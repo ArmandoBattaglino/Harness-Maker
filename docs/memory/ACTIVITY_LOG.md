@@ -1,4 +1,13 @@
 ---
+## 2026-03-18 — frontend-dev — Task #11: Projects View UI
+**Outcome:** COMPLETED
+**Summary:** Replaced ProjectsView stub with full projects table UI showing Name, Path, Status (Active/No session badge), Created date, and Actions (Open Terminal, Delete). Includes AddProjectModal integration, delete confirmation dialog, load/delete error banners, and empty state. Fetches on mount and after modal close. npm run build clean (304 modules).
+**Files changed:** client/src/views/ProjectsView.jsx (MODIFIED), docs/TASK_PLAN.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** re-fetch after modal close for consistency; ConfirmDialog/StatusBadge as in-file sub-components; formatDate uses toLocaleDateString
+**Blockers:** none
+**Next:** Task #12 (NFR polish — backend-dev), Task #13+ (QA/Security/Docs)
+---
 ## 2026-03-18 — frontend-dev — Task #10: Job Mode UI — JobPanel + react-markdown
 **Outcome:** COMPLETED
 **Summary:** Implemented full Job Mode UI: useJob hook (POST /api/v1/jobs + EventSource SSE + DELETE cancel), JobPanel component with 5 render states (idle/running/done/cancelled/error), streaming event log with auto-scroll, Markdown result display via react-markdown + remark-gfm, and Markdown prose styles. JobView updated from stub to full layout. npm run build clean (304 modules).

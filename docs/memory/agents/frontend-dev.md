@@ -1,4 +1,64 @@
 ---
+## 2026-03-18 — Task #11: Projects View UI
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+Task #10 (Job Mode UI) was fully complete. ProjectsView.jsx existed as a 7-line stub ("coming soon"). App.jsx already had `import ProjectsView from './views/ProjectsView.jsx'` and `case 'projects': return <ProjectsView />;`. Sidebar already handled project loading (GET /api/v1/projects on mount → SET_PROJECTS dispatch) and AddProjectModal. AppContext had SET_PROJECTS, ADD_PROJECT, REMOVE_PROJECT, SET_ACTIVE_PROJECT, SET_VIEW actions.
+
+### What I did
+1. Read memory: frontend-dev.md confirmed Task #10 done, Task #11 pending.
+2. Read App.jsx — routing for 'projects' view already in place, no changes needed.
+3. Read AppContext.jsx — confirmed REMOVE_PROJECT action clears sessions + resets activeProjectId if needed.
+4. Read useApi.js — apiDelete(path) already exists (no body needed for DELETE /api/v1/projects/:id).
+5. Read AddProjectModal.jsx — already works standalone, accepts onClose prop, dispatches ADD_PROJECT.
+6. Read Sidebar.jsx — projects list in sidebar already loads and dispatches, modal already wired there.
+7. Replaced ProjectsView.jsx stub with full implementation (~210 lines).
+8. Ran `npm run build` — clean, 304 modules, no errors.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| `client/src/views/ProjectsView.jsx` | MODIFIED | Replaced 7-line stub with full Projects table UI |
+| `docs/TASK_PLAN.md` | MODIFIED | Task #11 Status: PENDING → COMPLETED |
+| `docs/memory/PROGRESS.md` | MODIFIED | Moved TASK-11 to Completed section |
+
+### Improvements delivered
+- Full projects table: Name, Path (truncated with title tooltip), Status badge (green Active / gray No session), Created date (formatted), Actions (Open Terminal + Delete)
+- StatusBadge sub-component shows session presence from AppContext.sessions
+- ConfirmDialog sub-component for delete with "no files will be deleted" messaging
+- "Register Project" button opens AddProjectModal; after close, re-fetches project list to sync
+- "Open Terminal" dispatches SET_ACTIVE_PROJECT + SET_VIEW:'terminal' — navigates directly to TerminalView
+- "Delete" → confirm dialog → DELETE /api/v1/projects/:id → REMOVE_PROJECT dispatch
+- Error banners for both load errors and delete errors
+- Empty state when no projects registered
+- Loading state shown when projects list is empty and loading
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None — build clean on first attempt | — | — | — |
+
+### Decisions I made
+- Re-fetches project list after modal close (via loadProjects()) even though ADD_PROJECT dispatch already adds to state — ensures consistency if scaffold fails partially or network state diverges.
+- ConfirmDialog kept as sub-component in same file (tightly coupled, not reused).
+- StatusBadge kept as sub-component (same file, tiny, not reused).
+- formatDate() uses toLocaleDateString — human-readable, locale-aware, avoids manual date formatting.
+- Did not pass `sessions` to AddProjectModal — it dispatches ADD_PROJECT itself and that's sufficient.
+- Used `apiDelete('/api/v1/projects/:id')` (no body) — matches the backend DELETE endpoint which takes the id from the URL param.
+
+### What I learned
+- AppContext.REMOVE_PROJECT already handles clearing sessions and resetting activeProjectId — no extra cleanup needed in the UI delete handler.
+- Sidebar loads projects on mount and dispatches SET_PROJECTS, so ProjectsView's own fetch on mount may double-load on first visit — this is benign (last write wins, both return same data).
+- AddProjectModal dispatches ADD_PROJECT internally before calling onClose — so the re-fetch after close is a secondary sync, not the primary update.
+
+### State I'm leaving behind
+ProjectsView.jsx is complete and builds cleanly. All acceptance criteria met. No known issues.
+
+### Handoff
+- Task #12 (NFR polish — backend-dev) is the next pending task.
+- Task #13+ (QA, Security, Docs) follow.
+---
 ## 2026-03-18 — Task #10: Job Mode UI — JobPanel + react-markdown Result Rendering
 **Status:** COMPLETED
 **Called by:** orchestrator

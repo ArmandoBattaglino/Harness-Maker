@@ -1219,7 +1219,7 @@ Agent: frontend-dev
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   Implement the Projects view, which is where the user registers existing projects or scaffolds new ones.
 

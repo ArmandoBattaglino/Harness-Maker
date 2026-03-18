@@ -51,6 +51,9 @@
 - [TASK-10] Job Mode UI (frontend-dev) — COMPLETED 2026-03-18
   Created: useJob hook (startJob POST+EventSource, cancelJob DELETE, reset), JobPanel (5 render states: idle/running/done/cancelled/error, StreamLog, MarkdownResult with react-markdown+remark-gfm, AdvancedOptions, Copy button), JobView updated from stub. Markdown prose styles added to index.css. Build clean.
 
+- [TASK-11] Projects View UI (frontend-dev) — COMPLETED 2026-03-18
+  Replaced ProjectsView stub with full implementation: table of all projects (Name, Path, Status badge, Created date, Actions), "Register Project" button opens AddProjectModal, "Open Terminal" dispatches SET_ACTIVE_PROJECT + SET_VIEW:terminal, "Delete" shows ConfirmDialog then calls DELETE /api/v1/projects/:id + REMOVE_PROJECT dispatch. Fetches on mount and after modal close. Build clean (304 modules).
+
 ## In Progress
 _None._
 
@@ -59,8 +62,7 @@ _None._
 
 ## Pending
 
-### Phase 4 — Projects View + Polish
-- [TASK-11] Projects View UI (frontend-dev)
+### Phase 4 — Polish
 - [TASK-12] Non-Functional Requirements polish — browser auto-open, NFR resilience, version check (backend-dev)
 
 ### Phase 5 — QA, Security, Docs
