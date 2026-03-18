@@ -1645,17 +1645,17 @@ Dependencies: TASK #13, TASK #14
 
 | # | Task | Agent | Priority | Difficulty | Status |
 |---|------|-------|----------|------------|--------|
-| 1 | System Architecture Design | architect | HIGH | HARD | PENDING |
-| 2 | Monorepo Scaffold and Build System | devops | HIGH | EASY | PENDING |
-| 3 | Server Foundation | backend-dev | HIGH | MEDIUM | PENDING |
-| 4 | Project Management API | backend-dev | HIGH | EASY | PENDING |
-| 5 | SessionManager + WebSocket Terminal Handler | backend-dev | HIGH | VERY HARD | PENDING |
-| 6 | React Frontend — Sidebar + TerminalView | frontend-dev | HIGH | HARD | PENDING |
-| 7 | Entity Management API | backend-dev | HIGH | HARD | PENDING |
-| 8 | Entity Management UI | frontend-dev | HIGH | MEDIUM | PENDING |
-| 9 | Job Mode API | backend-dev | HIGH | HARD | PENDING |
-| 10 | Job Mode UI | frontend-dev | HIGH | MEDIUM | PENDING |
-| 11 | Projects View UI | frontend-dev | MEDIUM | EASY | PENDING |
+| 1 | System Architecture Design | architect | HIGH | HARD | COMPLETED |
+| 2 | Monorepo Scaffold and Build System | devops | HIGH | EASY | COMPLETED |
+| 3 | Server Foundation | backend-dev | HIGH | MEDIUM | COMPLETED |
+| 4 | Project Management API | backend-dev | HIGH | EASY | COMPLETED |
+| 5 | SessionManager + WebSocket Terminal Handler | backend-dev | HIGH | VERY HARD | COMPLETED |
+| 6 | React Frontend — Sidebar + TerminalView | frontend-dev | HIGH | HARD | COMPLETED |
+| 7 | Entity Management API | backend-dev | HIGH | HARD | COMPLETED |
+| 8 | Entity Management UI | frontend-dev | HIGH | MEDIUM | COMPLETED |
+| 9 | Job Mode API | backend-dev | HIGH | HARD | COMPLETED |
+| 10 | Job Mode UI | frontend-dev | HIGH | MEDIUM | COMPLETED |
+| 11 | Projects View UI | frontend-dev | MEDIUM | EASY | COMPLETED |
 | 12 | NFRs — Performance + Reliability + Polish | backend-dev | MEDIUM | MEDIUM | COMPLETED |
 | 13 | Full QA Test Suite | qa-tester | HIGH | HARD | PENDING |
 | 14 | Pre-Release Security Audit | security | HIGH | MEDIUM | PENDING |

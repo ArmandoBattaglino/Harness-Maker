@@ -1,22 +1,29 @@
 # Current Context
 **Session date:** 2026-03-18
-**Focus:** Phase 3 — Job Mode API + UI (Tasks #9 + #10), and Projects View UI (Task #11)
+**Focus:** Phase 5 — QA, Security Audit, and Documentation (Tasks #13, #14, #15 — all UNBLOCKED, run in parallel)
 
 _Project initialized via /create pipeline on 2026-03-18_
 
 ## Active Threads
-- Tasks #1–#8 are ALL COMPLETED as of 2026-03-18 (committed to git)
-- Phase 3 (Job Mode) is the immediate priority: Task #9 (JobRunner + SSE API) must ship first, then Task #10 (JobPanel UI)
-- Task #11 (Projects View UI) is UNBLOCKED — depends only on #4 and #6, both done — can run in parallel with #9
-- Task #12 (NFR Polish) depends on #5 and #6 — both done — also UNBLOCKED, lower priority than #9
+- Tasks #1–#12 are ALL COMPLETED as of 2026-03-18 (committed to git)
+- ALL implementation is done. Phase 5 is the final phase before v1 release.
+- Task #13 (qa-tester), Task #14 (security), Task #15 (documenter) are all UNBLOCKED and can run in parallel
+- Task #15 (Docs) has a soft dependency on #13 and #14 being complete — README should note any known issues discovered
 
 ## Open Questions
-- None currently blocking — all prerequisites for active tasks are satisfied
+- None currently blocking — all prerequisites satisfied
 
 ## Critical Constraints (current phase)
-**Phase 0 is done — node-pty constraint was resolved: use plain `node-pty` (not prebuilt-multiarch). See R-01 in PROGRESS.md.**
+**All implementation constraints (DEC-001 through DEC-010) are already applied in the codebase.**
+**Phase 5 agents should read the codebase, not re-implement anything.**
 
-**For Task #9 (JobRunner):** child.stdin.end() MUST be called immediately after spawn — process hangs indefinitely otherwise (DEC-005, GitHub #7497). This is the most critical non-obvious constraint in the entire codebase. Also: use child_process.spawn() with shell:false and an array of args, never shell:true.
+Key facts for Phase 5 agents:
+- node-pty constraint was resolved: plain `node-pty` is used (not prebuilt-multiarch). See R-01 in PROGRESS.md.
+- child.stdin.end() is called immediately after every job spawn in server/services/JobRunner.js (DEC-005).
+- Server binds to 127.0.0.1 in server/index.js (DEC-002, SEC-01).
+- CSRF middleware is in server/middleware/csrf.js — rejects POST/PUT/PATCH/DELETE without X-Requested-With header (DEC-008, SEC-06).
+- Path traversal prevention is in server/services/FileManager.js validatePath() (SEC-03, SEC-04).
+- ConPTY deadlock prevention: permanent pty.onData handler in server/services/SessionManager.js (DEC-009).
 
 ## Notes for Specific Agents
 
