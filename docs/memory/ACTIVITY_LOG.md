@@ -1,4 +1,12 @@
 ---
+## 2026-03-18 — code-mapper — Debug & Security Audit: BUG-02/03/04/05/11/14/16
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md and CHANGELOG.md following the debugger's full codebase audit session. Added Function Graph entries for 5 previously undocumented modules (AddProjectModal, Sidebar, ProjectsView internals, useSession, full SessionManager class). Updated parseFrontmatter entry with BUG-14 type guard complexity note. All 7 bug fixes documented in Key Behaviors section and CHANGELOG.
+**Files changed:** docs/memory/CODE_MAP.md (MODIFIED — header updated; 1 new Module Index row; 13 new Function Graph entries for SessionManager class methods, AddProjectModal, Sidebar, useSession; parseFrontmatter complexity note updated; 8 new Key Behaviors bullets), docs/memory/CHANGELOG.md (APPENDED — full Debug Session entry with per-file breakdown), docs/memory/ACTIVITY_LOG.md (APPENDED), docs/memory/agents/code-mapper.md (APPENDED)
+**Bugs fixed:** none (code-mapper is documentation-only)
+**Decisions made:** Expanded SessionManager stub into full class-method entries — the bug fixes made the internal structure security-relevant enough to warrant full documentation
+**Next:** qa-tester regression pass on the 6 changed files (BUG-02/03/04/05/11/14/16 fixes)
+---
 ## 2026-03-18 — project-manager — Phase 7 v1.1 Backlog Planning (Session 7)
 **Outcome:** COMPLETED
 **Summary:** Received results of post-v1 Debug & Security Audit (7 bugs fixed, 12 deferred, security re-audit PASS). Created Tasks #19, #20, #21 in TASK_PLAN.md for the three deferred v1.1 items: JobRunner memory leak (BUG-06), rate limiter map leak (BUG-07), and vite CVE upgrade (MEDIUM-04). Updated Phase Map, Execution Order, Task Status Summary table, PROGRESS.md, and CONTEXT.md to reflect Phase 7 state.

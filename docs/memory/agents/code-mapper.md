@@ -239,3 +239,67 @@ Tasks #16 (exec→spawn in openBrowser — server/index.js), #17 (allowedTools w
 ### Handoff
 All 18 tasks complete. No pending code-mapper work. If a v1.1 cycle begins (LOW findings: CSP unsafe-inline, rate limiter persistent storage), code-mapper should document changes to server/middleware/security.js (CSP update) and server/index.js (rateLimit function, if persisted).
 ---
+
+---
+## 2026-03-18 — Debug & Security Audit: BUG-02/03/04/05/11/14/16
+**Status:** COMPLETED
+**Called by:** orchestrator (post-debug code-mapper invocation)
+
+### Context when I started
+The debugger completed a full codebase audit and fixed 7 bugs across 6 files. CODE_MAP.md was complete through Task #18 (security hardening). CHANGELOG.md had entries through Task #18. Several client components (AddProjectModal, Sidebar, useSession) and the full SessionManager class had never received Function Graph entries — only Module Index rows.
+
+### What I did
+1. Read agent memory to confirm prior state and note handoff message
+2. Read existing CODE_MAP.md (full, ~947 lines) and CHANGELOG.md (full, ~342 lines) in parallel
+3. Read all 6 modified source files in parallel: AddProjectModal.jsx, Sidebar.jsx, ProjectsView.jsx, useSession.js, SessionManager.js, frontmatter.js
+4. Ran Grep calls to confirm callers of useSession (Terminal.jsx) and AddProjectModal (Sidebar + ProjectsView)
+5. Updated CODE_MAP.md:
+   - Header line: updated to "Debug & Security Audit"
+   - Module Index: added useSession.js row (was missing entirely)
+   - parseFrontmatter() entry: added BUG-14 complexity note about yaml.load() type guard
+   - SessionManager stub ("See prior entries. Unchanged."): replaced with 10 full Function Graph entries for all class methods + the permanent onData handler + the singleton export
+   - Added Function Graph entries for AddProjectModal::handleSubmit (new), Sidebar() + handleProjectClick + handleNavClick (all new), useSession + send + resize (all new)
+   - Updated ProjectsView() entry: added BUG-04 complexity note
+   - Key Behaviors section: added 8 new bullets for BUG-02/03/04/05/11/14/16
+6. Appended CHANGELOG entry with full per-file breakdown of all 7 bug fixes
+7. Appended ACTIVITY_LOG entry
+8. Wrote this agent memory log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header updated; useSession Module Index row added; 13 new Function Graph entries (SessionManager class, AddProjectModal, Sidebar, useSession); parseFrontmatter BUG-14 note; ProjectsView BUG-04 note; 8 Key Behaviors bullets |
+| docs/memory/CHANGELOG.md | APPENDED | Full Debug Session entry: per-bug breakdown of BUG-02/03/04/05/11/14/16 with root causes and impact |
+| docs/memory/ACTIVITY_LOG.md | APPENDED | code-mapper entry for Debug Session |
+| docs/memory/agents/code-mapper.md | APPENDED | This session log |
+
+### Improvements delivered
+- SessionManager is now fully documented as first-class Function Graph entries — was a stub reference for 3 previous sessions
+- AddProjectModal, Sidebar, useSession all have Function Graph entries for the first time
+- BUG-02 double-unregister sentinel pattern documented — future devs won't accidentally remove the _unregistered flag thinking it's dead code
+- BUG-11 backpressure guard documented — the ws.readyState check reason is now explicit
+- All 7 debug fixes are in Key Behaviors for fast discovery by any agent
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None | — | — | — |
+
+### Decisions I made
+- Replaced the SessionManager stub ("See prior entries. Unchanged.") with full class-method entries — BUG-02 and BUG-11 made the internal structure security-relevant. The onData handler complexity note is load-bearing for future devs.
+- Documented AddProjectModal, Sidebar, useSession as full Function Graph entries even though they were previously just Module Index rows — the BUG-03/04/05/16 fixes are architectural (wrong endpoint, wrong response shape, hardcoded port) and need to be preserved at the function level.
+
+### What I learned
+- SessionManager had been a "See prior entries. Unchanged." stub for 3 sessions — this was always deferred because no task had explicitly modified it since Task #5. The debug session forced full documentation.
+- The BUG-02 double-unregister pattern (sentinel flag on the session record) is a common Node.js pattern for preventing race conditions between explicit cleanup and natural event handlers. Worth preserving as a known pattern.
+- BUG-16 (WS_BASE hardcoded port) is a classic portability bug — always derive ports from window.location when running in a browser context, never hardcode.
+
+### State I'm leaving behind
+- CODE_MAP.md: complete through Debug Session. All 6 modified files fully documented.
+- CHANGELOG.md: entries for Tasks #1-#18 + Debug Session present.
+- PROGRESS.md and TASK_PLAN.md: no code-mapper task to mark; debugger had its own task.
+- Next pending tasks: #19 (JobRunner memory leak), #20 (rate limiter map leak), #21 (vite CVE upgrade) per project-manager Phase 7 planning.
+
+### Handoff
+After Tasks #19/#20/#21: code-mapper should document changes to server/services/JobRunner.js (cleanup of completed jobs Map) and server/index.js (rate limiter map cleanup). Also document any changes from qa-tester regression pass on BUG-02/03/04/05/11/14/16 fixes.
+---
