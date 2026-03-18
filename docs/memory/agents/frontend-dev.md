@@ -1,4 +1,63 @@
 ---
+## 2026-03-18 — Task #10: Job Mode UI — JobPanel + react-markdown Result Rendering
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+Task #9 (backend Job Mode API) was fully complete. JobRunner spawns `claude -p`, streams stream-json events via SSE, and exposes POST /api/v1/jobs, GET /api/v1/jobs/:id/stream, DELETE /api/v1/jobs/:id. The client had a stub JobView.jsx ("coming soon"). react-markdown 9.x and remark-gfm 4.x were already installed in client/package.json. App.jsx already had `case 'jobs': return <JobView />` routing.
+
+### What I did
+1. Read memory files: PROGRESS.md confirmed task #10 was PENDING. Tasks #1-9 all COMPLETED.
+2. Read existing code: App.jsx (routing done, JobView imported), AppContext.jsx (useAppState hook, activeProjectId in state), useApi.js (apiPost, apiDelete present), Sidebar.jsx (Jobs nav entry already present), JobView.jsx (stub), JobRunner.js + jobs.js (to understand SSE event shapes and API response).
+3. Created `client/src/hooks/useJob.js` — custom hook managing the full job lifecycle: POST to create job, EventSource for SSE streaming, apiDelete for cancellation, and a reset() function to return to idle.
+4. Created `client/src/components/JobPanel.jsx` — main job UI component with 5 render states (idle, running, done, cancelled, error), StreamLog sub-component for scrollable SSE events, MarkdownResult sub-component using ReactMarkdown + remarkGfm, AdvancedOptions collapsible section (allowedTools + maxTurns inputs), and Copy result button.
+5. Rewrote `client/src/views/JobView.jsx` — shows "Select a project" when no project active, otherwise renders JobView header + JobPanel.
+6. Added Markdown prose styles to `client/src/index.css` — .markdown-result class with styled headings (green), code blocks (dark bg), tables, blockquotes, links.
+7. Ran `npm run build` — clean build, 304 modules, no errors (only expected 633KB chunk size warning).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| `client/src/hooks/useJob.js` | CREATED | Custom hook: startJob (POST + EventSource), cancelJob (DELETE + close ES), reset, exposes status/streamEvents/result/error/jobId |
+| `client/src/components/JobPanel.jsx` | CREATED | Full job UI: form (textarea + run/cancel buttons + advanced options), streaming event log, Markdown result display, 5 render states |
+| `client/src/views/JobView.jsx` | MODIFIED | Replaced stub with: empty-state guard + header bar showing project name + JobPanel |
+| `client/src/index.css` | MODIFIED | Added .markdown-result CSS class with full prose styling (headings, code, tables, blockquotes, links, HR) |
+
+### Improvements delivered
+- Job Mode fully functional: prompt input, SSE streaming display, Markdown result rendering
+- StreamLog auto-scrolls to bottom as events arrive (scrollIntoView + bottomRef)
+- Ctrl+Enter keyboard shortcut to submit prompt
+- AdvancedOptions collapsible (allowedTools text, maxTurns number)
+- Copy result uses navigator.clipboard with 2s "Copied!" feedback
+- All 5 status states handled: idle, running, done, cancelled, error
+- API errors displayed as visible error messages (never silent fail)
+- EventSource cleaned up on unmount via esRef.current.close()
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None — build clean on first attempt | — | — | — |
+
+### Decisions I made
+- Used `useJob.js` hook to separate lifecycle logic from UI — JobPanel stays focused on rendering.
+- StreamLog renders event content with `renderEventContent()` helper that understands Claude stream-json shapes (assistant/message/content arrays, result fields, raw fallback).
+- MarkdownResult and StreamLog kept as sub-components in JobPanel.jsx (tightly coupled, not reused elsewhere) — correct per component rules.
+- Used `scrollIntoView({ behavior: 'instant' })` not 'smooth' — per design system rule: no smooth transitions.
+- CSS class `.markdown-result` in index.css rather than inline styles — per component rules.
+
+### What I learned
+- JobRunner sends raw stream-json lines from `claude -p --output-format stream-json` — events have shapes like `{type:'assistant', message:{content:[{type:'text',text:'...'}]}}` and a final `{type:'done', result:'...'}`.
+- SSE final event is `{type:'done', result: string|null}` when successful, `{type:'cancelled'}` when killed.
+- react-markdown 9.x uses `remarkPlugins` prop (not `plugins`) — API is stable.
+- EventSource native browser API does not support custom headers — this is fine per spec because GET /stream doesn't require CSRF.
+
+### State I'm leaving behind
+All three files are complete and build cleanly. Job Mode UI is fully functional. The Jobs nav entry in Sidebar was already wired. No known issues.
+
+### Handoff
+- Task #11 (Projects View UI) is the next pending frontend task.
+- Task #12 (NFR polish) and Task #13+ (QA/Security/Docs) follow.
+---
 ## 2026-03-18 — Task #8: Entity Management UI — AgentEditor, SkillEditor, ClaudeMdEditor
 **Status:** COMPLETED
 **Called by:** orchestrator

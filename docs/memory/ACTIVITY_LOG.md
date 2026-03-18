@@ -1,4 +1,13 @@
 ---
+## 2026-03-18 — frontend-dev — Task #10: Job Mode UI — JobPanel + react-markdown
+**Outcome:** COMPLETED
+**Summary:** Implemented full Job Mode UI: useJob hook (POST /api/v1/jobs + EventSource SSE + DELETE cancel), JobPanel component with 5 render states (idle/running/done/cancelled/error), streaming event log with auto-scroll, Markdown result display via react-markdown + remark-gfm, and Markdown prose styles. JobView updated from stub to full layout. npm run build clean (304 modules).
+**Files changed:** client/src/hooks/useJob.js (CREATED), client/src/components/JobPanel.jsx (CREATED), client/src/views/JobView.jsx (MODIFIED), client/src/index.css (MODIFIED), docs/TASK_PLAN.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** useJob hook separates lifecycle from UI; scrollIntoView instant (no smooth); CSS class not inline styles for Markdown
+**Blockers:** none
+**Next:** Task #11 (Projects View UI — frontend-dev)
+---
 ## 2026-03-18 — backend-dev — Task #9: Job Mode API — JobRunner and SSE Streaming
 **Outcome:** COMPLETED
 **Summary:** Implemented full job mode backend: JobRunner service (spawn claude -p, readline stdout, SSE forwarding, tree-kill cancellation, graceful shutdown) and jobs REST/SSE routes (POST create, GET stream, DELETE cancel, GET list). All DEC-005/006, SEC-02/08, NFR-16 requirements enforced. npm run build verified clean.

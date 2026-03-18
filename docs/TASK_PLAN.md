@@ -1118,7 +1118,7 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   Implement the Job Mode frontend — a UI for submitting prompts to Claude in headless mode, watching streaming progress, cancelling jobs, and viewing formatted Markdown results. Covers PRD FR-26 and FR-27.
 

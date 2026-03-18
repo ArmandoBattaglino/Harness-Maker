@@ -48,6 +48,9 @@
 - [TASK-9] Job Mode API (backend-dev) — COMPLETED 2026-03-18
   Created: server/services/JobRunner.js (spawn claude -p, readline stdout SSE forwarding, tree-kill cancellation, cancelAll() for shutdown), server/routes/jobs.js (POST/GET stream/DELETE/GET list). Mounted in server/index.js. child.stdin.end() enforced (DEC-005). shell: false (SEC-02). Prompt never logged (SEC-08). Build verified.
 
+- [TASK-10] Job Mode UI (frontend-dev) — COMPLETED 2026-03-18
+  Created: useJob hook (startJob POST+EventSource, cancelJob DELETE, reset), JobPanel (5 render states: idle/running/done/cancelled/error, StreamLog, MarkdownResult with react-markdown+remark-gfm, AdvancedOptions, Copy button), JobView updated from stub. Markdown prose styles added to index.css. Build clean.
+
 ## In Progress
 _None._
 
@@ -55,9 +58,6 @@ _None._
 _None._
 
 ## Pending
-
-### Phase 3 — Job Mode
-- [TASK-10] Job Mode UI — JobPanel + react-markdown (frontend-dev)
 
 ### Phase 4 — Projects View + Polish
 - [TASK-11] Projects View UI (frontend-dev)
