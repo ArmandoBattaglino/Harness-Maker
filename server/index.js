@@ -13,6 +13,7 @@ import { ProcessRegistry } from './services/ProcessRegistry.js';
 import { securityMiddleware } from './middleware/security.js';
 import { csrfMiddleware } from './middleware/csrf.js';
 import { ApiError } from './middleware/pathValidation.js';
+import projectsRouter from './routes/projects.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -78,10 +79,8 @@ async function startup() {
     res.json({ status: 'ok', version: '0.1.0', claudeBin });
   });
 
-  // Placeholder for all API routes — returns 501 until Task #4+ implements them
-  app.all('/api/v1/*', (req, res) => {
-    res.status(501).json({ error: 'Not implemented' });
-  });
+  // Project management routes
+  app.use('/api/v1/projects', projectsRouter);
 
   // -------------------------------------------------------------------------
   // 7. Serve static client build
