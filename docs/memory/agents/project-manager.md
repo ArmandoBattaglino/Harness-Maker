@@ -123,3 +123,43 @@ Assign Task #11 (Projects View UI) to frontend-dev in parallel.
 Task #12 (NFR Polish) can also run in parallel with lower urgency.
 After Task #9 completes, assign Task #10 (Job Mode UI) to frontend-dev.
 ---
+
+---
+## 2026-03-18 — Status sync after Tasks #9, #10, #11 completion
+**Status:** COMPLETED
+**Called by:** user (direct status update request)
+
+### Context when I started
+User confirmed Tasks #9 (Job Mode API), #10 (Job Mode UI), and #11 (Projects View UI) were all completed by backend-dev and frontend-dev agents. All three were already COMPLETED in TASK_PLAN.md (verified by reading the file). PROGRESS.md needed the blocking/unblocking notes updated.
+
+### What I did
+1. Read TASK_PLAN.md (lines 988, 1116, 1217, 1274) — confirmed #9/#10/#11 are already COMPLETED, #12 is PENDING.
+2. Read PROGRESS.md — confirmed it already listed all three tasks as COMPLETED in the Completed section.
+3. Updated PROGRESS.md Pending section to add explicit UNBLOCKED/BLOCKED notes for #12 and #13-#15.
+4. Appended this session log.
+5. Appended ACTIVITY_LOG.md entry.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/PROGRESS.md | MODIFIED | Added UNBLOCKED note for TASK-12; BLOCKED notes for TASK-13/14/15 |
+| docs/memory/agents/project-manager.md | APPENDED | This session log |
+| docs/memory/ACTIVITY_LOG.md | APPENDED | Standard activity entry |
+
+### Improvements delivered
+- PROGRESS.md now accurately reflects the unblocking cascade: all implementation tasks done, TASK-12 is the single active gate before QA/Security/Docs.
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- No TASK_PLAN.md edits needed: tasks #9/#10/#11 were already COMPLETED there (agents marked them correctly).
+
+### State I'm leaving behind
+- TASK_PLAN.md: #1-#11 COMPLETED, #12 PENDING (unblocked), #13-#15 PENDING (blocked on #12).
+- PROGRESS.md: reflects same state with explicit notes.
+- No code was written — pure status sync.
+
+### Handoff
+Next action: assign TASK-12 (NFR Polish) to backend-dev. After #12 completes, launch TASK-13 (qa-tester), TASK-14 (security), and TASK-15 (documenter) in parallel.
+---

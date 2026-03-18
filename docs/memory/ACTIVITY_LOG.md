@@ -130,3 +130,14 @@
 **Blockers:** none
 **Next:** Task #3 (Server Foundation)
 ---
+
+---
+## 2026-03-18 — project-manager — Status sync: Tasks #9/#10/#11 COMPLETED
+**Outcome:** COMPLETED
+**Summary:** Confirmed Tasks #9 (Job Mode API), #10 (Job Mode UI), #11 (Projects View UI) are all COMPLETED in TASK_PLAN.md. Updated PROGRESS.md to mark TASK-12 as UNBLOCKED and TASK-13/14/15 as BLOCKED until TASK-12 completes.
+**Files changed:** docs/memory/PROGRESS.md (MODIFIED — unblocking notes added)
+**Bugs fixed:** none
+**Decisions made:** none — pure status sync
+**Blockers:** none
+**Next:** Assign TASK-12 (NFR Polish) to backend-dev. After completion, launch TASK-13 + TASK-14 + TASK-15 in parallel.
+---

@@ -64,11 +64,15 @@ _None._
 
 ### Phase 4 — Polish
 - [TASK-12] Non-Functional Requirements polish — browser auto-open, NFR resilience, version check (backend-dev)
+  UNBLOCKED as of 2026-03-18: all implementation tasks #3-#11 are COMPLETED.
 
 ### Phase 5 — QA, Security, Docs
 - [TASK-13] Full QA Test Suite — all 6 critical paths + unit tests (qa-tester)
+  BLOCKED until TASK-12 is COMPLETED.
 - [TASK-14] Pre-Release Security Audit — all 10 SEC requirements (security)
+  BLOCKED until TASK-12 is COMPLETED.
 - [TASK-15] Documentation — README + troubleshooting guide (documenter)
+  BLOCKED until TASK-12 is COMPLETED.
 
 ## Known Issues
 - R-01 (RESOLVED): node-pty-prebuilt-multiarch not available — plain node-pty used instead
