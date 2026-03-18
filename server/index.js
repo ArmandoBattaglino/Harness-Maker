@@ -6,6 +6,7 @@ import { createServer } from 'http';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import express from 'express';
+import { WebSocketServer } from 'ws';
 
 import { discoverClaudeBinary } from './services/BinaryDiscovery.js';
 import { ConfigStore } from './services/ConfigStore.js';
@@ -14,6 +15,9 @@ import { securityMiddleware } from './middleware/security.js';
 import { csrfMiddleware } from './middleware/csrf.js';
 import { ApiError } from './middleware/pathValidation.js';
 import projectsRouter from './routes/projects.js';
+import sessionsRouter from './routes/sessions.js';
+import { sessionManager } from './services/SessionManager.js';
+import { setupTerminalWebSocket } from './ws/terminalHandler.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -33,6 +37,8 @@ async function startup() {
   try {
     claudeBin = await discoverClaudeBinary();
     console.log(`Claude CLI found at: ${claudeBin}`);
+    // Make claudeBin available to SessionManager (via public property on singleton)
+    sessionManager.claudeBin = claudeBin;
   } catch (err) {
     console.error(`[FATAL] ${err.message}`);
     process.exit(1);
@@ -82,6 +88,9 @@ async function startup() {
   // Project management routes
   app.use('/api/v1/projects', projectsRouter);
 
+  // Session management routes
+  app.use('/api/v1/sessions', sessionsRouter);
+
   // -------------------------------------------------------------------------
   // 7. Serve static client build
   // -------------------------------------------------------------------------
@@ -113,6 +122,10 @@ async function startup() {
   // -------------------------------------------------------------------------
   const server = createServer(app);
 
+  // WebSocket server — 1MB max payload to prevent memory exhaustion
+  const wss = new WebSocketServer({ server, maxPayload: 1 * 1024 * 1024 });
+  setupTerminalWebSocket(wss);
+
   await new Promise((resolve, reject) => {
     server.on('error', reject);
     server.listen(PORT, '127.0.0.1', () => {
@@ -132,7 +145,14 @@ async function startup() {
       console.log('HTTP server closed.');
     });
 
-    // Kill any tracked child processes
+    // Kill all active PTY sessions first (sends close to WebSocket clients)
+    try {
+      await sessionManager.killAll();
+    } catch (err) {
+      console.error(`[WARN] SessionManager killAll error: ${err.message}`);
+    }
+
+    // Kill any remaining orphaned processes from a previous run
     try {
       await ProcessRegistry.cleanupStale();
     } catch (err) {
