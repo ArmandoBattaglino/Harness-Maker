@@ -1,0 +1,23 @@
+{
+  "name": "claude-code-visual-manager-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "helmet": "^7.1.0",
+    "js-yaml": "^4.1.0",
+    "node-pty": "^1.1.0",
+    "tree-kill": "^1.2.2",
+    "uuid": "^9.0.0",
+    "write-file-atomic": "^5.0.1",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  }
+}
