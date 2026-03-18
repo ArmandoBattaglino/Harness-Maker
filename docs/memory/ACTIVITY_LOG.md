@@ -1,4 +1,13 @@
 ---
+## 2026-03-18 — code-mapper — Tasks #7 + #8: Entity Management API + UI
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md with all new server and client modules from Tasks #7 and #8: FileManager singleton, frontmatter utils (parseFrontmatter, serializeFrontmatter, filePathToId), three new API route files (agents, skills, claudemd), and four new client components (AgentEditor, SkillEditor, ClaudeMdEditor, EntitiesView) plus useApi.js extensions (apiPut, apiDeleteWithBody). Appended Task #7 and #8 entries to CHANGELOG.md. Fixed PROGRESS.md placement of Task #8.
+**Files changed:** docs/memory/CODE_MAP.md (rewritten), docs/memory/CHANGELOG.md (appended), docs/memory/PROGRESS.md (Task #8 moved to Completed), docs/memory/agents/code-mapper.md (created)
+**Bugs fixed:** PROGRESS.md had Task #8 misplaced in Pending section — moved to Completed
+**Decisions made:** Documented resolveAllowedBase as two separate entries (agents.js scopes to USER_AGENTS_DIR; skills.js scopes to USER_CLAUDE_DIR) — different coverage is a security-relevant distinction
+**Blockers:** none
+**Next:** Tasks #9 (Job Mode API) and #10 (Job Mode UI) — code-mapper should document JobRunner, SSE route, JobPanel after completion
+---
 ## 2026-03-18 — backend-dev — Task #7: Entity Management API — Agents, Skills, CLAUDE.md
 **Outcome:** COMPLETED
 **Summary:** Implemented the full entity management REST API. Created the missing FileManager.js prerequisite, a shared frontmatter utility module, and three new route files (agents, skills, claudemd). Mounted all three routers in server/index.js. npm run build and node --check on all new files passed with no errors.

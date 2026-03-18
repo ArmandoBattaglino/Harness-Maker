@@ -42,6 +42,9 @@
   /api/v1/skills, 4 scan locations: modern+legacy x user+project), server/routes/claudemd.js (read/write
   CLAUDE.md user+project scope). Mounted all three routers in server/index.js. npm run build verified.
 
+- [TASK-8] Entity Management UI (frontend-dev) — COMPLETED 2026-03-18
+  EntitiesView with 3 tabs: AgentEditor (full CRUD + restart banner), SkillEditor (full CRUD + toast), ClaudeMdEditor (dual-panel + live line count + 300-line warning). Build clean.
+
 ## In Progress
 _None._
 
@@ -49,9 +52,6 @@ _None._
 _None._
 
 ## Pending
-
-- [TASK-8] Entity Management UI (frontend-dev) — COMPLETED 2026-03-18
-  EntitiesView with 3 tabs: AgentEditor (full CRUD + restart banner), SkillEditor (full CRUD + toast), ClaudeMdEditor (dual-panel + live line count + 300-line warning). Build clean.
 
 ### Phase 3 — Job Mode
 - [TASK-9] Job Mode API — JobRunner + SSE streaming (backend-dev)
