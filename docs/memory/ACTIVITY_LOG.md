@@ -1,4 +1,13 @@
 ---
+## 2026-03-18 — documenter — Debug & Security Re-Audit Documentation
+**Outcome:** COMPLETED
+**Summary:** Updated docs/SECURITY_AUDIT.md to add 3 new findings from the security re-audit (MEDIUM-04: vite/esbuild CVE dev-only; LOW-03: process.env passthrough to PTY; LOW-04: safeRead bypass in claudemd GET). Updated docs/ARCHITECTURE.md in two sections: backpressure spec corrected from browser-API ws.bufferedAmount to server-side ws._socket.bufferSize; YAML frontmatter parse algorithm updated to regex-based implementation with non-object yaml.load return guard. Updated docs/memory/DOC_STATUS.md to reflect all changes.
+**Files changed:** docs/SECURITY_AUDIT.md (MODIFIED — header, executive summary, SEC-10 row, npm audit section, new MEDIUM-04 section, new LOW-03 and LOW-04 sections, OWASP A06 row, Summary Verdict updated), docs/ARCHITECTURE.md (MODIFIED — backpressure section + frontmatter parse algorithm), docs/memory/DOC_STATUS.md (MODIFIED — full refresh for this session), docs/memory/agents/documenter.md (APPENDED), docs/memory/ACTIVITY_LOG.md (APPENDED)
+**Bugs fixed:** none — documentation-only
+**Decisions made:** MEDIUM-04 placed in a new "MEDIUM Findings (from re-audit)" subsection rather than mixed with the original MEDIUM-01/02/03 to distinguish resolved vs open findings
+**Blockers:** none
+**Next:** v1.1 when TASK-19/20/21 are implemented — update SECURITY_AUDIT.md to mark MEDIUM-04 fixed and LOW-02/LOW-03 improved.
+---
 ## 2026-03-18 — code-mapper — Debug & Security Audit: BUG-02/03/04/05/11/14/16
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md and CHANGELOG.md following the debugger's full codebase audit session. Added Function Graph entries for 5 previously undocumented modules (AddProjectModal, Sidebar, ProjectsView internals, useSession, full SessionManager class). Updated parseFrontmatter entry with BUG-14 type guard complexity note. All 7 bug fixes documented in Key Behaviors section and CHANGELOG.

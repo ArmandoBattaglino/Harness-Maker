@@ -113,3 +113,59 @@ All documentation is current as of 2026-03-18. SECURITY_AUDIT.md verdict is PASS
 ### Handoff
 Project is v1 release-ready. No outstanding documentation work. If v1.1 work begins, SECURITY_AUDIT.md LOW-01 (unsafe-inline CSP) should be revisited per the existing note.
 ---
+
+---
+## 2026-03-18 — Debug & Security Re-Audit: Documentation Update
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel with code-mapper and project-manager) after debugger + security re-audit session
+
+### Context when I started
+All 18 tasks COMPLETED. Project was v1 release-ready. The debugger had just fixed 7 bugs across 6 files: AddProjectModal.jsx (API endpoint fix), Sidebar.jsx (response destructuring + session payload), ProjectsView.jsx (response destructuring), useSession.js (WS_BASE hardcoded port + retry logic), SessionManager.js (backpressure guard using server-side bufferSize + double-unregister guard), frontmatter.js (yaml.load non-object return guard). The security agent had run a full re-audit and found 3 new findings not in the original audit: MEDIUM-04 (vite/esbuild CVE, client devDependencies only), LOW-03 (process.env passthrough to PTY), LOW-04 (safeRead path bypass in claudemd GET).
+
+### What I did
+1. Read own session history (documenter.md), DOC_STATUS.md, README.md, ARCHITECTURE.md, all 6 modified source files, SECURITY_AUDIT.md, TASK_PLAN.md, and ACTIVITY_LOG.md tail in parallel.
+2. Confirmed code-mapper had already updated CODE_MAP.md and CHANGELOG.md for the debug session — no work needed there.
+3. Identified two stale sections in ARCHITECTURE.md: backpressure spec (used browser-API term `ws.bufferedAmount`; actual impl uses `ws._socket.bufferSize`) and YAML parse algorithm (showed original line-split approach; actual impl is regex-based with yaml.load return type guard).
+4. Updated ARCHITECTURE.md backpressure section — one sentence surgical edit explaining that the server-side `ws` module does not expose `bufferedAmount` and `ws._socket.bufferSize` is used instead.
+5. Updated ARCHITECTURE.md YAML parse algorithm — replaced the line-split function pseudocode with the regex-based implementation including the non-object guard and error catch.
+6. Updated SECURITY_AUDIT.md in 8 places: header verdict + last-updated line; executive summary; SEC-10 table row; npm audit section (added client/ findings block); new LOW-03, LOW-04, and MEDIUM-04 finding sections; OWASP A06 table row; Summary Verdict section.
+7. Rewrote DOC_STATUS.md fully — advanced last-updated timestamp, updated STATUS for all rows, removed false PARTIAL entries after confirming code-mapper had already updated CODE_MAP.md and CHANGELOG.md, added MEDIUM-04/LOW-03/LOW-04 to Documentation Debt table.
+8. Wrote ACTIVITY_LOG.md entry.
+9. Wrote this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| /c/Users/arman/Downloads/Test workflows/docs/ARCHITECTURE.md | MODIFIED | Backpressure section: ws.bufferedAmount → ws._socket.bufferSize (bug-fix-driven correction). YAML parse algorithm section: updated from line-split pseudocode to actual regex implementation with non-object return guard and error catch. |
+| /c/Users/arman/Downloads/Test workflows/docs/SECURITY_AUDIT.md | MODIFIED | Header: verdict updated to reflect MEDIUM-04 open (dev-only). Executive summary: added re-audit findings paragraph. SEC-10 row: PASS → PASS with NOTE. npm audit: added client/ block. New finding sections: LOW-03, LOW-04, MEDIUM-04. OWASP A06: updated for client CVEs. Summary Verdict: updated count and listed all 4 LOW findings. |
+| /c/Users/arman/Downloads/Test workflows/docs/memory/DOC_STATUS.md | MODIFIED | Full refresh: timestamp, all rows updated, CODE_MAP.md and CHANGELOG.md corrected from PARTIAL to UP_TO_DATE, documentation debt table extended with 3 new v1.1 items. |
+| /c/Users/arman/Downloads/Test workflows/docs/memory/agents/documenter.md | MODIFIED | Appended this session log. |
+| /c/Users/arman/Downloads/Test workflows/docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended Debug & Security Re-Audit Documentation entry. |
+
+### Improvements delivered
+- SECURITY_AUDIT.md is now a complete and accurate record of all known findings — original 3 MEDIUM resolved, plus new MEDIUM-04 (dev-only) and LOW-03/LOW-04 documented with descriptions, attack scenarios, and recommended v1.1 fixes.
+- ARCHITECTURE.md backpressure spec now matches the actual code — developers will not be confused by the reference to a browser-only API in server code.
+- ARCHITECTURE.md YAML parse algorithm now matches the actual implementation — regex-based with all defensive guards documented.
+- DOC_STATUS.md accurately reflects the state of all documentation artifacts with no false PARTIAL or STALE entries.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| DOC_STATUS.md had CODE_MAP.md and CHANGELOG.md listed as PARTIAL | Assumed code-mapper had not yet run; ACTIVITY_LOG showed it had already updated both | Corrected both rows to UP_TO_DATE after reading ACTIVITY_LOG | FIXED |
+
+### Decisions I made
+- MEDIUM-04 placed in a new "MEDIUM Findings (from re-audit)" section rather than interleaved with MEDIUM-01/02/03. Reasoning: original MEDIUM findings are all FIXED; MEDIUM-04 is open and dev-only. Mixing them would obscure the status difference and make the audit history harder to read.
+- Preserved the existing structure of LOW findings section rather than creating "LOW Findings (from re-audit)" — all LOW findings are open, so there is no status distinction that requires separation.
+- Did not update README.md — the bug fixes did not change any user-visible behavior, startup procedure, configuration, or troubleshooting steps that the README covers.
+
+### What I learned
+- Always check ACTIVITY_LOG.md before assuming a parallel agent has not yet run. Code-mapper had already updated CODE_MAP.md and CHANGELOG.md by the time this task started.
+- ARCHITECTURE.md pseudocode sections can drift silently when the implementation diverges during bug fixes. The backpressure section was incorrect because `ws.bufferedAmount` was the designed API but the debugger replaced it with `ws._socket.bufferSize` to work on the server side.
+- SECURITY_AUDIT.md must be updated after every security scan, not just after the formal pre-release audit. New findings from ad-hoc re-audits should be appended, not implied.
+
+### State I'm leaving behind
+All documentation is accurate and current as of 2026-03-18. SECURITY_AUDIT.md reflects the post-debug state: 3 original MEDIUM all FIXED, 1 new MEDIUM open (dev-only), 4 LOW open. ARCHITECTURE.md accurately describes both the backpressure and frontmatter implementations. DOC_STATUS.md is fully current.
+
+### Handoff
+When v1.1 work begins (TASK-19/20/21): update SECURITY_AUDIT.md to mark MEDIUM-04 FIXED when vite is upgraded, and note improvements to LOW-02 (rate limiter) and LOW-03 (env allowlist) if those are addressed.
+---
