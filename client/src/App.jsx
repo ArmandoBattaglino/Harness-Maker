@@ -1,11 +1,45 @@
-// App.jsx — root component stub
-// Will be replaced by frontend-dev with full UI implementation
-function App() {
+import { AppProvider, useAppState } from './store/AppContext.jsx';
+import Sidebar from './components/Sidebar.jsx';
+import TerminalView from './views/TerminalView.jsx';
+import JobView from './views/JobView.jsx';
+import EntitiesView from './views/EntitiesView.jsx';
+import ProjectsView from './views/ProjectsView.jsx';
+
+function MainContent() {
+  const { view } = useAppState();
+
+  switch (view) {
+    case 'terminal':
+      return <TerminalView />;
+    case 'jobs':
+      return <JobView />;
+    case 'entities':
+      return <EntitiesView />;
+    case 'projects':
+      return <ProjectsView />;
+    default:
+      return <TerminalView />;
+  }
+}
+
+function AppLayout() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-950 text-gray-100">
-      <div className="text-xl font-mono">Claude Code Visual Manager — Loading...</div>
+    <div
+      className="flex h-full w-full overflow-hidden"
+      style={{ backgroundColor: '#111111', color: 'white' }}
+    >
+      <Sidebar />
+      <main className="flex flex-1 overflow-hidden">
+        <MainContent />
+      </main>
     </div>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <AppProvider>
+      <AppLayout />
+    </AppProvider>
+  );
+}
