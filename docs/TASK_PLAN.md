@@ -1453,7 +1453,7 @@ Agent: security
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   Perform a full security audit of the completed application before v1 release. All 10 security requirements from PRD Section 8 must be verified. This runs in parallel with TASK #13 and TASK #15.
 
@@ -1542,7 +1542,7 @@ Agent: documenter
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   Write the user-facing README and supporting documentation for the Claude Code Visual Manager.
 
@@ -1659,7 +1659,7 @@ Dependencies: TASK #13, TASK #14
 | 12 | NFRs — Performance + Reliability + Polish | backend-dev | MEDIUM | MEDIUM | COMPLETED |
 | 13 | Full QA Test Suite | qa-tester | HIGH | HARD | PENDING |
 | 14 | Pre-Release Security Audit | security | HIGH | MEDIUM | PENDING |
-| 15 | Documentation | documenter | MEDIUM | EASY | PENDING |
+| 15 | Documentation | documenter | MEDIUM | EASY | COMPLETED |
 
 ---
 

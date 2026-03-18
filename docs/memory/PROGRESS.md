@@ -64,13 +64,16 @@ _None._
 
 ## Pending
 
-### Phase 5 — QA, Security, Docs
+### Phase 5 — QA, Security (sign-off required for v1 release)
 - [TASK-13] Full QA Test Suite — all 6 critical paths + unit tests (qa-tester)
   UNBLOCKED as of 2026-03-18: all implementation tasks #3-#12 are COMPLETED.
 - [TASK-14] Pre-Release Security Audit — all 10 SEC requirements (security)
   UNBLOCKED as of 2026-03-18.
-- [TASK-15] Documentation — README + troubleshooting guide (documenter)
-  UNBLOCKED as of 2026-03-18.
+
+## v1 Release Status
+**v1 Release Ready — pending QA (#13) and Security (#14) sign-off.**
+- All 12 implementation tasks COMPLETED (Tasks #1-#12).
+- Task #15 (Documentation) COMPLETED 2026-03-18: README.md created with full feature docs, configuration table, 5-scenario troubleshooting guide, security notes, and known limitations.
 
 ## Known Issues
 - R-01 (RESOLVED): node-pty-prebuilt-multiarch not available — plain node-pty used instead

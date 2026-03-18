@@ -1,4 +1,13 @@
 ---
+## 2026-03-18 — documenter — Task #15: Final Documentation
+**Outcome:** COMPLETED
+**Summary:** Created README.md from scratch at project root (was missing entirely). Covers prerequisites, install, run, features, configuration (4 env vars), 5-scenario troubleshooting guide, security model, and known v1 limitations. Updated docs/memory/PROJECT.md to correct package name inaccuracies left from Task #2. Updated docs/memory/PROGRESS.md to reflect v1 release-ready status. Created docs/memory/DOC_STATUS.md to track documentation health going forward.
+**Files changed:** README.md (CREATED), docs/memory/PROJECT.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/DOC_STATUS.md (CREATED), docs/memory/agents/documenter.md (CREATED)
+**Bugs fixed:** PROJECT.md had stale package names (prebuilt-multiarch and write-atomic) — corrected to node-pty and write-file-atomic per Task #2 devops findings
+**Decisions made:** NO_OPEN env var added to README config table (exists in code, not in task spec); docs/API.md deferred (API already documented in ARCHITECTURE.md); DECISIONS.md not edited to preserve decision history
+**Blockers:** none
+**Next:** QA sign-off (Task #13) and Security audit sign-off (Task #14) are the only remaining gates before v1 release
+---
 ## 2026-03-18 — project-manager — Session 4: Phase 5 Entry — Project State Analysis
 **Outcome:** COMPLETED
 **Summary:** Confirmed Tasks #1-#12 are all COMPLETED (12 implementation tasks done). Updated CONTEXT.md from Phase 3 to Phase 5 focus. Fixed stale Task Status Summary table in TASK_PLAN.md (rows #4-#11 were still showing PENDING). Project is now ready to enter the final phase: QA, Security Audit, and Documentation in parallel.

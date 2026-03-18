@@ -1,0 +1,154 @@
+# Security Audit Report — Claude Code Visual Manager v0.1.0
+**Audited by:** security agent (claude-sonnet-4-6)
+**Date:** 2026-03-18
+**Scope:** Pre-release v1 audit covering SEC-01 through SEC-10 and all route files
+**Verdict:** NEEDS_ATTENTION — 0 CRITICAL, 0 HIGH, 3 MEDIUM, 2 LOW findings
+
+---
+
+## Executive Summary
+
+The codebase demonstrates strong security hygiene overall. All 10 mandatory SEC requirements are satisfied. The server binds to 127.0.0.1 exclusively, uses `shell: false` on all critical process spawns, enforces CSRF headers on mutating routes, applies Helmet security headers, uses write-atomic for all file writes, validates paths before every write, caps WebSocket payloads at 1 MB, never logs sensitive data, and manages PTY lifecycle correctly.
+
+Three MEDIUM findings require attention before release:
+1. `exec()` is used in the browser auto-open helper in `server/index.js` — not a shell injection risk today (URL is trusted), but deviates from the `shell: false` policy and introduces a latent risk if the URL-building logic ever changes.
+2. The `allowedTools` parameter passed to `claude -p` is user-controlled and only type-checked (`typeof === 'string'`), not validated against a whitelist. This could allow unexpected tool access.
+3. The `processId` used in `process.kill(pid, 0)` inside `ProcessRegistry` deserializes PIDs from a JSON file that another user or privileged process could tamper with on a shared machine.
+
+Two LOW findings are informational.
+
+**Overall risk rating: LOW** for the intended threat model (single-user, localhost-only, no auth required). The MEDIUM findings should be addressed before release.
+
+---
+
+## Per-Requirement Results Table
+
+| ID | Requirement | Status | Finding | File:Line |
+|----|-------------|--------|---------|-----------|
+| SEC-01 | Server binds to 127.0.0.1 only | PASS | `server.listen(PORT, '127.0.0.1')` — host is explicit and correct | server/index.js:220 |
+| SEC-02 | shell:false on all spawn calls | PASS with NOTE | All `spawn()` and `execFileSync()` calls use `shell: false`. One `exec()` exists for browser auto-open (see MEDIUM-01) | server/index.js:52, services/JobRunner.js:70-74, services/BinaryDiscovery.js:27-31 |
+| SEC-03 | Path traversal prevention, HTTP 400 | PASS | `validateProjectPath` and `validateClaudePath` both use `path.resolve()` + prefix assertion, throw `ApiError(400)`. `FileManager.validatePath` repeats the same check. | server/middleware/pathValidation.js:22-41, services/FileManager.js:19-28 |
+| SEC-04 | All file writes use write-atomic, path validated before write | PASS | `FileManager.writeFile` always calls `validatePath` before `writeFileAtomic`. `ConfigStore` and `ProcessRegistry` also use `writeFileAtomic`. One direct `writeFileAtomic` in `projects.js:45` for scaffold CLAUDE.md — inside `projectPath` which was already resolved via `validateProjectPath`. | services/FileManager.js:49-53, services/ConfigStore.js:64, services/ProcessRegistry.js:43, routes/projects.js:45 |
+| SEC-05 | WebSocket payload size cap enforced | PASS | `WebSocketServer` instantiated with `{ maxPayload: 1 * 1024 * 1024 }` (1 MB). Resize message validates `cols`/`rows` in range 1–1000. | server/index.js:215, ws/terminalHandler.js:63-64 |
+| SEC-06 | CSRF header X-Requested-With: ClaudeCodeManager required on mutating requests | PASS | `csrfMiddleware` applied globally before all routes. Checks all POST/PUT/PATCH/DELETE methods. Returns 403 on missing/wrong header. | server/middleware/csrf.js:1-26, server/index.js:140 |
+| SEC-07 | Helmet security headers present | PASS | `securityMiddleware` applies `helmet()` with a strict CSP: `defaultSrc 'self'`, `scriptSrc 'self'`, `styleSrc 'self' 'unsafe-inline'`, `connectSrc 'self' ws://127.0.0.1:*`, `imgSrc 'self' data:`, `fontSrc 'self'`. | server/middleware/security.js:6-21 |
+| SEC-08 | No sensitive data (API keys, tokens, full prompt content) in logs | PASS | Prompt is never logged — explicit comment on JobRunner.js:181. `listJobs()` excludes prompt and result. SSE stream forwards parsed Claude output to clients but not to server logs. Error handler logs only `err.message`, not `req.body`. Stderr is truncated to 200 chars. | services/JobRunner.js:84, 138, 181, 269-278; routes/jobs.js:18-22; index.js:205 |
+| SEC-09 | PTY lifecycle cleanup (no orphan processes) | PASS | `ProcessRegistry` persists PIDs to `active_pids.json`. On startup `cleanupStale()` kills any surviving PIDs. `SessionManager.killSession` calls `treeKillAsync`, unregisters PID, clears clients set, and removes session from map. `killAll()` called on SIGTERM/SIGINT. `JobRunner.cancelAll()` called on shutdown. | services/SessionManager.js:209-241, services/ProcessRegistry.js:81-93, index.js:244-262 |
+| SEC-10 | npm audit — 0 vulnerabilities | PASS | `npm audit` in both root and `server/` directories returned 0 vulnerabilities across 185 total dependencies (80 prod, 106 dev, 33 optional). | See npm audit section below |
+
+---
+
+## npm audit Output Summary
+
+### Root package.json
+```
+Vulnerabilities: 0 (info: 0, low: 0, moderate: 0, high: 0, critical: 0)
+Total dependencies: 29 (prod: 1, dev: 29)
+```
+
+### server/package.json
+```
+Vulnerabilities: 0 (info: 0, low: 0, moderate: 0, high: 0, critical: 0)
+Total dependencies: 185 (prod: 80, dev: 106, optional: 33)
+```
+
+No known CVEs found in any dependency. All dependency versions are current as of audit date.
+
+**NOTE:** The root `package.json` lists `node-pty` in `server/package.json:17` but the PROGRESS.md notes that `node-pty-prebuilt-multiarch` was rejected in favour of plain `node-pty`. This is consistent with current install state and does not represent a vulnerability.
+
+---
+
+## MEDIUM Findings
+
+### MEDIUM-01: exec() used for browser auto-open (deviates from shell:false policy)
+- **Location:** server/index.js:48-54
+- **Description:** The `openBrowser()` function builds a shell command string and passes it to `exec()` (which uses the OS shell). The URL is constructed from `127.0.0.1` + `PORT` where `PORT` is parsed as an integer from the environment — so no user-controlled string flows into the command today. However, `exec()` accepts a string interpreted by the shell, meaning any future change that adds non-integer content to `url` would create a shell injection vector.
+- **Attack scenario (current):** Not exploitable today — PORT is `parseInt`'d, the base is a hardcoded string, and the function is only called at server startup, not per-request.
+- **Attack scenario (latent):** If the URL construction ever includes user-controlled or external data (e.g., a project name appended to the URL), an attacker who can set `PORT` to a crafted value or influence the URL string could inject shell commands.
+- **Recommended fix:** Replace `exec(cmd, ...)` with `spawn` (or `execFile`) with `shell: false` and array arguments. For example:
+  ```js
+  // Windows
+  spawn('cmd.exe', ['/c', 'start', '', url], { shell: false, detached: true, stdio: 'ignore' });
+  // macOS
+  spawn('open', [url], { shell: false, detached: true, stdio: 'ignore' });
+  // Linux
+  spawn('xdg-open', [url], { shell: false, detached: true, stdio: 'ignore' });
+  ```
+  This eliminates any shell parsing of the URL entirely.
+
+---
+
+### MEDIUM-02: allowedTools parameter not validated against a whitelist
+- **Location:** server/routes/jobs.js:44-45, server/services/JobRunner.js:65
+- **Description:** The `allowedTools` parameter received from the client is only checked for type (`typeof allowedTools !== 'string'`). It is then passed as-is to `spawn()` as a CLI argument: `'--allowedTools', allowedTools`. While `shell: false` prevents shell injection, the Claude CLI will receive whatever string the user supplies. This could enable access to tools the user did not intend to allow, or cause unexpected behavior if the Claude CLI parses `--allowedTools` values in an unexpected way.
+- **Attack scenario:** A client-side attacker (e.g., malicious script running in the browser) could pass `allowedTools: "all"` or a comma-separated list that includes dangerous Claude tools (e.g., bash execution, file deletion) when the application intended to restrict tools.
+- **Recommended fix:** Validate `allowedTools` against an explicit allowlist of known-valid Claude tool names. At minimum, reject strings containing shell metacharacters and enforce a maximum length. Example:
+  ```js
+  const ALLOWED_TOOLS_RE = /^[a-zA-Z0-9_,\-]+$/;
+  if (allowedTools !== undefined) {
+    if (typeof allowedTools !== 'string' || !ALLOWED_TOOLS_RE.test(allowedTools) || allowedTools.length > 512) {
+      throw new ApiError(400, 'allowedTools contains invalid characters');
+    }
+  }
+  ```
+
+---
+
+### MEDIUM-03: ProcessRegistry PID file not integrity-protected
+- **Location:** server/services/ProcessRegistry.js:26-38, 82-87
+- **Description:** `active_pids.json` is read from `%APPDATA%\ClaudeCodeManager\active_pids.json` and PID values from it are passed directly to `process.kill(pid, 0)` and `treeKill(pid, 'SIGKILL')`. On a shared machine or if the APPDATA directory has weak ACLs, a local attacker could write arbitrary PIDs into this file. At server startup, `cleanupStale()` would then send SIGKILL to those PIDs — potentially killing unrelated processes.
+- **Attack scenario:** Local privilege escalation or denial of service: an attacker with write access to `%APPDATA%\ClaudeCodeManager\` could add a PID belonging to a critical system process. On Windows, SIGKILL via `tree-kill` maps to `taskkill /F /T /PID`, which can kill any process the current user owns.
+- **Recommended fix:** Validate that PIDs in the registry fall within a reasonable range (1 to `os.constants.UV_MAXHOSTNAMELEN` or simply > 0 and < 65536 as a heuristic). Additionally, confirm that the PID file is owned by the current user before parsing it, or restrict ACLs on the config directory at creation time. The current `isNaN` check (line 83) only guards against non-numeric keys but not adversarial numeric values.
+
+---
+
+## LOW Findings
+
+### LOW-01: unsafe-inline in Content-Security-Policy for styleSrc
+- **Location:** server/middleware/security.js:13
+- **Description:** `styleSrc: ["'self'", "'unsafe-inline'"]` is required for Tailwind CSS inline styles. While this is a known trade-off and the comment acknowledges it, `unsafe-inline` for styles opens a path for CSS injection attacks that could leak data via timing channels (e.g., CSS attribute selectors). The threat is low in a localhost-only app with no third-party content.
+- **Recommended fix (future):** When Tailwind build is finalized, evaluate migrating to hashed or nonce-based inline styles instead of `unsafe-inline`. This is a v1.1 concern, not a blocker.
+
+---
+
+### LOW-02: Rate limiter in-memory state does not survive restarts and has no IP normalization
+- **Location:** server/index.js:62-82
+- **Description:** The in-memory rate limiter uses `req.ip` as the key. On loopback, this is always `127.0.0.1` or `::1`, meaning all traffic from localhost shares one counter. This is intentional per the comment ("guards against runaway client loops"), but it means a runaway client could deny any other local process access to the API until the window resets. Additionally, the `_rateLimitMap` grows without ever pruning expired entries (entries only reset their counter, they are never deleted from the Map).
+- **Recommended fix:** Add periodic pruning of expired entries from `_rateLimitMap` to prevent unbounded memory growth over long uptime periods. The functional impact is minor but the memory leak is real for long-running servers.
+
+---
+
+## Additional Checks
+
+### Agent name validation
+PASS. `server/routes/agents.js:20` defines `const AGENT_NAME_RE = /^[a-z][a-z0-9-]*$/` and enforces it server-side on POST (line 115-119). The name is validated before any file write.
+
+### All mutating endpoints require CSRF header
+PASS. `csrfMiddleware` is registered at `app.use(csrfMiddleware)` in `server/index.js:140`, BEFORE all route mounts (lines 170-181). This applies globally to all POST/PUT/PATCH/DELETE endpoints. Verified across: projects (POST, DELETE), sessions (POST, DELETE), agents (POST, PUT, DELETE), skills (POST, PUT, DELETE), claudemd (PUT /user, PUT /project), jobs (POST, DELETE).
+
+### OWASP Top 10 Summary
+
+| # | Category | Status |
+|---|----------|--------|
+| A01 Broken Access Control | PASS — localhost-only binding is the access control boundary; no user-to-user data separation needed (single-user app) |
+| A02 Cryptographic Failures | PASS — no secrets stored; no HTTPS needed on loopback; write-atomic prevents file corruption |
+| A03 Injection | PASS with MEDIUM-01/02 — no SQL; shell injection blocked by shell:false on all critical paths; exec() in openBrowser is not injection-reachable today |
+| A04 Insecure Design | PASS — security requirements defined upfront in SEC-01..10, enforced in middleware |
+| A05 Security Misconfiguration | PASS — Helmet applied; no default passwords; no debug endpoints in production paths |
+| A06 Vulnerable Components | PASS — npm audit shows 0 vulnerabilities across all 185 dependencies |
+| A07 Authentication Failures | N/A — single-user localhost; no auth by design (DEC-002) |
+| A08 Software Integrity | PASS — write-atomic prevents partial writes; no CI/CD configuration present to audit |
+| A09 Logging Failures | PASS — prompts not logged; error handler logs method+path+message only; no full body logging |
+| A10 SSRF | LOW RISK — no outbound HTTP requests; server only communicates with local child processes |
+
+---
+
+## Summary Verdict
+
+**NEEDS_ATTENTION** — The application satisfies all 10 mandatory SEC requirements and has no CRITICAL or HIGH vulnerabilities. Three MEDIUM findings should be addressed before release:
+
+1. **MEDIUM-01** (exec in openBrowser) — Replace with `spawn({ shell: false })` to align with the existing policy and eliminate the latent risk.
+2. **MEDIUM-02** (allowedTools not whitelisted) — Add character-set validation on the `allowedTools` string before passing it as a spawn argument.
+3. **MEDIUM-03** (PID file not integrity-protected) — Add PID range validation and consider restricting ACLs on the config directory at creation time.
+
+None of the MEDIUM findings are exploitable in the current deployment model (single-user, localhost-only, Windows desktop), but they represent risks if the application is ever ported to a multi-user or networked context.

@@ -1,6 +1,7 @@
 # Project: Claude Code Visual Manager
 **Created:** 2026-03-18
 **Last updated:** 2026-03-18
+**Implementation status:** v1 — all 12 implementation tasks COMPLETED. Pending: QA sign-off (Task #13), Security audit sign-off (Task #14).
 
 ## What it is
 A locally-hosted web application that provides a graphical user interface for the Claude Code CLI. It spawns Claude Code processes directly using the user's installed binary and delivers two interaction modes: a live PTY terminal (xterm.js over WebSocket) and a job mode (prompt → formatted Markdown result). It also provides visual editors for agents, skills, and CLAUDE.md files, with multi-project support and session persistence across browser tab closures.
@@ -51,11 +52,12 @@ A locally-hosted web application that provides a graphical user interface for th
 
 ## Key Constraints
 - Server must bind EXCLUSIVELY to 127.0.0.1 — never 0.0.0.0 (SEC-01)
-- node-pty-prebuilt-multiarch MUST be used (not plain node-pty) — avoids MSVC requirement (NFR-10)
+- node-pty (plain, not prebuilt-multiarch) is the actual installed package — prebuilt-multiarch did not resolve on the target environment (DEC-001 revised by Task #2 devops)
+- write-file-atomic (not write-atomic) is the actual installed package — write-atomic does not exist on npm (corrected by Task #2 devops)
 - child.stdin.end() must be called immediately after every job spawn (GitHub issue #7497 hang bug)
 - Primary platform: Windows 11 23H2 or later (ConPTY deadlock risk on older builds)
 - No shell: true in any spawn call (command injection risk, SEC-02)
-- All config/file writes must use write-atomic (SEC-09, FR-42)
+- All config/file writes must use write-file-atomic (SEC-09, FR-42)
 - Config stored at %APPDATA%\ClaudeCodeManager\config.json (FR-41)
 - All REST endpoints prefixed with /api/v1/ (FR-04)
 - Default port: 3000, configurable via PORT env var (FR-01)
