@@ -1,4 +1,13 @@
 ---
+## 2026-03-18 — backend-dev — Task #9: Job Mode API — JobRunner and SSE Streaming
+**Outcome:** COMPLETED
+**Summary:** Implemented full job mode backend: JobRunner service (spawn claude -p, readline stdout, SSE forwarding, tree-kill cancellation, graceful shutdown) and jobs REST/SSE routes (POST create, GET stream, DELETE cancel, GET list). All DEC-005/006, SEC-02/08, NFR-16 requirements enforced. npm run build verified clean.
+**Files changed:** server/services/JobRunner.js (CREATED), server/routes/jobs.js (CREATED), server/index.js (MODIFIED), docs/TASK_PLAN.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** cancelJob() marks status='cancelled' before treeKill to prevent race with close handler; SSE 404 uses inline response (not next()) to avoid double-header risk
+**Blockers:** none
+**Next:** Task #10 (frontend-dev, JobPanel UI) is now unblocked
+---
 ## 2026-03-18 — project-manager — Status Review: Tasks #7 + #8 Complete, Next Phase Assigned
 **Outcome:** COMPLETED
 **Summary:** Confirmed Tasks #7 and #8 are COMPLETED in TASK_PLAN.md and PROGRESS.md (prior agents had self-updated correctly). Updated CONTEXT.md to reflect Phase 3 (Job Mode) as the active focus. Identified Tasks #9 and #11 as unblocked and ready to assign in parallel.

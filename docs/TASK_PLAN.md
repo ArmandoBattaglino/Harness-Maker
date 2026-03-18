@@ -990,7 +990,7 @@ Agent: backend-dev
 Priority: HIGH
 Difficulty: HARD
 Suggested Model: claude-opus-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   Implement the Job Mode backend: spawning `claude -p` in headless mode, streaming output via Server-Sent Events (SSE), and cancellation via tree-kill. This covers PRD requirements FR-22 through FR-25.
 

@@ -19,7 +19,9 @@ import sessionsRouter from './routes/sessions.js';
 import agentsRouter from './routes/agents.js';
 import skillsRouter from './routes/skills.js';
 import claudemdRouter from './routes/claudemd.js';
+import jobsRouter from './routes/jobs.js';
 import { sessionManager } from './services/SessionManager.js';
+import { jobRunner } from './services/JobRunner.js';
 import { setupTerminalWebSocket } from './ws/terminalHandler.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -40,8 +42,9 @@ async function startup() {
   try {
     claudeBin = await discoverClaudeBinary();
     console.log(`Claude CLI found at: ${claudeBin}`);
-    // Make claudeBin available to SessionManager (via public property on singleton)
+    // Make claudeBin available to SessionManager and JobRunner (via public property on singletons)
     sessionManager.claudeBin = claudeBin;
+    jobRunner.claudeBin = claudeBin;
   } catch (err) {
     console.error(`[FATAL] ${err.message}`);
     process.exit(1);
@@ -99,6 +102,9 @@ async function startup() {
   app.use('/api/v1/skills', skillsRouter);
   app.use('/api/v1/claudemd', claudemdRouter);
 
+  // Job mode routes
+  app.use('/api/v1/jobs', jobsRouter);
+
   // -------------------------------------------------------------------------
   // 7. Serve static client build
   // -------------------------------------------------------------------------
@@ -152,6 +158,13 @@ async function startup() {
     server.close(() => {
       console.log('HTTP server closed.');
     });
+
+    // Cancel all running jobs (sends cancelled SSE event + closes connections)
+    try {
+      jobRunner.cancelAll();
+    } catch (err) {
+      console.error(`[WARN] JobRunner cancelAll error: ${err.message}`);
+    }
 
     // Kill all active PTY sessions first (sends close to WebSocket clients)
     try {

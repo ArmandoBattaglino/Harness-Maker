@@ -45,6 +45,9 @@
 - [TASK-8] Entity Management UI (frontend-dev) — COMPLETED 2026-03-18
   EntitiesView with 3 tabs: AgentEditor (full CRUD + restart banner), SkillEditor (full CRUD + toast), ClaudeMdEditor (dual-panel + live line count + 300-line warning). Build clean.
 
+- [TASK-9] Job Mode API (backend-dev) — COMPLETED 2026-03-18
+  Created: server/services/JobRunner.js (spawn claude -p, readline stdout SSE forwarding, tree-kill cancellation, cancelAll() for shutdown), server/routes/jobs.js (POST/GET stream/DELETE/GET list). Mounted in server/index.js. child.stdin.end() enforced (DEC-005). shell: false (SEC-02). Prompt never logged (SEC-08). Build verified.
+
 ## In Progress
 _None._
 
@@ -54,7 +57,6 @@ _None._
 ## Pending
 
 ### Phase 3 — Job Mode
-- [TASK-9] Job Mode API — JobRunner + SSE streaming (backend-dev)
 - [TASK-10] Job Mode UI — JobPanel + react-markdown (frontend-dev)
 
 ### Phase 4 — Projects View + Polish
@@ -69,5 +71,5 @@ _None._
 ## Known Issues
 - R-01 (RESOLVED): node-pty-prebuilt-multiarch not available — plain node-pty used instead
 - R-02 (MITIGATED): ConPTY deadlock — permanent pty.onData handler enforced in SessionManager (never removed)
-- R-03 (PENDING): Job mode process hang if child.stdin.end() not called — must enforce in Task #9 (JobRunner)
+- R-03 (RESOLVED): Job mode process hang if child.stdin.end() not called — enforced in Task #9 (JobRunner.js line after spawn)
 - NOTE: FileManager was NOT created in Task #5 as planned — RESOLVED in Task #7 (created server/services/FileManager.js).

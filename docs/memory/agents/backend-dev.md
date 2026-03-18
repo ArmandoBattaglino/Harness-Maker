@@ -1,4 +1,93 @@
 ---
+## 2026-03-18 — Task #9: Job Mode API — JobRunner and SSE Streaming
+**Status:** COMPLETED
+**Called by:** orchestrator (user via task assignment)
+
+### Context when I started
+Tasks #1–#8 all COMPLETED. Server had: ConfigStore, ProcessRegistry, BinaryDiscovery, SessionManager (PTY+RingBuffer), middleware (csrf, security, pathValidation), routes for projects/sessions/agents/skills/claudemd. `tree-kill` was already installed in server/package.json. No job mode code existed. PROGRESS.md known issue R-03 flagged that child.stdin.end() must be enforced in Task #9.
+
+### What I did
+1. Read all memory files (PROGRESS.md, DECISIONS.md, CONTEXT.md), read server/index.js (to understand mount pattern), server/services/ConfigStore.js (for API), server/services/SessionManager.js (for tree-kill and spawn patterns), server/routes/sessions.js and projects.js (for route conventions).
+2. Created `server/services/JobRunner.js` — class JobRunner with: startJob(), cancelJob(), addSseClient(), getJob(), listJobs(), cancelAll(). Exported singleton `jobRunner`. Key details:
+   - `claudeBin` set via public property on singleton (same pattern as SessionManager)
+   - `spawn(claudeBin, args, { cwd, stdio: ['pipe','pipe','pipe'], shell: false })`
+   - `child.stdin.end()` called IMMEDIATELY after spawn — cites GitHub #7497 in comment
+   - readline.createInterface({ input: child.stdout }) for line-by-line JSON parsing
+   - JSON.parse in try/catch — on error forwards `{ type: 'raw', data: line }` (NFR-16)
+   - Tracks `lastResultEvent` — the last parsed event with a `result` field
+   - `child.on('close')`: updates status (done/error), extracts result, sends `{ type: 'done', result, exitCode }` or `{ type: 'cancelled' }`, closes all SSE connections
+   - `child.stderr.on('data')`: logs truncated (200 chars max) to console.warn; never logs prompt (SEC-08)
+   - `cancelJob()`: marks status='cancelled' first (prevents close handler from overwriting), calls treeKill(pid, 'SIGTERM', cb), sends cancelled event, closes SSE clients
+   - `addSseClient()`: sets SSE headers; if job already finished sends final event immediately and ends res; if running adds to clients Set and wires res.on('close') for auto-cleanup
+   - `cancelAll()`: iterates all jobs, cancels running ones — used by shutdown handler
+   - tree-kill imported via `createRequire(import.meta.url)` because it's CJS (same pattern as SessionManager)
+3. Created `server/routes/jobs.js` — Router with 4 endpoints following existing route conventions (ApiError, try/catch, next(err)):
+   - `GET /` — returns sanitized job list (no prompt, no result — SEC-08)
+   - `POST /` — validates projectId+prompt, looks up project in ConfigStore, calls jobRunner.startJob(), returns 201 `{ jobId, projectId, createdAt }`
+   - `GET /:id/stream` — SSE endpoint; calls req.setTimeout(0) + res.setTimeout(0) to disable timeouts; calls jobRunner.addSseClient(); returns 404 inline if not found (no next() because headers may already be set)
+   - `DELETE /:id` — calls jobRunner.cancelJob(); if false checks whether job exists (404 or 409 if exists but not cancellable); 204 on success
+4. Updated `server/index.js`:
+   - Added imports: `jobsRouter` from routes/jobs.js, `jobRunner` from services/JobRunner.js
+   - Set `jobRunner.claudeBin = claudeBin` after binary discovery (immediately after sessionManager.claudeBin = claudeBin)
+   - Mounted `app.use('/api/v1/jobs', jobsRouter)` after claudemd routes
+   - Added `jobRunner.cancelAll()` in shutdown handler (before sessionManager.killAll())
+5. Ran `npm run build` — clean build, no errors.
+6. Ran `node --input-type=module --check` on both new files — both passed.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/JobRunner.js | CREATED | Job execution engine: spawn, readline, SSE forwarding, cancellation |
+| server/routes/jobs.js | CREATED | 4 REST/SSE endpoints for job lifecycle management |
+| server/index.js | MODIFIED | Import + mount jobsRouter; set jobRunner.claudeBin; cancelAll() in shutdown |
+| docs/TASK_PLAN.md | MODIFIED | Task #9 Status: PENDING → COMPLETED |
+
+### Improvements delivered
+- Job mode spawning is fully implemented and wired into the server
+- DEC-005 enforced: child.stdin.end() called immediately after spawn with code comment citing GitHub #7497
+- DEC-006 enforced: tree-kill (not child.kill()) used for cancellation
+- SEC-02 enforced: shell: false on all spawns
+- SEC-08 enforced: prompt never logged anywhere; stderr truncated at 200 chars
+- NFR-16 enforced: JSON parse errors don't crash; forwarded as raw type
+- Graceful shutdown: cancelAll() called in SIGTERM/SIGINT handlers
+- SSE timeout disabled with req.setTimeout(0) + res.setTimeout(0) on stream endpoint
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None encountered | — | — | — |
+
+### Decisions I made
+- `cancelJob()` marks status='cancelled' BEFORE calling treeKill — prevents the child.on('close') handler from overwriting status to 'error' if process exits non-zero after SIGTERM. This is a race condition fix.
+- SSE 404 in `GET /:id/stream` uses inline `res.status(404).json(...)` instead of `next(new ApiError(404, ...))` — because once SSE headers are set (if addSseClient is called), calling next() could cause double-header errors. Since addSseClient returns false before setting any headers when job not found, the inline approach is safe.
+- `addSseClient()` for already-finished jobs: sends final event and calls `res.end()` immediately — client gets the terminal state without polling.
+- `listJobs()` excludes prompt and result from the list endpoint — only the stream endpoint delivers result data, and only to clients actively connected at completion time.
+
+### What I learned
+- The `cancelJob()` status-before-kill order is critical: if you set status after treeKill, the async close handler can race and set 'error'. Always mark state transitions synchronously before initiating async side effects.
+- `req.setTimeout(0)` AND `res.setTimeout(0)` are both needed for SSE on Express — req timeout closes the request, res timeout closes the response; both need to be disabled.
+- readline line events fire for each \n-terminated line; empty lines (just \n) produce '' which should be skipped before JSON.parse to avoid spurious `{ type: 'raw', data: '' }` events.
+
+### State I'm leaving behind
+Both new files are created and syntactically valid. npm run build passes. The Job Mode API is fully implemented and mounted:
+- POST /api/v1/jobs (returns 201)
+- GET /api/v1/jobs/:id/stream (SSE, stays open until job finishes)
+- DELETE /api/v1/jobs/:id (tree-kill, returns 204)
+- GET /api/v1/jobs (sanitized list)
+
+No runtime testing performed (server requires Claude binary to start). Syntax and build verification passed.
+
+### Handoff
+Task #10 (frontend-dev, JobPanel UI) is now unblocked. Key notes:
+- SSE stream endpoint: `GET /api/v1/jobs/:id/stream` — use `EventSource` or `fetch` with ReadableStream
+- Each SSE event is `data: <json>\n\n` — parse with JSON.parse
+- Terminal event has `type: 'done'` with `result` field (the final Claude output string)
+- Cancellation event has `type: 'cancelled'`
+- Malformed lines arrive as `type: 'raw'` with `data` field — display as-is or ignore
+- POST requires `X-Requested-With: ClaudeCodeManager` header (existing CSRF middleware)
+- DELETE requires same CSRF header
+---
+
 ## 2026-03-18 — Task #7: Entity Management API — Agents, Skills, CLAUDE.md
 **Status:** COMPLETED
 **Called by:** orchestrator (user via task assignment)
