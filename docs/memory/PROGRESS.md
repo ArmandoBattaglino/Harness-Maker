@@ -65,14 +65,14 @@ _None._
 - [TASK-14] Pre-Release Security Audit (security) — COMPLETED 2026-03-18
   All 10 SEC requirements PASS. 3 MEDIUM findings (exec in openBrowser, allowedTools not whitelisted, PID file integrity), 2 LOW. 0 CRITICAL/HIGH. npm audit: 0 CVEs across 185 deps. Overall risk: LOW. docs/SECURITY_AUDIT.md produced.
 
-## Pending
+- [TASK-13] Full QA Test Suite (qa-tester) — COMPLETED 2026-03-18
+  110 tests pass (0 failures) across 6 test files. vitest v4.1.0 installed. All 6 PRD critical paths covered + unit tests for RingBuffer, FileManager, CSRF, pathValidation, SessionManager, JobRunner. `npm test` works from root and server directories. docs/TEST_RESULTS.md produced.
 
-### Phase 5 — QA (sign-off required for v1 release)
-- [TASK-13] Full QA Test Suite — all 6 critical paths + unit tests (qa-tester)
-  UNBLOCKED as of 2026-03-18: all implementation tasks #3-#12 are COMPLETED.
+## Pending
+_None. All tasks completed._
 
 ## v1 Release Status
-**v1 Release Ready — pending QA (#13) sign-off. Security (#14) and Documentation (#15) COMPLETED.**
+**v1 RELEASE READY — All Phase 5 tasks completed: QA (#13), Security (#14), Documentation (#15).**
 - All 12 implementation tasks COMPLETED (Tasks #1-#12).
 - Task #15 (Documentation) COMPLETED 2026-03-18: README.md created with full feature docs, configuration table, 5-scenario troubleshooting guide, security notes, and known limitations.
 

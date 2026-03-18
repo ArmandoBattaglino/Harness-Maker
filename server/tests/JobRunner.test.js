@@ -3,6 +3,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { EventEmitter } from 'events';
+import { PassThrough } from 'stream';
 
 // ---------------------------------------------------------------------------
 // Mock child_process.spawn
@@ -28,10 +29,14 @@ import { JobRunner } from '../services/JobRunner.js';
 // Helpers to create mock child processes
 // ---------------------------------------------------------------------------
 function makeMockChild(pid = 12345) {
-  const stdout = new EventEmitter();
-  const stderr = new EventEmitter();
+  // stdout and stderr must be proper Readable streams — readline.createInterface
+  // requires input.resume() which EventEmitter doesn't provide.
+  const stdout = new PassThrough();
+  const stderr = new PassThrough();
+
+  // stdin just needs .end() per DEC-005
   const stdin = new EventEmitter();
-  stdin.end = vi.fn(); // CRITICAL: DEC-005 — stdin.end() must be called
+  stdin.end = vi.fn();
 
   const child = new EventEmitter();
   child.pid = pid;
