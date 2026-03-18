@@ -53,6 +53,8 @@
 
 - [TASK-11] Projects View UI (frontend-dev) — COMPLETED 2026-03-18
   Replaced ProjectsView stub with full implementation: table of all projects (Name, Path, Status badge, Created date, Actions), "Register Project" button opens AddProjectModal, "Open Terminal" dispatches SET_ACTIVE_PROJECT + SET_VIEW:terminal, "Delete" shows ConfirmDialog then calls DELETE /api/v1/projects/:id + REMOVE_PROJECT dispatch. Fetches on mount and after modal close. Build clean (304 modules).
+- [TASK-12] Non-Functional Requirements Polish (backend-dev) — COMPLETED 2026-03-18
+  Added to server/index.js: browser auto-open (exec, NO_OPEN guard), in-memory rate limiter (200 req/min on /api/v1/*), GET /api/v1/version endpoint (appVersion, nodeVersion, platform), improved /health (uptime, activeSessions, activeJobs), improved startup logging ([startup] prefixed with version, binary path, config dir). Build verified clean.
 
 ## In Progress
 _None._
@@ -62,17 +64,13 @@ _None._
 
 ## Pending
 
-### Phase 4 — Polish
-- [TASK-12] Non-Functional Requirements polish — browser auto-open, NFR resilience, version check (backend-dev)
-  UNBLOCKED as of 2026-03-18: all implementation tasks #3-#11 are COMPLETED.
-
 ### Phase 5 — QA, Security, Docs
 - [TASK-13] Full QA Test Suite — all 6 critical paths + unit tests (qa-tester)
-  BLOCKED until TASK-12 is COMPLETED.
+  UNBLOCKED as of 2026-03-18: all implementation tasks #3-#12 are COMPLETED.
 - [TASK-14] Pre-Release Security Audit — all 10 SEC requirements (security)
-  BLOCKED until TASK-12 is COMPLETED.
+  UNBLOCKED as of 2026-03-18.
 - [TASK-15] Documentation — README + troubleshooting guide (documenter)
-  BLOCKED until TASK-12 is COMPLETED.
+  UNBLOCKED as of 2026-03-18.
 
 ## Known Issues
 - R-01 (RESOLVED): node-pty-prebuilt-multiarch not available — plain node-pty used instead

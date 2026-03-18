@@ -3,8 +3,10 @@
 // Startup sequence matches docs/ARCHITECTURE.md § 10.
 
 import { createServer } from 'http';
+import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { exec } from 'child_process';
 import express from 'express';
 import { WebSocketServer } from 'ws';
 
@@ -27,6 +29,59 @@ import { setupTerminalWebSocket } from './ws/terminalHandler.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ---------------------------------------------------------------------------
+// Package version — read once at startup
+// ---------------------------------------------------------------------------
+const _pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8'));
+const APP_VERSION = _pkg.version || '0.0.0';
+
+// ---------------------------------------------------------------------------
+// Auto-open browser helper
+// Opens the given URL in the system default browser.
+// Skipped when NO_OPEN=1 (tests, CI, headless servers).
+// Uses exec() here intentionally — no user input flows into cmd, the URL is
+// constructed from a trusted constant (127.0.0.1 + PORT from env).
+// ---------------------------------------------------------------------------
+function openBrowser(url) {
+  if (process.env.NO_OPEN) return;
+  const platform = process.platform;
+  let cmd;
+  if (platform === 'win32') cmd = `start "" "${url}"`;
+  else if (platform === 'darwin') cmd = `open "${url}"`;
+  else cmd = `xdg-open "${url}"`;
+
+  exec(cmd, (err) => {
+    if (err) console.warn('[startup] Could not auto-open browser:', err.message);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Simple in-memory rate limiter (no external deps)
+// maxRequests per windowMs per IP.  Localhost-only so this guards against
+// runaway client loops, not external attackers.
+// ---------------------------------------------------------------------------
+const _rateLimitMap = new Map();
+function rateLimit(maxRequests = 200, windowMs = 60000) {
+  return (req, res, next) => {
+    const ip = req.ip || req.socket.remoteAddress;
+    const now = Date.now();
+    const record = _rateLimitMap.get(ip) || { count: 0, resetAt: now + windowMs };
+
+    if (now > record.resetAt) {
+      record.count = 0;
+      record.resetAt = now + windowMs;
+    }
+
+    record.count++;
+    _rateLimitMap.set(ip, record);
+
+    if (record.count > maxRequests) {
+      return res.status(429).json({ error: 'Too many requests' });
+    }
+    return next();
+  };
+}
+
+// ---------------------------------------------------------------------------
 // 1. Load env
 // ---------------------------------------------------------------------------
 const PORT = parseInt(process.env.PORT ?? '3000', 10);
@@ -38,10 +93,12 @@ const PORT = parseInt(process.env.PORT ?? '3000', 10);
 let claudeBin;
 
 async function startup() {
+  console.log(`[startup] Starting Claude Code Visual Manager v${APP_VERSION}`);
+
   // Step 2: Discover claude binary — throws and we exit if not found
   try {
     claudeBin = await discoverClaudeBinary();
-    console.log(`Claude CLI found at: ${claudeBin}`);
+    console.log(`[startup] Discovered claude binary: ${claudeBin}`);
     // Make claudeBin available to SessionManager and JobRunner (via public property on singletons)
     sessionManager.claudeBin = claudeBin;
     jobRunner.claudeBin = claudeBin;
@@ -53,7 +110,7 @@ async function startup() {
   // Step 3: Load config (creates defaults if file missing)
   try {
     await ConfigStore.load();
-    console.log('ConfigStore loaded.');
+    console.log(`[startup] Config store: ${ConfigStore.CONFIG_DIR}`);
   } catch (err) {
     console.error(`[FATAL] Failed to load config: ${err.message}`);
     process.exit(1);
@@ -62,7 +119,7 @@ async function startup() {
   // Step 4: Kill any orphaned processes from a previous run
   try {
     await ProcessRegistry.cleanupStale();
-    console.log('ProcessRegistry: stale process cleanup complete.');
+    console.log('[startup] ProcessRegistry: stale process cleanup complete.');
   } catch (err) {
     // Non-fatal — log and continue
     console.error(`[WARN] ProcessRegistry cleanup error: ${err.message}`);
@@ -86,9 +143,27 @@ async function startup() {
   // 6. Routes
   // -------------------------------------------------------------------------
 
-  // Health check
+  // Health check — includes uptime, session count, job count
   app.get('/health', (req, res) => {
-    res.json({ status: 'ok', version: '0.1.0', claudeBin });
+    res.json({
+      status: 'ok',
+      version: APP_VERSION,
+      uptime: process.uptime(),
+      activeSessions: sessionManager.listSessions().length,
+      activeJobs: jobRunner.listJobs?.().length ?? 0,
+    });
+  });
+
+  // Rate limiting on all /api/v1/* routes (200 req/min — guards against runaway loops)
+  app.use('/api/v1', rateLimit(200, 60000));
+
+  // Version endpoint
+  app.get('/api/v1/version', (req, res) => {
+    res.json({
+      appVersion: APP_VERSION,
+      nodeVersion: process.version,
+      platform: process.platform,
+    });
   });
 
   // Project management routes
@@ -143,7 +218,12 @@ async function startup() {
   await new Promise((resolve, reject) => {
     server.on('error', reject);
     server.listen(PORT, '127.0.0.1', () => {
-      console.log(`Claude Code Visual Manager running at http://127.0.0.1:${PORT}`);
+      const url = `http://127.0.0.1:${PORT}`;
+      console.log(`[startup] Server running at ${url}`);
+      if (!process.env.NO_OPEN) {
+        console.log('[startup] Opening browser...');
+        openBrowser(url);
+      }
       resolve();
     });
   });

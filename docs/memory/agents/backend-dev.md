@@ -1,4 +1,87 @@
 ---
+## 2026-03-18 — Task #12: Non-Functional Requirements Polish
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+All implementation tasks #3–#11 were COMPLETED. The server was fully functional with all routes, SessionManager, JobRunner, FileManager, and WebSocket handler. server/index.js had a basic /health endpoint, minimal startup logging, and no browser auto-open. Tasks #13–#15 (QA, Security, Docs) were blocked waiting for this task.
+
+### What I did
+1. Read docs/memory/PROGRESS.md and docs/memory/agents/backend-dev.md to restore context.
+2. Read server/index.js in full to understand the current state before touching anything.
+3. Read package.json (root) to confirm APP_VERSION source (version: "0.1.0").
+4. Read server/services/ConfigStore.js to confirm CONFIG_DIR is an exported property (it is — `ConfigStore.CONFIG_DIR`).
+5. Read server/services/SessionManager.js to confirm `listSessions()` exists (it does — line 135).
+6. Grep confirmed `listJobs()` exists in server/services/JobRunner.js (line 271).
+7. Modified server/index.js with 5 changes (all in one file):
+   a. Added `import { readFileSync } from 'fs'` and `import { exec } from 'child_process'` to existing imports.
+   b. Added `APP_VERSION` constant — reads root package.json once at module load via readFileSync.
+   c. Added `openBrowser(url)` function — uses exec() with platform-specific commands (start/open/xdg-open); skipped if `process.env.NO_OPEN` is set.
+   d. Added `rateLimit(maxRequests, windowMs)` middleware factory — in-memory Map, no external deps; 200 req/min default.
+   e. Updated `startup()` function:
+      - Added `[startup] Starting Claude Code Visual Manager v${APP_VERSION}` as first log line.
+      - Updated binary discovery log to `[startup] Discovered claude binary: ${claudeBin}`.
+      - Updated ConfigStore log to `[startup] Config store: ${ConfigStore.CONFIG_DIR}`.
+      - Updated ProcessRegistry log to `[startup] ProcessRegistry: stale process cleanup complete.`
+   f. Updated `/health` route to include `uptime: process.uptime()`, `activeSessions: sessionManager.listSessions().length`, `activeJobs: jobRunner.listJobs?.().length ?? 0`.
+   g. Added `app.use('/api/v1', rateLimit(200, 60000))` BEFORE all /api/v1 routes.
+   h. Added `GET /api/v1/version` endpoint returning `{ appVersion, nodeVersion, platform }`.
+   i. Updated server.listen callback to log `[startup] Server running at ${url}` and call `openBrowser(url)` if `!process.env.NO_OPEN`.
+8. Ran `npm run build` — clean build, no errors (304 modules, same as before).
+9. Ran `node --input-type=module --check < server/index.js` — no output, syntax valid.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/index.js | MODIFIED | Browser auto-open, rate limiter, /api/v1/version, improved /health, improved startup logging |
+| docs/TASK_PLAN.md | MODIFIED | Task #12 Status: PENDING → COMPLETED; summary table row updated |
+| docs/memory/PROGRESS.md | MODIFIED | Task #12 moved to Completed; Tasks #13–#15 unblocked |
+| docs/memory/agents/backend-dev.md | MODIFIED | This session log appended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Entry appended |
+
+### Improvements delivered
+- `npm start` now auto-opens the browser to the app URL after server.listen() resolves
+- NO_OPEN=1 env var skips browser open (useful for CI, headless servers, test environments)
+- GET /api/v1/version returns { appVersion, nodeVersion, platform } — no auth needed
+- Rate limiting active on all /api/v1/* routes: 200 req/min per IP, 429 response if exceeded
+- /health now includes uptime, activeSessions, activeJobs alongside version and status
+- Startup log is now structured with [startup] prefix and includes version, binary path, config dir, URL
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None encountered | — | — | — |
+
+### Decisions I made
+- Used `exec()` for browser open (not spawn) — justification: the URL is a compile-time constant (127.0.0.1 + PORT from env with no user input), so shell injection is not possible here. The exec() pattern is idiomatic for OS command triggers like open/start/xdg-open. Added a code comment explaining this.
+- Rate limiter implemented in-memory without external deps — avoids adding a new package for a simple local-only server; 200 req/min is non-restrictive and only guards against runaway loops.
+- `/api/v1/version` does NOT require CSRF header — it is a GET (read-only) endpoint; CSRF guard only applies to mutating methods. The existing csrfMiddleware was already applied only to mutating verbs (POST/PUT/DELETE).
+- Rate limiter placed BEFORE all /api/v1 routers, AFTER body parsing and CSRF middleware — correct order so 429 responses still include JSON body.
+- `jobRunner.listJobs?.()` with optional chaining as a belt-and-suspenders safety; listJobs exists but the pattern follows the task spec suggestion exactly.
+
+### What I learned
+- `ConfigStore.CONFIG_DIR` is exported on the ConfigStore object — no need to read the config directory path separately, it was already a public property from Task #3.
+- The exec() guard for browser open must check `process.env.NO_OPEN` (truthy, not `=== '1'`) so any non-empty value skips it — more permissive and CI-friendly.
+- `node --input-type=module --check < file.js` is the correct zero-execution syntax check for ESM files — it does not import dependencies but validates syntax and static structure.
+
+### State I'm leaving behind
+server/index.js is modified and build-verified. All 5 NFR acceptance criteria from the task description are met:
+- Browser auto-open: YES (openBrowser, NO_OPEN guard)
+- GET /api/v1/version: YES (appVersion, nodeVersion, platform)
+- Rate limiting on /api/v1/*: YES (200 req/min, 429 on excess)
+- Improved startup logging: YES ([startup] prefixed, version + binary + config + URL)
+- Improved /health: YES (uptime + activeSessions + activeJobs)
+
+Tasks #13, #14, #15 are now unblocked.
+
+### Handoff
+Task #13 (QA) and #14 (Security) can now run in parallel. Key notes for QA:
+- Test GET /api/v1/version — should return 200 with appVersion: "0.1.0", nodeVersion: "v20.x.x", platform: "win32"
+- Test GET /health — should include status, version, uptime (number), activeSessions (number), activeJobs (number)
+- Rate limit test: send >200 requests to /api/v1/projects in under 60s — should get 429 on request 201+
+- Browser auto-open: verify npm start opens browser; verify NO_OPEN=1 npm start does not open browser
+---
+
 ## 2026-03-18 — Task #9: Job Mode API — JobRunner and SSE Streaming
 **Status:** COMPLETED
 **Called by:** orchestrator (user via task assignment)

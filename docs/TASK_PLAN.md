@@ -1276,7 +1276,7 @@ Agent: backend-dev
 Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   Implement the non-functional requirements from PRD Section 9 that are not yet covered by previous tasks.
 
@@ -1656,7 +1656,7 @@ Dependencies: TASK #13, TASK #14
 | 9 | Job Mode API | backend-dev | HIGH | HARD | PENDING |
 | 10 | Job Mode UI | frontend-dev | HIGH | MEDIUM | PENDING |
 | 11 | Projects View UI | frontend-dev | MEDIUM | EASY | PENDING |
-| 12 | NFRs — Performance + Reliability + Polish | backend-dev | MEDIUM | MEDIUM | PENDING |
+| 12 | NFRs — Performance + Reliability + Polish | backend-dev | MEDIUM | MEDIUM | COMPLETED |
 | 13 | Full QA Test Suite | qa-tester | HIGH | HARD | PENDING |
 | 14 | Pre-Release Security Audit | security | HIGH | MEDIUM | PENDING |
 | 15 | Documentation | documenter | MEDIUM | EASY | PENDING |

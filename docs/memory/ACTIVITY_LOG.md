@@ -1,4 +1,13 @@
 ---
+## 2026-03-18 — backend-dev — Task #12: Non-Functional Requirements Polish
+**Outcome:** COMPLETED
+**Summary:** Added browser auto-open (exec with NO_OPEN guard), in-memory rate limiter (200 req/min on /api/v1/*), GET /api/v1/version endpoint, improved /health (uptime/activeSessions/activeJobs), and structured [startup] logging with version/binary/config/URL. All changes are in server/index.js only. Build verified clean (304 modules).
+**Files changed:** server/index.js (MODIFIED), docs/TASK_PLAN.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** exec() for browser open (URL is not user-controlled; code-commented); no external deps for rate limiter; NO_OPEN env var skips browser open
+**Blockers:** none
+**Next:** Tasks #13 (QA), #14 (Security), #15 (Docs) all unblocked and can run in parallel
+---
 ## 2026-03-18 — code-mapper — Tasks #9+#10+#11: Job Mode API + UI + Projects View
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md with 14 new function graph entries covering JobRunner (7 functions), routes/jobs.js (4 endpoints), useJob hook (4 methods), JobPanel (4 components), JobView, and ProjectsView (4 components). Appended detailed CHANGELOG entries for all three tasks. Verified TASK_PLAN.md already shows tasks COMPLETED.
