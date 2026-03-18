@@ -2,8 +2,8 @@
 **Audited by:** security agent (claude-sonnet-4-6)
 **Date:** 2026-03-18
 **Scope:** Pre-release v1 audit covering SEC-01 through SEC-10 and all route files
-**Verdict:** PASS — 0 CRITICAL, 0 HIGH, 0 MEDIUM open, 2 LOW findings
-**Last updated:** 2026-03-18 — MEDIUM-01, MEDIUM-02, MEDIUM-03 resolved by Tasks #16, #17, #18
+**Verdict:** PASS — 0 CRITICAL, 0 HIGH, 1 MEDIUM open (dev-only), 4 LOW findings
+**Last updated:** 2026-03-18 — Full re-audit after debug session; MEDIUM-04 (vite/esbuild CVE, dev-only) and LOW-03/LOW-04 added
 
 ---
 
@@ -16,7 +16,12 @@ All three MEDIUM findings identified in the original audit have been resolved:
 2. `allowedTools` parameter now validated against a character-set whitelist with a length cap — Task #17.
 3. PID values loaded from `active_pids.json` are now range-guarded (1–65535) before being passed to `treeKill` — Task #18.
 
-Two LOW findings remain — both are informational and appropriate for v1.
+The full re-audit after the debug session identified one additional MEDIUM and two additional LOW findings:
+- MEDIUM-04: `vite`/`esbuild` CVE in `client/` devDependencies — dev-only, not present in the production server bundle. Deferred to v1.1 (upgrade `vite`).
+- LOW-03: `process.env` is passed verbatim to `pty.spawn()` — no production secret leak risk on a single-user local machine, but creates unnecessary surface area.
+- LOW-04: `safeRead` path validation in `server/routes/claudemd.js` GET is bypassed for user-scope reads — low risk since the path is hardcoded to `os.homedir()`, but architecturally inconsistent.
+
+Four LOW findings remain open in total (LOW-01 through LOW-04), all informational and appropriate for v1.
 
 **Overall risk rating: LOW** for the intended threat model (single-user, localhost-only, no auth required). All MEDIUM findings are resolved. The application is cleared for v1 release.
 
@@ -35,7 +40,7 @@ Two LOW findings remain — both are informational and appropriate for v1.
 | SEC-07 | Helmet security headers present | PASS | `securityMiddleware` applies `helmet()` with a strict CSP: `defaultSrc 'self'`, `scriptSrc 'self'`, `styleSrc 'self' 'unsafe-inline'`, `connectSrc 'self' ws://127.0.0.1:*`, `imgSrc 'self' data:`, `fontSrc 'self'`. | server/middleware/security.js:6-21 |
 | SEC-08 | No sensitive data (API keys, tokens, full prompt content) in logs | PASS | Prompt is never logged — explicit comment on JobRunner.js:181. `listJobs()` excludes prompt and result. SSE stream forwards parsed Claude output to clients but not to server logs. Error handler logs only `err.message`, not `req.body`. Stderr is truncated to 200 chars. | services/JobRunner.js:84, 138, 181, 269-278; routes/jobs.js:18-22; index.js:205 |
 | SEC-09 | PTY lifecycle cleanup (no orphan processes) | PASS | `ProcessRegistry` persists PIDs to `active_pids.json`. On startup `cleanupStale()` kills any surviving PIDs. `SessionManager.killSession` calls `treeKillAsync`, unregisters PID, clears clients set, and removes session from map. `killAll()` called on SIGTERM/SIGINT. `JobRunner.cancelAll()` called on shutdown. | services/SessionManager.js:209-241, services/ProcessRegistry.js:81-93, index.js:244-262 |
-| SEC-10 | npm audit — 0 vulnerabilities | PASS | `npm audit` in both root and `server/` directories returned 0 vulnerabilities across 185 total dependencies (80 prod, 106 dev, 33 optional). | See npm audit section below |
+| SEC-10 | npm audit — 0 vulnerabilities | PASS with NOTE | `npm audit` in root and `server/` returned 0 vulnerabilities. `client/` returned 2 moderate (vite/esbuild CVE — dev-only, not in production bundle). See MEDIUM-04 below. | See npm audit section below |
 
 ---
 
@@ -53,9 +58,17 @@ Vulnerabilities: 0 (info: 0, low: 0, moderate: 0, high: 0, critical: 0)
 Total dependencies: 185 (prod: 80, dev: 106, optional: 33)
 ```
 
-No known CVEs found in any dependency. All dependency versions are current as of audit date.
+No known CVEs found in server or root dependencies. All server dependency versions are current as of audit date.
 
 **NOTE:** The root `package.json` lists `node-pty` in `server/package.json:17` but the PROGRESS.md notes that `node-pty-prebuilt-multiarch` was rejected in favour of plain `node-pty`. This is consistent with current install state and does not represent a vulnerability.
+
+### client/package.json (re-audit 2026-03-18)
+```
+Vulnerabilities: 2 moderate (vite devDependency chain — esbuild CVE)
+Note: devDependencies only — not bundled into the production server/public/ output
+```
+
+The 2 moderate findings are in `vite`'s dependency chain (`esbuild`) and affect only the local development build toolchain. The compiled React bundle in `server/public/` does not include `vite` or `esbuild` at runtime. This finding is documented as MEDIUM-04 below (dev-only, not a production risk). Fix: upgrade `vite` in `client/package.json` to a patched version (deferred to v1.1).
 
 ---
 
@@ -126,6 +139,37 @@ No known CVEs found in any dependency. All dependency versions are current as of
 
 ---
 
+### LOW-03: process.env passed verbatim to PTY spawn
+**Added:** 2026-03-18 re-audit
+- **Location:** server/services/SessionManager.js — `pty.spawn(claudeBinaryPath, [], { env: process.env, ... })`
+- **Description:** The full server process environment, including any variables set in the shell before `npm start`, is forwarded into every Claude PTY child. On a single-user developer machine this is typically benign — the developer's shell environment is the intended context for Claude Code. However, if the server is ever run in an environment with secrets set as env vars (CI tokens, API keys, etc.), those secrets would be visible to every spawned Claude process and anything Claude chooses to print.
+- **Attack scenario:** Not exploitable in the intended single-user localhost deployment. Becomes relevant if the server is ever run in a non-developer context (e.g., as a background service with elevated privileges) or if environment variables containing credentials are present.
+- **Recommended fix (future):** Build an explicit allowlist of env vars to forward (e.g., `PATH`, `USERPROFILE`, `HOME`, `TEMP`, `SYSTEMROOT`, `ComSpec`, `CLAUDE_*`) rather than forwarding the full environment. This is a v1.1 concern.
+
+---
+
+### LOW-04: safeRead path validation bypassed for user-scope claudemd reads
+**Added:** 2026-03-18 re-audit
+- **Location:** server/routes/claudemd.js — `GET /api/v1/claudemd/user`
+- **Description:** The GET handler for the user-scope CLAUDE.md reads a hardcoded path derived from `os.homedir()` and does not run it through `safeRead`'s path validation before the file read. The path itself is safe (it is constructed from a trusted constant, not from request parameters), but the inconsistency means a future refactor that introduces request-parameter influence could bypass validation silently.
+- **Attack scenario:** Not exploitable in the current implementation — the path is not influenced by user input. The risk is latent: if a developer adds a query parameter to select a CLAUDE.md path without noticing the missing validation, the check would not be present.
+- **Recommended fix (future):** Route all file reads (not just writes) through the `safeRead`/`validatePath` helper for architectural consistency. This is a v1.1 refactor concern, not a blocker.
+
+---
+
+## MEDIUM Findings (from re-audit)
+
+### MEDIUM-04: vite/esbuild CVE in client devDependencies
+**Added:** 2026-03-18 re-audit
+- **Location:** client/package.json — `vite` (devDependency) → `esbuild` transitive dep
+- **Severity:** MEDIUM (development environment only — not in production runtime)
+- **Description:** `npm audit` in the `client/` directory reports 2 moderate findings in the `vite`/`esbuild` dependency chain. These packages are devDependencies used only at build time (`npm run build`). They are NOT bundled into the compiled `server/public/` output that runs in production. The CVE affects the `esbuild` development server (used by `vite dev`) — the application uses `vite build` only, not `vite dev`, in the production startup path (`npm start`).
+- **Attack scenario:** An attacker who can execute code during a local `npm run build` or `vite dev` session on the developer's machine could potentially exploit the esbuild CVE. This is not accessible from the network and requires local code execution already.
+- **Rating rationale:** Rated MEDIUM (not HIGH) because: (1) dev-only — not in the production bundle; (2) requires local code execution to trigger; (3) intended threat model is a single-user localhost developer machine.
+- **Recommended fix:** Upgrade `vite` in `client/package.json` to a version that includes a patched `esbuild`. Run `npm audit fix` in `client/`. Deferred to v1.1 — does not block v1 release.
+
+---
+
 ## Additional Checks
 
 ### Agent name validation
@@ -143,7 +187,7 @@ PASS. `csrfMiddleware` is registered at `app.use(csrfMiddleware)` in `server/ind
 | A03 Injection | PASS — no SQL; shell injection blocked by shell:false on all paths including openBrowser (Task #16); allowedTools whitelist enforced (Task #17) |
 | A04 Insecure Design | PASS — security requirements defined upfront in SEC-01..10, enforced in middleware |
 | A05 Security Misconfiguration | PASS — Helmet applied; no default passwords; no debug endpoints in production paths |
-| A06 Vulnerable Components | PASS — npm audit shows 0 vulnerabilities across all 185 dependencies |
+| A06 Vulnerable Components | PASS with NOTE — server/root: 0 CVEs; client devDeps: 2 moderate (vite/esbuild, dev-only, not in production bundle — see MEDIUM-04) |
 | A07 Authentication Failures | N/A — single-user localhost; no auth by design (DEC-002) |
 | A08 Software Integrity | PASS — write-atomic prevents partial writes; no CI/CD configuration present to audit |
 | A09 Logging Failures | PASS — prompts not logged; error handler logs method+path+message only; no full body logging |
@@ -153,14 +197,19 @@ PASS. `csrfMiddleware` is registered at `app.use(csrfMiddleware)` in `server/ind
 
 ## Summary Verdict
 
-**PASS** — The application satisfies all 10 mandatory SEC requirements and has no CRITICAL, HIGH, or open MEDIUM vulnerabilities. All three MEDIUM findings from the original audit were resolved in Tasks #16–#18 (2026-03-18):
+**PASS** — The application satisfies all 10 mandatory SEC requirements and has no CRITICAL or HIGH vulnerabilities. All three production MEDIUM findings from the original audit were resolved in Tasks #16–#18 (2026-03-18):
 
 1. **MEDIUM-01 FIXED** (Task #16) — `exec()` in `openBrowser()` replaced with platform-specific `spawn({ shell: false })`. SEC-02 now fully clean with no exceptions.
 2. **MEDIUM-02 FIXED** (Task #17) — `allowedTools` validated against `/^[a-zA-Z0-9_,\-]+$/` with a 512-character length cap at the route boundary. HTTP 400 returned on violation.
 3. **MEDIUM-03 FIXED** (Task #18) — `isValidPid()` guard (range 1–65535) added to `ProcessRegistry`. Both `cleanupStale()` and `register()` skip invalid PIDs with a warning instead of passing them to `treeKill`.
 
-Two LOW findings remain open — both are informational, appropriate for v1, and do not block release:
+One MEDIUM finding from the re-audit is open but dev-only (does not affect the production server):
+- **MEDIUM-04 OPEN (dev-only)** — `vite`/`esbuild` CVE in `client/` devDependencies. Not in production bundle. Upgrade `vite` in v1.1.
+
+Four LOW findings remain open — all informational, appropriate for v1, and do not block release:
 - **LOW-01** — `unsafe-inline` in CSP styleSrc (Tailwind trade-off; v1.1 concern)
 - **LOW-02** — Rate limiter memory leak for long-running servers (minor; no pruning of expired entries)
+- **LOW-03** — `process.env` forwarded verbatim to PTY child (benign on single-user localhost; env allowlist deferred to v1.1)
+- **LOW-04** — `safeRead` not called for user-scope CLAUDE.md GET (path is hardcoded constant, not user input; refactor deferred to v1.1)
 
 The application is cleared for v1 release under its intended threat model (single-user, localhost-only, Windows desktop).

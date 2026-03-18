@@ -70,7 +70,19 @@ _None._
 
 ## Pending
 
-_None. All 18 tasks COMPLETED._
+### Phase 7 — v1.1 Maintenance Backlog (ALL INDEPENDENT, run in parallel)
+- [TASK-19] v1.1 — Fix JobRunner memory leak — backend-dev — MEDIUM priority
+  BUG-06: jobs Map never evicts completed/cancelled/error entries. Fix: add TTL-based setTimeout
+  eviction (10 min retention window) so records are removed after clients have had time to read results.
+  File: server/services/JobRunner.js
+- [TASK-20] v1.1 — Fix rate limiter memory leak — backend-dev — MEDIUM priority
+  BUG-07: _rateLimitMap in server/index.js never prunes stale IP entries. Fix: add periodic
+  sweep (setInterval with .unref()) to delete entries where windowStart is older than windowMs.
+  File: server/index.js
+- [TASK-21] v1.1 — Upgrade vite to patch esbuild CVE — devops — MEDIUM priority
+  MEDIUM-04: client/ npm audit returns 2 moderate esbuild CVE findings (transitive via vite).
+  Fix: upgrade vite in client/package.json to latest stable 5.x or 6.x patch.
+  File: client/package.json
 
 ### Phase 6 — Security Hardening (ALL COMPLETED 2026-03-18)
 - [TASK-16] Security hardening — replace exec() in openBrowser with shell:false spawn (backend-dev) — COMPLETED 2026-03-18
@@ -83,8 +95,11 @@ _None. All 18 tasks COMPLETED._
 ## v1 Release Status
 **v1 RELEASE READY — All 18 tasks COMPLETED as of 2026-03-18.**
 - All 18 tasks (Phase 0–6) COMPLETED 2026-03-18.
-- Security audit verdict: ALL 3 MEDIUM findings RESOLVED. 2 LOW findings deferred to v1.1 (unsafe-inline CSS, rate limiter memory growth). Risk: LOW.
-- 0 CRITICAL, 0 HIGH, 0 MEDIUM findings remaining. Project is v1 release-ready.
+- Security audit verdict: ALL 3 MEDIUM findings RESOLVED. Risk: LOW.
+- Post-v1 Debug & Security Re-Audit (2026-03-18): 7 additional bugs fixed (BUG-02/03/04/05/11/14/16/19).
+  Security re-audit PASS: 0 CRITICAL/HIGH/MEDIUM in production code. 1 MEDIUM (MEDIUM-04) dev-only vite CVE.
+- 0 CRITICAL, 0 HIGH, 0 MEDIUM production findings remaining. Project is v1 release-ready.
+- v1.1 backlog created: Tasks #19, #20, #21 (3 MEDIUM items, all deferred non-blockers).
 - Final gate cleared: Tasks #16 (exec→spawn), #17 (allowedTools whitelist), #18 (PID range guard) all merged.
 
 ## Known Issues

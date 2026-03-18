@@ -338,3 +338,90 @@ Project is v1 RELEASE READY. Recommended next actions:
 2. git tag v1.0.0 and release
 3. v1.1 backlog: open new tasks for CSP unsafe-inline removal and rate limiter persistent storage
 ---
+
+---
+## 2026-03-18 — Task: Phase 7 v1.1 Backlog Planning (Session 7)
+**Status:** COMPLETED
+**Called by:** user (direct invocation — post Debug & Security Audit results, update task plan)
+
+### Context when I started
+All 18 v1 tasks were COMPLETED. The project was at v1 RELEASE READY. A new ad-hoc Debug & Security
+Audit session (not tracked as a numbered task) had just completed with the following results:
+- 7 bugs FIXED: BUG-02, BUG-03, BUG-04, BUG-05, BUG-11, BUG-14, BUG-16/BUG-19
+- 12 bugs documented and DEFERRED to v1.1
+- Security re-audit PASS: all 10 SEC requirements satisfied; 0 CRITICAL/HIGH/MEDIUM in production
+- 1 new MEDIUM finding (MEDIUM-04): esbuild/vite CVE in client/ devDependencies (dev-only)
+- User requested: mark debug/audit task COMPLETED, add v1.1 backlog tasks for BUG-06, BUG-07, MEDIUM-04
+
+The debug/audit session was ad-hoc — no TASK #19 existed prior to this session. TASK_PLAN.md
+had 18 rows all COMPLETED and the footer read "v1 RELEASE READY."
+
+### What I did
+1. Read docs/memory/agents/project-manager.md (own prior 6 sessions of history)
+2. Read docs/TASK_PLAN.md (lines 1-150 for overview, lines 1800-1876 for end of file)
+3. Read docs/memory/PROGRESS.md in full — confirmed v1 RELEASE READY state
+4. Read docs/memory/ACTIVITY_LOG.md (top 30 lines) — confirmed debug+security re-audit outcomes
+5. Read docs/memory/CONTEXT.md — confirmed it was stale (still said "Phase 5" as focus)
+6. Added Phase 7 row to Phase Map table in TASK_PLAN.md (3 tasks: #19, #20, #21)
+7. Inserted full task blocks for TASK #19 (JobRunner leak), TASK #20 (rate limiter leak),
+   TASK #21 (vite CVE upgrade) before the Execution Order section in TASK_PLAN.md
+8. Added Phase 7 block to Execution Order section in TASK_PLAN.md
+9. Added 3 new rows to Task Status Summary table in TASK_PLAN.md
+10. Updated footer timestamp in TASK_PLAN.md
+11. Updated docs/memory/PROGRESS.md: added Phase 7 Pending section with all 3 tasks
+12. Updated docs/memory/CONTEXT.md: changed Focus from Phase 5 to Phase 7; rewrote Active Threads,
+    Open Questions, and Critical Constraints for Phase 7 agents
+13. Appended ACTIVITY_LOG.md entry
+14. Appended this session log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Phase Map: added Phase 7 rows; added TASK #19/#20/#21 full blocks; updated Execution Order; updated Task Status Summary table; updated footer |
+| docs/memory/PROGRESS.md | MODIFIED | Added Phase 7 Pending section with all 3 v1.1 tasks and their context |
+| docs/memory/CONTEXT.md | MODIFIED | Focus updated to Phase 7; Active Threads, Open Questions, Critical Constraints rewritten for v1.1 agents |
+| docs/memory/agents/project-manager.md | APPENDED | This session log |
+| docs/memory/ACTIVITY_LOG.md | APPENDED | Standard activity entry at top of file |
+
+### Improvements delivered
+- TASK_PLAN.md now has 21 total tasks: 18 COMPLETED (v1), 3 PENDING (v1.1 backlog)
+- Phase 7 tasks are fully specified — assigned agents can start immediately with no additional research
+- CONTEXT.md now accurately reflects Phase 7 focus and gives Phase 7 agents precise targeting info
+- PROGRESS.md has the v1.1 backlog properly tracked
+
+### Bugs I encountered
+None — all prior task blocks and Summary table were accurate (agents had self-updated correctly).
+CONTEXT.md was stale (still said Phase 5) — updated as standard PM housekeeping.
+
+### Decisions I made
+- All 3 v1.1 items rated MEDIUM priority (not HIGH): none block v1 release, none involve data loss
+  or security risk in the intended localhost single-user deployment
+- BUG-06 (JobRunner leak) → TASK #19 → backend-dev, targeted to server/services/JobRunner.js
+- BUG-07 (rate limiter leak) → TASK #20 → backend-dev, targeted to server/index.js
+- MEDIUM-04 (esbuild CVE) → TASK #21 → devops, targeted to client/package.json vite bump
+- All 3 are INDEPENDENT — no shared files, no dependencies between them — assign all in parallel
+- The other 9 deferred bugs (BUG-08 through BUG-19 excluding already-fixed ones) are NOT added to
+  the task plan now because they require more investigation or are lower severity. They remain
+  documented in docs/memory/agents/debugger.md.
+
+### What I learned
+- Post-v1 audit sessions produce deferred bug lists that must be promoted to tracked tasks promptly
+  to prevent them from being lost. The ACTIVITY_LOG.md entry alone is not sufficient.
+- When the ad-hoc debug/security session has no task number, the PM should NOT back-assign a number
+  retroactively — instead, create forward-looking tasks for the actionable items.
+- The Task Status Summary table stays accurate only if the PM explicitly maintains it on every session.
+
+### State I'm leaving behind
+- Tasks #1–#18: COMPLETED (v1 RELEASE READY)
+- Task #19: PENDING — backend-dev, server/services/JobRunner.js, MEDIUM priority
+- Task #20: PENDING — backend-dev, server/index.js, MEDIUM priority
+- Task #21: PENDING — devops, client/package.json, MEDIUM priority
+- v1.1 plan: run Tasks #19/#20/#21 in parallel → qa-tester regression pass → tag v1.1
+
+### Handoff
+Assign Tasks #19, #20, #21 in parallel:
+- TASK #19 → backend-dev (JobRunner.js eviction fix)
+- TASK #20 → backend-dev second instance (rate limiter sweep fix)
+- TASK #21 → devops (vite upgrade in client/)
+After all 3 complete: qa-tester regression pass on the 3 changed files, then tag v1.1.
+---

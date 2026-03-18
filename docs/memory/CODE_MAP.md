@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-18 — after Task #16: exec→spawn in openBrowser (security) + Task #17: allowedTools whitelist (security) + Task #18: PID range guard (security) by code-mapper_
+_Last updated: 2026-03-18 — after Debug & Security Audit (BUG-02/03/04/05/11/14/16) by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -38,6 +38,7 @@ _Last updated: 2026-03-18 — after Task #16: exec→spawn in openBrowser (secur
 | client/src/main.jsx | (entry) | ReactDOM.createRoot bootstrap |
 | client/src/store/AppContext.jsx | AppContext, useAppState | Global React context: activeProjectId, projects list |
 | client/src/hooks/useApi.js | apiGet, apiPost, apiPut, apiDelete, apiDeleteWithBody | Fetch wrappers with CSRF header injection and error normalization |
+| client/src/hooks/useSession.js | useSession | WebSocket hook for PTY terminal: manages WS lifecycle, reconnect logic, send+resize callbacks |
 | client/src/components/Sidebar.jsx | default Sidebar | Project list, navigation, AddProjectModal trigger |
 | client/src/components/AddProjectModal.jsx | default AddProjectModal | Modal for adding new projects |
 | client/src/views/TerminalView.jsx | default TerminalView | xterm.js terminal, WebSocket reconnect, ResizeObserver |
@@ -136,7 +137,8 @@ _Last updated: 2026-03-18 — after Task #16: exec→spawn in openBrowser (secur
 - **Inputs:** content (string)
 - **Output:** `{ frontmatter: object, body: string }`
 - **Side effects:** none
-- **Last modified:** 2026-03-18 in Task #7 by backend-dev
+- **Complexity note (BUG-14 fix):** yaml.load() can return a scalar (string, number, null) for trivial YAML blocks that don't contain key-value pairs. Added type guard: `parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)` — only accepts plain objects; falls back to `{}` for any other type. Without this guard, downstream code calling `frontmatter.name` etc. would throw if YAML parsed to a string.
+- **Last modified:** 2026-03-18 in Debug Session (BUG-14) by debugger
 
 ### `server/utils/frontmatter.js` :: `serializeFrontmatter(frontmatter, body)`
 - **Purpose:** Serialize frontmatter object + body back to `---\n<yaml>\n---\n<body>` string.
@@ -689,6 +691,78 @@ _Last updated: 2026-03-18 — after Task #16: exec→spawn in openBrowser (secur
 
 ---
 
+### `client/src/components/AddProjectModal.jsx` :: `AddProjectModal({ onClose })`
+- **Purpose:** Modal dialog for registering a new project. Collects name, absolute path, and scaffold checkbox. POSTs to /api/v1/projects and dispatches ADD_PROJECT on success. Calls onClose to dismiss.
+- **Called by:** Sidebar (when "+" button clicked), ProjectsView (when "+ Register Project" clicked)
+- **Calls:** apiPost, useAppDispatch
+- **Inputs:** onClose (function — callback when modal should close)
+- **Output:** JSX fixed-position modal overlay
+- **Side effects:** HTTP POST to /api/v1/projects; dispatches ADD_PROJECT to AppContext
+- **Complexity note (BUG-03 fix):** Was incorrectly POSTing to `/api/v1/projects/scaffold` (non-existent endpoint). Fixed to POST to `/api/v1/projects` — the same endpoint handles both registration and optional scaffold via the `scaffold: true` flag in the body. The `scaffold` checkbox value is sent as a boolean field in the request body, not as a separate route.
+- **Last modified:** 2026-03-18 in Debug Session (BUG-03) by debugger
+
+---
+
+### `client/src/components/Sidebar.jsx` :: `Sidebar()`
+- **Purpose:** Left navigation sidebar. Loads project list on mount, renders project buttons with session status dots, navigation items (Terminal/Jobs/Entities/Projects), and "+" button to open AddProjectModal.
+- **Called by:** App.jsx (always rendered as left column)
+- **Calls:** apiGet (on mount — GET /api/v1/projects), apiPost (handleProjectClick — POST /api/v1/sessions), useAppState, useAppDispatch, AddProjectModal
+- **Inputs:** none (reads state from AppContext)
+- **Output:** JSX sidebar with navigation + project list
+- **Side effects:** HTTP GET on mount (dispatches SET_PROJECTS); HTTP POST per new session (dispatches SET_SESSION)
+- **Complexity note (BUG-04 fix):** Was destructuring the API response as `data.project` (singular) after GET /api/v1/projects; the endpoint returns `{ projects: [...] }` (plural). Fixed to `data.projects ?? []`. (BUG-05 fix): handleProjectClick was destructuring `data.sessionId` from the POST /api/v1/sessions response; the endpoint returns `{ session: { sessionId, ... } }`. Fixed to `data.session`.
+- **Last modified:** 2026-03-18 in Debug Session (BUG-04, BUG-05) by debugger
+
+### `client/src/components/Sidebar.jsx` :: `handleProjectClick(project)` (internal)
+- **Purpose:** Handle click on a project in the sidebar list. Dispatches SET_ACTIVE_PROJECT + SET_VIEW 'terminal'. If no existing session for the project, creates one via POST /api/v1/sessions and dispatches SET_SESSION.
+- **Called by:** Sidebar (onClick of each project button)
+- **Calls:** useAppDispatch, apiPost
+- **Inputs:** project (object — { id, name, path })
+- **Output:** void (async)
+- **Side effects:** dispatches to AppContext; HTTP POST to /api/v1/sessions if no existing session
+- **Last modified:** 2026-03-18 in Debug Session (BUG-05) by debugger
+
+### `client/src/components/Sidebar.jsx` :: `handleNavClick(view)` (internal)
+- **Purpose:** Dispatch SET_VIEW on nav item click.
+- **Called by:** Sidebar nav buttons
+- **Calls:** useAppDispatch
+- **Inputs:** view (string)
+- **Output:** void
+- **Side effects:** dispatches SET_VIEW to AppContext
+- **Last modified:** 2026-03-18 in Task #6 by frontend-dev
+
+---
+
+### `client/src/hooks/useSession.js` :: `useSession(sessionId, onData)`
+- **Purpose:** Custom React hook that manages a WebSocket connection to the terminal server for a given session. Exposes `send` (input) and `resize` callbacks. Reconnects once on unexpected close (not code 1000/1001). Cleans up on unmount.
+- **Called by:** client/src/components/Terminal.jsx
+- **Calls:** WebSocket (browser native), JSON.stringify (send/resize), clearTimeout
+- **Inputs:** sessionId (string | null | undefined), onData (function — called with each raw PTY data string)
+- **Output:** `{ send, resize }` — stable callbacks
+- **Side effects:** opens/closes WebSocket; retries once on unexpected disconnect with 1s delay
+- **Complexity note (BUG-16 fix):** WS_BASE was previously hardcoded to `ws://127.0.0.1:3000`. Fixed to use `ws://127.0.0.1:${window.location.port || 3000}` so the WS connection adapts to whatever port the app is running on (configured by PORT env var). Without this fix, a server on a non-3000 port would connect WS to the wrong port.
+- **Last modified:** 2026-03-18 in Debug Session (BUG-16) by debugger
+
+### `client/src/hooks/useSession.js` :: `send(data)` (returned callback)
+- **Purpose:** Send a keyboard input message to the server over the WebSocket. No-op if WS is not in OPEN state.
+- **Called by:** client/src/components/Terminal.jsx (xterm.js onData handler)
+- **Calls:** ws.send, JSON.stringify
+- **Inputs:** data (string — raw keyboard input)
+- **Output:** void
+- **Side effects:** sends WS message `{ type: 'input', data }`
+- **Last modified:** 2026-03-18 in Task #6 by frontend-dev
+
+### `client/src/hooks/useSession.js` :: `resize(cols, rows)` (returned callback)
+- **Purpose:** Send a terminal resize message to the server. No-op if WS not OPEN.
+- **Called by:** client/src/components/Terminal.jsx (ResizeObserver / FitAddon callback)
+- **Calls:** ws.send, JSON.stringify
+- **Inputs:** cols (number), rows (number)
+- **Output:** void
+- **Side effects:** sends WS message `{ type: 'resize', cols, rows }`
+- **Last modified:** 2026-03-18 in Task #6 by frontend-dev
+
+---
+
 ### `client/src/views/ProjectsView.jsx` :: `ProjectsView()`
 - **Purpose:** Full projects management view. Loads project list on mount via GET /api/v1/projects, dispatches SET_PROJECTS to AppContext. Shows table with Name / Path / Status (StatusBadge) / Created / Actions columns. Actions: Open Terminal (SET_ACTIVE_PROJECT + SET_VIEW 'terminal'), Delete (shows ConfirmDialog). Refreshes after modal close.
 - **Called by:** App.jsx (route/view rendering — when view === 'projects')
@@ -696,7 +770,8 @@ _Last updated: 2026-03-18 — after Task #16: exec→spawn in openBrowser (secur
 - **Inputs:** none (reads context)
 - **Output:** JSX — header + project table + modals
 - **Side effects:** HTTP GET on mount, HTTP DELETE on confirm; dispatches SET_PROJECTS, REMOVE_PROJECT, SET_ACTIVE_PROJECT, SET_VIEW to AppContext
-- **Last modified:** 2026-03-18 in Task #11 by frontend-dev
+- **Complexity note (BUG-04 fix):** Was destructuring `data.project` (singular) from GET /api/v1/projects response. Fixed to `data.projects ?? []` to match actual endpoint response shape `{ projects: [...] }`.
+- **Last modified:** 2026-03-18 in Debug Session (BUG-04) by debugger
 
 ### `client/src/views/ProjectsView.jsx` :: `StatusBadge({ active })` (internal)
 - **Purpose:** Visual indicator — green "Active" badge if the project has an active session (sessions[project.id] truthy), grey "No session" otherwise.
@@ -893,8 +968,116 @@ _Last updated: 2026-03-18 — after Task #16: exec→spawn in openBrowser (secur
 ### `server/services/RingBuffer.js` :: `RingBuffer`
 - See prior entries. Unchanged.
 
-### `server/services/SessionManager.js` :: `sessionManager`
-- See prior entries. Unchanged.
+### `server/services/SessionManager.js` :: `SessionManager.createSession(projectId, projectPath, claudeBinaryPath)`
+- **Purpose:** Spawn a new PTY process running the Claude binary in the given project directory. Wire permanent onData + onExit handlers. Register PID in ProcessRegistry. Return session record.
+- **Called by:** server/routes/sessions.js (POST /api/v1/sessions handler)
+- **Calls:** pty.spawn, RingBuffer (constructor), uuidv4, ProcessRegistry.register, SessionManager.#startIdleSweeper
+- **Inputs:** projectId (string), projectPath (string), claudeBinaryPath (string)
+- **Output:** Promise\<SessionRecord\>
+- **Side effects:** spawns PTY process; writes PID to active_pids.json via ProcessRegistry; starts idle sweeper if not running
+- **Complexity note (BUG-02 fix):** onExit handler uses a `_unregistered` sentinel flag on the session record to prevent double-unregister. killSession() also sets `_unregistered = true` before calling ProcessRegistry.unregister. Without this guard, both the explicit killSession call and the natural onExit event would each call unregister, causing a race write to active_pids.json.
+- **Last modified:** 2026-03-18 in Debug Session (BUG-02) by debugger
+
+### `server/services/SessionManager.js` :: `SessionManager.attachClient(sessionId, ws)`
+- **Purpose:** Add a WebSocket to a session's client set and immediately replay the ring buffer so the client catches up on all prior output.
+- **Called by:** server/ws/terminalHandler.js::setupTerminalWebSocket (on WS connection)
+- **Calls:** session.clients.add, session.buffer.toBuffer, ws.send
+- **Inputs:** sessionId (string), ws (WebSocket)
+- **Output:** void
+- **Side effects:** replays buffered bytes to ws; logs attach event
+- **Last modified:** 2026-03-18 in Task #5 by backend-dev
+
+### `server/services/SessionManager.js` :: `SessionManager.detachClient(sessionId, ws)`
+- **Purpose:** Remove a WebSocket from a session's client set. PTY stays alive (DEC-009 — user may reconnect).
+- **Called by:** server/ws/terminalHandler.js::setupTerminalWebSocket (on WS close)
+- **Calls:** session.clients.delete
+- **Inputs:** sessionId (string), ws (WebSocket)
+- **Output:** void
+- **Side effects:** none — PTY NOT killed; logs detach event
+- **Last modified:** 2026-03-18 in Task #5 by backend-dev
+
+### `server/services/SessionManager.js` :: `SessionManager.writeInput(sessionId, data)`
+- **Purpose:** Forward user keystrokes to the PTY process. No-op if session unknown or status is not 'active'.
+- **Called by:** server/ws/terminalHandler.js (on WS 'input' message)
+- **Calls:** session.pty.write
+- **Inputs:** sessionId (string), data (string)
+- **Output:** void
+- **Side effects:** writes to PTY stdin; updates lastActivityAt
+- **Last modified:** 2026-03-18 in Task #5 by backend-dev
+
+### `server/services/SessionManager.js` :: `SessionManager.resizePty(sessionId, cols, rows)`
+- **Purpose:** Resize PTY terminal dimensions. No-op on unknown or killed sessions. lastActivityAt is NOT updated (per architecture spec).
+- **Called by:** server/ws/terminalHandler.js (on WS 'resize' message)
+- **Calls:** session.pty.resize
+- **Inputs:** sessionId (string), cols (number), rows (number)
+- **Output:** void
+- **Side effects:** PTY resize
+- **Last modified:** 2026-03-18 in Task #5 by backend-dev
+
+### `server/services/SessionManager.js` :: `SessionManager.killSession(sessionId)`
+- **Purpose:** Kill PTY process tree, close all attached WebSocket clients, mark session as 'killed', unregister PID, remove from sessions map.
+- **Called by:** server/routes/sessions.js (DELETE handler), SessionManager.killAll, SessionManager.#startIdleSweeper (idle timeout)
+- **Calls:** treeKillAsync, ws.close (for each client), ProcessRegistry.unregister, SessionManager.#stopIdleSweeper
+- **Inputs:** sessionId (string)
+- **Output:** Promise\<void\>
+- **Side effects:** SIGKILL to process tree; closes WS connections; writes to active_pids.json; removes from sessions Map; may stop idle sweeper
+- **Complexity note (BUG-02 fix):** Uses `_unregistered` sentinel flag (same as in createSession onExit) to prevent double-unregister race between explicit killSession and the natural onExit handler firing after tree-kill.
+- **Last modified:** 2026-03-18 in Debug Session (BUG-02) by debugger
+
+### `server/services/SessionManager.js` :: `SessionManager.killAll()`
+- **Purpose:** Kill all active sessions. Used in SIGTERM/SIGINT shutdown handlers. Calls killSession for each in parallel via Promise.allSettled.
+- **Called by:** server/index.js::shutdown() handler
+- **Calls:** SessionManager.killSession (for each session), Promise.allSettled, SessionManager.#stopIdleSweeper
+- **Inputs:** none
+- **Output:** Promise\<void\>
+- **Side effects:** all sessions killed; idle sweeper stopped
+- **Last modified:** 2026-03-18 in Task #5 by backend-dev
+
+### `server/services/SessionManager.js` :: `SessionManager.getSession(sessionId)`
+- **Purpose:** Return the SessionRecord for a given sessionId, or undefined if not found.
+- **Called by:** server/ws/terminalHandler.js, server/routes/sessions.js
+- **Calls:** Map.get
+- **Inputs:** sessionId (string)
+- **Output:** SessionRecord | undefined
+- **Side effects:** none
+- **Last modified:** 2026-03-18 in Task #5 by backend-dev
+
+### `server/services/SessionManager.js` :: `SessionManager.listSessions()`
+- **Purpose:** Return all session records as an array.
+- **Called by:** server/routes/sessions.js (GET handler)
+- **Calls:** Array.from, Map.values
+- **Inputs:** none
+- **Output:** SessionRecord[]
+- **Side effects:** none
+- **Last modified:** 2026-03-18 in Task #5 by backend-dev
+
+### `server/services/SessionManager.js` :: `treeKillAsync(pid)` (internal)
+- **Purpose:** Wrap tree-kill in a Promise. Resolves on callback regardless of error (process may already be dead).
+- **Called by:** SessionManager.killSession
+- **Calls:** treeKill (tree-kill, loaded via createRequire)
+- **Inputs:** pid (number)
+- **Output:** Promise\<void\>
+- **Side effects:** SIGKILL to process tree
+- **Last modified:** 2026-03-18 in Task #5 by backend-dev
+
+### `server/services/SessionManager.js` :: `onData handler` (permanent, wired in createSession)
+- **Purpose:** Permanent PTY output drain — pushes all output to RingBuffer and forwards to connected clients. Never removed (DEC-009 — ConPTY deadlock prevention).
+- **Called by:** node-pty (fires on every byte of PTY output)
+- **Calls:** session.buffer.push, ws.send (for each client in session.clients)
+- **Inputs:** data (string — raw PTY output)
+- **Output:** void
+- **Side effects:** writes to RingBuffer; sends to WebSocket clients
+- **Complexity note (BUG-11 fix):** Backpressure guard: `if (ws.readyState !== WS_OPEN) continue` was added alongside the existing `ws._socket.bufferSize` check. Previously a client whose WS was in CLOSING/CLOSED state (readyState !== 1) could still reach the send path if _socket.bufferSize happened to be low. The readyState guard now comes first, preventing the send attempt on non-OPEN sockets.
+- **Last modified:** 2026-03-18 in Debug Session (BUG-11) by debugger
+
+### `server/services/SessionManager.js` :: `sessionManager` (singleton export)
+- **Purpose:** Singleton instance of SessionManager exported for use by routes and WS handler.
+- **Called by:** server/routes/sessions.js, server/ws/terminalHandler.js, server/index.js (shutdown)
+- **Calls:** (singleton — see class methods above)
+- **Inputs:** N/A
+- **Output:** SessionManager instance
+- **Side effects:** none (construction side effect: starts idle sweeper only once first session is created)
+- **Last modified:** 2026-03-18 in Task #5 by backend-dev
 
 ### `server/ws/terminalHandler.js` :: `setupTerminalWebSocket(wss)`
 - See prior entries. Unchanged.
@@ -927,6 +1110,13 @@ _Last updated: 2026-03-18 — after Task #16: exec→spawn in openBrowser (secur
 - MEDIUM-01 FIXED (Task #16): openBrowser() now uses spawn({shell:false}) — URL passed as array arg to cmd.exe/open/xdg-open, never shell-interpolated
 - MEDIUM-02 FIXED (Task #17): POST /api/v1/jobs validates allowedTools against `/^[a-zA-Z0-9_,\-]+$/` (max 512 chars) before passing to spawn args
 - MEDIUM-03 FIXED (Task #18): ProcessRegistry.cleanupStale() and register() now call isValidPid() — PIDs outside [1, 65535] are skipped with console.warn rather than passed to tree-kill
+- BUG-02 FIXED (Debug Session): SessionManager double-unregister race — killSession() and onExit() both set `session._unregistered = true` before calling ProcessRegistry.unregister; whichever runs second is a no-op
+- BUG-03 FIXED (Debug Session): AddProjectModal was POSTing to `/api/v1/projects/scaffold` (non-existent); fixed to `/api/v1/projects` with scaffold flag in body
+- BUG-04 FIXED (Debug Session): Sidebar and ProjectsView were reading `data.project` (singular) from GET /api/v1/projects; fixed to `data.projects` (plural) to match actual response shape
+- BUG-05 FIXED (Debug Session): Sidebar::handleProjectClick was reading `data.sessionId` from POST /api/v1/sessions; fixed to `data.session` to match actual response shape `{ session: { sessionId, ... } }`
+- BUG-11 FIXED (Debug Session): SessionManager onData backpressure guard now checks `ws.readyState !== WS_OPEN` first before the bufferSize check — prevents send attempt on CLOSING/CLOSED WebSockets
+- BUG-14 FIXED (Debug Session): frontmatter.js::parseFrontmatter now applies type guard on yaml.load() result — accepts only plain objects; scalar returns (string/number/null) fall back to `{}`
+- BUG-16 FIXED (Debug Session): useSession WS_BASE was hardcoded to port 3000; fixed to use `window.location.port || 3000` so WS connects to actual server port
 
 ## Key Patterns
 - ESM modules throughout (import/export)

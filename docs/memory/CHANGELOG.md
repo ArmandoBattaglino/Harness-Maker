@@ -339,3 +339,80 @@
 - register() callers (SessionManager, JobRunner): behavior unchanged for valid PIDs. For PIDs that are 0, negative, or > 65535, register() now silently skips (was: would write without validation). In practice child_process.spawn always returns valid PIDs, so this guard is defensive-only.
 - cleanupStale() callers (startup, shutdown in index.js): behavior unchanged for normal files. Corrupt/tampered files now skip bad entries instead of passing them to tree-kill.
 
+---
+
+### [Debug & Security Audit] Bug Fixes — BUG-02, BUG-03, BUG-04, BUG-05, BUG-11, BUG-14, BUG-16
+- Agent: debugger
+- Modified: client/src/components/AddProjectModal.jsx, client/src/components/Sidebar.jsx, client/src/views/ProjectsView.jsx, client/src/hooks/useSession.js, server/services/SessionManager.js, server/utils/frontmatter.js
+
+#### client/src/components/AddProjectModal.jsx (BUG-03)
+- **Change type:** MODIFIED (bug fix)
+- **What changed:** `handleSubmit` was POSTing to `/api/v1/projects/scaffold` (a non-existent endpoint). Fixed to POST to `/api/v1/projects` — the unified project creation endpoint that handles scaffolding via the `scaffold: boolean` field in the request body.
+- **Root cause:** The endpoint was renamed/merged during Task #4 but the client component was not updated to match.
+
+#### client/src/components/Sidebar.jsx (BUG-04 + BUG-05)
+
+##### BUG-04: SET_PROJECTS payload destructuring
+- **Change type:** MODIFIED (bug fix)
+- **What changed:** The `useEffect` that loads projects on mount was reading `data.project` (singular) from the GET /api/v1/projects response. Fixed to `data.projects ?? []` (plural) to match the actual response shape `{ projects: [...] }`.
+- **Root cause:** Typo/mismatch between expected and actual API response key name.
+
+##### BUG-05: SET_SESSION payload destructuring
+- **Change type:** MODIFIED (bug fix)
+- **What changed:** `handleProjectClick` was dispatching `{ projectId: project.id, session: data.sessionId }` — incorrectly reading `data.sessionId` (the session ID string) from the POST /api/v1/sessions response. The actual response shape is `{ session: { sessionId, projectId, status, ... } }`. Fixed to `{ projectId: project.id, session: data.session }`.
+- **Root cause:** Mismatch between expected flat response shape and actual nested response shape from sessions route.
+
+#### client/src/views/ProjectsView.jsx (BUG-04)
+- **Change type:** MODIFIED (bug fix)
+- **What changed:** `loadProjects()` was reading `data.project` (singular) from the GET /api/v1/projects response. Fixed to `data.projects ?? []` for consistency with Sidebar fix.
+- **Root cause:** Same as Sidebar BUG-04 — same API, same typo.
+
+#### client/src/hooks/useSession.js (BUG-16)
+- **Change type:** MODIFIED (bug fix)
+- **What changed:** `WS_BASE` was hardcoded to `ws://127.0.0.1:3000`. Fixed to use `ws://127.0.0.1:${window.location.port || 3000}` so the WebSocket connection targets the actual running server port (controlled by PORT env var).
+- **Root cause:** Port was hardcoded instead of dynamically derived from the page's own location.
+
+#### server/services/SessionManager.js (BUG-02 + BUG-11)
+
+##### BUG-02: Double unregister on PTY exit
+- **Change type:** MODIFIED (bug fix)
+- **What changed:** `killSession()` and the permanent `onExit` handler both called `ProcessRegistry.unregister(session.pid)` independently, causing a race condition: two concurrent writes to `active_pids.json`. Fixed by adding a `session._unregistered` sentinel flag. Both code paths set the flag before calling unregister; the second to run detects the flag already set and skips the call.
+- **Root cause:** ProcessRegistry.unregister is async; the cleanup path was duplicated across two independent code paths (explicit kill + natural process exit) without coordination.
+
+##### BUG-11: Backpressure guard on non-OPEN WebSockets
+- **Change type:** MODIFIED (bug fix)
+- **What changed:** The `onData` handler (permanent PTY output drain) was already guarding against slow clients via `ws._socket.bufferSize > 256KB`. Added a preceding guard: `if (ws.readyState !== WS_OPEN) continue`. Without this, a WebSocket in CLOSING state (readyState = 2) with a low buffer could still reach the `ws.send()` call, causing an error because send is invalid on non-OPEN sockets.
+- **Root cause:** The backpressure guard covered the slow-client case but not the closing-socket case. The `ws.send()` call throws on non-OPEN sockets.
+
+#### server/utils/frontmatter.js (BUG-14)
+- **Change type:** MODIFIED (bug fix)
+- **What changed:** `parseFrontmatter()` called `yaml.load()` and used the result as the frontmatter object. `yaml.load()` can return a scalar (string, number, `null`) for YAML blocks that are not key-value mappings (e.g. a YAML block containing only a string). Added type guard: only accept the result if `parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)`; otherwise fall back to `{}`.
+- **Root cause:** `js-yaml`'s `yaml.load()` API does not guarantee an object return — it returns whatever the YAML represents. An agent/skill .md file with malformed or non-mapping YAML frontmatter would cause downstream code to crash when accessing properties like `frontmatter.name`.
+
+#### Functions Added
+- none
+
+#### Functions Modified
+- `handleSubmit` in `AddProjectModal.jsx` — endpoint corrected from /api/v1/projects/scaffold to /api/v1/projects
+- `useEffect (loadProjects)` in `Sidebar.jsx` — data.project → data.projects
+- `handleProjectClick` in `Sidebar.jsx` — data.sessionId → data.session
+- `loadProjects()` in `ProjectsView.jsx` — data.project → data.projects
+- `WS_BASE` in `useSession.js` — hardcoded port 3000 → dynamic window.location.port
+- `onData handler` in `SessionManager.js` — added ws.readyState guard before ws.send
+- `killSession()` in `SessionManager.js` — added _unregistered sentinel flag
+- `onExit handler` in `SessionManager.js` — added _unregistered sentinel flag
+- `parseFrontmatter()` in `frontmatter.js` — added type guard on yaml.load() result
+
+#### Functions Removed
+- none
+
+#### Connection Changes
+- AddProjectModal now calls POST /api/v1/projects (was calling POST /api/v1/projects/scaffold — non-existent)
+- Sidebar::handleProjectClick now dispatches SET_SESSION with `data.session` object (was incorrectly passing `data.sessionId` string)
+
+#### Impact on Other Code
+- GET /api/v1/projects callers that were reading `data.project` (singular) in other parts of the codebase should be audited — only Sidebar and ProjectsView were found and fixed.
+- SessionManager test suite (SessionManager.test.js): tests for killSession should be re-run to verify the _unregistered sentinel path; test file was not modified but behavior changed.
+- frontmatter.js callers (agents.js, skills.js): now receive `{}` for malformed YAML frontmatter instead of potentially throwing downstream. Existing downstream code calling `frontmatter.name` etc. was already assuming an object; the fix makes this explicit.
+
+---

@@ -1,29 +1,31 @@
 # Current Context
 **Session date:** 2026-03-18
-**Focus:** Phase 5 — QA, Security Audit, and Documentation (Tasks #13, #14, #15 — all UNBLOCKED, run in parallel)
+**Focus:** Phase 7 — v1.1 Maintenance Backlog (Tasks #19, #20, #21 — all UNBLOCKED, run in parallel)
 
 _Project initialized via /create pipeline on 2026-03-18_
 
 ## Active Threads
-- Tasks #1–#12 are ALL COMPLETED as of 2026-03-18 (committed to git)
-- ALL implementation is done. Phase 5 is the final phase before v1 release.
-- Task #13 (qa-tester), Task #14 (security), Task #15 (documenter) are all UNBLOCKED and can run in parallel
-- Task #15 (Docs) has a soft dependency on #13 and #14 being complete — README should note any known issues discovered
+- Tasks #1–#18 are ALL COMPLETED as of 2026-03-18. v1 is RELEASE READY.
+- Post-v1 Debug & Security Audit completed (2026-03-18): 7 bugs fixed (BUG-02, 03, 04, 05, 11, 14, 16/19), 12 deferred to v1.1.
+- Security re-audit PASS: all 10 SEC requirements satisfied, 0 CRITICAL/HIGH/MEDIUM findings remaining in production code.
+- 3 v1.1 tasks now defined: TASK #19 (JobRunner leak), TASK #20 (rate limiter leak), TASK #21 (vite CVE upgrade).
+- All 3 Phase 7 tasks are INDEPENDENT — no dependencies among them, all can start immediately in parallel.
 
 ## Open Questions
-- None currently blocking — all prerequisites satisfied
+- None blocking. v1 is shippable as-is. Phase 7 tasks are improvements, not blockers.
 
 ## Critical Constraints (current phase)
-**All implementation constraints (DEC-001 through DEC-010) are already applied in the codebase.**
-**Phase 5 agents should read the codebase, not re-implement anything.**
+**All v1 implementation constraints (DEC-001 through DEC-010) are applied in the codebase.**
+**Phase 7 agents should make targeted, minimal changes — do not refactor unrelated code.**
 
-Key facts for Phase 5 agents:
-- node-pty constraint was resolved: plain `node-pty` is used (not prebuilt-multiarch). See R-01 in PROGRESS.md.
-- child.stdin.end() is called immediately after every job spawn in server/services/JobRunner.js (DEC-005).
-- Server binds to 127.0.0.1 in server/index.js (DEC-002, SEC-01).
-- CSRF middleware is in server/middleware/csrf.js — rejects POST/PUT/PATCH/DELETE without X-Requested-With header (DEC-008, SEC-06).
-- Path traversal prevention is in server/services/FileManager.js validatePath() (SEC-03, SEC-04).
-- ConPTY deadlock prevention: permanent pty.onData handler in server/services/SessionManager.js (DEC-009).
+Key facts for Phase 7 agents:
+- TASK #19 target: server/services/JobRunner.js — jobs Map eviction. Use setTimeout with .unref() pattern.
+  Retention window should be at least 5 minutes. Do not delete jobs while their SSE stream is still active.
+- TASK #20 target: server/index.js — _rateLimitMap cleanup. Use setInterval with .unref() sweeping stale entries.
+  Do not change the observable rate-limiting behavior for legitimate requests.
+- TASK #21 target: client/package.json — vite version bump. Run `npm run build` and `npm audit` in client/ to verify.
+  Do not upgrade React, xterm.js, or react-markdown as part of this task.
+- After all 3 Phase 7 tasks complete: run qa-tester regression pass, then tag v1.1.
 
 ## Notes for Specific Agents
 

@@ -1,4 +1,13 @@
 ---
+## 2026-03-18 — project-manager — Phase 7 v1.1 Backlog Planning (Session 7)
+**Outcome:** COMPLETED
+**Summary:** Received results of post-v1 Debug & Security Audit (7 bugs fixed, 12 deferred, security re-audit PASS). Created Tasks #19, #20, #21 in TASK_PLAN.md for the three deferred v1.1 items: JobRunner memory leak (BUG-06), rate limiter map leak (BUG-07), and vite CVE upgrade (MEDIUM-04). Updated Phase Map, Execution Order, Task Status Summary table, PROGRESS.md, and CONTEXT.md to reflect Phase 7 state.
+**Files changed:** docs/TASK_PLAN.md (MODIFIED — Tasks #19/#20/#21 blocks added, Phase Map/Execution Order/Summary table updated), docs/memory/PROGRESS.md (MODIFIED — Phase 7 pending section added), docs/memory/CONTEXT.md (MODIFIED — focus updated to Phase 7), docs/memory/agents/project-manager.md (APPENDED), docs/memory/ACTIVITY_LOG.md (APPENDED)
+**Bugs fixed:** none
+**Decisions made:** All 3 items rated MEDIUM priority (not HIGH) — none block v1 release; BUG-06/BUG-07 are memory leaks with no data loss risk on normal localhost use; MEDIUM-04 is dev-only CVE
+**Blockers:** none
+**Next:** Assign Tasks #19, #20, #21 to backend-dev (x2) and devops in parallel. After all 3 complete, qa-tester regression pass, then tag v1.1.
+---
 ## 2026-03-18 — debugger — Full Codebase Code Review (user-requested)
 **Outcome:** COMPLETED
 **Summary:** Performed full codebase audit across all server and client files. Found 19 bugs/anomalies. Fixed 7 (2 HIGH, 4 MEDIUM, 1 HIGH-severity logic): AddProjectModal wrong endpoint (BUG-03), projects list response not destructured in Sidebar+ProjectsView (BUG-04), session object not destructured in Sidebar (BUG-05), WS_BASE hardcoded port (BUG-16), ws.bufferedAmount server-side undefined (BUG-11), yaml.load non-object return not guarded (BUG-14), double ProcessRegistry.unregister (BUG-02). 12 bugs documented and deferred to v1.1.

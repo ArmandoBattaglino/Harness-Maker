@@ -842,7 +842,7 @@ Client                              Server (terminalHandler.js)
 
 ### Backpressure Handling
 
-Before each `ws.send(data)` in the `pty.onData` handler, check `ws.bufferedAmount`. If it exceeds `262144` (256 KB), skip sending to that specific client. The ring buffer still receives the data — the client will resync on its next reconnect via ring buffer replay.
+Before each `ws.send(data)` in the `pty.onData` handler, check the underlying socket's write buffer. On the server-side `ws` module, `ws.bufferedAmount` is not available (that is a browser WebSocket API). Instead, check `ws._socket.bufferSize`. If it exceeds `262144` (256 KB), skip sending to that specific client. The ring buffer still receives the data — the client will resync on its next reconnect via ring buffer replay.
 
 This check is per-client. Slow clients do not block fast clients or the PTY.
 
@@ -1127,39 +1127,34 @@ The delimiter is exactly `---` on its own line. There must be a newline after th
 
 ```javascript
 function parseMarkdownWithFrontmatter(content) {
-  // Normalize CRLF to LF before parsing (Windows files)
-  const normalized = content.replace(/\r\n/g, '\n');
-
-  const DELIMITER = '---';
-  const lines = normalized.split('\n');
-
-  if (lines[0] !== DELIMITER) {
+  // Match both \n and \r\n line endings (Windows CRLF tolerance)
+  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/m);
+  if (!match) {
     // No frontmatter — treat entire content as body
-    return { frontmatter: {}, body: normalized };
+    return { frontmatter: {}, body: content };
   }
 
-  // Find closing delimiter
-  let closingIndex = -1;
-  for (let i = 1; i < lines.length; i++) {
-    if (lines[i] === DELIMITER) {
-      closingIndex = i;
-      break;
+  let frontmatter = {};
+  try {
+    const parsed = yaml.load(match[1]);
+    // yaml.load can return any scalar type (string, number, null) for trivial
+    // YAML blocks. Only accept plain objects; fall back to {} for everything else.
+    if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      frontmatter = parsed;
     }
+  } catch {
+    // Malformed YAML — treat as empty frontmatter, preserve body
+    frontmatter = {};
   }
 
-  if (closingIndex === -1) {
-    throw new Error('Malformed frontmatter: opening --- without closing ---');
-  }
-
-  const yamlBlock = lines.slice(1, closingIndex).join('\n');
-  const body = lines.slice(closingIndex + 1).join('\n').trimStart();
-
-  const frontmatter = yaml.load(yamlBlock, { schema: yaml.CORE_SCHEMA });
-  // CORE_SCHEMA: interprets true/false, integers, floats. No !! tags.
-
-  return { frontmatter, body };
+  return { frontmatter, body: match[2] };
 }
 ```
+
+**Implementation notes:**
+- A single regex replaces the line-split + loop approach. This handles `\r\n` inline without a pre-normalization step.
+- `yaml.load` is called without a schema option (default CORE schema behavior). The result type is explicitly guarded — if YAML parses to a scalar (e.g., a bare number or string), the frontmatter falls back to `{}` rather than propagating a non-object into downstream code.
+- Malformed YAML throws inside `yaml.load` — that is caught and treated as empty frontmatter, so the body is always preserved.
 
 ### Serialize Algorithm
 

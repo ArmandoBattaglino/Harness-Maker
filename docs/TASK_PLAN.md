@@ -49,6 +49,9 @@ Claude Code Visual Manager is a locally-hosted web application (served on `local
 | Phase 6 | #16 (Backend) | Security hardening: replace exec() in openBrowser with shell:false spawn |
 | Phase 6 | #17 (Backend) | Security hardening: validate allowedTools against character whitelist |
 | Phase 6 | #18 (Backend) | Security hardening: validate PID range in ProcessRegistry before kill |
+| Phase 7 | #19 (Backend) | v1.1: Fix JobRunner memory leak — evict completed/cancelled/error jobs from jobs Map |
+| Phase 7 | #20 (Backend) | v1.1: Fix rate limiter memory leak — add TTL/cleanup to _rateLimitMap |
+| Phase 7 | #21 (DevOps) | v1.1: Upgrade vite in client/ to patch MEDIUM-04 esbuild CVE |
 
 ---
 
@@ -1803,6 +1806,175 @@ Acceptance Criteria:
 Dependencies: TASK #14
 ---
 
+TASK #19: v1.1 — Fix JobRunner Memory Leak (Evict Completed Jobs)
+Agent: backend-dev
+Priority: MEDIUM
+Difficulty: EASY
+Status: PENDING
+Context:
+  BUG-06 — JobRunner memory leak: the `jobs` Map in server/services/JobRunner.js accumulates
+  completed, cancelled, and error entries indefinitely. Under sustained use (many prompts over time),
+  this causes unbounded memory growth in the Node.js process.
+
+  CURRENT BEHAVIOR (as of v1):
+  - `JobRunner.js` maintains a `jobs = new Map()` that stores JobRecord objects keyed by jobId.
+  - On job completion (done / cancelled / error), the job status is updated but the entry is NEVER
+    removed from the Map.
+  - The only cleanup path is `cancelAll()` called at server shutdown, which calls treeKill on
+    running jobs but does not clear the Map itself.
+  - The GET /api/v1/jobs/list endpoint reads all entries in the Map — as entries accumulate,
+    this endpoint also returns stale entries from prior jobs forever.
+
+  ROOT CAUSE:
+  No eviction policy exists for terminal-state jobs. The Map is write-once, never pruned.
+
+  RECOMMENDED FIX APPROACH:
+  Add a TTL-based eviction: after a job reaches a terminal state (done / cancelled / error),
+  schedule a `setTimeout` to delete it from the Map after a configurable retention window
+  (e.g., 10 minutes = 600_000 ms). This keeps jobs queryable for a reasonable time after
+  completion (so the UI can poll the result) while preventing unbounded accumulation.
+
+  Example pattern (add inside the section where status is set to done/cancelled/error):
+  ```js
+  const JOB_RETENTION_MS = 10 * 60 * 1000; // 10 minutes
+  // after setting job.status to terminal state:
+  setTimeout(() => { this.jobs.delete(jobId); }, JOB_RETENTION_MS);
+  ```
+
+  CONSTRAINTS:
+  - Do not remove jobs immediately on completion — the GET /api/v1/jobs/:id and SSE stream
+    endpoints need the record to be readable until the client has consumed the result.
+  - Do not add new npm dependencies.
+  - Do not modify test files. The fix must work alongside existing tests.
+  - Run `npm test` and `npm run build` to verify no regressions.
+
+  FILE TO MODIFY: server/services/JobRunner.js
+  RELATED: BUG-07 (rate limiter map leak, handled in TASK #20 separately)
+
+Acceptance Criteria:
+  - [ ] Completed, cancelled, and error jobs are automatically evicted from the jobs Map after
+        a defined retention window (configurable constant, at least 5 minutes)
+  - [ ] Jobs remain queryable via GET /api/v1/jobs/:id during the retention window
+  - [ ] GET /api/v1/jobs/list does not return entries older than the retention window
+  - [ ] `npm test` passes with 0 failures after the change
+  - [ ] `npm run build` passes with 0 errors
+  - [ ] No new npm dependencies introduced
+Dependencies: none
+---
+
+TASK #20: v1.1 — Fix Rate Limiter Memory Leak (TTL Cleanup on _rateLimitMap)
+Agent: backend-dev
+Priority: MEDIUM
+Difficulty: EASY
+Status: PENDING
+Context:
+  BUG-07 — Rate limiter memory leak: the in-memory `_rateLimitMap` in server/index.js
+  accumulates one entry per unique IP address and never removes them. Under normal localhost use
+  this is negligible (a single IP), but any misconfigured network or penetration test scenario
+  that sends requests from rotating IPs will grow the Map indefinitely.
+
+  CURRENT BEHAVIOR (as of v1, in server/index.js):
+  ```js
+  const _rateLimitMap = new Map(); // <ip, { count, windowStart }>
+  // On each request: look up IP, increment count, reset if window expired
+  // Entries are NEVER deleted — once an IP is seen, its entry lives forever
+  ```
+
+  ROOT CAUSE:
+  The sliding-window rate limiter updates entries but never prunes stale ones (entries where
+  `windowStart` is more than 1 minute in the past and the window has not been re-entered).
+
+  RECOMMENDED FIX APPROACH:
+  Option A (preferred — minimal overhead): After resetting a window entry (`windowStart = now,
+  count = 1`), also check if the previous window was idle (count stayed within limit the whole
+  time). If the IP has not been seen in the current window, schedule a deletion or simply
+  delete-on-reset. Alternatively, clear the entry when count resets and only re-add it when
+  the IP sends the next request in a new window.
+
+  Option B (simpler): Run a periodic sweep with `setInterval` (e.g., every 5 minutes) that
+  deletes all entries whose `windowStart + windowMs < Date.now()` (i.e., stale idle entries).
+  This is O(n) over the Map but runs infrequently.
+
+  Example (Option B):
+  ```js
+  const RATE_LIMIT_SWEEP_MS = 5 * 60 * 1000; // every 5 minutes
+  setInterval(() => {
+    const cutoff = Date.now() - windowMs;
+    for (const [ip, rec] of _rateLimitMap) {
+      if (rec.windowStart < cutoff) _rateLimitMap.delete(ip);
+    }
+  }, RATE_LIMIT_SWEEP_MS).unref();
+  ```
+  `.unref()` prevents the sweep interval from keeping the Node.js process alive during shutdown.
+
+  CONSTRAINTS:
+  - Do not add new npm dependencies (do not reach for express-rate-limit or similar).
+  - Run `npm test` and `npm run build` to verify no regressions.
+  - The fix must not change the observable rate-limiting behavior for legitimate requests.
+
+  FILE TO MODIFY: server/index.js (the in-memory rate limiter section)
+  RELATED: BUG-06 (JobRunner Map leak, handled in TASK #19 separately)
+
+Acceptance Criteria:
+  - [ ] `_rateLimitMap` entries for idle/expired IPs are eventually removed (TTL or sweep)
+  - [ ] Rate limiting behavior for active IPs is unchanged
+  - [ ] The sweep interval (if used) calls `.unref()` so it does not block process shutdown
+  - [ ] `npm test` passes with 0 failures after the change
+  - [ ] `npm run build` passes with 0 errors
+  - [ ] No new npm dependencies introduced
+Dependencies: none
+---
+
+TASK #21: v1.1 — Upgrade Vite to Patch MEDIUM-04 esbuild CVE
+Agent: devops
+Priority: MEDIUM
+Difficulty: EASY
+Status: PENDING
+Context:
+  MEDIUM-04 — esbuild CVE in client/ devDependencies: the security re-audit (2026-03-18) found
+  that `client/node_modules` contains a version of esbuild (pulled in transitively by vite) with
+  2 moderate npm audit findings. These are dev-only vulnerabilities — esbuild is not in the
+  production bundle and is never shipped to a user — but they show up in `npm audit` for client/.
+
+  CURRENT STATE:
+  - `npm audit` run from `client/` returns 2 moderate findings related to esbuild
+  - The server/ and root-level `npm audit` return 0 vulnerabilities
+  - esbuild is a transitive dependency of vite (not directly listed in client/package.json)
+  - The CVE affects only the build-time toolchain, not the running app
+
+  RECOMMENDED FIX:
+  Upgrade vite in client/package.json to the latest stable release in the vite 5.x line
+  (or vite 6.x if available and stable). A vite upgrade typically pulls in a patched esbuild.
+
+  Steps:
+  1. Check the latest vite version: `npm view vite versions --json | tail -20`
+  2. Update `client/package.json`: change `"vite": "^5.x.x"` to the latest stable version
+  3. Run `npm install` in `client/`
+  4. Run `npm run build` from the project root to confirm the build still passes
+  5. Run `npm audit` from `client/` to confirm the esbuild findings are resolved
+  6. If vite 6.x introduces breaking changes with the current vite.config.js, stay on vite 5.x
+     latest patch instead
+
+  CONSTRAINTS:
+  - Do not upgrade React, xterm.js, or react-markdown as part of this task (scope creep risk)
+  - Do not change vite.config.js unless a breaking change in the new vite version requires it
+  - Run `npm test` after to confirm 0 regressions (vitest uses its own runner, not vite)
+  - If the CVE is NOT resolved by the vite upgrade, document the residual finding and mark
+    the task PARTIAL with a note explaining what remains
+
+  FILE TO MODIFY: client/package.json (vite version bump), client/package-lock.json (regenerated)
+  REFERENCE: Security re-audit 2026-03-18, ACTIVITY_LOG.md entry for security agent
+
+Acceptance Criteria:
+  - [ ] `npm audit` run from `client/` returns 0 moderate or higher findings (or documents why
+        a residual finding cannot be fixed by a vite upgrade)
+  - [ ] `npm run build` from project root passes with 0 errors after the upgrade
+  - [ ] `npm test` passes with 0 failures after the upgrade
+  - [ ] client/package.json vite version is updated to a patched release
+  - [ ] No other direct dependencies in client/package.json are changed
+Dependencies: none
+---
+
 ## Execution Order
 
 ### Parallel at start:
@@ -1845,6 +2017,11 @@ Dependencies: TASK #14
 - TASK #17 (Backend — validate allowedTools)
 - TASK #18 (Backend — validate PID range in ProcessRegistry)
 
+### Phase 7 — v1.1 maintenance (all independent, run in parallel, no blocker):
+- TASK #19 (Backend — fix JobRunner jobs Map memory leak)
+- TASK #20 (Backend — fix rate limiter _rateLimitMap memory leak)
+- TASK #21 (DevOps — upgrade vite to patch esbuild CVE)
+
 ---
 
 ## Task Status Summary
@@ -1869,7 +2046,10 @@ Dependencies: TASK #14
 | 16 | Security Hardening — replace exec() in openBrowser | backend-dev | HIGH | EASY | COMPLETED |
 | 17 | Security Hardening — validate allowedTools whitelist | backend-dev | HIGH | EASY | COMPLETED |
 | 18 | Security Hardening — validate PID range in ProcessRegistry | backend-dev | HIGH | EASY | COMPLETED |
+| 19 | v1.1 — Fix JobRunner memory leak (evict completed jobs) | backend-dev | MEDIUM | EASY | PENDING |
+| 20 | v1.1 — Fix rate limiter memory leak (TTL on _rateLimitMap) | backend-dev | MEDIUM | EASY | PENDING |
+| 21 | v1.1 — Upgrade vite to patch esbuild CVE (MEDIUM-04) | devops | MEDIUM | EASY | PENDING |
 
 ---
 
-_Last updated: 2026-03-18 by project-manager — All 18 tasks COMPLETED. v1 RELEASE READY._
+_Last updated: 2026-03-18 by project-manager — 18 tasks COMPLETED (v1 RELEASE READY). 3 tasks PENDING (v1.1 backlog: Tasks #19, #20, #21)._
