@@ -255,3 +255,13 @@
 **Blockers:** none
 **Next:** Task #18 (PID range validation in ProcessRegistry) if not yet done; then qa-tester regression pass.
 ---
+---
+## 2026-03-18 — code-mapper — Tasks #16+#17+#18: Security Hardening Code Map Update
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md and CHANGELOG.md to reflect three security fixes: openBrowser() exec→spawn (MEDIUM-01), allowedTools whitelist validation (MEDIUM-02), and ProcessRegistry PID range guard (MEDIUM-03). Added 7 new ProcessRegistry Function Graph entries that were previously missing, documented the openBrowser() function for the first time, and updated the startup() and POST /api/v1/jobs entries. All MEDIUM security findings now marked FIXED in Key Behaviors.
+**Files changed:** docs/memory/CODE_MAP.md (MODIFIED), docs/memory/CHANGELOG.md (APPENDED), docs/memory/ACTIVITY_LOG.md (APPENDED), docs/memory/agents/code-mapper.md (APPENDED)
+**Bugs fixed:** none
+**Decisions made:** Documented ProcessRegistry internals as full Function Graph entries (was only Module Index row) — security changes made them load-bearing; flagged allowedTools validation as BREAKING CHANGE in CHANGELOG
+**Blockers:** none
+**Next:** Project is v1 release-ready. No further code-mapper work pending.
+---

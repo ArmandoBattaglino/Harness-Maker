@@ -175,3 +175,67 @@ Tasks #13 (QA Test Suite — qa-tester), #14 (Security Audit — security), and 
 ### Handoff
 No pending tasks in current plan. If MEDIUM security findings are addressed, code-mapper should document changes to: server/index.js (exec → execFile for auto-open), server/routes/jobs.js (allowedTools validation), server/services/ProcessRegistry.js (PID integrity check).
 ---
+
+---
+## 2026-03-18 — Tasks #16+#17+#18: Security Hardening — openBrowser spawn, allowedTools whitelist, PID range guard
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+Tasks #16 (exec→spawn in openBrowser — server/index.js), #17 (allowedTools whitelist — server/routes/jobs.js), and #18 (PID range guard — server/services/ProcessRegistry.js) had just completed. These were the three MEDIUM security findings from the Task #14 audit (MEDIUM-01, MEDIUM-02, MEDIUM-03). CODE_MAP.md was complete through Task #15. CHANGELOG.md had entries through Task #15. My previous session log explicitly anticipated: "code-mapper should document changes to: server/index.js (exec→execFile for auto-open), server/routes/jobs.js (allowedTools validation), server/services/ProcessRegistry.js (PID integrity check)."
+
+### What I did
+1. Read agent memory file — confirmed previous state and exact handoff note
+2. Read existing CODE_MAP.md (full, 861 lines) and CHANGELOG.md (full) to understand prior state
+3. Read all 3 modified source files in parallel: server/index.js, server/routes/jobs.js, server/services/ProcessRegistry.js
+4. Ran 3 targeted Grep calls: openBrowser callers, isValidPid callers, allowedTools references across server/
+5. Confirmed: openBrowser is called only from startup(); isValidPid is called only from register() and cleanupStale(); allowedTools validation is local to the POST handler
+6. Updated CODE_MAP.md header line (tasks #16-#18)
+7. Updated Module Index entry for ProcessRegistry to mention isValidPid guard
+8. Added new `openBrowser(url)` Function Graph entry (with Windows start/title-arg complexity note)
+9. Updated `startup()` Function Graph entry — added openBrowser to Calls list, updated side effects, updated Last modified
+10. Updated `POST /api/v1/jobs` Function Graph entry — added allowedTools whitelist detail and Complexity note, updated Last modified
+11. Added 7 new ProcessRegistry Function Graph entries: isValidPid, register, unregister, cleanupStale, readRegistry (internal), writeRegistry (internal), killProcess (internal)
+12. Updated Key Behaviors section: changed audit result bullet, added 3 FIXED bullets for MEDIUM-01/02/03
+13. Appended 3 CHANGELOG entries (Tasks #16, #17, #18) with full function-level detail including breaking change note for Task #17
+14. Appended ACTIVITY_LOG entry
+15. Wrote this agent memory log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header updated; ProcessRegistry module index updated; openBrowser() new entry; startup() updated; POST /api/v1/jobs updated; 7 new ProcessRegistry Function Graph entries; Key Behaviors updated with MEDIUM-01/02/03 FIXED status |
+| docs/memory/CHANGELOG.md | APPENDED | Three entries: Task #16 (openBrowser spawn fix), Task #17 (allowedTools whitelist), Task #18 (PID range guard) |
+| docs/memory/ACTIVITY_LOG.md | APPENDED | code-mapper entry for Tasks #16+#17+#18 |
+| docs/memory/agents/code-mapper.md | APPENDED | This session log |
+
+### Improvements delivered
+- CODE_MAP.md now documents the full ProcessRegistry module as first-class Function Graph entries (was previously only in Module Index table — no function-level detail)
+- openBrowser() is now a documented named function with the Windows start/title-arg complexity note preserved
+- MEDIUM-01/02/03 FIXED status is now in Key Behaviors — any future agent can see the security posture without reading the full audit
+- Task #17 breaking change (400 for malformed allowedTools) is flagged in CHANGELOG for any future API consumers
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| startup() entry used backslash path `server\index.js` (inconsistent with rest of file) | Prior edit used backslash | Kept existing format — grep confirmed this is how it was stored | KNOWN (cosmetic only) |
+
+### Decisions I made
+- Added full function graph entries for ProcessRegistry internal helpers (readRegistry, writeRegistry, killProcess, isProcessAlive) — these are now security-relevant since isValidPid feeds into cleanupStale/register. Future agents debugging unexpected cleanup behavior need to know how the read→filter→kill chain works.
+- Flagged Task #17 allowedTools validation as a BREAKING CHANGE in CHANGELOG — clients sending allowedTools with spaces/slashes now get 400 instead of pass-through. Documented which values are affected vs unaffected.
+- Used `isValidPid` rather than "PID integrity check" as the function name in all entries for searchability
+
+### What I learned
+- ProcessRegistry had NO Function Graph entries at all in CODE_MAP.md — only a single Module Index table row. The module was non-trivial (7 functions, 2 now with security guards) and needed proper entries
+- The Windows `start` command requires an explicit empty-string title argument: `cmd.exe /c start "" <url>`. Without it, `start` misparses the URL as the window title. This complexity note is load-bearing for any future developer modifying openBrowser()
+- MAX_PID = 65535 is intentionally conservative (Linux default is 32768, configurable to 4194304). The comment in the source explains the rationale. Documented in Complexity note.
+
+### State I'm leaving behind
+- CODE_MAP.md: complete through Task #18. All 3 MEDIUM security findings are reflected as FIXED.
+- CHANGELOG.md: entries for Tasks #1-#18 present (full project history).
+- TASK_PLAN.md: Tasks #16, #17, #18 already COMPLETED (set by project-manager).
+- Project status: v1 RELEASE READY per ACTIVITY_LOG/project-manager entry.
+
+### Handoff
+All 18 tasks complete. No pending code-mapper work. If a v1.1 cycle begins (LOW findings: CSP unsafe-inline, rate limiter persistent storage), code-mapper should document changes to server/middleware/security.js (CSP update) and server/index.js (rateLimit function, if persisted).
+---
