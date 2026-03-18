@@ -861,7 +861,7 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   Implement the React UI for managing agents, skills, and CLAUDE.md files. This is the Entities view of the application, covering PRD requirements FR-28 through FR-40 on the frontend side.
 

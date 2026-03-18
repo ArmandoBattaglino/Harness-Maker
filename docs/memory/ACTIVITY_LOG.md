@@ -8,6 +8,15 @@
 **Blockers:** none
 **Next:** Task #8 (frontend-dev) — AgentEditor, SkillEditor, ClaudeMdEditor React components
 ---
+## 2026-03-18 — frontend-dev — Task #8: Entity Management UI — AgentEditor, SkillEditor, ClaudeMdEditor
+**Outcome:** COMPLETED
+**Summary:** Implemented the full entity management UI in React. Created three editor components (AgentEditor, SkillEditor, ClaudeMdEditor) and updated EntitiesView to render them via a tab bar. All components connect to the backend APIs with proper CSRF headers, display loading/error states, and handle form validation. Build verified clean (49 modules, no errors).
+**Files changed:** client/src/hooks/useApi.js (apiPut + apiDeleteWithBody added), client/src/components/AgentEditor.jsx (CREATED), client/src/components/SkillEditor.jsx (CREATED), client/src/components/ClaudeMdEditor.jsx (CREATED), client/src/views/EntitiesView.jsx (replaced stub)
+**Bugs fixed:** apiPut and apiDeleteWithBody were missing from useApi.js
+**Decisions made:** Non-auto-dismiss restart banner for agents per spec; auto-dismiss 3s toast for skills; live (not debounced) line count in ClaudeMdEditor
+**Blockers:** none
+**Next:** Task #9 (Job Mode API — backend-dev) + Task #10 (Job Mode UI — frontend-dev)
+---
 ## 2026-03-18 — project-manager — Project Analysis: Status Review + Task Plan Update
 **Outcome:** COMPLETED
 **Summary:** Discovered that Tasks #3-#6 were all committed to git but the TASK_PLAN.md still showed them as IN_PROGRESS or PENDING. Updated all 4 task statuses to COMPLETED. Identified that FileManager.js was not created in Task #5 despite being in the spec — this is a gap that Task #7 must fill. Project is now entering Phase 2 (Entity Management) and Phase 3 (Job Mode) simultaneously.

@@ -41,3 +41,27 @@ export async function apiDelete(path) {
   });
   return handleResponse(res);
 }
+
+export async function apiDeleteWithBody(path, body) {
+  const res = await fetch(path, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      ...MUTATION_HEADER,
+    },
+    body: JSON.stringify(body),
+  });
+  return handleResponse(res);
+}
+
+export async function apiPut(path, body) {
+  const res = await fetch(path, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...MUTATION_HEADER,
+    },
+    body: JSON.stringify(body),
+  });
+  return handleResponse(res);
+}

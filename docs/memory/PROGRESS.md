@@ -50,8 +50,8 @@ _None._
 
 ## Pending
 
-### Phase 2 — Entity Management
-- [TASK-8] Entity Management UI — AgentEditor, SkillEditor, ClaudeMdEditor (frontend-dev)
+- [TASK-8] Entity Management UI (frontend-dev) — COMPLETED 2026-03-18
+  EntitiesView with 3 tabs: AgentEditor (full CRUD + restart banner), SkillEditor (full CRUD + toast), ClaudeMdEditor (dual-panel + live line count + 300-line warning). Build clean.
 
 ### Phase 3 — Job Mode
 - [TASK-9] Job Mode API — JobRunner + SSE streaming (backend-dev)
