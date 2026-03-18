@@ -217,3 +217,66 @@ All 12 implementation tasks (#1-#12) were confirmed COMPLETED in TASK_PLAN.md. P
 ### Handoff
 Assign Task #13 (qa-tester) + Task #14 (security) + Task #15 (documenter) all in parallel. These three together represent the final gate before v1 release.
 ---
+
+---
+## 2026-03-18 — Task: Phase 5 close-out + Phase 6 security hardening task creation (Session 5)
+**Status:** COMPLETED
+**Called by:** user (direct invocation — post Phase 5 completion status review and v1 assessment)
+
+### Context when I started
+Tasks #13 (QA), #14 (Security), #15 (Documentation) had just been reported COMPLETED by their respective agents. TASK_PLAN.md had Tasks #13 and #15 correctly marked COMPLETED but the Task Status Summary table showed Task #14 as PENDING (stale). PROGRESS.md was accurate but had Tasks #13 and #14 listed below the "Blocked" section header despite being completed. The security audit found 3 MEDIUM findings that the security agent said "should be addressed before release."
+
+### What I did
+1. Read docs/memory/agents/project-manager.md (own history) and docs/TASK_PLAN.md in parallel to understand current state
+2. Read docs/SECURITY_AUDIT.md in full — all 3 MEDIUM findings with exact file/line references and recommended fix code
+3. Read docs/memory/PROGRESS.md to confirm task status
+4. Fixed Task Status Summary table: row #14 changed from PENDING to COMPLETED
+5. Added 3 new task blocks to TASK_PLAN.md (Tasks #16, #17, #18) — one per MEDIUM finding — each with exact current code location, exact recommended fix, and precise acceptance criteria
+6. Updated Phase Map table: added Phase 6 rows for #16, #17, #18
+7. Updated Execution Order section: added Phase 6 parallel block
+8. Updated Task Status Summary table: added 3 new rows PENDING
+9. Updated docs/memory/PROGRESS.md: added Phase 6 pending block; updated v1 Release Status from READY to NEAR-RELEASE
+10. Appended ACTIVITY_LOG.md entry and this session log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Fixed Task #14 in summary table; added Tasks #16/17/18 blocks; updated Phase Map, Execution Order, Task Status Summary |
+| docs/memory/PROGRESS.md | MODIFIED | Added Phase 6 pending block; updated v1 Release Status to NEAR-RELEASE |
+| docs/memory/agents/project-manager.md | APPENDED | This session log |
+| docs/memory/ACTIVITY_LOG.md | APPENDED | Session entry for this status sync |
+
+### Improvements delivered
+- TASK_PLAN.md now accurately reflects 18 total tasks (15 COMPLETED, 3 PENDING)
+- Phase 6 security hardening tasks are fully specified — backend-dev can pick up all 3 immediately with no additional research
+- PROGRESS.md correctly reflects NEAR-RELEASE state (not prematurely marked complete)
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| Task #14 shown as PENDING in summary table | Security agent updated its own task block but not the summary table | Fixed row #14 to COMPLETED | FIXED |
+
+### Decisions I made
+- All 3 MEDIUM security findings require tasks before v1 — the audit verdict is NEEDS_ATTENTION and explicitly says "should be addressed before release."
+- Tasks #16, #17, #18 all rated HIGH priority, EASY difficulty — targeted 5-15 line fixes each, no new dependencies needed.
+- All 3 run in parallel (different files: server/index.js, routes/jobs.js, services/ProcessRegistry.js).
+- 2 LOW findings (unsafe-inline CSS, rate limiter memory growth) deferred to v1.1 — not blocking.
+- After #16/#17/#18 complete: qa-tester regression pass on changed files, then v1 is done.
+
+### What I learned
+- Task Status Summary table drifts consistently — PM must fix it on every status sync.
+- Security audit verdict NEEDS_ATTENTION means tasks must be created, not deferred.
+- Including the exact recommended fix code inside each task's Context section enables backend-dev to implement without re-reading the audit.
+
+### State I'm leaving behind
+- Tasks #1–#15: COMPLETED
+- Task #16: PENDING — backend-dev, fix server/index.js openBrowser (exec -> spawn shell:false)
+- Task #17: PENDING — backend-dev, fix server/routes/jobs.js allowedTools validation
+- Task #18: PENDING — backend-dev, fix server/services/ProcessRegistry.js PID range guard
+- v1 status: NEAR-RELEASE — 3 easy targeted fixes remaining
+
+### Handoff
+Assign Tasks #16, #17, #18 ALL IN PARALLEL to backend-dev (different files, no conflicts).
+After all 3 complete: run qa-tester regression pass on the 3 changed files.
+After qa confirms green: v1 is COMPLETE.
+---
