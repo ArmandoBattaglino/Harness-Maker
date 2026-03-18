@@ -1,29 +1,150 @@
-// server/index.js — Express server stub for Claude Code Visual Manager
-// Serves the built React SPA from server/public and exposes a /health endpoint
-// Full API and WebSocket implementation added in Task #3 by backend-dev
-import express from 'express';
+// server/index.js
+// Full server bootstrap for Claude Code Visual Manager.
+// Startup sequence matches docs/ARCHITECTURE.md § 10.
+
 import { createServer } from 'http';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { WebSocketServer } from 'ws';
+import express from 'express';
+
+import { discoverClaudeBinary } from './services/BinaryDiscovery.js';
+import { ConfigStore } from './services/ConfigStore.js';
+import { ProcessRegistry } from './services/ProcessRegistry.js';
+import { securityMiddleware } from './middleware/security.js';
+import { csrfMiddleware } from './middleware/csrf.js';
+import { ApiError } from './middleware/pathValidation.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const PORT = process.env.PORT || 3000;
-const app = express();
 
-app.use(express.json());
-app.use(express.static(join(__dirname, 'public')));
+// ---------------------------------------------------------------------------
+// 1. Load env
+// ---------------------------------------------------------------------------
+const PORT = parseInt(process.env.PORT ?? '3000', 10);
+// IDLE_TIMEOUT_MINUTES and CLAUDE_BIN are consumed by their respective modules
 
-app.get('/health', (req, res) => res.json({ status: 'ok', version: '0.1.0' }));
+// ---------------------------------------------------------------------------
+// 2–4. Startup sequence (async IIFE so we can await and handle fatal errors)
+// ---------------------------------------------------------------------------
+let claudeBin;
 
-// SPA fallback — all non-API routes return index.html
-app.get('*', (req, res) => {
-  res.sendFile(join(__dirname, 'public', 'index.html'));
-});
+async function startup() {
+  // Step 2: Discover claude binary — throws and we exit if not found
+  try {
+    claudeBin = await discoverClaudeBinary();
+    console.log(`Claude CLI found at: ${claudeBin}`);
+  } catch (err) {
+    console.error(`[FATAL] ${err.message}`);
+    process.exit(1);
+  }
 
-const server = createServer(app);
-const wss = new WebSocketServer({ server });
+  // Step 3: Load config (creates defaults if file missing)
+  try {
+    await ConfigStore.load();
+    console.log('ConfigStore loaded.');
+  } catch (err) {
+    console.error(`[FATAL] Failed to load config: ${err.message}`);
+    process.exit(1);
+  }
 
-server.listen(PORT, '127.0.0.1', () => {
-  console.log(`Claude Code Visual Manager running at http://127.0.0.1:${PORT}`);
-});
+  // Step 4: Kill any orphaned processes from a previous run
+  try {
+    await ProcessRegistry.cleanupStale();
+    console.log('ProcessRegistry: stale process cleanup complete.');
+  } catch (err) {
+    // Non-fatal — log and continue
+    console.error(`[WARN] ProcessRegistry cleanup error: ${err.message}`);
+  }
+
+  // -------------------------------------------------------------------------
+  // 5. Build Express app and apply middleware
+  // -------------------------------------------------------------------------
+  const app = express();
+
+  // Security (Helmet + CSP)
+  securityMiddleware(app);
+
+  // Body parsing
+  app.use(express.json());
+
+  // CSRF protection
+  app.use(csrfMiddleware);
+
+  // -------------------------------------------------------------------------
+  // 6. Routes
+  // -------------------------------------------------------------------------
+
+  // Health check
+  app.get('/health', (req, res) => {
+    res.json({ status: 'ok', version: '0.1.0', claudeBin });
+  });
+
+  // Placeholder for all API routes — returns 501 until Task #4+ implements them
+  app.all('/api/v1/*', (req, res) => {
+    res.status(501).json({ error: 'Not implemented' });
+  });
+
+  // -------------------------------------------------------------------------
+  // 7. Serve static client build
+  // -------------------------------------------------------------------------
+  app.use(express.static(join(__dirname, 'public')));
+
+  // -------------------------------------------------------------------------
+  // 8. SPA fallback — non-API routes return index.html
+  // -------------------------------------------------------------------------
+  app.get('*', (req, res) => {
+    res.sendFile(join(__dirname, 'public', 'index.html'));
+  });
+
+  // -------------------------------------------------------------------------
+  // 9. Global error handler
+  // NEVER log req.body or response data (SEC-08)
+  // -------------------------------------------------------------------------
+  // eslint-disable-next-line no-unused-vars
+  app.use((err, req, res, next) => {
+    if (err instanceof ApiError) {
+      return res.status(err.statusCode).json({ error: err.message });
+    }
+    // Unexpected error — log for debugging but never expose internals
+    console.error(`[ERROR] ${req.method} ${req.path} —`, err.message);
+    return res.status(500).json({ error: 'Internal server error' });
+  });
+
+  // -------------------------------------------------------------------------
+  // 10. Start HTTP server — MUST bind to 127.0.0.1 (DEC-002)
+  // -------------------------------------------------------------------------
+  const server = createServer(app);
+
+  await new Promise((resolve, reject) => {
+    server.on('error', reject);
+    server.listen(PORT, '127.0.0.1', () => {
+      console.log(`Claude Code Visual Manager running at http://127.0.0.1:${PORT}`);
+      resolve();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // 11. Graceful shutdown handlers
+  // -------------------------------------------------------------------------
+  async function shutdown(signal) {
+    console.log(`\n[${signal}] Shutting down gracefully…`);
+
+    // Stop accepting new connections
+    server.close(() => {
+      console.log('HTTP server closed.');
+    });
+
+    // Kill any tracked child processes
+    try {
+      await ProcessRegistry.cleanupStale();
+    } catch (err) {
+      console.error(`[WARN] ProcessRegistry shutdown cleanup error: ${err.message}`);
+    }
+
+    process.exit(0);
+  }
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
+}
+
+startup();
