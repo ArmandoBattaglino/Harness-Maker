@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-18 — after Task #13: QA Test Suite (qa-tester) + Task #14: Security Audit (security) + Task #15: Documentation (documenter) by code-mapper_
+_Last updated: 2026-03-18 — after Task #16: exec→spawn in openBrowser (security) + Task #17: allowedTools whitelist (security) + Task #18: PID range guard (security) by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -12,7 +12,7 @@ _Last updated: 2026-03-18 — after Task #13: QA Test Suite (qa-tester) + Task #
 |------|-------------|---------|
 | server/index.js | (main) | Full bootstrap: binary discovery, config load, stale PID cleanup, middleware, routes, static SPA, error handler, 127.0.0.1 binding, SIGTERM/SIGINT |
 | server/services/ConfigStore.js | ConfigStore | Manages %APPDATA%\ClaudeCodeManager\config.json — projects CRUD, settings, write-file-atomic |
-| server/services/ProcessRegistry.js | ProcessRegistry | Tracks active PIDs in active_pids.json, cleanupStale() on startup |
+| server/services/ProcessRegistry.js | ProcessRegistry | Tracks active PIDs in active_pids.json, cleanupStale() on startup; isValidPid() guards register+cleanup against out-of-range values |
 | server/services/BinaryDiscovery.js | discoverClaudeBinary | 4-step Claude binary lookup: env var → PATH → %LOCALAPPDATA% → fatal error |
 | server/services/FileManager.js | FileManager (class), fileManager (singleton) | Atomic file I/O with path-traversal protection for all entity writes |
 | server/services/index.js | (barrel) | Re-exports ConfigStore, ProcessRegistry, discoverClaudeBinary |
@@ -327,14 +327,26 @@ _Last updated: 2026-03-18 — after Task #13: QA Test Suite (qa-tester) + Task #
 
 ---
 
+### `server/index.js` :: `openBrowser(url)`
+- **Purpose:** Open the app URL in the system default browser after server starts. Skipped when NO_OPEN=1 (tests, CI, headless). Platform-branched: Windows uses `cmd.exe /c start "" <url>`, macOS uses `open`, Linux uses `xdg-open`. Always spawns with `{ shell: false }` — URL is passed as an array element, never interpolated into a shell string (SEC-02).
+- **Called by:** startup() (inline, after server.listen resolves)
+- **Calls:** spawn (child_process) with shell:false, detached:true, stdio:ignore; child.unref()
+- **Inputs:** url (string — the server URL, e.g. http://127.0.0.1:3000)
+- **Output:** void
+- **Side effects:** spawns detached child process (cmd.exe / open / xdg-open); child is unref'd so it does not block process exit
+- **Complexity note:** Windows: `start` is a cmd.exe built-in — must be invoked via `cmd.exe /c start "" <url>`. The empty string is a required title argument for `start`. Without it `start` misparses the URL as the window title.
+- **Last modified:** 2026-03-18 in Task #16 by security (replaced exec() with spawn shell:false — MEDIUM-01 fix)
+
+---
+
 ### `server/index.js` :: `startup()`
 - **Purpose:** Full server bootstrap — binary discovery, config load, stale PID cleanup, Express setup, middleware, route mounting, WebSocket, HTTP bind.
 - **Called by:** entry point (module level)
-- **Calls:** discoverClaudeBinary, ConfigStore.load, ProcessRegistry.cleanupStale, securityMiddleware, csrfMiddleware, projectsRouter, sessionsRouter, agentsRouter, skillsRouter, claudemdRouter, jobsRouter, setupTerminalWebSocket
+- **Calls:** discoverClaudeBinary, ConfigStore.load, ProcessRegistry.cleanupStale, securityMiddleware, csrfMiddleware, projectsRouter, sessionsRouter, agentsRouter, skillsRouter, claudemdRouter, jobsRouter, setupTerminalWebSocket, openBrowser
 - **Inputs:** none (reads env: PORT, IDLE_TIMEOUT_MINUTES, CLAUDE_BINARY_PATH)
 - **Output:** Promise\<void\>
-- **Side effects:** HTTP server listening on 127.0.0.1:PORT, WebSocket server, SIGTERM/SIGINT handlers; sets jobRunner.claudeBin after binary discovery
-- **Last modified:** 2026-03-18 in Task #9 by backend-dev (added jobsRouter mount, jobRunner.claudeBin assignment, jobRunner.cancelAll() in shutdown)
+- **Side effects:** HTTP server listening on 127.0.0.1:PORT, WebSocket server, SIGTERM/SIGINT handlers; sets jobRunner.claudeBin after binary discovery; calls openBrowser(url) unless NO_OPEN=1
+- **Last modified:** 2026-03-18 in Task #16 by security (openBrowser refactored exec→spawn shell:false)
 
 ---
 

@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-03-18 after Task #15: Final Documentation for Claude Code Visual Manager_
+_Last updated: 2026-03-18 after Tasks #16–#18: Security Hardening (exec→spawn, allowedTools whitelist, PID range guard)_
 
 ## Status Legend
 - UP_TO_DATE — matches current code

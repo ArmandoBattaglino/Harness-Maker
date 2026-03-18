@@ -70,19 +70,22 @@ _None._
 
 ## Pending
 
-### Phase 6 — Security Hardening (UNBLOCKED — all 3 can run in parallel)
-- [TASK-16] Security hardening — replace exec() in openBrowser with shell:false spawn (backend-dev)
-  Fix: server/index.js. Replace exec(cmd) with spawn(bin, args, { shell:false, detached:true }). Easy 10-line change.
-- [TASK-17] Security hardening — validate allowedTools against character whitelist (backend-dev)
-  Fix: server/routes/jobs.js. Add /^[a-zA-Z0-9_,\-]+$/ regex check + 512-char length cap before passing to spawn.
+_None. All 18 tasks COMPLETED._
+
+### Phase 6 — Security Hardening (ALL COMPLETED 2026-03-18)
+- [TASK-16] Security hardening — replace exec() in openBrowser with shell:false spawn (backend-dev) — COMPLETED 2026-03-18
+  Fixed: server/index.js. openBrowser() now uses spawn with shell:false, detached:true, child.unref(). exec removed.
+- [TASK-17] Security hardening — validate allowedTools against character whitelist (backend-dev) — COMPLETED 2026-03-18
+  Fixed: server/routes/jobs.js. Added /^[a-zA-Z0-9_,\-]+$/ regex check + 512-char length cap, HTTP 400 on violation.
 - [TASK-18] Security hardening — validate PID range in ProcessRegistry (backend-dev) — COMPLETED 2026-03-18
-  Added isValidPid() helper (range 1–65535), guarded cleanupStale() with warn+skip, guarded register() with warn+return.
+  Fixed: server/services/ProcessRegistry.js. isValidPid() helper (range 1–65535), cleanupStale() and register() both guarded.
 
 ## v1 Release Status
-**NEAR-RELEASE — Phase 5 COMPLETE. 3 MEDIUM security hardening tasks remain before true v1.**
-- All 15 tasks (Phase 0–5) COMPLETED 2026-03-18.
-- Security audit verdict: NEEDS_ATTENTION (0 CRITICAL/HIGH, 3 MEDIUM, 2 LOW). Risk: LOW.
-- Tasks #16, #17, #18 are the final gate. Once these 3 easy backend fixes merge, status upgrades to v1 RELEASED.
+**v1 RELEASE READY — All 18 tasks COMPLETED as of 2026-03-18.**
+- All 18 tasks (Phase 0–6) COMPLETED 2026-03-18.
+- Security audit verdict: ALL 3 MEDIUM findings RESOLVED. 2 LOW findings deferred to v1.1 (unsafe-inline CSS, rate limiter memory growth). Risk: LOW.
+- 0 CRITICAL, 0 HIGH, 0 MEDIUM findings remaining. Project is v1 release-ready.
+- Final gate cleared: Tasks #16 (exec→spawn), #17 (allowedTools whitelist), #18 (PID range guard) all merged.
 
 ## Known Issues
 - R-01 (RESOLVED): node-pty-prebuilt-multiarch not available — plain node-pty used instead

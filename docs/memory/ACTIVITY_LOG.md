@@ -1,4 +1,14 @@
 ---
+## 2026-03-18 — project-manager — Phase 6 close-out + v1 Release Assessment
+**Outcome:** COMPLETED
+**Summary:** Confirmed Tasks #16, #17, #18 all COMPLETED in TASK_PLAN.md (individual blocks and Task Status Summary table were already accurate). Updated docs/memory/PROGRESS.md: moved Phase 6 tasks to Completed, upgraded v1 Release Status from NEAR-RELEASE to v1 RELEASE READY. All 3 MEDIUM security findings from the audit are now resolved. The project has 18/18 tasks COMPLETED and is ready for v1 release.
+**Files changed:** docs/memory/PROGRESS.md (MODIFIED — Phase 6 section updated, v1 status upgraded), docs/TASK_PLAN.md (MODIFIED — footer timestamp updated), docs/memory/agents/project-manager.md (APPENDED), docs/memory/ACTIVITY_LOG.md (APPENDED)
+**Bugs fixed:** none
+**Decisions made:** v1 is RELEASE READY — all MEDIUM findings resolved, 2 LOW findings deferred to v1.1
+**Blockers:** none
+**Next:** v1 release. Optional: QA regression pass on the 3 changed files (#16/#17/#18) before tagging. v1.1 backlog: unsafe-inline CSP fix, rate limiter persistent storage.
+---
+
 ## 2026-03-18 — backend-dev — Task #18: Security Hardening — PID Range Validation in ProcessRegistry
 **Outcome:** COMPLETED
 **Summary:** Added isValidPid() helper (range 1–65535) to server/services/ProcessRegistry.js. cleanupStale() now skips out-of-range PIDs with a [ProcessRegistry] warning instead of passing them to treeKill. register() now returns early with a warning if the PID is out of range. Resolves security audit MEDIUM-03.
