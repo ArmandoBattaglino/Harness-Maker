@@ -115,3 +115,63 @@ Tasks #9 (Job Mode API — backend-dev), #10 (Job Mode UI — frontend-dev), and
 ### Handoff
 After Task #12: document NFR improvements — browser auto-open, resilience improvements, startup polish. After Tasks #13-#15: document test suite location, security audit findings, README.
 ---
+
+---
+## 2026-03-18 — Tasks #13+#14+#15: QA Test Suite + Security Audit + Documentation
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+Tasks #13 (QA Test Suite — qa-tester), #14 (Security Audit — security), and #15 (Documentation — documenter) had just completed. CODE_MAP.md covered through Task #11. CHANGELOG.md had entries through Task #11. Previous session log noted: "After Tasks #13-#15: document test suite location, security audit findings, README."
+
+### What I did
+1. Read agent memory file to confirm previous state and handoff notes
+2. Read existing CODE_MAP.md (header + all sections) and CHANGELOG.md
+3. Read all 7 new test files in parallel: RingBuffer.test.js, FileManager.test.js, csrf.test.js, pathValidation.test.js, SessionManager.test.js, JobRunner.test.js, vitest.config.js
+4. Read docs/SECURITY_AUDIT.md (first 50 lines — verdict + findings)
+5. Read docs/TEST_RESULTS.md (first 50 lines — summary)
+6. Updated CODE_MAP.md header line (tasks #13-#15)
+7. Added Test Infrastructure table to Module Index section (7 files, test counts)
+8. Added Security + QA Artifacts section listing docs artifacts
+9. Added full Test Modules section with 7 Function Graph entries (one per test file + vitest.config)
+10. Added 3 new Key Behavior bullets (test suite facts, class-not-singleton pattern, security audit result)
+11. Appended 3 detailed CHANGELOG entries (Tasks #13, #14, #15)
+12. Wrote this agent memory log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header updated; Test Infrastructure table added; Security+QA Artifacts section added; 7 new Function Graph entries for test files; 3 new Key Behavior bullets |
+| docs/memory/CHANGELOG.md | APPENDED | Three entries: Task #13 (full per-suite breakdown), Task #14 (audit verdict + findings), Task #15 (docs files) |
+| docs/memory/agents/code-mapper.md | APPENDED | This session log |
+
+### Improvements delivered
+- CODE_MAP.md now maps all 6 test files as first-class modules with their coverage target, test count, mocking strategy, and key edge cases documented
+- Security audit findings (3 MEDIUM) documented in KEY BEHAVIORS for any future agent to find without reading the full audit
+- JobRunner.test.js complexity notes preserved: vi.hoisted() TDZ issue and PassThrough vs EventEmitter distinction
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None | — | — | — |
+
+### Decisions I made
+- Documented test files as proper Function Graph entries (not just a table row in Module Index) — test files have architectural properties worth preserving: what they import, what they mock, which class vs singleton, and non-obvious constraints like vi.hoisted() and PassThrough
+- Noted `{ SessionManager }` class import pattern explicitly — future backend-devs need to know tests use the class, not the singleton, or test isolation breaks
+- Security audit MEDIUM findings added to Key Behaviors (not just CHANGELOG) because they are actionable constraints for future development
+
+### What I learned
+- vi.hoisted() is required when a mock factory needs to reference a variable that would be in TDZ at mock-hoist time. This is a Vitest-specific pattern (not in Vitest docs prominently)
+- PassThrough stream required for readline.createInterface — plain EventEmitter lacks .resume(). This will catch future developers if they try to simplify the mock
+- The security audit explicitly verified all 10 SEC requirements pass, but notes exec() in browser auto-open as a latent risk (not yet a vulnerability, but one code change away from being one)
+- Task #15 (documenter) modified docs/memory/PROJECT.md and docs/memory/PROGRESS.md — these are living memory files, not code. CODE_MAP does not track them in the Function Graph but the CHANGELOG entry records the update for audit trail
+
+### State I'm leaving behind
+- CODE_MAP.md: complete through Task #15. All server modules, client modules, and test infrastructure documented.
+- CHANGELOG.md: entries for Tasks #1-#15 present (full project history).
+- All 110 tests passing. Security audit complete with 3 MEDIUM findings deferred to pre-release fix cycle.
+- Next work: address MEDIUM security findings (exec() auto-open, allowedTools whitelist, PID file integrity) before v1.0 release
+
+### Handoff
+No pending tasks in current plan. If MEDIUM security findings are addressed, code-mapper should document changes to: server/index.js (exec → execFile for auto-open), server/routes/jobs.js (allowedTools validation), server/services/ProcessRegistry.js (PID integrity check).
+---

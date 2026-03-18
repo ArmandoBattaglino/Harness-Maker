@@ -187,3 +187,83 @@
 - `StatusBadge({ active })`: green "Active" if sessions[project.id] truthy, grey "No session" otherwise; reads sessions from AppContext
 - `ConfirmDialog({ projectName, onConfirm, onCancel, busy })`: fixed-position overlay; warns "no files deleted — registry only"; disables buttons while busy
 - `formatDate(iso)`: locale date format; returns "—" on null/invalid input
+
+---
+
+### [Task #13] QA Test Suite
+- Agent: qa-tester
+- Added: server/tests/RingBuffer.test.js, server/tests/FileManager.test.js, server/tests/csrf.test.js, server/tests/pathValidation.test.js, server/tests/SessionManager.test.js, server/tests/JobRunner.test.js, server/vitest.config.js, docs/TEST_RESULTS.md
+
+#### server/vitest.config.js
+- New Vitest configuration: `environment: 'node'`, `pool: 'forks'` (sequential — prevents cross-test PTY interference), `testTimeout: 10000`, `include: ['tests/**/*.test.js']`, `reporters: ['verbose']`
+
+#### server/tests/RingBuffer.test.js — 19 tests
+- Tests: RingBuffer constructor (TypeError on zero/negative/float capacity), push string + Buffer, multiple pushes in order, empty push ignored, wrap-around overflow (oldest bytes discarded), single push larger than capacity (keeps last N bytes), multiple wrap-arounds, clear() (resets size + allows fresh write), toBuffer() idempotency
+- Imports `{ RingBuffer }` from `../services/RingBuffer.js` — no mocks; all in-memory
+
+#### server/tests/FileManager.test.js — 10 tests
+- Tests: validatePath (accepts valid + nested + base itself, rejects `../../etc/passwd`, sibling dir prefix attack, absolute outside base, returns absolute path on success), readFile (existing file, ENOENT throws, traversal rejected), writeFile (atomic write, parent dirs created, overwrite, traversal rejected), listDirectory (lists files, [] on ENOENT)
+- Uses real fs with per-test `os.tmpdir()` temp dir (mkdtemp + rm cleanup in afterEach)
+- Imports `{ FileManager }` class directly (not singleton) for isolation
+
+#### server/tests/csrf.test.js — 13 tests
+- Tests: GET/HEAD/OPTIONS always pass (no header needed), POST/PUT/PATCH/DELETE require exact `X-Requested-With: ClaudeCodeManager`, wrong value → 403, empty string → 403, case-variant (`ClaudeCodemanager`) → 403, WebSocket upgrade (GET + upgrade header) passes, rejection body = `{ error: 'CSRF validation failed' }`
+- Uses minimal mock req/res/next factory functions — no HTTP server instantiated
+
+#### server/tests/pathValidation.test.js — 13 tests
+- Tests: validateProjectPath (returns absolute, resolves relative, throws ApiError(400) for empty/whitespace/null/undefined/number), validateClaudePath (valid paths in single + multiple bases, traversal rejected, prefix-sharing sibling rejected, outside all bases → 400, empty bases array → 400), ApiError (statusCode, message, instanceof Error)
+- Imports `{ validateProjectPath, validateClaudePath, ApiError }` directly
+
+#### server/tests/SessionManager.test.js — 18 tests
+- Tests: createSession shape + uniqueId + in listSessions, getSession unknown → undefined, listSessions (empty + multiple), attachClient (added to Set + buffer replay sent to ws.send), detachClient (removed from Set + session survives with status 'active' — core PTY persistence), writeInput (pty.write called + lastActivityAt updated, no-op on killed + unknown session), killSession (removed from map + status 'killed' + ws.close called + no-op on unknown), PTY tab-switch simulation (buffer retained across detach+reattach — ws2 receives replay), session switching (independent sessions per project)
+- Mocks: `node-pty` (makeMockPty with _emit/_exit helpers), `ProcessRegistry` (register/unregister/cleanupStale as resolved vi.fn), `tree-kill` (calls callback immediately)
+- Imports `{ SessionManager }` class (not `sessionManager` singleton)
+
+#### server/tests/JobRunner.test.js — 18 tests
+- Tests: startJob (throws if claudeBin unset, returns jobId+projectId+createdAt, stdin.end() called immediately — DEC-005 hang prevention, shell:false — SEC-02, job in listJobs status 'running', exit 0 → 'done' + completedAt, exit 1 → 'error'), cancelJob (false for unknown + already done, true for running, status stays 'cancelled' after SIGTERM exit — race prevention, sends `"type":"cancelled"` SSE event), cancelAll (all running → cancelled, done job unaffected), addSseClient (false for unknown, true + SSE headers for running, done job → immediately sends done event + res.end), listJobs (prompt absent — SEC-08, child/clients/result absent)
+- Mocks: `child_process.spawn` via `vi.hoisted()` (PassThrough stdout/stderr, EventEmitter stdin with end mock), `tree-kill` (calls cb immediately)
+- `vi.hoisted()` required because vi.mock factories hoist before variable declarations (TDZ issue)
+- `PassThrough` used for stdout/stderr because readline.createInterface requires `.resume()` (not available on plain EventEmitter)
+
+#### docs/TEST_RESULTS.md
+- New document: records test runner config, total results (110 passed, 0 failed), per-suite breakdown with key behaviors verified
+
+---
+
+### [Task #14] Security Audit
+- Agent: security
+- Added: docs/SECURITY_AUDIT.md (no code files modified)
+
+#### docs/SECURITY_AUDIT.md
+- Pre-release audit of SEC-01 through SEC-10 and all route files
+- **Verdict:** NEEDS_ATTENTION — 0 CRITICAL, 0 HIGH, 3 MEDIUM, 2 LOW
+- All 10 SEC requirements: PASS (SEC-01 127.0.0.1 binding, SEC-02 shell:false, SEC-03 path traversal, SEC-04 write-atomic, SEC-05 WS payload cap, SEC-06 CSRF, SEC-07 Helmet CSP, SEC-08 no sensitive log, SEC-09 PTY cleanup, SEC-10 0 npm vulns)
+- **MEDIUM-01:** `exec()` in browser auto-open helper (server/index.js) — deviates from shell:false policy; not exploitable today (URL is trusted) but latent risk
+- **MEDIUM-02:** `allowedTools` param passed to `claude -p` is user-controlled; only type-checked (typeof string), not whitelist-validated
+- **MEDIUM-03:** PIDs in `active_pids.json` (ProcessRegistry) deserialized without integrity check — tamper risk on shared machines
+- **LOW-01/02:** informational findings
+- Overall risk: LOW for single-user localhost threat model. MEDIUM findings should be addressed before release.
+
+#### Connection Changes (security-relevant, no code modified)
+- No function interfaces changed. Audit documents existing security properties of: server/index.js (SEC-01, SEC-02 note), server/middleware/csrf.js, server/middleware/pathValidation.js, server/services/FileManager.js, server/services/JobRunner.js, server/services/SessionManager.js, server/services/ProcessRegistry.js, server/middleware/security.js
+
+---
+
+### [Task #15] Documentation
+- Agent: documenter
+- Added/Modified: README.md (created/updated), docs/memory/DOC_STATUS.md, docs/memory/PROJECT.md (updated), docs/memory/PROGRESS.md (updated)
+
+#### README.md
+- Public-facing documentation: project overview, install+run instructions, feature list, architecture summary, API reference, environment variables table, tech stack, contributing notes
+
+#### docs/memory/DOC_STATUS.md
+- New file tracking documentation coverage status per module/feature
+
+#### docs/memory/PROJECT.md
+- Updated with latest project state, confirmed stack, constraints, known issues
+
+#### docs/memory/PROGRESS.md
+- Updated task completion status: Tasks #1-#15 reflected
+
+#### Connection Changes
+- No function interfaces changed. Documentation does not affect runtime behavior.

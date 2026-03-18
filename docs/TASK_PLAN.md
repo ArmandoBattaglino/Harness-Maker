@@ -41,9 +41,14 @@ Claude Code Visual Manager is a locally-hosted web application (served on `local
 | Phase 3 | #8 (Frontend) | Entity editors (AgentEditor, SkillEditor, ClaudeMdEditor) |
 | Phase 4 | #9 (Backend) | Job Mode API (JobRunner + SSE streaming) |
 | Phase 4 | #10 (Frontend) | Job Mode UI (JobPanel + react-markdown) |
-| Phase 5 | #11 (QA) | Full test suite + 6 critical paths |
-| Phase 5 | #12 (Security) | Pre-release security audit |
-| Phase 5 | #13 (Documenter) | README + troubleshooting guide |
+| Phase 5 | #11 (Frontend) | Projects View UI |
+| Phase 5 | #12 (Backend) | NFR Polish — rate limiter, version endpoint, browser open, startup logging |
+| Phase 5 | #13 (QA) | Full test suite + 6 critical paths |
+| Phase 5 | #14 (Security) | Pre-release security audit |
+| Phase 5 | #15 (Documenter) | README + troubleshooting guide |
+| Phase 6 | #16 (Backend) | Security hardening: replace exec() in openBrowser with shell:false spawn |
+| Phase 6 | #17 (Backend) | Security hardening: validate allowedTools against character whitelist |
+| Phase 6 | #18 (Backend) | Security hardening: validate PID range in ProcessRegistry before kill |
 
 ---
 
@@ -1602,6 +1607,202 @@ Acceptance Criteria:
 Dependencies: TASK #13, TASK #14
 ---
 
+TASK #16: Security Hardening — Replace exec() in openBrowser with shell:false spawn
+Agent: backend-dev
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  The security audit (docs/SECURITY_AUDIT.md) identified MEDIUM-01: the `openBrowser()` function in
+  `server/index.js` uses Node's `exec()` — which passes a string to the OS shell — instead of
+  `spawn()` or `execFile()` with `shell: false`. While not exploitable today (PORT is always an
+  integer and the URL is constructed from hardcoded strings), it deviates from the project's
+  `shell: false` policy (SEC-02) and introduces a latent risk if the URL-construction logic
+  ever changes to include user-controlled data.
+
+  WORKING DIRECTORY: `C:\Users\arman\Downloads\Test workflows`
+
+  FILE TO MODIFY: `server/index.js`
+  CURRENT CODE (approximate location: server/index.js lines 48–54):
+  ```js
+  function openBrowser(url) {
+    const cmd = process.platform === 'win32'
+      ? `start "" "${url}"`
+      : process.platform === 'darwin' ? `open "${url}"` : `xdg-open "${url}"`;
+    exec(cmd, (err) => { if (err) console.error('[startup] Failed to open browser:', err.message); });
+  }
+  ```
+
+  REQUIRED FIX (replace with spawn, shell: false):
+  ```js
+  function openBrowser(url) {
+    let bin, args;
+    if (process.platform === 'win32') {
+      bin = 'cmd.exe'; args = ['/c', 'start', '', url];
+    } else if (process.platform === 'darwin') {
+      bin = 'open'; args = [url];
+    } else {
+      bin = 'xdg-open'; args = [url];
+    }
+    const child = spawn(bin, args, { shell: false, detached: true, stdio: 'ignore' });
+    child.on('error', (err) => console.error('[startup] Failed to open browser:', err.message));
+    child.unref();
+  }
+  ```
+  Make sure to remove the `exec` import from `child_process` if it is no longer used elsewhere,
+  or keep it only if it is used in other locations. Do NOT remove `spawn` — it is already imported
+  and used in other parts of the file. Verify that `npm run build` still succeeds after the change.
+
+  CONSTRAINT: `shell: false` must be explicit. Do not use `execFile` with a shell-expanded string.
+  Do not introduce any new npm dependencies.
+
+Acceptance Criteria:
+  - [ ] `openBrowser()` in server/index.js uses `spawn` (or `execFile`) with `shell: false`
+  - [ ] No shell string interpolation of the URL — URL is passed as a plain array argument
+  - [ ] `exec` import removed from `child_process` destructure if no longer used elsewhere
+  - [ ] `child.unref()` called so the detached process does not block server shutdown
+  - [ ] `npm run build` passes with 0 errors
+  - [ ] The change is consistent with the SEC-02 requirement already enforced everywhere else
+Dependencies: TASK #14
+---
+
+TASK #17: Security Hardening — Validate allowedTools against character whitelist
+Agent: backend-dev
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  The security audit (docs/SECURITY_AUDIT.md) identified MEDIUM-02: the `allowedTools` parameter
+  received from the client in `server/routes/jobs.js` is only checked for type
+  (`typeof allowedTools !== 'string'`). It is then passed as-is as a CLI argument to
+  `spawn('claude', [..., '--allowedTools', allowedTools], { shell: false })` in JobRunner.js.
+
+  While `shell: false` prevents shell injection, an adversarial or misconfigured client could
+  pass a value like `"all"` or a comma-separated list with unexpected tool names, granting Claude
+  access to powerful tools (e.g., bash execution, file deletion) that the application did not
+  intend to permit.
+
+  WORKING DIRECTORY: `C:\Users\arman\Downloads\Test workflows`
+
+  FILES TO MODIFY:
+  - `server/routes/jobs.js` — where `allowedTools` is received and validated before being passed to JobRunner
+  - Optionally also harden in `server/services/JobRunner.js` as a second layer
+
+  CURRENT CODE (approximate — server/routes/jobs.js lines 44–45):
+  ```js
+  if (allowedTools !== undefined && typeof allowedTools !== 'string') {
+    throw new ApiError(400, 'allowedTools must be a string');
+  }
+  ```
+
+  REQUIRED FIX — add character-set and length validation immediately after the type check:
+  ```js
+  const ALLOWED_TOOLS_RE = /^[a-zA-Z0-9_,\-]+$/;
+  if (allowedTools !== undefined) {
+    if (typeof allowedTools !== 'string') {
+      throw new ApiError(400, 'allowedTools must be a string');
+    }
+    if (!ALLOWED_TOOLS_RE.test(allowedTools) || allowedTools.length > 512) {
+      throw new ApiError(400, 'allowedTools contains invalid characters or exceeds maximum length');
+    }
+  }
+  ```
+
+  This allows: letters, digits, underscore, comma (for comma-separated lists), hyphen.
+  This rejects: spaces, semicolons, quotes, shell metacharacters, angle brackets, newlines.
+  Length cap of 512 characters prevents oversized arguments.
+
+  CONSTRAINT: Do not add any new npm dependencies. The fix must be pure input validation in existing
+  route/service files. Do not modify any test files — the QA agent owns those. Run `npm run build`
+  to verify the change compiles cleanly.
+
+Acceptance Criteria:
+  - [ ] `allowedTools` validated against `/^[a-zA-Z0-9_,\-]+$/` regex in server/routes/jobs.js
+  - [ ] Length cap of 512 characters enforced with HTTP 400 on violation
+  - [ ] HTTP 400 returned with a descriptive error message on validation failure
+  - [ ] The existing type check (`typeof !== 'string'`) is preserved (not removed)
+  - [ ] `npm run build` passes with 0 errors
+  - [ ] No new npm dependencies introduced
+Dependencies: TASK #14
+---
+
+TASK #18: Security Hardening — Validate PID range in ProcessRegistry before kill
+Agent: backend-dev
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  The security audit (docs/SECURITY_AUDIT.md) identified MEDIUM-03: `server/services/ProcessRegistry.js`
+  reads PID values from `%APPDATA%\ClaudeCodeManager\active_pids.json` at startup and passes them
+  directly to `process.kill(pid, 0)` and `treeKill(pid, 'SIGKILL')` in `cleanupStale()`.
+
+  The current guard at line 83 only checks `isNaN` — it does not validate that the PID is within
+  a safe numeric range. On a shared machine or if the APPDATA directory has weak ACLs, a local
+  actor could write arbitrary integers (e.g., PID 4 = Windows System process) into this file.
+  On startup, `cleanupStale()` would then attempt to kill those PIDs — a denial-of-service risk.
+
+  WORKING DIRECTORY: `C:\Users\arman\Downloads\Test workflows`
+
+  FILE TO MODIFY: `server/services/ProcessRegistry.js`
+
+  CURRENT CODE (approximate — lines 82–93):
+  ```js
+  cleanupStale() {
+    for (const [sessionId, pid] of Object.entries(this._pids)) {
+      if (isNaN(pid)) continue;
+      try {
+        process.kill(pid, 0);   // check if alive
+        treeKillAsync(pid, 'SIGKILL').catch(() => {});
+      } catch (_) { /* already gone */ }
+    }
+    this._pids = {};
+    this._persist();
+  }
+  ```
+
+  REQUIRED FIX — add a PID range guard (PIDs must be integers in the range 1–65535):
+  ```js
+  const MIN_PID = 1;
+  const MAX_PID = 65535;  // safe heuristic; UV_MAXHOSTNAMELEN is not the right constant here
+
+  cleanupStale() {
+    for (const [sessionId, pid] of Object.entries(this._pids)) {
+      const numPid = Number(pid);
+      if (!Number.isInteger(numPid) || numPid < MIN_PID || numPid > MAX_PID) {
+        console.warn(`[ProcessRegistry] Skipping out-of-range PID ${pid} for session ${sessionId}`);
+        continue;
+      }
+      try {
+        process.kill(numPid, 0);
+        treeKillAsync(numPid, 'SIGKILL').catch(() => {});
+      } catch (_) { /* already gone */ }
+    }
+    this._pids = {};
+    this._persist();
+  }
+  ```
+
+  Also apply the same range guard wherever PIDs are registered via `register(sessionId, pid)`:
+  - In `register()`: validate that `pid` is an integer in the range 1–65535 before storing it.
+    Log a warning and skip storage if the PID is out of range.
+
+  CONSTRAINT: Do not add any new npm dependencies. Do not modify test files. Run `npm run build`
+  to verify the change is clean. On Windows, `process.kill(pid, 0)` may throw for system-owned
+  processes even with a valid PID — the existing try/catch already handles that.
+
+Acceptance Criteria:
+  - [ ] `cleanupStale()` in ProcessRegistry.js skips PIDs outside the range 1–65535
+  - [ ] `register()` in ProcessRegistry.js validates PID range before storing
+  - [ ] Out-of-range PIDs logged as warnings with `[ProcessRegistry]` prefix, not silently dropped
+  - [ ] The existing `isNaN` / `Number.isInteger` check is preserved or superseded by the new guard
+  - [ ] `npm run build` passes with 0 errors
+  - [ ] No new npm dependencies introduced
+Dependencies: TASK #14
+---
+
 ## Execution Order
 
 ### Parallel at start:
@@ -1639,6 +1840,11 @@ Dependencies: TASK #13, TASK #14
 - TASK #14 (Security — audit)
 - TASK #15 (Docs — README)
 
+### Phase 6 — Security hardening (unblocked, run in parallel after TASK #14):
+- TASK #16 (Backend — replace exec() in openBrowser)
+- TASK #17 (Backend — validate allowedTools)
+- TASK #18 (Backend — validate PID range in ProcessRegistry)
+
 ---
 
 ## Task Status Summary
@@ -1658,8 +1864,11 @@ Dependencies: TASK #13, TASK #14
 | 11 | Projects View UI | frontend-dev | MEDIUM | EASY | COMPLETED |
 | 12 | NFRs — Performance + Reliability + Polish | backend-dev | MEDIUM | MEDIUM | COMPLETED |
 | 13 | Full QA Test Suite | qa-tester | HIGH | HARD | COMPLETED |
-| 14 | Pre-Release Security Audit | security | HIGH | MEDIUM | PENDING |
+| 14 | Pre-Release Security Audit | security | HIGH | MEDIUM | COMPLETED |
 | 15 | Documentation | documenter | MEDIUM | EASY | COMPLETED |
+| 16 | Security Hardening — replace exec() in openBrowser | backend-dev | HIGH | EASY | PENDING |
+| 17 | Security Hardening — validate allowedTools whitelist | backend-dev | HIGH | EASY | PENDING |
+| 18 | Security Hardening — validate PID range in ProcessRegistry | backend-dev | HIGH | EASY | PENDING |
 
 ---
 

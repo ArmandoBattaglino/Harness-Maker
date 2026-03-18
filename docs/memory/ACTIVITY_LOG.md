@@ -1,4 +1,24 @@
 ---
+## 2026-03-18 — code-mapper — Tasks #13+#14+#15: QA Test Suite + Security Audit + Documentation
+**Outcome:** COMPLETED
+**Summary:** Mapped 6 new test files (110 tests total) and vitest.config.js to CODE_MAP.md as first-class Function Graph entries with coverage targets, mock strategies, and edge cases noted. Appended 3 detailed CHANGELOG entries covering the full QA, security audit, and documentation work. Security audit findings (3 MEDIUM: exec() auto-open, allowedTools not whitelisted, PID file integrity) added to Key Behaviors.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** none
+**Decisions made:** Test files documented as full Function Graph entries (not just a table); vi.hoisted() and PassThrough patterns preserved as complexity notes; security findings added to Key Behaviors for discoverability
+**Blockers:** none
+**Next:** Address 3 MEDIUM security findings (Tasks #16-#18). After fixes, code-mapper should document changes to server/index.js, routes/jobs.js, services/ProcessRegistry.js.
+---
+
+---
+## 2026-03-18 — project-manager — Phase 5 close-out + Phase 6 task creation
+**Outcome:** COMPLETED
+**Summary:** Marked Tasks #13, #14, #15 COMPLETED in TASK_PLAN.md and the Task Status Summary table. Assessed the 3 MEDIUM security findings from the audit (exec in openBrowser, allowedTools not whitelisted, PID range not validated) and created Tasks #16, #17, #18 as mandatory Phase 6 security hardening tasks. Updated Phase Map, Execution Order, Task Status Summary, and PROGRESS.md to reflect the new state.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/agents/project-manager.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** Task Status Summary table had Task #14 listed as PENDING despite being COMPLETED
+**Decisions made:** MEDIUM security findings require tasks before v1 can be called truly complete; 3 new HIGH-priority EASY tasks created (each is a targeted fix with exact code provided)
+**Blockers:** none
+**Next:** Assign Tasks #16, #17, #18 to backend-dev (all 3 can run in parallel). After all 3 merge, run qa-tester regression pass, then v1 is complete.
+---
 ## 2026-03-18 — qa-tester — Task #13: Full QA Test Suite
 **Outcome:** COMPLETED
 **Summary:** Installed vitest v4.1.0 and wrote 110 unit/integration tests across 6 test files covering all 6 PRD critical paths. All 110 tests pass with 0 failures. `npm test` works from root and server directories. Found and fixed 2 test-infrastructure bugs (vi.hoisted pattern for mocked spawn, PassThrough for readline-compatible mock stdout).

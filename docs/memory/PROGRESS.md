@@ -69,12 +69,20 @@ _None._
   110 tests pass (0 failures) across 6 test files. vitest v4.1.0 installed. All 6 PRD critical paths covered + unit tests for RingBuffer, FileManager, CSRF, pathValidation, SessionManager, JobRunner. `npm test` works from root and server directories. docs/TEST_RESULTS.md produced.
 
 ## Pending
-_None. All tasks completed._
+
+### Phase 6 — Security Hardening (UNBLOCKED — all 3 can run in parallel)
+- [TASK-16] Security hardening — replace exec() in openBrowser with shell:false spawn (backend-dev)
+  Fix: server/index.js. Replace exec(cmd) with spawn(bin, args, { shell:false, detached:true }). Easy 10-line change.
+- [TASK-17] Security hardening — validate allowedTools against character whitelist (backend-dev)
+  Fix: server/routes/jobs.js. Add /^[a-zA-Z0-9_,\-]+$/ regex check + 512-char length cap before passing to spawn.
+- [TASK-18] Security hardening — validate PID range in ProcessRegistry (backend-dev)
+  Fix: server/services/ProcessRegistry.js. Guard PIDs to range 1–65535 in both cleanupStale() and register().
 
 ## v1 Release Status
-**v1 RELEASE READY — All Phase 5 tasks completed: QA (#13), Security (#14), Documentation (#15).**
-- All 12 implementation tasks COMPLETED (Tasks #1-#12).
-- Task #15 (Documentation) COMPLETED 2026-03-18: README.md created with full feature docs, configuration table, 5-scenario troubleshooting guide, security notes, and known limitations.
+**NEAR-RELEASE — Phase 5 COMPLETE. 3 MEDIUM security hardening tasks remain before true v1.**
+- All 15 tasks (Phase 0–5) COMPLETED 2026-03-18.
+- Security audit verdict: NEEDS_ATTENTION (0 CRITICAL/HIGH, 3 MEDIUM, 2 LOW). Risk: LOW.
+- Tasks #16, #17, #18 are the final gate. Once these 3 easy backend fixes merge, status upgrades to v1 RELEASED.
 
 ## Known Issues
 - R-01 (RESOLVED): node-pty-prebuilt-multiarch not available — plain node-pty used instead

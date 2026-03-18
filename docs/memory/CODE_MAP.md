@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-18 — after Task #9: Job Mode API + Task #10: Job Mode UI + Task #11: Projects View UI by backend-dev + frontend-dev_
+_Last updated: 2026-03-18 — after Task #13: QA Test Suite (qa-tester) + Task #14: Security Audit (security) + Task #15: Documentation (documenter) by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -50,8 +50,24 @@ _Last updated: 2026-03-18 — after Task #9: Job Mode API + Task #10: Job Mode U
 | client/src/views/JobView.jsx | default JobView | View wrapper: reads activeProjectId from AppContext, renders JobPanel for selected project |
 | client/src/views/ProjectsView.jsx | default ProjectsView, StatusBadge, ConfirmDialog, formatDate (internals) | Full project list table with session status, Open Terminal action, Register/Delete with confirmation modal |
 
+## Test Infrastructure
+| File | Framework | Modules Under Test | Test Count |
+|------|-----------|--------------------|------------|
+| server/vitest.config.js | Vitest v4.1.0 | (config) | — |
+| server/tests/RingBuffer.test.js | Vitest | server/services/RingBuffer.js | 19 |
+| server/tests/FileManager.test.js | Vitest | server/services/FileManager.js | 10 |
+| server/tests/csrf.test.js | Vitest | server/middleware/csrf.js | 13 |
+| server/tests/pathValidation.test.js | Vitest | server/middleware/pathValidation.js | 13 |
+| server/tests/SessionManager.test.js | Vitest | server/services/SessionManager.js | 18 |
+| server/tests/JobRunner.test.js | Vitest | server/services/JobRunner.js | 18 |
+
 ## Build Artifacts
 - `server/public/` — Vite build output (served as static files by Express)
+
+## Security + QA Artifacts
+- `docs/SECURITY_AUDIT.md` — pre-release security audit (0 CRITICAL, 0 HIGH, 3 MEDIUM, 2 LOW)
+- `docs/TEST_RESULTS.md` — test run results (110 tests, 0 failures, ~3.4s)
+- `README.md` — public-facing project documentation
 
 ---
 
@@ -698,6 +714,95 @@ _Last updated: 2026-03-18 — after Task #9: Job Mode API + Task #10: Job Mode U
 
 ---
 
+---
+
+## Test Modules (Task #13 — qa-tester)
+
+### `server/vitest.config.js` :: (config)
+- **Purpose:** Vitest configuration for server-side tests. Sets pool to 'forks' (sequential) to avoid cross-test PTY interference, 10s per-test timeout, includes all `tests/**/*.test.js`.
+- **Called by:** `npm test --prefix server` (or root `npm test`)
+- **Calls:** vitest/config::defineConfig
+- **Inputs:** none
+- **Output:** Vitest config object
+- **Side effects:** none
+- **Last modified:** 2026-03-18 in Task #13 by qa-tester
+
+---
+
+### `server/tests/RingBuffer.test.js` :: (test suite)
+- **Purpose:** 19 unit tests for RingBuffer circular buffer. Covers: constructor validation (TypeError on bad capacity), happy-path push/retrieve (string + Buffer), wrap-around overflow (oldest bytes discarded), clear(), toBuffer() idempotency.
+- **Tests:** `server/services/RingBuffer.js` — imports `{ RingBuffer }` directly (no mocks needed)
+- **Called by:** vitest test runner
+- **Calls:** RingBuffer (constructor), rb.push(), rb.toBuffer(), rb.clear(), rb.size, rb.capacity
+- **Inputs:** N/A (test file)
+- **Output:** 19 test results
+- **Side effects:** none (in-memory only)
+- **Last modified:** 2026-03-18 in Task #13 by qa-tester
+
+---
+
+### `server/tests/FileManager.test.js` :: (test suite)
+- **Purpose:** 10 unit tests for FileManager path validation and I/O. Uses real filesystem with per-test temp dir (fs.promises.mkdtemp). Covers: validatePath accept/reject (traversal detection, sibling dir attack, prefix-sharing attack), readFile (ENOENT, traversal), writeFile (atomic write, parent dir creation, overwrite, traversal), listDirectory (ENOENT returns []).
+- **Tests:** `server/services/FileManager.js` — imports `{ FileManager }` directly; uses real fs with temp dirs
+- **Called by:** vitest test runner
+- **Calls:** FileManager (constructor), fm.validatePath(), fm.readFile(), fm.writeFile(), fm.listDirectory(), fs.promises.mkdtemp, fs.promises.rm (cleanup)
+- **Inputs:** N/A (test file)
+- **Output:** 10 test results
+- **Side effects:** creates/deletes temp directories in os.tmpdir() during test run
+- **Last modified:** 2026-03-18 in Task #13 by qa-tester
+
+---
+
+### `server/tests/csrf.test.js` :: (test suite)
+- **Purpose:** 13 unit tests for csrfMiddleware. Covers: safe methods (GET/HEAD/OPTIONS) always call next(); mutating methods (POST/PUT/PATCH/DELETE) require exact header `X-Requested-With: ClaudeCodeManager`; wrong value or empty string returns 403; WebSocket upgrade requests (GET + upgrade header) pass; response body on rejection is `{ error: 'CSRF validation failed' }`.
+- **Tests:** `server/middleware/csrf.js` — imports `{ csrfMiddleware }` directly; uses mock req/res/next (no HTTP server needed)
+- **Called by:** vitest test runner
+- **Calls:** csrfMiddleware (with mock req/res/next), vi.fn (vitest mock)
+- **Inputs:** N/A (test file)
+- **Output:** 13 test results
+- **Side effects:** none (no filesystem or network)
+- **Last modified:** 2026-03-18 in Task #13 by qa-tester
+
+---
+
+### `server/tests/pathValidation.test.js` :: (test suite)
+- **Purpose:** 13 unit tests for validateProjectPath, validateClaudePath, and ApiError. Covers: validateProjectPath (valid path returns absolute, relative resolves, empty string/whitespace/non-string throws ApiError(400)), validateClaudePath (valid path in base, deeply nested, base itself, multi-base match, path traversal ../../, sibling prefix attack, outside all bases, empty bases array), ApiError (statusCode + message + instanceof Error).
+- **Tests:** `server/middleware/pathValidation.js` — imports `{ validateProjectPath, validateClaudePath, ApiError }` directly
+- **Called by:** vitest test runner
+- **Calls:** validateProjectPath(), validateClaudePath(), ApiError constructor
+- **Inputs:** N/A (test file)
+- **Output:** 13 test results
+- **Side effects:** none
+- **Last modified:** 2026-03-18 in Task #13 by qa-tester
+
+---
+
+### `server/tests/SessionManager.test.js` :: (test suite)
+- **Purpose:** 18 unit tests for SessionManager. Uses vi.mock to stub node-pty (avoids real PTY creation), ProcessRegistry (avoids filesystem writes), and tree-kill (avoids real signal sending). Covers: createSession (shape + uniqueId + listSessions), getSession (unknown → undefined), listSessions (empty + multiple), attachClient (add to Set + ring buffer replay on attach), detachClient (remove from Set + session persists with status 'active'), writeInput (pty.write + lastActivityAt update, no-op on killed/unknown), killSession (removes from map + marks killed + closes ws clients + no-op on unknown), PTY persistence (buffer retained across detach/reattach), session switching (independent sessions per project).
+- **Tests:** `server/services/SessionManager.js` — imports `{ SessionManager }` (class, not singleton) for test isolation
+- **Called by:** vitest test runner
+- **Calls:** SessionManager (constructor), manager.createSession/getSession/listSessions/attachClient/detachClient/writeInput/killSession/killAll; vi.mock for node-pty, ProcessRegistry, tree-kill
+- **Inputs:** N/A (test file)
+- **Output:** 18 test results
+- **Side effects:** none (all I/O mocked)
+- **Complexity note:** Imports `{ SessionManager }` class (not the `sessionManager` singleton) so each test can instantiate a fresh manager without cross-test state contamination. vi.mock is hoisted before import.
+- **Last modified:** 2026-03-18 in Task #13 by qa-tester
+
+---
+
+### `server/tests/JobRunner.test.js` :: (test suite)
+- **Purpose:** 18 unit tests for JobRunner. Uses vi.hoisted + vi.mock to intercept child_process.spawn (returns mock child with PassThrough stdout/stderr, EventEmitter stdin with .end mock). Covers: startJob (throws if claudeBin unset, returns jobId+createdAt, stdin.end() called immediately — hang prevention DEC-005, shell:false enforced — SEC-02, job in listJobs with status 'running', status becomes 'done' on exit code 0, status becomes 'error' on non-zero exit), cancelJob (false for unknown/done, true for running, status stays 'cancelled' after non-zero exit — race condition prevention, sends `"type":"cancelled"` SSE event to connected clients), cancelAll (cancels all running, leaves done untouched), addSseClient (false for unknown, returns true + sets SSE headers for running, immediately sends done event + calls res.end if job already completed), listJobs (prompt absent from output — SEC-08, child/clients/result absent from output).
+- **Tests:** `server/services/JobRunner.js` — imports `{ JobRunner }` class (not singleton); uses vi.hoisted for spawn mock
+- **Called by:** vitest test runner
+- **Calls:** JobRunner (constructor), runner.startJob/cancelJob/cancelAll/addSseClient/listJobs/getJob; spawnMock via vi.hoisted
+- **Inputs:** N/A (test file)
+- **Output:** 18 test results
+- **Side effects:** none (spawn + tree-kill mocked)
+- **Complexity note:** vi.hoisted() is required for the spawnMock ref because vi.mock factories are hoisted before variable declarations — a let/const at module top would be in TDZ when the factory runs. PassThrough is used for stdout/stderr because readline.createInterface requires .resume() which plain EventEmitter lacks.
+- **Last modified:** 2026-03-18 in Task #13 by qa-tester
+
+---
+
 ## Previously Documented Modules (unchanged in Tasks #7-#8)
 
 ### `server/services/ConfigStore.js` :: `ConfigStore`
@@ -733,6 +838,10 @@ _Last updated: 2026-03-18 — after Task #9: Job Mode API + Task #10: Job Mode U
 - Job prompt is NEVER logged (SEC-08) — neither in JobRunner nor in routes/jobs.js
 - JobRunner.cancelAll() called in server shutdown handler — ensures all running jobs receive SIGTERM before server exit
 - ProjectsView session status: sessions object from AppContext; badge shows "Active" if sessions[project.id] is truthy
+
+- Test suite: 6 files, 110 tests total, all passing. Runner: Vitest v4.1.0 with `pool: 'forks'` (sequential) to prevent PTY cross-test interference
+- SessionManager + JobRunner tests import the CLASS (not the singleton export) for per-test isolation
+- Security audit result: NEEDS_ATTENTION — 0 CRITICAL, 0 HIGH, 3 MEDIUM (exec() in auto-open, allowedTools not whitelist-validated, PID file tampering), 2 LOW. Overall risk LOW for localhost single-user model
 
 ## Key Patterns
 - ESM modules throughout (import/export)
