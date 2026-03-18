@@ -3,16 +3,17 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { EventEmitter } from 'events';
-import { Readable, Writable } from 'stream';
 
 // ---------------------------------------------------------------------------
-// Mock child_process.spawn before importing JobRunner
+// Mock child_process.spawn
+// Using module-level mock with factory that sets up the mock properly.
+// Note: vi.mock is hoisted, so we cannot reference variables declared with
+// let/const above it. Instead we use vi.hoisted() to create the mock ref.
 // ---------------------------------------------------------------------------
-let spawnMock;
+const spawnMock = vi.hoisted(() => vi.fn());
 
 vi.mock('child_process', async (importOriginal) => {
   const orig = await importOriginal();
-  spawnMock = vi.fn();
   return { ...orig, spawn: spawnMock };
 });
 
@@ -28,9 +29,7 @@ import { JobRunner } from '../services/JobRunner.js';
 // ---------------------------------------------------------------------------
 function makeMockChild(pid = 12345) {
   const stdout = new EventEmitter();
-  stdout.pipe = vi.fn();
   const stderr = new EventEmitter();
-  stderr.pipe = vi.fn();
   const stdin = new EventEmitter();
   stdin.end = vi.fn(); // CRITICAL: DEC-005 — stdin.end() must be called
 
@@ -217,7 +216,8 @@ describe('JobRunner', () => {
   // -------------------------------------------------------------------------
   describe('cancelAll', () => {
     it('should cancel all running jobs', () => {
-      spawnMock.mockImplementation(() => makeMockChild(Math.floor(Math.random() * 9000) + 1000));
+      let pidCounter = 1000;
+      spawnMock.mockImplementation(() => makeMockChild(pidCounter++));
 
       const { jobId: j1 } = runner.startJob('p1', '/p1', 'prompt1');
       const { jobId: j2 } = runner.startJob('p2', '/p2', 'prompt2');

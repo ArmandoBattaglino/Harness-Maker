@@ -1,4 +1,13 @@
 ---
+## 2026-03-18 — security — Task #14: Pre-Release Security Audit
+**Outcome:** COMPLETED
+**Summary:** Audited all 10 SEC requirements (SEC-01 through SEC-10) across the full server codebase. All 10 requirements pass. Found 3 MEDIUM and 2 LOW findings — no CRITICAL or HIGH issues. npm audit shows 0 CVEs in 185 dependencies. Overall risk rating: LOW for the intended localhost single-user deployment. docs/SECURITY_AUDIT.md written with exact file:line citations and fix recommendations for all findings.
+**Files changed:** docs/SECURITY_AUDIT.md (CREATED), docs/TASK_PLAN.md (MODIFIED — Task #14 status), docs/memory/agents/security.md (CREATED)
+**Bugs fixed:** none — audit is read-only
+**Decisions made:** MEDIUM (not HIGH) for exec() in openBrowser — not currently exploitable but policy violation; MEDIUM for allowedTools string not whitelisted
+**Blockers:** none
+**Next:** Task #15 (Documenter) is the final remaining task; 3 MEDIUM findings should be addressed before v1 release
+---
 ## 2026-03-18 — documenter — Task #15: Final Documentation
 **Outcome:** COMPLETED
 **Summary:** Created README.md from scratch at project root (was missing entirely). Covers prerequisites, install, run, features, configuration (4 env vars), 5-scenario troubleshooting guide, security model, and known v1 limitations. Updated docs/memory/PROJECT.md to correct package name inaccuracies left from Task #2. Updated docs/memory/PROGRESS.md to reflect v1 release-ready status. Created docs/memory/DOC_STATUS.md to track documentation health going forward.

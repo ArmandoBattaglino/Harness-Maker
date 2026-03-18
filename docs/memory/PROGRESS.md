@@ -62,16 +62,17 @@ _None._
 ## Blocked
 _None._
 
+- [TASK-14] Pre-Release Security Audit (security) — COMPLETED 2026-03-18
+  All 10 SEC requirements PASS. 3 MEDIUM findings (exec in openBrowser, allowedTools not whitelisted, PID file integrity), 2 LOW. 0 CRITICAL/HIGH. npm audit: 0 CVEs across 185 deps. Overall risk: LOW. docs/SECURITY_AUDIT.md produced.
+
 ## Pending
 
-### Phase 5 — QA, Security (sign-off required for v1 release)
+### Phase 5 — QA (sign-off required for v1 release)
 - [TASK-13] Full QA Test Suite — all 6 critical paths + unit tests (qa-tester)
   UNBLOCKED as of 2026-03-18: all implementation tasks #3-#12 are COMPLETED.
-- [TASK-14] Pre-Release Security Audit — all 10 SEC requirements (security)
-  UNBLOCKED as of 2026-03-18.
 
 ## v1 Release Status
-**v1 Release Ready — pending QA (#13) and Security (#14) sign-off.**
+**v1 Release Ready — pending QA (#13) sign-off. Security (#14) and Documentation (#15) COMPLETED.**
 - All 12 implementation tasks COMPLETED (Tasks #1-#12).
 - Task #15 (Documentation) COMPLETED 2026-03-18: README.md created with full feature docs, configuration table, 5-scenario troubleshooting guide, security notes, and known limitations.
 
