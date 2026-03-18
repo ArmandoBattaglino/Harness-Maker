@@ -1,4 +1,14 @@
 ---
+## 2026-03-18 — backend-dev — Task #18: Security Hardening — PID Range Validation in ProcessRegistry
+**Outcome:** COMPLETED
+**Summary:** Added isValidPid() helper (range 1–65535) to server/services/ProcessRegistry.js. cleanupStale() now skips out-of-range PIDs with a [ProcessRegistry] warning instead of passing them to treeKill. register() now returns early with a warning if the PID is out of range. Resolves security audit MEDIUM-03.
+**Files changed:** server/services/ProcessRegistry.js (MODIFIED), docs/TASK_PLAN.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** register() returns early (not throws) to match existing no-return-value contract; MAX_PID=65535 per task spec
+**Blockers:** none
+**Next:** Tasks #16 and #17 are the other 2 Phase 6 security fixes (parallel). Once all 3 complete, QA regression pass recommended before v1 release.
+---
+
 ## 2026-03-18 — backend-dev — Task #17: Security Hardening — Validate allowedTools whitelist
 **Outcome:** COMPLETED
 **Summary:** Added character-set whitelist validation for the `allowedTools` parameter in `server/routes/jobs.js`. The existing check only verified type; it now also enforces a `/^[a-zA-Z0-9_,\-]+$/` regex and a 512-character length cap, returning HTTP 400 on violation. Addresses MEDIUM-02 from the security audit.
