@@ -56,7 +56,7 @@ Agent: architect
 Priority: HIGH
 Difficulty: HARD
 Suggested Model: claude-opus-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   Design the complete server-side and client-side architecture for Claude Code Visual Manager before any code is written.
 
@@ -188,7 +188,7 @@ Agent: devops
 Priority: HIGH
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   Set up the monorepo structure, package.json files, and build tooling so that `npm start` in the repo root builds the React SPA and starts the Express server, serving the SPA at `http://127.0.0.1:3000`.
 
@@ -271,12 +271,17 @@ Agent: backend-dev
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   Implement the foundational server-side infrastructure in `server/index.js` and the supporting services. This is Phase 0 of the PRD and must be done before any feature work.
 
   WORKING DIRECTORY: `C:\Users\arman\Downloads\Test workflows`
   All file paths below are relative to this working directory.
+
+  PACKAGE CORRECTIONS (verified during Task #2 scaffold):
+  - Use `node-pty` NOT `node-pty-prebuilt-multiarch` — the prebuilt-multiarch package was not resolving correctly; plain `node-pty` installed successfully and is already present in `server/node_modules`.
+  - Use `write-file-atomic` NOT `write-atomic` — `write-atomic` does not exist on npm; the correct package name is `write-file-atomic`. It is already installed in `server/node_modules`. Import it as `const writeFileAtomic = require('write-file-atomic')`.
+  These corrections are ground truth. Do not attempt to require the old names.
 
   WHAT TO IMPLEMENT:
 
@@ -360,7 +365,7 @@ Agent: backend-dev
 Priority: HIGH
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   Implement the Project Management REST API endpoints. These are all CRUD operations on the project registry stored in `%APPDATA%\ClaudeCodeManager\config.json` via ConfigStore (implemented in Task #3).
 
@@ -440,7 +445,7 @@ Agent: backend-dev
 Priority: HIGH
 Difficulty: VERY HARD
 Suggested Model: claude-opus-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   This is the most complex backend task. Implement the PTY session lifecycle management, the filesystem abstraction layer, and the WebSocket terminal handler. This covers PRD requirements FR-10 through FR-21 and FR-44 through FR-46.
 
@@ -596,7 +601,7 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: HARD
 Suggested Model: claude-opus-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   Implement the React SPA shell, the project sidebar, and the xterm.js terminal view with session switching. This is the user-facing core of the application.
 
