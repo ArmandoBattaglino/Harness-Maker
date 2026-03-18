@@ -82,6 +82,61 @@ Task #13 (QA) and #14 (Security) can now run in parallel. Key notes for QA:
 - Browser auto-open: verify npm start opens browser; verify NO_OPEN=1 npm start does not open browser
 ---
 
+## 2026-03-18 — Task #17: Security Hardening — Validate allowedTools against character whitelist
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+All Tasks #1–#16 were COMPLETED or PENDING (#16, #17, #18 in Phase 6 security hardening). Task #17 targeted MEDIUM-02 from the security audit: `allowedTools` in `server/routes/jobs.js` was only checked for type (`typeof ... !== 'string'`), but not validated against a character-set whitelist or length cap. The value is passed directly to `spawn()` as a CLI argument with `shell: false`, so actual shell injection was not possible, but the missing whitelist was a defense-in-depth gap.
+
+### What I did
+1. Read `docs/memory/agents/backend-dev.md` to restore session context.
+2. Read `server/routes/jobs.js` in full to locate the existing validation block (lines 43-46).
+3. Read `server/services/JobRunner.js` in full to confirm `allowedTools` is used verbatim as a `--allowedTools` CLI arg (line 65) — no secondary validation there, confirming the route handler is the right place.
+4. Replaced the single-condition type check with a three-condition guard in `server/routes/jobs.js`:
+   - `typeof allowedTools !== 'string'` → HTTP 400 `'allowedTools must be a string'`
+   - `allowedTools.length > 512` → HTTP 400 `'Invalid allowedTools value'`
+   - `!/^[a-zA-Z0-9_,\-]+$/.test(allowedTools)` → HTTP 400 `'Invalid allowedTools value'`
+   Both length and regex checks use the same error message as specified in the task, not leaking which constraint was violated.
+5. Ran `node --input-type=module --check < server/routes/jobs.js` — syntax valid.
+6. Updated `docs/TASK_PLAN.md` Task #17 Status: PENDING → COMPLETED and status summary table row.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/routes/jobs.js | MODIFIED | Replaced single type-check with three-condition whitelist guard (type, length, regex) per MEDIUM-02 fix |
+| docs/TASK_PLAN.md | MODIFIED | Task #17 Status: PENDING → COMPLETED; summary table updated |
+| docs/memory/agents/backend-dev.md | MODIFIED | This session log appended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Entry appended |
+
+### Improvements delivered
+- `allowedTools` values with shell metacharacters (`;`, `&`, `|`, `$`, backtick, etc.) now return HTTP 400
+- Values exceeding 512 characters now return HTTP 400
+- Valid values (e.g., `Read,Glob,Grep`, `Bash_20241022`, `all`) still pass through unchanged
+- Fix is at the system boundary (route handler), not buried in the service layer
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None encountered | — | — | — |
+
+### Decisions I made
+- Length check placed BEFORE regex check — avoids running a regex on an unbounded-length string (minor but correct ordering).
+- Both length and regex violations return the same generic message `'Invalid allowedTools value'` (not revealing which constraint failed) — consistent with security principle of not leaking constraint details.
+- The type-check branch (`typeof !== 'string'`) is kept with its original message `'allowedTools must be a string'` — this covers non-string JSON types (array, object, number) which are a developer error, not an adversarial input.
+- Fix applied in `server/routes/jobs.js` only (the route handler / system boundary), not in `JobRunner.js` — the task spec and code conventions both say to validate at the boundary. The service already receives the value from a trusted caller (the route).
+
+### What I learned
+- The regex `/^[a-zA-Z0-9_,\-]+$/` correctly matches the task-specified pattern. The hyphen is safely escaped as `\-` inside the character class to avoid ambiguity — though in this position (at the end) it would be treated as a literal anyway, the escape makes intent explicit.
+- The three-condition guard order (type → length → regex) is the standard approach: fail fast on the cheapest check first.
+
+### State I'm leaving behind
+`server/routes/jobs.js` is modified and syntax-verified. The allowedTools whitelist validation is fully in place. Tasks #16 (exec in openBrowser) and #18 (PID range in ProcessRegistry) remain PENDING in Phase 6.
+
+### Handoff
+Tasks #16 and #18 are the remaining Phase 6 security hardening tasks. After both complete, a QA regression pass should be run and v1 can be declared complete.
+---
+
 ## 2026-03-18 — Task #9: Job Mode API — JobRunner and SSE Streaming
 **Status:** COMPLETED
 **Called by:** orchestrator (user via task assignment)

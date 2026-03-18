@@ -40,9 +40,19 @@ router.post('/', async (req, res, next) => {
       throw new ApiError(400, 'prompt is required and must be a non-empty string');
     }
 
-    // Validate allowedTools if provided
-    if (allowedTools !== undefined && typeof allowedTools !== 'string') {
-      throw new ApiError(400, 'allowedTools must be a string');
+    // Validate allowedTools if provided — MEDIUM-02 (security audit)
+    // Character-set whitelist: only alphanumeric, underscore, comma, hyphen.
+    // Max 512 chars to prevent unreasonably large inputs.
+    if (allowedTools !== undefined) {
+      if (typeof allowedTools !== 'string') {
+        throw new ApiError(400, 'allowedTools must be a string');
+      }
+      if (allowedTools.length > 512) {
+        throw new ApiError(400, 'Invalid allowedTools value');
+      }
+      if (!/^[a-zA-Z0-9_,\-]+$/.test(allowedTools)) {
+        throw new ApiError(400, 'Invalid allowedTools value');
+      }
     }
 
     // Validate maxTurns if provided

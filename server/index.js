@@ -6,7 +6,7 @@ import { createServer } from 'http';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { exec } from 'child_process';
+import { spawn } from 'child_process';
 import express from 'express';
 import { WebSocketServer } from 'ws';
 
@@ -38,20 +38,27 @@ const APP_VERSION = _pkg.version || '0.0.0';
 // Auto-open browser helper
 // Opens the given URL in the system default browser.
 // Skipped when NO_OPEN=1 (tests, CI, headless servers).
-// Uses exec() here intentionally — no user input flows into cmd, the URL is
-// constructed from a trusted constant (127.0.0.1 + PORT from env).
+// Uses spawn({ shell: false }) — URL is passed as an array argument, never
+// interpolated into a shell string (SEC-02).
 // ---------------------------------------------------------------------------
 function openBrowser(url) {
   if (process.env.NO_OPEN) return;
   const platform = process.platform;
-  let cmd;
-  if (platform === 'win32') cmd = `start "" "${url}"`;
-  else if (platform === 'darwin') cmd = `open "${url}"`;
-  else cmd = `xdg-open "${url}"`;
+  let bin, args;
+  if (platform === 'win32') {
+    // 'start' is a cmd.exe built-in; invoke via cmd /c with an explicit title arg
+    bin = 'cmd.exe';
+    args = ['/c', 'start', '', url];
+  } else if (platform === 'darwin') {
+    bin = 'open';
+    args = [url];
+  } else {
+    bin = 'xdg-open';
+    args = [url];
+  }
 
-  exec(cmd, (err) => {
-    if (err) console.warn('[startup] Could not auto-open browser:', err.message);
-  });
+  const child = spawn(bin, args, { shell: false, detached: true, stdio: 'ignore' });
+  child.unref();
 }
 
 // ---------------------------------------------------------------------------

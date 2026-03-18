@@ -1612,7 +1612,7 @@ Agent: backend-dev
 Priority: HIGH
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   The security audit (docs/SECURITY_AUDIT.md) identified MEDIUM-01: the `openBrowser()` function in
   `server/index.js` uses Node's `exec()` — which passes a string to the OS shell — instead of
@@ -1672,7 +1672,7 @@ Agent: backend-dev
 Priority: HIGH
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   The security audit (docs/SECURITY_AUDIT.md) identified MEDIUM-02: the `allowedTools` parameter
   received from the client in `server/routes/jobs.js` is only checked for type
@@ -1733,7 +1733,7 @@ Agent: backend-dev
 Priority: HIGH
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   The security audit (docs/SECURITY_AUDIT.md) identified MEDIUM-03: `server/services/ProcessRegistry.js`
   reads PID values from `%APPDATA%\ClaudeCodeManager\active_pids.json` at startup and passes them
@@ -1866,9 +1866,9 @@ Dependencies: TASK #14
 | 13 | Full QA Test Suite | qa-tester | HIGH | HARD | COMPLETED |
 | 14 | Pre-Release Security Audit | security | HIGH | MEDIUM | COMPLETED |
 | 15 | Documentation | documenter | MEDIUM | EASY | COMPLETED |
-| 16 | Security Hardening — replace exec() in openBrowser | backend-dev | HIGH | EASY | PENDING |
-| 17 | Security Hardening — validate allowedTools whitelist | backend-dev | HIGH | EASY | PENDING |
-| 18 | Security Hardening — validate PID range in ProcessRegistry | backend-dev | HIGH | EASY | PENDING |
+| 16 | Security Hardening — replace exec() in openBrowser | backend-dev | HIGH | EASY | COMPLETED |
+| 17 | Security Hardening — validate allowedTools whitelist | backend-dev | HIGH | EASY | COMPLETED |
+| 18 | Security Hardening — validate PID range in ProcessRegistry | backend-dev | HIGH | EASY | COMPLETED |
 
 ---
 

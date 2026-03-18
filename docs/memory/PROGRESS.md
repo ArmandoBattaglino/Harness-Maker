@@ -75,8 +75,8 @@ _None._
   Fix: server/index.js. Replace exec(cmd) with spawn(bin, args, { shell:false, detached:true }). Easy 10-line change.
 - [TASK-17] Security hardening — validate allowedTools against character whitelist (backend-dev)
   Fix: server/routes/jobs.js. Add /^[a-zA-Z0-9_,\-]+$/ regex check + 512-char length cap before passing to spawn.
-- [TASK-18] Security hardening — validate PID range in ProcessRegistry (backend-dev)
-  Fix: server/services/ProcessRegistry.js. Guard PIDs to range 1–65535 in both cleanupStale() and register().
+- [TASK-18] Security hardening — validate PID range in ProcessRegistry (backend-dev) — COMPLETED 2026-03-18
+  Added isValidPid() helper (range 1–65535), guarded cleanupStale() with warn+skip, guarded register() with warn+return.
 
 ## v1 Release Status
 **NEAR-RELEASE — Phase 5 COMPLETE. 3 MEDIUM security hardening tasks remain before true v1.**

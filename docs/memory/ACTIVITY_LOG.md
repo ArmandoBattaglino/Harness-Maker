@@ -1,4 +1,13 @@
 ---
+## 2026-03-18 — backend-dev — Task #17: Security Hardening — Validate allowedTools whitelist
+**Outcome:** COMPLETED
+**Summary:** Added character-set whitelist validation for the `allowedTools` parameter in `server/routes/jobs.js`. The existing check only verified type; it now also enforces a `/^[a-zA-Z0-9_,\-]+$/` regex and a 512-character length cap, returning HTTP 400 on violation. Addresses MEDIUM-02 from the security audit.
+**Files changed:** server/routes/jobs.js, docs/TASK_PLAN.md
+**Bugs fixed:** none
+**Decisions made:** Length check before regex (cheap-first); generic error message for both length/regex violations; fix at route boundary not in service layer
+**Blockers:** none
+**Next:** Tasks #16 (replace exec() in openBrowser) and #18 (validate PID range) remain in Phase 6. After both complete, run QA regression pass to confirm no regressions.
+---
 ## 2026-03-18 — code-mapper — Tasks #13+#14+#15: QA Test Suite + Security Audit + Documentation
 **Outcome:** COMPLETED
 **Summary:** Mapped 6 new test files (110 tests total) and vitest.config.js to CODE_MAP.md as first-class Function Graph entries with coverage targets, mock strategies, and edge cases noted. Appended 3 detailed CHANGELOG entries covering the full QA, security audit, and documentation work. Security audit findings (3 MEDIUM: exec() auto-open, allowedTools not whitelisted, PID file integrity) added to Key Behaviors.

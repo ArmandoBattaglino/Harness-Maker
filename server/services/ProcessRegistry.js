@@ -14,6 +14,25 @@ const treeKill = require('tree-kill');
 
 const PIDS_FILE_NAME = 'active_pids.json';
 
+// ---------------------------------------------------------------------------
+// PID validation
+// ---------------------------------------------------------------------------
+
+const MIN_PID = 1;
+const MAX_PID = 65535; // safe upper bound; covers all realistic OS PID ranges
+
+/**
+ * Returns true if pid is a valid OS process identifier: a positive integer
+ * in the range [1, 65535]. Values outside this range are rejected to prevent
+ * a tampered active_pids.json from triggering kills of unrelated OS processes.
+ *
+ * @param {unknown} pid
+ * @returns {boolean}
+ */
+function isValidPid(pid) {
+  return typeof pid === 'number' && Number.isInteger(pid) && pid >= MIN_PID && pid <= MAX_PID;
+}
+
 function getPidsFilePath() {
   return path.join(ConfigStore.CONFIG_DIR, PIDS_FILE_NAME);
 }
@@ -67,6 +86,10 @@ function killProcess(pid) {
 // ---------------------------------------------------------------------------
 
 async function register(pid, metadata) {
+  if (!isValidPid(pid)) {
+    console.warn(`[ProcessRegistry] Refusing to register out-of-range PID ${pid}`);
+    return;
+  }
   const registry = readRegistry();
   registry[String(pid)] = { pid, ...metadata, registeredAt: new Date().toISOString() };
   await writeRegistry(registry);
@@ -80,7 +103,13 @@ async function unregister(pid) {
 
 async function cleanupStale() {
   const registry = readRegistry();
-  const pids = Object.keys(registry).map(Number).filter((n) => !isNaN(n));
+  const pids = Object.keys(registry).map(Number).filter((n) => {
+    if (!isValidPid(n)) {
+      console.warn(`[ProcessRegistry] Skipping out-of-range PID ${n} in cleanupStale()`);
+      return false;
+    }
+    return true;
+  });
 
   const killPromises = pids
     .filter((pid) => isProcessAlive(pid))
