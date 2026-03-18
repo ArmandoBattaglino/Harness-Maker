@@ -215,3 +215,14 @@
 **Blockers:** none
 **Next:** Assign TASK-12 (NFR Polish) to backend-dev. After completion, launch TASK-13 + TASK-14 + TASK-15 in parallel.
 ---
+
+---
+## 2026-03-18 — backend-dev — Task #16: Security Hardening — Replace exec() in openBrowser with shell:false spawn
+**Outcome:** COMPLETED
+**Summary:** Replaced exec() in the openBrowser() helper with spawn({ shell: false, detached: true, stdio: 'ignore' }) using platform-specific bin/args arrays. On Windows, cmd.exe /c start is used since 'start' is a built-in. The exec import was removed from child_process. MEDIUM-01 from the security audit is resolved; SEC-02 (shell:false everywhere) is now fully enforced.
+**Files changed:** server/index.js, docs/TASK_PLAN.md
+**Bugs fixed:** none
+**Decisions made:** Windows uses cmd.exe /c start (not start.exe — it does not exist as a standalone binary)
+**Blockers:** none
+**Next:** Task #18 (PID range validation in ProcessRegistry) if not yet done; then qa-tester regression pass.
+---

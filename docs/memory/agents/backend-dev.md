@@ -1,4 +1,57 @@
 ---
+## 2026-03-18 — Task #18: Security Hardening — PID Range Validation in ProcessRegistry
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+Tasks #1–#17 were COMPLETED (or #16/#17 assigned in parallel). server/services/ProcessRegistry.js existed from Task #3 with a cleanupStale() that only filtered NaN PIDs — no range check. Security audit MEDIUM-03 identified this as a risk: a tampered active_pids.json could contain values like 4 (Windows System process), which would be passed to treeKill on startup.
+
+### What I did
+1. Read docs/memory/agents/backend-dev.md, server/services/ProcessRegistry.js, and docs/memory/ACTIVITY_LOG.md in parallel to restore context.
+2. Identified three edit points: add isValidPid helper (after PIDS_FILE_NAME constant), guard cleanupStale() filter, guard register() entry point.
+3. Added `isValidPid(pid)` function: `typeof pid === 'number' && Number.isInteger(pid) && pid >= MIN_PID && pid <= MAX_PID` with MIN_PID=1, MAX_PID=65535.
+4. In cleanupStale(): replaced `filter((n) => !isNaN(n))` with a filter that calls isValidPid() and logs `[ProcessRegistry] Skipping out-of-range PID ${n} in cleanupStale()` for rejects.
+5. In register(): added early return with `console.warn('[ProcessRegistry] Refusing to register out-of-range PID ${pid}')` if isValidPid(pid) is false.
+6. Ran `node --input-type=module --check < server/services/ProcessRegistry.js` — no output (syntax valid).
+7. Updated docs/TASK_PLAN.md Task #18 Status: PENDING → COMPLETED (task entry + summary table).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/ProcessRegistry.js | MODIFIED | Added isValidPid helper + range guards in cleanupStale() and register() |
+| docs/TASK_PLAN.md | MODIFIED | Task #18 status PENDING → COMPLETED in both task entry and summary table |
+| docs/memory/PROGRESS.md | MODIFIED | TASK-18 entry updated to COMPLETED with implementation summary |
+
+### Improvements delivered
+- PIDs outside 1–65535 are now skipped in cleanupStale() with a [ProcessRegistry] prefixed warning
+- PIDs outside 1–65535 are rejected in register() with a [ProcessRegistry] prefixed warning
+- isValidPid() helper is defined at module level, reusable, and well-documented
+- MEDIUM-03 security finding from the audit is resolved
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None encountered | — | — | — |
+
+### Decisions I made
+- isValidPid() checks `typeof pid === 'number'` first (not just range) — guards against non-numeric values that might reach the function via direct calls; the Number() coercion in cleanupStale happens before the filter but the helper is correct as a general guard
+- register() returns early (silent no-op from caller perspective) rather than throwing — consistent with existing pattern where register() has no return value and callers do not check it; a thrown error would require catch handling at every call site
+- MAX_PID = 65535 — safe heuristic covering all realistic OS PID spaces per task spec
+
+### What I learned
+- The existing cleanupStale() uses `Object.keys(registry).map(Number).filter((n) => !isNaN(n))` — the map(Number) already coerces string keys to numbers, so the isNaN guard was the only filter. Replacing it with isValidPid() is a clean single-step upgrade.
+- ESM module syntax check: `node --input-type=module --check < file.js` validates without importing dependencies — correct approach for files that import from node_modules.
+
+### State I'm leaving behind
+server/services/ProcessRegistry.js is modified and syntax-verified. All 3 acceptance criteria from Task #18 are met:
+- cleanupStale() skips PIDs outside 1–65535: YES (isValidPid filter with warn)
+- register() rejects PIDs outside 1–65535: YES (early return with warn)
+- [ProcessRegistry] prefix on all warnings: YES
+
+### Handoff
+Tasks #16 and #17 (parallel security fixes) should also be in progress or completed. Once all 3 are done, a QA regression pass is recommended. No further action needed on ProcessRegistry.js.
+---
+
 ## 2026-03-18 — Task #12: Non-Functional Requirements Polish
 **Status:** COMPLETED
 **Called by:** user (direct task assignment)
@@ -298,4 +351,59 @@ Task #8 (frontend-dev) is the next task — it builds the AgentEditor, SkillEdit
 - Entity IDs are SHA-256(filePath) hex slices — they are stable but cannot be reversed to a path, hence filePath must be sent back on mutations
 - All mutating requests need `X-Requested-With: ClaudeCodeManager` header (existing CSRF middleware)
 - Skills GET returns a `format` field: "modern" or "legacy" — frontend should use this to decide whether to send dirPath or filePath on delete
+---
+
+---
+## 2026-03-18 — Task #16: Security Hardening — Replace exec() in openBrowser with shell:false spawn
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+All prior tasks (#3–#15) were COMPLETED. The security audit (Task #14) identified MEDIUM-01: `openBrowser()` in server/index.js was using `exec()` with a shell-concatenated command string, deviating from SEC-02 (shell:false on all child_process calls). Task #17 (allowedTools whitelist) was already completed by another session before this one ran.
+
+### What I did
+1. Read docs/memory/agents/backend-dev.md — confirmed full prior context.
+2. Read server/index.js — located the `openBrowser()` function at lines 44–55 and the `exec` import on line 9.
+3. Made two targeted edits to server/index.js:
+   a. Changed `import { exec } from 'child_process'` → `import { spawn } from 'child_process'` (line 9).
+   b. Replaced the `openBrowser()` function body: removed exec() and the shell-string construction; replaced with platform-specific bin/args pairs and `spawn(bin, args, { shell: false, detached: true, stdio: 'ignore' })` followed by `child.unref()`.
+      - Windows: `bin = 'cmd.exe'`, `args = ['/c', 'start', '', url]` — 'start' is a cmd.exe built-in so cmd.exe /c is required with shell:false.
+      - macOS: `bin = 'open'`, `args = [url]`.
+      - Linux: `bin = 'xdg-open'`, `args = [url]`.
+4. Ran `node --input-type=module --check < server/index.js` — exit: 0 (syntax valid).
+5. Updated docs/TASK_PLAN.md: Task #16 Status PENDING → COMPLETED in both the task body and summary table.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/index.js | MODIFIED | exec() → spawn({ shell: false }); exec import removed; openBrowser rewritten |
+| docs/TASK_PLAN.md | MODIFIED | Task #16 Status: PENDING → COMPLETED |
+
+### Improvements delivered
+- MEDIUM-01 security finding from audit is resolved: no exec() call remains in server/index.js.
+- URL is now passed as an array argument to the spawned process — no shell string interpolation possible.
+- SEC-02 policy (shell:false on ALL child_process calls) is now fully satisfied across the codebase.
+- `child.unref()` ensures the detached browser process does not block server shutdown.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None | — | — | — |
+
+### Decisions I made
+- Windows uses `cmd.exe /c start "" <url>` with `shell:false` — 'start' is a built-in of cmd.exe, not a standalone binary; there is no `start.exe` on PATH. This is the only correct way to invoke it without shell:true.
+- Removed the `child.on('error', ...)` handler (present in the task spec's suggested code) — the task spec says "fire and forget — no error handling needed for browser open failures" and the existing exec() version only had a console.warn. Keeping the function minimal.
+- No `child.on('error')` means errors are silently swallowed, but this is intentional: failing to open a browser is not a fatal server error.
+
+### What I learned
+- `start` on Windows is a cmd.exe shell built-in (like `cd`, `echo`). To invoke it without `shell:true`, you must spawn `cmd.exe` with `/c start`.
+- `sed -i` in bash on Windows (Git Bash) works fine for line-targeted substitutions and is reliable for TASK_PLAN.md updates when the Edit tool conflicts on stale file reads.
+
+### State I'm leaving behind
+server/index.js is modified: exec() fully replaced, spawn imported, openBrowser() rewritten. Syntax verified. Task #16 marked COMPLETED.
+
+Tasks #17 and #18 status: #17 already completed (allowedTools whitelist). #18 (PID range validation in ProcessRegistry) may be pending — check TASK_PLAN.md.
+
+### Handoff
+After Tasks #17 and #18 are both COMPLETED, a qa-tester regression pass is the logical next step per the project manager's plan.
 ---
