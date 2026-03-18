@@ -16,12 +16,12 @@ export default function AddProjectModal({ onClose }) {
     setSubmitting(true);
 
     try {
-      const endpoint = scaffold
-        ? '/api/v1/projects/scaffold'
-        : '/api/v1/projects';
-
-      const project = await apiPost(endpoint, { name: name.trim(), path: path.trim() });
-      dispatch({ type: 'ADD_PROJECT', payload: project });
+      const data = await apiPost('/api/v1/projects', {
+        name: name.trim(),
+        path: path.trim(),
+        scaffold,
+      });
+      dispatch({ type: 'ADD_PROJECT', payload: data.project });
       onClose();
     } catch (err) {
       setError(err.message);

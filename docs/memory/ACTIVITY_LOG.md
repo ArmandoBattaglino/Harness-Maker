@@ -1,4 +1,13 @@
 ---
+## 2026-03-18 — security — Full Re-Audit (user-requested)
+**Outcome:** COMPLETED
+**Summary:** Conducted a full independent re-audit of the entire codebase. Confirmed all 3 prior MEDIUM findings (exec→spawn, allowedTools whitelist, PID range guard) are correctly fixed in the live code. Discovered 1 new MEDIUM finding (esbuild/vite CVE in client devDependencies, dev-only, not production), 2 new LOW findings (process.env passthrough to PTY, safeRead path bypass in claudemd.js GET), plus the pre-existing LOW-02 (rate limiter memory leak). npm audit for server/ and root returned 0 vulnerabilities; client/ returned 2 moderate (esbuild CVE).
+**Files changed:** docs/memory/agents/security.md (APPENDED), docs/memory/ACTIVITY_LOG.md (APPENDED)
+**Bugs fixed:** none
+**Decisions made:** esbuild CVE rated MEDIUM (not HIGH) — dev-only, not in production server. process.env passthrough rated LOW — single-user localhost, no untrusted users.
+**Blockers:** none
+**Next:** Upgrade vite in client/ to fix MEDIUM-04. Consider env whitelist for PTY spawn. Refactor safeRead in claudemd.js.
+---
 ## 2026-03-18 — documenter — Tasks #16–#18: Security Hardening Documentation
 **Outcome:** COMPLETED
 **Summary:** Updated docs/SECURITY_AUDIT.md to reflect that MEDIUM-01 (exec→spawn), MEDIUM-02 (allowedTools whitelist), and MEDIUM-03 (PID range guard) are now FIXED with applied-fix details. Changed the overall verdict from NEEDS_ATTENTION to PASS. Updated the SEC-02 per-requirement table row and the OWASP A03 row to remove the "with NOTE" qualifier. Updated docs/memory/DOC_STATUS.md to add SECURITY_AUDIT.md as an UP_TO_DATE row and advanced the last-updated timestamp to Tasks #16–#18.

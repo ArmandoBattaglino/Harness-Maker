@@ -87,8 +87,10 @@ export class SessionManager {
 
       for (const ws of session.clients) {
         if (ws.readyState !== WS_OPEN) continue;
-        // Backpressure: skip slow clients whose send buffer is too full
-        if (ws.bufferedAmount > 256 * 1024) continue;
+        // Backpressure: skip slow clients whose send buffer is too full.
+        // ws.bufferedAmount is a browser-side API; on the server-side ws module,
+        // the underlying socket's writable buffer size is checked instead.
+        if (ws._socket && ws._socket.bufferSize > 256 * 1024) continue;
         ws.send(data, { binary: false });
       }
     });
@@ -97,9 +99,13 @@ export class SessionManager {
     ptyProcess.onExit(() => {
       console.log(`[SessionManager] PTY exited — sessionId=${sessionId} pid=${session.pid}`);
       session.status = 'killed';
-      ProcessRegistry.unregister(session.pid).catch((err) => {
-        console.error(`[SessionManager] ProcessRegistry.unregister error: ${err.message}`);
-      });
+      // Only unregister if killSession has not already done so (prevents double-write to disk).
+      if (!session._unregistered) {
+        session._unregistered = true;
+        ProcessRegistry.unregister(session.pid).catch((err) => {
+          console.error(`[SessionManager] ProcessRegistry.unregister error: ${err.message}`);
+        });
+      }
     });
 
     // Register PID in ProcessRegistry before storing session
@@ -227,10 +233,13 @@ export class SessionManager {
 
     session.status = 'killed';
 
-    // Unregister from ProcessRegistry
-    await ProcessRegistry.unregister(session.pid).catch((err) => {
-      console.error(`[SessionManager] ProcessRegistry.unregister error: ${err.message}`);
-    });
+    // Unregister from ProcessRegistry (guard against double-unregister with onExit handler)
+    if (!session._unregistered) {
+      session._unregistered = true;
+      await ProcessRegistry.unregister(session.pid).catch((err) => {
+        console.error(`[SessionManager] ProcessRegistry.unregister error: ${err.message}`);
+      });
+    }
 
     // Remove from sessions map
     this.#sessions.delete(sessionId);

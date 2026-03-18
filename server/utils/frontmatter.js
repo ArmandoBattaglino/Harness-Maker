@@ -25,7 +25,12 @@ export function parseFrontmatter(content) {
 
   let frontmatter = {};
   try {
-    frontmatter = yaml.load(match[1]) || {};
+    const parsed = yaml.load(match[1]);
+    // yaml.load can return any scalar type (string, number, null) for trivial YAML blocks.
+    // Only accept plain objects; fall back to {} for anything else.
+    if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      frontmatter = parsed;
+    }
   } catch {
     // Malformed YAML — treat as empty frontmatter, preserve body
     frontmatter = {};

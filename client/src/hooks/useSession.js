@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 
-const WS_BASE = 'ws://127.0.0.1:3000';
+const WS_BASE = `ws://127.0.0.1:${window.location.port || 3000}`;
 
 export function useSession(sessionId, onData) {
   const wsRef = useRef(null);

@@ -19,7 +19,7 @@ export default function Sidebar() {
   // Load projects on mount
   useEffect(() => {
     apiGet('/api/v1/projects')
-      .then((projects) => dispatch({ type: 'SET_PROJECTS', payload: projects }))
+      .then((data) => dispatch({ type: 'SET_PROJECTS', payload: data.projects ?? [] }))
       .catch((err) => setLoadError(err.message));
   }, [dispatch]);
 
@@ -29,10 +29,10 @@ export default function Sidebar() {
 
     if (!state.sessions[project.id]) {
       try {
-        const session = await apiPost('/api/v1/sessions', { projectId: project.id });
+        const data = await apiPost('/api/v1/sessions', { projectId: project.id });
         dispatch({
           type: 'SET_SESSION',
-          payload: { projectId: project.id, session },
+          payload: { projectId: project.id, session: data.session },
         });
       } catch (err) {
         // Session creation failure is non-fatal — Terminal will show empty state

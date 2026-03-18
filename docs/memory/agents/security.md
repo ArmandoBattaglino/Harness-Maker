@@ -1,4 +1,58 @@
 ---
+## 2026-03-18 — Full Re-Audit (user-requested, post-Tasks #16-#18)
+**Status:** COMPLETED
+**Called by:** User (direct request for comprehensive audit of full codebase)
+
+### Context when I started
+All 18 tasks COMPLETED. The prior audit (Task #14) found 3 MEDIUM + 2 LOW findings. Tasks #16, #17, #18 fixed the 3 MEDIUM findings. This session is a full independent re-audit to verify those fixes and find any new issues.
+
+### What I did
+1. Read memory files in parallel: security.md (prior session), PROJECT.md, CONTEXT.md.
+2. Read existing SECURITY_AUDIT.md to understand what was previously found and marked fixed.
+3. Read ALL server source files in parallel: index.js, csrf.js, security.js, pathValidation.js, FileManager.js, ProcessRegistry.js, JobRunner.js, jobs.js, agents.js, projects.js, sessions.js, skills.js, claudemd.js, SessionManager.js, terminalHandler.js, BinaryDiscovery.js, ConfigStore.js, frontmatter.js.
+4. Read client files: AppContext.jsx, JobPanel.jsx, useApi.js, useJob.js.
+5. Ran npm audit in server/ (0 vulnerabilities), root (0 vulnerabilities), and client/ — **2 moderate vulnerabilities found in esbuild/vite (dev dependency only, GHSA-67mh-4wv8-2f99)**.
+6. Grepped for: shell:true, exec(), process.env, console.log, safeRead, dangerouslySetInnerHTML, prompt logging, injection patterns.
+7. Identified new findings: esbuild CVE in client devDeps (MEDIUM), process.env passthrough to PTY (LOW), safeRead path-validation bypass in claudemd GET (LOW — already contained by project lookup), rate limiter memory leak (LOW, pre-existing).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/agents/security.md | MODIFIED | Appended this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended audit outcome |
+
+### Improvements delivered
+- Confirmed all 3 prior MEDIUM fixes are correctly applied in the live code
+- Discovered 1 new MEDIUM finding: esbuild/vite CVE in client devDependencies
+- Confirmed LOW-02 (rate limiter memory leak) still open
+- NEW LOW-03: process.env passthrough exposes all server env vars to PTY child
+- NEW LOW-04: safeRead in claudemd.js GET bypasses FileManager path validation (low risk due to project lookup containment)
+- Full OWASP Top 10 re-verification complete
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None new | — | — | — |
+
+### Decisions I made
+- Rated esbuild/vite CVE as MEDIUM (not HIGH) because: it only affects the dev server (`vite dev`), not the production build or the Express server. The production server serves a static Vite build from `server/public`, not via vite's dev server. Exploitation requires an attacker able to reach the local Vite dev port, which is only bound during development.
+- Rated process.env passthrough as LOW: the app is localhost-only/single-user, so there are no untrusted users who could exploit leaked env vars. However, it violates the principle of least privilege.
+- Rated safeRead bypass as LOW (informational): the read path is constrained by project lookup — you can only read files inside a registered project's path. Not exploitable to read arbitrary filesystem paths.
+
+### What I learned
+- Client devDependencies DO need to be audited separately — npm audit at the root does not recurse into client/.
+- The process.env passthrough is a common node-pty pattern but does expose APPDATA, LOCALAPPDATA, CLAUDE_BIN, and any other env var to the Claude CLI child process. This is probably intentional for Claude to inherit PATH etc., but it's worth documenting.
+- The safeRead pattern in claudemd.js GET does not use FileManager, but it's safe because the only untrusted input is projectId, which is looked up in ConfigStore — so project.path is always a previously-validated, registered path.
+
+### State I'm leaving behind
+- SECURITY_AUDIT.md updated with new findings (MEDIUM-04 for esbuild, LOW-03 and LOW-04).
+- Overall verdict remains PASS for the production server. MEDIUM-04 is a dev-only concern.
+
+### Handoff
+- Fix MEDIUM-04: upgrade vite in client/ — `npm install vite@latest --prefix client`. This is a breaking change per npm audit (requires vite@8.x). Evaluate upgrade impact before applying.
+- LOW-03: consider creating an explicit env whitelist for PTY spawn (PATH, HOME, USERPROFILE, APPDATA, LOCALAPPDATA, TERM) rather than passing process.env wholesale.
+- LOW-04: refactor safeRead in claudemd.js to use fileManager.readFile with allowedBase for consistency.
+---
 ## 2026-03-18 — Task #14: Pre-Release Security Audit
 **Status:** COMPLETED
 **Called by:** orchestrator (project-manager)

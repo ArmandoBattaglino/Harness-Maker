@@ -79,7 +79,7 @@ export default function ProjectsView() {
     setLoading(true);
     setLoadError(null);
     apiGet('/api/v1/projects')
-      .then((list) => dispatch({ type: 'SET_PROJECTS', payload: list }))
+      .then((data) => dispatch({ type: 'SET_PROJECTS', payload: data.projects ?? [] }))
       .catch((err) => setLoadError(err.message))
       .finally(() => setLoading(false));
   }
