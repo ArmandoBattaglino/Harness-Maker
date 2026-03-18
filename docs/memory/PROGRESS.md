@@ -90,5 +90,13 @@ _None. All 18 tasks COMPLETED._
 ## Known Issues
 - R-01 (RESOLVED): node-pty-prebuilt-multiarch not available — plain node-pty used instead
 - R-02 (MITIGATED): ConPTY deadlock — permanent pty.onData handler enforced in SessionManager (never removed)
+- R-04 (FIXED 2026-03-18): AddProjectModal sent POST to nonexistent /api/v1/projects/scaffold — fixed to /api/v1/projects with scaffold in body (BUG-03)
+- R-05 (FIXED 2026-03-18): projects/session API responses not destructured in Sidebar and ProjectsView — all .map() calls were crashing (BUG-04, BUG-05)
+- R-06 (FIXED 2026-03-18): WS_BASE hardcoded to port 3000 — fixed to window.location.port (BUG-16)
+- R-07 (FIXED 2026-03-18): ws.bufferedAmount undefined server-side (browser API) — backpressure guard was always false; fixed to ws._socket.bufferSize (BUG-11)
+- R-08 (FIXED 2026-03-18): yaml.load() non-object return not guarded in parseFrontmatter (BUG-14)
+- R-09 (FIXED 2026-03-18): Double ProcessRegistry.unregister per session kill (BUG-02)
+- R-10 (DEFERRED v1.1): JobRunner #jobs Map memory leak — completed jobs never evicted (BUG-06)
+- R-11 (DEFERRED v1.1): Rate limiter _rateLimitMap never cleaned — entries accumulate (BUG-07)
 - R-03 (RESOLVED): Job mode process hang if child.stdin.end() not called — enforced in Task #9 (JobRunner.js line after spawn)
 - NOTE: FileManager was NOT created in Task #5 as planned — RESOLVED in Task #7 (created server/services/FileManager.js).

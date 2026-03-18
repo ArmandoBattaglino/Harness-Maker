@@ -1,4 +1,12 @@
 ---
+## 2026-03-18 — debugger — Full Codebase Code Review (user-requested)
+**Outcome:** COMPLETED
+**Summary:** Performed full codebase audit across all server and client files. Found 19 bugs/anomalies. Fixed 7 (2 HIGH, 4 MEDIUM, 1 HIGH-severity logic): AddProjectModal wrong endpoint (BUG-03), projects list response not destructured in Sidebar+ProjectsView (BUG-04), session object not destructured in Sidebar (BUG-05), WS_BASE hardcoded port (BUG-16), ws.bufferedAmount server-side undefined (BUG-11), yaml.load non-object return not guarded (BUG-14), double ProcessRegistry.unregister (BUG-02). 12 bugs documented and deferred to v1.1.
+**Files changed:** client/src/components/AddProjectModal.jsx, client/src/components/Sidebar.jsx, client/src/views/ProjectsView.jsx, client/src/hooks/useSession.js, server/services/SessionManager.js, server/utils/frontmatter.js, docs/memory/agents/debugger.md (CREATED)
+**Bugs fixed:** BUG-02, BUG-03, BUG-04, BUG-05, BUG-11, BUG-14, BUG-16
+**Decisions made:** Used ws._socket.bufferSize for server-side backpressure; _unregistered flag on session object for double-unregister guard; window.location.port for WS_BASE
+**Next:** qa-tester regression pass on the 6 changed files; BUG-06 (JobRunner memory leak) and BUG-07 (rate limiter map) deferred to v1.1
+---
 ## 2026-03-18 — security — Full Re-Audit (user-requested)
 **Outcome:** COMPLETED
 **Summary:** Conducted a full independent re-audit of the entire codebase. Confirmed all 3 prior MEDIUM findings (exec→spawn, allowedTools whitelist, PID range guard) are correctly fixed in the live code. Discovered 1 new MEDIUM finding (esbuild/vite CVE in client devDependencies, dev-only, not production), 2 new LOW findings (process.env passthrough to PTY, safeRead path bypass in claudemd.js GET), plus the pre-existing LOW-02 (rate limiter memory leak). npm audit for server/ and root returned 0 vulnerabilities; client/ returned 2 moderate (esbuild CVE).
