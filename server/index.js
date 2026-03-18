@@ -16,6 +16,9 @@ import { csrfMiddleware } from './middleware/csrf.js';
 import { ApiError } from './middleware/pathValidation.js';
 import projectsRouter from './routes/projects.js';
 import sessionsRouter from './routes/sessions.js';
+import agentsRouter from './routes/agents.js';
+import skillsRouter from './routes/skills.js';
+import claudemdRouter from './routes/claudemd.js';
 import { sessionManager } from './services/SessionManager.js';
 import { setupTerminalWebSocket } from './ws/terminalHandler.js';
 
@@ -90,6 +93,11 @@ async function startup() {
 
   // Session management routes
   app.use('/api/v1/sessions', sessionsRouter);
+
+  // Entity management routes (agents, skills, CLAUDE.md)
+  app.use('/api/v1/agents', agentsRouter);
+  app.use('/api/v1/skills', skillsRouter);
+  app.use('/api/v1/claudemd', claudemdRouter);
 
   // -------------------------------------------------------------------------
   // 7. Serve static client build

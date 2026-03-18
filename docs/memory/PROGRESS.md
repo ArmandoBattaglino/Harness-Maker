@@ -36,9 +36,14 @@
   client/src/components/Sidebar.jsx (project list, status indicators, Stop button, Add Project modal trigger),
   client/src/components/AddProjectModal.jsx (register + scaffold flows), client/src/views/TerminalView.jsx
   (Start Terminal button, session switching, ring buffer replay on reconnect). Build verified.
+- [TASK-7] Entity Management API (backend-dev) — COMPLETED 2026-03-18
+  Created: server/services/FileManager.js (path-validated atomic file I/O), server/utils/frontmatter.js (YAML
+  parse/serialize helpers), server/routes/agents.js (CRUD /api/v1/agents), server/routes/skills.js (CRUD
+  /api/v1/skills, 4 scan locations: modern+legacy x user+project), server/routes/claudemd.js (read/write
+  CLAUDE.md user+project scope). Mounted all three routers in server/index.js. npm run build verified.
 
 ## In Progress
-_None. Ready for Phase 2 (Entity Management) and Phase 3 (Job Mode)._
+_None._
 
 ## Blocked
 _None._
@@ -46,7 +51,6 @@ _None._
 ## Pending
 
 ### Phase 2 — Entity Management
-- [TASK-7] Entity Management API — agents/skills/CLAUDE.md CRUD endpoints (backend-dev)
 - [TASK-8] Entity Management UI — AgentEditor, SkillEditor, ClaudeMdEditor (frontend-dev)
 
 ### Phase 3 — Job Mode
@@ -66,4 +70,4 @@ _None._
 - R-01 (RESOLVED): node-pty-prebuilt-multiarch not available — plain node-pty used instead
 - R-02 (MITIGATED): ConPTY deadlock — permanent pty.onData handler enforced in SessionManager (never removed)
 - R-03 (PENDING): Job mode process hang if child.stdin.end() not called — must enforce in Task #9 (JobRunner)
-- NOTE: FileManager was NOT created in Task #5 as planned. It is a dependency for Task #7. Task #7 agent must create server/services/FileManager.js before implementing entity routes.
+- NOTE: FileManager was NOT created in Task #5 as planned — RESOLVED in Task #7 (created server/services/FileManager.js).

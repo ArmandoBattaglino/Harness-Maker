@@ -1,4 +1,13 @@
 ---
+## 2026-03-18 — backend-dev — Task #7: Entity Management API — Agents, Skills, CLAUDE.md
+**Outcome:** COMPLETED
+**Summary:** Implemented the full entity management REST API. Created the missing FileManager.js prerequisite, a shared frontmatter utility module, and three new route files (agents, skills, claudemd). Mounted all three routers in server/index.js. npm run build and node --check on all new files passed with no errors.
+**Files changed:** server/services/FileManager.js (CREATED), server/utils/frontmatter.js (CREATED), server/routes/agents.js (CREATED), server/routes/skills.js (CREATED), server/routes/claudemd.js (CREATED), server/index.js (MODIFIED)
+**Bugs fixed:** FileManager.js was never created in Task #5 despite being in the spec — created here as first step
+**Decisions made:** Shared frontmatter utils in server/utils/ to avoid duplication; resolveAllowedBase() validates filePath against all registered project paths before any write
+**Blockers:** none
+**Next:** Task #8 (frontend-dev) — AgentEditor, SkillEditor, ClaudeMdEditor React components
+---
 ## 2026-03-18 — project-manager — Project Analysis: Status Review + Task Plan Update
 **Outcome:** COMPLETED
 **Summary:** Discovered that Tasks #3-#6 were all committed to git but the TASK_PLAN.md still showed them as IN_PROGRESS or PENDING. Updated all 4 task statuses to COMPLETED. Identified that FileManager.js was not created in Task #5 despite being in the spec — this is a gap that Task #7 must fill. Project is now entering Phase 2 (Entity Management) and Phase 3 (Job Mode) simultaneously.
