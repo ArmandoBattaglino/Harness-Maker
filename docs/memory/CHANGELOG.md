@@ -111,3 +111,79 @@
 - Project panel is disabled/greyed when no project is selected
 - handleSaveUser: PUT /api/v1/claudemd/user; handleSaveProject: PUT /api/v1/claudemd/project
 - Both saves are independent — each has its own saving/saveError state
+
+---
+
+### [Task #9] Job Mode API — JobRunner and SSE Streaming
+- Agent: backend-dev
+- Added: server/services/JobRunner.js, server/routes/jobs.js
+- Modified: server/index.js (import jobRunner, mount /api/v1/jobs, set jobRunner.claudeBin, call jobRunner.cancelAll in shutdown)
+
+#### server/services/JobRunner.js
+- JobRunner class with private `#jobs` Map; exported as singleton `jobRunner`
+- `claudeBin` public property — set by server/index.js after binary discovery (same pattern as SessionManager)
+- `startJob(projectId, projectPath, prompt, allowedTools, maxTurns)`: spawns `claude -p --output-format stream-json`; stdin.end() immediately (DEC-005, GitHub #7497 hang prevention); readline on stdout for JSON line parsing; forwards each event to all SSE clients; finalizes status on child close
+- `cancelJob(jobId)`: sets status='cancelled' before tree-kill (prevents close handler overwriting with 'error'); tree-kill via CJS createRequire; sends cancelled SSE event; closes all client connections
+- `addSseClient(jobId, res)`: sets SSE headers; if job finished — sends terminal event immediately and returns; if running — adds to clients Set, wires 'close' cleanup
+- `listJobs()`: sanitized snapshot — excludes prompt, result, child, clients (SEC-08)
+- `cancelAll()`: used in SIGTERM/SIGINT shutdown handler; iterates all running jobs
+- Internal helpers: `sendSse(res, data)` (single SSE frame), `closeAllClients(job)` (iterates clients Set, calls res.end)
+- Prompt is NEVER logged anywhere (SEC-08 compliance)
+
+#### server/routes/jobs.js
+- `POST /api/v1/jobs`: validates projectId (string non-empty), prompt (string non-empty), allowedTools (string if provided), maxTurns (integer 1-100 if provided); looks up project in ConfigStore; calls jobRunner.startJob; returns 201 `{ jobId, projectId, createdAt }`
+- `GET /api/v1/jobs/:id/stream`: SSE endpoint; disables Express/Node timeouts (req.setTimeout(0), res.setTimeout(0)); delegates to jobRunner.addSseClient; does NOT call res.end() when found — JobRunner owns response lifetime
+- `DELETE /api/v1/jobs/:id`: calls jobRunner.cancelJob; 204 on success; 404 if job not found; 409 if job not in cancellable state
+- `GET /api/v1/jobs`: list all jobs (sanitized); bonus endpoint, not currently used by client UI
+
+#### server/index.js changes
+- Import: `jobRunner` from `./services/JobRunner.js`, `jobsRouter` from `./routes/jobs.js`
+- After binary discovery: `jobRunner.claudeBin = claudeBin`
+- Route mount: `app.use('/api/v1/jobs', jobsRouter)`
+- Shutdown handler: `jobRunner.cancelAll()` called before `sessionManager.killAll()`
+
+---
+
+### [Task #10] Job Mode UI — JobPanel and react-markdown Result Rendering
+- Agent: frontend-dev
+- Added: client/src/hooks/useJob.js, client/src/components/JobPanel.jsx
+- Modified: client/src/views/JobView.jsx (full implementation replacing stub), client/src/index.css (added .markdown-result styles)
+
+#### client/src/hooks/useJob.js
+- Custom hook `useJob(projectId)` — manages full job lifecycle
+- State: status ('idle'|'running'|'done'|'cancelled'|'error'), streamEvents (array), result (string|null), error (string|null), jobId (string|null)
+- Refs: esRef (EventSource), jobIdRef (current jobId — avoids stale closure in cancelJob)
+- `startJob({ prompt, allowedTools, maxTurns })`: POST /api/v1/jobs → opens EventSource for SSE stream → parses 'done'/'cancelled'/other events
+- `cancelJob()`: closes EventSource, DELETE /api/v1/jobs/:id (best-effort, swallows errors), sets status='cancelled'
+- `reset()`: closes EventSource, resets all state to idle
+- Guard: `if (status === 'running') return` in startJob prevents double-submission
+
+#### client/src/components/JobPanel.jsx
+- `JobPanel({ projectId })`: main export — 4 render modes: idle/running (prompt form + StreamLog), done (MarkdownResult), cancelled (message), error (error text)
+- Ctrl+Enter or Cmd+Enter submits prompt (handleKeyDown)
+- `StreamLog({ events })`: scrollable SSE event log; useEffect auto-scroll to bottomRef; shows "Waiting for output..." placeholder
+- `renderEventContent(ev)`: extracts displayable text from stream-json events; handles assistant/result/raw event types; truncates at 200-300 chars
+- `MarkdownResult({ result, onCopy, copyLabel })`: renders final result as Markdown via react-markdown + remark-gfm; Copy button writes to clipboard; within `.markdown-result` CSS scope
+- `AdvancedOptions(...)`: collapsible panel with allowedTools (text) and maxTurns (number 1-100) inputs; disabled while job running
+
+#### client/src/views/JobView.jsx
+- Full implementation: reads activeProjectId + projects from AppContext; shows "Select a project" placeholder if none selected; renders header with project name + JobPanel
+
+#### client/src/index.css
+- Added `.markdown-result` scoped CSS: heading sizes (h1-h4), paragraph margin, list indent, inline code styling, code block dark background, blockquote border, table with striped rows, link color, hr style
+
+---
+
+### [Task #11] Projects View UI — Full Implementation
+- Agent: frontend-dev
+- Modified: client/src/views/ProjectsView.jsx (full implementation replacing stub)
+
+#### client/src/views/ProjectsView.jsx
+- `ProjectsView()`: loads projects via GET /api/v1/projects on mount; dispatches SET_PROJECTS to AppContext
+- Project table columns: Name / Path (truncated with title tooltip) / Status (StatusBadge) / Created (formatDate) / Actions
+- "Open Terminal" action: dispatches SET_ACTIVE_PROJECT + SET_VIEW 'terminal' — navigates to terminal for that project
+- "Delete" action: shows ConfirmDialog modal; on confirm calls DELETE /api/v1/projects/:id; dispatches REMOVE_PROJECT
+- "+ Register Project" button: shows AddProjectModal; on close re-fetches project list
+- `StatusBadge({ active })`: green "Active" if sessions[project.id] truthy, grey "No session" otherwise; reads sessions from AppContext
+- `ConfirmDialog({ projectName, onConfirm, onCancel, busy })`: fixed-position overlay; warns "no files deleted — registry only"; disables buttons while busy
+- `formatDate(iso)`: locale date format; returns "—" on null/invalid input

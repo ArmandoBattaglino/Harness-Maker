@@ -54,3 +54,64 @@ Tasks #7 (backend Entity Management API) and #8 (frontend Entity Management UI) 
 ### Handoff
 After Tasks #9 and #10: code-mapper should document JobRunner service, SSE streaming route, JobPanel component, react-markdown integration.
 ---
+
+---
+## 2026-03-18 — Tasks #9+#10+#11: Job Mode API + Job Mode UI + Projects View UI
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+Tasks #9 (Job Mode API — backend-dev), #10 (Job Mode UI — frontend-dev), and #11 (Projects View UI — frontend-dev) had just completed. CODE_MAP.md covered through Task #8. CHANGELOG.md had entries through Task #8. My previous session log explicitly anticipated documenting JobRunner, SSE route, JobPanel, and react-markdown.
+
+### What I did
+1. Read agent memory file to confirm previous state and handoff notes
+2. Read existing CODE_MAP.md and CHANGELOG.md (prior state)
+3. Read all 8 modified/created files in parallel:
+   - server/services/JobRunner.js, server/routes/jobs.js, server/index.js
+   - client/src/hooks/useJob.js, client/src/components/JobPanel.jsx
+   - client/src/views/JobView.jsx, client/src/views/ProjectsView.jsx
+4. Grep confirmed index.css .markdown-result styles added
+5. Confirmed TASK_PLAN.md already marks Tasks #9, #10, #11 as COMPLETED (implementing agents set this)
+6. Updated CODE_MAP.md: header line, Module Index (4 new server rows, 4 new client rows), startup() entry (added jobsRouter + jobRunner.claudeBin), 14 new Function Graph entries, Key Behaviors + Key Patterns sections
+7. Appended 3 CHANGELOG entries (Tasks #9, #10, #11) to CHANGELOG.md
+8. Appended code-mapper entry to ACTIVITY_LOG.md
+9. PROGRESS.md already up-to-date (frontend-dev had written tasks there)
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header updated; Module Index: 8 new rows; startup() entry updated; 14 new Function Graph entries for JobRunner, jobs route, useJob, JobPanel components, JobView, ProjectsView components; Key Behaviors + Key Patterns sections extended |
+| docs/memory/CHANGELOG.md | APPENDED | Three new entries: Task #9 (JobRunner + routes), Task #10 (useJob + JobPanel + JobView + index.css), Task #11 (ProjectsView full implementation) |
+| docs/memory/ACTIVITY_LOG.md | APPENDED | code-mapper entry for Tasks #9+#10+#11 |
+| docs/memory/agents/code-mapper.md | APPENDED | This session log |
+
+### Improvements delivered
+- CODE_MAP.md now covers the full job mode stack end-to-end: JobRunner → routes/jobs.js → useJob → JobPanel → JobView
+- Key architectural patterns documented: SSE response ownership (JobRunner owns res lifetime), stdin.end() requirement (DEC-005), useJob ref+state duality for stale closure avoidance, .markdown-result CSS scope for react-markdown
+- ProjectsView sub-components documented (StatusBadge, ConfirmDialog, formatDate)
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None | — | — | — |
+
+### Decisions I made
+- Documented SSE response ownership explicitly: JobRunner.addSseClient owns the res lifetime; routes/jobs.js does NOT call res.end() after addSseClient returns true — this is non-obvious and a source of potential bugs if missed
+- Documented jobIdRef vs jobId state duality in useJob: the ref is needed because cancelJob is a useCallback and would otherwise capture stale jobId state
+
+### What I learned
+- JobRunner uses the same claudeBin pattern as SessionManager — both are singletons with a public property set by index.js after binary discovery
+- tree-kill is CJS-only in this codebase — both JobRunner.js and SessionManager.js use createRequire to import it (same pattern, independent implementations)
+- SSE disables Express/Node timeouts via req.setTimeout(0) + res.setTimeout(0) — this is required or long-running jobs will get timeout-killed by the framework
+- ProjectsView reads `sessions` from AppContext (not just `projects`) to determine session status badge — the sessions object is keyed by projectId
+
+### State I'm leaving behind
+- CODE_MAP.md: complete through Task #11. All server and client modules documented.
+- CHANGELOG.md: entries for Tasks #1-#11 present.
+- TASK_PLAN.md: Tasks #9, #10, #11 already COMPLETED (set by implementing agents).
+- PROGRESS.md: Tasks #9, #10, #11 in Completed section (set by implementing agents, confirmed).
+- Next pending tasks: #12 (NFR polish — backend-dev), #13 (QA), #14 (Security), #15 (Docs)
+
+### Handoff
+After Task #12: document NFR improvements — browser auto-open, resilience improvements, startup polish. After Tasks #13-#15: document test suite location, security audit findings, README.
+---

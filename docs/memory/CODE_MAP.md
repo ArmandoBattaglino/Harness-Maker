@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-18 — after Task #7: Entity Management API + Task #8: Entity Management UI by backend-dev + frontend-dev_
+_Last updated: 2026-03-18 — after Task #9: Job Mode API + Task #10: Job Mode UI + Task #11: Projects View UI by backend-dev + frontend-dev_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -27,6 +27,8 @@ _Last updated: 2026-03-18 — after Task #7: Entity Management API + Task #8: En
 | server/routes/agents.js | agentsRouter | GET/POST/PUT/DELETE /api/v1/agents — agent .md CRUD for user + project scope |
 | server/routes/skills.js | skillsRouter | GET/POST/PUT/DELETE /api/v1/skills — skill CRUD (modern SKILL.md + legacy commands/*.md) |
 | server/routes/claudemd.js | claudemdRouter | GET /api/v1/claudemd, PUT /user, PUT /project — CLAUDE.md read/write |
+| server/services/JobRunner.js | JobRunner (class), jobRunner (singleton) | One-shot Claude job executor: spawns claude -p, streams JSON output line-by-line to SSE clients, cancelAll on shutdown |
+| server/routes/jobs.js | jobsRouter | POST/GET/DELETE /api/v1/jobs, GET /api/v1/jobs/:id/stream (SSE) — job lifecycle REST + streaming |
 | server/ws/terminalHandler.js | setupTerminalWebSocket | WebSocket handler: sessionId from URL query, attach/detach client, route input/resize messages |
 
 ### Client Modules
@@ -43,6 +45,10 @@ _Last updated: 2026-03-18 — after Task #7: Entity Management API + Task #8: En
 | client/src/components/AgentEditor.jsx | default AgentEditor, AgentForm (internal) | Agent list + create/edit/delete UI; calls /api/v1/agents |
 | client/src/components/SkillEditor.jsx | default SkillEditor, SkillForm (internal) | Skill list + create/edit/delete UI; calls /api/v1/skills |
 | client/src/components/ClaudeMdEditor.jsx | default ClaudeMdEditor, ClaudeMdPanel (internal) | Dual-panel CLAUDE.md editor (user + project); calls /api/v1/claudemd |
+| client/src/hooks/useJob.js | default useJob | Custom hook: manages full job lifecycle (POST → SSE → result/cancel/reset), exposes status, streamEvents, result, error |
+| client/src/components/JobPanel.jsx | default JobPanel, StreamLog, MarkdownResult, AdvancedOptions (internals) | Job Mode UI: prompt textarea, SSE stream log, react-markdown result, cancel/copy/reset actions |
+| client/src/views/JobView.jsx | default JobView | View wrapper: reads activeProjectId from AppContext, renders JobPanel for selected project |
+| client/src/views/ProjectsView.jsx | default ProjectsView, StatusBadge, ConfirmDialog, formatDate (internals) | Full project list table with session status, Open Terminal action, Register/Delete with confirmation modal |
 
 ## Build Artifacts
 - `server/public/` — Vite build output (served as static files by Express)
@@ -308,11 +314,11 @@ _Last updated: 2026-03-18 — after Task #7: Entity Management API + Task #8: En
 ### `server/index.js` :: `startup()`
 - **Purpose:** Full server bootstrap — binary discovery, config load, stale PID cleanup, Express setup, middleware, route mounting, WebSocket, HTTP bind.
 - **Called by:** entry point (module level)
-- **Calls:** discoverClaudeBinary, ConfigStore.load, ProcessRegistry.cleanupStale, securityMiddleware, csrfMiddleware, projectsRouter, sessionsRouter, agentsRouter, skillsRouter, claudemdRouter, setupTerminalWebSocket
+- **Calls:** discoverClaudeBinary, ConfigStore.load, ProcessRegistry.cleanupStale, securityMiddleware, csrfMiddleware, projectsRouter, sessionsRouter, agentsRouter, skillsRouter, claudemdRouter, jobsRouter, setupTerminalWebSocket
 - **Inputs:** none (reads env: PORT, IDLE_TIMEOUT_MINUTES, CLAUDE_BINARY_PATH)
 - **Output:** Promise\<void\>
-- **Side effects:** HTTP server listening on 127.0.0.1:PORT, WebSocket server, SIGTERM/SIGINT handlers
-- **Last modified:** 2026-03-18 in Task #7 by backend-dev (added agentsRouter, skillsRouter, claudemdRouter mounts)
+- **Side effects:** HTTP server listening on 127.0.0.1:PORT, WebSocket server, SIGTERM/SIGINT handlers; sets jobRunner.claudeBin after binary discovery
+- **Last modified:** 2026-03-18 in Task #9 by backend-dev (added jobsRouter mount, jobRunner.claudeBin assignment, jobRunner.cancelAll() in shutdown)
 
 ---
 
@@ -443,6 +449,255 @@ _Last updated: 2026-03-18 — after Task #7: Entity Management API + Task #8: En
 
 ---
 
+### `server/services/JobRunner.js` :: `JobRunner.startJob(projectId, projectPath, prompt, allowedTools, maxTurns)`
+- **Purpose:** Spawn `claude -p <prompt> --output-format stream-json` as a child process. Wire readline on stdout to parse JSON lines. Forward each parsed event to all connected SSE clients. On close, finalize status and send done/cancelled terminal event. Returns summary object immediately (non-blocking).
+- **Called by:** POST /api/v1/jobs handler (routes/jobs.js)
+- **Calls:** spawn (child_process), child.stdin.end(), createInterface (readline), sendSse, closeAllClients, uuidv4
+- **Inputs:** projectId (string), projectPath (string), prompt (string), allowedTools (string|undefined), maxTurns (number|undefined)
+- **Output:** `{ jobId, projectId, createdAt }` (JobRecord summary — prompt intentionally excluded for SEC-08)
+- **Side effects:** spawns child process; readline reads stdout; maintains job Map entry with clients Set; logs start/finish
+- **Complexity note:** stdin.end() is called immediately after spawn — required to prevent `claude -p` from hanging waiting for input (GitHub issue #7497, DEC-005). lastResultEvent tracks the last stream-json event with a `result` field to capture final output.
+- **Last modified:** 2026-03-18 in Task #9 by backend-dev
+
+### `server/services/JobRunner.js` :: `JobRunner.cancelJob(jobId)`
+- **Purpose:** Cancel a running job by sending SIGTERM to the full process tree via tree-kill. Sets status to 'cancelled' before kill so the close handler doesn't overwrite with 'error'. Sends cancelled SSE event and closes all client connections.
+- **Called by:** DELETE /api/v1/jobs/:id handler (routes/jobs.js), JobRunner.cancelAll
+- **Calls:** treeKill (tree-kill via createRequire), sendSse, closeAllClients
+- **Inputs:** jobId (string)
+- **Output:** boolean — false if job not found or not 'running'; true on success
+- **Side effects:** SIGTERM to process tree; closes all SSE connections for the job
+- **Last modified:** 2026-03-18 in Task #9 by backend-dev
+
+### `server/services/JobRunner.js` :: `JobRunner.addSseClient(jobId, res)`
+- **Purpose:** Attach an Express response as an SSE client for a job. Sets SSE headers. If job already finished, sends terminal event and closes immediately. If running, adds to clients Set and wires 'close' cleanup.
+- **Called by:** GET /api/v1/jobs/:id/stream handler (routes/jobs.js)
+- **Calls:** res.setHeader, sendSse, res.end, job.clients.add, res.on('close')
+- **Inputs:** jobId (string), res (Express Response)
+- **Output:** boolean — false if job not found
+- **Side effects:** sets SSE response headers; keeps res open (streaming); registers disconnect cleanup
+- **Last modified:** 2026-03-18 in Task #9 by backend-dev
+
+### `server/services/JobRunner.js` :: `JobRunner.getJob(jobId)`
+- **Purpose:** Return the full JobRecord (including child, clients, status) or undefined if not found.
+- **Called by:** DELETE /api/v1/jobs/:id handler (to check status on failed cancel)
+- **Calls:** Map.get
+- **Inputs:** jobId (string)
+- **Output:** JobRecord | undefined
+- **Side effects:** none
+- **Last modified:** 2026-03-18 in Task #9 by backend-dev
+
+### `server/services/JobRunner.js` :: `JobRunner.listJobs()`
+- **Purpose:** Return sanitized job summaries (jobId, projectId, status, createdAt, completedAt). Excludes prompt, result, child process, and clients (SEC-08 + security).
+- **Called by:** GET /api/v1/jobs handler (routes/jobs.js)
+- **Calls:** Array.from, Map.values
+- **Inputs:** none
+- **Output:** array of sanitized job summary objects
+- **Side effects:** none
+- **Last modified:** 2026-03-18 in Task #9 by backend-dev
+
+### `server/services/JobRunner.js` :: `JobRunner.cancelAll()`
+- **Purpose:** Cancel all currently running jobs. Used in SIGTERM/SIGINT shutdown handler in server/index.js.
+- **Called by:** shutdown() in server/index.js
+- **Calls:** JobRunner.cancelJob (for each running job)
+- **Inputs:** none
+- **Output:** void
+- **Side effects:** SIGTERM to all running child processes; closes all SSE connections
+- **Last modified:** 2026-03-18 in Task #9 by backend-dev
+
+### `server/services/JobRunner.js` :: `sendSse(res, data)` (internal)
+- **Purpose:** Write a single `data: <json>\n\n` SSE frame to a response.
+- **Called by:** JobRunner.startJob (rl.on('line'), child.on('close')), JobRunner.cancelJob, JobRunner.addSseClient
+- **Calls:** res.write, JSON.stringify
+- **Inputs:** res (Express Response), data (any — serialized as JSON)
+- **Output:** void
+- **Side effects:** writes to HTTP response stream
+- **Last modified:** 2026-03-18 in Task #9 by backend-dev
+
+### `server/services/JobRunner.js` :: `closeAllClients(job)` (internal)
+- **Purpose:** End all SSE response connections for a job and clear the clients Set.
+- **Called by:** JobRunner.startJob (child.on('close')), JobRunner.cancelJob
+- **Calls:** res.end (for each client)
+- **Inputs:** job (JobRecord)
+- **Output:** void
+- **Side effects:** closes HTTP response streams; clears job.clients Set
+- **Last modified:** 2026-03-18 in Task #9 by backend-dev
+
+---
+
+### `server/routes/jobs.js` :: `GET /api/v1/jobs`
+- **Purpose:** List all jobs in sanitized form (no prompt, no result content). Useful for debugging/monitoring.
+- **Called by:** (not currently called by client — bonus endpoint)
+- **Calls:** jobRunner.listJobs
+- **Inputs:** none
+- **Output:** JSON `{ jobs: [...] }`
+- **Side effects:** none
+- **Last modified:** 2026-03-18 in Task #9 by backend-dev
+
+### `server/routes/jobs.js` :: `POST /api/v1/jobs`
+- **Purpose:** Validate request, look up project, call jobRunner.startJob. Returns 201 with jobId on success.
+- **Called by:** client/src/hooks/useJob.js::startJob (via apiPost)
+- **Calls:** ConfigStore.getProjects, jobRunner.startJob
+- **Inputs:** body `{ projectId, prompt, allowedTools?, maxTurns? }`
+- **Output:** 201 JSON `{ jobId, projectId, createdAt }` | 400/404/500 errors
+- **Side effects:** spawns child process (via jobRunner.startJob)
+- **Last modified:** 2026-03-18 in Task #9 by backend-dev
+
+### `server/routes/jobs.js` :: `GET /api/v1/jobs/:id/stream`
+- **Purpose:** SSE endpoint. Disables Express/Node.js request and response timeouts. Delegates to jobRunner.addSseClient. Stays open until job finishes or client disconnects.
+- **Called by:** client/src/hooks/useJob.js::startJob (via EventSource constructor, not apiGet)
+- **Calls:** req.setTimeout(0), res.setTimeout(0), jobRunner.addSseClient
+- **Inputs:** params.id (jobId)
+- **Output:** SSE stream (open connection) | 404 JSON if job not found
+- **Side effects:** keeps HTTP response open as streaming SSE connection
+- **Complexity note:** res.end() is NOT called here if job is found — JobRunner owns the response lifetime.
+- **Last modified:** 2026-03-18 in Task #9 by backend-dev
+
+### `server/routes/jobs.js` :: `DELETE /api/v1/jobs/:id`
+- **Purpose:** Cancel a running job. Returns 204 on success, 404 if job not found, 409 if job exists but not cancellable (already done/error/cancelled).
+- **Called by:** client/src/hooks/useJob.js::cancelJob (via apiDelete)
+- **Calls:** jobRunner.cancelJob, jobRunner.getJob
+- **Inputs:** params.id (jobId)
+- **Output:** 204 | 404 | 409 errors
+- **Side effects:** SIGTERM to process tree via jobRunner.cancelJob
+- **Last modified:** 2026-03-18 in Task #9 by backend-dev
+
+---
+
+### `client/src/hooks/useJob.js` :: `useJob(projectId)`
+- **Purpose:** Custom React hook managing the full lifecycle of one job run. Exposes startJob, cancelJob, reset, and reactive state (status, streamEvents, result, error, jobId).
+- **Called by:** JobPanel (client/src/components/JobPanel.jsx)
+- **Calls:** apiPost (startJob), apiDelete (cancelJob), EventSource (browser native SSE), closeEventSource
+- **Inputs:** projectId (string | null)
+- **Output:** `{ startJob, cancelJob, reset, status, streamEvents, result, error, jobId }`
+- **Side effects:** HTTP POST to start job; opens EventSource SSE connection; HTTP DELETE to cancel; clears EventSource on close
+- **Complexity note:** jobIdRef is used alongside jobId state to allow cancelJob (useCallback) to access the current jobId without stale closure. status guard `if (status === 'running') return` in startJob prevents double-submission.
+- **Last modified:** 2026-03-18 in Task #10 by frontend-dev
+
+### `client/src/hooks/useJob.js` :: `startJob({ prompt, allowedTools, maxTurns })` (method of useJob)
+- **Purpose:** POST to /api/v1/jobs, then open EventSource for the SSE stream. Parses each SSE message: 'done' finalizes result, 'cancelled' updates status, all others appended to streamEvents.
+- **Called by:** JobPanel::handleRun
+- **Calls:** apiPost, EventSource (browser), closeEventSource
+- **Inputs:** `{ prompt, allowedTools, maxTurns }` (from JobPanel form state)
+- **Output:** void (updates state via setters)
+- **Side effects:** HTTP POST; opens persistent EventSource connection
+- **Last modified:** 2026-03-18 in Task #10 by frontend-dev
+
+### `client/src/hooks/useJob.js` :: `cancelJob()` (method of useJob)
+- **Purpose:** Close the EventSource, then send DELETE /api/v1/jobs/:id. Sets status to 'cancelled'. Best-effort — swallows apiDelete errors.
+- **Called by:** JobPanel::handleCancel
+- **Calls:** closeEventSource, apiDelete
+- **Inputs:** none (reads jobIdRef.current internally)
+- **Output:** void
+- **Side effects:** closes SSE connection; HTTP DELETE (best-effort)
+- **Last modified:** 2026-03-18 in Task #10 by frontend-dev
+
+### `client/src/hooks/useJob.js` :: `reset()` (method of useJob)
+- **Purpose:** Reset all job state to idle. Closes any open EventSource. Clears jobIdRef.
+- **Called by:** JobPanel::handleReset
+- **Calls:** closeEventSource
+- **Inputs:** none
+- **Output:** void
+- **Side effects:** closes SSE connection if open
+- **Last modified:** 2026-03-18 in Task #10 by frontend-dev
+
+---
+
+### `client/src/components/JobPanel.jsx` :: `JobPanel({ projectId })`
+- **Purpose:** Main Job Mode UI component. Four render modes based on status: idle/running (prompt form + StreamLog), done (MarkdownResult), cancelled (message + reset), error (error message + retry). Ctrl+Enter submits prompt.
+- **Called by:** JobView (client/src/views/JobView.jsx)
+- **Calls:** useJob, StreamLog, MarkdownResult, AdvancedOptions
+- **Inputs:** projectId (string | null)
+- **Output:** JSX (conditional render by status)
+- **Side effects:** clipboard write on copy (navigator.clipboard); 2s timeout to reset copy label
+- **Last modified:** 2026-03-18 in Task #10 by frontend-dev
+
+### `client/src/components/JobPanel.jsx` :: `StreamLog({ events })` (internal)
+- **Purpose:** Scrollable list of SSE stream events. Auto-scrolls to bottom on each new event. Renders event type label + extracted text content via renderEventContent(). Shows "Waiting for output..." placeholder when events is empty.
+- **Called by:** JobPanel (idle/running render branch)
+- **Calls:** renderEventContent, useEffect (scroll to bottomRef)
+- **Inputs:** events (array of parsed SSE event objects)
+- **Output:** JSX
+- **Side effects:** DOM scroll on events change (scrollIntoView)
+- **Last modified:** 2026-03-18 in Task #10 by frontend-dev
+
+### `client/src/components/JobPanel.jsx` :: `renderEventContent(ev)` (internal)
+- **Purpose:** Extract displayable text from a Claude stream-json event. Handles: assistant events (message.content array filtered to text blocks), result events, raw events, generic ev.content/ev.text fallback. Truncates at 200-300 chars.
+- **Called by:** StreamLog
+- **Calls:** none (pure function)
+- **Inputs:** ev (parsed SSE event object)
+- **Output:** string (truncated display text)
+- **Side effects:** none
+- **Last modified:** 2026-03-18 in Task #10 by frontend-dev
+
+### `client/src/components/JobPanel.jsx` :: `MarkdownResult({ result, onCopy, copyLabel })` (internal)
+- **Purpose:** Display the final job result as rendered Markdown using react-markdown + remark-gfm. Shows a Copy button that calls onCopy. Applied within `.markdown-result` CSS scope (index.css).
+- **Called by:** JobPanel (done render branch)
+- **Calls:** ReactMarkdown (react-markdown), remarkGfm (remark-gfm)
+- **Inputs:** result (string — Markdown text), onCopy (function), copyLabel (string — button label)
+- **Output:** JSX
+- **Side effects:** none
+- **Last modified:** 2026-03-18 in Task #10 by frontend-dev
+
+### `client/src/components/JobPanel.jsx` :: `AdvancedOptions({ allowedTools, setAllowedTools, maxTurns, setMaxTurns, disabled })` (internal)
+- **Purpose:** Collapsible panel for job configuration: allowedTools (text input, default 'all') and maxTurns (number input, 1-100, default 10). Toggle open/closed with arrow button.
+- **Called by:** JobPanel (idle/running render branch)
+- **Calls:** none (controlled inputs — pure presentational)
+- **Inputs:** allowedTools, setAllowedTools, maxTurns, setMaxTurns (state from JobPanel), disabled (boolean — true while running)
+- **Output:** JSX collapsible section
+- **Side effects:** none
+- **Last modified:** 2026-03-18 in Task #10 by frontend-dev
+
+---
+
+### `client/src/views/JobView.jsx` :: `JobView()`
+- **Purpose:** View wrapper for Job Mode. Reads activeProjectId + projects from AppContext. Shows "Select a project" placeholder if no project is selected. Renders header with project name then JobPanel.
+- **Called by:** App.jsx (route/view rendering — when view === 'job')
+- **Calls:** useAppState, JobPanel
+- **Inputs:** none (reads context)
+- **Output:** JSX — header + JobPanel, or empty-state placeholder
+- **Side effects:** none
+- **Last modified:** 2026-03-18 in Task #10 by frontend-dev
+
+---
+
+### `client/src/views/ProjectsView.jsx` :: `ProjectsView()`
+- **Purpose:** Full projects management view. Loads project list on mount via GET /api/v1/projects, dispatches SET_PROJECTS to AppContext. Shows table with Name / Path / Status (StatusBadge) / Created / Actions columns. Actions: Open Terminal (SET_ACTIVE_PROJECT + SET_VIEW 'terminal'), Delete (shows ConfirmDialog). Refreshes after modal close.
+- **Called by:** App.jsx (route/view rendering — when view === 'projects')
+- **Calls:** apiGet (loadProjects), apiDelete (handleDeleteConfirm), useAppState, useAppDispatch, AddProjectModal, StatusBadge, ConfirmDialog
+- **Inputs:** none (reads context)
+- **Output:** JSX — header + project table + modals
+- **Side effects:** HTTP GET on mount, HTTP DELETE on confirm; dispatches SET_PROJECTS, REMOVE_PROJECT, SET_ACTIVE_PROJECT, SET_VIEW to AppContext
+- **Last modified:** 2026-03-18 in Task #11 by frontend-dev
+
+### `client/src/views/ProjectsView.jsx` :: `StatusBadge({ active })` (internal)
+- **Purpose:** Visual indicator — green "Active" badge if the project has an active session (sessions[project.id] truthy), grey "No session" otherwise.
+- **Called by:** ProjectsView (one per table row)
+- **Calls:** none (pure presentational)
+- **Inputs:** active (boolean)
+- **Output:** JSX span with inline dot indicator
+- **Side effects:** none
+- **Last modified:** 2026-03-18 in Task #11 by frontend-dev
+
+### `client/src/views/ProjectsView.jsx` :: `ConfirmDialog({ projectName, onConfirm, onCancel, busy })` (internal)
+- **Purpose:** Full-screen overlay modal for project deletion confirmation. Shows project name, warns "no files deleted — registry only". Disable buttons while busy.
+- **Called by:** ProjectsView (when confirmTarget is not null)
+- **Calls:** none (callbacks only)
+- **Inputs:** projectName (string), onConfirm (function), onCancel (function), busy (boolean)
+- **Output:** JSX fixed-position overlay
+- **Side effects:** none
+- **Last modified:** 2026-03-18 in Task #11 by frontend-dev
+
+### `client/src/views/ProjectsView.jsx` :: `formatDate(iso)` (internal)
+- **Purpose:** Format ISO date string to locale-friendly date (e.g., "Mar 18, 2026"). Returns "—" on null/invalid.
+- **Called by:** ProjectsView (project.createdAt column)
+- **Calls:** Date constructor, Date.toLocaleDateString
+- **Inputs:** iso (string | null)
+- **Output:** string
+- **Side effects:** none
+- **Last modified:** 2026-03-18 in Task #11 by frontend-dev
+
+---
+
 ## Previously Documented Modules (unchanged in Tasks #7-#8)
 
 ### `server/services/ConfigStore.js` :: `ConfigStore`
@@ -467,12 +722,17 @@ _Last updated: 2026-03-18 — after Task #7: Entity Management API + Task #8: En
 - PTY survives WebSocket close — user reconnects to same session
 - Ring buffer replayed on reconnect before live streaming
 - Idle sweeper: every 5 min, kills sessions inactive for 30 min (configurable)
-- tree-kill used for process termination (CJS loaded via createRequire)
-- sessionManager.claudeBin set by index.js after binary discovery
+- tree-kill used for process termination (CJS loaded via createRequire) — for both PTY sessions and jobs
+- sessionManager.claudeBin and jobRunner.claudeBin both set by index.js after binary discovery
 - Agent/skill IDs are SHA-256 derived from file path (first 16 hex chars) — deterministic, not stored
 - PUT/DELETE for agents and skills require filePath in body (ID cannot be reverse-hashed to path)
 - DELETE /api/v1/skills/:id uses `{ dirPath }` for modern skills (removes entire directory) and `{ filePath }` for legacy
 - CLAUDE.md saves return lineCount; UI warns if > 300 lines
+- Job Mode: `claude -p` spawned with `--output-format stream-json`; stdin.end() called immediately after spawn (DEC-005 / GitHub #7497)
+- Job SSE stream: GET /api/v1/jobs/:id/stream — Express/Node timeouts disabled (req.setTimeout(0), res.setTimeout(0))
+- Job prompt is NEVER logged (SEC-08) — neither in JobRunner nor in routes/jobs.js
+- JobRunner.cancelAll() called in server shutdown handler — ensures all running jobs receive SIGTERM before server exit
+- ProjectsView session status: sessions object from AppContext; badge shows "Active" if sessions[project.id] is truthy
 
 ## Key Patterns
 - ESM modules throughout (import/export)
@@ -482,6 +742,9 @@ _Last updated: 2026-03-18 — after Task #7: Entity Management API + Task #8: En
 - All file writes use write-file-atomic (never fs.writeFile directly)
 - Path traversal: FileManager.validatePath called on every read/write/delete
 - resolveAllowedBase() in agents.js and skills.js: independent implementations, same pattern — checks USER dir then all registered project paths
+- SSE pattern: server sets Content-Type text/event-stream + no-cache; client uses native EventSource (not apiGet); JobRunner owns response lifetime — routes/jobs.js does NOT call res.end() after addSseClient returns true
+- useJob hook: jobIdRef mirrors jobId state to avoid stale closure in cancelJob useCallback; status guard prevents double job submission
+- react-markdown applied in `.markdown-result` CSS scope (index.css) for consistent Markdown typography
 
 ## Removed Functions
 | Function | File | Removed in | Reason |

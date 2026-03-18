@@ -1,4 +1,13 @@
 ---
+## 2026-03-18 — code-mapper — Tasks #9+#10+#11: Job Mode API + UI + Projects View
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md with 14 new function graph entries covering JobRunner (7 functions), routes/jobs.js (4 endpoints), useJob hook (4 methods), JobPanel (4 components), JobView, and ProjectsView (4 components). Appended detailed CHANGELOG entries for all three tasks. Verified TASK_PLAN.md already shows tasks COMPLETED.
+**Files changed:** docs/memory/CODE_MAP.md (MODIFIED — new server+client sections), docs/memory/CHANGELOG.md (APPENDED — Tasks #9/#10/#11), docs/memory/agents/code-mapper.md (APPENDED — session log)
+**Bugs fixed:** none
+**Decisions made:** Documented SSE ownership pattern (JobRunner owns res lifetime, route does not call res.end); documented useJob ref+state duality for cancelJob closure; documented stdin.end() requirement (DEC-005)
+**Blockers:** none
+**Next:** Task #12 (NFR polish — backend-dev), then Task #13 QA, #14 Security, #15 Docs
+---
 ## 2026-03-18 — frontend-dev — Task #11: Projects View UI
 **Outcome:** COMPLETED
 **Summary:** Replaced ProjectsView stub with full projects table UI showing Name, Path, Status (Active/No session badge), Created date, and Actions (Open Terminal, Delete). Includes AddProjectModal integration, delete confirmation dialog, load/delete error banners, and empty state. Fetches on mount and after modal close. npm run build clean (304 modules).
