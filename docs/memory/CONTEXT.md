@@ -1,18 +1,22 @@
 # Current Context
 **Session date:** 2026-03-18
-**Focus:** Phase 0 — Foundation (node-pty + WebSocket + xterm.js validation and server bootstrap)
+**Focus:** Phase 3 — Job Mode API + UI (Tasks #9 + #10), and Projects View UI (Task #11)
 
 _Project initialized via /create pipeline on 2026-03-18_
 
 ## Active Threads
-- Phase 0 is the current work target: monorepo init, Express + helmet + CSRF, ConfigStore, ProcessRegistry, process signal handlers, stale PID cleanup, Claude binary discovery
+- Tasks #1–#8 are ALL COMPLETED as of 2026-03-18 (committed to git)
+- Phase 3 (Job Mode) is the immediate priority: Task #9 (JobRunner + SSE API) must ship first, then Task #10 (JobPanel UI)
+- Task #11 (Projects View UI) is UNBLOCKED — depends only on #4 and #6, both done — can run in parallel with #9
+- Task #12 (NFR Polish) depends on #5 and #6 — both done — also UNBLOCKED, lower priority than #9
 
 ## Open Questions
-- Will node-pty-prebuilt-multiarch have a prebuilt binary for the user's exact Node.js 20 LTS sub-version on Windows 11? (MUST be answered in Phase 0 before writing any PTY code)
+- None currently blocking — all prerequisites for active tasks are satisfied
 
-## Critical Constraint (read this first)
-**node-pty Windows build MUST be validated FIRST before any other Phase 0 work proceeds.**
-Run `npm install node-pty-prebuilt-multiarch` and verify the binary loads on the target machine. If no prebuilt binary exists, escalate immediately to the architect — the PTY architecture must be reconsidered before any other code is written. See DEC-010 and R-01 in DECISIONS.md.
+## Critical Constraints (current phase)
+**Phase 0 is done — node-pty constraint was resolved: use plain `node-pty` (not prebuilt-multiarch). See R-01 in PROGRESS.md.**
+
+**For Task #9 (JobRunner):** child.stdin.end() MUST be called immediately after spawn — process hangs indefinitely otherwise (DEC-005, GitHub #7497). This is the most critical non-obvious constraint in the entire codebase. Also: use child_process.spawn() with shell:false and an array of args, never shell:true.
 
 ## Notes for Specific Agents
 
