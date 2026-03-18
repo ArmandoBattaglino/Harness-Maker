@@ -59,3 +59,57 @@ Project is v1 release-ready pending QA (#13) and Security (#14) sign-off.
 ### Handoff
 If the QA or Security agents find issues that change the API surface, configuration, or feature behavior, update README.md accordingly. Use DOC_STATUS.md to track what becomes stale. The install instructions in README.md assume `npm run install:all` — verify this command still works after any devops changes.
 ---
+
+---
+## 2026-03-18 — Tasks #16–#18: Security Hardening Documentation
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel with code-mapper and project-manager)
+
+### Context when I started
+Tasks #16 (exec→spawn in server/index.js), #17 (allowedTools whitelist in server/routes/jobs.js), and #18 (PID range guard in server/services/ProcessRegistry.js) had all been confirmed COMPLETED in the ACTIVITY_LOG. The docs/SECURITY_AUDIT.md file still reflected the original audit state: verdict NEEDS_ATTENTION, all three MEDIUM findings listed as open recommendations, SEC-02 row had "PASS with NOTE", and the OWASP A03 row referenced the unresolved MEDIUM-01/02 findings.
+
+### What I did
+1. Read documenter.md (own session history), SECURITY_AUDIT.md, and DOC_STATUS.md in parallel.
+2. Read the tail of ACTIVITY_LOG.md to confirm exact nature of each fix (Task #16: spawn with shell:false; Task #17: ALLOWED_TOOLS_RE + length cap; Task #18: isValidPid range 1–65535).
+3. Updated SECURITY_AUDIT.md header: changed verdict to PASS, added last-updated line.
+4. Updated SECURITY_AUDIT.md executive summary: replaced "Three MEDIUM findings require attention" with "All three MEDIUM findings resolved".
+5. Updated SEC-02 per-requirement table row: removed "with NOTE" qualifier, noted Task #16 fix.
+6. Updated each MEDIUM finding: added "STATUS: FIXED — Task #N" banner, replaced "Recommended fix" with "Fix applied" showing the actual code applied.
+7. Updated OWASP A03 table row: removed "with MEDIUM-01/02" qualifier, noted Task #16 and #17 fixes.
+8. Updated Summary Verdict section: changed NEEDS_ATTENTION to PASS, converted the "should be addressed" list to a "FIXED" list with fix summaries, added two LOW findings still open.
+9. Updated DOC_STATUS.md: advanced last-updated timestamp, added SECURITY_AUDIT.md as an explicit UP_TO_DATE row.
+10. Appended to ACTIVITY_LOG.md.
+11. Wrote this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| C:\Users\arman\Downloads\Test workflows\docs\SECURITY_AUDIT.md | MODIFIED | Verdict changed NEEDS_ATTENTION→PASS; MEDIUM-01/02/03 each marked FIXED with applied-fix details; SEC-02 row cleaned; OWASP A03 row cleaned; Summary Verdict rewritten to reflect resolved state. |
+| C:\Users\arman\Downloads\Test workflows\docs\memory\DOC_STATUS.md | MODIFIED | Advanced last-updated timestamp; added SECURITY_AUDIT.md as explicit UP_TO_DATE row. |
+| C:\Users\arman\Downloads\Test workflows\docs\memory\ACTIVITY_LOG.md | MODIFIED | Appended Task #16–#18 documentation entry. |
+| C:\Users\arman\Downloads\Test workflows\docs\memory\agents\documenter.md | MODIFIED | Appended this session log. |
+
+### Improvements delivered
+- SECURITY_AUDIT.md now accurately reflects the post-fix state: v1 cleared for release with no open MEDIUM findings.
+- Audit history is fully preserved — original finding descriptions kept, fix details appended underneath each finding.
+- DOC_STATUS.md now explicitly tracks SECURITY_AUDIT.md health.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | — | — | — |
+
+### Decisions I made
+- Preserved the original finding descriptions under each MEDIUM-0x heading rather than replacing them. The audit record must remain useful as a historical document — future readers need to see what was found and what was done, not just the current state.
+- Added "STATUS: FIXED — Task #N" as a banner at the top of each finding rather than renaming the section. This keeps the heading anchors stable if any other documents link to them.
+
+### What I learned
+- SECURITY_AUDIT.md is a living document that needs updating whenever security fixes land — not just when the audit is first written.
+- The ACTIVITY_LOG entries from the backend-dev agent were detailed enough to reconstruct exact fix details (regex, range values, where the guard was placed) without needing to read the source files directly. Good ACTIVITY_LOG hygiene by prior agents made this task faster.
+
+### State I'm leaving behind
+All documentation is current as of 2026-03-18. SECURITY_AUDIT.md verdict is PASS. All 18 tasks COMPLETED. DOC_STATUS.md is accurate with no known stale documents.
+
+### Handoff
+Project is v1 release-ready. No outstanding documentation work. If v1.1 work begins, SECURITY_AUDIT.md LOW-01 (unsafe-inline CSP) should be revisited per the existing note.
+---

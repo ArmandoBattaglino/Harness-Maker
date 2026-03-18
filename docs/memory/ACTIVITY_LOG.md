@@ -1,4 +1,13 @@
 ---
+## 2026-03-18 — documenter — Tasks #16–#18: Security Hardening Documentation
+**Outcome:** COMPLETED
+**Summary:** Updated docs/SECURITY_AUDIT.md to reflect that MEDIUM-01 (exec→spawn), MEDIUM-02 (allowedTools whitelist), and MEDIUM-03 (PID range guard) are now FIXED with applied-fix details. Changed the overall verdict from NEEDS_ATTENTION to PASS. Updated the SEC-02 per-requirement table row and the OWASP A03 row to remove the "with NOTE" qualifier. Updated docs/memory/DOC_STATUS.md to add SECURITY_AUDIT.md as an UP_TO_DATE row and advanced the last-updated timestamp to Tasks #16–#18.
+**Files changed:** docs/SECURITY_AUDIT.md (MODIFIED), docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/agents/documenter.md (APPENDED), docs/memory/ACTIVITY_LOG.md (APPENDED)
+**Bugs fixed:** none
+**Decisions made:** Kept full original finding descriptions intact under each MEDIUM-0x heading — added STATUS: FIXED banner and "Fix applied" subsection rather than deleting the finding text, to preserve audit history
+**Blockers:** none
+**Next:** Project is v1 release-ready. All 18 tasks COMPLETED, all MEDIUM security findings resolved, docs current.
+---
 ## 2026-03-18 — project-manager — Phase 6 close-out + v1 Release Assessment
 **Outcome:** COMPLETED
 **Summary:** Confirmed Tasks #16, #17, #18 all COMPLETED in TASK_PLAN.md (individual blocks and Task Status Summary table were already accurate). Updated docs/memory/PROGRESS.md: moved Phase 6 tasks to Completed, upgraded v1 Release Status from NEAR-RELEASE to v1 RELEASE READY. All 3 MEDIUM security findings from the audit are now resolved. The project has 18/18 tasks COMPLETED and is ready for v1 release.

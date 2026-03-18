@@ -12,6 +12,7 @@ _Last updated: 2026-03-18 after Tasks #16–#18: Security Hardening (exec→spaw
 | Document | Status | Last Updated | Notes |
 |----------|--------|--------------|-------|
 | README.md | UP_TO_DATE | 2026-03-18 | Created from scratch. Covers prerequisites, install, run, features, configuration, 5-scenario troubleshooting, security, known limitations. |
+| docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-03-18 | Updated after Tasks #16–#18: MEDIUM-01/02/03 marked FIXED with applied-fix details; overall verdict changed from NEEDS_ATTENTION to PASS; SEC-02 table row and OWASP A03 row updated. |
 | docs/ARCHITECTURE.md | UP_TO_DATE | 2026-03-18 | Produced by architect in Task #1. Covers all 10 sections including component diagram, full API surface, WebSocket protocol, RingBuffer spec. No changes required — architecture was not revised after Task #1. |
 | docs/memory/PROJECT.md | UP_TO_DATE | 2026-03-18 | Updated in Task #15 to correct package names (node-pty, write-file-atomic) and add v1 implementation status. |
 | docs/memory/DECISIONS.md | UP_TO_DATE | 2026-03-18 | All 10 decisions documented by architect. DEC-001 note: actual package is plain node-pty (not prebuilt-multiarch) — documented in PROJECT.md; DECISIONS.md preserves the original intent for historical accuracy. |

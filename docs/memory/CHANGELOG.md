@@ -267,3 +267,75 @@
 
 #### Connection Changes
 - No function interfaces changed. Documentation does not affect runtime behavior.
+
+---
+
+### [Task #16] Replace exec() with spawn({shell:false}) in openBrowser()
+- Agent: security
+- Modified: server/index.js
+
+#### server/index.js :: openBrowser(url)
+- **Change type:** MODIFIED (security fix — MEDIUM-01)
+- **What changed:** Replaced `exec(\`start ${url}\`)` (or platform equivalent) with `spawn(bin, args, { shell: false, detached: true, stdio: 'ignore' })`. The URL is now passed as an element of the `args` array and is never interpolated into a shell string.
+- **Why:** Security audit MEDIUM-01 identified that `exec()` passes the command as a shell string, meaning a malformed URL could inject shell metacharacters. The `spawn({ shell: false })` form passes arguments as an OS-level array — no shell expansion occurs.
+- **Platform details:** Windows: `bin='cmd.exe'`, `args=['/c','start','',url]` — the empty string is a required title argument for `start`. macOS: `bin='open'`, `args=[url]`. Linux: `bin='xdg-open'`, `args=[url]`.
+
+#### Functions Added
+- `openBrowser(url)` in `server/index.js` — browser launch helper extracted as a named function (previously inline); uses spawn shell:false
+
+#### Functions Modified
+- `startup()` in `server/index.js` — now calls `openBrowser(url)` instead of inline exec; Last modified updated
+
+#### Connection Changes
+- startup() → openBrowser() (new internal call)
+
+#### Impact on Other Code
+- No callers outside server/index.js. NO_OPEN=1 env var still skips the browser open entirely.
+
+---
+
+### [Task #17] Add allowedTools whitelist validation in POST /api/v1/jobs
+- Agent: security
+- Modified: server/routes/jobs.js
+
+#### server/routes/jobs.js :: POST /api/v1/jobs
+- **Change type:** MODIFIED (security fix — MEDIUM-02)
+- **What changed:** Added character-set whitelist validation for the `allowedTools` request body parameter before it is passed to `jobRunner.startJob()` (and ultimately to `spawn()` args). Validation rules: must be a string (already checked), max 512 chars (new), must match `/^[a-zA-Z0-9_,\-]+$/` (new). Returns HTTP 400 `{ error: 'Invalid allowedTools value' }` on violation.
+- **Why:** Security audit MEDIUM-02 identified that `allowedTools` was only type-checked (`typeof string`) before being passed as a CLI argument. A user-controlled string containing shell metacharacters or path components could potentially influence CLI behavior.
+- **Regex rationale:** Allows tool names (alphanumeric + underscore), lists (comma-separated), hyphenated names. Rejects spaces, semicolons, quotes, slashes, and all other shell-special characters.
+
+#### Functions Modified
+- `POST /api/v1/jobs` in `server/routes/jobs.js` — added allowedTools regex + length validation block; Last modified updated
+
+#### Connection Changes
+- None — same callers (useJob.js::startJob) and same callees (jobRunner.startJob). Interface unchanged; new validation raises 400 on previously-accepted malformed inputs.
+
+#### Impact on Other Code
+- **BREAKING for malformed inputs:** Clients sending `allowedTools` values containing spaces, slashes, or shell metacharacters will now receive HTTP 400 instead of having the value passed through. Well-formed values (e.g. `"all"`, `"Bash,Read,Write"`, `"computer-use"`) are unaffected.
+
+---
+
+### [Task #18] Add PID range guard in ProcessRegistry
+- Agent: security
+- Modified: server/services/ProcessRegistry.js
+
+#### server/services/ProcessRegistry.js
+- **Change type:** MODIFIED (security fix — MEDIUM-03)
+- **What changed:** Added `isValidPid(pid)` guard function (range [1, 65535]) and applied it in both `register()` and `cleanupStale()`. In `register()`: if pid fails validation, log console.warn and return without writing to file. In `cleanupStale()`: filter out invalid PIDs with console.warn before passing to `killProcess()`.
+- **Why:** Security audit MEDIUM-03 identified that `active_pids.json` is deserialized without integrity checks. On a shared machine or after file tampering, arbitrary integer values could reach `tree-kill` and send SIGKILL to unrelated OS processes (e.g. PID 1 = init/systemd).
+- **Constants added:** `MIN_PID = 1`, `MAX_PID = 65535` (module-level, documented with rationale)
+
+#### Functions Added
+- `isValidPid(pid)` in `server/services/ProcessRegistry.js` — PID range guard: typeof number, isInteger, [1, 65535]
+
+#### Functions Modified
+- `register(pid, metadata)` in `server/services/ProcessRegistry.js` — added isValidPid guard at entry; console.warn on rejection; Last modified updated
+- `cleanupStale()` in `server/services/ProcessRegistry.js` — added .filter(isValidPid) on PID list after Object.keys().map(Number); console.warn per skipped PID; Last modified updated
+
+#### Connection Changes
+- isValidPid() called by register() and cleanupStale() (new internal dependency)
+
+#### Impact on Other Code
+- register() callers (SessionManager, JobRunner): behavior unchanged for valid PIDs. For PIDs that are 0, negative, or > 65535, register() now silently skips (was: would write without validation). In practice child_process.spawn always returns valid PIDs, so this guard is defensive-only.
+- cleanupStale() callers (startup, shutdown in index.js): behavior unchanged for normal files. Corrupt/tampered files now skip bad entries instead of passing them to tree-kill.
+

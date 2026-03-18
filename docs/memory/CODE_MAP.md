@@ -562,13 +562,14 @@ _Last updated: 2026-03-18 — after Task #16: exec→spawn in openBrowser (secur
 - **Last modified:** 2026-03-18 in Task #9 by backend-dev
 
 ### `server/routes/jobs.js` :: `POST /api/v1/jobs`
-- **Purpose:** Validate request, look up project, call jobRunner.startJob. Returns 201 with jobId on success.
+- **Purpose:** Validate request, look up project, call jobRunner.startJob. Returns 201 with jobId on success. Validates allowedTools against a character-set whitelist before passing to the shell.
 - **Called by:** client/src/hooks/useJob.js::startJob (via apiPost)
 - **Calls:** ConfigStore.getProjects, jobRunner.startJob
 - **Inputs:** body `{ projectId, prompt, allowedTools?, maxTurns? }`
 - **Output:** 201 JSON `{ jobId, projectId, createdAt }` | 400/404/500 errors
 - **Side effects:** spawns child process (via jobRunner.startJob)
-- **Last modified:** 2026-03-18 in Task #9 by backend-dev
+- **Complexity note:** allowedTools validation (MEDIUM-02 fix): must be string, max 512 chars, must match `/^[a-zA-Z0-9_,\-]+$/`. Rejects any shell metacharacters or injection attempts before the value reaches `spawn()` args. Empty string is rejected by the regex (no match).
+- **Last modified:** 2026-03-18 in Task #17 by security (MEDIUM-02 fix: added allowedTools character-set whitelist — was previously type-checked only)
 
 ### `server/routes/jobs.js` :: `GET /api/v1/jobs/:id/stream`
 - **Purpose:** SSE endpoint. Disables Express/Node.js request and response timeouts. Delegates to jobRunner.addSseClient. Stays open until job finishes or client disconnects.
@@ -815,6 +816,75 @@ _Last updated: 2026-03-18 — after Task #16: exec→spawn in openBrowser (secur
 
 ---
 
+---
+
+### `server/services/ProcessRegistry.js` :: `isValidPid(pid)` (internal)
+- **Purpose:** Guard function — returns true only if pid is a positive integer in range [1, 65535]. Values outside this range (zero, negative, float, string, >65535) are rejected to prevent a tampered `active_pids.json` from triggering kill signals on arbitrary OS processes.
+- **Called by:** ProcessRegistry.register, ProcessRegistry.cleanupStale
+- **Calls:** typeof, Number.isInteger
+- **Inputs:** pid (unknown — deliberately typed as unknown for defensive checking)
+- **Output:** boolean
+- **Side effects:** none
+- **Complexity note:** MAX_PID = 65535 is a safe upper bound covering all realistic OS PID ranges (Linux/macOS typically 4194304 but 65535 is conservative and safe). The guard is applied both on write (register) and on read (cleanupStale) to handle any pre-existing corrupt file content.
+- **Last modified:** 2026-03-18 in Task #18 by security (MEDIUM-03 fix: new function — added PID range guard)
+
+### `server/services/ProcessRegistry.js` :: `register(pid, metadata)`
+- **Purpose:** Add a PID + metadata to `active_pids.json`. Skips (with console.warn) if pid fails isValidPid — prevents registering PID 0, negative PIDs, or floats.
+- **Called by:** server/services/SessionManager.js (after pty spawn), server/services/JobRunner.js (after child spawn)
+- **Calls:** isValidPid, readRegistry, writeRegistry
+- **Inputs:** pid (number), metadata (object — e.g. { type: 'session'|'job', projectId })
+- **Output:** Promise\<void\>
+- **Side effects:** atomic write to active_pids.json; console.warn on invalid PID
+- **Last modified:** 2026-03-18 in Task #18 by security (added isValidPid guard — was previously unguarded)
+
+### `server/services/ProcessRegistry.js` :: `unregister(pid)`
+- **Purpose:** Remove a PID entry from `active_pids.json` on clean process exit.
+- **Called by:** server/services/SessionManager.js (session kill), server/services/JobRunner.js (job finish)
+- **Calls:** readRegistry, writeRegistry
+- **Inputs:** pid (number)
+- **Output:** Promise\<void\>
+- **Side effects:** atomic write to active_pids.json
+- **Last modified:** 2026-03-18 in Task #3 by backend-dev (original implementation)
+
+### `server/services/ProcessRegistry.js` :: `cleanupStale()`
+- **Purpose:** On startup (and shutdown), read active_pids.json, filter out any out-of-range PIDs (isValidPid guard), kill all valid alive PIDs via tree-kill SIGKILL, then clear the file. Ensures orphaned processes from a previous server run are cleaned up.
+- **Called by:** server/index.js::startup() (Step 4), server/index.js::shutdown() (final step)
+- **Calls:** readRegistry, isValidPid (filter), isProcessAlive, killProcess (tree-kill SIGKILL), writeRegistry
+- **Inputs:** none
+- **Output:** Promise\<void\>
+- **Side effects:** SIGKILL to any alive PIDs in registry; overwrites active_pids.json with `{}`; console.warn for skipped out-of-range PIDs
+- **Complexity note:** PIDs that fail isValidPid are skipped with a warning rather than killing — this is the MEDIUM-03 fix. Previously all values in the file (including potentially attacker-injected arbitrary integers) were passed to tree-kill.
+- **Last modified:** 2026-03-18 in Task #18 by security (added isValidPid filter — was previously unguarded)
+
+### `server/services/ProcessRegistry.js` :: `readRegistry()` (internal)
+- **Purpose:** Synchronously read and JSON-parse active_pids.json. Returns `{}` on missing file, parse error, or if root is not a plain object.
+- **Called by:** register, unregister, cleanupStale
+- **Calls:** fs.readFileSync, JSON.parse
+- **Inputs:** none (reads from path derived from ConfigStore.CONFIG_DIR)
+- **Output:** object (pid string keys → metadata objects)
+- **Side effects:** filesystem read
+- **Last modified:** 2026-03-18 in Task #3 by backend-dev (original implementation)
+
+### `server/services/ProcessRegistry.js` :: `writeRegistry(registry)` (internal)
+- **Purpose:** Atomically write the registry object to active_pids.json (JSON, 2-space indented).
+- **Called by:** register, unregister, cleanupStale
+- **Calls:** writeFileAtomic
+- **Inputs:** registry (object)
+- **Output:** Promise\<void\>
+- **Side effects:** atomic filesystem write
+- **Last modified:** 2026-03-18 in Task #3 by backend-dev (original implementation)
+
+### `server/services/ProcessRegistry.js` :: `killProcess(pid)` (internal)
+- **Purpose:** Tree-kill a PID with SIGKILL, wrapped in a Promise. Ignores errors (process may already be dead).
+- **Called by:** cleanupStale
+- **Calls:** treeKill (tree-kill, loaded via createRequire)
+- **Inputs:** pid (number — already validated by isValidPid before this is called)
+- **Output:** Promise\<void\>
+- **Side effects:** SIGKILL to process tree
+- **Last modified:** 2026-03-18 in Task #3 by backend-dev (original implementation)
+
+---
+
 ## Previously Documented Modules (unchanged in Tasks #7-#8)
 
 ### `server/services/ConfigStore.js` :: `ConfigStore`
@@ -853,7 +923,10 @@ _Last updated: 2026-03-18 — after Task #16: exec→spawn in openBrowser (secur
 
 - Test suite: 6 files, 110 tests total, all passing. Runner: Vitest v4.1.0 with `pool: 'forks'` (sequential) to prevent PTY cross-test interference
 - SessionManager + JobRunner tests import the CLASS (not the singleton export) for per-test isolation
-- Security audit result: NEEDS_ATTENTION — 0 CRITICAL, 0 HIGH, 3 MEDIUM (exec() in auto-open, allowedTools not whitelist-validated, PID file tampering), 2 LOW. Overall risk LOW for localhost single-user model
+- Security audit result (original): NEEDS_ATTENTION — 0 CRITICAL, 0 HIGH, 3 MEDIUM (exec() in auto-open, allowedTools not whitelist-validated, PID file tampering), 2 LOW. Overall risk LOW for localhost single-user model
+- MEDIUM-01 FIXED (Task #16): openBrowser() now uses spawn({shell:false}) — URL passed as array arg to cmd.exe/open/xdg-open, never shell-interpolated
+- MEDIUM-02 FIXED (Task #17): POST /api/v1/jobs validates allowedTools against `/^[a-zA-Z0-9_,\-]+$/` (max 512 chars) before passing to spawn args
+- MEDIUM-03 FIXED (Task #18): ProcessRegistry.cleanupStale() and register() now call isValidPid() — PIDs outside [1, 65535] are skipped with console.warn rather than passed to tree-kill
 
 ## Key Patterns
 - ESM modules throughout (import/export)
