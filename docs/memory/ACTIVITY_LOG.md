@@ -381,3 +381,14 @@
 **Blockers:** none
 **Next:** Project is v1 release-ready. No further code-mapper work pending.
 ---
+
+---
+## 2026-03-24 — researcher — Research: Puppeteer MCP Server for Claude Code
+**Outcome:** COMPLETED
+**Summary:** Researched Puppeteer MCP server options for Claude Code. Original @modelcontextprotocol/server-puppeteer is deprecated. Recommended puppeteer-mcp-claude (community, Claude Code-focused, auto-installer) or @playwright/mcp (official Microsoft alternative). Delivered full comparison with install commands and config blocks.
+**Files changed:** docs/memory/agents/researcher.md (CREATED)
+**Bugs fixed:** none
+**Decisions made:** puppeteer-mcp-claude recommended as primary Puppeteer option; @playwright/mcp as better long-term alternative
+**Blockers:** none
+**Next:** User decides which package to install
+---
