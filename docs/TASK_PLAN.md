@@ -13,13 +13,13 @@ Claude Code Visual Manager is a locally-hosted web application (served on `local
 **Tech Stack (decided in research phase):**
 - Runtime: Node.js 20 LTS
 - Server: Express 4.x + ws 8.x WebSocket
-- PTY: node-pty-prebuilt-multiarch (prebuilt binaries, avoids MSVC requirement)
+- PTY: node-pty (plain — prebuilt-multiarch was unavailable, see DEC-001)
 - Process kill: tree-kill
-- Config writes: write-atomic
+- Config writes: write-file-atomic
 - YAML: js-yaml 4.x
 - UUIDs: uuid 9.x
 - Security: helmet
-- Frontend: React 18 + Vite 5.x + Tailwind CSS 3.x
+- Frontend: React 18 + Vite 6.x + Tailwind CSS 3.x
 - Terminal: xterm.js 5.x + xterm-addon-fit
 - Markdown: react-markdown 9.x + remark-gfm
 

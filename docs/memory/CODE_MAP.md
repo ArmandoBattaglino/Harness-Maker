@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-18 — after Debug & Security Audit (BUG-02/03/04/05/11/14/16) by code-mapper_
+_Last updated: 2026-03-24 — after v1.1 Phase 7 (Tasks #19, #20, #21) by orchestrator_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -10,7 +10,7 @@ _Last updated: 2026-03-18 — after Debug & Security Audit (BUG-02/03/04/05/11/1
 ### Server Modules
 | File | Key Exports | Purpose |
 |------|-------------|---------|
-| server/index.js | (main) | Full bootstrap: binary discovery, config load, stale PID cleanup, middleware, routes, static SPA, error handler, 127.0.0.1 binding, SIGTERM/SIGINT |
+| server/index.js | (main) | Full bootstrap: binary discovery, config load, stale PID cleanup, middleware, routes, static SPA, error handler, 127.0.0.1 binding, SIGTERM/SIGINT, rate-limit stale sweep (BUG-07 fix) |
 | server/services/ConfigStore.js | ConfigStore | Manages %APPDATA%\ClaudeCodeManager\config.json — projects CRUD, settings, write-file-atomic |
 | server/services/ProcessRegistry.js | ProcessRegistry | Tracks active PIDs in active_pids.json, cleanupStale() on startup; isValidPid() guards register+cleanup against out-of-range values |
 | server/services/BinaryDiscovery.js | discoverClaudeBinary | 4-step Claude binary lookup: env var → PATH → %LOCALAPPDATA% → fatal error |
@@ -27,7 +27,7 @@ _Last updated: 2026-03-18 — after Debug & Security Audit (BUG-02/03/04/05/11/1
 | server/routes/agents.js | agentsRouter | GET/POST/PUT/DELETE /api/v1/agents — agent .md CRUD for user + project scope |
 | server/routes/skills.js | skillsRouter | GET/POST/PUT/DELETE /api/v1/skills — skill CRUD (modern SKILL.md + legacy commands/*.md) |
 | server/routes/claudemd.js | claudemdRouter | GET /api/v1/claudemd, PUT /user, PUT /project — CLAUDE.md read/write |
-| server/services/JobRunner.js | JobRunner (class), jobRunner (singleton) | One-shot Claude job executor: spawns claude -p, streams JSON output line-by-line to SSE clients, cancelAll on shutdown |
+| server/services/JobRunner.js | JobRunner (class), jobRunner (singleton) | One-shot Claude job executor: spawns claude -p, streams JSON output line-by-line to SSE clients, cancelAll on shutdown, TTL eviction of terminal jobs (BUG-06 fix) |
 | server/routes/jobs.js | jobsRouter | POST/GET/DELETE /api/v1/jobs, GET /api/v1/jobs/:id/stream (SSE) — job lifecycle REST + streaming |
 | server/ws/terminalHandler.js | setupTerminalWebSocket | WebSocket handler: sessionId from URL query, attach/detach client, route input/resize messages |
 
@@ -551,6 +551,24 @@ _Last updated: 2026-03-18 — after Debug & Security Audit (BUG-02/03/04/05/11/1
 - **Output:** void
 - **Side effects:** closes HTTP response streams; clears job.clients Set
 - **Last modified:** 2026-03-18 in Task #9 by backend-dev
+
+### `server/services/JobRunner.js` :: `JobRunner._scheduleEviction(jobId)` (private)
+- **Purpose:** Schedule TTL-based removal of a terminal-state job from the #jobs Map after 10 minutes. If SSE clients are still connected at eviction time, reschedules instead of deleting.
+- **Called by:** JobRunner.startJob (child.on('close') handler, line 226)
+- **Calls:** clearTimeout, setTimeout, this.#jobs.get, this.#jobs.delete, self (recursive reschedule)
+- **Inputs:** jobId (string)
+- **Output:** void
+- **Side effects:** sets job._evictionTimer; eventually deletes job from #jobs Map
+- **Last modified:** 2026-03-24 in Task #19 by backend-dev (BUG-06 fix)
+
+### `server/index.js` :: rate-limit stale sweep (module-level setInterval)
+- **Purpose:** Periodic cleanup of stale entries in _rateLimitMap. Every 60s, deletes entries where the rate limit window has expired (now > record.resetAt).
+- **Called by:** (automatic — setInterval at module load, lines 93-101)
+- **Calls:** _rateLimitMap.delete
+- **Inputs:** none (reads _rateLimitMap, Date.now())
+- **Output:** void
+- **Side effects:** deletes expired IP entries from _rateLimitMap; timer.unref() prevents blocking process exit
+- **Last modified:** 2026-03-24 in Task #20 by backend-dev (BUG-07 fix)
 
 ---
 

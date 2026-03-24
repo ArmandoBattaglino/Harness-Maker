@@ -93,15 +93,16 @@ _None._
 - [TASK-18] Security hardening — validate PID range in ProcessRegistry (backend-dev) — COMPLETED 2026-03-18
   Fixed: server/services/ProcessRegistry.js. isValidPid() helper (range 1–65535), cleanupStale() and register() both guarded.
 
-## v1 Release Status
-**v1 RELEASE READY — All 18 tasks COMPLETED as of 2026-03-18.**
-- All 18 tasks (Phase 0–6) COMPLETED 2026-03-18.
-- Security audit verdict: ALL 3 MEDIUM findings RESOLVED. Risk: LOW.
-- Post-v1 Debug & Security Re-Audit (2026-03-18): 7 additional bugs fixed (BUG-02/03/04/05/11/14/16/19).
-  Security re-audit PASS: 0 CRITICAL/HIGH/MEDIUM in production code. 1 MEDIUM (MEDIUM-04) dev-only vite CVE.
-- 0 CRITICAL, 0 HIGH, 0 MEDIUM production findings remaining. Project is v1 release-ready.
-- v1.1 backlog created: Tasks #19, #20, #21 (3 MEDIUM items, all deferred non-blockers).
-- Final gate cleared: Tasks #16 (exec→spawn), #17 (allowedTools whitelist), #18 (PID range guard) all merged.
+## v1.1 Release Status
+**v1.1 RELEASE READY — All 21 tasks COMPLETED as of 2026-03-24.**
+- v1 (18 tasks, Phase 0–6): COMPLETED 2026-03-18.
+- v1.1 (3 tasks, Phase 7): COMPLETED 2026-03-24.
+  - TASK-19: JobRunner memory leak fixed (TTL eviction, BUG-06)
+  - TASK-20: Rate limiter memory leak fixed (stale sweep, BUG-07)
+  - TASK-21: Vite 5.4→6.4.1 (esbuild CVE MEDIUM-04 resolved)
+- QA regression: 110/110 tests pass, npm audit 0 vulnerabilities.
+- 0 CRITICAL, 0 HIGH, 0 MEDIUM findings remaining (production AND dev).
+- Ready for `git tag v1.1.0`.
 
 ## Known Issues
 - R-01 (RESOLVED): node-pty-prebuilt-multiarch not available — plain node-pty used instead
@@ -113,6 +114,6 @@ _None._
 - R-08 (FIXED 2026-03-18): yaml.load() non-object return not guarded in parseFrontmatter (BUG-14)
 - R-09 (FIXED 2026-03-18): Double ProcessRegistry.unregister per session kill (BUG-02)
 - R-10 (FIXED 2026-03-24): JobRunner #jobs Map memory leak — completed jobs now auto-evicted after 10min TTL (BUG-06, TASK-19)
-- R-11 (DEFERRED v1.1): Rate limiter _rateLimitMap never cleaned — entries accumulate (BUG-07)
+- R-11 (FIXED 2026-03-24): Rate limiter _rateLimitMap stale sweep added — 60s interval cleans expired entries (BUG-07, TASK-20)
 - R-03 (RESOLVED): Job mode process hang if child.stdin.end() not called — enforced in Task #9 (JobRunner.js line after spawn)
 - NOTE: FileManager was NOT created in Task #5 as planned — RESOLVED in Task #7 (created server/services/FileManager.js).

@@ -1,4 +1,15 @@
 ---
+## 2026-03-24 — orchestrator — v1.1 Release Pipeline Complete
+**Outcome:** COMPLETED
+**Summary:** Full v1.1 pipeline executed: pre-flight tests (110/110 pass) → 3 parallel tasks (#19 JobRunner leak, #20 rate limiter leak, #21 Vite CVE) → regression tests (110/110 pass) → security check (npm audit 0 vulns) → docs updated (CODE_MAP, CHANGELOG, PROGRESS, CONTEXT, TASK_PLAN, DECISIONS). All 21 tasks COMPLETED. DEC-001 corrected. TASK_PLAN tech stack references fixed. Project ready for v1.1.0 tag.
+**Files changed:** docs/memory/CODE_MAP.md, CHANGELOG.md, PROGRESS.md, CONTEXT.md, DECISIONS.md, ACTIVITY_LOG.md, docs/TASK_PLAN.md
+**Bugs fixed:** none (all 3 bugs fixed by individual task agents)
+**Decisions made:** DEC-001 corrected to reflect actual node-pty usage
+**Blockers:** none
+**Next:** git tag v1.1.0 if user approves
+---
+
+---
 ## 2026-03-24 — backend-dev — Task #19: Fix JobRunner Memory Leak (BUG-06)
 **Outcome:** COMPLETED
 **Summary:** Added TTL-based eviction to JobRunner's jobs Map. Terminal-state jobs (done/cancelled/error) are auto-deleted after 10 minutes via setTimeout with .unref(). Safety check defers eviction if SSE clients are still connected. Timer stored on job record for clearing.

@@ -1,5 +1,33 @@
 # CHANGELOG — Claude Code Visual Manager
 
+## 2026-03-24
+
+### [Task #19] v1.1 — Fix JobRunner Memory Leak
+- Agent: backend-dev
+- Modified: server/services/JobRunner.js
+- Added: JOB_EVICTION_TTL_MS constant (10 min), _scheduleEviction(jobId) private method
+- Behavior: terminal-state jobs (completed/cancelled/error) are evicted from #jobs Map after 10 min TTL; active SSE clients prevent eviction (reschedules)
+- BUG-06 FIXED
+
+### [Task #20] v1.1 — Fix Rate Limiter Memory Leak
+- Agent: backend-dev
+- Modified: server/index.js (lines 91-101)
+- Added: setInterval sweep every 60s that deletes stale _rateLimitMap entries where window has expired
+- Timer uses .unref() to not block process exit
+- BUG-07 FIXED
+
+### [Task #21] v1.1 — Upgrade Vite to Patch esbuild CVE
+- Agent: devops
+- Modified: client/package.json (vite ^5.1.0 → ^6.4.1), client/package-lock.json
+- Resolved: GHSA-67mh-4wv8-2f99 (esbuild CVE, MEDIUM-04)
+- npm audit: 0 vulnerabilities after upgrade
+- Build verified: 301 modules, 2.06s
+
+### v1.1 QA Regression Pass
+- 110/110 tests pass, 0 failures, 3.87s
+- npm audit client/: 0 vulnerabilities
+- All 21 tasks COMPLETED
+
 ## 2026-03-18
 
 ### [Task #1] System Architecture Design
