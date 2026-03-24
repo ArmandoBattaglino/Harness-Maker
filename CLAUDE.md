@@ -1,7 +1,7 @@
 # Test workflows — CLAUDE.md
 
 ## Project Overview
-Claude Code Visual Manager is a locally-hosted web application (localhost:3131) that provides a graphical UI for the Claude Code CLI. It spawns Claude Code processes directly using the user's installed binary and delivers two interaction modes: a live PTY terminal (xterm.js over WebSocket) and a job mode (prompt → formatted Markdown result via SSE). It also provides visual CRUD editors for agents, skills, and CLAUDE.md files, with persistent multi-project session management.
+Claude Code Visual Manager is a locally-hosted web application (localhost:3000) that provides a graphical UI for the Claude Code CLI. It spawns Claude Code processes directly using the user's installed binary and delivers two interaction modes: a live PTY terminal (xterm.js over WebSocket) and a job mode (prompt → formatted Markdown result via SSE). It also provides visual CRUD editors for agents, skills, and CLAUDE.md files, with persistent multi-project session management.
 
 ## Running the Project
 ```
