@@ -1,12 +1,12 @@
 # Decision Log
 
-## DEC-001: Use node-pty-prebuilt-multiarch instead of node-pty
-**Date:** 2026-03-18
-**Made by:** PRD (architect)
-**Decision:** Use `node-pty-prebuilt-multiarch` as the PTY library, not plain `node-pty`.
-**Reasoning:** Plain `node-pty` requires compilation at install time, which requires MSVC Build Tools on Windows. Most end users do not have MSVC installed. `node-pty-prebuilt-multiarch` ships prebuilt binaries for common Node.js + platform combinations, allowing `npm install` to succeed without a C++ compiler.
-**Alternatives rejected:** Plain `node-pty` — rejected due to MSVC requirement on Windows. `node-pty-prebuilt` — older fork, fewer prebuilt targets.
-**Revisit if:** The user's Node.js version lacks a prebuilt binary (fallback: document MSVC Build Tools install in README).
+## DEC-001: Use node-pty as the PTY library
+**Date:** 2026-03-18 (revised 2026-03-24)
+**Made by:** PRD (architect), revised after R-01 resolution
+**Decision:** Use plain `node-pty` as the PTY library. Originally planned `node-pty-prebuilt-multiarch`, but it was unavailable — switched to `node-pty` during Task #3 implementation.
+**Reasoning:** `node-pty-prebuilt-multiarch` was not available for the target Node.js version. Plain `node-pty` requires native compilation (MSVC Build Tools on Windows), but works reliably. See PROGRESS.md R-01 for resolution history.
+**Alternatives rejected:** `node-pty-prebuilt-multiarch` — unavailable. `node-pty-prebuilt` — older fork, fewer targets.
+**Revisit if:** A prebuilt alternative becomes available and stable for Node 20 LTS on Windows.
 ---
 
 ## DEC-002: Bind server to 127.0.0.1 only (not 0.0.0.0)

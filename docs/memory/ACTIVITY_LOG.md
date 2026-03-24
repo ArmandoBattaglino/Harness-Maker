@@ -1,4 +1,26 @@
 ---
+## 2026-03-24 — qa-tester — Pre-v1.1 Test Suite Verification
+**Outcome:** COMPLETED
+**Summary:** Ran full test suite (`npm test`) as pre-development baseline check before v1.1. All 110 tests pass across 6 files in 3.92s. No regressions from Task #16 security hardening.
+**Files changed:** none (read-only verification)
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** v1.1 development can begin — test baseline is green.
+---
+
+---
+## 2026-03-24 — orchestrator — Full Project Audit: Docs vs Code
+**Outcome:** COMPLETED
+**Summary:** Ran 3 parallel Explore agents to audit all documentation (DECISIONS.md, PROGRESS.md, CODE_MAP.md, ACTIVITY_LOG.md) against actual codebase. Result: 99% match. Fixed DEC-001 in DECISIONS.md (still said node-pty-prebuilt-multiarch, code uses node-pty). All 24 endpoints, 19 React components, 3 middleware, 3 security fixes, 7 bug fixes, 10 npm deps confirmed matching.
+**Files changed:** docs/memory/DECISIONS.md (MODIFIED — DEC-001 corrected)
+**Bugs fixed:** none
+**Decisions made:** DEC-001 text updated to match actual node-pty usage (was outdated since Task #3)
+**Blockers:** none
+**Next:** v1.1 development — Tasks #19, #20, #21
+---
+
+---
 ## 2026-03-18 — documenter — Debug & Security Re-Audit Documentation
 **Outcome:** COMPLETED
 **Summary:** Updated docs/SECURITY_AUDIT.md to add 3 new findings from the security re-audit (MEDIUM-04: vite/esbuild CVE dev-only; LOW-03: process.env passthrough to PTY; LOW-04: safeRead bypass in claudemd GET). Updated docs/ARCHITECTURE.md in two sections: backpressure spec corrected from browser-API ws.bufferedAmount to server-side ws._socket.bufferSize; YAML frontmatter parse algorithm updated to regex-based implementation with non-object yaml.load return guard. Updated docs/memory/DOC_STATUS.md to reflect all changes.
