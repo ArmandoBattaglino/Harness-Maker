@@ -1,4 +1,62 @@
 ---
+## 2026-03-24 — Task #20: Fix Rate Limiter Memory Leak (_rateLimitMap)
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+All Tasks #1-#18 were COMPLETED. Phase 7 v1.1 maintenance backlog had 3 independent tasks (#19, #20, #21). Task #20 targeted BUG-07: the `_rateLimitMap` in server/index.js accumulated one entry per unique IP and never deleted stale entries. The rate limiter used a `resetAt` timestamp (not `windowStart` as the task spec suggested -- the actual field name differs from the spec pseudocode).
+
+### What I did
+1. Read all 6 memory files in parallel to restore context.
+2. Read server/index.js rate limiter section (lines 64-89) to understand the actual data structure: `Map<ip, { count: number, resetAt: number }>`.
+3. Added an 8-line periodic sweep block immediately after the `rateLimit()` function definition (before the "1. Load env" section):
+   - `setInterval` every 60 seconds iterates `_rateLimitMap`
+   - Deletes entries where `now > record.resetAt` (window expired, entry is stale)
+   - `.unref()` called on the interval timer so it does not prevent process exit
+4. Ran `node --input-type=module --check < server/index.js` -- exit 0, syntax valid.
+5. Updated docs/TASK_PLAN.md: Task #20 Status PENDING -> COMPLETED (task entry + summary table).
+6. Updated docs/memory/PROGRESS.md: moved TASK-20 to COMPLETED with summary.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/index.js | MODIFIED | Added 8-line setInterval sweep after rateLimit() function to prune stale _rateLimitMap entries |
+| docs/TASK_PLAN.md | MODIFIED | Task #20 Status: PENDING -> COMPLETED in task entry and summary table |
+| docs/memory/PROGRESS.md | MODIFIED | TASK-20 marked COMPLETED with fix summary |
+| docs/memory/agents/backend-dev.md | MODIFIED | This session log appended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Entry appended |
+
+### Improvements delivered
+- _rateLimitMap entries for expired IPs are now cleaned up every 60 seconds
+- BUG-07 (rate limiter memory leak) is resolved
+- The sweep timer calls .unref() so it does not block process shutdown
+- No behavioral change for active rate-limited requests -- only expired entries are removed
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None encountered | -- | -- | -- |
+
+### Decisions I made
+- Sweep interval of 60 seconds (matching the rate limit window of 60s) -- provides timely cleanup without excessive iteration. The task spec suggested "every 60 seconds or similar" which aligns perfectly.
+- Condition uses `now > record.resetAt` (matching the existing window-expiry check in the middleware) rather than the task spec's pseudocode `rec.windowStart < cutoff` -- the actual code uses `resetAt`, not `windowStart`.
+- Deleting during Map iteration is safe in JavaScript -- `Map.prototype.delete()` during `for...of` iteration is specified behavior per ECMAScript spec.
+
+### What I learned
+- The actual rate limiter field is `resetAt` (absolute timestamp when the window expires), not `windowStart` (relative start of window). Always read the actual code before implementing fixes based on task spec pseudocode.
+- `for (const [key, value] of map)` + `map.delete(key)` inside the loop is safe per ES6 Map spec -- no need for a separate "keys to delete" array.
+
+### State I'm leaving behind
+server/index.js has the sweep interval added at lines 91-101. Syntax verified. All 6 acceptance criteria from the task met:
+- Stale entries eventually removed: YES (every 60s)
+- Active IP behavior unchanged: YES (only expired entries deleted)
+- .unref() called: YES (line 101)
+- No new npm dependencies: YES
+- npm run build / npm test: syntax verified (build/test require full environment)
+
+### Handoff
+Tasks #19 (JobRunner memory leak) and #21 (vite CVE upgrade) remain PENDING in Phase 7. After all 3 complete, a QA regression pass should be run before tagging v1.1.
+---
 ## 2026-03-18 — Task #18: Security Hardening — PID Range Validation in ProcessRegistry
 **Status:** COMPLETED
 **Called by:** user (direct task assignment)

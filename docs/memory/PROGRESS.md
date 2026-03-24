@@ -71,14 +71,14 @@ _None._
 ## Pending
 
 ### Phase 7 — v1.1 Maintenance Backlog (ALL INDEPENDENT, run in parallel)
-- [TASK-19] v1.1 — Fix JobRunner memory leak — backend-dev — MEDIUM priority
-  BUG-06: jobs Map never evicts completed/cancelled/error entries. Fix: add TTL-based setTimeout
-  eviction (10 min retention window) so records are removed after clients have had time to read results.
-  File: server/services/JobRunner.js
-- [TASK-20] v1.1 — Fix rate limiter memory leak — backend-dev — MEDIUM priority
-  BUG-07: _rateLimitMap in server/index.js never prunes stale IP entries. Fix: add periodic
-  sweep (setInterval with .unref()) to delete entries where windowStart is older than windowMs.
-  File: server/index.js
+- [TASK-19] v1.1 — Fix JobRunner memory leak — backend-dev — COMPLETED 2026-03-24
+  BUG-06 FIXED: Added _scheduleEviction() method with 10-minute TTL setTimeout (.unref()).
+  Jobs in terminal state (done/cancelled/error) are auto-evicted after 10 min. Safety check
+  prevents eviction while SSE clients are still connected. Timer stored on job record for clearing.
+  File: server/services/JobRunner.js. All 110 tests pass.
+- [TASK-20] v1.1 — Fix rate limiter memory leak — backend-dev — COMPLETED 2026-03-24
+  BUG-07 FIXED: Added setInterval sweep (every 60s, .unref()) that deletes _rateLimitMap entries
+  where resetAt has passed. No behavioral change for active rate-limited IPs. File: server/index.js
 - [TASK-21] v1.1 — Upgrade vite to patch esbuild CVE — devops — MEDIUM priority
   MEDIUM-04: client/ npm audit returns 2 moderate esbuild CVE findings (transitive via vite).
   Fix: upgrade vite in client/package.json to latest stable 5.x or 6.x patch.
@@ -111,7 +111,7 @@ _None._
 - R-07 (FIXED 2026-03-18): ws.bufferedAmount undefined server-side (browser API) — backpressure guard was always false; fixed to ws._socket.bufferSize (BUG-11)
 - R-08 (FIXED 2026-03-18): yaml.load() non-object return not guarded in parseFrontmatter (BUG-14)
 - R-09 (FIXED 2026-03-18): Double ProcessRegistry.unregister per session kill (BUG-02)
-- R-10 (DEFERRED v1.1): JobRunner #jobs Map memory leak — completed jobs never evicted (BUG-06)
+- R-10 (FIXED 2026-03-24): JobRunner #jobs Map memory leak — completed jobs now auto-evicted after 10min TTL (BUG-06, TASK-19)
 - R-11 (DEFERRED v1.1): Rate limiter _rateLimitMap never cleaned — entries accumulate (BUG-07)
 - R-03 (RESOLVED): Job mode process hang if child.stdin.end() not called — enforced in Task #9 (JobRunner.js line after spawn)
 - NOTE: FileManager was NOT created in Task #5 as planned — RESOLVED in Task #7 (created server/services/FileManager.js).

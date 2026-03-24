@@ -1,4 +1,13 @@
 ---
+## 2026-03-24 — backend-dev — Task #20: Fix rate limiter memory leak
+**Outcome:** COMPLETED
+**Summary:** Added a periodic setInterval sweep (every 60s, .unref()) to `_rateLimitMap` in server/index.js that deletes entries whose `resetAt` timestamp has passed. This fixes BUG-07 where stale IP entries accumulated indefinitely. No behavioral change for active rate-limited requests.
+**Files changed:** server/index.js (added 8-line sweep block after rateLimit function)
+**Bugs fixed:** BUG-07 — _rateLimitMap memory leak
+**Decisions made:** Sweep interval of 60 seconds matches the rate limit window (60s), providing timely cleanup without excessive overhead.
+**Blockers:** none
+**Next:** TASK #19 (JobRunner memory leak) and TASK #21 (vite CVE upgrade) remain in Phase 7 backlog.
+---
 ## 2026-03-24 — qa-tester — Pre-v1.1 Test Suite Verification
 **Outcome:** COMPLETED
 **Summary:** Ran full test suite (`npm test`) as pre-development baseline check before v1.1. All 110 tests pass across 6 files in 3.92s. No regressions from Task #16 security hardening.

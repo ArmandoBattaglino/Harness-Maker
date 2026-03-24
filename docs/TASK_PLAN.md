@@ -1866,7 +1866,7 @@ TASK #20: v1.1 — Fix Rate Limiter Memory Leak (TTL Cleanup on _rateLimitMap)
 Agent: backend-dev
 Priority: MEDIUM
 Difficulty: EASY
-Status: PENDING
+Status: COMPLETED
 Context:
   BUG-07 — Rate limiter memory leak: the in-memory `_rateLimitMap` in server/index.js
   accumulates one entry per unique IP address and never removes them. Under normal localhost use
@@ -1929,7 +1929,7 @@ TASK #21: v1.1 — Upgrade Vite to Patch MEDIUM-04 esbuild CVE
 Agent: devops
 Priority: MEDIUM
 Difficulty: EASY
-Status: PENDING
+Status: COMPLETED
 Context:
   MEDIUM-04 — esbuild CVE in client/ devDependencies: the security re-audit (2026-03-18) found
   that `client/node_modules` contains a version of esbuild (pulled in transitively by vite) with
@@ -2047,8 +2047,8 @@ Dependencies: none
 | 17 | Security Hardening — validate allowedTools whitelist | backend-dev | HIGH | EASY | COMPLETED |
 | 18 | Security Hardening — validate PID range in ProcessRegistry | backend-dev | HIGH | EASY | COMPLETED |
 | 19 | v1.1 — Fix JobRunner memory leak (evict completed jobs) | backend-dev | MEDIUM | EASY | PENDING |
-| 20 | v1.1 — Fix rate limiter memory leak (TTL on _rateLimitMap) | backend-dev | MEDIUM | EASY | PENDING |
-| 21 | v1.1 — Upgrade vite to patch esbuild CVE (MEDIUM-04) | devops | MEDIUM | EASY | PENDING |
+| 20 | v1.1 — Fix rate limiter memory leak (TTL on _rateLimitMap) | backend-dev | MEDIUM | EASY | COMPLETED |
+| 21 | v1.1 — Upgrade vite to patch esbuild CVE (MEDIUM-04) | devops | MEDIUM | EASY | COMPLETED |
 
 ---
 

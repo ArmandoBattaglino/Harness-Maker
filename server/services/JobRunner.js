@@ -38,6 +38,13 @@ function closeAllClients(job) {
 }
 
 // ---------------------------------------------------------------------------
+// Retention window for completed/cancelled/error jobs before eviction (ms).
+// After a job reaches a terminal state, it remains in the Map for this long
+// so clients can still read the result. After the window, it is deleted.
+// ---------------------------------------------------------------------------
+const JOB_EVICTION_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+// ---------------------------------------------------------------------------
 // JobRunner class
 // ---------------------------------------------------------------------------
 export class JobRunner {
@@ -46,6 +53,44 @@ export class JobRunner {
 
   // Set by server/index.js after binary discovery (same pattern as SessionManager)
   claudeBin = null;
+
+  // -------------------------------------------------------------------------
+  // _scheduleEviction (private)
+  // Schedules removal of a terminal-state job from the jobs Map after the
+  // retention TTL. If SSE clients are still connected at eviction time,
+  // reschedules instead of deleting. The timer is stored on the job record
+  // so it can be cleared if needed.
+  // BUG-06 fix: prevents unbounded memory growth from accumulated jobs.
+  // -------------------------------------------------------------------------
+  _scheduleEviction(jobId) {
+    const job = this.#jobs.get(jobId);
+    if (!job) return;
+
+    // Clear any existing eviction timer (e.g., if rescheduling)
+    if (job._evictionTimer) {
+      clearTimeout(job._evictionTimer);
+      job._evictionTimer = null;
+    }
+
+    const timer = setTimeout(() => {
+      const current = this.#jobs.get(jobId);
+      if (!current) return; // Already removed
+
+      // Safety: do not evict if SSE clients are still connected
+      if (current.clients && current.clients.size > 0) {
+        // Reschedule — a client is still reading
+        this._scheduleEviction(jobId);
+        return;
+      }
+
+      this.#jobs.delete(jobId);
+    }, JOB_EVICTION_TTL_MS);
+
+    // .unref() so the timer does not prevent Node.js process exit
+    timer.unref();
+
+    job._evictionTimer = timer;
+  }
 
   // -------------------------------------------------------------------------
   // startJob
@@ -176,6 +221,9 @@ export class JobRunner {
 
       // Close all SSE connections — job is finished
       closeAllClients(job);
+
+      // Schedule eviction of the finished job from the Map (BUG-06 fix)
+      this._scheduleEviction(jobId);
     });
 
     console.log(`[JobRunner] Job started — jobId=${jobId} projectId=${projectId}`);

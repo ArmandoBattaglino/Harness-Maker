@@ -88,6 +88,18 @@ function rateLimit(maxRequests = 200, windowMs = 60000) {
   };
 }
 
+// Periodic sweep of stale rate-limit entries to prevent memory leak (BUG-07).
+// Entries whose window has expired are no longer needed — delete them.
+const _rateLimitSweepInterval = setInterval(() => {
+  const now = Date.now();
+  for (const [ip, record] of _rateLimitMap) {
+    if (now > record.resetAt) {
+      _rateLimitMap.delete(ip);
+    }
+  }
+}, 60_000);
+_rateLimitSweepInterval.unref();
+
 // ---------------------------------------------------------------------------
 // 1. Load env
 // ---------------------------------------------------------------------------
