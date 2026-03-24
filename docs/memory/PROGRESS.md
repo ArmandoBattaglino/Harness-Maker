@@ -94,15 +94,17 @@ _None._
   Fixed: server/services/ProcessRegistry.js. isValidPid() helper (range 1–65535), cleanupStale() and register() both guarded.
 
 ## v1.1 Release Status
-**v1.1 RELEASE READY — All 21 tasks COMPLETED as of 2026-03-24.**
+**v1.2 RELEASE READY — All 22 tasks COMPLETED as of 2026-03-24.**
 - v1 (18 tasks, Phase 0–6): COMPLETED 2026-03-18.
 - v1.1 (3 tasks, Phase 7): COMPLETED 2026-03-24.
   - TASK-19: JobRunner memory leak fixed (TTL eviction, BUG-06)
   - TASK-20: Rate limiter memory leak fixed (stale sweep, BUG-07)
   - TASK-21: Vite 5.4→6.4.1 (esbuild CVE MEDIUM-04 resolved)
+- v1.2 (1 task, Phase 8): COMPLETED 2026-03-24.
+  - TASK-22: GET /api/v1/jobs/:id route added (BUG-22)
 - QA regression: 110/110 tests pass, npm audit 0 vulnerabilities.
-- 0 CRITICAL, 0 HIGH, 0 MEDIUM findings remaining (production AND dev).
-- Ready for `git tag v1.1.0`.
+- Full E2E audit: 25 endpoints + 8 UI views tested, 0 bugs remaining.
+- Ready for `git tag v1.2.0`.
 
 ## Known Issues
 - R-01 (RESOLVED): node-pty-prebuilt-multiarch not available — plain node-pty used instead

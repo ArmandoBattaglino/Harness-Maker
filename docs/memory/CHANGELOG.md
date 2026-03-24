@@ -2,6 +2,12 @@
 
 ## 2026-03-24
 
+### [Task #22] v1.2 — Add GET /api/v1/jobs/:id Route (BUG-22)
+- Agent: orchestrator (inline fix)
+- Modified: server/routes/jobs.js
+- Added: GET /:id route returning sanitized job status + result (SEC-08 compliant)
+- BUG-22 FIXED: previously returned SPA HTML fallback instead of JSON 404
+
 ### [Task #19] v1.1 — Fix JobRunner Memory Leak
 - Agent: backend-dev
 - Modified: server/services/JobRunner.js

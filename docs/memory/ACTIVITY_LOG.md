@@ -1,4 +1,15 @@
 ---
+## 2026-03-24 — orchestrator — Task #22: Add GET /api/v1/jobs/:id (BUG-22)
+**Outcome:** COMPLETED
+**Summary:** Added missing GET /api/v1/jobs/:id route in server/routes/jobs.js. Returns sanitized job status+result. Previously, requests to this URL fell through to SPA HTML fallback. 110/110 tests pass. Verified live: 404 for nonexistent, 200 with running/done status.
+**Files changed:** server/routes/jobs.js (MODIFIED — added GET /:id handler)
+**Bugs fixed:** BUG-22 (GET jobs/:id returned HTML instead of JSON)
+**Decisions made:** none
+**Blockers:** none
+**Next:** Full E2E audit complete. All bugs resolved. Project is v1.2-ready.
+---
+
+---
 ## 2026-03-24 — orchestrator — v1.1 Release Pipeline Complete
 **Outcome:** COMPLETED
 **Summary:** Full v1.1 pipeline executed: pre-flight tests (110/110 pass) → 3 parallel tasks (#19 JobRunner leak, #20 rate limiter leak, #21 Vite CVE) → regression tests (110/110 pass) → security check (npm audit 0 vulns) → docs updated (CODE_MAP, CHANGELOG, PROGRESS, CONTEXT, TASK_PLAN, DECISIONS). All 21 tasks COMPLETED. DEC-001 corrected. TASK_PLAN tech stack references fixed. Project ready for v1.1.0 tag.
