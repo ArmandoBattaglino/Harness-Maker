@@ -8,8 +8,8 @@ _Project initialized via /create pipeline on 2026-03-18_
 - Tasks #1–#18 are ALL COMPLETED as of 2026-03-18. v1 is RELEASE READY.
 - Post-v1 Debug & Security Audit completed (2026-03-18): 7 bugs fixed (BUG-02, 03, 04, 05, 11, 14, 16/19), 12 deferred to v1.1.
 - Security re-audit PASS: all 10 SEC requirements satisfied, 0 CRITICAL/HIGH/MEDIUM findings remaining in production code.
-- 3 v1.1 tasks now defined: TASK #19 (JobRunner leak), TASK #20 (rate limiter leak), TASK #21 (vite CVE upgrade).
-- All 3 Phase 7 tasks are INDEPENDENT — no dependencies among them, all can start immediately in parallel.
+- All 3 Phase 7 v1.1 tasks COMPLETED as of 2026-03-24: TASK #19 (JobRunner leak), TASK #20 (rate limiter leak), TASK #21 (vite CVE upgrade).
+- Next step: v1.1 QA regression pass, then tag v1.1 release.
 
 ## Open Questions
 - None blocking. v1 is shippable as-is. Phase 7 tasks are improvements, not blockers.

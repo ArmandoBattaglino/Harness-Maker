@@ -79,10 +79,11 @@ _None._
 - [TASK-20] v1.1 — Fix rate limiter memory leak — backend-dev — COMPLETED 2026-03-24
   BUG-07 FIXED: Added setInterval sweep (every 60s, .unref()) that deletes _rateLimitMap entries
   where resetAt has passed. No behavioral change for active rate-limited IPs. File: server/index.js
-- [TASK-21] v1.1 — Upgrade vite to patch esbuild CVE — devops — MEDIUM priority
-  MEDIUM-04: client/ npm audit returns 2 moderate esbuild CVE findings (transitive via vite).
-  Fix: upgrade vite in client/package.json to latest stable 5.x or 6.x patch.
-  File: client/package.json
+- [TASK-21] v1.1 — Upgrade vite to patch esbuild CVE — devops — COMPLETED 2026-03-24
+  MEDIUM-04 FIXED: Upgraded vite from 5.4.21 to 6.4.1 in client/package.json. esbuild CVE
+  (GHSA-67mh-4wv8-2f99) resolved — npm audit returns 0 vulnerabilities. Build passes (301 modules).
+  All 110 tests pass. @vitejs/plugin-react@4.7.0 compatible with vite 6. Files: client/package.json,
+  client/package-lock.json.
 
 ### Phase 6 — Security Hardening (ALL COMPLETED 2026-03-18)
 - [TASK-16] Security hardening — replace exec() in openBrowser with shell:false spawn (backend-dev) — COMPLETED 2026-03-18

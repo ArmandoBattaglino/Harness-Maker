@@ -1,4 +1,24 @@
 ---
+## 2026-03-24 — backend-dev — Task #19: Fix JobRunner Memory Leak (BUG-06)
+**Outcome:** COMPLETED
+**Summary:** Added TTL-based eviction to JobRunner's jobs Map. Terminal-state jobs (done/cancelled/error) are auto-deleted after 10 minutes via setTimeout with .unref(). Safety check defers eviction if SSE clients are still connected. Timer stored on job record for clearing.
+**Files changed:** server/services/JobRunner.js (MODIFIED -- added JOB_EVICTION_TTL_MS constant, _scheduleEviction() method, eviction call in close handler)
+**Bugs fixed:** BUG-06 (JobRunner jobs Map memory leak)
+**Decisions made:** Eviction scheduled only in child.on('close') handler (fires for all terminal states); underscore-prefix convention for _scheduleEviction method
+**Blockers:** none
+**Next:** All 3 Phase 7 tasks now COMPLETED. QA regression pass, then tag v1.1.
+---
+
+---
+## 2026-03-24 — devops — Task #21: Upgrade Vite to Patch MEDIUM-04 esbuild CVE
+**Outcome:** COMPLETED
+**Summary:** Upgraded vite from 5.4.21 to 6.4.1 in client/package.json to resolve esbuild CVE GHSA-67mh-4wv8-2f99 (2 moderate findings). npm audit now returns 0 vulnerabilities. Build passes (301 modules), all 110 tests pass. No config changes needed — vite 6 is backward compatible.
+**Files changed:** client/package.json (vite ^5.1.0 -> ^6.4.1), client/package-lock.json (regenerated)
+**Bugs fixed:** MEDIUM-04 — esbuild CVE via transitive vite dependency
+**Decisions made:** Used vite 6.4.1 (not 5.x) because the CVE affects all vite through 6.1.6; no 5.x patch could resolve it. Did not upgrade to vite 8.x to avoid plugin-react compatibility issues.
+**Blockers:** none
+**Next:** All 3 Phase 7 tasks (#19, #20, #21) are now COMPLETED. Ready for v1.1 QA regression pass and tagging.
+---
 ## 2026-03-24 — backend-dev — Task #20: Fix rate limiter memory leak
 **Outcome:** COMPLETED
 **Summary:** Added a periodic setInterval sweep (every 60s, .unref()) to `_rateLimitMap` in server/index.js that deletes entries whose `resetAt` timestamp has passed. This fixes BUG-07 where stale IP entries accumulated indefinitely. No behavioral change for active rate-limited requests.

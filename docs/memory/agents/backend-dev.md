@@ -1,4 +1,67 @@
 ---
+## 2026-03-24 — Task #19: Fix JobRunner Memory Leak (BUG-06)
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+All Tasks #1-#18 COMPLETED. Task #20 (rate limiter leak) already COMPLETED by another session. Task #19 was the remaining backend v1.1 item. server/services/JobRunner.js had a `#jobs` Map that accumulated entries forever -- completed/cancelled/error jobs were never evicted, causing unbounded memory growth under sustained use.
+
+### What I did
+1. Read all memory files in parallel (PROJECT.md, DECISIONS.md, PROGRESS.md, CONTEXT.md, CODE_MAP.md, backend-dev.md) plus JobRunner.js source.
+2. Analyzed the two code paths that transition jobs to terminal state: `child.on('close')` handler (done/error) and `cancelJob()` (cancelled). Both call `closeAllClients(job)`. The `close` handler fires for ALL terminal states (including cancelled, since treeKill triggers process exit).
+3. Added `JOB_EVICTION_TTL_MS = 10 * 60 * 1000` constant (10 minutes) at module level.
+4. Added `_scheduleEviction(jobId)` method to JobRunner class:
+   - Clears any existing eviction timer on the job (supports rescheduling)
+   - Sets a setTimeout that deletes the job from the Map after TTL
+   - Safety check: if `job.clients.size > 0` at eviction time, reschedules instead of deleting
+   - Calls `timer.unref()` so the timer doesn't prevent Node.js process exit
+   - Stores timer reference as `job._evictionTimer` for external clearing
+5. Called `this._scheduleEviction(jobId)` in the `child.on('close')` handler, immediately after `closeAllClients(job)`.
+6. Ran `node --input-type=module --check` -- syntax valid.
+7. Ran `npm test` -- all 110 tests pass, 0 failures, no regressions.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/JobRunner.js | MODIFIED | Added JOB_EVICTION_TTL_MS constant + _scheduleEviction() method + eviction call in close handler |
+| docs/TASK_PLAN.md | MODIFIED | Task #19 Status: PENDING -> COMPLETED; summary table updated |
+| docs/memory/PROGRESS.md | MODIFIED | TASK-19 entry updated to COMPLETED; R-10 known issue marked FIXED |
+
+### Improvements delivered
+- Jobs in terminal state (done/cancelled/error) are automatically evicted from the Map after 10 minutes
+- During the 10-minute retention window, jobs remain fully queryable via getJob() and listJobs()
+- SSE client safety: eviction is deferred if any SSE clients are still connected at TTL expiry
+- Timer uses .unref() so it never blocks Node.js shutdown
+- Timer reference stored on job record for potential external clearing
+- No new npm dependencies added
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None encountered | -- | -- | -- |
+
+### Decisions I made
+- Eviction scheduled only in `child.on('close')` handler, not separately in `cancelJob()` -- because the close handler fires for ALL terminal states (including cancelled jobs after treeKill triggers exit). This avoids duplicate scheduling.
+- Used `_scheduleEviction` (underscore prefix) as a conventional "private" method rather than a true `#` private field -- consistent with the class having `claudeBin` as a public property and no other `#` private methods.
+- The reschedule-on-active-clients check is a safety net -- in practice, `closeAllClients()` is always called before `_scheduleEviction()`, and `addSseClient()` for finished jobs sends the final event immediately and calls `res.end()`.
+- TTL constant defined at module level (not instance level) -- matches the existing pattern where `sendSse` and `closeAllClients` are module-level functions.
+
+### What I learned
+- The `cancelJob()` / `child.on('close')` interaction means the close handler is the single point where ALL jobs reach their final state, making it the right place for eviction scheduling.
+
+### State I'm leaving behind
+server/services/JobRunner.js is modified with the TTL eviction fix. All acceptance criteria met:
+- Completed/cancelled/error jobs evicted after 10min: YES
+- Jobs queryable during retention window: YES
+- Timer doesn't block process exit: YES (.unref())
+- No new dependencies: YES
+- npm test: 110/110 pass
+
+### Handoff
+Task #20 and #21 are already COMPLETED. After QA regression pass, tag v1.1.
+---
+
+---
 ## 2026-03-24 — Task #20: Fix Rate Limiter Memory Leak (_rateLimitMap)
 **Status:** COMPLETED
 **Called by:** user (direct task assignment)

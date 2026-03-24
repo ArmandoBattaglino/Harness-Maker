@@ -1810,7 +1810,7 @@ TASK #19: v1.1 — Fix JobRunner Memory Leak (Evict Completed Jobs)
 Agent: backend-dev
 Priority: MEDIUM
 Difficulty: EASY
-Status: PENDING
+Status: COMPLETED
 Context:
   BUG-06 — JobRunner memory leak: the `jobs` Map in server/services/JobRunner.js accumulates
   completed, cancelled, and error entries indefinitely. Under sustained use (many prompts over time),
@@ -2046,7 +2046,7 @@ Dependencies: none
 | 16 | Security Hardening — replace exec() in openBrowser | backend-dev | HIGH | EASY | COMPLETED |
 | 17 | Security Hardening — validate allowedTools whitelist | backend-dev | HIGH | EASY | COMPLETED |
 | 18 | Security Hardening — validate PID range in ProcessRegistry | backend-dev | HIGH | EASY | COMPLETED |
-| 19 | v1.1 — Fix JobRunner memory leak (evict completed jobs) | backend-dev | MEDIUM | EASY | PENDING |
+| 19 | v1.1 — Fix JobRunner memory leak (evict completed jobs) | backend-dev | MEDIUM | EASY | COMPLETED |
 | 20 | v1.1 — Fix rate limiter memory leak (TTL on _rateLimitMap) | backend-dev | MEDIUM | EASY | COMPLETED |
 | 21 | v1.1 — Upgrade vite to patch esbuild CVE (MEDIUM-04) | devops | MEDIUM | EASY | COMPLETED |
 
