@@ -96,6 +96,28 @@ router.post('/', async (req, res, next) => {
 });
 
 // ---------------------------------------------------------------------------
+// GET /api/v1/jobs/:id
+// Returns current status and result of a single job (BUG-22 fix).
+// ---------------------------------------------------------------------------
+router.get('/:id', (req, res) => {
+  const { id } = req.params;
+  const job = jobRunner.getJob(id);
+
+  if (!job) {
+    return res.status(404).json({ error: 'Job not found' });
+  }
+
+  // Sanitize — never expose prompt content or child process ref (SEC-08)
+  res.json({
+    jobId: job.jobId,
+    projectId: job.projectId,
+    status: job.status,
+    createdAt: job.createdAt,
+    result: job.result ?? null,
+  });
+});
+
+// ---------------------------------------------------------------------------
 // GET /api/v1/jobs/:id/stream  (FR-23)
 // SSE endpoint — stays open until the job finishes or the client disconnects.
 // Express timeout MUST be disabled for this route.
