@@ -35,11 +35,22 @@ export default function Terminal({ sessionId, projectPath }) {
 
   const { send, resize } = useSession(sessionId, handleData);
 
+  const sendRef = useRef(send);
+  useEffect(() => {
+    sendRef.current = send;
+  }, [send]);
+
   // Mount: create one Terminal instance for the lifetime of this component
   useEffect(() => {
     const term = new XTerm(TERM_OPTIONS);
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
+
+    term.onData((data) => {
+      if (sendRef.current) {
+        sendRef.current(data);
+      }
+    });
 
     termRef.current = term;
     fitAddonRef.current = fitAddon;

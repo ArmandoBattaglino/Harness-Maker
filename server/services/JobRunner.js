@@ -62,6 +62,7 @@ export class JobRunner {
     const args = [
       '-p', prompt,
       '--output-format', 'stream-json',
+      '--verbose',
       '--allowedTools', allowedTools ?? 'all',
       '--max-turns', String(maxTurns ?? 10),
       '--no-session-persistence',
