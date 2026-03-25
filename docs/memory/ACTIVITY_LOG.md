@@ -1,4 +1,15 @@
 ---
+## 2026-03-25 — project-manager — Phase 9: Frontend Redesign Planning
+**Outcome:** COMPLETED
+**Summary:** Analyzed 5 Stitch design exports (Terminal Hub, Orchestration Center, Project Dashboard, Context Editor, Deployment Manager) and created 9 new tasks (#23-#31) for a complete frontend redesign. Tasks cover: design system foundation, new sidebar, 5 new views (replacing 4 old views), app shell integration, and QA. All tasks assigned to frontend-dev (except #31 to qa-tester). Dependency chain: #23 -> #24 -> #25-#29 (parallel) -> #30 -> #31.
+**Files changed:** docs/TASK_PLAN.md (MODIFIED — added Phase 9 tasks #23-#31), docs/memory/PROGRESS.md (MODIFIED — added Phase 9 pending section), docs/memory/CONTEXT.md (MODIFIED — updated focus to Phase 9), docs/memory/agents/project-manager.md (APPENDED), docs/memory/ACTIVITY_LOG.md (APPENDED)
+**Bugs fixed:** none
+**Decisions made:** Primary color changes from green (#4ade80) to purple (#933df5). Navigation expands from 4 to 5 views ('entities' split into 'context' + 'deployments'). Default view changes from 'terminal' to 'projects'. Terminal.jsx and useSession.js are off-limits for modification.
+**Blockers:** none
+**Next:** Assign TASK #23 (Design System Foundation) to frontend-dev. This is the first task and blocks all others.
+---
+
+---
 ## 2026-03-24 — orchestrator — Task #22: Add GET /api/v1/jobs/:id (BUG-22)
 **Outcome:** COMPLETED
 **Summary:** Added missing GET /api/v1/jobs/:id route in server/routes/jobs.js. Returns sanitized job status+result. Previously, requests to this URL fell through to SPA HTML fallback. 110/110 tests pass. Verified live: 404 for nonexistent, 200 with running/done status.

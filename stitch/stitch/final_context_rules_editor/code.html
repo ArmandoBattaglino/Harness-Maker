@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Claude Code - Context Editor</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "primary": "#933df5",
+          "background-light": "#f7f5f8",
+          "background-dark": "#181022",
+        },
+        fontFamily: {
+          "display": ["Inter", "sans-serif"],
+          "mono": ["JetBrains Mono", "monospace"]
+        },
+        borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+      },
+    },
+  }
+</script>
+<style>
+  body { font-family: 'Inter', sans-serif; background-color: #000000; color: #EAEAEA; }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+  
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #222222; border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: #333333; }
+
+  /* Markdown Syntax Highlighting Simulation */
+  .md-heading { color: #933df5; font-weight: 600; }
+  .md-code { color: #3291FF; }
+  .md-muted { color: #666666; }
+  .md-comment { color: #555555; font-style: italic; }
+  
+  .glass-header {
+    backdrop-filter: blur(8px);
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+</style>
+</head>
+<body class="bg-black text-[#EAEAEA] min-h-screen flex flex-col overflow-hidden">
+<div class="flex h-screen w-full">
+<!-- Sidebar Navigation -->
+<aside class="w-[260px] border-r border-[#1a1a1a] bg-[#090909] flex flex-col flex-shrink-0">
+<div class="p-4 flex gap-3 items-center border-b border-[#1a1a1a]">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-md size-8" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAT5pG6IxfjtjkBl7kkyWcBgk68GGze1fRgB89EOQ1AzAqagpTWvWW8XjCIbGAaM2oItxnNdsV0f0VH77NzbLvWwbW5GrNpPUQ07bmbyhZ5vDlV9WPY57d4V0Mw4tlYbP52bSqsyXsTt6umdU6bNvMHvHW-XazjI8opwyrAPiwJdovmbISVvIQl7aNoLpsjiqqsddkKi81rBg9lEuZn5PRlbV_nDpxrO9pclSWloVspwKhrwQ3t_FlnMmqwxFUsl_rP_c3A1jNPan4");'></div>
+<div class="flex flex-col">
+<h1 class="text-white text-sm font-semibold leading-tight">Claude Code</h1>
+<p class="text-[#888888] text-xs font-normal leading-tight">Workspace</p>
+</div>
+</div>
+<div class="flex flex-col gap-1 p-3 flex-1 overflow-y-auto">
+<div class="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-[#1a1a1a] cursor-pointer transition-colors text-[#888888]">
+<span class="material-symbols-outlined text-[20px]" data-icon="home">home</span>
+<p class="text-sm font-medium">Dashboard</p>
+</div>
+<div class="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-[#1a1a1a] cursor-pointer transition-colors text-[#888888]">
+<span class="material-symbols-outlined text-[20px]" data-icon="terminal">terminal</span>
+<p class="text-sm font-medium">Terminal</p>
+</div>
+<div class="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-[#1a1a1a] cursor-pointer transition-colors text-[#888888]">
+<span class="material-symbols-outlined text-[20px]" data-icon="analytics">analytics</span>
+<p class="text-sm font-medium">Jobs</p>
+</div>
+<div class="flex items-center gap-3 px-3 py-2 rounded-md bg-[#1a1a1a] text-white border-l-2 border-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="description">description</span>
+<p class="text-sm font-medium">Context Editor</p>
+</div>
+</div>
+<div class="p-4 border-t border-[#1a1a1a] flex items-center justify-between text-[#888888]">
+<div class="flex items-center gap-2">
+<div class="size-2 rounded-full bg-green-500"></div>
+<span class="text-xs font-mono uppercase tracking-widest">Active</span>
+</div>
+<span class="material-symbols-outlined text-[18px] cursor-pointer hover:text-white" data-icon="settings">settings</span>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex flex-col flex-1 min-w-0 bg-[#000000]">
+<!-- Top Header -->
+<header class="h-14 border-b border-[#1a1a1a] glass-header flex items-center justify-between px-6 z-10">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="auto_fix_high">auto_fix_high</span>
+<h2 class="text-white text-sm font-semibold tracking-tight">CLAUDE.md Rules</h2>
+</div>
+<nav class="flex items-center gap-1 bg-[#0f0f0f] p-1 rounded-lg border border-[#1a1a1a]">
+<button class="px-4 py-1.5 text-xs font-semibold rounded-md bg-[#1a1a1a] text-white">Project Rules</button>
+<button class="px-4 py-1.5 text-xs font-medium rounded-md text-[#888888] hover:text-[#cccccc] transition-colors">User Global</button>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 px-2.5 py-1 rounded bg-[#0f0f0f] border border-[#1a1a1a]">
+<span class="w-1 h-1 rounded-full bg-primary animate-pulse"></span>
+<span class="text-[10px] text-[#888888] font-mono uppercase tracking-tighter">Live Sync</span>
+</div>
+<div class="h-4 w-px bg-[#1a1a1a]"></div>
+<div class="flex items-center gap-2">
+<button class="h-8 px-4 text-xs font-medium text-[#888888] hover:text-white transition-colors">Discard</button>
+<button class="h-8 px-4 rounded-md bg-white text-black text-xs font-bold hover:bg-gray-200 transition-colors">Push Changes</button>
+</div>
+</div>
+</header>
+<!-- Context Budget Warning Banner -->
+<div class="bg-[#221100] border-b border-[#442200] px-6 py-2 flex items-center justify-between">
+<div class="flex items-center gap-3 text-[#ffaa44]">
+<span class="material-symbols-outlined text-[18px]" data-icon="warning">warning</span>
+<p class="text-xs font-medium">Context budget warning: CLAUDE.md is approaching 100 lines. Large instruction sets may degrade model reasoning performance.</p>
+</div>
+<div class="text-[10px] font-mono text-[#ffaa44]/60 uppercase">82 / 100 Lines</div>
+</div>
+<!-- Workspace -->
+<div class="flex flex-1 overflow-hidden">
+<!-- Left: Visual Builder -->
+<section class="w-1/2 border-r border-[#1a1a1a] flex flex-col bg-[#050505]">
+<div class="px-6 py-3 border-b border-[#1a1a1a] flex items-center justify-between bg-[#090909]">
+<div class="flex items-center gap-2">
+<span class="text-[11px] font-bold text-[#888888] uppercase tracking-widest">Rule Explorer</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-[10px] font-mono text-[#444444]">3 ACTIVE BLOCKS</span>
+<button class="text-primary hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="sort">sort</span>
+</button>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto p-6 space-y-4">
+<!-- Rule 1 -->
+<div class="group bg-[#0f0f0f] border border-[#1a1a1a] rounded-lg p-4 hover:border-[#333333] transition-all">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#333333] cursor-grab" data-icon="drag_indicator">drag_indicator</span>
+<input class="bg-transparent border-none text-white font-bold focus:ring-0 p-0 text-sm w-48 placeholder-[#333333]" type="text" value="Code Style Guidelines"/>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex bg-black border border-[#1a1a1a] rounded px-2 py-1 gap-2 items-center">
+<span class="text-[10px] text-[#666666] font-mono">SCOPE:</span>
+<select class="bg-transparent border-none text-[10px] text-[#EAEAEA] font-bold p-0 focus:ring-0 outline-none cursor-pointer uppercase tracking-tight">
+<option>Global</option>
+<option>Components</option>
+<option>Hooks</option>
+</select>
+</div>
+<button class="text-[#333333] hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="close">close</span>
+</button>
+</div>
+</div>
+<textarea class="w-full bg-[#050505] border border-[#1a1a1a] rounded-md p-4 text-sm text-[#cccccc] font-mono leading-relaxed focus:border-primary/50 focus:ring-0 outline-none resize-none min-h-[100px]" spellcheck="false">Always use functional components with Tailwind classes. Avoid arbitrary values in Tailwind where possible. Prefer 'lucide-react' for icons over others.</textarea>
+</div>
+<!-- Rule 2 -->
+<div class="group bg-[#0f0f0f] border border-[#1a1a1a] rounded-lg p-4 hover:border-[#333333] transition-all">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#333333] cursor-grab" data-icon="drag_indicator">drag_indicator</span>
+<input class="bg-transparent border-none text-white font-bold focus:ring-0 p-0 text-sm w-48 placeholder-[#333333]" type="text" value="Commit Standards"/>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex bg-black border border-[#1a1a1a] rounded px-2 py-1 gap-2 items-center">
+<span class="text-[10px] text-[#666666] font-mono">SCOPE:</span>
+<select class="bg-transparent border-none text-[10px] text-[#EAEAEA] font-bold p-0 focus:ring-0 outline-none cursor-pointer uppercase tracking-tight">
+<option>Global</option>
+</select>
+</div>
+<button class="text-[#333333] hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="close">close</span>
+</button>
+</div>
+</div>
+<textarea class="w-full bg-[#050505] border border-[#1a1a1a] rounded-md p-4 text-sm text-[#cccccc] font-mono leading-relaxed focus:border-primary/50 focus:ring-0 outline-none resize-none min-h-[80px]" spellcheck="false">Follow Conventional Commits format: feat, fix, docs, style, refactor, test, chore. Use imperative mood in descriptions.</textarea>
+</div>
+<!-- Rule 3 -->
+<div class="group bg-[#0f0f0f] border border-[#1a1a1a] rounded-lg p-4 hover:border-[#333333] transition-all">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#333333] cursor-grab" data-icon="drag_indicator">drag_indicator</span>
+<input class="bg-transparent border-none text-white font-bold focus:ring-0 p-0 text-sm w-48 placeholder-[#333333]" type="text" value="Testing"/>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex bg-black border border-[#1a1a1a] rounded px-2 py-1 gap-2 items-center">
+<span class="text-[10px] text-[#666666] font-mono">SCOPE:</span>
+<select class="bg-transparent border-none text-[10px] text-[#EAEAEA] font-bold p-0 focus:ring-0 outline-none cursor-pointer uppercase tracking-tight">
+<option>/tests</option>
+<option>Global</option>
+</select>
+</div>
+<button class="text-[#333333] hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="close">close</span>
+</button>
+</div>
+</div>
+<textarea class="w-full bg-[#050505] border border-[#1a1a1a] rounded-md p-4 text-sm text-[#cccccc] font-mono leading-relaxed focus:border-primary/50 focus:ring-0 outline-none resize-none min-h-[80px]" spellcheck="false">Ensure all new features include unit tests using Vitest. Mock external API calls strictly.</textarea>
+</div>
+<!-- Add Rule CTA -->
+<button class="w-full border border-dashed border-[#1a1a1a] rounded-lg py-8 flex flex-col items-center justify-center gap-3 text-[#444444] hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all group">
+<span class="material-symbols-outlined text-[32px] group-hover:scale-110 transition-transform" data-icon="add_circle">add_circle</span>
+<span class="text-xs font-bold uppercase tracking-[0.2em]">Add Context Rule</span>
+</button>
+</div>
+</section>
+<!-- Right: Raw Preview -->
+<section class="w-1/2 bg-[#000000] flex flex-col">
+<div class="px-6 py-3 border-b border-[#1a1a1a] flex items-center justify-between bg-[#000000]">
+<span class="text-[11px] font-bold text-[#888888] uppercase tracking-widest">CLAUDE.md Output</span>
+<div class="flex items-center gap-2">
+<button class="p-1.5 rounded hover:bg-[#1a1a1a] text-[#666666] hover:text-white transition-all">
+<span class="material-symbols-outlined text-[18px]" data-icon="content_copy">content_copy</span>
+</button>
+<button class="p-1.5 rounded hover:bg-[#1a1a1a] text-[#666666] hover:text-white transition-all">
+<span class="material-symbols-outlined text-[18px]" data-icon="open_in_full">open_in_full</span>
+</button>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto p-8 font-mono text-[13px] leading-[1.6]">
+<div class="max-w-2xl mx-auto space-y-6">
+<div class="pb-6 border-b border-[#1a1a1a]">
+<span class="md-heading text-lg"># Project Configuration for Claude</span><br/>
+<span class="md-comment text-xs mt-1 block"># Generated via Claude Code Context Editor</span>
+</div>
+<div class="space-y-4">
+<div>
+<span class="md-heading">## Global Rules</span>
+</div>
+<div class="pl-4 border-l border-primary/20 space-y-4">
+<div>
+<span class="md-heading">### Code Style Guidelines</span><br/>
+<span class="text-[#cccccc]">Always use functional components with Tailwind classes. Avoid arbitrary values in Tailwind where possible. Prefer </span><span class="md-code">'lucide-react'</span><span class="text-[#cccccc]"> for icons over others.</span>
+</div>
+<div>
+<span class="md-heading">### Commit Standards</span><br/>
+<span class="text-[#cccccc]">Follow Conventional Commits format: </span><span class="md-code">feat, fix, docs, style, refactor, test, chore</span><span class="text-[#cccccc]">. Use imperative mood in descriptions.</span>
+</div>
+</div>
+</div>
+<div class="space-y-4 pt-4">
+<div>
+<span class="md-heading">## Path-Specific Rules</span>
+</div>
+<div class="pl-4 border-l border-[#333333] space-y-4">
+<div>
+<span class="md-muted">#### /tests</span><br/>
+<span class="md-heading">### Testing</span><br/>
+<span class="text-[#cccccc]">Ensure all new features include unit tests using Vitest. Mock external API calls strictly.</span>
+</div>
+</div>
+</div>
+<!-- Simulated Cursor -->
+<div class="inline-block w-2 h-4 bg-primary/80 animate-pulse ml-1 align-middle"></div>
+</div>
+</div>
+<!-- Footer Stats -->
+<div class="px-6 py-2 border-t border-[#1a1a1a] flex items-center justify-between text-[10px] font-mono text-[#444444]">
+<div class="flex gap-4">
+<span>UTF-8</span>
+<span>MARKDOWN</span>
+</div>
+<div class="flex gap-4">
+<span>COL: 12</span>
+<span>LINE: 44</span>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</body></html>

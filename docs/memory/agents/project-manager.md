@@ -425,3 +425,79 @@ Assign Tasks #19, #20, #21 in parallel:
 - TASK #21 → devops (vite upgrade in client/)
 After all 3 complete: qa-tester regression pass on the 3 changed files, then tag v1.1.
 ---
+
+---
+## 2026-03-25 — Phase 9: Frontend Redesign Planning (Session 8)
+**Status:** COMPLETED
+**Called by:** user (direct invocation — analyze Stitch design exports and plan frontend redesign)
+
+### Context when I started
+All 22 tasks (v1.0 through v1.2) were COMPLETED. The project was at v1.2 RELEASE READY. The user had
+exported 5 screen designs from Google Stitch (AI design tool) and wanted to completely replace the
+frontend to match these new designs. The exports were at stitch/stitch/ with 5 subdirectories, each
+containing a code.html (full Tailwind markup) and screen.png (visual screenshot).
+
+### What I did
+1. Read all docs/memory/ files in parallel (PROJECT.md, DECISIONS.md, PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md, agents/project-manager.md)
+2. Read docs/TASK_PLAN.md (full structure including all 22 existing tasks)
+3. Read ALL 5 Stitch code.html files to extract the design system, layout patterns, component structures
+4. Read ALL 5 Stitch screen.png screenshots to verify visual designs
+5. Read ALL current frontend source files: App.jsx, main.jsx, AppContext.jsx, index.css, Sidebar.jsx,
+   TerminalView.jsx, ProjectsView.jsx, EntitiesView.jsx, JobView.jsx, tailwind.config.js, index.html
+6. Analyzed the design system across all 5 screens: extracted colors, typography, spacing, icons,
+   shared patterns (glass-effect, scrollbar, status indicators)
+7. Mapped Stitch screens to existing React components:
+   - Screen 1 (Terminal Hub) -> replaces TerminalView.jsx
+   - Screen 2 (Orchestration Center) -> replaces JobView.jsx + JobPanel.jsx
+   - Screen 3 (Project Dashboard) -> replaces ProjectsView.jsx
+   - Screen 4 (Context Editor) -> replaces EntitiesView.jsx CLAUDE.md tab (new view)
+   - Screen 5 (Deployment Manager) -> replaces EntitiesView.jsx Agents/Skills tabs (new view)
+8. Created 9 new tasks (#23-#31) in docs/TASK_PLAN.md with full verbose context
+9. Updated Phase Map table, Execution Order, and Task Status Summary in TASK_PLAN.md
+10. Updated PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md, and this agent memory file
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Added Phase 9 to Phase Map; added 9 task blocks (#23-#31); updated Execution Order with Phase 9 waves; updated Task Status Summary with 9 new rows; updated footer |
+| docs/memory/PROGRESS.md | MODIFIED | Added Phase 9 pending section with all 9 tasks and their dependencies |
+| docs/memory/CONTEXT.md | MODIFIED | Complete rewrite: focus updated to Phase 9, new Active Threads, new Critical Constraints for frontend-dev agents |
+| docs/memory/ACTIVITY_LOG.md | APPENDED | Session entry for Phase 9 planning |
+| docs/memory/agents/project-manager.md | APPENDED | This session log |
+
+### Improvements delivered
+- Complete Phase 9 plan with 9 self-contained tasks, each with full context extracted from Stitch designs
+- Each task includes: exact color values, layout dimensions, component hierarchy, API integration requirements, and acceptance criteria
+- Clear dependency chain: Wave 1 (foundation) -> Wave 2 (sidebar + views) -> Wave 3 (integration) -> Wave 4 (QA)
+- Identified that Terminal.jsx and useSession.js must NOT be modified (xterm.js constraints)
+- Identified the navigation change: 4 views -> 5 views ('entities' split into 'context' + 'deployments')
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Primary accent color changes from green (#4ade80) to purple (#933df5) based on Stitch designs
+- The 'entities' view is split into two new views: 'context' (CLAUDE.md editor) and 'deployments' (agents/skills)
+- Default landing view changes from 'terminal' to 'projects' (dashboard is now the home page)
+- Terminal.jsx and useSession.js are marked as OFF LIMITS for modification to prevent xterm.js regressions
+- useApi.js and useJob.js are OFF LIMITS — only the UI wrapper components change
+- Design system uses Inter as primary font (4 of 5 screens) with Geist as alternative for terminal hub
+- Material Symbols Outlined is the icon system (all 5 screens use it consistently)
+- Task #23 (design system foundation) is the single blocking first task — nothing else can start without it
+
+### What I learned
+- Stitch exports produce self-contained HTML files with inline Tailwind config — the color values and design tokens must be extracted and unified (minor inconsistencies exist between screens, e.g., primary #a855f7 vs #933df5)
+- The 5 screens share ~90% of their design system but have small variations in border radius and surface colors that need to be normalized
+- The existing frontend is heavily inline-styled (style={{ backgroundColor: '#111111' }}) rather than using Tailwind config — the redesign is an opportunity to fix this anti-pattern
+- The Terminal Hub screen (screen 1) is the hardest to implement because xterm.js owns the terminal area — the redesign wraps it with new chrome but cannot touch the terminal renderer itself
+
+### State I'm leaving behind
+- Tasks #1-#22: COMPLETED (v1.2 RELEASE READY)
+- Tasks #23-#31: PENDING (Phase 9 Frontend Redesign)
+- Task #23 is the first to assign — it has no dependencies
+- All Stitch design references are captured in the task blocks and in CONTEXT.md
+- No code was modified — pure planning task
+
+### Handoff
+Assign TASK #23 (Design System Foundation) to frontend-dev immediately. It is the single unblocked entry point for Phase 9. After #23 completes, assign TASK #24 (Sidebar). After #24, tasks #25-#29 can theoretically run in parallel but if using a single agent, run them serially: #25 -> #26 -> #27 -> #28 -> #29. After all views complete, TASK #30 (integration), then TASK #31 (QA).
+---

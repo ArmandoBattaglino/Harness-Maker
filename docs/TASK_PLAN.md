@@ -52,6 +52,16 @@ Claude Code Visual Manager is a locally-hosted web application (served on `local
 | Phase 7 | #19 (Backend) | v1.1: Fix JobRunner memory leak — evict completed/cancelled/error jobs from jobs Map |
 | Phase 7 | #20 (Backend) | v1.1: Fix rate limiter memory leak — add TTL/cleanup to _rateLimitMap |
 | Phase 7 | #21 (DevOps) | v1.1: Upgrade vite in client/ to patch MEDIUM-04 esbuild CVE |
+| Phase 8 | #22 (Backend) | v1.2: Add GET /api/v1/jobs/:id route (BUG-22) |
+| Phase 9 | #23 (Frontend) | Redesign: Design System Foundation — Tailwind config, fonts, CSS variables, shared utilities |
+| Phase 9 | #24 (Frontend) | Redesign: New Sidebar Navigation Component |
+| Phase 9 | #25 (Frontend) | Redesign: Project Dashboard View (replaces ProjectsView) |
+| Phase 9 | #26 (Frontend) | Redesign: Live Terminal Hub View (replaces TerminalView) |
+| Phase 9 | #27 (Frontend) | Redesign: Orchestration Center / Job Runner View (replaces JobView) |
+| Phase 9 | #28 (Frontend) | Redesign: Context & Rules Editor View (replaces EntitiesView CLAUDE.md tab) |
+| Phase 9 | #29 (Frontend) | Redesign: Deployment Manager View (replaces EntitiesView Agents/Skills tabs) |
+| Phase 9 | #30 (Frontend) | Redesign: App Shell, Routing, and View Integration |
+| Phase 9 | #31 (QA) | Redesign: Visual QA + Functional Regression Testing |
 
 ---
 
@@ -1975,6 +1985,755 @@ Acceptance Criteria:
 Dependencies: none
 ---
 
+TASK #23: Redesign — Design System Foundation (Tailwind Config, Fonts, CSS Variables, Shared Utilities)
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: opus
+Status: PENDING
+Context:
+  This is the FIRST task in the Phase 9 frontend redesign. All subsequent redesign tasks depend on this one.
+
+  THE GOAL: Establish the complete design system that ALL 5 Stitch screens share. The Stitch exports use a
+  consistent design language that must be codified into the Tailwind config and global CSS before any
+  component work begins.
+
+  DESIGN SYSTEM EXTRACTED FROM ALL 5 STITCH SCREENS:
+
+  COLOR PALETTE (from Stitch exports — these are the canonical values):
+  - primary: #933df5 (purple accent — used in active states, buttons, highlights, borders)
+    NOTE: Screen 1 (Terminal Hub) uses #a855f7 as primary, but the other 4 screens consistently use #933df5.
+    Use #933df5 as the canonical primary and add #a855f7 as "primary-light" for terminal glow effects.
+  - background-dark: #000000 (main body background — pure black)
+  - surface: #0a0a0a to #111111 (card/panel backgrounds, sidebar)
+  - surface-lighter / surface-raised: #141414 (elevated surfaces, hover states)
+  - surface-hover: #1a1a1a (interactive hover backgrounds)
+  - border-color: #1a1a1a to #222222 (borders between panels, cards)
+  - border-hover: #444444 (border on hover)
+  - text-main: #EAEAEA (primary text color)
+  - text-muted: #888888 (secondary/label text)
+  - text-dim: #555555 to #666666 (very muted labels, timestamps)
+  - text-dimmer: #444444 (placeholder text, subtle UI)
+  - terminal-bg: #000000 (terminal background)
+  - success / green: #10B981 or #22c55e (online status, running indicators)
+  - error / red: #E33A3A (failed states, delete actions)
+  - warning / amber: #ffaa44 (warning banners)
+  - accent / blue: #3291FF (links, info elements)
+  - code-purple: #d2a8ff (code highlighting — variables, types)
+  - code-green: #7ee787 (code highlighting — HTML tags)
+  - code-red: #ff7b72 (code highlighting — keywords)
+  - code-blue: #79c0ff (code highlighting — properties)
+  - code-string: #a5d6ff (code highlighting — strings)
+
+  TYPOGRAPHY:
+  - Primary font: "Inter" (sans-serif) — used for all UI text across screens 2-5
+  - Alternative: "Geist" (sans-serif) — used in screen 1 (Terminal Hub). Include both.
+  - Monospace: "JetBrains Mono" — used for terminal text, code blocks, PID labels, file paths, timestamps
+  - Base font size: 13px (text-[13px] is the root body size in the Terminal Hub screen)
+  - Font weights: 400 (normal), 500 (medium), 600 (semibold), 700 (bold)
+  - Tracking: tight for headers, widest for tiny uppercase labels
+
+  BORDER RADIUS (from Stitch tailwind configs):
+  - DEFAULT: 0.25rem (4px) — standard elements
+  - sm: 2px — small badges, tags
+  - md: 4px — medium elements
+  - lg: 0.5rem (8px) — cards, panels
+  - xl: 0.75rem (12px) — large cards, modals
+  - full: 9999px — pills, status dots
+
+  SHARED UI PATTERNS (must be available as utility classes or components):
+  - .glass-effect: backdrop-filter: blur(8-12px); background: rgba(10, 10, 10, 0.8) — used for floating headers
+  - .custom-scrollbar: thin 4-6px scrollbar with #1a1a1a/#262626 thumb on transparent track
+  - .active-indicator: box-shadow: 0 0 10px rgba(168, 85, 247, 0.4) — purple glow effect
+  - Material Symbols Outlined icon font — ALL screens use Google Material Symbols (not Material Icons)
+  - Status dots: consistent size-1.5 to size-2 rounded-full with color-coded backgrounds
+
+  WHAT TO DO:
+  1. Update client/tailwind.config.js with the full extended theme (colors, fontFamily, borderRadius)
+     matching the Stitch exports. Add darkMode: "class".
+  2. Update client/index.html to load the required Google Fonts:
+     - Inter (400, 500, 600, 700)
+     - Geist (400, 500, 600, 700)
+     - JetBrains Mono (400, 500)
+     - Material Symbols Outlined
+  3. Rewrite client/src/index.css with:
+     - Base body styles (bg #000000, text #EAEAEA, font-family Inter)
+     - Custom scrollbar styles
+     - Glass effect utility class
+     - Active indicator utility class
+     - Markdown result styles updated to match new color scheme (primary purple instead of green)
+     - Terminal-specific text styles
+  4. Create client/src/lib/constants.js with:
+     - API_BASE, WS_BASE constants (preserve existing patterns from useApi.js)
+     - NAV_ITEMS array with icon names (Material Symbols), labels, and view keys for the new 5-screen navigation
+     - STATUS_COLORS object mapping status strings to color classes
+
+  CURRENT STATE OF FILES TO MODIFY:
+  - client/tailwind.config.js: minimal config, no custom colors (just content path)
+  - client/index.html: no font imports, bare HTML shell
+  - client/src/index.css: green-themed markdown styles, basic body/root styles
+  - client/src/hooks/useApi.js: contains API_BASE constant — DO NOT modify this file, create a separate constants file
+
+  CRITICAL: Do NOT modify any existing component files in this task. This is foundation-only.
+  The old components will continue to work with the old styles until they are replaced in later tasks.
+
+Acceptance Criteria:
+  - [ ] client/tailwind.config.js has full color palette, fontFamily, borderRadius matching Stitch exports
+  - [ ] client/index.html loads Inter, Geist, JetBrains Mono, and Material Symbols Outlined from Google Fonts
+  - [ ] client/src/index.css has new base styles, scrollbar, glass-effect, active-indicator utilities
+  - [ ] client/src/index.css markdown styles updated to purple/dark theme (not green)
+  - [ ] client/src/lib/constants.js created with NAV_ITEMS, STATUS_COLORS
+  - [ ] darkMode: "class" is set in tailwind.config.js
+  - [ ] `npm run build` passes with 0 errors
+  - [ ] Existing components still render (no breaking changes to old code)
+Dependencies: none
+---
+
+TASK #24: Redesign — New Sidebar Navigation Component
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: opus
+Status: PENDING
+Context:
+  Replace the current Sidebar.jsx with a completely new sidebar matching the Stitch designs. The sidebar
+  design is consistent across ALL 5 Stitch screens with minor variations in which nav item is active.
+
+  STITCH SIDEBAR DESIGN (composite from all 5 screens):
+
+  STRUCTURE (top to bottom):
+  1. HEADER SECTION (top, border-b border-[#1a1a1a]):
+     - Logo: a small (size-7 to size-8) rounded square with purple gradient background containing
+       a Material Symbols icon ("terminal" or "hub")
+     - App name: "Claude Code" in bold 14px text, white
+     - Subtitle: "Visual Manager" or "Local Environment" in 10-11px muted text, uppercase tracking-widest
+     - Width: 240-260px (use 250px as standard)
+
+  2. NAVIGATION LINKS (main section, flex-1):
+     The NEW navigation has 5 views (not the current 4):
+     - "Project Dashboard" — icon: dashboard — maps to view: 'projects'
+     - "Live Terminal" — icon: terminal — maps to view: 'terminal'
+     - "Job Runner" — icon: play_arrow or rocket_launch — maps to view: 'jobs'
+     - "Deployments" — icon: memory — maps to view: 'deployments' (was "Entities" agents/skills tabs)
+     - "Context Editor" — icon: description — maps to view: 'context' (was "Entities" CLAUDE.md tab)
+
+     Active state: bg-surface-hover (#1a1a1a) with border border-border, icon turns primary (#933df5)
+       with filled variant (font-variation-settings: 'FILL' 1), text becomes white
+     Inactive state: text-text-muted (#888888), hover:bg-surface-hover, icons unfilled (FILL 0)
+     All nav items: flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium
+
+  3. OPTIONAL SECTIONS (varies by screen):
+     - Screen 1 (Terminal Hub): Shows "Active PTY Sessions" list below nav — session cards with
+       green status dot, session name, PID badge, project path. "New Local Session" button.
+     - Screen 3 (Dashboard): Shows "Recent" section with recently visited project paths
+     - Screen 5 (Deployment): Shows active agent indicator at bottom with running status
+
+  4. FOOTER (bottom, border-t border-[#1a1a1a]):
+     - System status indicator: green dot + "Active" / "System Online" text
+     - Settings link: settings icon + "Preferences" or "Settings" text
+     - Version number: small mono text like "v1.2.4"
+
+  WHAT TO DO:
+  1. Rewrite client/src/components/Sidebar.jsx entirely. The new component should:
+     a. Use the NAV_ITEMS from lib/constants.js
+     b. Render Material Symbols Outlined icons (use <span className="material-symbols-outlined">icon_name</span>)
+     c. Support the active/inactive styling exactly as described above
+     d. Include the header with logo, app name, subtitle
+     e. Include a dynamic "Active PTY Sessions" section that shows sessions from AppContext
+        (session name = project name, status dot = green if active, PID shown as small badge)
+     f. Include "New Local Session" button (dashed border style)
+     g. Include footer with status indicator and version number
+     h. KEEP the project loading logic (apiGet('/api/v1/projects') on mount) — this is critical
+     i. KEEP the handleProjectClick session creation logic — this is critical
+     j. KEEP the AddProjectModal integration — still needed for project registration
+
+  2. Update the view names in AppContext.jsx:
+     - Add 'deployments' and 'context' to the view type
+     - The existing 'entities' view will be removed (split into 'deployments' and 'context')
+     - Update initialState.view from 'terminal' to 'projects' (dashboard is now the landing page)
+
+  CURRENT SIDEBAR.JSX STATE:
+  - 256px wide, bg #1a1a1a
+  - Green (#4ade80) accent theme
+  - Text icon characters (>, #, @, =) instead of Material Symbols
+  - 4 nav items: Terminal, Jobs, Entities, Projects
+  - Project list below nav with status dots
+  - Simple + button for adding projects
+  - No footer, no status indicator, no version display
+
+  BACKEND API INTEGRATION (must be preserved):
+  - apiGet('/api/v1/projects') — fetches project list on mount
+  - apiPost('/api/v1/sessions', { projectId }) — creates PTY session on project click
+  - dispatch SET_PROJECTS, SET_ACTIVE_PROJECT, SET_SESSION, SET_VIEW — all must still work
+  - AddProjectModal onClose callback
+
+Acceptance Criteria:
+  - [ ] Sidebar matches Stitch design: 250px width, black/dark surface background, purple accent
+  - [ ] 5 navigation items with Material Symbols icons and correct active/inactive states
+  - [ ] Header shows logo icon + "Claude Code" + "Visual Manager" subtitle
+  - [ ] Active PTY Sessions section shows current sessions with green dots and PID badges
+  - [ ] Footer shows system status dot, settings link, and version number
+  - [ ] Project loading and session creation still work (no API regressions)
+  - [ ] AppContext.jsx updated with 'deployments' and 'context' views, default view changed to 'projects'
+  - [ ] AddProjectModal still triggers from appropriate button
+  - [ ] `npm run build` passes with 0 errors
+Dependencies: TASK #23
+---
+
+TASK #25: Redesign — Project Dashboard View (replaces ProjectsView)
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: opus
+Status: PENDING
+Context:
+  Replace the current ProjectsView.jsx (a simple table) with the rich Project Dashboard from Stitch
+  screen 3: final_project_dashboard.
+
+  STITCH DESIGN — PROJECT DASHBOARD (screen 3):
+
+  LAYOUT:
+  - Full-width content area with max-w-7xl centering
+  - Top header bar (h-[64px]): "Project Dashboard" title on left, global search bar in center,
+    notification bell + user avatar on right
+  - Scrollable main area below header
+
+  HEADER BAR:
+  - Left: "Project Dashboard" in text-lg font-semibold
+  - Center: search input with search icon, placeholder "Search projects, paths, or active tasks...",
+    keyboard shortcut "/" badge on right side, bg-[#0a0a0a] border border-border-color rounded-md
+  - Right: notification bell icon button + user avatar (small circle with initials, border border-border-color)
+
+  SECTION TITLE:
+  - "Active Environments" in text-[11px] font-bold uppercase tracking-[0.1em] text-text-muted
+  - Subtitle: "You have N local projects being managed by Claude Code." in text-sm text-text-muted
+  - Right side: "N TOTAL" badge + grid/list view toggle buttons (grid_view / list icons)
+
+  PROJECT CARDS GRID:
+  - grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6
+  - Each card: bg-surface (#111111) border border-border-color rounded-xl p-6, h-[180px]
+  - Card content:
+    - Top: project name (text-base font-semibold) + three-dot menu (more_vert, visible on hover)
+    - Below name: project path in text-[12px] text-text-muted font-mono truncate
+    - Bottom (border-t): status indicator:
+      - Active: animated ping dot (primary purple) + "N Active Agents" text
+      - Idle: gray dot + "Idle" text
+      - Failed: red dot + "N Failed Job" text in red
+    - Far right of bottom: time ago text ("2h ago", "Just now")
+  - Hover states: active projects hover:border-primary/50, idle hover:border-border-hover,
+    failed hover:border-[#E33A3A]/40
+
+  ADD PROJECT CARD:
+  - bg-transparent border border-dashed border-border-color rounded-xl, h-[180px]
+  - Center: circle icon container with "add" icon, "Register Existing Project" text below,
+    "Link a local directory" subtitle
+  - Hover: border-primary, bg-[#080808], icon scales up
+
+  SCAFFOLD CTA BANNER (bottom of page):
+  - mt-16, full-width card with rounded-2xl border
+  - Left: rocket icon in primary/10 background circle + "Start a new project with AI?" heading + subtitle
+  - Right: "Scaffold New Project" primary button
+
+  WHAT TO DO:
+  1. Rewrite client/src/views/ProjectsView.jsx entirely to match this design
+  2. Replace the table layout with the card grid layout
+  3. Implement the search bar (client-side filtering of projects by name/path is sufficient)
+  4. Implement the grid/list view toggle (grid shows cards, list can show a simplified version)
+  5. Each card must be clickable — clicking navigates to terminal view for that project
+     (same as current handleOpenTerminal: dispatch SET_ACTIVE_PROJECT + SET_VIEW:terminal)
+  6. Three-dot menu on each card: "Open Terminal", "Delete" options (same as current actions)
+  7. "Register Existing Project" card opens AddProjectModal
+  8. "Scaffold New Project" button opens AddProjectModal with scaffold mode
+  9. The ConfirmDialog for deletion must still work (restyle to match new dark theme)
+
+  BACKEND API (preserve all):
+  - apiGet('/api/v1/projects') — project list
+  - apiDelete('/api/v1/projects/:id') — project deletion
+  - GET /api/v1/sessions — to determine which projects have active sessions (for card status)
+  - dispatch SET_PROJECTS, REMOVE_PROJECT, SET_ACTIVE_PROJECT, SET_VIEW
+
+  STATUS MAPPING:
+  - Check sessions state from AppContext: if sessions[project.id] exists -> "Active"
+  - If no session -> "Idle"
+  - Future: check job status for "Failed" state (can be stubbed with idle for now)
+
+Acceptance Criteria:
+  - [ ] Card grid layout matching Stitch design (responsive columns, 180px height cards)
+  - [ ] Each card shows project name, path, status indicator (active/idle), and time
+  - [ ] Search bar filters projects by name or path
+  - [ ] Grid/list view toggle works
+  - [ ] "Register Existing Project" dashed card opens AddProjectModal
+  - [ ] "Scaffold New Project" button opens AddProjectModal
+  - [ ] Three-dot menu with "Open Terminal" and "Delete" actions
+  - [ ] Delete confirmation dialog still works (restyled to match dark theme)
+  - [ ] Header with search, title, notifications area
+  - [ ] All existing API integrations preserved (project CRUD, session check)
+  - [ ] `npm run build` passes with 0 errors
+Dependencies: TASK #23, TASK #24
+---
+
+TASK #26: Redesign — Live Terminal Hub View (replaces TerminalView)
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: opus
+Status: PENDING
+Context:
+  Replace the current TerminalView.jsx with the rich Terminal Hub from Stitch screen 1:
+  final_multi_agent_terminal_hub. This is the most complex redesign task because the terminal
+  (xterm.js) integration must be preserved exactly while the surrounding UI is completely rebuilt.
+
+  STITCH DESIGN — TERMINAL HUB (screen 1):
+
+  LAYOUT:
+  - Full-height main area with flex-col
+  - Top: PTY header bar (h-10, glass-effect with backdrop-filter blur)
+  - Middle: terminal body (flex-1, scrollable, font-mono)
+  - Bottom: status bar footer (h-9, bg-surface)
+
+  PTY HEADER BAR (glass-effect):
+  - Left side:
+    - Terminal icon (material-symbols "terminal") in primary color
+    - Session name in font-mono text-[11px] uppercase (e.g., "UI-REFACTOR-PRO")
+    - Divider (h-3 w-px bg-border-color)
+    - Folder icon + project path in font-mono text-[11px]
+  - Right side:
+    - Memory usage badge: "Memory" label + value in primary color (e.g., "1.2GB")
+    - Action buttons: copy output, split pane (future), kill process (red hover)
+    - Kill button: hover:bg-red-500/20, hover:text-red-400
+
+  TERMINAL BODY:
+  - Background: #000000 (terminal-bg)
+  - This is where xterm.js renders — the actual Terminal component goes here
+  - The Stitch mockup shows styled terminal output, but in reality this area is entirely
+    owned by xterm.js — we just need to place the Terminal component in this space
+  - Padding and max-width constraints should NOT apply to the xterm container
+    (xterm needs full width/height for proper rendering)
+
+  STATUS BAR FOOTER:
+  - Left: connection status (green dot + "Connected" in bold uppercase), divider,
+    daemon info ("Local Daemon (version)")
+  - Right: token usage indicator (toll icon + "Tokens used" + count + progress bar),
+    divider, latency indicator (timer icon + "Latency" + value)
+  - Note: Token and latency values are aspirational — can show placeholder/static values for now
+    since the backend doesn't provide these metrics yet
+
+  WHAT TO DO:
+  1. Rewrite client/src/views/TerminalView.jsx:
+     a. New PTY header bar with glass-effect styling
+     b. Terminal component placement (preserve the existing Terminal.jsx integration exactly)
+     c. New status bar footer
+     d. "No project selected" empty state should match new design (centered, muted text)
+  2. The Terminal.jsx component itself should NOT be modified — it already handles xterm.js correctly
+     (FitAddon, ResizeObserver, WebSocket lifecycle). Only its CONTAINER changes.
+  3. The "kill process" button in the header should dispatch a session kill (can call
+     apiDelete('/api/v1/sessions/:sessionId') — this endpoint exists)
+
+  CRITICAL XTERM.JS CONSTRAINTS (from DEC-009, research_b.md):
+  - Terminal.jsx creates ONE xterm.js Terminal instance per session — never reuse across sessions
+  - The xterm container div must be allowed to fill its parent completely (flex-1 overflow-hidden)
+  - Do NOT add padding or max-width to the xterm container — it breaks the fit addon
+  - The WebSocket connection in useSession.js must not be disrupted by the view redesign
+  - term.reset() is called on session switch — this behavior must be preserved
+
+  BACKEND API INTEGRATION (preserve all):
+  - useSession.js hook: WebSocket lifecycle, reconnect, ring buffer replay
+  - Terminal.jsx: xterm.js instance, FitAddon, ResizeObserver
+  - Session data from AppContext (sessions[activeProjectId])
+
+Acceptance Criteria:
+  - [ ] PTY header bar with glass-effect, session name, project path, memory badge, action buttons
+  - [ ] Terminal (xterm.js) renders correctly and fills the available space
+  - [ ] FitAddon and ResizeObserver still work (terminal resizes with window)
+  - [ ] WebSocket connection and ring buffer replay still work on reconnect
+  - [ ] Status bar footer with connection status, token placeholder, latency placeholder
+  - [ ] Kill process button in header works (calls session delete API)
+  - [ ] Empty state when no project is selected matches new design theme
+  - [ ] No xterm.js regressions (single instance per session, proper cleanup)
+  - [ ] `npm run build` passes with 0 errors
+Dependencies: TASK #23, TASK #24
+---
+
+TASK #27: Redesign — Orchestration Center / Job Runner View (replaces JobView)
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: opus
+Status: PENDING
+Context:
+  Replace the current JobView.jsx (simple header + JobPanel) with the rich Orchestration Center from
+  Stitch screen 2: final_orchestration_center. This is a three-column layout with a job queue, process
+  monitor, and rendered output.
+
+  STITCH DESIGN — ORCHESTRATION CENTER (screen 2):
+
+  LAYOUT: Three-pane horizontal split
+  1. Left pane: Active Background Jobs list (w-[340px], border-r)
+  2. Right pane: Process Monitor + Output (flex-1, split vertically)
+     - Top: Control bar (h-16, process info)
+     - Bottom: Output content area (flex-1, scrollable)
+
+  LEFT PANE — JOB QUEUE (w-[340px]):
+  - Header: "Active Background Jobs" title (text-[10px] uppercase tracking-[0.2em]) + refresh button
+  - Job cards (divide-y):
+    - Running job: bg-surface-raised/40, border-l-2 border-primary, highlighted
+      - PID badge + job name tag (uppercase, primary colored border)
+      - Duration timer (font-mono)
+      - Agent name with animated pulse dot
+      - Working directory path in mono
+      - CPU/RAM usage grid (2-col, bg-black/40)
+    - Idle/watching job: no left border highlight, muted colors
+    - Completed job: green check icon, muted text
+
+  RIGHT PANE — CONTROL BAR (h-16, bg-surface-dark):
+  - Left: Worker PID, Status (with animated dot), Process Load (CPU/RAM + progress bar)
+  - Right: "Attach Terminal" button (with ALT+A shortcut badge), "Kill Process" red button
+
+  RIGHT PANE — OUTPUT CONTENT (flex-1, bg-[#030303]):
+  - max-w-4xl mx-auto p-10 space-y-8
+  - Markdown header area: agent role badge, title, command with copy button
+  - Markdown content: prose-invert styling with proper code blocks
+  - Code blocks: rounded-xl border, file name header, syntax-highlighted content
+  - Active task status: spinner + "Worker #PID: Executing..." progress indicator
+  - Action buttons: "Return to Terminal", "Review Changes", "Continue Execution"
+
+  WHAT TO DO:
+  1. Rewrite client/src/views/JobView.jsx entirely with the three-pane layout
+  2. Create a new JobQueuePanel component (left pane) that:
+     a. Lists all jobs from the API (GET /api/v1/jobs/list)
+     b. Shows running/idle/completed states with appropriate styling
+     c. Clicking a job selects it and shows its output in the right pane
+  3. Create a new JobControlBar component (top of right pane) that:
+     a. Shows selected job's PID, status, resource usage (placeholder values for CPU/RAM)
+     b. "Kill Process" button calls DELETE /api/v1/jobs/:id
+  4. Modify the existing JobPanel.jsx component or create a new JobOutput component that:
+     a. Renders the SSE-streamed job output with proper markdown styling
+     b. The prompt input area should be redesigned to match the new theme
+     c. The markdown result area should use the new code block styling from Stitch
+  5. The "no project selected" empty state should match the new design theme
+
+  BACKEND API INTEGRATION (preserve all):
+  - useJob.js hook: startJob (POST + EventSource SSE), cancelJob (DELETE), reset
+  - GET /api/v1/jobs/list — for the job queue
+  - GET /api/v1/jobs/:id — for individual job status
+  - POST /api/v1/jobs — to start a new job
+  - DELETE /api/v1/jobs/:id — to cancel a job
+  - SSE stream at GET /api/v1/jobs/:id/stream
+
+  CURRENT JOBVIEW + JOBPANEL STATE:
+  - JobView.jsx: simple header showing "Job Mode / projectName" + JobPanel component
+  - JobPanel.jsx: 5 render states (idle/running/done/cancelled/error), StreamLog component,
+    MarkdownResult with react-markdown + remark-gfm, AdvancedOptions, Copy button
+  - useJob.js: startJob (POST + EventSource), cancelJob (DELETE), reset function
+
+Acceptance Criteria:
+  - [ ] Three-pane layout: job queue (340px) | control bar + output area
+  - [ ] Job queue lists all jobs with running/idle/completed visual states
+  - [ ] Selecting a job shows its output in the right pane
+  - [ ] Job creation (prompt submission) still works with SSE streaming
+  - [ ] Job cancellation still works
+  - [ ] Markdown rendering with code blocks matches Stitch design (dark theme, rounded borders)
+  - [ ] Control bar shows job status, PID, and kill button
+  - [ ] Empty state when no project selected matches new theme
+  - [ ] All existing API hooks (useJob.js) preserved and functional
+  - [ ] `npm run build` passes with 0 errors
+Dependencies: TASK #23, TASK #24
+---
+
+TASK #28: Redesign — Context & Rules Editor View (replaces EntitiesView CLAUDE.md tab)
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: HARD
+Suggested Model: opus
+Status: PENDING
+Context:
+  Create a new Context Editor view matching Stitch screen 4: final_context_rules_editor. This replaces
+  the ClaudeMdEditor tab from the old EntitiesView. The new design is a sophisticated split-pane editor
+  with a visual rule builder on the left and a raw CLAUDE.md preview on the right.
+
+  STITCH DESIGN — CONTEXT & RULES EDITOR (screen 4):
+
+  LAYOUT: Two-column split (50/50)
+  - Left: Rule Explorer (visual block editor)
+  - Right: CLAUDE.md Output (raw markdown preview)
+  - Top header with scope tabs and actions
+
+  TOP HEADER (h-14, glass-header):
+  - Left: magic wand icon (auto_fix_high) + "CLAUDE.md Rules" title
+  - Tab switcher: "Project Rules" | "User Global" buttons in a pill container
+    (bg-[#0f0f0f] p-1 rounded-lg border). Active tab has bg-[#1a1a1a] text-white
+  - Right: "Live Sync" indicator (animated dot + text), divider, "Discard" + "Push Changes" buttons
+
+  WARNING BANNER (conditional):
+  - bg-[#221100] border-b border-[#442200]
+  - Warning icon + "Context budget warning: CLAUDE.md is approaching 100 lines..."
+  - Line count display: "82 / 100 Lines"
+  - Show when CLAUDE.md content exceeds 80 lines (the 300-line warning from old ClaudeMdEditor
+    should be replaced with this graduated warning)
+
+  LEFT PANE — RULE EXPLORER (w-1/2):
+  - Section header: "Rule Explorer" label + "N ACTIVE BLOCKS" count + sort button
+  - Rule blocks (space-y-4):
+    - Each rule: bg-[#0f0f0f] border border-[#1a1a1a] rounded-lg p-4
+    - Header: drag handle (drag_indicator icon) + editable rule name input + scope dropdown
+      (GLOBAL/Components/Hooks/tests) + close (delete) button
+    - Body: textarea for rule content, font-mono, bg-[#050505] border
+    - Hover: border-[#333333]
+  - "Add Context Rule" button at bottom: dashed border, add_circle icon, hover:border-primary
+
+  RIGHT PANE — CLAUDE.md OUTPUT (w-1/2):
+  - Section header: "CLAUDE.md Output" label + copy button + expand button
+  - Rendered markdown preview with syntax coloring:
+    - Headings in primary (#933df5)
+    - Code in blue (#3291FF)
+    - Comments in gray italic
+  - Footer: UTF-8, MARKDOWN, COL/LINE indicators
+
+  WHAT TO DO:
+  1. Create client/src/views/ContextEditorView.jsx as a new file
+  2. This view reads/writes CLAUDE.md via the existing API:
+     - GET /api/v1/claudemd?scope=project&projectId=X — read project CLAUDE.md
+     - GET /api/v1/claudemd?scope=user — read user global CLAUDE.md
+     - PUT /api/v1/claudemd — write CLAUDE.md content
+  3. Implement the rule block parser:
+     - Parse CLAUDE.md sections (## headers) into individual rule blocks
+     - Each block becomes an editable card with name (from heading) and content (body text)
+     - Scope detection: if a heading starts with a path-like pattern, mark it as path-specific
+  4. Implement the live preview:
+     - As rule blocks are edited, regenerate the CLAUDE.md content in real-time
+     - Show in the right pane with syntax-colored markdown preview
+  5. Implement the scope tabs:
+     - "Project Rules" — loads/saves CLAUDE.md for the active project
+     - "User Global" — loads/saves the user-level global CLAUDE.md
+  6. Line count warning banner when content exceeds 80 lines
+  7. "Push Changes" button saves via PUT /api/v1/claudemd
+  8. "Discard" button reverts to last saved state
+
+  CURRENT CLAUDEMDEDITOR STATE:
+  - Dual-panel: left textarea for editing, right preview
+  - Scope selector (project/user)
+  - Live line count with 300-line warning
+  - Save/Load via PUT/GET /api/v1/claudemd
+
+Acceptance Criteria:
+  - [ ] Split-pane layout: Rule Explorer (left) + CLAUDE.md Output (right)
+  - [ ] Rule blocks are parsed from CLAUDE.md sections and rendered as editable cards
+  - [ ] Each rule card has editable name, scope dropdown, content textarea, delete button
+  - [ ] "Add Context Rule" button adds a new empty rule block
+  - [ ] Right pane shows live preview of generated CLAUDE.md with syntax coloring
+  - [ ] Scope tabs switch between project and user-global CLAUDE.md
+  - [ ] Line count warning banner appears when content exceeds 80 lines
+  - [ ] "Push Changes" saves via API, "Discard" reverts
+  - [ ] View mapped to 'context' in the App router
+  - [ ] `npm run build` passes with 0 errors
+Dependencies: TASK #23, TASK #24
+---
+
+TASK #29: Redesign — Deployment Manager View (replaces EntitiesView Agents/Skills tabs)
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: HARD
+Suggested Model: opus
+Status: PENDING
+Context:
+  Create a new Deployment Manager view matching Stitch screen 5: final_deployment_manager. This replaces
+  the AgentEditor and SkillEditor tabs from the old EntitiesView with a much richer master-detail layout.
+
+  STITCH DESIGN — DEPLOYMENT MANAGER (screen 5):
+
+  LAYOUT:
+  - Top: tab bar with "Profiles" | "Active Processes" | "Environment" tabs + "Register Agent" button
+  - Below: master-detail split
+    - Left: profile/agent list (w-[340px])
+    - Right: detail configuration form (flex-1)
+
+  TOP TAB BAR (h-[52px]):
+  - Tab buttons along bottom of bar with border-b-[2px] indicator
+  - Active tab: border-primary, text-text-main, font-semibold
+  - Inactive: border-transparent, text-text-muted
+  - Right side: "Register Agent" button (bg-surface border border-border, small)
+
+  LEFT MASTER LIST (w-[340px]):
+  - Search input at top: filter profiles, bg-surface, font-mono
+  - Agent cards (space-y-1):
+    - Active agent: bg-surface, border border-border, left green bar (w-1 bg-success)
+      - Icon (smart_toy) + name + "Running" badge (green, text-[9px])
+      - PID and port info in text-xs text-text-muted
+      - "Open Console" button overlay on hover
+    - Idle agent: no bg, hover:bg-surface-hover, hover:border-border
+      - Icon + name + "Idle" badge (gray)
+      - "Launch session" overlay on hover
+
+  RIGHT DETAIL PANE (flex-1):
+  - Detail header (h-16): agent icon in primary/10 circle + agent name heading +
+    instance info. Buttons: "Launch Session" (primary) + delete button
+  - Scrollable form sections:
+    1. PROFILE CONFIGURATION: Profile Identifier input + Binary Version input (2-col grid)
+    2. RUNTIME PARAMETERS: Local Working Directory input + folder browse button,
+       Resource Priority dropdown, Max Token Concurrency number input
+    3. MODEL INTELLIGENCE: Base Model dropdown (claude-3-opus/sonnet/haiku),
+       Sampling Temperature slider, Core Directives textarea
+    4. MODULE HOOKS: Tag-like list of linked modules with close buttons, "Add Linkage" button
+  - Sticky action bar at bottom: "Revert" ghost button + "Commit Changes" primary button
+
+  WHAT TO DO:
+  1. Create client/src/views/DeploymentManagerView.jsx as a new file
+  2. Implement the master-detail layout with the three tabs
+  3. "Profiles" tab (default): master list of agents with detail form
+     - Left: agent list from GET /api/v1/agents?projectId=X
+     - Right: selected agent detail form matching the Stitch design sections
+     - The form fields map to agent YAML frontmatter:
+       - name -> Profile Identifier
+       - description -> part of Core Directives
+       - allowedTools -> Module Hooks
+       - model -> Base Model dropdown
+     - Save: PUT /api/v1/agents/:name (with projectId)
+     - Delete: DELETE /api/v1/agents/:name
+     - Create: POST /api/v1/agents (from "Register Agent" button)
+  4. "Active Processes" tab: show running sessions/jobs (future enhancement, can be a stub
+     that shows a list of active PTY sessions from AppContext.sessions)
+  5. "Environment" tab: show skills list from GET /api/v1/skills
+     - Reuse similar master-detail pattern
+     - Skills have: name, description, steps
+  6. The "Launch Session" button should create a PTY session for the selected agent's project
+
+  CURRENT AGENT/SKILL EDITOR STATE:
+  - AgentEditor.jsx: list + form, CRUD via /api/v1/agents, YAML frontmatter editing
+  - SkillEditor.jsx: list + form, CRUD via /api/v1/skills, YAML frontmatter editing
+  - Both use plain form inputs, no master-detail layout
+
+  BACKEND API (preserve all):
+  - GET /api/v1/agents?projectId=X — list agents
+  - GET /api/v1/agents/:name?projectId=X — get single agent
+  - POST /api/v1/agents — create agent
+  - PUT /api/v1/agents/:name — update agent
+  - DELETE /api/v1/agents/:name — delete agent
+  - GET /api/v1/skills?projectId=X — list skills
+  - POST/PUT/DELETE for skills similarly
+
+Acceptance Criteria:
+  - [ ] Master-detail layout: agent list (340px) + detail form (flex-1)
+  - [ ] Three tabs: Profiles, Active Processes, Environment
+  - [ ] Agent list shows running/idle states with appropriate styling
+  - [ ] Detail form has all 4 sections from Stitch: Profile, Runtime, Model, Hooks
+  - [ ] Agent CRUD works: create, read, update, delete via existing API
+  - [ ] Search/filter agents in the master list
+  - [ ] "Register Agent" button opens creation flow
+  - [ ] Sticky action bar with Revert and Commit Changes buttons
+  - [ ] Skills accessible via "Environment" tab
+  - [ ] View mapped to 'deployments' in the App router
+  - [ ] `npm run build` passes with 0 errors
+Dependencies: TASK #23, TASK #24
+---
+
+TASK #30: Redesign — App Shell, Routing, and View Integration
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: sonnet
+Status: PENDING
+Context:
+  Update the App.jsx shell to integrate all the new views and remove the old ones. This is the
+  final wiring task that makes everything work together.
+
+  WHAT TO DO:
+  1. Update client/src/App.jsx:
+     a. Import the new view components:
+        - ProjectsView (redesigned in Task #25) for 'projects' view
+        - TerminalView (redesigned in Task #26) for 'terminal' view
+        - JobView (redesigned in Task #27) for 'jobs' view
+        - ContextEditorView (new in Task #28) for 'context' view
+        - DeploymentManagerView (new in Task #29) for 'deployments' view
+     b. Update the MainContent switch statement to route all 5 views
+     c. Remove the old EntitiesView import (it's been split into context + deployments)
+     d. Update AppLayout styling:
+        - Remove inline style={{ backgroundColor: '#111111' }}
+        - Use className="flex h-screen w-screen overflow-hidden bg-background-dark text-text-main"
+        - The html element should have class="dark" (add to index.html)
+     e. The default view should be 'projects' (the dashboard)
+
+  2. Update client/index.html:
+     a. Add class="dark" to the <html> element
+     b. Ensure all font links from Task #23 are present
+
+  3. Clean up old files that are no longer used:
+     a. client/src/views/EntitiesView.jsx — KEEP the file but mark as deprecated
+        (it may be referenced by imports that haven't been updated)
+     b. The old component files (AgentEditor.jsx, SkillEditor.jsx, ClaudeMdEditor.jsx)
+        should be KEPT until the new views are confirmed working, then can be removed
+
+  4. Verify the full flow:
+     a. App loads -> shows Project Dashboard (default view)
+     b. Click sidebar nav -> switches to correct view
+     c. Click project card -> navigates to Terminal view with session
+     d. All 5 views render without errors
+     e. API calls in all views work correctly
+
+  CURRENT APP.JSX STATE:
+  - 4 views: terminal, jobs, entities, projects
+  - Default view: terminal
+  - Inline styles with bg #111111
+  - Imports: Sidebar, TerminalView, JobView, EntitiesView, ProjectsView
+
+Acceptance Criteria:
+  - [ ] App.jsx routes to all 5 new views: projects, terminal, jobs, context, deployments
+  - [ ] Default view is 'projects' (dashboard)
+  - [ ] EntitiesView import removed, replaced by ContextEditorView and DeploymentManagerView
+  - [ ] AppLayout uses Tailwind classes instead of inline styles
+  - [ ] html element has class="dark" for Tailwind dark mode
+  - [ ] Full navigation flow works: sidebar nav switches views, project cards navigate to terminal
+  - [ ] No console errors on any view
+  - [ ] `npm run build` passes with 0 errors
+Dependencies: TASK #25, TASK #26, TASK #27, TASK #28, TASK #29
+---
+
+TASK #31: Redesign — Visual QA + Functional Regression Testing
+Agent: qa-tester
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: opus
+Status: PENDING
+Context:
+  After all Phase 9 redesign tasks are complete, run a comprehensive QA pass to verify:
+  1. Visual fidelity: each of the 5 views matches its corresponding Stitch screen design
+  2. Functional regression: all existing features still work (project CRUD, terminal PTY,
+     job execution, entity management, CLAUDE.md editing)
+  3. No broken API calls or console errors
+
+  STITCH REFERENCE SCREENSHOTS (for visual comparison):
+  - Screen 1: C:\Users\arman\Downloads\Test workflows\stitch\stitch\final_multi_agent_terminal_hub\screen.png
+  - Screen 2: C:\Users\arman\Downloads\Test workflows\stitch\stitch\final_orchestration_center\screen.png
+  - Screen 3: C:\Users\arman\Downloads\Test workflows\stitch\stitch\final_project_dashboard\screen.png
+  - Screen 4: C:\Users\arman\Downloads\Test workflows\stitch\stitch\final_context_rules_editor\screen.png
+  - Screen 5: C:\Users\arman\Downloads\Test workflows\stitch\stitch\final_deployment_manager\screen.png
+
+  TEST PLAN:
+  1. Visual comparison: navigate to each view and compare against its Stitch screenshot
+     - Check colors, spacing, typography, icon usage, layout proportions
+     - Check hover states and active states
+     - Check responsive behavior (sidebar collapse, card grid reflow)
+  2. Project Dashboard: register a project, verify card appears, delete it, verify it disappears
+  3. Terminal: select a project, verify PTY session starts, type commands, verify output
+  4. Job Runner: submit a prompt, verify SSE streaming, verify markdown result rendering
+  5. Context Editor: load CLAUDE.md, edit a rule, save, reload, verify persistence
+  6. Deployment Manager: list agents, create one, edit it, delete it, verify CRUD
+  7. Navigation: click through all 5 sidebar nav items, verify correct view loads
+  8. Run existing test suite: `npm test` — all 110 tests should still pass
+
+Acceptance Criteria:
+  - [ ] All 5 views visually match their Stitch screen designs (colors, layout, typography)
+  - [ ] Project CRUD works end-to-end (register, view, delete)
+  - [ ] PTY terminal works (session creation, command input, output display, reconnect)
+  - [ ] Job mode works (submit prompt, SSE stream, markdown result, cancel)
+  - [ ] CLAUDE.md editor works (load, edit, save for both project and user scope)
+  - [ ] Agent/skill CRUD works (list, create, update, delete)
+  - [ ] Sidebar navigation switches between all 5 views correctly
+  - [ ] No console errors on any view
+  - [ ] `npm test` passes with 110+ tests (0 failures)
+  - [ ] `npm run build` passes with 0 errors
+Dependencies: TASK #30
+---
+
 ## Execution Order
 
 ### Parallel at start:
@@ -2022,6 +2781,29 @@ Dependencies: none
 - TASK #20 (Backend — fix rate limiter _rateLimitMap memory leak)
 - TASK #21 (DevOps — upgrade vite to patch esbuild CVE)
 
+### Phase 9 — Frontend Redesign (Stitch Design Implementation):
+
+**Wave 1 — Foundation (no dependencies, start immediately):**
+- TASK #23 (Frontend — Design system: Tailwind config, fonts, CSS, constants)
+
+**Wave 2 — Sidebar + Views (all depend on #23, run in parallel):**
+- TASK #24 (Frontend — New Sidebar navigation)
+- TASK #25 (Frontend — Project Dashboard view) [also depends on #24]
+- TASK #26 (Frontend — Live Terminal Hub view) [also depends on #24]
+- TASK #27 (Frontend — Orchestration Center / Job Runner view) [also depends on #24]
+- TASK #28 (Frontend — Context & Rules Editor view) [also depends on #24]
+- TASK #29 (Frontend — Deployment Manager view) [also depends on #24]
+
+Note: Tasks #25-#29 can run in parallel AFTER #24 completes, since they all need the
+new sidebar/nav infrastructure. If a single frontend-dev agent is used, the recommended
+serial order is: #24 -> #25 -> #26 -> #27 -> #28 -> #29
+
+**Wave 3 — Integration (depends on ALL Wave 2 tasks):**
+- TASK #30 (Frontend — App shell, routing, view integration)
+
+**Wave 4 — QA (depends on #30):**
+- TASK #31 (QA — Visual QA + functional regression testing)
+
 ---
 
 ## Task Status Summary
@@ -2049,7 +2831,17 @@ Dependencies: none
 | 19 | v1.1 — Fix JobRunner memory leak (evict completed jobs) | backend-dev | MEDIUM | EASY | COMPLETED |
 | 20 | v1.1 — Fix rate limiter memory leak (TTL on _rateLimitMap) | backend-dev | MEDIUM | EASY | COMPLETED |
 | 21 | v1.1 — Upgrade vite to patch esbuild CVE (MEDIUM-04) | devops | MEDIUM | EASY | COMPLETED |
+| 22 | v1.2 — Add GET /api/v1/jobs/:id route (BUG-22) | backend-dev | HIGH | EASY | COMPLETED |
+| 23 | Redesign — Design System Foundation (Tailwind, fonts, CSS) | frontend-dev | HIGH | MEDIUM | PENDING |
+| 24 | Redesign — New Sidebar Navigation Component | frontend-dev | HIGH | MEDIUM | PENDING |
+| 25 | Redesign — Project Dashboard View | frontend-dev | HIGH | MEDIUM | PENDING |
+| 26 | Redesign — Live Terminal Hub View | frontend-dev | HIGH | HARD | PENDING |
+| 27 | Redesign — Orchestration Center / Job Runner View | frontend-dev | HIGH | HARD | PENDING |
+| 28 | Redesign — Context & Rules Editor View | frontend-dev | MEDIUM | HARD | PENDING |
+| 29 | Redesign — Deployment Manager View | frontend-dev | MEDIUM | HARD | PENDING |
+| 30 | Redesign — App Shell, Routing, View Integration | frontend-dev | HIGH | MEDIUM | PENDING |
+| 31 | Redesign — Visual QA + Functional Regression Testing | qa-tester | HIGH | MEDIUM | PENDING |
 
 ---
 
-_Last updated: 2026-03-18 by project-manager — 18 tasks COMPLETED (v1 RELEASE READY). 3 tasks PENDING (v1.1 backlog: Tasks #19, #20, #21)._
+_Last updated: 2026-03-25 by project-manager — 22 tasks COMPLETED (v1.2). 9 tasks PENDING (Phase 9: Frontend Redesign, Tasks #23-#31)._

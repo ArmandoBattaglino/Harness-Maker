@@ -1,60 +1,66 @@
 # Current Context
-**Session date:** 2026-03-24
-**Focus:** v1.1 COMPLETE — All 21 tasks done. Ready for v1.1 tag.
+**Session date:** 2026-03-25
+**Focus:** Phase 9 — Complete Frontend Redesign from Stitch Design Exports
 
 _Project initialized via /create pipeline on 2026-03-18_
 
 ## Active Threads
-- Tasks #1–#18 are ALL COMPLETED as of 2026-03-18. v1 is RELEASE READY.
-- Post-v1 Debug & Security Audit completed (2026-03-18): 7 bugs fixed (BUG-02, 03, 04, 05, 11, 14, 16/19), 12 deferred to v1.1.
-- Security re-audit PASS: all 10 SEC requirements satisfied, 0 CRITICAL/HIGH/MEDIUM findings remaining in production code.
-- All 3 Phase 7 v1.1 tasks COMPLETED as of 2026-03-24: TASK #19 (JobRunner leak), TASK #20 (rate limiter leak), TASK #21 (vite CVE upgrade).
-- v1.1 QA regression pass COMPLETED: 110/110 tests pass, npm audit 0 vulnerabilities.
-- Ready for v1.1 git tag.
+- Tasks #1–#22 are ALL COMPLETED as of 2026-03-24. v1.2 is RELEASE READY.
+- Phase 9 (Frontend Redesign) has been planned: 9 new tasks (#23-#31) added to TASK_PLAN.md.
+- Stitch design exports are located at: C:\Users\arman\Downloads\Test workflows\stitch\stitch\
+  - 5 screens: Terminal Hub, Orchestration Center, Project Dashboard, Context Editor, Deployment Manager
+  - Each screen has code.html (full Tailwind markup) and screen.png (visual reference)
+- The redesign completely replaces the frontend UI while keeping ALL backend API integration intact.
 
 ## Open Questions
-- None blocking. v1 is shippable as-is. Phase 7 tasks are improvements, not blockers.
+- None blocking. All design references are in the Stitch exports. Backend is stable.
 
-## Critical Constraints (current phase)
-**All v1 implementation constraints (DEC-001 through DEC-010) are applied in the codebase.**
-**Phase 7 agents should make targeted, minimal changes — do not refactor unrelated code.**
+## Critical Constraints (Phase 9)
+**All v1 backend constraints (DEC-001 through DEC-010) remain in effect — DO NOT modify server code.**
+**Phase 9 is FRONTEND-ONLY. No server/, no routes/, no services/ changes.**
 
-Key facts for Phase 7 agents:
-- TASK #19 target: server/services/JobRunner.js — jobs Map eviction. Use setTimeout with .unref() pattern.
-  Retention window should be at least 5 minutes. Do not delete jobs while their SSE stream is still active.
-- TASK #20 target: server/index.js — _rateLimitMap cleanup. Use setInterval with .unref() sweeping stale entries.
-  Do not change the observable rate-limiting behavior for legitimate requests.
-- TASK #21 target: client/package.json — vite version bump. Run `npm run build` and `npm audit` in client/ to verify.
-  Do not upgrade React, xterm.js, or react-markdown as part of this task.
-- After all 3 Phase 7 tasks complete: run qa-tester regression pass, then tag v1.1.
+Key rules for Phase 9 frontend-dev agents:
+
+### Design System
+- Primary color: #933df5 (purple) — replaces the old #4ade80 (green) accent
+- Background: #000000 (pure black) — replaces old #111111
+- Fonts: Inter (primary), Geist (terminal hub), JetBrains Mono (code/terminal)
+- Icons: Material Symbols Outlined (Google Fonts) — NOT Material Icons, NOT custom SVGs
+- All 5 screens share a consistent design language; extract commonalities into tailwind.config.js
+
+### Terminal (xterm.js) — DO NOT BREAK
+- Terminal.jsx (client/src/components/Terminal.jsx) must NOT be modified
+- useSession.js (client/src/hooks/useSession.js) must NOT be modified
+- The xterm container must be flex-1 overflow-hidden with NO padding/max-width
+- FitAddon, ResizeObserver, and WebSocket reconnect must continue to work
+- One xterm.js Terminal instance per session — never reuse (DEC-009)
+
+### API Integration — PRESERVE ALL
+- useApi.js (client/src/hooks/useApi.js) must NOT be modified
+- useJob.js (client/src/hooks/useJob.js) must NOT be modified
+- All API endpoints remain the same: /api/v1/projects, /api/v1/sessions, /api/v1/jobs, /api/v1/agents, /api/v1/skills, /api/v1/claudemd
+- CSRF header X-Requested-With: ClaudeCodeManager is already handled by useApi.js
+- AppContext.jsx state management pattern is preserved but new view types added
+
+### Navigation Changes
+- OLD: 4 views (terminal, jobs, entities, projects)
+- NEW: 5 views (projects, terminal, jobs, context, deployments)
+- 'entities' view is REMOVED — split into 'context' (CLAUDE.md editor) and 'deployments' (agents/skills)
+- Default landing view changes from 'terminal' to 'projects' (dashboard)
 
 ## Notes for Specific Agents
 
-### For architect:
-- Architecture document is COMPLETE: docs/ARCHITECTURE.md (produced 2026-03-18).
-- All 10 sections are written. No further design work is needed before Phase 0 implementation begins.
-- Fallback PTY strategy (if node-pty-prebuilt-multiarch binary is missing): not documented yet — only escalate if R-01 is confirmed during Phase 0 validation.
+### For frontend-dev (Phase 9 primary agent):
+- Start with TASK #23 (design system foundation) — all other tasks depend on it
+- Read ALL 5 Stitch code.html files for markup reference and screen.png for visual reference
+- The Stitch HTML uses CDN Tailwind — convert to proper Tailwind classes in the React components
+- Material Symbols icons: use <span className="material-symbols-outlined">icon_name</span>
+- For filled icons: add style={{ fontVariationSettings: "'FILL' 1" }}
+- Terminal.jsx and useSession.js are OFF LIMITS — only change the container/wrapper components
+- useApi.js and useJob.js are OFF LIMITS — only change the UI components that consume them
 
-### For backend-dev:
-- Read docs/research_b.md (PTY persistence + Windows reconnect) and docs/research_d.md (multi-session PTY Node.js) before starting Phase 0/1 work.
-- Read docs/research_a.md (Claude CLI headless invocation) before starting Phase 3 (Job Mode).
-- The permanent pty.onData handler pattern (DEC-009) is non-negotiable — see research_b.md for the ConPTY deadlock explanation.
-- child.stdin.end() immediately after job spawn is non-negotiable (DEC-005, GitHub #7497).
-
-### For frontend-dev:
-- Read docs/research_c.md (Claude Code file formats) before building entity editors (Phase 2).
-- One xterm.js Terminal instance per session — never share instances across project tabs.
-- ResizeObserver on container div → fitAddon.fit() → WebSocket resize message, debounced 100ms.
-
-### For qa-tester:
-- 6 QA critical paths are defined in docs/research_complete.md — these are the Phase 4 acceptance gates.
-- Priority test: browser tab close → reopen → verify ring buffer replay (QA critical path 1).
-- Priority test: job mode completes without hanging (QA critical path 3, validates DEC-005).
-
-### For security:
-- All 10 SEC requirements (SEC-01 through SEC-10) are mandatory for v1 release. See PRD Section 8.
-- Key items: 127.0.0.1 binding (SEC-01), no shell:true (SEC-02), path traversal prevention (SEC-03, SEC-04), CSRF header (SEC-06, DEC-008), helmet CSP (SEC-07).
-
-### For devops:
-- npm start must: build the client (Vite), start the server, auto-open browser at http://127.0.0.1:3000.
-- npm audit --audit-level=high is a mandatory pre-release CI step (SEC-10).
+### For qa-tester (TASK #31):
+- Compare each view against its Stitch screen.png screenshot
+- Run full functional regression: project CRUD, PTY terminal, job execution, entity CRUD, CLAUDE.md editing
+- All 110 existing tests must still pass (npm test)
+- Check for console errors on every view transition
