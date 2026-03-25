@@ -5,7 +5,7 @@ const initialState = {
   projects: [],
   sessions: {}, // { [projectId]: { sessionId, status, pid } }
   activeProjectId: null,
-  view: 'terminal', // 'terminal' | 'jobs' | 'entities' | 'projects'
+  view: 'projects', // 'projects' | 'terminal' | 'jobs' | 'deployments' | 'context'
 };
 
 // --- Reducer ---

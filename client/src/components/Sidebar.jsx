@@ -1,14 +1,8 @@
 import { useEffect, useState } from 'react';
 import { apiGet, apiPost } from '../hooks/useApi.js';
 import { useAppState, useAppDispatch } from '../store/AppContext.jsx';
+import { NAV_ITEMS } from '../lib/constants.js';
 import AddProjectModal from './AddProjectModal.jsx';
-
-const NAV_ITEMS = [
-  { view: 'terminal', label: 'Terminal', icon: '>' },
-  { view: 'jobs', label: 'Jobs', icon: '#' },
-  { view: 'entities', label: 'Entities', icon: '@' },
-  { view: 'projects', label: 'Projects', icon: '=' },
-];
 
 export default function Sidebar() {
   const state = useAppState();
@@ -35,7 +29,6 @@ export default function Sidebar() {
           payload: { projectId: project.id, session: data.session },
         });
       } catch (err) {
-        // Session creation failure is non-fatal — Terminal will show empty state
         console.error('Failed to create session:', err.message);
       }
     }
@@ -45,119 +38,176 @@ export default function Sidebar() {
     dispatch({ type: 'SET_VIEW', payload: view });
   }
 
+  // Collect active sessions as array for display
+  const activeSessions = Object.entries(state.sessions).map(([projectId, session]) => {
+    const project = state.projects.find((p) => p.id === projectId);
+    return { projectId, session, projectName: project?.name ?? 'Unknown' };
+  });
+
   return (
     <>
-      <aside
-        className="flex flex-col h-full border-r border-gray-800"
-        style={{ width: '256px', minWidth: '256px', backgroundColor: '#1a1a1a' }}
-      >
-        {/* App title */}
-        <div
-          className="px-4 py-4 border-b border-gray-800"
-          style={{ flexShrink: 0 }}
-        >
-          <span
-            className="text-xs font-bold tracking-wide"
-            style={{ color: '#4ade80', lineHeight: 1.4 }}
-          >
-            Claude Code
-            <br />
-            <span style={{ color: '#9ca3af' }}>Visual Manager</span>
-          </span>
-        </div>
+      <aside className="flex flex-col h-full w-[250px] min-w-[250px] shrink-0 bg-surface border-r border-border-color z-20">
+        {/* Header */}
+        <SidebarHeader />
 
         {/* Navigation */}
-        <nav className="px-2 py-3 border-b border-gray-800" style={{ flexShrink: 0 }}>
-          {NAV_ITEMS.map((item) => {
-            const isActive = state.view === item.view;
-            return (
-              <button
-                key={item.view}
-                onClick={() => handleNavClick(item.view)}
-                className="flex items-center gap-2 w-full px-3 py-2 rounded text-xs transition-colors text-left"
-                style={{
-                  color: isActive ? '#4ade80' : '#9ca3af',
-                  backgroundColor: isActive ? 'rgba(74,222,128,0.08)' : 'transparent',
-                }}
-              >
-                <span style={{ fontFamily: 'monospace', width: '12px' }}>{item.icon}</span>
-                {item.label}
-              </button>
-            );
-          })}
+        <nav className="px-2 py-3 flex flex-col gap-0.5">
+          {NAV_ITEMS.map((item) => (
+            <NavItem
+              key={item.view}
+              item={item}
+              isActive={state.view === item.view}
+              onClick={() => handleNavClick(item.view)}
+            />
+          ))}
         </nav>
 
-        {/* Projects list */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div
-            className="flex items-center justify-between px-4 py-2"
-            style={{ flexShrink: 0 }}
-          >
-            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-              Projects
+        {/* Active PTY Sessions */}
+        <div className="flex-1 flex flex-col overflow-hidden border-t border-border-color">
+          <div className="px-4 py-3 flex items-center justify-between shrink-0">
+            <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">
+              Active PTY Sessions
             </span>
-            <button
-              onClick={() => setShowModal(true)}
-              className="flex items-center justify-center w-5 h-5 rounded text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
-              title="Add project"
-              aria-label="Add project"
-              style={{ fontSize: '14px', lineHeight: 1 }}
-            >
-              +
-            </button>
+            <span className="text-[10px] text-text-muted font-mono">
+              {activeSessions.length} Total
+            </span>
           </div>
 
           {loadError && (
-            <p className="px-4 pb-2 text-xs text-red-400">{loadError}</p>
+            <p className="px-4 pb-2 text-xs text-error">{loadError}</p>
           )}
 
-          <ul className="flex-1 overflow-y-auto px-2 pb-2">
-            {state.projects.length === 0 && !loadError && (
-              <li className="px-3 py-3 text-xs text-gray-600 italic">
-                No projects yet. Click + to add one.
+          <ul className="flex-1 overflow-y-auto custom-scrollbar px-2 pb-2 flex flex-col gap-1">
+            {activeSessions.length === 0 && !loadError && (
+              <li className="px-3 py-3 text-[11px] text-text-muted italic">
+                No active sessions.
               </li>
             )}
-            {state.projects.map((project) => {
-              const session = state.sessions[project.id];
-              const hasSession = Boolean(session);
-              const isActive = state.activeProjectId === project.id;
-
-              return (
-                <li key={project.id}>
-                  <button
-                    onClick={() => handleProjectClick(project)}
-                    className="flex items-center gap-2 w-full px-3 py-2 rounded text-left transition-colors"
-                    style={{
-                      backgroundColor: isActive
-                        ? 'rgba(74,222,128,0.10)'
-                        : 'transparent',
-                      color: isActive ? '#f9fafb' : '#d1d5db',
-                    }}
-                  >
-                    {/* Session status dot */}
-                    <span
-                      className="flex-shrink-0 rounded-full"
-                      style={{
-                        width: '7px',
-                        height: '7px',
-                        backgroundColor: hasSession ? '#4ade80' : '#4b5563',
-                      }}
-                    />
-                    <span
-                      className="flex-1 truncate text-xs"
-                      title={project.path}
-                    >
-                      {project.name}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
+            {activeSessions.map(({ projectId, session, projectName }) => (
+              <SessionItem
+                key={projectId}
+                projectId={projectId}
+                session={session}
+                projectName={projectName}
+                isActive={state.activeProjectId === projectId}
+                onClick={() => {
+                  const project = state.projects.find((p) => p.id === projectId);
+                  if (project) handleProjectClick(project);
+                }}
+              />
+            ))}
           </ul>
+
+          {/* New Local Session button */}
+          <div className="px-3 pb-3 shrink-0">
+            <button
+              onClick={() => setShowModal(true)}
+              className="w-full py-1.5 border border-dashed border-border-default hover:border-text-muted/50 hover:bg-white/[0.02] rounded text-[11px] text-text-muted flex items-center justify-center gap-2 transition-colors"
+            >
+              <span className="material-symbols-outlined text-[14px]">add</span>
+              <span>New Local Session</span>
+            </button>
+          </div>
         </div>
+
+        {/* Footer */}
+        <SidebarFooter />
       </aside>
 
       {showModal && <AddProjectModal onClose={() => setShowModal(false)} />}
     </>
+  );
+}
+
+/* ── Sub-components ──────────────────────────────────── */
+
+function SidebarHeader() {
+  return (
+    <div className="p-4 border-b border-border-color flex items-center gap-2.5 shrink-0">
+      <div className="size-7 rounded bg-gradient-to-br from-primary to-purple-800 flex items-center justify-center text-white shrink-0">
+        <span className="material-symbols-outlined text-[16px]">terminal</span>
+      </div>
+      <div className="flex flex-col">
+        <h1 className="font-bold text-sm text-text-main tracking-tight leading-none">Claude Code</h1>
+        <p className="text-[10px] text-text-muted font-medium uppercase tracking-widest leading-none mt-0.5">
+          Visual Manager
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function NavItem({ item, isActive, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className={
+        'flex items-center gap-3 w-full px-3 py-2 rounded text-sm font-medium text-left transition-colors' +
+        (isActive
+          ? ' bg-surface-hover border border-border-color text-text-main'
+          : ' border border-transparent text-text-muted hover:bg-surface-hover hover:text-text-main')
+      }
+    >
+      <span
+        className={
+          'material-symbols-outlined text-[20px]' +
+          (isActive ? ' text-primary' : '')
+        }
+        style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
+      >
+        {item.icon}
+      </span>
+      <span>{item.label}</span>
+    </button>
+  );
+}
+
+function SessionItem({ projectId, session, projectName, isActive, onClick }) {
+  return (
+    <li>
+      <button
+        onClick={onClick}
+        className={
+          'w-full px-3 py-2.5 rounded text-left transition-colors border' +
+          (isActive
+            ? ' bg-white/[0.03] border-white/[0.05]'
+            : ' border-transparent hover:bg-white/[0.02]')
+        }
+      >
+        <div className="flex items-center justify-between mb-0.5">
+          <div className="flex items-center gap-2 overflow-hidden">
+            <div className="w-1.5 h-1.5 rounded-full bg-success shrink-0" />
+            <span className={
+              'truncate text-[13px]' +
+              (isActive ? ' font-semibold text-text-main' : ' font-medium text-text-muted')
+            }>
+              {projectName}
+            </span>
+          </div>
+          {session?.pid && (
+            <span className="text-[9px] font-mono text-text-muted bg-black/40 px-1 rounded border border-white/5 shrink-0 ml-2">
+              PID {session.pid}
+            </span>
+          )}
+        </div>
+      </button>
+    </li>
+  );
+}
+
+function SidebarFooter() {
+  return (
+    <div className="p-3 border-t border-border-color flex items-center justify-between shrink-0">
+      <div className="flex items-center gap-2 text-text-muted">
+        <div className="w-2 h-2 rounded-full bg-success" />
+        <span className="text-xs font-mono uppercase tracking-widest">Active</span>
+      </div>
+      <div className="flex items-center gap-3">
+        <span className="material-symbols-outlined text-[18px] text-text-muted cursor-pointer hover:text-text-main transition-colors">
+          settings
+        </span>
+        <span className="text-[10px] text-text-muted font-mono">v1.2.0</span>
+      </div>
+    </div>
   );
 }
