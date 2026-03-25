@@ -22,7 +22,9 @@ A locally-hosted web application that provides a graphical user interface for th
 | UI framework | React | 18 | Hooks-based state, concurrent rendering |
 | Terminal renderer | xterm.js | 5.x | Browser PTY rendering, ConPTY-compatible |
 | Terminal resize | xterm-addon-fit | latest | Resizes xterm.js to container div |
-| Styling | Tailwind CSS | 3.x | Utility-first; no conflicts with xterm.js canvas |
+| Styling | Tailwind CSS | 3.x | Utility-first; extended theme with 20+ design tokens (Phase 9) |
+| Fonts | Inter, JetBrains Mono | via Google Fonts CDN | Inter: UI text (400-700); JetBrains Mono: code/terminal (400-500); Geist: fallback only |
+| Icons | Material Symbols Outlined | via Google Fonts CDN | Variable weight+fill; used for sidebar navigation and status indicators |
 | Markdown render | react-markdown | 9.x | Safe Markdown for job results |
 | Markdown tables | remark-gfm | latest | GFM plugin (tables, code fences) for react-markdown |
 

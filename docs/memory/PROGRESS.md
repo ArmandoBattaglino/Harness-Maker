@@ -57,7 +57,7 @@
   Added to server/index.js: browser auto-open (exec, NO_OPEN guard), in-memory rate limiter (200 req/min on /api/v1/*), GET /api/v1/version endpoint (appVersion, nodeVersion, platform), improved /health (uptime, activeSessions, activeJobs), improved startup logging ([startup] prefixed with version, binary path, config dir). Build verified clean.
 
 ## In Progress
-_None._
+- [TASK-24] IN_PROGRESS 2026-03-25 — New Sidebar Navigation Component — frontend-dev — depends on #23 (COMPLETED)
 
 ## Blocked
 _None._
@@ -107,9 +107,9 @@ _None._
 - Ready for `git tag v1.2.0`.
 
 ## Phase 9 — Frontend Redesign (Stitch Design Export)
-**Status: IN PROGRESS — 9 tasks planned (#23-#31), 1 completed.**
+**Status: IN PROGRESS — 9 tasks planned (#23-#31), 2 completed.**
 - [TASK-23] COMPLETED 2026-03-25 — Design System Foundation (Tailwind config, fonts, CSS, constants) — frontend-dev
-- [TASK-24] PENDING — New Sidebar Navigation Component — frontend-dev — depends on #23
+- [TASK-24] COMPLETED 2026-03-25 — New Sidebar Navigation Component — frontend-dev — depends on #23
 - [TASK-25] PENDING — Project Dashboard View (replaces ProjectsView) — frontend-dev — depends on #23, #24
 - [TASK-26] PENDING — Live Terminal Hub View (replaces TerminalView) — frontend-dev — depends on #23, #24
 - [TASK-27] PENDING — Orchestration Center / Job Runner View (replaces JobView) — frontend-dev — depends on #23, #24

@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-25 — after Phase 9 Planning (Tasks #23-#31 planned) by code-mapper_
+_Last updated: 2026-03-25 — after Task #23: Design System Foundation by frontend-dev — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -49,7 +49,16 @@ _Last updated: 2026-03-25 — after Phase 9 Planning (Tasks #23-#31 planned) by 
 | client/src/hooks/useJob.js | default useJob | Custom hook: manages full job lifecycle (POST → SSE → result/cancel/reset), exposes status, streamEvents, result, error |
 | client/src/components/JobPanel.jsx | default JobPanel, StreamLog, MarkdownResult, AdvancedOptions (internals) | Job Mode UI: prompt textarea, SSE stream log, react-markdown result, cancel/copy/reset actions |
 | client/src/views/JobView.jsx | default JobView | View wrapper: reads activeProjectId from AppContext, renders JobPanel for selected project |
+| client/src/lib/constants.js | NAV_ITEMS, STATUS_COLORS | Shared UI constants: sidebar navigation items (icon/label/view), status-to-Tailwind-class mapping for badges (Phase 9 design tokens) |
 | client/src/views/ProjectsView.jsx | default ProjectsView, StatusBadge, ConfirmDialog, formatDate (internals) | Full project list table with session status, Open Terminal action, Register/Delete with confirmation modal |
+
+### Client Config & Styles
+| File | Key Exports | Purpose |
+|------|-------------|---------|
+| client/tailwind.config.js | default config | Tailwind CSS config: Phase 9 design tokens — 20+ color tokens (primary #933df5, surface scale, semantic colors, code syntax), font families (Inter/Geist/JetBrains Mono), border radius scale. darkMode: 'class'. |
+| client/index.html | (HTML entry) | SPA entry point: Google Fonts CDN links (Inter, JetBrains Mono, Material Symbols Outlined), dark class on html element. Last modified Task #23 (font imports added). |
+| client/src/index.css | (global styles) | Base body styles (#000 bg, Inter font), utility classes (.glass-effect, .custom-scrollbar, .active-indicator, .terminal-text, .filled-icon, .terminal-line-border), .markdown-result scoped styles (headings, code, tables, blockquotes — purple theme), .md-* syntax highlighting helpers. Last modified Task #23 (Phase 9 redesign). |
+| client/postcss.config.js | (PostCSS config) | PostCSS plugins: tailwindcss, autoprefixer |
 
 ## Test Infrastructure
 | File | Framework | Modules Under Test | Test Count |
@@ -820,6 +829,25 @@ _Last updated: 2026-03-25 — after Phase 9 Planning (Tasks #23-#31 planned) by 
 
 ---
 
+### `client/src/lib/constants.js` :: `NAV_ITEMS` (exported const)
+- **Purpose:** Array of sidebar navigation items. Each object: `{ icon: string (Material Symbols name), label: string (display text), view: string (AppContext view identifier) }`. Defines the 5 Phase 9 views: projects, terminal, jobs, deployments, context.
+- **Called by:** Currently Sidebar.jsx has its own local NAV_ITEMS (not yet importing this module). Will be imported by the new Sidebar in Task #24.
+- **Calls:** none (static data)
+- **Inputs:** N/A (constant)
+- **Output:** Array of 5 nav item objects
+- **Side effects:** none
+- **Last modified:** 2026-03-25 in Task #23 by frontend-dev
+
+### `client/src/lib/constants.js` :: `STATUS_COLORS` (exported const)
+- **Purpose:** Maps status strings to Tailwind CSS class triplets `{ bg, text, dot }` for badge/indicator rendering. Covers 10 statuses: running, active, idle, done, completed, cancelled, error, failed, pending, queued. References Phase 9 custom color tokens (bg-success/10, text-primary, bg-error/10, etc.).
+- **Called by:** Not yet imported. Will be used by Phase 9 view components (ProjectsView, JobView, etc.) to replace inline status color logic.
+- **Calls:** none (static data)
+- **Inputs:** N/A (constant)
+- **Output:** Object with 10 status keys, each mapping to `{ bg, text, dot }` class strings
+- **Side effects:** none
+- **Complexity note:** Uses Tailwind opacity modifier syntax (e.g., `bg-success/10` = success color at 10% opacity). Requires the custom color tokens from tailwind.config.js to resolve correctly.
+- **Last modified:** 2026-03-25 in Task #23 by frontend-dev
+
 ---
 
 ## Test Modules (Task #13 — qa-tester)
@@ -1146,11 +1174,13 @@ _Last updated: 2026-03-25 — after Phase 9 Planning (Tasks #23-#31 planned) by 
 - resolveAllowedBase() in agents.js and skills.js: independent implementations, same pattern — checks USER dir then all registered project paths
 - SSE pattern: server sets Content-Type text/event-stream + no-cache; client uses native EventSource (not apiGet); JobRunner owns response lifetime — routes/jobs.js does NOT call res.end() after addSseClient returns true
 - useJob hook: jobIdRef mirrors jobId state to avoid stale closure in cancelJob useCallback; status guard prevents double job submission
-- react-markdown applied in `.markdown-result` CSS scope (index.css) for consistent Markdown typography
+- react-markdown applied in `.markdown-result` CSS scope (index.css) for consistent Markdown typography — heading colors updated to #933df5 (purple) in Task #23
+- Phase 9 Design System (Task #23): primary=#933df5, background=#000, surface scale (0a0a0a/111111/141414/1a1a1a), fonts Inter+JetBrains Mono via Google Fonts CDN, Material Symbols Outlined icons, utility classes .glass-effect/.custom-scrollbar/.active-indicator
+- client/src/lib/constants.js: NAV_ITEMS defines 5 views (projects/terminal/jobs/deployments/context); STATUS_COLORS maps 10 statuses to Tailwind class triplets. Not yet imported — Task #24 Sidebar will consume these.
 
 ## Phase 9 — Frontend Redesign (PLANNED, not yet implemented)
 
-**Status:** 9 tasks planned (#23-#31), 0 started. No code changes yet.
+**Status:** 9 tasks planned (#23-#31), 1 completed (Task #23 — Design System Foundation).
 
 Phase 9 will completely replace the frontend UI based on 5 Stitch design exports. The following summarizes what will change and what must NOT change.
 
@@ -1187,7 +1217,7 @@ Phase 9 will completely replace the frontend UI based on 5 Stitch design exports
 ### Files that WILL be created/replaced (Tasks #23-#30)
 | Task | Expected File Changes |
 |------|----------------------|
-| #23 | tailwind.config.js overhaul, new CSS variables, font imports |
+| #23 | **DONE** — tailwind.config.js (20+ color tokens, font families, border radius), index.html (Google Fonts CDN), index.css (utility classes, markdown theme update), client/src/lib/constants.js (NAV_ITEMS, STATUS_COLORS) |
 | #24 | New Sidebar.jsx (replaces current) |
 | #25 | New ProjectsView.jsx (dashboard layout) |
 | #26 | New TerminalView.jsx (hub layout, Terminal.jsx wrapper unchanged) |

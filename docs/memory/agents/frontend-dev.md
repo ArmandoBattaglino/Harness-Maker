@@ -1,4 +1,58 @@
 ---
+## 2026-03-25 — Task #24: Redesign — New Sidebar Navigation Component
+**Status:** COMPLETED
+**Called by:** orchestrator (user)
+
+### Context when I started
+Task #23 (Design System Foundation) was complete. Tailwind config had all color tokens, Google Fonts loaded in index.html, NAV_ITEMS and STATUS_COLORS exported from lib/constants.js. The old Sidebar.jsx used inline styles with green (#4ade80) accent, monospace character icons, a flat project list, and hardcoded NAV_ITEMS array with 4 views (terminal/jobs/entities/projects). AppContext.jsx had view defaulting to 'terminal' with 'entities' as a valid view type.
+
+### What I did
+1. Read all 7 memory files in parallel, then all source files and 5 Stitch HTML exports in parallel.
+2. Rewrote `client/src/components/Sidebar.jsx` entirely (~190 lines) with 4 sub-components: SidebarHeader, NavItem, SessionItem, SidebarFooter.
+3. Updated `client/src/store/AppContext.jsx`: changed default view from 'terminal' to 'projects', updated comment listing valid views to include 'deployments' and 'context' (replacing 'entities').
+4. Ran `npx vite build` — clean build, 302 modules, no errors.
+5. Committed both files.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| `client/src/components/Sidebar.jsx` | MODIFIED (full rewrite) | New sidebar: purple gradient logo, Material Symbols icons via NAV_ITEMS from constants.js, filled icon variant on active, Active PTY Sessions section with green dots + PID badges, New Local Session dashed button, footer with green status dot + version |
+| `client/src/store/AppContext.jsx` | MODIFIED | Default view 'projects' (was 'terminal'), valid views updated in comment |
+| `docs/TASK_PLAN.md` | MODIFIED | Task #24 Status: IN_PROGRESS -> COMPLETED |
+| `docs/memory/PROGRESS.md` | MODIFIED | Task #24 marked COMPLETED |
+
+### Improvements delivered
+- Sidebar matches Stitch design exports: purple gradient logo icon, Material Symbols Outlined icons, filled active variant, bg-surface-hover active state with border
+- 5-view navigation using shared NAV_ITEMS constant (projects, terminal, jobs, deployments, context)
+- Active PTY Sessions section replaces old flat project list — shows green status dots, project names, PID badges
+- New Local Session button with dashed border opens AddProjectModal
+- Footer with green active status dot, settings icon, version v1.2.0
+- All existing API integrations preserved: apiGet projects on mount, handleProjectClick session creation, AddProjectModal
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None — build clean on first attempt | — | — | — |
+
+### Decisions I made
+- Split Sidebar into 4 sub-components (SidebarHeader, NavItem, SessionItem, SidebarFooter) — each is small and tightly coupled, kept in same file per component rules.
+- Active sessions derived from state.sessions entries rather than showing all projects — matches Stitch design which only shows sessions with active PTY.
+- Used `bg-surface` (#0a0a0a) as sidebar background matching Stitch Terminal Hub and Deployment Manager exports.
+- Width 250px (matching Deployment Manager Stitch export) rather than 260px (Terminal Hub) — 250px is the more common value across exports.
+- Did not add the "Status Card" from Terminal Hub (uptime/latency) — that is Terminal Hub specific, not shared sidebar.
+
+### What I learned
+- The 5 Stitch exports have slightly different sidebar styles (Terminal Hub uses Geist font, 260px width; Deployment Manager uses 250px, Inter font). Deployed a composite that matches the majority pattern.
+- AppContext SET_VIEW has no validation — any string is accepted. The view types are enforced only by the switch statement in App.jsx MainContent.
+- The old Sidebar had its own NAV_ITEMS hardcoded; now uses shared constants from lib/constants.js.
+
+### State I'm leaving behind
+Sidebar.jsx is fully rewritten and builds cleanly. AppContext default view is 'projects'. Note: App.jsx still routes 'entities' view and does not yet handle 'deployments' or 'context' — those will be added in Task #30 (App Shell, Routing, View Integration). For now, navigating to deployments/context will fall through to the default case (TerminalView).
+
+### Handoff
+Task #25 (Project Dashboard View) and Tasks #26-#29 (other views) are unblocked. Task #30 will update App.jsx routing to handle the new view types. The sidebar is ready for all 5 views.
+
+---
 ## 2026-03-25 — Task #23: Design System Foundation (Tailwind Config, Fonts, CSS Variables, Shared Utilities)
 **Status:** COMPLETED
 **Called by:** orchestrator (user)

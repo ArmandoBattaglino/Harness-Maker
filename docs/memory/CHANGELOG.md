@@ -2,6 +2,49 @@
 
 ## 2026-03-25
 
+### [Task #23] Design System Foundation (Phase 9)
+- Agent: frontend-dev
+- Modified: client/tailwind.config.js, client/index.html, client/src/index.css
+- Created: client/src/lib/constants.js
+
+#### client/tailwind.config.js
+- **Change type:** MODIFIED (full overhaul for Phase 9 design tokens)
+- **What changed:** Replaced minimal Tailwind config with full Phase 9 design token system. Added 20+ custom colors (primary #933df5, 4-level surface scale, 4 border tokens, 4 text tokens, semantic colors, 6 code syntax colors), 3 font families (Inter/Geist/JetBrains Mono), custom border radius scale (sm/DEFAULT/md/lg/xl/full). Added `darkMode: 'class'`.
+- **Why:** Design tokens extracted from all 5 Stitch design exports to establish consistent design system before building Phase 9 components.
+
+#### client/index.html
+- **Change type:** MODIFIED (font imports added)
+- **What changed:** Added Google Fonts preconnect links and stylesheet imports for Inter (400-700), JetBrains Mono (400-500), and Material Symbols Outlined (variable weight+fill). Added `class="dark"` on `<html>` for Tailwind dark mode.
+- **Why:** Phase 9 design system requires these fonts; CDN delivery chosen over bundling.
+
+#### client/src/index.css
+- **Change type:** MODIFIED (Phase 9 utility classes + markdown theme update)
+- **What changed:** Added utility classes: `.custom-scrollbar` (6px dark scrollbar), `.glass-effect` (blur+semi-transparent bg), `.active-indicator` (purple glow box-shadow), `.terminal-text` (JetBrains Mono), `.terminal-line-border`, `.filled-icon` (Material Symbols FILL variation). Updated `.markdown-result` heading colors from green to purple (#933df5). Added `.md-heading`, `.md-code`, `.md-muted`, `.md-comment` syntax highlighting helpers for Context Editor.
+- **Why:** Utility classes needed by Phase 9 components; markdown result theme must match new purple primary color.
+
+#### client/src/lib/constants.js (NEW)
+- **Change type:** CREATED
+- **Exports:** `NAV_ITEMS` (array of 5 sidebar nav items with icon/label/view), `STATUS_COLORS` (object mapping 10 status strings to Tailwind class triplets {bg, text, dot})
+- **Why:** Centralized design constants for Phase 9 — prevents hardcoded values across multiple components. NAV_ITEMS will be consumed by new Sidebar (Task #24). STATUS_COLORS will be used by all views that display status badges.
+- **Note:** NAV_ITEMS is not yet imported by existing Sidebar.jsx (which has its own local copy). Task #24 will replace Sidebar and import from this module.
+
+#### Functions Added
+- `NAV_ITEMS` constant in `client/src/lib/constants.js` — 5 navigation items for Phase 9 sidebar
+- `STATUS_COLORS` constant in `client/src/lib/constants.js` — 10-status badge color mapping using Phase 9 Tailwind tokens
+
+#### Functions Modified
+- None (config/style files only; no function signature changes)
+
+#### Connection Changes
+- client/src/lib/constants.js created but not yet imported — will be consumed starting Task #24 (Sidebar)
+- tailwind.config.js new color tokens are referenced by STATUS_COLORS (e.g., bg-success/10, text-primary)
+
+#### Impact on Other Code
+- All existing components using hardcoded color values will be progressively migrated to Tailwind tokens in Tasks #24-#30
+- `.markdown-result` heading colors changed from implicit green to explicit purple (#933df5) — affects JobPanel/MarkdownResult visual output immediately
+
+---
+
 ### Phase 9 Planning — Frontend Redesign (Tasks #23-#31)
 - Agent: project-manager (planning), code-mapper (documentation)
 - No code modified — planning-only task
