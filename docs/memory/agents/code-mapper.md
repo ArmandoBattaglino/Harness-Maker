@@ -303,3 +303,63 @@ The debugger completed a full codebase audit and fixed 7 bugs across 6 files. CO
 ### Handoff
 After Tasks #19/#20/#21: code-mapper should document changes to server/services/JobRunner.js (cleanup of completed jobs Map) and server/index.js (rate limiter map cleanup). Also document any changes from qa-tester regression pass on BUG-02/03/04/05/11/14/16 fixes.
 ---
+
+---
+## 2026-03-25 — Phase 9 Planning: Frontend Redesign CODE_MAP Update
+**Status:** COMPLETED
+**Called by:** orchestrator (post-planning code-mapper invocation)
+
+### Context when I started
+Phase 9 (Frontend Redesign) was just planned by project-manager. 9 new tasks (#23-#31) were added to TASK_PLAN.md. No code was modified — this was a planning-only task. CODE_MAP.md was complete through Task #22 (v1.2). CHANGELOG.md had entries through Task #22. 5 Stitch design exports exist at stitch/stitch/ with code.html + screen.png for each screen.
+
+### What I did
+1. Read all memory files in parallel: CODE_MAP.md, CHANGELOG.md, ACTIVITY_LOG.md, agent memory, PROGRESS.md, CONTEXT.md, TASK_PLAN.md
+2. Read the full CODE_MAP.md (header through Removed Functions section at line 1155) to understand the complete current state
+3. Updated CODE_MAP.md header line to reflect Phase 9 planning
+4. Added a new "Phase 9 — Frontend Redesign (PLANNED, not yet implemented)" section before Removed Functions, containing:
+   - Design exports table (5 Stitch screens mapped to existing views they replace)
+   - Navigation changes (4 views -> 5 views, entities split into context + deployments)
+   - Design system changes (color, background, fonts, icons)
+   - Files that MUST NOT be modified (Terminal.jsx, useSession.js, useApi.js, useJob.js, all server/*)
+   - Files that WILL be created/replaced (per-task expectations)
+   - Impact analysis on existing code map entries (which entries will need updates)
+5. Appended CHANGELOG entry for Phase 9 planning
+6. Appended ACTIVITY_LOG entry
+7. Wrote this agent memory log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header updated; new Phase 9 section added before Removed Functions with design exports, constraints, and impact analysis |
+| docs/memory/CHANGELOG.md | APPENDED | Phase 9 planning entry with design system details, navigation changes, constraints |
+| docs/memory/ACTIVITY_LOG.md | APPENDED | code-mapper entry for Phase 9 planning |
+| docs/memory/agents/code-mapper.md | APPENDED | This session log |
+
+### Improvements delivered
+- CODE_MAP.md now has a forward-looking section that any agent can read to understand what Phase 9 will change without reading TASK_PLAN.md
+- Off-limits files explicitly listed — prevents frontend-dev from accidentally modifying Terminal.jsx, useSession.js, useApi.js, or useJob.js
+- Impact analysis tells future code-mapper sessions exactly which entries will need updates as each task completes
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None | — | — | — |
+
+### Decisions I made
+- Added Phase 9 section to CODE_MAP.md even though no code changed — the planning context is architecturally significant and affects how all existing frontend entries should be understood (they are about to be replaced)
+- Listed "Files that MUST NOT be modified" as a table in CODE_MAP — this is a constraint that lives in CONTEXT.md but is worth duplicating in CODE_MAP because code-mapper is the primary reference for "what can I touch"
+- Documented the design export locations even though they are not in the codebase — future agents need to know where reference designs are
+
+### What I learned
+- The 'entities' view concept is being decomposed: CLAUDE.md editing becomes its own 'context' view, and agents/skills management becomes 'deployments'. This means EntitiesView.jsx will likely be deleted and its sub-components refactored into two separate views.
+- AppContext.jsx activeView types must change — 'entities' removed, 'context' and 'deployments' added. This is a state-level change that affects Sidebar navigation dispatch and App.jsx view routing.
+- The Stitch exports use CDN Tailwind — frontend-dev must convert to proper Tailwind classes in React components, not copy CDN script tags.
+
+### State I'm leaving behind
+- CODE_MAP.md: complete through Phase 9 planning. All existing function graph entries are current. Phase 9 section documents upcoming changes.
+- CHANGELOG.md: entries for Tasks #1-#22 + Phase 9 planning present.
+- No tasks to mark in TASK_PLAN.md — this was a code-mapper documentation task, not a numbered task.
+
+### Handoff
+After TASK #23 (Design System Foundation): code-mapper should document tailwind.config.js changes, new CSS variables, font imports. After each subsequent task (#24-#30): update or replace the affected function graph entries (Sidebar, views, AppContext). Mark replaced components in Removed Functions table.
+---

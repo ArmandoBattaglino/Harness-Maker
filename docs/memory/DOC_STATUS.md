@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-03-18 after Debug & Security Re-Audit (7 bug fixes, security re-audit with MEDIUM-04 + LOW-03/LOW-04 findings)_
+_Last updated: 2026-03-25 after Phase 9 Frontend Redesign Planning (9 tasks planned, no code changes)_
 
 ## Status Legend
 - UP_TO_DATE — matches current code
@@ -11,24 +11,34 @@ _Last updated: 2026-03-18 after Debug & Security Re-Audit (7 bug fixes, security
 
 | Document | Status | Last Updated | Notes |
 |----------|--------|--------------|-------|
-| README.md | UP_TO_DATE | 2026-03-18 | No user-visible behavior changed by the bug fixes. Security model description remains accurate. |
-| docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-03-18 | Updated for re-audit: MEDIUM-04 (vite/esbuild CVE, dev-only) and LOW-03 (process.env passthrough) and LOW-04 (safeRead bypass in claudemd GET) added. npm audit section updated with client/ findings. SEC-10 row and OWASP A06 row updated. Summary Verdict updated to reflect 4 LOW findings and 1 dev-only MEDIUM. |
-| docs/ARCHITECTURE.md | UP_TO_DATE | 2026-03-18 | Two sections updated for bug fixes: (1) Backpressure — corrected from browser-API ws.bufferedAmount to server-side ws._socket.bufferSize; (2) YAML frontmatter parse algorithm — updated to regex-based implementation with non-object yaml.load return guard and error catch. |
-| docs/memory/PROJECT.md | UP_TO_DATE | 2026-03-18 | Updated in Task #15 to correct package names (node-pty, write-file-atomic) and add v1 implementation status. |
-| docs/memory/DECISIONS.md | UP_TO_DATE | 2026-03-18 | All 10 decisions documented by architect. DEC-001 note: actual package is plain node-pty (not prebuilt-multiarch) — documented in PROJECT.md; DECISIONS.md preserves the original intent for historical accuracy. |
-| docs/memory/PROGRESS.md | UP_TO_DATE | 2026-03-18 | Maintained by project-manager through Phase 6. v1 release-ready status established. |
-| docs/memory/CODE_MAP.md | UP_TO_DATE | 2026-03-18 | Updated by code-mapper after the debug session: 5 new module entries (AddProjectModal, Sidebar, ProjectsView internals, useSession, SessionManager), parseFrontmatter BUG-14 type guard noted, 8 new Key Behaviors bullets. |
-| docs/memory/CHANGELOG.md | UP_TO_DATE | 2026-03-18 | Updated by code-mapper after the debug session: full Debug Session CHANGELOG entry with per-file breakdown and all 7 bug fixes documented. |
-| docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-03-18 | Updated by all agents. Includes debugger and security re-audit entries from this session. |
-| Inline comments | UP_TO_DATE | 2026-03-18 | All modified functions have accurate why-not-what comments. SessionManager.js backpressure guard has an explanatory comment for why ws._socket.bufferSize is used instead of ws.bufferedAmount. frontmatter.js has accurate JSDoc. |
-| docs/API.md | MISSING | — | No dedicated API reference file exists. API surface is documented inside docs/ARCHITECTURE.md. A standalone docs/API.md would improve discoverability but is not required for v1 release — architecture doc is the single source of truth. |
-| docs/CONTRIBUTING.md | MISSING | — | No contributing guide exists. Appropriate for a private/internal tool at v1. If the project is opened to contributors, this should be created. |
+| README.md | UP_TO_DATE | 2026-03-18 | Accurate for current v1.2 code. Will need updates after Phase 9 implementation (new navigation, new default view, design system changes). |
+| docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-03-18 | Reflects post-hardening state: 3 MEDIUM FIXED, 1 MEDIUM dev-only open (MEDIUM-04 resolved by Task #21 vite upgrade), 4 LOW. |
+| docs/ARCHITECTURE.md | UP_TO_DATE | 2026-03-18 | Backend architecture accurate. Frontend sections will need significant updates after Phase 9 implementation (new views, new navigation, design system). |
+| docs/memory/PROJECT.md | UP_TO_DATE | 2026-03-18 | Core project description and constraints still accurate. Phase 9 is frontend-only and does not change stack or constraints. |
+| docs/memory/DECISIONS.md | UP_TO_DATE | 2026-03-18 | All 10 decisions still apply. Phase 9 planning decisions (color, fonts, navigation) are recorded in CONTEXT.md and TASK_PLAN.md, not as formal DEC entries (they are design decisions, not architectural decisions). |
+| docs/memory/PROGRESS.md | UP_TO_DATE | 2026-03-25 | Updated by project-manager with Phase 9 pending section. |
+| docs/memory/CODE_MAP.md | UP_TO_DATE | 2026-03-24 | No code changed in this planning task. |
+| docs/memory/CHANGELOG.md | UP_TO_DATE | 2026-03-24 | No code changed in this planning task. |
+| docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-03-25 | Updated by project-manager with Phase 9 planning entry. |
+| Inline comments | UP_TO_DATE | 2026-03-18 | No code files modified. |
+| docs/API.md | MISSING | — | API surface documented in ARCHITECTURE.md. Standalone file deferred. |
+| docs/CONTRIBUTING.md | MISSING | — | Private tool; no external contributors. |
 
 ## Stale Sections (known gaps)
 
-- docs/memory/DECISIONS.md:DEC-001 — Records "use node-pty-prebuilt-multiarch" but actual installed package is plain node-pty. The decision text is historically accurate (it was the plan). The correction is recorded in PROJECT.md Key Constraints and in PROGRESS.md TASK-2 notes. No edits to DECISIONS.md made to preserve decision history.
-- docs/memory/DECISIONS.md:DEC-001 and package sections in TASK_PLAN.md — TASK_PLAN.md tech stack table still lists node-pty-prebuilt-multiarch and write-atomic. These are the original planned package names; the corrections are in PROGRESS.md. Both places are internally consistent with their purpose (plan vs reality).
-- docs/TASK_PLAN.md — does not have a task entry for the ad-hoc debug session documenter run (no pre-planned task number). This is by design — the call was triggered by the debug session completion, not a planned task. No entry is missing.
+- docs/memory/DECISIONS.md:DEC-001 — Records "use node-pty-prebuilt-multiarch" but actual installed package is plain node-pty. Historical accuracy preserved intentionally; correction in PROJECT.md.
+- docs/TASK_PLAN.md Task #1 context — Still references node-pty-prebuilt-multiarch and write-atomic as planned packages. These are the original spec; corrections documented in PROGRESS.md.
+
+## Upcoming Documentation Work (Phase 9)
+
+When Phase 9 implementation begins, the following documents will need updates:
+
+| Document | Section(s) affected | Trigger task |
+|----------|---------------------|--------------|
+| README.md | Features table (new views, navigation changes) | After Task #30 (App Shell Integration) |
+| docs/ARCHITECTURE.md | Frontend component diagram, React state management, view routing | After Task #30 |
+| docs/memory/PROJECT.md | Tech stack table (new fonts: Inter, Geist, JetBrains Mono; new icon library: Material Symbols Outlined) | After Task #23 (Design System Foundation) |
+| Inline comments | New components will need why-not-what comments | After each Task #23-#30 |
 
 ## Documentation Debt
 
@@ -37,7 +47,6 @@ _Last updated: 2026-03-18 after Debug & Security Re-Audit (7 bug fixes, security
 | docs/API.md — standalone REST API reference | Medium | API is documented in ARCHITECTURE.md; standalone file needed only if consumers other than internal agents use the API |
 | docs/CONTRIBUTING.md | Low | Private tool at v1; no external contributors currently |
 | docs/memory/DECISIONS.md DEC-001 correction note | Low | Historical accuracy preserved intentionally; gap is minor and tracked here |
-| README — dev workflow section | Low | Internal dev workflow documented in CLAUDE.md; no duplication needed in public README until project is opened |
-| SECURITY_AUDIT.md MEDIUM-04 fix | Low | Upgrade vite in client/package.json to patch esbuild CVE — dev-only, deferred to v1.1 |
+| README — dev workflow section | Low | Internal dev workflow documented in CLAUDE.md; no duplication needed until project is opened |
 | SECURITY_AUDIT.md LOW-03 fix | Low | Build env var allowlist for PTY spawn — deferred to v1.1 |
 | SECURITY_AUDIT.md LOW-04 fix | Low | Refactor safeRead to cover claudemd GET path — deferred to v1.1 |

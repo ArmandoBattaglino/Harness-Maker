@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-24 — after v1.1 Phase 7 (Tasks #19, #20, #21) by orchestrator_
+_Last updated: 2026-03-25 — after Phase 9 Planning (Tasks #23-#31 planned) by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -1147,6 +1147,68 @@ _Last updated: 2026-03-24 — after v1.1 Phase 7 (Tasks #19, #20, #21) by orches
 - SSE pattern: server sets Content-Type text/event-stream + no-cache; client uses native EventSource (not apiGet); JobRunner owns response lifetime — routes/jobs.js does NOT call res.end() after addSseClient returns true
 - useJob hook: jobIdRef mirrors jobId state to avoid stale closure in cancelJob useCallback; status guard prevents double job submission
 - react-markdown applied in `.markdown-result` CSS scope (index.css) for consistent Markdown typography
+
+## Phase 9 — Frontend Redesign (PLANNED, not yet implemented)
+
+**Status:** 9 tasks planned (#23-#31), 0 started. No code changes yet.
+
+Phase 9 will completely replace the frontend UI based on 5 Stitch design exports. The following summarizes what will change and what must NOT change.
+
+### Design Exports (reference files, not in codebase)
+| Export Directory | View | Replaces |
+|------------------|------|----------|
+| stitch/stitch/final_project_dashboard/ | Project Dashboard | ProjectsView.jsx |
+| stitch/stitch/final_multi_agent_terminal_hub/ | Live Terminal Hub | TerminalView.jsx |
+| stitch/stitch/final_orchestration_center/ | Orchestration Center / Job Runner | JobView.jsx |
+| stitch/stitch/final_context_rules_editor/ | Context & Rules Editor | ClaudeMdEditor (entities tab) |
+| stitch/stitch/final_deployment_manager/ | Deployment Manager | AgentEditor + SkillEditor (entities tab) |
+
+### Navigation Changes
+- OLD: 4 views — terminal, jobs, entities, projects
+- NEW: 5 views — projects, terminal, jobs, context, deployments
+- 'entities' view is REMOVED — split into 'context' (CLAUDE.md editor) and 'deployments' (agents/skills)
+- Default landing view changes from 'terminal' to 'projects'
+
+### Design System Changes (Task #23)
+- Primary color: #933df5 (purple) replaces #4ade80 (green)
+- Background: #000000 (pure black) replaces #111111
+- Fonts: Inter (primary), Geist (terminal hub), JetBrains Mono (code/terminal)
+- Icons: Material Symbols Outlined (Google Fonts)
+
+### Files that MUST NOT be modified (Phase 9 constraint)
+| File | Reason |
+|------|--------|
+| client/src/components/Terminal.jsx | xterm.js instance management, FitAddon, ResizeObserver — DEC-009 |
+| client/src/hooks/useSession.js | WebSocket lifecycle + reconnect logic |
+| client/src/hooks/useApi.js | CSRF header, fetch helpers — all views depend on this |
+| client/src/hooks/useJob.js | Job lifecycle hook — SSE EventSource management |
+| server/* | Phase 9 is FRONTEND-ONLY — no backend changes |
+
+### Files that WILL be created/replaced (Tasks #23-#30)
+| Task | Expected File Changes |
+|------|----------------------|
+| #23 | tailwind.config.js overhaul, new CSS variables, font imports |
+| #24 | New Sidebar.jsx (replaces current) |
+| #25 | New ProjectsView.jsx (dashboard layout) |
+| #26 | New TerminalView.jsx (hub layout, Terminal.jsx wrapper unchanged) |
+| #27 | New JobView.jsx (orchestration center layout) |
+| #28 | New view for CLAUDE.md editing (replaces ClaudeMdEditor tab in EntitiesView) |
+| #29 | New view for agents/skills management (replaces AgentEditor/SkillEditor tabs in EntitiesView) |
+| #30 | App.jsx / routing integration, EntitiesView.jsx likely removed |
+
+### Impact on Existing Code Map Entries
+When Phase 9 tasks execute, the following CODE_MAP entries will need updates:
+- `client/src/components/Sidebar.jsx` — will be replaced entirely
+- `client/src/views/ProjectsView.jsx` — will be replaced entirely
+- `client/src/views/TerminalView.jsx` — will be replaced entirely
+- `client/src/views/JobView.jsx` — will be replaced entirely
+- `client/src/views/EntitiesView.jsx` — will be removed (split into two new views)
+- `client/src/components/AgentEditor.jsx` — may be refactored into Deployment Manager view
+- `client/src/components/SkillEditor.jsx` — may be refactored into Deployment Manager view
+- `client/src/components/ClaudeMdEditor.jsx` — may be refactored into Context Editor view
+- `client/src/store/AppContext.jsx` — activeView types will change (add 'context', 'deployments'; remove 'entities')
+
+---
 
 ## Removed Functions
 | Function | File | Removed in | Reason |

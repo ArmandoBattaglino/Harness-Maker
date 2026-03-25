@@ -1,5 +1,20 @@
 # CHANGELOG — Claude Code Visual Manager
 
+## 2026-03-25
+
+### Phase 9 Planning — Frontend Redesign (Tasks #23-#31)
+- Agent: project-manager (planning), code-mapper (documentation)
+- No code modified — planning-only task
+- 9 new tasks created (#23-#31) for complete frontend UI replacement based on 5 Stitch design exports
+- Design exports at: stitch/stitch/ (5 screens: Project Dashboard, Terminal Hub, Orchestration Center, Context Editor, Deployment Manager)
+- Task dependency chain: #23 (design system) -> #24 (sidebar) -> #25-#29 (5 views, parallel) -> #30 (app shell) -> #31 (QA)
+- Navigation changes: 4 views -> 5 views; 'entities' split into 'context' + 'deployments'; default view changes from 'terminal' to 'projects'
+- Design system changes: purple (#933df5) replaces green (#4ade80); pure black (#000000) background; Inter/Geist/JetBrains Mono fonts; Material Symbols icons
+- Constraint: Terminal.jsx, useSession.js, useApi.js, useJob.js must NOT be modified; no server changes
+- Files modified: docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md (all by project-manager)
+
+---
+
 ## 2026-03-24
 
 ### [Task #22] v1.2 — Add GET /api/v1/jobs/:id Route (BUG-22)

@@ -1,4 +1,61 @@
 ---
+## 2026-03-25 — Task #23: Design System Foundation (Tailwind Config, Fonts, CSS Variables, Shared Utilities)
+**Status:** COMPLETED
+**Called by:** orchestrator (user)
+
+### Context when I started
+Phase 9 (Frontend Redesign) was planned with 9 tasks (#23-#31). Task #23 is the foundation — all subsequent tasks depend on it. The existing codebase had a minimal tailwind.config.js (empty theme.extend), a bare index.html (no fonts), and index.css with old green (#4ade80) accent colors. Five Stitch design export HTML files existed with full Tailwind configs and inline styles defining the new design language. No client/src/lib/ directory existed.
+
+### What I did
+1. Read all 7 memory files in parallel to understand project state.
+2. Read all 5 Stitch HTML exports (Terminal Hub, Orchestration Center, Project Dashboard, Context Editor, Deployment Manager) to extract design tokens.
+3. Read current client files: tailwind.config.js, index.html, index.css, useApi.js (read-only for pattern reference), package.json.
+4. Rewrote `client/tailwind.config.js` with full extended theme: 20+ color tokens, fontFamily (sans/mono/display), borderRadius (sm/DEFAULT/md/lg/xl/full), darkMode: "class".
+5. Rewrote `client/index.html` with Google Fonts links: Inter (400-700), JetBrains Mono (400-500), Material Symbols Outlined (variable weight+fill). Added class="dark" to html element. NOTE: Geist is not available on Google Fonts; it's listed as fallback in the font stack.
+6. Rewrote `client/src/index.css`: new base styles (bg #000, text #EAEAEA, Inter font), custom-scrollbar class, glass-effect class, active-indicator class, terminal-text class, filled-icon helper, full markdown-result styles updated from green to purple (#933df5) theme with code-text #c9d1d9 and code-purple #d2a8ff, markdown syntax highlighting classes (md-heading, md-code, md-muted, md-comment).
+7. Created `client/src/lib/constants.js`: NAV_ITEMS array (5 views: projects/terminal/jobs/deployments/context with Material Symbols icon names), STATUS_COLORS object mapping 10 status strings to Tailwind class triplets {bg, text, dot}.
+8. Ran `npx vite build` — clean build, 301 modules, no errors. Pre-existing 642KB chunk warning (react-markdown).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| `client/tailwind.config.js` | MODIFIED | Full design system: colors, fonts, borderRadius, darkMode from Stitch exports |
+| `client/index.html` | MODIFIED | Added Google Fonts (Inter, JetBrains Mono, Material Symbols Outlined), class="dark" on html |
+| `client/src/index.css` | MODIFIED | New base styles, utility classes (glass-effect, custom-scrollbar, active-indicator, terminal-text, filled-icon), markdown styles updated green->purple |
+| `client/src/lib/constants.js` | CREATED | NAV_ITEMS (5 views) and STATUS_COLORS (10 statuses) shared constants |
+| `docs/TASK_PLAN.md` | MODIFIED | Task #23 Status: PENDING -> COMPLETED |
+
+### Improvements delivered
+- Complete design token system codified in Tailwind config — all subsequent Phase 9 components can use semantic color names (primary, surface, text-main, etc.)
+- Google Fonts loaded for Inter, JetBrains Mono, Material Symbols Outlined
+- Markdown rendering updated from old green (#4ade80) accent to new purple (#933df5) theme
+- Shared navigation and status constants ready for Sidebar (#24) and all view components (#25-#29)
+- Glass effect, scrollbar, terminal text, and active indicator utility classes available globally
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None — build clean on first attempt | — | — | — |
+
+### Decisions I made
+- Geist font not loaded from CDN — it is not available on Google Fonts. Listed as fallback in font-sans stack after Inter. If needed, can add fontsource CDN later.
+- Used #933df5 as canonical primary (4 of 5 screens), added #a855f7 as primary-light (Terminal Hub glow effects).
+- Consolidated border colors: border-color (#1a1a1a) for subtle, border-default (#222222) for standard, border-hover (#444444) for interactive states.
+- Surface scale: surface (#0a0a0a), surface-default (#111111), surface-lighter (#141414), surface-hover (#1a1a1a) — covers all Stitch panel backgrounds.
+- Code syntax colors kept as separate tokens (code-purple, code-green, etc.) rather than a nested object — simpler Tailwind usage.
+- NAV_ITEMS uses Material Symbols icon names matching the Stitch exports: dashboard, terminal, play_arrow, memory, description.
+
+### What I learned
+- All 5 Stitch screens share a remarkably consistent design language with minor variations (Terminal Hub uses Geist font and #a855f7 primary, others use Inter and #933df5).
+- Material Symbols Outlined requires the variable font link with FILL parameter for filled icon variants.
+- The Stitch exports use 13px as the root body font size (text-[13px]).
+
+### State I'm leaving behind
+Design system foundation is complete. All 4 deliverables implemented and build-verified. No existing components were modified. The old green-themed markdown styles have been replaced with purple theme. Shared constants are ready for consumption by Tasks #24-#30.
+
+### Handoff
+Task #24 (New Sidebar Navigation Component) is next — it should use NAV_ITEMS from constants.js and the design tokens from tailwind.config.js.
+---
 ## 2026-03-18 — Task #11: Projects View UI
 **Status:** COMPLETED
 **Called by:** orchestrator

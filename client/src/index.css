@@ -2,12 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Base ─────────────────────────────────────────────── */
+
 body {
-  background: #111111;
-  color: white;
+  background: #000000;
+  color: #EAEAEA;
+  font-family: 'Inter', 'Geist', system-ui, sans-serif;
   margin: 0;
   height: 100vh;
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #root {
@@ -15,12 +20,63 @@ body {
   display: flex;
 }
 
-/* Markdown result rendering — used by JobPanel */
+/* ── Custom Scrollbar ─────────────────────────────────── */
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #222222;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #444444;
+}
+
+/* ── Glass Effect ─────────────────────────────────────── */
+
+.glass-effect {
+  backdrop-filter: blur(10px);
+  background: rgba(10, 10, 10, 0.8);
+}
+
+/* ── Active Indicator (purple glow) ───────────────────── */
+
+.active-indicator {
+  box-shadow: 0 0 10px rgba(147, 61, 245, 0.4);
+}
+
+/* ── Terminal Text ────────────────────────────────────── */
+
+.terminal-text {
+  font-family: 'JetBrains Mono', ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
+  letter-spacing: -0.01em;
+}
+
+.terminal-line-border {
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ── Filled Icon Helper ───────────────────────────────── */
+
+.filled-icon {
+  font-variation-settings: 'FILL' 1;
+}
+
+/* ── Markdown result rendering — used by JobPanel ─────── */
+
 .markdown-result h1,
 .markdown-result h2,
 .markdown-result h3,
 .markdown-result h4 {
-  color: #4ade80;
+  color: #933df5;
   font-weight: 700;
   margin-top: 1.25em;
   margin-bottom: 0.5em;
@@ -33,7 +89,7 @@ body {
 .markdown-result h4 { font-size: 0.9rem; }
 
 .markdown-result p {
-  color: #e5e7eb;
+  color: #c9d1d9;
   font-size: 0.8125rem;
   line-height: 1.7;
   margin-bottom: 0.875em;
@@ -41,7 +97,7 @@ body {
 
 .markdown-result ul,
 .markdown-result ol {
-  color: #e5e7eb;
+  color: #c9d1d9;
   font-size: 0.8125rem;
   line-height: 1.7;
   padding-left: 1.5em;
@@ -54,16 +110,16 @@ body {
 
 .markdown-result code {
   background: #1a1a1a;
-  color: #86efac;
+  color: #d2a8ff;
   padding: 0.1em 0.35em;
   border-radius: 3px;
-  font-family: 'ui-monospace', 'Cascadia Code', 'Fira Code', monospace;
+  font-family: 'JetBrains Mono', ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
   font-size: 0.78125rem;
 }
 
 .markdown-result pre {
-  background: #0d0d0d;
-  border: 1px solid #1f2937;
+  background: #0a0a0a;
+  border: 1px solid #222222;
   border-radius: 6px;
   padding: 1em;
   overflow-x: auto;
@@ -73,14 +129,14 @@ body {
 .markdown-result pre code {
   background: transparent;
   padding: 0;
-  color: #86efac;
+  color: #c9d1d9;
   font-size: 0.78125rem;
 }
 
 .markdown-result blockquote {
-  border-left: 3px solid #374151;
+  border-left: 3px solid #222222;
   padding-left: 1em;
-  color: #9ca3af;
+  color: #888888;
   font-style: italic;
   margin: 0.875em 0;
 }
@@ -93,31 +149,51 @@ body {
 }
 
 .markdown-result th {
-  background: #1a1a1a;
-  color: #4ade80;
+  background: #111111;
+  color: #933df5;
   font-weight: 700;
   padding: 0.5em 0.75em;
   text-align: left;
-  border: 1px solid #1f2937;
+  border: 1px solid #222222;
 }
 
 .markdown-result td {
-  color: #e5e7eb;
+  color: #c9d1d9;
   padding: 0.5em 0.75em;
-  border: 1px solid #1f2937;
+  border: 1px solid #222222;
 }
 
 .markdown-result tr:nth-child(even) td {
-  background: #141414;
+  background: #0a0a0a;
 }
 
 .markdown-result a {
-  color: #60a5fa;
+  color: #3291FF;
   text-decoration: underline;
 }
 
 .markdown-result hr {
   border: none;
-  border-top: 1px solid #1f2937;
+  border-top: 1px solid #222222;
   margin: 1.25em 0;
+}
+
+/* ── Markdown Syntax Highlighting (Context Editor) ────── */
+
+.md-heading {
+  color: #933df5;
+  font-weight: 600;
+}
+
+.md-code {
+  color: #3291FF;
+}
+
+.md-muted {
+  color: #666666;
+}
+
+.md-comment {
+  color: #555555;
+  font-style: italic;
 }
