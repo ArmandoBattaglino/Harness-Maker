@@ -1,7 +1,7 @@
 # Claude Code Visual Manager — Architecture Reference
-**Version:** 1.0
-**Date:** 2026-03-18
-**Status:** Locked (all DEC-001 through DEC-010 decisions are final)
+**Version:** 1.3 (updated for Phase 9 Frontend Redesign)
+**Date:** 2026-03-26 (originally 2026-03-18)
+**Status:** Locked (all DEC-001 through DEC-010 decisions are final; backend unchanged in Phase 9)
 **Audience:** Every agent assigned to this project. Read this before writing a single line of code.
 
 ---
@@ -32,25 +32,26 @@
 │  ┌──────────────────────────────────────────────────────────────────┐   │
 │  │                      React SPA (Vite build)                      │   │
 │  │                                                                  │   │
-│  │  ┌────────────┐  ┌────────────┐  ┌─────────────┐  ┌──────────┐  │   │
-│  │  │TerminalView│  │  JobView   │  │EntitiesView │  │ProjectsV.│  │   │
-│  │  │            │  │            │  │             │  │          │  │   │
-│  │  │ xterm.js   │  │PromptForm  │  │AgentEditor  │  │Register  │  │   │
-│  │  │ Terminal   │  │JobPanel    │  │SkillEditor  │  │Scaffold  │  │   │
-│  │  │ FitAddon   │  │react-md    │  │ClaudeMdEd.  │  │          │  │   │
-│  │  │            │  │EventSource │  │             │  │          │  │   │
-│  │  └─────┬──────┘  └─────┬──────┘  └──────┬──────┘  └────┬─────┘  │   │
-│  │        │               │                 │               │        │   │
-│  │  ┌─────▼───────────────▼─────────────────▼───────────────▼──────┐│   │
-│  │  │           Zustand Global Store                               ││   │
-│  │  │  activeProjectId · projects[] · sessions{} · jobs{}         ││   │
-│  │  │  agents[] · skills[] · claudeMd{}                           ││   │
-│  │  └──────────────────────────────────────────────────────────────┘│   │
+│  │  ┌────────────┐ ┌──────────┐ ┌──────────┐ ┌───────────┐ ┌──────────┐│   │
+│  │  │ProjectsView│ │ Terminal │ │ JobView  │ │Deployment │ │ Context  ││   │
+│  │  │ (Dashboard)│ │  View    │ │          │ │ Manager   │ │ Editor   ││   │
+│  │  │            │ │          │ │          │ │           │ │          ││   │
+│  │  │ Cards      │ │ xterm.js │ │PromptForm│ │ Profiles  │ │ Rules    ││   │
+│  │  │ Register   │ │ Terminal │ │ JobPanel │ │ Processes │ │ Preview  ││   │
+│  │  │ Scaffold   │ │ FitAddon │ │ react-md │ │ Environ.  │ │ Sections ││   │
+│  │  └─────┬──────┘ └────┬─────┘ └────┬─────┘ └─────┬─────┘ └────┬────┘│   │
+│  │        │              │            │              │             │     │   │
+│  │  ┌─────▼──────────────▼────────────▼──────────────▼─────────────▼──┐ │   │
+│  │  │           AppContext (useReducer + Context)                      │ │   │
+│  │  │  activeProjectId · projects[] · sessions{} · view               │ │   │
+│  │  │  agents[] · skills[] · claudeMd{}                               │ │   │
+│  │  └─────────────────────────────────────────────────────────────────┘ │   │
 │  │                                                                  │   │
-│  │  ┌──────────────────────────────────────────────────────────────┐│   │
-│  │  │              Sidebar (Sidebar.jsx)                           ││   │
-│  │  │  Project list · active highlight · Add/Remove · Nav tabs    ││   │
-│  │  └──────────────────────────────────────────────────────────────┘│   │
+│  │  ┌──────────────────────────────────────────────────────────────┐ │   │
+│  │  │              Sidebar (Sidebar.jsx)                            │ │   │
+│  │  │  5-item icon nav · project list · Material Symbols icons     │ │   │
+│  │  │  views: projects | terminal | jobs | deployments | context   │ │   │
+│  │  └──────────────────────────────────────────────────────────────┘ │   │
 │  └──────────────────────────────────────────────────────────────────┘   │
 │                                                                          │
 │   WebSocket ws://127.0.0.1:PORT/ws?sessionId=<uuid>  (PTY terminal)     │
@@ -141,19 +142,32 @@ index.js
 
 ```
 App.jsx
-  ├── Sidebar.jsx
-  │     └── ProjectItem.jsx (× n)
-  ├── TerminalView.jsx      [route: /terminal]
-  │     └── Terminal.jsx    (xterm.js wrapper, one instance per session)
-  ├── JobView.jsx           [route: /jobs]
-  │     ├── JobPanel.jsx    (prompt form + submit)
-  │     └── JobResult.jsx   (react-markdown render, × completed jobs)
-  ├── EntitiesView.jsx      [route: /entities]
-  │     ├── AgentEditor.jsx
-  │     ├── SkillEditor.jsx
-  │     └── ClaudeMdEditor.jsx
-  └── ProjectsView.jsx      [route: /projects]
+  ├── Sidebar.jsx                    [persistent left panel]
+  │     ├── NAV_ITEMS (5 icon links: projects, terminal, jobs, deployments, context)
+  │     ├── Project list (× n)
+  │     └── AddProjectModal.jsx
+  ├── ProjectsView.jsx               [view: projects — default landing]
+  │     ├── Project cards (× n)
+  │     ├── ConfirmDialog.jsx
+  │     └── AddProjectModal.jsx
+  ├── TerminalView.jsx                [view: terminal]
+  │     └── Terminal.jsx             (xterm.js wrapper, one instance per session)
+  ├── JobView.jsx                     [view: jobs]
+  │     ├── JobPanel.jsx             (prompt form + submit)
+  │     └── JobResult.jsx            (react-markdown render)
+  ├── DeploymentManagerView.jsx       [view: deployments]
+  │     ├── Profiles tab             (agent CRUD with YAML frontmatter)
+  │     ├── Active Processes tab     (running sessions monitor)
+  │     └── Environment tab          (skills CRUD, 4 scan locations)
+  ├── ContextEditorView.jsx           [view: context]
+  │     ├── Rule list / section editor (left pane)
+  │     └── Syntax-highlighted preview (right pane)
+  └── EntitiesView.jsx               [DEPRECATED — Phase 9; kept in codebase but unreachable]
 ```
+
+> **Note (Phase 9, 2026-03-26):** EntitiesView.jsx still exists on disk but is no longer imported
+> or routed to by App.jsx. Its functionality was split into DeploymentManagerView (agents + skills)
+> and ContextEditorView (CLAUDE.md editing). It may be removed in a future cleanup.
 
 ---
 
@@ -1223,9 +1237,13 @@ When the UI edits only frontmatter (not the body), the server must ensure the bo
 
 Global state (Zustand) holds only data that is shared across multiple components or that must survive component unmounting (e.g., navigating away from a view). Everything that is local to a single component and does not need to be accessed elsewhere lives in local `useState`.
 
-### Global Store (Zustand)
+### Global Store (AppContext with useReducer)
 
-**Store file:** `client/src/store.js`
+**Store file:** `client/src/store/AppContext.jsx`
+
+> **Note (Phase 9):** The original architecture specified Zustand. The actual implementation uses
+> React Context + useReducer (AppProvider / useAppState / useAppDispatch). The state shape and
+> actions listed below remain accurate; only the mechanism differs.
 
 ```javascript
 // Shape of the Zustand store
@@ -1245,7 +1263,7 @@ Global state (Zustand) holds only data that is shared across multiple components
   jobs: JobRecord[],
   // JobRecord: { jobId, projectId, prompt, status, result, createdAt }
 
-  // Entity lists (fetched when EntitiesView mounts, or when projectId changes)
+  // Entity lists (fetched when DeploymentManagerView or ContextEditorView mounts, or when projectId changes)
   agents: AgentRecord[],
   skills: SkillRecord[],
   claudeMd: { userScope: ClaudeMdRecord, projectScope: ClaudeMdRecord } | null,
@@ -1272,20 +1290,20 @@ Global state (Zustand) holds only data that is shared across multiple components
 
 | Data | Location | Reason |
 |------|----------|--------|
-| `projects[]` | Zustand | Needed by Sidebar and ProjectsView simultaneously |
-| `activeProjectId` | Zustand | Needed by Sidebar, TerminalView, JobView, EntitiesView |
-| `sessions{}` | Zustand (metadata only) | Session status shown in Sidebar |
+| `projects[]` | Global (Context) | Needed by Sidebar and ProjectsView simultaneously |
+| `activeProjectId` | Global (Context) | Needed by Sidebar, TerminalView, JobView, DeploymentManagerView, ContextEditorView |
+| `sessions{}` | Global (Context, metadata only) | Session status shown in Sidebar |
 | WebSocket instance (`ws`) | `Terminal.jsx` ref (`useRef`) | WebSocket is a side-effect object, not serializable; local to the Terminal component |
 | xterm.js `Terminal` instance | `Terminal.jsx` ref | Same — not serializable, owns DOM canvas |
 | `fitAddon` | `Terminal.jsx` ref | Bound to Terminal instance |
-| `jobs[]` | Zustand | Job list persists across view navigations; shown in sidebar |
-| SSE `EventSource` | `JobPanel.jsx` local state / ref | Scoped to the component that opened it |
-| Job streaming partial output | `JobPanel.jsx` local state | Transient UI state; not needed elsewhere |
-| `agents[]`, `skills[]` | Zustand | EntitiesView and sub-editors all read from the same list |
-| Agent/skill edit form state | `AgentEditor.jsx` / `SkillEditor.jsx` local state | Scoped to one editor |
-| `claudeMd` | Zustand | Accessed by ClaudeMdEditor |
-| CLAUDE.md editor textarea value | `ClaudeMdEditor.jsx` local state | Scoped to the editor |
-| Line count warning flag | Computed from local state (`content.split('\n').length > 300`) | Derived, no global relevance |
+| `jobs[]` | Global (Context) | Job list persists across view navigations |
+| SSE `EventSource` | `useJob.js` hook / `JobView.jsx` local ref | Scoped to the component that opened it |
+| Job streaming partial output | `JobView.jsx` local state | Transient UI state; not needed elsewhere |
+| `agents[]`, `skills[]` | Global (Context) | DeploymentManagerView Profiles and Environment tabs read from the same list |
+| Agent/skill edit form state | `DeploymentManagerView.jsx` local state | Scoped to DeploymentManagerView |
+| `claudeMd` | Global (Context) | Accessed by ContextEditorView |
+| CLAUDE.md editor content and rules | `ContextEditorView.jsx` local state | Scoped to the editor; includes parsed rule sections |
+| Line count warning flag | Computed from local state | Derived, no global relevance |
 
 ### Custom Hooks
 

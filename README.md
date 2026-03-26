@@ -43,15 +43,16 @@ The server binds exclusively to `127.0.0.1` — it is never accessible from the 
 
 | Feature | Description |
 |---------|-------------|
-| **Live PTY Terminal** | Full xterm.js terminal connected to a real Claude Code process over WebSocket. Resizes with the browser window. |
+| **Project Dashboard** | Card-based overview of all registered projects with status indicators, quick actions (open terminal, delete), and project registration. Default landing view. |
+| **Live Terminal Hub** | Full xterm.js terminal connected to a real Claude Code process over WebSocket. Resizes with the browser window. |
 | **Session Persistence** | PTY sessions survive browser tab closures. A 100 KB ring buffer replays recent output on reconnect. |
 | **Multi-Project Support** | Register multiple projects and run simultaneous Claude Code sessions — at least 5 concurrent without instability. |
-| **Job Mode** | Submit a prompt as a background job. Streaming progress arrives via SSE; finished output renders as formatted Markdown. |
-| **Agent Editor** | Visual CRUD editor for `.claude/agents/` YAML files. Displays a restart-required banner after any change. |
-| **Skill Editor** | Visual CRUD editor for Claude Code skills across all four scan locations (user + project, modern + legacy paths). |
-| **CLAUDE.md Editor** | Dual-panel editor for user-scope and project-scope CLAUDE.md files with live line count and a 300-line warning. |
-| **Project Management** | Register existing directories or scaffold a new `.claude/` structure (agents, commands, CLAUDE.md) from the UI. |
+| **Job Runner** | Submit a prompt as a background job. Streaming progress arrives via SSE; finished output renders as formatted Markdown. |
+| **Deployment Manager** | Unified management for agents and skills. Profiles tab for CRUD on `.claude/agents/` YAML files, Active Processes tab for running sessions, and Environment tab for skills across all four scan locations. |
+| **Context Editor** | Rule-based editor for CLAUDE.md files with syntax-highlighted preview, section management, and line count warnings. Supports both user-scope and project-scope files. |
+| **Project Registration** | Register existing directories or scaffold a new `.claude/` structure (agents, commands, CLAUDE.md) from the UI. |
 | **Auto-Open Browser** | Server opens the app URL in the default browser on every `npm start`. Set `NO_OPEN=1` to suppress. |
+| **Redesigned UI** | Phase 9 design system with Inter/JetBrains Mono fonts, Material Symbols icons, purple (#933df5) accent on dark background, and 5-view sidebar navigation. |
 
 ---
 

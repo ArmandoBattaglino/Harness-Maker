@@ -421,3 +421,69 @@ Task #23 (Design System Foundation) was just completed by frontend-dev. This is 
 ### Handoff
 After Task #24 (New Sidebar Navigation Component): map new Sidebar.jsx, verify it imports NAV_ITEMS from constants.js, update old Sidebar.jsx entry as REPLACED in Removed Functions table. Check if STATUS_COLORS gets imported too.
 ---
+
+---
+## 2026-03-26 — Tasks #24-#31: Phase 9 Full Code Map + QA Completion
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation after Task #31 QA pass)
+
+### Context when I started
+Tasks #24-#30 (Phase 9 frontend redesign implementation) and Task #31 (QA pass) had all completed. CODE_MAP.md was current through Task #23 only. 7 files were modified/created in Tasks #24-#30: App.jsx (rewritten), Sidebar.jsx (rewritten), ProjectsView.jsx (rewritten), TerminalView.jsx (rewritten), JobView.jsx (rewritten), ContextEditorView.jsx (new), DeploymentManagerView.jsx (new). Task #31 was a QA-only task with no code changes. Previous session handoff note said to map new Sidebar, verify NAV_ITEMS import, update Removed Functions.
+
+### What I did
+1. Read all memory files in parallel (CODE_MAP, CHANGELOG, ACTIVITY_LOG, agent memory, PROGRESS, TASK_PLAN)
+2. Read all 7 Phase 9 frontend files in parallel: App.jsx, Sidebar.jsx, ProjectsView.jsx, TerminalView.jsx, JobView.jsx, ContextEditorView.jsx, DeploymentManagerView.jsx
+3. Grepped AppContext.jsx for view type changes — confirmed 5-view enum
+4. Grepped for EntitiesView imports — confirmed only the dead file itself references the old view
+5. Updated CODE_MAP.md:
+   - Header: updated to Task #31
+   - Module Index: updated 6 existing entries (App.jsx, Sidebar.jsx, ProjectsView.jsx, TerminalView.jsx, JobView.jsx, EntitiesView.jsx marked DEAD), added 2 new entries (ContextEditorView.jsx, DeploymentManagerView.jsx)
+   - Phase 9 section: rewritten from PLANNED to COMPLETED with QA results and advisory findings
+   - Key Behaviors: added 9 bullets documenting Phase 9 patterns
+   - Removed/Dead Functions: populated table with 6 entries for dead code files
+6. Appended CHANGELOG entries for Tasks #24-#31 with 40+ functions added, connection changes, dead code impact
+7. Appended ACTIVITY_LOG entry
+8. Wrote this agent memory log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header updated; 8 Module Index entries updated/added; Phase 9 section rewritten as COMPLETED; 9 Key Behaviors bullets; 6 Removed/Dead Functions entries |
+| docs/memory/CHANGELOG.md | APPENDED | Two entries: Tasks #24-#30 (full per-file + per-function breakdown) and Task #31 (QA results) |
+| docs/memory/ACTIVITY_LOG.md | APPENDED | code-mapper entry for Tasks #24-#31 |
+| docs/memory/agents/code-mapper.md | APPENDED | This session log |
+
+### Improvements delivered
+- CODE_MAP.md now covers the complete Phase 9 frontend with all 7 rewritten/created files documented in Module Index
+- Dead code explicitly flagged: EntitiesView, AgentEditor, SkillEditor, ClaudeMdEditor, JobPanel all marked in Removed/Dead Functions table — future developers know not to modify these files
+- Connection changes documented: App.jsx imports changed, NAV_ITEMS now imported from constants.js (fulfilling Task #23 design), AppContext view types updated
+- QA advisory findings preserved in Phase 9 section for future cleanup reference
+- Two behavioral regressions documented: LINE_WARN_THRESHOLD 300->80, skill write ops removed (read-only in DeploymentManagerView)
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None | — | — | — |
+
+### Decisions I made
+- Marked 5 component files as "dead code" rather than "removed" because the files still exist on disk — they are just no longer imported. This distinction matters for anyone doing `git blame` or searching the codebase.
+- Documented the LINE_WARN_THRESHOLD change (300->80) as an impact item in CHANGELOG — this is a user-facing behavioral change that could surprise users who relied on the old 300-line threshold.
+- Documented DeploymentManagerView's lack of skill editing (read-only) as a feature regression — v1 SkillEditor had full CRUD via apiPut/apiDeleteWithBody.
+- Did NOT add Function Graph entries for all 40+ new Phase 9 sub-components — Module Index + Key Behaviors + CHANGELOG provide sufficient documentation for UI components. Function Graph entries are reserved for stateful logic and API-connected functions.
+
+### What I learned
+- Sidebar.jsx now imports NAV_ITEMS from constants.js (verified via source read). STATUS_COLORS from constants.js is NOT imported by any Phase 9 component — it was created for future use but remains unused.
+- ContextEditorView uses parseRules() to split content on "## " regex — this means CLAUDE.md content without "## " headings will appear as a single rule block with an empty name. Non-obvious behavior worth noting.
+- DeploymentManagerView has a Toast component that is identical in interface to ContextEditorView's Toast — both are local implementations, not shared. Future refactor opportunity.
+- JobView fetches backgroundJobs from GET /api/v1/jobs every 5s via setInterval — this is a new polling pattern that did not exist in v1 (v1 only showed the current job from useJob hook).
+- AppContext.jsx view default changed from 'terminal' to 'projects' — confirmed via Grep (line 8: `view: 'projects'`).
+
+### State I'm leaving behind
+- CODE_MAP.md: complete through Task #31. All Phase 9 files documented. Dead code flagged.
+- CHANGELOG.md: entries for Tasks #1-#31 + Debug Session present (full project history).
+- Phase 9 is COMPLETED per QA pass. Project is v2.0 release ready.
+- 5 dead code files remain on disk (EntitiesView, AgentEditor, SkillEditor, ClaudeMdEditor, JobPanel).
+
+### Handoff
+Phase 9 is complete. No pending code-mapper work. If dead code cleanup is done, code-mapper should remove the dead file entries from Module Index and move them from "DEAD CODE" to "DELETED" in Removed Functions table. If v2.1 work begins (ARIA improvements, Tailwind token consistency in ContextEditorView), map the affected files.
+---

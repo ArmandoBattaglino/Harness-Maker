@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-03-25 after Task #23: Design System Foundation_
+_Last updated: 2026-03-26 after Task #31: Visual QA + Functional Regression Testing (Phase 9 COMPLETE)_
 
 ## Status Legend
 - UP_TO_DATE -- matches current code
@@ -11,33 +11,23 @@ _Last updated: 2026-03-25 after Task #23: Design System Foundation_
 
 | Document | Status | Last Updated | Notes |
 |----------|--------|--------------|-------|
-| README.md | UP_TO_DATE | 2026-03-18 | Still accurate -- Task #23 is internal design tokens only. Will need update after Task #30 (navigation/view changes). |
-| docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-03-18 | Reflects post-hardening state. Phase 9 is frontend-only, no security surface change. |
-| docs/ARCHITECTURE.md | UP_TO_DATE | 2026-03-18 | Component diagram still shows old 4-view layout (EntitiesView). Becomes stale after Task #24 (new sidebar) or Task #30 (app shell). Not stale yet because old views still exist in code. |
-| docs/memory/PROJECT.md | UP_TO_DATE | 2026-03-25 | Updated tech stack table with Inter, JetBrains Mono fonts and Material Symbols Outlined icons (Task #23). |
-| docs/memory/DECISIONS.md | UP_TO_DATE | 2026-03-18 | All 10 decisions still apply. Phase 9 design decisions are in CONTEXT.md. |
-| docs/memory/PROGRESS.md | UP_TO_DATE | 2026-03-25 | Task #23 marked COMPLETED by project-manager. |
-| docs/memory/CODE_MAP.md | UP_TO_DATE | 2026-03-25 | Updated by code-mapper for Task #23 (expected). |
-| docs/memory/CHANGELOG.md | UP_TO_DATE | 2026-03-25 | Updated by code-mapper for Task #23 (expected). |
-| docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-03-25 | Task #23 entries from frontend-dev, code-mapper, and documenter. |
-| Inline comments | UP_TO_DATE | 2026-03-25 | New constants.js has adequate JSDoc. Modified files have appropriate comments. |
-| docs/API.md | MISSING | -- | API surface documented in ARCHITECTURE.md. Standalone file deferred. |
+| README.md | UP_TO_DATE | 2026-03-26 | Features table updated for Phase 9: 5 views, new design system, renamed features. |
+| docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-03-18 | Phase 9 is frontend-only; no security surface change. |
+| docs/ARCHITECTURE.md | UP_TO_DATE | 2026-03-26 | Component diagram, React component tree, and Section 8 (State Management) updated for Phase 9: 5 views, AppContext, EntitiesView deprecated. |
+| docs/memory/PROJECT.md | UP_TO_DATE | 2026-03-25 | Tech stack table includes Phase 9 fonts and icons. |
+| docs/memory/DECISIONS.md | UP_TO_DATE | 2026-03-18 | All 10 decisions still apply. Phase 9 design decisions documented in CONTEXT.md. |
+| docs/memory/PROGRESS.md | UP_TO_DATE | 2026-03-26 | All 31 tasks marked COMPLETED including Phase 9. |
+| docs/memory/CODE_MAP.md | UP_TO_DATE | 2026-03-26 | Updated by code-mapper for Phase 9 tasks. |
+| docs/memory/CHANGELOG.md | UP_TO_DATE | 2026-03-26 | Updated by code-mapper for Phase 9 tasks. |
+| docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-03-26 | All Phase 9 entries present. |
+| Inline comments | UP_TO_DATE | 2026-03-26 | All Phase 9 view components have appropriate comments. |
+| docs/API.md | MISSING | -- | API surface documented in ARCHITECTURE.md Section 2. Standalone file deferred. |
 | docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. |
 
 ## Stale Sections (known gaps)
 
 - docs/memory/DECISIONS.md:DEC-001 -- Records "use node-pty-prebuilt-multiarch" but actual installed package is plain node-pty. Historical accuracy preserved intentionally; correction in PROJECT.md.
-- docs/TASK_PLAN.md Task #1 context -- Still references node-pty-prebuilt-multiarch and write-atomic as planned packages. These are the original spec; corrections documented in PROGRESS.md.
-
-## Upcoming Documentation Work (Phase 9)
-
-When subsequent Phase 9 tasks complete, the following documents will need updates:
-
-| Document | Section(s) affected | Trigger task |
-|----------|---------------------|--------------|
-| docs/ARCHITECTURE.md | Component diagram (4 views -> 5 views), React state management section, view routing | After Task #24 (New Sidebar) or Task #30 (App Shell Integration) |
-| README.md | Features table (new views, navigation changes, design system mention) | After Task #30 (App Shell Integration) |
-| Inline comments | New components will need why-not-what comments | After each Task #24-#30 |
+- client/src/views/EntitiesView.jsx -- File still exists on disk but is no longer imported by App.jsx. Marked as DEPRECATED in ARCHITECTURE.md component tree. Can be deleted in a future cleanup.
 
 ## Documentation Debt
 
@@ -49,3 +39,4 @@ When subsequent Phase 9 tasks complete, the following documents will need update
 | README -- dev workflow section | Low | Internal dev workflow documented in CLAUDE.md; no duplication needed until project is opened |
 | SECURITY_AUDIT.md LOW-03 fix | Low | Build env var allowlist for PTY spawn -- deferred to v1.1 |
 | SECURITY_AUDIT.md LOW-04 fix | Low | Refactor safeRead to cover claudemd GET path -- deferred to v1.1 |
+| Delete EntitiesView.jsx | Low | Dead code after Phase 9; kept for rollback safety |

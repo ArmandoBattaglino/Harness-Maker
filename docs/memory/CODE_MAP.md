@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-25 — after Task #23: Design System Foundation by frontend-dev — mapped by code-mapper_
+_Last updated: 2026-03-26 — after Task #31: Visual QA + Functional Regression Testing by qa-tester — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -34,23 +34,25 @@ _Last updated: 2026-03-25 — after Task #23: Design System Foundation by fronte
 ### Client Modules
 | File | Key Exports | Purpose |
 |------|-------------|---------|
-| client/src/App.jsx | default App | Root React component (stub) |
+| client/src/App.jsx | default App, MainContent (internal), AppLayout (internal) | Root React component: AppProvider wrapper, flex layout with Sidebar + MainContent view router (5 views: projects/terminal/jobs/context/deployments). Phase 9 rewrite Task #30. |
 | client/src/main.jsx | (entry) | ReactDOM.createRoot bootstrap |
 | client/src/store/AppContext.jsx | AppContext, useAppState | Global React context: activeProjectId, projects list |
 | client/src/hooks/useApi.js | apiGet, apiPost, apiPut, apiDelete, apiDeleteWithBody | Fetch wrappers with CSRF header injection and error normalization |
 | client/src/hooks/useSession.js | useSession | WebSocket hook for PTY terminal: manages WS lifecycle, reconnect logic, send+resize callbacks |
-| client/src/components/Sidebar.jsx | default Sidebar | Project list, navigation, AddProjectModal trigger |
+| client/src/components/Sidebar.jsx | default Sidebar, SidebarHeader, NavItem, SessionItem, SidebarFooter (internals) | Phase 9 redesign: imports NAV_ITEMS from constants.js, 5-view navigation, Active PTY Sessions list, New Local Session button, AddProjectModal trigger. Task #24 rewrite. |
 | client/src/components/AddProjectModal.jsx | default AddProjectModal | Modal for adding new projects |
-| client/src/views/TerminalView.jsx | default TerminalView | xterm.js terminal, WebSocket reconnect, ResizeObserver |
-| client/src/views/EntitiesView.jsx | default EntitiesView | Tab container for Agents / Skills / CLAUDE.md tabs |
+| client/src/views/TerminalView.jsx | default TerminalView, PtyHeader, StatusBarFooter, EmptyState (internals) | Phase 9 Live Terminal Hub: header bar (project name, path, kill button), Terminal.jsx embed, status bar footer (connection status, daemon info, placeholder tokens/latency). Task #26 rewrite. |
+| client/src/views/EntitiesView.jsx | default EntitiesView | **DEAD FILE** — no longer imported by App.jsx (Phase 9). Replaced by ContextEditorView + DeploymentManagerView. QA advisory LOW finding. |
 | client/src/components/AgentEditor.jsx | default AgentEditor, AgentForm (internal) | Agent list + create/edit/delete UI; calls /api/v1/agents |
 | client/src/components/SkillEditor.jsx | default SkillEditor, SkillForm (internal) | Skill list + create/edit/delete UI; calls /api/v1/skills |
 | client/src/components/ClaudeMdEditor.jsx | default ClaudeMdEditor, ClaudeMdPanel (internal) | Dual-panel CLAUDE.md editor (user + project); calls /api/v1/claudemd |
 | client/src/hooks/useJob.js | default useJob | Custom hook: manages full job lifecycle (POST → SSE → result/cancel/reset), exposes status, streamEvents, result, error |
 | client/src/components/JobPanel.jsx | default JobPanel, StreamLog, MarkdownResult, AdvancedOptions (internals) | Job Mode UI: prompt textarea, SSE stream log, react-markdown result, cancel/copy/reset actions |
-| client/src/views/JobView.jsx | default JobView | View wrapper: reads activeProjectId from AppContext, renders JobPanel for selected project |
+| client/src/views/JobView.jsx | default JobView, JobCard, StreamLog, MarkdownOutput, PromptInput, CopyButton (internals) | Phase 9 Orchestration Center: three-pane layout (job queue left, control bar + output right), inline prompt input with advanced options, SSE stream log, Markdown result, background job polling. Task #27 rewrite. |
+| client/src/views/ContextEditorView.jsx | default ContextEditorView, Header, Toast, RuleBlock (internals) | Phase 9 Context & Rules Editor: two-column layout (rule explorer left, CLAUDE.md output right), dual scope (project/user), rule parsing/editing, save/discard/copy, line count warning. Task #28 new file. |
+| client/src/views/DeploymentManagerView.jsx | default DeploymentManagerView, AgentCard, SkillCard, AgentDetail, CreateAgentModal, ActiveProcessesTab, TabBar, FormSection, FormField, Toast (internals) | Phase 9 Deployment Manager: 3-tab layout (Profiles/Active Processes/Environment), master-detail agent editing, skill viewer, agent CRUD with modal, search filter. Task #29 new file. |
 | client/src/lib/constants.js | NAV_ITEMS, STATUS_COLORS | Shared UI constants: sidebar navigation items (icon/label/view), status-to-Tailwind-class mapping for badges (Phase 9 design tokens) |
-| client/src/views/ProjectsView.jsx | default ProjectsView, StatusBadge, ConfirmDialog, formatDate (internals) | Full project list table with session status, Open Terminal action, Register/Delete with confirmation modal |
+| client/src/views/ProjectsView.jsx | default ProjectsView, ConfirmDialog, CardMenu, StatusDot, ProjectCard, AddCard, ListRow (internals) | Phase 9 Project Dashboard: grid/list dual-view, search with "/" keyboard shortcut, project cards with status dots, delete confirmation modal, scaffold CTA banner. Task #25 rewrite. |
 
 ### Client Config & Styles
 | File | Key Exports | Purpose |
@@ -1176,71 +1178,52 @@ _Last updated: 2026-03-25 — after Task #23: Design System Foundation by fronte
 - useJob hook: jobIdRef mirrors jobId state to avoid stale closure in cancelJob useCallback; status guard prevents double job submission
 - react-markdown applied in `.markdown-result` CSS scope (index.css) for consistent Markdown typography — heading colors updated to #933df5 (purple) in Task #23
 - Phase 9 Design System (Task #23): primary=#933df5, background=#000, surface scale (0a0a0a/111111/141414/1a1a1a), fonts Inter+JetBrains Mono via Google Fonts CDN, Material Symbols Outlined icons, utility classes .glass-effect/.custom-scrollbar/.active-indicator
-- client/src/lib/constants.js: NAV_ITEMS defines 5 views (projects/terminal/jobs/deployments/context); STATUS_COLORS maps 10 statuses to Tailwind class triplets. Not yet imported — Task #24 Sidebar will consume these.
+- client/src/lib/constants.js: NAV_ITEMS defines 5 views (projects/terminal/jobs/deployments/context); STATUS_COLORS maps 10 statuses to Tailwind class triplets. Imported by Sidebar.jsx (Task #24+).
+- Phase 9 App.jsx: MainContent switch routes 5 views; AppLayout wraps Sidebar + MainContent in flex layout; default case falls back to ProjectsView
+- Phase 9 Sidebar.jsx: imports NAV_ITEMS from constants.js (not local copy); shows Active PTY Sessions section with live session count; SidebarFooter shows "v1.2.0" hardcoded version
+- Phase 9 ProjectsView.jsx: dual view mode (grid cards / list table); "/" keyboard shortcut focuses search input; search filters by name or path; CardMenu with outside-click dismiss via useRef+mousedown; delete is deregister-only (same as v1)
+- Phase 9 TerminalView.jsx: wraps Terminal.jsx unchanged; PtyHeader shows project name/path/kill button; StatusBarFooter shows connection status + placeholder tokens/latency badges; handleKill dispatches REMOVE_SESSION after apiDelete
+- Phase 9 JobView.jsx: three-pane (job queue left, control bar + output right); background jobs polled every 5s via setInterval; current in-memory job from useJob shown alongside server-fetched backgroundJobs; Ctrl+Enter keyboard shortcut to run; MarkdownOutput uses react-markdown+remarkGfm; StreamLog auto-scrolls via bottomRef.scrollIntoView
+- Phase 9 ContextEditorView.jsx: two-column (Rule Explorer left, CLAUDE.md Output right); parseRules() splits on "## " headings into name+body; rulesToContent() serializes back; LINE_WARN_THRESHOLD=80, LINE_LIMIT=100 (different from v1 300-line warning); scope toggle project/user; renderHighlightedLine() does syntax highlighting in right pane
+- Phase 9 DeploymentManagerView.jsx: 3 tabs (Profiles/Active Processes/Environment); Profiles tab = master-detail agent list + AgentDetail form; Environment tab = skill viewer (read-only display); CreateAgentModal validates name against ^[a-z][a-z0-9-]*$ (same as server-side); MODEL_OPTIONS hardcoded list of Claude model IDs
+- Phase 9 QA result (Task #31): ALL 10 acceptance criteria PASS. 110/110 tests pass. Build clean (299 modules). 3 LOW advisory findings: dead EntitiesView.jsx, minimal ARIA, hardcoded hex colors in ContextEditorView.
 
-## Phase 9 — Frontend Redesign (PLANNED, not yet implemented)
+## Phase 9 — Frontend Redesign (COMPLETED)
 
-**Status:** 9 tasks planned (#23-#31), 1 completed (Task #23 — Design System Foundation).
+**Status:** ALL 9 tasks (#23-#31) COMPLETED as of 2026-03-26. QA PASSED (Task #31: 10/10 acceptance criteria, 110/110 tests, build clean).
 
-Phase 9 will completely replace the frontend UI based on 5 Stitch design exports. The following summarizes what will change and what must NOT change.
+### Summary of Changes
+- 5 views completely rewritten, 2 new views created, App.jsx routing replaced
+- Navigation: 4 views (terminal/jobs/entities/projects) replaced by 5 views (projects/terminal/jobs/context/deployments)
+- Default landing view: 'projects' (was 'terminal')
+- AppContext.jsx view type: `'projects' | 'terminal' | 'jobs' | 'deployments' | 'context'` (was: `'terminal' | 'jobs' | 'entities' | 'projects'`)
+- EntitiesView.jsx is now DEAD CODE (not imported, not deleted)
+- AgentEditor.jsx, SkillEditor.jsx, ClaudeMdEditor.jsx, JobPanel.jsx are now DEAD CODE (replaced by inline implementations in new views)
+- Terminal.jsx, useSession.js, useApi.js, useJob.js: UNCHANGED (constraint respected)
+- All server code: UNCHANGED (frontend-only phase)
+
+### QA Advisory Findings (LOW severity)
+1. EntitiesView.jsx is dead code — should be deleted in cleanup task
+2. Minimal ARIA labels on interactive elements — accessibility improvement opportunity
+3. Some hardcoded hex colors in ContextEditorView.jsx (#333333, #050505, etc.) instead of Tailwind tokens
 
 ### Design Exports (reference files, not in codebase)
-| Export Directory | View | Replaces |
-|------------------|------|----------|
-| stitch/stitch/final_project_dashboard/ | Project Dashboard | ProjectsView.jsx |
-| stitch/stitch/final_multi_agent_terminal_hub/ | Live Terminal Hub | TerminalView.jsx |
-| stitch/stitch/final_orchestration_center/ | Orchestration Center / Job Runner | JobView.jsx |
-| stitch/stitch/final_context_rules_editor/ | Context & Rules Editor | ClaudeMdEditor (entities tab) |
-| stitch/stitch/final_deployment_manager/ | Deployment Manager | AgentEditor + SkillEditor (entities tab) |
-
-### Navigation Changes
-- OLD: 4 views — terminal, jobs, entities, projects
-- NEW: 5 views — projects, terminal, jobs, context, deployments
-- 'entities' view is REMOVED — split into 'context' (CLAUDE.md editor) and 'deployments' (agents/skills)
-- Default landing view changes from 'terminal' to 'projects'
-
-### Design System Changes (Task #23)
-- Primary color: #933df5 (purple) replaces #4ade80 (green)
-- Background: #000000 (pure black) replaces #111111
-- Fonts: Inter (primary), Geist (terminal hub), JetBrains Mono (code/terminal)
-- Icons: Material Symbols Outlined (Google Fonts)
-
-### Files that MUST NOT be modified (Phase 9 constraint)
-| File | Reason |
-|------|--------|
-| client/src/components/Terminal.jsx | xterm.js instance management, FitAddon, ResizeObserver — DEC-009 |
-| client/src/hooks/useSession.js | WebSocket lifecycle + reconnect logic |
-| client/src/hooks/useApi.js | CSRF header, fetch helpers — all views depend on this |
-| client/src/hooks/useJob.js | Job lifecycle hook — SSE EventSource management |
-| server/* | Phase 9 is FRONTEND-ONLY — no backend changes |
-
-### Files that WILL be created/replaced (Tasks #23-#30)
-| Task | Expected File Changes |
-|------|----------------------|
-| #23 | **DONE** — tailwind.config.js (20+ color tokens, font families, border radius), index.html (Google Fonts CDN), index.css (utility classes, markdown theme update), client/src/lib/constants.js (NAV_ITEMS, STATUS_COLORS) |
-| #24 | New Sidebar.jsx (replaces current) |
-| #25 | New ProjectsView.jsx (dashboard layout) |
-| #26 | New TerminalView.jsx (hub layout, Terminal.jsx wrapper unchanged) |
-| #27 | New JobView.jsx (orchestration center layout) |
-| #28 | New view for CLAUDE.md editing (replaces ClaudeMdEditor tab in EntitiesView) |
-| #29 | New view for agents/skills management (replaces AgentEditor/SkillEditor tabs in EntitiesView) |
-| #30 | App.jsx / routing integration, EntitiesView.jsx likely removed |
-
-### Impact on Existing Code Map Entries
-When Phase 9 tasks execute, the following CODE_MAP entries will need updates:
-- `client/src/components/Sidebar.jsx` — will be replaced entirely
-- `client/src/views/ProjectsView.jsx` — will be replaced entirely
-- `client/src/views/TerminalView.jsx` — will be replaced entirely
-- `client/src/views/JobView.jsx` — will be replaced entirely
-- `client/src/views/EntitiesView.jsx` — will be removed (split into two new views)
-- `client/src/components/AgentEditor.jsx` — may be refactored into Deployment Manager view
-- `client/src/components/SkillEditor.jsx` — may be refactored into Deployment Manager view
-- `client/src/components/ClaudeMdEditor.jsx` — may be refactored into Context Editor view
-- `client/src/store/AppContext.jsx` — activeView types will change (add 'context', 'deployments'; remove 'entities')
+| Export Directory | View | Status |
+|------------------|------|--------|
+| stitch/stitch/final_project_dashboard/ | Project Dashboard (ProjectsView.jsx) | DONE Task #25 |
+| stitch/stitch/final_multi_agent_terminal_hub/ | Live Terminal Hub (TerminalView.jsx) | DONE Task #26 |
+| stitch/stitch/final_orchestration_center/ | Orchestration Center (JobView.jsx) | DONE Task #27 |
+| stitch/stitch/final_context_rules_editor/ | Context & Rules Editor (ContextEditorView.jsx) | DONE Task #28 |
+| stitch/stitch/final_deployment_manager/ | Deployment Manager (DeploymentManagerView.jsx) | DONE Task #29 |
 
 ---
 
-## Removed Functions
+## Removed / Dead Functions
 | Function | File | Removed in | Reason |
 |----------|------|------------|--------|
-| (none yet) | | | |
+| EntitiesView() | client/src/views/EntitiesView.jsx | Task #30 (2026-03-26) | DEAD CODE — no longer imported by App.jsx. Replaced by ContextEditorView + DeploymentManagerView. File still on disk. |
+| AgentEditor(), AgentForm() | client/src/components/AgentEditor.jsx | Task #29 (2026-03-26) | DEAD CODE — not imported by any Phase 9 view. Agent editing is now inline in DeploymentManagerView::AgentDetail. File still on disk. |
+| SkillEditor(), SkillForm() | client/src/components/SkillEditor.jsx | Task #29 (2026-03-26) | DEAD CODE — not imported by any Phase 9 view. Skill viewing is now inline in DeploymentManagerView Environment tab. File still on disk. |
+| ClaudeMdEditor(), ClaudeMdPanel() | client/src/components/ClaudeMdEditor.jsx | Task #28 (2026-03-26) | DEAD CODE — not imported by any Phase 9 view. CLAUDE.md editing is now in ContextEditorView. File still on disk. |
+| JobPanel(), StreamLog(), MarkdownResult(), AdvancedOptions() | client/src/components/JobPanel.jsx | Task #27 (2026-03-26) | DEAD CODE — not imported by Phase 9 JobView. Job UI is now inline in JobView.jsx. File still on disk. |
+| StatusBadge(), old ConfirmDialog(), old formatDate() | client/src/views/ProjectsView.jsx (v1) | Task #25 (2026-03-26) | REPLACED — old internals replaced by new Phase 9 internals (ProjectCard, CardMenu, StatusDot, ListRow, AddCard, timeAgo). |

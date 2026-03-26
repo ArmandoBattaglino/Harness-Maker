@@ -93,8 +93,8 @@ _None._
 - [TASK-18] Security hardening — validate PID range in ProcessRegistry (backend-dev) — COMPLETED 2026-03-18
   Fixed: server/services/ProcessRegistry.js. isValidPid() helper (range 1–65535), cleanupStale() and register() both guarded.
 
-## v1.1 Release Status
-**v1.2 RELEASE READY — All 22 tasks COMPLETED as of 2026-03-24.**
+## Release Status
+**v2.0 RELEASE READY — ALL 31 tasks COMPLETED as of 2026-03-26.**
 - v1 (18 tasks, Phase 0–6): COMPLETED 2026-03-18.
 - v1.1 (3 tasks, Phase 7): COMPLETED 2026-03-24.
   - TASK-19: JobRunner memory leak fixed (TTL eviction, BUG-06)
@@ -105,6 +105,11 @@ _None._
 - QA regression: 110/110 tests pass, npm audit 0 vulnerabilities.
 - Full E2E audit: 25 endpoints + 8 UI views tested, 0 bugs remaining.
 - Ready for `git tag v1.2.0`.
+- v2.0 (9 tasks, Phase 9): COMPLETED 2026-03-26.
+  - TASK-23 through TASK-30: Full frontend redesign from Stitch design exports (Tailwind, 5 new views, sidebar, app shell)
+  - TASK-31: Visual QA + Functional Regression — 110/110 tests pass, 299 modules build, 0 critical/high bugs
+- QA regression (Phase 9): 110/110 tests pass, build clean (299 modules), 0 CRITICAL/HIGH findings.
+- Ready for `git tag v2.0.0`.
 
 ## Phase 9 — Frontend Redesign (Stitch Design Export)
 **Status: COMPLETED — All 9 tasks (#23-#31) done as of 2026-03-26.**

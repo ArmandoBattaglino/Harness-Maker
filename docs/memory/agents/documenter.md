@@ -274,3 +274,60 @@ All documentation is accurate for current code. PROJECT.md reflects the new font
 ### Handoff
 After Task #24 (New Sidebar Navigation Component): ARCHITECTURE.md component diagram needs updating to show 5 views instead of 4, and EntitiesView replaced by context/deployments. After Task #30 (App Shell Integration): README.md features table and ARCHITECTURE.md frontend sections need full update.
 ---
+
+---
+## 2026-03-26 — Task #31: Phase 9 Final Documentation Audit
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel with code-mapper and project-manager)
+
+### Context when I started
+All 31 tasks are COMPLETED. Phase 9 (Frontend Redesign) delivered 5 new views replacing the old 4-view layout. Task #31 was a QA review (no code changes). The documenter had not run since Task #23 (Design System Foundation), meaning Tasks #24-#30 had accumulated documentation debt: the component diagram, React component tree, state management section, and README features table all referenced the old EntitiesView/4-view layout.
+
+### What I did
+1. Read all 7 memory files in parallel (PROJECT.md, DECISIONS.md, PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md, DOC_STATUS.md, documenter.md).
+2. Read README.md, ARCHITECTURE.md (component diagram, component tree, Section 8), App.jsx, constants.js, Sidebar.jsx, and the new view files (ProjectsView, ContextEditorView, DeploymentManagerView) to understand the full Phase 9 changes.
+3. Identified 3 stale documents: README.md (features table), ARCHITECTURE.md (component diagram, component tree, Section 8 state management), DOC_STATUS.md (Phase 9 upcoming work section now outdated).
+4. Updated README.md features table: replaced Agent Editor/Skill Editor/CLAUDE.md Editor rows with Deployment Manager and Context Editor; added Project Dashboard and Redesigned UI rows; renamed Job Mode to Job Runner; renamed Project Management to Project Registration.
+5. Updated ARCHITECTURE.md component diagram: replaced 4-view layout with 5-view layout; replaced Zustand store label with AppContext; updated Sidebar description to show 5 views and Material Symbols icons.
+6. Updated ARCHITECTURE.md React component tree: replaced old 4-view tree with new 5-view tree; marked EntitiesView as DEPRECATED; added detailed sub-component descriptions for new views.
+7. Updated ARCHITECTURE.md Section 8: corrected store file path from client/src/store.js to client/src/store/AppContext.jsx; added note about useReducer vs Zustand; updated all state table entries referencing EntitiesView, Zustand, or old component names.
+8. Rewrote DOC_STATUS.md: removed "Upcoming Documentation Work" section (no longer applicable -- all Phase 9 tasks done); updated all status rows; added EntitiesView.jsx cleanup to debt table.
+9. Appended to ACTIVITY_LOG.md.
+10. Wrote this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| README.md | MODIFIED | Features table rewritten for Phase 9: 5 views, new design system row, renamed features. |
+| docs/ARCHITECTURE.md | MODIFIED | Component diagram (5 views, AppContext label), React component tree (5 views, EntitiesView deprecated), Section 8 header/store path/state table (Zustand -> AppContext, EntitiesView -> DeploymentManagerView/ContextEditorView), version header (1.0 -> 1.3). |
+| docs/memory/DOC_STATUS.md | MODIFIED | Full refresh: all rows updated for Phase 9 completion, upcoming work section removed, debt table updated. |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log. |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended Phase 9 final documentation audit entry. |
+
+### Improvements delivered
+- README.md features table now accurately describes the 5-view UI introduced in Phase 9 instead of the old 4-view layout.
+- ARCHITECTURE.md component diagram, component tree, and state management section all reflect the actual codebase as of Phase 9 completion.
+- EntitiesView.jsx properly documented as DEPRECATED in the component tree with explanation of what replaced it.
+- Zustand references corrected to AppContext/useReducer throughout Section 8, matching the actual implementation.
+- DOC_STATUS.md is a clean snapshot of post-Phase-9 documentation health with no lingering "upcoming work" items.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| ARCHITECTURE.md Section 8 references Zustand and client/src/store.js | Original architecture specified Zustand; actual implementation used React Context + useReducer in client/src/store/AppContext.jsx | Updated store file path, added implementation note, changed all "Zustand" references in the state table to "Global (Context)" | FIXED |
+
+### Decisions I made
+- Marked EntitiesView as DEPRECATED in the component tree rather than removing it. Reasoning: the file still exists on disk (QA noted it as a LOW advisory finding). Removing it from documentation would hide the fact that dead code exists. The deprecation note tells future agents it can be safely deleted.
+- Added a version bump to ARCHITECTURE.md header (1.0 -> 1.3) to signal that the document has been substantively updated. Used 1.3 to align with the project version progression (v1.0 -> v1.1 -> v1.2 -> Phase 9).
+- Corrected Zustand references to AppContext/useReducer. The original ARCHITECTURE.md specified Zustand as the state management approach, but the actual implementation used React Context with useReducer (AppProvider/useAppState/useAppDispatch). This is a factual correction, not a design change.
+
+### What I learned
+- The documenter should ideally run after each implementation task, not just at phase boundaries. Tasks #24-#30 accumulated significant documentation debt that required a larger update effort at the end of Phase 9.
+- The Zustand-vs-AppContext divergence was not caught in earlier documentation audits because the state shape was accurate even if the mechanism was wrong. Section 8's "Principle" and "Global Store" subsections needed careful reading to detect the stale references.
+
+### State I'm leaving behind
+All documentation is accurate and current as of 2026-03-26. All 31 tasks COMPLETED. README.md, ARCHITECTURE.md, and DOC_STATUS.md all reflect the Phase 9 frontend redesign. No known stale sections remain. Project is v2.0 release-ready from a documentation perspective.
+
+### Handoff
+No outstanding documentation work. If new tasks are added (v2.1, etc.), the documenter should be called after each task as usual. If EntitiesView.jsx is deleted in a cleanup task, remove the DEPRECATED note from ARCHITECTURE.md component tree.
+---
