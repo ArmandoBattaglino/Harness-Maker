@@ -363,3 +363,61 @@ Phase 9 (Frontend Redesign) was just planned by project-manager. 9 new tasks (#2
 ### Handoff
 After TASK #23 (Design System Foundation): code-mapper should document tailwind.config.js changes, new CSS variables, font imports. After each subsequent task (#24-#30): update or replace the affected function graph entries (Sidebar, views, AppContext). Mark replaced components in Removed Functions table.
 ---
+
+---
+## 2026-03-25 — Task #23: Design System Foundation
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+Task #23 (Design System Foundation) was just completed by frontend-dev. This is the first implementation task of Phase 9. CODE_MAP.md had a Phase 9 planning section from the previous session but no actual code entries for the new design system files. CHANGELOG.md had entries through Phase 9 planning. 4 files were modified/created: tailwind.config.js (overhaul), index.html (font imports), index.css (utility classes + markdown theme), constants.js (new module).
+
+### What I did
+1. Read all memory files in parallel (CODE_MAP, CHANGELOG, ACTIVITY_LOG, agent memory, PROGRESS)
+2. Read all 4 modified/created files: tailwind.config.js, index.html, index.css, constants.js
+3. Grepped for NAV_ITEMS and STATUS_COLORS usage -- found NAV_ITEMS in Sidebar.jsx (local copy, not imported from constants.js)
+4. Updated CODE_MAP.md:
+   - Header line: updated to Task #23
+   - Module Index: added constants.js row in Client Modules; added new "Client Config & Styles" section with tailwind.config.js, index.html, index.css, postcss.config.js
+   - Function Graph: added 2 entries for NAV_ITEMS and STATUS_COLORS constants
+   - Phase 9 section: updated status to 1/9, marked Task #23 as DONE in the files table
+   - Key Behaviors: added 3 bullets for Phase 9 design system, constants.js, and markdown theme update
+5. Appended CHANGELOG entry with full per-file breakdown
+6. Appended ACTIVITY_LOG entry
+7. Wrote this agent memory log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header updated; Client Config & Styles section added to Module Index; constants.js added to Client Modules; 2 new Function Graph entries (NAV_ITEMS, STATUS_COLORS); Phase 9 section updated; 3 Key Behaviors bullets added |
+| docs/memory/CHANGELOG.md | APPENDED | Task #23 entry with per-file breakdown of all 4 files |
+| docs/memory/ACTIVITY_LOG.md | APPENDED | code-mapper entry for Task #23 |
+| docs/memory/agents/code-mapper.md | APPENDED | This session log |
+
+### Improvements delivered
+- CODE_MAP.md now has a Client Config & Styles section -- tailwind.config.js, index.html, index.css were undocumented since Task #2
+- constants.js is mapped with both exports and their connection status (not yet imported by anything)
+- Phase 9 progress is visible at a glance in the Phase 9 section
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None | -- | -- | -- |
+
+### Decisions I made
+- Created a new "Client Config & Styles" section in Module Index rather than adding these to "Client Modules" -- config/style files are fundamentally different from React components/hooks and deserve their own grouping
+- Documented NAV_ITEMS as "not yet imported" explicitly -- Sidebar.jsx has its own local copy. This prevents confusion about why changing constants.js has no effect until Task #24 replaces Sidebar.
+
+### What I learned
+- Sidebar.jsx defines its own local NAV_ITEMS array (line 6) rather than importing from constants.js. The new constants.js module was created for Task #24+ consumption, not as a refactor of existing code.
+- STATUS_COLORS uses Tailwind opacity modifier syntax (bg-success/10) which requires the custom color tokens in tailwind.config.js to resolve. This is a dependency that could break if tokens are renamed.
+- index.css .markdown-result headings were updated from green to purple (#933df5) -- this affects the existing JobPanel MarkdownResult rendering immediately, not just Phase 9 components.
+
+### State I'm leaving behind
+- CODE_MAP.md: complete through Task #23. Phase 9 section shows 1/9 tasks done.
+- CHANGELOG.md: entries through Task #23.
+- constants.js: mapped but noted as not-yet-imported. Task #24 will create the consumer.
+
+### Handoff
+After Task #24 (New Sidebar Navigation Component): map new Sidebar.jsx, verify it imports NAV_ITEMS from constants.js, update old Sidebar.jsx entry as REPLACED in Removed Functions table. Check if STATUS_COLORS gets imported too.
+---
