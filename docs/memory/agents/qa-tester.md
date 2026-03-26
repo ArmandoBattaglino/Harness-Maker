@@ -85,6 +85,80 @@ Task fully self-contained. No blockers. Next tasks:
 ---
 
 ---
+## 2026-03-26 — Task #31: Visual QA + Functional Regression Testing (Phase 9)
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+Phase 9 Frontend Redesign was fully implemented: Tasks #23-#30 all COMPLETED. All 5 new views (ProjectsView, TerminalView, JobView, ContextEditorView, DeploymentManagerView) + new Sidebar + App.jsx routing had been rewritten/created. Build passed (299 modules). All 110 existing server tests passed. My job was to do a comprehensive QA pass comparing the implementation against the Stitch design exports.
+
+### What I did
+1. Read all 7 project memory files (PROJECT.md, DECISIONS.md, PROGRESS.md, CONTEXT.md, CODE_MAP.md, ACTIVITY_LOG.md, qa-tester.md)
+2. Read all 7 new/modified React view files:
+   - App.jsx (routing + layout)
+   - Sidebar.jsx (navigation + sessions)
+   - ProjectsView.jsx (dashboard with grid/list toggle)
+   - TerminalView.jsx (PTY terminal wrapper)
+   - JobView.jsx (orchestration center with 3-pane layout)
+   - ContextEditorView.jsx (CLAUDE.md rule editor)
+   - DeploymentManagerView.jsx (agents/skills CRUD)
+3. Read shared design system files: tailwind.config.js, constants.js, AppContext.jsx, index.css, index.html
+4. Read all 4 API hook files: useApi.js, useJob.js, useSession.js, Terminal.jsx (verified NOT modified)
+5. Read all 5 Stitch code.html reference files for visual comparison
+6. Searched for console.log (none found), hardcoded URLs (only expected one in useSession.js), aria-labels (minimal)
+7. Verified no references to old "entities" view remain in code
+8. Ran `npm test` — 110/110 pass in 3.99s
+9. Ran `npm run build` — 299 modules, 0 errors (bundle size warning only)
+10. Updated TASK_PLAN.md, ACTIVITY_LOG.md, and this file
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Task #31 status: PENDING -> COMPLETED, all acceptance criteria checked |
+| docs/memory/agents/qa-tester.md | MODIFIED | Appended this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended QA task completion entry |
+
+### Improvements delivered
+- Full QA sign-off on Phase 9 redesign
+- All 10 acceptance criteria verified as PASS
+- 0 CRITICAL/HIGH bugs found
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| (none found) | N/A | N/A | N/A |
+
+### Decisions I made
+- Rated visual fidelity as PASS: the React implementations faithfully translate the Stitch HTML designs. Minor differences exist (e.g., Tailwind token names differ between Stitch CDN config and project config, some hex values normalized) but the visual result matches the design intent.
+- Rated functional regression as PASS: all API integration is correct — each view calls proper endpoints with proper hooks, CSRF header is handled by useApi.js, error states are covered.
+- Rated terminal safety as PASS: Terminal.jsx and useSession.js are completely unmodified. The xterm container has flex-1 overflow-hidden with no padding/max-width. FitAddon and ResizeObserver are preserved.
+
+### Advisory Findings (LOW severity)
+1. **Dead file:** `client/src/views/EntitiesView.jsx` still exists on disk but is no longer imported. Should be deleted in cleanup.
+2. **Minimal aria-labels:** Only 2 files use aria-* attributes (AddProjectModal.jsx, AgentEditor.jsx). New views lack semantic ARIA roles. Not a blocker but worth addressing for accessibility.
+3. **Hardcoded hex colors in ContextEditorView.jsx:** Several color values (#0f0f0f, #050505, #333333, #444444, #666666, #cccccc, #ffaa44) are inline rather than using Tailwind design tokens from tailwind.config.js. Functional but inconsistent with design system best practices.
+4. **console.error in Sidebar.jsx and TerminalView.jsx:** Acceptable for error catch blocks, but could use a proper error-reporting pattern in the future.
+
+### What I learned
+- The Phase 9 redesign was well-executed: 5 complete views + sidebar + routing all integrated correctly in a single pass
+- The design system foundation (Task #23) was critical — tailwind.config.js and constants.js enabled consistent styling across all views
+- Worktree isolation for parallel frontend agents was a good strategy — no merge conflicts in the final integration
+- The Stitch designs each had slightly different Tailwind color configs (primary was #933df5 in most but #a855f7 in terminal hub) — the implementation normalized to #933df5 which is correct
+
+### State I'm leaving behind
+- All 10 acceptance criteria PASS
+- 110/110 tests pass, build passes with 299 modules
+- 3 LOW advisory findings documented (dead file, ARIA, inline colors)
+- Phase 9 is fully QA-verified and ready for release tagging
+
+### Handoff
+Phase 9 is complete. Ready for:
+1. Delete dead EntitiesView.jsx (optional cleanup)
+2. git tag for release
+3. code-mapper + documenter + project-manager trio (post-task protocol)
+---
+
+---
 ## 2026-03-24 — Pre-v1.1 Test Suite Verification
 **Status:** COMPLETED
 **Called by:** user (direct)

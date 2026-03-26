@@ -57,7 +57,7 @@
   Added to server/index.js: browser auto-open (exec, NO_OPEN guard), in-memory rate limiter (200 req/min on /api/v1/*), GET /api/v1/version endpoint (appVersion, nodeVersion, platform), improved /health (uptime, activeSessions, activeJobs), improved startup logging ([startup] prefixed with version, binary path, config dir). Build verified clean.
 
 ## In Progress
-- [TASK-24] IN_PROGRESS 2026-03-25 — New Sidebar Navigation Component — frontend-dev — depends on #23 (COMPLETED)
+_None._
 
 ## Blocked
 _None._
@@ -107,16 +107,16 @@ _None._
 - Ready for `git tag v1.2.0`.
 
 ## Phase 9 — Frontend Redesign (Stitch Design Export)
-**Status: IN PROGRESS — 9 tasks planned (#23-#31), 2 completed.**
+**Status: COMPLETED — All 9 tasks (#23-#31) done as of 2026-03-26.**
 - [TASK-23] COMPLETED 2026-03-25 — Design System Foundation (Tailwind config, fonts, CSS, constants) — frontend-dev
 - [TASK-24] COMPLETED 2026-03-25 — New Sidebar Navigation Component — frontend-dev — depends on #23
-- [TASK-25] PENDING — Project Dashboard View (replaces ProjectsView) — frontend-dev — depends on #23, #24
-- [TASK-26] PENDING — Live Terminal Hub View (replaces TerminalView) — frontend-dev — depends on #23, #24
-- [TASK-27] PENDING — Orchestration Center / Job Runner View (replaces JobView) — frontend-dev — depends on #23, #24
-- [TASK-28] PENDING — Context & Rules Editor View (new, replaces CLAUDE.md tab) — frontend-dev — depends on #23, #24
-- [TASK-29] PENDING — Deployment Manager View (new, replaces Agents/Skills tabs) — frontend-dev — depends on #23, #24
-- [TASK-30] PENDING — App Shell, Routing, View Integration — frontend-dev — depends on #25-#29
-- [TASK-31] PENDING — Visual QA + Functional Regression Testing — qa-tester — depends on #30
+- [TASK-25] COMPLETED 2026-03-26 — Project Dashboard View (replaces ProjectsView) — frontend-dev
+- [TASK-26] COMPLETED 2026-03-26 — Live Terminal Hub View (replaces TerminalView) — frontend-dev
+- [TASK-27] COMPLETED 2026-03-26 — Orchestration Center / Job Runner View (replaces JobView) — frontend-dev
+- [TASK-28] COMPLETED 2026-03-26 — Context & Rules Editor View (new, replaces CLAUDE.md tab) — frontend-dev
+- [TASK-29] COMPLETED 2026-03-26 — Deployment Manager View (new, replaces Agents/Skills tabs) — frontend-dev
+- [TASK-30] COMPLETED 2026-03-26 — App Shell, Routing, View Integration — frontend-dev
+- [TASK-31] COMPLETED 2026-03-26 — Visual QA + Functional Regression Testing — qa-tester
 
 ## Known Issues
 - R-01 (RESOLVED): node-pty-prebuilt-multiarch not available — plain node-pty used instead

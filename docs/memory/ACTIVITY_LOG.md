@@ -1,4 +1,26 @@
 ---
+## 2026-03-26 — qa-tester — Task #31: Visual QA + Functional Regression Testing
+**Outcome:** COMPLETED
+**Summary:** Comprehensive QA pass on all Phase 9 frontend redesign work. Code review of all 7 new/modified view files, visual comparison against 5 Stitch design exports, routing/navigation verification, API integration audit, terminal safety check, and design system consistency review. npm test: 110/110 pass. npm run build: 299 modules, 0 errors. Found 0 CRITICAL/HIGH bugs, 3 LOW advisory findings (dead EntitiesView.jsx file, minimal aria-label usage, hardcoded colors in ContextEditorView). All acceptance criteria PASS.
+**Files changed:** docs/TASK_PLAN.md (Task #31 status -> COMPLETED), docs/memory/agents/qa-tester.md (appended), docs/memory/ACTIVITY_LOG.md (appended)
+**Bugs fixed:** none (0 bugs found)
+**Decisions made:** Rated all acceptance criteria as PASS based on code review + build/test verification
+**Blockers:** none
+**Next:** Phase 9 is fully complete. Ready for git tag / release.
+---
+
+---
+## 2026-03-26 — orchestrator — Tasks #25-#30: Phase 9 Frontend Redesign — All 5 Views + App Shell
+**Outcome:** COMPLETED
+**Summary:** Launched 5 frontend-dev agents in parallel (worktree isolation) for Tasks #25-#29. Agents #25/#26/#27 produced complete rewrites before hitting rate limits; agent #28 produced ContextEditorView; agent #29 failed (rate limit too early). Orchestrator manually created DeploymentManagerView.jsx (#29) and updated App.jsx routing (#30). All 6 files committed, build passes (299 modules).
+**Files changed:** client/src/views/ProjectsView.jsx (REWRITTEN), client/src/views/TerminalView.jsx (REWRITTEN), client/src/views/JobView.jsx (REWRITTEN), client/src/views/ContextEditorView.jsx (CREATED), client/src/views/DeploymentManagerView.jsx (CREATED), client/src/App.jsx (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Used worktree isolation for parallel frontend agents to avoid file conflicts; completed #29 manually after agent rate limit; integrated #30 (routing) inline rather than separate agent since it's a simple wiring task
+**Blockers:** none
+**Next:** Task #31 (Visual QA + Functional Regression Testing) is now unblocked. qa-tester should run next.
+---
+
+---
 ## 2026-03-25 — code-mapper — Task #23: Design System Foundation — CODE_MAP + CHANGELOG Update
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md for Task #23 completion: added client/src/lib/constants.js to Module Index and Function Graph (NAV_ITEMS, STATUS_COLORS), added Client Config & Styles section (tailwind.config.js, index.html, index.css, postcss.config.js), updated Phase 9 section status to 1/9 completed, added Key Behaviors bullets for design system. Appended detailed CHANGELOG entry with per-file breakdown of all 4 modified/created files.
