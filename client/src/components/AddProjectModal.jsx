@@ -2,13 +2,16 @@ import { useState } from 'react';
 import { apiPost } from '../hooks/useApi.js';
 import { useAppDispatch } from '../store/AppContext.jsx';
 
-export default function AddProjectModal({ onClose }) {
+export default function AddProjectModal({ onClose, mode = 'register' }) {
   const dispatch = useAppDispatch();
   const [name, setName] = useState('');
   const [path, setPath] = useState('');
-  const [scaffold, setScaffold] = useState(true);
+  const [scaffold, setScaffold] = useState(mode === 'scaffold');
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const title = mode === 'scaffold' ? 'Scaffold New Project' : 'Register Existing Project';
+  const submitLabel = mode === 'scaffold' ? 'Scaffold Project' : 'Add Project';
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -37,7 +40,7 @@ export default function AddProjectModal({ onClose }) {
         style={{ maxWidth: '440px' }}
       >
         <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-white">Add Project</h2>
+          <h2 className="text-sm font-semibold text-white">{title}</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-white transition-colors"
@@ -105,7 +108,7 @@ export default function AddProjectModal({ onClose }) {
               disabled={submitting || !name.trim() || !path.trim()}
               className="rounded border border-green-700 bg-green-900 bg-opacity-40 px-4 py-2 text-xs text-green-300 hover:bg-opacity-70 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              {submitting ? 'Adding...' : 'Add Project'}
+              {submitting ? 'Working...' : submitLabel}
             </button>
           </div>
         </form>

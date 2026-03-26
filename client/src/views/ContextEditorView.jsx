@@ -257,6 +257,18 @@ export default function ContextEditorView() {
     });
   }, [content]);
 
+  // ---- Scope switch with unsaved-changes guard (BUG-09 fix) ----
+  const handleScopeSwitch = useCallback((newScope) => {
+    if (newScope === scope) return;
+    if (hasChanges) {
+      const confirmed = window.confirm(
+        'You have unsaved changes. Discard them and switch tabs?'
+      );
+      if (!confirmed) return;
+    }
+    setScope(newScope);
+  }, [scope, hasChanges]);
+
   // ---- Empty state: project scope with no project ----
   if (scope === 'project' && !activeProjectId && !loading) {
     return (
@@ -264,7 +276,7 @@ export default function ContextEditorView() {
         {/* Header */}
         <Header
           scope={scope}
-          onScopeChange={setScope}
+          onScopeChange={handleScopeSwitch}
           hasChanges={false}
           saving={false}
           onSave={handleSave}
@@ -290,7 +302,7 @@ export default function ContextEditorView() {
       <div className="flex flex-col flex-1 min-w-0 bg-black">
         <Header
           scope={scope}
-          onScopeChange={setScope}
+          onScopeChange={handleScopeSwitch}
           hasChanges={false}
           saving={false}
           onSave={handleSave}
@@ -309,7 +321,7 @@ export default function ContextEditorView() {
       <div className="flex flex-col flex-1 min-w-0 bg-black">
         <Header
           scope={scope}
-          onScopeChange={setScope}
+          onScopeChange={handleScopeSwitch}
           hasChanges={false}
           saving={false}
           onSave={handleSave}
@@ -331,7 +343,7 @@ export default function ContextEditorView() {
       {/* Header */}
       <Header
         scope={scope}
-        onScopeChange={setScope}
+        onScopeChange={handleScopeSwitch}
         hasChanges={hasChanges}
         saving={saving}
         onSave={handleSave}

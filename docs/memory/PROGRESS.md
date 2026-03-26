@@ -110,6 +110,17 @@ _None._
   - TASK-31: Visual QA + Functional Regression — 110/110 tests pass, 299 modules build, 0 critical/high bugs
 - QA regression (Phase 9): 110/110 tests pass, build clean (299 modules), 0 CRITICAL/HIGH findings.
 - Ready for `git tag v2.0.0`.
+- v2.1 (10 tasks, Phase 10): 9/10 COMPLETED 2026-03-26. TASK-41 (regression QA) pending.
+  - TASK-32: CSP fix — Google Fonts unblocked (fontSrc + styleSrc updated in security.js)
+  - TASK-33: JobRunner child.on('error') handler + stdin.end() try-catch
+  - TASK-34: Sidebar creatingSessionRef race condition lock
+  - TASK-35: ContextEditorView handleScopeSwitch confirmation guard
+  - TASK-36: Terminal background #1a1a1a → #000000
+  - TASK-37: Sidebar sessionError state with visible UI feedback
+  - TASK-38: SidebarFooter dynamic version via /api/v1/version + settings icon de-interactivized
+  - TASK-39: Logo container overflow-hidden
+  - TASK-40: AddProjectModal mode prop (register/scaffold), ProjectCard focus-within accessibility
+  - Build: 299 modules, 0 errors
 
 ## Phase 9 — Frontend Redesign (Stitch Design Export)
 **Status: COMPLETED — All 9 tasks (#23-#31) done as of 2026-03-26.**

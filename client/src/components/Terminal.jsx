@@ -8,7 +8,7 @@ const TERM_OPTIONS = {
   cursorBlink: true,
   fontSize: 14,
   fontFamily: 'Cascadia Code, Consolas, monospace',
-  theme: { background: '#1a1a1a' },
+  theme: { background: '#000000' },
 };
 
 // Debounce helper — returns a function that delays invoking fn by wait ms

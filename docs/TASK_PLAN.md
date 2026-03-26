@@ -2734,6 +2734,630 @@ Acceptance Criteria:
 Dependencies: TASK #30
 ---
 
+TASK #32: Bug Fix — CSP Blocks Google Fonts (BUG-11, blocks BUG-13, BUG-15)
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  The Content Security Policy defined in `server/middleware/security.js` sets
+  `fontSrc: ["'self'"]`, which blocks the browser from loading any external font files.
+  The application's `client/index.html` loads three font families from Google Fonts CDN:
+  - Inter (UI font)
+  - JetBrains Mono (terminal/code font)
+  - Material Symbols Outlined (icon font)
+
+  Because all three are served from `fonts.gstatic.com`, the CSP blocks them entirely.
+  The Inter and JetBrains Mono fonts fall back to system sans-serif/monospace (a cosmetic
+  regression), but Material Symbols Outlined has NO fallback — every `<span>` with class
+  `material-symbols-outlined` renders its text content (the icon name) as literal plain text.
+  This means: `dashboard`, `terminal`, `play_arrow`, `memory`, `description`, `search`,
+  `settings`, `add`, `rocket_launch`, `notifications`, `grid_view`, `list`, `content_copy`,
+  `vertical_split`, `close`, `bolt`, `toll`, `timer`, `drag_indicator`, `add_circle`,
+  `auto_fix_high`, `smart_toy`, `extension`, `delete`, `save`, etc.
+
+  WORKING DIRECTORY: `C:\Users\arman\Downloads\Test workflows - Copia`
+
+  FILE TO MODIFY: `server/middleware/security.js`
+
+  CURRENT CODE (lines 9-18):
+  ```js
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      connectSrc: ["'self'", 'ws://127.0.0.1:*'],
+      imgSrc: ["'self'", 'data:'],
+      fontSrc: ["'self'"],
+    },
+  },
+  ```
+
+  REQUIRED FIX — update two directives:
+  ```js
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      connectSrc: ["'self'", 'ws://127.0.0.1:*'],
+      imgSrc: ["'self'", 'data:'],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+    },
+  },
+  ```
+
+  EXPLANATION:
+  - `styleSrc` must include `https://fonts.googleapis.com` because the CSS files that
+    define the @font-face rules are served from that domain. Without this, the <link>
+    tags in index.html are blocked.
+  - `fontSrc` must include `https://fonts.gstatic.com` because the actual .woff2 font
+    binary files are served from that domain.
+  - This is the minimal, safe allowlist. We are NOT opening `*` or `data:` for fonts.
+  - This does NOT violate SEC-07 (helmet headers requirement) — CSP is still enforced,
+    just with the correct allowlist for fonts the app actually uses.
+
+  VERIFICATION:
+  1. `npm start` — open http://127.0.0.1:3000/ in Chrome
+  2. Open DevTools → Console — VERIFY: zero CSP violation errors
+  3. VERIFY: all Material Symbols icons render as graphical glyphs (not text)
+  4. VERIFY: Inter font loads (compare letter shapes with system font)
+  5. VERIFY: JetBrains Mono loads in the terminal and code areas
+  6. `npm test` — all 110 tests pass
+  7. `npm run build` — 0 errors
+
+  NOTE: This fix also resolves BUG-13 (logo text overflow — caused by icon text rendering
+  inside a small container) and BUG-15 (search bar showing "search" as text).
+
+Knowledge: none
+Acceptance Criteria:
+  - [ ] `fontSrc` includes `https://fonts.gstatic.com` in security.js
+  - [ ] `styleSrc` includes `https://fonts.googleapis.com` in security.js
+  - [ ] Zero CSP violation errors in Chrome DevTools Console
+  - [ ] All Material Symbols icons render as graphical icons across all 5 views
+  - [ ] Inter and JetBrains Mono fonts load correctly
+  - [ ] `npm test` passes with 110 tests (0 failures)
+  - [ ] `npm run build` passes with 0 errors
+  - [ ] No other CSP directives are loosened (defaultSrc, scriptSrc, connectSrc unchanged)
+Dependencies: none
+---
+
+TASK #33: Bug Fix — JobRunner Missing child.on('error') Handler (BUG-08)
+Agent: backend-dev
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  In `server/services/JobRunner.js`, the `startJob()` method spawns a child process via
+  `spawn(this.claudeBin, args, { shell: false })` at line 116. The code wires up handlers
+  for `child.stdout` (via readline), `child.stderr.on('data')`, and `child.on('close')`,
+  but it does NOT attach a `child.on('error')` handler.
+
+  If the claude binary cannot be executed (e.g., file not found, permissions error, or
+  corrupted executable), Node.js emits an `'error'` event on the ChildProcess object.
+  Without a handler, this becomes an unhandled error that can crash the entire server
+  process. Additionally, the `child.stdin.end()` call at line 125 (called immediately
+  after spawn) may throw synchronously if the stream is already destroyed.
+
+  Even in non-crash scenarios, the job will be left in `status: 'running'` permanently
+  because the `'close'` event may never fire after a spawn error — creating a ghost job
+  that cannot be cancelled and leaks memory.
+
+  WORKING DIRECTORY: `C:\Users\arman\Downloads\Test workflows - Copia`
+
+  FILE TO MODIFY: `server/services/JobRunner.js`
+
+  REQUIRED FIX — add `child.on('error')` handler immediately after the `child.stdin.end()`
+  call (around line 126):
+  ```js
+  child.stdin.end();
+
+  // Handle spawn errors (binary not found, permissions, etc.)
+  // Without this handler, a spawn failure becomes an unhandled exception
+  // that crashes the server process.
+  child.on('error', (err) => {
+    console.error(`[JobRunner] Spawn error jobId=${jobId}: ${err.message}`);
+    // NOTE: prompt is intentionally NOT logged (SEC-08)
+
+    if (job.status === 'running') {
+      job.status = 'error';
+      job.completedAt = new Date();
+
+      // Notify all connected SSE clients of the failure
+      for (const res of job.clients) {
+        try {
+          sendSse(res, { type: 'done', result: null, exitCode: null, error: err.message });
+        } catch {
+          // Client gone — ignore
+        }
+      }
+      closeAllClients(job);
+
+      // Schedule eviction so the error job is cleaned up (BUG-06 pattern)
+      this._scheduleEviction(jobId);
+    }
+  });
+  ```
+
+  ALSO: wrap `child.stdin.end()` in a try-catch to prevent a synchronous throw if the
+  stream is already destroyed:
+  ```js
+  try {
+    child.stdin.end();
+  } catch {
+    // stdin may already be destroyed if spawn failed synchronously
+  }
+  ```
+
+  CONSTRAINTS:
+  - Do not change the `shell: false` spawn option (SEC-02).
+  - Do not log the prompt content (SEC-08).
+  - Do not add new npm dependencies.
+  - `npm test` and `npm run build` must pass.
+
+Knowledge: none
+Acceptance Criteria:
+  - [ ] `child.on('error')` handler attached in JobRunner.startJob()
+  - [ ] Error handler sets job.status to 'error' and job.completedAt
+  - [ ] Error handler sends a terminal SSE event to all connected clients
+  - [ ] Error handler calls closeAllClients() and schedules eviction
+  - [ ] `child.stdin.end()` wrapped in try-catch
+  - [ ] Prompt content is NOT logged in the error handler (SEC-08)
+  - [ ] `npm test` passes with 0 failures
+  - [ ] `npm run build` passes with 0 errors
+Dependencies: none
+---
+
+TASK #34: Bug Fix — Sidebar Duplicate Session Race Condition (BUG-10)
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  In `client/src/components/Sidebar.jsx`, the `handleProjectClick(project)` function
+  checks `if (!state.sessions[project.id])` and then calls `apiPost('/api/v1/sessions')`.
+  Because the API call is asynchronous and does not update `state.sessions` until the
+  response returns (via the `SET_SESSION` dispatch), a rapid double-click on the same
+  project card will pass the guard twice — both clicks see `state.sessions[project.id]`
+  as falsy — and two session creation requests hit the server, spawning two PTY processes
+  for the same project.
+
+  This creates orphan PTY sessions: one is stored in AppContext.sessions, the other is
+  alive on the server but unreachable from the UI, consuming resources until the idle
+  sweeper kills it.
+
+  WORKING DIRECTORY: `C:\Users\arman\Downloads\Test workflows - Copia`
+
+  FILE TO MODIFY: `client/src/components/Sidebar.jsx`
+
+  RECOMMENDED FIX — add a `creatingSession` ref to block concurrent creation:
+  ```jsx
+  const creatingSessionRef = useRef(false);
+
+  async function handleProjectClick(project) {
+    dispatch({ type: 'SET_ACTIVE_PROJECT', payload: project.id });
+    dispatch({ type: 'SET_VIEW', payload: 'terminal' });
+
+    if (!state.sessions[project.id] && !creatingSessionRef.current) {
+      creatingSessionRef.current = true;
+      try {
+        const data = await apiPost('/api/v1/sessions', { projectId: project.id });
+        dispatch({
+          type: 'SET_SESSION',
+          payload: { projectId: project.id, session: data.session },
+        });
+      } catch (err) {
+        console.error('Failed to create session:', err.message);
+      } finally {
+        creatingSessionRef.current = false;
+      }
+    }
+  }
+  ```
+
+  Using a `useRef` instead of `useState` avoids unnecessary re-renders and works correctly
+  across async boundaries (refs are mutable and always reflect the latest value).
+
+  NOTE: The `useRef` import is already present in the file (used by AddProjectModal or
+  can be added to the existing import from 'react').
+
+  CONSTRAINTS:
+  - Do NOT modify `Terminal.jsx` or `useSession.js` (these are off-limits per Phase 9 rules).
+  - Do not add new npm dependencies.
+  - `npm run build` must pass.
+
+Knowledge: none
+Acceptance Criteria:
+  - [ ] Rapid double-click on a project card creates only ONE session (not two)
+  - [ ] `creatingSessionRef` blocks concurrent apiPost calls for session creation
+  - [ ] The ref is reset in the `finally` block (even on error)
+  - [ ] Existing session reuse logic (`if (!state.sessions[project.id])`) still works
+  - [ ] `npm run build` passes with 0 errors
+Dependencies: none
+---
+
+TASK #35: Bug Fix — ContextEditorView Unsaved Changes Data Loss (BUG-09)
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  In `client/src/views/ContextEditorView.jsx`, the scope tabs ("Project Rules" / "User
+  Global") call `onScopeChange(newScope)` which updates the `scope` state variable. This
+  triggers the `loadContent` useCallback (which depends on `[activeProjectId, scope]`),
+  which in turn triggers the `useEffect` at line 182–184 that fires `loadContent()`.
+
+  The `loadContent` function overwrites `content`, `originalContent`, and `rules` with
+  fresh data from the API — silently discarding any unsaved edits the user has made.
+
+  SCENARIO:
+  1. User is on "Project Rules" tab, editing a rule body
+  2. User clicks "User Global" tab before clicking "Push Changes"
+  3. The loadContent effect fires, all edits are lost with no confirmation
+
+  WORKING DIRECTORY: `C:\Users\arman\Downloads\Test workflows - Copia`
+
+  FILE TO MODIFY: `client/src/views/ContextEditorView.jsx`
+
+  RECOMMENDED FIX — add a confirmation guard when switching scope:
+  In the `Header` component, the `onScopeChange` callbacks should be intercepted:
+  ```jsx
+  function handleScopeSwitch(newScope) {
+    if (newScope === scope) return; // already on this tab
+    if (hasChanges) {
+      const confirmed = window.confirm(
+        'You have unsaved changes. Discard them and switch tabs?'
+      );
+      if (!confirmed) return;
+    }
+    setScope(newScope);
+  }
+  ```
+
+  Then pass `handleScopeSwitch` as the `onScopeChange` prop to `<Header>` instead of
+  the raw `setScope`.
+
+  ALTERNATIVE: If the team prefers a non-blocking approach, the "Discard" button can
+  be auto-triggered before the scope switch, or a custom modal can be used instead of
+  `window.confirm`. The minimum viable fix is the `window.confirm` approach.
+
+  CONSTRAINTS:
+  - Do not modify any backend files.
+  - Do not add new npm dependencies.
+  - `npm run build` must pass.
+
+Knowledge: none
+Acceptance Criteria:
+  - [ ] Switching scope tabs when `hasChanges === true` shows a confirmation dialog
+  - [ ] Clicking "Cancel" on the dialog keeps the user on the current tab (no data loss)
+  - [ ] Clicking "OK" on the dialog switches tabs and loads the new scope data
+  - [ ] Switching tabs when `hasChanges === false` does NOT show the dialog (no-op guard)
+  - [ ] `npm run build` passes with 0 errors
+Dependencies: none
+---
+
+TASK #36: Bug Fix — Terminal Background Color Mismatch (BUG-17)
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  The `Terminal.jsx` component (client/src/components/Terminal.jsx) sets the xterm.js
+  terminal background color to `#1a1a1a` in two places:
+  - Line 11: `TERM_OPTIONS.theme.background = '#1a1a1a'`
+  - Line 110: inline style `backgroundColor: '#1a1a1a'`
+
+  The Stitch design specification and `tailwind.config.js` define the terminal background
+  as pure black (`terminal-bg: '#000000'`). The surrounding `TerminalView.jsx` container
+  uses `bg-black` (which resolves to `#000000`). This creates a visible 2-tone effect:
+  the xterm.js area is lighter (#1a1a1a) than the surrounding chrome (#000000).
+
+  WORKING DIRECTORY: `C:\Users\arman\Downloads\Test workflows - Copia`
+
+  FILE TO MODIFY: `client/src/components/Terminal.jsx`
+
+  REQUIRED FIX:
+  1. Line 11: Change `theme: { background: '#1a1a1a' }` → `theme: { background: '#000000' }`
+  2. Line 110: Change `backgroundColor: '#1a1a1a'` → `backgroundColor: '#000000'`
+
+  CONSTRAINT: This is the ONLY permitted modification to Terminal.jsx. Do not change
+  any other terminal options (fontSize, fontFamily, cursorBlink). Do not refactor the
+  component. The xterm.js instance lifecycle must remain untouched.
+
+Knowledge: none
+Acceptance Criteria:
+  - [ ] xterm.js background is `#000000` (matches Tailwind `terminal-bg` token)
+  - [ ] Terminal container inline style uses `#000000`
+  - [ ] No 2-tone visual mismatch between xterm area and surrounding view
+  - [ ] `npm run build` passes with 0 errors
+Dependencies: none
+---
+
+TASK #37: Bug Fix — Sidebar Error Feedback for Failed Session Creation (BUG-12, BUG-18)
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  When a user clicks a project card in the sidebar, `handleProjectClick` calls
+  `apiPost('/api/v1/sessions', { projectId })`. If this API call fails (e.g., the
+  claude binary is not found on PATH, the project path doesn't exist, or the project
+  directory is inaccessible), the catch block only does `console.error('Failed to
+  create session:', err.message)`. The user sees:
+  - No error message anywhere in the UI
+  - The terminal view shows "DISCONNECTED" with no explanation
+  - The "Active PTY Sessions" section stays at "0 Total"
+  - No indication of what went wrong or how to fix it
+
+  This is especially problematic because `claude` not being on PATH is a common
+  first-run issue — the user has no way to know what's happening.
+
+  WORKING DIRECTORY: `C:\Users\arman\Downloads\Test workflows - Copia`
+
+  FILE TO MODIFY: `client/src/components/Sidebar.jsx`
+
+  RECOMMENDED FIX — add a visible error state:
+  1. Add a `sessionError` state variable: `const [sessionError, setSessionError] = useState(null);`
+  2. In the `catch` block of `handleProjectClick`, set it:
+     ```js
+     } catch (err) {
+       console.error('Failed to create session:', err.message);
+       setSessionError(err.message);
+       // Auto-clear after 8 seconds
+       setTimeout(() => setSessionError(null), 8000);
+     }
+     ```
+  3. Render the error in the "Active PTY Sessions" section, below the loadError paragraph:
+     ```jsx
+     {sessionError && (
+       <p className="px-4 pb-2 text-xs text-error">
+         Session failed: {sessionError}
+       </p>
+     )}
+     ```
+
+  This gives the user immediate visibility into why the terminal is "DISCONNECTED" and
+  what error the server returned (e.g., "claude binary not found", "ENOENT", "spawn error").
+
+  CONSTRAINTS:
+  - Do NOT modify Terminal.jsx or useSession.js.
+  - Do not add new npm dependencies.
+  - `npm run build` must pass.
+
+Knowledge: none
+Acceptance Criteria:
+  - [ ] When session creation fails, an error message appears in the sidebar
+  - [ ] Error message shows the server's error text (e.g., "claude binary not found")
+  - [ ] Error message auto-clears after a reasonable timeout (5-10 seconds)
+  - [ ] Successful session creation does NOT show an error
+  - [ ] `npm run build` passes with 0 errors
+Dependencies: none
+---
+
+TASK #38: Bug Fix — Sidebar Footer Hardcoded Version + Non-Functional Settings (BUG-19, BUG-20)
+Agent: frontend-dev
+Priority: LOW
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  Two minor issues in the `SidebarFooter` sub-component of `client/src/components/Sidebar.jsx`:
+
+  **Issue 1 (BUG-20):** The version number is hardcoded as `v1.2.0` (line 209). It should
+  dynamically read from the API so it stays in sync with `package.json`.
+
+  **Issue 2 (BUG-19):** The "settings" icon/text has `cursor-pointer` and `hover:text-text-main`
+  styles suggesting it's interactive, but there is no `onClick` handler — clicking it does
+  nothing. This is misleading UX.
+
+  WORKING DIRECTORY: `C:\Users\arman\Downloads\Test workflows - Copia`
+
+  FILE TO MODIFY: `client/src/components/Sidebar.jsx`
+
+  RECOMMENDED FIX FOR ISSUE 1:
+  The backend already exposes `GET /api/v1/version` which returns `{ appVersion, nodeVersion,
+  platform }`. Fetch the version on mount and display it:
+  ```jsx
+  const [appVersion, setAppVersion] = useState('...');
+  useEffect(() => {
+    apiGet('/api/v1/version')
+      .then((data) => setAppVersion(data.appVersion ?? '0.0.0'))
+      .catch(() => setAppVersion('err'));
+  }, []);
+  ```
+  Then render `v{appVersion}` instead of `v1.2.0`.
+
+  RECOMMENDED FIX FOR ISSUE 2:
+  Option A (preferred): Remove `cursor-pointer` and hover styles from the settings span
+  to make it look non-interactive (since no settings page exists yet). Keep the icon but
+  style it as disabled/muted.
+  Option B: Add a simple `onClick` handler that dispatches `SET_VIEW` to a 'settings' view
+  — but this requires creating a SettingsView which is out of scope. Option A is preferred.
+
+  CONSTRAINTS:
+  - Do not add new npm dependencies.
+  - `npm run build` must pass.
+
+Knowledge: none
+Acceptance Criteria:
+  - [ ] Version in sidebar footer is fetched from `/api/v1/version` API (not hardcoded)
+  - [ ] Settings icon no longer looks clickable if no settings view exists, OR links to a
+        meaningful action
+  - [ ] `npm run build` passes with 0 errors
+Dependencies: none
+---
+
+TASK #39: Bug Fix — Sidebar Header Logo Overflow Guard (BUG-13)
+Agent: frontend-dev
+Priority: LOW
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  In `client/src/components/Sidebar.jsx`, the `SidebarHeader` sub-component renders a
+  logo container (line 127):
+  ```jsx
+  <div className="size-7 rounded bg-gradient-to-br from-primary to-purple-800 flex items-center justify-center text-white shrink-0">
+    <span className="material-symbols-outlined text-[16px]">terminal</span>
+  </div>
+  ```
+
+  When Material Symbols fonts are NOT loaded (BUG-11), the word "terminal" renders as
+  plain text (8 characters) inside a 28px × 28px container. The text overflows the box
+  and overlaps with the adjacent "Claude Code" title.
+
+  Even after BUG-11 (TASK #32) is fixed and icons render properly, there is no safety
+  net if the font fails to load for any reason (e.g., offline mode, slow network).
+
+  WORKING DIRECTORY: `C:\Users\arman\Downloads\Test workflows - Copia`
+
+  FILE TO MODIFY: `client/src/components/Sidebar.jsx`
+
+  REQUIRED FIX — add `overflow-hidden` to the logo container:
+  ```jsx
+  <div className="size-7 rounded bg-gradient-to-br from-primary to-purple-800 flex items-center justify-center text-white shrink-0 overflow-hidden">
+  ```
+
+  This ensures that even if the icon font fails, the fallback text is clipped to the
+  container bounds and does not disrupt the layout.
+
+  CONSTRAINTS:
+  - Minimal change — only add a Tailwind class.
+  - Do not add new npm dependencies.
+  - `npm run build` must pass.
+
+Knowledge: none
+Acceptance Criteria:
+  - [ ] Logo container has `overflow-hidden` class
+  - [ ] If icon font fails to load, fallback text is clipped (not overflowing)
+  - [ ] When icon font loads correctly, icon renders normally within the container
+  - [ ] `npm run build` passes with 0 errors
+Dependencies: none
+---
+
+TASK #40: Bug Fix — Project Dashboard Accessibility & Modal Context (BUG-14, BUG-16, BUG-21)
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Three related UX/accessibility issues surfaced during the full QA pass:
+
+  **Issue 1 (BUG-14):** In `ProjectsView.jsx`, both the "Register Existing Project" dashed
+  card and the "Scaffold New Project" purple button at the bottom call `setShowModal(true)`,
+  opening the same `AddProjectModal` with identical title, fields, and behavior. The
+  "Scaffold New Project" CTA with its `rocket_launch` icon and persuasive copy creates an
+  expectation of project scaffolding (templates, language selection), but delivers the same
+  generic "Add Project" modal.
+
+  FIX: Pass a `mode` prop to `AddProjectModal`:
+  - `mode="register"` → title "Register Existing Project", current fields (name, path)
+  - `mode="scaffold"` → title "Scaffold New Project", same fields for now but with a
+    subtitle like "Scaffolding features coming soon" or with an additional "Template"
+    dropdown as a placeholder. At minimum, differentiate the modal title.
+  Add state: `const [modalMode, setModalMode] = useState(null);`
+  "Register" sets `setModalMode('register')`, "Scaffold" sets `setModalMode('scaffold')`.
+
+  **Issue 2 (BUG-16):** The three-dot menu (more_vert icon) on project cards is only
+  revealed via mouse hover (CSS `opacity-0 group-hover:opacity-100`). Keyboard users
+  cannot Tab-navigate to it or activate it.
+
+  FIX: Keep the hover reveal for aesthetics, but add `focus-within:opacity-100` to the
+  parent group so the button also becomes visible when focused via keyboard. Ensure the
+  button element is focusable (`tabIndex={0}` if needed, though `<button>` is already
+  focusable by default).
+
+  **Issue 3 (BUG-21):** The "Register Agent" modal in `DeploymentManagerView.jsx` opens
+  with a generic title and does not indicate whether the agent will be created at project
+  or user scope based on the current context.
+
+  FIX: If `activeProjectId` is set, default the scope toggle to "Project" and show the
+  project name in the modal subtitle. If no project is selected, default to "User (global)".
+
+  WORKING DIRECTORY: `C:\Users\arman\Downloads\Test workflows - Copia`
+
+  FILES TO MODIFY:
+  - `client/src/views/ProjectsView.jsx` (BUG-14 + BUG-16)
+  - `client/src/components/AddProjectModal.jsx` (BUG-14 — accept `mode` prop)
+  - `client/src/views/DeploymentManagerView.jsx` (BUG-21)
+
+  CONSTRAINTS:
+  - Do not modify backend files.
+  - Do not add new npm dependencies.
+  - `npm run build` must pass.
+
+Knowledge: none
+Acceptance Criteria:
+  - [ ] "Register Existing Project" and "Scaffold New Project" open modals with different titles
+  - [ ] AddProjectModal accepts a `mode` prop that controls the displayed title
+  - [ ] Three-dot menu on project cards is reachable via keyboard Tab navigation
+  - [ ] Three-dot menu becomes visible on focus (not only on hover)
+  - [ ] "Register Agent" modal defaults scope based on current project context
+  - [ ] `npm run build` passes with 0 errors
+Dependencies: TASK #32
+---
+
+TASK #41: Phase 10 — Post-Fix Regression QA
+Agent: qa-tester
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  After all Phase 10 bug fixes (Tasks #32-#40) are implemented, run a targeted regression
+  test to verify:
+  1. All 11 bugs (BUG-08 through BUG-21) identified in the QA Bug Report are resolved
+  2. No new regressions were introduced by the fixes
+  3. The existing 110-test suite still passes
+
+  TEST PLAN:
+  1. Start the server with `npm start` — verify clean startup with no errors
+  2. Open http://127.0.0.1:3000/ in Chrome
+  3. Open DevTools Console — VERIFY zero CSP violation errors (BUG-11 fix)
+  4. VERIFY all Material Symbols icons render as graphical glyphs across all 5 views
+  5. VERIFY Inter and JetBrains Mono fonts are loaded (inspect computed styles)
+  6. VERIFY sidebar header logo icon does not overflow (BUG-13 fix)
+  7. Navigate to Project Dashboard: VERIFY search bar icon renders correctly (BUG-15 fix)
+  8. VERIFY "Register Existing Project" and "Scaffold" open modals with different titles (BUG-14 fix)
+  9. VERIFY three-dot menu on cards is keyboard-accessible (BUG-16 fix)
+  10. Rapid double-click a project card — VERIFY only one session is created (BUG-10 fix)
+  11. If session creation fails — VERIFY error message appears in sidebar (BUG-12/18 fix)
+  12. Navigate to Terminal View — VERIFY terminal background is #000000 (BUG-17 fix)
+  13. Navigate to Context Editor — edit a rule, then switch scope tab — VERIFY confirmation
+      dialog appears (BUG-09 fix)
+  14. Navigate to Deployments — click "Register Agent" — VERIFY modal reflects scope (BUG-21 fix)
+  15. Check sidebar footer — VERIFY version is dynamically fetched (BUG-20 fix)
+  16. Check sidebar footer — VERIFY settings icon is not misleadingly interactive (BUG-19 fix)
+  17. Run `npm test` — VERIFY all 110 tests pass with 0 failures
+  18. Run `npm run build` — VERIFY 0 errors
+
+  BUG REPORT REFERENCE: See `bug_report.md` in the project artifacts for the original
+  detailed findings with screenshots and recordings.
+
+Knowledge: none
+Acceptance Criteria:
+  - [ ] All 11 bugs (BUG-08 through BUG-21) verified as fixed
+  - [ ] Zero CSP violation errors in Chrome DevTools Console
+  - [ ] All Material Symbols icons render correctly in all 5 views
+  - [ ] No new console errors introduced
+  - [ ] Sidebar header, footer, and session section work correctly
+  - [ ] Terminal background matches design spec
+  - [ ] Context Editor unsaved-changes guard works
+  - [ ] Modal context and accessibility fixes verified
+  - [ ] `npm test` passes with 110+ tests (0 failures)
+  - [ ] `npm run build` passes with 0 errors
+  - [ ] Test results documented in `docs/TEST_RESULTS_PHASE10.md`
+Dependencies: TASK #32, TASK #33, TASK #34, TASK #35, TASK #36, TASK #37, TASK #38, TASK #39, TASK #40
+---
+
 ## Execution Order
 
 ### Parallel at start:
@@ -2804,6 +3428,24 @@ serial order is: #24 -> #25 -> #26 -> #27 -> #28 -> #29
 **Wave 4 — QA (depends on #30):**
 - TASK #31 (QA — Visual QA + functional regression testing)
 
+### Phase 10 — Bug Hunt & Resolution (Current):
+
+**Wave 1 — Backend fixes (no dependencies, run in parallel):**
+- TASK #32 (Backend — Fix CSP to allow Google Fonts) [CRITICAL — unblocks all icon fixes]
+- TASK #33 (Backend — Fix JobRunner spawn error handling)
+
+**Wave 2 — Frontend fixes (all independent, run in parallel after #32):**
+- TASK #34 (Frontend — Fix Sidebar duplicate session race condition)
+- TASK #35 (Frontend — Fix ContextEditorView unsaved changes data loss)
+- TASK #36 (Frontend — Fix Terminal background color mismatch)
+- TASK #37 (Frontend — Fix Sidebar error feedback for failed sessions)
+- TASK #38 (Frontend — Fix Sidebar footer hardcoded version + settings)
+- TASK #39 (Frontend — Fix Sidebar header logo overflow guard)
+- TASK #40 (Frontend — Fix Dashboard accessibility + modal context)
+
+**Wave 3 — QA (depends on ALL Wave 1 + Wave 2 tasks):**
+- TASK #41 (QA — Phase 10 post-fix regression testing)
+
 ---
 
 ## Task Status Summary
@@ -2841,7 +3483,18 @@ serial order is: #24 -> #25 -> #26 -> #27 -> #28 -> #29
 | 29 | Redesign — Deployment Manager View | frontend-dev | MEDIUM | HARD | COMPLETED |
 | 30 | Redesign — App Shell, Routing, View Integration | frontend-dev | HIGH | MEDIUM | COMPLETED |
 | 31 | Redesign — Visual QA + Functional Regression Testing | qa-tester | HIGH | MEDIUM | COMPLETED |
+| 32 | Bug Fix — CSP blocks Google Fonts (icons as text) | backend-dev | CRITICAL | EASY | COMPLETED |
+| 33 | Bug Fix — JobRunner missing spawn error handler | backend-dev | HIGH | EASY | COMPLETED |
+| 34 | Bug Fix — Sidebar duplicate session race condition | frontend-dev | MEDIUM | EASY | COMPLETED |
+| 35 | Bug Fix — ContextEditorView unsaved changes loss | frontend-dev | HIGH | EASY | COMPLETED |
+| 36 | Bug Fix — Terminal background color mismatch | frontend-dev | MEDIUM | EASY | COMPLETED |
+| 37 | Bug Fix — Sidebar error feedback for failed sessions | frontend-dev | HIGH | EASY | COMPLETED |
+| 38 | Bug Fix — Sidebar footer hardcoded version + settings | frontend-dev | LOW | EASY | COMPLETED |
+| 39 | Bug Fix — Sidebar header logo overflow guard | frontend-dev | LOW | EASY | COMPLETED |
+| 40 | Bug Fix — Dashboard accessibility + modal context | frontend-dev | MEDIUM | MEDIUM | COMPLETED |
+| 41 | Phase 10 — Post-fix regression QA | qa-tester | HIGH | MEDIUM | COMPLETED |
+| 42 | Terminal Bug Fix — Add session creation logic to ProjectsView | backend-dev | CRITICAL | EASY | COMPLETED |
 
 ---
 
-_Last updated: 2026-03-26 by project-manager — ALL 31 tasks COMPLETED. Project fully complete. Ready for v2.0 release tagging._
+_Last updated: 2026-03-26 by antigravity — Phase 10 + TASK 42 COMPLETE. All 42 tasks DONE. Ready for v2.1 release._

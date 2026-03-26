@@ -641,3 +641,40 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 - No code changes. QA confirms Phase 9 is stable and ready for release.
 
 ---
+
+### [Tasks #32-#40] Phase 10 — Bug Fix Execution
+- Agent: antigravity
+- Modified: server/middleware/security.js, server/services/JobRunner.js, client/src/components/Sidebar.jsx, client/src/components/Terminal.jsx, client/src/views/ContextEditorView.jsx, client/src/views/ProjectsView.jsx, client/src/components/AddProjectModal.jsx
+
+#### Changes Summary
+| Task | File | Bug | Fix |
+|------|------|-----|-----|
+| #32 | security.js | BUG-11 CSP blocks fonts | Added fonts.googleapis.com to styleSrc, fonts.gstatic.com to fontSrc |
+| #33 | JobRunner.js | BUG-08 spawn crash | child.on('error') handler + stdin.end() try-catch |
+| #34 | Sidebar.jsx | BUG-10 race condition | creatingSessionRef lock (useRef) |
+| #35 | ContextEditorView.jsx | BUG-09 data loss | handleScopeSwitch with window.confirm guard |
+| #36 | Terminal.jsx | BUG-17 bg mismatch | #1a1a1a → #000000 |
+| #37 | Sidebar.jsx | BUG-18 no error feedback | sessionError state with 8s auto-clear message |
+| #38 | Sidebar.jsx | BUG-19/20 footer | Dynamic version via /api/v1/version, settings icon de-interactivized |
+| #39 | Sidebar.jsx | BUG-13 logo overflow | overflow-hidden on container |
+| #40 | ProjectsView+AddProjectModal | BUG-14/16/21 | modalMode state, mode prop, focus:opacity-100 accessibility |
+
+#### Functions Added
+- `handleScopeSwitch(newScope)` in ContextEditorView.jsx
+- `child.on('error')` handler in JobRunner.js
+
+#### Functions Modified
+- `startJob()`, `SidebarFooter()`, `SidebarHeader()`, `handleProjectClick()`, `AddProjectModal()`, `ProjectsView()`, `XTERM_OPTIONS`
+
+#### Build: 299 modules, 0 errors
+
+---
+
+### [Task #42] Terminal Bug Fix
+- Agent: antigravity
+- Modified: client/src/views/ProjectsView.jsx
+
+#### Changes Summary
+- **Bug Fixed**: Clicking "Open Terminal" from a project card did not create a backend session.
+- **Fix**: Updated `handleOpenTerminal` in `ProjectsView.jsx` to make a `POST /api/v1/sessions` request if no session exists for the project, setting the session in AppContext before navigating to the terminal view.
+- **Build Result**: 6/6 test files passed, 299 modules successfully built with 0 errors.

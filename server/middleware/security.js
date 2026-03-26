@@ -10,10 +10,10 @@ export function securityMiddleware(app) {
         directives: {
           defaultSrc: ["'self'"],
           scriptSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'"], // Tailwind needs this
+          styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"], // Tailwind + Google Fonts CSS
           connectSrc: ["'self'", 'ws://127.0.0.1:*'],
           imgSrc: ["'self'", 'data:'],
-          fontSrc: ["'self'"],
+          fontSrc: ["'self'", "https://fonts.gstatic.com"],
         },
       },
     })

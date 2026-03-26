@@ -122,7 +122,11 @@ export class JobRunner {
     // CRITICAL: close stdin immediately after spawn.
     // Without this, the Claude process waits indefinitely for input.
     // Fix for GitHub issue #7497.
-    child.stdin.end();
+    try {
+      child.stdin.end();
+    } catch {
+      // stdin may already be destroyed if spawn failed synchronously
+    }
 
     const job = {
       jobId,
@@ -139,6 +143,34 @@ export class JobRunner {
     };
 
     this.#jobs.set(jobId, job);
+
+    // -----------------------------------------------------------------------
+    // Handle spawn errors (binary not found, permissions, ENOENT, etc.)
+    // Without this handler, a spawn failure becomes an unhandled exception
+    // that crashes the server process. The 'close' event may never fire.
+    // -----------------------------------------------------------------------
+    child.on('error', (err) => {
+      console.error(`[JobRunner] Spawn error jobId=${jobId}: ${err.message}`);
+      // NOTE: prompt is intentionally NOT logged (SEC-08)
+
+      if (job.status === 'running') {
+        job.status = 'error';
+        job.completedAt = new Date();
+
+        // Notify all connected SSE clients of the failure
+        for (const res of job.clients) {
+          try {
+            sendSse(res, { type: 'done', result: null, exitCode: null, error: err.message });
+          } catch {
+            // Client gone — ignore
+          }
+        }
+        closeAllClients(job);
+
+        // Schedule eviction so the error job is cleaned up (BUG-06 pattern)
+        this._scheduleEviction(jobId);
+      }
+    });
 
     // -----------------------------------------------------------------------
     // Read stdout line-by-line via readline.

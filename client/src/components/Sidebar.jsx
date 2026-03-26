@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { apiGet, apiPost } from '../hooks/useApi.js';
 import { useAppState, useAppDispatch } from '../store/AppContext.jsx';
 import { NAV_ITEMS } from '../lib/constants.js';
@@ -8,6 +8,8 @@ export default function Sidebar() {
   const state = useAppState();
   const dispatch = useAppDispatch();
   const [showModal, setShowModal] = useState(false);
+  const [sessionError, setSessionError] = useState(null);
+  const creatingSessionRef = useRef(false);
   const [loadError, setLoadError] = useState(null);
 
   // Load projects on mount
@@ -21,7 +23,8 @@ export default function Sidebar() {
     dispatch({ type: 'SET_ACTIVE_PROJECT', payload: project.id });
     dispatch({ type: 'SET_VIEW', payload: 'terminal' });
 
-    if (!state.sessions[project.id]) {
+    if (!state.sessions[project.id] && !creatingSessionRef.current) {
+      creatingSessionRef.current = true;
       try {
         const data = await apiPost('/api/v1/sessions', { projectId: project.id });
         dispatch({
@@ -30,6 +33,10 @@ export default function Sidebar() {
         });
       } catch (err) {
         console.error('Failed to create session:', err.message);
+        setSessionError(err.message);
+        setTimeout(() => setSessionError(null), 8000);
+      } finally {
+        creatingSessionRef.current = false;
       }
     }
   }
@@ -75,6 +82,9 @@ export default function Sidebar() {
 
           {loadError && (
             <p className="px-4 pb-2 text-xs text-error">{loadError}</p>
+          )}
+          {sessionError && (
+            <p className="px-4 pb-2 text-xs text-error">Session failed: {sessionError}</p>
           )}
 
           <ul className="flex-1 overflow-y-auto custom-scrollbar px-2 pb-2 flex flex-col gap-1">
@@ -124,7 +134,7 @@ export default function Sidebar() {
 function SidebarHeader() {
   return (
     <div className="p-4 border-b border-border-color flex items-center gap-2.5 shrink-0">
-      <div className="size-7 rounded bg-gradient-to-br from-primary to-purple-800 flex items-center justify-center text-white shrink-0">
+      <div className="size-7 rounded bg-gradient-to-br from-primary to-purple-800 flex items-center justify-center text-white shrink-0 overflow-hidden">
         <span className="material-symbols-outlined text-[16px]">terminal</span>
       </div>
       <div className="flex flex-col">
@@ -196,6 +206,13 @@ function SessionItem({ projectId, session, projectName, isActive, onClick }) {
 }
 
 function SidebarFooter() {
+  const [appVersion, setAppVersion] = useState('...');
+  useEffect(() => {
+    apiGet('/api/v1/version')
+      .then((data) => setAppVersion(data.appVersion ?? '0.0.0'))
+      .catch(() => setAppVersion('err'));
+  }, []);
+
   return (
     <div className="p-3 border-t border-border-color flex items-center justify-between shrink-0">
       <div className="flex items-center gap-2 text-text-muted">
@@ -203,10 +220,10 @@ function SidebarFooter() {
         <span className="text-xs font-mono uppercase tracking-widest">Active</span>
       </div>
       <div className="flex items-center gap-3">
-        <span className="material-symbols-outlined text-[18px] text-text-muted cursor-pointer hover:text-text-main transition-colors">
+        <span className="material-symbols-outlined text-[18px] text-text-dimmer">
           settings
         </span>
-        <span className="text-[10px] text-text-muted font-mono">v1.2.0</span>
+        <span className="text-[10px] text-text-muted font-mono">v{appVersion}</span>
       </div>
     </div>
   );

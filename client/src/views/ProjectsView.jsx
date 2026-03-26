@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { apiGet, apiDelete } from '../hooks/useApi.js';
+import { apiGet, apiPost, apiDelete } from '../hooks/useApi.js';
 import { useAppState, useAppDispatch } from '../store/AppContext.jsx';
 import AddProjectModal from '../components/AddProjectModal.jsx';
 
@@ -129,7 +129,7 @@ function ProjectCard({ project, status, onOpenTerminal, onDelete }) {
               e.stopPropagation();
               setMenuOpen((v) => !v);
             }}
-            className="material-symbols-outlined text-text-muted text-[18px] opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+            className="material-symbols-outlined text-text-muted text-[18px] opacity-0 group-hover:opacity-100 focus-within:opacity-100 focus:opacity-100 transition-opacity shrink-0"
           >
             more_vert
           </button>
@@ -242,6 +242,7 @@ export default function ProjectsView() {
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [modalMode, setModalMode] = useState('register');
   const [confirmTarget, setConfirmTarget] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
@@ -276,8 +277,23 @@ export default function ProjectsView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function handleOpenTerminal(project) {
+  async function handleOpenTerminal(project) {
     dispatch({ type: 'SET_ACTIVE_PROJECT', payload: project.id });
+
+    // Create a PTY session if one doesn't already exist
+    if (!sessions[project.id]) {
+      try {
+        const data = await apiPost('/api/v1/sessions', { projectId: project.id });
+        dispatch({
+          type: 'SET_SESSION',
+          payload: { projectId: project.id, session: data.session },
+        });
+      } catch (err) {
+        console.error('Failed to create session:', err.message);
+      }
+    }
+
+    // Switch view AFTER session is verified or created
     dispatch({ type: 'SET_VIEW', payload: 'terminal' });
   }
 
@@ -429,7 +445,7 @@ export default function ProjectsView() {
                 Register an existing project or scaffold a new one to get started.
               </p>
               <button
-                onClick={() => setShowModal(true)}
+                onClick={() => { setModalMode('register'); setShowModal(true); }}
                 className="rounded-lg h-10 px-6 bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all"
               >
                 Register Project
@@ -449,7 +465,7 @@ export default function ProjectsView() {
                   onDelete={() => handleDeleteClick(project)}
                 />
               ))}
-              <AddCard onClick={() => setShowModal(true)} />
+              <AddCard onClick={() => { setModalMode('register'); setShowModal(true); }} />
             </div>
           )}
 
@@ -480,7 +496,7 @@ export default function ProjectsView() {
               </table>
               <div className="mt-6">
                 <button
-                  onClick={() => setShowModal(true)}
+                  onClick={() => { setModalMode('register'); setShowModal(true); }}
                   className="rounded-lg border border-dashed border-border-color px-4 py-2 text-sm text-text-muted hover:border-primary hover:text-primary transition-colors"
                 >
                   + Register Existing Project
@@ -516,7 +532,7 @@ export default function ProjectsView() {
                 </div>
               </div>
               <button
-                onClick={() => setShowModal(true)}
+                onClick={() => { setModalMode('scaffold'); setShowModal(true); }}
                 className="flex items-center justify-center rounded-lg h-11 px-8 bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all shadow-lg active:scale-[0.98] whitespace-nowrap shrink-0"
               >
                 Scaffold New Project
@@ -527,7 +543,7 @@ export default function ProjectsView() {
       </main>
 
       {/* Modals */}
-      {showModal && <AddProjectModal onClose={handleModalClose} />}
+      {showModal && <AddProjectModal mode={modalMode} onClose={handleModalClose} />}
       {confirmTarget && (
         <ConfirmDialog
           projectName={confirmTarget.name}
