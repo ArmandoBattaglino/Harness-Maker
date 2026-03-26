@@ -2,32 +2,32 @@ import { AppProvider, useAppState } from './store/AppContext.jsx';
 import Sidebar from './components/Sidebar.jsx';
 import TerminalView from './views/TerminalView.jsx';
 import JobView from './views/JobView.jsx';
-import EntitiesView from './views/EntitiesView.jsx';
 import ProjectsView from './views/ProjectsView.jsx';
+import ContextEditorView from './views/ContextEditorView.jsx';
+import DeploymentManagerView from './views/DeploymentManagerView.jsx';
 
 function MainContent() {
   const { view } = useAppState();
 
   switch (view) {
+    case 'projects':
+      return <ProjectsView />;
     case 'terminal':
       return <TerminalView />;
     case 'jobs':
       return <JobView />;
-    case 'entities':
-      return <EntitiesView />;
-    case 'projects':
-      return <ProjectsView />;
+    case 'context':
+      return <ContextEditorView />;
+    case 'deployments':
+      return <DeploymentManagerView />;
     default:
-      return <TerminalView />;
+      return <ProjectsView />;
   }
 }
 
 function AppLayout() {
   return (
-    <div
-      className="flex h-full w-full overflow-hidden"
-      style={{ backgroundColor: '#111111', color: 'white' }}
-    >
+    <div className="flex h-screen w-screen overflow-hidden bg-background-dark text-text-main">
       <Sidebar />
       <main className="flex flex-1 overflow-hidden">
         <MainContent />
