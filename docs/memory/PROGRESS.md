@@ -188,7 +188,7 @@ _None._
 - [TASK-58] COMPLETED 2026-03-27 — App.jsx + Sidebar swarm nav; SwarmView imported and added to switch; 'hub' icon + 'Swarm' label added to NAV_ITEMS in constants.js (Sidebar auto-renders dynamically from NAV_ITEMS). No extra ReactFlowProvider needed — SwarmView already wraps SwarmCanvas with its own. Build: 470 modules, 0 errors. 168/168 tests pass.
 
 ### V3 Phase 3 — Prompt-to-Flow
-- [TASK-59] IN_PROGRESS — scaffold endpoint complete (replaces 47.2 stub) — launched 2026-03-27
+- [TASK-59] COMPLETED 2026-03-27 — scaffold endpoint: generateWorkflowFromPrompt() + Claude claude-haiku-4-5-20251001 + WorkflowStore.create(); @anthropic-ai/sdk installed; 168/168 tests pass
 - [TASK-60] PENDING — PromptToFlowBar.jsx + staggered animation (depends on #57.1 + #59)
 - [TASK-61] COMPLETED — useWorkflow.js CRUD hook — client/src/hooks/useWorkflow.js created; uses apiGet/apiPut/apiDelete wrappers; useWorkflow(id) + useWorkflowList() exports; build: 470 modules, 0 errors
 

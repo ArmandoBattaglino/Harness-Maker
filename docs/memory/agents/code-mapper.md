@@ -1023,3 +1023,59 @@ CODE_MAP.md fully reflects Tasks #57.1 and #57.2. SwarmView has no App.jsx regis
 ### Handoff
 When Task #58 (App.jsx + Sidebar nav + ReactFlowProvider) completes: update App.jsx Module Index row (add swarm to view router) and note any new imports. When Task #61 (workflowDef wiring) completes: update SwarmView entry — workflowDef will no longer be local useState null.
 ---
+
+---
+## 2026-03-27 — Task #58: App.jsx + Sidebar swarm nav + ReactFlowProvider
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+Task #57.2 had mapped SwarmView as having "no live caller yet". My handoff note predicted this exact task: update App.jsx to add swarm routing and note new imports. The build count (299 → 470 modules) confirmed @xyflow/react + zustand tree-shaken in for the first time via the SwarmView dependency chain.
+
+### What I did
+1. Read CODE_MAP.md header + Module Index + tail (Function Graph end + SwarmView entry) — confirmed SwarmView "Called by" was still "no live caller yet"
+2. Read CHANGELOG.md tail — confirmed last entry was Task #57.2
+3. Read App.jsx — confirmed SwarmView import + case 'swarm' present; 6 view cases total
+4. Read constants.js — confirmed hub icon + swarm view item appended as 6th NAV_ITEMS entry
+5. Read SwarmView.jsx — no changes from #57.2; just now called by App.jsx
+6. Read Sidebar.jsx — confirmed it already imports NAV_ITEMS and maps over it; no code change needed
+7. Updated CODE_MAP.md:
+   - Header timestamp updated to Task #58
+   - App.jsx Module Index row updated (5 → 6 views, swarm added)
+   - Sidebar.jsx Module Index row updated (5-view → 6-view nav)
+   - constants.js Module Index row updated (swarm item note)
+   - SwarmView "Called by" updated from "no live caller" to "App.jsx::MainContent (case 'swarm')"
+   - SwarmView Last modified appended with Task #58 note
+   - NAV_ITEMS function graph entry updated (5 → 6 items, Task #58 Last modified)
+   - App.jsx function graph entries ADDED (MainContent, AppLayout, App — were missing from Function Graph)
+   - "App Root View Router (Task #58)" section added at end of Function Graph
+   - "Sidebar Nav (Task #58 — NAV_ITEMS update)" section added at end of Function Graph
+8. Appended CHANGELOG.md Task #58 entry
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Updated header timestamp, Module Index rows for App.jsx/Sidebar/constants.js, SwarmView "Called by" + Last modified, NAV_ITEMS function graph entry; added App root function graph section (MainContent/AppLayout/App); added NAV_ITEMS update note section |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Task #58 entry |
+
+### Improvements delivered
+- SwarmView's "no live caller" warning is now resolved in CODE_MAP.md
+- App.jsx functions (MainContent, AppLayout, App) are now in the Function Graph for the first time
+- Build size increase (299 → 470 modules) is documented in CHANGELOG.md connection changes
+
+### Bugs I encountered
+- None
+
+### Decisions I made
+- Added App.jsx function graph entries that were previously absent — they had been excluded in prior sessions because App.jsx wasn't being modified. Now that it's modified, they deserved proper entries.
+
+### What I learned
+- My handoff note from Task #57.2 ("When Task #58 completes: update App.jsx Module Index row...") was exactly correct — this validates the handoff note pattern
+- Sidebar.jsx did NOT need a code change for the new nav item because it already iterates NAV_ITEMS — the constant update was sufficient. This is the clean design pattern: data-driven nav from constants.js.
+
+### State I'm leaving behind
+CODE_MAP.md is fully current through Task #58. SwarmView is live in the app router. workflowDef remains null until Task #61 (workflow API wiring). Next mapping task will be for Task #59 (scaffold endpoint) or #60 (PromptToFlowBar).
+
+### Handoff
+Task #61 (workflowDef wiring): update SwarmView "Calls" + "Inputs" to reflect the API hook connection. workflowDef will change from useState(null) to data from useWorkflow(). Also update SwarmCanvas entry — it will receive real node/edge data.
+---

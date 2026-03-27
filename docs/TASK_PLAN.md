@@ -4892,7 +4892,7 @@ Agent: backend-dev
 Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: IN_PROGRESS
+Status: COMPLETED
 Dependencies: #47.1, #47.2
 Context:
   This task completes the scaffold endpoint in `server/routes/swarm.js` (stub in #47).
@@ -6016,7 +6016,7 @@ Acceptance criteria:
 | **57.1** | SwarmCanvas.jsx — React Flow canvas + drill-down | frontend-dev | HIGH | claude-opus-4-6 | COMPLETED |
 | **57.2** | SwarmView.jsx — layout shell + toolbar | frontend-dev | HIGH | claude-opus-4-6 | COMPLETED |
 | 58 | App.jsx + Sidebar — swarm nav + ReactFlowProvider | frontend-dev | HIGH | claude-haiku-4-5 | PENDING |
-| 59 | scaffold endpoint complete (replaces 47.2 stub) | backend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
+| 59 | scaffold endpoint complete (replaces 47.2 stub) | backend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
 | 60 | PromptToFlowBar.jsx + staggered animation | frontend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
 | 61 | useWorkflow.js — workflow CRUD hook | frontend-dev | MEDIUM | claude-haiku-4-5 | PENDING |
 | **62.1** | SwarmEngine — _onHandoff: context merge + PTY spawn | backend-dev | HIGH | claude-opus-4-6 | PENDING |

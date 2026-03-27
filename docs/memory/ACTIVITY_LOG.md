@@ -1,4 +1,22 @@
 ---
+## 2026-03-27 — code-mapper — Task #58: App.jsx + Sidebar swarm nav + ReactFlowProvider
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md to reflect SwarmView wired into App.jsx view router (case 'swarm') and swarm item added to NAV_ITEMS. SwarmView "no live caller" warning resolved. App.jsx Function Graph entries (MainContent/AppLayout/App) added for the first time. CHANGELOG.md Task #58 entry appended. Build growth 299 → 470 modules documented.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** Added App.jsx Function Graph entries previously missing — justified by App.jsx modification in this task
+**Blockers:** none
+**Next:** Task #59 (scaffold endpoint), #60 (PromptToFlowBar.jsx), #61 (workflowDef wiring into SwarmView)
+---
+## 2026-03-27 — project-manager — Phase 2 complete; Phase 3 wave launched
+**Outcome:** COMPLETED
+**Summary:** Marked #58 COMPLETED (confirmed self-marked by frontend-dev). #61 found already COMPLETED by concurrent frontend-dev agent. Updated TASK_PLAN.md: #59 PENDING→IN_PROGRESS. Updated PROGRESS.md Phase 3 section. Updated CONTEXT.md with accurate Phase 3 wave state: #59 IN_PROGRESS, #61 COMPLETED, #60 pending #59. Phase 2 Canvas Static: 29/57 done (now 30/57 with #61). Build 470 modules, 168/168 tests.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** #60 (PromptToFlowBar) now unblocked as soon as #59 completes — only remaining dep is #59
+**Blockers:** none
+**Next:** #59 (backend-dev, scaffold endpoint, IN_PROGRESS); after #59 completes launch #60 (PromptToFlowBar.jsx)
+---
 ## 2026-03-27 — frontend-dev — Task #61: useWorkflow.js — CRUD Hook
 **Outcome:** COMPLETED
 **Summary:** Created client/src/hooks/useWorkflow.js with two named exports: useWorkflow(id) for single-workflow CRUD (fetch-on-mount, update, remove) and useWorkflowList() for list CRUD (fetch-on-mount, create). Used existing apiGet/apiPut/apiDelete/apiPost wrappers from useApi.js — no window.fetch calls and no new packages needed. Build: 470 modules, 0 errors.
@@ -1260,4 +1278,14 @@
 **Decisions made:** none
 **Blockers:** none
 **Next:** frontend-dev executes Task #58 — wire SwarmView into App.jsx routing, add Sidebar nav item, create useWorkflow.js hook
+---
+---
+## 2026-03-27 — backend-dev — Task #59: POST /api/v1/swarm/scaffold — Prompt-to-Flow Endpoint
+**Outcome:** COMPLETED
+**Summary:** Replaced the 501 scaffold stub in server/routes/swarm.js with a full Claude API-powered implementation. Installed @anthropic-ai/sdk. generateWorkflowFromPrompt() calls claude-haiku-4-5-20251001, parses JSON response (stripping markdown fences), validates structure, saves via WorkflowStore.create(). Route declared as literal /scaffold before parameterized /:workflowId routes to ensure correct Express matching.
+**Files changed:** server/routes/swarm.js, server/package.json (npm install @anthropic-ai/sdk), docs/TASK_PLAN.md
+**Bugs fixed:** Design doc assumed store.create() returned an id — actually returns full object; fixed by extracting created.id
+**Decisions made:** Global CSRF covers /scaffold (no per-route duplicate); literal /scaffold route declared before parameterized routes
+**Blockers:** none
+**Next:** #60 PromptToFlowBar.jsx — now unblocked (was waiting on #59)
 ---

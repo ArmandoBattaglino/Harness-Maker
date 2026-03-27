@@ -1078,3 +1078,58 @@ SwarmEngine emits → broadcast() → per-executionId subscriber Set → open WS
 ### Handoff
 None — task fully self-contained. Dependent tasks (#51, #57.x frontend) can proceed.
 ---
+---
+## 2026-03-27 — Task #59: POST /api/v1/swarm/scaffold — Prompt-to-Flow Endpoint
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+Task #47.2 had placed a 501 stub at `router.post('/:workflowId/scaffold', ...)` in server/routes/swarm.js.
+Task #59 requires replacing that stub with a real Claude API-powered implementation.
+server/package.json did NOT have @anthropic-ai/sdk installed — needed to add it.
+WorkflowStore.create() returns the full workflow object (not just the id), so the design doc's `const workflowId = await store.create(workflowDef)` needed adjustment.
+
+### What I did
+1. Read server/routes/swarm.js, server/package.json, server/middleware/csrf.js, server/services/WorkflowStore.js, docs/memory/PROGRESS.md in parallel.
+2. Confirmed @anthropic-ai/sdk not in server/package.json — ran `npm install @anthropic-ai/sdk` in server/.
+3. Implemented `generateWorkflowFromPrompt(prompt)` as a module-level async helper before the router factory.
+4. Replaced the `/:workflowId/scaffold` stub with `router.post('/scaffold', ...)` as a literal route declared BEFORE the parameterized `/:workflowId/start` route to prevent Express treating 'scaffold' as a workflowId.
+5. Noted CSRF is applied globally in server/index.js — did not duplicate per-route.
+6. Corrected WorkflowStore.create() return value: returns full workflow object; extracted `created.id` for workflowId in response.
+7. Ran `npm test` from root — 168/168 tests pass.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/routes/swarm.js | MODIFIED | Added Anthropic import, generateWorkflowFromPrompt() helper, real /scaffold endpoint; removed 501 stub |
+| server/package.json | MODIFIED | @anthropic-ai/sdk added via npm install |
+| docs/TASK_PLAN.md | MODIFIED | Task #59 status PENDING→COMPLETED, summary table updated |
+
+### Improvements delivered
+- POST /api/v1/swarm/scaffold is now fully functional: validates prompt, calls Claude claude-haiku-4-5-20251001, strips markdown fences, parses JSON, validates basic structure, saves via WorkflowStore, returns 201 { workflowId, workflowDef }
+- 400 on empty/missing prompt, 400 on prompt > 2000 chars, 503 if store unavailable, 500 on Claude/parse failure
+- Route ordering: /scaffold declared before /:workflowId/* so Express matches correctly
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| Design doc called `const workflowId = await store.create()` treating return as id | WorkflowStore.create() returns full object, not id | Changed to `const created = await store.create(workflowDef); workflowId: created.id` | FIXED |
+
+### Decisions I made
+- No per-route csrfMiddleware → global CSRF middleware in server/index.js covers all routes; adding per-route would be redundant
+- Route path is `/scaffold` (literal) not `/:workflowId/scaffold` (parameterized) — declared first so Express matches 'scaffold' as the literal before parameterized routes
+- 500 returns `err.message` in the response body per task design — this may leak internal error text but matches the spec
+
+### What I learned
+- WorkflowStore.create() returns the full persisted object (with id, createdAt, updatedAt), not just the id
+- Express route ordering matters: a literal route like `/scaffold` must come before `/:param/suffix` routes or Express will consume 'scaffold' as the param value
+
+### State I'm leaving behind
+- server/routes/swarm.js: scaffold endpoint fully implemented, all 8 routes functional
+- server/package.json: @anthropic-ai/sdk installed
+- 168/168 tests pass
+- Task #59 COMPLETED
+
+### Handoff
+#60 (PromptToFlowBar.jsx) is now unblocked — it was waiting only on #59. Next: frontend-dev implements PromptToFlowBar with staggered canvas population animation.
+---
