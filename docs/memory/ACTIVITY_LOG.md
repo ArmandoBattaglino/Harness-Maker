@@ -20,6 +20,16 @@
 ---
 
 ---
+## 2026-03-27 — researcher — Research A: OpenAI Swarm Framework Mechanics
+**Outcome:** COMPLETED
+**Summary:** Deep-dive research on OpenAI Swarm framework mechanics. Produced docs/research_a.md with precise Agent class schema, handoff detection logic (type check on function return), context_variables flow (callable instructions + Result merge), triage hub-and-spoke pattern, and a full mapping table of every Swarm concept to its Claude CLI PTY equivalent. Ready for prd-writer and backend-dev to use directly.
+**Files changed:** docs/research_a.md (CREATED), docs/memory/agents/researcher.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** HandoffParser token format `__HANDOFF__:{targetId}:{json}` recommended; context merging (not replace) recommended to match Swarm Result semantics
+**Blockers:** none
+**Next:** prd-writer writes V3 PRD referencing research_a.md; architect may refine ExecutionEngine design based on Swarm run-loop mechanics
+---
+
 ## 2026-03-27 — researcher — Quick Orientation Scan: V3 Swarm Orchestrator
 **Outcome:** COMPLETED
 **Summary:** Delivered Quick Research Snapshot for V3 Swarm Orchestrator /create pipeline. Confirmed React Flow (@xyflow/react v12) is used by all four main competitors (LangFlow, Flowise, n8n, Dify). Identified v12 breaking changes (package rename, immutable node updates, measured dimensions), practical performance ceiling (~500 unoptimized nodes), and named canvas/execution state separation as the single most critical architecture decision.
