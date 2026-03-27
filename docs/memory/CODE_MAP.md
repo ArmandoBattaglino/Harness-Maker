@@ -1162,6 +1162,9 @@ _Last updated: 2026-03-27 — after Task #47.1 (swarm.js REST endpoints) + Task 
 
 - WorkflowStore persists workflows to %APPDATA%\ClaudeCodeManager\workflows\<uuid>.json; server generates UUIDs (never client-supplied); _resolveFilePath() guards all reads/writes against directory traversal (SEC-V3-06)
 - HandoffParser: stateful 4KB rolling buffer; ANSI-stripped; __HANDOFF__:targetId:base64 tokens may span multiple PTY onData chunks; global regex constructed fresh per feed() call to avoid stale lastIndex; contextUpdate validated (max 50 keys, primitive values, string max 1024 chars) (SEC-V3-07)
+- Swarm REST API (Task #47.1): POST /api/v1/swarm/:workflowId/start → 201; POST /:id/pause (Ctrl-C to all running agents); POST /:id/resume (no-op stub); DELETE /:id (stopExecution); GET /:id/status; GET /:id/agent/:nodeId/output (ring buffer); POST /:id/broadcast (soft=ESC marker, hard=Ctrl-C+text fire-and-forget); POST /:id/scaffold (501 stub — Task #59)
+- Swarm WS channel (Task #48.1): server.on('upgrade') routes /ws/swarm* to wssSwarm, all other paths to wssTerminal; handleSwarmConnection registers ws in module-level _subscribers Map keyed by executionId; sends execution_status snapshot on connect; empty Sets are eagerly deleted; getSubscribers() used by future broadcast in Task #48.2
+- SwarmEngine + sessionManager stored in app.locals (Task #48.1); swarmRoutes factory accesses them via app.locals at mount time
 - Test suite: 7 files, 132 tests total (110 + 22 new HandoffParser tests), all passing. Runner: Vitest v4.1.0 with `pool: 'forks'` (sequential) to prevent PTY cross-test interference
 - SessionManager + JobRunner tests import the CLASS (not the singleton export) for per-test isolation
 - Security audit result (original): NEEDS_ATTENTION — 0 CRITICAL, 0 HIGH, 3 MEDIUM (exec() in auto-open, allowedTools not whitelist-validated, PID file tampering), 2 LOW. Overall risk LOW for localhost single-user model
