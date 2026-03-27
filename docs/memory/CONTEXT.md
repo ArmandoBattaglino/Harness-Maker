@@ -1,18 +1,25 @@
 # Current Context
 **Session date:** 2026-03-27
-**Focus:** Phase 10 — Bug Hunt & Resolution (QA-driven bug fixes)
+**Focus:** V3 Planning — Multi-Agent Swarm Orchestrator PRD written. Next: V3 task planning and architecture.
 
 _Project initialized via /create pipeline on 2026-03-18_
 
 ## Active Threads
-- Tasks #1–#31 are ALL COMPLETED as of 2026-03-26. v2.0 is RELEASE READY.
-- Phase 10 (Bug Hunt & Resolution) has been executed: 9 of 10 tasks (#32-#40) COMPLETED.
-- TASK #41 (Post-fix regression QA) is the only remaining task.
-- Full manual QA captured 11 bugs (BUG-08 through BUG-21). All code bugs fixed.
-- Build status: 299 modules, 0 errors. All fixes verified via `npm run build`.
+- V3 PRD COMPLETE (docs/PRD.md, version 3.0, 2026-03-27). Ready for V3 task planning.
+- V2 is RELEASE READY (31 tasks, all COMPLETED). TASK #41 (regression QA) still pending for Phase 10.
+- Build status: 299 modules, 0 errors.
 
-## Open Questions
-- None blocking. All 9 code fix tasks are done. Regression QA (#41) should be run next.
+## Open Questions (V3 — for Architect)
+1. Scaffold AI model: which model for POST /api/v1/swarm/scaffold?
+2. Workflow-to-project binding: strict per-project or global?
+3. Agent PTY CWD: inherit project path or separate configurable CWD?
+4. RSS authentication: clear error or silent skip for auth-gated feeds?
+5. Zustand version: v4 or v5? (breaking API change between them)
+6. swarmListeners Set: needs non-destructive addition to SessionManager (V2 file) — architect must specify contract carefully to avoid breaking V2 tests.
+
+## Notes for Architect
+- Read PRD Section 11 (Open Questions) before designing SwarmEngine/SessionManager integration.
+- The swarmListeners tap point (Q6) is the most critical V2↔V3 bridge — any change to SessionManager must not remove the permanent pty.onData handler (DEC-009).
 
 ## What Changed in Phase 10
 

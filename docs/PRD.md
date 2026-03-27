@@ -1,782 +1,534 @@
-# PRD: Claude Code Visual Manager
-**Version:** 1.0
-**Date:** 2026-03-18
+# PRD: Claude Code Visual Manager — V3 (Multi-Agent Swarm Orchestrator)
+**Version:** 3.0
+**Date:** 2026-03-27
 **Status:** Draft
 
 ---
 
-## 1. Executive Summary
+## 1. Problem Statement
 
-Claude Code Visual Manager is a locally-hosted web application (served on `localhost`) that provides a graphical user interface for the Claude Code CLI. It targets developers who already hold a Claude Code subscription and want a visual shell around the CLI without leaving their machine or setting up cloud infrastructure.
+Claude Code Visual Manager V2 is a local GUI that wraps the `claude` CLI binary, providing PTY terminal sessions and job mode in a browser. Power users building agentic workflows need more than a terminal wrapper: they need to coordinate multiple Claude agents working in parallel, passing context between them, and reacting to external triggers — all without leaving the localhost environment, adding API keys, or learning a new orchestration framework.
 
-The application spawns Claude Code processes directly using the user's installed binary — no API key is required. It delivers two interaction modes in the same UI: a live PTY terminal (real-time bidirectional input/output via xterm.js over WebSocket) and a job mode (prompt submitted → Claude works in the background → formatted Markdown result displayed). It also provides visual editors for the Claude Code configuration surface: agents, skills, CLAUDE.md files, and project registration. Multiple projects can run simultaneously, each with its own persistent Claude process. Sessions survive browser tab closures and are terminated only on explicit user request.
+**Who has this problem:** Developers and AI power users already using Claude Code who want to build autonomous multi-agent pipelines (content agencies, research loops, code review chains, data processing flows) without cloud infrastructure or direct Anthropic API integration.
 
-The application is started with `npm start`, binds exclusively to `127.0.0.1`, requires no authentication (single-user, local machine), and targets Windows 11 as the primary platform.
-
----
-
-## 2. Problem Statement & User Persona
-
-### Problem Statement
-
-Claude Code is a powerful CLI tool, but it exposes no graphical interface. Developers must:
-- Work entirely in a terminal, with no project-switching sidebar or session management UI
-- Hand-edit YAML frontmatter in agent and skill Markdown files with no schema assistance
-- Lose terminal context whenever they switch projects or accidentally close a tab
-- Manually kill and restart Claude processes to switch contexts
-- Have no visibility into running sessions, their status, or their output history
-
-These friction points slow down teams that use Claude Code heavily across multiple projects. Existing web UIs (ClaudeCodeUI, claude-code-webui, ClaudeX) provide partial solutions but do not combine live terminal emulation, persistent sessions, job mode, and entity management in a single local application.
-
-### User Persona
-
-**Primary user:** A software developer or AI engineer who:
-- Has an active Claude Code subscription and the `claude` binary installed on Windows 11
-- Works on multiple projects simultaneously
-- Wants to switch between Claude sessions without losing terminal state
-- Wants to submit background jobs (prompt → formatted result) without babysitting a terminal
-- Wants a visual editor for agents, skills, and CLAUDE.md rather than editing raw files
-- Is comfortable running `npm start` in a terminal but does not want to configure cloud services
-
-**Usage environment:** Single user, local machine, no network access from outside the machine, no corporate auth required.
+**Why it matters:** The OpenAI Swarm framework introduced a clear, minimal model for agent orchestration: agents + handoffs + context_variables. V3 adapts this pattern to the Claude CLI binary via PTY stdout token parsing, making it accessible through a visual org-chart canvas editor that runs entirely on localhost.
 
 ---
 
-## 3. Goals & Non-Goals
-
-### Goals
+## 2. Goals & Success Metrics
 
 | Goal | Metric | Target |
 |------|--------|--------|
-| Live terminal access to Claude Code | PTY spawned and streaming via xterm.js | Session starts within 2 seconds of project selection |
-| Session persistence across disconnects | PTY process survives browser tab close/reopen | Verified by reconnect test (see QA critical path 1) |
-| Multi-project simultaneous sessions | N independent Claude processes running | At least 5 concurrent sessions without instability |
-| Job mode background execution | Prompt submitted, result rendered as Markdown | Job starts within 1 second, result rendered on completion |
-| Entity management | CRUD for agents, skills, CLAUDE.md | All file types read, edited, and saved correctly |
-| Project registration and scaffolding | Register existing dirs or scaffold new ones | Both flows complete without manual filesystem steps |
-| Clean process lifecycle | No orphaned processes after server shutdown | Zero `claude.exe` / `conhost.exe` leaks verified in Task Manager |
-| Security baseline | All 10 mandatory security requirements satisfied | 100% of security checklist passes before v1 release |
-| Simple startup | Single command launch | `npm start` brings up the full app in one step |
-
-### Non-Goals (v1)
-
-- Authentication or multi-user access
-- Cloud deployment or remote access
-- Git integration (commit, branch, diff UI)
-- MCP server management UI (read-only display only — [ASSUMED: editing .mcp.json is out of scope for v1 due to complexity])
-- Mobile or tablet browser support
-- Electron or Tauri packaging
-- Plugin or extension system
-- Automated Claude Code CLI updates
-- Session sharing or collaboration features
+| Visual workflow creation | Time from idea to running workflow | Under 2 minutes using Prompt-to-Flow |
+| Reliable handoff delivery | Handoff token parse success rate across ConPTY chunking | 100% (rolling accumulator) |
+| Canvas performance | React Flow render at 50 nodes | Under 100ms frame time |
+| Zero API calls | Direct Anthropic API calls in codebase | 0 |
+| V2 backward compatibility | Existing V2 tests passing after V3 merge | 110/110 |
+| Security compliance | All 7 SEC-V3-* requirements satisfied | 100% before release |
+| Autonomous execution | Workflow runs without user intervention | Confirmed via HITL-optional mode |
 
 ---
 
-## 4. User Stories
+## 3. User Stories
 
-### Project Management
-- As a user, I want to register an existing local folder as a project so that Claude can be launched in that directory.
-- As a user, I want to scaffold a new project directory so that `.claude/` and `CLAUDE.md` are created for me with a starter template.
-- As a user, I want to see all registered projects in a sidebar so that I can switch between them with one click.
-- As a user, I want to remove a project from the registry (without deleting files) so that I can keep the project list clean.
-
-### Terminal Mode
-- As a user, I want a live terminal in the browser that connects to a real Claude Code PTY process so that I can interact with Claude the same way I would in a native terminal.
-- As a user, I want to close the browser tab and reopen it without losing my terminal session so that I don't lose work if my browser crashes.
-- As a user, I want to switch between project terminals without killing either Claude process so that both contexts remain active simultaneously.
-- As a user, I want the terminal to resize correctly when I resize my browser window so that line wrapping and cursor positioning remain accurate.
-- As a user, I want to explicitly stop a Claude session from the UI so that I can free resources when a project is no longer needed.
-
-### Job Mode
-- As a user, I want to submit a text prompt to Claude and receive a formatted Markdown result when it finishes so that I can run background tasks without watching a terminal.
-- As a user, I want to see streaming progress while a job is running so that I know the job has not stalled.
-- As a user, I want to cancel a running job so that I can stop runaway or mistaken executions.
-- As a user, I want job results to persist in the UI after completion so that I can review them without rerunning.
-- As a user, I want to configure the allowed tools and max turns for a job before submitting so that I can control the job's scope.
-
-### Agent Management
-- As a user, I want to view all agents (project-scoped and user-scoped) in one list so that I can manage them without navigating the filesystem.
-- As a user, I want to create a new agent by filling in a form so that I don't have to write YAML frontmatter by hand.
-- As a user, I want to edit an existing agent's frontmatter fields and body so that I can update its behavior.
-- As a user, I want to delete an agent file from the UI so that I don't have to use a file explorer.
-- As a user, I want to see a warning after saving an agent that tells me to restart the session so that I know the change requires a restart to take effect.
-
-### Skill Management
-- As a user, I want to view all skills (project-scoped and user-scoped) so that I can manage them in one place.
-- As a user, I want to create a new skill by filling in a form (name, description, body) so that I can add slash commands without editing raw files.
-- As a user, I want to edit an existing skill's frontmatter and body so that I can update its behavior. Skill changes take effect live without a session restart.
-- As a user, I want to delete a skill from the UI so that obsolete slash commands are removed.
-
-### CLAUDE.md Management
-- As a user, I want to view and edit the project-scoped CLAUDE.md (`<project>/.claude/CLAUDE.md`) so that I can control the project system prompt.
-- As a user, I want to view and edit the user-scoped CLAUDE.md (`~/.claude/CLAUDE.md`) so that I can manage my global instructions.
-- As a user, I want to see a line count warning when my CLAUDE.md exceeds 300 lines so that I stay within the recommended context budget.
-
-### Application Lifecycle
-- As a user, I want to start the application with `npm start` so that I don't need to configure anything before first use.
-- As a user, I want the application to clean up all Claude processes when I stop the server so that no orphaned processes remain.
-- As a user, I want idle sessions (no client connected, no recent output) to be automatically terminated after a configurable timeout (default 30 minutes) so that I don't accumulate stale processes.
+- As a user, I want to draw an org-chart canvas where each node is a Claude agent, so that I can visualize my multi-agent workflow before running it.
+- As a user, I want to edit the canvas at any time including during execution, so that I can adjust the workflow in response to what I observe.
+- As a user, I want to create agent nodes from scratch (with optional templates) or by selecting from my existing `.claude/agents/` directory, so that I can reuse work I have already done.
+- As a user, I want agent nodes grouped into departments, and I want to drill into a department by double-clicking it, so that I can manage large workflows without visual clutter.
+- As a user, I want to start a workflow execution and watch agents light up with animated status as they run and pass handoffs to each other, so that I understand what is happening in real time.
+- As a user, I want handoff edges to show an animated pulse and a counter badge when a handoff occurs, so that I can trace the flow of context through the graph.
+- As a user, I want the workflow to never stop automatically — only a manual Stop button ends execution — so that looping workflows run indefinitely without surprise termination.
+- As a user, I want a soft budget warning when the estimated token usage crosses a threshold, without the workflow stopping, so that I stay informed without losing progress.
+- As a user, I want a circuit breaker that warns me when an edge fires more than N times, without stopping execution, so that I can detect runaway loops without being blocked.
+- As a user, I want to type a plain-English description of a workflow and have AI scaffold the initial canvas for me (Prompt-to-Flow), so that I do not have to build every node manually.
+- As a user, I want to chat with a running agent at the department level or the individual agent level (HITL), so that I can inject instructions mid-execution.
+- As a user, I want to click any agent node and "explode" it into a full xterm.js PTY terminal, so that I have direct keyboard access to that agent's process.
+- As a user, I want to broadcast a message to all agents, all agents in a department, or a single agent, so that I can issue instructions at any scope.
+- As a user, I want an HITL inbox where I can review and approve or reject paused agent actions, so that critical steps require human confirmation before proceeding.
+- As a user, I want to define trigger nodes (webhook or RSS) that start or resume workflows automatically, so that workflows can react to external events without manual intervention.
+- As a user, I want all of this to work through the `claude` CLI binary I already have installed, with zero additional API keys or cloud setup, so that there is no new cost or configuration burden.
 
 ---
 
-## 5. Functional Requirements
+## 4. Functional Requirements
 
-### Must Have (MVP — Phases 0-3)
+### Must Have (MVP — V3.0)
 
-**Application Bootstrap**
-- FR-01: The server must start with `npm start` and open the React SPA at `http://127.0.0.1:<PORT>` (default port: 3000, configurable via `PORT` environment variable).
-- FR-02: The server must bind exclusively to `127.0.0.1`, never to `0.0.0.0`. Verified by `netstat -an | findstr LISTENING` showing only the loopback address.
-- FR-03: On startup, the server must call `claude --version` and log the detected version. If the `claude` binary is not found on `PATH`, the server must emit a clear error message and exit with a non-zero code.
-- FR-04: All REST endpoints must be prefixed with `/api/v1/`.
+**Workflow CRUD**
+- FR-V3-01: The system must provide a WorkflowStore that persists workflow definitions as JSON files at `CONFIG_DIR/workflows/<id>.json`. Workflow IDs must be server-generated UUIDs. Concurrent writes must use `write-file-atomic`.
+- FR-V3-02: The server must expose a full CRUD REST API for workflows: `GET /api/v1/workflows`, `POST /api/v1/workflows`, `GET /api/v1/workflows/:id`, `PUT /api/v1/workflows/:id`, `DELETE /api/v1/workflows/:id`.
+- FR-V3-03: WorkflowDefinition schema must be validated on every write operation. Validation rules: node count maximum 50, systemPrompt per node maximum 16 KB, name and description length caps and character whitelist. Any validation failure must return HTTP 400 with a descriptive error message. (SEC-V3-02, SEC-V3-06)
+- FR-V3-04: WorkflowDefinition must support the following structure: `id`, `name`, `projectId`, `nodes` (array), `edges` (array), `settings` (mode, budgetTokens, circuitBreakerThreshold, defaultModel), `initialContext` (flat dict).
+- FR-V3-05: Each node must support these types: `agent`, `department`, `trigger`. Agent nodes carry: `label`, `systemPrompt`, `model`, `tools`, `isTriageNode`, `maxTurns`, `parentDepartmentId`. Trigger nodes carry: `triggerType` (`webhook` or `rss`), `rssUrl` or `webhookPath`, `targetNodeId`.
+- FR-V3-06: Each edge must carry: `id`, `source`, `target`, `type: "handoff"`, `data.circuitBreakerThreshold` (optional override).
 
-**Project Management**
-- FR-05: `POST /api/v1/projects` must accept `{ name: string, path: string }`, validate that `path` is an absolute path to an existing directory, store the project in the config store, and return `{ id, name, path, createdAt }`.
-- FR-06: `POST /api/v1/projects/scaffold` must accept `{ name: string, path: string }`, create the directory if it does not exist, create `<path>/.claude/` and `<path>/.claude/CLAUDE.md` with a starter template, register the project, and return the project record.
-- FR-07: `GET /api/v1/projects` must return all registered projects as a JSON array.
-- FR-08: `DELETE /api/v1/projects/:id` must remove the project from the registry without touching the filesystem.
-- FR-09: The React sidebar must list all projects. Clicking a project opens its terminal view. The active project is visually highlighted.
+**Swarm Execution Engine**
+- FR-V3-07: The SwarmEngine must manage a Map of active executions keyed by `executionId` (UUID). Each execution maintains a Map of `nodeId` → `{ pty, handoffParser, status, handoffCount }`.
+- FR-V3-08: When an execution starts, SwarmEngine must inject a system prompt block into each agent's PTY that includes: the agent's own domain instructions, a SWARM PROTOCOL section explaining the handoff token format, the list of valid target agent IDs the agent may hand off to, and the current `workflowContext` key-value pairs.
+- FR-V3-09: The handoff token format must be: `__HANDOFF__:<targetAgentId>:<base64_json_context_update>`. The done token must be: `__DONE__`. These tokens are emitted by agents via stdout.
+- FR-V3-10: On receiving a `__HANDOFF__` token, SwarmEngine must: base64-decode and JSON-parse the context update, shallow-merge it into the shared `workflowContext` dict, look up the target agent's PTY, inject the updated context into that PTY session, and increment the handoff counter for that edge.
+- FR-V3-11: On receiving a `__DONE__` token, SwarmEngine must emit a soft `execution_status` WebSocket notification only. The workflow must NOT stop. Execution continues until the user clicks Stop.
+- FR-V3-12: The only way to terminate an execution is via `DELETE /api/v1/swarm/:workflowId` or the manual Stop button in the UI. This must kill all agent PTYs in the execution using `tree-kill`.
+- FR-V3-13: SwarmEngine must tap PTY stdout via a non-destructive listener added to `session.swarmListeners` Set on `SessionManager` sessions. The existing permanent `pty.onData` handler must NEVER be removed. (DEC-009)
 
-**Session Management (Terminal Mode)**
-- FR-10: `POST /api/v1/sessions` must accept `{ projectId: string }`, spawn a PTY via `pty.spawn("claude", [], { name: "xterm-color", cols: 80, rows: 24, cwd: project.path, env: { ...process.env } })`, assign a UUID session ID, store `{ pty, buffer: RingBuffer(100KB), clients: Set<WebSocket>, createdAt, lastActivityAt }` in the sessions Map, and return `{ sessionId, projectId, createdAt }`.
-- FR-11: `GET /api/v1/sessions` must return all active sessions with their `{ sessionId, projectId, pid, status, createdAt, lastActivityAt }`.
-- FR-12: `DELETE /api/v1/sessions/:id` must call `pty.kill()` on the session's PTY, remove it from the sessions Map, and return 204.
-- FR-13: The WebSocket server must upgrade connections at `ws://127.0.0.1:<PORT>/ws?sessionId=<uuid>`. On connection: validate the sessionId exists (close with code 4004 if not), add the socket to `session.clients`, replay the ring buffer synchronously, then wire `pty.onData → ws.send` for live streaming.
-- FR-14: On WebSocket message of type `{ type: "input", data: string }`, the server must call `session.pty.write(data)`.
-- FR-15: On WebSocket message of type `{ type: "resize", cols: number, rows: number }`, the server must call `session.pty.resize(cols, rows)`.
-- FR-16: On WebSocket `close`, the server must call `session.clients.delete(ws)` and nothing else. The PTY must remain alive.
-- FR-17: A permanent `pty.onData` consumer must run from spawn to kill, writing output to the ring buffer and broadcasting to all connected clients. This handler must never be removed or paused based on client count.
-- FR-18: The ring buffer must be a true fixed-capacity circular buffer capped at 100 KB per session. Overflow must discard the oldest bytes, not grow unboundedly.
-- FR-19: An idle timeout sweeper must run every 5 minutes. Any session with zero connected clients and no `pty.onData` event in the past N minutes (configurable via `IDLE_TIMEOUT_MINUTES` env var, default 30) must have `pty.kill()` called and be removed from the sessions Map.
-- FR-20: The React terminal view must instantiate one xterm.js `Terminal` per session. `xterm-addon-fit` must be used for viewport sizing. A `ResizeObserver` on the container div must call `fitAddon.fit()` and then send a `{ type: "resize", cols, rows }` WebSocket message, debounced to 100 ms.
-- FR-21: On project tab switch in the React client, the current WebSocket must be closed (`ws.close()`), the xterm.js instance must be cleared (`terminal.clear()` then `terminal.reset()`), a new WebSocket must be opened with the target session's ID, and the ring buffer replay must be written into the terminal before live data.
+**HandoffParser**
+- FR-V3-14: HandoffParser must implement a stateful rolling byte accumulator, maximum 4 KB capacity. It must use a three-state FSM: `SCANNING` → `COLLECTING_TARGET` → `COLLECTING_PAYLOAD`. ANSI escape sequences must be stripped before accumulation. `\r\n` sequences must be normalized to `\n` before accumulation.
+- FR-V3-15: HandoffParser must handle `__HANDOFF__` and `__DONE__` tokens that arrive split across multiple PTY output chunks (ConPTY on Windows splits output into arbitrary byte fragments). The accumulator must reconstruct the full token before emitting it.
+- FR-V3-16: HandoffParser payload (base64 context update) must be capped at 4 KB. Payloads exceeding this cap must be silently dropped and logged as a warning. The extracted `contextUpdate` must be schema-validated (flat dict, string keys and values only) before being merged into `workflowContext`. (SEC-V3-07)
 
-**Job Mode**
-- FR-22: `POST /api/v1/jobs` must accept `{ projectId: string, prompt: string, allowedTools?: string, maxTurns?: number }`. It must spawn `child_process.spawn("claude", ["-p", prompt, "--output-format", "stream-json", "--allowedTools", allowedTools ?? "all", "--max-turns", String(maxTurns ?? 10), "--no-session-persistence"], { cwd: project.path, stdio: ["pipe", "pipe", "pipe"] })`, call `child.stdin.end()` immediately, assign a UUID job ID, and return `{ jobId, projectId, createdAt }`.
-- FR-23: Job output must be streamed to the browser via a WebSocket at `ws://127.0.0.1:<PORT>/ws/jobs?jobId=<uuid>` or via Server-Sent Events at `GET /api/v1/jobs/:id/stream`. [ASSUMED: SSE chosen for job streaming because it is simpler for unidirectional streaming and does not require upgrading the connection.]
-- FR-24: Each line of `child.stdout` must be parsed as JSON and forwarded to the browser as a streaming event. On `child.on('close')`, the server must extract the `result` field from the final `stream-json` event and send a `{ type: "done", result: string }` event.
-- FR-25: `DELETE /api/v1/jobs/:id` must call `tree-kill(child.pid)` and terminate all child processes spawned by Claude, then return 204.
-- FR-26: The React job view must display a spinner and accumulate partial output while the job is running. On the `done` event, it must render the `result` field using `react-markdown` with the `remark-gfm` plugin (for table and code block support).
-- FR-27: Completed job results must persist in React state for the duration of the browser session. The user must be able to scroll back through past job results.
+**Circuit Breaker**
+- FR-V3-17: CircuitBreaker must track handoff counts per edge. When an edge's handoff count reaches the configured threshold (default 10, configurable per workflow and per edge), CircuitBreaker must emit a `circuit_breaker` WebSocket event with `{ edgeId, counter, threshold }`. The workflow must NOT stop — the event is advisory only.
 
-**Agent Management**
-- FR-28: `GET /api/v1/agents` must return all agent files found in both `~/.claude/agents/` (user-scoped) and `<project>/.claude/agents/` (project-scoped) for the current project context, parsed into `{ id, name, scope: "user"|"project", filePath, frontmatter, body }`.
-- FR-29: `POST /api/v1/agents` must accept `{ name, scope, frontmatter, body }`, validate the name matches `^[a-z][a-z0-9-]*$`, write the file to the correct directory using `write-atomic`, and return the created agent record.
-- FR-30: `PUT /api/v1/agents/:id` must accept `{ frontmatter, body }`, parse and reserialize the YAML frontmatter using `js-yaml`, and write the updated file atomically. It must return the updated agent record.
-- FR-31: `DELETE /api/v1/agents/:id` must delete the agent file and return 204.
-- FR-32: After any agent save operation (POST or PUT), the React UI must display a persistent warning: "Restart the Claude session for this agent to take effect."
+**Budget Tracker**
+- FR-V3-18: BudgetTracker must estimate token usage from character count (approximate: chars / 4 = tokens). When estimated usage reaches the workflow's `budgetTokens` setting, BudgetTracker must emit a `budget_update` WebSocket event with `{ estimatedTokensUsed, limitTokens }`. The workflow must NOT stop. (User decision: soft warn only, never halt.)
 
-**Skill Management**
-- FR-33: `GET /api/v1/skills` must return all skill files found in `~/.claude/skills/` and `<project>/.claude/skills/` (current format), as well as legacy locations `~/.claude/commands/` and `<project>/.claude/commands/`, parsed into `{ id, name, scope, filePath, frontmatter, body }`.
-- FR-34: `POST /api/v1/skills` must accept `{ name, scope, frontmatter, body }`, create the directory `<base>/<name>/` and write `SKILL.md` inside it using `write-atomic`, and return the created skill record.
-- FR-35: `PUT /api/v1/skills/:id` must accept `{ frontmatter, body }` and write the updated `SKILL.md` atomically. No session restart warning is required (skill changes are live).
-- FR-36: `DELETE /api/v1/skills/:id` must delete the skill directory and its contents and return 204.
+**Prompt-to-Flow (AI Scaffold)**
+- FR-V3-19: The server must expose `POST /api/v1/swarm/scaffold` which accepts a plain-English workflow description and uses a Claude job (via JobRunner, `claude -p`) to generate a WorkflowDefinition JSON. The response must stream a valid WorkflowDefinition structure.
+- FR-V3-20: The frontend must display a "Scaffolding AI..." animation while the scaffold job is running, then animate each new node onto the canvas with an 80ms staggered delay per node.
 
-**CLAUDE.md Management**
-- FR-37: `GET /api/v1/claudemd` must return `{ userScope: { path, content }, projectScope: { path, content } }` for the active project context.
-- FR-38: `PUT /api/v1/claudemd/user` must accept `{ content: string }` and write it atomically to `~/.claude/CLAUDE.md`.
-- FR-39: `PUT /api/v1/claudemd/project` must accept `{ content: string, projectId: string }` and write it atomically to `<project>/.claude/CLAUDE.md`.
-- FR-40: The React CLAUDE.md editor must display a line count indicator and show a visible warning (yellow banner) when the content exceeds 300 lines.
+**Canvas (React Flow v12)**
+- FR-V3-21: The canvas must use `@xyflow/react` v12 (package name `@xyflow/react`). Canvas state (nodes, edges, viewport) must use React Flow's internal state management with immutable updates.
+- FR-V3-22: Agent execution state (status, handoff count, last output snippet) must be stored in a separate Zustand `ExecutionStore` completely independent from canvas state and from `AppContext`. The canvas must NOT re-render on every PTY output byte — only on status changes.
+- FR-V3-23: Department nodes must use `parentId` field (React Flow v12 group nodes). Expand/collapse must toggle `hidden: true/false` on child nodes using immutable updates.
+- FR-V3-24: Double-clicking a department node must drill into it, updating `focusedDepartmentId` state and filtering the canvas via `useMemo` to show only nodes within that department. A breadcrumb bar must display the current drill path (Home > Department > Sub-department).
+- FR-V3-25: The canvas must always remain editable — adding, moving, and connecting nodes must work during execution. There is no read-only lock during execution.
+- FR-V3-26: AgentNode must display: agent label, current status via border color (idle: gray, running: blue animated pulse, done: green, error: red), a micro PTY log showing the last 3 lines of PTY output, and the total handoff count for that node.
+- FR-V3-27: HandoffEdge must display a `[xN]` badge showing the handoff count for that edge. When a handoff event fires, the edge must animate (CSS keyframe light pulse) for 800ms.
+- FR-V3-28: TriggerNode must display: trigger type icon (webhook or RSS), the configured path or URL, and current status (waiting/firing).
 
-**Config Persistence**
-- FR-41: The application config (project registry, app settings) must be stored as JSON at `%APPDATA%\ClaudeCodeManager\config.json`. If `APPDATA` is unset, fall back to `os.homedir()\.claudecodemanager\config.json`.
-- FR-42: All writes to the config file must use `write-atomic` to prevent corruption on crash.
-- FR-43: On startup, if the config file does not exist, the server must create it with an empty default structure: `{ version: "1", projects: [], settings: {} }`.
+**HITL (Human-in-the-Loop)**
+- FR-V3-29: HITL inbox must expose: `GET /api/v1/inbox`, `GET /api/v1/inbox/:executionId`, `POST /api/v1/inbox/:itemId/approve`, `POST /api/v1/inbox/:itemId/reject`.
+- FR-V3-30: When an agent is paused for HITL, SwarmEngine must freeze that agent's PTY input (not kill it). On approve, the approved text must be injected via the PTY live injection sequence (see FR-V3-36). On reject, a rejection message must be injected.
+- FR-V3-31: The HITL inbox UI must show all pending items with Approve and Reject buttons, the agent label, the pending action text, and timestamp.
 
-**Process Lifecycle**
-- FR-44: The server must register handlers for `process.on('exit')`, `process.on('SIGTERM')`, and `process.on('SIGINT')`. Each handler must iterate the sessions Map and call `pty.kill()` on every active PTY before the process exits.
-- FR-45: On startup, the server must check `%APPDATA%\ClaudeCodeManager\active_pids.json` for stale PIDs from a previous abnormal shutdown, attempt to kill each stale PID using `tree-kill`, and delete the file.
-- FR-46: On each PTY spawn, the server must append the PID to `active_pids.json`. On each PTY kill, it must remove the PID from `active_pids.json`.
+**PTY Live Injection and PTY Explosion**
+- FR-V3-32: PTY Explosion must allow any agent node to be clicked and expanded into a full-screen xterm.js terminal (reusing the existing `Terminal.jsx` component). This gives the user direct keyboard access to that agent's PTY session. Physical keyboard input works correctly with no special handling.
+- FR-V3-33: Programmatic PTY injection (soft broadcast and HITL approval injection) must use the Ink-compatible sequence: `\x03` (Ctrl+C) + 300ms delay + text + `\x1b` + `\r`. Total latency budget: approximately 700ms. This is required because Claude Code's Ink library does not respond to plain `\r` or `\n` for prompt submission.
+- FR-V3-34: Two injection modes must be supported: `soft` (queued injection — agent processes after current task) and `hard` (immediate interrupt attempt — `\x03` + inject; unreliable during active tool execution, must be documented as best-effort).
 
-### Should Have (v1.1)
+**Broadcast**
+- FR-V3-35: `POST /api/v1/swarm/:executionId/broadcast` must accept `{ text, scope: "all" | "department" | "agent", targetId? }` and inject the text into all matched agents using the soft injection mode.
+- FR-V3-36: The BroadcastBar UI component must allow the user to type a message and select scope (All Agents / Department / Specific Agent) before sending.
 
-- FR-50: Settings editor UI for `~/.claude/settings.json` and `<project>/.claude/settings.json` with field validation against the JSON Schema at `https://json.schemastore.org/claude-code-settings.json`.
-- FR-51: Job history persistence across server restarts (stored in the config file or a sidecar JSON file).
-- FR-52: Per-project notes or README viewer in the sidebar.
-- FR-53: One-click "copy output" button on job results.
-- FR-54: Searchable terminal output within the current session buffer.
-- FR-55: Dark/light theme toggle.
+**Triggers**
+- FR-V3-37: TriggerManager must support two trigger types: `webhook` (dynamic HTTP endpoint registered at runtime at `/api/v1/triggers/webhooks/:path`) and `rss` (polling via `setInterval`, configurable interval, minimum 60 seconds).
+- FR-V3-38: On trigger fire, TriggerManager must inject the trigger payload as context into the target agent's PTY using soft injection mode.
+- FR-V3-39: Webhook body size must be capped at 32 KB. Payloads exceeding this limit must return HTTP 413 and must NOT be passed to any PTY. (SEC-V3-01)
+- FR-V3-40: Webhook endpoint must have a separate rate limiter of 10 requests per minute per source IP, independent of the main 200 req/min limiter. (SEC-V3-04)
+- FR-V3-41: RSS and webhook URLs must be validated against a private IP blocklist before any network request or dynamic endpoint registration. Blocked ranges: `127.x.x.x`, `10.x.x.x`, `172.16.x.x–172.31.x.x`, `192.168.x.x`, `::1`. Any URL resolving to these ranges must return HTTP 400. (SEC-V3-03)
 
-### Won't Have (explicitly out of scope for v1)
+**WebSocket**
+- FR-V3-42: The existing `wss` WebSocket server must gain a new channel `channel=swarm`. All swarm runtime events must be delivered over this channel. The existing `channel=terminal` behavior must remain unchanged.
+- FR-V3-43: SwarmHandler must emit these event types: `agent_status`, `handoff_started`, `handoff_completed`, `circuit_breaker`, `inbox_item`, `execution_status`, `budget_update`.
 
-- Authentication or session tokens — reason: single-user local app, binding to 127.0.0.1 is sufficient isolation.
-- Cloud or remote deployment — reason: design is deliberately localhost-only; adding remote access would require auth, TLS, and a redesigned security model.
-- Git integration (commit UI, branch management, diff view) — reason: scope and complexity; use VS Code or a dedicated Git UI.
-- MCP server configuration editor — reason: `.mcp.json` structure requires a separate research pass; read-only display is acceptable for v1.
-- Electron or Tauri packaging — reason: `npm start` is sufficient for the target user; packaging adds CI complexity.
-- Mobile browser support — reason: terminal emulation on mobile is impractical; xterm.js requires a keyboard.
-- Plugin or extension system — reason: premature abstraction; build the core features first.
+**Swarm Execution API**
+- FR-V3-44: Swarm execution control endpoints: `POST /api/v1/swarm/:workflowId/start`, `POST /api/v1/swarm/:workflowId/pause`, `POST /api/v1/swarm/:workflowId/resume`, `DELETE /api/v1/swarm/:workflowId`, `GET /api/v1/swarm/:workflowId/status`, `GET /api/v1/swarm/:executionId/agent/:nodeId/output`.
+
+**InterAgentFeed**
+- FR-V3-45: The InterAgentFeed panel must display a real-time chronological log of all inter-agent handoff events: source agent, target agent, context update preview, and timestamp. It must be updated via WebSocket without polling.
+
+**V2 Backward Compatibility**
+- FR-V3-46: All existing V2 API routes (`/api/v1/projects`, `/api/v1/sessions`, `/api/v1/agents`, `/api/v1/skills`, `/api/v1/claudemd`, `/api/v1/jobs`) must continue to function without modification. V3 adds new routes; it does not replace or break existing ones.
+- FR-V3-47: All existing V2 frontend views (ProjectsView, TerminalView, JobView, DeploymentManagerView, ContextEditorView) must remain accessible via sidebar navigation. The new SwarmView is additive.
+
+### Should Have (V3.1)
+
+- FR-V3-48: Workflow version history — store previous versions of WorkflowDefinition on each PUT, accessible via `GET /api/v1/workflows/:id/versions`.
+- FR-V3-49: Agent output export — download full PTY session log for any agent as a `.txt` file.
+- FR-V3-50: Canvas minimap — React Flow built-in `<MiniMap>` component for large workflows (over 15 nodes).
+- FR-V3-51: Workflow templates library — pre-built WorkflowDefinitions for common patterns (content agency, code review chain, research loop).
+- FR-V3-52: RSS trigger deduplication — track seen item GUIDs to avoid re-triggering on repeated poll of the same feed.
+
+### Won't Have (explicitly out of scope for V3.0)
+
+- Direct Anthropic API calls — reason: all Claude invocations must go through the `claude` CLI binary. This is a hard architectural constraint, not a preference.
+- Multi-user or cloud deployment — reason: localhost-only is a core security constraint (DEC-002). Adding multi-user would require a full auth redesign.
+- Agent-to-agent direct TCP/WebSocket communication — reason: all communication goes through the SwarmEngine stdout token protocol. Direct inter-agent networking would bypass the audit trail.
+- Persistent execution history across server restarts — reason: deferred to V3.1. Execution state lives in memory.
+- Workflow scheduling (cron) — reason: deferred to V3.1. Triggers cover webhook and RSS only for V3.0.
+- Git integration in swarm view — reason: out of scope for V2 and V3.
+- Mobile browser support — reason: React Flow canvas requires pointer events and precise layout not suitable for mobile.
 
 ---
 
-## 6. Technical Architecture
+## 5. Non-Functional Requirements
 
-### Technology Stack
+- **Performance:** React Flow canvas must render 50 nodes at under 100ms frame time. Agent status updates via WebSocket must reach the UI within 200ms of the PTY event. Prompt-to-Flow scaffold response must begin streaming within 2 seconds.
+- **Security:** All 7 SEC-V3-* requirements must be implemented before release (see Section 10 for full list). Server must continue to bind exclusively to 127.0.0.1. No user data, prompts, or PTY content may be logged to stdout or persisted outside the designated CONFIG_DIR.
+- **Compatibility:** Node.js 20 LTS. Windows 11 23H2 or later (ConPTY requirement for PTY). The `claude` CLI binary must be present and auto-detectable via PATH or `%LOCALAPPDATA%\AnthropicClaude\claude.exe`. React 18, `@xyflow/react` v12, Zustand (new dependency for ExecutionStore).
+- **Scalability:** Designed for single-user localhost. Maximum supported simultaneous agents in one execution: 50 (enforced by WorkflowDefinition schema validation FR-V3-03). Maximum simultaneous workflow executions: not formally capped in V3.0 but expected to be 3–5 based on PTY resource constraints.
+- **Reliability:** A crash or exception in any single agent's PTY handler must NOT crash the SwarmEngine or affect other agents. Each agent's PTY and HandoffParser must be isolated. Errors must be caught, logged to the execution event stream, and set that node's status to `error`.
+- **Build:** V3 must pass `npm run build` (Vite) with 0 errors. All 110 existing V2 tests must continue to pass (`npm test`). New services must have corresponding unit tests covering HandoffParser token splitting, CircuitBreaker threshold, BudgetTracker estimation, and WorkflowStore CRUD.
 
-| Layer | Library | Version | Purpose |
-|-------|---------|---------|---------|
-| Runtime | Node.js | 20 LTS | Server runtime; `child_process.spawn`, `node-pty` compatibility |
-| HTTP server | Express | 4.x | REST API, static file serving, middleware |
-| WebSocket | ws | 8.x | Low-level WebSocket for PTY streaming; no transport fallbacks needed |
-| PTY | node-pty-prebuilt-multiarch | latest | Prebuilt binaries avoid MSVC Build Tools requirement on Windows |
-| Process tree kill | tree-kill | latest | Kills Claude's full process tree (sub-processes included) |
-| Atomic file write | write-atomic | latest | Prevents config/agent/skill file corruption on crash |
-| YAML parsing | js-yaml | 4.x | Agent and skill YAML frontmatter parse and serialize |
-| UUID generation | uuid | 9.x | Session and job ID generation (v4) |
-| Security headers | helmet | latest | Sets CSP, X-Content-Type-Options, X-Frame-Options |
-| Frontend bundler | Vite | 5.x | Sub-second HMR for development; production bundle |
-| UI framework | React | 18 | Concurrent rendering, hooks-based state management |
-| Terminal renderer | xterm.js | 5.x | Browser-based PTY rendering; ConPTY-compatible |
-| Terminal resize | xterm-addon-fit | latest | Resizes xterm.js to its container div |
-| Styling | Tailwind CSS | 3.x | Utility-first; no conflicts with xterm.js canvas |
-| Markdown rendering | react-markdown | 9.x | Safe Markdown rendering for job results |
-| Markdown tables | remark-gfm | latest | GFM plugin for react-markdown (tables, code fences) |
+---
 
-### Component Architecture
+## 6. Technical Constraints
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         Node.js Process                          │
-│                                                                  │
-│  ┌──────────────┐  ┌───────────────┐  ┌──────────────────────┐  │
-│  │  Express      │  │ SessionManager│  │     JobRunner        │  │
-│  │  HTTP Server  │  │               │  │                      │  │
-│  │               │  │ Map<id,{      │  │ Map<id,{             │  │
-│  │  /api/v1/*    │  │   pty,        │  │   child,            │  │
-│  │  static SPA   │  │   buffer,     │  │   clients           │  │
-│  │               │  │   clients     │  │ }>                  │  │
-│  └──────┬────────┘  │ }>            │  └────────┬─────────────┘  │
-│         │           └───────┬───────┘           │               │
-│         │                   │                   │               │
-│  ┌──────▼────────────────────▼───────────────────▼────────────┐  │
-│  │                    WebSocket Server (ws)                    │  │
-│  │   /ws?sessionId=<uuid>          /ws/jobs?jobId=<uuid>       │  │
-│  └────────────────────────────────────────────────────────────┘  │
-│                                                                  │
-│  ┌──────────────┐  ┌───────────────┐  ┌──────────────────────┐  │
-│  │  FileManager │  │  ConfigStore  │  │   ProcessRegistry    │  │
-│  │              │  │               │  │   (active_pids.json) │  │
-│  │  Path valid. │  │  config.json  │  │                      │  │
-│  │  YAML parse  │  │  write-atomic │  │  Stale PID cleanup   │  │
-│  │  write-atomic│  │               │  │  on startup          │  │
-│  └──────────────┘  └───────────────┘  └──────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
+- NEVER use `shell: true` in any `spawn()` or `exec()` call — SEC-02, enforced project-wide. All new V3 spawn calls (SwarmEngine PTY spawn, TriggerManager RSS fetch) must use `shell: false`.
+- NEVER use `fs.writeFile` directly for any config, workflow, agent, or skill file — use `write-file-atomic` (the correct npm package name, confirmed in DEC-001 revision). WorkflowStore must follow the same atomic write pattern as ConfigStore.
+- ALWAYS validate file paths with `path.resolve()` + prefix assertion before any write. WorkflowStore path validation: resolved path must begin with `CONFIG_DIR/workflows/`.
+- PTY `onData` handler must NEVER be removed from SessionManager sessions — DEC-009 (ConPTY deadlock prevention on Windows). SwarmEngine taps output via `session.swarmListeners` Set, not by replacing `onData`.
+- `child.stdin.end()` must be called immediately after every job spawn in JobRunner (DEC-005, GitHub #7497). This constraint applies to Prompt-to-Flow scaffold jobs. It does NOT apply to interactive PTY sessions spawned by SwarmEngine.
+- All REST endpoints under `/api/v1/`. CSRF header `X-Requested-With: ClaudeCodeManager` required on all mutating requests (existing middleware covers this automatically for new routes mounted on the existing app).
+- Workflow IDs: server-generated UUIDs only (uuid v4). Client-supplied IDs must be ignored on POST.
+- Zero direct Anthropic API calls. All Claude invocations must use the `claude` CLI binary via `node-pty` (interactive PTY sessions) or `child_process.spawn` (job mode for scaffold). The SwarmEngine must never import or call the Anthropic SDK.
+- `@xyflow/react` v12 must be used for the canvas (user decision). The package name is `@xyflow/react`, not the older `reactflow`.
+- Zustand must be used for ExecutionStore (canvas execution state). AppContext must remain unchanged — Zustand store is additive, not a replacement.
+- Webhook local trust: for V3.0, webhook endpoints trust all requests from 127.0.0.1 without additional auth tokens. A security note (SEC-V3-NOTE-01) must be added to SECURITY_AUDIT.md acknowledging this as a known postilla for V3.1.
 
-┌─────────────────────────────────────────────────────────────────┐
-│                     React SPA (Vite)                            │
-│                                                                  │
-│  ┌────────────┐  ┌──────────────┐  ┌──────────┐  ┌──────────┐  │
-│  │  Terminal   │  │   Job Mode   │  │ Entities │  │ Projects │  │
-│  │  View       │  │   View       │  │  View    │  │  View    │  │
-│  │  xterm.js   │  │  Prompt+SSE  │  │ Agent/   │  │ Register │  │
-│  │  WebSocket  │  │  react-      │  │ Skill/   │  │ Scaffold │  │
-│  │             │  │  markdown    │  │ CLAUDE.md│  │          │  │
-│  └────────────┘  └──────────────┘  └──────────┘  └──────────┘  │
-│                                                                  │
-│  ┌────────────────────────────────────────────────────────────┐  │
-│  │                  Project Sidebar                           │  │
-│  │  [Project A] [Project B] [Project C]  [+ Add Project]     │  │
-│  └────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
+---
 
-External Processes (one per active session):
-  claude.exe ─ spawned by SessionManager via node-pty (ConPTY)
-  claude.exe ─ spawned by JobRunner via child_process.spawn
-```
-
-### File Layout
+## 7. Architecture Overview
 
 ```
-<repo-root>/
-├── package.json              # Root: scripts (start, dev, build)
-├── server/
-│   ├── index.js              # Express app bootstrap, server.listen("127.0.0.1")
-│   ├── routes/
-│   │   ├── projects.js       # /api/v1/projects
-│   │   ├── sessions.js       # /api/v1/sessions
-│   │   ├── jobs.js           # /api/v1/jobs
-│   │   ├── agents.js         # /api/v1/agents
-│   │   ├── skills.js         # /api/v1/skills
-│   │   └── claudemd.js       # /api/v1/claudemd
-│   ├── services/
-│   │   ├── SessionManager.js # PTY lifecycle, sessions Map, ring buffer
-│   │   ├── JobRunner.js      # child_process spawning, job Map
-│   │   ├── FileManager.js    # All FS reads/writes, path validation
-│   │   ├── ConfigStore.js    # %APPDATA% config JSON, write-atomic
-│   │   └── ProcessRegistry.js# active_pids.json read/write
-│   ├── ws/
-│   │   ├── terminalHandler.js# /ws WebSocket upgrade handler
-│   │   └── jobHandler.js     # /ws/jobs WebSocket upgrade handler
-│   └── middleware/
-│       ├── csrf.js           # X-Requested-With header check
-│       ├── pathValidation.js # Path traversal prevention
-│       └── security.js       # helmet() + binding assertions
-├── client/
-│   ├── index.html
-│   ├── vite.config.js
-│   └── src/
-│       ├── main.jsx
-│       ├── App.jsx
-│       ├── views/
-│       │   ├── TerminalView.jsx
-│       │   ├── JobView.jsx
-│       │   ├── EntitiesView.jsx
-│       │   └── ProjectsView.jsx
-│       ├── components/
-│       │   ├── Sidebar.jsx
-│       │   ├── Terminal.jsx       # xterm.js wrapper + WebSocket
-│       │   ├── JobPanel.jsx
-│       │   ├── AgentEditor.jsx
-│       │   ├── SkillEditor.jsx
-│       │   └── ClaudeMdEditor.jsx
-│       └── hooks/
-│           ├── useSession.js
-│           └── useJob.js
-└── docs/
-    └── PRD.md
-```
-
-### Data Model
-
-**Project**
-```
-{
-  id:        string (UUID v4)
-  name:      string
-  path:      string (absolute filesystem path, validated)
-  createdAt: string (ISO 8601)
-}
-```
-
-**SessionRecord** (in-memory only, not persisted)
-```
-{
-  sessionId:      string (UUID v4)
-  projectId:      string
-  pty:            IPty (node-pty instance)
-  buffer:         RingBuffer (100 KB fixed capacity)
-  clients:        Set<WebSocket>
-  pid:            number
-  status:         "active" | "killed"
-  createdAt:      Date
-  lastActivityAt: Date
-}
-```
-
-**JobRecord** (in-memory; job results persisted in v1.1)
-```
-{
-  jobId:       string (UUID v4)
-  projectId:   string
-  prompt:      string
-  allowedTools: string
-  maxTurns:    number
-  child:       ChildProcess
-  clients:     Set<WebSocket | SseResponse>
-  status:      "running" | "done" | "cancelled" | "error"
-  result:      string | null (Markdown)
-  createdAt:   Date
-  completedAt: Date | null
-}
-```
-
-**Agent** (file-backed)
-```
-{
-  id:          string (UUID v4, generated from filePath hash or random)
-  name:        string (from frontmatter)
-  scope:       "user" | "project"
-  filePath:    string (absolute)
-  frontmatter: object (all valid YAML frontmatter fields)
-  body:        string (Markdown body below frontmatter delimiter)
-}
-```
-
-**Skill** (file-backed)
-```
-{
-  id:          string
-  name:        string (from frontmatter or directory name)
-  scope:       "user" | "project"
-  filePath:    string (absolute path to SKILL.md)
-  frontmatter: object
-  body:        string
-}
-```
-
-**AppConfig** (persisted to %APPDATA%)
-```
-{
-  version:  "1"
-  projects: Project[]
-  settings: {
-    port:               number (default 3000)
-    idleTimeoutMinutes: number (default 30)
-  }
-}
+┌─────────────────────────────────────────────────────────────────────┐
+│  Browser (localhost:3000)                                           │
+│                                                                     │
+│  ┌────────────┐  ┌──────────────────────────────────────────────┐  │
+│  │  Sidebar   │  │  SwarmView                                   │  │
+│  │  (V2 nav + │  │  ┌─────────────────┐  ┌──────────────────┐  │  │
+│  │   Swarm)   │  │  │  SwarmCanvas    │  │  AgentInspector  │  │  │
+│  │            │  │  │  (React Flow    │  │  InterAgentFeed  │  │  │
+│  │            │  │  │   v12)          │  │  HitlInbox       │  │  │
+│  │            │  │  │  AgentNode      │  └──────────────────┘  │  │
+│  │            │  │  │  DepartmentNode │                         │  │
+│  │            │  │  │  TriggerNode    │  ┌──────────────────┐  │  │
+│  │            │  │  │  HandoffEdge    │  │  BroadcastBar    │  │  │
+│  │            │  │  └─────────────────┘  │  PromptToFlow    │  │  │
+│  └────────────┘  │  BreadcrumbBar        │  Bar             │  │  │
+│                  └──────────────────────────────────────────┘  │  │
+│                                                                     │
+│  Zustand ExecutionStore (separate from AppContext)                  │
+│  useSwarm hook → WS channel=swarm                                   │
+└───────────────────────────────┬─────────────────────────────────────┘
+                                │ HTTP + WebSocket (127.0.0.1:3000)
+┌───────────────────────────────▼─────────────────────────────────────┐
+│  Express Server                                                     │
+│                                                                     │
+│  New routes:  /api/v1/workflows  /api/v1/swarm  /api/v1/inbox       │
+│               /api/v1/triggers                                      │
+│  Existing:    /api/v1/projects  /api/v1/sessions  /api/v1/agents    │
+│               /api/v1/skills  /api/v1/claudemd  /api/v1/jobs        │
+│                                                                     │
+│  ┌─────────────────┐  ┌──────────────┐  ┌────────────────────────┐ │
+│  │  SwarmEngine    │  │ WorkflowStore│  │  TriggerManager        │ │
+│  │  - executions   │  │ (JSON on     │  │  (webhook endpoints    │ │
+│  │    Map          │  │  disk, atomic│  │   + RSS polling)       │ │
+│  │  - HandoffParser│  │  writes)     │  └────────────────────────┘ │
+│  │  - CircuitBreaker│ └──────────────┘  ┌────────────────────────┐ │
+│  │  - BudgetTracker│                    │  WS swarmHandler       │ │
+│  └────────┬────────┘                    │  (channel=swarm)       │ │
+│           │ taps via swarmListeners Set └────────────────────────┘ │
+│  ┌────────▼────────────────────────────────────────────────────┐   │
+│  │  SessionManager (V2, UNCHANGED)                              │   │
+│  │  - PTY sessions Map                                          │   │
+│  │  - permanent pty.onData (never removed — DEC-009)           │   │
+│  │  - session.swarmListeners Set (new tap point for V3)        │   │
+│  └────────────────────────────────────────────────────────────┘   │
+│                                                                     │
+│  ┌────────────────────────────────────────────────────────────┐   │
+│  │  node-pty processes (one per agent per execution)          │   │
+│  │  each spawning: claude CLI binary via PTY                  │   │
+│  └────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 7. Claude Code Integration
+## 8. Data Model
 
-### Binary Discovery
+### WorkflowDefinition
+- `id`: UUID (server-generated)
+- `name`: string (max 128 chars, `^[a-zA-Z0-9 _\-]+$`)
+- `description`: string (max 512 chars)
+- `projectId`: UUID (reference to V2 project)
+- `nodes`: array of NodeDefinition
+- `edges`: array of EdgeDefinition
+- `settings`: WorkflowSettings
+- `initialContext`: flat dict `{ [key: string]: string }`
+- `createdAt`: ISO 8601
+- `updatedAt`: ISO 8601
 
-The server must locate the `claude` binary at startup using the following strategy:
-1. Check if `claude` is on `PATH` via `child_process.spawnSync("claude", ["--version"], { shell: false })`.
-2. If not found on PATH, check the default installation location for Windows: `%LOCALAPPDATA%\AnthropicClaude\claude.exe`. [ASSUMED: based on typical Electron app installation paths on Windows.]
-3. If neither location yields a valid binary, log a clear error and exit.
-4. Store the resolved binary path in a module-level constant used by all spawn calls.
+### NodeDefinition
+- `id`: string (user-defined slug, `^[a-z][a-z0-9-]*$`)
+- `type`: `"agent"` | `"department"` | `"trigger"`
+- `position`: `{ x: number, y: number }`
+- `data`: AgentData | DepartmentData | TriggerData
 
-### Terminal Mode (PTY) Invocation
+### AgentData
+- `label`: string
+- `systemPrompt`: string (max 16 KB — SEC-V3-02)
+- `model`: string (e.g. `"claude-sonnet-4-6"`)
+- `tools`: array of string
+- `isTriageNode`: boolean (triage = first agent to receive initial context)
+- `maxTurns`: number
+- `parentDepartmentId`: string | null
 
-```js
-pty.spawn(CLAUDE_BIN, [], {
-  name: "xterm-color",
-  cols: 80,
-  rows: 24,
-  cwd: project.path,
-  env: { ...process.env }
-});
+### DepartmentData
+- `label`: string
+- `color`: string (hex)
+- `collapsed`: boolean
+
+### TriggerData
+- `label`: string
+- `triggerType`: `"webhook"` | `"rss"`
+- `webhookPath`: string | null (for webhook type)
+- `rssUrl`: string | null (for rss type)
+- `pollIntervalSeconds`: number (minimum 60)
+- `targetNodeId`: string
+
+### EdgeDefinition
+- `id`: string
+- `source`: string (nodeId)
+- `target`: string (nodeId)
+- `type`: `"handoff"`
+- `data.circuitBreakerThreshold`: number | null
+
+### WorkflowSettings
+- `mode`: `"autonomous"` | `"hitl"`
+- `budgetTokens`: number
+- `circuitBreakerThreshold`: number (default 10)
+- `defaultModel`: string
+
+### ExecutionState (in-memory only, not persisted)
+- `executionId`: UUID
+- `workflowId`: UUID
+- `status`: `"running"` | `"paused"` | `"stopped"` | `"error"`
+- `workflowContext`: flat dict `{ [key: string]: string }`
+- `agents`: Map of `nodeId` → AgentRuntime
+- `startedAt`: ISO 8601
+
+### AgentRuntime (in-memory)
+- `nodeId`: string
+- `pty`: node-pty IPty instance
+- `handoffParser`: HandoffParser instance
+- `status`: `"idle"` | `"running"` | `"waiting_hitl"` | `"done"` | `"error"`
+- `handoffCount`: number
+- `lastOutputSnippet`: string (last 3 lines)
+
+### InboxItem
+- `id`: UUID
+- `executionId`: UUID
+- `nodeId`: string
+- `agentLabel`: string
+- `pendingText`: string (max 8 KB — SEC-V3-05)
+- `status`: `"pending"` | `"approved"` | `"rejected"`
+- `createdAt`: ISO 8601
+
+---
+
+## 9. API Surface
+
+### Workflow CRUD
+```
+GET    /api/v1/workflows
+       Response: { workflows: WorkflowDefinition[] }
+
+POST   /api/v1/workflows
+       Body: Partial<WorkflowDefinition> (id ignored — server-generated)
+       Response: WorkflowDefinition
+
+GET    /api/v1/workflows/:id
+       Response: WorkflowDefinition | 404
+
+PUT    /api/v1/workflows/:id
+       Body: Partial<WorkflowDefinition>
+       Response: WorkflowDefinition | 400 (validation) | 404
+
+DELETE /api/v1/workflows/:id
+       Response: 204 | 404
 ```
 
-- Arguments: empty array (Claude Code reads input interactively from the PTY).
-- `env`: inherit the full server environment so Claude Code can access the user's auth credentials (stored in `~/.claude.json` OAuth session).
-- `cols` and `rows`: ConPTY uses these immediately; they are updated via `pty.resize()` when the browser terminal resizes.
+### Swarm Execution
+```
+POST   /api/v1/swarm/:workflowId/start
+       Body: { initialContext?: object }
+       Response: { executionId: string }
 
-### Job Mode (Headless) Invocation
+POST   /api/v1/swarm/:workflowId/pause
+       Response: 200
 
-```js
-const child = child_process.spawn(CLAUDE_BIN, [
-  "-p", prompt,
-  "--output-format", "stream-json",
-  "--allowedTools", allowedTools,
-  "--max-turns", String(maxTurns),
-  "--no-session-persistence"
-], {
-  cwd: project.path,
-  stdio: ["pipe", "pipe", "pipe"],
-  shell: false
-});
-child.stdin.end(); // CRITICAL: close stdin immediately (GitHub issue #7497)
+POST   /api/v1/swarm/:workflowId/resume
+       Response: 200
+
+DELETE /api/v1/swarm/:workflowId
+       Response: 204 (kills all PTYs, clears execution)
+
+GET    /api/v1/swarm/:workflowId/status
+       Response: ExecutionState (status, workflowContext, per-agent status)
+
+POST   /api/v1/swarm/scaffold
+       Body: { description: string }
+       Response: WorkflowDefinition (streamed via SSE)
+
+POST   /api/v1/swarm/:executionId/broadcast
+       Body: { text: string, scope: "all"|"department"|"agent", targetId?: string }
+       Response: { injectedCount: number }
+
+GET    /api/v1/swarm/:executionId/agent/:nodeId/output
+       Response: { output: string } (last 100 lines of PTY output)
 ```
 
-- `--output-format stream-json`: produces line-delimited JSON events for streaming progress.
-- `--no-session-persistence`: prevents cluttering Claude's session history with background jobs.
-- `child.stdin.end()`: must be called immediately after spawn. Failure to do so causes the process to hang indefinitely (confirmed bug: GitHub issue #7497).
-- `child.stdout` must be read line-by-line using the `readline` module. Each line is parsed as JSON and forwarded to the browser.
-- Final event: parse for `result` field (a Markdown string) and send `{ type: "done", result }` to the browser.
-- Cancellation: `tree-kill(child.pid)` — not `child.kill()`, which leaves sub-processes alive on Windows.
+### HITL Inbox
+```
+GET    /api/v1/inbox
+       Response: { items: InboxItem[] }
 
-### Version Check at Startup
+GET    /api/v1/inbox/:executionId
+       Response: { items: InboxItem[] }
 
-```js
-const result = child_process.spawnSync(CLAUDE_BIN, ["--version"], { encoding: "utf8" });
-const version = result.stdout.trim(); // e.g., "claude-code 1.2.3"
-logger.info(`Claude Code version: ${version}`);
-// Warn if version is below the minimum tested version
+POST   /api/v1/inbox/:itemId/approve
+       Body: { approvedText?: string }
+       Response: 200
+
+POST   /api/v1/inbox/:itemId/reject
+       Body: { reason?: string }
+       Response: 200
 ```
 
-Minimum tested version: [ASSUMED: "1.0.0" as baseline — the team must update this after integration testing.]
+### Triggers
+```
+GET    /api/v1/triggers
+       Response: { triggers: TriggerData[] }
 
-### YAML Frontmatter Parsing
-
-```js
-// Parse
-const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/m);
-const frontmatter = yaml.load(match[1]);
-const body = match[2];
-
-// Serialize
-const serialized = `---\n${yaml.dump(frontmatter)}---\n${body}`;
+POST   /api/v1/triggers/webhooks/:path
+       Body: any (max 32 KB — SEC-V3-01)
+       Response: 200 | 413 (body too large) | 429 (rate limited)
 ```
 
-- Agent frontmatter fields and their validation rules are documented in Section 6 of research_complete.md.
-- Skill frontmatter fields and their validation rules are documented in Section 6 of research_complete.md.
-- The `$ARGUMENTS` placeholder in the skill body must not be modified when only frontmatter is changed.
-
-### Agent Behavioral Notes
-
-- Agents are loaded at session start. Changes to agent files require a Claude session restart to take effect. The UI must display this warning after every agent save.
-- Skill changes are detected live by Claude Code. No session restart is required after skill saves.
-- The `name` frontmatter field in agent files must match `^[a-z][a-z0-9-]*$` (lowercase letters and hyphens only). The server must validate this before writing.
-
-### Session Lifecycle
-
+### WebSocket Events (channel=swarm)
+All events delivered as JSON frames on the WebSocket connection with `channel: "swarm"`.
 ```
-POST /api/v1/sessions
-  → validate projectId
-  → validate project.path (absolute, exists, accessible)
-  → pty.spawn(CLAUDE_BIN, [], { cwd, env, cols: 80, rows: 24 })
-  → session.clients = new Set()
-  → permanent pty.onData handler wired (never removed)
-  → append PID to active_pids.json
-  → return { sessionId, projectId, createdAt }
-
-WebSocket /ws?sessionId=<uuid>
-  → validate sessionId exists (4004 if not)
-  → session.clients.add(ws)
-  → replay ring buffer → ws.send(chunk) for each chunk
-  → wire pty.onData → ws.send (already wired; buffer already replaying)
-  → on ws.message({ type:"input" }) → pty.write(data)
-  → on ws.message({ type:"resize" }) → pty.resize(cols, rows)
-  → on ws.close → session.clients.delete(ws) — PTY stays alive
-
-DELETE /api/v1/sessions/:id
-  → pty.kill()
-  → sessions.delete(sessionId)
-  → remove PID from active_pids.json
-  → return 204
-
-Idle sweeper (every 5 minutes):
-  → for each session where clients.size === 0
-       and now - lastActivityAt > IDLE_TIMEOUT_MINUTES
-  → pty.kill(), sessions.delete(sessionId)
-  → remove PID from active_pids.json
+{ type: "agent_status", nodeId, status, lastOutputSnippet }
+{ type: "handoff_started", sourceNodeId, targetNodeId, edgeId, counter }
+{ type: "handoff_completed", sourceNodeId, targetNodeId }
+{ type: "circuit_breaker", edgeId, counter, threshold }
+{ type: "inbox_item", item: InboxItem }
+{ type: "execution_status", status }
+{ type: "budget_update", estimatedTokensUsed, limitTokens }
 ```
 
 ---
 
-## 8. Security Requirements
+## 10. UX Flow
 
-All 10 of the following requirements are mandatory for v1 release. No exceptions.
+### Main Flow: Building and Running a Workflow
 
-**SEC-01: Bind to 127.0.0.1 only.**
-The server must call `server.listen(PORT, "127.0.0.1")`. The `host` argument must never be `"0.0.0.0"` or omitted (which defaults to `0.0.0.0`). Verification: `netstat -an | findstr LISTENING` must show only the loopback address for the application port.
+1. User opens the app (localhost:3000). The V2 sidebar is visible with all existing views plus a new "Swarm" item.
+2. User clicks "Swarm" in the sidebar. SwarmView opens with an empty React Flow canvas and a PromptToFlowBar at the top.
+3. **Option A — Prompt-to-Flow:** User types a workflow description (e.g. "Content agency with copywriter, editor, SEO reviewer, and publisher") and presses Enter. The PromptToFlowBar shows "Scaffolding AI..." animation. Nodes appear on canvas with 80ms staggered animation.
+4. **Option B — Manual build:** User right-clicks canvas → "Add Agent". A modal appears where they can either (a) create from scratch (enter label, system prompt, model, tools) or (b) select from existing `.claude/agents/` in the active project directory. Department nodes are created similarly.
+5. User draws edges between nodes by dragging from one node's output handle to another node's input handle. Each edge is a handoff.
+6. User double-clicks a department node to drill into it. BreadcrumbBar updates: "Home > Marketing Dept". User adds agents inside the department, then clicks "Home" in the breadcrumb to return to top level.
+7. User opens AgentInspector (right panel) by clicking an agent node. They review and edit the system prompt, model selection, tool list, and maxTurns.
+8. User clicks "Run Workflow". SwarmEngine starts, spawns PTYs for each agent, injects system prompts. Triage node receives the initial context.
+9. Canvas animates: the triage node's border pulses blue. When it emits `__HANDOFF__:target-id:base64payload`, the source edge pulses with a light animation, the badge shows `[x1]`, and the target node's border turns blue.
+10. InterAgentFeed panel (right side) shows: "Copywriter → Editor: { topic: 'AI trends', draft_complete: true }".
+11. If `__DONE__` is received from any agent, a soft toast notification appears: "Agent 'Copywriter' signaled done". Workflow continues.
+12. If circuit breaker fires (edge hits threshold), a warning toast appears. Workflow continues.
+13. If budget soft-warn fires, a banner appears at the top of SwarmView: "Estimated tokens used: 85,000 / 100,000". Workflow continues.
+14. **HITL flow:** In HITL mode, when an agent is ready to act, it emits an inbox item. HitlInbox panel shows: "Editor wants to publish draft: [preview]". User clicks Approve or Reject. On approve, text is injected into the agent's PTY via the Ink-compatible sequence.
+15. **PTY Explosion:** User clicks a running agent node and selects "Open Terminal". Terminal.jsx opens fullscreen, connected to that agent's PTY. User types directly. User presses Escape or clicks X to close.
+16. **Broadcast:** User opens BroadcastBar, types "Focus on brevity", selects scope "All Agents", and clicks Send. Text is injected into all running agents via soft injection.
+17. User clicks Stop. All PTYs are killed via tree-kill. Canvas nodes return to idle state.
 
-**SEC-02: No `shell: true` in any child process invocation.**
-Every call to `child_process.spawn()` and `pty.spawn()` must pass arguments as a JavaScript array. The `shell` option must be `false` or omitted. A code review must audit every spawn call site before release. Rationale: `shell: true` allows arbitrary command injection via crafted project paths or prompts.
+### Trigger Flow
 
-**SEC-03: Working directory path validation.**
-Before spawning any PTY or job process with `cwd: project.path`:
-- Validate `project.path` is an absolute path (does not start with `.`).
-- Validate `project.path` contains no `..` components and no null bytes.
-- Validate the directory exists and is accessible using `fs.accessSync`.
-- [ASSUMED: UNC paths (e.g., `\\server\share`) are rejected in v1 with an error message.]
-Return HTTP 400 with a descriptive error if validation fails.
-
-**SEC-04: File write path validation.**
-The `FileManager` service must:
-- Resolve every write target path using `path.resolve()`.
-- Assert that the resolved path starts with the expected base directory (`%APPDATA%\ClaudeCodeManager\`, `~/.claude/`, or a registered project path).
-- Return HTTP 400 and write no file if the assertion fails.
-This prevents path traversal attacks (e.g., `{ name: "../../evil" }` in an API body).
-
-**SEC-05: WebSocket message size caps and backpressure.**
-- Set `maxPayload: 1024 * 1024` (1 MB) on the `WebSocketServer` constructor.
-- Before calling `ws.send(data)`, check `ws.bufferedAmount`. If it exceeds 256 KB, pause forwarding from the PTY output handler for that client until `ws.bufferedAmount` drops below the threshold.
-- The ring buffer write must not be paused — only the per-client send may be paused.
-
-**SEC-06: CSRF protection on mutating endpoints.**
-All `POST`, `PUT`, `PATCH`, and `DELETE` endpoints must require the request header `X-Requested-With: ClaudeCodeManager`. Express middleware must verify this header and return HTTP 403 if absent. The React client must send this header on all mutating `fetch` calls. The middleware must be applied before all API routes.
-
-**SEC-07: Security headers via helmet.**
-Apply `helmet()` as the first Express middleware. The Content-Security-Policy must restrict `script-src` to `'self'` only. Verify the following headers are present on all responses: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `X-Powered-By` absent.
-
-**SEC-08: No sensitive data in logs.**
-The application must never log:
-- API keys or OAuth tokens (from `~/.claude.json`)
-- Full prompt content from job mode submissions
-- Full file content of CLAUDE.md, agent files, or skill files
-Allowed to log: session IDs, project IDs, PIDs, exit codes, error messages (without stack data containing file content).
-
-**SEC-09: PTY process lifecycle management.**
-- Register `process.on('exit')`, `process.on('SIGTERM')`, `process.on('SIGINT')` handlers that call `pty.kill()` on every session in the Map before the process exits.
-- Implement the idle timeout sweeper (FR-19) to kill sessions idle beyond the configured threshold.
-- On startup, check `active_pids.json` for stale PIDs and kill them with `tree-kill` (FR-45).
-- Never rely on garbage collection or process exit alone to clean up ConPTY resources.
-
-**SEC-10: `npm audit` in CI.**
-Run `npm audit --audit-level=high` as a mandatory step before any release. Resolve all high and critical findings before shipping. This is non-optional because `node-pty` and `ws` receive periodic CVEs.
+1. User adds a TriggerNode to the canvas and connects it to an agent node with a handoff edge.
+2. User opens TriggerNode inspector: selects type "webhook", enters path `/my-hook`.
+3. On workflow start, TriggerManager dynamically registers `POST /api/v1/triggers/webhooks/my-hook`.
+4. An external tool posts to that endpoint. TriggerManager receives the body (validated, max 32 KB), and injects it as context into the connected agent's PTY.
+5. The connected agent node animates on canvas and processing begins.
 
 ---
 
-## 9. Non-Functional Requirements
+## 11. Open Questions
 
-### Performance
-
-- NFR-01: The xterm.js terminal must display PTY output with a perceived latency of less than 50 ms from keystroke to screen update under normal localhost conditions.
-- NFR-02: Session switching (WebSocket close + new WebSocket open + ring buffer replay) must complete within 500 ms for a 100 KB ring buffer.
-- NFR-03: `POST /api/v1/sessions` must return within 2 seconds of the request (PTY spawned and ready).
-- NFR-04: `POST /api/v1/jobs` must return within 1 second (child process spawned, response returned before job completes).
-- NFR-05: The React SPA must load and render the project list within 3 seconds of the user navigating to `http://127.0.0.1:3000` on a cold start.
-- NFR-06: The application must support at least 5 simultaneous active PTY sessions without measurable degradation in terminal responsiveness.
-- NFR-07: Ring buffer memory must be capped at 100 KB per session. With 5 sessions, total ring buffer memory must not exceed 500 KB.
-
-### Compatibility
-
-- NFR-08: Primary platform: Windows 11 (23H2 or later). ConPTY behavior on Windows 11 pre-23H2 is unsupported [ASSUMED: based on ClosePseudoConsole deadlock risk on older builds].
-- NFR-09: Runtime: Node.js 20 LTS. The application must not use any Node.js API marked as experimental in Node.js 20.
-- NFR-10: The `node-pty-prebuilt-multiarch` package must be used (not plain `node-pty`) to avoid requiring MSVC Build Tools on the user's machine.
-- NFR-11: The React SPA must support the latest stable versions of Chrome, Firefox, and Edge. Safari support is not required for v1 [ASSUMED: Windows-primary users; Safari is Mac-only].
-- NFR-12: The Claude Code binary must be on the user's `PATH` or at the fallback location specified in Section 7. The application must not bundle or install Claude Code.
-
-### Startup
-
-- NFR-13: `npm install` followed by `npm start` must bring the application to a ready state (server listening, SPA served, browser-openable) in under 30 seconds on a machine with an internet connection (for `npm install`) and under 5 seconds on a machine with dependencies already installed.
-- NFR-14: `npm start` must open the browser automatically at `http://127.0.0.1:<PORT>`. [ASSUMED: using the `open` npm package or a platform-appropriate `start` command.]
-- NFR-15: The server must log its listening address and port to stdout on startup, e.g.: `Claude Code Visual Manager running at http://127.0.0.1:3000`.
-
-### Reliability
-
-- NFR-16: The server must not crash on malformed WebSocket messages. All message parsing must be wrapped in try/catch; malformed messages must log a warning and be discarded.
-- NFR-17: The server must not crash if the `claude` binary exits unexpectedly. It must detect PTY exit via `pty.onExit`, update the session status to `"killed"`, notify connected WebSocket clients with `{ type: "session-exit", code }`, and remove the session from the Map.
-- NFR-18: Write failures (e.g., disk full) in `write-atomic` must be caught, returned as HTTP 500 with a descriptive error, and must not corrupt existing files.
+1. **Scaffold AI model:** Which model should `POST /api/v1/swarm/scaffold` use for the prompt-to-flow generation job? Assumption: the user's default model configured in Claude Code settings. Architect should confirm whether a hardcoded model is preferable for reliability.
+2. **Workflow-to-project binding:** The WorkflowDefinition includes a `projectId` field. Should workflows be strictly scoped to a single project, or should they be global (usable across projects)? Current assumption: scoped to projectId for file system coherence, but the store does not enforce this filter server-side in V3.0.
+3. **Agent PTY spawn flags:** Should each agent PTY inherit the project's working directory from the V2 project record, or use a separate configurable CWD? Assumption: inherit the registered project's path.
+4. **RSS authentication:** RSS feeds behind HTTP auth are out of scope for V3.0. Should TriggerManager throw a clear error or silently skip authenticated feeds?
+5. **Zustand version:** What Zustand version should be installed? Latest (v5) changes the store API significantly from v4. Architect should specify version to avoid breaking changes during implementation.
+6. **`swarmListeners` Set contract:** The `session.swarmListeners` Set is described as a tap point on SessionManager, but SessionManager (V2) does not currently have this field. The backend-dev implementing SwarmEngine must add this field to SessionManager non-destructively. This is a V2 file modification; it must be done carefully to avoid breaking V2 tests.
 
 ---
 
-## 10. Phase Plan
+## 12. Out of Scope
 
-### Phase 0 — Foundation (Week 1, Days 1-3)
-
-**Objective:** Minimal working server + React shell with no features.
-
-**Tasks:**
-1. Initialize monorepo: `server/` (Node.js + Express) and `client/` (React + Vite + Tailwind).
-2. Configure `npm start` to build the client and start the server, serving the client SPA at `http://127.0.0.1:3000`.
-3. Apply `helmet()` middleware and the CSRF header middleware (SEC-06, SEC-07).
-4. Bind to `127.0.0.1` only (SEC-01).
-5. Implement `ConfigStore`: read/write `%APPDATA%\ClaudeCodeManager\config.json` with `write-atomic`.
-6. Implement `ProcessRegistry`: `active_pids.json` read/write.
-7. Register `SIGTERM`/`SIGINT`/`exit` handlers (FR-44, SEC-09).
-8. Implement stale PID cleanup on startup (FR-45).
-9. Implement Claude binary discovery and version check (FR-03).
-
-**Acceptance Criteria:**
-- `npm start` serves the React SPA at `http://127.0.0.1:3000`.
-- `netstat` shows the port bound only to `127.0.0.1`.
-- `POST /api/v1/projects` without the CSRF header returns 403.
-- `node server/index.js` followed by Ctrl+C leaves no orphaned processes.
+- Direct Anthropic API SDK calls or API key configuration — all Claude invocations via `claude` binary only.
+- Cloud, remote, or multi-user deployment — localhost-only architecture.
+- Agent-to-agent TCP/WebSocket networking — all communication through SwarmEngine stdout token protocol.
+- Persistent execution history across server restarts — in-memory only in V3.0.
+- Workflow cron scheduling — deferred to V3.1.
+- Workflow version history — deferred to V3.1.
+- Canvas export to image/PDF — not planned.
+- Mobile browser support — React Flow canvas requires desktop pointer events.
+- Git integration in the swarm canvas — out of scope for V2 and V3.
+- Authentication, API keys, or access control — localhost trust model.
+- Electron or Tauri packaging — web app only.
+- MCP server configuration editor — read-only display remains as-is from V2.
 
 ---
 
-### Phase 1 — Project Management + PTY Terminal (Week 1-2, Days 4-8)
+## Appendix A: Security Requirements (SEC-V3-*)
 
-**Objective:** A user can register a project and open a live terminal to Claude Code.
+All seven requirements are mandatory and must be implemented and verified before the V3.0 release tag.
 
-**Tasks:**
-1. Implement `GET /api/v1/projects`, `POST /api/v1/projects`, `DELETE /api/v1/projects` (FR-05, FR-07, FR-08).
-2. Implement `POST /api/v1/projects/scaffold` (FR-06).
-3. Implement `SessionManager`: PTY spawn, ring buffer, `sessions` Map, permanent `pty.onData` handler (FR-10 to FR-19).
-4. Implement WebSocket terminal handler at `/ws?sessionId=<uuid>` (FR-13 to FR-16).
-5. Implement `FileManager` with path validation (SEC-04).
-6. Implement React `Sidebar` (project list) and `TerminalView` (xterm.js + WebSocket).
-7. Implement xterm-addon-fit + `ResizeObserver` + resize WebSocket message (FR-20).
-8. Implement session switching in the React client (FR-21).
-9. Implement idle timeout sweeper (FR-19, SEC-09).
+| ID | Requirement | Implementation location |
+|----|-------------|------------------------|
+| SEC-V3-01 | Webhook body size cap: 32 KB maximum. Payloads over this limit must return HTTP 413 and must NOT be forwarded to any PTY. | `server/routes/triggers.js` — `express.json({ limit: '32kb' })` |
+| SEC-V3-02 | WorkflowDefinition schema validation: systemPrompt max 16 KB per node, node count max 50, all string fields validated. HTTP 400 on any violation. Must run on every POST and PUT to `/api/v1/workflows`. | `server/services/WorkflowStore.js` — `validateWorkflow()` |
+| SEC-V3-03 | SSRF prevention: RSS URLs and webhook source URLs must be checked against a private IP blocklist before any outbound request or dynamic endpoint registration. Blocked: 127.x, 10.x, 172.16-31.x, 192.168.x, ::1. Return HTTP 400 on match. | `server/services/TriggerManager.js` — `isSafeUrl()` |
+| SEC-V3-04 | Webhook rate limiter: 10 requests per minute per source IP on the `/api/v1/triggers/webhooks/*` path. Separate from and stricter than the main 200 req/min limiter. Return HTTP 429 on breach. | `server/routes/triggers.js` — dedicated rate limiter middleware |
+| SEC-V3-05 | HITL resume text size cap: approved text injected via PTY must not exceed 8 KB. Text exceeding this must return HTTP 400 at the inbox approve endpoint before any PTY injection. | `server/routes/inbox.js` — length check on `approvedText` |
+| SEC-V3-06 | Workflow name/description length caps: name max 128 chars, description max 512 chars. Character whitelist for name: `^[a-zA-Z0-9 _\-]+$`. Enforced server-side in `validateWorkflow()`. HTTP 400 on violation. | `server/services/WorkflowStore.js` — `validateWorkflow()` |
+| SEC-V3-07 | HandoffParser payload cap: base64 payload accumulation must stop and flush (discard) at 4 KB. The extracted `contextUpdate` JSON must be schema-validated (flat dict, string keys, string values only) before being merged into `workflowContext`. Any non-conforming payload is dropped with a warning log. | `server/services/HandoffParser.js` + `server/services/SwarmEngine.js` — merge guard |
 
-**Acceptance Criteria:**
-- User can register an existing folder and see it in the sidebar.
-- Clicking a project opens a live xterm.js terminal connected to a real `claude` process.
-- Closing the browser tab and reopening restores the terminal session with ring buffer replay (QA critical path 1).
-- Switching between two projects keeps both Claude processes alive (QA critical path 2).
-- `DELETE /api/v1/sessions/:id` kills the PTY and removes it from the Map.
-- Path traversal attempt returns 400 (QA critical path 5).
+**SEC-V3-NOTE-01 (known postilla):** Webhook endpoints in V3.0 trust all requests from the localhost interface without additional auth tokens. This is an accepted risk for a localhost-only tool and will be revisited in V3.1 with optional shared-secret header validation.
 
 ---
 
-### Phase 2 — Entity Management (Week 2, Days 9-12)
+## Appendix B: Implementation Phase Plan
 
-**Objective:** A user can view, create, edit, and delete agents, skills, and CLAUDE.md files.
+### Phase 1 — Backend Foundation
+1. `server/services/WorkflowStore.js` — CRUD, atomic writes, path validation, `validateWorkflow()`
+2. `server/routes/workflows.js` — REST CRUD, mounted at `/api/v1/workflows`
+3. `server/services/HandoffParser.js` — rolling 4 KB accumulator, three-state FSM, ANSI strip
+4. `server/services/SwarmEngine.js` — skeleton: execution Map, spawn agent PTY, tap `swarmListeners`, handoff loop
+5. `server/routes/swarm.js` — execution control endpoints
+6. `server/ws/swarmHandler.js` — WS channel=swarm event dispatch
 
-**Tasks:**
-1. Implement `GET /api/v1/agents`, `POST`, `PUT`, `DELETE` (FR-28 to FR-31).
-2. Implement `GET /api/v1/skills`, `POST`, `PUT`, `DELETE` (FR-33 to FR-36).
-3. Implement `GET /api/v1/claudemd`, `PUT /api/v1/claudemd/user`, `PUT /api/v1/claudemd/project` (FR-37 to FR-39).
-4. Implement YAML frontmatter parse/serialize with `js-yaml` for agents and skills.
-5. Implement React `AgentEditor`, `SkillEditor`, `ClaudeMdEditor` components.
-6. Implement "restart required" warning on agent save (FR-32).
-7. Implement CLAUDE.md line count warning at 300 lines (FR-40).
+### Phase 2 — Canvas Static (no execution)
+1. `npm install @xyflow/react zustand` in `client/`
+2. `client/src/store/SwarmContext.jsx` — Zustand ExecutionStore
+3. `client/src/canvas/SwarmCanvas.jsx` + custom nodes (`AgentNode`, `DepartmentNode`, `TriggerNode`) + `HandoffEdge`
+4. `client/src/panels/AgentInspector.jsx`
+5. `client/src/canvas/overlays/BreadcrumbBar.jsx`
+6. `client/src/views/SwarmView.jsx` — full layout assembly
+7. `client/src/App.jsx` + Sidebar — add "swarm" view entry
 
-**Acceptance Criteria:**
-- User can create a new agent, and the file appears in the correct directory on disk.
-- User can edit an existing agent's frontmatter and body; the saved file is valid YAML.
-- User can delete an agent; the file is removed from disk.
-- The "restart required" warning appears after every agent save.
-- User can view and edit both user-scoped and project-scoped CLAUDE.md.
-- CLAUDE.md editor shows a yellow warning banner when content exceeds 300 lines.
-- Path traversal in agent name returns 400 (QA critical path 5 variant).
+### Phase 3 — Prompt-to-Flow
+1. `POST /api/v1/swarm/scaffold` backend (JobRunner call, JSON extraction from stdout, SSE streaming)
+2. `client/src/canvas/overlays/PromptToFlowBar.jsx` — input + "Scaffolding AI..." animation
+3. Canvas ingestion: JSON → React Flow nodes with 80ms staggered animation
 
----
+### Phase 4 — Live Execution
+1. `server/services/CircuitBreaker.js` — edge count tracking, threshold emit
+2. `server/services/BudgetTracker.js` — char-count estimation, soft-warn emit
+3. `server/services/SwarmEngine.js` — completion: handoff loop, circuit breaker integration, budget integration
+4. `client/src/hooks/useSwarm.js` — WS connection, dispatch to SwarmContext
+5. `client/src/hooks/useHandoff.js` — CSS keyframe edge animations
+6. `AgentNode.jsx` — blinking border, micro PTY log, status color system
+7. `client/src/canvas/overlays/BroadcastBar.jsx` + broadcast route
 
-### Phase 3 — Job Mode (Week 2-3, Days 13-15)
+### Phase 5 — HITL + PTY Explosion
+1. `server/routes/inbox.js` — HITL inbox CRUD + approve/reject with PTY injection
+2. SwarmEngine freeze/unfreeze agent on HITL transition
+3. PTY Explosion: click agent node → `Terminal.jsx` fullscreen overlay
+4. `client/src/panels/InterAgentFeed.jsx` — real-time handoff event log
+5. `client/src/hooks/useInbox.js` — WS/polling HITL notification
 
-**Objective:** A user can submit a prompt, watch streaming progress, and receive a formatted Markdown result.
-
-**Tasks:**
-1. Implement `JobRunner`: `child_process.spawn` with `--output-format stream-json`, stdin closed immediately (FR-22).
-2. Implement SSE streaming at `GET /api/v1/jobs/:id/stream` (FR-23, FR-24).
-3. Implement `DELETE /api/v1/jobs/:id` with `tree-kill` (FR-25).
-4. Implement React `JobPanel`: prompt textarea, tool/turn config, streaming progress, `react-markdown` result rendering (FR-26, FR-27).
-
-**Acceptance Criteria:**
-- Submitting a prompt starts a job within 1 second (FR-04 timing).
-- Streaming progress events appear in the UI while the job runs.
-- Job completes without hanging (QA critical path 3).
-- Clicking "Cancel" terminates the `claude` process and all sub-processes (QA critical path 6).
-- After cancellation, a new job can be submitted successfully.
-- Result is rendered as formatted Markdown with table and code block support.
-
----
-
-### Phase 4 — Polish, QA, Security Sign-off (Week 3, Days 16-21)
-
-**Objective:** All features stable, security audit passed, ready for release.
-
-**Tasks:**
-1. End-to-end QA of all 6 QA critical paths from research_complete.md.
-2. Run `npm audit --audit-level=high` and resolve all findings (SEC-10).
-3. Security agent audit: binding verification, no-shell-true audit, path traversal tests, CSRF tests, log cleanliness, CSP header check.
-4. Error handling: surface WebSocket close codes 4004 and 4001 as UI error messages.
-5. Stale process cleanup test: kill the server abnormally, verify no orphan processes, verify startup cleanup works on next start.
-6. Performance testing: 5 simultaneous sessions under normal usage.
-7. Documentation: README with prerequisites (Node.js 20, `claude` on PATH), `npm start` instructions, and troubleshooting for `node-pty` build failures.
-8. Implement FR-50 (settings.json editor) as stretch goal if time permits.
-
-**Acceptance Criteria:**
-- All 6 QA critical paths pass.
-- `npm audit` reports zero high or critical vulnerabilities.
-- Security checklist from Section 8 is 100% complete.
-- `npm start` on a clean Windows 11 machine with Node.js 20 and `claude` on PATH succeeds without errors.
-- No `claude.exe` or `conhost.exe` processes remain after server shutdown (normal or abnormal).
-
----
-
-## 11. Out of Scope (v1)
-
-| Feature | Reason |
-|---------|--------|
-| Authentication / login | Single-user local app; `127.0.0.1` binding provides sufficient isolation |
-| Multi-user support | Architectural redesign required; out of scope for v1 |
-| Cloud / remote deployment | Would require TLS, auth, and a redesigned security model |
-| Git integration (commit UI, branch management, diff view) | Separate concern; existing tools (VS Code, Sourcetree) handle this |
-| MCP server configuration editor | `.mcp.json` editing requires additional research; read-only display sufficient for v1 |
-| Electron or Tauri packaging | `npm start` is sufficient; packaging adds CI and code-signing complexity |
-| Mobile browser support | PTY terminal emulation is impractical on mobile; xterm.js requires a physical keyboard |
-| Plugin or extension system | Premature abstraction; build the core features first |
-| Automated Claude Code CLI updates | The user manages their own Claude Code installation |
-| Session sharing or collaboration | Requires auth and multi-user architecture |
-| settings.json visual editor | Should Have for v1.1; omitted from MVP to reduce scope |
-| Job history persistence across restarts | Should Have for v1.1; requires additional storage design |
-| Claude.ai web integration | Claude Code CLI uses local auth; web integration is a different product |
-| Custom themes beyond dark/light | Cosmetic; deferred |
-
----
-
-## 12. Open Risks & Mitigations
-
-| ID | Risk | Severity | Likelihood | Mitigation |
-|----|------|----------|------------|------------|
-| R-01 | `node-pty-prebuilt-multiarch` prebuilt binary missing for the user's Node.js version | HIGH | MEDIUM | Use `node-pty-prebuilt-multiarch` (not plain `node-pty`) to cover most Node.js 20 + Windows combinations. Document the MSVC Build Tools fallback in the README. Test installation on a clean Windows 11 machine before release. |
-| R-02 | ConPTY output pipe deadlock if the permanent reader is ever paused or removed | HIGH | MEDIUM | Enforce the permanent reader pattern: the `pty.onData` handler is wired once at spawn and never removed or conditioned on client count. Add an integration test specifically for "browser disconnected, PTY still running" (QA critical path 1). |
-| R-03 | Job mode process hang (GitHub issue #7497 — stdin not closed) | HIGH | HIGH | `child.stdin.end()` must be called immediately after every `child_process.spawn` call in `JobRunner`. This must be enforced as a code review checklist item and in the test suite. |
-| R-04 | Claude CLI breaking change in `-p` or `--output-format` flags | MEDIUM | LOW-MEDIUM | Wrap job spawning in a version check at startup. Pin the minimum tested Claude Code CLI version in the README. Test against each new Claude Code release before updating the documented minimum version. |
-| R-05 | Orphaned `claude.exe` / `conhost.exe` on abnormal server crash (before exit handlers fire) | MEDIUM | MEDIUM | Write active PIDs to `active_pids.json` on each spawn. On startup, kill stale PIDs with `tree-kill` before the server begins accepting requests. Document manual cleanup steps in the README. |
-| R-06 | `ClosePseudoConsole` deadlock on Windows 11 pre-23H2 | LOW | LOW | Always drain the ring buffer before calling `pty.kill()`. Document minimum supported Windows version as Windows 11 23H2 or later. |
-| R-07 | Memory growth from many active sessions' ring buffers | LOW | LOW | Cap ring buffer at 100 KB per session. Implement idle timeout sweeper (FR-19). Surface active session count in the UI status bar. |
-| R-08 | XSS in job mode result rendering | MEDIUM | LOW | Use `react-markdown` (not `dangerouslySetInnerHTML`) for all Markdown rendering. Apply helmet CSP headers. Never inject raw HTML from Claude's output into the DOM. |
-| R-09 | Config file corruption on server crash during write | LOW | LOW | All config writes use `write-atomic` (write-then-rename), which is atomic at the OS level. A crash mid-write leaves the previous file intact. |
-| R-10 | Claude Code binary not found on user's PATH | LOW | HIGH (setup issue) | Detect at startup with `claude --version`, emit a clear error message with installation instructions, and exit with code 1. Do not silently fail. |
-
----
-
-*End of PRD v1.0*
+### Phase 6 — Trigger Nodes
+1. `server/services/TriggerManager.js` — dynamic webhook registration + RSS polling + SSRF guard
+2. `server/routes/triggers.js` — webhook endpoints + rate limiter + body size cap
+3. `client/src/canvas/nodes/TriggerNode.jsx` — visual + status display

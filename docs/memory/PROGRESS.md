@@ -93,6 +93,9 @@ _None._
 - [TASK-18] Security hardening — validate PID range in ProcessRegistry (backend-dev) — COMPLETED 2026-03-18
   Fixed: server/services/ProcessRegistry.js. isValidPid() helper (range 1–65535), cleanupStale() and register() both guarded.
 
+## V3 Planning Status
+**V3 PRD WRITTEN — 2026-03-27.** docs/PRD.md (version 3.0) complete. Ready for project-manager to build V3 TASK_PLAN and architect to design SwarmEngine. 6 open questions in PRD Section 11 need architect review before implementation.
+
 ## Release Status
 **v2.0 RELEASE READY — ALL 31 tasks COMPLETED as of 2026-03-26.**
 - v1 (18 tasks, Phase 0–6): COMPLETED 2026-03-18.
