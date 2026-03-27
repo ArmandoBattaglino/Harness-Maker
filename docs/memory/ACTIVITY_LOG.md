@@ -1,4 +1,14 @@
 ---
+## 2026-03-27 — researcher — Research C: Claude CLI PTY Live Injection
+**Outcome:** COMPLETED
+**Summary:** Researched how Claude Code CLI handles text injected into PTY stdin during active task execution. Found that mid-execution input is queued (not dropped, not an immediate interrupt), that Ctrl+C is unreliable during tool calls, and that programmatic Enter (\r/\n) does NOT trigger Ink's submit handler. Documented the only reliable injection pattern (Ctrl+C → wait → text → Escape → wait → Enter, ~500-700ms total). Recommended hybrid --print + --resume architecture as alternative for fully controllable agents.
+**Files changed:** docs/research_c.md (CREATED), docs/memory/agents/researcher.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Soft-broadcast (queue) vs. hard-broadcast (interrupt-first) distinction documented for BroadcastService design
+**Blockers:** none
+**Next:** backend-dev reads research_c.md before implementing BroadcastService; prd-writer incorporates injection latency and reliability caveats into V3 PRD
+---
+
 ## 2026-03-27 — security — V3 Swarm Orchestrator Early Security Assessment
 **Outcome:** COMPLETED
 **Summary:** Delivered pre-PRD early security assessment for V3 Swarm Orchestrator. Rated 8 new attack surfaces, identified 3 new vulnerability classes (SSRF via RSS, disk-resident execution instructions, webhook external ingress), and produced 7 mandatory security requirements for the PRD. No code exists yet — this is a planning-phase read-only analysis.

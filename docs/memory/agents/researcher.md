@@ -192,3 +192,55 @@ Research snapshot delivered. No code changes. Key finding: React Flow is the rig
 ### Handoff
 Architect should read the Key Architecture Insight section of the snapshot before designing the execution state model. Specifically: canvas state (positions, edges) and execution state (agent status, output, errors) must be in separate stores that stay in sync via a sync layer.
 ---
+
+---
+## 2026-03-27 — Research B: React Flow GroupNode / DepartmentNode
+**Status:** COMPLETED
+**Called by:** user (focused deep dive for V3 Swarm Orchestrator /create pipeline)
+
+### Context when I started
+V3 canvas architecture is being designed. The team needs concrete implementation details for DepartmentNode (group container) and the matrioska drill-down UX pattern. Known: @xyflow/react v12, immutable node updates, Zustand for execution state.
+
+### What I did
+1. Read memory files (researcher.md, CONTEXT.md)
+2. Ran 4 parallel web searches: parentId/subflow docs, expand-collapse v12, drill-down navigation, extent/drag-within-parent
+3. Fetched 5 official docs pages: sub-flows guide, expand-collapse example, sub-flows example, hidden example, Node API reference
+4. Fetched GitHub discussion #1024 for community patterns and gotchas
+5. Ran 1 follow-up search: updateNode/setNodes live update patterns + known bugs
+6. Synthesized all findings into docs/research_b.md
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/research_b.md | CREATED | Full research report on React Flow group nodes and drill-down |
+| docs/memory/agents/researcher.md | MODIFIED | Appended this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended activity entry |
+
+### Improvements delivered
+- Confirmed official parentId + extent:'parent' API for v12 — no breaking changes from v11.11.0+
+- Identified expand/collapse Pro pattern vs free hidden-flag pattern — free pattern is sufficient for this project
+- Designed complete matrioska drill-down via canvas filtering (focusedDepartmentId + departmentStack in Zustand)
+- Flagged updateNode bug #5036 (unintended selection after drag-drop) — team should use setNodes instead
+- Clarified that parent node width/height MUST be set via style:{}, not node fields
+
+### Bugs I encountered
+None — research only.
+
+### Decisions I made
+- Canvas filtering (Approach A) over embedded ReactFlow per node (Approach B) for drill-down — Approach B creates multiple independent ReactFlow stores, catastrophically expensive for live execution
+- hidden flag (Pattern A) over Pro useExpandCollapse hook (Pattern B) — free, fits fixed-canvas model
+
+### What I learned
+- parentId was called parentNode before v11.11.0 — v12 removes the old name
+- Parent nodes require explicit style.width/style.height — no auto-sizing to fit children
+- extent:'parent' clipping can cut off execution overlay badges — inset children or add overflow:visible to parent style
+- updateNode has a known bug causing unintended node selection after drag; use setNodes with map callback for bulk updates
+- Embed ReactFlow in a node (community workaround) = separate store per node = not viable for live execution
+- The hidden flag approach keeps full graph in Zustand state; only the rendering filter changes — clean separation
+
+### State I'm leaving behind
+docs/research_b.md is complete. Contains: full parentId/extent API, expand-collapse implementation, drill-down pattern with code sketches, all gotchas, and actionable implications for DepartmentNode.jsx and SwarmCanvasView.
+
+### Handoff
+frontend-dev building DepartmentNode.jsx and SwarmCanvasView should read docs/research_b.md — specifically the "Implications for this project" section — before implementing.
+---
