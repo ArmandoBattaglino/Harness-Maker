@@ -5006,7 +5006,7 @@ Phase: V3 Phase 4 — Live Execution
 Priority: HIGH
 Difficulty: HARD
 Depends on: #46.3, #49
-Status: PENDING
+Status: IN_PROGRESS
 Context:
   First of three subtasks completing the SwarmEngine handoff loop (from skeleton in #46.3).
   Replace the _onHandoff stub with the first half of the full implementation.
@@ -5177,7 +5177,7 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: IN_PROGRESS
 Dependencies: #57.2, #48.2
 Context:
   Create `client/src/hooks/useSwarm.js`.
@@ -5296,7 +5296,7 @@ Agent: frontend-dev
 Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: IN_PROGRESS
 Dependencies: #57.1, #47.1
 Context:
   Create `client/src/canvas/overlays/BroadcastBar.jsx`.
@@ -5329,8 +5329,8 @@ Agent: backend-dev
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
-Dependencies: #62.3
+Status: IN_PROGRESS
+Dependencies: #46.3
 Context:
   The existing SessionManager has an idle sweeper that kills PTY sessions after 30 minutes
   of inactivity (IDLE_TIMEOUT_MINUTES env var). Long-running swarm agents would be killed.

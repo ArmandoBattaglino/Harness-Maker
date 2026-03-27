@@ -1,4 +1,61 @@
 ---
+## 2026-03-27 — Tasks #59 + #61: scaffold endpoint full impl + useWorkflow.js CRUD hook
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+Tasks #59 (backend-dev: swarm.js scaffold stub replaced with full Anthropic SDK implementation) and #61 (frontend-dev: client/src/hooks/useWorkflow.js created with useWorkflow + useWorkflowList named exports) had just completed. CODE_MAP.md was last updated after Task #58. The swarm.js Module Index row described only the 501 stub; no entry existed for useWorkflow.js or its exported hooks. No useWorkflow.js callers existed yet.
+
+### What I did
+1. Read agent memory (code-mapper.md, offset 1 limit 80) for session continuity
+2. Read CODE_MAP.md header + Module Index (offset 1, limit 100) in parallel with CHANGELOG.md header (offset 1, limit 30) and both modified source files (swarm.js, useWorkflow.js)
+3. Grep'd codebase for generateWorkflowFromPrompt — confirmed only 1 file (swarm.js, no external callers)
+4. Grep'd client/ for useWorkflow — confirmed only 1 file (the new hook itself, no callers yet)
+5. Read CODE_MAP.md tail sections (offset 1800+, 1880+, 1960+) to locate insert points and last existing entries
+6. Read CHANGELOG.md tail sections (offset 900+, 960+, 1080+, 1160+, 1239+) to confirm last entry and find append point
+7. Updated CODE_MAP.md:
+   - Updated header timestamp to reference Tasks #59 + #61
+   - Updated swarm.js Module Index row to document generateWorkflowFromPrompt and full scaffold implementation
+   - Added useWorkflow.js Module Index row (new file)
+   - Updated SwarmView last-modified note to mention useWorkflow now exists for wiring
+   - Appended "POST /scaffold Full Implementation (Task #59)" section with 2 function entries
+   - Appended "Workflow CRUD Hooks (Task #61)" section with 2 function entries
+8. Appended two CHANGELOG.md entries: Task #59 and Task #61
+9. Appended ACTIVITY_LOG.md entry
+10. Appended this agent memory entry
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header timestamp; swarm.js Module Index row updated; useWorkflow.js row added; SwarmView entry note updated; 2 new Function Graph sections (4 entries total) |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Task #59 and Task #61 entries |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session summary entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- generateWorkflowFromPrompt is now documented as module-private (key distinction for future agents who might look for it as an importable function)
+- Route ordering constraint (scaffold must be declared before /:workflowId/*) is captured in CODE_MAP.md Complexity note
+- useWorkflow and useWorkflowList have full function graph entries — callers will know exactly what the hooks return and which API endpoints they hit
+- SwarmView workflowDef note updated to point to Task #61 as the wiring path
+
+### Bugs I encountered
+- None
+
+### Decisions I made
+- Documented generateWorkflowFromPrompt as "module-private" not "private/unexported" — the former is clearer for JS (no access modifier keywords in JS)
+- Did not create separate Function Graph section for server/package.json — SDK addition is captured in CHANGELOG connection changes, which is sufficient
+
+### What I learned
+- CODE_MAP.md is now ~2080+ lines — offset reads must jump by 80-100 line increments to cover the full file efficiently
+- The CHANGELOG.md documenter ran before code-mapper in this task pair (ACTIVITY_LOG already had a documenter entry for #59+#61) — both agents ran correctly in parallel, no conflict
+- useWorkflow.js uses two separate named exports (useWorkflow + useWorkflowList) rather than a default export — important for callers who must use named import syntax
+
+### State I'm leaving behind
+CODE_MAP.md fully reflects Tasks #59 and #61. CHANGELOG.md has entries for both. useWorkflow.js has no live callers yet — SwarmView.jsx workflowDef local state remains null until the next wiring task.
+
+### Handoff
+Task #60 (PromptToFlowBar.jsx) is next in the Phase 3 pipeline. When that completes, CODE_MAP.md will need entries for the new component and its connection to the POST /scaffold endpoint (via useWorkflowList.create or a direct apiPost call).
+---
 ## 2026-03-27 — Tasks #50 + #51: V3 Security Layer + @xyflow/react + zustand install
 **Status:** COMPLETED
 **Called by:** orchestrator (post-task code-mapper invocation)

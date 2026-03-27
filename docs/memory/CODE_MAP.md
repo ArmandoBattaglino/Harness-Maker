@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-27 — after Task #59 (swarm.js scaffold full impl) + Task #61 (useWorkflow.js CRUD hook) — mapped by code-mapper_
+_Last updated: 2026-03-27 — after Task #60 (PromptToFlowBar.jsx + staggered animation) — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -74,7 +74,8 @@ _Last updated: 2026-03-27 — after Task #59 (swarm.js scaffold full impl) + Tas
 | client/src/canvas/AgentInspector.jsx | default AgentInspector | Right-panel component for inspecting a selected canvas node. Reads selectedNodeId + agentStates from useSwarmStore. Shows label, type, status, handoffCount, systemPrompt, lastOutputSnippet. Close button calls setSelectedNode(null). (Task #55) |
 | client/src/canvas/BreadcrumbBar.jsx | default BreadcrumbBar | Top-bar breadcrumb nav for drill-down into department nodes. Reads departmentStack + navigateBreadcrumb from useSwarmStore. Root crumb always visible; each depth level rendered as a clickable button. (Task #56) |
 | client/src/canvas/SwarmCanvas.jsx | default SwarmCanvas | Root React Flow canvas for swarm visualization. Registers nodeTypes (agent, department, trigger) + edgeTypes (handoff). Manages nodes/edges state via useNodesState/useEdgesState. Drill-down filtering: computes visibleNodes/visibleEdges via focusedDepartmentId. onNodeClick→setSelectedNode; onPaneClick→setSelectedNode(null). Mounts BreadcrumbBar + AgentInspector. (Task #57.1) |
-| client/src/views/SwarmView.jsx | default SwarmView | Layout shell for the Swarm Orchestrator page. Toolbar shows title + executionStatus indicator (idle/running/stopped color-coded) + conditional Reset button when stopped. Wraps SwarmCanvas in ReactFlowProvider. Owns workflowDef local state (useState null — to be wired to API/store in Task #61). (Task #57.2) |
+| client/src/canvas/PromptToFlowBar.jsx | default PromptToFlowBar | Natural-language prompt input bar. POSTs to /api/v1/swarm/scaffold, applies per-node staggered fadeIn animation to returned workflowDef, calls onWorkflowGenerated(workflowId, animatedDef) on success. (Task #60) |
+| client/src/views/SwarmView.jsx | default SwarmView | Layout shell for the Swarm Orchestrator page. Toolbar shows title + executionStatus indicator + conditional Reset button. Mounts PromptToFlowBar (Task #60); workflowDef local state wired to onWorkflowGenerated → setWorkflowDef → SwarmCanvas prop. (Tasks #57.2, #60) |
 
 ### Client Config & Styles
 | File | Key Exports | Purpose |
