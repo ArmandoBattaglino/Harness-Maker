@@ -644,3 +644,49 @@ Project is v2.0 RELEASE READY. Recommended next actions:
 2. Optional future work: address the 3 LOW advisory findings from Task #31 QA (cleanup dead EntitiesView.jsx, add ARIA labels, extract hardcoded colors to design tokens)
 3. No further tasks planned — project task plan is complete.
 ---
+---
+## 2026-03-27 — V3 Plan Overview (read-only analysis session)
+**Status:** COMPLETED
+**Called by:** user (direct request: "delineami tutto il piano nei dettagli")
+
+### Context when I started
+V2 fully complete (42 tasks, all COMPLETED). V3 PRD written (docs/PRD.md v3.0). V3 task plan complete
+(docs/TASK_PLAN.md tasks #43–#82, 40 tasks). All memory files current. No code sessions today — read-only.
+
+### What I did
+1. Read PROGRESS.md — confirmed V2 done (0/40 V3 tasks completed), V3 planning complete as of 2026-03-27.
+2. Read CONTEXT.md — confirmed V3 key decisions (DEC-V3-01 through DEC-V3-05), open architect questions answered.
+3. Read docs/PRD.md first 100 lines — V3 = Multi-Agent Swarm Orchestrator, zero API keys, CLI binary only.
+4. Read docs/TASK_PLAN.md V3 section (lines 3504–5494) — all 40 tasks, full context blocks, acceptance criteria.
+5. Produced complete Italian-language project overview covering all 7 phases, execution waves, risks, critical path.
+6. Wrote activity log + session memory.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session entry |
+| docs/memory/agents/project-manager.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- Complete Italian-language V3 briefing covering all 40 tasks, 7 phases, parallel waves, critical path, risks
+
+### Bugs I encountered
+None (read-only session).
+
+### Decisions I made
+- No changes to TASK_PLAN.md — read-only analysis as requested.
+
+### What I learned
+- V3 first parallel pair: #43 (WorkflowStore, EASY) + #45 (HandoffParser, HARD) — no mutual dependency.
+- Critical path: #43+#45 → #46 (VERY HARD SwarmEngine) → #47/#48/#49 → [Canvas Wave 2] → [Live Execution Wave 4] → [HITL Wave 5] → [QA Wave 7].
+- Two VERY HARD tasks: #46 (SwarmEngine skeleton) and #62 (SwarmEngine handoff loop) — both opus-level.
+- DEC-009 (ConPTY permanent onData handler) is the most critical constraint bridging V2 and V3.
+
+### State I'm leaving behind
+V3 plan fully analyzed and briefed. No tasks in progress. Next action: launch TASK #43 + TASK #45 in parallel.
+
+### Handoff
+backend-dev should receive TASK #43 and TASK #45 simultaneously as the first V3 wave.
+TASK #43 context: create server/services/WorkflowStore.js (EASY, model sonnet).
+TASK #45 context: create server/services/HandoffParser.js (HARD, model opus — ConPTY rolling accumulator).
+---

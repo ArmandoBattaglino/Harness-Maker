@@ -678,3 +678,17 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 - **Bug Fixed**: Clicking "Open Terminal" from a project card did not create a backend session.
 - **Fix**: Updated `handleOpenTerminal` in `ProjectsView.jsx` to make a `POST /api/v1/sessions` request if no session exists for the project, setting the session in AppContext before navigating to the terminal view.
 - **Build Result**: 6/6 test files passed, 299 modules successfully built with 0 errors.
+
+---
+## 2026-03-27 — /create Pipeline — V3 Planning Complete (no code changes)
+**Type:** PLANNING
+**Files created:**
+- `docs/PRD.md` — V3 Multi-Agent Swarm Orchestrator PRD (47 FR + 7 SEC requirements, 6 implementation phases, API routes, data schemas, user stories)
+- `docs/research_complete.md` — Master research synthesis (OpenAI Swarm CLI adaptation, React Flow v12 group nodes, Claude CLI PTY injection patterns)
+- `docs/research_a.md` — OpenAI Swarm framework research
+- `docs/research_b.md` — React Flow v12 GroupNode / DepartmentNode research
+- `docs/research_c.md` — Claude CLI PTY Live Injection research
+**TASK_PLAN.md updated:** V3 tasks #43–#82 appended (40 tasks, 7 phases)
+**CODE_MAP.md:** No update needed — no source code modified
+**Breaking changes:** none
+---

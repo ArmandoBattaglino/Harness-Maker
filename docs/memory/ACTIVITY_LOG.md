@@ -648,3 +648,24 @@
 **Blockers:** none
 **Next:** Project Manager to build V3 TASK_PLAN.md from PRD. Architect to review Section 11 Open Questions before designing SwarmEngine/SessionManager integration.
 ---
+
+---
+## 2026-03-27 — orchestrator — /create Pipeline Stage 5+6: PRD + Task Plan V3
+**Outcome:** COMPLETED
+**Summary:** Full /create pipeline completed for V3 Swarm Orchestrator. Stage 5 wrote docs/PRD.md (47 functional reqs, 7 security reqs, 6 impl phases). Stage 6 wrote V3 tasks #43–#82 (40 tasks across 7 phases) in docs/TASK_PLAN.md. Also wrote docs/research_complete.md (master research brief synthesizing research_a/b/c). Pipeline ran from Stage 4.5C (research supervisor) through full completion.
+**Files changed:** docs/PRD.md (CREATED), docs/TASK_PLAN.md (APPENDED — V3 tasks #43-#82), docs/research_complete.md (CREATED)
+**Bugs fixed:** none
+**Decisions made:** DEC-V3-01 through DEC-V3-05 confirmed (HandoffParser rolling buffer, PTY injection modes, SwarmEngine tap pattern, React Flow v12 filtering, Zustand separate from AppContext)
+**Blockers:** none — project-manager agent hit token limit; task plan written directly by orchestrator
+**Next:** Begin V3 Phase 1 with TASK #43 (WorkflowStore.js). All 7 phases documented with full context for backend-dev, frontend-dev, qa-tester, security, devops agents.
+---
+---
+## 2026-03-27 — project-manager — V3 Plan Overview (read-only analysis)
+**Outcome:** COMPLETED
+**Summary:** Read-only analysis of the full V3 plan (docs/PRD.md, docs/TASK_PLAN.md #43-#82, PROGRESS.md, CONTEXT.md). Produced a complete Italian-language briefing of all 40 V3 tasks across 7 phases. No code or plan files modified.
+**Files changed:** docs/memory/ACTIVITY_LOG.md (this entry), docs/memory/agents/project-manager.md (session log)
+**Bugs fixed:** none
+**Decisions made:** none (read-only session)
+**Blockers:** none — V3 can begin immediately with TASK #43 (WorkflowStore.js) + TASK #45 (HandoffParser.js) in parallel
+**Next:** TASK #43 (backend-dev, WorkflowStore.js) + TASK #45 (backend-dev, HandoffParser.js) — first parallel pair of Wave 1
+---

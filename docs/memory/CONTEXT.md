@@ -49,3 +49,25 @@ Security assessment completed 2026-03-27. Seven mandatory requirements must appe
 - Run `npm test` (110 tests should pass)
 - Run `npm run build` (299 modules, 0 errors)
 - Browser test: icons render as glyphs, terminal bg is black, scope switch prompts
+
+---
+## Update 2026-03-27 — V3 Planning Complete
+
+**Focus:** V3 Swarm Orchestrator — Phase 1 (Backend Foundation) is next.
+
+**Ready to start:** TASK #43 (WorkflowStore.js) — backend-dev
+
+**V3 Key Decisions (for all agents):**
+- DEC-V3-01: HandoffParser uses rolling 4KB byte accumulator (NOT line-by-line) — ConPTY splits tokens
+- DEC-V3-02: PTY injection: soft=queue, hard=\x03+300ms+text+Escape+100ms+Enter (unreliable during tool calls)
+- DEC-V3-03: SwarmEngine taps via session.swarmListeners Set — primary onData NEVER removed (DEC-009)
+- DEC-V3-04: React Flow canvas state SEPARATE from Zustand ExecutionStore — never mix them
+- DEC-V3-05: WorkflowContext = flat dict, shallow merge on each handoff (OpenAI Swarm pattern)
+- Canvas always editable during execution (no lock)
+- __DONE__ = soft notify only, workflow never auto-stops
+- Budget = soft warn only, never stops
+- HITL = human can chat at dept + agent level; PTY Explosion for direct terminal
+
+**Blocking V3 start:** TASK #41 is COMPLETED. All V2 tasks done. V3 can begin immediately.
+
+**First wave (Phase 1):** #43, #45 can run in parallel (WorkflowStore + HandoffParser have no deps on each other). #46 waits for #43+#45. #47 waits for #46. #48 waits for #46. #49 waits for #46.
