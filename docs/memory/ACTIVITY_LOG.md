@@ -1,4 +1,23 @@
 ---
+## 2026-03-27 — frontend-dev — Task #57.1: SwarmCanvas.jsx — React Flow Canvas + Drill-Down Filtering
+**Outcome:** COMPLETED
+**Summary:** Created client/src/canvas/SwarmCanvas.jsx. Registers all 3 custom node types (agent, department, trigger) and handoff edge type. Implements drill-down filtering via useMemo — when focusedDepartmentId is set, only nodes belonging to that department (+ the dept itself) are shown, with edges filtered to match. onNodeClick/onPaneClick wired to SwarmStore. BreadcrumbBar and AgentInspector mounted in layout. Build passes (299 modules, 0 errors).
+**Files changed:** client/src/canvas/SwarmCanvas.jsx (CREATED), docs/TASK_PLAN.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** Task #57.2 (SwarmView.jsx layout shell + toolbar) and #58 (App.jsx + ReactFlowProvider) can proceed
+
+---
+## 2026-03-27 — documenter — Tasks #54/#55/#56: HandoffEdge.jsx, AgentInspector.jsx, BreadcrumbBar.jsx
+**Outcome:** COMPLETED
+**Summary:** Audited all documentation artifacts after creation of HandoffEdge.jsx (custom animated edge), AgentInspector.jsx (node inspector side panel), and BreadcrumbBar.jsx (canvas breadcrumb nav), plus index.css modification for dashdraw keyframes. All four files have adequate inline documentation. V3 public doc deferral policy maintained — README.md and ARCHITECTURE.md not updated. DOC_STATUS.md updated with 4 new rows (HandoffEdge, index.css, AgentInspector, BreadcrumbBar) and expanded ARCHITECTURE.md stale section note to include edge/panel/nav canvas layers.
+**Files changed:** docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/documenter.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** V3 public doc deferral policy maintained — no README or ARCHITECTURE changes until Task #82
+**Blockers:** none
+**Next:** Tasks #57.1 (SwarmCanvas.jsx) and #57.2 (SwarmView.jsx) — next parallel wave
+---
 ## 2026-03-27 — frontend-dev — Task #54: HandoffEdge.jsx — Animated Edge + Counter Badge
 **Outcome:** COMPLETED
 **Summary:** Created client/src/canvas/edges/HandoffEdge.jsx — custom React Flow edge type "handoff" with animated dashed blue stroke and counter badge. Badge reads edgeCounters[id] from useSwarmStore; shows only when counter > 0. Added @keyframes dashdraw to client/src/index.css for stroke animation.
@@ -1125,4 +1144,15 @@
 **Decisions made:** Placed in client/src/canvas/ (not overlays/ subdirectory) — task spec explicitly says client/src/canvas/BreadcrumbBar.jsx
 **Blockers:** none
 **Next:** Task #55 (AgentInspector.jsx) still IN_PROGRESS. After #54+#55+#56 all complete: launch #57.1 (SwarmCanvas.jsx) + #57.2 (SwarmView.jsx) in parallel.
+---
+
+---
+## 2026-03-27 — project-manager — Tasks #54/#55/#56 COMPLETED; Launch #57.1
+**Outcome:** COMPLETED
+**Summary:** Confirmed tasks #54 (HandoffEdge.jsx), #55 (AgentInspector.jsx), and #56 (BreadcrumbBar.jsx) all COMPLETED (self-marked by frontend-dev agents). Updated TASK_PLAN.md to set #57.1 (SwarmCanvas.jsx) IN_PROGRESS. Updated PROGRESS.md counter to 26/57. Updated CONTEXT.md with current wave info and full constraints for SwarmCanvas implementation.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** Launch only #57.1 now — #57.2 depends on #57.1 which is not yet done
+**Blockers:** none
+**Next:** After #57.1 completes → mark COMPLETED → launch #57.2 (SwarmView.jsx, frontend-dev, claude-opus-4-6)
 ---

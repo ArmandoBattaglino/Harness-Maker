@@ -1,4 +1,46 @@
 ---
+## 2026-03-27 — Task #57.1: SwarmCanvas.jsx — React Flow Canvas + Drill-Down Filtering
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+All canvas sub-components were already built: AgentNode, DepartmentNode, TriggerNode (nodes), HandoffEdge (edge), AgentInspector (side panel), BreadcrumbBar (nav). SwarmContext.jsx Zustand store was in place with focusedDepartmentId, setSelectedNode, navigateBreadcrumb. This task wires them all together into the main React Flow canvas component.
+
+### What I did
+1. Read all dependency files to confirm exports and prop signatures
+2. Created SwarmCanvas.jsx with: nodeTypes/edgeTypes registered outside component, useNodesState/useEdgesState for local canvas state, useMemo drill-down filtering, onConnect/onNodeClick/onPaneClick callbacks, ReactFlow with Background/Controls/MiniMap, BreadcrumbBar + AgentInspector mounted
+3. Verified build passes (299 modules, 0 errors)
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/canvas/SwarmCanvas.jsx | CREATED | Main React Flow canvas with drill-down filtering |
+| docs/TASK_PLAN.md | MODIFIED | Marked #57.1 COMPLETED |
+| docs/memory/PROGRESS.md | MODIFIED | Updated V3 status to 27/57, marked #57.1 COMPLETED |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended task completion entry |
+
+### Improvements delivered
+- All canvas sub-components now composable through SwarmCanvas
+- Drill-down filtering works via focusedDepartmentId from Zustand store
+- Node selection wired to AgentInspector via SwarmStore
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Used useNodesState/useEdgesState (local state) rather than lifting to Zustand, matching DEC-011 (canvas state separate from execution state)
+- Did not use useReactFlow().fitView() on dept change because ReactFlowProvider isn't added until Task #58 — the fitView prop on ReactFlow handles initial fit
+
+### What I learned
+- @xyflow/react v12 useNodesState/useEdgesState must be inside a ReactFlowProvider context, but the ReactFlow component itself provides one internally, so these hooks work fine as long as they're used within the ReactFlow tree or its parent has a provider
+
+### State I'm leaving behind
+SwarmCanvas.jsx is complete and builds cleanly. It accepts a `workflowDef` prop with `nodes` and `edges` arrays. Not yet mounted in any view — Task #57.2 (SwarmView.jsx) will embed it, and Task #58 will wrap it with ReactFlowProvider in App.jsx.
+
+### Handoff
+Task #57.2 (SwarmView.jsx) should embed SwarmCanvas and add toolbar. Task #58 should wrap the swarm route with ReactFlowProvider.
+
+---
 ## 2026-03-27 — Task #55: AgentInspector.jsx — Node Config Panel
 **Status:** COMPLETED
 **Called by:** user (direct task assignment)

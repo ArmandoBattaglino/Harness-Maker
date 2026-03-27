@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-27 — after Tasks #53.1 + #53.2 + #53.3 (AgentNode, DepartmentNode, TriggerNode React Flow canvas nodes) — mapped by code-mapper_
+_Last updated: 2026-03-27 — after Tasks #54 + #55 + #56 (HandoffEdge, AgentInspector, BreadcrumbBar canvas components) — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -69,6 +69,9 @@ _Last updated: 2026-03-27 — after Tasks #53.1 + #53.2 + #53.3 (AgentNode, Depa
 | client/src/canvas/nodes/AgentNode.jsx | default AgentNode | React Flow custom node type="agent". Subscribes to useSwarmStore(agentStates[id]). 5 status colors (idle/running/done/paused/error), target Handle top + source Handle bottom, lastOutputSnippet display (last 3 lines), handoffCount badge. (Task #53.1) |
 | client/src/canvas/nodes/DepartmentNode.jsx | default DepartmentNode | React Flow group container node type="department". Subscribes to focusedDepartmentId + setFocusedDepartment from useSwarmStore. Click on header calls setFocusedDepartment(id). Sized by React Flow to contain child nodes. (Task #53.2) |
 | client/src/canvas/nodes/TriggerNode.jsx | default TriggerNode | React Flow source-only node type="trigger". webhook/rss icon variants (triggerIcons map), purple theme, source Handle bottom only. Full implementation deferred to Task #76. (Task #53.3) |
+| client/src/canvas/edges/HandoffEdge.jsx | default HandoffEdge | React Flow custom edge type="handoff". Animated dashed blue line when edgeCounters[id] > 0; grey static line when idle. Counter badge via EdgeLabelRenderer. (Task #54) |
+| client/src/canvas/AgentInspector.jsx | default AgentInspector | Right-panel component for inspecting a selected canvas node. Reads selectedNodeId + agentStates from useSwarmStore. Shows label, type, status, handoffCount, systemPrompt, lastOutputSnippet. Close button calls setSelectedNode(null). (Task #55) |
+| client/src/canvas/BreadcrumbBar.jsx | default BreadcrumbBar | Top-bar breadcrumb nav for drill-down into department nodes. Reads departmentStack + navigateBreadcrumb from useSwarmStore. Root crumb always visible; each depth level rendered as a clickable button. (Task #56) |
 
 ### Client Config & Styles
 | File | Key Exports | Purpose |
@@ -76,7 +79,7 @@ _Last updated: 2026-03-27 — after Tasks #53.1 + #53.2 + #53.3 (AgentNode, Depa
 | client/package.json | (config) | Client dependencies — now includes @xyflow/react@12.10.1 (React Flow v12 graph canvas) and zustand@4.5.7 (v4, not v5) alongside react@18.2, react-markdown, xterm, xterm-addon-fit. (Task #51) |
 | client/tailwind.config.js | default config | Tailwind CSS config: Phase 9 design tokens — 20+ color tokens (primary #933df5, surface scale, semantic colors, code syntax), font families (Inter/Geist/JetBrains Mono), border radius scale. darkMode: 'class'. |
 | client/index.html | (HTML entry) | SPA entry point: Google Fonts CDN links (Inter, JetBrains Mono, Material Symbols Outlined), dark class on html element. Last modified Task #23 (font imports added). |
-| client/src/index.css | (global styles) | Base body styles (#000 bg, Inter font), utility classes (.glass-effect, .custom-scrollbar, .active-indicator, .terminal-text, .filled-icon, .terminal-line-border), .markdown-result scoped styles (headings, code, tables, blockquotes — purple theme), .md-* syntax highlighting helpers. Last modified Task #23 (Phase 9 redesign). |
+| client/src/index.css | (global styles) | Base body styles (#000 bg, Inter font), utility classes (.glass-effect, .custom-scrollbar, .active-indicator, .terminal-text, .filled-icon, .terminal-line-border), .markdown-result scoped styles (headings, code, tables, blockquotes — purple theme), .md-* syntax highlighting helpers, @keyframes dashdraw (animated SVG dash offset for HandoffEdge). Last modified Task #54 (@keyframes dashdraw added). |
 | client/postcss.config.js | (PostCSS config) | PostCSS plugins: tailwindcss, autoprefixer |
 
 ## Test Infrastructure
@@ -1840,7 +1843,7 @@ _Last updated: 2026-03-27 — after Tasks #53.1 + #53.2 + #53.3 (AgentNode, Depa
 
 ### `client/src/store/SwarmContext.jsx` :: `navigateBreadcrumb(index)`
 - **Purpose:** Rewind the department breadcrumb stack to a specific index. Slice to index (not index+1) so the clicked crumb becomes the new top. Sets focusedDepartmentId to the new top, or null if stack is now empty.
-- **Called by:** (not yet wired — future breadcrumb nav UI component)
+- **Called by:** client/src/canvas/BreadcrumbBar.jsx (Task #56 — wired to root button: index=0; and per-crumb buttons: index+1)
 - **Calls:** Zustand set, Array.slice
 - **Inputs:** index (number — the breadcrumb index to navigate to; 0 = root)
 - **Output:** void
@@ -1849,7 +1852,7 @@ _Last updated: 2026-03-27 — after Tasks #53.1 + #53.2 + #53.3 (AgentNode, Depa
 
 ### `client/src/store/SwarmContext.jsx` :: `setSelectedNode(id)`
 - **Purpose:** Set the selected canvas node for the AgentInspector panel to render details for.
-- **Called by:** (not yet wired — future canvas node click handler)
+- **Called by:** client/src/canvas/AgentInspector.jsx (close button passes null — Task #55); future canvas node click handler (for non-null selection)
 - **Calls:** Zustand set
 - **Inputs:** id (string | null)
 - **Output:** void
@@ -1907,3 +1910,41 @@ _Last updated: 2026-03-27 — after Tasks #53.1 + #53.2 + #53.3 (AgentNode, Depa
 - **Side effects:** none (stub — no store subscription, no polling)
 - **Complexity note (stub):** triggerIcons is a module-level const map — adding new trigger types requires adding to the map and this file. Task #76 will add URL configuration, activation toggle, and polling integration.
 - **Last modified:** 2026-03-27 in Task #53.3 by frontend-dev
+
+---
+
+## React Flow Canvas Edges + Inspector + Breadcrumb (Tasks #54 + #55 + #56)
+
+### `client/src/canvas/edges/HandoffEdge.jsx` :: `HandoffEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, data, markerEnd })`
+- **Purpose:** Custom React Flow edge type="handoff". Reads edgeCounters[id] from useSwarmStore to determine active/idle state. Renders animated dashed blue line (when counter > 0) or static grey line (counter = 0). Shows a blue rounded counter badge via EdgeLabelRenderer when active. The @keyframes dashdraw animation in index.css drives the strokeDashoffset march.
+- **Called by:** (not yet registered in an edgeTypes map — pending WorkflowCanvas.jsx canvas container; currently no callers)
+- **Calls:** useSwarmStore (selector: s.edgeCounters[id] ?? 0), getBezierPath (from @xyflow/react), BaseEdge (from @xyflow/react), EdgeLabelRenderer (from @xyflow/react)
+- **Inputs:** id (string — React Flow edge id), sourceX/sourceY/targetX/targetY (numbers — endpoint coords), sourcePosition/targetPosition (Position enum from @xyflow/react), data (object — not used currently), markerEnd (string | undefined — arrow marker)
+- **Output:** JSX fragment — BaseEdge path + optional EdgeLabelRenderer counter badge
+- **Side effects:** none (read-only store subscription + pure render)
+- **Complexity note:** Animation is CSS-driven via `animation: 'dashdraw 0.5s linear infinite'` applied inline, referencing the @keyframes dashdraw rule added to client/src/index.css. The counter badge is only mounted when isActive (counter > 0) — EdgeLabelRenderer is never rendered for idle edges.
+- **Last modified:** 2026-03-27 in Task #54 by frontend-dev
+
+---
+
+### `client/src/canvas/AgentInspector.jsx` :: `AgentInspector({ nodes, onUpdateNode })`
+- **Purpose:** Side panel that renders details for the currently selected canvas node. Reads selectedNodeId and agentStates[selectedNodeId] from useSwarmStore. Shows: node label, type badge, live status from Zustand (status string + handoffCount), system prompt (from node.data.systemPrompt, read-only), and last output snippet (from agentState.lastOutputSnippet). Close button calls setSelectedNode(null) to deselect. Returns an empty placeholder div when no node is selected.
+- **Called by:** (not yet embedded in parent canvas component — pending WorkflowCanvas.jsx; currently no callers)
+- **Calls:** useSwarmStore (selector: s.selectedNodeId), useSwarmStore (selector: s.agentStates[selectedNodeId]), useSwarmStore (selector: s.setSelectedNode), nodes.find() (prop traversal)
+- **Inputs:** nodes (array — React Flow node objects from parent canvas; used to find label, type, data.systemPrompt), onUpdateNode (function — passed as prop but not yet called; reserved for future edit operations)
+- **Output:** JSX — w-64 right panel; empty placeholder if no selection; detail view with header, type badge, status block, system prompt block, last output block
+- **Side effects:** calls setSelectedNode(null) on close button click — clears selectedNodeId in SwarmStore
+- **Complexity note:** Three separate useSwarmStore selectors (selectedNodeId, agentState, setSelectedNode) rather than one broad selector — prevents unnecessary re-renders when unrelated store slices change. agentState data comes from Zustand (live runtime state); systemPrompt comes from node.data (static workflow definition). These are separate sources and may diverge.
+- **Last modified:** 2026-03-27 in Task #55 by frontend-dev
+
+---
+
+### `client/src/canvas/BreadcrumbBar.jsx` :: `BreadcrumbBar({ nodes })`
+- **Purpose:** Horizontal breadcrumb bar for swarm canvas drill-down navigation. Reads departmentStack (array of department node IDs) and navigateBreadcrumb from useSwarmStore. Renders a root "All Agents" button that calls navigateBreadcrumb(0), then one button per stack entry. The last entry is styled bold (current depth). Each crumb button calls navigateBreadcrumb(index + 1) where index is 0-based within the crumbs array. Node labels are resolved by looking up node IDs in the nodes prop; falls back to raw ID if node not found.
+- **Called by:** (not yet embedded in parent canvas component — pending WorkflowCanvas.jsx; currently no callers)
+- **Calls:** useSwarmStore (selector: s.departmentStack), useSwarmStore (selector: s.navigateBreadcrumb), nodes.find() (per crumb, to resolve label), navigateBreadcrumb(0) on root click, navigateBreadcrumb(index + 1) on crumb click
+- **Inputs:** nodes (array — React Flow node objects from parent canvas; used to resolve department labels from IDs in departmentStack)
+- **Output:** JSX — horizontal flex bar with root button + separator "/" + per-depth crumb buttons; last crumb is white + font-medium
+- **Side effects:** calls navigateBreadcrumb() on button clicks — mutates departmentStack + focusedDepartmentId in SwarmStore
+- **Complexity note:** navigateBreadcrumb(0) = navigate to root (empty stack); navigateBreadcrumb(index + 1) navigates to depth index+1 in the stack. The root button always appears even when departmentStack is empty (flat canvas view). The crumb loop only renders entries from departmentStack — if it is empty, only the root button is shown.
+- **Last modified:** 2026-03-27 in Task #56 by frontend-dev

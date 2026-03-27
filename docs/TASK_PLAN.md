@@ -4711,7 +4711,7 @@ Phase: V3 Phase 2 — Canvas Static
 Priority: HIGH
 Difficulty: HARD
 Depends on: #52, #53.1, #53.2, #53.3, #54, #56
-Status: PENDING
+Status: COMPLETED
 Context:
   Create `client/src/canvas/SwarmCanvas.jsx` — the React Flow canvas component.
   This is the inner canvas that SwarmView (#57.2) embeds. It does NOT include the toolbar or panels.
@@ -6013,7 +6013,7 @@ Acceptance criteria:
 | 54 | HandoffEdge.jsx — animated edge + counter badge | frontend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
 | 55 | AgentInspector.jsx — node config panel | frontend-dev | MEDIUM | claude-sonnet-4-6 | IN_PROGRESS |
 | 56 | BreadcrumbBar.jsx — drill-down nav | frontend-dev | MEDIUM | claude-haiku-4-5 | IN_PROGRESS |
-| **57.1** | SwarmCanvas.jsx — React Flow canvas + drill-down | frontend-dev | HIGH | claude-opus-4-6 | PENDING |
+| **57.1** | SwarmCanvas.jsx — React Flow canvas + drill-down | frontend-dev | HIGH | claude-opus-4-6 | COMPLETED |
 | **57.2** | SwarmView.jsx — layout shell + toolbar | frontend-dev | HIGH | claude-opus-4-6 | PENDING |
 | 58 | App.jsx + Sidebar — swarm nav + ReactFlowProvider | frontend-dev | HIGH | claude-haiku-4-5 | PENDING |
 | 59 | scaffold endpoint complete (replaces 47.2 stub) | backend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |

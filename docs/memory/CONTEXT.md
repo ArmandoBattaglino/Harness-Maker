@@ -69,14 +69,24 @@ Security assessment completed 2026-03-27. Seven mandatory requirements must appe
 
 **#53.1 + #53.2 + #53.3 COMPLETED — build passes.**
 
-**Current wave (IN_PROGRESS — launched in parallel 2026-03-27):**
-- TASK #54 — HandoffEdge.jsx — animated edge + counter badge (frontend-dev, claude-sonnet-4-6) — IN_PROGRESS
-- TASK #55 — AgentInspector.jsx — node config panel (frontend-dev, claude-sonnet-4-6) — IN_PROGRESS
-- TASK #56 — BreadcrumbBar.jsx — drill-down nav (frontend-dev, claude-haiku-4-5) — IN_PROGRESS
+**Wave 2 COMPLETE (2026-03-27):**
+- TASK #54 — HandoffEdge.jsx — COMPLETED
+- TASK #55 — AgentInspector.jsx — COMPLETED
+- TASK #56 — BreadcrumbBar.jsx — COMPLETED
 
-**After #54 + #55 + #56 complete:**
-- TASK #57.1 (SwarmCanvas.jsx) + #57.2 (SwarmView.jsx) — can run in parallel
-- Both depend on #53.1 (done), #54 (in-progress), #55 (in-progress), #56 (in-progress)
+**#57.1 COMPLETED (concurrent agent, 2026-03-27):**
+- TASK #57.1 — SwarmCanvas.jsx — COMPLETED (frontend-dev self-marked; PROGRESS.md at 27/57)
+
+**Current wave (PENDING — ready to launch 2026-03-27):**
+- TASK #57.2 — SwarmView.jsx — Main V3 Layout Shell + Toolbar (frontend-dev, claude-opus-4-6, MEDIUM)
+  - Depends on: #57.1 (DONE) + #55 (DONE) — all deps met, ready now
+  - Wraps SwarmCanvas in full layout: toolbar (workflow name, Start/Pause/Stop, status badge), right panel (AgentInspector 320px), bottom drawer (Inbox/Feed tabs, collapsible 200px)
+  - ReactFlowProvider wraps SwarmCanvas here — SwarmCanvas must NOT add another one
+  - Toolbar dispatches execution control actions: startExecution, pauseExecution, stopExecution from SwarmStore
+  - Bottom drawer: two tabs (Inbox = HITL requests, Feed = live handoff log)
+
+**After #57.2 completes:**
+- TASK #58 — ReactFlowProvider wrapper + WorkflowEditorPage — depends on #57.2
 
 **Key context for #53.x agents:**
 - SwarmContext.jsx is at client/src/store/SwarmContext.jsx — complete, exports useSwarmStore + SwarmProvider
