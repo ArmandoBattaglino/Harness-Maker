@@ -1,4 +1,13 @@
 ---
+## 2026-03-27 — frontend-dev — Task #64: useHandoff.js — Edge Animation Hook
+**Outcome:** COMPLETED
+**Summary:** Created client/src/hooks/useHandoff.js with two exports: useHandoff(callback) fires a callback whenever any edgeCounter increases, and useRecentHandoffs(durationMs) returns a ref Set of recently-active edge IDs. Both use refs for previous-state comparison to avoid unnecessary re-renders. Build passes cleanly.
+**Files changed:** client/src/hooks/useHandoff.js (CREATED)
+**Bugs fixed:** none
+**Decisions made:** Used ref-based previous-counter tracking to avoid re-render churn; recentRef.current is a stable Set so callers get a ref, not a new object on each render
+**Blockers:** none
+**Next:** Task #65 AgentNode live-state styling
+---
 ## 2026-03-27 — backend-dev — Task #67: SwarmEngine Heartbeat — Idle Sweeper Prevention
 **Outcome:** COMPLETED
 **Summary:** Verified all heartbeat acceptance criteria already implemented in #46.3 (_startHeartbeat sets 5-min interval with .unref(), stopExecution clears it, startExecution calls it). Added pauseExecution and resumeExecution methods to SwarmEngine. All 168 tests pass.
@@ -1383,4 +1392,25 @@
 **Decisions made:** Placed file at client/src/canvas/ (not canvas/overlays/) per task message spec; mounted below ReactFlowProvider div to avoid z-index complications
 **Blockers:** none
 **Next:** Task #65 (AgentNode live updates), Task #63 (useSwarm.js WS hook), Task #64 (useHandoff.js edge animation)
+---
+
+---
+## 2026-03-27 — project-manager — Phase 4 wave: #63/#66/#67 COMPLETED; #62.1 retry; #64/#65 launching
+**Outcome:** COMPLETED
+**Summary:** Marked tasks #63 (useSwarm.js), #66 (BroadcastBar.jsx + broadcast route), and #67 (SwarmEngine heartbeat) as COMPLETED in TASK_PLAN.md. Reverted #62.1 to PENDING (API 500 error during agent execution — clean retry in progress). Updated PROGRESS.md to 37/57 COMPLETED. Launched #64 (useHandoff.js) and #65 (AgentNode live updates) in parallel — both are now unblocked since #63 is done.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** #62.1 reverted to PENDING (not BLOCKED) — failure was execution-infrastructure, not spec problem; retry is correct action
+**Blockers:** #62.1 retry in progress; #62.2/#62.3 blocked on #62.1; #68-#73 blocked on all Phase 4 completing
+**Next:** After #62.1 succeeds → launch #62.2; after #64/#65 complete → they are independent; after all of Phase 4 (#62.1-#62.3, #64, #65) → launch Wave 5 (HITL + PTY Explosion: #68-#73)
+---
+---
+## 2026-03-27 — frontend-dev — Task #65: AgentNode Live Updates — Pulse + Micro PTY Log
+**Outcome:** COMPLETED
+**Summary:** Enhanced AgentNode.jsx micro PTY log section. Replaced flat truncated div with a scrollable bg-black/40 code block showing last 4 lines in green monospace. Added blinking cursor (▋ with animate-pulse) when status is running. Confirmed animate-pulse on running border and handoffCount badge were already correct. Build passes at 472 modules, 0 errors.
+**Files changed:** client/src/canvas/nodes/AgentNode.jsx
+**Bugs fixed:** none
+**Decisions made:** Used Tailwind animate-pulse for blinking cursor to stay consistent with project-wide animation pattern; no new CSS keyframes needed
+**Blockers:** none
+**Next:** Task #66 (BroadcastBar + route) or other Phase 4 items
 ---

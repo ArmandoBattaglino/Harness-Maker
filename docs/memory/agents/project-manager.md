@@ -1510,3 +1510,63 @@ None.
 ### Handoff
 Task #60 (PromptToFlowBar.jsx + staggered animation) launching — frontend-dev agent, claude-sonnet-4-6. File to create: client/src/canvas/overlays/PromptToFlowBar.jsx. Full context in CONTEXT.md. After #60 completes, next wave is Phase 4: #62.1 + #63 + #64 can launch in parallel (all depend on #46.3 which is DONE).
 ---
+
+---
+## 2026-03-27 — Phase 4 Progress: #63/#66/#67 COMPLETED; #62.1 retry; #64/#65 launching
+**Status:** COMPLETED
+**Called by:** user (orchestrator — wave results: #63 done, #66 done, #67 done, #62.1 failed)
+
+### Context when I started
+Phase 4 (Live Execution) wave reported partial completion:
+- #63 useSwarm.js WS hook — COMPLETED (build 472 modules)
+- #66 BroadcastBar.jsx + broadcast route — COMPLETED (build 472 modules)
+- #67 SwarmEngine heartbeat idle sweeper prevention — COMPLETED (168 tests pass)
+- #62.1 SwarmEngine _onHandoff steps 1-4 — FAILED (API 500 error during agent execution, retrying)
+- #64 useHandoff.js (depends on #63) and #65 AgentNode live updates (depends on #53.1 + #63) now unblocked and launching in parallel.
+
+### What I did
+1. Read TASK_PLAN.md (task sections for #62.1, #63, #64, #65, #66, #67) and ACTIVITY_LOG.md + PROGRESS.md for current state.
+2. Marked #63 COMPLETED (added Completed: 2026-03-27 note) in TASK_PLAN.md.
+3. Marked #66 COMPLETED (added Completed: 2026-03-27 note) in TASK_PLAN.md.
+4. Marked #67 COMPLETED (added Completed: 2026-03-27 note) in TASK_PLAN.md.
+5. Reverted #62.1 from IN_PROGRESS back to PENDING with retry note in TASK_PLAN.md.
+6. Updated PROGRESS.md status line from 35/57 to 37/57 COMPLETED with accurate per-task notes.
+7. Updated CONTEXT.md active threads to reflect completed tasks and launching #64/#65.
+8. Appended ACTIVITY_LOG.md entry.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | #63/#66/#67 marked COMPLETED with date; #62.1 reverted to PENDING with retry note |
+| docs/memory/PROGRESS.md | MODIFIED | Status line updated 35/57 → 37/57; active wave description updated |
+| docs/memory/CONTEXT.md | MODIFIED | Current wave section replaced with accurate completed/retrying/launching breakdown |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | New PM session entry appended |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- TASK_PLAN.md accurately reflects real completion state of Phase 4 wave
+- PROGRESS.md count corrected to 37/57
+- CONTEXT.md unambiguously communicates what is done, what is retrying, and what is now in-flight
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| #62.1 API 500 during agent execution | Unknown — likely agent infrastructure error during backend-dev run | Reverted task to PENDING for clean retry | DEFERRED (retry in progress) |
+
+### Decisions I made
+- #62.1 reverted to PENDING (not BLOCKED) — the task spec is correct, the failure was execution-infrastructure, not a logic problem; retry is appropriate
+
+### What I learned
+- Always check whether a task "failure" is a spec problem vs execution-infrastructure problem; for API 500 on agent run, reverting to PENDING is correct
+
+### State I'm leaving behind
+- 37/57 Phase 4 tasks complete
+- #62.1 PENDING — retry active right now
+- #64 + #65 launching in parallel (both depend on #63 which is done)
+- #62.2 still blocked on #62.1; #62.3 blocked on #62.2; #68/#69/#70 blocked on Phase 4 completion
+
+### Handoff
+After #62.1 completes successfully: launch #62.2 immediately (depends only on #62.1).
+After #64/#65 complete: these are independent of #62.x, so no chain wait needed.
+After all of #62.1-#62.3, #64, #65 complete: Wave 5 (#68 HITL inbox, #69 HitlInbox.jsx, #70 PTY Explosion) can launch.
+---

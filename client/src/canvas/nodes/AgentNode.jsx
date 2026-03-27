@@ -37,11 +37,13 @@ export default function AgentNode({ id, data, selected }) {
       {/* Status badge */}
       <div className="text-xs text-gray-300 capitalize">{status}</div>
 
-      {/* lastOutputSnippet — micro log (3 lines max, truncated) */}
+      {/* lastOutputSnippet — micro PTY log (last 4 lines, scrollable) */}
       {agentState?.lastOutputSnippet && (
-        <div className="mt-2 text-xs text-gray-400 font-mono truncate overflow-hidden"
-             style={{ maxHeight: '3.6em', lineHeight: '1.2em' }}>
-          {agentState.lastOutputSnippet.split('\n').slice(-3).join('\n')}
+        <div className="mt-2 bg-black/40 rounded p-1.5 max-h-16 overflow-y-auto">
+          <pre className="text-xs text-green-300 font-mono whitespace-pre-wrap break-all leading-tight">
+            {agentState.lastOutputSnippet.split('\n').slice(-4).join('\n')}
+            {status === 'running' && <span className="animate-pulse">▋</span>}
+          </pre>
         </div>
       )}
 

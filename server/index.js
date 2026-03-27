@@ -15,6 +15,8 @@ import { ConfigStore } from './services/ConfigStore.js';
 import { WorkflowStore } from './services/WorkflowStore.js';
 import { ProcessRegistry } from './services/ProcessRegistry.js';
 import SwarmEngine from './services/SwarmEngine.js';
+import CircuitBreaker from './services/CircuitBreaker.js';
+import BudgetTracker from './services/BudgetTracker.js';
 import { securityMiddleware } from './middleware/security.js';
 import { csrfMiddleware } from './middleware/csrf.js';
 import { ApiError } from './middleware/pathValidation.js';
@@ -254,7 +256,9 @@ async function startup() {
 
   // Initialize SwarmEngine (depends on sessionManager + workflowStore)
   const workflowStore = app.locals.workflowStore;
-  const swarmEngine = new SwarmEngine(sessionManager, workflowStore);
+  const circuitBreaker = new CircuitBreaker();
+  const budgetTracker = new BudgetTracker();
+  const swarmEngine = new SwarmEngine(sessionManager, workflowStore, circuitBreaker, budgetTracker);
   app.locals.swarmEngine = swarmEngine;
   app.locals.sessionManager = sessionManager;
 

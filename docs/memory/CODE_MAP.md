@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-27 — after Task #60 (PromptToFlowBar.jsx + staggered animation) — mapped by code-mapper_
+_Last updated: 2026-03-27 — after Tasks #63 (useSwarm.js), #66 (BroadcastBar.jsx + SwarmView mount), #67 (SwarmEngine heartbeat + pauseExecution/resumeExecution) — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -75,7 +75,9 @@ _Last updated: 2026-03-27 — after Task #60 (PromptToFlowBar.jsx + staggered an
 | client/src/canvas/BreadcrumbBar.jsx | default BreadcrumbBar | Top-bar breadcrumb nav for drill-down into department nodes. Reads departmentStack + navigateBreadcrumb from useSwarmStore. Root crumb always visible; each depth level rendered as a clickable button. (Task #56) |
 | client/src/canvas/SwarmCanvas.jsx | default SwarmCanvas | Root React Flow canvas for swarm visualization. Registers nodeTypes (agent, department, trigger) + edgeTypes (handoff). Manages nodes/edges state via useNodesState/useEdgesState. Drill-down filtering: computes visibleNodes/visibleEdges via focusedDepartmentId. onNodeClick→setSelectedNode; onPaneClick→setSelectedNode(null). Mounts BreadcrumbBar + AgentInspector. (Task #57.1) |
 | client/src/canvas/PromptToFlowBar.jsx | default PromptToFlowBar | Natural-language prompt input bar. POSTs to /api/v1/swarm/scaffold, applies per-node staggered fadeIn animation to returned workflowDef, calls onWorkflowGenerated(workflowId, animatedDef) on success. (Task #60) |
-| client/src/views/SwarmView.jsx | default SwarmView | Layout shell for the Swarm Orchestrator page. Toolbar shows title + executionStatus indicator + conditional Reset button. Mounts PromptToFlowBar (Task #60); workflowDef local state wired to onWorkflowGenerated → setWorkflowDef → SwarmCanvas prop. (Tasks #57.2, #60) |
+| client/src/canvas/BroadcastBar.jsx | default BroadcastBar | Broadcasts text to all running agent PTYs via POST /api/v1/swarm/:executionId/broadcast. Only renders when executionStatus === 'running'. Soft/hard mode selector. (Task #66) |
+| client/src/hooks/useSwarm.js | useSwarm (named) | WebSocket hook for swarm execution lifecycle: connectWs(executionId) → /ws/swarm?executionId=X; startExecution() POSTs + connects WS; stopExecution() DELETEs + closes WS. Dispatches 6 WS message types to useSwarmStore. (Task #63) |
+| client/src/views/SwarmView.jsx | default SwarmView | Layout shell for the Swarm Orchestrator page. Toolbar shows title + executionStatus indicator + conditional Reset button. Mounts PromptToFlowBar (Task #60) and BroadcastBar (Task #66); workflowDef local state wired to onWorkflowGenerated → setWorkflowDef → SwarmCanvas prop. (Tasks #57.2, #60, #66) |
 
 ### Client Config & Styles
 | File | Key Exports | Purpose |
@@ -1773,7 +1775,7 @@ _Last updated: 2026-03-27 — after Task #60 (PromptToFlowBar.jsx + staggered an
 
 ### `client/src/store/SwarmContext.jsx` :: `setExecution(id, status)`
 - **Purpose:** Set the active execution ID and execution status atomically. Called on execution start/stop from WS event handlers.
-- **Called by:** (not yet wired — future WS message handler for execution_status events)
+- **Called by:** useSwarm.js::startExecution (on POST success — sets running), useSwarm.js::stopExecution (sets null/stopped), useSwarm.js::connectWs onmessage (case 'execution_status' — Task #63)
 - **Calls:** Zustand set
 - **Inputs:** id (string | null), status ('idle' | 'running' | 'stopped')
 - **Output:** void
@@ -1782,7 +1784,7 @@ _Last updated: 2026-03-27 — after Task #60 (PromptToFlowBar.jsx + staggered an
 
 ### `client/src/store/SwarmContext.jsx` :: `updateAgentState(nodeId, patch)`
 - **Purpose:** Merge a partial update into the agentStates entry for a specific node. Non-destructive — existing fields are preserved; only patch keys are overwritten.
-- **Called by:** (not yet wired — future WS agent_update event handler)
+- **Called by:** useSwarm.js::connectWs onmessage (cases 'agent_status' and 'handoff_started' — Task #63)
 - **Calls:** Zustand set with spread merge
 - **Inputs:** nodeId (string), patch (object with subset of { status, lastOutputSnippet, handoffCount })
 - **Output:** void
@@ -1791,7 +1793,7 @@ _Last updated: 2026-03-27 — after Task #60 (PromptToFlowBar.jsx + staggered an
 
 ### `client/src/store/SwarmContext.jsx` :: `updateEdgeCounter(edgeId, count)`
 - **Purpose:** Set the handoff counter for a specific edge. Used to drive animated edge labels on the canvas.
-- **Called by:** (not yet wired — future WS edge_counter event handler)
+- **Called by:** useSwarm.js::connectWs onmessage (case 'handoff_started' — Task #63)
 - **Calls:** Zustand set with spread merge
 - **Inputs:** edgeId (string), count (number)
 - **Output:** void
@@ -1800,7 +1802,7 @@ _Last updated: 2026-03-27 — after Task #60 (PromptToFlowBar.jsx + staggered an
 
 ### `client/src/store/SwarmContext.jsx` :: `updateBudget(used, limit)`
 - **Purpose:** Update the budget tracker display state. Drives the BudgetBar component (when built).
-- **Called by:** (not yet wired — future WS budget_update event handler)
+- **Called by:** useSwarm.js::connectWs onmessage (case 'budget_update' — Task #63)
 - **Calls:** Zustand set
 - **Inputs:** used (number — estimated tokens used), limit (number — token ceiling)
 - **Output:** void
@@ -1809,7 +1811,7 @@ _Last updated: 2026-03-27 — after Task #60 (PromptToFlowBar.jsx + staggered an
 
 ### `client/src/store/SwarmContext.jsx` :: `addInboxItem(item)`
 - **Purpose:** Append a Human-in-the-Loop approval item to the pending inboxItems list. Each item has an id and payload for the approval UI.
-- **Called by:** (not yet wired — future WS hitl_pending event handler)
+- **Called by:** useSwarm.js::connectWs onmessage (case 'hitl_required' — Task #63)
 - **Calls:** Zustand set with array spread
 - **Inputs:** item (object — HITL pending approval payload, must have id field)
 - **Output:** void
@@ -1827,7 +1829,7 @@ _Last updated: 2026-03-27 — after Task #60 (PromptToFlowBar.jsx + staggered an
 
 ### `client/src/store/SwarmContext.jsx` :: `addFeedEvent(event)`
 - **Purpose:** Append a handoff event to the inter-agent feed. Automatically trims to the last 100 events to prevent unbounded memory growth.
-- **Called by:** (not yet wired — future WS handoff/feed event handler)
+- **Called by:** useSwarm.js::connectWs onmessage (cases 'handoff_started' and 'circuit_breaker' — Task #63)
 - **Calls:** Zustand set, Array.slice(-100)
 - **Inputs:** event (object — handoff event: { fromNode, toNode, timestamp, payload })
 - **Output:** void
@@ -1865,7 +1867,7 @@ _Last updated: 2026-03-27 — after Task #60 (PromptToFlowBar.jsx + staggered an
 
 ### `client/src/store/SwarmContext.jsx` :: `setWsConnected(b)`
 - **Purpose:** Track WebSocket connection health for the swarm WS channel. Drives connection status indicator in UI.
-- **Called by:** (not yet wired — future WS open/close handlers)
+- **Called by:** useSwarm.js::connectWs onopen (true), onclose (false), onerror (false) — Task #63
 - **Calls:** Zustand set
 - **Inputs:** b (boolean)
 - **Output:** void
@@ -1972,14 +1974,14 @@ _Last updated: 2026-03-27 — after Task #60 (PromptToFlowBar.jsx + staggered an
 ## Swarm View Shell (Task #57.2)
 
 ### `client/src/views/SwarmView.jsx` :: `SwarmView()`
-- **Purpose:** Top-level page shell for the Swarm Orchestrator. Renders a fixed toolbar (title, executionStatus indicator, conditional Reset button), then PromptToFlowBar below the toolbar, then the full-height canvas area. Provides the ReactFlowProvider boundary required by @xyflow/react. Owns `workflowDef` local state; receives it from PromptToFlowBar.onWorkflowGenerated and passes it down to SwarmCanvas.
+- **Purpose:** Top-level page shell for the Swarm Orchestrator. Renders a fixed toolbar (title, executionStatus indicator, conditional Reset button), then PromptToFlowBar below the toolbar, then the full-height canvas area, then BroadcastBar pinned to the bottom (only visible when executionStatus === 'running'). Provides the ReactFlowProvider boundary required by @xyflow/react. Owns `workflowDef` local state; receives it from PromptToFlowBar.onWorkflowGenerated and passes it down to SwarmCanvas.
 - **Called by:** App.jsx::MainContent (case 'swarm' — wired in Task #58)
-- **Calls:** useSwarmStore (selector: s.executionStatus), useSwarmStore (selector: s.reset), useState (React — workflowDef local state), ReactFlowProvider (from @xyflow/react), PromptToFlowBar (client/src/canvas/PromptToFlowBar.jsx — Task #60), SwarmCanvas (client/src/canvas/SwarmCanvas.jsx)
+- **Calls:** useSwarmStore (selector: s.executionStatus), useSwarmStore (selector: s.reset), useState (React — workflowDef local state), ReactFlowProvider (from @xyflow/react), PromptToFlowBar (client/src/canvas/PromptToFlowBar.jsx — Task #60), SwarmCanvas (client/src/canvas/SwarmCanvas.jsx), BroadcastBar (client/src/canvas/BroadcastBar.jsx — Task #66)
 - **Inputs:** none (no props)
-- **Output:** JSX — flex-col full-height div: toolbar row (shrink-0) + PromptToFlowBar (shrink-0) + canvas area (flex-1, overflow-hidden) containing ReactFlowProvider > SwarmCanvas
+- **Output:** JSX — flex-col full-height div: toolbar row (shrink-0) + PromptToFlowBar (shrink-0) + canvas area (flex-1, overflow-hidden) containing ReactFlowProvider > SwarmCanvas + BroadcastBar (bottom, conditionally rendered by its own internal logic)
 - **Side effects:** calls SwarmStore.reset() when Reset button is clicked (clears execution state); no server I/O
-- **Complexity note:** `statusColors` is a module-level const map (idle/running/stopped → Tailwind class string). `executionStatus === 'stopped'` is the sole gate for the Reset button. onWorkflowGenerated callback receives (workflowId, animatedDef) from PromptToFlowBar — SwarmView discards workflowId and stores only animatedDef in workflowDef local state, which flows into SwarmCanvas. ReactFlowProvider must wrap SwarmCanvas (not SwarmCanvas internally) because SwarmView is the intended boundary for the React Flow context.
-- **Last modified:** 2026-03-27 in Task #60 by frontend-dev (PromptToFlowBar mounted; onWorkflowGenerated → setWorkflowDef wired; workflowDef prop now live to SwarmCanvas)
+- **Complexity note:** `statusColors` is a module-level const map (idle/running/stopped → Tailwind class string). `executionStatus === 'stopped'` is the sole gate for the Reset button. onWorkflowGenerated callback receives (workflowId, animatedDef) from PromptToFlowBar — SwarmView discards workflowId and stores only animatedDef in workflowDef local state, which flows into SwarmCanvas. BroadcastBar is always mounted but renders null when executionStatus !== 'running' (self-hides based on store state). ReactFlowProvider must wrap SwarmCanvas (not SwarmCanvas internally) because SwarmView is the intended boundary for the React Flow context.
+- **Last modified:** 2026-03-27 in Task #66 by frontend-dev (BroadcastBar import + mount added; layout updated)
 
 ---
 

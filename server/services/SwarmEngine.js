@@ -26,9 +26,11 @@ class SwarmEngine {
    * @param {import('./SessionManager.js').SessionManager} sessionManager
    * @param {import('./WorkflowStore.js').WorkflowStore} workflowStore
    */
-  constructor(sessionManager, workflowStore) {
+  constructor(sessionManager, workflowStore, circuitBreaker = null, budgetTracker = null) {
     this._sessionManager = sessionManager;
     this._workflowStore = workflowStore;
+    this._circuitBreaker = circuitBreaker;
+    this._budgetTracker = budgetTracker;
     this._executions = new Map();   // executionId -> WorkflowExecution
     this._wsBroadcast = null;       // function(executionId, event) — set by swarmHandler
   }
@@ -279,21 +281,60 @@ class SwarmEngine {
 
   /**
    * Handle a handoff event from one agent to another.
-   * Stub for Task #46.3 / #62 — broadcasts WS event, full routing implemented later.
+   * Merges context, increments edge counter, checks circuit breaker,
+   * updates source agent state, and spawns/reuses target PTY.
+   * Implemented in Task #62.1.
    * @param {string} executionId
    * @param {string} sourceNodeId
    * @param {object} event - { type: 'handoff', targetId, contextUpdate }
    */
   async _onHandoff(executionId, sourceNodeId, event) {
+    const execution = this._executions.get(executionId);
+    if (!execution) return;
+
+    const { targetId, contextUpdate } = event;
+
+    // 1. Shallow merge context update (DEC-V3-05: OpenAI Swarm pattern)
+    if (contextUpdate && typeof contextUpdate === 'object') {
+      Object.assign(execution.workflowContext, contextUpdate);
+    }
+
+    // 2. Find edge ID (source-target pair)
+    const edgeId = execution.workflowDef.edges.find(
+      (e) => e.source === sourceNodeId && e.target === targetId
+    )?.id ?? `${sourceNodeId}->${targetId}`;
+
+    // 3. Increment edge counter
+    const counter = (execution.edgeCounters.get(edgeId) ?? 0) + 1;
+    execution.edgeCounters.set(edgeId, counter);
+
+    // 4. Circuit breaker check (advisory only — does not stop execution)
+    const threshold = execution.workflowDef.settings?.circuitBreakerThreshold ?? 10;
+    if (this._circuitBreaker && this._circuitBreaker.check(edgeId, counter, threshold)) {
+      if (this._wsBroadcast) {
+        this._wsBroadcast(executionId, { type: 'circuit_breaker', edgeId, counter, threshold });
+      }
+    }
+
+    // 5. Increment source agent handoffCount
+    const sourceState = execution.agentStates.get(sourceNodeId);
+    if (sourceState) {
+      sourceState.handoffCount = (sourceState.handoffCount ?? 0) + 1;
+    }
+
+    // 6. Broadcast handoff event
     if (this._wsBroadcast) {
       this._wsBroadcast(executionId, {
         type: 'handoff_started',
         sourceNodeId,
-        targetNodeId: event.targetId,
-        edgeId: null,
-        counter: 0,
+        targetNodeId: targetId,
+        edgeId,
+        counter,
       });
     }
+
+    // 7. Spawn or reuse target agent PTY
+    await this._ensureAgentPty(executionId, targetId);
   }
 
   /**

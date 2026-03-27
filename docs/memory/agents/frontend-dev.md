@@ -985,3 +985,47 @@ BroadcastBar.jsx fully implemented and mounted. Build: 472 modules, 0 errors. Co
 ### Handoff
 Task #66 fully self-contained. Next: Task #65 (AgentNode live updates), Task #63 (useSwarm.js WS hook), Task #64 (useHandoff.js).
 ---
+---
+## 2026-03-27 — Task #65: AgentNode Live Updates — Pulse + Micro PTY Log
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+AgentNode.jsx was completed in Task #53.1. It already had: animate-pulse on running status via Tailwind statusColors map, lastOutputSnippet display (3 lines, truncated plain div), and handoffCount badge. The micro PTY log section used `truncate overflow-hidden` with inline maxHeight — not a scrollable code block, no blinking cursor.
+
+### What I did
+1. Read docs/memory/agents/frontend-dev.md for prior session context.
+2. Read client/src/canvas/nodes/AgentNode.jsx to confirm exact current implementation.
+3. Verified all three acceptance criteria: animate-pulse (already present in statusColors.running), handoffCount badge (already present), lastOutputSnippet (present but needed enhancement).
+4. Replaced the flat truncated div for lastOutputSnippet with a scrollable `bg-black/40 rounded` container holding a `<pre>` with `text-green-300 font-mono whitespace-pre-wrap break-all leading-tight` classes. Changed slice(-3) to slice(-4) for 4-line display. Added blinking cursor `{status === 'running' && <span className="animate-pulse">▋</span>}` inside the `<pre>`.
+5. Ran `npm run build` — 472 modules, 0 errors, build passes in 4.17s.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/canvas/nodes/AgentNode.jsx | MODIFIED | Enhanced micro PTY log: scrollable bg-black/40 container, green monospace pre, 4-line slice, blinking cursor when running |
+| docs/TASK_PLAN.md | MODIFIED | Task #65 Status: PENDING → COMPLETED |
+
+### Improvements delivered
+- lastOutputSnippet now renders in a dark scrollable code block with green monospace text — visually distinct from the rest of the node UI
+- Last 4 lines shown (was 3)
+- Blinking ▋ cursor appended when status === 'running' — clear visual indicator of live activity
+- animate-pulse on running border was already correct — confirmed working
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Used `animate-pulse` on the `<span>▋</span>` for the blinking cursor rather than a CSS keyframes animation → consistent with Tailwind animate-pulse already used project-wide; no new CSS required
+- Kept `max-h-16 overflow-y-auto` on the container (matches task spec `max-h-16`) so the log area stays compact inside the React Flow node
+
+### What I learned
+- AgentNode is a React Flow custom node — it must stay compact (max-w-[220px]) or layout breaks in the canvas
+- Tailwind `whitespace-pre-wrap break-all` combo works well for PTY output in constrained widths — wraps long lines without overflow
+
+### State I'm leaving behind
+AgentNode.jsx is fully enhanced per Task #65 spec. Build clean at 472 modules. All three acceptance criteria met.
+
+### Handoff
+None — task fully self-contained.
+---

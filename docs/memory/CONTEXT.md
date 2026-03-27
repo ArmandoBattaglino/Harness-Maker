@@ -96,27 +96,26 @@ Security assessment completed 2026-03-27. Seven mandatory requirements must appe
 - TASK #61 — useWorkflow.js — COMPLETED
 - Phase 3 (Prompt-to-Flow) FULLY DONE. 33/57 V3 tasks complete.
 
-**Current wave — V3 Phase 4 Live Execution (all 4 running in parallel, 2026-03-27):**
-- TASK #62.1 — SwarmEngine _onHandoff: context merge + edge counter + PTY spawn
+**Current wave — V3 Phase 4 Live Execution (updated 2026-03-27):**
+
+COMPLETED this session:
+- TASK #63 — useSwarm.js WS hook — COMPLETED (build: 472 modules)
+- TASK #66 — BroadcastBar.jsx + broadcast route — COMPLETED (build: 472 modules)
+- TASK #67 — SwarmEngine heartbeat idle sweeper prevention — COMPLETED (168 tests pass)
+
+RETRYING:
+- TASK #62.1 — SwarmEngine _onHandoff steps 1–4 — PENDING (previous attempt: API 500 error during agent execution; retrying now)
   - Agent: backend-dev, Model: claude-opus-4-6, Difficulty: HARD, Deps: #46.3 ✓ + #49 ✓
-  - Implement _onHandoff steps 1–4: context merge (shallow dict), edge counter increment in
-    Zustand broadcast, target PTY spawn via _spawnAgentPty if not already alive
   - File: server/services/SwarmEngine.js
-- TASK #63 — useSwarm.js WS hook for execution control
-  - Agent: frontend-dev, Model: claude-sonnet-4-6, Difficulty: MEDIUM, Deps: #57.2 ✓ + #48.2 ✓
-  - Create client/src/hooks/useSwarm.js — WebSocket connection to swarm channel
-  - Manage executionStatus, start/stop/pause/resume/broadcast actions
-  - Wire to SwarmContext.jsx ExecutionStore
-- TASK #66 — BroadcastBar.jsx + POST broadcast route
-  - Agent: frontend-dev, Model: claude-sonnet-4-6, Difficulty: MEDIUM, Deps: #57.1 ✓ + #47.1 ✓
-  - Create client/src/canvas/overlays/BroadcastBar.jsx
-  - Visible only when executionStatus === 'running'; scope selector + message input
-  - POST to /api/v1/swarm/:workflowId/broadcast with { scope, message, mode }
-- TASK #67 — SwarmEngine heartbeat: idle sweeper prevention
-  - Agent: backend-dev, Model: claude-haiku-4-5, Difficulty: EASY, Deps: #46.3 ✓
-  - Extend SwarmEngine._startHeartbeat() to call sessionManager.touchSession(sessionId)
-    on every heartbeat tick to reset the 30-min idle timer per active agent PTY
-  - File: server/services/SwarmEngine.js
+  - Implement: _findEdgeId(), _getThreshold(), _onHandoff steps 1–4 (edge counter + circuit breaker + context merge + handoff_started WS + _ensureAgentPty)
+
+LAUNCHING NOW (parallel):
+- TASK #64 — useHandoff.js edge animation hook — IN_PROGRESS
+  - Agent: frontend-dev, Deps: #63 ✓
+  - Add animatingEdges Set to SwarmStore, setEdgeAnimating action, 800ms edge pulse
+- TASK #65 — AgentNode.jsx live updates — IN_PROGRESS
+  - Agent: frontend-dev, Deps: #53.1 ✓ + #63 ✓
+  - Animated blue glow border on status='running', micro PTY log (last 500 chars), double-click → ptyExplosionNodeId
 
 **Key context for #53.x agents:**
 - SwarmContext.jsx is at client/src/store/SwarmContext.jsx — complete, exports useSwarmStore + SwarmProvider

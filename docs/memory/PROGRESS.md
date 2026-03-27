@@ -152,7 +152,7 @@ _None._
 - NOTE: FileManager was NOT created in Task #5 as planned — RESOLVED in Task #7 (created server/services/FileManager.js).
 
 ## V3 — Swarm Orchestrator (57 granular tasks after split — 2026-03-27 replan)
-**Status: 35/57 COMPLETED — as of 2026-03-27. All Phase 1 backend tasks done. All Phase 2 (Canvas Static) COMPLETED. Phase 3 (Prompt-to-Flow) FULLY COMPLETED. Phase 4 (Live Execution) ACTIVE: #63 useSwarm.js DONE, #67 heartbeat DONE. #62.1, #66 still IN_PROGRESS.**
+**Status: 38/57 COMPLETED — as of 2026-03-27. All Phase 1 backend tasks done. All Phase 2 (Canvas Static) COMPLETED. Phase 3 (Prompt-to-Flow) FULLY COMPLETED. Phase 4 (Live Execution) ACTIVE: #63 useSwarm.js DONE, #64 useHandoff.js DONE, #66 BroadcastBar DONE, #67 heartbeat DONE. #62.1 PENDING (retry after API 500 failure). #65 (AgentNode live) pending.**
 **Note: Original 40 tasks (#43–#82). After model assignment + subtask split: 57 granular units.**
 **7 original tasks split into subtasks: #46→3, #47→2, #48→2, #53→3, #57→2, #62→3, #71→2**
 - V3 PRD complete: docs/PRD.md
@@ -223,3 +223,6 @@ _None._
 - [TASK-80] PENDING — V3 End-to-End Test (qa-tester, Puppeteer)
 - [TASK-81] PENDING — Build verification + v3.0.0 git tag (devops)
 - [TASK-82] PENDING — V3 Documentation update (documenter)
+
+- [TASK-65] AgentNode Live Updates — frontend-dev — COMPLETED 2026-03-27
+  Enhanced micro PTY log in AgentNode.jsx: scrollable dark code block, green monospace, last 4 lines, blinking cursor when running. animate-pulse border and handoffCount badge already existed. Build clean at 472 modules.

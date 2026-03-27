@@ -5006,7 +5006,8 @@ Phase: V3 Phase 4 — Live Execution
 Priority: HIGH
 Difficulty: HARD
 Depends on: #46.3, #49
-Status: IN_PROGRESS
+Status: PENDING
+Note: Previous attempt FAILED (API 500 error during agent execution) — retrying.
 Context:
   First of three subtasks completing the SwarmEngine handoff loop (from skeleton in #46.3).
   Replace the _onHandoff stub with the first half of the full implementation.
@@ -5178,6 +5179,7 @@ Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
 Status: COMPLETED
+Completed: 2026-03-27
 Dependencies: #57.2, #48.2
 Context:
   Create `client/src/hooks/useSwarm.js`.
@@ -5232,7 +5234,7 @@ Agent: frontend-dev
 Priority: LOW
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Dependencies: #63
 Context:
   Create `client/src/hooks/useHandoff.js`.
@@ -5263,7 +5265,7 @@ Agent: frontend-dev
 Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Dependencies: #63, #53.1
 Context:
   Update AgentNode.jsx (from #53) to show live execution feedback:
@@ -5297,6 +5299,7 @@ Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
 Status: COMPLETED
+Completed: 2026-03-27
 Dependencies: #57.1, #47.1
 Context:
   Create `client/src/canvas/overlays/BroadcastBar.jsx`.
@@ -5330,6 +5333,7 @@ Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
 Status: COMPLETED
+Completed: 2026-03-27
 Dependencies: #46.3
 Context:
   The existing SessionManager has an idle sweeper that kills PTY sessions after 30 minutes
