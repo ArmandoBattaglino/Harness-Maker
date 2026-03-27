@@ -872,3 +872,14 @@
 **Blockers:** none
 **Next:** Task #48.2 — implement broadcast() in swarmHandler.js and wire swarmEngine.setWsBroadcast().
 ---
+
+---
+## 2026-03-27 — backend-dev — Task #47.1: server/routes/swarm.js — Execution Control Endpoints
+**Outcome:** COMPLETED
+**Summary:** Created server/routes/swarm.js with 7 execution control endpoints (start, pause, resume, delete, status, agent output, broadcast) plus a 501 scaffold stub for #47.2. Mounted at /api/v1/swarm in server/index.js. Also added app.locals.sessionManager to make the sessionManager available via app.locals. 132/132 tests pass.
+**Files changed:** server/routes/swarm.js (CREATED), server/index.js (MODIFIED — swarmRoutes import + mount + sessionManager in app.locals)
+**Bugs fixed:** none
+**Decisions made:** No per-route CSRF (already global); hard broadcast fire-and-forget via setTimeout per spec; scaffold stub (501) included in swarm.js
+**Blockers:** none
+**Next:** Task #47.2 (scaffold stub endpoint — should replace 501 in swarm.js) can proceed now.
+---

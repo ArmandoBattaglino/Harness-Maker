@@ -152,7 +152,7 @@ _None._
 - NOTE: FileManager was NOT created in Task #5 as planned — RESOLVED in Task #7 (created server/services/FileManager.js).
 
 ## V3 — Swarm Orchestrator (57 granular tasks after split — 2026-03-27 replan)
-**Status: 8/57 COMPLETED — as of 2026-03-27. #47.1 and #48.1 IN_PROGRESS.**
+**Status: 9/57 COMPLETED — as of 2026-03-27. #48.1 IN_PROGRESS.**
 **Note: Original 40 tasks (#43–#82). After model assignment + subtask split: 57 granular units.**
 **7 original tasks split into subtasks: #46→3, #47→2, #48→2, #53→3, #57→2, #62→3, #71→2**
 - V3 PRD complete: docs/PRD.md
@@ -166,6 +166,7 @@ _None._
 - [TASK-46.1] COMPLETED 2026-03-27 — SwarmEngine — SessionManager patch + class skeleton, 132/132 tests pass
 - [TASK-46.2] COMPLETED 2026-03-27 — SwarmEngine — startExecution + _spawnAgentPty + HandoffParser tap, 132/132 tests pass
 - [TASK-46.3] COMPLETED 2026-03-27 — SwarmEngine — _buildSystemPrompt + _startHeartbeat, 132/132 tests pass
+- [TASK-47.1] COMPLETED 2026-03-27 — swarm.js — 7 execution control endpoints, scaffold stub (501), mounted at /api/v1/swarm, 132/132 tests pass
 - [TASK-47.1] IN_PROGRESS — swarm.js — 7 execution control endpoints (launched 2026-03-27)
 - [TASK-47.2] PENDING — swarm.js — scaffold endpoint stub (501)
 - [TASK-48.1] COMPLETED 2026-03-27 — swarmHandler.js — channel routing + connection management; dual noServer WSS routing via server.on('upgrade'); 132/132 tests pass

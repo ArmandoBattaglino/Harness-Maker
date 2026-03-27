@@ -930,3 +930,58 @@ server/ws/swarmHandler.js is complete for task #48.1. getSubscribers() is ready 
 ### Handoff
 Task #48.2 needs to implement the broadcast() function in swarmHandler.js and wire SwarmEngine.setWsBroadcast() so that execution events are pushed to all subscribers via getSubscribers(executionId). The _subscribers Map is already populated by #48.1.
 ---
+
+---
+## 2026-03-27 — Task #47.1: server/routes/swarm.js — Execution Control Endpoints
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+SwarmEngine.js had all three subtasks (#46.1-#46.3) completed with startExecution, stopExecution, getStatus, setWsBroadcast all implemented. server/index.js had already been modified by a previous agent to import SwarmEngine and handleSwarmConnection from swarmHandler.js, create a swarmEngine instance, and store it in app.locals. The swarm router file did not exist. 132/132 tests passing.
+
+### What I did
+1. Read project memory and all relevant source files in parallel (backend-dev.md, PROGRESS.md, server/index.js, sessions.js, jobs.js, csrf.js, SwarmEngine.js).
+2. Discovered server/index.js had already been updated by another agent to instantiate SwarmEngine — more changes than expected from task context.
+3. Created server/routes/swarm.js with all 7 execution control endpoints plus the #47.2 scaffold stub (501).
+4. Added `import swarmRoutes from './routes/swarm.js';` to server/index.js.
+5. Added `app.locals.sessionManager = sessionManager;` to server/index.js (so the factory can receive it from app.locals).
+6. Added `app.use('/api/v1/swarm', swarmRoutes(app.locals.swarmEngine, app.locals.sessionManager));` mount after workflow routes.
+7. Ran npm test — 132/132 pass, 0 failures.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/routes/swarm.js | CREATED | All 7 execution control endpoints + 501 scaffold stub |
+| server/index.js | MODIFIED | Added swarmRoutes import, app.locals.sessionManager assignment, swarm router mount |
+| docs/TASK_PLAN.md | MODIFIED | Task #47.1 status: IN_PROGRESS → COMPLETED |
+
+### Improvements delivered
+- 7 swarm execution control REST endpoints now implemented and mounted
+- CSRF enforced globally (csrfMiddleware in server/index.js covers all POST/DELETE routes)
+- sessionManager stored in app.locals for router factory access
+- Scaffold stub (501) in place for Task #47.2
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None | — | — | — |
+
+### Decisions I made
+- Did not apply per-route csrfMiddleware since it is already applied globally in server/index.js — redundant guards would waste CPU and complicate the code.
+- Kept hard mode broadcast fire-and-forget via setTimeout (not async/await) per task spec — avoids holding the response open.
+- Included 501 scaffold stub inside swarm.js rather than creating a separate file — keeps all swarm routes in one file, consistent with jobs.js and sessions.js patterns.
+- agentStates returned by getStatus() is already a plain object (Object.fromEntries in getStatus) — iterated with Object.entries() safely.
+
+### What I learned
+- server/index.js had already been modified by Task #48.1 agent (or another concurrent task) before this task ran — SwarmEngine import and swarmHandler wiring were already in place.
+- The CSRF middleware is global in this project — no need to import/apply it per-router.
+- SwarmEngine.getStatus() returns agentStates as a plain object (Object.fromEntries) not a Map — use Object.entries() not Map iteration in routes.
+
+### State I'm leaving behind
+- server/routes/swarm.js: all 7 endpoints working, scaffold stub at 501, mounted at /api/v1/swarm
+- server/index.js: sessionManager in app.locals, swarm router mounted
+- 132/132 tests pass
+
+### Handoff
+Task #47.2 (scaffold endpoint stub) can now proceed — it needs to add or replace the 501 stub in server/routes/swarm.js.
+---
