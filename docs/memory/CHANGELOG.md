@@ -1126,3 +1126,40 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 - All three nodes await registration in a nodeTypes map inside a WorkflowCanvas wrapper component (future task)
 
 ---
+
+## 2026-03-27 — Tasks #54 + #55 + #56: HandoffEdge, AgentInspector, BreadcrumbBar — Canvas Visual Layer
+**Agent:** frontend-dev (three parallel tasks)
+**Triggered by:** V3 Phase 3 client — implement the custom edge type, inspector side panel, and breadcrumb navigation bar that complete the canvas visual layer alongside the three node types from Tasks #53.1-#53.3
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/canvas/edges/HandoffEdge.jsx | ADDED | Custom React Flow edge type="handoff"; reads edgeCounters[id] from useSwarmStore; animated dashed blue line when counter > 0; grey static line when idle; counter badge via EdgeLabelRenderer |
+| client/src/canvas/AgentInspector.jsx | ADDED | Right-panel node inspector; reads selectedNodeId + agentStates from useSwarmStore; shows label, type, status, handoffCount, systemPrompt, lastOutputSnippet; close button calls setSelectedNode(null) |
+| client/src/canvas/BreadcrumbBar.jsx | ADDED | Top-bar breadcrumb nav; reads departmentStack + navigateBreadcrumb from useSwarmStore; root crumb always shown; per-depth buttons call navigateBreadcrumb(index+1) |
+| client/src/index.css | MODIFIED | Added @keyframes dashdraw — SVG strokeDashoffset animation referenced by HandoffEdge inline style |
+
+### Functions Added
+- `HandoffEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, data, markerEnd })` in `client/src/canvas/edges/HandoffEdge.jsx` — animated custom edge; counter badge via EdgeLabelRenderer; uses getBezierPath + BaseEdge from @xyflow/react
+- `AgentInspector({ nodes, onUpdateNode })` in `client/src/canvas/AgentInspector.jsx` — inspector panel for selected node; three useSwarmStore selectors; close → setSelectedNode(null)
+- `BreadcrumbBar({ nodes })` in `client/src/canvas/BreadcrumbBar.jsx` — breadcrumb nav; root button → navigateBreadcrumb(0); per-crumb → navigateBreadcrumb(index+1); labels resolved from nodes prop
+
+### Functions Modified
+- `navigateBreadcrumb(index)` in `client/src/store/SwarmContext.jsx` — "Called by" updated: first live caller is BreadcrumbBar.jsx (Task #56)
+- `setSelectedNode(id)` in `client/src/store/SwarmContext.jsx` — "Called by" updated: AgentInspector close button calls setSelectedNode(null) (Task #55); non-null selection still pending canvas onClick
+
+### Connection Changes
+- client/src/canvas/edges/HandoffEdge.jsx → useSwarmStore (reads edgeCounters[id]) — new caller
+- client/src/canvas/AgentInspector.jsx → useSwarmStore (reads selectedNodeId, agentStates, setSelectedNode) — new caller
+- client/src/canvas/AgentInspector.jsx → SwarmStore::setSelectedNode — first live caller (null deselection)
+- client/src/canvas/BreadcrumbBar.jsx → useSwarmStore (reads departmentStack, navigateBreadcrumb) — new caller
+- client/src/canvas/BreadcrumbBar.jsx → SwarmStore::navigateBreadcrumb — first live caller
+- client/src/index.css @keyframes dashdraw → consumed by HandoffEdge.jsx inline style animation property
+
+### Impact on Other Code
+- HandoffEdge, AgentInspector, BreadcrumbBar are created but not yet wired into a parent WorkflowCanvas.jsx. The canvas wrapper must: register HandoffEdge in edgeTypes["handoff"], embed AgentInspector with nodes prop, embed BreadcrumbBar with nodes prop.
+- client/src/canvas/ directory now has three groupings: nodes/ (AgentNode, DepartmentNode, TriggerNode), edges/ (HandoffEdge), and canvas root (AgentInspector, BreadcrumbBar).
+- useSwarmStore.navigateBreadcrumb has its first live caller — the breadcrumb back-navigation path is now exercisable.
+- useSwarmStore.setSelectedNode deselect path (null) is now wired; the selection path (non-null) remains pending.
+
+---
