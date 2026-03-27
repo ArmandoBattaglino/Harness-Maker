@@ -1,4 +1,22 @@
 ---
+## 2026-03-27 — code-mapper — Tasks #59 + #61: scaffold endpoint + useWorkflow.js CRUD hook
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md to document the full POST /scaffold implementation in swarm.js (generateWorkflowFromPrompt helper using @anthropic-ai/sdk + full route handler replacing 501 stub) and the new useWorkflow.js CRUD hooks (useWorkflow + useWorkflowList). Module Index rows updated/added. Two Function Graph sections appended. SwarmView workflowDef note updated. CHANGELOG.md entries appended for both tasks.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** none
+**Decisions made:** Documented generateWorkflowFromPrompt as module-private (not a named export) to clarify it is not callable from other modules
+**Blockers:** none
+**Next:** Task #60 (PromptToFlowBar.jsx) when completed
+---
+## 2026-03-27 — documenter — Task #59 + Task #61: scaffold endpoint + useWorkflow.js CRUD hook
+**Outcome:** COMPLETED
+**Summary:** Audited all documentation after Task #59 (scaffold endpoint fully implemented in server/routes/swarm.js via Anthropic SDK) and Task #61 (useWorkflow.js CRUD hook created in client/src/hooks/). DOC_STATUS.md updated: timestamp advanced, swarm.js row split into two entries (Task #47.1 stub + Task #59 full implementation), new row added for useWorkflow.js, ARCHITECTURE.md stale section note updated to reflect Phase 3 partial state. README.md and ARCHITECTURE.md not touched — V3 public doc deferral policy in effect until Task #82.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none
+**Decisions made:** V3 public doc deferral policy maintained — no changes to README.md or ARCHITECTURE.md
+**Blockers:** none
+**Next:** Task #60 (PromptToFlowBar.jsx) — only remaining Phase 3 task now that #59 and #61 are done
+---
 ## 2026-03-27 — code-mapper — Task #58: App.jsx + Sidebar swarm nav + ReactFlowProvider
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md to reflect SwarmView wired into App.jsx view router (case 'swarm') and swarm item added to NAV_ITEMS. SwarmView "no live caller" warning resolved. App.jsx Function Graph entries (MainContent/AppLayout/App) added for the first time. CHANGELOG.md Task #58 entry appended. Build growth 299 → 470 modules documented.
@@ -1288,4 +1306,25 @@
 **Decisions made:** Global CSRF covers /scaffold (no per-route duplicate); literal /scaffold route declared before parameterized routes
 **Blockers:** none
 **Next:** #60 PromptToFlowBar.jsx — now unblocked (was waiting on #59)
+---
+---
+## 2026-03-27 — project-manager — Tasks #59 + #61 COMPLETED; launching #60
+**Outcome:** COMPLETED
+**Summary:** Confirmed Task #59 (POST /api/v1/swarm/scaffold — generateWorkflowFromPrompt + @anthropic-ai/sdk + WorkflowStore.create, 168/168 tests pass) and Task #61 (useWorkflow.js CRUD hook — useWorkflow(id) + useWorkflowList(), build 470 modules) both COMPLETED. Both were already self-marked by their agents. Updated PROGRESS.md (29/57 → 31/57). Updated CONTEXT.md with Phase 3 current state. Task #60 (PromptToFlowBar.jsx + staggered animation) now unblocked — both deps (#57.1 + #59) satisfied — launching immediately.
+**Files changed:** docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** Task #60 (PromptToFlowBar.jsx) — frontend-dev, claude-sonnet-4-6, MEDIUM; after #60 completes → Phase 4 Live Execution wave (#62.1, #63, #64 in parallel)
+---
+
+---
+## 2026-03-27 — frontend-dev — Task #60: PromptToFlowBar.jsx + Staggered Animation
+**Outcome:** COMPLETED
+**Summary:** Created client/src/canvas/PromptToFlowBar.jsx — a prompt input bar that calls POST /api/v1/swarm/scaffold and applies staggered fadeIn animation (80ms per node) to the returned workflowDef. Mounted in SwarmView.jsx above the ReactFlowProvider/canvas. Added @keyframes fadeIn to index.css. Build: 471 modules, 0 errors.
+**Files changed:** client/src/canvas/PromptToFlowBar.jsx (CREATED), client/src/index.css (MODIFIED), client/src/views/SwarmView.jsx (MODIFIED), docs/TASK_PLAN.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Used direct fetch() with manual CSRF header (matches task spec); PromptToFlowBar placed as sibling to canvas in layout flex column
+**Blockers:** none
+**Next:** Phase 3 fully complete. Phase 4 (Live Execution): #62.1–#62.3 SwarmEngine _onHandoff, #63 useSwarm.js, #64 useHandoff.js, #65 AgentNode live, #66 BroadcastBar, #67 heartbeat
 ---

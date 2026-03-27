@@ -1,4 +1,55 @@
 ---
+## 2026-03-27 — Task #59 + Task #61: scaffold endpoint + useWorkflow.js CRUD hook
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel with code-mapper and project-manager)
+
+### Context when I started
+Tasks #59 and #61 had just completed. server/routes/swarm.js was modified to implement the POST /api/v1/swarm/scaffold endpoint (formerly a 501 stub). client/src/hooks/useWorkflow.js was created as a new CRUD hook for workflow definitions. DOC_STATUS.md was last updated after Task #58. The server/routes/swarm.js row in DOC_STATUS.md said "Scaffold stub returns 501" — stale. useWorkflow.js had no row at all — missing.
+
+### What I did
+1. Read DOC_STATUS.md, server/routes/swarm.js, client/src/hooks/useWorkflow.js, PROJECT.md, PROGRESS.md, CONTEXT.md, DECISIONS.md, and ACTIVITY_LOG.md (recent entries) in parallel.
+2. Confirmed Task #59 changes: generateWorkflowFromPrompt() helper added, Anthropic SDK imported, POST /scaffold route fully implemented (prompt validation, Claude API call, markdown fence stripping, WorkflowStore.create, 201 response, 400/500/503 error codes). @anthropic-ai/sdk installed server-side.
+3. Confirmed Task #61 changes: useWorkflow.js created with useWorkflow(id) and useWorkflowList() named exports. Uses apiGet/apiPost/apiPut/apiDelete wrappers from useApi.js. Standard loading/error state pattern. All callbacks in useCallback with correct deps.
+4. Assessed staleness:
+   - README.md: NOT stale. V3 deferral policy in effect.
+   - docs/ARCHITECTURE.md: NOT stale. Intentionally deferred until Task #82.
+   - Inline comments in swarm.js: UP TO DATE. Block comment on generateWorkflowFromPrompt() accurately describes purpose, markdown-fence stripping, validation, and throw behavior. Route comment block documents request/response/errors.
+   - Inline comments in useWorkflow.js: UP TO DATE. File-level comment names purpose. Per-export comments describe each hook.
+   - DOC_STATUS.md: STALE — timestamp, swarm.js row, and stale section note (still said "scaffold endpoint (#59) still pending"). useWorkflow.js row entirely missing.
+5. Updated DOC_STATUS.md: advanced timestamp; split swarm.js row (kept Task #47.1 entry, added new Task #59 entry with full implementation details); added useWorkflow.js row; updated ARCHITECTURE.md stale section to reflect Phase 3 partial completion and remove "scaffold pending" wording.
+6. Appended to ACTIVITY_LOG.md and this agent log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Timestamp advanced; Task #59 row added for swarm.js scaffold implementation; Task #61 row added for useWorkflow.js; ARCHITECTURE.md stale section updated (scaffold no longer pending, Phase 3 partial state documented). |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended Task #59+#61 documenter entry. |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log. |
+
+### Improvements delivered
+- DOC_STATUS.md now accurately tracks that POST /api/v1/swarm/scaffold is fully live (not a stub).
+- useWorkflow.js is tracked in DOC_STATUS.md for the first time.
+- ARCHITECTURE.md stale note no longer falsely claims scaffold is pending.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | -- | -- | -- |
+
+### Decisions I made
+- V3 public doc deferral policy maintained. No changes to README.md or ARCHITECTURE.md until Task #82.
+- Split the swarm.js DOC_STATUS row into two entries (Task #47.1 + Task #59) to preserve history while accurately reflecting the current state. Overwriting the single row would lose the Task #47.1 documentation context.
+
+### What I learned
+- The scaffold endpoint uses @anthropic-ai/sdk directly (not via JobRunner as DEC-016 originally described). The actual implementation calls Anthropic SDK directly in the route handler, not through jobRunner.startJob(). This diverges from DEC-016 but is a valid simplification — the SDK call is synchronous and the result is not streamed to the client.
+- useWorkflow.js follows the same loading/error/callback pattern as other hooks in this codebase (useSession.js, useJob.js). Future hooks in V3 should follow this pattern.
+
+### State I'm leaving behind
+DOC_STATUS.md is current as of 2026-03-27 and now tracks 27 V3 artifacts (added swarm.js Task #59 and useWorkflow.js Task #61 rows). All inline documentation through Task #61 is adequate. V3 public docs still intentionally deferred until Task #82.
+
+### Handoff
+Next task is #60 (PromptToFlowBar.jsx). That task creates a new client/src/components/ file. DOC_STATUS.md will need a new row for that file.
+---
 ## 2026-03-27 — Task #58: App.jsx + Sidebar swarm nav
 **Status:** COMPLETED
 **Called by:** orchestrator (parallel with code-mapper and project-manager)

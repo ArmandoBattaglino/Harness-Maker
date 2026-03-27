@@ -152,7 +152,7 @@ _None._
 - NOTE: FileManager was NOT created in Task #5 as planned — RESOLVED in Task #7 (created server/services/FileManager.js).
 
 ## V3 — Swarm Orchestrator (57 granular tasks after split — 2026-03-27 replan)
-**Status: 29/57 COMPLETED — as of 2026-03-27. All Phase 1 backend tasks done. All Phase 2 (Canvas Static) COMPLETED. #52 COMPLETED — SwarmContext.jsx. #53.1, #53.2, #53.3 COMPLETED — all three canvas nodes done. #54 COMPLETED — HandoffEdge.jsx. #55 COMPLETED — AgentInspector.jsx. #56 COMPLETED — BreadcrumbBar.jsx. #57.1 COMPLETED — SwarmCanvas.jsx (React Flow canvas + drill-down filtering). #57.2 COMPLETED — SwarmView.jsx (layout shell + toolbar). #58 COMPLETED — App.jsx swarm routing + NAV_ITEMS 'Swarm' entry. Phase 2 fully done.**
+**Status: 31/57 COMPLETED — as of 2026-03-27. All Phase 1 backend tasks done. All Phase 2 (Canvas Static) COMPLETED. #52 COMPLETED — SwarmContext.jsx. #53.1, #53.2, #53.3 COMPLETED — all three canvas nodes done. #54 COMPLETED — HandoffEdge.jsx. #55 COMPLETED — AgentInspector.jsx. #56 COMPLETED — BreadcrumbBar.jsx. #57.1 COMPLETED — SwarmCanvas.jsx (React Flow canvas + drill-down filtering). #57.2 COMPLETED — SwarmView.jsx (layout shell + toolbar). #58 COMPLETED — App.jsx swarm routing + NAV_ITEMS 'Swarm' entry. Phase 2 fully done. Phase 3 partially done: #59 scaffold endpoint DONE, #61 useWorkflow.js DONE, #60 PromptToFlowBar.jsx IN_PROGRESS.**
 **Note: Original 40 tasks (#43–#82). After model assignment + subtask split: 57 granular units.**
 **7 original tasks split into subtasks: #46→3, #47→2, #48→2, #53→3, #57→2, #62→3, #71→2**
 - V3 PRD complete: docs/PRD.md
@@ -189,7 +189,7 @@ _None._
 
 ### V3 Phase 3 — Prompt-to-Flow
 - [TASK-59] COMPLETED 2026-03-27 — scaffold endpoint: generateWorkflowFromPrompt() + Claude claude-haiku-4-5-20251001 + WorkflowStore.create(); @anthropic-ai/sdk installed; 168/168 tests pass
-- [TASK-60] PENDING — PromptToFlowBar.jsx + staggered animation (depends on #57.1 + #59)
+- [TASK-60] COMPLETED 2026-03-27 — PromptToFlowBar.jsx + staggered animation — PromptToFlowBar.jsx created, @keyframes fadeIn added to index.css, SwarmView.jsx wired; 471 modules build clean
 - [TASK-61] COMPLETED — useWorkflow.js CRUD hook — client/src/hooks/useWorkflow.js created; uses apiGet/apiPut/apiDelete wrappers; useWorkflow(id) + useWorkflowList() exports; build: 470 modules, 0 errors
 
 ### V3 Phase 4 — Live Execution

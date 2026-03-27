@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ReactFlowProvider } from '@xyflow/react';
 import SwarmCanvas from '../canvas/SwarmCanvas';
+import PromptToFlowBar from '../canvas/PromptToFlowBar';
 import { useSwarmStore } from '../store/SwarmContext';
 
 // Status indicator color map
@@ -41,6 +42,13 @@ export default function SwarmView() {
           </button>
         )}
       </div>
+
+      {/* Prompt-to-Flow bar */}
+      <PromptToFlowBar
+        onWorkflowGenerated={(workflowId, animatedDef) => {
+          setWorkflowDef(animatedDef);
+        }}
+      />
 
       {/* Canvas area — takes remaining height */}
       <div className="flex-1 overflow-hidden">

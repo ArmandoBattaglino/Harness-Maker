@@ -1239,6 +1239,72 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 
 ---
 
+## 2026-03-27 — Task #59: server/routes/swarm.js — POST /scaffold Full Implementation
+**Agent:** backend-dev
+**Triggered by:** Replace the 501 scaffold stub in swarm.js with a full Anthropic Claude API call that generates a workflow definition from a natural-language prompt and saves it to WorkflowStore.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/routes/swarm.js | MODIFIED | Scaffold stub (501) replaced with full implementation: new `generateWorkflowFromPrompt(prompt)` module-private helper using @anthropic-ai/sdk (claude-haiku-4-5-20251001); POST /scaffold handler with 400/503/500 guards; saves to WorkflowStore via req.app.locals.workflowStore.create() |
+| server/package.json | MODIFIED | Added `@anthropic-ai/sdk` to dependencies |
+
+### Functions Added
+- `generateWorkflowFromPrompt(prompt)` in `server/routes/swarm.js` — module-private async fn; calls Anthropic API with multi-agent workflow design system prompt; strips markdown fences; validates structure; throws on failure. Model: claude-haiku-4-5-20251001, max_tokens: 2048.
+
+### Functions Modified
+- `POST /scaffold route handler` in `server/routes/swarm.js` — was a 501 stub; now fully implemented with prompt validation (required, string, ≤ 2000 chars), generateWorkflowFromPrompt call, optional projectId attachment, WorkflowStore.create() persistence, 201 response with workflowId + workflowDef. Route declared BEFORE /:workflowId/* to prevent param shadowing.
+
+### Functions Removed
+- None (501 stub body replaced in-place — same route, new implementation)
+
+### Connection Changes
+- `server/routes/swarm.js` → `@anthropic-ai/sdk` (new import; Anthropic client instantiated inside generateWorkflowFromPrompt, reads ANTHROPIC_API_KEY from env)
+- `POST /scaffold handler` → `generateWorkflowFromPrompt` (new internal call)
+- `POST /scaffold handler` → `req.app.locals.workflowStore.create()` → `WorkflowStore.create()` (new call path — scaffold now persists generated workflow)
+- `generateWorkflowFromPrompt` → outbound HTTPS to api.anthropic.com (new external dependency for this route)
+
+### Impact on Other Code
+- WorkflowStore.create() is now called from a second site (previously only from routes/workflows.js); no changes to WorkflowStore itself
+- ANTHROPIC_API_KEY must be set in the server environment — if absent, Anthropic SDK will throw on instantiation and the endpoint will always 500
+- Route ordering inside swarmRoutes() is now critical: /scaffold must remain the first route declaration
+
+---
+
+## 2026-03-27 — Task #61: client/src/hooks/useWorkflow.js — CRUD Hook
+**Agent:** frontend-dev
+**Triggered by:** Implement React hooks for workflow CRUD so SwarmView (and future workflow selector UI) can fetch, create, update, and delete workflow definitions via the /api/v1/workflows REST API.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/hooks/useWorkflow.js | ADDED | Two named-export hooks: useWorkflow(id) for single-workflow CRUD; useWorkflowList() for list fetch + create |
+
+### Functions Added
+- `useWorkflow(workflowId)` in `client/src/hooks/useWorkflow.js` — manages single workflow; auto-fetches on mount/id-change; exposes refresh, update(patch), remove(); returns { workflow, loading, error, refresh, update, remove }
+- `useWorkflowList()` in `client/src/hooks/useWorkflow.js` — fetches all workflows on mount; exposes refresh, create(workflowDef); returns { workflows, loading, error, refresh, create }
+
+### Functions Modified
+- None
+
+### Functions Removed
+- None
+
+### Connection Changes
+- `useWorkflow` → `apiGet` from `client/src/hooks/useApi.js` (GET /api/v1/workflows/:id)
+- `useWorkflow` → `apiPut` from `client/src/hooks/useApi.js` (PUT /api/v1/workflows/:id)
+- `useWorkflow` → `apiDelete` from `client/src/hooks/useApi.js` (DELETE /api/v1/workflows/:id)
+- `useWorkflowList` → `apiGet` from `client/src/hooks/useApi.js` (GET /api/v1/workflows)
+- `useWorkflowList` → `apiPost` from `client/src/hooks/useApi.js` (POST /api/v1/workflows)
+- No live callers yet for either export — awaiting SwarmView.jsx wiring (workflowDef local state currently null)
+
+### Impact on Other Code
+- SwarmView.jsx owns `workflowDef` as local state (currently null); useWorkflow/useWorkflowList are the intended source for this state — wiring is the next step
+- useApi.js apiGet/apiPost/apiPut/apiDelete now have an additional consumer — no changes to useApi.js itself needed
+- No new dependencies: hooks use only react + existing useApi.js wrappers
+
+---
+
 ## 2026-03-27 — Task #58: App.jsx + Sidebar swarm nav + ReactFlowProvider
 **Agent:** frontend-dev
 **Triggered by:** Wire SwarmView into the App.jsx view router and add the Swarm nav item to the sidebar so users can navigate to the Swarm Orchestrator page.

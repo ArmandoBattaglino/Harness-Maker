@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-27 — after Task #58 (App.jsx + Sidebar swarm nav + ReactFlowProvider) — mapped by code-mapper_
+_Last updated: 2026-03-27 — after Task #59 (swarm.js scaffold full impl) + Task #61 (useWorkflow.js CRUD hook) — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -35,7 +35,7 @@ _Last updated: 2026-03-27 — after Task #58 (App.jsx + Sidebar swarm nav + Reac
 | server/services/SwarmEngine.js | SwarmEngine (class), default SwarmEngine | V3 swarm orchestrator — spawns agent PTY sessions, registers HandoffParser swarmListeners taps, routes handoff/done events, tracks per-node agent state and budget; in-memory only (never persisted) (Tasks #46, #46.3, DEC-014) |
 | server/services/CircuitBreaker.js | CircuitBreaker (class), default CircuitBreaker | Advisory circuit breaker for handoff loops — check(edgeId, counter, threshold) returns boolean; never stops execution, caller emits WS advisory (FR-V3-17, Task #49) |
 | server/services/BudgetTracker.js | BudgetTracker (class), default BudgetTracker | Soft budget tracker — accumulates char counts per session, estimates tokens (÷4), provides checkBudget advisory signal; never stops execution (FR-V3-18, Task #49) |
-| server/routes/swarm.js | swarmRoutes (factory fn) | 7-endpoint REST API for swarm execution control: start, pause, resume, stop, status, agent output, broadcast. Factory pattern: accepts swarmEngine + sessionManager at construction. (Task #47.1) |
+| server/routes/swarm.js | swarmRoutes (factory fn), generateWorkflowFromPrompt (module-private) | 7-endpoint REST API for swarm execution control: start, pause, resume, stop, status, agent output, broadcast. POST /scaffold fully implemented using @anthropic-ai/sdk (claude-haiku-4-5-20251001). Factory pattern: accepts swarmEngine + sessionManager at construction. (Tasks #47.1 + #59) |
 | server/ws/swarmHandler.js | handleSwarmConnection (default), getSubscribers, broadcast | WebSocket connection handler for /ws/swarm path. Module-level _subscribers Map keyed by executionId → Set\<WebSocket\>. Sends initial execution_status snapshot on connect. broadcast() fans out JSON events to all OPEN connections for an executionId. (Tasks #48.1, #48.2) |
 | server/utils/ssrfGuard.js | isSafeUrl | Synchronous SSRF prevention guard — rejects private/loopback IP literals and localhost in URLs before any outbound server fetch. Covers IPv4, IPv6 loopback, IPv4-mapped IPv6, link-local. Does NOT perform DNS lookup (sync-only design). (SEC-V3-03, Task #50) |
 | server/middleware/webhookLimit.js | webhookLimit (default) | Express JSON body-parser capped at 32 KB. Apply before any route that ingests untrusted webhook payloads. Awaiting use in routes/triggers.js (Task #75). (SEC-V3-01, Task #50) |
@@ -50,6 +50,7 @@ _Last updated: 2026-03-27 — after Task #58 (App.jsx + Sidebar swarm nav + Reac
 | client/src/main.jsx | (entry) | ReactDOM.createRoot bootstrap |
 | client/src/store/AppContext.jsx | AppContext, useAppState | Global React context: activeProjectId, projects list |
 | client/src/hooks/useApi.js | apiGet, apiPost, apiPut, apiDelete, apiDeleteWithBody | Fetch wrappers with CSRF header injection and error normalization |
+| client/src/hooks/useWorkflow.js | useWorkflow (named), useWorkflowList (named) | CRUD React hooks for workflow definitions: useWorkflow(id) — fetch/update/remove single workflow; useWorkflowList() — fetch all + create. Both use apiGet/apiPost/apiPut/apiDelete from useApi.js. (Task #61) |
 | client/src/hooks/useSession.js | useSession | WebSocket hook for PTY terminal: manages WS lifecycle, reconnect logic, send+resize callbacks |
 | client/src/components/Sidebar.jsx | default Sidebar, SidebarHeader, NavItem, SessionItem, SidebarFooter (internals) | Phase 9 redesign: imports NAV_ITEMS from constants.js, 6-view navigation (swarm added Task #58), Active PTY Sessions list, New Local Session button, AddProjectModal trigger. Task #24 rewrite. |
 | client/src/components/AddProjectModal.jsx | default AddProjectModal | Modal for adding new projects |
@@ -1977,7 +1978,7 @@ _Last updated: 2026-03-27 — after Task #58 (App.jsx + Sidebar swarm nav + Reac
 - **Output:** JSX — flex-col full-height div: toolbar row (shrink-0) + canvas area (flex-1, overflow-hidden) containing ReactFlowProvider > SwarmCanvas
 - **Side effects:** calls SwarmStore.reset() when Reset button is clicked (clears execution state); no server I/O
 - **Complexity note:** `statusColors` is a module-level const map (idle/running/stopped → Tailwind class string). `executionStatus === 'stopped'` is the sole gate for the Reset button — it does not render for idle or running states. ReactFlowProvider must wrap SwarmCanvas (not SwarmCanvas internally) because SwarmView is the intended boundary for the React Flow context.
-- **Last modified:** 2026-03-27 in Task #57.2 by frontend-dev; "Called by" resolved in Task #58 (App.jsx MainContent now routes case 'swarm' → SwarmView)
+- **Last modified:** 2026-03-27 in Task #57.2 by frontend-dev; "Called by" resolved in Task #58 (App.jsx MainContent now routes case 'swarm' → SwarmView). workflowDef local state still null — useWorkflow hook (Task #61) now exists for wiring.
 
 ---
 
@@ -2019,3 +2020,51 @@ _Last updated: 2026-03-27 — after Task #58 (App.jsx + Sidebar swarm nav + Reac
 - Full 6-item order: projects, terminal, jobs, deployments, context, swarm.
 - Imported by: Sidebar.jsx (already live since Task #24), App.jsx's MainContent (switch keys match these view strings).
 - **Last modified:** 2026-03-27 in Task #58 by frontend-dev (swarm item appended)
+
+---
+
+## POST /scaffold Full Implementation (Task #59)
+
+### `server/routes/swarm.js` :: `generateWorkflowFromPrompt(prompt)`
+- **Purpose:** Module-private async helper. Calls the Anthropic Claude API (claude-haiku-4-5-20251001, max_tokens 2048) with a system prompt that instructs Claude to return a multi-agent workflow definition as JSON. Strips any accidental markdown fences from the response. Validates that the returned JSON has a `name` field and at least one `nodes` entry. Returns the parsed workflow object.
+- **Called by:** `swarmRoutes` → POST /scaffold handler (same file — line 114)
+- **Calls:** `new Anthropic()` (reads ANTHROPIC_API_KEY from env), `client.messages.create(...)`, `JSON.parse()`
+- **Inputs:** prompt (string — user natural-language description of the workflow, already trimmed and validated ≤ 2000 chars by caller)
+- **Output:** Promise\<object\> — parsed workflow definition matching WorkflowStore schema: `{ name, description, nodes[], edges[] }`
+- **Side effects:** outbound HTTPS call to api.anthropic.com; throws on network failure, non-200, JSON parse error, or invalid structure
+- **Complexity note:** Two-step markdown fence strip: `text.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/, '').trim()`. This handles Claude occasionally wrapping JSON in a code block despite the system prompt saying not to. The model used (claude-haiku-4-5-20251001) is hard-coded — if this model becomes unavailable the endpoint will always 500.
+- **Last modified:** 2026-03-27 in Task #59 by backend-dev (replaces 501 scaffold stub)
+
+### `server/routes/swarm.js` :: `POST /scaffold route handler` (inside `swarmRoutes()`)
+- **Purpose:** Validates the incoming prompt body field (required, string, non-empty, ≤ 2000 chars), calls `generateWorkflowFromPrompt`, optionally attaches `projectId` to the returned workflow definition, saves to `WorkflowStore` via `req.app.locals.workflowStore.create()`, and returns 201 with `{ workflowId, workflowDef }`.
+- **Called by:** Express router — POST /api/v1/swarm/scaffold (declared BEFORE /:workflowId/* routes to prevent param shadowing)
+- **Calls:** `generateWorkflowFromPrompt(prompt)`, `req.app.locals.workflowStore.create(workflowDef)` → `WorkflowStore.create()`
+- **Inputs:** `req.body.prompt` (string, required), `req.body.projectId` (string, optional)
+- **Output:** HTTP 201 `{ workflowId: string, workflowDef: object }` | 400 if prompt invalid | 503 if WorkflowStore unavailable | 500 on Claude API or JSON error
+- **Side effects:** creates a new workflow record in WorkflowStore (persisted to disk via write-file-atomic); makes outbound Anthropic API call
+- **Complexity note:** Route MUST be declared before `/:workflowId/start` in the router — otherwise Express would match 'scaffold' as a `:workflowId` param. Comment in source code documents this ordering constraint.
+- **Last modified:** 2026-03-27 in Task #59 by backend-dev (was 501 stub; now full impl)
+
+---
+
+## Workflow CRUD Hooks (Task #61)
+
+### `client/src/hooks/useWorkflow.js` :: `useWorkflow(workflowId)`
+- **Purpose:** React hook that manages the lifecycle of a single workflow definition. Fetches the workflow by ID on mount (and on workflowId change). Exposes `update(patch)` to PUT changes and `remove()` to DELETE the workflow. Returns `{ workflow, loading, error, refresh, update, remove }`.
+- **Called by:** (no live callers yet — intended for SwarmView.jsx workflow selector, Task #61 follow-up wiring)
+- **Calls:** `apiGet(\`/api/v1/workflows/${workflowId}\`)`, `apiPut(\`/api/v1/workflows/${workflowId}\`, patch)`, `apiDelete(\`/api/v1/workflows/${workflowId}\`)`, `useState` (workflow/loading/error), `useEffect` (triggers refresh on workflowId change), `useCallback` (refresh/update/remove memoized)
+- **Inputs:** workflowId (string | undefined — if falsy, refresh and mutation calls are no-ops)
+- **Output:** `{ workflow: object|null, loading: boolean, error: string|null, refresh: () => Promise<void>, update: (patch) => Promise<object>, remove: () => Promise<void> }`
+- **Side effects:** GET /api/v1/workflows/:id on mount and on workflowId change; PUT on update(); DELETE on remove(); sets component state (loading/error/workflow)
+- **Complexity note:** refresh is wrapped in useCallback with [workflowId] dep and passed to useEffect — this guarantees a new fetch fires whenever workflowId changes without lint-warning for missing deps. `update()` does NOT re-call refresh after PUT — it sets workflow directly from the server response (optimistic-free, server-truth approach).
+- **Last modified:** 2026-03-27 in Task #61 by frontend-dev
+
+### `client/src/hooks/useWorkflow.js` :: `useWorkflowList()`
+- **Purpose:** React hook that fetches all workflow definitions and allows creating new ones. Fetches all workflows on mount. Exposes `create(workflowDef)` to POST a new workflow (appends to local list optimistically after server confirms). Returns `{ workflows, loading, error, refresh, create }`.
+- **Called by:** (no live callers yet — intended for a future WorkflowSelectorModal or SwarmView workflow picker)
+- **Calls:** `apiGet('/api/v1/workflows')`, `apiPost('/api/v1/workflows', workflowDef)`, `useState` (workflows/loading/error), `useEffect` (triggers refresh on mount), `useCallback` (refresh/create memoized)
+- **Inputs:** none
+- **Output:** `{ workflows: object[], loading: boolean, error: string|null, refresh: () => Promise<void>, create: (workflowDef) => Promise<object> }`
+- **Side effects:** GET /api/v1/workflows on mount; POST /api/v1/workflows on create(); appends returned workflow to local workflows state via `setWorkflows(prev => [...prev, created])`
+- **Complexity note:** create() appends the server-returned workflow object (not the local input) — the server assigns the UUID, so this is a server-truth append. The list is NOT re-fetched after create; the local append is sufficient for immediate UI update.
+- **Last modified:** 2026-03-27 in Task #61 by frontend-dev

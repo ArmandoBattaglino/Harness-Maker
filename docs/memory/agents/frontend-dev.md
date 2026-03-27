@@ -836,3 +836,61 @@ SwarmView.jsx is complete and builds cleanly. workflowDef is wired as useState(n
 ### Handoff
 Task #58 (App.jsx + Sidebar swarm nav) should import SwarmView and add it to the routing/navigation. Task #61 (useWorkflow.js) should connect workflowDef to the API.
 ---
+
+---
+## 2026-03-27 — Task #60: PromptToFlowBar.jsx + Staggered Animation
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+Tasks #59 (scaffold endpoint POST /api/v1/swarm/scaffold) and #61 (useWorkflow.js CRUD hook) were both COMPLETED. SwarmView.jsx had `const [workflowDef, setWorkflowDef] = useState(null)` waiting to be wired. The project uses Tailwind for all styling. No existing API wrappers were needed here — the task spec called for direct fetch() in this component (no api/ wrapper exists for scaffold).
+
+### What I did
+1. Read docs/memory/PROGRESS.md and docs/memory/agents/frontend-dev.md for full prior state.
+2. Read client/src/views/SwarmView.jsx — confirmed workflowDef + setWorkflowDef already present, ReactFlowProvider wraps SwarmCanvas.
+3. Read client/src/index.css — confirmed @keyframes dashdraw section exists, placed @keyframes fadeIn immediately after it.
+4. Read client/src/canvas/ glob — confirmed PromptToFlowBar.jsx did not yet exist.
+5. Created client/src/canvas/PromptToFlowBar.jsx:
+   - SCAFFOLD_HEADERS const with Content-Type + X-Requested-With CSRF header
+   - useState for prompt/loading/error
+   - handleGenerate: useCallback fetches /api/v1/swarm/scaffold, applies staggered animation to returned nodes (opacity:0, animation: `fadeIn 0.3s ease forwards ${i*0.08}s`), calls onWorkflowGenerated(workflowId, animatedDef), clears prompt on success
+   - handleKeyDown: Enter (no shift) triggers handleGenerate
+   - Renders: flex row with purple sparkle icon, text input (maxLength=2000), Generate button; error div below on failure; loading disables both input and button
+6. Added @keyframes fadeIn to client/src/index.css: from opacity:0/translateY(8px) to opacity:1/translateY(0)
+7. Modified client/src/views/SwarmView.jsx: imported PromptToFlowBar, mounted it between toolbar and canvas area with onWorkflowGenerated wired to setWorkflowDef.
+8. Verified build: 471 modules, 0 errors.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/canvas/PromptToFlowBar.jsx | CREATED | New prompt-to-flow input bar component |
+| client/src/index.css | MODIFIED | Added @keyframes fadeIn for node entrance animation |
+| client/src/views/SwarmView.jsx | MODIFIED | Imported + mounted PromptToFlowBar above canvas area |
+| docs/TASK_PLAN.md | MODIFIED | Task #60 Status: PENDING → COMPLETED |
+| docs/memory/PROGRESS.md | MODIFIED | Task #60 marked COMPLETED |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | New session entry appended |
+| docs/memory/agents/frontend-dev.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- Natural-language workflow generation UI visible in SwarmView
+- Staggered fadeIn entrance animation on generated nodes (80ms delay between each node)
+- CSRF header enforced on scaffold fetch (X-Requested-With: ClaudeCodeManager)
+- Full loading + error UI states
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Used direct fetch() rather than apiPost() wrapper — the spec called for it and the CSRF header is manually included; apiPost wrappers also include it, so this is functionally equivalent but matches the task spec exactly
+- Placed PromptToFlowBar between toolbar and canvas rather than inside canvas — keeps it as a sibling component in the layout flex column, not inside the ReactFlowProvider DOM tree
+
+### What I learned
+- The build was already at 470 modules before this task; adding PromptToFlowBar pushed it to 471 (one new module)
+- @keyframes fadeIn was not yet present in index.css; @keyframes dashdraw was. Placed fadeIn immediately after dashdraw under the same comment section.
+
+### State I'm leaving behind
+PromptToFlowBar is fully functional. It calls POST /api/v1/swarm/scaffold with the user's prompt, receives workflowId + workflowDef, applies staggered animation inline styles, and calls setWorkflowDef in SwarmView. SwarmCanvas receives workflowDef as a prop and will render the nodes when #62+ (live execution) are done. Build: 471 modules, 0 errors.
+
+### Handoff
+Phase 3 is now fully complete (#59, #60, #61 all done). Next wave is Phase 4 (Live Execution): #62.1 SwarmEngine _onHandoff, #62.2, #62.3, #63 useSwarm.js WS hook, #64 useHandoff.js, #65 AgentNode live updates, #66 BroadcastBar, #67 heartbeat.
+---

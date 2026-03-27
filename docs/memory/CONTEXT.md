@@ -80,25 +80,26 @@ Security assessment completed 2026-03-27. Seven mandatory requirements must appe
 **Phase 2 (Canvas Static) — ALL COMPLETE (2026-03-27):**
 - #51–#58 ALL COMPLETED. Build: 470 modules, 0 errors. 168/168 tests pass.
 
-**Current wave — V3 Phase 3 Prompt-to-Flow (launched 2026-03-27, running in parallel):**
-- TASK #59 — POST /api/v1/swarm/scaffold — full scaffold endpoint (backend-dev, claude-sonnet-4-6, MEDIUM) — IN_PROGRESS
-  - Replaces 501 stub in server/routes/swarm.js (from #47.2)
-  - Receives { prompt, projectId, projectPath }; validates prompt max 2000 chars, projectId UUID
-  - Calls jobRunner.startJob() → waits for completion (promise+emitter, NOT polling loop)
-  - Extracts JSON: markdown fence first, then bare JSON
-  - WorkflowStore.validate() before WorkflowStore.create()
-  - 201 on success, 422 on parse fail, 408 on 60s timeout
-  - SEC-08 equivalent: never log raw prompt or Claude output in errors
-  - See server/routes/jobs.js for JobRunner pattern, server/routes/swarm.js for existing router
+**Current wave — V3 Phase 3 Prompt-to-Flow (2026-03-27):**
+- TASK #59 — POST /api/v1/swarm/scaffold — COMPLETED (2026-03-27)
+  - generateWorkflowFromPrompt() implemented with @anthropic-ai/sdk (claude-haiku-4-5-20251001)
+  - WorkflowStore.create() called on success; 168/168 tests pass
+  - 201 on success, 422 on parse fail, 408 on 60s timeout; raw prompt never logged
 
-- TASK #61 — useWorkflow.js — CRUD hook — COMPLETED (frontend-dev self-marked, 2026-03-27)
+- TASK #61 — useWorkflow.js — COMPLETED (2026-03-27)
   - client/src/hooks/useWorkflow.js created; useWorkflow(id) + useWorkflowList() exports
-  - Uses apiGet/apiPut/apiDelete wrappers with X-Requested-With header
+  - Uses apiGet/apiPut/apiDelete/apiPost wrappers with X-Requested-With header; build: 470 modules, 0 errors
 
-**After #59 completes (only remaining blocker for #60):**
-- TASK #60 — PromptToFlowBar.jsx (depends on #57.1 DONE + #59 IN_PROGRESS) — frontend-dev, claude-sonnet-4-6, MEDIUM
-  - Floating input bar overlaid on React Flow canvas; staggered 80ms node animation on scaffold success
-  - Waits on #59 completing before it can call the real scaffold endpoint
+**LAUNCHING NOW — Task #60 (PromptToFlowBar.jsx):**
+- TASK #60 — PromptToFlowBar.jsx + staggered animation — frontend-dev, claude-sonnet-4-6, MEDIUM
+  - Both deps met: #57.1 (SwarmCanvas.jsx) DONE + #59 (scaffold endpoint) DONE
+  - Create client/src/canvas/overlays/PromptToFlowBar.jsx
+  - Floating input bar overlaid on React Flow canvas (absolute positioned, not blocking canvas)
+  - POST to /api/v1/swarm/scaffold with { prompt, projectId, projectPath }
+  - Staggered 80ms per-node animation: setNodes with opacity:0 → CSS fade-in transition
+  - fitView() after all nodes added; error toast for 3s on 422/408
+  - Use useWorkflowList().create from useWorkflow.js for any local state needs
+  - Build must stay at 470 modules, 0 errors
 
 **Key context for #53.x agents:**
 - SwarmContext.jsx is at client/src/store/SwarmContext.jsx — complete, exports useSwarmStore + SwarmProvider
