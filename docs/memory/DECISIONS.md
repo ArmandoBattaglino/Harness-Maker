@@ -89,3 +89,57 @@
 **Alternatives rejected:** Discovering this mid-Phase 1 — would invalidate all PTY code written so far.
 **Revisit if:** Prebuilt binary is confirmed present (risk cleared; proceed with normal Phase 0 tasks).
 ---
+
+## DEC-011: Separate Zustand execution store from React Flow canvas state
+**Date:** 2026-03-27
+**Agent:** architect
+**Task:** V3 Swarm Orchestrator — Technical Analysis
+**Decision:** All live execution state (agent status, loop counters, handoff events, HITL queue, budget totals) lives in a Zustand store (`useExecutionStore`). React Flow canvas state (@xyflow/react) manages ONLY node positions, edges, and node definitions. The two stores never merge.
+**Reasoning:** Research finding: merging canvas and execution state causes React Flow update conflicts during live execution. @xyflow/react v12 requires immutable node updates via `setNodes` — if execution state is embedded in node data and updates every tick, the canvas re-renders uncontrollably. Separation allows execution state to update at high frequency without touching the canvas store.
+**Alternatives rejected:** Storing execution state in React Flow node.data — causes cascading re-renders and breaks drag/drop during live runs. Using a second useReducer — Zustand is better suited for fine-grained subscription (components subscribe only to the slice they need).
+---
+
+## DEC-012: HandoffParser uses stateful rolling byte accumulator
+**Date:** 2026-03-27
+**Agent:** architect
+**Task:** V3 Swarm Orchestrator — Technical Analysis
+**Decision:** HandoffParser maintains a rolling string accumulator per agent session. Each chunk from pty.onData is appended to the accumulator. The parser scans for `HANDOFF:<target>:<base64ctx>` and `DONE` patterns. Matched tokens are sliced out; unmatched tail is retained for the next chunk.
+**Reasoning:** ConPTY on Windows delivers PTY stdout in arbitrary byte chunks (DEC-009 context). A `HANDOFF:` token can be split across two or more consecutive chunks. Line-by-line parsing via readline would silently drop split tokens. A stateful accumulator is the only reliable approach.
+**Alternatives rejected:** readline interface — fails on split tokens. Regex on each chunk independently — same failure mode. Fixed-size look-back window — fragile, needs tuning per environment.
+---
+
+## DEC-013: WorkflowStore follows ConfigStore pattern exactly
+**Date:** 2026-03-27
+**Agent:** architect
+**Task:** V3 Swarm Orchestrator — Technical Analysis
+**Decision:** WorkflowStore persists workflow JSON files to `%APPDATA%\ClaudeCodeManager\workflows\<workflowId>.json` using write-file-atomic. API: load(), get(id), list(), save(workflow), delete(id). In-memory Map<id, WorkflowDefinition> as cache.
+**Reasoning:** ConfigStore.js is already proven, audited (SEC-09), and follows atomic write discipline. Reusing the same pattern avoids inventing a new persistence layer. Separate files per workflow (not one big JSON) avoids a single-file write contention bottleneck when multiple workflows are saved simultaneously.
+**Alternatives rejected:** SQLite — over-engineered, adds a native dep, no benefit at this scale. Single monolithic workflows.json — write contention, harder partial reads. In-memory only — workflows lost on restart.
+---
+
+## DEC-014: SwarmEngine attaches secondary onData listener via session swarmListeners Set
+**Date:** 2026-03-27
+**Agent:** architect
+**Task:** V3 Swarm Orchestrator — Technical Analysis
+**Decision:** The SessionManager session record gains an optional `swarmListeners: Set<Function>` field. The primary `pty.onData` handler iterates this set (if present) after writing to the ring buffer. SwarmEngine adds/removes its per-agent callback via `sessionManager.addSwarmListener(sessionId, fn)` / `removeSwarmListener(sessionId, fn)`.
+**Reasoning:** DEC-009 mandates the primary onData handler is NEVER removed or replaced. SwarmEngine cannot wire its own onData because that would replace the existing handler in node-pty (only one onData handler is supported). The swarmListeners Set is called from inside the primary handler, so ConPTY pipe draining is never interrupted.
+**Alternatives rejected:** Replacing the primary handler — forbidden by DEC-009. Polling the ring buffer on a timer — introduces latency and CPU overhead. EventEmitter on SessionManager — slightly cleaner but requires adding an EventEmitter dep or extending the class; the Set approach is minimal and explicit.
+---
+
+## DEC-015: Circuit breaker is per-edge, not per-node
+**Date:** 2026-03-27
+**Agent:** architect
+**Task:** V3 Swarm Orchestrator — Technical Analysis
+**Decision:** CircuitBreaker tracks handoff counts keyed by `<fromAgentId>:<toAgentId>` (edge identity), not by node. Default threshold: 10 crossings. On threshold breach, the execution is paused and the UI marks the edge as TRIPPED.
+**Reasoning:** A loop is a property of an edge traversal pattern, not a single node. Keying by node would false-positive on a legitimately busy hub node that receives handoffs from many different sources. Keying by directed edge pair accurately identifies a repeating A→B→A cycle.
+**Alternatives rejected:** Per-node counter — false positives on hub nodes. Global traversal counter — too coarse, fires on legitimate high-volume workflows. Time-window based rate limiting — complex, adds a clock dependency.
+---
+
+## DEC-016: Prompt-to-Flow uses existing JobRunner with one auto-retry
+**Date:** 2026-03-27
+**Agent:** architect
+**Task:** V3 Swarm Orchestrator — Technical Analysis
+**Decision:** The Prompt-to-Flow feature submits a structured generation prompt via the existing `jobRunner.startJob()`. The server parses the stream-json result event for a JSON block. If JSON.parse fails, one automatic retry is made with a stricter prompt (explicit JSON-only instruction). If the retry also fails, the endpoint returns HTTP 422 with a user-visible error.
+**Reasoning:** JobRunner already handles spawn, stream-json parsing, SSE delivery, and process lifecycle. Reusing it avoids duplicating spawn logic. The auto-retry covers the most common failure mode (Claude wrapping JSON in markdown fences) without user intervention. Two attempts total keeps latency acceptable.
+**Alternatives rejected:** Direct child_process.spawn — duplicates JobRunner, violates DRY. Unlimited retries — could hang the UI. Silent failure — bad UX, user doesn't know why the flow didn't generate.
+---

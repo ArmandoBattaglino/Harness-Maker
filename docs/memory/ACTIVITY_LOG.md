@@ -1,4 +1,15 @@
 ---
+## 2026-03-27 — architect — V3 Swarm Orchestrator Technical Analysis
+**Outcome:** COMPLETED
+**Summary:** Produced full technical analysis for V3 Swarm Orchestrator. Defined 10 new backend services, 7 new frontend components, complete data model schemas, dual-store architecture (Zustand execution + React Flow canvas), all integration points with existing SessionManager/JobRunner, 8 ranked risks, and recommended stack additions. Six architectural decisions recorded (DEC-011 to DEC-016).
+**Files changed:** docs/memory/agents/architect.md (CREATED), docs/memory/DECISIONS.md (MODIFIED — DEC-011 to DEC-016), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** DEC-011 (separate Zustand/ReactFlow stores), DEC-012 (stateful HandoffParser accumulator), DEC-013 (WorkflowStore follows ConfigStore pattern), DEC-014 (swarmListeners Set on session record), DEC-015 (circuit breaker per-edge), DEC-016 (Prompt-to-Flow via JobRunner with one retry)
+**Blockers:** none
+**Next:** prd-writer produces the V3 PRD, then backend-dev implements in the order specified in the technical analysis
+---
+
+---
 ## 2026-03-27 — researcher — Quick Orientation Scan: V3 Swarm Orchestrator
 **Outcome:** COMPLETED
 **Summary:** Delivered Quick Research Snapshot for V3 Swarm Orchestrator /create pipeline. Confirmed React Flow (@xyflow/react v12) is used by all four main competitors (LangFlow, Flowise, n8n, Dify). Identified v12 breaking changes (package rename, immutable node updates, measured dimensions), practical performance ceiling (~500 unoptimized nodes), and named canvas/execution state separation as the single most critical architecture decision.
