@@ -1,4 +1,31 @@
 ---
+## 2026-03-27 — frontend-dev — Task #53.2: DepartmentNode.jsx — Group Container Node
+**Outcome:** COMPLETED
+**Summary:** Created client/src/canvas/nodes/DepartmentNode.jsx — React Flow group container node for departments. Renders with focused/selected visual states, clicking header calls setFocusedDepartment(id) from SwarmStore. Build passes clean (299 modules).
+**Files changed:** client/src/canvas/nodes/DepartmentNode.jsx (CREATED), docs/TASK_PLAN.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Implemented per task spec exactly — isFocused driven by useSwarmStore focusedDepartmentId comparison to node id
+**Blockers:** none
+**Next:** Task #53.3 (TriggerNode.jsx) and #54 (HandoffEdge.jsx) are next
+---
+## 2026-03-27 — frontend-dev — Task #53.1: AgentNode.jsx — Custom React Flow Agent Node
+**Outcome:** COMPLETED
+**Summary:** Created client/src/canvas/nodes/AgentNode.jsx — the primary agent node type for the V3 swarm canvas. Component reads execution state from useSwarmStore (agentStates[id]), renders status-colored bordered card with source/target Handles, label, status badge, lastOutputSnippet (last 3 lines), and handoffCount badge. Build passes clean (299 modules, 0 errors).
+**Files changed:** client/src/canvas/nodes/AgentNode.jsx (CREATED), docs/TASK_PLAN.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Followed task spec verbatim — no deviations. Directory client/src/canvas/nodes/ created as new directory.
+**Blockers:** none
+**Next:** Tasks #53.2 (DepartmentNode.jsx), #53.3 (TriggerNode.jsx), #54 (HandoffEdge.jsx) — all can proceed now
+---
+## 2026-03-27 — code-mapper — Tasks #50 + #51: V3 Security Layer + @xyflow/react + zustand
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md with 6 new Module Index rows, 1 new test infrastructure row, and a full "V3 Security Layer" Function Graph section covering isSafeUrl, _isIPv4, _isPublicIPv4, webhookLimit, webhookRateLimit, validateResumeText. Test count updated 132→168. Appended two CHANGELOG.md entries (Task #50 and #51) with full function lists, connection graphs, and future-caller notes (Tasks #68 and #75).
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** All 4 new security modules documented as pending future route wiring (not yet live callers); WorkflowStore + HandoffParser noted as "verified correct, no changes"
+**Blockers:** none
+**Next:** Tasks #52+ canvas component tasks. CODE_MAP will need updates when routes/inbox.js (Task #68) and routes/triggers.js (Task #75) are implemented.
+---
 ## 2026-03-27 — frontend-dev — Task #52: SwarmContext.jsx — Zustand ExecutionStore
 **Outcome:** COMPLETED
 **Summary:** Created client/src/store/SwarmContext.jsx — the Zustand 4.5.7 execution state store for the V3 swarm orchestrator. Exports useSwarmStore (default + named). Store is fully isolated from AppContext.jsx — no cross-imports. Build passes clean (299 modules, 0 errors).
@@ -1005,4 +1032,14 @@
 **Decisions made:** #52 is next in Phase 2 canvas chain; it unblocks #53.1, #53.2, #53.3, #54, #55, #56, #57.1 which all depend on it
 **Blockers:** none
 **Next:** Task #52 frontend-dev in progress. After #52 completes, tasks #53.1, #53.2, #53.3 can run in parallel (all depend on #52 only).
+---
+---
+## 2026-03-27 — documenter — Task #52: SwarmContext.jsx Zustand ExecutionStore
+**Outcome:** COMPLETED
+**Summary:** Audited all documentation artifacts after Task #52 (client/src/store/SwarmContext.jsx created). SwarmContext.jsx inline comments are adequate — all state slices have shape annotations and the addFeedEvent 100-item cap is noted inline. No public doc updates required (V3 deferral policy). Updated DOC_STATUS.md with new SwarmContext.jsx row (16 V3 artifacts now tracked) and expanded ARCHITECTURE.md stale section note.
+**Files changed:** docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/agents/documenter.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** No inline comments added to SwarmContext.jsx — existing shape comments are sufficient; "why" threshold not met for conventional Zustand factory. V3 public doc deferral policy maintained.
+**Blockers:** none
+**Next:** Tasks #53.1–#53.3 (canvas nodes) are IN_PROGRESS — they all import useSwarmStore from SwarmContext. Task #82 (documentation update) remains the endpoint for ARCHITECTURE.md + README.md V3 section.
 ---

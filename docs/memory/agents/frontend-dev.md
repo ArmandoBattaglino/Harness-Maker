@@ -1,4 +1,58 @@
 ---
+## 2026-03-27 — Task #53.1: AgentNode.jsx — Custom React Flow Agent Node
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+Task #52 (SwarmContext.jsx) was COMPLETED. client/src/store/SwarmContext.jsx exported useSwarmStore with agentStates shape { status, lastOutputSnippet, handoffCount }. @xyflow/react@12.10.1 was installed in client/. The canvas directory client/src/canvas/ did not exist at all — needed to create client/src/canvas/nodes/ as new directories.
+
+### What I did
+1. Read docs/memory/agents/frontend-dev.md (session history), docs/memory/PROJECT.md, docs/memory/PROGRESS.md in parallel.
+2. Read client/src/store/SwarmContext.jsx — confirmed agentStates[id] shape and that useSwarmStore is a named export.
+3. Verified client/src/canvas/ did not exist via bash.
+4. Read client/tailwind.config.js — confirmed gray/blue/green/yellow/red are Tailwind defaults (not custom tokens), so statusColors classes will resolve.
+5. Created client/src/canvas/nodes/ directory via mkdir -p.
+6. Created client/src/canvas/nodes/AgentNode.jsx — verbatim implementation per task spec. No deviations.
+7. Ran `npm run build` from project root — clean build, 299 modules, 0 errors (only pre-existing chunk size warning for react-markdown at 668KB).
+8. Updated docs/TASK_PLAN.md, PROGRESS.md, ACTIVITY_LOG.md, and this agent memory file.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| `client/src/canvas/nodes/AgentNode.jsx` | CREATED | Custom React Flow node: status color mapping, target/source Handles, label, status badge, lastOutputSnippet (last 3 lines), handoffCount badge |
+| `docs/TASK_PLAN.md` | MODIFIED | Task #53.1 Status: IN_PROGRESS → COMPLETED; summary table IN_PROGRESS → COMPLETED |
+| `docs/memory/PROGRESS.md` | MODIFIED | Task #53.1 entry updated to COMPLETED |
+| `docs/memory/ACTIVITY_LOG.md` | MODIFIED | New entry appended |
+
+### Improvements delivered
+- AgentNode renders status-specific border+background colors for 5 states: idle, running (pulse), done, paused, error
+- Selected state adds white ring highlight
+- Reads live execution state from useSwarmStore — zero component state for execution data
+- lastOutputSnippet shown as last 3 lines (monospace, max 3.6em height)
+- handoffCount badge shown conditionally when > 0
+- Source handle (bottom, blue) and target handle (top, gray) for React Flow edge connections
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None — build clean on first attempt | — | — | — |
+
+### Decisions I made
+- Followed task spec verbatim — no structural deviations.
+- gray/blue/green/yellow/red Tailwind classes confirmed against tailwind.config.js: these are Tailwind defaults, not custom tokens — safe to use.
+- Directory creation (mkdir -p) was necessary before file creation since client/src/canvas/ did not exist.
+
+### What I learned
+- client/src/canvas/ is a brand new directory — subsequent node tasks (#53.2, #53.3) also need to place files here.
+- useSwarmStore is exported both as default and named — import { useSwarmStore } works as specified.
+- @xyflow/react Handle component uses className with `!` prefix for Tailwind important overrides (e.g. !bg-gray-400) to override React Flow's own default handle styles.
+
+### State I'm leaving behind
+AgentNode.jsx is complete, tested via build, and ready for registration in nodeTypes object (Task #57.1). The canvas/nodes/ directory now exists for #53.2 and #53.3.
+
+### Handoff
+Tasks #53.2 (DepartmentNode.jsx) and #53.3 (TriggerNode.jsx) should place files in client/src/canvas/nodes/. Task #57.1 (SwarmCanvas.jsx) will import and register all three node types in nodeTypes.
+---
 ## 2026-03-27 — Task #52: SwarmContext.jsx — Zustand ExecutionStore
 **Status:** COMPLETED
 **Called by:** user (direct task assignment)

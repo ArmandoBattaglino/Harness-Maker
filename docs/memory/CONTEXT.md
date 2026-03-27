@@ -68,15 +68,25 @@ Security assessment completed 2026-03-27. Seven mandatory requirements must appe
 - CircuitBreaker.js + BudgetTracker.js
 
 **Current wave (IN_PROGRESS — launched in parallel 2026-03-27):**
-- TASK #50 — V3 Security Layer (security agent) — HIGH priority — IN_PROGRESS
-- TASK #51 — @xyflow/react + zustand install (devops) — HIGH priority — IN_PROGRESS
+- TASK #53.1 — AgentNode.jsx — Custom React Flow Agent Node (frontend-dev, claude-opus-4-6) — IN_PROGRESS
+- TASK #53.2 — DepartmentNode.jsx — Group Container Node with Collapse/Expand (frontend-dev, claude-opus-4-6) — IN_PROGRESS
+- TASK #53.3 — TriggerNode.jsx — Webhook/RSS Trigger Node stub (frontend-dev, claude-sonnet-4-6) — IN_PROGRESS
 
-**After #51 completes:**
-- TASK #52 — SwarmContext.jsx Zustand ExecutionStore (frontend-dev) — HIGH priority (depends on #51)
+**After #53.1 + #53.2 + #53.3 complete:**
+- TASK #54 (HandoffEdge), #55 (AgentInspector), #56 (BreadcrumbBar) — can all run in parallel
+- #54 depends on #52 + #53.1 (all done/in-progress)
+- #55 depends on #52 + #53.1 (all done/in-progress)
+- #56 depends on #52 (done)
 
-**After #51 + #52 complete:**
-- TASK #53.1, #53.2, #53.3 (canvas nodes) in parallel
-- TASK #54 (HandoffEdge), #55 (AgentInspector), #56 (BreadcrumbBar) in parallel
+**Key context for #53.x agents:**
+- SwarmContext.jsx is at client/src/store/SwarmContext.jsx — complete, exports useSwarmStore + SwarmProvider
+- Use: `useSwarmStore(s => s.agentStates[nodeId])` pattern for per-node subscriptions (DEC-V3-04)
+- ALL setNodes calls MUST use immutable spread: `{ ...node, data: { ...node.data } }` — React Flow v12
+- NEVER mutate node objects in place
+- Execution state (status, counters) MUST live in Zustand, NOT in node.data
+- For DepartmentNode: parent nodes MUST appear BEFORE their children in the nodes array
+- Build command: `cd client && npm run build` — must stay at 299+ modules, 0 errors
+- File locations: client/src/canvas/nodes/AgentNode.jsx, DepartmentNode.jsx, TriggerNode.jsx
 
 **Key context for #47.1 and #48.1 agents:**
 - SwarmEngine.js is at server/services/SwarmEngine.js — complete, all methods implemented, 132 tests pass

@@ -980,3 +980,114 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 - broadcast() silently skips non-OPEN connections — callers do not need to handle partial-send errors
 
 ---
+
+## 2026-03-27 — Task #50: V3 Security Layer (SEC-V3-01 through SEC-V3-07)
+**Agent:** security
+**Triggered by:** V3 Phase 1 security hardening — SSRF prevention for RSS polling, webhook body cap, webhook rate limiter, HITL payload cap, and confirmation that WorkflowStore + HandoffParser already implement their schema/buffer caps correctly
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/utils/ssrfGuard.js | ADDED | Synchronous SSRF prevention guard: isSafeUrl() blocks private/loopback/link-local IP literals and localhost. Covers IPv4, IPv6 loopback, IPv4-mapped IPv6 (dotted + hex-word forms). No DNS lookup (synchronous-only design). (SEC-V3-03) |
+| server/middleware/webhookLimit.js | ADDED | Express JSON body-parser capped at 32 KB. For use in routes/triggers.js (Task #75). (SEC-V3-01) |
+| server/middleware/webhookRateLimit.js | ADDED | Express middleware: 10 requests/minute/IP rate limiter for webhook routes. In-memory Map with periodic stale-sweep (unref'd). Returns HTTP 429 on excess. For use in routes/triggers.js (Task #75). (SEC-V3-04) |
+| server/middleware/hitlValidation.js | ADDED | Express middleware: rejects resumeText body field exceeding 8 KB (8192 chars) with HTTP 400. For use in routes/inbox.js (Task #68). (SEC-V3-05) |
+| server/tests/security-v3.test.js | ADDED | 36-test Vitest suite: 18 tests for isSafeUrl (SEC-V3-03), 9 tests for WorkflowStore schema validation (SEC-V3-02+06), 3 tests for HandoffParser oversized payload (SEC-V3-07), 5 tests for validateResumeText (SEC-V3-05). |
+| server/services/WorkflowStore.js | VERIFIED (no changes) | Schema validation for name (max 100 chars, character whitelist), description (max 500 chars), nodes (max 50), systemPrompt (max 16 KB) was already correctly implemented. SEC-V3-02 + SEC-V3-06 confirmed by tests. |
+| server/services/HandoffParser.js | VERIFIED (no changes) | 4 KB buffer cap and contextUpdate validation (max 50 keys, string values max 1024 chars) was already correctly implemented. SEC-V3-07 confirmed by tests. |
+
+### Functions Added
+- `isSafeUrl(urlString)` in `server/utils/ssrfGuard.js` — synchronous SSRF URL safety check; returns boolean; no DNS lookup (intentional)
+- `_isIPv4(host)` in `server/utils/ssrfGuard.js` — private helper; detects bare IPv4 dotted-decimal strings
+- `_isPublicIPv4(ip)` in `server/utils/ssrfGuard.js` — private helper; rejects RFC-1918/loopback/link-local IPv4 ranges
+- `webhookLimit` in `server/middleware/webhookLimit.js` — default export; express.json({ limit: '32kb' }) instance
+- `webhookRateLimit(req, res, next)` in `server/middleware/webhookRateLimit.js` — default export; 10 req/min/IP limiter with in-memory Map + unref'd sweep interval
+- `validateResumeText(req, res, next)` in `server/middleware/hitlValidation.js` — named export; 8 KB resumeText cap; returns 400 on excess
+
+### Functions Modified
+- none
+
+### Functions Removed
+- none
+
+### Connection Changes
+- `server/utils/ssrfGuard.js::isSafeUrl` — future caller: TriggerManager.js RSS polling (Task #75). Currently no live callers (test-only).
+- `server/middleware/webhookLimit.js::webhookLimit` — future caller: routes/triggers.js webhook handler (Task #75). Currently no live callers.
+- `server/middleware/webhookRateLimit.js::webhookRateLimit` — future caller: routes/triggers.js webhook handler (Task #75). Currently no live callers.
+- `server/middleware/hitlValidation.js::validateResumeText` — future caller: routes/inbox.js POST /resume/:id (Task #68). Currently no live callers.
+- `server/tests/security-v3.test.js` imports: isSafeUrl from ssrfGuard.js, WorkflowStore from WorkflowStore.js, HandoffParser from HandoffParser.js, validateResumeText from hitlValidation.js
+
+### Impact on Other Code
+- Test total increases from 132 to 168 (36 new security-v3 tests). 168/168 pass.
+- All 4 new security modules are middleware/utility stubs awaiting wiring — no existing route is affected.
+- SEC-V3-02/06 and SEC-V3-07 verified: WorkflowStore and HandoffParser have no code changes; tests confirm existing behavior is already correct.
+
+---
+
+## 2026-03-27 — Task #51: @xyflow/react + zustand install
+**Agent:** devops
+**Triggered by:** V3 Phase 3 pre-requisite — install React Flow v12 (graph canvas library) and Zustand v4 (state management) in the client before workflow canvas implementation tasks begin
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/package.json | MODIFIED | Added `@xyflow/react: ^12.10.1` and `zustand: ^4.5.7` to dependencies |
+| client/package-lock.json | MODIFIED | Lock file updated with resolved versions @xyflow/react@12.10.1, zustand@4.5.7, and all transitive dependencies |
+
+### Functions Added
+- none (dependency install only — no source code added)
+
+### Functions Modified
+- none
+
+### Functions Removed
+- none
+
+### Connection Changes
+- `@xyflow/react@12.10.1` is now available for import in all client source files. Primary intended consumer: future workflow canvas view components (V3 Phase 3, Tasks #52+).
+- `zustand@4.5.7` (v4, not v5) is now available for import in all client source files. Note: v4 API (`create`, `useStore`) not v5 API. Primary intended consumer: workflow execution store.
+- No existing client code imports either library yet — they are installed but unused until canvas tasks begin.
+
+### Impact on Other Code
+- Build verified: 299 modules, 0 errors after install. 132 server tests pass (client has no test suite).
+- zustand version pinned to v4.5.7 (not v5) — future tasks must use v4 API. BREAKING if someone accidentally uses v5 `create` import path.
+- @xyflow/react@12.10.1 is the React 18-compatible React Flow v12 package (the old package was `reactflow`; this is the v12 rename). Future canvas components must import from `@xyflow/react` not `reactflow`.
+
+---
+
+## 2026-03-27 — Task #52: client/src/store/SwarmContext.jsx — Zustand ExecutionStore
+**Agent:** frontend-dev
+**Triggered by:** V3 Phase 3 client — create Zustand v4 store for all swarm execution state consumed by canvas + inspector panel components
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/store/SwarmContext.jsx | ADDED | useSwarmStore Zustand v4 store: 9 state fields + 12 action methods; isolated from AppContext |
+
+### Functions Added
+- `useSwarmStore` in `client/src/store/SwarmContext.jsx` — Zustand create() store; dual export (default + named)
+- `setExecution(id, status)` — set activeExecutionId + executionStatus atomically
+- `updateAgentState(nodeId, patch)` — non-destructive partial merge into agentStates[nodeId]
+- `updateEdgeCounter(edgeId, count)` — set edge handoff counter for canvas animation
+- `updateBudget(used, limit)` — update budget display state (estimatedTokensUsed + limitTokens)
+- `addInboxItem(item)` — append HITL approval item to inboxItems list
+- `resolveInboxItem(itemId)` — remove resolved HITL item by id
+- `addFeedEvent(event)` — append handoff event, trimmed to last 100 (slice(-100))
+- `setFocusedDepartment(id)` — forward-navigate into a department; pushes id to departmentStack
+- `navigateBreadcrumb(index)` — rewind breadcrumb stack to index; sets focusedDepartmentId to new top
+- `setSelectedNode(id)` — set selectedNodeId for AgentInspector panel
+- `setWsConnected(b)` — track swarm WS connection health
+- `reset()` — restore all 9 state fields to initial values
+
+### Functions Modified
+- none
+
+### Connection Changes
+- client/src/store/SwarmContext.jsx created with no callers yet — awaiting Task #53.x (AgentNode, DepartmentNode, TriggerNode) and canvas/WS event handler wiring
+- No imports from AppContext.jsx or App.jsx — fully isolated Zustand store
+
+### Impact on Other Code
+- All future swarm canvas components (AgentNode, DepartmentNode, TriggerNode, AgentInspector, BudgetBar, breadcrumb nav) should import `useSwarmStore` from `client/src/store/SwarmContext.jsx`
+- No existing code is affected — this is a new module with no callers
+
+---

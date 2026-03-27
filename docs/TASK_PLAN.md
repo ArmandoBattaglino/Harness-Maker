@@ -4444,7 +4444,7 @@ Phase: V3 Phase 2 — Canvas Static
 Priority: HIGH
 Difficulty: MEDIUM
 Depends on: #52
-Status: PENDING
+Status: COMPLETED
 Context:
   Create `client/src/canvas/nodes/AgentNode.jsx` — the primary node type in the swarm canvas.
 
@@ -4482,7 +4482,7 @@ Phase: V3 Phase 2 — Canvas Static
 Priority: HIGH
 Difficulty: HARD
 Depends on: #52
-Status: PENDING
+Status: COMPLETED
 Context:
   Create `client/src/canvas/nodes/DepartmentNode.jsx`.
   This is the most complex canvas node — it acts as a group container for agent nodes.
@@ -4530,7 +4530,7 @@ Phase: V3 Phase 2 — Canvas Static
 Priority: MEDIUM
 Difficulty: EASY
 Depends on: #52
-Status: PENDING
+Status: COMPLETED
 Context:
   Create `client/src/canvas/nodes/TriggerNode.jsx` — the canvas node for webhook and RSS triggers.
   This is a stub implementation for Phase 2 canvas; full trigger state display is completed in #76.
@@ -6007,9 +6007,9 @@ Acceptance criteria:
 | 50 | V3 Security Layer (SEC-V3-01 to SEC-V3-07) | security | HIGH | claude-sonnet-4-6 | COMPLETED |
 | 51 | Client deps: @xyflow/react + zustand install | devops | HIGH | claude-haiku-4-5 | COMPLETED |
 | 52 | SwarmContext.jsx — Zustand ExecutionStore | frontend-dev | HIGH | claude-sonnet-4-6 | COMPLETED |
-| **53.1** | AgentNode.jsx — agent canvas node | frontend-dev | HIGH | claude-opus-4-6 | PENDING |
-| **53.2** | DepartmentNode.jsx — group container node | frontend-dev | HIGH | claude-opus-4-6 | PENDING |
-| **53.3** | TriggerNode.jsx — webhook/RSS node stub | frontend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
+| **53.1** | AgentNode.jsx — agent canvas node | frontend-dev | HIGH | claude-opus-4-6 | COMPLETED |
+| **53.2** | DepartmentNode.jsx — group container node | frontend-dev | HIGH | claude-opus-4-6 | COMPLETED |
+| **53.3** | TriggerNode.jsx — webhook/RSS node stub | frontend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
 | 54 | HandoffEdge.jsx — animated edge + counter badge | frontend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
 | 55 | AgentInspector.jsx — node config panel | frontend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
 | 56 | BreadcrumbBar.jsx — drill-down nav | frontend-dev | MEDIUM | claude-haiku-4-5 | PENDING |

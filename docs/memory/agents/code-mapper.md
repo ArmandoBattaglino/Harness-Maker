@@ -1,4 +1,60 @@
 ---
+## 2026-03-27 — Tasks #50 + #51: V3 Security Layer + @xyflow/react + zustand install
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+Tasks #50 (security: 5 new files — ssrfGuard.js, webhookLimit.js, webhookRateLimit.js, hitlValidation.js, security-v3.test.js; 2 verified-unchanged: WorkflowStore.js, HandoffParser.js) and #51 (devops: client/package.json + package-lock.json with @xyflow/react + zustand) had just completed. CODE_MAP.md was last updated after Tasks #47.2 + #48.2 (swarm.js scaffold stub + broadcast wiring). No entries existed for any of the new security modules.
+
+### What I did
+1. Read CODE_MAP.md header + Module Index (offset 1, limit 100) — confirmed last update timestamp and existing module rows
+2. Read all 5 new server files in parallel: ssrfGuard.js, webhookLimit.js, webhookRateLimit.js, hitlValidation.js, security-v3.test.js
+3. Read client/package.json to confirm installed versions
+4. Read CODE_MAP.md tail sections (offset 1148+, 1665+) to locate Key Behaviors and insertion point
+5. Read CHANGELOG.md tail sections (offset 975+) to find the append point
+6. Grep'd server/ for all new module names to confirm no existing callers (all test-only or pending future routes)
+7. Updated CODE_MAP.md:
+   - Updated header timestamp
+   - Added 6 new Module Index rows (ssrfGuard, webhookLimit, webhookRateLimit, hitlValidation, security-v3.test.js, client/package.json)
+   - Added new test infrastructure row (security-v3.test.js with 36 tests)
+   - Updated Key Behaviors: test count 132→168, 8 new security/dependency bullets
+   - Added new Function Graph section "V3 Security Layer (Task #50)" with 7 entries
+8. Appended two CHANGELOG.md entries: Task #50 (security layer) and Task #51 (deps install)
+9. Appended ACTIVITY_LOG.md entry
+10. Appended this agent memory entry
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header timestamp; 6 new Module Index rows; 1 new test infra row; V3 Security Layer Function Graph section (7 entries); Key Behaviors updated (test count + 8 bullets) |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Task #50 and Task #51 entries with full function lists and connection graphs |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session summary entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- CODE_MAP.md now documents all 4 new security middleware/utility modules with their future-caller notes (tasks #68, #75)
+- CHANGELOG.md has precise records of which SEC-V3-* controls were new code vs. confirmed-already-correct
+- Test count accurately reflects 168 total (was 132 before this task pair)
+
+### Bugs I encountered
+- None
+
+### Decisions I made
+- Documented webhookLimit as a "default export = a middleware instance" (not a function) — important distinction for future callers who might try to call it like a function
+- Marked WorkflowStore.js and HandoffParser.js as "VERIFIED (no changes)" in the CHANGELOG — distinguishes "already correct" from "not implemented" for the SEC-V3 audit trail
+- Added client/package.json as a Module Index entry so installed library versions are findable in the code map
+
+### What I learned
+- CODE_MAP.md now requires 12+ offset-limited read passes for full coverage (file is ~1700+ lines after this update)
+- All 4 new security modules are "middleware stubs" — no live routes import them yet; future tasks #68, #74, #75 must wire them in
+- webhookRateLimit.js has a module-load side effect (setInterval starts on import) — this is intentional and documented, but means it will begin running as soon as routes/triggers.js is loaded
+
+### State I'm leaving behind
+CODE_MAP.md fully reflects Tasks #50 and #51. CHANGELOG.md has entries for both tasks. Test count is 168. All 4 security modules noted as awaiting future route integration (tasks #68 and #75).
+
+### Handoff
+Tasks #52+ (SwarmContext.jsx, AgentNode.jsx, etc.) are next. When routes/inbox.js (Task #68) and routes/triggers.js (Task #75) are implemented, CODE_MAP.md will need entries for those route files plus updated "Called by" fields for the 4 security middleware functions.
+---
 ## 2026-03-27 — Tasks #47.1 + #48.1: swarm.js REST endpoints + swarmHandler.js WS channel
 **Status:** COMPLETED
 **Called by:** orchestrator (post-task code-mapper invocation)

@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-27 — after Task #50 (V3 Security Layer: ssrfGuard, webhookLimit, webhookRateLimit, hitlValidation, security-v3 tests) + Task #51 (@xyflow/react + zustand install) — mapped by code-mapper_
+_Last updated: 2026-03-27 — after Task #52 (SwarmContext.jsx — Zustand ExecutionStore) — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -65,6 +65,7 @@ _Last updated: 2026-03-27 — after Task #50 (V3 Security Layer: ssrfGuard, webh
 | client/src/views/DeploymentManagerView.jsx | default DeploymentManagerView, AgentCard, SkillCard, AgentDetail, CreateAgentModal, ActiveProcessesTab, TabBar, FormSection, FormField, Toast (internals) | Phase 9 Deployment Manager: 3-tab layout (Profiles/Active Processes/Environment), master-detail agent editing, skill viewer, agent CRUD with modal, search filter. Task #29 new file. |
 | client/src/lib/constants.js | NAV_ITEMS, STATUS_COLORS | Shared UI constants: sidebar navigation items (icon/label/view), status-to-Tailwind-class mapping for badges (Phase 9 design tokens) |
 | client/src/views/ProjectsView.jsx | default ProjectsView, ConfirmDialog, CardMenu, StatusDot, ProjectCard, AddCard, ListRow (internals) | Phase 9 Project Dashboard: grid/list dual-view, search with "/" keyboard shortcut, project cards with status dots, delete confirmation modal, scaffold CTA banner. Task #25 rewrite. |
+| client/src/store/SwarmContext.jsx | useSwarmStore (default + named) | Zustand v4 store for V3 swarm execution state. Holds agentStates, edgeCounters, budget, inboxItems, interAgentFeed, departmentStack breadcrumb, selectedNodeId, wsConnected. Isolated from AppContext — no cross-imports. (Task #52) |
 
 ### Client Config & Styles
 | File | Key Exports | Purpose |
@@ -1172,7 +1173,14 @@ _Last updated: 2026-03-27 — after Task #50 (V3 Security Layer: ssrfGuard, webh
 - Swarm REST API (Task #47.1): POST /api/v1/swarm/:workflowId/start → 201; POST /:id/pause (Ctrl-C to all running agents); POST /:id/resume (no-op stub); DELETE /:id (stopExecution); GET /:id/status; GET /:id/agent/:nodeId/output (ring buffer); POST /:id/broadcast (soft=ESC marker, hard=Ctrl-C+text fire-and-forget); POST /:id/scaffold (501 stub — Task #59)
 - Swarm WS channel (Tasks #48.1 + #48.2): server.on('upgrade') routes /ws/swarm* to wssSwarm, all other paths to wssTerminal; handleSwarmConnection registers ws in module-level _subscribers Map keyed by executionId; sends execution_status snapshot on connect; empty Sets are eagerly deleted; getSubscribers() is called by broadcast(); broadcast() fans out JSON events to all OPEN connections for a given executionId; swarmEngine.setWsBroadcast(broadcast) called at startup in server/index.js so all SwarmEngine WS emissions go through the handler
 - SwarmEngine + sessionManager stored in app.locals (Task #48.1); swarmRoutes factory accesses them via app.locals at mount time
-- Test suite: 7 files, 132 tests total (110 + 22 new HandoffParser tests), all passing. Runner: Vitest v4.1.0 with `pool: 'forks'` (sequential) to prevent PTY cross-test interference
+- Test suite: 8 files, 168 tests total (132 + 36 new security-v3 tests), all passing. Runner: Vitest v4.1.0 with `pool: 'forks'` (sequential) to prevent PTY cross-test interference
+- SSRF guard (SEC-V3-03): isSafeUrl() in server/utils/ssrfGuard.js — synchronous hostname check, covers IPv4/IPv6/IPv4-mapped/localhost; called by TriggerManager.js RSS polling (Task #75, not yet wired)
+- Webhook body cap (SEC-V3-01): webhookLimit middleware (32 KB) in server/middleware/webhookLimit.js — for routes/triggers.js (Task #75, not yet wired)
+- Webhook rate limit (SEC-V3-04): webhookRateLimit middleware (10/min/IP) in server/middleware/webhookRateLimit.js — for routes/triggers.js (Task #75, not yet wired)
+- HITL payload cap (SEC-V3-05): validateResumeText middleware (8 KB) in server/middleware/hitlValidation.js — for routes/inbox.js (Task #68, not yet wired)
+- SEC-V3-02+06: WorkflowStore already had correct schema validation (name max 100 chars, invalid chars, description max 500 chars, nodes max 50, systemPrompt max 16 KB) — confirmed by security-v3 tests; no changes required
+- SEC-V3-07: HandoffParser already had correct oversized payload handling (4 KB buffer cap, contextUpdate validation: max 50 keys, string values max 1024 chars) — confirmed by security-v3 tests; no changes required
+- Client dependencies updated (Task #51): @xyflow/react@12.10.1 (React Flow v12 canvas for workflow graph editor) and zustand@4.5.7 (v4, not v5 — v4 API used) added to client/package.json. Build: 299 modules, 0 errors.
 - SessionManager + JobRunner tests import the CLASS (not the singleton export) for per-test isolation
 - Security audit result (original): NEEDS_ATTENTION — 0 CRITICAL, 0 HIGH, 3 MEDIUM (exec() in auto-open, allowedTools not whitelist-validated, PID file tampering), 2 LOW. Overall risk LOW for localhost single-user model
 - MEDIUM-01 FIXED (Task #16): openBrowser() now uses spawn({shell:false}) — URL passed as array arg to cmd.exe/open/xdg-open, never shell-interpolated
@@ -1739,3 +1747,126 @@ _Last updated: 2026-03-27 — after Task #50 (V3 Security Layer: ssrfGuard, webh
 | ClaudeMdEditor(), ClaudeMdPanel() | client/src/components/ClaudeMdEditor.jsx | Task #28 (2026-03-26) | DEAD CODE — not imported by any Phase 9 view. CLAUDE.md editing is now in ContextEditorView. File still on disk. |
 | JobPanel(), StreamLog(), MarkdownResult(), AdvancedOptions() | client/src/components/JobPanel.jsx | Task #27 (2026-03-26) | DEAD CODE — not imported by Phase 9 JobView. Job UI is now inline in JobView.jsx. File still on disk. |
 | StatusBadge(), old ConfirmDialog(), old formatDate() | client/src/views/ProjectsView.jsx (v1) | Task #25 (2026-03-26) | REPLACED — old internals replaced by new Phase 9 internals (ProjectCard, CardMenu, StatusDot, ListRow, AddCard, timeAgo). |
+
+---
+
+## SwarmContext ExecutionStore (Task #52)
+
+### `client/src/store/SwarmContext.jsx` :: `useSwarmStore` (Zustand store — default + named export)
+- **Purpose:** Zustand v4 global store for all V3 swarm execution state. Central source of truth for the canvas and inspector panels. Holds runtime-only state — never persisted to disk.
+- **Called by:** no callers yet — store is ready for Task #53.x node components (AgentNode, DepartmentNode, TriggerNode) and future canvas/inspector panels to import useSwarmStore directly
+- **Calls:** zustand::create (Zustand v4.5.7)
+- **Inputs:** N/A (Zustand store — no constructor args)
+- **Output:** hook returning state slice + actions
+- **Side effects:** none (pure in-memory state; no API calls, no storage writes)
+- **Last modified:** 2026-03-27 in Task #52 by frontend-dev
+
+### `client/src/store/SwarmContext.jsx` :: `setExecution(id, status)`
+- **Purpose:** Set the active execution ID and execution status atomically. Called on execution start/stop from WS event handlers.
+- **Called by:** (not yet wired — future WS message handler for execution_status events)
+- **Calls:** Zustand set
+- **Inputs:** id (string | null), status ('idle' | 'running' | 'stopped')
+- **Output:** void
+- **Side effects:** updates activeExecutionId + executionStatus in store
+- **Last modified:** 2026-03-27 in Task #52 by frontend-dev
+
+### `client/src/store/SwarmContext.jsx` :: `updateAgentState(nodeId, patch)`
+- **Purpose:** Merge a partial update into the agentStates entry for a specific node. Non-destructive — existing fields are preserved; only patch keys are overwritten.
+- **Called by:** (not yet wired — future WS agent_update event handler)
+- **Calls:** Zustand set with spread merge
+- **Inputs:** nodeId (string), patch (object with subset of { status, lastOutputSnippet, handoffCount })
+- **Output:** void
+- **Side effects:** mutates agentStates[nodeId] in store
+- **Last modified:** 2026-03-27 in Task #52 by frontend-dev
+
+### `client/src/store/SwarmContext.jsx` :: `updateEdgeCounter(edgeId, count)`
+- **Purpose:** Set the handoff counter for a specific edge. Used to drive animated edge labels on the canvas.
+- **Called by:** (not yet wired — future WS edge_counter event handler)
+- **Calls:** Zustand set with spread merge
+- **Inputs:** edgeId (string), count (number)
+- **Output:** void
+- **Side effects:** mutates edgeCounters[edgeId] in store
+- **Last modified:** 2026-03-27 in Task #52 by frontend-dev
+
+### `client/src/store/SwarmContext.jsx` :: `updateBudget(used, limit)`
+- **Purpose:** Update the budget tracker display state. Drives the BudgetBar component (when built).
+- **Called by:** (not yet wired — future WS budget_update event handler)
+- **Calls:** Zustand set
+- **Inputs:** used (number — estimated tokens used), limit (number — token ceiling)
+- **Output:** void
+- **Side effects:** mutates budget object in store
+- **Last modified:** 2026-03-27 in Task #52 by frontend-dev
+
+### `client/src/store/SwarmContext.jsx` :: `addInboxItem(item)`
+- **Purpose:** Append a Human-in-the-Loop approval item to the pending inboxItems list. Each item has an id and payload for the approval UI.
+- **Called by:** (not yet wired — future WS hitl_pending event handler)
+- **Calls:** Zustand set with array spread
+- **Inputs:** item (object — HITL pending approval payload, must have id field)
+- **Output:** void
+- **Side effects:** appends to inboxItems array in store
+- **Last modified:** 2026-03-27 in Task #52 by frontend-dev
+
+### `client/src/store/SwarmContext.jsx` :: `resolveInboxItem(itemId)`
+- **Purpose:** Remove a resolved HITL approval item from the inboxItems list. Called after user approves or rejects.
+- **Called by:** (not yet wired — future HITL approve/reject UI action)
+- **Calls:** Zustand set, Array.filter
+- **Inputs:** itemId (string — id of the item to remove)
+- **Output:** void
+- **Side effects:** removes matching item from inboxItems in store
+- **Last modified:** 2026-03-27 in Task #52 by frontend-dev
+
+### `client/src/store/SwarmContext.jsx` :: `addFeedEvent(event)`
+- **Purpose:** Append a handoff event to the inter-agent feed. Automatically trims to the last 100 events to prevent unbounded memory growth.
+- **Called by:** (not yet wired — future WS handoff/feed event handler)
+- **Calls:** Zustand set, Array.slice(-100)
+- **Inputs:** event (object — handoff event: { fromNode, toNode, timestamp, payload })
+- **Output:** void
+- **Side effects:** appends to interAgentFeed, trims to 100 entries max
+- **Complexity note:** .slice(-100) after spread means only the newest 100 events are retained — oldest are silently dropped. This is correct for an activity feed but callers must not assume all events are retained.
+- **Last modified:** 2026-03-27 in Task #52 by frontend-dev
+
+### `client/src/store/SwarmContext.jsx` :: `setFocusedDepartment(id)`
+- **Purpose:** Navigate into a department node (drill-down). If id is non-null, pushes id onto departmentStack breadcrumb and sets focusedDepartmentId. If id is null, does not modify the stack (use navigateBreadcrumb to go up).
+- **Called by:** (not yet wired — future DepartmentNode double-click handler)
+- **Calls:** Zustand set with array spread
+- **Inputs:** id (string | null — department node ID)
+- **Output:** void
+- **Side effects:** mutates focusedDepartmentId + departmentStack in store
+- **Complexity note:** Null id does NOT clear the stack — only navigateBreadcrumb rewinds the stack. This asymmetry is intentional: setFocusedDepartment is for forward navigation; navigateBreadcrumb is for backward navigation via breadcrumb clicks.
+- **Last modified:** 2026-03-27 in Task #52 by frontend-dev
+
+### `client/src/store/SwarmContext.jsx` :: `navigateBreadcrumb(index)`
+- **Purpose:** Rewind the department breadcrumb stack to a specific index. Slice to index (not index+1) so the clicked crumb becomes the new top. Sets focusedDepartmentId to the new top, or null if stack is now empty.
+- **Called by:** (not yet wired — future breadcrumb nav UI component)
+- **Calls:** Zustand set, Array.slice
+- **Inputs:** index (number — the breadcrumb index to navigate to; 0 = root)
+- **Output:** void
+- **Side effects:** mutates departmentStack + focusedDepartmentId in store
+- **Last modified:** 2026-03-27 in Task #52 by frontend-dev
+
+### `client/src/store/SwarmContext.jsx` :: `setSelectedNode(id)`
+- **Purpose:** Set the selected canvas node for the AgentInspector panel to render details for.
+- **Called by:** (not yet wired — future canvas node click handler)
+- **Calls:** Zustand set
+- **Inputs:** id (string | null)
+- **Output:** void
+- **Side effects:** mutates selectedNodeId in store
+- **Last modified:** 2026-03-27 in Task #52 by frontend-dev
+
+### `client/src/store/SwarmContext.jsx` :: `setWsConnected(b)`
+- **Purpose:** Track WebSocket connection health for the swarm WS channel. Drives connection status indicator in UI.
+- **Called by:** (not yet wired — future WS open/close handlers)
+- **Calls:** Zustand set
+- **Inputs:** b (boolean)
+- **Output:** void
+- **Side effects:** mutates wsConnected in store
+- **Last modified:** 2026-03-27 in Task #52 by frontend-dev
+
+### `client/src/store/SwarmContext.jsx` :: `reset()`
+- **Purpose:** Reset all execution state to initial values. Called on execution stop or when leaving the swarm canvas view.
+- **Called by:** (not yet wired — future execution stop handler or view unmount cleanup)
+- **Calls:** Zustand set
+- **Inputs:** none
+- **Output:** void
+- **Side effects:** resets all 9 state fields to their initial values (null/idle/empty)
+- **Last modified:** 2026-03-27 in Task #52 by frontend-dev

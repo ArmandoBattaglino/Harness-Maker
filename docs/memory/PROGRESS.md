@@ -152,7 +152,7 @@ _None._
 - NOTE: FileManager was NOT created in Task #5 as planned — RESOLVED in Task #7 (created server/services/FileManager.js).
 
 ## V3 — Swarm Orchestrator (57 granular tasks after split — 2026-03-27 replan)
-**Status: 14/57 COMPLETED — as of 2026-03-27. All Phase 1 backend tasks done. #50 (security) COMPLETED (168 tests pass, 36 new security tests). #51 (devops) COMPLETED (@xyflow/react + zustand installed, 132 tests pass). #52 (frontend-dev) IN_PROGRESS — SwarmContext.jsx Zustand ExecutionStore.**
+**Status: 17/57 COMPLETED — as of 2026-03-27. All Phase 1 backend tasks done. #52 COMPLETED — SwarmContext.jsx. #53.1, #53.2, #53.3 COMPLETED — all three canvas nodes done.**
 **Note: Original 40 tasks (#43–#82). After model assignment + subtask split: 57 granular units.**
 **7 original tasks split into subtasks: #46→3, #47→2, #48→2, #53→3, #57→2, #62→3, #71→2**
 - V3 PRD complete: docs/PRD.md
@@ -177,9 +177,9 @@ _None._
 ### V3 Phase 2 — Canvas Static
 - [TASK-51] COMPLETED 2026-03-27 — @xyflow/react@12.10.1 + zustand@4.5.7 installed in client/; 299 modules build clean; 132/132 tests pass — devops agent
 - [TASK-52] COMPLETED 2026-03-27 — SwarmContext.jsx Zustand ExecutionStore — client/src/store/SwarmContext.jsx created; useSwarmStore Zustand store with execution state, canvas navigation, HITL inbox, inter-agent feed, breadcrumb stack. Build clean (299 modules).
-- [TASK-53.1] PENDING — AgentNode.jsx — agent canvas node
-- [TASK-53.2] PENDING — DepartmentNode.jsx — group container node
-- [TASK-53.3] PENDING — TriggerNode.jsx — webhook/RSS node stub
+- [TASK-53.1] COMPLETED 2026-03-27 — AgentNode.jsx — client/src/canvas/nodes/AgentNode.jsx created; reads agentStates from useSwarmStore, renders status colors, handles/label/snippet/handoffCount. Build clean (299 modules).
+- [TASK-53.2] COMPLETED 2026-03-27 — DepartmentNode.jsx — client/src/canvas/nodes/DepartmentNode.jsx created; group container node with focused/selected state, setFocusedDepartment click, agentCount badge. Build clean (299 modules).
+- [TASK-53.3] COMPLETED 2026-03-27 — TriggerNode.jsx — client/src/canvas/nodes/TriggerNode.jsx created; source-only Handle, purple theme, webhook (🔗) / rss (📡) icon mapping, selected ring. Build clean (299 modules).
 - [TASK-54] PENDING — HandoffEdge.jsx — animated edge + counter badge
 - [TASK-55] PENDING — AgentInspector.jsx — node config panel
 - [TASK-56] PENDING — BreadcrumbBar.jsx — drill-down nav

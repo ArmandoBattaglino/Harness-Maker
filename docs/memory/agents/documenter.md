@@ -1,4 +1,59 @@
 ---
+## 2026-03-27 — Tasks #50 + #51: V3 Security Layer + Client Deps
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel with code-mapper and project-manager)
+
+### Context when I started
+Task #50 (V3 Security Layer) had just created 4 new server files (ssrfGuard.js, webhookLimit.js, webhookRateLimit.js, hitlValidation.js) and a 36-test test file (security-v3.test.js). Task #51 (client deps) had just added @xyflow/react@12.10.1 and zustand@4.5.7 to client/package.json. By the time I started, Task #52 (SwarmContext.jsx) had also completed concurrently. V3 public doc deferral policy is in effect — README.md and ARCHITECTURE.md are intentionally not updated until Task #82.
+
+### What I did
+1. Read DOC_STATUS.md, PROJECT.md, DECISIONS.md, PROGRESS.md, ACTIVITY_LOG.md (recent entries), and documenter.md (prior sessions) in parallel.
+2. Read all 5 new files from Task #50: ssrfGuard.js, webhookLimit.js, webhookRateLimit.js, hitlValidation.js, security-v3.test.js. Read client/package.json for Task #51.
+3. Assessed staleness:
+   - README.md: NOT stale. No user-facing feature or config change. V3 deferred per policy.
+   - ARCHITECTURE.md: NOT stale. Intentionally deferred until V3 complete (Task #82).
+   - All 5 Task #50 files: UP TO DATE. ssrfGuard.js has complete JSDoc plus a detailed module-level comment explaining the deliberate dns.lookup() omission. webhookLimit.js, webhookRateLimit.js, hitlValidation.js all have inline JSDoc and usage examples.
+   - docs/memory/PROJECT.md: STALE — new V3 client dependencies @xyflow/react and zustand were missing from the tech stack table.
+   - DOC_STATUS.md: STALE — 7 new V3 artifacts not yet tracked.
+4. Updated docs/memory/PROJECT.md: added two rows to the tech stack table for @xyflow/react v12 and zustand v4.
+5. Updated docs/memory/DOC_STATUS.md:
+   - Advanced timestamp.
+   - Added 7 new rows to V3 service files table (ssrfGuard.js, webhookLimit.js, webhookRateLimit.js, hitlValidation.js, security-v3.test.js, client/package.json — plus one row each for the 4 server files).
+   - Expanded ARCHITECTURE.md stale section note to include the V3 security layer components and installed canvas deps.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/PROJECT.md | MODIFIED | Added @xyflow/react v12 and zustand v4 rows to tech stack table. Installed packages are factual state — not deferred under V3 policy. |
+| docs/memory/DOC_STATUS.md | MODIFIED | Timestamp advanced; 7 new V3 rows added (5 security files + client/package.json + notes); ARCHITECTURE.md stale section expanded to reference V3 security layer and canvas deps. |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log. |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended Tasks #50 + #51 documenter entry. |
+
+### Improvements delivered
+- docs/memory/PROJECT.md tech stack is now accurate — V3 canvas and state management packages are listed.
+- DOC_STATUS.md V3 service files table now tracks 14 V3 artifacts (all Phase 1 backend + security layer + client deps).
+- ARCHITECTURE.md stale section note now includes the full V3 security layer and installed client libraries, giving Task #82 a complete inventory.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | -- | -- | -- |
+
+### Decisions I made
+- Updated PROJECT.md tech stack for installed packages even though V3 is incomplete. Rationale: installed package state is factual and useful for any agent; V3 deferral applies to user-facing feature documentation (README, ARCHITECTURE), not to the internal memory tech stack.
+- Did not update README.md or ARCHITECTURE.md. V3 is incomplete. Policy unchanged.
+- All 5 new server files from Task #50 are adequately self-documenting — no additional inline "why" comments needed.
+
+### What I learned
+- ssrfGuard.js handles the IPv4-mapped IPv6 in both dotted-decimal (::ffff:192.168.1.1) and normalized hex form (::ffff:c0a8:101) because Node.js internally normalizes to hex. This is a subtle SSRF bypass that was caught in testing — the hex-word branch is essential.
+- webhookLimit.js and webhookRateLimit.js are intentional stubs — they will not be wired until tasks #74 and #75 implement TriggerManager.js and triggers.js respectively. The files exist now so the security policy is documented before implementation.
+
+### State I'm leaving behind
+DOC_STATUS.md is current as of 2026-03-27. 14 V3 artifacts tracked. PROJECT.md tech stack includes V3 dependencies. No public-facing documentation is stale. V3 documentation remains intentionally deferred until Task #82.
+
+### Handoff
+Task #52 (SwarmContext.jsx) already completed concurrently — documenter should audit its inline docs in the next pass. After Task #82: major ARCHITECTURE.md + README.md V3 update.
+---
 ## 2026-03-27 — Tasks #47.1 + #48.1: server/routes/swarm.js + server/ws/swarmHandler.js
 **Status:** COMPLETED
 **Called by:** orchestrator (parallel with code-mapper and project-manager)
@@ -603,4 +658,56 @@ DOC_STATUS.md is current as of 2026-03-27 after Tasks #47.2 + #48.2. 10 V3 artif
 
 ### Handoff
 Next documenter session triggers after Task #50 (V3 Security Layer), #51 (client deps), or #52 (frontend). After Task #82: major ARCHITECTURE.md + README.md V3 update covering all new services, REST routes, WS protocol, canvas architecture, and execution model.
+---
+---
+## 2026-03-27 — Task #52: SwarmContext.jsx Zustand ExecutionStore
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel with code-mapper and project-manager)
+
+### Context when I started
+Task #52 just completed. client/src/store/SwarmContext.jsx was created — a Zustand v4 execution state store for the V3 swarm orchestrator. The prior documenter session (Tasks #50+#51) had noted that SwarmContext.jsx should be audited in the next pass. V3 public doc deferral policy remains in effect (README.md and ARCHITECTURE.md not updated until Task #82).
+
+### What I did
+1. Read DOC_STATUS.md, SwarmContext.jsx, documenter.md (prior session), PROGRESS.md, CONTEXT.md, and ACTIVITY_LOG.md (recent entries) in parallel.
+2. Assessed staleness of all documentation artifacts:
+   - README.md: NOT stale. No user-facing feature or config change. V3 deferred per policy.
+   - ARCHITECTURE.md: NOT stale. Intentionally deferred until V3 complete (Task #82).
+   - docs/API.md: MISSING (intentional, tracked as medium debt).
+   - client/src/store/SwarmContext.jsx inline comments: UP TO DATE. All state slice definitions have inline type/shape comments. The addFeedEvent `.slice(-100)` has a "keep last 100" comment that documents the capping behavior. The navigateBreadcrumb index-based slice logic is self-evident. No "why" comments are needed beyond what's present — the CLAUDE.md convention says to add "why" comments only for non-obvious approaches, and the Zustand store factory pattern is conventional.
+   - DOC_STATUS.md: STALE — missing row for SwarmContext.jsx (Task #52).
+3. Updated DOC_STATUS.md:
+   - Advanced timestamp to reflect Task #52.
+   - Added row for client/src/store/SwarmContext.jsx (Task #52) documenting full state shape and all 12 actions.
+   - Updated ARCHITECTURE.md stale section note to include SwarmContext.jsx and confirm @xyflow/react is now imported.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Timestamp advanced; SwarmContext.jsx row added to V3 files table; ARCHITECTURE.md stale section note expanded to reference Task #52. |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log. |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended Task #52 documenter entry. |
+
+### Improvements delivered
+- DOC_STATUS.md now tracks 16 V3 artifacts (all Phase 1 backend + security layer + client deps + SwarmContext store).
+- ARCHITECTURE.md stale section note now has a complete inventory including the Zustand store for Task #82.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | -- | -- | -- |
+
+### Decisions I made
+- Did not add any inline comments to SwarmContext.jsx. All state slices have adequate inline documentation of their shape. The Zustand factory pattern requires no "why" explanation — it's conventional and the store's purpose is self-documenting.
+- Did not update README.md or ARCHITECTURE.md. V3 is incomplete. Policy unchanged.
+- Task #52 was already marked COMPLETED in TASK_PLAN.md by the frontend-dev agent — no change needed.
+
+### What I learned
+- SwarmContext.jsx follows DEC-V3-04 strictly: no React Flow canvas state (node positions, edges array) is mixed into this store. Components call useSwarmStore() directly — no React context wrapper is needed with Zustand v4.
+- ptyExplosionNodeId is NOT present in the Task #52 store — Task #71.2 notes it needs to be added to SwarmStore if not already present. This is a deferred addition, documented in TASK_PLAN.md Task #71.2 context.
+
+### State I'm leaving behind
+DOC_STATUS.md is current as of 2026-03-27, 16 V3 artifacts tracked. SwarmContext.jsx has no documentation gaps. V3 public documentation remains intentionally deferred until Task #82.
+
+### Handoff
+Next: Tasks #53.1, #53.2, #53.3 (canvas nodes) are IN_PROGRESS — they all import from SwarmContext. After Task #82: major ARCHITECTURE.md + README.md V3 update.
 ---
