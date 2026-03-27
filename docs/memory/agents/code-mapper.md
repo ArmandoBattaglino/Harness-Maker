@@ -55,6 +55,59 @@ CODE_MAP.md fully reflects Tasks #50 and #51. CHANGELOG.md has entries for both 
 ### Handoff
 Tasks #52+ (SwarmContext.jsx, AgentNode.jsx, etc.) are next. When routes/inbox.js (Task #68) and routes/triggers.js (Task #75) are implemented, CODE_MAP.md will need entries for those route files plus updated "Called by" fields for the 4 security middleware functions.
 ---
+## 2026-03-27 — Tasks #53.1 + #53.2 + #53.3: AgentNode, DepartmentNode, TriggerNode canvas nodes
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+Three parallel frontend-dev subtasks just completed simultaneously. CODE_MAP.md was last updated after Task #52 (SwarmContext.jsx) — all SwarmContext "Called by" fields were "(not yet wired)". The client/src/canvas/nodes/ directory was new (did not exist before this task batch). No callers existed for any of the three new node files.
+
+### What I did
+1. Read CODE_MAP.md header + Module Index + tail (3 offset reads) to confirm current state and last entry
+2. Read all three new source files in parallel: AgentNode.jsx, DepartmentNode.jsx, TriggerNode.jsx
+3. Read CHANGELOG.md tail to find append point
+4. Read agent memory (code-mapper.md) for session continuity
+5. Grep'd client/src for any existing imports of AgentNode, DepartmentNode, TriggerNode — confirmed zero callers (only the 3 new files themselves)
+6. Updated CODE_MAP.md:
+   - Updated header timestamp to reference Tasks #53.1 + #53.2 + #53.3
+   - Added 3 new Module Index rows (AgentNode, DepartmentNode, TriggerNode) after SwarmContext row
+   - Updated setFocusedDepartment "Called by" from "(not yet wired)" to DepartmentNode.jsx (first live caller)
+   - Added new "React Flow Canvas Nodes" Function Graph section with 3 entries (AgentNode, DepartmentNode, TriggerNode)
+7. Appended CHANGELOG.md entry covering all three tasks
+8. Appended ACTIVITY_LOG.md entry
+9. Appended this agent memory entry
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header timestamp updated; 3 new Module Index rows; setFocusedDepartment "Called by" updated; new "React Flow Canvas Nodes" Function Graph section with 3 entries |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Tasks #53.1+#53.2+#53.3 entry with function list and connection graph |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session summary entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- CODE_MAP.md now fully documents all three canvas node components
+- setFocusedDepartment "Called by" is accurate — DepartmentNode is now its first live caller
+- TriggerNode correctly documented as stub with Task #76 forward reference
+
+### Bugs I encountered
+- ACTIVITY_LOG.md had not been read before first edit attempt — read it first, then used the exact anchor string from the last code-mapper entry
+
+### Decisions I made
+- TriggerNode function graph entry documented with "(stub)" note and explicit Task #76 forward reference — makes the deferred implementation visible to any agent reading the map
+- All three nodes marked "not yet registered — future WorkflowCanvas.jsx nodeTypes map" in "Called by" — accurate state: installed but not wired
+
+### What I learned
+- ACTIVITY_LOG.md line count is now ~1130+ — continue using tail reads to find append point
+- CODE_MAP.md is now ~1900+ lines — always use offset reads, never full file read
+- client/src/canvas/ is a new directory introduced in this task batch — agents building WorkflowCanvas.jsx should know the nodeTypes live in client/src/canvas/nodes/
+
+### State I'm leaving behind
+CODE_MAP.md: fully reflects Tasks #53.1, #53.2, #53.3. Three new node components documented. setFocusedDepartment has its first live caller recorded. CHANGELOG.md has entry for all three. All three nodes are stubs awaiting nodeTypes registration in WorkflowCanvas.jsx.
+
+### Handoff
+WorkflowCanvas.jsx (future task) will import all three node components and register them in nodeTypes — at that point update "Called by" for AgentNode, DepartmentNode, and TriggerNode in CODE_MAP.md. Also: Task #76 will fully implement TriggerNode — update its Function Graph entry when complete. Routes/inbox.js (#68) and routes/triggers.js (#75) still pending — security middleware "Called by" fields still need updating when those are implemented.
+---
 ## 2026-03-27 — Tasks #47.1 + #48.1: swarm.js REST endpoints + swarmHandler.js WS channel
 **Status:** COMPLETED
 **Called by:** orchestrator (post-task code-mapper invocation)
