@@ -1,4 +1,13 @@
 ---
+## 2026-03-27 — frontend-dev — Task #71.1: PTY Explosion — Full-Screen Overlay Component
+**Outcome:** COMPLETED
+**Summary:** Created client/src/canvas/PtyExplosion.jsx — a full-screen overlay component that wraps Terminal.jsx (unchanged, per DEC-009) to display an agent's live PTY session. Added ptyExplosionNodeId + setPtyExplosionNodeId to SwarmContext store. Added .pty-explosion-overlay/.pty-explosion-header/.pty-explosion-body/.pty-explosion-close CSS classes to index.css. Build passes at 472 modules, 0 errors.
+**Files changed:** client/src/canvas/PtyExplosion.jsx (CREATED), client/src/store/SwarmContext.jsx (MODIFIED), client/src/index.css (MODIFIED), docs/TASK_PLAN.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Used Terminal.jsx as inner component (not raw xterm) — DEC-009 forbids creating new xterm instances. Package is `xterm`/`xterm-addon-fit` (not `@xterm/xterm`) — verified from client/package.json. WS handled by useSession inside Terminal.jsx, not re-implemented in overlay.
+**Blockers:** none
+**Next:** Task #71.2 adds Escape key handler (calls setPtyExplosionNodeId(null) on Escape).
+---
 ## 2026-03-27 — code-mapper — Task #62.1: SwarmEngine._onHandoff full implementation
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md to replace _onHandoff stub entry with full 7-step implementation documentation; updated _ensureAgentPty and CircuitBreaker.check "Called by" annotations to reflect live wiring; updated SwarmEngine and index.js module index entries to reflect constructor params and new imports. CHANGELOG.md entry appended.
