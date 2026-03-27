@@ -1,4 +1,13 @@
 ---
+## 2026-03-27 — documenter — Tasks #63, #66, #67: useSwarm.js + BroadcastBar.jsx + SwarmEngine pause/resume
+**Outcome:** COMPLETED
+**Summary:** Audited all documentation after three Phase 4 tasks. DOC_STATUS.md updated: timestamp advanced; new rows added for useSwarm.js (Task #63) and BroadcastBar.jsx (Task #66); new SwarmEngine row added for Task #67 (pauseExecution/resumeExecution); SwarmView.jsx row updated to reflect BroadcastBar mount (Task #66); ARCHITECTURE.md stale section advanced to reflect Phase 4 progress. README.md and ARCHITECTURE.md not touched — V3 public doc deferral policy in effect until Task #82.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none
+**Decisions made:** V3 public doc deferral policy maintained
+**Blockers:** none
+**Next:** Tasks #62.1–#62.3 (_onHandoff full implementation) will require another SwarmEngine DOC_STATUS row update when complete
+---
 ## 2026-03-27 — frontend-dev — Task #64: useHandoff.js — Edge Animation Hook
 **Outcome:** COMPLETED
 **Summary:** Created client/src/hooks/useHandoff.js with two exports: useHandoff(callback) fires a callback whenever any edgeCounter increases, and useRecentHandoffs(durationMs) returns a ref Set of recently-active edge IDs. Both use refs for previous-state comparison to avoid unnecessary re-renders. Build passes cleanly.

@@ -1,4 +1,47 @@
 ---
+## 2026-03-27 — Task #64: useHandoff.js — Edge Animation Hook
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+SwarmContext.jsx (useSwarmStore) was fully implemented with edgeCounters map. HandoffEdge.jsx reads edgeCounters[id] directly and renders animated dashed-blue edge when counter > 0. useSwarm.js dispatches updateEdgeCounter on handoff_started WS events. No hook existed for components that want to react to counter changes via callbacks.
+
+### What I did
+Created client/src/hooks/useHandoff.js with two named exports:
+1. useHandoff(onHandoff) — subscribes to edgeCounters, fires onHandoff(edgeId, counter) whenever any counter increases. Uses prevCountersRef to track previous values so the effect only fires on genuine increases.
+2. useRecentHandoffs(durationMs=2000) — same comparison logic but adds edgeId to recentRef.current (a stable Set) and schedules removal after durationMs via setTimeout. Returns the ref's current Set.
+Ran npm run build — 472 modules transformed, build green.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/hooks/useHandoff.js | CREATED | New hook with useHandoff and useRecentHandoffs exports |
+| docs/TASK_PLAN.md | MODIFIED | Task #64 Status: PENDING → COMPLETED |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session entry |
+| docs/memory/PROGRESS.md | MODIFIED | Updated status count and task list |
+
+### Improvements delivered
+- Components can now subscribe to handoff events via a clean callback API rather than comparing edgeCounters themselves
+- useRecentHandoffs provides a transient "just fired" Set for highlight effects without adding new store state
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Used refs (prevCountersRef, recentRef) for previous-state tracking so the comparison is side-effect-free and doesn't cause re-renders — only the Zustand selector causes re-renders
+- Returned recentRef.current (the Set itself) rather than a derived value so callers get a stable reference; callers that need reactivity should pair with a forceUpdate or use useHandoff instead
+- Did not add animatingEdges to the store — HandoffEdge already handles animation via edgeCounters; adding more store state for the same signal would be redundant
+
+### What I learned
+- useSwarmStore is a plain Zustand store (no React context wrapper needed) — import and use the selector directly
+- HandoffEdge.jsx animates entirely from edgeCounters[id] > 0, so this hook only needs to track counter increases, not duration
+
+### State I'm leaving behind
+client/src/hooks/useHandoff.js is complete and build-verified. Both exports follow the same pattern. No store changes required.
+
+### Handoff
+Task #65 (AgentNode live-state styling) is next in Phase 4. It will likely read agentStates from useSwarmStore and apply CSS classes to AgentNode.jsx based on status field.
+---
 ## 2026-03-27 — Task #61: useWorkflow.js — CRUD Hook
 **Status:** COMPLETED
 **Called by:** user (direct task assignment)

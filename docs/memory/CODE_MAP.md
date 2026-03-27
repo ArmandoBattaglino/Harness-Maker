@@ -1876,7 +1876,7 @@ _Last updated: 2026-03-27 — after Tasks #63 (useSwarm.js), #66 (BroadcastBar.j
 
 ### `client/src/store/SwarmContext.jsx` :: `reset()`
 - **Purpose:** Reset all execution state to initial values. Called on execution stop or when leaving the swarm canvas view.
-- **Called by:** (not yet wired — future execution stop handler or view unmount cleanup)
+- **Called by:** SwarmView.jsx Reset button (onClick, when executionStatus === 'stopped' — Task #57.2)
 - **Calls:** Zustand set
 - **Inputs:** none
 - **Output:** void
