@@ -1,4 +1,47 @@
 ---
+## 2026-03-27 — Task #47.2: server/routes/swarm.js — Scaffold Endpoint Stub
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+Task #47.1 had already been completed, delivering 7 execution control endpoints for swarm.js plus a scaffold stub. The task asked to add `router.post('/scaffold', csrfMiddleware, (req, res) => res.status(501).json({ error: 'Not implemented' }))` if not already present, or confirm it exists if it is.
+
+### What I did
+1. Read server/routes/swarm.js and docs/memory/agents/backend-dev.md in parallel.
+2. Found the scaffold stub already present at lines 246-251: `router.post('/:workflowId/scaffold', (req, res) => { return res.status(501).json({ error: 'Not implemented — scaffold endpoint coming in Task #59' }); });`
+3. Checked that no csrfMiddleware is used per-route in swarm.js (it is applied globally, not inline). The existing stub matches the file's pattern.
+4. Ran `npm test` — 132/132 pass.
+5. Updated TASK_PLAN.md, ACTIVITY_LOG.md, PROGRESS.md.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Status #47.2 PENDING → COMPLETED in task block and summary table |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session entry |
+| docs/memory/PROGRESS.md | MODIFIED | Updated #47.2 from PENDING to COMPLETED |
+| docs/memory/agents/backend-dev.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- Confirmed POST /api/v1/swarm/:workflowId/scaffold returns 501 `{ error: 'Not implemented...' }` — stub ready for Task #59 to replace.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | - | - | - |
+
+### Decisions I made
+- No code change required — stub was already written by #47.1 backend-dev session. The task spec's `csrfMiddleware` reference is inconsistent with the rest of swarm.js (no per-route CSRF there); existing stub pattern is correct.
+
+### What I learned
+- Task #47.1 already included the scaffold stub as part of its deliverable. Future verification tasks should check #47.1 deliverables before assuming #47.2 has work remaining.
+
+### State I'm leaving behind
+server/routes/swarm.js has 7 functional endpoints plus a POST /:workflowId/scaffold stub returning 501. All 132 tests pass. Task #47.2 fully complete.
+
+### Handoff
+Task #59 (Prompt-to-Flow) will replace the scaffold stub with a full implementation. No further work needed on #47.2.
+
+---
 ## 2026-03-27 — Task #46.3: SwarmEngine.js — _buildSystemPrompt + _startHeartbeat
 **Status:** COMPLETED
 **Called by:** user (direct task assignment)

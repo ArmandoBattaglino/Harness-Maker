@@ -29,7 +29,7 @@ import swarmRoutes from './routes/swarm.js';
 import { sessionManager } from './services/SessionManager.js';
 import { jobRunner } from './services/JobRunner.js';
 import { setupTerminalWebSocket } from './ws/terminalHandler.js';
-import handleSwarmConnection from './ws/swarmHandler.js';
+import handleSwarmConnection, { broadcast } from './ws/swarmHandler.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -257,6 +257,9 @@ async function startup() {
   const swarmEngine = new SwarmEngine(sessionManager, workflowStore);
   app.locals.swarmEngine = swarmEngine;
   app.locals.sessionManager = sessionManager;
+
+  // Wire WebSocket broadcast to SwarmEngine so execution events reach subscribers.
+  swarmEngine.setWsBroadcast(broadcast);
 
   // WebSocket routing — two noServer WSS instances, routed by URL path.
   // /ws/swarm  → swarm execution updates (Task #48)

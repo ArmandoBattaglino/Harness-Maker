@@ -167,8 +167,7 @@ _None._
 - [TASK-46.2] COMPLETED 2026-03-27 — SwarmEngine — startExecution + _spawnAgentPty + HandoffParser tap, 132/132 tests pass
 - [TASK-46.3] COMPLETED 2026-03-27 — SwarmEngine — _buildSystemPrompt + _startHeartbeat, 132/132 tests pass
 - [TASK-47.1] COMPLETED 2026-03-27 — swarm.js — 7 execution control endpoints, scaffold stub (501), mounted at /api/v1/swarm, 132/132 tests pass
-- [TASK-47.1] IN_PROGRESS — swarm.js — 7 execution control endpoints (launched 2026-03-27)
-- [TASK-47.2] PENDING — swarm.js — scaffold endpoint stub (501)
+- [TASK-47.2] COMPLETED 2026-03-27 — swarm.js — scaffold stub (501) confirmed present from #47.1; no code changes needed; 132/132 tests pass
 - [TASK-48.1] COMPLETED 2026-03-27 — swarmHandler.js — channel routing + connection management; dual noServer WSS routing via server.on('upgrade'); 132/132 tests pass
 - [TASK-48.2] PENDING — swarmHandler.js — broadcast() + WS event wiring
 - [TASK-49] COMPLETED 2026-03-27 — CircuitBreaker.js + BudgetTracker.js — pure service classes, no I/O, no imports, 132/132 tests pass

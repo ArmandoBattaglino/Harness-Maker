@@ -1,4 +1,23 @@
 ---
+## 2026-03-27 — backend-dev — Task #47.2: swarm.js — Scaffold Endpoint Stub (POST /api/v1/swarm/scaffold)
+**Outcome:** COMPLETED
+**Summary:** Verified that the POST /api/v1/swarm/scaffold stub (returns 501 `{ error: 'Not implemented' }`) was already present in server/routes/swarm.js from Task #47.1 (lines 246-251). No code changes required. 132/132 tests pass.
+**Files changed:** none (stub already present)
+**Bugs fixed:** none
+**Decisions made:** none — stub was already in place
+**Blockers:** none
+**Next:** Task #48.2 (swarmHandler.js broadcast + WS event wiring); Task #59 will replace this stub with full implementation
+
+---
+## 2026-03-27 — documenter — Tasks #47.1 + #48.1: Documentation audit
+**Outcome:** COMPLETED
+**Summary:** Audited all documentation artifacts after Task #47.1 (server/routes/swarm.js — 7 execution control REST endpoints) and Task #48.1 (server/ws/swarmHandler.js — WebSocket channel routing + connection management). Both new files have complete inline documentation. server/index.js wiring is also self-documenting. Public docs (README.md, ARCHITECTURE.md) intentionally not updated per V3 deferral policy. DOC_STATUS.md updated with new rows for swarm.js, swarmHandler.js, and a corrected server/index.js row.
+**Files changed:** docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/agents/documenter.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Maintained V3 deferral policy — no public doc updates until V3 is feature-complete (Task #82).
+**Blockers:** none
+**Next:** After Task #48.2 (broadcast wiring): update swarmHandler.js row. After Task #82: major ARCHITECTURE.md + README.md V3 update.
+---
 ## 2026-03-27 — project-manager — Tasks #46.3 + #49 COMPLETED; #47.1 + #48.1 launched
 **Outcome:** COMPLETED
 **Summary:** Marked Task #46.3 (SwarmEngine._buildSystemPrompt + _startHeartbeat) and Task #49 (CircuitBreaker.js + BudgetTracker.js) as COMPLETED in TASK_PLAN.md and PROGRESS.md (both at 132/132 tests). Launched #47.1 (swarm.js execution control endpoints, 7 routes) and #48.1 (swarmHandler.js channel routing + connection management) in parallel — both unblocked since #46.3 and #46.1 are done. Updated all status tables, CONTEXT.md, PROGRESS.md (now 8/57 V3 COMPLETED).

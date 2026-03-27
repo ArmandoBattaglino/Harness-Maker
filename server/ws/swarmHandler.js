@@ -1,7 +1,8 @@
 // server/ws/swarmHandler.js
 // WebSocket handler for swarm execution updates.
 // Clients connect with ?executionId=<uuid> to subscribe to live execution events.
-// Task #48.1 — channel routing + connection management only (broadcast wired in #48.2).
+// Task #48.1 — channel routing + connection management.
+// Task #48.2 — broadcast() export + wired to SwarmEngine.
 
 // ---------------------------------------------------------------------------
 // Module-level subscriber registry
@@ -18,6 +19,23 @@ const _subscribers = new Map();
  */
 export function getSubscribers(executionId) {
   return _subscribers.get(executionId) ?? new Set();
+}
+
+/**
+ * Send a JSON event to all open WebSocket subscribers for a given executionId.
+ * Connections whose readyState is not OPEN (1) are skipped silently.
+ *
+ * @param {string} executionId
+ * @param {object} event  — must be JSON-serialisable
+ */
+export function broadcast(executionId, event) {
+  const subs = getSubscribers(executionId);
+  const msg = JSON.stringify(event);
+  for (const ws of subs) {
+    if (ws.readyState === 1) { // WebSocket.OPEN
+      ws.send(msg);
+    }
+  }
 }
 
 /**

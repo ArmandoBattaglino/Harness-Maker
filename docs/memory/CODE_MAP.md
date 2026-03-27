@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-27 — after Task #46.3 (_buildSystemPrompt + _startHeartbeat) + Task #49 (CircuitBreaker + BudgetTracker) — mapped by code-mapper_
+_Last updated: 2026-03-27 — after Task #47.1 (swarm.js REST endpoints) + Task #48.1 (swarmHandler.js WS channel) — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -10,7 +10,7 @@ _Last updated: 2026-03-27 — after Task #46.3 (_buildSystemPrompt + _startHeart
 ### Server Modules
 | File | Key Exports | Purpose |
 |------|-------------|---------|
-| server/index.js | (main) | Full bootstrap: binary discovery, config load, stale PID cleanup, middleware, routes, static SPA, error handler, 127.0.0.1 binding, SIGTERM/SIGINT, rate-limit stale sweep (BUG-07 fix) |
+| server/index.js | (main) | Full bootstrap: binary discovery, config load, stale PID cleanup, middleware, routes (incl. /api/v1/swarm), static SPA, error handler, 127.0.0.1 binding, two noServer WSS instances (wssTerminal + wssSwarm) routed by pathname, SwarmEngine instantiated + stored in app.locals, sessionManager stored in app.locals, SIGTERM/SIGINT, rate-limit stale sweep (BUG-07 fix). Last modified Task #47.1 + #48.1. |
 | server/services/ConfigStore.js | ConfigStore | Manages %APPDATA%\ClaudeCodeManager\config.json — projects CRUD, settings, write-file-atomic |
 | server/services/ProcessRegistry.js | ProcessRegistry | Tracks active PIDs in active_pids.json, cleanupStale() on startup; isValidPid() guards register+cleanup against out-of-range values |
 | server/services/BinaryDiscovery.js | discoverClaudeBinary | 4-step Claude binary lookup: env var → PATH → %LOCALAPPDATA% → fatal error |
@@ -35,6 +35,8 @@ _Last updated: 2026-03-27 — after Task #46.3 (_buildSystemPrompt + _startHeart
 | server/services/SwarmEngine.js | SwarmEngine (class), default SwarmEngine | V3 swarm orchestrator — spawns agent PTY sessions, registers HandoffParser swarmListeners taps, routes handoff/done events, tracks per-node agent state and budget; in-memory only (never persisted) (Tasks #46, #46.3, DEC-014) |
 | server/services/CircuitBreaker.js | CircuitBreaker (class), default CircuitBreaker | Advisory circuit breaker for handoff loops — check(edgeId, counter, threshold) returns boolean; never stops execution, caller emits WS advisory (FR-V3-17, Task #49) |
 | server/services/BudgetTracker.js | BudgetTracker (class), default BudgetTracker | Soft budget tracker — accumulates char counts per session, estimates tokens (÷4), provides checkBudget advisory signal; never stops execution (FR-V3-18, Task #49) |
+| server/routes/swarm.js | swarmRoutes (factory fn) | 7-endpoint REST API for swarm execution control: start, pause, resume, stop, status, agent output, broadcast. Factory pattern: accepts swarmEngine + sessionManager at construction. (Task #47.1) |
+| server/ws/swarmHandler.js | handleSwarmConnection (default), getSubscribers | WebSocket connection handler for /ws/swarm path. Module-level _subscribers Map keyed by executionId → Set\<WebSocket\>. Sends initial execution_status snapshot on connect. (Task #48.1) |
 
 ### Client Modules
 | File | Key Exports | Purpose |
@@ -1367,7 +1369,7 @@ _Last updated: 2026-03-27 — after Task #46.3 (_buildSystemPrompt + _startHeart
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine.startExecution(workflowId, projectId, projectPath)`
 - **Purpose:** Start a new workflow execution. Loads workflow definition from WorkflowStore, creates an in-memory WorkflowExecution record, identifies the triage node (first node with isTriageNode===true or fallback to nodes[0]), spawns a PTY session for that node, then starts the heartbeat timer.
-- **Called by:** (not yet wired to any route — swarm route to be implemented in a future task)
+- **Called by:** server/routes/swarm.js POST /:workflowId/start handler (Task #47.1)
 - **Calls:** WorkflowStore.get, uuidv4, SwarmEngine._spawnAgentPty, SwarmEngine._startHeartbeat
 - **Inputs:** workflowId (string), projectId (string), projectPath (string)
 - **Output:** Promise\<string\> — executionId (UUID)
@@ -1434,7 +1436,7 @@ _Last updated: 2026-03-27 — after Task #46.3 (_buildSystemPrompt + _startHeart
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine.stopExecution(executionId)`
 - **Purpose:** Stop a running workflow execution. Clears heartbeat timer, removes all swarm tap listeners from their respective PTY sessions (before killing), kills all agent PTY sessions via SessionManager.killSession, marks status 'stopped', and deletes the execution record.
-- **Called by:** (not yet wired to any route — future task)
+- **Called by:** server/routes/swarm.js DELETE /:executionId handler (Task #47.1)
 - **Calls:** clearInterval, SessionManager.getSession, ptySession.swarmListeners.delete, SessionManager.killSession
 - **Inputs:** executionId (string)
 - **Output:** Promise\<void\>
@@ -1444,12 +1446,12 @@ _Last updated: 2026-03-27 — after Task #46.3 (_buildSystemPrompt + _startHeart
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine.getStatus(executionId)`
 - **Purpose:** Return a serializable snapshot of an execution's status, agentStates, edgeCounters, and budget.
-- **Called by:** (not yet wired to any route — future task)
+- **Called by:** server/routes/swarm.js (pause, resume, status, agent-output, broadcast handlers), server/ws/swarmHandler.js::handleSwarmConnection (initial status on WS connect)
 - **Calls:** Object.fromEntries
 - **Inputs:** executionId (string)
 - **Output:** `{ executionId, workflowId, status, agentStates: object, edgeCounters: object, budget: object }` | null if not found
 - **Side effects:** none
-- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev
+- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev (updated callers: Task #47.1 + #48.1)
 
 ---
 

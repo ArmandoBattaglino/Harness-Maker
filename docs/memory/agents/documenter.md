@@ -1,4 +1,61 @@
 ---
+## 2026-03-27 — Tasks #47.1 + #48.1: server/routes/swarm.js + server/ws/swarmHandler.js
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel with code-mapper and project-manager)
+
+### Context when I started
+Tasks #47.1 and #48.1 had just completed. server/routes/swarm.js was created with 7 REST endpoints for swarm execution control. server/ws/swarmHandler.js was created for WebSocket channel routing and connection management for /ws/swarm. server/index.js was modified to import and wire both. V3 is still in progress — public documentation policy remains: do not update README.md or ARCHITECTURE.md until V3 is feature-complete (Task #82).
+
+### What I did
+1. Read DOC_STATUS.md, my prior session log, ACTIVITY_LOG.md (recent entries), server/routes/swarm.js, server/ws/swarmHandler.js, and server/index.js in parallel.
+2. Assessed staleness of all documentation artifacts:
+   - README.md: NOT stale. No user-facing feature or config change. V3 deferred per policy.
+   - ARCHITECTURE.md: NOT stale (intentionally deferred until V3 complete — high-priority debt item).
+   - docs/API.md: MISSING (intentional, tracked as medium debt).
+   - Inline comments / JSDoc in server/routes/swarm.js: UP TO DATE. Factory function swarmRoutes has JSDoc. Each route handler has a block comment documenting the HTTP method, path, request, response, and error shapes. No additional documentation needed.
+   - Inline comments / JSDoc in server/ws/swarmHandler.js: UP TO DATE. handleSwarmConnection (default export) has JSDoc with @param. getSubscribers (named export) has JSDoc with @param/@returns. Module-level _subscribers Map has a block comment explaining its structure.
+   - server/index.js wiring: Adequately commented. swarm route mount at line 222 has a clear inline comment. WSS routing at lines 264-284 has clear comments including the path mapping.
+3. Updated DOC_STATUS.md:
+   - Advanced timestamp to reflect Tasks #47.1 and #48.1.
+   - Added row for server/routes/swarm.js (Task #47.1) to V3 service files table.
+   - Added row for server/ws/swarmHandler.js (Task #48.1) to V3 service files table.
+   - Updated server/index.js row to reflect Tasks #43, #47.1, and #48.1 modifications.
+   - Updated ARCHITECTURE.md stale section note to include swarm REST routes and swarmHandler WS.
+4. Appended to ACTIVITY_LOG.md.
+5. Wrote this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Timestamp advanced; two new V3 rows added (swarm.js, swarmHandler.js); server/index.js row updated to reflect all three wiring tasks; ARCHITECTURE.md stale section expanded. |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log. |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended Tasks #47.1 + #48.1 documenter entry. |
+
+### Improvements delivered
+- DOC_STATUS.md V3 service files table now tracks 9 V3 backend artifacts (7 services + swarm routes + swarmHandler).
+- ARCHITECTURE.md stale section note now accurately describes all currently-implemented V3 components including REST routes and WS handler.
+- server/index.js row corrected to reflect its cumulative modification history.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| server/index.js mounts swarm routes using app.locals.swarmEngine which is set AFTER the route mount at line 222, but before the WSS setup at line 257. The route factory captures the reference at mount time — if app.locals.swarmEngine is undefined at that point the routes will receive undefined. | SwarmEngine is instantiated at line 257 but swarmRoutes() is called at line 222. | Not my bug to fix — noted for debugger/backend-dev if runtime errors appear on swarm routes. | KNOWN — deferred |
+
+### Decisions I made
+- Did not update README.md or ARCHITECTURE.md. V3 is incomplete. Policy unchanged from prior sessions.
+- Both new files are adequately self-documenting. No additional inline "why" comments are warranted.
+- Noted a potential initialization-order issue in server/index.js (swarm routes mounted before SwarmEngine is instantiated) — not fixed here since it is outside documenter scope, but logged in bugs table.
+
+### What I learned
+- swarm.js uses a broadcast endpoint (POST /:executionId/broadcast) with soft/hard mode. Soft appends ESC marker; hard sends Ctrl-C then delays via setTimeout (fire-and-forget, no await). The hard mode intentionally does not await — response is sent immediately and the delay runs async.
+- swarmHandler.js uses a module-level Map (_subscribers) rather than a class so it can be imported by both the WS handler and any future broadcast service without instantiation coupling.
+
+### State I'm leaving behind
+DOC_STATUS.md is current as of 2026-03-27. 9 V3 artifacts are now tracked in the V3 service files table. No public-facing documentation is stale. V3 documentation remains intentionally deferred until Task #82. The potential SwarmEngine initialization order issue in server/index.js is noted in bugs table above.
+
+### Handoff
+After Task #48.2 (broadcast wiring in swarmHandler.js): update swarmHandler.js row in DOC_STATUS.md to note broadcast is wired. After Task #82: major ARCHITECTURE.md + README.md V3 update covering all new services, REST routes, WS protocol, canvas architecture, and execution model.
+---
 ## 2026-03-27 — Tasks #46.3 + #49: SwarmEngine._buildSystemPrompt + _startHeartbeat; CircuitBreaker.js + BudgetTracker.js
 **Status:** COMPLETED
 **Called by:** orchestrator (parallel with code-mapper and project-manager)
