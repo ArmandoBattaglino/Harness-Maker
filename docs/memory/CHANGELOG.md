@@ -758,3 +758,46 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 **CODE_MAP.md:** No update needed — no source code modified
 **Breaking changes:** none
 ---
+
+## 2026-03-27 — Task #46.2: SwarmEngine startExecution + _spawnAgentPty + HandoffParser tap
+**Agent:** backend-dev
+**Triggered by:** V3 Phase 2 — implement SwarmEngine core execution loop: startExecution, PTY spawn, HandoffParser integration via swarmListeners tap (DEC-014), stub handlers for handoff/done events
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/SwarmEngine.js | MODIFIED | Implemented startExecution, _spawnAgentPty, _ensureAgentPty, _onHandoff, _onDone; updated stopExecution to remove tapFn from swarmListeners before killSession; added stub bodies for _buildSystemPrompt and _startHeartbeat |
+
+### Functions Added
+- `SwarmEngine.startExecution(workflowId, projectId, projectPath)` in `server/services/SwarmEngine.js` — loads workflow, creates WorkflowExecution record, finds triage node, spawns its PTY; returns executionId
+- `SwarmEngine._spawnAgentPty(executionId, nodeId)` in `server/services/SwarmEngine.js` — creates PTY session, writes system prompt, creates HandoffParser, registers tapFn on ptySession.swarmListeners, initializes agentStates entry, emits WS agent_status
+- `SwarmEngine._ensureAgentPty(executionId, nodeId)` in `server/services/SwarmEngine.js` — reuse active PTY or spawn new; returns sessionId
+- `SwarmEngine._onHandoff(executionId, sourceNodeId, event)` in `server/services/SwarmEngine.js` — stub: broadcasts WS handoff_started event; full routing deferred to #46.3/#62
+- `SwarmEngine._onDone(executionId, nodeId)` in `server/services/SwarmEngine.js` — stub: marks agentStates entry as 'done', broadcasts WS execution_status event; full completion logic deferred to #62.3
+- `SwarmEngine._buildSystemPrompt(node, workflowContext, handoffTargets)` in `server/services/SwarmEngine.js` — stub (empty body); full implementation in Task #46.3
+- `SwarmEngine._startHeartbeat(executionId)` in `server/services/SwarmEngine.js` — stub (empty body); full implementation in Task #46.3
+- `SwarmEngine.getStatus(executionId)` in `server/services/SwarmEngine.js` — return serializable snapshot of execution state
+
+### Functions Modified
+- `SwarmEngine.stopExecution(executionId)` in `server/services/SwarmEngine.js` — added tapFn removal loop (iterates agentStates, removes each tapFn from ptySession.swarmListeners before killSession loop); this prevents late PTY output from firing tap callbacks during shutdown
+
+### Connection Changes
+- SwarmEngine._spawnAgentPty → SessionManager.createSession (new dependency: PTY creation)
+- SwarmEngine._spawnAgentPty → SessionManager.writeInput (new dependency: system prompt injection)
+- SwarmEngine._spawnAgentPty → SessionManager.getSession (new dependency: access swarmListeners Set)
+- SwarmEngine._spawnAgentPty → HandoffParser (new: one HandoffParser instance per agent PTY, wired via tapFn closure on ptySession.swarmListeners)
+- SwarmEngine._spawnAgentPty tapFn → HandoffParser.feed (new: every PTY onData chunk is fed to HandoffParser)
+- SwarmEngine._spawnAgentPty tapFn → SwarmEngine._onHandoff (new: triggered on handoff events from parser)
+- SwarmEngine._spawnAgentPty tapFn → SwarmEngine._onDone (new: triggered on done events from parser)
+- SwarmEngine.startExecution → WorkflowStore.get (new: loads workflow definition)
+- SwarmEngine.stopExecution → SessionManager.getSession (new: tapFn cleanup before kill)
+- SwarmEngine.stopExecution → SessionManager.killSession (existing pattern, now preceded by tapFn cleanup)
+- HandoffParser.feed "Called by" updated: now wired via SwarmEngine._spawnAgentPty tapFn (was "not yet wired")
+
+### Impact on Other Code
+- SessionManager.swarmListeners Set (added in DEC-014 prep, Task prior to #46) is now actively used — tapFns registered and removed per SwarmEngine lifecycle
+- HandoffParser is now consumed by SwarmEngine (no longer a standalone service) — callers of HandoffParser directly in tests are unaffected
+- No breaking changes to existing endpoints or public function interfaces
+- SwarmEngine is not yet integrated into server/index.js or any route — not callable via HTTP as of Task #46.2
+
+---

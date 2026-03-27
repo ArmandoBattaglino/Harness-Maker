@@ -1,4 +1,24 @@
 ---
+## 2026-03-27 — code-mapper — Task #46.2: SwarmEngine startExecution + _spawnAgentPty + HandoffParser tap
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md with full SwarmEngine Function Graph (10 entries). Updated Module Index with SwarmEngine row. Updated HandoffParser "Called by" to reflect live wiring via SwarmEngine._spawnAgentPty tapFn. Appended Task #46.2 CHANGELOG entry with full connection map.
+**Files changed:** docs/memory/CODE_MAP.md (MODIFIED), docs/memory/CHANGELOG.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/code-mapper.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** After Task #46.3 (_buildSystemPrompt + _startHeartbeat): update stub entries to reflect full implementations.
+---
+## 2026-03-27 — documenter — Task #46.2: SwarmEngine documentation audit
+**Outcome:** COMPLETED
+**Summary:** Audited all documentation artifacts after Task #46.2 (SwarmEngine.js startExecution + _spawnAgentPty + HandoffParser tap). Inline documentation in SwarmEngine.js is adequate — all new methods have complete JSDoc. Public docs (README.md, ARCHITECTURE.md) intentionally not updated per V3 deferral policy. DOC_STATUS.md updated with two new SwarmEngine rows and a clarified ARCHITECTURE.md stale section note.
+**Files changed:** docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/agents/documenter.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Maintained V3 deferral policy — no public doc updates until V3 is feature-complete (Task #82). SwarmEngine rows split by subtask (#46.1, #46.2) for granular tracking.
+**Blockers:** none
+**Next:** After Task #46.3 (_buildSystemPrompt + _startHeartbeat): update SwarmEngine row in DOC_STATUS.md V3 table.
+---
+
+---
 ## 2026-03-27 — backend-dev — Task #46.2: SwarmEngine — startExecution + _spawnAgentPty + HandoffParser Tap
 **Outcome:** COMPLETED
 **Summary:** Implemented startExecution(), _spawnAgentPty(), _ensureAgentPty(), _onHandoff (stub), _onDone (stub) in SwarmEngine.js. startExecution loads workflow from store, creates execution record, finds triage node, spawns agent PTY. _spawnAgentPty creates session via SessionManager, wires HandoffParser tap on swarmListeners, tracks lastOutputSnippet (last 500 chars), stores tapFn for cleanup. Updated stopExecution to remove tapFn from swarmListeners before killing sessions. 132/132 tests pass.
@@ -777,4 +797,26 @@
 **Decisions made:** none
 **Blockers:** none
 **Next:** TASK #46.1 (backend-dev, claude-opus-4-6) + TASK #49 (backend-dev, claude-sonnet-4-6) — launch in parallel
+---
+
+---
+## 2026-03-27 — backend-dev — Task #49: CircuitBreaker.js + BudgetTracker.js
+**Outcome:** COMPLETED
+**Summary:** Created two pure service classes with no I/O and no imports. CircuitBreaker.check() returns true when counter >= threshold (advisory only, FR-V3-17). BudgetTracker tracks char counts per session/execution, estimates tokens at 1 token per 4 chars, and exposes checkBudget() returning { exceeded, estimatedUsed } (FR-V3-18). 132/132 tests pass.
+**Files changed:** server/services/CircuitBreaker.js (CREATED), server/services/BudgetTracker.js (CREATED)
+**Bugs fixed:** none
+**Decisions made:** Implemented spec exactly as provided — no deviations.
+**Blockers:** none
+**Next:** Task #62.3 wires BudgetTracker into SwarmEngine._onDone(). Task #47.1 unblocked (depended on #49).
+---
+
+---
+## 2026-03-27 — project-manager — Task #46.2 mark COMPLETED + #46.3 & #49 parallel launch
+**Outcome:** COMPLETED
+**Summary:** Confirmed Task #46.2 (SwarmEngine startExecution + _spawnAgentPty + HandoffParser tap) COMPLETED in all tracking files — 132/132 tests pass. Launched #46.3 (_buildSystemPrompt + _startHeartbeat, backend-dev/opus) and #49 (CircuitBreaker.js + BudgetTracker.js, backend-dev/sonnet) in parallel. Cleared #49's spurious dependency on #46.3 — both are pure stateless classes with no runtime coupling to SwarmEngine.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/agents/project-manager.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** #49 had incorrect dependency on #46.3 — cleared to none
+**Decisions made:** #49 runs in parallel with #46.3 (pure class interface contract fully defined in task spec, no runtime dep)
+**Blockers:** none
+**Next:** After #46.3 + #49 complete — launch #47.1 (swarm routes), #47.2 (scaffold stub), evaluate #48.1 readiness
 ---

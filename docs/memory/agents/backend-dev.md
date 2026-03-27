@@ -783,3 +783,43 @@ server/routes/workflows.js: fully implemented, all 5 endpoints, mounted in index
 ### Handoff
 None — task fully self-contained. Next task is #46 (SwarmEngine.js skeleton).
 ---
+
+---
+## 2026-03-27 — Task #49: CircuitBreaker.js + BudgetTracker.js
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+V3 Phase 1 backend services being built incrementally. SwarmEngine.js already has `if (this._budgetTracker)` guards in _spawnAgentPty. These two pure service classes were missing and needed before they can be wired in by later tasks.
+
+### What I did
+1. Read project memory (PROGRESS.md, ACTIVITY_LOG.md) and listed server/services/ directory in parallel.
+2. Created server/services/CircuitBreaker.js — single `check(edgeId, counter, threshold=10)` method returning `counter >= threshold`.
+3. Created server/services/BudgetTracker.js — full implementation with `_sessionChars` Map, `_executionSessions` Map, and methods: estimate(), track(), registerSession(), getTotal(), checkBudget(), clearExecution().
+4. Ran `npm test` — 132/132 tests pass, zero regressions.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/CircuitBreaker.js | CREATED | Advisory circuit breaker — check() method only, no I/O, no imports |
+| server/services/BudgetTracker.js | CREATED | Soft budget tracker — char counting per session, token estimation (charCount/4 ceil), checkBudget() returns { exceeded, estimatedUsed } |
+| docs/TASK_PLAN.md | MODIFIED | Task #49 status changed from IN_PROGRESS to COMPLETED |
+
+### Improvements delivered
+- CircuitBreaker and BudgetTracker now exist as pure service classes, unblocking #47.1, #47.2, #48.1, #48.2 which depend on #49 per the task graph.
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Implemented exactly the code specified in the task — no deviation. Both classes have zero I/O and zero external imports, as required.
+
+### What I learned
+- These are pure value classes — no async, no deps. Straightforward to implement from spec.
+
+### State I'm leaving behind
+Both files exist and are correct. They are not yet imported anywhere (SwarmEngine integration deferred to Task #62.3 per task instructions). 132/132 tests pass.
+
+### Handoff
+Task #62.3 will import BudgetTracker and wire it into SwarmEngine._onDone(). Task #47.1 can proceed (depends on #46.3 and #49 — #49 is now done).
+---

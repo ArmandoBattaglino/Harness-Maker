@@ -836,3 +836,55 @@ TASK #46.1 (SwarmEngine — SessionManager patch + class skeleton, backend-dev, 
 ### Handoff
 Assign #46.1 (opus) + #49 (sonnet) in parallel to backend-dev.
 ---
+---
+## 2026-03-27 — Task #46.2 Completion Mark + #46.3 & #49 Parallel Launch
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task completion notification)
+
+### Context when I started
+Task #46.2 (SwarmEngine.js startExecution + _spawnAgentPty + HandoffParser tap) had just completed. 132/132 tests pass. Code committed in HEAD. Orchestrator requested: mark #46.2 COMPLETED in TASK_PLAN.md, then launch #46.3 + #49 in parallel. The TASK_PLAN.md body already showed #46.2 as COMPLETED and the summary table also showed COMPLETED — both were accurate from the prior session. PROGRESS.md also already showed #46.2 COMPLETED.
+
+### What I did
+1. Read TASK_PLAN.md sections around #46.2, #46.3, #49 to verify exact status
+2. Read PROGRESS.md to confirm V3 section accuracy — all 5 completed tasks reflected correctly
+3. Read project-manager.md session history
+4. Confirmed #46.2 COMPLETED everywhere — no change needed to body or summary table
+5. Updated #46.3 Status: PENDING → IN_PROGRESS in TASK_PLAN.md body and summary table
+6. Updated #49 Status: PENDING → IN_PROGRESS; Dependencies: #46.3 → none (pure stateless classes — parallel-safe per original PM session note)
+7. Updated PROGRESS.md V3 section: #46.3 and #49 marked IN_PROGRESS with agent/model assignments
+8. Wrote this session log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | #46.3 status PENDING→IN_PROGRESS; #49 status PENDING→IN_PROGRESS + dependency cleared to none; summary table updated for both |
+| docs/memory/PROGRESS.md | MODIFIED | V3 section header updated to note parallel launch; #46.3 + #49 marked IN_PROGRESS with agent/model |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log appended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Session entry appended |
+
+### Improvements delivered
+- TASK_PLAN.md accurately reflects the running state: #46.3 and #49 both IN_PROGRESS
+- #49's dependency clarified: it was incorrectly listed as needing #46.3 (runtime dep) but it's two pure stateless classes (CircuitBreaker + BudgetTracker) with no runtime dependency on SwarmEngine — safe to run in parallel
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| #49 had spurious dependency on #46.3 | Original task plan set dep conservatively | Cleared to "none" with explanation in dependency field | FIXED |
+
+### Decisions I made
+- #49 dependency cleared to none → CircuitBreaker.check() and BudgetTracker.track() are pure stateless math; SwarmEngine only calls them — they don't import SwarmEngine. No runtime coupling means parallel execution is safe.
+- #46.3 and #49 launched in parallel (one response) per CLAUDE.md parallel mandate
+
+### What I learned
+- Pure service classes (CircuitBreaker, BudgetTracker) should never have been given a SwarmEngine dependency in the task plan — the interface contract is in the task spec, not the runtime
+- TASK_PLAN.md at V3 scope reliably exceeds 256KB — always grep for specific lines rather than reading linearly
+
+### State I'm leaving behind
+- #46.3 IN_PROGRESS: backend-dev (claude-opus-4-6) implementing _buildSystemPrompt + _startHeartbeat
+- #49 IN_PROGRESS: backend-dev (claude-sonnet-4-6) implementing CircuitBreaker.js + BudgetTracker.js
+- Both running in parallel
+- Next wave after both complete: #47.1 + #47.2 + #48.1 can be evaluated for parallel launch
+
+### Handoff
+After #46.3 completes: unblock #47.1 (swarm.js execution routes), #47.2 (scaffold stub), #62.1 (handoff loop part 1). After #49 completes: BudgetTracker ready for SwarmEngine _onDone integration (#62.3).
+---

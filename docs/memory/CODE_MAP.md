@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-27 — after Tasks #43 (WorkflowStore) and #45 (HandoffParser) — mapped by code-mapper_
+_Last updated: 2026-03-27 — after Task #46.2 (SwarmEngine startExecution + _spawnAgentPty + HandoffParser tap) — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -32,6 +32,7 @@ _Last updated: 2026-03-27 — after Tasks #43 (WorkflowStore) and #45 (HandoffPa
 | server/ws/terminalHandler.js | setupTerminalWebSocket | WebSocket handler: sessionId from URL query, attach/detach client, route input/resize messages |
 | server/services/WorkflowStore.js | WorkflowStore (class) | CRUD + schema validation for workflow definitions; persists to %APPDATA%\ClaudeCodeManager\workflows\<id>.json via write-file-atomic; server-generated UUIDs; path-traversal guard on all reads/writes (Task #43) |
 | server/services/HandoffParser.js | HandoffParser (class), default HandoffParser | Stateful rolling 4KB buffer extractor for ConPTY __HANDOFF__ and __DONE__ tokens; handles chunk-split across multiple PTY onData callbacks; ANSI escape stripping; JSON payload validation (Task #45, DEC-012) |
+| server/services/SwarmEngine.js | SwarmEngine (class), default SwarmEngine | V3 swarm orchestrator — spawns agent PTY sessions, registers HandoffParser swarmListeners taps, routes handoff/done events, tracks per-node agent state and budget; in-memory only (never persisted) (Task #46, DEC-014) |
 
 ### Client Modules
 | File | Key Exports | Purpose |
@@ -1314,7 +1315,7 @@ _Last updated: 2026-03-27 — after Tasks #43 (WorkflowStore) and #45 (HandoffPa
 
 ### `server/services/HandoffParser.js` :: `HandoffParser.feed(rawChunk)`
 - **Purpose:** Accept a raw PTY onData chunk (may be partial), strip ANSI escape codes, append to rolling 4KB buffer, then scan for `__HANDOFF__:target:base64` and `__DONE__` tokens. Returns array of parsed events (empty if no tokens found yet). Clears buffer when tokens are found.
-- **Called by:** Not yet wired to PTY onData — reserved for SwarmEngine / workflow executor (Task #46+)
+- **Called by:** SwarmEngine._spawnAgentPty (via tapFn closure registered on ptySession.swarmListeners — Task #46.2)
 - **Calls:** String.replace (ANSI strip × 4), HandoffParser._validateContext, Buffer.from, JSON.parse, RegExp.exec, DONE_RE.test, console.warn
 - **Inputs:** rawChunk (string — raw PTY output from node-pty onData)
 - **Output:** `Array<{ type: 'handoff', targetId: string, contextUpdate: object } | { type: 'done' }>` — empty array when no tokens present
@@ -1333,12 +1334,118 @@ _Last updated: 2026-03-27 — after Tasks #43 (WorkflowStore) and #45 (HandoffPa
 
 ### `server/services/HandoffParser.js` :: `HandoffParser.reset()`
 - **Purpose:** Clear the rolling accumulator buffer. Called when a session is reset or on parser reuse.
-- **Called by:** Not yet wired — reserved for session lifecycle management in SwarmEngine
+- **Called by:** Not yet wired — reserved for session lifecycle management in SwarmEngine (future task)
 - **Calls:** (assignment only)
 - **Inputs:** none
 - **Output:** void
 - **Side effects:** clears `this._buf` to empty string
 - **Last modified:** 2026-03-27 in Task #45 by backend-dev
+
+---
+
+## SwarmEngine (Task #46.2)
+
+### `server/services/SwarmEngine.js` :: `SwarmEngine(sessionManager, workflowStore)`
+- **Purpose:** Constructor. Stores references to SessionManager and WorkflowStore. Initializes empty _executions Map and null _wsBroadcast. _budgetTracker is undefined until a future task wires it in.
+- **Called by:** server/index.js (future — not yet integrated at server startup as of Task #46.2)
+- **Calls:** none (assignment only)
+- **Inputs:** sessionManager (SessionManager singleton), workflowStore (WorkflowStore instance)
+- **Output:** SwarmEngine instance
+- **Side effects:** none
+- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev
+
+### `server/services/SwarmEngine.js` :: `SwarmEngine.setWsBroadcast(fn)`
+- **Purpose:** Wire the WebSocket broadcast function (called by swarmHandler.js after WS channel setup). Stored as this._wsBroadcast for use by all methods that emit execution status events.
+- **Called by:** swarmHandler.js (not yet implemented — future task)
+- **Calls:** none (assignment only)
+- **Inputs:** fn (Function — (executionId: string, event: object) => void)
+- **Output:** void
+- **Side effects:** sets this._wsBroadcast
+- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev
+
+### `server/services/SwarmEngine.js` :: `SwarmEngine.startExecution(workflowId, projectId, projectPath)`
+- **Purpose:** Start a new workflow execution. Loads workflow definition from WorkflowStore, creates an in-memory WorkflowExecution record, identifies the triage node (first node with isTriageNode===true or fallback to nodes[0]), then spawns a PTY session for that node. Returns executionId.
+- **Called by:** (not yet wired to any route — swarm route to be implemented in a future task)
+- **Calls:** WorkflowStore.get, uuidv4, SwarmEngine._spawnAgentPty
+- **Inputs:** workflowId (string), projectId (string), projectPath (string)
+- **Output:** Promise\<string\> — executionId (UUID)
+- **Side effects:** creates execution record in this._executions; spawns PTY session; emits WS agent_status event via _spawnAgentPty
+- **Complexity note:** The execution record is stored in _executions BEFORE _spawnAgentPty is called, so _spawnAgentPty can look it up during its own execution. Order matters.
+- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev
+
+### `server/services/SwarmEngine.js` :: `SwarmEngine._spawnAgentPty(executionId, nodeId)`
+- **Purpose:** Spawn an agent PTY session for a workflow node. Looks up the execution and node, builds handoffTargets from outgoing edges, calls _buildSystemPrompt (stub), creates a PTY session via SessionManager.createSession, writes the system prompt to the PTY, initializes agent state in agentStates Map, creates a tapFn closure that feeds PTY output to a HandoffParser instance, registers tapFn on ptySession.swarmListeners (DEC-014), and emits WS agent_status event.
+- **Called by:** SwarmEngine.startExecution, SwarmEngine._ensureAgentPty
+- **Calls:** SessionManager.createSession, SessionManager.writeInput, SessionManager.getSession, HandoffParser (constructor), HandoffParser.feed, SwarmEngine._buildSystemPrompt, SwarmEngine._onHandoff, SwarmEngine._onDone, this._wsBroadcast
+- **Inputs:** executionId (string), nodeId (string)
+- **Output:** Promise\<void\>
+- **Side effects:** creates PTY session; writes to PTY stdin; adds entry to execution.agentStates; registers tapFn on ptySession.swarmListeners Set; emits WS event
+- **Complexity note:** tapFn is a closure capturing executionId, nodeId, parser instance, and execution reference. It: (1) tracks lastOutputSnippet (last 500 chars), (2) optionally calls _budgetTracker if wired (Task #49), (3) feeds chunks to HandoffParser and dispatches handoff/done events. tapFn is stored in agentStates so stopExecution can remove it from swarmListeners during cleanup.
+- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev
+
+### `server/services/SwarmEngine.js` :: `SwarmEngine._ensureAgentPty(executionId, nodeId)`
+- **Purpose:** Return the sessionId for a node's agent PTY if one is already active (status !== 'done'). If none exists or the existing one is done, spawn a new PTY and return its sessionId.
+- **Called by:** (future handoff routing logic — not yet called as of Task #46.2)
+- **Calls:** SwarmEngine._spawnAgentPty (conditional)
+- **Inputs:** executionId (string), nodeId (string)
+- **Output:** Promise\<string | undefined\> — sessionId of active or newly spawned PTY
+- **Side effects:** may spawn PTY session (via _spawnAgentPty)
+- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev
+
+### `server/services/SwarmEngine.js` :: `SwarmEngine._buildSystemPrompt(node, workflowContext, handoffTargets)` (stub)
+- **Purpose:** Assemble the system prompt for an agent node — role, workflow context, valid handoff targets. Per OpenAI Swarm pattern. STUB: returns undefined as of Task #46.2; full implementation in Task #46.3.
+- **Called by:** SwarmEngine._spawnAgentPty
+- **Calls:** none (empty body — stub)
+- **Inputs:** node (workflow node object), workflowContext (object), handoffTargets (string[])
+- **Output:** undefined (stub — will return string in #46.3)
+- **Side effects:** none
+- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev (stub)
+
+### `server/services/SwarmEngine.js` :: `SwarmEngine._startHeartbeat(executionId)` (stub)
+- **Purpose:** Start a heartbeat timer to prevent idle sweeper from killing active workflow PTY sessions. STUB: empty body as of Task #46.2; full implementation in Task #46.3.
+- **Called by:** (not yet called — will be called from startExecution in #46.3)
+- **Calls:** none (empty body — stub)
+- **Inputs:** executionId (string)
+- **Output:** void
+- **Side effects:** none (stub — will set execution.heartbeatTimer in #46.3)
+- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev (stub)
+
+### `server/services/SwarmEngine.js` :: `SwarmEngine._onHandoff(executionId, sourceNodeId, event)` (stub)
+- **Purpose:** Handle a handoff event from the HandoffParser. Currently broadcasts a handoff_started WS event. Full routing (spawn target agent, edge counter tracking, context merge) deferred to Task #46.3 / #62.
+- **Called by:** SwarmEngine._spawnAgentPty tapFn (via HandoffParser.feed returning evt.type === 'handoff')
+- **Calls:** this._wsBroadcast
+- **Inputs:** executionId (string), sourceNodeId (string), event ({ type: 'handoff', targetId: string, contextUpdate: object })
+- **Output:** Promise\<void\>
+- **Side effects:** emits WS event `{ type: 'handoff_started', sourceNodeId, targetNodeId, edgeId: null, counter: 0 }`
+- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev (stub — full routing in #46.3/#62)
+
+### `server/services/SwarmEngine.js` :: `SwarmEngine._onDone(executionId, nodeId)` (stub)
+- **Purpose:** Handle a done event from the HandoffParser. Marks the agent state as 'done' in agentStates Map, then broadcasts an execution_status WS event. Full completion logic (all-done check, execution status update) deferred to Task #62.3.
+- **Called by:** SwarmEngine._spawnAgentPty tapFn (via HandoffParser.feed returning evt.type === 'done')
+- **Calls:** this._wsBroadcast
+- **Inputs:** executionId (string), nodeId (string)
+- **Output:** void
+- **Side effects:** mutates execution.agentStates.get(nodeId).status to 'done'; emits WS event `{ type: 'execution_status', status: 'agent_done', nodeId }`
+- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev (stub — full completion in #62.3)
+
+### `server/services/SwarmEngine.js` :: `SwarmEngine.stopExecution(executionId)`
+- **Purpose:** Stop a running workflow execution. Clears heartbeat timer, removes all swarm tap listeners from their respective PTY sessions (before killing), kills all agent PTY sessions via SessionManager.killSession, marks status 'stopped', and deletes the execution record.
+- **Called by:** (not yet wired to any route — future task)
+- **Calls:** clearInterval, SessionManager.getSession, ptySession.swarmListeners.delete, SessionManager.killSession
+- **Inputs:** executionId (string)
+- **Output:** Promise\<void\>
+- **Side effects:** removes tapFn from swarmListeners Sets; kills all PTY sessions; removes execution from this._executions
+- **Complexity note (DEC-014):** tapFn removal happens BEFORE killSession — ensures the listener cannot fire on any final PTY output flushed during the kill sequence.
+- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev (updated: added tapFn removal loop before kill loop)
+
+### `server/services/SwarmEngine.js` :: `SwarmEngine.getStatus(executionId)`
+- **Purpose:** Return a serializable snapshot of an execution's status, agentStates, edgeCounters, and budget.
+- **Called by:** (not yet wired to any route — future task)
+- **Calls:** Object.fromEntries
+- **Inputs:** executionId (string)
+- **Output:** `{ executionId, workflowId, status, agentStates: object, edgeCounters: object, budget: object }` | null if not found
+- **Side effects:** none
+- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev
 
 ---
 

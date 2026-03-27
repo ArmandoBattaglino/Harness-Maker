@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-03-27 after Tasks #43/#45: WorkflowStore.js + HandoffParser.js (V3 in progress)_
+_Last updated: 2026-03-27 after Task #46.2: SwarmEngine.js startExecution + _spawnAgentPty + HandoffParser tap (V3 in progress)_
 
 ## Status Legend
 - UP_TO_DATE -- matches current code
@@ -30,13 +30,15 @@ _Last updated: 2026-03-27 after Tasks #43/#45: WorkflowStore.js + HandoffParser.
 |------|--------|-------|
 | server/services/WorkflowStore.js | UP_TO_DATE | New file (Task #43). Persistent workflow state store. Self-documenting code; no inline docs needed. Not yet reflected in ARCHITECTURE.md (V3 incomplete). |
 | server/services/HandoffParser.js | UP_TO_DATE | New file (Task #45). Stateful rolling-buffer token extractor for ConPTY chunk-split handoff tokens. Well-documented inline. 22 unit tests in server/tests/HandoffParser.test.js. Not yet reflected in ARCHITECTURE.md (V3 incomplete). |
+| server/services/SwarmEngine.js (Task #46.1) | UP_TO_DATE | Created (Task #46.1). Class skeleton + constructor + setWsBroadcast + stopExecution + getStatus. All methods have JSDoc. swarmListeners tap design referenced to DEC-014. Not yet in ARCHITECTURE.md (V3 incomplete). |
+| server/services/SwarmEngine.js (Task #46.2) | UP_TO_DATE | Modified (Task #46.2). Implemented startExecution, _spawnAgentPty, _ensureAgentPty, _onHandoff (stub), _onDone (stub). All methods have complete JSDoc with @param/@returns/@throws. WorkflowExecution in-memory shape documented in file header comment. tapFn lifecycle (register + cleanup in stopExecution) documented inline. budgetTracker hook documented as deferred to Task #49. Not yet in ARCHITECTURE.md (V3 incomplete). |
 | server/index.js | UP_TO_DATE | Modified (Task #43). WorkflowStore initialization added at server startup. No documentation staleness — V3 architecture section in ARCHITECTURE.md does not exist yet. |
 
 ## Stale Sections (known gaps)
 
 - docs/memory/DECISIONS.md:DEC-001 -- Records "use node-pty-prebuilt-multiarch" but actual installed package is plain node-pty. Historical accuracy preserved intentionally; correction in PROJECT.md.
 - client/src/views/EntitiesView.jsx -- File still exists on disk but is no longer imported by App.jsx. Marked as DEPRECATED in ARCHITECTURE.md component tree. Can be deleted in a future cleanup.
-- docs/ARCHITECTURE.md -- Does not yet include V3 components (WorkflowStore, HandoffParser, SwarmEngine, BroadcastService, etc.). Will require a major update when V3 is feature-complete.
+- docs/ARCHITECTURE.md -- Does not yet include V3 components (WorkflowStore, HandoffParser, SwarmEngine, BroadcastService, etc.). Will require a major update when V3 is feature-complete. SwarmEngine now has startExecution, _spawnAgentPty, _ensureAgentPty, _onHandoff (stub), _onDone (stub) implemented as of Task #46.2. _buildSystemPrompt and _startHeartbeat remain stubs pending Task #46.3.
 
 ## Documentation Debt
 

@@ -80,6 +80,9 @@ class SwarmEngine {
     // 5. Spawn triage agent PTY
     await this._spawnAgentPty(executionId, triageNode.id);
 
+    // 6. Start heartbeat to keep agent PTYs alive
+    this._startHeartbeat(executionId);
+
     return executionId;
   }
 
@@ -207,7 +210,44 @@ class SwarmEngine {
    * @returns {string} assembled system prompt
    */
   _buildSystemPrompt(node, workflowContext, handoffTargets) {
-    /* implementato in #46.3 */
+    const lines = [];
+
+    // Agent's own system prompt / role instructions
+    const agentPrompt = (node.data && node.data.systemPrompt) || '';
+    lines.push(agentPrompt);
+    lines.push('');
+    lines.push('--- SWARM PROTOCOL (mandatory — never skip) ---');
+
+    // Workflow context section — omit entirely if empty
+    const contextKeys = Object.keys(workflowContext);
+    if (contextKeys.length > 0) {
+      lines.push('Current workflow context:');
+      for (const key of contextKeys) {
+        lines.push(`${key}: ${workflowContext[key]}`);
+      }
+      lines.push('');
+    }
+
+    // Handoff instructions — vary based on whether targets exist
+    if (handoffTargets.length > 0) {
+      lines.push('When your task is complete and must pass to another agent, output EXACTLY as last line:');
+      lines.push('__HANDOFF__:<targetId>:<base64_json_context_update>');
+      lines.push('');
+      lines.push(`Valid target IDs: ${handoffTargets.join(', ')}`);
+      lines.push('Context update format: {"key": "value", ...} — flat dict only, max 50 keys, values max 1024 chars');
+      lines.push('');
+      lines.push('When fully done (no further handoff needed):');
+      lines.push('__DONE__');
+    } else {
+      lines.push('When fully done:');
+      lines.push('__DONE__');
+    }
+
+    lines.push('');
+    lines.push('Do NOT output the handoff or done token mid-response. Only as the very LAST line.');
+    lines.push('--- END PROTOCOL ---');
+
+    return lines.join('\n');
   }
 
   /**
@@ -217,7 +257,24 @@ class SwarmEngine {
    * @param {string} executionId
    */
   _startHeartbeat(executionId) {
-    /* implementato in #46.3 */
+    const execution = this._executions.get(executionId);
+    if (!execution) return;
+
+    execution.heartbeatTimer = setInterval(() => {
+      const exec = this._executions.get(executionId);
+      if (!exec) return;
+
+      for (const [nodeId, state] of exec.agentStates) {
+        if (state.status === 'running') {
+          this._sessionManager.writeInput(state.sessionId, '');
+        }
+      }
+    }, 300000); // 5 minutes
+
+    // Allow Node.js to exit even if heartbeat timer is active
+    if (execution.heartbeatTimer.unref) {
+      execution.heartbeatTimer.unref();
+    }
   }
 
   /**

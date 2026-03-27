@@ -3988,7 +3988,7 @@ Phase: V3 Phase 1 — Backend Foundation
 Priority: HIGH
 Difficulty: MEDIUM
 Depends on: #46.2
-Status: PENDING
+Status: COMPLETED
 Context:
   Third of three subtasks for SwarmEngine.js.
   Implement _buildSystemPrompt and _startHeartbeat in the class from #46.1.
@@ -4258,8 +4258,8 @@ Agent: backend-dev
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
-Dependencies: #46.3
+Status: IN_PROGRESS
+Dependencies: none (pure stateless classes — no runtime dep on SwarmEngine; launched in parallel with #46.3)
 Context:
   Create two small pure services:
 
@@ -5998,12 +5998,12 @@ Acceptance criteria:
 | 45 | HandoffParser.js | backend-dev | HIGH | claude-opus-4-6 | COMPLETED |
 | **46.1** | SwarmEngine — SessionManager patch + class skeleton | backend-dev | HIGH | claude-opus-4-6 | COMPLETED |
 | **46.2** | SwarmEngine — startExecution + _spawnAgentPty + tap | backend-dev | HIGH | claude-opus-4-6 | COMPLETED |
-| **46.3** | SwarmEngine — _buildSystemPrompt + _startHeartbeat | backend-dev | HIGH | claude-opus-4-6 | PENDING |
+| **46.3** | SwarmEngine — _buildSystemPrompt + _startHeartbeat | backend-dev | HIGH | claude-opus-4-6 | COMPLETED |
 | **47.1** | swarm.js — execution control endpoints (7 routes) | backend-dev | HIGH | claude-sonnet-4-6 | PENDING |
 | **47.2** | swarm.js — scaffold endpoint stub (501) | backend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
 | **48.1** | swarmHandler.js — channel routing + connection mgmt | backend-dev | HIGH | claude-sonnet-4-6 | PENDING |
 | **48.2** | swarmHandler.js — broadcast() + WS event wiring | backend-dev | HIGH | claude-sonnet-4-6 | PENDING |
-| 49 | CircuitBreaker.js + BudgetTracker.js | backend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
+| 49 | CircuitBreaker.js + BudgetTracker.js | backend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
 | 50 | V3 Security Layer (SEC-V3-01 to SEC-V3-07) | security | HIGH | claude-sonnet-4-6 | PENDING |
 | 51 | Client deps: @xyflow/react + zustand install | devops | HIGH | claude-haiku-4-5 | PENDING |
 | 52 | SwarmContext.jsx — Zustand ExecutionStore | frontend-dev | HIGH | claude-sonnet-4-6 | PENDING |

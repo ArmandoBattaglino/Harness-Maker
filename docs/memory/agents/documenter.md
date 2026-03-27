@@ -1,4 +1,55 @@
 ---
+## 2026-03-27 — Task #46.2: SwarmEngine startExecution + _spawnAgentPty + HandoffParser tap
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel with code-mapper and project-manager)
+
+### Context when I started
+Task #46.2 (SwarmEngine.js startExecution + _spawnAgentPty + HandoffParser tap) had just completed. SwarmEngine.js was modified to implement startExecution(), _spawnAgentPty(), _ensureAgentPty(), _onHandoff (stub), _onDone (stub). stopExecution was updated to remove tapFns from swarmListeners before killing sessions. V3 is still in progress — public documentation policy remains: do not update README.md or ARCHITECTURE.md until V3 is feature-complete (Task #82 is the designated V3 doc task).
+
+### What I did
+1. Read SwarmEngine.js, DOC_STATUS.md, and documenter.md in parallel.
+2. Read ACTIVITY_LOG.md (recent entries) and PROGRESS.md to confirm V3 progress state.
+3. Assessed staleness of all documentation artifacts:
+   - README.md: NOT stale. No user-facing feature/config change. V3 deferred.
+   - ARCHITECTURE.md: NOT stale (intentionally deferred until V3 complete — tracked as high-priority debt).
+   - docs/API.md: MISSING (intentional — documented in ARCHITECTURE.md, standalone deferred).
+   - Inline comments / JSDoc in SwarmEngine.js: UP TO DATE. All new and modified methods have complete JSDoc with @param, @returns, @throws. WorkflowExecution in-memory shape documented in file-header block comment. tapFn lifecycle and budgetTracker hook both have inline comments. No stale comments found.
+4. Updated DOC_STATUS.md: advanced timestamp; added two new SwarmEngine rows (#46.1 and #46.2) to the V3 service files table; updated the ARCHITECTURE.md stale section note to describe SwarmEngine's current partial implementation state (#46.2 methods done, #46.3 stubs remaining).
+5. Appended to ACTIVITY_LOG.md.
+6. Wrote this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Timestamp advanced; two SwarmEngine rows added to V3 service files table (#46.1 skeleton, #46.2 startExecution/_spawnAgentPty/_ensureAgentPty/_onHandoff/_onDone); ARCHITECTURE.md stale section updated to note SwarmEngine partial impl state. |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log. |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended Task #46.2 documenter entry. |
+
+### Improvements delivered
+- DOC_STATUS.md V3 service files table now explicitly tracks SwarmEngine.js at two granularity levels (#46.1 skeleton, #46.2 core implementation), noting exactly which methods are implemented vs stubbed.
+- The stale section note for ARCHITECTURE.md now accurately describes the partial state of SwarmEngine (startExecution through _onDone done; _buildSystemPrompt + _startHeartbeat pending #46.3).
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | -- | -- | -- |
+
+### Decisions I made
+- Did not update README.md or ARCHITECTURE.md. V3 is incomplete. The policy from prior sessions holds: documenting partial architecture creates false docs.
+- SwarmEngine.js inline docs are adequate as-is. All new methods have full JSDoc, the WorkflowExecution shape is documented in a block comment, and the tapFn lifecycle and budgetTracker hook are explained with inline comments. No "why" comments are missing.
+- Placed SwarmEngine rows in the V3 service files table (not the main Documentation Health table). This keeps the main table for stable, released documentation artifacts. V3 files are tracked separately until V3 ships.
+
+### What I learned
+- When a single service file accumulates changes across multiple subtasks (#46.1, #46.2, #46.3), it is cleaner to track each subtask's contribution separately in the V3 service files table rather than updating a single row — this preserves a record of what was added when.
+
+### State I'm leaving behind
+DOC_STATUS.md is current as of 2026-03-27. SwarmEngine.js Tasks #46.1 and #46.2 are both tracked. _buildSystemPrompt and _startHeartbeat remain stubs (tracked in ARCHITECTURE.md stale section note). No public-facing documentation is stale. V3 documentation remains intentionally deferred until Task #82.
+
+### Handoff
+After Task #46.3 (_buildSystemPrompt + _startHeartbeat): update the SwarmEngine row in DOC_STATUS.md V3 service files table to reflect those methods being implemented. After V3 reaches Task #82 (V3 Documentation update): ARCHITECTURE.md and README.md need major V3 updates. Use the DOC_STATUS.md high-priority debt items as the trigger checklist.
+---
+
+---
 ## 2026-03-27 — Tasks #43/#45: WorkflowStore + HandoffParser documentation audit
 **Status:** COMPLETED
 **Called by:** orchestrator (parallel with code-mapper and project-manager)

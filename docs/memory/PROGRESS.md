@@ -152,7 +152,7 @@ _None._
 - NOTE: FileManager was NOT created in Task #5 as planned — RESOLVED in Task #7 (created server/services/FileManager.js).
 
 ## V3 — Swarm Orchestrator (57 granular tasks after split — 2026-03-27 replan)
-**Status: 5/57 COMPLETED — as of 2026-03-27.**
+**Status: 6/57 COMPLETED — as of 2026-03-27. #49 IN_PROGRESS.**
 **Note: Original 40 tasks (#43–#82). After model assignment + subtask split: 57 granular units.**
 **7 original tasks split into subtasks: #46→3, #47→2, #48→2, #53→3, #57→2, #62→3, #71→2**
 - V3 PRD complete: docs/PRD.md
@@ -165,12 +165,12 @@ _None._
 - [TASK-45] COMPLETED 2026-03-27 — HandoffParser.js — 22 unit tests, 132/132 tests pass
 - [TASK-46.1] COMPLETED 2026-03-27 — SwarmEngine — SessionManager patch + class skeleton, 132/132 tests pass
 - [TASK-46.2] COMPLETED 2026-03-27 — SwarmEngine — startExecution + _spawnAgentPty + HandoffParser tap, 132/132 tests pass
-- [TASK-46.3] PENDING — SwarmEngine — _buildSystemPrompt + _startHeartbeat
+- [TASK-46.3] COMPLETED 2026-03-27 — SwarmEngine — _buildSystemPrompt + _startHeartbeat, 132/132 tests pass
 - [TASK-47.1] PENDING — swarm.js — 7 execution control endpoints
 - [TASK-47.2] PENDING — swarm.js — scaffold endpoint stub (501)
 - [TASK-48.1] PENDING — swarmHandler.js — channel routing + connection management
 - [TASK-48.2] PENDING — swarmHandler.js — broadcast() + WS event wiring
-- [TASK-49] PENDING — CircuitBreaker.js + BudgetTracker.js
+- [TASK-49] COMPLETED 2026-03-27 — CircuitBreaker.js + BudgetTracker.js — pure service classes, no I/O, no imports, 132/132 tests pass
 - [TASK-50] PENDING — V3 Security Layer (SEC-V3-01 to SEC-V3-07)
 
 ### V3 Phase 2 — Canvas Static
