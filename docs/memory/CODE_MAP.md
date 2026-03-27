@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-27 — after Tasks #64 (useHandoff.js edge animation hook), #65 (AgentNode.jsx live update — pulse + micro PTY log) — mapped by code-mapper_
+_Last updated: 2026-03-27 — after Task #62.1 (SwarmEngine._onHandoff full routing + constructor CircuitBreaker/BudgetTracker params + server/index.js wiring) — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -10,7 +10,7 @@ _Last updated: 2026-03-27 — after Tasks #64 (useHandoff.js edge animation hook
 ### Server Modules
 | File | Key Exports | Purpose |
 |------|-------------|---------|
-| server/index.js | (main) | Full bootstrap: binary discovery, config load, stale PID cleanup, middleware, routes (incl. /api/v1/swarm), static SPA, error handler, 127.0.0.1 binding, two noServer WSS instances (wssTerminal + wssSwarm) routed by pathname, SwarmEngine instantiated + stored in app.locals, sessionManager stored in app.locals, swarmEngine.setWsBroadcast(broadcast) wired at startup, SIGTERM/SIGINT, rate-limit stale sweep (BUG-07 fix). Last modified Task #47.1 + #48.1 + #48.2. |
+| server/index.js | (main) | Full bootstrap: binary discovery, config load, stale PID cleanup, middleware, routes (incl. /api/v1/swarm), static SPA, error handler, 127.0.0.1 binding, two noServer WSS instances (wssTerminal + wssSwarm) routed by pathname, CircuitBreaker + BudgetTracker instantiated and passed to SwarmEngine constructor, SwarmEngine stored in app.locals, sessionManager stored in app.locals, swarmEngine.setWsBroadcast(broadcast) wired at startup, SIGTERM/SIGINT, rate-limit stale sweep (BUG-07 fix). Last modified Task #47.1 + #48.1 + #48.2 + #62.1. |
 | server/services/ConfigStore.js | ConfigStore | Manages %APPDATA%\ClaudeCodeManager\config.json — projects CRUD, settings, write-file-atomic |
 | server/services/ProcessRegistry.js | ProcessRegistry | Tracks active PIDs in active_pids.json, cleanupStale() on startup; isValidPid() guards register+cleanup against out-of-range values |
 | server/services/BinaryDiscovery.js | discoverClaudeBinary | 4-step Claude binary lookup: env var → PATH → %LOCALAPPDATA% → fatal error |
@@ -32,7 +32,7 @@ _Last updated: 2026-03-27 — after Tasks #64 (useHandoff.js edge animation hook
 | server/ws/terminalHandler.js | setupTerminalWebSocket | WebSocket handler: sessionId from URL query, attach/detach client, route input/resize messages |
 | server/services/WorkflowStore.js | WorkflowStore (class) | CRUD + schema validation for workflow definitions; persists to %APPDATA%\ClaudeCodeManager\workflows\<id>.json via write-file-atomic; server-generated UUIDs; path-traversal guard on all reads/writes (Task #43) |
 | server/services/HandoffParser.js | HandoffParser (class), default HandoffParser | Stateful rolling 4KB buffer extractor for ConPTY __HANDOFF__ and __DONE__ tokens; handles chunk-split across multiple PTY onData callbacks; ANSI escape stripping; JSON payload validation (Task #45, DEC-012) |
-| server/services/SwarmEngine.js | SwarmEngine (class), default SwarmEngine | V3 swarm orchestrator — spawns agent PTY sessions, registers HandoffParser swarmListeners taps, routes handoff/done events, tracks per-node agent state and budget; in-memory only (never persisted) (Tasks #46, #46.3, DEC-014) |
+| server/services/SwarmEngine.js | SwarmEngine (class), default SwarmEngine | V3 swarm orchestrator — spawns agent PTY sessions, registers HandoffParser swarmListeners taps, routes handoff/done events, tracks per-node agent state and budget; in-memory only (never persisted). Constructor accepts circuitBreaker + budgetTracker optional params (Tasks #46, #46.3, #62.1, DEC-014) |
 | server/services/CircuitBreaker.js | CircuitBreaker (class), default CircuitBreaker | Advisory circuit breaker for handoff loops — check(edgeId, counter, threshold) returns boolean; never stops execution, caller emits WS advisory (FR-V3-17, Task #49) |
 | server/services/BudgetTracker.js | BudgetTracker (class), default BudgetTracker | Soft budget tracker — accumulates char counts per session, estimates tokens (÷4), provides checkBudget advisory signal; never stops execution (FR-V3-18, Task #49) |
 | server/routes/swarm.js | swarmRoutes (factory fn), generateWorkflowFromPrompt (module-private) | 7-endpoint REST API for swarm execution control: start, pause, resume, stop, status, agent output, broadcast. POST /scaffold fully implemented using @anthropic-ai/sdk (claude-haiku-4-5-20251001). Factory pattern: accepts swarmEngine + sessionManager at construction. (Tasks #47.1 + #59) |
@@ -1420,12 +1420,12 @@ _Last updated: 2026-03-27 — after Tasks #64 (useHandoff.js edge animation hook
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine._ensureAgentPty(executionId, nodeId)`
 - **Purpose:** Return the sessionId for a node's agent PTY if one is already active (status !== 'done'). If none exists or the existing one is done, spawn a new PTY and return its sessionId.
-- **Called by:** (future handoff routing logic — not yet called as of Task #46.2)
+- **Called by:** SwarmEngine._onHandoff (called with targetId to spawn/reuse target agent — wired in Task #62.1)
 - **Calls:** SwarmEngine._spawnAgentPty (conditional)
 - **Inputs:** executionId (string), nodeId (string)
 - **Output:** Promise\<string | undefined\> — sessionId of active or newly spawned PTY
 - **Side effects:** may spawn PTY session (via _spawnAgentPty)
-- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev
+- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev; "Called by" updated Task #62.1 (was "future routing logic — not yet called")
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine._buildSystemPrompt(node, workflowContext, handoffTargets)`
 - **Purpose:** Assemble the full system prompt for an agent node per OpenAI Swarm pattern. Sections: (1) node.data.systemPrompt, (2) SWARM PROTOCOL header, (3) workflowContext key/value pairs (omitted if empty), (4) handoff target instructions with __HANDOFF__:<targetId>:<b64json> format (omitted if no targets), (5) __DONE__ instruction, (6) constraint: token only as very last line.
@@ -1447,14 +1447,15 @@ _Last updated: 2026-03-27 — after Tasks #64 (useHandoff.js edge animation hook
 - **Complexity note:** The interval iterates execution.agentStates and filters for status === 'running'. It re-fetches the execution each tick via _executions.get(executionId) and exits early if the execution has been removed (e.g., stopExecution cleared it). stopExecution calls clearInterval(execution.heartbeatTimer) to cancel.
 - **Last modified:** 2026-03-27 in Task #46.3 by backend-dev (was stub in #46.2); heartbeat logic verified correct in Task #67 — 5min/300000ms interval, .unref() prevents blocking process exit, clearInterval on stop confirmed
 
-### `server/services/SwarmEngine.js` :: `SwarmEngine._onHandoff(executionId, sourceNodeId, event)` (stub)
-- **Purpose:** Handle a handoff event from the HandoffParser. Currently broadcasts a handoff_started WS event. Full routing (spawn target agent, edge counter tracking, context merge) deferred to Task #46.3 / #62.
+### `server/services/SwarmEngine.js` :: `SwarmEngine._onHandoff(executionId, sourceNodeId, event)`
+- **Purpose:** Handle a handoff event from the HandoffParser. Fully implemented in Task #62.1: (1) shallow-merges contextUpdate into execution.workflowContext, (2) resolves edgeId from workflow edge list (fallback: "source->target"), (3) increments edge counter in edgeCounters Map, (4) calls CircuitBreaker.check advisory — emits WS circuit_breaker event if threshold exceeded (advisory only, never stops execution), (5) increments source agent handoffCount, (6) broadcasts WS handoff_started event with edgeId + counter, (7) calls _ensureAgentPty to spawn or reuse target agent PTY.
 - **Called by:** SwarmEngine._spawnAgentPty tapFn (via HandoffParser.feed returning evt.type === 'handoff')
-- **Calls:** this._wsBroadcast
+- **Calls:** Object.assign (contextUpdate merge), execution.edgeCounters.get/set, CircuitBreaker.check (advisory), this._wsBroadcast, SwarmEngine._ensureAgentPty
 - **Inputs:** executionId (string), sourceNodeId (string), event ({ type: 'handoff', targetId: string, contextUpdate: object })
 - **Output:** Promise\<void\>
-- **Side effects:** emits WS event `{ type: 'handoff_started', sourceNodeId, targetNodeId, edgeId: null, counter: 0 }`
-- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev (stub — full routing in #46.3/#62)
+- **Side effects:** mutates execution.workflowContext (shallow merge); mutates execution.edgeCounters; mutates execution.agentStates[sourceNodeId].handoffCount; may spawn new PTY via _ensureAgentPty; emits WS events (circuit_breaker advisory if threshold hit, handoff_started always)
+- **Complexity note:** CircuitBreaker check is advisory only — it does NOT stop the handoff or execution. If the circuit threshold is hit, only a WS advisory event is broadcast. The handoff proceeds regardless. edgeId resolution falls back to a synthetic "sourceNodeId->targetId" string if no matching edge is found in the workflow definition.
+- **Last modified:** 2026-03-27 in Task #62.1 by backend-dev (full implementation — was stub in #46.2)
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine._onDone(executionId, nodeId)` (stub)
 - **Purpose:** Handle a done event from the HandoffParser. Marks the agent state as 'done' in agentStates Map, then broadcasts an execution_status WS event. Full completion logic (all-done check, execution status update) deferred to Task #62.3.
@@ -1488,7 +1489,7 @@ _Last updated: 2026-03-27 — after Tasks #64 (useHandoff.js edge animation hook
 
 ### `server/services/CircuitBreaker.js` :: `CircuitBreaker.check(edgeId, counter, threshold)`
 - **Purpose:** Advisory check — returns true if the handoff counter for a given edge has reached or exceeded the threshold. Does NOT stop execution; the caller is responsible for emitting a WS advisory event.
-- **Called by:** (not yet wired — will be called from SwarmEngine handoff routing logic in a future task; FR-V3-17)
+- **Called by:** SwarmEngine._onHandoff (wired in Task #62.1 — called with edgeId, counter, and threshold from workflow settings; if returns true, WS circuit_breaker advisory event is emitted)
 - **Calls:** none (single comparison — pure function)
 - **Inputs:** edgeId (string — edge identifier, not currently used in check logic but included for future per-edge state), counter (number — current handoff count for this edge), threshold (number — default 10)
 - **Output:** boolean — true if counter >= threshold

@@ -1476,3 +1476,92 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 - Client-side AgentNode.jsx: already handles 'paused' status with its own color (statusColors map covers idle/running/done/paused/error) — WS events from pauseExecution will immediately update the canvas color when useSwarm is mounted.
 
 ---
+
+## 2026-03-27 — Task #62.1: SwarmEngine._onHandoff full implementation + constructor CircuitBreaker/BudgetTracker params + server/index.js wiring
+**Agent:** backend-dev (verified complete by prior session; recorded by code-mapper)
+**Triggered by:** V3 Phase 2 — complete the _onHandoff stub with full handoff routing: context merge, edge counter, circuit breaker advisory, handoffCount tracking, WS broadcast, _ensureAgentPty call; wire CircuitBreaker + BudgetTracker into SwarmEngine constructor via server/index.js
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/SwarmEngine.js | MODIFIED | _onHandoff: full implementation replacing stub — context merge, edge counter, circuit breaker check, handoffCount increment, WS handoff_started broadcast, _ensureAgentPty call; constructor: added circuitBreaker + budgetTracker optional params (default null) stored as this._circuitBreaker + this._budgetTracker |
+| server/index.js | MODIFIED | Added CircuitBreaker + BudgetTracker imports; instantiated circuitBreaker + budgetTracker before SwarmEngine; passed both to SwarmEngine constructor call |
+
+### Functions Modified
+- `SwarmEngine.constructor(sessionManager, workflowStore, circuitBreaker, budgetTracker)` in `server/services/SwarmEngine.js` — added circuitBreaker (default null) and budgetTracker (default null) as optional third and fourth parameters; stored as this._circuitBreaker and this._budgetTracker
+- `SwarmEngine._onHandoff(executionId, sourceNodeId, event)` in `server/services/SwarmEngine.js` — full implementation replacing stub: (1) Object.assign context merge, (2) edge ID resolution (workflow edges lookup with fallback), (3) edgeCounters increment, (4) CircuitBreaker.check advisory with WS circuit_breaker event, (5) sourceState.handoffCount increment, (6) WS handoff_started broadcast with edgeId + counter, (7) _ensureAgentPty(executionId, targetId) call
+- `startup()` in `server/index.js` — now imports CircuitBreaker + BudgetTracker; instantiates both before SwarmEngine; passes both to SwarmEngine constructor
+
+### Connection Changes
+- server/index.js → server/services/CircuitBreaker.js (new import — was never imported before Task #62.1)
+- server/index.js → server/services/BudgetTracker.js (new import — was never imported before Task #62.1)
+- SwarmEngine._onHandoff → CircuitBreaker.check (new live call — was "pending wiring task" in Task #49)
+- SwarmEngine._onHandoff → SwarmEngine._ensureAgentPty (new call — _ensureAgentPty was orphaned; now has its first live caller)
+- SwarmEngine._onHandoff → execution.edgeCounters (now actively updated — was never written before Task #62.1)
+- SwarmEngine._onHandoff → execution.workflowContext (now actively merged — was never written before Task #62.1)
+
+### Impact on Other Code
+- CircuitBreaker.check "Called by" annotation updated — was "not yet wired"; now called from _onHandoff on every handoff event
+- SwarmEngine._ensureAgentPty "Called by" annotation updated — was "future routing logic"; now called from _onHandoff
+- execution.edgeCounters is now actively populated — getStatus() serializes it via Object.fromEntries; client receives live edge counter data via GET /:executionId/status and WS updates
+- BudgetTracker is now instantiated and passed to SwarmEngine — the existing `if (this._budgetTracker)` guard in _spawnAgentPty tapFn is now live; track() and checkBudget() are called on every PTY output chunk
+- BudgetTracker.registerSession is still not called from _spawnAgentPty — getTotal() will return 0 for all executions until that wiring is added (deferred)
+
+---
+
+## 2026-03-27 — Task #64: client/src/hooks/useHandoff.js — Edge Animation Hook
+**Agent:** frontend-dev
+**Triggered by:** V3 Phase 3 client — create a callback-based hook (useHandoff) and a recent-set hook (useRecentHandoffs) for components that need to react programmatically to handoff counter increases rather than reading edgeCounters directly.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/hooks/useHandoff.js | ADDED | Two named-export hooks: useHandoff(callback) — fires callback(edgeId, counter) on each increment; useRecentHandoffs(durationMs) — returns Set of recently-active edgeIds with auto-expire |
+
+### Functions Added
+- `useHandoff(onHandoff)` in `client/src/hooks/useHandoff.js` — side-effect-only hook; calls onHandoff(edgeId, newCounter) per edgeCounter increase; uses ref diff against previous snapshot
+- `useRecentHandoffs(durationMs)` in `client/src/hooks/useHandoff.js` — returns stable Set ref of recently-active edgeIds; auto-removes each edgeId after durationMs via setTimeout; default 2000ms
+
+### Functions Modified
+- None
+
+### Functions Removed
+- None
+
+### Connection Changes
+- `useHandoff` → `useSwarmStore` (selector: s.edgeCounters) — new subscriber to edge counter state
+- `useRecentHandoffs` → `useSwarmStore` (selector: s.edgeCounters) — new subscriber to edge counter state
+- No live callers yet for either export
+
+### Impact on Other Code
+- HandoffEdge.jsx currently reads edgeCounters directly from useSwarmStore — useHandoff/useRecentHandoffs offer an alternative API for components that need callback-style notification rather than inline rendering logic
+- Callers of useHandoff must memoize the onHandoff callback (useCallback) to avoid spurious effect re-runs; this is a stable contract requirement for the hook
+
+---
+
+## 2026-03-27 — Task #65: client/src/canvas/nodes/AgentNode.jsx — Pulse + Micro PTY Log
+**Agent:** frontend-dev
+**Triggered by:** V3 Phase 3 client — enhance AgentNode's lastOutputSnippet display from a bare text line to a scrollable bg-black/40 container with green monospace pre, last 4 lines (was 3), and a blinking cursor when running.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/canvas/nodes/AgentNode.jsx | MODIFIED | lastOutputSnippet display enhanced: scrollable bg-black/40 container (max-h-16, overflow-y-auto), green monospace pre, last 4 lines (was 3), blinking ▋ cursor via animate-pulse when status === 'running' |
+
+### Functions Added
+- None
+
+### Functions Modified
+- `AgentNode({ id, data, selected })` in `client/src/canvas/nodes/AgentNode.jsx` — lastOutputSnippet block upgraded: added bg-black/40 wrapper div (max-h-16, overflow-y-auto, rounded, p-1.5), pre tag with text-green-300 font-mono styling, slice changed from -3 to -4 lines, blinking ▋ cursor span (animate-pulse) appended inside pre when status === 'running'
+
+### Functions Removed
+- None
+
+### Connection Changes
+- None (internal rendering change only — no new store subscriptions, no new imports)
+
+### Impact on Other Code
+- AgentNode is consumed only by SwarmCanvas.jsx via nodeTypes.agent registration — no other callers; rendering change is purely cosmetic and backwards-compatible
+- The blinking cursor uses Tailwind `animate-pulse` class (already in the project via statusColors for the running border) — no new CSS dependencies
+
+---

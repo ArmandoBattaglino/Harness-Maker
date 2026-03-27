@@ -1,4 +1,103 @@
 ---
+## 2026-03-27 — Tasks #64 + #65: useHandoff.js edge animation hook + AgentNode.jsx live updates
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+Two tasks just completed: Task #64 (frontend-dev: client/src/hooks/useHandoff.js created — 2 named-export hooks useHandoff and useRecentHandoffs) and Task #65 (frontend-dev: client/src/canvas/nodes/AgentNode.jsx modified — lastOutputSnippet enhanced). CODE_MAP.md was last updated after Tasks #63+#66+#67. useHandoff.js did not exist in the module index. AgentNode.jsx function graph entry still referenced last 3 lines and had no mention of the scrollable container or blinking cursor.
+
+### What I did
+1. Read CODE_MAP.md (offset 1-80), CHANGELOG.md (offset 1-30), agent memory (offset 1-40), both source files (useHandoff.js, AgentNode.jsx) — all in parallel
+2. Read CHANGELOG.md tail (offset 1450-30) to find exact append point
+3. Read CODE_MAP.md tail (offset 2195-10) to confirm final line
+4. Grep'd client/src for useHandoff/useRecentHandoffs — confirmed no live callers
+5. Updated CODE_MAP.md:
+   - Updated header timestamp to Tasks #64 + #65
+   - Updated AgentNode.jsx Module Index row (4 lines, scrollable container, blinking cursor)
+   - Added useHandoff.js Module Index row (new file)
+   - Updated AgentNode.jsx Function Graph Complexity note (slice -4, scrollable container, blinking cursor, last-modified)
+   - Appended "Edge Animation Hooks (Task #64)" section with 2 new function entries
+6. Appended 2 CHANGELOG entries: Task #64 and Task #65
+7. Appended ACTIVITY_LOG.md entry
+8. Appended this agent memory entry
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header timestamp; AgentNode Module Index row updated; useHandoff.js Module Index row added; AgentNode Function Graph entry updated; 2 new function entries appended |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Task #64 and Task #65 entries |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session summary entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- useHandoff and useRecentHandoffs are now fully mapped with their ref-based diffing pattern documented — future agents will know the non-reactivity caveat of useRecentHandoffs before using it
+- AgentNode.jsx entry now accurately reflects the last 4 lines (not 3), scrollable container, and blinking cursor feature added in Task #65
+
+### Bugs I encountered
+- None
+
+### Decisions I made
+- useRecentHandoffs returns a ref Set, not state — documented as non-reactive. Callers wanting re-renders must manage their own state alongside this hook.
+- No Module Index key-behavior update was needed for the 2-hook file pattern — the existing hook module format was sufficient.
+
+### What I learned
+- useRecentHandoffs is subtly different from useHandoff: the former is meant for imperative/visual checks, the latter for event-driven callbacks. Both read the same edgeCounters store slice. This distinction matters for future consumers.
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md are fully up to date through Task #65. useHandoff.js module index + 2 function entries added. AgentNode.jsx last-modified updated. No live callers for useHandoff/useRecentHandoffs yet.
+
+### Handoff
+Next code-mapper invocation should handle Tasks #62.1-#62.3 (_onHandoff full routing) or #68-#70 (HITL inbox/freeze). When useHandoff gets its first live caller, update its "Called by" entry in CODE_MAP.md.
+---
+
+## 2026-03-27 — Tasks #63 + #66 + #67: useSwarm.js WS hook + BroadcastBar.jsx + SwarmEngine pause/resume
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+Three tasks just completed: Task #63 (frontend-dev: client/src/hooks/useSwarm.js created — WS hook dispatching 6 event types to SwarmStore, startExecution/stopExecution REST actions), Task #66 (frontend-dev: client/src/canvas/BroadcastBar.jsx created + SwarmView.jsx modified to mount it), Task #67 (backend-dev: server/services/SwarmEngine.js modified — heartbeat verified + pauseExecution/resumeExecution methods added). CODE_MAP.md was last updated after Task #60. All SwarmStore actions were marked "not yet wired"; BroadcastBar.jsx did not exist; useSwarm.js did not exist; SwarmEngine had no pause/resume methods.
+
+### What I did
+1. Read CODE_MAP.md (offset 1-120, 480-200, 680-200, 880-200, 1080-200, 1350-200, 1549-200, 1748-200, 1948-200, 2098-15), CHANGELOG.md (offset 1-60, 900-80, 980-80, 1200-100, 1300-100, 1370-10), all 3 modified source files (useSwarm.js, BroadcastBar.jsx, SwarmView.jsx, SwarmEngine.js) in parallel
+2. Grep'd for useSwarm, BroadcastBar, pauseExecution, resumeExecution across the codebase to find all callers and connection points
+3. Updated CODE_MAP.md header timestamp; added BroadcastBar.jsx + useSwarm.js + updated SwarmView.jsx to Module Index; updated 7 SwarmStore action "Called by" annotations (setExecution, updateAgentState, updateEdgeCounter, updateBudget, addInboxItem, addFeedEvent, setWsConnected, reset); updated SwarmView() function entry to note BroadcastBar mount; added heartbeat verification note to _startHeartbeat; appended 9 new function entries for useSwarm/connectWs/startExecution/stopExecution/BroadcastBar/handleSend/handleKeyDown/pauseExecution/resumeExecution
+4. Appended 3 CHANGELOG.md entries (Tasks #63, #66, #67)
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header, Module Index, 7 store action "Called by" updates, SwarmView() entry updated, _startHeartbeat note, 9 new function entries in 3 new sections |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended 3 entries for Tasks #63/#66/#67 |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log appended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Entry appended |
+
+### Improvements delivered
+- All 7 "not yet wired" SwarmStore actions now correctly documented with live callers (via useSwarm.js)
+- BroadcastBar.jsx fully mapped with its broadcast → store → REST dependencies
+- SwarmEngine.pauseExecution and resumeExecution mapped including the note that POST /:executionId/pause comment is now stale
+- useSwarm hook architecture documented: 3 public callbacks, 6 WS event dispatch paths, cleanup on unmount
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| _startHeartbeat has 2 "Last modified" strings with identical text | Both _buildSystemPrompt and _startHeartbeat entries had the same "was stub in #46.2" text | Added unique context to _startHeartbeat entry (heartbeat verification note) to make it unique for Edit tool | FIXED |
+
+### Decisions I made
+- Kept `reset()` caller annotation as "SwarmView.jsx Reset button" — it was already noted as wired in Task #57.2 but the store entry still said "not yet wired". Corrected.
+- BroadcastBar "Called by" notes that it always mounts in SwarmView but self-hides — this is the correct description per the source code's `if (!isActive) return null` pattern.
+
+### What I learned
+- useSwarm.js is the bridge between the WS channel and the Zustand store — once it is mounted in SwarmView (future task), the full reactive pipeline is live: WS events → store → canvas nodes/edges update in real time
+- pauseExecution/resumeExecution are logical state changes only — they do not send Ctrl-C to PTYs; the route-level Ctrl-C is separate. Important distinction for Task #70 design.
+- BroadcastBar uses native fetch (not apiPost) — because it needs fine-grained access to the `sent` count from response, which apiPost doesn't surface directly
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md are fully up to date through Task #67. 9 new function entries added. All store action connections resolved. No broken "Called by: not yet wired" entries for the 6 store actions dispatched by connectWs.
+
+### Handoff
+Next code-mapper invocation should handle Tasks #62.1-#62.3 (_onHandoff full routing) or #68-#70 (HITL inbox). SwarmEngine._onHandoff is currently a stub — when routed, it will need updated "Called by" noting the full implementation.
+---
+
 ## 2026-03-27 — Tasks #59 + #61: scaffold endpoint full impl + useWorkflow.js CRUD hook
 **Status:** COMPLETED
 **Called by:** orchestrator (post-task code-mapper invocation)

@@ -98,24 +98,44 @@ Security assessment completed 2026-03-27. Seven mandatory requirements must appe
 
 **Current wave — V3 Phase 4 Live Execution (updated 2026-03-27):**
 
-COMPLETED this session:
+PHASE 4 COMPLETED (39/57 V3 tasks):
+- TASK #62.1 — SwarmEngine _onHandoff steps 1–4 — COMPLETED (168/168 tests pass)
 - TASK #63 — useSwarm.js WS hook — COMPLETED (build: 472 modules)
+- TASK #64 — useHandoff.js edge animation hook — COMPLETED
+- TASK #65 — AgentNode.jsx live updates — COMPLETED
 - TASK #66 — BroadcastBar.jsx + broadcast route — COMPLETED (build: 472 modules)
 - TASK #67 — SwarmEngine heartbeat idle sweeper prevention — COMPLETED (168 tests pass)
 
-RETRYING:
-- TASK #62.1 — SwarmEngine _onHandoff steps 1–4 — PENDING (previous attempt: API 500 error during agent execution; retrying now)
-  - Agent: backend-dev, Model: claude-opus-4-6, Difficulty: HARD, Deps: #46.3 ✓ + #49 ✓
-  - File: server/services/SwarmEngine.js
-  - Implement: _findEdgeId(), _getThreshold(), _onHandoff steps 1–4 (edge counter + circuit breaker + context merge + handoff_started WS + _ensureAgentPty)
+CURRENT WAVE — Phase 4 continuation + Phase 5 (2026-03-27):
 
-LAUNCHING NOW (parallel):
-- TASK #64 — useHandoff.js edge animation hook — IN_PROGRESS
-  - Agent: frontend-dev, Deps: #63 ✓
-  - Add animatingEdges Set to SwarmStore, setEdgeAnimating action, 800ms edge pulse
-- TASK #65 — AgentNode.jsx live updates — IN_PROGRESS
-  - Agent: frontend-dev, Deps: #53.1 ✓ + #63 ✓
-  - Animated blue glow border on status='running', micro PTY log (last 500 chars), double-click → ptyExplosionNodeId
+Launching simultaneously (all deps met):
+- TASK #62.2 — SwarmEngine _onHandoff steps 5–6: context injection + agent status — IN_PROGRESS
+  - Agent: backend-dev, Model: claude-opus-4-6, Difficulty: HARD, Deps: #62.1 ✓
+  - File: server/services/SwarmEngine.js
+  - Implement: _getHandoffTargets(), _onHandoff steps 5–6 (_buildSystemPrompt → writeInput, source 'done' + target 'running', 3 WS events)
+  - Also add helper _getHandoffTargets(workflowDef, nodeId): array of target node IDs from edges where source === nodeId
+- TASK #68 — inbox.js HITL approve/reject API — IN_PROGRESS
+  - Agent: backend-dev, Model: claude-sonnet-4-6, Difficulty: MEDIUM, Deps: #46.3 ✓ (corrected from #62.3)
+  - File: server/routes/inbox.js — 4 endpoints: GET /inbox, GET /inbox/:executionId, POST /inbox/:itemId/approve, POST /inbox/:itemId/reject
+  - ApproveInboxItem: validate resumeText ≤ 8192 chars, unfreeze edge if circuit_breaker, write to PTY
+- TASK #70 — SwarmEngine freeze/unfreeze agent — IN_PROGRESS
+  - Agent: backend-dev, Model: claude-sonnet-4-6, Difficulty: MEDIUM, Deps: #62.1 ✓
+  - File: server/services/SwarmEngine.js — add freezeAgent(executionId, nodeId, reason) + unfreezeAgent(executionId, nodeId, resumeText)
+  - HITL mode: on handoff create InboxItem + freeze source, don't spawn target until approved
+- TASK #71.1 — PTY Explosion overlay — IN_PROGRESS
+  - Agent: frontend-dev, Model: claude-sonnet-4-6, Difficulty: MEDIUM, Deps: #58 ✓ (#57.2+#63 both done)
+  - File: client/src/views/SwarmView.jsx (modify) — add pty-explosion-overlay using existing Terminal.jsx
+  - Add ptyExplosionNodeId/setPtyExplosionNodeId to SwarmStore if not present from #52
+- TASK #72 — InterAgentFeed.jsx — IN_PROGRESS
+  - Agent: frontend-dev, Model: claude-haiku-4-5, Difficulty: EASY, Deps: #52 ✓ + #63 ✓
+  - File: client/src/panels/InterAgentFeed.jsx — scrolling log of [HH:MM:SS] AgentA → AgentB events
+  - Data from useSwarmStore(s => s.interAgentFeed), last 100 events, auto-scroll
+
+NEXT AFTER CURRENT WAVE:
+- #62.3 waits on #62.2 (SwarmEngine _onDone + BudgetTracker — backend-dev, sonnet)
+- #69 waits on #68 (HitlInbox.jsx — frontend-dev, sonnet)
+- #71.2 waits on #71.1 (PTY Explosion Escape key — frontend-dev, haiku)
+- #65 still PENDING if not yet done — AgentNode.jsx live updates (frontend-dev, sonnet)
 
 **Key context for #53.x agents:**
 - SwarmContext.jsx is at client/src/store/SwarmContext.jsx — complete, exports useSwarmStore + SwarmProvider

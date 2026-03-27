@@ -28,6 +28,7 @@ import claudemdRouter from './routes/claudemd.js';
 import jobsRouter from './routes/jobs.js';
 import workflowsRouter from './routes/workflows.js';
 import swarmRoutes from './routes/swarm.js';
+import inboxRoutes from './routes/inbox.js';
 import { sessionManager } from './services/SessionManager.js';
 import { jobRunner } from './services/JobRunner.js';
 import { setupTerminalWebSocket } from './ws/terminalHandler.js';
@@ -222,6 +223,9 @@ async function startup() {
 
   // Swarm execution control routes
   app.use('/api/v1/swarm', swarmRoutes(app.locals.swarmEngine, app.locals.sessionManager));
+
+  // HITL inbox routes (approve/reject — separate router, same /api/v1/swarm prefix)
+  app.use('/api/v1/swarm', inboxRoutes(app.locals.swarmEngine));
 
   // -------------------------------------------------------------------------
   // 7. Serve static client build

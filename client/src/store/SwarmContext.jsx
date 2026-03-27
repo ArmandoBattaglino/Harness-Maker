@@ -17,6 +17,9 @@ const useSwarmStore = create((set, get) => ({
   // Selected node (for AgentInspector panel)
   selectedNodeId: null,
 
+  // PTY Explosion — node whose terminal is shown full-screen
+  ptyExplosionNodeId: null,
+
   // WS connection state
   wsConnected: false,
 

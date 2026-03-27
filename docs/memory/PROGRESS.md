@@ -1,6 +1,8 @@
 # Progress
 
 ## Completed
+- [TASK-62.2] SwarmEngine._onHandoff context injection + status updates (backend-dev) — COMPLETED 2026-03-27
+  After _ensureAgentPty: injects updated workflowContext prompt into target PTY, sets source status done, sets target status running, broadcasts WS events.
 
 ### Phase 0 — Foundation (DONE as of 2026-03-18)
 - [TASK-1] docs/ARCHITECTURE.md produced by architect — 2026-03-18
@@ -152,7 +154,7 @@ _None._
 - NOTE: FileManager was NOT created in Task #5 as planned — RESOLVED in Task #7 (created server/services/FileManager.js).
 
 ## V3 — Swarm Orchestrator (57 granular tasks after split — 2026-03-27 replan)
-**Status: 38/57 COMPLETED — as of 2026-03-27. All Phase 1 backend tasks done. All Phase 2 (Canvas Static) COMPLETED. Phase 3 (Prompt-to-Flow) FULLY COMPLETED. Phase 4 (Live Execution) ACTIVE: #63 useSwarm.js DONE, #64 useHandoff.js DONE, #66 BroadcastBar DONE, #67 heartbeat DONE. #62.1 PENDING (retry after API 500 failure). #65 (AgentNode live) pending.**
+**Status: 41/57 COMPLETED — as of 2026-03-27. All Phase 1 backend tasks done. All Phase 2 (Canvas Static) COMPLETED. Phase 3 (Prompt-to-Flow) FULLY COMPLETED. Phase 4 (Live Execution) ACTIVE: #62.1 DONE, #63 DONE, #64 DONE, #66 DONE, #67 DONE. Phase 5 wave: #62.2, #68, #70 DONE, #71.1 IN_PROGRESS, #72 COMPLETED.**
 **Note: Original 40 tasks (#43–#82). After model assignment + subtask split: 57 granular units.**
 **7 original tasks split into subtasks: #46→3, #47→2, #48→2, #53→3, #57→2, #62→3, #71→2**
 - V3 PRD complete: docs/PRD.md
@@ -194,22 +196,23 @@ _None._
 
 ### V3 Phase 4 — Live Execution
 - [TASK-62.1] COMPLETED 2026-03-27 — SwarmEngine _onHandoff: full implementation verified (context merge, edge counter, circuit breaker advisory, handoffCount, _ensureAgentPty). 168/168 tests pass.
-- [TASK-62.2] PENDING — SwarmEngine _onHandoff: context injection + agent status updates (waits on #62.1)
+- [TASK-62.1] COMPLETED 2026-03-27 — SwarmEngine _onHandoff steps 1-4: context merge, edge counter, circuit breaker advisory, _ensureAgentPty. 168/168 tests pass.
+- [TASK-62.2] IN_PROGRESS — SwarmEngine _onHandoff: context injection + agent status updates (backend-dev, opus)
 - [TASK-62.3] PENDING — SwarmEngine _onDone + BudgetTracker + lastOutputSnippet (waits on #62.2)
-- [TASK-63] IN_PROGRESS — useSwarm.js WS hook for execution control
-- [TASK-64] PENDING — useHandoff.js edge animation hook
+- [TASK-63] COMPLETED 2026-03-27 — useSwarm.js WS hook for execution control
+- [TASK-64] COMPLETED 2026-03-27 — useHandoff.js edge animation hook
 - [TASK-65] PENDING — AgentNode live updates — pulse + micro PTY log
 - [TASK-66] COMPLETED 2026-03-27 — BroadcastBar.jsx + broadcast route — client/src/canvas/BroadcastBar.jsx created; mounted at bottom of SwarmView.jsx after ReactFlowProvider; returns null unless executionStatus==='running'; POSTs to /api/v1/swarm/:executionId/broadcast with {text, scope:'all', mode}; soft/hard mode selector; 3s result feedback; build: 472 modules, 0 errors
-- [TASK-67] IN_PROGRESS — SwarmEngine heartbeat — idle sweeper prevention
+- [TASK-67] COMPLETED 2026-03-27 — SwarmEngine heartbeat — idle sweeper prevention
 
 ### V3 Phase 5 — HITL + PTY Explosion
-- [TASK-68] PENDING — inbox.js HITL approve/reject API
-- [TASK-69] PENDING — HitlInbox.jsx approval panel
-- [TASK-70] PENDING — SwarmEngine freeze/unfreeze agent
-- [TASK-71.1] PENDING — PTY Explosion overlay component
-- [TASK-71.2] PENDING — PTY Explosion Escape key handler
-- [TASK-72] PENDING — InterAgentFeed.jsx real-time handoff log
-- [TASK-73] PENDING — useInbox.js HITL polling hook
+- [TASK-68] IN_PROGRESS — inbox.js HITL approve/reject API (backend-dev, sonnet; dep: #46.3 corrected from #62.3)
+- [TASK-69] PENDING — HitlInbox.jsx approval panel (waits on #68)
+- [TASK-70] COMPLETED 2026-03-27 — SwarmEngine freezeAgent/unfreezeAgent HITL methods added; 168/168 tests pass
+- [TASK-71.1] IN_PROGRESS — PTY Explosion overlay component (frontend-dev, sonnet; dep: #58 ✓)
+- [TASK-71.2] PENDING — PTY Explosion Escape key handler (waits on #71.1)
+- [TASK-72] IN_PROGRESS — InterAgentFeed.jsx real-time handoff log (frontend-dev, haiku; dep: #52 ✓)
+- [TASK-73] PENDING — useInbox.js HITL polling hook (waits on #69, #63)
 
 ### V3 Phase 6 — Trigger Nodes
 - [TASK-74] PENDING — TriggerManager.js webhooks + RSS polling

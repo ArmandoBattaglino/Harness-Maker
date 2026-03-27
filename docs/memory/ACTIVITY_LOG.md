@@ -1,4 +1,32 @@
 ---
+## 2026-03-27 — documenter — Task #62.1: SwarmEngine._onHandoff full implementation
+**Outcome:** COMPLETED
+**Summary:** Audited all documentation after Task #62.1 (_onHandoff fully implemented) and the wiring of CircuitBreaker + BudgetTracker into server/index.js. DOC_STATUS.md updated: timestamp advanced; new SwarmEngine Task #62.1 row added documenting the full 7-step _onHandoff implementation; server/index.js row updated to note CircuitBreaker/BudgetTracker import and constructor wiring; ARCHITECTURE.md stale section updated to mark Task #62.1 complete and advance Phase 4 status. README.md and ARCHITECTURE.md not touched — V3 public doc deferral policy in effect until Task #82.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none
+**Decisions made:** V3 public doc deferral policy maintained
+**Blockers:** none
+**Next:** Tasks #62.2–#62.3 (_onDone full completion logic) and #68–#70 (HITL) will need DOC_STATUS updates when done
+---
+## 2026-03-27 — backend-dev — Task #70: SwarmEngine HITL freeze/unfreeze
+**Outcome:** COMPLETED
+**Summary:** Added freezeAgent and unfreezeAgent methods to SwarmEngine.js. freezeAgent sets agent status to 'paused', appends an inboxItem with auto-generated id, and broadcasts hitl_required + agent_status WS events. unfreezeAgent sets status back to 'running' and broadcasts agent_status. 168/168 tests pass.
+**Files changed:** server/services/SwarmEngine.js, docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/backend-dev.md
+**Bugs fixed:** none
+**Decisions made:** Followed exact method signatures from task spec; placed methods between resumeExecution and getStatus matching existing code organization.
+**Blockers:** none
+**Next:** Task #71 (PTY Explosion), #68 (inbox route), #72 (InterAgentFeed) are still in progress in the phase 5 wave.
+---
+## 2026-03-27 — code-mapper — Tasks #63 + #66 + #67: useSwarm.js + BroadcastBar.jsx + SwarmEngine pause/resume
+**Outcome:** COMPLETED
+**Summary:** Mapped 3 tasks: useSwarm.js WS hook (6 event types dispatched to SwarmStore, startExecution/stopExecution actions), BroadcastBar.jsx (broadcast text input, self-hides when not running, mounted in SwarmView), SwarmEngine.pauseExecution/resumeExecution (logical state pause — no PTY interrupt, heartbeat verified correct). Updated 7 previously "not yet wired" SwarmStore action "Called by" annotations. Added 9 new function entries to CODE_MAP.md and 3 entries to CHANGELOG.md.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** BroadcastBar documented as always-mounted/self-hiding (matches source `if (!isActive) return null`); pauseExecution noted as logical-only (no Ctrl-C)
+**Blockers:** none
+**Next:** Tasks #62.1-#62.3 (_onHandoff full routing), #68-#70 (HITL inbox/freeze). useSwarm.js needs mounting in SwarmView — when done, code-mapper should update SwarmView() Called by for useSwarm.
+---
+
 ## 2026-03-27 — documenter — Tasks #64, #65: useHandoff.js + AgentNode.jsx micro-PTY enhancements
 **Outcome:** COMPLETED
 **Summary:** Audited all documentation after Tasks #64 and #65. DOC_STATUS.md updated: timestamp advanced; new row added for useHandoff.js (Task #64); AgentNode.jsx row updated for Task #65 changes (4-line log, scrollable, blinking cursor, selected-ring). ARCHITECTURE.md stale section updated to mark #64/#65 complete. V3 public docs deferred per policy.
@@ -7,6 +35,16 @@
 **Decisions made:** V3 public doc deferral maintained
 **Blockers:** none
 **Next:** Tasks #62.1–#62.3 (_onHandoff routing) and #68–#70 (HITL) will need DOC_STATUS updates when done
+---
+
+## 2026-03-27 — code-mapper — Tasks #64 + #65: useHandoff.js edge animation hook + AgentNode.jsx live updates
+**Outcome:** COMPLETED
+**Summary:** Mapped 2 tasks: useHandoff.js (2 new named-export hooks — useHandoff callback pattern and useRecentHandoffs ref-Set pattern, both subscribe to SwarmStore edgeCounters), AgentNode.jsx (lastOutputSnippet enhanced to scrollable container with last 4 lines, green monospace pre, blinking cursor when running). Added 2 new function graph entries, updated 2 Module Index rows, updated AgentNode.jsx function graph entry, appended 2 CHANGELOG entries.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** none
+**Decisions made:** useRecentHandoffs returns a ref Set (not state) — documented as non-reactive; callers needing re-renders must manage their own state
+**Blockers:** none
+**Next:** Tasks #62.1–#62.3 (_onHandoff full routing), #68–#70 (HITL inbox/freeze). useHandoff/useRecentHandoffs have no live callers yet.
 ---
 ## 2026-03-27 — documenter — Tasks #63, #66, #67: useSwarm.js + BroadcastBar.jsx + SwarmEngine pause/resume
 **Outcome:** COMPLETED
@@ -1453,4 +1491,14 @@
 **Decisions made:** No code changes made — implementation already complete
 **Blockers:** none
 **Next:** Task #62.2 — SwarmEngine _onHandoff context injection + agent status updates
+---
+---
+## 2026-03-27 — backend-dev — Task #62.2: SwarmEngine._onHandoff — Context Injection + Agent Status Updates
+**Outcome:** COMPLETED
+**Summary:** Extended _onHandoff in SwarmEngine.js with 3 new steps after _ensureAgentPty: (1) build fresh system prompt from updated workflowContext and inject into target PTY via writeInput, (2) set source agent status to 'done' + WS broadcast, (3) set target agent status to 'running' + WS broadcast. 168/168 tests pass.
+**Files changed:** server/services/SwarmEngine.js, docs/TASK_PLAN.md
+**Bugs fixed:** none
+**Decisions made:** targetState read after _ensureAgentPty call to ensure state entry exists; contextPrompt guard preserved per _spawnAgentPty pattern
+**Blockers:** none
+**Next:** Task #62.3 — complete _onDone (check all-agents-done, set execution stopped, emit execution_complete WS event)
 ---

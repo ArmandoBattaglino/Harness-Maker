@@ -1222,3 +1222,55 @@ SwarmEngine._onHandoff is fully implemented. 168/168 tests pass. Task #62.2 (con
 ### Handoff
 Task #62.2 can proceed — it depends on #62.1 which is now COMPLETED.
 ---
+---
+## 2026-03-27 — Task #62.2: SwarmEngine._onHandoff — Context Injection + Agent Status Updates
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+Task #62.1 had already implemented the first 7 steps of _onHandoff: context merge, edge counter increment, circuit breaker check, source handoffCount increment, WS broadcast of handoff_started, and _ensureAgentPty call. The method ended after step 7 with no context injection or status updates.
+
+### What I did
+1. Read docs/memory/agents/backend-dev.md and server/services/SwarmEngine.js in parallel.
+2. Located the insertion point: after `await this._ensureAgentPty(executionId, targetId);` at line 337.
+3. Added 3 blocks after _ensureAgentPty:
+   - Step 8: retrieve targetState, look up targetNode, build contextPrompt via _buildSystemPrompt with updated workflowContext, write to target PTY via _sessionManager.writeInput.
+   - Step 9: set sourceState.status = 'done', broadcast agent_status WS event.
+   - Step 10: set targetState.status = 'running', broadcast agent_status WS event.
+4. Ran npm test — 168/168 pass.
+5. Updated TASK_PLAN.md task block and summary table.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SwarmEngine.js | MODIFIED | Added steps 8-10 to _onHandoff (lines 339-370): context injection + source/target status updates |
+| docs/TASK_PLAN.md | MODIFIED | Status #62.2 IN_PROGRESS → COMPLETED in task block and summary table |
+| docs/memory/agents/backend-dev.md | MODIFIED | Appended this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session entry |
+| docs/memory/PROGRESS.md | MODIFIED | Updated #62.2 to COMPLETED |
+
+### Improvements delivered
+- Target agent PTY now receives updated workflowContext via a fresh system prompt on every handoff.
+- Source agent status transitions to 'done' post-handoff with a WS broadcast.
+- Target agent status transitions to 'running' post-handoff with a WS broadcast.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| Edit tool refused file write (modified since read) | File was modified between read and edit (likely linter/editor) | Used Node.js string replacement via Bash instead for TASK_PLAN.md | FIXED |
+
+### Decisions I made
+- targetState is fetched after _ensureAgentPty (not before) because the state entry might not exist until _spawnAgentPty initializes it — this matches the task spec's placement.
+- contextPrompt guard (`if (contextPrompt)`) preserved — consistent with _spawnAgentPty pattern.
+- targetState.status = 'running' set unconditionally (if targetState exists), even if _ensureAgentPty reused an existing session where status was already 'running' — this is harmless and ensures the WS broadcast fires regardless.
+
+### What I learned
+- _ensureAgentPty creates agentStates entries via _spawnAgentPty if the node isn't running yet, so targetState is safe to read immediately after the await.
+- The Edit tool can fail if another process writes the file between the Read and Edit calls — use Node.js file manipulation via Bash as fallback for TASK_PLAN.md.
+
+### State I'm leaving behind
+_onHandoff is now complete through step 10. Steps 1-10 all implemented across tasks #62.1 and #62.2. Task #62.3 (_onDone full implementation) remains as a stub. 168/168 tests pass.
+
+### Handoff
+Task #62.3 should complete _onDone: check if all agents are done, then set execution.status = 'stopped' and emit execution_complete WS event.
+---

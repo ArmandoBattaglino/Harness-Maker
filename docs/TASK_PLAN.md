@@ -5070,7 +5070,7 @@ Phase: V3 Phase 4 — Live Execution
 Priority: HIGH
 Difficulty: HARD
 Depends on: #62.1
-Status: PENDING
+Status: COMPLETED
 Context:
   Second of three subtasks for SwarmEngine handoff loop.
   Complete _onHandoff steps 5-6: inject context into target PTY + update agent statuses.
@@ -5362,8 +5362,8 @@ Agent: backend-dev
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
-Dependencies: #62.3
+Status: COMPLETED
+Dependencies: #46.3
 Context:
   Create `server/routes/inbox.js` for Human-in-the-Loop workflow management.
 
@@ -5447,8 +5447,8 @@ Agent: backend-dev
 Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
-Dependencies: #68, #62.3
+Status: COMPLETED
+Dependencies: #62.1
 Context:
   Add freeze/unfreeze capability to SwarmEngine for HITL workflows.
 
@@ -5486,7 +5486,7 @@ Phase: V3 Phase 5 — HITL + PTY Explosion
 Priority: HIGH
 Difficulty: MEDIUM
 Depends on: #57.2, #63
-Status: PENDING
+Status: IN_PROGRESS
 Context:
   First of two subtasks for PTY Explosion.
   Implement the full-screen overlay that renders an existing agent's PTY session.
@@ -5596,7 +5596,7 @@ Agent: frontend-dev
 Priority: LOW
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Dependencies: #63
 Context:
   Create `client/src/panels/InterAgentFeed.jsx`.
@@ -6026,14 +6026,14 @@ Acceptance criteria:
 | 60 | PromptToFlowBar.jsx + staggered animation | frontend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
 | 61 | useWorkflow.js — workflow CRUD hook | frontend-dev | MEDIUM | claude-haiku-4-5 | COMPLETED |
 | **62.1** | SwarmEngine — _onHandoff: context merge + PTY spawn | backend-dev | HIGH | claude-opus-4-6 | COMPLETED |
-| **62.2** | SwarmEngine — _onHandoff: context injection + status | backend-dev | HIGH | claude-opus-4-6 | PENDING |
+| **62.2** | SwarmEngine — _onHandoff: context injection + status | backend-dev | HIGH | claude-opus-4-6 | COMPLETED |
 | **62.3** | SwarmEngine — _onDone + BudgetTracker + snippets | backend-dev | HIGH | claude-sonnet-4-6 | PENDING |
-| 63 | useSwarm.js — WS hook for execution control | frontend-dev | HIGH | claude-sonnet-4-6 | IN_PROGRESS |
+| 63 | useSwarm.js — WS hook for execution control | frontend-dev | HIGH | claude-sonnet-4-6 | COMPLETED |
 | 64 | useHandoff.js — edge animation hook | frontend-dev | LOW | claude-haiku-4-5 | COMPLETED |
 | 65 | AgentNode live updates — pulse + micro PTY log | frontend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
 | 66 | BroadcastBar.jsx + broadcast route | frontend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
-| 67 | SwarmEngine heartbeat — idle sweeper prevention | backend-dev | MEDIUM | claude-haiku-4-5 | IN_PROGRESS |
-| 68 | inbox.js — HITL approve/reject API | backend-dev | HIGH | claude-sonnet-4-6 | PENDING |
+| 67 | SwarmEngine heartbeat — idle sweeper prevention | backend-dev | MEDIUM | claude-haiku-4-5 | COMPLETED |
+| 68 | inbox.js — HITL approve/reject API | backend-dev | HIGH | claude-sonnet-4-6 | COMPLETED |
 | 69 | HitlInbox.jsx — approval panel | frontend-dev | HIGH | claude-sonnet-4-6 | PENDING |
 | 70 | SwarmEngine HITL — freeze/unfreeze agent | backend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
 | **71.1** | PTY Explosion — full-screen overlay component | frontend-dev | HIGH | claude-sonnet-4-6 | PENDING |

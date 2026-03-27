@@ -335,6 +335,39 @@ class SwarmEngine {
 
     // 7. Spawn or reuse target agent PTY
     await this._ensureAgentPty(executionId, targetId);
+
+    // 8. Inject updated context into target agent's PTY
+    const targetState = execution.agentStates.get(targetId);
+    if (targetState && targetState.sessionId) {
+      const targetNode = execution.workflowDef.nodes.find((n) => n.id === targetId);
+      if (targetNode) {
+        const handoffTargets = execution.workflowDef.edges
+          .filter((e) => e.source === targetId)
+          .map((e) => e.target);
+        const contextPrompt = this._buildSystemPrompt(
+          targetNode, execution.workflowContext, handoffTargets
+        );
+        if (contextPrompt) {
+          this._sessionManager.writeInput(targetState.sessionId, contextPrompt + '\n');
+        }
+      }
+    }
+
+    // 9. Update source agent status to 'done' after handoff
+    if (sourceState) {
+      sourceState.status = 'done';
+      if (this._wsBroadcast) {
+        this._wsBroadcast(executionId, { type: 'agent_status', nodeId: sourceNodeId, status: 'done' });
+      }
+    }
+
+    // 10. Update target agent status to 'running'
+    if (targetState) {
+      targetState.status = 'running';
+      if (this._wsBroadcast) {
+        this._wsBroadcast(executionId, { type: 'agent_status', nodeId: targetId, status: 'running' });
+      }
+    }
   }
 
   /**
@@ -426,6 +459,56 @@ class SwarmEngine {
           this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'running' });
         }
       }
+    }
+  }
+
+  /**
+   * Freeze a single agent for Human-in-the-Loop review.
+   * Sets the agent status to 'paused', adds an inbox item, and broadcasts
+   * hitl_required + agent_status events.
+   * Added in Task #70.
+   * @param {string} executionId
+   * @param {string} nodeId
+   * @param {object} inboxItem - metadata for the human reviewer
+   */
+  freezeAgent(executionId, nodeId, inboxItem) {
+    const execution = this._executions.get(executionId);
+    if (!execution) return;
+    const state = execution.agentStates.get(nodeId);
+    if (!state) return;
+
+    state.status = 'paused';
+
+    // Add to inbox for human review
+    execution.inboxItems.push({ ...inboxItem, nodeId, id: inboxItem.id ?? `hitl-${Date.now()}` });
+
+    if (this._wsBroadcast) {
+      this._wsBroadcast(executionId, {
+        type: 'hitl_required',
+        nodeId,
+        item: execution.inboxItems[execution.inboxItems.length - 1],
+      });
+      this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'paused' });
+    }
+  }
+
+  /**
+   * Unfreeze a single agent after Human-in-the-Loop review is complete.
+   * Sets the agent status back to 'running' and broadcasts agent_status event.
+   * Added in Task #70.
+   * @param {string} executionId
+   * @param {string} nodeId
+   */
+  unfreezeAgent(executionId, nodeId) {
+    const execution = this._executions.get(executionId);
+    if (!execution) return;
+    const state = execution.agentStates.get(nodeId);
+    if (!state) return;
+
+    state.status = 'running';
+
+    if (this._wsBroadcast) {
+      this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'running' });
     }
   }
 
