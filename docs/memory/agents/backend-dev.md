@@ -1,4 +1,48 @@
 ---
+## 2026-03-27 — Task #45: HandoffParser.js — Stateful Rolling Buffer Token Extractor
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+V3 Swarm Orchestrator backend foundation. No V3 backend code existed yet. DEC-012 specified the rolling accumulator design. The existing codebase had 110 tests across 6 test files using vitest 4.1.0.
+
+### What I did
+1. Read project memory (PROGRESS, DECISIONS, CONTEXT) and existing test conventions (RingBuffer.test.js as template).
+2. Created server/services/HandoffParser.js implementing the stateful rolling buffer parser per the DEC-012 specification.
+3. Created server/tests/HandoffParser.test.js with 22 unit tests covering all 9 required scenarios plus additional edge cases (reset, context validation boundaries).
+4. Ran full test suite: 132/132 pass (110 existing + 22 new). Zero failures.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/HandoffParser.js | CREATED | Stateful rolling buffer parser with ANSI stripping, 4KB cap, __HANDOFF__ and __DONE__ extraction, contextUpdate validation (50 keys, 1024 char string max) |
+| server/tests/HandoffParser.test.js | CREATED | 22 unit tests: 2-chunk split, 3-chunk split, ANSI pollution, oversized context, malformed base64, __DONE__, 4KB overflow, multiple tokens, combined handoff+done, reset, validation edge cases |
+
+### Improvements delivered
+- V3 can now reliably extract handoff tokens from ConPTY output regardless of chunk splitting
+- SEC-V3-07 enforced: 4KB buffer cap, 50-key limit, 1024-char string value limit
+- Malformed payloads logged and skipped (no crash, no throw)
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | - | - | - |
+
+### Decisions I made
+- Used `new RegExp(HANDOFF_RE.source, 'g')` inside feed() instead of reusing module-level regex -- avoids stale lastIndex across calls since /g flag makes lastIndex persistent on the RegExp object
+- Defined ANSI patterns as module-level constants but the handoff regex is reconstructed per-call for safety
+
+### What I learned
+- vitest needs `npm install` in the server dir before running on fresh worktrees (not auto-installed)
+- The base64 regex pattern in the task spec correctly handles padding variants (==, =, or no padding)
+
+### State I'm leaving behind
+HandoffParser.js is complete and fully tested. It is a pure class with no I/O or side effects. Ready for SwarmEngine (#46) to instantiate one per active agent PTY and call feed() from the swarmListeners tap.
+
+### Handoff
+Task #46 (SwarmEngine.js skeleton) will import and use HandoffParser. Task #77 (HandoffParser unit tests by qa-tester) is largely pre-empted since this task already includes comprehensive tests -- qa-tester may add integration-level tests.
+
+---
 ## 2026-03-24 — Task #19: Fix JobRunner Memory Leak (BUG-06)
 **Status:** COMPLETED
 **Called by:** user (direct task assignment)
