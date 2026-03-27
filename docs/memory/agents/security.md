@@ -1,4 +1,70 @@
 ---
+## 2026-03-27 — Task #50: V3 Security Layer — SEC-V3-01 through SEC-V3-07
+**Status:** COMPLETED
+**Called by:** User (direct task assignment)
+
+### Context when I started
+V3 Phase 1 backend was fully complete (Tasks #43-#49). WorkflowStore.js, HandoffParser.js, and SwarmEngine.js were all implemented. Task #50 required implementing 7 security requirements and writing a security test file. Two new routes (triggers.js, inbox.js) that use several of these middlewares are not yet built (Tasks #68, #75).
+
+### What I did
+1. Read all memory files in parallel: security.md, PROGRESS.md, ACTIVITY_LOG.md.
+2. Read WorkflowStore.js — confirmed SEC-V3-02 (systemPrompt 16KB cap, 50-node limit, name whitelist) and SEC-V3-06 (name max 100, description max 500, NAME_REGEX) already fully implemented by backend-dev in Task #43.
+3. Read HandoffParser.js — confirmed SEC-V3-07 (4KB buffer cap, _validateContext() with max 50 keys and 1024-char value limit) already fully implemented by backend-dev in Task #45.
+4. Read server/index.js rateLimit() function to understand the existing in-memory pattern for SEC-V3-04.
+5. Read HandoffParser.test.js — 22 existing tests already cover the parser's security limits.
+6. Created server/utils/ssrfGuard.js (SEC-V3-03) — isSafeUrl() blocking private IPv4 ranges, loopback, link-local, unspecified, and IPv4-mapped IPv6 (both dotted-decimal and hex-normalized forms).
+7. Created server/middleware/webhookLimit.js (SEC-V3-01) — express.json({ limit: '32kb' }) placeholder for triggers.js.
+8. Created server/middleware/webhookRateLimit.js (SEC-V3-04) — 10 req/min stricter rate limiter placeholder for triggers.js.
+9. Created server/middleware/hitlValidation.js (SEC-V3-05) — validateResumeText() middleware placeholder for inbox.js.
+10. Created server/tests/security-v3.test.js — 36 new tests covering all 7 SEC-V3 requirements.
+11. Ran npm test — initial run caught a bug in ssrfGuard.js: Node.js normalizes IPv4-mapped IPv6 addresses to hex format (e.g., ::ffff:c0a8:101 not ::ffff:192.168.1.1). Fixed by adding a hex-word regex branch that reconstructs the IPv4 dotted-decimal and re-checks it.
+12. Verified final run: 168/168 tests pass (132 pre-existing + 36 new).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/utils/ssrfGuard.js | CREATED | isSafeUrl() SSRF prevention function — blocks all private/loopback IPv4 and IPv6 ranges |
+| server/middleware/webhookLimit.js | CREATED | express.json({ limit: '32kb' }) placeholder for SEC-V3-01 |
+| server/middleware/webhookRateLimit.js | CREATED | 10 req/min rate limiter placeholder for SEC-V3-04 |
+| server/middleware/hitlValidation.js | CREATED | validateResumeText() middleware for SEC-V3-05 |
+| server/tests/security-v3.test.js | CREATED | 36 tests covering SEC-V3-01 through SEC-V3-07 |
+| docs/TASK_PLAN.md | MODIFIED | Task #50 status: IN_PROGRESS → COMPLETED (both locations) |
+
+### Improvements delivered
+- SSRF prevention guard implemented and tested with 20+ test cases including edge cases
+- All 4 V3-specific middleware files ready for import in triggers.js and inbox.js
+- 36 new security tests added — 168 total passing (was 132)
+- SEC-V3-02, SEC-V3-06, SEC-V3-07 confirmed present and correct in existing code — no gaps found
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| IPv4-mapped IPv6 SSRF bypass | Node.js URL parser normalizes ::ffff:192.168.1.1 to ::ffff:c0a8:101 (hex words) — dotted-decimal regex didn't match | Added second regex branch for ::ffff:xxxx:xxxx hex form, converts each 16-bit word back to decimal octets | FIXED |
+
+### Decisions I made
+- Used URL parsing (new URL()) not dns.lookup() for SSRF check — synchronous, no network I/O, appropriate since the guard only blocks IP literals and "localhost"; domain names that resolve to private IPs are an accepted limitation (noted in ssrfGuard.js comments).
+- Wrote webhookLimit.js as a direct `express.json` export (not a factory) since 32KB is a fixed constant per the PRD.
+- webhookRateLimit.js is a module-scoped singleton (one Map, one sweep interval) matching the server/index.js pattern exactly — no new dependencies introduced.
+
+### What I learned
+- Node.js URL parser normalizes IPv4-mapped IPv6 to hex word format (::ffff:c0a8:101) — any SSRF guard must handle BOTH the dotted-decimal (::ffff:192.168.1.1) and hex-word (::ffff:xxxx:xxxx) forms.
+- WorkflowStore.js and HandoffParser.js already had all required security validations fully implemented by backend-dev at the time of Task #43 and #45 respectively — no remediation needed.
+- The security test file can test middleware functions directly without starting a server by constructing mock req/res objects.
+
+### State I'm leaving behind
+- 7 files created. All 168 tests passing.
+- SEC-V3-01 (webhookLimit.js) and SEC-V3-04 (webhookRateLimit.js) are placeholder files — they must be imported in triggers.js (Task #75).
+- SEC-V3-05 (hitlValidation.js) is a placeholder — must be imported in inbox.js (Task #68).
+- SEC-V3-03 (ssrfGuard.js) is ready for import in TriggerManager.js (Task #74).
+- SEC-V3-02, -06, -07 are fully active in WorkflowStore.js and HandoffParser.js.
+
+### Handoff
+- Task #74 (TriggerManager.js): import ssrfGuard.js and call isSafeUrl() before every RSS fetch.
+- Task #75 (triggers.js): import webhookLimit and webhookRateLimit from middleware/ and apply both on the POST /webhooks/:path route.
+- Task #68 (inbox.js): import validateResumeText from middleware/hitlValidation.js and apply on POST /inbox/:itemId/approve.
+- Task #79 (V3 Pre-Release Security Audit): verify all 7 SEC-V3 requirements are wired up (not just present as stubs) in the final codebase.
+---
+
 ## 2026-03-27 — V3 Swarm Orchestrator Early Security Assessment
 **Status:** COMPLETED
 **Called by:** User (early analysis phase, pre-PRD)

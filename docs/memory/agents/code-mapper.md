@@ -674,3 +674,46 @@ CODE_MAP.md fully reflects Tasks #46.3 and #49. CHANGELOG.md has entries for bot
 ### Handoff
 After Task #47.1 (swarm.js routes): update CODE_MAP.md with route functions and update SwarmEngine "Called by" fields (startExecution, stopExecution, getStatus all become reachable via HTTP).
 ---
+## 2026-03-27 — Tasks #47.2 + #48.2: swarm.js scaffold stub + broadcast() + WS event wiring
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+Tasks #47.2 and #48.2 had just completed. CODE_MAP.md was last updated after Tasks #47.1 + #48.1. swarmHandler.js now had a new `broadcast()` named export, and server/index.js now called `swarmEngine.setWsBroadcast(broadcast)` to wire execution events. Task #47.2 produced no source code changes — scaffold stub was already present from #47.1. ACTIVITY_LOG.md had been modified by at least one other agent since last read (devops Task #51 entry was present).
+
+### What I did
+1. Read swarmHandler.js in full (106 lines) — confirmed broadcast() export and getSubscribers() call
+2. Read server/index.js in full (341 lines) — confirmed `import handleSwarmConnection, { broadcast }` and `swarmEngine.setWsBroadcast(broadcast)` call
+3. Read CODE_MAP.md in offset passes — found existing swarmHandler entries (lines 1618-1644) and SwarmEngine.setWsBroadcast entry (lines 1364-1371)
+4. Read CHANGELOG.md tail — last entry was Task #48.1 at line ~930
+5. Read ACTIVITY_LOG.md head — file had been modified since last session (devops #51 and project-manager entries present)
+6. Updated CODE_MAP.md: header timestamp; Module Index for swarmHandler.js (added broadcast to exports); Module Index for server/index.js (noted setWsBroadcast wiring); Key Behaviors line for WS channel (updated to reflect #48.2 completion); SwarmEngine.setWsBroadcast "Called by" (was "future task", now "server/index.js::startup()"); getSubscribers "Called by" (was "not yet called", now "broadcast()"); new broadcast() Function Graph entry
+7. Appended Tasks #47.2 and #48.2 entries to CHANGELOG.md
+8. Prepended code-mapper session entry to ACTIVITY_LOG.md
+9. Appended this agent memory entry
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header timestamp; Module Index 2 rows updated; Key Behaviors line updated; SwarmEngine.setWsBroadcast + getSubscribers "Called by" updated; broadcast() Function Graph entry added |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Task #47.2 entry (no source code change noted) + Task #48.2 entry with full connection graph |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Prepended code-mapper session summary entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Key connections discovered
+- broadcast() → getSubscribers() (internal — first real caller of getSubscribers since it was added in #48.1)
+- server/index.js::startup() → swarmEngine.setWsBroadcast(broadcast) (new call — wires SwarmEngine emission path end-to-end to WS clients)
+- All SwarmEngine methods calling this._wsBroadcast are now fully live (_spawnAgentPty, _onHandoff, _onDone)
+- Task #47.2 had zero source code changes — scaffold stub was already present in swarm.js from Task #47.1
+
+### What I learned
+- ACTIVITY_LOG.md uses prepend ordering (newest first) — always prepend, never append
+- CODE_MAP.md is now ~1680+ lines — requires Grep for finding specific entries rather than offset reads
+- When a task confirms code is already present (no-op), CHANGELOG.md should still get an entry that explicitly notes "no source code changed"
+
+### State I'm leaving behind
+CODE_MAP.md fully reflects Tasks #47.2 and #48.2. broadcast() has a complete Function Graph entry. All "Called by" fields in the swarm stack are now accurate. WS event flow is documented end-to-end: SwarmEngine._wsBroadcast → broadcast() → getSubscribers() → ws.send() per subscriber.
+
+### Handoff
+Next tasks (#50 security, #51 devops deps, #52 SwarmContext frontend) are next wave. Task #52 will introduce client-side Zustand store and SwarmContext — CODE_MAP.md will need new client module entries when that completes.
+---

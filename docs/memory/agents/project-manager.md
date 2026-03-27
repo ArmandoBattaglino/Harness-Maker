@@ -1001,3 +1001,63 @@ Launch three agents in parallel:
 2. devops → TASK #51 (@xyflow/react + zustand install in client/)
 3. frontend-dev → TASK #52 (SwarmContext.jsx Zustand ExecutionStore — can start even before #51 lands since it's pure JS with no canvas deps)
 ---
+---
+## 2026-03-27 — Tasks #47.2 + #48.2 COMPLETED; #50 + #51 IN_PROGRESS
+**Status:** COMPLETED
+**Called by:** user (orchestrator notification — two tasks completed, two tasks launching)
+
+### Context when I started
+V3 Phase 1 was fully complete with 11/57 tasks done (all backend foundation tasks: #43–#49 plus #47.1, #47.2, #48.1, #48.2). The user confirmed:
+- Task #47.2 (swarm.js scaffold stub 501) COMPLETED — stub was already present from #47.1
+- Task #48.2 (swarmHandler.js broadcast() + setWsBroadcast wired) COMPLETED — 132 tests pass
+Both #50 (V3 Security Layer, depends #44+#47.1) and #51 (client deps, depends #48.2) are now unblocked and launching in parallel.
+
+### What I did
+1. Read TASK_PLAN.md sections for #47.2, #48.2, #50, #51, and the summary table
+2. Confirmed #47.2 and #48.2 body entries were already COMPLETED (set by backend-dev)
+3. Summary table also already had #47.2 and #48.2 COMPLETED
+4. Updated #50 task body: Status PENDING → IN_PROGRESS
+5. Updated #51 task body: Status PENDING → IN_PROGRESS (then found devops already set it to COMPLETED)
+6. Updated summary table: #50 PENDING → IN_PROGRESS, #51 PENDING → IN_PROGRESS (then found devops already set it COMPLETED there too)
+7. Final summary table state: #50 IN_PROGRESS, #51 COMPLETED
+8. Updated summary table footer: 12 COMPLETED (was "3 COMPLETED"), 1 IN_PROGRESS (#50), 44 PENDING
+9. Updated PROGRESS.md: status header, #50 IN_PROGRESS, #51 referenced as already COMPLETED
+10. Updated CONTEXT.md: next wave updated to reflect #51 COMPLETED and #52 unblocked
+11. Wrote this session log and appended to ACTIVITY_LOG.md
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | #50 Status PENDING → IN_PROGRESS; summary table footer updated 3→12 COMPLETED + #50 IN_PROGRESS; #51 confirmed COMPLETED |
+| docs/memory/PROGRESS.md | MODIFIED | Status header updated 11→12/57 COMPLETED; #50 IN_PROGRESS note added; #51 referenced as COMPLETED (already done by devops) |
+| docs/memory/CONTEXT.md | MODIFIED | Next wave updated: #51 IN_PROGRESS → COMPLETED, #52 unblocked |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | This session entry appended |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- TASK_PLAN.md summary footer now accurately shows 12/57 COMPLETED with full list of completed task IDs
+- #50 correctly flagged IN_PROGRESS (security agent running)
+- #51 correctly flagged COMPLETED (devops agent already completed it before this PM session)
+- CONTEXT.md updated so frontend-dev working on #52 knows #51 is done (deps satisfied)
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| #51 was already COMPLETED by devops before PM session | devops agent updated PROGRESS.md and task body entry concurrently with PM session | PM confirmed state from PROGRESS.md system-reminder and left #51 as COMPLETED | FIXED |
+
+### Decisions I made
+- #52 (SwarmContext.jsx Zustand ExecutionStore) is now unblocked since #51 COMPLETED — can launch immediately
+
+### What I learned
+- Concurrent agent execution can result in other agents completing tasks between PM reads — always verify current state from PROGRESS.md system reminders
+- The PROGRESS.md system-reminder shows the true live state — use it when task entries contradict
+
+### State I'm leaving behind
+- #50 IN_PROGRESS: V3 Security Layer (SEC-V3-01 to SEC-V3-07) — security agent running
+- #51 COMPLETED: @xyflow/react@12.10.1 + zustand@4.5.7 installed — build clean
+- #52 PENDING but unblocked: SwarmContext.jsx Zustand ExecutionStore — depends on #51 (DONE)
+- 12/57 V3 tasks COMPLETED, 1 IN_PROGRESS (#50), 44 PENDING
+
+### Handoff
+When #50 (security) completes: mark COMPLETED, update summary table to 13/57, next task in security chain is #79 (pre-release security audit — far downstream).
+When #52 (SwarmContext.jsx) is assigned: frontend-dev, claude-sonnet-4-6, depends on #51 (done). After #52: canvas nodes #53.1, #53.2, #53.3 can launch in parallel.

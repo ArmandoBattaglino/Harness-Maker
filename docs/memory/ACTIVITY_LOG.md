@@ -1,4 +1,14 @@
 ---
+## 2026-03-27 — security — Task #50: V3 Security Layer — SEC-V3-01 through SEC-V3-07
+**Outcome:** COMPLETED
+**Summary:** Implemented all 7 V3 security requirements. Created ssrfGuard.js (SSRF prevention, blocks private IPs/loopback), webhookLimit.js (32KB body cap placeholder), webhookRateLimit.js (10 req/min placeholder), and hitlValidation.js (8KB HITL text cap). Verified SEC-V3-02, -06, -07 were already fully implemented in WorkflowStore.js and HandoffParser.js. Created 36-test security-v3.test.js. All 168 tests pass (132 pre-existing + 36 new).
+**Files changed:** server/utils/ssrfGuard.js (CREATED), server/middleware/webhookLimit.js (CREATED), server/middleware/webhookRateLimit.js (CREATED), server/middleware/hitlValidation.js (CREATED), server/tests/security-v3.test.js (CREATED), docs/TASK_PLAN.md (MODIFIED)
+**Bugs fixed:** IPv4-mapped IPv6 SSRF bypass — Node.js normalizes ::ffff:192.168.1.1 to hex (::ffff:c0a8:101); added hex-word branch to ssrfGuard.js
+**Decisions made:** Used URL parsing (no dns.lookup()) for SSRF — synchronous, no network I/O, blocks all IP literals; domain-to-private-IP is accepted limitation documented in ssrfGuard.js
+**Blockers:** none
+**Next:** Task #51 (devops) already COMPLETED. Next: Task #52 (frontend SwarmContext). Tasks #68, #74, #75 must import the new middleware/utils files created here.
+---
+
 ## 2026-03-27 — code-mapper — Tasks #47.2 + #48.2: swarm.js scaffold stub + broadcast() WS wiring
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md: header timestamp, Module Index entries for swarmHandler.js (added broadcast export) and server/index.js (noted setWsBroadcast wiring); added new broadcast() Function Graph entry; updated getSubscribers "Called by" and SwarmEngine.setWsBroadcast "Called by" to reflect live connections; updated Key Behaviors note for the WS channel. Appended two CHANGELOG.md entries (Tasks #47.2 and #48.2) with full connection graphs.
@@ -956,4 +966,15 @@
 **Decisions made:** Maintained V3 deferral policy — no public doc updates until V3 is feature-complete (Task #82). Added separate #48.2 row in V3 service files table to preserve per-task history.
 **Blockers:** none
 **Next:** After Tasks #50/#51/#52 complete: update DOC_STATUS.md V3 table. After Task #82: major ARCHITECTURE.md + README.md V3 update.
+---
+
+---
+## 2026-03-27 — project-manager — Tasks #47.2 + #48.2 COMPLETED; #50 + #51 Launched
+**Outcome:** COMPLETED
+**Summary:** Marked #47.2 (scaffold stub 501) and #48.2 (swarmHandler broadcast wired) as COMPLETED in TASK_PLAN.md summary table (already set by backend-dev in body entries). Launched #50 (V3 Security Layer, security agent) and #51 (client deps install, devops agent) in parallel. #51 was already completed by devops agent before PM session — confirmed and finalized. Summary table footer updated to 12/57 COMPLETED.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** #52 (SwarmContext.jsx) now unblocked since #51 COMPLETED — can launch immediately
+**Blockers:** none
+**Next:** #52 (SwarmContext.jsx, frontend-dev, claude-sonnet-4-6) ready to launch. Await #50 (security) completion.
 ---

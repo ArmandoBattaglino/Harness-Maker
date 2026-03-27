@@ -172,7 +172,7 @@ _None._
 - [TASK-48.2] COMPLETED 2026-03-27 — swarmHandler.js broadcast() + WS event wiring; broadcast() named export added; setWsBroadcast(broadcast) called in server/index.js; 132/132 tests pass
 - [TASK-49] COMPLETED 2026-03-27 — CircuitBreaker.js + BudgetTracker.js — pure service classes, 132/132 tests pass
 - [TASK-49] COMPLETED 2026-03-27 — CircuitBreaker.js + BudgetTracker.js — pure service classes, no I/O, no imports, 132/132 tests pass
-- [TASK-50] IN_PROGRESS — V3 Security Layer (SEC-V3-01 to SEC-V3-07) — security agent
+- [TASK-50] COMPLETED 2026-03-27 — V3 Security Layer (SEC-V3-01 to SEC-V3-07) — ssrfGuard.js, webhookLimit.js, webhookRateLimit.js, hitlValidation.js created; SEC-V3-02/-06/-07 verified in WorkflowStore.js + HandoffParser.js; 36 new tests; 168/168 pass
 
 ### V3 Phase 2 — Canvas Static
 - [TASK-51] COMPLETED 2026-03-27 — @xyflow/react@12.10.1 + zustand@4.5.7 installed in client/; 299 modules build clean; 132/132 tests pass — devops agent

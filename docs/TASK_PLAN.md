@@ -4294,7 +4294,7 @@ Agent: security
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: IN_PROGRESS
+Status: COMPLETED
 Dependencies: #44, #47.1
 Context:
   Implement all 7 mandatory V3 security requirements from the PRD (Appendix A).
@@ -6004,7 +6004,7 @@ Acceptance criteria:
 | **48.1** | swarmHandler.js — channel routing + connection mgmt | backend-dev | HIGH | claude-sonnet-4-6 | COMPLETED |
 | **48.2** | swarmHandler.js — broadcast() + WS event wiring | backend-dev | HIGH | claude-sonnet-4-6 | COMPLETED |
 | 49 | CircuitBreaker.js + BudgetTracker.js | backend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
-| 50 | V3 Security Layer (SEC-V3-01 to SEC-V3-07) | security | HIGH | claude-sonnet-4-6 | IN_PROGRESS |
+| 50 | V3 Security Layer (SEC-V3-01 to SEC-V3-07) | security | HIGH | claude-sonnet-4-6 | COMPLETED |
 | 51 | Client deps: @xyflow/react + zustand install | devops | HIGH | claude-haiku-4-5 | COMPLETED |
 | 52 | SwarmContext.jsx — Zustand ExecutionStore | frontend-dev | HIGH | claude-sonnet-4-6 | PENDING |
 | **53.1** | AgentNode.jsx — agent canvas node | frontend-dev | HIGH | claude-opus-4-6 | PENDING |
@@ -6046,7 +6046,7 @@ Acceptance criteria:
 
 **Total V3 tasks (original #43–#82): 40**
 **After subtask split: 57 tasks (40 originals → 17 split into subtasks + 3 completed = 57 granular units)**
-**Breakdown: 3 COMPLETED (#43, #44, #45) + 54 PENDING subtasks and standalone tasks**
+**Breakdown: 12 COMPLETED (#43, #44, #45, #46.1, #46.2, #46.3, #47.1, #47.2, #48.1, #48.2, #49, #51) + 1 IN_PROGRESS (#50) + 44 PENDING — 2026-03-27**
 
 ---
 

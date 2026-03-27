@@ -45,13 +45,25 @@ export function isSafeUrl(urlString) {
     : hostname;
 
   // --- IPv6 loopback ---
-  if (host === '::1') return false;
   if (host.toLowerCase() === '::1') return false;
 
-  // IPv4-mapped IPv6: ::ffff:x.x.x.x
-  const ipv4MappedMatch = host.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/i);
-  if (ipv4MappedMatch) {
-    return _isPublicIPv4(ipv4MappedMatch[1]);
+  // IPv4-mapped IPv6, dotted-decimal form: ::ffff:x.x.x.x
+  const ipv4MappedDotted = host.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/i);
+  if (ipv4MappedDotted) {
+    return _isPublicIPv4(ipv4MappedDotted[1]);
+  }
+
+  // IPv4-mapped IPv6, hex form (Node.js normalizes to this): ::ffff:xxxx:xxxx
+  // e.g. ::ffff:c0a8:101 = 192.168.1.1, ::ffff:7f00:1 = 127.0.0.1
+  const ipv4MappedHex = host.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i);
+  if (ipv4MappedHex) {
+    const highWord = parseInt(ipv4MappedHex[1], 16);
+    const lowWord  = parseInt(ipv4MappedHex[2], 16);
+    const a = (highWord >> 8) & 0xff;
+    const b = highWord & 0xff;
+    const c = (lowWord >> 8) & 0xff;
+    const d = lowWord & 0xff;
+    return _isPublicIPv4(`${a}.${b}.${c}.${d}`);
   }
 
   // --- Pure IPv4 ---
