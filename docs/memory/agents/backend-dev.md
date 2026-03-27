@@ -528,3 +528,58 @@ Tasks #17 and #18 status: #17 already completed (allowedTools whitelist). #18 (P
 ### Handoff
 After Tasks #17 and #18 are both COMPLETED, a qa-tester regression pass is the logical next step per the project manager's plan.
 ---
+
+---
+## 2026-03-27 — Task #43: WorkflowStore.js — Workflow JSON Persistence
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+V3 Swarm Orchestrator planning phase complete. All V1/V1.1 tasks done (Tasks #1-#22). V3 task chain beginning at #43. server/services/ had ConfigStore.js, BinaryDiscovery.js, FileManager.js, JobRunner.js, ProcessRegistry.js, RingBuffer.js, SessionManager.js — no WorkflowStore yet. server/services/node_modules did not exist (needed npm install in server/).
+
+### What I did
+1. Read PROJECT.md, DECISIONS.md in parallel — confirmed DEC-013 (WorkflowStore follows ConfigStore pattern), write-file-atomic requirement, path validation rules.
+2. Read ConfigStore.js in full — captured the exact pattern: resolveConfigDir(), ensureDir(), writeFileAtomic(), no in-memory cache (file-per-entity design), error handling style.
+3. Read server/index.js in full — understood the startup() sequence, import block, service initialization pattern.
+4. Created server/services/WorkflowStore.js as an ES module class with: constructor(configDir), init(), list(), get(id), create(data), update(id, data), delete(id), validate(data), _resolveFilePath(id), _writeWorkflow(workflow).
+5. Added WorkflowStore import to server/index.js and added initialization block inside startup() immediately after `const app = express()` (important: app must exist before app.locals is accessible). Instance stored in app.locals.workflowStore for future route access.
+6. Ran `npm install` in server/ (node_modules was missing in the worktree). Then ran `npx vitest run` — 110/110 tests pass.
+7. Updated TASK_PLAN.md: Status PENDING -> COMPLETED for Task #43.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/WorkflowStore.js | CREATED | New class: init/list/get/create/update/delete/validate + path traversal guard |
+| server/index.js | MODIFIED | Added WorkflowStore import + init block after `const app = express()` |
+| docs/TASK_PLAN.md | MODIFIED | Task #43 Status: PENDING -> COMPLETED |
+
+### Improvements delivered
+- WorkflowStore.create() generates UUID server-side, validates schema, writes atomic JSON to workflows/<id>.json
+- WorkflowStore.get(id) returns null for nonexistent IDs — never throws
+- Schema validation enforces: name max 100 chars + regex, description max 500, nodes max 50, node id regex, systemPrompt max 16384 chars
+- All writes use write-file-atomic (SEC-09, FR-V3-03)
+- _resolveFilePath() validates path is within workflows/ dir, rejects traversal sequences
+- WorkflowStore.list() returns [] when workflows/ dir is empty or unreadable
+- 110 existing tests still pass — no regressions
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| WorkflowStore init block placed before `const app = express()` on first attempt | server/index.js declares `const app` at step 5, after step 3 where I initially placed the init block | Moved init to after `const app = express()` line | FIXED |
+
+### Decisions I made
+- WorkflowStore is a class (not a module-level singleton like ConfigStore) — ConfigStore uses module-level state because there's only one config; WorkflowStore might have multiple instances in tests. This matches the task spec's `constructor(configDir)` API.
+- Stored the instance on `app.locals.workflowStore` — the standard Express pattern for service injection into routes, consistent with how future routes/workflows.js will access it via `req.app.locals.workflowStore`.
+- WorkflowStore init block is non-fatal (warn + continue) — if the workflows dir fails to create, the app still starts and the workflows feature degrades. This matches how ProcessRegistry.cleanupStale() is treated.
+- validate() never throws — returns `{ valid, errors }` object. create()/update() do throw with statusCode=400 on validation failure (for route handlers to catch and return HTTP 400).
+
+### What I learned
+- In server/index.js, `const app = express()` is declared inside the startup() IIFE, not at module level — so any code that references `app` (like `app.locals`) must come AFTER that line. ConfigStore is initialized before app creation because it doesn't need the app object.
+- server/ node_modules may be missing in worktrees even when the parent project has them installed. Always run `npm install` in server/ if tests fail to load vitest.
+
+### State I'm leaving behind
+server/services/WorkflowStore.js created and exports the WorkflowStore class. server/index.js imports it and stores an initialized instance in app.locals.workflowStore. 110/110 tests pass. All acceptance criteria met.
+
+### Handoff
+Task #44 (server/routes/workflows.js CRUD API) should read server/index.js to see how app.locals.workflowStore is set up, then access it via `req.app.locals.workflowStore` in the route handlers. Task #46 (SwarmEngine) depends on #43 — WorkflowStore is now available.
+---

@@ -3565,7 +3565,7 @@ Agent: backend-dev
 Priority: HIGH
 Difficulty: EASY
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Dependencies: none (requires v2.1 complete — #42 done)
 Context:
   Create `server/services/WorkflowStore.js` following the EXACT same pattern as the existing

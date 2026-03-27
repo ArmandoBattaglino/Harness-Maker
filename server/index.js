@@ -12,6 +12,7 @@ import { WebSocketServer } from 'ws';
 
 import { discoverClaudeBinary } from './services/BinaryDiscovery.js';
 import { ConfigStore } from './services/ConfigStore.js';
+import { WorkflowStore } from './services/WorkflowStore.js';
 import { ProcessRegistry } from './services/ProcessRegistry.js';
 import { securityMiddleware } from './middleware/security.js';
 import { csrfMiddleware } from './middleware/csrf.js';
@@ -148,6 +149,17 @@ async function startup() {
   // 5. Build Express app and apply middleware
   // -------------------------------------------------------------------------
   const app = express();
+
+  // Initialize workflow store (creates workflows/ dir if missing)
+  try {
+    const workflowStore = new WorkflowStore(ConfigStore.CONFIG_DIR);
+    await workflowStore.init();
+    app.locals.workflowStore = workflowStore;
+    console.log(`[startup] Workflow store: ${ConfigStore.CONFIG_DIR}/workflows`);
+  } catch (err) {
+    // Non-fatal — log and continue; workflows feature degrades gracefully
+    console.error(`[WARN] WorkflowStore init error: ${err.message}`);
+  }
 
   // Security (Helmet + CSP)
   securityMiddleware(app);
