@@ -1,4 +1,13 @@
 ---
+## 2026-03-27 — project-manager — V3 Phase 1 Wave 1 Status Sync
+**Outcome:** COMPLETED
+**Summary:** Verified TASK #43 (WorkflowStore.js) and TASK #45 (HandoffParser.js) are both marked COMPLETED in TASK_PLAN.md. Updated PROGRESS.md to reflect 2/40 V3 tasks completed. V3 Phase 1 Wave 1 is done — Wave 2 (#44 workflows.js CRUD routes + #46 SwarmEngine.js skeleton) is now unblocked and ready to launch in parallel.
+**Files changed:** docs/memory/PROGRESS.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** TASK #44 (workflows.js CRUD routes, backend-dev) + TASK #46 (SwarmEngine.js skeleton, backend-dev) — launch in parallel
+---
 ## 2026-03-27 — backend-dev — Task #45: HandoffParser.js — Stateful Rolling Buffer Token Extractor
 **Outcome:** COMPLETED
 **Summary:** Created server/services/HandoffParser.js with stateful rolling buffer for ConPTY chunk-split token extraction, and server/tests/HandoffParser.test.js with 22 unit tests covering all 9 required scenarios plus additional edge cases. All 132 tests pass (110 existing + 22 new).
@@ -700,4 +709,14 @@
 **Decisions made:** WorkflowStore is a class (not module singleton) to support constructor(configDir) API; instance stored in app.locals for Express route access pattern
 **Blockers:** none
 **Next:** Task #44 (server/routes/workflows.js CRUD API) can now be implemented — WorkflowStore is ready
+---
+---
+## 2026-03-27 — backend-dev — Task #44: server/routes/workflows.js — CRUD API
+**Outcome:** COMPLETED
+**Summary:** Created server/routes/workflows.js with 5 CRUD endpoints (GET list, POST create, GET by ID, PUT update, DELETE) accessing WorkflowStore via app.locals. Mounted at /api/v1/workflows in server/index.js. All 132 existing tests pass.
+**Files changed:** server/routes/workflows.js (CREATED), server/index.js (MODIFIED — import + mount)
+**Bugs fixed:** none
+**Decisions made:** CSRF enforced globally (no per-route check needed); app.locals pattern for store access; 503 guard for non-fatal store init failure
+**Blockers:** none
+**Next:** Task #46 (SwarmEngine.js skeleton)
 ---

@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-03-26 after Task #31: Visual QA + Functional Regression Testing (Phase 9 COMPLETE)_
+_Last updated: 2026-03-27 after Tasks #43/#45: WorkflowStore.js + HandoffParser.js (V3 in progress)_
 
 ## Status Legend
 - UP_TO_DATE -- matches current code
@@ -24,10 +24,19 @@ _Last updated: 2026-03-26 after Task #31: Visual QA + Functional Regression Test
 | docs/API.md | MISSING | -- | API surface documented in ARCHITECTURE.md Section 2. Standalone file deferred. |
 | docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. |
 
+## New V3 Service Files (not yet in public docs — V3 incomplete)
+
+| File | Status | Notes |
+|------|--------|-------|
+| server/services/WorkflowStore.js | UP_TO_DATE | New file (Task #43). Persistent workflow state store. Self-documenting code; no inline docs needed. Not yet reflected in ARCHITECTURE.md (V3 incomplete). |
+| server/services/HandoffParser.js | UP_TO_DATE | New file (Task #45). Stateful rolling-buffer token extractor for ConPTY chunk-split handoff tokens. Well-documented inline. 22 unit tests in server/tests/HandoffParser.test.js. Not yet reflected in ARCHITECTURE.md (V3 incomplete). |
+| server/index.js | UP_TO_DATE | Modified (Task #43). WorkflowStore initialization added at server startup. No documentation staleness — V3 architecture section in ARCHITECTURE.md does not exist yet. |
+
 ## Stale Sections (known gaps)
 
 - docs/memory/DECISIONS.md:DEC-001 -- Records "use node-pty-prebuilt-multiarch" but actual installed package is plain node-pty. Historical accuracy preserved intentionally; correction in PROJECT.md.
 - client/src/views/EntitiesView.jsx -- File still exists on disk but is no longer imported by App.jsx. Marked as DEPRECATED in ARCHITECTURE.md component tree. Can be deleted in a future cleanup.
+- docs/ARCHITECTURE.md -- Does not yet include V3 components (WorkflowStore, HandoffParser, SwarmEngine, BroadcastService, etc.). Will require a major update when V3 is feature-complete.
 
 ## Documentation Debt
 
@@ -40,3 +49,5 @@ _Last updated: 2026-03-26 after Task #31: Visual QA + Functional Regression Test
 | SECURITY_AUDIT.md LOW-03 fix | Low | Build env var allowlist for PTY spawn -- deferred to v1.1 |
 | SECURITY_AUDIT.md LOW-04 fix | Low | Refactor safeRead to cover claudemd GET path -- deferred to v1.1 |
 | Delete EntitiesView.jsx | Low | Dead code after Phase 9; kept for rollback safety |
+| docs/ARCHITECTURE.md V3 section | High | Must be written once V3 feature set (SwarmEngine, WorkflowStore, HandoffParser, BroadcastService, SwarmCanvasView) is complete. Deferred intentionally -- documenting incomplete architecture creates false docs. |
+| README.md V3 features | High | Must be updated once V3 ships. Currently README accurately describes v1.3 features only. Do not add V3 features until the V3 task plan is fully COMPLETED. |

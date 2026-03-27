@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-26 — after Tasks #32-#40: Phase 10 Bug Fix Execution — mapped by antigravity_
+_Last updated: 2026-03-27 — after Tasks #43 (WorkflowStore) and #45 (HandoffParser) — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -30,6 +30,8 @@ _Last updated: 2026-03-26 — after Tasks #32-#40: Phase 10 Bug Fix Execution �
 | server/services/JobRunner.js | JobRunner (class), jobRunner (singleton) | One-shot Claude job executor: spawns claude -p, streams JSON output line-by-line to SSE clients, cancelAll on shutdown, TTL eviction of terminal jobs (BUG-06 fix) |
 | server/routes/jobs.js | jobsRouter | POST/GET/DELETE /api/v1/jobs, GET /api/v1/jobs/:id (status+result), GET /api/v1/jobs/:id/stream (SSE) — job lifecycle REST + streaming |
 | server/ws/terminalHandler.js | setupTerminalWebSocket | WebSocket handler: sessionId from URL query, attach/detach client, route input/resize messages |
+| server/services/WorkflowStore.js | WorkflowStore (class) | CRUD + schema validation for workflow definitions; persists to %APPDATA%\ClaudeCodeManager\workflows\<id>.json via write-file-atomic; server-generated UUIDs; path-traversal guard on all reads/writes (Task #43) |
+| server/services/HandoffParser.js | HandoffParser (class), default HandoffParser | Stateful rolling 4KB buffer extractor for ConPTY __HANDOFF__ and __DONE__ tokens; handles chunk-split across multiple PTY onData callbacks; ANSI escape stripping; JSON payload validation (Task #45, DEC-012) |
 
 ### Client Modules
 | File | Key Exports | Purpose |
@@ -72,6 +74,7 @@ _Last updated: 2026-03-26 — after Tasks #32-#40: Phase 10 Bug Fix Execution �
 | server/tests/pathValidation.test.js | Vitest | server/middleware/pathValidation.js | 13 |
 | server/tests/SessionManager.test.js | Vitest | server/services/SessionManager.js | 18 |
 | server/tests/JobRunner.test.js | Vitest | server/services/JobRunner.js | 18 |
+| server/tests/HandoffParser.test.js | Vitest | server/services/HandoffParser.js | 22 |
 
 ## Build Artifacts
 - `server/public/` — Vite build output (served as static files by Express)

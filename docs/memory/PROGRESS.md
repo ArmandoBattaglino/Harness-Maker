@@ -152,13 +152,13 @@ _None._
 - NOTE: FileManager was NOT created in Task #5 as planned — RESOLVED in Task #7 (created server/services/FileManager.js).
 
 ## V3 — Swarm Orchestrator (40 tasks, Phase 1–7)
-**Status: 0/40 COMPLETED — as of 2026-03-27.**
+**Status: 2/40 COMPLETED — as of 2026-03-27.**
 - V3 PRD complete: docs/PRD.md
 - V3 research complete: docs/research_complete.md, research_a/b/c.md
 - V3 task plan: docs/TASK_PLAN.md tasks #43–#82
 
 ### V3 Phase 1 — Backend Foundation (8 tasks)
-- [TASK-43] PENDING — WorkflowStore.js (backend-dev)
+- [TASK-43] COMPLETED 2026-03-27 — WorkflowStore.js (backend-dev) — CRUD persistence for workflow JSON, atomic writes, 132/132 tests pass
 - [TASK-44] PENDING — workflows.js CRUD routes (backend-dev)
 - [TASK-45] COMPLETED 2026-03-27 — HandoffParser.js (backend-dev) — stateful rolling buffer parser + 22 unit tests, 132/132 tests pass
 - [TASK-46] PENDING — SwarmEngine.js skeleton (backend-dev)

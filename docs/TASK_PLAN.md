@@ -5449,8 +5449,8 @@ Acceptance criteria:
 
 | # | Task | Agent | Priority | Difficulty | Status |
 |---|------|-------|----------|------------|--------|
-| 43 | WorkflowStore.js | backend-dev | HIGH | EASY | PENDING |
-| 44 | workflows.js CRUD routes | backend-dev | HIGH | EASY | PENDING |
+| 43 | WorkflowStore.js | backend-dev | HIGH | EASY | COMPLETED |
+| 44 | workflows.js CRUD routes | backend-dev | HIGH | EASY | COMPLETED |
 | 45 | HandoffParser.js | backend-dev | HIGH | HARD | COMPLETED |
 | 46 | SwarmEngine.js skeleton | backend-dev | HIGH | VERY HARD | PENDING |
 | 47 | swarm.js routes + scaffold | backend-dev | HIGH | HARD | PENDING |

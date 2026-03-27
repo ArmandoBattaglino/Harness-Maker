@@ -627,3 +627,53 @@ server/services/WorkflowStore.js created and exports the WorkflowStore class. se
 ### Handoff
 Task #44 (server/routes/workflows.js CRUD API) should read server/index.js to see how app.locals.workflowStore is set up, then access it via `req.app.locals.workflowStore` in the route handlers. Task #46 (SwarmEngine) depends on #43 — WorkflowStore is now available.
 ---
+---
+## 2026-03-27 — Task #44: server/routes/workflows.js — CRUD API
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+WorkflowStore.js (#43) already completed and initialized in server/index.js at app.locals.workflowStore. CSRF middleware applied globally (handles all mutating methods). Need to create the Express router and mount it.
+
+### What I did
+1. Read WorkflowStore.js to understand create/update/delete error patterns (statusCode 400/404 on thrown errors).
+2. Read server/index.js to confirm workflowStore is stored in app.locals and to find the route mount point.
+3. Read server/routes/projects.js and server/middleware/csrf.js to understand existing CSRF and error patterns.
+4. Created server/routes/workflows.js with 5 CRUD endpoints using app.locals.workflowStore.
+5. Added import and mount in server/index.js after jobsRouter.
+6. Ran npm test: 132/132 tests pass (no regressions).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/routes/workflows.js | CREATED | Full CRUD REST API: GET list, POST create, GET by ID, PUT update, DELETE — all using WorkflowStore from app.locals |
+| server/index.js | MODIFIED | Added workflowsRouter import and app.use('/api/v1/workflows', workflowsRouter) mount |
+
+### Improvements delivered
+- Full CRUD API for workflows at /api/v1/workflows
+- Validation errors from WorkflowStore surfaced as 400 { error, details[] }
+- 404 responses include the id field: { error: "Workflow not found", id }
+- CSRF enforced via global middleware (no per-route duplication needed)
+- 503 guard if workflowStore failed to init at startup (graceful degradation)
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | - | - | - |
+
+### Decisions I made
+- Used app.locals.workflowStore to access the store (already set by index.js startup, matches how other singletons are accessed) → consistent with project pattern
+- Did not add CSRF check per-route since csrfMiddleware is global and handles POST/PUT/DELETE already
+- Added 503 guard for workflowStore being null (startup could fail non-fatally per index.js)
+
+### What I learned
+- WorkflowStore throws errors with .statusCode property (400/404) — catch and translate to structured JSON responses
+- CSRF is fully handled globally, routes do not need to check headers themselves
+- app.locals is the pattern for passing per-request services in this project
+
+### State I'm leaving behind
+server/routes/workflows.js: fully implemented, all 5 endpoints, mounted in index.js. 132 tests pass.
+
+### Handoff
+None — task fully self-contained. Next task is #46 (SwarmEngine.js skeleton).
+---
