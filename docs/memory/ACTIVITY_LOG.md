@@ -1,4 +1,26 @@
 ---
+## 2026-03-27 — tech-lead — Stage 0: V3 Swarm Orchestrator Technical Assessment
+**Outcome:** COMPLETED
+**Summary:** Delivered Stage 0 technical feasibility analysis for V3 Swarm Orchestrator. Feasibility CLEAR, platform CLEAR, integration UNCERTAIN. Biggest risk: PTY stdout chunking on Windows ConPTY means HANDOFF pattern detection requires a stateful stream buffer, not naive line parsing. Three targeted questions produced covering handoff parser robustness, PTY concurrency cap, and stream-json event extraction for Prompt-to-Flow.
+**Files changed:** docs/memory/agents/tech-lead.md (CREATED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** none (assessment only)
+**Blockers:** none
+**Next:** Stage 1 research, then Stage 2 architect design
+---
+
+---
+## 2026-03-27 — creative-director — Stage 0: V3 Swarm Orchestrator Creative Analysis
+**Outcome:** COMPLETED
+**Summary:** Delivered Stage 0 creative analysis for the proposed V3 "Swarm Orchestrator" concept. Rated Vision CLEAR, User VAGUE, Value CLEAR. Surfaced 3 blocking product questions: (1) primary user identity (watcher Leo vs. builder Anna), (2) completion/failure experience and emotional arc, (3) whether the canvas is editable during live execution. These must be answered before PRD work begins.
+**Files changed:** docs/memory/agents/creative-director.md (CREATED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** User clarity rated VAGUE due to three incompatible primary personas; canvas editability during live runs identified as highest-risk UX decision.
+**Blockers:** none — questions surfaced for user to answer in Stage 1
+**Next:** Tech-lead Stage 0 analysis (parallel). Then user answers questions → researcher → prd-writer.
+---
+
+---
 ## 2026-03-26 — antigravity — Task #42: Terminal Bug Fix
 **Outcome:** COMPLETED
 **Summary:** Fixed a bug where clicking 'Open Terminal' from a project card navigated to the terminal view but failed to start a PTY session. Added the missing session creation logic (`apiPost('/api/v1/sessions')`) to `ProjectsView.handleOpenTerminal`, mirroring the existing session logic in the Sidebar. Build and tests passed.
