@@ -1444,7 +1444,7 @@ _Last updated: 2026-03-27 — after Tasks #63 (useSwarm.js), #66 (BroadcastBar.j
 - **Output:** void
 - **Side effects:** sets execution.heartbeatTimer (NodeJS.Timer); periodic writeInput calls to all running PTY sessions every 300,000ms; timer is unref'd so it does not block process exit
 - **Complexity note:** The interval iterates execution.agentStates and filters for status === 'running'. It re-fetches the execution each tick via _executions.get(executionId) and exits early if the execution has been removed (e.g., stopExecution cleared it). stopExecution calls clearInterval(execution.heartbeatTimer) to cancel.
-- **Last modified:** 2026-03-27 in Task #46.3 by backend-dev (was stub in #46.2)
+- **Last modified:** 2026-03-27 in Task #46.3 by backend-dev (was stub in #46.2); heartbeat logic verified correct in Task #67 — 5min/300000ms interval, .unref() prevents blocking process exit, clearInterval on stop confirmed
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine._onHandoff(executionId, sourceNodeId, event)` (stub)
 - **Purpose:** Handle a handoff event from the HandoffParser. Currently broadcasts a handoff_started WS event. Full routing (spawn target agent, edge counter tracking, context merge) deferred to Task #46.3 / #62.
