@@ -1,4 +1,14 @@
 ---
+## 2026-03-27 — security — V3 Swarm Orchestrator Early Security Assessment
+**Outcome:** COMPLETED
+**Summary:** Delivered pre-PRD early security assessment for V3 Swarm Orchestrator. Rated 8 new attack surfaces, identified 3 new vulnerability classes (SSRF via RSS, disk-resident execution instructions, webhook external ingress), and produced 7 mandatory security requirements for the PRD. No code exists yet — this is a planning-phase read-only analysis.
+**Files changed:** docs/memory/agents/security.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/CONTEXT.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Webhook endpoint rated HIGH (not CRITICAL) because 127.0.0.1 binding requires deliberate user action to expose. WorkflowDefinition load-and-execute rated HIGH — disk content used as execution instruction bypasses CSRF. RSS polling rated HIGH as first SSRF vector in the project.
+**Blockers:** none
+**Next:** prd-writer incorporates 7 mandatory SEC requirements into V3 PRD
+---
+
 ## 2026-03-27 — architect — V3 Swarm Orchestrator Technical Analysis
 **Outcome:** COMPLETED
 **Summary:** Produced full technical analysis for V3 Swarm Orchestrator. Defined 10 new backend services, 7 new frontend components, complete data model schemas, dual-store architecture (Zustand execution + React Flow canvas), all integration points with existing SessionManager/JobRunner, 8 ranked risks, and recommended stack additions. Six architectural decisions recorded (DEC-011 to DEC-016).

@@ -1,4 +1,57 @@
 ---
+## 2026-03-27 — V3 Swarm Orchestrator Early Security Assessment
+**Status:** COMPLETED
+**Called by:** User (early analysis phase, pre-PRD)
+
+### Context when I started
+v2.1 is release-ready (41 tasks completed). V3 Swarm Orchestrator is in the planning phase — architect produced DEC-011 to DEC-016, researcher and tech-lead completed Stage 0. No V3 code exists yet. This is a pre-PRD security assessment to identify new attack surface and produce mandatory security requirements before the PRD is written.
+
+### What I did
+1. Read all memory files in parallel: security.md (prior sessions), PROJECT.md, DECISIONS.md, CONTEXT.md, ACTIVITY_LOG.md, PROGRESS.md.
+2. Analyzed the 8 new attack surfaces described in the assessment brief against the V2 baseline.
+3. Rated each surface by risk level.
+4. Identified new vulnerability classes introduced by V3 that do not exist in V2.
+5. Produced mandatory security requirements for the PRD.
+6. Identified low-risk items that appear risky but are contained by architecture.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/agents/security.md | MODIFIED | Appended this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended assessment outcome |
+| docs/memory/CONTEXT.md | MODIFIED | Added V3 security assessment notes |
+
+### Key Findings
+- CRITICAL NEW SURFACE: POST /api/v1/triggers/webhooks/:path — only endpoint that can receive external traffic. Requires full input isolation and no PTY passthrough of raw webhook body.
+- HIGH NEW SURFACE: WorkflowDefinition JSON load-and-execute — systemPrompt from disk becomes a live PTY instruction. Requires schema validation + size limits before any execution starts.
+- HIGH NEW SURFACE: TriggerManager RSS polling — server makes outbound HTTP requests to user-configured URLs (SSRF vector).
+- MEDIUM: HITL resume text injection — user text injected directly into running PTY. Already partially mitigated by CSRF; needs size cap.
+- MEDIUM: SwarmEngine systemPrompt passthrough — user-controlled prompt text reaches spawned PTY process. Not a new class but new propagation path.
+- LOW: Workflow names/descriptions on disk — display-only, file paths use UUID, low risk.
+- LOW: broadcast endpoint — text to multiple PTYs, same risk profile as single PTY writeInput.
+
+### Decisions I made
+- Rated webhook endpoint as HIGH (not CRITICAL) overall because the app binds to 127.0.0.1 — external exposure requires deliberate user action (port forwarding / reverse proxy). However within the exposed surface it is the highest-risk entry point.
+- Rated WorkflowDefinition load-and-execute as HIGH because disk-loaded content bypasses the CSRF check entirely — a file tamper attack would survive all existing mitigations.
+- RSS polling is the only place the server initiates outbound connections — rated HIGH as an SSRF vector.
+
+### What I learned
+- V3 introduces two threat classes V2 never had: (1) server-initiated outbound requests (SSRF via RSS), (2) disk-resident data used as execution instructions (workflow JSON systemPrompt). Both require new mitigations not present in the V2 baseline.
+- The HITL injection surface is the same as existing PTY writeInput — no new class, but new automation context means a poisoned HITL response could chain agent actions.
+- Workflow names are safe because file paths use server-generated UUIDs (DEC-013), not the display name.
+
+### State I'm leaving behind
+- Assessment delivered to user. No code changes — this is a pre-PRD read-only analysis.
+- 7 mandatory security requirements produced for the PRD author (prd-writer).
+- See CONTEXT.md for notes to the prd-writer agent.
+
+### Handoff
+- prd-writer: incorporate the 7 mandatory security requirements as non-negotiable SEC requirements in the V3 PRD.
+- backend-dev: when implementing TriggerManager, RSS polling needs an allowlist or at minimum a private-IP blocklist for SSRF prevention.
+- backend-dev: WorkflowDefinition loader must validate JSON schema and enforce systemPrompt size cap before any PTY spawn.
+- backend-dev: webhook endpoint needs its own stricter rate limiter, size cap on body, and must never pass raw body bytes to a PTY.
+---
+
 ## 2026-03-18 — Full Re-Audit (user-requested, post-Tasks #16-#18)
 **Status:** COMPLETED
 **Called by:** User (direct request for comprehensive audit of full codebase)
