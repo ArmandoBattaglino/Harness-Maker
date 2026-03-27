@@ -1,4 +1,22 @@
 ---
+## 2026-03-27 — frontend-dev — Task #61: useWorkflow.js — CRUD Hook
+**Outcome:** COMPLETED
+**Summary:** Created client/src/hooks/useWorkflow.js with two named exports: useWorkflow(id) for single-workflow CRUD (fetch-on-mount, update, remove) and useWorkflowList() for list CRUD (fetch-on-mount, create). Used existing apiGet/apiPut/apiDelete/apiPost wrappers from useApi.js — no window.fetch calls and no new packages needed. Build: 470 modules, 0 errors.
+**Files changed:** client/src/hooks/useWorkflow.js (CREATED), docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/frontend-dev.md
+**Bugs fixed:** none
+**Decisions made:** Used useApi.js wrappers (apiGet/apiPut/apiDelete/apiPost) instead of window.fetch directly — matches project convention; split into two separate named exports (useWorkflow + useWorkflowList) rather than one monolithic hook — cleaner separation of concerns
+**Blockers:** none
+**Next:** Task #59 (scaffold endpoint) and Task #60 (PromptToFlowBar.jsx) — V3 Phase 3 Prompt-to-Flow
+---
+## 2026-03-27 — documenter — Task #58: App.jsx + Sidebar swarm nav
+**Outcome:** COMPLETED
+**Summary:** Audited all documentation after Task #58. README.md and ARCHITECTURE.md had stale view-count references ("5-view sidebar" / "5-item icon nav" / missing swarm in views list) — both updated surgically. DOC_STATUS.md timestamp advanced; new rows added for constants.js and App.jsx; ARCHITECTURE.md stale section note updated to show Phase 2 complete.
+**Files changed:** README.md, docs/ARCHITECTURE.md, docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none
+**Decisions made:** V3 public doc deferral policy maintained — no V3 section added to ARCHITECTURE.md or README until Task #82
+**Blockers:** none
+**Next:** Task #59 (scaffold endpoint) — V3 Phase 3
+---
 ## 2026-03-27 — frontend-dev — Task #58: App.jsx + Sidebar swarm nav + ReactFlowProvider
 **Outcome:** COMPLETED
 **Summary:** Added SwarmView to App.jsx routing (import + switch case 'swarm'). Added 'hub' icon + 'Swarm' label entry to NAV_ITEMS in constants.js — Sidebar already iterates NAV_ITEMS dynamically so no Sidebar.jsx edit was needed. No ReactFlowProvider added at App level since SwarmView already provides one. Build: 470 modules, 0 errors. 168/168 tests pass. V3 Phase 2 (Canvas Static) now fully complete (29/57).

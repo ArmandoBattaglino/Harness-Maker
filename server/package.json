@@ -9,6 +9,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.80.0",
     "claude-code-visual-manager": "file:..",
     "express": "^4.18.2",
     "helmet": "^7.1.0",

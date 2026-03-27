@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-27 — after Task #57.2 (SwarmView.jsx — Layout Shell + Toolbar) — mapped by code-mapper_
+_Last updated: 2026-03-27 — after Task #58 (App.jsx + Sidebar swarm nav + ReactFlowProvider) — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -46,12 +46,12 @@ _Last updated: 2026-03-27 — after Task #57.2 (SwarmView.jsx — Layout Shell +
 ### Client Modules
 | File | Key Exports | Purpose |
 |------|-------------|---------|
-| client/src/App.jsx | default App, MainContent (internal), AppLayout (internal) | Root React component: AppProvider wrapper, flex layout with Sidebar + MainContent view router (5 views: projects/terminal/jobs/context/deployments). Phase 9 rewrite Task #30. |
+| client/src/App.jsx | default App, MainContent (internal), AppLayout (internal) | Root React component: AppProvider wrapper, flex layout with Sidebar + MainContent view router (6 views: projects/terminal/jobs/context/deployments/swarm). Phase 9 rewrite Task #30; swarm case added Task #58. |
 | client/src/main.jsx | (entry) | ReactDOM.createRoot bootstrap |
 | client/src/store/AppContext.jsx | AppContext, useAppState | Global React context: activeProjectId, projects list |
 | client/src/hooks/useApi.js | apiGet, apiPost, apiPut, apiDelete, apiDeleteWithBody | Fetch wrappers with CSRF header injection and error normalization |
 | client/src/hooks/useSession.js | useSession | WebSocket hook for PTY terminal: manages WS lifecycle, reconnect logic, send+resize callbacks |
-| client/src/components/Sidebar.jsx | default Sidebar, SidebarHeader, NavItem, SessionItem, SidebarFooter (internals) | Phase 9 redesign: imports NAV_ITEMS from constants.js, 5-view navigation, Active PTY Sessions list, New Local Session button, AddProjectModal trigger. Task #24 rewrite. |
+| client/src/components/Sidebar.jsx | default Sidebar, SidebarHeader, NavItem, SessionItem, SidebarFooter (internals) | Phase 9 redesign: imports NAV_ITEMS from constants.js, 6-view navigation (swarm added Task #58), Active PTY Sessions list, New Local Session button, AddProjectModal trigger. Task #24 rewrite. |
 | client/src/components/AddProjectModal.jsx | default AddProjectModal | Modal for adding new projects |
 | client/src/views/TerminalView.jsx | default TerminalView, PtyHeader, StatusBarFooter, EmptyState (internals) | Phase 9 Live Terminal Hub: header bar (project name, path, kill button), Terminal.jsx embed, status bar footer (connection status, daemon info, placeholder tokens/latency). Task #26 rewrite. |
 | client/src/views/EntitiesView.jsx | default EntitiesView | **DEAD FILE** — no longer imported by App.jsx (Phase 9). Replaced by ContextEditorView + DeploymentManagerView. QA advisory LOW finding. |
@@ -63,7 +63,7 @@ _Last updated: 2026-03-27 — after Task #57.2 (SwarmView.jsx — Layout Shell +
 | client/src/views/JobView.jsx | default JobView, JobCard, StreamLog, MarkdownOutput, PromptInput, CopyButton (internals) | Phase 9 Orchestration Center: three-pane layout (job queue left, control bar + output right), inline prompt input with advanced options, SSE stream log, Markdown result, background job polling. Task #27 rewrite. |
 | client/src/views/ContextEditorView.jsx | default ContextEditorView, Header, Toast, RuleBlock (internals) | Phase 9 Context & Rules Editor: two-column layout (rule explorer left, CLAUDE.md output right), dual scope (project/user), rule parsing/editing, save/discard/copy, line count warning. Task #28 new file. |
 | client/src/views/DeploymentManagerView.jsx | default DeploymentManagerView, AgentCard, SkillCard, AgentDetail, CreateAgentModal, ActiveProcessesTab, TabBar, FormSection, FormField, Toast (internals) | Phase 9 Deployment Manager: 3-tab layout (Profiles/Active Processes/Environment), master-detail agent editing, skill viewer, agent CRUD with modal, search filter. Task #29 new file. |
-| client/src/lib/constants.js | NAV_ITEMS, STATUS_COLORS | Shared UI constants: sidebar navigation items (icon/label/view), status-to-Tailwind-class mapping for badges (Phase 9 design tokens) |
+| client/src/lib/constants.js | NAV_ITEMS, STATUS_COLORS | Shared UI constants: sidebar navigation items (icon/label/view — 6 items including swarm added Task #58), status-to-Tailwind-class mapping for badges (Phase 9 design tokens) |
 | client/src/views/ProjectsView.jsx | default ProjectsView, ConfirmDialog, CardMenu, StatusDot, ProjectCard, AddCard, ListRow (internals) | Phase 9 Project Dashboard: grid/list dual-view, search with "/" keyboard shortcut, project cards with status dots, delete confirmation modal, scaffold CTA banner. Task #25 rewrite. |
 | client/src/store/SwarmContext.jsx | useSwarmStore (default + named) | Zustand v4 store for V3 swarm execution state. Holds agentStates, edgeCounters, budget, inboxItems, interAgentFeed, departmentStack breadcrumb, selectedNodeId, wsConnected. Isolated from AppContext — no cross-imports. (Task #52) |
 | client/src/canvas/nodes/AgentNode.jsx | default AgentNode | React Flow custom node type="agent". Subscribes to useSwarmStore(agentStates[id]). 5 status colors (idle/running/done/paused/error), target Handle top + source Handle bottom, lastOutputSnippet display (last 3 lines), handoffCount badge. (Task #53.1) |
@@ -856,13 +856,13 @@ _Last updated: 2026-03-27 — after Task #57.2 (SwarmView.jsx — Layout Shell +
 ---
 
 ### `client/src/lib/constants.js` :: `NAV_ITEMS` (exported const)
-- **Purpose:** Array of sidebar navigation items. Each object: `{ icon: string (Material Symbols name), label: string (display text), view: string (AppContext view identifier) }`. Defines the 5 Phase 9 views: projects, terminal, jobs, deployments, context.
-- **Called by:** Currently Sidebar.jsx has its own local NAV_ITEMS (not yet importing this module). Will be imported by the new Sidebar in Task #24.
+- **Purpose:** Array of sidebar navigation items. Each object: `{ icon: string (Material Symbols name), label: string (display text), view: string (AppContext view identifier) }`. Defines 6 Phase 9 views: projects, terminal, jobs, deployments, context, swarm.
+- **Called by:** Sidebar.jsx (imports and maps over array to render nav buttons — live since Task #24); App.jsx::MainContent switch case keys match these view strings.
 - **Calls:** none (static data)
 - **Inputs:** N/A (constant)
-- **Output:** Array of 5 nav item objects
+- **Output:** Array of 6 nav item objects
 - **Side effects:** none
-- **Last modified:** 2026-03-25 in Task #23 by frontend-dev
+- **Last modified:** 2026-03-27 in Task #58 by frontend-dev (swarm item `{ icon: 'hub', label: 'Swarm', view: 'swarm' }` appended; previously 5 items since Task #23)
 
 ### `client/src/lib/constants.js` :: `STATUS_COLORS` (exported const)
 - **Purpose:** Maps status strings to Tailwind CSS class triplets `{ bg, text, dot }` for badge/indicator rendering. Covers 10 statuses: running, active, idle, done, completed, cancelled, error, failed, pending, queued. References Phase 9 custom color tokens (bg-success/10, text-primary, bg-error/10, etc.).
@@ -1971,10 +1971,51 @@ _Last updated: 2026-03-27 — after Task #57.2 (SwarmView.jsx — Layout Shell +
 
 ### `client/src/views/SwarmView.jsx` :: `SwarmView()`
 - **Purpose:** Top-level page shell for the Swarm Orchestrator. Renders a fixed toolbar (title, executionStatus indicator, conditional Reset button) above a full-height canvas area. Provides the ReactFlowProvider boundary required by @xyflow/react. Owns `workflowDef` local state (null until wired in Task #61) and passes it as a prop to SwarmCanvas.
-- **Called by:** no live caller yet — needs to be added to App.jsx view router (Task #61)
+- **Called by:** App.jsx::MainContent (case 'swarm' — wired in Task #58)
 - **Calls:** useSwarmStore (selector: s.executionStatus), useSwarmStore (selector: s.reset), useState (React — workflowDef local state), ReactFlowProvider (from @xyflow/react), SwarmCanvas (client/src/canvas/SwarmCanvas.jsx)
 - **Inputs:** none (no props)
 - **Output:** JSX — flex-col full-height div: toolbar row (shrink-0) + canvas area (flex-1, overflow-hidden) containing ReactFlowProvider > SwarmCanvas
 - **Side effects:** calls SwarmStore.reset() when Reset button is clicked (clears execution state); no server I/O
 - **Complexity note:** `statusColors` is a module-level const map (idle/running/stopped → Tailwind class string). `executionStatus === 'stopped'` is the sole gate for the Reset button — it does not render for idle or running states. ReactFlowProvider must wrap SwarmCanvas (not SwarmCanvas internally) because SwarmView is the intended boundary for the React Flow context.
-- **Last modified:** 2026-03-27 in Task #57.2 by frontend-dev
+- **Last modified:** 2026-03-27 in Task #57.2 by frontend-dev; "Called by" resolved in Task #58 (App.jsx MainContent now routes case 'swarm' → SwarmView)
+
+---
+
+## App Root View Router (Task #58)
+
+### `client/src/App.jsx` :: `MainContent()`
+- **Purpose:** Internal component that reads `view` from AppContext and returns the appropriate view component. Switch covers 6 cases: projects → ProjectsView, terminal → TerminalView, jobs → JobView, context → ContextEditorView, deployments → DeploymentManagerView, swarm → SwarmView. Default falls back to ProjectsView.
+- **Called by:** AppLayout (same file — rendered inside `<main>` flex container)
+- **Calls:** useAppState (store/AppContext.jsx — reads view), ProjectsView, TerminalView, JobView, ContextEditorView, DeploymentManagerView, SwarmView
+- **Inputs:** none (no props; reads view from context)
+- **Output:** JSX — one of the 6 view components
+- **Side effects:** none
+- **Last modified:** 2026-03-27 in Task #58 by frontend-dev (swarm case added; previously 5 cases)
+
+### `client/src/App.jsx` :: `AppLayout()`
+- **Purpose:** Internal layout shell — flex row containing Sidebar (fixed 250px) and a `<main>` flex-1 region that renders MainContent.
+- **Called by:** App (default export — same file, wraps in AppProvider)
+- **Calls:** Sidebar, MainContent
+- **Inputs:** none
+- **Output:** JSX — full-screen flex row
+- **Side effects:** none
+- **Last modified:** 2026-03-27 in Task #30 by frontend-dev (unchanged in Task #58)
+
+### `client/src/App.jsx` :: `App()`
+- **Purpose:** Root exported component. Wraps AppLayout in AppProvider (context provider).
+- **Called by:** client/src/main.jsx (ReactDOM.createRoot entry point)
+- **Calls:** AppProvider, AppLayout
+- **Inputs:** none
+- **Output:** JSX — AppProvider > AppLayout tree
+- **Side effects:** none
+- **Last modified:** 2026-03-27 in Task #30 by frontend-dev (unchanged in Task #58)
+
+---
+
+## Sidebar Nav (Task #58 — NAV_ITEMS update)
+
+### `client/src/lib/constants.js` :: `NAV_ITEMS` update note
+- NAV_ITEMS expanded from 5 to 6 items in Task #58: added `{ icon: 'hub', label: 'Swarm', view: 'swarm' }` as the last entry.
+- Full 6-item order: projects, terminal, jobs, deployments, context, swarm.
+- Imported by: Sidebar.jsx (already live since Task #24), App.jsx's MainContent (switch keys match these view strings).
+- **Last modified:** 2026-03-27 in Task #58 by frontend-dev (swarm item appended)

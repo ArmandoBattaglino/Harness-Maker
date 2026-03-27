@@ -1,4 +1,57 @@
 ---
+## 2026-03-27 — Task #58: App.jsx + Sidebar swarm nav
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel with code-mapper and project-manager)
+
+### Context when I started
+Task #58 had just completed. Two files were modified: client/src/lib/constants.js (NAV_ITEMS extended to 6 items with 'swarm' entry) and client/src/App.jsx (SwarmView import + routing case added). Phase 2 (Canvas Static) is now complete — build at 470 modules. DOC_STATUS.md was last updated after Task #57.2.
+
+### What I did
+1. Read DOC_STATUS.md, documenter.md (prior session), constants.js, App.jsx, README.md, and ARCHITECTURE.md (header + component diagram) in parallel.
+2. Confirmed what changed: NAV_ITEMS grew from 5 to 6 entries (hub/Swarm/swarm added); App.jsx added SwarmView import and case 'swarm' route.
+3. Assessed staleness:
+   - README.md: STALE — "5-view sidebar navigation" in Redesigned UI row. One word needed updating.
+   - docs/ARCHITECTURE.md: STALE — "5-item icon nav" and views list missing swarm. Two phrases needed updating.
+   - constants.js inline comments: UP TO DATE — module-level JSDoc describes NAV_ITEMS correctly.
+   - App.jsx inline comments: none present — no comment needed (routing switch is self-explanatory; "why" comment not warranted).
+   - DOC_STATUS.md: STALE — timestamp, two missing rows, and stale section note still mentioned #58 as pending.
+4. Made surgical updates: README.md (1 line), ARCHITECTURE.md (2 lines), DOC_STATUS.md (timestamp + 2 new rows + stale section).
+5. PROGRESS.md: already updated by frontend-dev (Task #58 COMPLETED). No change needed.
+6. Appended to ACTIVITY_LOG.md and this agent log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| README.md | MODIFIED | "5-view sidebar navigation" → "6-view sidebar navigation" in Features table Redesigned UI row. |
+| docs/ARCHITECTURE.md | MODIFIED | "5-item icon nav" → "6-item icon nav"; views list in Sidebar block extended with "swarm". |
+| docs/memory/DOC_STATUS.md | MODIFIED | Timestamp advanced; README and ARCHITECTURE rows updated; constants.js and App.jsx rows added to V3 service files table; ARCHITECTURE.md stale section note updated to show Phase 2 complete (all tasks through #58 done). |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended Task #58 documenter entry. |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log. |
+
+### Improvements delivered
+- README.md and ARCHITECTURE.md now accurately reflect the 6-view sidebar (projects, terminal, jobs, deployments, context, swarm).
+- DOC_STATUS.md V3 service files table now tracks 25 V3 artifacts (through app shell wiring, Task #58).
+- ARCHITECTURE.md stale section note now reflects that Phase 2 (Canvas Static) is fully complete through Task #58.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | -- | -- | -- |
+
+### Decisions I made
+- Did not add inline comments to App.jsx routing switch. The switch is a straightforward pattern used for all other views — no "why" comment is warranted.
+- V3 public doc deferral policy maintained. No V3 section added to ARCHITECTURE.md or README until Task #82.
+
+### What I learned
+- The Sidebar does not need editing when NAV_ITEMS changes because Sidebar.jsx iterates NAV_ITEMS dynamically. This is an important pattern to note for future nav changes — only constants.js and App.jsx need updating.
+- Phase 2 (Canvas Static) complete means all static canvas infrastructure (nodes, edges, inspector, breadcrumb, canvas assembly, view shell, app routing) is in place. Phase 3 work (#59+) will add the dynamic/live layer.
+
+### State I'm leaving behind
+DOC_STATUS.md is current as of 2026-03-27 and tracks 25 V3 artifacts. README.md and ARCHITECTURE.md accurately describe a 6-view sidebar. All inline documentation through Task #58 is adequate. V3 architecture documentation remains intentionally deferred until Task #82.
+
+### Handoff
+Next task is #59 (scaffold endpoint — /api/v1/swarm/scaffold — V3 Phase 3 Prompt-to-Flow). That task will modify server-side route files. DOC_STATUS.md will need its server/routes/swarm.js row updated to reflect scaffold endpoint implementation (currently shows 501 stub).
+---
 ## 2026-03-27 — Task #57.2: SwarmView.jsx — layout shell + toolbar
 **Status:** COMPLETED
 **Called by:** orchestrator (parallel with code-mapper and project-manager)

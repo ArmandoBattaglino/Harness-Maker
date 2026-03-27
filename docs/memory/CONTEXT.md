@@ -77,19 +77,28 @@ Security assessment completed 2026-03-27. Seven mandatory requirements must appe
 **#57.1 COMPLETED (concurrent agent, 2026-03-27):**
 - TASK #57.1 — SwarmCanvas.jsx — COMPLETED (frontend-dev self-marked; PROGRESS.md at 27/57)
 
-**Current wave (IN_PROGRESS — launched 2026-03-27):**
-- TASK #57.2 — SwarmView.jsx — Main V3 Layout Shell + Toolbar (frontend-dev, claude-opus-4-6, MEDIUM) — IN_PROGRESS
-  - Depends on: #57.1 (DONE) + #55 (DONE) — all deps met
-  - Wraps SwarmCanvas in full layout: toolbar (workflow name, Start/Pause/Stop, status badge), right panel (AgentInspector 320px), bottom drawer (Inbox/Feed tabs, collapsible 200px)
-  - ReactFlowProvider wraps SwarmCanvas here — SwarmCanvas must NOT add another one
-  - Toolbar dispatches execution control actions: startExecution, pauseExecution, stopExecution from SwarmStore
-  - Bottom drawer: two tabs (Inbox = HITL requests, Feed = live handoff log)
-  - Canvas state (nodes/edges) uses useNodesState/useEdgesState from @xyflow/react — NOT Zustand (DEC-V3-04)
-  - Right panel shows AgentInspector when selectedNodeId in SwarmStore is not null; empty state otherwise
-  - Save button: calls useWorkflow().update() with current nodes/edges (useWorkflow hook created in #58)
+**Phase 2 (Canvas Static) — ALL COMPLETE (2026-03-27):**
+- #51–#58 ALL COMPLETED. Build: 470 modules, 0 errors. 168/168 tests pass.
 
-**After #57.2 completes:**
-- TASK #58 — ReactFlowProvider wrapper + WorkflowEditorPage — depends on #57.2
+**Current wave — V3 Phase 3 Prompt-to-Flow (launched 2026-03-27, running in parallel):**
+- TASK #59 — POST /api/v1/swarm/scaffold — full scaffold endpoint (backend-dev, claude-sonnet-4-6, MEDIUM) — IN_PROGRESS
+  - Replaces 501 stub in server/routes/swarm.js (from #47.2)
+  - Receives { prompt, projectId, projectPath }; validates prompt max 2000 chars, projectId UUID
+  - Calls jobRunner.startJob() → waits for completion (promise+emitter, NOT polling loop)
+  - Extracts JSON: markdown fence first, then bare JSON
+  - WorkflowStore.validate() before WorkflowStore.create()
+  - 201 on success, 422 on parse fail, 408 on 60s timeout
+  - SEC-08 equivalent: never log raw prompt or Claude output in errors
+  - See server/routes/jobs.js for JobRunner pattern, server/routes/swarm.js for existing router
+
+- TASK #61 — useWorkflow.js — CRUD hook — COMPLETED (frontend-dev self-marked, 2026-03-27)
+  - client/src/hooks/useWorkflow.js created; useWorkflow(id) + useWorkflowList() exports
+  - Uses apiGet/apiPut/apiDelete wrappers with X-Requested-With header
+
+**After #59 completes (only remaining blocker for #60):**
+- TASK #60 — PromptToFlowBar.jsx (depends on #57.1 DONE + #59 IN_PROGRESS) — frontend-dev, claude-sonnet-4-6, MEDIUM
+  - Floating input bar overlaid on React Flow canvas; staggered 80ms node animation on scaffold success
+  - Waits on #59 completing before it can call the real scaffold endpoint
 
 **Key context for #53.x agents:**
 - SwarmContext.jsx is at client/src/store/SwarmContext.jsx — complete, exports useSwarmStore + SwarmProvider

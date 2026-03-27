@@ -52,7 +52,7 @@ The server binds exclusively to `127.0.0.1` — it is never accessible from the 
 | **Context Editor** | Rule-based editor for CLAUDE.md files with syntax-highlighted preview, section management, and line count warnings. Supports both user-scope and project-scope files. |
 | **Project Registration** | Register existing directories or scaffold a new `.claude/` structure (agents, commands, CLAUDE.md) from the UI. |
 | **Auto-Open Browser** | Server opens the app URL in the default browser on every `npm start`. Set `NO_OPEN=1` to suppress. |
-| **Redesigned UI** | Phase 9 design system with Inter/JetBrains Mono fonts, Material Symbols icons, purple (#933df5) accent on dark background, and 5-view sidebar navigation. |
+| **Redesigned UI** | Phase 9 design system with Inter/JetBrains Mono fonts, Material Symbols icons, purple (#933df5) accent on dark background, and 6-view sidebar navigation. |
 
 ---
 

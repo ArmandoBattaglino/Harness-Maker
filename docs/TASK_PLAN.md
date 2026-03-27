@@ -4892,7 +4892,7 @@ Agent: backend-dev
 Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: IN_PROGRESS
 Dependencies: #47.1, #47.2
 Context:
   This task completes the scaffold endpoint in `server/routes/swarm.js` (stub in #47).
@@ -4967,7 +4967,7 @@ Agent: frontend-dev
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Dependencies: #58
 Context:
   Create/finalize `client/src/hooks/useWorkflow.js` (stub from #58).

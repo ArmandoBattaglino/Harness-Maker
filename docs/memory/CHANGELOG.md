@@ -1238,3 +1238,37 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 - Reset button only appears when executionStatus === 'stopped'; it calls SwarmStore.reset() which resets executionStatus to 'idle' — meaning the button immediately disappears after click.
 
 ---
+
+## 2026-03-27 — Task #58: App.jsx + Sidebar swarm nav + ReactFlowProvider
+**Agent:** frontend-dev
+**Triggered by:** Wire SwarmView into the App.jsx view router and add the Swarm nav item to the sidebar so users can navigate to the Swarm Orchestrator page.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/App.jsx | MODIFIED | Imported SwarmView; added `case 'swarm': return <SwarmView />` to MainContent switch — 6th view case |
+| client/src/lib/constants.js | MODIFIED | Appended `{ icon: 'hub', label: 'Swarm', view: 'swarm' }` to NAV_ITEMS array (5 → 6 items) |
+
+### Functions Added
+- None (no new functions — modifications to existing routing logic and static constant)
+
+### Functions Modified
+- `MainContent()` in `client/src/App.jsx` — swarm case added to switch; now routes 6 views instead of 5
+- `NAV_ITEMS` in `client/src/lib/constants.js` — 6th nav item appended (`hub` icon, "Swarm" label, view='swarm')
+
+### Functions Removed
+- None
+
+### Connection Changes
+- App.jsx::MainContent → SwarmView (new live render path; case 'swarm' now active)
+- SwarmView "no live caller" warning resolved — App.jsx is now its parent
+- Sidebar NAV_ITEMS loop automatically renders the new Swarm item (no Sidebar.jsx code change needed — it already iterates NAV_ITEMS)
+- ReactFlowProvider boundary is owned by SwarmView (not App.jsx or SwarmCanvas) — SwarmCanvas receives the provider from its parent
+
+### Impact on Other Code
+- Sidebar.jsx: no code change needed; NAV_ITEMS import already live since Task #24 — new 6th item renders automatically
+- Build grew from 299 to 470 modules: @xyflow/react + zustand tree-shaken in for the first time via SwarmView → SwarmCanvas dependency chain
+- 168/168 tests pass — routing change does not affect server tests
+- workflowDef remains null until Task #61 wires SwarmView to the workflow API/store; canvas renders empty graph until then
+
+---

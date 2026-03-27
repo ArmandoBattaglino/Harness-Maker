@@ -1,6 +1,7 @@
 // server/routes/swarm.js
 // Execution control REST API for the V3 Swarm Orchestrator — Task #47.1
 //
+// POST   /api/v1/swarm/scaffold                   → 201 { workflowId, workflowDef }
 // POST   /api/v1/swarm/:workflowId/start         → 201 { executionId, status }
 // POST   /api/v1/swarm/:executionId/pause         → 200 { ok: true }
 // POST   /api/v1/swarm/:executionId/resume        → 200 { ok: true }
@@ -8,9 +9,75 @@
 // GET    /api/v1/swarm/:executionId/status        → 200 { executionId, status, agentStates, edgeCounters, budget }
 // GET    /api/v1/swarm/:executionId/agent/:nodeId/output → 200 { output: string }
 // POST   /api/v1/swarm/:executionId/broadcast     → 200 { sent: number }
-// POST   /api/v1/swarm/:workflowId/scaffold       → 501 (stub, Task #47.2)
 
 import { Router } from 'express';
+import Anthropic from '@anthropic-ai/sdk';
+
+// ---------------------------------------------------------------------------
+// generateWorkflowFromPrompt(prompt)
+// Calls Claude API to produce a workflow definition JSON from a natural-language
+// description. Strips accidental markdown fences and validates basic structure.
+// Throws on Claude API failure, JSON parse error, or invalid structure.
+// ---------------------------------------------------------------------------
+async function generateWorkflowFromPrompt(prompt) {
+  const client = new Anthropic(); // uses ANTHROPIC_API_KEY env var
+
+  const systemPrompt = `You are a workflow designer. Given a user's description, generate a multi-agent workflow definition as JSON.
+
+Output ONLY valid JSON matching this schema (no markdown, no explanation):
+{
+  "name": "string (max 100 chars, alphanumeric + spaces + hyphens)",
+  "description": "string (max 500 chars)",
+  "nodes": [
+    {
+      "id": "string (unique, e.g. node-1)",
+      "type": "agent",
+      "data": {
+        "label": "string",
+        "systemPrompt": "string (the agent's role and instructions)",
+        "isTriageNode": boolean
+      },
+      "position": { "x": number, "y": number }
+    }
+  ],
+  "edges": [
+    {
+      "id": "string (unique, e.g. edge-1)",
+      "source": "node-id",
+      "target": "node-id",
+      "type": "handoff"
+    }
+  ]
+}
+
+Rules:
+- First node should have isTriageNode: true
+- Nodes should be positioned in a logical flow (left to right or top to bottom)
+- Position x/y should be spaced 200px apart
+- Maximum 10 nodes, 15 edges
+- Name must match /^[\\w\\s\\-.]+$/ (letters, numbers, spaces, hyphens, dots only)`;
+
+  const response = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 2048,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: prompt }],
+  });
+
+  const text = response.content[0]?.text;
+  if (!text) throw new Error('No response from Claude');
+
+  // Parse JSON — strip any accidental markdown fences
+  const clean = text.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/, '').trim();
+  const wf = JSON.parse(clean);
+
+  // Basic validation
+  if (!wf.name || !Array.isArray(wf.nodes) || wf.nodes.length === 0) {
+    throw new Error('Invalid workflow structure from Claude');
+  }
+
+  return wf;
+}
 
 /**
  * Factory function — returns an Express router with all swarm execution control endpoints.
@@ -21,6 +88,46 @@ import { Router } from 'express';
  */
 export default function swarmRoutes(swarmEngine, sessionManager) {
   const router = Router();
+
+  // -------------------------------------------------------------------------
+  // POST /api/v1/swarm/scaffold
+  // Body: { prompt: string, projectId?: string }
+  // Calls Claude API to generate a workflow definition, saves to WorkflowStore.
+  // → 201 { workflowId, workflowDef }
+  // → 400 if prompt missing, empty, or > 2000 chars
+  // → 503 if WorkflowStore unavailable
+  // → 500 on Claude API failure or invalid response
+  // IMPORTANT: This literal route must be declared BEFORE /:workflowId/* routes
+  //            so Express does not treat 'scaffold' as a workflowId param.
+  // -------------------------------------------------------------------------
+  router.post('/scaffold', async (req, res) => {
+    const { prompt, projectId } = req.body || {};
+
+    if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
+      return res.status(400).json({ error: 'prompt is required' });
+    }
+    if (prompt.length > 2000) {
+      return res.status(400).json({ error: 'prompt exceeds 2000 character limit' });
+    }
+
+    try {
+      const workflowDef = await generateWorkflowFromPrompt(prompt.trim());
+
+      // Attach projectId if provided
+      if (projectId && typeof projectId === 'string') {
+        workflowDef.projectId = projectId.trim();
+      }
+
+      const store = req.app.locals.workflowStore;
+      if (!store) return res.status(503).json({ error: 'WorkflowStore unavailable' });
+
+      const created = await store.create(workflowDef);
+      return res.status(201).json({ workflowId: created.id, workflowDef: created });
+    } catch (err) {
+      console.error(`[swarm] POST /scaffold error: ${err.message}`);
+      return res.status(500).json({ error: err.message });
+    }
+  });
 
   // -------------------------------------------------------------------------
   // POST /api/v1/swarm/:workflowId/start
@@ -240,14 +347,6 @@ export default function swarmRoutes(swarmEngine, sessionManager) {
       console.error(`[swarm] POST /:executionId/broadcast error: ${err.message}`);
       return res.status(500).json({ error: 'Internal server error' });
     }
-  });
-
-  // -------------------------------------------------------------------------
-  // POST /api/v1/swarm/:workflowId/scaffold
-  // Stub — full implementation in Task #47.2 / #59.
-  // -------------------------------------------------------------------------
-  router.post('/:workflowId/scaffold', (req, res) => {
-    return res.status(501).json({ error: 'Not implemented — scaffold endpoint coming in Task #59' });
   });
 
   return router;

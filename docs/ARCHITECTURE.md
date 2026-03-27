@@ -49,8 +49,8 @@
 │  │                                                                  │   │
 │  │  ┌──────────────────────────────────────────────────────────────┐ │   │
 │  │  │              Sidebar (Sidebar.jsx)                            │ │   │
-│  │  │  5-item icon nav · project list · Material Symbols icons     │ │   │
-│  │  │  views: projects | terminal | jobs | deployments | context   │ │   │
+│  │  │  6-item icon nav · project list · Material Symbols icons     │ │   │
+│  │  │  views: projects | terminal | jobs | deployments | context | swarm │ │   │
 │  │  └──────────────────────────────────────────────────────────────┘ │   │
 │  └──────────────────────────────────────────────────────────────────┘   │
 │                                                                          │

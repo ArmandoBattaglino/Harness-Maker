@@ -1,4 +1,53 @@
 ---
+## 2026-03-27 — Task #61: useWorkflow.js — CRUD Hook
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+Task #58 (App.jsx swarm routing) was COMPLETED. server/routes/workflows.js CRUD API existed at /api/v1/workflows. SwarmView.jsx had `const [workflowDef, setWorkflowDef] = useState(null)` as a placeholder. The project had an existing useApi.js with apiGet/apiPost/apiPut/apiDelete helpers that automatically include the X-Requested-With: ClaudeCodeManager CSRF header.
+
+### What I did
+1. Read docs/memory/PROGRESS.md and package.json for context.
+2. Read client/src/hooks/useJob.js and client/src/hooks/useApi.js to understand the exact hook pattern and available API wrappers.
+3. Confirmed project uses apiGet/apiPost/apiPut/apiDelete from useApi.js — never window.fetch directly in hooks.
+4. Created client/src/hooks/useWorkflow.js with two named exports:
+   - useWorkflow(workflowId): fetches on mount via useEffect+useCallback, exposes refresh/update/remove
+   - useWorkflowList(): fetches all on mount, exposes refresh/create
+5. Used apiGet/apiPut/apiDelete/apiPost wrappers throughout — consistent with useJob.js pattern.
+6. Verified build: 470 modules, 0 errors.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/hooks/useWorkflow.js | CREATED | New CRUD hook for /api/v1/workflows REST API |
+| docs/TASK_PLAN.md | MODIFIED | Task #61 Status: IN_PROGRESS → COMPLETED |
+| docs/memory/PROGRESS.md | MODIFIED | Task #61 marked COMPLETED with details |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | New session entry appended |
+| docs/memory/agents/frontend-dev.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- Two clean named exports: useWorkflow(id) for single resource, useWorkflowList() for collection
+- Loading + error state for both hooks
+- All mutations propagate to local state immediately (optimistic update on create/update/remove)
+- Zero new npm packages — uses existing apiGet/apiPut/apiDelete/apiPost wrappers
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Used useApi.js wrappers (apiGet/apiPut/apiDelete/apiPost) instead of window.fetch directly → consistent with useJob.js pattern; wrappers handle error parsing and CSRF header automatically
+- Split into two named exports (useWorkflow + useWorkflowList) rather than one monolithic hook → cleaner separation of concerns; single-workflow CRUD doesn't need the list, and list consumers don't need individual-item state
+
+### What I learned
+- useApi.js already exports apiPut — so PUT requests are covered without any new code
+- The project pattern is: all HTTP in hooks goes through useApi.js; no direct fetch() in component or hook files
+
+### State I'm leaving behind
+client/src/hooks/useWorkflow.js is complete and builds cleanly. SwarmView.jsx still has `workflowDef` as local useState(null) — wiring SwarmView to call useWorkflowList() and useWorkflow() is a separate task (not in scope for #61).
+
+### Handoff
+Task #59 (scaffold endpoint, backend-dev) and Task #60 (PromptToFlowBar.jsx, frontend-dev) are the next Phase 3 items. After those are done, SwarmView.jsx will need to import useWorkflowList/useWorkflow to replace the placeholder useState(null).
+---
 ## 2026-03-27 — Task #58: App.jsx + Sidebar swarm nav + ReactFlowProvider
 **Status:** COMPLETED
 **Called by:** user (direct task assignment)
