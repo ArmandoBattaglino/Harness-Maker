@@ -152,7 +152,7 @@ _None._
 - NOTE: FileManager was NOT created in Task #5 as planned — RESOLVED in Task #7 (created server/services/FileManager.js).
 
 ## V3 — Swarm Orchestrator (57 granular tasks after split — 2026-03-27 replan)
-**Status: 31/57 COMPLETED — as of 2026-03-27. All Phase 1 backend tasks done. All Phase 2 (Canvas Static) COMPLETED. #52 COMPLETED — SwarmContext.jsx. #53.1, #53.2, #53.3 COMPLETED — all three canvas nodes done. #54 COMPLETED — HandoffEdge.jsx. #55 COMPLETED — AgentInspector.jsx. #56 COMPLETED — BreadcrumbBar.jsx. #57.1 COMPLETED — SwarmCanvas.jsx (React Flow canvas + drill-down filtering). #57.2 COMPLETED — SwarmView.jsx (layout shell + toolbar). #58 COMPLETED — App.jsx swarm routing + NAV_ITEMS 'Swarm' entry. Phase 2 fully done. Phase 3 partially done: #59 scaffold endpoint DONE, #61 useWorkflow.js DONE, #60 PromptToFlowBar.jsx IN_PROGRESS.**
+**Status: 34/57 COMPLETED — as of 2026-03-27. All Phase 1 backend tasks done. All Phase 2 (Canvas Static) COMPLETED. Phase 3 (Prompt-to-Flow) FULLY COMPLETED. Phase 4 (Live Execution) ACTIVE: #63 useSwarm.js DONE. #62.1, #66, #67 still IN_PROGRESS.**
 **Note: Original 40 tasks (#43–#82). After model assignment + subtask split: 57 granular units.**
 **7 original tasks split into subtasks: #46→3, #47→2, #48→2, #53→3, #57→2, #62→3, #71→2**
 - V3 PRD complete: docs/PRD.md
@@ -193,14 +193,14 @@ _None._
 - [TASK-61] COMPLETED — useWorkflow.js CRUD hook — client/src/hooks/useWorkflow.js created; uses apiGet/apiPut/apiDelete wrappers; useWorkflow(id) + useWorkflowList() exports; build: 470 modules, 0 errors
 
 ### V3 Phase 4 — Live Execution
-- [TASK-62.1] PENDING — SwarmEngine _onHandoff: context merge + edge counter + PTY spawn
-- [TASK-62.2] PENDING — SwarmEngine _onHandoff: context injection + agent status updates
-- [TASK-62.3] PENDING — SwarmEngine _onDone + BudgetTracker + lastOutputSnippet
-- [TASK-63] PENDING — useSwarm.js WS hook for execution control
+- [TASK-62.1] IN_PROGRESS — SwarmEngine _onHandoff: context merge + edge counter + PTY spawn
+- [TASK-62.2] PENDING — SwarmEngine _onHandoff: context injection + agent status updates (waits on #62.1)
+- [TASK-62.3] PENDING — SwarmEngine _onDone + BudgetTracker + lastOutputSnippet (waits on #62.2)
+- [TASK-63] IN_PROGRESS — useSwarm.js WS hook for execution control
 - [TASK-64] PENDING — useHandoff.js edge animation hook
 - [TASK-65] PENDING — AgentNode live updates — pulse + micro PTY log
-- [TASK-66] PENDING — BroadcastBar.jsx + broadcast route
-- [TASK-67] PENDING — SwarmEngine heartbeat — idle sweeper prevention
+- [TASK-66] COMPLETED 2026-03-27 — BroadcastBar.jsx + broadcast route — client/src/canvas/BroadcastBar.jsx created; mounted at bottom of SwarmView.jsx after ReactFlowProvider; returns null unless executionStatus==='running'; POSTs to /api/v1/swarm/:executionId/broadcast with {text, scope:'all', mode}; soft/hard mode selector; 3s result feedback; build: 472 modules, 0 errors
+- [TASK-67] IN_PROGRESS — SwarmEngine heartbeat — idle sweeper prevention
 
 ### V3 Phase 5 — HITL + PTY Explosion
 - [TASK-68] PENDING — inbox.js HITL approve/reject API

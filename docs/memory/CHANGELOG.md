@@ -1305,6 +1305,41 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 
 ---
 
+## 2026-03-27 — Task #60: PromptToFlowBar.jsx + staggered animation — Phase 3 Prompt-to-Flow COMPLETE
+**Agent:** frontend-dev
+**Triggered by:** V3 Phase 3 client — implement the natural-language prompt input bar that calls POST /api/v1/swarm/scaffold and wires the generated workflowDef (with staggered node entrance animation) into SwarmView → SwarmCanvas.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/canvas/PromptToFlowBar.jsx | ADDED | New component: prompt text input + Generate button, POSTs to /api/v1/swarm/scaffold, applies staggered fadeIn animation to each node, calls onWorkflowGenerated(workflowId, animatedDef) |
+| client/src/index.css | MODIFIED | @keyframes fadeIn added (opacity: 0→1, transform: translateY(6px)→0) — drives PromptToFlowBar node entrance animation |
+| client/src/views/SwarmView.jsx | MODIFIED | Imported PromptToFlowBar; mounted between toolbar and canvas; onWorkflowGenerated callback wires workflowId+animatedDef → setWorkflowDef → SwarmCanvas prop |
+
+### Functions Added
+- `PromptToFlowBar({ onWorkflowGenerated })` in `client/src/canvas/PromptToFlowBar.jsx` — prompt input bar with Generate button; POSTs to scaffold endpoint; applies per-node staggered CSS animation to workflowDef.nodes before calling onWorkflowGenerated
+- `handleGenerate()` (useCallback internal) in `client/src/canvas/PromptToFlowBar.jsx` — async fetch to /api/v1/swarm/scaffold; decodes { workflowId, workflowDef }; applies animation transform; calls prop callback; sets loading/error state
+- `handleKeyDown(e)` (internal) in `client/src/canvas/PromptToFlowBar.jsx` — Enter (no Shift) → handleGenerate()
+
+### Functions Modified
+- `SwarmView()` in `client/src/views/SwarmView.jsx` — added PromptToFlowBar mount; onWorkflowGenerated callback captures animatedDef into workflowDef local state; workflowDef prop to SwarmCanvas is now live (was always null before Task #60)
+
+### Functions Removed
+- None
+
+### Connection Changes
+- `SwarmView` → `PromptToFlowBar` (new import + render; onWorkflowGenerated callback created inline)
+- `PromptToFlowBar.handleGenerate` → `POST /api/v1/swarm/scaffold` (new outbound fetch from client)
+- `PromptToFlowBar.handleGenerate` → `onWorkflowGenerated` prop callback → `SwarmView.setWorkflowDef` → `SwarmCanvas.workflowDef` prop (full data flow now live end-to-end)
+- `@keyframes fadeIn` in `client/src/index.css` → consumed by `PromptToFlowBar.handleGenerate` inline style injection per node
+
+### Impact on Other Code
+- `SwarmCanvas.workflowDef` prop: previously always received null from SwarmView; now receives an animated workflow definition after scaffold succeeds. SwarmCanvas treats workflowDef as initialNodes/initialEdges only (useNodesState/useEdgesState) — re-generating via PromptToFlowBar will NOT update the canvas after first mount. This is a known limitation: full live reload of workflowDef requires a SwarmCanvas key reset or state reinit (future task).
+- Build: 471 modules, 0 errors (unchanged from prior builds — no new npm dependencies added).
+- Phase 3 (Prompt-to-Flow) is fully complete as of Task #60.
+
+---
+
 ## 2026-03-27 — Task #58: App.jsx + Sidebar swarm nav + ReactFlowProvider
 **Agent:** frontend-dev
 **Triggered by:** Wire SwarmView into the App.jsx view router and add the Swarm nav item to the sidebar so users can navigate to the Swarm Orchestrator page.

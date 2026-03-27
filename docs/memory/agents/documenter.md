@@ -1,4 +1,58 @@
 ---
+## 2026-03-27 — Task #60: PromptToFlowBar.jsx + staggered animation
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel with code-mapper and project-manager)
+
+### Context when I started
+Task #60 had just completed. Three files were touched: client/src/canvas/PromptToFlowBar.jsx (CREATED), client/src/index.css (MODIFIED — @keyframes fadeIn added), client/src/views/SwarmView.jsx (MODIFIED — PromptToFlowBar mounted and onWorkflowGenerated wired). Build reached 471 modules. DOC_STATUS.md was last updated after Tasks #59 and #61. The previous session (Task #59 + #61) noted that "Next task is #60 (PromptToFlowBar.jsx). DOC_STATUS.md will need a new row for that file."
+
+### What I did
+1. Read DOC_STATUS.md, documenter.md (prior sessions), PROGRESS.md, and PROJECT.md in parallel.
+2. Read the three modified files: PromptToFlowBar.jsx, SwarmView.jsx, and the fadeIn keyframe in index.css.
+3. Confirmed Task #60 changes:
+   - PromptToFlowBar.jsx: new component — prompt input + Generate button + error display. POSTs to /api/v1/swarm/scaffold, maps response nodes to add per-index staggered animation style (opacity 0 + fadeIn 0.3s with i * 0.08s delay). Calls onWorkflowGenerated(workflowId, animatedDef). CSRF header included. maxLength 2000 matches server validation. Enter key (no Shift) submits.
+   - index.css: @keyframes fadeIn block added (opacity 0 + translateY(8px) → opacity 1 + translateY(0)) under "Node Staggered Entrance Animation" section header.
+   - SwarmView.jsx: PromptToFlowBar imported and inserted between toolbar and canvas. onWorkflowGenerated sets workflowDef state to animatedDef, which is passed down to SwarmCanvas. workflowDef is no longer a permanent null stub.
+4. Assessed staleness of all tracked documents:
+   - README.md: NOT stale. V3 deferral policy in effect.
+   - docs/ARCHITECTURE.md: NOT stale. Intentionally deferred until Task #82.
+   - Inline comments in PromptToFlowBar.jsx: UP TO DATE. File-level comment names purpose. Staggered animation inline comment explains the approach.
+   - Inline comments in SwarmView.jsx: UP TO DATE. Comment block on PromptToFlowBar mount is present in the file.
+   - DOC_STATUS.md: STALE — missing PromptToFlowBar.jsx row; index.css row only described Task #54 changes; SwarmView.jsx row described workflowDef as "stub placeholder"; stale section said "Phase 3 partial, Task #60 pending".
+5. Updated DOC_STATUS.md: advanced timestamp; added PromptToFlowBar.jsx row; updated index.css row to cover Task #60 fadeIn keyframe; updated SwarmView.jsx row to reflect workflowDef is now wired; updated ARCHITECTURE.md stale section to mark Phase 3 as COMPLETE.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Timestamp advanced; PromptToFlowBar.jsx row added; index.css row updated to document fadeIn keyframe (Task #60); SwarmView.jsx row updated (workflowDef no longer a stub); ARCHITECTURE.md stale section Phase 3 status updated to COMPLETE. |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended Task #60 documenter entry. |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log. |
+
+### Improvements delivered
+- DOC_STATUS.md now tracks PromptToFlowBar.jsx for the first time.
+- index.css entry now accurately covers both Tasks #54 (dashdraw) and #60 (fadeIn).
+- SwarmView.jsx entry updated — workflowDef stub note removed, Phase 3 wiring documented.
+- ARCHITECTURE.md stale section no longer says "Task #60 pending" — Phase 3 officially complete.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | -- | -- | -- |
+
+### Decisions I made
+- V3 public doc deferral policy maintained. No changes to README.md or ARCHITECTURE.md until Task #82.
+- Added PromptToFlowBar.jsx to the V3 service files table rather than the main documentation health table, consistent with how all other V3 canvas components are tracked (they all carry "Not yet in ARCHITECTURE.md (V3 incomplete)").
+
+### What I learned
+- PromptToFlowBar uses direct window.fetch (not the apiPost wrapper from useApi.js) because it includes the SCAFFOLD_HEADERS constant inline. This differs from useWorkflow.js which uses apiPost. Both approaches are valid — PromptToFlowBar is a standalone presentational component while useWorkflow.js is a reusable data hook.
+- The staggered animation is applied client-side in the component (not server-side) — the scaffold endpoint returns a plain workflowDef; the animation style injection happens in the handleGenerate callback before calling onWorkflowGenerated.
+
+### State I'm leaving behind
+DOC_STATUS.md is current as of 2026-03-27 and now tracks all Phase 3 artifacts. Phase 3 (Prompt-to-Flow) is fully COMPLETE. Phase 4 (Live Execution) tasks #62.1 onward are all PENDING. V3 public docs intentionally deferred until Task #82.
+
+### Handoff
+Phase 4 begins with Task #62.1 (SwarmEngine _onHandoff). That task modifies server/services/SwarmEngine.js. DOC_STATUS.md will need the SwarmEngine row updated when Tasks #62.1–#62.3 complete.
+---
 ## 2026-03-27 — Task #59 + Task #61: scaffold endpoint + useWorkflow.js CRUD hook
 **Status:** COMPLETED
 **Called by:** orchestrator (parallel with code-mapper and project-manager)

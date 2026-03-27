@@ -90,16 +90,33 @@ Security assessment completed 2026-03-27. Seven mandatory requirements must appe
   - client/src/hooks/useWorkflow.js created; useWorkflow(id) + useWorkflowList() exports
   - Uses apiGet/apiPut/apiDelete/apiPost wrappers with X-Requested-With header; build: 470 modules, 0 errors
 
-**LAUNCHING NOW — Task #60 (PromptToFlowBar.jsx):**
-- TASK #60 — PromptToFlowBar.jsx + staggered animation — frontend-dev, claude-sonnet-4-6, MEDIUM
-  - Both deps met: #57.1 (SwarmCanvas.jsx) DONE + #59 (scaffold endpoint) DONE
-  - Create client/src/canvas/overlays/PromptToFlowBar.jsx
-  - Floating input bar overlaid on React Flow canvas (absolute positioned, not blocking canvas)
-  - POST to /api/v1/swarm/scaffold with { prompt, projectId, projectPath }
-  - Staggered 80ms per-node animation: setNodes with opacity:0 → CSS fade-in transition
-  - fitView() after all nodes added; error toast for 3s on 422/408
-  - Use useWorkflowList().create from useWorkflow.js for any local state needs
-  - Build must stay at 470 modules, 0 errors
+**Phase 3 COMPLETE — Phase 4 (Live Execution) NOW ACTIVE (2026-03-27):**
+- TASK #60 — PromptToFlowBar.jsx + staggered animation — COMPLETED (build: 471 modules)
+- TASK #59 — scaffold endpoint — COMPLETED
+- TASK #61 — useWorkflow.js — COMPLETED
+- Phase 3 (Prompt-to-Flow) FULLY DONE. 33/57 V3 tasks complete.
+
+**Current wave — V3 Phase 4 Live Execution (all 4 running in parallel, 2026-03-27):**
+- TASK #62.1 — SwarmEngine _onHandoff: context merge + edge counter + PTY spawn
+  - Agent: backend-dev, Model: claude-opus-4-6, Difficulty: HARD, Deps: #46.3 ✓ + #49 ✓
+  - Implement _onHandoff steps 1–4: context merge (shallow dict), edge counter increment in
+    Zustand broadcast, target PTY spawn via _spawnAgentPty if not already alive
+  - File: server/services/SwarmEngine.js
+- TASK #63 — useSwarm.js WS hook for execution control
+  - Agent: frontend-dev, Model: claude-sonnet-4-6, Difficulty: MEDIUM, Deps: #57.2 ✓ + #48.2 ✓
+  - Create client/src/hooks/useSwarm.js — WebSocket connection to swarm channel
+  - Manage executionStatus, start/stop/pause/resume/broadcast actions
+  - Wire to SwarmContext.jsx ExecutionStore
+- TASK #66 — BroadcastBar.jsx + POST broadcast route
+  - Agent: frontend-dev, Model: claude-sonnet-4-6, Difficulty: MEDIUM, Deps: #57.1 ✓ + #47.1 ✓
+  - Create client/src/canvas/overlays/BroadcastBar.jsx
+  - Visible only when executionStatus === 'running'; scope selector + message input
+  - POST to /api/v1/swarm/:workflowId/broadcast with { scope, message, mode }
+- TASK #67 — SwarmEngine heartbeat: idle sweeper prevention
+  - Agent: backend-dev, Model: claude-haiku-4-5, Difficulty: EASY, Deps: #46.3 ✓
+  - Extend SwarmEngine._startHeartbeat() to call sessionManager.touchSession(sessionId)
+    on every heartbeat tick to reset the 30-min idle timer per active agent PTY
+  - File: server/services/SwarmEngine.js
 
 **Key context for #53.x agents:**
 - SwarmContext.jsx is at client/src/store/SwarmContext.jsx — complete, exports useSwarmStore + SwarmProvider

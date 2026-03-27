@@ -351,6 +351,44 @@ class SwarmEngine {
   }
 
   /**
+   * Pause all running agents in a workflow execution.
+   * Sets each running agent's status to 'paused' and broadcasts the change.
+   * Added in Task #67.
+   * @param {string} executionId
+   */
+  pauseExecution(executionId) {
+    const execution = this._executions.get(executionId);
+    if (!execution) return;
+    for (const [nodeId, state] of execution.agentStates) {
+      if (state.status === 'running') {
+        state.status = 'paused';
+        if (this._wsBroadcast) {
+          this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'paused' });
+        }
+      }
+    }
+  }
+
+  /**
+   * Resume all paused agents in a workflow execution.
+   * Sets each paused agent's status back to 'running' and broadcasts the change.
+   * Added in Task #67.
+   * @param {string} executionId
+   */
+  resumeExecution(executionId) {
+    const execution = this._executions.get(executionId);
+    if (!execution) return;
+    for (const [nodeId, state] of execution.agentStates) {
+      if (state.status === 'paused') {
+        state.status = 'running';
+        if (this._wsBroadcast) {
+          this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'running' });
+        }
+      }
+    }
+  }
+
+  /**
    * Get the current status of a workflow execution.
    * @param {string} executionId
    * @returns {object|null} execution status or null if not found

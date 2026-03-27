@@ -5177,7 +5177,7 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: IN_PROGRESS
+Status: COMPLETED
 Dependencies: #57.2, #48.2
 Context:
   Create `client/src/hooks/useSwarm.js`.
@@ -6017,16 +6017,16 @@ Acceptance criteria:
 | **57.2** | SwarmView.jsx — layout shell + toolbar | frontend-dev | HIGH | claude-opus-4-6 | COMPLETED |
 | 58 | App.jsx + Sidebar — swarm nav + ReactFlowProvider | frontend-dev | HIGH | claude-haiku-4-5 | PENDING |
 | 59 | scaffold endpoint complete (replaces 47.2 stub) | backend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
-| 60 | PromptToFlowBar.jsx + staggered animation | frontend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
-| 61 | useWorkflow.js — workflow CRUD hook | frontend-dev | MEDIUM | claude-haiku-4-5 | PENDING |
-| **62.1** | SwarmEngine — _onHandoff: context merge + PTY spawn | backend-dev | HIGH | claude-opus-4-6 | PENDING |
+| 60 | PromptToFlowBar.jsx + staggered animation | frontend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
+| 61 | useWorkflow.js — workflow CRUD hook | frontend-dev | MEDIUM | claude-haiku-4-5 | COMPLETED |
+| **62.1** | SwarmEngine — _onHandoff: context merge + PTY spawn | backend-dev | HIGH | claude-opus-4-6 | IN_PROGRESS |
 | **62.2** | SwarmEngine — _onHandoff: context injection + status | backend-dev | HIGH | claude-opus-4-6 | PENDING |
 | **62.3** | SwarmEngine — _onDone + BudgetTracker + snippets | backend-dev | HIGH | claude-sonnet-4-6 | PENDING |
-| 63 | useSwarm.js — WS hook for execution control | frontend-dev | HIGH | claude-sonnet-4-6 | PENDING |
+| 63 | useSwarm.js — WS hook for execution control | frontend-dev | HIGH | claude-sonnet-4-6 | IN_PROGRESS |
 | 64 | useHandoff.js — edge animation hook | frontend-dev | LOW | claude-haiku-4-5 | PENDING |
 | 65 | AgentNode live updates — pulse + micro PTY log | frontend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
-| 66 | BroadcastBar.jsx + broadcast route | frontend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
-| 67 | SwarmEngine heartbeat — idle sweeper prevention | backend-dev | MEDIUM | claude-haiku-4-5 | PENDING |
+| 66 | BroadcastBar.jsx + broadcast route | frontend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
+| 67 | SwarmEngine heartbeat — idle sweeper prevention | backend-dev | MEDIUM | claude-haiku-4-5 | IN_PROGRESS |
 | 68 | inbox.js — HITL approve/reject API | backend-dev | HIGH | claude-sonnet-4-6 | PENDING |
 | 69 | HitlInbox.jsx — approval panel | frontend-dev | HIGH | claude-sonnet-4-6 | PENDING |
 | 70 | SwarmEngine HITL — freeze/unfreeze agent | backend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |

@@ -83,7 +83,7 @@ _Last updated: 2026-03-27 — after Task #60 (PromptToFlowBar.jsx + staggered an
 | client/package.json | (config) | Client dependencies — now includes @xyflow/react@12.10.1 (React Flow v12 graph canvas) and zustand@4.5.7 (v4, not v5) alongside react@18.2, react-markdown, xterm, xterm-addon-fit. (Task #51) |
 | client/tailwind.config.js | default config | Tailwind CSS config: Phase 9 design tokens — 20+ color tokens (primary #933df5, surface scale, semantic colors, code syntax), font families (Inter/Geist/JetBrains Mono), border radius scale. darkMode: 'class'. |
 | client/index.html | (HTML entry) | SPA entry point: Google Fonts CDN links (Inter, JetBrains Mono, Material Symbols Outlined), dark class on html element. Last modified Task #23 (font imports added). |
-| client/src/index.css | (global styles) | Base body styles (#000 bg, Inter font), utility classes (.glass-effect, .custom-scrollbar, .active-indicator, .terminal-text, .filled-icon, .terminal-line-border), .markdown-result scoped styles (headings, code, tables, blockquotes — purple theme), .md-* syntax highlighting helpers, @keyframes dashdraw (animated SVG dash offset for HandoffEdge). Last modified Task #54 (@keyframes dashdraw added). |
+| client/src/index.css | (global styles) | Base body styles (#000 bg, Inter font), utility classes (.glass-effect, .custom-scrollbar, .active-indicator, .terminal-text, .filled-icon, .terminal-line-border), .markdown-result scoped styles (headings, code, tables, blockquotes — purple theme), .md-* syntax highlighting helpers, @keyframes dashdraw (animated SVG dash offset for HandoffEdge), @keyframes fadeIn (opacity 0→1 for PromptToFlowBar staggered node entrance). Last modified Task #60 (@keyframes fadeIn added). |
 | client/postcss.config.js | (PostCSS config) | PostCSS plugins: tailwindcss, autoprefixer |
 
 ## Test Infrastructure
@@ -1972,14 +1972,14 @@ _Last updated: 2026-03-27 — after Task #60 (PromptToFlowBar.jsx + staggered an
 ## Swarm View Shell (Task #57.2)
 
 ### `client/src/views/SwarmView.jsx` :: `SwarmView()`
-- **Purpose:** Top-level page shell for the Swarm Orchestrator. Renders a fixed toolbar (title, executionStatus indicator, conditional Reset button) above a full-height canvas area. Provides the ReactFlowProvider boundary required by @xyflow/react. Owns `workflowDef` local state (null until wired in Task #61) and passes it as a prop to SwarmCanvas.
+- **Purpose:** Top-level page shell for the Swarm Orchestrator. Renders a fixed toolbar (title, executionStatus indicator, conditional Reset button), then PromptToFlowBar below the toolbar, then the full-height canvas area. Provides the ReactFlowProvider boundary required by @xyflow/react. Owns `workflowDef` local state; receives it from PromptToFlowBar.onWorkflowGenerated and passes it down to SwarmCanvas.
 - **Called by:** App.jsx::MainContent (case 'swarm' — wired in Task #58)
-- **Calls:** useSwarmStore (selector: s.executionStatus), useSwarmStore (selector: s.reset), useState (React — workflowDef local state), ReactFlowProvider (from @xyflow/react), SwarmCanvas (client/src/canvas/SwarmCanvas.jsx)
+- **Calls:** useSwarmStore (selector: s.executionStatus), useSwarmStore (selector: s.reset), useState (React — workflowDef local state), ReactFlowProvider (from @xyflow/react), PromptToFlowBar (client/src/canvas/PromptToFlowBar.jsx — Task #60), SwarmCanvas (client/src/canvas/SwarmCanvas.jsx)
 - **Inputs:** none (no props)
-- **Output:** JSX — flex-col full-height div: toolbar row (shrink-0) + canvas area (flex-1, overflow-hidden) containing ReactFlowProvider > SwarmCanvas
+- **Output:** JSX — flex-col full-height div: toolbar row (shrink-0) + PromptToFlowBar (shrink-0) + canvas area (flex-1, overflow-hidden) containing ReactFlowProvider > SwarmCanvas
 - **Side effects:** calls SwarmStore.reset() when Reset button is clicked (clears execution state); no server I/O
-- **Complexity note:** `statusColors` is a module-level const map (idle/running/stopped → Tailwind class string). `executionStatus === 'stopped'` is the sole gate for the Reset button — it does not render for idle or running states. ReactFlowProvider must wrap SwarmCanvas (not SwarmCanvas internally) because SwarmView is the intended boundary for the React Flow context.
-- **Last modified:** 2026-03-27 in Task #57.2 by frontend-dev; "Called by" resolved in Task #58 (App.jsx MainContent now routes case 'swarm' → SwarmView). workflowDef local state still null — useWorkflow hook (Task #61) now exists for wiring.
+- **Complexity note:** `statusColors` is a module-level const map (idle/running/stopped → Tailwind class string). `executionStatus === 'stopped'` is the sole gate for the Reset button. onWorkflowGenerated callback receives (workflowId, animatedDef) from PromptToFlowBar — SwarmView discards workflowId and stores only animatedDef in workflowDef local state, which flows into SwarmCanvas. ReactFlowProvider must wrap SwarmCanvas (not SwarmCanvas internally) because SwarmView is the intended boundary for the React Flow context.
+- **Last modified:** 2026-03-27 in Task #60 by frontend-dev (PromptToFlowBar mounted; onWorkflowGenerated → setWorkflowDef wired; workflowDef prop now live to SwarmCanvas)
 
 ---
 
@@ -2069,3 +2069,35 @@ _Last updated: 2026-03-27 — after Task #60 (PromptToFlowBar.jsx + staggered an
 - **Side effects:** GET /api/v1/workflows on mount; POST /api/v1/workflows on create(); appends returned workflow to local workflows state via `setWorkflows(prev => [...prev, created])`
 - **Complexity note:** create() appends the server-returned workflow object (not the local input) — the server assigns the UUID, so this is a server-truth append. The list is NOT re-fetched after create; the local append is sufficient for immediate UI update.
 - **Last modified:** 2026-03-27 in Task #61 by frontend-dev
+
+---
+
+## Prompt-to-Flow Bar (Task #60)
+
+### `client/src/canvas/PromptToFlowBar.jsx` :: `PromptToFlowBar({ onWorkflowGenerated })`
+- **Purpose:** Natural-language prompt input bar that generates a multi-agent workflow via the scaffold endpoint. Renders a purple-accent text input + "Generate" button. On submit, POSTs the trimmed prompt to POST /api/v1/swarm/scaffold, extracts the returned workflowDef, applies staggered CSS fadeIn animation to every node (opacity: 0 → animation: fadeIn 0.3s ease forwards), and calls onWorkflowGenerated(workflowId, animatedDef). Supports Enter key (non-shifted) as submit shortcut. Displays inline error text on failure. Clears the prompt field on success.
+- **Called by:** SwarmView.jsx (Task #60 — mounted between toolbar and canvas; onWorkflowGenerated callback wires to setWorkflowDef)
+- **Calls:** fetch (native browser — POST /api/v1/swarm/scaffold with X-Requested-With CSRF header), useState (prompt, loading, error), useCallback (handleGenerate), onWorkflowGenerated (prop callback)
+- **Inputs:** onWorkflowGenerated (function — called as onWorkflowGenerated(workflowId: string, animatedDef: object) on success; optional — guarded with `?.`)
+- **Output:** JSX — flex-col div: input row (icon + text input + Generate button) + optional error line below
+- **Side effects:** POST /api/v1/swarm/scaffold (creates a workflow record on the server via WorkflowStore); calls onWorkflowGenerated prop on success; sets prompt/loading/error React state
+- **Complexity note:** Staggered animation: each node in workflowDef.nodes gets `style.animation = 'fadeIn 0.3s ease forwards ${i * 0.08}s'` where i is the index. This depends on @keyframes fadeIn declared in client/src/index.css. The SCAFFOLD_HEADERS constant (module-level) includes the CSRF header — mutating requests without this header would be rejected by server/middleware/csrf.js. handleGenerate is memoized via useCallback with [prompt, loading, onWorkflowGenerated] deps.
+- **Last modified:** 2026-03-27 in Task #60 by frontend-dev
+
+### `client/src/canvas/PromptToFlowBar.jsx` :: `handleGenerate()` (internal — via useCallback)
+- **Purpose:** Async submit handler. Guards against empty prompt and concurrent submission (loading flag). Calls POST /api/v1/swarm/scaffold, decodes { workflowId, workflowDef }, applies per-node staggered animation transform, and calls onWorkflowGenerated. Sets error state on any fetch or HTTP failure.
+- **Called by:** PromptToFlowBar — Generate button onClick; handleKeyDown (Enter key without Shift)
+- **Calls:** fetch('/api/v1/swarm/scaffold', ...), res.json(), onWorkflowGenerated (prop), setLoading, setError, setPrompt
+- **Inputs:** (no params — reads prompt, loading, onWorkflowGenerated from closure)
+- **Output:** Promise\<void\>
+- **Side effects:** server POST; React state updates (loading, error, prompt)
+- **Last modified:** 2026-03-27 in Task #60 by frontend-dev
+
+### `client/src/canvas/PromptToFlowBar.jsx` :: `handleKeyDown(e)` (internal)
+- **Purpose:** Keyboard event handler for the prompt input. Calls handleGenerate() when Enter is pressed without Shift (Shift+Enter is reserved for multi-line expansion if ever implemented). Prevents the default form-submit behavior.
+- **Called by:** PromptToFlowBar — input element's onKeyDown prop
+- **Calls:** handleGenerate()
+- **Inputs:** e (KeyboardEvent)
+- **Output:** void
+- **Side effects:** delegates to handleGenerate (see above)
+- **Last modified:** 2026-03-27 in Task #60 by frontend-dev

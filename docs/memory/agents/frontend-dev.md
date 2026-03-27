@@ -894,3 +894,50 @@ PromptToFlowBar is fully functional. It calls POST /api/v1/swarm/scaffold with t
 ### Handoff
 Phase 3 is now fully complete (#59, #60, #61 all done). Next wave is Phase 4 (Live Execution): #62.1 SwarmEngine _onHandoff, #62.2, #62.3, #63 useSwarm.js WS hook, #64 useHandoff.js, #65 AgentNode live updates, #66 BroadcastBar, #67 heartbeat.
 ---
+---
+## 2026-03-27 — Task #63: useSwarm.js — WebSocket Hook for Execution Control
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+Task #61 (useWorkflow.js CRUD hook) was COMPLETED. SwarmContext.jsx had a full Zustand store (useSwarmStore) with setExecution, updateAgentState, updateEdgeCounter, updateBudget, addInboxItem, addFeedEvent, setWsConnected, reset actions. The /ws/swarm WebSocket endpoint was built in #48.1. The project pattern requires all HTTP in hooks to go through useApi.js wrappers (apiGet/apiPost/apiPut/apiDelete).
+
+### What I did
+1. Read client/src/store/SwarmContext.jsx — confirmed all store actions available as named exports from useSwarmStore.
+2. Read client/src/hooks/useApi.js — confirmed apiPost returns parsed JSON body, apiDelete handles DELETE with CSRF header.
+3. Read client/src/hooks/useWorkflow.js — confirmed hook style: useCallback for all async actions, useEffect for cleanup.
+4. Created client/src/hooks/useSwarm.js with: connectWs (opens WebSocket, dispatches all 6 WS message types to store), startExecution (POST via apiPost, connects WS), stopExecution (DELETE via apiDelete, closes WS), useEffect cleanup on unmount.
+5. Used apiPost/apiDelete instead of raw fetch to stay consistent with project convention (useApi.js wrappers handle CSRF header and error parsing automatically).
+6. Ran npm run build — 471 modules (+1 from new file), 0 errors.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/hooks/useSwarm.js | CREATED | New WebSocket hook for swarm execution control |
+| docs/TASK_PLAN.md | MODIFIED | Task #63 Status: IN_PROGRESS → COMPLETED |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | New session entry appended |
+| docs/memory/agents/frontend-dev.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- useSwarm(workflowId) hook fully wires WS lifecycle to SwarmStore
+- Handles all 6 WS message types: agent_status, handoff_started, execution_status, budget_update, circuit_breaker, hitl_required
+- startExecution/stopExecution use apiPost/apiDelete wrappers (no raw fetch in hook files)
+- WS auto-closes on component unmount (useEffect cleanup)
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Used apiPost/apiDelete instead of raw fetch → wrappers handle CSRF header (X-Requested-With: ClaudeCodeManager) and JSON error parsing automatically; apiPost already returns parsed JSON body so { executionId } is directly destructurable
+- Kept reset action from task spec description but not called internally (components can call store reset directly when needed) — not wiring reset inside the hook avoids over-eager state clearing on WS reconnect scenarios
+
+### What I learned
+- useSwarmStore is a plain Zustand store (no React context wrapping needed) — import and call directly
+- The project has apiPost/apiDelete already covering the start/stop HTTP cases — no new npm packages needed
+
+### State I'm leaving behind
+client/src/hooks/useSwarm.js is complete and builds cleanly. SwarmView.jsx does not yet call useSwarm — that wiring is a separate task (#66 or similar).
+
+### Handoff
+Task #64 (useHandoff.js) and Task #65 (AgentNode live status display) are the next Phase 3 items. SwarmView.jsx will need to import and call useSwarm(workflowId) to wire start/stop buttons and receive live WS updates.
+---

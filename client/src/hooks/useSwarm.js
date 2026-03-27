@@ -1,0 +1,88 @@
+// useSwarm.js — WebSocket hook for swarm execution control and live state updates.
+import { useEffect, useRef, useCallback } from 'react';
+import { useSwarmStore } from '../store/SwarmContext';
+import { apiPost, apiDelete } from './useApi.js';
+
+export function useSwarm(workflowId) {
+  const wsRef = useRef(null);
+  const {
+    setExecution,
+    updateAgentState,
+    updateEdgeCounter,
+    updateBudget,
+    addInboxItem,
+    addFeedEvent,
+    setWsConnected,
+  } = useSwarmStore();
+
+  // Connect WS for a running execution
+  const connectWs = useCallback((executionId) => {
+    if (wsRef.current) {
+      wsRef.current.close();
+    }
+    const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const url = `${protocol}//${location.host}/ws/swarm?executionId=${executionId}`;
+    const ws = new WebSocket(url);
+
+    ws.onopen = () => setWsConnected(true);
+    ws.onclose = () => setWsConnected(false);
+    ws.onerror = () => setWsConnected(false);
+
+    ws.onmessage = (e) => {
+      let msg;
+      try { msg = JSON.parse(e.data); } catch { return; }
+
+      switch (msg.type) {
+        case 'agent_status':
+          updateAgentState(msg.nodeId, { status: msg.status });
+          break;
+        case 'handoff_started':
+          updateEdgeCounter(msg.edgeId, msg.counter);
+          addFeedEvent({ ...msg, timestamp: Date.now() });
+          updateAgentState(msg.sourceNodeId, { handoffCount: msg.counter });
+          break;
+        case 'execution_status':
+          setExecution(msg.executionId ?? null, msg.status ?? 'running');
+          break;
+        case 'budget_update':
+          updateBudget(msg.estimatedTokensUsed, msg.limitTokens);
+          break;
+        case 'circuit_breaker':
+          addFeedEvent({ ...msg, timestamp: Date.now() });
+          break;
+        case 'hitl_required':
+          addInboxItem(msg);
+          break;
+        default:
+          break;
+      }
+    };
+
+    wsRef.current = ws;
+  }, [setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, setExecution, updateBudget, addInboxItem]);
+
+  // Start execution
+  const startExecution = useCallback(async (projectId, projectPath) => {
+    const data = await apiPost(`/api/v1/swarm/${workflowId}/start`, { projectId, projectPath });
+    const { executionId } = data;
+    setExecution(executionId, 'running');
+    connectWs(executionId);
+    return executionId;
+  }, [workflowId, setExecution, connectWs]);
+
+  // Stop execution
+  const stopExecution = useCallback(async (executionId) => {
+    await apiDelete(`/api/v1/swarm/${executionId}`);
+    setExecution(null, 'stopped');
+    wsRef.current?.close();
+  }, [setExecution]);
+
+  // Cleanup WS on unmount
+  useEffect(() => {
+    return () => {
+      wsRef.current?.close();
+    };
+  }, []);
+
+  return { startExecution, stopExecution, connectWs };
+}

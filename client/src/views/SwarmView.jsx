@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ReactFlowProvider } from '@xyflow/react';
 import SwarmCanvas from '../canvas/SwarmCanvas';
 import PromptToFlowBar from '../canvas/PromptToFlowBar';
+import BroadcastBar from '../canvas/BroadcastBar';
 import { useSwarmStore } from '../store/SwarmContext';
 
 // Status indicator color map
@@ -56,6 +57,9 @@ export default function SwarmView() {
           <SwarmCanvas workflowDef={workflowDef} />
         </ReactFlowProvider>
       </div>
+
+      {/* Broadcast bar — only visible during active execution */}
+      <BroadcastBar />
     </div>
   );
 }

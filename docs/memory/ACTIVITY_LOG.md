@@ -1,4 +1,31 @@
 ---
+## 2026-03-27 — code-mapper — Task #60: PromptToFlowBar.jsx + staggered animation
+**Outcome:** COMPLETED
+**Summary:** CODE_MAP.md updated with new PromptToFlowBar component (3 function entries: PromptToFlowBar, handleGenerate, handleKeyDown), updated SwarmView entry (PromptToFlowBar now mounted and workflowDef prop live), updated index.css entry (@keyframes fadeIn). CHANGELOG.md entry appended. Phase 3 Prompt-to-Flow data flow is now fully documented end-to-end.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** none
+**Decisions made:** Documented known limitation: SwarmCanvas treats workflowDef as initialState only — re-generation via PromptToFlowBar does not live-reload the canvas after first mount.
+**Blockers:** none
+**Next:** Phase 4 (Live Execution) tasks #62.1, #63, #66, #67 in progress — code-mapper will be called after each completes.
+---
+## 2026-03-27 — project-manager — Phase 3 complete; Phase 4 launch (#62.1, #63, #66, #67)
+**Outcome:** COMPLETED
+**Summary:** Marked Task #60 COMPLETED (Phase 3 fully done — all of #59, #60, #61 complete, 33/57 V3 tasks). Launched Phase 4 Live Execution wave: #62.1 (SwarmEngine _onHandoff context merge + PTY spawn), #63 (useSwarm.js WS hook), #66 (BroadcastBar.jsx + broadcast route), #67 (SwarmEngine heartbeat idle sweeper prevention) all set to IN_PROGRESS. Build at 471 modules.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** #67 dependency corrected to #46.3 (was incorrectly listed as #62.3)
+**Blockers:** none
+**Next:** #62.2 launches after #62.1 completes; #62.3 after #62.2; #64/#65 pending #63; #68/#69/#70 pending Phase 4 completion
+---
+## 2026-03-27 — documenter — Task #60: PromptToFlowBar.jsx + staggered animation
+**Outcome:** COMPLETED
+**Summary:** Audited all documentation after Task #60 (PromptToFlowBar.jsx created, @keyframes fadeIn added to index.css, SwarmView.jsx wired with onWorkflowGenerated callback). DOC_STATUS.md updated: timestamp advanced; PromptToFlowBar.jsx row added; index.css row updated to document Task #60 fadeIn keyframe addition; SwarmView.jsx row updated to reflect workflowDef is now wired (no longer a stub); ARCHITECTURE.md stale section Phase 3 status updated from "partial/pending" to "COMPLETE". README.md and ARCHITECTURE.md not touched — V3 public doc deferral policy in effect until Task #82.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none
+**Decisions made:** V3 public doc deferral policy maintained; Phase 3 complete as of Task #60
+**Blockers:** none
+**Next:** Phase 4 live execution tasks (#62.1 onward)
+---
 ## 2026-03-27 — code-mapper — Tasks #59 + #61: scaffold endpoint + useWorkflow.js CRUD hook
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md to document the full POST /scaffold implementation in swarm.js (generateWorkflowFromPrompt helper using @anthropic-ai/sdk + full route handler replacing 501 stub) and the new useWorkflow.js CRUD hooks (useWorkflow + useWorkflowList). Module Index rows updated/added. Two Function Graph sections appended. SwarmView workflowDef note updated. CHANGELOG.md entries appended for both tasks.
@@ -1327,4 +1354,14 @@
 **Decisions made:** Used direct fetch() with manual CSRF header (matches task spec); PromptToFlowBar placed as sibling to canvas in layout flex column
 **Blockers:** none
 **Next:** Phase 3 fully complete. Phase 4 (Live Execution): #62.1–#62.3 SwarmEngine _onHandoff, #63 useSwarm.js, #64 useHandoff.js, #65 AgentNode live, #66 BroadcastBar, #67 heartbeat
+---
+---
+## 2026-03-27 — frontend-dev — Task #63: useSwarm.js — WebSocket Hook for Execution Control
+**Outcome:** COMPLETED
+**Summary:** Created client/src/hooks/useSwarm.js. The hook opens a WebSocket to /ws/swarm?executionId=X, dispatches all WS message types to SwarmStore (agent_status, handoff_started, execution_status, budget_update, circuit_breaker, hitl_required), and exposes startExecution/stopExecution/connectWs. Uses apiPost/apiDelete from useApi.js for HTTP calls (consistent with project convention). Build passes: 471 modules, 0 errors.
+**Files changed:** client/src/hooks/useSwarm.js (CREATED), docs/TASK_PLAN.md (Task #63 → COMPLETED)
+**Bugs fixed:** none
+**Decisions made:** Used apiPost/apiDelete wrappers instead of raw fetch — consistent with useApi.js project convention; apiPost already returns parsed JSON so executionId is available directly.
+**Blockers:** none
+**Next:** Task #64 (useHandoff.js), Task #65 (AgentNode live status), Task #66 (SwarmView wiring to useSwarm)
 ---
