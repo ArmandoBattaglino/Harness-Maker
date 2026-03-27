@@ -1,4 +1,22 @@
 ---
+## 2026-03-27 — frontend-dev — Task #52: SwarmContext.jsx — Zustand ExecutionStore
+**Outcome:** COMPLETED
+**Summary:** Created client/src/store/SwarmContext.jsx — the Zustand 4.5.7 execution state store for the V3 swarm orchestrator. Exports useSwarmStore (default + named). Store is fully isolated from AppContext.jsx — no cross-imports. Build passes clean (299 modules, 0 errors).
+**Files changed:** client/src/store/SwarmContext.jsx (CREATED), docs/TASK_PLAN.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Store is standalone Zustand create() — no React context wrapper needed since components use useSwarmStore() directly; thin named export provided for App.jsx compatibility if needed
+**Blockers:** none
+**Next:** Task #53.1 (AgentNode.jsx), #53.2 (DepartmentNode.jsx), #53.3 (TriggerNode.jsx) — all can import from SwarmContext now
+---
+## 2026-03-27 — documenter — Tasks #50 + #51: V3 Security Layer + Client Deps docs audit
+**Outcome:** COMPLETED
+**Summary:** Audited all documentation artifacts after Task #50 (V3 security layer: ssrfGuard.js, webhookLimit.js, webhookRateLimit.js, hitlValidation.js, security-v3.test.js) and Task #51 (@xyflow/react + zustand installed in client/). All 5 new server files have complete inline JSDoc — no public doc updates required. Updated docs/memory/PROJECT.md tech stack table to include @xyflow/react v12 and zustand v4. Updated DOC_STATUS.md with 7 new V3 file rows and expanded ARCHITECTURE.md stale section note. V3 public doc deferral policy maintained.
+**Files changed:** docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/PROJECT.md (MODIFIED), docs/memory/agents/documenter.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** PROJECT.md tech stack updated for installed packages (not deferred) — installed packages are factual state, not V3 feature docs. V3 public doc deferral policy maintained for README.md and ARCHITECTURE.md.
+**Blockers:** none
+**Next:** Task #52 (SwarmContext.jsx) already COMPLETED. Documenter should audit SwarmContext.jsx inline docs in the next pass.
+---
 ## 2026-03-27 — security — Task #50: V3 Security Layer — SEC-V3-01 through SEC-V3-07
 **Outcome:** COMPLETED
 **Summary:** Implemented all 7 V3 security requirements. Created ssrfGuard.js (SSRF prevention, blocks private IPs/loopback), webhookLimit.js (32KB body cap placeholder), webhookRateLimit.js (10 req/min placeholder), and hitlValidation.js (8KB HITL text cap). Verified SEC-V3-02, -06, -07 were already fully implemented in WorkflowStore.js and HandoffParser.js. Created 36-test security-v3.test.js. All 168 tests pass (132 pre-existing + 36 new).
@@ -977,4 +995,14 @@
 **Decisions made:** #52 (SwarmContext.jsx) now unblocked since #51 COMPLETED — can launch immediately
 **Blockers:** none
 **Next:** #52 (SwarmContext.jsx, frontend-dev, claude-sonnet-4-6) ready to launch. Await #50 (security) completion.
+---
+---
+## 2026-03-27 — project-manager — Task #50 + #51 Confirmed COMPLETED; Task #52 Launched
+**Outcome:** COMPLETED
+**Summary:** Confirmed Tasks #50 (V3 Security Layer, 168 tests pass, 36 new security tests) and #51 (@xyflow/react + zustand client install, 132 tests pass, build clean) both already marked COMPLETED in TASK_PLAN.md. Updated PROGRESS.md count to 14/57 and marked #52 IN_PROGRESS. Task #52 (SwarmContext.jsx Zustand ExecutionStore) is now launched for frontend-dev — depends on #51 which is confirmed complete.
+**Files changed:** docs/memory/PROGRESS.md (MODIFIED — status count updated, #52 status), docs/TASK_PLAN.md (MODIFIED — #52 Status: PENDING → IN_PROGRESS)
+**Bugs fixed:** none
+**Decisions made:** #52 is next in Phase 2 canvas chain; it unblocks #53.1, #53.2, #53.3, #54, #55, #56, #57.1 which all depend on it
+**Blockers:** none
+**Next:** Task #52 frontend-dev in progress. After #52 completes, tasks #53.1, #53.2, #53.3 can run in parallel (all depend on #52 only).
 ---

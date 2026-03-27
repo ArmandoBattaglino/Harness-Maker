@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-27 — after Task #47.2 (swarm.js scaffold stub) + Task #48.2 (swarmHandler.js broadcast() + WS event wiring) — mapped by code-mapper_
+_Last updated: 2026-03-27 — after Task #50 (V3 Security Layer: ssrfGuard, webhookLimit, webhookRateLimit, hitlValidation, security-v3 tests) + Task #51 (@xyflow/react + zustand install) — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -37,6 +37,11 @@ _Last updated: 2026-03-27 — after Task #47.2 (swarm.js scaffold stub) + Task #
 | server/services/BudgetTracker.js | BudgetTracker (class), default BudgetTracker | Soft budget tracker — accumulates char counts per session, estimates tokens (÷4), provides checkBudget advisory signal; never stops execution (FR-V3-18, Task #49) |
 | server/routes/swarm.js | swarmRoutes (factory fn) | 7-endpoint REST API for swarm execution control: start, pause, resume, stop, status, agent output, broadcast. Factory pattern: accepts swarmEngine + sessionManager at construction. (Task #47.1) |
 | server/ws/swarmHandler.js | handleSwarmConnection (default), getSubscribers, broadcast | WebSocket connection handler for /ws/swarm path. Module-level _subscribers Map keyed by executionId → Set\<WebSocket\>. Sends initial execution_status snapshot on connect. broadcast() fans out JSON events to all OPEN connections for an executionId. (Tasks #48.1, #48.2) |
+| server/utils/ssrfGuard.js | isSafeUrl | Synchronous SSRF prevention guard — rejects private/loopback IP literals and localhost in URLs before any outbound server fetch. Covers IPv4, IPv6 loopback, IPv4-mapped IPv6, link-local. Does NOT perform DNS lookup (sync-only design). (SEC-V3-03, Task #50) |
+| server/middleware/webhookLimit.js | webhookLimit (default) | Express JSON body-parser capped at 32 KB. Apply before any route that ingests untrusted webhook payloads. Awaiting use in routes/triggers.js (Task #75). (SEC-V3-01, Task #50) |
+| server/middleware/webhookRateLimit.js | webhookRateLimit (default) | Express middleware: 10 requests/minute/IP rate limiter for webhook endpoints. In-memory Map with periodic stale-entry sweep (mirrors server/index.js pattern). Returns HTTP 429 on excess. Awaiting use in routes/triggers.js (Task #75). (SEC-V3-04, Task #50) |
+| server/middleware/hitlValidation.js | validateResumeText | Express middleware: rejects resumeText body field exceeding 8 KB (8192 chars) with HTTP 400. Awaiting use in routes/inbox.js (Task #68). (SEC-V3-05, Task #50) |
+| server/tests/security-v3.test.js | (test suite) | 36-test Vitest suite covering SEC-V3-03 (isSafeUrl — 18 cases), SEC-V3-02+06 (WorkflowStore schema validation — 9 cases), SEC-V3-07 (HandoffParser oversized payload — 3 cases), SEC-V3-05 (validateResumeText — 5 cases). (Task #50) |
 
 ### Client Modules
 | File | Key Exports | Purpose |
@@ -64,6 +69,7 @@ _Last updated: 2026-03-27 — after Task #47.2 (swarm.js scaffold stub) + Task #
 ### Client Config & Styles
 | File | Key Exports | Purpose |
 |------|-------------|---------|
+| client/package.json | (config) | Client dependencies — now includes @xyflow/react@12.10.1 (React Flow v12 graph canvas) and zustand@4.5.7 (v4, not v5) alongside react@18.2, react-markdown, xterm, xterm-addon-fit. (Task #51) |
 | client/tailwind.config.js | default config | Tailwind CSS config: Phase 9 design tokens — 20+ color tokens (primary #933df5, surface scale, semantic colors, code syntax), font families (Inter/Geist/JetBrains Mono), border radius scale. darkMode: 'class'. |
 | client/index.html | (HTML entry) | SPA entry point: Google Fonts CDN links (Inter, JetBrains Mono, Material Symbols Outlined), dark class on html element. Last modified Task #23 (font imports added). |
 | client/src/index.css | (global styles) | Base body styles (#000 bg, Inter font), utility classes (.glass-effect, .custom-scrollbar, .active-indicator, .terminal-text, .filled-icon, .terminal-line-border), .markdown-result scoped styles (headings, code, tables, blockquotes — purple theme), .md-* syntax highlighting helpers. Last modified Task #23 (Phase 9 redesign). |
@@ -80,6 +86,7 @@ _Last updated: 2026-03-27 — after Task #47.2 (swarm.js scaffold stub) + Task #
 | server/tests/SessionManager.test.js | Vitest | server/services/SessionManager.js | 18 |
 | server/tests/JobRunner.test.js | Vitest | server/services/JobRunner.js | 18 |
 | server/tests/HandoffParser.test.js | Vitest | server/services/HandoffParser.js | 22 |
+| server/tests/security-v3.test.js | Vitest | server/utils/ssrfGuard.js, server/services/WorkflowStore.js, server/services/HandoffParser.js, server/middleware/hitlValidation.js | 36 |
 
 ## Build Artifacts
 - `server/public/` — Vite build output (served as static files by Express)

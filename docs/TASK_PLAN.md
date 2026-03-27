@@ -4374,7 +4374,7 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Dependencies: #51
 Context:
   Create `client/src/store/SwarmContext.jsx` — the Zustand-based execution state store for V3.
@@ -6006,7 +6006,7 @@ Acceptance criteria:
 | 49 | CircuitBreaker.js + BudgetTracker.js | backend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
 | 50 | V3 Security Layer (SEC-V3-01 to SEC-V3-07) | security | HIGH | claude-sonnet-4-6 | COMPLETED |
 | 51 | Client deps: @xyflow/react + zustand install | devops | HIGH | claude-haiku-4-5 | COMPLETED |
-| 52 | SwarmContext.jsx — Zustand ExecutionStore | frontend-dev | HIGH | claude-sonnet-4-6 | PENDING |
+| 52 | SwarmContext.jsx — Zustand ExecutionStore | frontend-dev | HIGH | claude-sonnet-4-6 | COMPLETED |
 | **53.1** | AgentNode.jsx — agent canvas node | frontend-dev | HIGH | claude-opus-4-6 | PENDING |
 | **53.2** | DepartmentNode.jsx — group container node | frontend-dev | HIGH | claude-opus-4-6 | PENDING |
 | **53.3** | TriggerNode.jsx — webhook/RSS node stub | frontend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |

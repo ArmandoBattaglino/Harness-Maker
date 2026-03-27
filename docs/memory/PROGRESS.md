@@ -152,7 +152,7 @@ _None._
 - NOTE: FileManager was NOT created in Task #5 as planned — RESOLVED in Task #7 (created server/services/FileManager.js).
 
 ## V3 — Swarm Orchestrator (57 granular tasks after split — 2026-03-27 replan)
-**Status: 12/57 COMPLETED — as of 2026-03-27. All Phase 1 backend tasks done. #51 (devops) COMPLETED. #50 (security) still IN_PROGRESS.**
+**Status: 14/57 COMPLETED — as of 2026-03-27. All Phase 1 backend tasks done. #50 (security) COMPLETED (168 tests pass, 36 new security tests). #51 (devops) COMPLETED (@xyflow/react + zustand installed, 132 tests pass). #52 (frontend-dev) IN_PROGRESS — SwarmContext.jsx Zustand ExecutionStore.**
 **Note: Original 40 tasks (#43–#82). After model assignment + subtask split: 57 granular units.**
 **7 original tasks split into subtasks: #46→3, #47→2, #48→2, #53→3, #57→2, #62→3, #71→2**
 - V3 PRD complete: docs/PRD.md
@@ -176,7 +176,7 @@ _None._
 
 ### V3 Phase 2 — Canvas Static
 - [TASK-51] COMPLETED 2026-03-27 — @xyflow/react@12.10.1 + zustand@4.5.7 installed in client/; 299 modules build clean; 132/132 tests pass — devops agent
-- [TASK-52] PENDING — SwarmContext.jsx Zustand ExecutionStore
+- [TASK-52] COMPLETED 2026-03-27 — SwarmContext.jsx Zustand ExecutionStore — client/src/store/SwarmContext.jsx created; useSwarmStore Zustand store with execution state, canvas navigation, HITL inbox, inter-agent feed, breadcrumb stack. Build clean (299 modules).
 - [TASK-53.1] PENDING — AgentNode.jsx — agent canvas node
 - [TASK-53.2] PENDING — DepartmentNode.jsx — group container node
 - [TASK-53.3] PENDING — TriggerNode.jsx — webhook/RSS node stub

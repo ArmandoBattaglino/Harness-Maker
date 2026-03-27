@@ -1,4 +1,55 @@
 ---
+## 2026-03-27 — Task #52: SwarmContext.jsx — Zustand ExecutionStore
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+V3 Phase 2 (Canvas Static) had just become unblocked: devops (Task #51) installed @xyflow/react@12.10.1 and zustand@4.5.7 in client/. All Phase 1 backend tasks (#43–#50) were COMPLETED. client/src/store/ contained only AppContext.jsx. The task required creating a completely separate Zustand store for V3 swarm execution state — no coupling to AppContext.
+
+### What I did
+1. Read docs/memory/agents/frontend-dev.md (session history) and client/src/store/AppContext.jsx in parallel.
+2. Verified client/src/store/ existed with only AppContext.jsx, and that zustand@4.5.7 was in client/package.json.
+3. Created client/src/store/SwarmContext.jsx — verbatim implementation per task spec. No deviations.
+4. Ran `npm run build` from project root — clean build, 299 modules, 0 errors (only pre-existing chunk size warning for react-markdown at 668KB).
+5. Updated docs/TASK_PLAN.md (Status IN_PROGRESS → COMPLETED, summary table PENDING → COMPLETED), PROGRESS.md, ACTIVITY_LOG.md, and this agent memory file.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| `client/src/store/SwarmContext.jsx` | CREATED | Zustand ExecutionStore — full V3 execution state, canvas navigation, HITL inbox, inter-agent feed, breadcrumb stack, WS connection state, all actions |
+| `docs/TASK_PLAN.md` | MODIFIED | Task #52 Status: IN_PROGRESS → COMPLETED; summary table PENDING → COMPLETED |
+| `docs/memory/PROGRESS.md` | MODIFIED | Task #52 entry updated to COMPLETED |
+| `docs/memory/ACTIVITY_LOG.md` | MODIFIED | New entry appended |
+
+### Improvements delivered
+- Zustand store with 9 state slices: activeExecutionId, executionStatus, agentStates, edgeCounters, budget, inboxItems, interAgentFeed, focusedDepartmentId/departmentStack, selectedNodeId, wsConnected
+- 12 actions: setExecution, updateAgentState, updateEdgeCounter, updateBudget, addInboxItem, resolveInboxItem, addFeedEvent, setFocusedDepartment, navigateBreadcrumb, setSelectedNode, setWsConnected, reset
+- addFeedEvent caps interAgentFeed at last 100 events via .slice(-100)
+- navigateBreadcrumb(0) pops stack to root (focusedDepartmentId = null)
+- setFocusedDepartment(id) pushes to departmentStack when id is truthy
+- Fully isolated from AppContext.jsx — zero imports between them
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None — build clean on first attempt | — | — | — |
+
+### Decisions I made
+- No React context wrapper exported (no Provider component) — components call useSwarmStore() directly from Zustand; thin named export `{ useSwarmStore }` provided for App.jsx compatibility per task spec.
+- Store is a single create() call, not split into slices — state shape is small enough that splitting would add complexity without benefit.
+- No devtools middleware added — task spec did not request it; can be added later if needed.
+
+### What I learned
+- Zustand 4.x import is `import { create } from 'zustand'` (not default import) — this is the correct v4 API.
+- The store is completely decoupled from React's context system — components can use it without any Provider wrapping.
+- departmentStack breadcrumb: navigateBreadcrumb(0) slices to empty array → focusedDepartmentId falls to null (root). navigateBreadcrumb(1) keeps first element as focused department.
+
+### State I'm leaving behind
+SwarmContext.jsx is complete, tested via build, and ready for import by Tasks #53–#58 (canvas nodes, panels, SwarmCanvas, SwarmView). All 12 actions are implemented. Store is fully isolated from AppContext.
+
+### Handoff
+Tasks #53.1 (AgentNode.jsx), #53.2 (DepartmentNode.jsx), #53.3 (TriggerNode.jsx) are now unblocked. They should `import useSwarmStore from '../store/SwarmContext'` or `import { useSwarmStore } from '../store/SwarmContext'` — both work.
+---
 ## 2026-03-25 — Task #24: Redesign — New Sidebar Navigation Component
 **Status:** COMPLETED
 **Called by:** orchestrator (user)

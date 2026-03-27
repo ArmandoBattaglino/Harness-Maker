@@ -1061,3 +1061,51 @@ Both #50 (V3 Security Layer, depends #44+#47.1) and #51 (client deps, depends #4
 ### Handoff
 When #50 (security) completes: mark COMPLETED, update summary table to 13/57, next task in security chain is #79 (pre-release security audit — far downstream).
 When #52 (SwarmContext.jsx) is assigned: frontend-dev, claude-sonnet-4-6, depends on #51 (done). After #52: canvas nodes #53.1, #53.2, #53.3 can launch in parallel.
+---
+## 2026-03-27 — Task #50 + #51 Confirmed COMPLETED; Task #52 Launched
+**Status:** COMPLETED
+**Called by:** user (orchestrator notification — two tasks completed, launching next)
+
+### Context when I started
+V3 Phase 2 (Canvas Static) was starting. Tasks #50 (V3 Security Layer) and #51 (@xyflow/react + zustand install) had just finished. #50 had 168 tests passing (36 new security tests added). #51 had @xyflow/react@12.10.1 + zustand@4.5.7 installed in client/ with 132 tests still passing and build clean. The user instructed to mark both COMPLETED and launch #52.
+
+### What I did
+1. Read TASK_PLAN.md (grep for #50/#51/#52) — confirmed both already had Status: COMPLETED in the plan from the executing agents writing their own completions per memory protocol.
+2. Read PROGRESS.md — confirmed #50 and #51 were listed as COMPLETED there too, but the summary line still said 12/57 and #50 "still IN_PROGRESS".
+3. Updated PROGRESS.md status line to 14/57 COMPLETED with accurate descriptions of both completions.
+4. Updated PROGRESS.md: [TASK-52] PENDING → IN_PROGRESS.
+5. Updated TASK_PLAN.md: Task #52 Status: PENDING → IN_PROGRESS.
+6. Appended to ACTIVITY_LOG.md.
+7. Appended to agents/project-manager.md (this entry).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Task #52 Status: PENDING → IN_PROGRESS (task launched) |
+| docs/memory/PROGRESS.md | MODIFIED | Status count 12/57 → 14/57; #50 and #51 confirmed complete; #52 IN_PROGRESS |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended PM session entry |
+| docs/memory/agents/project-manager.md | MODIFIED | Appended this session entry |
+
+### Improvements delivered
+- PROGRESS.md now accurately reflects 14/57 V3 tasks completed
+- Task #52 correctly set IN_PROGRESS so the frontend-dev agent can begin immediately
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Task #52 is the correct next task: it is the sole unblocked Phase 2 task (depends only on #51, which is confirmed done). All other Phase 2 tasks (#53.1, #53.2, #53.3, #54, #55, #56, #57.1, #57.2) depend on #52.
+
+### What I learned
+- The executing agents (security + devops) correctly wrote their own COMPLETED status to TASK_PLAN.md per the memory protocol — no manual correction needed in the plan itself.
+- PROGRESS.md summary line was stale (12/57 instead of 14/57) and required manual update.
+
+### State I'm leaving behind
+- Tasks #50, #51: COMPLETED in all tracking files.
+- Task #52: IN_PROGRESS — frontend-dev building SwarmContext.jsx (Zustand ExecutionStore).
+- All Phase 2 tasks #53.1–#57.2 remain PENDING and depend on #52.
+- Phase 1 is 100% complete (14 tasks including #50; #51 is Phase 2 devops prep).
+
+### Handoff
+After #52 completes, launch #53.1 + #53.2 + #53.3 in parallel — they all depend only on #52 and are independent of each other.
+---

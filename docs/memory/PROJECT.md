@@ -27,6 +27,8 @@ A locally-hosted web application that provides a graphical user interface for th
 | Icons | Material Symbols Outlined | via Google Fonts CDN | Variable weight+fill; used for sidebar navigation and status indicators |
 | Markdown render | react-markdown | 9.x | Safe Markdown for job results |
 | Markdown tables | remark-gfm | latest | GFM plugin (tables, code fences) for react-markdown |
+| Canvas / flow | @xyflow/react | 12.x | V3 swarm canvas — node/edge graph rendering (Task #51). Installed, not yet imported. |
+| Client state | zustand | 4.x | V3 execution store — fine-grained subscription for live swarm state (Task #51, DEC-011). Installed, not yet imported. |
 
 ## Core Goals (from PRD)
 - Live PTY terminal in browser connected to real Claude Code process (session starts < 2s)
