@@ -1091,3 +1091,38 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 - No existing code is affected — this is a new module with no callers
 
 ---
+
+## 2026-03-27 — Tasks #53.1 + #53.2 + #53.3: AgentNode, DepartmentNode, TriggerNode — React Flow Canvas Nodes
+**Agent:** frontend-dev (three parallel subtasks)
+**Triggered by:** V3 Phase 3 client — implement the three custom React Flow node types needed by the workflow canvas: agent visualization node (with live swarm state), department group container node, and trigger source stub
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/canvas/nodes/AgentNode.jsx | ADDED | Custom React Flow node type="agent"; subscribes to useSwarmStore(agentStates[id]); 5 status colors; target Handle top + source Handle bottom; lastOutputSnippet (last 3 lines); handoffCount badge |
+| client/src/canvas/nodes/DepartmentNode.jsx | ADDED | React Flow group container node type="department"; subscribes to focusedDepartmentId + setFocusedDepartment from useSwarmStore; click header → setFocusedDepartment(id) |
+| client/src/canvas/nodes/TriggerNode.jsx | ADDED | React Flow source-only node stub type="trigger"; webhook/rss icon variants; purple theme; source Handle bottom only; full implementation deferred to Task #76 |
+
+### Functions Added
+- `AgentNode({ id, data, selected })` in `client/src/canvas/nodes/AgentNode.jsx` — live-state agent card with 5 status colors, output snippet, handoff count badge; subscribes useSwarmStore(s => s.agentStates[id])
+- `DepartmentNode({ id, data, selected })` in `client/src/canvas/nodes/DepartmentNode.jsx` — group container with clickable header; calls setFocusedDepartment(id) from useSwarmStore on click; focused/unfocused border styling
+- `TriggerNode({ id, data, selected })` in `client/src/canvas/nodes/TriggerNode.jsx` — purple trigger stub; source Handle only; triggerIcons const map (webhook/rss/fallback); full impl Task #76
+
+### Functions Modified
+- `setFocusedDepartment(id)` in `client/src/store/SwarmContext.jsx` — "Called by" updated: was "not yet wired", now called by DepartmentNode.jsx header onClick (Task #53.2)
+
+### Connection Changes
+- client/src/canvas/nodes/AgentNode.jsx → client/src/store/SwarmContext.jsx::useSwarmStore (new live caller — reads agentStates[id])
+- client/src/canvas/nodes/DepartmentNode.jsx → client/src/store/SwarmContext.jsx::useSwarmStore (new live caller — reads focusedDepartmentId + setFocusedDepartment)
+- client/src/canvas/nodes/DepartmentNode.jsx → client/src/store/SwarmContext.jsx::setFocusedDepartment (first live caller — triggered by header click)
+- client/src/canvas/nodes/TriggerNode.jsx — no store subscription (stub)
+- All three nodes import Handle + Position from @xyflow/react (already installed in Task #51)
+- None of the three nodes are yet registered in a nodeTypes map — pending WorkflowCanvas.jsx canvas container component
+
+### Impact on Other Code
+- useSwarmStore.setFocusedDepartment now has its first live caller (DepartmentNode) — the "Called by" field in CODE_MAP.md has been updated
+- Three new files introduce the client/src/canvas/nodes/ directory (new subdirectory — did not previously exist)
+- TriggerNode is a stub — Task #76 must add: URL config field, activation toggle, polling service integration, and likely additional store state
+- All three nodes await registration in a nodeTypes map inside a WorkflowCanvas wrapper component (future task)
+
+---

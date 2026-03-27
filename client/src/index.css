@@ -178,6 +178,13 @@ body {
   margin: 1.25em 0;
 }
 
+/* ── Canvas Edge Animations ───────────────────────────── */
+
+@keyframes dashdraw {
+  from { stroke-dashoffset: 18; }
+  to { stroke-dashoffset: 0; }
+}
+
 /* ── Markdown Syntax Highlighting (Context Editor) ────── */
 
 .md-heading {

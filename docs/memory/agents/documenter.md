@@ -1,4 +1,59 @@
 ---
+## 2026-03-27 — Tasks #53.1/#53.2/#53.3: AgentNode.jsx, DepartmentNode.jsx, TriggerNode.jsx
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel with code-mapper and project-manager)
+
+### Context when I started
+Tasks #53.1, #53.2, #53.3 had just completed concurrently. Three new React Flow node components were created in client/src/canvas/nodes/. V3 is still in progress — public documentation policy in effect: do not update README.md or ARCHITECTURE.md until Task #82. DOC_STATUS.md was last updated after Task #52 (SwarmContext.jsx).
+
+### What I did
+1. Read DOC_STATUS.md, my prior session log (offset to recent entries), CONTEXT.md, and ACTIVITY_LOG.md (recent entries) in parallel with reading all three new node files.
+2. Confirmed the canvas/nodes/ directory contains exactly the 3 expected files: AgentNode.jsx, DepartmentNode.jsx, TriggerNode.jsx.
+3. Assessed staleness:
+   - README.md: NOT stale. V3 deferred per policy.
+   - ARCHITECTURE.md: NOT stale. Intentionally deferred until V3 complete (Task #82).
+   - AgentNode.jsx inline comments: UP TO DATE. File-level comment names the type and purpose. Inline comments explain: status→color mapping, top Handle as handoff target, bottom Handle as handoff source, lastOutputSnippet micro-log truncation logic, handoffCount badge. No "what" comments — all are orientation comments for React Flow conventions or non-obvious layout choices.
+   - DepartmentNode.jsx inline comments: UP TO DATE. File-level comment explains group node type and the React Flow { extent: 'parent' } pattern. Inline comment on header click explains the drill-down action. Comment on NodeResizer clarifies React Flow automatic handling for group nodes.
+   - TriggerNode.jsx inline comments: UP TO DATE. File-level comment marks this as a stub with Task #76 forward reference. Inline comment on the source Handle explains the data flow direction (triggers fire outward to agents). No target Handle by design — this is a source-only node.
+   - DOC_STATUS.md: STALE — 3 new canvas node files not yet tracked. ARCHITECTURE.md stale section note did not mention canvas node layer.
+4. Updated DOC_STATUS.md:
+   - Advanced timestamp.
+   - Added 3 new rows to V3 service files table (AgentNode.jsx, DepartmentNode.jsx, TriggerNode.jsx).
+   - Expanded ARCHITECTURE.md stale section note to include the canvas node layer with React Flow type mappings, SwarmStore dependency pattern, and stub/full-impl notes.
+5. Appended to ACTIVITY_LOG.md and this agent log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Timestamp advanced; 3 new canvas node rows added; ARCHITECTURE.md stale note expanded with canvas node layer. |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended Tasks #53.1/#53.2/#53.3 documenter entry. |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log. |
+
+### Improvements delivered
+- DOC_STATUS.md V3 service files table now tracks 17 V3 artifacts (Phase 1 backend + security + client deps + SwarmContext + 3 canvas nodes).
+- ARCHITECTURE.md stale section note now has a complete inventory of the canvas node layer, ready for Task #82.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | -- | -- | -- |
+
+### Decisions I made
+- Did not add any new inline comments to the three node files. All three are adequately self-documenting with appropriate orientation comments for React Flow conventions. Adding more would cross into "what" commentary.
+- Did not update README.md or ARCHITECTURE.md. V3 is incomplete. Policy unchanged.
+- TriggerNode.jsx correctly has no SwarmStore import — this is intentional per Task #76 deferral, not a gap.
+
+### What I learned
+- DepartmentNode.jsx uses no Handles at all — React Flow group nodes contain child nodes via `{ extent: 'parent' }` on child node objects, not via edges to the container. This is a React Flow v12 convention worth noting in ARCHITECTURE.md when V3 docs are written.
+- TriggerNode.jsx is a source-only node by design: triggers are entry points into the swarm. The Handle design reflects this unidirectional data flow.
+- AgentNode.jsx is the only node that directly subscribes to SwarmStore execution state via per-node selector pattern `useSwarmStore(s => s.agentStates[id])` — this is the DEC-V3-04 pattern in practice.
+
+### State I'm leaving behind
+DOC_STATUS.md is current as of 2026-03-27 and tracks 17 V3 artifacts. All three canvas node stubs have adequate inline documentation. No public-facing documentation is stale. V3 documentation remains intentionally deferred until Task #82.
+
+### Handoff
+Next tasks are #54 (HandoffEdge.jsx), #55 (AgentInspector.jsx), #56 (BreadcrumbBar.jsx) — all runnable in parallel. Each will need a DOC_STATUS.md row entry when completed.
+---
 ## 2026-03-27 — Tasks #50 + #51: V3 Security Layer + Client Deps
 **Status:** COMPLETED
 **Called by:** orchestrator (parallel with code-mapper and project-manager)

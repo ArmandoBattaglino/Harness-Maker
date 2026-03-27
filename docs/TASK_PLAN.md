@@ -4560,7 +4560,7 @@ Agent: frontend-dev
 Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Dependencies: #52, #53.1
 Context:
   Create `client/src/canvas/edges/HandoffEdge.jsx` — a custom React Flow edge that shows:
@@ -4622,7 +4622,7 @@ Agent: frontend-dev
 Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Dependencies: #52, #53.1
 Context:
   Create `client/src/panels/AgentInspector.jsx` — the right-side panel that appears when
@@ -4660,7 +4660,7 @@ Agent: frontend-dev
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Dependencies: #52
 Context:
   Create `client/src/canvas/overlays/BreadcrumbBar.jsx`.
@@ -6010,9 +6010,9 @@ Acceptance criteria:
 | **53.1** | AgentNode.jsx — agent canvas node | frontend-dev | HIGH | claude-opus-4-6 | COMPLETED |
 | **53.2** | DepartmentNode.jsx — group container node | frontend-dev | HIGH | claude-opus-4-6 | COMPLETED |
 | **53.3** | TriggerNode.jsx — webhook/RSS node stub | frontend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
-| 54 | HandoffEdge.jsx — animated edge + counter badge | frontend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
-| 55 | AgentInspector.jsx — node config panel | frontend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
-| 56 | BreadcrumbBar.jsx — drill-down nav | frontend-dev | MEDIUM | claude-haiku-4-5 | PENDING |
+| 54 | HandoffEdge.jsx — animated edge + counter badge | frontend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
+| 55 | AgentInspector.jsx — node config panel | frontend-dev | MEDIUM | claude-sonnet-4-6 | IN_PROGRESS |
+| 56 | BreadcrumbBar.jsx — drill-down nav | frontend-dev | MEDIUM | claude-haiku-4-5 | IN_PROGRESS |
 | **57.1** | SwarmCanvas.jsx — React Flow canvas + drill-down | frontend-dev | HIGH | claude-opus-4-6 | PENDING |
 | **57.2** | SwarmView.jsx — layout shell + toolbar | frontend-dev | HIGH | claude-opus-4-6 | PENDING |
 | 58 | App.jsx + Sidebar — swarm nav + ReactFlowProvider | frontend-dev | HIGH | claude-haiku-4-5 | PENDING |

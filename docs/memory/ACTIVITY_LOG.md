@@ -1,4 +1,40 @@
 ---
+## 2026-03-27 — frontend-dev — Task #54: HandoffEdge.jsx — Animated Edge + Counter Badge
+**Outcome:** COMPLETED
+**Summary:** Created client/src/canvas/edges/HandoffEdge.jsx — custom React Flow edge type "handoff" with animated dashed blue stroke and counter badge. Badge reads edgeCounters[id] from useSwarmStore; shows only when counter > 0. Added @keyframes dashdraw to client/src/index.css for stroke animation.
+**Files changed:** client/src/canvas/edges/HandoffEdge.jsx (CREATED), client/src/index.css (MODIFIED — @keyframes dashdraw added)
+**Bugs fixed:** none
+**Decisions made:** Implemented verbatim per task spec — no deviations
+**Blockers:** none
+**Next:** Tasks #55 (AgentInspector.jsx) and #56 (BreadcrumbBar.jsx) remain IN_PROGRESS
+---
+## 2026-03-27 — frontend-dev — Task #55: AgentInspector.jsx — Node Config Panel
+**Outcome:** COMPLETED
+**Summary:** Created client/src/canvas/AgentInspector.jsx — the right-side panel that appears when a canvas node is selected. Reads selectedNodeId, agentStates, and setSelectedNode from SwarmContext Zustand store. Shows node label, type badge, live status, handoffCount, systemPrompt, and lastOutputSnippet. Returns empty state when nothing is selected. Build verified clean (299 modules, 0 errors).
+**Files changed:** client/src/canvas/AgentInspector.jsx (CREATED), docs/TASK_PLAN.md (Task #55 IN_PROGRESS → COMPLETED)
+**Bugs fixed:** none
+**Decisions made:** File placed in client/src/canvas/ per user-provided task spec; matches import path expected by SwarmCanvas.jsx (#57.1)
+**Blockers:** none
+**Next:** Tasks #54 (HandoffEdge.jsx), #56 (BreadcrumbBar.jsx) — remaining Phase 2 canvas tasks
+---
+## 2026-03-27 — project-manager — Tasks #53.1/#53.2/#53.3 COMPLETED; #54+#55+#56 launched IN_PROGRESS
+**Outcome:** COMPLETED
+**Summary:** Confirmed #53.1 (AgentNode.jsx), #53.2 (DepartmentNode.jsx), #53.3 (TriggerNode.jsx) all COMPLETED with build passing. Marked #54 (HandoffEdge.jsx), #55 (AgentInspector.jsx), #56 (BreadcrumbBar.jsx) as IN_PROGRESS in TASK_PLAN.md summary table and task bodies. Updated PROGRESS.md and CONTEXT.md to reflect current parallel wave.
+**Files changed:** docs/TASK_PLAN.md (task bodies + summary table for #54/#55/#56), docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** Launch #54+#55+#56 in parallel — all deps met (#52 done, #53.1 done); after this wave completes, launch #57.1+#57.2 in parallel
+**Blockers:** none
+**Next:** #54 HandoffEdge, #55 AgentInspector, #56 BreadcrumbBar all running. After those complete: PM marks done and launches #57.1+#57.2 in parallel.
+---
+## 2026-03-27 — documenter — Tasks #53.1/#53.2/#53.3: AgentNode.jsx, DepartmentNode.jsx, TriggerNode.jsx
+**Outcome:** COMPLETED
+**Summary:** Audited all documentation artifacts after creation of three V3 canvas node components. All three files have adequate inline comments. No public docs (README.md, ARCHITECTURE.md) required updates under the V3 deferral policy. DOC_STATUS.md updated with 3 new rows for the canvas node stubs and expanded ARCHITECTURE.md stale section note.
+**Files changed:** docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/agents/documenter.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** V3 public doc deferral policy maintained — no README or ARCHITECTURE changes until Task #82
+**Blockers:** none
+**Next:** Tasks #54 (HandoffEdge.jsx), #55 (AgentInspector.jsx), #56 (BreadcrumbBar.jsx) — next parallel wave
+---
 ## 2026-03-27 — project-manager — Task Plan Update: #52 COMPLETED, #53.1+#53.2+#53.3 All Completed
 **Outcome:** COMPLETED
 **Summary:** Marked #52 (SwarmContext.jsx) as COMPLETED and launched #53.1, #53.2, #53.3 in parallel. All three completed concurrently (frontend-dev agents ran simultaneously). AgentNode.jsx, DepartmentNode.jsx, TriggerNode.jsx all done. V3 Phase 2 canvas nodes complete. Counter: 17/57 V3 tasks COMPLETED.
@@ -1069,4 +1105,14 @@
 **Decisions made:** All 12 action methods as separate Function Graph entries for practical connection tracing
 **Blockers:** none
 **Next:** Task #53.x (AgentNode, DepartmentNode, TriggerNode) — update CODE_MAP.md "Called by" fields when those tasks complete
+---
+---
+## 2026-03-27 — frontend-dev — Task #56: BreadcrumbBar.jsx — Drill-Down Navigation
+**Outcome:** COMPLETED
+**Summary:** Created client/src/canvas/BreadcrumbBar.jsx — breadcrumb navigation bar for swarm canvas drill-down. Shows "All Agents" root crumb always, resolves department names from nodes prop, last crumb bold/white (current location), each crumb calls navigateBreadcrumb(index). Build verified clean (299 modules, 0 errors).
+**Files changed:** client/src/canvas/BreadcrumbBar.jsx (CREATED), docs/TASK_PLAN.md (Task #56 IN_PROGRESS → COMPLETED), docs/memory/PROGRESS.md (counter updated, #56 COMPLETED), docs/memory/ACTIVITY_LOG.md (this entry)
+**Bugs fixed:** none
+**Decisions made:** Placed in client/src/canvas/ (not overlays/ subdirectory) — task spec explicitly says client/src/canvas/BreadcrumbBar.jsx
+**Blockers:** none
+**Next:** Task #55 (AgentInspector.jsx) still IN_PROGRESS. After #54+#55+#56 all complete: launch #57.1 (SwarmCanvas.jsx) + #57.2 (SwarmView.jsx) in parallel.
 ---

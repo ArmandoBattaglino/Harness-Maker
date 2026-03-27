@@ -67,16 +67,16 @@ Security assessment completed 2026-03-27. Seven mandatory requirements must appe
 - swarmHandler.js (channel routing + connection management + broadcast() + WS event wiring)
 - CircuitBreaker.js + BudgetTracker.js
 
-**Current wave (IN_PROGRESS — launched in parallel 2026-03-27):**
-- TASK #53.1 — AgentNode.jsx — Custom React Flow Agent Node (frontend-dev, claude-opus-4-6) — IN_PROGRESS
-- TASK #53.2 — DepartmentNode.jsx — Group Container Node with Collapse/Expand (frontend-dev, claude-opus-4-6) — IN_PROGRESS
-- TASK #53.3 — TriggerNode.jsx — Webhook/RSS Trigger Node stub (frontend-dev, claude-sonnet-4-6) — IN_PROGRESS
+**#53.1 + #53.2 + #53.3 COMPLETED — build passes.**
 
-**After #53.1 + #53.2 + #53.3 complete:**
-- TASK #54 (HandoffEdge), #55 (AgentInspector), #56 (BreadcrumbBar) — can all run in parallel
-- #54 depends on #52 + #53.1 (all done/in-progress)
-- #55 depends on #52 + #53.1 (all done/in-progress)
-- #56 depends on #52 (done)
+**Current wave (IN_PROGRESS — launched in parallel 2026-03-27):**
+- TASK #54 — HandoffEdge.jsx — animated edge + counter badge (frontend-dev, claude-sonnet-4-6) — IN_PROGRESS
+- TASK #55 — AgentInspector.jsx — node config panel (frontend-dev, claude-sonnet-4-6) — IN_PROGRESS
+- TASK #56 — BreadcrumbBar.jsx — drill-down nav (frontend-dev, claude-haiku-4-5) — IN_PROGRESS
+
+**After #54 + #55 + #56 complete:**
+- TASK #57.1 (SwarmCanvas.jsx) + #57.2 (SwarmView.jsx) — can run in parallel
+- Both depend on #53.1 (done), #54 (in-progress), #55 (in-progress), #56 (in-progress)
 
 **Key context for #53.x agents:**
 - SwarmContext.jsx is at client/src/store/SwarmContext.jsx — complete, exports useSwarmStore + SwarmProvider

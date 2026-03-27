@@ -1,4 +1,55 @@
 ---
+## 2026-03-27 — Task #54: HandoffEdge.jsx — Animated Edge + Counter Badge
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+Tasks #53.1/#53.2/#53.3 (all canvas nodes) COMPLETED. client/src/canvas/nodes/ existed. client/src/canvas/edges/ did NOT exist — needed to create it. SwarmContext.jsx exported useSwarmStore with edgeCounters: { [edgeId]: number } shape. @xyflow/react@12.10.1 installed. Task required verbatim implementation per provided spec.
+
+### What I did
+1. Read docs/memory/agents/frontend-dev.md (session history) in parallel with client/src directory listing, SwarmContext.jsx (first 30 lines), and client/src/index.css.
+2. Confirmed client/src/canvas/edges/ did not exist — created it with mkdir -p.
+3. Created client/src/canvas/edges/HandoffEdge.jsx — verbatim per task spec.
+4. Added @keyframes dashdraw animation to client/src/index.css under a new "Canvas Edge Animations" section comment.
+5. Ran npm run build — clean build, 299 modules, 0 errors.
+6. Updated docs/TASK_PLAN.md (IN_PROGRESS → COMPLETED in task body and summary table), PROGRESS.md, ACTIVITY_LOG.md, and this file.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| `client/src/canvas/edges/HandoffEdge.jsx` | CREATED | Custom React Flow "handoff" edge: animated dashed blue line when counter > 0, static gray line when 0, counter badge using EdgeLabelRenderer |
+| `client/src/index.css` | MODIFIED | Added @keyframes dashdraw for stroke-dashoffset animation used by HandoffEdge active state |
+| `docs/TASK_PLAN.md` | MODIFIED | Task #54 Status IN_PROGRESS → COMPLETED (task body + summary table) |
+| `docs/memory/PROGRESS.md` | MODIFIED | TASK-54 IN_PROGRESS → COMPLETED with description |
+| `docs/memory/ACTIVITY_LOG.md` | MODIFIED | New entry appended |
+
+### Improvements delivered
+- HandoffEdge renders animated dashed blue line (stroke #60a5fa, strokeWidth 2, strokeDasharray "6 3") when counter > 0
+- Static gray line (stroke #4b5563, strokeWidth 1) when counter === 0
+- Counter badge appears only when isActive (counter > 0) via EdgeLabelRenderer, positioned at labelX/labelY midpoint
+- Badge uses Tailwind classes: bg-blue-500, text-white, rounded-full, border-blue-300, nodrag nopan
+- dashdraw CSS keyframe animation drives stroke-dashoffset from 18 → 0
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None — build clean on first attempt | — | — | — |
+
+### Decisions I made
+- Implemented verbatim per task spec — no deviations. Spec was complete and concrete.
+- canvas/edges/ directory was new — created it before writing the file.
+
+### What I learned
+- The edges/ subdirectory must be created separately; it was not created by any previous node task.
+- EdgeLabelRenderer + position absolute + translate(-50%,-50%) + translate(labelXpx, labelYpx) is the correct React Flow pattern for edge label positioning.
+- The dashdraw animation target is the SVG path via inline style on BaseEdge — standard React Flow pattern for animated edges.
+
+### State I'm leaving behind
+HandoffEdge.jsx is complete and build-verified. It is ready for registration in SwarmCanvas.jsx (Task #57.1) as `edgeTypes={{ handoff: HandoffEdge }}`.
+
+### Handoff
+Task #57.1 (SwarmCanvas.jsx) must import HandoffEdge from './edges/HandoffEdge' and register it in edgeTypes. Tasks #55 (AgentInspector.jsx) and #56 (BreadcrumbBar.jsx) are also part of the current parallel wave.
+---
 ## 2026-03-27 — Task #53.3: TriggerNode.jsx — Webhook/RSS Node Stub
 **Status:** COMPLETED
 **Called by:** user (direct task assignment)

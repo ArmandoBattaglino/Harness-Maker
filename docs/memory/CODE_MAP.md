@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-27 — after Task #52 (SwarmContext.jsx — Zustand ExecutionStore) — mapped by code-mapper_
+_Last updated: 2026-03-27 — after Tasks #53.1 + #53.2 + #53.3 (AgentNode, DepartmentNode, TriggerNode React Flow canvas nodes) — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -66,6 +66,9 @@ _Last updated: 2026-03-27 — after Task #52 (SwarmContext.jsx — Zustand Execu
 | client/src/lib/constants.js | NAV_ITEMS, STATUS_COLORS | Shared UI constants: sidebar navigation items (icon/label/view), status-to-Tailwind-class mapping for badges (Phase 9 design tokens) |
 | client/src/views/ProjectsView.jsx | default ProjectsView, ConfirmDialog, CardMenu, StatusDot, ProjectCard, AddCard, ListRow (internals) | Phase 9 Project Dashboard: grid/list dual-view, search with "/" keyboard shortcut, project cards with status dots, delete confirmation modal, scaffold CTA banner. Task #25 rewrite. |
 | client/src/store/SwarmContext.jsx | useSwarmStore (default + named) | Zustand v4 store for V3 swarm execution state. Holds agentStates, edgeCounters, budget, inboxItems, interAgentFeed, departmentStack breadcrumb, selectedNodeId, wsConnected. Isolated from AppContext — no cross-imports. (Task #52) |
+| client/src/canvas/nodes/AgentNode.jsx | default AgentNode | React Flow custom node type="agent". Subscribes to useSwarmStore(agentStates[id]). 5 status colors (idle/running/done/paused/error), target Handle top + source Handle bottom, lastOutputSnippet display (last 3 lines), handoffCount badge. (Task #53.1) |
+| client/src/canvas/nodes/DepartmentNode.jsx | default DepartmentNode | React Flow group container node type="department". Subscribes to focusedDepartmentId + setFocusedDepartment from useSwarmStore. Click on header calls setFocusedDepartment(id). Sized by React Flow to contain child nodes. (Task #53.2) |
+| client/src/canvas/nodes/TriggerNode.jsx | default TriggerNode | React Flow source-only node type="trigger". webhook/rss icon variants (triggerIcons map), purple theme, source Handle bottom only. Full implementation deferred to Task #76. (Task #53.3) |
 
 ### Client Config & Styles
 | File | Key Exports | Purpose |
@@ -1827,7 +1830,7 @@ _Last updated: 2026-03-27 — after Task #52 (SwarmContext.jsx — Zustand Execu
 
 ### `client/src/store/SwarmContext.jsx` :: `setFocusedDepartment(id)`
 - **Purpose:** Navigate into a department node (drill-down). If id is non-null, pushes id onto departmentStack breadcrumb and sets focusedDepartmentId. If id is null, does not modify the stack (use navigateBreadcrumb to go up).
-- **Called by:** (not yet wired — future DepartmentNode double-click handler)
+- **Called by:** client/src/canvas/nodes/DepartmentNode.jsx (onClick header — wired in Task #53.2)
 - **Calls:** Zustand set with array spread
 - **Inputs:** id (string | null — department node ID)
 - **Output:** void
@@ -1870,3 +1873,37 @@ _Last updated: 2026-03-27 — after Task #52 (SwarmContext.jsx — Zustand Execu
 - **Output:** void
 - **Side effects:** resets all 9 state fields to their initial values (null/idle/empty)
 - **Last modified:** 2026-03-27 in Task #52 by frontend-dev
+
+---
+
+## React Flow Canvas Nodes (Tasks #53.1 + #53.2 + #53.3)
+
+### `client/src/canvas/nodes/AgentNode.jsx` :: `AgentNode({ id, data, selected })`
+- **Purpose:** Custom React Flow node for visualizing a single swarm agent. Reads live state from useSwarmStore to render status color, output snippet, and handoff count. Registered as nodeTypes["agent"] in the React Flow canvas.
+- **Called by:** (not yet registered — future WorkflowCanvas.jsx nodeTypes map; currently no callers)
+- **Calls:** useSwarmStore (selector: s.agentStates[id]), Handle (from @xyflow/react), Position (from @xyflow/react)
+- **Inputs:** id (string — React Flow node id), data (object — { label: string }), selected (boolean — React Flow selection state)
+- **Output:** JSX — bordered card with status color, agent icon, label, status text, optional lastOutputSnippet, optional handoffCount badge; target Handle at top + source Handle at bottom
+- **Side effects:** none (read-only store subscription + pure render)
+- **Complexity note:** statusColors lookup uses `statusColors[status] || statusColors.idle` — unknown status values fall back to idle styling rather than throwing. `lastOutputSnippet.split('\n').slice(-3).join('\n')` trims to last 3 lines of output for the micro-log display.
+- **Last modified:** 2026-03-27 in Task #53.1 by frontend-dev
+
+### `client/src/canvas/nodes/DepartmentNode.jsx` :: `DepartmentNode({ id, data, selected })`
+- **Purpose:** React Flow group container node for a department (a logical cluster of agent nodes). Subscribes to focusedDepartmentId + setFocusedDepartment from useSwarmStore. Clicking the header calls setFocusedDepartment(id) to drill-down. Child agent nodes use `{ extent: 'parent' }` in React Flow to be contained within this node. Registered as nodeTypes["department"].
+- **Called by:** (not yet registered — future WorkflowCanvas.jsx nodeTypes map; currently no callers)
+- **Calls:** useSwarmStore (selector: s.setFocusedDepartment), useSwarmStore (selector: s.focusedDepartmentId), setFocusedDepartment(id) on click
+- **Inputs:** id (string — React Flow node id), data (object — { label: string, agentCount?: number }), selected (boolean)
+- **Output:** JSX — full-width/height rounded container with clickable header (department label + optional agentCount badge), focused vs. unfocused border/bg styling
+- **Side effects:** calls setFocusedDepartment(id) on header click — mutates focusedDepartmentId + departmentStack in SwarmStore
+- **Complexity note:** Two separate useSwarmStore subscriptions (one for the action, one for focusedDepartmentId state) to avoid re-subscribing to the entire store on every render. React Flow resizes the container to its declared width/height — DepartmentNode renders full w-full h-full inside that box.
+- **Last modified:** 2026-03-27 in Task #53.2 by frontend-dev
+
+### `client/src/canvas/nodes/TriggerNode.jsx` :: `TriggerNode({ id, data, selected })`
+- **Purpose:** React Flow source-only trigger node (webhook or RSS). Fires outward to agent nodes — has a source Handle at the bottom only (no target Handle, triggers only initiate edges). Purple visual theme. Full implementation (polling logic, URL config, activation) deferred to Task #76.
+- **Called by:** (not yet registered — future WorkflowCanvas.jsx nodeTypes map; currently no callers)
+- **Calls:** Handle (from @xyflow/react), Position (from @xyflow/react); triggerIcons lookup (module-level const map)
+- **Inputs:** id (string — React Flow node id), data (object — { label: string, triggerType: 'webhook'|'rss'|string }), selected (boolean)
+- **Output:** JSX — purple bordered card with trigger icon (webhook: 🔗, rss: 📡, fallback: ⚡), label, triggerType badge; source Handle at bottom only
+- **Side effects:** none (stub — no store subscription, no polling)
+- **Complexity note (stub):** triggerIcons is a module-level const map — adding new trigger types requires adding to the map and this file. Task #76 will add URL configuration, activation toggle, and polling integration.
+- **Last modified:** 2026-03-27 in Task #53.3 by frontend-dev

@@ -152,7 +152,7 @@ _None._
 - NOTE: FileManager was NOT created in Task #5 as planned — RESOLVED in Task #7 (created server/services/FileManager.js).
 
 ## V3 — Swarm Orchestrator (57 granular tasks after split — 2026-03-27 replan)
-**Status: 17/57 COMPLETED — as of 2026-03-27. All Phase 1 backend tasks done. #52 COMPLETED — SwarmContext.jsx. #53.1, #53.2, #53.3 COMPLETED — all three canvas nodes done.**
+**Status: 23/57 COMPLETED — as of 2026-03-27. All Phase 1 backend tasks done. #52 COMPLETED — SwarmContext.jsx. #53.1, #53.2, #53.3 COMPLETED — all three canvas nodes done. #54 COMPLETED — HandoffEdge.jsx. #55 COMPLETED — AgentInspector.jsx. #56 COMPLETED — BreadcrumbBar.jsx.**
 **Note: Original 40 tasks (#43–#82). After model assignment + subtask split: 57 granular units.**
 **7 original tasks split into subtasks: #46→3, #47→2, #48→2, #53→3, #57→2, #62→3, #71→2**
 - V3 PRD complete: docs/PRD.md
@@ -180,9 +180,9 @@ _None._
 - [TASK-53.1] COMPLETED 2026-03-27 — AgentNode.jsx — client/src/canvas/nodes/AgentNode.jsx created; reads agentStates from useSwarmStore, renders status colors, handles/label/snippet/handoffCount. Build clean (299 modules).
 - [TASK-53.2] COMPLETED 2026-03-27 — DepartmentNode.jsx — client/src/canvas/nodes/DepartmentNode.jsx created; group container node with focused/selected state, setFocusedDepartment click, agentCount badge. Build clean (299 modules).
 - [TASK-53.3] COMPLETED 2026-03-27 — TriggerNode.jsx — client/src/canvas/nodes/TriggerNode.jsx created; source-only Handle, purple theme, webhook (🔗) / rss (📡) icon mapping, selected ring. Build clean (299 modules).
-- [TASK-54] PENDING — HandoffEdge.jsx — animated edge + counter badge
-- [TASK-55] PENDING — AgentInspector.jsx — node config panel
-- [TASK-56] PENDING — BreadcrumbBar.jsx — drill-down nav
+- [TASK-54] COMPLETED 2026-03-27 — HandoffEdge.jsx — client/src/canvas/edges/HandoffEdge.jsx created; animated dashed blue line + counter badge driven by useSwarmStore edgeCounters[id]; @keyframes dashdraw added to index.css. Build clean (299 modules).
+- [TASK-55] COMPLETED 2026-03-27 — AgentInspector.jsx — client/src/canvas/AgentInspector.jsx created; reads selectedNodeId/agentStates/setSelectedNode from SwarmStore; shows label, type badge, live status, handoffCount, systemPrompt, lastOutputSnippet; empty state when nothing selected. Build clean (299 modules).
+- [TASK-56] COMPLETED 2026-03-27 — BreadcrumbBar.jsx — client/src/canvas/BreadcrumbBar.jsx created; root "All Agents" crumb always shown, department crumbs from departmentStack with label resolution from nodes prop, last crumb bold/white, navigateBreadcrumb(index) on click. Build clean (299 modules).
 - [TASK-57.1] PENDING — SwarmCanvas.jsx — React Flow canvas + drill-down filtering
 - [TASK-57.2] PENDING — SwarmView.jsx — layout shell + toolbar
 - [TASK-58] PENDING — App.jsx + Sidebar swarm nav + ReactFlowProvider
