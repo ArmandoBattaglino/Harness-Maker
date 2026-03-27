@@ -37,6 +37,49 @@ CODE_MAP.md fully reflects Tasks #43 and #45. CHANGELOG.md has entries for both 
 ### Handoff
 Task #46 (SwarmEngine.js skeleton) will wire HandoffParser into PTY onData — update CODE_MAP.md with SwarmEngine connections when that task completes.
 ---
+## 2026-03-27 — Task #46.2: SwarmEngine startExecution + _spawnAgentPty + HandoffParser tap
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+Task #46.2 (backend-dev) had just implemented startExecution, _spawnAgentPty, _ensureAgentPty, _onHandoff, _onDone in SwarmEngine.js, and updated stopExecution. CODE_MAP.md had no SwarmEngine Function Graph entries — only the Module Index was missing SwarmEngine, and HandoffParser entries said "not yet wired." My previous session (Tasks #43+#45) had noted this handoff explicitly.
+
+### What I did
+1. Read SwarmEngine.js in full (317 lines — fits in one read)
+2. Read CODE_MAP.md in 3 offset passes (header, SwarmEngine/HandoffParser tail, Module Index section)
+3. Read CHANGELOG.md tail to find append point (line ~760)
+4. Grepped server/ for SwarmEngine/startExecution/stopExecution to confirm no route integration yet
+5. Grepped SessionManager.js for swarmListeners to confirm DEC-014 Set is live
+6. Updated CODE_MAP.md: timestamp, Module Index new SwarmEngine row, HandoffParser "Called by" updated, new SwarmEngine Function Graph section (10 entries: constructor, setWsBroadcast, startExecution, _spawnAgentPty, _ensureAgentPty, _buildSystemPrompt stub, _startHeartbeat stub, _onHandoff, _onDone, stopExecution, getStatus)
+7. Appended Task #46.2 entry to CHANGELOG.md with full connection map
+8. Appended code-mapper entry to ACTIVITY_LOG.md
+9. Appended this agent memory entry
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Timestamp updated; Module Index +1 row (SwarmEngine); HandoffParser "Called by" updated to reflect live wiring; new SwarmEngine Function Graph section (10 entries) |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Task #46.2 entry with full connection changes |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended code-mapper session summary |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Key connections discovered
+- SwarmEngine._spawnAgentPty → SessionManager.createSession (PTY spawn)
+- SwarmEngine._spawnAgentPty → HandoffParser.feed (via tapFn on swarmListeners Set — DEC-014 pattern)
+- SwarmEngine._spawnAgentPty tapFn → _onHandoff / _onDone (event dispatch)
+- SwarmEngine.stopExecution now removes tapFn from swarmListeners BEFORE killing sessions
+
+### What I learned
+- The swarmListeners Set (DEC-014) is the integration point between SessionManager PTY output and SwarmEngine — not a direct callback but a Set of functions called inside SessionManager's onData handler
+- SwarmEngine is NOT yet wired to server/index.js or any route as of Task #46.2 — it is a standalone service awaiting route integration (likely Task #46.4 or later)
+- _buildSystemPrompt and _startHeartbeat are explicit stubs (empty bodies, comments "implemented in #46.3") — these will be filled in Task #46.3
+
+### State I'm leaving behind
+CODE_MAP.md has complete SwarmEngine Function Graph. CHANGELOG.md appended. All stub methods flagged clearly in their entries. HandoffParser wiring is documented.
+
+### Handoff
+Task #46.3 implements _buildSystemPrompt and _startHeartbeat — update their CODE_MAP entries from "stub" to full implementations when that task completes.
+---
 ## 2026-03-27 — /pm read-only plan review
 **Status:** COMPLETED (no-op)
 **Called by:** orchestrator (post /pm command)

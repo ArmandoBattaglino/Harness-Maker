@@ -1,4 +1,57 @@
 ---
+## 2026-03-27 — Task #46.3: SwarmEngine.js — _buildSystemPrompt + _startHeartbeat
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+SwarmEngine.js had all execution methods implemented from #46.2. Two stubs remained: _buildSystemPrompt (returned undefined) and _startHeartbeat (no-op). startExecution did not call _startHeartbeat. 132/132 tests passing.
+
+### What I did
+1. Read project memory (PROGRESS, CONTEXT, DECISIONS, agent log) and SwarmEngine.js in parallel.
+2. Implemented `_buildSystemPrompt(node, workflowContext, handoffTargets)`:
+   - Outputs agent's systemPrompt, then SWARM PROTOCOL block
+   - Omits "Current workflow context:" section when workflowContext is empty
+   - Omits "Valid target IDs:" line and handoff instructions when handoffTargets is empty (shows only __DONE__)
+   - Always includes "Do NOT output the handoff or done token mid-response" instruction
+3. Implemented `_startHeartbeat(executionId)`:
+   - Sets 5-minute (300000ms) setInterval stored on execution.heartbeatTimer
+   - On each tick, iterates agentStates and writes empty string to all 'running' sessions
+   - Calls .unref() on the timer so Node.js can exit cleanly
+4. Added `this._startHeartbeat(executionId)` call in startExecution after _spawnAgentPty
+5. Verified stopExecution already has clearInterval(execution.heartbeatTimer) on line 330
+6. Ran npm test — 132/132 pass, zero regressions.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SwarmEngine.js | MODIFIED | Implemented _buildSystemPrompt and _startHeartbeat; added _startHeartbeat call in startExecution |
+
+### Improvements delivered
+- SwarmEngine now generates full SWARM PROTOCOL system prompts for agent PTYs
+- Heartbeat keeps agent PTY sessions alive during active workflow execution (prevents idle sweeper kills)
+- All three #46 subtasks are now COMPLETED — SwarmEngine core is fully functional
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | - | - | - |
+
+### Decisions I made
+- Used .unref() on the heartbeat timer so it does not prevent Node.js process exit during shutdown
+- Used defensive `(node.data && node.data.systemPrompt) || ''` to handle nodes without systemPrompt
+- Re-fetched execution inside the setInterval callback (via this._executions.get) to handle the case where execution is stopped between ticks
+
+### What I learned
+- clearInterval(null) is a safe no-op in Node.js, so stopExecution's existing cleanup works even if heartbeat was never started
+
+### State I'm leaving behind
+SwarmEngine.js is fully implemented for Phase 1: startExecution, _spawnAgentPty, _ensureAgentPty, _buildSystemPrompt, _startHeartbeat, _onHandoff (stub), _onDone (stub), stopExecution, getStatus. All 3 subtasks (#46.1, #46.2, #46.3) complete. Next: #47.1 wires SwarmEngine into swarm.js routes. 132/132 tests pass.
+
+### Handoff
+- Task #47.1: Wire SwarmEngine into swarm.js routes (7 execution control endpoints). SwarmEngine is ready to be instantiated with sessionManager + workflowStore.
+- Task #62.1-62.3: Replace _onHandoff and _onDone stubs with full implementation.
+
+---
 ## 2026-03-27 — Task #46.2: SwarmEngine.js — startExecution + _spawnAgentPty + HandoffParser Tap
 **Status:** COMPLETED
 **Called by:** user (direct task assignment)

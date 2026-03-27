@@ -1,4 +1,14 @@
 ---
+## 2026-03-27 — backend-dev — Task #46.3: SwarmEngine.js — _buildSystemPrompt + _startHeartbeat
+**Outcome:** COMPLETED
+**Summary:** Implemented _buildSystemPrompt (assembles SWARM PROTOCOL prompt with context and handoff targets) and _startHeartbeat (5-min interval writing empty string to running agent sessions). Added _startHeartbeat call in startExecution. All 3 SwarmEngine subtasks (#46.1-46.3) now complete. 132/132 tests pass.
+**Files changed:** server/services/SwarmEngine.js (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Used .unref() on heartbeat timer for clean shutdown; defensive node.data access in prompt builder
+**Blockers:** none
+**Next:** #47.1 (swarm.js execution control routes) can proceed — SwarmEngine is ready to be wired into routes.
+
+---
 ## 2026-03-27 — code-mapper — Task #46.2: SwarmEngine startExecution + _spawnAgentPty + HandoffParser tap
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md with full SwarmEngine Function Graph (10 entries). Updated Module Index with SwarmEngine row. Updated HandoffParser "Called by" to reflect live wiring via SwarmEngine._spawnAgentPty tapFn. Appended Task #46.2 CHANGELOG entry with full connection map.
