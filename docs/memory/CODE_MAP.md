@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-27 — after Tasks #63 (useSwarm.js), #66 (BroadcastBar.jsx + SwarmView mount), #67 (SwarmEngine heartbeat + pauseExecution/resumeExecution) — mapped by code-mapper_
+_Last updated: 2026-03-27 — after Tasks #64 (useHandoff.js edge animation hook), #65 (AgentNode.jsx live update — pulse + micro PTY log) — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -51,6 +51,7 @@ _Last updated: 2026-03-27 — after Tasks #63 (useSwarm.js), #66 (BroadcastBar.j
 | client/src/store/AppContext.jsx | AppContext, useAppState | Global React context: activeProjectId, projects list |
 | client/src/hooks/useApi.js | apiGet, apiPost, apiPut, apiDelete, apiDeleteWithBody | Fetch wrappers with CSRF header injection and error normalization |
 | client/src/hooks/useWorkflow.js | useWorkflow (named), useWorkflowList (named) | CRUD React hooks for workflow definitions: useWorkflow(id) — fetch/update/remove single workflow; useWorkflowList() — fetch all + create. Both use apiGet/apiPost/apiPut/apiDelete from useApi.js. (Task #61) |
+| client/src/hooks/useHandoff.js | useHandoff (named), useRecentHandoffs (named) | Edge animation hooks for reacting to handoff counter changes. useHandoff(callback) fires callback on each edgeCounter increase; useRecentHandoffs(durationMs) returns a Set of recently-active edgeIds. Both subscribe to useSwarmStore.edgeCounters via refs for previous-state diffing. (Task #64) |
 | client/src/hooks/useSession.js | useSession | WebSocket hook for PTY terminal: manages WS lifecycle, reconnect logic, send+resize callbacks |
 | client/src/components/Sidebar.jsx | default Sidebar, SidebarHeader, NavItem, SessionItem, SidebarFooter (internals) | Phase 9 redesign: imports NAV_ITEMS from constants.js, 6-view navigation (swarm added Task #58), Active PTY Sessions list, New Local Session button, AddProjectModal trigger. Task #24 rewrite. |
 | client/src/components/AddProjectModal.jsx | default AddProjectModal | Modal for adding new projects |
@@ -67,7 +68,7 @@ _Last updated: 2026-03-27 — after Tasks #63 (useSwarm.js), #66 (BroadcastBar.j
 | client/src/lib/constants.js | NAV_ITEMS, STATUS_COLORS | Shared UI constants: sidebar navigation items (icon/label/view — 6 items including swarm added Task #58), status-to-Tailwind-class mapping for badges (Phase 9 design tokens) |
 | client/src/views/ProjectsView.jsx | default ProjectsView, ConfirmDialog, CardMenu, StatusDot, ProjectCard, AddCard, ListRow (internals) | Phase 9 Project Dashboard: grid/list dual-view, search with "/" keyboard shortcut, project cards with status dots, delete confirmation modal, scaffold CTA banner. Task #25 rewrite. |
 | client/src/store/SwarmContext.jsx | useSwarmStore (default + named) | Zustand v4 store for V3 swarm execution state. Holds agentStates, edgeCounters, budget, inboxItems, interAgentFeed, departmentStack breadcrumb, selectedNodeId, wsConnected. Isolated from AppContext — no cross-imports. (Task #52) |
-| client/src/canvas/nodes/AgentNode.jsx | default AgentNode | React Flow custom node type="agent". Subscribes to useSwarmStore(agentStates[id]). 5 status colors (idle/running/done/paused/error), target Handle top + source Handle bottom, lastOutputSnippet display (last 3 lines), handoffCount badge. (Task #53.1) |
+| client/src/canvas/nodes/AgentNode.jsx | default AgentNode | React Flow custom node type="agent". Subscribes to useSwarmStore(agentStates[id]). 5 status colors (idle/running/done/paused/error), target Handle top + source Handle bottom, lastOutputSnippet scrollable bg-black/40 container (last 4 lines, green monospace pre, blinking ▋ cursor when running), handoffCount badge. (Tasks #53.1, #65) |
 | client/src/canvas/nodes/DepartmentNode.jsx | default DepartmentNode | React Flow group container node type="department". Subscribes to focusedDepartmentId + setFocusedDepartment from useSwarmStore. Click on header calls setFocusedDepartment(id). Sized by React Flow to contain child nodes. (Task #53.2) |
 | client/src/canvas/nodes/TriggerNode.jsx | default TriggerNode | React Flow source-only node type="trigger". webhook/rss icon variants (triggerIcons map), purple theme, source Handle bottom only. Full implementation deferred to Task #76. (Task #53.3) |
 | client/src/canvas/edges/HandoffEdge.jsx | default HandoffEdge | React Flow custom edge type="handoff". Animated dashed blue line when edgeCounters[id] > 0; grey static line when idle. Counter badge via EdgeLabelRenderer. (Task #54) |
@@ -1894,8 +1895,8 @@ _Last updated: 2026-03-27 — after Tasks #63 (useSwarm.js), #66 (BroadcastBar.j
 - **Inputs:** id (string — React Flow node id), data (object — { label: string }), selected (boolean — React Flow selection state)
 - **Output:** JSX — bordered card with status color, agent icon, label, status text, optional lastOutputSnippet, optional handoffCount badge; target Handle at top + source Handle at bottom
 - **Side effects:** none (read-only store subscription + pure render)
-- **Complexity note:** statusColors lookup uses `statusColors[status] || statusColors.idle` — unknown status values fall back to idle styling rather than throwing. `lastOutputSnippet.split('\n').slice(-3).join('\n')` trims to last 3 lines of output for the micro-log display.
-- **Last modified:** 2026-03-27 in Task #53.1 by frontend-dev
+- **Complexity note:** statusColors lookup uses `statusColors[status] || statusColors.idle` — unknown status values fall back to idle styling rather than throwing. `lastOutputSnippet.split('\n').slice(-4).join('\n')` trims to last 4 lines of output for the micro-log display (changed from 3 in Task #65). The output area is a scrollable bg-black/40 container (max-h-16, overflow-y-auto) with a green monospace pre. A blinking ▋ cursor (`<span className="animate-pulse">`) is appended only when status === 'running'.
+- **Last modified:** 2026-03-27 in Task #65 by frontend-dev (enhanced: scrollable output container, last 4 lines, blinking cursor when running; was last 3 lines, no container, no cursor)
 
 ### `client/src/canvas/nodes/DepartmentNode.jsx` :: `DepartmentNode({ id, data, selected })`
 - **Purpose:** React Flow group container node for a department (a logical cluster of agent nodes). Subscribes to focusedDepartmentId + setFocusedDepartment from useSwarmStore. Clicking the header calls setFocusedDepartment(id) to drill-down. Child agent nodes use `{ extent: 'parent' }` in React Flow to be contained within this node. Registered as nodeTypes["department"].
@@ -2103,3 +2104,97 @@ _Last updated: 2026-03-27 — after Tasks #63 (useSwarm.js), #66 (BroadcastBar.j
 - **Output:** void
 - **Side effects:** delegates to handleGenerate (see above)
 - **Last modified:** 2026-03-27 in Task #60 by frontend-dev
+
+---
+
+## Swarm WS Hook (Task #63)
+
+### `client/src/hooks/useSwarm.js` :: `useSwarm(workflowId)`
+- **Purpose:** React hook that owns the WebSocket connection to the swarm WS channel for a given workflowId. Exposes connectWs, startExecution, and stopExecution. Manages a wsRef (useRef) to prevent stale WS references. Cleans up the WS on unmount via useEffect cleanup.
+- **Called by:** (no live callers yet — intended consumer is SwarmView.jsx or a SwarmToolbar component that needs execution controls; wiring is a future task)
+- **Calls:** useSwarmStore (6 actions: setExecution, updateAgentState, updateEdgeCounter, updateBudget, addInboxItem, addFeedEvent, setWsConnected), connectWs (internal), startExecution (internal), stopExecution (internal), useRef, useCallback, useEffect (React)
+- **Inputs:** workflowId (string — workflow ID passed to startExecution POST)
+- **Output:** `{ startExecution, stopExecution, connectWs }` — stable callbacks
+- **Side effects:** opens/closes WebSocket; HTTP POST on startExecution; HTTP DELETE on stopExecution; cleanup on unmount (wsRef.current?.close())
+- **Last modified:** 2026-03-27 in Task #63 by frontend-dev
+
+### `client/src/hooks/useSwarm.js` :: `connectWs(executionId)` (returned callback)
+- **Purpose:** Open a WebSocket connection to /ws/swarm?executionId=X. Closes any existing WS first. Dispatches 6 message types to useSwarmStore: agent_status → updateAgentState; handoff_started → updateEdgeCounter + addFeedEvent + updateAgentState; execution_status → setExecution; budget_update → updateBudget; circuit_breaker → addFeedEvent; hitl_required → addInboxItem. Sets wsConnected via onopen/onclose/onerror.
+- **Called by:** useSwarm — called internally by startExecution after POST succeeds; also returned as a public callback for manual reconnect
+- **Calls:** WebSocket (browser native), setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, setExecution, updateBudget, addInboxItem, JSON.parse
+- **Inputs:** executionId (string)
+- **Output:** void (stores new WebSocket instance in wsRef.current)
+- **Side effects:** opens WebSocket to server; registers onopen/onclose/onerror/onmessage handlers; closes previous WS if any
+- **Complexity note:** Protocol is selected dynamically: `location.protocol === 'https:' ? 'wss:' : 'ws:'` — correct for both dev (ws) and prod (wss) environments. The WS URL is relative to `location.host` so it adapts to any port. onmessage silently discards non-JSON frames (try/catch with return).
+- **Last modified:** 2026-03-27 in Task #63 by frontend-dev
+
+### `client/src/hooks/useSwarm.js` :: `startExecution(projectId, projectPath)` (returned callback)
+- **Purpose:** POST to /api/v1/swarm/:workflowId/start with {projectId, projectPath}, then call connectWs(executionId) to open the WS stream. Sets store state to running. Returns the executionId.
+- **Called by:** (no live callers yet — intended for a Run button in SwarmView or SwarmToolbar)
+- **Calls:** apiPost (from hooks/useApi.js), setExecution (store), connectWs (internal)
+- **Inputs:** projectId (string), projectPath (string)
+- **Output:** Promise\<string\> — executionId returned from server
+- **Side effects:** HTTP POST; opens WebSocket; updates store (activeExecutionId, executionStatus = 'running')
+- **Last modified:** 2026-03-27 in Task #63 by frontend-dev
+
+### `client/src/hooks/useSwarm.js` :: `stopExecution(executionId)` (returned callback)
+- **Purpose:** DELETE /api/v1/swarm/:executionId to stop the server-side execution, then close the local WS and update store to stopped/null.
+- **Called by:** (no live callers yet — intended for a Stop button in SwarmView or SwarmToolbar)
+- **Calls:** apiDelete (from hooks/useApi.js), setExecution (store), wsRef.current?.close()
+- **Inputs:** executionId (string)
+- **Output:** Promise\<void\>
+- **Side effects:** HTTP DELETE; closes WebSocket; updates store (activeExecutionId = null, executionStatus = 'stopped')
+- **Last modified:** 2026-03-27 in Task #63 by frontend-dev
+
+---
+
+## Broadcast Bar (Task #66)
+
+### `client/src/canvas/BroadcastBar.jsx` :: `BroadcastBar()`
+- **Purpose:** Input bar for broadcasting text to all running agent PTY sessions for the active execution. Reads activeExecutionId + executionStatus from useSwarmStore. Renders null (no DOM output) when executionStatus !== 'running'. Allows mode selection: 'soft' (text only) or 'hard' (Ctrl-C interrupt then text). POSTs to /api/v1/swarm/:executionId/broadcast with { text, scope: 'all', mode }. Shows "Sent to N agents" confirmation for 3 seconds on success, or error text on failure.
+- **Called by:** SwarmView.jsx (always mounted; self-hides when not running — Task #66)
+- **Calls:** useSwarmStore (selectors: s.activeExecutionId, s.executionStatus), useState (text, mode, sending, result), fetch (native browser — POST /api/v1/swarm/:executionId/broadcast with X-Requested-With CSRF header), setTimeout (clear result after 3s)
+- **Inputs:** none (no props — reads from store)
+- **Output:** null when executionStatus !== 'running'; JSX flex bar with text input + mode selector + Send button + result feedback when active
+- **Side effects:** HTTP POST to broadcast endpoint; 3s setTimeout to clear result display
+- **Last modified:** 2026-03-27 in Task #66 by frontend-dev
+
+### `client/src/canvas/BroadcastBar.jsx` :: `handleSend()` (internal async)
+- **Purpose:** Guard against empty text, inactive execution, or concurrent send. POST to broadcast endpoint. Parse { sent } from response and display "Sent to N agent(s)" confirmation. Clear text input on success.
+- **Called by:** BroadcastBar — Send button onClick; handleKeyDown (Enter without Shift)
+- **Calls:** fetch('/api/v1/swarm/:executionId/broadcast'), res.json(), setSending, setResult, setText, setTimeout
+- **Inputs:** none (reads text, isActive, sending from closure)
+- **Output:** Promise\<void\>
+- **Side effects:** HTTP POST; React state updates (sending, result, text); 3s timeout to clear result
+- **Last modified:** 2026-03-27 in Task #66 by frontend-dev
+
+### `client/src/canvas/BroadcastBar.jsx` :: `handleKeyDown(e)` (internal)
+- **Purpose:** Keyboard handler for the broadcast text input. Calls handleSend() on Enter without Shift. Prevents default.
+- **Called by:** BroadcastBar — input onKeyDown prop
+- **Calls:** handleSend()
+- **Inputs:** e (KeyboardEvent)
+- **Output:** void
+- **Side effects:** delegates to handleSend
+- **Last modified:** 2026-03-27 in Task #66 by frontend-dev
+
+---
+
+## SwarmEngine pause/resume (Task #67)
+
+### `server/services/SwarmEngine.js` :: `SwarmEngine.pauseExecution(executionId)`
+- **Purpose:** Set every running agent's status to 'paused' and broadcast an agent_status WS event for each. Does NOT send Ctrl-C — status change is logical only (PTY processes continue running). This is the store-level pause; the REST route (POST /:executionId/pause) still uses inline Ctrl-C for interrupt delivery.
+- **Called by:** (no live REST callers yet — the existing POST /:executionId/pause route uses inline Ctrl-C via getStatus; pauseExecution is available for future HITL freeze in Task #70)
+- **Calls:** this._executions.get, execution.agentStates iteration, this._wsBroadcast
+- **Inputs:** executionId (string)
+- **Output:** void (no-op if execution not found)
+- **Side effects:** mutates agentStates[nodeId].status → 'paused' for all running agents; emits WS `{ type: 'agent_status', nodeId, status: 'paused' }` per agent
+- **Last modified:** 2026-03-27 in Task #67 by backend-dev (new method)
+
+### `server/services/SwarmEngine.js` :: `SwarmEngine.resumeExecution(executionId)`
+- **Purpose:** Set every paused agent's status back to 'running' and broadcast an agent_status WS event for each. Counterpart to pauseExecution — restores logical running state after a pause.
+- **Called by:** (no live REST callers yet — POST /:executionId/resume is a no-op stub; resumeExecution is available for Task #70 HITL unfreeze)
+- **Calls:** this._executions.get, execution.agentStates iteration, this._wsBroadcast
+- **Inputs:** executionId (string)
+- **Output:** void (no-op if execution not found)
+- **Side effects:** mutates agentStates[nodeId].status → 'running' for all paused agents; emits WS `{ type: 'agent_status', nodeId, status: 'running' }` per agent
+- **Last modified:** 2026-03-27 in Task #67 by backend-dev (new method)

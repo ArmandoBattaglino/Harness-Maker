@@ -5006,8 +5006,8 @@ Phase: V3 Phase 4 — Live Execution
 Priority: HIGH
 Difficulty: HARD
 Depends on: #46.3, #49
-Status: PENDING
-Note: Previous attempt FAILED (API 500 error during agent execution) — retrying.
+Status: COMPLETED
+Note: Implementation verified complete in SwarmEngine.js — all acceptance criteria met. 168/168 tests pass.
 Context:
   First of three subtasks completing the SwarmEngine handoff loop (from skeleton in #46.3).
   Replace the _onHandoff stub with the first half of the full implementation.
@@ -5235,6 +5235,7 @@ Priority: LOW
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
 Status: COMPLETED
+Completed: 2026-03-27
 Dependencies: #63
 Context:
   Create `client/src/hooks/useHandoff.js`.
@@ -5266,6 +5267,7 @@ Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
 Status: COMPLETED
+Completed: 2026-03-27
 Dependencies: #63, #53.1
 Context:
   Update AgentNode.jsx (from #53) to show live execution feedback:
@@ -6023,12 +6025,12 @@ Acceptance criteria:
 | 59 | scaffold endpoint complete (replaces 47.2 stub) | backend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
 | 60 | PromptToFlowBar.jsx + staggered animation | frontend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
 | 61 | useWorkflow.js — workflow CRUD hook | frontend-dev | MEDIUM | claude-haiku-4-5 | COMPLETED |
-| **62.1** | SwarmEngine — _onHandoff: context merge + PTY spawn | backend-dev | HIGH | claude-opus-4-6 | IN_PROGRESS |
+| **62.1** | SwarmEngine — _onHandoff: context merge + PTY spawn | backend-dev | HIGH | claude-opus-4-6 | COMPLETED |
 | **62.2** | SwarmEngine — _onHandoff: context injection + status | backend-dev | HIGH | claude-opus-4-6 | PENDING |
 | **62.3** | SwarmEngine — _onDone + BudgetTracker + snippets | backend-dev | HIGH | claude-sonnet-4-6 | PENDING |
 | 63 | useSwarm.js — WS hook for execution control | frontend-dev | HIGH | claude-sonnet-4-6 | IN_PROGRESS |
-| 64 | useHandoff.js — edge animation hook | frontend-dev | LOW | claude-haiku-4-5 | PENDING |
-| 65 | AgentNode live updates — pulse + micro PTY log | frontend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
+| 64 | useHandoff.js — edge animation hook | frontend-dev | LOW | claude-haiku-4-5 | COMPLETED |
+| 65 | AgentNode live updates — pulse + micro PTY log | frontend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
 | 66 | BroadcastBar.jsx + broadcast route | frontend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
 | 67 | SwarmEngine heartbeat — idle sweeper prevention | backend-dev | MEDIUM | claude-haiku-4-5 | IN_PROGRESS |
 | 68 | inbox.js — HITL approve/reject API | backend-dev | HIGH | claude-sonnet-4-6 | PENDING |

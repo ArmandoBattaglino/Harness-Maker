@@ -193,7 +193,7 @@ _None._
 - [TASK-61] COMPLETED — useWorkflow.js CRUD hook — client/src/hooks/useWorkflow.js created; uses apiGet/apiPut/apiDelete wrappers; useWorkflow(id) + useWorkflowList() exports; build: 470 modules, 0 errors
 
 ### V3 Phase 4 — Live Execution
-- [TASK-62.1] IN_PROGRESS — SwarmEngine _onHandoff: context merge + edge counter + PTY spawn
+- [TASK-62.1] COMPLETED 2026-03-27 — SwarmEngine _onHandoff: full implementation verified (context merge, edge counter, circuit breaker advisory, handoffCount, _ensureAgentPty). 168/168 tests pass.
 - [TASK-62.2] PENDING — SwarmEngine _onHandoff: context injection + agent status updates (waits on #62.1)
 - [TASK-62.3] PENDING — SwarmEngine _onDone + BudgetTracker + lastOutputSnippet (waits on #62.2)
 - [TASK-63] IN_PROGRESS — useSwarm.js WS hook for execution control

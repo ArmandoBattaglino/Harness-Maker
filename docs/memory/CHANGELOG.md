@@ -1373,3 +1373,106 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 - workflowDef remains null until Task #61 wires SwarmView to the workflow API/store; canvas renders empty graph until then
 
 ---
+
+## 2026-03-27 — Task #63: client/src/hooks/useSwarm.js — WS Hook
+**Agent:** frontend-dev
+**Triggered by:** V3 Phase 3 client — implement the WebSocket hook that connects to /ws/swarm and dispatches live swarm execution events to the Zustand store, plus startExecution/stopExecution REST actions.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/hooks/useSwarm.js | ADDED | New named-export hook: useSwarm(workflowId) — manages WS lifecycle, dispatches 6 message types to SwarmStore, exposes connectWs/startExecution/stopExecution |
+
+### Functions Added
+- `useSwarm(workflowId)` in `client/src/hooks/useSwarm.js` — hook shell; owns wsRef; exposes 3 callbacks; cleans up WS on unmount
+- `connectWs(executionId)` in `client/src/hooks/useSwarm.js` — opens WebSocket to /ws/swarm?executionId=X; dispatches agent_status, handoff_started, execution_status, budget_update, circuit_breaker, hitl_required messages to SwarmStore
+- `startExecution(projectId, projectPath)` in `client/src/hooks/useSwarm.js` — POSTs to /api/v1/swarm/:workflowId/start, calls connectWs, sets store to running, returns executionId
+- `stopExecution(executionId)` in `client/src/hooks/useSwarm.js` — DELETEs /api/v1/swarm/:executionId, closes WS, sets store to stopped/null
+
+### Functions Modified
+- None
+
+### Functions Removed
+- None
+
+### Connection Changes
+- `useSwarm.connectWs` → `useSwarmStore::setWsConnected` (onopen/onclose/onerror — first live callers)
+- `useSwarm.connectWs` → `useSwarmStore::updateAgentState` (agent_status, handoff_started — first live callers from WS path)
+- `useSwarm.connectWs` → `useSwarmStore::updateEdgeCounter` (handoff_started — first live caller)
+- `useSwarm.connectWs` → `useSwarmStore::addFeedEvent` (handoff_started, circuit_breaker — first live callers)
+- `useSwarm.connectWs` → `useSwarmStore::setExecution` (execution_status — first live WS caller; already called in startExecution/stopExecution paths)
+- `useSwarm.connectWs` → `useSwarmStore::updateBudget` (budget_update — first live caller)
+- `useSwarm.connectWs` → `useSwarmStore::addInboxItem` (hitl_required — first live caller)
+- `useSwarm.startExecution` → `apiPost` from `useApi.js` (POST /api/v1/swarm/:workflowId/start)
+- `useSwarm.stopExecution` → `apiDelete` from `useApi.js` (DELETE /api/v1/swarm/:executionId)
+
+### Impact on Other Code
+- All 7 previously "not yet wired" SwarmStore actions now have live callers — the WS → store → canvas rendering pipeline is complete end-to-end once useSwarm is mounted
+- No live callers for useSwarm itself yet — needs mounting in SwarmView.jsx (future task, likely alongside a Run/Stop toolbar button)
+
+---
+
+## 2026-03-27 — Task #66: client/src/canvas/BroadcastBar.jsx + SwarmView mount
+**Agent:** frontend-dev
+**Triggered by:** V3 Phase 3 client — implement broadcast text bar for sending messages to all running agent PTYs; mount it in SwarmView below the canvas.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/canvas/BroadcastBar.jsx | ADDED | New component: broadcast text input + soft/hard mode selector + Send button; reads activeExecutionId + executionStatus from SwarmStore; self-hides when not running |
+| client/src/views/SwarmView.jsx | MODIFIED | Imported BroadcastBar; mounted as last child of the flex-col layout (below canvas area) |
+
+### Functions Added
+- `BroadcastBar()` in `client/src/canvas/BroadcastBar.jsx` — default export; renders null when executionStatus !== 'running'; POST /api/v1/swarm/:executionId/broadcast with text + scope + mode
+- `handleSend()` (internal async) in `client/src/canvas/BroadcastBar.jsx` — guards against empty/inactive/concurrent; POSTs broadcast; shows "Sent to N agents" confirmation for 3s
+- `handleKeyDown(e)` (internal) in `client/src/canvas/BroadcastBar.jsx` — Enter without Shift → handleSend()
+
+### Functions Modified
+- `SwarmView()` in `client/src/views/SwarmView.jsx` — added BroadcastBar import + mount; layout now: toolbar → PromptToFlowBar → canvas → BroadcastBar
+
+### Functions Removed
+- None
+
+### Connection Changes
+- `SwarmView` → `BroadcastBar` (new import + render; BroadcastBar always mounted, self-hides)
+- `BroadcastBar.handleSend` → `POST /api/v1/swarm/:executionId/broadcast` (direct fetch — uses native browser fetch with CSRF header, not apiPost)
+- `BroadcastBar` → `useSwarmStore::activeExecutionId` (new selector)
+- `BroadcastBar` → `useSwarmStore::executionStatus` (new selector)
+
+### Impact on Other Code
+- POST /api/v1/swarm/:executionId/broadcast — previously only callable from test harness; now has a UI client
+- BroadcastBar uses native fetch (not apiPost from useApi.js) — if CSRF header requirements change, both fetch sites must be updated
+- BroadcastBar renders null when not running — no DOM impact on idle canvas view
+
+---
+
+## 2026-03-27 — Task #67: server/services/SwarmEngine.js — heartbeat verified + pauseExecution/resumeExecution
+**Agent:** backend-dev
+**Triggered by:** V3 Phase 3 server — verify heartbeat timer correctness and add pauseExecution/resumeExecution methods to SwarmEngine for HITL freeze/unfreeze support (Task #70 prerequisite).
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/SwarmEngine.js | MODIFIED | Added pauseExecution(executionId) and resumeExecution(executionId) methods; _startHeartbeat verified correct (5min interval, .unref(), clearInterval on stop) |
+
+### Functions Added
+- `SwarmEngine.pauseExecution(executionId)` in `server/services/SwarmEngine.js` — sets all running agents to 'paused', broadcasts agent_status WS event per agent; no PTY interrupt sent (logical state only)
+- `SwarmEngine.resumeExecution(executionId)` in `server/services/SwarmEngine.js` — sets all paused agents back to 'running', broadcasts agent_status WS event per agent
+
+### Functions Modified
+- `SwarmEngine._startHeartbeat(executionId)` — no code changes; heartbeat logic confirmed correct: 300000ms interval, timer.unref() called, clearInterval(execution.heartbeatTimer) in stopExecution. Last modified annotation updated to reflect Task #67 verification.
+
+### Functions Removed
+- None
+
+### Connection Changes
+- `SwarmEngine.pauseExecution` → `this._wsBroadcast` (emits agent_status 'paused' per agent — same broadcast path as _spawnAgentPty and _onDone)
+- `SwarmEngine.resumeExecution` → `this._wsBroadcast` (emits agent_status 'running' per agent)
+- No REST callers yet — POST /:executionId/pause route still uses inline Ctrl-C via getStatus; pauseExecution/resumeExecution are available for Task #70 HITL freeze wiring
+
+### Impact on Other Code
+- `POST /:executionId/pause` in swarm.js: comment in source says "SwarmEngine has no pauseExecution method — Task #70 will add full HITL freeze". This comment is now stale — pauseExecution exists. The route's inline Ctrl-C behavior is still correct but the comment should be updated when Task #70 wires pauseExecution.
+- `POST /:executionId/resume` in swarm.js: currently a no-op stub — resumeExecution is now available and can replace the stub body in Task #70.
+- Client-side AgentNode.jsx: already handles 'paused' status with its own color (statusColors map covers idle/running/done/paused/error) — WS events from pauseExecution will immediately update the canvas color when useSwarm is mounted.
+
+---

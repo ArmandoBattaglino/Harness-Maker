@@ -1,4 +1,13 @@
 ---
+## 2026-03-27 — documenter — Tasks #64, #65: useHandoff.js + AgentNode.jsx micro-PTY enhancements
+**Outcome:** COMPLETED
+**Summary:** Audited all documentation after Tasks #64 and #65. DOC_STATUS.md updated: timestamp advanced; new row added for useHandoff.js (Task #64); AgentNode.jsx row updated for Task #65 changes (4-line log, scrollable, blinking cursor, selected-ring). ARCHITECTURE.md stale section updated to mark #64/#65 complete. V3 public docs deferred per policy.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none
+**Decisions made:** V3 public doc deferral maintained
+**Blockers:** none
+**Next:** Tasks #62.1–#62.3 (_onHandoff routing) and #68–#70 (HITL) will need DOC_STATUS updates when done
+---
 ## 2026-03-27 — documenter — Tasks #63, #66, #67: useSwarm.js + BroadcastBar.jsx + SwarmEngine pause/resume
 **Outcome:** COMPLETED
 **Summary:** Audited all documentation after three Phase 4 tasks. DOC_STATUS.md updated: timestamp advanced; new rows added for useSwarm.js (Task #63) and BroadcastBar.jsx (Task #66); new SwarmEngine row added for Task #67 (pauseExecution/resumeExecution); SwarmView.jsx row updated to reflect BroadcastBar mount (Task #66); ARCHITECTURE.md stale section advanced to reflect Phase 4 progress. README.md and ARCHITECTURE.md not touched — V3 public doc deferral policy in effect until Task #82.
@@ -1422,4 +1431,26 @@
 **Decisions made:** Used Tailwind animate-pulse for blinking cursor to stay consistent with project-wide animation pattern; no new CSS keyframes needed
 **Blockers:** none
 **Next:** Task #66 (BroadcastBar + route) or other Phase 4 items
+---
+
+---
+## 2026-03-27 — project-manager — Status update: #64 COMPLETED, #65 COMPLETED, #62.1 PENDING retry
+**Outcome:** COMPLETED
+**Summary:** Marked tasks #64 (useHandoff.js edge animation hook) and #65 (AgentNode live updates — blinking border + micro PTY log) as COMPLETED in TASK_PLAN.md, both in task bodies and the summary table. Task #62.1 (SwarmEngine _onHandoff: context merge + PTY spawn) remains PENDING — failed twice with API 500 errors and is being retried with a different model.
+**Files changed:** docs/TASK_PLAN.md
+**Bugs fixed:** Summary table inconsistency — #64 and #65 showed PENDING in table while task bodies showed COMPLETED
+**Decisions made:** #62.1 left as PENDING (retry active, correct state)
+**Blockers:** #62.1 retry pending — blocks #62.2 and full handoff loop
+**Next:** When #62.1 retry completes, mark COMPLETED and launch #62.2 (SwarmEngine _onHandoff: context injection + status updates)
+---
+
+---
+## 2026-03-27 — backend-dev — Task #62.1: SwarmEngine._onHandoff — Context Merge + Edge Counter + PTY Spawn
+**Outcome:** COMPLETED
+**Summary:** Verified that all Task #62.1 acceptance criteria were already implemented in SwarmEngine.js by a prior session. _onHandoff performs shallow context merge, increments edge counters, fires circuit_breaker WS advisory, increments source handoffCount, and calls _ensureAgentPty. CircuitBreaker and BudgetTracker are already instantiated and wired in server/index.js. 168/168 tests pass.
+**Files changed:** docs/TASK_PLAN.md (status update only — no code changes needed)
+**Bugs fixed:** none
+**Decisions made:** No code changes made — implementation already complete
+**Blockers:** none
+**Next:** Task #62.2 — SwarmEngine _onHandoff context injection + agent status updates
 ---

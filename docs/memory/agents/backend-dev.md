@@ -1181,3 +1181,44 @@ SwarmEngine.js has: startExecution, _spawnAgentPty, _ensureAgentPty, _buildSyste
 ### Handoff
 The swarm.js route stubs for /pause and /resume (added in #47.1) can now call swarmEngine.pauseExecution(executionId) and swarmEngine.resumeExecution(executionId) — no further work needed on SwarmEngine for pause/resume. Task #67 fully self-contained.
 ---
+
+---
+## 2026-03-27 — Task #62.1: SwarmEngine._onHandoff — Context Merge + Edge Counter + PTY Spawn
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+Task #62.1 had a previous failed attempt (API 500 error). The task required: updating SwarmEngine constructor to accept circuitBreaker + budgetTracker params, replacing the _onHandoff stub with a full implementation, and wiring CircuitBreaker + BudgetTracker into server/index.js.
+
+### What I did
+1. Read SwarmEngine.js (full file) and server/index.js in parallel.
+2. Discovered all three requirements were already fully implemented by a prior session:
+   - Constructor already has `circuitBreaker = null, budgetTracker = null` params and `this._circuitBreaker` / `this._budgetTracker` assignments.
+   - `_onHandoff` already has the full 7-step implementation: context merge, edge ID lookup, edge counter increment, circuit breaker advisory check, source handoffCount increment, WS broadcast, and `_ensureAgentPty` call.
+   - server/index.js already imports CircuitBreaker and BudgetTracker, instantiates both, and passes them to SwarmEngine constructor.
+3. Ran `npm test` — 168/168 tests pass.
+4. Updated docs/TASK_PLAN.md status to COMPLETED in both the task block and summary table.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Changed Task #62.1 status from IN_PROGRESS/PENDING to COMPLETED in both task block and summary table |
+
+### Improvements delivered
+- Verified _onHandoff implementation meets all acceptance criteria: context merge, edge counter, circuit breaker advisory WS event, source handoffCount increment, _ensureAgentPty call.
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- No code changes made — previous session completed the implementation. Only memory updates performed.
+
+### What I learned
+- When a task is marked IN_PROGRESS or shows a "previous attempt FAILED" note, always read the actual files first before writing any code — the implementation may already exist.
+
+### State I'm leaving behind
+SwarmEngine._onHandoff is fully implemented. 168/168 tests pass. Task #62.2 (context injection + agent status updates) is the next step in the handoff chain.
+
+### Handoff
+Task #62.2 can proceed — it depends on #62.1 which is now COMPLETED.
+---

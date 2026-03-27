@@ -1,4 +1,53 @@
 ---
+## 2026-03-27 — Tasks #63, #66, #67: useSwarm.js + BroadcastBar.jsx + SwarmEngine pause/resume
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel with code-mapper and project-manager)
+
+### Context when I started
+Three Phase 4 (Live Execution) tasks had just completed: Task #63 created client/src/hooks/useSwarm.js (WS execution control hook), Task #66 created client/src/canvas/BroadcastBar.jsx and modified SwarmView.jsx to mount it, Task #67 added pauseExecution/resumeExecution to server/services/SwarmEngine.js and verified the heartbeat was already correct from Task #46.3. DOC_STATUS.md was last updated after Task #60 (PromptToFlowBar). It had no rows for useSwarm.js, BroadcastBar.jsx, or SwarmEngine Task #67 changes.
+
+### What I did
+1. Read DOC_STATUS.md, useSwarm.js, BroadcastBar.jsx, SwarmView.jsx, and SwarmEngine.js in parallel.
+2. Confirmed Task #63: useSwarm(workflowId) hook — wsRef for WS lifecycle, connectWs(executionId), startExecution via apiPost, stopExecution via apiDelete, 6 WS message type dispatch to SwarmStore. Returns { startExecution, stopExecution, connectWs }.
+3. Confirmed Task #66: BroadcastBar.jsx — reads activeExecutionId + executionStatus from SwarmStore, returns null when not active (self-hiding), POSTs { text, scope, mode } to /api/v1/swarm/:id/broadcast with CSRF header. SwarmView.jsx updated to import and mount BroadcastBar at the bottom of the view.
+4. Confirmed Task #67: pauseExecution and resumeExecution added to SwarmEngine. Each iterates agentStates and transitions agents between 'running' and 'paused', broadcasting agent_status WS events. JSDoc complete. _startHeartbeat verified correct from Task #46.3.
+5. Assessed staleness: README.md (not stale — V3 deferred), ARCHITECTURE.md (not stale — V3 deferred until Task #82), inline comments (all three new files have file-level comments naming purpose; SwarmEngine JSDoc complete on new methods).
+6. Updated DOC_STATUS.md: advanced timestamp; added useSwarm.js row (Task #63); added BroadcastBar.jsx row (Task #66); added SwarmEngine Task #67 row; updated SwarmView.jsx row to document BroadcastBar mount; updated ARCHITECTURE.md stale section to reflect Phase 4 partial progress.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Timestamp advanced; useSwarm.js row added (Task #63); BroadcastBar.jsx row added (Task #66); SwarmEngine Task #67 row added; SwarmView.jsx row updated (BroadcastBar mount); ARCHITECTURE.md stale section updated (Phase 4 partial progress documented). |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended Tasks #63/#66/#67 documenter entry. |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log. |
+
+### Improvements delivered
+- DOC_STATUS.md now tracks useSwarm.js and BroadcastBar.jsx for the first time.
+- SwarmEngine entry reflects cumulative Task #67 changes (pause/resume methods).
+- SwarmView.jsx entry accurately describes the full three-part layout (toolbar → PromptToFlowBar → canvas → BroadcastBar).
+- ARCHITECTURE.md stale section updated with Phase 4 partial status so future agents know what is done vs pending.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | -- | -- | -- |
+
+### Decisions I made
+- V3 public doc deferral policy maintained. No changes to README.md or ARCHITECTURE.md until Task #82.
+- BroadcastBar.jsx row placed in V3 Service Files table (consistent with all other Phase 4 canvas components).
+- useSwarm.js row placed in V3 Service Files table (consistent with useWorkflow.js placement in Task #61).
+
+### What I learned
+- BroadcastBar uses direct window.fetch (not apiPost wrapper) — same pattern as PromptToFlowBar. Both are self-contained action components rather than data hooks, so direct fetch with inline headers is reasonable.
+- useSwarm.js uses the apiPost/apiDelete wrappers from useApi.js for control calls but opens WebSocket directly (no wrapper exists for WS — that is correct and expected).
+- pauseExecution/resumeExecution are synchronous methods (not async) — they only update in-memory state and broadcast WS events. They do not actually pause the underlying PTY process (that would require a SIGSTOP/SIGCONT which is deferred).
+
+### State I'm leaving behind
+DOC_STATUS.md is current as of 2026-03-27 and tracks all Phase 3 and Phase 4 (partial) artifacts. Phase 4 remaining: Tasks #62.1–#62.3 (_onHandoff full routing), #64/#65 (useHandoff.js + AgentNode live styling — may already be done per ACTIVITY_LOG), #68/#69/#70 (HITL). V3 public docs deferred until Task #82.
+
+### Handoff
+Tasks #62.1–#62.3 will modify SwarmEngine.js again — DOC_STATUS.md will need another row when those complete. If Task #64/#65 are already done (they appear in ACTIVITY_LOG), a future documenter call should add those rows too.
+---
 ## 2026-03-27 — Task #60: PromptToFlowBar.jsx + staggered animation
 **Status:** COMPLETED
 **Called by:** orchestrator (parallel with code-mapper and project-manager)

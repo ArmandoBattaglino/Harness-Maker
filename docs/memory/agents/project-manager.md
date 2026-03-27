@@ -1570,3 +1570,43 @@ After #62.1 completes successfully: launch #62.2 immediately (depends only on #6
 After #64/#65 complete: these are independent of #62.x, so no chain wait needed.
 After all of #62.1-#62.3, #64, #65 complete: Wave 5 (#68 HITL inbox, #69 HitlInbox.jsx, #70 PTY Explosion) can launch.
 ---
+
+---
+## 2026-03-27 — Task status update: #64 COMPLETED, #65 COMPLETED, #62.1 PENDING (retry)
+**Status:** COMPLETED
+**Called by:** user (orchestrator notification)
+
+### Context when I started
+Three tasks required status reconciliation: #64 (useHandoff.js) and #65 (AgentNode live updates) had just completed successfully. Task #62.1 (SwarmEngine _onHandoff full implementation) had failed twice with API 500 errors and was being retried with a different model.
+
+### What I did
+1. Read TASK_PLAN.md to check current status of #64, #65, and #62.1
+2. Found #64 and #65 task bodies already had `Status: COMPLETED` but the summary table at the bottom still showed PENDING for both
+3. Task #62.1 was already `Status: PENDING` with a retry note — correct state, no change needed
+4. Updated summary table rows for #64 and #65 from PENDING to COMPLETED
+5. Added `Completed: 2026-03-27` timestamps to both task body entries
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Summary table rows for #64 and #65 updated to COMPLETED; added Completed timestamps to task bodies |
+
+### Improvements delivered
+- TASK_PLAN.md summary table is now consistent with task body statuses for #64 and #65
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| Summary table showed PENDING for #64/#65 while task bodies showed COMPLETED | Prior agent updated task bodies but not summary table | Updated both rows in summary table | FIXED |
+
+### Decisions I made
+- Left #62.1 at PENDING — it already had the retry note; correct state, no change needed
+
+### State I'm leaving behind
+- #64: COMPLETED (summary table + task body both correct)
+- #65: COMPLETED (summary table + task body both correct)
+- #62.1: PENDING (retry in progress with different model — do not touch until retry result arrives)
+
+### Handoff
+Wait for #62.1 retry result before proceeding. If it succeeds, mark COMPLETED and launch #62.2 (context injection + status updates, depends on #62.1).
+---
