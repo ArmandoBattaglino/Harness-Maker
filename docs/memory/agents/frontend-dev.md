@@ -1,4 +1,55 @@
 ---
+## 2026-03-27 — Task #72: InterAgentFeed.jsx — Real-time Handoff Log
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+SwarmContext.jsx interAgentFeed array was fully implemented. The store caps feed at last 100 events via .slice(-100). addFeedEvent action exists. The canvas/ directory already contained AgentInspector.jsx, BroadcastBar.jsx, BreadcrumbBar.jsx as the pattern for canvas-adjacent panels. Existing components used Tailwind utility classes matching gray-900 background, gray-700 borders, text-xs sizing.
+
+### What I did
+Created client/src/canvas/InterAgentFeed.jsx exactly matching the task spec:
+- useSwarmStore subscription to interAgentFeed
+- useRef + useEffect for auto-scroll to bottomRef on feed.length change
+- Empty state branch: full-height flex column with header + centered "No handoffs yet" text
+- Populated state: w-56 shrink-0 column with header (title + count badge) + scrollable event list
+- Each event row: timestamp (gray-500), type icon (blue-400, EVENT_ICONS map), description (truncated)
+- handoff_started description: sourceNodeId.slice(0,6) → targetNodeId.slice(0,6)
+- circuit_breaker description: loop edgeId.slice(0,8) (counter)
+- All other types: fall through to event.type string
+- Build verified: 472 modules, 0 errors
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/canvas/InterAgentFeed.jsx | CREATED | New real-time feed panel component |
+| docs/TASK_PLAN.md | MODIFIED | Task #72 Status: IN_PROGRESS → COMPLETED |
+| docs/memory/PROGRESS.md | MODIFIED | V3 count 40→41, #72 marked COMPLETED |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Session log appended |
+| docs/memory/agents/frontend-dev.md | MODIFIED | This entry |
+
+### Improvements delivered
+- Real-time inter-agent handoff visibility available for SwarmView integration
+- Empty state handles zero-event case gracefully without layout shift
+- Auto-scroll ensures newest events always visible without manual scrolling
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Placed in client/src/canvas/ (not client/src/panels/ as TASK_PLAN context suggested) — all V3 canvas-adjacent UI components live in canvas/, making this consistent with AgentInspector, BroadcastBar, BreadcrumbBar
+- Used array index as key (key={i}) matching the task spec — acceptable since feed is append-only and capped at 100; no reordering occurs
+
+### What I learned
+- The canvas/ directory is the correct home for all SwarmView sub-panels, not panels/ (which doesn't exist yet)
+- interAgentFeed events have: type, timestamp, sourceNodeId, targetNodeId (handoff_started), edgeId/counter (circuit_breaker)
+
+### State I'm leaving behind
+InterAgentFeed.jsx is complete and build-verified. It is not yet mounted in SwarmView.jsx — a follow-up task or the consumer of this component will need to add it to the SwarmView layout (likely in the bottom drawer "Feed" tab referenced in TASK_PLAN.md around line 4836).
+
+### Handoff
+Component is ready to mount. The TASK_PLAN.md references a bottom drawer with "Inbox | Feed" tabs (line ~4836) — InterAgentFeed would slot into the Feed tab of that drawer when implemented.
+---
+
 ## 2026-03-27 — Task #64: useHandoff.js — Edge Animation Hook
 **Status:** COMPLETED
 **Called by:** user (direct task assignment)

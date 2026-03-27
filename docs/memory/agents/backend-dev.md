@@ -1321,3 +1321,51 @@ _onHandoff is now complete through step 10. Steps 1-10 all implemented across ta
 ### Handoff
 Task #62.3 should complete _onDone: check if all agents are done, then set execution.status = 'stopped' and emit execution_complete WS event.
 ---
+
+---
+## 2026-03-27 — Task #68: server/routes/inbox.js — HITL Approve/Reject API
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+SwarmEngine already had `inboxItems: []` in execution records and `agentStates` as a Map. `hitlValidation.js` was already created (Task #50) with `validateResumeText` middleware capping resumeText at 8192 chars. The swarm routes were already mounted at `/api/v1/swarm` via `swarmRoutes()` factory. `server/index.js` had `swarmEngine` stored in `app.locals.swarmEngine`.
+
+### What I did
+1. Read backend-dev.md, PROGRESS.md, hitlValidation.js, server/index.js, server/routes/swarm.js, and SwarmEngine.js (top 80 lines) in parallel.
+2. Created `server/routes/inbox.js` — factory function returning a Router with 3 endpoints.
+3. Added import and mount in `server/index.js` at the same `/api/v1/swarm` prefix.
+4. Ran `npm test` — 168/168 tests pass, 0 failures.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/routes/inbox.js | CREATED | New HITL inbox router — GET inbox, POST approve, POST reject |
+| server/index.js | MODIFIED | Added import for inboxRoutes + mount at /api/v1/swarm |
+
+### Improvements delivered
+- GET /api/v1/swarm/:executionId/inbox returns current inboxItems array
+- POST /approve removes item, writes resumeText+\n to PTY, sets agentState.status='running', broadcasts hitl_resolved approved
+- POST /reject removes item, broadcasts hitl_resolved rejected
+- validateResumeText middleware correctly blocks >8KB resumeText (400)
+- All 168 tests continue to pass
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| Pre-existing: agentStates accessed as Object.entries() in swarm.js but it's a Map | swarm.js lines 185/316 iterate with Object.entries() on a Map — this returns 0 entries silently | Not fixed (not my task scope) | KNOWN — reported separately |
+
+### Decisions I made
+- Used `execution.agentStates.get(item.nodeId)` (Map API) not `execution.agentStates[nodeId]` — consistent with how SwarmEngine initializes it as `new Map()`
+- Added try/catch to all handlers to prevent unhandled exceptions leaking through — consistent with swarm.js error handling pattern
+- Reject endpoint does NOT unfreeze the agent (agentState.status left as-is) — Task #70 will implement full HITL freeze/unfreeze
+
+### What I learned
+- `swarm.js` uses `Object.entries(execution.agentStates)` but agentStates is a Map — this is a pre-existing inconsistency that likely causes the pause broadcast to iterate 0 entries silently
+- The inbox router mounts at the same `/api/v1/swarm` prefix as `swarmRoutes` — Express handles two routers on the same prefix by trying each in order
+
+### State I'm leaving behind
+`server/routes/inbox.js` fully implemented and mounted. 168/168 tests pass. Ready for Task #69 (HitlInbox.jsx) and Task #70 (SwarmEngine freeze/unfreeze).
+
+### Handoff
+Task #69 (HitlInbox.jsx) can proceed — inbox API is live at GET/POST /api/v1/swarm/:executionId/inbox/:itemId/approve|reject. Task #70 (freeze/unfreeze) should also add logic to the reject handler to properly halt the agent PTY.
+---

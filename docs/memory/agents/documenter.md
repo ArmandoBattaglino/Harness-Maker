@@ -1,4 +1,51 @@
 ---
+## 2026-03-27 — Task #62.1: SwarmEngine._onHandoff full implementation
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel with code-mapper and project-manager)
+
+### Context when I started
+Task #62.1 had just completed. _onHandoff was previously a stub in Tasks #46.2 and #46.3. Task #62.1 fully implemented the method. server/index.js was updated to import and wire CircuitBreaker and BudgetTracker into the SwarmEngine constructor. DOC_STATUS.md was last updated after Tasks #64 and #65 (useHandoff.js + AgentNode.jsx). It had no row for Task #62.1 and the server/index.js row only referenced tasks up to #48.2.
+
+### What I did
+1. Read DOC_STATUS.md, SwarmEngine.js, and server/index.js in parallel.
+2. Read documenter.md tail, ACTIVITY_LOG.md tail, and PROGRESS.md head for context.
+3. Confirmed _onHandoff is now fully implemented: (1) contextUpdate shallow merge into workflowContext; (2) edgeId resolved from workflowDef.edges source/target pair; (3) edge counter incremented; (4) advisory circuit breaker check (threshold from workflowDef.settings, default 10) with circuit_breaker WS broadcast; (5) source agent handoffCount incremented; (6) handoff_started WS broadcast; (7) _ensureAgentPty call for target node. Method is async.
+4. Confirmed server/index.js: CircuitBreaker and BudgetTracker now imported and passed as args 3 and 4 to new SwarmEngine(sessionManager, workflowStore, circuitBreaker, budgetTracker).
+5. Assessed staleness: README.md (not stale — V3 deferred), ARCHITECTURE.md (not stale — V3 deferred until Task #82), inline comments (JSDoc on _onHandoff is complete and accurate to the implementation).
+6. Updated DOC_STATUS.md: advanced timestamp; added Task #62.1 SwarmEngine row; updated server/index.js row; corrected stale wording in previous SwarmEngine rows (stub references updated to past tense); updated ARCHITECTURE.md stale paragraph to mark #62.1 complete and update Phase 4 status list.
+7. Appended ACTIVITY_LOG entry and this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Timestamp advanced; new SwarmEngine Task #62.1 row added; server/index.js row updated for CircuitBreaker/BudgetTracker wiring; SwarmEngine Task #46.2 and #46.3 rows updated to clarify stubs were at time of those tasks; ARCHITECTURE.md stale section updated to mark #62.1 done and advance Phase 4 status. |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended Task #62.1 documenter entry. |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log. |
+
+### Improvements delivered
+- DOC_STATUS.md now has a dedicated row for Task #62.1 describing the full 7-step _onHandoff implementation.
+- server/index.js row now accurately documents CircuitBreaker + BudgetTracker constructor wiring (previously only referenced tasks up to #48.2).
+- Phase 4 status in the ARCHITECTURE.md stale section is now accurate: #62.1 is marked complete and appears first in the completed list.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | -- | -- | -- |
+
+### Decisions I made
+- No inline doc changes needed for SwarmEngine.js — JSDoc on _onHandoff was already complete and accurate (the implementation matched the documented signature). The "Implemented in Task #62.1" comment in the JSDoc correctly identifies the task.
+- _onDone treated as partial stub (sets state.status='done', broadcasts execution_status agent_done) — its DOC_STATUS row notes "full workflow completion logic deferred to Task #62.3".
+
+### What I learned
+- _onHandoff is async because _ensureAgentPty is async (it calls _spawnAgentPty which calls sessionManager.createSession). The await at step 7 is load-bearing — without it, the target PTY spawn would not be awaited and the execution could proceed with an uninitialized agent state.
+- The circuit breaker threshold defaults to 10 if not specified in workflowDef.settings. This default is advisory-only — it does not stop execution.
+
+### State I'm leaving behind
+DOC_STATUS.md is current as of 2026-03-27 covering all Phase 4 completed tasks (#62.1, #63–#67). Remaining Phase 4: Tasks #62.2–#62.3 (_onDone full logic), #68/#69/#70 (HITL). V3 public docs deferred until Task #82.
+
+### Handoff
+Tasks #62.2 and #62.3 will modify SwarmEngine.js again — _onDone full logic. DOC_STATUS.md will need the SwarmEngine #62.1 row notes updated (or a new cumulative row) when those complete. HITL tasks (#68–#70) will need new rows for server/routes/inbox.js and related files.
+---
 ## 2026-03-27 — Tasks #64, #65: useHandoff.js + AgentNode.jsx micro-PTY enhancements
 **Status:** COMPLETED
 **Called by:** orchestrator (parallel with code-mapper and project-manager)

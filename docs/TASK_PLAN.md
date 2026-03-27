@@ -5486,7 +5486,7 @@ Phase: V3 Phase 5 — HITL + PTY Explosion
 Priority: HIGH
 Difficulty: MEDIUM
 Depends on: #57.2, #63
-Status: IN_PROGRESS
+Status: COMPLETED
 Context:
   First of two subtasks for PTY Explosion.
   Implement the full-screen overlay that renders an existing agent's PTY session.
@@ -6036,7 +6036,7 @@ Acceptance criteria:
 | 68 | inbox.js — HITL approve/reject API | backend-dev | HIGH | claude-sonnet-4-6 | COMPLETED |
 | 69 | HitlInbox.jsx — approval panel | frontend-dev | HIGH | claude-sonnet-4-6 | PENDING |
 | 70 | SwarmEngine HITL — freeze/unfreeze agent | backend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
-| **71.1** | PTY Explosion — full-screen overlay component | frontend-dev | HIGH | claude-sonnet-4-6 | PENDING |
+| **71.1** | PTY Explosion — full-screen overlay component | frontend-dev | HIGH | claude-sonnet-4-6 | COMPLETED |
 | **71.2** | PTY Explosion — Escape key handler | frontend-dev | MEDIUM | claude-haiku-4-5 | PENDING |
 | 72 | InterAgentFeed.jsx — real-time handoff log | frontend-dev | LOW | claude-haiku-4-5 | PENDING |
 | 73 | useInbox.js — HITL polling hook | frontend-dev | MEDIUM | claude-haiku-4-5 | PENDING |

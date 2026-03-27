@@ -206,7 +206,7 @@ _None._
 - [TASK-67] COMPLETED 2026-03-27 — SwarmEngine heartbeat — idle sweeper prevention
 
 ### V3 Phase 5 — HITL + PTY Explosion
-- [TASK-68] IN_PROGRESS — inbox.js HITL approve/reject API (backend-dev, sonnet; dep: #46.3 corrected from #62.3)
+- [TASK-68] COMPLETED 2026-03-27 — inbox.js HITL approve/reject API (server/routes/inbox.js created, mounted at /api/v1/swarm, 168/168 tests pass)
 - [TASK-69] PENDING — HitlInbox.jsx approval panel (waits on #68)
 - [TASK-70] COMPLETED 2026-03-27 — SwarmEngine freezeAgent/unfreezeAgent HITL methods added; 168/168 tests pass
 - [TASK-71.1] IN_PROGRESS — PTY Explosion overlay component (frontend-dev, sonnet; dep: #58 ✓)

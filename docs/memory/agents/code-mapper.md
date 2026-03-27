@@ -50,6 +50,50 @@ CODE_MAP.md and CHANGELOG.md are fully up to date through Task #65. useHandoff.j
 Next code-mapper invocation should handle Tasks #62.1-#62.3 (_onHandoff full routing) or #68-#70 (HITL inbox/freeze). When useHandoff gets its first live caller, update its "Called by" entry in CODE_MAP.md.
 ---
 
+## 2026-03-27 — Task #62.1: SwarmEngine._onHandoff full implementation
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+Task #62.1 was verified complete by prior session. _onHandoff was previously a stub (Task #46.2) that only emitted a WS event. CircuitBreaker and BudgetTracker existed as standalone services (Task #49) but were never imported by server/index.js or passed to SwarmEngine. CODE_MAP.md last updated after Tasks #64/#65.
+
+### What I did
+1. Read SwarmEngine.js (full file), server/index.js (lines 1-320), CODE_MAP.md header + module index + SwarmEngine function entries, CHANGELOG.md tail — all in parallel
+2. Read existing _onHandoff stub entry and _ensureAgentPty entry in CODE_MAP.md to understand what needed updating
+3. Updated CODE_MAP.md header timestamp; updated SwarmEngine module index entry to note constructor change; updated server/index.js module index entry to note CircuitBreaker/BudgetTracker imports; replaced _onHandoff stub entry with full implementation entry; updated _ensureAgentPty "Called by" (was "future routing logic"; now points to _onHandoff); updated CircuitBreaker.check "Called by" (was "not yet wired"; now points to _onHandoff)
+4. Appended CHANGELOG.md entry for Task #62.1
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header timestamp; SwarmEngine + index.js module index entries; _onHandoff stub replaced with full implementation; _ensureAgentPty and CircuitBreaker.check "Called by" annotations updated |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Task #62.1 entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log appended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Entry appended |
+
+### Improvements delivered
+- _onHandoff entry fully documents the 7-step implementation (context merge, edge counter, circuit breaker, handoffCount, WS broadcast, _ensureAgentPty)
+- _ensureAgentPty "Called by" was stale ("not yet called") — now correctly points to _onHandoff
+- CircuitBreaker.check "Called by" was stale ("not yet wired") — now correctly points to _onHandoff
+- BudgetTracker live wiring via constructor now reflected in module index and index.js entry
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- BudgetTracker.registerSession is still not called from _spawnAgentPty — noted in CHANGELOG impact section as a known deferred wiring gap. Did not add a DECISIONS.md entry (no architectural decision — just deferred wiring).
+
+### What I learned
+- The _onHandoff full implementation follows a strict 7-step sequence: merge → resolve edge → counter → circuit breaker → handoffCount → broadcast → _ensureAgentPty. This order matters: the WS broadcast goes out BEFORE _ensureAgentPty spawns the PTY, so the client sees handoff_started before agent_status appears.
+- edgeId resolution has a fallback: if no matching edge exists in workflow definition, a synthetic "source->target" string is used — this prevents crashes on malformed workflow data.
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md are fully up to date through Task #62.1. All _onHandoff-related entries are now accurate. No broken "not yet wired" entries for CircuitBreaker or _ensureAgentPty.
+
+### Handoff
+Next code-mapper invocation should handle Task #62.2 (_onDone full completion logic) or Tasks #68-#70 (HITL inbox). BudgetTracker.registerSession wiring is still pending.
+---
+
 ## 2026-03-27 — Tasks #63 + #66 + #67: useSwarm.js WS hook + BroadcastBar.jsx + SwarmEngine pause/resume
 **Status:** COMPLETED
 **Called by:** orchestrator (post-task code-mapper invocation)

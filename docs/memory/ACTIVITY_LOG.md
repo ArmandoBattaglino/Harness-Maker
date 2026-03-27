@@ -1,4 +1,22 @@
 ---
+## 2026-03-27 — code-mapper — Task #62.1: SwarmEngine._onHandoff full implementation
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md to replace _onHandoff stub entry with full 7-step implementation documentation; updated _ensureAgentPty and CircuitBreaker.check "Called by" annotations to reflect live wiring; updated SwarmEngine and index.js module index entries to reflect constructor params and new imports. CHANGELOG.md entry appended.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** BudgetTracker.registerSession wiring gap noted as deferred
+**Blockers:** none
+**Next:** Task #62.2 (_onDone full completion logic) or Tasks #68-#70 (HITL inbox)
+---
+## 2026-03-27 — project-manager — Wave launch: #62.1 COMPLETED; #62.2, #68, #70, #71.1, #72 → IN_PROGRESS
+**Outcome:** COMPLETED
+**Summary:** #62.1 verified COMPLETED (168/168 tests). Launched 5 simultaneous tasks. #70 already COMPLETED by concurrent backend-dev. TASK_PLAN.md, PROGRESS.md (40/57), CONTEXT.md updated with current wave details and next-step chain.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md
+**Bugs fixed:** none
+**Decisions made:** #68 dep corrected to #46.3; #70 dep simplified to #62.1
+**Blockers:** none
+**Next:** #62.3 waits on #62.2; #69 waits on #68; #71.2 waits on #71.1; #73 waits on #69+#63
+---
 ## 2026-03-27 — frontend-dev — Task #72: InterAgentFeed.jsx — Real-time Handoff Log
 **Outcome:** COMPLETED
 **Summary:** Created client/src/canvas/InterAgentFeed.jsx — a scrollable real-time panel that reads interAgentFeed from SwarmContext Zustand store, auto-scrolls to bottom on new events, shows empty state when feed is empty, and renders each event with timestamp, type icon, and a type-specific description. Build passes at 472 modules, 0 errors.
@@ -1511,4 +1529,15 @@
 **Decisions made:** targetState read after _ensureAgentPty call to ensure state entry exists; contextPrompt guard preserved per _spawnAgentPty pattern
 **Blockers:** none
 **Next:** Task #62.3 — complete _onDone (check all-agents-done, set execution stopped, emit execution_complete WS event)
+---
+
+---
+## 2026-03-27 — backend-dev — Task #68: server/routes/inbox.js — HITL Approve/Reject API
+**Outcome:** COMPLETED
+**Summary:** Created server/routes/inbox.js with GET inbox, POST approve, POST reject endpoints. Mounted at /api/v1/swarm prefix alongside existing swarmRoutes. validateResumeText middleware enforces 8KB cap on resumeText. Approve writes to PTY and sets agent status='running'. Reject removes item and broadcasts. 168/168 tests pass.
+**Files changed:** server/routes/inbox.js (CREATED), server/index.js (MODIFIED — import + mount)
+**Bugs fixed:** none
+**Decisions made:** agentStates.get() used (Map API); reject endpoint leaves agent frozen for Task #70 to handle
+**Blockers:** none
+**Next:** Task #69 (HitlInbox.jsx UI panel) and Task #70 (SwarmEngine freeze/unfreeze full implementation)
 ---
