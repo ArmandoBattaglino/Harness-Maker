@@ -1522,6 +1522,126 @@ _Last updated: 2026-03-27 — after Task #47.1 (swarm.js REST endpoints) + Task 
 
 ---
 
+---
+
+## Swarm REST API (Task #47.1)
+
+### `server/routes/swarm.js` :: `swarmRoutes(swarmEngine, sessionManager)`
+- **Purpose:** Factory function — creates and returns an Express Router with all 7 swarm execution control endpoints (+ 1 stub). Accepts live swarmEngine and sessionManager instances at creation time so handlers close over them.
+- **Called by:** server/index.js startup() (line: `app.use('/api/v1/swarm', swarmRoutes(app.locals.swarmEngine, app.locals.sessionManager))`)
+- **Calls:** Router() (express), SwarmEngine.startExecution, SwarmEngine.getStatus, SwarmEngine.stopExecution, SessionManager.writeInput, SessionManager.getSession
+- **Inputs:** swarmEngine (SwarmEngine instance), sessionManager (SessionManager singleton)
+- **Output:** Express Router instance
+- **Side effects:** none (factory — side effects happen per-request)
+- **Last modified:** 2026-03-27 in Task #47.1 by backend-dev
+
+### `server/routes/swarm.js` :: `POST /:workflowId/start`
+- **Purpose:** Start a new workflow execution. Validates projectId (non-empty string) and projectPath (non-empty string). Calls swarmEngine.startExecution. Returns 201 { executionId, status: 'running' }. Returns 400 on missing params, 404 if workflow not found ('Workflow not found' error from SwarmEngine).
+- **Called by:** (external REST clients — UI or test harness; no client-side caller yet as of Task #47.1)
+- **Calls:** swarmEngine.startExecution
+- **Inputs:** params.workflowId (string), body.projectId (string), body.projectPath (string)
+- **Output:** 201 `{ executionId, status: 'running' }` | 400/404/500
+- **Side effects:** spawns agent PTY sessions via SwarmEngine.startExecution
+- **Last modified:** 2026-03-27 in Task #47.1 by backend-dev
+
+### `server/routes/swarm.js` :: `POST /:executionId/pause`
+- **Purpose:** Pause a running execution by sending Ctrl-C (\x03) to every agent session whose agentState.status === 'running'. Best-effort — no acknowledgment from agents. Full HITL freeze deferred to Task #70.
+- **Called by:** (external REST clients)
+- **Calls:** swarmEngine.getStatus, sessionManager.writeInput
+- **Inputs:** params.executionId (string)
+- **Output:** 200 `{ ok: true }` | 404/500
+- **Side effects:** sends \x03 (Ctrl-C) to all running agent PTY stdinss
+- **Last modified:** 2026-03-27 in Task #47.1 by backend-dev
+
+### `server/routes/swarm.js` :: `POST /:executionId/resume`
+- **Purpose:** No-op endpoint stub. Returns 200 { ok: true } if execution exists, 404 if not. Full HITL unfreeze deferred to Task #70.
+- **Called by:** (external REST clients)
+- **Calls:** swarmEngine.getStatus
+- **Inputs:** params.executionId (string)
+- **Output:** 200 `{ ok: true }` | 404/500
+- **Side effects:** none (no-op for now)
+- **Last modified:** 2026-03-27 in Task #47.1 by backend-dev
+
+### `server/routes/swarm.js` :: `DELETE /:executionId`
+- **Purpose:** Stop (terminate) a running execution. Delegates entirely to swarmEngine.stopExecution. Returns 204 on success (including if executionId was not found — stopExecution is a no-op for unknown IDs).
+- **Called by:** (external REST clients)
+- **Calls:** swarmEngine.stopExecution
+- **Inputs:** params.executionId (string)
+- **Output:** 204 | 500
+- **Side effects:** kills all agent PTY sessions, clears heartbeat timer, removes execution record (via SwarmEngine.stopExecution)
+- **Last modified:** 2026-03-27 in Task #47.1 by backend-dev
+
+### `server/routes/swarm.js` :: `GET /:executionId/status`
+- **Purpose:** Return a status snapshot for a running execution. 404 if execution not found.
+- **Called by:** (external REST clients)
+- **Calls:** swarmEngine.getStatus
+- **Inputs:** params.executionId (string)
+- **Output:** 200 `{ executionId, status, agentStates, edgeCounters, budget }` | 404/500
+- **Side effects:** none
+- **Last modified:** 2026-03-27 in Task #47.1 by backend-dev
+
+### `server/routes/swarm.js` :: `GET /:executionId/agent/:nodeId/output`
+- **Purpose:** Return the full ring buffer contents for a specific agent's PTY session. Resolves execution → agentState → sessionId → session.buffer. Returns 404 at each lookup step if not found.
+- **Called by:** (external REST clients)
+- **Calls:** swarmEngine.getStatus, sessionManager.getSession
+- **Inputs:** params.executionId (string), params.nodeId (string)
+- **Output:** 200 `{ output: string }` | 404/500
+- **Side effects:** none (buffer read is non-destructive)
+- **Last modified:** 2026-03-27 in Task #47.1 by backend-dev
+
+### `server/routes/swarm.js` :: `POST /:executionId/broadcast`
+- **Purpose:** Send a text message to running agent sessions, filtered by scope. Scope 'all' or omitted targets all running agents; a specific nodeId targets exactly that node. Soft mode: text + ESC + newline. Hard mode: Ctrl-C → 300ms → text + ESC → 100ms → newline (fire-and-forget via setTimeout). Returns { sent: N } with count of targeted sessions.
+- **Called by:** (external REST clients)
+- **Calls:** swarmEngine.getStatus, sessionManager.writeInput, setTimeout (hard mode only)
+- **Inputs:** params.executionId (string), body.text (string), body.scope ('all' | nodeId | undefined), body.mode ('soft' | 'hard', default 'soft')
+- **Output:** 200 `{ sent: number }` | 400/404/500
+- **Side effects:** writes to PTY stdin of targeted agent sessions; hard mode uses fire-and-forget setTimeout (no await)
+- **Complexity note:** Hard mode timing uses two nested setTimeouts (300ms outer, 100ms inner) — these are not awaited, meaning the response returns before the second and third writes are sent. This is intentional (interrupt-and-redirect pattern).
+- **Last modified:** 2026-03-27 in Task #47.1 by backend-dev
+
+### `server/routes/swarm.js` :: `POST /:workflowId/scaffold` (stub)
+- **Purpose:** Stub endpoint — returns 501 Not Implemented. Full implementation deferred to Task #59.
+- **Called by:** (external REST clients — not yet implemented)
+- **Calls:** none
+- **Inputs:** params.workflowId (string)
+- **Output:** 501 `{ error: 'Not implemented — scaffold endpoint coming in Task #59' }`
+- **Side effects:** none
+- **Last modified:** 2026-03-27 in Task #47.1 by backend-dev
+
+---
+
+## Swarm WebSocket Handler (Task #48.1)
+
+### `server/ws/swarmHandler.js` :: `handleSwarmConnection(ws, req, swarmEngine)` (default export)
+- **Purpose:** Handle an incoming WebSocket connection on the /ws/swarm path. Parses executionId from URL query string; closes connection with error if missing. Adds ws to module-level _subscribers Set for the executionId. Registers close and error handlers that remove ws from the Set (and clean up empty Sets). Sends initial execution_status snapshot if execution exists, or an error message if not.
+- **Called by:** server/index.js wssSwarm.on('connection') handler
+- **Calls:** URL (browser API), getSubscribers, _subscribers.set/get/add/delete, ws.send, ws.close, swarmEngine.getStatus, JSON.stringify
+- **Inputs:** ws (WebSocket), req (IncomingMessage), swarmEngine (SwarmEngine instance)
+- **Output:** void
+- **Side effects:** adds ws to _subscribers Map; on close/error removes ws and cleans up empty Set; sends initial JSON message to ws
+- **Complexity note:** Empty Set is eagerly deleted from _subscribers to prevent memory accumulation across many short-lived connections. Sets are only stored while at least one subscriber exists for an executionId.
+- **Last modified:** 2026-03-27 in Task #48.1 by backend-dev
+
+### `server/ws/swarmHandler.js` :: `getSubscribers(executionId)` (named export)
+- **Purpose:** Return the current subscriber Set for a given executionId. Returns an empty Set (transient, not stored) if no subscribers exist. Used by future broadcast logic (Task #48.2) to fan out WS events.
+- **Called by:** (not yet called by any module — intended caller: SwarmEngine or a broadcast helper in Task #48.2)
+- **Calls:** _subscribers.get, Set constructor (empty fallback)
+- **Inputs:** executionId (string)
+- **Output:** Set\<WebSocket\>
+- **Side effects:** none
+- **Last modified:** 2026-03-27 in Task #48.1 by backend-dev
+
+### `server/ws/swarmHandler.js` :: `_subscribers` (module-level Map)
+- **Purpose:** Module-level registry of active WebSocket subscribers per execution. Key: executionId (string) → Value: Set\<WebSocket\>. Entries are created on first connection for an executionId and deleted when the last subscriber disconnects. Never persisted.
+- **Called by:** handleSwarmConnection (mutates), getSubscribers (reads)
+- **Calls:** N/A (data structure)
+- **Inputs:** N/A
+- **Output:** N/A
+- **Side effects:** mutated by handleSwarmConnection on connect/disconnect
+- **Last modified:** 2026-03-27 in Task #48.1 by backend-dev
+
+---
+
 ## Removed / Dead Functions
 | Function | File | Removed in | Reason |
 |----------|------|------------|--------|

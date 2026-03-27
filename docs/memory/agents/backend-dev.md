@@ -1028,3 +1028,53 @@ SwarmEngine.js had all three subtasks (#46.1-#46.3) completed with startExecutio
 ### Handoff
 Task #47.2 (scaffold endpoint stub) can now proceed — it needs to add or replace the 501 stub in server/routes/swarm.js.
 ---
+
+---
+## 2026-03-27 — Task #48.2: swarmHandler.js — broadcast() + WS Event Wiring
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+swarmHandler.js had handleSwarmConnection (default export) and getSubscribers from Task #48.1.
+broadcast() was not yet implemented. server/index.js imported handleSwarmConnection but never called
+swarmEngine.setWsBroadcast(), so execution events from SwarmEngine had no path to connected WebSocket clients.
+132/132 tests passing at start.
+
+### What I did
+1. Read swarmHandler.js and server/index.js in parallel to confirm exact state before touching anything.
+2. Added `broadcast(executionId, event)` as a named export in swarmHandler.js:
+   - Calls getSubscribers(executionId) to get the Set
+   - JSON.serializes the event once
+   - Iterates subscribers, sends to each where ws.readyState === 1 (OPEN), skips others silently
+3. Updated comment header in swarmHandler.js to reference Task #48.2.
+4. Changed the import in server/index.js from default-only to `import handleSwarmConnection, { broadcast }`.
+5. Added `swarmEngine.setWsBroadcast(broadcast)` immediately after SwarmEngine instantiation (line ~262).
+6. Ran `npm test` — 132/132 pass.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/ws/swarmHandler.js | MODIFIED | Added broadcast() named export (16 lines); updated header comment |
+| server/index.js | MODIFIED | Added { broadcast } to import; added setWsBroadcast(broadcast) call after engine init |
+
+### Improvements delivered
+- SwarmEngine execution events (agent_started, agent_done, execution_complete, etc.) now flow to all subscribed browser WebSocket clients for a given executionId
+- Closed/closing connections are silently skipped via readyState check — no throw on stale sockets
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Used numeric `1` for readyState check rather than importing WebSocket class for the constant — avoids a module dependency just for a constant, and `1` is the stable spec value for OPEN.
+- Passed `broadcast` function reference directly to setWsBroadcast (not a lambda wrapper) — functionally equivalent and simpler.
+
+### What I learned
+- server/index.js places SwarmEngine init AFTER the Express route mounting (line ~257) which means the swarmRoutes call at line ~222 references `app.locals.swarmEngine` before it's set. This is an existing ordering concern — not introduced here, not fixed here (out of scope). The route handler uses `app.locals.swarmEngine` lazily at request time, so it works in practice.
+
+### State I'm leaving behind
+broadcast() is exported and wired. All 132 tests pass. The full WS pipeline is now functional:
+SwarmEngine emits → broadcast() → per-executionId subscriber Set → open WS clients.
+
+### Handoff
+None — task fully self-contained. Dependent tasks (#51, #57.x frontend) can proceed.
+---

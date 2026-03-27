@@ -902,3 +902,14 @@
 **Blockers:** none
 **Next:** Task #47.2 (scaffold stub endpoint — should replace 501 in swarm.js) can proceed now.
 ---
+
+---
+## 2026-03-27 — backend-dev — Task #48.2: swarmHandler.js — broadcast() + WS Event Wiring
+**Outcome:** COMPLETED
+**Summary:** Added broadcast(executionId, event) named export to server/ws/swarmHandler.js. Wired it to SwarmEngine via setWsBroadcast(broadcast) in server/index.js. Execution events from SwarmEngine now reach connected browser WebSocket subscribers. 132/132 tests pass.
+**Files changed:** server/ws/swarmHandler.js, server/index.js
+**Bugs fixed:** none
+**Decisions made:** Used numeric readyState === 1 instead of importing WebSocket class for the OPEN constant.
+**Blockers:** none
+**Next:** Frontend WebSocket consumer tasks (#57.x useSwarm hook, #51 client deps install) can now proceed.
+---
