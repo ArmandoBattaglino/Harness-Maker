@@ -1061,3 +1061,12 @@
 **Blockers:** none
 **Next:** Tasks #53.1–#53.3 (canvas nodes) are IN_PROGRESS — they all import useSwarmStore from SwarmContext. Task #82 (documentation update) remains the endpoint for ARCHITECTURE.md + README.md V3 section.
 ---
+## 2026-03-27 — code-mapper — Task #52: SwarmContext.jsx — Zustand ExecutionStore
+**Outcome:** COMPLETED
+**Summary:** Mapped client/src/store/SwarmContext.jsx into CODE_MAP.md with 13 Function Graph entries (useSwarmStore + 12 action methods) and added Module Index row. Appended CHANGELOG.md entry. No callers exist yet — all "Called by" fields are "(not yet wired)" pending Task #53.x canvas nodes.
+**Files changed:** docs/memory/CODE_MAP.md (MODIFIED), docs/memory/CHANGELOG.md (MODIFIED), docs/memory/agents/code-mapper.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Bugs fixed:** CHANGELOG.md concurrent-write conflict — re-read and used correct anchor string
+**Decisions made:** All 12 action methods as separate Function Graph entries for practical connection tracing
+**Blockers:** none
+**Next:** Task #53.x (AgentNode, DepartmentNode, TriggerNode) — update CODE_MAP.md "Called by" fields when those tasks complete
+---
