@@ -1,4 +1,38 @@
 ---
+## 2026-03-27 — code-mapper — Tasks #47.2 + #48.2: swarm.js scaffold stub + broadcast() WS wiring
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md: header timestamp, Module Index entries for swarmHandler.js (added broadcast export) and server/index.js (noted setWsBroadcast wiring); added new broadcast() Function Graph entry; updated getSubscribers "Called by" and SwarmEngine.setWsBroadcast "Called by" to reflect live connections; updated Key Behaviors note for the WS channel. Appended two CHANGELOG.md entries (Tasks #47.2 and #48.2) with full connection graphs.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** Task #47.2 CHANGELOG entry notes no source code changed — stub was already present from #47.1
+**Next:** Task #50 (security audit), #51 (devops deps install), #52 (SwarmContext frontend) are next wave
+---
+## 2026-03-27 — devops — Task #51: Client Dependencies — @xyflow/react + Zustand
+**Outcome:** COMPLETED
+**Summary:** Installed @xyflow/react@12.10.1 and zustand@4.5.7 in client/. npm run build passes (299 modules, 0 errors). All 132 tests pass. No imports added yet — packages installed only; imports happen in tasks #52-#57.
+**Files changed:** client/package.json, client/package-lock.json
+**Bugs fixed:** none
+**Decisions made:** Used zustand@4 (not v5) per task spec — v5 has breaking API changes. @xyflow/react resolved to latest v12.10.1. picomatch audit warning pre-existed from vite/tinyglobby — not introduced by this task.
+**Blockers:** none
+**Next:** Task #52 (SwarmContext.jsx Zustand ExecutionStore) — now unblocked
+---
+## 2026-03-27 — code-mapper — Tasks #47.1 + #48.1: swarm.js REST endpoints + swarmHandler.js WS channel
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md with 2 new Module Index entries (swarm.js, swarmHandler.js), corrected 3 SwarmEngine "Called by" fields from "(not yet wired)" to live callers, added 12 new Function Graph entries covering all 7 swarm REST endpoint handlers, the swarmRoutes factory, handleSwarmConnection, getSubscribers, and the _subscribers Map. Appended two CHANGELOG.md entries with full function lists and connection graphs. Noted an app.locals ordering risk in both documents.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (ordering risk flagged as advisory)
+**Decisions made:** Documented _subscribers as a standalone Function Graph entry; scaffold stub (501) given its own entry referencing Task #59
+**Next:** Task #48.2 (broadcast wiring via getSubscribers) will add new connections to update
+---
+## 2026-03-27 — project-manager — Tasks #47.1, #47.2, #48.1, #48.2: Phase 1 completion + plan update
+**Outcome:** COMPLETED
+**Summary:** Confirmed all 4 tasks COMPLETED (132/132 tests pass each). Marked #47.1 COMPLETED in summary table (was stale IN_PROGRESS). Removed duplicate #48.2 PENDING entry from PROGRESS.md. Updated V3 count from 9/57 to 11/57. CONTEXT.md updated to reflect Phase 1 done and next wave (#50, #51, #52 in parallel).
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** Next wave runs in parallel: #50 (security), #51 (devops install), #52 (SwarmContext frontend)
+**Blockers:** none
+**Next:** Launch #50 + #51 + #52 in parallel (all independent, no shared deps)
+---
 ## 2026-03-27 — backend-dev — Task #47.2: swarm.js — Scaffold Endpoint Stub (POST /api/v1/swarm/scaffold)
 **Outcome:** COMPLETED
 **Summary:** Verified that the POST /api/v1/swarm/scaffold stub (returns 501 `{ error: 'Not implemented' }`) was already present in server/routes/swarm.js from Task #47.1 (lines 246-251). No code changes required. 132/132 tests pass.
@@ -912,4 +946,14 @@
 **Decisions made:** Used numeric readyState === 1 instead of importing WebSocket class for the OPEN constant.
 **Blockers:** none
 **Next:** Frontend WebSocket consumer tasks (#57.x useSwarm hook, #51 client deps install) can now proceed.
+---
+---
+## 2026-03-27 — documenter — Tasks #47.2 + #48.2: Documentation audit
+**Outcome:** COMPLETED
+**Summary:** Audited all documentation artifacts after Task #47.2 (swarm.js scaffold stub — no code change, stub confirmed present from #47.1) and Task #48.2 (swarmHandler.js broadcast() named export added; swarmEngine.setWsBroadcast(broadcast) wired in server/index.js). All inline JSDoc is accurate — broadcast() has complete @param JSDoc in swarmHandler.js, wiring comment is accurate in server/index.js. Public docs (README.md, ARCHITECTURE.md) intentionally not updated per V3 deferral policy. DOC_STATUS.md updated: new row for swarmHandler.js #48.2, server/index.js row updated, ARCHITECTURE.md stale note updated to reflect full WS broadcast pipeline is wired.
+**Files changed:** docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/agents/documenter.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Maintained V3 deferral policy — no public doc updates until V3 is feature-complete (Task #82). Added separate #48.2 row in V3 service files table to preserve per-task history.
+**Blockers:** none
+**Next:** After Tasks #50/#51/#52 complete: update DOC_STATUS.md V3 table. After Task #82: major ARCHITECTURE.md + README.md V3 update.
 ---

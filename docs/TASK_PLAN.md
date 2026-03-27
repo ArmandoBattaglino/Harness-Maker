@@ -4294,7 +4294,7 @@ Agent: security
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: IN_PROGRESS
 Dependencies: #44, #47.1
 Context:
   Implement all 7 mandatory V3 security requirements from the PRD (Appendix A).
@@ -4345,7 +4345,7 @@ Agent: devops
 Priority: HIGH
 Difficulty: TRIVIAL
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Dependencies: #48.2
 Context:
   Install V3 frontend dependencies in `client/`:
@@ -6004,8 +6004,8 @@ Acceptance criteria:
 | **48.1** | swarmHandler.js — channel routing + connection mgmt | backend-dev | HIGH | claude-sonnet-4-6 | COMPLETED |
 | **48.2** | swarmHandler.js — broadcast() + WS event wiring | backend-dev | HIGH | claude-sonnet-4-6 | COMPLETED |
 | 49 | CircuitBreaker.js + BudgetTracker.js | backend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
-| 50 | V3 Security Layer (SEC-V3-01 to SEC-V3-07) | security | HIGH | claude-sonnet-4-6 | PENDING |
-| 51 | Client deps: @xyflow/react + zustand install | devops | HIGH | claude-haiku-4-5 | PENDING |
+| 50 | V3 Security Layer (SEC-V3-01 to SEC-V3-07) | security | HIGH | claude-sonnet-4-6 | IN_PROGRESS |
+| 51 | Client deps: @xyflow/react + zustand install | devops | HIGH | claude-haiku-4-5 | COMPLETED |
 | 52 | SwarmContext.jsx — Zustand ExecutionStore | frontend-dev | HIGH | claude-sonnet-4-6 | PENDING |
 | **53.1** | AgentNode.jsx — agent canvas node | frontend-dev | HIGH | claude-opus-4-6 | PENDING |
 | **53.2** | DepartmentNode.jsx — group container node | frontend-dev | HIGH | claude-opus-4-6 | PENDING |

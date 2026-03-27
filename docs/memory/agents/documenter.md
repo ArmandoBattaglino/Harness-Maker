@@ -550,3 +550,57 @@ All documentation is accurate and current as of 2026-03-26. All 31 tasks COMPLET
 ### Handoff
 No outstanding documentation work. If new tasks are added (v2.1, etc.), the documenter should be called after each task as usual. If EntitiesView.jsx is deleted in a cleanup task, remove the DEPRECATED note from ARCHITECTURE.md component tree.
 ---
+---
+## 2026-03-27 — Tasks #47.2 + #48.2: swarm.js scaffold stub confirmed; swarmHandler.js broadcast() + WS event wiring
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel with code-mapper and project-manager)
+
+### Context when I started
+Task #47.2 completed with no code changes — the scaffold stub was already present from Task #47.1. Task #48.2 added broadcast() as a named export to server/ws/swarmHandler.js and wired setWsBroadcast(broadcast) in server/index.js. V3 is still in progress — public documentation policy remains: do not update README.md or ARCHITECTURE.md until V3 is feature-complete (Task #82).
+
+### What I did
+1. Read swarmHandler.js, server/index.js, DOC_STATUS.md, my prior session log, ACTIVITY_LOG.md, and PROGRESS.md in parallel.
+2. Assessed staleness of all documentation artifacts:
+   - README.md: NOT stale. No user-facing feature or config change. V3 deferred per policy.
+   - ARCHITECTURE.md: NOT stale (intentionally deferred until V3 complete — high-priority debt item).
+   - docs/API.md: MISSING (intentional, tracked as medium debt).
+   - Inline comments / JSDoc in server/ws/swarmHandler.js: UP TO DATE. broadcast() export has JSDoc with @param for both executionId and event. The WebSocket.OPEN constant comment (// WebSocket.OPEN) is present inline. No stale comments — the prior "Broadcast wiring deferred to Task #48.2" note in DOC_STATUS.md was the only stale artifact.
+   - server/index.js: Line 261-262 has accurate inline comment: "Wire WebSocket broadcast to SwarmEngine so execution events reach subscribers." The import at line 32 imports both handleSwarmConnection and broadcast. Fully self-documenting.
+3. Updated DOC_STATUS.md:
+   - Advanced timestamp to reflect Tasks #47.2 and #48.2.
+   - Added separate row for swarmHandler.js (Task #48.2) documenting broadcast() export.
+   - Updated server/index.js row to reflect Task #48.2 wiring (broadcast import + setWsBroadcast call).
+   - Updated ARCHITECTURE.md stale section note: scaffold stub confirmed (#47.2 no code change), broadcast() wired, live WS event pipeline marked fully wired as of #48.2.
+4. Appended to ACTIVITY_LOG.md.
+5. Wrote this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Timestamp advanced; swarmHandler.js #48.2 row added; server/index.js row updated for #48.2; ARCHITECTURE.md stale note updated to reflect broadcast pipeline is fully wired. |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log. |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended Tasks #47.2 + #48.2 documenter entry. |
+
+### Improvements delivered
+- DOC_STATUS.md V3 service files table now tracks 10 V3 backend artifacts.
+- ARCHITECTURE.md stale section accurately notes that the WS broadcast pipeline (swarmHandler.js broadcast() + swarmEngine.setWsBroadcast) is fully wired as of Task #48.2. Only _onHandoff/_onDone stubs and scaffold full implementation remain pending.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None in this session | — | — | — |
+
+### Decisions I made
+- Did not update README.md or ARCHITECTURE.md. V3 is incomplete. Policy unchanged.
+- Added a separate DOC_STATUS.md row for Task #48.2 (rather than editing the #48.1 row) to preserve per-task history in the V3 service files table.
+
+### What I learned
+- broadcast() iterates the _subscribers Set for a given executionId and calls ws.send(JSON.stringify(event)) only when readyState === 1. The explicit === 1 check (vs WebSocket.OPEN) is used because WebSocket is not imported in the module — it avoids a dependency while relying on the stable numeric value.
+- The WS broadcast pipeline is now end-to-end: SwarmEngine calls this.wsBroadcast(executionId, event) → broadcast() fans it out to all open subscriber connections for that executionId.
+
+### State I'm leaving behind
+DOC_STATUS.md is current as of 2026-03-27 after Tasks #47.2 + #48.2. 10 V3 artifacts tracked. No public-facing documentation is stale. V3 documentation remains intentionally deferred until Task #82. The WS broadcast pipeline is fully wired as of Task #48.2.
+
+### Handoff
+Next documenter session triggers after Task #50 (V3 Security Layer), #51 (client deps), or #52 (frontend). After Task #82: major ARCHITECTURE.md + README.md V3 update covering all new services, REST routes, WS protocol, canvas architecture, and execution model.
+---

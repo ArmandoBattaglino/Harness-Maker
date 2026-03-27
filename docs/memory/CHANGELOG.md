@@ -856,3 +856,127 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 - SwarmEngine.stopExecution should call BudgetTracker.clearExecution to prevent memory leaks — not yet wired
 
 ---
+
+## 2026-03-27 — Task #47.1: server/routes/swarm.js — Swarm Execution Control REST API
+**Agent:** backend-dev
+**Triggered by:** V3 Phase 2 — implement 7 REST endpoints for swarm execution lifecycle control (start, pause, resume, stop, status, agent output, broadcast); factory pattern to accept swarmEngine + sessionManager
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/routes/swarm.js | ADDED | Factory fn swarmRoutes(swarmEngine, sessionManager) — 7 live endpoints + 1 stub (scaffold → 501) |
+| server/index.js | MODIFIED | Added swarm routes import + mount at /api/v1/swarm using app.locals.swarmEngine + app.locals.sessionManager; sessionManager stored in app.locals |
+
+### Functions Added
+- `swarmRoutes(swarmEngine, sessionManager)` in `server/routes/swarm.js` — factory returning Express Router with all swarm endpoints
+- `POST /:workflowId/start` in `server/routes/swarm.js` — validates projectId + projectPath, calls swarmEngine.startExecution → 201 { executionId, status }
+- `POST /:executionId/pause` in `server/routes/swarm.js` — sends \x03 Ctrl-C to all running agent sessions via sessionManager.writeInput
+- `POST /:executionId/resume` in `server/routes/swarm.js` — no-op stub; returns 200 { ok: true }; full HITL deferred to Task #70
+- `DELETE /:executionId` in `server/routes/swarm.js` — calls swarmEngine.stopExecution → 204
+- `GET /:executionId/status` in `server/routes/swarm.js` — calls swarmEngine.getStatus → 200 snapshot or 404
+- `GET /:executionId/agent/:nodeId/output` in `server/routes/swarm.js` — resolves execution→agentState→session→buffer.toString() → 200 { output }
+- `POST /:executionId/broadcast` in `server/routes/swarm.js` — scope-filtered text injection; soft (ESC marker) or hard (Ctrl-C + 300ms + text + 100ms + newline, fire-and-forget) mode
+- `POST /:workflowId/scaffold` in `server/routes/swarm.js` — 501 stub; full implementation in Task #59
+
+### Functions Modified
+- `startup()` in `server/index.js` — now stores sessionManager in app.locals; mounts swarmRoutes; note: SwarmEngine instantiated AFTER route mount which means app.locals.swarmEngine is set after swarmRoutes is called — factory accesses it at request time (not at mount time). Potential ordering issue noted.
+
+### Connection Changes
+- server/index.js → server/routes/swarm.js (new import)
+- server/routes/swarm.js → server/services/SwarmEngine.js (swarmEngine.startExecution, getStatus, stopExecution)
+- server/routes/swarm.js → server/services/SessionManager.js (sessionManager.writeInput, getSession)
+- SwarmEngine.startExecution now has a live caller (POST /:workflowId/start)
+- SwarmEngine.stopExecution now has a live caller (DELETE /:executionId)
+- SwarmEngine.getStatus now has live callers (pause, resume, status, agent-output, broadcast handlers)
+
+### Impact on Other Code
+- app.locals.swarmEngine is set AFTER `app.use('/api/v1/swarm', swarmRoutes(...))` is called in startup(). The factory closes over the reference at call time, not at request time. If swarmEngine is not yet on app.locals when routes are mounted, handlers will crash on first request. This ordering risk is present in the current code and should be verified.
+- No breaking changes to existing endpoints
+
+---
+
+## 2026-03-27 — Task #48.1: server/ws/swarmHandler.js — Channel Routing + Connection Management
+**Agent:** backend-dev
+**Triggered by:** V3 Phase 2 — implement WebSocket handler for /ws/swarm path: subscriber registry per executionId, connection lifecycle, initial status snapshot on connect
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/ws/swarmHandler.js | ADDED | handleSwarmConnection (default export), getSubscribers (named export), module-level _subscribers Map |
+| server/index.js | MODIFIED | Two noServer WSS instances (wssTerminal + wssSwarm, 1MB maxPayload each); server.on('upgrade') router (/ws/swarm* → wssSwarm, else → wssTerminal); SwarmEngine instantiated and stored in app.locals.swarmEngine; app.locals.sessionManager set |
+
+### Functions Added
+- `handleSwarmConnection(ws, req, swarmEngine)` in `server/ws/swarmHandler.js` — default export; registers ws in _subscribers, sends initial status snapshot, cleans up on close/error
+- `getSubscribers(executionId)` in `server/ws/swarmHandler.js` — named export; returns current Set\<WebSocket\> for executionId, or empty Set; used by future broadcast implementation (Task #48.2)
+- `_subscribers` Map in `server/ws/swarmHandler.js` — module-level state: executionId → Set\<WebSocket\>
+
+### Functions Modified
+- `startup()` in `server/index.js` — added wssTerminal + wssSwarm noServer WebSocket servers; server.on('upgrade') routes by pathname prefix; SwarmEngine instantiated with (sessionManager, workflowStore) and stored in app.locals; app.locals.sessionManager set; swarmRoutes mounted using app.locals references
+
+### Connection Changes
+- server/index.js → server/ws/swarmHandler.js (new import: handleSwarmConnection)
+- server/index.js::wssSwarm → handleSwarmConnection (wires WSS connection event to handler)
+- server/index.js::server.on('upgrade') routes WS upgrades: /ws/swarm* → wssSwarm; all others → wssTerminal
+- handleSwarmConnection → swarmEngine.getStatus (reads initial snapshot on WS connect)
+- SwarmEngine now instantiated in server/index.js (was not previously in startup sequence)
+- app.locals.swarmEngine and app.locals.sessionManager now set — accessible to all route handlers
+
+### Impact on Other Code
+- setupTerminalWebSocket() called with wssTerminal (noServer instance) instead of a server-attached WSS — no behavioral change since setupTerminalWebSocket only binds .on('connection'); upgrade routing replaces the previous implicit handling
+- getSubscribers() currently has no callers — it is the hook for Task #48.2 broadcast fan-out implementation
+- SwarmEngine constructor runs after workflowStore init; if workflowStore init fails (non-fatal warn), swarmEngine is constructed with a null/undefined workflowStore — startExecution will throw 'Workflow not found' for all requests in that case
+
+---
+
+## 2026-03-27 — Task #47.2: server/routes/swarm.js — scaffold stub (POST /scaffold → 501)
+**Agent:** backend-dev
+**Triggered by:** V3 Phase 2 — confirm scaffold stub is present in swarm.js; no new code written — stub was already placed in Task #47.1
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| docs/TASK_PLAN.md | MODIFIED | Task #47.2 marked COMPLETED — scaffold stub confirmed already present from Task #47.1 |
+
+### Functions Added
+- none (scaffold stub was already present from Task #47.1 as `POST /:workflowId/scaffold` → 501)
+
+### Functions Modified
+- none
+
+### Connection Changes
+- none (no source code changed)
+
+### Impact on Other Code
+- none
+
+---
+
+## 2026-03-27 — Task #48.2: server/ws/swarmHandler.js — broadcast() + WS event wiring
+**Agent:** backend-dev
+**Triggered by:** V3 Phase 2 — add broadcast(executionId, event) named export to swarmHandler.js; wire SwarmEngine WS events to subscribers by calling swarmEngine.setWsBroadcast(broadcast) in server/index.js
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/ws/swarmHandler.js | MODIFIED | Added broadcast(executionId, event) named export — iterates subscribers Set, sends JSON to OPEN connections only (readyState === 1), skips non-OPEN connections silently |
+| server/index.js | MODIFIED | Added broadcast to the named imports from swarmHandler.js; added swarmEngine.setWsBroadcast(broadcast) call immediately after SwarmEngine is instantiated |
+
+### Functions Added
+- `broadcast(executionId, event)` in `server/ws/swarmHandler.js` — fans out JSON event to all OPEN WebSocket subscribers for a given executionId; calls getSubscribers(); readyState === 1 guard prevents send() on closing/closed sockets
+
+### Functions Modified
+- `startup()` in `server/index.js` — now imports broadcast from swarmHandler.js and calls swarmEngine.setWsBroadcast(broadcast) to wire execution events to WS clients; `broadcast` is imported as a named export alongside the default handleSwarmConnection
+- `SwarmEngine.setWsBroadcast(fn)` — caller updated: previously "not yet implemented — future task"; now called from server/index.js::startup()
+
+### Connection Changes
+- server/index.js → server/ws/swarmHandler.js::broadcast (new named import)
+- server/index.js::startup() → swarmEngine.setWsBroadcast(broadcast) (new call — wires SwarmEngine emission path to WS subscribers)
+- server/ws/swarmHandler.js::broadcast → getSubscribers (internal call — now getSubscribers has its first real caller)
+- SwarmEngine._wsBroadcast is now set at startup — all methods that call this._wsBroadcast (e.g. _spawnAgentPty, _onHandoff, _onDone) will now deliver events to connected WS clients
+
+### Impact on Other Code
+- SwarmEngine._spawnAgentPty, _onHandoff, _onDone all call this._wsBroadcast — these were previously no-ops when _wsBroadcast was null; now they deliver live events to subscribers
+- getSubscribers() now has its first real caller (broadcast) — was previously documented as "no callers" since Task #48.1
+- broadcast() silently skips non-OPEN connections — callers do not need to handle partial-send errors
+
+---

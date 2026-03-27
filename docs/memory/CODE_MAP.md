@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-27 — after Task #47.1 (swarm.js REST endpoints) + Task #48.1 (swarmHandler.js WS channel) — mapped by code-mapper_
+_Last updated: 2026-03-27 — after Task #47.2 (swarm.js scaffold stub) + Task #48.2 (swarmHandler.js broadcast() + WS event wiring) — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -10,7 +10,7 @@ _Last updated: 2026-03-27 — after Task #47.1 (swarm.js REST endpoints) + Task 
 ### Server Modules
 | File | Key Exports | Purpose |
 |------|-------------|---------|
-| server/index.js | (main) | Full bootstrap: binary discovery, config load, stale PID cleanup, middleware, routes (incl. /api/v1/swarm), static SPA, error handler, 127.0.0.1 binding, two noServer WSS instances (wssTerminal + wssSwarm) routed by pathname, SwarmEngine instantiated + stored in app.locals, sessionManager stored in app.locals, SIGTERM/SIGINT, rate-limit stale sweep (BUG-07 fix). Last modified Task #47.1 + #48.1. |
+| server/index.js | (main) | Full bootstrap: binary discovery, config load, stale PID cleanup, middleware, routes (incl. /api/v1/swarm), static SPA, error handler, 127.0.0.1 binding, two noServer WSS instances (wssTerminal + wssSwarm) routed by pathname, SwarmEngine instantiated + stored in app.locals, sessionManager stored in app.locals, swarmEngine.setWsBroadcast(broadcast) wired at startup, SIGTERM/SIGINT, rate-limit stale sweep (BUG-07 fix). Last modified Task #47.1 + #48.1 + #48.2. |
 | server/services/ConfigStore.js | ConfigStore | Manages %APPDATA%\ClaudeCodeManager\config.json — projects CRUD, settings, write-file-atomic |
 | server/services/ProcessRegistry.js | ProcessRegistry | Tracks active PIDs in active_pids.json, cleanupStale() on startup; isValidPid() guards register+cleanup against out-of-range values |
 | server/services/BinaryDiscovery.js | discoverClaudeBinary | 4-step Claude binary lookup: env var → PATH → %LOCALAPPDATA% → fatal error |
@@ -36,7 +36,7 @@ _Last updated: 2026-03-27 — after Task #47.1 (swarm.js REST endpoints) + Task 
 | server/services/CircuitBreaker.js | CircuitBreaker (class), default CircuitBreaker | Advisory circuit breaker for handoff loops — check(edgeId, counter, threshold) returns boolean; never stops execution, caller emits WS advisory (FR-V3-17, Task #49) |
 | server/services/BudgetTracker.js | BudgetTracker (class), default BudgetTracker | Soft budget tracker — accumulates char counts per session, estimates tokens (÷4), provides checkBudget advisory signal; never stops execution (FR-V3-18, Task #49) |
 | server/routes/swarm.js | swarmRoutes (factory fn) | 7-endpoint REST API for swarm execution control: start, pause, resume, stop, status, agent output, broadcast. Factory pattern: accepts swarmEngine + sessionManager at construction. (Task #47.1) |
-| server/ws/swarmHandler.js | handleSwarmConnection (default), getSubscribers | WebSocket connection handler for /ws/swarm path. Module-level _subscribers Map keyed by executionId → Set\<WebSocket\>. Sends initial execution_status snapshot on connect. (Task #48.1) |
+| server/ws/swarmHandler.js | handleSwarmConnection (default), getSubscribers, broadcast | WebSocket connection handler for /ws/swarm path. Module-level _subscribers Map keyed by executionId → Set\<WebSocket\>. Sends initial execution_status snapshot on connect. broadcast() fans out JSON events to all OPEN connections for an executionId. (Tasks #48.1, #48.2) |
 
 ### Client Modules
 | File | Key Exports | Purpose |
@@ -1163,7 +1163,7 @@ _Last updated: 2026-03-27 — after Task #47.1 (swarm.js REST endpoints) + Task 
 - WorkflowStore persists workflows to %APPDATA%\ClaudeCodeManager\workflows\<uuid>.json; server generates UUIDs (never client-supplied); _resolveFilePath() guards all reads/writes against directory traversal (SEC-V3-06)
 - HandoffParser: stateful 4KB rolling buffer; ANSI-stripped; __HANDOFF__:targetId:base64 tokens may span multiple PTY onData chunks; global regex constructed fresh per feed() call to avoid stale lastIndex; contextUpdate validated (max 50 keys, primitive values, string max 1024 chars) (SEC-V3-07)
 - Swarm REST API (Task #47.1): POST /api/v1/swarm/:workflowId/start → 201; POST /:id/pause (Ctrl-C to all running agents); POST /:id/resume (no-op stub); DELETE /:id (stopExecution); GET /:id/status; GET /:id/agent/:nodeId/output (ring buffer); POST /:id/broadcast (soft=ESC marker, hard=Ctrl-C+text fire-and-forget); POST /:id/scaffold (501 stub — Task #59)
-- Swarm WS channel (Task #48.1): server.on('upgrade') routes /ws/swarm* to wssSwarm, all other paths to wssTerminal; handleSwarmConnection registers ws in module-level _subscribers Map keyed by executionId; sends execution_status snapshot on connect; empty Sets are eagerly deleted; getSubscribers() used by future broadcast in Task #48.2
+- Swarm WS channel (Tasks #48.1 + #48.2): server.on('upgrade') routes /ws/swarm* to wssSwarm, all other paths to wssTerminal; handleSwarmConnection registers ws in module-level _subscribers Map keyed by executionId; sends execution_status snapshot on connect; empty Sets are eagerly deleted; getSubscribers() is called by broadcast(); broadcast() fans out JSON events to all OPEN connections for a given executionId; swarmEngine.setWsBroadcast(broadcast) called at startup in server/index.js so all SwarmEngine WS emissions go through the handler
 - SwarmEngine + sessionManager stored in app.locals (Task #48.1); swarmRoutes factory accesses them via app.locals at mount time
 - Test suite: 7 files, 132 tests total (110 + 22 new HandoffParser tests), all passing. Runner: Vitest v4.1.0 with `pool: 'forks'` (sequential) to prevent PTY cross-test interference
 - SessionManager + JobRunner tests import the CLASS (not the singleton export) for per-test isolation
@@ -1363,12 +1363,12 @@ _Last updated: 2026-03-27 — after Task #47.1 (swarm.js REST endpoints) + Task 
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine.setWsBroadcast(fn)`
 - **Purpose:** Wire the WebSocket broadcast function (called by swarmHandler.js after WS channel setup). Stored as this._wsBroadcast for use by all methods that emit execution status events.
-- **Called by:** swarmHandler.js (not yet implemented — future task)
+- **Called by:** server/index.js::startup() — `swarmEngine.setWsBroadcast(broadcast)` called immediately after SwarmEngine is instantiated (Task #48.2)
 - **Calls:** none (assignment only)
 - **Inputs:** fn (Function — (executionId: string, event: object) => void)
 - **Output:** void
 - **Side effects:** sets this._wsBroadcast
-- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev
+- **Last modified:** 2026-03-27 in Task #48.2 by backend-dev (caller updated — was "future task", now wired from server/index.js)
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine.startExecution(workflowId, projectId, projectPath)`
 - **Purpose:** Start a new workflow execution. Loads workflow definition from WorkflowStore, creates an in-memory WorkflowExecution record, identifies the triage node (first node with isTriageNode===true or fallback to nodes[0]), spawns a PTY session for that node, then starts the heartbeat timer.
@@ -1626,13 +1626,23 @@ _Last updated: 2026-03-27 — after Task #47.1 (swarm.js REST endpoints) + Task 
 - **Last modified:** 2026-03-27 in Task #48.1 by backend-dev
 
 ### `server/ws/swarmHandler.js` :: `getSubscribers(executionId)` (named export)
-- **Purpose:** Return the current subscriber Set for a given executionId. Returns an empty Set (transient, not stored) if no subscribers exist. Used by future broadcast logic (Task #48.2) to fan out WS events.
-- **Called by:** (not yet called by any module — intended caller: SwarmEngine or a broadcast helper in Task #48.2)
+- **Purpose:** Return the current subscriber Set for a given executionId. Returns an empty Set (transient, not stored) if no subscribers exist. Used by broadcast() to fan out WS events.
+- **Called by:** server/ws/swarmHandler.js::broadcast (Task #48.2)
 - **Calls:** _subscribers.get, Set constructor (empty fallback)
 - **Inputs:** executionId (string)
 - **Output:** Set\<WebSocket\>
 - **Side effects:** none
 - **Last modified:** 2026-03-27 in Task #48.1 by backend-dev
+
+### `server/ws/swarmHandler.js` :: `broadcast(executionId, event)` (named export)
+- **Purpose:** Send a JSON-serialized event to all open WebSocket connections subscribed to a given executionId. Connections whose readyState is not OPEN (1) are skipped silently — no error is thrown for closed or closing sockets.
+- **Called by:** server/services/SwarmEngine.js — all methods that call this._wsBroadcast (wired via swarmEngine.setWsBroadcast(broadcast) in server/index.js::startup())
+- **Calls:** getSubscribers, JSON.stringify, ws.send (per subscriber)
+- **Inputs:** executionId (string), event (object — must be JSON-serializable)
+- **Output:** void
+- **Side effects:** sends WebSocket messages to all OPEN subscribers; non-OPEN connections silently skipped
+- **Complexity note:** readyState === 1 check (WebSocket.OPEN) is used because the `ws` library does not export the WebSocket constant in ESM context without an import. The literal 1 is correct and stable per RFC 6455.
+- **Last modified:** 2026-03-27 in Task #48.2 by backend-dev
 
 ### `server/ws/swarmHandler.js` :: `_subscribers` (module-level Map)
 - **Purpose:** Module-level registry of active WebSocket subscribers per execution. Key: executionId (string) → Value: Set\<WebSocket\>. Entries are created on first connection for an executionId and deleted when the last subscriber disconnects. Never persisted.

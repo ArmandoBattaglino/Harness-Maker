@@ -152,7 +152,7 @@ _None._
 - NOTE: FileManager was NOT created in Task #5 as planned — RESOLVED in Task #7 (created server/services/FileManager.js).
 
 ## V3 — Swarm Orchestrator (57 granular tasks after split — 2026-03-27 replan)
-**Status: 11/57 COMPLETED — as of 2026-03-27. All Phase 1 backend tasks done. Next: #50 (security), #51 (devops), #52 (frontend) in parallel.**
+**Status: 12/57 COMPLETED — as of 2026-03-27. All Phase 1 backend tasks done. #51 (devops) COMPLETED. #50 (security) still IN_PROGRESS.**
 **Note: Original 40 tasks (#43–#82). After model assignment + subtask split: 57 granular units.**
 **7 original tasks split into subtasks: #46→3, #47→2, #48→2, #53→3, #57→2, #62→3, #71→2**
 - V3 PRD complete: docs/PRD.md
@@ -172,10 +172,10 @@ _None._
 - [TASK-48.2] COMPLETED 2026-03-27 — swarmHandler.js broadcast() + WS event wiring; broadcast() named export added; setWsBroadcast(broadcast) called in server/index.js; 132/132 tests pass
 - [TASK-49] COMPLETED 2026-03-27 — CircuitBreaker.js + BudgetTracker.js — pure service classes, 132/132 tests pass
 - [TASK-49] COMPLETED 2026-03-27 — CircuitBreaker.js + BudgetTracker.js — pure service classes, no I/O, no imports, 132/132 tests pass
-- [TASK-50] PENDING — V3 Security Layer (SEC-V3-01 to SEC-V3-07)
+- [TASK-50] IN_PROGRESS — V3 Security Layer (SEC-V3-01 to SEC-V3-07) — security agent
 
 ### V3 Phase 2 — Canvas Static
-- [TASK-51] PENDING — @xyflow/react + zustand install (devops)
+- [TASK-51] COMPLETED 2026-03-27 — @xyflow/react@12.10.1 + zustand@4.5.7 installed in client/; 299 modules build clean; 132/132 tests pass — devops agent
 - [TASK-52] PENDING — SwarmContext.jsx Zustand ExecutionStore
 - [TASK-53.1] PENDING — AgentNode.jsx — agent canvas node
 - [TASK-53.2] PENDING — DepartmentNode.jsx — group container node

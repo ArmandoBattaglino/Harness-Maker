@@ -1,4 +1,59 @@
 ---
+## 2026-03-27 — Tasks #47.1 + #48.1: swarm.js REST endpoints + swarmHandler.js WS channel
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+Tasks #47.1 (backend-dev: server/routes/swarm.js — 7 execution control REST endpoints) and #48.1 (backend-dev: server/ws/swarmHandler.js — WebSocket channel routing + connection management) had just completed. CODE_MAP.md was last updated after Task #49 (CircuitBreaker + BudgetTracker). No entries existed for swarm.js or swarmHandler.js. SwarmEngine entries existed but "Called by" fields said "(not yet wired to any route)."
+
+### What I did
+1. Read CODE_MAP.md header (offset 1, limit 100) and Module Index section
+2. Read server/routes/swarm.js (254 lines) and server/ws/swarmHandler.js (87 lines) fully in parallel
+3. Read server/index.js fully to confirm mount point, WSS routing, and app.locals wiring
+4. Read CODE_MAP.md tail sections (SwarmEngine entries at offset 1340+, end section at offset 1520+) to locate append point and stale "Called by" fields
+5. Read CHANGELOG.md tail (offset 840) to find append point
+6. Updated CODE_MAP.md:
+   - Updated header timestamp
+   - Added 2 new Module Index rows (swarm.js, swarmHandler.js)
+   - Updated server/index.js Module Index entry with new swarm route + WSS details
+   - Updated SwarmEngine.getStatus "Called by" (was "not yet wired")
+   - Updated SwarmEngine.startExecution "Called by" (was "not yet wired")
+   - Updated SwarmEngine.stopExecution "Called by" (was "not yet wired")
+   - Added Function Graph section: 9 entries for swarm.js, 3 entries for swarmHandler.js
+   - Added 4 Key Behaviors bullets for swarm REST + WS
+7. Appended two CHANGELOG.md entries (Tasks #47.1 and #48.1 with full function lists + connection graphs + ordering concern note)
+8. Tasks #47.1 and #48.1 already marked COMPLETED in TASK_PLAN.md — no change needed
+9. Appended ACTIVITY_LOG entry
+10. Appended this agent memory entry
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Module Index (2 new rows + updated server/index.js row); updated 3 SwarmEngine "Called by" fields; added 12 new Function Graph entries; added 4 Key Behaviors bullets; updated timestamp |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Task #47.1 and Task #48.1 entries with full connection graphs |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session summary entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| app.locals ordering concern | swarmRoutes is mounted before SwarmEngine is instantiated in startup(); factory closes over app.locals at call time, not at request time — if locals aren't set yet, handlers could receive undefined swarmEngine | Noted as an ordering risk in CHANGELOG.md and CODE_MAP.md — not a code bug but an architectural risk to flag for Task #70 or HITL work | KNOWN (advisory) |
+
+### Decisions I made
+- Documented _subscribers Map as a Function Graph entry (not just a module-level note) because it is a stateful singleton that other modules will need to understand for Task #48.2 broadcast wiring
+- Kept swarmRoutes scaffold stub (POST /:workflowId/scaffold → 501) as a function entry with explicit note that Task #59 will replace it
+
+### What I learned
+- Two noServer WSS instances (wssTerminal + wssSwarm) with server.on('upgrade') routing is the pattern used instead of the previous single-WSS approach — the upgrade handler dispatches by pathname prefix (/ws/swarm* vs everything else)
+- getSubscribers() returns an ephemeral empty Set (not stored) when no subscribers exist — callers must not assume the returned Set is the live one; only non-empty Sets are stored in _subscribers
+- server/index.js now stores both swarmEngine and sessionManager in app.locals — this means any Express middleware or route handler has access to both via req.app.locals
+
+### State I'm leaving behind
+CODE_MAP.md fully reflects Tasks #47.1 and #48.1. CHANGELOG.md has entries for both tasks. SwarmEngine "Called by" fields are now accurate. getSubscribers() is noted as having no callers yet (Task #48.2 will wire it).
+
+### Handoff
+Task #48.2 (broadcast wiring) will use getSubscribers() to fan-out WS events from SwarmEngine — update CODE_MAP.md with that connection when it completes. The app.locals ordering risk should be re-examined if any issues arise.
+---
 ## 2026-03-27 — Tasks #43 + #45: WorkflowStore + HandoffParser
 **Status:** COMPLETED
 **Called by:** orchestrator (post-task code-mapper invocation)

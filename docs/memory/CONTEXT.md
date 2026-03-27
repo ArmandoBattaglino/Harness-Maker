@@ -51,17 +51,32 @@ Security assessment completed 2026-03-27. Seven mandatory requirements must appe
 - Browser test: icons render as glyphs, terminal bg is black, scope switch prompts
 
 ---
-## Update 2026-03-27 — V3 Phase 1 Backend Foundation In Progress
+## Update 2026-03-27 — V3 Phase 1 Backend Foundation COMPLETE
 
-**Focus:** V3 Swarm Orchestrator — Phase 1 Backend Foundation tasks executing.
+**Focus:** V3 Swarm Orchestrator — Phase 1 Backend Foundation ALL DONE (11/57 tasks).
 
-**Completed:** #43, #44, #45, #46.1, #46.2, #46.3, #49 (7/57 V3 tasks, 132/132 tests pass)
-**IN_PROGRESS (parallel):**
-- TASK #47.1 — swarm.js execution control endpoints (7 routes) — backend-dev, depends #46.3 ✓
-- TASK #48.1 — swarmHandler.js channel routing + connection management — backend-dev, depends #46.1 ✓
+**Completed (Phase 1 — all 11 tasks):**
+#43, #44, #45, #46.1, #46.2, #46.3, #47.1, #47.2, #48.1, #48.2, #49 — 132/132 tests pass throughout.
 
-**Next after #47.1 completes:** #47.2 (scaffold stub, PENDING — depends #47.1 + #59)
-**Next after #48.1 completes:** #48.2 (broadcast + WS event types — depends #48.1)
+**Phase 1 deliverables:**
+- WorkflowStore.js (CRUD + persistence)
+- workflows.js REST routes (mounted at /api/v1/workflows)
+- HandoffParser.js (rolling 4KB accumulator)
+- SwarmEngine.js (full: skeleton + startExecution + _spawnAgentPty + _buildSystemPrompt + _startHeartbeat)
+- swarm.js REST routes (7 execution control endpoints + scaffold stub at /api/v1/swarm)
+- swarmHandler.js (channel routing + connection management + broadcast() + WS event wiring)
+- CircuitBreaker.js + BudgetTracker.js
+
+**Current wave (IN_PROGRESS — launched in parallel 2026-03-27):**
+- TASK #50 — V3 Security Layer (security agent) — HIGH priority — IN_PROGRESS
+- TASK #51 — @xyflow/react + zustand install (devops) — HIGH priority — IN_PROGRESS
+
+**After #51 completes:**
+- TASK #52 — SwarmContext.jsx Zustand ExecutionStore (frontend-dev) — HIGH priority (depends on #51)
+
+**After #51 + #52 complete:**
+- TASK #53.1, #53.2, #53.3 (canvas nodes) in parallel
+- TASK #54 (HandoffEdge), #55 (AgentInspector), #56 (BreadcrumbBar) in parallel
 
 **Key context for #47.1 and #48.1 agents:**
 - SwarmEngine.js is at server/services/SwarmEngine.js — complete, all methods implemented, 132 tests pass

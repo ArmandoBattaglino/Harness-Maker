@@ -943,3 +943,61 @@ Task #46.2 (SwarmEngine.js startExecution + _spawnAgentPty + HandoffParser tap) 
 ### Handoff
 After #46.3 completes: unblock #47.1 (swarm.js execution routes), #47.2 (scaffold stub), #62.1 (handoff loop part 1). After #49 completes: BudgetTracker ready for SwarmEngine _onDone integration (#62.3).
 ---
+---
+## 2026-03-27 — Tasks #47.1 + #48.1 COMPLETED; #47.2 + #48.2 COMPLETED; Phase 1 done; Next: #50 + #51 + #52
+**Status:** COMPLETED
+**Called by:** user (orchestrator notification — #47.1 and #48.1 confirmed completed; #47.2 and #48.2 launched and also completed)
+
+### Context when I started
+V3 Phase 1 was winding down. Tasks #47.1 (swarm.js 7 execution control endpoints) and #48.1 (swarmHandler.js channel routing + connection management) had just been confirmed COMPLETED with 132/132 tests passing. User indicated #47.2 and #48.2 were launching next. When I re-read the file, those two tasks had already been completed by their agents as well.
+
+### What I did
+1. Read TASK_PLAN.md (target sections for #47.x and #48.x blocks + summary table)
+2. Read docs/memory/PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md for current state
+3. Found discrepancies: summary table had #47.1 as IN_PROGRESS (should be COMPLETED); #48.2 task block had PENDING (should be COMPLETED); duplicate stale #48.2 PENDING entry in PROGRESS.md; PROGRESS.md count was 9/57 (should be 11/57)
+4. Edited TASK_PLAN.md summary table: #47.1 → COMPLETED
+5. Edited PROGRESS.md: updated count 9/57 → 11/57; removed stale #48.2 PENDING line; added #49 completed entry
+6. Edited CONTEXT.md: replaced stale IN_PROGRESS thread with Phase 1 complete summary + next wave assignments
+7. Appended ACTIVITY_LOG.md entry for this PM session
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Summary table #47.1 status: IN_PROGRESS → COMPLETED |
+| docs/memory/PROGRESS.md | MODIFIED | V3 count 9/57 → 11/57; removed stale duplicate #48.2 PENDING entry; added #49 completion line |
+| docs/memory/CONTEXT.md | MODIFIED | Replaced stale IN_PROGRESS thread with Phase 1 complete state + next parallel wave (#50, #51, #52) |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended PM session log entry |
+| docs/memory/agents/project-manager.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- TASK_PLAN.md summary table is now fully consistent (all Phase 1 tasks COMPLETED)
+- PROGRESS.md count is accurate (11/57, not 9/57)
+- CONTEXT.md reflects Phase 1 complete and gives next-wave guidance for orchestrator
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| #47.1 showed IN_PROGRESS in summary table despite COMPLETED status in task block | File was modified mid-session by another agent between my first read and my edit attempts | Re-read file before editing | FIXED |
+| Duplicate #48.2 PENDING entry in PROGRESS.md | Another agent wrote a PENDING entry before its own COMPLETED entry was written | Removed stale PENDING line | FIXED |
+
+### Decisions I made
+- Next parallel wave: #50 (security), #51 (devops — @xyflow/react + zustand install), #52 (SwarmContext.jsx frontend) — all three have no dependency on each other and can launch simultaneously
+- #50 is security agent, HIGH priority, should not be skipped
+- #51 is a prerequisite for all canvas tasks (#53.x, #54, #55, #56, #57.x) — highest leverage next action
+
+### What I learned
+- When file shows "was modified since read" error, always re-read before retrying edits — concurrent agent writes are common in this codebase
+- TASK_PLAN.md summary table (line ~6000) can drift from task blocks when multiple agents update different sections simultaneously — always check both locations
+
+### State I'm leaving behind
+- All 11 Phase 1 V3 tasks COMPLETED (43, 44, 45, 46.1, 46.2, 46.3, 47.1, 47.2, 48.1, 48.2, 49)
+- 132/132 tests pass
+- V3 Phase 2 (Canvas Static) blocked on #51 (devops: install @xyflow/react + zustand) + #52 (SwarmContext)
+- #50 (security hardening) is independent and can run in parallel
+
+### Handoff
+Launch three agents in parallel:
+1. security → TASK #50 (V3 Security Layer, SEC-V3-01 through SEC-V3-07)
+2. devops → TASK #51 (@xyflow/react + zustand install in client/)
+3. frontend-dev → TASK #52 (SwarmContext.jsx Zustand ExecutionStore — can start even before #51 lands since it's pure JS with no canvas deps)
+---
