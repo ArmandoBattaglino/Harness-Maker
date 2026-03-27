@@ -1,4 +1,58 @@
 ---
+## 2026-03-27 — Task #46.2: SwarmEngine.js — startExecution + _spawnAgentPty + HandoffParser Tap
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+SwarmEngine.js skeleton existed from #46.1 with stubs for startExecution and _spawnAgentPty. SessionManager.js already had swarmListeners Set wired into onData handler (DEC-014). HandoffParser.js was complete from #45. 132/132 tests passing.
+
+### What I did
+1. Read project memory (PROGRESS, CONTEXT, agent log) and source files (SwarmEngine.js, SessionManager.js, HandoffParser.js) in parallel.
+2. Verified SessionManager.createSession signature: `(projectId, projectPath, claudeBinaryPath)` -- 3 args, not 2 as task spec assumed. claudeBinaryPath comes from `sessionManager.claudeBin` (set by server/index.js at startup).
+3. Verified createSession returns full session object (not just sessionId) -- need `session.sessionId`.
+4. Implemented `startExecution()`: loads workflow from store, creates execution record (with projectId/projectPath stored for _spawnAgentPty), finds triage node (isTriageNode === true or first), spawns agent PTY.
+5. Implemented `_spawnAgentPty()`: finds node, builds handoff targets from edges, spawns session via SessionManager, creates HandoffParser, registers tap on swarmListeners, stores tapFn in agentStates for cleanup.
+6. Implemented `_ensureAgentPty()`: checks if active session exists for nodeId, reuses if status !== 'done', spawns new otherwise.
+7. Added `_onHandoff()` and `_onDone()` stubs that broadcast WS events. `_onDone` also marks agent state as 'done'.
+8. Updated `stopExecution()` to remove tapFn from swarmListeners BEFORE killing sessions.
+9. Ran `npm test` -- 132/132 pass, zero regressions.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SwarmEngine.js | MODIFIED | Implemented startExecution, _spawnAgentPty, _ensureAgentPty, _onHandoff (stub), _onDone (stub); updated stopExecution to clean up tapFn |
+
+### Improvements delivered
+- SwarmEngine can now start a workflow execution and spawn agent PTYs with HandoffParser tap
+- PTY output is parsed for handoff/done tokens in real time
+- lastOutputSnippet tracks last 500 chars of each agent's output
+- Budget tracking hook ready (calls this._budgetTracker if present, for #49)
+- Tap listeners are properly cleaned up on stopExecution
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | - | - | - |
+
+### Decisions I made
+- Stored `projectId` and `projectPath` on the execution record (not in the task spec shape, but needed by _spawnAgentPty to pass to createSession)
+- Pass `this._sessionManager.claudeBin` as 3rd arg to createSession -- matches the pattern used in server/routes/sessions.js
+- Initialize agentState BEFORE defining tapFn, then assign tapFn afterward -- avoids referencing undefined state in the closure
+- _onDone sets agent status to 'done' immediately -- enables _ensureAgentPty to detect completed agents
+- Guard `if (systemPrompt)` before writeInput -- _buildSystemPrompt is still a stub returning undefined in #46.3
+
+### What I learned
+- SessionManager.createSession returns the full session record object, not just sessionId -- the session object has { sessionId, projectId, pty, buffer, clients, swarmListeners, ... }
+- The claudeBin property is set as a dynamic property on the sessionManager singleton by server/index.js at startup -- not a constructor param
+
+### State I'm leaving behind
+SwarmEngine.js has 5 fully implemented methods (startExecution, _spawnAgentPty, _ensureAgentPty, _onHandoff stub, _onDone stub) plus the updated stopExecution. Two stubs remain for #46.3: _buildSystemPrompt (returns undefined) and _startHeartbeat (no-op). The engine is not yet instantiated or wired into any route -- that happens in #47.1. 132/132 tests pass.
+
+### Handoff
+- Task #46.3: Implement _buildSystemPrompt() and _startHeartbeat(). _buildSystemPrompt should assemble role + context + handoff target instructions. _startHeartbeat should touch lastActivityAt on all agent sessions to prevent idle sweeper kills.
+- Task #47.1: Wire SwarmEngine into swarm.js routes, instantiate with sessionManager + workflowStore.
+
+---
 ## 2026-03-27 — Task #46.1: SwarmEngine.js — SessionManager swarmListeners Patch + Class Skeleton
 **Status:** COMPLETED
 **Called by:** user (direct task assignment)

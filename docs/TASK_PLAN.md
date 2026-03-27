@@ -3915,7 +3915,7 @@ Phase: V3 Phase 1 — Backend Foundation
 Priority: HIGH
 Difficulty: HARD
 Depends on: #46.1
-Status: PENDING
+Status: COMPLETED
 Context:
   Second of three subtasks for SwarmEngine.js.
   Implement `startExecution()` and `_spawnAgentPty()` in the class from #46.1.
@@ -5997,7 +5997,7 @@ Acceptance criteria:
 | 44 | workflows.js CRUD routes | backend-dev | HIGH | claude-sonnet-4-6 | COMPLETED |
 | 45 | HandoffParser.js | backend-dev | HIGH | claude-opus-4-6 | COMPLETED |
 | **46.1** | SwarmEngine — SessionManager patch + class skeleton | backend-dev | HIGH | claude-opus-4-6 | COMPLETED |
-| **46.2** | SwarmEngine — startExecution + _spawnAgentPty + tap | backend-dev | HIGH | claude-opus-4-6 | PENDING |
+| **46.2** | SwarmEngine — startExecution + _spawnAgentPty + tap | backend-dev | HIGH | claude-opus-4-6 | COMPLETED |
 | **46.3** | SwarmEngine — _buildSystemPrompt + _startHeartbeat | backend-dev | HIGH | claude-opus-4-6 | PENDING |
 | **47.1** | swarm.js — execution control endpoints (7 routes) | backend-dev | HIGH | claude-sonnet-4-6 | PENDING |
 | **47.2** | swarm.js — scaffold endpoint stub (501) | backend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |

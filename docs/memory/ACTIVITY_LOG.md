@@ -1,4 +1,13 @@
 ---
+## 2026-03-27 — backend-dev — Task #46.2: SwarmEngine — startExecution + _spawnAgentPty + HandoffParser Tap
+**Outcome:** COMPLETED
+**Summary:** Implemented startExecution(), _spawnAgentPty(), _ensureAgentPty(), _onHandoff (stub), _onDone (stub) in SwarmEngine.js. startExecution loads workflow from store, creates execution record, finds triage node, spawns agent PTY. _spawnAgentPty creates session via SessionManager, wires HandoffParser tap on swarmListeners, tracks lastOutputSnippet (last 500 chars), stores tapFn for cleanup. Updated stopExecution to remove tapFn from swarmListeners before killing sessions. 132/132 tests pass.
+**Files changed:** server/services/SwarmEngine.js (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Pass sessionManager.claudeBin as 3rd arg to createSession (matches existing pattern in sessions.js routes); initialize agentState before tapFn definition so tap closure can reference it safely
+**Blockers:** none
+**Next:** Task #46.3 (_buildSystemPrompt + _startHeartbeat) can proceed immediately
+---
 ## 2026-03-27 — backend-dev — Task #46.1: SwarmEngine — SessionManager swarmListeners Patch + Class Skeleton
 **Outcome:** COMPLETED
 **Summary:** Patched SessionManager.js to add `swarmListeners: new Set()` to session records and iterate it inside the existing pty.onData handler (after ring buffer + WS broadcast, DEC-014). Created SwarmEngine.js class skeleton with constructor, setWsBroadcast, stopExecution, getStatus (implemented) and 4 stub methods for #46.2/#46.3. 132/132 tests pass, zero regressions.
