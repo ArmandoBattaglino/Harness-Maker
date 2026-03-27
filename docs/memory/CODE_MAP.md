@@ -1662,6 +1662,74 @@ _Last updated: 2026-03-27 — after Task #50 (V3 Security Layer: ssrfGuard, webh
 
 ---
 
+---
+
+## V3 Security Layer (Task #50)
+
+### `server/utils/ssrfGuard.js` :: `isSafeUrl(urlString)`
+- **Purpose:** Synchronous SSRF prevention — returns true if the URL string is safe to fetch from the server (not a private/loopback/link-local address), false otherwise. Designed for RSS polling in TriggerManager.js. Operates on the hostname string only; no DNS resolution (intentional — keeps guard synchronous and side-effect free).
+- **Called by:** server/tests/security-v3.test.js (test suite); future: TriggerManager.js RSS polling (Task #75)
+- **Calls:** URL (built-in), `_isIPv4`, `_isPublicIPv4` (private helpers)
+- **Inputs:** urlString (string)
+- **Output:** boolean — true = safe to fetch, false = blocked
+- **Side effects:** none
+- **Complexity note:** Covers four address families: (1) pure IPv4 via `_isIPv4` + `_isPublicIPv4`, (2) IPv6 loopback (::1), (3) IPv4-mapped IPv6 in dotted form (::ffff:x.x.x.x), (4) IPv4-mapped IPv6 in hex word form (::ffff:xxxx:xxxx — the form Node.js normalizes to). Hostname "localhost" rejected by case-insensitive string match. Empty hostname rejected. Unparseable URLs rejected via try/catch on URL constructor. Non-IP hostnames (domains) are allowed — no DNS lookup performed.
+- **Last modified:** 2026-03-27 in Task #50 by security (new file — SEC-V3-03)
+
+### `server/utils/ssrfGuard.js` :: `_isIPv4(host)` (private)
+- **Purpose:** Check if the string matches bare IPv4 dotted-decimal format.
+- **Called by:** isSafeUrl
+- **Calls:** RegExp.test
+- **Inputs:** host (string)
+- **Output:** boolean
+- **Side effects:** none
+- **Last modified:** 2026-03-27 in Task #50 by security
+
+### `server/utils/ssrfGuard.js` :: `_isPublicIPv4(ip)` (private)
+- **Purpose:** Return true if the IPv4 address is publicly routable — blocks: 0.0.0.0/8, 10.0.0.0/8, 127.0.0.0/8, 169.254.0.0/16, 172.16.0.0/12, 192.168.0.0/16. Returns false for malformed inputs.
+- **Called by:** isSafeUrl (for pure IPv4 and IPv4-mapped IPv6 paths)
+- **Calls:** String.split, Array.map(Number), Array.some
+- **Inputs:** ip (string — dotted IPv4)
+- **Output:** boolean
+- **Side effects:** none
+- **Last modified:** 2026-03-27 in Task #50 by security
+
+---
+
+### `server/middleware/webhookLimit.js` :: `webhookLimit` (default export)
+- **Purpose:** Express JSON body-parser middleware capped at 32 KB. Apply before any route handler that receives untrusted webhook payloads. Prevents memory exhaustion via oversized payloads from external callers.
+- **Called by:** future: server/routes/triggers.js webhook ingestion handler (Task #75). Currently imported only by tests.
+- **Calls:** express.json({ limit: '32kb' }) (Express built-in)
+- **Inputs:** Express (req, res, next) — standard middleware signature
+- **Output:** calls next() or rejects with 413 Entity Too Large
+- **Side effects:** may reject request with 413
+- **Last modified:** 2026-03-27 in Task #50 by security (new file — SEC-V3-01)
+
+---
+
+### `server/middleware/webhookRateLimit.js` :: `webhookRateLimit(req, res, next)` (default export)
+- **Purpose:** Express middleware limiting webhook endpoints to 10 requests per minute per IP (stricter than the global 200 req/min cap in server/index.js). Uses an in-memory Map with a periodic stale-entry sweep (mirrors server/index.js pattern, timer is unref'd for clean process exit). Returns HTTP 429 on excess.
+- **Called by:** future: server/routes/triggers.js webhook ingestion handler (Task #75). Currently imported only by tests.
+- **Calls:** Map.get/set/delete, Date.now, res.status(429).json, next
+- **Inputs:** Express (req, res, next)
+- **Output:** calls next() within limit, or returns 429 JSON error
+- **Side effects:** mutates module-level `_webhookRateLimitMap`; module-load side effect: starts a setInterval sweep (unref'd)
+- **Complexity note:** The `_sweepInterval` runs as soon as the module is imported. `_sweepInterval.unref()` prevents it from blocking process exit. Pattern mirrors the stale-sweep in server/index.js::startup().
+- **Last modified:** 2026-03-27 in Task #50 by security (new file — SEC-V3-04)
+
+---
+
+### `server/middleware/hitlValidation.js` :: `validateResumeText(req, res, next)` (named export)
+- **Purpose:** Express middleware that rejects requests where `req.body.resumeText` exceeds 8 KB (8192 chars). Returns HTTP 400 with `{ error: 'resumeText exceeds 8KB limit' }`. Calls next() if field is absent or within limit. Prevents large payload injection into running PTY sessions via the HITL approve/resume endpoint.
+- **Called by:** future: server/routes/inbox.js POST /resume/:id handler (Task #68). Currently imported only by tests.
+- **Calls:** res.status(400).json, next
+- **Inputs:** Express (req, res, next)
+- **Output:** calls next() or returns 400 JSON error
+- **Side effects:** none
+- **Last modified:** 2026-03-27 in Task #50 by security (new file — SEC-V3-05)
+
+---
+
 ## Removed / Dead Functions
 | Function | File | Removed in | Reason |
 |----------|------|------------|--------|
