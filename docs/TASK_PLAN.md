@@ -3657,7 +3657,7 @@ Agent: backend-dev
 Priority: HIGH
 Difficulty: EASY
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Dependencies: #43
 Context:
   Create `server/routes/workflows.js` exposing the full CRUD API for workflows (FR-V3-02).
