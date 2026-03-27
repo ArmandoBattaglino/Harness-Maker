@@ -2198,3 +2198,27 @@ _Last updated: 2026-03-27 — after Tasks #64 (useHandoff.js edge animation hook
 - **Output:** void (no-op if execution not found)
 - **Side effects:** mutates agentStates[nodeId].status → 'running' for all paused agents; emits WS `{ type: 'agent_status', nodeId, status: 'running' }` per agent
 - **Last modified:** 2026-03-27 in Task #67 by backend-dev (new method)
+
+---
+
+## Edge Animation Hooks (Task #64)
+
+### `client/src/hooks/useHandoff.js` :: `useHandoff(onHandoff)`
+- **Purpose:** React hook that calls `onHandoff(edgeId, newCounter)` each time any edge counter in useSwarmStore.edgeCounters increases. Uses a ref (`prevCountersRef`) to track the previous snapshot of edgeCounters and detect increments. Fires once per increased counter per render cycle.
+- **Called by:** (no live callers yet — intended for components that need to react to new handoffs, e.g. a notification toast or sound effect trigger)
+- **Calls:** useSwarmStore (selector: s.edgeCounters), useEffect (React), useRef (React)
+- **Inputs:** onHandoff (function — called with (edgeId: string, newCounter: number) on each handoff increment; may be null/undefined — guarded with `&& onHandoff`)
+- **Output:** void (no return value — side-effect-only hook)
+- **Side effects:** calls onHandoff callback as a side effect on each edge counter increase; updates prevCountersRef snapshot on every edgeCounters change
+- **Complexity note:** prevCountersRef stores the previous edgeCounters snapshot. On every edgeCounters change (useEffect dep), the hook iterates all entries, compares to prev, and fires callback for any that increased. `prev[edgeId] ?? 0` handles new edges that weren't in the previous snapshot. The ref snapshot is updated with a full spread of edgeCounters at the end of each effect run. onHandoff is in the useEffect dep array — callers must memoize the callback (e.g. useCallback) to avoid re-running the effect on every render.
+- **Last modified:** 2026-03-27 in Task #64 by frontend-dev
+
+### `client/src/hooks/useHandoff.js` :: `useRecentHandoffs(durationMs)`
+- **Purpose:** React hook that returns a Set of edgeIds that have had a handoff in the last `durationMs` milliseconds. Intended for briefly highlighting recently-activated edges (e.g. in HandoffEdge.jsx or a mini-map overlay). The Set is updated as a side effect — components reading this value will NOT automatically re-render when the Set changes (it is a ref, not state).
+- **Called by:** (no live callers yet — intended for components that want to briefly style or highlight recently-active edges)
+- **Calls:** useSwarmStore (selector: s.edgeCounters), useEffect (React), useRef (React), setTimeout (browser — deletes edgeId from Set after durationMs)
+- **Inputs:** durationMs (number — default 2000; milliseconds to keep an edgeId in the recent Set after a handoff)
+- **Output:** Set\<string\> — reference to recentRef.current; mutable Set of recently-active edgeIds
+- **Side effects:** each handoff counter increase schedules a setTimeout that removes the edgeId from the ref Set after durationMs; also updates prevCountersRef snapshot
+- **Complexity note:** Returns `recentRef.current` directly (a stable Set reference) rather than a new Set each render — the returned Set is mutated in-place by the setTimeout callbacks. Consumers that want to trigger re-renders must use this hook alongside their own state or use it only for non-reactive checks (e.g. imperative DOM manipulation). The durationMs parameter is in the useEffect dep array — changing it mid-mount will restart the effect.
+- **Last modified:** 2026-03-27 in Task #64 by frontend-dev
