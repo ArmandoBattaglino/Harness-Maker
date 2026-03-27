@@ -5329,7 +5329,7 @@ Agent: backend-dev
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: IN_PROGRESS
+Status: COMPLETED
 Dependencies: #46.3
 Context:
   The existing SessionManager has an idle sweeper that kills PTY sessions after 30 minutes

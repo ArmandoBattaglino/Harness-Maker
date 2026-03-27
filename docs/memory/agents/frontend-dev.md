@@ -941,3 +941,47 @@ client/src/hooks/useSwarm.js is complete and builds cleanly. SwarmView.jsx does 
 ### Handoff
 Task #64 (useHandoff.js) and Task #65 (AgentNode live status display) are the next Phase 3 items. SwarmView.jsx will need to import and call useSwarm(workflowId) to wire start/stop buttons and receive live WS updates.
 ---
+---
+## 2026-03-27 — Task #66: BroadcastBar.jsx + Broadcast Route
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+Phase 4 (Live Execution) active. SwarmView.jsx existed as a fully functional layout shell with ReactFlowProvider wrapping SwarmCanvas. SwarmContext.jsx Zustand store had activeExecutionId and executionStatus fields. POST /api/v1/swarm/:executionId/broadcast was already implemented in Task #47.1. No BroadcastBar component existed yet.
+
+### What I did
+1. Read memory files (PROGRESS.md, frontend-dev.md, SwarmContext.jsx, SwarmView.jsx, BreadcrumbBar.jsx) to understand store shape and component patterns.
+2. Created client/src/canvas/BroadcastBar.jsx — standalone functional component consuming useSwarmStore; returns null if executionStatus !== 'running' || !activeExecutionId; local state for text/mode/sending/result; POST fetch to /api/v1/swarm/:executionId/broadcast; Enter key sends; 3-second auto-clear on result; mode selector (soft/hard).
+3. Modified client/src/views/SwarmView.jsx — added BroadcastBar import and mounted it after the ReactFlowProvider div with a comment.
+4. Ran npm run build — 472 modules, 0 errors.
+5. Updated TASK_PLAN.md #66 → COMPLETED, PROGRESS.md, ACTIVITY_LOG.md, frontend-dev.md.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/canvas/BroadcastBar.jsx | CREATED | New component — broadcast toolbar input for active swarm executions |
+| client/src/views/SwarmView.jsx | MODIFIED | Added BroadcastBar import + mounted at bottom of flex column after ReactFlowProvider |
+
+### Improvements delivered
+- Users can now type a message and broadcast it to all running agent PTYs during active swarm execution
+- Mode selector lets users choose soft (inject text) vs hard (Ctrl+C then text) broadcast
+- Component is invisible during idle/stopped state — zero UI impact when swarm is not running
+- 3-second result feedback confirms delivery without cluttering the UI
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Mounted BroadcastBar outside the ReactFlowProvider div (below it, inside the outer flex column) rather than overlaying the canvas — matches task spec and keeps z-index concerns simple
+- Placed file at client/src/canvas/BroadcastBar.jsx (not client/src/canvas/overlays/) — task spec said client/src/canvas/ directly; task plan body said overlays/ but the authoritative spec in the task message said canvas/ — used the task message path
+
+### What I learned
+- SwarmContext.jsx exports useSwarmStore both as named export and default — either import form works
+- BroadcastBar location in spec vs task plan description diverged; always use the spec in the direct task message over the task plan body section
+
+### State I'm leaving behind
+BroadcastBar.jsx fully implemented and mounted. Build: 472 modules, 0 errors. Component returns null until execution is running — safe to ship as-is.
+
+### Handoff
+Task #66 fully self-contained. Next: Task #65 (AgentNode live updates), Task #63 (useSwarm.js WS hook), Task #64 (useHandoff.js).
+---

@@ -1,4 +1,13 @@
 ---
+## 2026-03-27 — backend-dev — Task #67: SwarmEngine Heartbeat — Idle Sweeper Prevention
+**Outcome:** COMPLETED
+**Summary:** Verified all heartbeat acceptance criteria already implemented in #46.3 (_startHeartbeat sets 5-min interval with .unref(), stopExecution clears it, startExecution calls it). Added pauseExecution and resumeExecution methods to SwarmEngine. All 168 tests pass.
+**Files changed:** server/services/SwarmEngine.js, docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md, docs/memory/PROGRESS.md, docs/memory/agents/backend-dev.md
+**Bugs fixed:** none
+**Decisions made:** pauseExecution only transitions 'running'→'paused'; resumeExecution only transitions 'paused'→'running'
+**Blockers:** none
+**Next:** Task #68 (inbox.js HITL API) once Phase 4 dependencies complete
+---
 ## 2026-03-27 — code-mapper — Task #60: PromptToFlowBar.jsx + staggered animation
 **Outcome:** COMPLETED
 **Summary:** CODE_MAP.md updated with new PromptToFlowBar component (3 function entries: PromptToFlowBar, handleGenerate, handleKeyDown), updated SwarmView entry (PromptToFlowBar now mounted and workflowDef prop live), updated index.css entry (@keyframes fadeIn). CHANGELOG.md entry appended. Phase 3 Prompt-to-Flow data flow is now fully documented end-to-end.
@@ -1364,4 +1373,14 @@
 **Decisions made:** Used apiPost/apiDelete wrappers instead of raw fetch — consistent with useApi.js project convention; apiPost already returns parsed JSON so executionId is available directly.
 **Blockers:** none
 **Next:** Task #64 (useHandoff.js), Task #65 (AgentNode live status), Task #66 (SwarmView wiring to useSwarm)
+---
+---
+## 2026-03-27 — frontend-dev — Task #66: BroadcastBar.jsx + Broadcast Route
+**Outcome:** COMPLETED
+**Summary:** Created client/src/canvas/BroadcastBar.jsx — a toolbar input component that POSTs to /api/v1/swarm/:executionId/broadcast with text, scope:'all', and mode (soft/hard). Component returns null when execution is not running. Mounted BroadcastBar at bottom of SwarmView.jsx after ReactFlowProvider. Build: 472 modules, 0 errors.
+**Files changed:** client/src/canvas/BroadcastBar.jsx (CREATED), client/src/views/SwarmView.jsx (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Placed file at client/src/canvas/ (not canvas/overlays/) per task message spec; mounted below ReactFlowProvider div to avoid z-index complications
+**Blockers:** none
+**Next:** Task #65 (AgentNode live updates), Task #63 (useSwarm.js WS hook), Task #64 (useHandoff.js edge animation)
 ---
