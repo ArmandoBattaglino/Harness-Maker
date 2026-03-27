@@ -1,4 +1,14 @@
 ---
+## 2026-03-27 — backend-dev — Task #45: HandoffParser.js — Stateful Rolling Buffer Token Extractor
+**Outcome:** COMPLETED
+**Summary:** Created server/services/HandoffParser.js with stateful rolling buffer for ConPTY chunk-split token extraction, and server/tests/HandoffParser.test.js with 22 unit tests covering all 9 required scenarios plus additional edge cases. All 132 tests pass (110 existing + 22 new).
+**Files changed:** server/services/HandoffParser.js (CREATED), server/tests/HandoffParser.test.js (CREATED)
+**Bugs fixed:** none
+**Decisions made:** Used RegExp constructor inside feed() to avoid stale lastIndex from module-level global regex
+**Blockers:** none
+**Next:** Task #46 (SwarmEngine.js skeleton) or #43/#44 (WorkflowStore/routes) can proceed
+
+---
 ## 2026-03-27 — researcher — Research B: React Flow GroupNode / DepartmentNode
 **Outcome:** COMPLETED
 **Summary:** Deep dive into @xyflow/react v12 group node APIs, expand/collapse patterns, and matrioska drill-down navigation. Produced docs/research_b.md with actionable implementation blueprints for DepartmentNode.jsx and SwarmCanvasView — covering parentId/extent system, hidden-flag collapse, and canvas-filtering drill-down with Zustand breadcrumb stack.

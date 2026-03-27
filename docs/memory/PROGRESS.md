@@ -160,7 +160,7 @@ _None._
 ### V3 Phase 1 — Backend Foundation (8 tasks)
 - [TASK-43] PENDING — WorkflowStore.js (backend-dev)
 - [TASK-44] PENDING — workflows.js CRUD routes (backend-dev)
-- [TASK-45] PENDING — HandoffParser.js (backend-dev)
+- [TASK-45] COMPLETED 2026-03-27 — HandoffParser.js (backend-dev) — stateful rolling buffer parser + 22 unit tests, 132/132 tests pass
 - [TASK-46] PENDING — SwarmEngine.js skeleton (backend-dev)
 - [TASK-47] PENDING — swarm.js routes + scaffold (backend-dev)
 - [TASK-48] PENDING — swarmHandler.js WS channel (backend-dev)
