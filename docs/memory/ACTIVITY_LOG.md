@@ -1107,6 +1107,16 @@
 **Next:** Task #53.x (AgentNode, DepartmentNode, TriggerNode) — update CODE_MAP.md "Called by" fields when those tasks complete
 ---
 ---
+## 2026-03-27 — code-mapper — Tasks #53.1 + #53.2 + #53.3: AgentNode, DepartmentNode, TriggerNode canvas nodes
+**Outcome:** COMPLETED
+**Summary:** Mapped three new React Flow custom node components (AgentNode, DepartmentNode, TriggerNode) into CODE_MAP.md with 3 new Module Index rows and 3 Function Graph entries. Updated SwarmContext.jsx::setFocusedDepartment "Called by" — DepartmentNode is now its first live caller. Appended CHANGELOG.md entry for all three parallel tasks. Introduces client/src/canvas/nodes/ directory.
+**Files changed:** docs/memory/CODE_MAP.md (MODIFIED), docs/memory/CHANGELOG.md (MODIFIED), docs/memory/agents/code-mapper.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** TriggerNode documented as stub with forward reference to Task #76; all three nodes marked as awaiting nodeTypes registration in future WorkflowCanvas wrapper
+**Blockers:** none
+**Next:** WorkflowCanvas.jsx (future task) must register nodeTypes — update "Called by" for all three nodes at that point
+---
+---
 ## 2026-03-27 — frontend-dev — Task #56: BreadcrumbBar.jsx — Drill-Down Navigation
 **Outcome:** COMPLETED
 **Summary:** Created client/src/canvas/BreadcrumbBar.jsx — breadcrumb navigation bar for swarm canvas drill-down. Shows "All Agents" root crumb always, resolves department names from nodes prop, last crumb bold/white (current location), each crumb calls navigateBreadcrumb(index). Build verified clean (299 modules, 0 errors).

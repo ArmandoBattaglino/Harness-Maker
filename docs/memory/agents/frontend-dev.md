@@ -545,3 +545,54 @@ All four files are complete and build cleanly. The Entities tab in the nav was a
 - Task #10 will need `JobView.jsx` which is currently a stub (same pattern as the old EntitiesView stub).
 - No changes needed to routing or AppContext for Task #10 — `view: 'jobs'` case is already handled in App.jsx.
 ---
+---
+## 2026-03-27 — Task #56: BreadcrumbBar.jsx — Drill-Down Navigation
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+V3 Phase 2 canvas tasks were progressing. Tasks #52, #53.1, #53.2, #53.3, #54 were all COMPLETED. SwarmContext.jsx exported useSwarmStore with departmentStack (array of dept IDs) and navigateBreadcrumb(index) action. The client/src/canvas/ directory existed with nodes/ and edges/ subdirectories but no top-level files.
+
+### What I did
+1. Read docs/memory/agents/frontend-dev.md, docs/memory/PROJECT.md, docs/memory/PROGRESS.md in parallel.
+2. Read client/src/store/SwarmContext.jsx — confirmed departmentStack is string[], navigateBreadcrumb(0) pops to root, navigateBreadcrumb(index) slices to that depth.
+3. Listed client/src/canvas/ — confirmed edges/ and nodes/ subdirectories exist, no top-level files.
+4. Created client/src/canvas/BreadcrumbBar.jsx — verbatim implementation per task spec.
+5. Ran npm run build — clean build, 299 modules, 0 errors.
+6. Updated docs/TASK_PLAN.md (Task #56 IN_PROGRESS → COMPLETED via sed on line 4663), PROGRESS.md, ACTIVITY_LOG.md, and this agent memory file.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| `client/src/canvas/BreadcrumbBar.jsx` | CREATED | Breadcrumb nav bar: root "All Agents" crumb always shown, department crumbs resolved from nodes prop, last crumb bold/white, navigateBreadcrumb(index) on click |
+| `docs/TASK_PLAN.md` | MODIFIED | Task #56 Status: IN_PROGRESS → COMPLETED (line 4663 via sed) |
+| `docs/memory/PROGRESS.md` | MODIFIED | #56 entry updated to COMPLETED; counter updated |
+| `docs/memory/ACTIVITY_LOG.md` | MODIFIED | New entry appended |
+
+### Improvements delivered
+- BreadcrumbBar renders "All Agents" root crumb at all times (clicking navigateBreadcrumb(0) resets to root)
+- Department crumbs built from departmentStack — each ID resolved to node label via nodes prop (fallback to raw ID)
+- Last crumb displayed in text-white font-medium to indicate current location
+- All intermediate crumbs display in text-gray-300 with hover:text-white transition
+- Separator "/" shown between crumbs in text-gray-600
+- Clicking any crumb at index i calls navigateBreadcrumb(i + 1) for dept crumbs, navigateBreadcrumb(0) for root
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None — build clean on first attempt | — | — | — |
+
+### Decisions I made
+- Placed in client/src/canvas/ (not client/src/canvas/overlays/) — task spec explicitly specifies the path as client/src/canvas/BreadcrumbBar.jsx, not the overlays/ subdirectory mentioned in TASK_PLAN.md context block.
+- Implemented verbatim per task spec — spec was complete and concrete.
+
+### What I learned
+- The TASK_PLAN.md context block for Task #56 mentioned client/src/canvas/overlays/BreadcrumbBar.jsx but the task instruction header explicitly says client/src/canvas/BreadcrumbBar.jsx — always prefer the explicit instruction over the context block when they conflict.
+- navigateBreadcrumb(0) slices departmentStack to empty → focusedDepartmentId falls to null (root). navigateBreadcrumb(index+1) for crumb at position index keeps that crumb's dept as the focused one.
+
+### State I'm leaving behind
+BreadcrumbBar.jsx is complete, build-verified (299 modules, 0 errors). Ready for import by SwarmCanvas.jsx (Task #57.1) or SwarmView.jsx (Task #57.2). No known issues.
+
+### Handoff
+Tasks #57.1 (SwarmCanvas.jsx) and #57.2 (SwarmView.jsx) are the next phase. SwarmCanvas.jsx will import BreadcrumbBar and render it above the React Flow canvas. Pass `nodes` prop from React Flow's useNodes() or the workflow definition nodes array to resolve department labels.
+---
