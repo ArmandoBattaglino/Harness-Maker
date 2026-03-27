@@ -773,3 +773,53 @@ CODE_MAP.md fully reflects Tasks #47.2 and #48.2. broadcast() has a complete Fun
 ### Handoff
 Next tasks (#50 security, #51 devops deps, #52 SwarmContext frontend) are next wave. Task #52 will introduce client-side Zustand store and SwarmContext — CODE_MAP.md will need new client module entries when that completes.
 ---
+## 2026-03-27 — Task #52: SwarmContext.jsx — Zustand ExecutionStore
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+Task #52 (frontend-dev) had just created client/src/store/SwarmContext.jsx — the Zustand v4 execution state store. My previous session (Tasks #47.2 + #48.2) had predicted this exact task: "Task #52 will introduce client-side Zustand store and SwarmContext — CODE_MAP.md will need new client module entries." CODE_MAP.md was last updated after Tasks #50+#51.
+
+### What I did
+1. Read SwarmContext.jsx in full (80 lines — fits in one read)
+2. Read code-mapper.md agent log (offset 1–120) and CODE_MAP.md header + Client Modules section (offset 1–120)
+3. Read CODE_MAP.md tail (offset 1530+, 1608+, 1706+) to find Function Graph append point (line 1749)
+4. Read CHANGELOG.md tail (offset 870+, 929+, 975+, 1040+) to find append point (line 1057)
+5. Read ACTIVITY_LOG.md head (offset 1–20) to confirm existing Task #52 ACTIVITY_LOG entry (already written by frontend-dev)
+6. Grepped client/src for useSwarmStore/SwarmContext — confirmed no callers exist yet (store is ready but not yet imported)
+7. Updated CODE_MAP.md:
+   - Updated header timestamp (Task #50+#51 → Task #52)
+   - Added client/src/store/SwarmContext.jsx row to Client Modules Module Index
+   - Appended new "SwarmContext ExecutionStore (Task #52)" section with 13 Function Graph entries (useSwarmStore + 12 action methods)
+8. Appended Task #52 entry to CHANGELOG.md with full function list and connection notes
+9. Appended this agent memory entry
+10. Appended ACTIVITY_LOG.md entry
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Timestamp updated; Module Index +1 row (SwarmContext.jsx); new "SwarmContext ExecutionStore" Function Graph section (13 entries) |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Task #52 entry with full function list and connection notes |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended code-mapper session summary |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| CHANGELOG.md first edit failed with "file modified since read" | ACTIVITY_LOG.md showed documenter had already written to CHANGELOG.md after I read it | Re-read and confirmed line count, then used correct anchor string | FIXED |
+
+### Decisions I made
+- Documented all 12 action methods as separate Function Graph entries (not collapsed into useSwarmStore) — future components will import and call them individually; having separate entries makes connection tracing practical
+- "Called by" for all entries is "(not yet wired)" — no callers exist yet; this is correct state and will be updated when Task #53.x canvas components are mapped
+
+### What I learned
+- CHANGELOG.md can be modified by other agents between my read and write — always confirm the actual last line before attempting an Edit that relies on end-of-file position
+- SwarmContext.jsx follows pure Zustand create() pattern (no React.createContext wrapper) — components call useSwarmStore() directly; the thin named export is a compatibility affordance only
+- addFeedEvent uses .slice(-100) after spread — the newest 100 events are retained, oldest silently dropped — this is an important behavioral contract for any component rendering the feed
+
+### State I'm leaving behind
+CODE_MAP.md fully reflects Task #52. All 13 entries for SwarmContext are documented with accurate "Called by: (not yet wired)" annotations. CHANGELOG.md has the Task #52 entry.
+
+### Handoff
+Task #53.x (AgentNode.jsx, DepartmentNode.jsx, TriggerNode.jsx) will be the first callers of useSwarmStore — update CODE_MAP.md "Called by" fields for the relevant action methods when those tasks complete. Also: WS event handler wiring (setExecution, updateAgentState, etc.) will come in a later task — document those connections at that time.
+---
