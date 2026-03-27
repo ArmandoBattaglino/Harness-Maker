@@ -926,3 +926,100 @@ CODE_MAP.md fully reflects Task #52. All 13 entries for SwarmContext are documen
 ### Handoff
 Task #53.x (AgentNode.jsx, DepartmentNode.jsx, TriggerNode.jsx) will be the first callers of useSwarmStore — update CODE_MAP.md "Called by" fields for the relevant action methods when those tasks complete. Also: WS event handler wiring (setExecution, updateAgentState, etc.) will come in a later task — document those connections at that time.
 ---
+
+---
+## 2026-03-27 — Task #57.1: SwarmCanvas.jsx — React Flow Canvas + Drill-Down Filtering
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+Tasks #54+#55+#56 had built HandoffEdge, AgentInspector, and BreadcrumbBar — all with "no callers yet" annotations. Task #57.1 just created SwarmCanvas.jsx, the root canvas container that registers all 3 node types + 1 edge type and mounts all sub-components. CODE_MAP.md was last updated after Tasks #54+#55+#56.
+
+### What I did
+1. Read SwarmCanvas.jsx (104 lines) — identified full import list, hooks used, memos, callbacks, JSX structure
+2. Read CODE_MAP.md header + Module Index (offset 1, limit 180) — confirmed last update timestamp and existing canvas module rows
+3. Read CODE_MAP.md tail (offset 1900+) to locate BreadcrumbBar Function Graph entry and confirm all "no callers" annotations
+4. Read CHANGELOG.md tail (offset 1130+) to find append point
+5. Grep'd entire client/src for SwarmCanvas and useSwarmStore to confirm callers and confirm SwarmCanvas has no callers yet
+6. Glob'd client/src/canvas/** to confirm full canvas directory state (7 files)
+7. Updated CODE_MAP.md:
+   - Updated header timestamp
+   - Added Module Index row for SwarmCanvas.jsx
+   - Updated "Called by" for AgentNode, DepartmentNode, TriggerNode, HandoffEdge, AgentInspector, BreadcrumbBar — all now point to SwarmCanvas.jsx as first live parent
+   - Updated useSwarmStore "Called by" to list all active callers (7 components)
+   - Added new Function Graph section for SwarmCanvas with full entry
+8. Appended Task #57.1 entry to CHANGELOG.md
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header timestamp; Module Index SwarmCanvas row; "Called by" updated for 7 canvas components; new Function Graph section |
+| docs/memory/CHANGELOG.md | MODIFIED | Task #57.1 entry appended |
+
+### Improvements delivered
+- All canvas primitives now have accurate "Called by" annotations — zero "no callers" warnings in the canvas layer
+- Complete drill-down click loop documented: DepartmentNode.click → setFocusedDepartment → SwarmStore.focusedDepartmentId → SwarmCanvas visibleNodes filter
+- workflowDef-as-initial-state limitation documented (non-reactive after mount)
+
+### Bugs I encountered
+- None
+
+### Decisions I made
+- Documented nodeTypes/edgeTypes module-level const pattern (React Flow v12 requirement to prevent re-registration) as a Complexity note on SwarmCanvas
+
+### What I learned
+- SwarmCanvas is the central wiring point for all canvas primitives — when future tasks add a WorkflowView parent, CODE_MAP.md SwarmCanvas "Called by" must be updated at that time
+- workflowDef is initial-state only: live workflow editing would require unmount/remount of SwarmCanvas or an explicit setNodes/setEdges call from a parent — important constraint for Task #57.2 and beyond
+
+### State I'm leaving behind
+CODE_MAP.md fully reflects Task #57.1. All canvas components have accurate callers. SwarmCanvas itself has no callers yet — pending Task #57.2 (SwarmView.jsx) or #58 (App.jsx integration).
+
+### Handoff
+When Task #57.2 (SwarmView.jsx) completes: update SwarmCanvas "Called by" to point to SwarmView. When Task #58 (App.jsx + Sidebar + ReactFlowProvider) completes: update App.jsx Module Index row.
+---
+
+---
+## 2026-03-27 — Task #57.2: SwarmView.jsx — Layout Shell + Toolbar
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+Task #57.2 (frontend-dev) created `client/src/views/SwarmView.jsx` — the top-level page shell for the Swarm Orchestrator. CODE_MAP.md was last updated after Task #57.1 (SwarmCanvas.jsx). SwarmCanvas had "no callers yet" in its entry — Task #57.2 resolves this. SwarmView is not yet registered in App.jsx.
+
+### What I did
+1. Read SwarmView.jsx in full (54 lines) — identified all imports, JSX structure, store selectors, local state
+2. Searched codebase for SwarmView callers — confirmed no live callers yet (App.jsx not yet wired)
+3. Searched for SwarmCanvas, useSwarmStore, SwarmContext references across client/src — confirmed 8 files total
+4. Read CODE_MAP.md tail (offsets 1920-1965) — located SwarmCanvas entry with "no callers yet" note
+5. Read CHANGELOG.md tail — found last entry ends at line 1208
+6. Updated CODE_MAP.md: header timestamp, Module Index new row for SwarmView, SwarmCanvas "Called by" updated to SwarmView, new Function Graph section for SwarmView
+7. Appended CHANGELOG.md entry for Task #57.2
+8. Appended this agent log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header timestamp updated; SwarmView row added to Module Index; SwarmCanvas "Called by" updated; new Function Graph section added for SwarmView |
+| docs/memory/CHANGELOG.md | MODIFIED | Task #57.2 entry appended |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- SwarmCanvas "no callers yet" warning resolved — SwarmView is now accurately mapped as its first parent
+- SwarmView fully mapped: toolbar logic (statusColors, executionStatus selector, conditional Reset), ReactFlowProvider boundary ownership, workflowDef null-state documented
+
+### Bugs I encountered
+- None
+
+### Decisions I made
+- ReactFlowProvider boundary ownership noted in CODE_MAP as owned by SwarmView (not SwarmCanvas) — clarifies the architectural boundary for Task #58 (App.jsx integration) and future agents
+
+### What I learned
+- The prior task note in my agent log accurately predicted this task: "update SwarmCanvas 'Called by' to point to SwarmView" — the handoff notes are working correctly
+- SwarmView owns workflowDef as useState(null) — it is NOT reading from the SwarmStore or API yet. Task #61 is the wiring task. This is important context for any agent touching the data flow.
+
+### State I'm leaving behind
+CODE_MAP.md fully reflects Tasks #57.1 and #57.2. SwarmView has no App.jsx registration yet — pending Task #58. workflowDef is null and disconnected from any API until Task #61.
+
+### Handoff
+When Task #58 (App.jsx + Sidebar nav + ReactFlowProvider) completes: update App.jsx Module Index row (add swarm to view router) and note any new imports. When Task #61 (workflowDef wiring) completes: update SwarmView entry — workflowDef will no longer be local useState null.
+---

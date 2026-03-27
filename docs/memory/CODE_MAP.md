@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-27 — after Task #57.1 (SwarmCanvas.jsx — React Flow canvas + drill-down filtering) — mapped by code-mapper_
+_Last updated: 2026-03-27 — after Task #57.2 (SwarmView.jsx — Layout Shell + Toolbar) — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -73,6 +73,7 @@ _Last updated: 2026-03-27 — after Task #57.1 (SwarmCanvas.jsx — React Flow c
 | client/src/canvas/AgentInspector.jsx | default AgentInspector | Right-panel component for inspecting a selected canvas node. Reads selectedNodeId + agentStates from useSwarmStore. Shows label, type, status, handoffCount, systemPrompt, lastOutputSnippet. Close button calls setSelectedNode(null). (Task #55) |
 | client/src/canvas/BreadcrumbBar.jsx | default BreadcrumbBar | Top-bar breadcrumb nav for drill-down into department nodes. Reads departmentStack + navigateBreadcrumb from useSwarmStore. Root crumb always visible; each depth level rendered as a clickable button. (Task #56) |
 | client/src/canvas/SwarmCanvas.jsx | default SwarmCanvas | Root React Flow canvas for swarm visualization. Registers nodeTypes (agent, department, trigger) + edgeTypes (handoff). Manages nodes/edges state via useNodesState/useEdgesState. Drill-down filtering: computes visibleNodes/visibleEdges via focusedDepartmentId. onNodeClick→setSelectedNode; onPaneClick→setSelectedNode(null). Mounts BreadcrumbBar + AgentInspector. (Task #57.1) |
+| client/src/views/SwarmView.jsx | default SwarmView | Layout shell for the Swarm Orchestrator page. Toolbar shows title + executionStatus indicator (idle/running/stopped color-coded) + conditional Reset button when stopped. Wraps SwarmCanvas in ReactFlowProvider. Owns workflowDef local state (useState null — to be wired to API/store in Task #61). (Task #57.2) |
 
 ### Client Config & Styles
 | File | Key Exports | Purpose |
@@ -1956,10 +1957,24 @@ _Last updated: 2026-03-27 — after Task #57.1 (SwarmCanvas.jsx — React Flow c
 
 ### `client/src/canvas/SwarmCanvas.jsx` :: `SwarmCanvas({ workflowDef })`
 - **Purpose:** Root canvas component for swarm workflow visualization. Initializes React Flow with workflowDef.nodes + workflowDef.edges, registers all custom node/edge types, applies drill-down filtering via focusedDepartmentId, wires user interaction (onNodeClick, onPaneClick, onConnect), and mounts BreadcrumbBar + AgentInspector into the layout.
-- **Called by:** no callers yet — entry point for a parent WorkflowView/SwarmView page component (pending task)
+- **Called by:** SwarmView.jsx (Task #57.2 — first live caller; mounted inside ReactFlowProvider with `workflowDef` prop)
 - **Calls:** useSwarmStore (selector: s.focusedDepartmentId), useSwarmStore (selector: s.setSelectedNode), useNodesState (from @xyflow/react), useEdgesState (from @xyflow/react), useMemo (React — visibleNodes, visibleNodeIds, visibleEdges), useCallback (React — onConnect, onNodeClick, onPaneClick), addEdge (from @xyflow/react), ReactFlow + Background + Controls + MiniMap (from @xyflow/react), AgentNode, DepartmentNode, TriggerNode, HandoffEdge, AgentInspector, BreadcrumbBar
 - **Inputs:** workflowDef (object — `{ nodes: ReactFlowNode[], edges: ReactFlowEdge[] }` or undefined; defaults to empty arrays)
 - **Output:** JSX — flex column: BreadcrumbBar (top) + flex row: ReactFlow canvas (flex-1) + AgentInspector (right panel)
 - **Side effects:** calls setSelectedNode(nodeId) on node click; calls setSelectedNode(null) on pane click; calls setEdges to append a new handoff edge on connect. No server I/O.
 - **Complexity note (drill-down filtering):** Three separate useMemo computations — (1) visibleNodes filters nodes where `n.id === focusedDepartmentId || n.parentId === focusedDepartmentId` (or all nodes if focusedDepartmentId is null); (2) visibleNodeIds converts visibleNodes to a Set for O(1) edge lookup; (3) visibleEdges filters edges where both source and target are in visibleNodeIds. nodeTypes and edgeTypes objects are declared OUTSIDE the component (module-level consts) to prevent React Flow from re-registering on every render — this is a React Flow v12 requirement. workflowDef is treated as the initial state only; changes to workflowDef after mount are NOT reflected (useNodesState/useEdgesState take initialNodes/initialEdges).
-- **Last modified:** 2026-03-27 in Task #57.1 by frontend-dev
+- **Last modified:** 2026-03-27 in Task #57.1 by frontend-dev; "Called by" updated Task #57.2 (SwarmView now mounts it)
+
+---
+
+## Swarm View Shell (Task #57.2)
+
+### `client/src/views/SwarmView.jsx` :: `SwarmView()`
+- **Purpose:** Top-level page shell for the Swarm Orchestrator. Renders a fixed toolbar (title, executionStatus indicator, conditional Reset button) above a full-height canvas area. Provides the ReactFlowProvider boundary required by @xyflow/react. Owns `workflowDef` local state (null until wired in Task #61) and passes it as a prop to SwarmCanvas.
+- **Called by:** no live caller yet — needs to be added to App.jsx view router (Task #61)
+- **Calls:** useSwarmStore (selector: s.executionStatus), useSwarmStore (selector: s.reset), useState (React — workflowDef local state), ReactFlowProvider (from @xyflow/react), SwarmCanvas (client/src/canvas/SwarmCanvas.jsx)
+- **Inputs:** none (no props)
+- **Output:** JSX — flex-col full-height div: toolbar row (shrink-0) + canvas area (flex-1, overflow-hidden) containing ReactFlowProvider > SwarmCanvas
+- **Side effects:** calls SwarmStore.reset() when Reset button is clicked (clears execution state); no server I/O
+- **Complexity note:** `statusColors` is a module-level const map (idle/running/stopped → Tailwind class string). `executionStatus === 'stopped'` is the sole gate for the Reset button — it does not render for idle or running states. ReactFlowProvider must wrap SwarmCanvas (not SwarmCanvas internally) because SwarmView is the intended boundary for the React Flow context.
+- **Last modified:** 2026-03-27 in Task #57.2 by frontend-dev

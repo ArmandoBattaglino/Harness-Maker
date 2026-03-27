@@ -1,4 +1,52 @@
 ---
+## 2026-03-27 — Task #57.2: SwarmView.jsx — layout shell + toolbar
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel with code-mapper and project-manager)
+
+### Context when I started
+Task #57.2 had just completed. One new file was created: client/src/views/SwarmView.jsx — the top-level view shell that wraps SwarmCanvas in ReactFlowProvider and provides a toolbar with execution status indicator and conditional Reset button. V3 public documentation deferral policy is in effect. DOC_STATUS.md was last updated after Task #57.1 (SwarmCanvas.jsx).
+
+### What I did
+1. Read DOC_STATUS.md, SwarmView.jsx, PROJECT.md, ACTIVITY_LOG.md (recent entries), and documenter.md (prior session) in parallel.
+2. Verified SwarmView.jsx in client/src/views/. Confirmed: 53 lines. Reads executionStatus and reset from useSwarmStore. statusColors map drives color + animate-pulse on the status pill. Reset button conditional on executionStatus === 'stopped'. Wraps SwarmCanvas in ReactFlowProvider. workflowDef local state is a stub (useState null) — placeholder for Task #58 workflow selection wiring.
+3. Assessed staleness:
+   - README.md: NOT stale. V3 deferred per policy.
+   - ARCHITECTURE.md: NOT stale. Intentionally deferred until V3 complete (Task #82).
+   - SwarmView.jsx inline comments: UP TO DATE. File-level comment names component purpose. Inline comments on toolbar sections explain Reset button conditionality and status indicator role.
+   - DOC_STATUS.md: STALE — SwarmView.jsx row missing; ARCHITECTURE.md stale note did not mention view shell layer.
+4. Updated DOC_STATUS.md: advanced timestamp, added SwarmView.jsx row to V3 service files table, expanded ARCHITECTURE.md stale section note with view shell layer, updated remaining tasks list from #57.2/#58 to #58 only.
+5. Appended to ACTIVITY_LOG.md and this agent log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Timestamp advanced; SwarmView.jsx row added; ARCHITECTURE.md stale note expanded with view shell layer; remaining tasks updated from #57.2/#58 to #58 only. |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended Task #57.2 documenter entry. |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log. |
+
+### Improvements delivered
+- DOC_STATUS.md V3 service files table now tracks 23 V3 artifacts (through view shell layer, Task #57.2).
+- ARCHITECTURE.md stale section note now has a complete inventory of the view shell layer through Task #57.2.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | -- | -- | -- |
+
+### Decisions I made
+- Did not add any new inline comments to SwarmView.jsx. Existing file-level comment and inline toolbar section comments are adequate.
+- Did not update README.md or ARCHITECTURE.md. V3 is incomplete. Policy unchanged.
+
+### What I learned
+- SwarmView.jsx places ReactFlowProvider at the view boundary (wrapping SwarmCanvas), not at the App level. This means each SwarmView instance gets its own isolated React Flow context — important to note for Task #82 architecture documentation, as it avoids global context pollution for multi-canvas scenarios.
+- workflowDef is a stub (null) at this stage — Task #58 will wire it to workflow selection. This is a known placeholder and not a documentation gap.
+
+### State I'm leaving behind
+DOC_STATUS.md is current as of 2026-03-27 and tracks 23 V3 artifacts. All canvas and view components through Task #57.2 have adequate inline documentation. No public-facing documentation is stale. V3 documentation remains intentionally deferred until Task #82.
+
+### Handoff
+Next task is #58 (App.jsx + ReactFlowProvider + Sidebar swarm nav integration). That task will need a DOC_STATUS.md row entry for App.jsx modifications and Sidebar changes when completed. After #58, the full canvas stack is assembled and wired into the app shell.
+---
 ## 2026-03-27 — Task #57.1: SwarmCanvas.jsx — React Flow canvas + drill-down filtering
 **Status:** COMPLETED
 **Called by:** orchestrator (parallel with code-mapper and project-manager)

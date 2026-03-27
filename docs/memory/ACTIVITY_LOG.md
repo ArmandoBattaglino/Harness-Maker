@@ -1,4 +1,41 @@
 ---
+## 2026-03-27 — frontend-dev — Task #58: App.jsx + Sidebar swarm nav + ReactFlowProvider
+**Outcome:** COMPLETED
+**Summary:** Added SwarmView to App.jsx routing (import + switch case 'swarm'). Added 'hub' icon + 'Swarm' label entry to NAV_ITEMS in constants.js — Sidebar already iterates NAV_ITEMS dynamically so no Sidebar.jsx edit was needed. No ReactFlowProvider added at App level since SwarmView already provides one. Build: 470 modules, 0 errors. 168/168 tests pass. V3 Phase 2 (Canvas Static) now fully complete (29/57).
+**Files changed:** client/src/App.jsx, client/src/lib/constants.js, docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/frontend-dev.md
+**Bugs fixed:** none
+**Decisions made:** Used Material Symbols 'hub' icon for Swarm nav entry (network/graph semantics, consistent with icon set); no extra ReactFlowProvider at App level
+**Blockers:** none
+**Next:** Task #59 (scaffold endpoint) + Task #60 (PromptToFlowBar.jsx) — V3 Phase 3 Prompt-to-Flow
+---
+## 2026-03-27 — code-mapper — Task #57.2: SwarmView.jsx — Layout Shell + Toolbar
+**Outcome:** COMPLETED
+**Summary:** Mapped SwarmView.jsx — new page shell wrapping SwarmCanvas in ReactFlowProvider with toolbar (executionStatus indicator, conditional Reset button). Updated SwarmCanvas "Called by" from "no callers yet" to SwarmView. workflowDef is null/local-state until Task #61.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** none
+**Decisions made:** ReactFlowProvider boundary ownership documented as belonging to SwarmView (not SwarmCanvas)
+**Blockers:** none
+**Next:** Task #58 — App.jsx + Sidebar swarm nav registration; Task #61 — workflowDef API wiring
+---
+
+## 2026-03-27 — documenter — Task #57.2: SwarmView.jsx layout shell + toolbar
+**Outcome:** COMPLETED
+**Summary:** Audited all documentation artifacts after creation of SwarmView.jsx. File has adequate inline comments — file-level comment plus inline comments on toolbar sections (status indicator, Reset button conditionality). V3 public doc deferral policy maintained. DOC_STATUS.md updated with new SwarmView.jsx row and ARCHITECTURE.md stale section note expanded with view shell layer and updated remaining tasks.
+**Files changed:** docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/documenter.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** V3 public doc deferral policy maintained — no README or ARCHITECTURE changes until Task #82
+**Blockers:** none
+**Next:** Task #58 (App.jsx + ReactFlowProvider + Sidebar swarm nav integration)
+---
+## 2026-03-27 — code-mapper — Task #57.1: SwarmCanvas.jsx — React Flow Canvas + Drill-Down Filtering
+**Outcome:** COMPLETED
+**Summary:** Mapped SwarmCanvas.jsx — the root React Flow canvas container that wires all 6 previously-built canvas primitives. Updated "Called by" for AgentNode, DepartmentNode, TriggerNode, HandoffEdge, AgentInspector, BreadcrumbBar — all now resolved from "no callers" to SwarmCanvas.jsx. Documented the complete drill-down click loop and the workflowDef-as-initial-state limitation.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** Task #57.2 (SwarmView.jsx) IN_PROGRESS — when complete, update SwarmCanvas "Called by" to point to SwarmView.
+---
 ## 2026-03-27 — project-manager — Task #57.1 COMPLETED; #57.2 launched IN_PROGRESS
 **Outcome:** COMPLETED
 **Summary:** Confirmed Task #57.1 (SwarmCanvas.jsx) COMPLETED per frontend-dev self-mark and ACTIVITY_LOG entry. Marked #57.2 (SwarmView.jsx — layout shell + toolbar) IN_PROGRESS in TASK_PLAN.md. Updated PROGRESS.md and CONTEXT.md to reflect current wave.
@@ -1195,4 +1232,14 @@
 **Decisions made:** statusColors outside component; ReactFlowProvider in view shell (self-contained); workflowDef as local useState(null) pending useWorkflow hook in #61
 **Blockers:** none
 **Next:** Task #58 — App.jsx + Sidebar swarm nav integration (import SwarmView, add route)
+---
+---
+## 2026-03-27 — project-manager — Task #57.2 COMPLETED; Launch #58 IN_PROGRESS
+**Outcome:** COMPLETED
+**Summary:** Marked Task #57.2 (SwarmView.jsx layout shell + toolbar) as COMPLETED — build passes 299 modules. Promoted Task #58 (App.jsx + Sidebar swarm nav + ReactFlowProvider) to IN_PROGRESS. Dependency #57.2 is now satisfied.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** frontend-dev executes Task #58 — wire SwarmView into App.jsx routing, add Sidebar nav item, create useWorkflow.js hook
 ---

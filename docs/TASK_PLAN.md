@@ -4859,7 +4859,7 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Dependencies: #57.2
 Context:
   Wire SwarmView into the existing app navigation.

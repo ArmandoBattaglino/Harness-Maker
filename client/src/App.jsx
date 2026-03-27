@@ -5,6 +5,7 @@ import JobView from './views/JobView.jsx';
 import ProjectsView from './views/ProjectsView.jsx';
 import ContextEditorView from './views/ContextEditorView.jsx';
 import DeploymentManagerView from './views/DeploymentManagerView.jsx';
+import SwarmView from './views/SwarmView.jsx';
 
 function MainContent() {
   const { view } = useAppState();
@@ -20,6 +21,8 @@ function MainContent() {
       return <ContextEditorView />;
     case 'deployments':
       return <DeploymentManagerView />;
+    case 'swarm':
+      return <SwarmView />;
     default:
       return <ProjectsView />;
   }

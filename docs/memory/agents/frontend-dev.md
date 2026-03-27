@@ -1,4 +1,55 @@
 ---
+## 2026-03-27 — Task #58: App.jsx + Sidebar swarm nav + ReactFlowProvider
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+SwarmView.jsx (#57.2) was COMPLETED and builds cleanly. App.jsx had 5 views in a switch statement (projects/terminal/jobs/context/deployments). Sidebar.jsx iterates NAV_ITEMS from client/src/lib/constants.js dynamically — no hardcoded nav items in Sidebar.jsx itself.
+
+### What I did
+1. Read App.jsx, Sidebar.jsx, and constants.js to understand the routing/nav pattern.
+2. Confirmed Sidebar uses NAV_ITEMS array from constants.js — only constants.js needed a new entry, not Sidebar.jsx.
+3. Added `{ icon: 'hub', label: 'Swarm', view: 'swarm' }` to NAV_ITEMS in constants.js.
+4. Added `import SwarmView from './views/SwarmView.jsx'` to App.jsx.
+5. Added `case 'swarm': return <SwarmView />;` to the MainContent switch in App.jsx.
+6. Did NOT add ReactFlowProvider at App level — SwarmView already wraps SwarmCanvas with its own provider (confirmed from #57.2 session notes).
+7. Ran `npm run build` — 470 modules, 0 errors.
+8. Ran `npm test` — 168/168 tests pass.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| `client/src/lib/constants.js` | MODIFIED | Added `{ icon: 'hub', label: 'Swarm', view: 'swarm' }` to NAV_ITEMS array |
+| `client/src/App.jsx` | MODIFIED | Added SwarmView import + `case 'swarm'` in MainContent switch |
+| `docs/TASK_PLAN.md` | MODIFIED | Task #58 Status IN_PROGRESS → COMPLETED |
+| `docs/memory/PROGRESS.md` | MODIFIED | Counter 28/57 → 29/57; #58 PENDING → COMPLETED; Phase 2 fully done note |
+| `docs/memory/ACTIVITY_LOG.md` | MODIFIED | Appended task completion entry |
+| `docs/memory/agents/frontend-dev.md` | MODIFIED | This session log appended |
+
+### Improvements delivered
+- Swarm view is now reachable via sidebar navigation
+- All existing views (projects/terminal/jobs/context/deployments) are unaffected
+- No new packages introduced
+- V3 Phase 2 (Canvas Static) fully complete
+
+### Bugs I encountered
+None. First attempt built and tested clean.
+
+### Decisions I made
+- Used Material Symbols icon `hub` for the Swarm nav entry — represents a network/graph hub, semantically correct for a swarm orchestrator, consistent with the Material Symbols Outlined icon set used throughout the sidebar.
+- No ReactFlowProvider at App level — SwarmView already has one wrapping SwarmCanvas. Adding a second would be redundant and could cause context conflicts.
+- No Sidebar.jsx edit required — the sidebar already iterates NAV_ITEMS dynamically; only constants.js needed updating.
+
+### What I learned
+- The Sidebar nav is fully data-driven from NAV_ITEMS in constants.js. Adding a new view requires only: (1) constants.js entry, (2) App.jsx import + switch case. Sidebar.jsx never needs editing for new views.
+- The chunk size warning (860KB) from @xyflow/react is pre-existing and expected — not introduced by this task.
+
+### State I'm leaving behind
+Task #58 fully complete. App routes to SwarmView on 'swarm' view. Sidebar shows "Swarm" with hub icon. 168/168 tests pass, 470 modules build clean. V3 Phase 2 done. Next: Phase 3 (Prompt-to-Flow — Tasks #59, #60, #61).
+
+### Handoff
+Task #59 (scaffold endpoint — backend-dev): replace the 501 stub in swarm.js POST /scaffold with real AI-driven workflow generation. Task #60 (PromptToFlowBar.jsx — frontend-dev): prompt bar component with staggered canvas animation after scaffold response.
+---
 ## 2026-03-27 — Task #57.1: SwarmCanvas.jsx — React Flow Canvas + Drill-Down Filtering
 **Status:** COMPLETED
 **Called by:** user (direct task assignment)

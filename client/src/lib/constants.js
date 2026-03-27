@@ -15,6 +15,7 @@ export const NAV_ITEMS = [
   { icon: 'play_arrow',  label: 'Job Runner',       view: 'jobs' },
   { icon: 'memory',      label: 'Deployments',      view: 'deployments' },
   { icon: 'description', label: 'Context Editor',   view: 'context' },
+  { icon: 'hub',         label: 'Swarm',            view: 'swarm' },
 ];
 
 /**

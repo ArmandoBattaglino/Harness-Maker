@@ -152,7 +152,7 @@ _None._
 - NOTE: FileManager was NOT created in Task #5 as planned — RESOLVED in Task #7 (created server/services/FileManager.js).
 
 ## V3 — Swarm Orchestrator (57 granular tasks after split — 2026-03-27 replan)
-**Status: 28/57 COMPLETED — as of 2026-03-27. All Phase 1 backend tasks done. #52 COMPLETED — SwarmContext.jsx. #53.1, #53.2, #53.3 COMPLETED — all three canvas nodes done. #54 COMPLETED — HandoffEdge.jsx. #55 COMPLETED — AgentInspector.jsx. #56 COMPLETED — BreadcrumbBar.jsx. #57.1 COMPLETED — SwarmCanvas.jsx (React Flow canvas + drill-down filtering). #57.2 COMPLETED — SwarmView.jsx (layout shell + toolbar).**
+**Status: 29/57 COMPLETED — as of 2026-03-27. All Phase 1 backend tasks done. All Phase 2 (Canvas Static) COMPLETED. #52 COMPLETED — SwarmContext.jsx. #53.1, #53.2, #53.3 COMPLETED — all three canvas nodes done. #54 COMPLETED — HandoffEdge.jsx. #55 COMPLETED — AgentInspector.jsx. #56 COMPLETED — BreadcrumbBar.jsx. #57.1 COMPLETED — SwarmCanvas.jsx (React Flow canvas + drill-down filtering). #57.2 COMPLETED — SwarmView.jsx (layout shell + toolbar). #58 COMPLETED — App.jsx swarm routing + NAV_ITEMS 'Swarm' entry. Phase 2 fully done.**
 **Note: Original 40 tasks (#43–#82). After model assignment + subtask split: 57 granular units.**
 **7 original tasks split into subtasks: #46→3, #47→2, #48→2, #53→3, #57→2, #62→3, #71→2**
 - V3 PRD complete: docs/PRD.md
@@ -185,7 +185,7 @@ _None._
 - [TASK-56] COMPLETED 2026-03-27 — BreadcrumbBar.jsx — client/src/canvas/BreadcrumbBar.jsx created; root "All Agents" crumb always shown, department crumbs from departmentStack with label resolution from nodes prop, last crumb bold/white, navigateBreadcrumb(index) on click. Build clean (299 modules).
 - [TASK-57.1] COMPLETED 2026-03-27 — SwarmCanvas.jsx — React Flow canvas with drill-down filtering; registers agent/department/trigger nodeTypes + handoff edgeType; useMemo drill-down filters nodes by focusedDepartmentId; onNodeClick/onPaneClick wired to SwarmStore; BreadcrumbBar + AgentInspector mounted. Build clean (299 modules).
 - [TASK-57.2] COMPLETED 2026-03-27 — SwarmView.jsx — full-page layout shell; toolbar with executionStatus indicator (idle/running/stopped) + conditional Reset button; ReactFlowProvider wraps SwarmCanvas; workflowDef as useState(null) pending #61. Build clean (299 modules).
-- [TASK-58] PENDING — App.jsx + Sidebar swarm nav + ReactFlowProvider
+- [TASK-58] COMPLETED 2026-03-27 — App.jsx + Sidebar swarm nav; SwarmView imported and added to switch; 'hub' icon + 'Swarm' label added to NAV_ITEMS in constants.js (Sidebar auto-renders dynamically from NAV_ITEMS). No extra ReactFlowProvider needed — SwarmView already wraps SwarmCanvas with its own. Build: 470 modules, 0 errors. 168/168 tests pass.
 
 ### V3 Phase 3 — Prompt-to-Flow
 - [TASK-59] PENDING — scaffold endpoint complete (replaces 47.2 stub)

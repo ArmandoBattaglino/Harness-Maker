@@ -1206,3 +1206,35 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 - useSwarmStore.setSelectedNode selection path (non-null) is now wired via onNodeClick — previously only the deselect (null) path was exercisable.
 
 ---
+
+## 2026-03-27 — Task #57.2: SwarmView.jsx — Layout Shell + Toolbar
+**Agent:** frontend-dev
+**Triggered by:** Create the top-level page shell for the Swarm Orchestrator — toolbar with execution status + reset, ReactFlowProvider boundary, SwarmCanvas embed.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/views/SwarmView.jsx | ADDED | New page-level shell component for the swarm orchestrator view |
+
+### Functions Added
+- `SwarmView()` in `client/src/views/SwarmView.jsx` — top-level layout shell: toolbar (title + executionStatus indicator + conditional Reset button) + ReactFlowProvider wrapping SwarmCanvas. Owns workflowDef local state (null; to be wired in Task #61).
+- `statusColors` (module-level const) in `client/src/views/SwarmView.jsx` — map of execution status strings to Tailwind class strings (idle: text-gray-400, running: text-blue-400 animate-pulse, stopped: text-red-400).
+
+### Functions Modified
+- `SwarmCanvas({ workflowDef })` in `client/src/canvas/SwarmCanvas.jsx` — "Called by" updated: SwarmView.jsx is now the first live caller (no code change to SwarmCanvas itself).
+
+### Functions Removed
+- None
+
+### Connection Changes
+- SwarmView.jsx → SwarmCanvas.jsx (first live mounting; passes workflowDef prop, currently null)
+- SwarmView.jsx → useSwarmStore (reads executionStatus + reset)
+- ReactFlowProvider boundary now owned by SwarmView (not SwarmCanvas) — SwarmCanvas is no longer responsible for the provider
+
+### Impact on Other Code
+- SwarmCanvas "no callers yet" warning is resolved — SwarmView is now its parent.
+- SwarmView itself has no caller yet — needs to be registered in App.jsx view router (Task #61).
+- workflowDef remains null until Task #61 wires it to the workflow API/store; SwarmCanvas will render an empty graph until then.
+- Reset button only appears when executionStatus === 'stopped'; it calls SwarmStore.reset() which resets executionStatus to 'idle' — meaning the button immediately disappears after click.
+
+---
