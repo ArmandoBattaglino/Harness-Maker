@@ -1,4 +1,50 @@
 ---
+## 2026-03-27 — Tasks #64, #65: useHandoff.js + AgentNode.jsx micro-PTY enhancements
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel with code-mapper and project-manager)
+
+### Context when I started
+Tasks #64 and #65 had just completed. Task #64 created client/src/hooks/useHandoff.js (two named exports for edgeCounter diff callbacks). Task #65 enhanced the micro PTY log display in client/src/canvas/nodes/AgentNode.jsx. DOC_STATUS.md was last updated after Tasks #63/#66/#67. AgentNode row described the Task #53.1 state (3 lines, no cursor, no scroll). No row existed for useHandoff.js.
+
+### What I did
+1. Read DOC_STATUS.md, documenter.md (tail), useHandoff.js, and AgentNode.jsx in parallel.
+2. Confirmed Task #64: useHandoff.js exports useHandoff(onHandoff) — fires callback per edgeCounter increase using prevCountersRef; and useRecentHandoffs(durationMs=2000) — returns recentRef Set, adds edgeIds on counter increase, removes after durationMs via setTimeout.
+3. Confirmed Task #65: AgentNode.jsx enhanced — lastOutputSnippet now slices last 4 lines (was 3), container is max-h-16 overflow-y-auto (scrollable), blinking cursor (animate-pulse ▋) appended inside pre when status === 'running', selected prop drives ring-2 ring-white highlight, cursor-pointer + transition-all duration-200 added.
+4. Assessed staleness: README.md (not stale — V3 deferred), ARCHITECTURE.md (not stale — V3 deferred until Task #82), inline comments in both files (all present and accurate).
+5. Updated DOC_STATUS.md: advanced timestamp; updated AgentNode row to cover Task #65 changes; added new useHandoff.js row; updated ARCHITECTURE.md stale section to remove #64/#65 from pending list and mark them completed.
+6. Appended ACTIVITY_LOG entry and this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Timestamp advanced; AgentNode.jsx row updated for Task #65 enhancements; useHandoff.js row added (Task #64); ARCHITECTURE.md stale section updated to mark #64/#65 completed. |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended Tasks #64/#65 documenter entry. |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log. |
+
+### Improvements delivered
+- DOC_STATUS.md now tracks useHandoff.js for the first time.
+- AgentNode.jsx row accurately reflects Task #65 live-state enhancements (was describing Task #53.1 state only).
+- Phase 4 pending list in ARCHITECTURE.md stale section is now accurate.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | -- | -- | -- |
+
+### Decisions I made
+- AgentNode.jsx row kept as a single combined entry (Tasks #53.1 + #65) rather than a second separate row — consistent with how SwarmEngine rows accumulate by task number in parentheses.
+- useHandoff.js row placed in V3 Service Files table alongside useSwarm.js and useWorkflow.js — consistent placement for client hooks.
+
+### What I learned
+- useRecentHandoffs returns recentRef.current directly (the live Set object), not a React state value — callers get a stable ref but it won't trigger re-renders on its own. This is intentional: the hook is designed for animation cues, not reactive UI state.
+- AgentNode is now the most visually rich canvas node — it has live color, scroll, cursor blink, and selection ring. DepartmentNode and TriggerNode remain simpler stubs by comparison.
+
+### State I'm leaving behind
+DOC_STATUS.md is current as of 2026-03-27 covering all Phase 4 completed tasks (#63–#67). Phase 4 remaining: Tasks #62.1–#62.3 (_onHandoff full routing in SwarmEngine), #68/#69/#70 (HITL inbox, resolve, freeze). V3 public docs deferred until Task #82.
+
+### Handoff
+Tasks #62.1–#62.3 will modify SwarmEngine.js again — DOC_STATUS.md will need an updated SwarmEngine row when those complete. HITL tasks (#68–#70) will need new rows for server/routes/inbox.js and related middleware.
+---
 ## 2026-03-27 — Tasks #63, #66, #67: useSwarm.js + BroadcastBar.jsx + SwarmEngine pause/resume
 **Status:** COMPLETED
 **Called by:** orchestrator (parallel with code-mapper and project-manager)
