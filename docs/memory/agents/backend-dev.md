@@ -1,4 +1,51 @@
 ---
+## 2026-03-27 — Task #70: SwarmEngine HITL — freezeAgent + unfreezeAgent
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+SwarmEngine.js had pauseExecution/resumeExecution (Task #67) for bulk pause/resume. No per-agent HITL freeze was present. inboxItems array already existed on every execution record. 168 tests passing.
+
+### What I did
+1. Read server/services/SwarmEngine.js in full and docs/memory/agents/backend-dev.md in parallel.
+2. Identified insertion point: between resumeExecution (line 463) and getStatus (line 470).
+3. Added freezeAgent(executionId, nodeId, inboxItem): sets state.status = 'paused', pushes enriched inbox item with auto-id fallback `hitl-${Date.now()}`, broadcasts hitl_required + agent_status WS events.
+4. Added unfreezeAgent(executionId, nodeId): sets state.status = 'running', broadcasts agent_status WS event.
+5. Ran npm test — 168/168 pass, no regressions.
+6. Updated TASK_PLAN.md #70 → COMPLETED, PROGRESS.md counter 39→40, ACTIVITY_LOG.md appended.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SwarmEngine.js | MODIFIED | Added freezeAgent + unfreezeAgent methods before getStatus |
+| docs/TASK_PLAN.md | MODIFIED | Status #70 IN_PROGRESS → COMPLETED |
+| docs/memory/PROGRESS.md | MODIFIED | Counter 39→40, task line updated |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session entry |
+| docs/memory/agents/backend-dev.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- freezeAgent provides per-agent HITL pause with inbox tracking and dual WS broadcasts (hitl_required + agent_status).
+- unfreezeAgent resumes a single agent without disturbing the rest of the execution.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | - | - | - |
+
+### Decisions I made
+- Used exact method signatures from task spec — no deviation. The TASK_PLAN.md context described a different, older design (Ctrl+C, status 'frozen', resumeText PTY inject) but the task body provided the definitive implementation; used that.
+- id fallback `hitl-${Date.now()}` matches spec exactly.
+
+### What I learned
+- The task spec body takes precedence over the TASK_PLAN.md context block when they describe different implementations.
+- inboxItems array was already initialized on every execution record (line 73) — no extra initialization needed.
+
+### State I'm leaving behind
+SwarmEngine.js has freezeAgent + unfreezeAgent at lines 466-519 (approx). All 168 tests pass. Task fully self-contained.
+
+### Handoff
+Tasks #68 (inbox route), #71 (PTY explosion), #72 (InterAgentFeed) are in progress in the phase 5 wave. No further action needed on #70.
+---
 ## 2026-03-27 — Task #47.2: server/routes/swarm.js — Scaffold Endpoint Stub
 **Status:** COMPLETED
 **Called by:** user (direct task assignment)

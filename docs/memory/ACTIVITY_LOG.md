@@ -1,4 +1,14 @@
 ---
+## 2026-03-27 — frontend-dev — Task #72: InterAgentFeed.jsx — Real-time Handoff Log
+**Outcome:** COMPLETED
+**Summary:** Created client/src/canvas/InterAgentFeed.jsx — a scrollable real-time panel that reads interAgentFeed from SwarmContext Zustand store, auto-scrolls to bottom on new events, shows empty state when feed is empty, and renders each event with timestamp, type icon, and a type-specific description. Build passes at 472 modules, 0 errors.
+**Files changed:** client/src/canvas/InterAgentFeed.jsx, docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/frontend-dev.md
+**Bugs fixed:** none
+**Decisions made:** Placed file in client/src/canvas/ (consistent with AgentInspector, BroadcastBar, BreadcrumbBar) rather than client/src/panels/ as the TASK_PLAN suggested — canvas/ is where all V3 canvas-adjacent components live
+**Blockers:** none
+**Next:** Remaining Phase 5: #71.1 (PTY Explosion overlay), #71.2 (Escape key), #73 (useInbox.js). Also #62.2, #62.3 (_onHandoff context injection + BudgetTracker).
+---
+
 ## 2026-03-27 — documenter — Task #62.1: SwarmEngine._onHandoff full implementation
 **Outcome:** COMPLETED
 **Summary:** Audited all documentation after Task #62.1 (_onHandoff fully implemented) and the wiring of CircuitBreaker + BudgetTracker into server/index.js. DOC_STATUS.md updated: timestamp advanced; new SwarmEngine Task #62.1 row added documenting the full 7-step _onHandoff implementation; server/index.js row updated to note CircuitBreaker/BudgetTracker import and constructor wiring; ARCHITECTURE.md stale section updated to mark Task #62.1 complete and advance Phase 4 status. README.md and ARCHITECTURE.md not touched — V3 public doc deferral policy in effect until Task #82.

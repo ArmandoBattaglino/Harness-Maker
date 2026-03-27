@@ -60,6 +60,7 @@ const useSwarmStore = create((set, get) => ({
   }),
 
   setSelectedNode: (id) => set({ selectedNodeId: id }),
+  setPtyExplosionNodeId: (id) => set({ ptyExplosionNodeId: id }),
   setWsConnected: (b) => set({ wsConnected: b }),
 
   reset: () => set({
@@ -73,6 +74,7 @@ const useSwarmStore = create((set, get) => ({
     focusedDepartmentId: null,
     departmentStack: [],
     selectedNodeId: null,
+    ptyExplosionNodeId: null,
     wsConnected: false,
   }),
 }));
