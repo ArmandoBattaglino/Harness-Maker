@@ -55,7 +55,10 @@ Security assessment completed 2026-03-27. Seven mandatory requirements must appe
 
 **Focus:** V3 Swarm Orchestrator — Phase 1 (Backend Foundation) is next.
 
-**Ready to start:** TASK #43 (WorkflowStore.js) — backend-dev
+**Ready to start:** TASK #46.2 (SwarmEngine startExecution + _spawnAgentPty) — backend-dev
+**Completed so far:** #43, #44, #45, #46.1 (4/57 V3 tasks)
+**SwarmEngine.js exists** at server/services/SwarmEngine.js -- skeleton with stubs for #46.2 and #46.3
+**SessionManager.js patched** -- swarmListeners Set wired in onData handler (DEC-014)
 
 **V3 Key Decisions (for all agents):**
 - DEC-V3-01: HandoffParser uses rolling 4KB byte accumulator (NOT line-by-line) — ConPTY splits tokens

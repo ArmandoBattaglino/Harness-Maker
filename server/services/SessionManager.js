@@ -31,6 +31,7 @@ const SWEEP_INTERVAL_MS = 5 * 60 * 1000;
 //   pty: IPty,
 //   buffer: RingBuffer,
 //   clients: Set<WebSocket>,
+//   swarmListeners: Set<Function>,  // V3: secondary listeners for SwarmEngine (DEC-014)
 //   pid: number,
 //   status: 'active' | 'killed',
 //   createdAt: Date,
@@ -73,6 +74,7 @@ export class SessionManager {
       pty: ptyProcess,
       buffer,
       clients: new Set(),
+      swarmListeners: new Set(), // V3: secondary listeners for SwarmEngine (DEC-014)
       pid: ptyProcess.pid,
       status: 'active',
       createdAt: new Date(),
@@ -92,6 +94,11 @@ export class SessionManager {
         // the underlying socket's writable buffer size is checked instead.
         if (ws._socket && ws._socket.bufferSize > 256 * 1024) continue;
         ws.send(data, { binary: false });
+      }
+
+      // V3 swarm tap — non-destructive, DEC-014
+      for (const listener of (session.swarmListeners || [])) {
+        try { listener(data); } catch (_) {}
       }
     });
 

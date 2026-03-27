@@ -1,4 +1,56 @@
 ---
+## 2026-03-27 — Task #46.1: SwarmEngine.js — SessionManager swarmListeners Patch + Class Skeleton
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+V3 Phase 1 backend foundation in progress. Tasks #43 (WorkflowStore), #44 (workflows CRUD routes), and #45 (HandoffParser) were already completed. 132/132 tests passing. SessionManager.js had the permanent pty.onData handler (DEC-009) with ring buffer write + WS broadcast. No swarm listener mechanism existed yet.
+
+### What I did
+1. Read all project memory (PROJECT, DECISIONS, PROGRESS, CONTEXT, CODE_MAP, ACTIVITY_LOG, agent log) in parallel.
+2. Read SessionManager.js, HandoffParser.js, and server/index.js to understand existing patterns.
+3. **STEP 1 — SessionManager.js patch:**
+   - Added `swarmListeners: new Set()` to the session record in `createSession()`.
+   - Added swarmListeners iteration INSIDE the existing `pty.onData` handler, AFTER the ring buffer write and WS broadcast. Each listener is called in a try/catch so a failing listener never crashes the PTY pipeline.
+   - Updated the SessionRecord shape comment to include `swarmListeners`.
+   - The existing onData handler was NOT removed or replaced (DEC-009 preserved).
+4. **STEP 2 — SwarmEngine.js created:**
+   - Class with constructor(sessionManager, workflowStore), setWsBroadcast(fn), stopExecution(executionId), getStatus(executionId) fully implemented.
+   - startExecution, _spawnAgentPty, _buildSystemPrompt, _startHeartbeat present as stubs with `/* implementato in #46.x */` comments.
+   - WorkflowExecution shape documented in comments.
+5. Ran `npm test` — 132/132 tests pass, zero regressions.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SessionManager.js | MODIFIED | Added `swarmListeners: new Set()` to session record + swarmListeners iteration inside onData handler (DEC-014) |
+| server/services/SwarmEngine.js | CREATED | SwarmEngine class skeleton with constructor, setWsBroadcast, stopExecution, getStatus + 4 stubs |
+
+### Improvements delivered
+- SessionManager now supports secondary listeners via swarmListeners Set without violating DEC-009
+- SwarmEngine class skeleton ready for #46.2 and #46.3 to implement the remaining methods
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | - | - | - |
+
+### Decisions I made
+- Used `(session.swarmListeners || [])` defensive fallback in the onData iteration, matching the task spec exactly -- ensures backward compatibility if a session record is somehow missing the field
+- SwarmEngine is a default export (not named export) matching HandoffParser pattern in this codebase
+
+### What I learned
+- The onData handler parameter is named `data` not `chunk` in SessionManager.js -- used `data` to match the existing code
+- SwarmEngine does not need to be a singleton -- it takes sessionManager and workflowStore as constructor deps, allowing test injection
+
+### State I'm leaving behind
+SessionManager.js has the swarmListeners tap fully wired. SwarmEngine.js skeleton is complete. The class is NOT yet imported or instantiated anywhere (that happens in #47.1 when swarm routes are created, or in server/index.js when wiring is done). 132/132 tests pass.
+
+### Handoff
+- Task #46.2: Implement startExecution() and _spawnAgentPty() in SwarmEngine.js. These methods create WorkflowExecution objects and spawn agent PTYs via sessionManager.createSession().
+- Task #46.3: Implement _buildSystemPrompt() and _startHeartbeat(). The heartbeat prevents idle sweeper from killing agent PTYs during active workflows.
+
+---
 ## 2026-03-27 — Task #45: HandoffParser.js — Stateful Rolling Buffer Token Extractor
 **Status:** COMPLETED
 **Called by:** user (direct task assignment)

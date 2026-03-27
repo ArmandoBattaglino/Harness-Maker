@@ -152,7 +152,7 @@ _None._
 - NOTE: FileManager was NOT created in Task #5 as planned — RESOLVED in Task #7 (created server/services/FileManager.js).
 
 ## V3 — Swarm Orchestrator (57 granular tasks after split — 2026-03-27 replan)
-**Status: 3/57 COMPLETED — as of 2026-03-27.**
+**Status: 4/57 COMPLETED — as of 2026-03-27.**
 **Note: Original 40 tasks (#43–#82). After model assignment + subtask split: 57 granular units.**
 **7 original tasks split into subtasks: #46→3, #47→2, #48→2, #53→3, #57→2, #62→3, #71→2**
 - V3 PRD complete: docs/PRD.md
@@ -163,7 +163,7 @@ _None._
 - [TASK-43] COMPLETED 2026-03-27 — WorkflowStore.js — 132/132 tests pass
 - [TASK-44] COMPLETED 2026-03-27 — workflows.js CRUD routes (routes mounted, CRUD working)
 - [TASK-45] COMPLETED 2026-03-27 — HandoffParser.js — 22 unit tests, 132/132 tests pass
-- [TASK-46.1] PENDING — SwarmEngine — SessionManager patch + class skeleton
+- [TASK-46.1] COMPLETED 2026-03-27 — SwarmEngine — SessionManager patch + class skeleton, 132/132 tests pass
 - [TASK-46.2] PENDING — SwarmEngine — startExecution + _spawnAgentPty + HandoffParser tap
 - [TASK-46.3] PENDING — SwarmEngine — _buildSystemPrompt + _startHeartbeat
 - [TASK-47.1] PENDING — swarm.js — 7 execution control endpoints

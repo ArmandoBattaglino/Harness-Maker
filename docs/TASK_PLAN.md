@@ -3805,7 +3805,7 @@ Phase: V3 Phase 1 — Backend Foundation
 Priority: HIGH
 Difficulty: HARD
 Depends on: #43, #45
-Status: PENDING
+Status: COMPLETED
 Context:
   First of three subtasks for SwarmEngine.js — the orchestration core of V3.
   This subtask adds the swarmListeners tap point to SessionManager and creates the
@@ -5996,7 +5996,7 @@ Acceptance criteria:
 | 43 | WorkflowStore.js | backend-dev | HIGH | claude-sonnet-4-6 | COMPLETED |
 | 44 | workflows.js CRUD routes | backend-dev | HIGH | claude-sonnet-4-6 | COMPLETED |
 | 45 | HandoffParser.js | backend-dev | HIGH | claude-opus-4-6 | COMPLETED |
-| **46.1** | SwarmEngine — SessionManager patch + class skeleton | backend-dev | HIGH | claude-opus-4-6 | PENDING |
+| **46.1** | SwarmEngine — SessionManager patch + class skeleton | backend-dev | HIGH | claude-opus-4-6 | COMPLETED |
 | **46.2** | SwarmEngine — startExecution + _spawnAgentPty + tap | backend-dev | HIGH | claude-opus-4-6 | PENDING |
 | **46.3** | SwarmEngine — _buildSystemPrompt + _startHeartbeat | backend-dev | HIGH | claude-opus-4-6 | PENDING |
 | **47.1** | swarm.js — execution control endpoints (7 routes) | backend-dev | HIGH | claude-sonnet-4-6 | PENDING |

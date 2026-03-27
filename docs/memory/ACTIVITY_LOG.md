@@ -1,4 +1,13 @@
 ---
+## 2026-03-27 — backend-dev — Task #46.1: SwarmEngine — SessionManager swarmListeners Patch + Class Skeleton
+**Outcome:** COMPLETED
+**Summary:** Patched SessionManager.js to add `swarmListeners: new Set()` to session records and iterate it inside the existing pty.onData handler (after ring buffer + WS broadcast, DEC-014). Created SwarmEngine.js class skeleton with constructor, setWsBroadcast, stopExecution, getStatus (implemented) and 4 stub methods for #46.2/#46.3. 132/132 tests pass, zero regressions.
+**Files changed:** server/services/SessionManager.js (MODIFIED), server/services/SwarmEngine.js (CREATED)
+**Bugs fixed:** none
+**Decisions made:** Used defensive `(session.swarmListeners || [])` fallback; SwarmEngine as default export matching HandoffParser pattern
+**Blockers:** none
+**Next:** Task #46.2 (startExecution + _spawnAgentPty) and #46.3 (_buildSystemPrompt + _startHeartbeat) can proceed immediately
+---
 ## 2026-03-27 — project-manager — V3 Task Plan Replan: Model Assignments + Subtask Split
 **Outcome:** COMPLETED
 **Summary:** Added Suggested Model field to all 54 PENDING V3 tasks (#44–#82). Split 7 complex tasks into granular subtasks: #46→3 subtasks, #47→2, #48→2, #53→3, #57→2, #62→3, #71→2. Total V3 granular units increased from 40 to 57. All dependencies updated to reference correct subtask IDs. PROGRESS.md updated.
