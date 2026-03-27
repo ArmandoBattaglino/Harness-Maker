@@ -1,4 +1,13 @@
 ---
+## 2026-03-27 — project-manager — V3 Task Plan Replan: Model Assignments + Subtask Split
+**Outcome:** COMPLETED
+**Summary:** Added Suggested Model field to all 54 PENDING V3 tasks (#44–#82). Split 7 complex tasks into granular subtasks: #46→3 subtasks, #47→2, #48→2, #53→3, #57→2, #62→3, #71→2. Total V3 granular units increased from 40 to 57. All dependencies updated to reference correct subtask IDs. PROGRESS.md updated.
+**Files changed:** docs/TASK_PLAN.md (MODIFIED — model fields + subtask blocks added), docs/memory/PROGRESS.md (MODIFIED — V3 section rewritten with subtask IDs), docs/memory/agents/project-manager.md (MODIFIED — session log appended), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** claude-opus-4-6 for VERY HARD tasks (46.x, 57.x, 62.x, 78, 80); claude-haiku-4-5 for trivial/boilerplate tasks (51, 56, 58, 61, 64, 67, 71.2, 72, 73, 75, 76, 81); claude-sonnet-4-6 for standard implementation
+**Blockers:** none
+**Next:** TASK #46.1 (SwarmEngine — SessionManager patch + class skeleton, backend-dev, claude-opus-4-6) is the highest-priority unblocked task. Can run alongside #49 (CircuitBreaker + BudgetTracker, claude-sonnet-4-6) since #49 only needs #46.3 for wiring but can be written standalone.
+---
 ## 2026-03-27 — code-mapper — Tasks #43/#45: WorkflowStore + HandoffParser mapped
 **Outcome:** COMPLETED
 **Summary:** Added WorkflowStore (9 methods) and HandoffParser (3 methods) to CODE_MAP.md Module Index and Function Graph. Appended two CHANGELOG.md entries (Task #43 and Task #45). Test count updated from 110 to 132. No breaking changes to existing interfaces.

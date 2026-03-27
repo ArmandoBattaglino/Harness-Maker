@@ -1,4 +1,71 @@
 ---
+## 2026-03-27 — V3 Task Plan Replan: Model Assignments + Subtask Split
+**Status:** COMPLETED
+**Called by:** user (direct instruction — requested model assignments and subtask splits for all PENDING V3 tasks)
+
+### Context when I started
+V3 task plan had 40 tasks (#43–#82). Tasks #43, #44, #45 were COMPLETED (WorkflowStore, workflows CRUD routes, HandoffParser). The remaining 37 tasks (#46–#82) were PENDING with no `Suggested Model` fields and several VERY HARD / HARD tasks had too broad a scope for single-agent execution (>200 lines, multiple responsibilities). The TASK_PLAN.md file was 5495 lines and exceeded the 256KB read limit — had to read in sections using offset/limit.
+
+### What I did
+1. Read TASK_PLAN.md in 5 sections (offset/limit) to get full spec of all 40 V3 tasks
+2. Read PROGRESS.md, CONTEXT.md, DECISIONS.md for full project context
+3. Read docs/memory/agents/project-manager.md for session history
+4. Analyzed all 37 PENDING tasks against split criteria:
+   - Tasks marked VERY HARD: #46, #62 → mandatory split
+   - Tasks marked HARD with multiple distinct responsibilities: #47, #48, #53, #57, #71
+5. Determined model assignments for all tasks:
+   - claude-opus-4-6: VERY HARD + HARD architecture-critical tasks (46.x, 53.1, 53.2, 57.x, 62.1, 62.2, 78, 80)
+   - claude-haiku-4-5: trivial/boilerplate/simple (51, 56, 58, 61, 64, 67, 71.2, 72, 73, 75, 76, 81)
+   - claude-sonnet-4-6: standard implementation (everything else)
+6. Wrote 17 new subtask blocks into TASK_PLAN.md (replacing 7 original tasks)
+7. Updated all dependency references throughout the file (#46 → #46.3, #57 → #57.1 or #57.2, etc.)
+8. Updated the V3 Task Status Summary table with all 57 granular units
+9. Updated PROGRESS.md V3 section with subtask IDs
+10. Appended to ACTIVITY_LOG.md
+11. Wrote this session log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Added Suggested Model to all pending tasks; split #46→3, #47→2, #48→2, #53→3, #57→2, #62→3, #71→2 subtasks; updated dependency refs; rewrote V3 summary table |
+| docs/memory/PROGRESS.md | MODIFIED | Rewrote V3 section — now 57 granular tasks with subtask IDs |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session entry |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log |
+
+### Improvements delivered
+- Every PENDING V3 task now has a Suggested Model field — agents can be launched with correct model
+- 7 VERY HARD / HARD / multi-responsibility tasks split into 17 focused subtasks
+- Dependency graph updated throughout — subtask IDs used everywhere (e.g. #46.3 not #46)
+- Total granular V3 units: 57 (from 40), with 3 already COMPLETED
+- The next executable task (#46.1) is clearly identified with full context
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| TASK_PLAN.md exceeded 256KB read limit | File grew to 5495 lines during V3 planning | Read in sections with offset/limit | WORKAROUND |
+| #44 shown as PENDING in task summary table | Summary table not updated after #44 completed | Updated summary to show COMPLETED | FIXED |
+
+### Decisions I made
+- Split criteria applied: >200 lines OR multiple distinct responsibilities OR VERY HARD rating
+- #47.2 (scaffold stub) separated from #47.1 (control routes) because scaffold is complex async logic that deserves its own task (#59) — stub allows frontend work to proceed without full scaffold
+- #53.3 (TriggerNode) kept as separate subtask rather than stub — it's logically distinct from AgentNode and DepartmentNode
+- #62 split into 3 because the handoff loop has 3 distinct logical units: edge/circuit, context injection, done/budget — all complex enough to be separate
+- #71 split because overlay rendering and keyboard handling are independently testable
+
+### What I learned
+- TASK_PLAN.md at V3 scope reliably exceeds 256KB — always read in offset sections
+- Dependencies in subtask format need global search-and-replace to stay consistent (several dependency refs needed updating after split)
+- The summary table at the bottom is a critical navigation artifact — must be updated whenever tasks split
+
+### State I'm leaving behind
+- docs/TASK_PLAN.md: 57 V3 granular tasks, all PENDING except #43/#44/#45 (COMPLETED)
+- All 57 tasks have Suggested Model assigned
+- Next wave: #46.1 is the critical path blocker. #49 can be written standalone (pure classes, no deps on running SwarmEngine)
+- #51 (devops, @xyflow/react install, claude-haiku-4-5) can run in parallel once #48.2 is done
+
+### Handoff
+Next priority: assign TASK #46.1 (SwarmEngine — SessionManager patch + class skeleton) to backend-dev with claude-opus-4-6. TASK #49 (CircuitBreaker + BudgetTracker) can run in parallel with #46.x since it only requires the interface contract (not the running engine). Both should launch together.
+---
 ## 2026-03-18 — Task: Project Analysis and Task Plan Review (Session 1)
 **Status:** COMPLETED
 **Called by:** user (direct invocation via /pm)

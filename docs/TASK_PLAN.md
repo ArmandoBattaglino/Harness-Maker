@@ -3796,196 +3796,368 @@ Acceptance criteria:
 
 ---
 
-TASK #46: SwarmEngine.js — Skeleton (PTY Spawn + Stdout Tap)
-Agent: backend-dev
-Priority: HIGH
-Difficulty: VERY HARD
+---
+Task: #46.1
+Title: SwarmEngine.js — SessionManager swarmListeners Patch + Class Skeleton
 Suggested Model: claude-opus-4-6
+Agent: backend-dev
+Phase: V3 Phase 1 — Backend Foundation
+Priority: HIGH
+Difficulty: HARD
+Depends on: #43, #45
 Status: PENDING
-Dependencies: #43, #45
 Context:
-  Create `server/services/SwarmEngine.js` — the orchestration core of V3. This is the most
-  complex new file. Start with the skeleton (spawn + tap), complete the handoff loop in #62.
+  First of three subtasks for SwarmEngine.js — the orchestration core of V3.
+  This subtask adds the swarmListeners tap point to SessionManager and creates the
+  SwarmEngine class skeleton with constructor, setWsBroadcast, stopExecution, and getStatus.
 
-  CRITICAL: SessionManager.js must NOT be modified. SwarmEngine accesses it only via its
-  existing public API: `createSession()`, `getSession()`, `writeInput()`, `killSession()`.
-  The tap on PTY stdout uses `session.swarmListeners` (a Set to be added to SessionManager).
+  CRITICAL CONSTRAINT — DEC-009 + DEC-014:
+  SessionManager.js has a permanent pty.onData handler that MUST NEVER be removed or replaced
+  (DEC-009, ConPTY deadlock prevention). The only safe way to add a secondary listener is via a
+  Set that the existing handler iterates. Do NOT replace or modify the existing handler — only
+  ADD the iteration of swarmListeners inside it.
 
-  STEP 1 — Add `swarmListeners` Set to SessionManager (minimal patch):
+  STEP 1 — Minimal patch to SessionManager.js:
   In `SessionManager.createSession()`, add ONE line to the session record:
-  `session.swarmListeners = new Set();`
-  In `SessionManager._setupPtyHandlers()` (or wherever pty.onData is registered), add:
   ```js
-  session.pty.onData(chunk => {
-    // [EXISTING: write to ring buffer, forward to WS clients]
-    // NEW: forward to swarmListeners (non-destructive tap)
-    for (const listener of session.swarmListeners) {
-      listener(chunk);
-    }
-  });
+  session.swarmListeners = new Set();
   ```
-  THE EXISTING onData HANDLER MUST NOT BE REMOVED (DEC-009).
-
-  STEP 2 — SwarmEngine class skeleton:
+  In the `pty.onData` handler (wherever the existing ring buffer write + WS broadcast happens),
+  add AFTER the existing code (never before, never replacing):
   ```js
+  // V3 swarm tap — non-destructive, DEC-014
+  for (const listener of (session.swarmListeners || [])) {
+    try { listener(chunk); } catch (_) {}
+  }
+  ```
+  Wrap in try/catch so a failing swarm listener NEVER takes down the PTY pipeline.
+  THE EXISTING onData HANDLER MUST NOT BE REMOVED OR REPLACED (DEC-009).
+
+  STEP 2 — SwarmEngine class skeleton (server/services/SwarmEngine.js):
+  ```js
+  import { v4 as uuidv4 } from 'uuid';
+  import HandoffParser from './HandoffParser.js';
+
   class SwarmEngine {
     constructor(sessionManager, workflowStore) {
       this._sessionManager = sessionManager;
       this._workflowStore = workflowStore;
       this._executions = new Map();   // executionId → WorkflowExecution
-      this._wsBroadcast = null;       // set via setWsBroadcast(fn) after WS handler is ready
+      this._wsBroadcast = null;
     }
 
     setWsBroadcast(fn) { this._wsBroadcast = fn; }
 
-    // Start workflow execution
-    async startExecution(workflowId, projectId, projectPath) { ... }
+    async startExecution(workflowId, projectId, projectPath) { /* implemented in #46.2 */ }
+    async _spawnAgentPty(executionId, nodeId) { /* implemented in #46.2 */ }
+    _buildSystemPrompt(node, workflowContext, handoffTargets) { /* implemented in #46.3 */ }
+    _startHeartbeat(executionId) { /* implemented in #46.3 */ }
 
-    // Spawn one agent PTY + attach HandoffParser tap
-    async _spawnAgentPty(executionId, nodeId) { ... }
+    async stopExecution(executionId) {
+      const execution = this._executions.get(executionId);
+      if (!execution) return;
+      clearInterval(execution.heartbeatTimer);
+      for (const [nodeId, state] of execution.agentStates) {
+        if (state.sessionId) {
+          await this._sessionManager.killSession(state.sessionId);
+        }
+      }
+      execution.status = 'stopped';
+      this._executions.delete(executionId);
+    }
 
-    // System prompt assembly (OpenAI Swarm pattern — FR-V3-08)
-    _buildSystemPrompt(node, workflowContext, handoffTargets) { ... }
-
-    // Heartbeat — write empty string to keep PTY alive (prevent idle sweeper)
-    _startHeartbeat(executionId) { ... }
-
-    // Stop all PTYs for an execution
-    async stopExecution(executionId) { ... }
-
-    // Get execution status
-    getStatus(executionId) { ... }
+    getStatus(executionId) {
+      const e = this._executions.get(executionId);
+      if (!e) return null;
+      return {
+        executionId: e.executionId,
+        workflowId: e.workflowId,
+        status: e.status,
+        agentStates: Object.fromEntries(e.agentStates),
+        edgeCounters: Object.fromEntries(e.edgeCounters),
+        budget: e.budget || { estimatedTokensUsed: 0, limitTokens: 0 }
+      };
+    }
   }
+  export default SwarmEngine;
   ```
 
-  SYSTEM PROMPT FORMAT (FR-V3-08, from research_a.md — OpenAI Swarm adaptation):
-  ```
-  {node.data.systemPrompt}
-
-  --- SWARM PROTOCOL (mandatory — never skip) ---
-  Current workflow context:
-  {key}: {value}
-  ...
-
-  When your task is complete and must pass to another agent, output EXACTLY as last line:
-  __HANDOFF__:<targetId>:<base64_json_context_update>
-
-  Valid target IDs: {handoffTargets.join(', ')}
-  Context update format: {"key": "value", ...} — flat dict only, max 50 keys
-
-  When fully done (no further handoff needed):
-  __DONE__
-
-  Do NOT output the handoff or done token mid-response. Only as the very LAST line of your output.
-  --- END PROTOCOL ---
-  ```
-
-  HEARTBEAT (prevent idle sweeper — DEC from research_complete.md):
-  Every 5 minutes, for each active PTY in the execution, write '' (empty string) to keep alive:
-  `sessionManager.writeInput(sessionId, '')` — this resets the 30-minute idle timeout.
-
-  WorkflowExecution runtime state (never persisted):
+  WorkflowExecution runtime state shape (never persisted):
   ```js
   {
     executionId: string,
     workflowId: string,
     workflowDef: WorkflowDefinition,
     status: 'running' | 'stopped',
-    agentStates: Map<nodeId, {
-      sessionId: string,
-      status: 'idle' | 'running' | 'done' | 'frozen',
-      handoffCount: number,
-      lastOutputSnippet: string   // last 500 chars of PTY output
-    }>,
+    agentStates: Map<nodeId, { sessionId, status, handoffCount, lastOutputSnippet }>,
     edgeCounters: Map<edgeId, number>,
-    workflowContext: {},          // flat dict, shallow-merged on handoffs
-    heartbeatTimer: NodeJS.Timer,
+    workflowContext: {},
+    heartbeatTimer: NodeJS.Timer | null,
     inboxItems: []
   }
   ```
 
 Acceptance criteria:
-  - [ ] SessionManager.js gets `swarmListeners = new Set()` with ZERO change to existing onData handler (DEC-009 preserved)
-  - [ ] SwarmEngine.startExecution() creates a WorkflowExecution in the executions Map
-  - [ ] `_spawnAgentPty()` calls sessionManager.createSession(), adds a tap listener to swarmListeners, feeds chunks to HandoffParser
-  - [ ] System prompt includes SWARM PROTOCOL block with valid target IDs
-  - [ ] Heartbeat timer writes to all active PTYs every 5 minutes
-  - [ ] stopExecution() kills all PTYs and clears heartbeat timer
+  - [ ] SessionManager.js gets swarmListeners iteration INSIDE existing onData, not replacing it
+  - [ ] DEC-009 preserved: existing ring buffer write and WS broadcast happen before and independently
+  - [ ] Try/catch wraps each swarm listener call — a throwing listener never affects PTY
+  - [ ] SwarmEngine class exported with constructor, setWsBroadcast, stopExecution, getStatus
   - [ ] 110 existing tests still pass after SessionManager.js patch
 
 ---
 
-TASK #47: server/routes/swarm.js — Execution Control + Scaffold Endpoint
+---
+Task: #46.2
+Title: SwarmEngine.js — startExecution + _spawnAgentPty + HandoffParser Tap
+Suggested Model: claude-opus-4-6
 Agent: backend-dev
+Phase: V3 Phase 1 — Backend Foundation
 Priority: HIGH
 Difficulty: HARD
-Suggested Model: claude-sonnet-4-6
+Depends on: #46.1
 Status: PENDING
-Dependencies: #46
 Context:
-  Create `server/routes/swarm.js` with these endpoints (mount at `/api/v1/swarm`):
+  Second of three subtasks for SwarmEngine.js.
+  Implement `startExecution()` and `_spawnAgentPty()` in the class from #46.1.
 
-  EXECUTION CONTROL:
-  - `POST /api/v1/swarm/:workflowId/start` → 201 { executionId, status: 'running' }
-    Body: { projectId, projectPath }
-  - `POST /api/v1/swarm/:workflowId/pause` → 200 (freeze all agent PTYs — send \x03 to each)
-  - `POST /api/v1/swarm/:workflowId/resume` → 200 (unfreeze)
-  - `DELETE /api/v1/swarm/:workflowId` → 204 (stop + kill all PTYs)
-  - `GET /api/v1/swarm/:workflowId/status` → 200 { executionId, status, agentStates, edgeCounters, budget }
-  - `GET /api/v1/swarm/:executionId/agent/:nodeId/output` → 200 { output: string } (read ring buffer)
-  - `POST /api/v1/swarm/:executionId/broadcast` → 200
-    Body: { text, scope: 'all' | departmentId | agentNodeId, mode: 'soft' | 'hard' }
+  startExecution(workflowId, projectId, projectPath):
+  1. Load workflow from WorkflowStore: `const wf = await this._workflowStore.get(workflowId)`
+  2. If not found: throw Error('Workflow not found')
+  3. Build executionId = uuidv4()
+  4. Build WorkflowExecution object (see shape in #46.1)
+  5. Find the triage node (node where data.isTriageNode === true, or first agent node)
+  6. Spawn triage agent: `await this._spawnAgentPty(executionId, triageNode.id)`
+  7. Store execution in this._executions Map
+  8. Return executionId
 
-  SCAFFOLD ENDPOINT (Prompt-to-Flow — FR-V3-19):
-  `POST /api/v1/swarm/scaffold` → 201 { workflow: WorkflowDefinition }
-  Body: { prompt, projectId, projectPath }
+  _spawnAgentPty(executionId, nodeId):
+  1. Get execution: `const execution = this._executions.get(executionId)`
+  2. Get node definition: `const node = execution.workflowDef.nodes.find(n => n.id === nodeId)`
+  3. Build handoff targets list: edges where source === nodeId → target IDs
+  4. Build system prompt string (calls _buildSystemPrompt from #46.3)
+  5. Create session: `const sessionId = await this._sessionManager.createSession(projectId, projectPath)`
+  6. Write system prompt to PTY stdin: `this._sessionManager.writeInput(sessionId, systemPrompt + '\n')`
+  7. Create a HandoffParser instance for this agent
+  8. Register swarm listener on the session's swarmListeners Set:
+     ```js
+     const session = this._sessionManager.getSession(sessionId);
+     const tapFn = (chunk) => {
+       const events = parser.feed(chunk);
+       // Update lastOutputSnippet (last 500 chars)
+       execution.agentStates.get(nodeId).lastOutputSnippet =
+         (execution.agentStates.get(nodeId).lastOutputSnippet + chunk).slice(-500);
+       for (const evt of events) {
+         if (evt.type === 'handoff') this._onHandoff(executionId, nodeId, evt);
+         if (evt.type === 'done') this._onDone(executionId, nodeId);
+       }
+     };
+     session.swarmListeners.add(tapFn);
+     ```
+  9. Store sessionId + tapFn reference in agentStates for later removal:
+     `execution.agentStates.set(nodeId, { sessionId, tapFn, status: 'running', handoffCount: 0, lastOutputSnippet: '' })`
+  10. Emit WS: `{ type: 'agent_status', nodeId, status: 'running' }`
 
-  Scaffold implementation:
-  1. Build scaffold system prompt (see research_complete.md Prompt-to-Flow section)
-  2. Call `jobRunner.startJob(projectId, projectPath, scaffoldPrompt, 'none', 1)` (reuse existing JobRunner)
-  3. Wait for 'done' event from job
-  4. Strip markdown fences from result: `result.match(/```json\n([\s\S]+?)\n```/) || result.match(/(\{[\s\S]+\})/)`
-  5. JSON.parse → validate schema → WorkflowStore.create()
-  6. Return 201 { workflow }
-  7. On parse failure: return 422 { error: 'SCAFFOLD_PARSE_FAILED' } — DO NOT log raw prompt (SEC-08)
+  _ensureAgentPty(executionId, nodeId):
+  - Check if agentStates already has an active session for nodeId
+  - If yes and status != 'done': return existing session (reuse)
+  - If no or status=='done': spawn fresh PTY via _spawnAgentPty
 
-  Scaffold system prompt template:
+  stopExecution must also remove swarm tap listeners:
+  ```js
+  // In stopExecution, before killSession:
+  const session = this._sessionManager.getSession(state.sessionId);
+  if (session && state.tapFn) session.swarmListeners.delete(state.tapFn);
   ```
-  Output ONLY valid JSON — no markdown, no explanation, no code fences.
-  Schema:
-  { "name":"...", "nodes":[...], "edges":[...], "settings": { "mode":"auto", "budgetTokens":100000, "circuitBreakerThreshold":10, "defaultModel":"claude-sonnet-4-6" }, "initialContext": {} }
-  AgentNode: { "id":"agent-<slug>", "type":"agent", "position":{"x":N,"y":N}, "data":{ "label":"...", "systemPrompt":"...", "tools":[], "model":"claude-sonnet-4-6", "isTriageNode":false, "maxTurns":20 } }
-  DepartmentNode: { "id":"dept-<slug>", "type":"department", "position":{"x":N,"y":N}, "style":{"width":400,"height":300}, "data":{"label":"..."} }
-  HandoffEdge: { "id":"e-<src>-<tgt>", "source":"...", "target":"...", "type":"handoff", "data":{"circuitBreakerThreshold":null} }
-  Auto-layout: 280px horizontal spacing, 160px vertical spacing. First node at {x:100, y:100}.
-  Workflow request: <PROMPT>
-  ```
-
-  BROADCAST implementation (from research_c.md):
-  - Soft mode: write text + Escape + Enter (no interrupt)
-  - Hard mode: write \x03 (Ctrl+C) → wait 300ms → text → Escape → wait 100ms → Enter
-  - Fire-and-forget per agent — do NOT block broadcast loop waiting for acknowledgment
 
 Acceptance criteria:
-  - [ ] All 8 endpoints respond with correct status codes
-  - [ ] scaffold endpoint returns 422 (not 500) on JSON parse failure, no raw prompt logged
-  - [ ] Broadcast hard mode sends \x03 first, then text
-  - [ ] CSRF header required on all mutating endpoints
+  - [ ] startExecution() creates execution record and spawns triage agent PTY
+  - [ ] _spawnAgentPty() registers HandoffParser tap on session.swarmListeners
+  - [ ] lastOutputSnippet updated from tap callback (last 500 chars)
+  - [ ] tapFn stored in agentStates for removal on stop
+  - [ ] stopExecution() removes tapFn from swarmListeners before killing session
+  - [ ] 110 existing tests still pass
 
 ---
 
-TASK #48: server/ws/swarmHandler.js — WebSocket Swarm Channel
+---
+Task: #46.3
+Title: SwarmEngine.js — _buildSystemPrompt + _startHeartbeat
+Suggested Model: claude-opus-4-6
 Agent: backend-dev
+Phase: V3 Phase 1 — Backend Foundation
 Priority: HIGH
 Difficulty: MEDIUM
-Suggested Model: claude-sonnet-4-6
+Depends on: #46.2
 Status: PENDING
-Dependencies: #46
 Context:
-  Create `server/ws/swarmHandler.js`. Add `channel=swarm` routing to the EXISTING `wss` WebSocket
-  server in `server/index.js`. Do NOT create a new WebSocket server.
+  Third of three subtasks for SwarmEngine.js.
+  Implement _buildSystemPrompt and _startHeartbeat in the class from #46.1.
 
-  In `server/index.js`, where WS upgrade is handled, add routing:
+  _buildSystemPrompt(node, workflowContext, handoffTargets):
+  Assembles the system prompt following the OpenAI Swarm pattern (FR-V3-08, research_a.md):
+  ```
+  {node.data.systemPrompt}
+
+  --- SWARM PROTOCOL (mandatory — never skip) ---
+  Current workflow context:
+  {each key}: {each value}
+  ...
+
+  When your task is complete and must pass to another agent, output EXACTLY as last line:
+  __HANDOFF__:<targetId>:<base64_json_context_update>
+
+  Valid target IDs: {handoffTargets.join(', ')}
+  Context update format: {"key": "value", ...} — flat dict only, max 50 keys, values max 1024 chars
+
+  When fully done (no further handoff needed):
+  __DONE__
+
+  Do NOT output the handoff or done token mid-response. Only as the very LAST line.
+  --- END PROTOCOL ---
+  ```
+
+  If workflowContext is empty: omit the "Current workflow context:" section.
+  If handoffTargets is empty: omit the Valid target IDs line, show __DONE__ only.
+
+  _startHeartbeat(executionId):
+  - Sets `execution.heartbeatTimer = setInterval(...)` every 5 minutes (300000ms)
+  - On each tick: for every entry in execution.agentStates where status === 'running':
+    `this._sessionManager.writeInput(state.sessionId, '')`
+  - An empty string write resets the idle timer without sending visible input
+  - Timer MUST be stored so stopExecution() can call clearInterval(execution.heartbeatTimer)
+  - Call _startHeartbeat(executionId) at end of startExecution(), after triage agent spawned
+
+  Also implement the _onHandoff and _onDone stubs (full impl in #62):
+  ```js
+  async _onHandoff(executionId, sourceNodeId, event) {
+    // Placeholder — full impl in #62
+    if (this._wsBroadcast) {
+      this._wsBroadcast(executionId, { type: 'handoff_started',
+        sourceNodeId, targetNodeId: event.targetId, edgeId: null, counter: 0 });
+    }
+  }
+  _onDone(executionId, nodeId) {
+    if (this._wsBroadcast) {
+      this._wsBroadcast(executionId, { type: 'execution_status', status: 'agent_done', nodeId });
+    }
+  }
+  ```
+
+Acceptance criteria:
+  - [ ] _buildSystemPrompt returns string with SWARM PROTOCOL block + valid target IDs
+  - [ ] Context section omitted when workflowContext is empty
+  - [ ] _startHeartbeat sets interval and stores timer on execution object
+  - [ ] Heartbeat writes empty string to all 'running' agent sessions
+  - [ ] stopExecution() clears the heartbeat timer (no leak)
+  - [ ] 110 existing tests still pass
+
+---
+
+---
+Task: #47.1
+Title: server/routes/swarm.js — Execution Control Endpoints
+Suggested Model: claude-sonnet-4-6
+Agent: backend-dev
+Phase: V3 Phase 1 — Backend Foundation
+Priority: HIGH
+Difficulty: MEDIUM
+Depends on: #46.3
+Status: PENDING
+Context:
+  First of two subtasks for swarm.js routes.
+  Create `server/routes/swarm.js` and mount at `/api/v1/swarm` in server/index.js.
+  Implement the 7 execution control and status endpoints (NOT the scaffold endpoint — that is #47.2).
+
+  Look at server/routes/sessions.js and server/routes/jobs.js for the Express router pattern.
+  All mutating endpoints require the CSRF header: X-Requested-With: ClaudeCodeManager.
+
+  ENDPOINTS TO IMPLEMENT:
+  - `POST /api/v1/swarm/:workflowId/start` → 201 { executionId, status: 'running' }
+    Body: { projectId, projectPath } — validate both present
+  - `POST /api/v1/swarm/:workflowId/pause` → 200 { ok: true }
+    Calls swarmEngine.pauseExecution(executionId) — freeze all active agent PTYs (write \x03)
+  - `POST /api/v1/swarm/:workflowId/resume` → 200 { ok: true }
+    Calls swarmEngine.resumeExecution(executionId) — set agents back to 'running'
+  - `DELETE /api/v1/swarm/:workflowId` → 204
+    Calls swarmEngine.stopExecution(executionId) — kill all PTYs
+  - `GET /api/v1/swarm/:workflowId/status` → 200 { executionId, status, agentStates, edgeCounters, budget }
+    Calls swarmEngine.getStatus(executionId)
+  - `GET /api/v1/swarm/:executionId/agent/:nodeId/output` → 200 { output: string }
+    Reads agent's PTY ring buffer via sessionManager.getSession(sessionId).buffer.toString()
+  - `POST /api/v1/swarm/:executionId/broadcast` → 200 { sent: N }
+    Body: { text, scope: 'all' | departmentId | agentNodeId, mode: 'soft' | 'hard' }
+    Broadcast implementation per research_c.md:
+    - Soft: write text + '\x1b' + '\n' (Escape + Enter, no interrupt)
+    - Hard: write '\x03' → wait 300ms → text → '\x1b' → wait 100ms → '\n'
+    - Fire-and-forget per agent PTY — do NOT block waiting for acknowledgment
+
+  INJECT swarmEngine into routes at init:
+  In server/index.js: `import swarmRoutes from './routes/swarm.js'`
+  Pass swarmEngine instance: `app.use('/api/v1/swarm', swarmRoutes(swarmEngine, sessionManager))`
+  Pattern: export a factory function `(swarmEngine, sessionManager) => router`
+
+Acceptance criteria:
+  - [ ] All 7 endpoints respond with correct status codes
+  - [ ] CSRF header required on POST/DELETE mutations
+  - [ ] Route mounted in server/index.js with swarmEngine + sessionManager injected
+  - [ ] start returns 404 when workflowId does not exist in WorkflowStore
+  - [ ] status returns 404 when no execution is running for workflowId
+
+---
+
+---
+Task: #47.2
+Title: server/routes/swarm.js — Scaffold Endpoint (POST /api/v1/swarm/scaffold)
+Suggested Model: claude-sonnet-4-6
+Agent: backend-dev
+Phase: V3 Phase 1 — Backend Foundation
+Priority: MEDIUM
+Difficulty: MEDIUM
+Depends on: #47.1, #59
+Status: PENDING
+Context:
+  Second of two subtasks for swarm.js routes.
+  Add the scaffold endpoint to the router created in #47.1.
+  This task is also superseded by the full implementation in #59 — #47.2 creates a stub that
+  returns 501 Not Implemented, while #59 provides the complete implementation.
+
+  STUB ENDPOINT (this task):
+  `POST /api/v1/swarm/scaffold` → 501 { error: 'Not yet implemented — see task #59' }
+  Body: { prompt, projectId, projectPath }
+  Validate body present and prompt max 2000 chars. Return 400 on validation fail.
+
+  This stub allows #57 (SwarmView) and #60 (PromptToFlowBar) to be built and tested
+  against a real endpoint URL before #59 completes the implementation.
+
+  The FINAL implementation in #59 will replace this stub with:
+  1. Full JobRunner call to Claude API for workflow scaffold generation
+  2. JSON extraction + WorkflowStore.create()
+  3. 422 on parse failure, 408 on timeout
+  See full spec in TASK #59.
+
+Acceptance criteria:
+  - [ ] POST /api/v1/swarm/scaffold exists and returns 501 (stub)
+  - [ ] Validates prompt max 2000 chars → 400 on violation
+  - [ ] CSRF header required
+  - [ ] No raw prompt in logs or error responses
+
+---
+
+---
+Task: #48.1
+Title: swarmHandler.js — Channel Routing + Connection Management
+Suggested Model: claude-sonnet-4-6
+Agent: backend-dev
+Phase: V3 Phase 1 — Backend Foundation
+Priority: HIGH
+Difficulty: MEDIUM
+Depends on: #46.1
+Status: PENDING
+Context:
+  First of two subtasks for swarmHandler.js.
+  Create `server/ws/swarmHandler.js` and add channel=swarm routing to server/index.js.
+
+  In `server/index.js`, find where `wss.on('connection', ...)` is handled and add routing:
   ```js
   wss.on('connection', (ws, req) => {
     const url = new URL(req.url, 'ws://localhost');
@@ -3993,36 +4165,91 @@ Context:
     if (channel === 'swarm') {
       swarmHandler.handleConnection(ws, url);
     } else {
-      terminalHandler.handleConnection(ws, url, req);  // existing handler
+      terminalHandler.handleConnection(ws, url, req);  // existing — do NOT touch
     }
   });
   ```
 
-  swarmHandler.handleConnection(ws, url):
-  - Parse `executionId` from query params
-  - Validate executionId exists in swarmEngine
-  - Register ws client for that execution
-  - On ws close: remove from execution's client set
+  swarmHandler.js — connection management:
+  ```js
+  const _clients = new Map();  // executionId → Set<WebSocket>
 
-  swarmHandler.broadcast(executionId, event):
-  - Send JSON event to all registered clients for that executionId
-  - Event types emitted by SwarmEngine (FR-V3 WS events):
-    ```
-    { type: "agent_status", nodeId, status, lastOutputSnippet }
-    { type: "handoff_started", sourceNodeId, targetNodeId, edgeId, counter }
-    { type: "handoff_completed", sourceNodeId, targetNodeId }
-    { type: "circuit_breaker", edgeId, counter, threshold }
-    { type: "inbox_item", item }
-    { type: "execution_status", status }
-    { type: "budget_update", estimatedTokensUsed, limitTokens }
-    ```
-  - SwarmEngine calls `swarmHandler.broadcast(executionId, event)` via the injected `setWsBroadcast` callback
+  function handleConnection(ws, url) {
+    const executionId = url.searchParams.get('executionId');
+    if (!executionId) {
+      ws.close(4001, 'Missing executionId');
+      return;
+    }
+    // Validate executionId exists — checked against swarmEngine._executions
+    // If not found: ws.close(4004, 'Execution not found'); return;
+    if (!_clients.has(executionId)) _clients.set(executionId, new Set());
+    _clients.get(executionId).add(ws);
+    ws.on('close', () => {
+      const set = _clients.get(executionId);
+      if (set) { set.delete(ws); if (set.size === 0) _clients.delete(executionId); }
+    });
+    // Send initial status snapshot
+    const status = swarmEngine.getStatus(executionId);
+    if (status) ws.send(JSON.stringify({ type: 'execution_status', ...status }));
+  }
+  ```
+
+  Pass swarmEngine reference via factory: `export default (swarmEngine) => ({ handleConnection, broadcast })`
 
 Acceptance criteria:
-  - [ ] `channel=swarm` requests handled by swarmHandler, not terminalHandler
-  - [ ] Existing terminal WebSocket connections still work (no regression)
-  - [ ] WS clients receive JSON events on handoff/status changes
-  - [ ] Client disconnection cleanly removes from execution's client set
+  - [ ] channel=swarm connections handled by swarmHandler (not terminalHandler)
+  - [ ] Existing terminal WebSocket (no channel param) still handled by terminalHandler — zero regression
+  - [ ] Missing executionId → close code 4001
+  - [ ] Non-existent executionId → close code 4004
+  - [ ] Client disconnection removes ws from _clients Set cleanly
+
+---
+
+---
+Task: #48.2
+Title: swarmHandler.js — broadcast() + WS Event Types
+Suggested Model: claude-sonnet-4-6
+Agent: backend-dev
+Phase: V3 Phase 1 — Backend Foundation
+Priority: HIGH
+Difficulty: EASY
+Depends on: #48.1
+Status: PENDING
+Context:
+  Second of two subtasks for swarmHandler.js.
+  Add the broadcast() function and wire it to SwarmEngine via setWsBroadcast().
+
+  broadcast(executionId, event):
+  ```js
+  function broadcast(executionId, event) {
+    const clients = _clients.get(executionId);
+    if (!clients || clients.size === 0) return;
+    const msg = JSON.stringify(event);
+    for (const ws of clients) {
+      if (ws.readyState === ws.OPEN) {
+        try { ws.send(msg); } catch (_) {}
+      }
+    }
+  }
+  ```
+
+  WS event types that SwarmEngine broadcasts (all handled by broadcast()):
+  - { type: "agent_status", nodeId, status, lastOutputSnippet }
+  - { type: "handoff_started", sourceNodeId, targetNodeId, edgeId, counter }
+  - { type: "handoff_completed", sourceNodeId, targetNodeId }
+  - { type: "circuit_breaker", edgeId, counter, threshold }
+  - { type: "inbox_item", item }
+  - { type: "execution_status", status }
+  - { type: "budget_update", estimatedTokensUsed, limitTokens }
+
+  In server/index.js, after both swarmEngine and swarmHandler are initialized:
+  `swarmEngine.setWsBroadcast((executionId, event) => swarmHandler.broadcast(executionId, event))`
+
+Acceptance criteria:
+  - [ ] broadcast() sends JSON to all OPEN clients for an executionId
+  - [ ] Closed WS sockets silently skipped (no throw)
+  - [ ] swarmEngine.setWsBroadcast() wired in server/index.js
+  - [ ] SwarmEngine WS events arrive at connected browser clients during execution
 
 ---
 
@@ -4032,7 +4259,7 @@ Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-sonnet-4-6
 Status: PENDING
-Dependencies: #46
+Dependencies: #46.3
 Context:
   Create two small pure services:
 
@@ -4068,7 +4295,7 @@ Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
 Status: PENDING
-Dependencies: #44, #47
+Dependencies: #44, #47.1
 Context:
   Implement all 7 mandatory V3 security requirements from the PRD (Appendix A).
   These are BLOCKING for any V3 release.
@@ -4119,7 +4346,7 @@ Priority: HIGH
 Difficulty: TRIVIAL
 Suggested Model: claude-haiku-4-5
 Status: PENDING
-Dependencies: #48 (backend WS channel ready before frontend connects)
+Dependencies: #48.2
 Context:
   Install V3 frontend dependencies in `client/`:
   ```bash
@@ -4208,59 +4435,123 @@ Acceptance criteria:
 
 ---
 
-TASK #53: Canvas Nodes — AgentNode, DepartmentNode, TriggerNode
-Agent: frontend-dev
-Priority: HIGH
-Difficulty: HARD
+---
+Task: #53.1
+Title: AgentNode.jsx — Custom React Flow Agent Node
 Suggested Model: claude-opus-4-6
+Agent: frontend-dev
+Phase: V3 Phase 2 — Canvas Static
+Priority: HIGH
+Difficulty: MEDIUM
+Depends on: #52
 Status: PENDING
-Dependencies: #52
 Context:
-  Create three custom React Flow node components. All in `client/src/canvas/nodes/`.
+  Create `client/src/canvas/nodes/AgentNode.jsx` — the primary node type in the swarm canvas.
 
   CRITICAL REACT FLOW v12 RULES (from research_b.md):
-  - ALL `setNodes` calls MUST use immutable spread: `{ ...node, data: { ...node.data } }`
+  - ALL setNodes calls MUST use immutable spread: `{ ...node, data: { ...node.data } }`
   - NEVER mutate node objects in place — React Flow v12 breaks silently
-  - Parent nodes MUST appear BEFORE children in the nodes array
-  - DepartmentNode width/height set via `style: { width, height }` — NOT node fields
-  - Use `setNodes` (not `updateNode`) for batch updates — updateNode has selection bug #5036
-  - Execution state (status, counters) in ZUSTAND — not in node.data that triggers setNodes
+  - Execution state (status, counters) MUST live in Zustand, NOT in node.data
 
   AgentNode.jsx (`type: "agent"`):
-  - Shows: label, model badge, status indicator dot (idle/running/done/frozen → colors)
-  - Subscribes: `const agentState = useSwarmStore(s => s.agentStates[nodeId])`
-  - Status colors: idle=gray, running=blue pulse, done=green, frozen=orange
-  - Handles: `onDoubleClick` → fire PTY Explosion (dispatch to SwarmContext)
-  - Wrapped in `React.memo`
-  - Animated border when status='running': CSS @keyframes pulse, blue glow
+  - Shows: label, model badge (small pill), status indicator dot
+  - Status colors: idle=gray (#6b7280), running=blue (#3b82f6) with pulse, done=green (#22c55e), frozen=orange (#f97316)
+  - Subscribes: `const agentState = useSwarmStore(s => s.agentStates[data.id] || { status: 'idle' })`
+  - onDoubleClick: `useSwarmStore.getState().setPtyExplosionNodeId(id)` (for PTY Explosion #71)
+  - Wrapped in React.memo — never re-renders unless its own slice of store changes
+  - Animated border when running: CSS @keyframes agentPulse with blue box-shadow glow
+  - React Flow handles (source/target) visible on hover
 
-  DepartmentNode.jsx (`type: "department"`, renders as group container):
-  - Style: semi-transparent background, dashed border, label at top
-  - Toggle button (▶/▼): collapses/expands children via `hidden` flag
-  - Double-click: dispatch `setFocusedDepartment(id)` → drill-down
-  - Collapse logic:
-    ```js
-    const childIds = getNodes().filter(n => n.parentId === id).map(n => n.id);
-    setNodes(nodes => nodes.map(n =>
-      childIds.includes(n.id) ? { ...n, hidden: !data.collapsed } : n
-    ));
-    ```
-  - Wrapped in `React.memo`
-
-  TriggerNode.jsx (`type: "trigger"`):
-  - Shows: trigger type icon (🔗 webhook or 📡 RSS), label, last-fired timestamp
-  - Read-only status (not interactive)
-  - Subscribes to trigger state from SwarmStore when execution is active
-
-  Register all three in SwarmCanvas.jsx (task #57) as `nodeTypes` prop.
+  Export AgentNode as default. It will be registered in SwarmCanvas (#57.1) as `nodeTypes.agent`.
 
 Acceptance criteria:
-  - [ ] AgentNode shows correct status color for each of 4 states
-  - [ ] AgentNode animated blue border when status='running'
-  - [ ] DepartmentNode collapse/expand correctly toggles child node `hidden` property
-  - [ ] DepartmentNode double-click fires `setFocusedDepartment`
-  - [ ] All three nodes wrapped in React.memo
-  - [ ] No node.data mutations (always spread)
+  - [ ] Correct status dot color for all 4 states (idle/running/done/frozen)
+  - [ ] Blue pulsing border animation when status='running'
+  - [ ] Subscribes ONLY to its own agentState slice (no global re-renders)
+  - [ ] onDoubleClick sets ptyExplosionNodeId in SwarmStore
+  - [ ] Wrapped in React.memo
+
+---
+
+---
+Task: #53.2
+Title: DepartmentNode.jsx — Group Container Node with Collapse/Expand
+Suggested Model: claude-opus-4-6
+Agent: frontend-dev
+Phase: V3 Phase 2 — Canvas Static
+Priority: HIGH
+Difficulty: HARD
+Depends on: #52
+Status: PENDING
+Context:
+  Create `client/src/canvas/nodes/DepartmentNode.jsx`.
+  This is the most complex canvas node — it acts as a group container for agent nodes.
+
+  CRITICAL REACT FLOW v12 RULES:
+  - Parent (department) nodes MUST appear BEFORE their children in the nodes array
+  - DepartmentNode width/height MUST be set via `style: { width, height }` on the node object — NOT node fields
+  - Use `setNodes` (not `updateNode`) for batch updates — updateNode has selection bug #5036
+
+  DepartmentNode.jsx (`type: "department"`, renders as group container):
+  - Style: semi-transparent dark background (rgba(17,24,39,0.6)), dashed border (#374151), label at top
+  - Toggle button (▶ collapsed / ▼ expanded) in top-right corner
+  - Collapse logic using useReactFlow():
+    ```js
+    const { getNodes, setNodes } = useReactFlow();
+    const collapse = () => {
+      const childIds = getNodes().filter(n => n.parentId === id).map(n => n.id);
+      setNodes(nodes => nodes.map(n =>
+        childIds.includes(n.id) ? { ...n, hidden: !data.collapsed } : n
+      ));
+      // Also update the department node's data.collapsed flag immutably:
+      setNodes(nodes => nodes.map(n =>
+        n.id === id ? { ...n, data: { ...n.data, collapsed: !data.collapsed } } : n
+      ));
+    };
+    ```
+  - Double-click: `useSwarmStore.getState().setFocusedDepartment(id)` → drill-down
+  - Wrapped in React.memo
+
+Acceptance criteria:
+  - [ ] Collapse/expand correctly sets hidden=true/false on all child nodes
+  - [ ] No node.data mutation — always immutable spread with setNodes
+  - [ ] Double-click fires setFocusedDepartment
+  - [ ] Semi-transparent background + dashed border style
+  - [ ] Wrapped in React.memo
+
+---
+
+---
+Task: #53.3
+Title: TriggerNode.jsx — Webhook/RSS Trigger Node (stub)
+Suggested Model: claude-sonnet-4-6
+Agent: frontend-dev
+Phase: V3 Phase 2 — Canvas Static
+Priority: MEDIUM
+Difficulty: EASY
+Depends on: #52
+Status: PENDING
+Context:
+  Create `client/src/canvas/nodes/TriggerNode.jsx` — the canvas node for webhook and RSS triggers.
+  This is a stub implementation for Phase 2 canvas; full trigger state display is completed in #76.
+
+  TriggerNode.jsx (`type: "trigger"`):
+  - Shows: trigger type (data.triggerType === 'webhook' → chain-link icon, 'rss' → signal icon)
+  - Shows: label (from data.label)
+  - Shows: URL/path (data.webhookPath or data.rssUrl, truncated to 30 chars)
+  - Status: read-only — shows "waiting" when no execution active
+  - During execution: subscribes to trigger state from SwarmStore
+  - No interactive controls — configured in AgentInspector (#55)
+  - Wrapped in React.memo
+
+  Note: Use text-based icons (W for webhook, R for RSS) as placeholder until icon library confirmed.
+  Full fired/timestamp display completed in #76.
+
+Acceptance criteria:
+  - [ ] Webhook type shows different icon/label from RSS type
+  - [ ] URL/path shown (truncated)
+  - [ ] Read-only status display
+  - [ ] Wrapped in React.memo
 
 ---
 
@@ -4270,7 +4561,7 @@ Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
 Status: PENDING
-Dependencies: #52
+Dependencies: #52, #53.1
 Context:
   Create `client/src/canvas/edges/HandoffEdge.jsx` — a custom React Flow edge that shows:
   - An animated "light pulse" traveling along the edge path when a handoff is in progress
@@ -4332,7 +4623,7 @@ Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
 Status: PENDING
-Dependencies: #52
+Dependencies: #52, #53.1
 Context:
   Create `client/src/panels/AgentInspector.jsx` — the right-side panel that appears when
   a node is selected on the canvas.
@@ -4411,29 +4702,45 @@ Acceptance criteria:
 
 ---
 
-TASK #57: SwarmView.jsx + SwarmCanvas.jsx — Main V3 Layout
+---
+Task: #57.1
+Title: SwarmCanvas.jsx — React Flow Canvas with Node/Edge Types + Drill-Down
+Suggested Model: claude-opus-4-6
 Agent: frontend-dev
+Phase: V3 Phase 2 — Canvas Static
 Priority: HIGH
 Difficulty: HARD
-Suggested Model: claude-opus-4-6
+Depends on: #52, #53.1, #53.2, #53.3, #54, #56
 Status: PENDING
-Dependencies: #52, #53, #54, #55, #56
 Context:
-  Create the main V3 view layout. Two files:
+  Create `client/src/canvas/SwarmCanvas.jsx` — the React Flow canvas component.
+  This is the inner canvas that SwarmView (#57.2) embeds. It does NOT include the toolbar or panels.
 
-  SwarmCanvas.jsx (`client/src/canvas/SwarmCanvas.jsx`):
+  CRITICAL REACT FLOW v12 RULES (from research_b.md):
+  - Parent nodes (DepartmentNode) MUST appear BEFORE child nodes in the nodes array
+  - Use ReactFlowProvider (added in #58) as an ancestor — never create a second ReactFlowProvider here
+  - Canvas state (nodes/edges) lives in local useState, NOT in Zustand — DEC-011
+
+  IMPLEMENTATION:
   ```jsx
-  import { ReactFlow, Background, Controls, MiniMap } from '@xyflow/react';
+  import { ReactFlow, Background, Controls, MiniMap, useReactFlow } from '@xyflow/react';
   import '@xyflow/react/dist/style.css';
+  import { useMemo, useEffect } from 'react';
+  import { useSwarmStore } from '../store/SwarmContext';
+  import AgentNode from './nodes/AgentNode';
+  import DepartmentNode from './nodes/DepartmentNode';
+  import TriggerNode from './nodes/TriggerNode';
+  import HandoffEdge from './edges/HandoffEdge';
+  import BreadcrumbBar from './overlays/BreadcrumbBar';
 
   const nodeTypes = { agent: AgentNode, department: DepartmentNode, trigger: TriggerNode };
   const edgeTypes = { handoff: HandoffEdge };
 
-  const SwarmCanvas = ({ nodes, edges, onNodesChange, onEdgesChange, onConnect }) => {
+  const SwarmCanvas = ({ nodes, edges, onNodesChange, onEdgesChange, onConnect, onNodeClick }) => {
     const focusedDept = useSwarmStore(s => s.focusedDepartmentId);
-    const reactFlowRef = useReactFlow();
+    const { fitView } = useReactFlow();
 
-    // Matrioska drill-down filtering (from research_b.md)
+    // Matrioska drill-down filtering
     const displayedNodes = useMemo(() => {
       if (!focusedDept) return nodes;
       return nodes.filter(n => n.id === focusedDept || n.parentId === focusedDept);
@@ -4445,39 +4752,105 @@ Context:
       return edges.filter(e => visibleIds.has(e.source) && visibleIds.has(e.target));
     }, [edges, displayedNodes, focusedDept]);
 
-    // fitView when drill-down changes
     useEffect(() => {
-      setTimeout(() => reactFlowRef.fitView({ padding: 0.1 }), 50);
+      const t = setTimeout(() => fitView({ padding: 0.1 }), 50);
+      return () => clearTimeout(t);
     }, [focusedDept]);
 
     return (
       <ReactFlow nodes={displayedNodes} edges={displayedEdges}
                  nodeTypes={nodeTypes} edgeTypes={edgeTypes}
                  onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
-                 onConnect={onConnect} fitView>
+                 onConnect={onConnect} onNodeClick={onNodeClick}
+                 fitView>
         <Background /><Controls /><MiniMap />
         <BreadcrumbBar />
-        <PromptToFlowBar />   {/* #60 */}
-        <BroadcastBar />      {/* #66 */}
+        {/* PromptToFlowBar added in #60 */}
+        {/* BroadcastBar added in #66 */}
       </ReactFlow>
     );
   };
+  export default SwarmCanvas;
   ```
 
-  SwarmView.jsx (`client/src/views/SwarmView.jsx`):
-  - 3-column layout: canvas (flex-1) + right panel (AgentInspector, 320px) + bottom drawer (HitlInbox, InterAgentFeed)
-  - Toolbar: workflow name, ▶ Start / ⏸ Pause / ⏹ Stop buttons, status badge
-  - Canvas takes remaining space
-  - `useWorkflow` hook (#useWorkflow) for loading/saving workflow
-  - `useSwarm` hook (#63) for WS connection and execution control
+  Important: PromptToFlowBar and BroadcastBar are placeholders — add them when those tasks complete.
+  Use React Flow's `onNodeClick` to update `selectedNodeId` in SwarmStore (for AgentInspector).
 
 Acceptance criteria:
-  - [ ] SwarmCanvas renders @xyflow/react with all 3 node types and 1 edge type
-  - [ ] Canvas filtering works correctly for drill-down (only focused dept's nodes shown)
-  - [ ] fitView() called when focusedDepartmentId changes
-  - [ ] SwarmView shows toolbar with Start/Pause/Stop buttons
-  - [ ] Right panel shows AgentInspector when node is selected
-  - [ ] Build completes without errors
+  - [ ] SwarmCanvas renders @xyflow/react with all 3 node types + HandoffEdge
+  - [ ] Drill-down filtering: only nodes matching focusedDept or its children shown
+  - [ ] Edges filtered to only show connections between visible nodes
+  - [ ] fitView() called with 50ms delay when focusedDepartmentId changes
+  - [ ] onNodeClick dispatches setSelectedNode to SwarmStore
+  - [ ] npm run build passes after this task
+
+---
+
+---
+Task: #57.2
+Title: SwarmView.jsx — Main V3 Layout Shell + Toolbar
+Suggested Model: claude-opus-4-6
+Agent: frontend-dev
+Phase: V3 Phase 2 — Canvas Static
+Priority: HIGH
+Difficulty: MEDIUM
+Depends on: #57.1, #55
+Status: PENDING
+Context:
+  Create `client/src/views/SwarmView.jsx` — the top-level view that wraps SwarmCanvas in a
+  full application layout with toolbar, right panel, and bottom drawer.
+
+  LAYOUT (CSS grid or flex):
+  ```
+  +-------------------------------------------+
+  | Toolbar: [workflow name] [▶ Start] [⏸ Pause] [⏹ Stop] [status badge]  |
+  +-------------------------------------------+
+  | Canvas (flex-1)         | AgentInspector  |
+  |                         | (320px, right)  |
+  |                         |                 |
+  +-------------------------------------------+
+  | Bottom drawer: [Inbox tab] [Feed tab]      |
+  | (collapsible, 200px when open)             |
+  +-------------------------------------------+
+  ```
+
+  TOOLBAR:
+  - Workflow name: from useWorkflow(workflowId).workflow.name — editable on click
+  - Start button (▶): calls useSwarm().start(workflowId, projectId, projectPath)
+  - Pause button (⏸): calls useSwarm().pause(workflowId)
+  - Stop button (⏹): calls useSwarm().stop(workflowId)
+  - Status badge: shows executionStatus from SwarmStore (idle/running/stopped)
+  - Save button: calls useWorkflow().update() with current nodes/edges state
+
+  CANVAS SECTION:
+  - useState for nodes/edges (React Flow canonical pattern — NOT Zustand)
+  - useNodesState() and useEdgesState() from @xyflow/react
+  - Pass to SwarmCanvas: nodes, edges, onNodesChange, onEdgesChange, onConnect
+
+  RIGHT PANEL:
+  - Shows AgentInspector when selectedNodeId !== null in SwarmStore
+  - Empty state: "Select a node to configure"
+
+  BOTTOM DRAWER (tabs: Inbox | Feed):
+  - Inbox tab: placeholder for HitlInbox (#69)
+  - Feed tab: placeholder for InterAgentFeed (#72)
+  - Collapsible — toggle button at bottom edge
+
+  PTY EXPLOSION OVERLAY (from #71 — add placeholder):
+  ```jsx
+  const ptyExplosionNodeId = useSwarmStore(s => s.ptyExplosionNodeId);
+  {ptyExplosionNodeId && <div className="pty-explosion-overlay">[Terminal placeholder #71]</div>}
+  ```
+
+  useSwarm hook is a stub at this point (full impl in #63) — pass empty start/stop/pause.
+
+Acceptance criteria:
+  - [ ] 3-section layout (toolbar + canvas + bottom drawer) renders without errors
+  - [ ] Toolbar shows workflow name and Start/Pause/Stop buttons
+  - [ ] Status badge reflects executionStatus from SwarmStore
+  - [ ] Right panel shows/hides based on selectedNodeId
+  - [ ] Bottom drawer tabs (Inbox/Feed) visible (can be empty placeholders)
+  - [ ] npm run build passes after this task
 
 ---
 
@@ -4487,7 +4860,7 @@ Priority: HIGH
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
 Status: PENDING
-Dependencies: #57
+Dependencies: #57.2
 Context:
   Wire SwarmView into the existing app navigation.
 
@@ -4520,7 +4893,7 @@ Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
 Status: PENDING
-Dependencies: #47
+Dependencies: #47.1, #47.2
 Context:
   This task completes the scaffold endpoint in `server/routes/swarm.js` (stub in #47).
   The full implementation:
@@ -4554,7 +4927,7 @@ Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
 Status: PENDING
-Dependencies: #57, #59
+Dependencies: #57.1, #59
 Context:
   Create `client/src/canvas/overlays/PromptToFlowBar.jsx`.
 
@@ -4624,77 +4997,178 @@ Acceptance criteria:
 
 ---
 
-TASK #62: SwarmEngine.js — Complete Handoff Loop + Circuit Breaker
-Agent: backend-dev
-Priority: HIGH
-Difficulty: VERY HARD
+---
+Task: #62.1
+Title: SwarmEngine.js — _onHandoff: Context Merge + Edge Counter + PTY Spawn
 Suggested Model: claude-opus-4-6
+Agent: backend-dev
+Phase: V3 Phase 4 — Live Execution
+Priority: HIGH
+Difficulty: HARD
+Depends on: #46.3, #49
 Status: PENDING
-Dependencies: #46, #49
 Context:
-  Complete the SwarmEngine.js skeleton from #46 with the full handoff processing loop.
+  First of three subtasks completing the SwarmEngine handoff loop (from skeleton in #46.3).
+  Replace the _onHandoff stub with the first half of the full implementation.
 
-  HANDOFF PROCESSING (FR-V3-10, OpenAI Swarm pattern from research_a.md):
-  When HandoffParser.feed() returns a `{ type: 'handoff', targetId, contextUpdate }` event:
+  IMPLEMENT _onHandoff steps 1-4 (context merge + target PTY spawn):
 
+  Helper methods to add:
+  - `_findEdgeId(workflowDef, sourceNodeId, targetNodeId)`:
+    Find the edge object where source===sourceNodeId and target===targetNodeId.
+    Return the edge.id string, or `<sourceNodeId>-<targetNodeId>` if no matching edge.
+  - `_getThreshold(workflowDef, edgeId)`:
+    Find edge by id, return edge.data.circuitBreakerThreshold ?? workflowDef.settings.circuitBreakerThreshold ?? 10
+
+  _onHandoff steps to implement (steps 1-4):
   ```js
   async _onHandoff(executionId, sourceNodeId, { targetId, contextUpdate }) {
     const execution = this._executions.get(executionId);
+    if (!execution || execution.status !== 'running') return;
 
-    // 1. Circuit breaker check
+    // STEP 1: Edge counter + circuit breaker check (advisory only, FR-V3-17)
     const edgeId = this._findEdgeId(execution.workflowDef, sourceNodeId, targetId);
     const count = (execution.edgeCounters.get(edgeId) || 0) + 1;
     execution.edgeCounters.set(edgeId, count);
     const threshold = this._getThreshold(execution.workflowDef, edgeId);
     if (this._circuitBreaker.check(edgeId, count, threshold)) {
       this._wsBroadcast(executionId, { type: 'circuit_breaker', edgeId, counter: count, threshold });
-      // WORKFLOW CONTINUES — advisory only (user decision, FR-V3-17)
+      // WORKFLOW CONTINUES — never stops on circuit breaker (FR-V3-17 confirmed)
     }
 
-    // 2. Shallow merge context (OpenAI Swarm context_variables pattern)
+    // STEP 2: Shallow context merge (OpenAI Swarm context_variables pattern — DEC-V3-05)
     Object.assign(execution.workflowContext, contextUpdate);
 
-    // 3. Emit WS event
-    this._wsBroadcast(executionId, { type: 'handoff_started', sourceNodeId, targetNodeId: targetId, edgeId, counter: count });
+    // STEP 3: Emit handoff_started WS event
+    this._wsBroadcast(executionId, { type: 'handoff_started',
+      sourceNodeId, targetNodeId: targetId, edgeId, counter: count });
 
-    // 4. Spawn or reuse target PTY
+    // STEP 4: Spawn or reuse target PTY
     await this._ensureAgentPty(executionId, targetId);
+  }
+  ```
 
-    // 5. Inject updated context into target agent
+  This task does NOT yet update agent statuses or write context to target PTY — that is #62.2.
+
+Acceptance criteria:
+  - [ ] _findEdgeId() returns correct edge ID from workflow definition
+  - [ ] Edge counters increment correctly on each handoff
+  - [ ] Circuit breaker emits WS event at threshold, workflow NOT stopped
+  - [ ] workflowContext updated via Object.assign (shallow merge)
+  - [ ] handoff_started WS event emitted before target spawn
+  - [ ] 110 existing tests still pass
+
+---
+
+---
+Task: #62.2
+Title: SwarmEngine.js — _onHandoff: Context Injection + Agent Status Updates
+Suggested Model: claude-opus-4-6
+Agent: backend-dev
+Phase: V3 Phase 4 — Live Execution
+Priority: HIGH
+Difficulty: HARD
+Depends on: #62.1
+Status: PENDING
+Context:
+  Second of three subtasks for SwarmEngine handoff loop.
+  Complete _onHandoff steps 5-6: inject context into target PTY + update agent statuses.
+
+  Continue _onHandoff after the target PTY is spawned (steps 5-6):
+  ```js
+    // STEP 5: Build updated system prompt and inject into target agent
     const targetNode = execution.workflowDef.nodes.find(n => n.id === targetId);
-    const targets = this._getHandoffTargets(execution.workflowDef, targetId);
-    const systemPrompt = this._buildSystemPrompt(targetNode, execution.workflowContext, targets);
-    const targetSessionId = execution.agentStates.get(targetId).sessionId;
-    this._sessionManager.writeInput(targetSessionId, systemPrompt + '\n');
+    if (!targetNode) {
+      console.error(`[SwarmEngine] Unknown target node: ${targetId}`);
+      return;
+    }
+    const handoffTargets = this._getHandoffTargets(execution.workflowDef, targetId);
+    const systemPrompt = this._buildSystemPrompt(targetNode, execution.workflowContext, handoffTargets);
+    const targetState = execution.agentStates.get(targetId);
+    await this._sessionManager.writeInput(targetState.sessionId, systemPrompt + '\n');
 
-    // 6. Update agent state
-    execution.agentStates.get(sourceNodeId).status = 'done';
-    execution.agentStates.get(targetId).status = 'running';
-    this._wsBroadcast(executionId, { type: 'agent_status', nodeId: targetId, status: 'running' });
+    // STEP 6: Update agent statuses + emit WS events
+    const sourceState = execution.agentStates.get(sourceNodeId);
+    if (sourceState) sourceState.status = 'done';
+    targetState.status = 'running';
+    targetState.handoffCount = (targetState.handoffCount || 0) + 1;
+    this._wsBroadcast(executionId, { type: 'agent_status', nodeId: sourceNodeId, status: 'done' });
+    this._wsBroadcast(executionId, { type: 'agent_status', nodeId: targetId, status: 'running',
+      lastOutputSnippet: targetState.lastOutputSnippet });
     this._wsBroadcast(executionId, { type: 'handoff_completed', sourceNodeId, targetNodeId: targetId });
   }
   ```
 
-  DONE TOKEN HANDLING (FR-V3-11):
+  Helper: `_getHandoffTargets(workflowDef, nodeId)`:
+  Return array of target node IDs from edges where source === nodeId.
+
+Acceptance criteria:
+  - [ ] System prompt with updated context injected into target agent PTY via writeInput
+  - [ ] Source agent status set to 'done', target status set to 'running'
+  - [ ] handoffCount incremented on target agentState
+  - [ ] Three WS events emitted: agent_status (source done), agent_status (target running), handoff_completed
+  - [ ] Unknown targetId logs error and returns gracefully (no crash)
+  - [ ] 110 existing tests still pass
+
+---
+
+---
+Task: #62.3
+Title: SwarmEngine.js — _onDone + BudgetTracker Integration + lastOutputSnippet
+Suggested Model: claude-sonnet-4-6
+Agent: backend-dev
+Phase: V3 Phase 4 — Live Execution
+Priority: HIGH
+Difficulty: MEDIUM
+Depends on: #62.2
+Status: PENDING
+Context:
+  Third of three subtasks for SwarmEngine handoff loop.
+  Implement _onDone, integrate BudgetTracker, and ensure lastOutputSnippet is correctly updated.
+
+  _onDone(executionId, nodeId):
   ```js
   _onDone(executionId, nodeId) {
-    // Soft notify only — DO NOT stop execution (user decision)
+    // Soft notify only — NEVER stop execution on __DONE__ (user decision, FR-V3-11)
+    const execution = this._executions.get(executionId);
+    if (!execution) return;
+    const state = execution.agentStates.get(nodeId);
+    if (state) state.status = 'done';
     this._wsBroadcast(executionId, { type: 'execution_status', status: 'agent_done', nodeId });
-    // Workflow continues until manual Stop
+    this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'done' });
   }
   ```
 
-  OUTPUT SNIPPET (for lastOutputSnippet field):
-  In the swarmListeners tap callback, also update `agentStates.get(nodeId).lastOutputSnippet`
-  with the last 500 chars of accumulated output (for AgentNode micro-log display).
+  BudgetTracker integration:
+  - Pass circuitBreaker and budgetTracker instances into SwarmEngine constructor:
+    `constructor(sessionManager, workflowStore, circuitBreaker, budgetTracker)`
+  - In the swarm listener tap callback (in #46.2's tapFn), after updating lastOutputSnippet:
+    ```js
+    if (this._budgetTracker) {
+      this._budgetTracker.track(state.sessionId, chunk);
+      const limit = execution.workflowDef.settings?.budgetTokens || 0;
+      if (limit > 0) {
+        const { exceeded, estimatedUsed } = this._budgetTracker.checkBudget(executionId, limit);
+        if (exceeded) {
+          this._wsBroadcast(executionId, { type: 'budget_update', estimatedTokensUsed: estimatedUsed, limitTokens: limit });
+        }
+      }
+    }
+    ```
+
+  lastOutputSnippet update (confirm from #46.2 — verify in tests):
+  - The tap function appends each chunk and keeps only the last 500 chars
+  - `state.lastOutputSnippet = (state.lastOutputSnippet + chunk).slice(-500)`
+  - BudgetTracker.track() is called on every chunk (this is where char count accumulates)
+
+  Update server/index.js to pass circuitBreaker and budgetTracker to SwarmEngine constructor.
 
 Acceptance criteria:
-  - [ ] Handoff from agent A to agent B correctly spawns B's PTY and injects updated context
-  - [ ] workflowContext is shallow-merged (not replaced) on each handoff
-  - [ ] Circuit breaker threshold firing emits WS event but does NOT stop execution
-  - [ ] `__DONE__` token emits soft WS event, workflow continues
-  - [ ] lastOutputSnippet updated with last 500 chars
-  - [ ] All existing tests still pass
+  - [ ] _onDone emits execution_status and agent_status events, workflow NOT stopped
+  - [ ] BudgetTracker.track() called on every PTY chunk
+  - [ ] budget_update WS event emitted when budget exceeded (advisory only, never stops)
+  - [ ] lastOutputSnippet limited to last 500 chars in tap callback
+  - [ ] All 110+ existing tests still pass (including new ones from #77)
 
 ---
 
@@ -4704,7 +5178,7 @@ Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
 Status: PENDING
-Dependencies: #57, #48
+Dependencies: #57.2, #48.2
 Context:
   Create `client/src/hooks/useSwarm.js`.
 
@@ -4790,7 +5264,7 @@ Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
 Status: PENDING
-Dependencies: #63
+Dependencies: #63, #53.1
 Context:
   Update AgentNode.jsx (from #53) to show live execution feedback:
 
@@ -4823,7 +5297,7 @@ Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
 Status: PENDING
-Dependencies: #57, #47
+Dependencies: #57.1, #47.1
 Context:
   Create `client/src/canvas/overlays/BroadcastBar.jsx`.
 
@@ -4856,7 +5330,7 @@ Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
 Status: PENDING
-Dependencies: #62
+Dependencies: #62.3
 Context:
   The existing SessionManager has an idle sweeper that kills PTY sessions after 30 minutes
   of inactivity (IDLE_TIMEOUT_MINUTES env var). Long-running swarm agents would be killed.
@@ -4883,7 +5357,7 @@ Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
 Status: PENDING
-Dependencies: #62
+Dependencies: #62.3
 Context:
   Create `server/routes/inbox.js` for Human-in-the-Loop workflow management.
 
@@ -4968,7 +5442,7 @@ Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
 Status: PENDING
-Dependencies: #68
+Dependencies: #68, #62.3
 Context:
   Add freeze/unfreeze capability to SwarmEngine for HITL workflows.
 
@@ -4997,47 +5471,117 @@ Acceptance criteria:
 
 ---
 
-TASK #71: PTY Explosion — Full-Screen Terminal for Agent
+---
+Task: #71.1
+Title: PTY Explosion — Full-Screen Overlay Component
+Suggested Model: claude-sonnet-4-6
 Agent: frontend-dev
+Phase: V3 Phase 5 — HITL + PTY Explosion
 Priority: HIGH
 Difficulty: MEDIUM
-Suggested Model: claude-sonnet-4-6
+Depends on: #57.2, #63
 Status: PENDING
-Dependencies: #57, #63
 Context:
-  Implement PTY Explosion: clicking (double-click from AgentNode) opens the agent's PTY
-  session in a full-screen xterm.js terminal overlay.
+  First of two subtasks for PTY Explosion.
+  Implement the full-screen overlay that renders an existing agent's PTY session.
 
-  Uses the EXISTING `Terminal.jsx` component UNCHANGED — just pass the agent's `sessionId`.
+  IMPORTANT: Uses the EXISTING `Terminal.jsx` component COMPLETELY UNCHANGED.
+  PTY Explosion only needs to pass the agent's sessionId to Terminal.jsx.
+  Never create a new xterm.js instance per DEC-009 / existing Terminal contract.
 
-  In SwarmView.jsx:
+  In SwarmView.jsx, add the overlay (see #57.2 placeholder):
   ```jsx
-  const ptyExplosionNodeId = useSwarmStore(s => s.ptyExplosionNodeId);
-  const ptyExplosionSessionId = ptyExplosionNodeId
-    ? execution.agentStates.get(ptyExplosionNodeId)?.sessionId
-    : null;
+  import Terminal from '../components/Terminal';
 
-  // Render fullscreen overlay
+  // Inside SwarmView render:
+  const ptyExplosionNodeId = useSwarmStore(s => s.ptyExplosionNodeId);
+  const ptyExplosionSessionId = useMemo(() => {
+    if (!ptyExplosionNodeId || !execution) return null;
+    return execution.agentStates.get(ptyExplosionNodeId)?.sessionId || null;
+  }, [ptyExplosionNodeId, execution]);
+
   {ptyExplosionSessionId && (
     <div className="pty-explosion-overlay">
-      <button onClick={() => setSwarmStore({ ptyExplosionNodeId: null })}>✕ Close</button>
+      <div className="pty-explosion-header">
+        <span className="pty-explosion-title">Agent: {ptyExplosionNodeId}</span>
+        <button
+          className="pty-explosion-close"
+          onClick={() => useSwarmStore.getState().setPtyExplosionNodeId(null)}
+        >
+          Close
+        </button>
+      </div>
       <Terminal sessionId={ptyExplosionSessionId} />
     </div>
   )}
   ```
 
-  CSS: position fixed, full viewport, z-index 1000, black background.
-  Close button top-right corner.
-  Pressing Escape also closes the overlay.
+  CSS (add to SwarmView.css or global):
+  ```css
+  .pty-explosion-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: #000; display: flex; flex-direction: column;
+  }
+  .pty-explosion-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 16px; background: #111; border-bottom: 1px solid #333;
+  }
+  .pty-explosion-title { color: #9ca3af; font-size: 13px; font-family: monospace; }
+  .pty-explosion-close {
+    background: #374151; color: #fff; border: none; border-radius: 4px;
+    padding: 4px 12px; cursor: pointer; font-size: 12px;
+  }
+  ```
 
-  Note from research_c.md: Physical keyboard input in PTY Explosion works correctly because
-  it goes directly through xterm.js — no programmatic injection needed.
+  Add `ptyExplosionNodeId: null` and `setPtyExplosionNodeId: (id) => set({ ptyExplosionNodeId: id })`
+  to SwarmStore if not already present from #52.
 
 Acceptance criteria:
-  - [ ] Double-clicking an AgentNode opens PTY Explosion overlay
-  - [ ] Existing Terminal.jsx used UNCHANGED — only sessionId differs
-  - [ ] Full-screen overlay with close button (click + Escape)
-  - [ ] Physical keyboard input works correctly in the terminal
+  - [ ] Double-clicking an AgentNode opens the overlay (via setPtyExplosionNodeId in #53.1)
+  - [ ] Overlay occupies full viewport at z-index 1000
+  - [ ] Terminal.jsx used UNCHANGED — only sessionId passed differs
+  - [ ] Close button calls setPtyExplosionNodeId(null)
+  - [ ] Agent name shown in header bar
+
+---
+
+---
+Task: #71.2
+Title: PTY Explosion — Escape Key Handler
+Suggested Model: claude-haiku-4-5
+Agent: frontend-dev
+Phase: V3 Phase 5 — HITL + PTY Explosion
+Priority: MEDIUM
+Difficulty: EASY
+Depends on: #71.1
+Status: PENDING
+Context:
+  Second of two subtasks for PTY Explosion.
+  Add keyboard Escape handler to close the overlay without clicking the button.
+
+  Inside SwarmView.jsx, add a useEffect that listens for Escape keypress:
+  ```js
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && useSwarmStore.getState().ptyExplosionNodeId !== null) {
+        e.preventDefault();
+        useSwarmStore.getState().setPtyExplosionNodeId(null);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+  ```
+
+  Note from research_c.md: Escape inside an xterm.js terminal normally sends an ESC character
+  to the PTY. This handler must check that the overlay IS open before intercepting — when no
+  overlay is active, Escape must pass through to xterm.js normally. The `e.preventDefault()`
+  only fires when the overlay is open.
+
+Acceptance criteria:
+  - [ ] Pressing Escape while overlay is open closes it (sets ptyExplosionNodeId to null)
+  - [ ] Pressing Escape when overlay is CLOSED does not intercept — passes to xterm.js
+  - [ ] Event listener removed on component unmount (no leak)
 
 ---
 
@@ -5117,7 +5661,7 @@ Priority: MEDIUM
 Difficulty: HARD
 Suggested Model: claude-sonnet-4-6
 Status: PENDING
-Dependencies: #46, #50
+Dependencies: #46.3, #50
 Context:
   Create `server/services/TriggerManager.js`.
 
@@ -5192,7 +5736,7 @@ Priority: LOW
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
 Status: PENDING
-Dependencies: #53
+Dependencies: #53.3
 Context:
   Update TriggerNode.jsx (stub from #53) with full implementation:
 
@@ -5273,7 +5817,7 @@ Priority: HIGH
 Difficulty: HARD
 Suggested Model: claude-opus-4-6
 Status: PENDING
-Dependencies: #62, #77
+Dependencies: #62.3, #77
 Context:
   Write integration tests for SwarmEngine in `server/tests/swarm-engine.test.js`.
 
@@ -5340,7 +5884,7 @@ Priority: HIGH
 Difficulty: HARD
 Suggested Model: claude-opus-4-6
 Status: PENDING
-Dependencies: #71, #73, #76, #77, #78
+Dependencies: #71.2, #73, #76, #77, #78
 Context:
   Full E2E test of the V3 Swarm Orchestrator using Puppeteer MCP.
 
@@ -5445,51 +5989,65 @@ Acceptance criteria:
 
 ---
 
-## V3 Task Status Summary
+## V3 Task Status Summary (Updated 2026-03-27 — Model Assignments + Subtask Split)
 
-| # | Task | Agent | Priority | Difficulty | Status |
-|---|------|-------|----------|------------|--------|
-| 43 | WorkflowStore.js | backend-dev | HIGH | EASY | COMPLETED |
-| 44 | workflows.js CRUD routes | backend-dev | HIGH | EASY | COMPLETED |
-| 45 | HandoffParser.js | backend-dev | HIGH | HARD | COMPLETED |
-| 46 | SwarmEngine.js skeleton | backend-dev | HIGH | VERY HARD | PENDING |
-| 47 | swarm.js routes + scaffold | backend-dev | HIGH | HARD | PENDING |
-| 48 | swarmHandler.js (WS channel) | backend-dev | HIGH | MEDIUM | PENDING |
-| 49 | CircuitBreaker + BudgetTracker | backend-dev | MEDIUM | EASY | PENDING |
-| 50 | V3 Security Layer (SEC-V3-01–07) | security | HIGH | MEDIUM | PENDING |
-| 51 | Client deps: @xyflow/react + zustand | devops | HIGH | TRIVIAL | PENDING |
-| 52 | SwarmContext.jsx (Zustand) | frontend-dev | HIGH | MEDIUM | PENDING |
-| 53 | AgentNode + DepartmentNode + TriggerNode | frontend-dev | HIGH | HARD | PENDING |
-| 54 | HandoffEdge.jsx | frontend-dev | MEDIUM | MEDIUM | PENDING |
-| 55 | AgentInspector.jsx | frontend-dev | MEDIUM | MEDIUM | PENDING |
-| 56 | BreadcrumbBar.jsx | frontend-dev | MEDIUM | EASY | PENDING |
-| 57 | SwarmView.jsx + SwarmCanvas.jsx | frontend-dev | HIGH | HARD | PENDING |
-| 58 | App.jsx + Sidebar swarm nav | frontend-dev | HIGH | EASY | PENDING |
-| 59 | scaffold endpoint (complete) | backend-dev | MEDIUM | MEDIUM | PENDING |
-| 60 | PromptToFlowBar.jsx + animation | frontend-dev | MEDIUM | MEDIUM | PENDING |
-| 61 | useWorkflow.js hook | frontend-dev | MEDIUM | EASY | PENDING |
-| 62 | SwarmEngine.js complete (handoff loop) | backend-dev | HIGH | VERY HARD | PENDING |
-| 63 | useSwarm.js WS hook | frontend-dev | HIGH | MEDIUM | PENDING |
-| 64 | useHandoff.js edge animation | frontend-dev | LOW | EASY | PENDING |
-| 65 | AgentNode live updates | frontend-dev | MEDIUM | MEDIUM | PENDING |
-| 66 | BroadcastBar.jsx + broadcast route | frontend-dev | MEDIUM | MEDIUM | PENDING |
-| 67 | Heartbeat (idle sweeper prevention) | backend-dev | MEDIUM | EASY | PENDING |
-| 68 | inbox.js HITL routes | backend-dev | HIGH | MEDIUM | PENDING |
-| 69 | HitlInbox.jsx | frontend-dev | HIGH | MEDIUM | PENDING |
-| 70 | SwarmEngine freeze/unfreeze | backend-dev | MEDIUM | MEDIUM | PENDING |
-| 71 | PTY Explosion overlay | frontend-dev | HIGH | MEDIUM | PENDING |
-| 72 | InterAgentFeed.jsx | frontend-dev | LOW | EASY | PENDING |
-| 73 | useInbox.js hook | frontend-dev | MEDIUM | EASY | PENDING |
-| 74 | TriggerManager.js | backend-dev | MEDIUM | HARD | PENDING |
-| 75 | triggers.js routes | backend-dev | MEDIUM | EASY | PENDING |
-| 76 | TriggerNode.jsx | frontend-dev | LOW | EASY | PENDING |
-| 77 | HandoffParser unit tests | qa-tester | HIGH | MEDIUM | PENDING |
-| 78 | SwarmEngine integration tests | qa-tester | HIGH | HARD | PENDING |
-| 79 | V3 Security Audit | security | HIGH | MEDIUM | PENDING |
-| 80 | V3 E2E Test | qa-tester | HIGH | HARD | PENDING |
-| 81 | Build verification + git tag | devops | HIGH | EASY | PENDING |
-| 82 | V3 Documentation update | documenter | MEDIUM | MEDIUM | PENDING |
+| # | Task | Agent | Priority | Model | Status |
+|---|------|-------|----------|-------|--------|
+| 43 | WorkflowStore.js | backend-dev | HIGH | claude-sonnet-4-6 | COMPLETED |
+| 44 | workflows.js CRUD routes | backend-dev | HIGH | claude-sonnet-4-6 | COMPLETED |
+| 45 | HandoffParser.js | backend-dev | HIGH | claude-opus-4-6 | COMPLETED |
+| **46.1** | SwarmEngine — SessionManager patch + class skeleton | backend-dev | HIGH | claude-opus-4-6 | PENDING |
+| **46.2** | SwarmEngine — startExecution + _spawnAgentPty + tap | backend-dev | HIGH | claude-opus-4-6 | PENDING |
+| **46.3** | SwarmEngine — _buildSystemPrompt + _startHeartbeat | backend-dev | HIGH | claude-opus-4-6 | PENDING |
+| **47.1** | swarm.js — execution control endpoints (7 routes) | backend-dev | HIGH | claude-sonnet-4-6 | PENDING |
+| **47.2** | swarm.js — scaffold endpoint stub (501) | backend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
+| **48.1** | swarmHandler.js — channel routing + connection mgmt | backend-dev | HIGH | claude-sonnet-4-6 | PENDING |
+| **48.2** | swarmHandler.js — broadcast() + WS event wiring | backend-dev | HIGH | claude-sonnet-4-6 | PENDING |
+| 49 | CircuitBreaker.js + BudgetTracker.js | backend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
+| 50 | V3 Security Layer (SEC-V3-01 to SEC-V3-07) | security | HIGH | claude-sonnet-4-6 | PENDING |
+| 51 | Client deps: @xyflow/react + zustand install | devops | HIGH | claude-haiku-4-5 | PENDING |
+| 52 | SwarmContext.jsx — Zustand ExecutionStore | frontend-dev | HIGH | claude-sonnet-4-6 | PENDING |
+| **53.1** | AgentNode.jsx — agent canvas node | frontend-dev | HIGH | claude-opus-4-6 | PENDING |
+| **53.2** | DepartmentNode.jsx — group container node | frontend-dev | HIGH | claude-opus-4-6 | PENDING |
+| **53.3** | TriggerNode.jsx — webhook/RSS node stub | frontend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
+| 54 | HandoffEdge.jsx — animated edge + counter badge | frontend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
+| 55 | AgentInspector.jsx — node config panel | frontend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
+| 56 | BreadcrumbBar.jsx — drill-down nav | frontend-dev | MEDIUM | claude-haiku-4-5 | PENDING |
+| **57.1** | SwarmCanvas.jsx — React Flow canvas + drill-down | frontend-dev | HIGH | claude-opus-4-6 | PENDING |
+| **57.2** | SwarmView.jsx — layout shell + toolbar | frontend-dev | HIGH | claude-opus-4-6 | PENDING |
+| 58 | App.jsx + Sidebar — swarm nav + ReactFlowProvider | frontend-dev | HIGH | claude-haiku-4-5 | PENDING |
+| 59 | scaffold endpoint complete (replaces 47.2 stub) | backend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
+| 60 | PromptToFlowBar.jsx + staggered animation | frontend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
+| 61 | useWorkflow.js — workflow CRUD hook | frontend-dev | MEDIUM | claude-haiku-4-5 | PENDING |
+| **62.1** | SwarmEngine — _onHandoff: context merge + PTY spawn | backend-dev | HIGH | claude-opus-4-6 | PENDING |
+| **62.2** | SwarmEngine — _onHandoff: context injection + status | backend-dev | HIGH | claude-opus-4-6 | PENDING |
+| **62.3** | SwarmEngine — _onDone + BudgetTracker + snippets | backend-dev | HIGH | claude-sonnet-4-6 | PENDING |
+| 63 | useSwarm.js — WS hook for execution control | frontend-dev | HIGH | claude-sonnet-4-6 | PENDING |
+| 64 | useHandoff.js — edge animation hook | frontend-dev | LOW | claude-haiku-4-5 | PENDING |
+| 65 | AgentNode live updates — pulse + micro PTY log | frontend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
+| 66 | BroadcastBar.jsx + broadcast route | frontend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
+| 67 | SwarmEngine heartbeat — idle sweeper prevention | backend-dev | MEDIUM | claude-haiku-4-5 | PENDING |
+| 68 | inbox.js — HITL approve/reject API | backend-dev | HIGH | claude-sonnet-4-6 | PENDING |
+| 69 | HitlInbox.jsx — approval panel | frontend-dev | HIGH | claude-sonnet-4-6 | PENDING |
+| 70 | SwarmEngine HITL — freeze/unfreeze agent | backend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
+| **71.1** | PTY Explosion — full-screen overlay component | frontend-dev | HIGH | claude-sonnet-4-6 | PENDING |
+| **71.2** | PTY Explosion — Escape key handler | frontend-dev | MEDIUM | claude-haiku-4-5 | PENDING |
+| 72 | InterAgentFeed.jsx — real-time handoff log | frontend-dev | LOW | claude-haiku-4-5 | PENDING |
+| 73 | useInbox.js — HITL polling hook | frontend-dev | MEDIUM | claude-haiku-4-5 | PENDING |
+| 74 | TriggerManager.js — webhooks + RSS polling | backend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
+| 75 | triggers.js routes — trigger API | backend-dev | MEDIUM | claude-haiku-4-5 | PENDING |
+| 76 | TriggerNode.jsx — full visual implementation | frontend-dev | LOW | claude-haiku-4-5 | PENDING |
+| 77 | HandoffParser unit tests | qa-tester | HIGH | claude-sonnet-4-6 | PENDING |
+| 78 | SwarmEngine integration tests | qa-tester | HIGH | claude-opus-4-6 | PENDING |
+| 79 | V3 Pre-Release Security Audit | security | HIGH | claude-sonnet-4-6 | PENDING |
+| 80 | V3 End-to-End Test (Puppeteer) | qa-tester | HIGH | claude-opus-4-6 | PENDING |
+| 81 | Build verification + v3.0.0 git tag | devops | HIGH | claude-haiku-4-5 | PENDING |
+| 82 | V3 Documentation update | documenter | MEDIUM | claude-sonnet-4-6 | PENDING |
+
+**Total V3 tasks (original #43–#82): 40**
+**After subtask split: 57 tasks (40 originals → 17 split into subtasks + 3 completed = 57 granular units)**
+**Breakdown: 3 COMPLETED (#43, #44, #45) + 54 PENDING subtasks and standalone tasks**
 
 ---
 
-_Last updated: 2026-03-27 — V3 Swarm Orchestrator task plan created (40 tasks, #43–#82). PRD v3.0 complete. Research complete (docs/research_a/b/c.md + research_complete.md). Ready to start Phase 1._
+_Last updated: 2026-03-27 — Model assignments added + complex tasks split into subtasks. #46→3, #47→2, #48→2, #53→3, #57→2, #62→3, #71→2 subtasks. All 54 pending tasks have Suggested Model assigned._

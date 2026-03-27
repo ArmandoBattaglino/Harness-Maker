@@ -151,62 +151,74 @@ _None._
 - R-03 (RESOLVED): Job mode process hang if child.stdin.end() not called — enforced in Task #9 (JobRunner.js line after spawn)
 - NOTE: FileManager was NOT created in Task #5 as planned — RESOLVED in Task #7 (created server/services/FileManager.js).
 
-## V3 — Swarm Orchestrator (40 tasks, Phase 1–7)
-**Status: 2/40 COMPLETED — as of 2026-03-27.**
+## V3 — Swarm Orchestrator (57 granular tasks after split — 2026-03-27 replan)
+**Status: 3/57 COMPLETED — as of 2026-03-27.**
+**Note: Original 40 tasks (#43–#82). After model assignment + subtask split: 57 granular units.**
+**7 original tasks split into subtasks: #46→3, #47→2, #48→2, #53→3, #57→2, #62→3, #71→2**
 - V3 PRD complete: docs/PRD.md
 - V3 research complete: docs/research_complete.md, research_a/b/c.md
-- V3 task plan: docs/TASK_PLAN.md tasks #43–#82
+- V3 task plan: docs/TASK_PLAN.md tasks #43–#82 (with subtasks .1/.2/.3)
 
-### V3 Phase 1 — Backend Foundation (8 tasks)
-- [TASK-43] COMPLETED 2026-03-27 — WorkflowStore.js (backend-dev) — CRUD persistence for workflow JSON, atomic writes, 132/132 tests pass
-- [TASK-44] PENDING — workflows.js CRUD routes (backend-dev)
-- [TASK-45] COMPLETED 2026-03-27 — HandoffParser.js (backend-dev) — stateful rolling buffer parser + 22 unit tests, 132/132 tests pass
-- [TASK-46] PENDING — SwarmEngine.js skeleton (backend-dev)
-- [TASK-47] PENDING — swarm.js routes + scaffold (backend-dev)
-- [TASK-48] PENDING — swarmHandler.js WS channel (backend-dev)
-- [TASK-49] PENDING — CircuitBreaker + BudgetTracker (backend-dev)
-- [TASK-50] PENDING — V3 Security Layer (security)
+### V3 Phase 1 — Backend Foundation
+- [TASK-43] COMPLETED 2026-03-27 — WorkflowStore.js — 132/132 tests pass
+- [TASK-44] COMPLETED 2026-03-27 — workflows.js CRUD routes (routes mounted, CRUD working)
+- [TASK-45] COMPLETED 2026-03-27 — HandoffParser.js — 22 unit tests, 132/132 tests pass
+- [TASK-46.1] PENDING — SwarmEngine — SessionManager patch + class skeleton
+- [TASK-46.2] PENDING — SwarmEngine — startExecution + _spawnAgentPty + HandoffParser tap
+- [TASK-46.3] PENDING — SwarmEngine — _buildSystemPrompt + _startHeartbeat
+- [TASK-47.1] PENDING — swarm.js — 7 execution control endpoints
+- [TASK-47.2] PENDING — swarm.js — scaffold endpoint stub (501)
+- [TASK-48.1] PENDING — swarmHandler.js — channel routing + connection management
+- [TASK-48.2] PENDING — swarmHandler.js — broadcast() + WS event wiring
+- [TASK-49] PENDING — CircuitBreaker.js + BudgetTracker.js
+- [TASK-50] PENDING — V3 Security Layer (SEC-V3-01 to SEC-V3-07)
 
-### V3 Phase 2 — Canvas Static (8 tasks)
+### V3 Phase 2 — Canvas Static
 - [TASK-51] PENDING — @xyflow/react + zustand install (devops)
-- [TASK-52] PENDING — SwarmContext.jsx Zustand store (frontend-dev)
-- [TASK-53] PENDING — AgentNode + DepartmentNode + TriggerNode (frontend-dev)
-- [TASK-54] PENDING — HandoffEdge.jsx (frontend-dev)
-- [TASK-55] PENDING — AgentInspector.jsx (frontend-dev)
-- [TASK-56] PENDING — BreadcrumbBar.jsx (frontend-dev)
-- [TASK-57] PENDING — SwarmView + SwarmCanvas (frontend-dev)
-- [TASK-58] PENDING — App.jsx + Sidebar nav (frontend-dev)
+- [TASK-52] PENDING — SwarmContext.jsx Zustand ExecutionStore
+- [TASK-53.1] PENDING — AgentNode.jsx — agent canvas node
+- [TASK-53.2] PENDING — DepartmentNode.jsx — group container node
+- [TASK-53.3] PENDING — TriggerNode.jsx — webhook/RSS node stub
+- [TASK-54] PENDING — HandoffEdge.jsx — animated edge + counter badge
+- [TASK-55] PENDING — AgentInspector.jsx — node config panel
+- [TASK-56] PENDING — BreadcrumbBar.jsx — drill-down nav
+- [TASK-57.1] PENDING — SwarmCanvas.jsx — React Flow canvas + drill-down filtering
+- [TASK-57.2] PENDING — SwarmView.jsx — layout shell + toolbar
+- [TASK-58] PENDING — App.jsx + Sidebar swarm nav + ReactFlowProvider
 
-### V3 Phase 3 — Prompt-to-Flow (3 tasks)
-- [TASK-59] PENDING — scaffold endpoint complete (backend-dev)
-- [TASK-60] PENDING — PromptToFlowBar + animation (frontend-dev)
-- [TASK-61] PENDING — useWorkflow.js hook (frontend-dev)
+### V3 Phase 3 — Prompt-to-Flow
+- [TASK-59] PENDING — scaffold endpoint complete (replaces 47.2 stub)
+- [TASK-60] PENDING — PromptToFlowBar.jsx + staggered animation
+- [TASK-61] PENDING — useWorkflow.js CRUD hook
 
-### V3 Phase 4 — Live Execution (6 tasks)
-- [TASK-62] PENDING — SwarmEngine handoff loop complete (backend-dev)
-- [TASK-63] PENDING — useSwarm.js WS hook (frontend-dev)
-- [TASK-64] PENDING — useHandoff.js edge animation (frontend-dev)
-- [TASK-65] PENDING — AgentNode live updates (frontend-dev)
-- [TASK-66] PENDING — BroadcastBar + broadcast route (frontend-dev)
-- [TASK-67] PENDING — Heartbeat (backend-dev)
+### V3 Phase 4 — Live Execution
+- [TASK-62.1] PENDING — SwarmEngine _onHandoff: context merge + edge counter + PTY spawn
+- [TASK-62.2] PENDING — SwarmEngine _onHandoff: context injection + agent status updates
+- [TASK-62.3] PENDING — SwarmEngine _onDone + BudgetTracker + lastOutputSnippet
+- [TASK-63] PENDING — useSwarm.js WS hook for execution control
+- [TASK-64] PENDING — useHandoff.js edge animation hook
+- [TASK-65] PENDING — AgentNode live updates — pulse + micro PTY log
+- [TASK-66] PENDING — BroadcastBar.jsx + broadcast route
+- [TASK-67] PENDING — SwarmEngine heartbeat — idle sweeper prevention
 
-### V3 Phase 5 — HITL + PTY Explosion (6 tasks)
-- [TASK-68] PENDING — inbox.js HITL routes (backend-dev)
-- [TASK-69] PENDING — HitlInbox.jsx (frontend-dev)
-- [TASK-70] PENDING — SwarmEngine freeze/unfreeze (backend-dev)
-- [TASK-71] PENDING — PTY Explosion overlay (frontend-dev)
-- [TASK-72] PENDING — InterAgentFeed.jsx (frontend-dev)
-- [TASK-73] PENDING — useInbox.js hook (frontend-dev)
+### V3 Phase 5 — HITL + PTY Explosion
+- [TASK-68] PENDING — inbox.js HITL approve/reject API
+- [TASK-69] PENDING — HitlInbox.jsx approval panel
+- [TASK-70] PENDING — SwarmEngine freeze/unfreeze agent
+- [TASK-71.1] PENDING — PTY Explosion overlay component
+- [TASK-71.2] PENDING — PTY Explosion Escape key handler
+- [TASK-72] PENDING — InterAgentFeed.jsx real-time handoff log
+- [TASK-73] PENDING — useInbox.js HITL polling hook
 
-### V3 Phase 6 — Trigger Nodes (3 tasks)
-- [TASK-74] PENDING — TriggerManager.js (backend-dev)
-- [TASK-75] PENDING — triggers.js routes (backend-dev)
-- [TASK-76] PENDING — TriggerNode.jsx (frontend-dev)
+### V3 Phase 6 — Trigger Nodes
+- [TASK-74] PENDING — TriggerManager.js webhooks + RSS polling
+- [TASK-75] PENDING — triggers.js routes
+- [TASK-76] PENDING — TriggerNode.jsx full visual implementation
 
-### V3 Phase 7 — QA + Security + Release (6 tasks)
+### V3 Phase 7 — QA + Security + Release
 - [TASK-77] PENDING — HandoffParser unit tests (qa-tester)
 - [TASK-78] PENDING — SwarmEngine integration tests (qa-tester)
-- [TASK-79] PENDING — V3 Security Audit (security)
-- [TASK-80] PENDING — V3 E2E Test (qa-tester)
-- [TASK-81] PENDING — Build verification + v3.0.0 tag (devops)
+- [TASK-79] PENDING — V3 Pre-Release Security Audit (security)
+- [TASK-80] PENDING — V3 End-to-End Test (qa-tester, Puppeteer)
+- [TASK-81] PENDING — Build verification + v3.0.0 git tag (devops)
 - [TASK-82] PENDING — V3 Documentation update (documenter)
