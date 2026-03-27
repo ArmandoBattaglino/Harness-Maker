@@ -1,4 +1,24 @@
 ---
+## 2026-03-27 — project-manager — Tasks #46.3 + #49 COMPLETED; #47.1 + #48.1 launched
+**Outcome:** COMPLETED
+**Summary:** Marked Task #46.3 (SwarmEngine._buildSystemPrompt + _startHeartbeat) and Task #49 (CircuitBreaker.js + BudgetTracker.js) as COMPLETED in TASK_PLAN.md and PROGRESS.md (both at 132/132 tests). Launched #47.1 (swarm.js execution control endpoints, 7 routes) and #48.1 (swarmHandler.js channel routing + connection management) in parallel — both unblocked since #46.3 and #46.1 are done. Updated all status tables, CONTEXT.md, PROGRESS.md (now 8/57 V3 COMPLETED).
+**Files changed:** docs/TASK_PLAN.md (MODIFIED — statuses updated), docs/memory/PROGRESS.md (MODIFIED), docs/memory/CONTEXT.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/project-manager.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** #47.1 and #48.1 launched in parallel — they have no dependency on each other (#47.1 depends #46.3, #48.1 depends #46.1 — both satisfied)
+**Blockers:** none
+**Next:** #47.2 (after #47.1 done) + #48.2 (after #48.1 done). Also #50 (security), #51 (client deps) can start once #48.2 is complete.
+
+---
+## 2026-03-27 — documenter — Tasks #46.3 + #49: Documentation audit
+**Outcome:** COMPLETED
+**Summary:** Audited all documentation artifacts after Task #46.3 (SwarmEngine._buildSystemPrompt + _startHeartbeat implemented) and Task #49 (CircuitBreaker.js + BudgetTracker.js created). All inline JSDoc is complete and accurate in all three files. Public docs (README.md, ARCHITECTURE.md) intentionally not updated per V3 deferral policy. DOC_STATUS.md updated with three new V3 service file rows (#46.3, CircuitBreaker, BudgetTracker) and a corrected ARCHITECTURE.md stale section note.
+**Files changed:** docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/agents/documenter.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Maintained V3 deferral policy — no public doc updates until V3 is feature-complete (Task #82). All three new/modified files have adequate inline documentation; no further doc work needed for these tasks.
+**Blockers:** none
+**Next:** After Task #47.1 (swarm.js routes): update DOC_STATUS.md V3 table. After Task #82: major ARCHITECTURE.md + README.md V3 update.
+
+---
 ## 2026-03-27 — backend-dev — Task #46.3: SwarmEngine.js — _buildSystemPrompt + _startHeartbeat
 **Outcome:** COMPLETED
 **Summary:** Implemented _buildSystemPrompt (assembles SWARM PROTOCOL prompt with context and handoff targets) and _startHeartbeat (5-min interval writing empty string to running agent sessions). Added _startHeartbeat call in startExecution. All 3 SwarmEngine subtasks (#46.1-46.3) now complete. 132/132 tests pass.
@@ -829,4 +849,26 @@
 **Decisions made:** #49 runs in parallel with #46.3 (pure class interface contract fully defined in task spec, no runtime dep)
 **Blockers:** none
 **Next:** After #46.3 + #49 complete — launch #47.1 (swarm routes), #47.2 (scaffold stub), evaluate #48.1 readiness
+---
+
+---
+## 2026-03-27 — code-mapper — Tasks #46.3 + #49: SwarmEngine stubs resolved + CircuitBreaker/BudgetTracker mapped
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md with full implementations for _buildSystemPrompt and _startHeartbeat (both were stubs in #46.2), updated startExecution entry to reflect _startHeartbeat wiring; added Module Index rows and complete Function Graph entries for CircuitBreaker (1 method) and BudgetTracker (6 methods). Appended two CHANGELOG.md entries. Neither new service is yet imported by SwarmEngine — both awaiting wiring tasks.
+**Files changed:** docs/memory/CODE_MAP.md (MODIFIED), docs/memory/CHANGELOG.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/code-mapper.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** After Task #47.1 (swarm.js routes): add route function entries and update SwarmEngine "Called by" fields.
+---
+
+---
+## 2026-03-27 — backend-dev — Task #48.1: swarmHandler.js — Channel Routing + Connection Management
+**Outcome:** COMPLETED
+**Summary:** Created server/ws/swarmHandler.js with module-level _subscribers Map, handleSwarmConnection default export, and getSubscribers named export. Modified server/index.js to instantiate SwarmEngine, switch to two noServer WSS instances, and add server.on('upgrade') URL-path routing (/ws/swarm vs terminal). 132/132 tests pass.
+**Files changed:** server/ws/swarmHandler.js (CREATED), server/index.js (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Two noServer WSS + upgrade router (canonical ws library pattern) rather than dual connection listeners on single WSS.
+**Blockers:** none
+**Next:** Task #48.2 — implement broadcast() in swarmHandler.js and wire swarmEngine.setWsBroadcast().
 ---

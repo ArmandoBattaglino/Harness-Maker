@@ -4062,7 +4062,7 @@ Phase: V3 Phase 1 — Backend Foundation
 Priority: HIGH
 Difficulty: MEDIUM
 Depends on: #46.3
-Status: PENDING
+Status: COMPLETED
 Context:
   First of two subtasks for swarm.js routes.
   Create `server/routes/swarm.js` and mount at `/api/v1/swarm` in server/index.js.
@@ -4152,7 +4152,7 @@ Phase: V3 Phase 1 — Backend Foundation
 Priority: HIGH
 Difficulty: MEDIUM
 Depends on: #46.1
-Status: PENDING
+Status: COMPLETED
 Context:
   First of two subtasks for swarmHandler.js.
   Create `server/ws/swarmHandler.js` and add channel=swarm routing to server/index.js.
@@ -4258,7 +4258,7 @@ Agent: backend-dev
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-sonnet-4-6
-Status: IN_PROGRESS
+Status: COMPLETED
 Dependencies: none (pure stateless classes — no runtime dep on SwarmEngine; launched in parallel with #46.3)
 Context:
   Create two small pure services:
@@ -5999,9 +5999,9 @@ Acceptance criteria:
 | **46.1** | SwarmEngine — SessionManager patch + class skeleton | backend-dev | HIGH | claude-opus-4-6 | COMPLETED |
 | **46.2** | SwarmEngine — startExecution + _spawnAgentPty + tap | backend-dev | HIGH | claude-opus-4-6 | COMPLETED |
 | **46.3** | SwarmEngine — _buildSystemPrompt + _startHeartbeat | backend-dev | HIGH | claude-opus-4-6 | COMPLETED |
-| **47.1** | swarm.js — execution control endpoints (7 routes) | backend-dev | HIGH | claude-sonnet-4-6 | PENDING |
+| **47.1** | swarm.js — execution control endpoints (7 routes) | backend-dev | HIGH | claude-sonnet-4-6 | IN_PROGRESS |
 | **47.2** | swarm.js — scaffold endpoint stub (501) | backend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
-| **48.1** | swarmHandler.js — channel routing + connection mgmt | backend-dev | HIGH | claude-sonnet-4-6 | PENDING |
+| **48.1** | swarmHandler.js — channel routing + connection mgmt | backend-dev | HIGH | claude-sonnet-4-6 | COMPLETED |
 | **48.2** | swarmHandler.js — broadcast() + WS event wiring | backend-dev | HIGH | claude-sonnet-4-6 | PENDING |
 | 49 | CircuitBreaker.js + BudgetTracker.js | backend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
 | 50 | V3 Security Layer (SEC-V3-01 to SEC-V3-07) | security | HIGH | claude-sonnet-4-6 | PENDING |

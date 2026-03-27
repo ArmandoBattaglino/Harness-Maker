@@ -51,14 +51,25 @@ Security assessment completed 2026-03-27. Seven mandatory requirements must appe
 - Browser test: icons render as glyphs, terminal bg is black, scope switch prompts
 
 ---
-## Update 2026-03-27 — V3 Planning Complete
+## Update 2026-03-27 — V3 Phase 1 Backend Foundation In Progress
 
-**Focus:** V3 Swarm Orchestrator — Phase 1 (Backend Foundation) is next.
+**Focus:** V3 Swarm Orchestrator — Phase 1 Backend Foundation tasks executing.
 
-**Ready to start:** TASK #46.2 (SwarmEngine startExecution + _spawnAgentPty) — backend-dev
-**Completed so far:** #43, #44, #45, #46.1 (4/57 V3 tasks)
-**SwarmEngine.js exists** at server/services/SwarmEngine.js -- skeleton with stubs for #46.2 and #46.3
-**SessionManager.js patched** -- swarmListeners Set wired in onData handler (DEC-014)
+**Completed:** #43, #44, #45, #46.1, #46.2, #46.3, #49 (7/57 V3 tasks, 132/132 tests pass)
+**IN_PROGRESS (parallel):**
+- TASK #47.1 — swarm.js execution control endpoints (7 routes) — backend-dev, depends #46.3 ✓
+- TASK #48.1 — swarmHandler.js channel routing + connection management — backend-dev, depends #46.1 ✓
+
+**Next after #47.1 completes:** #47.2 (scaffold stub, PENDING — depends #47.1 + #59)
+**Next after #48.1 completes:** #48.2 (broadcast + WS event types — depends #48.1)
+
+**Key context for #47.1 and #48.1 agents:**
+- SwarmEngine.js is at server/services/SwarmEngine.js — complete, all methods implemented, 132 tests pass
+- SessionManager.js has swarmListeners Set wired (DEC-014) — never touch the onData handler
+- Look at server/routes/sessions.js and server/routes/jobs.js for Express router pattern
+- server/ws/terminalHandler.js for WebSocket handler pattern (do NOT break it for #48.1)
+- All mutating endpoints require CSRF header: X-Requested-With: ClaudeCodeManager
+- CircuitBreaker.js + BudgetTracker.js exist in server/services/ — used by SwarmEngine internally
 
 **V3 Key Decisions (for all agents):**
 - DEC-V3-01: HandoffParser uses rolling 4KB byte accumulator (NOT line-by-line) — ConPTY splits tokens

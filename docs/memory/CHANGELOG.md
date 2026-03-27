@@ -801,3 +801,58 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 - SwarmEngine is not yet integrated into server/index.js or any route — not callable via HTTP as of Task #46.2
 
 ---
+
+## 2026-03-27 — Task #46.3: SwarmEngine._buildSystemPrompt + _startHeartbeat
+**Agent:** backend-dev
+**Triggered by:** V3 Phase 2 — implement the two stub methods left incomplete in Task #46.2: _buildSystemPrompt (OpenAI Swarm pattern prompt assembly) and _startHeartbeat (5-min keepalive timer); also wire _startHeartbeat into startExecution
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/SwarmEngine.js | MODIFIED | Implemented _buildSystemPrompt and _startHeartbeat (both were empty stubs); startExecution now calls _startHeartbeat after _spawnAgentPty |
+
+### Functions Modified
+- `SwarmEngine._buildSystemPrompt(node, workflowContext, handoffTargets)` in `server/services/SwarmEngine.js` — fully implemented from stub: assembles multi-section prompt with agent role, SWARM PROTOCOL header, conditional workflowContext block (omitted when empty), conditional handoff instruction block (omitted when no targets, includes __HANDOFF__ format + target IDs + context update constraints), and __DONE__ instruction; returns joined string
+- `SwarmEngine._startHeartbeat(executionId)` in `server/services/SwarmEngine.js` — fully implemented from stub: creates 5-minute setInterval writing empty string to all running agent PTYs, stores timer on execution.heartbeatTimer, calls timer.unref() for clean process exit
+- `SwarmEngine.startExecution(workflowId, projectId, projectPath)` in `server/services/SwarmEngine.js` — added call to _startHeartbeat(executionId) immediately after _spawnAgentPty returns; now also stores heartbeatTimer: null on the initial execution object
+
+### Connection Changes
+- SwarmEngine.startExecution → SwarmEngine._startHeartbeat (new call — wired from stub to live)
+- SwarmEngine._startHeartbeat → SessionManager.writeInput (periodic — every 300,000ms per running agent)
+
+### Impact on Other Code
+- SwarmEngine.stopExecution already clears heartbeatTimer via clearInterval — no change needed there
+- No callers affected outside SwarmEngine itself
+
+---
+
+## 2026-03-27 — Task #49: CircuitBreaker.js + BudgetTracker.js
+**Agent:** backend-dev
+**Triggered by:** V3 Phase 2 — create two advisory safety services for the swarm execution engine: CircuitBreaker (handoff loop detection) and BudgetTracker (token budget estimation); both advisory-only per FR-V3-17 and FR-V3-18
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/CircuitBreaker.js | ADDED | New file — single-method advisory circuit breaker |
+| server/services/BudgetTracker.js | ADDED | New file — char-accumulating token budget tracker |
+
+### Functions Added
+- `CircuitBreaker.check(edgeId, counter, threshold)` in `server/services/CircuitBreaker.js` — returns boolean; true when counter >= threshold (default 10); advisory only — does not stop execution
+- `BudgetTracker.estimate(charCount)` in `server/services/BudgetTracker.js` — Math.ceil(charCount / 4); heuristic 1 token ≈ 4 chars
+- `BudgetTracker.track(sessionId, outputChunk)` in `server/services/BudgetTracker.js` — accumulates outputChunk.length in _sessionChars Map per sessionId
+- `BudgetTracker.registerSession(executionId, sessionId)` in `server/services/BudgetTracker.js` — registers sessionId under executionId in _executionSessions Map for cross-session totaling
+- `BudgetTracker.getTotal(executionId)` in `server/services/BudgetTracker.js` — sums chars for all sessions in execution, calls estimate(); returns token estimate
+- `BudgetTracker.checkBudget(executionId, limitTokens)` in `server/services/BudgetTracker.js` — calls getTotal(), returns { exceeded: boolean, estimatedUsed: number }; advisory only
+- `BudgetTracker.clearExecution(executionId)` in `server/services/BudgetTracker.js` — removes all _sessionChars and _executionSessions entries for this execution; meant to be called from SwarmEngine.stopExecution
+
+### Connection Changes
+- SwarmEngine._spawnAgentPty tapFn already has a conditional `if (this._budgetTracker)` block that calls BudgetTracker.track and BudgetTracker.checkBudget — this code path is now live once _budgetTracker is attached to SwarmEngine (wiring task pending)
+- CircuitBreaker is not yet imported or wired to SwarmEngine; connection is pending a future handoff routing task
+- BudgetTracker.registerSession is not yet called from _spawnAgentPty — pending wiring task
+
+### Impact on Other Code
+- Neither file is imported by any existing module — they are standalone services awaiting wiring into SwarmEngine
+- SwarmEngine tapFn already guards all _budgetTracker calls with `if (this._budgetTracker)` — safe to wire without code changes to tapFn
+- SwarmEngine.stopExecution should call BudgetTracker.clearExecution to prevent memory leaks — not yet wired
+
+---

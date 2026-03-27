@@ -1,4 +1,59 @@
 ---
+## 2026-03-27 — Task #46.3 + #49 COMPLETED; Launch #47.1 + #48.1
+**Status:** COMPLETED
+**Called by:** user (orchestrator notification — two tasks completed, two tasks launching)
+
+### Context when I started
+V3 Phase 1 was mid-execution. Tasks #46.1, #46.2, #46.3 formed the SwarmEngine implementation chain. #49 (CircuitBreaker + BudgetTracker) ran in parallel as it had no runtime dependencies. Both #46.3 and #49 have now completed with 132/132 tests passing. The completion of #46.3 unblocks #47.1 (swarm routes) and #48.1 (swarmHandler) simultaneously.
+
+### What I did
+1. Read TASK_PLAN.md (offset sections for tasks #46–#49) to confirm current statuses
+2. Found #46.3 task entry already shows Status: COMPLETED (set by backend-dev in its own session)
+3. Found #49 task entry was Status: IN_PROGRESS — updated to COMPLETED
+4. Updated summary table: #47.1 and #48.1 changed from PENDING to IN_PROGRESS
+5. Updated task entries: #47.1 Status: IN_PROGRESS, #48.1 Status: IN_PROGRESS
+6. Updated PROGRESS.md: counter 6/57 → 8/57, #47.1 and #48.1 marked IN_PROGRESS
+7. Updated CONTEXT.md: replaced old "ready to start #46.2" section with current state and guidance for #47.1 + #48.1 agents
+8. Appended to ACTIVITY_LOG.md
+9. Wrote this session log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | #49 Status: IN_PROGRESS → COMPLETED; #47.1, #48.1 Status: PENDING → IN_PROGRESS; summary table updated |
+| docs/memory/PROGRESS.md | MODIFIED | Counter 6/57 → 8/57; #47.1, #48.1 marked IN_PROGRESS |
+| docs/memory/CONTEXT.md | MODIFIED | Replaced stale "ready to start #46.2" with current V3 Phase 1 state + agent context for #47.1/#48.1 |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session entry |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log |
+
+### Improvements delivered
+- TASK_PLAN.md now accurately reflects that 8/57 V3 tasks are COMPLETED and 2 are IN_PROGRESS
+- CONTEXT.md now has useful guidance for the #47.1 and #48.1 agents (pointers to reference files, key constraints)
+- Parallel execution confirmed: #47.1 and #48.1 have no dependency on each other — both can run simultaneously
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| #49 task entry showed IN_PROGRESS | backend-dev marked summary table COMPLETED but left task entry as IN_PROGRESS | Updated task entry to COMPLETED | FIXED |
+
+### Decisions I made
+- #47.1 and #48.1 launched in parallel — #47.1 depends on #46.3 (done), #48.1 depends on #46.1 (done); no mutual dependency; maximum throughput is to run both simultaneously
+
+### What I learned
+- When backend-dev completes tasks, it updates the summary table but sometimes leaves the task entry body status unchanged — PM must always check both the entry AND the summary table
+- V3 task chain is proceeding cleanly; 8/57 done with all tests passing at each step
+
+### State I'm leaving behind
+- #47.1 IN_PROGRESS: swarm.js execution control routes (7 endpoints), backend-dev, claude-sonnet-4-6
+- #48.1 IN_PROGRESS: swarmHandler.js channel routing, backend-dev, claude-sonnet-4-6
+- On completion of #47.1 → launch #47.2 (scaffold stub, depends #47.1 + #59)
+- On completion of #48.1 → launch #48.2 (broadcast + WS event types, depends #48.1)
+- #50 (security layer) depends on #44 + #47.1 — ready once #47.1 completes
+- #51 (client deps install) depends on #48.2
+
+### Handoff
+After #47.1 and #48.1 complete: launch #47.2 (scaffold stub) and #48.2 (broadcast) in parallel. Also check if #50 (security) can now launch since it depends on #44 (done) + #47.1 (in progress — wait for completion).
+---
 ## 2026-03-27 — V3 Task Plan Replan: Model Assignments + Subtask Split
 **Status:** COMPLETED
 **Called by:** user (direct instruction — requested model assignments and subtask splits for all PENDING V3 tasks)

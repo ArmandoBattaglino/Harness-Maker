@@ -876,3 +876,57 @@ Both files exist and are correct. They are not yet imported anywhere (SwarmEngin
 ### Handoff
 Task #62.3 will import BudgetTracker and wire it into SwarmEngine._onDone(). Task #47.1 can proceed (depends on #46.3 and #49 — #49 is now done).
 ---
+
+---
+## 2026-03-27 — Task #48.1: swarmHandler.js — Channel Routing + Connection Management
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+server/ws/terminalHandler.js existed as the only WS handler; it registered a connection listener on a single WSS attached to the HTTP server. SwarmEngine.js existed with getStatus(executionId) returning null or a status object. server/index.js had no SwarmEngine instantiation and no swarm WS routing. 132/132 tests passing.
+
+### What I did
+1. Read project memory (PROGRESS, ACTIVITY_LOG) and existing files (terminalHandler.js, index.js, SwarmEngine.js getStatus method) in parallel.
+2. Created server/ws/swarmHandler.js with:
+   - Module-level _subscribers Map (executionId -> Set<ws>)
+   - Default export handleSwarmConnection(ws, req, swarmEngine)
+   - Named export getSubscribers(executionId)
+   - executionId parsed from query string via new URL(req.url, 'http://localhost')
+   - ws.close() + early return if no executionId, sending JSON error first
+   - Subscriber set add/remove on connection/close/error
+   - Initial status sent via swarmEngine.getStatus(executionId)
+3. Modified server/index.js:
+   - Added import for SwarmEngine and handleSwarmConnection
+   - Changed single WSS (attached to server) to two noServer WSS instances (wssTerminal + wssSwarm)
+   - Added server.on('upgrade', ...) router that checks pathname.startsWith('/ws/swarm')
+   - Instantiated SwarmEngine(sessionManager, workflowStore) and stored on app.locals.swarmEngine
+4. Ran npm test — 132/132 passed.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/ws/swarmHandler.js | CREATED | New WS handler: subscriber registry, executionId routing, initial status send |
+| server/index.js | MODIFIED | SwarmEngine import + instantiation, dual noServer WSS + upgrade router |
+
+### Improvements delivered
+- New /ws/swarm WS endpoint for swarm execution subscriptions
+- Terminal WS completely unaffected (same terminalHandler.js wired to wssTerminal)
+- Clean URL-path-based routing via server.on('upgrade') — standard ws library pattern
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Used two noServer WSS instances + server.on('upgrade') router rather than a single WSS with two connection listeners — this is the correct ws library pattern; two listeners on the same WSS 'connection' event would both fire for every connection.
+- Routed by URL pathname (/ws/swarm) rather than query param (?channel=swarm) — the task spec uses URL path and this is more RESTful/standard for WS endpoints.
+
+### What I learned
+- When splitting WS endpoints on a single HTTP server, ws library's noServer mode + handleUpgrade is the canonical approach — avoids listener interference.
+- The linter automatically added `import swarmRoutes from './routes/swarm.js'` and `app.locals.sessionManager = sessionManager` to index.js — both harmless.
+
+### State I'm leaving behind
+server/ws/swarmHandler.js is complete for task #48.1. getSubscribers() is ready for use by broadcast() in task #48.2. swarmEngine is available on app.locals.swarmEngine for route handlers. 132/132 tests pass.
+
+### Handoff
+Task #48.2 needs to implement the broadcast() function in swarmHandler.js and wire SwarmEngine.setWsBroadcast() so that execution events are pushed to all subscribers via getSubscribers(executionId). The _subscribers Map is already populated by #48.1.
+---

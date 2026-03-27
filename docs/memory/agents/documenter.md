@@ -1,4 +1,63 @@
 ---
+## 2026-03-27 — Tasks #46.3 + #49: SwarmEngine._buildSystemPrompt + _startHeartbeat; CircuitBreaker.js + BudgetTracker.js
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel with code-mapper and project-manager)
+
+### Context when I started
+Task #46.3 (SwarmEngine._buildSystemPrompt + _startHeartbeat) and Task #49 (CircuitBreaker.js + BudgetTracker.js) had just completed. SwarmEngine.js was modified to implement the two remaining stub methods. CircuitBreaker.js and BudgetTracker.js were created as new pure-service files. V3 is still in progress — public documentation policy remains: do not update README.md or ARCHITECTURE.md until V3 is feature-complete (Task #82 is the designated V3 doc task).
+
+### What I did
+1. Read DOC_STATUS.md, ACTIVITY_LOG.md (recent entries), CONTEXT.md, PROGRESS.md, and all three service files in parallel.
+2. Read my prior session log (documenter.md) to confirm standing decisions and handoff notes.
+3. Assessed staleness of all documentation artifacts:
+   - README.md: NOT stale. No user-facing feature or config change. V3 deferred per policy.
+   - ARCHITECTURE.md: NOT stale (intentionally deferred until V3 complete — high-priority debt item).
+   - docs/API.md: MISSING (intentional, tracked as medium debt).
+   - Inline comments / JSDoc in SwarmEngine.js: UP TO DATE. _buildSystemPrompt and _startHeartbeat both have complete JSDoc with @param/@returns. No stale comments found (prior "Stub for #46.3" comment in the body was replaced by the actual implementation).
+   - Inline comments / JSDoc in CircuitBreaker.js: UP TO DATE. check() method has full JSDoc.
+   - Inline comments / JSDoc in BudgetTracker.js: UP TO DATE. All 6 methods have JSDoc. FR-V3-17/FR-V3-18 advisory-only design is noted in file header comments.
+4. Updated DOC_STATUS.md:
+   - Advanced timestamp to reflect Tasks #46.3 and #49.
+   - Added row for SwarmEngine.js (Task #46.3) to V3 service files table.
+   - Added rows for CircuitBreaker.js (Task #49) and BudgetTracker.js (Task #49) to V3 service files table.
+   - Updated ARCHITECTURE.md stale section note to reflect SwarmEngine is now fully implemented through #46.3 (both _buildSystemPrompt and _startHeartbeat live), and that CircuitBreaker + BudgetTracker are now standalone service files.
+5. Appended to ACTIVITY_LOG.md.
+6. Wrote this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Timestamp advanced; three new V3 service file rows added (#46.3 SwarmEngine, CircuitBreaker, BudgetTracker); ARCHITECTURE.md stale section note updated to reflect all SwarmEngine methods implemented and new CircuitBreaker/BudgetTracker files. |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log. |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended Tasks #46.3 + #49 documenter entry. |
+
+### Improvements delivered
+- DOC_STATUS.md V3 service files table now tracks all 7 V3 backend service files with per-subtask granularity.
+- ARCHITECTURE.md stale section note now accurately describes SwarmEngine's complete implementation state (all methods through #46.3, stubs remaining only for _onHandoff/#62.x and _onDone/#62.3).
+- CircuitBreaker and BudgetTracker are now formally tracked in the V3 service files table, making the documentation debt scope clear for Task #82.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | -- | -- | -- |
+
+### Decisions I made
+- Did not update README.md or ARCHITECTURE.md. V3 is incomplete. Policy unchanged from prior sessions.
+- SwarmEngine.js inline docs for _buildSystemPrompt and _startHeartbeat are adequate — both have full JSDoc. No additional "why" comments needed; the implementation is self-explanatory with the existing inline block comments.
+- CircuitBreaker.js and BudgetTracker.js are self-documenting. The file-header comment for each explains the advisory-only design clearly (FR-V3-17/FR-V3-18). No additional inline documentation needed.
+- Added three separate rows in the V3 service files table (one per subtask/file) rather than consolidating, preserving per-task traceability.
+
+### What I learned
+- BudgetTracker uses a two-map approach (_sessionChars + _executionSessions) so that clearExecution can efficiently delete all session char counts without scanning the entire _sessionChars map. This is worth noting as the pattern is non-obvious.
+- CircuitBreaker is intentionally stateless — it takes the counter as an argument rather than maintaining its own state. The edge counters live in SwarmEngine.execution.edgeCounters. This is a clean separation of concerns.
+
+### State I'm leaving behind
+DOC_STATUS.md is current as of 2026-03-27. All 7 V3 backend service files are tracked (WorkflowStore, HandoffParser, SwarmEngine #46.1, #46.2, #46.3, CircuitBreaker, BudgetTracker). No public-facing documentation is stale. V3 documentation remains intentionally deferred until Task #82.
+
+### Handoff
+After Task #47.1 (swarm.js execution control routes): update DOC_STATUS.md V3 table to add swarm.js row. After Task #48.x (swarmHandler.js): same pattern. After V3 reaches Task #82 (V3 Documentation update): ARCHITECTURE.md and README.md need major V3 updates covering all new services, the WS protocol extension, the canvas architecture, and the execution model.
+
+---
 ## 2026-03-27 — Task #46.2: SwarmEngine startExecution + _spawnAgentPty + HandoffParser tap
 **Status:** COMPLETED
 **Called by:** orchestrator (parallel with code-mapper and project-manager)

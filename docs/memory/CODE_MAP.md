@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-27 — after Task #46.2 (SwarmEngine startExecution + _spawnAgentPty + HandoffParser tap) — mapped by code-mapper_
+_Last updated: 2026-03-27 — after Task #46.3 (_buildSystemPrompt + _startHeartbeat) + Task #49 (CircuitBreaker + BudgetTracker) — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -32,7 +32,9 @@ _Last updated: 2026-03-27 — after Task #46.2 (SwarmEngine startExecution + _sp
 | server/ws/terminalHandler.js | setupTerminalWebSocket | WebSocket handler: sessionId from URL query, attach/detach client, route input/resize messages |
 | server/services/WorkflowStore.js | WorkflowStore (class) | CRUD + schema validation for workflow definitions; persists to %APPDATA%\ClaudeCodeManager\workflows\<id>.json via write-file-atomic; server-generated UUIDs; path-traversal guard on all reads/writes (Task #43) |
 | server/services/HandoffParser.js | HandoffParser (class), default HandoffParser | Stateful rolling 4KB buffer extractor for ConPTY __HANDOFF__ and __DONE__ tokens; handles chunk-split across multiple PTY onData callbacks; ANSI escape stripping; JSON payload validation (Task #45, DEC-012) |
-| server/services/SwarmEngine.js | SwarmEngine (class), default SwarmEngine | V3 swarm orchestrator — spawns agent PTY sessions, registers HandoffParser swarmListeners taps, routes handoff/done events, tracks per-node agent state and budget; in-memory only (never persisted) (Task #46, DEC-014) |
+| server/services/SwarmEngine.js | SwarmEngine (class), default SwarmEngine | V3 swarm orchestrator — spawns agent PTY sessions, registers HandoffParser swarmListeners taps, routes handoff/done events, tracks per-node agent state and budget; in-memory only (never persisted) (Tasks #46, #46.3, DEC-014) |
+| server/services/CircuitBreaker.js | CircuitBreaker (class), default CircuitBreaker | Advisory circuit breaker for handoff loops — check(edgeId, counter, threshold) returns boolean; never stops execution, caller emits WS advisory (FR-V3-17, Task #49) |
+| server/services/BudgetTracker.js | BudgetTracker (class), default BudgetTracker | Soft budget tracker — accumulates char counts per session, estimates tokens (÷4), provides checkBudget advisory signal; never stops execution (FR-V3-18, Task #49) |
 
 ### Client Modules
 | File | Key Exports | Purpose |
@@ -1364,14 +1366,14 @@ _Last updated: 2026-03-27 — after Task #46.2 (SwarmEngine startExecution + _sp
 - **Last modified:** 2026-03-27 in Task #46.2 by backend-dev
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine.startExecution(workflowId, projectId, projectPath)`
-- **Purpose:** Start a new workflow execution. Loads workflow definition from WorkflowStore, creates an in-memory WorkflowExecution record, identifies the triage node (first node with isTriageNode===true or fallback to nodes[0]), then spawns a PTY session for that node. Returns executionId.
+- **Purpose:** Start a new workflow execution. Loads workflow definition from WorkflowStore, creates an in-memory WorkflowExecution record, identifies the triage node (first node with isTriageNode===true or fallback to nodes[0]), spawns a PTY session for that node, then starts the heartbeat timer.
 - **Called by:** (not yet wired to any route — swarm route to be implemented in a future task)
-- **Calls:** WorkflowStore.get, uuidv4, SwarmEngine._spawnAgentPty
+- **Calls:** WorkflowStore.get, uuidv4, SwarmEngine._spawnAgentPty, SwarmEngine._startHeartbeat
 - **Inputs:** workflowId (string), projectId (string), projectPath (string)
 - **Output:** Promise\<string\> — executionId (UUID)
-- **Side effects:** creates execution record in this._executions; spawns PTY session; emits WS agent_status event via _spawnAgentPty
+- **Side effects:** creates execution record in this._executions; spawns PTY session; starts heartbeat timer; emits WS agent_status event via _spawnAgentPty
 - **Complexity note:** The execution record is stored in _executions BEFORE _spawnAgentPty is called, so _spawnAgentPty can look it up during its own execution. Order matters.
-- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev
+- **Last modified:** 2026-03-27 in Task #46.3 by backend-dev (added _startHeartbeat call)
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine._spawnAgentPty(executionId, nodeId)`
 - **Purpose:** Spawn an agent PTY session for a workflow node. Looks up the execution and node, builds handoffTargets from outgoing edges, calls _buildSystemPrompt (stub), creates a PTY session via SessionManager.createSession, writes the system prompt to the PTY, initializes agent state in agentStates Map, creates a tapFn closure that feeds PTY output to a HandoffParser instance, registers tapFn on ptySession.swarmListeners (DEC-014), and emits WS agent_status event.
@@ -1392,23 +1394,25 @@ _Last updated: 2026-03-27 — after Task #46.2 (SwarmEngine startExecution + _sp
 - **Side effects:** may spawn PTY session (via _spawnAgentPty)
 - **Last modified:** 2026-03-27 in Task #46.2 by backend-dev
 
-### `server/services/SwarmEngine.js` :: `SwarmEngine._buildSystemPrompt(node, workflowContext, handoffTargets)` (stub)
-- **Purpose:** Assemble the system prompt for an agent node — role, workflow context, valid handoff targets. Per OpenAI Swarm pattern. STUB: returns undefined as of Task #46.2; full implementation in Task #46.3.
+### `server/services/SwarmEngine.js` :: `SwarmEngine._buildSystemPrompt(node, workflowContext, handoffTargets)`
+- **Purpose:** Assemble the full system prompt for an agent node per OpenAI Swarm pattern. Sections: (1) node.data.systemPrompt, (2) SWARM PROTOCOL header, (3) workflowContext key/value pairs (omitted if empty), (4) handoff target instructions with __HANDOFF__:<targetId>:<b64json> format (omitted if no targets), (5) __DONE__ instruction, (6) constraint: token only as very last line.
 - **Called by:** SwarmEngine._spawnAgentPty
-- **Calls:** none (empty body — stub)
-- **Inputs:** node (workflow node object), workflowContext (object), handoffTargets (string[])
-- **Output:** undefined (stub — will return string in #46.3)
+- **Calls:** Object.keys (workflowContext), Array.join (handoffTargets)
+- **Inputs:** node (workflow node object — reads node.data.systemPrompt), workflowContext (object — flat dict of shared context), handoffTargets (string[] — valid target node IDs from outgoing edges)
+- **Output:** string — fully assembled system prompt (multi-line, joined with \n)
 - **Side effects:** none
-- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev (stub)
+- **Complexity note:** Context section is conditionally omitted when workflowContext has zero keys. Handoff instruction block (with target IDs, b64json context update format, and 50-key/1024-char limits) is only included when handoffTargets.length > 0; otherwise only __DONE__ instruction is emitted.
+- **Last modified:** 2026-03-27 in Task #46.3 by backend-dev (was stub in #46.2)
 
-### `server/services/SwarmEngine.js` :: `SwarmEngine._startHeartbeat(executionId)` (stub)
-- **Purpose:** Start a heartbeat timer to prevent idle sweeper from killing active workflow PTY sessions. STUB: empty body as of Task #46.2; full implementation in Task #46.3.
-- **Called by:** (not yet called — will be called from startExecution in #46.3)
-- **Calls:** none (empty body — stub)
+### `server/services/SwarmEngine.js` :: `SwarmEngine._startHeartbeat(executionId)`
+- **Purpose:** Start a 5-minute setInterval that writes empty string to every running agent PTY session, preventing the SessionManager idle sweeper from killing them during an active workflow. Stores the timer handle on execution.heartbeatTimer. Calls timer.unref() so Node.js can exit cleanly if no other work is pending.
+- **Called by:** SwarmEngine.startExecution (called immediately after triage agent PTY is spawned)
+- **Calls:** setInterval, SessionManager.writeInput (every 5 min, per running agent), timer.unref
 - **Inputs:** executionId (string)
 - **Output:** void
-- **Side effects:** none (stub — will set execution.heartbeatTimer in #46.3)
-- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev (stub)
+- **Side effects:** sets execution.heartbeatTimer (NodeJS.Timer); periodic writeInput calls to all running PTY sessions every 300,000ms; timer is unref'd so it does not block process exit
+- **Complexity note:** The interval iterates execution.agentStates and filters for status === 'running'. It re-fetches the execution each tick via _executions.get(executionId) and exits early if the execution has been removed (e.g., stopExecution cleared it). stopExecution calls clearInterval(execution.heartbeatTimer) to cancel.
+- **Last modified:** 2026-03-27 in Task #46.3 by backend-dev (was stub in #46.2)
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine._onHandoff(executionId, sourceNodeId, event)` (stub)
 - **Purpose:** Handle a handoff event from the HandoffParser. Currently broadcasts a handoff_started WS event. Full routing (spawn target agent, edge counter tracking, context merge) deferred to Task #46.3 / #62.
@@ -1446,6 +1450,73 @@ _Last updated: 2026-03-27 — after Task #46.2 (SwarmEngine startExecution + _sp
 - **Output:** `{ executionId, workflowId, status, agentStates: object, edgeCounters: object, budget: object }` | null if not found
 - **Side effects:** none
 - **Last modified:** 2026-03-27 in Task #46.2 by backend-dev
+
+---
+
+### `server/services/CircuitBreaker.js` :: `CircuitBreaker.check(edgeId, counter, threshold)`
+- **Purpose:** Advisory check — returns true if the handoff counter for a given edge has reached or exceeded the threshold. Does NOT stop execution; the caller is responsible for emitting a WS advisory event.
+- **Called by:** (not yet wired — will be called from SwarmEngine handoff routing logic in a future task; FR-V3-17)
+- **Calls:** none (single comparison — pure function)
+- **Inputs:** edgeId (string — edge identifier, not currently used in check logic but included for future per-edge state), counter (number — current handoff count for this edge), threshold (number — default 10)
+- **Output:** boolean — true if counter >= threshold
+- **Side effects:** none
+- **Last modified:** 2026-03-27 in Task #49 by backend-dev
+
+---
+
+### `server/services/BudgetTracker.js` :: `BudgetTracker.estimate(charCount)`
+- **Purpose:** Convert a raw character count to a rough token estimate using the heuristic 1 token ≈ 4 chars.
+- **Called by:** BudgetTracker.getTotal
+- **Calls:** Math.ceil
+- **Inputs:** charCount (number)
+- **Output:** number — estimated token count (Math.ceil(charCount / 4))
+- **Side effects:** none
+- **Last modified:** 2026-03-27 in Task #49 by backend-dev
+
+### `server/services/BudgetTracker.js` :: `BudgetTracker.track(sessionId, outputChunk)`
+- **Purpose:** Accumulate character count for a session. Adds outputChunk.length to the running total stored in _sessionChars Map.
+- **Called by:** SwarmEngine._spawnAgentPty tapFn (called on every PTY output chunk if this._budgetTracker is set)
+- **Calls:** Map.get, Map.set
+- **Inputs:** sessionId (string), outputChunk (string — raw PTY output chunk)
+- **Output:** void
+- **Side effects:** mutates this._sessionChars Map
+- **Last modified:** 2026-03-27 in Task #49 by backend-dev
+
+### `server/services/BudgetTracker.js` :: `BudgetTracker.registerSession(executionId, sessionId)`
+- **Purpose:** Associate a sessionId with an executionId so getTotal can sum across all sessions in an execution.
+- **Called by:** (not yet wired — should be called from SwarmEngine._spawnAgentPty when _budgetTracker is set; future task)
+- **Calls:** Map.has, Map.set, Set.add
+- **Inputs:** executionId (string), sessionId (string)
+- **Output:** void
+- **Side effects:** mutates this._executionSessions Map
+- **Last modified:** 2026-03-27 in Task #49 by backend-dev
+
+### `server/services/BudgetTracker.js` :: `BudgetTracker.getTotal(executionId)`
+- **Purpose:** Sum character counts for all sessions belonging to an execution and convert to estimated tokens.
+- **Called by:** BudgetTracker.checkBudget
+- **Calls:** BudgetTracker.estimate, Map.get, Set iteration
+- **Inputs:** executionId (string)
+- **Output:** number — estimated total token count across all sessions in this execution
+- **Side effects:** none
+- **Last modified:** 2026-03-27 in Task #49 by backend-dev
+
+### `server/services/BudgetTracker.js` :: `BudgetTracker.checkBudget(executionId, limitTokens)`
+- **Purpose:** Advisory check — returns whether estimated token usage has reached or exceeded the limit. Does NOT stop execution; caller (SwarmEngine tapFn) emits a budget_update WS event.
+- **Called by:** SwarmEngine._spawnAgentPty tapFn (if this._budgetTracker is set and workflow has budgetTokens limit > 0)
+- **Calls:** BudgetTracker.getTotal
+- **Inputs:** executionId (string), limitTokens (number)
+- **Output:** `{ exceeded: boolean, estimatedUsed: number }`
+- **Side effects:** none
+- **Last modified:** 2026-03-27 in Task #49 by backend-dev
+
+### `server/services/BudgetTracker.js` :: `BudgetTracker.clearExecution(executionId)`
+- **Purpose:** Remove all tracking data for an execution and its sessions. Called on stopExecution to prevent memory leaks.
+- **Called by:** (not yet wired to SwarmEngine.stopExecution — future task)
+- **Calls:** Map.delete, Set iteration
+- **Inputs:** executionId (string)
+- **Output:** void
+- **Side effects:** mutates this._sessionChars (removes entries for each session) and this._executionSessions (removes execution entry)
+- **Last modified:** 2026-03-27 in Task #49 by backend-dev
 
 ---
 

@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-03-27 after Task #46.2: SwarmEngine.js startExecution + _spawnAgentPty + HandoffParser tap (V3 in progress)_
+_Last updated: 2026-03-27 after Task #46.3: SwarmEngine._buildSystemPrompt + _startHeartbeat; Task #49: CircuitBreaker.js + BudgetTracker.js_
 
 ## Status Legend
 - UP_TO_DATE -- matches current code
@@ -32,13 +32,16 @@ _Last updated: 2026-03-27 after Task #46.2: SwarmEngine.js startExecution + _spa
 | server/services/HandoffParser.js | UP_TO_DATE | New file (Task #45). Stateful rolling-buffer token extractor for ConPTY chunk-split handoff tokens. Well-documented inline. 22 unit tests in server/tests/HandoffParser.test.js. Not yet reflected in ARCHITECTURE.md (V3 incomplete). |
 | server/services/SwarmEngine.js (Task #46.1) | UP_TO_DATE | Created (Task #46.1). Class skeleton + constructor + setWsBroadcast + stopExecution + getStatus. All methods have JSDoc. swarmListeners tap design referenced to DEC-014. Not yet in ARCHITECTURE.md (V3 incomplete). |
 | server/services/SwarmEngine.js (Task #46.2) | UP_TO_DATE | Modified (Task #46.2). Implemented startExecution, _spawnAgentPty, _ensureAgentPty, _onHandoff (stub), _onDone (stub). All methods have complete JSDoc with @param/@returns/@throws. WorkflowExecution in-memory shape documented in file header comment. tapFn lifecycle (register + cleanup in stopExecution) documented inline. budgetTracker hook documented as deferred to Task #49. Not yet in ARCHITECTURE.md (V3 incomplete). |
+| server/services/SwarmEngine.js (Task #46.3) | UP_TO_DATE | Modified (Task #46.3). Implemented _buildSystemPrompt (assembles SWARM PROTOCOL block: role prompt + workflow context + handoff targets + __DONE__ instructions) and _startHeartbeat (5-min setInterval writing empty string to running agent sessions; .unref() for clean shutdown). _startHeartbeat call added in startExecution after _spawnAgentPty. JSDoc complete on both methods. _onHandoff and _onDone remain stubs (deferred to Tasks #62.x). Not yet in ARCHITECTURE.md (V3 incomplete). |
+| server/services/CircuitBreaker.js (Task #49) | UP_TO_DATE | Created (Task #49). Advisory circuit breaker for swarm handoff loops. Single check(edgeId, counter, threshold) method returns boolean — does NOT stop execution (FR-V3-17 advisory-only). JSDoc complete. Not yet in ARCHITECTURE.md (V3 incomplete). |
+| server/services/BudgetTracker.js (Task #49) | UP_TO_DATE | Created (Task #49). Soft budget tracker for swarm executions. Methods: estimate(charCount), track(sessionId, chunk), registerSession(executionId, sessionId), getTotal(executionId), checkBudget(executionId, limitTokens), clearExecution(executionId). Does NOT stop execution (FR-V3-18 advisory-only). JSDoc complete. Wired into SwarmEngine._spawnAgentPty tapFn via this._budgetTracker guard (set externally). Not yet in ARCHITECTURE.md (V3 incomplete). |
 | server/index.js | UP_TO_DATE | Modified (Task #43). WorkflowStore initialization added at server startup. No documentation staleness — V3 architecture section in ARCHITECTURE.md does not exist yet. |
 
 ## Stale Sections (known gaps)
 
 - docs/memory/DECISIONS.md:DEC-001 -- Records "use node-pty-prebuilt-multiarch" but actual installed package is plain node-pty. Historical accuracy preserved intentionally; correction in PROJECT.md.
 - client/src/views/EntitiesView.jsx -- File still exists on disk but is no longer imported by App.jsx. Marked as DEPRECATED in ARCHITECTURE.md component tree. Can be deleted in a future cleanup.
-- docs/ARCHITECTURE.md -- Does not yet include V3 components (WorkflowStore, HandoffParser, SwarmEngine, BroadcastService, etc.). Will require a major update when V3 is feature-complete. SwarmEngine now has startExecution, _spawnAgentPty, _ensureAgentPty, _onHandoff (stub), _onDone (stub) implemented as of Task #46.2. _buildSystemPrompt and _startHeartbeat remain stubs pending Task #46.3.
+- docs/ARCHITECTURE.md -- Does not yet include V3 components (WorkflowStore, HandoffParser, SwarmEngine, CircuitBreaker, BudgetTracker, BroadcastService, etc.). Will require a major update when V3 is feature-complete (Task #82). SwarmEngine is now fully implemented through Task #46.3: startExecution, _spawnAgentPty, _ensureAgentPty, _buildSystemPrompt, _startHeartbeat, _onHandoff (stub — #62.x), _onDone (stub — #62.3), stopExecution, getStatus all exist. CircuitBreaker and BudgetTracker exist as standalone pure-service classes (Task #49). _onHandoff and _onDone remain stubs until Tasks #62.1–#62.3.
 
 ## Documentation Debt
 

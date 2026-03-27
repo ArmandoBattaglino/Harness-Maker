@@ -14,6 +14,7 @@ import { discoverClaudeBinary } from './services/BinaryDiscovery.js';
 import { ConfigStore } from './services/ConfigStore.js';
 import { WorkflowStore } from './services/WorkflowStore.js';
 import { ProcessRegistry } from './services/ProcessRegistry.js';
+import SwarmEngine from './services/SwarmEngine.js';
 import { securityMiddleware } from './middleware/security.js';
 import { csrfMiddleware } from './middleware/csrf.js';
 import { ApiError } from './middleware/pathValidation.js';
@@ -24,9 +25,11 @@ import skillsRouter from './routes/skills.js';
 import claudemdRouter from './routes/claudemd.js';
 import jobsRouter from './routes/jobs.js';
 import workflowsRouter from './routes/workflows.js';
+import swarmRoutes from './routes/swarm.js';
 import { sessionManager } from './services/SessionManager.js';
 import { jobRunner } from './services/JobRunner.js';
 import { setupTerminalWebSocket } from './ws/terminalHandler.js';
+import handleSwarmConnection from './ws/swarmHandler.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -215,6 +218,9 @@ async function startup() {
   // Workflow routes
   app.use('/api/v1/workflows', workflowsRouter);
 
+  // Swarm execution control routes
+  app.use('/api/v1/swarm', swarmRoutes(app.locals.swarmEngine, app.locals.sessionManager));
+
   // -------------------------------------------------------------------------
   // 7. Serve static client build
   // -------------------------------------------------------------------------
@@ -246,9 +252,36 @@ async function startup() {
   // -------------------------------------------------------------------------
   const server = createServer(app);
 
-  // WebSocket server — 1MB max payload to prevent memory exhaustion
-  const wss = new WebSocketServer({ server, maxPayload: 1 * 1024 * 1024 });
-  setupTerminalWebSocket(wss);
+  // Initialize SwarmEngine (depends on sessionManager + workflowStore)
+  const workflowStore = app.locals.workflowStore;
+  const swarmEngine = new SwarmEngine(sessionManager, workflowStore);
+  app.locals.swarmEngine = swarmEngine;
+  app.locals.sessionManager = sessionManager;
+
+  // WebSocket routing — two noServer WSS instances, routed by URL path.
+  // /ws/swarm  → swarm execution updates (Task #48)
+  // /ws/* (all other paths) → PTY terminal sessions
+  const wssTerminal = new WebSocketServer({ noServer: true, maxPayload: 1 * 1024 * 1024 });
+  const wssSwarm = new WebSocketServer({ noServer: true, maxPayload: 1 * 1024 * 1024 });
+
+  setupTerminalWebSocket(wssTerminal);
+
+  wssSwarm.on('connection', (ws, req) => {
+    handleSwarmConnection(ws, req, swarmEngine);
+  });
+
+  server.on('upgrade', (req, socket, head) => {
+    const pathname = new URL(req.url, 'http://localhost').pathname;
+    if (pathname.startsWith('/ws/swarm')) {
+      wssSwarm.handleUpgrade(req, socket, head, (ws) => {
+        wssSwarm.emit('connection', ws, req);
+      });
+    } else {
+      wssTerminal.handleUpgrade(req, socket, head, (ws) => {
+        wssTerminal.emit('connection', ws, req);
+      });
+    }
+  });
 
   await new Promise((resolve, reject) => {
     server.on('error', reject);

@@ -573,3 +573,49 @@ Tasks #24-#30 (Phase 9 frontend redesign implementation) and Task #31 (QA pass) 
 ### Handoff
 Phase 9 is complete. No pending code-mapper work. If dead code cleanup is done, code-mapper should remove the dead file entries from Module Index and move them from "DEAD CODE" to "DELETED" in Removed Functions table. If v2.1 work begins (ARIA improvements, Tailwind token consistency in ContextEditorView), map the affected files.
 ---
+
+---
+## 2026-03-27 — Tasks #46.3 + #49: SwarmEngine stub resolution + CircuitBreaker/BudgetTracker
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation, parallel with project-manager and documenter)
+
+### Context when I started
+Tasks #46.3 (backend-dev) and #49 (backend-dev) had just completed simultaneously. CODE_MAP.md last updated after Task #46.2 — it had two stub entries for _buildSystemPrompt and _startHeartbeat with notes "full implementation in Task #46.3". CircuitBreaker.js and BudgetTracker.js were brand new files with no CODE_MAP.md presence at all.
+
+### What I did
+1. Read SwarmEngine.js (374 lines), CircuitBreaker.js (18 lines), BudgetTracker.js (69 lines) all in full — one parallel pass
+2. Read CODE_MAP.md header (offset 1, limit 100) for Module Index + timestamp
+3. Read CHANGELOG.md tail (offset 750, limit 100) for append point (line 803)
+4. Grepped server/ for CircuitBreaker and BudgetTracker imports — confirmed neither is imported anywhere yet (both standalone)
+5. Grepped CODE_MAP.md for _buildSystemPrompt and _startHeartbeat — located exact stub entry text (context 8) to enable precise Edit
+6. Read CODE_MAP.md offset 1440 to find SwarmEngine section end and confirm append point for new sections
+7. Updated CODE_MAP.md: (a) timestamp, (b) Module Index +2 rows (CircuitBreaker, BudgetTracker), (c) SwarmEngine row purpose updated to note Tasks #46 + #46.3, (d) _buildSystemPrompt stub entry replaced with full implementation entry, (e) _startHeartbeat stub entry replaced with full implementation entry, (f) startExecution entry updated to include _startHeartbeat in Calls and Side effects, (g) new CircuitBreaker Function Graph section (1 entry), (h) new BudgetTracker Function Graph section (6 entries)
+8. Appended two CHANGELOG.md entries (Task #46.3 and Task #49 — both with full function lists and connection maps)
+9. Appended ACTIVITY_LOG.md entry
+10. Appended this agent memory entry
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Timestamp updated; Module Index +2 rows; _buildSystemPrompt + _startHeartbeat stub entries replaced with full implementations; startExecution entry updated; new CircuitBreaker section (1 fn); new BudgetTracker section (6 fns) |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Task #46.3 entry + Task #49 entry |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session summary entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Key connections discovered
+- CircuitBreaker: not yet imported by any module — awaiting wiring into SwarmEngine handoff routing (future task)
+- BudgetTracker: not yet imported by any module — SwarmEngine tapFn has a guard `if (this._budgetTracker)` ready to use it, but _budgetTracker property is never set yet
+- BudgetTracker.registerSession: not yet called from _spawnAgentPty — wiring pending
+- BudgetTracker.clearExecution: not yet called from stopExecution — potential memory leak until wired
+
+### What I learned
+- CODE_MAP.md is now ~1520+ lines — requires 3-4 offset passes to read fully; use Grep for locating specific entries
+- The `if (this._budgetTracker)` guard in SwarmEngine tapFn (visible in _spawnAgentPty body) means BudgetTracker can be wired with zero changes to tapFn — just set the property
+- CircuitBreaker.check's edgeId param is not currently used in the comparison logic (only counter and threshold matter) — this appears intentional for future per-edge state storage
+
+### State I'm leaving behind
+CODE_MAP.md fully reflects Tasks #46.3 and #49. CHANGELOG.md has entries for both. Both new services have complete Function Graph coverage. Stubs from Task #46.2 are resolved.
+
+### Handoff
+After Task #47.1 (swarm.js routes): update CODE_MAP.md with route functions and update SwarmEngine "Called by" fields (startExecution, stopExecution, getStatus all become reachable via HTTP).
+---
