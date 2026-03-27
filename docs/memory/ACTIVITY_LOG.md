@@ -680,3 +680,14 @@
 **Blockers:** none
 **Next:** Launch TASK #43 (WorkflowStore.js) + TASK #45 (HandoffParser.js) in parallel — first wave of V3 Phase 1
 ---
+
+---
+## 2026-03-27 — backend-dev — Task #43: WorkflowStore.js — Workflow JSON Persistence
+**Outcome:** COMPLETED
+**Summary:** Created server/services/WorkflowStore.js implementing full CRUD persistence for workflow JSON files under %APPDATA%\ClaudeCodeManager\workflows\. Follows ConfigStore.js pattern exactly: write-file-atomic, path traversal validation, no throws from get(). Added WorkflowStore import and init block to server/index.js with instance stored in app.locals.workflowStore for route access. All 110 existing tests still pass.
+**Files changed:** server/services/WorkflowStore.js (CREATED), server/index.js (MODIFIED), docs/TASK_PLAN.md (MODIFIED)
+**Bugs fixed:** Placement bug — init block initially placed before `const app = express()`, fixed by moving it after the app declaration
+**Decisions made:** WorkflowStore is a class (not module singleton) to support constructor(configDir) API; instance stored in app.locals for Express route access pattern
+**Blockers:** none
+**Next:** Task #44 (server/routes/workflows.js CRUD API) can now be implemented — WorkflowStore is ready
+---
