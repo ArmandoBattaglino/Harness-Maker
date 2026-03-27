@@ -1163,3 +1163,46 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 - useSwarmStore.setSelectedNode deselect path (null) is now wired; the selection path (non-null) remains pending.
 
 ---
+
+---
+## 2026-03-27 — Task #57.1: SwarmCanvas.jsx — React Flow Canvas + Drill-Down Filtering
+**Agent:** frontend-dev
+**Triggered by:** V3 Phase 3 client — implement the root canvas container that wires all previously-built canvas primitives (AgentNode, DepartmentNode, TriggerNode, HandoffEdge, AgentInspector, BreadcrumbBar) into a single React Flow canvas with drill-down filtering
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/canvas/SwarmCanvas.jsx | ADDED | Root React Flow canvas component; nodeTypes (agent/department/trigger) + edgeTypes (handoff) registered as module-level consts; useNodesState/useEdgesState from workflowDef prop; drill-down filtering via focusedDepartmentId (3 useMemo); onNodeClick→setSelectedNode; onPaneClick→setSelectedNode(null); BreadcrumbBar + AgentInspector mounted |
+
+### Functions Added
+- `SwarmCanvas({ workflowDef })` in `client/src/canvas/SwarmCanvas.jsx` — root React Flow canvas; manages nodes/edges state; applies drill-down filter; wires user interaction; mounts BreadcrumbBar + AgentInspector
+
+### Functions Modified
+- `AgentNode` "Called by" in CODE_MAP.md — updated from "no callers" to SwarmCanvas.jsx (nodeTypes.agent)
+- `DepartmentNode` "Called by" in CODE_MAP.md — updated from "no callers" to SwarmCanvas.jsx (nodeTypes.department)
+- `TriggerNode` "Called by" in CODE_MAP.md — updated from "no callers" to SwarmCanvas.jsx (nodeTypes.trigger)
+- `HandoffEdge` "Called by" in CODE_MAP.md — updated from "no callers" to SwarmCanvas.jsx (edgeTypes.handoff + onConnect default)
+- `AgentInspector` "Called by" in CODE_MAP.md — updated from "no callers" to SwarmCanvas.jsx (first live mount)
+- `BreadcrumbBar` "Called by" in CODE_MAP.md — updated from "no callers" to SwarmCanvas.jsx (first live mount)
+- `useSwarmStore` "Called by" in CODE_MAP.md — updated to list all active callers as of Task #57.1
+
+### Functions Removed
+- None
+
+### Connection Changes
+- SwarmCanvas.jsx → AgentNode (first registration as nodeTypes.agent)
+- SwarmCanvas.jsx → DepartmentNode (first registration as nodeTypes.department)
+- SwarmCanvas.jsx → TriggerNode (first registration as nodeTypes.trigger)
+- SwarmCanvas.jsx → HandoffEdge (first registration as edgeTypes.handoff; also default type for onConnect new edges)
+- SwarmCanvas.jsx → AgentInspector (first live mount)
+- SwarmCanvas.jsx → BreadcrumbBar (first live mount)
+- SwarmCanvas.jsx → useSwarmStore (reads focusedDepartmentId, setSelectedNode)
+- DepartmentNode.setFocusedDepartment → SwarmStore.focusedDepartmentId → SwarmCanvas visibleNodes filter: complete click-to-filter loop now wired
+
+### Impact on Other Code
+- All six canvas primitives now have their first live parent — "no callers" warnings are resolved.
+- SwarmCanvas itself still has no caller — needs embedding in a WorkflowView/SwarmView page and a workflowDef prop from API/store.
+- workflowDef is consumed as initial state only (useNodesState/useEdgesState take initialValues). Changes after mount are NOT reactive — parent must unmount/remount to update the graph from a new workflowDef.
+- useSwarmStore.setSelectedNode selection path (non-null) is now wired via onNodeClick — previously only the deselect (null) path was exercisable.
+
+---

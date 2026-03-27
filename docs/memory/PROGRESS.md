@@ -152,7 +152,7 @@ _None._
 - NOTE: FileManager was NOT created in Task #5 as planned — RESOLVED in Task #7 (created server/services/FileManager.js).
 
 ## V3 — Swarm Orchestrator (57 granular tasks after split — 2026-03-27 replan)
-**Status: 27/57 COMPLETED — as of 2026-03-27. All Phase 1 backend tasks done. #52 COMPLETED — SwarmContext.jsx. #53.1, #53.2, #53.3 COMPLETED — all three canvas nodes done. #54 COMPLETED — HandoffEdge.jsx. #55 COMPLETED — AgentInspector.jsx. #56 COMPLETED — BreadcrumbBar.jsx. #57.1 COMPLETED — SwarmCanvas.jsx (React Flow canvas + drill-down filtering).**
+**Status: 28/57 COMPLETED — as of 2026-03-27. All Phase 1 backend tasks done. #52 COMPLETED — SwarmContext.jsx. #53.1, #53.2, #53.3 COMPLETED — all three canvas nodes done. #54 COMPLETED — HandoffEdge.jsx. #55 COMPLETED — AgentInspector.jsx. #56 COMPLETED — BreadcrumbBar.jsx. #57.1 COMPLETED — SwarmCanvas.jsx (React Flow canvas + drill-down filtering). #57.2 COMPLETED — SwarmView.jsx (layout shell + toolbar).**
 **Note: Original 40 tasks (#43–#82). After model assignment + subtask split: 57 granular units.**
 **7 original tasks split into subtasks: #46→3, #47→2, #48→2, #53→3, #57→2, #62→3, #71→2**
 - V3 PRD complete: docs/PRD.md
@@ -184,7 +184,7 @@ _None._
 - [TASK-55] COMPLETED 2026-03-27 — AgentInspector.jsx — client/src/canvas/AgentInspector.jsx created; reads selectedNodeId/agentStates/setSelectedNode from SwarmStore; shows label, type badge, live status, handoffCount, systemPrompt, lastOutputSnippet; empty state when nothing selected. Build clean (299 modules).
 - [TASK-56] COMPLETED 2026-03-27 — BreadcrumbBar.jsx — client/src/canvas/BreadcrumbBar.jsx created; root "All Agents" crumb always shown, department crumbs from departmentStack with label resolution from nodes prop, last crumb bold/white, navigateBreadcrumb(index) on click. Build clean (299 modules).
 - [TASK-57.1] COMPLETED 2026-03-27 — SwarmCanvas.jsx — React Flow canvas with drill-down filtering; registers agent/department/trigger nodeTypes + handoff edgeType; useMemo drill-down filters nodes by focusedDepartmentId; onNodeClick/onPaneClick wired to SwarmStore; BreadcrumbBar + AgentInspector mounted. Build clean (299 modules).
-- [TASK-57.2] PENDING — SwarmView.jsx — layout shell + toolbar
+- [TASK-57.2] COMPLETED 2026-03-27 — SwarmView.jsx — full-page layout shell; toolbar with executionStatus indicator (idle/running/stopped) + conditional Reset button; ReactFlowProvider wraps SwarmCanvas; workflowDef as useState(null) pending #61. Build clean (299 modules).
 - [TASK-58] PENDING — App.jsx + Sidebar swarm nav + ReactFlowProvider
 
 ### V3 Phase 3 — Prompt-to-Flow

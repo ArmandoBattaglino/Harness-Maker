@@ -1,4 +1,53 @@
 ---
+## 2026-03-27 — Task #57.1: SwarmCanvas.jsx — React Flow canvas + drill-down filtering
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel with code-mapper and project-manager)
+
+### Context when I started
+Task #57.1 had just completed. One new client-side canvas component was created: SwarmCanvas.jsx — the main React Flow canvas assembly component that wires together all previously built canvas layers (AgentNode, DepartmentNode, TriggerNode, HandoffEdge, AgentInspector, BreadcrumbBar). V3 public documentation deferral policy is in effect — README.md and ARCHITECTURE.md intentionally deferred until Task #82. DOC_STATUS.md was last updated after Tasks #54/#55/#56.
+
+### What I did
+1. Read DOC_STATUS.md, PROJECT.md, ACTIVITY_LOG.md (recent entries), and documenter.md (prior session) in parallel with reading SwarmCanvas.jsx.
+2. Verified SwarmCanvas.jsx in client/src/canvas/. Confirmed: 104 lines, registers nodeTypes + edgeTypes as module-level constants, drill-down filtering via two useMemo hooks (visibleNodes + visibleEdges), onConnect defaults to type "handoff", onNodeClick/onPaneClick wired to SwarmStore setSelectedNode, BreadcrumbBar mounted at top, AgentInspector mounted in side panel, ReactFlow fitView.
+3. Assessed staleness:
+   - README.md: NOT stale. V3 deferred per policy.
+   - ARCHITECTURE.md: NOT stale. Intentionally deferred until V3 complete (Task #82).
+   - SwarmCanvas.jsx inline comments: UP TO DATE. File-level comment names component purpose. Two inline comments explain why nodeTypes/edgeTypes are defined outside the component (prevent re-registration) and the drill-down filtering logic (show only dept + its children when focusedDepartmentId is set).
+   - DOC_STATUS.md: STALE — SwarmCanvas.jsx row missing; ARCHITECTURE.md stale note did not mention canvas assembly layer.
+4. Updated DOC_STATUS.md: advanced timestamp, added SwarmCanvas.jsx row to V3 service files table, expanded ARCHITECTURE.md stale section note with canvas assembly layer and updated remaining tasks list.
+5. Appended to ACTIVITY_LOG.md and this agent log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Timestamp advanced; SwarmCanvas.jsx row added; ARCHITECTURE.md stale note expanded with canvas assembly layer; remaining tasks updated from #57.1/#57.2/#58 to #57.2/#58. |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended Task #57.1 documenter entry. |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log. |
+
+### Improvements delivered
+- DOC_STATUS.md V3 service files table now tracks 22 V3 artifacts (through canvas assembly layer, Task #57.1).
+- ARCHITECTURE.md stale section note now has a complete inventory of the canvas component layer through Task #57.1, ready for Task #82.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | -- | -- | -- |
+
+### Decisions I made
+- Did not add any new inline comments to SwarmCanvas.jsx. Existing file-level comment and two inline comments (module-level nodeTypes/edgeTypes + drill-down filtering memo) are adequate.
+- Did not update README.md or ARCHITECTURE.md. V3 is incomplete. Policy unchanged.
+
+### What I learned
+- SwarmCanvas.jsx demonstrates the correct React Flow composition pattern: nodeTypes/edgeTypes defined at module scope (not inside the component) prevents React Flow from re-registering custom types on every render cycle. Worth documenting in ARCHITECTURE.md at Task #82.
+- The dual-state pattern (useNodesState/useEdgesState hold full arrays; visibleNodes/visibleEdges derived via useMemo for filtered display) is a clean way to implement drill-down in React Flow without mutating the underlying data. This pattern is used here and is worth highlighting in ARCHITECTURE.md.
+- visibleNodeIds is a Set (separate useMemo from visibleNodes) — this avoids O(n²) lookups in the visibleEdges filter, an important performance consideration when workflows have many nodes.
+
+### State I'm leaving behind
+DOC_STATUS.md is current as of 2026-03-27 and tracks 22 V3 artifacts. All canvas components through Task #57.1 have adequate inline documentation. No public-facing documentation is stale. V3 documentation remains intentionally deferred until Task #82.
+
+### Handoff
+Next tasks are #57.2 (SwarmView.jsx — layout shell + toolbar) and #58 (App.jsx + ReactFlowProvider + Sidebar integration). Each will need a DOC_STATUS.md row entry when completed. After #57.2 and #58, the full canvas stack is assembled.
+---
 ## 2026-03-27 — Tasks #54/#55/#56: HandoffEdge.jsx, AgentInspector.jsx, BreadcrumbBar.jsx
 **Status:** COMPLETED
 **Called by:** orchestrator (parallel with code-mapper and project-manager)

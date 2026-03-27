@@ -1,0 +1,53 @@
+// client/src/views/SwarmView.jsx
+// Layout shell for the Swarm Orchestrator — toolbar + canvas.
+import { useState } from 'react';
+import { ReactFlowProvider } from '@xyflow/react';
+import SwarmCanvas from '../canvas/SwarmCanvas';
+import { useSwarmStore } from '../store/SwarmContext';
+
+// Status indicator color map
+const statusColors = {
+  idle: 'text-gray-400',
+  running: 'text-blue-400 animate-pulse',
+  stopped: 'text-red-400',
+};
+
+export default function SwarmView() {
+  const executionStatus = useSwarmStore((s) => s.executionStatus);
+  const reset = useSwarmStore((s) => s.reset);
+  const [workflowDef, setWorkflowDef] = useState(null);
+
+  return (
+    <div className="flex flex-col h-full bg-gray-950 text-white">
+      {/* Toolbar */}
+      <div className="flex items-center gap-3 px-4 py-2 bg-gray-900 border-b border-gray-700 shrink-0">
+        <span className="text-sm font-semibold text-white">Swarm Orchestrator</span>
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Execution status indicator */}
+        <span className={`text-xs capitalize ${statusColors[executionStatus] || 'text-gray-400'}`}>
+          ● {executionStatus}
+        </span>
+
+        {/* Reset button — only when stopped */}
+        {executionStatus === 'stopped' && (
+          <button
+            onClick={reset}
+            className="text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors"
+          >
+            Reset
+          </button>
+        )}
+      </div>
+
+      {/* Canvas area — takes remaining height */}
+      <div className="flex-1 overflow-hidden">
+        <ReactFlowProvider>
+          <SwarmCanvas workflowDef={workflowDef} />
+        </ReactFlowProvider>
+      </div>
+    </div>
+  );
+}

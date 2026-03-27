@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-27 — after Tasks #54 + #55 + #56 (HandoffEdge, AgentInspector, BreadcrumbBar canvas components) — mapped by code-mapper_
+_Last updated: 2026-03-27 — after Task #57.1 (SwarmCanvas.jsx — React Flow canvas + drill-down filtering) — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -72,6 +72,7 @@ _Last updated: 2026-03-27 — after Tasks #54 + #55 + #56 (HandoffEdge, AgentIns
 | client/src/canvas/edges/HandoffEdge.jsx | default HandoffEdge | React Flow custom edge type="handoff". Animated dashed blue line when edgeCounters[id] > 0; grey static line when idle. Counter badge via EdgeLabelRenderer. (Task #54) |
 | client/src/canvas/AgentInspector.jsx | default AgentInspector | Right-panel component for inspecting a selected canvas node. Reads selectedNodeId + agentStates from useSwarmStore. Shows label, type, status, handoffCount, systemPrompt, lastOutputSnippet. Close button calls setSelectedNode(null). (Task #55) |
 | client/src/canvas/BreadcrumbBar.jsx | default BreadcrumbBar | Top-bar breadcrumb nav for drill-down into department nodes. Reads departmentStack + navigateBreadcrumb from useSwarmStore. Root crumb always visible; each depth level rendered as a clickable button. (Task #56) |
+| client/src/canvas/SwarmCanvas.jsx | default SwarmCanvas | Root React Flow canvas for swarm visualization. Registers nodeTypes (agent, department, trigger) + edgeTypes (handoff). Manages nodes/edges state via useNodesState/useEdgesState. Drill-down filtering: computes visibleNodes/visibleEdges via focusedDepartmentId. onNodeClick→setSelectedNode; onPaneClick→setSelectedNode(null). Mounts BreadcrumbBar + AgentInspector. (Task #57.1) |
 
 ### Client Config & Styles
 | File | Key Exports | Purpose |
@@ -1760,7 +1761,7 @@ _Last updated: 2026-03-27 — after Tasks #54 + #55 + #56 (HandoffEdge, AgentIns
 
 ### `client/src/store/SwarmContext.jsx` :: `useSwarmStore` (Zustand store — default + named export)
 - **Purpose:** Zustand v4 global store for all V3 swarm execution state. Central source of truth for the canvas and inspector panels. Holds runtime-only state — never persisted to disk.
-- **Called by:** no callers yet — store is ready for Task #53.x node components (AgentNode, DepartmentNode, TriggerNode) and future canvas/inspector panels to import useSwarmStore directly
+- **Called by:** AgentNode.jsx (agentStates[id]), DepartmentNode.jsx (setFocusedDepartment, focusedDepartmentId), TriggerNode.jsx (none — no subscription), HandoffEdge.jsx (edgeCounters[id]), AgentInspector.jsx (selectedNodeId, agentStates, setSelectedNode), BreadcrumbBar.jsx (departmentStack, navigateBreadcrumb), SwarmCanvas.jsx (focusedDepartmentId, setSelectedNode). All live as of Task #57.1.
 - **Calls:** zustand::create (Zustand v4.5.7)
 - **Inputs:** N/A (Zustand store — no constructor args)
 - **Output:** hook returning state slice + actions
@@ -1883,7 +1884,7 @@ _Last updated: 2026-03-27 — after Tasks #54 + #55 + #56 (HandoffEdge, AgentIns
 
 ### `client/src/canvas/nodes/AgentNode.jsx` :: `AgentNode({ id, data, selected })`
 - **Purpose:** Custom React Flow node for visualizing a single swarm agent. Reads live state from useSwarmStore to render status color, output snippet, and handoff count. Registered as nodeTypes["agent"] in the React Flow canvas.
-- **Called by:** (not yet registered — future WorkflowCanvas.jsx nodeTypes map; currently no callers)
+- **Called by:** SwarmCanvas.jsx — registered in module-level nodeTypes map as nodeTypes.agent (Task #57.1)
 - **Calls:** useSwarmStore (selector: s.agentStates[id]), Handle (from @xyflow/react), Position (from @xyflow/react)
 - **Inputs:** id (string — React Flow node id), data (object — { label: string }), selected (boolean — React Flow selection state)
 - **Output:** JSX — bordered card with status color, agent icon, label, status text, optional lastOutputSnippet, optional handoffCount badge; target Handle at top + source Handle at bottom
@@ -1893,7 +1894,7 @@ _Last updated: 2026-03-27 — after Tasks #54 + #55 + #56 (HandoffEdge, AgentIns
 
 ### `client/src/canvas/nodes/DepartmentNode.jsx` :: `DepartmentNode({ id, data, selected })`
 - **Purpose:** React Flow group container node for a department (a logical cluster of agent nodes). Subscribes to focusedDepartmentId + setFocusedDepartment from useSwarmStore. Clicking the header calls setFocusedDepartment(id) to drill-down. Child agent nodes use `{ extent: 'parent' }` in React Flow to be contained within this node. Registered as nodeTypes["department"].
-- **Called by:** (not yet registered — future WorkflowCanvas.jsx nodeTypes map; currently no callers)
+- **Called by:** SwarmCanvas.jsx — registered in module-level nodeTypes map as nodeTypes.department (Task #57.1)
 - **Calls:** useSwarmStore (selector: s.setFocusedDepartment), useSwarmStore (selector: s.focusedDepartmentId), setFocusedDepartment(id) on click
 - **Inputs:** id (string — React Flow node id), data (object — { label: string, agentCount?: number }), selected (boolean)
 - **Output:** JSX — full-width/height rounded container with clickable header (department label + optional agentCount badge), focused vs. unfocused border/bg styling
@@ -1903,7 +1904,7 @@ _Last updated: 2026-03-27 — after Tasks #54 + #55 + #56 (HandoffEdge, AgentIns
 
 ### `client/src/canvas/nodes/TriggerNode.jsx` :: `TriggerNode({ id, data, selected })`
 - **Purpose:** React Flow source-only trigger node (webhook or RSS). Fires outward to agent nodes — has a source Handle at the bottom only (no target Handle, triggers only initiate edges). Purple visual theme. Full implementation (polling logic, URL config, activation) deferred to Task #76.
-- **Called by:** (not yet registered — future WorkflowCanvas.jsx nodeTypes map; currently no callers)
+- **Called by:** SwarmCanvas.jsx — registered in module-level nodeTypes map as nodeTypes.trigger (Task #57.1)
 - **Calls:** Handle (from @xyflow/react), Position (from @xyflow/react); triggerIcons lookup (module-level const map)
 - **Inputs:** id (string — React Flow node id), data (object — { label: string, triggerType: 'webhook'|'rss'|string }), selected (boolean)
 - **Output:** JSX — purple bordered card with trigger icon (webhook: 🔗, rss: 📡, fallback: ⚡), label, triggerType badge; source Handle at bottom only
@@ -1917,7 +1918,7 @@ _Last updated: 2026-03-27 — after Tasks #54 + #55 + #56 (HandoffEdge, AgentIns
 
 ### `client/src/canvas/edges/HandoffEdge.jsx` :: `HandoffEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, data, markerEnd })`
 - **Purpose:** Custom React Flow edge type="handoff". Reads edgeCounters[id] from useSwarmStore to determine active/idle state. Renders animated dashed blue line (when counter > 0) or static grey line (counter = 0). Shows a blue rounded counter badge via EdgeLabelRenderer when active. The @keyframes dashdraw animation in index.css drives the strokeDashoffset march.
-- **Called by:** (not yet registered in an edgeTypes map — pending WorkflowCanvas.jsx canvas container; currently no callers)
+- **Called by:** SwarmCanvas.jsx — registered in module-level edgeTypes map as edgeTypes.handoff (Task #57.1); also used as default edge type for new onConnect edges (`addEdge({ ...params, type: 'handoff' }, eds)`)
 - **Calls:** useSwarmStore (selector: s.edgeCounters[id] ?? 0), getBezierPath (from @xyflow/react), BaseEdge (from @xyflow/react), EdgeLabelRenderer (from @xyflow/react)
 - **Inputs:** id (string — React Flow edge id), sourceX/sourceY/targetX/targetY (numbers — endpoint coords), sourcePosition/targetPosition (Position enum from @xyflow/react), data (object — not used currently), markerEnd (string | undefined — arrow marker)
 - **Output:** JSX fragment — BaseEdge path + optional EdgeLabelRenderer counter badge
@@ -1929,7 +1930,7 @@ _Last updated: 2026-03-27 — after Tasks #54 + #55 + #56 (HandoffEdge, AgentIns
 
 ### `client/src/canvas/AgentInspector.jsx` :: `AgentInspector({ nodes, onUpdateNode })`
 - **Purpose:** Side panel that renders details for the currently selected canvas node. Reads selectedNodeId and agentStates[selectedNodeId] from useSwarmStore. Shows: node label, type badge, live status from Zustand (status string + handoffCount), system prompt (from node.data.systemPrompt, read-only), and last output snippet (from agentState.lastOutputSnippet). Close button calls setSelectedNode(null) to deselect. Returns an empty placeholder div when no node is selected.
-- **Called by:** (not yet embedded in parent canvas component — pending WorkflowCanvas.jsx; currently no callers)
+- **Called by:** SwarmCanvas.jsx (Task #57.1 — first live caller; mounted as `<AgentInspector nodes={nodes} />` in the right panel)
 - **Calls:** useSwarmStore (selector: s.selectedNodeId), useSwarmStore (selector: s.agentStates[selectedNodeId]), useSwarmStore (selector: s.setSelectedNode), nodes.find() (prop traversal)
 - **Inputs:** nodes (array — React Flow node objects from parent canvas; used to find label, type, data.systemPrompt), onUpdateNode (function — passed as prop but not yet called; reserved for future edit operations)
 - **Output:** JSX — w-64 right panel; empty placeholder if no selection; detail view with header, type badge, status block, system prompt block, last output block
@@ -1941,10 +1942,24 @@ _Last updated: 2026-03-27 — after Tasks #54 + #55 + #56 (HandoffEdge, AgentIns
 
 ### `client/src/canvas/BreadcrumbBar.jsx` :: `BreadcrumbBar({ nodes })`
 - **Purpose:** Horizontal breadcrumb bar for swarm canvas drill-down navigation. Reads departmentStack (array of department node IDs) and navigateBreadcrumb from useSwarmStore. Renders a root "All Agents" button that calls navigateBreadcrumb(0), then one button per stack entry. The last entry is styled bold (current depth). Each crumb button calls navigateBreadcrumb(index + 1) where index is 0-based within the crumbs array. Node labels are resolved by looking up node IDs in the nodes prop; falls back to raw ID if node not found.
-- **Called by:** (not yet embedded in parent canvas component — pending WorkflowCanvas.jsx; currently no callers)
+- **Called by:** SwarmCanvas.jsx (Task #57.1 — first live caller; mounted as `<BreadcrumbBar nodes={nodes} />` above the ReactFlow panel)
 - **Calls:** useSwarmStore (selector: s.departmentStack), useSwarmStore (selector: s.navigateBreadcrumb), nodes.find() (per crumb, to resolve label), navigateBreadcrumb(0) on root click, navigateBreadcrumb(index + 1) on crumb click
 - **Inputs:** nodes (array — React Flow node objects from parent canvas; used to resolve department labels from IDs in departmentStack)
 - **Output:** JSX — horizontal flex bar with root button + separator "/" + per-depth crumb buttons; last crumb is white + font-medium
 - **Side effects:** calls navigateBreadcrumb() on button clicks — mutates departmentStack + focusedDepartmentId in SwarmStore
 - **Complexity note:** navigateBreadcrumb(0) = navigate to root (empty stack); navigateBreadcrumb(index + 1) navigates to depth index+1 in the stack. The root button always appears even when departmentStack is empty (flat canvas view). The crumb loop only renders entries from departmentStack — if it is empty, only the root button is shown.
 - **Last modified:** 2026-03-27 in Task #56 by frontend-dev
+
+---
+
+## React Flow Canvas Container (Task #57.1)
+
+### `client/src/canvas/SwarmCanvas.jsx` :: `SwarmCanvas({ workflowDef })`
+- **Purpose:** Root canvas component for swarm workflow visualization. Initializes React Flow with workflowDef.nodes + workflowDef.edges, registers all custom node/edge types, applies drill-down filtering via focusedDepartmentId, wires user interaction (onNodeClick, onPaneClick, onConnect), and mounts BreadcrumbBar + AgentInspector into the layout.
+- **Called by:** no callers yet — entry point for a parent WorkflowView/SwarmView page component (pending task)
+- **Calls:** useSwarmStore (selector: s.focusedDepartmentId), useSwarmStore (selector: s.setSelectedNode), useNodesState (from @xyflow/react), useEdgesState (from @xyflow/react), useMemo (React — visibleNodes, visibleNodeIds, visibleEdges), useCallback (React — onConnect, onNodeClick, onPaneClick), addEdge (from @xyflow/react), ReactFlow + Background + Controls + MiniMap (from @xyflow/react), AgentNode, DepartmentNode, TriggerNode, HandoffEdge, AgentInspector, BreadcrumbBar
+- **Inputs:** workflowDef (object — `{ nodes: ReactFlowNode[], edges: ReactFlowEdge[] }` or undefined; defaults to empty arrays)
+- **Output:** JSX — flex column: BreadcrumbBar (top) + flex row: ReactFlow canvas (flex-1) + AgentInspector (right panel)
+- **Side effects:** calls setSelectedNode(nodeId) on node click; calls setSelectedNode(null) on pane click; calls setEdges to append a new handoff edge on connect. No server I/O.
+- **Complexity note (drill-down filtering):** Three separate useMemo computations — (1) visibleNodes filters nodes where `n.id === focusedDepartmentId || n.parentId === focusedDepartmentId` (or all nodes if focusedDepartmentId is null); (2) visibleNodeIds converts visibleNodes to a Set for O(1) edge lookup; (3) visibleEdges filters edges where both source and target are in visibleNodeIds. nodeTypes and edgeTypes objects are declared OUTSIDE the component (module-level consts) to prevent React Flow from re-registering on every render — this is a React Flow v12 requirement. workflowDef is treated as the initial state only; changes to workflowDef after mount are NOT reflected (useNodesState/useEdgesState take initialNodes/initialEdges).
+- **Last modified:** 2026-03-27 in Task #57.1 by frontend-dev

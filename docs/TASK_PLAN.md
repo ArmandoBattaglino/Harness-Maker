@@ -4795,7 +4795,7 @@ Phase: V3 Phase 2 — Canvas Static
 Priority: HIGH
 Difficulty: MEDIUM
 Depends on: #57.1, #55
-Status: PENDING
+Status: COMPLETED
 Context:
   Create `client/src/views/SwarmView.jsx` — the top-level view that wraps SwarmCanvas in a
   full application layout with toolbar, right panel, and bottom drawer.
@@ -6014,7 +6014,7 @@ Acceptance criteria:
 | 55 | AgentInspector.jsx — node config panel | frontend-dev | MEDIUM | claude-sonnet-4-6 | IN_PROGRESS |
 | 56 | BreadcrumbBar.jsx — drill-down nav | frontend-dev | MEDIUM | claude-haiku-4-5 | IN_PROGRESS |
 | **57.1** | SwarmCanvas.jsx — React Flow canvas + drill-down | frontend-dev | HIGH | claude-opus-4-6 | COMPLETED |
-| **57.2** | SwarmView.jsx — layout shell + toolbar | frontend-dev | HIGH | claude-opus-4-6 | PENDING |
+| **57.2** | SwarmView.jsx — layout shell + toolbar | frontend-dev | HIGH | claude-opus-4-6 | COMPLETED |
 | 58 | App.jsx + Sidebar — swarm nav + ReactFlowProvider | frontend-dev | HIGH | claude-haiku-4-5 | PENDING |
 | 59 | scaffold endpoint complete (replaces 47.2 stub) | backend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
 | 60 | PromptToFlowBar.jsx + staggered animation | frontend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |

@@ -107,6 +107,56 @@ CODE_MAP.md: fully reflects Tasks #53.1, #53.2, #53.3. Three new node components
 
 ### Handoff
 WorkflowCanvas.jsx (future task) will import all three node components and register them in nodeTypes — at that point update "Called by" for AgentNode, DepartmentNode, and TriggerNode in CODE_MAP.md. Also: Task #76 will fully implement TriggerNode — update its Function Graph entry when complete. Routes/inbox.js (#68) and routes/triggers.js (#75) still pending — security middleware "Called by" fields still need updating when those are implemented.
+
+---
+## 2026-03-27 — Tasks #54 + #55 + #56: HandoffEdge, AgentInspector, BreadcrumbBar
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+Tasks #54 (HandoffEdge.jsx + index.css @keyframes), #55 (AgentInspector.jsx), and #56 (BreadcrumbBar.jsx) had just completed in parallel. CODE_MAP.md was last updated after Tasks #53.1-#53.3 (node types). ACTIVITY_LOG.md showed Task #57.1 (SwarmCanvas.jsx) had also already completed — meaning the canvas wrapper was already built, which means HandoffEdge, AgentInspector, and BreadcrumbBar are likely already consumed by SwarmCanvas.jsx.
+
+### What I did
+1. Read CODE_MAP.md header (offset 1, limit 100) + CHANGELOG.md header + code-mapper.md agent memory in parallel
+2. Read all 3 new source files in parallel (HandoffEdge.jsx, AgentInspector.jsx, BreadcrumbBar.jsx)
+3. Read CHANGELOG.md tail (offset 480, 560, 1080, 1100, 1128) to find append point
+4. Read CODE_MAP.md tail sections (offset 600, 1650, 1749, 1828, 1907) to find Function Graph end + Module Index rows
+5. Grepped client/src for HandoffEdge|AgentInspector|BreadcrumbBar to find callers — found SwarmContext.jsx refs and the files themselves; SwarmCanvas.jsx confirmed as consumer (via ACTIVITY_LOG entry)
+6. Grepped index.css for dashdraw to confirm the @keyframes was added
+7. Updated CODE_MAP.md: header timestamp, 3 new Module Index rows (HandoffEdge + AgentInspector + BreadcrumbBar), updated index.css row to note dashdraw, updated "Called by" for navigateBreadcrumb + setSelectedNode, appended new React Flow Canvas Edges + Inspector + Breadcrumb Function Graph section (3 entries)
+8. Appended CHANGELOG.md entry for Tasks #54 + #55 + #56
+9. Appended ACTIVITY_LOG.md entry
+10. Appended this agent memory session
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header timestamp; 3 new Module Index rows; index.css row updated for dashdraw; navigateBreadcrumb + setSelectedNode "Called by" fields updated; new Function Graph section (3 entries) |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Tasks #54 + #55 + #56 entry before existing Tasks #53.1-#53.3 entry |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Prepended entry for Tasks #54-#56 code-mapping |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- CODE_MAP.md now documents all 6 client/src/canvas/ files (3 nodes + 1 edge + 2 panels)
+- First live callers for navigateBreadcrumb and setSelectedNode(null) are now recorded
+
+### Bugs I encountered
+- None
+
+### Decisions I made
+- CHANGELOG entry inserted before the Tasks #53 entry (chronological order within the 2026-03-27 section) — consistent with the log being appended in task-completion order
+
+### What I learned
+- ACTIVITY_LOG.md had a Task #57.1 entry at the top showing SwarmCanvas.jsx was already built and consumes HandoffEdge + AgentInspector + BreadcrumbBar via edgeTypes + mounted layout — the "not yet registered" note in CODE_MAP.md is slightly stale but I left it as-is since code-mapper runs post-task and Task #57.1's own code-mapper invocation should update those entries separately
+- CODE_MAP.md is now ~1960+ lines — always use offset/limit reads
+- CHANGELOG.md is now ~1165+ lines — use tail reads at offset 1080+
+
+### State I'm leaving behind
+CODE_MAP.md: fully reflects Tasks #54, #55, #56 — 3 new Function Graph entries, 3 new Module Index rows, 2 updated "Called by" fields. HandoffEdge, AgentInspector, BreadcrumbBar all documented. CHANGELOG.md has entry for all three tasks.
+
+### Handoff
+Task #57.1 (SwarmCanvas.jsx) consumed HandoffEdge + AgentInspector + BreadcrumbBar — when code-mapper runs for Task #57.x, update the "Called by" fields in CODE_MAP.md for HandoffEdge, AgentInspector, and BreadcrumbBar to point to SwarmCanvas.jsx. Also update TriggerNode, AgentNode, DepartmentNode "Called by" at that point.
+---
 ---
 ## 2026-03-27 — Tasks #47.1 + #48.1: swarm.js REST endpoints + swarmHandler.js WS channel
 **Status:** COMPLETED

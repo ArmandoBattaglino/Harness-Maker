@@ -77,13 +77,16 @@ Security assessment completed 2026-03-27. Seven mandatory requirements must appe
 **#57.1 COMPLETED (concurrent agent, 2026-03-27):**
 - TASK #57.1 — SwarmCanvas.jsx — COMPLETED (frontend-dev self-marked; PROGRESS.md at 27/57)
 
-**Current wave (PENDING — ready to launch 2026-03-27):**
-- TASK #57.2 — SwarmView.jsx — Main V3 Layout Shell + Toolbar (frontend-dev, claude-opus-4-6, MEDIUM)
-  - Depends on: #57.1 (DONE) + #55 (DONE) — all deps met, ready now
+**Current wave (IN_PROGRESS — launched 2026-03-27):**
+- TASK #57.2 — SwarmView.jsx — Main V3 Layout Shell + Toolbar (frontend-dev, claude-opus-4-6, MEDIUM) — IN_PROGRESS
+  - Depends on: #57.1 (DONE) + #55 (DONE) — all deps met
   - Wraps SwarmCanvas in full layout: toolbar (workflow name, Start/Pause/Stop, status badge), right panel (AgentInspector 320px), bottom drawer (Inbox/Feed tabs, collapsible 200px)
   - ReactFlowProvider wraps SwarmCanvas here — SwarmCanvas must NOT add another one
   - Toolbar dispatches execution control actions: startExecution, pauseExecution, stopExecution from SwarmStore
   - Bottom drawer: two tabs (Inbox = HITL requests, Feed = live handoff log)
+  - Canvas state (nodes/edges) uses useNodesState/useEdgesState from @xyflow/react — NOT Zustand (DEC-V3-04)
+  - Right panel shows AgentInspector when selectedNodeId in SwarmStore is not null; empty state otherwise
+  - Save button: calls useWorkflow().update() with current nodes/edges (useWorkflow hook created in #58)
 
 **After #57.2 completes:**
 - TASK #58 — ReactFlowProvider wrapper + WorkflowEditorPage — depends on #57.2

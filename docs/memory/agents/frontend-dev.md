@@ -689,3 +689,50 @@ BreadcrumbBar.jsx is complete, build-verified (299 modules, 0 errors). Ready for
 ### Handoff
 Tasks #57.1 (SwarmCanvas.jsx) and #57.2 (SwarmView.jsx) are the next phase. SwarmCanvas.jsx will import BreadcrumbBar and render it above the React Flow canvas. Pass `nodes` prop from React Flow's useNodes() or the workflow definition nodes array to resolve department labels.
 ---
+
+---
+## 2026-03-27 — Task #57.2: SwarmView.jsx — Layout Shell + Toolbar
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+SwarmCanvas.jsx (#57.1) was COMPLETED and built cleanly (299 modules). SwarmContext.jsx Zustand store had executionStatus ('idle'|'running'|'stopped') and reset(). No SwarmView.jsx existed in client/src/views/ yet. Existing views (TerminalView.jsx) used flex-col with shrink-0 headers and flex-1 content areas.
+
+### What I did
+1. Read existing views (TerminalView.jsx) + SwarmCanvas.jsx + SwarmContext.jsx for patterns
+2. Created SwarmView.jsx: toolbar with status indicator + conditional Reset button, ReactFlowProvider wrapping SwarmCanvas
+3. Verified build passes (299 modules, 0 errors, same module count as before)
+4. Updated TASK_PLAN.md: Status IN_PROGRESS → COMPLETED for task #57.2 (both table row and task block)
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/views/SwarmView.jsx | CREATED | Full-page layout shell: toolbar + ReactFlowProvider + SwarmCanvas |
+| docs/TASK_PLAN.md | MODIFIED | Marked #57.2 COMPLETED in both summary table and task block |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended task completion entry |
+| docs/memory/PROGRESS.md | MODIFIED | Updated V3 status to 28/57, marked #57.2 COMPLETED |
+
+### Improvements delivered
+- SwarmCanvas is now embedded in a full-page view with a toolbar
+- Execution status visually reflected (idle=gray, running=blue+pulse, stopped=red)
+- Reset button conditionally shown only when stopped
+- ReactFlowProvider wraps the canvas, making it self-contained
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- statusColors map defined outside the component (no re-creation on render)
+- ReactFlowProvider placed in SwarmView rather than App.jsx — self-contained per task spec; Task #58 may move or adjust as needed
+- workflowDef kept as local useState(null) — no Zustand yet, per task spec; useWorkflow hook from Task #61 will wire this up
+
+### What I learned
+- @xyflow/react ReactFlowProvider can be placed in any parent component — placing in the view shell is safe and allows the view to be self-contained
+- The 299-module build count is stable; SwarmView adds no new module count because it re-uses already-imported @xyflow/react from SwarmCanvas
+
+### State I'm leaving behind
+SwarmView.jsx is complete and builds cleanly. workflowDef is wired as useState(null) — canvas shows empty until a workflow is loaded (Task #61 will add useWorkflow hook). ReactFlowProvider wraps SwarmCanvas. Not yet mounted in App.jsx routing — that is Task #58.
+
+### Handoff
+Task #58 (App.jsx + Sidebar swarm nav) should import SwarmView and add it to the routing/navigation. Task #61 (useWorkflow.js) should connect workflowDef to the API.
+---
