@@ -5296,7 +5296,7 @@ Agent: frontend-dev
 Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: IN_PROGRESS
+Status: COMPLETED
 Dependencies: #57.1, #47.1
 Context:
   Create `client/src/canvas/overlays/BroadcastBar.jsx`.

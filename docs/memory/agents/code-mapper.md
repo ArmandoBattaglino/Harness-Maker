@@ -1136,3 +1136,63 @@ CODE_MAP.md is fully current through Task #58. SwarmView is live in the app rout
 ### Handoff
 Task #61 (workflowDef wiring): update SwarmView "Calls" + "Inputs" to reflect the API hook connection. workflowDef will change from useState(null) to data from useWorkflow(). Also update SwarmCanvas entry — it will receive real node/edge data.
 ---
+---
+## 2026-03-27 — Task #60: PromptToFlowBar.jsx + staggered animation
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+Tasks #59 (swarm.js scaffold full impl) and #61 (useWorkflow.js CRUD hooks) had already been mapped. CODE_MAP.md was current through Task #61. SwarmView workflowDef was documented as "always null" — Task #60 was the wiring task. Phase 3 (Prompt-to-Flow) was declared complete by frontend-dev after this task.
+
+### What I did
+1. Read PromptToFlowBar.jsx in full (93 lines) — new file created by frontend-dev
+2. Read SwarmView.jsx in full (61 lines) — modified to mount PromptToFlowBar and wire onWorkflowGenerated
+3. Read CODE_MAP.md Module Index section (offset 1, limit 80) — confirmed last timestamp and existing rows
+4. Grepped client/src for PromptToFlowBar usages — confirmed only SwarmView.jsx imports it
+5. Grepped client/src/index.css for fadeIn — confirmed @keyframes fadeIn added at line 190
+6. Read CODE_MAP.md SwarmView Function Graph entry (offset 1971+) to prepare update
+7. Read CHANGELOG.md and ACTIVITY_LOG.md tail for append points
+8. Updated CODE_MAP.md:
+   - Header timestamp updated to Task #60
+   - Module Index: added PromptToFlowBar.jsx row; updated SwarmView row; updated index.css row (fadeIn added)
+   - SwarmView Function Graph entry: updated Purpose, Calls, Output, Complexity note, Last modified
+   - Added new "Prompt-to-Flow Bar (Task #60)" Function Graph section with 3 entries (PromptToFlowBar, handleGenerate, handleKeyDown)
+9. Appended CHANGELOG.md entry for Task #60 with full connection graph
+10. Appended ACTIVITY_LOG.md entry
+11. Appended this agent memory entry
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header timestamp; Module Index (1 new row + 2 updated rows); SwarmView Function Graph entry updated; new "Prompt-to-Flow Bar" section (3 entries) |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Task #60 entry with full connection graph and known limitation note |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended code-mapper session summary |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Key connections discovered
+- PromptToFlowBar → POST /api/v1/swarm/scaffold (direct fetch — not using useApi.js wrappers, uses SCAFFOLD_HEADERS module const instead)
+- PromptToFlowBar.onWorkflowGenerated → SwarmView.setWorkflowDef → SwarmCanvas.workflowDef (full Prompt-to-Flow data path now live and documented)
+- @keyframes fadeIn (index.css) → consumed by PromptToFlowBar.handleGenerate per-node inline style injection
+
+### Improvements delivered
+- CODE_MAP.md now has the complete Phase 3 Prompt-to-Flow data flow documented end-to-end
+- Known limitation documented: SwarmCanvas treats workflowDef as initialState — re-generation does not live-reload the canvas (workflowDef changes after mount are ignored by useNodesState/useEdgesState)
+- CSRF header pattern: PromptToFlowBar uses SCAFFOLD_HEADERS module-level const (not useApi.js) — direct fetch approach documented for future maintainers
+
+### Bugs I encountered
+- None
+
+### Decisions I made
+- Documented the SwarmCanvas initial-state-only limitation in both CODE_MAP.md and CHANGELOG.md — this is a known future task (canvas key reset or state reinit on workflowDef change)
+- PromptToFlowBar uses direct fetch (not useApi.js) — documented this pattern deviation; it's not a bug (CSRF header is included) but future tasks should decide whether to consolidate into a useApi wrapper
+
+### What I learned
+- PromptToFlowBar is the only client component that calls the scaffold endpoint directly without going through a React hook — all other API calls go through useApi.js
+- The staggered animation (i * 0.08s delay per node) is applied at the time of scaffold response parsing, not at render time — this means the CSS animation plays when SwarmCanvas first mounts the nodes from the animatedDef
+
+### State I'm leaving behind
+CODE_MAP.md fully reflects Task #60. Phase 3 is complete. Phase 4 (Live Execution) tasks #62.1, #63, #66, #67 are now IN_PROGRESS.
+
+### Handoff
+Phase 4 tasks incoming: #62.1 (SwarmEngine _onHandoff context merge + PTY spawn), #63 (useSwarm.js WS hook), #66 (BroadcastBar.jsx + broadcast route), #67 (SwarmEngine heartbeat idle sweeper). Each will need CODE_MAP.md updates. Key connections to watch: useSwarm.js will be the first client WS consumer of the swarm WebSocket — document how it wires to SwarmContext.setExecution/updateAgentState/etc.
+---

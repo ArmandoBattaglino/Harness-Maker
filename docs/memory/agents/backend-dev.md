@@ -1133,3 +1133,51 @@ WorkflowStore.create() returns the full workflow object (not just the id), so th
 ### Handoff
 #60 (PromptToFlowBar.jsx) is now unblocked — it was waiting only on #59. Next: frontend-dev implements PromptToFlowBar with staggered canvas population animation.
 ---
+## 2026-03-27 — Task #67: SwarmEngine Heartbeat — Idle Sweeper Prevention
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+SwarmEngine.js had _startHeartbeat fully implemented in #46.3 (5-min interval, .unref(), writes '' to running sessions, stored in execution.heartbeatTimer, cleared in stopExecution). startExecution already called _startHeartbeat. 168/168 tests passing. pauseExecution and resumeExecution were absent.
+
+### What I did
+1. Read docs/memory/agents/backend-dev.md and server/services/SwarmEngine.js in parallel.
+2. Verified all 6 heartbeat acceptance criteria by code inspection — all already satisfied by #46.3.
+3. Confirmed pauseExecution and resumeExecution were not present in the file.
+4. Added pauseExecution (transitions 'running'→'paused' for all agent states, broadcasts agent_status WS event) after stopExecution.
+5. Added resumeExecution (transitions 'paused'→'running' for all agent states, broadcasts agent_status WS event) after pauseExecution.
+6. Ran npm test — 168/168 pass.
+7. Updated TASK_PLAN.md, ACTIVITY_LOG.md, PROGRESS.md.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SwarmEngine.js | MODIFIED | Added pauseExecution and resumeExecution methods |
+| docs/TASK_PLAN.md | MODIFIED | Status #67 IN_PROGRESS → COMPLETED |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session entry |
+| docs/memory/PROGRESS.md | MODIFIED | Updated count 34→35, noted #67 DONE |
+| docs/memory/agents/backend-dev.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- SwarmEngine now exposes pauseExecution/resumeExecution for the swarm routes stub at /api/v1/swarm/:executionId/pause and /resume (wired in #47.1).
+- All heartbeat acceptance criteria confirmed fully satisfied.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | - | - | - |
+
+### Decisions I made
+- pauseExecution only transitions status 'running'→'paused', leaving 'done'/'waiting' states untouched — matches the task spec exactly and avoids unintended state changes.
+- resumeExecution only transitions 'paused'→'running' for the same reason.
+- Both methods silently return if executionId is unknown (no throw) — consistent with how stopExecution handles missing executions.
+
+### What I learned
+- All heartbeat work was done in #46.3. Task #67 was primarily a verification + pause/resume addition task, not a new heartbeat implementation.
+
+### State I'm leaving behind
+SwarmEngine.js has: startExecution, _spawnAgentPty, _ensureAgentPty, _buildSystemPrompt, _startHeartbeat, _onHandoff (stub), _onDone (stub), stopExecution, pauseExecution, resumeExecution, getStatus. All 168 tests pass. The pause/resume methods are ready for the swarm route stubs to call.
+
+### Handoff
+The swarm.js route stubs for /pause and /resume (added in #47.1) can now call swarmEngine.pauseExecution(executionId) and swarmEngine.resumeExecution(executionId) — no further work needed on SwarmEngine for pause/resume. Task #67 fully self-contained.
+---
