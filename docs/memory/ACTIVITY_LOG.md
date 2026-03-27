@@ -1,4 +1,15 @@
 ---
+## 2026-03-27 — researcher — Quick Orientation Scan: V3 Swarm Orchestrator
+**Outcome:** COMPLETED
+**Summary:** Delivered Quick Research Snapshot for V3 Swarm Orchestrator /create pipeline. Confirmed React Flow (@xyflow/react v12) is used by all four main competitors (LangFlow, Flowise, n8n, Dify). Identified v12 breaking changes (package rename, immutable node updates, measured dimensions), practical performance ceiling (~500 unoptimized nodes), and named canvas/execution state separation as the single most critical architecture decision.
+**Files changed:** docs/memory/agents/researcher.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** React Flow v12 validated as correct canvas choice; execution state and canvas state must be separate stores
+**Blockers:** none
+**Next:** Architect design phase — architect should read the Key Architecture Insight in the snapshot before designing the execution state model
+---
+
+---
 ## 2026-03-27 — tech-lead — Stage 0: V3 Swarm Orchestrator Technical Assessment
 **Outcome:** COMPLETED
 **Summary:** Delivered Stage 0 technical feasibility analysis for V3 Swarm Orchestrator. Feasibility CLEAR, platform CLEAR, integration UNCERTAIN. Biggest risk: PTY stdout chunking on Windows ConPTY means HANDOFF pattern detection requires a stateful stream buffer, not naive line parsing. Three targeted questions produced covering handoff parser robustness, PTY concurrency cap, and stream-json event extraction for Prompt-to-Flow.
