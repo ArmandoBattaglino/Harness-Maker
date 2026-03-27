@@ -23,6 +23,7 @@ import agentsRouter from './routes/agents.js';
 import skillsRouter from './routes/skills.js';
 import claudemdRouter from './routes/claudemd.js';
 import jobsRouter from './routes/jobs.js';
+import workflowsRouter from './routes/workflows.js';
 import { sessionManager } from './services/SessionManager.js';
 import { jobRunner } from './services/JobRunner.js';
 import { setupTerminalWebSocket } from './ws/terminalHandler.js';
@@ -210,6 +211,9 @@ async function startup() {
 
   // Job mode routes
   app.use('/api/v1/jobs', jobsRouter);
+
+  // Workflow routes
+  app.use('/api/v1/workflows', workflowsRouter);
 
   // -------------------------------------------------------------------------
   // 7. Serve static client build
