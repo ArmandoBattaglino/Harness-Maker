@@ -1,4 +1,15 @@
 ---
+## 2026-03-27 — researcher — Research B: React Flow GroupNode / DepartmentNode
+**Outcome:** COMPLETED
+**Summary:** Deep dive into @xyflow/react v12 group node APIs, expand/collapse patterns, and matrioska drill-down navigation. Produced docs/research_b.md with actionable implementation blueprints for DepartmentNode.jsx and SwarmCanvasView — covering parentId/extent system, hidden-flag collapse, and canvas-filtering drill-down with Zustand breadcrumb stack.
+**Files changed:** docs/research_b.md (CREATED), docs/memory/agents/researcher.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Use hidden flag for collapse (not Pro hook); use canvas filtering for drill-down (not embedded ReactFlow); use setNodes not updateNode for bulk updates (updateNode has known selection bug #5036)
+**Blockers:** none
+**Next:** frontend-dev reads docs/research_b.md before implementing DepartmentNode.jsx and SwarmCanvasView
+---
+
+---
 ## 2026-03-27 — researcher — Research C: Claude CLI PTY Live Injection
 **Outcome:** COMPLETED
 **Summary:** Researched how Claude Code CLI handles text injected into PTY stdin during active task execution. Found that mid-execution input is queued (not dropped, not an immediate interrupt), that Ctrl+C is unreliable during tool calls, and that programmatic Enter (\r/\n) does NOT trigger Ink's submit handler. Documented the only reliable injection pattern (Ctrl+C → wait → text → Escape → wait → Enter, ~500-700ms total). Recommended hybrid --print + --resume architecture as alternative for fully controllable agents.
