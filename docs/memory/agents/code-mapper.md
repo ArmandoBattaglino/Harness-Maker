@@ -1,4 +1,42 @@
 ---
+## 2026-03-27 — Tasks #43 + #45: WorkflowStore + HandoffParser
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+Tasks #43 (WorkflowStore.js) and #45 (HandoffParser.js + tests) had just completed. CODE_MAP.md was last updated after Phase 10 bug fixes (Tasks #32-#40). No entries existed for either new service.
+
+### What I did
+1. Read CODE_MAP.md in 6 offset-limited passes (file is ~1230 lines, exceeds single-read limit)
+2. Read WorkflowStore.js (285 lines) and HandoffParser.js (111 lines) fully in parallel
+3. Grepped server/index.js for WorkflowStore usage to confirm startup integration
+4. Grepped server/ for HandoffParser usage to confirm no existing callers (only tests)
+5. Read CHANGELOG.md tail (offset 300+) and ACTIVITY_LOG.md head to determine append points
+6. Updated CODE_MAP.md: header timestamp, Module Index (2 new rows + test row), Key Behaviors (2 new bullets + updated test count), Function Graph (12 new entries for WorkflowStore, 3 for HandoffParser)
+7. Appended two CHANGELOG.md entries (Task #43 and Task #45 — both with full function lists and connection graphs)
+8. Appended ACTIVITY_LOG.md entry
+9. Appended this agent memory entry
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Added WorkflowStore + HandoffParser to Module Index; added 15 Function Graph entries; updated Key Behaviors; updated timestamp |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Task #43 and Task #45 entries |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session summary entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### What I learned
+- CODE_MAP.md is now ~1400+ lines and requires offset-based reading in 6 passes — keep this in mind for future sessions
+- HandoffParser is not yet wired to any PTY consumer — it is a standalone service awaiting SwarmEngine (Task #46)
+- WorkflowStore routes (routes/workflows.js) do not yet exist — WorkflowStore is initialized in server/index.js but has no callers yet
+- The global regex `lastIndex` issue (HandoffParser uses `new RegExp(HANDOFF_RE.source, 'g')` inside feed()) is a non-obvious correctness requirement — documented in Function Graph complexity note
+
+### State I'm leaving behind
+CODE_MAP.md fully reflects Tasks #43 and #45. CHANGELOG.md has entries for both tasks. Test count updated to 132 in both CODE_MAP.md and Key Behaviors section.
+
+### Handoff
+Task #46 (SwarmEngine.js skeleton) will wire HandoffParser into PTY onData — update CODE_MAP.md with SwarmEngine connections when that task completes.
+---
 ## 2026-03-27 — /pm read-only plan review
 **Status:** COMPLETED (no-op)
 **Called by:** orchestrator (post /pm command)

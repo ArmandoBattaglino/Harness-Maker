@@ -680,6 +680,72 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 - **Build Result**: 6/6 test files passed, 299 modules successfully built with 0 errors.
 
 ---
+## 2026-03-27 — Task #43: WorkflowStore.js
+
+---
+**Agent:** backend-dev
+**Triggered by:** V3 Phase 1 — persist workflow definitions to disk (FR-V3-03, SEC-V3-02, SEC-V3-06)
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/WorkflowStore.js | ADDED | Full CRUD service for workflow JSON files; atomic writes; path-traversal guard; schema validation |
+| server/index.js | MODIFIED | Import + instantiate WorkflowStore; call workflowStore.init() in startup sequence with try/catch warn |
+
+### Functions Added
+- `WorkflowStore.init()` in `server/services/WorkflowStore.js` — creates workflows/ directory on first run
+- `WorkflowStore.list()` in `server/services/WorkflowStore.js` — returns all stored WorkflowDefinition objects
+- `WorkflowStore.get(id)` in `server/services/WorkflowStore.js` — returns single WorkflowDefinition or null; path-safe
+- `WorkflowStore.create(data)` in `server/services/WorkflowStore.js` — validates, generates UUID, atomic write
+- `WorkflowStore.update(id, data)` in `server/services/WorkflowStore.js` — validates, merges, atomic write; throws 404 if not found
+- `WorkflowStore.delete(id)` in `server/services/WorkflowStore.js` — unlinks file; returns boolean
+- `WorkflowStore.validate(data)` in `server/services/WorkflowStore.js` — schema validation; never throws; returns `{valid, errors[]}`
+- `WorkflowStore._resolveFilePath(id)` in `server/services/WorkflowStore.js` — path-traversal guard; returns null on invalid input
+- `WorkflowStore._writeWorkflow(workflow)` in `server/services/WorkflowStore.js` — atomic write via write-file-atomic
+
+### Functions Modified
+- `startup()` in `server/index.js` — now instantiates WorkflowStore and calls workflowStore.init() (new dependency added)
+
+### Connection Changes
+- server/index.js → server/services/WorkflowStore.js (new import)
+- WorkflowStore.create/update → WorkflowStore.validate (internal call chain)
+- WorkflowStore.create/update → WorkflowStore._writeWorkflow (internal call chain)
+- WorkflowStore._writeWorkflow → WorkflowStore._resolveFilePath (internal)
+- WorkflowStore.get/delete → WorkflowStore._resolveFilePath (internal)
+- WorkflowStore.list → WorkflowStore.get (internal)
+
+### Impact on Other Code
+- workflow routes (routes/workflows.js) do not yet exist — WorkflowStore is initialized but not yet called by any route handler
+- No breaking changes to existing endpoints
+
+---
+
+## 2026-03-27 — Task #45: HandoffParser.js + Unit Tests
+
+---
+**Agent:** backend-dev
+**Triggered by:** V3 Phase 1 — stateful rolling buffer extractor for ConPTY __HANDOFF__ / __DONE__ tokens spanning multiple PTY onData chunks (DEC-012, SEC-V3-07)
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/HandoffParser.js | ADDED | Pure class: stateful rolling 4KB buffer; ANSI strip; __HANDOFF__ + __DONE__ token extraction; contextUpdate validation |
+| server/tests/HandoffParser.test.js | ADDED | 22 unit tests covering all 9 required scenarios + edge cases (malformed base64, schema violation, buffer cap, ANSI stripping, chunk-split tokens) |
+
+### Functions Added
+- `HandoffParser.feed(rawChunk)` in `server/services/HandoffParser.js` — main entry point; strips ANSI; accumulates buffer; extracts tokens; returns event array
+- `HandoffParser._validateContext(obj)` in `server/services/HandoffParser.js` — validates contextUpdate: flat dict, max 50 keys, primitive values, string max 1024 chars
+- `HandoffParser.reset()` in `server/services/HandoffParser.js` — clears accumulator buffer
+
+### Connection Changes
+- HandoffParser is not yet wired to any PTY onData handler — reserved for SwarmEngine (Task #46+)
+- server/tests/HandoffParser.test.js imports `{ HandoffParser }` directly from services/HandoffParser.js
+
+### Impact on Other Code
+- Test count increases from 110 to 132 (22 new HandoffParser tests)
+- No changes to any existing function interfaces
+
+---
 ## 2026-03-27 — /create Pipeline — V3 Planning Complete (no code changes)
 **Type:** PLANNING
 **Files created:**

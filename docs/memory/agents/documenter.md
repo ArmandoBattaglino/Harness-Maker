@@ -1,4 +1,51 @@
 ---
+## 2026-03-27 — Tasks #43/#45: WorkflowStore + HandoffParser documentation audit
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel with code-mapper and project-manager)
+
+### Context when I started
+Tasks #43 (WorkflowStore.js created) and #45 (HandoffParser.js + 22 unit tests created) had just completed. server/index.js was modified to initialize WorkflowStore at startup. V3 is still in progress — no V3 features should appear in public docs yet.
+
+### What I did
+1. Read DOC_STATUS.md, documenter.md, and the ACTIVITY_LOG.md tail in parallel.
+2. Skimmed README.md to confirm V3 features are not yet listed — confirmed clean, describes v1.3 only.
+3. Updated DOC_STATUS.md: advanced timestamp, added a new "New V3 Service Files" tracking table, added ARCHITECTURE.md V3 section gap to Stale Sections, added two high-priority debt items for V3 documentation that must be written only after V3 is feature-complete.
+4. No other documentation changes needed — V3 is incomplete and documenting partial architecture would create false docs.
+5. Appended this session log.
+6. Appended to ACTIVITY_LOG.md.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Timestamp advanced; V3 service files tracking table added; ARCHITECTURE.md V3 gap noted in stale sections; two high-priority V3 doc debt items added. |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log. |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended Tasks #43/#45 entry. |
+
+### Improvements delivered
+- DOC_STATUS.md now explicitly tracks the two new V3 service files with their inline documentation status.
+- High-priority debt items added for ARCHITECTURE.md V3 section and README.md V3 features — acts as a clear trigger checklist for when V3 completes.
+- Confirmed README.md does not prematurely mention V3 features.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | -- | -- | -- |
+
+### Decisions I made
+- Did not update README.md or ARCHITECTURE.md. V3 is incomplete. Documenting partial architecture creates false docs that will conflict with the final implementation.
+- Added V3 doc debt items at HIGH priority (not medium) — once V3 ships, both README and ARCHITECTURE need major updates and should not be overlooked.
+
+### What I learned
+- The correct documentation response during an in-progress feature (V3) is to track new files in DOC_STATUS.md as "not yet in public docs" without updating public-facing documentation. This prevents false documentation while maintaining awareness of what will need updating.
+
+### State I'm leaving behind
+DOC_STATUS.md is current as of 2026-03-27. README.md and ARCHITECTURE.md are accurate for v1.3 (Phase 9 complete). V3 documentation is deferred until V3 is feature-complete. The two new V3 service files (WorkflowStore.js, HandoffParser.js) are tracked in the new V3 service files table.
+
+### Handoff
+When V3 task plan reaches COMPLETED status: (1) update ARCHITECTURE.md with V3 component diagram and data flow, (2) update README.md features table with V3 capabilities (swarm orchestration, workflow canvas, agent broadcasting). Use DOC_STATUS.md debt table as the trigger checklist.
+---
+
+---
 ## 2026-03-27 — /pm read-only plan review
 **Status:** COMPLETED (no-op)
 **Called by:** orchestrator (post /pm command)

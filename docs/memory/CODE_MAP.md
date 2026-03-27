@@ -1155,7 +1155,9 @@ _Last updated: 2026-03-27 — after Tasks #43 (WorkflowStore) and #45 (HandoffPa
 - JobRunner.cancelAll() called in server shutdown handler — ensures all running jobs receive SIGTERM before server exit
 - ProjectsView session status: sessions object from AppContext; badge shows "Active" if sessions[project.id] is truthy
 
-- Test suite: 6 files, 110 tests total, all passing. Runner: Vitest v4.1.0 with `pool: 'forks'` (sequential) to prevent PTY cross-test interference
+- WorkflowStore persists workflows to %APPDATA%\ClaudeCodeManager\workflows\<uuid>.json; server generates UUIDs (never client-supplied); _resolveFilePath() guards all reads/writes against directory traversal (SEC-V3-06)
+- HandoffParser: stateful 4KB rolling buffer; ANSI-stripped; __HANDOFF__:targetId:base64 tokens may span multiple PTY onData chunks; global regex constructed fresh per feed() call to avoid stale lastIndex; contextUpdate validated (max 50 keys, primitive values, string max 1024 chars) (SEC-V3-07)
+- Test suite: 7 files, 132 tests total (110 + 22 new HandoffParser tests), all passing. Runner: Vitest v4.1.0 with `pool: 'forks'` (sequential) to prevent PTY cross-test interference
 - SessionManager + JobRunner tests import the CLASS (not the singleton export) for per-test isolation
 - Security audit result (original): NEEDS_ATTENTION — 0 CRITICAL, 0 HIGH, 3 MEDIUM (exec() in auto-open, allowedTools not whitelist-validated, PID file tampering), 2 LOW. Overall risk LOW for localhost single-user model
 - MEDIUM-01 FIXED (Task #16): openBrowser() now uses spawn({shell:false}) — URL passed as array arg to cmd.exe/open/xdg-open, never shell-interpolated
@@ -1218,6 +1220,125 @@ _Last updated: 2026-03-27 — after Tasks #43 (WorkflowStore) and #45 (HandoffPa
 | stitch/stitch/final_orchestration_center/ | Orchestration Center (JobView.jsx) | DONE Task #27 |
 | stitch/stitch/final_context_rules_editor/ | Context & Rules Editor (ContextEditorView.jsx) | DONE Task #28 |
 | stitch/stitch/final_deployment_manager/ | Deployment Manager (DeploymentManagerView.jsx) | DONE Task #29 |
+
+---
+
+---
+
+## WorkflowStore (Task #43)
+
+### `server/services/WorkflowStore.js` :: `WorkflowStore.init()`
+- **Purpose:** Create the `workflows/` subdirectory under configDir if it does not already exist.
+- **Called by:** server/index.js startup sequence (after `new WorkflowStore(ConfigStore.CONFIG_DIR)`)
+- **Calls:** fs.existsSync, fs.mkdirSync
+- **Inputs:** none
+- **Output:** Promise\<void\>
+- **Side effects:** may create directory at `%APPDATA%\ClaudeCodeManager\workflows\`
+- **Last modified:** 2026-03-27 in Task #43 by backend-dev
+
+### `server/services/WorkflowStore.js` :: `WorkflowStore.list()`
+- **Purpose:** Return an array of all WorkflowDefinition objects from disk. Calls get() for each .json file — silently skips unreadable or malformed files.
+- **Called by:** workflow routes (not yet implemented — reserved for routes/workflows.js)
+- **Calls:** fs.existsSync, fs.readdirSync, WorkflowStore.get
+- **Inputs:** none
+- **Output:** Promise\<WorkflowDefinition[]\> — empty array if directory missing or empty
+- **Side effects:** filesystem reads (one per .json file)
+- **Last modified:** 2026-03-27 in Task #43 by backend-dev
+
+### `server/services/WorkflowStore.js` :: `WorkflowStore.get(id)`
+- **Purpose:** Return a single WorkflowDefinition by ID, or null if not found, invalid, or parse error. Path-traversal safe via _resolveFilePath.
+- **Called by:** WorkflowStore.list (internal), WorkflowStore.update (pre-check)
+- **Calls:** WorkflowStore._resolveFilePath, fs.existsSync, fs.readFileSync, JSON.parse
+- **Inputs:** id (string — UUID)
+- **Output:** Promise\<WorkflowDefinition | null\>
+- **Side effects:** filesystem read
+- **Last modified:** 2026-03-27 in Task #43 by backend-dev
+
+### `server/services/WorkflowStore.js` :: `WorkflowStore.create(data)`
+- **Purpose:** Validate schema, generate server-side UUID, set createdAt/updatedAt, atomically write to `<id>.json`. Returns created WorkflowDefinition. Server generates UUID — never trusts client-supplied IDs.
+- **Called by:** workflow routes (not yet implemented — reserved for POST /api/v1/workflows)
+- **Calls:** WorkflowStore.validate, randomUUID, WorkflowStore._writeWorkflow
+- **Inputs:** data (object — `{ name, projectId, description?, nodes?, edges?, settings?, initialContext? }`)
+- **Output:** Promise\<WorkflowDefinition\> — throws Error (statusCode=400) on validation failure
+- **Side effects:** atomic write to workflows/<uuid>.json
+- **Last modified:** 2026-03-27 in Task #43 by backend-dev
+
+### `server/services/WorkflowStore.js` :: `WorkflowStore.update(id, data)`
+- **Purpose:** Load existing workflow (throws 404 if missing), validate new data, merge with existing fields, write atomically. Preserves id, createdAt; updates updatedAt.
+- **Called by:** workflow routes (not yet implemented — reserved for PUT /api/v1/workflows/:id)
+- **Calls:** WorkflowStore.get, WorkflowStore.validate, WorkflowStore._writeWorkflow
+- **Inputs:** id (string), data (object — same shape as create)
+- **Output:** Promise\<WorkflowDefinition\> — throws Error (statusCode=404 or 400)
+- **Side effects:** atomic write overwrites existing .json file
+- **Last modified:** 2026-03-27 in Task #43 by backend-dev
+
+### `server/services/WorkflowStore.js` :: `WorkflowStore.delete(id)`
+- **Purpose:** Unlink the workflow JSON file. Returns true on success, false if not found or path invalid.
+- **Called by:** workflow routes (not yet implemented — reserved for DELETE /api/v1/workflows/:id)
+- **Calls:** WorkflowStore._resolveFilePath, fs.existsSync, fs.unlinkSync
+- **Inputs:** id (string)
+- **Output:** Promise\<boolean\>
+- **Side effects:** deletes file from disk
+- **Last modified:** 2026-03-27 in Task #43 by backend-dev
+
+### `server/services/WorkflowStore.js` :: `WorkflowStore.validate(data)`
+- **Purpose:** Schema validation — returns `{ valid: boolean, errors: string[] }`. Never throws. Validates: name (required, max 100, NAME_REGEX `/^[\w\s\-.]+$/`), description (max 500), nodes (array, max 50, each node.id matches NODE_ID_REGEX `^[a-z][a-z0-9-]*$`, systemPrompt max 16384 chars).
+- **Called by:** WorkflowStore.create, WorkflowStore.update
+- **Calls:** none (pure validation)
+- **Inputs:** data (unknown)
+- **Output:** `{ valid: boolean, errors: string[] }`
+- **Side effects:** none
+- **Last modified:** 2026-03-27 in Task #43 by backend-dev
+
+### `server/services/WorkflowStore.js` :: `WorkflowStore._resolveFilePath(id)` (internal)
+- **Purpose:** Resolve workflow ID to absolute file path; returns null if ID is blank, contains path separators (`/`, `\`), traversal sequences (`..`), or null bytes. Final path must start with `this._workflowsDir + path.sep` (SEC-V3-06 directory traversal prevention).
+- **Called by:** WorkflowStore.get, WorkflowStore.delete, WorkflowStore._writeWorkflow
+- **Calls:** path.resolve, String.includes
+- **Inputs:** id (string)
+- **Output:** string (absolute path) | null
+- **Side effects:** none (throws nothing — returns null on any invalid input)
+- **Last modified:** 2026-03-27 in Task #43 by backend-dev
+
+### `server/services/WorkflowStore.js` :: `WorkflowStore._writeWorkflow(workflow)` (internal)
+- **Purpose:** Atomically write a workflow object as JSON (2-space indented) to `<id>.json`. Creates workflows directory if missing. Validates path before write.
+- **Called by:** WorkflowStore.create, WorkflowStore.update
+- **Calls:** fs.existsSync, fs.mkdirSync, WorkflowStore._resolveFilePath, writeFileAtomic, JSON.stringify
+- **Inputs:** workflow (WorkflowDefinition — must have valid .id field)
+- **Output:** Promise\<void\> — throws if _resolveFilePath returns null
+- **Side effects:** atomic filesystem write; may create directory
+- **Last modified:** 2026-03-27 in Task #43 by backend-dev
+
+---
+
+## HandoffParser (Task #45)
+
+### `server/services/HandoffParser.js` :: `HandoffParser.feed(rawChunk)`
+- **Purpose:** Accept a raw PTY onData chunk (may be partial), strip ANSI escape codes, append to rolling 4KB buffer, then scan for `__HANDOFF__:target:base64` and `__DONE__` tokens. Returns array of parsed events (empty if no tokens found yet). Clears buffer when tokens are found.
+- **Called by:** Not yet wired to PTY onData — reserved for SwarmEngine / workflow executor (Task #46+)
+- **Calls:** String.replace (ANSI strip × 4), HandoffParser._validateContext, Buffer.from, JSON.parse, RegExp.exec, DONE_RE.test, console.warn
+- **Inputs:** rawChunk (string — raw PTY output from node-pty onData)
+- **Output:** `Array<{ type: 'handoff', targetId: string, contextUpdate: object } | { type: 'done' }>` — empty array when no tokens present
+- **Side effects:** mutates `this._buf`; console.warn on malformed payload or schema violation
+- **Complexity note:** Global regex with `g` flag retains `lastIndex` between calls — a new RegExp is constructed from `HANDOFF_RE.source` inside each `feed()` call to avoid stale `lastIndex` bugs. The module-level `HANDOFF_RE` is used only as a source template.
+- **Last modified:** 2026-03-27 in Task #45 by backend-dev
+
+### `server/services/HandoffParser.js` :: `HandoffParser._validateContext(obj)` (internal)
+- **Purpose:** Validate that a decoded contextUpdate is a flat non-null non-array object with max 50 keys, each key a string, each value a primitive (string/number/boolean), string values max 1024 chars (SEC-V3-07).
+- **Called by:** HandoffParser.feed (after base64+JSON decode of each HANDOFF token)
+- **Calls:** typeof, Object.keys, Array.isArray
+- **Inputs:** obj (unknown — decoded JSON from base64 payload)
+- **Output:** boolean — true if valid, false otherwise
+- **Side effects:** none
+- **Last modified:** 2026-03-27 in Task #45 by backend-dev
+
+### `server/services/HandoffParser.js` :: `HandoffParser.reset()`
+- **Purpose:** Clear the rolling accumulator buffer. Called when a session is reset or on parser reuse.
+- **Called by:** Not yet wired — reserved for session lifecycle management in SwarmEngine
+- **Calls:** (assignment only)
+- **Inputs:** none
+- **Output:** void
+- **Side effects:** clears `this._buf` to empty string
+- **Last modified:** 2026-03-27 in Task #45 by backend-dev
 
 ---
 

@@ -1,4 +1,24 @@
 ---
+## 2026-03-27 — code-mapper — Tasks #43/#45: WorkflowStore + HandoffParser mapped
+**Outcome:** COMPLETED
+**Summary:** Added WorkflowStore (9 methods) and HandoffParser (3 methods) to CODE_MAP.md Module Index and Function Graph. Appended two CHANGELOG.md entries (Task #43 and Task #45). Test count updated from 110 to 132. No breaking changes to existing interfaces.
+**Files changed:** docs/memory/CODE_MAP.md (MODIFIED), docs/memory/CHANGELOG.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** HandoffParser noted as not yet wired to PTY onData — reserved for SwarmEngine (Task #46+); WorkflowStore routes not yet implemented
+**Blockers:** none
+**Next:** Task #46 (SwarmEngine.js skeleton) — will wire HandoffParser into PTY onData flow
+---
+## 2026-03-27 — documenter — Tasks #43/#45: WorkflowStore + HandoffParser documentation audit
+**Outcome:** COMPLETED
+**Summary:** Audited all documentation for staleness after WorkflowStore.js and HandoffParser.js were created. No public docs updated — V3 is still in progress and premature documentation would be false. DOC_STATUS.md updated to track the two new V3 service files and flag high-priority debt for ARCHITECTURE.md and README.md updates that must follow V3 completion.
+**Files changed:** docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/agents/documenter.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Deferred ARCHITECTURE.md and README.md V3 updates until V3 feature-complete; confirmed README describes v1.3 only (no premature V3 content)
+**Blockers:** none
+**Next:** Update ARCHITECTURE.md and README.md when all V3 tasks are COMPLETED
+---
+
+---
 ## 2026-03-27 — project-manager — V3 Phase 1 Wave 1 Status Sync
 **Outcome:** COMPLETED
 **Summary:** Verified TASK #43 (WorkflowStore.js) and TASK #45 (HandoffParser.js) are both marked COMPLETED in TASK_PLAN.md. Updated PROGRESS.md to reflect 2/40 V3 tasks completed. V3 Phase 1 Wave 1 is done — Wave 2 (#44 workflows.js CRUD routes + #46 SwarmEngine.js skeleton) is now unblocked and ready to launch in parallel.
