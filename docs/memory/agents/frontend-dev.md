@@ -1,4 +1,51 @@
 ---
+## 2026-03-27 — Task #53.2: DepartmentNode.jsx — Group Container Node
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+V3 Phase 2 (Canvas Static) had SwarmContext.jsx (Task #52) and AgentNode.jsx (Task #53.1) completed. client/src/canvas/nodes/ directory existed but was empty before #53.1 ran. Task required creating a React Flow group container node for departments. The task spec provided the full component code verbatim.
+
+### What I did
+1. Read docs/memory/agents/frontend-dev.md and client/src/store/SwarmContext.jsx in parallel to confirm useSwarmStore API.
+2. Verified client/src/canvas/nodes/ directory existed (created by Task #53.1).
+3. Created client/src/canvas/nodes/DepartmentNode.jsx per task spec verbatim, no deviations.
+4. Ran npm run build from project root — clean build, 299 modules, 0 errors.
+5. Updated docs/TASK_PLAN.md (Status IN_PROGRESS → COMPLETED in both summary table and task body), PROGRESS.md, ACTIVITY_LOG.md, and this agent memory file.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| `client/src/canvas/nodes/DepartmentNode.jsx` | CREATED | Group container node — focused/selected visual states, setFocusedDepartment click handler, agentCount badge |
+| `docs/TASK_PLAN.md` | MODIFIED | Task #53.2 Status: IN_PROGRESS → COMPLETED (both summary table and task body block) |
+| `docs/memory/PROGRESS.md` | MODIFIED | Task #53.2 entry updated from IN_PROGRESS to COMPLETED |
+| `docs/memory/ACTIVITY_LOG.md` | MODIFIED | New entry appended |
+
+### Improvements delivered
+- DepartmentNode renders as group container with department label, icon, agentCount badge (conditionally shown)
+- isFocused state driven by useSwarmStore focusedDepartmentId === id comparison
+- Focused state: blue border + blue tinted background; default state: gray border + dark background
+- Selected state (React Flow selection): ring highlight
+- Clicking header calls setFocusedDepartment(id) to drill down into department
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None — build clean on first attempt | — | — | — |
+
+### Decisions I made
+- Implemented verbatim per task spec — no creative deviations since spec was fully concrete.
+- useSwarmStore imported via named import matching the export pattern confirmed in SwarmContext.jsx.
+
+### What I learned
+- DepartmentNode is simpler than AgentNode — its only SwarmStore interactions are reading focusedDepartmentId and calling setFocusedDepartment (no agentStates polling).
+
+### State I'm leaving behind
+DepartmentNode.jsx complete and build-verified. Ready for import by SwarmCanvas.jsx (Task #57.1) as the "department" node type in the nodeTypes map.
+
+### Handoff
+Task #53.3 (TriggerNode.jsx) and #54 (HandoffEdge.jsx) are next in the canvas phase.
+---
 ## 2026-03-27 — Task #53.1: AgentNode.jsx — Custom React Flow Agent Node
 **Status:** COMPLETED
 **Called by:** user (direct task assignment)
