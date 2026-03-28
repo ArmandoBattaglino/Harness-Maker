@@ -1,4 +1,14 @@
 ---
+## 2026-03-28 — frontend-dev — Task #89: SwarmCanvas — react to workflowDef prop changes
+**Outcome:** COMPLETED
+**Summary:** Fixed BUG-21 (SwarmCanvas.jsx not reacting to workflowDef changes after mount). Added useEffect hook that watches workflowDef prop and calls setNodes/setEdges when workflowDef is defined. This allows scaffold-generated workflows to appear on canvas after the API returns the result. The fix is minimal (8 lines of code) and follows React Flow patterns.
+**Files changed:** client/src/canvas/SwarmCanvas.jsx, docs/TASK_PLAN.md
+**Bugs fixed:** BUG-21 (SwarmCanvas blind to post-mount workflowDef changes)
+**Decisions made:** useEffect dependency array includes [workflowDef, setNodes, setEdges]; checked that nodes/edges are already in React Flow format in workflowDef, no conversion needed
+**Blockers:** none
+**Next:** Task #84 (Zustand swarmListeners reactivity) or Task #90 (TriggerNode fired counter) — both HIGH/EASY
+---
+
 ## 2026-03-28 — project-manager — Tasks #84--#99: QA Bug-Fix Wave Created
 **Outcome:** COMPLETED
 **Summary:** Created 16 bug tasks (#84--#99) from QA-tester findings. Tasks cover Zustand reactivity bugs, WS item shape mismatches, canvas prop-change blindness, pause/resume route no-ops, memory leaks in stopExecution, and body-limit misconfiguration. All tasks appended to docs/TASK_PLAN.md with Status: PENDING.

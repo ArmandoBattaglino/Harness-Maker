@@ -1,4 +1,60 @@
 ---
+## 2026-03-28 — Task #89: SwarmCanvas — React to workflowDef Prop Changes After Mount
+**Status:** COMPLETED
+**Called by:** user (direct task assignment via system reminder)
+
+### Context when I started
+Task #88 was completed. SwarmCanvas.jsx was initializing nodes/edges from workflowDef prop at mount time via useNodesState/useEdgesState, but had no hook to react to workflowDef changes after mount. PromptToFlowBar.jsx calls onWorkflowGenerated callback with a newly scaffolded workflow, which sets state in SwarmView, but the canvas remained visually empty because useNodesState only reads initial values at mount.
+
+### What I did
+1. Read SwarmCanvas.jsx lines 34-52 to understand current initialization.
+2. Read SwarmView.jsx to confirm workflowDef state is updated via onWorkflowGenerated callback from PromptToFlowBar.
+3. Confirmed nodes/edges are already in React Flow format in workflowDef — no conversion needed.
+4. Added import of useEffect from 'react' (line 3).
+5. Added useEffect hook after the useNodesState/useEdgesState initialization (lines 45-52):
+   - Watches [workflowDef, setNodes, setEdges] dependencies
+   - Calls setNodes/setEdges when workflowDef is defined
+6. Ran `cd client && npm run build` — 473 modules, 0 errors.
+7. Ran `npm test` — 187/187 tests PASS.
+8. Updated docs/TASK_PLAN.md: Status PENDING → COMPLETED.
+9. Git commit: "Task #89: SwarmCanvas — react to workflowDef prop changes, scaffold now visible".
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/canvas/SwarmCanvas.jsx | MODIFIED | Added useEffect to watch workflowDef changes |
+| docs/TASK_PLAN.md | MODIFIED | Task #89 Status: PENDING → COMPLETED |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Session log appended |
+
+### Improvements delivered
+- Canvas now updates immediately when workflowDef prop changes (scaffold results now visible)
+- Minimal code change (8 lines, no refactoring needed)
+- No dependency on helper functions — workflowDef.nodes/edges already in correct format
+- Build: 473 modules, 0 errors
+- Tests: 187/187 PASS
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None | — | — | — |
+
+### Decisions I made
+- useEffect dependency array includes setNodes and setEdges from useNodesState/useEdgesState because React Flow may return new function references on each render. Including them in deps ensures the effect runs when React Flow internals change, maintaining correctness per React best practices.
+- Only call setNodes/setEdges when workflowDef is truthy to avoid unnecessary updates when workflowDef is null/undefined during initial load.
+- No guard needed to check if workflowDef.nodes/edges exist — workflowDef is a controlled value from state, guaranteed to have shape { nodes: [...], edges: [...] } when truthy.
+
+### What I learned
+- @xyflow/react useNodesState and useEdgesState return setter functions that may change on renders — including them in useEffect deps is correct per React linting rules.
+- When a parent prop changes after mount, child useXxxState hooks initialized with prop values won't auto-sync — explicit useEffect is the correct pattern.
+
+### State I'm leaving behind
+SwarmCanvas now fully reacts to workflowDef changes. Scaffold feature in PromptToFlowBar.jsx now works end-to-end: (1) user submits prompt, (2) API generates workflow JSON, (3) PromptToFlowBar.onWorkflowGenerated fires, (4) SwarmView sets workflowDef state, (5) SwarmCanvas useEffect fires, (6) canvas updates with nodes/edges. No further work needed on this component for MVP.
+
+### Handoff
+None — task fully self-contained.
+
+---
+
 ## 2026-03-27 — Task #69: HitlInbox.jsx — Approval Panel
 **Status:** COMPLETED
 **Called by:** user (direct task assignment)
