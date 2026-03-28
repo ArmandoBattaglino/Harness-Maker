@@ -1,4 +1,13 @@
 ---
+## 2026-03-28 — debugger — Task #80 BUGFIX: Swarm Route Init Order
+**Outcome:** COMPLETED
+**Summary:** swarmRoutes() and inboxRoutes() were factory-called with app.locals.swarmEngine before SwarmEngine was instantiated (line 231 vs 271). Fixed by hoisting SwarmEngine instantiation to before the route mounts, placed between workflow routes and static file serving so API routes precede the SPA wildcard fallback. 187/187 tests pass.
+**Files changed:** server/index.js
+**Bugs fixed:** TypeError: Cannot read properties of undefined on all /api/v1/swarm/* and /api/v1/swarm/**/inbox/* endpoints
+**Decisions made:** Instantiate SwarmEngine in section 7 (before static serving) rather than in section 10 (after error handler) — required to keep routes before SPA wildcard
+**Blockers:** none
+**Next:** Task #81 (build verify + tag) and #82 (docs) can proceed
+---
 ## 2026-03-28 — qa-tester — Task #80: V3 End-to-End Test
 **Outcome:** COMPLETED
 **Summary:** Full E2E test of the V3 Swarm Orchestrator using Playwright browser automation. Server started, all 6 sidebar views verified (Projects, Live Terminal, Job Runner, Deployments, Context Editor, Swarm). SwarmView loads correctly with PromptToFlowBar, React Flow canvas, BreadcrumbBar, AgentInspector. Scaffold endpoint fails gracefully when ANTHROPIC_API_KEY is missing (expected). V2 backward compatibility fully verified -- Terminal view spawns PTY with Claude Code CLI successfully. Workflow CRUD API works. 187/187 server tests pass. One HIGH bug found: SwarmEngine route initialization order bug (swarmRoutes and inboxRoutes mounted before SwarmEngine instantiation, causing 500 errors on all execution control endpoints).

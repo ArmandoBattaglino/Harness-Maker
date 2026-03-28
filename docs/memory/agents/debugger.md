@@ -78,3 +78,49 @@ All 7 critical/high/medium bugs have been fixed. The following bugs are document
 - The JobRunner memory leak (BUG-06) should be addressed in v1.1: add a max-job-count or TTL cleanup
 - Rate limiter map cleanup (BUG-07) should be addressed in v1.1
 ---
+---
+## 2026-03-28 — Task #80 BUGFIX: Swarm Route Init Order
+**Status:** COMPLETED
+**Called by:** User (bug escalated from qa-tester E2E test)
+
+### Context when I started
+QA tester identified that all /api/v1/swarm/* endpoints returned 500 TypeError. Root cause identified in the bug report: swarmRoutes() and inboxRoutes() were called at lines 231-234 of server/index.js before swarmEngine was instantiated at line 271. The factories received undefined as their swarmEngine argument.
+
+### What I did
+1. Read docs/memory/agents/debugger.md and server/index.js in parallel.
+2. Confirmed exact bug: lines 231-234 called `swarmRoutes(app.locals.swarmEngine, ...)` and `inboxRoutes(app.locals.swarmEngine)` — both `undefined` because `new SwarmEngine(...)` was at line 271 (inside section 10, after the HTTP server was created, after the SPA wildcard fallback `app.get('*', ...)`, and after the error handler).
+3. Identified a secondary problem: even if we just moved the mounts past line 271, they would be registered AFTER the `app.get('*', ...)` wildcard GET handler (line 238) and the error handler (line 253), meaning GET requests to /api/v1/swarm/* would be intercepted by the SPA fallback first.
+4. Designed fix: move SwarmEngine instantiation UP to section 7 (before static serving), so route mounts happen before the SPA wildcard and error handler.
+5. Removed the deferred `app.locals.triggersRouter` indirection (was storing the router for later mounting) — replaced with direct `triggersRouter(triggerManager)` call at the same location.
+6. Ran `npm test` — 187/187 tests pass.
+7. Committed: git commit 843680a.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/index.js | MODIFIED | Moved SwarmEngine instantiation + swarmRoutes/inboxRoutes/triggersRouter mount from section 10 (after HTTP server create) to section 7 (after workflow routes, before static serving). Removed app.locals.triggersRouter indirection. |
+
+### Improvements delivered
+- All /api/v1/swarm/* endpoints now receive a live SwarmEngine instance
+- All /api/v1/swarm/**/inbox/* endpoints now receive a live SwarmEngine instance
+- /api/v1/triggers now receives a live TriggerManager instance (was already working via the same deferred mount pattern, no change in behavior)
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| swarmRoutes/inboxRoutes receive undefined | Factory called before SwarmEngine instantiated — and route registered after SPA wildcard | Moved SwarmEngine init to section 7, before static serving and SPA fallback | FIXED |
+
+### Decisions I made
+- Chose to hoist SwarmEngine init rather than use a lazy-init pattern — simpler, no closures, consistent with how sessionManager and workflowStore are handled.
+- Removed app.locals.triggersRouter deferred storage — was only needed because of the flawed late-mount pattern; no longer required.
+
+### What I learned
+- Express registers middleware/routes in call order. Any route registered after `app.get('*', ...)` will NEVER be reached for GET requests. The original code had the swarm routes destined for this dead zone (section 10, after the wildcard at section 8) in addition to the undefined-reference bug.
+- Always check that API routes are mounted before the SPA wildcard fallback and before the global error handler.
+
+### State I'm leaving behind
+server/index.js is fully fixed. All 187 tests pass. The startup sequence now correctly instantiates SwarmEngine before mounting its routes, and all swarm/inbox/trigger routes are registered before static serving and the SPA fallback.
+
+### Handoff
+Task #81 (build verify + tag) and #82 (docs) can proceed — no further action required on this bug.
+---
