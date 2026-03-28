@@ -1,10 +1,11 @@
 // client/src/views/SwarmView.jsx
 // Layout shell for the Swarm Orchestrator — toolbar + canvas.
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ReactFlowProvider } from '@xyflow/react';
 import SwarmCanvas from '../canvas/SwarmCanvas';
 import PromptToFlowBar from '../canvas/PromptToFlowBar';
 import BroadcastBar from '../canvas/BroadcastBar';
+import PtyExplosion from '../canvas/PtyExplosion';
 import { useSwarmStore } from '../store/SwarmContext';
 
 // Status indicator color map
@@ -17,7 +18,21 @@ const statusColors = {
 export default function SwarmView() {
   const executionStatus = useSwarmStore((s) => s.executionStatus);
   const reset = useSwarmStore((s) => s.reset);
+  const ptyExplosionNodeId = useSwarmStore((s) => s.ptyExplosionNodeId);
+  const setPtyExplosionNodeId = useSwarmStore((s) => s.setPtyExplosionNodeId);
   const [workflowDef, setWorkflowDef] = useState(null);
+
+  // Escape key handler — close PTY explosion overlay if it's open
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && ptyExplosionNodeId !== null) {
+        e.preventDefault();
+        setPtyExplosionNodeId(null);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [ptyExplosionNodeId, setPtyExplosionNodeId]);
 
   return (
     <div className="flex flex-col h-full bg-gray-950 text-white">
@@ -60,6 +75,14 @@ export default function SwarmView() {
 
       {/* Broadcast bar — only visible during active execution */}
       <BroadcastBar />
+
+      {/* PTY Explosion overlay — full-screen terminal for direct agent interaction */}
+      {ptyExplosionNodeId && (
+        <PtyExplosion
+          sessionId={ptyExplosionNodeId}
+          onClose={() => setPtyExplosionNodeId(null)}
+        />
+      )}
     </div>
   );
 }

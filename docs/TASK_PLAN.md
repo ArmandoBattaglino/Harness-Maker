@@ -5560,7 +5560,7 @@ Phase: V3 Phase 5 — HITL + PTY Explosion
 Priority: MEDIUM
 Difficulty: EASY
 Depends on: #71.1
-Status: PENDING
+Status: COMPLETED
 Context:
   Second of two subtasks for PTY Explosion.
   Add keyboard Escape handler to close the overlay without clicking the button.

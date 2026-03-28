@@ -1183,3 +1183,64 @@ AgentNode.jsx is fully enhanced per Task #65 spec. Build clean at 472 modules. A
 ### Handoff
 None — task fully self-contained.
 ---
+
+---
+## 2026-03-28 — Task #71.2: PTY Explosion — Escape Key Handler
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+Task #71.1 (PtyExplosion.jsx component) was COMPLETED. The component was already created at client/src/canvas/PtyExplosion.jsx and accepts sessionId + onClose props. The SwarmContext.jsx store had ptyExplosionNodeId and setPtyExplosionNodeId state management already in place. SwarmView.jsx imported useSwarmStore but did not yet import or render PtyExplosion. The task required adding an Escape key handler that only intercepts when the overlay is open (ptyExplosionNodeId !== null), allowing Escape to pass through to xterm.js when the overlay is closed.
+
+### What I did
+1. Read SwarmView.jsx to confirm the structure: toolbar, PromptToFlowBar, ReactFlowProvider canvas, BroadcastBar. No PtyExplosion import or render yet.
+2. Read PtyExplosion.jsx to understand props (sessionId, onClose) and structure (dialog role, Terminal component inside).
+3. Read SwarmContext.jsx to confirm ptyExplosionNodeId store state and setPtyExplosionNodeId action.
+4. Modified SwarmView.jsx in three steps:
+   a. Added useEffect to imports (useState was already imported).
+   b. Subscribed to ptyExplosionNodeId and setPtyExplosionNodeId via useSwarmStore hooks.
+   c. Implemented useEffect with keydown handler that checks `e.key === 'Escape' && ptyExplosionNodeId !== null` before calling e.preventDefault() and setPtyExplosionNodeId(null). Handler only prevents default when overlay is open.
+   d. Dependency array includes both ptyExplosionNodeId and setPtyExplosionNodeId to ensure fresh state on updates.
+   e. Cleanup function removes event listener on unmount.
+5. Conditionally rendered PtyExplosion component at bottom of JSX (after BroadcastBar), passing sessionId={ptyExplosionNodeId} and onClose={() => setPtyExplosionNodeId(null)}.
+6. Ran `cd client && npm run build` to verify: 473 modules (exceeds 472+ requirement), 0 errors.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/views/SwarmView.jsx | MODIFIED | Added useEffect import, store subscriptions (ptyExplosionNodeId, setPtyExplosionNodeId), useEffect hook with Escape key handler (checks !== null before intercepting), conditional render of PtyExplosion at bottom of JSX |
+| docs/TASK_PLAN.md | MODIFIED | Task #71.2 Status: PENDING → COMPLETED |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Session log appended |
+| docs/memory/PROGRESS.md | MODIFIED | V3 count 43→45, #71.1 and #71.2 marked COMPLETED, Phase 5 notes updated |
+| docs/memory/agents/frontend-dev.md | MODIFIED | This entry |
+
+### Improvements delivered
+- Escape key handler fully functional and context-aware (only intercepts when overlay is open)
+- No key interception when overlay is closed — Escape passes through to xterm.js as expected
+- Event listener properly cleaned up on component unmount — no memory leak
+- PtyExplosion now conditionally rendered in SwarmView with proper prop passing
+- Build stays at 473 modules with 0 errors (exceeds 472+ requirement)
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None | — | — | — |
+
+### Decisions I made
+- Dependency array includes both ptyExplosionNodeId and setPtyExplosionNodeId even though only ptyExplosionNodeId is used in the condition. This ensures the handler always has the latest store state without relying on stale closures. The dependency is safe because both are stable Zustand selectors.
+- Placed PtyExplosion conditional render at the bottom of SwarmView (after BroadcastBar) to ensure it layers on top of all other content (flex layout naturally stacks, but overlay CSS will position it fixed/absolute).
+- onClose handler is an arrow function `() => setPtyExplosionNodeId(null)` rather than direct prop to avoid issues with Zustand selector updates.
+
+### What I learned
+- Zustand hooks return stable selectors that should be listed in useEffect dependencies even if only one is used in the effect body — maintains consistency with React hooks rules and prevents stale closure bugs.
+- Conditional rendering in React for overlays works well with the flex layout; no need for absolute positioning in the React JSX (CSS can handle it via .pty-explosion-overlay class).
+
+### State I'm leaving behind
+SwarmView.jsx is fully wired with Escape key handler and PtyExplosion rendering. The handler correctly distinguishes between "overlay open" (prevent default + close) and "overlay closed" (pass through to xterm). Build clean at 473 modules. All acceptance criteria met:
+- Pressing Escape while overlay is open closes it ✓
+- Pressing Escape when overlay is closed does not intercept ✓
+- Event listener removed on component unmount ✓
+
+### Handoff
+Task #73 (useInbox.js HITL polling hook) can now begin. No blockers. Task #72 (InterAgentFeed.jsx) is already COMPLETED. Phase 5 HITL + PTY Explosion tasks are now all DONE except #73 which waits on #69 and #63 (both done).
+---

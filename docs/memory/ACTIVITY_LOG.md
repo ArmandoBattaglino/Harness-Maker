@@ -1569,3 +1569,14 @@
 **Blockers:** none
 **Next:** Task #78 (SwarmEngine integration tests) — now unblocked as SwarmEngine Phase 4 is feature-complete
 ---
+
+---
+## 2026-03-28 — frontend-dev — Task #71.2: PTY Explosion — Escape Key Handler
+**Outcome:** COMPLETED
+**Summary:** Added Escape key handler to SwarmView.jsx that closes the PTY explosion overlay when Escape is pressed and the overlay is open. Handler correctly checks ptyExplosionNodeId !== null before preventing default. Event listener properly cleaned up on unmount. PtyExplosion component conditionally rendered based on ptyExplosionNodeId. Build passes: 473 modules, 0 errors.
+**Files changed:** client/src/views/SwarmView.jsx (added useEffect, imported PtyExplosion, conditional render, store subscriptions), docs/TASK_PLAN.md (Status: COMPLETED)
+**Bugs fixed:** none
+**Decisions made:** Dependency array includes both ptyExplosionNodeId and setPtyExplosionNodeId to ensure handler always has latest state; conditional render places overlay at bottom of SwarmView after BroadcastBar; handler checks !== null before intercepting to allow Escape to pass through xterm.js when overlay is closed
+**Blockers:** none
+**Next:** Task #73 (useInbox.js HITL polling hook) can begin as #71.2 is now complete
+---
