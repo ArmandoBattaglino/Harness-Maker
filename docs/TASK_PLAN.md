@@ -6194,7 +6194,7 @@ Agent: frontend-dev
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   FILE: client/src/store/SwarmContext.jsx:54-57
   TYPE: logic-error
@@ -6224,7 +6224,7 @@ Agent: frontend-dev
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   FILE: client/src/store/SwarmContext.jsx:46-48
   TYPE: logic-error

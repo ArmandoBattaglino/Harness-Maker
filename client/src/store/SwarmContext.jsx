@@ -44,17 +44,22 @@ const useSwarmStore = create((set, get) => ({
   addInboxItem: (item) => set((state) => ({ inboxItems: [...state.inboxItems, item] })),
 
   resolveInboxItem: (itemId) => set((state) => ({
-    inboxItems: state.inboxItems.filter((i) => i.id !== itemId)
+    inboxItems: state.inboxItems.filter((i) => i?.id !== itemId)
   })),
 
   addFeedEvent: (event) => set((state) => ({
     interAgentFeed: [...state.interAgentFeed, event].slice(-100)  // keep last 100
   })),
 
-  setFocusedDepartment: (id) => set((state) => ({
-    focusedDepartmentId: id,
-    departmentStack: id ? [...state.departmentStack, id] : state.departmentStack,
-  })),
+  setFocusedDepartment: (id) => set((state) => {
+    // Avoid pushing duplicate if id is already the last item on the stack
+    const lastId = state.departmentStack[state.departmentStack.length - 1];
+    const shouldPush = id && lastId !== id;
+    return {
+      focusedDepartmentId: id,
+      departmentStack: shouldPush ? [...state.departmentStack, id] : state.departmentStack,
+    };
+  }),
 
   navigateBreadcrumb: (index) => set((state) => {
     const newStack = state.departmentStack.slice(0, index);

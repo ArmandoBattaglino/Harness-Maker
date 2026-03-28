@@ -1,4 +1,14 @@
 ---
+## 2026-03-28 — frontend-dev — Tasks #86 + #87: SwarmContext departmentStack dedup + resolveInboxItem
+**Outcome:** COMPLETED
+**Summary:** Fixed BUG-86 (setFocusedDepartment pushed duplicate department IDs on repeated clicks) by adding check: only push if the new id differs from the last item on departmentStack. Fixed BUG-87 (resolveInboxItem failed to remove items due to incorrect id accessor) by adding optional chaining `i?.id` for defensive filtering. Both fixes are minimal (4 lines + 1 character). Build passes 0 errors (473 modules transformed).
+**Files changed:** client/src/store/SwarmContext.jsx, docs/TASK_PLAN.md
+**Bugs fixed:** BUG-86 (departmentStack duplicates), BUG-87 (inbox items not removed)
+**Decisions made:** For BUG-86, check against lastId !== id before pushing (consistent with existing departmentStack design); for BUG-87, add defensive `?` to handle any item shape variations
+**Blockers:** none
+**Next:** Tasks #88 (handoffCount increment logic) or #90 (TriggerNode fired counter)
+---
+
 ## 2026-03-28 — frontend-dev — Task #89: SwarmCanvas — react to workflowDef prop changes
 **Outcome:** COMPLETED
 **Summary:** Fixed BUG-21 (SwarmCanvas.jsx not reacting to workflowDef changes after mount). Added useEffect hook that watches workflowDef prop and calls setNodes/setEdges when workflowDef is defined. This allows scaffold-generated workflows to appear on canvas after the API returns the result. The fix is minimal (8 lines of code) and follows React Flow patterns.
