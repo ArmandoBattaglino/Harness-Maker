@@ -1718,3 +1718,14 @@
 **Blockers:** none
 **Next:** Task #74 (TriggerManager.js) next in V3 Phase 6
 ---
+
+---
+## 2026-03-28 — qa-tester — Debug Loop Step 1: Full V3 Codebase Inspection
+**Outcome:** COMPLETED
+**Summary:** Exhaustive inspection of all 24 V3 component files (10 backend, 14 frontend). Found 16 bugs (1 HIGH, 7 MEDIUM, 8 LOW). Most critical: HITL inbox data flow is broken end-to-end on the client (useInbox direct store mutation + shape mismatches), SwarmCanvas ignores workflowDef prop changes after first render, pause/resume routes are stubs that don't call SwarmEngine methods, budget status always reports 0/0.
+**Files changed:** docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (inspection only)
+**Decisions made:** Classified 16 bugs by severity, identified HITL inbox shape mismatch as systemic issue
+**Blockers:** none
+**Next:** Debugger agent to fix bugs in priority order: BUG#9 (canvas), BUG#1/#2/#4 (HITL inbox), BUG#7/#8 (pause/resume), BUG#6/#14 (budget)
+---

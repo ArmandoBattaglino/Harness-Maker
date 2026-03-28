@@ -378,3 +378,76 @@ Phase 6 (Trigger Nodes) was fully completed (Tasks #73–#76). Task #77 required
 ### Handoff
 Task fully self-contained. Next QA task is #78 (SwarmEngine integration tests).
 ---
+
+---
+## 2026-03-28 — Debug Loop Step 1: Full V3 Codebase Inspection
+**Status:** COMPLETED
+**Called by:** user (direct)
+
+### Context when I started
+V3 release tagged at v3.0.0. 187/187 tests pass. 473 modules build clean. User requested full codebase inspection of all V3 components -- backend and frontend -- to find and report bugs without fixing them.
+
+### What I did
+1. Read all 7 project memory files in parallel
+2. Read all 10 backend files: SwarmEngine.js, TriggerManager.js, HandoffParser.js, CircuitBreaker.js, BudgetTracker.js, WorkflowStore.js, swarm.js, inbox.js, triggers.js, server/index.js
+3. Read all 14 frontend files: AgentNode.jsx, DepartmentNode.jsx, TriggerNode.jsx, HandoffEdge.jsx, AgentInspector.jsx, BreadcrumbBar.jsx, SwarmCanvas.jsx, SwarmView.jsx, BroadcastBar.jsx, HitlInbox.jsx, useSwarm.js, useInbox.js, useWorkflow.js, SwarmContext.jsx + PromptToFlowBar.jsx + useApi.js
+4. Ran npm test -- 187/187 pass in 5.13s
+5. Ran client build -- 473 modules, 0 errors, 867KB bundle
+6. Identified and documented 16 bugs (1 HIGH, 7 MEDIUM, 8 LOW)
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/agents/qa-tester.md | MODIFIED | Appended this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended task completion entry |
+
+### Improvements delivered
+- Exhaustive V3 bug catalog: 16 bugs found across backend and frontend
+- HITL inbox flow identified as broken end-to-end on client (BUG #1, #2, #4)
+- Canvas workflow display identified as broken after scaffold (BUG #9)
+- Budget status always reporting 0/0 identified (BUG #14)
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG#1 useInbox direct store mutation | Zustand state mutated directly, bypasses reactivity | None -- report only | FOUND |
+| BUG#2 useInbox filter shape mismatch | WS items have wrapper shape, filter expects flat | None -- report only | FOUND |
+| BUG#3 departmentStack duplicates | setFocusedDepartment pushes without dedup | None -- report only | FOUND |
+| BUG#4 resolveInboxItem shape mismatch | WS items have .item.id not .id | None -- report only | FOUND |
+| BUG#5 handoffCount uses edge counter | msg.counter is edge-specific, not agent total | None -- report only | FOUND |
+| BUG#6 BudgetTracker memory leak | clearExecution never called from stopExecution | None -- report only | FOUND |
+| BUG#7 /pause skips pauseExecution() | Route sends Ctrl-C but doesn't update state | None -- report only | FOUND |
+| BUG#8 /resume is a no-op | Route returns ok but never calls resumeExecution | None -- report only | FOUND |
+| BUG#9 SwarmCanvas ignores workflowDef changes | useNodesState initializes once, ignores prop changes | None -- report only | FOUND |
+| BUG#10 useInbox data shape inconsistency | Server vs WS items have different shapes | None -- report only | FOUND |
+| BUG#11 inbox routes access private _executions | Encapsulation violation, fragile coupling | None -- report only | FOUND |
+| BUG#12 TriggerNode animation doesn't re-fire | Boolean fired can't detect repeated firings | None -- report only | FOUND |
+| BUG#13 null executionId pollers never cleaned | cleanupExecution only cleans matching executionId | None -- report only | FOUND |
+| BUG#14 getStatus budget always 0/0 | e.budget property doesn't exist on execution | None -- report only | FOUND |
+| BUG#15 useSwarm full store subscription | Destructuring all actions causes excess re-renders | None -- report only | FOUND |
+| BUG#16 webhook 32KB limit ineffective | Global parser runs first with 100KB default | None -- report only | FOUND |
+
+### Decisions I made
+- Reported all findings without fixing per QA protocol
+- Classified BUG#1 as HIGH because it silently breaks the HITL polling fallback
+- Combined BUG#2 and BUG#4 as part of the same systemic issue (inbox item shape inconsistency)
+
+### What I learned
+- The HITL inbox data flow has a systemic shape mismatch: WS events wrap items in { type, nodeId, item: {...} } but server GET returns unwrapped items. Every component handles this differently, leading to 4 separate bugs.
+- SwarmCanvas uses useNodesState which only reads initialNodes once -- this is a common React Flow pitfall.
+- The pause/resume routes were implemented as stubs in Task #47.1 but never updated when SwarmEngine gained real pause/resumeExecution methods in Task #67.
+
+### State I'm leaving behind
+- 16 bugs documented, none fixed
+- All bugs are in the V3 code path (no V2 regressions found)
+- 187/187 tests pass, 473 module build clean
+- Most impactful cluster: BUG #1/#2/#4 (HITL inbox broken), BUG #9 (canvas dead after scaffold)
+
+### Handoff
+All 16 bugs need debugger agent attention. Priority order:
+1. BUG #9 -- canvas won't show scaffold results (blocks core workflow)
+2. BUG #1/#2/#4 -- HITL inbox broken end-to-end (blocks approval flow)
+3. BUG #7/#8 -- pause/resume routes are stubs (blocks execution control)
+4. BUG #6/#14 -- budget tracking broken (blocks cost visibility)
+5. Remaining LOW bugs as time permits
+---
