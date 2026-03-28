@@ -1,4 +1,46 @@
 ---
+## 2026-03-28 — V3 Release-Ready Closure
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+QA-tester had just confirmed CLEAN — 187/187 tests pass, zero bugs. User asked for three final actions: (1) ensure tasks #83–#99 all show COMPLETED, (2) add a V3 RELEASE-READY marker, (3) append a closure entry to ACTIVITY_LOG.md. Prior PM session had already reconciled the PENDING→COMPLETED corrections for #83, #84, #85, #92, #94, #95, #99 and added the debug loop summary table.
+
+### What I did
+1. Read TASK_PLAN.md header and tasks #83–#99 inline records and the debug loop summary table to verify all show COMPLETED — confirmed.
+2. Identified that TASK_PLAN.md header still said Status: ACTIVE, lacking a formal release-ready declaration at the document top.
+3. Replaced the header block with Status: V3 RELEASE-READY and added a V3 RELEASE-READY banner section with QA verdict, build stats, debug loop outcome, and no-known-bugs statement.
+4. Prepended closure entry to ACTIVITY_LOG.md.
+5. Wrote this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Header Status changed from ACTIVE to V3 RELEASE-READY; V3 RELEASE-READY banner block added immediately after header |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Closure entry prepended |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log prepended |
+
+### Improvements delivered
+- TASK_PLAN.md now opens with an unambiguous release-ready declaration
+- ACTIVITY_LOG.md records the formal project closure moment
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Added the banner immediately after the document header (before Overview) so it is the first thing any reader sees when opening the task plan.
+- Left tasks #32, #33, #34, #37, #38, #39, #40, #41 (Phase 10 wave) as PENDING — these are pre-V3 bug tasks that were superseded by the V3 rewrite and the subsequent debug loop. They are not blocking release and are historical artifacts.
+
+### What I learned
+- The prior PM session already did the heavy reconciliation work (7 PENDING→COMPLETED corrections, debug loop table). This session was a clean closure pass only.
+
+### State I'm leaving behind
+TASK_PLAN.md is fully accurate. All tasks #83–#99 COMPLETED. V3 RELEASE-READY banner in place. No open work items.
+
+### Handoff
+None — project closure complete. Next engagement would be a new feature request or v4 planning.
+
+---
 ## 2026-03-28 — Debug Loop Closure: Tasks #83–#99 Reconciliation
 **Status:** COMPLETED
 **Called by:** user
