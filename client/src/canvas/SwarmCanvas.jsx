@@ -1,6 +1,6 @@
 // client/src/canvas/SwarmCanvas.jsx
 // Main React Flow canvas for swarm visualization with drill-down filtering.
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import {
   ReactFlow,
   Background,
@@ -41,6 +41,15 @@ export default function SwarmCanvas({ workflowDef }) {
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  // React to workflowDef changes: when scaffold generates a new workflow or workflowDef is updated,
+  // update the canvas nodes and edges immediately
+  useEffect(() => {
+    if (workflowDef) {
+      setNodes(workflowDef.nodes ?? []);
+      setEdges(workflowDef.edges ?? []);
+    }
+  }, [workflowDef, setNodes, setEdges]);
 
   // Drill-down filtering: when focusedDepartmentId is set, show only nodes
   // that are children of that department (parentId === focusedDepartmentId) + the dept itself

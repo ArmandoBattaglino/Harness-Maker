@@ -6281,7 +6281,7 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   FILE: client/src/canvas/SwarmCanvas.jsx:42-43
   TYPE: wrong-behavior
