@@ -1739,3 +1739,13 @@
 **Blockers:** none
 **Next:** Debugger agent to fix bugs in priority order: BUG#9 (canvas), BUG#1/#2/#4 (HITL inbox), BUG#7/#8 (pause/resume), BUG#6/#14 (budget)
 ---
+---
+## 2026-03-28 — frontend-dev — Task #84/#85/#92: useInbox.js Bug Fixes
+**Outcome:** COMPLETED
+**Summary:** Fixed three interconnected bugs in useInbox.js polling fallback: (1) direct Zustand store mutation bypassed reactivity, (2) filter failed on inconsistent item shapes, (3) REST and WS items had incompatible field names. Created normalizeInboxItem() helper to unify shape. Build: 473 modules, 0 errors.
+**Files changed:** client/src/hooks/useInbox.js
+**Bugs fixed:** Bug #84 (Zustand mutation), Bug #85 (shape robustness), Bug #92 (shape normalization)
+**Decisions made:** normalizeInboxItem() provides fallback field mapping for REST vs WS variants
+**Blockers:** None
+**Next:** HITL polling fallback is now functional. All Phase 5 (HITL + PTY Explosion) tasks are complete.
+---

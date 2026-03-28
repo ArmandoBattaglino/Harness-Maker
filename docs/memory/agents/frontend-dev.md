@@ -1433,3 +1433,67 @@ Build: 473 modules, 0 errors. All three acceptance criteria met:
 ### Handoff
 Phase 6 (Trigger Nodes: #74, #75, #76) is now fully COMPLETE. Phase 7 (QA + Security + Release: #77–#82) can now begin. Task #77 (HandoffParser unit tests) is the natural next step for qa-tester.
 ---
+## 2026-03-28 — Task #84/#85/#92: useInbox.js — Zustand Mutation + Shape Normalization Fix
+**Status:** COMPLETED
+**Called by:** user (direct bug fix request)
+
+### Context when I started
+Task #73 (useInbox.js polling hook) was completed on 2026-03-28 and merged into the codebase. However, three critical bugs remained unfixed:
+- Bug #84: Line 30 in useInbox.js directly mutated the Zustand store without using a reactive action — `useSwarmStore.getState().inboxItems = items` bypasses reactivity and components don't re-render.
+- Bug #85: Line 15 filtered inbox items by `i.status === 'pending'` but WS-delivered items might have a different shape or missing status field.
+- Bug #92: Items from REST and WS endpoints had inconsistent shapes, causing filtering to fail unpredictably.
+The HITL inbox was broken in polling-fallback mode (when WS disconnected) — items arrived but components never re-rendered.
+
+### What I did
+1. Read useInbox.js fully — identified direct store mutation on line 30.
+2. Read SwarmContext.jsx — confirmed Zustand store shape and available actions (addInboxItem, resolveInboxItem, setState).
+3. Created normalizeInboxItem() helper function that:
+   - Maps REST field names (id, agentId, status, payload) to consistent shape
+   - Handles WS variants (agent_id → agentId, resume_text → payload, etc.)
+   - Returns normalized { id, type, agentId, status, payload } structure
+4. Fixed Bug #84: Replaced `useSwarmStore.getState().inboxItems = items` with `useSwarmStore.setState({ inboxItems: items })` — proper Zustand reactive mutation.
+5. Fixed Bugs #85/#92: Added normalization to both:
+   - The inboxItems selector: `.map(normalizeInboxItem).filter((i) => i.status === 'pending')`
+   - The loadInbox fetch: `(data.items ?? []).map(normalizeInboxItem)` before setState
+6. Verified build: `cd client && npm run build` — 473 modules, 0 errors, 0 warnings.
+7. Git commit with message summarizing all three bug fixes.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/hooks/useInbox.js | MODIFIED | Added normalizeInboxItem() helper; fixed direct store mutation (getState() → setState()); normalized shapes in selector and loadInbox |
+
+### Improvements delivered
+- Polling fallback now properly triggers component re-renders when WS is disconnected
+- Items from REST and WS endpoints have consistent shape: { id, type, agentId, status, payload }
+- Filter by pending status is now robust against shape variations
+- Zustand reactivity is properly maintained — all subscribers notified on store updates
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| Bug #84 | Direct store mutation with `useSwarmStore.getState().inboxItems = items` bypasses Zustand reactivity | Changed to `useSwarmStore.setState({ inboxItems: items })` | FIXED |
+| Bug #85 | Filtering by `i.status === 'pending'` fails when items have missing or variant-named status fields | Added normalizeInboxItem() to ensure all items have status field | FIXED |
+| Bug #92 | REST and WS items have different shapes (id vs item.id, resumeText vs resume_text, etc.) | Created normalizeInboxItem() to map both shapes to consistent { id, type, agentId, status, payload } | FIXED |
+
+### Decisions I made
+- normalizeInboxItem() provides sensible defaults (empty strings) for missing fields — prevents null reference errors downstream.
+- Normalization happens at both the selector and the loadInbox fetch — ensures consistency regardless of data source (WS or REST).
+- Used mapping + filtering chain in the selector: `.map(normalizeInboxItem).filter((i) => i.status === 'pending')` — separates concerns and is idiomatic React.
+
+### What I learned
+- Direct mutation of Zustand state via getState() bypasses the reactive machinery — must use setState() or store actions.
+- WS and REST endpoints should normalize to a consistent shape at the boundary (in the hook) rather than leaving shape variance to consumer components.
+- Mapping normalizeInboxItem() in both the selector and the load function ensures robustness — data is normalized at entry points and at consumption points.
+
+### State I'm leaving behind
+useInbox.js is now fully functional. All three bugs are fixed:
+- Polling fallback properly mutates store via setState() — components re-render
+- Items from both REST and WS have normalized shape
+- Pending status filter is robust
+- Build: 473 modules, 0 errors
+- Commit: 30107ac
+
+### Handoff
+Bug fixes are complete and committed. The HITL polling fallback should now work correctly when WS is disconnected. No downstream tasks depend on these fixes — they are purely correctness improvements to existing Task #73.
+---
