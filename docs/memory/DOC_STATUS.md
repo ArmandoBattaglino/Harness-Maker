@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-03-28 after Tasks #84–#99: Debug Loop — 16 Bugs Fixed_
+_Last updated: 2026-03-28 after V3 RELEASE-READY closure — all docs verified clean_
 
 ## Status Legend
 - UP_TO_DATE -- matches current code
@@ -11,19 +11,19 @@ _Last updated: 2026-03-28 after Tasks #84–#99: Debug Loop — 16 Bugs Fixed_
 
 | Document | Status | Last Updated | Notes |
 |----------|--------|--------------|-------|
-| README.md | UP_TO_DATE | 2026-03-28 | V3 features table, Swarm quick-start guide, V3 constraints, Known Limitations updated for v3. All V2 sections preserved. |
-| docs/ARCHITECTURE.md | UP_TO_DATE | 2026-03-28 | V3 Section 11 added (11.1 system diagram, 11.2 WS events, 11.3 WorkflowDefinition schema, 11.4 handoff protocol, 11.5 HITL flow, 11.6 key decisions, 11.7 security requirements, 11.8 service dependency graph, 11.9 React component tree). Version header updated to 3.0. ToC entry added. |
-| docs/API.md | UP_TO_DATE | 2026-03-28 | Updated: pause endpoint now documents full state update + WS broadcast (BUG-94). Resume endpoint now documents actual resumeExecution() behavior, no longer marked as no-op (BUG-95). Budget field in status response now reflects real budgetTracker data (BUG-98). |
+| README.md | UP_TO_DATE | 2026-03-28 | V3 features table, Swarm quick-start guide, V3 constraints, Known Limitations updated for v3. All V2 sections preserved. Verified clean at V3 RELEASE-READY closure. |
+| docs/ARCHITECTURE.md | UP_TO_DATE | 2026-03-28 | V3 Section 11 added (11.1 system diagram, 11.2 WS events, 11.3 WorkflowDefinition schema, 11.4 handoff protocol, 11.5 HITL flow, 11.6 key decisions, 11.7 security requirements, 11.8 service dependency graph, 11.9 React component tree). Version header updated to 3.0. Verified clean at V3 RELEASE-READY closure. |
+| docs/API.md | UP_TO_DATE | 2026-03-28 | pause endpoint: full state update + WS broadcast (BUG-94). resume endpoint: actual resumeExecution() behavior (BUG-95). budget field in status response: real budgetTracker data (BUG-98). Verified clean at V3 RELEASE-READY closure. |
 | docs/memory/PROJECT.md | UP_TO_DATE | 2026-03-28 | Version updated to v3.0, implementation status updated to complete. @anthropic-ai/sdk row added to tech stack. @xyflow/react and zustand rows updated (no longer "not yet imported"). V3-Specific Constraints section added (DEC-011 through DEC-016, SEC-V3-01 through SEC-V3-07). |
 | docs/memory/DECISIONS.md | UP_TO_DATE | 2026-03-27 | DEC-011 through DEC-016 added by architect during V3 tasks. No changes needed. |
-| docs/memory/PROGRESS.md | UP_TO_DATE | 2026-03-28 | Tasks #84–#99 debug loop all COMPLETED. |
+| docs/memory/PROGRESS.md | UP_TO_DATE | 2026-03-28 | All 99 tasks COMPLETED. Debug loop (Tasks #84–#99) all COMPLETED. Project closed at V3 RELEASE-READY. |
 | docs/memory/CODE_MAP.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No changes from documenter. |
 | docs/memory/CHANGELOG.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No changes from documenter. |
-| docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-03-28 | Debug loop documentation pass entry appended. |
+| docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-03-28 | V3 RELEASE-READY closure entry appended by project-manager and documenter. |
 | docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-03-18 | V1 audit. V3 audit is docs/security-v3-audit.md (Task #79). |
-| docs/security-v3-audit.md | UP_TO_DATE | 2026-03-28 | BUG-99 fix note added: MEDIUM finding MEDIUM-V3-01 note updated to record that the 32KB body cap (SEC-V3-01) is now enforced via express.raw() — the bypass identified in the original audit is resolved. |
-| Inline comments | UP_TO_DATE | 2026-03-28 | All V3 route files have comprehensive block comments. server/routes/swarm.js pause/resume comments updated to reflect actual behavior post BUG-94/95 fixes. server/routes/triggers.js BUG-99 comment present in source. server/services/SwarmEngine.js getExecution(), getStatus(), stopExecution() all have accurate JSDoc. |
-| docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. Deferred. |
+| docs/security-v3-audit.md | UP_TO_DATE | 2026-03-28 | BUG-99 fix note added: SEC-V3-01 now enforced via express.raw() — body-size bypass resolved. MEDIUM-V3-01 CSRF mismatch unchanged (not blocking; app is localhost-only). Verified clean at V3 RELEASE-READY closure. |
+| Inline comments | UP_TO_DATE | 2026-03-28 | All V3 route files have comprehensive block comments. server/routes/swarm.js pause/resume comments reflect BUG-94/95 fixes. server/routes/triggers.js BUG-99 comment present. server/services/SwarmEngine.js getExecution(), getStatus(), stopExecution() all have accurate JSDoc. Verified clean at V3 RELEASE-READY closure. |
+| docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. Deferred indefinitely. |
 
 ## Stale Sections (known gaps)
 
