@@ -1,4 +1,13 @@
 ---
+## 2026-03-28 — code-mapper — Tasks #73–#82: V3 Trigger System, HITL Inbox, Tests, Security, Docs
+**Outcome:** COMPLETED
+**Summary:** Mapped 10 tasks from the V3 final wave. 18 new function entries added to CODE_MAP.md covering useInbox.js (HITL hook), TriggerManager.js (webhook+RSS), triggers.js routes, the fully implemented TriggerNode.jsx, SwarmEngine integration tests, and the server/index.js route-order bugfix. CHANGELOG.md received a combined wave entry. Key connection discovered: ssrfGuard.isSafeUrl now has its first production caller (TriggerManager). Known gap: TriggerManager.cleanupExecution not yet wired to SwarmEngine.stopExecution.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** Combined Tasks #73–#82 into one CHANGELOG entry (same wave, same date)
+**Blockers:** none
+**Next:** nothing — V3 is fully mapped and documented; next session should start with /pm to pick up any follow-on tasks
+---
 ## 2026-03-28 — documenter — Task #82: V3 Documentation Update
 **Outcome:** COMPLETED
 **Summary:** All project documentation updated for v3.0 release. README.md gained a full V3 Swarm Orchestrator section with quick-start guide and feature table entries. docs/ARCHITECTURE.md received a new Section 11 covering the complete V3 system architecture (diagram, WS events, schemas, handoff protocol, HITL flow, decisions, security requirements). docs/API.md was created from scratch as a standalone REST + WS API reference covering all V1 and V3 endpoints. docs/memory/PROJECT.md updated to v3.0 with V3 tech stack entries and constraint section.

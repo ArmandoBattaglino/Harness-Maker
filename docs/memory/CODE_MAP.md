@@ -2223,3 +2223,243 @@ _Last updated: 2026-03-27 — after Task #62.1 (SwarmEngine._onHandoff full rout
 - **Side effects:** each handoff counter increase schedules a setTimeout that removes the edgeId from the ref Set after durationMs; also updates prevCountersRef snapshot
 - **Complexity note:** Returns `recentRef.current` directly (a stable Set reference) rather than a new Set each render — the returned Set is mutated in-place by the setTimeout callbacks. Consumers that want to trigger re-renders must use this hook alongside their own state or use it only for non-reactive checks (e.g. imperative DOM manipulation). The durationMs parameter is in the useEffect dep array — changing it mid-mount will restart the effect.
 - **Last modified:** 2026-03-27 in Task #64 by frontend-dev
+
+---
+
+## V3 HITL Inbox Hook (Task #73)
+
+### `client/src/hooks/useInbox.js` :: `useInbox(executionId)` (named export)
+- **Purpose:** React hook for managing HITL inbox items. Loads pending inbox items from the server on mount, polling every 10 s when the WebSocket is disconnected. Provides `approve` and `reject` callbacks that POST to the server and optimistically call `resolveInboxItem` on success.
+- **Called by:** (no live callers yet — intended for SwarmView or a dedicated InboxPanel component)
+- **Calls:** useSwarmStore (selectors: s.inboxItems.filter(pending), s.wsConnected, s.resolveInboxItem), fetch (GET /api/v1/swarm/:id/inbox), fetch (POST /api/v1/swarm/:id/inbox/:itemId/approve), fetch (POST /api/v1/swarm/:id/inbox/:itemId/reject), useCallback (React), useEffect (React), setInterval / clearInterval
+- **Inputs:** executionId (string | undefined — if falsy, all fetches are skipped)
+- **Output:** `{ inboxItems: object[], approve: (itemId, resumeText?) => Promise<void>, reject: (itemId) => Promise<void> }`
+- **Side effects:** GET /api/v1/swarm/:id/inbox on mount and on polling interval; POST on approve/reject; directly writes to useSwarmStore.getState().inboxItems on load (bypasses set() action — direct state mutation); setInterval started when wsConnected is false, cleared via useEffect cleanup
+- **Complexity note:** On loadInbox success the hook writes directly to `useSwarmStore.getState().inboxItems = items` (imperative mutation, not via the store's set() action). This bypasses the addInboxItem/resolveInboxItem immutable update path and may cause subscriber skips. Polling is only active when wsConnected is false — the WebSocket is the primary delivery path and polling is a fallback.
+- **Last modified:** 2026-03-28 in Task #73 by frontend-dev (new file)
+
+### `client/src/hooks/useInbox.js` :: `loadInbox()` (internal useCallback)
+- **Purpose:** Fetch current inbox items for the active execution from the server and synchronize the Zustand store with the server state.
+- **Called by:** useInbox — called on mount via useEffect; also on every polling interval when wsConnected is false
+- **Calls:** fetch (GET /api/v1/swarm/:executionId/inbox), useSwarmStore.getState() (direct state mutation)
+- **Inputs:** none (reads executionId from closure)
+- **Output:** Promise\<void\>
+- **Side effects:** HTTP GET; mutates useSwarmStore.getState().inboxItems directly
+- **Last modified:** 2026-03-28 in Task #73 by frontend-dev
+
+### `client/src/hooks/useInbox.js` :: `approve(itemId, resumeText)` (internal useCallback, returned)
+- **Purpose:** POST the approval decision for a specific inbox item to the server. Calls resolveInboxItem(itemId) on success to remove it from the pending list.
+- **Called by:** (consumers of useInbox hook — future InboxPanel component)
+- **Calls:** fetch (POST /api/v1/swarm/:executionId/inbox/:itemId/approve), resolveInboxItem (from useSwarmStore)
+- **Inputs:** itemId (string), resumeText (string, default '')
+- **Output:** Promise\<void\>
+- **Side effects:** HTTP POST with CSRF header + JSON body; calls resolveInboxItem on success
+- **Last modified:** 2026-03-28 in Task #73 by frontend-dev
+
+### `client/src/hooks/useInbox.js` :: `reject(itemId)` (internal useCallback, returned)
+- **Purpose:** POST the rejection decision for a specific inbox item. Calls resolveInboxItem(itemId) on success.
+- **Called by:** (consumers of useInbox hook — future InboxPanel component)
+- **Calls:** fetch (POST /api/v1/swarm/:executionId/inbox/:itemId/reject), resolveInboxItem (from useSwarmStore)
+- **Inputs:** itemId (string)
+- **Output:** Promise\<void\>
+- **Side effects:** HTTP POST with CSRF header; calls resolveInboxItem on success
+- **Last modified:** 2026-03-28 in Task #73 by frontend-dev
+
+---
+
+## V3 Trigger System (Tasks #74 + #75)
+
+### `server/services/TriggerManager.js` :: `TriggerManager` (class, default export)
+- **Purpose:** Manages webhook registrations and RSS polling triggers for the V3 swarm orchestrator. Stores webhooks in a Map (path → registration) and RSS pollers in a Map (nodeId → poller state). Integrates with SwarmEngine to start executions when triggers fire.
+- **Called by:** server/index.js (instantiated as `new TriggerManager(swarmEngine)` during startup); server/routes/triggers.js (via `triggersRouter(triggerManager)` factory)
+- **Calls:** ssrfGuard.isSafeUrl (SEC-V3-03), swarmEngine.startExecution, swarmEngine._wsBroadcast, setInterval / clearInterval, fetch (outbound RSS), AbortSignal.timeout
+- **Inputs:** constructor: swarmEngine (SwarmEngine instance)
+- **Output:** instance with webhooks Map + rssPollers Map + public API
+- **Side effects:** creates persistent setInterval timers for RSS polling (unref'd); makes outbound HTTP fetches to RSS URLs; calls swarmEngine.startExecution when triggers fire; calls swarmEngine._wsBroadcast for existing-execution RSS events
+- **Last modified:** 2026-03-28 in Task #74 by backend-dev (new file)
+
+### `server/services/TriggerManager.js` :: `TriggerManager.registerWebhook(path, workflowId, targetNodeId)`
+- **Purpose:** Register a webhook path to trigger a workflow. Throws if any argument is missing or not a non-empty string.
+- **Called by:** (no live callers at route layer yet — routes/triggers.js only handles incoming webhooks; registration is expected to be called from workflow setup code)
+- **Calls:** this.webhooks.set
+- **Inputs:** path (string — URL suffix, e.g. '/hooks/abc'), workflowId (string), targetNodeId (string)
+- **Output:** void
+- **Side effects:** adds entry to this.webhooks Map
+- **Last modified:** 2026-03-28 in Task #74 by backend-dev
+
+### `server/services/TriggerManager.js` :: `TriggerManager.unregisterWebhook(path)`
+- **Purpose:** Remove a webhook registration by path. No-op if path is not registered.
+- **Called by:** (no live callers)
+- **Calls:** this.webhooks.delete
+- **Inputs:** path (string)
+- **Output:** void
+- **Side effects:** removes entry from this.webhooks Map
+- **Last modified:** 2026-03-28 in Task #74 by backend-dev
+
+### `server/services/TriggerManager.js` :: `TriggerManager.handleWebhook(path, payload)`
+- **Purpose:** Receive an incoming webhook event. Looks up the registration for `path`; if not found returns `{ triggered: false }`. If found, calls swarmEngine.startExecution(workflowId, workflowId, ''). The 32 KB body cap (SEC-V3-01) is enforced upstream in routes/triggers.js before this method is called.
+- **Called by:** server/routes/triggers.js POST /webhooks/:path handler
+- **Calls:** this.webhooks.get, this.swarmEngine.startExecution
+- **Inputs:** path (string), payload (object — already validated and capped by routes layer)
+- **Output:** Promise\<{ triggered: boolean, executionId?: string }\>
+- **Side effects:** calls swarmEngine.startExecution (spawns new PTY execution); may throw if startExecution fails (route catches and returns 200 anyway)
+- **Last modified:** 2026-03-28 in Task #74 by backend-dev
+
+### `server/services/TriggerManager.js` :: `TriggerManager.createRssTrigger(nodeId, rssUrl, workflowId, pollIntervalMs, executionId)`
+- **Purpose:** Create a recurring RSS polling trigger for a workflow node. Validates rssUrl with isSafeUrl() (SEC-V3-03). First poll seeds lastSeenGuid without firing. Subsequent polls fire _fireTrigger for any new items. Timer is unref'd to allow clean process exit.
+- **Called by:** (no live callers yet — intended for TriggerNode activation via a future API or workflow setup step)
+- **Calls:** isSafeUrl (ssrfGuard.js), this.removeTrigger, this._pollRss, setInterval, intervalId.unref
+- **Inputs:** nodeId (string), rssUrl (string), workflowId (string), pollIntervalMs (number, default 300000), executionId (string|null, default null)
+- **Output:** Promise\<void\>
+- **Side effects:** registers an entry in this.rssPollers Map; starts a setInterval timer; makes an immediate outbound HTTP fetch (seed poll)
+- **Complexity note:** SSRF guard is applied BEFORE any HTTP fetch — isSafeUrl() rejects private/loopback URLs synchronously. First poll (seedOnly=true) records lastSeenGuid but does not fire startExecution — prevents flood of executions on startup for existing feeds.
+- **Last modified:** 2026-03-28 in Task #74 by backend-dev
+
+### `server/services/TriggerManager.js` :: `TriggerManager._pollRss(nodeId, seedOnly)` (private)
+- **Purpose:** Fetch the RSS feed URL for nodeId, parse items, detect new items since lastSeenGuid, and call _fireTrigger for each new item. If seedOnly=true, updates lastSeenGuid without firing.
+- **Called by:** TriggerManager.createRssTrigger (seed poll); recurring setInterval callback
+- **Calls:** fetch (outbound HTTP, 15s AbortSignal.timeout), _extractItems, _itemGuid, this._fireTrigger
+- **Inputs:** nodeId (string), seedOnly (boolean)
+- **Output:** Promise\<void\>
+- **Side effects:** outbound HTTP GET to RSS URL; updates state.lastSeenGuid; calls _fireTrigger per new item; logs errors to console (never throws — poller must survive feed errors)
+- **Complexity note:** Errors (network, non-2xx, parse) are caught and logged — the polling interval is never aborted on transient failures. lastSeenGuid comparison assumes RSS feeds are ordered newest-first (the RSS 2.0 convention). For Atom feeds, same logic applies as entries are parsed by _extractItems.
+- **Last modified:** 2026-03-28 in Task #74 by backend-dev
+
+### `server/services/TriggerManager.js` :: `TriggerManager._fireTrigger(nodeId, workflowId, executionId, item)` (private)
+- **Purpose:** Fire a trigger for a new RSS item. If executionId is set (execution already running), broadcasts an rss_item WS event via swarmEngine._wsBroadcast. If no executionId, calls swarmEngine.startExecution to start a new execution.
+- **Called by:** TriggerManager._pollRss (per new RSS item)
+- **Calls:** this.swarmEngine._wsBroadcast (if executionId present), this.swarmEngine.startExecution (if no executionId)
+- **Inputs:** nodeId (string), workflowId (string), executionId (string|null), item ({ guid, raw })
+- **Output:** Promise\<void\>
+- **Side effects:** either broadcasts WS event or starts new execution; errors are caught and logged (never throws)
+- **Last modified:** 2026-03-28 in Task #74 by backend-dev
+
+### `server/services/TriggerManager.js` :: `TriggerManager.removeTrigger(nodeId)`
+- **Purpose:** Clear the RSS polling interval for nodeId and remove its entry from rssPollers. No-op if nodeId not found.
+- **Called by:** TriggerManager.createRssTrigger (clears existing poller before registering new one); TriggerManager.cleanupExecution
+- **Calls:** clearInterval, this.rssPollers.delete
+- **Inputs:** nodeId (string)
+- **Output:** void
+- **Side effects:** clears setInterval timer; removes entry from this.rssPollers Map
+- **Last modified:** 2026-03-28 in Task #74 by backend-dev
+
+### `server/services/TriggerManager.js` :: `TriggerManager.cleanupExecution(executionId)`
+- **Purpose:** Remove all RSS pollers associated with a specific executionId. Called by SwarmEngine.stopExecution() so polling intervals don't linger after an execution ends.
+- **Called by:** SwarmEngine.stopExecution (intended — not yet wired in source; documented as the intended call site)
+- **Calls:** clearInterval, this.rssPollers.delete (per matching entry)
+- **Inputs:** executionId (string)
+- **Output:** void
+- **Side effects:** clears setInterval timers; removes entries from this.rssPollers Map
+- **Last modified:** 2026-03-28 in Task #74 by backend-dev
+
+### `server/services/TriggerManager.js` :: `TriggerManager.listTriggers()`
+- **Purpose:** Serialize all currently registered webhooks and RSS pollers for the GET /api/v1/triggers endpoint.
+- **Called by:** server/routes/triggers.js GET / handler
+- **Calls:** this.webhooks.entries() (spread), this.rssPollers.entries() (spread)
+- **Inputs:** none
+- **Output:** `{ webhooks: Array<{ path, workflowId, targetNodeId }>, rssPollers: Array<{ nodeId, rssUrl, workflowId, pollIntervalMs, lastSeenGuid, executionId }> }`
+- **Side effects:** none
+- **Last modified:** 2026-03-28 in Task #74 by backend-dev
+
+### `server/services/TriggerManager.js` :: `_extractItems(xml)` (module-private)
+- **Purpose:** Parse RSS/Atom XML string and return an array of raw item/entry XML fragments. Supports both `<item>` (RSS 2.0) and `<entry>` (Atom 1.0), preferring RSS items.
+- **Called by:** TriggerManager._pollRss
+- **Calls:** String.indexOf (loop)
+- **Inputs:** xml (string)
+- **Output:** string[] — raw XML fragments for each item/entry
+- **Side effects:** none
+- **Last modified:** 2026-03-28 in Task #74 by backend-dev
+
+### `server/services/TriggerManager.js` :: `_extractTag(fragment, tag)` (module-private)
+- **Purpose:** Extract the text content of the first matching XML tag in a fragment. Strips CDATA wrappers. Returns null if tag not found.
+- **Called by:** _itemGuid
+- **Calls:** RegExp.match
+- **Inputs:** fragment (string), tag (string — e.g. 'guid', 'link', 'title')
+- **Output:** string | null
+- **Side effects:** none
+- **Last modified:** 2026-03-28 in Task #74 by backend-dev
+
+### `server/services/TriggerManager.js` :: `_itemGuid(fragment)` (module-private)
+- **Purpose:** Derive a stable unique ID for an RSS/Atom item. Prefers `<guid>`, falls back to `<id>` (Atom), then `<link>`, then null.
+- **Called by:** TriggerManager._pollRss
+- **Calls:** _extractTag
+- **Inputs:** fragment (string — raw XML item/entry block)
+- **Output:** string | null
+- **Side effects:** none
+- **Last modified:** 2026-03-28 in Task #74 by backend-dev
+
+---
+
+### `server/routes/triggers.js` :: `triggersRouter(triggerManager)` (default export factory)
+- **Purpose:** Express Router factory for trigger management endpoints. Registers POST /webhooks/:path (webhook receiver, rate-limited, 32 KB cap, no CSRF — external caller) and GET / (list triggers, CSRF-protected internal endpoint). Returns the configured Router.
+- **Called by:** server/index.js (startup) — `app.use('/api/v1/triggers', triggersRouter(triggerManager))`
+- **Calls:** Router() (express), express.json({ limit: '32kb' }), webhookRateLimit(), triggerManager.handleWebhook, triggerManager.listTriggers
+- **Inputs:** triggerManager (TriggerManager instance)
+- **Output:** Express Router
+- **Side effects:** module-load side effect: starts stale-entry sweep setInterval (unref'd) on `_webhookRateLimitMap`
+- **Last modified:** 2026-03-28 in Task #75 by backend-dev (new file)
+
+### `server/routes/triggers.js` :: `webhookRateLimit(maxRequests, windowMs)` (module-private middleware factory)
+- **Purpose:** Return an Express middleware that limits webhook requests to maxRequests per windowMs per IP (default 10 req/60 s). Uses an in-memory `_webhookRateLimitMap`. Returns HTTP 429 on excess.
+- **Called by:** triggersRouter — applied as middleware on POST /webhooks/:path
+- **Calls:** Map.get/set, Date.now, res.status(429).json, next
+- **Inputs:** maxRequests (number, default 10), windowMs (number ms, default 60000)
+- **Output:** Express middleware function (req, res, next)
+- **Side effects:** mutates module-level `_webhookRateLimitMap`; module-load: starts sweep setInterval
+- **Complexity note:** Rate limiter is inlined in routes/triggers.js rather than using the standalone server/middleware/webhookRateLimit.js stub (which was created in Task #50 but not wired). The two implementations are functionally equivalent.
+- **Last modified:** 2026-03-28 in Task #75 by backend-dev
+
+---
+
+## V3 TriggerNode Full Implementation (Task #76)
+
+### `client/src/canvas/nodes/TriggerNode.jsx` :: `TriggerNode({ id, data, selected })` (UPDATED)
+- **Purpose:** Custom React Flow source-only node for webhook and RSS triggers. Now subscribes to `triggerStates[id]` from useSwarmStore to show live fired/waiting status and last-fired timestamp. Shows a 2-second CSS pulse animation when the node fires. No target Handle — triggers only emit outward. Purple visual theme.
+- **Called by:** SwarmCanvas.jsx (nodeTypes.trigger registration)
+- **Calls:** useSwarmStore (selector: s.triggerStates[id]), Handle + Position (from @xyflow/react), useState (showFiredAnimation), useEffect (React — animation reset timer), setTimeout / clearTimeout
+- **Inputs:** id (string — React Flow node id), data (object — { label, triggerType: 'webhook'|'rss', webhookPath?, rssUrl? }), selected (boolean)
+- **Output:** JSX — purple bordered card: icon + label, triggerType badge, status badge ('Fired!' or 'waiting'), last-fired timestamp when available; source Handle at bottom only
+- **Side effects:** schedules a 2s setTimeout on every fired→true transition to reset showFiredAnimation to false; no store writes
+- **Complexity note:** `showFiredAnimation` is local state (not from store) — it drives the `animate-[triggerFiredPulse_2s_ease-out]` CSS animation and auto-resets after 2 s via useEffect cleanup. `triggerState.status` ('waiting'|'fired') is the canonical status from the store; `showFiredAnimation` only controls the animation class. The CSS animation `triggerFiredPulse` must be defined in client/src/index.css (added in Task #76).
+- **Last modified:** 2026-03-28 in Task #76 by frontend-dev (fully implemented — was stub in Task #53.3)
+
+---
+
+## SwarmContext store (Task #76 additions)
+
+### `client/src/store/SwarmContext.jsx` :: `updateTriggerState(triggerId, patch)` (UPDATED — now has live caller)
+- **Purpose:** Merge a partial update into triggerStates[triggerId]. Non-destructive. Drives TriggerNode's live fired/waiting visual state.
+- **Called by:** (intended caller: useSwarm.js WS onmessage for trigger_fired events — not yet wired; TriggerNode reads triggerStates directly)
+- **Calls:** Zustand set with spread merge
+- **Inputs:** triggerId (string), patch (object — partial { fired, lastFiredAt, status })
+- **Output:** void
+- **Side effects:** mutates triggerStates[triggerId] in store
+- **Last modified:** 2026-03-28 in Task #76 by frontend-dev (store field and action existed since Task #52; TriggerNode now subscribes to it)
+
+---
+
+## SwarmEngine Integration Tests (Task #78)
+
+### `server/tests/swarm-engine.test.js` :: `SwarmEngine integration test suite`
+- **Purpose:** 13-test Vitest integration test suite for SwarmEngine. Covers: (1) execution lifecycle (startExecution/stopExecution), (2) handoff processing (_onHandoff — context merge, createSession call, WS broadcast, source node status), (3) circuit breaker (edge threshold → circuit_breaker WS event, execution not stopped), (4) budget tracking (tap → budget_update WS event), (5) heartbeat (writeInput every 5 min via fake timers, no heartbeat for paused), (6) HITL mode (freezeAgent → inbox item + paused status + WS events + no auto-spawn), (7) DEC-009 preservation (swarmListeners tap must never replace/remove existing onData handler). SessionManager is fully mocked — no real PTY processes spawned.
+- **Called by:** Vitest test runner (npm test)
+- **Calls:** SwarmEngine (real), CircuitBreaker (real), BudgetTracker (real), vi.fn() (mocked: SessionManager.createSession/getSession/writeInput/killSession, wsBroadcast)
+- **Inputs:** none (test harness)
+- **Output:** 13 test results
+- **Side effects:** none outside test process; uses vi.useFakeTimers() for heartbeat tests; vi.clearAllMocks() in afterEach
+- **Complexity note:** DEC-009 tests verify that swarmListeners.add() is used (never onData replacement), and that stopExecution removes only the engine's own tap (sentinel listener survives). buildMocks() factory is called fresh in beforeEach for test isolation. buildTwoNodeWorkflow() helper creates a minimal two-node workflow with configurable budgetTokens and circuitBreakerThreshold.
+- **Last modified:** 2026-03-28 in Task #78 by qa-tester (new file)
+
+---
+
+## server/index.js — Route Init Order Bugfix (Task #80)
+
+### `server/index.js` :: `startup()` — MODIFIED (route init order)
+- **Purpose:** Full server bootstrap. Key change in Task #80: swarmEngine + triggerManager are now instantiated BEFORE any route handlers are mounted. This fixes a race where route handlers accessing `req.app.locals.swarmEngine` would receive undefined if a request arrived during startup before the engine was attached.
+- **Called by:** entry point (module top-level call)
+- **Calls:** (same as prior — all existing service instantiation, route mounts, WS setup); now also: `new TriggerManager(swarmEngine)`, `triggersRouter(triggerManager)`, app.use('/api/v1/triggers', ...)
+- **Inputs:** none
+- **Output:** HTTP server listening on 127.0.0.1:PORT
+- **Side effects:** imports TriggerManager + triggersRouter; instantiates triggerManager after swarmEngine; mounts /api/v1/triggers route; order: swarmEngine → triggerManager → routes mounted
+- **Complexity note (ordering constraint):** swarmEngine must be instantiated before TriggerManager (TriggerManager constructor takes swarmEngine). Both must be instantiated before route handlers are mounted (routes capture them via closure or app.locals). This ordering is enforced by declaration order in startup().
+- **Last modified:** 2026-03-28 in Task #80 by debugger (route init order fixed; TriggerManager + triggersRouter wired)

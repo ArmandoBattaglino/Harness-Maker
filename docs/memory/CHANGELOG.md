@@ -1565,3 +1565,78 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 - The blinking cursor uses Tailwind `animate-pulse` class (already in the project via statusColors for the running border) — no new CSS dependencies
 
 ---
+
+## 2026-03-28 — Tasks #73–#82: V3 Trigger System, HITL Inbox Hook, Integration Tests, Security Audit, Build Verification, Docs
+**Agent:** frontend-dev (73, 76), backend-dev (74, 75, 80), qa-tester (77, 78), security (79), devops (81), documenter (82)
+**Triggered by:** V3 final wave — complete trigger system (webhook + RSS), HITL inbox hook, SwarmEngine integration tests, security audit sign-off, E2E build verification and v3.0.0 tag, documentation update
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/hooks/useInbox.js | ADDED | HITL inbox polling + approve/reject hook |
+| server/services/TriggerManager.js | ADDED | Webhook registration + RSS polling trigger service; SSRF guard applied; integrates with SwarmEngine |
+| server/routes/triggers.js | ADDED | Express Router factory: POST /webhooks/:path (rate-limited, 32 KB cap, no CSRF) + GET / (list triggers) |
+| client/src/canvas/nodes/TriggerNode.jsx | MODIFIED | Full implementation replacing Task #53.3 stub — subscribes to triggerStates[id] in useSwarmStore; fired animation; webhook/RSS URL label display; last-fired timestamp |
+| client/src/store/SwarmContext.jsx | MODIFIED | updateTriggerState() action now has a live subscriber (TriggerNode); setPtyExplosionNodeId added in Task #71.2 |
+| client/src/index.css | MODIFIED | @keyframes triggerFiredPulse added for TriggerNode fired animation |
+| server/tests/HandoffParser.test.js | VERIFIED | Confirmed existing — 0 code changes; tests pass |
+| server/tests/swarm-engine.test.js | ADDED | 13-test integration suite for SwarmEngine (lifecycle, handoff, circuit breaker, budget, heartbeat, HITL, DEC-009) |
+| docs/security-v3-audit.md | ADDED | Security audit report for V3 — SEC-V3-01 through SEC-V3-07 status; pre-release sign-off |
+| server/index.js | MODIFIED | Route init order bugfix: swarmEngine instantiated BEFORE route mounting; TriggerManager + triggersRouter wired |
+| README.md | MODIFIED | Updated for V3: trigger system, HITL, swarm orchestrator |
+| docs/ARCHITECTURE.md | MODIFIED/ADDED | V3 architecture documentation |
+| docs/API.md | MODIFIED/ADDED | V3 API reference |
+| docs/memory/PROJECT.md | MODIFIED | Updated version + V3 feature list |
+
+### Functions Added
+- `useInbox(executionId)` in `client/src/hooks/useInbox.js` — HITL polling + approve/reject; polling fallback when WS disconnected
+- `loadInbox()` (internal) in `client/src/hooks/useInbox.js` — fetches /api/v1/swarm/:id/inbox; directly mutates useSwarmStore.getState().inboxItems
+- `approve(itemId, resumeText)` (returned callback) in `client/src/hooks/useInbox.js` — POSTs approve + calls resolveInboxItem
+- `reject(itemId)` (returned callback) in `client/src/hooks/useInbox.js` — POSTs reject + calls resolveInboxItem
+- `TriggerManager` class in `server/services/TriggerManager.js` — webhook registry + RSS polling engine; SSRF guard
+- `TriggerManager.registerWebhook(path, workflowId, targetNodeId)` — register path→workflow mapping
+- `TriggerManager.unregisterWebhook(path)` — remove path registration
+- `TriggerManager.handleWebhook(path, payload)` — dispatch incoming webhook → startExecution
+- `TriggerManager.createRssTrigger(nodeId, rssUrl, workflowId, pollIntervalMs, executionId)` — SSRF-guarded RSS poller with seed-on-first-poll
+- `TriggerManager._pollRss(nodeId, seedOnly)` — outbound fetch + XML parse + new-item detection
+- `TriggerManager._fireTrigger(nodeId, workflowId, executionId, item)` — start execution or broadcast rss_item WS event
+- `TriggerManager.removeTrigger(nodeId)` — clear RSS poller for nodeId
+- `TriggerManager.cleanupExecution(executionId)` — clear all RSS pollers for a finished execution
+- `TriggerManager.listTriggers()` — serialize webhooks + rssPollers for GET /api/v1/triggers
+- `_extractItems(xml)` (module-private) in `TriggerManager.js` — RSS/Atom XML item parser
+- `_extractTag(fragment, tag)` (module-private) in `TriggerManager.js` — extract tag text content
+- `_itemGuid(fragment)` (module-private) in `TriggerManager.js` — derive stable item ID
+- `triggersRouter(triggerManager)` in `server/routes/triggers.js` — Express Router factory
+- `webhookRateLimit(maxRequests, windowMs)` (module-private) in `server/routes/triggers.js` — 10 req/min/IP middleware
+
+### Functions Modified
+- `TriggerNode({ id, data, selected })` in `client/src/canvas/nodes/TriggerNode.jsx` — FULLY IMPLEMENTED (was stub in Task #53.3); now subscribes to useSwarmStore(s.triggerStates[id]); fired animation + timestamp display
+- `startup()` in `server/index.js` — BUGFIX: swarmEngine instantiated before route mounting; added TriggerManager instantiation + triggersRouter mount at /api/v1/triggers
+- `updateTriggerState(triggerId, patch)` in `client/src/store/SwarmContext.jsx` — "Called by" updated: TriggerNode now subscribes to triggerStates[id]; action existed since Task #52
+
+### Functions Removed
+- None
+
+### Connection Changes
+- `useInbox` → `useSwarmStore::inboxItems` (new subscriber via filter selector)
+- `useInbox` → `useSwarmStore::wsConnected` (polling fallback gated on this)
+- `useInbox` → `useSwarmStore::resolveInboxItem` (called on approve/reject success)
+- `useInbox.approve/reject` → `GET/POST /api/v1/swarm/:id/inbox` (new REST consumers)
+- `TriggerManager` → `ssrfGuard.isSafeUrl` (SEC-V3-03 — now has first live caller in production code)
+- `TriggerManager.handleWebhook` → `swarmEngine.startExecution` (new live call path)
+- `TriggerManager._fireTrigger` → `swarmEngine._wsBroadcast` (new live call for rss_item events)
+- `triggersRouter POST /webhooks/:path` → `TriggerManager.handleWebhook` (first caller)
+- `triggersRouter GET /` → `TriggerManager.listTriggers` (first caller)
+- `server/index.js` → `TriggerManager` (new import + instantiation)
+- `server/index.js` → `triggersRouter` (new import + mount at /api/v1/triggers)
+- `TriggerNode` → `useSwarmStore::triggerStates` (new subscription — was no subscription in stub)
+
+### Impact on Other Code
+- `ssrfGuard.isSafeUrl` — previous CHANGELOG noted "future caller: TriggerManager.js"; now live
+- `server/middleware/webhookLimit.js` and `server/middleware/webhookRateLimit.js` (stubs from Task #50) — NOT used in routes/triggers.js; the router inlines equivalent logic. The middleware stubs remain on disk but are still test-only.
+- `SwarmEngine.stopExecution` — should call `triggerManager.cleanupExecution(executionId)` but this wiring is not yet in source; RSS pollers for stopped executions may linger until next removal.
+- `TriggerManager.cleanupExecution` has no live caller yet — documented as intended for SwarmEngine.stopExecution.
+- Build verification (Task #81): all server tests pass; v3.0.0 git tag applied.
+- Security audit (Task #79): SEC-V3-01 through SEC-V3-07 all confirmed PASS in docs/security-v3-audit.md.
+
+---

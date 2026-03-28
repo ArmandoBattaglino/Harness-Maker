@@ -1,4 +1,51 @@
 ---
+## 2026-03-28 — Tasks #73–#82: V3 Trigger System, HITL Inbox Hook, Integration Tests, Security Audit, Docs
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task wave code-mapper invocation)
+
+### Context when I started
+V3 final implementation wave completed. 10 tasks across 6 agents: frontend-dev (Tasks #73, #76), backend-dev (Tasks #74, #75, #80), qa-tester (Tasks #77, #78), security (Task #79), devops (Task #81), documenter (Task #82). Major new files: useInbox.js, TriggerManager.js, triggers.js routes, swarm-engine.test.js, security-v3-audit.md. Modified: TriggerNode.jsx (full impl from stub), SwarmContext.jsx (addl subscriptions), index.css (triggerFiredPulse keyframe), server/index.js (bugfix + wiring). CODE_MAP.md was last updated after Tasks #64+#65. CHANGELOG.md last entry was Task #65.
+
+### What I did
+1. Read 7 memory files in parallel: CODE_MAP.md (tails at offset 1600, 1718, 1797, 1857, 1956, 2055, 2226), CHANGELOG.md (tails at offset 900, 955, 1054, 1110, 1230, 1430, 1568), agent memory (offset 1-20)
+2. Read all 7 modified/created source files: useInbox.js, TriggerManager.js, triggers.js, TriggerNode.jsx, swarm-engine.test.js, server/index.js (first 80 lines), SwarmContext.jsx (first 80 lines)
+3. Appended V3 Trigger System + HITL Inbox Hook + Integration Tests + bugfix sections to CODE_MAP.md (18 new function entries, 2 modified entries)
+4. Appended single combined CHANGELOG entry covering Tasks #73–#82 to CHANGELOG.md
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Added V3 HITL Inbox Hook section (useInbox.js — 4 entries), V3 Trigger System section (TriggerManager — 13 entries, triggersRouter — 2 entries), V3 TriggerNode Full Implementation section, SwarmContext updateTriggerState update, SwarmEngine Integration Tests section, server/index.js startup() route order bugfix section |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended combined entry covering Tasks #73–#82 |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Activity entry appended |
+
+### Improvements delivered
+- All new V3 modules fully mapped with connection traces
+- ssrfGuard.isSafeUrl "Called by" updated from "test-only" to live production caller (TriggerManager)
+- TriggerNode stub entry updated to reflect full implementation
+- Known gap documented: TriggerManager.cleanupExecution has no live caller yet (SwarmEngine.stopExecution should call it)
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None | — | — | — |
+
+### Decisions I made
+- Combined Tasks #73–#82 into one CHANGELOG entry (same wave, same date) rather than 10 separate entries — avoids 10 near-identical file sections for tasks that collectively form a coherent release wave
+
+### What I learned
+- routes/triggers.js inlines its own rate limiter rather than using the server/middleware/webhookRateLimit.js stub from Task #50. Both stubs are now on disk but the inline implementation is the live one. Future maintainers should consolidate.
+- useInbox.js directly mutates useSwarmStore.getState().inboxItems (imperative mutation) rather than using the addInboxItem store action — this bypasses Zustand's subscriber notification and could cause rendering gaps. Flag for future refactor.
+- TriggerManager.cleanupExecution is documented to be called from SwarmEngine.stopExecution but is NOT wired yet — RSS pollers may linger after execution ends.
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md are both up to date through Task #82. All V3 services are mapped. Known gaps: (1) cleanupExecution not wired to stopExecution, (2) useInbox direct state mutation should use store actions, (3) webhookRateLimit.js + webhookLimit.js middleware stubs (Task #50) are unused in production — only test-referenced.
+
+### Handoff
+None — code-mapper task self-contained.
+
+---
 ## 2026-03-27 — Tasks #64 + #65: useHandoff.js edge animation hook + AgentNode.jsx live updates
 **Status:** COMPLETED
 **Called by:** orchestrator (post-task code-mapper invocation)
