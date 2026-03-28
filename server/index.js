@@ -17,6 +17,7 @@ import { ProcessRegistry } from './services/ProcessRegistry.js';
 import SwarmEngine from './services/SwarmEngine.js';
 import CircuitBreaker from './services/CircuitBreaker.js';
 import BudgetTracker from './services/BudgetTracker.js';
+import TriggerManager from './services/TriggerManager.js';
 import { securityMiddleware } from './middleware/security.js';
 import { csrfMiddleware } from './middleware/csrf.js';
 import { ApiError } from './middleware/pathValidation.js';
@@ -29,6 +30,7 @@ import jobsRouter from './routes/jobs.js';
 import workflowsRouter from './routes/workflows.js';
 import swarmRoutes from './routes/swarm.js';
 import inboxRoutes from './routes/inbox.js';
+import triggersRouter from './routes/triggers.js';
 import { sessionManager } from './services/SessionManager.js';
 import { jobRunner } from './services/JobRunner.js';
 import { setupTerminalWebSocket } from './ws/terminalHandler.js';
@@ -221,6 +223,10 @@ async function startup() {
   // Workflow routes
   app.use('/api/v1/workflows', workflowsRouter);
 
+  // Trigger management routes (webhooks + RSS polling)
+  // Note: mounted at /api/v1/triggers — swarmEngine wired later after instantiation
+  app.locals.triggersRouter = triggersRouter;
+
   // Swarm execution control routes
   app.use('/api/v1/swarm', swarmRoutes(app.locals.swarmEngine, app.locals.sessionManager));
 
@@ -268,6 +274,13 @@ async function startup() {
 
   // Wire WebSocket broadcast to SwarmEngine so execution events reach subscribers.
   swarmEngine.setWsBroadcast(broadcast);
+
+  // Initialize TriggerManager (depends on swarmEngine)
+  const triggerManager = new TriggerManager(swarmEngine);
+  app.locals.triggerManager = triggerManager;
+
+  // Mount triggers router now that swarmEngine is available
+  app.use('/api/v1/triggers', app.locals.triggersRouter(triggerManager));
 
   // WebSocket routing — two noServer WSS instances, routed by URL path.
   // /ws/swarm  → swarm execution updates (Task #48)

@@ -217,8 +217,8 @@ _None._
 - [TASK-73] COMPLETED 2026-03-28 — useInbox.js HITL polling hook (client/src/hooks/useInbox.js; polling + approve/reject actions; 473 modules, 0 errors)
 
 ### V3 Phase 6 — Trigger Nodes
-- [TASK-74] PENDING — TriggerManager.js webhooks + RSS polling
-- [TASK-75] PENDING — triggers.js routes
+- [TASK-74] COMPLETED 2026-03-28 — TriggerManager.js webhooks + RSS polling
+- [TASK-75] COMPLETED 2026-03-28 — triggers.js routes
 - [TASK-76] PENDING — TriggerNode.jsx full visual implementation
 
 ### V3 Phase 7 — QA + Security + Release

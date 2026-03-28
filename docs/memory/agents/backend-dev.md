@@ -1,4 +1,70 @@
 ---
+## 2026-03-28 — Task #75: triggers.js — Trigger API Routes
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+server/services/TriggerManager.js existed and was fully implemented (Task #74 COMPLETED). server/routes/triggers.js did not exist. TriggerManager was not imported or instantiated in server/index.js. inbox.js showed the Express router factory pattern used in this project. express-rate-limit was not in server/package.json. 168 tests passing, 473 modules building.
+
+### What I did
+1. Read docs/memory/ (PROJECT, DECISIONS, PROGRESS, CONTEXT) in parallel with backend-dev agent log.
+2. Read server/index.js lines 1–100 (imports, rate limiter pattern, startup).
+3. Read server/routes/inbox.js lines 1–60 for Express router factory pattern and CSRF requirements.
+4. Checked server/package.json — confirmed no express-rate-limit; decided to use in-memory rate limiter (like main limiter).
+5. Read TriggerManager.js API: registerWebhook, unregisterWebhook, handleWebhook, createRssTrigger, removeTrigger, cleanupExecution, listTriggers.
+6. Created server/routes/triggers.js with:
+   - webhookRateLimit(10, 60000) middleware: in-memory per-IP limiter with 60s periodic sweep (memory leak prevention)
+   - POST /api/v1/triggers/webhooks/:path: express.json({ limit: '32kb' }), rate limit, NO CSRF (external caller), always 200 { received: true }
+   - GET /api/v1/triggers: CSRF-protected (internal UI), returns { triggers: triggerManager.listTriggers() }
+7. Updated server/index.js:
+   - Added import TriggerManager from './services/TriggerManager.js'
+   - Added import triggersRouter from './routes/triggers.js'
+   - Stored triggersRouter factory function in app.locals.triggersRouter (deferred mounting until after SwarmEngine instantiation)
+   - After swarmEngine instantiation: instantiated new TriggerManager(swarmEngine), stored in app.locals.triggerManager
+   - Mounted router: app.use('/api/v1/triggers', app.locals.triggersRouter(triggerManager))
+8. Ran npm test — 168/168 pass, no regressions.
+9. Ran cd client && npm run build — 473 modules, 0 errors.
+10. Updated TASK_PLAN.md #75 → COMPLETED, PROGRESS.md, ACTIVITY_LOG.md, agent log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/routes/triggers.js | CREATED | POST /webhooks/:path (webhook receiver, 10 req/min, 32KB cap, always 200), GET / (trigger list, CSRF-protected) |
+| server/index.js | MODIFIED | Imported TriggerManager and triggersRouter, instantiated TriggerManager after SwarmEngine, mounted router at /api/v1/triggers |
+| docs/TASK_PLAN.md | MODIFIED | Status #75 PENDING → COMPLETED, and #74 (auto-corrected from previous session) |
+| docs/memory/PROGRESS.md | MODIFIED | Updated V3 Phase 6 — Trigger Nodes section |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session entry |
+| docs/memory/agents/backend-dev.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- Webhook receiver endpoint: external, 32KB body cap (SEC-V3-01), 10 req/min rate limit (SEC-V3-04), secure (always returns 200 regardless of match).
+- Trigger list endpoint: internal, CSRF-protected, returns both webhooks and RSS pollers.
+- Memory leak prevention: periodic 60s sweep of expired rate limit entries.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | - | - | - |
+
+### Decisions I made
+- In-memory webhook rate limiter (not express-rate-limit): maintains consistency with the global rate limiter pattern already in server/index.js (rateLimit function). Separate Map keyed by 'webhook:IP' to not collide with global IP counts. 60s periodic sweep matches global limiter sweep.
+- Webhook endpoint always returns 200 (never 404, never reveals if matched): external callers cannot infer webhook path validity or registration status. Errors logged server-side but not exposed. This is intentional security behavior.
+- POST /api/v1/triggers/webhooks/:path uses param :path not a structured URL like /api/v1/triggers/webhooks/register/:path. This matches TriggerManager.handleWebhook(path, payload) API exactly — the path is the full webhook identifier.
+- express.json({ limit: '32kb' }) is a PER-ROUTE middleware, not global, so it only applies to /webhooks/:path (SEC-V3-01 enforcement at route layer, not TriggerManager layer).
+- TriggerManager instantiated AFTER SwarmEngine (which already had broadcast wired). TriggerManager constructor takes swarmEngine as arg and stores it. This matches the pattern of inbox.js which also takes swarmEngine as arg.
+
+### What I learned
+- Express router factory pattern: each route file exports a default function(dependencies) => Router. This allows route handlers to access singleton services passed at mount time. Matches inbox.js and swarm.js patterns.
+- Rate limiter memory leak sweep: 60s interval with setInterval(...).unref() is the pattern. The Map keyed by IP naturally expires via the window-based reset logic (if (now > record.resetAt) then delete). Without periodic sweep, the Map itself would grow unbounded.
+- 32KB body limit: express.json({ limit: '32kb' }) — this is the correct Express.js API for per-route body size enforcement.
+- Webhook security: returning 200 always prevents external reconnaissance of valid webhook paths.
+
+### State I'm leaving behind
+server/routes/triggers.js is fully implemented. TriggerManager is instantiated in server/index.js and passed to triggersRouter factory. All 168 tests pass. Build clean at 473 modules. Both endpoints working: POST /api/v1/triggers/webhooks/:path (external, rate-limited) and GET /api/v1/triggers (internal, CSRF-protected).
+
+### Handoff
+Task #76 (TriggerNode.jsx — full visual implementation) can now use GET /api/v1/triggers to fetch webhook and RSS poller lists. No backend work needed for #76 (frontend task). Task #77+ (QA/security/release) depends on all Phase 6 tasks being done.
+---
 ## 2026-03-28 — Task #74: TriggerManager.js — Webhooks + RSS Polling
 **Status:** COMPLETED
 **Called by:** user (direct task assignment)

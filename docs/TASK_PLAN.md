@@ -6040,8 +6040,8 @@ Acceptance criteria:
 | **71.2** | PTY Explosion — Escape key handler | frontend-dev | MEDIUM | claude-haiku-4-5 | PENDING |
 | 72 | InterAgentFeed.jsx — real-time handoff log | frontend-dev | LOW | claude-haiku-4-5 | PENDING |
 | 73 | useInbox.js — HITL polling hook | frontend-dev | MEDIUM | claude-haiku-4-5 | PENDING |
-| 74 | TriggerManager.js — webhooks + RSS polling | backend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
-| 75 | triggers.js routes — trigger API | backend-dev | MEDIUM | claude-haiku-4-5 | PENDING |
+| 74 | TriggerManager.js — webhooks + RSS polling | backend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
+| 75 | triggers.js routes — trigger API | backend-dev | MEDIUM | claude-haiku-4-5 | COMPLETED |
 | 76 | TriggerNode.jsx — full visual implementation | frontend-dev | LOW | claude-haiku-4-5 | PENDING |
 | 77 | HandoffParser unit tests | qa-tester | HIGH | claude-sonnet-4-6 | PENDING |
 | 78 | SwarmEngine integration tests | qa-tester | HIGH | claude-opus-4-6 | PENDING |

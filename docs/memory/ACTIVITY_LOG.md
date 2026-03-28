@@ -1,4 +1,13 @@
 ---
+## 2026-03-28 — backend-dev — Task #75: triggers.js — Trigger API Routes
+**Outcome:** COMPLETED
+**Summary:** Created server/routes/triggers.js with two endpoints: POST /api/v1/triggers/webhooks/:path (webhook receiver, external caller, 10 req/min rate limit, 32KB body cap, always 200) and GET /api/v1/triggers (internal UI endpoint, CSRF-protected, returns trigger list). Instantiated TriggerManager in server/index.js and mounted routes at /api/v1/triggers. 168/168 tests pass, 473 modules build clean (0 errors).
+**Files changed:** server/routes/triggers.js (CREATED), server/index.js (MODIFIED), docs/TASK_PLAN.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Used in-memory webhook rate limiter (separate from global limiter) with periodic 60s sweep to prevent memory leak. Webhook endpoint always returns 200 to external callers for security (no information leakage). TriggerManager instantiated after SwarmEngine so it can be passed to the router factory function.
+**Blockers:** none
+**Next:** Task #76 (TriggerNode.jsx full visual implementation) or Task #77+ for QA/security/release.
+---
 ## 2026-03-28 — backend-dev — Task #74: TriggerManager.js — Webhooks + RSS Polling
 **Outcome:** COMPLETED
 **Summary:** Created server/services/TriggerManager.js with webhook registration/dispatch and RSS polling. SSRF guard (isSafeUrl from server/utils/ssrfGuard.js) enforced before any outbound fetch. On first RSS poll lastSeenGuid is seeded without firing. cleanupExecution() removes all pollers for a stopped execution. 168/168 tests pass.
