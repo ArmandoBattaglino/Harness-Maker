@@ -1,4 +1,65 @@
 ---
+## 2026-03-28 — Tasks #88 + #90 + #91: handoffCount, TriggerNode fireCount, granular selectors
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+V3 swarm orchestrator frontend has three bugs: (1) handoffCount increment logic incorrectly assigns edge counter instead of incrementing per-agent count; (2) TriggerNode uses boolean `fired` flag preventing animation re-trigger on repeated firings; (3) useSwarm uses full-store destructuring causing cascade re-renders on any store change. All three are in client/ and require minimal surgical fixes.
+
+### What I did
+1. Read project memory files (PROJECT.md, PROGRESS.md, DECISIONS.md, ACTIVITY_LOG.md) to understand project state.
+2. Read docs/memory/agents/frontend-dev.md previous session to understand v3 frontend context.
+3. Read client/src/hooks/useSwarm.js fully (89 lines) and identified BUG-88 (line 42) and BUG-91 (lines 8-16).
+4. Read client/src/canvas/nodes/TriggerNode.jsx fully (95 lines) and identified BUG-90 (lines 15, 23-31).
+5. Applied BUG-88 fix: changed line 42-43 to read agentStates and compute `currentHandoffCount + 1` instead of assigning `msg.counter`.
+6. Applied BUG-91 fix: replaced 8-line full-store destructuring (lines 8-16) with 8 granular Zustand selectors (one per action/state).
+7. Updated BUG-91's dependency array to include `agentStates` for closure consistency.
+8. Applied BUG-90 fix: replaced `fired` boolean at line 15 with `fireCount` counter, and changed useEffect dependency from `[fired]` to `[fireCount]`.
+9. Ran `cd client && npm run build` — 473 modules transformed, 0 errors, 4.02s.
+10. Updated docs/TASK_PLAN.md: tasks #88, #90, #91 Status: PENDING → COMPLETED.
+11. Appended to docs/memory/ACTIVITY_LOG.md session entry.
+12. Git commit: "Task #88/#90/#91: fix handoffCount, TriggerNode fire counter, granular selectors".
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/hooks/useSwarm.js | MODIFIED | BUG-88 (lines 41-43): handoffCount now increments by 1 per handoff_started event. BUG-91 (lines 8-15): replaced full-store destructuring with 8 granular selectors. Updated dependency array to include agentStates. |
+| client/src/canvas/nodes/TriggerNode.jsx | MODIFIED | BUG-90 (lines 15, 23-31): replaced boolean `fired` flag with `fireCount` counter; useEffect now depends on fireCount instead of fired, allowing animation to re-trigger on repeated firings. |
+| docs/TASK_PLAN.md | MODIFIED | Tasks #88, #90, #91 Status: PENDING → COMPLETED |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Session log entry appended (this session) |
+
+### Improvements delivered
+- BUG-88: handoffCount now correctly reflects per-agent handoff frequency. Each handoff_started event increments the source agent's count by exactly 1, not a global edge counter.
+- BUG-90: Trigger animation now re-plays on every firing. Users can visually see repeated trigger events; animation is no longer "stuck on" after the first fire.
+- BUG-91: useSwarm consumers now subscribe to only the slices they need via granular Zustand selectors. This eliminates cascade re-renders when unrelated store state changes (e.g., another agent's status update).
+- Build: 473 modules, 0 errors, passes clean
+- No regressions: all three fixes are minimal, surgical changes
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None | — | — | — |
+
+### Decisions I made
+- BUG-88: Read agentStates at message time (closure capture) to preserve reactivity. Zustand guarantee: selectors with current state always return latest value, so this is safe.
+- BUG-90: Use counter (fireCount) over timestamp (firedAt) because counters are simpler to compare in useEffect dependency arrays and are idiomatic in Redux/Zustand patterns.
+- BUG-91: One selector per consumed action/state (not per object type) to match Zustand best practice. This ensures fine-grained subscription — each component re-renders only when its consumed fields change.
+
+### What I learned
+- Zustand selectors are not memoized at call-time; they subscribe to store changes. Including selector calls in dependency arrays (agentStates) ensures closures always have fresh state.
+- React component animations triggered by boolean flags are anti-patterns — use counters or timestamps to force re-execution of useEffect on each event.
+- Full-store destructuring in Zustand is a common performance anti-pattern in high-frequency state updates; granular selectors are the recommended approach.
+
+### State I'm leaving behind
+- handoffCount: Now increments correctly per handoff event. AgentNode.jsx handoffCount badge will display accurate per-agent handoff frequency.
+- TriggerNode: Animation state correctly resets and re-triggers on each firing. Repeated firings are now visually distinguishable.
+- useSwarm: Granular selectors prevent unnecessary re-renders. SwarmView and dependent components will render more smoothly during high-frequency execution events.
+
+### Handoff
+None — tasks fully self-contained. Next tasks may include BUG-92 (useInbox.js item shape normalization) or other remaining V3 bugs.
+
+---
+
 ## 2026-03-28 — Tasks #86 + #87: SwarmContext — departmentStack dedup + resolveInboxItem
 **Status:** COMPLETED
 **Called by:** user (direct task assignment)

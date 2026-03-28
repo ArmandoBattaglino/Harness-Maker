@@ -1,4 +1,15 @@
 ---
+## 2026-03-28 — frontend-dev — Tasks #88 + #90 + #91: handoffCount, TriggerNode fireCount, granular selectors
+**Outcome:** COMPLETED
+**Summary:** Fixed three frontend bugs in one commit. BUG-88: handoffCount was assigned edge counter instead of incrementing per-agent count by 1 — fixed by reading agentStates and computing `currentHandoffCount + 1` on handoff_started event. BUG-90: TriggerNode used boolean `fired` flag preventing animation re-trigger on repeated firings — fixed by replacing with `fireCount` counter and useEffect dependency on counter. BUG-91: useSwarm full-store destructuring caused cascade re-renders on any store change — fixed by replacing with 8 granular Zustand selectors (one per action/state). All fixes verified: build passes 473 modules, 0 errors.
+**Files changed:** client/src/hooks/useSwarm.js, client/src/canvas/nodes/TriggerNode.jsx, docs/TASK_PLAN.md
+**Bugs fixed:** BUG-88 (handoffCount logic), BUG-90 (TriggerNode animation), BUG-91 (store reactivity)
+**Decisions made:** For BUG-88, read agentStates at message time to preserve closure semantics; for BUG-90, use counter over timestamp (simpler, consistent with Redux patterns); for BUG-91, separate selector per consumed action/state (Zustand best practice)
+**Blockers:** none
+**Next:** Task #92 (useInbox.js item shape normalization) or other remaining bugs
+---
+
+---
 ## 2026-03-28 — frontend-dev — Tasks #86 + #87: SwarmContext departmentStack dedup + resolveInboxItem
 **Outcome:** COMPLETED
 **Summary:** Fixed BUG-86 (setFocusedDepartment pushed duplicate department IDs on repeated clicks) by adding check: only push if the new id differs from the last item on departmentStack. Fixed BUG-87 (resolveInboxItem failed to remove items due to incorrect id accessor) by adding optional chaining `i?.id` for defensive filtering. Both fixes are minimal (4 lines + 1 character). Build passes 0 errors (473 modules transformed).
