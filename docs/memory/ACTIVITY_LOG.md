@@ -1800,3 +1800,14 @@
 **Blockers:** None
 **Next:** HITL polling fallback is now functional. All Phase 5 (HITL + PTY Explosion) tasks are complete.
 ---
+
+---
+## 2026-03-28 — code-mapper — Tasks #84–#99: Debug Loop Wave Documentation
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md and CHANGELOG.md for the full debug loop wave (16 bug fixes, 10 files). 17 existing function entries updated with accurate callers/side-effects; 2 new entries added (SwarmEngine.getExecution, inboxRoutes update). All previously "not yet wired" gaps (cleanupExecution, clearExecution, pauseExecution, resumeExecution) now reflect live callers. 9 BUG-fix notes appended to Key Behaviors section.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (documentation only)
+**Decisions made:** Combined all 16 fixes into one CHANGELOG entry; updated function entries in-place
+**Blockers:** none
+**Next:** nothing — task fully self-contained
+---

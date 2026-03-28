@@ -1,4 +1,58 @@
 ---
+## 2026-03-28 — Tasks #84–#99: Debug Loop Wave (Frontend Zustand/WS + Backend SwarmEngine/Routes)
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task wave code-mapper invocation)
+
+### Context when I started
+Debug wave of 16 bug fixes across 10 files, 2 agents (debugger + devs). All fixes are in existing files — no new files created. Major themes: (1) frontend Zustand mutation bugs in useInbox, (2) SwarmEngine cleanup gaps (budgetTracker/triggerManager not called on stop), (3) route stub-to-live wiring (pause/resume/inbox), (4) 32KB webhook body cap enforcement. CODE_MAP.md last updated after Tasks #73–#82 wave.
+
+### What I did
+1. Read CODE_MAP.md (offset 1-80, 80-200, 600-200, 800-300, 1100-200, 1300-300, 1600-300, 1900-300, 2199-300, 2450-30) — selective reading to find all affected function entries
+2. Read CHANGELOG.md (offset 50-80, 130-50, 180-50, 1620-25) to find append point
+3. Read all 10 modified source files in parallel: useInbox.js, SwarmContext.jsx, useSwarm.js, TriggerNode.jsx, SwarmCanvas.jsx, SwarmEngine.js, TriggerManager.js, inbox.js, swarm.js, triggers.js
+4. Read code-mapper agent memory (offset 1-80) for context
+5. Updated CODE_MAP.md header timestamp
+6. Updated 17 existing function entries with accurate "Last modified", "Called by", and description changes
+7. Appended new getExecution() function entry and inboxRoutes() update in new section
+8. Appended "Key Behaviors updated" section with 9 BUG-FIX notes
+9. Appended CHANGELOG entry covering Tasks #84–#99
+10. Appended this agent memory session log
+11. Appended ACTIVITY_LOG entry
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header timestamp; 17 function entries updated; 2 new entries (getExecution, inboxRoutes update); BUG fix notes in Key Behaviors section |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Tasks #84–#99 combined entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session summary |
+
+### Improvements delivered
+- All 9 BUG fixes documented with precise root cause in function entries
+- Previously "not yet wired" gaps closed: cleanupExecution, clearExecution, pauseExecution, resumeExecution all now have live callers documented
+- getExecution() public API documented — encapsulation improvement
+- useInbox Zustand mutation bug (getState() direct mutation vs setState) corrected in map
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None — code-mapper only documents, does not fix | — | — | — |
+
+### Decisions I made
+- Combined all 16 fixes (#84–#99) into one CHANGELOG entry — same date, same conceptual wave
+- Updated function entries in-place rather than adding new sections for each bug fix — cleaner map
+
+### What I learned
+- SwarmEngine.getExecution() is a clean encapsulation boundary — routes that previously accessed _executions directly are now using this public accessor. Pattern should be followed for any future route additions.
+- useSwarmStore.setState() is the correct Zustand v4 path for bulk state replacement (like loading inbox items) — direct getState() mutation bypasses subscriber notification.
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md are both up to date through Task #99. All 9 BUG fixes from the debug wave are fully documented. No known gaps in the function graph for currently implemented code.
+
+### Handoff
+None — task self-contained.
+
+---
 ## 2026-03-28 — Tasks #73–#82: V3 Trigger System, HITL Inbox Hook, Integration Tests, Security Audit, Docs
 **Status:** COMPLETED
 **Called by:** orchestrator (post-task wave code-mapper invocation)

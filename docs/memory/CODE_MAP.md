@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-27 — after Task #62.1 (SwarmEngine._onHandoff full routing + constructor CircuitBreaker/BudgetTracker params + server/index.js wiring) — mapped by code-mapper_
+_Last updated: 2026-03-28 — after Tasks #84–#99 (debug loop wave: frontend Zustand/WS fixes, backend SwarmEngine/TriggerManager/routes cleanup) — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -1457,33 +1457,33 @@ _Last updated: 2026-03-27 — after Task #62.1 (SwarmEngine._onHandoff full rout
 - **Complexity note:** CircuitBreaker check is advisory only — it does NOT stop the handoff or execution. If the circuit threshold is hit, only a WS advisory event is broadcast. The handoff proceeds regardless. edgeId resolution falls back to a synthetic "sourceNodeId->targetId" string if no matching edge is found in the workflow definition.
 - **Last modified:** 2026-03-27 in Task #62.1 by backend-dev (full implementation — was stub in #46.2)
 
-### `server/services/SwarmEngine.js` :: `SwarmEngine._onDone(executionId, nodeId)` (stub)
-- **Purpose:** Handle a done event from the HandoffParser. Marks the agent state as 'done' in agentStates Map, then broadcasts an execution_status WS event. Full completion logic (all-done check, execution status update) deferred to Task #62.3.
+### `server/services/SwarmEngine.js` :: `SwarmEngine._onDone(executionId, nodeId)`
+- **Purpose:** Handle a done event from the HandoffParser. Marks the agent state as 'done' in agentStates Map, then broadcasts both an execution_status (agent_done) and agent_status (done) WS event. Fully implemented in Task #62.3.
 - **Called by:** SwarmEngine._spawnAgentPty tapFn (via HandoffParser.feed returning evt.type === 'done')
-- **Calls:** this._wsBroadcast
+- **Calls:** this._wsBroadcast (twice — execution_status + agent_status)
 - **Inputs:** executionId (string), nodeId (string)
 - **Output:** void
-- **Side effects:** mutates execution.agentStates.get(nodeId).status to 'done'; emits WS event `{ type: 'execution_status', status: 'agent_done', nodeId }`
-- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev (stub — full completion in #62.3)
+- **Side effects:** mutates execution.agentStates.get(nodeId).status to 'done'; emits WS `{ type: 'execution_status', status: 'agent_done', nodeId }` and `{ type: 'agent_status', nodeId, status: 'done' }`
+- **Last modified:** 2026-03-28 in Task #62.3 by backend-dev (completed — now emits two WS events; was single event stub)
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine.stopExecution(executionId)`
-- **Purpose:** Stop a running workflow execution. Clears heartbeat timer, removes all swarm tap listeners from their respective PTY sessions (before killing), kills all agent PTY sessions via SessionManager.killSession, marks status 'stopped', and deletes the execution record.
-- **Called by:** server/routes/swarm.js DELETE /:executionId handler (Task #47.1)
-- **Calls:** clearInterval, SessionManager.getSession, ptySession.swarmListeners.delete, SessionManager.killSession
+- **Purpose:** Stop a running workflow execution. Clears heartbeat timer, removes all swarm tap listeners from their respective PTY sessions (before killing), kills all agent PTY sessions via SessionManager.killSession, marks status 'stopped', deletes the execution record, calls TriggerManager.cleanupExecution (BUG-97 fix), and calls BudgetTracker.clearExecution (BUG-93 fix).
+- **Called by:** server/routes/swarm.js DELETE /:executionId handler
+- **Calls:** clearInterval, SessionManager.getSession, ptySession.swarmListeners.delete, SessionManager.killSession, this._triggerManager.cleanupExecution (if set), this._budgetTracker.clearExecution (if set)
 - **Inputs:** executionId (string)
 - **Output:** Promise\<void\>
-- **Side effects:** removes tapFn from swarmListeners Sets; kills all PTY sessions; removes execution from this._executions
-- **Complexity note (DEC-014):** tapFn removal happens BEFORE killSession — ensures the listener cannot fire on any final PTY output flushed during the kill sequence.
-- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev (updated: added tapFn removal loop before kill loop)
+- **Side effects:** removes tapFn from swarmListeners Sets; kills all PTY sessions; removes execution from this._executions; clears trigger polling intervals; clears budget tracking data
+- **Complexity note (DEC-014):** tapFn removal happens BEFORE killSession — ensures the listener cannot fire on any final PTY output flushed during the kill sequence. TriggerManager cleanup prevents RSS polling intervals from leaking after execution end (BUG-97). BudgetTracker cleanup prevents memory accumulation (BUG-93).
+- **Last modified:** 2026-03-28 in Tasks #93/#97 by backend-dev (BUG-93 fix: added budgetTracker.clearExecution call; BUG-97 fix: added triggerManager.cleanupExecution call)
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine.getStatus(executionId)`
-- **Purpose:** Return a serializable snapshot of an execution's status, agentStates, edgeCounters, and budget.
-- **Called by:** server/routes/swarm.js (pause, resume, status, agent-output, broadcast handlers), server/ws/swarmHandler.js::handleSwarmConnection (initial status on WS connect)
-- **Calls:** Object.fromEntries
+- **Purpose:** Return a serializable snapshot of an execution's status, agentStates, edgeCounters, and budget. BUG-98 fix: now reads real budget data from budgetTracker.getTotal(executionId) instead of returning an empty object.
+- **Called by:** server/routes/swarm.js (pause, resume, status, agent-output, broadcast handlers), server/ws/swarmHandler.js::handleSwarmConnection (initial status on WS connect), server/routes/inbox.js GET /:executionId/inbox (existence check)
+- **Calls:** Object.fromEntries, this._budgetTracker.getTotal (if set)
 - **Inputs:** executionId (string)
-- **Output:** `{ executionId, workflowId, status, agentStates: object, edgeCounters: object, budget: object }` | null if not found
+- **Output:** `{ executionId, workflowId, status, agentStates: object, edgeCounters: object, budget: { estimatedTokensUsed, limitTokens } }` | null if not found
 - **Side effects:** none
-- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev (updated callers: Task #47.1 + #48.1)
+- **Last modified:** 2026-03-28 in Task #98 by backend-dev (BUG-98 fix: budget now sourced from budgetTracker.getTotal instead of undefined e.budget)
 
 ---
 
@@ -1518,12 +1518,12 @@ _Last updated: 2026-03-27 — after Task #62.1 (SwarmEngine._onHandoff full rout
 
 ### `server/services/BudgetTracker.js` :: `BudgetTracker.registerSession(executionId, sessionId)`
 - **Purpose:** Associate a sessionId with an executionId so getTotal can sum across all sessions in an execution.
-- **Called by:** (not yet wired — should be called from SwarmEngine._spawnAgentPty when _budgetTracker is set; future task)
+- **Called by:** SwarmEngine._spawnAgentPty (when _budgetTracker is set — wired in Task #62.3)
 - **Calls:** Map.has, Map.set, Set.add
 - **Inputs:** executionId (string), sessionId (string)
 - **Output:** void
 - **Side effects:** mutates this._executionSessions Map
-- **Last modified:** 2026-03-27 in Task #49 by backend-dev
+- **Last modified:** 2026-03-27 in Task #49 by backend-dev (caller wired in Task #62.3)
 
 ### `server/services/BudgetTracker.js` :: `BudgetTracker.getTotal(executionId)`
 - **Purpose:** Sum character counts for all sessions belonging to an execution and convert to estimated tokens.
@@ -1544,13 +1544,13 @@ _Last updated: 2026-03-27 — after Task #62.1 (SwarmEngine._onHandoff full rout
 - **Last modified:** 2026-03-27 in Task #49 by backend-dev
 
 ### `server/services/BudgetTracker.js` :: `BudgetTracker.clearExecution(executionId)`
-- **Purpose:** Remove all tracking data for an execution and its sessions. Called on stopExecution to prevent memory leaks.
-- **Called by:** (not yet wired to SwarmEngine.stopExecution — future task)
+- **Purpose:** Remove all tracking data for an execution and its sessions. Called on stopExecution to prevent memory leaks. BUG-93 fix: wired to SwarmEngine.stopExecution in Task #93.
+- **Called by:** SwarmEngine.stopExecution (wired in Task #93 — BUG-93 fix)
 - **Calls:** Map.delete, Set iteration
 - **Inputs:** executionId (string)
 - **Output:** void
 - **Side effects:** mutates this._sessionChars (removes entries for each session) and this._executionSessions (removes execution entry)
-- **Last modified:** 2026-03-27 in Task #49 by backend-dev
+- **Last modified:** 2026-03-28 in Task #93 by backend-dev (BUG-93 fix — caller wired to stopExecution)
 
 ---
 
@@ -1577,22 +1577,22 @@ _Last updated: 2026-03-27 — after Task #62.1 (SwarmEngine._onHandoff full rout
 - **Last modified:** 2026-03-27 in Task #47.1 by backend-dev
 
 ### `server/routes/swarm.js` :: `POST /:executionId/pause`
-- **Purpose:** Pause a running execution by sending Ctrl-C (\x03) to every agent session whose agentState.status === 'running'. Best-effort — no acknowledgment from agents. Full HITL freeze deferred to Task #70.
-- **Called by:** (external REST clients)
-- **Calls:** swarmEngine.getStatus, sessionManager.writeInput
+- **Purpose:** Pause a running execution. Sends Ctrl-C (\x03) to every running agent session, then calls swarmEngine.pauseExecution() to update logical state and broadcast WS agent_status events. BUG-94 fix: pauseExecution() call added so store state is kept in sync with the interrupt.
+- **Called by:** (external REST clients / UI)
+- **Calls:** swarmEngine.getStatus, sessionManager.writeInput (Ctrl-C per running agent), swarmEngine.pauseExecution
 - **Inputs:** params.executionId (string)
 - **Output:** 200 `{ ok: true }` | 404/500
-- **Side effects:** sends \x03 (Ctrl-C) to all running agent PTY stdinss
-- **Last modified:** 2026-03-27 in Task #47.1 by backend-dev
+- **Side effects:** sends \x03 (Ctrl-C) to all running agent PTY stdins; calls pauseExecution to update agentStates + broadcast WS events
+- **Last modified:** 2026-03-28 in Task #94 by backend-dev (BUG-94 fix: added swarmEngine.pauseExecution() call after Ctrl-C delivery)
 
 ### `server/routes/swarm.js` :: `POST /:executionId/resume`
-- **Purpose:** No-op endpoint stub. Returns 200 { ok: true } if execution exists, 404 if not. Full HITL unfreeze deferred to Task #70.
-- **Called by:** (external REST clients)
-- **Calls:** swarmEngine.getStatus
+- **Purpose:** Resume all paused agents. Calls swarmEngine.resumeExecution() to update logical state and broadcast WS agent_status events. BUG-95 fix: was a no-op stub; now actually calls resumeExecution.
+- **Called by:** (external REST clients / UI)
+- **Calls:** swarmEngine.getStatus, swarmEngine.resumeExecution
 - **Inputs:** params.executionId (string)
 - **Output:** 200 `{ ok: true }` | 404/500
-- **Side effects:** none (no-op for now)
-- **Last modified:** 2026-03-27 in Task #47.1 by backend-dev
+- **Side effects:** calls resumeExecution — sets paused agents to 'running', broadcasts WS agent_status events
+- **Last modified:** 2026-03-28 in Task #95 by backend-dev (BUG-95 fix: was no-op stub; now calls swarmEngine.resumeExecution())
 
 ### `server/routes/swarm.js` :: `DELETE /:executionId`
 - **Purpose:** Stop (terminate) a running execution. Delegates entirely to swarmEngine.stopExecution. Returns 204 on success (including if executionId was not found — stopExecution is a no-op for unknown IDs).
@@ -1821,13 +1821,13 @@ _Last updated: 2026-03-27 — after Task #62.1 (SwarmEngine._onHandoff full rout
 - **Last modified:** 2026-03-27 in Task #52 by frontend-dev
 
 ### `client/src/store/SwarmContext.jsx` :: `resolveInboxItem(itemId)`
-- **Purpose:** Remove a resolved HITL approval item from the inboxItems list. Called after user approves or rejects.
-- **Called by:** (not yet wired — future HITL approve/reject UI action)
+- **Purpose:** Remove a resolved HITL approval item from the inboxItems list. Called after user approves or rejects. BUG-86 fix: filter now uses `i?.id !== itemId` (optional chain) to guard against null/malformed items in the list.
+- **Called by:** useInbox.js::approve (on POST success), useInbox.js::reject (on POST success)
 - **Calls:** Zustand set, Array.filter
 - **Inputs:** itemId (string — id of the item to remove)
 - **Output:** void
 - **Side effects:** removes matching item from inboxItems in store
-- **Last modified:** 2026-03-27 in Task #52 by frontend-dev
+- **Last modified:** 2026-03-28 in Task #86 by frontend-dev (BUG-86 fix: i?.id optional chain guard; caller wired via useInbox)
 
 ### `client/src/store/SwarmContext.jsx` :: `addFeedEvent(event)`
 - **Purpose:** Append a handoff event to the inter-agent feed. Automatically trims to the last 100 events to prevent unbounded memory growth.
@@ -1840,14 +1840,14 @@ _Last updated: 2026-03-27 — after Task #62.1 (SwarmEngine._onHandoff full rout
 - **Last modified:** 2026-03-27 in Task #52 by frontend-dev
 
 ### `client/src/store/SwarmContext.jsx` :: `setFocusedDepartment(id)`
-- **Purpose:** Navigate into a department node (drill-down). If id is non-null, pushes id onto departmentStack breadcrumb and sets focusedDepartmentId. If id is null, does not modify the stack (use navigateBreadcrumb to go up).
+- **Purpose:** Navigate into a department node (drill-down). If id is non-null AND not already the last item on the stack, pushes id onto departmentStack and sets focusedDepartmentId. If id is null, does not modify the stack. BUG-87 fix: added dedup guard so clicking a department twice does not push a duplicate entry.
 - **Called by:** client/src/canvas/nodes/DepartmentNode.jsx (onClick header — wired in Task #53.2)
 - **Calls:** Zustand set with array spread
 - **Inputs:** id (string | null — department node ID)
 - **Output:** void
-- **Side effects:** mutates focusedDepartmentId + departmentStack in store
-- **Complexity note:** Null id does NOT clear the stack — only navigateBreadcrumb rewinds the stack. This asymmetry is intentional: setFocusedDepartment is for forward navigation; navigateBreadcrumb is for backward navigation via breadcrumb clicks.
-- **Last modified:** 2026-03-27 in Task #52 by frontend-dev
+- **Side effects:** mutates focusedDepartmentId + departmentStack in store (only if id !== last stack entry)
+- **Complexity note:** BUG-87 fix: `const lastId = state.departmentStack[state.departmentStack.length - 1]; const shouldPush = id && lastId !== id;` — duplicate push guard. Null id does NOT clear the stack — only navigateBreadcrumb rewinds. Asymmetry is intentional: setFocusedDepartment is for forward navigation; navigateBreadcrumb is for backward.
+- **Last modified:** 2026-03-28 in Task #87 by frontend-dev (BUG-87 fix: dedup guard — was missing in Task #52)
 
 ### `client/src/store/SwarmContext.jsx` :: `navigateBreadcrumb(index)`
 - **Purpose:** Rewind the department breadcrumb stack to a specific index. Slice to index (not index+1) so the clicked crumb becomes the new top. Sets focusedDepartmentId to the new top, or null if stack is now empty.
@@ -1962,14 +1962,14 @@ _Last updated: 2026-03-27 — after Task #62.1 (SwarmEngine._onHandoff full rout
 ## React Flow Canvas Container (Task #57.1)
 
 ### `client/src/canvas/SwarmCanvas.jsx` :: `SwarmCanvas({ workflowDef })`
-- **Purpose:** Root canvas component for swarm workflow visualization. Initializes React Flow with workflowDef.nodes + workflowDef.edges, registers all custom node/edge types, applies drill-down filtering via focusedDepartmentId, wires user interaction (onNodeClick, onPaneClick, onConnect), and mounts BreadcrumbBar + AgentInspector into the layout.
+- **Purpose:** Root canvas component for swarm workflow visualization. Initializes React Flow with workflowDef.nodes + workflowDef.edges, registers all custom node/edge types, applies drill-down filtering via focusedDepartmentId, wires user interaction (onNodeClick, onPaneClick, onConnect), and mounts BreadcrumbBar + AgentInspector into the layout. BUG-89 fix: workflowDef changes after mount are now reflected via a useEffect that calls setNodes/setEdges on prop change.
 - **Called by:** SwarmView.jsx (Task #57.2 — first live caller; mounted inside ReactFlowProvider with `workflowDef` prop)
-- **Calls:** useSwarmStore (selector: s.focusedDepartmentId), useSwarmStore (selector: s.setSelectedNode), useNodesState (from @xyflow/react), useEdgesState (from @xyflow/react), useMemo (React — visibleNodes, visibleNodeIds, visibleEdges), useCallback (React — onConnect, onNodeClick, onPaneClick), addEdge (from @xyflow/react), ReactFlow + Background + Controls + MiniMap (from @xyflow/react), AgentNode, DepartmentNode, TriggerNode, HandoffEdge, AgentInspector, BreadcrumbBar
+- **Calls:** useSwarmStore (selector: s.focusedDepartmentId), useSwarmStore (selector: s.setSelectedNode), useNodesState (from @xyflow/react), useEdgesState (from @xyflow/react), useEffect (React — workflowDef change sync), useMemo (React — visibleNodes, visibleNodeIds, visibleEdges), useCallback (React — onConnect, onNodeClick, onPaneClick), addEdge (from @xyflow/react), ReactFlow + Background + Controls + MiniMap (from @xyflow/react), AgentNode, DepartmentNode, TriggerNode, HandoffEdge, AgentInspector, BreadcrumbBar
 - **Inputs:** workflowDef (object — `{ nodes: ReactFlowNode[], edges: ReactFlowEdge[] }` or undefined; defaults to empty arrays)
 - **Output:** JSX — flex column: BreadcrumbBar (top) + flex row: ReactFlow canvas (flex-1) + AgentInspector (right panel)
-- **Side effects:** calls setSelectedNode(nodeId) on node click; calls setSelectedNode(null) on pane click; calls setEdges to append a new handoff edge on connect. No server I/O.
-- **Complexity note (drill-down filtering):** Three separate useMemo computations — (1) visibleNodes filters nodes where `n.id === focusedDepartmentId || n.parentId === focusedDepartmentId` (or all nodes if focusedDepartmentId is null); (2) visibleNodeIds converts visibleNodes to a Set for O(1) edge lookup; (3) visibleEdges filters edges where both source and target are in visibleNodeIds. nodeTypes and edgeTypes objects are declared OUTSIDE the component (module-level consts) to prevent React Flow from re-registering on every render — this is a React Flow v12 requirement. workflowDef is treated as the initial state only; changes to workflowDef after mount are NOT reflected (useNodesState/useEdgesState take initialNodes/initialEdges).
-- **Last modified:** 2026-03-27 in Task #57.1 by frontend-dev; "Called by" updated Task #57.2 (SwarmView now mounts it)
+- **Side effects:** calls setSelectedNode(nodeId) on node click; calls setSelectedNode(null) on pane click; calls setEdges to append a new handoff edge on connect; calls setNodes/setEdges when workflowDef prop changes (BUG-89 fix). No server I/O.
+- **Complexity note (BUG-89 fix):** Added `useEffect(() => { if (workflowDef) { setNodes(workflowDef.nodes ?? []); setEdges(workflowDef.edges ?? []); } }, [workflowDef, setNodes, setEdges])`. Previously workflowDef was treated as initial state only — changes from PromptToFlowBar after mount were NOT reflected on the canvas. The useEffect dep array includes both setNodes and setEdges (stable references from useNodesState/useEdgesState). nodeTypes/edgeTypes still declared outside component per React Flow v12 requirement.
+- **Last modified:** 2026-03-28 in Task #89 by frontend-dev (BUG-89 fix: workflowDef useEffect sync added; was initial-only in Task #57.1)
 
 ---
 
@@ -2111,23 +2111,23 @@ _Last updated: 2026-03-27 — after Task #62.1 (SwarmEngine._onHandoff full rout
 ## Swarm WS Hook (Task #63)
 
 ### `client/src/hooks/useSwarm.js` :: `useSwarm(workflowId)`
-- **Purpose:** React hook that owns the WebSocket connection to the swarm WS channel for a given workflowId. Exposes connectWs, startExecution, and stopExecution. Manages a wsRef (useRef) to prevent stale WS references. Cleans up the WS on unmount via useEffect cleanup.
-- **Called by:** (no live callers yet — intended consumer is SwarmView.jsx or a SwarmToolbar component that needs execution controls; wiring is a future task)
-- **Calls:** useSwarmStore (6 actions: setExecution, updateAgentState, updateEdgeCounter, updateBudget, addInboxItem, addFeedEvent, setWsConnected), connectWs (internal), startExecution (internal), stopExecution (internal), useRef, useCallback, useEffect (React)
+- **Purpose:** React hook that owns the WebSocket connection to the swarm WS channel for a given workflowId. Exposes connectWs, startExecution, and stopExecution. Manages a wsRef (useRef) to prevent stale WS references. Cleans up the WS on unmount via useEffect cleanup. BUG-90 fix: store selectors are now granular (one per action/state slice) to avoid re-renders on unrelated store changes.
+- **Called by:** (no live callers yet — intended consumer is SwarmView.jsx or a SwarmToolbar component that needs execution controls)
+- **Calls:** useSwarmStore (granular selectors — one per: setExecution, updateAgentState, updateEdgeCounter, updateBudget, addInboxItem, addFeedEvent, setWsConnected, agentStates), connectWs (internal), startExecution (internal), stopExecution (internal), useRef, useCallback, useEffect (React)
 - **Inputs:** workflowId (string — workflow ID passed to startExecution POST)
 - **Output:** `{ startExecution, stopExecution, connectWs }` — stable callbacks
 - **Side effects:** opens/closes WebSocket; HTTP POST on startExecution; HTTP DELETE on stopExecution; cleanup on unmount (wsRef.current?.close())
-- **Last modified:** 2026-03-27 in Task #63 by frontend-dev
+- **Last modified:** 2026-03-28 in Task #90 by frontend-dev (BUG-90 fix: granular store selectors — was single broad selector in Task #63)
 
 ### `client/src/hooks/useSwarm.js` :: `connectWs(executionId)` (returned callback)
-- **Purpose:** Open a WebSocket connection to /ws/swarm?executionId=X. Closes any existing WS first. Dispatches 6 message types to useSwarmStore: agent_status → updateAgentState; handoff_started → updateEdgeCounter + addFeedEvent + updateAgentState; execution_status → setExecution; budget_update → updateBudget; circuit_breaker → addFeedEvent; hitl_required → addInboxItem. Sets wsConnected via onopen/onclose/onerror.
+- **Purpose:** Open a WebSocket connection to /ws/swarm?executionId=X. Closes any existing WS first. Dispatches 6 message types to useSwarmStore: agent_status → updateAgentState; handoff_started → updateEdgeCounter + addFeedEvent + updateAgentState(handoffCount increment); execution_status → setExecution; budget_update → updateBudget; circuit_breaker → addFeedEvent; hitl_required → addInboxItem. BUG-88 fix: handoff_started now correctly increments handoffCount by reading agentStates[msg.sourceNodeId].handoffCount from the store (was missing in Task #63).
 - **Called by:** useSwarm — called internally by startExecution after POST succeeds; also returned as a public callback for manual reconnect
 - **Calls:** WebSocket (browser native), setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, setExecution, updateBudget, addInboxItem, JSON.parse
 - **Inputs:** executionId (string)
 - **Output:** void (stores new WebSocket instance in wsRef.current)
 - **Side effects:** opens WebSocket to server; registers onopen/onclose/onerror/onmessage handlers; closes previous WS if any
-- **Complexity note:** Protocol is selected dynamically: `location.protocol === 'https:' ? 'wss:' : 'ws:'` — correct for both dev (ws) and prod (wss) environments. The WS URL is relative to `location.host` so it adapts to any port. onmessage silently discards non-JSON frames (try/catch with return).
-- **Last modified:** 2026-03-27 in Task #63 by frontend-dev
+- **Complexity note (BUG-88 fix):** handoff_started handler now reads `agentStates[msg.sourceNodeId]?.handoffCount ?? 0` from the store and calls `updateAgentState(msg.sourceNodeId, { handoffCount: currentHandoffCount + 1 })`. Without this, the AgentNode handoffCount badge never incremented on WS messages. Protocol selected dynamically (wss:/ws: based on location.protocol). WS URL relative to location.host for port adaptability. Non-JSON frames silently discarded.
+- **Last modified:** 2026-03-28 in Tasks #88/#90 by frontend-dev (BUG-88: handoffCount increment added; BUG-90: granular selectors; was Task #63)
 
 ### `client/src/hooks/useSwarm.js` :: `startExecution(projectId, projectPath)` (returned callback)
 - **Purpose:** POST to /api/v1/swarm/:workflowId/start with {projectId, projectPath}, then call connectWs(executionId) to open the WS stream. Sets store state to running. Returns the executionId.
@@ -2183,22 +2183,22 @@ _Last updated: 2026-03-27 — after Task #62.1 (SwarmEngine._onHandoff full rout
 ## SwarmEngine pause/resume (Task #67)
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine.pauseExecution(executionId)`
-- **Purpose:** Set every running agent's status to 'paused' and broadcast an agent_status WS event for each. Does NOT send Ctrl-C — status change is logical only (PTY processes continue running). This is the store-level pause; the REST route (POST /:executionId/pause) still uses inline Ctrl-C for interrupt delivery.
-- **Called by:** (no live REST callers yet — the existing POST /:executionId/pause route uses inline Ctrl-C via getStatus; pauseExecution is available for future HITL freeze in Task #70)
+- **Purpose:** Set every running agent's status to 'paused' and broadcast an agent_status WS event for each. Does NOT send Ctrl-C — status change is logical only (PTY processes continue running). REST route POST /:executionId/pause now calls this after sending Ctrl-C (BUG-94 fix).
+- **Called by:** server/routes/swarm.js POST /:executionId/pause handler (BUG-94 fix — wired in Task #94)
 - **Calls:** this._executions.get, execution.agentStates iteration, this._wsBroadcast
 - **Inputs:** executionId (string)
 - **Output:** void (no-op if execution not found)
 - **Side effects:** mutates agentStates[nodeId].status → 'paused' for all running agents; emits WS `{ type: 'agent_status', nodeId, status: 'paused' }` per agent
-- **Last modified:** 2026-03-27 in Task #67 by backend-dev (new method)
+- **Last modified:** 2026-03-28 in Task #94 by backend-dev (BUG-94 fix — now called from swarm.js pause route after Ctrl-C delivery)
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine.resumeExecution(executionId)`
-- **Purpose:** Set every paused agent's status back to 'running' and broadcast an agent_status WS event for each. Counterpart to pauseExecution — restores logical running state after a pause.
-- **Called by:** (no live REST callers yet — POST /:executionId/resume is a no-op stub; resumeExecution is available for Task #70 HITL unfreeze)
+- **Purpose:** Set every paused agent's status back to 'running' and broadcast an agent_status WS event for each. REST route POST /:executionId/resume now calls this (BUG-95 fix).
+- **Called by:** server/routes/swarm.js POST /:executionId/resume handler (BUG-95 fix — wired in Task #95)
 - **Calls:** this._executions.get, execution.agentStates iteration, this._wsBroadcast
 - **Inputs:** executionId (string)
 - **Output:** void (no-op if execution not found)
 - **Side effects:** mutates agentStates[nodeId].status → 'running' for all paused agents; emits WS `{ type: 'agent_status', nodeId, status: 'running' }` per agent
-- **Last modified:** 2026-03-27 in Task #67 by backend-dev (new method)
+- **Last modified:** 2026-03-28 in Task #95 by backend-dev (BUG-95 fix — now called from swarm.js resume route; was no-op stub)
 
 ---
 
@@ -2228,24 +2228,33 @@ _Last updated: 2026-03-27 — after Task #62.1 (SwarmEngine._onHandoff full rout
 
 ## V3 HITL Inbox Hook (Task #73)
 
+### `client/src/hooks/useInbox.js` :: `normalizeInboxItem(item)` (module-private)
+- **Purpose:** Normalize inbox item shapes from REST API and WS sources to a consistent `{ id, type, agentId, status, payload }` structure. Handles field name aliasing (agent_id→agentId, resume_text/resumeText→payload). BUG-84/BUG-85 fix.
+- **Called by:** useInbox (within inboxItems selector), loadInbox (normalizes fetched items before setState)
+- **Calls:** none (pure function)
+- **Inputs:** item (object — raw item from API or WS, may have inconsistent field names)
+- **Output:** `{ id: string, type: string, agentId: string, status: string, payload: string }`
+- **Side effects:** none
+- **Last modified:** 2026-03-28 in Tasks #84/#85 by frontend-dev (BUG-84/85 fix: shape normalization added)
+
 ### `client/src/hooks/useInbox.js` :: `useInbox(executionId)` (named export)
-- **Purpose:** React hook for managing HITL inbox items. Loads pending inbox items from the server on mount, polling every 10 s when the WebSocket is disconnected. Provides `approve` and `reject` callbacks that POST to the server and optimistically call `resolveInboxItem` on success.
+- **Purpose:** React hook for managing HITL inbox items. Loads pending inbox items from the server on mount, polling every 10 s when the WebSocket is disconnected. Normalizes item shapes from REST and WS sources. Filters to pending items only. Provides `approve` and `reject` callbacks that POST to the server and call `resolveInboxItem` on success.
 - **Called by:** (no live callers yet — intended for SwarmView or a dedicated InboxPanel component)
-- **Calls:** useSwarmStore (selectors: s.inboxItems.filter(pending), s.wsConnected, s.resolveInboxItem), fetch (GET /api/v1/swarm/:id/inbox), fetch (POST /api/v1/swarm/:id/inbox/:itemId/approve), fetch (POST /api/v1/swarm/:id/inbox/:itemId/reject), useCallback (React), useEffect (React), setInterval / clearInterval
+- **Calls:** useSwarmStore (selectors: s.inboxItems.map(normalizeInboxItem).filter(pending), s.wsConnected, s.resolveInboxItem), normalizeInboxItem, fetch (GET /api/v1/swarm/:id/inbox), fetch (POST /api/v1/swarm/:id/inbox/:itemId/approve), fetch (POST /api/v1/swarm/:id/inbox/:itemId/reject), useSwarmStore.setState (direct — not addInboxItem), useCallback (React), useEffect (React), setInterval / clearInterval
 - **Inputs:** executionId (string | undefined — if falsy, all fetches are skipped)
 - **Output:** `{ inboxItems: object[], approve: (itemId, resumeText?) => Promise<void>, reject: (itemId) => Promise<void> }`
-- **Side effects:** GET /api/v1/swarm/:id/inbox on mount and on polling interval; POST on approve/reject; directly writes to useSwarmStore.getState().inboxItems on load (bypasses set() action — direct state mutation); setInterval started when wsConnected is false, cleared via useEffect cleanup
-- **Complexity note:** On loadInbox success the hook writes directly to `useSwarmStore.getState().inboxItems = items` (imperative mutation, not via the store's set() action). This bypasses the addInboxItem/resolveInboxItem immutable update path and may cause subscriber skips. Polling is only active when wsConnected is false — the WebSocket is the primary delivery path and polling is a fallback.
-- **Last modified:** 2026-03-28 in Task #73 by frontend-dev (new file)
+- **Side effects:** GET /api/v1/swarm/:id/inbox on mount and on polling interval; POST on approve/reject; uses `useSwarmStore.setState({ inboxItems: items })` (Zustand correct mutation path via setState — BUG-84 fix); setInterval started when wsConnected is false, cleared via useEffect cleanup
+- **Complexity note:** BUG-84 fix: loadInbox now calls `useSwarmStore.setState({ inboxItems: items })` (correct Zustand path) rather than the old direct getState() imperative mutation. BUG-85 fix: normalizeInboxItem() ensures consistent field names between REST (agent_id, resume_text) and WS (agentId, resumeText) sources. Polling is only active when wsConnected is false — WebSocket is the primary delivery path.
+- **Last modified:** 2026-03-28 in Tasks #84/#85 by frontend-dev (BUG-84: Zustand mutation fix; BUG-85: shape normalization; was Task #73 new file)
 
 ### `client/src/hooks/useInbox.js` :: `loadInbox()` (internal useCallback)
-- **Purpose:** Fetch current inbox items for the active execution from the server and synchronize the Zustand store with the server state.
+- **Purpose:** Fetch current inbox items for the active execution from the server, normalize their shapes, and sync the Zustand store via setState.
 - **Called by:** useInbox — called on mount via useEffect; also on every polling interval when wsConnected is false
-- **Calls:** fetch (GET /api/v1/swarm/:executionId/inbox), useSwarmStore.getState() (direct state mutation)
+- **Calls:** fetch (GET /api/v1/swarm/:executionId/inbox), normalizeInboxItem, useSwarmStore.setState
 - **Inputs:** none (reads executionId from closure)
 - **Output:** Promise\<void\>
-- **Side effects:** HTTP GET; mutates useSwarmStore.getState().inboxItems directly
-- **Last modified:** 2026-03-28 in Task #73 by frontend-dev
+- **Side effects:** HTTP GET; calls useSwarmStore.setState to replace inboxItems with normalized items
+- **Last modified:** 2026-03-28 in Task #84 by frontend-dev (BUG-84 fix: now uses setState instead of direct mutation)
 
 ### `client/src/hooks/useInbox.js` :: `approve(itemId, resumeText)` (internal useCallback, returned)
 - **Purpose:** POST the approval decision for a specific inbox item to the server. Calls resolveInboxItem(itemId) on success to remove it from the pending list.
@@ -2254,7 +2263,7 @@ _Last updated: 2026-03-27 — after Task #62.1 (SwarmEngine._onHandoff full rout
 - **Inputs:** itemId (string), resumeText (string, default '')
 - **Output:** Promise\<void\>
 - **Side effects:** HTTP POST with CSRF header + JSON body; calls resolveInboxItem on success
-- **Last modified:** 2026-03-28 in Task #73 by frontend-dev
+- **Last modified:** 2026-03-28 in Task #73 by frontend-dev (unchanged in #84/#85)
 
 ### `client/src/hooks/useInbox.js` :: `reject(itemId)` (internal useCallback, returned)
 - **Purpose:** POST the rejection decision for a specific inbox item. Calls resolveInboxItem(itemId) on success.
@@ -2263,7 +2272,7 @@ _Last updated: 2026-03-27 — after Task #62.1 (SwarmEngine._onHandoff full rout
 - **Inputs:** itemId (string)
 - **Output:** Promise\<void\>
 - **Side effects:** HTTP POST with CSRF header; calls resolveInboxItem on success
-- **Last modified:** 2026-03-28 in Task #73 by frontend-dev
+- **Last modified:** 2026-03-28 in Task #73 by frontend-dev (unchanged in #84/#85)
 
 ---
 
@@ -2344,13 +2353,13 @@ _Last updated: 2026-03-27 — after Task #62.1 (SwarmEngine._onHandoff full rout
 - **Last modified:** 2026-03-28 in Task #74 by backend-dev
 
 ### `server/services/TriggerManager.js` :: `TriggerManager.cleanupExecution(executionId)`
-- **Purpose:** Remove all RSS pollers associated with a specific executionId. Called by SwarmEngine.stopExecution() so polling intervals don't linger after an execution ends.
-- **Called by:** SwarmEngine.stopExecution (intended — not yet wired in source; documented as the intended call site)
-- **Calls:** clearInterval, this.rssPollers.delete (per matching entry)
+- **Purpose:** Remove all RSS pollers associated with a specific executionId (or null executionId, which also matches workflow-level pollers). Called by SwarmEngine.stopExecution() so polling intervals don't linger after an execution ends. BUG-97 fix: null-executionId pollers are also cleaned up to prevent memory leaks.
+- **Called by:** SwarmEngine.stopExecution (wired in Task #97 — BUG-97 fix)
+- **Calls:** clearInterval, this.rssPollers.delete (per matching entry — matches executionId === arg OR executionId === null)
 - **Inputs:** executionId (string)
 - **Output:** void
-- **Side effects:** clears setInterval timers; removes entries from this.rssPollers Map
-- **Last modified:** 2026-03-28 in Task #74 by backend-dev
+- **Side effects:** clears setInterval timers; removes entries from this.rssPollers Map; also removes null-executionId pollers (workflow-level) to prevent leak
+- **Last modified:** 2026-03-28 in Task #97 by backend-dev (BUG-97 fix — caller wired; null executionId pollers also cleaned)
 
 ### `server/services/TriggerManager.js` :: `TriggerManager.listTriggers()`
 - **Purpose:** Serialize all currently registered webhooks and RSS pollers for the GET /api/v1/triggers endpoint.
@@ -2391,13 +2400,14 @@ _Last updated: 2026-03-27 — after Task #62.1 (SwarmEngine._onHandoff full rout
 ---
 
 ### `server/routes/triggers.js` :: `triggersRouter(triggerManager)` (default export factory)
-- **Purpose:** Express Router factory for trigger management endpoints. Registers POST /webhooks/:path (webhook receiver, rate-limited, 32 KB cap, no CSRF — external caller) and GET / (list triggers, CSRF-protected internal endpoint). Returns the configured Router.
+- **Purpose:** Express Router factory for trigger management endpoints. Registers POST /webhooks/:path (webhook receiver, rate-limited, 32 KB body cap via express.raw — BUG-99 fix, no CSRF — external caller) and GET / (list triggers, CSRF-protected internal endpoint). Returns the configured Router.
 - **Called by:** server/index.js (startup) — `app.use('/api/v1/triggers', triggersRouter(triggerManager))`
-- **Calls:** Router() (express), express.json({ limit: '32kb' }), webhookRateLimit(), triggerManager.handleWebhook, triggerManager.listTriggers
+- **Calls:** Router() (express), express.raw({ limit: '32kb', type: 'application/json' }), webhookRateLimit(), triggerManager.handleWebhook, triggerManager.listTriggers
 - **Inputs:** triggerManager (TriggerManager instance)
 - **Output:** Express Router
 - **Side effects:** module-load side effect: starts stale-entry sweep setInterval (unref'd) on `_webhookRateLimitMap`
-- **Last modified:** 2026-03-28 in Task #75 by backend-dev (new file)
+- **Complexity note (BUG-99 fix):** Webhook body now uses express.raw (not express.json) so the 32KB limit is enforced before JSON parsing. JSON is manually parsed inside the handler via JSON.parse(req.body.toString('utf8')). This prevents the global express.json() parser from running first and ignoring the size limit.
+- **Last modified:** 2026-03-28 in Task #99 by backend-dev (BUG-99 fix: changed express.json to express.raw for 32KB enforcement; was Task #75 new file)
 
 ### `server/routes/triggers.js` :: `webhookRateLimit(maxRequests, windowMs)` (module-private middleware factory)
 - **Purpose:** Return an Express middleware that limits webhook requests to maxRequests per windowMs per IP (default 10 req/60 s). Uses an in-memory `_webhookRateLimitMap`. Returns HTTP 429 on excess.
@@ -2414,14 +2424,14 @@ _Last updated: 2026-03-27 — after Task #62.1 (SwarmEngine._onHandoff full rout
 ## V3 TriggerNode Full Implementation (Task #76)
 
 ### `client/src/canvas/nodes/TriggerNode.jsx` :: `TriggerNode({ id, data, selected })` (UPDATED)
-- **Purpose:** Custom React Flow source-only node for webhook and RSS triggers. Now subscribes to `triggerStates[id]` from useSwarmStore to show live fired/waiting status and last-fired timestamp. Shows a 2-second CSS pulse animation when the node fires. No target Handle — triggers only emit outward. Purple visual theme.
+- **Purpose:** Custom React Flow source-only node for webhook and RSS triggers. Subscribes to `triggerStates[id]` from useSwarmStore to show live fired/waiting status and last-fired timestamp. Shows a 2-second CSS pulse animation when the node fires. BUG-91 fix: animation now keyed on `fireCount` (numeric counter from store) rather than `status === 'fired'` string, so repeated firings are correctly detected as new events.
 - **Called by:** SwarmCanvas.jsx (nodeTypes.trigger registration)
-- **Calls:** useSwarmStore (selector: s.triggerStates[id]), Handle + Position (from @xyflow/react), useState (showFiredAnimation), useEffect (React — animation reset timer), setTimeout / clearTimeout
+- **Calls:** useSwarmStore (selector: s.triggerStates[id]), Handle + Position (from @xyflow/react), useState (showFiredAnimation), useEffect (React — animation reset timer, keyed on fireCount), setTimeout / clearTimeout
 - **Inputs:** id (string — React Flow node id), data (object — { label, triggerType: 'webhook'|'rss', webhookPath?, rssUrl? }), selected (boolean)
 - **Output:** JSX — purple bordered card: icon + label, triggerType badge, status badge ('Fired!' or 'waiting'), last-fired timestamp when available; source Handle at bottom only
-- **Side effects:** schedules a 2s setTimeout on every fired→true transition to reset showFiredAnimation to false; no store writes
-- **Complexity note:** `showFiredAnimation` is local state (not from store) — it drives the `animate-[triggerFiredPulse_2s_ease-out]` CSS animation and auto-resets after 2 s via useEffect cleanup. `triggerState.status` ('waiting'|'fired') is the canonical status from the store; `showFiredAnimation` only controls the animation class. The CSS animation `triggerFiredPulse` must be defined in client/src/index.css (added in Task #76).
-- **Last modified:** 2026-03-28 in Task #76 by frontend-dev (fully implemented — was stub in Task #53.3)
+- **Side effects:** schedules a 2s setTimeout on every fireCount increment to reset showFiredAnimation to false; no store writes
+- **Complexity note (BUG-91 fix):** `showFiredAnimation` is now driven by `useEffect(() => { if (fireCount > 0) { setShowFiredAnimation(true); ... } }, [fireCount])`. Previously keyed on `status === 'fired'` which would not re-trigger the animation if the node fired a second time (status was already 'fired'). The `fireCount` field must be incremented in `updateTriggerState` calls from the WS handler. `triggerState.fireCount ?? 0` read from the store is the counter; `showFiredAnimation` is the local animation gate.
+- **Last modified:** 2026-03-28 in Task #91 by frontend-dev (BUG-91 fix: fireCount counter replaces status-string animation trigger; was Task #76)
 
 ---
 
@@ -2463,3 +2473,47 @@ _Last updated: 2026-03-27 — after Task #62.1 (SwarmEngine._onHandoff full rout
 - **Side effects:** imports TriggerManager + triggersRouter; instantiates triggerManager after swarmEngine; mounts /api/v1/triggers route; order: swarmEngine → triggerManager → routes mounted
 - **Complexity note (ordering constraint):** swarmEngine must be instantiated before TriggerManager (TriggerManager constructor takes swarmEngine). Both must be instantiated before route handlers are mounted (routes capture them via closure or app.locals). This ordering is enforced by declaration order in startup().
 - **Last modified:** 2026-03-28 in Task #80 by debugger (route init order fixed; TriggerManager + triggersRouter wired)
+
+---
+
+## Debug Loop Wave (Tasks #84–#99)
+
+### `server/services/SwarmEngine.js` :: `SwarmEngine.getExecution(executionId)` (NEW — Task #96)
+- **Purpose:** Public accessor for the raw execution object (not a serialized snapshot). Prevents route handlers from accessing the private `_executions` field directly. Returns null if not found. BUG-96 fix.
+- **Called by:** server/routes/inbox.js GET /:executionId/inbox (reads inboxItems), server/routes/inbox.js POST /:executionId/inbox/:itemId/approve (reads inboxItems, agentStates), server/routes/inbox.js POST /:executionId/inbox/:itemId/reject (reads inboxItems)
+- **Calls:** this._executions.get
+- **Inputs:** executionId (string)
+- **Output:** WorkflowExecution object | null
+- **Side effects:** none
+- **Complexity note:** Returns the live mutable execution object (not a copy) — callers that mutate it (e.g. inbox.js splicing inboxItems) are making direct in-memory mutations. This is intentional for inbox approve/reject flows where immediate mutation is needed without a round-trip through the store.
+- **Last modified:** 2026-03-28 in Task #96 by backend-dev (new method — BUG-96 fix: routes no longer access _executions directly)
+
+---
+
+### `server/routes/inbox.js` :: `inboxRoutes(swarmEngine)` (factory — UPDATED)
+- **Purpose:** Express Router factory for HITL inbox endpoints. Now uses public swarmEngine.getExecution() (BUG-96 fix) instead of private _executions access. Validates execution existence via getStatus() check first for GET, then gets raw execution for item operations.
+- **Called by:** server/index.js (startup) — `app.use('/api/v1/swarm', inboxRoutes(swarmEngine))`
+- **Calls:** swarmEngine.getStatus (existence check for GET), swarmEngine.getExecution (raw execution access for approve/reject), validateResumeText (middleware), swarmEngine._sessionManager.writeInput (approve path), swarmEngine._wsBroadcast
+- **Inputs:** swarmEngine (SwarmEngine instance)
+- **Output:** Express Router
+- **Side effects:** approve: writes resumeText to PTY stdin, broadcasts hitl_resolved WS event; reject: broadcasts hitl_resolved WS event
+- **Last modified:** 2026-03-28 in Task #96 by backend-dev (BUG-96 fix: now uses getExecution() public API instead of _executions private access)
+
+---
+
+## Key Behaviors (updated 2026-03-28 after debug wave #84–#99)
+- BUG-84 FIXED: useInbox loadInbox now calls `useSwarmStore.setState({ inboxItems })` correctly (Zustand mutation path)
+- BUG-85 FIXED: useInbox normalizeInboxItem() ensures REST/WS item shapes are consistent before store write
+- BUG-86 FIXED: resolveInboxItem filter uses `i?.id` (optional chain) — null/malformed items no longer throw
+- BUG-87 FIXED: setFocusedDepartment dedup guard — duplicate department IDs not pushed onto stack
+- BUG-88 FIXED: useSwarm connectWs handoff_started handler now increments handoffCount from agentStates snapshot
+- BUG-89 FIXED: SwarmCanvas useEffect watches workflowDef prop — canvas now reflects scaffold output after mount
+- BUG-90 FIXED: useSwarm useSwarmStore subscriptions are now granular (one selector per slice) — avoids over-renders
+- BUG-91 FIXED: TriggerNode animation keyed on fireCount numeric counter — repeated firings now retrigger the animation
+- BUG-93 FIXED: SwarmEngine.stopExecution now calls budgetTracker.clearExecution — no memory leak after stop
+- BUG-94 FIXED: swarm.js POST /pause now calls swarmEngine.pauseExecution() after Ctrl-C delivery — logical state kept in sync
+- BUG-95 FIXED: swarm.js POST /resume now calls swarmEngine.resumeExecution() — was a no-op stub
+- BUG-96 FIXED: SwarmEngine.getExecution() public method added — inbox.js no longer accesses private _executions
+- BUG-97 FIXED: SwarmEngine.stopExecution now calls triggerManager.cleanupExecution() — RSS poll intervals cleaned up on stop
+- BUG-98 FIXED: SwarmEngine.getStatus now reads budget from budgetTracker.getTotal() — returns real token estimates
+- BUG-99 FIXED: routes/triggers.js webhook body now uses express.raw({ limit: '32kb' }) — 32KB cap enforced before JSON parse

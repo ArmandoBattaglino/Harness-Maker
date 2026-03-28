@@ -1640,3 +1640,69 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 - Security audit (Task #79): SEC-V3-01 through SEC-V3-07 all confirmed PASS in docs/security-v3-audit.md.
 
 ---
+
+## 2026-03-28 — Tasks #84–#99: Debug Loop Wave
+
+**Agent:** debugger + backend-dev + frontend-dev
+**Triggered by:** Systematic debug pass across swarm frontend and backend — 16 bug fixes across 8 files.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/hooks/useInbox.js | MODIFIED | BUG-84: Zustand mutation fix (setState not direct mutation); BUG-85: normalizeInboxItem shape normalization added |
+| client/src/store/SwarmContext.jsx | MODIFIED | BUG-86: resolveInboxItem i?.id optional chain; BUG-87: setFocusedDepartment dedup guard for departmentStack |
+| client/src/hooks/useSwarm.js | MODIFIED | BUG-88: handoffCount increment in handoff_started WS handler; BUG-90: granular useSwarmStore selectors |
+| client/src/canvas/nodes/TriggerNode.jsx | MODIFIED | BUG-91: animation keyed on fireCount counter rather than status string — repeated firings now retrigger animation |
+| client/src/canvas/SwarmCanvas.jsx | MODIFIED | BUG-89: useEffect added to sync workflowDef prop changes into React Flow nodes/edges state after mount |
+| server/services/SwarmEngine.js | MODIFIED | BUG-93: budgetTracker.clearExecution wired to stopExecution; BUG-94/95: pauseExecution/resumeExecution now live-called from routes; BUG-96: getExecution() public method added; BUG-98: getStatus() reads real budget from budgetTracker |
+| server/services/TriggerManager.js | MODIFIED | BUG-97: cleanupExecution now also removes null-executionId (workflow-level) pollers; caller wired from stopExecution |
+| server/routes/inbox.js | MODIFIED | BUG-96: now uses swarmEngine.getExecution() public API instead of direct _executions access |
+| server/routes/swarm.js | MODIFIED | BUG-94: POST /pause now calls swarmEngine.pauseExecution(); BUG-95: POST /resume now calls swarmEngine.resumeExecution() |
+| server/routes/triggers.js | MODIFIED | BUG-99: express.raw({ limit: '32kb' }) for webhook body — enforces 32KB cap before JSON parse |
+
+### Functions Added
+- `normalizeInboxItem(item)` in `client/src/hooks/useInbox.js` — normalizes REST/WS inbox item shape to `{ id, type, agentId, status, payload }` (BUG-85 fix)
+- `SwarmEngine.getExecution(executionId)` in `server/services/SwarmEngine.js` — public accessor for live execution object; prevents private _executions field access from routes (BUG-96 fix)
+
+### Functions Modified
+- `useInbox(executionId)` in `client/src/hooks/useInbox.js` — Zustand mutation via setState (not direct mutation); added normalizeInboxItem pipeline in selector and loadInbox
+- `loadInbox()` in `client/src/hooks/useInbox.js` — now calls `useSwarmStore.setState({ inboxItems })` instead of direct getState() mutation
+- `resolveInboxItem(itemId)` in `client/src/store/SwarmContext.jsx` — filter now uses `i?.id` optional chain guard
+- `setFocusedDepartment(id)` in `client/src/store/SwarmContext.jsx` — dedup guard: only pushes to stack if id !== last stack entry
+- `connectWs(executionId)` in `client/src/hooks/useSwarm.js` — handoff_started now increments handoffCount from agentStates snapshot
+- `useSwarm(workflowId)` in `client/src/hooks/useSwarm.js` — granular store selectors (one per slice)
+- `TriggerNode({ id, data, selected })` in `client/src/canvas/nodes/TriggerNode.jsx` — animation gated on fireCount counter (not status string)
+- `SwarmCanvas({ workflowDef })` in `client/src/canvas/SwarmCanvas.jsx` — useEffect added for workflowDef prop sync
+- `SwarmEngine.stopExecution(executionId)` in `server/services/SwarmEngine.js` — added budgetTracker.clearExecution() + triggerManager.cleanupExecution() calls
+- `SwarmEngine.getStatus(executionId)` in `server/services/SwarmEngine.js` — budget now sourced from budgetTracker.getTotal(); was returning undefined e.budget
+- `SwarmEngine.pauseExecution(executionId)` in `server/services/SwarmEngine.js` — now called from routes/swarm.js POST /pause (was uncalled)
+- `SwarmEngine.resumeExecution(executionId)` in `server/services/SwarmEngine.js` — now called from routes/swarm.js POST /resume (was uncalled)
+- `TriggerManager.cleanupExecution(executionId)` in `server/services/TriggerManager.js` — also removes null-executionId pollers; now wired from stopExecution
+- `POST /:executionId/pause` in `server/routes/swarm.js` — calls swarmEngine.pauseExecution() after Ctrl-C delivery
+- `POST /:executionId/resume` in `server/routes/swarm.js` — calls swarmEngine.resumeExecution() (was pure no-op stub)
+- `POST /webhooks/:path` in `server/routes/triggers.js` — body parser changed from express.json to express.raw({ limit: '32kb' })
+- `inboxRoutes(swarmEngine)` in `server/routes/inbox.js` — uses swarmEngine.getExecution() instead of private _executions access
+- `BudgetTracker.clearExecution(executionId)` in `server/services/BudgetTracker.js` — now has live caller (stopExecution)
+
+### Functions Removed
+- None
+
+### Connection Changes
+- `SwarmEngine.stopExecution` → `TriggerManager.cleanupExecution` (new — BUG-97 fix)
+- `SwarmEngine.stopExecution` → `BudgetTracker.clearExecution` (new — BUG-93 fix)
+- `server/routes/swarm.js POST /pause` → `SwarmEngine.pauseExecution` (new — BUG-94 fix)
+- `server/routes/swarm.js POST /resume` → `SwarmEngine.resumeExecution` (new — BUG-95 fix)
+- `server/routes/inbox.js` → `SwarmEngine.getExecution` (new — replaces direct _executions access — BUG-96 fix)
+- `SwarmEngine.getStatus` → `BudgetTracker.getTotal` (new — BUG-98 fix)
+- `useInbox.loadInbox` → `useSwarmStore.setState` (path corrected — was direct mutation)
+- `TriggerNode` → `triggerStates[id].fireCount` (new — replaces status string gating)
+- `SwarmCanvas` → `workflowDef prop` via useEffect (new reactive dep — BUG-89 fix)
+- `useSwarm.connectWs` → `agentStates[sourceNodeId].handoffCount` (new read for increment — BUG-88 fix)
+
+### Impact on Other Code
+- `SwarmEngine._executions` — no longer accessed directly from routes (inbox.js); only SwarmEngine internal methods may access it
+- `server/middleware/webhookLimit.js` and `server/middleware/webhookRateLimit.js` — still not used (routes/triggers.js inlines equivalent logic); these middleware stubs remain test-only
+- `BudgetTracker.registerSession` — already wired since Task #62.3; confirmed correct
+- All previous "not yet wired" notes for stopExecution cleanup calls are now resolved
+
+---
