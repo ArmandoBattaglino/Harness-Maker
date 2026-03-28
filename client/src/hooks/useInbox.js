@@ -3,16 +3,39 @@ import { useCallback, useEffect } from 'react';
 import { useSwarmStore } from '../store/SwarmContext';
 
 /**
+ * Normalize inbox item shape to consistent structure.
+ * Ensures items from REST and WS endpoints have the same shape: { id, type, agentId, status, payload }
+ *
+ * @param {Object} item - Raw item from API or WS
+ * @returns {Object} Normalized item
+ */
+function normalizeInboxItem(item) {
+  return {
+    id: item?.id || '',
+    type: item?.type || 'hitl',
+    agentId: item?.agentId || item?.agent_id || '',
+    status: item?.status || 'pending',
+    payload: item?.payload || item?.resume_text || item?.resumeText || '',
+  };
+}
+
+/**
  * Hook for managing HITL inbox items.
  * - Loads inbox items on mount and periodically polls when WS is disconnected
  * - Provides approve/reject actions
  * - Filters inbox to show only pending items
+ * - Normalizes item shapes from REST and WS sources
  *
  * @param {string} executionId - The active execution ID
  * @returns {{ inboxItems, approve, reject }}
  */
 export function useInbox(executionId) {
-  const inboxItems = useSwarmStore((s) => s.inboxItems?.filter((i) => i.status === 'pending') ?? []);
+  // Filter by pending status and normalize item shapes
+  const inboxItems = useSwarmStore((s) =>
+    (s.inboxItems || [])
+      .map(normalizeInboxItem)
+      .filter((i) => i.status === 'pending')
+  );
   const wsConnected = useSwarmStore((s) => s.wsConnected);
   const resolveInboxItem = useSwarmStore((s) => s.resolveInboxItem);
 
@@ -24,10 +47,9 @@ export function useInbox(executionId) {
       const res = await fetch(`/api/v1/swarm/${executionId}/inbox`);
       if (res.ok) {
         const data = await res.json();
-        // Update store with fetched items (assume they come as pending by default from server)
-        const items = data.items ?? [];
-        // Re-synchronize inboxItems in store with server state
-        useSwarmStore.getState().inboxItems = items;
+        // Normalize items and update store via Zustand action (not direct mutation)
+        const items = (data.items ?? []).map(normalizeInboxItem);
+        useSwarmStore.setState({ inboxItems: items });
       }
     } catch (err) {
       console.error('[useInbox] loadInbox error:', err);
