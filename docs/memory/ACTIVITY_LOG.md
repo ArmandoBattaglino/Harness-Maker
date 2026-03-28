@@ -1,4 +1,13 @@
 ---
+## 2026-03-28 — documenter — Task #82: V3 Documentation Update
+**Outcome:** COMPLETED
+**Summary:** All project documentation updated for v3.0 release. README.md gained a full V3 Swarm Orchestrator section with quick-start guide and feature table entries. docs/ARCHITECTURE.md received a new Section 11 covering the complete V3 system architecture (diagram, WS events, schemas, handoff protocol, HITL flow, decisions, security requirements). docs/API.md was created from scratch as a standalone REST + WS API reference covering all V1 and V3 endpoints. docs/memory/PROJECT.md updated to v3.0 with V3 tech stack entries and constraint section.
+**Files changed:** README.md, docs/ARCHITECTURE.md, docs/API.md (CREATED), docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/DOC_STATUS.md
+**Bugs fixed:** none
+**Decisions made:** none (documentation task — no code decisions)
+**Blockers:** none
+**Next:** nothing — Task chain complete. V3 is fully documented and released at v3.0.0.
+---
 ## 2026-03-28 — devops — Task #81: Build Verification + v3.0.0 Tag
 **Outcome:** COMPLETED
 **Summary:** Final build and release verification completed. Client build: 473 modules, 866.72 kB minified (well under 3MB limit). npm audit: 1 HIGH advisory in path-to-regexp (pre-existing, noted as non-exploitable in Task #79 security audit). npm test: 187/187 tests PASS in 3.57s. Git tag v3.0.0 created successfully. V3 release-ready.

@@ -1216,3 +1216,60 @@ DOC_STATUS.md is current as of 2026-03-27, 16 V3 artifacts tracked. SwarmContext
 ### Handoff
 Next: Tasks #53.1, #53.2, #53.3 (canvas nodes) are IN_PROGRESS — they all import from SwarmContext. After Task #82: major ARCHITECTURE.md + README.md V3 update.
 ---
+## 2026-03-28 — Task #82: V3 Documentation Update
+**Status:** COMPLETED
+**Called by:** orchestrator (final task in V3 Wave 7 — parallel with code-mapper and project-manager)
+
+### Context when I started
+All 81 preceding tasks were COMPLETED. Git tag v3.0.0 had been created by devops (Task #81). The project was fully implemented and release-ready. DOC_STATUS.md had a high-priority debt item: "docs/ARCHITECTURE.md V3 section — Must be written once V3 ships" and "README.md V3 features — Must be updated once V3 ships." docs/API.md did not exist. The README still described v1.3 features only.
+
+### What I did
+1. Read README.md, docs/memory/PROJECT.md, docs/memory/DOC_STATUS.md, and all route files (swarm.js, inbox.js, triggers.js, workflows.js) in parallel — plus existing ARCHITECTURE.md and documenter.md.
+2. Read docs/memory/DECISIONS.md and docs/memory/PROGRESS.md for full V3 decision context.
+3. Updated README.md: added 6 V3 feature rows to the feature table; added a full "V3 Swarm Orchestrator" section with 5-step quick-start guide, ANTHROPIC_API_KEY env var table, and swarm constraint list; updated Known Limitations from v1 to v3.0.
+4. Updated docs/ARCHITECTURE.md: updated version header to 3.0; added V3 item to ToC; appended Section 11 (9 subsections: system diagram, WS swarm channel events, WorkflowDefinition schema, handoff protocol, HITL flow, key V3 decisions, V3 security requirements, V3 service dependency graph, V3 React component tree).
+5. Created docs/API.md from scratch: full standalone REST + WS reference covering all V1 and V3 endpoints with request/response examples, error codes, and WS event tables.
+6. Updated docs/memory/PROJECT.md: version to v3.0; implementation status to "all 82 tasks COMPLETED, git tag v3.0.0 created"; added @anthropic-ai/sdk to tech stack; updated @xyflow/react and zustand rows to reflect active use; added V3-Specific Constraints section.
+7. Updated docs/memory/DOC_STATUS.md: all documents now UP_TO_DATE; documentation debt table updated.
+8. Marked Task #82 COMPLETED in docs/TASK_PLAN.md.
+9. Committed all changes: `git commit dd09cf2`.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| README.md | MODIFIED | V3 feature table (6 rows), V3 Swarm Orchestrator section (quick-start + constraints), Known Limitations updated for v3.0 |
+| docs/ARCHITECTURE.md | MODIFIED | Version header 3.0; ToC entry added; Section 11 appended (V3 full architecture documentation) |
+| docs/API.md | CREATED | New file — standalone REST + WS API reference for all V1 and V3 endpoints |
+| docs/memory/PROJECT.md | MODIFIED | Version, implementation status, tech stack (@anthropic-ai/sdk), V3 constraints section |
+| docs/memory/DOC_STATUS.md | MODIFIED | All rows updated; debt table refreshed |
+| docs/TASK_PLAN.md | MODIFIED | Task #82 Status: PENDING → COMPLETED |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Task #82 entry appended |
+| docs/memory/agents/documenter.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- First time the project has a standalone API reference (docs/API.md) with copy-pasteable examples.
+- ARCHITECTURE.md V3 section fills the highest-priority documentation debt item that has been flagged since Task #43.
+- README.md is now accurate for v3.0 — a new user can understand and use the Swarm feature without reading source code.
+- docs/memory/PROJECT.md is the authoritative V3 constraints reference for any future agents.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | -- | -- | -- |
+
+### Decisions I made
+- Appended Section 11 to ARCHITECTURE.md rather than rewriting existing sections — existing V1 architecture is accurate and other agents rely on it.
+- docs/API.md includes all V1 endpoints (Projects, Sessions, Jobs, Agents, Skills, CLAUDE.md) even though they were in ARCHITECTURE.md Section 2 — a standalone API.md should be self-contained.
+- Did not document TriggerNode.jsx visual implementation (stub) as "complete" — noted it in debt table since Task #76 was out of scope for v3.0.
+
+### What I learned
+- The Anthropic SDK is imported in swarm.js at the module level (not as a lazy import) — ANTHROPIC_API_KEY must be set before the server starts, not just before scaffold is called.
+- Webhook endpoint always returns 200 to external callers even on error (SEC-V3-07) — this is intentional information-leakage prevention. Documenting this in API.md prevents future agents from "fixing" it.
+- The swarm WS channel is server-push only — no client-to-server messages. All control flows through REST. This asymmetry is important for developers integrating with the API.
+
+### State I'm leaving behind
+All documentation is UP_TO_DATE as of 2026-03-28 for v3.0.0 release. No documentation debt items are blocking. Minor deferred items tracked in DOC_STATUS.md debt table (CONTRIBUTING.md, EntitiesView.jsx cleanup, swarm execution state persistence for v3.1).
+
+### Handoff
+No handoff required. Task chain is complete — V3 is implemented, tested, audited, built, tagged, and now documented. The project is in a clean state for future development.
+---
