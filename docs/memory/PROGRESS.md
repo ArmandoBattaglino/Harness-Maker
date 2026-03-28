@@ -154,7 +154,7 @@ _None._
 - NOTE: FileManager was NOT created in Task #5 as planned — RESOLVED in Task #7 (created server/services/FileManager.js).
 
 ## V3 — Swarm Orchestrator (57 granular tasks after split — 2026-03-27 replan)
-**Status: 42/57 COMPLETED — as of 2026-03-27. All Phase 1 backend tasks done. All Phase 2 (Canvas Static) COMPLETED. Phase 3 (Prompt-to-Flow) FULLY COMPLETED. Phase 4 (Live Execution) ACTIVE: #62.1, #62.2, #62.3, #63, #64, #66, #67 DONE. Phase 5 wave: #68, #70 DONE, #71.1 IN_PROGRESS, #72 COMPLETED.**
+**Status: 43/57 COMPLETED — as of 2026-03-27. All Phase 1 backend tasks done. All Phase 2 (Canvas Static) COMPLETED. Phase 3 (Prompt-to-Flow) FULLY COMPLETED. Phase 4 (Live Execution) ACTIVE: #62.1, #62.2, #62.3, #63, #64, #66, #67 DONE. Phase 5 wave: #68, #69, #70 DONE, #71.1 IN_PROGRESS, #72 COMPLETED.**
 **Note: Original 40 tasks (#43–#82). After model assignment + subtask split: 57 granular units.**
 **7 original tasks split into subtasks: #46→3, #47→2, #48→2, #53→3, #57→2, #62→3, #71→2**
 - V3 PRD complete: docs/PRD.md
@@ -207,7 +207,7 @@ _None._
 
 ### V3 Phase 5 — HITL + PTY Explosion
 - [TASK-68] COMPLETED 2026-03-27 — inbox.js HITL approve/reject API (server/routes/inbox.js created, mounted at /api/v1/swarm, 168/168 tests pass)
-- [TASK-69] PENDING — HitlInbox.jsx approval panel (waits on #68)
+- [TASK-69] COMPLETED 2026-03-27 — HitlInbox.jsx approval panel created (client/src/panels/HitlInbox.jsx); list view with type badges, Approve/Reject flow, inline resume textarea, empty state, getPendingCount export; 472 modules, 0 errors
 - [TASK-70] COMPLETED 2026-03-27 — SwarmEngine freezeAgent/unfreezeAgent HITL methods added; 168/168 tests pass
 - [TASK-71.1] IN_PROGRESS — PTY Explosion overlay component (frontend-dev, sonnet; dep: #58 ✓)
 - [TASK-71.2] PENDING — PTY Explosion Escape key handler (waits on #71.1)

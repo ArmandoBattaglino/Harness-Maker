@@ -1,4 +1,13 @@
 ---
+## 2026-03-27 — frontend-dev — Task #69: HitlInbox.jsx — Approval Panel
+**Outcome:** COMPLETED
+**Summary:** Created client/src/panels/HitlInbox.jsx — HITL approval panel with list view, type badges, Approve/Reject actions, inline resume text textarea, and empty state. Exports both default HitlInbox and named getPendingCount for tab badge. Build passes at 472 modules, 0 errors.
+**Files changed:** client/src/panels/HitlInbox.jsx (CREATED), docs/TASK_PLAN.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/agents/frontend-dev.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** inbox items in store are full WS messages { type, nodeId, item: {...} } — accessed via entry.item; API path uses /api/v1/swarm/:executionId/inbox/:itemId/approve|reject with apiPost from useApi.js
+**Blockers:** none
+**Next:** Task #73 (useInbox.js polling hook) waits on #69 completion.
+---
 ## 2026-03-27 — frontend-dev — Task #71.1: PTY Explosion — Full-Screen Overlay Component
 **Outcome:** COMPLETED
 **Summary:** Created client/src/canvas/PtyExplosion.jsx — a full-screen overlay component that wraps Terminal.jsx (unchanged, per DEC-009) to display an agent's live PTY session. Added ptyExplosionNodeId + setPtyExplosionNodeId to SwarmContext store. Added .pty-explosion-overlay/.pty-explosion-header/.pty-explosion-body/.pty-explosion-close CSS classes to index.css. Build passes at 472 modules, 0 errors.

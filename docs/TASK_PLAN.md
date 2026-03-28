@@ -5411,7 +5411,7 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Dependencies: #68, #52
 Context:
   Create `client/src/panels/HitlInbox.jsx` — a panel (bottom drawer in SwarmView) showing
