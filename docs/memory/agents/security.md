@@ -1,4 +1,66 @@
 ---
+## 2026-03-28 — Task #79: V3 Pre-Release Security Audit
+**Status:** COMPLETED
+**Called by:** User (direct task assignment)
+
+### Context when I started
+Task #50 (2026-03-27) created the 4 security middleware files as stubs and verified SEC-V3-02/-06/-07 in WorkflowStore + HandoffParser. Tasks #68 (inbox.js), #74 (TriggerManager.js), #75 (triggers.js) were completed after Task #50. This audit verifies that all stubs are now wired into production routes and all 7 SEC-V3 requirements are active end-to-end.
+
+### What I did
+1. Read all 7 memory files in parallel (security.md, PROJECT.md, DECISIONS.md, PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md).
+2. Read all 14 target files in parallel: triggers.js, inbox.js, TriggerManager.js, HandoffParser.js, CircuitBreaker.js, BudgetTracker.js, SwarmEngine.js, swarm.js, swarmHandler.js, WorkflowStore.js, hitlValidation.js, ssrfGuard.js, csrf.js, useInbox.js.
+3. Verified each of 7 SEC-V3 requirements against production code with exact file:line citations.
+4. Ran `npm audit` (root + client) — found path-to-regexp HIGH (transitive) and picomatch HIGH (client devdep).
+5. Ran `npm test` — 187/187 pass.
+6. Checked: shell:true (zero matches), fs.writeFile (zero matches), prompt logging in scaffold (not present).
+7. Identified MEDIUM-V3-01: webhook endpoint blocked by global CSRF middleware (functional issue, net security positive).
+8. Identified LOW-V3-01 (swarmHandler keeps WS open for missing execution), LOW-V3-02 (BudgetTracker unbounded char count), LOW-V3-03 (RSS URL logged in error paths).
+9. Wrote docs/security-v3-audit.md (full report, 19 findings documented).
+10. Updated TASK_PLAN.md, PROGRESS.md, ACTIVITY_LOG.md.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/security-v3-audit.md | CREATED | Full V3 pre-release security audit report |
+| docs/TASK_PLAN.md | MODIFIED | Task #79 status PENDING → COMPLETED |
+| docs/memory/PROGRESS.md | MODIFIED | Added Task #79 to Completed section |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended audit outcome entry |
+| docs/memory/agents/security.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- All 7 SEC-V3 requirements confirmed active in production code with exact citations
+- MEDIUM design note identified: webhook receiver blocked by global CSRF (functional bug, more secure than designed)
+- Two HIGH npm advisories assessed as non-exploitable in current usage patterns
+- Three LOW informational findings documented for backlog
+- Full OWASP Top 10 verification against all V3 additions
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None — audit only | — | — | — |
+
+### Decisions I made
+- Rated webhook CSRF blocking as MEDIUM (not HIGH): it is a functional bug that makes the system more restrictive than designed, but it does not create a security vulnerability. The app is localhost-only anyway.
+- Rated path-to-regexp HIGH dep as non-exploitable: the vulnerability requires user-supplied route pattern strings, which this app never does — all routes are statically defined. Effective risk is LOW despite advisory severity.
+- Rated picomatch HIGH dev dep as LOW risk: dev-only dependency, not in production build.
+- Did NOT fix MEDIUM-V3-01 inline (webhook CSRF): fixing it requires modifying csrf.js to add a path exemption. This is a code change that could break existing CSRF tests, and the fix belongs in a follow-up task. Documented the exact fix in the audit report.
+
+### What I learned
+- The triggers router is stored in `app.locals.triggersRouter` then mounted at line 283 (after SwarmEngine init), but the CSRF middleware is mounted at line 180. The mounting order means the webhook endpoint IS protected by CSRF despite the design intent comment saying it should not be. This is easy to miss — the late mount gives the impression of escaping the global middleware, but it does not.
+- `path-to-regexp` HIGH advisory comes from `@google/stitch-sdk` → `express@5.x` → `router@2.x`. The server itself uses its own Express instance without stitch-sdk, so the vulnerable version is only in the stitch-sdk transitive dep — not in the app's main Express routing.
+- All V3 middleware stubs from Task #50 are correctly wired: webhookLimit imported inline in triggers.js, webhookRateLimit implemented inline (not as import), hitlValidation imported in inbox.js, ssrfGuard imported in TriggerManager.js.
+
+### State I'm leaving behind
+- docs/security-v3-audit.md: complete, ready for review. Verdict: PASS with notes (0 CRITICAL, 0 HIGH in app code, 1 MEDIUM design note, 3 LOW informational).
+- Task #79 COMPLETED.
+- Three LOW findings are documented but not fixed — backlog for future sprint.
+- MEDIUM-V3-01 (webhook CSRF) requires a targeted fix in csrf.js (add path exemption) — recommended before v3 release if external webhook triggering is needed.
+
+### Handoff
+- Task #80 (V3 E2E Test, qa-tester, Puppeteer): run E2E tests against the full V3 UI
+- Task #81 (Build verification + v3.0.0 git tag): devops
+- MEDIUM-V3-01 fix: if webhook triggering from external sources is required, add `/^\/api\/v1\/triggers\/webhooks\//` exemption to csrf.js before v3 release
+---
 ## 2026-03-27 — Task #50: V3 Security Layer — SEC-V3-01 through SEC-V3-07
 **Status:** COMPLETED
 **Called by:** User (direct task assignment)

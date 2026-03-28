@@ -1,4 +1,13 @@
 ---
+## 2026-03-28 — security — Task #79: V3 Pre-Release Security Audit
+**Outcome:** COMPLETED
+**Summary:** Full audit of all 14 V3 files. All 7 SEC-V3 requirements verified active in production code with exact file:line citations. Zero CRITICAL/HIGH findings in application code. One MEDIUM design note (webhook route blocked by global CSRF middleware — net security positive, functional impact only). Two HIGH npm advisories (path-to-regexp in transitive dep, picomatch in client devdeps — neither exploitable in current usage). 187/187 tests pass.
+**Files changed:** docs/security-v3-audit.md (CREATED — full report), docs/TASK_PLAN.md (MODIFIED — #79 PENDING→COMPLETED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/agents/security.md (MODIFIED)
+**Bugs fixed:** none — audit only
+**Decisions made:** Rated webhook CSRF blocking as MEDIUM (functional, not security critical); rated path-to-regexp HIGH dep as non-exploitable in current routing pattern
+**Blockers:** none
+**Next:** Task #80 (V3 E2E Test — qa-tester, Puppeteer)
+---
 ## 2026-03-28 — qa-tester — Task #78: SwarmEngine Integration Tests
 **Outcome:** COMPLETED
 **Summary:** Created server/tests/swarm-engine.test.js with 19 integration tests covering 7 test areas: execution lifecycle, handoff processing, circuit breaker (advisory-only, no stop), budget tracking (budget_update WS event), heartbeat (writeInput '' every 5 min via fake timers), HITL mode (freezeAgent creates inboxItem, does not spawn target), and DEC-009 preservation (swarmListeners.add only, onData never touched). Full suite: 187/187 tests pass in 5.62s.

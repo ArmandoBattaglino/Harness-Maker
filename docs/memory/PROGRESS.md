@@ -1,6 +1,8 @@
 # Progress
 
 ## Completed
+- [TASK-79] V3 Pre-Release Security Audit (security) — COMPLETED 2026-03-28
+  All 7 SEC-V3 requirements verified as active in production code. Zero CRITICAL/HIGH findings in V3 code. One MEDIUM design note (webhook CSRF interaction — net security positive). Two HIGH npm dependency advisories (path-to-regexp, picomatch — neither exploitable in current usage). 187/187 tests pass. docs/security-v3-audit.md produced.
 - [TASK-78] SwarmEngine Integration Tests (qa-tester) — COMPLETED 2026-03-28
   server/tests/swarm-engine.test.js created: 19 tests across 7 cases (lifecycle, handoff, circuit breaker, budget, heartbeat, HITL, DEC-009). 187/187 tests pass in 5.62s. SessionManager fully mocked — no real PTY.
 - [TASK-77] HandoffParser Unit Tests (qa-tester) — COMPLETED 2026-03-28
