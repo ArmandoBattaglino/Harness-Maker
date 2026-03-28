@@ -167,8 +167,8 @@ export default function swarmRoutes(swarmEngine, sessionManager) {
 
   // -------------------------------------------------------------------------
   // POST /api/v1/swarm/:executionId/pause
-  // Sends Ctrl-C to all running agent sessions inline (SwarmEngine has no
-  // pauseExecution method — Task #70 will add full HITL freeze).
+  // Sends Ctrl-C to all running agent sessions and sets their status to 'paused'.
+  // Calls swarmEngine.pauseExecution() to update state and broadcast WS events.
   // → 200 { ok: true }
   // → 404 if execution not found
   // -------------------------------------------------------------------------
@@ -188,6 +188,9 @@ export default function swarmRoutes(swarmEngine, sessionManager) {
         }
       }
 
+      // Update execution state to 'paused' and broadcast WS events (BUG-94 fix)
+      swarmEngine.pauseExecution(executionId);
+
       return res.status(200).json({ ok: true });
     } catch (err) {
       console.error(`[swarm] POST /:executionId/pause error: ${err.message}`);
@@ -197,7 +200,8 @@ export default function swarmRoutes(swarmEngine, sessionManager) {
 
   // -------------------------------------------------------------------------
   // POST /api/v1/swarm/:executionId/resume
-  // No-op for now — full HITL resume implemented in Task #70.
+  // Resumes all paused agents by setting their status back to 'running'.
+  // Calls swarmEngine.resumeExecution() to update state and broadcast WS events.
   // → 200 { ok: true }
   // → 404 if execution not found
   // -------------------------------------------------------------------------
@@ -210,7 +214,9 @@ export default function swarmRoutes(swarmEngine, sessionManager) {
         return res.status(404).json({ error: 'Execution not found' });
       }
 
-      // No-op — full resume (HITL unfreeze) is implemented in Task #70
+      // Resume execution — set paused agents to 'running' (BUG-95 fix)
+      swarmEngine.resumeExecution(executionId);
+
       return res.status(200).json({ ok: true });
     } catch (err) {
       console.error(`[swarm] POST /:executionId/resume error: ${err.message}`);

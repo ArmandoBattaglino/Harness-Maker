@@ -66,17 +66,28 @@ export default function triggersRouter(triggerManager) {
   // Webhook receiver endpoint.
   // - External caller: NOT CSRF-protected (no X-Requested-With header expected)
   // - Rate limited: 10 req/min per IP (SEC-V3-04)
-  // - Body size limit: 32 KB (SEC-V3-01)
+  // - Body size limit: 32 KB (SEC-V3-01) — enforced via express.raw, not bypassed by global parser
   // - Always returns 200 { received: true } for external visibility
   // -------------------------------------------------------------------------
   router.post(
     '/webhooks/:path',
-    express.json({ limit: '32kb' }),
+    express.raw({ limit: '32kb', type: 'application/json' }),
     webhookRateLimit(10, 60000),
     async (req, res) => {
       try {
         const { path } = req.params;
-        const payload = req.body || {};
+        let payload = {};
+
+        // Manually parse JSON from raw body to enforce 32KB cap (BUG-99 fix)
+        if (req.body && req.body.length > 0) {
+          try {
+            payload = JSON.parse(req.body.toString('utf8'));
+          } catch (parseErr) {
+            // Invalid JSON — treat as empty payload
+            // Still return 200 to external caller per SEC-V3-07
+            payload = {};
+          }
+        }
 
         // Validate path is a non-empty string
         if (!path || typeof path !== 'string') {
