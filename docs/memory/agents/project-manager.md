@@ -1,4 +1,58 @@
 ---
+## 2026-03-28 — V3 Final Reconciliation + Task #83 (v3.0.1 patch)
+**Status:** COMPLETED
+**Called by:** user (V3 complete — verify final status, assess TriggerManager gap)
+
+### Context when I started
+All V3 tasks (#43–#82, 57 granular units) reported as COMPLETED. v3.0.0 git tag created. Code-mapper identified one gap: TriggerManager.cleanupExecution() has no live caller — SwarmEngine.stopExecution() does not call it, so RSS pollers accumulate. User asked to verify #73–#82 statuses, assess the gap, and update docs.
+
+### What I did
+1. Read TASK_PLAN.md (multiple offset reads) to check #73–#82 individual entries and the V3 summary table
+2. Read ACTIVITY_LOG.md (top entries) to confirm recent completions
+3. Read PROGRESS.md to cross-reference V3 completion status
+4. Read project-manager.md (my own prior session) for context
+5. Found: #75 individual entry showed PENDING while summary table + ACTIVITY_LOG confirmed it was COMPLETED
+6. Found: summary table at bottom of TASK_PLAN.md had 15+ stale PENDING entries (tasks completed by concurrent agents that never updated the summary table)
+7. Corrected #75 individual entry: PENDING → COMPLETED
+8. Rewrote entire summary table block with all 57 tasks as COMPLETED
+9. Added V3 Release Final Status section with git tag date and known gap description
+10. Assessed TriggerManager gap: decided to create Task #83 (v3.0.1 patch) rather than noting as known issue — RSS poller accumulation is bounded but real in production
+11. Created Task #83 with full backend-dev context, acceptance criteria, dependencies
+12. Appended ACTIVITY_LOG.md entry
+13. Wrote this session log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Task #75 PENDING→COMPLETED; summary table all 57→COMPLETED; V3 final status block + gap description added; Task #83 created |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | PM session entry prepended |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log |
+
+### Improvements delivered
+- TASK_PLAN.md now accurately reflects all 57 V3 tasks as COMPLETED
+- Summary table is no longer stale (was showing 15+ false PENDINGs)
+- TriggerManager gap elevated from informal mention to formal tracked task (#83)
+- V3 release section documents the git tag date and release readiness
+
+### Bugs I encountered
+None. The "bug" was stale summary table entries — a cosmetic issue in docs, not code.
+
+### Decisions I made
+- Task #83 as v3.0.1 patch (not known issue): RSS poller accumulation is low-severity but real. A one-function wire-up (stopExecution → cleanupExecution) is trivial. Tracking it as PENDING/assignable is more actionable than a buried known-issue note.
+- Task #83 priority = LOW: no data loss, no security risk, no user-visible breakage. Background CPU/network waste only.
+- Suggested model = haiku: the fix is a mechanical 3-5 line addition with no design complexity.
+
+### What I learned
+- Concurrent agents completing tasks do not always update the summary table at the bottom of TASK_PLAN.md — they update their own task entries and PROGRESS.md, but the consolidated table can drift. Future PM passes should always reconcile the table.
+- The ACTIVITY_LOG is the most reliable source of truth for task completion status — individual task entries in TASK_PLAN.md sometimes lag.
+
+### State I'm leaving behind
+- V3: 57/57 tasks COMPLETED. v3.0.0 tagged.
+- v3.0.1: Task #83 PENDING (backend-dev, haiku, LOW). Wire SwarmEngine.stopExecution → TriggerManager.cleanupExecution. No blockers.
+
+### Handoff
+Assign Task #83 to backend-dev (haiku model). It is self-contained — no parallel tasks needed. After #83 completes: run code-mapper + documenter + PM in parallel as usual.
+---
 ## 2026-03-27 — Task #62.1 COMPLETED; Phase 5 wave launched (#62.2, #68, #70, #71.1, #72)
 **Status:** COMPLETED
 **Called by:** user (orchestrator notification — #62.1 done, 168 tests pass)

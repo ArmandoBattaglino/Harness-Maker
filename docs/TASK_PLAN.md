@@ -5714,7 +5714,7 @@ Agent: backend-dev
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Dependencies: #74
 Context:
   Create `server/routes/triggers.js` and mount at `/api/v1/triggers`.
@@ -6017,11 +6017,11 @@ Acceptance criteria:
 | **53.2** | DepartmentNode.jsx — group container node | frontend-dev | HIGH | claude-opus-4-6 | COMPLETED |
 | **53.3** | TriggerNode.jsx — webhook/RSS node stub | frontend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
 | 54 | HandoffEdge.jsx — animated edge + counter badge | frontend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
-| 55 | AgentInspector.jsx — node config panel | frontend-dev | MEDIUM | claude-sonnet-4-6 | IN_PROGRESS |
-| 56 | BreadcrumbBar.jsx — drill-down nav | frontend-dev | MEDIUM | claude-haiku-4-5 | IN_PROGRESS |
+| 55 | AgentInspector.jsx — node config panel | frontend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
+| 56 | BreadcrumbBar.jsx — drill-down nav | frontend-dev | MEDIUM | claude-haiku-4-5 | COMPLETED |
 | **57.1** | SwarmCanvas.jsx — React Flow canvas + drill-down | frontend-dev | HIGH | claude-opus-4-6 | COMPLETED |
 | **57.2** | SwarmView.jsx — layout shell + toolbar | frontend-dev | HIGH | claude-opus-4-6 | COMPLETED |
-| 58 | App.jsx + Sidebar — swarm nav + ReactFlowProvider | frontend-dev | HIGH | claude-haiku-4-5 | PENDING |
+| 58 | App.jsx + Sidebar — swarm nav + ReactFlowProvider | frontend-dev | HIGH | claude-haiku-4-5 | COMPLETED |
 | 59 | scaffold endpoint complete (replaces 47.2 stub) | backend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
 | 60 | PromptToFlowBar.jsx + staggered animation | frontend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
 | 61 | useWorkflow.js — workflow CRUD hook | frontend-dev | MEDIUM | claude-haiku-4-5 | COMPLETED |
@@ -6034,26 +6034,88 @@ Acceptance criteria:
 | 66 | BroadcastBar.jsx + broadcast route | frontend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
 | 67 | SwarmEngine heartbeat — idle sweeper prevention | backend-dev | MEDIUM | claude-haiku-4-5 | COMPLETED |
 | 68 | inbox.js — HITL approve/reject API | backend-dev | HIGH | claude-sonnet-4-6 | COMPLETED |
-| 69 | HitlInbox.jsx — approval panel | frontend-dev | HIGH | claude-sonnet-4-6 | PENDING |
-| 70 | SwarmEngine HITL — freeze/unfreeze agent | backend-dev | MEDIUM | claude-sonnet-4-6 | PENDING |
+| 69 | HitlInbox.jsx — approval panel | frontend-dev | HIGH | claude-sonnet-4-6 | COMPLETED |
+| 70 | SwarmEngine HITL — freeze/unfreeze agent | backend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
 | **71.1** | PTY Explosion — full-screen overlay component | frontend-dev | HIGH | claude-sonnet-4-6 | COMPLETED |
-| **71.2** | PTY Explosion — Escape key handler | frontend-dev | MEDIUM | claude-haiku-4-5 | PENDING |
-| 72 | InterAgentFeed.jsx — real-time handoff log | frontend-dev | LOW | claude-haiku-4-5 | PENDING |
-| 73 | useInbox.js — HITL polling hook | frontend-dev | MEDIUM | claude-haiku-4-5 | PENDING |
+| **71.2** | PTY Explosion — Escape key handler | frontend-dev | MEDIUM | claude-haiku-4-5 | COMPLETED |
+| 72 | InterAgentFeed.jsx — real-time handoff log | frontend-dev | LOW | claude-haiku-4-5 | COMPLETED |
+| 73 | useInbox.js — HITL polling hook | frontend-dev | MEDIUM | claude-haiku-4-5 | COMPLETED |
 | 74 | TriggerManager.js — webhooks + RSS polling | backend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
 | 75 | triggers.js routes — trigger API | backend-dev | MEDIUM | claude-haiku-4-5 | COMPLETED |
-| 76 | TriggerNode.jsx — full visual implementation | frontend-dev | LOW | claude-haiku-4-5 | PENDING |
+| 76 | TriggerNode.jsx — full visual implementation | frontend-dev | LOW | claude-haiku-4-5 | COMPLETED |
 | 77 | HandoffParser unit tests | qa-tester | HIGH | claude-sonnet-4-6 | COMPLETED |
-| 78 | SwarmEngine integration tests | qa-tester | HIGH | claude-opus-4-6 | PENDING |
-| 79 | V3 Pre-Release Security Audit | security | HIGH | claude-sonnet-4-6 | PENDING |
+| 78 | SwarmEngine integration tests | qa-tester | HIGH | claude-opus-4-6 | COMPLETED |
+| 79 | V3 Pre-Release Security Audit | security | HIGH | claude-sonnet-4-6 | COMPLETED |
 | 80 | V3 End-to-End Test (Puppeteer) | qa-tester | HIGH | claude-opus-4-6 | COMPLETED |
-| 81 | Build verification + v3.0.0 git tag | devops | HIGH | claude-haiku-4-5 | PENDING |
-| 82 | V3 Documentation update | documenter | MEDIUM | claude-sonnet-4-6 | PENDING |
+| 81 | Build verification + v3.0.0 git tag | devops | HIGH | claude-haiku-4-5 | COMPLETED |
+| 82 | V3 Documentation update | documenter | MEDIUM | claude-sonnet-4-6 | COMPLETED |
 
 **Total V3 tasks (original #43–#82): 40**
-**After subtask split: 57 tasks (40 originals → 17 split into subtasks + 3 completed = 57 granular units)**
-**Breakdown: 12 COMPLETED (#43, #44, #45, #46.1, #46.2, #46.3, #47.1, #47.2, #48.1, #48.2, #49, #51) + 1 IN_PROGRESS (#50) + 44 PENDING — 2026-03-27**
+**After subtask split: 57 granular units (40 originals + 17 subtask expansions)**
+**ALL 57 COMPLETED — v3.0.0 tagged 2026-03-28. V3 RELEASE DONE.**
 
 ---
 
-_Last updated: 2026-03-27 — Model assignments added + complex tasks split into subtasks. #46→3, #47→2, #48→2, #53→3, #57→2, #62→3, #71→2 subtasks. All 54 pending tasks have Suggested Model assigned._
+## V3 Release Final Status
+
+**v3.0.0 RELEASED — ALL 57 V3 tasks COMPLETED as of 2026-03-28.**
+
+- Phase 1 (Backend Foundation, #43–#50): 10 tasks COMPLETED
+- Phase 2 (Canvas Static, #51–#58): 10 tasks COMPLETED
+- Phase 3 (Prompt-to-Flow, #59–#61): 3 tasks COMPLETED
+- Phase 4 (Live Execution, #62.1–#67): 7 tasks COMPLETED
+- Phase 5 (HITL + PTY Explosion, #68–#73): 7 tasks COMPLETED
+- Phase 6 (Trigger Nodes, #74–#76): 3 tasks COMPLETED
+- Phase 7 (QA + Security + Release, #77–#82): 6 tasks COMPLETED
+- Git tag v3.0.0 created: 2026-03-28
+
+### Known Gap — v3.0.1 Candidate
+
+**Gap:** `TriggerManager.cleanupExecution()` has no live caller. `SwarmEngine.stopExecution()` should call it to clean up RSS pollers and webhook registrations when an execution stops, but currently does not. RSS poll intervals created during execution will continue running until the Node.js process restarts.
+
+**Impact:** LOW — RSS pollers are non-destructive and bounded in count. They waste a small amount of CPU/network but do not cause data loss or security risk. Production deployments that frequently start/stop swarm executions may accumulate idle pollers.
+
+**Resolution:** Task #83 (v3.0.1 patch) created below.
+
+---
+
+TASK #83: SwarmEngine.stopExecution() — Wire TriggerManager.cleanupExecution()
+Agent: backend-dev
+Priority: LOW
+Difficulty: LOW
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  Code-mapper identified that TriggerManager.cleanupExecution() was implemented in Task #74 but has no live caller. SwarmEngine.stopExecution() should call it when an execution stops, to clean up any RSS pollers and webhook registrations that were created during that execution.
+
+  FILE TO EDIT: server/services/SwarmEngine.js
+  METHOD TO PATCH: stopExecution(executionId)
+
+  HOW TO FIX:
+  1. In stopExecution(), after the current cleanup logic (killing PTYs, broadcasting WS done event, etc.), add:
+     ```js
+     if (this._triggerManager) {
+       this._triggerManager.cleanupExecution(executionId);
+     }
+     ```
+  2. If SwarmEngine does not already hold a reference to TriggerManager, inject it via constructor or a setter. TriggerManager is instantiated in server/index.js — pass it to SwarmEngine at construction time (same pattern as how swarmEngine receives sessionManager).
+
+  VERIFICATION:
+  - 187/187 existing tests must still pass after the patch
+  - No new tests required (cleanupExecution is already tested in TriggerManager unit tests)
+  - Build must remain clean
+
+  CONTEXT — why this matters:
+  Without this wire-up, RSS pollers created when a trigger fires during swarm execution continue running in the background after the execution stops. They are not destructive but waste CPU/network and accumulate over time if executions are started/stopped frequently.
+
+Acceptance Criteria:
+  - [ ] stopExecution() calls triggerManager.cleanupExecution(executionId)
+  - [ ] TriggerManager reference is correctly injected into SwarmEngine (constructor or setter)
+  - [ ] server/index.js passes triggerManager to SwarmEngine at instantiation
+  - [ ] 187/187 tests pass
+  - [ ] Build clean (0 errors)
+Dependencies: #74, #46.1
+
+---
+
+_Last updated: 2026-03-28 — V3 summary table corrected to COMPLETED for all 57 tasks. Task #83 added as v3.0.1 patch for TriggerManager.cleanupExecution() gap._

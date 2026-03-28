@@ -1,4 +1,13 @@
 ---
+## 2026-03-28 — project-manager — V3 Final Status Reconciliation + Task #83 Created
+**Outcome:** COMPLETED
+**Summary:** Audited all 57 V3 granular tasks (#43–#82). Task #75 individual entry corrected from PENDING to COMPLETED (was already done per ACTIVITY_LOG). Summary table at bottom of TASK_PLAN.md corrected: all 57 tasks now show COMPLETED. V3 final status block added with git tag date. Assessed TriggerManager.cleanupExecution() gap: warrants a v3.0.1 patch (Task #83 created) rather than a known issue note, as it causes RSS poller accumulation in long-running servers.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** TriggerManager gap = v3.0.1 patch (Task #83), not merely a known issue — the leak is bounded but real in production
+**Blockers:** none
+**Next:** Task #83 (backend-dev, haiku, LOW — wire stopExecution → cleanupExecution)
+---
 ## 2026-03-28 — code-mapper — Tasks #73–#82: V3 Trigger System, HITL Inbox, Tests, Security, Docs
 **Outcome:** COMPLETED
 **Summary:** Mapped 10 tasks from the V3 final wave. 18 new function entries added to CODE_MAP.md covering useInbox.js (HITL hook), TriggerManager.js (webhook+RSS), triggers.js routes, the fully implemented TriggerNode.jsx, SwarmEngine integration tests, and the server/index.js route-order bugfix. CHANGELOG.md received a combined wave entry. Key connection discovered: ssrfGuard.isSafeUrl now has its first production caller (TriggerManager). Known gap: TriggerManager.cleanupExecution not yet wired to SwarmEngine.stopExecution.
