@@ -223,30 +223,45 @@ async function startup() {
   // Workflow routes
   app.use('/api/v1/workflows', workflowsRouter);
 
-  // Trigger management routes (webhooks + RSS polling)
-  // Note: mounted at /api/v1/triggers — swarmEngine wired later after instantiation
-  app.locals.triggersRouter = triggersRouter;
+  // -------------------------------------------------------------------------
+  // 7. Instantiate SwarmEngine + mount swarm/inbox/trigger routes
+  // SwarmEngine must be created before mounting its routes so the factory
+  // functions receive a live instance, not undefined. (Task #80 fix)
+  // -------------------------------------------------------------------------
+  const workflowStore = app.locals.workflowStore;
+  const circuitBreaker = new CircuitBreaker();
+  const budgetTracker = new BudgetTracker();
+  const swarmEngine = new SwarmEngine(sessionManager, workflowStore, circuitBreaker, budgetTracker);
+  app.locals.swarmEngine = swarmEngine;
+  app.locals.sessionManager = sessionManager;
 
-  // Swarm execution control routes
-  app.use('/api/v1/swarm', swarmRoutes(app.locals.swarmEngine, app.locals.sessionManager));
+  // Swarm execution control routes — mounted here so swarmEngine is already assigned
+  app.use('/api/v1/swarm', swarmRoutes(swarmEngine, sessionManager));
 
   // HITL inbox routes (approve/reject — separate router, same /api/v1/swarm prefix)
-  app.use('/api/v1/swarm', inboxRoutes(app.locals.swarmEngine));
+  app.use('/api/v1/swarm', inboxRoutes(swarmEngine));
+
+  // Initialize TriggerManager (depends on swarmEngine)
+  const triggerManager = new TriggerManager(swarmEngine);
+  app.locals.triggerManager = triggerManager;
+
+  // Mount triggers router now that swarmEngine is available
+  app.use('/api/v1/triggers', triggersRouter(triggerManager));
 
   // -------------------------------------------------------------------------
-  // 7. Serve static client build
+  // 8. Serve static client build
   // -------------------------------------------------------------------------
   app.use(express.static(join(__dirname, 'public')));
 
   // -------------------------------------------------------------------------
-  // 8. SPA fallback — non-API routes return index.html
+  // 9. SPA fallback — non-API routes return index.html
   // -------------------------------------------------------------------------
   app.get('*', (req, res) => {
     res.sendFile(join(__dirname, 'public', 'index.html'));
   });
 
   // -------------------------------------------------------------------------
-  // 9. Global error handler
+  // 10. Global error handler
   // NEVER log req.body or response data (SEC-08)
   // -------------------------------------------------------------------------
   // eslint-disable-next-line no-unused-vars
@@ -260,27 +275,12 @@ async function startup() {
   });
 
   // -------------------------------------------------------------------------
-  // 10. Start HTTP server — MUST bind to 127.0.0.1 (DEC-002)
+  // 11. Start HTTP server — MUST bind to 127.0.0.1 (DEC-002)
   // -------------------------------------------------------------------------
   const server = createServer(app);
 
-  // Initialize SwarmEngine (depends on sessionManager + workflowStore)
-  const workflowStore = app.locals.workflowStore;
-  const circuitBreaker = new CircuitBreaker();
-  const budgetTracker = new BudgetTracker();
-  const swarmEngine = new SwarmEngine(sessionManager, workflowStore, circuitBreaker, budgetTracker);
-  app.locals.swarmEngine = swarmEngine;
-  app.locals.sessionManager = sessionManager;
-
   // Wire WebSocket broadcast to SwarmEngine so execution events reach subscribers.
   swarmEngine.setWsBroadcast(broadcast);
-
-  // Initialize TriggerManager (depends on swarmEngine)
-  const triggerManager = new TriggerManager(swarmEngine);
-  app.locals.triggerManager = triggerManager;
-
-  // Mount triggers router now that swarmEngine is available
-  app.use('/api/v1/triggers', app.locals.triggersRouter(triggerManager));
 
   // WebSocket routing — two noServer WSS instances, routed by URL path.
   // /ws/swarm  → swarm execution updates (Task #48)
