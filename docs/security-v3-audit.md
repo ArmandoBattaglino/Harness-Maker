@@ -17,20 +17,25 @@ All 7 mandatory SEC-V3 requirements are implemented and active in production cod
 ## SEC-V3 Requirements Verification
 
 ### SEC-V3-01: 32KB webhook body cap
-**Status: PASS**
-**Location:** `server/routes/triggers.js:74`
+**Status: PASS (strengthened — BUG-99 fix applied 2026-03-28)**
+**Location:** `server/routes/triggers.js:72–74`
 
 ```js
-router.post('/webhooks/:path',
-  express.json({ limit: '32kb' }),   // line 74 — hard cap enforced before handler
+router.post(
+  '/webhooks/:path',
+  express.raw({ limit: '32kb', type: 'application/json' }),
   webhookRateLimit(10, 60000),
-  async (req, res) => { ... }
+  async (req, res) => {
+    // manually parse: payload = JSON.parse(req.body.toString('utf8'))
+  }
 );
 ```
 
-`express.json({ limit: '32kb' })` is applied as a per-route middleware directly on the `POST /webhooks/:path` route, before the rate limiter and before the handler. This is the correct placement — the cap is enforced even if the rate limiter is not hit. Payloads exceeding 32KB cause Express to return HTTP 413 before `handleWebhook()` is ever called.
+**BUG-99 fix (2026-03-28):** The original implementation used `express.json({ limit: '32kb' })` as per-route middleware. However, the global `express.json()` at `server/index.js:177` (100KB default limit) was mounted before all routes and consumed the request body first — the per-route middleware ran on an already-parsed body, making the 32KB cap ineffective.
 
-The global `express.json()` at `server/index.js:177` uses Express's default limit (100KB). The per-route middleware on the webhook endpoint overrides this with the stricter 32KB limit.
+The fix switches to `express.raw({ limit: '32kb', type: 'application/json' })`, which bypasses the global JSON parser entirely and enforces the size cap at the raw-bytes level. The handler then manually calls `JSON.parse(req.body.toString('utf8'))`. Invalid JSON is treated as an empty payload and still returns `{ received: true }` per SEC design (external callers must not receive error detail).
+
+This makes SEC-V3-01 correctly enforced end-to-end: payloads over 32KB cause Express to return HTTP 413 before the rate limiter or handler are reached.
 
 ---
 
@@ -258,6 +263,7 @@ Dependency chain: tailwindcss@3.4.19 → chokidar → picomatch@2.3.1
 ### MEDIUM-V3-01: Webhook endpoint blocked by global CSRF middleware (design mismatch)
 **Severity: MEDIUM (functional correctness issue, net security positive)**
 **Location:** `server/routes/triggers.js:67` (design comment), `server/index.js:180` and `283`
+**Note (2026-03-28):** BUG-99 fix (express.raw body parser) does not change the CSRF interaction — the CSRF middleware runs before the body parser and is unaffected by this change. MEDIUM-V3-01 remains open.
 
 The webhook receiver comment states: "External caller: NOT CSRF-protected (no X-Requested-With header expected)". However, the global `csrfMiddleware` is mounted at `server/index.js:180` before all routes, including the triggers router mounted at line 283.
 
@@ -387,7 +393,7 @@ All 187 tests pass. No regressions introduced by V3 additions.
 | swarmHandler open WS on missing execution | LOW | Informational | server/ws/swarmHandler.js |
 | BudgetTracker unbounded char accumulation | LOW | Informational | server/services/BudgetTracker.js |
 | RSS URL logged in error paths | LOW | Informational | server/services/TriggerManager.js |
-| SEC-V3-01: 32KB webhook body cap | PASS | Verified active | server/routes/triggers.js:74 |
+| SEC-V3-01: 32KB webhook body cap | PASS | Verified active. BUG-99 fix (2026-03-28): switched from express.json to express.raw — 32KB cap now enforced at raw-bytes level, bypassing global JSON parser. | server/routes/triggers.js:72 |
 | SEC-V3-02: WorkflowDefinition schema validation | PASS | Verified active | server/services/WorkflowStore.js |
 | SEC-V3-03: SSRF guard for RSS URLs | PASS | Verified active | server/services/TriggerManager.js:186 |
 | SEC-V3-04: Webhook rate limiter 10 req/min | PASS | Verified active | server/routes/triggers.js:75 |

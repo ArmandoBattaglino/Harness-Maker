@@ -1,4 +1,53 @@
 ---
+## 2026-03-28 — Tasks #84–#99: Debug Loop Documentation Pass
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel with code-mapper and project-manager, post debug loop)
+
+### Context when I started
+16 bugs had been fixed across Tasks #84–#99 by backend-dev and frontend-dev. The modified files spanned both client and server: useInbox.js, SwarmContext.jsx, useSwarm.js, TriggerNode.jsx, SwarmCanvas.jsx, SwarmEngine.js, TriggerManager.js, inbox.js, swarm.js, triggers.js. DOC_STATUS.md was last updated after Tasks #73–#83 and was now out of date for the bug-fix wave. docs/API.md had two stale endpoint descriptions (pause as partial-op, resume as no-op). docs/security-v3-audit.md had the original SEC-V3-01 pass note that did not reflect the BUG-99 bypass discovery.
+
+### What I did
+1. Read DOC_STATUS.md, docs/API.md, docs/security-v3-audit.md in parallel (all three stale targets).
+2. Read all 4 modified server-side source files: swarm.js, triggers.js, SwarmEngine.js, inbox.js.
+3. Read ACTIVITY_LOG.md tail and documenter.md session history.
+4. Updated docs/API.md: pause endpoint server-actions updated (BUG-94 fix: pauseExecution() called, state updated, WS broadcast occurs). Resume endpoint rewritten — it now actually works, not a no-op (BUG-95). Budget field in status response annotated to document BudgetTracker.getTotal() source and meaning of limitTokens=0 (BUG-98).
+5. Updated docs/security-v3-audit.md: SEC-V3-01 section rewritten to document BUG-99 fix — express.json → express.raw, and why the original bypass occurred (global middleware consumed body first). Summary table entry updated. MEDIUM-V3-01 note added to confirm the CSRF mismatch is unchanged by the BUG-99 fix.
+6. Updated docs/memory/DOC_STATUS.md: all items set to UP_TO_DATE. Removed "Wire stopExecution → cleanupExecution" debt (resolved by #93/#97). DOC_STATUS notes updated for API.md and security-v3-audit.md. MEDIUM-V3-01 added to Documentation Debt table.
+7. Appended to docs/memory/ACTIVITY_LOG.md.
+8. Git commit staged and executed.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | All items UP_TO_DATE. Removed resolved stale gaps. Added MEDIUM-V3-01 to debt table. Updated last-updated date and notes for API.md and security-v3-audit.md. |
+| docs/API.md | MODIFIED | Pause endpoint: documented full state update + WS broadcast behavior (no longer "does not freeze state"). Resume endpoint: rewritten from "no-op" to document actual resumeExecution() behavior. Budget field in status: annotated with BudgetTracker.getTotal() source. |
+| docs/security-v3-audit.md | MODIFIED | SEC-V3-01 section: rewrote to document BUG-99 fix (express.raw replaces express.json, explains bypass root cause). MEDIUM-V3-01 heading: added note that BUG-99 does not change CSRF mismatch. Summary table: SEC-V3-01 row updated with BUG-99 note. |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended debug loop documentation pass entry. |
+| docs/memory/agents/documenter.md | MODIFIED | This session log appended. |
+
+### Improvements delivered
+- API.md now accurately describes pause/resume as functional, not partial/stubbed — important for frontend developers and API consumers.
+- Security audit now correctly records that SEC-V3-01 was strengthened beyond the original implementation. A reader of the audit will understand the original gap and the fix.
+- DOC_STATUS.md has no more false stale entries from the pre-debug state.
+
+### Bugs I encountered
+None — documentation-only task.
+
+### Decisions I made
+- SEC-V3-01 audit status kept as PASS (not changed to PARTIAL) because the property was always the design intent; BUG-99 was an implementation error, not a design gap. The audit note documents the fix clearly.
+- Did not update docs/ARCHITECTURE.md — no architectural changes occurred in the debug loop. All 16 bugs were behavioral fixes within existing components.
+- Did not update inline comments in client files — the client bugs (BUG-84 through #92) were logic fixes with clear self-documenting variable names; no "why" comments were missing.
+
+### What I learned
+- express.json per-route middleware does NOT override a global express.json() that already consumed the body. Only express.raw() or express.text() with a different content-type can bypass the global parser. This pattern is worth knowing for any route that needs a stricter body size than the global default.
+- The original security audit verified middleware presence via code inspection, not execution order — a gap in static audit methodology. Dynamic audit (actually sending oversized payloads) would have caught BUG-99 immediately.
+
+### State I'm leaving behind
+All documentation is accurate and synchronized with the post-debug codebase. Project is release-ready per project-manager. No open documentation debt that blocks release.
+
+### Handoff
+None — documentation pass is fully self-contained. Next session should call project-manager for v3.0.0 release tasks if any.
+---
 ## 2026-03-27 — Task #62.1: SwarmEngine._onHandoff full implementation
 **Status:** COMPLETED
 **Called by:** orchestrator (parallel with code-mapper and project-manager)

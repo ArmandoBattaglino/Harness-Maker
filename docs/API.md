@@ -476,7 +476,11 @@ Start executing a workflow. Spawns a PTY session for the triage (first) agent no
 
 ### `POST /api/v1/swarm/:executionId/pause`
 
-Send Ctrl-C (`\x03`) to all currently running agent PTY sessions in the execution. Does not freeze the execution state — agents may continue processing queued output.
+Send Ctrl-C (`\x03`) to all currently running agent PTY sessions in the execution, then set each running agent's status to `"paused"` and broadcast `agent_status` WS events for each.
+
+**Server actions:**
+1. For each agent with `status === "running"`: writes `\x03` to its PTY session.
+2. Calls `SwarmEngine.pauseExecution()` to set agent states to `"paused"` and broadcast `agent_status` WS events.
 
 **Response 200:** `{ "ok": true }`
 
@@ -486,7 +490,13 @@ Send Ctrl-C (`\x03`) to all currently running agent PTY sessions in the executio
 
 ### `POST /api/v1/swarm/:executionId/resume`
 
-No-op in v3.0. Reserved for future full HITL-freeze resume semantics.
+Resume all paused agents. Sets each agent with `status === "paused"` back to `"running"` and broadcasts `agent_status` WS events for each.
+
+**Server actions:**
+1. Calls `SwarmEngine.resumeExecution()` to update agent states from `"paused"` to `"running"`.
+2. Broadcasts `agent_status` WS event for each resumed agent.
+
+**Note:** Does not re-inject prompts or re-spawn PTY sessions — agents continue from where they were interrupted.
 
 **Response 200:** `{ "ok": true }`
 
@@ -530,10 +540,12 @@ Get full execution status snapshot.
   },
   "budget": {
     "estimatedTokensUsed": 1500,
-    "limitTokens": 100000
+    "limitTokens": 0
   }
 }
 ```
+
+`budget.estimatedTokensUsed` is derived from `BudgetTracker.getTotal(executionId)` — the sum of all output characters across all agent sessions for this execution (characters used as a proxy for tokens). `limitTokens` is drawn from the workflow definition's `settings.budgetTokens` field; `0` means no limit configured.
 
 **Errors:** `404`
 

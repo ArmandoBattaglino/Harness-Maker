@@ -1,4 +1,13 @@
 ---
+## 2026-03-28 — documenter — Tasks #84–#99: Debug Loop Documentation Pass
+**Outcome:** COMPLETED
+**Summary:** Documented all 16 bug fixes from the post-release debug loop (Tasks #84–#99). Updated docs/API.md: pause endpoint now reflects real state-update + WS-broadcast behavior (BUG-94); resume endpoint is no longer described as a no-op (BUG-95); budget field in status response now documents BudgetTracker.getTotal() source (BUG-98). Updated docs/security-v3-audit.md: SEC-V3-01 strengthened — BUG-99 fix replaces express.json bypass with express.raw at raw-bytes level; MEDIUM-V3-01 note added to confirm CSRF mismatch is unchanged. DOC_STATUS.md regenerated: all items marked UP_TO_DATE, three previously-tracked stale gaps resolved (stopExecution wire-up done in #93/#97, CODE_MAP.md TriggerNode stub remains for code-mapper).
+**Files changed:** docs/API.md, docs/security-v3-audit.md, docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (documentation task)
+**Decisions made:** SEC-V3-01 note — the BUG-99 fix (express.raw) is a security strengthening even though the original audit marked SEC-V3-01 PASS. The bypass was a latent implementation error not caught by the audit because audit verified the presence of the middleware, not its effective execution order.
+**Blockers:** none
+**Next:** Project is release-ready per project-manager. No open documentation debt that blocks release.
+---
 ## 2026-03-28 — project-manager — Debug Loop Closure: Tasks #83–#99 All COMPLETED
 **Outcome:** COMPLETED
 **Summary:** Verified and reconciled the debug loop. All 17 post-release bug tasks (#83–#99) confirmed COMPLETED. Seven tasks that still showed Status: PENDING in TASK_PLAN.md despite being completed by backend-dev and frontend-dev agents were corrected (#83, #84, #85, #92, #94, #95, #99). V3 summary table updated with a full debug loop table. Release status section updated: v3.0.0 + debug loop = RELEASE-READY, no known open bugs. Task #83 (TriggerManager wire-up) marked COMPLETED as superseded by #93 and #97.
