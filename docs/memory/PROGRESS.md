@@ -154,7 +154,7 @@ _None._
 - NOTE: FileManager was NOT created in Task #5 as planned — RESOLVED in Task #7 (created server/services/FileManager.js).
 
 ## V3 — Swarm Orchestrator (57 granular tasks after split — 2026-03-27 replan)
-**Status: 41/57 COMPLETED — as of 2026-03-27. All Phase 1 backend tasks done. All Phase 2 (Canvas Static) COMPLETED. Phase 3 (Prompt-to-Flow) FULLY COMPLETED. Phase 4 (Live Execution) ACTIVE: #62.1 DONE, #63 DONE, #64 DONE, #66 DONE, #67 DONE. Phase 5 wave: #62.2, #68, #70 DONE, #71.1 IN_PROGRESS, #72 COMPLETED.**
+**Status: 42/57 COMPLETED — as of 2026-03-27. All Phase 1 backend tasks done. All Phase 2 (Canvas Static) COMPLETED. Phase 3 (Prompt-to-Flow) FULLY COMPLETED. Phase 4 (Live Execution) ACTIVE: #62.1, #62.2, #62.3, #63, #64, #66, #67 DONE. Phase 5 wave: #68, #70 DONE, #71.1 IN_PROGRESS, #72 COMPLETED.**
 **Note: Original 40 tasks (#43–#82). After model assignment + subtask split: 57 granular units.**
 **7 original tasks split into subtasks: #46→3, #47→2, #48→2, #53→3, #57→2, #62→3, #71→2**
 - V3 PRD complete: docs/PRD.md
@@ -197,8 +197,8 @@ _None._
 ### V3 Phase 4 — Live Execution
 - [TASK-62.1] COMPLETED 2026-03-27 — SwarmEngine _onHandoff: full implementation verified (context merge, edge counter, circuit breaker advisory, handoffCount, _ensureAgentPty). 168/168 tests pass.
 - [TASK-62.1] COMPLETED 2026-03-27 — SwarmEngine _onHandoff steps 1-4: context merge, edge counter, circuit breaker advisory, _ensureAgentPty. 168/168 tests pass.
-- [TASK-62.2] IN_PROGRESS — SwarmEngine _onHandoff: context injection + agent status updates (backend-dev, opus)
-- [TASK-62.3] PENDING — SwarmEngine _onDone + BudgetTracker + lastOutputSnippet (waits on #62.2)
+- [TASK-62.2] COMPLETED 2026-03-27 — SwarmEngine _onHandoff: context injection + agent status updates. 168/168 tests pass.
+- [TASK-62.3] COMPLETED 2026-03-27 — SwarmEngine _onDone (dual WS events) + BudgetTracker.registerSession wiring + lastOutputSnippet verified. 168/168 tests pass.
 - [TASK-63] COMPLETED 2026-03-27 — useSwarm.js WS hook for execution control
 - [TASK-64] COMPLETED 2026-03-27 — useHandoff.js edge animation hook
 - [TASK-65] PENDING — AgentNode live updates — pulse + micro PTY log

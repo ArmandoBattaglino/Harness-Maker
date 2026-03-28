@@ -1369,3 +1369,53 @@ SwarmEngine already had `inboxItems: []` in execution records and `agentStates` 
 ### Handoff
 Task #69 (HitlInbox.jsx) can proceed — inbox API is live at GET/POST /api/v1/swarm/:executionId/inbox/:itemId/approve|reject. Task #70 (freeze/unfreeze) should also add logic to the reject handler to properly halt the agent PTY.
 ---
+---
+## 2026-03-27 — Task #62.3: SwarmEngine._onDone + BudgetTracker Integration + lastOutputSnippet
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+SwarmEngine.js was fully built through Task #62.2. _onDone had a stub that only emitted one WS event (execution_status). BudgetTracker was imported and constructed in server/index.js and passed to SwarmEngine constructor (already done correctly), but registerSession was never called so checkBudget always returned estimatedUsed=0. The tapFn already had track() and checkBudget() calls and lastOutputSnippet slice(-500). 168 tests passing.
+
+### What I did
+1. Read all memory files and SwarmEngine.js, BudgetTracker.js, CircuitBreaker.js, server/index.js in parallel.
+2. Identified that _onDone was missing the second WS broadcast (agent_status with status: 'done').
+3. Fixed _onDone to emit both: execution_status (status: 'agent_done') AND agent_status (status: 'done').
+4. Identified that BudgetTracker.track() was called per chunk (correct) but registerSession was never called, so getTotal(executionId) always returned 0.
+5. Added registerSession(executionId, sessionId) call in _spawnAgentPty immediately after writeInput for system prompt.
+6. Confirmed server/index.js already passes circuitBreaker + budgetTracker to SwarmEngine constructor correctly — no change needed.
+7. Confirmed lastOutputSnippet = (state.lastOutputSnippet + chunk).slice(-500) was already correct in tapFn.
+8. Ran npm test — 168/168 pass, no regressions.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SwarmEngine.js | MODIFIED | _onDone: added second _wsBroadcast for agent_status; _spawnAgentPty: added budgetTracker.registerSession call |
+| docs/TASK_PLAN.md | MODIFIED | Status #62.3 PENDING → COMPLETED (both block entry and summary table) |
+| docs/memory/PROGRESS.md | MODIFIED | Counter updated, task line updated |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session entry |
+| docs/memory/agents/backend-dev.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- _onDone now correctly emits both execution_status + agent_status WS events (FR-V3-11: soft notify, workflow never stopped).
+- BudgetTracker.registerSession now called at spawn time so getTotal(executionId) accurately aggregates all sessions in the execution.
+- budget_update WS event will now fire with correct estimatedTokensUsed when budget exceeded.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| _onDone missing agent_status broadcast | Original stub only emitted execution_status | Added second _wsBroadcast call | FIXED |
+| BudgetTracker.checkBudget always returned 0 | registerSession never called; _executionSessions was empty | Added registerSession(executionId, sessionId) in _spawnAgentPty | FIXED |
+
+### Decisions I made
+- Called registerSession immediately after writeInput for system prompt, before HandoffParser setup. This ensures the session is tracked from the moment PTY is created, capturing all subsequent output including system prompt response.
+
+### What I learned
+- BudgetTracker uses a two-layer Map design: _sessionChars (keyed by sessionId) + _executionSessions (Set of sessionIds per executionId). Both must be wired: track() per chunk for sessionChars, registerSession() at spawn for the execution→session link. Without registerSession, getTotal() returns 0.
+
+### State I'm leaving behind
+_onDone fully implemented per spec. BudgetTracker fully wired. lastOutputSnippet already correct. 168/168 tests pass. SwarmEngine is feature-complete for Phase 4.
+
+### Handoff
+Task #78 (SwarmEngine integration tests) and #77 (HandoffParser unit tests) can now proceed — both depend on the full SwarmEngine being complete.
+---

@@ -1550,3 +1550,13 @@
 **Blockers:** none
 **Next:** Task #69 (HitlInbox.jsx UI panel) and Task #70 (SwarmEngine freeze/unfreeze full implementation)
 ---
+---
+## 2026-03-27 — backend-dev — Task #62.3: SwarmEngine._onDone + BudgetTracker Integration
+**Outcome:** COMPLETED
+**Summary:** Fixed _onDone to emit both execution_status and agent_status WS events (was missing agent_status). Added BudgetTracker.registerSession() call in _spawnAgentPty so checkBudget correctly aggregates all sessions per execution. lastOutputSnippet (.slice(-500) in tapFn) was already correct. 168/168 tests pass.
+**Files changed:** server/services/SwarmEngine.js
+**Bugs fixed:** _onDone missing agent_status broadcast; BudgetTracker.checkBudget always returning 0 (registerSession never called)
+**Decisions made:** registerSession called at PTY spawn time before HandoffParser setup
+**Blockers:** none
+**Next:** Task #78 (SwarmEngine integration tests) — now unblocked as SwarmEngine Phase 4 is feature-complete
+---

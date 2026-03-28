@@ -1,4 +1,60 @@
 ---
+## 2026-03-27 — Task #62.1 COMPLETED; Phase 5 wave launched (#62.2, #68, #70, #71.1, #72)
+**Status:** COMPLETED
+**Called by:** user (orchestrator notification — #62.1 done, 168 tests pass)
+
+### Context when I started
+#62.1 (SwarmEngine _onHandoff steps 1-4) was reported COMPLETED with 168/168 tests passing. Phase 4 fully done: #62.1, #63, #64, #66, #67 all COMPLETED. Five tasks ready to launch: #62.2 (backend, opus, HARD), #68 (backend, sonnet, MEDIUM — dep corrected to #46.3), #70 (backend, sonnet, MEDIUM — dep simplified to #62.1), #71.1 (frontend, sonnet, MEDIUM — dep: #58 ✓), #72 (frontend, haiku, EASY — dep: #52 ✓).
+
+### What I did
+1. Read project-manager.md (top 80 lines) for recent session history
+2. Read TASK_PLAN.md (offset 0–100) for project overview
+3. Read TASK_PLAN.md tasks #62.1–#62.3, #68, #70, #71.1, #72 to confirm statuses and context
+4. Read PROGRESS.md (offset 100–215) to understand V3 current wave
+5. Confirmed #62.1 already COMPLETED in TASK_PLAN.md (self-marked with test note)
+6. Updated TASK_PLAN.md: #62.2 PENDING→IN_PROGRESS, #68 PENDING→IN_PROGRESS + dep corrected to #46.3, #70 PENDING→IN_PROGRESS + dep corrected to #62.1, #71.1 PENDING→IN_PROGRESS, #72 PENDING→IN_PROGRESS
+7. Discovered concurrent agents had already completed #70 and #72 by the time of PM writes — reflected in PROGRESS.md (self-modified to 40/57)
+8. Updated PROGRESS.md: status line 39→40/57, Phase 4/5 entries updated
+9. Updated CONTEXT.md: replaced stale Phase 4 retry block with current Phase 5 wave details
+10. Appended ACTIVITY_LOG.md entry
+11. Wrote this session log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | #62.2 IN_PROGRESS; #68 IN_PROGRESS + dep corrected; #70 confirmed COMPLETED; #71.1 IN_PROGRESS; #72 confirmed COMPLETED |
+| docs/memory/PROGRESS.md | MODIFIED | V3 status updated 39→40/57; Phase 4 completed entries; Phase 5 wave with IN_PROGRESS/COMPLETED per task |
+| docs/memory/CONTEXT.md | MODIFIED | Current wave block replaced: Phase 4 retry → Phase 5 active wave with all 5 task specs |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | PM session entry appended |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log |
+
+### Improvements delivered
+- TASK_PLAN.md accurately reflects concurrent completions (#70, #72 already done)
+- #68 dependency corrected: was #62.3 (incorrect), now #46.3 (inbox route only needs SwarmEngine base class, not _onDone/BudgetTracker)
+- #70 dependency simplified: was #68 + #62.3, now #62.1 (freeze/unfreeze is SwarmEngine.js patch independent of HITL route)
+- PROGRESS.md V3 count accurate at 40/57 (Phase 4: 6 tasks, Phase 5 partial: #70 + #72 done)
+
+### Bugs I encountered
+- None. Noted concurrent agent activity resulted in #70 and #72 self-completing before PM pass finished.
+
+### Decisions I made
+- #68 dep = #46.3 (not #62.3): inbox route needs SwarmEngine.approveInboxItem() which operates on execution.inboxItems; this is independent of _onDone/BudgetTracker which is only needed for budget tracking
+- #70 dep = #62.1 (not #68, #62.3): freeze/unfreeze is purely a SwarmEngine.js addition; doesn't need the inbox HTTP route to exist first
+- Accepted concurrent agent's #70 COMPLETED state rather than overwriting
+
+### What I learned
+- Concurrent agents can complete tasks faster than PM coordination latency — always re-read task status before writing to avoid stale overwrites
+- Phase 5 now has mixed states: #70 DONE, #72 DONE, #68 IN_PROGRESS, #71.1 IN_PROGRESS
+
+### State I'm leaving behind
+- V3: 40/57 tasks COMPLETED
+- Phase 4 (Live Execution): ALL DONE (#62.1, #63, #64, #66, #67 — plus #62.2 already COMPLETED by concurrent agent per TASK_PLAN.md line 5073)
+- Phase 5 (HITL + PTY Explosion): #70 COMPLETED, #72 COMPLETED; #68 IN_PROGRESS, #71.1 IN_PROGRESS
+- Queued: #62.3 (waits on #62.2 — already done), #69 (waits on #68), #71.2 (waits on #71.1), #73 (waits on #69+#63)
+
+### Handoff
+When #62.2 completes: launch #62.3 immediately (backend-dev, sonnet, MEDIUM). When #68 completes: launch #69 (frontend-dev, sonnet, MEDIUM). When #71.1 completes: launch #71.2 (frontend-dev, haiku, EASY). When #69 + #63 both done: launch #73 (frontend-dev, haiku, EASY).
+---
 ## 2026-03-27 — Task #60 COMPLETED; Phase 3 DONE; Launch Phase 4 wave (#62.1 + #63 + #66 + #67)
 **Status:** COMPLETED
 **Called by:** user (orchestrator notification — #60 done, Phase 3 complete, Phase 4 launching)

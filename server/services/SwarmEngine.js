@@ -125,6 +125,11 @@ class SwarmEngine {
       this._sessionManager.writeInput(sessionId, systemPrompt + '\n');
     }
 
+    // Register session with BudgetTracker so getTotal(executionId) includes it
+    if (this._budgetTracker) {
+      this._budgetTracker.registerSession(executionId, sessionId);
+    }
+
     // Set up HandoffParser tap on the PTY output
     const parser = new HandoffParser();
 
@@ -378,16 +383,12 @@ class SwarmEngine {
    */
   _onDone(executionId, nodeId) {
     const execution = this._executions.get(executionId);
-    if (execution) {
-      const state = execution.agentStates.get(nodeId);
-      if (state) state.status = 'done';
-    }
+    if (!execution) return;
+    const state = execution.agentStates.get(nodeId);
+    if (state) state.status = 'done';
     if (this._wsBroadcast) {
-      this._wsBroadcast(executionId, {
-        type: 'execution_status',
-        status: 'agent_done',
-        nodeId,
-      });
+      this._wsBroadcast(executionId, { type: 'execution_status', status: 'agent_done', nodeId });
+      this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'done' });
     }
   }
 
