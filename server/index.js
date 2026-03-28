@@ -245,6 +245,10 @@ async function startup() {
   const triggerManager = new TriggerManager(swarmEngine);
   app.locals.triggerManager = triggerManager;
 
+  // Give SwarmEngine a back-reference to TriggerManager so stopExecution()
+  // can call cleanupExecution() and stop RSS pollers (Task #83 fix).
+  swarmEngine.setTriggerManager(triggerManager);
+
   // Mount triggers router now that swarmEngine is available
   app.use('/api/v1/triggers', triggersRouter(triggerManager));
 

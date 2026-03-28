@@ -33,6 +33,7 @@ class SwarmEngine {
     this._budgetTracker = budgetTracker;
     this._executions = new Map();   // executionId -> WorkflowExecution
     this._wsBroadcast = null;       // function(executionId, event) — set by swarmHandler
+    this._triggerManager = null;    // set by setTriggerManager() after TriggerManager is instantiated
   }
 
   /**
@@ -42,6 +43,16 @@ class SwarmEngine {
    */
   setWsBroadcast(fn) {
     this._wsBroadcast = fn;
+  }
+
+  /**
+   * Set the TriggerManager instance.
+   * Called by server/index.js immediately after TriggerManager is instantiated,
+   * so stopExecution() can clean up RSS pollers and webhooks for the execution.
+   * @param {import('./TriggerManager.js').default} tm
+   */
+  setTriggerManager(tm) {
+    this._triggerManager = tm;
   }
 
   /**
@@ -423,6 +434,13 @@ class SwarmEngine {
 
     execution.status = 'stopped';
     this._executions.delete(executionId);
+
+    // Clean up any RSS pollers / webhooks registered for this execution.
+    // Without this call the TriggerManager intervals keep running indefinitely
+    // after the execution ends (BUG: TASK #83).
+    if (this._triggerManager) {
+      this._triggerManager.cleanupExecution(executionId);
+    }
   }
 
   /**

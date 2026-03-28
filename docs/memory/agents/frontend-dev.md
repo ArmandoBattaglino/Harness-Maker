@@ -153,6 +153,57 @@ client/src/hooks/useHandoff.js is complete and build-verified. Both exports foll
 ### Handoff
 Task #65 (AgentNode live-state styling) is next in Phase 4. It will likely read agentStates from useSwarmStore and apply CSS classes to AgentNode.jsx based on status field.
 ---
+## 2026-03-28 — Tasks #35 + #36: BUG-09 ContextEditorView Confirmation Guard + BUG-17 Terminal Background
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+Phase 10 (v2.1) had 10 tasks. The TASK_PLAN.md showed Tasks #35 and #36 as Status: PENDING. CONTEXT.md listed both as "done" in Phase 10 changes, but on-disk files needed verification. PROGRESS.md showed v2.1 at 9/10 COMPLETED with TASK-35 and TASK-36 mentioned.
+
+### What I did
+1. Read docs/memory/{PROJECT.md, DECISIONS.md, PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md} in parallel.
+2. Read client/src/views/ContextEditorView.jsx (562 lines) — confirmed handleScopeSwitch at lines 261-270 already contains the window.confirm guard with correct dependency array [scope, hasChanges]. BUG-09 fix was already applied to this file.
+3. Read client/src/components/Terminal.jsx (113 lines) — found:
+   - TERM_OPTIONS.theme.background: '#000000' (already correct)
+   - Container div inline style line 111: backgroundColor: '#1a1a1a' (still the bug)
+4. Applied TASK #36 fix: changed '#1a1a1a' → '#000000' on line 111 of Terminal.jsx.
+5. Verified the edit was applied correctly via Read.
+6. Updated TASK_PLAN.md: both #35 and #36 Status: PENDING → COMPLETED.
+7. Build permission was denied (sandbox restriction) — could not run npm run build to verify.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/components/Terminal.jsx | MODIFIED | Line 111: container div backgroundColor '#1a1a1a' → '#000000' (BUG-17) |
+| docs/TASK_PLAN.md | MODIFIED | Task #35 and #36 Status: PENDING → COMPLETED |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Session log appended |
+| docs/memory/agents/frontend-dev.md | MODIFIED | This entry |
+
+### Improvements delivered
+- BUG-17 FIXED: Terminal container div now matches xterm.js theme background (#000000), eliminating the 2-tone visual mismatch between xterm area and surrounding TerminalView chrome.
+- BUG-09 CONFIRMED ALREADY FIXED: ContextEditorView.jsx handleScopeSwitch already had the window.confirm guard — no additional code change needed.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| Terminal container div still used #1a1a1a despite TERM_OPTIONS.theme.background being #000000 | Inline style on the wrapper div was not updated when TERM_OPTIONS was fixed | Changed backgroundColor: '#1a1a1a' to '#000000' on line 111 | FIXED |
+
+### Decisions I made
+- TASK_PLAN.md described two locations needing change in Terminal.jsx (TERM_OPTIONS.theme + inline style), but TERM_OPTIONS.theme.background was already '#000000' when I read the file — only the inline style remained. Applied only the needed change rather than re-setting an already-correct value.
+- ContextEditorView.jsx BUG-09 fix was already in place — marked COMPLETED without code modification since the acceptance criteria are met.
+
+### What I learned
+- When CONTEXT.md lists changes as "done", verify the actual file before assuming — in this case ContextEditorView.jsx had the fix, Terminal.jsx had a partial fix (only TERM_OPTIONS was updated, not the wrapper div style).
+- The container div background must match xterm.js theme.background or a visible border/gap will show the div color during font load or resize.
+
+### State I'm leaving behind
+- Terminal.jsx: backgroundColor on wrapper div is now '#000000', matching xterm.js theme.background. One xterm.js Terminal instance per mount, permanent — DEC-009 compliant.
+- ContextEditorView.jsx: handleScopeSwitch confirmation guard is present and correct with [scope, hasChanges] dependency array.
+- Build not run (permission denied) — next agent should run: cd client && npm run build
+
+### Handoff
+Tasks #35 and #36 are COMPLETED. The next pending Phase 10 tasks are #37–#40 (Sidebar error feedback, SidebarFooter version, logo overflow, AddProjectModal mode prop). TASK #41 (regression QA) is the gating task for v2.1 release.
+---
 ## 2026-03-27 — Task #61: useWorkflow.js — CRUD Hook
 **Status:** COMPLETED
 **Called by:** user (direct task assignment)

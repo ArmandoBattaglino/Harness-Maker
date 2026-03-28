@@ -207,6 +207,8 @@ function SessionItem({ projectId, session, projectName, isActive, onClick }) {
 
 function SidebarFooter() {
   const [appVersion, setAppVersion] = useState('...');
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
   useEffect(() => {
     apiGet('/api/v1/version')
       .then((data) => setAppVersion(data.appVersion ?? '0.0.0'))
@@ -214,16 +216,34 @@ function SidebarFooter() {
   }, []);
 
   return (
-    <div className="p-3 border-t border-border-color flex items-center justify-between shrink-0">
-      <div className="flex items-center gap-2 text-text-muted">
-        <div className="w-2 h-2 rounded-full bg-success" />
-        <span className="text-xs font-mono uppercase tracking-widest">Active</span>
-      </div>
-      <div className="flex items-center gap-3">
-        <span className="material-symbols-outlined text-[18px] text-text-dimmer">
-          settings
-        </span>
-        <span className="text-[10px] text-text-muted font-mono">v{appVersion}</span>
+    <div className="border-t border-border-color shrink-0">
+      {settingsOpen && (
+        <div className="px-3 py-2 bg-surface-hover text-[11px] text-text-muted border-b border-border-color flex items-center justify-between">
+          <span>Settings — coming soon</span>
+          <button
+            onClick={() => setSettingsOpen(false)}
+            className="text-text-dimmer hover:text-text-muted transition-colors"
+            aria-label="Close settings notice"
+          >
+            <span className="material-symbols-outlined text-[14px]">close</span>
+          </button>
+        </div>
+      )}
+      <div className="p-3 flex items-center justify-between">
+        <div className="flex items-center gap-2 text-text-muted">
+          <div className="w-2 h-2 rounded-full bg-success" />
+          <span className="text-xs font-mono uppercase tracking-widest">Active</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setSettingsOpen((prev) => !prev)}
+            className="text-text-dimmer hover:text-text-muted transition-colors focus:outline-none"
+            aria-label="Open settings"
+          >
+            <span className="material-symbols-outlined text-[18px]">settings</span>
+          </button>
+          <span className="text-[10px] text-text-muted font-mono">v{appVersion}</span>
+        </div>
       </div>
     </div>
   );

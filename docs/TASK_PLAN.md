@@ -2985,7 +2985,7 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   In `client/src/views/ContextEditorView.jsx`, the scope tabs ("Project Rules" / "User
   Global") call `onScopeChange(newScope)` which updates the `scope` state variable. This
@@ -3046,7 +3046,7 @@ Agent: frontend-dev
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   The `Terminal.jsx` component (client/src/components/Terminal.jsx) sets the xterm.js
   terminal background color to `#1a1a1a` in two places:

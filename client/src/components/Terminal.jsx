@@ -107,7 +107,7 @@ export default function Terminal({ sessionId, projectPath }) {
     <div
       ref={containerRef}
       className="h-full w-full"
-      style={{ overflow: 'hidden', backgroundColor: '#1a1a1a' }}
+      style={{ overflow: 'hidden', backgroundColor: '#000000' }}
     />
   );
 }

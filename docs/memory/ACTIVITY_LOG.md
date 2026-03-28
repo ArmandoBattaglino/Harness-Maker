@@ -1,4 +1,13 @@
 ---
+## 2026-03-28 — frontend-dev — Tasks #35 + #36: BUG-09 + BUG-17 Frontend Bug Fixes
+**Outcome:** COMPLETED
+**Summary:** Fixed BUG-17 (Terminal background color mismatch) by changing the wrapper div's inline backgroundColor from '#1a1a1a' to '#000000' in Terminal.jsx, making it consistent with xterm.js theme.background. Confirmed BUG-09 (ContextEditorView unsaved changes data loss) fix was already present in ContextEditorView.jsx — handleScopeSwitch with window.confirm guard was in place with correct [scope, hasChanges] dependency array.
+**Files changed:** client/src/components/Terminal.jsx, docs/TASK_PLAN.md
+**Bugs fixed:** BUG-17 (Terminal 2-tone background mismatch — container div now #000000)
+**Decisions made:** BUG-09 fix already applied — no code change needed; BUG-17 had partial fix (TERM_OPTIONS already #000000 but inline style was still #1a1a1a)
+**Blockers:** npm run build denied by sandbox — build verification pending
+**Next:** Tasks #37–#40 (remaining Phase 10 bug fixes); TASK #41 (regression QA for v2.1 release)
+---
 ## 2026-03-28 — documenter — Tasks #73–#83: V3 Final Documentation Pass
 **Outcome:** COMPLETED
 **Summary:** Verified README.md, docs/ARCHITECTURE.md, and docs/API.md against all V3 changes (Tasks #73–#82). All three documents confirmed accurate for v3.0.0. Updated docs/memory/DOC_STATUS.md to: (1) correct the TriggerNode.jsx debt entry — Task #76 delivered a full implementation, not a stub; (2) add the Task #83 gap (cleanupExecution not wired to stopExecution) to both Stale Sections and Documentation Debt; (3) update the last-updated header to reflect this final pass.
