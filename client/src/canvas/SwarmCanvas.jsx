@@ -103,8 +103,15 @@ export default function SwarmCanvas({ workflowDef }) {
           className="flex-1"
         >
           <Background />
-          <Controls />
-          <MiniMap />
+          <Controls
+            style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: '6px' }}
+            showInteractive={false}
+          />
+          <MiniMap
+            style={{ background: '#111827', border: '1px solid #374151', borderRadius: '6px' }}
+            maskColor="rgba(0,0,0,0.4)"
+            nodeColor="#6366f1"
+          />
         </ReactFlow>
         <AgentInspector nodes={nodes} />
       </div>

@@ -35,7 +35,7 @@ export default function SwarmView() {
   }, [ptyExplosionNodeId, setPtyExplosionNodeId]);
 
   return (
-    <div className="flex flex-col h-full bg-gray-950 text-white">
+    <div className="flex flex-col w-full h-full bg-gray-950 text-white">
       {/* Toolbar */}
       <div className="flex items-center gap-3 px-4 py-2 bg-gray-900 border-b border-gray-700 shrink-0">
         <span className="text-sm font-semibold text-white">Swarm Orchestrator</span>

@@ -265,3 +265,29 @@ body {
   color: #555555;
   font-style: italic;
 }
+
+/* ── React Flow Dark Theme Overrides ────────────────────── */
+.react-flow__controls {
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  box-shadow: none;
+}
+.react-flow__controls-button {
+  background: #1f2937;
+  border-bottom: 1px solid #374151;
+  fill: #9ca3af;
+  color: #9ca3af;
+}
+.react-flow__controls-button:hover {
+  background: #374151;
+  fill: #f3f4f6;
+}
+.react-flow__controls-button:last-child {
+  border-bottom: none;
+}
+.react-flow__minimap {
+  background: #111827 !important;
+  border: 1px solid #374151;
+  border-radius: 6px;
+}
