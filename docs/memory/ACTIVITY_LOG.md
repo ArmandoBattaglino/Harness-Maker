@@ -1,4 +1,13 @@
 ---
+## 2026-03-28 — frontend-dev — Task #76: TriggerNode.jsx — Full Visual Implementation
+**Outcome:** COMPLETED
+**Summary:** Enhanced TriggerNode.jsx with full trigger state subscription and visual feedback. Added triggerStates field to SwarmContext.jsx with updateTriggerState action. Implemented webhook label (path truncation), RSS label (URL truncation), status badge (waiting/fired), last-fired timestamp display, and 2-second green border pulse animation (@keyframes triggerFiredPulse). Build passes at 473 modules, 0 errors. All three acceptance criteria met.
+**Files changed:** client/src/canvas/nodes/TriggerNode.jsx (MODIFIED), client/src/store/SwarmContext.jsx (MODIFIED), client/src/index.css (MODIFIED), docs/TASK_PLAN.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Added useState(showFiredAnimation) + useEffect to manage 2-second animation window (fired state resets animation flag after timeout, allowing re-trigger on same execution). Used Tailwind className `animate-[triggerFiredPulse_2s_ease-out]` with dynamic inline animation. Formatted timestamp via toLocaleTimeString for compact display. RSS URL truncated to 20 chars with ellipsis.
+**Blockers:** none
+**Next:** Phase 6 (Trigger Nodes) complete. Phase 7 QA (Task #77 HandoffParser tests, #78 SwarmEngine integration tests) ready to begin.
+---
 ## 2026-03-28 — backend-dev — Task #75: triggers.js — Trigger API Routes
 **Outcome:** COMPLETED
 **Summary:** Created server/routes/triggers.js with two endpoints: POST /api/v1/triggers/webhooks/:path (webhook receiver, external caller, 10 req/min rate limit, 32KB body cap, always 200) and GET /api/v1/triggers (internal UI endpoint, CSRF-protected, returns trigger list). Instantiated TriggerManager in server/index.js and mounted routes at /api/v1/triggers. 168/168 tests pass, 473 modules build clean (0 errors).

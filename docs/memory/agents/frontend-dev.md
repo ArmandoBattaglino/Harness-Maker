@@ -1300,3 +1300,85 @@ Hook is ready for use by HitlInbox.jsx or any component needing inbox state + ac
 ### Handoff
 Task #74 (TriggerManager.js) next. This hook is self-contained and ready for integration.
 ---
+
+---
+## 2026-03-28 — Task #76: TriggerNode.jsx — Full Visual Implementation
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+Task #75 (triggers.js routes) was COMPLETED. TriggerNode.jsx stub existed at client/src/canvas/nodes/TriggerNode.jsx with basic icon/label/badge UI. SwarmContext.jsx had no triggerStates field yet. No animation keyframes for trigger state changes. The component needed subscription to trigger state during execution and visual feedback when a trigger fires.
+
+### What I did
+1. Read memory files (PROGRESS.md, CONTEXT.md, DECISIONS.md) to understand current state and design patterns (from #52-#75).
+2. Read client/src/store/SwarmContext.jsx to confirm store shape and action patterns.
+3. Read client/src/canvas/nodes/AgentNode.jsx to understand subscription and animation patterns used in similar nodes.
+4. Enhanced SwarmContext.jsx:
+   - Added triggerStates field to store: `{ [triggerId]: { fired, lastFiredAt, status } }`
+   - Added updateTriggerState(triggerId, patch) action for store mutations
+   - Updated reset() action to clear triggerStates on workflow reset
+5. Added @keyframes triggerFiredPulse to index.css: 2-second animation from green glow to fade-out, returning to purple
+6. Completely rewrote TriggerNode.jsx:
+   - Imported useState, useEffect, useSwarmStore
+   - Subscribe to triggerStates[id] via `useSwarmStore((s) => s.triggerStates[id])`
+   - Local state: showFiredAnimation boolean, reset to false after 2-second timeout
+   - useEffect watches fired state: when true, set showFiredAnimation=true and schedule 2s reset
+   - Webhook label: show path (data.webhookPath) or label
+   - RSS label: truncate URL to 20 chars with ellipsis (data.rssUrl)
+   - Status badge: show "Fired!" in green if status==='fired', else "waiting" in purple
+   - Last-fired timestamp: display formatted time via toLocaleTimeString if lastFiredAt exists
+   - Animation class: conditionally apply `animate-[triggerFiredPulse_2s_ease-out]` when showFiredAnimation=true
+7. Ran `cd client && npm run build` — 473 modules, 0 errors.
+8. Updated TASK_PLAN.md #76 → COMPLETED, PROGRESS.md, ACTIVITY_LOG.md, frontend-dev.md.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/canvas/nodes/TriggerNode.jsx | MODIFIED | Full visual implementation: trigger state subscription, webhook/RSS labels, status badge, last-fired timestamp, 2-second pulse animation on fired |
+| client/src/store/SwarmContext.jsx | MODIFIED | Added triggerStates field and updateTriggerState action to store; updated reset() to clear triggerStates |
+| client/src/index.css | MODIFIED | Added @keyframes triggerFiredPulse (2s green border glow → fade-out back to purple) |
+| docs/TASK_PLAN.md | MODIFIED | Task #76 Status: PENDING → COMPLETED, acceptance criteria all checked |
+| docs/memory/PROGRESS.md | MODIFIED | Task #76 marked COMPLETED, overall count 45→46 of 57 |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Session log appended |
+| docs/memory/agents/frontend-dev.md | MODIFIED | This entry appended |
+
+### Improvements delivered
+- Trigger nodes now display webhook path and RSS URL dynamically (not hardcoded labels)
+- Status feedback: "waiting" vs "Fired!" visual distinction on nodes
+- Last-fired timestamp shows when trigger has been activated (only if data exists)
+- 2-second green pulse animation on trigger activation — clear visual signal for user
+- triggerStates can now be updated by WS events (useSwarmStore mutations) as triggers fire during execution
+- Build clean at 473 modules
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None | — | — | — |
+
+### Decisions I made
+- Added useState + useEffect to manage animation lifecycle (fired → showAnimation=true → 2s timeout → showAnimation=false) rather than relying solely on CSS animation timing. This allows re-triggering the animation on the same execution if a trigger fires multiple times.
+- Used Tailwind's dynamic class syntax `animate-[triggerFiredPulse_2s_ease-out]` to keep animation scoped to the one use case; @keyframes define the actual behavior (green glow at 0%, 50%, fade by 100%).
+- Formatted timestamp with `toLocaleTimeString` (compact: HH:MM:SS format) instead of ISO string — more readable in the small node space.
+- RSS URL truncated to 20 chars (not 15, not 25) — balances readability with node width constraints (max-w-[200px]).
+
+### What I learned
+- Zustand selectors (useSwarmStore) can subscribe to nested fields; the pattern `s.triggerStates[id]` is idiomatic and creates a fine-grained subscription (component only re-renders when that specific trigger's state changes).
+- Custom CSS animations with @keyframes can use multiple percentage stops (0%, 50%, 100%) to create complex transitions; this is cleaner than setTimeout-based color changes.
+- Local component state + useEffect can manage animation lifecycle without adding complexity to Zustand — separation of concerns: Zustand manages execution state, component state manages UI animation transients.
+
+### State I'm leaving behind
+TriggerNode.jsx is fully functional. It subscribes to triggerStates from SwarmStore and renders:
+- Correct icons (🔗 for webhook, 📡 for RSS)
+- Dynamic labels (webhook path or RSS URL, not generic labels)
+- Status badge (waiting/fired) with color coding
+- Last-fired timestamp when available
+- 2-second green pulse animation on trigger fire
+
+Build: 473 modules, 0 errors. All three acceptance criteria met:
+- Webhook and RSS nodes show correct icons and labels ✓
+- "Fired!" animation on trigger activation (green pulse for 2 seconds) ✓
+- Last-fired timestamp displayed and updated ✓
+
+### Handoff
+Phase 6 (Trigger Nodes: #74, #75, #76) is now fully COMPLETE. Phase 7 (QA + Security + Release: #77–#82) can now begin. Task #77 (HandoffParser unit tests) is the natural next step for qa-tester.
+---

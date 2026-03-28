@@ -5,6 +5,7 @@ const useSwarmStore = create((set, get) => ({
   activeExecutionId: null,
   executionStatus: 'idle', // 'idle' | 'running' | 'stopped'
   agentStates: {},         // { [nodeId]: { status, lastOutputSnippet, handoffCount } }
+  triggerStates: {},       // { [triggerId]: { fired, lastFiredAt, status } }
   edgeCounters: {},        // { [edgeId]: number }
   budget: { estimatedTokensUsed: 0, limitTokens: 0 },
   inboxItems: [],          // HITL pending approvals
@@ -28,6 +29,10 @@ const useSwarmStore = create((set, get) => ({
 
   updateAgentState: (nodeId, patch) => set((state) => ({
     agentStates: { ...state.agentStates, [nodeId]: { ...state.agentStates[nodeId], ...patch } }
+  })),
+
+  updateTriggerState: (triggerId, patch) => set((state) => ({
+    triggerStates: { ...state.triggerStates, [triggerId]: { ...state.triggerStates[triggerId], ...patch } }
   })),
 
   updateEdgeCounter: (edgeId, count) => set((state) => ({
@@ -67,6 +72,7 @@ const useSwarmStore = create((set, get) => ({
     activeExecutionId: null,
     executionStatus: 'idle',
     agentStates: {},
+    triggerStates: {},
     edgeCounters: {},
     budget: { estimatedTokensUsed: 0, limitTokens: 0 },
     inboxItems: [],

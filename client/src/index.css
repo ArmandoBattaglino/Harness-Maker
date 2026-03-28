@@ -192,6 +192,14 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* ── Trigger Fired Animation (2s green border pulse) ────── */
+
+@keyframes triggerFiredPulse {
+  0% { border-color: rgb(74, 222, 128); box-shadow: 0 0 12px rgba(74, 222, 128, 0.6); }
+  50% { border-color: rgb(74, 222, 128); box-shadow: 0 0 20px rgba(74, 222, 128, 0.8); }
+  100% { border-color: rgb(168, 85, 247); box-shadow: 0 0 0px rgba(74, 222, 128, 0); }
+}
+
 /* ── PTY Explosion Overlay ────────────────────────────── */
 
 .pty-explosion-overlay {

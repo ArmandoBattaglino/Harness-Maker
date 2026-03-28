@@ -156,7 +156,7 @@ _None._
 - NOTE: FileManager was NOT created in Task #5 as planned — RESOLVED in Task #7 (created server/services/FileManager.js).
 
 ## V3 — Swarm Orchestrator (57 granular tasks after split — 2026-03-27 replan)
-**Status: 45/57 COMPLETED — as of 2026-03-28. All Phase 1 backend tasks done. All Phase 2 (Canvas Static) COMPLETED. Phase 3 (Prompt-to-Flow) FULLY COMPLETED. Phase 4 (Live Execution) ACTIVE: #62.1, #62.2, #62.3, #63, #64, #66, #67 DONE. Phase 5 wave: #68, #69, #70, #71.1, #71.2 DONE, #72 COMPLETED.**
+**Status: 46/57 COMPLETED — as of 2026-03-28. All Phase 1 backend tasks done. All Phase 2 (Canvas Static) COMPLETED. Phase 3 (Prompt-to-Flow) FULLY COMPLETED. Phase 4 (Live Execution) ACTIVE: #62.1, #62.2, #62.3, #63, #64, #66, #67 DONE. Phase 5 wave: #68, #69, #70, #71.1, #71.2, #73 DONE. Phase 6 (Trigger Nodes): #74, #75, #76 ALL COMPLETED.**
 **Note: Original 40 tasks (#43–#82). After model assignment + subtask split: 57 granular units.**
 **7 original tasks split into subtasks: #46→3, #47→2, #48→2, #53→3, #57→2, #62→3, #71→2**
 - V3 PRD complete: docs/PRD.md
@@ -219,7 +219,7 @@ _None._
 ### V3 Phase 6 — Trigger Nodes
 - [TASK-74] COMPLETED 2026-03-28 — TriggerManager.js webhooks + RSS polling
 - [TASK-75] COMPLETED 2026-03-28 — triggers.js routes
-- [TASK-76] PENDING — TriggerNode.jsx full visual implementation
+- [TASK-76] COMPLETED 2026-03-28 — TriggerNode.jsx full visual implementation
 
 ### V3 Phase 7 — QA + Security + Release
 - [TASK-77] PENDING — HandoffParser unit tests (qa-tester)

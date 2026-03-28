@@ -5741,7 +5741,7 @@ Agent: frontend-dev
 Priority: LOW
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Dependencies: #53.3
 Context:
   Update TriggerNode.jsx (stub from #53) with full implementation:
@@ -5757,9 +5757,9 @@ Context:
   No interactive controls — triggers are configured in AgentInspector (#55).
 
 Acceptance criteria:
-  - [ ] Webhook and RSS nodes show correct icons and labels
-  - [ ] "Fired!" animation on trigger activation
-  - [ ] Last-fired timestamp displayed and updated
+  - [x] Webhook and RSS nodes show correct icons and labels
+  - [x] "Fired!" animation on trigger activation
+  - [x] Last-fired timestamp displayed and updated
 
 ---
 
