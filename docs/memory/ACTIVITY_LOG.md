@@ -1,4 +1,13 @@
 ---
+## 2026-03-28 — devops — Task #81: Build Verification + v3.0.0 Tag
+**Outcome:** COMPLETED
+**Summary:** Final build and release verification completed. Client build: 473 modules, 866.72 kB minified (well under 3MB limit). npm audit: 1 HIGH advisory in path-to-regexp (pre-existing, noted as non-exploitable in Task #79 security audit). npm test: 187/187 tests PASS in 3.57s. Git tag v3.0.0 created successfully. V3 release-ready.
+**Files changed:** docs/TASK_PLAN.md (MODIFIED — Task #81 PENDING→COMPLETED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/agents/devops.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Pre-existing path-to-regexp HIGH advisory is acceptable per Task #79 security audit (transitive dep, not exploitable in routing pattern)
+**Blockers:** none
+**Next:** Task #82 (V3 Documentation Update — documenter)
+---
 ## 2026-03-28 — debugger — Task #80 BUGFIX: Swarm Route Init Order
 **Outcome:** COMPLETED
 **Summary:** swarmRoutes() and inboxRoutes() were factory-called with app.locals.swarmEngine before SwarmEngine was instantiated (line 231 vs 271). Fixed by hoisting SwarmEngine instantiation to before the route mounts, placed between workflow routes and static file serving so API routes precede the SPA wildcard fallback. 187/187 tests pass.

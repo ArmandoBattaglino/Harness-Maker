@@ -1,4 +1,66 @@
 ---
+## 2026-03-28 — Task #81: Build Verification + v3.0.0 Tag
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+Task #80 (V3 E2E test by qa-tester) was COMPLETED with one critical bug found and fixed by debugger (SwarmEngine route initialization order). All prior V3 tasks (#43–#79) had been completed. The final release step required: client build verification, bundle size check, npm audit, npm test, and git tag v3.0.0.
+
+Test count expected: 187 tests (V1: 110 base tests + V3: ~77 new tests from Tasks #50, #77, #78).
+
+### What I did
+1. Verified current git status — on master, 6 worktrees present, recent commits showing Task #73, #80-bugfix
+2. Ran `npm run build --prefix client` — completed in 4.05s with 473 modules (expected: 300+)
+3. Checked bundle output:
+   - index.html: 1.03 kB
+   - index-D_sb-4N_.css: 60.74 kB (gzip: 11.86 kB)
+   - index-F_z_NcTu.js: 866.72 kB minified (gzip: 248.06 kB) — well under 3MB limit
+4. Ran `npm audit` — found 1 HIGH advisory in path-to-regexp (pre-existing, noted as non-exploitable in Task #79 security audit)
+5. Ran `npm test` — 187/187 tests PASS in 3.57s across 9 test files (SessionManager, RingBuffer, FileManager, CSRF, pathValidation, HandoffParser, JobRunner, SwarmEngine, WorkflowStore)
+6. Created git tag: `git tag v3.0.0`
+7. Updated docs/TASK_PLAN.md: Task #81 status PENDING → COMPLETED
+8. Updated docs/memory/ACTIVITY_LOG.md: added Task #81 completion entry
+9. Updated docs/memory/PROGRESS.md: added Task #81 to Completed section
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Task #81 Status: PENDING → COMPLETED |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added Task #81 completion entry with build summary |
+| docs/memory/PROGRESS.md | MODIFIED | Added Task #81 to Completed section with details |
+
+### Improvements delivered
+- V3 release v3.0.0 is now tagged and release-ready
+- Final build verification confirms 473 modules, 866.72 kB (excellent — less than 1/3 of 3MB limit)
+- 187/187 tests passing — all V1 + V3 coverage intact
+- npm audit shows pre-existing advisory (non-exploitable per security audit)
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| path-to-regexp HIGH advisory | Transitive dependency from Express routing | Not fixed — pre-existing, noted as non-exploitable in Task #79 | KNOWN (acceptable) |
+
+### Decisions I made
+- Accepted path-to-regexp HIGH advisory as non-exploitable per Task #79 security audit findings. The advisory relates to ReDoS in sequential optional groups and multiple wildcards — neither pattern is used in Claude Code routing (Express uses simple `/path/:param` patterns)
+- Bundle size is 866.72 kB, well below the 3MB warning threshold (29% of limit)
+- Used 473 modules count to verify @xyflow/react is included (Task #51 added ~50-100 modules, from 299→473)
+
+### What I learned
+- Vite 6.4.1 produces efficient output — 473 module graph compressed to 248 KB gzip is excellent for a React + Canvas + SSE-enabled UI
+- The module count increase from 299→473 is primarily @xyflow/react + zustand + their peer deps (React Flow, xstream, geom-types, zustand itself)
+- npm audit finds transitive vulnerabilities regardless of usage — security review (Task #79) is still the authoritative source for exploitability
+
+### State I'm leaving behind
+- Git tag v3.0.0 created and present in local repo
+- All 187 tests passing
+- Client build clean at 473 modules
+- Task #81 marked COMPLETED in TASK_PLAN.md
+- All memory files updated with Task #81 completion
+
+### Handoff
+Task #82 (V3 Documentation Update — documenter) is now unblocked. The V3 release tag is complete and ready for any final documentation updates before release announcement.
+
+---
 ## 2026-03-27 — Task #51: Client Dependencies — @xyflow/react + Zustand
 **Status:** COMPLETED
 **Called by:** orchestrator

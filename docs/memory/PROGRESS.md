@@ -1,6 +1,8 @@
 # Progress
 
 ## Completed
+- [TASK-81] Build verification + v3.0.0 tag (devops) — COMPLETED 2026-03-28
+  npm run build: 473 modules, 866.72 kB (within 3MB limit). npm test: 187/187 PASS. npm audit: 1 pre-existing HIGH in path-to-regexp (non-exploitable, noted in security audit). Git tag v3.0.0 created successfully. V3 release-ready.
 - [TASK-80-BUGFIX] Swarm route init order bug (debugger) — COMPLETED 2026-03-28
   swarmRoutes() and inboxRoutes() were called with undefined swarmEngine. Fixed by moving SwarmEngine instantiation to before route mounting (section 7), keeping all routes before the SPA wildcard fallback. 187/187 tests pass. Committed as 843680a.
 - [TASK-80] V3 End-to-End Test (qa-tester) — COMPLETED 2026-03-28
