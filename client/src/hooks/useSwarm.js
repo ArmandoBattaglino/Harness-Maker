@@ -5,15 +5,14 @@ import { apiPost, apiDelete } from './useApi.js';
 
 export function useSwarm(workflowId) {
   const wsRef = useRef(null);
-  const {
-    setExecution,
-    updateAgentState,
-    updateEdgeCounter,
-    updateBudget,
-    addInboxItem,
-    addFeedEvent,
-    setWsConnected,
-  } = useSwarmStore();
+  const setExecution = useSwarmStore((s) => s.setExecution);
+  const updateAgentState = useSwarmStore((s) => s.updateAgentState);
+  const updateEdgeCounter = useSwarmStore((s) => s.updateEdgeCounter);
+  const updateBudget = useSwarmStore((s) => s.updateBudget);
+  const addInboxItem = useSwarmStore((s) => s.addInboxItem);
+  const addFeedEvent = useSwarmStore((s) => s.addFeedEvent);
+  const setWsConnected = useSwarmStore((s) => s.setWsConnected);
+  const agentStates = useSwarmStore((s) => s.agentStates);
 
   // Connect WS for a running execution
   const connectWs = useCallback((executionId) => {
@@ -39,7 +38,9 @@ export function useSwarm(workflowId) {
         case 'handoff_started':
           updateEdgeCounter(msg.edgeId, msg.counter);
           addFeedEvent({ ...msg, timestamp: Date.now() });
-          updateAgentState(msg.sourceNodeId, { handoffCount: msg.counter });
+          const sourceAgent = agentStates[msg.sourceNodeId];
+          const currentHandoffCount = sourceAgent?.handoffCount ?? 0;
+          updateAgentState(msg.sourceNodeId, { handoffCount: currentHandoffCount + 1 });
           break;
         case 'execution_status':
           setExecution(msg.executionId ?? null, msg.status ?? 'running');
@@ -59,7 +60,7 @@ export function useSwarm(workflowId) {
     };
 
     wsRef.current = ws;
-  }, [setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, setExecution, updateBudget, addInboxItem]);
+  }, [setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, setExecution, updateBudget, addInboxItem, agentStates]);
 
   // Start execution
   const startExecution = useCallback(async (projectId, projectPath) => {

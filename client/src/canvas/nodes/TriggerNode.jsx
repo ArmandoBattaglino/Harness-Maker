@@ -12,23 +12,23 @@ const triggerIcons = {
 // type: "trigger"
 export default function TriggerNode({ id, data, selected }) {
   const triggerState = useSwarmStore((s) => s.triggerStates[id]);
-  const fired = triggerState?.fired ?? false;
+  const fireCount = triggerState?.fireCount ?? 0;
   const lastFiredAt = triggerState?.lastFiredAt;
   const status = triggerState?.status ?? 'waiting'; // 'waiting' | 'fired'
 
   // Local state for reset animation after 2 seconds
   const [showFiredAnimation, setShowFiredAnimation] = useState(false);
 
-  // Trigger the "Fired!" animation when fired state changes to true
+  // Trigger the "Fired!" animation when fireCount increments (detects repeated firings)
   useEffect(() => {
-    if (fired) {
+    if (fireCount > 0) {
       setShowFiredAnimation(true);
       const timer = setTimeout(() => {
         setShowFiredAnimation(false);
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [fired]);
+  }, [fireCount]);
 
   const icon = triggerIcons[data.triggerType] || '⚡';
 

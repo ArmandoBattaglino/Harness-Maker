@@ -6252,7 +6252,7 @@ Agent: frontend-dev
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   FILE: client/src/hooks/useSwarm.js:42
   TYPE: wrong-behavior
@@ -6317,7 +6317,7 @@ Agent: frontend-dev
 Priority: LOW
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   FILE: client/src/canvas/nodes/TriggerNode.jsx:23-30
   TYPE: wrong-behavior
@@ -6346,7 +6346,7 @@ Agent: frontend-dev
 Priority: LOW
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   FILE: client/src/hooks/useSwarm.js:8-16
   TYPE: performance / stale-closure
