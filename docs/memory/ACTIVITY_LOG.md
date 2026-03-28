@@ -1,4 +1,13 @@
 ---
+## 2026-03-28 — project-manager — Debug Loop Closure: Tasks #83–#99 All COMPLETED
+**Outcome:** COMPLETED
+**Summary:** Verified and reconciled the debug loop. All 17 post-release bug tasks (#83–#99) confirmed COMPLETED. Seven tasks that still showed Status: PENDING in TASK_PLAN.md despite being completed by backend-dev and frontend-dev agents were corrected (#83, #84, #85, #92, #94, #95, #99). V3 summary table updated with a full debug loop table. Release status section updated: v3.0.0 + debug loop = RELEASE-READY, no known open bugs. Task #83 (TriggerManager wire-up) marked COMPLETED as superseded by #93 and #97.
+**Files changed:** docs/TASK_PLAN.md (7 Status corrections, debug loop summary table added, V3 release status section updated)
+**Bugs fixed:** none (reconciliation task)
+**Decisions made:** Task #83 superseded by #93/#97 — both tasks together delivered the full TriggerManager.cleanupExecution() wire-up that #83 described. Marking #83 COMPLETED rather than creating a new task.
+**Blockers:** none
+**Next:** Project is release-ready. No open tasks.
+---
 ## 2026-03-28 — backend-dev — Tasks #94 + #95 + #99: Backend route bug fixes
 **Outcome:** COMPLETED
 **Summary:** Fixed three backend route bugs affecting swarm execution control and webhook security. BUG-94: /pause endpoint sent Ctrl-C to running agents but never called swarmEngine.pauseExecution(), so agent states remained 'running' and no WS broadcast occurred — fix: call pauseExecution() after Ctrl-C to update state and broadcast events. BUG-95: /resume endpoint was a no-op (comment said "full HITL resume implemented in Task #70") — fix: implement the call by invoking swarmEngine.resumeExecution() to set paused agents to 'running' and broadcast. BUG-99: /webhooks route declared express.json({ limit: '32kb' }) but the global express.json() middleware (100KB default) had already consumed the request before the route-specific middleware ran, bypassing the 32KB cap entirely — fix: use express.raw({ limit: '32kb' }) on the route and manually parse JSON to enforce SEC-V3-01. All fixes verified: 187/187 tests pass.

@@ -1,4 +1,46 @@
 ---
+## 2026-03-28 — Debug Loop Closure: Tasks #83–#99 Reconciliation
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+Debug loop declared complete by user. All 16 bug tasks (#84–#99) plus #83 claimed done by agents. However, grep on TASK_PLAN.md revealed 7 tasks still showing Status: PENDING despite agents reporting them COMPLETED in ACTIVITY_LOG.md. V3 summary table also had no debug loop section and no release-ready declaration.
+
+### What I did
+1. Read tail of ACTIVITY_LOG.md to confirm which tasks backend-dev and frontend-dev reported as COMPLETED
+2. Ran grep on TASK_PLAN.md to identify exact line numbers of PENDING tasks
+3. Read specific line ranges to confirm the PENDING entries were not stale placeholders but the actual task records
+4. Fixed 7 Status: PENDING → Status: COMPLETED entries: #83, #84, #85, #92, #94, #95, #99
+5. Updated V3 summary table header to reflect 2026-03-28 debug loop completion date
+6. Added full debug loop summary table (#83–#99, all COMPLETED) after the V3 task table
+7. Added release-ready declaration to the table footer
+8. Rewrote V3 Release Final Status section to include debug loop summary and resolution of the known gap
+9. Appended ACTIVITY_LOG entry
+10. Wrote this session log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | 7 Status corrections (PENDING → COMPLETED); V3 summary table header updated; debug loop summary table added; V3 Release Final Status section rewritten to include debug loop outcome and gap resolution |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | PM session entry prepended |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- TASK_PLAN.md now accurately reflects the true state: all 99 tasks COMPLETED
+- Debug loop is formally documented in the V3 summary section with a full 17-row table
+- Release-ready declaration added: "v3.0.0 + debug loop = RELEASE-READY. No known open bugs."
+- Task #83 supersession documented: the fix was delivered by #93 + #97 together
+
+### Decisions I made
+- Task #83 marked COMPLETED (superseded) rather than creating a v3.0.1 patch task — Task #93 wired budgetTracker.clearExecution() + triggerManager.cleanupExecution() into stopExecution(), and Task #97 fixed the null executionId poller leak in cleanupExecution() itself. Together they fully deliver what #83 described.
+- V3 summary table not re-listed with #83–#99 rows inline (they already have their own TASK entries below) — added a separate "Debug Loop Summary" subsection instead for clean visual separation
+
+### State I'm leaving behind
+All 99 tasks (1–99) COMPLETED. TASK_PLAN.md accurate. No PENDING or BLOCKED tasks. Project is release-ready.
+
+### Handoff
+None — project fully reconciled. If user wants to proceed, options are: (a) git tag the post-debug-loop state as v3.0.1, (b) move to new feature planning.
+---
 ## 2026-03-28 — Tasks #84--#99: QA Bug-Fix Wave Task Creation
 **Status:** COMPLETED
 **Called by:** user (Debug Loop -- Step 2: Create Bug Tasks from qa-tester findings)

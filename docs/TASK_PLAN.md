@@ -5995,7 +5995,7 @@ Acceptance criteria:
 
 ---
 
-## V3 Task Status Summary (Updated 2026-03-27 — Model Assignments + Subtask Split)
+## V3 Task Status Summary (Updated 2026-03-28 — Debug Loop Complete, All 16 Post-Release Bugs Resolved)
 
 | # | Task | Agent | Priority | Model | Status |
 |---|------|-------|----------|-------|--------|
@@ -6054,6 +6054,32 @@ Acceptance criteria:
 **After subtask split: 57 granular units (40 originals + 17 subtask expansions)**
 **ALL 57 COMPLETED — v3.0.0 tagged 2026-03-28. V3 RELEASE DONE.**
 
+## Debug Loop Summary (Tasks #83–#99 — Post-Release Bug Wave)
+
+| # | Task | Agent | Status |
+|---|------|-------|--------|
+| 83 | SwarmEngine.stopExecution() — Wire TriggerManager.cleanupExecution() | backend-dev | COMPLETED |
+| 84 | useInbox.js — Fix Direct Zustand Store Mutation in Polling Fallback | frontend-dev | COMPLETED |
+| 85 | useInbox.js — Fix WS Item Shape Mismatch Causing Empty Filtered List | frontend-dev | COMPLETED |
+| 86 | SwarmContext.jsx — Prevent Duplicate departmentStack Pushes | frontend-dev | COMPLETED |
+| 87 | SwarmContext.jsx — Fix resolveInboxItem ID Accessor for WS Items | frontend-dev | COMPLETED |
+| 88 | useSwarm.js — Fix handoffCount Increment Logic | frontend-dev | COMPLETED |
+| 89 | SwarmCanvas.jsx — React to workflowDef Prop Changes After Mount | frontend-dev | COMPLETED |
+| 90 | TriggerNode.jsx — Replace Boolean fired Flag with Counter | frontend-dev | COMPLETED |
+| 91 | useSwarm.js — Replace Full Store Destructuring with Granular Selectors | frontend-dev | COMPLETED |
+| 92 | useInbox.js — Normalize WS and REST Item Shapes | frontend-dev | COMPLETED |
+| 93 | SwarmEngine.js — Fix stopExecution Memory Leak (budgetTracker + triggerManager) | backend-dev | COMPLETED |
+| 94 | swarm.js Route — Call swarmEngine.pauseExecution() in /pause Handler | backend-dev | COMPLETED |
+| 95 | swarm.js Route — Implement swarmEngine.resumeExecution() in /resume Handler | backend-dev | COMPLETED |
+| 96 | inbox.js Route — Add Public getExecution() Method to SwarmEngine | backend-dev | COMPLETED |
+| 97 | TriggerManager.js — Fix Null executionId Poller Leak in cleanupExecution | backend-dev | COMPLETED |
+| 98 | SwarmEngine.js — Fix getStatus() Returning Undefined Budget | backend-dev | COMPLETED |
+| 99 | triggers.js Route — Fix 32KB Body Limit Overridden by Global Parser | backend-dev | COMPLETED |
+
+**ALL 17 DEBUG LOOP TASKS (#83–#99) COMPLETED — 2026-03-28.**
+**187/187 tests passing. Build: 473 modules, 0 errors.**
+**v3.0.0 + debug loop = RELEASE-READY.**
+
 ---
 
 ## V3 Release Final Status
@@ -6069,13 +6095,19 @@ Acceptance criteria:
 - Phase 7 (QA + Security + Release, #77–#82): 6 tasks COMPLETED
 - Git tag v3.0.0 created: 2026-03-28
 
-### Known Gap — v3.0.1 Candidate
+**POST-RELEASE DEBUG LOOP — ALL 17 BUG TASKS (#83–#99) COMPLETED as of 2026-03-28.**
 
-**Gap:** `TriggerManager.cleanupExecution()` has no live caller. `SwarmEngine.stopExecution()` should call it to clean up RSS pollers and webhook registrations when an execution stops, but currently does not. RSS poll intervals created during execution will continue running until the Node.js process restarts.
+- Task #83: TriggerManager wire-up — superseded by #93/#97 (both fixed stopExecution cleanup). COMPLETED.
+- Tasks #84–#92: Frontend bug wave — Zustand reactivity, WS shape normalization, canvas prop-change blindness, handoffCount logic, TriggerNode counter, granular selectors. ALL COMPLETED.
+- Tasks #93–#99: Backend bug wave — stopExecution memory leak, pause/resume routes, private field access, poller null-executionId leak, getStatus budget, 32KB webhook limit. ALL COMPLETED.
+- Test suite: 187/187 passing after all fixes.
+- Build: 473 modules, 0 errors.
 
-**Impact:** LOW — RSS pollers are non-destructive and bounded in count. They waste a small amount of CPU/network but do not cause data loss or security risk. Production deployments that frequently start/stop swarm executions may accumulate idle pollers.
+**v3.0.0 + debug loop = RELEASE-READY. No known open bugs.**
 
-**Resolution:** Task #83 (v3.0.1 patch) created below.
+### Former Gap — RESOLVED
+
+**Gap (resolved):** `TriggerManager.cleanupExecution()` had no live caller. Fixed in Task #93 (budgetTracker + triggerManager cleanup in stopExecution) and Task #97 (null executionId poller leak in cleanupExecution itself). Task #83 is superseded — the fix was delivered as part of the debug wave.
 
 ---
 
@@ -6084,7 +6116,7 @@ Agent: backend-dev
 Priority: LOW
 Difficulty: LOW
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   Code-mapper identified that TriggerManager.cleanupExecution() was implemented in Task #74 but has no live caller. SwarmEngine.stopExecution() should call it when an execution stops, to clean up any RSS pollers and webhook registrations that were created during that execution.
 
@@ -6134,7 +6166,7 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   FILE: client/src/hooks/useInbox.js:31
   TYPE: wrong-behavior
@@ -6164,7 +6196,7 @@ Agent: frontend-dev
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   FILE: client/src/hooks/useInbox.js:15
   TYPE: wrong-behavior
@@ -6377,7 +6409,7 @@ Agent: frontend-dev
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   FILE: client/src/hooks/useInbox.js:24-31
   TYPE: logic-error
@@ -6444,7 +6476,7 @@ Agent: backend-dev
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   FILE: server/routes/swarm.js:175-196
   TYPE: wrong-behavior
@@ -6475,7 +6507,7 @@ Agent: backend-dev
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   FILE: server/routes/swarm.js:204-219
   TYPE: wrong-behavior
@@ -6599,7 +6631,7 @@ Agent: backend-dev
 Priority: LOW
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   FILE: server/routes/triggers.js:72-98
   TYPE: missing-guard
