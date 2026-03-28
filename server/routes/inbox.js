@@ -29,7 +29,7 @@ export default function inboxRoutes(swarmEngine) {
       const status = swarmEngine.getStatus(executionId);
       if (!status) return res.status(404).json({ error: 'Execution not found' });
 
-      const execution = swarmEngine._executions.get(executionId);
+      const execution = swarmEngine.getExecution(executionId);
       const items = execution?.inboxItems ?? [];
       return res.json({ items });
     } catch (err) {
@@ -52,7 +52,7 @@ export default function inboxRoutes(swarmEngine) {
       const { executionId, itemId } = req.params;
       const { resumeText } = req.body || {};
 
-      const execution = swarmEngine._executions.get(executionId);
+      const execution = swarmEngine.getExecution(executionId);
       if (!execution) return res.status(404).json({ error: 'Execution not found' });
 
       const itemIndex = execution.inboxItems.findIndex((i) => i.id === itemId);
@@ -98,7 +98,7 @@ export default function inboxRoutes(swarmEngine) {
     try {
       const { executionId, itemId } = req.params;
 
-      const execution = swarmEngine._executions.get(executionId);
+      const execution = swarmEngine.getExecution(executionId);
       if (!execution) return res.status(404).json({ error: 'Execution not found' });
 
       const itemIndex = execution.inboxItems.findIndex((i) => i.id === itemId);

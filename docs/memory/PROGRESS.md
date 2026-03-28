@@ -1,6 +1,8 @@
 # Progress
 
 ## Completed
+- [TASK-93/96/97/98] Backend service bug fixes (backend-dev) — COMPLETED 2026-03-28
+  BUG-93: stopExecution() now calls budgetTracker.clearExecution(). BUG-96: Added public getExecution() method to SwarmEngine, inbox.js updated to use it instead of private _executions. BUG-97: cleanupExecution() now cleans up null-executionId pollers. BUG-98: getStatus() returns real budget data from budgetTracker. 187/187 tests pass. 473 modules build clean.
 - [TASK-88/90/91] Frontend bug fixes (frontend-dev) — COMPLETED 2026-03-28
   BUG-88: handoffCount increment logic fixed (increments by 1 per event, not assigned edge counter). BUG-90: TriggerNode animation re-triggers on repeated firings (counter instead of boolean). BUG-91: useSwarm granular Zustand selectors prevent cascade re-renders. Build: 473 modules, 0 errors.
 - [TASK-82] V3 Documentation Update (documenter) — COMPLETED 2026-03-28

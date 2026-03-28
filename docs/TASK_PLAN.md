@@ -6410,7 +6410,7 @@ Agent: backend-dev
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   FILE: server/services/SwarmEngine.js:411-443
   TYPE: missing-cleanup
@@ -6506,7 +6506,7 @@ Agent: backend-dev
 Priority: LOW
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   FILE: server/routes/inbox.js:32
   TYPE: wrong-behavior (fragile private field access)
@@ -6540,7 +6540,7 @@ Agent: backend-dev
 Priority: LOW
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   FILE: server/services/TriggerManager.js:346-353
   TYPE: logic-error
@@ -6570,7 +6570,7 @@ Agent: backend-dev
 Priority: LOW
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   FILE: server/services/SwarmEngine.js:549
   TYPE: wrong-behavior

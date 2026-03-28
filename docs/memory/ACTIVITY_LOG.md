@@ -1,4 +1,14 @@
 ---
+## 2026-03-28 — backend-dev — Tasks #93 + #96 + #97 + #98: Backend service bug fixes
+**Outcome:** COMPLETED
+**Summary:** Fixed four backend memory leaks and API fragility bugs. BUG-93: stopExecution() was missing budgetTracker.clearExecution() call, leaking per-execution budget tracking state indefinitely on repeated start/stop cycles. BUG-96: inbox.js directly accessed private SwarmEngine._executions field (3 places) — added public getExecution() method and updated all 3 routes to use it. BUG-97: TriggerManager.cleanupExecution() only cleaned up pollers matching the execution ID but never cleaned up workflow-level pollers (executionId=null), leaking setInterval handlers. BUG-98: getStatus() returned undefined budget (e.budget field was never set) — now queries budgetTracker.getTotal(executionId) directly. All fixes minimal and surgical. 187/187 tests pass, build: 473 modules, 0 errors.
+**Files changed:** server/services/SwarmEngine.js (added getExecution(), fixed stopExecution(), fixed getStatus()), server/services/TriggerManager.js (fixed cleanupExecution()), server/routes/inbox.js (replaced 3x _executions.get with getExecution()), docs/TASK_PLAN.md
+**Bugs fixed:** BUG-93 (stopExecution memory leak), BUG-96 (inbox private field access), BUG-97 (null executionId poller leak), BUG-98 (undefined budget)
+**Decisions made:** For BUG-93, add call to budgetTracker.clearExecution() after triggerManager cleanup. For BUG-96, create thin public getExecution() wrapper returning null if not found. For BUG-97, check (executionId === id || executionId === null) in cleanup loop. For BUG-98, query budgetTracker.getTotal() dynamically rather than storing budget on execution object.
+**Blockers:** none
+**Next:** Task #99+ (if any) or release v3.0.0
+
+---
 ## 2026-03-28 — frontend-dev — Tasks #88 + #90 + #91: handoffCount, TriggerNode fireCount, granular selectors
 **Outcome:** COMPLETED
 **Summary:** Fixed three frontend bugs in one commit. BUG-88: handoffCount was assigned edge counter instead of incrementing per-agent count by 1 — fixed by reading agentStates and computing `currentHandoffCount + 1` on handoff_started event. BUG-90: TriggerNode used boolean `fired` flag preventing animation re-trigger on repeated firings — fixed by replacing with `fireCount` counter and useEffect dependency on counter. BUG-91: useSwarm full-store destructuring caused cascade re-renders on any store change — fixed by replacing with 8 granular Zustand selectors (one per action/state). All fixes verified: build passes 473 modules, 0 errors.

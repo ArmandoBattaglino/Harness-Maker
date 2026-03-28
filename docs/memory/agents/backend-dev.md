@@ -1,4 +1,63 @@
 ---
+## 2026-03-28 — Tasks #93 + #96 + #97 + #98: Backend service bug fixes
+**Status:** COMPLETED
+**Called by:** user (direct task assignment — four coordinated bugs)
+
+### Context when I started
+Four backend bugs were reported: BUG-93 (stopExecution memory leak — missing budgetTracker.clearExecution), BUG-96 (inbox.js accessing private _executions field instead of public API), BUG-97 (TriggerManager.cleanupExecution not cleaning up null-executionId pollers), BUG-98 (getStatus returning undefined budget). All four existed in production code. 187 tests passing, 473 modules building clean.
+
+### What I did
+1. Read docs/memory/ (PROJECT, DECISIONS, PROGRESS, CONTEXT, ACTIVITY_LOG) and backend-dev agent log in parallel to understand project state.
+2. Read SwarmEngine.js lines 400-560 (stopExecution, getStatus); BudgetTracker.js (full public API); TriggerManager.js lines 340-370 (cleanupExecution); inbox.js lines 1-130 (all three route handlers).
+3. Applied fix for BUG-93: Added budgetTracker.clearExecution(executionId) call at end of stopExecution() (after triggerManager.cleanupExecution).
+4. Applied fix for BUG-96: Added public getExecution(executionId) method to SwarmEngine that returns execution object or null. Updated inbox.js lines 32, 55, 101 to call getExecution() instead of accessing _executions directly.
+5. Applied fix for BUG-98: Modified getStatus() to call budgetTracker.getTotal(executionId) and return real budget data instead of undefined e.budget.
+6. Applied fix for BUG-97: Modified TriggerManager.cleanupExecution() condition from `if (poller.executionId === executionId)` to `if (poller.executionId === executionId || poller.executionId === null)` to clean up workflow-level pollers.
+7. Ran npm test — 187/187 pass, no regressions.
+8. Ran cd client && npm run build — 473 modules, 0 errors.
+9. Updated docs/TASK_PLAN.md (all 4 tasks PENDING → COMPLETED), docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, agent log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SwarmEngine.js | MODIFIED | Added getExecution(executionId) public method; fixed stopExecution() to call budgetTracker.clearExecution(); fixed getStatus() to return real budget from budgetTracker |
+| server/services/TriggerManager.js | MODIFIED | Fixed cleanupExecution() to clean up null-executionId pollers (workflow-level triggers) |
+| server/routes/inbox.js | MODIFIED | Replaced all 3 private _executions.get() calls with public getExecution() |
+| docs/TASK_PLAN.md | MODIFIED | Status: PENDING → COMPLETED for all 4 tasks |
+| docs/memory/PROGRESS.md | MODIFIED | Added summary of all 4 fixes to Completed section |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session entry |
+| docs/memory/agents/backend-dev.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- BUG-93: stopExecution now properly cleans up budgetTracker state — no memory accumulation on repeated start/stop cycles.
+- BUG-96: inbox.js now uses public getExecution() API instead of private field access — prevents API fragility if _executions field is ever refactored.
+- BUG-97: TriggerManager.cleanupExecution() now properly cleans up null-executionId (workflow-level) pollers — prevents setInterval memory leaks for workflow triggers.
+- BUG-98: getStatus() now returns real, dynamically computed budget data instead of undefined value.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | - | - | - |
+
+### Decisions I made
+- For BUG-93: Placed budgetTracker.clearExecution() after triggerManager.cleanupExecution() (same guard pattern, symmetric cleanup).
+- For BUG-96: Created thin public wrapper getExecution() that returns execution or null, matching Swagger pattern. Kept method as simple as possible (one line).
+- For BUG-97: Changed condition from single `===` check to `=== executionId || === null` — this catches both specific and workflow-level pollers.
+- For BUG-98: Query budgetTracker.getTotal() dynamically in getStatus() rather than storing budget on execution object. This avoids stale budget values and centralizes budget state in one place (BudgetTracker).
+
+### What I learned
+- Memory leaks in swarm orchestrators accumulate across execution cycles — cleanup must be exhaustive (budgetTracker, triggerManager, session tap listeners all called).
+- Workflow-level triggers (executionId=null) are a different lifecycle tier from execution-specific triggers — must handle both cases in cleanup.
+- BudgetTracker tracks per-session character counts but doesn't expose a per-execution summary API — getStatus() needs to call getTotal() to reconstruct it.
+- Private field access (_executions) in route handlers creates maintenance burden — public wrapper methods (getExecution) are safer even if slightly verbose.
+
+### State I'm leaving behind
+SwarmEngine is hardened against memory leaks: stopExecution() now cleans up all three resource types (sessions, budgets, triggers). getStatus() returns accurate budget data. inbox.js uses public API only. TriggerManager cleans up both execution-specific and workflow-level pollers. All 187 tests pass. Build clean at 473 modules. Code is ready for v3.0.0 release.
+
+### Handoff
+All four bugs are fixed and tested. No follow-up work needed. Next task: if any other bugs remain, escalate via debugger agent.
+
+---
 ## 2026-03-28 — Task #75: triggers.js — Trigger API Routes
 **Status:** COMPLETED
 **Called by:** user (direct task assignment)

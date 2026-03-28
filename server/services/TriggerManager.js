@@ -340,12 +340,13 @@ class TriggerManager {
   /**
    * Clean up all RSS pollers that belong to a specific execution.
    * Called by SwarmEngine.stopExecution() so intervals are not left running
-   * after the execution ends.
+   * after the execution ends. Also cleans up workflow-level pollers (where
+   * executionId is null) to prevent memory leaks (BUG-97 fix).
    * @param {string} executionId
    */
   cleanupExecution(executionId) {
     for (const [nodeId, poller] of this.rssPollers) {
-      if (poller.executionId === executionId) {
+      if (poller.executionId === executionId || poller.executionId === null) {
         clearInterval(poller.intervalId);
         this.rssPollers.delete(nodeId);
       }

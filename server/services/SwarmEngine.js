@@ -437,9 +437,15 @@ class SwarmEngine {
 
     // Clean up any RSS pollers / webhooks registered for this execution.
     // Without this call the TriggerManager intervals keep running indefinitely
-    // after the execution ends (BUG: TASK #83).
+    // after the execution ends (BUG-97 fix).
     if (this._triggerManager) {
       this._triggerManager.cleanupExecution(executionId);
+    }
+
+    // Clear budget tracking data for this execution.
+    // Without this call the BudgetTracker accumulates memory (BUG-93 fix).
+    if (this._budgetTracker) {
+      this._budgetTracker.clearExecution(executionId);
     }
   }
 
@@ -532,7 +538,19 @@ class SwarmEngine {
   }
 
   /**
+   * Get the execution object for a given executionId (public API for internal routes).
+   * Returns null if execution not found. Prevents routes from accessing private _executions field.
+   * Added in Task #96 (BUG-96 fix).
+   * @param {string} executionId
+   * @returns {object | null}
+   */
+  getExecution(executionId) {
+    return this._executions.get(executionId) || null;
+  }
+
+  /**
    * Get the current status of a workflow execution.
+   * BUG-98 fix: return real budget data from budgetTracker instead of undefined e.budget.
    * @param {string} executionId
    * @returns {object|null} execution status or null if not found
    */
@@ -540,13 +558,20 @@ class SwarmEngine {
     const e = this._executions.get(executionId);
     if (!e) return null;
 
+    // Get real budget data from budgetTracker (BUG-98 fix)
+    let budget = { estimatedTokensUsed: 0, limitTokens: 0 };
+    if (this._budgetTracker) {
+      const totalTokens = this._budgetTracker.getTotal(executionId);
+      budget = { estimatedTokensUsed: totalTokens, limitTokens: 0 };
+    }
+
     return {
       executionId: e.executionId,
       workflowId: e.workflowId,
       status: e.status,
       agentStates: Object.fromEntries(e.agentStates),
       edgeCounters: Object.fromEntries(e.edgeCounters),
-      budget: e.budget || { estimatedTokensUsed: 0, limitTokens: 0 },
+      budget,
     };
   }
 }
