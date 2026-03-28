@@ -8,6 +8,7 @@ _Last updated: 2026-03-18 · 5 files_
 | research_c.md | Claude Code file formats (agents, skills, CLAUDE.md) | backend-dev, frontend-dev |
 | research_d.md | Multi-session PTY architecture Node.js | architect, backend-dev |
 | research_complete.md | Master research brief (all topics synthesized) | all agents |
+| swarm-route-init-order-bug.md | SwarmEngine route init order bug (HIGH) — all execution endpoints 500 | backend-dev, debugger, devops |
 
 ## How to use
 Each file contains focused research findings. When you receive a task from TASK_PLAN.md,

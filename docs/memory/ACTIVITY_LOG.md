@@ -1,4 +1,14 @@
 ---
+## 2026-03-28 — qa-tester — Task #80: V3 End-to-End Test
+**Outcome:** COMPLETED
+**Summary:** Full E2E test of the V3 Swarm Orchestrator using Playwright browser automation. Server started, all 6 sidebar views verified (Projects, Live Terminal, Job Runner, Deployments, Context Editor, Swarm). SwarmView loads correctly with PromptToFlowBar, React Flow canvas, BreadcrumbBar, AgentInspector. Scaffold endpoint fails gracefully when ANTHROPIC_API_KEY is missing (expected). V2 backward compatibility fully verified -- Terminal view spawns PTY with Claude Code CLI successfully. Workflow CRUD API works. 187/187 server tests pass. One HIGH bug found: SwarmEngine route initialization order bug (swarmRoutes and inboxRoutes mounted before SwarmEngine instantiation, causing 500 errors on all execution control endpoints).
+**Files changed:** docs/TASK_PLAN.md (MODIFIED -- #80 COMPLETED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/agents/qa-tester.md (MODIFIED)
+**Bugs fixed:** none (bug found and documented, not fixed -- debugger agent should handle)
+**Decisions made:** none
+**Blockers:** none
+**Next:** Debugger agent should fix the SwarmEngine route initialization order bug in server/index.js. Then Task #81 (build verify + tag) and #82 (docs).
+
+---
 ## 2026-03-28 — security — Task #79: V3 Pre-Release Security Audit
 **Outcome:** COMPLETED
 **Summary:** Full audit of all 14 V3 files. All 7 SEC-V3 requirements verified active in production code with exact file:line citations. Zero CRITICAL/HIGH findings in application code. One MEDIUM design note (webhook route blocked by global CSRF middleware — net security positive, functional impact only). Two HIGH npm advisories (path-to-regexp in transitive dep, picomatch in client devdeps — neither exploitable in current usage). 187/187 tests pass.

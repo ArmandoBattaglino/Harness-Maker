@@ -1,4 +1,71 @@
 ---
+## 2026-03-28 — Task #80: V3 End-to-End Test
+**Status:** COMPLETED
+**Called by:** orchestrator (user)
+
+### Context when I started
+All V3 dependencies met: #71.2, #73, #76, #77, #78, #79 all COMPLETED. 187/187 server tests pass. Client build: 473 modules, 0 errors. Task required full E2E browser test of V3 Swarm Orchestrator + V2 backward compatibility verification using Playwright MCP tools.
+
+### What I did
+1. Read all 7 project memory files in parallel
+2. Ran `npm test` -- 187/187 pass in 5.59s (9 test files)
+3. Started server with `NO_OPEN=1 node server/index.js` in background
+4. Verified server health via `curl http://127.0.0.1:3000/health`
+5. Used Playwright MCP to navigate to http://127.0.0.1:3000 -- Project Dashboard loaded with 2 projects
+6. Clicked "Swarm" in sidebar -- SwarmView loaded with all components: Swarm Orchestrator header (idle status), PromptToFlowBar (text input + Generate button), React Flow canvas (zoom controls, mini map), BreadcrumbBar ("All Agents"), AgentInspector ("Select a node to inspect")
+7. Typed workflow description in PromptToFlowBar -- Generate button enabled correctly
+8. Clicked Generate -- scaffold endpoint returned expected error (no ANTHROPIC_API_KEY configured). Error displayed cleanly in UI (no crash).
+9. Tested Workflow CRUD API via curl: POST /api/v1/workflows created workflow successfully, DELETE cleaned it up
+10. Tested swarm execution endpoints via curl: POST /start correctly validates projectId. GET /status returns 500 -- BUG FOUND (see below)
+11. Tested HITL inbox endpoint via curl: GET /:executionId/inbox returns 500 -- same BUG
+12. V2 backward compatibility: clicked all 5 V2 sidebar nav items (Projects, Live Terminal, Job Runner, Deployments, Context Editor) -- all views load correctly
+13. Clicked "Prova" project card -- PTY session spawned (PID 42220), Claude Code CLI v2.1.86 loaded in terminal, Connected status shown
+14. Took screenshots at 5 key steps for documentation
+15. Cleaned up: killed server, deleted test workflow
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Task #80 status: PENDING -> COMPLETED |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended task completion entry |
+| docs/memory/PROGRESS.md | MODIFIED | Added Task #80 to Completed section |
+| docs/memory/agents/qa-tester.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- Full E2E verification of V3 Swarm Orchestrator UI components
+- V2 backward compatibility confirmed -- all 5 legacy views load, Terminal spawns PTY successfully
+- 187/187 server tests confirmed passing
+- HIGH severity bug found and documented (SwarmEngine route initialization order)
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| SwarmEngine route init order: swarmRoutes and inboxRoutes receive undefined swarmEngine | server/index.js lines 231-234 mount routes with app.locals.swarmEngine BEFORE it is set at lines 271-272. The factory functions capture undefined as closure param. | None -- documented for debugger agent | FOUND, NOT FIXED |
+
+### Decisions I made
+- **Scaffold test marked as EXPECTED FAILURE**: The scaffold endpoint requires ANTHROPIC_API_KEY which is not configured on the test machine. This is a valid environment constraint, not a code bug. Steps 5-9 of the test plan (nodes on canvas, agent inspection, start execution, status colors, PTY Explosion) were SKIPPED because they depend on scaffold generating a workflow.
+- **Used Playwright MCP instead of Puppeteer MCP**: Playwright tools were available and more feature-rich (accessibility snapshots, form filling). Task description mentioned Puppeteer but Playwright achieves the same goal.
+- **Did not fix the route init bug**: Per QA protocol, bugs are documented and handed to the debugger agent, not fixed by QA.
+
+### What I learned
+- The SwarmEngine route initialization order bug is a classic dependency-ordering issue: Express route factories that take a service instance via closure capture must be mounted AFTER the service is instantiated. The fix is either: (a) move route mounting after SwarmEngine creation, or (b) pass a lazy reference (function/getter) instead of the instance directly.
+- The scaffold endpoint's error handling is clean -- the Anthropic SDK error message is surfaced to the user without exposing stack traces.
+- React Flow canvas renders correctly with zoom controls, mini map, and empty state.
+- The PromptToFlowBar correctly disables the Generate button when the text input is empty and enables it when text is present.
+
+### State I'm leaving behind
+- 187/187 tests pass
+- All V3 UI components render correctly (SwarmView, PromptToFlowBar, SwarmCanvas, BreadcrumbBar, AgentInspector)
+- All V2 views work (Projects, Terminal, Job Runner, Deployments, Context Editor)
+- Terminal PTY spawn works end-to-end with Claude Code CLI
+- ONE HIGH BUG: server/index.js:231-234 mounts swarmRoutes and inboxRoutes before SwarmEngine is instantiated at line 271-272. All execution control and HITL inbox endpoints return 500.
+- Screenshots saved: e2e-01-dashboard.png through e2e-05-terminal-working.png
+
+### Handoff
+HIGH BUG needs fix by debugger agent: move swarmRoutes and inboxRoutes mounting in server/index.js to AFTER SwarmEngine instantiation (after line 276). Then Task #81 (build verify + v3.0.0 tag) and Task #82 (V3 docs).
+---
+
+---
 ## 2026-03-28 — Task #78: SwarmEngine Integration Tests
 **Status:** COMPLETED
 **Called by:** orchestrator (project-manager)

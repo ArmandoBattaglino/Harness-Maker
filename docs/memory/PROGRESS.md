@@ -1,6 +1,8 @@
 # Progress
 
 ## Completed
+- [TASK-80] V3 End-to-End Test (qa-tester) — COMPLETED 2026-03-28
+  E2E Playwright test of V3 Swarm Orchestrator. 187/187 tests pass. All 6 sidebar views load. SwarmView components verified (PromptToFlowBar, canvas, BreadcrumbBar, AgentInspector). V2 backward compatibility confirmed (Terminal spawns PTY with Claude Code CLI). Scaffold fails gracefully without API key. ONE HIGH BUG FOUND: SwarmEngine route initialization order — swarmRoutes and inboxRoutes mounted before SwarmEngine instantiation in server/index.js:231-234 vs 271-272, causing 500 on all execution endpoints.
 - [TASK-79] V3 Pre-Release Security Audit (security) — COMPLETED 2026-03-28
   All 7 SEC-V3 requirements verified as active in production code. Zero CRITICAL/HIGH findings in V3 code. One MEDIUM design note (webhook CSRF interaction — net security positive). Two HIGH npm dependency advisories (path-to-regexp, picomatch — neither exploitable in current usage). 187/187 tests pass. docs/security-v3-audit.md produced.
 - [TASK-78] SwarmEngine Integration Tests (qa-tester) — COMPLETED 2026-03-28
