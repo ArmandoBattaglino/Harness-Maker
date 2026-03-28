@@ -5623,7 +5623,7 @@ Agent: frontend-dev
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Dependencies: #69, #63
 Context:
   Create `client/src/hooks/useInbox.js`.

@@ -212,7 +212,7 @@ _None._
 - [TASK-71.1] COMPLETED 2026-03-27 — PTY Explosion overlay component (frontend-dev, sonnet; dep: #58 ✓)
 - [TASK-71.2] COMPLETED 2026-03-28 — PTY Explosion Escape key handler (frontend-dev, haiku; 473 modules, 0 errors)
 - [TASK-72] IN_PROGRESS — InterAgentFeed.jsx real-time handoff log (frontend-dev, haiku; dep: #52 ✓)
-- [TASK-73] PENDING — useInbox.js HITL polling hook (waits on #69, #63)
+- [TASK-73] COMPLETED 2026-03-28 — useInbox.js HITL polling hook (client/src/hooks/useInbox.js; polling + approve/reject actions; 473 modules, 0 errors)
 
 ### V3 Phase 6 — Trigger Nodes
 - [TASK-74] PENDING — TriggerManager.js webhooks + RSS polling

@@ -1580,3 +1580,13 @@
 **Blockers:** none
 **Next:** Task #73 (useInbox.js HITL polling hook) can begin as #71.2 is now complete
 ---
+---
+## 2026-03-28 — frontend-dev — Task #73: useInbox.js — HITL Polling Hook
+**Outcome:** COMPLETED
+**Summary:** Created client/src/hooks/useInbox.js — polling hook for HITL inbox items with WS fallback. Loads inbox on mount, polls every 10s when WS disconnected, provides approve/reject actions with proper CSRF headers. Build passes at 473 modules, 0 errors.
+**Files changed:** client/src/hooks/useInbox.js (CREATED), docs/TASK_PLAN.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Use Zustand direct getState access to update inboxItems; filter to pending status in hook; approve/reject calls resolveInboxItem after successful API response
+**Blockers:** none
+**Next:** Task #74 (TriggerManager.js) next in V3 Phase 6
+---

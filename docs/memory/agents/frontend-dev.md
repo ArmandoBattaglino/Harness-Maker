@@ -1244,3 +1244,59 @@ SwarmView.jsx is fully wired with Escape key handler and PtyExplosion rendering.
 ### Handoff
 Task #73 (useInbox.js HITL polling hook) can now begin. No blockers. Task #72 (InterAgentFeed.jsx) is already COMPLETED. Phase 5 HITL + PTY Explosion tasks are now all DONE except #73 which waits on #69 and #63 (both done).
 ---
+
+---
+## 2026-03-28 — Task #73: useInbox.js — HITL Polling Hook
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+Task #69 (HitlInbox.jsx) was completed. Task #63 (useSwarm.js) was completed. SwarmContext.jsx had inboxItems array and wsConnected flag. Server routes at GET /api/v1/swarm/:executionId/inbox, POST .../approve, POST .../reject were fully implemented in server/routes/inbox.js. No useInbox.js hook existed yet.
+
+### What I did
+1. Read server/routes/inbox.js to confirm API paths and response shapes: GET returns { items: [...] }, POST approve/reject both return { ok: true }.
+2. Read client/src/store/SwarmContext.jsx to confirm inboxItems array, wsConnected flag, resolveInboxItem(itemId) action.
+3. Read client/src/hooks/useSwarm.js to understand WS pattern: how hitl_required events are handled, how setWsConnected works.
+4. Created client/src/hooks/useInbox.js with:
+   - loadInbox() callback: fetches GET /api/v1/swarm/:executionId/inbox and updates store
+   - useEffect with initial load + fallback polling (10s interval when WS disconnected)
+   - approve(itemId, resumeText) action: POST with CSRF header, calls resolveInboxItem on success
+   - reject(itemId) action: POST with CSRF header, calls resolveInboxItem on success
+   - Returns { inboxItems, approve, reject } where inboxItems filtered to pending status
+5. Ran `cd client && npm run build` — passed with 473 modules, 0 errors.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/hooks/useInbox.js | CREATED | New HITL polling hook with WS fallback |
+| docs/TASK_PLAN.md | MODIFIED | Task #73 Status: PENDING → COMPLETED |
+
+### Improvements delivered
+- Polling provides fallback when WS disconnected (resilience)
+- Proper CSRF header on all mutating requests
+- Clean integration with Zustand store via useSwarmStore
+- Optimistic UI updates via resolveInboxItem(itemId)
+
+### Bugs I encountered
+None — straightforward implementation following established patterns.
+
+### Decisions I made
+- Use Zustand `getState()` for direct store mutation in loadInbox callback (simple, matches pattern from useSwarm.js)
+- Filter inboxItems to pending status in hook rather than Zustand (cleaner subscription, avoids store complexity)
+- Polling interval: 10s (matches task spec)
+- Initial load on mount before checking wsConnected (ensure fresh data on start)
+
+### What I learned
+- Polling logic (initial load + interval on condition) is now well-understood for this codebase
+- CSRF header pattern is consistent: `'X-Requested-With': 'ClaudeCodeManager'` on all POSTs
+- SwarmStore actions like resolveInboxItem are thin wrappers over filter/splice operations
+
+### State I'm leaving behind
+Hook is ready for use by HitlInbox.jsx or any component needing inbox state + actions. All three criteria met:
+- Initial inbox items loaded on execution start ✓
+- Polling activates every 10s when WS disconnected ✓
+- Approve/reject call correct API endpoints with CSRF header ✓
+
+### Handoff
+Task #74 (TriggerManager.js) next. This hook is self-contained and ready for integration.
+---
