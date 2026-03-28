@@ -5768,7 +5768,7 @@ Agent: qa-tester
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Dependencies: #45
 Context:
   Write unit tests for HandoffParser.js in `server/tests/handoff-parser.test.js`.
@@ -6043,7 +6043,7 @@ Acceptance criteria:
 | 74 | TriggerManager.js — webhooks + RSS polling | backend-dev | MEDIUM | claude-sonnet-4-6 | COMPLETED |
 | 75 | triggers.js routes — trigger API | backend-dev | MEDIUM | claude-haiku-4-5 | COMPLETED |
 | 76 | TriggerNode.jsx — full visual implementation | frontend-dev | LOW | claude-haiku-4-5 | PENDING |
-| 77 | HandoffParser unit tests | qa-tester | HIGH | claude-sonnet-4-6 | PENDING |
+| 77 | HandoffParser unit tests | qa-tester | HIGH | claude-sonnet-4-6 | COMPLETED |
 | 78 | SwarmEngine integration tests | qa-tester | HIGH | claude-opus-4-6 | PENDING |
 | 79 | V3 Pre-Release Security Audit | security | HIGH | claude-sonnet-4-6 | PENDING |
 | 80 | V3 End-to-End Test (Puppeteer) | qa-tester | HIGH | claude-opus-4-6 | PENDING |

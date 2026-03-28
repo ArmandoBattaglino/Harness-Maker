@@ -198,3 +198,55 @@ User requested a full test suite run as a pre-development verification before st
 ### Handoff
 None — verification complete. v1.1 development can proceed.
 ---
+
+---
+## 2026-03-28 — Task #77: HandoffParser Unit Tests
+**Status:** COMPLETED
+**Called by:** orchestrator (project-manager)
+
+### Context when I started
+Phase 6 (Trigger Nodes) was fully completed (Tasks #73–#76). Task #77 required writing unit tests for HandoffParser.js covering 8 ConPTY chunk-splitting scenarios. The test suite baseline was 168 tests passing across 8 files (the test count had grown from 110 to 168 since my last session via Tasks #45, security-v3, etc.).
+
+### What I did
+1. Read docs/memory/agents/qa-tester.md to restore session history
+2. Read server/services/HandoffParser.js to understand the class API: stateful rolling buffer parser, feed(rawChunk) returns array of events, resets buffer on match, enforces 4KB cap, strips ANSI, validates contextUpdate (<=50 keys, primitives only, string values <=1024 chars)
+3. Read server/tests/RingBuffer.test.js to confirm vitest pattern (describe/it/expect, beforeEach, no globals)
+4. Discovered server/tests/HandoffParser.test.js already existed with comprehensive coverage
+5. Read the full existing test file — all 8 required scenarios plus 3 additional scenarios (Scenario 9, reset() tests, contextUpdate boundary validation) were already implemented
+6. Ran npm test from root — 168/168 tests pass, 8 test files, 5.89s
+7. Updated TASK_PLAN.md, PROGRESS.md, ACTIVITY_LOG.md, and this file
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Task #77 status: PENDING → COMPLETED; summary table updated |
+| docs/memory/PROGRESS.md | MODIFIED | Added TASK-77 to Completed section |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended task completion entry |
+| docs/memory/agents/qa-tester.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- Confirmed all 8 required HandoffParser test scenarios are in place and passing
+- Confirmed 168/168 total tests pass (no regressions)
+- Task #77 acceptance criteria: all checked
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| (none found) | N/A | N/A | N/A |
+
+### Decisions I made
+- HandoffParser.test.js already existed with full coverage — no new test file creation needed. The file was created by a previous agent session (likely during a prior parallel work wave). It covers all 8 required scenarios plus extra edge cases (reset() behavior, contextUpdate boundary at exactly 50 keys and 1024 chars, combined handoff+done in same chunk).
+
+### What I learned
+- The test count grew from 110 to 168 between my last session and this one — security-v3.test.js and HandoffParser.test.js were added by other agents in Tasks #45 and beyond
+- The Scenario 2 (3-chunk split) test emits a "malformed handoff payload" warning to stderr during the intermediate feed() call (the mid-chunk `-copywriter:eyJr` feed produces a partial base64 that decodes to invalid JSON) — this is expected behavior, the warning is cosmetic and the test still passes
+- The vitest config uses `pool: 'forks'` and `include: ['tests/**/*.test.js']` — any test file matching that glob is auto-discovered
+
+### State I'm leaving behind
+- 168/168 tests pass, 8 test files
+- server/tests/HandoffParser.test.js covers all 8 required scenarios from Task #77 plus 4 additional edge cases
+- No known issues or regressions
+
+### Handoff
+Task fully self-contained. Next QA task is #78 (SwarmEngine integration tests).
+---

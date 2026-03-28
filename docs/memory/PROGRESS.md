@@ -1,6 +1,8 @@
 # Progress
 
 ## Completed
+- [TASK-77] HandoffParser Unit Tests (qa-tester) — COMPLETED 2026-03-28
+  server/tests/HandoffParser.test.js verified: all 8 required scenarios covered (chunk splitting, ANSI stripping, oversized payload rejection, malformed base64, __DONE__ detection, buffer overflow, multiple tokens). 168/168 tests pass.
 - [TASK-74] TriggerManager.js — Webhooks + RSS Polling (backend-dev) — COMPLETED 2026-03-28
   server/services/TriggerManager.js created. Webhook registration, dispatch, RSS polling with SSRF guard. 168/168 tests pass.
 - [TASK-62.2] SwarmEngine._onHandoff context injection + status updates (backend-dev) — COMPLETED 2026-03-27
