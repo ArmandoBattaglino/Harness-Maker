@@ -1706,3 +1706,62 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 - All previous "not yet wired" notes for stopExecution cleanup calls are now resolved
 
 ---
+## 2026-03-28 — Debug Loop Closure + Final QA Gate
+**Agent:** qa-tester (verification), code-mapper (documentation)
+**Triggered by:** Final QA verification pass confirming all 16 post-release bugs fixed and zero regressions
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| docs/memory/CHANGELOG.md | MODIFIED | Appended debug loop closure entry (this entry) |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended final closure activity log entry |
+
+### Functions Added
+- None
+
+### Functions Modified
+- None (all modifications were recorded in the Tasks #84–#99 entry above)
+
+### Functions Removed
+- None
+
+### Connection Changes
+- None (all connection changes were recorded in the Tasks #84–#99 entry above)
+
+### Impact on Other Code
+- None
+
+### Debug Loop Summary
+| Metric | Value |
+|--------|-------|
+| Bugs found (Tasks #84–#99) | 16 |
+| Bugs fixed | 16 |
+| Bugs remaining | 0 |
+| Test suite result | 187/187 PASS |
+| Client build result | 473 modules, 0 errors |
+| QA verdict | CLEAN — zero remaining bugs |
+| Release status | v3.0.0 RELEASE-READY |
+
+### Bug Fix Index (Tasks #84–#99)
+| Task | Bug ID | Location | Nature |
+|------|--------|----------|--------|
+| #84 | BUG-84 | useInbox.js | Direct Zustand store mutation bypassed reactivity |
+| #85 | BUG-85 | useInbox.js | Filter failed on inconsistent inbox item shapes |
+| #86 | BUG-86 | SwarmContext.jsx | resolveInboxItem filter used i.id without null guard |
+| #87 | BUG-87 | SwarmContext.jsx | setFocusedDepartment pushed duplicate stack entries |
+| #88 | BUG-88 | useSwarm.js | connectWs handoff_started incremented stale handoffCount |
+| #89 | BUG-89 | useSwarm.js | Granular selectors caused stale closure reads |
+| #90 | BUG-90 | TriggerNode.jsx | Animation gated on status string (missed fire events) |
+| #91 | BUG-91 | SwarmCanvas.jsx | workflowDef prop changes not synced via useEffect |
+| #92 | BUG-92 | useInbox.js | REST vs WS inbox items had incompatible field shapes |
+| #93 | BUG-93 | SwarmEngine.js | stopExecution() missing budgetTracker.clearExecution() — memory leak |
+| #94 | BUG-94 | routes/swarm.js | POST /pause never called swarmEngine.pauseExecution() — state not updated |
+| #95 | BUG-95 | routes/swarm.js | POST /resume was a no-op stub — resumeExecution never called |
+| #96 | BUG-96 | routes/inbox.js | Direct access to private SwarmEngine._executions field |
+| #97 | BUG-97 | TriggerManager.js | cleanupExecution() leaked null-executionId workflow pollers |
+| #98 | BUG-98 | SwarmEngine.js | getStatus() returned undefined budget (e.budget never set) |
+| #99 | BUG-99 | routes/triggers.js | 32KB webhook body cap bypassed by global express.json middleware |
+
+---
+
+---

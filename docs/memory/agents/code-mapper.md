@@ -1440,3 +1440,52 @@ CODE_MAP.md fully reflects Task #60. Phase 3 is complete. Phase 4 (Live Executio
 ### Handoff
 Phase 4 tasks incoming: #62.1 (SwarmEngine _onHandoff context merge + PTY spawn), #63 (useSwarm.js WS hook), #66 (BroadcastBar.jsx + broadcast route), #67 (SwarmEngine heartbeat idle sweeper). Each will need CODE_MAP.md updates. Key connections to watch: useSwarm.js will be the first client WS consumer of the swarm WebSocket — document how it wires to SwarmContext.setExecution/updateAgentState/etc.
 ---
+
+---
+## 2026-03-28 — Debug Loop Closure + Final QA Gate
+**Status:** COMPLETED
+**Called by:** orchestrator (post-QA final closure pass)
+
+### Context when I started
+qa-tester completed a final verification pass confirming all 16 post-release bugs (Tasks #84–#99) are fixed. 187/187 tests pass, 473 modules build clean. No code changes were made in this pass — documentation-only closure task. CODE_MAP.md was already fully updated in the prior wave (Tasks #84–#99 entry). Only CHANGELOG.md and ACTIVITY_LOG.md needed final closure entries.
+
+### What I did
+1. Read CHANGELOG.md tail (lines 1668–1707) to confirm prior Tasks #84–#99 entry is complete and locate append point.
+2. Read ACTIVITY_LOG.md tail (lines 1822–1841) to locate append point.
+3. Read code-mapper.md (prior session log) for context continuity.
+4. Appended "Debug Loop Closure + Final QA Gate" entry to CHANGELOG.md with full bug fix index table (16 rows) and release summary metrics table.
+5. Appended matching closure entry to ACTIVITY_LOG.md.
+6. Appended this session log to code-mapper.md.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CHANGELOG.md | MODIFIED | Appended debug loop closure entry with 16-bug index table and release metrics |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended final closure activity log entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- CHANGELOG.md now has a permanent, indexed record of all 16 debug loop bugs with task/location/nature columns — traceable for any future regression investigation.
+- ACTIVITY_LOG.md closure entry gives any agent reading the log a clear signal: the project is clean and release-ready.
+- Release metrics (187/187 tests, 473 modules, 0 bugs) are permanently recorded at the time of closure.
+
+### Bugs I encountered
+- None (documentation-only task)
+
+### Decisions I made
+- Added a full 16-row bug fix index table in the CHANGELOG entry rather than a summary — each bug deserves individual traceability in the permanent record.
+- Recorded test suite and build metrics at closure time (not just "all pass") — these are baseline numbers for v3.0.0 and useful for future regression comparison.
+
+### What I learned
+- The debug loop (Tasks #84–#99) covered both frontend (Zustand mutation, canvas reactivity, selector staleness, inbox item normalization) and backend (service cleanup memory leaks, route stub-to-live wiring, middleware ordering security bypass) concerns.
+- Two most impactful fixes: BUG-93 (budgetTracker memory leak on repeated execution cycles) and BUG-99 (SEC-V3-01 webhook 32KB cap bypass via middleware ordering).
+
+### State I'm leaving behind
+- CODE_MAP.md: fully current as of Tasks #84–#99 wave. No further updates needed for this release.
+- CHANGELOG.md: complete through debug loop closure entry (2026-03-28).
+- ACTIVITY_LOG.md: complete through debug loop closure entry (2026-03-28).
+- v3.0.0 is RELEASE-READY: 187/187 tests, 473 modules, 0 known bugs.
+
+### Handoff
+None — task fully self-contained. Project is release-ready with no open documentation debt.
+---
