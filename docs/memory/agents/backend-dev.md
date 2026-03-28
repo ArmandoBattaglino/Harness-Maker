@@ -1,4 +1,54 @@
 ---
+## 2026-03-28 — Tasks #94 + #95 + #99: Backend route bug fixes
+**Status:** COMPLETED
+**Called by:** user (direct task assignment — three route bugs)
+
+### Context when I started
+Three backend route bugs were reported: BUG-94 (/pause endpoint sends Ctrl-C but never calls pauseExecution(), leaving agent state as 'running'), BUG-95 (/resume endpoint is a complete no-op, comment says "full HITL resume implemented in Task #70"), BUG-99 (webhook endpoint declared express.json({ limit: '32kb' }) but the global express.json() middleware at 100KB default had already consumed the request, bypassing the 32KB cap). All three bugs in production. 187 tests passing, 473 modules clean. SwarmEngine.pauseExecution() and resumeExecution() were already implemented in Task #67.
+
+### What I did
+1. Read docs/memory/ files in parallel (PROJECT, DECISIONS, PROGRESS, CONTEXT, ACTIVITY_LOG, agent log) to understand project state.
+2. Read server/routes/swarm.js lines 175-219 (/pause and /resume routes), server/routes/triggers.js lines 65-98 (webhook route), server/services/SwarmEngine.js lines 458-488 (pauseExecution/resumeExecution method signatures).
+3. Applied fix for BUG-94: Added call to swarmEngine.pauseExecution(executionId) immediately after the Ctrl-C loop in /pause route. This updates agent states to 'paused' and broadcasts WS events.
+4. Applied fix for BUG-95: Implemented /resume route by calling swarmEngine.resumeExecution(executionId), which sets all paused agents to 'running' and broadcasts WS events.
+5. Applied fix for BUG-99: Changed webhook route middleware from express.json({ limit: '32kb' }) to express.raw({ limit: '32kb', type: 'application/json' }), then manually parse JSON with try-catch. This bypasses the global parser and enforces the 32KB cap at route level. Invalid JSON treated as empty payload per SEC-V3-07 (always return 200 to external caller).
+6. Ran npm test — 187/187 pass, no regressions.
+7. Committed: "Task #94/#95/#99: Fix pause/resume state update, enforce 32KB webhook body limit"
+8. Updated docs/memory/ACTIVITY_LOG.md, agent log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/routes/swarm.js | MODIFIED | BUG-94: Added swarmEngine.pauseExecution(executionId) call after Ctrl-C loop. BUG-95: Implemented resumeExecution(executionId) call (was no-op). Updated docstrings. |
+| server/routes/triggers.js | MODIFIED | BUG-99: Changed express.json({ limit: '32kb' }) to express.raw({ limit: '32kb', type: 'application/json' }) + manual JSON.parse. Enforce 32KB cap at route level, bypass global parser. |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session entry |
+| docs/memory/agents/backend-dev.md | MODIFIED | Appending this session log |
+
+### Improvements delivered
+- BUG-94: /pause endpoint now properly sets agent states to 'paused' and broadcasts WS events to connected clients.
+- BUG-95: /resume endpoint now properly sets paused agents to 'running' and broadcasts WS events (was previously a no-op).
+- BUG-99: Webhook endpoint now properly enforces 32KB body size limit per SEC-V3-01. The 100KB global parser no longer bypasses the route-level cap.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | - | - | - |
+
+### Decisions I made
+- For BUG-94 & BUG-95: SwarmEngine.pauseExecution() and resumeExecution() methods already existed from Task #67 — no new method implementation needed. Simply call them from the routes.
+- For BUG-99: express.raw() with type filter is the correct pattern to bypass the global body parser for a specific route. Manual JSON.parse with try-catch provides error handling without breaking the security (always return 200 per SEC-V3-07). Treating invalid JSON as empty payload is safe because triggerManager.handleWebhook() expects a plain object.
+
+### What I learned
+- Route-specific middleware in Express runs AFTER global middleware for body parsing — to override a global parser, must use a different content-type handler (express.raw) with explicit type filtering.
+- pauseExecution() and resumeExecution() are simple state transitions that only update the execution object and broadcast WS events — they do NOT stop or interrupt the agent PTYs (that's done by the /pause route sending Ctrl-C separately).
+
+### State I'm leaving behind
+All three bugs fixed. 187/187 tests pass. No regressions. /pause and /resume endpoints now properly update swarm execution state. Webhook endpoint properly enforces 32KB size cap. Production-ready.
+
+### Handoff
+None — task fully self-contained.
+
+---
 ## 2026-03-28 — Tasks #93 + #96 + #97 + #98: Backend service bug fixes
 **Status:** COMPLETED
 **Called by:** user (direct task assignment — four coordinated bugs)

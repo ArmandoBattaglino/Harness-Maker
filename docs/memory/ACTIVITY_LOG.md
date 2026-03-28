@@ -1,4 +1,14 @@
 ---
+## 2026-03-28 — backend-dev — Tasks #94 + #95 + #99: Backend route bug fixes
+**Outcome:** COMPLETED
+**Summary:** Fixed three backend route bugs affecting swarm execution control and webhook security. BUG-94: /pause endpoint sent Ctrl-C to running agents but never called swarmEngine.pauseExecution(), so agent states remained 'running' and no WS broadcast occurred — fix: call pauseExecution() after Ctrl-C to update state and broadcast events. BUG-95: /resume endpoint was a no-op (comment said "full HITL resume implemented in Task #70") — fix: implement the call by invoking swarmEngine.resumeExecution() to set paused agents to 'running' and broadcast. BUG-99: /webhooks route declared express.json({ limit: '32kb' }) but the global express.json() middleware (100KB default) had already consumed the request before the route-specific middleware ran, bypassing the 32KB cap entirely — fix: use express.raw({ limit: '32kb' }) on the route and manually parse JSON to enforce SEC-V3-01. All fixes verified: 187/187 tests pass.
+**Files changed:** server/routes/swarm.js (BUG-94 & BUG-95 fixes), server/routes/triggers.js (BUG-99 fix), docs/TASK_PLAN.md
+**Bugs fixed:** BUG-94 (/pause doesn't update state), BUG-95 (/resume is no-op), BUG-99 (32KB webhook limit bypassed)
+**Decisions made:** For BUG-94 & BUG-95: SwarmEngine.pauseExecution() and resumeExecution() already existed from Task #67 (Pause All / Resume All). For BUG-99: express.raw() avoids the global parser entirely, then manual JSON.parse enforces the size cap at route level. Invalid JSON is treated as empty payload per SEC-V3-07 (always return 200 to external caller).
+**Blockers:** none
+**Next:** Task #92+ or release v3.0.0
+---
+
 ## 2026-03-28 — backend-dev — Tasks #93 + #96 + #97 + #98: Backend service bug fixes
 **Outcome:** COMPLETED
 **Summary:** Fixed four backend memory leaks and API fragility bugs. BUG-93: stopExecution() was missing budgetTracker.clearExecution() call, leaking per-execution budget tracking state indefinitely on repeated start/stop cycles. BUG-96: inbox.js directly accessed private SwarmEngine._executions field (3 places) — added public getExecution() method and updated all 3 routes to use it. BUG-97: TriggerManager.cleanupExecution() only cleaned up pollers matching the execution ID but never cleaned up workflow-level pollers (executionId=null), leaking setInterval handlers. BUG-98: getStatus() returned undefined budget (e.budget field was never set) — now queries budgetTracker.getTotal(executionId) directly. All fixes minimal and surgical. 187/187 tests pass, build: 473 modules, 0 errors.
