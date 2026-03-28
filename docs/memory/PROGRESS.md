@@ -1,6 +1,8 @@
 # Progress
 
 ## Completed
+- [TASK-74] TriggerManager.js — Webhooks + RSS Polling (backend-dev) — COMPLETED 2026-03-28
+  server/services/TriggerManager.js created. Webhook registration, dispatch, RSS polling with SSRF guard. 168/168 tests pass.
 - [TASK-62.2] SwarmEngine._onHandoff context injection + status updates (backend-dev) — COMPLETED 2026-03-27
   After _ensureAgentPty: injects updated workflowContext prompt into target PTY, sets source status done, sets target status running, broadcasts WS events.
 

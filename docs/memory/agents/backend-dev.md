@@ -1,4 +1,70 @@
 ---
+## 2026-03-28 — Task #74: TriggerManager.js — Webhooks + RSS Polling
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+server/services/TriggerManager.js did not exist. SwarmEngine.js was complete with startExecution(workflowId, projectId, projectPath). ssrfGuard.js existed at server/utils/ssrfGuard.js with isSafeUrl(). No xml2js in server/package.json. 168 tests passing.
+
+### What I did
+1. Read docs/memory/ (PROJECT, DECISIONS, CONTEXT) and backend-dev agent log in parallel.
+2. Grepped for ssrfGuard — found server/utils/ssrfGuard.js with isSafeUrl() already implemented.
+3. Checked server/package.json — no xml2js, no fast-xml-parser. Decided on simple regex-based RSS XML parser.
+4. Read SwarmEngine.js lines 1-120 for startExecution() signature: startExecution(workflowId, projectId, projectPath) → executionId.
+5. Read stopExecution() at line 400 to understand cleanup contract.
+6. Created server/services/TriggerManager.js with:
+   - _extractItems(xml): extracts <item> or <entry> blocks from RSS/Atom feeds
+   - _extractTag(fragment, tag): extracts text content of first matching XML tag (handles CDATA)
+   - _itemGuid(fragment): prefers <guid>, falls back to <id>, then <link>
+   - registerWebhook(path, workflowId, targetNodeId): validates inputs, stores in this.webhooks Map
+   - unregisterWebhook(path): deletes from Map
+   - handleWebhook(path, payload): looks up registration, calls swarmEngine.startExecution()
+   - createRssTrigger(nodeId, rssUrl, workflowId, pollIntervalMs, executionId): SSRF guard first, seeds lastSeenGuid on first poll without firing, schedules setInterval
+   - _pollRss(nodeId, seedOnly): fetches feed with 15s AbortSignal timeout, parses items, fires on new GUIDs
+   - _fireTrigger(nodeId, workflowId, executionId, item): WS broadcast if executionId, else startExecution
+   - removeTrigger(nodeId): clearInterval + Map delete
+   - cleanupExecution(executionId): removes all pollers where poller.executionId === executionId
+   - listTriggers(): serializes both Maps
+7. Ran npm test — 168/168 pass, no regressions.
+8. Updated TASK_PLAN.md #74 → COMPLETED, PROGRESS.md, ACTIVITY_LOG.md, agent log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/TriggerManager.js | CREATED | Full TriggerManager implementation |
+| docs/TASK_PLAN.md | MODIFIED | Status #74 PENDING → COMPLETED |
+| docs/memory/PROGRESS.md | MODIFIED | Added #74 to Completed section |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session entry |
+| docs/memory/agents/backend-dev.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- Webhook trigger system: dynamic path registration, dispatch to swarmEngine.startExecution()
+- RSS polling: SSRF-safe, first-poll seed (no startup flood), per-item GUID tracking, cleanupExecution() on stop
+- SEC-V3-03 enforced: isSafeUrl() called before any outbound fetch
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | - | - | - |
+
+### Decisions I made
+- No xml2js dep: used simple regex-based parser (_extractItems, _extractTag, _itemGuid). Handles RSS <item> and Atom <entry>; handles CDATA stripping. Good enough for the URLs field in RSS feeds.
+- handleWebhook uses workflowId as projectId and '' as projectPath for webhook-triggered executions. The workflow definition carries its own agent instructions.
+- _fireTrigger: if executionId is provided, broadcasts rss_item WS event (no dedicated inject API exists yet); otherwise calls startExecution. This is intentional — a dedicated injectContext() would be a future task.
+- setInterval handles are .unref()'d so Node.js can exit cleanly even with active pollers.
+- AbortSignal.timeout(15000) used for RSS fetch — available in Node 20 LTS natively.
+
+### What I learned
+- ssrfGuard.js was already fully implemented at server/utils/ssrfGuard.js (created before #74, as noted in the security test file). No re-implementation needed.
+- SwarmEngine.startExecution(workflowId, projectId, projectPath) — all three args required; projectId is used by SessionManager.createSession internally.
+- setInterval on Windows returns an object with .unref() method for Node >= 14.
+
+### State I'm leaving behind
+server/services/TriggerManager.js is fully implemented. 168/168 tests pass. No exports from other files changed.
+
+### Handoff
+Task #75 (server/routes/triggers.js) can now import TriggerManager. The 32KB webhook body cap (SEC-V3-01) must be enforced in the route layer using express.json({ limit: '32kb' }) or similar — TriggerManager itself does not enforce this.
+---
 ## 2026-03-27 — Task #70: SwarmEngine HITL — freezeAgent + unfreezeAgent
 **Status:** COMPLETED
 **Called by:** user (direct task assignment)

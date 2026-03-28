@@ -1,4 +1,13 @@
 ---
+## 2026-03-28 — backend-dev — Task #74: TriggerManager.js — Webhooks + RSS Polling
+**Outcome:** COMPLETED
+**Summary:** Created server/services/TriggerManager.js with webhook registration/dispatch and RSS polling. SSRF guard (isSafeUrl from server/utils/ssrfGuard.js) enforced before any outbound fetch. On first RSS poll lastSeenGuid is seeded without firing. cleanupExecution() removes all pollers for a stopped execution. 168/168 tests pass.
+**Files changed:** server/services/TriggerManager.js (CREATED), docs/TASK_PLAN.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/agents/backend-dev.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** No xml2js in server/package.json — used simple regex-based XML parser for RSS. startExecution() called with workflowId as projectId and '' as projectPath for webhook-triggered flows.
+**Blockers:** none
+**Next:** Task #75 (triggers route) can now proceed — it imports TriggerManager.
+---
 ## 2026-03-27 — frontend-dev — Task #69: HitlInbox.jsx — Approval Panel
 **Outcome:** COMPLETED
 **Summary:** Created client/src/panels/HitlInbox.jsx — HITL approval panel with list view, type badges, Approve/Reject actions, inline resume text textarea, and empty state. Exports both default HitlInbox and named getPendingCount for tab badge. Build passes at 472 modules, 0 errors.
