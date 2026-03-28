@@ -1,7 +1,7 @@
 # Claude Code Visual Manager — Architecture Reference
-**Version:** 1.3 (updated for Phase 9 Frontend Redesign)
-**Date:** 2026-03-26 (originally 2026-03-18)
-**Status:** Locked (all DEC-001 through DEC-010 decisions are final; backend unchanged in Phase 9)
+**Version:** 3.0 (updated for V3 Swarm Orchestrator)
+**Date:** 2026-03-28 (originally 2026-03-18; V3 additions in Section 11)
+**Status:** Locked — DEC-001 through DEC-016 are final. V3 architecture in Section 11.
 **Audience:** Every agent assigned to this project. Read this before writing a single line of code.
 
 ---
@@ -18,6 +18,7 @@
 8. [React State Management](#8-react-state-management)
 9. [Error Handling Matrix](#9-error-handling-matrix)
 10. [Startup Sequence](#10-startup-sequence)
+11. [V3 Swarm Orchestrator Architecture](#11-v3-swarm-orchestrator-architecture)
 
 ---
 
@@ -1656,3 +1657,273 @@ All 10 items must be verified before v1 release.
 | SEC-08 | No sensitive data in logs | Code review: no prompt content, no file content in log calls |
 | SEC-09 | PTY process lifecycle management (signal handlers + idle timeout) | `index.js` signal handlers + `SessionManager` sweeper |
 | SEC-10 | `npm audit --audit-level=high` passes | Pre-release CI step |
+
+---
+
+## 11. V3 Swarm Orchestrator Architecture
+
+_Added: 2026-03-28 (Task #82). Covers all V3 components shipped in v3.0.0._
+
+### 11.1 System Diagram
+
+```
+Browser (localhost only)
+┌─────────────────────────────────────────────────────────────────────────┐
+│  React SPA                                                              │
+│                                                                         │
+│  ┌──────────────────────────────────────────────────────────────────┐   │
+│  │  SwarmView.jsx  (view: swarm — 6th sidebar nav item)             │   │
+│  │                                                                  │   │
+│  │  ┌─────────────────────────────────────────────────────────┐     │   │
+│  │  │  PromptToFlowBar.jsx                                    │     │   │
+│  │  │  POST /api/v1/swarm/scaffold → workflowDef              │     │   │
+│  │  └─────────────────────────────────────────────────────────┘     │   │
+│  │                                                                  │   │
+│  │  ┌─────────────────────────────────────────────────────────┐     │   │
+│  │  │  SwarmCanvas.jsx  (@xyflow/react ReactFlow)             │     │   │
+│  │  │                                                         │     │   │
+│  │  │  BreadcrumbBar.jsx  (dept drill-down nav)               │     │   │
+│  │  │  AgentNode.jsx  (type: "agent")                         │     │   │
+│  │  │  DepartmentNode.jsx (type: "department")                │     │   │
+│  │  │  TriggerNode.jsx   (type: "trigger")                    │     │   │
+│  │  │  HandoffEdge.jsx   (type: "handoff", animated)          │     │   │
+│  │  │  AgentInspector.jsx (right-side panel)                  │     │   │
+│  │  └─────────────────────────────────────────────────────────┘     │   │
+│  │                                                                  │   │
+│  │  ┌─────────────────────────────────────────────────────────┐     │   │
+│  │  │  BroadcastBar.jsx (text → all running agents)           │     │   │
+│  │  └─────────────────────────────────────────────────────────┘     │   │
+│  │                                                                  │   │
+│  │  ┌─────────────────────────────────────────────────────────┐     │   │
+│  │  │  SwarmContext.jsx  (Zustand v4 — useSwarmStore)         │     │   │
+│  │  │  Slices: activeExecutionId · executionStatus            │     │   │
+│  │  │          agentStates · edgeCounters · budget            │     │   │
+│  │  │          inboxItems · interAgentFeed                    │     │   │
+│  │  │          focusedDepartmentId · departmentStack          │     │   │
+│  │  │          selectedNodeId · wsConnected                   │     │   │
+│  │  └─────────────────────────────────────────────────────────┘     │   │
+│  └──────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│  WS  ws://127.0.0.1:PORT/ws/swarm?executionId=<uuid>                    │
+│  REST fetch() /api/v1/swarm/* /api/v1/workflows/*                       │
+└─────────────────────────────────────────────────────────────────────────┘
+                        │ loopback only 127.0.0.1:PORT
+                        ▼
+Node.js Server Process
+┌─────────────────────────────────────────────────────────────────────────┐
+│  server/index.js                                                        │
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Express Router — V3 routes                                     │    │
+│  │  /api/v1/workflows  → workflows.js (CRUD)                       │    │
+│  │  /api/v1/swarm      → swarm.js    (scaffold + execution ctrl)   │    │
+│  │  /api/v1/swarm      → inbox.js    (HITL approve/reject)         │    │
+│  │  /api/v1/triggers   → triggers.js (webhook receiver + list)     │    │
+│  └──────────────┬──────────────────────────────────────────────────┘    │
+│                 │                                                        │
+│  ┌──────────────▼──────────────────────────────────────────────────┐    │
+│  │  wssSwarm  (ws.Server — /ws/swarm path)                        │    │
+│  │  → swarmHandler.js: handleSwarmConnection, broadcast()          │    │
+│  └──────────────┬──────────────────────────────────────────────────┘    │
+│                 │                                                        │
+│  ┌──────────────▼──────────────────────────────────────────────────┐    │
+│  │  V3 Services Layer                                              │    │
+│  │                                                                 │    │
+│  │  ┌──────────────┐  ┌───────────────┐  ┌────────────────────┐   │    │
+│  │  │ SwarmEngine  │  │ WorkflowStore │  │  TriggerManager    │   │    │
+│  │  │              │  │               │  │                    │   │    │
+│  │  │ startExecution│  │ CRUD on disk  │  │ Webhook dispatch   │   │    │
+│  │  │ stopExecution │  │ write-atomic  │  │ RSS polling        │   │    │
+│  │  │ pauseExecution│  │ %APPDATA%\   │  │ SSRF guard (isSafe │   │    │
+│  │  │ resumeExectn │  │ workflows\   │  │  Url)              │   │    │
+│  │  │ getStatus    │  │ <id>.json    │  └────────────────────┘   │    │
+│  │  │ _onHandoff   │  └───────────────┘                          │    │
+│  │  │ _onDone      │                                             │    │
+│  │  │ _spawnAgentPty│  ┌───────────────┐  ┌────────────────────┐   │    │
+│  │  │ _ensureAgent  │  │ HandoffParser │  │  CircuitBreaker    │   │    │
+│  │  │ _buildSysPromt│  │               │  │                    │   │    │
+│  │  │ _startHrtbeat │  │ Stateful accum│  │ Per-edge counter   │   │    │
+│  │  └──────┬───────┘  │ HANDOFF/DONE  │  │ Advisory (no stop) │   │    │
+│  │         │          │ token extract  │  └────────────────────┘   │    │
+│  │         │          └───────────────┘                            │    │
+│  │         │                                ┌────────────────────┐   │    │
+│  │         │                                │  BudgetTracker     │   │    │
+│  │         │                                │                    │   │    │
+│  │         │                                │ Char-count estimate│   │    │
+│  │         │                                │ Advisory (no stop) │   │    │
+│  │         │                                └────────────────────┘   │    │
+│  │         ▼                                                         │    │
+│  │  SessionManager (shared with V1 PTY terminal)                    │    │
+│  │  swarmListeners Set on session record (DEC-014)                  │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                         │
+│  Per-agent Claude processes (one PTY per active swarm agent node)       │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                  │
+│  │ claude.exe   │  │ claude.exe   │  │ claude.exe   │  ...             │
+│  │ (agent A)    │  │ (agent B)    │  │ (agent C)    │                  │
+│  │ node-pty/ConPTY              handoff HANDOFF:B:ctx token             │
+│  └──────────────┘  └──────────────┘  └──────────────┘                  │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### 11.2 WebSocket Swarm Channel Events
+
+All events are JSON objects sent over `ws://127.0.0.1:PORT/ws/swarm?executionId=<uuid>`.
+
+#### Server → Client Events
+
+| Event `type` | Payload fields | Description |
+|---|---|---|
+| `execution_status` | `executionId`, `status` ('running'\|'stopped'\|'done'), `agentStates` | Full execution state snapshot. Sent on connect and on status change. |
+| `agent_status` | `executionId`, `nodeId`, `status`, `handoffCount?` | Single agent's status changed (idle / running / paused / done / error). |
+| `handoff_started` | `executionId`, `sourceNodeId`, `targetNodeId`, `edgeId`, `counter` | A HANDOFF token was parsed; target agent PTY is being spawned or reused. |
+| `circuit_breaker` | `executionId`, `edgeId`, `counter` | Edge crossing threshold reached (advisory — execution continues). |
+| `budget_update` | `executionId`, `estimatedTokensUsed`, `limitTokens` | Token budget estimate updated for the execution. |
+| `hitl_required` | `executionId`, `nodeId`, `itemId`, `question` | Agent requested human approval; item added to inbox. |
+| `hitl_resolved` | `executionId`, `itemId`, `nodeId`, `decision` ('approved'\|'rejected') | HITL item resolved via approve/reject endpoint. |
+| `rss_item` | `url`, `title`, `link`, `pubDate` | RSS poller found a new item; triggers attached workflow. |
+
+#### Client → Server Messages
+
+No client-to-server messages on the swarm channel. The swarm WS channel is server-push only. Control commands (start, stop, broadcast, approve, reject) use the REST API.
+
+### 11.3 WorkflowDefinition Schema
+
+```json
+{
+  "id": "uuid-v4",
+  "name": "string (max 100 chars — /^[\\w\\s\\-.]+$/)",
+  "description": "string (max 500 chars)",
+  "projectId": "string (optional — links workflow to a registered project)",
+  "settings": {
+    "circuitBreakerThreshold": 10
+  },
+  "nodes": [
+    {
+      "id": "node-1",
+      "type": "agent",
+      "data": {
+        "label": "Triage Agent",
+        "systemPrompt": "You are the triage agent...",
+        "isTriageNode": true
+      },
+      "position": { "x": 0, "y": 0 }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-1",
+      "source": "node-1",
+      "target": "node-2",
+      "type": "handoff"
+    }
+  ],
+  "createdAt": "2026-03-28T00:00:00.000Z",
+  "updatedAt": "2026-03-28T00:00:00.000Z"
+}
+```
+
+**Node types:** `"agent"` (executes Claude Code), `"department"` (group container — no PTY), `"trigger"` (webhook or RSS source — no PTY).
+
+**Edge types:** `"handoff"` (only type currently defined). Handoff edges are directional: `source` → `target`.
+
+**Workflow persistence:** One JSON file per workflow at `%APPDATA%\ClaudeCodeManager\workflows\<id>.json` (DEC-013).
+
+### 11.4 Handoff Protocol
+
+Each Claude agent is injected with a SWARM PROTOCOL block in its system prompt by `SwarmEngine._buildSystemPrompt()`. The block instructs the agent to:
+- Output `HANDOFF:<targetNodeId>:<base64-encoded JSON context update>` when delegating work.
+- Output `__DONE__` when the task is complete.
+
+`HandoffParser` maintains a per-session rolling string accumulator. When `pty.onData` fires, the chunk is appended and scanned for these tokens. Because ConPTY delivers output in arbitrary byte chunks, a token can be split across chunks — the accumulator retains the unmatched tail for the next chunk (DEC-012).
+
+### 11.5 HITL (Human-in-the-Loop) Flow
+
+```
+Agent PTY outputs "HITL:<question>" token
+        ↓
+HandoffParser emits hitl event
+        ↓
+SwarmEngine receives event
+  → creates inboxItem { id, nodeId, question, createdAt }
+  → appends to execution.inboxItems
+  → sets agent status = 'paused'
+  → broadcasts hitl_required WS event
+        ↓
+Browser inbox UI shows pending item
+        ↓
+User clicks Approve (optional resumeText) or Reject
+  → POST /api/v1/swarm/:executionId/inbox/:itemId/approve|reject
+        ↓
+inbox.js handler:
+  → removes item from inboxItems
+  → (approve) writes resumeText to agent PTY, sets status = 'running'
+  → broadcasts hitl_resolved WS event
+```
+
+### 11.6 Key V3 Decisions
+
+| Decision | Summary |
+|----------|---------|
+| DEC-011 | Execution state (Zustand) and canvas state (@xyflow/react) are strictly separated — never merged. Merging causes cascade re-renders during live execution. |
+| DEC-012 | HandoffParser uses a stateful rolling byte accumulator. ConPTY chunks tokens arbitrarily; line-by-line parsing silently drops split tokens. |
+| DEC-013 | WorkflowStore writes one JSON file per workflow to `%APPDATA%\ClaudeCodeManager\workflows\`. Follows ConfigStore pattern exactly. |
+| DEC-014 | SwarmEngine attaches a secondary `swarmListeners` Set to each session record. Primary `pty.onData` handler (DEC-009) is never replaced. |
+| DEC-015 | Circuit breaker is per-edge (not per-node) to avoid false positives on legitimate hub nodes. |
+| DEC-016 | Prompt-to-Flow calls the Anthropic SDK directly (claude-haiku-4-5-20251001). The scaffold endpoint validates and saves the result via WorkflowStore. |
+
+### 11.7 V3 Security Requirements
+
+| # | Requirement | Implementation |
+|---|------------|---------------|
+| SEC-V3-01 | Webhook body size cap: 32 KB | `express.json({ limit: '32kb' })` in triggers.js |
+| SEC-V3-02 | Workflow schema validation before save | WorkflowStore.create() / update() validation layer |
+| SEC-V3-03 | SSRF prevention on RSS URLs | `server/utils/ssrfGuard.js` — blocks private IPs, loopback, link-local |
+| SEC-V3-04 | Webhook rate limit: 10 req/min per IP | `webhookRateLimit()` middleware in triggers.js |
+| SEC-V3-05 | HITL resume text cap: 8 KB | `validateResumeText` middleware in inbox.js |
+| SEC-V3-06 | HandoffParser oversized payload rejection | HandoffParser rejects base64 payloads > 64 KB |
+| SEC-V3-07 | Webhook always returns 200 to external caller | Prevents information leakage about workflow structure |
+
+### 11.8 V3 Service Dependency Graph
+
+```
+server/index.js
+  ├── WorkflowStore         (no deps — initializes after ConfigStore)
+  ├── CircuitBreaker        (no deps — pure service, stateless per call)
+  ├── BudgetTracker         (no deps — in-memory per execution)
+  ├── TriggerManager        (depends on: WorkflowStore, ssrfGuard, SwarmEngine)
+  ├── SwarmEngine           (depends on: SessionManager, WorkflowStore, CircuitBreaker, BudgetTracker)
+  │     └── HandoffParser   (instantiated per agent session inside SwarmEngine)
+  ├── swarmHandler.js       (depends on: SwarmEngine — broadcast() wired via setWsBroadcast)
+  └── Express V3 routes
+        ├── workflows.js    → WorkflowStore
+        ├── swarm.js        → SwarmEngine, WorkflowStore
+        ├── inbox.js        → SwarmEngine
+        └── triggers.js     → TriggerManager
+
+```
+
+### 11.9 V3 React Component Tree (Swarm view additions)
+
+```
+App.jsx
+  └── SwarmView.jsx                     [view: swarm — 6th nav item]
+        ├── PromptToFlowBar.jsx         (prompt → scaffold → workflowDef)
+        ├── ReactFlowProvider           (@xyflow/react required wrapper)
+        │     └── SwarmCanvas.jsx       (main React Flow canvas)
+        │           ├── BreadcrumbBar.jsx
+        │           ├── AgentNode.jsx   (nodeType: "agent")
+        │           ├── DepartmentNode.jsx (nodeType: "department")
+        │           ├── TriggerNode.jsx (nodeType: "trigger")
+        │           ├── HandoffEdge.jsx (edgeType: "handoff")
+        │           └── AgentInspector.jsx (right panel)
+        └── BroadcastBar.jsx            (self-hides when not running)
+
+Hooks (V3):
+  useSwarm.js         — WS lifecycle + start/stop execution REST calls
+  useHandoff.js       — edgeCounter delta detection; useRecentHandoffs set
+  useWorkflow.js      — useWorkflow(id) + useWorkflowList() REST wrappers
+
+Store (V3):
+  client/src/store/SwarmContext.jsx  — useSwarmStore (Zustand v4)
+```

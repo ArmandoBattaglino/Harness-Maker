@@ -1,7 +1,7 @@
 # Project: Claude Code Visual Manager
 **Created:** 2026-03-18
-**Last updated:** 2026-03-18
-**Implementation status:** v1 — all 12 implementation tasks COMPLETED. Pending: QA sign-off (Task #13), Security audit sign-off (Task #14).
+**Last updated:** 2026-03-28
+**Implementation status:** v3.0 — V3 Swarm Orchestrator complete. All 82 tasks COMPLETED. Git tag v3.0.0 created. Release-ready.
 
 ## What it is
 A locally-hosted web application that provides a graphical user interface for the Claude Code CLI. It spawns Claude Code processes directly using the user's installed binary and delivers two interaction modes: a live PTY terminal (xterm.js over WebSocket) and a job mode (prompt → formatted Markdown result). It also provides visual editors for agents, skills, and CLAUDE.md files, with multi-project support and session persistence across browser tab closures.
@@ -27,8 +27,9 @@ A locally-hosted web application that provides a graphical user interface for th
 | Icons | Material Symbols Outlined | via Google Fonts CDN | Variable weight+fill; used for sidebar navigation and status indicators |
 | Markdown render | react-markdown | 9.x | Safe Markdown for job results |
 | Markdown tables | remark-gfm | latest | GFM plugin (tables, code fences) for react-markdown |
-| Canvas / flow | @xyflow/react | 12.x | V3 swarm canvas — node/edge graph rendering (Task #51). Installed, not yet imported. |
-| Client state | zustand | 4.x | V3 execution store — fine-grained subscription for live swarm state (Task #51, DEC-011). Installed, not yet imported. |
+| Canvas / flow | @xyflow/react | 12.x | V3 swarm canvas — node/edge graph rendering. ReactFlow + custom node/edge types. |
+| Client state | zustand | 4.x | V3 execution store — fine-grained subscription for live swarm state (DEC-011). useSwarmStore in SwarmContext.jsx. |
+| Claude API | @anthropic-ai/sdk | latest | V3 Prompt-to-Flow scaffold endpoint — calls claude-haiku-4-5-20251001 to generate workflow JSON. |
 
 ## Core Goals (from PRD)
 - Live PTY terminal in browser connected to real Claude Code process (session starts < 2s)
@@ -67,3 +68,14 @@ A locally-hosted web application that provides a graphical user interface for th
 - Default port: 3000, configurable via PORT env var (FR-01)
 - Idle session timeout: 30 minutes default, configurable via IDLE_TIMEOUT_MINUTES (FR-19)
 - X-Requested-With: ClaudeCodeManager header required on all mutating requests (SEC-06)
+
+## V3-Specific Constraints (DEC-011 through DEC-016)
+- Execution state (Zustand) and canvas state (@xyflow/react) must NEVER be merged — DEC-011
+- HandoffParser must use a stateful rolling byte accumulator — line-by-line parsing drops split ConPTY tokens (DEC-012)
+- WorkflowStore writes one file per workflow to %APPDATA%\ClaudeCodeManager\workflows\ (DEC-013)
+- SwarmEngine must attach secondary swarmListeners Set to session records — NEVER replace the primary pty.onData handler (DEC-014, DEC-009)
+- Circuit breaker is keyed by directed edge pair (sourceId:targetId), not by node — DEC-015
+- Prompt-to-Flow calls Anthropic SDK directly (claude-haiku-4-5-20251001) — DEC-016
+- SEC-V3-01: Webhook body cap 32 KB | SEC-V3-03: SSRF guard on RSS URLs | SEC-V3-04: Webhook rate limit 10 req/min/IP
+- SEC-V3-05: HITL resumeText cap 8 KB | SEC-V3-06: HandoffParser payload cap 64 KB
+- SEC-V3-07: Webhook receiver always returns 200 to external callers (information leakage prevention)

@@ -53,6 +53,40 @@ The server binds exclusively to `127.0.0.1` — it is never accessible from the 
 | **Project Registration** | Register existing directories or scaffold a new `.claude/` structure (agents, commands, CLAUDE.md) from the UI. |
 | **Auto-Open Browser** | Server opens the app URL in the default browser on every `npm start`. Set `NO_OPEN=1` to suppress. |
 | **Redesigned UI** | Phase 9 design system with Inter/JetBrains Mono fonts, Material Symbols icons, purple (#933df5) accent on dark background, and 6-view sidebar navigation. |
+| **Swarm Orchestrator (V3)** | Visual multi-agent canvas: design, generate, and run agent networks. Drag-and-drop node/edge graph backed by @xyflow/react. |
+| **Prompt-to-Flow (V3)** | Describe a workflow in plain language — Claude generates the agent graph automatically. |
+| **Live Execution (V3)** | Run a workflow: each agent node spawns its own PTY session. Handoffs flow between agents in real time over WebSocket. |
+| **Human-in-the-Loop (V3)** | Agents can pause and request human approval. The HITL inbox lets you approve or reject decisions with optional resume text. |
+| **Broadcast (V3)** | Send a text message to all running agents simultaneously (soft or hard interrupt mode). |
+| **Trigger Nodes (V3)** | Webhooks and RSS pollers can fire a workflow automatically. Rate-limited webhook receiver with SSRF-safe RSS polling. |
+
+---
+
+## V3 Swarm Orchestrator
+
+Version 3 adds a visual multi-agent canvas where you can design, generate, and run networks of Claude Code agents that hand off work to each other autonomously.
+
+### Swarm Quick Start
+
+1. **Open the Swarm view.** Click the "hub" icon in the left sidebar (sixth item).
+2. **Generate a workflow.** Type a plain-language description into the prompt bar at the top and press Enter. Claude generates an agent graph automatically (requires `ANTHROPIC_API_KEY` in your environment).
+3. **Start execution.** Click **Start** in the toolbar. Each agent node spawns a live PTY session. Handoffs between nodes animate in real time on the canvas.
+4. **Monitor agents.** Click any node to open the Agent Inspector panel on the right — see live status, system prompt, handoff count, and the last 4 lines of PTY output.
+5. **Handle HITL requests.** When an agent pauses for approval, a notification appears. Open the inbox, review the agent's request, and click **Approve** (optionally typing resume text) or **Reject** to continue.
+
+### Environment Variable Required for Swarm
+
+| Variable | Description |
+|----------|-------------|
+| `ANTHROPIC_API_KEY` | Required for Prompt-to-Flow scaffold. Set before `npm start` or via your shell's environment. The key is used server-side only and is never logged or sent to the browser. |
+
+### Swarm Constraints
+
+- Maximum 10 agent nodes and 15 edges per workflow (enforced by scaffold prompt design).
+- Circuit breaker fires at 10 edge crossings by default (configurable via `workflowDef.settings.circuitBreakerThreshold`). Fires an advisory WS event — does not stop execution.
+- Budget tracking is advisory: the server estimates token usage from PTY output byte counts and broadcasts `budget_update` events. No hard cutoff is enforced server-side.
+- HITL resume text is capped at 8 KB per approval.
+- Webhook receivers are rate-limited to 10 requests per minute per IP. Webhook body size is capped at 32 KB.
 
 ---
 
@@ -149,14 +183,17 @@ If the session is gone, start a new terminal from the project view.
 
 ---
 
-## Known Limitations (v1)
+## Known Limitations (v3)
 
 - **No authentication.** The app relies on network isolation (localhost-only binding) rather than user authentication. Do not change the bind address.
 - **Windows primary.** The PTY layer targets Windows 11 with ConPTY. macOS and Linux work but are not the primary test target.
-- **No job history persistence.** Completed job results are held in memory and lost on server restart. Persistence is planned for v1.1.
-- **No settings.json editor.** The Claude Code `settings.json` file is readable but not editable via the UI. Planned for v1.1.
-- **No git integration.** No commit, diff, or branch management UI. Out of scope for v1.
-- **No MCP server editor.** MCP server configuration is display-only. Out of scope for v1.
+- **No job history persistence.** Completed job results are held in memory and lost on server restart. Persistence is planned for a future release.
+- **No settings.json editor.** The Claude Code `settings.json` file is readable but not editable via the UI.
+- **No git integration.** No commit, diff, or branch management UI. Out of scope.
+- **No MCP server editor.** MCP server configuration is display-only. Out of scope.
+- **Swarm execution state is in-memory.** A server restart clears all running executions. Workflow definitions persist to disk; execution state does not.
+- **ANTHROPIC_API_KEY required for Prompt-to-Flow.** Without the key, the scaffold endpoint returns 500. The rest of the app (terminal, jobs, entity management) works without it.
+- **Trigger RSS poller is in-memory.** RSS poll registrations are lost on server restart. Re-register via the Triggers view after restart.
 
 ---
 
