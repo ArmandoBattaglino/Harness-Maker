@@ -1,6 +1,8 @@
 # Progress
 
 ## Completed
+- [TASK-78] SwarmEngine Integration Tests (qa-tester) — COMPLETED 2026-03-28
+  server/tests/swarm-engine.test.js created: 19 tests across 7 cases (lifecycle, handoff, circuit breaker, budget, heartbeat, HITL, DEC-009). 187/187 tests pass in 5.62s. SessionManager fully mocked — no real PTY.
 - [TASK-77] HandoffParser Unit Tests (qa-tester) — COMPLETED 2026-03-28
   server/tests/HandoffParser.test.js verified: all 8 required scenarios covered (chunk splitting, ANSI stripping, oversized payload rejection, malformed base64, __DONE__ detection, buffer overflow, multiple tokens). 168/168 tests pass.
 - [TASK-74] TriggerManager.js — Webhooks + RSS Polling (backend-dev) — COMPLETED 2026-03-28

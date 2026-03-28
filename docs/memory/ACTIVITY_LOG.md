@@ -1,4 +1,14 @@
 ---
+## 2026-03-28 — qa-tester — Task #78: SwarmEngine Integration Tests
+**Outcome:** COMPLETED
+**Summary:** Created server/tests/swarm-engine.test.js with 19 integration tests covering 7 test areas: execution lifecycle, handoff processing, circuit breaker (advisory-only, no stop), budget tracking (budget_update WS event), heartbeat (writeInput '' every 5 min via fake timers), HITL mode (freezeAgent creates inboxItem, does not spawn target), and DEC-009 preservation (swarmListeners.add only, onData never touched). Full suite: 187/187 tests pass in 5.62s.
+**Files changed:** server/tests/swarm-engine.test.js (CREATED — 481 lines, 19 tests), docs/TASK_PLAN.md (MODIFIED — Task #78 PENDING→COMPLETED)
+**Bugs fixed:** none
+**Decisions made:** Tested HITL via freezeAgent() directly (SwarmEngine does not auto-freeze in _onHandoff — it is a separate API). Used vi.useFakeTimers() + advanceTimersByTimeAsync for heartbeat test.
+**Blockers:** none
+**Next:** Task #78 is now complete. Remaining QA tasks as assigned by project-manager.
+---
+
 ## 2026-03-28 — qa-tester — Task #77: HandoffParser Unit Tests
 **Outcome:** COMPLETED
 **Summary:** Verified server/tests/HandoffParser.test.js already contained all 8 required test scenarios. Ran full test suite confirming 168/168 tests pass across 8 test files. All acceptance criteria met: chunk-split detection (2-chunk and 3-chunk), ANSI stripping, >50-key rejection, malformed base64 handling, __DONE__ detection, 4KB buffer overflow with subsequent token detection, and multiple tokens in one chunk.

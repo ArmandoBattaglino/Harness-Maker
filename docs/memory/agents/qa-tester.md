@@ -1,4 +1,65 @@
 ---
+## 2026-03-28 — Task #78: SwarmEngine Integration Tests
+**Status:** COMPLETED
+**Called by:** orchestrator (project-manager)
+
+### Context when I started
+168 tests passing across 8 test files. SwarmEngine.js fully implemented (startExecution, _spawnAgentPty, _onHandoff, _onDone, stopExecution, freezeAgent, unfreezeAgent, heartbeat, circuit breaker, budget tracking). No tests for SwarmEngine existed. Task required 7 specific test areas.
+
+### What I did
+1. Read all 7 project memory files in parallel (PROJECT.md, DECISIONS.md, PROGRESS.md, CONTEXT.md, qa-tester.md, ACTIVITY_LOG.md)
+2. Read SwarmEngine.js (537 lines) — full understanding of all methods and their contracts
+3. Read HandoffParser.test.js and SessionManager.test.js for testing patterns (vitest, vi.fn(), vi.mock(), fake timers)
+4. Read WorkflowStore.js, CircuitBreaker.js, BudgetTracker.js for mock design
+5. Read SessionManager.js to understand swarmListeners Set and DEC-009 permanent onData constraint
+6. Wrote server/tests/swarm-engine.test.js — 19 tests across 7 describe blocks
+7. Ran npm test — 187/187 pass in 5.62s (well under 10s requirement)
+8. Committed, updated TASK_PLAN.md, ACTIVITY_LOG.md, PROGRESS.md
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/tests/swarm-engine.test.js | CREATED | 19 integration tests covering 7 required cases (lifecycle, handoff, circuit breaker, budget, heartbeat, HITL, DEC-009) |
+| docs/TASK_PLAN.md | MODIFIED | Task #78 status: PENDING → COMPLETED |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session entry |
+| docs/memory/PROGRESS.md | MODIFIED | Added Task #78 to Completed section |
+
+### Improvements delivered
+- SwarmEngine now has 19 integration tests covering every major behavioral path
+- SessionManager fully mocked — no real PTY processes, tests run in <6s
+- DEC-009 preservation explicitly tested: 4 dedicated tests verify swarmListeners.add-only behavior
+- Heartbeat tested with vi.useFakeTimers() — no real 5-minute wait
+- Circuit breaker advisory-only behavior explicitly asserted (execution NOT stopped after 10 handoffs)
+- Budget tracking tested end-to-end through tap function (real BudgetTracker, not mocked)
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None | — | — | — |
+
+### Decisions I made
+- **HITL tested via freezeAgent() directly**: SwarmEngine does not auto-freeze in _onHandoff — HITL is a separate API call. Test 6 verifies freezeAgent creates inboxItem + pauses agent + does not spawn target.
+- **Real CircuitBreaker and BudgetTracker, not mocked**: Both are pure logic with no side effects — testing with real instances gives higher value than mocked ones. The only mock is SessionManager (PTY).
+- **Sentinel pattern for DEC-009**: Added a sentinelFn to swarmListeners before startExecution to prove SwarmEngine only adds, never clears the Set.
+- **vi.useFakeTimers() in beforeEach**: Required for heartbeat test (advanceTimersByTimeAsync by 5 min). vi.useRealTimers() in afterEach ensures no timer leak between tests.
+- **Mock design — single mockSession returned for all createSession calls**: Sufficient for all 7 test areas. The same session is returned for node-a and node-b, which means swarmListeners receives two taps on multi-handoff tests. This is intentional — tests still verify the right behaviors.
+
+### What I learned
+- SwarmEngine._onHandoff steps 5–10 in order: merge context → find edgeId → increment counter → circuit breaker → increment handoffCount → broadcast handoff_started → _ensureAgentPty → inject context → set source done → set target running
+- Budget tracking is driven by the tap function (tapFn) registered on swarmListeners — budget_update event is emitted inside the tap, not in _onHandoff
+- freezeAgent() is the HITL entry point: it sets status='paused', pushes to inboxItems[], broadcasts hitl_required + agent_status. It does NOT spawn the target — that happens only when unfreezeAgent + manual handoff occurs.
+- DEC-009: SwarmEngine never calls session.onData — it only uses session.swarmListeners.add(tapFn). The onData handler set by SessionManager at spawn time is permanent and untouched.
+- vi.advanceTimersByTimeAsync is needed (not advanceTimersByTime) when the timer callback itself is async or uses await internally.
+
+### State I'm leaving behind
+- 187/187 tests pass (168 previous + 19 new SwarmEngine tests)
+- server/tests/swarm-engine.test.js is complete and committed
+- No known issues with the test file
+
+### Handoff
+Task fully self-contained. No blockers. Next QA tasks as assigned by project-manager.
+---
+
 ## 2026-03-18 — Task #13: Full QA Test Suite
 **Status:** COMPLETED
 **Called by:** orchestrator (project-manager)
