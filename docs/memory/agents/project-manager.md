@@ -1,4 +1,54 @@
 ---
+## 2026-03-28 — Tasks #84--#99: QA Bug-Fix Wave Task Creation
+**Status:** COMPLETED
+**Called by:** user (Debug Loop -- Step 2: Create Bug Tasks from qa-tester findings)
+
+### Context when I started
+v3.0.0 released with git tag. Task #83 (TriggerManager cleanup wire-up) pending. QA-tester ran and found 16 bugs. User asked PM to convert them into numbered tasks #84--#99 in TASK_PLAN.md.
+
+### What I did
+1. Read tail of TASK_PLAN.md to confirm last task was #83 at line 6119
+2. Read project-manager.md to confirm current session context
+3. Read ACTIVITY_LOG.md top entry to confirm latest project state
+4. Wrote Python script to append 16 tasks (heredoc shell approach failed due to single-quote conflicts in bash on Windows)
+5. Fixed Windows path in the script, ran it successfully
+6. Verified line count grew from 6121 to 6632 (511 lines added -- 16 tasks)
+7. Spot-checked start (#84) and end (#99) of appended section
+8. Cleaned up temp script file
+9. Updated ACTIVITY_LOG.md and this session log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Appended 16 bug tasks #84--#99 with full context, fix hints, acceptance criteria |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | PM session entry prepended |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log |
+
+### Improvements delivered
+- All 16 QA-tester bugs are now tracked as structured TASK_PLAN.md entries
+- Each task is self-contained: file, line range, bug type, description, fix hint, acceptance criteria
+- Grouped logically: frontend (#84--#92) then backend (#93--#99)
+- Cross-task coordination notes added where bugs share root causes (e.g., #85, #87, #92 all stem from WS item shape mismatch)
+
+### Decisions I made
+- TASK #89 (SwarmCanvas workflowDef prop-change blindness) marked HIGH priority despite being listed as MEDIUM by QA -- it breaks the core prompt-to-flow UX
+- TASK #92 (item shape normalization) positioned as the root fix for #85 and #87; added coordination notes
+- TASK #93 coordinated with #83 to avoid double-patching stopExecution
+- Grouped by agent assignment rather than strict priority order to make orchestration waves clear
+
+### State I'm leaving behind
+- 16 tasks (#84--#99) in TASK_PLAN.md with Status: PENDING
+- All tasks ready to be assigned to frontend-dev and backend-dev
+- Task #83 (backend-dev, LOW) also still PENDING
+
+### Handoff
+Orchestrator should assign in two parallel waves:
+- Wave 1 (HIGH): #84 (frontend-dev) + #89 (frontend-dev) -- can run in parallel
+- Wave 2 (MEDIUM frontend): #85, #86, #87, #88, #92 -- can run in parallel after or alongside wave 1
+- Wave 2 (MEDIUM backend): #83, #93, #94, #95 -- backend-dev parallel wave (note #95 depends on #94, #93 depends on #83)
+- Wave 3 (LOW): #90, #91, #96, #97, #98, #99 -- low priority cleanup
+---
+
 ## 2026-03-28 — V3 Final Reconciliation + Task #83 (v3.0.1 patch)
 **Status:** COMPLETED
 **Called by:** user (V3 complete — verify final status, assess TriggerManager gap)

@@ -6119,3 +6119,514 @@ Dependencies: #74, #46.1
 ---
 
 _Last updated: 2026-03-28 — V3 summary table corrected to COMPLETED for all 57 tasks. Task #83 added as v3.0.1 patch for TriggerManager.cleanupExecution() gap._
+
+
+---
+
+## QA Bug-Fix Wave -- Tasks #84--#99 (2026-03-28)
+
+QA-tester identified 16 bugs across frontend hooks, canvas components, and backend routes/services. Tasks are grouped by agent: frontend bugs first (#84--#92), then backend bugs (#93--#99).
+
+---
+
+TASK #84: useInbox.js -- Fix Direct Zustand Store Mutation in Polling Fallback
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  FILE: client/src/hooks/useInbox.js:31
+  TYPE: wrong-behavior
+
+  DESCRIPTION:
+  The HITL polling fallback calls useSwarmStore.getState().setInboxItems(...) -- a direct state
+  mutation that bypasses Zustand reactivity. Subscribers never see the update; the inbox never
+  refreshes via polling. The polling fallback is the recovery path when the WebSocket drops.
+  Broken reactivity means users see a stale inbox during connectivity issues -- a silent,
+  hard-to-debug failure.
+
+  FIX:
+  Replace the getState() direct call with the proper Zustand hook pattern so the state update
+  triggers re-renders in all subscribers. Dispatch through the store bound action (use
+  setInboxItems from useSwarmStore directly, not via getState()).
+
+Acceptance Criteria:
+  - [ ] Bug fixed -- polling fallback updates inbox and triggers re-renders
+  - [ ] npm test passes (187 tests)
+  - [ ] npm run build passes
+Dependencies: none
+
+---
+
+TASK #85: useInbox.js -- Fix WS Item Shape Mismatch Causing Empty Filtered List
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  FILE: client/src/hooks/useInbox.js:15
+  TYPE: wrong-behavior
+
+  DESCRIPTION:
+  The filter i.status === 'pending' is applied to WS items that have a wrapper shape:
+  { item: { id, status, ... } }. So i.status is always undefined, the filter always returns
+  empty, and the inbox panel shows empty even when pending HITL items exist.
+
+  FIX:
+  Normalize item shape before filtering, or fix the filter condition to access the correct
+  nested field. See also TASK #92 which addresses full shape normalization.
+  COORDINATION: TASK #85 fixes the filter; TASK #92 normalizes all items. Either fix
+  independently or roll into #92 -- do not duplicate work.
+
+Acceptance Criteria:
+  - [ ] Filter correctly matches pending WS items
+  - [ ] Inbox panel shows pending HITL items delivered via WebSocket
+  - [ ] npm test passes (187 tests)
+  - [ ] npm run build passes
+Dependencies: none
+
+---
+
+TASK #86: SwarmContext.jsx -- Prevent Duplicate departmentStack Pushes
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  FILE: client/src/store/SwarmContext.jsx:54-57
+  TYPE: logic-error
+
+  DESCRIPTION:
+  setFocusedDepartment pushes the department to departmentStack on every call. If the user
+  clicks the same department node repeatedly, the stack accumulates duplicates:
+  ['eng', 'eng', 'eng', ...]. Back-navigation cycles through duplicates before reaching
+  the real parent, corrupting the UX.
+
+  FIX:
+  Before pushing, check if the department is already the top of the stack. Only push if it
+  differs from the current top:
+    if (state.departmentStack[state.departmentStack.length - 1] !== department) { /* push */ }
+
+Acceptance Criteria:
+  - [ ] Repeated clicks on the same department do not add duplicates to the stack
+  - [ ] Back navigation works correctly after repeated clicks
+  - [ ] npm test passes (187 tests)
+  - [ ] npm run build passes
+Dependencies: none
+
+---
+
+TASK #87: SwarmContext.jsx -- Fix resolveInboxItem ID Accessor for WS Items
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  FILE: client/src/store/SwarmContext.jsx:46-48
+  TYPE: logic-error
+
+  DESCRIPTION:
+  resolveInboxItem filters the inbox list using i.id, but WS items have shape
+  { item: { id, ... } }. So i.id is always undefined for WS items, the filter never removes
+  any item, and resolved HITL items remain in the inbox forever. The HITL panel never clears.
+
+  FIX:
+  Fix the id accessor to match the WS item shape. If items are normalized (TASK #92), use the
+  normalized field. Otherwise use i.item?.id ?? i.id defensively until normalization is done.
+
+Acceptance Criteria:
+  - [ ] Resolved HITL items are removed from the inbox after approve/reject
+  - [ ] Inbox panel clears correctly after resolution
+  - [ ] npm test passes (187 tests)
+  - [ ] npm run build passes
+Dependencies: none
+
+---
+
+TASK #88: useSwarm.js -- Fix handoffCount Increment Logic
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  FILE: client/src/hooks/useSwarm.js:42
+  TYPE: wrong-behavior
+
+  DESCRIPTION:
+  The handoff_started WebSocket event handler sets handoffCount to an edge counter value
+  (a graph-level count of total edges) instead of incrementing the agent individual counter
+  by 1. The UI shows a global graph metric instead of per-agent handoff count.
+
+  FIX:
+  Change the handler to increment by 1:
+    handoffCount: (prev.handoffCount ?? 0) + 1
+  Do not assign the edge counter value directly.
+
+Acceptance Criteria:
+  - [ ] Each handoff_started event increments the agent handoffCount by exactly 1
+  - [ ] UI reflects per-agent handoff frequency, not a global edge counter
+  - [ ] npm test passes (187 tests)
+  - [ ] npm run build passes
+Dependencies: none
+
+---
+
+TASK #89: SwarmCanvas.jsx -- React to workflowDef Prop Changes After Mount
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  FILE: client/src/canvas/SwarmCanvas.jsx:42-43
+  TYPE: wrong-behavior
+
+  DESCRIPTION:
+  useNodesState and useEdgesState are initialized once from the workflowDef prop at mount time.
+  If workflowDef changes after mount (e.g., scaffold result arrives asynchronously from the
+  prompt-to-flow API call), the canvas does not update -- it remains empty. Users submit a
+  prompt, the scaffold result arrives, but the canvas never shows the generated workflow.
+  This is a critical UX bug in the prompt-to-flow feature.
+
+  FIX:
+  Add a useEffect that calls setNodes and setEdges when workflowDef changes:
+    useEffect(() => {
+      if (workflowDef) {
+        setNodes(buildNodes(workflowDef));
+        setEdges(buildEdges(workflowDef));
+      }
+    }, [workflowDef]);
+  Adjust buildNodes/buildEdges references to match actual helper names in the file.
+
+Acceptance Criteria:
+  - [ ] Canvas renders nodes/edges when workflowDef prop changes after mount
+  - [ ] Scaffold results from prompt-to-flow appear on canvas without page reload
+  - [ ] npm test passes (187 tests)
+  - [ ] npm run build passes
+Dependencies: none
+
+---
+
+TASK #90: TriggerNode.jsx -- Replace Boolean fired Flag with Counter or Timestamp
+Agent: frontend-dev
+Priority: LOW
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  FILE: client/src/canvas/nodes/TriggerNode.jsx:23-30
+  TYPE: wrong-behavior
+
+  DESCRIPTION:
+  The fired boolean flag is set to true when a trigger fires. Setting true -> true on
+  subsequent firings is a React state no-op -- the animation does not re-trigger after
+  the first time. Users cannot visually see that a trigger has fired more than once.
+
+  FIX:
+  Replace fired: boolean with fireCount: number (or firedAt: Date). Increment/update on
+  each trigger event. Tie the animation to fireCount (e.g., use it as a key on an animated
+  element to force remount on each increment).
+
+Acceptance Criteria:
+  - [ ] Trigger animation re-plays on every firing, not just the first
+  - [ ] fireCount correctly reflects repeated firings
+  - [ ] npm test passes (187 tests)
+  - [ ] npm run build passes
+Dependencies: none
+
+---
+
+TASK #91: useSwarm.js -- Replace Full Store Destructuring with Granular Selectors
+Agent: frontend-dev
+Priority: LOW
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  FILE: client/src/hooks/useSwarm.js:8-16
+  TYPE: performance / stale-closure
+
+  DESCRIPTION:
+  useSwarm uses a full-store Zustand selector, causing every consumer to re-render on ANY
+  store state change. In a swarm execution with many agents broadcasting events, this creates
+  a cascade of unnecessary re-renders that degrades UI responsiveness.
+
+  FIX:
+  Replace full destructuring with granular per-field selectors:
+    const agents = useSwarmStore(s => s.agents);
+    const executionStatus = useSwarmStore(s => s.executionStatus);
+    // one selector per consumed field
+  Performance fix, low priority but should be done before v3.1.
+
+Acceptance Criteria:
+  - [ ] useSwarm uses granular Zustand selectors (one per consumed field)
+  - [ ] No full-store destructuring remains in useSwarm.js
+  - [ ] npm test passes (187 tests)
+  - [ ] npm run build passes
+Dependencies: none
+
+---
+
+TASK #92: useInbox.js -- Normalize WS and REST Item Shapes
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  FILE: client/src/hooks/useInbox.js:24-31
+  TYPE: logic-error
+
+  DESCRIPTION:
+  Items from REST polling and WebSocket have different shapes. The hook mixes them without
+  normalization, creating fragile i.id ?? i.item?.id guards throughout downstream code
+  (filter, resolveInboxItem, display components). This is the root cause of TASK #85 and
+  TASK #87.
+
+  FIX:
+  Define a canonical shape: { id, type, agentId, status, payload, source: 'ws' | 'rest' }
+  Apply a normalizeItem(raw) transform to all items before they enter the store -- both from
+  REST and WS. This root fix resolves #85 and #87 as a side effect.
+  COORDINATION: If #85 and #87 have already been patched locally, ensure normalization does
+  not regress those fixes.
+
+Acceptance Criteria:
+  - [ ] All inbox items conform to canonical shape regardless of source (WS or REST)
+  - [ ] normalizeItem() or equivalent applied before any item enters the store
+  - [ ] Filter and resolveInboxItem work correctly with normalized shape
+  - [ ] npm test passes (187 tests)
+  - [ ] npm run build passes
+Dependencies: none
+
+---
+
+TASK #93: SwarmEngine.js -- Fix stopExecution Memory Leak (budgetTracker + triggerManager)
+Agent: backend-dev
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  FILE: server/services/SwarmEngine.js:411-443
+  TYPE: missing-cleanup
+
+  DESCRIPTION:
+  stopExecution() kills PTYs and broadcasts the done event but never calls:
+  - budgetTracker.clearExecution(executionId) -- leaks per-execution budget tracking state
+  - triggerManager.cleanupExecution(executionId) -- leaks RSS pollers and webhook registrations
+    (same gap as TASK #83, which wires TriggerManager into stopExecution)
+  On repeated start/stop cycles these accumulate in memory indefinitely.
+
+  FIX:
+  At the end of stopExecution(), add:
+    if (this._budgetTracker) this._budgetTracker.clearExecution(executionId);
+    if (this._triggerManager) this._triggerManager.cleanupExecution(executionId);
+  COORDINATION: TASK #83 covers TriggerManager wire-up. This task adds budgetTracker.
+  Confirm which runs first and adjust -- avoid double-patching the same lines.
+
+Acceptance Criteria:
+  - [ ] stopExecution() calls budgetTracker.clearExecution(executionId)
+  - [ ] stopExecution() calls triggerManager.cleanupExecution(executionId)
+  - [ ] No memory accumulation on repeated start/stop cycles
+  - [ ] npm test passes (187 tests)
+  - [ ] npm run build passes
+Dependencies: #83
+
+---
+
+TASK #94: swarm.js Route -- Call swarmEngine.pauseExecution() in /pause Handler
+Agent: backend-dev
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  FILE: server/routes/swarm.js:175-196
+  TYPE: wrong-behavior
+
+  DESCRIPTION:
+  The /pause route handler sends Ctrl-C to the active PTY (suspending the process) but never
+  calls swarmEngine.pauseExecution(executionId). Agent internal state in SwarmEngine is never
+  updated to 'paused'. The UI still shows 'running' after pause; the resume flow may be
+  confused about what to resume.
+
+  FIX:
+  After the Ctrl-C send, add:
+    swarmEngine.pauseExecution(executionId);
+  Ensure swarmEngine is in scope in this route (check existing import/injection pattern).
+
+Acceptance Criteria:
+  - [ ] /pause route calls swarmEngine.pauseExecution(executionId)
+  - [ ] Agent state transitions to 'paused' in SwarmEngine after pause
+  - [ ] UI reflects paused state correctly
+  - [ ] npm test passes (187 tests)
+  - [ ] npm run build passes
+Dependencies: none
+
+---
+
+TASK #95: swarm.js Route -- Implement swarmEngine.resumeExecution() in /resume Handler
+Agent: backend-dev
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  FILE: server/routes/swarm.js:204-219
+  TYPE: wrong-behavior
+
+  DESCRIPTION:
+  The /resume route handler is a no-op -- it returns 200 OK but never calls
+  swarmEngine.resumeExecution(). Paused executions cannot be resumed. The pause/resume
+  feature is completely non-functional end-to-end.
+
+  FIX:
+  Implement the route to call:
+    swarmEngine.resumeExecution(executionId);
+  If resumeExecution does not exist on SwarmEngine yet, implement it: update agent state
+  from 'paused' to 'running' and send a continuation signal to the PTY (e.g., SIGCONT
+  or write a newline to stdin to restart input flow).
+
+Acceptance Criteria:
+  - [ ] /resume route calls swarmEngine.resumeExecution(executionId)
+  - [ ] Paused executions resume correctly (state transitions paused -> running)
+  - [ ] npm test passes (187 tests)
+  - [ ] npm run build passes
+Dependencies: #94
+
+---
+
+TASK #96: inbox.js Route -- Add Public getExecution() Method to SwarmEngine
+Agent: backend-dev
+Priority: LOW
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  FILE: server/routes/inbox.js:32
+  TYPE: wrong-behavior (fragile private field access)
+
+  DESCRIPTION:
+  The inbox route accesses swarmEngine._executions directly -- a private field by convention
+  (leading underscore). If SwarmEngine refactors its internal storage structure, the route
+  silently breaks. It also bypasses any future access controls or lazy-loading.
+
+  FIX:
+  Add a public method to SwarmEngine:
+    getExecution(executionId) {
+      return this._executions.get(executionId) ?? null;
+    }
+  Update inbox.js to call swarmEngine.getExecution(executionId) instead of accessing
+  _executions directly. Grep for any other routes accessing _executions directly and
+  update them too.
+
+Acceptance Criteria:
+  - [ ] SwarmEngine has a public getExecution(executionId) method
+  - [ ] inbox.js uses getExecution() instead of _executions directly
+  - [ ] No other route accesses _executions directly (confirmed by grep)
+  - [ ] npm test passes (187 tests)
+  - [ ] npm run build passes
+Dependencies: none
+
+---
+
+TASK #97: TriggerManager.js -- Fix Null executionId Poller Leak in cleanupExecution
+Agent: backend-dev
+Priority: LOW
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  FILE: server/services/TriggerManager.js:346-353
+  TYPE: logic-error
+
+  DESCRIPTION:
+  RSS pollers created with a null executionId (e.g., from workflow-triggered polling without
+  an execution context) are never cleaned up by cleanupExecution() because the method filters
+  by executionId and null never matches a real ID. These pollers accumulate until the Node.js
+  process restarts.
+
+  FIX (choose one):
+  (a) In cleanupExecution: if called with null, clean up all null-executionId pollers.
+  (b) In removeTrigger: when a trigger is removed, always clean up its associated pollers
+      regardless of executionId. Option (b) is safer -- cleanup tied to trigger lifecycle.
+
+Acceptance Criteria:
+  - [ ] RSS pollers with null executionId are cleaned up and not leaked
+  - [ ] cleanupExecution(null) or removeTrigger() handles the null case correctly
+  - [ ] npm test passes (187 tests)
+  - [ ] npm run build passes
+Dependencies: none
+
+---
+
+TASK #98: SwarmEngine.js -- Fix getStatus() Returning Undefined Budget
+Agent: backend-dev
+Priority: LOW
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  FILE: server/services/SwarmEngine.js:549
+  TYPE: wrong-behavior
+
+  DESCRIPTION:
+  getStatus() returns e.budget where e is the execution object. e.budget is never set on
+  the execution object -- budget data lives in budgetTracker. Result: the budget field in
+  the status response is always undefined, which renders as 0/0 in the UI.
+
+  FIX:
+  Replace e.budget with:
+    budget: this._budgetTracker.getUsage(executionId)
+  Ensure _budgetTracker is available on this (should be after Task #62.3).
+
+Acceptance Criteria:
+  - [ ] getStatus() returns real budget usage from budgetTracker
+  - [ ] UI displays correct token/cost budget values during execution
+  - [ ] npm test passes (187 tests)
+  - [ ] npm run build passes
+Dependencies: none
+
+---
+
+TASK #99: triggers.js Route -- Fix 32KB Body Limit Overridden by Global Parser
+Agent: backend-dev
+Priority: LOW
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  FILE: server/routes/triggers.js:72-98
+  TYPE: missing-guard
+
+  DESCRIPTION:
+  The webhook route applies express.json({ limit: '32kb' }) as route-level middleware, but
+  the global JSON body parser in server/index.js has already consumed the request body with
+  its 100KB default. Route-level body parser middleware is ignored once the body has been
+  consumed -- the 32KB limit is silently ineffective. Webhook payloads up to 100KB are
+  accepted despite the intent to limit them to 32KB.
+
+  FIX (choose one):
+  (a) Set the global body parser limit to 32KB in server/index.js:
+      express.json({ limit: '32kb' }) -- affects all routes.
+  (b) Use express.raw() on the webhook route before the global parser runs, then manually
+      parse and size-check.
+  (c) Add explicit size-check middleware before the route handler reading
+      req.headers['content-length'], return 413 if > 32768.
+  Option (c) is least invasive and most targeted. Option (a) is simplest if 32KB is
+  acceptable globally.
+  SECURITY NOTE: Minor DoS hardening. Fix before any public deployment.
+
+Acceptance Criteria:
+  - [ ] Webhook payloads over 32KB are rejected with HTTP 413
+  - [ ] Fix does not break existing webhook tests
+  - [ ] npm test passes (187 tests)
+  - [ ] npm run build passes
+Dependencies: none
+
+---

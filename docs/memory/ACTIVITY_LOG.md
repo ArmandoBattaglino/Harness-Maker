@@ -1,4 +1,14 @@
 ---
+## 2026-03-28 — project-manager — Tasks #84--#99: QA Bug-Fix Wave Created
+**Outcome:** COMPLETED
+**Summary:** Created 16 bug tasks (#84--#99) from QA-tester findings. Tasks cover Zustand reactivity bugs, WS item shape mismatches, canvas prop-change blindness, pause/resume route no-ops, memory leaks in stopExecution, and body-limit misconfiguration. All tasks appended to docs/TASK_PLAN.md with Status: PENDING.
+**Files changed:** docs/TASK_PLAN.md
+**Bugs fixed:** none (tasks created, not yet implemented)
+**Decisions made:** Grouped frontend bugs (#84--#92) before backend bugs (#93--#99); marked TASK #89 (SwarmCanvas workflowDef) as HIGH priority alongside #84 (Zustand reactivity)
+**Blockers:** none
+**Next:** Orchestrator assigns #84 + #89 (HIGH priority) to frontend-dev; #93 + #94 + #95 (MEDIUM backend) to backend-dev; lower-priority tasks can run in parallel waves
+---
+
 ## 2026-03-28 — frontend-dev — Tasks #35 + #36: BUG-09 + BUG-17 Frontend Bug Fixes
 **Outcome:** COMPLETED
 **Summary:** Fixed BUG-17 (Terminal background color mismatch) by changing the wrapper div's inline backgroundColor from '#1a1a1a' to '#000000' in Terminal.jsx, making it consistent with xterm.js theme.background. Confirmed BUG-09 (ContextEditorView unsaved changes data loss) fix was already present in ContextEditorView.jsx — handleScopeSwitch with window.confirm guard was in place with correct [scope, hasChanges] dependency array.
