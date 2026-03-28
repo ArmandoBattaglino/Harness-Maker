@@ -1273,3 +1273,54 @@ All documentation is UP_TO_DATE as of 2026-03-28 for v3.0.0 release. No document
 ### Handoff
 No handoff required. Task chain is complete — V3 is implemented, tested, audited, built, tagged, and now documented. The project is in a clean state for future development.
 ---
+
+---
+## 2026-03-28 — Tasks #73–#83: V3 Final Documentation Pass
+**Status:** COMPLETED
+**Called by:** user (final documenter pass for the V3 release wave)
+
+### Context when I started
+Task #82 had produced README.md, docs/ARCHITECTURE.md, and docs/API.md for v3.0. Tasks #73–#76 (useInbox.js, TriggerManager.js, triggers.js routes, TriggerNode.jsx full visual) and #78–#83 (swarm integration tests, security audit, E2E tests, build verification, docs, Task #83 created) were all completed or pending. DOC_STATUS.md was last updated at the end of Task #82. The DOC_STATUS.md "Documentation Debt" table incorrectly listed "TriggerNode.jsx full visual implementation" as a medium-priority deferred item — Task #76 had in fact completed this work.
+
+### What I did
+1. Read DOC_STATUS.md, documenter.md (error: too large), ACTIVITY_LOG.md (error: too large) — used shorter reads.
+2. Read useInbox.js, TriggerManager.js, triggers.js, TriggerNode.jsx, SwarmEngine.stopExecution, PROGRESS.md in parallel.
+3. Read README.md (all 203 lines) and API.md first 80 lines to verify accuracy.
+4. Searched for "cleanupExecution" and "Task #83" across docs/ to confirm the gap is already captured in TASK_PLAN.md, CHANGELOG.md, and CODE_MAP.md.
+5. Searched for TriggerNode stub/full mentions to confirm Task #76 did complete the full implementation.
+6. Determined DOC_STATUS.md had two inaccuracies: (a) TriggerNode listed as stub/deferred — it is fully implemented; (b) Task #83 gap not listed in Stale Sections or Documentation Debt.
+7. Updated DOC_STATUS.md: advanced timestamp, added cleanupExecution gap to Stale Sections, updated Documentation Debt table to replace TriggerNode stub entry with accurate entries for Task #83 and CODE_MAP cleanup.
+8. Appended ACTIVITY_LOG entry and this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Timestamp updated; TriggerNode stub debt entry replaced with accurate entries; cleanupExecution gap added to Stale Sections and Documentation Debt; Code_MAP.md stub notation note added |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended V3 final documentation pass entry |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- DOC_STATUS.md now accurately reflects that TriggerNode.jsx is fully implemented (Task #76 completed this).
+- Task #83 gap (cleanupExecution not wired) is now documented in DOC_STATUS.md Stale Sections and Documentation Debt, giving any future agent reading DOC_STATUS.md a clear pointer to the pending patch.
+- README.md, docs/ARCHITECTURE.md, and docs/API.md confirmed accurate — no updates needed.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| DOC_STATUS.md had TriggerNode listed as stub | Task #82 documenter wrote the debt entry before Task #76 ran (or wrote it noting the stub state without checking if #76 had completed) | Updated debt table to reflect actual state | FIXED |
+
+### Decisions I made
+- Did not rewrite any section of README/ARCHITECTURE/API.md — all confirmed accurate through code review. Only DOC_STATUS.md needed updating.
+- Noted CODE_MAP.md "(stub)" notation for TriggerNode as documentation debt (Low priority) — code-mapper should update this, not documenter.
+- Kept the cleanupExecution gap as documentation debt (Low priority) rather than triggering an immediate bugfix — Task #83 is already PENDING in the task plan.
+
+### What I learned
+- Task #76 (TriggerNode full visual) was completed on 2026-03-28 and is confirmed in PROGRESS.md and CHANGELOG.md, but DOC_STATUS.md was not updated to reflect this — a gap in the post-Task-#76 documentation pass (documenter was not called after Task #76 individually).
+- The SwarmEngine.stopExecution() method has no reference to TriggerManager — the TriggerManager is held by routes/triggers.js but not passed into SwarmEngine at construction. This means the Task #83 fix requires either passing TriggerManager into SwarmEngine's constructor or providing a cleanup callback pattern.
+
+### State I'm leaving behind
+All three primary user-facing docs (README.md, docs/ARCHITECTURE.md, docs/API.md) are UP_TO_DATE for v3.0.0. DOC_STATUS.md is now accurate. Known deferred items are properly tracked: Task #83 gap, CONTRIBUTING.md absence, EntitiesView.jsx dead code, v3.1 security items.
+
+### Handoff
+Assign Task #83 to backend-dev. After #83 completes, run code-mapper + documenter + PM in parallel as usual. Documenter will need to update docs/API.md if stopExecution behavior changes, and update DOC_STATUS.md to mark the cleanupExecution gap as resolved.
+---

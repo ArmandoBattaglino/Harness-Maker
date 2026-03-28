@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-03-28 after Task #82: V3 Documentation Update_
+_Last updated: 2026-03-28 after Tasks #73–#83: V3 Final Documentation Pass_
 
 ## Status Legend
 - UP_TO_DATE -- matches current code
@@ -29,6 +29,8 @@ _Last updated: 2026-03-28 after Task #82: V3 Documentation Update_
 
 - docs/memory/DECISIONS.md:DEC-001 -- Records "use node-pty-prebuilt-multiarch" but actual installed package is plain node-pty. Historical accuracy preserved intentionally; correction in PROJECT.md.
 - client/src/views/EntitiesView.jsx -- Still exists on disk but is no longer imported by App.jsx. Marked DEPRECATED in ARCHITECTURE.md component tree. Can be deleted in a future cleanup.
+- server/services/SwarmEngine.js:stopExecution -- Does not call TriggerManager.cleanupExecution(). RSS pollers attached to an execution will continue running after the execution is stopped until process restart. Tracked as Task #83 (v3.0.1 patch, PENDING).
+- docs/memory/CODE_MAP.md:TriggerNode entry -- Still contains "(stub)" notation from Task #53.3; Task #76 fully implemented TriggerNode with store subscription, fired animation, and timestamp display. Code-mapper should update the map entry.
 
 ## Documentation Debt
 
@@ -40,4 +42,5 @@ _Last updated: 2026-03-28 after Task #82: V3 Documentation Update_
 | SECURITY_AUDIT.md LOW-03 fix | Low | Build env var allowlist for PTY spawn — deferred to v3.1 |
 | SECURITY_AUDIT.md LOW-04 fix | Low | Refactor safeRead to cover claudemd GET path — deferred to v3.1 |
 | Swarm execution state persistence | Medium | In-memory only in v3.0; restart clears all executions. Disk persistence planned for v3.1. |
-| TriggerNode.jsx full visual implementation | Medium | TriggerNode is a stub (type: "trigger") — full live state subscription deferred (was Task #76 which was out of scope for v3.0 wave). |
+| Wire stopExecution → cleanupExecution (Task #83) | Low | RSS pollers for stopped executions accumulate. Patch is a one-line wire-up in SwarmEngine.stopExecution. Tracked as Task #83 PENDING. |
+| docs/memory/CODE_MAP.md TriggerNode "(stub)" notation | Low | Code-mapper should update the map entry — TriggerNode is now fully implemented (Task #76). |

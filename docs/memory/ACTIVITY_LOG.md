@@ -1,4 +1,13 @@
 ---
+## 2026-03-28 — documenter — Tasks #73–#83: V3 Final Documentation Pass
+**Outcome:** COMPLETED
+**Summary:** Verified README.md, docs/ARCHITECTURE.md, and docs/API.md against all V3 changes (Tasks #73–#82). All three documents confirmed accurate for v3.0.0. Updated docs/memory/DOC_STATUS.md to: (1) correct the TriggerNode.jsx debt entry — Task #76 delivered a full implementation, not a stub; (2) add the Task #83 gap (cleanupExecution not wired to stopExecution) to both Stale Sections and Documentation Debt; (3) update the last-updated header to reflect this final pass.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none
+**Decisions made:** No doc rewrites needed — Task #82 documenter produced accurate V3 docs. Only DOC_STATUS.md required correction.
+**Blockers:** none
+**Next:** Task #83 (backend-dev — wire SwarmEngine.stopExecution → TriggerManager.cleanupExecution)
+---
 ## 2026-03-28 — project-manager — V3 Final Status Reconciliation + Task #83 Created
 **Outcome:** COMPLETED
 **Summary:** Audited all 57 V3 granular tasks (#43–#82). Task #75 individual entry corrected from PENDING to COMPLETED (was already done per ACTIVITY_LOG). Summary table at bottom of TASK_PLAN.md corrected: all 57 tasks now show COMPLETED. V3 final status block added with git tag date. Assessed TriggerManager.cleanupExecution() gap: warrants a v3.0.1 patch (Task #83 created) rather than a known issue note, as it causes RSS poller accumulation in long-running servers.
