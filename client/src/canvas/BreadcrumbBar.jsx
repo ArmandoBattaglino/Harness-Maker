@@ -19,7 +19,7 @@ export default function BreadcrumbBar({ nodes }) {
         onClick={() => navigateBreadcrumb(0)}
         className="hover:text-white transition-colors"
       >
-        🗺️ All Agents
+        All Agents
       </button>
 
       {crumbs.map((crumb, index) => (
