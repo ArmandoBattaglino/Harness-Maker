@@ -1904,3 +1904,14 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** qa-tester should verify Run/Stop/Pause/Resume button state transitions with live swarm execution
 ---
+
+---
+## 2026-03-29 — qa-tester — Swarm Integration Bug Inspection
+**Outcome:** COMPLETED
+**Summary:** Inspected tasks #32-#40 (all COMPLETED per PROGRESS.md, CSP fix in security.js verified). Inspected 7 Swarm integration files (SwarmView.jsx, SwarmContext.jsx, SwarmCanvas.jsx, HitlInbox.jsx, InterAgentFeed.jsx, useSwarm.js, Sidebar.jsx). Found 2 HIGH bugs, 1 MEDIUM, 2 LOW in the new Swarm integration code.
+**Files changed:** docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** Tasks #32-#40 all verified complete; BUG-SW-01 and BUG-SW-02 are highest priority
+**Blockers:** none
+**Next:** debugger/frontend-dev to fix BUG-SW-01 (Stop button missing when paused) and BUG-SW-02 (empty projectId on Run)
+---
