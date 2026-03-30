@@ -6689,7 +6689,7 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: sonnet
-Status: PENDING
+Status: COMPLETED
 Context: |
   HitlInbox.jsx exists at client/src/panels/HitlInbox.jsx. It is a complete, self-contained
   component that reads from the Zustand SwarmContext store (inboxItems, resolveInboxItem,
@@ -6730,7 +6730,7 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: sonnet
-Status: PENDING
+Status: COMPLETED
 Context: |
   useSwarm.js exists at client/src/hooks/useSwarm.js. It exports:
     useSwarm(workflowId) -> { startExecution, stopExecution, connectWs }
@@ -6792,7 +6792,7 @@ Agent: frontend-dev
 Priority: MEDIUM
 Difficulty: LOW
 Suggested Model: haiku
-Status: PENDING
+Status: COMPLETED
 Context: |
   InterAgentFeed.jsx exists at client/src/canvas/InterAgentFeed.jsx. It is a complete,
   self-contained component. It uses: useSwarmStore((s) => s.interAgentFeed)
@@ -6834,7 +6834,7 @@ Agent: frontend-dev
 Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: sonnet
-Status: PENDING
+Status: COMPLETED
 Context: |
   The backend already has working Pause/Resume routes in server/routes/swarm.js:
     POST /api/v1/swarm/:executionId/pause  -> swarmEngine.pauseExecution(executionId)

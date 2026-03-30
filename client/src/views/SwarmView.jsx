@@ -6,21 +6,48 @@ import SwarmCanvas from '../canvas/SwarmCanvas';
 import PromptToFlowBar from '../canvas/PromptToFlowBar';
 import BroadcastBar from '../canvas/BroadcastBar';
 import PtyExplosion from '../canvas/PtyExplosion';
+import HitlInbox, { getPendingCount } from '../panels/HitlInbox';
 import { useSwarmStore } from '../store/SwarmContext';
+import { useSwarm } from '../hooks/useSwarm';
+import { useAppState } from '../store/AppContext';
+import { apiPost } from '../hooks/useApi.js';
 
 // Status indicator color map
 const statusColors = {
   idle: 'text-gray-400',
   running: 'text-blue-400 animate-pulse',
+  paused: 'text-yellow-400',
   stopped: 'text-red-400',
 };
 
 export default function SwarmView() {
   const executionStatus = useSwarmStore((s) => s.executionStatus);
+  const activeExecutionId = useSwarmStore((s) => s.activeExecutionId);
+  const inboxItems = useSwarmStore((s) => s.inboxItems);
+  const interAgentFeed = useSwarmStore((s) => s.interAgentFeed);
+  const setPaused = useSwarmStore((s) => s.setPaused);
+  const setResumed = useSwarmStore((s) => s.setResumed);
   const reset = useSwarmStore((s) => s.reset);
   const ptyExplosionNodeId = useSwarmStore((s) => s.ptyExplosionNodeId);
   const setPtyExplosionNodeId = useSwarmStore((s) => s.setPtyExplosionNodeId);
+
   const [workflowDef, setWorkflowDef] = useState(null);
+  // Task #100 — HITL inbox drawer toggle
+  const [inboxOpen, setInboxOpen] = useState(false);
+  // Task #101 — loading state for run/stop
+  const [executing, setExecuting] = useState(false);
+  // Task #103 — loading state for pause/resume
+  const [pausing, setPausing] = useState(false);
+
+  // Task #101 — project context for startExecution
+  const { activeProjectId, projects } = useAppState();
+  const projectPath = projects.find((p) => p.id === activeProjectId)?.path ?? '';
+
+  // Task #101 — useSwarm hook (workflowId comes from workflowDef once generated)
+  const { startExecution, stopExecution } = useSwarm(workflowDef?.id);
+
+  // Task #100 — pending HITL count for badge
+  const pendingCount = getPendingCount(inboxItems);
 
   // Escape key handler — close PTY explosion overlay if it's open
   useEffect(() => {
@@ -34,6 +61,48 @@ export default function SwarmView() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [ptyExplosionNodeId, setPtyExplosionNodeId]);
 
+  // Task #101 — Run handler
+  const handleRun = async () => {
+    setExecuting(true);
+    try {
+      await startExecution(activeProjectId ?? '', projectPath);
+    } finally {
+      setExecuting(false);
+    }
+  };
+
+  // Task #101 — Stop handler
+  const handleStop = async () => {
+    setExecuting(true);
+    try {
+      await stopExecution(activeExecutionId);
+    } finally {
+      setExecuting(false);
+    }
+  };
+
+  // Task #103 — Pause handler
+  const handlePause = async () => {
+    setPausing(true);
+    try {
+      await apiPost(`/api/v1/swarm/${activeExecutionId}/pause`, {});
+      setPaused();
+    } finally {
+      setPausing(false);
+    }
+  };
+
+  // Task #103 — Resume handler
+  const handleResume = async () => {
+    setPausing(true);
+    try {
+      await apiPost(`/api/v1/swarm/${activeExecutionId}/resume`, {});
+      setResumed();
+    } finally {
+      setPausing(false);
+    }
+  };
+
   return (
     <div className="flex flex-col w-full h-full bg-gray-950 text-white">
       {/* Toolbar */}
@@ -42,6 +111,60 @@ export default function SwarmView() {
 
         {/* Spacer */}
         <div className="flex-1" />
+
+        {/* Task #100 — HITL inbox badge button */}
+        <button
+          onClick={() => setInboxOpen((o) => !o)}
+          className={`text-xs px-2 py-1 rounded transition-colors ${
+            pendingCount > 0 ? 'bg-orange-600 hover:bg-orange-500 text-white' : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+          }`}
+        >
+          {'\uD83D\uDCE5'} HITL{pendingCount > 0 ? ` (${pendingCount})` : ''}
+        </button>
+
+        {/* Task #101 — Run button: idle + workflow loaded */}
+        {executionStatus === 'idle' && workflowDef !== null && (
+          <button
+            onClick={handleRun}
+            disabled={executing}
+            className="bg-green-600 hover:bg-green-500 text-white text-xs px-3 py-1 rounded transition-colors disabled:opacity-40"
+          >
+            {executing ? '...' : 'Run'}
+          </button>
+        )}
+
+        {/* Task #103 — Pause button: running */}
+        {executionStatus === 'running' && (
+          <button
+            onClick={handlePause}
+            disabled={pausing}
+            className="bg-yellow-600 hover:bg-yellow-500 text-white text-xs px-3 py-1 rounded transition-colors disabled:opacity-40"
+          >
+            {pausing ? '...' : 'Pause'}
+          </button>
+        )}
+
+        {/* Task #103 — Resume button: paused */}
+        {executionStatus === 'paused' && (
+          <button
+            onClick={handleResume}
+            disabled={pausing}
+            className="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1 rounded transition-colors disabled:opacity-40"
+          >
+            {pausing ? '...' : 'Resume'}
+          </button>
+        )}
+
+        {/* Task #101 — Stop button: running */}
+        {executionStatus === 'running' && (
+          <button
+            onClick={handleStop}
+            disabled={executing}
+            className="bg-red-600 hover:bg-red-500 text-white text-xs px-3 py-1 rounded transition-colors disabled:opacity-40"
+          >
+            {executing ? '...' : 'Stop'}
+          </button>
+        )}
 
         {/* Execution status indicator */}
         <span className={`text-xs capitalize ${statusColors[executionStatus] || 'text-gray-400'}`}>
@@ -66,12 +189,19 @@ export default function SwarmView() {
         }}
       />
 
-      {/* Canvas area — takes remaining height */}
+      {/* Canvas area — takes remaining height. Task #102: InterAgentFeed is mounted inside SwarmCanvas */}
       <div className="flex-1 overflow-hidden">
         <ReactFlowProvider>
           <SwarmCanvas workflowDef={workflowDef} />
         </ReactFlowProvider>
       </div>
+
+      {/* Task #100 — HITL inbox drawer (above BroadcastBar) */}
+      {inboxOpen && (
+        <div className="border-t border-gray-700 bg-gray-900 max-h-64 overflow-y-auto">
+          <HitlInbox />
+        </div>
+      )}
 
       {/* Broadcast bar — only visible during active execution */}
       <BroadcastBar />

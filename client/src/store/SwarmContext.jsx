@@ -3,7 +3,7 @@ import { create } from 'zustand';
 const useSwarmStore = create((set, get) => ({
   // Execution state
   activeExecutionId: null,
-  executionStatus: 'idle', // 'idle' | 'running' | 'stopped'
+  executionStatus: 'idle', // 'idle' | 'running' | 'paused' | 'stopped'
   agentStates: {},         // { [nodeId]: { status, lastOutputSnippet, handoffCount } }
   triggerStates: {},       // { [triggerId]: { fired, lastFiredAt, status } }
   edgeCounters: {},        // { [edgeId]: number }
@@ -68,6 +68,9 @@ const useSwarmStore = create((set, get) => ({
       focusedDepartmentId: newStack.length > 0 ? newStack[newStack.length - 1] : null,
     };
   }),
+
+  setPaused: () => set({ executionStatus: 'paused' }),
+  setResumed: () => set({ executionStatus: 'running' }),
 
   setSelectedNode: (id) => set({ selectedNodeId: id }),
   setPtyExplosionNodeId: (id) => set({ ptyExplosionNodeId: id }),

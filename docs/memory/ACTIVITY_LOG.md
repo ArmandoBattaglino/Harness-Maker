@@ -1894,3 +1894,13 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Nothing — process hardening is self-contained. Next code task proceeds with the updated pipeline.
 ---
+---
+## 2026-03-29 — frontend-dev — Tasks #100, #101, #102, #103: SwarmView Integration Wave
+**Outcome:** COMPLETED
+**Summary:** Wired four previously built-but-unmounted V3 frontend components into SwarmView.jsx in a single pass to avoid merge conflicts. Added HITL inbox badge+drawer (#100), Run/Stop execution buttons via useSwarm hook (#101), InterAgentFeed side panel inside SwarmCanvas (#102), and Pause/Resume toolbar controls with 'paused' state extended in SwarmContext (#103). Build: 476 modules, 0 errors. Tests: 187/187 passed.
+**Files changed:** client/src/views/SwarmView.jsx, client/src/canvas/SwarmCanvas.jsx, client/src/store/SwarmContext.jsx
+**Bugs fixed:** none
+**Decisions made:** InterAgentFeed mounted inside SwarmCanvas.jsx (not SwarmView) to keep it co-located with the ReactFlow canvas; HITL drawer uses local toggle state to avoid polluting Zustand
+**Blockers:** none
+**Next:** qa-tester should verify Run/Stop/Pause/Resume button state transitions with live swarm execution
+---

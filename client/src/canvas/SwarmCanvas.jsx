@@ -18,6 +18,7 @@ import TriggerNode from './nodes/TriggerNode';
 import HandoffEdge from './edges/HandoffEdge';
 import AgentInspector from './AgentInspector';
 import BreadcrumbBar from './BreadcrumbBar';
+import InterAgentFeed from './InterAgentFeed';
 import { useSwarmStore } from '../store/SwarmContext';
 
 // Register custom node and edge types — defined OUTSIDE component to prevent re-registration
@@ -113,6 +114,7 @@ export default function SwarmCanvas({ workflowDef }) {
             nodeColor="#6366f1"
           />
         </ReactFlow>
+        <InterAgentFeed />
         <AgentInspector nodes={nodes} />
       </div>
     </div>

@@ -1669,3 +1669,61 @@ useInbox.js is now fully functional. All three bugs are fixed:
 ### Handoff
 Bug fixes are complete and committed. The HITL polling fallback should now work correctly when WS is disconnected. No downstream tasks depend on these fixes — they are purely correctness improvements to existing Task #73.
 ---
+---
+## 2026-03-29 — Tasks #100, #101, #102, #103: SwarmView Integration Wave
+**Status:** COMPLETED
+**Called by:** user (direct task assignment — all four in one pass)
+
+### Context when I started
+Four built-but-unmounted V3 frontend components needed wiring into SwarmView.jsx. HitlInbox.jsx (#69), InterAgentFeed.jsx (#72), and useSwarm.js (#61) already existed but were never imported into SwarmView. SwarmContext.jsx had no 'paused' state. All four tasks touched SwarmView.jsx so they were combined into one pass to avoid merge conflicts.
+
+### What I did
+1. Read all seven relevant source files in parallel: SwarmView.jsx, SwarmContext.jsx, useSwarm.js, HitlInbox.jsx, InterAgentFeed.jsx, SwarmCanvas.jsx, AppContext.jsx.
+2. Confirmed AppContext exports `useAppState` (not `useAppContext`) — state shape: { activeProjectId, projects[] }.
+3. Confirmed `apiPost` lives at `../hooks/useApi.js` (same path used by HitlInbox.jsx already).
+4. SwarmContext.jsx — added `'paused'` to executionStatus comment, added `setPaused` and `setResumed` actions matching the existing `set({})` pattern (no immer).
+5. SwarmCanvas.jsx — imported `InterAgentFeed` from `./InterAgentFeed`, added it as a sibling between ReactFlow and AgentInspector inside the `flex flex-1 overflow-hidden` div. InterAgentFeed is always mounted (it renders itself empty when feed has 0 entries — has its own empty state UI).
+6. SwarmView.jsx — full rewrite adding: 4 new imports (useSwarm, useAppState, HitlInbox+getPendingCount, apiPost); 6 new store selectors (activeExecutionId, inboxItems, interAgentFeed, setPaused, setResumed — added granularly); 3 new local state vars (inboxOpen, executing, pausing); run/stop/pause/resume async handlers with try/finally for loading state; toolbar buttons in order: HITL badge, Run, Pause, Resume, Stop, status dot, Reset; canvas section wrapped in flex-row to leave room for InterAgentFeed (handled inside SwarmCanvas); HitlInbox drawer conditionally rendered above BroadcastBar.
+7. Run `npm run build` — 476 modules, 0 errors.
+8. Run `npm test -- --run` — 187/187 passed.
+9. Marked tasks #100, #101, #102, #103 COMPLETED in docs/TASK_PLAN.md.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/store/SwarmContext.jsx | MODIFIED | Added 'paused' to executionStatus enum comment; added setPaused and setResumed actions |
+| client/src/canvas/SwarmCanvas.jsx | MODIFIED | Imported InterAgentFeed; added as sibling between ReactFlow and AgentInspector |
+| client/src/views/SwarmView.jsx | MODIFIED (full rewrite) | Added all 4 tasks: HITL badge+drawer, Run/Stop, Pause/Resume, InterAgentFeed via SwarmCanvas |
+| docs/TASK_PLAN.md | MODIFIED | Tasks #100, #101, #102, #103 Status: PENDING → COMPLETED |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Session log entry appended |
+
+### Improvements delivered
+- Run/Stop buttons now functional in SwarmView toolbar — wired to useSwarm hook with projectId/projectPath from AppContext
+- Pause/Resume buttons with 'paused' store state — full round-trip to backend pause/resume routes
+- HITL inbox badge button in toolbar — shows pending count, toggles collapsible drawer above BroadcastBar
+- InterAgentFeed real-time handoff log now visible inside SwarmCanvas beside ReactFlow
+- statusColors map updated with 'paused': 'text-yellow-400' for visual feedback
+- All loading states handled with try/finally — buttons never stuck in disabled state on error
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None | — | — | — |
+
+### Decisions I made
+- InterAgentFeed mounted in SwarmCanvas.jsx (not SwarmView) — keeps it co-located with the canvas visually and architecturally; InterAgentFeed already has its own sizing (w-56 shrink-0) so it slots in naturally.
+- Task instructions said to add `{interAgentFeed.length > 0 && <InterAgentFeed />}` in SwarmView but InterAgentFeed already renders its own empty state internally. Mounting it always in SwarmCanvas is cleaner — the component self-manages visibility.
+- HITL badge button always visible (not just when pendingCount > 0) — better UX to always have the toggle available; just changes color based on pending count.
+- Used `useAppState` (not `useAppContext`) — AppContext.jsx exports two separate hooks, `useAppState` and `useAppDispatch`. The task plan mentioned "useAppContext" but the actual export is `useAppState`.
+
+### What I learned
+- AppContext.jsx uses React Context + useReducer (not Zustand). It exports `useAppState()` for reads. The task plan referenced a non-existent `useAppContext` — always read the actual file.
+- InterAgentFeed empty-state: when feed.length === 0, it renders without the w-56 shrink-0 class (the empty div uses h-full without width constraints). This is intentional — it collapses to near-zero width when idle. So mounting it always is fine.
+- SwarmContext.jsx uses plain Zustand `set({})` — no immer. Match the pattern exactly when adding new actions.
+
+### State I'm leaving behind
+All four tasks fully implemented and verified. SwarmView.jsx is the main changed file — it now imports 4 new dependencies (useSwarm, useAppState, HitlInbox, apiPost) and has a richer toolbar. SwarmCanvas.jsx has InterAgentFeed mounted. SwarmContext.jsx has setPaused/setResumed actions. Build and tests green.
+
+### Handoff
+None — all four tasks are self-contained and fully functional. qa-tester can verify button state transitions with a live swarm execution.
+---
