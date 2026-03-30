@@ -6897,3 +6897,101 @@ Acceptance Criteria:
   - [ ] npm test passes (187 tests)
 Dependencies: #101, #52
 ---
+
+---
+
+TASK #104: BUG-FIX — InterAgentFeed empty-state missing w-56 shrink-0
+Agent: frontend-dev
+Priority: CRITICAL
+Difficulty: LOW
+Suggested Model: sonnet
+Status: COMPLETED
+Context: |
+  BUG-1: InterAgentFeed empty-state container div was missing w-56 shrink-0,
+  causing the flex row in SwarmCanvas to collapse to ~172px.
+
+Acceptance Criteria:
+  - [x] w-56 shrink-0 added to empty-state div
+  - [x] build passes
+---
+
+TASK #105: BUG-FIX — Stop button hidden when paused
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: LOW
+Suggested Model: sonnet
+Status: COMPLETED
+Context: |
+  BUG-2: Stop button condition was executionStatus === 'running' only — disappeared when paused.
+  Fixed to (executionStatus === 'running' || executionStatus === 'paused').
+
+Acceptance Criteria:
+  - [x] Stop button visible when paused
+  - [x] build passes
+---
+
+TASK #106: BUG-FIX — Run button fires with empty projectId
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: LOW
+Suggested Model: sonnet
+Status: COMPLETED
+Context: |
+  BUG-3: Run button showed even when no project selected. Added activeProjectId guard to
+  visibility condition, early return guard in handleRun, runError state, and error display.
+
+Acceptance Criteria:
+  - [x] Run button hidden when no project selected
+  - [x] handleRun shows error message when called without project
+  - [x] runError displayed as red text below toolbar
+  - [x] build passes
+---
+
+TASK #107: BUG-FIX — HitlInbox drawer lacks header/close button
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: LOW
+Suggested Model: sonnet
+Status: COMPLETED
+Context: |
+  BUG-4: HITL drawer had no visible title or close button. Added header row with
+  "HITL Approvals" label and close button. Also added e.stopPropagation() to HITL badge button.
+
+Acceptance Criteria:
+  - [x] Header row with title and close button added to HITL drawer
+  - [x] Badge button has stopPropagation
+  - [x] build passes
+---
+
+TASK #108: BUG-FIX — HitlInbox approve/reject silent failure
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: LOW
+Suggested Model: sonnet
+Status: COMPLETED
+Context: |
+  BUG-5: approve/reject silently returned when executionId was null. Changed early return
+  guard in handleApproveConfirm and handleReject to call setError with a message.
+
+Acceptance Criteria:
+  - [x] setError called with message on missing executionId
+  - [x] build passes
+---
+
+TASK #109: BUG-FIX — useSwarm agentStates in connectWs deps causes recreation
+Agent: frontend-dev
+Priority: LOW
+Difficulty: LOW
+Suggested Model: sonnet
+Status: COMPLETED
+Context: |
+  BUG-6: agentStates subscribed at top level and included in connectWs deps — caused
+  recreation on every state change. Removed top-level subscription; used
+  useSwarmStore.getState().agentStates inside the handler instead of closing over it.
+
+Acceptance Criteria:
+  - [x] agentStates selector removed from top of useSwarm
+  - [x] handoff_started uses getState() for point-in-time read
+  - [x] agentStates removed from connectWs deps array
+  - [x] build passes, 187 tests pass
+---

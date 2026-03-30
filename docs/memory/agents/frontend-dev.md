@@ -1727,3 +1727,68 @@ All four tasks fully implemented and verified. SwarmView.jsx is the main changed
 ### Handoff
 None — all four tasks are self-contained and fully functional. qa-tester can verify button state transitions with a live swarm execution.
 ---
+
+---
+## 2026-03-29 — Tasks #104-#109: QA Bug-Fix Pass — 6 Bugs in SwarmView/InterAgentFeed/HitlInbox/useSwarm
+**Status:** COMPLETED
+**Called by:** user (direct QA bug list)
+
+### Context when I started
+QA inspection identified 6 bugs across 4 files in the Swarm Orchestrator frontend:
+- InterAgentFeed.jsx: empty-state div missing w-56 shrink-0 (canvas collapse)
+- SwarmView.jsx: Stop button hidden when paused; Run button fires with null projectId; HITL drawer no header/close
+- HitlInbox.jsx: approve/reject silently return when executionId null
+- useSwarm.js: agentStates subscribed at top level and in connectWs deps causing hook recreation on every agent state change
+
+All 4 files already existed and were functional; these were edge-case/visual/UX bugs.
+
+### What I did
+1. Read all 4 source files in parallel along with memory context files.
+2. Applied BUG-1: added `w-56 shrink-0` to InterAgentFeed empty-state container div (was already on populated div, missing on empty).
+3. Applied BUG-2: changed Stop button condition from `executionStatus === 'running'` to `(executionStatus === 'running' || executionStatus === 'paused')`.
+4. Applied BUG-3: (a) added `&& activeProjectId` to Run button visibility condition; (b) added early guard in handleRun with setRunError call; (c) added `const [runError, setRunError] = useState('')` local state; (d) added error display div below toolbar.
+5. Applied BUG-4: (a) added header row with "HITL Approvals" label and ✕ close button inside HITL drawer container; (b) added `e.stopPropagation()` to HITL badge button onClick.
+6. Applied BUG-5: changed silent `return` guards in handleApproveConfirm and handleReject to `setError('No active execution — cannot approve/reject.')` + return.
+7. Applied BUG-6: (a) removed top-level `agentStates = useSwarmStore(s => s.agentStates)` subscription; (b) replaced closed-over reference in handoff_started handler with `useSwarmStore.getState().agentStates[msg.sourceNodeId]`; (c) removed `agentStates` from connectWs useCallback dependency array; (d) wrapped handoff_started case in a block `{}` for lexical scoping of const declarations.
+8. Ran `npm run build` from client/ — 476 modules, 0 errors, 4.10s.
+9. Ran `npm test -- --run` from project root — 187 passed, 0 failed, 4.81s.
+10. Appended tasks #104-#109 to docs/TASK_PLAN.md (PM hadn't created them yet).
+11. Writing memory logs (this entry).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/canvas/InterAgentFeed.jsx | MODIFIED | BUG-1: added w-56 shrink-0 to empty-state outer div |
+| client/src/views/SwarmView.jsx | MODIFIED | BUG-2: Stop button condition includes 'paused'; BUG-3: Run button gated by activeProjectId, handleRun early guard + runError state + error display; BUG-4: HITL badge stopPropagation + drawer header with close button |
+| client/src/panels/HitlInbox.jsx | MODIFIED | BUG-5: handleApproveConfirm + handleReject early guards now call setError instead of silent return |
+| client/src/hooks/useSwarm.js | MODIFIED | BUG-6: removed agentStates top-level subscription; handoff_started uses getState(); agentStates removed from connectWs deps; handoff_started case wrapped in block for const scoping |
+| docs/TASK_PLAN.md | MODIFIED | Tasks #104-#109 added as COMPLETED |
+
+### Improvements delivered
+- BUG-1 (CRITICAL): InterAgentFeed always reserves exactly 224px (w-56) regardless of feed empty/populated state. SwarmCanvas no longer collapses to 172px.
+- BUG-2 (HIGH): Stop button visible in both running and paused states — users can always abort.
+- BUG-3 (HIGH): Run button only visible when project is selected; clicking run without project shows clear error message; no more silent startExecution('', '') calls.
+- BUG-4 (MEDIUM): HITL drawer now has "HITL Approvals" title and ✕ close button; badge click propagation stopped.
+- BUG-5 (MEDIUM): Approve/Reject actions now surface "No active execution" error to user instead of silently failing.
+- BUG-6 (LOW): connectWs is no longer recreated on every agent state change — eliminates unnecessary WS reconnect risk during high-frequency execution events.
+- Build: 476 modules, 0 errors. Tests: 187/187 passing.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| const declaration inside switch case without block | handoff_started case used bare const without enclosing block | Wrapped case in {} block | FIXED |
+
+### Decisions I made
+- BUG-6: Used `useSwarmStore.getState()` (Zustand imperative getter) rather than a ref or effect to read agentStates — this is the canonical Zustand pattern for reading store state inside event handlers without creating subscriptions. No stale closure risk since getState() always returns the current state snapshot.
+- BUG-3: Kept `activeProjectId` check only at visibility level (hides button) AND added early guard in handleRun for defense-in-depth (in case button ever becomes visible by other means).
+
+### What I learned
+- Zustand `useSwarmStore.getState()` is the correct pattern for reading store state imperatively inside WS message handlers — avoids both stale closures and unnecessary subscriptions.
+- Switch-case const declarations require a wrapping block `{}` in JavaScript to avoid "Lexical declaration cannot appear in a single-statement context" errors at parse time — even though the prior code may have worked if the linter/transpiler was lenient.
+
+### State I'm leaving behind
+All 6 bugs fixed. Build 476 modules, 0 errors. 187/187 tests passing. Files fully functional.
+
+### Handoff
+None — task fully self-contained. QA may want to re-screenshot to verify layout fix visually.
+---

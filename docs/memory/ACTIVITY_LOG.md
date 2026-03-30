@@ -1926,3 +1926,14 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** debugger/frontend-dev to fix BUG-SW-01 (Stop button missing when paused) and BUG-SW-02 (empty projectId on Run)
 ---
+
+---
+## 2026-03-29 — frontend-dev — Tasks #104-#109: QA Bug-Fix Pass
+**Outcome:** COMPLETED
+**Summary:** Fixed 6 bugs found during QA visual inspection of the Swarm Orchestrator UI. BUG-1 (CRITICAL): InterAgentFeed empty-state was missing w-56 shrink-0 causing canvas collapse to 172px. BUG-2 (HIGH): Stop button now visible when paused. BUG-3 (HIGH): Run button gated by activeProjectId with user-visible error. BUG-4 (MEDIUM): HITL drawer header + close button added; stopPropagation on badge. BUG-5 (MEDIUM): approve/reject now surface error instead of silent return when executionId null. BUG-6 (LOW): useSwarm no longer subscribes to agentStates at top level — uses getState() inside handler instead, preventing connectWs recreation on every agent state change.
+**Files changed:** client/src/canvas/InterAgentFeed.jsx, client/src/views/SwarmView.jsx, client/src/panels/HitlInbox.jsx, client/src/hooks/useSwarm.js, docs/TASK_PLAN.md
+**Bugs fixed:** BUG-1, BUG-2, BUG-3, BUG-4, BUG-5, BUG-6
+**Decisions made:** Use useSwarmStore.getState() for imperative agentStates reads in WS handlers
+**Blockers:** none
+**Next:** QA visual re-check to confirm layout fix; git commit
+---
