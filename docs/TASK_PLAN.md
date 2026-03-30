@@ -6674,3 +6674,226 @@ Acceptance Criteria:
 Dependencies: none
 
 ---
+
+---
+
+## Post-Release Integration Wave (#100-#103)
+
+**Declared:** 2026-03-29
+**Reason:** V3 codebase audit revealed four frontend components and hooks that were built and tested in isolation but never mounted or wired into SwarmView.jsx. All backend routes exist. All store slices exist. The components are self-contained. These tasks complete the integration so the Swarm UI is fully operational end-to-end.
+
+---
+
+TASK #100: Mount HitlInbox in SwarmView -- Notification Badge + Collapsible Drawer
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: sonnet
+Status: PENDING
+Context: |
+  HitlInbox.jsx exists at client/src/panels/HitlInbox.jsx. It is a complete, self-contained
+  component that reads from the Zustand SwarmContext store (inboxItems, resolveInboxItem,
+  activeExecutionId). It also exports a named helper getPendingCount(inboxItems). The component
+  was built in Task #69 but was NEVER imported or mounted into SwarmView.jsx.
+
+  SwarmView.jsx is at client/src/views/SwarmView.jsx. It currently imports:
+    ReactFlowProvider, SwarmCanvas, PromptToFlowBar, BroadcastBar, PtyExplosion, useSwarmStore
+
+  WHAT TO DO:
+  1. Import HitlInbox (default) and getPendingCount (named) from ../panels/HitlInbox
+  2. Read inboxItems from store: const inboxItems = useSwarmStore(s => s.inboxItems)
+     (useSwarmStore is already imported)
+  3. Add local state: const [inboxOpen, setInboxOpen] = useState(false)
+  4. In the toolbar: add a badge button that shows "HITL (N)" when getPendingCount(inboxItems) > 0.
+     The button toggles inboxOpen. When count is 0, show nothing or a greyed-out label.
+  5. Below the main canvas area (inside the flex column): conditionally render
+     {inboxOpen && <HitlInbox />}
+     HitlInbox is self-contained -- no props needed.
+
+  CRITICAL CONSTRAINTS:
+  - Do NOT remove the PtyExplosion overlay, BroadcastBar, PromptToFlowBar, or SwarmCanvas.
+  - Do NOT break existing functionality.
+  - useSwarmStore is already imported -- do not add a duplicate import.
+  - Run npm run build from the client/ directory -- must pass with 0 errors.
+
+Acceptance Criteria:
+  - [ ] HitlInbox is imported and mounted in SwarmView.jsx
+  - [ ] getPendingCount badge appears in toolbar when pending HITL items exist
+  - [ ] Drawer toggles open/closed via the badge button
+  - [ ] npm run build passes (0 errors)
+  - [ ] No existing SwarmView functionality is broken
+Dependencies: #69, #71.1
+---
+
+TASK #101: Add Run/Stop Execution Buttons to SwarmView Toolbar
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: sonnet
+Status: PENDING
+Context: |
+  useSwarm.js exists at client/src/hooks/useSwarm.js. It exports:
+    useSwarm(workflowId) -> { startExecution, stopExecution, connectWs }
+  - startExecution(projectId, projectPath): POSTs to /api/v1/swarm/:workflowId/start,
+    then connects WebSocket. Sets executionId and executionStatus = 'running' in store.
+  - stopExecution(executionId): DELETEs /api/v1/swarm/:executionId. Sets status = 'stopped'.
+
+  SwarmView.jsx currently has NO Run or Stop buttons. The toolbar has only a title, spacer,
+  execution status indicator, and a Reset button (visible when stopped). The useSwarm hook
+  is NOT imported or called anywhere in SwarmView.
+
+  AppContext.jsx (client/src/store/AppContext.jsx) provides:
+    const { activeProjectId, projects } = useAppContext()
+  The projectPath is: projects.find(p => p.id === activeProjectId)?.path
+
+  workflowDef is already in SwarmView local state (set by PromptToFlowBar via setWorkflowDef).
+  workflowId = workflowDef?.id
+
+  WHAT TO DO:
+  1. Import useSwarm from ../hooks/useSwarm
+  2. Import useAppContext from ../store/AppContext (check exact export name in that file)
+  3. Call: const { startExecution, stopExecution } = useSwarm(workflowDef?.id)
+  4. Add local state: const [executing, setExecuting] = useState(false)
+  5. In the toolbar, add buttons:
+     - "Run" button: visible when executionStatus === 'idle'. On click:
+         setExecuting(true)
+         await startExecution(activeProjectId, projectPath)
+         setExecuting(false)
+       Disabled when workflowDef is null or executing is true.
+     - "Stop" button: visible when executionStatus === 'running'. On click:
+         setExecuting(true)
+         await stopExecution(activeExecutionId)
+         setExecuting(false)
+       Disabled when executing is true.
+  6. executionStatus and activeExecutionId come from:
+       const { executionStatus, activeExecutionId } = useSwarmStore(s => ({
+         executionStatus: s.executionStatus,
+         activeExecutionId: s.activeExecutionId
+       }))
+     (useSwarmStore already imported -- add these selectors, do not duplicate import)
+
+  CRITICAL CONSTRAINTS:
+  - Do NOT use shell: true anywhere.
+  - Do NOT break existing toolbar elements (Reset button, status indicator, etc.).
+  - Run npm run build from client/ -- must pass with 0 errors.
+
+Acceptance Criteria:
+  - [ ] Run button appears in toolbar when executionStatus === 'idle' and workflowDef is loaded
+  - [ ] Stop button appears when executionStatus === 'running'
+  - [ ] startExecution is called with correct projectId and projectPath
+  - [ ] stopExecution is called with activeExecutionId
+  - [ ] Loading state disables buttons during async calls
+  - [ ] npm run build passes (0 errors)
+Dependencies: #61, #63, #71.1
+---
+
+TASK #102: Mount InterAgentFeed Panel in SwarmView
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: LOW
+Suggested Model: haiku
+Status: PENDING
+Context: |
+  InterAgentFeed.jsx exists at client/src/canvas/InterAgentFeed.jsx. It is a complete,
+  self-contained component. It uses: useSwarmStore((s) => s.interAgentFeed)
+  It renders as a w-56 shrink-0 right-side panel with a border-l. No props required.
+
+  SwarmView.jsx does NOT import or mount InterAgentFeed anywhere. The canvas area is
+  currently a single column layout.
+
+  WHAT TO DO:
+  1. Import InterAgentFeed from ../canvas/InterAgentFeed
+  2. Read interAgentFeed from store:
+       const interAgentFeed = useSwarmStore(s => s.interAgentFeed)
+     (useSwarmStore already imported -- add this selector, no duplicate import)
+  3. Find the div that wraps SwarmCanvas. Change its container to a flex-row layout:
+       <div className="flex flex-row flex-1 overflow-hidden">
+         <div className="flex-1">
+           <ReactFlowProvider><SwarmCanvas /></ReactFlowProvider>
+         </div>
+         {interAgentFeed.length > 0 && <InterAgentFeed />}
+       </div>
+  4. The InterAgentFeed panel only appears when there are feed entries (hides when idle).
+
+  CRITICAL CONSTRAINTS:
+  - Do NOT remove ReactFlowProvider wrapping SwarmCanvas -- it is required.
+  - Do NOT break PtyExplosion overlay, BroadcastBar, PromptToFlowBar, or existing layout.
+  - Run npm run build from client/ -- must pass with 0 errors.
+
+Acceptance Criteria:
+  - [ ] InterAgentFeed is imported and mounted in SwarmView.jsx
+  - [ ] Panel is only visible when interAgentFeed.length > 0
+  - [ ] Canvas retains flex-1 and fills remaining space
+  - [ ] npm run build passes (0 errors)
+  - [ ] ReactFlowProvider wrapping is preserved
+Dependencies: #72, #71.1
+---
+
+TASK #103: Add Pause/Resume Execution Controls to SwarmView Toolbar
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: MEDIUM
+Suggested Model: sonnet
+Status: PENDING
+Context: |
+  The backend already has working Pause/Resume routes in server/routes/swarm.js:
+    POST /api/v1/swarm/:executionId/pause  -> swarmEngine.pauseExecution(executionId)
+    POST /api/v1/swarm/:executionId/resume -> swarmEngine.resumeExecution(executionId)
+
+  The Zustand SwarmContext store (client/src/store/SwarmContext.jsx) currently has:
+    executionStatus: 'idle' | 'running' | 'stopped'
+  There is NO 'paused' state. This must be added.
+
+  SwarmView.jsx has no Pause or Resume buttons.
+
+  WHAT TO DO -- in order:
+
+  Step 1 -- Extend SwarmContext.jsx:
+  - Open client/src/store/SwarmContext.jsx
+  - Find the executionStatus setter or initial state. Add 'paused' as a valid value.
+  - Add two new actions to the store:
+      setPaused: (state) => { state.executionStatus = 'paused' }
+      setResumed: (state) => { state.executionStatus = 'running' }
+    (Match the existing action pattern in the file -- use immer produce or direct mutation
+    depending on what the file already does)
+
+  Step 2 -- Add Pause/Resume to SwarmView.jsx:
+  - Import apiPost from the appropriate utility (check client/src/utils/api.js or
+    client/src/hooks/useApi.js for the correct import path)
+  - Add local state: const [pausing, setPausing] = useState(false)
+  - Read setPaused and setResumed from store:
+      const { setPaused, setResumed } = useSwarmStore(s => ({
+        setPaused: s.setPaused,
+        setResumed: s.setResumed
+      }))
+  - In the toolbar, add:
+    - Pause button: visible when executionStatus === 'running'. On click:
+        setPausing(true)
+        await apiPost(`/api/v1/swarm/${activeExecutionId}/pause`, {})
+        setPaused()
+        setPausing(false)
+      Disabled when pausing is true.
+    - Resume button: visible when executionStatus === 'paused'. On click:
+        setPausing(true)
+        await apiPost(`/api/v1/swarm/${activeExecutionId}/resume`, {})
+        setResumed()
+        setPausing(false)
+      Disabled when pausing is true.
+
+  CRITICAL CONSTRAINTS:
+  - SwarmContext changes MUST NOT break any existing actions or state shape.
+  - Pause and Resume buttons must coexist with Run/Stop buttons added in Task #101.
+  - Do NOT remove any existing toolbar elements.
+  - Run npm run build from client/ -- must pass with 0 errors.
+  - Run npm test -- must pass (187 tests).
+
+Acceptance Criteria:
+  - [ ] 'paused' added to executionStatus enum in SwarmContext.jsx
+  - [ ] setPaused and setResumed actions exist in the store
+  - [ ] Pause button appears when executionStatus === 'running', calls pause route
+  - [ ] Resume button appears when executionStatus === 'paused', calls resume route
+  - [ ] executionStatus updates correctly after each call
+  - [ ] npm run build passes (0 errors)
+  - [ ] npm test passes (187 tests)
+Dependencies: #101, #52
+---

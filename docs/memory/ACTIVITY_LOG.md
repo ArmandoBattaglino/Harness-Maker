@@ -1,4 +1,17 @@
 ---
+## 2026-03-29 — project-manager — Tasks #100-#103: SwarmView Integration Wave
+**Outcome:** COMPLETED
+**Summary:** Added 4 new PENDING tasks (#100-#103) to docs/TASK_PLAN.md. These tasks wire four
+built-but-unmounted V3 frontend components into SwarmView.jsx: HitlInbox drawer (#100), Run/Stop
+buttons via useSwarm hook (#101), InterAgentFeed side panel (#102), and Pause/Resume toolbar
+controls with SwarmContext.jsx store extension (#103). All tasks are assigned to frontend-dev with
+full self-contained context and acceptance criteria.
+**Files changed:** docs/TASK_PLAN.md (222 lines appended), docs/memory/agents/project-manager.md (session log), docs/memory/ACTIVITY_LOG.md (this entry)
+**Bugs fixed:** none
+**Decisions made:** #100+#101 Priority HIGH (critical path); #102+#103 Priority MEDIUM; bash heredoc workaround via Python script
+**Blockers:** none
+**Next:** Assign #100 and #101 to frontend-dev in parallel; after completion run #102 and #103; then qa-tester for final build+test verification.
+---
 ## 2026-03-28 — documenter — V3 RELEASE-READY: Final Documentation Closure
 **Outcome:** COMPLETED
 **Summary:** Final closure verification pass. No code was modified in this pass. All documentation artifacts confirmed accurate: README.md, docs/ARCHITECTURE.md, docs/API.md, docs/security-v3-audit.md, and all inline comments verified clean against the post-debug-loop codebase. DOC_STATUS.md last-updated line advanced to V3 RELEASE-READY closure. All items remain UP_TO_DATE. No open documentation debt blocks release.
