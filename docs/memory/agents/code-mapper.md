@@ -1489,3 +1489,54 @@ qa-tester completed a final verification pass confirming all 16 post-release bug
 ### Handoff
 None — task fully self-contained. Project is release-ready with no open documentation debt.
 ---
+
+---
+## 2026-03-29 — Analysis: Swarm UI Integration Gap Root Cause + Pipeline Hardening
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation — analysis task, no code modified)
+
+### Context when I started
+Project was release-ready (v3.0.0, 187/187 tests, 0 known bugs) after the Tasks #84–#99 debug wave. This task was a root cause analysis: Swarm UI components had been built in earlier tasks but never wired into App.jsx routing, making them unreachable from the running app. The analysis identified the orchestration gap and updated two global user config files (outside the project repo) to prevent recurrence.
+
+### What I did
+1. Read CODE_MAP.md tail (offset 2490) — confirmed last entry was Tasks #84–#99 debug wave closure.
+2. Read CHANGELOG.md tail (offset 1740) — confirmed last CHANGELOG entry was the debug loop closure.
+3. Read my agent log tail (offset 1460) — confirmed prior session state.
+4. Read ACTIVITY_LOG.md tail (offset 1855) — confirmed last activity was debug loop closure.
+5. Updated CODE_MAP.md: changed header timestamp to 2026-03-29; appended new "Orchestration Pipeline — Global Config Notes" section documenting the INTEGRATION RULE additions to create.md and project-manager.md.
+6. Appended CHANGELOG.md entry documenting the pipeline hardening.
+7. Appended ACTIVITY_LOG.md entry.
+8. Appended this agent log entry.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Updated header timestamp; added "Orchestration Pipeline" section with notes on create.md and project-manager.md INTEGRATION RULE changes |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended pipeline hardening entry with file table, connection changes, and impact notes |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended pipeline hardening activity log entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- CODE_MAP.md now records that global orchestration config (create.md, project-manager.md) has been updated — any agent reading the map understands WHY the integration rule exists and where it lives.
+- CHANGELOG.md has a permanent record that the Swarm UI integration gap was diagnosed and the pipeline was hardened on 2026-03-29.
+
+### Bugs I encountered
+- None (documentation-only task)
+
+### Decisions I made
+- Placed the global config notes in a new top-level section of CODE_MAP.md ("Orchestration Pipeline — Global Config Notes") rather than the Module Index — these files are not project code and should be visually separated to avoid confusion with server/client modules.
+- Used INTEGRATION RULE as the canonical term for the new mandate, consistent with the wording in create.md and project-manager.md.
+
+### What I learned
+- Orphaned UI component bugs arise when the planning pipeline treats "build component" and "wire into router" as independent concerns — the fix is structural (mandate paired tasks in same wave), not code-level.
+- Global config files (~/.claude/) can affect the project's development trajectory as much as any source file — they belong in CODE_MAP notes even though they are not in the repo.
+
+### State I'm leaving behind
+- CODE_MAP.md: current as of 2026-03-29, includes orchestration pipeline notes section.
+- CHANGELOG.md: complete through pipeline hardening entry.
+- ACTIVITY_LOG.md: complete through pipeline hardening entry.
+- No open code debt. Project is still release-ready.
+
+### Handoff
+None — task fully self-contained.
+---

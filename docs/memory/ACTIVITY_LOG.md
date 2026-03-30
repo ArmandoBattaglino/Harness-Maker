@@ -1870,3 +1870,14 @@
 **Next:** Project is release-ready. No open bugs, no pending tasks.
 ---
 ---
+
+---
+## 2026-03-29 — code-mapper — Analysis: Swarm UI Integration Gap + Pipeline Hardening
+**Outcome:** COMPLETED
+**Summary:** Root cause analysis identified that Swarm UI components were built without paired App.jsx routing tasks in the same planning wave. create.md and project-manager.md (global user config) were updated with mandatory INTEGRATION RULE sections to prevent this class of orphaned-component bugs in all future sessions. CODE_MAP.md updated with global config notes section and header timestamp.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md (all memory-only — no project code changed)
+**Bugs fixed:** none (process/pipeline fix, not code fix)
+**Decisions made:** Document global config changes in CODE_MAP.md under a dedicated "Orchestration Pipeline" section separate from the project code graph
+**Blockers:** none
+**Next:** Nothing — process hardening is self-contained. Next code task proceeds with the updated pipeline.
+---
