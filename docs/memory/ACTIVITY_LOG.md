@@ -1,4 +1,15 @@
 ---
+## 2026-03-29 — qa-tester — Visual Inspection: Full App Screenshot + Layout Audit
+**Outcome:** COMPLETED
+**Summary:** Took Puppeteer screenshots and performed DOM measurement of all 6 views. Found 9 visual bugs (2 CRITICAL, 2 HIGH, 2 MEDIUM, 3 LOW). Root cause of all Swarm view layout failures: InterAgentFeed has no explicit width class — its 122px content width + AgentInspector w-64 (256px) leaves only 172px for the React Flow canvas. The minimap (202px) overflows 45px past the canvas left boundary into the sidebar.
+**Files changed:** docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (report only)
+**Decisions made:** Canvas sizing bug is in InterAgentFeed.jsx/SwarmView.jsx — needs explicit w-* class
+**Blockers:** none
+**Next:** frontend-dev to fix BUG-VIS-1 (add w-48/w-56 to InterAgentFeed), BUG-VIS-3 (Context Editor toolbar overflow), BUG-VIS-5 (HitlInbox header+close)
+---
+
+---
 ## 2026-03-29 — project-manager — Tasks #100-#103: SwarmView Integration Wave
 **Outcome:** COMPLETED
 **Summary:** Added 4 new PENDING tasks (#100-#103) to docs/TASK_PLAN.md. These tasks wire four

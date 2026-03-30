@@ -1,4 +1,59 @@
 ---
+## 2026-03-29 — Visual Inspection: Full App Screenshot + Layout Audit
+**Status:** COMPLETED
+**Called by:** user (direct)
+
+### Context when I started
+V3 release at v3.0.0. 187/187 tests pass. 473 modules build clean. Tasks #100-#103 recently added by project-manager to wire HitlInbox, Run/Stop controls, InterAgentFeed, and BroadcastBar into SwarmView. User requested complete visual inspection of all views using Puppeteer MCP tools.
+
+### What I did
+1. Read docs/memory/ files (qa-tester.md, CONTEXT.md, PROGRESS.md) in parallel
+2. Navigated to http://127.0.0.1:3000 and took screenshots of all 6 views
+3. Used evaluate() calls to measure exact DOM layout dimensions for every panel in SwarmView
+4. Identified canvas width bottleneck: Inter-Agent Feed has no explicit w-* class — width collapses to content (122px header text). AgentInspector has hardcoded w-64 (256px). Together they consume 378px of 550px total, leaving only 172px for the canvas.
+5. Measured minimap position: left=204px vs canvas left=250px → 45px overflow into sidebar
+6. Measured Context Editor toolbar: Push Changes button right edge at x=826px vs 800px window → 27px clipped
+7. Verified Material Symbols font loaded correctly, no JS console errors
+8. Tested HITL button: panel opens correctly but second-click appears to navigate away from Swarm view
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/agents/qa-tester.md | MODIFIED | Appended this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended task completion entry |
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-VIS-1: Canvas 172px wide | InterAgentFeed no w-* class (122px) + AgentInspector w-64 (256px) = 378px consumed | None — report only | FOUND |
+| BUG-VIS-2: Minimap overflows 45px into sidebar | Canvas 172px but minimap 202px — bleeds left beyond canvas boundary | None — report only | FOUND |
+| BUG-VIS-3: Push Changes clipped 27px | Context Editor toolbar doesn't fit at 800px viewport | None — report only | FOUND |
+| BUG-VIS-4: InterAgentFeed no explicit width | flex-col with no w-*, width = content min-width, will thrash on live data | None — report only | FOUND |
+| BUG-VIS-5: HITL panel no header/close | HitlInbox renders only checkmark + text, no header or dismiss button | None — report only | FOUND |
+| BUG-VIS-6: Three-dot btn no aria-label | button.material-symbols-outlined textContent = "more_vert" | None — report only | FOUND |
+| BUG-VIS-7: Sidebar "Active" relies on CSS uppercase | Text is "Active", renders as ACTIVE via text-transform | None — report only | LOW |
+| BUG-VIS-8: Zoom controls off-screen with HITL open | controls at top=505px; canvas shrinks to 350px when HITL panel open | None — report only | FOUND |
+| BUG-VIS-9: Version shows v0.1.0 not v3.0.0 | /api/v1/version may return stale version or frontend hardcodes it | None — report only | FOUND |
+
+### What I learned
+- Puppeteer MCP screenshot tool does not accept width/height parameters (int32 error) — always uses 800x600
+- InterAgentFeed.jsx (Task #72) completed but never given explicit width class — root cause of entire canvas sizing failure
+- React Flow minimap uses CSS position:absolute within canvas; overflows when canvas is narrower than minimap
+- HITL toggle second-click causes unintended navigation — possible event bubbling to sidebar
+
+### State I'm leaving behind
+- 9 visual bugs documented, none fixed
+- Most critical: canvas only 172px wide (BUG-VIS-1/4) and minimap overflow (BUG-VIS-2)
+- All V2 views load correctly with proper empty states, no JS console errors
+
+### Handoff
+- BUG-VIS-1+4: frontend-dev — add w-48 or w-56 to InterAgentFeed panel div in SwarmView or InterAgentFeed.jsx
+- BUG-VIS-3: frontend-dev — Context Editor toolbar overflow handling
+- BUG-VIS-5: frontend-dev — HitlInbox.jsx header + close button
+- BUG-VIS-9: investigate /api/v1/version endpoint vs package.json version
+---
+
+---
 ## 2026-03-28 — Debug Loop Final Verification Pass
 **Status:** COMPLETED
 **Called by:** user (direct)
