@@ -49,7 +49,10 @@ function InboxItem({ inboxEntry, executionId, onResolved }) {
   };
 
   const handleApproveConfirm = async () => {
-    if (!executionId || !itemId) return;
+    if (!executionId || !itemId) {
+      setError('No active execution — cannot approve/reject.');
+      return;
+    }
     setApproving(true);
     setError(null);
     try {
@@ -70,7 +73,10 @@ function InboxItem({ inboxEntry, executionId, onResolved }) {
   };
 
   const handleReject = async () => {
-    if (!executionId || !itemId) return;
+    if (!executionId || !itemId) {
+      setError('No active execution — cannot approve/reject.');
+      return;
+    }
     setRejecting(true);
     setError(null);
     try {

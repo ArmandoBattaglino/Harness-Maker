@@ -12,8 +12,6 @@ export function useSwarm(workflowId) {
   const addInboxItem = useSwarmStore((s) => s.addInboxItem);
   const addFeedEvent = useSwarmStore((s) => s.addFeedEvent);
   const setWsConnected = useSwarmStore((s) => s.setWsConnected);
-  const agentStates = useSwarmStore((s) => s.agentStates);
-
   // Connect WS for a running execution
   const connectWs = useCallback((executionId) => {
     if (wsRef.current) {
@@ -35,13 +33,14 @@ export function useSwarm(workflowId) {
         case 'agent_status':
           updateAgentState(msg.nodeId, { status: msg.status });
           break;
-        case 'handoff_started':
+        case 'handoff_started': {
           updateEdgeCounter(msg.edgeId, msg.counter);
           addFeedEvent({ ...msg, timestamp: Date.now() });
-          const sourceAgent = agentStates[msg.sourceNodeId];
+          const sourceAgent = useSwarmStore.getState().agentStates[msg.sourceNodeId];
           const currentHandoffCount = sourceAgent?.handoffCount ?? 0;
           updateAgentState(msg.sourceNodeId, { handoffCount: currentHandoffCount + 1 });
           break;
+        }
         case 'execution_status':
           setExecution(msg.executionId ?? null, msg.status ?? 'running');
           break;
@@ -60,7 +59,7 @@ export function useSwarm(workflowId) {
     };
 
     wsRef.current = ws;
-  }, [setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, setExecution, updateBudget, addInboxItem, agentStates]);
+  }, [setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, setExecution, updateBudget, addInboxItem]);
 
   // Start execution
   const startExecution = useCallback(async (projectId, projectPath) => {

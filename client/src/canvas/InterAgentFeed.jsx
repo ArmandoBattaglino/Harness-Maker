@@ -25,7 +25,7 @@ export default function InterAgentFeed() {
 
   if (feed.length === 0) {
     return (
-      <div className="flex flex-col h-full bg-gray-900 border-l border-gray-700">
+      <div className="flex flex-col h-full bg-gray-900 border-l border-gray-700 w-56 shrink-0">
         <div className="px-3 py-2 text-xs font-semibold text-gray-400 border-b border-gray-700">
           Inter-Agent Feed
         </div>

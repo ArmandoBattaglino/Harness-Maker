@@ -38,6 +38,8 @@ export default function SwarmView() {
   const [executing, setExecuting] = useState(false);
   // Task #103 — loading state for pause/resume
   const [pausing, setPausing] = useState(false);
+  // BUG-3 — error shown when run is attempted without a project selected
+  const [runError, setRunError] = useState('');
 
   // Task #101 — project context for startExecution
   const { activeProjectId, projects } = useAppState();
@@ -63,9 +65,14 @@ export default function SwarmView() {
 
   // Task #101 — Run handler
   const handleRun = async () => {
+    if (!activeProjectId) {
+      setRunError('Select a project first before running a workflow.');
+      return;
+    }
+    setRunError('');
     setExecuting(true);
     try {
-      await startExecution(activeProjectId ?? '', projectPath);
+      await startExecution(activeProjectId, projectPath);
     } finally {
       setExecuting(false);
     }
@@ -114,7 +121,7 @@ export default function SwarmView() {
 
         {/* Task #100 — HITL inbox badge button */}
         <button
-          onClick={() => setInboxOpen((o) => !o)}
+          onClick={(e) => { e.stopPropagation(); setInboxOpen((o) => !o); }}
           className={`text-xs px-2 py-1 rounded transition-colors ${
             pendingCount > 0 ? 'bg-orange-600 hover:bg-orange-500 text-white' : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
           }`}
@@ -122,8 +129,8 @@ export default function SwarmView() {
           {'\uD83D\uDCE5'} HITL{pendingCount > 0 ? ` (${pendingCount})` : ''}
         </button>
 
-        {/* Task #101 — Run button: idle + workflow loaded */}
-        {executionStatus === 'idle' && workflowDef !== null && (
+        {/* Task #101 — Run button: idle + workflow loaded + project selected */}
+        {executionStatus === 'idle' && workflowDef !== null && activeProjectId && (
           <button
             onClick={handleRun}
             disabled={executing}
@@ -155,8 +162,8 @@ export default function SwarmView() {
           </button>
         )}
 
-        {/* Task #101 — Stop button: running */}
-        {executionStatus === 'running' && (
+        {/* Task #101 — Stop button: running or paused */}
+        {(executionStatus === 'running' || executionStatus === 'paused') && (
           <button
             onClick={handleStop}
             disabled={executing}
@@ -182,6 +189,11 @@ export default function SwarmView() {
         )}
       </div>
 
+      {/* BUG-3 — run error when no project selected */}
+      {runError && (
+        <div className="text-xs text-red-400 px-4 py-1 bg-gray-900">{runError}</div>
+      )}
+
       {/* Prompt-to-Flow bar */}
       <PromptToFlowBar
         onWorkflowGenerated={(workflowId, animatedDef) => {
@@ -199,6 +211,10 @@ export default function SwarmView() {
       {/* Task #100 — HITL inbox drawer (above BroadcastBar) */}
       {inboxOpen && (
         <div className="border-t border-gray-700 bg-gray-900 max-h-64 overflow-y-auto">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-gray-700">
+            <span className="text-xs font-semibold text-gray-300">HITL Approvals</span>
+            <button onClick={() => setInboxOpen(false)} className="text-gray-500 hover:text-white text-xs">✕</button>
+          </div>
           <HitlInbox />
         </div>
       )}
