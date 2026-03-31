@@ -38,8 +38,7 @@ export default function SwarmView() {
   const [executing, setExecuting] = useState(false);
   // Task #103 — loading state for pause/resume
   const [pausing, setPausing] = useState(false);
-  // BUG-3 — error shown when run is attempted without a project selected
-  const [runError, setRunError] = useState('');
+  // (runError removed — Run button uses disabled+tooltip, error state was unreachable)
 
   // Task #101 — project context for startExecution
   const { activeProjectId, projects } = useAppState();
@@ -65,11 +64,6 @@ export default function SwarmView() {
 
   // Task #101 — Run handler
   const handleRun = async () => {
-    if (!activeProjectId) {
-      setRunError('Select a project first before running a workflow.');
-      return;
-    }
-    setRunError('');
     setExecuting(true);
     try {
       await startExecution(activeProjectId, projectPath);
@@ -185,21 +179,16 @@ export default function SwarmView() {
           ● {executionStatus}
         </span>
 
-        {/* Reset button — only when stopped */}
+        {/* Reset button — only when stopped; also clears workflowDef (BUG-TOOLBAR-4) */}
         {executionStatus === 'stopped' && (
           <button
-            onClick={reset}
+            onClick={() => { reset(); setWorkflowDef(null); }}
             className="text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors"
           >
             Reset
           </button>
         )}
       </div>
-
-      {/* BUG-3 — run error when no project selected */}
-      {runError && (
-        <div className="text-xs text-red-400 px-4 py-1 bg-gray-900">{runError}</div>
-      )}
 
       {/* Prompt-to-Flow bar */}
       <PromptToFlowBar
