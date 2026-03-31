@@ -16,8 +16,10 @@
 **QA bug-fix wave:** All 8 visual/swarm bugs (#104–#111) COMPLETED.
 **Known open bugs:** None.
 **Post-release fix #112:** Swarm workflow generation + Run button UX — 2026-03-31 (COMPLETED).
+**Post-release fix #113:** BUG-TOOLBAR-1 (dead runError state) + BUG-TOOLBAR-4 (Reset clears workflowDef) — 2026-03-31 (COMPLETED).
+**Known low-priority bugs:** BUG-TOOLBAR-2 (old WS not closed on regen) → Task #114 PENDING. BUG-TOOLBAR-3 (Stop/Pause race → /null/ URL) → Task #115 PENDING.
 
-All tasks in the original V3 wave (#43–#82, 57 granular units), the post-release debug loop (#83–#99), and the QA visual inspection bug-fix wave (#104–#111) are COMPLETED. Task #112 fixed Swarm workflow generation (claude CLI binary instead of Anthropic SDK) and Run button always-visible UX. The codebase is stable and confirmed ready for production deployment at v3.0.0.
+All tasks in the original V3 wave (#43–#82, 57 granular units), the post-release debug loop (#83–#99), and the QA visual inspection bug-fix wave (#104–#111) are COMPLETED. Tasks #112 and #113 fixed Swarm workflow generation, Run button UX, dead state cleanup, and Reset behavior. Two low-priority toolbar bugs (#114, #115) are tracked and PENDING for future work. The codebase is stable and confirmed ready for production deployment at v3.0.0.
 
 ---
 
