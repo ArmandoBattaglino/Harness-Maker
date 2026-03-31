@@ -1,4 +1,59 @@
 ---
+## 2026-03-31 — Tasks #116/#117/#118: Swarm Bug Wave — Confirmed COMPLETED in f705c96
+**Status:** COMPLETED
+**Called by:** user (direct instruction — confirmation that all 4 Swarm fixes are committed)
+
+### Context when I started
+Previous PM session had already registered tasks #116–#118 as COMPLETED and #119 as PENDING.
+User now confirmed the fixes are committed in f705c96 and requested TASK_PLAN.md, ACTIVITY_LOG.md,
+and agent log to be updated to reflect this final state.
+
+### What I did
+1. Read agent log (lines 1-67) and ACTIVITY_LOG.md (lines 1-40) in parallel for current state.
+2. Verified TASK_PLAN.md: tasks #116, #117, #118 already showed Status: COMPLETED — no change needed
+   to individual task blocks.
+3. Updated TASK_PLAN.md header (3 edits):
+   - Status line: "POST-RELEASE BUG WAVE #2 OPEN — 119/119 tasks (115 COMPLETED + 4 new Swarm bugs)"
+     → "POST-RELEASE BUG WAVE #2 CLOSED — 119/119 tasks COMPLETED"
+   - QA Swarm wave line: "IN_PROGRESS" → "COMPLETED — all 4 fixes committed in f705c96"
+   - "Known open bugs" line: removed BUG-SWARM-3/4 references → "none"
+   - Prose summary: "115 original tasks" → "119 tasks", added commit reference f705c96
+4. Prepended new ACTIVITY_LOG.md entry for this confirmation session.
+5. Appended this session log to my own agent file.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Header updated: wave status CLOSED, all 119 COMPLETED, no open bugs, commit f705c96 referenced |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | New entry prepended confirming commit f705c96 |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- TASK_PLAN.md now accurately reflects the project as fully complete: 119/119 tasks COMPLETED, zero
+  known open bugs, all Swarm fixes committed.
+- ACTIVITY_LOG captures the commit SHA f705c96 for traceability.
+
+### Bugs I encountered
+- None.
+
+### Decisions I made
+- Did not change the individual task blocks for #116/#117/#118 — they were already Status: COMPLETED
+  from the prior session. Only the header prose needed updating.
+
+### What I learned
+- The header Status line, the wave bullet, and the prose summary paragraph are three separate edit
+  targets in TASK_PLAN.md when closing a bug wave. All three must be updated consistently.
+
+### State I'm leaving behind
+- TASK_PLAN.md: 119/119 tasks COMPLETED. No open bugs. v3.0.0 stable.
+- Task #119 (QA regression check) remains PENDING — it was created to verify all 4 fixes, should be
+  run by qa-tester before closing out the wave entirely.
+
+### Handoff
+- qa-tester: run Task #119 (QA regression check) via Puppeteer — verify Swarm canvas renders nodes
+  at full opacity, fitView centers correctly, workflowDef persists across navigation, null workflowId
+  does not throw. Files: PromptToFlowBar.jsx, SwarmCanvas.jsx, SwarmContext.jsx, useSwarm.js.
+---
 ## 2026-03-31 — Tasks #116–#119: QA Swarm Bug Wave — Task Registration
 **Status:** COMPLETED
 **Called by:** user (direct instruction — QA inspection report with 4 Swarm bugs)

@@ -1,4 +1,22 @@
 ---
+## 2026-03-31 — documenter — Tasks #116-118: Swarm Bug-Fix Wave documentation closure
+**Outcome:** COMPLETED
+**Summary:** Tasks #116-118 fixed 4 Swarm section bugs (BUG-SWARM-1 through BUG-SWARM-4). DOC_STATUS.md updated: open bugs count reset to 0, all 4 entries moved to Fixed Bugs table with FIXED status and root cause notes. Inline comments for SwarmCanvas.jsx (fitView rationale), SwarmContext.jsx (workflowDef persistence note), and useSwarm.js (startExecution null guard) reflected in health table. PROGRESS.md updated with #116-118 completion entry. ACTIVITY_LOG.md entry appended.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** BUG-SWARM-1, BUG-SWARM-2, BUG-SWARM-3, BUG-SWARM-4 (documentation updated to reflect code fixes)
+**Decisions made:** none
+**Blockers:** none
+**Next:** Task #119 (QA regression check via Puppeteer) — qa-tester should verify all 4 fixes hold visually
+---
+## 2026-03-31 — project-manager — Tasks #116/#117/#118: Swarm Bug Wave CONFIRMED COMMITTED
+**Outcome:** COMPLETED
+**Summary:** User confirmed all 4 Swarm bug fixes (BUG-SWARM-1 through BUG-SWARM-4) are committed in f705c96. Tasks #116 (opacity + fitView), #117 (workflowDef persistence), #118 (null guard on workflowId) confirmed COMPLETED. TASK_PLAN.md header updated: POST-RELEASE BUG WAVE #2 closed, all 119 tasks COMPLETED, no known open bugs.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** BUG-SWARM-1, BUG-SWARM-2, BUG-SWARM-3, BUG-SWARM-4 — all confirmed committed in f705c96
+**Decisions made:** none
+**Blockers:** none
+**Next:** Task #119 (QA regression check) remains PENDING — qa-tester should verify all 4 fixes hold via Puppeteer
+---
 ## 2026-03-31 — project-manager — Tasks #116–#119: QA Swarm Bug Wave registered
 **Outcome:** COMPLETED
 **Summary:** QA inspection of the Swarm section found 4 bugs (BUG-SWARM-1 through BUG-SWARM-4). Tasks #116–#118 registered as COMPLETED (fixes were already executing in parallel). Task #119 registered as PENDING — regression QA check blocking on #116–#118. TASK_PLAN.md header updated to reflect the new wave.

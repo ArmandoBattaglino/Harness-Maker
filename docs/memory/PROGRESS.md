@@ -1,6 +1,9 @@
 # Progress
 
 ## Completed
+- [TASKS #116-#118] Swarm Bug-Fix Wave — post-release patch (frontend-dev) — COMPLETED 2026-03-31
+  BUG-SWARM-1: SwarmCanvas.jsx useEffect calls useReactFlow().fitView (setTimeout 50ms) after setNodes/setEdges — nodes now centered after generation. BUG-SWARM-2: Removed opacity:0 and staggered CSS animation from node style in PromptToFlowBar.jsx — ReactFlow bounding box measurements now correct. BUG-SWARM-3: workflowDef migrated from SwarmView.jsx local useState to Zustand (useSwarmStore.workflowDef + setWorkflowDef) — persists across route navigation. BUG-SWARM-4: useSwarm.startExecution already throws Error('No workflow selected') on undefined workflowId — confirmed present. Removed orphaned @keyframes fadeIn from index.css. All 4 bugs FIXED.
+
 - [TASKS #114-#115] Toolbar Bug-Fix Wave (frontend-dev) — COMPLETED 2026-03-31
   BUG-TOOLBAR-2: useSwarm.js cleanup useEffect re-keyed on [workflowId] — old WebSocket now closed on workflow regen. BUG-TOOLBAR-3: SwarmView.jsx handlePause/handleResume guard against null activeExecutionId — no more /null/ URL requests. 187/187 tests pass. All 115 tasks COMPLETED. v3.0.0 fully stable, zero open bugs.
 

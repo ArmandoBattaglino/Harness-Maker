@@ -1,21 +1,21 @@
 # Documentation Status
-_Last updated: 2026-03-31 after QA Swarm inspection — 4 open bugs found in Swarm section, Tasks #116-118 fixes IN PROGRESS_
+_Last updated: 2026-03-31 after Tasks #116-118: Swarm section — 4 bugs fixed, zero open bugs_
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**
 - QA inspection: CLEAN at release — zero bugs found at release gate
 - Test suite: 187/187 passing (at release)
-- Tasks completed: 115/115 (+ #116-118 IN PROGRESS for Swarm bug fixes)
-- Open bugs: 4 (Swarm section — fixes in progress)
+- Tasks completed: 118/115 (Tasks #116-118 are post-release Swarm bug fixes)
+- Open bugs: 0 (all 4 Swarm bugs resolved — see Fixed Bugs below)
 
-## Open Bugs (v3.0.0 post-release)
+## Fixed Bugs (v3.0.0 post-release patch)
 
 | ID | Severity | Description | Task | Status |
 |----|----------|-------------|------|--------|
-| BUG-SWARM-1 | HIGH | Swarm nodes invisible after generation — nodes not rendered in canvas | #116 | IN PROGRESS |
-| BUG-SWARM-2 | HIGH | Node style has `opacity: 0` — nodes present in state but visually hidden | #116 | IN PROGRESS |
-| BUG-SWARM-3 | MEDIUM | `workflowDef` loses persistence on navigation — state not retained across route changes | #117 | IN PROGRESS |
-| BUG-SWARM-4 | LOW | Missing null guard in `useSwarm.startExecution` — potential crash on undefined input | #118 | IN PROGRESS |
+| BUG-SWARM-1 | HIGH | Swarm nodes invisible after generation — fitView not firing after node mount | #116 | FIXED 2026-03-31 |
+| BUG-SWARM-2 | HIGH | Node style had `opacity: 0` + staggered animation — corrupted React Flow ResizeObserver bounding box | #116 | FIXED 2026-03-31 |
+| BUG-SWARM-3 | MEDIUM | `workflowDef` lost on navigation — moved from local useState to Zustand (useSwarmStore) | #117 | FIXED 2026-03-31 |
+| BUG-SWARM-4 | LOW | Missing null guard in `useSwarm.startExecution` — throws `Error('No workflow selected')` on undefined workflowId | #118 | FIXED 2026-03-31 |
 
 ## Status Legend
 - UP_TO_DATE -- matches current code
@@ -38,7 +38,7 @@ _Last updated: 2026-03-31 after QA Swarm inspection — 4 open bugs found in Swa
 | docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-03-28 | V3 RELEASE-READY closure entry appended by project-manager and documenter. |
 | docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-03-18 | V1 audit. V3 audit is docs/security-v3-audit.md (Task #79). |
 | docs/security-v3-audit.md | UP_TO_DATE | 2026-03-28 | BUG-99 fix note added: SEC-V3-01 now enforced via express.raw() — body-size bypass resolved. MEDIUM-V3-01 CSRF mismatch unchanged (not blocking; app is localhost-only). Verified clean at V3 RELEASE-READY closure. |
-| Inline comments | UP_TO_DATE | 2026-03-28 | All V3 route files have comprehensive block comments. server/routes/swarm.js pause/resume comments reflect BUG-94/95 fixes. server/routes/triggers.js BUG-99 comment present. server/services/SwarmEngine.js getExecution(), getStatus(), stopExecution() all have accurate JSDoc. Verified clean at V3 RELEASE-READY closure. |
+| Inline comments | UP_TO_DATE | 2026-03-31 | All V3 route files have comprehensive block comments. server/routes/swarm.js pause/resume comments reflect BUG-94/95 fixes. server/routes/triggers.js BUG-99 comment present. server/services/SwarmEngine.js getExecution(), getStatus(), stopExecution() all have accurate JSDoc. Post-release patch: SwarmCanvas.jsx useEffect comment updated (fitView rationale). SwarmContext.jsx workflowDef field comment added (BUG-SWARM-3). useSwarm.js startExecution null guard comment already present via throw. |
 | docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. Deferred indefinitely. |
 
 ## Stale Sections (known gaps)
