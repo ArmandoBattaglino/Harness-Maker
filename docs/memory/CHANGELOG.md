@@ -1795,3 +1795,44 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 - Existing codebase unaffected — this is a process change only; no project files were modified
 
 ---
+
+---
+## 2026-03-31 — Tasks #104-#110: QA Bug-Fix Pass + v3.0.0 Version Bump
+**Agent:** frontend-dev (Tasks #104-#109), devops/release (Task #110)
+**Triggered by:** Final QA pass before v3.0.0 release — 6 UI bugs found during visual regression testing of SwarmView, InterAgentFeed, HitlInbox, and useSwarm hook.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/canvas/InterAgentFeed.jsx | MODIFIED | Empty-state div now has `w-56 shrink-0` — prevents React Flow canvas from collapsing horizontally when feed is empty |
+| client/src/views/SwarmView.jsx | MODIFIED | Stop button visible when paused; Run gated by activeProjectId; HITL drawer gets header+close; HITL badge uses stopPropagation; runError state added |
+| client/src/panels/HitlInbox.jsx | MODIFIED | InboxItem handleApproveConfirm + handleReject call setError() on null executionId/itemId instead of silent return |
+| client/src/hooks/useSwarm.js | MODIFIED | Removed agentStates top-level Zustand subscription; uses useSwarmStore.getState() inside handoff_started handler |
+| package.json | MODIFIED | version: "0.1.0" → "3.0.0" |
+
+### Functions Added
+- None
+
+### Functions Modified
+- `InterAgentFeed()` in `client/src/canvas/InterAgentFeed.jsx` — empty-state branch: outer div classes changed from (implicit auto-width) to `flex flex-col h-full bg-gray-900 border-l border-gray-700 w-56 shrink-0`
+- `SwarmView()` in `client/src/views/SwarmView.jsx` — Stop button condition: `executionStatus === 'running'` → `executionStatus === 'running' || executionStatus === 'paused'`; Run button condition: added `&& activeProjectId` gate; `runError` state added (`useState('')`); HITL inbox drawer now has header row (title span + close button); HITL badge button adds `e.stopPropagation()`
+- `handleRun()` in `client/src/views/SwarmView.jsx` (internal) — guard added: if `!activeProjectId` → `setRunError('Select a project first before running a workflow.')` and early return; clears runError at top of happy path
+- `InboxItem({ inboxEntry, executionId, onResolved })` in `client/src/panels/HitlInbox.jsx` — `handleApproveConfirm`: null check now calls `setError('No active execution — cannot approve/reject.')` instead of bare `return`; `handleReject`: same fix
+- `useSwarm(workflowId)` in `client/src/hooks/useSwarm.js` — removed `const agentStates = useSwarmStore((s) => s.agentStates)` top-level selector; handoff_started handler now reads: `const sourceAgent = useSwarmStore.getState().agentStates[msg.sourceNodeId]`
+- `connectWs(executionId)` in `client/src/hooks/useSwarm.js` — handoff_started case updated: agentStates now sourced from `useSwarmStore.getState()` (imperative read) instead of stale closure over the removed selector
+
+### Functions Removed
+- None
+
+### Connection Changes
+- `SwarmView` → `useAppState` — now also reads `projects` list (to derive `projectPath` from `activeProjectId`) in addition to `activeProjectId`
+- `SwarmView` → `apiPost` — now imports `apiPost` from `hooks/useApi.js` for pause/resume calls (was called indirectly only through useSwarm)
+- `useSwarm.connectWs` — no longer has `agentStates` as a dependency in the `useCallback` dep array (removed from closure chain)
+
+### Impact on Other Code
+- SwarmView toolbar now has 5 possible button states: idle+workflow+project (Run), running (Pause + Stop), paused (Resume + Stop), stopped (Reset), idle without project (no Run). All are mutually exclusive.
+- `runError` banner appears beneath the toolbar and above PromptToFlowBar — any component absolutely positioned relative to SwarmView should account for this additional conditional row
+- HitlInbox InboxItem now has visible error feedback in the card when executionId is null — callers that render HitlInbox without an active execution will see this error on any approve/reject attempt. This is correct behavior; was previously a silent no-op that confused users.
+- useSwarm no longer causes re-renders of its consumer on agent state changes — only on the specific store slices it subscribes to (setExecution, updateAgentState, etc. actions). This is a performance improvement with no behavioral change.
+
+---

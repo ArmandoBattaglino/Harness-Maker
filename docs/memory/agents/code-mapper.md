@@ -1540,3 +1540,58 @@ Project was release-ready (v3.0.0, 187/187 tests, 0 known bugs) after the Tasks 
 ### Handoff
 None — task fully self-contained.
 ---
+
+---
+## 2026-03-31 — Tasks #104-#110: QA Bug-Fix Pass + v3.0.0 Version Bump
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task wave code-mapper invocation)
+
+### Context when I started
+QA visual regression wave produced 6 bug fixes across 4 frontend files plus a version bump in package.json. All changes are in existing files — no new files created. The project is at v3.0.0 release state.
+
+### What I did
+1. Read CODE_MAP.md header + module index (offset 1-85) and tail sections (offset 900-200, 1900-200, 2450-100, 2530-15) to understand current state
+2. Read CHANGELOG.md tail (offset 1750-50) to find append point
+3. Read all 5 modified source files in parallel: InterAgentFeed.jsx, SwarmView.jsx, HitlInbox.jsx, useSwarm.js, package.json
+4. Read PROGRESS.md for current task state
+5. Updated CODE_MAP.md header timestamp
+6. Updated Module Index entries for useSwarm.js, SwarmView.jsx; added InterAgentFeed.jsx and HitlInbox.jsx to Module Index (were missing)
+7. Added "Root Config" table entry for package.json with version 3.0.0 note
+8. Updated Function Graph entries for SwarmView(), useSwarm(), connectWs(), startExecution(), stopExecution()
+9. Appended new Function Graph sections for InterAgentFeed.jsx and HitlInbox.jsx
+10. Appended Key Behaviors notes for Tasks #104-#110
+11. Appended CHANGELOG entry
+12. Appended this agent memory session log
+13. Appended ACTIVITY_LOG entry
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header timestamp; Module Index updated (4 files); Function Graph updated (5 entries) + 2 new sections added; Key Behaviors appended |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Tasks #104-#110 combined entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session summary |
+
+### Improvements delivered
+- CODE_MAP.md Module Index now includes InterAgentFeed.jsx and HitlInbox.jsx (were previously mapped only in function graph but missing from the index table)
+- package.json root config now documented (version 3.0.0)
+- All 5 modified function entries accurately reflect the bug-fix changes
+
+### Bugs I encountered
+- None
+
+### Decisions I made
+- Added InterAgentFeed.jsx and HitlInbox.jsx to Module Index table — they had no existing index entry despite having been created in earlier tasks. This was a mapping gap.
+- Added "Root Config" section to Module Index to capture the package.json version bump, since no such section existed.
+
+### What I learned
+- InterAgentFeed.jsx was created as part of Task #72 but never added to the Module Index — code-mapper should check the Module Index against the Function Graph on every wave to catch orphaned entries.
+
+### State I'm leaving behind
+- CODE_MAP.md: up to date as of 2026-03-31 covering all Tasks through #110
+- CHANGELOG.md: entry appended for Tasks #104-#110
+- v3.0.0 is release-ready; all documentation current
+
+### Handoff
+- None — this was the final documentation pass before v3.0.0 release. No open mapping gaps remaining.
+---

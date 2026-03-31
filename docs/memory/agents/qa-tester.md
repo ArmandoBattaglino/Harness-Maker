@@ -640,3 +640,60 @@ BUG-SW-07 (LOW): PtyExplosion overlay is always mounted at SwarmView bottom outs
 ### Handoff
 BUG-SW-01 and BUG-SW-02 should go to debugger/frontend-dev. BUG-SW-04 (InterAgentFeed width) is a simple CSS fix.
 ---
+
+---
+## 2026-03-31 — Toolbar Audit: SwarmView Toolbar Button Visibility
+
+**Status:** COMPLETED
+**Called by:** user (direct)
+
+### Context when I started
+v3.0.0 declared release-ready. User reported "I have no commands" — meaning the Swarm Orchestrator toolbar shows no Run/Pause/Stop/Reset buttons on first open. Requested audit of button visibility conditions across SwarmView.jsx, SwarmContext.jsx, useSwarm.js, PromptToFlowBar.jsx, AppContext.jsx.
+
+### What I did
+1. Read docs/memory/agents/qa-tester.md (previous sessions), CONTEXT.md, ACTIVITY_LOG.md in parallel
+2. Read all 5 target files in a single parallel batch:
+   - client/src/views/SwarmView.jsx — full file
+   - client/src/store/SwarmContext.jsx — full file
+   - client/src/hooks/useSwarm.js — full file
+   - client/src/canvas/PromptToFlowBar.jsx — full file
+   - client/src/store/AppContext.jsx — full file
+3. Traced all conditional render guards for each button
+4. Traced initial state values from each store
+5. Identified 2 UX gaps and 4 functional bugs
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/agents/qa-tester.md | MODIFIED | Appended this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended task entry |
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-TOOLBAR-1: runError is dead code | Run button guard requires activeProjectId truthy; handleRun early-return on !activeProjectId never fires | None — report only | FOUND |
+| BUG-TOOLBAR-2: stale WS on workflow regeneration | connectWs only called in startExecution; old WS not closed when workflowDef replaced | None — report only | FOUND |
+| BUG-TOOLBAR-3: Stop+Pause race sets URL to /null/ | stopExecution sets activeExecutionId→null before in-flight pause completes | None — report only | FOUND |
+| BUG-TOOLBAR-4: Reset doesn't clear workflowDef | workflowDef is useState in SwarmView, not in store.reset(); canvas shows stale agent states | None — report only | FOUND |
+
+### UX Gaps
+- UX-GAP-1: Initial toolbar shows zero action buttons with no explanation why
+- UX-GAP-2: Generating a workflow with no project selected gives no error (Run stays hidden silently)
+- UX-GAP-3: Post-Reset, workflowDef persists but PromptToFlowBar input was cleared — no visible reminder of loaded workflow
+
+### Decisions I made
+- Report only — per QA rules, do not fix bugs myself, escalate to debugger
+
+### What I learned
+- The triple-AND guard on Run (idle && workflowDef !== null && activeProjectId) means the very error message written for the "no project" case (runError) is architecturally unreachable — it's inside handleRun which is only called from Run, which is only shown when activeProjectId is already truthy
+- workflowDef lives in SwarmView local state, not in SwarmContext.reset() — this is a separation of concerns gap
+- useSwarm(workflowDef?.id) hook receives undefined on mount; the useCallback dep array correctly re-creates startExecution when workflowId changes — so the primary flow works, but WS accumulation is a side effect
+
+### State I'm leaving behind
+4 bugs documented, 2 UX gaps documented. None fixed.
+
+### Handoff
+BUG-TOOLBAR-1 (dead runError code) → debugger/frontend-dev: either always-render Run with disabled state + tooltip, or remove dead error branch
+BUG-TOOLBAR-4 (Reset leaves stale canvas) → debugger/frontend-dev: clear workflowDef on reset or show "workflow loaded" indicator
+BUG-TOOLBAR-2+3 are low severity — may defer
+---

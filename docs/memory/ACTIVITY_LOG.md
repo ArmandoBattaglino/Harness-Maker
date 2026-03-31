@@ -1982,3 +1982,25 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** QA visual re-check to confirm layout fix; git commit
 ---
+
+---
+## 2026-03-31 — code-mapper — Tasks #104-#110: QA Bug-Fix Pass + v3.0.0 Version Bump
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md and CHANGELOG.md for 6 frontend bug fixes (InterAgentFeed canvas collapse, SwarmView Stop/Run/HITL/runError fixes, HitlInbox error surfacing, useSwarm agentStates subscription removal) plus package.json version bump to 3.0.0. Added InterAgentFeed.jsx and HitlInbox.jsx to Module Index (previously missing). All function entries for modified files updated with accurate descriptions.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (code-mapper documentation task)
+**Decisions made:** Added "Root Config" section to CODE_MAP.md Module Index for package.json; added InterAgentFeed.jsx and HitlInbox.jsx to Module Index (were orphaned from index)
+**Blockers:** none
+**Next:** v3.0.0 is release-ready. All docs and code map current.
+---
+
+---
+## 2026-03-31 — qa-tester — Toolbar Audit: SwarmView Toolbar Button Visibility
+**Outcome:** COMPLETED
+**Summary:** Audited all 5 files governing SwarmView toolbar controls. Found that zero action buttons are visible on initial load due to a triple-AND guard requiring idle status + workflowDef loaded + project selected simultaneously. Found 4 bugs: runError dead code (MEDIUM), WS accumulation on workflow regeneration (LOW), Stop+Pause race → /null/ URL (LOW), Reset leaves stale canvas (MEDIUM). No code changed.
+**Files changed:** docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** report only, escalate to debugger per protocol
+**Blockers:** none
+**Next:** debugger should address BUG-TOOLBAR-1 (runError dead code) and BUG-TOOLBAR-4 (Reset stale canvas) — both MEDIUM severity
+---
