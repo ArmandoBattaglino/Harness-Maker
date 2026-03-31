@@ -1,4 +1,74 @@
 ---
+## 2026-03-29 — Tasks #104–#111: QA Bug-Fix Wave
+**Status:** COMPLETED
+**Called by:** user (direct instruction with QA bug list)
+
+### Context when I started
+V3 had tasks #100-#103 added in the previous session to wire frontend components into SwarmView.
+QA then ran a Puppeteer visual inspection and found 7 confirmed bugs across SwarmView and its
+sub-components. User provided the bug list with BUG IDs, file paths, and line numbers and asked
+for tasks #104-#110 to be created (I added #111 to match the note that BUG-SW-04 also needed a
+task, bringing the total to 8 tasks: #104-#111).
+
+### What I did
+1. Read TASK_PLAN.md tail (lines 6890-6899) to confirm the file ended at line 6899 after ---.
+2. Read docs/memory/ACTIVITY_LOG.md head to confirm the prepend target.
+3. Read docs/memory/agents/project-manager.md head to confirm the prepend target.
+4. Attempted Python script approach (used in prior session) but Bash was denied.
+5. Used the Edit tool directly to append the full task block after line 6899.
+6. Appended ACTIVITY_LOG.md entry.
+7. Wrote this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Appended tasks #104-#111 (QA bug-fix wave header + 8 task blocks) |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Session activity entry prepended |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log prepended |
+
+### Improvements delivered
+- TASK_PLAN.md now contains 8 new PENDING bug-fix tasks (#104-#111) with full self-contained
+  context: exact file paths, line numbers, current code approximations, fix strategies, and
+  acceptance criteria. A frontend-dev agent can execute each task without reading additional files.
+- Bug severity breakdown: CRITICAL x2 (canvas collapse, Stop/paused, Run/no-project), MEDIUM x3
+  (empty-state shift, HITL header+bubbling, approve/reject no-op), LOW x2 (version string,
+  agentStates dep).
+
+### Bugs I encountered
+- Edit tool rejected first attempt with "file modified since read" error — resolved by re-reading
+  the tail of the file (lines 6890-6899) to get a fresh snapshot, then retrying the Edit.
+- Bash was denied — could not use the Python script approach from the prior session. Used Edit
+  tool directly instead.
+
+### Decisions I made
+- Included task #111 (BUG-SW-04 / agentStates dep) even though user said #104-#110, because the
+  bug list contained 8 bugs (including BUG-SW-04 labeled LOW). Numbered sequentially as #111.
+- Tasks #104 and #107 overlap (both fix InterAgentFeed w-56 shrink-0) — documented the overlap
+  explicitly in both tasks with a NOTE instructing the agent to check if #104 already covers both
+  paths before editing #107.
+
+### What I learned
+- The Edit tool requires a re-read if any other write has touched the file between the last read
+  and the edit attempt — even reads from the same session do not count; need a fresh read call.
+- On this environment Bash is not always available (permission-denied), so the Python script
+  workaround is not always usable. The Edit tool with large new_string blocks works as a fallback.
+
+### State I am leaving behind
+TASK_PLAN.md now has tasks #1-#111. Tasks #104-#111 are all PENDING, assigned to frontend-dev.
+No code was written in this session — this was a planning/task-creation session only.
+
+### Handoff
+frontend-dev should tackle in priority order:
+  1. #104 (canvas collapse — CRITICAL) and #105 (Stop/paused — CRITICAL) and #106 (Run/no-project
+     — CRITICAL) — these three can be done in parallel since they touch different lines/files.
+  2. #107 (empty-state shift — MEDIUM, may already be covered by #104).
+  3. #108 (HITL drawer header + bubbling — MEDIUM).
+  4. #109 (approve/reject no-op — MEDIUM).
+  5. #110 (sidebar version string — LOW).
+  6. #111 (agentStates dep — LOW).
+---
+
+---
 ## 2026-03-29 — Tasks #100-#103: SwarmView Integration Wave
 **Status:** COMPLETED
 **Called by:** user (plan-mode execution — plan file frolicking-mapping-token-agent-a70c88cc8eaef7b84.md)

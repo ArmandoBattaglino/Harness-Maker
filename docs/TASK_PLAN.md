@@ -6900,6 +6900,405 @@ Dependencies: #101, #52
 
 ---
 
+## Post-Release QA Bug-Fix Wave — Tasks #104–#111
+
+**Declared:** 2026-03-29
+**Source:** QA visual inspection (Puppeteer audit, 2026-03-29)
+**Scope:** 7 frontend bugs found during visual regression testing of the fully integrated SwarmView.
+  CRITICAL (2 tasks), MEDIUM (3 tasks), LOW (2 tasks).
+**Assigned to:** frontend-dev
+**Blocking:** V3 production release
+
+---
+
+TASK #104: BUG-VISUAL-01 — InterAgentFeed canvas width collapse (missing w-56 shrink-0)
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: LOW
+Suggested Model: haiku
+Status: PENDING
+Context:
+  BUG ID: BUG-VISUAL-01
+  Severity: CRITICAL — the React Flow canvas collapses to ~172px wide, making it completely unusable.
+  The minimap (202px) overflows 45px past the canvas left boundary into the sidebar.
+
+  ROOT CAUSE:
+  client/src/canvas/InterAgentFeed.jsx is missing Tailwind classes `w-56 shrink-0` on its root
+  container div. Without an explicit width, the component has no width reservation and the flex row
+  in SwarmView.jsx distributes the remaining space incorrectly.
+
+  The component has TWO render paths that both need the fix:
+
+  PATH 1 — empty state (no messages yet):
+    File: client/src/canvas/InterAgentFeed.jsx
+    Line: ~28
+    Current code:  <div className="flex flex-col ...">
+    Required fix:  Add `w-56 shrink-0` to the className so it reads:
+                   <div className="w-56 shrink-0 flex flex-col ...">
+
+  PATH 2 — populated state (messages present):
+    File: client/src/canvas/InterAgentFeed.jsx
+    Line: ~40
+    Current code:  <div className="flex flex-col ...">
+    Required fix:  Add `w-56 shrink-0` to the className (same classes, same fix).
+
+  If both render paths share a single root div (inspect the file to confirm), one edit covers both.
+  If they use separate root divs, apply the fix to each independently.
+
+  Task #107 covers the empty-state path specifically. This task is the canonical fix for the
+  populated-state path and must ensure both paths are resolved.
+
+  VERIFICATION:
+  After the fix, the React Flow canvas in SwarmView should occupy the remaining flex space (approx.
+  500px+), not collapse to 172px. Run npm run build from client/ (0 errors). Run npm test (187 tests).
+
+Acceptance Criteria:
+  - [ ] Populated-state root div in InterAgentFeed.jsx has `w-56 shrink-0`
+  - [ ] Empty-state root div in InterAgentFeed.jsx also has `w-56 shrink-0` (or shares the same root)
+  - [ ] React Flow canvas in SwarmView is no longer collapsed
+  - [ ] npm run build passes (0 errors)
+  - [ ] npm test passes (187 tests)
+Dependencies: #102
+---
+
+TASK #105: BUG-SW-01 — Stop button invisible when execution is paused
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: LOW
+Suggested Model: haiku
+Status: PENDING
+Context:
+  BUG ID: BUG-SW-01
+  Severity: CRITICAL — users cannot stop a paused swarm execution. The Stop button disappears the
+  moment the user clicks Pause, leaving no way to terminate the run from the UI.
+
+  ROOT CAUSE:
+  File: client/src/views/SwarmView.jsx
+  Line: ~159 (the Stop button visibility/render condition)
+
+  Current condition (approximate):
+    {executionStatus === 'running' && (
+      <button onClick={handleStop}>Stop</button>
+    )}
+
+  Fix — broaden the condition to include 'paused':
+    {(executionStatus === 'running' || executionStatus === 'paused') && (
+      <button onClick={handleStop}>Stop</button>
+    )}
+
+  Read the file to confirm the exact condition syntax before editing. Do NOT change the Stop
+  button onClick handler or styling — only widen the visibility condition.
+
+  executionStatus values (from SwarmContext.jsx, task #103): 'idle' | 'running' | 'paused'
+
+  VERIFICATION:
+  executionStatus 'paused' -> Stop button visible.
+  executionStatus 'running' -> Stop button visible.
+  executionStatus 'idle' -> Stop button NOT visible.
+  npm run build (0 errors). npm test (187 tests).
+
+Acceptance Criteria:
+  - [ ] Stop button is visible when executionStatus === 'running'
+  - [ ] Stop button is visible when executionStatus === 'paused'
+  - [ ] Stop button is NOT visible when executionStatus === 'idle'
+  - [ ] npm run build passes (0 errors)
+  - [ ] npm test passes (187 tests)
+Dependencies: #101, #103
+---
+
+TASK #106: BUG-SW-02 — Run button callable with no project selected
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: LOW
+Suggested Model: haiku
+Status: PENDING
+Context:
+  BUG ID: BUG-SW-02
+  Severity: CRITICAL — clicking Run with no project selected calls startExecution with a null or
+  empty projectId, producing a malformed API request and a silent failure with no user feedback.
+
+  ROOT CAUSE:
+  File: client/src/views/SwarmView.jsx
+  Line: ~126 (the Run button visibility/enabled condition)
+
+  The Run button is shown/enabled based on executionStatus === 'idle' alone, without checking
+  whether a project is actually selected.
+
+  Fix — add `&& activeProjectId` guard:
+
+  Current (approximate):
+    {executionStatus === 'idle' && (
+      <button onClick={handleRun}>Run</button>
+    )}
+
+  Fixed:
+    {executionStatus === 'idle' && activeProjectId && (
+      <button onClick={handleRun}>Run</button>
+    )}
+
+  WHERE activeProjectId comes from:
+  Read the top of SwarmView.jsx to find where it is destructured. It is likely already in scope
+  from an existing hook call (e.g. useProjects, SwarmContext, or a similar hook). If not in scope,
+  import it from the appropriate context (check client/src/context/SwarmContext.jsx or
+  client/src/hooks/useSwarm.js for the variable name).
+
+  Alternative: disable instead of hide:
+    <button disabled={!activeProjectId || executionStatus !== 'idle'} onClick={handleRun}>Run</button>
+  Either approach is acceptable. Conditional render (hide) is the simpler fix.
+
+  VERIFICATION:
+  No project selected -> Run button not visible (or disabled).
+  Project selected + status idle -> Run button visible and enabled.
+  startExecution is never called with null/empty projectId.
+  npm run build (0 errors). npm test (187 tests).
+
+Acceptance Criteria:
+  - [ ] Run button is NOT shown (or is disabled) when activeProjectId is null/undefined/empty
+  - [ ] Run button IS shown and enabled when activeProjectId is set and executionStatus === 'idle'
+  - [ ] startExecution is never called with a null/empty projectId
+  - [ ] npm run build passes (0 errors)
+  - [ ] npm test passes (187 tests)
+Dependencies: #101
+---
+
+TASK #107: BUG-SW-03 — InterAgentFeed empty-state missing w-56 shrink-0 (layout shift on first message)
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: LOW
+Suggested Model: haiku
+Status: PENDING
+Context:
+  BUG ID: BUG-SW-03
+  Severity: MEDIUM — when InterAgentFeed has not yet received any messages, the empty-state div
+  has no reserved width, causing a layout shift the moment the first event arrives and the component
+  switches from the empty-state to the populated render path.
+
+  This is the empty-state half of the same root fix as BUG-VISUAL-01 (Task #104).
+
+  FILE: client/src/canvas/InterAgentFeed.jsx
+  LINE: ~28 (the empty-state / no-messages render path root div)
+
+  Fix: ensure the empty-state root div has `w-56 shrink-0` in its className.
+
+  NOTE: If Task #104 has already been completed and both render paths were fixed together using a
+  single shared root div, this task can be marked COMPLETED with a note referencing #104. Inspect
+  the file to confirm before editing.
+
+  VERIFICATION:
+  On initial render (before any agent messages), the InterAgentFeed panel occupies a fixed 224px
+  (w-56 = 14rem = 224px at Tailwind 16px base). No layout shift when first message arrives.
+  npm run build (0 errors). npm test (187 tests).
+
+Acceptance Criteria:
+  - [ ] Empty-state render path div has `w-56 shrink-0`
+  - [ ] No layout shift when the first inter-agent message arrives
+  - [ ] npm run build passes (0 errors)
+  - [ ] npm test passes (187 tests)
+Dependencies: #102, #104
+---
+
+TASK #108: BUG-VISUAL-05 — HitlInbox drawer missing visible title and HITL button double-click event bubbling
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: MEDIUM
+Suggested Model: sonnet
+Status: PENDING
+Context:
+  BUG ID: BUG-VISUAL-05
+  Severity: MEDIUM — two related issues in the HITL drawer in SwarmView.jsx.
+
+  ISSUE A — Missing drawer title/header:
+  The HITL inbox drawer container has no visible title. When the drawer opens the user sees a list
+  of approval requests with no label identifying the panel.
+
+  FILE: client/src/views/SwarmView.jsx
+  LOCATION: the drawer container div that wraps <HitlInbox /> (added in task #100).
+
+  Fix: add a header element inside the drawer container, before <HitlInbox />:
+    <div className="p-4 border-b border-gray-700">
+      <h2 className="text-sm font-semibold text-white">HITL Inbox</h2>
+    </div>
+  Adjust class names to match the app dark theme if different Tailwind conventions are used in this
+  file — check neighboring elements for the correct patterns.
+
+  ISSUE B — Double-click event bubbling on HITL toggle button:
+  Clicking the HITL button twice in rapid succession may cause the event to bubble to the underlying
+  canvas click handler, toggling the drawer open/closed unexpectedly.
+
+  FILE: client/src/views/SwarmView.jsx
+  LOCATION: the HITL toggle button onClick prop (near the toolbar, added in task #100).
+
+  Fix: add e.stopPropagation() to the onClick handler:
+    onClick={(e) => { e.stopPropagation(); toggleHitlDrawer(); }}
+  Or as a named handler:
+    const handleHitlToggle = (e) => { e.stopPropagation(); toggleHitlDrawer(); };
+
+  Read the file to find the exact current handler syntax before editing.
+
+  VERIFICATION:
+  Drawer displays "HITL Inbox" as a visible header when open. Clicking HITL button twice does not
+  cause double-toggle or canvas interference. npm run build (0 errors). npm test (187 tests).
+
+Acceptance Criteria:
+  - [ ] Drawer has a visible "HITL Inbox" title/header element styled for the dark theme
+  - [ ] HITL toggle button has e.stopPropagation() on its onClick handler
+  - [ ] npm run build passes (0 errors)
+  - [ ] npm test passes (187 tests)
+Dependencies: #100
+---
+
+TASK #109: BUG-SW-05 — HitlInbox approve/reject silently no-ops when executionId is null
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: MEDIUM
+Suggested Model: sonnet
+Status: PENDING
+Context:
+  BUG ID: BUG-SW-05
+  Severity: MEDIUM — when the user clicks Approve or Reject in HitlInbox and executionId is null
+  (e.g. no active execution, or execution ended while the drawer was open), the handler silently
+  returns with no feedback. The user sees nothing and may click repeatedly thinking the UI is frozen.
+
+  FILE: client/src/panels/HitlInbox.jsx
+  LINES: ~52-53 (approve handler early-return guard)
+         ~72-73 (reject handler early-return guard)
+
+  Current approximate pattern:
+    const handleApprove = async (requestId) => {
+      if (!executionId) return;   // line ~52 — silent no-op
+      ...
+    };
+    const handleReject = async (requestId) => {
+      if (!executionId) return;   // line ~72 — silent no-op
+      ...
+    };
+
+  RECOMMENDED FIX — disable buttons when executionId is null (OPTION A):
+    <button
+      disabled={!executionId}
+      className="... disabled:opacity-50 disabled:cursor-not-allowed"
+      onClick={() => handleApprove(req.id)}
+    >
+      Approve
+    </button>
+  Apply the same pattern to the Reject button.
+
+  ALTERNATIVE FIX — show inline error (OPTION B):
+  If a toast/notification system exists in client/src/components/ (check for Toast.jsx or similar),
+  replace the silent return with a toast call or local error state display.
+
+  Read lines 40-90 of the file to understand the full handler and render structure before editing.
+
+  VERIFICATION:
+  executionId null -> Approve and Reject buttons visually disabled (opacity-50 or hidden).
+  executionId set -> buttons work as before.
+  No silent no-ops — user always knows why the button is non-functional.
+  npm run build (0 errors). npm test (187 tests).
+
+Acceptance Criteria:
+  - [ ] Approve button is disabled (or hidden) when executionId is null
+  - [ ] Reject button is disabled (or hidden) when executionId is null
+  - [ ] User receives visible feedback (disabled styling or error message) instead of silent failure
+  - [ ] Handlers work correctly when executionId is present
+  - [ ] npm run build passes (0 errors)
+  - [ ] npm test passes (187 tests)
+Dependencies: #100, #68
+---
+
+TASK #110: BUG-VISUAL-07 — Sidebar footer shows v0.1.0 instead of v3.0.0
+Agent: frontend-dev
+Priority: LOW
+Difficulty: LOW
+Suggested Model: haiku
+Status: PENDING
+Context:
+  BUG ID: BUG-VISUAL-07
+  Severity: LOW — the sidebar footer displays the version string "v0.1.0" instead of the correct
+  release version "v3.0.0". Cosmetic issue that erodes trust in the release.
+
+  ROOT CAUSE (investigate before editing):
+  Common locations to check:
+
+  1. The sidebar footer component — search for "0.1.0" in client/src/ to find the hardcoded string.
+     Likely in client/src/components/Sidebar.jsx or a Layout/Footer component.
+  2. client/package.json — the "version" field. Vite can expose this as import.meta.env.PACKAGE_VERSION
+     or a custom define in vite.config.js.
+  3. Root package.json — root-level version field.
+  4. vite.config.js — a define block that injects version at build time.
+
+  INVESTIGATION STEPS:
+  a) Search client/src/ for the string "0.1.0" to find where it lives.
+  b) Check if import.meta.env.PACKAGE_VERSION or similar is referenced in the sidebar component.
+  c) If read from package.json via a Vite define, updating the version field in the package.json
+     is the correct fix.
+
+  FIX:
+  - If hardcoded: change the string to "v3.0.0".
+  - If read from package.json via Vite define: update "version" in the relevant package.json to "3.0.0".
+  Do NOT change the major UI structure of the sidebar. This is a one-line string change.
+
+  VERIFICATION:
+  Sidebar footer displays "v3.0.0". npm run build (0 errors). npm test (187 tests).
+
+Acceptance Criteria:
+  - [ ] Sidebar footer displays "v3.0.0" (not "v0.1.0")
+  - [ ] Version source is identified (hardcoded vs. package.json vs. Vite define)
+  - [ ] npm run build passes (0 errors)
+  - [ ] npm test passes (187 tests)
+Dependencies: none
+---
+
+TASK #111: BUG-SW-04 — useSwarm.js agentStates full-object dep causes excess WebSocket reconnections
+Agent: frontend-dev
+Priority: LOW
+Difficulty: MEDIUM
+Suggested Model: sonnet
+Status: PENDING
+Context:
+  BUG ID: BUG-SW-04
+  Severity: LOW — useSwarm.js places the full agentStates object in the dependency array of the
+  connectWs useCallback or useEffect. Because agentStates is a new object reference on every agent
+  state update, the WebSocket connection is torn down and recreated far more often than necessary —
+  potentially on every incoming WS message. This causes subtle flicker and wasted round-trips but
+  does not cause a hard crash.
+
+  FILE: client/src/hooks/useSwarm.js
+  LINE ~15: agentStates is defined (useState or similar)
+  LINE ~63: agentStates appears in the connectWs dependency array (useCallback/useEffect deps)
+
+  FIX STRATEGY — read lines 1-100 of the file first to understand the full hook structure.
+
+  OPTION A (remove agentStates from deps — preferred if connectWs does not READ agentStates):
+    Remove agentStates from the dependency array entirely.
+
+  OPTION B (use a ref — if connectWs must read agentStates inside a callback):
+    const agentStatesRef = useRef(agentStates);
+    useEffect(() => { agentStatesRef.current = agentStates; }, [agentStates]);
+    Replace agentStates references inside connectWs with agentStatesRef.current.
+    Remove agentStates from connectWs deps.
+
+  OPTION C (use a stable primitive as dep — if only the count/keys matter):
+    const agentCount = Object.keys(agentStates).length;
+    Use agentCount in deps instead of the full agentStates object.
+
+  If connectWs does not read agentStates at all (it only writes via setter), OPTION A is correct.
+
+  VERIFICATION:
+  WS connection must NOT be recreated on every agent state update message.
+  Existing WS behaviors preserved (connect on mount, reconnect on project change, disconnect on unmount).
+  npm run build (0 errors). npm test (187 tests).
+
+Acceptance Criteria:
+  - [ ] agentStates full object is NOT in the connectWs dependency array
+  - [ ] WebSocket is not recreated on each agentStates update
+  - [ ] All existing WS behaviors preserved (connect, disconnect, reconnect)
+  - [ ] npm run build passes (0 errors)
+  - [ ] npm test passes (187 tests)
+Dependencies: #101
+---
+
+---
+
 TASK #104: BUG-FIX — InterAgentFeed empty-state missing w-56 shrink-0
 Agent: frontend-dev
 Priority: CRITICAL

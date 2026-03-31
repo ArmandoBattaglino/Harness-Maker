@@ -1,4 +1,20 @@
 ---
+## 2026-03-29 — project-manager — Tasks #104–#111: QA Bug-Fix Wave
+**Outcome:** COMPLETED
+**Summary:** Added 8 new PENDING tasks (#104-#111) to docs/TASK_PLAN.md based on QA visual
+  inspection findings (Puppeteer audit). Tasks cover 7 confirmed bugs: 2 CRITICAL (canvas collapse,
+  Stop button paused, Run button no-project guard), 3 MEDIUM (empty-state layout shift, HITL drawer
+  header + bubbling, approve/reject silent no-op), and 2 LOW (sidebar version string, agentStates
+  dep excess WS reconnections). All assigned to frontend-dev with full self-contained context
+  including exact file paths and line numbers.
+**Files changed:** docs/TASK_PLAN.md (tasks #104-#111 appended)
+**Bugs fixed:** none (task creation only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** frontend-dev to fix CRITICAL tasks #104, #105, #106 first, then MEDIUM #107-#109, then LOW #110-#111
+---
+
+---
 ## 2026-03-29 — qa-tester — Visual Inspection: Full App Screenshot + Layout Audit
 **Outcome:** COMPLETED
 **Summary:** Took Puppeteer screenshots and performed DOM measurement of all 6 views. Found 9 visual bugs (2 CRITICAL, 2 HIGH, 2 MEDIUM, 3 LOW). Root cause of all Swarm view layout failures: InterAgentFeed has no explicit width class — its 122px content width + AgentInspector w-64 (256px) leaves only 172px for the React Flow canvas. The minimap (202px) overflows 45px past the canvas left boundary into the sidebar.
