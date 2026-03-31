@@ -1,4 +1,13 @@
 ---
+## 2026-03-31 — documenter — Tasks #114-#115: Final LOW-priority toolbar bug fixes
+**Outcome:** COMPLETED
+**Summary:** Tasks #114 (BUG-TOOLBAR-2: stale WS not closed on workflow regen) and #115 (BUG-TOOLBAR-3: Stop+Pause/Resume race producing /null/ URL) fixed. All 115 tasks now COMPLETED; 187/187 tests pass; zero open bugs. DOC_STATUS.md header and PROGRESS.md row updated to reflect 115/115. No changes required to README.md, ARCHITECTURE.md, or API.md — the fixes are internal implementation details with no user-facing API or config surface changes.
+**Files changed:** client/src/hooks/useSwarm.js (cleanup useEffect keyed on workflowId), client/src/views/SwarmView.jsx (null-guard in handlePause/handleResume), docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** BUG-TOOLBAR-2 (stale WebSocket on workflow regeneration), BUG-TOOLBAR-3 (null executionId race in pause/resume)
+**Decisions made:** none
+**Blockers:** none
+**Next:** v3.0.0 is complete and clean. No remaining open tasks.
+---
 ## 2026-03-31 — project-manager — TASK_PLAN.md sync: Tasks #32-#41 + #113-#115 added
 **Outcome:** COMPLETED
 **Summary:** Corrected stale PENDING entries for tasks #32–#41 (all completed in prior sessions, verified via PROGRESS.md and qa-tester code inspection). Task #41 (Post-Fix Regression QA) marked COMPLETED — 187/187 tests passed, 9 test files, all green. Task #112 confirmed COMPLETED (already set). Task #113 (BUG-TOOLBAR-1 + BUG-TOOLBAR-4) added as COMPLETED. Tasks #114 and #115 added as PENDING LOW-priority items (BUG-TOOLBAR-2: old WS not closed on regen; BUG-TOOLBAR-3: Stop/Pause race producing /null/ URL). As of 2026-03-31: tasks #1–#113 all COMPLETED, 187/187 tests pass, only #114 and #115 remain PENDING (low priority).
@@ -65,6 +74,15 @@
 **Next:** v3.0.0 production deployment. No open bugs. All tasks complete.
 ---
 
+---
+## 2026-03-31 — project-manager — Tasks #114 and #115: BUG-TOOLBAR-2 + BUG-TOOLBAR-3 COMPLETED
+**Outcome:** COMPLETED
+**Summary:** BUG-TOOLBAR-2 fixed in useSwarm.js — cleanup useEffect now keyed on [workflowId] instead of [], ensuring the old WebSocket is explicitly closed when workflowId changes and preventing stale duplicate handlers. BUG-TOOLBAR-3 fixed in SwarmView.jsx — handlePause and handleResume now guard against null activeExecutionId, eliminating /null/ URLs in WS requests during rapid Stop/Pause clicks. 187/187 tests pass. Build clean. All 115 tasks are now COMPLETED.
+**Files changed:** client/src/hooks/useSwarm.js (Task #114), client/src/views/SwarmView.jsx (Task #115), docs/TASK_PLAN.md (header + task statuses), docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** BUG-TOOLBAR-2, BUG-TOOLBAR-3
+**Decisions made:** none
+**Blockers:** none
+**Next:** All 115 tasks complete. v3.0.0 is fully stable — no open bugs, 187/187 tests pass, build clean. Ready for production deployment.
 ---
 ## 2026-03-29 — project-manager — Tasks #104–#111: QA Bug-Fix Wave
 **Outcome:** COMPLETED
@@ -2062,4 +2080,14 @@ full self-contained context and acceptance criteria.
 **Decisions made:** Test coverage snapshot recorded as a new top-level section in CODE_MAP.md.
 **Blockers:** none
 **Next:** v3.0.0 baseline established — all future code changes must maintain 187/187 pass rate.
+---
+---
+## 2026-03-31 — qa-tester — Final v3.0.0 6-point codebase inspection
+**Outcome:** COMPLETED
+**Summary:** Read-only inspection of 6 files from the last fix wave (Tasks #112-#115). All 12 individual checkpoints passed. Zero bugs found. v3.0.0 declared CLEAN.
+**Files changed:** none (read-only inspection)
+**Bugs fixed:** none found
+**Decisions made:** none
+**Blockers:** none
+**Next:** v3.0.0 production deployment. Nothing further required.
 ---

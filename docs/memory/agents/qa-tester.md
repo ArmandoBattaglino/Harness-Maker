@@ -697,3 +697,55 @@ BUG-TOOLBAR-1 (dead runError code) → debugger/frontend-dev: either always-rend
 BUG-TOOLBAR-4 (Reset leaves stale canvas) → debugger/frontend-dev: clear workflowDef on reset or show "workflow loaded" indicator
 BUG-TOOLBAR-2+3 are low severity — may defer
 ---
+
+---
+## 2026-03-31 — Final v3.0.0 Codebase Inspection (6-point checklist)
+**Status:** COMPLETED
+**Called by:** user (direct)
+
+### Context when I started
+All 115 tasks marked COMPLETED in TASK_PLAN.md. The last wave of fixes covered BUG-TOOLBAR-1 through BUG-TOOLBAR-4 (Tasks #112–#115). User requested a focused 6-point inspection of the files touched in that wave to confirm zero remaining bugs before declaring v3.0.0 CLEAN.
+
+### What I did
+1. Read docs/memory/ACTIVITY_LOG.md (last entries) and docs/TASK_PLAN.md header to confirm state
+2. Read all 6 target files in two parallel batches:
+   - Batch 1: client/src/hooks/useSwarm.js + client/src/views/SwarmView.jsx
+   - Batch 2: server/routes/swarm.js + server/index.js
+   - Batch 3: client/src/canvas/InterAgentFeed.jsx + client/src/panels/HitlInbox.jsx
+3. Grepped for runError state in SwarmView.jsx (confirmed only a comment, not live state)
+4. Grepped for Anthropic SDK usage in server/routes/swarm.js (confirmed zero matches)
+
+### Files I touched (read-only inspection)
+| File | Action | Notes |
+|------|--------|-------|
+| client/src/hooks/useSwarm.js | READ | Verified cleanup useEffect |
+| client/src/views/SwarmView.jsx | READ | Verified toolbar behavior |
+| server/routes/swarm.js | READ | Verified spawn vs SDK |
+| server/index.js | READ | Verified claudeBin arg |
+| client/src/canvas/InterAgentFeed.jsx | READ | Verified empty-state classes |
+| client/src/panels/HitlInbox.jsx | READ | Verified error handling |
+
+### Inspection results — all 6 checkpoints PASSED
+
+1. useSwarm.js cleanup useEffect: depends on [workflowId] at line 87. PASS.
+2. SwarmView.jsx Run button: conditionally rendered only when executionStatus==='idle' (line 129), disabled when !workflowDef || !activeProjectId, tooltip varies per condition. PASS.
+3. SwarmView.jsx handlePause: has `if (!activeExecutionId) return` guard at line 87. PASS.
+4. SwarmView.jsx handleResume: has `if (!activeExecutionId) return` guard at line 99. PASS.
+5. SwarmView.jsx Reset button: calls `reset(); setWorkflowDef(null)` in same handler at line 187. PASS.
+6. SwarmView.jsx runError: no live state — only a comment at line 41. PASS.
+7. server/routes/swarm.js generateWorkflowFromPrompt: uses spawn(claudeBin, args, { shell: false }) at line 71. No Anthropic SDK import anywhere. PASS.
+8. server/index.js swarmRoutes call: passes claudeBin as 3rd arg at line 239: swarmRoutes(swarmEngine, sessionManager, claudeBin). PASS.
+9. InterAgentFeed.jsx empty-state div: className includes w-56 shrink-0 at line 28. PASS.
+10. HitlInbox.jsx approve: on API failure calls setError(e.message) at line 64. PASS.
+11. HitlInbox.jsx reject: on API failure calls setError(e.message) at line 85. PASS.
+12. HitlInbox.jsx both handlers: when !executionId || !itemId, call setError('No active execution...') — not silent return. PASS.
+
+### Verdict
+CLEAN. Zero bugs found. All 6 checkpoint files match their expected state exactly.
+
+### State I'm leaving behind
+v3.0.0 is confirmed CLEAN. All 115 tasks completed. 187/187 tests pass. No open bugs.
+
+### Handoff
+None — inspection fully self-contained. v3.0.0 ready for production deployment.
+---

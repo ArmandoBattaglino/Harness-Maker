@@ -1864,3 +1864,33 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 - Tasks #32–#40 status retroactively corrected in TASK_PLAN.md; no code impact.
 
 ---
+
+## 2026-03-31 — Tasks #114 + #115: Fix BUG-TOOLBAR-2 + BUG-TOOLBAR-3
+**Agent:** frontend-dev (debugger)
+**Triggered by:** Two race-condition bugs in the swarm toolbar: (1) switching workflows while a WS was live left a stale socket open; (2) clicking Stop + Pause/Resume simultaneously could POST to /api/v1/swarm/null/pause or /null/resume.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/hooks/useSwarm.js | MODIFIED | Cleanup useEffect dependency array changed from `[]` to `[workflowId]`. Also sets `wsRef.current = null` in cleanup. |
+| client/src/views/SwarmView.jsx | MODIFIED | `handlePause` and `handleResume` each gained an early `if (!activeExecutionId) return` guard at the top of the function body. |
+
+### Functions Added
+- none
+
+### Functions Modified
+- `useSwarm(workflowId)` in `client/src/hooks/useSwarm.js` — BUG-TOOLBAR-2: cleanup useEffect dependency was `[]` (fired only on unmount). Changed to `[workflowId]` so React runs the cleanup — closing the live WS and nulling wsRef — whenever the workflowId prop changes. This prevents a stale WS from the previous workflow from remaining open after a new workflow is generated.
+- `handlePause()` in `client/src/views/SwarmView.jsx` — BUG-TOOLBAR-3: added `if (!activeExecutionId) return` early exit. Prevents a POST to `/api/v1/swarm/null/pause` when Stop resolves (setting activeExecutionId = null) while Pause is still in-flight.
+- `handleResume()` in `client/src/views/SwarmView.jsx` — BUG-TOOLBAR-3: added `if (!activeExecutionId) return` early exit. Same race condition guard as handlePause.
+
+### Functions Removed
+- none
+
+### Connection Changes
+- `useSwarm` cleanup lifecycle: previously disconnected only on component unmount. Now also disconnects on `workflowId` change — closes the WS before SwarmView re-calls `useSwarm` with the new id.
+
+### Impact on Other Code
+- `SwarmView.jsx` callers of `handlePause`/`handleResume` (Pause and Resume toolbar buttons) now silently no-op if `activeExecutionId` is null — this is safe since the buttons are only rendered when `executionStatus === 'running'` or `=== 'paused'`, meaning the race window is narrow and the guard only fires in the edge case.
+- 187/187 tests pass. Build clean.
+
+---

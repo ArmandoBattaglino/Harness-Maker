@@ -123,6 +123,63 @@ Neither is urgent. No handoff required unless user initiates these tasks.
 ---
 
 ---
+## 2026-03-31 — Tasks #114 and #115: BUG-TOOLBAR-2 + BUG-TOOLBAR-3 COMPLETED
+**Status:** COMPLETED
+**Called by:** user (direct instruction with implementation summary)
+
+### Context when I started
+Tasks #114 (BUG-TOOLBAR-2) and #115 (BUG-TOOLBAR-3) were the only two remaining PENDING tasks in
+TASK_PLAN.md. Both had been fixed by the frontend-dev agent and reported as complete. 187/187 tests
+pass, build clean. The header block still listed them as PENDING and the task Status fields were
+still PENDING.
+
+### What I did
+1. Read TASK_PLAN.md (head + tasks #114-#115 blocks), ACTIVITY_LOG.md, PROGRESS.md, and own agent
+   log in parallel to confirm exact current state.
+2. Used Grep to locate the exact line ranges of tasks #114 and #115.
+3. Applied two Edit operations — changed Status: PENDING to Status: COMPLETED for both tasks.
+4. Updated the TASK_PLAN.md header block: replaced the "Known low-priority bugs: PENDING" line
+   with two "Post-release fix" entries, updated the summary sentence, added Tests line (187/187),
+   and updated the overall status to "all tasks #1–#115 COMPLETED".
+5. Appended a new COMPLETED entry to ACTIVITY_LOG.md.
+6. Prepended a new COMPLETED entry to PROGRESS.md Completed section.
+7. Appended this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Tasks #114, #115 Status: PENDING -> COMPLETED; header updated to reflect all 115 tasks COMPLETED |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | New COMPLETED entry for Tasks #114-#115 appended |
+| docs/memory/PROGRESS.md | MODIFIED | New COMPLETED entry for Tasks #114-#115 prepended to Completed section |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- TASK_PLAN.md is now fully accurate: all 115 tasks COMPLETED, zero PENDING/IN_PROGRESS/BLOCKED.
+- Header block is the definitive single-source-of-truth for project milestone status.
+- ACTIVITY_LOG.md and PROGRESS.md both reflect the final completion milestone.
+
+### Bugs I encountered
+- None. All edits applied cleanly.
+
+### Decisions I made
+- Marked both tasks COMPLETED directly as reported — no re-verification needed since user confirmed
+  187/187 tests pass and build is clean.
+
+### What I learned
+- Always use the task title line as the anchor for Edit tool calls to tasks — it is always unique
+  and survives line-number shifts from prior edits in the same session.
+
+### State I'm leaving behind
+TASK_PLAN.md: 115 tasks total, all COMPLETED. Zero tasks in any other state. 187/187 tests pass.
+Build: 473 modules, 0 warnings. Project is v3.0.0, release-ready with no open bugs.
+
+### Handoff
+No remaining work. The project is complete at v3.0.0. If the user wants to proceed:
+- devops: create git tag v3.0.0 (or verify it exists), run npm run build + npm test, push tag.
+- No other agent action is required unless a new feature or bug is reported.
+---
+
+---
 ## 2026-03-31 — Task #112: Fix Swarm Workflow Generation + Run Button UX
 **Status:** COMPLETED
 **Called by:** user (direct instruction with implementation summary + Puppeteer verification)

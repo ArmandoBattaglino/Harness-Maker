@@ -2,7 +2,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** V3 RELEASE-READY (v3.0.0 — all QA bugs resolved)
+**Status:** V3 RELEASE-READY (v3.0.0 — all tasks #1–#115 COMPLETED)
 
 ---
 
@@ -12,14 +12,16 @@
 **QA bug-fix wave completed:** 2026-03-31
 **QA verdict:** CLEAN — Puppeteer visual inspection confirms all 6 views render correctly.
 **Build:** 473 modules, 0 warnings.
+**Tests:** 187/187 pass.
 **Debug loop:** All 17 post-release bug tasks (#83–#99) COMPLETED.
 **QA bug-fix wave:** All 8 visual/swarm bugs (#104–#111) COMPLETED.
-**Known open bugs:** None.
 **Post-release fix #112:** Swarm workflow generation + Run button UX — 2026-03-31 (COMPLETED).
 **Post-release fix #113:** BUG-TOOLBAR-1 (dead runError state) + BUG-TOOLBAR-4 (Reset clears workflowDef) — 2026-03-31 (COMPLETED).
-**Known low-priority bugs:** BUG-TOOLBAR-2 (old WS not closed on regen) → Task #114 PENDING. BUG-TOOLBAR-3 (Stop/Pause race → /null/ URL) → Task #115 PENDING.
+**Post-release fix #114:** BUG-TOOLBAR-2 (useSwarm.js cleanup useEffect keyed on [workflowId]) — 2026-03-31 (COMPLETED).
+**Post-release fix #115:** BUG-TOOLBAR-3 (SwarmView.jsx handlePause/handleResume guard against null activeExecutionId) — 2026-03-31 (COMPLETED).
+**Known open bugs:** None.
 
-All tasks in the original V3 wave (#43–#82, 57 granular units), the post-release debug loop (#83–#99), and the QA visual inspection bug-fix wave (#104–#111) are COMPLETED. Tasks #112 and #113 fixed Swarm workflow generation, Run button UX, dead state cleanup, and Reset behavior. Two low-priority toolbar bugs (#114, #115) are tracked and PENDING for future work. The codebase is stable and confirmed ready for production deployment at v3.0.0.
+All 115 tasks are COMPLETED. This includes the original V3 wave (#43–#82, 57 granular units), the post-release debug loop (#83–#99), the QA visual inspection bug-fix wave (#104–#111), and post-release toolbar fixes (#112–#115). The codebase is stable, fully tested (187/187), and confirmed ready for production deployment at v3.0.0.
 
 ---
 
@@ -7475,7 +7477,7 @@ Agent: frontend-dev
 Priority: LOW
 Difficulty: LOW
 Suggested Model: haiku
-Status: PENDING
+Status: COMPLETED
 Context: |
   In SwarmView.jsx, when the user regenerates a workflow (calls generateWorkflow() while a
   previous workflow exists), any active WebSocket connection from the prior run is not explicitly
@@ -7505,7 +7507,7 @@ Agent: frontend-dev
 Priority: LOW
 Difficulty: LOW
 Suggested Model: haiku
-Status: PENDING
+Status: COMPLETED
 Context: |
   In SwarmView.jsx, when the user clicks Stop or Pause rapidly (before a run ID is returned
   from the server), the runId state variable is still null. The WS or fetch call that sends

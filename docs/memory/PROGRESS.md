@@ -1,6 +1,9 @@
 # Progress
 
 ## Completed
+- [TASKS #114-#115] Toolbar Bug-Fix Wave (frontend-dev) — COMPLETED 2026-03-31
+  BUG-TOOLBAR-2: useSwarm.js cleanup useEffect re-keyed on [workflowId] — old WebSocket now closed on workflow regen. BUG-TOOLBAR-3: SwarmView.jsx handlePause/handleResume guard against null activeExecutionId — no more /null/ URL requests. 187/187 tests pass. All 115 tasks COMPLETED. v3.0.0 fully stable, zero open bugs.
+
 - [TASKS #104-#111] QA Visual Bug-Fix Wave (frontend-dev) — COMPLETED 2026-03-31
   All 8 bugs from the Puppeteer visual audit resolved: InterAgentFeed w-56 shrink-0 (VISUAL-01/SW-03),
   Stop button paused-state condition (SW-01), Run button activeProjectId guard (SW-02), HITL drawer

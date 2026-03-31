@@ -1,4 +1,47 @@
 ---
+## 2026-03-31 — Tasks #114-#115: Final LOW-priority toolbar bug fixes
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel with code-mapper and project-manager)
+
+### Context when I started
+Tasks #114 and #115 were the final two open items in the entire project. Both were LOW-priority toolbar bugs: BUG-TOOLBAR-2 (stale WebSocket not closed when a new workflow is generated while one execution was running) and BUG-TOOLBAR-3 (handlePause/handleResume could fire with a null activeExecutionId if the user clicked Stop then Pause before state updated, producing a /null/ URL in the API call). DOC_STATUS.md header still referenced "113 tasks COMPLETED" from a prior session.
+
+### What I did
+1. Read DOC_STATUS.md, ACTIVITY_LOG.md (top entries), useSwarm.js, and SwarmView.jsx in parallel.
+2. Confirmed both fixes are internal implementation details:
+   - useSwarm.js: added a cleanup useEffect keyed on [workflowId] that calls wsRef.current?.close() and nulls the ref. No API surface change.
+   - SwarmView.jsx: added `if (!activeExecutionId) return;` at the top of handlePause and handleResume. No API surface change.
+3. Confirmed README.md, ARCHITECTURE.md, and API.md require no changes — these fixes have no user-visible config, endpoint, or architecture impact.
+4. Updated DOC_STATUS.md header to reference "115 tasks COMPLETED, zero open bugs".
+5. Updated PROGRESS.md row note from "113 tasks" to "115 tasks".
+6. Appended ACTIVITY_LOG.md entry.
+7. Appended this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Header timestamp updated: 113 -> 115 tasks COMPLETED, "zero open bugs" added. PROGRESS.md row note updated. |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Task #114-#115 documenter entry prepended. |
+| docs/memory/agents/documenter.md | MODIFIED | This session log appended. |
+
+### Improvements delivered
+- DOC_STATUS.md now correctly records the final state: all 115 tasks COMPLETED, zero open bugs.
+
+### Bugs I encountered
+None during documentation review.
+
+### Decisions I made
+- README.md, ARCHITECTURE.md, and API.md: no update required. The two bug fixes are implementation details (a useEffect cleanup and two guard clauses) with no user-facing surface changes.
+
+### What I learned
+- Small guard-clause and cleanup fixes rarely require doc updates — the key check is whether any API endpoint signature, config variable, or architectural component changed. Here none did.
+
+### State I'm leaving behind
+All documentation is accurate and up to date. v3.0.0 is complete. No documentation debt has been added. Existing documented debt items (CONTRIBUTING.md, EntitiesView.jsx dead code, CODE_MAP.md TriggerNode stub notation, MEDIUM-V3-01 CSRF mismatch) remain deferred as previously recorded.
+
+### Handoff
+None — task fully self-contained. Project is complete.
+---
 ## 2026-03-31 — Task #112: Fix Swarm Workflow Generation + Run Button UX
 **Status:** COMPLETED
 **Called by:** orchestrator (parallel with code-mapper and project-manager, post Task #112)
