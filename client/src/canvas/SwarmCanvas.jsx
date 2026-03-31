@@ -35,6 +35,9 @@ const edgeTypes = {
 export default function SwarmCanvas({ workflowDef }) {
   const focusedDepartmentId = useSwarmStore((s) => s.focusedDepartmentId);
   const setSelectedNode = useSwarmStore((s) => s.setSelectedNode);
+  const executionStatus = useSwarmStore((s) => s.executionStatus);
+  // Side panels only visible during active or paused execution (not idle/stopped)
+  const showSidePanels = executionStatus === 'running' || executionStatus === 'paused';
 
   // Initial nodes/edges from workflowDef (or empty)
   const initialNodes = workflowDef?.nodes ?? [];
@@ -114,8 +117,8 @@ export default function SwarmCanvas({ workflowDef }) {
             nodeColor="#6366f1"
           />
         </ReactFlow>
-        <InterAgentFeed />
-        <AgentInspector nodes={nodes} />
+        {showSidePanels && <InterAgentFeed />}
+        {showSidePanels && <AgentInspector nodes={nodes} />}
       </div>
     </div>
   );
