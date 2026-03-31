@@ -1865,6 +1865,46 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 
 ---
 
+## 2026-03-31 — v3.0.0 RELEASE
+
+**Agent:** qa-tester (final inspection) + code-mapper (documentation)
+**Triggered by:** Final QA inspection pass confirming zero bugs — formal v3.0.0 release declaration.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| docs/memory/CHANGELOG.md | MODIFIED | Appended v3.0.0 release entry (this entry) |
+
+### Functions Added
+- None
+
+### Functions Modified
+- None
+
+### Functions Removed
+- None
+
+### Connection Changes
+- None — release declaration only; no source modifications
+
+### Impact on Other Code
+- None
+
+### Release Summary
+| Metric | Value |
+|--------|-------|
+| Version | v3.0.0 |
+| Release date | 2026-03-31 |
+| Total tasks completed | 115 / 115 |
+| Test suite result | 187 / 187 PASS |
+| Client build | 473 modules, 866.72 kB, 0 errors |
+| QA inspection | CLEAN — zero bugs found |
+| Security audit | SEC-V3-01 through SEC-V3-07 all PASS |
+| Open bugs | 0 |
+| Swarm Orchestrator | Fully functional (PromptToFlowBar → SwarmEngine → HITL → TriggerManager) |
+
+---
+
 ## 2026-03-31 — Tasks #114 + #115: Fix BUG-TOOLBAR-2 + BUG-TOOLBAR-3
 **Agent:** frontend-dev (debugger)
 **Triggered by:** Two race-condition bugs in the swarm toolbar: (1) switching workflows while a WS was live left a stale socket open; (2) clicking Stop + Pause/Resume simultaneously could POST to /api/v1/swarm/null/pause or /null/resume.

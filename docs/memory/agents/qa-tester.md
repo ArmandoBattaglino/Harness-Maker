@@ -749,3 +749,69 @@ v3.0.0 is confirmed CLEAN. All 115 tasks completed. 187/187 tests pass. No open 
 ### Handoff
 None — inspection fully self-contained. v3.0.0 ready for production deployment.
 ---
+
+---
+## 2026-03-31 — Swarm Section Deep Visual Inspection (Puppeteer)
+**Status:** COMPLETED
+**Called by:** user (direct)
+
+### Context when I started
+v3.0.0 declared released. 187/187 tests pass. 473 modules build clean. 115/115 tasks COMPLETED. Previous QA visual session (2026-03-29) found 9 visual bugs; a subsequent frontend-dev fix wave resolved BUG-VIS-1 through BUG-VIS-9. User requested a new comprehensive Puppeteer visual inspection of the Swarm section specifically, testing every component and interaction.
+
+### What I did
+1. Read all project memory files + all 6 Swarm source files in parallel
+2. Navigated to http://127.0.0.1:3000 and clicked into Swarm view
+3. Verified toolbar initial state: HITL visible, Run disabled (opacity 0.4) with "Select a project first" tooltip, no Pause/Resume/Stop/Reset (correct for idle), status "● idle" correct
+4. Verified PromptToFlowBar: Generate disabled when empty (correct), enables when text entered (correct)
+5. Generated a workflow ("Triage customer support requests...") — took ~15s, Generate button shows "Generating..." during load (correct), input cleared on success (correct)
+6. Discovered BUG-SWARM-1: nodes appear off-canvas after generation — fitView prop does not re-fire when nodes are set via useEffect after mount
+7. Discovered BUG-SWARM-2: staggered animation injects `opacity:0` permanently into node style prop — React Flow reads this on every render, breaking node dimension measurement
+8. Clicked FitView button — did NOT work (viewport transform unchanged) — CONFIRMED BUG-SWARM-1
+9. Verified HITL drawer: opens with "HITL Approvals" header + "No pending approvals" empty state + ✕ close button (all correct)
+10. Verified close button works, canvas restores to 675px height (correct)
+11. Verified BroadcastBar not present in idle state (correct)
+12. Verified AgentInspector and InterAgentFeed not present in idle state (correct per showSidePanels logic)
+13. Selected a project (SmokeTestProject) via clicking project card in Projects view — navigated to Live Terminal
+14. Navigated back to Swarm — confirmed workflowDef was LOST (canvas empty) — BUG-SWARM-3
+15. Confirmed Run button tooltip changed correctly to "Generate a workflow below first" (activeProjectId now set) — correct behavior
+16. Generated workflow again with active project — Run button became enabled (disabled:false, opacity:1, title:"Run workflow") — correct
+17. Reviewed InterAgentFeed.jsx source: w-56 shrink-0 correctly applied (previous BUG-VIS-4 fix is in place)
+18. Reviewed useSwarm.js: identified BUG-SWARM-4 (silent /undefined/ URL when workflowId is null, though guarded by button disable)
+19. Read PromptToFlowBar.jsx line 42: confirmed root cause of BUG-SWARM-2 — opacity:0 injected into node.style prop permanently
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/agents/qa-tester.md | MODIFIED | Appended this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended task completion entry |
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-SWARM-1: Nodes invisible after generation / fitView broken | fitView prop runs on mount with empty nodes; useEffect sets nodes after mount; fitView never re-fires; manual FitView button also fails because RF's internal node dimensions are corrupted | None — report only | FOUND |
+| BUG-SWARM-2: Staggered animation injects permanent opacity:0 into RF node style | PromptToFlowBar.jsx line 42: `style: { opacity: 0, animation: 'fadeIn...' }` — the opacity:0 persists in React state forever, corrupting RF dimension measurement | None — report only | FOUND |
+| BUG-SWARM-3: workflowDef lost on view switch | workflowDef lives in useState inside SwarmView.jsx — unmounts when navigating away, resets to null | None — report only | FOUND |
+| BUG-SWARM-4: useSwarm calls /api/v1/swarm/undefined/start if workflowId null | workflowId param is undefined when workflowDef is null; guarded by button disable but not by the hook itself | None — report only | FOUND (LOW) |
+
+### Decisions I made
+- BUG-SWARM-1 and BUG-SWARM-2 are directly linked: the animation opacity:0 breaks RF's node measurement, which then breaks fitView. Fixing BUG-SWARM-2 (removing opacity from node style) should resolve BUG-SWARM-1 as well.
+- BUG-SWARM-3 is a design issue: workflowDef should be persisted in the Zustand SwarmStore, not in local component state.
+
+### What I learned
+- React Flow's `fitView` prop only fires on initial mount — it CANNOT be used to fit dynamically-added nodes. The correct approach is `useReactFlow().fitView()` called imperatively after `setNodes()` in a `useEffect`.
+- Injecting `opacity: 0` into a React Flow node's `style` prop permanently corrupts RF's ResizeObserver-based dimension measurement — the node appears invisible or mispositioned even after CSS animations restore visual opacity.
+- The `animation: fadeIn forwards` CSS fill mode maintains visual opacity:1 but does NOT update the React prop — so React Flow always sees opacity:0 in its internal state.
+- Puppeteer times out after extended interaction sessions with complex React Flow canvases — use evaluate() sparingly and prefer screenshot + JS batch queries.
+
+### State I'm leaving behind
+- 4 bugs found, 0 fixed
+- BUG-SWARM-1 + BUG-SWARM-2 are HIGH severity: nodes are essentially invisible after workflow generation without manual zoom-out exploration
+- BUG-SWARM-3 is MEDIUM: workflow resets on view switch (annoying but data not lost — can regenerate)
+- BUG-SWARM-4 is LOW: guarded by button disable, theoretical risk only
+- Components that PASS: toolbar button visibility/logic, status indicator, HITL drawer open/close, BreadcrumbBar, BroadcastBar absence in idle, AgentInspector absence in idle, PromptToFlowBar enable/disable logic, HitlInbox empty state, Generate loading state, InterAgentFeed w-56 width (BUG-VIS-4 previously fixed)
+
+### Handoff
+- BUG-SWARM-1+2: debugger → frontend-dev. Fix: in PromptToFlowBar.jsx remove opacity:0 from node style (use a CSS class instead, or wrap nodes in a div with the animation). In SwarmCanvas.jsx use `useReactFlow().fitView({ padding: 0.2 })` in the workflowDef useEffect after setNodes/setEdges.
+- BUG-SWARM-3: frontend-dev. Move workflowDef to Zustand SwarmStore or React context so it survives view switches.
+- BUG-SWARM-4: frontend-dev (LOW). Add guard in startExecution: `if (!workflowId) throw new Error('No workflow selected')`.
+---

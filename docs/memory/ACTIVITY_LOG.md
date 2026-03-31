@@ -1,4 +1,22 @@
 ---
+## 2026-03-31 — documenter — v3.0.0 RELEASE: QA CLEAN, zero bugs, 187/187 tests pass, all 115 tasks completed.
+**Outcome:** COMPLETED
+**Summary:** Final QA inspection confirmed zero bugs. v3.0.0 is production-ready. DOC_STATUS.md updated with Release Status block and revised header; README.md updated with Current Version line.
+**Files changed:** docs/memory/DOC_STATUS.md, README.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** nothing — v3.0.0 release complete.
+---
+## 2026-03-31 — project-manager — v3.0.0 FINAL RELEASE CLOSURE
+**Outcome:** COMPLETED
+**Summary:** Final QA inspection by qa-tester returned CLEAN — 187/187 tests pass, zero bugs, all 115 tasks COMPLETED. TASK_PLAN.md header updated to reflect official v3.0.0 release. Project is closed with no open work items, no known defects, and full documentation coverage.
+**Files changed:** docs/TASK_PLAN.md (header status line updated to v3.0.0 RELEASED), docs/memory/ACTIVITY_LOG.md (this entry), docs/memory/agents/project-manager.md (final session log)
+**Bugs fixed:** none
+**Decisions made:** v3.0.0 declared RELEASED as of 2026-03-31 — all gates passed (QA clean, 187/187 tests, 115/115 tasks, zero open bugs)
+**Blockers:** none
+**Next:** Project complete. No remaining tasks. Optional follow-up: devops git tag v3.0.0, documenter release notes if desired.
+---
 ## 2026-03-31 — code-mapper — Tasks #114+#115: Fix BUG-TOOLBAR-2 + BUG-TOOLBAR-3
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md and CHANGELOG.md to reflect the two toolbar bug fixes. BUG-TOOLBAR-2 (useSwarm.js cleanup useEffect re-keyed from [] to [workflowId]) and BUG-TOOLBAR-3 (handlePause/handleResume null-guard in SwarmView.jsx) are now fully documented with root cause, fix, and connection impact notes.
@@ -2099,4 +2117,25 @@ full self-contained context and acceptance criteria.
 **Decisions made:** none
 **Blockers:** none
 **Next:** v3.0.0 production deployment. Nothing further required.
+---
+---
+## 2026-03-31 — code-mapper — v3.0.0 RELEASE declaration
+**Outcome:** COMPLETED
+**Summary:** Appended v3.0.0 release entry to CHANGELOG.md and updated CODE_MAP.md header timestamp. Final QA inspection confirmed zero bugs, 187/187 tests pass, all 115 tasks completed. Swarm Orchestrator fully functional.
+**Files changed:** docs/memory/CHANGELOG.md (v3.0.0 release entry appended), docs/memory/CODE_MAP.md (header timestamp updated to v3.0.0 release)
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** nothing — v3.0.0 is released and complete
+---
+
+---
+## 2026-03-31 — qa-tester — Swarm Section Deep Visual Inspection
+**Outcome:** COMPLETED
+**Summary:** Full Puppeteer visual inspection of Swarm section found 4 bugs (2 HIGH, 1 MEDIUM, 1 LOW). Most critical: staggered animation injects permanent opacity:0 into React Flow node style prop, corrupting dimension measurement and breaking fitView — nodes are invisible after workflow generation. workflowDef also lost on view switch (stored in local state, not Zustand). All toolbar state logic, HITL drawer, BroadcastBar, and PromptToFlowBar enable/disable logic verified correct.
+**Files changed:** docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (report only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** debugger to investigate BUG-SWARM-1+2, frontend-dev to fix all 4 bugs.
 ---

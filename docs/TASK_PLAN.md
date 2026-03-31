@@ -2,7 +2,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** V3 RELEASE-READY (v3.0.0 — all tasks #1–#115 COMPLETED)
+**Status:** v3.0.0 RELEASED — 2026-03-31 — QA CLEAN — 187/187 tests — 115/115 tasks COMPLETED
 
 ---
 

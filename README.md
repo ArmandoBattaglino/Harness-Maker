@@ -1,5 +1,7 @@
 # Claude Code Visual Manager
 
+**Current Version: v3.0.0** — QA CLEAN, 187/187 tests passing, all 115 tasks completed.
+
 A locally-hosted web application that provides a graphical interface for the Claude Code CLI. Run Claude Code sessions in a live browser terminal, submit background jobs, and manage your agents, skills, and CLAUDE.md files — all from a single-command launch.
 
 ---

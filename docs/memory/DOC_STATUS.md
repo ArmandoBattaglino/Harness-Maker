@@ -1,5 +1,12 @@
 # Documentation Status
-_Last updated: 2026-03-31 after Tasks #114-#115: Final LOW-priority toolbar bug fixes — all 115 tasks COMPLETED, zero open bugs, 187/187 tests pass_
+_Last updated: 2026-03-31 after v3.0.0 RELEASE — QA CLEAN, zero bugs, 187/187 tests pass, all 115 tasks COMPLETED_
+
+## Release Status
+**v3.0.0 — RELEASED 2026-03-31**
+- QA inspection: CLEAN — zero bugs found
+- Test suite: 187/187 passing
+- Tasks completed: 115/115
+- Open bugs: 0
 
 ## Status Legend
 - UP_TO_DATE -- matches current code

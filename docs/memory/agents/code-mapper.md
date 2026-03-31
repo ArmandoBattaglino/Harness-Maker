@@ -1,4 +1,58 @@
 ---
+## 2026-03-31 — Tasks #114+#115: Fix BUG-TOOLBAR-2 + BUG-TOOLBAR-3
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+CODE_MAP.md was last updated after Task #113 (BUG-TOOLBAR-1 + BUG-TOOLBAR-4). Two more toolbar bugs had just been fixed: BUG-TOOLBAR-2 in useSwarm.js (stale WS on workflow change) and BUG-TOOLBAR-3 in SwarmView.jsx (null race in handlePause/handleResume). Both source files were confirmed read before any edits. 187/187 tests pass.
+
+### What I did
+1. Read CODE_MAP.md header and surrounding context using grep (line numbers for useSwarm/SwarmView entries located at lines 80-81 in Module Index and 2120-2156 in Function Graph, SwarmView entry at lines 1985-1993).
+2. Read CHANGELOG.md tail (offset 1856-1866) to find append point.
+3. Read both modified source files (useSwarm.js, SwarmView.jsx) in full.
+4. Read code-mapper agent memory (offset 1-60) to confirm last session.
+5. Updated CODE_MAP.md header timestamp.
+6. Updated Module Index row for useSwarm.js (added BUG-TOOLBAR-2 note, Task #114 reference).
+7. Updated Module Index row for SwarmView.jsx (added BUG-TOOLBAR-3 note, Task #115 reference).
+8. Updated useSwarm(workflowId) function entry: extended Purpose, updated Side effects, added Complexity note for Task #114.
+9. Updated SwarmView() function entry: extended Complexity note with handlePause/handleResume null-guard description, updated Last modified.
+10. Appended CHANGELOG entry for Tasks #114+#115.
+11. Appended ACTIVITY_LOG entry.
+12. Appended this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header timestamp; Module Index rows for useSwarm.js + SwarmView.jsx updated; useSwarm() + SwarmView() function entries updated with BUG-TOOLBAR-2/3 detail |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Tasks #114+#115 entry |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session summary |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- useSwarm cleanup lifecycle change ([] → [workflowId]) fully documented with root cause and mechanism
+- handlePause/handleResume null-guard documented under SwarmView complexity note
+- Both bugs cross-referenced in Module Index for quick lookup
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None — code-mapper only documents | — | — | — |
+
+### Decisions I made
+- handlePause and handleResume do not have separate CODE_MAP entries — they are internal handlers on SwarmView and covered under the SwarmView() entry. Pattern maintained from prior sessions.
+- Both tasks (#114 + #115) combined into one CHANGELOG entry — same date, same conceptual fix wave.
+
+### What I learned
+- The `[workflowId]` dependency on the useSwarm cleanup useEffect is the canonical way to tear down a WS when a workflowId prop changes without needing the consumer to explicitly call cleanup. React runs the effect cleanup before re-running the effect on dep change.
+- `wsRef.current = null` after `.close()` in the cleanup prevents any lingering onmessage/onclose handlers from referencing a closed socket via a non-null ref.
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md are fully up to date through Task #115. All 115 tasks documented. v3.0.0 is complete with zero known bugs or open tasks.
+
+### Handoff
+None — task self-contained. Project is at v3.0.0 stable.
+
+---
 ## 2026-03-28 — Tasks #84–#99: Debug Loop Wave (Frontend Zustand/WS + Backend SwarmEngine/Routes)
 **Status:** COMPLETED
 **Called by:** orchestrator (post-task wave code-mapper invocation)
@@ -1641,4 +1695,48 @@ QA visual regression wave produced 6 bug fixes across 4 frontend files plus a ve
 
 ### Handoff
 - None — task fully self-contained. v3.0.0 baseline is documented.
+---
+---
+## 2026-03-31 — v3.0.0 RELEASE declaration
+**Status:** COMPLETED
+**Called by:** orchestrator (post-final-QA code-mapper invocation)
+
+### Context when I started
+All 115 tasks were completed. Final QA inspection returned CLEAN — zero bugs. 187/187 tests passing. The request was to append a formal v3.0.0 release entry to CHANGELOG.md and update the CODE_MAP.md header timestamp. No source code was modified in this pass.
+
+### What I did
+1. Read CHANGELOG.md (last ~320 lines) — confirmed end of file at line 1897, identified correct append point
+2. Read CODE_MAP.md (first 10 lines) — captured existing header for in-place timestamp update
+3. Read agents/code-mapper.md + ACTIVITY_LOG.md + PROGRESS.md in parallel for full context
+4. Edited CHANGELOG.md — inserted v3.0.0 RELEASE entry (release summary table, metrics) before the Tasks #114+#115 entry so chronological ordering is preserved within the 2026-03-31 date block
+5. Edited CODE_MAP.md — updated header line from "after Tasks #114+#115..." to "v3.0.0 RELEASE — all 115 tasks completed, 187/187 tests pass, zero bugs"
+6. Appended ACTIVITY_LOG.md entry
+7. Appended this agent memory session log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CHANGELOG.md | MODIFIED | v3.0.0 RELEASE entry inserted at chronological position within 2026-03-31 date block |
+| docs/memory/CODE_MAP.md | MODIFIED | Header timestamp updated to reflect v3.0.0 release event |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended release activity log entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- CHANGELOG.md now has a formal v3.0.0 release milestone entry with full metrics (115 tasks, 187/187 tests, zero bugs, security audit all-pass)
+- CODE_MAP.md header accurately reflects the release state rather than the last individual bug fix
+
+### Bugs I encountered
+- None
+
+### Decisions I made
+- Inserted CHANGELOG entry before Tasks #114+#115 entry (not at file end) to maintain chronological ordering within the 2026-03-31 date block — release comes after all fixes, logically, but #114+#115 were already the last entry; insertion before that entry correctly positions the release declaration as the logical culmination of the final fix wave.
+
+### What I learned
+- The CHANGELOG uses a "most recent at top" ordering within date blocks — new entries for the same day should be inserted before older same-day entries only when ordering matters narratively. In this case the release entry is a capstone so it sits at the top of the day's entries.
+
+### State I'm leaving behind
+v3.0.0 is fully released and documented. All memory files are consistent. No open gaps.
+
+### Handoff
+None — task fully self-contained. v3.0.0 is complete.
 ---

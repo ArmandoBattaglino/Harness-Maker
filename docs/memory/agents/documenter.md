@@ -1,4 +1,47 @@
 ---
+## 2026-03-31 — v3.0.0 RELEASE: Final documentation closure
+**Status:** COMPLETED
+**Called by:** user (post-QA release announcement)
+
+### Context when I started
+QA inspection just completed CLEAN — zero bugs, 187/187 tests pass, all 115 tasks done. User requested three surgical doc updates to record the release.
+
+### What I did
+1. Updated `docs/memory/DOC_STATUS.md` header line and added a new "Release Status" block at the top declaring v3.0.0 RELEASED 2026-03-31, QA CLEAN, 187/187 tests, 115/115 tasks, 0 open bugs.
+2. Added a "Current Version: v3.0.0" line to the top of `README.md` immediately below the H1 title.
+3. Prepended the final release entry to `docs/memory/ACTIVITY_LOG.md` (had to retry twice — file was being written concurrently by project-manager agent).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Header updated; Release Status block added |
+| README.md | MODIFIED | Current Version line added below H1 |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Final release entry prepended |
+| docs/memory/agents/documenter.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- README.md now immediately communicates the released version to anyone reading it.
+- DOC_STATUS.md formally records the release gate (QA CLEAN, test count, task count) as a persistent record.
+- ACTIVITY_LOG.md has a canonical final release entry from the documenter.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| ACTIVITY_LOG.md edit rejected twice | File written concurrently by project-manager agent between my read and edit | Re-read the updated file each time and re-applied the edit | FIXED |
+
+### Decisions I made
+- Added "Release Status" block inside DOC_STATUS.md above the Status Legend rather than as a footer — so it is the first thing a reader sees and unambiguously records the release gate.
+- Used a single bold line in README.md (not a table or section) — minimal footprint, immediate visibility.
+
+### What I learned
+- ACTIVITY_LOG.md is a high-contention file at release closure — multiple agents write to it in the same moment. Always re-read immediately before each edit attempt.
+
+### State I'm leaving behind
+All documentation is accurate and up to date for v3.0.0. No stale sections remain except the intentionally deferred items already listed in DOC_STATUS.md (CONTRIBUTING.md, DEC-001 note, dead EntitiesView.jsx, security LOW-03/04, and the v3.1 planned items).
+
+### Handoff
+None — v3.0.0 documentation is complete and closed.
+---
 ## 2026-03-31 — Tasks #114-#115: Final LOW-priority toolbar bug fixes
 **Status:** COMPLETED
 **Called by:** orchestrator (parallel with code-mapper and project-manager)

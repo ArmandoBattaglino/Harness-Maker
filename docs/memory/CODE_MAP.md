@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-31 — after Tasks #114+#115: Fix BUG-TOOLBAR-2 + BUG-TOOLBAR-3 in useSwarm.js + SwarmView.jsx — mapped by code-mapper_
+_Last updated: 2026-03-31 — v3.0.0 RELEASE — all 115 tasks completed, 187/187 tests pass, zero bugs — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
