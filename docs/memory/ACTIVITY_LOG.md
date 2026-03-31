@@ -1,4 +1,13 @@
 ---
+## 2026-03-31 — code-mapper — Tasks #114+#115: Fix BUG-TOOLBAR-2 + BUG-TOOLBAR-3
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md and CHANGELOG.md to reflect the two toolbar bug fixes. BUG-TOOLBAR-2 (useSwarm.js cleanup useEffect re-keyed from [] to [workflowId]) and BUG-TOOLBAR-3 (handlePause/handleResume null-guard in SwarmView.jsx) are now fully documented with root cause, fix, and connection impact notes.
+**Files changed:** docs/memory/CODE_MAP.md (header, Module Index rows, useSwarm + SwarmView function entries), docs/memory/CHANGELOG.md (new entry appended)
+**Bugs fixed:** none (code-mapper documents, does not fix)
+**Decisions made:** none
+**Blockers:** none
+**Next:** v3.0.0 complete. All 115 tasks documented in CODE_MAP + CHANGELOG. No remaining gaps.
+---
 ## 2026-03-31 — documenter — Tasks #114-#115: Final LOW-priority toolbar bug fixes
 **Outcome:** COMPLETED
 **Summary:** Tasks #114 (BUG-TOOLBAR-2: stale WS not closed on workflow regen) and #115 (BUG-TOOLBAR-3: Stop+Pause/Resume race producing /null/ URL) fixed. All 115 tasks now COMPLETED; 187/187 tests pass; zero open bugs. DOC_STATUS.md header and PROGRESS.md row updated to reflect 115/115. No changes required to README.md, ARCHITECTURE.md, or API.md — the fixes are internal implementation details with no user-facing API or config surface changes.
