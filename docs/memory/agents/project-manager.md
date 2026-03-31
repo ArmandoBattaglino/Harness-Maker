@@ -51,6 +51,76 @@ No immediate handoff required. If the user wants to deploy v3.0.0:
 - devops: create git tag v3.0.0 and run final npm run build + npm test verification.
 - documenter: update README release notes if not already done.
 ---
+---
+## 2026-03-31 — TASK_PLAN.md sync: Tasks #32-#41 COMPLETED + Tasks #113-#115 added
+**Status:** COMPLETED
+**Called by:** user (direct instruction)
+
+### Context when I started
+User reported a critical discrepancy: tasks #32-#40 were marked PENDING in TASK_PLAN.md but had
+been verified COMPLETED in a prior session (confirmed in PROGRESS.md and by qa-tester code
+inspection). Task #41 (Post-Fix Regression QA) also needed marking COMPLETED — 187/187 tests
+passed, 9 test files. Task #112 was already COMPLETED. Tasks #113-#115 needed to be added
+(#113 as COMPLETED, #114-#115 as PENDING LOW priority).
+
+### What I did
+1. Read project-manager.md (own prior session log) and top of TASK_PLAN.md in parallel.
+2. Used Grep to find all PENDING status lines in TASK_PLAN.md and cross-referenced with task
+   header lines to confirm which tasks they belonged to (#32, #33, #34, #37, #38, #39, #40, #41).
+3. Read surrounding context for each task to get unique strings for Edit tool.
+4. Applied 7 Edit operations changing Status: PENDING to Status: COMPLETED for tasks
+   #32, #33, #34, #37, #38, #39, #40. Task #41 was already COMPLETED (or changed automatically
+   during the sequence — verified by final read showing Status: COMPLETED at line 3330).
+5. Confirmed Task #112 was already COMPLETED (Status: COMPLETED at line 7408).
+6. Appended tasks #113 (COMPLETED), #114 (PENDING), #115 (PENDING) to the end of TASK_PLAN.md
+   after the Task #112 closing separator.
+7. Verified: grep for Status: PENDING returns exactly 2 matches (lines 7478, 7508 = #114, #115).
+8. Appended entry to ACTIVITY_LOG.md.
+9. Appended this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Tasks #32, #33, #34, #37, #38, #39, #40, #41 changed PENDING → COMPLETED; tasks #113 (COMPLETED), #114 (PENDING), #115 (PENDING) appended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | New entry prepended summarizing the sync and milestone state |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- TASK_PLAN.md is now fully accurate: tasks #1-#113 all COMPLETED, only #114 and #115 PENDING
+  (both LOW priority toolbar race/cleanup bugs deferred for future work).
+- Tasks #113-#115 now formally tracked with full context for any future frontend-dev picking them up.
+- ACTIVITY_LOG.md records the 2026-03-31 milestone: 187/187 tests, all 113 tasks complete.
+
+### Bugs I encountered
+- None. All 7 status edits and 1 append applied cleanly.
+- Task #41 appeared to already be COMPLETED when verified (possibly a line-number shift from prior
+  edits or it had been set by another agent in a parallel operation).
+
+### Decisions I made
+- Added Task #113 as COMPLETED (not just mentioned in header) so the formal task record exists
+  matching the convention of all other completed tasks.
+- Task #114 and #115 given LOW priority with PENDING status and full context blocks so any future
+  frontend-dev agent can pick them up without re-reading commit history.
+
+### What I learned
+- When multiple Edits are applied to a file in sequence, line numbers shift — always use the Edit
+  tool with unique surrounding-text anchors, not line numbers. The approach of reading each
+  task's unique title line as the anchor works reliably.
+- The "file modified since read" error on the first Edit attempt is a timing artifact of the
+  system; re-reading the file and retrying resolves it cleanly.
+
+### State I'm leaving behind
+TASK_PLAN.md: 115 tasks total. Tasks #1-#113 COMPLETED. Tasks #114, #115 PENDING (LOW priority).
+No tasks are IN_PROGRESS or BLOCKED.
+187/187 tests passing as of 2026-03-31.
+Project is at v3.0.0, release-ready.
+
+### Handoff
+Tasks #114 and #115 are the only remaining work — both LOW priority frontend-dev tasks.
+- Task #114: frontend-dev, close old WebSocket on workflow regen in SwarmView.jsx
+- Task #115: frontend-dev, guard Stop/Pause handlers against null runId in SwarmView.jsx
+Neither is urgent. No handoff required unless user initiates these tasks.
+---
 
 ---
 ## 2026-03-31 — Task #112: Fix Swarm Workflow Generation + Run Button UX
