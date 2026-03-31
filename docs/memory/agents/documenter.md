@@ -1513,3 +1513,44 @@ All three primary user-facing docs (README.md, docs/ARCHITECTURE.md, docs/API.md
 ### Handoff
 Assign Task #83 to backend-dev. After #83 completes, run code-mapper + documenter + PM in parallel as usual. Documenter will need to update docs/API.md if stopExecution behavior changes, and update DOC_STATUS.md to mark the cleanupExecution gap as resolved.
 ---
+
+---
+## 2026-03-31 — Task #41: Post-Fix Regression QA
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel with code-mapper and project-manager)
+
+### Context when I started
+Task #41 (Post-Fix Regression QA) just completed with 187/187 tests passing at v3.0.0. Tasks #32-40 had stale PENDING status in TASK_PLAN.md (completed in a prior session) and were being corrected. DOC_STATUS.md was last updated after Task #112; PROGRESS.md entry still referenced 99 tasks rather than 113.
+
+### What I did
+1. Read DOC_STATUS.md, ACTIVITY_LOG.md (head), README.md, and documenter.md (head) in parallel.
+2. Grep-searched README.md for any test count mention — none found; no README change needed.
+3. Updated DOC_STATUS.md header timestamp and task summary line for PROGRESS.md row to reflect 113 tasks and 187/187 test pass.
+4. Appended Task #41 entry to ACTIVITY_LOG.md.
+5. Appended this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Header timestamp advanced; PROGRESS.md row updated: 99 tasks → 113 tasks, added 187/187 test confirmation |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Task #41 entry appended |
+| docs/memory/agents/documenter.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- DOC_STATUS.md now accurately reflects the project end state: all 113 tasks complete, v3.0.0 stable, 187 tests passing.
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- README.md: no change needed — contains no test count, no version string to update.
+
+### What I learned
+- README.md has never contained a test count, so QA milestones only need to be recorded in DOC_STATUS.md and ACTIVITY_LOG.md.
+
+### State I am leaving behind
+All documentation is current. v3.0.0 is confirmed stable. No open documentation debt beyond the pre-existing low-priority items already listed in DOC_STATUS.md.
+
+### Handoff
+None — task fully self-contained. Project is at stable v3.0.0 closure.
+---

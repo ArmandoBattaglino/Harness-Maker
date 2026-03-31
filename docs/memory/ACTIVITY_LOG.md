@@ -1,4 +1,22 @@
 ---
+## 2026-03-31 — project-manager — TASK_PLAN.md sync: Tasks #32-#41 + #113-#115 added
+**Outcome:** COMPLETED
+**Summary:** Corrected stale PENDING entries for tasks #32–#41 (all completed in prior sessions, verified via PROGRESS.md and qa-tester code inspection). Task #41 (Post-Fix Regression QA) marked COMPLETED — 187/187 tests passed, 9 test files, all green. Task #112 confirmed COMPLETED (already set). Task #113 (BUG-TOOLBAR-1 + BUG-TOOLBAR-4) added as COMPLETED. Tasks #114 and #115 added as PENDING LOW-priority items (BUG-TOOLBAR-2: old WS not closed on regen; BUG-TOOLBAR-3: Stop/Pause race producing /null/ URL). As of 2026-03-31: tasks #1–#113 all COMPLETED, 187/187 tests pass, only #114 and #115 remain PENDING (low priority).
+**Files changed:** docs/TASK_PLAN.md
+**Bugs fixed:** none (status sync only)
+**Decisions made:** Tasks #32–#41 retroactively marked COMPLETED per PROGRESS.md verification. Tasks #114-#115 formalized as tracked low-priority items.
+**Blockers:** none
+**Next:** Tasks #114 (BUG-TOOLBAR-2) and #115 (BUG-TOOLBAR-3) are the only remaining work — both LOW priority, deferred.
+---
+## 2026-03-31 — orchestrator — Tasks #41, #113: Regression QA + TASK_PLAN sync
+**Outcome:** COMPLETED
+**Summary:** Full regression test suite ran: 187/187 tests passed, 9 files, all green (v3.0.0 confirmed stable). TASK_PLAN.md had stale PENDING entries for tasks #32-40 (completed in prior session) — being corrected by project-manager. BUG-TOOLBAR-1 (dead runError state) and BUG-TOOLBAR-4 (Reset not clearing workflowDef) fixed in Task #113.
+**Files changed:** client/src/views/SwarmView.jsx (Task #113), docs/TASK_PLAN.md (stale status fix)
+**Bugs fixed:** BUG-TOOLBAR-1, BUG-TOOLBAR-4
+**Decisions made:** runError removed in favor of disabled+tooltip pattern on Run button
+**Blockers:** none
+**Next:** Tasks #114-#115 (LOW priority WS cleanup + Stop/Pause race) remain as the only open items
+---
 ## 2026-03-31 — project-manager — Task #112: Fix Swarm Workflow Generation + Run Button UX
 **Outcome:** COMPLETED
 **Summary:** Swarm workflow generation was broken because server/routes/swarm.js used the Anthropic SDK (requiring an API key) instead of the claude CLI binary. generateWorkflowFromPrompt was rewritten to spawn the claude binary with -p and --output-format json flags; claudeBin is now passed from server/index.js as the 3rd arg to swarmRoutes(). Run button in SwarmView.jsx changed from hidden-when-idle to always-visible-disabled-with-tooltip. PromptToFlowBar.jsx API-key error message reverted. Puppeteer verification confirmed a 3-node triage workflow generates end-to-end.
@@ -2023,4 +2041,25 @@ full self-contained context and acceptance criteria.
 **Decisions made:** report only, escalate to debugger per protocol
 **Blockers:** none
 **Next:** debugger should address BUG-TOOLBAR-1 (runError dead code) and BUG-TOOLBAR-4 (Reset stale canvas) — both MEDIUM severity
+---
+
+---
+## 2026-03-31 — documenter — Task #41: Post-Fix Regression QA
+**Outcome:** COMPLETED
+**Summary:** Regression QA confirmed 187/187 tests pass at v3.0.0. TASK_PLAN stale entries (#32-40) corrected to COMPLETED. DOC_STATUS.md advanced to reflect all 113 tasks complete and v3.0.0 stable.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** nothing — v3.0.0 is confirmed stable and fully documented
+---
+---
+## 2026-03-31 — code-mapper — Task #41: Post-Fix Regression QA
+**Outcome:** COMPLETED
+**Summary:** Test-only task. 187/187 tests passed (9 files, 5.16s) against v3.0.0 codebase after Phase 10 bug fixes (Tasks #32–#40). No source files modified. Test coverage baseline appended to CODE_MAP.md; Task #41 status corrected in TASK_PLAN.md.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
+**Bugs fixed:** none
+**Decisions made:** Test coverage snapshot recorded as a new top-level section in CODE_MAP.md.
+**Blockers:** none
+**Next:** v3.0.0 baseline established — all future code changes must maintain 187/187 pass rate.
 ---

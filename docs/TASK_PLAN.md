@@ -2756,7 +2756,7 @@ Agent: backend-dev
 Priority: CRITICAL
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   The Content Security Policy defined in `server/middleware/security.js` sets
   `fontSrc: ["'self'"]`, which blocks the browser from loading any external font files.
@@ -2846,7 +2846,7 @@ Agent: backend-dev
 Priority: HIGH
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   In `server/services/JobRunner.js`, the `startJob()` method spawns a child process via
   `spawn(this.claudeBin, args, { shell: false })` at line 116. The code wires up handlers
@@ -2933,7 +2933,7 @@ Agent: frontend-dev
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   In `client/src/components/Sidebar.jsx`, the `handleProjectClick(project)` function
   checks `if (!state.sessions[project.id])` and then calls `apiPost('/api/v1/sessions')`.
@@ -3101,7 +3101,7 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   When a user clicks a project card in the sidebar, `handleProjectClick` calls
   `apiPost('/api/v1/sessions', { projectId })`. If this API call fails (e.g., the
@@ -3163,7 +3163,7 @@ Agent: frontend-dev
 Priority: LOW
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   Two minor issues in the `SidebarFooter` sub-component of `client/src/components/Sidebar.jsx`:
 
@@ -3216,7 +3216,7 @@ Agent: frontend-dev
 Priority: LOW
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   In `client/src/components/Sidebar.jsx`, the `SidebarHeader` sub-component renders a
   logo container (line 127):
@@ -3264,7 +3264,7 @@ Agent: frontend-dev
 Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   Three related UX/accessibility issues surfaced during the full QA pass:
 
@@ -3327,7 +3327,7 @@ Agent: qa-tester
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   After all Phase 10 bug fixes (Tasks #32-#40) are implemented, run a targeted regression
   test to verify:
@@ -7440,4 +7440,93 @@ Acceptance Criteria:
   - [x] PromptToFlowBar.jsx shows correct error messages
   - [x] Puppeteer end-to-end: workflow generates successfully, 3-node triage workflow produced
 Dependencies: TASK #100, TASK #101
+---
+
+TASK #113: Fix BUG-TOOLBAR-1 (dead runError state) + BUG-TOOLBAR-4 (Reset clears workflowDef)
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: sonnet
+Status: COMPLETED
+Context: |
+  Two toolbar bugs in SwarmView.jsx were identified and fixed in the 2026-03-31 session:
+
+  BUG-TOOLBAR-1: After a swarm run completes with an error, the runError state is never cleared
+  when the user starts a new run. The stale error message persists in the UI until the next
+  error or a manual reset. Fix: clear runError at the start of each new run invocation.
+
+  BUG-TOOLBAR-4: The Reset toolbar button was clearing the workflowDef state in addition to
+  resetting run state, causing the generated workflow to disappear and forcing the user to
+  re-generate it. Fix: Reset should only clear run-related state (runStatus, runError, nodeStates),
+  not the workflowDef itself.
+
+  Both fixes verified by Puppeteer inspection and confirmed passing with 187/187 tests.
+
+Acceptance Criteria:
+  - [x] runError cleared at start of each new swarm run
+  - [x] Reset button preserves workflowDef, only clears run state
+  - [x] 187/187 tests pass after fix
+  - [x] Puppeteer visual verification confirms correct toolbar behavior
+Dependencies: TASK #112
+---
+
+TASK #114: Fix BUG-TOOLBAR-2 — Old WebSocket not closed on workflow regen
+Agent: frontend-dev
+Priority: LOW
+Difficulty: LOW
+Suggested Model: haiku
+Status: PENDING
+Context: |
+  In SwarmView.jsx, when the user regenerates a workflow (calls generateWorkflow() while a
+  previous workflow exists), any active WebSocket connection from the prior run is not explicitly
+  closed before the new workflow is initialized. This can result in duplicate WS message handlers
+  and stale event listeners accumulating in memory.
+
+  WORKING DIRECTORY: C:\Users\arman\Downloads\Test workflows - Copia
+  FILE TO MODIFY: client/src/views/SwarmView.jsx (or wherever the swarm WS is managed)
+
+  EXPECTED FIX: Before calling generateWorkflow() (or equivalent), check if an existing WS
+  connection is open (ws.readyState === WebSocket.OPEN) and call ws.close() on it. Then
+  proceed with the new workflow generation.
+
+  This is a low-priority memory/cleanup bug — the app is functional without it, but it is
+  a resource leak that should be patched before v3.1.
+
+Acceptance Criteria:
+  - [ ] Old WebSocket explicitly closed before workflow regen begins
+  - [ ] No duplicate WS message handlers after multiple regens in one session
+  - [ ] 187/187 tests still pass (or updated count)
+  - [ ] No regressions in swarm run behavior
+Dependencies: TASK #112, TASK #113
+---
+
+TASK #115: Fix BUG-TOOLBAR-3 — Stop/Pause race produces /null/ URL in WebSocket request
+Agent: frontend-dev
+Priority: LOW
+Difficulty: LOW
+Suggested Model: haiku
+Status: PENDING
+Context: |
+  In SwarmView.jsx, when the user clicks Stop or Pause rapidly (before a run ID is returned
+  from the server), the runId state variable is still null. The WS or fetch call that sends
+  the stop/pause command constructs a URL using the runId, producing a request to a path like
+  /api/v1/swarm/null/stop, which the server rejects with a 404.
+
+  WORKING DIRECTORY: C:\Users\arman\Downloads\Test workflows - Copia
+  FILE TO MODIFY: client/src/views/SwarmView.jsx (Stop/Pause button handlers)
+
+  EXPECTED FIX: Guard the Stop/Pause handlers — only send the stop/pause request if runId
+  is non-null. Optionally disable the Stop/Pause buttons until a runId is available (i.e.,
+  until the first status event is received from the server confirming the run has started).
+
+  This is a low-priority race condition — only triggered by unusually fast user interaction
+  immediately after clicking Run.
+
+Acceptance Criteria:
+  - [ ] Stop/Pause handlers guard against null runId (no /null/ in request URLs)
+  - [ ] Stop/Pause buttons optionally disabled until runId is available
+  - [ ] No 404 errors in server logs during rapid Stop after Run
+  - [ ] 187/187 tests still pass (or updated count)
+  - [ ] No regressions in swarm run/stop/pause behavior
+Dependencies: TASK #112, TASK #113
 ---

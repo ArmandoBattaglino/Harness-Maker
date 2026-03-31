@@ -2625,3 +2625,17 @@ _Last updated: 2026-03-31 — after Task #113: Fix BUG-TOOLBAR-1 + BUG-TOOLBAR-4
 - Task #108 FIXED: HitlInbox InboxItem handleApproveConfirm + handleReject now call setError() on null executionId/itemId — was silent return, error now shown in the card
 - Task #109 FIXED: useSwarm agentStates top-level subscription removed — hook no longer causes SwarmView re-renders on every agent state change; agentStates now read via useSwarmStore.getState() inside handoff_started handler
 - Task #110: package.json version bumped from 0.1.0 → 3.0.0 (v3.0.0 official release)
+
+## Test Coverage Snapshot
+_Recorded 2026-03-31 after Task #41: Post-Fix Regression QA_
+
+| Metric | Value |
+|--------|-------|
+| Total tests | 187 |
+| Test files | 9 |
+| Pass rate | 100% (187/187) |
+| Duration | 5.16s |
+| Codebase version | v3.0.0 |
+| Runner | Vitest (npm test) |
+
+All 187 tests pass against the current codebase at v3.0.0. This baseline was established after Tasks #32–#40 (Phase 10 bug fixes). Any future code changes should maintain or exceed this count with zero failures.

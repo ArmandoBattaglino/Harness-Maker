@@ -1836,3 +1836,31 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 - useSwarm no longer causes re-renders of its consumer on agent state changes — only on the specific store slices it subscribes to (setExecution, updateAgentState, etc. actions). This is a performance improvement with no behavioral change.
 
 ---
+---
+## 2026-03-31 — Task #41: Post-Fix Regression QA
+**Agent:** qa-tester (inline — npm test)
+**Triggered by:** Regression suite run after Tasks #32–#40 Phase 10 bug fixes. Also correcting stale PENDING status for Tasks #32–#40 in TASK_PLAN.md (completed in a prior session).
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| docs/TASK_PLAN.md | MODIFIED | Task #41 status updated PENDING → COMPLETED |
+| docs/memory/CODE_MAP.md | MODIFIED | Test coverage snapshot appended (187/187 tests, v3.0.0) |
+
+### Functions Added
+- none
+
+### Functions Modified
+- none
+
+### Functions Removed
+- none
+
+### Connection Changes
+- none — test-only run; no source or test file modifications
+
+### Impact on Other Code
+- Establishes 187-test / 9-file / 5.16s baseline for v3.0.0. All future PRs must maintain 187/187 pass rate.
+- Tasks #32–#40 status retroactively corrected in TASK_PLAN.md; no code impact.
+
+---

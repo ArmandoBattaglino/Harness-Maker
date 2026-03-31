@@ -1595,3 +1595,50 @@ QA visual regression wave produced 6 bug fixes across 4 frontend files plus a ve
 ### Handoff
 - None — this was the final documentation pass before v3.0.0 release. No open mapping gaps remaining.
 ---
+---
+## 2026-03-31 — Task #41: Post-Fix Regression QA
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task trio: code-mapper + project-manager + documenter)
+
+### Context when I started
+- Codebase at v3.0.0. Tasks #32–#40 had been completed in a prior session but TASK_PLAN.md still showed PENDING for #41.
+- No source files were modified in this task — it was a pure test execution.
+
+### What I did
+1. Read current CODE_MAP.md header and tail to understand current state (last entry: Task #110 version bump to 3.0.0).
+2. Read current CHANGELOG.md tail (last entry: Tasks #104–#110).
+3. Confirmed no function-level changes to map — test-only task.
+4. Updated Task #41 status in TASK_PLAN.md from PENDING → COMPLETED.
+5. Appended test coverage snapshot section to CODE_MAP.md documenting 187/187 tests at v3.0.0.
+6. Appended CHANGELOG.md entry for Task #41.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Task #41 status: PENDING → COMPLETED |
+| docs/memory/CODE_MAP.md | MODIFIED | Appended ## Test Coverage Snapshot section with 187/187 baseline |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Task #41 entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Entry appended |
+
+### Improvements delivered
+- CODE_MAP.md now records the 187-test / 9-file baseline for v3.0.0 — future agents have a clear regression baseline to reference.
+- TASK_PLAN.md corrected so #41 no longer shows as PENDING.
+
+### Bugs I encountered
+- none
+
+### Decisions I made
+- Added a new "Test Coverage Snapshot" top-level section to CODE_MAP.md rather than embedding the note in function entries — test metrics are codebase-wide, not tied to any single function.
+
+### What I learned
+- Task #41 was originally written expecting 110 tests; the actual suite grew to 187 by the time it ran. The v3.0.0 baseline is 187 tests across 9 files.
+
+### State I'm leaving behind
+- CODE_MAP.md: updated through Task #41, test coverage snapshot present.
+- CHANGELOG.md: entry for Task #41 appended.
+- TASK_PLAN.md: Task #41 marked COMPLETED.
+
+### Handoff
+- None — task fully self-contained. v3.0.0 baseline is documented.
+---

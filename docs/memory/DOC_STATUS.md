@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-03-31 after Task #112: Fix Swarm workflow generation + Run button UX_
+_Last updated: 2026-03-31 after Task #41: Post-Fix Regression QA — v3.0.0 confirmed stable (187/187 tests pass, all 113 tasks completed)_
 
 ## Status Legend
 - UP_TO_DATE -- matches current code
@@ -16,7 +16,7 @@ _Last updated: 2026-03-31 after Task #112: Fix Swarm workflow generation + Run b
 | docs/API.md | UP_TO_DATE | 2026-03-28 | pause endpoint: full state update + WS broadcast (BUG-94). resume endpoint: actual resumeExecution() behavior (BUG-95). budget field in status response: real budgetTracker data (BUG-98). Verified clean at V3 RELEASE-READY closure. |
 | docs/memory/PROJECT.md | UP_TO_DATE | 2026-03-28 | Version updated to v3.0, implementation status updated to complete. @anthropic-ai/sdk row added to tech stack. @xyflow/react and zustand rows updated (no longer "not yet imported"). V3-Specific Constraints section added (DEC-011 through DEC-016, SEC-V3-01 through SEC-V3-07). |
 | docs/memory/DECISIONS.md | UP_TO_DATE | 2026-03-27 | DEC-011 through DEC-016 added by architect during V3 tasks. No changes needed. |
-| docs/memory/PROGRESS.md | UP_TO_DATE | 2026-03-28 | All 99 tasks COMPLETED. Debug loop (Tasks #84–#99) all COMPLETED. Project closed at V3 RELEASE-READY. |
+| docs/memory/PROGRESS.md | UP_TO_DATE | 2026-03-31 | All 113 tasks COMPLETED. Tasks #32–#40 stale PENDING status corrected to COMPLETED. 187/187 regression tests pass at v3.0.0. Project confirmed stable. |
 | docs/memory/CODE_MAP.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No changes from documenter. |
 | docs/memory/CHANGELOG.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No changes from documenter. |
 | docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-03-28 | V3 RELEASE-READY closure entry appended by project-manager and documenter. |
