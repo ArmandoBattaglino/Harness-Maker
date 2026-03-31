@@ -84,6 +84,7 @@ export default function SwarmView() {
 
   // Task #103 — Pause handler
   const handlePause = async () => {
+    if (!activeExecutionId) return; // BUG-TOOLBAR-3: guard against Stop+Pause race
     setPausing(true);
     try {
       await apiPost(`/api/v1/swarm/${activeExecutionId}/pause`, {});
@@ -95,6 +96,7 @@ export default function SwarmView() {
 
   // Task #103 — Resume handler
   const handleResume = async () => {
+    if (!activeExecutionId) return; // BUG-TOOLBAR-3: guard against Stop+Resume race
     setPausing(true);
     try {
       await apiPost(`/api/v1/swarm/${activeExecutionId}/resume`, {});

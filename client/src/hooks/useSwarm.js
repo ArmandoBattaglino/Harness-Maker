@@ -77,12 +77,14 @@ export function useSwarm(workflowId) {
     wsRef.current?.close();
   }, [setExecution]);
 
-  // Cleanup WS on unmount
+  // Close WS when workflowId changes (new workflow generated while one was running)
+  // and on unmount — BUG-TOOLBAR-2
   useEffect(() => {
     return () => {
       wsRef.current?.close();
+      wsRef.current = null;
     };
-  }, []);
+  }, [workflowId]);
 
   return { startExecution, stopExecution, connectWs };
 }
