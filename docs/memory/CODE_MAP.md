@@ -2093,7 +2093,7 @@ _Last updated: 2026-03-31 — after Task #112: Fix Swarm workflow generation + R
 - **Output:** JSX — flex-col div: input row (icon + text input + Generate button) + optional error line below
 - **Side effects:** POST /api/v1/swarm/scaffold (creates a workflow record on the server via WorkflowStore); calls onWorkflowGenerated prop on success; sets prompt/loading/error React state
 - **Complexity note:** Staggered animation: each node in workflowDef.nodes gets `style.animation = 'fadeIn 0.3s ease forwards ${i * 0.08}s'` where i is the index. This depends on @keyframes fadeIn declared in client/src/index.css. The SCAFFOLD_HEADERS constant (module-level) includes the CSRF header — mutating requests without this header would be rejected by server/middleware/csrf.js. handleGenerate is memoized via useCallback with [prompt, loading, onWorkflowGenerated] deps.
-- **Last modified:** 2026-03-27 in Task #60 by frontend-dev
+- **Last modified:** 2026-03-31 in Task #112 by orchestrator (error message display reverted to generic `body.error || HTTP {status}` — was showing API-key-specific message that no longer applies since scaffold uses spawn not SDK)
 
 ### `client/src/canvas/PromptToFlowBar.jsx` :: `handleGenerate()` (internal — via useCallback)
 - **Purpose:** Async submit handler. Guards against empty prompt and concurrent submission (loading flag). Calls POST /api/v1/swarm/scaffold, decodes { workflowId, workflowDef }, applies per-node staggered animation transform, and calls onWorkflowGenerated. Sets error state on any fetch or HTTP failure.
