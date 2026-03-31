@@ -1,4 +1,51 @@
 ---
+## 2026-03-31 — Tasks #104–#111: QA Bug-Fix Pass + v3.0.0 Version Bump
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel with code-mapper and project-manager, post QA bug-fix wave)
+
+### Context when I started
+Tasks #104-#111 were the QA visual bug-fix pass. Five files were modified by frontend-dev: InterAgentFeed.jsx, SwarmView.jsx, HitlInbox.jsx, useSwarm.js, and package.json. The project had been declared V3 RELEASE-READY at v3.0.0. DOC_STATUS.md was last updated 2026-03-28. ARCHITECTURE.md was last updated 2026-03-28 and had not yet captured the specific UI control rules introduced in this QA pass.
+
+### What I did
+1. Read DOC_STATUS.md, documenter.md (history), and README.md in parallel.
+2. Read all 5 modified source files in parallel: InterAgentFeed.jsx, SwarmView.jsx, HitlInbox.jsx, useSwarm.js, package.json.
+3. Read ARCHITECTURE.md Section 11.5 (HITL flow) and Section 11.9 (component tree) to determine exact staleness.
+4. Determined README.md is NOT stale: it contains no semver string in prose (only "(v3)" section headings); the package.json bump to 3.0.0 does not affect any README text.
+5. Updated ARCHITECTURE.md Section 11.5: added HITL drawer header/close button behavior, and the inline error-surfacing change (no more silent no-op on approve/reject when executionId is null).
+6. Updated ARCHITECTURE.md Section 11.9: rewrote component tree to include InterAgentFeed (with the w-56 shrink-0 rationale), HitlInbox drawer as inline-rendered in SwarmView, PtyExplosion, and full toolbar control visibility rules for all five buttons. Added useSwarm.js getState() pattern explanation.
+7. Updated DOC_STATUS.md: advanced last-updated line to 2026-03-31, updated ARCHITECTURE.md and README.md table rows with accurate notes.
+8. Appended to ACTIVITY_LOG.md and this file.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/ARCHITECTURE.md | MODIFIED | Section 11.5: HITL drawer header+close and error surfacing added. Section 11.9: full rewrite of component tree and hook descriptions to match QA bug-fix pass output. |
+| docs/memory/DOC_STATUS.md | MODIFIED | Last-updated line advanced to 2026-03-31. README.md and ARCHITECTURE.md table rows updated. |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Session entry appended. |
+| docs/memory/agents/documenter.md | MODIFIED | This session log appended. |
+
+### Improvements delivered
+- ARCHITECTURE.md Section 11.9 now accurately documents the w-56 shrink-0 constraint on InterAgentFeed (preventing canvas collapse), the HITL drawer rendering model, PtyExplosion overlay, and all five toolbar button visibility conditions.
+- ARCHITECTURE.md Section 11.5 now documents that approve/reject buttons surface an inline error when no executionId is active — correct behavior, not a silent no-op.
+- README.md confirmed not stale — saved unnecessary churn.
+
+### Bugs I encountered
+None in documentation work. The source bugs were already fixed by frontend-dev before this pass.
+
+### Decisions I made
+- README.md does not need updating for the v3.0.0 version bump. The README uses "(v3)" as a section label, not a semver reference. No version badge or explicit version string appears in the prose.
+- ARCHITECTURE.md is the right place to document toolbar control visibility logic (which buttons show in which states), since this is architectural behavior, not a UI style guide.
+
+### What I learned
+- When QA fixes are UI-behavioral (button visibility, error surfacing, layout constraints), ARCHITECTURE.md Section 11.9 (component tree) is the primary documentation target — not README or API docs.
+- The useSwarm.js getState() pattern (accessing Zustand state inside a callback without subscribing to it) is worth documenting explicitly because it's a non-obvious React/Zustand idiom that prevents excessive re-renders.
+
+### State I'm leaving behind
+All documentation is accurate and synchronized with the v3.0.0 codebase after the QA bug-fix wave. README.md, ARCHITECTURE.md, API.md, security audit, and memory files are all current. No open documentation debt blocks release.
+
+### Handoff
+None — v3.0.0 documentation is complete and current.
+---
 ## 2026-03-28 — V3 RELEASE-READY: Final Documentation Closure
 **Status:** COMPLETED
 **Called by:** user (final closure pass after debug loop — no code changes in this pass)

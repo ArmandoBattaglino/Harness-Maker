@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-03-28 after V3 RELEASE-READY closure — all docs verified clean_
+_Last updated: 2026-03-31 after Tasks #104–#111: QA Bug-Fix Pass + v3.0.0 version bump_
 
 ## Status Legend
 - UP_TO_DATE -- matches current code
@@ -11,8 +11,8 @@ _Last updated: 2026-03-28 after V3 RELEASE-READY closure — all docs verified c
 
 | Document | Status | Last Updated | Notes |
 |----------|--------|--------------|-------|
-| README.md | UP_TO_DATE | 2026-03-28 | V3 features table, Swarm quick-start guide, V3 constraints, Known Limitations updated for v3. All V2 sections preserved. Verified clean at V3 RELEASE-READY closure. |
-| docs/ARCHITECTURE.md | UP_TO_DATE | 2026-03-28 | V3 Section 11 added (11.1 system diagram, 11.2 WS events, 11.3 WorkflowDefinition schema, 11.4 handoff protocol, 11.5 HITL flow, 11.6 key decisions, 11.7 security requirements, 11.8 service dependency graph, 11.9 React component tree). Version header updated to 3.0. Verified clean at V3 RELEASE-READY closure. |
+| README.md | UP_TO_DATE | 2026-03-31 | No version string appears in prose (only "(v3)" section headings). package.json bumped to 3.0.0 — README unaffected. Features table and Swarm quick-start guide remain accurate. Verified clean after Tasks #104–#111. |
+| docs/ARCHITECTURE.md | UP_TO_DATE | 2026-03-31 | Section 11.5 HITL flow updated: drawer now has header+close button; approve/reject surfaces inline errors (no silent no-op). Section 11.9 component tree updated: InterAgentFeed (w-56 shrink-0), HitlInbox drawer, PtyExplosion, toolbar control visibility rules (Run/Stop/Pause/Resume/HITL), and useSwarm getState() pattern all documented. |
 | docs/API.md | UP_TO_DATE | 2026-03-28 | pause endpoint: full state update + WS broadcast (BUG-94). resume endpoint: actual resumeExecution() behavior (BUG-95). budget field in status response: real budgetTracker data (BUG-98). Verified clean at V3 RELEASE-READY closure. |
 | docs/memory/PROJECT.md | UP_TO_DATE | 2026-03-28 | Version updated to v3.0, implementation status updated to complete. @anthropic-ai/sdk row added to tech stack. @xyflow/react and zustand rows updated (no longer "not yet imported"). V3-Specific Constraints section added (DEC-011 through DEC-016, SEC-V3-01 through SEC-V3-07). |
 | docs/memory/DECISIONS.md | UP_TO_DATE | 2026-03-27 | DEC-011 through DEC-016 added by architect during V3 tasks. No changes needed. |

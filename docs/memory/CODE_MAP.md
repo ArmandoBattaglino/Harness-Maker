@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-29 — after Analysis task: orchestration pipeline hardened (create.md + project-manager.md INTEGRATION RULE) — mapped by code-mapper_
+_Last updated: 2026-03-31 — after Tasks #104-#110: QA Bug-Fix Pass + v3.0.0 version bump — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -77,8 +77,15 @@ _Last updated: 2026-03-29 — after Analysis task: orchestration pipeline harden
 | client/src/canvas/SwarmCanvas.jsx | default SwarmCanvas | Root React Flow canvas for swarm visualization. Registers nodeTypes (agent, department, trigger) + edgeTypes (handoff). Manages nodes/edges state via useNodesState/useEdgesState. Drill-down filtering: computes visibleNodes/visibleEdges via focusedDepartmentId. onNodeClick→setSelectedNode; onPaneClick→setSelectedNode(null). Mounts BreadcrumbBar + AgentInspector. (Task #57.1) |
 | client/src/canvas/PromptToFlowBar.jsx | default PromptToFlowBar | Natural-language prompt input bar. POSTs to /api/v1/swarm/scaffold, applies per-node staggered fadeIn animation to returned workflowDef, calls onWorkflowGenerated(workflowId, animatedDef) on success. (Task #60) |
 | client/src/canvas/BroadcastBar.jsx | default BroadcastBar | Broadcasts text to all running agent PTYs via POST /api/v1/swarm/:executionId/broadcast. Only renders when executionStatus === 'running'. Soft/hard mode selector. (Task #66) |
-| client/src/hooks/useSwarm.js | useSwarm (named) | WebSocket hook for swarm execution lifecycle: connectWs(executionId) → /ws/swarm?executionId=X; startExecution() POSTs + connects WS; stopExecution() DELETEs + closes WS. Dispatches 6 WS message types to useSwarmStore. (Task #63) |
-| client/src/views/SwarmView.jsx | default SwarmView | Layout shell for the Swarm Orchestrator page. Toolbar shows title + executionStatus indicator + conditional Reset button. Mounts PromptToFlowBar (Task #60) and BroadcastBar (Task #66); workflowDef local state wired to onWorkflowGenerated → setWorkflowDef → SwarmCanvas prop. (Tasks #57.2, #60, #66) |
+| client/src/hooks/useSwarm.js | useSwarm (named) | WebSocket hook for swarm execution lifecycle: connectWs(executionId) → /ws/swarm?executionId=X; startExecution() POSTs + connects WS; stopExecution() DELETEs + closes WS. Dispatches 6 WS message types to useSwarmStore. agentStates top-level subscription removed (Task #109); uses useSwarmStore.getState() inside handler. (Tasks #63, #109) |
+| client/src/views/SwarmView.jsx | default SwarmView | Layout shell for the Swarm Orchestrator page. Toolbar: title, executionStatus indicator, Run/Stop/Pause/Resume buttons (Stop visible when paused — Task #105), HITL drawer toggle with header+close button (Task #106), runError banner when no project selected (Task #107). Run button gated on activeProjectId (Task #105). (Tasks #57.2, #60, #66, #101, #103, #105, #106, #107) |
+| client/src/canvas/InterAgentFeed.jsx | default InterAgentFeed | Real-time sidebar log of agent handoff events. Empty-state container now has w-56 shrink-0 (Task #104 — prevents canvas collapse when feed is empty). Auto-scrolls to bottom. Renders event icon + timestamp + details for handoff_started/agent_status/circuit_breaker/execution_status types. (Tasks #72, #104) |
+| client/src/panels/HitlInbox.jsx | default HitlInbox, getPendingCount (named) | HITL approval panel. InboxItem.handleApproveConfirm and handleReject now call setError() instead of silently returning when executionId/itemId is null (Task #108). (Tasks #69, #108) |
+
+### Root Config
+| File | Key Exports | Purpose |
+|------|-------------|---------|
+| package.json | (config) | Root package.json: version bumped to **3.0.0** (was 0.1.0) in Task #110. npm scripts: start, dev, build, install:all, test. devDependencies: concurrently. dependencies: @google/stitch-sdk. |
 
 ### Client Config & Styles
 | File | Key Exports | Purpose |
@@ -1976,14 +1983,14 @@ _Last updated: 2026-03-29 — after Analysis task: orchestration pipeline harden
 ## Swarm View Shell (Task #57.2)
 
 ### `client/src/views/SwarmView.jsx` :: `SwarmView()`
-- **Purpose:** Top-level page shell for the Swarm Orchestrator. Renders a fixed toolbar (title, executionStatus indicator, conditional Reset button), then PromptToFlowBar below the toolbar, then the full-height canvas area, then BroadcastBar pinned to the bottom (only visible when executionStatus === 'running'). Provides the ReactFlowProvider boundary required by @xyflow/react. Owns `workflowDef` local state; receives it from PromptToFlowBar.onWorkflowGenerated and passes it down to SwarmCanvas.
+- **Purpose:** Top-level page shell for the Swarm Orchestrator. Renders a fixed toolbar, PromptToFlowBar, full-height canvas, HITL inbox drawer, BroadcastBar, and PTY explosion overlay. Provides the ReactFlowProvider boundary required by @xyflow/react. Owns `workflowDef` local state.
 - **Called by:** App.jsx::MainContent (case 'swarm' — wired in Task #58)
-- **Calls:** useSwarmStore (selector: s.executionStatus), useSwarmStore (selector: s.reset), useState (React — workflowDef local state), ReactFlowProvider (from @xyflow/react), PromptToFlowBar (client/src/canvas/PromptToFlowBar.jsx — Task #60), SwarmCanvas (client/src/canvas/SwarmCanvas.jsx), BroadcastBar (client/src/canvas/BroadcastBar.jsx — Task #66)
+- **Calls:** useSwarmStore (selectors: executionStatus, activeExecutionId, inboxItems, interAgentFeed, setPaused, setResumed, reset, ptyExplosionNodeId, setPtyExplosionNodeId), useAppState (activeProjectId, projects), useSwarm(workflowDef?.id), getPendingCount, useState (workflowDef, inboxOpen, executing, pausing, runError), useEffect (Escape key handler), apiPost, ReactFlowProvider, SwarmCanvas, PromptToFlowBar, BroadcastBar, PtyExplosion, HitlInbox
 - **Inputs:** none (no props)
-- **Output:** JSX — flex-col full-height div: toolbar row (shrink-0) + PromptToFlowBar (shrink-0) + canvas area (flex-1, overflow-hidden) containing ReactFlowProvider > SwarmCanvas + BroadcastBar (bottom, conditionally rendered by its own internal logic)
-- **Side effects:** calls SwarmStore.reset() when Reset button is clicked (clears execution state); no server I/O
-- **Complexity note:** `statusColors` is a module-level const map (idle/running/stopped → Tailwind class string). `executionStatus === 'stopped'` is the sole gate for the Reset button. onWorkflowGenerated callback receives (workflowId, animatedDef) from PromptToFlowBar — SwarmView discards workflowId and stores only animatedDef in workflowDef local state, which flows into SwarmCanvas. BroadcastBar is always mounted but renders null when executionStatus !== 'running' (self-hides based on store state). ReactFlowProvider must wrap SwarmCanvas (not SwarmCanvas internally) because SwarmView is the intended boundary for the React Flow context.
-- **Last modified:** 2026-03-27 in Task #66 by frontend-dev (BroadcastBar import + mount added; layout updated)
+- **Output:** JSX — flex-col full-height div: toolbar + optional runError banner + PromptToFlowBar + canvas + optional HITL drawer + BroadcastBar + optional PtyExplosion overlay
+- **Side effects:** Escape key listener wired via document.addEventListener (cleaned up on unmount). apiPost to /pause and /resume. calls setPaused/setResumed/reset on store. Calls startExecution/stopExecution from useSwarm hook.
+- **Complexity note (Tasks #105-#107):** Stop button condition changed from `executionStatus === 'running'` to `executionStatus === 'running' || executionStatus === 'paused'` — Stop is now visible when paused. Run button gated on `activeProjectId` (truthy check) so workflow cannot start without a project selected; `runError` state shows inline error message when user clicks Run without a project. HITL drawer now has its own header with title + close button (Task #106) — no longer a bare panel. HITL badge uses `e.stopPropagation()` to prevent click from bubbling into canvas (Task #106). statusColors module-level const maps 4 statuses (added 'paused' → text-yellow-400).
+- **Last modified:** 2026-03-31 in Tasks #105/#106/#107 by frontend-dev (Stop visible when paused; Run gated by activeProjectId; HITL drawer header+close; HITL badge stopPropagation; runError state added)
 
 ---
 
@@ -2111,41 +2118,42 @@ _Last updated: 2026-03-29 — after Analysis task: orchestration pipeline harden
 ## Swarm WS Hook (Task #63)
 
 ### `client/src/hooks/useSwarm.js` :: `useSwarm(workflowId)`
-- **Purpose:** React hook that owns the WebSocket connection to the swarm WS channel for a given workflowId. Exposes connectWs, startExecution, and stopExecution. Manages a wsRef (useRef) to prevent stale WS references. Cleans up the WS on unmount via useEffect cleanup. BUG-90 fix: store selectors are now granular (one per action/state slice) to avoid re-renders on unrelated store changes.
-- **Called by:** (no live callers yet — intended consumer is SwarmView.jsx or a SwarmToolbar component that needs execution controls)
-- **Calls:** useSwarmStore (granular selectors — one per: setExecution, updateAgentState, updateEdgeCounter, updateBudget, addInboxItem, addFeedEvent, setWsConnected, agentStates), connectWs (internal), startExecution (internal), stopExecution (internal), useRef, useCallback, useEffect (React)
+- **Purpose:** React hook that owns the WebSocket connection to the swarm WS channel for a given workflowId. Exposes connectWs, startExecution, and stopExecution. Manages a wsRef (useRef) to prevent stale WS references. Cleans up the WS on unmount via useEffect cleanup. BUG-90 fix: store selectors are now granular (one per action/state slice). Task #109: removed agentStates top-level subscription — agentStates is now read inside the handler via useSwarmStore.getState() to avoid stale closures and prevent re-subscriptions.
+- **Called by:** SwarmView.jsx (via `const { startExecution, stopExecution } = useSwarm(workflowDef?.id)` — wired in Task #101)
+- **Calls:** useSwarmStore (granular selectors — one per: setExecution, updateAgentState, updateEdgeCounter, updateBudget, addInboxItem, addFeedEvent, setWsConnected), useSwarmStore.getState() (direct access inside handoff_started handler for agentStates read — Task #109), connectWs (internal), startExecution (internal), stopExecution (internal), useRef, useCallback, useEffect (React)
 - **Inputs:** workflowId (string — workflow ID passed to startExecution POST)
 - **Output:** `{ startExecution, stopExecution, connectWs }` — stable callbacks
 - **Side effects:** opens/closes WebSocket; HTTP POST on startExecution; HTTP DELETE on stopExecution; cleanup on unmount (wsRef.current?.close())
-- **Last modified:** 2026-03-28 in Task #90 by frontend-dev (BUG-90 fix: granular store selectors — was single broad selector in Task #63)
+- **Complexity note (Task #109):** The `agentStates` subscription was removed from the top-level hook body. Instead, `useSwarmStore.getState().agentStates[msg.sourceNodeId]` is called directly inside the `handoff_started` onmessage handler. This prevents the hook from re-rendering its consumer (SwarmView) every time any agent state changes while still allowing the handler to read current handoffCount when processing handoff events.
+- **Last modified:** 2026-03-31 in Task #109 by frontend-dev (removed agentStates top-level subscription; uses useSwarmStore.getState() inside handler)
 
 ### `client/src/hooks/useSwarm.js` :: `connectWs(executionId)` (returned callback)
-- **Purpose:** Open a WebSocket connection to /ws/swarm?executionId=X. Closes any existing WS first. Dispatches 6 message types to useSwarmStore: agent_status → updateAgentState; handoff_started → updateEdgeCounter + addFeedEvent + updateAgentState(handoffCount increment); execution_status → setExecution; budget_update → updateBudget; circuit_breaker → addFeedEvent; hitl_required → addInboxItem. BUG-88 fix: handoff_started now correctly increments handoffCount by reading agentStates[msg.sourceNodeId].handoffCount from the store (was missing in Task #63).
+- **Purpose:** Open a WebSocket connection to /ws/swarm?executionId=X. Closes any existing WS first. Dispatches 6 message types to useSwarmStore: agent_status → updateAgentState; handoff_started → updateEdgeCounter + addFeedEvent + updateAgentState(handoffCount increment); execution_status → setExecution; budget_update → updateBudget; circuit_breaker → addFeedEvent; hitl_required → addInboxItem. BUG-88 fix: handoff_started now correctly increments handoffCount. Task #109: agentStates read via useSwarmStore.getState() instead of stale closure.
 - **Called by:** useSwarm — called internally by startExecution after POST succeeds; also returned as a public callback for manual reconnect
-- **Calls:** WebSocket (browser native), setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, setExecution, updateBudget, addInboxItem, JSON.parse
+- **Calls:** WebSocket (browser native), setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, setExecution, updateBudget, addInboxItem, JSON.parse, useSwarmStore.getState() (for agentStates inside handoff_started)
 - **Inputs:** executionId (string)
 - **Output:** void (stores new WebSocket instance in wsRef.current)
 - **Side effects:** opens WebSocket to server; registers onopen/onclose/onerror/onmessage handlers; closes previous WS if any
-- **Complexity note (BUG-88 fix):** handoff_started handler now reads `agentStates[msg.sourceNodeId]?.handoffCount ?? 0` from the store and calls `updateAgentState(msg.sourceNodeId, { handoffCount: currentHandoffCount + 1 })`. Without this, the AgentNode handoffCount badge never incremented on WS messages. Protocol selected dynamically (wss:/ws: based on location.protocol). WS URL relative to location.host for port adaptability. Non-JSON frames silently discarded.
-- **Last modified:** 2026-03-28 in Tasks #88/#90 by frontend-dev (BUG-88: handoffCount increment added; BUG-90: granular selectors; was Task #63)
+- **Complexity note (Task #109):** handoff_started reads `useSwarmStore.getState().agentStates[msg.sourceNodeId]` directly rather than subscribing to agentStates at hook level. This pattern avoids stale closure issues without adding a reactive subscription that would cause the hook to re-render SwarmView. Protocol selected dynamically (wss:/ws: based on location.protocol). Non-JSON frames silently discarded.
+- **Last modified:** 2026-03-31 in Task #109 by frontend-dev (agentStates moved from top-level selector to getState() inside handler)
 
 ### `client/src/hooks/useSwarm.js` :: `startExecution(projectId, projectPath)` (returned callback)
 - **Purpose:** POST to /api/v1/swarm/:workflowId/start with {projectId, projectPath}, then call connectWs(executionId) to open the WS stream. Sets store state to running. Returns the executionId.
-- **Called by:** (no live callers yet — intended for a Run button in SwarmView or SwarmToolbar)
+- **Called by:** SwarmView.jsx::handleRun (Task #101 — wired to Run button; only called when activeProjectId is set and workflowDef is loaded)
 - **Calls:** apiPost (from hooks/useApi.js), setExecution (store), connectWs (internal)
 - **Inputs:** projectId (string), projectPath (string)
 - **Output:** Promise\<string\> — executionId returned from server
 - **Side effects:** HTTP POST; opens WebSocket; updates store (activeExecutionId, executionStatus = 'running')
-- **Last modified:** 2026-03-27 in Task #63 by frontend-dev
+- **Last modified:** 2026-03-27 in Task #63 by frontend-dev (caller wired in Task #101)
 
 ### `client/src/hooks/useSwarm.js` :: `stopExecution(executionId)` (returned callback)
 - **Purpose:** DELETE /api/v1/swarm/:executionId to stop the server-side execution, then close the local WS and update store to stopped/null.
-- **Called by:** (no live callers yet — intended for a Stop button in SwarmView or SwarmToolbar)
+- **Called by:** SwarmView.jsx::handleStop (Task #101 — wired to Stop button; Stop button now visible when running OR paused, per Task #105)
 - **Calls:** apiDelete (from hooks/useApi.js), setExecution (store), wsRef.current?.close()
 - **Inputs:** executionId (string)
 - **Output:** Promise\<void\>
 - **Side effects:** HTTP DELETE; closes WebSocket; updates store (activeExecutionId = null, executionStatus = 'stopped')
-- **Last modified:** 2026-03-27 in Task #63 by frontend-dev
+- **Last modified:** 2026-03-27 in Task #63 by frontend-dev (caller updated in Task #105 — Stop now shown when paused too)
 
 ---
 

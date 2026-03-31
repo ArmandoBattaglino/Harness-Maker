@@ -1,6 +1,13 @@
 # Progress
 
 ## Completed
+- [TASKS #104-#111] QA Visual Bug-Fix Wave (frontend-dev) — COMPLETED 2026-03-31
+  All 8 bugs from the Puppeteer visual audit resolved: InterAgentFeed w-56 shrink-0 (VISUAL-01/SW-03),
+  Stop button paused-state condition (SW-01), Run button activeProjectId guard (SW-02), HITL drawer
+  header + stopPropagation (VISUAL-05), HitlInbox approve/reject disabled state (SW-05), version bump
+  to v3.0.0 in package.json (VISUAL-07), agentStates subscription removed from useSwarm deps (SW-04).
+  Puppeteer confirmation: all 6 views render correctly. v3.0.0 release state confirmed.
+
 - [TASK-93/96/97/98] Backend service bug fixes (backend-dev) — COMPLETED 2026-03-28
   BUG-93: stopExecution() now calls budgetTracker.clearExecution(). BUG-96: Added public getExecution() method to SwarmEngine, inbox.js updated to use it instead of private _executions. BUG-97: cleanupExecution() now cleans up null-executionId pollers. BUG-98: getStatus() returns real budget data from budgetTracker. 187/187 tests pass. 473 modules build clean.
 - [TASK-88/90/91] Frontend bug fixes (frontend-dev) — COMPLETED 2026-03-28

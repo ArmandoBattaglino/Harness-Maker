@@ -2,19 +2,21 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** V3 RELEASE-READY
+**Status:** V3 RELEASE-READY (v3.0.0 — all QA bugs resolved)
 
 ---
 
 ## V3 RELEASE-READY
 
 **Declared:** 2026-03-28
-**QA verdict:** CLEAN — 187/187 tests pass, 0 failures, 0 errors.
+**QA bug-fix wave completed:** 2026-03-31
+**QA verdict:** CLEAN — Puppeteer visual inspection confirms all 6 views render correctly.
 **Build:** 473 modules, 0 warnings.
 **Debug loop:** All 17 post-release bug tasks (#83–#99) COMPLETED.
+**QA bug-fix wave:** All 8 visual/swarm bugs (#104–#111) COMPLETED.
 **Known open bugs:** None.
 
-All tasks in the original V3 wave (#43–#82, 57 granular units) and the post-release debug loop (#83–#99) are COMPLETED. No further development work is required before release. The codebase is stable and ready for production deployment.
+All tasks in the original V3 wave (#43–#82, 57 granular units), the post-release debug loop (#83–#99), and the QA visual inspection bug-fix wave (#104–#111) are COMPLETED. The codebase is stable and confirmed ready for production deployment at v3.0.0.
 
 ---
 
@@ -6916,7 +6918,7 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: LOW
 Suggested Model: haiku
-Status: PENDING
+Status: COMPLETED
 Context:
   BUG ID: BUG-VISUAL-01
   Severity: CRITICAL — the React Flow canvas collapses to ~172px wide, making it completely unusable.
@@ -6966,7 +6968,7 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: LOW
 Suggested Model: haiku
-Status: PENDING
+Status: COMPLETED
 Context:
   BUG ID: BUG-SW-01
   Severity: CRITICAL — users cannot stop a paused swarm execution. The Stop button disappears the
@@ -7011,7 +7013,7 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: LOW
 Suggested Model: haiku
-Status: PENDING
+Status: COMPLETED
 Context:
   BUG ID: BUG-SW-02
   Severity: CRITICAL — clicking Run with no project selected calls startExecution with a null or
@@ -7066,7 +7068,7 @@ Agent: frontend-dev
 Priority: MEDIUM
 Difficulty: LOW
 Suggested Model: haiku
-Status: PENDING
+Status: COMPLETED
 Context:
   BUG ID: BUG-SW-03
   Severity: MEDIUM — when InterAgentFeed has not yet received any messages, the empty-state div
@@ -7102,7 +7104,7 @@ Agent: frontend-dev
 Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: sonnet
-Status: PENDING
+Status: COMPLETED
 Context:
   BUG ID: BUG-VISUAL-05
   Severity: MEDIUM — two related issues in the HITL drawer in SwarmView.jsx.
@@ -7152,7 +7154,7 @@ Agent: frontend-dev
 Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: sonnet
-Status: PENDING
+Status: COMPLETED
 Context:
   BUG ID: BUG-SW-05
   Severity: MEDIUM — when the user clicks Approve or Reject in HitlInbox and executionId is null
@@ -7210,7 +7212,7 @@ Agent: frontend-dev
 Priority: LOW
 Difficulty: LOW
 Suggested Model: haiku
-Status: PENDING
+Status: COMPLETED
 Context:
   BUG ID: BUG-VISUAL-07
   Severity: LOW — the sidebar footer displays the version string "v0.1.0" instead of the correct
@@ -7253,7 +7255,7 @@ Agent: frontend-dev
 Priority: LOW
 Difficulty: MEDIUM
 Suggested Model: sonnet
-Status: PENDING
+Status: COMPLETED
 Context:
   BUG ID: BUG-SW-04
   Severity: LOW — useSwarm.js places the full agentStates object in the dependency array of the

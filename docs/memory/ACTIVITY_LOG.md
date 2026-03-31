@@ -1,4 +1,33 @@
 ---
+## 2026-03-31 — documenter — Tasks #104–#111: Documentation Update After QA Bug-Fix Pass
+**Outcome:** COMPLETED
+**Summary:** Audited all documentation for staleness after the QA bug-fix wave (Tasks #104-#111) and v3.0.0 version bump. README.md confirmed accurate — no version string in prose, no change needed. docs/ARCHITECTURE.md Section 11.5 (HITL flow) and Section 11.9 (React component tree + toolbar controls) updated to reflect all fixes. DOC_STATUS.md advanced to 2026-03-31.
+**Files changed:** docs/ARCHITECTURE.md (Sections 11.5 and 11.9), docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none
+**Decisions made:** README.md requires no version string update — the document references "v3" headings only, not a specific semver string
+**Blockers:** none
+**Next:** v3.0.0 production deployment. All docs current.
+---
+
+---
+## 2026-03-31 — project-manager — Tasks #104–#111: QA Bug-Fix Wave COMPLETED
+**Outcome:** COMPLETED
+**Summary:** All 8 frontend bugs found during the Puppeteer visual inspection wave are now fixed and
+  verified. InterAgentFeed canvas collapse (w-56 shrink-0) resolved. Stop button now visible when
+  paused. Run button gated by activeProjectId. HITL drawer has visible header + stopPropagation.
+  HitlInbox approve/reject buttons disabled when executionId is null. package.json version bumped to
+  v3.0.0. agentStates full-object dep removed from useSwarm. Puppeteer confirmation: Projects, Terminal,
+  Job Runner, Context Editor, Deployments, and Swarm views all render correctly. v3.0.0 is release-ready.
+**Files changed:** docs/TASK_PLAN.md (tasks #104-#111 Status: PENDING -> COMPLETED; header updated),
+  docs/memory/PROGRESS.md (bug-fix wave entry added), docs/memory/ACTIVITY_LOG.md (this entry),
+  docs/memory/agents/project-manager.md (session log appended)
+**Bugs fixed:** BUG-VISUAL-01, BUG-SW-01, BUG-SW-02, BUG-SW-03, BUG-VISUAL-05, BUG-SW-05, BUG-VISUAL-07, BUG-SW-04
+**Decisions made:** none
+**Blockers:** none
+**Next:** v3.0.0 production deployment. No open bugs. All tasks complete.
+---
+
+---
 ## 2026-03-29 — project-manager — Tasks #104–#111: QA Bug-Fix Wave
 **Outcome:** COMPLETED
 **Summary:** Added 8 new PENDING tasks (#104-#111) to docs/TASK_PLAN.md based on QA visual

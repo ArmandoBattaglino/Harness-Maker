@@ -1850,9 +1850,12 @@ SwarmEngine receives event
   → sets agent status = 'paused'
   → broadcasts hitl_required WS event
         ↓
-Browser inbox UI shows pending item
+Browser HITL drawer opens (toggle button in SwarmView toolbar)
+  → drawer has a labeled header ("HITL Approvals") and an explicit close (✕) button
+  → pending item shows agent name, type badge, timestamp, and message
         ↓
 User clicks Approve (optional resumeText) or Reject
+  → If no active executionId: error is surfaced inline on the card (never a silent no-op)
   → POST /api/v1/swarm/:executionId/inbox/:itemId/approve|reject
         ↓
 inbox.js handler:
@@ -1916,11 +1919,30 @@ App.jsx
         │           ├── DepartmentNode.jsx (nodeType: "department")
         │           ├── TriggerNode.jsx (nodeType: "trigger")
         │           ├── HandoffEdge.jsx (edgeType: "handoff")
-        │           └── AgentInspector.jsx (right panel)
-        └── BroadcastBar.jsx            (self-hides when not running)
+        │           ├── AgentInspector.jsx (right panel, w-64 fixed)
+        │           └── InterAgentFeed.jsx (right sidebar, w-56 shrink-0;
+        │                                   fixed width prevents canvas collapse)
+        ├── HitlInbox.jsx               (approval drawer; rendered inline in
+        │                                SwarmView when inboxOpen=true; header
+        │                                + close button added in QA pass #104–111)
+        ├── BroadcastBar.jsx            (self-hides when not running)
+        └── PtyExplosion.jsx            (full-screen PTY overlay; Escape key closes)
+
+Toolbar controls (SwarmView):
+  Run     — visible only when: status=idle AND workflowDef loaded AND activeProjectId set
+            (gated by activeProjectId — shows runError banner if project not selected)
+  Pause   — visible when status=running
+  Resume  — visible when status=paused
+  Stop    — visible when status=running OR paused (was missing for paused state prior to QA pass)
+  Reset   — visible when status=stopped
+  HITL    — always visible; badge shows pending approval count; stopPropagation prevents
+            inadvertent canvas click-through
 
 Hooks (V3):
-  useSwarm.js         — WS lifecycle + start/stop execution REST calls
+  useSwarm.js         — WS lifecycle + start/stop execution REST calls.
+                        agentStates is accessed via useSwarmStore.getState() inside
+                        the WS onmessage handler (not as a top-level selector) to
+                        prevent excessive reconnects on every agent state change.
   useHandoff.js       — edgeCounter delta detection; useRecentHandoffs set
   useWorkflow.js      — useWorkflow(id) + useWorkflowList() REST wrappers
 
