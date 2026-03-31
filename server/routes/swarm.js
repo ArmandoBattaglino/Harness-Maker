@@ -11,18 +11,19 @@
 // POST   /api/v1/swarm/:executionId/broadcast     → 200 { sent: number }
 
 import { Router } from 'express';
-import Anthropic from '@anthropic-ai/sdk';
+import { spawn } from 'child_process';
+import os from 'os';
 
 // ---------------------------------------------------------------------------
-// generateWorkflowFromPrompt(prompt)
-// Calls Claude API to produce a workflow definition JSON from a natural-language
-// description. Strips accidental markdown fences and validates basic structure.
-// Throws on Claude API failure, JSON parse error, or invalid structure.
+// generateWorkflowFromPrompt(claudeBin, prompt)
+// Spawns `claude -p <fullPrompt> --output-format json` to produce a workflow
+// definition JSON from a natural-language description.
+// Uses the installed Claude Code binary (no API key required).
+// Strips accidental markdown fences and validates basic structure.
+// Throws on spawn failure, JSON parse error, or invalid structure.
 // ---------------------------------------------------------------------------
-async function generateWorkflowFromPrompt(prompt) {
-  const client = new Anthropic(); // uses ANTHROPIC_API_KEY env var
-
-  const systemPrompt = `You are a workflow designer. Given a user's description, generate a multi-agent workflow definition as JSON.
+async function generateWorkflowFromPrompt(claudeBin, prompt) {
+  const fullPrompt = `You are a workflow designer. Given a user description, generate a multi-agent workflow definition as JSON.
 
 Output ONLY valid JSON matching this schema (no markdown, no explanation):
 {
@@ -34,7 +35,7 @@ Output ONLY valid JSON matching this schema (no markdown, no explanation):
       "type": "agent",
       "data": {
         "label": "string",
-        "systemPrompt": "string (the agent's role and instructions)",
+        "systemPrompt": "string (the agent role and instructions)",
         "isTriageNode": boolean
       },
       "position": { "x": number, "y": number }
@@ -52,31 +53,56 @@ Output ONLY valid JSON matching this schema (no markdown, no explanation):
 
 Rules:
 - First node should have isTriageNode: true
-- Nodes should be positioned in a logical flow (left to right or top to bottom)
-- Position x/y should be spaced 200px apart
+- Nodes positioned left to right, x/y spaced 200px apart
 - Maximum 10 nodes, 15 edges
-- Name must match /^[\\w\\s\\-.]+$/ (letters, numbers, spaces, hyphens, dots only)`;
+- Name must match /^[\\w\\s\\-.]+$/
 
-  const response = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 2048,
-    system: systemPrompt,
-    messages: [{ role: 'user', content: prompt }],
+User description: ${prompt}`;
+
+  return new Promise((resolve, reject) => {
+    const args = [
+      '-p', fullPrompt,
+      '--output-format', 'json',
+      '--max-turns', '1',
+      '--no-session-persistence',
+      '--allowedTools', 'none',
+    ];
+
+    const child = spawn(claudeBin, args, {
+      cwd: os.tmpdir(),
+      stdio: ['pipe', 'pipe', 'pipe'],
+      shell: false, // SEC-02
+    });
+
+    // CRITICAL: close stdin immediately — DEC-005 / GitHub #7497
+    try { child.stdin.end(); } catch { /* ignore */ }
+
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (chunk) => { stdout += chunk.toString(); });
+    child.stderr.on('data', (chunk) => { stderr += chunk.toString(); });
+
+    child.on('close', (code) => {
+      if (code !== 0) {
+        return reject(new Error(`Claude exited ${code}: ${stderr.slice(0, 200)}`));
+      }
+      try {
+        // --output-format json returns a single JSON object with a `result` field
+        const parsed = JSON.parse(stdout.trim());
+        const text = parsed.result ?? parsed.content ?? stdout.trim();
+        const clean = String(text).replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/m, '').trim();
+        const wf = JSON.parse(clean);
+        if (!wf.name || !Array.isArray(wf.nodes) || wf.nodes.length === 0) {
+          throw new Error('Invalid workflow structure from Claude');
+        }
+        resolve(wf);
+      } catch (e) {
+        reject(new Error(`Failed to parse workflow JSON: ${e.message}`));
+      }
+    });
+
+    child.on('error', (err) => reject(new Error(`Spawn failed: ${err.message}`)));
   });
-
-  const text = response.content[0]?.text;
-  if (!text) throw new Error('No response from Claude');
-
-  // Parse JSON — strip any accidental markdown fences
-  const clean = text.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/, '').trim();
-  const wf = JSON.parse(clean);
-
-  // Basic validation
-  if (!wf.name || !Array.isArray(wf.nodes) || wf.nodes.length === 0) {
-    throw new Error('Invalid workflow structure from Claude');
-  }
-
-  return wf;
 }
 
 /**
@@ -84,9 +110,10 @@ Rules:
  *
  * @param {import('../services/SwarmEngine.js').default} swarmEngine
  * @param {import('../services/SessionManager.js').SessionManager} sessionManager
+ * @param {string} claudeBin  Path to the claude binary (set by BinaryDiscovery at startup)
  * @returns {Router}
  */
-export default function swarmRoutes(swarmEngine, sessionManager) {
+export default function swarmRoutes(swarmEngine, sessionManager, claudeBin) {
   const router = Router();
 
   // -------------------------------------------------------------------------
@@ -110,8 +137,12 @@ export default function swarmRoutes(swarmEngine, sessionManager) {
       return res.status(400).json({ error: 'prompt exceeds 2000 character limit' });
     }
 
+    if (!claudeBin) {
+      return res.status(503).json({ error: 'Claude binary not configured — restart the server' });
+    }
+
     try {
-      const workflowDef = await generateWorkflowFromPrompt(prompt.trim());
+      const workflowDef = await generateWorkflowFromPrompt(claudeBin, prompt.trim());
 
       // Attach projectId if provided
       if (projectId && typeof projectId === 'string') {

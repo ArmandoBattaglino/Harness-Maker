@@ -236,7 +236,7 @@ async function startup() {
   app.locals.sessionManager = sessionManager;
 
   // Swarm execution control routes — mounted here so swarmEngine is already assigned
-  app.use('/api/v1/swarm', swarmRoutes(swarmEngine, sessionManager));
+  app.use('/api/v1/swarm', swarmRoutes(swarmEngine, sessionManager, claudeBin));
 
   // HITL inbox routes (approve/reject — separate router, same /api/v1/swarm prefix)
   app.use('/api/v1/swarm', inboxRoutes(swarmEngine));

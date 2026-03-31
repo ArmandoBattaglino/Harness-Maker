@@ -129,12 +129,19 @@ export default function SwarmView() {
           {'\uD83D\uDCE5'} HITL{pendingCount > 0 ? ` (${pendingCount})` : ''}
         </button>
 
-        {/* Task #101 — Run button: idle + workflow loaded + project selected */}
-        {executionStatus === 'idle' && workflowDef !== null && activeProjectId && (
+        {/* Run button — always visible when idle; disabled with hint if preconditions not met */}
+        {executionStatus === 'idle' && (
           <button
-            onClick={handleRun}
-            disabled={executing}
-            className="bg-green-600 hover:bg-green-500 text-white text-xs px-3 py-1 rounded transition-colors disabled:opacity-40"
+            onClick={workflowDef && activeProjectId ? handleRun : undefined}
+            disabled={executing || !workflowDef || !activeProjectId}
+            title={
+              !activeProjectId
+                ? 'Select a project first'
+                : !workflowDef
+                ? 'Generate a workflow below first'
+                : 'Run workflow'
+            }
+            className="bg-green-600 hover:bg-green-500 text-white text-xs px-3 py-1 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {executing ? '...' : 'Run'}
           </button>
