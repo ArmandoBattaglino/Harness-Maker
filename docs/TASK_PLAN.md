@@ -20,7 +20,7 @@
 **Post-release fix #114:** BUG-TOOLBAR-2 (useSwarm.js cleanup useEffect keyed on [workflowId]) — 2026-03-31 (COMPLETED).
 **Post-release fix #115:** BUG-TOOLBAR-3 (SwarmView.jsx handlePause/handleResume guard against null activeExecutionId) — 2026-03-31 (COMPLETED).
 **QA Swarm inspection wave #116–#119:** 4 Swarm bugs found by QA — 2026-03-31 (IN_PROGRESS — fixes executing in parallel).
-**Known open bugs:** BUG-SWARM-1, BUG-SWARM-2, BUG-SWARM-3, BUG-SWARM-4 — tracked as tasks #116–#119.
+**Known open bugs:** BUG-SWARM-3, BUG-SWARM-4 — tracked as tasks #118–#119. BUG-SWARM-1 and BUG-SWARM-2 (tasks #116–#117) COMPLETED 2026-03-31.
 
 All 115 original tasks are COMPLETED. Tasks #116–#119 are post-release bug fixes from a QA Swarm section inspection. This includes the original V3 wave (#43–#82, 57 granular units), the post-release debug loop (#83–#99), the QA visual inspection bug-fix wave (#104–#111), post-release toolbar fixes (#112–#115), and QA Swarm bug wave (#116–#119).
 

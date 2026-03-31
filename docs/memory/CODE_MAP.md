@@ -2640,3 +2640,23 @@ _Recorded 2026-03-31 after Task #41: Post-Fix Regression QA_
 | Runner | Vitest (npm test) |
 
 All 187 tests pass against the current codebase at v3.0.0. This baseline was established after Tasks #32–#40 (Phase 10 bug fixes). Any future code changes should maintain or exceed this count with zero failures.
+
+---
+
+## Open Bug Registry — QA Swarm Inspection (2026-03-31, post-v3.0.0)
+
+_Recorded by code-mapper after qa-tester QA inspection. No files were modified during the inspection._
+
+| Bug ID | File | Location | Nature | Root Cause | Status |
+|--------|------|----------|--------|------------|--------|
+| BUG-SWARM-2 | `client/src/canvas/PromptToFlowBar.jsx` | `handleGenerate` — animatedDef node style (~line 42) | `opacity: 0` injected into React Flow node inline style corrupts ResizeObserver measurement cycle | React Flow uses ResizeObserver to measure node dimensions for viewport calculations. Nodes with `opacity: 0` in their `style` prop are measured as having 0 visible area, breaking the internal dimension cache and preventing `fitView` from computing correct bounds. | OPEN |
+| BUG-SWARM-1 | `client/src/canvas/SwarmCanvas.jsx` | `<ReactFlow fitView>` prop | `fitView` does not trigger correctly after scaffold generates nodes — canvas viewport stays at initial position | Consequence of BUG-SWARM-2: when `fitView` fires after `setNodes()`, all nodes report 0 dimensions (hidden by opacity:0) so the viewport fit is a no-op. Fixing SWARM-2 should resolve SWARM-1. | OPEN |
+| BUG-SWARM-3 | `client/src/views/SwarmView.jsx` | `const [workflowDef, setWorkflowDef] = useState(null)` line 34 | `workflowDef` stored in local React `useState` — destroyed on component unmount / tab navigation; user must regenerate workflow every time they leave SwarmView | Fix: move `workflowDef` into `useSwarmStore` (or a separate persistent store slice) so it survives navigation | OPEN |
+| BUG-SWARM-4 | `client/src/hooks/useSwarm.js` | `startExecution` line 66 — `` apiPost(`/api/v1/swarm/${workflowId}/start`, ...) `` | `workflowId` can be `undefined` if `workflowDef` has not been generated when `startExecution` is called — sends `POST /api/v1/swarm/undefined/start` | The toolbar `disabled={!workflowDef}` guard on the Run button prevents this in normal flow, but a race (rapid double-click, concurrent state update) can bypass it. Fix: add `if (!workflowId) throw new Error('No workflow selected')` at the top of `startExecution`. | OPEN |
+
+### Notes on BUG-SWARM-2 / BUG-SWARM-1 interaction
+`PromptToFlowBar.handleGenerate` builds `animatedDef` by spreading `style: { ...node.style, opacity: 0, animation: '...' }` onto every node. This style object is stored verbatim in `workflowDef.nodes[i].style` and passed to React Flow via `SwarmCanvas`. React Flow's ResizeObserver sees nodes with `opacity: 0` as zero-area — its internal bounds calculation for `fitView` returns an empty viewport. The CSS animation eventually fades nodes in (CSS side-effect, not React-controlled), but by then `fitView` has already computed wrong bounds. Correct fix: remove `opacity: 0` from the style; use a CSS class or CSS variable for the animation instead, or use `useReactFlow().fitView()` imperatively after the nodes are visible.
+
+### Connection Paths for Bug Investigation
+- `PromptToFlowBar.handleGenerate` → `onWorkflowGenerated(workflowId, animatedDef)` → `SwarmView::setWorkflowDef(animatedDef)` → `SwarmCanvas({ workflowDef: animatedDef })` → `setNodes(workflowDef.nodes)` via `useEffect` → React Flow internal ResizeObserver → `fitView` calculation
+- `useSwarm.startExecution(projectId, projectPath)` → reads `workflowId` from closure (parameter to `useSwarm(workflowId)`) → `` apiPost(`/api/v1/swarm/${workflowId}/start`, ...) `` — no null check on `workflowId`

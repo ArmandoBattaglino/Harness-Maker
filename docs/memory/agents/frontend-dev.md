@@ -1828,3 +1828,49 @@ Fix is complete and self-contained. No open issues.
 ### Handoff
 None — task fully self-contained.
 ---
+
+---
+## 2026-03-31 — Task #117: BUG-SWARM-3 — workflowDef persistence via Zustand
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+`workflowDef` was stored in `useState(null)` inside `SwarmView.jsx`. Every time the user navigated to another view and returned, `workflowDef` was lost — the canvas went blank, the Run button became disabled, and the generated workflow was unrecoverable without regenerating it.
+
+### What I did
+1. Read `client/src/store/SwarmContext.jsx` — confirmed the Zustand store and the existing `reset()` action.
+2. Read `client/src/views/SwarmView.jsx` — confirmed the local state and all usage points.
+3. Added `workflowDef: null` to the initial state in SwarmContext.jsx.
+4. Added `setWorkflowDef: (def) => set({ workflowDef: def })` action to SwarmContext.jsx.
+5. Added `workflowDef: null` to the `reset()` action in SwarmContext.jsx so reset clears it correctly.
+6. Replaced `const [workflowDef, setWorkflowDef] = useState(null)` in SwarmView.jsx with two `useSwarmStore` selectors.
+7. Simplified the Reset button's `onClick` from `() => { reset(); setWorkflowDef(null); }` to just `reset` — since `reset()` now handles it.
+8. Verified `useState` import still valid (3 other local UI states remain).
+9. Ran `npm run build` — 0 errors, built in 3.86s.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| `client/src/store/SwarmContext.jsx` | MODIFIED | Added `workflowDef: null` to initial state, `setWorkflowDef` action, and `workflowDef: null` to `reset()` |
+| `client/src/views/SwarmView.jsx` | MODIFIED | Replaced local `useState` for `workflowDef` with two Zustand selectors; simplified Reset button `onClick` |
+
+### Improvements delivered
+- `workflowDef` now survives view navigation — user does not lose the generated workflow when switching tabs
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-SWARM-3: workflowDef lost on navigation | useState scope is component-local, cleared on unmount | Moved to Zustand SwarmStore | FIXED |
+
+### Decisions I made
+- Simplified Reset button to `onClick={reset}` (removed redundant `setWorkflowDef(null)`) because `reset()` now explicitly resets `workflowDef: null` in the store.
+
+### What I learned
+- The reset action already existed as a comprehensive store-wide reset — new slice state must always be added there explicitly or it persists incorrectly after reset.
+
+### State I'm leaving behind
+Both files modified and build passes. BUG-SWARM-3 is fully resolved.
+
+### Handoff
+Orchestrator to commit. QA can verify by: generate a workflow, navigate to another view, return to Swarm — canvas and Run button should be intact.
+---

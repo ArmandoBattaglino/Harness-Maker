@@ -1934,3 +1934,43 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 - 187/187 tests pass. Build clean.
 
 ---
+
+## 2026-03-31 — QA Swarm Inspection (post-v3.0.0)
+**Agent:** qa-tester
+**Triggered by:** Manual QA inspection of the Swarm section after v3.0.0 release — no code changes; 4 bugs catalogued for next fix wave.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/views/SwarmView.jsx | INSPECTED (no change) | BUG-SWARM-1 (fitView broken after workflow generation) and BUG-SWARM-3 (workflowDef in local useState — lost on navigation) discovered |
+| client/src/canvas/PromptToFlowBar.jsx | INSPECTED (no change) | BUG-SWARM-2 discovered: opacity:0 injected into React Flow node style corrupts ResizeObserver |
+| client/src/canvas/SwarmCanvas.jsx | INSPECTED (no change) | Context file for BUG-SWARM-1 and BUG-SWARM-2 |
+| client/src/hooks/useSwarm.js | INSPECTED (no change) | BUG-SWARM-4 discovered: startExecution has no null guard on workflowId (line 66) |
+| client/src/panels/HitlInbox.jsx | INSPECTED (no change) | No new bugs — all existing fixes (Task #108) verified correct |
+
+### Functions Added
+- None
+
+### Functions Modified
+- None
+
+### Functions Removed
+- None
+
+### Connection Changes
+- None (inspection only — no source modifications)
+
+### Impact on Other Code
+- BUG-SWARM-2 (`opacity:0` in node style) is the root cause of BUG-SWARM-1 (fitView failure): `opacity:0` blocks React Flow's ResizeObserver from measuring node dimensions, so the viewport fit calculation fires before nodes have nonzero dimensions — fixing SWARM-2 likely resolves SWARM-1 as well
+- BUG-SWARM-3 (`workflowDef` in local `useState`) means every navigation away from SwarmView destroys the generated workflow and the canvas — connecting `workflowDef` to a persistent store (e.g. `useSwarmStore`) would fix this
+- BUG-SWARM-4 (no null guard on `workflowId` in `useSwarm.startExecution`) means `apiPost('/api/v1/swarm/undefined/start', ...)` can be sent if `workflowDef` is null when the Run button is activated — toolbar `disabled` guard is present but a race is theoretically possible
+
+### Bug Registry
+| Bug ID | File | Location | Nature | Status |
+|--------|------|----------|--------|--------|
+| BUG-SWARM-2 | PromptToFlowBar.jsx | handleGenerate — animatedDef node style (line ~42) | `opacity: 0` injected into React Flow node style corrupts ResizeObserver measurement — root cause of BUG-SWARM-1 | OPEN |
+| BUG-SWARM-1 | SwarmCanvas.jsx | `fitView` prop on `<ReactFlow>` | fitView does not trigger correctly after scaffold generates nodes — canvas stays at initial viewport because node dimensions are 0 when fitView fires | OPEN |
+| BUG-SWARM-3 | SwarmView.jsx | `const [workflowDef, setWorkflowDef] = useState(null)` line 34 | workflowDef held in local useState — destroyed on component unmount / tab navigation | OPEN |
+| BUG-SWARM-4 | useSwarm.js | `startExecution` line 66 — template literal `${workflowId}` | workflowId can be undefined if workflowDef has not been generated — no explicit null guard before the apiPost call | OPEN |
+
+---

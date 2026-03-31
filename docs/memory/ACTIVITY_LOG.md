@@ -2160,3 +2160,14 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** nothing — bug fix is self-contained.
 ---
+
+---
+## 2026-03-31 — frontend-dev — Task #117: BUG-SWARM-3 workflowDef persistence fix
+**Outcome:** COMPLETED
+**Summary:** Moved `workflowDef` from local `useState` in SwarmView.jsx to the Zustand SwarmStore. Added `workflowDef: null` to initial state and `reset()`, added `setWorkflowDef` action. Simplified Reset button. Build passes 0 errors.
+**Files changed:** client/src/store/SwarmContext.jsx, client/src/views/SwarmView.jsx
+**Bugs fixed:** BUG-SWARM-3 — workflowDef lost on view navigation
+**Decisions made:** Reset button simplified to `onClick={reset}` since reset() now handles workflowDef
+**Blockers:** none
+**Next:** orchestrator to commit; QA to verify workflow persists across view navigation
+---
