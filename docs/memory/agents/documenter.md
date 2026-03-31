@@ -1,4 +1,55 @@
 ---
+## 2026-03-31 — Task #112: Fix Swarm Workflow Generation + Run Button UX
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel with code-mapper and project-manager, post Task #112)
+
+### Context when I started
+server/routes/swarm.js had been rewritten: generateWorkflowFromPrompt now spawns the claude binary (-p / --output-format json) instead of calling the Anthropic SDK. swarmRoutes signature changed to accept claudeBin as 3rd param. server/index.js updated to pass claudeBin. SwarmView.jsx Run button changed to always-visible. PromptToFlowBar.jsx had a minor revert. DOC_STATUS.md was last updated after Tasks #104-#111 and still referenced ANTHROPIC_API_KEY requirement.
+
+### What I did
+1. Read DOC_STATUS.md, ACTIVITY_LOG.md (top entries), README.md, and ARCHITECTURE.md (via grep) in parallel.
+2. Read server/routes/swarm.js (first 80 lines) to confirm the binary-spawn pattern.
+3. Identified three stale locations: README.md Quick Start step 2, README.md "Environment Variable Required for Swarm" section, README.md Known Limitations bullet, and ARCHITECTURE.md DEC-016.
+4. Surgically updated all three README.md locations — removed the env var table section entirely, updated step 2, updated the Known Limitations bullet.
+5. Updated ARCHITECTURE.md DEC-016 to describe the binary-spawn approach with exact flags and note the `claudeBin` param change.
+6. Wrote DOC_STATUS.md timestamp and row updates.
+7. Appended ACTIVITY_LOG.md entry.
+8. Appended this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| README.md | MODIFIED | Removed ANTHROPIC_API_KEY requirement: Quick Start step 2, the entire "Environment Variable Required for Swarm" table, and Known Limitations bullet. Replaced with claude binary references. |
+| docs/ARCHITECTURE.md | MODIFIED | DEC-016 updated: was "calls Anthropic SDK directly (claude-haiku-4-5-20251001)" — now documents binary spawn pattern with exact flags and claudeBin param. |
+| docs/memory/DOC_STATUS.md | MODIFIED | Header timestamp updated. README.md and ARCHITECTURE.md rows updated with Task #112 context. |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Task #112 documenter entry prepended. |
+| docs/memory/agents/documenter.md | MODIFIED | This session log appended. |
+
+### Improvements delivered
+- README.md no longer misleads users into thinking they need an ANTHROPIC_API_KEY for Swarm features.
+- ARCHITECTURE.md DEC-016 now accurately records the implementation decision with preserved history.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| ACTIVITY_LOG.md edit — separator mismatch | The `---` separator on line 10 was preceded by a blank line (line 11 was blank before the next heading). First edit attempt used wrong old_string. | Read exact lines, used correct multi-line match. | FIXED |
+| ARCHITECTURE.md edit — file not read yet | Edit tool rejected the first attempt because ARCHITECTURE.md had only been read via grep (not via Read tool). | Read the specific lines via Read(offset=1873, limit=10) then applied the edit. | FIXED |
+
+### Decisions I made
+- Deleted the entire "Environment Variable Required for Swarm" subsection rather than leaving a stub — the section only existed to document the API key requirement, which no longer applies.
+- Preserved DEC-016 update history inline (parenthetical "Updated 2026-03-31: was...") rather than creating a separate DEC-017 — this is an amendment to an existing architectural decision, not a new one.
+
+### What I learned
+- The Edit tool requires a prior Read tool call on the exact file (grep alone does not satisfy this). When editing large files, use Read with offset+limit to target the needed section before editing.
+- When an ACTIVITY_LOG.md separator pattern spans a blank line, the old_string must include the blank line to match correctly.
+
+### State I'm leaving behind
+All documentation is accurate and current as of Task #112. No stale sections. No API key references remain in user-facing docs. DEC-016 history is preserved inline.
+
+### Handoff
+None — task fully self-contained.
+---
+
 ## 2026-03-31 — Tasks #104–#111: QA Bug-Fix Pass + v3.0.0 Version Bump
 **Status:** COMPLETED
 **Called by:** orchestrator (parallel with code-mapper and project-manager, post QA bug-fix wave)
