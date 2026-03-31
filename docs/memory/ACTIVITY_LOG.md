@@ -1,4 +1,14 @@
 ---
+## 2026-03-31 — frontend-dev — Tasks #116+#117: BUG-SWARM-2 + BUG-SWARM-1 fixed
+**Outcome:** COMPLETED
+**Summary:** Fixed two linked Swarm canvas bugs. BUG-SWARM-2: removed opacity:0 and staggered animation from node style prop in PromptToFlowBar.jsx — this was corrupting React Flow bounding box measurements and causing fitView to misfire. BUG-SWARM-1: added useReactFlow() imperative fitView call in SwarmCanvas.jsx useEffect (setTimeout 50ms after setNodes/setEdges) so nodes are correctly centered after workflow generation. Also removed unused @keyframes fadeIn from index.css.
+**Files changed:** client/src/canvas/PromptToFlowBar.jsx, client/src/canvas/SwarmCanvas.jsx, client/src/index.css
+**Bugs fixed:** BUG-SWARM-2 (opacity:0 in node style), BUG-SWARM-1 (fitView not firing after node mount)
+**Decisions made:** Remove fadeIn keyframe from index.css — only referenced by buggy animation code, no other usages
+**Blockers:** none
+**Next:** BUG-SWARM-3 and BUG-SWARM-4 still open (tasks #118-119).
+---
+---
 ## 2026-03-31 — documenter — QA Swarm Inspection: 4 open bugs found, Tasks #116-118 IN PROGRESS
 **Outcome:** PARTIAL
 **Summary:** Post-release QA inspection of the Swarm section found 4 bugs. BUG-SWARM-1 and BUG-SWARM-2 (HIGH) — nodes invisible after generation due to opacity:0 in node style. BUG-SWARM-3 (MEDIUM) — workflowDef loses persistence across navigation. BUG-SWARM-4 (LOW) — missing null guard in useSwarm.startExecution. Fixes are running in parallel as Tasks #116 (SWARM-1+2), #117 (SWARM-3), #118 (SWARM-4). DOC_STATUS.md updated to record open bug count and task status. No source code modified.

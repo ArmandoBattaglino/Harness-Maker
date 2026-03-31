@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-31 — v3.0.0 RELEASE — all 115 tasks completed, 187/187 tests pass, zero bugs — mapped by code-mapper_
+_Last updated: 2026-03-31 — QA Swarm Inspection (post-v3.0.0) — 4 open bugs catalogued (BUG-SWARM-1 through BUG-SWARM-4) — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -2097,6 +2097,7 @@ _Last updated: 2026-03-31 — v3.0.0 RELEASE — all 115 tasks completed, 187/18
 
 ### `client/src/canvas/PromptToFlowBar.jsx` :: `handleGenerate()` (internal — via useCallback)
 - **Purpose:** Async submit handler. Guards against empty prompt and concurrent submission (loading flag). Calls POST /api/v1/swarm/scaffold, decodes { workflowId, workflowDef }, applies per-node staggered animation transform, and calls onWorkflowGenerated. Sets error state on any fetch or HTTP failure.
+- **BUG-SWARM-2 (OPEN 2026-03-31):** Injects `opacity: 0` into each node's `style` prop as part of the staggered fade-in animation. This corrupts React Flow's ResizeObserver measurement — nodes appear as 0-area until CSS fades them in — which is the root cause of BUG-SWARM-1 (fitView fails after generation). Fix: use a CSS class or data attribute for the animation instead of injecting opacity into the node style object.
 - **Called by:** PromptToFlowBar — Generate button onClick; handleKeyDown (Enter key without Shift)
 - **Calls:** fetch('/api/v1/swarm/scaffold', ...), res.json(), onWorkflowGenerated (prop), setLoading, setError, setPrompt
 - **Inputs:** (no params — reads prompt, loading, onWorkflowGenerated from closure)
@@ -2140,6 +2141,7 @@ _Last updated: 2026-03-31 — v3.0.0 RELEASE — all 115 tasks completed, 187/18
 
 ### `client/src/hooks/useSwarm.js` :: `startExecution(projectId, projectPath)` (returned callback)
 - **Purpose:** POST to /api/v1/swarm/:workflowId/start with {projectId, projectPath}, then call connectWs(executionId) to open the WS stream. Sets store state to running. Returns the executionId.
+- **BUG-SWARM-4 (OPEN 2026-03-31):** `workflowId` is read from the `useSwarm(workflowId)` closure — if `workflowDef` is null/undefined when this hook is created, `workflowId` is `undefined` and the POST goes to `/api/v1/swarm/undefined/start`. The Run button has a `disabled={!workflowDef}` guard but no null check exists inside `startExecution` itself. Fix: add `if (!workflowId) throw new Error('No workflow selected')` at the top of `startExecution`.
 - **Called by:** SwarmView.jsx::handleRun (Task #101 — wired to Run button; only called when activeProjectId is set and workflowDef is loaded)
 - **Calls:** apiPost (from hooks/useApi.js), setExecution (store), connectWs (internal)
 - **Inputs:** projectId (string), projectPath (string)

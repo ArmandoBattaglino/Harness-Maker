@@ -1,4 +1,60 @@
 ---
+## 2026-03-31 — Tasks #116+#117: BUG-SWARM-2 (opacity:0) + BUG-SWARM-1 (fitView)
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+Two linked bugs in the Swarm canvas section reported by QA. BUG-SWARM-2: PromptToFlowBar.jsx was injecting `opacity: 0` and a CSS animation string into React Flow node `style` props, which React Flow keeps as permanent inline styles — this caused the ResizeObserver to measure nodes as invisible, corrupting the bounding box used by fitView. BUG-SWARM-1: SwarmCanvas.jsx relied on the `fitView` prop which only fires at mount (when nodes=[]); nodes added via useEffect after mount were never re-fitted, leaving them off-screen.
+
+### What I did
+1. Read PromptToFlowBar.jsx (94 lines) — confirmed the buggy staggered animation map at lines 37-44.
+2. Read SwarmCanvas.jsx (125 lines) — confirmed useEffect at lines 51-56 had no fitView call; `fitView` prop was present on ReactFlow but ineffective for post-mount node population.
+3. Searched for all `fadeIn` usages — found only in PromptToFlowBar.jsx (the bug) and index.css (the keyframe definition). No other references.
+4. Read index.css lines 186-200 — confirmed fadeIn keyframe block is isolated and only related to the removed animation.
+5. Applied BUG-SWARM-2 fix: replaced the node map (lines 37-44) with a clean deep-clone map removing all style/animation injection.
+6. Applied BUG-SWARM-1 fix: added `useReactFlow` import, destructured `fitView` from it, added `setTimeout(() => fitView({ padding: 0.2, duration: 400 }), 50)` inside the workflowDef useEffect, added `fitView` to dependency array.
+7. Removed unused `@keyframes fadeIn` block from index.css (lines 188-193).
+8. Ran `cd client && npm run build` — 476 modules, 0 errors, 3.87s.
+9. Updated docs/TASK_PLAN.md header to mark #116+#117 COMPLETED.
+10. Appended to ACTIVITY_LOG.md and this agent log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/canvas/PromptToFlowBar.jsx | MODIFIED | Removed staggered animation map. Node map now only deep-clones data, no style/opacity injection. |
+| client/src/canvas/SwarmCanvas.jsx | MODIFIED | Added useReactFlow import. Added fitView imperative call inside workflowDef useEffect with 50ms setTimeout. Added fitView to dependency array. |
+| client/src/index.css | MODIFIED | Removed @keyframes fadeIn block (only reference was the removed animation code). |
+| docs/TASK_PLAN.md | MODIFIED | Updated header: BUG-SWARM-1 + BUG-SWARM-2 marked COMPLETED. |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Session log entry appended. |
+
+### Improvements delivered
+- BUG-SWARM-2: React Flow node bounding boxes are now measured correctly — no opacity:0 corruption.
+- BUG-SWARM-1: Generated workflow nodes now fit the viewport immediately after generation via imperative fitView.
+- index.css: Removed dead CSS rule that was no longer referenced.
+- Build: 476 modules, 0 errors, clean.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-SWARM-2 | opacity:0 injected into React Flow node style prop — ResizeObserver measures invisible nodes, corrupting fitView bounding box | Removed opacity/animation from node style map in PromptToFlowBar.jsx | FIXED |
+| BUG-SWARM-1 | fitView prop on ReactFlow only fires at mount (empty nodes); post-mount nodes added via useEffect are never refitted | useReactFlow() + imperative fitView() call with 50ms setTimeout in workflowDef useEffect | FIXED |
+
+### Decisions I made
+- Removed fadeIn keyframe from index.css entirely — grep confirmed zero usages elsewhere. Keeping dead CSS adds confusion and false signal to future readers.
+- 50ms setTimeout before fitView is the standard approach for React Flow — gives the layout engine time to measure nodes before fit is calculated. Alternatives (requestAnimationFrame, useLayoutEffect) are more complex with no benefit here.
+
+### What I learned
+- React Flow treats node `style` prop as a permanent inline style override — if you inject `opacity: 0` there, React Flow never clears it, and ResizeObserver measures the node as if it has zero opacity (0 height in some browsers). Never inject animation state into node style props.
+- The `fitView` prop on ReactFlow only fires once at mount. For dynamic node populations loaded via useEffect, always use `useReactFlow().fitView()` imperatively.
+- `useReactFlow()` requires the component to be inside a ReactFlowProvider — SwarmCanvas is already wrapped in SwarmView.jsx, so no provider changes needed.
+
+### State I'm leaving behind
+Both BUG-SWARM-1 and BUG-SWARM-2 are fully fixed and build-verified. BUG-SWARM-3 (workflowDef loses persistence across navigation) and BUG-SWARM-4 (null guard in useSwarm.startExecution) remain open as tasks #118-119.
+
+### Handoff
+Tasks #118 and #119 remain. Next frontend session should address BUG-SWARM-3 (workflowDef persistence) in SwarmView.jsx or SwarmContext — the workflowDef state likely lives in local component state and is lost on unmount.
+---
+---
 ## 2026-03-28 — Tasks #88 + #90 + #91: handoffCount, TriggerNode fireCount, granular selectors
 **Status:** COMPLETED
 **Called by:** user (direct task assignment)
