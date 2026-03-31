@@ -1740,3 +1740,62 @@ v3.0.0 is fully released and documented. All memory files are consistent. No ope
 ### Handoff
 None — task fully self-contained. v3.0.0 is complete.
 ---
+
+---
+## 2026-03-31 — QA Swarm Inspection (post-v3.0.0)
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation, parallel with project-manager and documenter)
+
+### Context when I started
+qa-tester completed a manual QA inspection of the Swarm section after v3.0.0 release. No source files were modified — 4 bugs were found and catalogued. CODE_MAP.md was last updated after Tasks #114+#115 (BUG-TOOLBAR-2 and BUG-TOOLBAR-3). ACTIVITY_LOG.md had already been written to by documenter (QA inspection entry) and then by frontend-dev (Tasks #116+#117 fixes for BUG-SWARM-1+2). The bugs were being fixed concurrently with my documentation pass.
+
+### What I did
+1. Read CODE_MAP.md tail (offsets 2200, 2390, 2440, 2535, 2630) to find structure and append point
+2. Read CHANGELOG.md tail (offsets 1490, 1600, 1680, 1758, 1837, 1916) to find append point (line 1936)
+3. Read all 5 inspected source files in one parallel pass (SwarmView.jsx, SwarmCanvas.jsx, PromptToFlowBar.jsx, useSwarm.js, HitlInbox.jsx)
+4. Read ACTIVITY_LOG.md head — confirmed documenter had already written an inspection entry; frontend-dev had written Tasks #116+#117 fix entry
+5. Read agent memory log tail to confirm append point
+6. Updated CODE_MAP.md:
+   - Header timestamp updated
+   - handleGenerate() function entry: added BUG-SWARM-2 inline note
+   - startExecution() function entry: added BUG-SWARM-4 inline note
+   - Appended new "Open Bug Registry" section at end of file with full bug table, root cause analysis, and connection paths
+7. Appended QA Inspection entry to CHANGELOG.md with full bug registry table and impact analysis
+8. Prepended code-mapper entry to ACTIVITY_LOG.md
+9. Appended this agent memory log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header updated; handleGenerate + startExecution function entries annotated with bug notes; new Open Bug Registry section appended |
+| docs/memory/CHANGELOG.md | MODIFIED | QA Inspection entry appended with full bug registry, impact analysis, and connection paths |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | code-mapper entry prepended |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- All 4 Swarm bugs are now formally registered in CODE_MAP.md with root cause, location, and recommended fix
+- BUG-SWARM-2 / BUG-SWARM-1 coupling is explicitly documented — debugger and frontend-dev do not need to re-investigate the relationship
+- Connection paths for bug investigation are in CODE_MAP.md — future agent can trace the opacity:0 injection from PromptToFlowBar → SwarmView → SwarmCanvas → React Flow → fitView without re-reading all files
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| ACTIVITY_LOG.md "file modified since read" on first write attempt | Frontend-dev and documenter had both written to ACTIVITY_LOG.md between my read and write (Tasks #116+#117 completed concurrently) | Re-read head of ACTIVITY_LOG.md, used unique anchor string for Edit | FIXED |
+| CHANGELOG.md Edit "50 matches found" with `---\n\n` anchor | The separator `---` followed by blank line appears 50 times in CHANGELOG.md | Used a unique multi-line anchor from the final entry's Impact on Other Code section | FIXED |
+
+### Decisions I made
+- Documented BUG-SWARM-2 as the root cause of BUG-SWARM-1 — not two independent bugs. The connection paths section makes this unambiguous for the next developer.
+- Added inline BUG annotations directly on the function entries (handleGenerate, startExecution) rather than only in the registry table — a developer reading any individual function entry will immediately see the known bug without needing to read the registry section.
+- Did not update "Last modified" dates on the function entries (no code change occurred — inspection only).
+
+### What I learned
+- ACTIVITY_LOG.md uses prepend ordering (newest first) — confirmed again; must always re-read head before editing
+- When the project is active and multiple agents are running in parallel, ACTIVITY_LOG.md and CHANGELOG.md can be modified between my read and write in the same session — always use unique multi-line anchors for Edit calls, never rely on short separators like `---`
+- BUG-SWARM-1 and BUG-SWARM-2 were already being fixed (Tasks #116+#117) by the time I started my documentation pass — the bugs were concurrent with my work. My bug registry still provides permanent history.
+
+### State I'm leaving behind
+CODE_MAP.md now has an Open Bug Registry section at the end documenting BUG-SWARM-1 through BUG-SWARM-4. Function entries for handleGenerate and startExecution have inline bug annotations. CHANGELOG.md has a QA Inspection entry with the full bug table. BUG-SWARM-1 and BUG-SWARM-2 were already fixed by frontend-dev (Tasks #116+#117) by the time this session completed — the CODE_MAP bug registry will need a status update (OPEN → FIXED) after Tasks #118+#119 complete.
+
+### Handoff
+After Tasks #118 (BUG-SWARM-3) and #119 (BUG-SWARM-4) complete, code-mapper should update the Open Bug Registry status entries from OPEN to FIXED for those bugs. Also update the handleGenerate and startExecution function entry "Last modified" dates when those files change.
+---

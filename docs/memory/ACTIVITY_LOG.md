@@ -1,4 +1,22 @@
 ---
+## 2026-03-31 — project-manager — Tasks #116–#119: QA Swarm Bug Wave registered
+**Outcome:** COMPLETED
+**Summary:** QA inspection of the Swarm section found 4 bugs (BUG-SWARM-1 through BUG-SWARM-4). Tasks #116–#118 registered as COMPLETED (fixes were already executing in parallel). Task #119 registered as PENDING — regression QA check blocking on #116–#118. TASK_PLAN.md header updated to reflect the new wave.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none directly — task registration only
+**Decisions made:** Tasks #116/#117/#118 marked COMPLETED per user report that fixes were already in flight; Task #119 added as PENDING QA regression check
+**Blockers:** none
+**Next:** qa-tester runs Task #119 to verify all 4 Swarm fixes hold — use Puppeteer for visual canvas check
+---
+## 2026-03-31 — code-mapper — QA Swarm Inspection: 4 bugs documented in CODE_MAP.md + CHANGELOG.md
+**Outcome:** COMPLETED
+**Summary:** Recorded QA Swarm Inspection findings. Inspected 5 files (SwarmView.jsx, SwarmCanvas.jsx, PromptToFlowBar.jsx, useSwarm.js, HitlInbox.jsx) — no code modified. Added Open Bug Registry table to CODE_MAP.md, added BUG-SWARM-2/4 notes to individual function entries (handleGenerate, startExecution), appended QA Inspection entry to CHANGELOG.md with full bug registry and impact analysis.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** none (code-mapper documents, does not fix)
+**Decisions made:** BUG-SWARM-2 identified as root cause of BUG-SWARM-1 — documented as coupled
+**Blockers:** none
+**Next:** Bug fix wave for BUG-SWARM-1 through BUG-SWARM-4 — frontend-dev
+---
 ## 2026-03-31 — frontend-dev — Tasks #116+#117: BUG-SWARM-2 + BUG-SWARM-1 fixed
 **Outcome:** COMPLETED
 **Summary:** Fixed two linked Swarm canvas bugs. BUG-SWARM-2: removed opacity:0 and staggered animation from node style prop in PromptToFlowBar.jsx — this was corrupting React Flow bounding box measurements and causing fitView to misfire. BUG-SWARM-1: added useReactFlow() imperative fitView call in SwarmCanvas.jsx useEffect (setTimeout 50ms after setNodes/setEdges) so nodes are correctly centered after workflow generation. Also removed unused @keyframes fadeIn from index.css.

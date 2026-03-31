@@ -7533,3 +7533,191 @@ Acceptance Criteria:
   - [ ] No regressions in swarm run/stop/pause behavior
 Dependencies: TASK #112, TASK #113
 ---
+
+---
+
+## QA Swarm Inspection Wave — Tasks #116–#119 (2026-03-31)
+
+These four tasks were created from a QA inspection of the Swarm section. BUG-SWARM-2 is the root cause
+of BUG-SWARM-1 (corrupt node style -> bad ResizeObserver bounding box -> fitView broken). Tasks #116, #117,
+and #118 were already executing in parallel at the time of registration. Task #119 is PENDING — regression
+QA to run once the three fix tasks confirm COMPLETED.
+
+---
+
+TASK #116: BUG-SWARM-2+1: Fix staggered animation opacity + fitView imperativo
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: sonnet
+Status: COMPLETED
+Context:
+  Two linked bugs — BUG-SWARM-2 is the root cause of BUG-SWARM-1.
+
+  BUG-SWARM-2 (root cause):
+  In client/src/canvas/PromptToFlowBar.jsx at approximately line 42, the React Flow node is given a
+  style prop that includes opacity: 0 and a CSS animation. This is the staggered entrance animation
+  code. The problem: opacity: 0 injected directly into the React Flow node style prop corrupts
+  the ResizeObserver measurements that React Flow uses internally to compute bounding boxes. When RF
+  cannot measure node dimensions correctly, its internal layout engine produces wrong bounding boxes,
+  which makes fitView compute an incorrect viewport — so nodes appear offscreen or invisible.
+
+  FIX for BUG-SWARM-2: Remove opacity and animation from the style prop passed directly to the
+  React Flow node. Instead, add a wrapper div inside the custom node component with a CSS class
+  that uses @keyframes for the stagger animation. This keeps the animation purely visual/CSS and
+  never pollutes the RF node style, so RF measurements remain accurate.
+
+  BUG-SWARM-1 (consequence):
+  After workflow generation, newly created nodes are invisible in the canvas. The root cause is that
+  React Flow's fitView only fires at component mount (when nodes=[]). When nodes are populated
+  later via useEffect (after the async prompt-to-flow call), RF has already run fitView and does not
+  re-run it. Combined with BUG-SWARM-2's corrupt bounding boxes, nodes render off-viewport.
+
+  FIX for BUG-SWARM-1: In client/src/canvas/SwarmCanvas.jsx, call fitView() imperatively after
+  setNodes() and setEdges() complete. Use the useReactFlow() hook to get the fitView function.
+  The call should be deferred by one tick (e.g., setTimeout(() => fitView({ padding: 0.2 }), 0))
+  to ensure the DOM has updated before RF re-measures. Remove the fitView prop from ReactFlow if
+  it was set to true to avoid double-firing.
+
+  Files: client/src/canvas/PromptToFlowBar.jsx, client/src/canvas/SwarmCanvas.jsx
+
+Acceptance Criteria:
+  - [x] opacity and animation removed from the React Flow node style prop in PromptToFlowBar.jsx
+  - [x] Stagger animation moved to a CSS class on a wrapper element inside the custom node
+  - [x] fitView() called imperatively after setNodes/setEdges in SwarmCanvas.jsx using useReactFlow()
+  - [x] Nodes are visible in the canvas after workflow generation
+  - [x] fitView correctly frames all generated nodes with appropriate padding
+  - [x] No regressions in canvas interaction (pan, zoom, node selection)
+  - [x] 187/187 tests still pass (or updated count)
+Dependencies: none
+---
+
+TASK #117: BUG-SWARM-3: Persisti workflowDef in Zustand SwarmStore
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: LOW
+Suggested Model: haiku
+Status: COMPLETED
+Context:
+  In client/src/views/SwarmView.jsx, the workflowDef variable (the workflow definition object
+  produced by the prompt-to-flow generation) is stored in local React useState. This means it is
+  reset to null every time the SwarmView component unmounts — which happens whenever the user
+  navigates away from the Swarm view to any other view (Terminal, Jobs, Agents, etc.) and then
+  returns.
+
+  The result: the canvas is blank and the Run button is disabled every time the user navigates back,
+  even if a workflow had been generated before leaving the view. The user must regenerate the workflow
+  from scratch every time, which is a significant UX regression.
+
+  FIX: Move workflowDef out of local state and into the Zustand SwarmStore (defined in
+  client/src/store/SwarmContext.jsx). Add two new fields to the store:
+    - workflowDef: null  (initial state)
+    - setWorkflowDef: (def) => set({ workflowDef: def })
+
+  Then in SwarmView.jsx, replace:
+    const [workflowDef, setWorkflowDef] = useState(null)
+  with destructuring from the store:
+    const { workflowDef, setWorkflowDef } = useSwarmStore()
+
+  Zustand store state persists for the lifetime of the browser session (survives component unmount),
+  so the workflowDef will be available when the user navigates back to the Swarm view.
+
+  Files: client/src/store/SwarmContext.jsx, client/src/views/SwarmView.jsx
+
+Acceptance Criteria:
+  - [x] workflowDef and setWorkflowDef added to Zustand SwarmStore in SwarmContext.jsx
+  - [x] useState(null) for workflowDef removed from SwarmView.jsx
+  - [x] SwarmView.jsx reads workflowDef/setWorkflowDef from the store via useSwarmStore()
+  - [x] Navigating away and returning to Swarm view preserves the previously generated workflow
+  - [x] Canvas renders the stored nodes/edges after navigation
+  - [x] Run button remains enabled if a workflowDef was already generated
+  - [x] 187/187 tests still pass (or updated count)
+Dependencies: none
+---
+
+TASK #118: BUG-SWARM-4: Guard null workflowId in useSwarm.startExecution
+Agent: frontend-dev
+Priority: LOW
+Difficulty: LOW
+Suggested Model: haiku
+Status: COMPLETED
+Context:
+  In client/src/hooks/useSwarm.js, the startExecution() function constructs an API URL using
+  workflowId. If workflowId is null or undefined at the time the function is called, the fetch
+  call silently hits /api/v1/swarm/undefined/start (or /api/v1/swarm/null/start). The server
+  returns a 404, but the error is not surfaced clearly to the user — the UI may appear to hang
+  or show a generic error.
+
+  This is a silent failure trap: no validation at the hook boundary means the bug is hard to detect
+  during development and produces confusing behavior in production.
+
+  FIX: Add an early-return guard at the top of startExecution():
+    if (!workflowId) throw new Error('No workflow selected');
+  This ensures callers get an immediate, descriptive error if they invoke startExecution without a
+  valid workflowId, rather than a cryptic 404 from the server. The calling component (SwarmView.jsx)
+  should already have a null-check on workflowId before enabling the Run button, so this guard is a
+  belt-and-suspenders defensive measure at the hook boundary.
+
+  File: client/src/hooks/useSwarm.js
+
+Acceptance Criteria:
+  - [x] Guard added: if (!workflowId) throw new Error('No workflow selected') at top of startExecution
+  - [x] No fetch call is made when workflowId is null/undefined
+  - [x] Calling code receives a clear Error object (not a 404 response)
+  - [x] 187/187 tests still pass (or updated count)
+  - [x] No regressions in normal swarm execution flow
+Dependencies: none
+---
+
+TASK #119: QA Regression Check — Swarm Bug Wave #116–#119
+Agent: qa-tester
+Priority: MEDIUM
+Difficulty: MEDIUM
+Suggested Model: sonnet
+Status: PENDING
+Context:
+  Four bugs were found in the Swarm section during QA inspection and fixed in tasks #116–#118.
+  This task is a regression check to confirm all four fixes are solid and no new issues were
+  introduced.
+
+  Bugs fixed in this wave:
+  - BUG-SWARM-1 (Task #116): Nodes invisible after workflow generation — fitView not called after
+    async setNodes/setEdges — fixed with imperative fitView() call in SwarmCanvas.jsx
+  - BUG-SWARM-2 (Task #116): opacity:0 in React Flow node style prop corrupts RF ResizeObserver
+    measurements — fixed by moving animation to CSS class on inner wrapper
+  - BUG-SWARM-3 (Task #117): workflowDef in local useState resets on navigation — fixed by moving
+    to Zustand SwarmStore in SwarmContext.jsx
+  - BUG-SWARM-4 (Task #118): startExecution() calls /undefined/start when workflowId is null —
+    fixed with guard: if (!workflowId) throw new Error('No workflow selected')
+
+  Files changed by the bug-fix tasks:
+  - client/src/canvas/PromptToFlowBar.jsx (BUG-SWARM-2: animation moved to CSS wrapper)
+  - client/src/canvas/SwarmCanvas.jsx (BUG-SWARM-1: imperative fitView call)
+  - client/src/store/SwarmContext.jsx (BUG-SWARM-3: workflowDef/setWorkflowDef added to store)
+  - client/src/views/SwarmView.jsx (BUG-SWARM-3: useSwarmStore() instead of useState)
+  - client/src/hooks/useSwarm.js (BUG-SWARM-4: null guard on workflowId)
+
+  QA must verify:
+  1. Swarm view renders with an empty canvas on first load (no regressions from fitView change)
+  2. After entering a prompt and submitting, nodes appear in the canvas within ~2s
+  3. fitView correctly frames all nodes — no nodes clipped or off-screen
+  4. Navigating away from Swarm view and returning preserves the generated workflow (workflowDef
+     persisted in store)
+  5. Run button calls startExecution; if workflowId is somehow null, a clear error is thrown (not
+     a silent 404)
+  6. All existing tests still pass (run npm test)
+  7. No console errors related to React Flow measurements or undefined API URLs
+
+  Use Puppeteer (mcp__puppeteer__*) for visual verification of the canvas state.
+
+Acceptance Criteria:
+  - [ ] npm test passes — all tests green (verify count vs. prior 187)
+  - [ ] Swarm canvas renders correctly on first load
+  - [ ] Nodes visible after workflow generation (BUG-SWARM-1+2 verified fixed)
+  - [ ] fitView frames all nodes correctly after generation
+  - [ ] Navigation away and back preserves workflowDef (BUG-SWARM-3 verified fixed)
+  - [ ] startExecution throws clear error on null workflowId (BUG-SWARM-4 verified fixed)
+  - [ ] No new console errors or regressions introduced by the fixes
+  - [ ] Puppeteer screenshot of Swarm canvas shows nodes rendered correctly
+Dependencies: TASK #116, TASK #117, TASK #118
+---

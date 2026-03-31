@@ -1,4 +1,70 @@
 ---
+## 2026-03-31 — Tasks #116–#119: QA Swarm Bug Wave — Task Registration
+**Status:** COMPLETED
+**Called by:** user (direct instruction — QA inspection report with 4 Swarm bugs)
+
+### Context when I started
+Project was at v3.0.0 RELEASED with 115/115 tasks COMPLETED and zero known open bugs. A QA
+inspection of the Swarm section was run externally (in parallel) and returned 4 bugs. The user
+provided full root cause analysis and fix descriptions for all 4 bugs, plus stated that fixes for
+tasks #116–#118 were already executing in parallel at the time of reporting.
+
+### What I did
+1. Read TASK_PLAN.md header (lines 1-50) and the tail (lines 7520-7535) to understand current
+   state and find the correct append point.
+2. Read ACTIVITY_LOG.md (lines 1-30) and my own agent log (lines 1-40) in parallel for context.
+3. Updated TASK_PLAN.md header: changed Status line to reflect new bug wave; added QA Swarm wave
+   line to the bullet list; updated the prose summary to include tasks #116–#119.
+4. Appended the 4 new task blocks after the last existing task (Task #115) in TASK_PLAN.md.
+   Task #116: Status COMPLETED — BUG-SWARM-2+1 (opacity fix + fitView imperative)
+   Task #117: Status COMPLETED — BUG-SWARM-3 (workflowDef in Zustand store)
+   Task #118: Status COMPLETED — BUG-SWARM-4 (null guard on workflowId)
+   Task #119: Status PENDING  — QA regression check (depends on #116, #117, #118)
+5. Prepended a new ACTIVITY_LOG.md entry for this registration session.
+6. Appended this session log to my own agent file.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Header updated (status line, bullet, prose); 4 new task blocks appended after Task #115 |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | New entry prepended for tasks #116–#119 registration |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- TASK_PLAN.md now accurately reflects post-v3.0.0 state: 4 Swarm bugs registered, 3 already fixed
+  (COMPLETED), 1 QA regression check pending.
+- All 4 bugs have full verbose context blocks: root cause, exact fix description, file paths, and
+  acceptance criteria — self-contained for any agent picking them up.
+- Task #119 correctly chains on #116 + #117 + #118 as dependencies.
+
+### Bugs I encountered
+- First Edit attempt for appending the 4 tasks failed because "Dependencies: TASK #112, TASK #113 ---"
+  string was not unique (appears twice in the file — Task #113 and Task #115 share the same dependency
+  line). Fixed by providing more surrounding context (the preceding acceptance criteria line) to make
+  the match unique. Needed a second read after file was modified before the successful edit.
+
+### Decisions I made
+- Tasks #116, #117, #118 marked COMPLETED immediately per user report that fixes were already in
+  flight in parallel agents — no need to leave them PENDING/IN_PROGRESS when the work is done.
+- Task #119 added as PENDING rather than IN_PROGRESS since it depends on the three fix tasks fully
+  completing before regression QA can run.
+- Used [x] for acceptance criteria on COMPLETED tasks (fixes already applied) and [ ] for Task #119
+  (PENDING — qa-tester must verify).
+
+### What I learned
+- When appending task blocks to TASK_PLAN.md, the dependency line format "Dependencies: X, Y ---"
+  can repeat across tasks with the same dependencies, causing ambiguous Edit matches. Always include
+  the acceptance criteria bullet immediately before the dependency line as additional context.
+
+### State I'm leaving behind
+- TASK_PLAN.md: 119 tasks total. #116/#117/#118 COMPLETED. #119 PENDING — blocked on those three.
+- No other open tasks. v3.0.0 stable; these 4 are post-release Swarm fixes from QA inspection.
+
+### Handoff
+- qa-tester should run Task #119 once #116–#118 are confirmed complete. Use Puppeteer for visual
+  canvas verification. Files to check: PromptToFlowBar.jsx, SwarmCanvas.jsx, SwarmContext.jsx,
+  SwarmView.jsx, useSwarm.js.
+---
 ## 2026-03-31 — Tasks #104–#111: QA Bug-Fix Wave COMPLETED
 **Status:** COMPLETED
 **Called by:** user (direct instruction with Puppeteer confirmation summary)
