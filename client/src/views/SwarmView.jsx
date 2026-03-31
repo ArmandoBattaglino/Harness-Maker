@@ -31,7 +31,8 @@ export default function SwarmView() {
   const ptyExplosionNodeId = useSwarmStore((s) => s.ptyExplosionNodeId);
   const setPtyExplosionNodeId = useSwarmStore((s) => s.setPtyExplosionNodeId);
 
-  const [workflowDef, setWorkflowDef] = useState(null);
+  const workflowDef = useSwarmStore((s) => s.workflowDef);
+  const setWorkflowDef = useSwarmStore((s) => s.setWorkflowDef);
   // Task #100 — HITL inbox drawer toggle
   const [inboxOpen, setInboxOpen] = useState(false);
   // Task #101 — loading state for run/stop
@@ -184,7 +185,7 @@ export default function SwarmView() {
         {/* Reset button — only when stopped; also clears workflowDef (BUG-TOOLBAR-4) */}
         {executionStatus === 'stopped' && (
           <button
-            onClick={() => { reset(); setWorkflowDef(null); }}
+            onClick={reset}
             className="text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors"
           >
             Reset

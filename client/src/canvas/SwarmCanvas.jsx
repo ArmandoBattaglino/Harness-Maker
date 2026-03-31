@@ -9,6 +9,7 @@ import {
   useNodesState,
   useEdgesState,
   addEdge,
+  useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -33,6 +34,7 @@ const edgeTypes = {
 };
 
 export default function SwarmCanvas({ workflowDef }) {
+  const { fitView } = useReactFlow();
   const focusedDepartmentId = useSwarmStore((s) => s.focusedDepartmentId);
   const setSelectedNode = useSwarmStore((s) => s.setSelectedNode);
   const executionStatus = useSwarmStore((s) => s.executionStatus);
@@ -52,8 +54,10 @@ export default function SwarmCanvas({ workflowDef }) {
     if (workflowDef) {
       setNodes(workflowDef.nodes ?? []);
       setEdges(workflowDef.edges ?? []);
+      // Give React Flow a tick to measure nodes before calling fitView
+      setTimeout(() => fitView({ padding: 0.2, duration: 400 }), 50);
     }
-  }, [workflowDef, setNodes, setEdges]);
+  }, [workflowDef, setNodes, setEdges, fitView]);
 
   // Drill-down filtering: when focusedDepartmentId is set, show only nodes
   // that are children of that department (parentId === focusedDepartmentId) + the dept itself

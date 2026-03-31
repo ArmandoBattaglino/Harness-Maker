@@ -1792,3 +1792,39 @@ All 6 bugs fixed. Build 476 modules, 0 errors. 187/187 tests passing. Files full
 ### Handoff
 None — task fully self-contained. QA may want to re-screenshot to verify layout fix visually.
 ---
+
+---
+## 2026-03-31 — BUG-SWARM-4: useSwarm.startExecution null guard
+**Status:** COMPLETED
+**Called by:** user (direct bug fix assignment)
+
+### Context when I started
+BUG-SWARM-4 was identified during QA inspection: `useSwarm.startExecution()` had no guard on `workflowId`, so if called before a workflow was selected the URL became `/api/v1/swarm/undefined/start`, causing a 404 on the server instead of a clear client-side error.
+
+### What I did
+1. Read `client/src/hooks/useSwarm.js` to confirm exact line location.
+2. Added one guard line at the top of `startExecution` body: `if (!workflowId) throw new Error('No workflow selected');`
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/hooks/useSwarm.js | MODIFIED | Added null guard at top of startExecution useCallback |
+
+### Improvements delivered
+- Callers now receive a meaningful Error('No workflow selected') instead of a silent 404 from the server when workflowId is null/undefined.
+
+### Bugs I encountered
+None — single-line fix with no side effects.
+
+### Decisions I made
+- Guard throws immediately before the API call — consistent with the pattern used by stopExecution (which relies on the caller having an executionId). No silent returns; an exception forces the UI to handle the degenerate case explicitly.
+
+### What I learned
+- The hook takes `workflowId` as a parameter from the component scope (closed over via useCallback dep array) — so the guard check is `!workflowId` truthy check, which covers null, undefined, and empty string.
+
+### State I'm leaving behind
+Fix is complete and self-contained. No open issues.
+
+### Handoff
+None — task fully self-contained.
+---

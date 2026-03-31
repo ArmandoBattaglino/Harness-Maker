@@ -1640,3 +1640,50 @@ All documentation is current. v3.0.0 is confirmed stable. No open documentation 
 ### Handoff
 None — task fully self-contained. Project is at stable v3.0.0 closure.
 ---
+---
+## 2026-03-31 — QA Swarm Inspection: 4 open bugs, Tasks #116-118 IN PROGRESS
+**Status:** COMPLETED
+**Called by:** user (post-release QA bug disclosure)
+
+### Context when I started
+v3.0.0 had been declared RELEASED with zero open bugs. Post-release QA inspection of the Swarm section surfaced 4 new bugs. Fixes are running in parallel as Tasks #116-118. User asked only for documentation updates — no source code modification.
+
+### What I did
+1. Read docs/memory/DOC_STATUS.md and the top of docs/memory/ACTIVITY_LOG.md in parallel.
+2. Read docs/memory/agents/documenter.md for session continuity.
+3. Updated DOC_STATUS.md:
+   - Header line updated to reflect QA Swarm inspection and Tasks #116-118 IN PROGRESS.
+   - Release Status block updated: "Open bugs: 4 (Swarm section — fixes in progress)".
+   - Task count updated: "115/115 (+ #116-118 IN PROGRESS for Swarm bug fixes)".
+   - Added a new "Open Bugs (v3.0.0 post-release)" table listing all 4 bugs with severity, description, assigned task, and status.
+4. Prepended a new entry to docs/memory/ACTIVITY_LOG.md recording the QA inspection outcome, 4 bugs, and task assignments.
+5. Appended this session log to docs/memory/agents/documenter.md.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Header updated; Release Status open bug count set to 4; new "Open Bugs" table added |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | QA Swarm inspection entry prepended |
+| docs/memory/agents/documenter.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- DOC_STATUS.md now accurately reflects that v3.0.0 has 4 post-release bugs in the Swarm section, not zero.
+- The "Open Bugs" table provides a quick-reference for all agents working on Tasks #116-118.
+
+### Bugs I encountered
+None during this documentation task.
+
+### Decisions I made
+- Added a new "Open Bugs (v3.0.0 post-release)" table directly in DOC_STATUS.md (not just in ACTIVITY_LOG) so that any agent reading the doc status file immediately sees the live bug count. This is more useful than burying the list only in the log.
+- Did not modify any source code files — as explicitly instructed.
+- Did not modify README.md, ARCHITECTURE.md, or API.md — the bugs are in client-side Swarm view state management; no public API or setup instructions are affected until fixes are confirmed.
+
+### What I learned
+- DOC_STATUS.md needs a persistent "Open Bugs" table to remain trustworthy across post-release patch cycles. A "zero bugs at release" assertion becomes stale the moment QA finds new issues — the table approach avoids that.
+
+### State I'm leaving behind
+DOC_STATUS.md header and Release Status block are accurate. Four bugs are listed with task assignments. Fixes (Tasks #116-118) are IN PROGRESS. After those tasks complete, the documenter should: clear the Open Bugs table (or mark all FIXED), update the header timestamp, and confirm 0 open bugs.
+
+### Handoff
+After Tasks #116-118 are merged: run regression suite, then call documenter to close the Open Bugs table and reset open bug count to 0 in DOC_STATUS.md.
+---

@@ -33,13 +33,11 @@ export default function PromptToFlowBar({ onWorkflowGenerated }) {
 
       const { workflowId, workflowDef } = await res.json();
 
-      // Add staggered animation: add animationDelay to each node
       const animatedDef = {
         ...workflowDef,
-        nodes: workflowDef.nodes.map((node, i) => ({
+        nodes: workflowDef.nodes.map((node) => ({
           ...node,
           data: { ...node.data },
-          style: { ...node.style, opacity: 0, animation: `fadeIn 0.3s ease forwards ${i * 0.08}s` },
         })),
       };
 

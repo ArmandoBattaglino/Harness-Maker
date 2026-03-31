@@ -1,12 +1,21 @@
 # Documentation Status
-_Last updated: 2026-03-31 after v3.0.0 RELEASE — QA CLEAN, zero bugs, 187/187 tests pass, all 115 tasks COMPLETED_
+_Last updated: 2026-03-31 after QA Swarm inspection — 4 open bugs found in Swarm section, Tasks #116-118 fixes IN PROGRESS_
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**
-- QA inspection: CLEAN — zero bugs found
-- Test suite: 187/187 passing
-- Tasks completed: 115/115
-- Open bugs: 0
+- QA inspection: CLEAN at release — zero bugs found at release gate
+- Test suite: 187/187 passing (at release)
+- Tasks completed: 115/115 (+ #116-118 IN PROGRESS for Swarm bug fixes)
+- Open bugs: 4 (Swarm section — fixes in progress)
+
+## Open Bugs (v3.0.0 post-release)
+
+| ID | Severity | Description | Task | Status |
+|----|----------|-------------|------|--------|
+| BUG-SWARM-1 | HIGH | Swarm nodes invisible after generation — nodes not rendered in canvas | #116 | IN PROGRESS |
+| BUG-SWARM-2 | HIGH | Node style has `opacity: 0` — nodes present in state but visually hidden | #116 | IN PROGRESS |
+| BUG-SWARM-3 | MEDIUM | `workflowDef` loses persistence on navigation — state not retained across route changes | #117 | IN PROGRESS |
+| BUG-SWARM-4 | LOW | Missing null guard in `useSwarm.startExecution` — potential crash on undefined input | #118 | IN PROGRESS |
 
 ## Status Legend
 - UP_TO_DATE -- matches current code

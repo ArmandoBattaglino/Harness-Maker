@@ -63,6 +63,7 @@ export function useSwarm(workflowId) {
 
   // Start execution
   const startExecution = useCallback(async (projectId, projectPath) => {
+    if (!workflowId) throw new Error('No workflow selected');
     const data = await apiPost(`/api/v1/swarm/${workflowId}/start`, { projectId, projectPath });
     const { executionId } = data;
     setExecution(executionId, 'running');

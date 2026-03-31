@@ -21,6 +21,9 @@ const useSwarmStore = create((set, get) => ({
   // PTY Explosion — node whose terminal is shown full-screen
   ptyExplosionNodeId: null,
 
+  // Workflow definition (persisted across view navigation — BUG-SWARM-3)
+  workflowDef: null,
+
   // WS connection state
   wsConnected: false,
 
@@ -76,6 +79,8 @@ const useSwarmStore = create((set, get) => ({
   setPtyExplosionNodeId: (id) => set({ ptyExplosionNodeId: id }),
   setWsConnected: (b) => set({ wsConnected: b }),
 
+  setWorkflowDef: (def) => set({ workflowDef: def }),
+
   reset: () => set({
     activeExecutionId: null,
     executionStatus: 'idle',
@@ -90,6 +95,7 @@ const useSwarmStore = create((set, get) => ({
     selectedNodeId: null,
     ptyExplosionNodeId: null,
     wsConnected: false,
+    workflowDef: null,
   }),
 }));
 

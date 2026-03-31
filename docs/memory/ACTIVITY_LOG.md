@@ -1,4 +1,14 @@
 ---
+## 2026-03-31 — documenter — QA Swarm Inspection: 4 open bugs found, Tasks #116-118 IN PROGRESS
+**Outcome:** PARTIAL
+**Summary:** Post-release QA inspection of the Swarm section found 4 bugs. BUG-SWARM-1 and BUG-SWARM-2 (HIGH) — nodes invisible after generation due to opacity:0 in node style. BUG-SWARM-3 (MEDIUM) — workflowDef loses persistence across navigation. BUG-SWARM-4 (LOW) — missing null guard in useSwarm.startExecution. Fixes are running in parallel as Tasks #116 (SWARM-1+2), #117 (SWARM-3), #118 (SWARM-4). DOC_STATUS.md updated to record open bug count and task status. No source code modified.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (documentation update only — fixes in progress)
+**Decisions made:** none
+**Blockers:** none
+**Next:** Await completion of Tasks #116-118 (Swarm bug fixes). Post-fix: run regression suite, update DOC_STATUS.md open bug count to 0, update PROGRESS.md.
+---
+---
 ## 2026-03-31 — documenter — v3.0.0 RELEASE: QA CLEAN, zero bugs, 187/187 tests pass, all 115 tasks completed.
 **Outcome:** COMPLETED
 **Summary:** Final QA inspection confirmed zero bugs. v3.0.0 is production-ready. DOC_STATUS.md updated with Release Status block and revised header; README.md updated with Current Version line.
@@ -2138,4 +2148,15 @@ full self-contained context and acceptance criteria.
 **Decisions made:** none
 **Blockers:** none
 **Next:** debugger to investigate BUG-SWARM-1+2, frontend-dev to fix all 4 bugs.
+---
+
+---
+## 2026-03-31 — frontend-dev — BUG-SWARM-4: useSwarm.startExecution null guard
+**Outcome:** COMPLETED
+**Summary:** Added a one-line null guard at the top of `startExecution` in useSwarm.js. If `workflowId` is falsy the function now throws `Error('No workflow selected')` immediately, preventing the silent `/api/v1/swarm/undefined/start` 404.
+**Files changed:** client/src/hooks/useSwarm.js
+**Bugs fixed:** BUG-SWARM-4
+**Decisions made:** Guard throws (not silently returns) so callers are forced to handle the degenerate state.
+**Blockers:** none
+**Next:** nothing — bug fix is self-contained.
 ---

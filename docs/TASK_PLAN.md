@@ -2,7 +2,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED — 2026-03-31 — QA CLEAN — 187/187 tests — 115/115 tasks COMPLETED
+**Status:** v3.0.0 RELEASED — 2026-03-31 — POST-RELEASE BUG WAVE #2 OPEN — 119/119 tasks (115 COMPLETED + 4 new Swarm bugs #116–#119)
 
 ---
 
@@ -19,9 +19,10 @@
 **Post-release fix #113:** BUG-TOOLBAR-1 (dead runError state) + BUG-TOOLBAR-4 (Reset clears workflowDef) — 2026-03-31 (COMPLETED).
 **Post-release fix #114:** BUG-TOOLBAR-2 (useSwarm.js cleanup useEffect keyed on [workflowId]) — 2026-03-31 (COMPLETED).
 **Post-release fix #115:** BUG-TOOLBAR-3 (SwarmView.jsx handlePause/handleResume guard against null activeExecutionId) — 2026-03-31 (COMPLETED).
-**Known open bugs:** None.
+**QA Swarm inspection wave #116–#119:** 4 Swarm bugs found by QA — 2026-03-31 (IN_PROGRESS — fixes executing in parallel).
+**Known open bugs:** BUG-SWARM-1, BUG-SWARM-2, BUG-SWARM-3, BUG-SWARM-4 — tracked as tasks #116–#119.
 
-All 115 tasks are COMPLETED. This includes the original V3 wave (#43–#82, 57 granular units), the post-release debug loop (#83–#99), the QA visual inspection bug-fix wave (#104–#111), and post-release toolbar fixes (#112–#115). The codebase is stable, fully tested (187/187), and confirmed ready for production deployment at v3.0.0.
+All 115 original tasks are COMPLETED. Tasks #116–#119 are post-release bug fixes from a QA Swarm section inspection. This includes the original V3 wave (#43–#82, 57 granular units), the post-release debug loop (#83–#99), the QA visual inspection bug-fix wave (#104–#111), post-release toolbar fixes (#112–#115), and QA Swarm bug wave (#116–#119).
 
 ---
 
