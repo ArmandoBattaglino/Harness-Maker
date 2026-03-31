@@ -1873,7 +1873,7 @@ inbox.js handler:
 | DEC-013 | WorkflowStore writes one JSON file per workflow to `%APPDATA%\ClaudeCodeManager\workflows\`. Follows ConfigStore pattern exactly. |
 | DEC-014 | SwarmEngine attaches a secondary `swarmListeners` Set to each session record. Primary `pty.onData` handler (DEC-009) is never replaced. |
 | DEC-015 | Circuit breaker is per-edge (not per-node) to avoid false positives on legitimate hub nodes. |
-| DEC-016 | Prompt-to-Flow calls the Anthropic SDK directly (claude-haiku-4-5-20251001). The scaffold endpoint validates and saves the result via WorkflowStore. |
+| DEC-016 | Prompt-to-Flow spawns the `claude` binary with `-p <prompt> --output-format json --max-turns 1 --no-session-persistence --allowedTools none` — same pattern as JobRunner. No Anthropic SDK or API key required. `swarmRoutes` accepts `claudeBin` as its third parameter (passed from server/index.js). The scaffold endpoint validates the JSON output and saves via WorkflowStore. (Updated 2026-03-31: was Anthropic SDK + claude-haiku-4-5-20251001.) |
 
 ### 11.7 V3 Security Requirements
 

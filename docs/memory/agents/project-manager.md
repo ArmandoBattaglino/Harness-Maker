@@ -53,6 +53,65 @@ No immediate handoff required. If the user wants to deploy v3.0.0:
 ---
 
 ---
+## 2026-03-31 — Task #112: Fix Swarm Workflow Generation + Run Button UX
+**Status:** COMPLETED
+**Called by:** user (direct instruction with implementation summary + Puppeteer verification)
+
+### Context when I started
+TASK_PLAN.md had tasks #1–#111 all COMPLETED. Task #112 was not yet in the plan — it was completed by
+backend-dev and frontend-dev agents and reported to me for logging. The TASK_PLAN.md header still
+referenced the QA bug-fix wave (#104–#111) as the most recent work. ACTIVITY_LOG.md had the documenter
+entry (2026-03-31) as the most recent entry.
+
+### What I did
+1. Read TASK_PLAN.md (head + tail) and ACTIVITY_LOG.md to confirm #112 was absent and file boundaries.
+2. Read project-manager.md agent log to confirm last session state.
+3. Updated TASK_PLAN.md header block: added "Post-release fix #112" line and expanded the summary
+   sentence to mention the Swarm fix and the updated task count.
+4. Appended TASK #112 block (COMPLETED) at the end of TASK_PLAN.md after the existing #109 entry.
+5. Prepended a new COMPLETED entry for Task #112 to ACTIVITY_LOG.md.
+6. Appended this session log to project-manager.md.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Header updated to reference #112; TASK #112 block appended as COMPLETED |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | New COMPLETED entry for Task #112 prepended at top |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- TASK_PLAN.md is now fully current: 112 tasks, all COMPLETED, no pending work.
+- ACTIVITY_LOG.md records the Swarm fix milestone for future agent context.
+- Header block accurately describes the post-release fix history (#112).
+
+### Bugs I encountered
+- None in memory operations. Task #112 itself fixed: (1) Swarm workflow generation using Anthropic SDK
+  instead of claude CLI binary, (2) Run button hidden instead of disabled-with-tooltip.
+
+### Decisions I made
+- Added Task #112 as COMPLETED directly (no PENDING phase) since it was already verified and done.
+- Placed #112 after the existing last task entry (#109) since #110 and #111 appear earlier in the file
+  (the tasks were not strictly sequential at file end — #109 was the actual last entry at line 7398).
+
+### What I learned
+- The TASK_PLAN.md file does not always end with the highest task number — tasks #110 and #111 appear
+  at lines 7210 and 7253, while #109 is at line 7382. Always use Grep to find the actual last entry
+  before appending.
+- The file uses a single trailing --- as a delimiter. New tasks should be appended inside that block,
+  not after a final --- line (which would leave a dangling separator).
+
+### State I'm leaving behind
+All 112 tasks in TASK_PLAN.md are COMPLETED. No tasks in PENDING, IN_PROGRESS, or BLOCKED state.
+Project is at v3.0.0 with Swarm workflow generation confirmed working end-to-end via Puppeteer.
+
+### Handoff
+No blocking work remains. If the user wants to proceed:
+- devops: create git tag v3.0.0, run npm run build + npm test, push tag.
+- documenter: update ARCHITECTURE.md Section 11 to document Swarm workflow generation via CLI binary.
+- qa-tester: regression test the Swarm view with a Puppeteer full walkthrough if desired.
+---
+
+---
 ## 2026-03-29 — Tasks #104–#111: QA Bug-Fix Wave
 **Status:** COMPLETED
 **Called by:** user (direct instruction with QA bug list)

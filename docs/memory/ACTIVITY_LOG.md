@@ -1,4 +1,24 @@
 ---
+## 2026-03-31 — project-manager — Task #112: Fix Swarm Workflow Generation + Run Button UX
+**Outcome:** COMPLETED
+**Summary:** Swarm workflow generation was broken because server/routes/swarm.js used the Anthropic SDK (requiring an API key) instead of the claude CLI binary. generateWorkflowFromPrompt was rewritten to spawn the claude binary with -p and --output-format json flags; claudeBin is now passed from server/index.js as the 3rd arg to swarmRoutes(). Run button in SwarmView.jsx changed from hidden-when-idle to always-visible-disabled-with-tooltip. PromptToFlowBar.jsx API-key error message reverted. Puppeteer verification confirmed a 3-node triage workflow generates end-to-end.
+**Files changed:** server/routes/swarm.js, server/index.js, client/src/views/SwarmView.jsx, client/src/canvas/PromptToFlowBar.jsx
+**Bugs fixed:** Swarm workflow generation broken (SDK vs CLI binary mismatch), Run button hidden instead of disabled
+**Decisions made:** Use claude CLI binary for all AI invocations — no direct Anthropic SDK usage in server routes
+**Blockers:** none
+**Next:** v3.0.0 deployment remains unblocked. All Swarm features now functional end-to-end.
+---
+
+## 2026-03-31 — documenter — Task #112: Fix Swarm Workflow Generation + Run Button UX
+**Outcome:** COMPLETED
+**Summary:** Removed ANTHROPIC_API_KEY requirement from README.md Swarm Quick Start, env var table, and Known Limitations. Updated ARCHITECTURE.md DEC-016 to document the binary-spawn approach (claude -p / --output-format json) replacing the Anthropic SDK. DOC_STATUS.md timestamp advanced.
+**Files changed:** README.md, docs/ARCHITECTURE.md (DEC-016), docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none
+**Decisions made:** DEC-016 amended — Prompt-to-Flow uses claude binary, not Anthropic SDK. No API key needed.
+**Blockers:** none
+**Next:** v3.0.0 deployment remains unblocked. All docs accurate.
+---
+
 ## 2026-03-31 — documenter — Tasks #104–#111: Documentation Update After QA Bug-Fix Pass
 **Outcome:** COMPLETED
 **Summary:** Audited all documentation for staleness after the QA bug-fix wave (Tasks #104-#111) and v3.0.0 version bump. README.md confirmed accurate — no version string in prose, no change needed. docs/ARCHITECTURE.md Section 11.5 (HITL flow) and Section 11.9 (React component tree + toolbar controls) updated to reflect all fixes. DOC_STATUS.md advanced to 2026-03-31.

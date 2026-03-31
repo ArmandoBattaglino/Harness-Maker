@@ -69,16 +69,10 @@ Version 3 adds a visual multi-agent canvas where you can design, generate, and r
 ### Swarm Quick Start
 
 1. **Open the Swarm view.** Click the "hub" icon in the left sidebar (sixth item).
-2. **Generate a workflow.** Type a plain-language description into the prompt bar at the top and press Enter. Claude generates an agent graph automatically (requires `ANTHROPIC_API_KEY` in your environment).
+2. **Generate a workflow.** Type a plain-language description into the prompt bar at the top and press Enter. Claude generates an agent graph automatically using the installed `claude` binary — no API key required.
 3. **Start execution.** Click **Start** in the toolbar. Each agent node spawns a live PTY session. Handoffs between nodes animate in real time on the canvas.
 4. **Monitor agents.** Click any node to open the Agent Inspector panel on the right — see live status, system prompt, handoff count, and the last 4 lines of PTY output.
 5. **Handle HITL requests.** When an agent pauses for approval, a notification appears. Open the inbox, review the agent's request, and click **Approve** (optionally typing resume text) or **Reject** to continue.
-
-### Environment Variable Required for Swarm
-
-| Variable | Description |
-|----------|-------------|
-| `ANTHROPIC_API_KEY` | Required for Prompt-to-Flow scaffold. Set before `npm start` or via your shell's environment. The key is used server-side only and is never logged or sent to the browser. |
 
 ### Swarm Constraints
 
@@ -192,7 +186,7 @@ If the session is gone, start a new terminal from the project view.
 - **No git integration.** No commit, diff, or branch management UI. Out of scope.
 - **No MCP server editor.** MCP server configuration is display-only. Out of scope.
 - **Swarm execution state is in-memory.** A server restart clears all running executions. Workflow definitions persist to disk; execution state does not.
-- **ANTHROPIC_API_KEY required for Prompt-to-Flow.** Without the key, the scaffold endpoint returns 500. The rest of the app (terminal, jobs, entity management) works without it.
+- **Prompt-to-Flow requires the `claude` binary.** The scaffold endpoint spawns `claude -p ... --output-format json`. If the binary is not found, it returns 500. The rest of the app (terminal, jobs, entity management) is unaffected.
 - **Trigger RSS poller is in-memory.** RSS poll registrations are lost on server restart. Re-register via the Triggers view after restart.
 
 ---

@@ -15,8 +15,9 @@
 **Debug loop:** All 17 post-release bug tasks (#83–#99) COMPLETED.
 **QA bug-fix wave:** All 8 visual/swarm bugs (#104–#111) COMPLETED.
 **Known open bugs:** None.
+**Post-release fix #112:** Swarm workflow generation + Run button UX — 2026-03-31 (COMPLETED).
 
-All tasks in the original V3 wave (#43–#82, 57 granular units), the post-release debug loop (#83–#99), and the QA visual inspection bug-fix wave (#104–#111) are COMPLETED. The codebase is stable and confirmed ready for production deployment at v3.0.0.
+All tasks in the original V3 wave (#43–#82, 57 granular units), the post-release debug loop (#83–#99), and the QA visual inspection bug-fix wave (#104–#111) are COMPLETED. Task #112 fixed Swarm workflow generation (claude CLI binary instead of Anthropic SDK) and Run button always-visible UX. The codebase is stable and confirmed ready for production deployment at v3.0.0.
 
 ---
 
@@ -7395,4 +7396,46 @@ Acceptance Criteria:
   - [x] handoff_started uses getState() for point-in-time read
   - [x] agentStates removed from connectWs deps array
   - [x] build passes, 187 tests pass
+---
+
+TASK #112: Fix Swarm workflow generation + Run button UX
+Agent: backend-dev + frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: sonnet
+Status: COMPLETED
+Context: |
+  Swarm workflow generation was broken because generateWorkflowFromPrompt in
+  server/routes/swarm.js attempted to use the Anthropic SDK directly (requiring an API key),
+  rather than the claude CLI binary already available on the system.
+
+  Fix 1 (backend): Rewrote generateWorkflowFromPrompt to spawn the claude CLI binary using
+  the -p flag and --output-format json. claudeBin is passed from server/index.js as the 3rd
+  argument to swarmRoutes(). No API key required — the existing binary authentication is used.
+
+  Fix 2 (frontend — SwarmView.jsx): Run button was hidden when idle (no workflow / no project
+  selected). Changed to always-visible but disabled with a descriptive tooltip, matching the
+  standard UX pattern for action buttons that require prerequisites.
+
+  Fix 3 (frontend — PromptToFlowBar.jsx): Reverted incorrect API-key error message that was
+  added during a failed SDK approach.
+
+  Puppeteer verification: workflow generation works end-to-end. Claude generated a 3-node
+  triage workflow. Run button is now always visible (disabled until workflow generated and
+  project selected).
+
+Files changed:
+  - server/routes/swarm.js (generateWorkflowFromPrompt rewritten to use CLI binary)
+  - server/index.js (passes claudeBin as 3rd arg to swarmRoutes())
+  - client/src/views/SwarmView.jsx (Run button always visible when idle)
+  - client/src/canvas/PromptToFlowBar.jsx (error message reverted)
+
+Acceptance Criteria:
+  - [x] generateWorkflowFromPrompt uses claude CLI binary (spawn -p --output-format json)
+  - [x] No Anthropic SDK / API key dependency in workflow generation
+  - [x] claudeBin passed correctly from server/index.js to swarmRoutes()
+  - [x] Run button always visible when idle (disabled with tooltip, not hidden)
+  - [x] PromptToFlowBar.jsx shows correct error messages
+  - [x] Puppeteer end-to-end: workflow generates successfully, 3-node triage workflow produced
+Dependencies: TASK #100, TASK #101
 ---

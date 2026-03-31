@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-31 — after Tasks #104-#110: QA Bug-Fix Pass + v3.0.0 version bump — mapped by code-mapper_
+_Last updated: 2026-03-31 — after Task #112: Fix Swarm workflow generation + Run button UX — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -35,7 +35,7 @@ _Last updated: 2026-03-31 — after Tasks #104-#110: QA Bug-Fix Pass + v3.0.0 ve
 | server/services/SwarmEngine.js | SwarmEngine (class), default SwarmEngine | V3 swarm orchestrator — spawns agent PTY sessions, registers HandoffParser swarmListeners taps, routes handoff/done events, tracks per-node agent state and budget; in-memory only (never persisted). Constructor accepts circuitBreaker + budgetTracker optional params (Tasks #46, #46.3, #62.1, DEC-014) |
 | server/services/CircuitBreaker.js | CircuitBreaker (class), default CircuitBreaker | Advisory circuit breaker for handoff loops — check(edgeId, counter, threshold) returns boolean; never stops execution, caller emits WS advisory (FR-V3-17, Task #49) |
 | server/services/BudgetTracker.js | BudgetTracker (class), default BudgetTracker | Soft budget tracker — accumulates char counts per session, estimates tokens (÷4), provides checkBudget advisory signal; never stops execution (FR-V3-18, Task #49) |
-| server/routes/swarm.js | swarmRoutes (factory fn), generateWorkflowFromPrompt (module-private) | 7-endpoint REST API for swarm execution control: start, pause, resume, stop, status, agent output, broadcast. POST /scaffold fully implemented using @anthropic-ai/sdk (claude-haiku-4-5-20251001). Factory pattern: accepts swarmEngine + sessionManager at construction. (Tasks #47.1 + #59) |
+| server/routes/swarm.js | swarmRoutes (factory fn), generateWorkflowFromPrompt (module-private) | 7-endpoint REST API for swarm execution control: start, pause, resume, stop, status, agent output, broadcast. POST /scaffold uses spawn(claudeBin, ['-p', prompt, '--output-format', 'json', ...]) — no Anthropic SDK. Factory pattern: accepts swarmEngine + sessionManager + claudeBin. (Tasks #47.1 + #59 + #112) |
 | server/ws/swarmHandler.js | handleSwarmConnection (default), getSubscribers, broadcast | WebSocket connection handler for /ws/swarm path. Module-level _subscribers Map keyed by executionId → Set\<WebSocket\>. Sends initial execution_status snapshot on connect. broadcast() fans out JSON events to all OPEN connections for an executionId. (Tasks #48.1, #48.2) |
 | server/utils/ssrfGuard.js | isSafeUrl | Synchronous SSRF prevention guard — rejects private/loopback IP literals and localhost in URLs before any outbound server fetch. Covers IPv4, IPv6 loopback, IPv4-mapped IPv6, link-local. Does NOT perform DNS lookup (sync-only design). (SEC-V3-03, Task #50) |
 | server/middleware/webhookLimit.js | webhookLimit (default) | Express JSON body-parser capped at 32 KB. Apply before any route that ingests untrusted webhook payloads. Awaiting use in routes/triggers.js (Task #75). (SEC-V3-01, Task #50) |
@@ -1565,14 +1565,14 @@ _Last updated: 2026-03-31 — after Tasks #104-#110: QA Bug-Fix Pass + v3.0.0 ve
 
 ## Swarm REST API (Task #47.1)
 
-### `server/routes/swarm.js` :: `swarmRoutes(swarmEngine, sessionManager)`
-- **Purpose:** Factory function — creates and returns an Express Router with all 7 swarm execution control endpoints (+ 1 stub). Accepts live swarmEngine and sessionManager instances at creation time so handlers close over them.
-- **Called by:** server/index.js startup() (line: `app.use('/api/v1/swarm', swarmRoutes(app.locals.swarmEngine, app.locals.sessionManager))`)
-- **Calls:** Router() (express), SwarmEngine.startExecution, SwarmEngine.getStatus, SwarmEngine.stopExecution, SessionManager.writeInput, SessionManager.getSession
-- **Inputs:** swarmEngine (SwarmEngine instance), sessionManager (SessionManager singleton)
+### `server/routes/swarm.js` :: `swarmRoutes(swarmEngine, sessionManager, claudeBin)`
+- **Purpose:** Factory function — creates and returns an Express Router with all 8 swarm execution control endpoints. Accepts live swarmEngine, sessionManager, and claudeBin (resolved binary path) at creation time so handlers close over them.
+- **Called by:** server/index.js startup() (line: `app.use('/api/v1/swarm', swarmRoutes(swarmEngine, sessionManager, claudeBin))`)
+- **Calls:** Router() (express), SwarmEngine.startExecution, SwarmEngine.getStatus, SwarmEngine.stopExecution, SessionManager.writeInput, SessionManager.getSession, generateWorkflowFromPrompt
+- **Inputs:** swarmEngine (SwarmEngine instance), sessionManager (SessionManager singleton), claudeBin (string — absolute path to claude binary, set by BinaryDiscovery at startup)
 - **Output:** Express Router instance
 - **Side effects:** none (factory — side effects happen per-request)
-- **Last modified:** 2026-03-27 in Task #47.1 by backend-dev
+- **Last modified:** 2026-03-31 in Task #112 by orchestrator (BREAKING CHANGE: added claudeBin 3rd param; was swarmRoutes(swarmEngine, sessionManager))
 
 ### `server/routes/swarm.js` :: `POST /:workflowId/start`
 - **Purpose:** Start a new workflow execution. Validates projectId (non-empty string) and projectPath (non-empty string). Calls swarmEngine.startExecution. Returns 201 { executionId, status: 'running' }. Returns 400 on missing params, 404 if workflow not found ('Workflow not found' error from SwarmEngine).
@@ -2037,25 +2037,25 @@ _Last updated: 2026-03-31 — after Tasks #104-#110: QA Bug-Fix Pass + v3.0.0 ve
 
 ## POST /scaffold Full Implementation (Task #59)
 
-### `server/routes/swarm.js` :: `generateWorkflowFromPrompt(prompt)`
-- **Purpose:** Module-private async helper. Calls the Anthropic Claude API (claude-haiku-4-5-20251001, max_tokens 2048) with a system prompt that instructs Claude to return a multi-agent workflow definition as JSON. Strips any accidental markdown fences from the response. Validates that the returned JSON has a `name` field and at least one `nodes` entry. Returns the parsed workflow object.
-- **Called by:** `swarmRoutes` → POST /scaffold handler (same file — line 114)
-- **Calls:** `new Anthropic()` (reads ANTHROPIC_API_KEY from env), `client.messages.create(...)`, `JSON.parse()`
-- **Inputs:** prompt (string — user natural-language description of the workflow, already trimmed and validated ≤ 2000 chars by caller)
-- **Output:** Promise\<object\> — parsed workflow definition matching WorkflowStore schema: `{ name, description, nodes[], edges[] }`
-- **Side effects:** outbound HTTPS call to api.anthropic.com; throws on network failure, non-200, JSON parse error, or invalid structure
-- **Complexity note:** Two-step markdown fence strip: `text.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/, '').trim()`. This handles Claude occasionally wrapping JSON in a code block despite the system prompt saying not to. The model used (claude-haiku-4-5-20251001) is hard-coded — if this model becomes unavailable the endpoint will always 500.
-- **Last modified:** 2026-03-27 in Task #59 by backend-dev (replaces 501 scaffold stub)
+### `server/routes/swarm.js` :: `generateWorkflowFromPrompt(claudeBin, prompt)`
+- **Purpose:** Module-private async helper. Spawns the local claude binary (`claudeBin -p <fullPrompt> --output-format json --max-turns 1 --no-session-persistence --allowedTools none`) in os.tmpdir(). Closes stdin immediately (DEC-005). Collects stdout/stderr, exits non-zero → reject. Parses `stdout` as JSON, extracts `parsed.result ?? parsed.content` to get the model's text response, strips markdown fences, re-parses as workflow JSON, validates `name` + `nodes[]` present. Returns the parsed workflow object.
+- **Called by:** `swarmRoutes` → POST /scaffold handler (same file)
+- **Calls:** `spawn(claudeBin, args, { shell: false })` (child_process), `child.stdin.end()`, `JSON.parse()`
+- **Inputs:** claudeBin (string — absolute path to claude binary), prompt (string — user natural-language description, already trimmed and validated ≤ 2000 chars by caller)
+- **Output:** Promise\<object\> — parsed workflow definition: `{ name, description, nodes[], edges[] }`
+- **Side effects:** spawns a claude child process in os.tmpdir(); throws on spawn failure, non-zero exit, JSON parse error, or invalid structure. No outbound HTTPS call — uses local binary only.
+- **Complexity note (Task #112):** Uses `--output-format json` which wraps the model response in a JSON envelope `{ result: "...", ... }`. The function extracts `parsed.result ?? parsed.content` before attempting the second JSON.parse. Two-step markdown fence strip handles cases where the model wraps output in code blocks. BREAKING CHANGE from Task #59: previous version used `new Anthropic()` SDK with API key — now uses spawn() with no API key required.
+- **Last modified:** 2026-03-31 in Task #112 by orchestrator (BREAKING: replaced Anthropic SDK call with spawn(claudeBin, ...) pattern — no API key required; added claudeBin as first parameter)
 
 ### `server/routes/swarm.js` :: `POST /scaffold route handler` (inside `swarmRoutes()`)
-- **Purpose:** Validates the incoming prompt body field (required, string, non-empty, ≤ 2000 chars), calls `generateWorkflowFromPrompt`, optionally attaches `projectId` to the returned workflow definition, saves to `WorkflowStore` via `req.app.locals.workflowStore.create()`, and returns 201 with `{ workflowId, workflowDef }`.
+- **Purpose:** Validates the incoming prompt body field (required, string, non-empty, ≤ 2000 chars). Guards against missing claudeBin (503). Calls `generateWorkflowFromPrompt(claudeBin, prompt.trim())`, optionally attaches `projectId` to the returned workflow definition, saves to `WorkflowStore` via `req.app.locals.workflowStore.create()`, and returns 201 with `{ workflowId, workflowDef }`.
 - **Called by:** Express router — POST /api/v1/swarm/scaffold (declared BEFORE /:workflowId/* routes to prevent param shadowing)
-- **Calls:** `generateWorkflowFromPrompt(prompt)`, `req.app.locals.workflowStore.create(workflowDef)` → `WorkflowStore.create()`
+- **Calls:** `generateWorkflowFromPrompt(claudeBin, prompt)`, `req.app.locals.workflowStore.create(workflowDef)` → `WorkflowStore.create()`
 - **Inputs:** `req.body.prompt` (string, required), `req.body.projectId` (string, optional)
-- **Output:** HTTP 201 `{ workflowId: string, workflowDef: object }` | 400 if prompt invalid | 503 if WorkflowStore unavailable | 500 on Claude API or JSON error
-- **Side effects:** creates a new workflow record in WorkflowStore (persisted to disk via write-file-atomic); makes outbound Anthropic API call
+- **Output:** HTTP 201 `{ workflowId: string, workflowDef: object }` | 400 if prompt invalid | 503 if claudeBin unset or WorkflowStore unavailable | 500 on spawn/JSON error
+- **Side effects:** spawns local claude binary process; creates a new workflow record in WorkflowStore (persisted to disk via write-file-atomic). No outbound API call.
 - **Complexity note:** Route MUST be declared before `/:workflowId/start` in the router — otherwise Express would match 'scaffold' as a `:workflowId` param. Comment in source code documents this ordering constraint.
-- **Last modified:** 2026-03-27 in Task #59 by backend-dev (was 501 stub; now full impl)
+- **Last modified:** 2026-03-31 in Task #112 by orchestrator (updated call signature: generateWorkflowFromPrompt(claudeBin, prompt); added 503 guard for missing claudeBin)
 
 ---
 
