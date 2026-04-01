@@ -1,4 +1,13 @@
 ---
+## 2026-03-31 — project-manager — Tasks #116–#123: Swarm Bug Wave + Audit Wave ALL COMPLETED
+**Outcome:** COMPLETED
+**Summary:** All 8 Swarm tasks (#116–#123) marked COMPLETED. Final verified state: 187/187 tests pass, build 477 modules 0 errors, Puppeteer confirms click-on-node opens AgentInspector with name/type/system prompt, nodes visible and centered after generation, workflowDef persists on navigation, Open Terminal button implemented in AgentInspector. TASK_PLAN.md header updated to 123/123 ALL COMPLETED.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** BUG-SWARM-1/2/3/4 (Tasks #116–#118), BUG-AUDIT-1/2/3/4 (Tasks #120–#122) — all confirmed resolved
+**Decisions made:** none
+**Blockers:** none
+**Next:** nothing — all tasks complete, project at v3.0.0 fully stable
+---
 ## 2026-03-31 — project-manager — Tasks #120–#123: Swarm Audit Bug Wave Registered
 **Outcome:** COMPLETED
 **Summary:** Registered 4 tasks from a code audit of the Swarm section. Tasks #120 (BUG-AUDIT-1) and #121 (BUG-AUDIT-2+3) discovered already COMPLETED per ACTIVITY_LOG evidence (frontend-dev fixed them before registration). Task #122 (BUG-AUDIT-4: useInbox dead code in SwarmView) is PENDING — frontend-dev must add useInbox(activeExecutionId) call. Task #123 (QA regression) is PENDING, depends on #120–#122.
@@ -2286,4 +2295,24 @@ full self-contained context and acceptance criteria.
 **Decisions made:** useInbox is NOT dead code — it IS imported by SwarmView.jsx (confirmed by grep: line 12 import, line 53 call). Bug report was accurate about the pre-fix state; fix was adding the import.
 **Blockers:** none
 **Next:** qa-tester should verify: (1) AgentInspector visible in idle state, (2) "Open Terminal" button appears when agentState.sessionId is present, (3) HITL polling fires when WS disconnected
+---
+---
+## 2026-03-31 — documenter — Swarm Section COMPLETE: all bugs fixed, 0 open bugs
+**Outcome:** COMPLETED
+**Summary:** All 8 post-release Swarm bugs (BUG-SWARM-1 through BUG-SWARM-4, BUG-AUDIT-1 through BUG-AUDIT-4) are confirmed FIXED. Test suite 187/187 passing, build clean at 477 modules, 0 errors. DOC_STATUS.md updated: header timestamp refreshed, task count corrected to 122/115, open bug count set to 0, BUG-AUDIT-4 moved from "In Progress" table to Fixed Bugs table, Inline comments row updated to mention BUG-AUDIT-4 fix. Swarm section is fully operational: generate workflow, inspect nodes, run with live WS, live agent status, Open Terminal PTY, Inter-Agent Feed, HITL approve/reject, Broadcast, Pause/Resume/Stop, workflowDef persistence across navigation.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** BUG-AUDIT-4 (documented — fix applied by frontend-dev in Task #122)
+**Decisions made:** none
+**Blockers:** none
+**Next:** no open bugs; project stable at v3.0.0. Next significant change will trigger a new documentation pass.
+---
+---
+## 2026-03-31 — code-mapper — Tasks #116–#122: Swarm Bug-Fix Wave mapped
+**Outcome:** COMPLETED
+**Summary:** Mapped all 7 Swarm bug fixes (BUG-SWARM-1 through BUG-SWARM-4, BUG-AUDIT-1 through BUG-AUDIT-4). Updated CODE_MAP.md Function Graph for SwarmCanvas, PromptToFlowBar/handleGenerate, SwarmView, useSwarm/startExecution, AgentInspector, useSwarmStore (added setWorkflowDef + reset payload), index.css (@keyframes fadeIn removal). All 8 bugs closed in the Open Bug Registry. Appended CHANGELOG entry.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** BUG-SWARM-1, BUG-SWARM-2, BUG-SWARM-3, BUG-SWARM-4, BUG-AUDIT-1, BUG-AUDIT-2, BUG-AUDIT-3, BUG-AUDIT-4 — all FIXED per documentation
+**Decisions made:** none
+**Blockers:** none
+**Next:** Task #123 (QA regression check via Puppeteer) — qa-tester should verify all fixes hold; project-manager to confirm all tasks complete
 ---

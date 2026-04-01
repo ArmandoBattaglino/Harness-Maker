@@ -1731,3 +1731,50 @@ DOC_STATUS.md header and Release Status block are accurate. Four bugs are listed
 ### Handoff
 After Tasks #116-118 are merged: run regression suite, then call documenter to close the Open Bugs table and reset open bug count to 0 in DOC_STATUS.md.
 ---
+---
+## 2026-03-31 — Task #122 closure: Swarm Section COMPLETE, 0 open bugs
+**Status:** COMPLETED
+**Called by:** user (Swarm section fully operational confirmation)
+
+### Context when I started
+v3.0.0 was at 1 remaining open bug: BUG-AUDIT-4 (useInbox.js hook not mounted in SwarmView.jsx — HITL inbox polling never started). Tasks #116-121 were all COMPLETED. Task #122 (BUG-AUDIT-4 fix) was IN PROGRESS. User confirmed Task #122 complete: all 8 post-release Swarm bugs fixed, 187/187 tests pass, build 477 modules 0 errors, all 10 Swarm features verified working.
+
+### What I did
+1. Read docs/memory/DOC_STATUS.md and the first 50 lines of docs/memory/ACTIVITY_LOG.md in parallel.
+2. Read the tail of docs/memory/agents/documenter.md to restore session continuity.
+3. Updated docs/memory/DOC_STATUS.md:
+   - Header: updated timestamp and summary to reflect 0 open bugs and Swarm section complete.
+   - Release Status block: task count updated to 122/115; open bugs set to 0.
+   - Removed the "Open Bugs (post-release Swarm audit)" table (was showing BUG-AUDIT-4 IN PROGRESS).
+   - Fixed Bugs table: added BUG-AUDIT-4 row at top with FIXED 2026-03-31 status.
+   - Inline comments row: updated Notes field to include SwarmView.jsx useInbox call (BUG-AUDIT-4) and AgentInspector Open Terminal button.
+4. Appended entry to docs/memory/ACTIVITY_LOG.md recording the full Swarm closure.
+5. Appended this session log to docs/memory/agents/documenter.md.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Header updated; task count corrected to 122/115; open bugs set to 0; BUG-AUDIT-4 moved from Open to Fixed table; Inline comments row updated |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Swarm Section COMPLETE entry appended |
+| docs/memory/agents/documenter.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- DOC_STATUS.md now accurately reflects: 0 open bugs, all 122 tasks COMPLETED, Swarm section fully operational.
+- The Fixed Bugs table is now the complete historical record of all 8 post-release Swarm patches.
+
+### Bugs I encountered
+None during this documentation task.
+
+### Decisions I made
+- Removed the "Open Bugs" table entirely rather than leaving it empty — an empty table is misleading and the fixed items already appear in the Fixed Bugs table below. Cleaner state.
+- Did not modify README.md, ARCHITECTURE.md, or API.md — BUG-AUDIT-4 fix (mounting useInbox in SwarmView) is an internal client-side wiring fix; no public API, setup steps, or architectural components changed.
+
+### What I learned
+- DOC_STATUS.md inline comments row needs to track all client-side component wiring fixes, not just route files and services, since Swarm bugs were entirely client-side.
+
+### State I'm leaving behind
+DOC_STATUS.md is fully accurate: 0 open bugs, 122/115 tasks COMPLETED, all documentation UP_TO_DATE. Swarm section is complete and stable. No documentation debt beyond the pre-existing low-priority deferred items.
+
+### Handoff
+None — project is stable at v3.0.0. No open documentation items. Next session should start fresh from this clean state.
+---

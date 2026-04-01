@@ -1854,3 +1854,67 @@ CODE_MAP.md and CHANGELOG.md are fully up to date through the Swarm audit (Tasks
 ### Handoff
 qa-tester should verify: AgentInspector visible in idle state; "Open Terminal" button visible when sessionId is set; HITL polling fires when WS disconnected. Tasks #120-#122 are the active fixes — frontend-dev is running them concurrently.
 ---
+---
+## 2026-03-31 — Tasks #116–#122: Swarm Bug-Fix Wave
+**Status:** COMPLETED
+**Called by:** user (explicit request to update CODE_MAP.md + CHANGELOG.md after Swarm bug-fix wave)
+
+### Context when I started
+CODE_MAP.md header said "Swarm Code Audit (BUG-AUDIT-1 through BUG-AUDIT-4)" — the Module Index rows were already current (reflecting Tasks #116-122), but the Function Graph entries still contained stale information: PromptToFlowBar still documented the opacity:0 animation; SwarmCanvas still lacked fitView + always-AgentInspector notes; SwarmView still documented workflowDef as local useState; startExecution still had BUG-SWARM-4 as OPEN; AgentInspector lacked the "Open Terminal" button entry; useSwarmStore lacked setWorkflowDef; index.css still listed @keyframes fadeIn as present; Open Bug Registry showed all 8 bugs as OPEN.
+
+### What I did
+1. Read CODE_MAP.md header + Module Index (lines 1-120) and last 60 lines of CHANGELOG.md to locate append point.
+2. Read all 7 modified source files in parallel: PromptToFlowBar.jsx, SwarmCanvas.jsx, SwarmContext.jsx, SwarmView.jsx, useSwarm.js, AgentInspector.jsx, and checked index.css for @keyframes fadeIn (confirmed removed).
+3. Read code-mapper.md agent log (lines 1-60) and ACTIVITY_LOG.md (lines 1-55) to confirm last session.
+4. Read CODE_MAP.md Function Graph sections for all affected functions (lines 1946-2170 and 2089-2161).
+5. Ran grep to find exact line numbers of all entries needing updates.
+6. Updated CODE_MAP.md header timestamp.
+7. Updated index.css Module Index entry (@keyframes fadeIn REMOVED note).
+8. Updated useSwarmStore Function Graph entry: added setWorkflowDef + full state+action list + updated Called by.
+9. Added setWorkflowDef() Function Graph entry (new action).
+10. Updated reset() Function Graph entry: workflowDef: null in reset payload.
+11. Updated AgentInspector Function Graph entry: setPtyExplosionNodeId selector, "Open Terminal" button, always-rendered note.
+12. Updated SwarmCanvas Function Graph entry: useReactFlow fitView, always-AgentInspector, InterAgentFeed still gated.
+13. Updated SwarmView Function Graph entry: workflowDef in store, useInbox wired, Calls list updated, Complexity notes updated.
+14. Updated PromptToFlowBar + handleGenerate Function Graph entries: opacity:0 REMOVED, BUG-SWARM-2 FIXED.
+15. Updated startExecution Function Graph entry: BUG-SWARM-4 FIXED, null guard documented.
+16. Replaced Open Bug Registry table: all 8 bugs changed to FIXED with fix description + task number.
+17. Appended CHANGELOG entry for Tasks #116–#122.
+18. Appended ACTIVITY_LOG entry.
+19. Appended this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header timestamp; index.css row; useSwarmStore + setWorkflowDef + reset() + AgentInspector + SwarmCanvas + SwarmView + PromptToFlowBar + handleGenerate + startExecution Function Graph entries; Open Bug Registry all FIXED |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Tasks #116–#122 entry |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session summary |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- All 8 Swarm section bugs documented as FIXED in CODE_MAP.md Open Bug Registry
+- setWorkflowDef is now a first-class documented action in the Function Graph
+- AgentInspector "Open Terminal" button and setPtyExplosionNodeId connection fully documented
+- useInbox → SwarmView connection documented as live (was dead code before Task #122)
+- @keyframes fadeIn removal reflected in index.css module entry
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None — code-mapper only documents | — | — | — |
+
+### Decisions I made
+- Rewrote Open Bug Registry as a "Bug Registry" with FIXED status rather than keeping OPEN entries — cleaner than maintaining a stale OPEN list when everything is resolved.
+- setWorkflowDef() gets its own Function Graph entry (not bundled under useSwarmStore) because it is a new action with its own callers and semantics.
+- handleKeyDown() entry in PromptToFlowBar was left unchanged (no bug touched it).
+
+### What I learned
+- The 50ms timeout for fitView in SwarmCanvas is a well-known React Flow pattern: the fitView must wait for ResizeObserver to fire (one tick) after setNodes before node dimensions are available. Without the delay it is always a no-op.
+- Removing opacity:0 from React Flow node style objects (not CSS class, but inline style prop) is the correct approach — inline style on the React Flow node data object is read by its internal ResizeObserver path before CSS transitions are applied.
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md are fully up to date through Task #122. All 122 tasks documented. 8 Swarm bugs closed. Build: 477 modules, 0 errors. Tests: 187/187 pass.
+
+### Handoff
+Task #123 (QA regression check via Puppeteer) is PENDING — qa-tester should verify all 8 fixes hold visually in the browser.
+---

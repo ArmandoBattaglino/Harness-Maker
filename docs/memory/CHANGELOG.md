@@ -2018,3 +2018,53 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 | BUG-AUDIT-4 | useInbox.js | Not imported by any component (dead code) | FIXED — imported in SwarmView.jsx (Task #122) |
 
 ---
+
+## 2026-03-31 — Tasks #116–#122: Swarm Bug-Fix Wave (BUG-SWARM-2+1, BUG-SWARM-3, BUG-SWARM-4, BUG-AUDIT-1, BUG-AUDIT-2+3, BUG-AUDIT-4, Visual fix)
+**Agent:** frontend-dev (fixes), code-mapper (this documentation)
+**Triggered by:** QA Swarm Inspection + Swarm Code Audit identified 8 bugs in the Swarm section. All fixed in this wave. Build: 477 modules, 0 errors. Tests: 187/187 pass. Verified with Puppeteer: nodes visible, node click opens inspector with system prompt.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/canvas/PromptToFlowBar.jsx | MODIFIED | Removed per-node opacity:0 + animation style injection from animatedDef (BUG-SWARM-2 fix — Task #116) |
+| client/src/canvas/SwarmCanvas.jsx | MODIFIED | Added useReactFlow() + imperative fitView(padding:0.2, duration:400) with 50ms timeout in workflowDef useEffect (BUG-SWARM-1 fix — Task #116); AgentInspector moved outside showSidePanels gate (BUG-AUDIT-1 fix — Task #120); InterAgentFeed remains gated on showSidePanels |
+| client/src/index.css | MODIFIED | Removed @keyframes fadeIn (was only used by the removed opacity animation — Task #116) |
+| client/src/store/SwarmContext.jsx | MODIFIED | Added workflowDef: null state slice, setWorkflowDef action, workflowDef: null in reset() payload (BUG-SWARM-3 fix — Task #117) |
+| client/src/views/SwarmView.jsx | MODIFIED | workflowDef + setWorkflowDef migrated from local useState to useSwarmStore selectors (BUG-SWARM-3 fix — Task #117); reset() now covers workflowDef implicitly via store; added import + call of useInbox(activeExecutionId) at line 53 (BUG-AUDIT-4 fix — Task #122) |
+| client/src/hooks/useSwarm.js | MODIFIED | Added `if (!workflowId) throw new Error('No workflow selected')` at top of startExecution (BUG-SWARM-4 fix — Task #118) |
+| client/src/canvas/AgentInspector.jsx | MODIFIED | Added setPtyExplosionNodeId subscription from useSwarmStore; added "Open Terminal" button rendered when agentState.sessionId is set, calling setPtyExplosionNodeId(agentState.sessionId) (BUG-AUDIT-2+3 fix — Task #121) |
+
+### Functions Added
+- `setWorkflowDef(def)` in `client/src/store/SwarmContext.jsx` — new Zustand action to persist the generated workflow def across navigation; part of BUG-SWARM-3 fix (Task #117)
+
+### Functions Modified
+- `PromptToFlowBar({ onWorkflowGenerated })` in `client/src/canvas/PromptToFlowBar.jsx` — animatedDef construction no longer injects opacity:0 or animation strings into node style prop; is now a plain structural clone; BUG-SWARM-2 FIXED (Task #116)
+- `handleGenerate()` in `client/src/canvas/PromptToFlowBar.jsx` — same as above; BUG-SWARM-2 FIXED (Task #116)
+- `SwarmCanvas({ workflowDef })` in `client/src/canvas/SwarmCanvas.jsx` — (1) added useReactFlow() import + fitView imperative call with 50ms delay in workflowDef useEffect (BUG-SWARM-1 fix, Task #116); (2) AgentInspector rendered unconditionally — removed showSidePanels gate (BUG-AUDIT-1 fix, Task #120)
+- `useSwarmStore` in `client/src/store/SwarmContext.jsx` — added workflowDef state + setWorkflowDef action + workflowDef: null in reset() (BUG-SWARM-3 fix, Task #117); setPtyExplosionNodeId now subscribed from AgentInspector (Task #121)
+- `reset()` in `client/src/store/SwarmContext.jsx` — workflowDef: null added to reset payload (Task #117)
+- `SwarmView()` in `client/src/views/SwarmView.jsx` — workflowDef moved from useState to useSwarmStore; single reset() call now sufficient; useInbox(activeExecutionId) wired as HITL polling fallback (Tasks #117, #122)
+- `startExecution(projectId, projectPath)` in `client/src/hooks/useSwarm.js` — null guard `if (!workflowId) throw new Error('No workflow selected')` added (BUG-SWARM-4 FIXED, Task #118)
+- `AgentInspector({ nodes, onUpdateNode })` in `client/src/canvas/AgentInspector.jsx` — added setPtyExplosionNodeId selector + "Open Terminal" button conditional on agentState.sessionId (BUG-AUDIT-2+3 FIXED, Task #121)
+
+### Functions Removed
+- None
+
+### Connection Changes
+- `PromptToFlowBar.handleGenerate` → no longer mutates node style objects before calling onWorkflowGenerated; animatedDef is a clean clone
+- `SwarmCanvas` → `AgentInspector` — always rendered (was `{showSidePanels && <AgentInspector />}`)
+- `SwarmCanvas` → `InterAgentFeed` — still gated on showSidePanels (unchanged)
+- `AgentInspector` → `useSwarmStore::setPtyExplosionNodeId` — new subscription and call site (BUG-AUDIT-2+3)
+- `AgentInspector` → `PtyExplosion` — indirect via store: AgentInspector writes ptyExplosionNodeId; SwarmView reads it and renders PtyExplosion overlay
+- `SwarmView` → `useSwarmStore::workflowDef` + `setWorkflowDef` — new selectors replacing useState (BUG-SWARM-3)
+- `SwarmView` → `useInbox(activeExecutionId)` — new live call site; hook was previously dead code (BUG-AUDIT-4)
+- `useInbox` → `/api/v1/swarm/:executionId/inbox` — REST polling path now reachable from live UI
+
+### Impact on Other Code
+- AgentInspector is always present in SwarmCanvas DOM regardless of execution state — any code that assumed it was absent during 'idle' should be updated (none identified)
+- useInbox is no longer dead code — it now polls every 10s when wsConnected is false; the hook's resolveInboxItem call path is now live
+- @keyframes fadeIn removed from index.css — no other consumer of this keyframe exists; safe to remove
+- Build output: 477 modules (up from 473 before this wave — 4 additional module boundaries from hook wiring)
+- All 187 tests pass; zero regressions
+
+---

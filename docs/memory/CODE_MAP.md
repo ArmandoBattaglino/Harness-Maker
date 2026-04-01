@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-31 — Swarm Code Audit (BUG-AUDIT-1 through BUG-AUDIT-4) — mapped by code-mapper_
+_Last updated: 2026-03-31 — Swarm Bug-Fix Wave (#116–#122) — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -94,7 +94,7 @@ _Last updated: 2026-03-31 — Swarm Code Audit (BUG-AUDIT-1 through BUG-AUDIT-4)
 | client/package.json | (config) | Client dependencies — now includes @xyflow/react@12.10.1 (React Flow v12 graph canvas) and zustand@4.5.7 (v4, not v5) alongside react@18.2, react-markdown, xterm, xterm-addon-fit. (Task #51) |
 | client/tailwind.config.js | default config | Tailwind CSS config: Phase 9 design tokens — 20+ color tokens (primary #933df5, surface scale, semantic colors, code syntax), font families (Inter/Geist/JetBrains Mono), border radius scale. darkMode: 'class'. |
 | client/index.html | (HTML entry) | SPA entry point: Google Fonts CDN links (Inter, JetBrains Mono, Material Symbols Outlined), dark class on html element. Last modified Task #23 (font imports added). |
-| client/src/index.css | (global styles) | Base body styles (#000 bg, Inter font), utility classes (.glass-effect, .custom-scrollbar, .active-indicator, .terminal-text, .filled-icon, .terminal-line-border), .markdown-result scoped styles (headings, code, tables, blockquotes — purple theme), .md-* syntax highlighting helpers, @keyframes dashdraw (animated SVG dash offset for HandoffEdge), @keyframes fadeIn (opacity 0→1 for PromptToFlowBar staggered node entrance). Last modified Task #60 (@keyframes fadeIn added). |
+| client/src/index.css | (global styles) | Base body styles (#000 bg, Inter font), utility classes (.glass-effect, .custom-scrollbar, .active-indicator, .terminal-text, .filled-icon, .terminal-line-border), .markdown-result scoped styles (headings, code, tables, blockquotes — purple theme), .md-* syntax highlighting helpers, @keyframes dashdraw (animated SVG dash offset for HandoffEdge). @keyframes fadeIn REMOVED (Task #116 — BUG-SWARM-2 fix: staggered opacity animation on scaffold nodes caused ResizeObserver corruption in React Flow). Last modified Task #116. |
 | client/postcss.config.js | (PostCSS config) | PostCSS plugins: tailwindcss, autoprefixer |
 
 ## Test Infrastructure
@@ -1775,13 +1775,13 @@ _Last updated: 2026-03-31 — Swarm Code Audit (BUG-AUDIT-1 through BUG-AUDIT-4)
 ## SwarmContext ExecutionStore (Task #52)
 
 ### `client/src/store/SwarmContext.jsx` :: `useSwarmStore` (Zustand store — default + named export)
-- **Purpose:** Zustand v4 global store for all V3 swarm execution state. Central source of truth for the canvas and inspector panels. Holds runtime-only state — never persisted to disk.
-- **Called by:** AgentNode.jsx (agentStates[id]), DepartmentNode.jsx (setFocusedDepartment, focusedDepartmentId), TriggerNode.jsx (none — no subscription), HandoffEdge.jsx (edgeCounters[id]), AgentInspector.jsx (selectedNodeId, agentStates, setSelectedNode), BreadcrumbBar.jsx (departmentStack, navigateBreadcrumb), SwarmCanvas.jsx (focusedDepartmentId, setSelectedNode). All live as of Task #57.1.
+- **Purpose:** Zustand v4 global store for all V3 swarm execution state. Central source of truth for the canvas and inspector panels. Holds runtime-only state — never persisted to disk. State slices: activeExecutionId, executionStatus, agentStates, triggerStates, edgeCounters, budget, inboxItems, interAgentFeed, focusedDepartmentId, departmentStack, selectedNodeId, ptyExplosionNodeId, workflowDef (added Task #117 — BUG-SWARM-3), wsConnected. Actions: setExecution, updateAgentState, updateTriggerState, updateEdgeCounter, updateBudget, addInboxItem, resolveInboxItem, addFeedEvent, setFocusedDepartment, navigateBreadcrumb, setPaused, setResumed, setSelectedNode, setPtyExplosionNodeId, setWsConnected, setWorkflowDef (added Task #117), reset (workflowDef: null added to reset payload — Task #117).
+- **Called by:** AgentNode.jsx (agentStates[id]), DepartmentNode.jsx (setFocusedDepartment, focusedDepartmentId), TriggerNode.jsx (none), HandoffEdge.jsx (edgeCounters[id]), AgentInspector.jsx (selectedNodeId, agentStates, setSelectedNode, setPtyExplosionNodeId — setPtyExplosionNodeId added Task #121), BreadcrumbBar.jsx (departmentStack, navigateBreadcrumb), SwarmCanvas.jsx (focusedDepartmentId, setSelectedNode, executionStatus), SwarmView.jsx (workflowDef, setWorkflowDef — added Task #117), useSwarm.js (setExecution, updateAgentState, updateEdgeCounter, updateBudget, addInboxItem, addFeedEvent, setWsConnected)
 - **Calls:** zustand::create (Zustand v4.5.7)
 - **Inputs:** N/A (Zustand store — no constructor args)
 - **Output:** hook returning state slice + actions
 - **Side effects:** none (pure in-memory state; no API calls, no storage writes)
-- **Last modified:** 2026-03-27 in Task #52 by frontend-dev
+- **Last modified:** 2026-03-31 in Task #117 by frontend-dev (BUG-SWARM-3: workflowDef state + setWorkflowDef action + workflowDef: null in reset() added; Task #121: setPtyExplosionNodeId now consumed by AgentInspector)
 
 ### `client/src/store/SwarmContext.jsx` :: `setExecution(id, status)`
 - **Purpose:** Set the active execution ID and execution status atomically. Called on execution start/stop from WS event handlers.
@@ -1884,14 +1884,23 @@ _Last updated: 2026-03-31 — Swarm Code Audit (BUG-AUDIT-1 through BUG-AUDIT-4)
 - **Side effects:** mutates wsConnected in store
 - **Last modified:** 2026-03-27 in Task #52 by frontend-dev
 
+### `client/src/store/SwarmContext.jsx` :: `setWorkflowDef(def)`
+- **Purpose:** Store a generated workflow definition in Zustand so it persists across component unmounts (tab navigation). Added to fix BUG-SWARM-3 — workflowDef was previously held in SwarmView local useState and destroyed on unmount.
+- **Called by:** SwarmView.jsx — `onWorkflowGenerated` callback from PromptToFlowBar calls `setWorkflowDef(animatedDef)`; workflowDef read back via `useSwarmStore(s => s.workflowDef)` (Task #117)
+- **Calls:** Zustand set
+- **Inputs:** def (object — `{ id, name, nodes[], edges[], ... }` — the full workflow definition returned by scaffold endpoint; or null to clear)
+- **Output:** void
+- **Side effects:** updates workflowDef slice in store
+- **Last modified:** 2026-03-31 in Task #117 by frontend-dev (BUG-SWARM-3 fix: new action)
+
 ### `client/src/store/SwarmContext.jsx` :: `reset()`
-- **Purpose:** Reset all execution state to initial values. Called on execution stop or when leaving the swarm canvas view.
+- **Purpose:** Reset all execution state to initial values. Called via SwarmView Reset button when executionStatus === 'stopped'. Now includes workflowDef: null in the reset payload (Task #117 — clears the persisted workflow def and returns canvas to blank state).
 - **Called by:** SwarmView.jsx Reset button (onClick, when executionStatus === 'stopped' — Task #57.2)
 - **Calls:** Zustand set
 - **Inputs:** none
 - **Output:** void
-- **Side effects:** resets all 9 state fields to their initial values (null/idle/empty)
-- **Last modified:** 2026-03-27 in Task #52 by frontend-dev
+- **Side effects:** resets all state fields to initial values (null/idle/empty) — including workflowDef: null (added Task #117), ptyExplosionNodeId: null
+- **Last modified:** 2026-03-31 in Task #117 by frontend-dev (BUG-SWARM-3 fix: workflowDef: null added to reset payload)
 
 ---
 
@@ -1944,14 +1953,14 @@ _Last updated: 2026-03-31 — Swarm Code Audit (BUG-AUDIT-1 through BUG-AUDIT-4)
 ---
 
 ### `client/src/canvas/AgentInspector.jsx` :: `AgentInspector({ nodes, onUpdateNode })`
-- **Purpose:** Side panel that renders details for the currently selected canvas node. Reads selectedNodeId and agentStates[selectedNodeId] from useSwarmStore. Shows: node label, type badge, live status from Zustand (status string + handoffCount), system prompt (from node.data.systemPrompt, read-only), and last output snippet (from agentState.lastOutputSnippet). Close button calls setSelectedNode(null) to deselect. Returns an empty placeholder div when no node is selected.
-- **Called by:** SwarmCanvas.jsx (Task #57.1 — first live caller; mounted as `<AgentInspector nodes={nodes} />` in the right panel)
-- **Calls:** useSwarmStore (selector: s.selectedNodeId), useSwarmStore (selector: s.agentStates[selectedNodeId]), useSwarmStore (selector: s.setSelectedNode), nodes.find() (prop traversal)
+- **Purpose:** Side panel that renders details for the currently selected canvas node. Reads selectedNodeId and agentStates[selectedNodeId] from useSwarmStore. Shows: node label, type badge, live status from Zustand (status string + handoffCount), "Open Terminal" button (when agentState.sessionId is set — BUG-AUDIT-2+3 fix), system prompt (from node.data.systemPrompt, read-only), and last output snippet (from agentState.lastOutputSnippet). Close button calls setSelectedNode(null) to deselect. Returns an empty placeholder div when no node is selected. Component is always rendered in SwarmCanvas — not gated on executionStatus (BUG-AUDIT-1 fix, Task #120).
+- **Called by:** SwarmCanvas.jsx (Task #57.1; always rendered without showSidePanels gate — BUG-AUDIT-1 fix, Task #120)
+- **Calls:** useSwarmStore (selector: s.selectedNodeId), useSwarmStore (selector: s.agentStates[selectedNodeId]), useSwarmStore (selector: s.setSelectedNode), useSwarmStore (selector: s.setPtyExplosionNodeId), nodes.find() (prop traversal), setPtyExplosionNodeId (on "Open Terminal" button click)
 - **Inputs:** nodes (array — React Flow node objects from parent canvas; used to find label, type, data.systemPrompt), onUpdateNode (function — passed as prop but not yet called; reserved for future edit operations)
-- **Output:** JSX — w-64 right panel; empty placeholder if no selection; detail view with header, type badge, status block, system prompt block, last output block
-- **Side effects:** calls setSelectedNode(null) on close button click — clears selectedNodeId in SwarmStore
-- **Complexity note:** Three separate useSwarmStore selectors (selectedNodeId, agentState, setSelectedNode) rather than one broad selector — prevents unnecessary re-renders when unrelated store slices change. agentState data comes from Zustand (live runtime state); systemPrompt comes from node.data (static workflow definition). These are separate sources and may diverge.
-- **Last modified:** 2026-03-27 in Task #55 by frontend-dev
+- **Output:** JSX — w-64 right panel; empty placeholder if no selection; detail view with header, type badge, optional "Open Terminal" button, status block, system prompt block, last output block
+- **Side effects:** calls setSelectedNode(null) on close button click; calls setPtyExplosionNodeId(agentState.sessionId) on "Open Terminal" button click — both mutate SwarmStore
+- **Complexity note:** Four separate useSwarmStore selectors (selectedNodeId, agentState, setSelectedNode, setPtyExplosionNodeId). agentState data comes from Zustand (live runtime state); systemPrompt comes from node.data (static workflow definition). "Open Terminal" button is conditionally rendered: only when agentState?.sessionId is truthy — sessionId is set by SwarmEngine when a PTY session is assigned to that agent node.
+- **Last modified:** 2026-03-31 in Task #121 by frontend-dev (BUG-AUDIT-2+3: added setPtyExplosionNodeId subscription + "Open Terminal" button; Task #120 — rendering no longer gated on showSidePanels in SwarmCanvas)
 
 ---
 
@@ -1970,28 +1979,32 @@ _Last updated: 2026-03-31 — Swarm Code Audit (BUG-AUDIT-1 through BUG-AUDIT-4)
 ## React Flow Canvas Container (Task #57.1)
 
 ### `client/src/canvas/SwarmCanvas.jsx` :: `SwarmCanvas({ workflowDef })`
-- **Purpose:** Root canvas component for swarm workflow visualization. Initializes React Flow with workflowDef.nodes + workflowDef.edges, registers all custom node/edge types, applies drill-down filtering via focusedDepartmentId, wires user interaction (onNodeClick, onPaneClick, onConnect), and mounts BreadcrumbBar + AgentInspector into the layout. BUG-89 fix: workflowDef changes after mount are now reflected via a useEffect that calls setNodes/setEdges on prop change.
+- **Purpose:** Root canvas component for swarm workflow visualization. Initializes React Flow with workflowDef.nodes + workflowDef.edges, registers all custom node/edge types, applies drill-down filtering via focusedDepartmentId, wires user interaction (onNodeClick, onPaneClick, onConnect), mounts BreadcrumbBar + AgentInspector (always — BUG-AUDIT-1 fix) + InterAgentFeed (gated on showSidePanels only). BUG-89 fix: workflowDef changes after mount reflected via useEffect. BUG-SWARM-1+2 fix (Task #116): useReactFlow() + imperative fitView(padding: 0.2, duration: 400) called inside useEffect after 50ms timeout so React Flow can measure nodes before fit.
 - **Called by:** SwarmView.jsx (Task #57.2 — first live caller; mounted inside ReactFlowProvider with `workflowDef` prop)
-- **Calls:** useSwarmStore (selector: s.focusedDepartmentId), useSwarmStore (selector: s.setSelectedNode), useNodesState (from @xyflow/react), useEdgesState (from @xyflow/react), useEffect (React — workflowDef change sync), useMemo (React — visibleNodes, visibleNodeIds, visibleEdges), useCallback (React — onConnect, onNodeClick, onPaneClick), addEdge (from @xyflow/react), ReactFlow + Background + Controls + MiniMap (from @xyflow/react), AgentNode, DepartmentNode, TriggerNode, HandoffEdge, AgentInspector, BreadcrumbBar
+- **Calls:** useReactFlow (from @xyflow/react — provides fitView), useSwarmStore (selector: s.focusedDepartmentId), useSwarmStore (selector: s.setSelectedNode), useSwarmStore (selector: s.executionStatus), useNodesState (from @xyflow/react), useEdgesState (from @xyflow/react), useEffect (React — workflowDef change sync + fitView), useMemo (React — visibleNodes, visibleNodeIds, visibleEdges), useCallback (React — onConnect, onNodeClick, onPaneClick), addEdge (from @xyflow/react), ReactFlow + Background + Controls + MiniMap (from @xyflow/react), AgentNode, DepartmentNode, TriggerNode, HandoffEdge, AgentInspector, BreadcrumbBar, InterAgentFeed
 - **Inputs:** workflowDef (object — `{ nodes: ReactFlowNode[], edges: ReactFlowEdge[] }` or undefined; defaults to empty arrays)
-- **Output:** JSX — flex column: BreadcrumbBar (top) + flex row: ReactFlow canvas (flex-1) + AgentInspector (right panel)
-- **Side effects:** calls setSelectedNode(nodeId) on node click; calls setSelectedNode(null) on pane click; calls setEdges to append a new handoff edge on connect; calls setNodes/setEdges when workflowDef prop changes (BUG-89 fix). No server I/O.
-- **Complexity note (BUG-89 fix):** Added `useEffect(() => { if (workflowDef) { setNodes(workflowDef.nodes ?? []); setEdges(workflowDef.edges ?? []); } }, [workflowDef, setNodes, setEdges])`. Previously workflowDef was treated as initial state only — changes from PromptToFlowBar after mount were NOT reflected on the canvas. The useEffect dep array includes both setNodes and setEdges (stable references from useNodesState/useEdgesState). nodeTypes/edgeTypes still declared outside component per React Flow v12 requirement.
-- **Last modified:** 2026-03-28 in Task #89 by frontend-dev (BUG-89 fix: workflowDef useEffect sync added; was initial-only in Task #57.1)
+- **Output:** JSX — flex column: BreadcrumbBar (top) + flex row: ReactFlow canvas (flex-1) + optional InterAgentFeed (right, when showSidePanels) + AgentInspector (always-right panel)
+- **Side effects:** calls setSelectedNode(nodeId) on node click; calls setSelectedNode(null) on pane click; calls setEdges to append a new handoff edge on connect; calls setNodes/setEdges + fitView when workflowDef prop changes. No server I/O.
+- **Complexity note (BUG-89 fix):** useEffect watches workflowDef — calls setNodes/setEdges on prop change so scaffold output after mount is reflected.
+- **Complexity note (BUG-SWARM-1+2 fix — Task #116):** useReactFlow() provides `fitView` imperative function. After setNodes/setEdges, a `setTimeout(() => fitView({ padding: 0.2, duration: 400 }), 50)` gives React Flow one tick to run its ResizeObserver and measure node dimensions before fitting. Without the delay, fitView fires before nodes have nonzero dimensions and is a no-op. nodeTypes/edgeTypes still declared outside component per React Flow v12 requirement.
+- **Complexity note (BUG-AUDIT-1 fix — Task #120):** AgentInspector is now always rendered unconditionally — not gated on `showSidePanels`. The component itself handles its empty state ("Select a node to inspect"). InterAgentFeed remains gated on `showSidePanels` (only shown when running or paused).
+- **Last modified:** 2026-03-31 in Task #120 by frontend-dev (BUG-AUDIT-1: AgentInspector always rendered; Task #116: useReactFlow fitView with 50ms delay)
 
 ---
 
 ## Swarm View Shell (Task #57.2)
 
 ### `client/src/views/SwarmView.jsx` :: `SwarmView()`
-- **Purpose:** Top-level page shell for the Swarm Orchestrator. Renders a fixed toolbar, PromptToFlowBar, full-height canvas, HITL inbox drawer, BroadcastBar, and PTY explosion overlay. Provides the ReactFlowProvider boundary required by @xyflow/react. Owns `workflowDef` local state.
+- **Purpose:** Top-level page shell for the Swarm Orchestrator. Renders a fixed toolbar, PromptToFlowBar, full-height canvas, HITL inbox drawer, BroadcastBar, and PTY explosion overlay. Provides the ReactFlowProvider boundary required by @xyflow/react. workflowDef is stored in useSwarmStore (migrated from local useState — BUG-SWARM-3 fix, Task #117). Calls useInbox(activeExecutionId) as a polling fallback for HITL inbox when WS is disconnected (BUG-AUDIT-4 fix, Task #122).
 - **Called by:** App.jsx::MainContent (case 'swarm' — wired in Task #58)
-- **Calls:** useSwarmStore (selectors: executionStatus, activeExecutionId, inboxItems, interAgentFeed, setPaused, setResumed, reset, ptyExplosionNodeId, setPtyExplosionNodeId), useAppState (activeProjectId, projects), useSwarm(workflowDef?.id), getPendingCount, useState (workflowDef, inboxOpen, executing, pausing), useEffect (Escape key handler), apiPost, ReactFlowProvider, SwarmCanvas, PromptToFlowBar, BroadcastBar, PtyExplosion, HitlInbox
+- **Calls:** useSwarmStore (selectors: executionStatus, activeExecutionId, inboxItems, interAgentFeed, setPaused, setResumed, reset, ptyExplosionNodeId, setPtyExplosionNodeId, workflowDef, setWorkflowDef), useAppState (activeProjectId, projects), useSwarm(workflowDef?.id), useInbox(activeExecutionId), getPendingCount, useState (inboxOpen, executing, pausing), useEffect (Escape key handler), apiPost, ReactFlowProvider, SwarmCanvas, PromptToFlowBar, BroadcastBar, PtyExplosion, HitlInbox
 - **Inputs:** none (no props)
 - **Output:** JSX — flex-col full-height div: toolbar + PromptToFlowBar + canvas + optional HITL drawer + BroadcastBar + optional PtyExplosion overlay
-- **Side effects:** Escape key listener wired via document.addEventListener (cleaned up on unmount). apiPost to /pause and /resume. calls setPaused/setResumed/reset on store. Calls startExecution/stopExecution from useSwarm hook.
-- **Complexity note (Tasks #105-#107, #112, #113, #115):** Stop button condition: `executionStatus === 'running' || executionStatus === 'paused'`. Run button: always rendered when `executionStatus === 'idle'`; disabled with `disabled` attr + `title` tooltip when workflowDef or activeProjectId is missing; onClick guard `workflowDef && activeProjectId ? handleRun : undefined` prevents any stray invocation even if disabled attr is bypassed. runError state removed (Task #113 — it was dead code; the button is disabled before the guard could ever fire). Reset button onClick: `() => { reset(); setWorkflowDef(null); }` — also clears workflowDef so canvas returns to blank state after reset (Task #113 — BUG-TOOLBAR-4 fix; previously only called reset() leaving stale workflowDef in state). handlePause and handleResume now open with `if (!activeExecutionId) return` guard (Task #115 — BUG-TOOLBAR-3 fix: prevents /api/v1/swarm/null/pause and /null/resume requests when Stop resolves and clears activeExecutionId while a Pause/Resume is already in-flight).
-- **Last modified:** 2026-03-31 in Task #115 by frontend-dev (BUG-TOOLBAR-3: added early return guard `if (!activeExecutionId) return` to handlePause and handleResume)
+- **Side effects:** Escape key listener wired via document.addEventListener (cleaned up on unmount). apiPost to /pause and /resume. calls setPaused/setResumed/reset on store. Calls startExecution/stopExecution from useSwarm hook. useInbox polls /api/v1/swarm/:executionId/inbox every 10s when WS is disconnected (side effect via hook).
+- **Complexity note (Tasks #105-#107, #112, #113, #115):** Stop button condition: `executionStatus === 'running' || executionStatus === 'paused'`. Run button: always rendered when `executionStatus === 'idle'`; disabled with `disabled` attr + `title` tooltip when workflowDef or activeProjectId is missing; onClick guard `workflowDef && activeProjectId ? handleRun : undefined`. runError state removed (Task #113). Reset button onClick: `reset()` — now resets all store state including workflowDef (workflowDef: null in store reset) since workflowDef moved to store (Task #117). handlePause/handleResume guard: `if (!activeExecutionId) return` (Task #115 — BUG-TOOLBAR-3).
+- **Complexity note (Task #117 — BUG-SWARM-3):** workflowDef moved from `const [workflowDef, setWorkflowDef] = useState(null)` (local — destroyed on navigation) to `useSwarmStore` (s.workflowDef + s.setWorkflowDef). Reset button now calls a single `reset()` which includes `workflowDef: null` in the reset payload — no separate `setWorkflowDef(null)` needed.
+- **Complexity note (Task #122 — BUG-AUDIT-4):** `useInbox(activeExecutionId)` called at line 53 (result discarded — side effects only). When the WS drops and `wsConnected` is false, useInbox polls the REST inbox endpoint every 10s and dispatches inbox items to the store. This provides a fallback path for HITL approvals when the live WS feed is unavailable.
+- **Last modified:** 2026-03-31 in Task #122 by frontend-dev (BUG-AUDIT-4: useInbox(activeExecutionId) wired; Task #117: workflowDef moved to store)
 
 ---
 
@@ -2087,24 +2100,23 @@ _Last updated: 2026-03-31 — Swarm Code Audit (BUG-AUDIT-1 through BUG-AUDIT-4)
 ## Prompt-to-Flow Bar (Task #60)
 
 ### `client/src/canvas/PromptToFlowBar.jsx` :: `PromptToFlowBar({ onWorkflowGenerated })`
-- **Purpose:** Natural-language prompt input bar that generates a multi-agent workflow via the scaffold endpoint. Renders a purple-accent text input + "Generate" button. On submit, POSTs the trimmed prompt to POST /api/v1/swarm/scaffold, extracts the returned workflowDef, applies staggered CSS fadeIn animation to every node (opacity: 0 → animation: fadeIn 0.3s ease forwards), and calls onWorkflowGenerated(workflowId, animatedDef). Supports Enter key (non-shifted) as submit shortcut. Displays inline error text on failure. Clears the prompt field on success.
-- **Called by:** SwarmView.jsx (Task #60 — mounted between toolbar and canvas; onWorkflowGenerated callback wires to setWorkflowDef)
+- **Purpose:** Natural-language prompt input bar that generates a multi-agent workflow via the scaffold endpoint. Renders a purple-accent text input + "Generate" button. On submit, POSTs the trimmed prompt to POST /api/v1/swarm/scaffold, extracts the returned workflowDef (no per-node style mutation — staggered opacity animation REMOVED, BUG-SWARM-2 fix), and calls onWorkflowGenerated(workflowId, animatedDef). Supports Enter key (non-shifted) as submit shortcut. Displays inline error text on failure. Clears the prompt field on success.
+- **Called by:** SwarmView.jsx (Task #60 — mounted between toolbar and canvas; onWorkflowGenerated callback wires to setWorkflowDef in SwarmStore)
 - **Calls:** fetch (native browser — POST /api/v1/swarm/scaffold with X-Requested-With CSRF header), useState (prompt, loading, error), useCallback (handleGenerate), onWorkflowGenerated (prop callback)
 - **Inputs:** onWorkflowGenerated (function — called as onWorkflowGenerated(workflowId: string, animatedDef: object) on success; optional — guarded with `?.`)
 - **Output:** JSX — flex-col div: input row (icon + text input + Generate button) + optional error line below
 - **Side effects:** POST /api/v1/swarm/scaffold (creates a workflow record on the server via WorkflowStore); calls onWorkflowGenerated prop on success; sets prompt/loading/error React state
-- **Complexity note:** Staggered animation: each node in workflowDef.nodes gets `style.animation = 'fadeIn 0.3s ease forwards ${i * 0.08}s'` where i is the index. This depends on @keyframes fadeIn declared in client/src/index.css. The SCAFFOLD_HEADERS constant (module-level) includes the CSRF header — mutating requests without this header would be rejected by server/middleware/csrf.js. handleGenerate is memoized via useCallback with [prompt, loading, onWorkflowGenerated] deps.
-- **Last modified:** 2026-03-31 in Task #112 by orchestrator (error message display reverted to generic `body.error || HTTP {status}` — was showing API-key-specific message that no longer applies since scaffold uses spawn not SDK)
+- **Complexity note:** animatedDef is now simply `{ ...workflowDef, nodes: workflowDef.nodes.map(node => ({ ...node, data: { ...node.data } })) }` — a shallow-spread clone with no style mutation. Previously injected `opacity: 0` + `animation: fadeIn 0.3s ...` into each node's style, which broke React Flow's ResizeObserver (BUG-SWARM-2). The @keyframes fadeIn rule was also removed from index.css (Task #116). SCAFFOLD_HEADERS module-level constant includes X-Requested-With CSRF header. handleGenerate memoized via useCallback([prompt, loading, onWorkflowGenerated]).
+- **Last modified:** 2026-03-31 in Task #116 by frontend-dev (BUG-SWARM-2 fix: removed opacity:0 + animation style injection from node style prop; animatedDef is now a plain structural clone)
 
 ### `client/src/canvas/PromptToFlowBar.jsx` :: `handleGenerate()` (internal — via useCallback)
-- **Purpose:** Async submit handler. Guards against empty prompt and concurrent submission (loading flag). Calls POST /api/v1/swarm/scaffold, decodes { workflowId, workflowDef }, applies per-node staggered animation transform, and calls onWorkflowGenerated. Sets error state on any fetch or HTTP failure.
-- **BUG-SWARM-2 (OPEN 2026-03-31):** Injects `opacity: 0` into each node's `style` prop as part of the staggered fade-in animation. This corrupts React Flow's ResizeObserver measurement — nodes appear as 0-area until CSS fades them in — which is the root cause of BUG-SWARM-1 (fitView fails after generation). Fix: use a CSS class or data attribute for the animation instead of injecting opacity into the node style object.
+- **Purpose:** Async submit handler. Guards against empty prompt and concurrent submission (loading flag). Calls POST /api/v1/swarm/scaffold, decodes { workflowId, workflowDef }, builds animatedDef as a plain shallow-spread clone (no style mutation — BUG-SWARM-2 FIXED Task #116), and calls onWorkflowGenerated. Sets error state on any fetch or HTTP failure.
 - **Called by:** PromptToFlowBar — Generate button onClick; handleKeyDown (Enter key without Shift)
 - **Calls:** fetch('/api/v1/swarm/scaffold', ...), res.json(), onWorkflowGenerated (prop), setLoading, setError, setPrompt
 - **Inputs:** (no params — reads prompt, loading, onWorkflowGenerated from closure)
 - **Output:** Promise\<void\>
 - **Side effects:** server POST; React state updates (loading, error, prompt)
-- **Last modified:** 2026-03-27 in Task #60 by frontend-dev
+- **Last modified:** 2026-03-31 in Task #116 by frontend-dev (BUG-SWARM-2 FIXED: opacity:0 animation injection removed; animatedDef is now a clean structural clone)
 
 ### `client/src/canvas/PromptToFlowBar.jsx` :: `handleKeyDown(e)` (internal)
 - **Purpose:** Keyboard event handler for the prompt input. Calls handleGenerate() when Enter is pressed without Shift (Shift+Enter is reserved for multi-line expansion if ever implemented). Prevents the default form-submit behavior.
@@ -2141,14 +2153,14 @@ _Last updated: 2026-03-31 — Swarm Code Audit (BUG-AUDIT-1 through BUG-AUDIT-4)
 - **Last modified:** 2026-03-31 in Task #109 by frontend-dev (agentStates moved from top-level selector to getState() inside handler)
 
 ### `client/src/hooks/useSwarm.js` :: `startExecution(projectId, projectPath)` (returned callback)
-- **Purpose:** POST to /api/v1/swarm/:workflowId/start with {projectId, projectPath}, then call connectWs(executionId) to open the WS stream. Sets store state to running. Returns the executionId.
-- **BUG-SWARM-4 (OPEN 2026-03-31):** `workflowId` is read from the `useSwarm(workflowId)` closure — if `workflowDef` is null/undefined when this hook is created, `workflowId` is `undefined` and the POST goes to `/api/v1/swarm/undefined/start`. The Run button has a `disabled={!workflowDef}` guard but no null check exists inside `startExecution` itself. Fix: add `if (!workflowId) throw new Error('No workflow selected')` at the top of `startExecution`.
+- **Purpose:** POST to /api/v1/swarm/:workflowId/start with {projectId, projectPath}, then call connectWs(executionId) to open the WS stream. Sets store state to running. Returns the executionId. Guards against missing workflowId with explicit throw (BUG-SWARM-4 FIXED — Task #118).
 - **Called by:** SwarmView.jsx::handleRun (Task #101 — wired to Run button; only called when activeProjectId is set and workflowDef is loaded)
 - **Calls:** apiPost (from hooks/useApi.js), setExecution (store), connectWs (internal)
 - **Inputs:** projectId (string), projectPath (string)
 - **Output:** Promise\<string\> — executionId returned from server
 - **Side effects:** HTTP POST; opens WebSocket; updates store (activeExecutionId, executionStatus = 'running')
-- **Last modified:** 2026-03-27 in Task #63 by frontend-dev (caller wired in Task #101)
+- **Complexity note (Task #118 — BUG-SWARM-4 FIXED):** `if (!workflowId) throw new Error('No workflow selected')` added at top of function. Previously a missing/undefined workflowId would silently POST to `/api/v1/swarm/undefined/start`. The toolbar disabled guard provides first-line defense; this throw is a defense-in-depth layer.
+- **Last modified:** 2026-03-31 in Task #118 by frontend-dev (BUG-SWARM-4 FIXED: null guard `if (!workflowId) throw` added)
 
 ### `client/src/hooks/useSwarm.js` :: `stopExecution(executionId)` (returned callback)
 - **Purpose:** DELETE /api/v1/swarm/:executionId to stop the server-side execution, then close the local WS and update store to stopped/null.
@@ -2646,20 +2658,17 @@ All 187 tests pass against the current codebase at v3.0.0. This baseline was est
 
 ---
 
-## Open Bug Registry — QA Swarm Inspection (2026-03-31, post-v3.0.0)
+## Bug Registry — Swarm Section (post-v3.0.0 fix waves)
 
-_Recorded by code-mapper after qa-tester QA inspection. No files were modified during the inspection._
+_All bugs identified in QA Swarm Inspection (2026-03-31) and Swarm Code Audit (2026-03-31) are now FIXED._
 
-| Bug ID | File | Location | Nature | Root Cause | Status |
-|--------|------|----------|--------|------------|--------|
-| BUG-SWARM-2 | `client/src/canvas/PromptToFlowBar.jsx` | `handleGenerate` — animatedDef node style (~line 42) | `opacity: 0` injected into React Flow node inline style corrupts ResizeObserver measurement cycle | React Flow uses ResizeObserver to measure node dimensions for viewport calculations. Nodes with `opacity: 0` in their `style` prop are measured as having 0 visible area, breaking the internal dimension cache and preventing `fitView` from computing correct bounds. | OPEN |
-| BUG-SWARM-1 | `client/src/canvas/SwarmCanvas.jsx` | `<ReactFlow fitView>` prop | `fitView` does not trigger correctly after scaffold generates nodes — canvas viewport stays at initial position | Consequence of BUG-SWARM-2: when `fitView` fires after `setNodes()`, all nodes report 0 dimensions (hidden by opacity:0) so the viewport fit is a no-op. Fixing SWARM-2 should resolve SWARM-1. | OPEN |
-| BUG-SWARM-3 | `client/src/views/SwarmView.jsx` | `const [workflowDef, setWorkflowDef] = useState(null)` line 34 | `workflowDef` stored in local React `useState` — destroyed on component unmount / tab navigation; user must regenerate workflow every time they leave SwarmView | Fix: move `workflowDef` into `useSwarmStore` (or a separate persistent store slice) so it survives navigation | OPEN |
-| BUG-SWARM-4 | `client/src/hooks/useSwarm.js` | `startExecution` line 66 — `` apiPost(`/api/v1/swarm/${workflowId}/start`, ...) `` | `workflowId` can be `undefined` if `workflowDef` has not been generated when `startExecution` is called — sends `POST /api/v1/swarm/undefined/start` | The toolbar `disabled={!workflowDef}` guard on the Run button prevents this in normal flow, but a race (rapid double-click, concurrent state update) can bypass it. Fix: add `if (!workflowId) throw new Error('No workflow selected')` at the top of `startExecution`. | OPEN |
-
-### Notes on BUG-SWARM-2 / BUG-SWARM-1 interaction
-`PromptToFlowBar.handleGenerate` builds `animatedDef` by spreading `style: { ...node.style, opacity: 0, animation: '...' }` onto every node. This style object is stored verbatim in `workflowDef.nodes[i].style` and passed to React Flow via `SwarmCanvas`. React Flow's ResizeObserver sees nodes with `opacity: 0` as zero-area — its internal bounds calculation for `fitView` returns an empty viewport. The CSS animation eventually fades nodes in (CSS side-effect, not React-controlled), but by then `fitView` has already computed wrong bounds. Correct fix: remove `opacity: 0` from the style; use a CSS class or CSS variable for the animation instead, or use `useReactFlow().fitView()` imperatively after the nodes are visible.
-
-### Connection Paths for Bug Investigation
-- `PromptToFlowBar.handleGenerate` → `onWorkflowGenerated(workflowId, animatedDef)` → `SwarmView::setWorkflowDef(animatedDef)` → `SwarmCanvas({ workflowDef: animatedDef })` → `setNodes(workflowDef.nodes)` via `useEffect` → React Flow internal ResizeObserver → `fitView` calculation
-- `useSwarm.startExecution(projectId, projectPath)` → reads `workflowId` from closure (parameter to `useSwarm(workflowId)`) → `` apiPost(`/api/v1/swarm/${workflowId}/start`, ...) `` — no null check on `workflowId`
+| Bug ID | File | Nature | Fix Applied | Status | Fixed In |
+|--------|------|--------|-------------|--------|----------|
+| BUG-SWARM-2 | `client/src/canvas/PromptToFlowBar.jsx` | `opacity: 0` injected into React Flow node style corrupts ResizeObserver — nodes measured as 0-area | Removed all per-node style mutation from animatedDef; animatedDef is now a plain structural clone | FIXED | Task #116 |
+| BUG-SWARM-1 | `client/src/canvas/SwarmCanvas.jsx` | fitView fires before nodes have nonzero dimensions — viewport stays at initial position | Added useReactFlow() + imperative fitView(padding:0.2, duration:400) in useEffect with 50ms delay | FIXED | Task #116 |
+| BUG-SWARM-3 | `client/src/views/SwarmView.jsx` | workflowDef in local useState — destroyed on component unmount/navigation | Moved workflowDef to useSwarmStore (setWorkflowDef + workflowDef: null in reset) | FIXED | Task #117 |
+| BUG-SWARM-4 | `client/src/hooks/useSwarm.js` | startExecution sends POST to /api/v1/swarm/undefined/start when workflowId is null | `if (!workflowId) throw new Error('No workflow selected')` added at top of startExecution | FIXED | Task #118 |
+| BUG-AUDIT-1 | `client/src/canvas/SwarmCanvas.jsx` | AgentInspector gated on showSidePanels — hidden in idle state | Moved AgentInspector outside the showSidePanels conditional — always rendered | FIXED | Task #120 |
+| BUG-AUDIT-2 | `client/src/canvas/AgentNode.jsx` | No onClick path to setPtyExplosionNodeId from canvas node | Added "Open Terminal" button in AgentInspector (indirect path via inspector) | FIXED | Task #121 |
+| BUG-AUDIT-3 | `client/src/canvas/AgentInspector.jsx` | No "Open Terminal" button in inspector | Added button calling setPtyExplosionNodeId(agentState.sessionId) when sessionId present | FIXED | Task #121 |
+| BUG-AUDIT-4 | `client/src/hooks/useInbox.js` | useInbox hook imported by no component — dead code, HITL polling unreachable | Added `useInbox(activeExecutionId)` call in SwarmView.jsx line 53 | FIXED | Task #122 |

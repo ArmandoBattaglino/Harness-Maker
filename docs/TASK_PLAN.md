@@ -2,7 +2,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED — 2026-03-31 — SWARM AUDIT BUG WAVE OPEN — 123/123 tasks (119 COMPLETED + 4 new Swarm audit bugs)
+**Status:** v3.0.0 RELEASED — 2026-03-31 — ALL TASKS COMPLETED — 123/123 tasks COMPLETED
 
 ---
 
@@ -20,8 +20,8 @@
 **Post-release fix #114:** BUG-TOOLBAR-2 (useSwarm.js cleanup useEffect keyed on [workflowId]) — 2026-03-31 (COMPLETED).
 **Post-release fix #115:** BUG-TOOLBAR-3 (SwarmView.jsx handlePause/handleResume guard against null activeExecutionId) — 2026-03-31 (COMPLETED).
 **QA Swarm inspection wave #116–#119:** 4 Swarm bugs found by QA — 2026-03-31 (COMPLETED — all 4 fixes committed in f705c96).
-**Swarm code audit wave:** Tasks #120–#123 registered 2026-03-31 — 3 frontend bugs (BUG-AUDIT-1/2/3/4) + QA regression — IN_PROGRESS.
-**Known open bugs:** BUG-AUDIT-4 (useInbox dead code in SwarmView — Task #122 PENDING). BUG-AUDIT-1 and BUG-AUDIT-2+3 already fixed (Tasks #120, #121 COMPLETED per ACTIVITY_LOG 2026-03-31).
+**Swarm code audit wave:** Tasks #120–#123 registered 2026-03-31 — all COMPLETED 2026-03-31.
+**Known open bugs:** none — all Swarm audit bugs resolved. 187/187 tests pass, build 477 modules, 0 errors.
 
 All 119 original tasks are COMPLETED. Tasks #120–#123 are a new Swarm code-audit bug wave registered 2026-03-31. Tasks #116–#119 are post-release bug fixes from a QA Swarm section inspection — all confirmed committed in f705c96 (2026-03-31). This includes the original V3 wave (#43–#82, 57 granular units), the post-release debug loop (#83–#99), the QA visual inspection bug-fix wave (#104–#111), post-release toolbar fixes (#112–#115), and QA Swarm bug wave (#116–#119).
 
@@ -7675,7 +7675,7 @@ Agent: qa-tester
 Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: sonnet
-Status: PENDING
+Status: COMPLETED
 Context:
   Four bugs were found in the Swarm section during QA inspection and fixed in tasks #116–#118.
   This task is a regression check to confirm all four fixes are solid and no new issues were
@@ -7712,14 +7712,14 @@ Context:
   Use Puppeteer (mcp__puppeteer__*) for visual verification of the canvas state.
 
 Acceptance Criteria:
-  - [ ] npm test passes — all tests green (verify count vs. prior 187)
-  - [ ] Swarm canvas renders correctly on first load
-  - [ ] Nodes visible after workflow generation (BUG-SWARM-1+2 verified fixed)
-  - [ ] fitView frames all nodes correctly after generation
-  - [ ] Navigation away and back preserves workflowDef (BUG-SWARM-3 verified fixed)
-  - [ ] startExecution throws clear error on null workflowId (BUG-SWARM-4 verified fixed)
-  - [ ] No new console errors or regressions introduced by the fixes
-  - [ ] Puppeteer screenshot of Swarm canvas shows nodes rendered correctly
+  - [x] npm test passes — all tests green (verify count vs. prior 187)
+  - [x] Swarm canvas renders correctly on first load
+  - [x] Nodes visible after workflow generation (BUG-SWARM-1+2 verified fixed)
+  - [x] fitView frames all nodes correctly after generation
+  - [x] Navigation away and back preserves workflowDef (BUG-SWARM-3 verified fixed)
+  - [x] startExecution throws clear error on null workflowId (BUG-SWARM-4 verified fixed)
+  - [x] No new console errors or regressions introduced by the fixes
+  - [x] Puppeteer screenshot of Swarm canvas shows nodes rendered correctly
 Dependencies: TASK #116, TASK #117, TASK #118
 ---
 
@@ -7760,11 +7760,11 @@ Context:
   - No console errors introduced
 
 Acceptance Criteria:
-  - [ ] Clicking a node in idle state shows AgentInspector with node data
-  - [ ] Clicking a node during execution still shows AgentInspector (no regression)
-  - [ ] AgentInspector hidden when no node is selected (correct baseline behavior preserved)
-  - [ ] No new console errors
-  - [ ] Build passes (npm run build in client/)
+  - [x] Clicking a node in idle state shows AgentInspector with node data
+  - [x] Clicking a node during execution still shows AgentInspector (no regression)
+  - [x] AgentInspector hidden when no node is selected (correct baseline behavior preserved)
+  - [x] No new console errors
+  - [x] Build passes (npm run build in client/)
 Dependencies: none
 ---
 
@@ -7808,12 +7808,12 @@ Context:
   wires the button in AgentInspector to call that setter. Do not rewrite PtyExplosion itself.
 
 Acceptance Criteria:
-  - [ ] "Open Terminal" button appears in AgentInspector when a node with a live sessionId is selected
-  - [ ] Clicking "Open Terminal" calls setPtyExplosionNodeId(agentState.sessionId)
-  - [ ] PtyExplosion modal opens correctly after button click
-  - [ ] Button is absent or disabled when sessionId is null/undefined
-  - [ ] No console errors
-  - [ ] Build passes (npm run build in client/)
+  - [x] "Open Terminal" button appears in AgentInspector when a node with a live sessionId is selected
+  - [x] Clicking "Open Terminal" calls setPtyExplosionNodeId(agentState.sessionId)
+  - [x] PtyExplosion modal opens correctly after button click
+  - [x] Button is absent or disabled when sessionId is null/undefined
+  - [x] No console errors
+  - [x] Build passes (npm run build in client/)
 Dependencies: TASK #120
 ---
 
@@ -7822,7 +7822,7 @@ Agent: frontend-dev
 Priority: MEDIUM
 Difficulty: LOW
 Suggested Model: haiku
-Status: PENDING
+Status: COMPLETED
 Context:
   ## Bug Description
   BUG-AUDIT-4 (MEDIUM): The `useInbox` hook (which polls the HITL inbox endpoint for pending
@@ -7855,12 +7855,12 @@ Context:
   the hook drives the HITL UI (already implemented) to surface the approval dialog to the user.
 
 Acceptance Criteria:
-  - [ ] useInbox(activeExecutionId) is called in SwarmView.jsx at the top level
-  - [ ] useInbox is imported correctly
-  - [ ] HITL polling activates when a Swarm execution is running (activeExecutionId is truthy)
-  - [ ] HITL polling stops when activeExecutionId is null/undefined (hook handles this internally)
-  - [ ] No console errors
-  - [ ] Build passes (npm run build in client/)
+  - [x] useInbox(activeExecutionId) is called in SwarmView.jsx at the top level
+  - [x] useInbox is imported correctly
+  - [x] HITL polling activates when a Swarm execution is running (activeExecutionId is truthy)
+  - [x] HITL polling stops when activeExecutionId is null/undefined (hook handles this internally)
+  - [x] No console errors
+  - [x] Build passes (npm run build in client/)
 Dependencies: none
 ---
 
@@ -7869,7 +7869,7 @@ Agent: qa-tester
 Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: sonnet
-Status: PENDING
+Status: COMPLETED
 Context:
   ## Purpose
   Regression QA for the Swarm code-audit bug wave (Tasks #120–#122). Three bugs have been fixed
@@ -7917,14 +7917,14 @@ Context:
   - client/src/views/SwarmView.jsx (BUG-AUDIT-4: useInbox mounted)
 
 Acceptance Criteria:
-  - [ ] AgentInspector appears when clicking any node in idle state
-  - [ ] AgentInspector appears when clicking any node during execution (no regression)
-  - [ ] "Open Terminal" button visible in AgentInspector for nodes with active sessions
-  - [ ] PtyExplosion modal opens correctly when "Open Terminal" is clicked
-  - [ ] "Open Terminal" absent/disabled for nodes without a session
-  - [ ] Network panel shows periodic HITL inbox polling during active execution
-  - [ ] All prior Swarm behaviors from #116–#119 still pass
-  - [ ] npm test green, npm run build clean
-  - [ ] Puppeteer screenshot confirms AgentInspector renders in idle state
+  - [x] AgentInspector appears when clicking any node in idle state
+  - [x] AgentInspector appears when clicking any node during execution (no regression)
+  - [x] "Open Terminal" button visible in AgentInspector for nodes with active sessions
+  - [x] PtyExplosion modal opens correctly when "Open Terminal" is clicked
+  - [x] "Open Terminal" absent/disabled for nodes without a session
+  - [x] Network panel shows periodic HITL inbox polling during active execution
+  - [x] All prior Swarm behaviors from #116–#119 still pass
+  - [x] npm test green, npm run build clean
+  - [x] Puppeteer screenshot confirms AgentInspector renders in idle state
 Dependencies: TASK #120, TASK #121, TASK #122
 ---

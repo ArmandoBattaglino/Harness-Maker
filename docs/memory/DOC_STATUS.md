@@ -1,23 +1,18 @@
 # Documentation Status
-_Last updated: 2026-03-31 after Swarm Audit — 4 post-release bugs found; BUG-AUDIT-1/2/3 FIXED, BUG-AUDIT-4 IN PROGRESS (Task #122)_
+_Last updated: 2026-03-31 after Swarm Section fully confirmed operational — 187/187 tests pass, build clean, 0 open bugs_
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**
 - QA inspection: CLEAN at release — zero bugs found at release gate
-- Test suite: 187/187 passing (at release)
-- Tasks completed: 119/115 (Tasks #116-118 post-release Swarm bug fixes; Task #119 QA regression check completed; Tasks #120-122 Swarm audit fixes)
-- Open bugs: 1 (BUG-AUDIT-4 — useInbox.js not mounted; Task #122 in progress)
-
-## Open Bugs (post-release Swarm audit — fixes in progress)
-
-| ID | Severity | Description | Task | Status |
-|----|----------|-------------|------|--------|
-| BUG-AUDIT-4 | MEDIUM | useInbox.js hook is implemented but not mounted by any component — HitlInbox or equivalent does not call it, so inbox polling never starts | #122 | IN PROGRESS |
+- Test suite: 187/187 passing (confirmed post all patches)
+- Tasks completed: 122/115 (Tasks #116-118 post-release Swarm bug fixes; Task #119 QA regression check completed; Tasks #120-122 Swarm audit fixes — all COMPLETED)
+- Open bugs: 0
 
 ## Fixed Bugs (v3.0.0 post-release patches)
 
 | ID | Severity | Description | Task | Status |
 |----|----------|-------------|------|--------|
+| BUG-AUDIT-4 | MEDIUM | useInbox.js hook implemented but not mounted — SwarmView.jsx was not calling useInbox(activeExecutionId), so HITL inbox polling never started | #122 | FIXED 2026-03-31 |
 | BUG-AUDIT-1 | CRITICAL | AgentInspector hidden in idle state — was gated behind showSidePanels; now always rendered (component has its own empty state) | #120 | FIXED 2026-03-31 |
 | BUG-AUDIT-2 | CRITICAL | PtyExplosion not reachable from UI — "Open Terminal" button added to AgentInspector; calls setPtyExplosionNodeId when sessionId present | #121 | FIXED 2026-03-31 |
 | BUG-AUDIT-3 | HIGH | PtyExplosion entry point missing — resolved alongside BUG-AUDIT-2 by wiring the button in AgentInspector | #121 | FIXED 2026-03-31 |
@@ -47,7 +42,7 @@ _Last updated: 2026-03-31 after Swarm Audit — 4 post-release bugs found; BUG-A
 | docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-03-28 | V3 RELEASE-READY closure entry appended by project-manager and documenter. |
 | docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-03-18 | V1 audit. V3 audit is docs/security-v3-audit.md (Task #79). |
 | docs/security-v3-audit.md | UP_TO_DATE | 2026-03-28 | BUG-99 fix note added: SEC-V3-01 now enforced via express.raw() — body-size bypass resolved. MEDIUM-V3-01 CSRF mismatch unchanged (not blocking; app is localhost-only). Verified clean at V3 RELEASE-READY closure. |
-| Inline comments | UP_TO_DATE | 2026-03-31 | All V3 route files have comprehensive block comments. server/routes/swarm.js pause/resume comments reflect BUG-94/95 fixes. server/routes/triggers.js BUG-99 comment present. server/services/SwarmEngine.js getExecution(), getStatus(), stopExecution() all have accurate JSDoc. Post-release patch: SwarmCanvas.jsx useEffect comment updated (fitView rationale). SwarmContext.jsx workflowDef field comment added (BUG-SWARM-3). useSwarm.js startExecution null guard comment already present via throw. |
+| Inline comments | UP_TO_DATE | 2026-03-31 | All V3 route files have comprehensive block comments. server/routes/swarm.js pause/resume comments reflect BUG-94/95 fixes. server/routes/triggers.js BUG-99 comment present. server/services/SwarmEngine.js getExecution(), getStatus(), stopExecution() all have accurate JSDoc. Post-release patches: SwarmCanvas.jsx useEffect comment updated (fitView rationale). SwarmContext.jsx workflowDef field comment added (BUG-SWARM-3). useSwarm.js startExecution null guard comment present. SwarmView.jsx useInbox call added (BUG-AUDIT-4). AgentInspector.jsx Open Terminal button (BUG-AUDIT-2+3). |
 | docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. Deferred indefinitely. |
 
 ## Stale Sections (known gaps)
