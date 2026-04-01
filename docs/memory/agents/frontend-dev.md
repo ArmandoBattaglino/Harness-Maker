@@ -1,4 +1,44 @@
 ---
+## 2026-03-31 — BUG-AUDIT-1 + BUG-AUDIT-2+3: AgentInspector always visible + Open Terminal button
+**Status:** COMPLETED
+**Called by:** user (direct fix request)
+
+### Context when I started
+Two audit bugs in the Swarm section. BUG-AUDIT-1: AgentInspector was gated behind `showSidePanels` (executionStatus === 'running' || 'paused'), so in idle state clicking a node did nothing — no panel appeared. BUG-AUDIT-2+3: PtyExplosion was fully implemented in the store but had no UI entry point — AgentInspector lacked any button to trigger it.
+
+### What I did
+1. Read SwarmCanvas.jsx (129 lines) — confirmed `showSidePanels` gate on both InterAgentFeed and AgentInspector at lines 124-125.
+2. Read AgentInspector.jsx (73 lines) — confirmed it already handles empty state and that `setPtyExplosionNodeId` was not imported.
+3. Applied BUG-AUDIT-1 fix: removed `showSidePanels &&` gate from AgentInspector in SwarmCanvas.jsx. InterAgentFeed retains its gate.
+4. Applied BUG-AUDIT-2+3 fix: added `setPtyExplosionNodeId` selector from useSwarmStore, and added "Open Terminal" button after the type badge — visible only when `agentState?.sessionId` is truthy.
+5. Ran `npm run build` — 477 modules, 0 errors, 4.04s.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/canvas/SwarmCanvas.jsx | MODIFIED | Removed `showSidePanels &&` gate from AgentInspector render. Inspector now always rendered. |
+| client/src/canvas/AgentInspector.jsx | MODIFIED | Added `setPtyExplosionNodeId` selector. Added "Open Terminal" button shown when `agentState?.sessionId` is truthy. |
+
+### Improvements delivered
+- BUG-AUDIT-1: AgentInspector visible in idle — clicking any node shows label, type, systemPrompt immediately.
+- BUG-AUDIT-2+3: "Open Terminal" button appears when agent has active session; calls `setPtyExplosionNodeId(agentState.sessionId)`.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-AUDIT-1 | AgentInspector gated behind showSidePanels — hidden in idle | Removed gate from SwarmCanvas.jsx | FIXED |
+| BUG-AUDIT-2+3 | No UI button to open PtyExplosion | Added "Open Terminal" button in AgentInspector.jsx | FIXED |
+
+### Decisions I made
+- AgentInspector always rendered — the component handles its own empty state. InterAgentFeed retains gate.
+- "Open Terminal" button placed after type badge, before status block.
+
+### State I'm leaving behind
+Both bugs fully fixed and build-verified. `onUpdateNode` prop on AgentInspector still unused — pre-existing.
+
+### Handoff
+None — task fully self-contained.
+---
 ## 2026-03-31 — Tasks #116+#117: BUG-SWARM-2 (opacity:0) + BUG-SWARM-1 (fitView)
 **Status:** COMPLETED
 **Called by:** user (direct task assignment)

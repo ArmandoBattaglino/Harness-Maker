@@ -1,12 +1,12 @@
 # Documentation Status
-_Last updated: 2026-03-31 after Swarm Audit — 4 new post-release bugs found (BUG-AUDIT-1 through BUG-AUDIT-4), Tasks #120-122 in progress_
+_Last updated: 2026-03-31 after Swarm Audit — 4 post-release bugs found; BUG-AUDIT-1/2/3 FIXED, BUG-AUDIT-4 IN PROGRESS (Task #122)_
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**
 - QA inspection: CLEAN at release — zero bugs found at release gate
 - Test suite: 187/187 passing (at release)
-- Tasks completed: 119/115 (Tasks #116-118 are post-release Swarm bug fixes; Task #119 QA regression check completed)
-- Open bugs: 4 (BUG-AUDIT-1 through BUG-AUDIT-4 — post-release Swarm audit; fixes in progress as Tasks #120-122)
+- Tasks completed: 119/115 (Tasks #116-118 post-release Swarm bug fixes; Task #119 QA regression check completed; Tasks #120-122 Swarm audit fixes)
+- Open bugs: 1 (BUG-AUDIT-4 — useInbox.js not mounted; Task #122 in progress)
 
 ## Open Bugs (post-release Swarm audit — fixes in progress)
 
