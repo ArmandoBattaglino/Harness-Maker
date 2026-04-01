@@ -1930,3 +1930,44 @@ Both files modified and build passes. BUG-SWARM-3 is fully resolved.
 ### Handoff
 Orchestrator to commit. QA can verify by: generate a workflow, navigate to another view, return to Swarm — canvas and Run button should be intact.
 ---
+
+---
+## 2026-03-31 — BUG-AUDIT-4: Wire useInbox into SwarmView
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+`useInbox.js` was fully implemented (polling REST every 10s when WS disconnected, calling addInboxItem via Zustand setState) but was dead code — no component imported or called it. The HITL fallback polling therefore never activated during any execution.
+
+### What I did
+1. Read `client/src/hooks/useInbox.js` — confirmed hook is a pure side-effect hook: it polls `/api/v1/swarm/{id}/inbox` every 10s only when `wsConnected === false`, normalizes items, and pushes them into the Zustand store. Returns `{ inboxItems, approve, reject }` but the side-effect is the critical part.
+2. Read `client/src/views/SwarmView.jsx` — identified the correct insertion point after `useSwarm` (line 49) and the import block (lines 11-14).
+3. Added `import { useInbox } from '../hooks/useInbox.js';` to the import block.
+4. Added `useInbox(activeExecutionId);` call inside the component after `useSwarm` call, with a comment referencing BUG-AUDIT-4.
+5. Ran `npm run build` — 477 modules transformed, 0 errors, built in 4.32s.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/views/SwarmView.jsx | MODIFIED | Added `useInbox` import and side-effect call with `activeExecutionId`. |
+
+### Improvements delivered
+- HITL fallback REST polling now activates automatically whenever `wsConnected === false` during an active execution.
+- No render changes — hook is a pure side-effect, output not used by SwarmView directly (HitlInbox reads from Zustand store).
+
+### Bugs I encountered
+None — the fix was purely additive.
+
+### Decisions I made
+- Called `useInbox(activeExecutionId)` without capturing return value — correct because `HitlInbox` panel reads `inboxItems` directly from Zustand, not from this hook's return value. Avoids double-rendering.
+
+### What I learned
+- `useInbox` uses `wsConnected` from Zustand internally — no need to pass it as a param. The hook self-regulates.
+- `activeExecutionId` is already selected in SwarmView (line 25), so passing it to `useInbox` costs nothing.
+
+### State I'm leaving behind
+SwarmView.jsx now mounts the HITL polling hook. Build clean. No open issues.
+
+### Handoff
+None — fix is self-contained.
+---

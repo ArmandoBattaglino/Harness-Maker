@@ -1,14 +1,23 @@
 # Documentation Status
-_Last updated: 2026-03-31 after Tasks #116-118: Swarm section — 4 bugs fixed, zero open bugs_
+_Last updated: 2026-03-31 after Swarm Audit — 4 new post-release bugs found (BUG-AUDIT-1 through BUG-AUDIT-4), Tasks #120-122 in progress_
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**
 - QA inspection: CLEAN at release — zero bugs found at release gate
 - Test suite: 187/187 passing (at release)
-- Tasks completed: 118/115 (Tasks #116-118 are post-release Swarm bug fixes)
-- Open bugs: 0 (all 4 Swarm bugs resolved — see Fixed Bugs below)
+- Tasks completed: 119/115 (Tasks #116-118 are post-release Swarm bug fixes; Task #119 QA regression check completed)
+- Open bugs: 4 (BUG-AUDIT-1 through BUG-AUDIT-4 — post-release Swarm audit; fixes in progress as Tasks #120-122)
 
-## Fixed Bugs (v3.0.0 post-release patch)
+## Open Bugs (post-release Swarm audit — fixes in progress)
+
+| ID | Severity | Description | Task | Status |
+|----|----------|-------------|------|--------|
+| BUG-AUDIT-1 | CRITICAL | AgentInspector panel hidden when no node selected (idle state) — click on a node shows nothing; component not mounted or display:none in idle | #120 | IN PROGRESS |
+| BUG-AUDIT-2 | CRITICAL | PtyExplosion view not reachable from the UI — no "Open Terminal" button wired up anywhere in SwarmView or SwarmCanvas | #121 | IN PROGRESS |
+| BUG-AUDIT-3 | HIGH | PtyExplosion route exists but is dead-code — the UI entry point is missing, making the feature inaccessible regardless of routing | #121 | IN PROGRESS |
+| BUG-AUDIT-4 | MEDIUM | useInbox.js hook is implemented but not mounted by any component — HitlInbox or equivalent does not call it, so inbox polling never starts | #122 | IN PROGRESS |
+
+## Fixed Bugs (v3.0.0 post-release patches)
 
 | ID | Severity | Description | Task | Status |
 |----|----------|-------------|------|--------|

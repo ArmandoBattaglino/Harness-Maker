@@ -2,7 +2,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED — 2026-03-31 — POST-RELEASE BUG WAVE #2 CLOSED — 119/119 tasks COMPLETED
+**Status:** v3.0.0 RELEASED — 2026-03-31 — SWARM AUDIT BUG WAVE OPEN — 123/123 tasks (119 COMPLETED + 4 new Swarm audit bugs)
 
 ---
 
@@ -20,9 +20,10 @@
 **Post-release fix #114:** BUG-TOOLBAR-2 (useSwarm.js cleanup useEffect keyed on [workflowId]) — 2026-03-31 (COMPLETED).
 **Post-release fix #115:** BUG-TOOLBAR-3 (SwarmView.jsx handlePause/handleResume guard against null activeExecutionId) — 2026-03-31 (COMPLETED).
 **QA Swarm inspection wave #116–#119:** 4 Swarm bugs found by QA — 2026-03-31 (COMPLETED — all 4 fixes committed in f705c96).
-**Known open bugs:** none.
+**Swarm code audit wave:** Tasks #120–#123 registered 2026-03-31 — 3 frontend bugs (BUG-AUDIT-1/2/3/4) + QA regression — IN_PROGRESS.
+**Known open bugs:** BUG-AUDIT-1 (AgentInspector hidden in idle), BUG-AUDIT-2+3 (PtyExplosion unreachable, no Open Terminal button), BUG-AUDIT-4 (useInbox dead code in SwarmView).
 
-All 119 tasks are COMPLETED. Tasks #116–#119 are post-release bug fixes from a QA Swarm section inspection — all confirmed committed in f705c96 (2026-03-31). This includes the original V3 wave (#43–#82, 57 granular units), the post-release debug loop (#83–#99), the QA visual inspection bug-fix wave (#104–#111), post-release toolbar fixes (#112–#115), and QA Swarm bug wave (#116–#119).
+All 119 original tasks are COMPLETED. Tasks #120–#123 are a new Swarm code-audit bug wave registered 2026-03-31. Tasks #116–#119 are post-release bug fixes from a QA Swarm section inspection — all confirmed committed in f705c96 (2026-03-31). This includes the original V3 wave (#43–#82, 57 granular units), the post-release debug loop (#83–#99), the QA visual inspection bug-fix wave (#104–#111), post-release toolbar fixes (#112–#115), and QA Swarm bug wave (#116–#119).
 
 ---
 

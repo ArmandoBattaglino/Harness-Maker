@@ -1,4 +1,13 @@
 ---
+## 2026-03-31 — frontend-dev — BUG-AUDIT-1 + BUG-AUDIT-2+3: AgentInspector always visible + Open Terminal button
+**Outcome:** COMPLETED
+**Summary:** Fixed two audit bugs in the Swarm section. AgentInspector is now always rendered (was hidden in idle behind showSidePanels gate). Added "Open Terminal" button in AgentInspector that calls setPtyExplosionNodeId when agentState.sessionId is present. Build: 477 modules, 0 errors.
+**Files changed:** client/src/canvas/SwarmCanvas.jsx, client/src/canvas/AgentInspector.jsx
+**Bugs fixed:** BUG-AUDIT-1 (AgentInspector hidden in idle), BUG-AUDIT-2+3 (PtyExplosion unreachable, no Open Terminal button)
+**Decisions made:** AgentInspector always rendered (not conditionally on selectedNodeId) — the component already has its own "Select a node to inspect" empty state
+**Blockers:** none
+**Next:** qa-tester verification of inspector visibility and PTY button in idle vs running states
+---
 ## 2026-03-31 — documenter — Tasks #116-118: Swarm Bug-Fix Wave documentation closure
 **Outcome:** COMPLETED
 **Summary:** Tasks #116-118 fixed 4 Swarm section bugs (BUG-SWARM-1 through BUG-SWARM-4). DOC_STATUS.md updated: open bugs count reset to 0, all 4 entries moved to Fixed Bugs table with FIXED status and root cause notes. Inline comments for SwarmCanvas.jsx (fitView rationale), SwarmContext.jsx (workflowDef persistence note), and useSwarm.js (startExecution null guard) reflected in health table. PROGRESS.md updated with #116-118 completion entry. ACTIVITY_LOG.md entry appended.
@@ -2227,4 +2236,15 @@ full self-contained context and acceptance criteria.
 **Decisions made:** none
 **Blockers:** none
 **Next:** frontend-dev should fix BUG-AUDIT-1 (showSidePanels guard) and BUG-AUDIT-2 (add click-to-open PtyExplosion in AgentNode)
+---
+
+---
+## 2026-03-31 — frontend-dev — BUG-AUDIT-4: Wire useInbox into SwarmView
+**Outcome:** COMPLETED
+**Summary:** `useInbox.js` was dead code — imported nowhere. Added import and side-effect call `useInbox(activeExecutionId)` in `SwarmView.jsx` after the `useSwarm` hook. HITL fallback REST polling (every 10s when WS disconnected) now activates automatically during executions. Build: 477 modules, 0 errors.
+**Files changed:** client/src/views/SwarmView.jsx
+**Bugs fixed:** BUG-AUDIT-4 (useInbox dead code — polling never ran)
+**Decisions made:** none
+**Blockers:** none
+**Next:** nothing — fix self-contained
 ---
