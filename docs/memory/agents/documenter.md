@@ -1,4 +1,48 @@
 ---
+## 2026-03-31 — Swarm Audit: 4 post-release bugs, DOC_STATUS.md + ACTIVITY_LOG.md updated
+**Status:** PARTIAL
+**Called by:** user (post-audit documentation update request)
+
+### Context when I started
+A second post-release Swarm audit just completed. Four new bugs were found (BUG-AUDIT-1 through BUG-AUDIT-4). Fixes for BUG-AUDIT-1/2/3 were already committed by frontend-dev (Tasks #120-121). BUG-AUDIT-4 (useInbox.js not mounted) was still in progress as Task #122. DOC_STATUS.md still reflected the prior bug wave (BUG-SWARM-1 through BUG-SWARM-4, all FIXED) and showed "0 open bugs".
+
+### What I did
+1. Read DOC_STATUS.md, ACTIVITY_LOG.md (top entries), PROGRESS.md, and this agent log in parallel to understand the exact current state.
+2. Confirmed from ACTIVITY_LOG.md that frontend-dev had already fixed BUG-AUDIT-1 (AgentInspector visibility) and BUG-AUDIT-2+3 (Open Terminal button / PtyExplosion wiring).
+3. Updated DOC_STATUS.md:
+   - Header line: updated to reflect 4 bugs found, 3 fixed, 1 still in progress.
+   - Release Status block: open bug count changed from 0 to 1; task count updated to include Tasks #120-122.
+   - Added "Open Bugs" table with BUG-AUDIT-4 (only remaining open bug).
+   - Extended "Fixed Bugs" table with BUG-AUDIT-1, BUG-AUDIT-2, BUG-AUDIT-3 entries above the prior SWARM wave.
+4. Appended documenter entry to ACTIVITY_LOG.md (prepended before the frontend-dev entry for chronological accuracy).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Header, Release Status block, Open Bugs table (BUG-AUDIT-4 only), Fixed Bugs table extended with BUG-AUDIT-1/2/3 |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Documenter entry prepended before frontend-dev entry |
+| docs/memory/agents/documenter.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- DOC_STATUS.md now accurately reflects the current bug state: 3 FIXED, 1 open.
+- ACTIVITY_LOG.md has a canonical documenter entry for this audit wave.
+
+### Bugs I encountered
+- ACTIVITY_LOG.md was modified between my read and first edit attempt — re-read and retried successfully.
+
+### Decisions I made
+- Marked BUG-AUDIT-1/2/3 as FIXED in DOC_STATUS.md even before Task #122 closes, because the frontend-dev ACTIVITY_LOG entry confirmed those fixes were committed (build: 477 modules, 0 errors).
+- Left BUG-AUDIT-4 as the sole entry in the Open Bugs table — it is the only unresolved item.
+
+### What I learned
+- When an audit finds bugs mid-wave, the ACTIVITY_LOG already contains fix confirmations from the implementing agent before the documenter is called — always read it first to determine which bugs are actually still open before updating DOC_STATUS.md.
+
+### State I'm leaving behind
+DOC_STATUS.md: 1 open bug (BUG-AUDIT-4), all others FIXED. Task #122 is the only remaining open work item in the bug wave.
+
+### Handoff
+After Task #122 completes: update DOC_STATUS.md to move BUG-AUDIT-4 from "Open Bugs" to "Fixed Bugs", set open bug count to 0, update header line.
+---
 ## 2026-03-31 — v3.0.0 RELEASE: Final documentation closure
 **Status:** COMPLETED
 **Called by:** user (post-QA release announcement)

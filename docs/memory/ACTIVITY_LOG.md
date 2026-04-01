@@ -1,4 +1,22 @@
 ---
+## 2026-03-31 — project-manager — Tasks #120–#123: Swarm Audit Bug Wave Registered
+**Outcome:** COMPLETED
+**Summary:** Registered 4 tasks from a code audit of the Swarm section. Tasks #120 (BUG-AUDIT-1) and #121 (BUG-AUDIT-2+3) discovered already COMPLETED per ACTIVITY_LOG evidence (frontend-dev fixed them before registration). Task #122 (BUG-AUDIT-4: useInbox dead code in SwarmView) is PENDING — frontend-dev must add useInbox(activeExecutionId) call. Task #123 (QA regression) is PENDING, depends on #120–#122.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none directly — task registration only
+**Decisions made:** Tasks #120/#121 marked COMPLETED immediately based on existing ACTIVITY_LOG entry confirming frontend-dev already applied fixes
+**Blockers:** none
+**Next:** frontend-dev runs Task #122 (SwarmView.jsx — add useInbox hook call); then qa-tester runs Task #123 regression suite
+---
+## 2026-03-31 — documenter — Swarm Audit: 4 bugs found, BUG-AUDIT-1/2/3 FIXED, BUG-AUDIT-4 IN PROGRESS
+**Outcome:** PARTIAL
+**Summary:** Post-release Swarm audit found 4 bugs (BUG-AUDIT-1 CRITICAL: AgentInspector hidden in idle; BUG-AUDIT-2 CRITICAL + BUG-AUDIT-3 HIGH: PtyExplosion unreachable, no Open Terminal button; BUG-AUDIT-4 MEDIUM: useInbox.js not mounted). BUG-AUDIT-1/2/3 already fixed by frontend-dev (Tasks #120-121). BUG-AUDIT-4 still in progress (Task #122). DOC_STATUS.md updated: Open Bugs table shows only BUG-AUDIT-4; Fixed Bugs table extended with BUG-AUDIT-1/2/3 entries; header counts and open-bug total corrected.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** BUG-AUDIT-1, BUG-AUDIT-2, BUG-AUDIT-3 (documentation updated to reflect code fixes already applied by frontend-dev)
+**Decisions made:** none
+**Blockers:** none
+**Next:** Task #122 (useInbox.js mounting fix) must complete; documenter to update DOC_STATUS.md BUG-AUDIT-4 entry to FIXED once Task #122 is merged
+---
 ## 2026-03-31 — frontend-dev — BUG-AUDIT-1 + BUG-AUDIT-2+3: AgentInspector always visible + Open Terminal button
 **Outcome:** COMPLETED
 **Summary:** Fixed two audit bugs in the Swarm section. AgentInspector is now always rendered (was hidden in idle behind showSidePanels gate). Added "Open Terminal" button in AgentInspector that calls setPtyExplosionNodeId when agentState.sessionId is present. Build: 477 modules, 0 errors.
@@ -2258,4 +2276,14 @@ full self-contained context and acceptance criteria.
 **Decisions made:** none
 **Blockers:** none
 **Next:** nothing — test suite confirmed green at v3.0.0.
+---
+---
+## 2026-03-31 — code-mapper — Swarm Code Audit: BUG-AUDIT-1 through BUG-AUDIT-4
+**Outcome:** COMPLETED
+**Summary:** Mapped 4 bugs found in the Swarm section audit and their concurrent fixes (Tasks #120-#122). AgentInspector now always visible (BUG-AUDIT-1). "Open Terminal" button added to AgentInspector calling setPtyExplosionNodeId (BUG-AUDIT-2+3). useInbox confirmed wired in SwarmView.jsx as HITL polling fallback — not dead code (BUG-AUDIT-4). CODE_MAP.md Module Index updated for SwarmCanvas, AgentInspector, SwarmView, and useInbox (new entry). CHANGELOG.md audit entry appended.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** BUG-AUDIT-1, BUG-AUDIT-2, BUG-AUDIT-3, BUG-AUDIT-4 (documented — fixes by frontend-dev)
+**Decisions made:** useInbox is NOT dead code — it IS imported by SwarmView.jsx (confirmed by grep: line 12 import, line 53 call). Bug report was accurate about the pre-fix state; fix was adding the import.
+**Blockers:** none
+**Next:** qa-tester should verify: (1) AgentInspector visible in idle state, (2) "Open Terminal" button appears when agentState.sessionId is present, (3) HITL polling fires when WS disconnected
 ---

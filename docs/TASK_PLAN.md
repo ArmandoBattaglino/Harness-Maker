@@ -21,7 +21,7 @@
 **Post-release fix #115:** BUG-TOOLBAR-3 (SwarmView.jsx handlePause/handleResume guard against null activeExecutionId) — 2026-03-31 (COMPLETED).
 **QA Swarm inspection wave #116–#119:** 4 Swarm bugs found by QA — 2026-03-31 (COMPLETED — all 4 fixes committed in f705c96).
 **Swarm code audit wave:** Tasks #120–#123 registered 2026-03-31 — 3 frontend bugs (BUG-AUDIT-1/2/3/4) + QA regression — IN_PROGRESS.
-**Known open bugs:** BUG-AUDIT-1 (AgentInspector hidden in idle), BUG-AUDIT-2+3 (PtyExplosion unreachable, no Open Terminal button), BUG-AUDIT-4 (useInbox dead code in SwarmView).
+**Known open bugs:** BUG-AUDIT-4 (useInbox dead code in SwarmView — Task #122 PENDING). BUG-AUDIT-1 and BUG-AUDIT-2+3 already fixed (Tasks #120, #121 COMPLETED per ACTIVITY_LOG 2026-03-31).
 
 All 119 original tasks are COMPLETED. Tasks #120–#123 are a new Swarm code-audit bug wave registered 2026-03-31. Tasks #116–#119 are post-release bug fixes from a QA Swarm section inspection — all confirmed committed in f705c96 (2026-03-31). This includes the original V3 wave (#43–#82, 57 granular units), the post-release debug loop (#83–#99), the QA visual inspection bug-fix wave (#104–#111), post-release toolbar fixes (#112–#115), and QA Swarm bug wave (#116–#119).
 
@@ -7721,4 +7721,210 @@ Acceptance Criteria:
   - [ ] No new console errors or regressions introduced by the fixes
   - [ ] Puppeteer screenshot of Swarm canvas shows nodes rendered correctly
 Dependencies: TASK #116, TASK #117, TASK #118
+---
+
+TASK #120: BUG-AUDIT-1 — AgentInspector Hidden in Idle State (SwarmCanvas.jsx)
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: LOW
+Suggested Model: haiku
+Status: COMPLETED
+Context:
+  ## Bug Description
+  BUG-AUDIT-1 (CRITICAL): When the Swarm is in idle state (no active execution), clicking a node
+  in the canvas does not display the AgentInspector side panel. The panel stays hidden regardless
+  of which node the user clicks.
+
+  ## Root Cause
+  In `client/src/canvas/SwarmCanvas.jsx`, the AgentInspector is gated behind a `showSidePanels`
+  condition (or equivalent idle-state guard). When `showSidePanels` is false (idle), the component
+  is not mounted at all, so click handlers have nothing to render into.
+
+  ## Required Fix
+  Remove the `showSidePanels` gate from AgentInspector's render path. AgentInspector must be
+  rendered unconditionally — it should display whenever a node is selected, regardless of whether
+  a Swarm execution is currently running. The panel's own internal state (selectedNode) controls
+  visibility.
+
+  ## File to Edit
+  `client/src/canvas/SwarmCanvas.jsx`
+
+  ## How to Identify the Gate
+  Search for `showSidePanels` (or similar boolean) used as a condition wrapping `<AgentInspector`.
+  Remove the wrapping condition — keep AgentInspector in the JSX tree at all times.
+
+  ## Acceptance Criteria
+  - AgentInspector renders and shows node details when any node is clicked in idle state
+  - AgentInspector renders and shows node details when any node is clicked during an active execution
+  - No regressions: AgentInspector does not appear when no node is selected
+  - No console errors introduced
+
+Acceptance Criteria:
+  - [ ] Clicking a node in idle state shows AgentInspector with node data
+  - [ ] Clicking a node during execution still shows AgentInspector (no regression)
+  - [ ] AgentInspector hidden when no node is selected (correct baseline behavior preserved)
+  - [ ] No new console errors
+  - [ ] Build passes (npm run build in client/)
+Dependencies: none
+---
+
+TASK #121: BUG-AUDIT-2+3 — PtyExplosion Unreachable + Missing "Open Terminal" Button (AgentInspector.jsx)
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: LOW
+Suggested Model: haiku
+Status: COMPLETED
+Context:
+  ## Bug Description
+  BUG-AUDIT-2 (CRITICAL): The PtyExplosion modal (full-screen PTY terminal for an agent session)
+  is unreachable from the UI. There is no button or interaction that calls `setPtyExplosionNodeId`.
+
+  BUG-AUDIT-3 (HIGH): AgentInspector.jsx does not render an "Open Terminal" button, meaning the
+  user has no way to open the PTY terminal for a selected Swarm agent node.
+
+  ## Root Cause
+  AgentInspector.jsx renders node metadata and status but was never wired up to the PtyExplosion
+  feature. `setPtyExplosionNodeId` exists in Swarm state but is never called from the inspector.
+
+  ## Required Fix
+  Add an "Open Terminal" button to AgentInspector.jsx. When clicked, the button must call:
+    `setPtyExplosionNodeId(agentState.sessionId)`
+  where `agentState` is the agent node's current state object (which contains `sessionId`).
+
+  The button should be visible whenever a node is selected and `agentState.sessionId` is truthy
+  (i.e., a PTY session exists for that agent). If `sessionId` is null/undefined, the button should
+  be disabled or hidden — do not call `setPtyExplosionNodeId(undefined)`.
+
+  ## File to Edit
+  `client/src/canvas/AgentInspector.jsx`
+
+  ## How to Identify the Right Location
+  Find where the inspector renders agent node metadata. Add the button below the status/metadata
+  block. Import or receive `setPtyExplosionNodeId` as a prop (or from Swarm context/store —
+  follow the existing pattern for how other actions are dispatched from this component).
+
+  ## Integration Note
+  PtyExplosion is already implemented and is triggered by `setPtyExplosionNodeId`. This task only
+  wires the button in AgentInspector to call that setter. Do not rewrite PtyExplosion itself.
+
+Acceptance Criteria:
+  - [ ] "Open Terminal" button appears in AgentInspector when a node with a live sessionId is selected
+  - [ ] Clicking "Open Terminal" calls setPtyExplosionNodeId(agentState.sessionId)
+  - [ ] PtyExplosion modal opens correctly after button click
+  - [ ] Button is absent or disabled when sessionId is null/undefined
+  - [ ] No console errors
+  - [ ] Build passes (npm run build in client/)
+Dependencies: TASK #120
+---
+
+TASK #122: BUG-AUDIT-4 — useInbox Dead Code — HITL Polling Never Mounted (SwarmView.jsx)
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: LOW
+Suggested Model: haiku
+Status: PENDING
+Context:
+  ## Bug Description
+  BUG-AUDIT-4 (MEDIUM): The `useInbox` hook (which polls the HITL inbox endpoint for pending
+  human-in-the-loop approval requests) is never called from SwarmView.jsx. This means the HITL
+  inbox never activates during a Swarm execution — agents requiring human approval silently stall.
+
+  ## Root Cause
+  `useInbox` was implemented in `client/src/hooks/useInbox.js` and is a functional hook ready to
+  consume. However, SwarmView.jsx was not updated to call it, leaving it as dead code that is
+  never mounted.
+
+  ## Required Fix
+  In `client/src/views/SwarmView.jsx`, add the following hook call:
+    `useInbox(activeExecutionId)`
+  This must be called at the top level of SwarmView (following React hook rules — not inside
+  conditionals or callbacks). `activeExecutionId` is already available in SwarmView's state/props.
+  Import `useInbox` from `../hooks/useInbox` (or the correct relative path).
+
+  ## File to Edit
+  `client/src/views/SwarmView.jsx`
+
+  ## How to Identify the Right Location
+  Find the existing hook calls in SwarmView (e.g., `useSwarm`, `useSwarmStore`, etc.) and add
+  `useInbox(activeExecutionId)` alongside them, in the same block. Do not call it inside a
+  conditional.
+
+  ## Behavior After Fix
+  Once mounted, useInbox polls the HITL inbox endpoint (e.g., GET /api/v1/inbox) at the configured
+  interval whenever `activeExecutionId` is non-null. When a pending approval request is detected,
+  the hook drives the HITL UI (already implemented) to surface the approval dialog to the user.
+
+Acceptance Criteria:
+  - [ ] useInbox(activeExecutionId) is called in SwarmView.jsx at the top level
+  - [ ] useInbox is imported correctly
+  - [ ] HITL polling activates when a Swarm execution is running (activeExecutionId is truthy)
+  - [ ] HITL polling stops when activeExecutionId is null/undefined (hook handles this internally)
+  - [ ] No console errors
+  - [ ] Build passes (npm run build in client/)
+Dependencies: none
+---
+
+TASK #123: QA Regression — Swarm Audit Bug Wave Visual Verification
+Agent: qa-tester
+Priority: MEDIUM
+Difficulty: MEDIUM
+Suggested Model: sonnet
+Status: PENDING
+Context:
+  ## Purpose
+  Regression QA for the Swarm code-audit bug wave (Tasks #120–#122). Three bugs have been fixed
+  by frontend-dev:
+    - BUG-AUDIT-1: AgentInspector now renders unconditionally (no longer hidden in idle state)
+    - BUG-AUDIT-2+3: "Open Terminal" button added to AgentInspector, wiring PtyExplosion
+    - BUG-AUDIT-4: useInbox(activeExecutionId) mounted in SwarmView (HITL polling active)
+
+  ## What to Verify
+  1. **AgentInspector visible in idle state**: Navigate to Swarm view (no active execution). Click
+     any node on the canvas. Verify the AgentInspector side panel appears and shows node metadata.
+     Previously this was broken — clicking nodes did nothing.
+
+  2. **AgentInspector visible during execution**: Start a Swarm execution. Click a node. Verify
+     AgentInspector still appears (no regression from the unconditional render change).
+
+  3. **"Open Terminal" button present**: In AgentInspector, when a node is selected that has a
+     live session (sessionId truthy), verify an "Open Terminal" button is visible.
+
+  4. **PtyExplosion opens**: Click "Open Terminal". Verify the PtyExplosion full-screen PTY modal
+     opens for that agent session.
+
+  5. **"Open Terminal" absent for no-session nodes**: Select a node with no active session (e.g.,
+     a pending/queued agent). Verify the "Open Terminal" button is absent or disabled.
+
+  6. **HITL inbox polling**: During an active execution, open the browser DevTools network panel.
+     Verify that GET /api/v1/inbox (or equivalent HITL endpoint) is being called periodically.
+     Previously it was never called.
+
+  7. **No regressions**: All existing Swarm behaviors from Tasks #116–#119 still work:
+     - Nodes render at full opacity
+     - fitView centers correctly
+     - workflowDef persists across navigation
+     - null workflowId produces a clear error, not a silent 404
+
+  8. **Build and tests**: npm test passes, npm run build (in client/) produces no errors.
+
+  ## Tools
+  Use Puppeteer (mcp__puppeteer__*) for visual verification of canvas and modal states.
+  Use browser DevTools (via Puppeteer evaluate) to check network requests for HITL polling.
+
+  ## Files Changed by #120–#122
+  - client/src/canvas/SwarmCanvas.jsx (BUG-AUDIT-1: gate removed)
+  - client/src/canvas/AgentInspector.jsx (BUG-AUDIT-2+3: Open Terminal button added)
+  - client/src/views/SwarmView.jsx (BUG-AUDIT-4: useInbox mounted)
+
+Acceptance Criteria:
+  - [ ] AgentInspector appears when clicking any node in idle state
+  - [ ] AgentInspector appears when clicking any node during execution (no regression)
+  - [ ] "Open Terminal" button visible in AgentInspector for nodes with active sessions
+  - [ ] PtyExplosion modal opens correctly when "Open Terminal" is clicked
+  - [ ] "Open Terminal" absent/disabled for nodes without a session
+  - [ ] Network panel shows periodic HITL inbox polling during active execution
+  - [ ] All prior Swarm behaviors from #116–#119 still pass
+  - [ ] npm test green, npm run build clean
+  - [ ] Puppeteer screenshot confirms AgentInspector renders in idle state
+Dependencies: TASK #120, TASK #121, TASK #122
 ---

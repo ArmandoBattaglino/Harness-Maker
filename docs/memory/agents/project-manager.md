@@ -1,4 +1,64 @@
 ---
+## 2026-03-31 — Tasks #120–#123: Swarm Code Audit Bug Wave — Registered
+**Status:** COMPLETED
+**Called by:** user (direct instruction — code audit report with 4 Swarm bugs)
+
+### Context when I started
+Project was at v3.0.0 RELEASED with 119/119 tasks COMPLETED. A code audit of the Swarm section
+found 4 new bugs. The user provided full bug descriptions and fix instructions. The ACTIVITY_LOG
+already showed that BUG-AUDIT-1 and BUG-AUDIT-2+3 had been fixed by frontend-dev before I was
+called (top entry: "frontend-dev — BUG-AUDIT-1 + BUG-AUDIT-2+3"). BUG-AUDIT-4 had not been fixed.
+
+### What I did
+1. Read TASK_PLAN.md header (lines 1-50) and ACTIVITY_LOG.md (lines 1-60) to understand current
+   state — discovered #120 and #121 are already done in code before being formally registered.
+2. Updated TASK_PLAN.md header:
+   - Status line: "119/119 COMPLETED" → "123/123 (119 COMPLETED + 4 new Swarm audit bugs)"
+   - Added Swarm audit wave bullet to the header block
+   - Updated "Known open bugs" line to reflect only BUG-AUDIT-4 as open
+   - Updated prose summary paragraph
+3. Appended 4 new task blocks at the end of TASK_PLAN.md (after Task #119):
+   - Task #120: BUG-AUDIT-1 — Status: COMPLETED (already fixed per ACTIVITY_LOG)
+   - Task #121: BUG-AUDIT-2+3 — Status: COMPLETED (already fixed per ACTIVITY_LOG)
+   - Task #122: BUG-AUDIT-4 — Status: PENDING (useInbox not yet mounted in SwarmView.jsx)
+   - Task #123: QA regression — Status: PENDING (depends on #120–#122)
+4. Prepended ACTIVITY_LOG entry for this registration session.
+5. Appended this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Header updated + 4 new task blocks appended (#120–#123) |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | New PM entry prepended for this registration session |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- TASK_PLAN.md now contains all 4 audit bug tasks with full verbose context for frontend-dev
+  and qa-tester. Tasks #120 and #121 correctly reflect the already-completed state.
+- Known open work is clearly identified: only Task #122 (useInbox mount) and Task #123 (QA) remain.
+
+### Bugs I encountered
+- None (registration task only).
+
+### Decisions I made
+- Marked Tasks #120 and #121 as COMPLETED immediately — the ACTIVITY_LOG had a top-level
+  frontend-dev entry explicitly stating both BUG-AUDIT-1 and BUG-AUDIT-2+3 were fixed with build
+  success (477 modules, 0 errors). Registering them as PENDING would be inaccurate.
+
+### What I learned
+- When registering bug waves, always cross-check ACTIVITY_LOG.md first — agents may have already
+  applied fixes in parallel before the PM session runs. The registrar must reflect actual state.
+- Three edit targets always needed in TASK_PLAN.md when opening a new bug wave: (1) Status line,
+  (2) wave bullet in the header block, (3) "Known open bugs" line, (4) prose summary paragraph.
+
+### State I'm leaving behind
+- TASK_PLAN.md: 123 tasks total. #120 COMPLETED, #121 COMPLETED, #122 PENDING, #123 PENDING.
+- Only BUG-AUDIT-4 (useInbox dead code) remains as an open bug.
+
+### Handoff
+- frontend-dev: run Task #122 — add `useInbox(activeExecutionId)` at the top level of
+  `client/src/views/SwarmView.jsx`. Import from `../hooks/useInbox`. Then qa-tester runs #123.
+---
 ## 2026-03-31 — Tasks #116/#117/#118: Swarm Bug Wave — Confirmed COMPLETED in f705c96
 **Status:** COMPLETED
 **Called by:** user (direct instruction — confirmation that all 4 Swarm fixes are committed)

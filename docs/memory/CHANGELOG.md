@@ -1974,3 +1974,47 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 | BUG-SWARM-4 | useSwarm.js | `startExecution` line 66 — template literal `${workflowId}` | workflowId can be undefined if workflowDef has not been generated — no explicit null guard before the apiPost call | OPEN |
 
 ---
+
+---
+## 2026-03-31 — Swarm Code Audit + Tasks #120–#122: Fix BUG-AUDIT-1, BUG-AUDIT-2+3, BUG-AUDIT-4
+**Agent:** frontend-dev (fixes concurrent in Tasks #120-#122), code-mapper (this audit documentation)
+**Triggered by:** Post-v3.0.0 Swarm section code audit identifying 4 bugs: inspector visibility gating, missing PTY terminal trigger UI, missing "Open Terminal" button, and dead useInbox hook.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/canvas/SwarmCanvas.jsx | MODIFIED | AgentInspector moved outside showSidePanels gate — now always rendered (BUG-AUDIT-1) |
+| client/src/canvas/AgentInspector.jsx | MODIFIED | Added "Open Terminal" button calling setPtyExplosionNodeId(agentState.sessionId) when sessionId present; now subscribes to setPtyExplosionNodeId from useSwarmStore (BUG-AUDIT-2+3) |
+| client/src/views/SwarmView.jsx | MODIFIED | Added import + call of useInbox(activeExecutionId) at line 53 — REST polling fallback for HITL inbox when WS disconnected (BUG-AUDIT-4) |
+
+### Functions Added
+- None
+
+### Functions Modified
+- `SwarmCanvas({ workflowDef })` in `client/src/canvas/SwarmCanvas.jsx` — AgentInspector rendering moved from inside `{showSidePanels && ...}` gate to always-on. The component already handles its own empty state ("Select a node to inspect"). InterAgentFeed remains gated on showSidePanels. (BUG-AUDIT-1)
+- `AgentInspector({ nodes, onUpdateNode })` in `client/src/canvas/AgentInspector.jsx` — Added `setPtyExplosionNodeId` subscription from useSwarmStore; added "Open Terminal" button conditionally rendered when `agentState?.sessionId` is set; button calls `setPtyExplosionNodeId(agentState.sessionId)` on click. (BUG-AUDIT-2+3)
+- `SwarmView()` in `client/src/views/SwarmView.jsx` — Added `import { useInbox } from '../hooks/useInbox.js'` and `useInbox(activeExecutionId)` call (result unused — side effects only: polling + store update). Comment documents purpose: "HITL polling fallback when WS is disconnected". (BUG-AUDIT-4)
+
+### Functions Removed
+- None
+
+### Connection Changes
+- `AgentInspector` → `useSwarmStore::setPtyExplosionNodeId` — new subscription (first caller after SwarmView — provides node-level PTY explosion trigger)
+- `AgentInspector` → `PtyExplosion` — indirect: AgentInspector now sets `ptyExplosionNodeId` via store; SwarmView reads that store value and renders PtyExplosion overlay
+- `SwarmView` → `useInbox` — new import and call (hook was previously orphaned — no component consumed it; now wired as HITL polling fallback)
+- `useInbox` → `/api/v1/swarm/:executionId/inbox` — REST polling path now exercisable from the live app (was only theoretically wired via the hook file)
+
+### Impact on Other Code
+- AgentInspector is now always present in the SwarmCanvas DOM — callers that assumed it only existed during running/paused executions should note it always renders (with "Select a node" empty state when nothing is selected)
+- `useInbox` is no longer dead code — BUG-AUDIT-4 status: RESOLVED. The hook now has a live caller and its polling + resolve behaviors are reachable from the UI.
+- PtyExplosion overlay can now be triggered from two paths: (1) SwarmView escape-key cleanup (already existed) and (2) AgentInspector "Open Terminal" button (new) — both write to the same `ptyExplosionNodeId` store value
+
+### Audit Bug Registry
+| Bug ID | File | Nature | Status |
+|--------|------|--------|--------|
+| BUG-AUDIT-1 | SwarmCanvas.jsx:42-43 | AgentInspector gated on showSidePanels — hidden in idle | FIXED (Task #120) |
+| BUG-AUDIT-2 | AgentNode.jsx | No onClick for setPtyExplosionNodeId on AgentNode | FIXED via AgentInspector button (Task #121) |
+| BUG-AUDIT-3 | AgentInspector.jsx | No "Open Terminal" button | FIXED (Task #121) |
+| BUG-AUDIT-4 | useInbox.js | Not imported by any component (dead code) | FIXED — imported in SwarmView.jsx (Task #122) |
+
+---
