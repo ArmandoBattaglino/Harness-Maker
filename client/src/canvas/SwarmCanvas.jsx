@@ -122,7 +122,7 @@ export default function SwarmCanvas({ workflowDef }) {
           />
         </ReactFlow>
         {showSidePanels && <InterAgentFeed />}
-        {showSidePanels && <AgentInspector nodes={nodes} />}
+        <AgentInspector nodes={nodes} />
       </div>
     </div>
   );

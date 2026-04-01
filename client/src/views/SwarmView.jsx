@@ -9,6 +9,7 @@ import PtyExplosion from '../canvas/PtyExplosion';
 import HitlInbox, { getPendingCount } from '../panels/HitlInbox';
 import { useSwarmStore } from '../store/SwarmContext';
 import { useSwarm } from '../hooks/useSwarm';
+import { useInbox } from '../hooks/useInbox.js';
 import { useAppState } from '../store/AppContext';
 import { apiPost } from '../hooks/useApi.js';
 

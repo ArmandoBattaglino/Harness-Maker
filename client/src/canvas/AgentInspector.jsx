@@ -6,6 +6,7 @@ export default function AgentInspector({ nodes, onUpdateNode }) {
   const selectedNodeId = useSwarmStore((s) => s.selectedNodeId);
   const agentState = useSwarmStore((s) => s.agentStates[selectedNodeId]);
   const setSelectedNode = useSwarmStore((s) => s.setSelectedNode);
+  const setPtyExplosionNodeId = useSwarmStore((s) => s.setPtyExplosionNodeId);
 
   const selectedNode = nodes?.find((n) => n.id === selectedNodeId);
 
