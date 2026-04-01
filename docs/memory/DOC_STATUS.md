@@ -12,15 +12,15 @@ _Last updated: 2026-03-31 after Swarm Audit — 4 new post-release bugs found (B
 
 | ID | Severity | Description | Task | Status |
 |----|----------|-------------|------|--------|
-| BUG-AUDIT-1 | CRITICAL | AgentInspector panel hidden when no node selected (idle state) — click on a node shows nothing; component not mounted or display:none in idle | #120 | IN PROGRESS |
-| BUG-AUDIT-2 | CRITICAL | PtyExplosion view not reachable from the UI — no "Open Terminal" button wired up anywhere in SwarmView or SwarmCanvas | #121 | IN PROGRESS |
-| BUG-AUDIT-3 | HIGH | PtyExplosion route exists but is dead-code — the UI entry point is missing, making the feature inaccessible regardless of routing | #121 | IN PROGRESS |
 | BUG-AUDIT-4 | MEDIUM | useInbox.js hook is implemented but not mounted by any component — HitlInbox or equivalent does not call it, so inbox polling never starts | #122 | IN PROGRESS |
 
 ## Fixed Bugs (v3.0.0 post-release patches)
 
 | ID | Severity | Description | Task | Status |
 |----|----------|-------------|------|--------|
+| BUG-AUDIT-1 | CRITICAL | AgentInspector hidden in idle state — was gated behind showSidePanels; now always rendered (component has its own empty state) | #120 | FIXED 2026-03-31 |
+| BUG-AUDIT-2 | CRITICAL | PtyExplosion not reachable from UI — "Open Terminal" button added to AgentInspector; calls setPtyExplosionNodeId when sessionId present | #121 | FIXED 2026-03-31 |
+| BUG-AUDIT-3 | HIGH | PtyExplosion entry point missing — resolved alongside BUG-AUDIT-2 by wiring the button in AgentInspector | #121 | FIXED 2026-03-31 |
 | BUG-SWARM-1 | HIGH | Swarm nodes invisible after generation — fitView not firing after node mount | #116 | FIXED 2026-03-31 |
 | BUG-SWARM-2 | HIGH | Node style had `opacity: 0` + staggered animation — corrupted React Flow ResizeObserver bounding box | #116 | FIXED 2026-03-31 |
 | BUG-SWARM-3 | MEDIUM | `workflowDef` lost on navigation — moved from local useState to Zustand (useSwarmStore) | #117 | FIXED 2026-03-31 |

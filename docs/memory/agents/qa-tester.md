@@ -864,3 +864,51 @@ User reports "manca tutto il procedimento per farli funzionare" and clicking an 
 - BUG-AUDIT-2+4: frontend-dev — add onClick to AgentNode that calls setPtyExplosionNodeId(sessionId), and/or add "Open Terminal" button in AgentInspector
 - BUG-AUDIT-3: frontend-dev — decide: wire useInbox into HitlInbox as the source of truth, or delete useInbox.js
 ---
+
+---
+## 2026-03-31 — Task: Full Test Suite Run (user request)
+**Status:** COMPLETED
+**Called by:** user (direct)
+
+### Context when I started
+v3.0.0 released. All 119 tasks COMPLETED. Prior session log shows 187/187 tests passing. User requested explicit test suite execution and results report.
+
+### What I did
+1. Read docs/memory/ files in parallel (PROJECT.md, PROGRESS.md, ACTIVITY_LOG.md, qa-tester.md header)
+2. Ran `npm test` from the project root — this delegates to `npm test --prefix server` → `vitest run`
+3. Captured full output and tail -80 for the summary block
+4. Verified test count, pass/fail split, vitest version, and duration
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/agents/qa-tester.md | MODIFIED | Appended this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended task completion entry |
+
+### Test Results
+- **Vitest version:** v4.1.0
+- **Test files:** 9 passed (9)
+- **Tests:** 187 passed (187) — 0 failed
+- **Duration:** 5.89s (transform 452ms, setup 0ms, import 780ms, tests 5.82s)
+- **Failures:** NONE
+
+### stderr lines observed (expected — not failures)
+The following stderr lines appeared during the run. All are expected/intentional — they come from tests that deliberately trigger error paths and verify the parser logs them:
+- `[HandoffParser] malformed handoff payload: Unterminated string in JSON` — Scenario 2 split-chunk test
+- `[HandoffParser] contextUpdate rejected (schema violation) from target agent-b` — Scenario 4 oversized contextUpdate tests (4 lines)
+- `[HandoffParser] malformed handoff payload: Unexpected token` — Scenario 5 invalid base64 tests
+- `[HandoffParser] malformed handoff payload: Unexpected end of JSON input` — reset() test
+- `[SessionManager] Session created/killAll/Killing session` — SessionManager lifecycle tests
+
+### Bugs I encountered
+None. All 187 tests pass cleanly.
+
+### Decisions I made
+- No action required. Test suite is green.
+
+### State I'm leaving behind
+187/187 tests passing. Zero failures. v3.0.0 stable.
+
+### Handoff
+None — task fully self-contained.
+---
