@@ -1799,3 +1799,58 @@ CODE_MAP.md now has an Open Bug Registry section at the end documenting BUG-SWAR
 ### Handoff
 After Tasks #118 (BUG-SWARM-3) and #119 (BUG-SWARM-4) complete, code-mapper should update the Open Bug Registry status entries from OPEN to FIXED for those bugs. Also update the handleGenerate and startExecution function entry "Last modified" dates when those files change.
 ---
+---
+## 2026-03-31 — Swarm Code Audit: BUG-AUDIT-1 through BUG-AUDIT-4
+**Status:** COMPLETED
+**Called by:** orchestrator (post-audit code-mapper invocation)
+
+### Context when I started
+CODE_MAP.md was last updated after Tasks #114+#115 (BUG-TOOLBAR-2+3). A new post-v3.0.0 Swarm section code audit had identified 4 bugs. Frontend-dev was concurrently running Tasks #120-#122 to fix them.
+
+### What I did
+1. Read CODE_MAP.md (offset 1-100, 75-100, 1070-1170, 1170-1270, 1269+) in parallel chunks to locate existing entries for SwarmCanvas, AgentInspector, SwarmView, useInbox.
+2. Read CHANGELOG.md tail (offsets 700, 1090, 1230, 1510, 1720, 1799, 1898, 1977) to find append point (line 1977).
+3. Read source files: SwarmCanvas.jsx, AgentNode.jsx, AgentInspector.jsx, useInbox.js, SwarmView.jsx (first 60 lines).
+4. Grepped for `useInbox` across client/ — confirmed it IS imported by SwarmView.jsx (line 12: import; line 53: call). The bug report said "dead code" — this was the pre-fix state; Task #122 added the import.
+5. Grepped for `setPtyExplosionNodeId` — confirmed AgentInspector.jsx now subscribes to it (line 9) and calls it in the "Open Terminal" button (line 45).
+6. Confirmed SwarmCanvas.jsx line 125: `<AgentInspector nodes={nodes} />` is no longer inside the `{showSidePanels && ...}` block — it's always rendered.
+7. Updated CODE_MAP.md header timestamp.
+8. Updated Module Index rows for: SwarmCanvas (BUG-AUDIT-1 note), AgentInspector (BUG-AUDIT-2+3 note + setPtyExplosionNodeId), SwarmView (BUG-AUDIT-4/useInbox note).
+9. Added new Module Index row for useInbox.js (was missing entirely — confirmed not dead code).
+10. Appended CHANGELOG entry with full audit registry table.
+11. Appended ACTIVITY_LOG entry.
+12. Appended this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header timestamp; Module Index for SwarmCanvas + AgentInspector + SwarmView updated; new useInbox.js row added |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Swarm audit entry for Tasks #120-#122 |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended audit summary |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- useInbox.js now has a Module Index entry (was missing)
+- AgentInspector Module Index updated to reflect setPtyExplosionNodeId subscription + "Open Terminal" button
+- SwarmCanvas Module Index updated to note AgentInspector always-visible fix
+- SwarmView Module Index updated to note useInbox wiring
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-AUDIT-4 claim "dead code" vs reality | useInbox.js was dead code BEFORE Task #122 fix; after the fix it IS imported by SwarmView.jsx | Confirmed wired; documented accurately | RESOLVED |
+
+### Decisions I made
+- BUG-AUDIT-2 (no onClick on AgentNode for setPtyExplosionNodeId) was addressed via AgentInspector's "Open Terminal" button rather than adding onClick to the AgentNode card itself. Both approaches are valid; the inspector button is more discoverable and avoids node-click conflicts with React Flow's onNodeClick→setSelectedNode behavior. Documented accordingly.
+- useInbox.js Module Index entry added from scratch (hook existed since Task #73 but was never documented in CODE_MAP Module Index — only mentioned in CHANGELOG).
+
+### What I learned
+- The audit bug report for BUG-AUDIT-4 ("useInbox not imported by any component") was accurate at audit time. Task #122 added the import to SwarmView.jsx at line 12 and the call at line 53 with the comment "BUG-AUDIT-4 fix". Always grep before declaring dead code final.
+- AgentInspector.jsx already subscribed to `setPtyExplosionNodeId` (line 9) before the "Open Terminal" button was added — the store action was wired in SwarmContext.jsx since Task #71.2. BUG-AUDIT-2 was about the UI trigger path being absent, not the store action.
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md are fully up to date through the Swarm audit (Tasks #120-#122). All 4 audit bugs documented with their fix locations and mechanisms.
+
+### Handoff
+qa-tester should verify: AgentInspector visible in idle state; "Open Terminal" button visible when sessionId is set; HITL polling fires when WS disconnected. Tasks #120-#122 are the active fixes — frontend-dev is running them concurrently.
+---
