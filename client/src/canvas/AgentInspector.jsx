@@ -39,6 +39,16 @@ export default function AgentInspector({ nodes, onUpdateNode }) {
         Type: {selectedNode.type || 'agent'}
       </div>
 
+      {/* Open Terminal button — only when agent has an active session */}
+      {agentState?.sessionId && (
+        <button
+          onClick={() => setPtyExplosionNodeId(agentState.sessionId)}
+          className="w-full text-xs px-2 py-1.5 rounded bg-indigo-700 hover:bg-indigo-600 text-white transition-colors flex items-center gap-1.5"
+        >
+          <span>⌨</span> Open Terminal
+        </button>
+      )}
+
       {/* Live status (from Zustand) */}
       {agentState && (
         <div className="bg-gray-800 rounded p-2 text-xs">

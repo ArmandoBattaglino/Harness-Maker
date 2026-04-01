@@ -49,6 +49,9 @@ export default function SwarmView() {
   // Task #101 — useSwarm hook (workflowId comes from workflowDef once generated)
   const { startExecution, stopExecution } = useSwarm(workflowDef?.id);
 
+  // BUG-AUDIT-4 fix — HITL polling fallback when WS is disconnected
+  useInbox(activeExecutionId);
+
   // Task #100 — pending HITL count for badge
   const pendingCount = getPendingCount(inboxItems);
 
