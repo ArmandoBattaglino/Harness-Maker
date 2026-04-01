@@ -2217,3 +2217,14 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** orchestrator to commit; QA to verify workflow persists across view navigation
 ---
+
+---
+## 2026-03-31 — qa-tester — Swarm Section Full Audit
+**Outcome:** COMPLETED
+**Summary:** Full read-audit of all 15 Swarm section files (frontend + backend). Identified 4 concrete bugs: AgentInspector hidden in idle state (BUG-AUDIT-1), PtyExplosion unreachable from any click (BUG-AUDIT-2), useInbox.js dead code not consumed by any component (BUG-AUDIT-3), AgentInspector missing "Open Terminal" button (BUG-AUDIT-4).
+**Files changed:** docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (audit only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** frontend-dev should fix BUG-AUDIT-1 (showSidePanels guard) and BUG-AUDIT-2 (add click-to-open PtyExplosion in AgentNode)
+---

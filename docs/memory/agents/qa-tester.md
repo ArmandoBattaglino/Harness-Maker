@@ -815,3 +815,52 @@ v3.0.0 declared released. 187/187 tests pass. 473 modules build clean. 115/115 t
 - BUG-SWARM-3: frontend-dev. Move workflowDef to Zustand SwarmStore or React context so it survives view switches.
 - BUG-SWARM-4: frontend-dev (LOW). Add guard in startExecution: `if (!workflowId) throw new Error('No workflow selected')`.
 ---
+
+---
+## 2026-03-31 — Swarm Section Full Audit (no test run)
+**Status:** COMPLETED
+**Called by:** user (direct)
+
+### Context when I started
+User reports "manca tutto il procedimento per farli funzionare" and clicking an agent node does nothing visible. Task was a full read-audit of all Swarm frontend and backend files without running tests — pure code analysis to map implemented vs missing features.
+
+### What I did
+1. Read in parallel: SwarmView.jsx, SwarmCanvas.jsx, AgentNode.jsx, AgentInspector.jsx, InterAgentFeed.jsx, BroadcastBar.jsx, PromptToFlowBar.jsx, BreadcrumbBar.jsx, HitlInbox.jsx, useSwarm.js, useInbox.js, SwarmContext.jsx, SwarmEngine.js (full), server/routes/swarm.js, server/routes/inbox.js, PtyExplosion.jsx
+2. Traced the node-click data flow from AgentNode → SwarmCanvas.onNodeClick → setSelectedNode → AgentInspector condition
+3. Traced the PtyExplosion trigger path: searched for setPtyExplosionNodeId callers — only SwarmView.jsx (Escape key handler + close) and SwarmContext.jsx (store). AgentNode.jsx does NOT call it.
+4. Checked useInbox.js callers — grep found 0 consumers (only the file itself).
+5. Delivered full audit report to user with priority-ordered list of what is broken/missing.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/agents/qa-tester.md | MODIFIED | Appended this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended task completion entry |
+
+### Improvements delivered
+- Complete gap analysis of Swarm section: 5 broken/missing features identified and prioritized
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-AUDIT-1: Click on node does nothing visible | AgentInspector only shown when showSidePanels=true (requires executionStatus === 'running' or 'paused'). In idle state the panel is unmounted entirely. | None — report only | FOUND |
+| BUG-AUDIT-2: No way to open PtyExplosion from UI | setPtyExplosionNodeId is never called from AgentNode.jsx or any click handler. The overlay component is wired and functional but unreachable. | None — report only | FOUND |
+| BUG-AUDIT-3: useInbox.js is dead code | The hook exists with polling + approve/reject logic but is imported by zero components. HitlInbox.jsx uses direct apiPost + store directly, duplicating logic. | None — report only | FOUND |
+| BUG-AUDIT-4: AgentInspector cannot open PTY Explosion | No "Open Terminal" button in AgentInspector to trigger setPtyExplosionNodeId | None — report only | FOUND |
+
+### Decisions I made
+- Audit-only mode: no code changes made per QA protocol
+
+### What I learned
+- showSidePanels guard at SwarmCanvas.jsx:42 is the root cause of the invisible-inspector UX issue
+- PtyExplosion is fully wired in SwarmView (Escape key, conditional render, close callback) but the trigger path from user click does not exist
+- useInbox.js was written as a reusable hook but HitlInbox.jsx was written independently using apiPost directly — the two systems coexist without connecting
+
+### State I'm leaving behind
+- No code changes. Audit findings documented for developer/debugger action.
+
+### Handoff
+- BUG-AUDIT-1: frontend-dev — either show AgentInspector in idle state (remove showSidePanels guard) or add a separate click-to-inspect panel for idle state
+- BUG-AUDIT-2+4: frontend-dev — add onClick to AgentNode that calls setPtyExplosionNodeId(sessionId), and/or add "Open Terminal" button in AgentInspector
+- BUG-AUDIT-3: frontend-dev — decide: wire useInbox into HitlInbox as the source of truth, or delete useInbox.js
+---
