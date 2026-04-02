@@ -195,7 +195,7 @@ class SwarmEngine {
 
     // Emit WS status update
     if (this._wsBroadcast) {
-      this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'running' });
+      this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'running', sessionId });
     }
   }
 
@@ -373,7 +373,7 @@ class SwarmEngine {
     if (sourceState) {
       sourceState.status = 'done';
       if (this._wsBroadcast) {
-        this._wsBroadcast(executionId, { type: 'agent_status', nodeId: sourceNodeId, status: 'done' });
+        this._wsBroadcast(executionId, { type: 'agent_status', nodeId: sourceNodeId, status: 'done', sessionId: sourceState.sessionId });
       }
     }
 
@@ -381,7 +381,7 @@ class SwarmEngine {
     if (targetState) {
       targetState.status = 'running';
       if (this._wsBroadcast) {
-        this._wsBroadcast(executionId, { type: 'agent_status', nodeId: targetId, status: 'running' });
+        this._wsBroadcast(executionId, { type: 'agent_status', nodeId: targetId, status: 'running', sessionId: targetState.sessionId });
       }
     }
   }
@@ -399,7 +399,7 @@ class SwarmEngine {
     if (state) state.status = 'done';
     if (this._wsBroadcast) {
       this._wsBroadcast(executionId, { type: 'execution_status', status: 'agent_done', nodeId });
-      this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'done' });
+      this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'done', sessionId: state?.sessionId });
     }
   }
 
@@ -462,7 +462,7 @@ class SwarmEngine {
       if (state.status === 'running') {
         state.status = 'paused';
         if (this._wsBroadcast) {
-          this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'paused' });
+          this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'paused', sessionId: state.sessionId });
         }
       }
     }
@@ -481,7 +481,7 @@ class SwarmEngine {
       if (state.status === 'paused') {
         state.status = 'running';
         if (this._wsBroadcast) {
-          this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'running' });
+          this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'running', sessionId: state.sessionId });
         }
       }
     }
@@ -513,7 +513,7 @@ class SwarmEngine {
         nodeId,
         item: execution.inboxItems[execution.inboxItems.length - 1],
       });
-      this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'paused' });
+      this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'paused', sessionId: state.sessionId });
     }
   }
 
@@ -533,7 +533,7 @@ class SwarmEngine {
     state.status = 'running';
 
     if (this._wsBroadcast) {
-      this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'running' });
+      this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'running', sessionId: state.sessionId });
     }
   }
 

@@ -31,7 +31,7 @@ export function useSwarm(workflowId) {
 
       switch (msg.type) {
         case 'agent_status':
-          updateAgentState(msg.nodeId, { status: msg.status });
+          updateAgentState(msg.nodeId, { status: msg.status, ...(msg.sessionId ? { sessionId: msg.sessionId } : {}) });
           break;
         case 'handoff_started': {
           updateEdgeCounter(msg.edgeId, msg.counter);

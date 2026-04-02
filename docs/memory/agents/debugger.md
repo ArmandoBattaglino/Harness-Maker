@@ -124,3 +124,51 @@ server/index.js is fully fixed. All 187 tests pass. The startup sequence now cor
 ### Handoff
 Task #81 (build verify + tag) and #82 (docs) can proceed — no further action required on this bug.
 ---
+---
+## 2026-04-02 — Task #124: BUG-SESSION-1 — Add sessionId to agent_status WS event
+**Status:** COMPLETED
+**Called by:** User (direct task assignment — V3.1 Swarm Bug Fix Wave)
+
+### Context when I started
+The "Open Terminal" button in AgentInspector was never visible during live Swarm execution. The button's render condition is `agentState?.sessionId` (AgentInspector.jsx line 43). The Zustand agentState.sessionId was always undefined because: (1) SwarmEngine never included sessionId in any agent_status broadcast, and (2) the useSwarm.js onmessage handler for agent_status only spread `{ status }` into agentState, discarding any sessionId that might have arrived.
+
+### What I did
+1. Read all 5 files in parallel: debugger.md, DECISIONS.md, SwarmEngine.js, useSwarm.js, AgentInspector.jsx.
+2. Traced all 8 `_wsBroadcast` call sites for `agent_status` in SwarmEngine.js — confirmed none included sessionId.
+3. Confirmed sessionId is available in scope at every call site: as the local `sessionId` variable in `_spawnAgentPty`, and as `state.sessionId` for all other methods.
+4. Applied fixes to all 8 broadcast sites in SwarmEngine.js.
+5. Applied client-side fix in useSwarm.js `case 'agent_status'` to forward sessionId from msg to updateAgentState.
+6. Ran `npm test` — 187/187 pass, 0 regressions.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SwarmEngine.js | MODIFIED | Added `sessionId` field to all 8 `_wsBroadcast` calls for `agent_status`. Call sites: _spawnAgentPty (line 198), pauseExecution (line 465), resumeExecution (line 484), _onHandoff step 9 (line 376), _onHandoff step 10 (line 383), _onDone (line 403), freezeAgent (line 516), unfreezeAgent (line 536). |
+| client/src/hooks/useSwarm.js | MODIFIED | Updated `case 'agent_status'` handler (line 34) to spread sessionId into the updateAgentState call: `{ status: msg.status, ...(msg.sessionId ? { sessionId: msg.sessionId } : {}) }` |
+
+### Improvements delivered
+- The WS `agent_status` event now always carries `sessionId` when one exists
+- `agentStates[nodeId].sessionId` in the Zustand store is now populated after spawn
+- "Open Terminal" button in AgentInspector now renders for running agents
+- pause/resume/handoff/done/freeze/unfreeze transitions all correctly propagate sessionId
+- 0 test regressions — 187/187 pass
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-SESSION-1: sessionId never in agent_status WS event | SwarmEngine._wsBroadcast calls for agent_status omitted sessionId at all 8 emission sites; useSwarm.js also discarded it | Added sessionId to all 8 broadcasts; updated useSwarm.js handler to include sessionId | FIXED |
+
+### Decisions I made
+- Used `...(msg.sessionId ? { sessionId: msg.sessionId } : {})` spread pattern in useSwarm.js — avoids setting sessionId to undefined in the Zustand store for old events or events from agents whose PTY was killed (safe because AgentInspector already guards with `?.sessionId` truthiness).
+- For _onDone, used `state?.sessionId` with optional chaining — state is always set at that point but the guard is consistent with the rest of the codebase's defensive style.
+
+### What I learned
+- SwarmEngine has exactly 8 agent_status broadcast sites across 7 methods. When adding new fields to this WS event, all 8 must be updated — they are not centralized.
+- The useSwarm.js handler pattern `updateAgentState(nodeId, { status })` is a "partial patch" model — it only overwrites the named keys. This means if the server omits sessionId, the client silently retains whatever sessionId was previously set (or undefined). Always trace server → wire → client for WS contract bugs.
+
+### State I'm leaving behind
+Both files fixed. 187/187 tests pass. The Open Terminal button now works. TASK #125 (TEST GATE for BUG-SESSION-1) can proceed.
+
+### Handoff
+qa-tester runs TASK #125 (TEST GATE: BUG-SESSION-1) to verify the fix end-to-end before the pipeline continues to TASK #126 (BUG-HANDOFF-1).
+---

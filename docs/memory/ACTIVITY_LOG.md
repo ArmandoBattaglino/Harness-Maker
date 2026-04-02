@@ -1,4 +1,13 @@
 ---
+## 2026-04-02 — debugger — Task #124: BUG-SESSION-1 — Add sessionId to agent_status WS event
+**Outcome:** COMPLETED
+**Summary:** Fixed 8 `_wsBroadcast` call sites in SwarmEngine.js that emitted `agent_status` without `sessionId`. Also updated useSwarm.js to forward `sessionId` from the WS message into the Zustand agentState. These two omissions together caused AgentInspector's "Open Terminal" button to never appear during live execution. 187/187 tests pass.
+**Files changed:** server/services/SwarmEngine.js, client/src/hooks/useSwarm.js
+**Bugs fixed:** BUG-SESSION-1 — sessionId missing from all agent_status WS broadcasts
+**Decisions made:** Used optional spread pattern in useSwarm.js to avoid setting sessionId=undefined for events without it
+**Blockers:** none
+**Next:** qa-tester runs TASK #125 (TEST GATE: BUG-SESSION-1) to verify Open Terminal button end-to-end
+---
 ## 2026-04-02 — project-manager — Tasks #124–#132: V3.1 Swarm Bug Fix Wave registered
 **Outcome:** COMPLETED
 **Summary:** Read PRD Section 11 + Section 11.1 and all four affected source files to verify the 4 known bugs. Appended a new AREA V3.1 section to TASK_PLAN.md with 9 tasks: 4 debugger fix tasks (#124, #126, #128, #130) + 4 hard-gate TEST GATE tasks (#125, #127, #129, #131) + 1 AREA CHECKPOINT (#132). Header updated to reflect V3.1 wave open. Bug-to-task mapping: BUG-SESSION-1→#124/#125, BUG-HANDOFF-1→#126/#127, BUG-TRIGGER-1→#128/#129, BUG-INSPECTOR-1→#130/#131.
