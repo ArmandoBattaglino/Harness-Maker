@@ -1,4 +1,13 @@
 ---
+## 2026-04-02 — project-manager — Tasks #124–#132: V3.1 Swarm Bug Fix Wave registered
+**Outcome:** COMPLETED
+**Summary:** Read PRD Section 11 + Section 11.1 and all four affected source files to verify the 4 known bugs. Appended a new AREA V3.1 section to TASK_PLAN.md with 9 tasks: 4 debugger fix tasks (#124, #126, #128, #130) + 4 hard-gate TEST GATE tasks (#125, #127, #129, #131) + 1 AREA CHECKPOINT (#132). Header updated to reflect V3.1 wave open. Bug-to-task mapping: BUG-SESSION-1→#124/#125, BUG-HANDOFF-1→#126/#127, BUG-TRIGGER-1→#128/#129, BUG-INSPECTOR-1→#130/#131.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none (task registration only)
+**Decisions made:** Numbered new tasks #124–#132 in continuation of historical sequence; TEST GATE tasks use HARD gate type enforcing sequential unblocking; AREA CHECKPOINT #132 depends on all four TEST GATE tasks
+**Blockers:** none
+**Next:** debugger runs TASK #124 (BUG-SESSION-1 fix — highest priority, blocks "Open Terminal" button)
+---
 ## 2026-04-02 — documenter — PRD Section 11 documentation registered in DOC_STATUS.md
 **Outcome:** COMPLETED
 **Summary:** prd-writer added Section 11 (Component Specifications) and Section 11.1 (WS Event Field Reference) to docs/PRD.md, documenting 12 Swarm components and formally recording 4 known bugs (BUG-PRD-1 through BUG-PRD-4). DOC_STATUS.md updated: PRD.md row added to health table (UP_TO_DATE), new Known Bugs section created for the 4 spec'd-but-unfixed bugs, Documentation Debt extended with a fix-task placeholder.

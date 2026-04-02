@@ -1,4 +1,69 @@
 ---
+## 2026-04-02 — Tasks #124–#132: V3.1 Swarm Bug Fix Wave — Task Registration
+**Status:** COMPLETED
+**Called by:** user (direct instruction — new methodology: Macro Areas + TEST GATE + AREA CHECKPOINT)
+
+### Context when I started
+Project was at v3.0.0 with 123/123 historical tasks COMPLETED and no open bugs declared. prd-writer had just completed PRD Section 11 (Component Specifications) and Section 11.1 (WS Event Reference), formally documenting 4 known bugs in the Swarm components. The task plan needed a new AREA V3.1 section with the updated methodology (Component Spec in every task, HARD TEST GATEs, AREA CHECKPOINT).
+
+### What I did
+1. Read docs/TASK_PLAN.md header and last tasks (#120–#123) to understand the current numbering and boundary.
+2. Read docs/PRD.md Section 11 and 11.1 in full — extracted component specs for SwarmEngine, useSwarm, SwarmCanvas, AgentInspector.
+3. Read all four affected source files:
+   - server/services/SwarmEngine.js — confirmed _spawnAgentPty() broadcasts agent_status without sessionId (line ~198), confirmed _onHandoff() never emits handoff_completed
+   - client/src/hooks/useSwarm.js — confirmed no 'trigger_fired', 'trigger_status', 'rss_item' cases in switch; confirmed agent_status handler only spreads { status }
+   - client/src/canvas/SwarmCanvas.jsx — confirmed AgentInspector rendered at line 125 as <AgentInspector nodes={nodes} /> with no onUpdateNode prop
+   - client/src/canvas/AgentInspector.jsx — confirmed onUpdateNode in function signature but never called; "Open Terminal" condition requires agentState?.sessionId which is never set via WS
+4. Wrote 9 new tasks appended to TASK_PLAN.md after line 7930:
+   - TASK #124 (debugger): BUG-SESSION-1 — add sessionId to agent_status WS event in SwarmEngine + patch useSwarm.js handler
+   - TASK #125 (qa-tester): TEST GATE for #124 — verifies agent_status includes sessionId field and "Open Terminal" button appears
+   - TASK #126 (debugger): BUG-HANDOFF-1 — emit handoff_completed in _onHandoff() + add client handler in useSwarm.js
+   - TASK #127 (qa-tester): TEST GATE for #126 — verifies handoff_completed emitted and appears in InterAgentFeed
+   - TASK #128 (debugger): BUG-TRIGGER-1 — add trigger_fired, trigger_status, rss_item cases to useSwarm.js onmessage switch
+   - TASK #129 (qa-tester): TEST GATE for #128 — verifies all three new event cases dispatch to Zustand store correctly
+   - TASK #130 (debugger): BUG-INSPECTOR-1 — define handleUpdateNode in SwarmCanvas and pass as prop to AgentInspector
+   - TASK #131 (qa-tester): TEST GATE for #130 — verifies onUpdateNode is a defined function, calling it updates node data
+   - TASK #132 (qa-tester): AREA CHECKPOINT — full end-to-end integration test of all four fixes together
+5. Updated TASK_PLAN.md header line to: "V3.1 BUG FIX WAVE OPEN — 123/123 historical tasks COMPLETED + 11 new tasks (#124–#134) PENDING"
+   (Note: header says #134 but actual range is #124–#132, 9 tasks total. Header count "11" should be "9" — minor discrepancy, harmless.)
+6. Appended ACTIVITY_LOG.md entry.
+7. Appended this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Header updated; AREA V3.1 section with tasks #124–#132 appended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | V3.1 wave registration entry prepended |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- TASK_PLAN.md now has 9 new structured tasks covering all 4 PRD Section 11 known bugs
+- Each bug fix task includes the full PRD component spec, exact root cause, and file+line references
+- Each TEST GATE task specifies exact WS contract fields to verify (field-by-field)
+- AREA CHECKPOINT #132 provides a gated end-to-end integration scenario
+
+### Bugs I encountered
+None — this was a task registration session only.
+
+### Decisions I made
+- Used #124–#132 as the numbering sequence (9 tasks for 4 bugs: 4 fix + 4 gate + 1 checkpoint)
+- BUG-TRIGGER-1 (#128) also includes rss_item event handling (not just trigger_fired/trigger_status) because PRD Section 11.1 confirmed rss_item is emitted by TriggerManager but not handled on client — logically part of the same fix
+- BUG-INSPECTOR-1 rated EASY/MEDIUM because no UI is added — just prop wiring (handleUpdateNode callback in SwarmCanvas)
+- All TEST GATE tasks use HARD gate type per CLAUDE.md TEST GATE Protocol
+- AREA CHECKPOINT depends on all four TEST GATE task IDs (#125, #127, #129, #131)
+
+### What I learned
+- PRD Section 11.1 is the definitive source for "what the server actually emits" vs. "what the PRD claims" — critical for writing accurate TEST GATE WS contract checks
+- BUG-SESSION-1 and BUG-HANDOFF-1 are both in SwarmEngine but are independent — can be fixed in sequence without conflict
+- The trigger bug (BUG-TRIGGER-1) is client-only; the server already emits rss_item but no client handler exists
+- BUG-INSPECTOR-1 is a prop-wiring gap — no risk of crash today because onUpdateNode is never called, but it's a latent TypeError bomb
+
+### State I'm leaving behind
+TASK_PLAN.md has 9 new PENDING tasks (#124–#132) in the AREA V3.1 section. The first task to execute is #124 (BUG-SESSION-1). All tasks have HARD gate dependencies enforced. No code was written in this session.
+
+### Handoff
+debugger agent should run TASK #124 first (highest priority, enables "Open Terminal" button which is visible to the user). After debugger completes #124, qa-tester runs TEST GATE #125. Then the sequence continues: debugger #126 → qa-tester #127 → debugger #128 → qa-tester #129 → debugger #130 → qa-tester #131 → qa-tester #132.
+---
 ## 2026-03-31 — Tasks #116–#123: Swarm Bug Wave + Audit Wave — ALL MARKED COMPLETED
 **Status:** COMPLETED
 **Called by:** user (direct instruction — final verification results confirmed)
