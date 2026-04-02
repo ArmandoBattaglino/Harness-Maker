@@ -1,4 +1,13 @@
 ---
+## 2026-04-02 — project-manager — Task #124 verified COMPLETED + V3.1 area status report
+**Outcome:** COMPLETED
+**Summary:** Confirmed TASK #124 (BUG-SESSION-1) is COMPLETED as self-marked by debugger. TASK #125 (TEST GATE) is the immediate next action — qa-tester must run it. Tasks #126–#132 are all PENDING/BLOCKED on the HARD gate chain. TASK_PLAN.md header updated to reflect accurate in-progress state.
+**Files changed:** docs/TASK_PLAN.md (header), docs/memory/agents/project-manager.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** Header-only update to TASK_PLAN.md — body statuses were already correct
+**Blockers:** none
+**Next:** qa-tester runs TASK #125 (TEST GATE — agent_status sessionId field verification). Expected PASS. On PASS, debugger runs TASK #126 (BUG-HANDOFF-1).
+---
 ## 2026-04-02 — debugger — Task #124: BUG-SESSION-1 — Add sessionId to agent_status WS event
 **Outcome:** COMPLETED
 **Summary:** Fixed 8 `_wsBroadcast` call sites in SwarmEngine.js that emitted `agent_status` without `sessionId`. Also updated useSwarm.js to forward `sessionId` from the WS message into the Zustand agentState. These two omissions together caused AgentInspector's "Open Terminal" button to never appear during live execution. 187/187 tests pass.

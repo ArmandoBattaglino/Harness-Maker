@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-02 — PRD Section 11 Component Specifications added — mapped by code-mapper_
+_Last updated: 2026-04-02 — Task #124: BUG-SESSION-1 agent_status sessionId fix — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -1422,14 +1422,14 @@ _Last updated: 2026-04-02 — PRD Section 11 Component Specifications added — 
 - **Last modified:** 2026-03-27 in Task #46.3 by backend-dev (added _startHeartbeat call)
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine._spawnAgentPty(executionId, nodeId)`
-- **Purpose:** Spawn an agent PTY session for a workflow node. Looks up the execution and node, builds handoffTargets from outgoing edges, calls _buildSystemPrompt (stub), creates a PTY session via SessionManager.createSession, writes the system prompt to the PTY, initializes agent state in agentStates Map, creates a tapFn closure that feeds PTY output to a HandoffParser instance, registers tapFn on ptySession.swarmListeners (DEC-014), and emits WS agent_status event.
+- **Purpose:** Spawn an agent PTY session for a workflow node. Looks up the execution and node, builds handoffTargets from outgoing edges, calls _buildSystemPrompt (stub), creates a PTY session via SessionManager.createSession, writes the system prompt to the PTY, initializes agent state in agentStates Map, creates a tapFn closure that feeds PTY output to a HandoffParser instance, registers tapFn on ptySession.swarmListeners (DEC-014), and emits WS agent_status event including sessionId.
 - **Called by:** SwarmEngine.startExecution, SwarmEngine._ensureAgentPty
 - **Calls:** SessionManager.createSession, SessionManager.writeInput, SessionManager.getSession, HandoffParser (constructor), HandoffParser.feed, SwarmEngine._buildSystemPrompt, SwarmEngine._onHandoff, SwarmEngine._onDone, this._wsBroadcast
 - **Inputs:** executionId (string), nodeId (string)
 - **Output:** Promise\<void\>
-- **Side effects:** creates PTY session; writes to PTY stdin; adds entry to execution.agentStates; registers tapFn on ptySession.swarmListeners Set; emits WS event
+- **Side effects:** creates PTY session; writes to PTY stdin; adds entry to execution.agentStates; registers tapFn on ptySession.swarmListeners Set; emits WS `{ type: 'agent_status', nodeId, status: 'running', sessionId }` — sessionId added in Task #124 (BUG-SESSION-1)
 - **Complexity note:** tapFn is a closure capturing executionId, nodeId, parser instance, and execution reference. It: (1) tracks lastOutputSnippet (last 500 chars), (2) optionally calls _budgetTracker if wired (Task #49), (3) feeds chunks to HandoffParser and dispatches handoff/done events. tapFn is stored in agentStates so stopExecution can remove it from swarmListeners during cleanup.
-- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev
+- **Last modified:** 2026-04-02 in Task #124 by debugger (BUG-SESSION-1: sessionId added to agent_status WS event payload; was missing in all 8 emission sites)
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine._ensureAgentPty(executionId, nodeId)`
 - **Purpose:** Return the sessionId for a node's agent PTY if one is already active (status !== 'done'). If none exists or the existing one is done, spawn a new PTY and return its sessionId.
@@ -1476,8 +1476,8 @@ _Last updated: 2026-04-02 — PRD Section 11 Component Specifications added — 
 - **Calls:** this._wsBroadcast (twice — execution_status + agent_status)
 - **Inputs:** executionId (string), nodeId (string)
 - **Output:** void
-- **Side effects:** mutates execution.agentStates.get(nodeId).status to 'done'; emits WS `{ type: 'execution_status', status: 'agent_done', nodeId }` and `{ type: 'agent_status', nodeId, status: 'done' }`
-- **Last modified:** 2026-03-28 in Task #62.3 by backend-dev (completed — now emits two WS events; was single event stub)
+- **Side effects:** mutates execution.agentStates.get(nodeId).status to 'done'; emits WS `{ type: 'execution_status', status: 'agent_done', nodeId }` and `{ type: 'agent_status', nodeId, status: 'done', sessionId }` — sessionId added in Task #124 (BUG-SESSION-1)
+- **Last modified:** 2026-04-02 in Task #124 by debugger (BUG-SESSION-1: sessionId field added to agent_status WS event)
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine.stopExecution(executionId)`
 - **Purpose:** Stop a running workflow execution. Clears heartbeat timer, removes all swarm tap listeners from their respective PTY sessions (before killing), kills all agent PTY sessions via SessionManager.killSession, marks status 'stopped', deletes the execution record, calls TriggerManager.cleanupExecution (BUG-97 fix), and calls BudgetTracker.clearExecution (BUG-93 fix).

@@ -912,3 +912,45 @@ None. All 187 tests pass cleanly.
 ### Handoff
 None — task fully self-contained.
 ---
+
+---
+## 2026-04-02 — Task #125: TEST GATE — SwarmEngine agent_status sessionId field
+**Status:** COMPLETED
+**Called by:** user (direct)
+
+### Context when I started
+Task #124 (debugger) had just fixed BUG-SESSION-1: all 8 `_wsBroadcast` call sites in SwarmEngine.js now include `sessionId` in `agent_status` events. useSwarm.js was also updated to forward `sessionId` into Zustand state. This TEST GATE verifies those fixes are correct and complete before #126 (BUG-HANDOFF-1) may proceed.
+
+### What I did
+1. Read all 5 relevant files in parallel: SwarmEngine.js, useSwarm.js, SwarmContext.jsx, AgentInspector.jsx (plus qa-tester.md session history)
+2. Audited all `_wsBroadcast` calls emitting `agent_status` in SwarmEngine.js — found 8 sites: lines 198, 376, 383, 402, 465, 484, 516, 536 — all include `sessionId`
+3. Verified useSwarm.js `case 'agent_status'` (line 34): uses conditional spread `...(msg.sessionId ? { sessionId: msg.sessionId } : {})` — correct defensive pattern
+4. Verified SwarmContext.jsx `updateAgentState` (lines 33-35): pure patch merge, sessionId written to state without filtering
+5. Verified AgentInspector.jsx line 43: `{agentState?.sessionId && (<button...>Open Terminal</button>)}` — truthy check correct
+6. Ran `cd server && npm test` — 187/187 pass in 7.99s (9 test files)
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Task #125 Status: PENDING → COMPLETED; header updated to reflect progress |
+| docs/memory/agents/qa-tester.md | MODIFIED | Appended this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended gate result entry |
+
+### Bugs I encountered
+None. All code paths reviewed — BUG-SESSION-1 fix is complete and correct across all layers.
+
+### Decisions I made
+- useSwarm.js line 34 conditional spread `...(msg.sessionId ? ...)` does NOT overwrite a stored sessionId with undefined if a subsequent event omits it. This is intentional defensive behavior, not a bug.
+- Line 402 (_onDone): uses `state?.sessionId` optional chaining — correct because state could theoretically be undefined; optional chaining means sessionId can be undefined in the emitted event. However in practice state is always set before _onDone is called, and client-side the conditional spread protects against undefined. No action required.
+
+### What I learned
+- SwarmEngine has 8 total `agent_status` emission sites: _spawnAgentPty, _onHandoff (x2), _onDone, pauseExecution, resumeExecution, freezeAgent, unfreezeAgent — all now compliant with WS contract
+- The Zustand `updateAgentState` uses spread merge — sessionId persists across status updates as long as at least one event delivers it (the initial 'running' event from _spawnAgentPty always does)
+
+### State I'm leaving behind
+- TEST GATE #125: PASS — gate is unblocked
+- Task #126 (BUG-HANDOFF-1 fix) may now proceed
+
+### Handoff
+Next: debugger runs TASK #126 (BUG-HANDOFF-1 — handoff_completed event missing from SwarmEngine)
+---

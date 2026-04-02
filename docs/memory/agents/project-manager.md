@@ -64,6 +64,57 @@ TASK_PLAN.md has 9 new PENDING tasks (#124–#132) in the AREA V3.1 section. The
 ### Handoff
 debugger agent should run TASK #124 first (highest priority, enables "Open Terminal" button which is visible to the user). After debugger completes #124, qa-tester runs TEST GATE #125. Then the sequence continues: debugger #126 → qa-tester #127 → debugger #128 → qa-tester #129 → debugger #130 → qa-tester #131 → qa-tester #132.
 ---
+## 2026-04-02 — Task #124 COMPLETED + V3.1 Area Status Review
+**Status:** COMPLETED
+**Called by:** user (direct instruction — verify #124 status, report AREA V3.1 state)
+
+### Context when I started
+debugger had just completed TASK #124 (BUG-SESSION-1 — sessionId added to all agent_status WS broadcasts in SwarmEngine.js + useSwarm.js handler patched). The fix was verified as already present in the codebase. 187/187 tests pass. The user asked me to confirm #124 as COMPLETED, report on the AREA V3.1 state, and update memory.
+
+### What I did
+1. Read TASK_PLAN.md tasks #124–#132 via Grep to confirm current Status values.
+2. Read ACTIVITY_LOG.md and project-manager.md to validate most recent session logs.
+3. Confirmed TASK #124 was already marked Status: COMPLETED (by the debugger agent).
+4. Confirmed TASK #125 is Status: PENDING — the TEST GATE is the next action required.
+5. Confirmed tasks #126–#132 are all Status: PENDING (blocked by HARD gate chain).
+6. Updated TASK_PLAN.md header from the stale "11 new tasks PENDING" to the accurate current state: #124 COMPLETED, #125 PENDING, #126–#132 BLOCKED on gate.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Header updated to reflect accurate V3.1 in-progress state |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log appended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Session entry appended |
+
+### Improvements delivered
+- TASK_PLAN.md header now accurately reflects the V3.1 wave state (was stale "PENDING" for all 9 tasks)
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- No task status changes needed in TASK_PLAN.md body — #124 was already COMPLETED by debugger; all others correctly PENDING
+- Header update only (cosmetic accuracy fix)
+
+### What I learned
+- The debugger agent correctly self-marked #124 as COMPLETED per the Memory Protocol; no PM action was needed for the body
+- AREA V3.1 follows a strict linear gate chain: #124 → gate #125 → #126 → gate #127 → #128 → gate #129 → #130 → gate #131 → checkpoint #132
+
+### State I'm leaving behind
+AREA V3.1 state:
+- TASK #124 (BUG-SESSION-1): COMPLETED — sessionId in agent_status fixed
+- TASK #125 (TEST GATE): PENDING — qa-tester must run this next; HARD gate blocks #126
+- TASK #126 (BUG-HANDOFF-1): PENDING, blocked on #125 PASS
+- TASK #127 (TEST GATE): PENDING, blocked on #126
+- TASK #128 (BUG-TRIGGER-1): PENDING, blocked on #127 PASS
+- TASK #129 (TEST GATE): PENDING, blocked on #128
+- TASK #130 (BUG-INSPECTOR-1): PENDING, blocked on #129 PASS
+- TASK #131 (TEST GATE): PENDING, blocked on #130
+- TASK #132 (AREA CHECKPOINT): PENDING, blocked on all four TEST GATE tasks
+
+### Handoff
+qa-tester must run TASK #125 (TEST GATE — SwarmEngine agent_status sessionId field). Expected verdict: PASS (fix was confirmed committed with 187/187 tests passing). On PASS, debugger proceeds to TASK #126 (BUG-HANDOFF-1).
+---
 ## 2026-03-31 — Tasks #116–#123: Swarm Bug Wave + Audit Wave — ALL MARKED COMPLETED
 **Status:** COMPLETED
 **Called by:** user (direct instruction — final verification results confirmed)
