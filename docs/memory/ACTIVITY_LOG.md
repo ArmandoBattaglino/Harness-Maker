@@ -1,4 +1,13 @@
 ---
+## 2026-04-02 — project-manager — Task #126 verified COMPLETED + Task #127 set IN_PROGRESS
+**Outcome:** COMPLETED
+**Summary:** Confirmed TASK #126 (BUG-HANDOFF-1) is COMPLETED as self-marked by debugger — handoff_completed WS event added to SwarmEngine._onHandoff() and case handler added to useSwarm.js. Updated TASK #127 (TEST GATE) from PENDING to IN_PROGRESS; qa-tester is now running the gate. TASK_PLAN.md header updated to reflect current wave state. Tasks #128–#132 remain BLOCKED on the HARD gate chain.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/agents/project-manager.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (status update only)
+**Decisions made:** TASK #126 body already correctly self-marked COMPLETED by debugger — only header and #127 Status required editing
+**Blockers:** none
+**Next:** qa-tester completes TASK #127 TEST GATE. On PASS → debugger runs TASK #128 (BUG-TRIGGER-1). On FAIL → debugger returns to #126.
+---
 ## 2026-04-02 — code-mapper — Task #124: BUG-SESSION-1 — agent_status sessionId Fix
 **Outcome:** COMPLETED
 **Summary:** Documented the BUG-SESSION-1 fix across CODE_MAP.md and CHANGELOG.md. All 8 agent_status WS emission sites in SwarmEngine now include sessionId; the full chain SwarmEngine → WS → useSwarm → updateAgentState → AgentInspector "Open Terminal" is now mapped. PRD Section 11 known bug #1 formally resolved.

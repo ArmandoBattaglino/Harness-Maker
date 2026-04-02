@@ -954,3 +954,46 @@ None. All code paths reviewed — BUG-SESSION-1 fix is complete and correct acro
 ### Handoff
 Next: debugger runs TASK #126 (BUG-HANDOFF-1 — handoff_completed event missing from SwarmEngine)
 ---
+
+---
+## 2026-04-02 — Task #127: TEST GATE — handoff_completed event (BUG-HANDOFF-1)
+**Status:** COMPLETED
+**Called by:** user (direct)
+
+### Context when I started
+Task #126 (debugger) had just fixed BUG-HANDOFF-1: added `handoff_completed` WS broadcast as step 11 in SwarmEngine._onHandoff() and added `case 'handoff_completed'` in useSwarm.js. This TEST GATE verifies correctness across all layers before #128 (BUG-TRIGGER-1) may proceed.
+
+### What I did
+1. Read docs/memory/ context files in parallel (PROJECT.md, ACTIVITY_LOG.md, qa-tester.md)
+2. Read all 4 primary source files in parallel:
+   - server/services/SwarmEngine.js (offset 290–395): verified _onHandoff() full sequence including step 11
+   - client/src/hooks/useSwarm.js: verified case 'handoff_completed' handler at lines 44-46
+   - client/src/canvas/InterAgentFeed.jsx: verified feed rendering from interAgentFeed store
+   - client/src/store/SwarmContext.jsx: verified addFeedEvent action and interAgentFeed state
+3. Ran `cd server && npm test` — 187/187 pass, 0 regressions
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Task #127 Status: IN_PROGRESS → COMPLETED; header updated 127/132 |
+| docs/memory/agents/qa-tester.md | MODIFIED | Appended this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended gate result entry |
+
+### Bugs I encountered
+None blocking. One cosmetic note: InterAgentFeed.jsx EVENT_ICONS map does not include a 'handoff_completed' key (only 'handoff_started', 'agent_status', 'circuit_breaker', 'execution_status'). The event renders with icon '?' and text "handoff_completed" — visible and functional, but no dedicated icon. This is LOW severity cosmetic only, not a functional failure.
+
+### Decisions I made
+- EVENT_ICONS gap is LOW severity cosmetic — does not block the gate. The event appears in the feed; the icon is just generic '?'. Not reporting as a bug since the spec (FR-V3-43) does not prescribe an icon character.
+
+### What I learned
+- _onHandoff() sequence (confirmed): step 6 = handoff_started → step 9 = agent_status source:done → step 10 = agent_status target:running → step 11 = handoff_completed. All 4 events present in correct order.
+- SwarmContext.jsx addFeedEvent (line 53-55): appends to interAgentFeed, caps at 100. Correct.
+- InterAgentFeed.jsx reads `s.interAgentFeed` directly from Zustand store — no derived selector that could filter handoff_completed events.
+- useSwarm.js line 44-46: `case 'handoff_completed': addFeedEvent({ ...msg, timestamp: Date.now() })` — spreads all WS fields + adds timestamp. Correct per spec.
+
+### State I'm leaving behind
+All checks PASS. 187/187 tests green. handoff_completed event is fully wired: server emits → WS delivers → useSwarm routes to store → InterAgentFeed renders it. TASK #128 (BUG-TRIGGER-1) is now unblocked.
+
+### Handoff
+Debugger runs TASK #128: BUG-TRIGGER-1 fix.
+---

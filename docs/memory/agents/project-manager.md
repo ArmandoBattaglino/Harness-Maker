@@ -64,6 +64,58 @@ TASK_PLAN.md has 9 new PENDING tasks (#124–#132) in the AREA V3.1 section. The
 ### Handoff
 debugger agent should run TASK #124 first (highest priority, enables "Open Terminal" button which is visible to the user). After debugger completes #124, qa-tester runs TEST GATE #125. Then the sequence continues: debugger #126 → qa-tester #127 → debugger #128 → qa-tester #129 → debugger #130 → qa-tester #131 → qa-tester #132.
 ---
+## 2026-04-02 — Task #126 COMPLETED + Task #127 set IN_PROGRESS (BUG-HANDOFF-1 handoff)
+**Status:** COMPLETED
+**Called by:** user (direct instruction — verify #126 COMPLETED, mark #127 IN_PROGRESS, report AREA V3.1 state)
+
+### Context when I started
+debugger had just completed TASK #126 (BUG-HANDOFF-1): added `handoff_completed` broadcast in SwarmEngine._onHandoff() at lines 388–395, and added `case 'handoff_completed'` in useSwarm.js at lines 44–46. Both changes confirmed committed. 187/187 tests pass, 0 regressions. TASK #126 was already self-marked COMPLETED by the debugger agent.
+
+### What I did
+1. Read TASK_PLAN.md header and tasks #124–#132 via Grep + targeted Read to confirm current Status values.
+2. Read ACTIVITY_LOG.md (last 40 lines) and project-manager.md (last 60 lines) for context.
+3. Confirmed TASK #126 already shows Status: COMPLETED — no change needed to body.
+4. Updated TASK_PLAN.md header: added note "(BUG-HANDOFF-1: handoff_completed added)" for #126, changed #127 from "NEXT" to "IN_PROGRESS".
+5. Updated TASK #127 Status from PENDING to IN_PROGRESS (qa-tester now running the TEST GATE).
+6. Appended this session log and ACTIVITY_LOG.md entry.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Header updated; TASK #127 Status: PENDING → IN_PROGRESS |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log appended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Entry for this session appended |
+
+### Improvements delivered
+- TASK_PLAN.md accurately reflects that #126 is done and #127 is actively running
+- AREA V3.1 gate chain is advancing correctly: #124 DONE → #125 PASS → #126 DONE → #127 IN_PROGRESS
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- TASK #126 body already had Status: COMPLETED (debugger self-marked) — no re-edit needed
+- Only the header line and TASK #127 Status field needed updating
+
+### What I learned
+- Debugger agents consistently self-mark tasks COMPLETED per memory protocol — PM only needs to update header + next task status
+- HARD gate chain is enforced correctly: #128 remains BLOCKED until #127 returns PASS
+
+### State I'm leaving behind
+AREA V3.1 state:
+- #124 (BUG-SESSION-1): COMPLETED
+- #125 (TEST GATE for #124): COMPLETED — PASS
+- #126 (BUG-HANDOFF-1): COMPLETED
+- #127 (TEST GATE for #126): IN_PROGRESS — qa-tester running
+- #128 (BUG-TRIGGER-1): PENDING — BLOCKED on #127 PASS
+- #129 (TEST GATE for #128): PENDING — BLOCKED on #128
+- #130 (BUG-INSPECTOR-1): PENDING — BLOCKED on #129 PASS
+- #131 (TEST GATE for #130): PENDING — BLOCKED on #130
+- #132 (AREA CHECKPOINT): PENDING — BLOCKED on #125, #127, #129, #131
+
+### Handoff
+qa-tester completes TASK #127. On PASS: debugger runs TASK #128 (BUG-TRIGGER-1 — add trigger_fired, trigger_status, rss_item cases to useSwarm.js). On FAIL: debugger returns to #126 with bug report.
+---
 ## 2026-04-02 — Task #124 COMPLETED + V3.1 Area Status Review
 **Status:** COMPLETED
 **Called by:** user (direct instruction — verify #124 status, report AREA V3.1 state)

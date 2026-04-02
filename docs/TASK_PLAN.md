@@ -2,7 +2,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED — 2026-03-31 — V3.1 BUG FIX WAVE IN PROGRESS — 126/132 tasks: #124 COMPLETED — #125 COMPLETED (TEST GATE PASS) — #126 COMPLETED — #127 NEXT (TEST GATE for #126) — #128–#132 BLOCKED on gates
+**Status:** v3.0.0 RELEASED — 2026-03-31 — V3.1 BUG FIX WAVE IN PROGRESS — 127/132 tasks: #124 COMPLETED — #125 COMPLETED (TEST GATE PASS) — #126 COMPLETED (BUG-HANDOFF-1: handoff_completed added) — #127 COMPLETED (TEST GATE PASS) — #128–#132 BLOCKED on gates
 
 ---
 
@@ -8058,8 +8058,9 @@ Type: TEST_GATE
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Gate: HARD — TASK #128 CANNOT start until this gate returns PASS
+Gate result: PASS — 2026-04-02
 Context:
   Component being tested: SwarmEngine._onHandoff() + useSwarm.js 'handoff_completed' handler + InterAgentFeed display
   Component spec (from PRD Section 11.1):
