@@ -2,7 +2,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED — 2026-03-31 — V3.1 BUG FIX WAVE IN PROGRESS — 128/132 tasks: #124 COMPLETED — #125 COMPLETED (TEST GATE PASS) — #126 COMPLETED (BUG-HANDOFF-1: handoff_completed added) — #127 COMPLETED (TEST GATE PASS) — #128 COMPLETED (BUG-TRIGGER-1: trigger_fired/trigger_status/rss_item handlers added) — #129–#132 BLOCKED on gates
+**Status:** v3.0.0 RELEASED — 2026-03-31 — V3.1 BUG FIX WAVE IN PROGRESS — 128/132 tasks: #124 COMPLETED — #125 COMPLETED (TEST GATE PASS) — #126 COMPLETED (BUG-HANDOFF-1: handoff_completed added) — #127 COMPLETED (TEST GATE PASS) — #128 COMPLETED (BUG-TRIGGER-1: trigger_fired/trigger_status/rss_item handlers added) — #129 IN_PROGRESS (TEST GATE running) — #130–#132 BLOCKED on gates
 
 ---
 
@@ -8136,7 +8136,7 @@ Type: TEST_GATE
 Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Gate: HARD — TASK #130 CANNOT start until this gate returns PASS
 Context:
   Component being tested: useSwarm.js onmessage switch — cases 'trigger_fired', 'trigger_status', 'rss_item'

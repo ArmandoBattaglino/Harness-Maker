@@ -1,4 +1,44 @@
 ---
+## 2026-04-02 — Task #128 status update + Task #129 set IN_PROGRESS
+**Status:** COMPLETED
+**Called by:** user (post-task status update after debugger completed BUG-TRIGGER-1)
+
+### Context when I started
+TASK #128 (BUG-TRIGGER-1) had just been completed by the debugger. The header already reflected #128 as COMPLETED (self-marked). TASK #129 (TEST GATE for #128) was still PENDING and needed to be advanced to IN_PROGRESS to reflect qa-tester actively running it.
+
+### What I did
+1. Read TASK_PLAN.md to verify TASK #128 status (already COMPLETED at line 8096 — correctly self-marked by debugger).
+2. Updated TASK_PLAN.md header line 5: changed "#129–#132 BLOCKED on gates" to "#129 IN_PROGRESS (TEST GATE running) — #130–#132 BLOCKED on gates".
+3. Updated TASK #129 body Status field: PENDING → IN_PROGRESS.
+4. Appended ACTIVITY_LOG.md and this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Header updated (#129 IN_PROGRESS); TASK #129 Status: PENDING → IN_PROGRESS |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Status update entry appended |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log prepended |
+
+### Improvements delivered
+- Task chain is accurately reflected: 5 tasks COMPLETED (#124–#128), #129 IN_PROGRESS, #130–#132 BLOCKED
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- TASK #128 was already correctly self-marked COMPLETED by the debugger — no re-marking needed, only the header required updating.
+- Note confirmed by debugger ACTIVITY_LOG entry: only rss_item has actual server-side emission; trigger_fired and trigger_status handlers are defensive/forward-looking per PRD spec.
+
+### State I'm leaving behind
+- TASK_PLAN.md: #124–#128 COMPLETED, #129 IN_PROGRESS, #130–#132 BLOCKED
+- qa-tester is running TASK #129 TEST GATE (verifies trigger_fired, trigger_status, rss_item handlers in useSwarm.js)
+- On PASS: debugger picks up TASK #130 (BUG-INSPECTOR-1 — SwarmCanvas onUpdateNode prop)
+- On FAIL: debugger returns to #128
+
+### Handoff
+qa-tester running TASK #129. PM action required after TASK #129 verdict: mark #129 COMPLETED/FAILED, advance #130 to IN_PROGRESS or return to #128.
+
+---
 ## 2026-04-02 — Tasks #124–#132: V3.1 Swarm Bug Fix Wave — Task Registration
 **Status:** COMPLETED
 **Called by:** user (direct instruction — new methodology: Macro Areas + TEST GATE + AREA CHECKPOINT)

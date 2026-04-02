@@ -1,4 +1,13 @@
 ---
+## 2026-04-02 — project-manager — Task #128 verified COMPLETED + Task #129 set IN_PROGRESS
+**Outcome:** COMPLETED
+**Summary:** Confirmed TASK #128 (BUG-TRIGGER-1) is COMPLETED — debugger added trigger_fired, trigger_status, and rss_item cases to useSwarm.js onmessage switch; updateTriggerState and addFeedEvent wired per PRD spec. Updated TASK #129 (TEST GATE) from PENDING to IN_PROGRESS; qa-tester is now running the gate. Note: only rss_item has actual server-side emission today; trigger_fired/trigger_status handlers are forward-looking.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/agents/project-manager.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (status update only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** qa-tester completes TASK #129 TEST GATE. On PASS → debugger runs TASK #130 (BUG-INSPECTOR-1). On FAIL → debugger returns to #128.
+---
 ## 2026-04-02 — debugger — Task #128: BUG-TRIGGER-1 — trigger_fired / trigger_status / rss_item handlers in useSwarm.js
 **Outcome:** COMPLETED
 **Summary:** Added three missing WS event cases (trigger_fired, trigger_status, rss_item) to useSwarm.js onmessage switch. Also destructured updateTriggerState from the Zustand store (was missing from the hook). The rss_item case additionally calls addFeedEvent per PRD spec. TriggerNode.jsx can now display live trigger status changes.
