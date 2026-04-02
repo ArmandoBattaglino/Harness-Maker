@@ -1844,7 +1844,7 @@ _Last updated: 2026-04-02 — Task #124: BUG-SESSION-1 agent_status sessionId fi
 
 ### `client/src/store/SwarmContext.jsx` :: `addFeedEvent(event)`
 - **Purpose:** Append a handoff event to the inter-agent feed. Automatically trims to the last 100 events to prevent unbounded memory growth.
-- **Called by:** useSwarm.js::connectWs onmessage (cases 'handoff_started' and 'circuit_breaker' — Task #63)
+- **Called by:** useSwarm.js::connectWs onmessage (cases 'handoff_started' and 'circuit_breaker' — Task #63; case 'handoff_completed' added Task #126)
 - **Calls:** Zustand set, Array.slice(-100)
 - **Inputs:** event (object — handoff event: { fromNode, toNode, timestamp, payload })
 - **Output:** void

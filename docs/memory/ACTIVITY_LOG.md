@@ -2409,3 +2409,13 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** debugger runs TASK #126 (BUG-HANDOFF-1 — handoff_completed event missing from SwarmEngine)
 ---
+---
+## 2026-04-02 — qa-tester — Task #127: TEST GATE — handoff_completed event
+**Outcome:** COMPLETED
+**Summary:** Verified the BUG-HANDOFF-1 fix across all 4 layers: SwarmEngine._onHandoff() emits handoff_completed at step 11 with correct fields {type, sourceNodeId, targetNodeId}; useSwarm.js case 'handoff_completed' calls addFeedEvent with timestamp; SwarmContext.jsx addFeedEvent appends to interAgentFeed; InterAgentFeed.jsx renders all feed entries. 187/187 tests pass, 0 regressions. Gate verdict: PASS.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** EVENT_ICONS gap in InterAgentFeed.jsx ('handoff_completed' has no icon entry, renders '?') classified as LOW cosmetic only — does not block the gate
+**Blockers:** none
+**Next:** debugger runs TASK #128 (BUG-TRIGGER-1)
+---
