@@ -1,4 +1,13 @@
 ---
+## 2026-04-02 — documenter — Task #132: AREA CHECKPOINT PASS — V3.1 Swarm Bug Fix Wave closed
+**Outcome:** COMPLETED
+**Summary:** Updated DOC_STATUS.md to reflect all four V3.1 bugs fixed (BUG-SESSION-1, BUG-HANDOFF-1, BUG-TRIGGER-1, BUG-INSPECTOR-1); replaced "Known Bugs" section with "ALL FIXED" summary; added 4 rows to Fixed Bugs table. Updated ARCHITECTURE.md Swarm WS event table: `agent_status` corrected (sessionId field added), `handoff_completed` row added, `trigger_fired`/`trigger_status`/`rss_item` rows added. 132/132 tasks complete, zero open bugs.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/ARCHITECTURE.md, docs/memory/agents/documenter.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (documentation pass — bugs were already fixed by debugger in Tasks #124-#130)
+**Decisions made:** README.md not updated (no API or setup changes in V3.1 wave)
+**Blockers:** none
+**Next:** Project stable. All tasks complete. No pending documentation debt requiring immediate action.
+---
 ## 2026-04-02 — code-mapper — Task #132: AREA CHECKPOINT V3.1 PASS
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md header with 132/132 task count, AREA V3.1 CLOSED 2026-04-02, and Swarm V3 completeness note. Appended V3.1 full wave summary to CHANGELOG.md: 4 bugs fixed, 8 TEST GATE passes, 1 AREA CHECKPOINT PASS, 187/187 tests, build 477 modules. All PRD Section 11 WS contracts satisfied.

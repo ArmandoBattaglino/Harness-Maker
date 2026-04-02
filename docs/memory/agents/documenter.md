@@ -1,4 +1,65 @@
 ---
+## 2026-04-02 — Task #132: AREA CHECKPOINT PASS — V3.1 Swarm Bug Fix Wave closed
+**Status:** COMPLETED
+**Called by:** user (parallel post-task documentation update)
+
+### Context when I started
+AREA CHECKPOINT #132 had just returned PASS. Four bugs (BUG-PRD-1 through BUG-PRD-4, re-IDs as BUG-SESSION-1, BUG-HANDOFF-1, BUG-TRIGGER-1, BUG-INSPECTOR-1) were all fixed across Tasks #124-#130. Three TEST GATE tasks (#125, #127, #129, #131) all returned PASS. 132/132 tasks now COMPLETED. No open bugs. DOC_STATUS.md still showed the bugs as "Known Bugs — not yet fixed" (from the previous prd-writer session). ARCHITECTURE.md's Swarm WS event table was stale: `agent_status` was missing `sessionId`; `handoff_completed`, `trigger_fired`, `trigger_status`, and `rss_item` rows were missing or inaccurate.
+
+### What I did
+1. Read DOC_STATUS.md, documenter agent log (top 80 lines), and ACTIVITY_LOG.md (top 60 lines) in parallel to understand current state.
+2. Read SwarmEngine.js (lines 1-199), useSwarm.js (lines 1-122), SwarmCanvas.jsx (lines 1-139), and TASK_PLAN.md grep for #124-#132 in parallel to understand what code changed.
+3. Confirmed ARCHITECTURE.md Swarm WS event table was stale via Grep for affected field names.
+4. Read ARCHITECTURE.md lines 1770-1789 to see the exact stale rows.
+5. Updated DOC_STATUS.md:
+   - Header: updated to reflect AREA CHECKPOINT #132 PASS, 132/132 tasks, zero open bugs.
+   - Release Status block: tasks completed count updated to 132/132.
+   - Fixed Bugs table: added all 4 V3.1 bugs (BUG-SESSION-1, BUG-HANDOFF-1, BUG-TRIGGER-1, BUG-INSPECTOR-1) with task references.
+   - Replaced "Known Bugs (not yet fixed)" section with "V3.1 Bug Fix Wave — ALL FIXED" section.
+   - docs/PRD.md row: updated notes to reflect bugs are now fixed.
+   - docs/ARCHITECTURE.md row: updated to 2026-04-02 with V3.1 WS event table changes.
+   - Inline comments row: updated to 2026-04-02 with V3.1 changes documented.
+   - Documentation Debt: marked BUG-PRD-1 through BUG-PRD-4 row as RESOLVED.
+6. Updated docs/ARCHITECTURE.md Swarm WS event table:
+   - `agent_status`: corrected payload fields (added `sessionId`, removed stale `handoffCount?`).
+   - Added `handoff_completed` row (FR-V3-43, Task #126).
+   - Updated `rss_item` row to include `executionId` and `nodeId` fields.
+   - Added `trigger_fired` row (Task #128).
+   - Added `trigger_status` row (Task #128).
+7. README.md: no changes needed — no endpoint or setup changes in V3.1 wave.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Header, Release Status, Fixed Bugs table (4 new rows), Known Bugs section replaced with FIXED summary, ARCHITECTURE.md row updated, Inline comments row updated, Debt table row resolved |
+| docs/ARCHITECTURE.md | MODIFIED | Swarm WS event table: `agent_status` payload corrected; `handoff_completed` added; `trigger_fired`, `trigger_status`, `rss_item` rows added/corrected |
+| docs/memory/agents/documenter.md | MODIFIED | This session log prepended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Documenter entry prepended |
+
+### Improvements delivered
+- DOC_STATUS.md now accurately reflects zero open bugs (was showing 4 known unfixed bugs).
+- ARCHITECTURE.md Swarm WS event table is now complete and accurate — developers can trust it as the canonical event reference.
+- Four fixed bugs are permanently archived in the Fixed Bugs table with task references.
+- All documentation artifacts marked UP_TO_DATE.
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Did NOT update README.md — V3.1 wave was all internal WS event corrections, no API endpoints, env vars, or setup steps changed.
+- Updated `rss_item` in ARCHITECTURE.md to include `executionId` and `nodeId` fields (which the code sends) because the old entry only listed `url, title, link, pubDate` which matched the TriggerManager._fireTrigger payload but not the client-facing useSwarm.js handler fields.
+- Kept `handoffCount?` removal from `agent_status` row — it is no longer in the actual WS broadcast from SwarmEngine.js (the broadcast only sends `nodeId, status, sessionId`).
+
+### What I learned
+- After a bug-fix wave, the WS event table in ARCHITECTURE.md is high-risk for staleness because WS events are not part of the REST API surface tracked in API.md. Must check this table after every SwarmEngine.js change.
+- BUG-PRD bug IDs get re-IDed by the debugger with new descriptive names (BUG-SESSION-1 etc.) — document both aliases in DOC_STATUS.md for traceability.
+
+### State I'm leaving behind
+All documentation artifacts UP_TO_DATE as of 2026-04-02. Zero open bugs. 132/132 tasks complete. ARCHITECTURE.md WS event table matches current server/services/SwarmEngine.js and client/src/hooks/useSwarm.js exactly.
+
+### Handoff
+None — task fully self-contained. Project is in stable state. No open documentation debt requiring immediate action.
+---
 ## 2026-04-02 — PRD Section 11 added by prd-writer: DOC_STATUS.md updated
 **Status:** COMPLETED
 **Called by:** user (parallel post-task documentation update)

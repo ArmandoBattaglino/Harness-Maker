@@ -1775,13 +1775,16 @@ All events are JSON objects sent over `ws://127.0.0.1:PORT/ws/swarm?executionId=
 | Event `type` | Payload fields | Description |
 |---|---|---|
 | `execution_status` | `executionId`, `status` ('running'\|'stopped'\|'done'), `agentStates` | Full execution state snapshot. Sent on connect and on status change. |
-| `agent_status` | `executionId`, `nodeId`, `status`, `handoffCount?` | Single agent's status changed (idle / running / paused / done / error). |
+| `agent_status` | `executionId`, `nodeId`, `status`, `sessionId` | Single agent's status changed (idle / running / paused / done / error). `sessionId` is required for AgentInspector "Open Terminal" activation. Fixed Task #124 (BUG-SESSION-1). |
 | `handoff_started` | `executionId`, `sourceNodeId`, `targetNodeId`, `edgeId`, `counter` | A HANDOFF token was parsed; target agent PTY is being spawned or reused. |
+| `handoff_completed` | `executionId`, `sourceNodeId`, `targetNodeId` | Target agent has been spawned/reused and is running. Emitted at end of `_onHandoff()` per FR-V3-43. Added Task #126 (BUG-HANDOFF-1). |
 | `circuit_breaker` | `executionId`, `edgeId`, `counter` | Edge crossing threshold reached (advisory — execution continues). |
 | `budget_update` | `executionId`, `estimatedTokensUsed`, `limitTokens` | Token budget estimate updated for the execution. |
 | `hitl_required` | `executionId`, `nodeId`, `itemId`, `question` | Agent requested human approval; item added to inbox. |
 | `hitl_resolved` | `executionId`, `itemId`, `nodeId`, `decision` ('approved'\|'rejected') | HITL item resolved via approve/reject endpoint. |
-| `rss_item` | `url`, `title`, `link`, `pubDate` | RSS poller found a new item; triggers attached workflow. |
+| `trigger_fired` | `executionId`, `triggerId` (or `nodeId`), `firedAt` | A trigger condition was met. Client updates `triggerStates[triggerId]` (fired, fireCount). Added Task #128 (BUG-TRIGGER-1). |
+| `trigger_status` | `executionId`, `triggerId` (or `nodeId`), `status` | Trigger polling or webhook listener status changed. Added Task #128 (BUG-TRIGGER-1). |
+| `rss_item` | `executionId`, `nodeId`, `guid?`, `url`, `title`, `link`, `pubDate` | RSS poller found a new item. Client updates `triggerStates[nodeId]` and feed. Added Task #128 (BUG-TRIGGER-1). |
 
 #### Client → Server Messages
 
