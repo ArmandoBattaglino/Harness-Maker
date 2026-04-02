@@ -1,4 +1,13 @@
 ---
+## 2026-04-02 — debugger — Task #128: BUG-TRIGGER-1 — trigger_fired / trigger_status / rss_item handlers in useSwarm.js
+**Outcome:** COMPLETED
+**Summary:** Added three missing WS event cases (trigger_fired, trigger_status, rss_item) to useSwarm.js onmessage switch. Also destructured updateTriggerState from the Zustand store (was missing from the hook). The rss_item case additionally calls addFeedEvent per PRD spec. TriggerNode.jsx can now display live trigger status changes.
+**Files changed:** client/src/hooks/useSwarm.js
+**Bugs fixed:** BUG-TRIGGER-1 — trigger WS events fell through to default:break, triggerStates store never updated
+**Decisions made:** Used msg.triggerId ?? msg.nodeId as the store key for trigger_fired/trigger_status (server may use either field); used fireCount increment via getState() snapshot for atomic-safe increment; added fired:true field alongside status:'fired' to match both TriggerNode.jsx (reads status) and PRD spec (reads fired boolean)
+**Blockers:** none
+**Next:** qa-tester runs TASK #129 TEST GATE for BUG-TRIGGER-1
+---
 ## 2026-04-02 — code-mapper — Task #126: BUG-HANDOFF-1 documentation
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md with _onHandoff step 11 emission (handoff_completed), connectWs new case, addFeedEvent updated caller list. Appended CHANGELOG.md entry for Task #126 including full connection chain and impact analysis.

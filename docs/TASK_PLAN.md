@@ -2,7 +2,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED — 2026-03-31 — V3.1 BUG FIX WAVE IN PROGRESS — 127/132 tasks: #124 COMPLETED — #125 COMPLETED (TEST GATE PASS) — #126 COMPLETED (BUG-HANDOFF-1: handoff_completed added) — #127 COMPLETED (TEST GATE PASS) — #128–#132 BLOCKED on gates
+**Status:** v3.0.0 RELEASED — 2026-03-31 — V3.1 BUG FIX WAVE IN PROGRESS — 128/132 tasks: #124 COMPLETED — #125 COMPLETED (TEST GATE PASS) — #126 COMPLETED (BUG-HANDOFF-1: handoff_completed added) — #127 COMPLETED (TEST GATE PASS) — #128 COMPLETED (BUG-TRIGGER-1: trigger_fired/trigger_status/rss_item handlers added) — #129–#132 BLOCKED on gates
 
 ---
 
@@ -8093,7 +8093,7 @@ Agent: debugger
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Component Spec (from PRD Section 11 — useSwarm):
   File: client/src/hooks/useSwarm.js
   Purpose: Manages WebSocket connection to the swarm execution channel, dispatches incoming events to the Zustand store.

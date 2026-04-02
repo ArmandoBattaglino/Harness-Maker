@@ -11,6 +11,7 @@ export function useSwarm(workflowId) {
   const updateBudget = useSwarmStore((s) => s.updateBudget);
   const addInboxItem = useSwarmStore((s) => s.addInboxItem);
   const addFeedEvent = useSwarmStore((s) => s.addFeedEvent);
+  const updateTriggerState = useSwarmStore((s) => s.updateTriggerState);
   const setWsConnected = useSwarmStore((s) => s.setWsConnected);
   // Connect WS for a running execution
   const connectWs = useCallback((executionId) => {
@@ -56,13 +57,39 @@ export function useSwarm(workflowId) {
         case 'hitl_required':
           addInboxItem(msg);
           break;
+        case 'trigger_fired': {
+          const tfId = msg.triggerId ?? msg.nodeId;
+          const prevTf = useSwarmStore.getState().triggerStates[tfId] ?? {};
+          updateTriggerState(tfId, {
+            fired: true,
+            status: 'fired',
+            lastFiredAt: msg.firedAt ?? msg.timestamp ?? Date.now(),
+            fireCount: (prevTf.fireCount ?? 0) + 1,
+          });
+          break;
+        }
+        case 'trigger_status':
+          updateTriggerState(msg.triggerId ?? msg.nodeId, { status: msg.status });
+          break;
+        case 'rss_item': {
+          const prevRss = useSwarmStore.getState().triggerStates[msg.nodeId] ?? {};
+          updateTriggerState(msg.nodeId, {
+            fired: true,
+            status: 'fired',
+            lastFiredAt: Date.now(),
+            fireCount: (prevRss.fireCount ?? 0) + 1,
+            lastItem: msg.guid ?? null,
+          });
+          addFeedEvent({ ...msg, timestamp: Date.now() });
+          break;
+        }
         default:
           break;
       }
     };
 
     wsRef.current = ws;
-  }, [setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, setExecution, updateBudget, addInboxItem]);
+  }, [setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, setExecution, updateBudget, addInboxItem, updateTriggerState]);
 
   // Start execution
   const startExecution = useCallback(async (projectId, projectPath) => {

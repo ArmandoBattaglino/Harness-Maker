@@ -219,3 +219,56 @@ Both files fixed. 187/187 tests pass. TASK #127 (TEST GATE for BUG-HANDOFF-1) is
 ### Handoff
 qa-tester runs TASK #127 (TEST GATE: BUG-HANDOFF-1) to verify handoff_completed WS event end-to-end. On PASS, debugger proceeds to TASK #128 (BUG-TRIGGER-1).
 ---
+---
+## 2026-04-02 — Task #128: BUG-TRIGGER-1 — Handle trigger_fired / trigger_status / rss_item in useSwarm.js
+**Status:** COMPLETED
+**Called by:** User (direct task assignment — V3.1 Swarm Bug Fix Wave)
+
+### Context when I started
+Task #127 (TEST GATE for BUG-HANDOFF-1) had PASSED. Task #128 was the next unblocked task. useSwarm.js had no handlers for trigger_fired, trigger_status, or rss_item WS event types — they all fell into the default:break branch. The Zustand store (SwarmContext.jsx) already had triggerStates {} and updateTriggerState(triggerId, patch) action. TriggerNode.jsx reads triggerStates[id].status, .lastFiredAt, .fireCount to render visual state. updateTriggerState was also not destructured in useSwarm.js at all (missing line).
+
+### What I did
+1. Read TriggerManager.js — confirmed it only emits `rss_item` (fields: type, nodeId, guid). trigger_fired and trigger_status are not yet emitted by the server but need client handlers for future use.
+2. Read useSwarm.js — confirmed updateTriggerState was absent from destructured store actions; no trigger cases in switch.
+3. Read SwarmContext.jsx — confirmed updateTriggerState(triggerId, patch) exists and does a merge patch.
+4. Read TriggerNode.jsx — confirmed it reads status, lastFiredAt, fireCount from triggerStates[id].
+5. Read PRD spec in TASK_PLAN.md (TASK #128 body) — confirmed field conventions for each event.
+6. Added `updateTriggerState` destructure at line 14 of useSwarm.js (before setWsConnected).
+7. Added three new cases after `case 'hitl_required'`: trigger_fired, trigger_status, rss_item.
+8. Added updateTriggerState to connectWs useCallback dependency array.
+9. Ran npm test — 187/187 pass.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/hooks/useSwarm.js | MODIFIED | Added updateTriggerState destructure (line 14); added case 'trigger_fired', case 'trigger_status', case 'rss_item' to onmessage switch (lines 60–83); added updateTriggerState to useCallback deps array |
+
+### Improvements delivered
+- trigger_fired → updateTriggerState(msg.triggerId ?? msg.nodeId, { fired:true, status:'fired', lastFiredAt, fireCount+1 })
+- trigger_status → updateTriggerState(msg.triggerId ?? msg.nodeId, { status: msg.status })
+- rss_item → updateTriggerState(msg.nodeId, { fired:true, status:'fired', lastFiredAt, fireCount+1, lastItem:msg.guid }) + addFeedEvent
+- TriggerNode.jsx now receives live store updates when any trigger fires
+- 187/187 tests pass, 0 regressions
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-TRIGGER-1: trigger WS events silently ignored | useSwarm.js switch had no cases for trigger_fired / trigger_status / rss_item; updateTriggerState not destructured | Added destructure + 3 new switch cases | FIXED |
+
+### Decisions I made
+- Used `msg.triggerId ?? msg.nodeId` as the store key for trigger_fired and trigger_status — the server spec is ambiguous on field name so this handles both conventions.
+- Used `useSwarmStore.getState().triggerStates[id] ?? {}` to read current fireCount before incrementing — avoids stale closure capture in the onmessage handler which runs inside a useCallback.
+- Added both `fired: true` (PRD boolean) and `status: 'fired'` (TriggerNode string enum) to both trigger_fired and rss_item — satisfies both the PRD acceptance criteria and the TriggerNode rendering logic.
+- rss_item calls addFeedEvent per PRD spec section 11.1 — makes the RSS fire visible in the interAgentFeed panel.
+
+### What I learned
+- TriggerManager.js only emits `rss_item` (not trigger_fired or trigger_status). The latter two are planned server events with no current server-side implementation — client-side handlers are added preemptively.
+- The rss_item WS event fields are exactly: `{ type: 'rss_item', nodeId: string, guid: string|null }` — emitted from TriggerManager._fireTrigger() line 311-315.
+- When adding a new store action destructure to useSwarm.js, it must also be added to the useCallback deps array at line 88 to avoid stale closure bugs.
+
+### State I'm leaving behind
+client/src/hooks/useSwarm.js fixed. 187/187 tests pass. TASK #129 (TEST GATE for BUG-TRIGGER-1) is the next action — qa-tester must run it.
+
+### Handoff
+qa-tester runs TASK #129 (TEST GATE: BUG-TRIGGER-1) to verify trigger WS events update the store and TriggerNode renders correctly. On PASS, pipeline continues to TASK #130 (BUG-SWARM-2 or next bug in wave).
+---
