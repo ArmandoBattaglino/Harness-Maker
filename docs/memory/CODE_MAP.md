@@ -2217,8 +2217,8 @@ _Last updated: 2026-04-02 — Task #124: BUG-SESSION-1 agent_status sessionId fi
 - **Calls:** this._executions.get, execution.agentStates iteration, this._wsBroadcast
 - **Inputs:** executionId (string)
 - **Output:** void (no-op if execution not found)
-- **Side effects:** mutates agentStates[nodeId].status → 'paused' for all running agents; emits WS `{ type: 'agent_status', nodeId, status: 'paused' }` per agent
-- **Last modified:** 2026-03-28 in Task #94 by backend-dev (BUG-94 fix — now called from swarm.js pause route after Ctrl-C delivery)
+- **Side effects:** mutates agentStates[nodeId].status → 'paused' for all running agents; emits WS `{ type: 'agent_status', nodeId, status: 'paused', sessionId }` per agent — sessionId added in Task #124 (BUG-SESSION-1)
+- **Last modified:** 2026-04-02 in Task #124 by debugger (BUG-SESSION-1: sessionId added to agent_status WS event)
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine.resumeExecution(executionId)`
 - **Purpose:** Set every paused agent's status back to 'running' and broadcast an agent_status WS event for each. REST route POST /:executionId/resume now calls this (BUG-95 fix).
@@ -2226,8 +2226,8 @@ _Last updated: 2026-04-02 — Task #124: BUG-SESSION-1 agent_status sessionId fi
 - **Calls:** this._executions.get, execution.agentStates iteration, this._wsBroadcast
 - **Inputs:** executionId (string)
 - **Output:** void (no-op if execution not found)
-- **Side effects:** mutates agentStates[nodeId].status → 'running' for all paused agents; emits WS `{ type: 'agent_status', nodeId, status: 'running' }` per agent
-- **Last modified:** 2026-03-28 in Task #95 by backend-dev (BUG-95 fix — now called from swarm.js resume route; was no-op stub)
+- **Side effects:** mutates agentStates[nodeId].status → 'running' for all paused agents; emits WS `{ type: 'agent_status', nodeId, status: 'running', sessionId }` per agent — sessionId added in Task #124 (BUG-SESSION-1)
+- **Last modified:** 2026-04-02 in Task #124 by debugger (BUG-SESSION-1: sessionId added to agent_status WS event)
 
 ---
 

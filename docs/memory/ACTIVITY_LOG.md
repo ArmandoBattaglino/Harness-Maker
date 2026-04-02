@@ -2371,3 +2371,14 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** TEST GATE tasks (#124+) should reference PRD Section 11 for acceptance criteria. 4 open bugs (sessionId gap, handoff_completed missing, trigger_fired/trigger_status not implemented, rss_item unhandled) need task entries.
 ---
+
+---
+## 2026-04-02 — qa-tester — Task #125: TEST GATE — SwarmEngine agent_status sessionId field
+**Outcome:** COMPLETED
+**Summary:** Verified BUG-SESSION-1 fix is complete across all 4 layers (SwarmEngine.js emission sites, useSwarm.js handler, SwarmContext.jsx store, AgentInspector.jsx button condition). All 8 `agent_status` emission sites include `sessionId`. Client handler correctly forwards it into Zustand. "Open Terminal" button properly conditioned on `agentState?.sessionId`. 187/187 tests pass.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (gate verification only)
+**Decisions made:** Conditional spread in useSwarm.js is intentional defensive behavior, not a bug
+**Blockers:** none
+**Next:** debugger runs TASK #126 (BUG-HANDOFF-1 — handoff_completed event missing from SwarmEngine)
+---
