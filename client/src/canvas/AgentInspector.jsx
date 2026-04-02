@@ -1,6 +1,7 @@
 // client/src/canvas/AgentInspector.jsx
 // Side panel for inspecting and editing agent node configuration.
 import { useSwarmStore } from '../store/SwarmContext';
+import { stripAnsi } from '../utils/stripAnsi';
 
 export default function AgentInspector({ nodes, onUpdateNode }) {
   const selectedNodeId = useSwarmStore((s) => s.selectedNodeId);
@@ -75,7 +76,7 @@ export default function AgentInspector({ nodes, onUpdateNode }) {
         <div className="flex flex-col gap-1">
           <div className="text-xs text-gray-400">Last Output</div>
           <div className="bg-gray-800 rounded p-2 text-xs font-mono whitespace-pre-wrap max-h-32 overflow-y-auto text-green-300">
-            {agentState.lastOutputSnippet}
+            {stripAnsi(agentState.lastOutputSnippet)}
           </div>
         </div>
       )}

@@ -350,7 +350,8 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: EASY
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-02 — Created client/src/utils/stripAnsi.js; applied stripAnsi() in AgentNode.jsx (lastOutputSnippet render) and AgentInspector.jsx (Last Output section). Build: 479 modules, 0 errors. PTY Explosion xterm.js sessions not affected.
 Context:
   Source: Deep user test 2026-04-02 — TEST #5 and TEST #7
   User-facing problem:

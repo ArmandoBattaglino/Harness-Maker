@@ -2558,3 +2558,13 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Tasks #144 (ANSI stripping), #145 (handoff chain), #146 (run-disabled feedback) — then TEST GATE #147 and AREA CHECKPOINT #148
 ---
+---
+## 2026-04-02 — frontend-dev — Task #144: BUG-UX-ANSI-1 — Strip ANSI from AgentNode + AgentInspector
+**Outcome:** COMPLETED
+**Summary:** Created client/src/utils/stripAnsi.js (comprehensive ANSI/VT escape sequence regex + line-ending normalization). Applied stripAnsi() in AgentNode.jsx micro-log render and AgentInspector.jsx Last Output render. PTY Explosion xterm.js sessions not affected. Build: 479 modules, 0 errors.
+**Files changed:** client/src/utils/stripAnsi.js (CREATED), client/src/canvas/nodes/AgentNode.jsx, client/src/canvas/AgentInspector.jsx, docs/TASK_PLAN.md
+**Bugs fixed:** BUG-UX-ANSI-1 — raw ANSI escape sequences visible in AgentNode micro-log and AgentInspector Last Output
+**Decisions made:** Strip at render site (not at Zustand store level) to preserve raw diagnostic data in state
+**Blockers:** none
+**Next:** Tasks #145 (BUG-UX-HANDOFF-1) and #146 (BUG-UX-FEEDBACK-1) should be completed, then TEST GATE #147.
+---

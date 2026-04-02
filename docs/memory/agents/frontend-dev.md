@@ -2051,3 +2051,51 @@ Task #143 fully complete. Tasks #144-#148 remain in the V3.4 wave (ANSI strippin
 ### Handoff
 qa-tester should run TEST GATE #147 after tasks #144-#146 are also complete.
 ---
+## 2026-04-02 — Task #144: BUG-UX-ANSI-1 — Strip ANSI escape sequences from AgentNode micro-log and AgentInspector lastOutput
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+Tasks #133-#143 were completed; the V3.4 wave was open with Tasks #144-#148 pending. A deep user test on 2026-04-02 (TEST #5 and TEST #7) found that `lastOutputSnippet` values coming from the server's PTY stream were stored in Zustand as raw terminal bytes including ANSI escape sequences. Both AgentNode.jsx (micro-log) and AgentInspector.jsx (Last Output section) rendered those raw bytes verbatim in `<pre>`/`<div>` elements, producing unreadable garbage like `\x1b[73C --- END PROTOCOL ---\x1b[7m`.
+
+### What I did
+1. Read docs/memory/agents/frontend-dev.md, ACTIVITY_LOG.md (last 30 lines) for project state.
+2. Read client/src/canvas/nodes/AgentNode.jsx and client/src/canvas/AgentInspector.jsx to understand exact render sites.
+3. Confirmed `client/src/utils/` directory did not exist yet.
+4. Created `client/src/utils/stripAnsi.js` — a single named export `stripAnsi(str)` using a comprehensive regex covering CSI sequences, OSC sequences, character-set sequences, other 2-byte ESC sequences, plus `\r\n` → `\n` and bare `\r` → `\n` normalization.
+5. Added `import { stripAnsi } from '../../utils/stripAnsi'` to AgentNode.jsx; wrapped `agentState.lastOutputSnippet` with `stripAnsi()` before `.split('\n').slice(-4).join('\n')`.
+6. Added `import { stripAnsi } from '../utils/stripAnsi'` to AgentInspector.jsx; wrapped `agentState.lastOutputSnippet` with `stripAnsi()` in the Last Output render.
+7. Ran `npm run build --prefix client` — 479 modules (up 2 from 477 baseline — new utils file + re-bundled consumers), 0 errors.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| `client/src/utils/stripAnsi.js` | CREATED | New utility: `stripAnsi(str)` removes ANSI/VT escape sequences from terminal output for plain-text display |
+| `client/src/canvas/nodes/AgentNode.jsx` | MODIFIED | Added stripAnsi import; applied to lastOutputSnippet before rendering micro-log |
+| `client/src/canvas/AgentInspector.jsx` | MODIFIED | Added stripAnsi import; applied to lastOutputSnippet before rendering Last Output section |
+| `docs/TASK_PLAN.md` | MODIFIED | Task #144 Status PENDING → COMPLETED |
+
+### Improvements delivered
+- AgentNode micro-log now renders clean, human-readable text (no `\x1b` garbage)
+- AgentInspector "Last Output" now renders clean text
+- PTY Explosion xterm.js sessions completely unaffected (they consume the raw WS stream, not the Zustand snippet)
+- Zero new npm packages
+
+### Bugs I encountered
+None. First attempt built clean.
+
+### Decisions I made
+- Created `client/src/utils/` as new directory for shared utility functions — correct placement for pure JS helpers that aren't hooks, components, or API wrappers.
+- Applied stripping at the render site (in the component), not at the Zustand store level. Rationale: the store snapshot is a diagnostic record; keeping raw data in state is safer (future consumers that want the raw bytes can get them), and strip-at-render matches the single-responsibility principle.
+- Did NOT strip in BroadcastBar.jsx or PTY Explosion — BroadcastBar uses a different field and PTY Explosion uses xterm.js which handles ANSI natively.
+
+### What I learned
+- The project's `lastOutputSnippet` in agentStates is a raw PTY buffer slice accumulated server-side — it contains ANSI codes because ConPTY always emits them. The fix must happen client-side at the render boundary where xterm.js is NOT used.
+- `client/src/utils/` did not pre-exist — this is the first utility file in that directory.
+
+### State I'm leaving behind
+Task #144 fully complete. Build: 479 modules, 0 errors. Tasks #145-#148 remain in the V3.4 wave (handoff chain UX, run-disabled feedback, TEST GATE #147, AREA CHECKPOINT #148).
+
+### Handoff
+Tasks #145 and #146 should be completed, then qa-tester runs TEST GATE #147 covering all four V3.4 bug fixes.
+---
