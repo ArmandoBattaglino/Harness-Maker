@@ -2,7 +2,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED — 2026-03-31 — V3.1 BUG FIX WAVE IN PROGRESS — 128/132 tasks: #124 COMPLETED — #125 COMPLETED (TEST GATE PASS) — #126 COMPLETED (BUG-HANDOFF-1: handoff_completed added) — #127 COMPLETED (TEST GATE PASS) — #128 COMPLETED (BUG-TRIGGER-1: trigger_fired/trigger_status/rss_item handlers added) — #129 IN_PROGRESS (TEST GATE running) — #130–#132 BLOCKED on gates
+**Status:** v3.0.0 RELEASED — 2026-03-31 — V3.1 BUG FIX WAVE IN PROGRESS — 129/132 tasks: #124 COMPLETED — #125 COMPLETED (TEST GATE PASS) — #126 COMPLETED (BUG-HANDOFF-1: handoff_completed added) — #127 COMPLETED (TEST GATE PASS) — #128 COMPLETED (BUG-TRIGGER-1: trigger_fired/trigger_status/rss_item handlers added) — #129 COMPLETED (TEST GATE PASS) — #130 COMPLETED (BUG-INSPECTOR-1: handleUpdateNode defined + passed to AgentInspector) — #131–#132 BLOCKED on gate
 
 ---
 
@@ -8170,7 +8170,7 @@ Agent: debugger
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Component Spec (from PRD Section 11 — AgentInspector):
   File: client/src/canvas/AgentInspector.jsx
   Purpose: Right-side panel showing detailed information about the selected agent node.

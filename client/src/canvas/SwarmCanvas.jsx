@@ -93,6 +93,15 @@ export default function SwarmCanvas({ workflowDef }) {
     [setSelectedNode]
   );
 
+  const handleUpdateNode = useCallback(
+    (nodeId, patch) => {
+      setNodes((nds) =>
+        nds.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, ...patch } } : n))
+      );
+    },
+    [setNodes]
+  );
+
   return (
     <div className="flex flex-col w-full h-full">
       <BreadcrumbBar nodes={nodes} />
@@ -122,7 +131,7 @@ export default function SwarmCanvas({ workflowDef }) {
           />
         </ReactFlow>
         {showSidePanels && <InterAgentFeed />}
-        <AgentInspector nodes={nodes} />
+        <AgentInspector nodes={nodes} onUpdateNode={handleUpdateNode} />
       </div>
     </div>
   );

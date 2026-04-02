@@ -1,4 +1,13 @@
 ---
+## 2026-04-02 — debugger — Task #130: BUG-INSPECTOR-1 — onUpdateNode prop wired in SwarmCanvas
+**Outcome:** COMPLETED
+**Summary:** AgentInspector.jsx declared `onUpdateNode` in its props signature but SwarmCanvas.jsx never defined nor passed it, leaving the prop permanently undefined. Defined `handleUpdateNode` useCallback in SwarmCanvas using React Flow's `setNodes` and passed it as `onUpdateNode` to AgentInspector. No UI changes — AgentInspector's current body never calls the prop; the fix wires the contract for future use. 187/187 tests pass.
+**Files changed:** client/src/canvas/SwarmCanvas.jsx (lines 96–103 added handleUpdateNode; line 134 updated AgentInspector mount)
+**Bugs fixed:** BUG-INSPECTOR-1 (onUpdateNode always undefined)
+**Decisions made:** Used patch parameter name (partial merge) consistent with SwarmContext conventions
+**Blockers:** none
+**Next:** qa-tester runs TASK #131 (TEST GATE for BUG-INSPECTOR-1)
+---
 ## 2026-04-02 — code-mapper — Task #128: BUG-TRIGGER-1 trigger WS handlers in useSwarm.js
 **Outcome:** COMPLETED
 **Summary:** Mapped 3 new WS message cases (trigger_fired, trigger_status, rss_item) added to useSwarm.js connectWs onmessage switch. updateTriggerState now has live WS-path callers. rss_item chain (TriggerManager._fireTrigger → WS → useSwarm → updateTriggerState + addFeedEvent) is now complete. trigger_fired and trigger_status cases are preemptive (client handlers exist, no server emitter yet).

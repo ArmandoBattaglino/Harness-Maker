@@ -272,3 +272,51 @@ client/src/hooks/useSwarm.js fixed. 187/187 tests pass. TASK #129 (TEST GATE for
 ### Handoff
 qa-tester runs TASK #129 (TEST GATE: BUG-TRIGGER-1) to verify trigger WS events update the store and TriggerNode renders correctly. On PASS, pipeline continues to TASK #130 (BUG-SWARM-2 or next bug in wave).
 ---
+---
+## 2026-04-02 — Task #130: BUG-INSPECTOR-1 — Define and pass onUpdateNode prop from SwarmCanvas to AgentInspector
+**Status:** COMPLETED
+**Called by:** User (direct task assignment — V3.1 Swarm Bug Fix Wave)
+
+### Context when I started
+TASK #129 (TEST GATE for BUG-TRIGGER-1) had PASSED. TASK #130 was the next unblocked task. The bug: AgentInspector.jsx declares `onUpdateNode` in its props signature but SwarmCanvas.jsx never defines a handler for it nor passes it as a prop. The result is `onUpdateNode === undefined` inside AgentInspector. No crash today because AgentInspector's current body never calls `onUpdateNode` — but the prop contract is permanently broken for any future code that tries to use it.
+
+### What I did
+1. Read 4 files in parallel: AgentInspector.jsx, SwarmCanvas.jsx, SwarmContext.jsx, debugger.md.
+2. Confirmed: AgentInspector declares `onUpdateNode` in props signature (line 5) but never calls it anywhere in the component body. No TypeError fires at runtime, but the contract is broken.
+3. Confirmed: SwarmCanvas mounts `<AgentInspector nodes={nodes} />` at line 125 — `onUpdateNode` is absent.
+4. Confirmed: SwarmContext.jsx has no `updateNode` Zustand action. The correct mechanism is React Flow's `setNodes` from `useNodesState`, already available in SwarmCanvas.
+5. `useCallback` was already imported at SwarmCanvas.jsx line 3 — no import change needed.
+6. Defined `handleUpdateNode` using `useCallback` with `setNodes` as the dependency, applying a patch merge to node.data.
+7. Passed `onUpdateNode={handleUpdateNode}` to `<AgentInspector>`.
+8. Ran `npm test` — 187/187 pass, 0 regressions.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/canvas/SwarmCanvas.jsx | MODIFIED | Added `handleUpdateNode` useCallback (lines 96–103); passed as `onUpdateNode={handleUpdateNode}` to `<AgentInspector>` (line 134). |
+
+### Improvements delivered
+- `onUpdateNode` prop contract is now fully wired — AgentInspector receives a valid function reference
+- Any future code in AgentInspector that calls `onUpdateNode(nodeId, patch)` will correctly update the React Flow node's `data` field
+- No TypeError when/if `onUpdateNode` is called
+- 187/187 tests pass, 0 regressions
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-INSPECTOR-1: onUpdateNode always undefined in AgentInspector | SwarmCanvas never defined a handler and never passed the prop | Added handleUpdateNode useCallback in SwarmCanvas; passed as onUpdateNode to AgentInspector | FIXED |
+
+### Decisions I made
+- Used `patch` as the parameter name (vs `data` in the TASK spec) to make clear it's a partial merge, not a full replacement — consistent with the `patch` convention used throughout SwarmContext actions.
+- Did NOT add any UI to AgentInspector — the task spec explicitly says no UI change required since `onUpdateNode` is not currently called in the body.
+
+### What I learned
+- AgentInspector currently has no editable fields and no call to `onUpdateNode`. The prop was declared prophylactically for future inline editing. Wiring it now costs nothing and prevents a crash when that editing is implemented.
+- When a React component declares a callback prop it never calls, the broken contract is silent — no linting error, no runtime crash. Always check both sides of the prop contract (declarer + passer) during code audit.
+
+### State I'm leaving behind
+client/src/canvas/SwarmCanvas.jsx is fixed. 187/187 tests pass. TASK #131 (TEST GATE for BUG-INSPECTOR-1) is the next action — qa-tester must run it.
+
+### Handoff
+qa-tester runs TASK #131 (TEST GATE: BUG-INSPECTOR-1) to verify the fix. On PASS, pipeline continues to TASK #132.
+---
