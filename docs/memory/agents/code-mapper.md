@@ -2026,3 +2026,49 @@ CODE_MAP.md and CHANGELOG.md are fully up to date through the PRD Section 11 tas
 ### Handoff
 Future sessions: 4 known bugs (sessionId missing from agent_status, handoff_completed never emitted, trigger_fired/trigger_status not implemented, rss_item unhandled by client) should be registered as formal task entries in TASK_PLAN.md.
 ---
+---
+## 2026-04-02 — Task #126: BUG-HANDOFF-1 — handoff_completed WS broadcast + client handler
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation, parallel with project-manager and documenter)
+
+### Context when I started
+Task #126 (BUG-HANDOFF-1) had just been completed by debugger/backend-dev. PRD Section 11 known bug #2 ("handoff_completed never emitted") was formally open. CODE_MAP.md and CHANGELOG.md were last updated after Task #124 (BUG-SESSION-1). The source files already contained the fix: SwarmEngine._onHandoff() had step 11 added (lines ~388-395) and useSwarm.js had case 'handoff_completed' added (lines ~44-46).
+
+### What I did
+1. Read CODE_MAP.md offset 1900 (tail) — confirmed current structure and last-modified dates
+2. Read CHANGELOG.md offset 1500, 1640, 1740, 1838, 1936, 2035, 2134, 2170 — found append point (line 2170) and located the correct insertion point (before Task #124 entry to keep newest-first order)
+3. Read agent memory (offset 1200, 1280) — confirmed last session ended at PRD Section 11 task
+4. Grep'd SwarmEngine.js for _onHandoff — confirmed step 11 code at lines 388-395
+5. Grep'd useSwarm.js for handoff_completed and addFeedEvent — confirmed case at lines 44-46
+6. Updated CODE_MAP.md:
+   - `_onHandoff` entry: added "MODIFIED Task #126" to heading; updated Calls (added SessionManager.writeInput, _buildSystemPrompt); updated Side effects to document all 4+1 WS events in sequence; updated Last modified
+   - `addFeedEvent` entry: updated Called by to add case 'handoff_completed' (Task #126)
+   - `connectWs` entry: updated Purpose to document 7 message types (was 6); added Complexity note for Task #126; updated Last modified
+7. Appended CHANGELOG.md entry (inserted before Task #124 entry — correct chronological position since Task #126 is 2026-04-02 and Task #124 is also 2026-04-02 but came before)
+8. Prepended ACTIVITY_LOG.md entry
+9. Appended this agent memory entry
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | _onHandoff entry: heading, Side effects (4+1 WS events documented), Last modified; addFeedEvent Called by updated; connectWs Purpose + Complexity note + Last modified updated |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Task #126 entry (inserted before Task #124 in the file — chronological ordering within 2026-04-02) |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Prepended code-mapper Task #126 summary entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Key connections discovered
+- `SwarmEngine._onHandoff` now emits 5 WS events in sequence: circuit_breaker (conditional), handoff_started, agent_status(source:done), agent_status(target:running), handoff_completed — full chain now documented
+- `useSwarm.connectWs` now handles 7 WS message types (was 6 before Task #126 — handoff_completed is the 7th)
+- `addFeedEvent` is called from 3 cases: handoff_started, circuit_breaker, handoff_completed — InterAgentFeed receives all three
+
+### What I learned
+- CODE_MAP.md is now ~2100+ lines — Grep is essential for locating specific entries; offset reads needed only for context verification
+- CHANGELOG.md is now ~2200+ lines with a complex structure (---/--- separators between major sections) — must read the exact tail before appending
+- PRD Section 11 bug #2 (handoff_completed never emitted) is now formally RESOLVED — the fix was straightforward: 1 step added to server method, 1 case added to client switch
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md fully reflect Task #126. _onHandoff entry documents all 5 WS emission points. connectWs entry documents all 7 handled message types. PRD bug #2 RESOLVED. Known remaining open bugs: trigger_fired/trigger_status not implemented, rss_item unhandled by client (bugs #3 and #4 from PRD Section 11).
+
+### Handoff
+Task #127 (TEST GATE) is IN_PROGRESS — qa-tester is verifying the BUG-HANDOFF-1 fix. On PASS, Task #128 (BUG-TRIGGER-1) begins. On FAIL, debugger returns to #126.
+---

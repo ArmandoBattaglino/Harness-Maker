@@ -1,4 +1,13 @@
 ---
+## 2026-04-02 — code-mapper — Task #126: BUG-HANDOFF-1 documentation
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md with _onHandoff step 11 emission (handoff_completed), connectWs new case, addFeedEvent updated caller list. Appended CHANGELOG.md entry for Task #126 including full connection chain and impact analysis.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** BUG-HANDOFF-1 documentation (PRD known bug #2 now RESOLVED per CHANGELOG)
+**Decisions made:** none (documentation only)
+**Blockers:** none
+**Next:** qa-tester runs Task #127 TEST GATE; on PASS Task #128 continues.
+---
 ## 2026-04-02 — project-manager — Task #126 verified COMPLETED + Task #127 set IN_PROGRESS
 **Outcome:** COMPLETED
 **Summary:** Confirmed TASK #126 (BUG-HANDOFF-1) is COMPLETED as self-marked by debugger — handoff_completed WS event added to SwarmEngine._onHandoff() and case handler added to useSwarm.js. Updated TASK #127 (TEST GATE) from PENDING to IN_PROGRESS; qa-tester is now running the gate. TASK_PLAN.md header updated to reflect current wave state. Tasks #128–#132 remain BLOCKED on the HARD gate chain.

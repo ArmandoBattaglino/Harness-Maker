@@ -2133,6 +2133,36 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 ---
 
 ---
+## 2026-04-02 — Task #126: BUG-HANDOFF-1 — handoff_completed WS broadcast + client handler
+**Agent:** backend-dev (server fix) + frontend-dev (client handler)
+**Triggered by:** PRD Section 11 known bug #2 — `handoff_completed` WS event (FR-V3-43) was never emitted by SwarmEngine and had no client handler. InterAgentFeed could not display handoff completion events.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/SwarmEngine.js | MODIFIED | Added step 11 in `_onHandoff()` (lines ~388-395): unconditional `_wsBroadcast(executionId, { type: 'handoff_completed', sourceNodeId, targetNodeId: targetId })` after both agent_status broadcasts |
+| client/src/hooks/useSwarm.js | MODIFIED | Added `case 'handoff_completed': addFeedEvent({ ...msg, timestamp: Date.now() }); break;` in connectWs onmessage switch (lines ~44-46) |
+
+### Functions Added
+- None
+
+### Functions Modified
+- `SwarmEngine._onHandoff(executionId, sourceNodeId, event)` in `server/services/SwarmEngine.js` — added step 11: `this._wsBroadcast(executionId, { type: 'handoff_completed', sourceNodeId, targetNodeId: targetId })` — 4th WS event emitted by this method, fulfilling FR-V3-43
+- `connectWs(executionId)` in `client/src/hooks/useSwarm.js` — added `case 'handoff_completed'` dispatch: calls `addFeedEvent({ ...msg, timestamp: Date.now() })` — handoff completion events now appear in InterAgentFeed
+
+### Functions Removed
+- None
+
+### Connection Changes
+- `SwarmEngine._onHandoff` → WS `handoff_completed` → `useSwarm case 'handoff_completed'` → `addFeedEvent` → `useSwarmStore.interAgentFeed` → `InterAgentFeed` display
+- This closes the chain: handoff events now have a complete bookend pair (`handoff_started` at step 6, `handoff_completed` at step 11) visible in the feed
+
+### Impact on Other Code
+- `addFeedEvent` now called from 3 WS event cases: `handoff_started`, `circuit_breaker`, `handoff_completed` (was 2 before this task)
+- `InterAgentFeed` components reading `useSwarmStore.interAgentFeed` will now receive `handoff_completed` entries with `{ type: 'handoff_completed', sourceNodeId, targetNodeId, timestamp }` — display logic may need to handle this type (currently all feed entries are rendered generically)
+- PRD Section 11 known bug #2 ("handoff_completed never emitted") is now RESOLVED
+
+---
 ## 2026-04-02 — Task #124: BUG-SESSION-1 — agent_status sessionId Fix
 **Agent:** debugger (fix confirmed pre-existing in codebase)
 **Triggered by:** PRD Section 11 audit formally documenting that `agent_status` WS events were missing the `sessionId` field in all SwarmEngine emission sites — causing AgentInspector "Open Terminal" button to never render (agentState.sessionId always falsy).
