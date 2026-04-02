@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-02 — Task #128: BUG-TRIGGER-1 trigger WS handlers in useSwarm.js — mapped by code-mapper_
+_Last updated: 2026-04-02 — Task #130: BUG-INSPECTOR-1 handleUpdateNode wired in SwarmCanvas — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server

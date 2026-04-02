@@ -2240,3 +2240,33 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 | trigger_status server emission | No SwarmEngine or TriggerManager path broadcasts `trigger_status`. Client handler exists but is unreachable. | OPEN |
 
 ---
+
+## 2026-04-02 — Task #130: BUG-INSPECTOR-1 — handleUpdateNode wired in SwarmCanvas
+**Agent:** frontend-dev
+**Triggered by:** BUG-INSPECTOR-1 — `AgentInspector` declared `onUpdateNode` as a prop in its interface but `SwarmCanvas` never passed it. The prop contract was unsatisfied: any call to `onUpdateNode` inside `AgentInspector` would throw (undefined is not a function).
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/canvas/SwarmCanvas.jsx | MODIFIED | Added `handleUpdateNode` useCallback (lines 96-103); passed as `onUpdateNode={handleUpdateNode}` to `<AgentInspector>` (line 134) |
+
+### Functions Added
+- `handleUpdateNode(nodeId, patch)` in `client/src/canvas/SwarmCanvas.jsx` — useCallback; shallow-merges `patch` into `node.data` for the node matching `nodeId` via `setNodes`; satisfies AgentInspector's `onUpdateNode` prop contract
+
+### Functions Modified
+- `SwarmCanvas({ workflowDef })` in `client/src/canvas/SwarmCanvas.jsx` — added `handleUpdateNode` useCallback definition; `<AgentInspector>` now receives `onUpdateNode={handleUpdateNode}` (was `onUpdateNode` prop absent/undefined)
+
+### Functions Removed
+- None
+
+### Connection Changes
+- `SwarmCanvas.handleUpdateNode` → `setNodes` (React Flow state setter — new call path; shallow-merges patch into node.data)
+- `SwarmCanvas` → `AgentInspector` :: `onUpdateNode` prop — now fulfilled (was previously undefined at the call site)
+- `AgentInspector.onUpdateNode` → `SwarmCanvas.handleUpdateNode` — prop contract now active end-to-end
+
+### Impact on Other Code
+- Any existing or future code in `AgentInspector` that calls `onUpdateNode(nodeId, patch)` will now correctly update the corresponding React Flow node's `data` slice and trigger a canvas re-render
+- No other callers of `handleUpdateNode` exist — the function is internal to SwarmCanvas and exposed only via the `onUpdateNode` prop
+- BUG-INSPECTOR-1 resolved: the undefined-prop crash path is eliminated
+
+---

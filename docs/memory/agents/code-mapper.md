@@ -2120,3 +2120,55 @@ CODE_MAP.md and CHANGELOG.md fully reflect Task #128. updateTriggerState "Called
 ### Handoff
 Task #129 (TEST GATE for BUG-TRIGGER-1) was already completed by qa-tester (PASS verdict — see ACTIVITY_LOG.md). Next task chain follows qa-tester's PASS verdict.
 ---
+
+---
+## 2026-04-02 — Task #130: BUG-INSPECTOR-1 — handleUpdateNode wired in SwarmCanvas
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation, parallel with project-manager and documenter)
+
+### Context when I started
+Task #130 (frontend-dev) added `handleUpdateNode` useCallback in `SwarmCanvas.jsx` (lines 96-103) and passed it as `onUpdateNode={handleUpdateNode}` to `<AgentInspector>` (line 134). Prior to this fix, `AgentInspector` declared `onUpdateNode` in its interface but SwarmCanvas never passed it — the prop was always `undefined`. Code_map.md was last updated after Task #128. The ACTIVITY_LOG.md showed Task #131 (TEST GATE) already COMPLETED by qa-tester with PASS verdict.
+
+### What I did
+1. Read SwarmCanvas.jsx in full (139 lines) — confirmed handleUpdateNode useCallback at lines 96-103, onUpdateNode prop at line 134
+2. Read CODE_MAP.md header (offset 1, limit 5) — confirmed last update timestamp was Task #128
+3. Read CHANGELOG.md tail (offset 2218+, 2243+) to find the append point (line 2243)
+4. Read code-mapper.md tail (offset 2100+) to confirm session context
+5. Grepped CODE_MAP.md for "handleUpdateNode" and "onUpdateNode" — confirmed neither existed; AgentInspector entry noted onUpdateNode as "passed as prop but not yet called; reserved for future edit operations"
+6. Grepped CODE_MAP.md for SwarmCanvas entry to locate exact text for edit operations
+7. Updated CODE_MAP.md:
+   - Header timestamp updated to Task #130
+   - AgentInspector entry: `onUpdateNode` "Inputs" description updated — now describes the live wiring to handleUpdateNode
+   - AgentInspector entry: `Last modified` updated to Task #130
+   - SwarmCanvas entry: `Side effects` updated to mention handleUpdateNode path
+   - SwarmCanvas entry: Added new Complexity note for BUG-INSPECTOR-1 explaining the prop contract
+   - SwarmCanvas entry: `Last modified` updated to Task #130
+   - Added new Function Graph entry for `handleUpdateNode(nodeId, patch)` (inserted after SwarmCanvas entry, before Swarm View Shell section)
+8. Appended CHANGELOG.md entry for Task #130 with full function list and connection graph
+9. Appended ACTIVITY_LOG.md entry
+10. Appended this session log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header timestamp; AgentInspector entry (onUpdateNode Inputs + Last modified); SwarmCanvas entry (Side effects + new Complexity note + Last modified); new handleUpdateNode Function Graph entry |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Task #130 entry |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended code-mapper session summary |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Key connections discovered
+- `SwarmCanvas.handleUpdateNode` → `setNodes` (React Flow internal state setter) — new call path created in Task #130
+- `AgentInspector` ← `onUpdateNode={handleUpdateNode}` prop from `SwarmCanvas` — prop contract now fulfilled; was previously undefined
+- No other callers of `handleUpdateNode` exist — it is only reachable via the AgentInspector prop
+
+### What I learned
+- The AgentInspector entry already had `onUpdateNode` as a declared prop since its creation — the bug was purely on the SwarmCanvas side (never passing the prop). The fix was minimal: add one useCallback + pass it as a prop.
+- CODE_MAP.md is now ~2560+ lines. Grep remains the only reliable lookup method.
+- Task #131 (TEST GATE) was PASS — the fix is verified. Task #132 is now unblocked.
+
+### State I'm leaving behind
+CODE_MAP.md fully reflects Task #130. `handleUpdateNode` has a complete Function Graph entry. AgentInspector and SwarmCanvas entries are accurately updated. The BUG-INSPECTOR-1 prop contract gap is documented as RESOLVED.
+
+### Handoff
+Task #132 is next (per ACTIVITY_LOG.md showing Task #131 TEST GATE PASS). Code-mapper will need to update entries after Task #132 completes.
+---

@@ -1,4 +1,13 @@
 ---
+## 2026-04-02 — code-mapper — Task #130: BUG-INSPECTOR-1 — handleUpdateNode wired in SwarmCanvas
+**Outcome:** COMPLETED
+**Summary:** Mapped `handleUpdateNode(nodeId, patch)` useCallback added to SwarmCanvas.jsx (lines 96-103); documented the fulfilled prop contract between SwarmCanvas and AgentInspector. Updated CODE_MAP.md with new Function Graph entry, updated AgentInspector and SwarmCanvas entries. Appended CHANGELOG.md entry for Task #130.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** BUG-INSPECTOR-1 (documented as resolved — `onUpdateNode` prop contract now fulfilled)
+**Decisions made:** none
+**Blockers:** none
+**Next:** Task #132 (unblocked per Task #131 TEST GATE PASS)
+---
 ## 2026-04-02 — qa-tester — Task #131: TEST GATE — SwarmCanvas onUpdateNode prop wiring
 **Outcome:** COMPLETED
 **Summary:** Static code audit confirmed handleUpdateNode is defined as useCallback in SwarmCanvas.jsx (lines 96–103) performing shallow merge on node.data via setNodes, and is passed as `onUpdateNode` to AgentInspector at line 134. AgentInspector.jsx declares the prop in its function signature. Component body does not call onUpdateNode directly (read-only inspector), so no TypeError risk. 187/187 server tests pass.
