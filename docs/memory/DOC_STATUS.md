@@ -20,6 +20,10 @@ _Last updated: 2026-04-02 after AREA CHECKPOINT #132 PASS — V3.1 Swarm Bug Fix
 | BUG-SWARM-2 | HIGH | Node style had `opacity: 0` + staggered animation — corrupted React Flow ResizeObserver bounding box | #116 | FIXED 2026-03-31 |
 | BUG-SWARM-3 | MEDIUM | `workflowDef` lost on navigation — moved from local useState to Zustand (useSwarmStore) | #117 | FIXED 2026-03-31 |
 | BUG-SWARM-4 | LOW | Missing null guard in `useSwarm.startExecution` — throws `Error('No workflow selected')` on undefined workflowId | #118 | FIXED 2026-03-31 |
+| BUG-SESSION-1 / BUG-PRD-1 | HIGH | `agent_status` WS broadcast in SwarmEngine.js `_spawnAgentPty` and `_onHandoff` was missing `sessionId` field — AgentInspector "Open Terminal" button could never activate | #124 | FIXED 2026-04-02 |
+| BUG-HANDOFF-1 / BUG-PRD-2 | MEDIUM | `_onHandoff()` emitted `handoff_started` but never `handoff_completed` — FR-V3-43 + PRD Section 11 require both events; `useSwarm.js` case was also missing | #126 | FIXED 2026-04-02 |
+| BUG-TRIGGER-1 / BUG-PRD-3 | MEDIUM | `trigger_fired`, `trigger_status`, and `rss_item` WS events silently dropped — `useSwarm.js` switch had no cases; all three now handled with `updateTriggerState` + `addFeedEvent` | #128 | FIXED 2026-04-02 |
+| BUG-INSPECTOR-1 / BUG-PRD-4 | LOW | `onUpdateNode` prop undefined in SwarmCanvas.jsx — `handleUpdateNode` useCallback defined and wired to AgentInspector; performs shallow merge on `node.data` via `setNodes` | #130 | FIXED 2026-04-02 |
 
 ## Status Legend
 - UP_TO_DATE -- matches current code
@@ -43,7 +47,7 @@ _Last updated: 2026-04-02 after AREA CHECKPOINT #132 PASS — V3.1 Swarm Bug Fix
 | docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-03-28 | V3 RELEASE-READY closure entry appended by project-manager and documenter. |
 | docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-03-18 | V1 audit. V3 audit is docs/security-v3-audit.md (Task #79). |
 | docs/security-v3-audit.md | UP_TO_DATE | 2026-03-28 | BUG-99 fix note added: SEC-V3-01 now enforced via express.raw() — body-size bypass resolved. MEDIUM-V3-01 CSRF mismatch unchanged (not blocking; app is localhost-only). Verified clean at V3 RELEASE-READY closure. |
-| Inline comments | UP_TO_DATE | 2026-03-31 | All V3 route files have comprehensive block comments. server/routes/swarm.js pause/resume comments reflect BUG-94/95 fixes. server/routes/triggers.js BUG-99 comment present. server/services/SwarmEngine.js getExecution(), getStatus(), stopExecution() all have accurate JSDoc. Post-release patches: SwarmCanvas.jsx useEffect comment updated (fitView rationale). SwarmContext.jsx workflowDef field comment added (BUG-SWARM-3). useSwarm.js startExecution null guard comment present. SwarmView.jsx useInbox call added (BUG-AUDIT-4). AgentInspector.jsx Open Terminal button (BUG-AUDIT-2+3). |
+| Inline comments | UP_TO_DATE | 2026-04-02 | All V3 route files have comprehensive block comments. Post-release patches: SwarmCanvas.jsx useEffect comment updated (fitView rationale). SwarmContext.jsx workflowDef field comment added (BUG-SWARM-3). useSwarm.js startExecution null guard comment present. SwarmView.jsx useInbox call added (BUG-AUDIT-4). AgentInspector.jsx Open Terminal button (BUG-AUDIT-2+3). V3.1 wave: SwarmEngine.js _spawnAgentPty WS broadcast includes sessionId field; _onHandoff step 11 handoff_completed broadcast block added. useSwarm.js connectWs switch includes trigger_fired, trigger_status, rss_item cases. SwarmCanvas.jsx handleUpdateNode useCallback block (lines 96-103) and AgentInspector mount with onUpdateNode prop. |
 | docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. Deferred indefinitely. |
 
 ## Stale Sections (known gaps)
@@ -75,4 +79,4 @@ All four BUG-PRD-* bugs identified by prd-writer's code audit have been fixed in
 | Swarm execution state persistence | Medium | In-memory only in v3.0; restart clears all executions. Disk persistence planned for v3.1. |
 | docs/memory/CODE_MAP.md TriggerNode "(stub)" notation | Low | Code-mapper should update the map entry — TriggerNode is now fully implemented (Task #76). |
 | MEDIUM-V3-01 (webhook CSRF mismatch) | Medium | Functional issue: external callers receive 403. Fix is CSRF exemption path in server/middleware/csrf.js. Not blocking v3.0 (app is localhost-only). |
-| BUG-PRD-1 through BUG-PRD-4 code fixes | Medium | Bugs documented in PRD Section 11; debugger tasks not yet created. Priority: BUG-PRD-1 (HIGH) first, then BUG-PRD-2/3 (MEDIUM), then BUG-PRD-4 (LOW). |
+| ~~BUG-PRD-1 through BUG-PRD-4 code fixes~~ | RESOLVED | All four bugs fixed in V3.1 wave (Tasks #124-#130). AREA CHECKPOINT #132 PASS confirmed. No remaining debt from this item. |

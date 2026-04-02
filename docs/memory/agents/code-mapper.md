@@ -1,4 +1,55 @@
 ---
+## 2026-04-02 — Task #132: AREA CHECKPOINT V3.1 PASS
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+CODE_MAP.md was last updated after Task #130 (BUG-INSPECTOR-1 — handleUpdateNode wired). CHANGELOG.md last entry was Task #130 at line 2244. Task #132 is the AREA CHECKPOINT that closes the entire V3.1 Swarm bug fix wave: 4 bugs resolved (BUG-SESSION-1, BUG-HANDOFF-1, BUG-TRIGGER-1, BUG-INSPECTOR-1), 8 TEST GATEs passed, 187/187 tests passing, build 477 modules. No code was modified in Task #132 — it is a verification checkpoint.
+
+### What I did
+1. Read CODE_MAP.md header (offset 1-80) — confirmed last updated timestamp was Task #130.
+2. Read CHANGELOG.md tail (offset 2100-2272) — confirmed last entry was Task #130 at line 2244; found exact insert point.
+3. Read code-mapper.md (offset 1-60) — confirmed last session was Task #124.
+4. Read ACTIVITY_LOG.md (offset 1-30) — found project-manager had already appended a Task #132 entry; inserted code-mapper entry before it.
+5. Updated CODE_MAP.md header: changed timestamp to Task #132, added V3.1 SWARM SYSTEM STATUS block documenting 132/132 tasks complete, AREA V3.1 CLOSED, all WS contracts satisfied.
+6. Appended CHANGELOG.md entry for Task #132 before the Task #130 entry — full V3.1 wave table (4 bugs x TEST GATE results), AREA CHECKPOINT results (build/tests/WS contracts), known remaining gaps.
+7. Appended ACTIVITY_LOG.md entry (inserted before project-manager's entry).
+8. Appended this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header timestamp updated to Task #132; V3.1 SWARM SYSTEM STATUS block added with 132/132 complete, AREA V3.1 CLOSED, WS contracts satisfied |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Task #132 AREA CHECKPOINT entry with full V3.1 wave summary table |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended code-mapper Task #132 entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- CODE_MAP.md now reflects the final project state: 132/132 tasks, AREA V3.1 CLOSED, Swarm V3 complete
+- CHANGELOG.md has a single consolidated V3.1 wave summary entry documenting all 4 bugs, 8 TEST GATEs, 1 AREA CHECKPOINT — easy reference for future agents
+- The known remaining gaps (trigger_fired/trigger_status server emission) are explicitly documented in both CHANGELOG and as an open item
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None — code-mapper only documents | — | — | — |
+
+### Decisions I made
+- Inserted the CHANGELOG Task #132 entry BEFORE Task #130 (not at the very end) to maintain reverse-chronological order matching the existing pattern: most recent at top of the day's entries. Task #132 executed after #130, so it goes before it in the file.
+- The V3.1 STATUS block in CODE_MAP.md header was written as a blockquote to visually separate it from the header metadata line — keeps formatting consistent with existing single-line header pattern while adding the prominent status notice.
+- Did not add any Function Graph entries — Task #132 introduced zero code changes. The checkpoint is documentation-only.
+
+### What I learned
+- AREA CHECKPOINT tasks require a broader CHANGELOG entry than single-bug tasks: the entry must serve as a durable summary of the entire wave, not just the checkpoint verdict. Future agents reading this file need the wave table to understand what was fixed in V3.1 without traversing 8 separate entries.
+- The ACTIVITY_LOG can have concurrent writes from parallel agents (project-manager and code-mapper both appended Task #132 entries in the same session); the file must be re-read before each append to get the current state.
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md are fully up to date through Task #132. Project is at V3.1 stable. 132/132 tasks COMPLETED. No open bugs. Two known future gaps (server-side trigger_fired/trigger_status emission) documented in CHANGELOG. Project ready for V3.2 scope definition or new feature requests.
+
+### Handoff
+None — project stable. Next session begins with V3.2 scope definition or a new user-requested feature.
+
+---
 ## 2026-04-02 — Task #124: BUG-SESSION-1 — agent_status sessionId Fix
 **Status:** COMPLETED
 **Called by:** orchestrator (post-task code-mapper invocation)

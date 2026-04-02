@@ -1,4 +1,13 @@
 ---
+## 2026-04-02 — code-mapper — Task #132: AREA CHECKPOINT V3.1 PASS
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md header with 132/132 task count, AREA V3.1 CLOSED 2026-04-02, and Swarm V3 completeness note. Appended V3.1 full wave summary to CHANGELOG.md: 4 bugs fixed, 8 TEST GATE passes, 1 AREA CHECKPOINT PASS, 187/187 tests, build 477 modules. All PRD Section 11 WS contracts satisfied.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (checkpoint only — bugs fixed in Tasks #124-#130)
+**Decisions made:** none
+**Blockers:** none
+**Next:** Project is at V3.1 stable. No open bugs. Future task: server-side trigger_fired/trigger_status emission (preemptive client handlers exist).
+---
 ## 2026-04-02 — project-manager — Task #132 COMPLETED — AREA V3.1 CLOSED — Full V3.1 wave recap
 **Outcome:** COMPLETED
 **Summary:** TASK #132 AREA CHECKPOINT V3.1 returned PASS. All 132 tasks are now COMPLETED. TASK_PLAN.md header updated to final consolidated status: AREA V3.1 CLOSED, 187/187 tests pass, build 477 modules 0 errors, no open bugs. The entire V3.1 Swarm Bug Fix wave (#124–#132) is closed.
