@@ -1079,3 +1079,52 @@ All checks PASS. 187/187 tests green. handoff_completed event is fully wired: se
 ### Handoff
 Debugger runs TASK #128: BUG-TRIGGER-1 fix.
 ---
+---
+## 2026-04-02 — Task #132: AREA CHECKPOINT — V3.1 Swarm Bug Fixes
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+All four individual TEST GATE tasks (#125, #127, #129, #131) had individually returned PASS. TASK #132 is the AREA_CHECKPOINT for the entire V3.1 Swarm Bug Fixes wave, verifying that all four fixes coexist correctly as an integrated system and that no regressions were introduced.
+
+### What I did
+1. Read docs/TASK_PLAN.md — confirmed tasks #125, #127, #129, #131 all show Status: COMPLETED with Gate Result: PASS.
+2. Read all four modified files in parallel:
+   - server/services/SwarmEngine.js
+   - client/src/hooks/useSwarm.js
+   - client/src/canvas/SwarmCanvas.jsx
+   - client/src/canvas/AgentInspector.jsx
+3. Traced the full end-to-end scenario (2-agent workflow → Run → agent_status with sessionId → handoff → rss_item → node click with onUpdateNode).
+4. Ran `npm test` in server/ — 187/187 pass, 9 test files.
+5. Ran `npm run build` in client/ — 477 modules, 0 errors (only a non-blocking chunk size advisory warning).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | TASK #132 Status: PENDING → COMPLETED; header updated to 132/132; AREA V3.1 CLOSED noted |
+| docs/memory/agents/qa-tester.md | MODIFIED | This session log appended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Entry appended |
+
+### Improvements delivered
+- AREA CHECKPOINT V3.1 PASS: all four Swarm bug fixes verified to coexist correctly
+- Area V3.1 formally closed — V3.2 feature work is unblocked
+
+### Bugs I encountered
+None — all four fixes are present and correct. No regressions detected.
+
+### Decisions I made
+- Static code audit + build + server test suite is the appropriate verification method for this area checkpoint, consistent with the approach used in TEST GATEs #125, #127, #129, #131. No client test harness exists in this project.
+- Chunk size warning (880 KB bundle) is pre-existing and non-blocking — not introduced by V3.1 fixes.
+
+### What I learned
+- The V3.1 wave followed a strict GATE → FIX → GATE → AREA_CHECKPOINT discipline: all fixes were additive (no existing behavior removed), all gates passed cleanly, and the area checkpoint confirmed integration.
+- agent_status (8 emission sites), handoff_completed (1 emission site in _onHandoff), trigger cases (3 switch cases), and onUpdateNode prop wiring all verified clean.
+
+### State I'm leaving behind
+- TASK #132: COMPLETED, AREA V3.1: CLOSED
+- All 132 tasks complete. 187/187 server tests pass. Build: 477 modules, 0 errors.
+- V3.2 feature development is unblocked.
+
+### Handoff
+V3.2 planning may proceed. project-manager should be called to register next tasks.
+---

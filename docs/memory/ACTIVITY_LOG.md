@@ -2501,3 +2501,13 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** debugger runs TASK #128 (BUG-TRIGGER-1)
 ---
+---
+## 2026-04-02 — qa-tester — Task #132: AREA CHECKPOINT — V3.1 Swarm Bug Fixes
+**Outcome:** COMPLETED
+**Summary:** Full area checkpoint for V3.1 Swarm Bug Fixes wave. All 4 individual TEST GATEs (#125, #127, #129, #131) confirmed PASS. Code audit verified all 4 bug fixes coexist correctly in SwarmEngine.js, useSwarm.js, SwarmCanvas.jsx, and AgentInspector.jsx. Build: 477 modules, 0 errors. Tests: 187/187. AREA V3.1 CLOSED.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** Static audit + build + server tests sufficient for area checkpoint (no client test harness in project)
+**Blockers:** none
+**Next:** V3.2 feature planning — project-manager should register next tasks
+---
