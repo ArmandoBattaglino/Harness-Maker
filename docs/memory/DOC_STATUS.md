@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-03-31 after Swarm Section fully confirmed operational — 187/187 tests pass, build clean, 0 open bugs_
+_Last updated: 2026-04-02 after prd-writer added Section 11 Component Specifications to PRD.md — 12 components fully spec'd, 4 known bugs formally documented_
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**
@@ -33,6 +33,7 @@ _Last updated: 2026-03-31 after Swarm Section fully confirmed operational — 18
 |----------|--------|--------------|-------|
 | README.md | UP_TO_DATE | 2026-03-31 | Task #112: Removed ANTHROPIC_API_KEY requirement from Swarm Quick Start step 2, removed "Environment Variable Required for Swarm" section, updated Known Limitations entry. Prompt-to-Flow now uses claude binary — no API key needed. |
 | docs/ARCHITECTURE.md | UP_TO_DATE | 2026-03-31 | Task #112: DEC-016 updated — Prompt-to-Flow now spawns claude binary (-p/--output-format json), not Anthropic SDK. swarmRoutes accepts claudeBin as 3rd param. Previous entry: Section 11.5 HITL flow, Section 11.9 component tree — all still accurate. |
+| docs/PRD.md | UP_TO_DATE | 2026-04-02 | Section 11 (Component Specifications) and Section 11.1 (WS Event Field Reference) added by prd-writer. All 12 Swarm components spec'd with inputs, outputs, step-by-step behavior, contracts, known issues, and acceptance criteria. Four known bugs formally documented: BUG-PRD-1 (missing sessionId in agent_status), BUG-PRD-2 (handoff_completed never emitted), BUG-PRD-3 (trigger_fired/trigger_status unhandled on client), BUG-PRD-4 (onUpdateNode prop undefined in SwarmCanvas). |
 | docs/API.md | UP_TO_DATE | 2026-03-28 | pause endpoint: full state update + WS broadcast (BUG-94). resume endpoint: actual resumeExecution() behavior (BUG-95). budget field in status response: real budgetTracker data (BUG-98). Verified clean at V3 RELEASE-READY closure. |
 | docs/memory/PROJECT.md | UP_TO_DATE | 2026-03-28 | Version updated to v3.0, implementation status updated to complete. @anthropic-ai/sdk row added to tech stack. @xyflow/react and zustand rows updated (no longer "not yet imported"). V3-Specific Constraints section added (DEC-011 through DEC-016, SEC-V3-01 through SEC-V3-07). |
 | docs/memory/DECISIONS.md | UP_TO_DATE | 2026-03-27 | DEC-011 through DEC-016 added by architect during V3 tasks. No changes needed. |
@@ -51,6 +52,17 @@ _Last updated: 2026-03-31 after Swarm Section fully confirmed operational — 18
 - client/src/views/EntitiesView.jsx -- Still exists on disk but is no longer imported by App.jsx. Marked DEPRECATED in ARCHITECTURE.md component tree. Can be deleted in a future cleanup.
 - docs/memory/CODE_MAP.md:TriggerNode entry -- Still contains "(stub)" notation from Task #53.3; Task #76 fully implemented TriggerNode with store subscription, fired animation, and timestamp display. Code-mapper should update the map entry.
 
+## Known Bugs (formally documented in PRD Section 11 — not yet fixed)
+
+These bugs were identified during the prd-writer's code audit (2026-04-02) and are now formally specified in PRD.md Section 11. They require debugger + frontend-dev/backend-dev tasks to fix.
+
+| ID | Severity | Location | Description | Documented in |
+|----|----------|----------|-------------|---------------|
+| BUG-PRD-1 | HIGH | SwarmEngine.js + useSwarm.js | `agent_status` WS event lacks `sessionId` field — AgentInspector "Open Terminal" button can never activate via WS alone | PRD Section 11: SwarmEngine Known Issues |
+| BUG-PRD-2 | MEDIUM | SwarmEngine.js | `handoff_completed` event never emitted — FR-V3-43 requires it; `_onHandoff` emits only `handoff_started` | PRD Section 11: SwarmEngine Known Issues |
+| BUG-PRD-3 | MEDIUM | useSwarm.js (client) | `trigger_fired` and `trigger_status` WS events unhandled on client — TriggerManager emits them but useSwarm.js switch statement has no case for either | PRD Section 11: useSwarm (hook) Known Issues |
+| BUG-PRD-4 | LOW | SwarmCanvas.jsx | `onUpdateNode` prop passed by SwarmView.jsx but never declared in SwarmCanvas.jsx props destructuring — prop is silently ignored | PRD Section 11: SwarmCanvas Known Issues |
+
 ## Documentation Debt
 
 | Item | Priority | Reason deferred |
@@ -63,3 +75,4 @@ _Last updated: 2026-03-31 after Swarm Section fully confirmed operational — 18
 | Swarm execution state persistence | Medium | In-memory only in v3.0; restart clears all executions. Disk persistence planned for v3.1. |
 | docs/memory/CODE_MAP.md TriggerNode "(stub)" notation | Low | Code-mapper should update the map entry — TriggerNode is now fully implemented (Task #76). |
 | MEDIUM-V3-01 (webhook CSRF mismatch) | Medium | Functional issue: external callers receive 403. Fix is CSRF exemption path in server/middleware/csrf.js. Not blocking v3.0 (app is localhost-only). |
+| BUG-PRD-1 through BUG-PRD-4 code fixes | Medium | Bugs documented in PRD Section 11; debugger tasks not yet created. Priority: BUG-PRD-1 (HIGH) first, then BUG-PRD-2/3 (MEDIUM), then BUG-PRD-4 (LOW). |

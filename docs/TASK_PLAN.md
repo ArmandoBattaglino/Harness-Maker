@@ -2,7 +2,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED — 2026-03-31 — ALL TASKS COMPLETED — 123/123 tasks COMPLETED
+**Status:** v3.0.0 RELEASED — 2026-03-31 — V3.1 BUG FIX WAVE OPEN — 123/123 historical tasks COMPLETED + 11 new tasks (#124–#134) PENDING
 
 ---
 

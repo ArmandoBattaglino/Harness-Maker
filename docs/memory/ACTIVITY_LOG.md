@@ -1,4 +1,22 @@
 ---
+## 2026-04-02 — documenter — PRD Section 11 documentation registered in DOC_STATUS.md
+**Outcome:** COMPLETED
+**Summary:** prd-writer added Section 11 (Component Specifications) and Section 11.1 (WS Event Field Reference) to docs/PRD.md, documenting 12 Swarm components and formally recording 4 known bugs (BUG-PRD-1 through BUG-PRD-4). DOC_STATUS.md updated: PRD.md row added to health table (UP_TO_DATE), new Known Bugs section created for the 4 spec'd-but-unfixed bugs, Documentation Debt extended with a fix-task placeholder.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none (documentation task — bugs are documented in PRD, not yet fixed in code)
+**Decisions made:** PRD.md added to Documentation Health table as a tracked artifact; Known Bugs table introduced to distinguish documented-but-unfixed bugs from Fixed Bugs table
+**Blockers:** none
+**Next:** debugger should address BUG-PRD-1 (HIGH: missing sessionId in agent_status WS event) — project-manager to create fix tasks for BUG-PRD-1 through BUG-PRD-4
+---
+## 2026-04-02 — prd-writer — Section 11 Component Specifications added to PRD
+**Outcome:** COMPLETED
+**Summary:** Read all 17 Swarm source files (server + client) and appended Section 11 (Component Specifications) to docs/PRD.md. Documented 12 components in full spec format plus a WS event field reference (Section 11.1) that maps every server-emitted event to its actual fields. Four known bugs from prior analysis sessions were formally documented within the spec: missing sessionId in agent_status, unimplemented handoff_completed, unhandled trigger_fired/trigger_status on the client, and undefined onUpdateNode prop in SwarmCanvas.
+**Files changed:** docs/PRD.md (Section 11 + Section 11.1 appended)
+**Bugs fixed:** none (documentation task)
+**Decisions made:** Numbered the new section "Section 11 — Component Specifications" appended after Appendix B to avoid renumbering the existing Section 11 (Open Questions); added Section 11.1 for WS event reference as a sub-section.
+**Blockers:** none
+**Next:** QA-tester can now use Section 11 specs to write TEST GATE test cases for every Swarm component; debugger can use the Known Issues entries to prioritize fixes.
+---
 ## 2026-03-31 — project-manager — Tasks #116–#123: Swarm Bug Wave + Audit Wave ALL COMPLETED
 **Outcome:** COMPLETED
 **Summary:** All 8 Swarm tasks (#116–#123) marked COMPLETED. Final verified state: 187/187 tests pass, build 477 modules 0 errors, Puppeteer confirms click-on-node opens AgentInspector with name/type/system prompt, nodes visible and centered after generation, workflowDef persists on navigation, Open Terminal button implemented in AgentInspector. TASK_PLAN.md header updated to 123/123 ALL COMPLETED.

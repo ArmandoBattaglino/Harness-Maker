@@ -1,4 +1,60 @@
 ---
+## 2026-04-02 — Task: Write Section 11 — Component Specifications (Swarm V3)
+**Status:** COMPLETED
+**Called by:** user (direct invocation with full context and file list)
+
+### Context when I started
+The PRD at docs/PRD.md was complete through Section 12 (Out of Scope) and two appendices (Security, Phase Plan). Section 11 was titled "Open Questions". The Swarm V3 implementation was fully built (Tasks #1–#123 all COMPLETED as of 2026-03-31). Four known bugs had been identified in a prior analysis session: missing sessionId in agent_status events, unimplemented handoff_completed, unhandled trigger_fired/trigger_status, and undefined onUpdateNode prop.
+
+### What I did
+1. Read docs/PRD.md (existing sections 1-12 + appendices).
+2. Read all 17 source files in parallel: SwarmEngine.js, HandoffParser.js, WorkflowStore.js, TriggerManager.js, swarm.js (routes), swarmHandler.js (WS), SwarmView.jsx, SwarmCanvas.jsx, AgentNode.jsx (in nodes/ subdirectory), HandoffEdge.jsx (in edges/ subdirectory), AgentInspector.jsx, BroadcastBar.jsx, InterAgentFeed.jsx, useSwarm.js, useInbox.js, SwarmContext.jsx.
+3. Discovered that AgentNode and HandoffEdge are in subdirectories (nodes/ and edges/) not at the root canvas level — different from the paths given in the task prompt.
+4. Wrote "Section 11 — Component Specifications" as an appendix to the PRD (appended after Appendix B). Covers 12 components in full spec format.
+5. Wrote "Section 11.1 — WebSocket Event Field Reference (Actual Implementation)" documenting the exact fields of all 8 WS event types, including discrepancies from PRD Section 9.
+6. Formally documented all 4 known bugs within the spec's "Known issues" sections.
+7. Updated docs/memory/ACTIVITY_LOG.md.
+8. Updated docs/memory/agents/prd-writer.md (this file).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/PRD.md | MODIFIED (appended) | Added Section 11 (12 component specs) + Section 11.1 (WS event field reference) |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended task entry |
+| docs/memory/agents/prd-writer.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- Every Swarm component now has a testable specification that QA can use directly
+- All 4 known bugs are formally documented with file, field, and impact description
+- WS event field discrepancies between PRD and actual code are documented in one place
+- The "Open Terminal" button root cause is fully traced (agent_status missing sessionId → agentState.sessionId never set → condition always false)
+- handoff_completed is confirmed never emitted — FR-V3-43 is partially unimplemented
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| AgentNode.jsx path mismatch | Task prompt listed client/src/canvas/AgentNode.jsx but actual path is client/src/canvas/nodes/AgentNode.jsx | Used Glob to discover actual path | RESOLVED (documentation only) |
+| HandoffEdge.jsx path mismatch | Same — actual path is client/src/canvas/edges/HandoffEdge.jsx | Same Glob approach | RESOLVED (documentation only) |
+
+### Decisions I made
+- Appended new section as "Section 11 — Component Specifications" rather than renaming the existing Section 11 (Open Questions) to preserve link stability for agents that reference it.
+- Added Section 11.1 (WS Event Reference) as a sub-section rather than a separate numbered section to keep the TOC clean.
+- Documented triggerStates/trigger_fired issue under both SwarmContext (Known Issues) and useSwarm (Known Issues) for maximum discoverability.
+
+### What I learned
+- `agent_status` events are the most under-specified: the PRD says they include `lastOutputSnippet` (they don't) and no one documented the missing `sessionId` field.
+- TriggerManager emits `rss_item` (not `trigger_fired`) but this event name appears nowhere in the PRD, the client switch, or the store.
+- The `onUpdateNode` prop gap in SwarmCanvas → AgentInspector is a silent latent bug — it will only surface when someone adds edit functionality to AgentInspector.
+- `useInbox.js` uses `useSwarmStore.setState()` directly (bypassing defined actions) for the polling update path, which is an inconsistency with the rest of the store usage pattern.
+
+### State I'm leaving behind
+docs/PRD.md is fully updated. Section 11 covers all 12 Swarm components. Section 11.1 covers all 8 WS event types. Four known bugs are documented. All acceptance criteria are written as testable assertions.
+
+### Handoff
+- qa-tester: Use Section 11 acceptance criteria to write TEST GATE tests for each component.
+- debugger: Prioritize the four "Known issues" entries — especially agent_status missing sessionId (blocks Open Terminal) and handoff_completed never emitted (FR-V3-43 gap).
+- project-manager: Consider adding tasks for the 4 documented bugs if they are not already in TASK_PLAN.md.
+---
 ## 2026-03-27 — Task: Write V3 PRD (Multi-Agent Swarm Orchestrator)
 **Status:** COMPLETED
 **Called by:** user (direct invocation with full context)

@@ -1,11 +1,16 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-03-31 — Swarm Bug-Fix Wave (#116–#122) — mapped by code-mapper_
+_Last updated: 2026-04-02 — PRD Section 11 Component Specifications added — mapped by code-mapper_
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
 - `client/src/main.jsx` — React app entry point
 
 ## Module Index
+
+### Design Documents
+| File | Key Exports | Purpose |
+|------|-------------|---------|
+| docs/PRD.md | Sections 1–11.1 | Product Requirements Document for Claude Code Visual Manager V3. Added Section 11 (Component Specifications — 12 Swarm components) + Section 11.1 (WS Event Field Reference — 8 event types + 4 known implementation gaps) in 2026-04-02 by prd-writer. **This is now the authoritative single source of truth for all Swarm component contracts, inputs, outputs, and acceptance criteria.** Section 11 covers: SwarmEngine, HandoffParser, WorkflowStore, TriggerManager, swarmRoutes, swarmHandler, SwarmContext/useSwarmStore, useSwarm, useInbox, SwarmView, SwarmCanvas, AgentNode/HandoffEdge/AgentInspector/BroadcastBar/InterAgentFeed. Section 11.1 documents exact WS event fields vs PRD Section 9 discrepancies. 4 known bugs formally documented. |
 
 ### Server Modules
 | File | Key Exports | Purpose |

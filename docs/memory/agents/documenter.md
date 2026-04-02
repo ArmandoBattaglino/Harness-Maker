@@ -1,4 +1,52 @@
 ---
+## 2026-04-02 — PRD Section 11 added by prd-writer: DOC_STATUS.md updated
+**Status:** COMPLETED
+**Called by:** user (parallel post-task documentation update)
+
+### Context when I started
+prd-writer had just appended Section 11 (Component Specifications) and Section 11.1 (WS Event Field Reference) to docs/PRD.md. This was a documentation-only task — no source code was modified. DOC_STATUS.md still showed PRD.md as implicitly untracked (it had no row in the Documentation Health table). Four bugs were formally documented inside the new section (BUG-PRD-1 through BUG-PRD-4) based on prd-writer's code audit of 17 Swarm files.
+
+### What I did
+1. Read DOC_STATUS.md, documenter agent log, and ACTIVITY_LOG.md (top entries) in parallel.
+2. Read PRD.md header and Section 11 header to understand scope of new content (12 components, 2 sub-sections).
+3. Verified ARCHITECTURE.md and README.md — neither references the Component Specification Protocol or PRD content that would need updating; both remain accurate as-is.
+4. Updated DOC_STATUS.md:
+   - Header line: updated to 2026-04-02 with Section 11 summary.
+   - Added PRD.md row to the Documentation Health table with UP_TO_DATE status, notes on 12 components, Section 11 + 11.1, and all 4 BUG-PRD-* entries.
+   - Added new "Known Bugs (formally documented in PRD Section 11)" table before the Documentation Debt section — 4 entries (BUG-PRD-1 through BUG-PRD-4) with severity, location, description, and PRD cross-reference.
+   - Extended Documentation Debt table with a BUG-PRD-1 through BUG-PRD-4 row to signal that code fix tasks are not yet created.
+5. Appended documenter entry to ACTIVITY_LOG.md.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Header updated; PRD.md row added to health table; Known Bugs table added; Documentation Debt extended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Documenter entry prepended |
+| docs/memory/agents/documenter.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- DOC_STATUS.md now tracks PRD.md as a first-class documentation artifact (it was previously untracked in the health table).
+- Four formally spec'd bugs are now visible in DOC_STATUS.md, making them actionable for the next debugger task.
+- The distinction between "bugs fixed in code" (Fixed Bugs table) and "bugs documented but not yet fixed" (Known Bugs table) is now explicit.
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Did NOT update ARCHITECTURE.md or README.md — the Component Specification Protocol is a process workflow (defined in CLAUDE.md), not an architectural component. ARCHITECTURE.md describes system components and data flow; it does not need to reference the PRD section numbering.
+- Added a separate "Known Bugs" table rather than folding BUG-PRD-* into the Fixed Bugs table — they are documented but not yet fixed, so conflating them with fixed bugs would be misleading.
+- Reused the same bug ID scheme (BUG-PRD-*) that prd-writer used in the ACTIVITY_LOG entry for consistency.
+
+### What I learned
+- PRD.md was not previously tracked in DOC_STATUS.md's health table — this is a gap to avoid in future: every major documentation artifact should have a row from the moment it is created.
+- When prd-writer discovers bugs during spec-writing, documenter should immediately surface them in DOC_STATUS.md's Known Bugs section so they are visible to project-manager and debugger without requiring a full PRD read.
+
+### State I'm leaving behind
+DOC_STATUS.md: PRD.md is UP_TO_DATE as of 2026-04-02. Four BUG-PRD-* bugs are documented and visible. No code was changed. No source files are stale.
+
+### Handoff
+Debugger should pick up BUG-PRD-1 (HIGH: missing sessionId in agent_status) as highest priority. Project-manager should create fix tasks for BUG-PRD-1 through BUG-PRD-4.
+---
 ## 2026-03-31 — Swarm Audit: 4 post-release bugs, DOC_STATUS.md + ACTIVITY_LOG.md updated
 **Status:** PARTIAL
 **Called by:** user (post-audit documentation update request)
