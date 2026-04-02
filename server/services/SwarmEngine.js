@@ -384,6 +384,15 @@ class SwarmEngine {
         this._wsBroadcast(executionId, { type: 'agent_status', nodeId: targetId, status: 'running', sessionId: targetState.sessionId });
       }
     }
+
+    // 11. Broadcast handoff_completed (FR-V3-43)
+    if (this._wsBroadcast) {
+      this._wsBroadcast(executionId, {
+        type: 'handoff_completed',
+        sourceNodeId,
+        targetNodeId: targetId,
+      });
+    }
   }
 
   /**

@@ -41,6 +41,9 @@ export function useSwarm(workflowId) {
           updateAgentState(msg.sourceNodeId, { handoffCount: currentHandoffCount + 1 });
           break;
         }
+        case 'handoff_completed':
+          addFeedEvent({ ...msg, timestamp: Date.now() });
+          break;
         case 'execution_status':
           setExecution(msg.executionId ?? null, msg.status ?? 'running');
           break;

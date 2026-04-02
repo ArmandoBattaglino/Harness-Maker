@@ -172,3 +172,50 @@ Both files fixed. 187/187 tests pass. The Open Terminal button now works. TASK #
 ### Handoff
 qa-tester runs TASK #125 (TEST GATE: BUG-SESSION-1) to verify the fix end-to-end before the pipeline continues to TASK #126 (BUG-HANDOFF-1).
 ---
+---
+## 2026-04-02 — Task #126: BUG-HANDOFF-1 — Emit handoff_completed from SwarmEngine._onHandoff()
+**Status:** COMPLETED
+**Called by:** User (direct task assignment — V3.1 Swarm Bug Fix Wave)
+
+### Context when I started
+Task #125 (TEST GATE for BUG-SESSION-1) had just PASSED. Task #126 was the next unblocked task in the V3.1 fix wave. SwarmEngine._onHandoff() was implemented in Task #62.1 and emits handoff_started (step 6), agent_status for source (step 9), and agent_status for target (step 10). FR-V3-43 requires a handoff_completed event to be broadcast after the handoff is fully complete. That emission was never added. Separately, useSwarm.js had no 'handoff_completed' case in its onmessage switch, so even if the server emitted it, the client would silently drop it into the default: break branch.
+
+### What I did
+1. Read 4 files in parallel: SwarmEngine.js, useSwarm.js, SwarmContext.jsx, debugger.md.
+2. Confirmed the gap: _onHandoff() ends after step 10 without any handoff_completed broadcast. useSwarm.js switch has no case for handoff_completed. addFeedEvent is already destructured and used in the handoff_started case — available for reuse.
+3. Applied server-side fix: added step 11 in _onHandoff() after step 10's closing brace, before the method's closing brace. The broadcast is wrapped in `if (this._wsBroadcast)` consistent with all other broadcast sites.
+4. Applied client-side fix: added `case 'handoff_completed':` immediately after the closing brace of `case 'handoff_started'`. Handler calls `addFeedEvent({ ...msg, timestamp: Date.now() })` then `break`.
+5. Ran `npm test` — 187/187 pass, 0 regressions.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SwarmEngine.js | MODIFIED | Added step 11 in _onHandoff() (lines 388–395): `if (this._wsBroadcast) { this._wsBroadcast(executionId, { type: 'handoff_completed', sourceNodeId, targetNodeId: targetId }); }` — placed after step 10 (target agent_status), before the method's closing brace. |
+| client/src/hooks/useSwarm.js | MODIFIED | Added `case 'handoff_completed': addFeedEvent({ ...msg, timestamp: Date.now() }); break;` at lines 44–46, immediately after the closing brace of `case 'handoff_started'` block. |
+
+### Improvements delivered
+- handoff_completed WS event is now broadcast with `{ type, sourceNodeId, targetNodeId }` after every successful handoff
+- The client now processes handoff_completed and appends it to the interAgentFeed via addFeedEvent
+- InterAgentFeed component (which renders interAgentFeed from Zustand) will now display the completion event
+- handoff_started continues to be emitted at step 6 — no regression
+- 187/187 tests pass
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-HANDOFF-1: handoff_completed never emitted | _onHandoff() was implemented before FR-V3-43 was finalized; the terminal broadcast was simply never added | Added step 11 with the broadcast in SwarmEngine._onHandoff(); added client handler in useSwarm.js | FIXED |
+
+### Decisions I made
+- Did NOT add edgeId or counter to handoff_completed — FR-V3-43 specifies only `{ type, sourceNodeId, targetNodeId }`. Adding extra fields would be out of scope.
+- Placed the new broadcast unconditionally (not gated on targetState or sourceState) — by step 11 the handoff is always complete regardless of whether targetState is null.
+
+### What I learned
+- The WS event sequence for a full handoff is now: handoff_started (step 6) → agent_status source done (step 9) → agent_status target running (step 10) → handoff_completed (step 11). Any consumer relying on ordering can depend on this sequence.
+- addFeedEvent is already available in useSwarm.js from the existing destructuring at line 13 — no import changes needed for new WS cases that call it.
+
+### State I'm leaving behind
+Both files fixed. 187/187 tests pass. TASK #127 (TEST GATE for BUG-HANDOFF-1) is the next action — qa-tester must run it.
+
+### Handoff
+qa-tester runs TASK #127 (TEST GATE: BUG-HANDOFF-1) to verify handoff_completed WS event end-to-end. On PASS, debugger proceeds to TASK #128 (BUG-TRIGGER-1).
+---
