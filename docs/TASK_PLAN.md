@@ -2,7 +2,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED — 2026-03-31 — V3.1 BUG FIX WAVE IN PROGRESS — 129/132 tasks: #124 COMPLETED — #125 COMPLETED (TEST GATE PASS) — #126 COMPLETED (BUG-HANDOFF-1: handoff_completed added) — #127 COMPLETED (TEST GATE PASS) — #128 COMPLETED (BUG-TRIGGER-1: trigger_fired/trigger_status/rss_item handlers added) — #129 COMPLETED (TEST GATE PASS) — #130 COMPLETED (BUG-INSPECTOR-1: handleUpdateNode defined + passed to AgentInspector) — #131–#132 BLOCKED on gate
+**Status:** v3.0.0 RELEASED — 2026-03-31 — V3.1 BUG FIX WAVE IN PROGRESS — 131/132 tasks: #124 COMPLETED — #125 COMPLETED (TEST GATE PASS) — #126 COMPLETED (BUG-HANDOFF-1: handoff_completed added) — #127 COMPLETED (TEST GATE PASS) — #128 COMPLETED (BUG-TRIGGER-1: trigger_fired/trigger_status/rss_item handlers added) — #129 COMPLETED (TEST GATE PASS) — #130 COMPLETED (BUG-INSPECTOR-1: handleUpdateNode defined + passed to AgentInspector) — #131 COMPLETED (TEST GATE PASS: onUpdateNode wiring verified) — #132 UNBLOCKED
 
 ---
 
@@ -8212,8 +8212,9 @@ Type: TEST_GATE
 Priority: MEDIUM
 Difficulty: LOW
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Gate: HARD — TASK #132 CANNOT start until this gate returns PASS
+Gate Result: PASS — 2026-04-02
 Context:
   Component being tested: SwarmCanvas.jsx (handleUpdateNode callback) + AgentInspector.jsx (onUpdateNode prop receipt)
   Component spec (from PRD Section 11 — AgentInspector):

@@ -1961,11 +1961,11 @@ _Last updated: 2026-04-02 — Task #128: BUG-TRIGGER-1 trigger WS handlers in us
 - **Purpose:** Side panel that renders details for the currently selected canvas node. Reads selectedNodeId and agentStates[selectedNodeId] from useSwarmStore. Shows: node label, type badge, live status from Zustand (status string + handoffCount), "Open Terminal" button (when agentState.sessionId is set — BUG-AUDIT-2+3 fix), system prompt (from node.data.systemPrompt, read-only), and last output snippet (from agentState.lastOutputSnippet). Close button calls setSelectedNode(null) to deselect. Returns an empty placeholder div when no node is selected. Component is always rendered in SwarmCanvas — not gated on executionStatus (BUG-AUDIT-1 fix, Task #120).
 - **Called by:** SwarmCanvas.jsx (Task #57.1; always rendered without showSidePanels gate — BUG-AUDIT-1 fix, Task #120)
 - **Calls:** useSwarmStore (selector: s.selectedNodeId), useSwarmStore (selector: s.agentStates[selectedNodeId]), useSwarmStore (selector: s.setSelectedNode), useSwarmStore (selector: s.setPtyExplosionNodeId), nodes.find() (prop traversal), setPtyExplosionNodeId (on "Open Terminal" button click)
-- **Inputs:** nodes (array — React Flow node objects from parent canvas; used to find label, type, data.systemPrompt), onUpdateNode (function — passed as prop but not yet called; reserved for future edit operations)
+- **Inputs:** nodes (array — React Flow node objects from parent canvas; used to find label, type, data.systemPrompt), onUpdateNode (function — callback from SwarmCanvas.handleUpdateNode; shallow-merges patch into node.data via setNodes; wired in Task #130 BUG-INSPECTOR-1)
 - **Output:** JSX — w-64 right panel; empty placeholder if no selection; detail view with header, type badge, optional "Open Terminal" button, status block, system prompt block, last output block
 - **Side effects:** calls setSelectedNode(null) on close button click; calls setPtyExplosionNodeId(agentState.sessionId) on "Open Terminal" button click — both mutate SwarmStore
 - **Complexity note:** Four separate useSwarmStore selectors (selectedNodeId, agentState, setSelectedNode, setPtyExplosionNodeId). agentState data comes from Zustand (live runtime state); systemPrompt comes from node.data (static workflow definition). "Open Terminal" button is conditionally rendered: only when agentState?.sessionId is truthy — sessionId is set by SwarmEngine when a PTY session is assigned to that agent node.
-- **Last modified:** 2026-03-31 in Task #121 by frontend-dev (BUG-AUDIT-2+3: added setPtyExplosionNodeId subscription + "Open Terminal" button; Task #120 — rendering no longer gated on showSidePanels in SwarmCanvas)
+- **Last modified:** 2026-04-02 in Task #130 by frontend-dev (BUG-INSPECTOR-1: onUpdateNode prop now wired — was passed as prop but never implemented in SwarmCanvas; Task #121 — setPtyExplosionNodeId + "Open Terminal" button; Task #120 — rendering no longer gated on showSidePanels)
 
 ---
 
@@ -1989,11 +1989,21 @@ _Last updated: 2026-04-02 — Task #128: BUG-TRIGGER-1 trigger WS handlers in us
 - **Calls:** useReactFlow (from @xyflow/react — provides fitView), useSwarmStore (selector: s.focusedDepartmentId), useSwarmStore (selector: s.setSelectedNode), useSwarmStore (selector: s.executionStatus), useNodesState (from @xyflow/react), useEdgesState (from @xyflow/react), useEffect (React — workflowDef change sync + fitView), useMemo (React — visibleNodes, visibleNodeIds, visibleEdges), useCallback (React — onConnect, onNodeClick, onPaneClick), addEdge (from @xyflow/react), ReactFlow + Background + Controls + MiniMap (from @xyflow/react), AgentNode, DepartmentNode, TriggerNode, HandoffEdge, AgentInspector, BreadcrumbBar, InterAgentFeed
 - **Inputs:** workflowDef (object — `{ nodes: ReactFlowNode[], edges: ReactFlowEdge[] }` or undefined; defaults to empty arrays)
 - **Output:** JSX — flex column: BreadcrumbBar (top) + flex row: ReactFlow canvas (flex-1) + optional InterAgentFeed (right, when showSidePanels) + AgentInspector (always-right panel)
-- **Side effects:** calls setSelectedNode(nodeId) on node click; calls setSelectedNode(null) on pane click; calls setEdges to append a new handoff edge on connect; calls setNodes/setEdges + fitView when workflowDef prop changes. No server I/O.
+- **Side effects:** calls setSelectedNode(nodeId) on node click; calls setSelectedNode(null) on pane click; calls setEdges to append a new handoff edge on connect; calls setNodes/setEdges + fitView when workflowDef prop changes; calls setNodes (shallow-merge patch into node.data) via handleUpdateNode. No server I/O.
 - **Complexity note (BUG-89 fix):** useEffect watches workflowDef — calls setNodes/setEdges on prop change so scaffold output after mount is reflected.
 - **Complexity note (BUG-SWARM-1+2 fix — Task #116):** useReactFlow() provides `fitView` imperative function. After setNodes/setEdges, a `setTimeout(() => fitView({ padding: 0.2, duration: 400 }), 50)` gives React Flow one tick to run its ResizeObserver and measure node dimensions before fitting. Without the delay, fitView fires before nodes have nonzero dimensions and is a no-op. nodeTypes/edgeTypes still declared outside component per React Flow v12 requirement.
 - **Complexity note (BUG-AUDIT-1 fix — Task #120):** AgentInspector is now always rendered unconditionally — not gated on `showSidePanels`. The component itself handles its empty state ("Select a node to inspect"). InterAgentFeed remains gated on `showSidePanels` (only shown when running or paused).
-- **Last modified:** 2026-03-31 in Task #120 by frontend-dev (BUG-AUDIT-1: AgentInspector always rendered; Task #116: useReactFlow fitView with 50ms delay)
+- **Complexity note (BUG-INSPECTOR-1 — Task #130):** `handleUpdateNode(nodeId, patch)` useCallback (lines 96-103) shallow-merges `patch` into the target node's `data` object via `setNodes`. Passed as `onUpdateNode` prop to `<AgentInspector>`. This satisfies the prop contract AgentInspector expected — prior to this task, `onUpdateNode` was defined as a prop on AgentInspector's interface but was never passed by SwarmCanvas.
+- **Last modified:** 2026-04-02 in Task #130 by frontend-dev (BUG-INSPECTOR-1: handleUpdateNode useCallback added; passed as onUpdateNode to AgentInspector — prop contract now fulfilled; Task #120: AgentInspector always rendered; Task #116: useReactFlow fitView with 50ms delay)
+
+### `client/src/canvas/SwarmCanvas.jsx` :: `handleUpdateNode(nodeId, patch)`
+- **Purpose:** useCallback that shallow-merges a patch object into a specific node's `data` slice within the React Flow nodes state. Enables AgentInspector (and any future panel) to write back edits to node properties without lifting state out of SwarmCanvas.
+- **Called by:** `<AgentInspector onUpdateNode={handleUpdateNode} />` (prop — AgentInspector calls it when user edits a node field in the inspector panel)
+- **Calls:** setNodes (React Flow state setter — maps over nodes array, replaces matching node with spread-merged data)
+- **Inputs:** nodeId (string — id of the target React Flow node), patch (object — key/value pairs to merge into node.data; non-overlapping keys are preserved via `{ ...n.data, ...patch }`)
+- **Output:** void (triggers React Flow re-render of the updated node)
+- **Side effects:** mutates the React Flow `nodes` state array (via setNodes); causes a re-render of the affected node component
+- **Last modified:** 2026-04-02 in Task #130 by frontend-dev (BUG-INSPECTOR-1: new function — resolves missing prop contract between SwarmCanvas and AgentInspector)
 
 ---
 

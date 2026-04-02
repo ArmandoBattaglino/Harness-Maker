@@ -1,4 +1,50 @@
 ---
+## 2026-04-02 — Task #130 COMPLETED + Task #131 set IN_PROGRESS
+**Status:** COMPLETED
+**Called by:** user (post-task status update after debugger completed BUG-INSPECTOR-1)
+
+### Context when I started
+TASK #130 (BUG-INSPECTOR-1) had just been completed by the debugger. The TASK_PLAN.md header already listed #130 as COMPLETED (self-marked by debugger). TASK #131 (TEST GATE for BUG-INSPECTOR-1) was still PENDING and needed to be advanced to IN_PROGRESS. TASK #132 (AREA CHECKPOINT) remains BLOCKED.
+
+### What I did
+1. Read TASK_PLAN.md to verify TASK #130 Status (confirmed COMPLETED at line 8173 — correctly self-marked by debugger).
+2. Updated TASK_PLAN.md header line 5: changed "129/132 tasks" to "130/132 tasks", changed "#131–#132 BLOCKED on gate" to "#131 IN_PROGRESS (TEST GATE running) — #132 BLOCKED on gate".
+3. Updated TASK #131 body Status field: PENDING → IN_PROGRESS.
+4. Appended ACTIVITY_LOG.md and this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Header updated (130/132, #131 IN_PROGRESS); TASK #131 Status: PENDING → IN_PROGRESS |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Status update entry appended |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log prepended |
+
+### Improvements delivered
+- Task chain accurately reflects: 6 tasks COMPLETED (#124–#130), #131 IN_PROGRESS, #132 BLOCKED.
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- TASK #130 was already correctly self-marked COMPLETED by the debugger — no re-marking needed.
+- Debugger confirmed the fix: handleUpdateNode useCallback added to SwarmCanvas.jsx (lines 96–103), passed as onUpdateNode to AgentInspector at line 134. No UI change needed — AgentInspector body does not yet call onUpdateNode; prop wiring is a forward-compatibility fix.
+
+### State I'm leaving behind
+- TASK_PLAN.md: #124–#130 COMPLETED, #131 IN_PROGRESS, #132 BLOCKED
+- qa-tester is assigned TASK #131 TEST GATE (verifies typeof onUpdateNode === 'function' in AgentInspector props, behavioral update of node data, no TypeError, existing behaviors unchanged)
+- On PASS: TASK #132 AREA CHECKPOINT unlocks — qa-tester runs full V3.1 end-to-end integration scenario
+- On FAIL: debugger returns to #130 with bug report
+
+### Handoff
+qa-tester runs TASK #131. PM action required after TASK #131 verdict: mark #131 COMPLETED/FAILED, advance #132 to IN_PROGRESS (or return to #130).
+
+TASK #132 AREA CHECKPOINT — what it verifies:
+1. BUG-SESSION-1: agent_status includes sessionId; "Open Terminal" visible in AgentInspector for running agents
+2. BUG-HANDOFF-1: handoff_completed emitted; appears in InterAgentFeed; handoff_started not regressed
+3. BUG-TRIGGER-1: trigger_fired/trigger_status/rss_item cases in useSwarm.js; rss_item calls updateTriggerState + addFeedEvent
+4. BUG-INSPECTOR-1: onUpdateNode passed as defined function from SwarmCanvas to AgentInspector; calling it updates node data without TypeError
+End-to-end scenario: Generate 2-agent workflow → Run → click nodes → verify AgentInspector + Open Terminal → verify handoff events → no console errors → npm test (0 failures) → npm run build (0 errors) → Puppeteer screenshot confirms Open Terminal button visible.
+---
 ## 2026-04-02 — Task #128 status update + Task #129 set IN_PROGRESS
 **Status:** COMPLETED
 **Called by:** user (post-task status update after debugger completed BUG-TRIGGER-1)

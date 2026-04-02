@@ -1,4 +1,42 @@
 ---
+## 2026-04-02 — Task #131: TEST GATE — SwarmCanvas onUpdateNode prop wiring
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+TASK #130 (BUG-INSPECTOR-1) had just been completed by the debugger: `handleUpdateNode` useCallback added to SwarmCanvas.jsx (lines 96–103) and passed as `onUpdateNode` to `<AgentInspector>` (line 134). Gate #131 verifies the fix is correctly wired before unblocking TASK #132.
+
+### What I did
+1. Read SwarmCanvas.jsx in full — confirmed `handleUpdateNode` defined at lines 96–103 as useCallback, uses `setNodes` for shallow merge on `node.data`, and is passed as `onUpdateNode={handleUpdateNode}` to `<AgentInspector>` at line 134.
+2. Read AgentInspector.jsx in full — confirmed `onUpdateNode` is declared in the function signature `({ nodes, onUpdateNode })` at line 5. The component body never calls `onUpdateNode` directly (read-only inspector currently), so no TypeError risk.
+3. Ran `cd server && npm test` — 187/187 tests pass, 9 test files, 0 regressions.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | TASK #131 Status: IN_PROGRESS → COMPLETED, gate result PASS recorded; header status updated to 131/132 |
+| docs/memory/agents/qa-tester.md | MODIFIED | This session log appended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Entry appended |
+
+### Improvements delivered
+- TEST GATE #131 cleared: TASK #132 is now unblocked
+
+### Bugs I encountered
+None — fix was clean and complete.
+
+### Decisions I made
+- Static code audit approach: AgentInspector.jsx does not call `onUpdateNode` in its current body, so behavioral test (calling the callback and verifying state update) would require a React Testing Library test harness that does not exist in this project. Static audit of the prop contract (defined in SwarmCanvas, declared in AgentInspector) is sufficient to verify the wiring. The behavioral contract (setNodes shallow merge) is readable directly from the useCallback body. Server tests confirm no regressions.
+
+### What I learned
+- AgentInspector currently only reads `onUpdateNode` from props but never invokes it — the prop is wired for future use. No TypeError risk exists today from call sites.
+- The project has no client-side unit test suite — only server tests (187 tests in /server). Client-side gating must rely on static code audit + visual/manual verification.
+
+### State I'm leaving behind
+TASK #131: COMPLETED, PASS. TASK #132 is now unblocked (hard gate cleared).
+
+### Handoff
+TASK #132 can now proceed. No bugs found, no follow-up needed from debugger.
+---
 ## 2026-04-02 — Task #129: TEST GATE — useSwarm trigger event handlers
 **Status:** COMPLETED
 **Called by:** orchestrator (project-manager routed)

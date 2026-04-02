@@ -1,4 +1,22 @@
 ---
+## 2026-04-02 — qa-tester — Task #131: TEST GATE — SwarmCanvas onUpdateNode prop wiring
+**Outcome:** COMPLETED
+**Summary:** Static code audit confirmed handleUpdateNode is defined as useCallback in SwarmCanvas.jsx (lines 96–103) performing shallow merge on node.data via setNodes, and is passed as `onUpdateNode` to AgentInspector at line 134. AgentInspector.jsx declares the prop in its function signature. Component body does not call onUpdateNode directly (read-only inspector), so no TypeError risk. 187/187 server tests pass.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** Static code audit sufficient — no client test harness exists in this project
+**Blockers:** none
+**Next:** TASK #132 is unblocked (hard gate cleared)
+---
+## 2026-04-02 — project-manager — Task #130 COMPLETED + Task #131 IN_PROGRESS
+**Outcome:** COMPLETED
+**Summary:** Marked TASK #130 (BUG-INSPECTOR-1) COMPLETED in TASK_PLAN.md header and advanced TASK #131 (TEST GATE) to IN_PROGRESS. Task count updated to 130/132. TASK #132 (AREA CHECKPOINT) remains BLOCKED pending TASK #131 PASS.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** qa-tester runs TASK #131 TEST GATE for BUG-INSPECTOR-1 (onUpdateNode prop wiring)
+---
 ## 2026-04-02 — debugger — Task #130: BUG-INSPECTOR-1 — onUpdateNode prop wired in SwarmCanvas
 **Outcome:** COMPLETED
 **Summary:** AgentInspector.jsx declared `onUpdateNode` in its props signature but SwarmCanvas.jsx never defined nor passed it, leaving the prop permanently undefined. Defined `handleUpdateNode` useCallback in SwarmCanvas using React Flow's `setNodes` and passed it as `onUpdateNode` to AgentInspector. No UI changes — AgentInspector's current body never calls the prop; the fix wires the contract for future use. 187/187 tests pass.
