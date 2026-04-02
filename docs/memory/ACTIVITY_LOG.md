@@ -1,4 +1,13 @@
 ---
+## 2026-04-02 — code-mapper — Task #124: BUG-SESSION-1 — agent_status sessionId Fix
+**Outcome:** COMPLETED
+**Summary:** Documented the BUG-SESSION-1 fix across CODE_MAP.md and CHANGELOG.md. All 8 agent_status WS emission sites in SwarmEngine now include sessionId; the full chain SwarmEngine → WS → useSwarm → updateAgentState → AgentInspector "Open Terminal" is now mapped. PRD Section 11 known bug #1 formally resolved.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (documentation task)
+**Decisions made:** Grouped 8 emission sites under 4 method entries; documented client-side as "no code change required — fix propagates automatically from server"
+**Blockers:** none
+**Next:** qa-tester runs Task #125 (TEST GATE: BUG-SESSION-1 verification)
+---
 ## 2026-04-02 — project-manager — Task #124 verified COMPLETED + V3.1 area status report
 **Outcome:** COMPLETED
 **Summary:** Confirmed TASK #124 (BUG-SESSION-1) is COMPLETED as self-marked by debugger. TASK #125 (TEST GATE) is the immediate next action — qa-tester must run it. Tasks #126–#132 are all PENDING/BLOCKED on the HARD gate chain. TASK_PLAN.md header updated to reflect accurate in-progress state.

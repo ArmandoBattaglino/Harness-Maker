@@ -2131,3 +2131,39 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 - The 4 known bugs documented here (sessionId gap, handoff_completed missing, trigger events missing, rss_item unhandled) are open items for future tasks
 
 ---
+
+---
+## 2026-04-02 — Task #124: BUG-SESSION-1 — agent_status sessionId Fix
+**Agent:** debugger (fix confirmed pre-existing in codebase)
+**Triggered by:** PRD Section 11 audit formally documenting that `agent_status` WS events were missing the `sessionId` field in all SwarmEngine emission sites — causing AgentInspector "Open Terminal" button to never render (agentState.sessionId always falsy).
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/SwarmEngine.js | CONFIRMED MODIFIED | All 8 `agent_status` emission sites now include `sessionId` field in the broadcast payload |
+| client/src/hooks/useSwarm.js | CONFIRMED COMPATIBLE | `agent_status` case already passes full `msg` fields to `updateAgentState` — no client change required once server emits sessionId |
+
+### Functions Added
+- None
+
+### Functions Modified
+- `SwarmEngine._spawnAgentPty(executionId, nodeId)` in `server/services/SwarmEngine.js` — `agent_status` WS broadcast now includes `sessionId` field (Task #124 — BUG-SESSION-1)
+- `SwarmEngine._onDone(executionId, nodeId)` in `server/services/SwarmEngine.js` — `agent_status` WS broadcast now includes `sessionId` (Task #124)
+- `SwarmEngine.pauseExecution(executionId)` in `server/services/SwarmEngine.js` — `agent_status` WS broadcast per agent now includes `sessionId` (Task #124)
+- `SwarmEngine.resumeExecution(executionId)` in `server/services/SwarmEngine.js` — `agent_status` WS broadcast per agent now includes `sessionId` (Task #124)
+- (4 additional emission sites in SwarmEngine.js — freezeAgent, unfreezeAgent, and related status transitions — also confirmed fixed; same pattern)
+
+### Functions Removed
+- None
+
+### Connection Changes
+- **`SwarmEngine._wsBroadcast(agent_status)` → WS → `useSwarm case 'agent_status'` → `SwarmContext.updateAgentState({status, sessionId})` → `AgentInspector` (reads `agentState.sessionId` to render "Open Terminal" button)**
+  - This chain was previously broken at the first link: SwarmEngine emitted `{ type, nodeId, status }` with no `sessionId`. Now that sessionId is present, the entire downstream chain activates without any client-side changes.
+- `useSwarm.connectWs` agent_status handler — no code change; sessionId now flows through the existing `updateAgentState(msg.nodeId, { status: msg.status, sessionId: msg.sessionId })` call automatically
+
+### Impact on Other Code
+- `AgentInspector` "Open Terminal" button (`setPtyExplosionNodeId(agentState.sessionId)`) is now reachable from the live UI — previously `agentState.sessionId` was always `undefined`/falsy so the conditional `{agentState?.sessionId && <button>}` never rendered
+- `updateAgentState` patch object now includes `sessionId` — any other consumer of `agentStates[nodeId].sessionId` from the Zustand store also benefits
+- PRD Section 11 known bug #1 ("agent_status missing sessionId") is now RESOLVED; the other 3 known bugs (handoff_completed, trigger events, rss_item) remain open
+
+---

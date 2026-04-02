@@ -1,4 +1,60 @@
 ---
+## 2026-04-02 — Task #124: BUG-SESSION-1 — agent_status sessionId Fix
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+CODE_MAP.md was last updated after PRD Section 11 documentation (2026-04-02, prd-writer). Task #124 was confirmed already fixed by debugger in SwarmEngine.js (8 emission sites) and useSwarm.js handler. The fix ensures that all `agent_status` WS events include `sessionId`, enabling AgentInspector's "Open Terminal" button to render. CHANGELOG.md last entry was the PRD Section 11 entry at line 2133.
+
+### What I did
+1. Read CODE_MAP.md header (offset 0-200) and located affected entries via Grep for `agent_status` pattern.
+2. Read CHANGELOG.md tail (offset 1700-2133) to find exact append point.
+3. Read agent memory (offset 0-60) for context.
+4. Read CODE_MAP.md entries for `_spawnAgentPty`, `_onDone`, `pauseExecution`, `resumeExecution`, `updateAgentState`, `connectWs` (offsets 1420-1500, 1473-1500, 2140-2180, 1795-1825, 2150-2160).
+5. Updated CODE_MAP.md header timestamp to Task #124.
+6. Updated `_spawnAgentPty` entry: Side effects now documents `sessionId` in agent_status payload; Last modified updated.
+7. Updated `_onDone` entry: Side effects now shows `sessionId` in agent_status payload; Last modified updated.
+8. Updated `pauseExecution` + `resumeExecution` entries: Side effects show sessionId; Last modified updated.
+9. Updated `updateAgentState` entry: Inputs and Side effects now include sessionId; noted the upstream fix propagates automatically.
+10. Updated `connectWs` entry: Purpose, Side effects, and new Complexity note document the sessionId flow-through.
+11. Appended CHANGELOG entry for Task #124.
+12. Appended ACTIVITY_LOG entry.
+13. Appended this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header timestamp; 6 function entries updated with sessionId documentation (_spawnAgentPty, _onDone, pauseExecution, resumeExecution, updateAgentState, connectWs) |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Task #124 entry with full connection chain documentation |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session summary |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- The full WS event chain `SwarmEngine._wsBroadcast(agent_status+sessionId) → useSwarm case 'agent_status' → updateAgentState({status,sessionId}) → AgentInspector` is now fully documented
+- All 8 SwarmEngine emission sites accounted for (grouped under 4 method entries; pauseExecution/resumeExecution each iterate multiple agents)
+- PRD Section 11 known bug #1 now marked RESOLVED in CHANGELOG
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None — code-mapper only documents | — | — | — |
+
+### Decisions I made
+- Did not create a separate CODE_MAP entry for every individual emission site — the 8 sites are spread across 4 methods (_spawnAgentPty, _onDone, pauseExecution, resumeExecution) so documenting each method entry is sufficient. Pattern consistent with prior sessions.
+- `connectWs` entry updated with a new Complexity note rather than a Purpose rewrite — keeps history intact while adding the sessionId flow explanation.
+- `updateAgentState` entry notes that no code change was required client-side — the fix was purely server-side; documented to prevent future confusion.
+
+### What I learned
+- When a server-side WS event gains a new field, the client-side handler often requires no code change if the handler already passes the full `msg` object to the store action. The chain "fix is upstream; client benefits automatically" is a common pattern worth documenting explicitly.
+- The `agent_status` event has 8 emission sites (not obvious from the function graph — needs Grep). The four method entries cover all 8: _spawnAgentPty (1 site), _onDone (1 site), pauseExecution (1 per running agent), resumeExecution (1 per paused agent).
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md are fully up to date through Task #124. The sessionId fix is documented across the full data flow. PRD Section 11 known bug #1 is RESOLVED. Remaining 3 open bugs (BUG-HANDOFF-1, BUG-TRIGGER-1, BUG-INSPECTOR-1) from the Section 11 audit are addressed in Tasks #126-#131.
+
+### Handoff
+qa-tester runs Task #125 (TEST GATE: BUG-SESSION-1) next. On PASS, debugger runs Task #126 (BUG-HANDOFF-1).
+
+---
 ## 2026-03-31 — Tasks #114+#115: Fix BUG-TOOLBAR-2 + BUG-TOOLBAR-3
 **Status:** COMPLETED
 **Called by:** orchestrator (post-task code-mapper invocation)

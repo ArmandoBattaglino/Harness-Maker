@@ -1801,10 +1801,10 @@ _Last updated: 2026-04-02 — Task #124: BUG-SESSION-1 agent_status sessionId fi
 - **Purpose:** Merge a partial update into the agentStates entry for a specific node. Non-destructive — existing fields are preserved; only patch keys are overwritten.
 - **Called by:** useSwarm.js::connectWs onmessage (cases 'agent_status' and 'handoff_started' — Task #63)
 - **Calls:** Zustand set with spread merge
-- **Inputs:** nodeId (string), patch (object with subset of { status, lastOutputSnippet, handoffCount })
+- **Inputs:** nodeId (string), patch (object with subset of { status, lastOutputSnippet, handoffCount, sessionId })
 - **Output:** void
-- **Side effects:** mutates agentStates[nodeId] in store
-- **Last modified:** 2026-03-27 in Task #52 by frontend-dev
+- **Side effects:** mutates agentStates[nodeId] in store — now persists sessionId from agent_status WS events (Task #124 — BUG-SESSION-1); AgentInspector reads agentState.sessionId to conditionally render "Open Terminal" button
+- **Last modified:** 2026-04-02 in Task #124 by debugger (BUG-SESSION-1: sessionId now present in patch from agent_status events — no code change to this function; behavior change is upstream in SwarmEngine)
 
 ### `client/src/store/SwarmContext.jsx` :: `updateEdgeCounter(edgeId, count)`
 - **Purpose:** Set the handoff counter for a specific edge. Used to drive animated edge labels on the canvas.
@@ -2148,14 +2148,15 @@ _Last updated: 2026-04-02 — Task #124: BUG-SESSION-1 agent_status sessionId fi
 - **Last modified:** 2026-03-31 in Task #114 by frontend-dev (BUG-TOOLBAR-2: cleanup useEffect dependency changed from [] to [workflowId]; wsRef.current also set to null in cleanup)
 
 ### `client/src/hooks/useSwarm.js` :: `connectWs(executionId)` (returned callback)
-- **Purpose:** Open a WebSocket connection to /ws/swarm?executionId=X. Closes any existing WS first. Dispatches 6 message types to useSwarmStore: agent_status → updateAgentState; handoff_started → updateEdgeCounter + addFeedEvent + updateAgentState(handoffCount increment); execution_status → setExecution; budget_update → updateBudget; circuit_breaker → addFeedEvent; hitl_required → addInboxItem. BUG-88 fix: handoff_started now correctly increments handoffCount. Task #109: agentStates read via useSwarmStore.getState() instead of stale closure.
+- **Purpose:** Open a WebSocket connection to /ws/swarm?executionId=X. Closes any existing WS first. Dispatches 6 message types to useSwarmStore: agent_status → updateAgentState (now includes sessionId — Task #124 BUG-SESSION-1); handoff_started → updateEdgeCounter + addFeedEvent + updateAgentState(handoffCount increment); execution_status → setExecution; budget_update → updateBudget; circuit_breaker → addFeedEvent; hitl_required → addInboxItem. BUG-88 fix: handoff_started now correctly increments handoffCount. Task #109: agentStates read via useSwarmStore.getState() instead of stale closure.
 - **Called by:** useSwarm — called internally by startExecution after POST succeeds; also returned as a public callback for manual reconnect
 - **Calls:** WebSocket (browser native), setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, setExecution, updateBudget, addInboxItem, JSON.parse, useSwarmStore.getState() (for agentStates inside handoff_started)
 - **Inputs:** executionId (string)
 - **Output:** void (stores new WebSocket instance in wsRef.current)
-- **Side effects:** opens WebSocket to server; registers onopen/onclose/onerror/onmessage handlers; closes previous WS if any
+- **Side effects:** opens WebSocket to server; registers onopen/onclose/onerror/onmessage handlers; closes previous WS if any; agent_status handler now passes sessionId from WS event into updateAgentState patch (Task #124 — BUG-SESSION-1)
 - **Complexity note (Task #109):** handoff_started reads `useSwarmStore.getState().agentStates[msg.sourceNodeId]` directly rather than subscribing to agentStates at hook level. This pattern avoids stale closure issues without adding a reactive subscription that would cause the hook to re-render SwarmView. Protocol selected dynamically (wss:/ws: based on location.protocol). Non-JSON frames silently discarded.
-- **Last modified:** 2026-03-31 in Task #109 by frontend-dev (agentStates moved from top-level selector to getState() inside handler)
+- **Complexity note (Task #124 — BUG-SESSION-1):** The `agent_status` case now calls `updateAgentState(msg.nodeId, { status: msg.status, sessionId: msg.sessionId })`. Previously `sessionId` was absent from the WS payload — AgentInspector's "Open Terminal" button could never render because `agentState.sessionId` was always falsy. Fix was in SwarmEngine (all 8 emission sites); this handler required no code change — sessionId flows through automatically once the server emits it.
+- **Last modified:** 2026-04-02 in Task #124 by debugger (BUG-SESSION-1: agent_status WS handler now receives and passes sessionId; no code change required client-side — server fix propagates automatically)
 
 ### `client/src/hooks/useSwarm.js` :: `startExecution(projectId, projectPath)` (returned callback)
 - **Purpose:** POST to /api/v1/swarm/:workflowId/start with {projectId, projectPath}, then call connectWs(executionId) to open the WS stream. Sets store state to running. Returns the executionId. Guards against missing workflowId with explicit throw (BUG-SWARM-4 FIXED — Task #118).
