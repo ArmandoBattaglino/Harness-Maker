@@ -12,7 +12,7 @@ import HandoffParser from './HandoffParser.js';
 //   executionId: string,
 //   workflowId: string,
 //   workflowDef: WorkflowDefinition,
-//   status: 'running' | 'stopped',
+//   status: 'running' | 'paused' | 'stopping' | 'stopped' | 'failed' | 'completed',
 //   agentStates: Map<nodeId, { sessionId, status, handoffCount, lastOutputSnippet }>,
 //   edgeCounters: Map<edgeId, number>,
 //   workflowContext: {},
@@ -55,6 +55,78 @@ class SwarmEngine {
     this._triggerManager = tm;
   }
 
+  _serializeAgentState(state = {}) {
+    return {
+      sessionId: state.sessionId ?? null,
+      status: state.status ?? 'idle',
+      handoffCount: state.handoffCount ?? 0,
+      lastOutputSnippet: state.lastOutputSnippet ?? '',
+    };
+  }
+
+  _getBudgetSnapshot(execution) {
+    let budget = { estimatedTokensUsed: 0, limitTokens: execution.workflowDef.settings?.budgetTokens || 0 };
+    if (this._budgetTracker) {
+      budget = {
+        estimatedTokensUsed: this._budgetTracker.getTotal(execution.executionId),
+        limitTokens: execution.workflowDef.settings?.budgetTokens || 0,
+      };
+    }
+    return budget;
+  }
+
+  _broadcastExecutionSnapshot(execution) {
+    if (!this._wsBroadcast || !execution) return;
+    this._wsBroadcast(execution.executionId, {
+      type: 'execution_status',
+      ...this.getStatus(execution.executionId, execution),
+    });
+  }
+
+  _broadcastAgentStatus(executionId, nodeId, state) {
+    if (!this._wsBroadcast) return;
+    this._wsBroadcast(executionId, {
+      type: 'agent_status',
+      nodeId,
+      status: state?.status ?? 'idle',
+      sessionId: state?.sessionId ?? null,
+      lastOutputSnippet: state?.lastOutputSnippet ?? '',
+    });
+  }
+
+  _setExecutionStatus(execution, status) {
+    if (!execution || execution.status === status) return;
+    execution.status = status;
+    this._broadcastExecutionSnapshot(execution);
+  }
+
+  _syncExecutionStatusFromAgents(execution) {
+    if (!execution || ['stopping', 'stopped', 'failed', 'completed'].includes(execution.status)) {
+      return execution?.status ?? null;
+    }
+
+    const agentStates = [...execution.agentStates.values()];
+    const hasRunning = agentStates.some((state) => state.status === 'running');
+    const hasPaused = agentStates.some((state) => state.status === 'paused');
+    const hasFailed = agentStates.some((state) => state.status === 'failed');
+
+    if (hasFailed) {
+      this._setExecutionStatus(execution, 'failed');
+    } else if (hasRunning) {
+      this._setExecutionStatus(execution, 'running');
+    } else if (hasPaused) {
+      this._setExecutionStatus(execution, 'paused');
+    } else if (agentStates.length > 0) {
+      this._setExecutionStatus(execution, 'completed');
+      if (execution.heartbeatTimer) {
+        clearInterval(execution.heartbeatTimer);
+        execution.heartbeatTimer = null;
+      }
+    }
+
+    return execution.status;
+  }
+
   /**
    * Start a new workflow execution.
    * Implemented in Task #46.2.
@@ -95,6 +167,8 @@ class SwarmEngine {
 
     // 6. Start heartbeat to keep agent PTYs alive
     this._startHeartbeat(executionId);
+
+    this._broadcastExecutionSnapshot(execution);
 
     return executionId;
   }
@@ -158,6 +232,7 @@ class SwarmEngine {
       const state = execution.agentStates.get(nodeId);
       if (state) {
         state.lastOutputSnippet = (state.lastOutputSnippet + chunk).slice(-500);
+        this._broadcastAgentStatus(executionId, nodeId, state);
       }
 
       // Budget tracking (if budgetTracker attached later — #49)
@@ -194,9 +269,8 @@ class SwarmEngine {
     }
 
     // Emit WS status update
-    if (this._wsBroadcast) {
-      this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'running', sessionId });
-    }
+    this._broadcastAgentStatus(executionId, nodeId, execution.agentStates.get(nodeId));
+    this._syncExecutionStatusFromAgents(execution);
   }
 
   /**
@@ -372,17 +446,13 @@ class SwarmEngine {
     // 9. Update source agent status to 'done' after handoff
     if (sourceState) {
       sourceState.status = 'done';
-      if (this._wsBroadcast) {
-        this._wsBroadcast(executionId, { type: 'agent_status', nodeId: sourceNodeId, status: 'done', sessionId: sourceState.sessionId });
-      }
+      this._broadcastAgentStatus(executionId, sourceNodeId, sourceState);
     }
 
     // 10. Update target agent status to 'running'
     if (targetState) {
       targetState.status = 'running';
-      if (this._wsBroadcast) {
-        this._wsBroadcast(executionId, { type: 'agent_status', nodeId: targetId, status: 'running', sessionId: targetState.sessionId });
-      }
+      this._broadcastAgentStatus(executionId, targetId, targetState);
     }
 
     // 11. Broadcast handoff_completed (FR-V3-43)
@@ -393,6 +463,8 @@ class SwarmEngine {
         targetNodeId: targetId,
       });
     }
+
+    this._syncExecutionStatusFromAgents(execution);
   }
 
   /**
@@ -406,10 +478,8 @@ class SwarmEngine {
     if (!execution) return;
     const state = execution.agentStates.get(nodeId);
     if (state) state.status = 'done';
-    if (this._wsBroadcast) {
-      this._wsBroadcast(executionId, { type: 'execution_status', status: 'agent_done', nodeId });
-      this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'done', sessionId: state?.sessionId });
-    }
+    this._broadcastAgentStatus(executionId, nodeId, state);
+    this._syncExecutionStatusFromAgents(execution);
   }
 
   /**
@@ -419,13 +489,28 @@ class SwarmEngine {
    */
   async stopExecution(executionId) {
     const execution = this._executions.get(executionId);
-    if (!execution) return;
+    if (!execution) return null;
 
-    // Stop heartbeat timer
-    clearInterval(execution.heartbeatTimer);
+    if (['stopped', 'failed', 'completed'].includes(execution.status)) {
+      return this.getStatus(executionId, execution);
+    }
 
-    // Remove swarm tap listeners BEFORE killing sessions
+    this._setExecutionStatus(execution, 'stopping');
+
+    if (execution.heartbeatTimer) {
+      clearInterval(execution.heartbeatTimer);
+      execution.heartbeatTimer = null;
+    }
+
     for (const [nodeId, state] of execution.agentStates) {
+      if (['running', 'paused'].includes(state.status)) {
+        state.status = 'stopping';
+        this._broadcastAgentStatus(executionId, nodeId, state);
+      }
+    }
+    this._broadcastExecutionSnapshot(execution);
+
+    for (const [, state] of execution.agentStates) {
       if (state.sessionId && state.tapFn) {
         const session = this._sessionManager.getSession(state.sessionId);
         if (session) {
@@ -434,28 +519,39 @@ class SwarmEngine {
       }
     }
 
-    // Kill all agent PTY sessions
-    for (const [nodeId, state] of execution.agentStates) {
-      if (state.sessionId) {
-        await this._sessionManager.killSession(state.sessionId);
+    try {
+      for (const [, state] of execution.agentStates) {
+        if (state.sessionId) {
+          await this._sessionManager.killSession(state.sessionId);
+        }
       }
+    } catch (error) {
+      this._setExecutionStatus(execution, 'failed');
+      throw error;
     }
 
-    execution.status = 'stopped';
-    this._executions.delete(executionId);
+    for (const [, state] of execution.agentStates) {
+      if (!['done', 'failed'].includes(state.status)) {
+        state.status = 'stopped';
+      }
+      state.sessionId = null;
+      state.tapFn = null;
+    }
 
-    // Clean up any RSS pollers / webhooks registered for this execution.
-    // Without this call the TriggerManager intervals keep running indefinitely
-    // after the execution ends (BUG-97 fix).
+    for (const [nodeId, state] of execution.agentStates) {
+      this._broadcastAgentStatus(executionId, nodeId, state);
+    }
+
     if (this._triggerManager) {
       this._triggerManager.cleanupExecution(executionId);
     }
 
-    // Clear budget tracking data for this execution.
-    // Without this call the BudgetTracker accumulates memory (BUG-93 fix).
     if (this._budgetTracker) {
       this._budgetTracker.clearExecution(executionId);
     }
+
+    this._setExecutionStatus(execution, 'stopped');
+    return this.getStatus(executionId, execution);
   }
 
   /**
@@ -466,15 +562,18 @@ class SwarmEngine {
    */
   pauseExecution(executionId) {
     const execution = this._executions.get(executionId);
-    if (!execution) return;
+    if (!execution || execution.status !== 'running') return null;
     for (const [nodeId, state] of execution.agentStates) {
       if (state.status === 'running') {
-        state.status = 'paused';
-        if (this._wsBroadcast) {
-          this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'paused', sessionId: state.sessionId });
+        if (state.sessionId) {
+          this._sessionManager.writeInput(state.sessionId, '\x03');
         }
+        state.status = 'paused';
+        this._broadcastAgentStatus(executionId, nodeId, state);
       }
     }
+    this._syncExecutionStatusFromAgents(execution);
+    return this.getStatus(executionId, execution);
   }
 
   /**
@@ -485,15 +584,21 @@ class SwarmEngine {
    */
   resumeExecution(executionId) {
     const execution = this._executions.get(executionId);
-    if (!execution) return;
+    if (!execution || execution.status !== 'paused') return null;
     for (const [nodeId, state] of execution.agentStates) {
       if (state.status === 'paused') {
-        state.status = 'running';
-        if (this._wsBroadcast) {
-          this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'running', sessionId: state.sessionId });
+        if (state.sessionId) {
+          this._sessionManager.writeInput(
+            state.sessionId,
+            'Resume the swarm workflow from the latest shared context and continue your task.\n'
+          );
         }
+        state.status = 'running';
+        this._broadcastAgentStatus(executionId, nodeId, state);
       }
     }
+    this._syncExecutionStatusFromAgents(execution);
+    return this.getStatus(executionId, execution);
   }
 
   /**
@@ -522,8 +627,9 @@ class SwarmEngine {
         nodeId,
         item: execution.inboxItems[execution.inboxItems.length - 1],
       });
-      this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'paused', sessionId: state.sessionId });
     }
+    this._broadcastAgentStatus(executionId, nodeId, state);
+    this._syncExecutionStatusFromAgents(execution);
   }
 
   /**
@@ -541,9 +647,8 @@ class SwarmEngine {
 
     state.status = 'running';
 
-    if (this._wsBroadcast) {
-      this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'running', sessionId: state.sessionId });
-    }
+    this._broadcastAgentStatus(executionId, nodeId, state);
+    this._syncExecutionStatusFromAgents(execution);
   }
 
   /**
@@ -563,24 +668,20 @@ class SwarmEngine {
    * @param {string} executionId
    * @returns {object|null} execution status or null if not found
    */
-  getStatus(executionId) {
-    const e = this._executions.get(executionId);
+  getStatus(executionId, executionOverride = null) {
+    const e = executionOverride || this._executions.get(executionId);
     if (!e) return null;
-
-    // Get real budget data from budgetTracker (BUG-98 fix)
-    let budget = { estimatedTokensUsed: 0, limitTokens: 0 };
-    if (this._budgetTracker) {
-      const totalTokens = this._budgetTracker.getTotal(executionId);
-      budget = { estimatedTokensUsed: totalTokens, limitTokens: 0 };
-    }
 
     return {
       executionId: e.executionId,
       workflowId: e.workflowId,
       status: e.status,
-      agentStates: Object.fromEntries(e.agentStates),
+      agentStates: Object.fromEntries(
+        [...e.agentStates.entries()].map(([nodeId, state]) => [nodeId, this._serializeAgentState(state)])
+      ),
       edgeCounters: Object.fromEntries(e.edgeCounters),
-      budget,
+      budget: this._getBudgetSnapshot(e),
+      inboxItems: e.inboxItems.map((item) => ({ ...item })),
     };
   }
 }

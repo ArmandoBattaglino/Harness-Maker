@@ -10,7 +10,7 @@ import { spawn } from 'child_process';
 import express from 'express';
 import { WebSocketServer } from 'ws';
 
-import { discoverClaudeBinary } from './services/BinaryDiscovery.js';
+import { discoverClaudeBinary, discoverCodexBinary } from './services/BinaryDiscovery.js';
 import { ConfigStore } from './services/ConfigStore.js';
 import { WorkflowStore } from './services/WorkflowStore.js';
 import { ProcessRegistry } from './services/ProcessRegistry.js';
@@ -120,6 +120,7 @@ const PORT = parseInt(process.env.PORT ?? '3000', 10);
 // 2–4. Startup sequence (async IIFE so we can await and handle fatal errors)
 // ---------------------------------------------------------------------------
 let claudeBin;
+let codexBin = null;
 
 async function startup() {
   console.log(`[startup] Starting Claude Code Visual Manager v${APP_VERSION}`);
@@ -134,6 +135,13 @@ async function startup() {
   } catch (err) {
     console.error(`[FATAL] ${err.message}`);
     process.exit(1);
+  }
+
+  try {
+    codexBin = await discoverCodexBinary();
+    console.log(`[startup] Discovered codex binary for scaffold fallback: ${codexBin}`);
+  } catch (err) {
+    console.warn(`[startup] Codex scaffold fallback unavailable: ${err.message}`);
   }
 
   // Step 3: Load config (creates defaults if file missing)
@@ -236,7 +244,7 @@ async function startup() {
   app.locals.sessionManager = sessionManager;
 
   // Swarm execution control routes — mounted here so swarmEngine is already assigned
-  app.use('/api/v1/swarm', swarmRoutes(swarmEngine, sessionManager, claudeBin));
+  app.use('/api/v1/swarm', swarmRoutes(swarmEngine, sessionManager, { claudeBin, codexBin }));
 
   // HITL inbox routes (approve/reject — separate router, same /api/v1/swarm prefix)
   app.use('/api/v1/swarm', inboxRoutes(swarmEngine));

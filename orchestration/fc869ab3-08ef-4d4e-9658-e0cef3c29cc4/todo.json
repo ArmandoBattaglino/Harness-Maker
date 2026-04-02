@@ -1,0 +1,10 @@
+{
+  "request_id": "fc869ab3-08ef-4d4e-9658-e0cef3c29cc4",
+  "created_at": "2026-04-02T17:29:48.754Z",
+  "user_prompt": "TASK #137: BUG-SWARM-006 — Rehydrate full execution snapshot on WS reconnect.\n\nRead these first:\n- docs/TASK_PLAN.md (task #137 section)\n- docs/memory/PROJECT.md\n- docs/memory/DECISIONS.md\n- docs/memory/PROGRESS.md\n- docs/memory/CONTEXT.md\n- docs/memory/CODE_MAP.md\n- docs/memory/ACTIVITY_LOG.md\n\nRelevant files likely include:\n- server/routes/swarmHandler.js\n- client/src/hooks/useSwarm.js\n- client/src/store/SwarmContext.jsx\n- client/src/views/SwarmView.jsx\n- any related Swarm snapshot/hydration components\n\nGoal:\nFix reconnect/initial hydration so the client applies the full execution snapshot payload, not just executionId/status. Restore agentStates, edge counters, budget, feed-critical metadata, and execution status from the server snapshot. Verify multi-tab/reload continuity as far as possible from code/tests.\n\nConstraints:\n- Make minimal safe changes.\n- Run relevant tests/builds.\n- Update docs/TASK_PLAN.md status/completion note for #137 if completed.\n- Do not revert unrelated changes.\n- Report changed files and verification results.",
+  "requested_agent": "frontend-dev",
+  "status": "active",
+  "steps": [],
+  "next_actions": [],
+  "summary": null
+}

@@ -7,7 +7,8 @@ import path from 'path';
 import { execFileSync } from 'child_process';
 
 // Module-level cache
-let _cachedPath = null;
+let _cachedClaudePath = null;
+let _cachedCodexPath = null;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -31,13 +32,13 @@ function validateBinary(binaryPath) {
   });
 }
 
-function findOnPath() {
+function findOnPath(binaryName) {
   // On Windows, use 'where'; on POSIX, use 'which'
   const isWindows = process.platform === 'win32';
   const cmd = isWindows ? 'where.exe' : 'which';
 
   try {
-    const result = execFileSync(cmd, ['claude'], {
+    const result = execFileSync(cmd, [binaryName], {
       shell: false,
       stdio: 'pipe',
       timeout: 5000,
@@ -69,9 +70,20 @@ function findInLocalAppData() {
 // Public API
 // ---------------------------------------------------------------------------
 
+function findCodexSandboxBinary() {
+  const userHome = process.env.USERPROFILE || process.env.HOME;
+  if (!userHome) return null;
+
+  const candidate = path.join(userHome, '.codex', '.sandbox-bin', 'codex.exe');
+  if (fileExists(candidate)) {
+    return candidate;
+  }
+  return null;
+}
+
 export async function discoverClaudeBinary() {
-  if (_cachedPath !== null) {
-    return _cachedPath;
+  if (_cachedClaudePath !== null) {
+    return _cachedClaudePath;
   }
 
   // Step 1: Explicit env override
@@ -83,17 +95,17 @@ export async function discoverClaudeBinary() {
       );
     }
     validateBinary(envPath);
-    _cachedPath = envPath;
-    return _cachedPath;
+    _cachedClaudePath = envPath;
+    return _cachedClaudePath;
   }
 
   // Step 2: PATH lookup
-  const pathCandidate = findOnPath();
+  const pathCandidate = findOnPath('claude');
   if (pathCandidate) {
     try {
       validateBinary(pathCandidate);
-      _cachedPath = pathCandidate;
-      return _cachedPath;
+      _cachedClaudePath = pathCandidate;
+      return _cachedClaudePath;
     } catch {
       // Binary found on PATH but failed --version; continue to next step
     }
@@ -104,8 +116,8 @@ export async function discoverClaudeBinary() {
   if (localCandidate) {
     try {
       validateBinary(localCandidate);
-      _cachedPath = localCandidate;
-      return _cachedPath;
+      _cachedClaudePath = localCandidate;
+      return _cachedClaudePath;
     } catch {
       // Found but failed --version; fall through to error
     }
@@ -114,5 +126,49 @@ export async function discoverClaudeBinary() {
   // Step 4: Not found
   throw new Error(
     'Claude CLI not found. Install from https://claude.ai/code or set CLAUDE_BIN env var.'
+  );
+}
+
+export async function discoverCodexBinary() {
+  if (_cachedCodexPath !== null) {
+    return _cachedCodexPath;
+  }
+
+  if (process.env.CODEX_BIN) {
+    const envPath = process.env.CODEX_BIN;
+    if (!fileExists(envPath)) {
+      throw new Error(
+        `CODEX_BIN is set to "${envPath}" but the file does not exist or is not executable.`
+      );
+    }
+    validateBinary(envPath);
+    _cachedCodexPath = envPath;
+    return _cachedCodexPath;
+  }
+
+  const pathCandidate = findOnPath('codex');
+  if (pathCandidate) {
+    try {
+      validateBinary(pathCandidate);
+      _cachedCodexPath = pathCandidate;
+      return _cachedCodexPath;
+    } catch {
+      // continue to sandbox fallback
+    }
+  }
+
+  const sandboxCandidate = findCodexSandboxBinary();
+  if (sandboxCandidate) {
+    try {
+      validateBinary(sandboxCandidate);
+      _cachedCodexPath = sandboxCandidate;
+      return _cachedCodexPath;
+    } catch {
+      // fall through to error
+    }
+  }
+
+  throw new Error(
+    'Codex CLI not found. Set CODEX_BIN or install/configure a local Codex executable.'
   );
 }

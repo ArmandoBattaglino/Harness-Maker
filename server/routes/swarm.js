@@ -3,106 +3,50 @@
 //
 // POST   /api/v1/swarm/scaffold                   → 201 { workflowId, workflowDef }
 // POST   /api/v1/swarm/:workflowId/start         → 201 { executionId, status }
-// POST   /api/v1/swarm/:executionId/pause         → 200 { ok: true }
-// POST   /api/v1/swarm/:executionId/resume        → 200 { ok: true }
-// DELETE /api/v1/swarm/:executionId               → 204
-// GET    /api/v1/swarm/:executionId/status        → 200 { executionId, status, agentStates, edgeCounters, budget }
+// POST   /api/v1/swarm/:executionId/pause        → 200 { ok: true }
+// POST   /api/v1/swarm/:executionId/resume       → 200 { ok: true }
+// DELETE /api/v1/swarm/:executionId              → 204
+// GET    /api/v1/swarm/:executionId/status       → 200 { executionId, status, agentStates, edgeCounters, budget }
 // GET    /api/v1/swarm/:executionId/agent/:nodeId/output → 200 { output: string }
-// POST   /api/v1/swarm/:executionId/broadcast     → 200 { sent: number }
+// POST   /api/v1/swarm/:executionId/broadcast    → 200 { sent: number }
 
 import { Router } from 'express';
-import { spawn } from 'child_process';
-import os from 'os';
+import { generateWorkflowFromPrompt } from '../services/ScaffoldGenerator.js';
 
-// ---------------------------------------------------------------------------
-// generateWorkflowFromPrompt(claudeBin, prompt)
-// Spawns `claude -p <fullPrompt> --output-format json` to produce a workflow
-// definition JSON from a natural-language description.
-// Uses the installed Claude Code binary (no API key required).
-// Strips accidental markdown fences and validates basic structure.
-// Throws on spawn failure, JSON parse error, or invalid structure.
-// ---------------------------------------------------------------------------
-async function generateWorkflowFromPrompt(claudeBin, prompt) {
-  const fullPrompt = `You are a workflow designer. Given a user description, generate a multi-agent workflow definition as JSON.
-
-Output ONLY valid JSON matching this schema (no markdown, no explanation):
-{
-  "name": "string (max 100 chars, alphanumeric + spaces + hyphens)",
-  "description": "string (max 500 chars)",
-  "nodes": [
-    {
-      "id": "string (unique, e.g. node-1)",
-      "type": "agent",
-      "data": {
-        "label": "string",
-        "systemPrompt": "string (the agent role and instructions)",
-        "isTriageNode": boolean
-      },
-      "position": { "x": number, "y": number }
-    }
-  ],
-  "edges": [
-    {
-      "id": "string (unique, e.g. edge-1)",
-      "source": "node-id",
-      "target": "node-id",
-      "type": "handoff"
-    }
-  ]
+function getAgentNodeById(workflowDef, nodeId) {
+  return workflowDef?.nodes?.find((node) => node.id === nodeId && node.type === 'agent') ?? null;
 }
 
-Rules:
-- First node should have isTriageNode: true
-- Nodes positioned left to right, x/y spaced 200px apart
-- Maximum 10 nodes, 15 edges
-- Name must match /^[\\w\\s\\-.]+$/
+function isAgentInDepartment(agentNode, departmentId) {
+  if (!agentNode || !departmentId) return false;
+  return agentNode.parentId === departmentId || agentNode.data?.parentDepartmentId === departmentId;
+}
 
-User description: ${prompt}`;
+export function resolveBroadcastNodeTargets(execution, scope, targetId) {
+  const normalizedScope = scope === 'department' || scope === 'agent' ? scope : 'all';
+  const targets = [];
 
-  return new Promise((resolve, reject) => {
-    const args = [
-      '-p', fullPrompt,
-      '--output-format', 'json',
-      '--max-turns', '1',
-      '--no-session-persistence',
-      '--allowedTools', 'none',
-    ];
+  for (const [nodeId, state] of Object.entries(execution.agentStates ?? {})) {
+    if (state.status !== 'running' || !state.sessionId) continue;
 
-    const child = spawn(claudeBin, args, {
-      cwd: os.tmpdir(),
-      stdio: ['pipe', 'pipe', 'pipe'],
-      shell: false, // SEC-02
+    const agentNode = getAgentNodeById(execution.workflowDef, nodeId);
+    if (!agentNode) continue;
+
+    const matchesScope =
+      normalizedScope === 'all'
+      || (normalizedScope === 'agent' && nodeId === targetId)
+      || (normalizedScope === 'department' && isAgentInDepartment(agentNode, targetId));
+
+    if (!matchesScope) continue;
+
+    targets.push({
+      nodeId,
+      sessionId: state.sessionId,
+      label: agentNode.data?.label || nodeId,
     });
+  }
 
-    // CRITICAL: close stdin immediately — DEC-005 / GitHub #7497
-    try { child.stdin.end(); } catch { /* ignore */ }
-
-    let stdout = '';
-    let stderr = '';
-    child.stdout.on('data', (chunk) => { stdout += chunk.toString(); });
-    child.stderr.on('data', (chunk) => { stderr += chunk.toString(); });
-
-    child.on('close', (code) => {
-      if (code !== 0) {
-        return reject(new Error(`Claude exited ${code}: ${stderr.slice(0, 200)}`));
-      }
-      try {
-        // --output-format json returns a single JSON object with a `result` field
-        const parsed = JSON.parse(stdout.trim());
-        const text = parsed.result ?? parsed.content ?? stdout.trim();
-        const clean = String(text).replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/m, '').trim();
-        const wf = JSON.parse(clean);
-        if (!wf.name || !Array.isArray(wf.nodes) || wf.nodes.length === 0) {
-          throw new Error('Invalid workflow structure from Claude');
-        }
-        resolve(wf);
-      } catch (e) {
-        reject(new Error(`Failed to parse workflow JSON: ${e.message}`));
-      }
-    });
-
-    child.on('error', (err) => reject(new Error(`Spawn failed: ${err.message}`)));
-  });
+  return targets;
 }
 
 /**
@@ -110,20 +54,21 @@ User description: ${prompt}`;
  *
  * @param {import('../services/SwarmEngine.js').default} swarmEngine
  * @param {import('../services/SessionManager.js').SessionManager} sessionManager
- * @param {string} claudeBin  Path to the claude binary (set by BinaryDiscovery at startup)
+ * @param {{ claudeBin?: string|null, codexBin?: string|null }} scaffoldProviders
  * @returns {Router}
  */
-export default function swarmRoutes(swarmEngine, sessionManager, claudeBin) {
+export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProviders = {}) {
   const router = Router();
 
   // -------------------------------------------------------------------------
   // POST /api/v1/swarm/scaffold
   // Body: { prompt: string, projectId?: string }
-  // Calls Claude API to generate a workflow definition, saves to WorkflowStore.
+  // Calls the configured scaffold provider(s) to generate a workflow definition,
+  // then saves it to WorkflowStore.
   // → 201 { workflowId, workflowDef }
   // → 400 if prompt missing, empty, or > 2000 chars
-  // → 503 if WorkflowStore unavailable
-  // → 500 on Claude API failure or invalid response
+  // → 503 if WorkflowStore or scaffold providers are unavailable
+  // → 500 on provider failure or invalid response
   // IMPORTANT: This literal route must be declared BEFORE /:workflowId/* routes
   //            so Express does not treat 'scaffold' as a workflowId param.
   // -------------------------------------------------------------------------
@@ -137,14 +82,17 @@ export default function swarmRoutes(swarmEngine, sessionManager, claudeBin) {
       return res.status(400).json({ error: 'prompt exceeds 2000 character limit' });
     }
 
-    if (!claudeBin) {
-      return res.status(503).json({ error: 'Claude binary not configured — restart the server' });
+    if (!scaffoldProviders.claudeBin && !scaffoldProviders.codexBin) {
+      return res.status(503).json({ error: 'No scaffold provider configured — restart the server' });
     }
 
     try {
-      const workflowDef = await generateWorkflowFromPrompt(claudeBin, prompt.trim());
+      const workflowDef = await generateWorkflowFromPrompt({
+        prompt: prompt.trim(),
+        claudeBin: scaffoldProviders.claudeBin,
+        codexBin: scaffoldProviders.codexBin,
+      });
 
-      // Attach projectId if provided
       if (projectId && typeof projectId === 'string') {
         workflowDef.projectId = projectId.trim();
       }
@@ -156,7 +104,7 @@ export default function swarmRoutes(swarmEngine, sessionManager, claudeBin) {
       return res.status(201).json({ workflowId: created.id, workflowDef: created });
     } catch (err) {
       console.error(`[swarm] POST /scaffold error: ${err.message}`);
-      return res.status(500).json({ error: err.message });
+      return res.status(err.statusCode ?? 500).json({ error: err.message });
     }
   });
 
@@ -198,8 +146,7 @@ export default function swarmRoutes(swarmEngine, sessionManager, claudeBin) {
 
   // -------------------------------------------------------------------------
   // POST /api/v1/swarm/:executionId/pause
-  // Sends Ctrl-C to all running agent sessions and sets their status to 'paused'.
-  // Calls swarmEngine.pauseExecution() to update state and broadcast WS events.
+  // Canonical pause transition. SwarmEngine owns PTY interruption + status updates.
   // → 200 { ok: true }
   // → 404 if execution not found
   // -------------------------------------------------------------------------
@@ -211,18 +158,13 @@ export default function swarmRoutes(swarmEngine, sessionManager, claudeBin) {
       if (!execution) {
         return res.status(404).json({ error: 'Execution not found' });
       }
-
-      // Send Ctrl-C to every running agent session
-      for (const [nodeId, state] of Object.entries(execution.agentStates)) {
-        if (state.status === 'running' && state.sessionId) {
-          sessionManager.writeInput(state.sessionId, '\x03');
-        }
+      if (execution.status !== 'running') {
+        return res.status(409).json({ error: `Execution cannot be paused from status '${execution.status}'` });
       }
 
-      // Update execution state to 'paused' and broadcast WS events (BUG-94 fix)
-      swarmEngine.pauseExecution(executionId);
+      const nextStatus = swarmEngine.pauseExecution(executionId);
 
-      return res.status(200).json({ ok: true });
+      return res.status(200).json({ ok: true, status: nextStatus?.status ?? 'paused' });
     } catch (err) {
       console.error(`[swarm] POST /:executionId/pause error: ${err.message}`);
       return res.status(500).json({ error: 'Internal server error' });
@@ -231,8 +173,7 @@ export default function swarmRoutes(swarmEngine, sessionManager, claudeBin) {
 
   // -------------------------------------------------------------------------
   // POST /api/v1/swarm/:executionId/resume
-  // Resumes all paused agents by setting their status back to 'running'.
-  // Calls swarmEngine.resumeExecution() to update state and broadcast WS events.
+  // Canonical resume transition. SwarmEngine owns PTY re-entry + status updates.
   // → 200 { ok: true }
   // → 404 if execution not found
   // -------------------------------------------------------------------------
@@ -244,11 +185,13 @@ export default function swarmRoutes(swarmEngine, sessionManager, claudeBin) {
       if (!execution) {
         return res.status(404).json({ error: 'Execution not found' });
       }
+      if (execution.status !== 'paused') {
+        return res.status(409).json({ error: `Execution cannot be resumed from status '${execution.status}'` });
+      }
 
-      // Resume execution — set paused agents to 'running' (BUG-95 fix)
-      swarmEngine.resumeExecution(executionId);
+      const nextStatus = swarmEngine.resumeExecution(executionId);
 
-      return res.status(200).json({ ok: true });
+      return res.status(200).json({ ok: true, status: nextStatus?.status ?? 'running' });
     } catch (err) {
       console.error(`[swarm] POST /:executionId/resume error: ${err.message}`);
       return res.status(500).json({ error: 'Internal server error' });
@@ -262,6 +205,10 @@ export default function swarmRoutes(swarmEngine, sessionManager, claudeBin) {
   router.delete('/:executionId', async (req, res) => {
     try {
       const { executionId } = req.params;
+      const execution = swarmEngine.getStatus(executionId);
+      if (!execution) {
+        return res.status(404).json({ error: 'Execution not found' });
+      }
       await swarmEngine.stopExecution(executionId);
       return res.status(204).end();
     } catch (err) {
@@ -335,7 +282,7 @@ export default function swarmRoutes(swarmEngine, sessionManager, claudeBin) {
   router.post('/:executionId/broadcast', (req, res) => {
     try {
       const { executionId } = req.params;
-      const { text, scope, mode } = req.body ?? {};
+      const { text, scope, targetId, mode } = req.body ?? {};
 
       const execution = swarmEngine.getStatus(executionId);
       if (!execution) {
@@ -346,40 +293,44 @@ export default function swarmRoutes(swarmEngine, sessionManager, claudeBin) {
         return res.status(400).json({ error: 'text is required and must be a string' });
       }
 
-      const broadcastMode = mode === 'hard' ? 'hard' : 'soft';
-
-      // Collect target agent session IDs filtered by scope
-      const targets = [];
-      for (const [nodeId, state] of Object.entries(execution.agentStates)) {
-        if (state.status !== 'running' || !state.sessionId) continue;
-
-        // scope: 'all' → all running agents
-        //        agentNodeId → exact node match
-        //        departmentId → match by nodeId prefix or exact (best-effort for now)
-        if (!scope || scope === 'all' || scope === nodeId) {
-          targets.push(state.sessionId);
-        }
+      if (scope && !['all', 'department', 'agent'].includes(scope)) {
+        return res.status(400).json({ error: "scope must be 'all', 'department', or 'agent'" });
+      }
+      if ((scope === 'department' || scope === 'agent') && (!targetId || typeof targetId !== 'string')) {
+        return res.status(400).json({ error: 'targetId is required for department and agent broadcasts' });
       }
 
-      // Send to each target
-      for (const sessionId of targets) {
+      const broadcastMode = mode === 'hard' ? 'hard' : 'soft';
+      const executionRecord = swarmEngine.getExecution(executionId);
+      const targets = resolveBroadcastNodeTargets(
+        {
+          ...execution,
+          workflowDef: executionRecord?.workflowDef ?? null,
+        },
+        scope,
+        targetId
+      );
+
+      for (const target of targets) {
         if (broadcastMode === 'soft') {
-          // Soft: append text + ESC marker + newline — agent reads and decides
-          sessionManager.writeInput(sessionId, text + '\x1b\n');
+          sessionManager.writeInput(target.sessionId, text + '\x1b\n');
         } else {
-          // Hard: interrupt (Ctrl-C), wait 300ms, send text + ESC, wait 100ms, send newline
-          // Fire-and-forget — no await
-          sessionManager.writeInput(sessionId, '\x03');
+          sessionManager.writeInput(target.sessionId, '\x03');
           setTimeout(() => {
-            sessionManager.writeInput(sessionId, text + '\x1b');
+            sessionManager.writeInput(target.sessionId, text + '\x1b');
             setTimeout(() => {
-              sessionManager.writeInput(sessionId, '\n');
+              sessionManager.writeInput(target.sessionId, '\n');
             }, 100);
           }, 300);
         }
       }
 
-      return res.status(200).json({ sent: targets.length });
+      return res.status(200).json({
+        sent: targets.length,
+        scope: scope ?? 'all',
+        targetId: targetId ?? null,
+        recipientNodeIds: targets.map((target) => target.nodeId),
+      });
     } catch (err) {
       console.error(`[swarm] POST /:executionId/broadcast error: ${err.message}`);
       return res.status(500).json({ error: 'Internal server error' });

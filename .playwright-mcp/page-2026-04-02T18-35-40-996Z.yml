@@ -1,0 +1,130 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e7]: terminal
+      - generic [ref=e8]:
+        - heading "Claude Code" [level=1] [ref=e9]
+        - paragraph [ref=e10]: Visual Manager
+    - navigation [ref=e11]:
+      - button "dashboard Projects" [ref=e12] [cursor=pointer]:
+        - generic [ref=e13]: dashboard
+        - generic [ref=e14]: Projects
+      - button "terminal Live Terminal" [ref=e15] [cursor=pointer]:
+        - generic [ref=e16]: terminal
+        - generic [ref=e17]: Live Terminal
+      - button "play_arrow Job Runner" [ref=e18] [cursor=pointer]:
+        - generic [ref=e19]: play_arrow
+        - generic [ref=e20]: Job Runner
+      - button "memory Deployments" [ref=e21] [cursor=pointer]:
+        - generic [ref=e22]: memory
+        - generic [ref=e23]: Deployments
+      - button "description Context Editor" [ref=e24] [cursor=pointer]:
+        - generic [ref=e25]: description
+        - generic [ref=e26]: Context Editor
+      - button "hub Swarm" [active] [ref=e27] [cursor=pointer]:
+        - generic [ref=e28]: hub
+        - generic [ref=e29]: Swarm
+    - generic [ref=e30]:
+      - generic [ref=e31]:
+        - generic [ref=e32]: Active PTY Sessions
+        - generic [ref=e33]: 1 Total
+      - list [ref=e34]:
+        - listitem [ref=e255]:
+          - button "Prova PID 16180" [ref=e256] [cursor=pointer]:
+            - generic [ref=e257]:
+              - generic [ref=e260]: Prova
+              - generic [ref=e261]: PID 16180
+      - button "add New Local Session" [ref=e37] [cursor=pointer]:
+        - generic [ref=e38]: add
+        - generic [ref=e39]: New Local Session
+    - generic [ref=e41]:
+      - generic [ref=e44]: Active
+      - generic [ref=e45]:
+        - button "Open settings" [ref=e46] [cursor=pointer]:
+          - generic [ref=e47]: settings
+        - generic [ref=e48]: v3.0.0
+  - main [ref=e49]:
+    - generic [ref=e425]:
+      - generic [ref=e426]:
+        - generic [ref=e427]: Swarm Orchestrator
+        - button "📥 HITL" [ref=e428] [cursor=pointer]
+        - button "Run" [ref=e429] [cursor=pointer]
+        - generic [ref=e430]: ● idle
+      - generic [ref=e432]:
+        - generic [ref=e433]: ✨
+        - textbox "Describe your workflow... e.g. 'Triage customer requests then route to billing or support agents'" [ref=e434]
+        - button "Generate" [disabled] [ref=e435]
+      - generic [ref=e436]:
+        - generic [ref=e437]: Saved workflows
+        - combobox [ref=e438]:
+          - option "Select a saved workflow"
+          - option "Research-Write-Review Team" [selected]
+          - option "Customer Support Triage"
+          - option "A Customer Support Triage Routes Requests Workflow"
+          - option "Customer Request Router"
+          - option "Test Workflow"
+          - option "Test Workflow"
+          - option "Customer Support Triage Workflow"
+          - option "Customer Triage Workflow"
+          - option "Customer Support Ticket Router"
+          - option "Customer Support Triage Workflow"
+          - option "Button State Verification Workflow"
+          - option "Customer Support Triage Workflow"
+          - option "Workflow di Marketing"
+          - option "Prova Workflow"
+          - option "Customer Request Triage Workflow"
+        - button "Load workflow" [ref=e439] [cursor=pointer]
+        - button "Refresh" [ref=e440] [cursor=pointer]
+        - generic [ref=e441]: Shows current-project workflows plus unscoped ones
+      - generic [ref=e443]:
+        - button "All Agents" [ref=e445] [cursor=pointer]
+        - generic [ref=e446]:
+          - application [ref=e447]:
+            - generic [ref=e449]:
+              - generic:
+                - generic:
+                  - img:
+                    - group "Edge from node-1 to node-2" [ref=e450] [cursor=pointer]
+                  - img:
+                    - group "Edge from node-2 to node-3" [ref=e453] [cursor=pointer]
+                  - img:
+                    - group "Edge from node-3 to node-2" [ref=e456] [cursor=pointer]
+                - generic:
+                  - group [ref=e459]:
+                    - generic [ref=e460] [cursor=pointer]:
+                      - generic [ref=e462]:
+                        - img "agent" [ref=e463]: 🤖
+                        - generic [ref=e464]: Ricercatore
+                      - generic [ref=e465]: idle
+                  - group [ref=e467]:
+                    - generic [ref=e468] [cursor=pointer]:
+                      - generic [ref=e470]:
+                        - img "agent" [ref=e471]: 🤖
+                        - generic [ref=e472]: Writer
+                      - generic [ref=e473]: idle
+                  - group [ref=e475]:
+                    - generic [ref=e476] [cursor=pointer]:
+                      - generic [ref=e478]:
+                        - img "agent" [ref=e479]: 🤖
+                        - generic [ref=e480]: Revisore
+                      - generic [ref=e481]: idle
+            - img
+            - generic "Control Panel" [ref=e483]:
+              - button "Zoom In" [disabled]:
+                - img
+              - button "Zoom Out" [ref=e484] [cursor=pointer]:
+                - img [ref=e485]
+              - button "Fit View" [ref=e487] [cursor=pointer]:
+                - img [ref=e488]
+            - img "Mini Map" [ref=e491]
+            - link "React Flow attribution" [ref=e496] [cursor=pointer]:
+              - /url: https://reactflow.dev
+              - text: React Flow
+          - generic [ref=e498]:
+            - generic [ref=e499]:
+              - generic [ref=e500]: Ricercatore
+              - button "Close inspector" [ref=e501] [cursor=pointer]: ×
+            - generic [ref=e502]: "Type: agent"
+            - generic [ref=e503]:
+              - generic [ref=e504]: System Prompt
+              - generic [ref=e505]: Sei un ricercatore esperto. Il tuo compito è analizzare documenti, estrarre informazioni chiave, identificare dati rilevanti e organizzare i risultati in modo strutturato. Presenta le tue scoperte in modo chiaro e completo, includendo fonti e riferimenti. Quando hai completato l'analisi, passa i risultati al writer per la stesura del report.

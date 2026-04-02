@@ -1,9 +1,558 @@
 # TASK_PLAN.md — Claude Code Visual Manager
+<!-- Status Update 2026-04-02: V3.2/V3.3 tasks #133-#142 registered from Codex browser reports and PRD discrepancy analysis. -->
+**Status Update (2026-04-02): V3.2/V3.3 Swarm runtime follow-up wave is now CLOSED. Tasks #133-#142 are completed after runtime verification, scoped broadcast delivery, live `lastOutputSnippet` propagation, and PRD/API alignment. Effective completion state is 142/142 completed, with AREA V3.1, V3.2, and V3.3 all closed.
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED — 2026-03-31 — V3.1 BUG FIX WAVE FULLY CLOSED — 132/132 tasks COMPLETED — AREA V3.1 CLOSED 2026-04-02 — All 4 swarm bugs fixed and verified: BUG-SESSION-1 (agent_status+sessionId) | BUG-HANDOFF-1 (handoff_completed emitted) | BUG-TRIGGER-1 (trigger_fired/trigger_status/rss_item handlers) | BUG-INSPECTOR-1 (onUpdateNode wired) — AREA CHECKPOINT #132 PASS — 187/187 tests pass — build 477 modules 0 errors — NO OPEN BUGS
+**Status:** v3.0.0 RELEASED - 2026-03-31 - V3.1 BUG FIX WAVE FULLY CLOSED - AREA V3.1 CLOSED 2026-04-02 - V3.2/V3.3 SWARM RUNTIME INTEGRITY + CONTRACT COMPLETION CLOSED 2026-04-02 - AREA CHECKPOINT #142 PASS - V3.4 SWARM UX DEEP TEST FINDINGS OPEN (Tasks #143-#148 PENDING) - 4 bugs found via Playwright deep user test 2026-04-02
 
+---
+
+## AREA: V3.2 — Swarm Runtime Integrity
+_Components: Swarm scaffold/generation, SwarmView, SwarmEngine, inbox/HITL routes, useSwarm reconnect hydration_
+_Tasks: #133 → #138_
+_Gate: All runtime lifecycle regressions must PASS before V3.3 contract-completion work can be considered closed_
+_Source: Codex browser walkthrough report + Codex simulated Swarm walkthrough + Debug Report and PRD Discrepancies, analyzed by Project Manager on 2026-04-02_
+
+---
+
+TASK #133: BUG-SWARM-001 — Fix Prompt-to-Flow scaffold 500 failure (swarm.js + scaffold runtime path)
+Area: V3.2 — Swarm Runtime Integrity
+Agent: debugger
+Priority: CRITICAL
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Completion Note: 2026-04-02 — Scaffold generation now classifies Claude limit failures from stdout and falls back to Codex with a strict JSON output schema, restoring browser workflow generation when Claude Code is rate-limited.
+Context:
+  Source discrepancy:
+    - swarm-user-browser-debug-report-2026-04-02.md — BUG-SWARM-001
+    - Debug Report and PRD Discrepancies.md — Prompt-to-Flow onboarding/runtime mismatch
+  User-facing problem:
+    The primary Swarm onboarding path fails from the browser with HTTP 500 on `/api/v1/swarm/scaffold`, so a user cannot generate a workflow graph from a natural-language prompt.
+  Required fix scope:
+    1. Trace the real failure path from the request body to Claude/Codex spawn, output parsing, error normalization, and workflowDef persistence.
+    2. Make scaffold failures observable and deterministic: malformed model output, missing binary, timeout, and parser errors must each surface a clear client-safe error.
+    3. Preserve the intended PRD behavior: a valid user prompt must produce a usable workflow graph that can be rendered and run from SwarmView.
+Acceptance Criteria:
+  - [ ] Valid Prompt-to-Flow request no longer returns generic HTTP 500 for the tested happy path
+  - [ ] Browser user can generate a workflow graph from Swarm without manual API intervention
+  - [ ] Scaffold error responses are normalized and actionable for known failure classes
+  - [ ] Generated workflowDef is persisted/loadable by the existing workflow flow
+  - [ ] npm test passes
+Completion Note: PASS — 2026-04-02 — scaffold now parses structured Claude CLI stdout errors, returns non-generic provider failures, and falls back to Codex when Claude is usage-limited or unavailable. Verified with server tests plus a real generation run returning a valid 2-node workflow.
+Dependencies: none
+---
+
+TASK #134: BUG-SWARM-002 — Add saved workflow picker/load flow to Swarm UI (SwarmView.jsx + workflow-loading UX)
+Area: V3.2 — Swarm Runtime Integrity
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Context:
+  Source discrepancy:
+    - swarm-user-browser-debug-report-2026-04-02.md — BUG-SWARM-002
+  User-facing problem:
+    Returning users cannot reliably discover and load already-saved workflows from the Swarm screen, which blocks recovery when generation fails and makes the section feel stateless.
+  Required fix scope:
+    1. Expose persisted workflows directly in the Swarm entry experience.
+    2. Allow selecting/loading an existing workflow without requiring a fresh scaffold.
+    3. Keep the UI aligned with the project PRD and existing workflow storage semantics.
+Acceptance Criteria:
+  - [ ] Swarm UI shows an accessible way to list/select saved workflows
+  - [ ] Selected saved workflow loads into canvas and related state correctly
+  - [ ] User can reach a runnable workflow even if scaffold path is unavailable
+  - [ ] No regression to current empty-state and new-generation UX
+  - [ ] npm test passes
+Completion Note: PASS — 2026-04-02 — SwarmView now exposes a saved-workflow selector, explicit load action, and refresh path inside the Swarm screen. The load path is disabled during active executions and verified by a successful client production build.
+Dependencies: TASK #133
+---
+
+TASK #135: BUG-SWARM-003/004 — Make pause, resume, and execution status transitions canonical (SwarmEngine.js + swarmHandler.js + useSwarm.js)
+Area: V3.2 — Swarm Runtime Integrity
+Agent: backend-dev
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Context:
+  Source discrepancies:
+    - swarm-user-browser-debug-report-2026-04-02.md — BUG-SWARM-003 and BUG-SWARM-004
+    - Debug Report and PRD Discrepancies.md — pause/resume/runtime-state drift
+  User-facing problem:
+    Pause/Resume currently appears to work in UI while actual PTY execution and canonical execution status can remain wrong. Browser state, in-memory state, and WS snapshots drift apart.
+  Required fix scope:
+    1. Define canonical runtime states for running, paused, stopping, stopped, failed, completed.
+    2. Ensure pause/resume mutates real runtime state, not just local client status.
+    3. Make `/status`, WS execution events, and any initial execution snapshot all reflect the same canonical state.
+    4. Guarantee Stop emits a final trustworthy state transition to connected/reconnecting clients.
+Acceptance Criteria:
+  - [ ] Pause genuinely pauses active runtime work rather than only changing UI state
+  - [ ] Resume genuinely resumes paused runtime work where supported, or returns an explicit unsupported/error state
+  - [ ] `/status`, WS events, and in-memory execution state stay aligned through run/pause/resume/stop
+  - [ ] Refresh or second-tab inspection does not show contradictory execution status for the same run
+  - [ ] npm test passes
+Completion Note: PASS â€” 2026-04-02 â€” SwarmEngine now broadcasts canonical `execution_status` snapshots for running/paused/stopping/stopped/completed, pause/resume route through the real PTY/runtime path, stop preserves a trustworthy stopped snapshot for reconnects, and the client applies null `sessionId` plus execution snapshots consistently. Verified with `npm test --prefix server` (196/196 pass).
+Dependencies: none
+---
+
+TASK #136: BUG-SWARM-005 — Fix HITL approve/reject runtime recovery (inbox.js + SwarmEngine HITL path)
+Area: V3.2 — Swarm Runtime Integrity
+Agent: backend-dev
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Context:
+  Source discrepancies:
+    - swarm-user-browser-debug-report-2026-04-02.md — BUG-SWARM-005
+    - Debug Report and PRD Discrepancies.md — reject path does not inject correct PTY message / recovery mismatch
+  User-facing problem:
+    Approve/Reject from the HITL inbox is desynchronized from actual agent runtime behavior, so a user can submit a decision and still leave the agent frozen, stale, or out of sync with inbox state.
+  Required fix scope:
+    1. Route approve/reject through the true freeze/unfreeze runtime path.
+    2. Ensure reject injects the expected rejection guidance/message back into PTY runtime.
+    3. Keep inbox item state, agent runtime state, and WS updates synchronized after decision resolution.
+Acceptance Criteria:
+  - [ ] Approve resumes the blocked agent/runtime path correctly
+  - [ ] Reject resumes or completes the blocked state using the expected rejection message contract
+  - [ ] HITL item leaves inbox in sync with runtime state
+  - [ ] Connected clients receive consistent post-decision state updates
+  - [ ] npm test passes
+Completion Note: PASS â€” 2026-04-02 â€” inbox approve/reject now remove the item, route through `SwarmEngine.unfreezeAgent()`, broadcast `hitl_resolved`, and keep execution status aligned. Reject now injects explicit rejection guidance back into the PTY before resuming. Verified with `npm test --prefix server` (196/196 pass).
+Dependencies: TASK #135
+---
+
+TASK #137: BUG-SWARM-006 — Rehydrate full execution snapshot on WS reconnect (swarmHandler.js + useSwarm.js)
+Area: V3.2 — Swarm Runtime Integrity
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Context:
+  Source discrepancy:
+    - swarm-user-browser-debug-report-2026-04-02.md — BUG-SWARM-006
+  User-facing problem:
+    On refresh or reconnect, the server sends a richer snapshot than the client actually applies, so the recovered Swarm screen can look partially empty or inconsistent even while the execution is still alive.
+  Required fix scope:
+    1. Apply the full execution snapshot payload on reconnect/initial hydrate.
+    2. Restore agentStates, edge counters, budget, feed-critical execution metadata, and status from the snapshot.
+    3. Verify multi-tab and reload behavior against the intended runtime continuity model.
+Acceptance Criteria:
+- [ ] Reconnect applies all required snapshot fields, not just executionId/status
+- [ ] Refreshed client can recover the active execution view without major missing state
+- [ ] Multi-tab view of the same execution remains materially consistent
+- [ ] npm test passes
+Completion Note: PASS — 2026-04-02 — Initial Swarm WS snapshots now include `workflowDef`, and `useSwarm` applies the full reconnect snapshot into Zustand while restoring the workflow canvas from the snapshot or `workflowId` fallback fetch. Verified with `npm test --prefix server -- swarm-handler.test.js swarm-engine.test.js` (24/24 pass) and `npm run build --prefix client`.
+Dependencies: TASK #135
+---
+
+TASK #138: TEST GATE — Swarm runtime lifecycle and reconnect regression
+Area: V3.2 — Swarm Runtime Integrity
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Gate: HARD — TASK #139 CANNOT start until this gate returns PASS
+Context:
+  Components being tested:
+    1. Swarm scaffold/generation happy path
+    2. Saved workflow load/recovery path
+    3. Runtime lifecycle state transitions (run/pause/resume/stop)
+    4. HITL approve/reject recovery
+    5. WS reconnect and snapshot rehydration
+  End-to-end scenario to run:
+    Step 1: Generate a workflow from Prompt-to-Flow in browser; verify graph appears without 500.
+    Step 2: Refresh or open another tab; verify generated/saved workflow can be recovered.
+    Step 3: Start execution; verify canonical running state on backend/client.
+    Step 4: Pause and resume; verify runtime actually pauses/resumes and state remains aligned.
+    Step 5: Trigger a HITL decision; verify approve and reject both resolve correctly.
+    Step 6: Refresh/reconnect during or after execution; verify full snapshot rehydrates.
+Acceptance Criteria:
+  - [x] Prompt-to-Flow onboarding path works from browser
+  - [x] Saved workflow load path works from Swarm UI
+  - [x] run/pause/resume/stop states stay aligned across backend, WS, and client
+  - [x] HITL approve/reject is recoverable and synchronized
+  - [x] Reconnect restores a materially complete execution view
+  - [x] npm test passes
+Gate Result: PASS - 2026-04-02 - proceed to TASK #139
+Completion Note: PASS - 2026-04-02 - Browser verification confirmed Prompt-to-Flow generation, saved workflow loading, execution start/completion, and reconnect hydration on the Swarm screen. Server coverage closed lifecycle/HITL/runtime regressions with `npm test --prefix server` (203/203 pass) and `npm run build --prefix client`.
+Dependencies: TASK #133, TASK #134, TASK #135, TASK #136, TASK #137
+---
+
+## AREA: V3.3 — Swarm Contract Completion
+_Components: BroadcastBar, scoped broadcast delivery, agent_status runtime payloads, PRD/API alignment docs_
+_Tasks: #139 → #142_
+_Gate: V3.3 cannot close until API/UI contract completion and documentation alignment both pass_
+_Source: Debug Report and PRD Discrepancies + Codex browser/user simulation findings, normalized by Project Manager on 2026-04-02_
+
+---
+
+TASK #139: BUG-SWARM-007 / BUG-2 - Complete scoped broadcast contract in API and UI (BroadcastBar + swarm.js delivery semantics)
+Area: V3.3 - Swarm Contract Completion
+Agent: debugger
+Priority: MEDIUM
+Difficulty: HARD
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Context:
+  Source discrepancies:
+    - swarm-user-browser-debug-report-2026-04-02.md - BUG-SWARM-007
+    - Debug Report and PRD Discrepancies.md - BUG-2 BroadcastBar missing real scope contract
+  User-facing problem:
+    Broadcast currently behaves as if `all` is the only trustworthy scope. Department and specific-agent targeting are not fully represented in the UI and/or not delivered correctly by the backend contract.
+  Required fix scope:
+    1. Expose real scope selection in the BroadcastBar UX.
+    2. Implement backend delivery semantics for all, department, and specific-agent targets.
+    3. Keep the contract explicit enough that QA can verify intended recipients.
+Acceptance Criteria:
+  - [x] Broadcast UI exposes the intended scope choices
+  - [x] API/backend correctly routes broadcasts to all / department / specific-agent scopes
+  - [x] Scope-specific delivery is testable and observable from user perspective
+  - [x] npm test passes
+Completion Note: PASS - 2026-04-02 - BroadcastBar now supports All Agents / Department / Specific Agent targeting, and the backend resolves recipients explicitly with returned `recipientNodeIds`. Route helper coverage added for all scope modes.
+Dependencies: TASK #138
+---
+
+TASK #140: BUG-SWARM-009 / BUG-5 - Stream lastOutputSnippet in agent_status WS events (SwarmEngine.js + client agent state consumption)
+Area: V3.3 - Swarm Contract Completion
+Agent: backend-dev
+Priority: MEDIUM
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Context:
+  Source discrepancies:
+    - swarm-user-browser-debug-report-2026-04-02.md - BUG-SWARM-009
+    - Debug Report and PRD Discrepancies.md - BUG-5 missing lastOutputSnippet contract
+  User-facing problem:
+    Agent micro-output and inspector runtime previews do not reflect live work because `agent_status` payloads do not carry the snippet data the UI expects.
+  Required fix scope:
+    1. Add/restore `lastOutputSnippet` in the relevant WS runtime payloads.
+    2. Ensure client store and inspector/canvas surfaces consume the field consistently.
+    3. Preserve existing agent_status contract fields from prior bug-fix waves.
+Acceptance Criteria:
+  - [x] `agent_status` includes `lastOutputSnippet` when runtime output exists
+  - [x] AgentNode/AgentInspector show meaningful live snippet updates from real WS traffic
+  - [x] No regression to sessionId/status propagation
+  - [x] npm test passes
+Completion Note: PASS - 2026-04-02 - SwarmEngine now emits `lastOutputSnippet` on every `agent_status` update, including live PTY output taps, and `useSwarm.js` preserves the field in Zustand without regressing `sessionId` or `status`.
+Dependencies: TASK #138
+---
+
+TASK #141: PRD/API alignment pass for Swarm contracts that affect UX
+Area: V3.3 - Swarm Contract Completion
+Agent: documenter
+Priority: LOW
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Context:
+  Source discrepancy:
+    - Debug Report and PRD Discrepancies.md
+  Scope rule:
+    This is not a broad documentation cleanup. It exists only to align contracts that materially affect product quality, QA accuracy, and future implementation decisions.
+  Required alignment scope:
+    1. Scaffold/generation behavior and failure semantics
+    2. HITL inbox route/decision contract where needed
+    3. Broadcast scope contract
+    4. WS payload fields that the UI truly depends on, including runtime snippet visibility
+Acceptance Criteria:
+  - [x] PRD/docs reflect the implemented user-visible Swarm runtime contracts
+  - [x] QA can derive expected behavior for scaffold, HITL, reconnect, broadcast, and snippet visibility from docs
+  - [x] Outdated or misleading contract statements are corrected without expanding scope unnecessarily
+Completion Note: PASS - 2026-04-02 - PRD/API references now match the implemented scaffold fallback semantics, scoped broadcast contract, HITL recovery behavior, and `agent_status` payload fields used by the UI.
+Dependencies: TASK #139, TASK #140
+---
+
+TASK #142: AREA CHECKPOINT - V3.2/V3.3 Swarm runtime quality pass
+Area: V3.3 - Swarm Contract Completion
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Gate: HARD - No further Swarm release-quality claims may be made until this checkpoint returns PASS
+Context:
+  This checkpoint verifies that the discrepancies found by Codex browser testing, simulation, and PRD comparison have been resolved as a coherent user experience.
+  Integrated scenarios to run:
+    Step 1: Generate or load a workflow from Swarm as a user would.
+    Step 2: Run the workflow and verify trustworthy runtime state changes.
+    Step 3: Exercise HITL, refresh/reconnect, and re-open the same execution from another tab.
+    Step 4: Send scoped broadcasts and verify target behavior.
+    Step 5: Inspect live agent output snippets from canvas/inspector.
+    Step 6: Confirm docs/PRD are aligned with actual user-visible behavior.
+Acceptance Criteria:
+  - [x] Onboarding path works through generate and/or saved workflow recovery
+  - [x] Runtime state is trustworthy across pause/resume/stop/reconnect
+  - [x] HITL recovery works from user perspective
+  - [x] Broadcast scopes function according to implemented contract
+  - [x] Live output snippet visibility is present where UI promises it
+  - [x] Documentation/PRD contract for these flows is aligned with reality
+  - [x] npm test passes
+Checkpoint Result: PASS - 2026-04-02 - AREA V3.2/V3.3 CLOSED
+Completion Note: PASS - 2026-04-02 - End-to-end Swarm follow-up wave closed with browser verification, deterministic scaffold fallback when providers are unavailable, scoped broadcast coverage, live snippet WS propagation, 203/203 server tests passing, and client production build succeeding.
+Dependencies: TASK #138, TASK #139, TASK #140, TASK #141
+---
+
+## AREA: V3.4 — Swarm UX Deep Test Findings
+_Components: SwarmView.jsx, AgentNode.jsx, AgentInspector.jsx, useSwarm.js, SwarmEngine.js_
+_Tasks: #143 → #150_
+_Gate: All UX bugs must PASS before V3.5 work can begin_
+_Source: Deep user testing session 2026-04-02 — full Playwright browser walkthrough of every Swarm function from scratch (no pre-saved workflows). Tester generated a 3-agent workflow (Ricercatore→Writer→Revisore), executed it, inspected nodes, opened PTY Explosion, tested HITL, tested Load/Refresh, navigated between views._
+
+---
+
+TASK #143: BUG-UX-COMPLETED-1 — Add Reset/Run button for `completed` execution state (SwarmView.jsx)
+Area: V3.4 — Swarm UX Deep Test Findings
+Agent: frontend-dev
+Priority: CRITICAL
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Context:
+  Source: Deep user test 2026-04-02 — TEST #12
+  User-facing problem:
+    After a workflow execution completes (any agent emits `__DONE__`), the UI shows `● completed` status but NO action buttons are visible. The user is stuck in a dead-end state with no way to re-run or reset the workflow.
+  Root cause analysis:
+    In SwarmView.jsx lines 145-203, toolbar buttons are conditionally rendered based on `executionStatus`:
+      - Run button: only shown when `executionStatus === 'idle'` (line 145)
+      - Reset button: only shown when `executionStatus === 'stopped'` (line 196)
+      - Pause/Resume/Stop: only shown during `running` or `paused`
+    When `executionStatus === 'completed'`, NONE of these conditions match, so the toolbar shows only the status indicator with no actionable buttons.
+  Current workaround:
+    User must re-click "Load workflow" from the dropdown to reset state to idle. This is non-obvious and undiscoverable.
+  File: client/src/views/SwarmView.jsx
+  Lines: 145-203
+  Required fix:
+    1. Add `executionStatus === 'completed'` to the Reset button condition (line 196), OR
+    2. Add `executionStatus === 'completed'` to the Run button condition (line 145) so user can directly re-run, OR
+    3. Show BOTH Reset and Run in `completed` state — Reset returns to idle, Run starts fresh execution
+    Option 3 is the best UX: show Reset (to clear state and inspect results) AND Run (to immediately re-execute).
+Acceptance Criteria:
+  - [ ] When executionStatus is 'completed', at least one actionable button is visible in the toolbar
+  - [ ] User can reset from 'completed' to 'idle' state via a visible button
+  - [ ] User can re-run the workflow directly from 'completed' state without re-loading from dropdown
+  - [ ] Existing behavior for idle/running/paused/stopped states is unchanged (no regression)
+  - [ ] npm run build passes with 0 errors
+Dependencies: none
+---
+
+TASK #144: BUG-UX-ANSI-1 — Strip ANSI escape sequences from AgentNode micro-log and AgentInspector lastOutput (AgentNode.jsx + AgentInspector.jsx)
+Area: V3.4 — Swarm UX Deep Test Findings
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Source: Deep user test 2026-04-02 — TEST #5 and TEST #7
+  User-facing problem:
+    After workflow execution, the AgentNode's micro PTY log and AgentInspector's "Last Output" section display raw ANSI escape sequences instead of readable text. The user sees garbage like:
+      `\x1b[73C --- END PROTOCOL ---\x1b[7m \x1b[27m\x1b[K\x1b[57C \x1b[38;2;136;136;136m────`
+    instead of clean text. This makes both the micro-log (3-4 lines visible in each canvas node) and the Inspector's "Last Output" completely useless for understanding what the agent did.
+  Affected components:
+    1. client/src/canvas/nodes/AgentNode.jsx — renders `lastOutputSnippet` from useSwarmStore agentStates
+    2. client/src/canvas/AgentInspector.jsx — renders the "Last Output" section from agentState data
+  Data flow:
+    SwarmEngine.js emits `agent_status` with `lastOutputSnippet` (raw PTY bytes) →
+    swarmHandler.js broadcasts via WS →
+    useSwarm.js handler stores in Zustand `agentStates[nodeId].lastOutputSnippet` →
+    AgentNode.jsx and AgentInspector.jsx read and render this value directly
+  Root cause:
+    The `lastOutputSnippet` is PTY raw output that includes ConPTY ANSI control sequences (cursor positioning, color codes, etc.). These sequences are never stripped before being displayed in the React components.
+  Required fix:
+    Option A (preferred — fix at render time): Add a `stripAnsi(text)` utility function and apply it before rendering in both AgentNode.jsx and AgentInspector.jsx. A simple regex like `/\x1b\[[0-9;]*[a-zA-Z]|\x1b\][^\x07]*\x07|\x1b[()][AB012]|\x1b\[[\?]?[0-9;]*[hlm]/g` covers the common ConPTY sequences.
+    Option B (fix at source): Strip ANSI in useSwarm.js before storing in Zustand. This is cleaner but requires verifying that raw ANSI isn't needed elsewhere (e.g., PTY Explosion uses the real PTY session, not this snippet).
+    Option A is safer and less risky. The stripAnsi function should also normalize `\r\n` to `\n` and collapse cursor movement sequences to spaces.
+  Files:
+    - client/src/canvas/nodes/AgentNode.jsx
+    - client/src/canvas/AgentInspector.jsx
+    - (new) client/src/utils/stripAnsi.js — shared utility
+Acceptance Criteria:
+  - [ ] AgentNode micro-log shows clean, readable text (no \x1b sequences visible)
+  - [ ] AgentInspector "Last Output" shows clean, readable text
+  - [ ] Text content is preserved (only control sequences removed, not actual content)
+  - [ ] PTY Explosion terminal is NOT affected (it uses real PTY session, not the snippet)
+  - [ ] The strip function handles ConPTY-specific sequences: CSI (ESC[...), OSC (ESC]...), cursor positioning, color codes (SGR), screen clearing
+  - [ ] npm run build passes with 0 errors
+Dependencies: none
+---
+
+TASK #145: BUG-UX-HANDOFF-1 — Investigate and fix handoff chain failure: first agent emits __DONE__ without handoff (SwarmEngine.js + system prompt injection)
+Area: V3.4 — Swarm UX Deep Test Findings
+Agent: debugger
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Context:
+  Source: Deep user test 2026-04-02 — TEST #5
+  User-facing problem:
+    When executing a 3-agent workflow (Ricercatore→Writer→Revisore), only the Ricercatore agent runs. It emits `__DONE__` almost immediately without ever producing a `__HANDOFF__` token to the Writer. The Writer and Revisore remain in `idle` state permanently. The execution status jumps from `idle` to `completed` within seconds, without the user seeing any `running` animation or inter-agent handoff.
+  Expected behavior (per PRD FR-V3-10, FR-V3-11):
+    1. Ricercatore should run, produce output, then emit `__HANDOFF__:node-2:<base64_context>` to pass results to Writer
+    2. Writer should receive context, process it, emit `__HANDOFF__:node-3:<base64_context>` to Revisore
+    3. Revisore should review and either emit `__HANDOFF__:node-2:<base64_context>` (back to Writer for corrections) or `__DONE__`
+    4. `__DONE__` should only emit a soft notification (FR-V3-11) — workflow should NOT stop
+  What actually happened:
+    - Ricercatore PTY spawned successfully (verified via PTY Explosion — SWARM PROTOCOL visible in terminal)
+    - Ricercatore received the system prompt with handoff instructions and valid target IDs
+    - Claude Code read the SWARM PROTOCOL but chose to emit `__DONE__` immediately instead of doing work and then doing a handoff
+    - The `__DONE__` caused `execution_status: completed` to be emitted
+    - No `__HANDOFF__` token was ever detected by HandoffParser
+  Investigation scope:
+    1. Check SwarmEngine._buildSystemPrompt() — is the handoff instruction clear enough? Does it tell the agent WHAT to do (not just HOW to handoff)?
+    2. Check if there's an `initialContext` being injected that gives the agent actual work to do. A bare system prompt without a task/goal may cause the agent to say "I'm ready" and emit __DONE__
+    3. Check HandoffParser — is it possible the handoff token was emitted but not detected (ConPTY chunking)?
+    4. Check SwarmEngine._onDone() — does it correctly emit ONLY a soft notification? Or does it terminate the execution?
+    5. Check the scaffold-generated workflow — does it include `initialContext` with a starting task?
+  Key files:
+    - server/services/SwarmEngine.js — _buildSystemPrompt(), _onDone(), startExecution()
+    - server/services/HandoffParser.js — token detection logic
+    - server/routes/swarm.js — scaffold endpoint (does it set initialContext?)
+  Likely root causes (investigate in order):
+    A. The system prompt tells the agent HOW to handoff but not WHAT to do — the agent has no task, so it immediately says "done"
+    B. The initialContext is empty or missing, so the agent has no input data to process
+    C. _onDone() kills the execution instead of just emitting a soft notification
+    D. HandoffParser fails to detect the token (less likely given the __DONE__ was detected)
+Acceptance Criteria:
+  - [ ] Root cause identified and documented
+  - [ ] When executing a multi-agent workflow, the first agent performs actual work before handing off
+  - [ ] Handoff chain propagates: agent A → agent B → agent C (at least one full chain verified)
+  - [ ] `__DONE__` emits soft notification only — does NOT stop the entire execution (FR-V3-11)
+  - [ ] Agent status transitions visible in UI: idle → running → done (with handoff) or running (receiver)
+  - [ ] npm test passes
+Dependencies: none
+---
+
+TASK #146: BUG-UX-FEEDBACK-1 — Show user-friendly feedback when Run button is disabled due to missing project (SwarmView.jsx)
+Area: V3.4 — Swarm UX Deep Test Findings
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Source: Deep user test 2026-04-02 — TEST #3
+  User-facing problem:
+    When a user generates or loads a workflow but has NOT yet selected an active project, the Run button is disabled with no visible explanation. The tooltip "Select a project first" only appears on hover and is invisible on touch devices. A new user does not understand why Run is disabled after successfully generating a workflow.
+  Current behavior:
+    - SwarmView.jsx line 148: `disabled={executing || !workflowDef || !activeProjectId}`
+    - Line 150-154: title attribute set based on condition, but tooltip is mouse-only
+  File: client/src/views/SwarmView.jsx
+  Lines: 146-159
+  Required fix:
+    Add a small inline warning message when `!activeProjectId && workflowDef` — e.g., a yellow text under the toolbar or next to the Run button saying "Select a project in the sidebar to run this workflow". This should only appear when the user has a workflow ready but no project selected.
+  Alternative approach:
+    Auto-select the first available project when entering Swarm view if none is active. This would eliminate the issue entirely but may have side effects if the user has multiple projects.
+Acceptance Criteria:
+  - [ ] When Run is disabled due to missing project, a visible text message explains what to do
+  - [ ] The message disappears once a project is selected
+  - [ ] The message does NOT appear when Run is disabled for other reasons (no workflow, executing)
+  - [ ] npm run build passes with 0 errors
+Dependencies: none
+---
+
+TASK #147: TEST GATE — V3.4 Bug Fixes Individual Verification
+Area: V3.4 — Swarm UX Deep Test Findings
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  This TEST GATE verifies each individual bug fix from tasks #143-#146 works correctly in isolation before the AREA CHECKPOINT integration test.
+  Tests to run:
+    1. TASK #143 verification — Completed state buttons:
+       (a) Generate or load a workflow
+       (b) Run it (wait for __DONE__ or manually stop → then verify completed state)
+       (c) Verify at least one action button (Reset and/or Run) is visible when status is "completed"
+       (d) Click Reset → verify status returns to "idle" and Run button appears
+       (e) Click Run from completed state (if Run is shown) → verify new execution starts
+    2. TASK #144 verification — ANSI stripping:
+       (a) Run a workflow so at least one agent produces PTY output
+       (b) Inspect AgentNode micro-log → verify NO \x1b sequences visible in rendered text
+       (c) Click the agent node → inspect AgentInspector "Last Output" → verify clean text
+       (d) Open PTY Explosion → verify terminal still renders correctly (ANSI NOT stripped in PTY)
+    3. TASK #145 verification — Handoff chain:
+       (a) Generate a 2+ agent workflow
+       (b) Run it
+       (c) Verify first agent transitions to "running" status with visible animation
+       (d) Wait for handoff → verify second agent transitions to "running"
+       (e) Verify InterAgentFeed shows handoff events
+       (f) Verify execution does NOT auto-terminate on first __DONE__ (soft notification only)
+    4. TASK #146 verification — Run button feedback:
+       (a) Navigate to Swarm WITHOUT selecting a project first
+       (b) Generate a workflow
+       (c) Verify a visible text message explains why Run is disabled
+       (d) Select a project → verify message disappears and Run is enabled
+Acceptance Criteria:
+  - [ ] All 4 individual bug fix verifications pass
+  - [ ] npm test passes (0 failures)
+  - [ ] npm run build passes (0 errors)
+  - [ ] No console errors in browser DevTools during testing
+Dependencies: TASK #143, TASK #144, TASK #145, TASK #146
+---
+
+TASK #148: AREA CHECKPOINT — V3.4 Swarm UX Deep Test (full integration re-test)
+Area: V3.4 — Swarm UX Deep Test Findings
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: HIGH
+Difficulty: HIGH
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Gate: HARD — V3.4 is not closed until this checkpoint returns PASS
+Context:
+  This checkpoint repeats the EXACT user test scenario from the 2026-04-02 deep test session, verifying that ALL bugs found are now fixed. The tester must follow these steps as a new user, from scratch, using NO pre-saved workflows.
+  Full end-to-end re-test scenario:
+    Step 1: Navigate to Swarm view WITHOUT selecting a project first.
+    Step 2: Type a workflow description in the Prompt-to-Flow bar: "Un team di 3 agenti: un ricercatore che analizza documenti, un writer che scrive report, e un revisore che controlla la qualità."
+    Step 3: Click Generate. Verify workflow appears on canvas with 3 nodes and correct edges.
+    Step 4: Verify Run button is DISABLED and a visible message explains to select a project. (TASK #146 fix)
+    Step 5: Click on a project in the sidebar to select it. Verify Run button becomes ENABLED.
+    Step 6: Click Run. Verify:
+      (a) Status changes to "running" with visible animation on first agent node
+      (b) Pause and Stop buttons appear in toolbar during execution
+      (c) BroadcastBar appears at bottom during execution
+    Step 7: Wait for handoff. Verify: (TASK #145 fix)
+      (a) First agent hands off to second agent (not just __DONE__)
+      (b) Second agent starts running
+      (c) InterAgentFeed shows handoff events
+    Step 8: While running, click an agent node. Verify:
+      (a) AgentInspector shows clean text in "Last Output" (NO ANSI escape codes) (TASK #144 fix)
+      (b) AgentNode micro-log shows clean text (NO ANSI escape codes) (TASK #144 fix)
+    Step 9: When execution reaches completed state, verify: (TASK #143 fix)
+      (a) Reset and/or Run buttons are visible
+      (b) User can click Reset to return to idle
+      (c) User can re-run the workflow without reloading from dropdown
+    Step 10: Navigate away from Swarm (click Projects), then navigate back. Verify workflow state is preserved.
+    Step 11: Open PTY Explosion on a node that ran. Verify terminal shows correctly (ANSI rendered by xterm.js, not stripped).
+    Step 12: Click HITL button. Verify panel opens with "No pending approvals" or pending items.
+    Step 13: Use Load workflow dropdown to load a different saved workflow. Verify canvas updates.
+    Step 14: Check browser DevTools console — no TypeError, no unhandled exceptions.
+    Step 15: Run npm test — 0 failures. Run npm run build — 0 errors.
+Acceptance Criteria:
+  - [ ] All 15 steps pass without failure
+  - [ ] BUG-UX-COMPLETED-1 (TASK #143): Reset/Run visible in completed state
+  - [ ] BUG-UX-ANSI-1 (TASK #144): Clean text in AgentNode + AgentInspector
+  - [ ] BUG-UX-HANDOFF-1 (TASK #145): Handoff chain works (agent A → B → C)
+  - [ ] BUG-UX-FEEDBACK-1 (TASK #146): Run disabled feedback visible without project
+  - [ ] PTY Explosion still works correctly (xterm.js renders ANSI)
+  - [ ] HITL inbox opens/closes correctly
+  - [ ] Workflow persistence across navigation confirmed
+  - [ ] npm test: 0 failures
+  - [ ] npm run build: 0 errors
+  - [ ] Puppeteer screenshots captured for Steps 4, 6, 8, 9
+Dependencies: TASK #147
 ---
 
 ## V3 RELEASE-READY
@@ -7933,7 +8482,7 @@ Dependencies: TASK #120, TASK #121, TASK #122
 
 ## AREA: V3.1 — Swarm Bug Fixes
 _Components: SwarmEngine, useSwarm, SwarmCanvas, AgentInspector_
-_Tasks: #124 → #134_
+_Tasks: #124 → #132_
 _Gate: ALL components in this area must pass their TEST GATE before any V3.2 feature work starts_
 _Source: PRD Section 11 + Section 11.1 — four bugs formally documented by prd-writer on 2026-04-02_
 

@@ -72,379 +72,13 @@ Register an existing directory as a project.
 ```
 
 **Errors:**
-- `400` — missing/invalid fields, non-absolute path, path traversal attempt
-- `404` — path does not exist on the filesystem
-- `409` — path already registered
-
----
-
-### `POST /api/v1/projects/scaffold`
-
-Create a new project directory with a starter `.claude/` structure.
-
-**Request body:** Same as `POST /api/v1/projects`.
-
-**Server actions:** Creates directory, `.claude/agents/`, `.claude/commands/`, and a starter `CLAUDE.md`.
-
-**Response 201:** Same shape as `POST /api/v1/projects`.
-
-**Errors:** `400`, `409` (same as above).
-
----
-
-### `GET /api/v1/projects/:id`
-
-Get a single project. Returns `pathExists: true|false` to indicate whether the directory still exists.
-
-**Response 200:**
-```json
-{
-  "id": "uuid-v4",
-  "name": "my-app",
-  "path": "C:\\Users\\arman\\projects\\my-app",
-  "createdAt": "2026-03-18T10:00:00.000Z",
-  "pathExists": true
-}
-```
-
-**Errors:** `404`
-
----
-
-### `DELETE /api/v1/projects/:id`
-
-Remove a project from the registry. Does NOT touch the filesystem.
-
-**Response 204:** No body.
-
-**Errors:** `404`
-
----
-
-## Sessions
-
-### `GET /api/v1/sessions`
-
-List all active PTY sessions.
-
-**Response 200:**
-```json
-[
-  {
-    "id": "uuid-v4",
-    "projectId": "uuid-v4",
-    "status": "running",
-    "createdAt": "2026-03-18T10:00:00.000Z",
-    "lastActivityAt": "2026-03-18T10:01:00.000Z"
-  }
-]
-```
-
----
-
-### `POST /api/v1/sessions`
-
-Start a new PTY session for a project.
-
-**Request body:**
-```json
-{
-  "projectId": "uuid-v4",
-  "projectPath": "C:\\Users\\arman\\projects\\my-app"
-}
-```
-
-**Response 201:**
-```json
-{
-  "id": "uuid-v4",
-  "projectId": "uuid-v4",
-  "status": "running"
-}
-```
-
-**Errors:** `400` — missing projectId or projectPath.
-
----
-
-### `DELETE /api/v1/sessions/:id`
-
-Kill a PTY session. The PTY process is terminated immediately.
-
-**Response 204:** No body.
-
-**Errors:** `404`
-
----
-
-## Jobs
-
-### `POST /api/v1/jobs`
-
-Submit a background job (non-interactive Claude Code invocation).
-
-**Request body:**
-```json
-{
-  "projectId": "uuid-v4",
-  "projectPath": "C:\\Users\\arman\\projects\\my-app",
-  "prompt": "Refactor the auth module to use JWT"
-}
-```
-
-**Response 201:**
-```json
-{ "jobId": "uuid-v4" }
-```
-
-**Errors:** `400` — missing required fields.
-
----
-
-### `GET /api/v1/jobs/:id/stream`
-
-Stream job output as Server-Sent Events. Connect with `EventSource`.
-
-**Event types:**
-| Event | Data | Description |
-|-------|------|-------------|
-| `progress` | `{ text: "..." }` | Incremental stdout chunk |
-| `done` | `{ result: "..." }` | Job finished — full Markdown result |
-| `error` | `{ error: "..." }` | Job failed |
-
----
-
-### `DELETE /api/v1/jobs/:id`
-
-Cancel a running job. Uses `tree-kill` to terminate the full process tree.
-
-**Response 204:** No body.
-
----
-
-## Agents
-
-### `GET /api/v1/agents`
-
-List all agents across all four scan locations.
-
-**Response 200:**
-```json
-{
-  "agents": [
-    {
-      "name": "backend-dev",
-      "path": "C:\\Users\\arman\\.claude\\agents\\backend-dev.md",
-      "scope": "user",
-      "frontmatter": { "description": "...", "model": "..." },
-      "body": "You are a backend developer..."
-    }
-  ]
-}
-```
-
----
-
-### `POST /api/v1/agents`
-
-Create a new agent. Name must match `^[a-z][a-z0-9-]*$`.
-
-**Request body:**
-```json
-{
-  "name": "my-agent",
-  "scope": "user",
-  "frontmatter": { "description": "My agent", "model": "claude-opus-4-5" },
-  "body": "You are a specialist in..."
-}
-```
-
-**Response 201:** The created agent record.
-
-**Errors:** `400` — invalid name or missing fields.
-
----
-
-### `PUT /api/v1/agents/:name`
-
-Update an existing agent's content or frontmatter.
-
-**Response 200:** Updated agent record.
-
-**Errors:** `400`, `404`
-
----
-
-### `DELETE /api/v1/agents/:name`
-
-Delete an agent file.
-
-**Response 204:** No body.
-
-**Errors:** `404`
-
----
-
-## Skills
-
-### `GET /api/v1/skills`
-
-List all skills from all four scan locations.
-
-**Response 200:**
-```json
-{
-  "skills": [
-    {
-      "name": "commit",
-      "scope": "user",
-      "path": "C:\\Users\\arman\\.claude\\skills\\commit\\SKILL.md",
-      "frontmatter": {},
-      "body": "..."
-    }
-  ]
-}
-```
-
----
-
-### `POST /api/v1/skills`, `PUT /api/v1/skills/:name`, `DELETE /api/v1/skills/:name`
-
-Same pattern as agents. Name validation same as agents.
-
----
-
-## CLAUDE.md
-
-### `GET /api/v1/claudemd`
-
-Retrieve a CLAUDE.md file.
-
-**Query params:** `scope` (`user` | `project`), `projectId` (required when scope=project)
-
-**Response 200:**
-```json
-{
-  "content": "# Project: my-app\n...",
-  "path": "C:\\Users\\arman\\.claude\\CLAUDE.md"
-}
-```
-
----
-
-### `PUT /api/v1/claudemd`
-
-Save a CLAUDE.md file.
-
-**Request body:** `{ "scope": "user"|"project", "projectId": "...", "content": "..." }`
-
-**Response 200:** `{ "ok": true }`
-
-**Errors:** `400`, `404`
-
----
-
-## Workflows (V3)
-
-Workflow definitions are persisted to disk and survive server restarts. Execution state is in-memory only.
-
-### `GET /api/v1/workflows`
-
-List all workflow definitions.
-
-**Response 200:**
-```json
-{
-  "workflows": [
-    {
-      "id": "uuid-v4",
-      "name": "Code Review Pipeline",
-      "description": "...",
-      "nodes": [...],
-      "edges": [...],
-      "createdAt": "...",
-      "updatedAt": "..."
-    }
-  ]
-}
-```
-
----
-
-### `POST /api/v1/workflows`
-
-Create a workflow definition manually (as opposed to AI-generated via scaffold).
-
-**Request body:** WorkflowDefinition without `id`, `createdAt`, `updatedAt` — server generates those.
-
-**Response 201:** `{ "workflow": { ...WorkflowDefinition } }`
-
-**Errors:**
-- `400` — validation failure (details array returned)
-- `503` — WorkflowStore unavailable
-
----
-
-### `GET /api/v1/workflows/:id`
-
-Get a single workflow definition.
-
-**Response 200:** `{ "workflow": { ...WorkflowDefinition } }`
-
-**Errors:** `404`
-
----
-
-### `PUT /api/v1/workflows/:id`
-
-Full update of a workflow definition.
-
-**Response 200:** `{ "workflow": { ...WorkflowDefinition } }`
-
-**Errors:** `400`, `404`
-
----
-
-### `DELETE /api/v1/workflows/:id`
-
-Delete a workflow definition. Does not affect running executions.
-
-**Response 204:** No body.
-
-**Errors:** `404`
-
----
-
-## Swarm Execution (V3)
-
-Swarm executions are in-memory. A server restart clears all running executions.
-
-### `POST /api/v1/swarm/scaffold`
-
-Generate a workflow definition from a natural-language description using the Claude API.
-
-**Request body:**
-```json
-{
-  "prompt": "A pipeline that reviews code, writes tests, then summarizes findings",
-  "projectId": "uuid-v4"
-}
-```
-
-**Response 201:**
-```json
-{
-  "workflowId": "uuid-v4",
-  "workflowDef": { ...WorkflowDefinition }
-}
-```
-
-**Errors:**
-- `400` — prompt missing, empty, or exceeds 2000 characters
-- `500` — Claude API failure or JSON parse error
-- `503` — WorkflowStore unavailable
-
-**Note:** Requires `ANTHROPIC_API_KEY` in the server environment. Uses `claude-haiku-4-5-20251001`.
+- `400` ??? prompt missing, empty, or exceeds 2000 characters
+- `500` ??? provider failure or invalid model output after provider fallback is exhausted
+- `503` ??? WorkflowStore unavailable
+
+**Notes:**
+- Provider failures are normalized into client-safe messages when Claude/Codex output is malformed or unavailable.
+- If both providers are unavailable with retryable or limit-style failures, the server returns a deterministic local workflow so Prompt-to-Flow still yields a runnable graph.
 
 ---
 
@@ -577,10 +211,10 @@ Send text to running agent PTY sessions filtered by scope.
 | Field | Values | Description |
 |-------|--------|-------------|
 | `text` | string | Text to send to agents (required) |
-| `scope` | `"all"` \| nodeId | `"all"` targets every running agent; a nodeId targets one agent |
+| `scope` | `"all"` \| `"department"` \| `"agent"` | Broadcast target mode |
 | `mode` | `"soft"` \| `"hard"` | Soft: append text + ESC + newline. Hard: Ctrl-C → 300ms → text + ESC → 100ms → newline |
 
-**Response 200:** `{ "sent": 3 }` (number of agents that received the message)
+**Response 200:** `{ "sent": 3, "scope": "department", "targetId": "dept-1", "recipientNodeIds": ["agent-1", "agent-2"] }`
 
 **Errors:** `400` — text missing or not a string; `404` — execution not found.
 
@@ -626,7 +260,7 @@ Approve a HITL item. Optionally provide resume text to send to the agent's PTY.
 **Server actions:**
 1. Removes item from `inboxItems`.
 2. If `resumeText` provided, writes it + newline to the agent's PTY session.
-3. Sets agent status to `"running"`.
+3. Resumes the frozen agent via `SwarmEngine.unfreezeAgent()`.
 4. Broadcasts `hitl_resolved` WS event with `decision: "approved"`.
 
 **Response 200:** `{ "ok": true }`
@@ -637,7 +271,7 @@ Approve a HITL item. Optionally provide resume text to send to the agent's PTY.
 
 ### `POST /api/v1/swarm/:executionId/inbox/:itemId/reject`
 
-Reject a HITL item. Agent remains paused. Broadcasts `hitl_resolved` with `decision: "rejected"`.
+Reject a HITL item. The server injects explicit rejection guidance into the PTY, resumes the agent via `SwarmEngine.unfreezeAgent()`, and broadcasts `hitl_resolved` with `decision: "rejected"`.
 
 **Request body:** None required.
 
@@ -723,7 +357,7 @@ Server-push only — no client-to-server messages. Control commands use the REST
 | `type` | Key payload fields | When sent |
 |--------|--------------------|-----------|
 | `execution_status` | `executionId`, `status`, `agentStates` | On connect (initial snapshot) + on status change |
-| `agent_status` | `executionId`, `nodeId`, `status`, `handoffCount?` | When a single agent's status changes |
+| `agent_status` | `executionId`, `nodeId`, `status`, `sessionId`, `lastOutputSnippet` | When a single agent's status changes or live PTY output updates its snippet |
 | `handoff_started` | `executionId`, `sourceNodeId`, `targetNodeId`, `edgeId`, `counter` | When a HANDOFF token is parsed |
 | `circuit_breaker` | `executionId`, `edgeId`, `counter` | When edge crossing threshold is reached (advisory) |
 | `budget_update` | `executionId`, `estimatedTokensUsed`, `limitTokens` | When budget estimate is updated |

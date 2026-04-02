@@ -3,4 +3,4 @@
 
 export { ConfigStore } from './ConfigStore.js';
 export { ProcessRegistry } from './ProcessRegistry.js';
-export { discoverClaudeBinary } from './BinaryDiscovery.js';
+export { discoverClaudeBinary, discoverCodexBinary } from './BinaryDiscovery.js';

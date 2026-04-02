@@ -1,0 +1,10 @@
+{
+  "request_id": "d0b3bd76-7244-494c-a3a9-2a345105e04a",
+  "created_at": "2026-04-02T17:15:35.305Z",
+  "user_prompt": "Implement TASK #135 from docs/TASK_PLAN.md: BUG-SWARM-003/004 — make pause, resume, and execution status transitions canonical across server/services/SwarmEngine.js, server/routes/swarm.js, server/ws/swarmHandler.js, and client/src/hooks/useSwarm.js if needed. Read docs/memory/* first as needed. Current issue: pause/resume mostly flip logical flags, stop deletes execution so reconnect/status can drift, and the initial WS snapshot includes richer state than the client applies. Constraints: do not revert unrelated user changes; the worktree is dirty, especially server/routes/swarm.js and client/src/views/SwarmView.jsx. Please edit only files required for #135, run relevant tests, and report changed files plus verification results. Make the runtime model canonical for running/paused/stopping/stopped/failed/completed as far as this task requires, keep /status + WS + reconnect aligned, and ensure stop emits a trustworthy final transition for connected/reconnecting clients.",
+  "requested_agent": "backend-dev",
+  "status": "active",
+  "steps": [],
+  "next_actions": [],
+  "summary": null
+}

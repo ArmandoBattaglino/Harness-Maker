@@ -83,7 +83,7 @@ Claude Code Visual Manager V2 is a local GUI that wraps the `claude` CLI binary,
 - FR-V3-18: BudgetTracker must estimate token usage from character count (approximate: chars / 4 = tokens). When estimated usage reaches the workflow's `budgetTokens` setting, BudgetTracker must emit a `budget_update` WebSocket event with `{ estimatedTokensUsed, limitTokens }`. The workflow must NOT stop. (User decision: soft warn only, never halt.)
 
 **Prompt-to-Flow (AI Scaffold)**
-- FR-V3-19: The server must expose `POST /api/v1/swarm/scaffold` which accepts a plain-English workflow description and uses a Claude job (via JobRunner, `claude -p`) to generate a WorkflowDefinition JSON. The response must stream a valid WorkflowDefinition structure.
+- FR-V3-19: The server must expose `POST /api/v1/swarm/scaffold` which accepts a plain-English workflow description and tries the configured scaffold providers in order (Claude, then Codex). If all providers are temporarily unavailable with retryable/limit-style failures, the endpoint must still return a deterministic runnable WorkflowDefinition fallback rather than a generic 500.
 - FR-V3-20: The frontend must display a "Scaffolding AI..." animation while the scaffold job is running, then animate each new node onto the canvas with an 80ms staggered delay per node.
 
 **Canvas (React Flow v12)**
@@ -98,7 +98,7 @@ Claude Code Visual Manager V2 is a local GUI that wraps the `claude` CLI binary,
 
 **HITL (Human-in-the-Loop)**
 - FR-V3-29: HITL inbox must expose: `GET /api/v1/inbox`, `GET /api/v1/inbox/:executionId`, `POST /api/v1/inbox/:itemId/approve`, `POST /api/v1/inbox/:itemId/reject`.
-- FR-V3-30: When an agent is paused for HITL, SwarmEngine must freeze that agent's PTY input (not kill it). On approve, the approved text must be injected via the PTY live injection sequence (see FR-V3-36). On reject, a rejection message must be injected.
+- FR-V3-30: When an agent is paused for HITL, SwarmEngine must freeze that agent's PTY input (not kill it). On approve, the approved text must be injected and the agent must resume through the canonical unfreeze path. On reject, explicit rejection guidance must be injected and the agent must likewise resume through the canonical unfreeze path.
 - FR-V3-31: The HITL inbox UI must show all pending items with Approve and Reject buttons, the agent label, the pending action text, and timestamp.
 
 **PTY Live Injection and PTY Explosion**
@@ -107,7 +107,7 @@ Claude Code Visual Manager V2 is a local GUI that wraps the `claude` CLI binary,
 - FR-V3-34: Two injection modes must be supported: `soft` (queued injection — agent processes after current task) and `hard` (immediate interrupt attempt — `\x03` + inject; unreliable during active tool execution, must be documented as best-effort).
 
 **Broadcast**
-- FR-V3-35: `POST /api/v1/swarm/:executionId/broadcast` must accept `{ text, scope: "all" | "department" | "agent", targetId? }` and inject the text into all matched agents using the soft injection mode.
+- FR-V3-35: `POST /api/v1/swarm/:executionId/broadcast` must accept `{ text, scope: "all" | "department" | "agent", targetId?, mode }`, resolve recipients according to workflow structure, and return `{ sent, scope, targetId, recipientNodeIds }` so QA can verify the actual targets.
 - FR-V3-36: The BroadcastBar UI component must allow the user to type a message and select scope (All Agents / Department / Specific Agent) before sending.
 
 **Triggers**
@@ -363,7 +363,7 @@ POST   /api/v1/swarm/scaffold
 
 POST   /api/v1/swarm/:executionId/broadcast
        Body: { text: string, scope: "all"|"department"|"agent", targetId?: string }
-       Response: { injectedCount: number }
+       Response: { sent: number, scope: string, targetId: string|null, recipientNodeIds: string[] }
 
 GET    /api/v1/swarm/:executionId/agent/:nodeId/output
        Response: { output: string } (last 100 lines of PTY output)
@@ -399,7 +399,7 @@ POST   /api/v1/triggers/webhooks/:path
 ### WebSocket Events (channel=swarm)
 All events delivered as JSON frames on the WebSocket connection with `channel: "swarm"`.
 ```
-{ type: "agent_status", nodeId, status, lastOutputSnippet }
+{ type: "agent_status", nodeId, status, sessionId, lastOutputSnippet }
 { type: "handoff_started", sourceNodeId, targetNodeId, edgeId, counter }
 { type: "handoff_completed", sourceNodeId, targetNodeId }
 { type: "circuit_breaker", edgeId, counter, threshold }
@@ -590,7 +590,7 @@ This section is the authoritative single source of truth for every Swarm compone
 
 **Known issues:**
 - BUG: `agent_status` events are emitted with `{ type, nodeId, status }` only — the `sessionId` field is absent. `useSwarm.js` calls `updateAgentState(msg.nodeId, { status: msg.status })` on this event, which does not set `agentState.sessionId`. As a result, `AgentInspector` can never display the "Open Terminal" button (which requires `agentState?.sessionId` to be truthy) via WS updates alone. The sessionId is only populated if the client independently fetches `/api/v1/swarm/:executionId/status`.
-- BUG: `handoff_completed` is never emitted. FR-V3-43 requires it; the actual `_onHandoff` implementation emits `handoff_started` and two `agent_status` events but no `handoff_completed`.
+- RESOLVED 2026-04-02: `_onHandoff()` emits `handoff_completed` after the target agent is running, matching FR-V3-43 and the InterAgentFeed client contract.
 
 **Acceptance Criteria:**
 - [ ] `startExecution()` returns a UUID string and the triage agent's PTY emits output within 5 seconds
@@ -1170,7 +1170,7 @@ This section is the authoritative single source of truth for every Swarm compone
 **File:** `client/src/canvas/BroadcastBar.jsx`
 **Type:** `frontend-component`
 **Layer:** `client`
-**Purpose:** Input bar at the bottom of SwarmView that lets the user broadcast a text message to all running agents with soft or hard injection mode.
+**Purpose:** Input bar at the bottom of SwarmView that lets the user broadcast a text message to all running agents, a department, or a specific agent with soft or hard injection mode.
 
 **Inputs:**
 | Nome | Tipo | Required | Descrizione |
@@ -1181,11 +1181,11 @@ This section is the authoritative single source of truth for every Swarm compone
 | Nome | Tipo | Descrizione |
 |------|------|-------------|
 | DOM | React element | Hidden when not active; visible text input + mode selector + Send button |
-| POST broadcast | `{ text, scope: 'all', mode }` | Sent to `/api/v1/swarm/:executionId/broadcast` |
+| POST broadcast | `{ text, scope, targetId, mode }` | Sent to `/api/v1/swarm/:executionId/broadcast` |
 
 **Behavior (step by step):**
 1. `isActive = executionStatus === 'running' && activeExecutionId`. If not active, renders null.
-2. On Send (button click or Enter key without Shift): POSTs `{ text: text.trim(), scope: 'all', mode }` to broadcast endpoint with `X-Requested-With: ClaudeCodeManager` header.
+2. On Send (button click or Enter key without Shift): POSTs `{ text: text.trim(), scope, targetId, mode }` to broadcast endpoint with `X-Requested-With: ClaudeCodeManager` header.
 3. On success: shows `"Sent to N agents"` feedback for 3 seconds; clears input.
 4. On failure: shows `"Error: <message>"` feedback.
 5. Input is limited to 500 characters (maxLength attribute).
@@ -1251,9 +1251,9 @@ This section documents the exact fields emitted by the server implementation, as
 
 ### WS Event: `agent_status`
 **Emitted by:** `SwarmEngine._spawnAgentPty()`, `_onHandoff()`, `_onDone()`, `pauseExecution()`, `resumeExecution()`, `freezeAgent()`, `unfreezeAgent()`
-**Actual fields:** `{ type: 'agent_status', nodeId: string, status: string }`
-**PRD Section 9 discrepancy:** PRD specifies `{ type: "agent_status", nodeId, status, lastOutputSnippet }`. The `lastOutputSnippet` field is NOT emitted. It is stored in-memory on the execution's agentStates map but never included in the WS broadcast.
-**Known issue:** `sessionId` is not included. `useSwarm.js` needs `sessionId` to populate `agentState.sessionId` so AgentInspector can show the "Open Terminal" button.
+**Actual fields:** `{ type: 'agent_status', nodeId: string, status: string, sessionId: string|null, lastOutputSnippet: string }`
+**PRD Section 9 discrepancy:** Resolved 2026-04-02. `agent_status` now includes both `sessionId` and `lastOutputSnippet`, and live PTY output refreshes the snippet through the same event contract.
+**Known issue:** none for this contract after the 2026-04-02 runtime-contract pass.
 
 ---
 

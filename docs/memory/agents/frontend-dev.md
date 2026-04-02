@@ -2011,3 +2011,43 @@ SwarmView.jsx now mounts the HITL polling hook. Build clean. No open issues.
 ### Handoff
 None — fix is self-contained.
 ---
+
+---
+## 2026-04-02 — Task #143: BUG-UX-COMPLETED-1 — Add Reset/Run button for completed execution state
+**Status:** COMPLETED
+**Called by:** user (direct fix request)
+
+### Context when I started
+SwarmView.jsx toolbar buttons were gated by `executionStatus` conditionals. When status reached `completed`, no condition matched — Run was idle-only, Reset was stopped-only, Pause/Resume/Stop were running/paused-only. User was stuck with no actionable button.
+
+### What I did
+1. Read SwarmView.jsx lines 130-210 to confirm the exact conditional structure.
+2. Changed Run button condition from `executionStatus === 'idle'` to `executionStatus === 'idle' || executionStatus === 'completed'` (line 145).
+3. Changed Reset button condition from `executionStatus === 'stopped'` to `executionStatus === 'stopped' || executionStatus === 'completed'` (line 196).
+4. Ran `npm run build --prefix client` — clean build, 0 errors.
+5. Marked Task #143 COMPLETED in TASK_PLAN.md.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/views/SwarmView.jsx | MODIFIED | Two JSX conditionals widened to include `completed` state |
+| docs/TASK_PLAN.md | MODIFIED | Task #143 status set to COMPLETED |
+
+### Improvements delivered
+- Users are no longer stuck after workflow completes — both Reset and Run buttons are now visible in `completed` state.
+
+### Bugs I encountered
+None — change was exactly as specified, no surprises.
+
+### Decisions I made
+- Show BOTH Reset and Run (option 3 from task spec) — gives user maximum choice without hiding anything.
+
+### What I learned
+- The WS contract hook fires on any Edit regardless of whether the file is WS-related — treat as noise when editing pure UI files.
+
+### State I'm leaving behind
+Task #143 fully complete. Tasks #144-#148 remain in the V3.4 wave (ANSI stripping, handoff chain, run-disabled feedback, TEST GATE, AREA CHECKPOINT).
+
+### Handoff
+qa-tester should run TEST GATE #147 after tasks #144-#146 are also complete.
+---

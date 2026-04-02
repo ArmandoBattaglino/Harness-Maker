@@ -110,10 +110,10 @@ describe('SwarmEngine', () => {
 
   // -------------------------------------------------------------------------
   // Test 1: Execution lifecycle
-  // startExecution() → agentStates populated → stopExecution() → Map cleared
+  // startExecution() → agentStates populated → stopExecution() → terminal snapshot retained
   // -------------------------------------------------------------------------
   describe('Test 1: Execution lifecycle', () => {
-    it('should populate agentStates on startExecution and clear the execution on stopExecution', async () => {
+    it('should retain a stopped execution snapshot after stopExecution', async () => {
       // Act — start
       const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
 
@@ -129,8 +129,12 @@ describe('SwarmEngine', () => {
       // Act — stop
       await engine.stopExecution(executionId);
 
-      // Assert — execution no longer retrievable
-      expect(engine.getStatus(executionId)).toBeNull();
+      // Assert — execution remains retrievable with canonical stopped state
+      const stoppedStatus = engine.getStatus(executionId);
+      expect(stoppedStatus).not.toBeNull();
+      expect(stoppedStatus.status).toBe('stopped');
+      expect(stoppedStatus.agentStates['node-a'].status).toBe('stopped');
+      expect(stoppedStatus.agentStates['node-a'].sessionId).toBeNull();
     });
 
     it('should remove swarm tap listener from session on stopExecution', async () => {
@@ -143,6 +147,20 @@ describe('SwarmEngine', () => {
 
       // After stop, tap must be removed (cleanup)
       expect(mockSession.swarmListeners.size).toBe(0);
+    });
+
+    it('should broadcast stopping and stopped execution_status events on stopExecution', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+
+      wsBroadcast.mockClear();
+      await engine.stopExecution(executionId);
+
+      const executionEvents = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .filter((ev) => ev.type === 'execution_status');
+
+      expect(executionEvents.some((ev) => ev.status === 'stopping')).toBe(true);
+      expect(executionEvents.some((ev) => ev.status === 'stopped')).toBe(true);
     });
   });
 
@@ -319,6 +337,26 @@ describe('SwarmEngine', () => {
       const budgetEvent = events.find((e) => e.type === 'budget_update');
       expect(budgetEvent).toBeUndefined();
     });
+
+    it('should emit agent_status updates with lastOutputSnippet as PTY output arrives', async () => {
+      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const tapFn = [...mockSession.swarmListeners][0];
+
+      wsBroadcast.mockClear();
+      tapFn('first chunk');
+      tapFn(' second chunk');
+
+      const statusEvents = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .filter((ev) => ev.type === 'agent_status' && ev.nodeId === 'node-a');
+
+      expect(statusEvents.length).toBeGreaterThanOrEqual(2);
+      expect(statusEvents.at(-1)).toMatchObject({
+        status: 'running',
+        sessionId: 'sess-node-a',
+        lastOutputSnippet: 'first chunk second chunk',
+      });
+    });
   });
 
   // -------------------------------------------------------------------------
@@ -359,6 +397,18 @@ describe('SwarmEngine', () => {
         ([, input]) => input === ''
       );
       expect(heartbeatCalls.length).toBe(0);
+    });
+
+    it('should set the execution status to paused and then back to running on pause/resume', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+
+      const paused = engine.pauseExecution(executionId);
+      expect(paused.status).toBe('paused');
+      expect(paused.agentStates['node-a'].status).toBe('paused');
+
+      const resumed = engine.resumeExecution(executionId);
+      expect(resumed.status).toBe('running');
+      expect(resumed.agentStates['node-a'].status).toBe('running');
     });
   });
 
@@ -421,6 +471,34 @@ describe('SwarmEngine', () => {
       const exec = engine._executions.get(executionId);
       // node-b must not be in agentStates at all
       expect(exec.agentStates.has('node-b')).toBe(false);
+    });
+
+    it('should mark the execution completed when the final active agent reports done', async () => {
+      const singleNodeWorkflow = {
+        id: 'wf-single',
+        name: 'Single Node Workflow',
+        nodes: [
+          { id: 'node-a', data: { isTriageNode: true, systemPrompt: 'You are agent A.' } },
+        ],
+        edges: [],
+        settings: { budgetTokens: 0, circuitBreakerThreshold: 10 },
+        initialContext: {},
+      };
+      workflowStoreMock.get.mockResolvedValue(singleNodeWorkflow);
+
+      const executionId = await engine.startExecution('wf-single', 'proj-1', '/projects/proj-1');
+
+      wsBroadcast.mockClear();
+      engine._onDone(executionId, 'node-a');
+
+      const status = engine.getStatus(executionId);
+      expect(status.status).toBe('completed');
+      expect(status.agentStates['node-a'].status).toBe('done');
+
+      const executionEvents = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .filter((ev) => ev.type === 'execution_status');
+      expect(executionEvents.some((ev) => ev.status === 'completed')).toBe(true);
     });
   });
 

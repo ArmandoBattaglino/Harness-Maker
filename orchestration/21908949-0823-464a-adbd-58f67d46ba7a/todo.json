@@ -1,0 +1,10 @@
+{
+  "request_id": "21908949-0823-464a-adbd-58f67d46ba7a",
+  "created_at": "2026-04-02T17:46:47.330Z",
+  "user_prompt": "TASK #138 TEST GATE — Swarm runtime lifecycle and reconnect regression. Read docs/TASK_PLAN.md task #138 plus the current working tree changes for tasks #133-#137. Do a QA audit focused on whether #138 can be marked PASS right now. Verify against acceptance criteria: scaffold happy path, saved workflow load, run/pause/resume/stop alignment, HITL approve/reject recovery, reconnect snapshot restore, npm test. You are not fixing code. Report: PASS/FAIL, concrete evidence, missing verification gaps, and exact file references or commands that support your conclusion.",
+  "requested_agent": "qa-tester",
+  "status": "active",
+  "steps": [],
+  "next_actions": [],
+  "summary": null
+}

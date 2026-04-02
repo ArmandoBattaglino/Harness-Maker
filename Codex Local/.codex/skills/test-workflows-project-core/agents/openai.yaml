@@ -1,0 +1,4 @@
+interface:
+  display_name: "Test Workflows Core"
+  short_description: "Project-local Claude-derived operating model"
+  default_prompt: "Use $test-workflows-project-core to work inside this repository with its local Claude-style workflow and memory rules."

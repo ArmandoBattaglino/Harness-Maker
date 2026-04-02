@@ -3,7 +3,7 @@ import { create } from 'zustand';
 const useSwarmStore = create((set, get) => ({
   // Execution state
   activeExecutionId: null,
-  executionStatus: 'idle', // 'idle' | 'running' | 'paused' | 'stopped'
+  executionStatus: 'idle', // 'idle' | 'running' | 'paused' | 'stopping' | 'stopped' | 'failed' | 'completed'
   agentStates: {},         // { [nodeId]: { status, lastOutputSnippet, handoffCount } }
   triggerStates: {},       // { [triggerId]: { fired, lastFiredAt, status } }
   edgeCounters: {},        // { [edgeId]: number }

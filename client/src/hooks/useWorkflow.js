@@ -18,7 +18,7 @@ export function useWorkflow(workflowId) {
     setError(null);
     try {
       const data = await apiGet(`${API_BASE}/${workflowId}`);
-      setWorkflow(data);
+      setWorkflow(data?.workflow ?? data ?? null);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -55,7 +55,7 @@ export function useWorkflowList() {
     setError(null);
     try {
       const data = await apiGet(API_BASE);
-      setWorkflows(data);
+      setWorkflows(Array.isArray(data) ? data : (data?.workflows ?? []));
     } catch (e) {
       setError(e.message);
     } finally {

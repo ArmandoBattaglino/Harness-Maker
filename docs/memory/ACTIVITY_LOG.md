@@ -1,4 +1,3 @@
----
 ## 2026-04-02 — documenter — Task #132: AREA CHECKPOINT PASS — V3.1 Swarm Bug Fix Wave closed
 **Outcome:** COMPLETED
 **Summary:** Updated DOC_STATUS.md to reflect all four V3.1 bugs fixed (BUG-SESSION-1, BUG-HANDOFF-1, BUG-TRIGGER-1, BUG-INSPECTOR-1); replaced "Known Bugs" section with "ALL FIXED" summary; added 4 rows to Fixed Bugs table. Updated ARCHITECTURE.md Swarm WS event table: `agent_status` corrected (sessionId field added), `handoff_completed` row added, `trigger_fired`/`trigger_status`/`rss_item` rows added. 132/132 tasks complete, zero open bugs.
@@ -2537,4 +2536,25 @@ full self-contained context and acceptance criteria.
 **Decisions made:** Static audit + build + server tests sufficient for area checkpoint (no client test harness in project)
 **Blockers:** none
 **Next:** V3.2 feature planning — project-manager should register next tasks
+---
+
+## 2026-04-02 - debugger/qa-tester/documenter - Tasks #138-#142: Swarm runtime follow-up wave closed
+**Outcome:** COMPLETED
+**Summary:** Closed the V3.2/V3.3 Swarm follow-up wave end-to-end. Added deterministic local scaffold fallback when both external providers are unavailable, verified Prompt-to-Flow and saved workflow loading in the browser, completed scoped broadcast delivery with explicit recipient reporting, and restored live 'lastOutputSnippet' propagation through 'agent_status'. Updated PRD/API/task-plan memory to match the implemented runtime contract. Verification: `npm test --prefix server` (203/203 pass), `npm run build --prefix client`, and browser execution reaching Completed in SwarmView.
+**Files changed:** server/services/ScaffoldGenerator.js, server/tests/ScaffoldGenerator.test.js, server/services/SwarmEngine.js, server/routes/swarm.js, server/tests/swarm-engine.test.js, server/tests/swarm-routes.test.js, client/src/hooks/useSwarm.js, client/src/canvas/BroadcastBar.jsx, docs/TASK_PLAN.md, docs/API.md, docs/PRD.md, docs/memory/PROGRESS.md, docs/memory/DECISIONS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** BUG-SWARM-007, BUG-SWARM-009 and the Prompt-to-Flow provider unavailability regression
+**Decisions made:** DEC-017 - deterministic local scaffold fallback when providers are unavailable
+**Blockers:** none
+**Next:** no open V3.2/V3.3 Swarm tasks remain; future work can start from the next planned wave.
+---
+
+---
+## 2026-04-02 — frontend-dev — Task #143: BUG-UX-COMPLETED-1 — Add Reset/Run button for completed state
+**Outcome:** COMPLETED
+**Summary:** Extended two JSX conditionals in SwarmView.jsx toolbar so both Reset and Run buttons are visible when executionStatus is 'completed'. Users can now re-run or reset after a workflow finishes without reloading. Build passes cleanly.
+**Files changed:** client/src/views/SwarmView.jsx
+**Bugs fixed:** BUG-UX-COMPLETED-1 — dead-end completed state with no action buttons
+**Decisions made:** Show both Reset and Run in completed state (option 3 from task spec)
+**Blockers:** none
+**Next:** Tasks #144 (ANSI stripping), #145 (handoff chain), #146 (run-disabled feedback) — then TEST GATE #147 and AREA CHECKPOINT #148
 ---

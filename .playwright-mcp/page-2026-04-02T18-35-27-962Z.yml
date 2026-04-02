@@ -1,0 +1,128 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e7]: terminal
+        - generic [ref=e8]:
+          - heading "Claude Code" [level=1] [ref=e9]
+          - paragraph [ref=e10]: Visual Manager
+      - navigation [ref=e11]:
+        - button "dashboard Projects" [ref=e12] [cursor=pointer]:
+          - generic [ref=e13]: dashboard
+          - generic [ref=e14]: Projects
+        - button "terminal Live Terminal" [ref=e15] [cursor=pointer]:
+          - generic [ref=e16]: terminal
+          - generic [ref=e17]: Live Terminal
+        - button "play_arrow Job Runner" [ref=e18] [cursor=pointer]:
+          - generic [ref=e19]: play_arrow
+          - generic [ref=e20]: Job Runner
+        - button "memory Deployments" [ref=e21] [cursor=pointer]:
+          - generic [ref=e22]: memory
+          - generic [ref=e23]: Deployments
+        - button "description Context Editor" [ref=e24] [cursor=pointer]:
+          - generic [ref=e25]: description
+          - generic [ref=e26]: Context Editor
+        - button "hub Swarm" [ref=e27] [cursor=pointer]:
+          - generic [ref=e28]: hub
+          - generic [ref=e29]: Swarm
+      - generic [ref=e30]:
+        - generic [ref=e31]:
+          - generic [ref=e32]: Active PTY Sessions
+          - generic [ref=e33]: 1 Total
+        - list [ref=e34]:
+          - listitem [ref=e255]:
+            - button "Prova PID 16180" [ref=e256] [cursor=pointer]:
+              - generic [ref=e257]:
+                - generic [ref=e260]: Prova
+                - generic [ref=e261]: PID 16180
+        - button "add New Local Session" [ref=e37] [cursor=pointer]:
+          - generic [ref=e38]: add
+          - generic [ref=e39]: New Local Session
+      - generic [ref=e41]:
+        - generic [ref=e44]: Active
+        - generic [ref=e45]:
+          - button "Open settings" [ref=e46] [cursor=pointer]:
+            - generic [ref=e47]: settings
+          - generic [ref=e48]: v3.0.0
+    - main [ref=e49]:
+      - generic [ref=e262]:
+        - generic [ref=e263]:
+          - generic [ref=e264]:
+            - generic [ref=e265]:
+              - generic [ref=e266]: terminal
+              - generic [ref=e267]: Prova
+            - generic [ref=e269]:
+              - generic [ref=e270]: folder_open
+              - generic [ref=e271]: C:\Users\arman\Downloads\Test workflows - Copia
+          - generic [ref=e272]:
+            - generic [ref=e273]:
+              - generic [ref=e274]: Memory
+              - generic [ref=e275]: —
+            - button "content_copy" [ref=e276] [cursor=pointer]:
+              - generic [ref=e277]: content_copy
+            - button "vertical_split" [disabled] [ref=e278]:
+              - generic [ref=e279]: vertical_split
+            - button "close" [ref=e280] [cursor=pointer]:
+              - generic [ref=e281]: close
+        - generic [ref=e286]:
+          - textbox "Terminal input" [ref=e287]
+          - generic [ref=e288]:
+            - generic [ref=e289]:
+              - generic [ref=e290]: ▐
+              - generic [ref=e291]: ▛███▜
+              - generic [ref=e292]: ▌
+              - generic [ref=e294]: Claude
+              - generic [ref=e296]: Code
+              - generic [ref=e298]: v2.1.90
+            - generic [ref=e299]:
+              - generic [ref=e300]: ▝▜
+              - generic [ref=e301]: █████
+              - generic [ref=e302]: ▛▘
+              - generic [ref=e304]: Opus
+              - generic [ref=e306]: "4.6"
+              - generic [ref=e308]: with
+              - generic [ref=e310]: medium
+              - generic [ref=e312]: effort
+              - generic [ref=e314]: ·
+              - generic [ref=e316]: Claude
+              - generic [ref=e318]: Pro
+            - generic [ref=e319]:
+              - generic [ref=e322]: ▘▘
+              - generic [ref=e324]: ▝▝
+              - generic [ref=e326]: ~\Downloads\Test
+              - generic [ref=e328]: workflows
+              - generic [ref=e330]: "-"
+              - generic [ref=e332]: Copia
+            - generic [ref=e335]: ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+            - generic [ref=e337]: ❯
+            - generic [ref=e339]: ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+            - generic [ref=e340]:
+              - generic [ref=e342]: ⏵⏵
+              - generic [ref=e344]: bypass
+              - generic [ref=e346]: permissions
+              - generic [ref=e348]: "on"
+              - generic [ref=e349]: (shift+tab
+              - generic [ref=e351]: to
+              - generic [ref=e353]: cycle)
+              - generic [ref=e355]: /
+              - generic [ref=e356]: b
+              - generic [ref=e357]: u
+              - generic [ref=e358]: d
+              - generic [ref=e359]: d
+              - generic [ref=e360]: "y"
+        - generic [ref=e405]:
+          - generic [ref=e406]:
+            - generic [ref=e409]: Connected
+            - generic [ref=e411]:
+              - generic [ref=e412]: bolt
+              - generic [ref=e413]: Local Daemon
+          - generic [ref=e414]:
+            - generic [ref=e415]:
+              - generic [ref=e416]: toll
+              - generic [ref=e417]: Tokens
+              - generic [ref=e418]: —
+            - generic [ref=e420]:
+              - generic [ref=e421]: timer
+              - generic [ref=e422]: Latency
+              - generic [ref=e423]: —
+  - generic [ref=e424]: ////////////////////////////////oooooooooooooooooooooooooooooooo

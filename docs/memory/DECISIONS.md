@@ -143,3 +143,12 @@
 **Reasoning:** JobRunner already handles spawn, stream-json parsing, SSE delivery, and process lifecycle. Reusing it avoids duplicating spawn logic. The auto-retry covers the most common failure mode (Claude wrapping JSON in markdown fences) without user intervention. Two attempts total keeps latency acceptable.
 **Alternatives rejected:** Direct child_process.spawn — duplicates JobRunner, violates DRY. Unlimited retries — could hang the UI. Silent failure — bad UX, user doesn't know why the flow didn't generate.
 ---
+
+## DEC-017: Swarm scaffold must degrade to a deterministic local workflow when providers are unavailable
+**Date:** 2026-04-02
+**Made by:** debugger / qa-tester runtime follow-up wave
+**Decision:** If both configured scaffold providers fail with retryable or limit-style availability errors, 'POST /api/v1/swarm/scaffold' returns a deterministic local workflow instead of surfacing a generic failure.
+**Reasoning:** Prompt-to-Flow is a primary onboarding path. In this repo's runtime environment, Claude and Codex providers can both be temporarily unavailable, which otherwise blocks the entire Swarm surface. A deterministic fallback preserves a runnable graph, keeps browser QA unblocked, and is safer than inventing partial provider-specific retry loops in the UI.
+**Alternatives rejected:** Hard-fail with 500/503 - leaves Swarm unusable. Silent empty workflow - violates the product contract and gives the user no runnable graph.
+**Revisit if:** Provider reliability improves enough that the local fallback is no longer needed, or if a richer local planner replaces the current deterministic template.
+---

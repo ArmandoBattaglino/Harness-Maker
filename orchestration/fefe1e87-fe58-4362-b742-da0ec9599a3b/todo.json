@@ -1,0 +1,10 @@
+{
+  "request_id": "fefe1e87-fe58-4362-b742-da0ec9599a3b",
+  "created_at": "2026-04-02T15:23:48.972Z",
+  "user_prompt": "Reply with the exact word READY and nothing else.",
+  "requested_agent": "project-manager",
+  "status": "active",
+  "steps": [],
+  "next_actions": [],
+  "summary": null
+}

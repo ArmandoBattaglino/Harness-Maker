@@ -1,6 +1,6 @@
 // client/src/views/SwarmView.jsx
 // Layout shell for the Swarm Orchestrator — toolbar + canvas.
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ReactFlowProvider } from '@xyflow/react';
 import SwarmCanvas from '../canvas/SwarmCanvas';
 import PromptToFlowBar from '../canvas/PromptToFlowBar';
@@ -10,10 +10,10 @@ import HitlInbox, { getPendingCount } from '../panels/HitlInbox';
 import { useSwarmStore } from '../store/SwarmContext';
 import { useSwarm } from '../hooks/useSwarm';
 import { useInbox } from '../hooks/useInbox.js';
+import { useWorkflowList } from '../hooks/useWorkflow.js';
 import { useAppState } from '../store/AppContext';
 import { apiPost } from '../hooks/useApi.js';
 
-// Status indicator color map
 const statusColors = {
   idle: 'text-gray-400',
   running: 'text-blue-400 animate-pulse',
@@ -25,37 +25,43 @@ export default function SwarmView() {
   const executionStatus = useSwarmStore((s) => s.executionStatus);
   const activeExecutionId = useSwarmStore((s) => s.activeExecutionId);
   const inboxItems = useSwarmStore((s) => s.inboxItems);
-  const interAgentFeed = useSwarmStore((s) => s.interAgentFeed);
   const setPaused = useSwarmStore((s) => s.setPaused);
   const setResumed = useSwarmStore((s) => s.setResumed);
   const reset = useSwarmStore((s) => s.reset);
   const ptyExplosionNodeId = useSwarmStore((s) => s.ptyExplosionNodeId);
   const setPtyExplosionNodeId = useSwarmStore((s) => s.setPtyExplosionNodeId);
-
   const workflowDef = useSwarmStore((s) => s.workflowDef);
   const setWorkflowDef = useSwarmStore((s) => s.setWorkflowDef);
-  // Task #100 — HITL inbox drawer toggle
-  const [inboxOpen, setInboxOpen] = useState(false);
-  // Task #101 — loading state for run/stop
-  const [executing, setExecuting] = useState(false);
-  // Task #103 — loading state for pause/resume
-  const [pausing, setPausing] = useState(false);
-  // (runError removed — Run button uses disabled+tooltip, error state was unreachable)
 
-  // Task #101 — project context for startExecution
+  const [selectedWorkflowId, setSelectedWorkflowId] = useState('');
+  const [inboxOpen, setInboxOpen] = useState(false);
+  const [executing, setExecuting] = useState(false);
+  const [pausing, setPausing] = useState(false);
+
   const { activeProjectId, projects } = useAppState();
   const projectPath = projects.find((p) => p.id === activeProjectId)?.path ?? '';
+  const {
+    workflows,
+    loading: workflowsLoading,
+    error: workflowsError,
+    refresh: refreshWorkflows,
+  } = useWorkflowList();
 
-  // Task #101 — useSwarm hook (workflowId comes from workflowDef once generated)
   const { startExecution, stopExecution } = useSwarm(workflowDef?.id);
-
-  // BUG-AUDIT-4 fix — HITL polling fallback when WS is disconnected
   useInbox(activeExecutionId);
 
-  // Task #100 — pending HITL count for badge
   const pendingCount = getPendingCount(inboxItems);
+  const isExecutionActive = executionStatus === 'running' || executionStatus === 'paused';
+  const savedWorkflows = useMemo(() => {
+    return workflows
+      .filter((workflow) => !activeProjectId || !workflow.projectId || workflow.projectId === activeProjectId)
+      .sort((a, b) => {
+        const aTime = new Date(a.updatedAt ?? a.createdAt ?? 0).getTime();
+        const bTime = new Date(b.updatedAt ?? b.createdAt ?? 0).getTime();
+        return bTime - aTime;
+      });
+  }, [workflows, activeProjectId]);
 
-  // Escape key handler — close PTY explosion overlay if it's open
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && ptyExplosionNodeId !== null) {
@@ -67,7 +73,12 @@ export default function SwarmView() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [ptyExplosionNodeId, setPtyExplosionNodeId]);
 
-  // Task #101 — Run handler
+  useEffect(() => {
+    if (workflowDef?.id) {
+      setSelectedWorkflowId(workflowDef.id);
+    }
+  }, [workflowDef?.id]);
+
   const handleRun = async () => {
     setExecuting(true);
     try {
@@ -77,7 +88,6 @@ export default function SwarmView() {
     }
   };
 
-  // Task #101 — Stop handler
   const handleStop = async () => {
     setExecuting(true);
     try {
@@ -87,9 +97,8 @@ export default function SwarmView() {
     }
   };
 
-  // Task #103 — Pause handler
   const handlePause = async () => {
-    if (!activeExecutionId) return; // BUG-TOOLBAR-3: guard against Stop+Pause race
+    if (!activeExecutionId) return;
     setPausing(true);
     try {
       await apiPost(`/api/v1/swarm/${activeExecutionId}/pause`, {});
@@ -99,9 +108,8 @@ export default function SwarmView() {
     }
   };
 
-  // Task #103 — Resume handler
   const handleResume = async () => {
-    if (!activeExecutionId) return; // BUG-TOOLBAR-3: guard against Stop+Resume race
+    if (!activeExecutionId) return;
     setPausing(true);
     try {
       await apiPost(`/api/v1/swarm/${activeExecutionId}/resume`, {});
@@ -111,18 +119,22 @@ export default function SwarmView() {
     }
   };
 
+  const handleLoadWorkflow = () => {
+    const selected = savedWorkflows.find((workflow) => workflow.id === selectedWorkflowId);
+    if (!selected) return;
+
+    reset();
+    setWorkflowDef(selected);
+  };
+
   return (
     <div className="flex flex-col w-full h-full bg-gray-950 text-white">
-      {/* Toolbar */}
       <div className="flex items-center gap-3 px-4 py-2 bg-gray-900 border-b border-gray-700 shrink-0">
         <span className="text-sm font-semibold text-white">Swarm Orchestrator</span>
-
-        {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Task #100 — HITL inbox badge button */}
         <button
-          onClick={(e) => { e.stopPropagation(); setInboxOpen((o) => !o); }}
+          onClick={(e) => { e.stopPropagation(); setInboxOpen((open) => !open); }}
           className={`text-xs px-2 py-1 rounded transition-colors ${
             pendingCount > 0 ? 'bg-orange-600 hover:bg-orange-500 text-white' : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
           }`}
@@ -130,8 +142,7 @@ export default function SwarmView() {
           {'\uD83D\uDCE5'} HITL{pendingCount > 0 ? ` (${pendingCount})` : ''}
         </button>
 
-        {/* Run button — always visible when idle; disabled with hint if preconditions not met */}
-        {executionStatus === 'idle' && (
+        {(executionStatus === 'idle' || executionStatus === 'completed') && (
           <button
             onClick={workflowDef && activeProjectId ? handleRun : undefined}
             disabled={executing || !workflowDef || !activeProjectId}
@@ -139,7 +150,7 @@ export default function SwarmView() {
               !activeProjectId
                 ? 'Select a project first'
                 : !workflowDef
-                ? 'Generate a workflow below first'
+                ? 'Generate or load a workflow first'
                 : 'Run workflow'
             }
             className="bg-green-600 hover:bg-green-500 text-white text-xs px-3 py-1 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
@@ -148,7 +159,6 @@ export default function SwarmView() {
           </button>
         )}
 
-        {/* Task #103 — Pause button: running */}
         {executionStatus === 'running' && (
           <button
             onClick={handlePause}
@@ -159,7 +169,6 @@ export default function SwarmView() {
           </button>
         )}
 
-        {/* Task #103 — Resume button: paused */}
         {executionStatus === 'paused' && (
           <button
             onClick={handleResume}
@@ -170,7 +179,6 @@ export default function SwarmView() {
           </button>
         )}
 
-        {/* Task #101 — Stop button: running or paused */}
         {(executionStatus === 'running' || executionStatus === 'paused') && (
           <button
             onClick={handleStop}
@@ -181,13 +189,11 @@ export default function SwarmView() {
           </button>
         )}
 
-        {/* Execution status indicator */}
         <span className={`text-xs capitalize ${statusColors[executionStatus] || 'text-gray-400'}`}>
           ● {executionStatus}
         </span>
 
-        {/* Reset button — only when stopped; also clears workflowDef (BUG-TOOLBAR-4) */}
-        {executionStatus === 'stopped' && (
+        {(executionStatus === 'stopped' || executionStatus === 'completed') && (
           <button
             onClick={reset}
             className="text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors"
@@ -197,21 +203,67 @@ export default function SwarmView() {
         )}
       </div>
 
-      {/* Prompt-to-Flow bar */}
       <PromptToFlowBar
         onWorkflowGenerated={(workflowId, animatedDef) => {
           setWorkflowDef(animatedDef);
+          setSelectedWorkflowId(workflowId);
+          refreshWorkflows();
         }}
       />
 
-      {/* Canvas area — takes remaining height. Task #102: InterAgentFeed is mounted inside SwarmCanvas */}
+      <div className="flex items-center gap-2 px-4 py-2 bg-gray-900 border-b border-gray-700 shrink-0">
+        <span className="text-xs font-semibold text-gray-300">Saved workflows</span>
+        <select
+          value={selectedWorkflowId}
+          onChange={(e) => setSelectedWorkflowId(e.target.value)}
+          disabled={workflowsLoading || savedWorkflows.length === 0 || isExecutionActive}
+          className="min-w-72 max-w-[28rem] bg-gray-800 text-white text-xs rounded px-2 py-1.5 border border-gray-600 disabled:opacity-50"
+        >
+          <option value="">
+            {workflowsLoading
+              ? 'Loading workflows...'
+              : savedWorkflows.length === 0
+              ? 'No saved workflows available'
+              : 'Select a saved workflow'}
+          </option>
+          {savedWorkflows.map((workflow) => (
+            <option key={workflow.id} value={workflow.id}>
+              {workflow.name}
+            </option>
+          ))}
+        </select>
+        <button
+          onClick={handleLoadWorkflow}
+          disabled={!selectedWorkflowId || isExecutionActive}
+          className="text-xs px-3 py-1.5 rounded bg-gray-700 hover:bg-gray-600 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Load workflow
+        </button>
+        <button
+          onClick={refreshWorkflows}
+          disabled={workflowsLoading}
+          className="text-xs px-2 py-1.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 transition-colors disabled:opacity-40"
+        >
+          Refresh
+        </button>
+        <div className="flex-1" />
+        <span className="text-xs text-gray-500">
+          {activeProjectId ? 'Shows current-project workflows plus unscoped ones' : 'Shows all saved workflows'}
+        </span>
+      </div>
+
+      {workflowsError && (
+        <div className="px-4 py-2 text-xs text-red-400 bg-gray-900 border-b border-gray-800">
+          Failed to load saved workflows: {workflowsError}
+        </div>
+      )}
+
       <div className="flex-1 overflow-hidden">
         <ReactFlowProvider>
           <SwarmCanvas workflowDef={workflowDef} />
         </ReactFlowProvider>
       </div>
 
-      {/* Task #100 — HITL inbox drawer (above BroadcastBar) */}
       {inboxOpen && (
         <div className="border-t border-gray-700 bg-gray-900 max-h-64 overflow-y-auto">
           <div className="flex items-center justify-between px-3 py-2 border-b border-gray-700">
@@ -222,10 +274,8 @@ export default function SwarmView() {
         </div>
       )}
 
-      {/* Broadcast bar — only visible during active execution */}
       <BroadcastBar />
 
-      {/* PTY Explosion overlay — full-screen terminal for direct agent interaction */}
       {ptyExplosionNodeId && (
         <PtyExplosion
           sessionId={ptyExplosionNodeId}

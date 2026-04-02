@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bug Hunt And Fix"
+  short_description: "Repo bug discovery and remediation pipeline"
+  default_prompt: "Use $bug-hunt-and-fix to run this repository's full QA, fix, verification, and documentation workflow."

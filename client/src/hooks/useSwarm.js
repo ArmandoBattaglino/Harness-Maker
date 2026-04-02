@@ -1,18 +1,122 @@
 // useSwarm.js — WebSocket hook for swarm execution control and live state updates.
 import { useEffect, useRef, useCallback } from 'react';
 import { useSwarmStore } from '../store/SwarmContext';
-import { apiPost, apiDelete } from './useApi.js';
+import { apiGet, apiPost, apiDelete } from './useApi.js';
+
+const EXECUTION_STORAGE_KEY = 'swarm-active-execution';
+
+function readStoredExecution() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(EXECUTION_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredExecution(snapshot) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(EXECUTION_STORAGE_KEY, JSON.stringify(snapshot));
+  } catch {
+    // Ignore storage failures; live runtime state still works in-memory.
+  }
+}
+
+function clearStoredExecution() {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(EXECUTION_STORAGE_KEY);
+  } catch {
+    // Ignore storage failures.
+  }
+}
 
 export function useSwarm(workflowId) {
   const wsRef = useRef(null);
   const setExecution = useSwarmStore((s) => s.setExecution);
+  const setWorkflowDef = useSwarmStore((s) => s.setWorkflowDef);
   const updateAgentState = useSwarmStore((s) => s.updateAgentState);
   const updateEdgeCounter = useSwarmStore((s) => s.updateEdgeCounter);
   const updateBudget = useSwarmStore((s) => s.updateBudget);
   const addInboxItem = useSwarmStore((s) => s.addInboxItem);
+  const resolveInboxItem = useSwarmStore((s) => s.resolveInboxItem);
   const addFeedEvent = useSwarmStore((s) => s.addFeedEvent);
   const updateTriggerState = useSwarmStore((s) => s.updateTriggerState);
   const setWsConnected = useSwarmStore((s) => s.setWsConnected);
+
+  const applyExecutionSnapshot = useCallback(async (snapshot) => {
+    const currentState = useSwarmStore.getState();
+    const nextExecutionId = snapshot.executionId ?? currentState.activeExecutionId;
+    const nextStatus = snapshot.status ?? currentState.executionStatus ?? 'running';
+
+    useSwarmStore.setState({
+      activeExecutionId: nextExecutionId,
+      executionStatus: nextStatus,
+      ...(snapshot.agentStates ? { agentStates: snapshot.agentStates } : {}),
+      ...(snapshot.triggerStates ? { triggerStates: snapshot.triggerStates } : {}),
+      ...(snapshot.edgeCounters ? { edgeCounters: snapshot.edgeCounters } : {}),
+      ...(snapshot.budget ? { budget: snapshot.budget } : {}),
+      ...(snapshot.inboxItems ? { inboxItems: snapshot.inboxItems } : {}),
+      ...(snapshot.interAgentFeed ? { interAgentFeed: snapshot.interAgentFeed } : {}),
+    });
+
+    const workflowIdToPersist = snapshot.workflowId ?? snapshot.workflowDef?.id ?? currentState.workflowDef?.id ?? null;
+    if (nextExecutionId && !['stopped', 'completed', 'failed'].includes(nextStatus)) {
+      writeStoredExecution({ executionId: nextExecutionId, workflowId: workflowIdToPersist });
+    } else {
+      clearStoredExecution();
+    }
+
+    if (snapshot.workflowDef) {
+      setWorkflowDef(snapshot.workflowDef);
+      return { executionId: nextExecutionId, status: nextStatus };
+    }
+
+    const workflowIdToLoad = snapshot.workflowId ?? currentState.workflowDef?.id ?? null;
+    if (!workflowIdToLoad) {
+      return { executionId: nextExecutionId, status: nextStatus };
+    }
+
+    const existingWorkflow = currentState.workflowDef;
+    if (existingWorkflow?.id === workflowIdToLoad) {
+      return { executionId: nextExecutionId, status: nextStatus };
+    }
+
+    try {
+      const workflowResponse = await apiGet(`/api/v1/workflows/${workflowIdToLoad}`);
+      setWorkflowDef(workflowResponse?.workflow ?? workflowResponse);
+    } catch {
+      // Leave the current canvas state intact; runtime snapshot is still applied above.
+    }
+
+    return { executionId: nextExecutionId, status: nextStatus };
+  }, [setWorkflowDef]);
+
+  const restorePersistedExecution = useCallback(async () => {
+    if (wsRef.current) return;
+
+    const stored = readStoredExecution();
+    if (!stored?.executionId) return;
+
+    const status = await apiGet(`/api/v1/swarm/${stored.executionId}/status`).catch(() => null);
+    if (!status) {
+      clearStoredExecution();
+      return;
+    }
+
+    const snapshot = {
+      ...status,
+      workflowId: status.workflowId ?? stored.workflowId ?? null,
+    };
+    const hydrated = await applyExecutionSnapshot(snapshot);
+
+    if (!['stopped', 'completed', 'failed'].includes(hydrated.status)) {
+      connectWs(stored.executionId);
+    }
+  }, [applyExecutionSnapshot]);
+
   // Connect WS for a running execution
   const connectWs = useCallback((executionId) => {
     if (wsRef.current) {
@@ -22,9 +126,22 @@ export function useSwarm(workflowId) {
     const url = `${protocol}//${location.host}/ws/swarm?executionId=${executionId}`;
     const ws = new WebSocket(url);
 
-    ws.onopen = () => setWsConnected(true);
-    ws.onclose = () => setWsConnected(false);
-    ws.onerror = () => setWsConnected(false);
+    ws.onopen = () => {
+      if (wsRef.current === ws) {
+        setWsConnected(true);
+      }
+    };
+    ws.onclose = () => {
+      if (wsRef.current === ws) {
+        wsRef.current = null;
+        setWsConnected(false);
+      }
+    };
+    ws.onerror = () => {
+      if (wsRef.current === ws) {
+        setWsConnected(false);
+      }
+    };
 
     ws.onmessage = (e) => {
       let msg;
@@ -32,7 +149,13 @@ export function useSwarm(workflowId) {
 
       switch (msg.type) {
         case 'agent_status':
-          updateAgentState(msg.nodeId, { status: msg.status, ...(msg.sessionId ? { sessionId: msg.sessionId } : {}) });
+          updateAgentState(msg.nodeId, {
+            status: msg.status,
+            ...(Object.prototype.hasOwnProperty.call(msg, 'sessionId') ? { sessionId: msg.sessionId } : {}),
+            ...(Object.prototype.hasOwnProperty.call(msg, 'lastOutputSnippet')
+              ? { lastOutputSnippet: msg.lastOutputSnippet }
+              : {}),
+          });
           break;
         case 'handoff_started': {
           updateEdgeCounter(msg.edgeId, msg.counter);
@@ -45,9 +168,14 @@ export function useSwarm(workflowId) {
         case 'handoff_completed':
           addFeedEvent({ ...msg, timestamp: Date.now() });
           break;
-        case 'execution_status':
-          setExecution(msg.executionId ?? null, msg.status ?? 'running');
+        case 'execution_status': {
+          void applyExecutionSnapshot(msg).then(({ status }) => {
+            if (['stopped', 'completed', 'failed'].includes(status) && wsRef.current === ws) {
+              ws.close();
+            }
+          });
           break;
+        }
         case 'budget_update':
           updateBudget(msg.estimatedTokensUsed, msg.limitTokens);
           break;
@@ -56,6 +184,9 @@ export function useSwarm(workflowId) {
           break;
         case 'hitl_required':
           addInboxItem(msg);
+          break;
+        case 'hitl_resolved':
+          resolveInboxItem(msg.itemId);
           break;
         case 'trigger_fired': {
           const tfId = msg.triggerId ?? msg.nodeId;
@@ -89,7 +220,7 @@ export function useSwarm(workflowId) {
     };
 
     wsRef.current = ws;
-  }, [setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, setExecution, updateBudget, addInboxItem, updateTriggerState]);
+  }, [setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, setExecution, updateBudget, addInboxItem, resolveInboxItem, updateTriggerState, applyExecutionSnapshot]);
 
   // Start execution
   const startExecution = useCallback(async (projectId, projectPath) => {
@@ -97,19 +228,31 @@ export function useSwarm(workflowId) {
     const data = await apiPost(`/api/v1/swarm/${workflowId}/start`, { projectId, projectPath });
     const { executionId } = data;
     setExecution(executionId, 'running');
+    writeStoredExecution({ executionId, workflowId });
     connectWs(executionId);
     return executionId;
   }, [workflowId, setExecution, connectWs]);
 
   // Stop execution
   const stopExecution = useCallback(async (executionId) => {
+    setExecution(executionId, 'stopping');
     await apiDelete(`/api/v1/swarm/${executionId}`);
-    setExecution(null, 'stopped');
-    wsRef.current?.close();
-  }, [setExecution]);
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      const status = await apiGet(`/api/v1/swarm/${executionId}/status`).catch(() => null);
+      if (status) {
+        await applyExecutionSnapshot(status);
+      } else {
+        setExecution(executionId, 'stopped');
+      }
+    }
+  }, [setExecution, applyExecutionSnapshot]);
 
   // Close WS when workflowId changes (new workflow generated while one was running)
   // and on unmount — BUG-TOOLBAR-2
+  useEffect(() => {
+    void restorePersistedExecution();
+  }, [restorePersistedExecution]);
+
   useEffect(() => {
     return () => {
       wsRef.current?.close();

@@ -1,0 +1,90 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e7]: terminal
+      - generic [ref=e8]:
+        - heading "Claude Code" [level=1] [ref=e9]
+        - paragraph [ref=e10]: Visual Manager
+    - navigation [ref=e11]:
+      - button "dashboard Projects" [ref=e12] [cursor=pointer]:
+        - generic [ref=e13]: dashboard
+        - generic [ref=e14]: Projects
+      - button "terminal Live Terminal" [ref=e15] [cursor=pointer]:
+        - generic [ref=e16]: terminal
+        - generic [ref=e17]: Live Terminal
+      - button "play_arrow Job Runner" [ref=e18] [cursor=pointer]:
+        - generic [ref=e19]: play_arrow
+        - generic [ref=e20]: Job Runner
+      - button "memory Deployments" [ref=e21] [cursor=pointer]:
+        - generic [ref=e22]: memory
+        - generic [ref=e23]: Deployments
+      - button "description Context Editor" [ref=e24] [cursor=pointer]:
+        - generic [ref=e25]: description
+        - generic [ref=e26]: Context Editor
+      - button "hub Swarm" [ref=e27] [cursor=pointer]:
+        - generic [ref=e28]: hub
+        - generic [ref=e29]: Swarm
+    - generic [ref=e30]:
+      - generic [ref=e31]:
+        - generic [ref=e32]: Active PTY Sessions
+        - generic [ref=e33]: 0 Total
+      - list [ref=e34]:
+        - listitem [ref=e35]: No active sessions.
+      - button "add New Local Session" [ref=e37] [cursor=pointer]:
+        - generic [ref=e38]: add
+        - generic [ref=e39]: New Local Session
+    - generic [ref=e41]:
+      - generic [ref=e44]: Active
+      - generic [ref=e45]:
+        - button "Open settings" [ref=e46] [cursor=pointer]:
+          - generic [ref=e47]: settings
+        - generic [ref=e48]: v3.0.0
+  - main [ref=e49]:
+    - generic [ref=e109]:
+      - generic [ref=e110]:
+        - generic [ref=e111]: Swarm Orchestrator
+        - button "📥 HITL" [ref=e112] [cursor=pointer]
+        - button "Run" [disabled] [ref=e113]
+        - generic [ref=e114]: ● idle
+      - generic [ref=e116]:
+        - generic [ref=e117]: ✨
+        - textbox "Describe your workflow... e.g. 'Triage customer requests then route to billing or support agents'" [disabled] [ref=e118]: "Un team di 3 agenti: un ricercatore che analizza documenti, un writer che scrive report, e un revisore che controlla la qualità. Il ricercatore passa i risultati al writer, il writer passa al revisore, e il revisore può rimandare al writer se ci sono errori."
+        - button "Generating..." [disabled] [ref=e151]
+      - generic [ref=e120]:
+        - generic [ref=e121]: Saved workflows
+        - combobox [ref=e122]:
+          - option "Select a saved workflow" [selected]
+          - option "Customer Support Triage"
+          - option "A Customer Support Triage Routes Requests Workflow"
+          - option "Customer Request Router"
+          - option "Test Workflow"
+          - option "Test Workflow"
+          - option "Customer Support Triage Workflow"
+          - option "Customer Triage Workflow"
+          - option "Customer Support Ticket Router"
+          - option "Customer Support Triage Workflow"
+          - option "Button State Verification Workflow"
+          - option "Customer Support Triage Workflow"
+          - option "Workflow di Marketing"
+          - option "Prova Workflow"
+          - option "Customer Request Triage Workflow"
+        - button "Load workflow" [disabled] [ref=e123]
+        - button "Refresh" [ref=e124] [cursor=pointer]
+        - generic [ref=e125]: Shows all saved workflows
+      - generic [ref=e127]:
+        - button "All Agents" [ref=e129] [cursor=pointer]
+        - generic [ref=e130]:
+          - application [ref=e131]:
+            - img
+            - generic "Control Panel" [ref=e134]:
+              - button "Zoom In" [ref=e135] [cursor=pointer]:
+                - img [ref=e136]
+              - button "Zoom Out" [ref=e138] [cursor=pointer]:
+                - img [ref=e139]
+              - button "Fit View" [ref=e141] [cursor=pointer]:
+                - img [ref=e142]
+            - img "Mini Map" [ref=e145]
+            - link "React Flow attribution" [ref=e147] [cursor=pointer]:
+              - /url: https://reactflow.dev
+              - text: React Flow
+          - generic [ref=e150]: Select a node to inspect

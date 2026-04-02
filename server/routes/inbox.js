@@ -8,6 +8,15 @@
 import { Router } from 'express';
 import { validateResumeText } from '../middleware/hitlValidation.js';
 
+function buildRejectResumeText(item) {
+  const reason = item?.message || item?.reason || 'The human reviewer rejected the previous step.';
+  return [
+    'Human review decision: rejected.',
+    reason,
+    'Adjust your approach using the current workflow context and continue without repeating the rejected action.',
+  ].join('\n');
+}
+
 /**
  * Factory function — returns an Express router with HITL inbox endpoints.
  *
@@ -61,14 +70,11 @@ export default function inboxRoutes(swarmEngine) {
       const item = execution.inboxItems[itemIndex];
       execution.inboxItems.splice(itemIndex, 1);
 
-      // Resume the paused agent PTY with resumeText if provided
       const agentState = execution.agentStates.get(item.nodeId);
       if (agentState?.sessionId && resumeText) {
         swarmEngine._sessionManager.writeInput(agentState.sessionId, resumeText + '\n');
       }
-
-      // Unfreeze the agent
-      if (agentState) agentState.status = 'running';
+      swarmEngine.unfreezeAgent(executionId, item.nodeId);
 
       // Broadcast resolution to WS subscribers
       if (swarmEngine._wsBroadcast) {
@@ -80,7 +86,7 @@ export default function inboxRoutes(swarmEngine) {
         });
       }
 
-      return res.json({ ok: true });
+      return res.json({ ok: true, status: swarmEngine.getStatus(executionId)?.status ?? 'running' });
     } catch (err) {
       console.error(`[inbox] POST /:executionId/inbox/:itemId/approve error: ${err.message}`);
       return res.status(500).json({ error: 'Internal server error' });
@@ -89,8 +95,8 @@ export default function inboxRoutes(swarmEngine) {
 
   // -------------------------------------------------------------------------
   // POST /api/v1/swarm/:executionId/inbox/:itemId/reject
-  // Removes the inbox item and broadcasts hitl_resolved with decision 'rejected'.
-  // Agent remains frozen — Task #70 will implement full unfreeze/cancel logic.
+  // Removes the inbox item, injects rejection guidance into the PTY,
+  // and resumes the blocked runtime path through the canonical unfreeze flow.
   // → 200 { ok: true }
   // → 404 if execution or item not found
   // -------------------------------------------------------------------------
@@ -107,6 +113,12 @@ export default function inboxRoutes(swarmEngine) {
       const item = execution.inboxItems[itemIndex];
       execution.inboxItems.splice(itemIndex, 1);
 
+      const agentState = execution.agentStates.get(item.nodeId);
+      if (agentState?.sessionId) {
+        swarmEngine._sessionManager.writeInput(agentState.sessionId, buildRejectResumeText(item) + '\n');
+      }
+      swarmEngine.unfreezeAgent(executionId, item.nodeId);
+
       // Broadcast resolution to WS subscribers
       if (swarmEngine._wsBroadcast) {
         swarmEngine._wsBroadcast(executionId, {
@@ -117,7 +129,7 @@ export default function inboxRoutes(swarmEngine) {
         });
       }
 
-      return res.json({ ok: true });
+      return res.json({ ok: true, status: swarmEngine.getStatus(executionId)?.status ?? 'running' });
     } catch (err) {
       console.error(`[inbox] POST /:executionId/inbox/:itemId/reject error: ${err.message}`);
       return res.status(500).json({ error: 'Internal server error' });

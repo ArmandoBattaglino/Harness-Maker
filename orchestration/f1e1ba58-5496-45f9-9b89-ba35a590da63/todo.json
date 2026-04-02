@@ -1,0 +1,10 @@
+{
+  "request_id": "f1e1ba58-5496-45f9-9b89-ba35a590da63",
+  "created_at": "2026-04-02T15:59:00.819Z",
+  "user_prompt": "Read-only frontend/UX audit of the Swarm section, using a /debug-style bug-finding mindset. Do not modify files. Focus on end-user visible functional issues, broken flows, regressions, and UX inconsistencies. Read at least README.md, client/src/views/SwarmView.jsx, client/src/hooks/useSwarm.js, and any connected store/context/node/panel files needed. Return concise findings ordered by severity with file/line references and impact.",
+  "requested_agent": "debugger",
+  "status": "active",
+  "steps": [],
+  "next_actions": [],
+  "summary": null
+}

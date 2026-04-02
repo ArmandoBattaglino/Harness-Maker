@@ -13,6 +13,15 @@
     "concurrently": "^8.0.0"
   },
   "dependencies": {
-    "@google/stitch-sdk": "^0.0.3"
-  }
+    "@google/stitch-sdk": "^0.0.3",
+    "playwright-core": "^1.59.1"
+  },
+  "description": "**Current Version: v3.0.0** — QA CLEAN, 187/187 tests passing, all 115 tasks completed.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

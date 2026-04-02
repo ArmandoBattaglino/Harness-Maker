@@ -64,13 +64,23 @@ export default function handleSwarmConnection(ws, req, swarmEngine) {
     return;
   }
 
-  // 3. Add ws to per-execution subscriber set
+  // 3. Require an execution snapshot before subscribing so reconnects only bind
+  //    to canonical running or terminal executions that the server still knows.
+  const status = swarmEngine.getStatus(executionId);
+  const execution = swarmEngine.getExecution?.(executionId) ?? null;
+  if (!status || !execution) {
+    ws.send(JSON.stringify({ type: 'error', message: 'Execution not found' }));
+    ws.close();
+    return;
+  }
+
+  // 4. Add ws to per-execution subscriber set
   if (!_subscribers.has(executionId)) {
     _subscribers.set(executionId, new Set());
   }
   _subscribers.get(executionId).add(ws);
 
-  // 4. Handle connection close — remove ws from subscriber set
+  // 5. Handle connection close — remove ws from subscriber set
   ws.on('close', () => {
     const set = _subscribers.get(executionId);
     if (set) {
@@ -81,7 +91,7 @@ export default function handleSwarmConnection(ws, req, swarmEngine) {
     }
   });
 
-  // 5. Handle connection error — remove ws from subscriber set, log error
+  // 6. Handle connection error — remove ws from subscriber set, log error
   ws.on('error', (err) => {
     console.error(
       `[SwarmWS] WebSocket error — executionId=${executionId} message=${err.message}`
@@ -95,11 +105,10 @@ export default function handleSwarmConnection(ws, req, swarmEngine) {
     }
   });
 
-  // 6. Send initial status if execution exists
-  const status = swarmEngine.getStatus(executionId);
-  if (status) {
-    ws.send(JSON.stringify({ type: 'execution_status', ...status }));
-  } else {
-    ws.send(JSON.stringify({ type: 'error', message: 'Execution not found' }));
-  }
+  // 7. Send initial snapshot so reconnecting clients can fully hydrate state.
+  ws.send(JSON.stringify({
+    type: 'execution_status',
+    ...status,
+    workflowDef: execution.workflowDef ?? null,
+  }));
 }
