@@ -1,4 +1,13 @@
 ---
+## 2026-04-02 — code-mapper — Task #128: BUG-TRIGGER-1 trigger WS handlers in useSwarm.js
+**Outcome:** COMPLETED
+**Summary:** Mapped 3 new WS message cases (trigger_fired, trigger_status, rss_item) added to useSwarm.js connectWs onmessage switch. updateTriggerState now has live WS-path callers. rss_item chain (TriggerManager._fireTrigger → WS → useSwarm → updateTriggerState + addFeedEvent) is now complete. trigger_fired and trigger_status cases are preemptive (client handlers exist, no server emitter yet).
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** BUG-TRIGGER-1 (rss_item silently dropped — now handled)
+**Decisions made:** none
+**Blockers:** trigger_fired + trigger_status server-side emission still missing — documented as open gap
+**Next:** trigger_fired/trigger_status server-side emission tasks if priority warrants; otherwise next bug or feature task
+---
 ## 2026-04-02 — qa-tester — Task #129: TEST GATE — useSwarm trigger event handlers
 **Outcome:** COMPLETED
 **Summary:** Static code audit of useSwarm.js confirmed all 3 new WS cases (trigger_fired, trigger_status, rss_item) are present and correctly wired. updateTriggerState is in the useCallback deps array. TriggerNode.jsx reads triggerStates from Zustand store. Server-side rss_item emission confirmed in TriggerManager._fireTrigger(). 187/187 server tests pass. Verdict: PASS.

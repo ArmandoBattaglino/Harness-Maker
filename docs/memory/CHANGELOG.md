@@ -2197,3 +2197,46 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 - PRD Section 11 known bug #1 ("agent_status missing sessionId") is now RESOLVED; the other 3 known bugs (handoff_completed, trigger events, rss_item) remain open
 
 ---
+
+## 2026-04-02 — Task #128: BUG-TRIGGER-1 — Trigger WS handlers in useSwarm.js
+**Agent:** frontend-dev
+**Triggered by:** PRD Section 11 known bugs #3 and #4 — `trigger_fired`/`trigger_status` not handled client-side; `rss_item` emitted by TriggerManager._fireTrigger() but silently dropped by useSwarm.js onmessage switch.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/hooks/useSwarm.js | MODIFIED | Added `updateTriggerState` selector at line 14; added 3 new cases in connectWs onmessage switch (trigger_fired, trigger_status, rss_item); updateTriggerState added to useCallback deps array at line 92 |
+
+### Functions Added
+- None
+
+### Functions Modified
+- `useSwarm(workflowId)` in `client/src/hooks/useSwarm.js` — added `const updateTriggerState = useSwarmStore((s) => s.updateTriggerState)` at line 14; added updateTriggerState to useCallback deps array (line 92). Task #128 (BUG-TRIGGER-1).
+- `connectWs(executionId)` in `client/src/hooks/useSwarm.js` — added 3 new WS message cases at lines 60-85:
+  - `case 'trigger_fired'` (lines 60-70): reads `useSwarmStore.getState().triggerStates[tfId]` for prevFireCount; calls `updateTriggerState(tfId, { fired:true, status:'fired', lastFiredAt:msg.firedAt??msg.timestamp??Date.now(), fireCount:prev+1 })`. ID resolved as `msg.triggerId ?? msg.nodeId`. PREEMPTIVE — no server-side emitter yet.
+  - `case 'trigger_status'` (lines 71-73): calls `updateTriggerState(msg.triggerId??msg.nodeId, { status:msg.status })`. PREEMPTIVE — no server-side emitter yet.
+  - `case 'rss_item'` (lines 74-85): reads `useSwarmStore.getState().triggerStates[msg.nodeId]` for prevFireCount; calls `updateTriggerState(msg.nodeId, { fired:true, status:'fired', lastFiredAt:Date.now(), fireCount:prev+1, lastItem:msg.guid??null })`; then calls `addFeedEvent({ ...msg, timestamp:Date.now() })`. LIVE — TriggerManager._fireTrigger() already emits `rss_item` events.
+
+### Functions Removed
+- None
+
+### Connection Changes
+- `TriggerManager._fireTrigger` → WS `rss_item` → `useSwarm case 'rss_item'` → `updateTriggerState` + `addFeedEvent` → `triggerStates[nodeId]` store + `interAgentFeed` — this chain was previously broken at useSwarm (silent drop); now complete end-to-end
+- `useSwarm.connectWs` → `useSwarmStore::updateTriggerState` — new store action consumer (first WS-path caller; TriggerNode reads store reactively as downstream consumer)
+- `trigger_fired` case: `useSwarm case 'trigger_fired'` → `updateTriggerState` — wired client-side; server emission missing (preemptive)
+- `trigger_status` case: `useSwarm case 'trigger_status'` → `updateTriggerState` — wired client-side; server emission missing (preemptive)
+
+### Impact on Other Code
+- `updateTriggerState` in SwarmContext.jsx — "Called by" updated from "not yet wired" to live: useSwarm.js WS onmessage (3 cases). No change to store logic.
+- `TriggerNode.jsx` — receives trigger state updates via `useSwarmStore(s => s.triggerStates[id])` subscription; `fireCount` increments now trigger the `showFiredAnimation` effect (BUG-91 fix in Task #76 requires fireCount to be incremented, which these handlers now do)
+- `addFeedEvent` now called from 4 WS event cases: handoff_started, circuit_breaker, handoff_completed, rss_item (was 3 before this task)
+- PRD Section 11 known bug #4 ("rss_item event not handled by client") is now RESOLVED
+- PRD Section 11 known bug #3 ("trigger_fired / trigger_status not implemented") remains PARTIALLY open — client handlers exist; server-side emission still missing
+
+### Known Gap (post-Task #128)
+| Gap | Description | Status |
+|-----|-------------|--------|
+| trigger_fired server emission | TriggerManager._fireTrigger does not broadcast `trigger_fired` WS event — only `rss_item`. Client handler exists but is unreachable. | OPEN |
+| trigger_status server emission | No SwarmEngine or TriggerManager path broadcasts `trigger_status`. Client handler exists but is unreachable. | OPEN |
+
+---

@@ -2072,3 +2072,51 @@ CODE_MAP.md and CHANGELOG.md fully reflect Task #126. _onHandoff entry documents
 ### Handoff
 Task #127 (TEST GATE) is IN_PROGRESS — qa-tester is verifying the BUG-HANDOFF-1 fix. On PASS, Task #128 (BUG-TRIGGER-1) begins. On FAIL, debugger returns to #126.
 ---
+---
+## 2026-04-02 — Task #128: BUG-TRIGGER-1 — Trigger WS handlers in useSwarm.js
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation, parallel with project-manager and documenter)
+
+### Context when I started
+Task #128 (frontend-dev) had just completed. CODE_MAP.md was last updated after Task #126 (BUG-HANDOFF-1). The PRD Section 11 audit documented 3 open bugs — #3 (trigger_fired/trigger_status not implemented) and #4 (rss_item silently dropped by client). My prior handoff note predicted Task #128 would fix these. useSwarm.js had 7 handled WS message types before this task; now has 10.
+
+### What I did
+1. Read useSwarm.js in full (122 lines) — confirmed all 3 new cases at lines 60-85 and updateTriggerState at line 14 and in deps array at line 92
+2. Read CODE_MAP.md tail (offset 2468) — found updateTriggerState entry with "not yet wired" note
+3. Read CODE_MAP.md (offset 2139-2181) — found useSwarm(workflowId) and connectWs entries
+4. Read CHANGELOG.md tail (offset 2190) — confirmed last entry ends at line 2199
+5. Grepped SwarmContext.jsx for updateTriggerState/addFeedEvent/triggerStates — confirmed store signature: `updateTriggerState: (triggerId, patch) => set(...)`, triggerStates: {}
+6. Updated CODE_MAP.md:
+   - Header timestamp: Task #124 → Task #128
+   - Module Index for useSwarm.js: "Dispatches 6 WS" → "Dispatches 10 WS", noted Task #128
+   - useSwarm(workflowId) function entry: added Task #128 complexity note, updated Calls to include updateTriggerState, updated Last modified
+   - connectWs(executionId) function entry: updated Purpose (7 → 10 types), updated Calls (added updateTriggerState, added getState() for trigger cases), added Task #128 complexity note for all 3 cases, updated Last modified
+   - updateTriggerState entry: updated "Called by" from "not yet wired" to live WS caller; expanded patch shape note; updated Last modified
+7. Appended CHANGELOG.md entry for Task #128 (inserted after last entry at line 2199)
+8. Prepended ACTIVITY_LOG.md entry for Task #128
+9. Appended this agent memory log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header timestamp; Module Index useSwarm.js row; useSwarm() entry (Calls + complexity note + Last modified); connectWs() entry (Purpose + Calls + complexity note + Last modified); updateTriggerState entry (Called by + patch shape + Last modified) |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Task #128 entry |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Prepended code-mapper Task #128 summary entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Key connections discovered
+- `TriggerManager._fireTrigger` → WS `rss_item` → `useSwarm case 'rss_item'` → `updateTriggerState` + `addFeedEvent` — end-to-end chain now complete (was broken at useSwarm before Task #128)
+- `trigger_fired` and `trigger_status` client handlers are preemptive: code path exists in useSwarm but no server-side emitter exists. TriggerManager._fireTrigger only emits `rss_item`.
+- `addFeedEvent` now called from 4 cases: handoff_started, circuit_breaker, handoff_completed, rss_item
+
+### What I learned
+- CODE_MAP.md is now ~2500+ lines — Grep is the only reliable way to locate entries; reading by offset only for context verification around found lines
+- The `trigger_fired`/`trigger_status` gap is documented in CHANGELOG.md as an open known gap table — good pattern for preemptive handlers with no server counterpart
+- useSwarm getState() calls inside WS handlers are the correct pattern for reading Zustand store without creating reactive subscriptions that cause re-renders
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md fully reflect Task #128. updateTriggerState "Called by" is accurate. connectWs entry documents all 10 WS message types. Open gaps: trigger_fired and trigger_status server-side emission.
+
+### Handoff
+Task #129 (TEST GATE for BUG-TRIGGER-1) was already completed by qa-tester (PASS verdict — see ACTIVITY_LOG.md). Next task chain follows qa-tester's PASS verdict.
+---
