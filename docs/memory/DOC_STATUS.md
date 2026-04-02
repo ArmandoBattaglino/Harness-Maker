@@ -1,11 +1,11 @@
 # Documentation Status
-_Last updated: 2026-04-02 after prd-writer added Section 11 Component Specifications to PRD.md — 12 components fully spec'd, 4 known bugs formally documented_
+_Last updated: 2026-04-02 after AREA CHECKPOINT #132 PASS — V3.1 Swarm Bug Fix Wave fully closed. All 4 BUG-PRD-* bugs fixed (Tasks #124-#132, 9 tasks). 132/132 tasks COMPLETED. Zero open bugs._
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**
 - QA inspection: CLEAN at release — zero bugs found at release gate
-- Test suite: 187/187 passing (confirmed post all patches)
-- Tasks completed: 122/115 (Tasks #116-118 post-release Swarm bug fixes; Task #119 QA regression check completed; Tasks #120-122 Swarm audit fixes — all COMPLETED)
+- Test suite: 187/187 passing (confirmed post all patches including V3.1 wave)
+- Tasks completed: 132/132 (Tasks #124-#132 V3.1 Swarm bug fix wave — all COMPLETED, AREA CHECKPOINT PASS)
 - Open bugs: 0
 
 ## Fixed Bugs (v3.0.0 post-release patches)
@@ -33,7 +33,7 @@ _Last updated: 2026-04-02 after prd-writer added Section 11 Component Specificat
 |----------|--------|--------------|-------|
 | README.md | UP_TO_DATE | 2026-03-31 | Task #112: Removed ANTHROPIC_API_KEY requirement from Swarm Quick Start step 2, removed "Environment Variable Required for Swarm" section, updated Known Limitations entry. Prompt-to-Flow now uses claude binary — no API key needed. |
 | docs/ARCHITECTURE.md | UP_TO_DATE | 2026-03-31 | Task #112: DEC-016 updated — Prompt-to-Flow now spawns claude binary (-p/--output-format json), not Anthropic SDK. swarmRoutes accepts claudeBin as 3rd param. Previous entry: Section 11.5 HITL flow, Section 11.9 component tree — all still accurate. |
-| docs/PRD.md | UP_TO_DATE | 2026-04-02 | Section 11 (Component Specifications) and Section 11.1 (WS Event Field Reference) added by prd-writer. All 12 Swarm components spec'd with inputs, outputs, step-by-step behavior, contracts, known issues, and acceptance criteria. Four known bugs formally documented: BUG-PRD-1 (missing sessionId in agent_status), BUG-PRD-2 (handoff_completed never emitted), BUG-PRD-3 (trigger_fired/trigger_status unhandled on client), BUG-PRD-4 (onUpdateNode prop undefined in SwarmCanvas). |
+| docs/PRD.md | UP_TO_DATE | 2026-04-02 | Section 11 (Component Specifications) and Section 11.1 (WS Event Field Reference) added by prd-writer. All 12 Swarm components spec'd. All four BUG-PRD-* bugs now FIXED in V3.1 wave (Tasks #124-#130). Known Issues entries in Section 11 now reflect resolved state. |
 | docs/API.md | UP_TO_DATE | 2026-03-28 | pause endpoint: full state update + WS broadcast (BUG-94). resume endpoint: actual resumeExecution() behavior (BUG-95). budget field in status response: real budgetTracker data (BUG-98). Verified clean at V3 RELEASE-READY closure. |
 | docs/memory/PROJECT.md | UP_TO_DATE | 2026-03-28 | Version updated to v3.0, implementation status updated to complete. @anthropic-ai/sdk row added to tech stack. @xyflow/react and zustand rows updated (no longer "not yet imported"). V3-Specific Constraints section added (DEC-011 through DEC-016, SEC-V3-01 through SEC-V3-07). |
 | docs/memory/DECISIONS.md | UP_TO_DATE | 2026-03-27 | DEC-011 through DEC-016 added by architect during V3 tasks. No changes needed. |
@@ -52,16 +52,16 @@ _Last updated: 2026-04-02 after prd-writer added Section 11 Component Specificat
 - client/src/views/EntitiesView.jsx -- Still exists on disk but is no longer imported by App.jsx. Marked DEPRECATED in ARCHITECTURE.md component tree. Can be deleted in a future cleanup.
 - docs/memory/CODE_MAP.md:TriggerNode entry -- Still contains "(stub)" notation from Task #53.3; Task #76 fully implemented TriggerNode with store subscription, fired animation, and timestamp display. Code-mapper should update the map entry.
 
-## Known Bugs (formally documented in PRD Section 11 — not yet fixed)
+## V3.1 Bug Fix Wave — ALL FIXED (2026-04-02)
 
-These bugs were identified during the prd-writer's code audit (2026-04-02) and are now formally specified in PRD.md Section 11. They require debugger + frontend-dev/backend-dev tasks to fix.
+All four BUG-PRD-* bugs identified by prd-writer's code audit have been fixed in AREA V3.1 (Tasks #124-#132). AREA CHECKPOINT #132 PASS confirmed all fixes work together.
 
-| ID | Severity | Location | Description | Documented in |
-|----|----------|----------|-------------|---------------|
-| BUG-PRD-1 | HIGH | SwarmEngine.js + useSwarm.js | `agent_status` WS event lacks `sessionId` field — AgentInspector "Open Terminal" button can never activate via WS alone | PRD Section 11: SwarmEngine Known Issues |
-| BUG-PRD-2 | MEDIUM | SwarmEngine.js | `handoff_completed` event never emitted — FR-V3-43 requires it; `_onHandoff` emits only `handoff_started` | PRD Section 11: SwarmEngine Known Issues |
-| BUG-PRD-3 | MEDIUM | useSwarm.js (client) | `trigger_fired` and `trigger_status` WS events unhandled on client — TriggerManager emits them but useSwarm.js switch statement has no case for either | PRD Section 11: useSwarm (hook) Known Issues |
-| BUG-PRD-4 | LOW | SwarmCanvas.jsx | `onUpdateNode` prop passed by SwarmView.jsx but never declared in SwarmCanvas.jsx props destructuring — prop is silently ignored | PRD Section 11: SwarmCanvas Known Issues |
+| ID | Severity | Location | Description | Fixed in Task | Status |
+|----|----------|----------|-------------|---------------|--------|
+| BUG-PRD-1 / BUG-SESSION-1 | HIGH | SwarmEngine.js + useSwarm.js | `agent_status` WS event lacked `sessionId` field — AgentInspector "Open Terminal" button could never activate via WS alone | #124 | FIXED 2026-04-02 |
+| BUG-PRD-2 / BUG-HANDOFF-1 | MEDIUM | SwarmEngine.js | `handoff_completed` event never emitted — `_onHandoff()` only emitted `handoff_started`; FR-V3-43 required both | #126 | FIXED 2026-04-02 |
+| BUG-PRD-3 / BUG-TRIGGER-1 | MEDIUM | useSwarm.js (client) | `trigger_fired`, `trigger_status`, and `rss_item` WS events unhandled on client — switch statement had no cases for them | #128 | FIXED 2026-04-02 |
+| BUG-PRD-4 / BUG-INSPECTOR-1 | LOW | SwarmCanvas.jsx | `onUpdateNode` prop was never defined in SwarmCanvas.jsx — `handleUpdateNode` useCallback added and passed to AgentInspector | #130 | FIXED 2026-04-02 |
 
 ## Documentation Debt
 

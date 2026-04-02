@@ -1,4 +1,13 @@
 ---
+## 2026-04-02 — project-manager — Task #132 COMPLETED — AREA V3.1 CLOSED — Full V3.1 wave recap
+**Outcome:** COMPLETED
+**Summary:** TASK #132 AREA CHECKPOINT V3.1 returned PASS. All 132 tasks are now COMPLETED. TASK_PLAN.md header updated to final consolidated status: AREA V3.1 CLOSED, 187/187 tests pass, build 477 modules 0 errors, no open bugs. The entire V3.1 Swarm Bug Fix wave (#124–#132) is closed.
+**Files changed:** docs/TASK_PLAN.md (header line 5), docs/memory/agents/project-manager.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (all 4 V3.1 bugs were fixed in prior tasks #124–#131)
+**Decisions made:** No new tasks — project stable. V3.2 scope requires user decision.
+**Blockers:** none
+**Next:** User defines V3.2 scope or new feature request. Deferred items: InterAgentFeed handoff_completed icon (cosmetic), server-side trigger_fired/trigger_status emission (future feature), HITL UI prompt, Puppeteer E2E regression suite.
+---
 ## 2026-04-02 — code-mapper — Task #130: BUG-INSPECTOR-1 — handleUpdateNode wired in SwarmCanvas
 **Outcome:** COMPLETED
 **Summary:** Mapped `handleUpdateNode(nodeId, patch)` useCallback added to SwarmCanvas.jsx (lines 96-103); documented the fulfilled prop contract between SwarmCanvas and AgentInspector. Updated CODE_MAP.md with new Function Graph entry, updated AgentInspector and SwarmCanvas entries. Appended CHANGELOG.md entry for Task #130.

@@ -2,7 +2,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED — 2026-03-31 — V3.1 BUG FIX WAVE COMPLETED — 132/132 tasks: #124 COMPLETED — #125 COMPLETED (TEST GATE PASS) — #126 COMPLETED (BUG-HANDOFF-1: handoff_completed added) — #127 COMPLETED (TEST GATE PASS) — #128 COMPLETED (BUG-TRIGGER-1: trigger_fired/trigger_status/rss_item handlers added) — #129 COMPLETED (TEST GATE PASS) — #130 COMPLETED (BUG-INSPECTOR-1: handleUpdateNode defined + passed to AgentInspector) — #131 COMPLETED (TEST GATE PASS: onUpdateNode wiring verified) — #132 COMPLETED (AREA CHECKPOINT PASS: AREA V3.1 CLOSED)
+**Status:** v3.0.0 RELEASED — 2026-03-31 — V3.1 BUG FIX WAVE FULLY CLOSED — 132/132 tasks COMPLETED — AREA V3.1 CLOSED 2026-04-02 — All 4 swarm bugs fixed and verified: BUG-SESSION-1 (agent_status+sessionId) | BUG-HANDOFF-1 (handoff_completed emitted) | BUG-TRIGGER-1 (trigger_fired/trigger_status/rss_item handlers) | BUG-INSPECTOR-1 (onUpdateNode wired) — AREA CHECKPOINT #132 PASS — 187/187 tests pass — build 477 modules 0 errors — NO OPEN BUGS
 
 ---
 

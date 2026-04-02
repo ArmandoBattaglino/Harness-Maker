@@ -1,4 +1,73 @@
 ---
+## 2026-04-02 — Task #132 COMPLETED — AREA V3.1 CLOSED — Full session recap
+**Status:** COMPLETED
+**Called by:** user (post-task status update after qa-tester completed AREA CHECKPOINT #132 PASS)
+
+### Context when I started
+TASK #132 (AREA CHECKPOINT V3.1) had just been reported PASS by qa-tester. TASK_PLAN.md header still listed the old detailed per-task status string from the previous PM session. All 132 tasks were COMPLETED but the header did not yet declare AREA V3.1 CLOSED with final project health.
+
+### What I did
+1. Read TASK_PLAN.md lines 1-80 and 8100-8286 to verify TASK #132 Status (confirmed COMPLETED at line 8246, Checkpoint Result: PASS 2026-04-02).
+2. Read project-manager.md and ACTIVITY_LOG.md for context.
+3. Updated TASK_PLAN.md line 5 header: replaced per-task status string with consolidated "132/132 tasks COMPLETED — AREA V3.1 CLOSED 2026-04-02 — 4 bugs fixed — 187/187 tests — 477 modules — NO OPEN BUGS".
+4. Appended this session log and ACTIVITY_LOG entry.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Header line 5: final consolidated status — AREA V3.1 CLOSED, all 132 tasks COMPLETED |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log prepended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Final session recap entry appended |
+
+### Session recap — Work completed 2026-04-02 (Tasks #124–#132)
+
+| Task | Agent | Title | Outcome |
+|------|-------|-------|---------|
+| #124 | debugger | BUG-SESSION-1: agent_status +sessionId in SwarmEngine | COMPLETED |
+| #125 | qa-tester | TEST GATE — BUG-SESSION-1 | PASS |
+| #126 | debugger | BUG-HANDOFF-1: handoff_completed emitted in SwarmEngine | COMPLETED |
+| #127 | qa-tester | TEST GATE — BUG-HANDOFF-1 | PASS |
+| #128 | debugger | BUG-TRIGGER-1: trigger_fired/trigger_status/rss_item in useSwarm.js | COMPLETED |
+| #129 | qa-tester | TEST GATE — BUG-TRIGGER-1 | PASS |
+| #130 | debugger | BUG-INSPECTOR-1: handleUpdateNode defined + passed to AgentInspector | COMPLETED |
+| #131 | qa-tester | TEST GATE — BUG-INSPECTOR-1 (onUpdateNode wiring) | PASS |
+| #132 | qa-tester | AREA CHECKPOINT V3.1 — full integration verification | PASS |
+
+### Project state at close of V3.1
+
+- All 132 tasks COMPLETED.
+- No open bugs known.
+- Build: 477 modules, 0 errors.
+- Tests: 187/187 pass.
+- AREA V3.1 Swarm Bug Fixes: CLOSED.
+
+### Known cosmetic / deferred items (not formal tasks — not blocking any release)
+1. InterAgentFeed icon for 'handoff_completed' events — currently falls back to default icon (no dedicated icon defined). Cosmetic only; event appears and is readable.
+2. Server-side trigger_fired and trigger_status WS emission — TriggerManager does not yet emit these events. Client handlers are wired (TASK #128) but will never fire until server side is implemented. Deferred to future V3.2 feature work.
+
+### Possible V3.2 next steps
+- Add dedicated icon/label for 'handoff_completed' in InterAgentFeed.jsx.
+- Server-side: emit trigger_fired / trigger_status from TriggerManager._fireTrigger().
+- Budget enforcement UI (BudgetGuard visual feedback in SwarmView).
+- HITL approval flow (hitl_required event already handled client-side — needs UI prompt).
+- Puppeteer E2E regression suite (run Steps 1-7 of AREA CHECKPOINT automatically on each build).
+
+### Bugs I encountered
+None in this PM session.
+
+### Decisions I made
+- Header updated to consolidated status string rather than per-task enumeration — cleaner for future readers and agents.
+- No new tasks created — all V3.1 work is verified and closed. Next work requires user decision on V3.2 scope.
+
+### State I'm leaving behind
+- TASK_PLAN.md: 132/132 COMPLETED, AREA V3.1 CLOSED, no IN_PROGRESS or BLOCKED tasks.
+- No agent is currently assigned any work.
+- Project is in a clean, release-ready state equivalent to V3.0 + V3.1 patch.
+
+### Handoff
+None. Project is stable. Next session should start with user defining V3.2 scope or a new feature request.
+
+---
 ## 2026-04-02 — Task #130 COMPLETED + Task #131 set IN_PROGRESS
 **Status:** COMPLETED
 **Called by:** user (post-task status update after debugger completed BUG-INSPECTOR-1)

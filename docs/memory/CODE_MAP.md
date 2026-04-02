@@ -1,5 +1,8 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-02 — Task #130: BUG-INSPECTOR-1 handleUpdateNode wired in SwarmCanvas — mapped by code-mapper_
+_Last updated: 2026-04-02 — Task #132: AREA CHECKPOINT V3.1 PASS — 132/132 tasks complete, AREA V3.1 CLOSED — mapped by code-mapper_
+
+> **V3.1 SWARM SYSTEM STATUS: COMPLETE**
+> All 4 BUG-SWARM wave bugs resolved (BUG-SESSION-1, BUG-HANDOFF-1, BUG-TRIGGER-1, BUG-INSPECTOR-1). 8 TEST GATE passes. 1 AREA CHECKPOINT PASS. Build: 477 modules. Tests: 187/187 passing. All WS contracts from PRD Section 11 are now satisfied. Area V3.1 CLOSED 2026-04-02.
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server

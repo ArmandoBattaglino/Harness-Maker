@@ -2241,6 +2241,60 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 
 ---
 
+## 2026-04-02 — Task #132: AREA CHECKPOINT V3.1 — PASS
+**Agent:** qa-tester (checkpoint), code-mapper (documentation)
+**Triggered by:** All 4 BUG-SWARM wave bugs fixed and their TEST GATEs passed. AREA CHECKPOINT V3.1 executed to verify the entire V3.1 Swarm bugfix wave as a coherent unit.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header updated: 132/132 tasks, AREA V3.1 CLOSED 2026-04-02, Swarm V3 complete status note added |
+| docs/memory/CHANGELOG.md | MODIFIED | This entry appended |
+
+### Functions Added
+- None
+
+### Functions Modified
+- None (AREA CHECKPOINT is a verification task — no code changes)
+
+### Functions Removed
+- None
+
+### Wave Summary: V3.1 Swarm Bugfix Wave (Tasks #124–#132)
+| Task | Bug ID | Fix | TEST GATE | Result |
+|------|--------|-----|-----------|--------|
+| #124 | BUG-SESSION-1 | SwarmEngine: all 8 `agent_status` emission sites now include `sessionId` | Task #125 | PASS |
+| #126 | BUG-HANDOFF-1 | SwarmEngine._onHandoff(): `handoff_completed` WS event now emitted (step 11); useSwarm: `case 'handoff_completed'` handler added → addFeedEvent | Task #127 | PASS |
+| #128 | BUG-TRIGGER-1 | useSwarm: 3 new WS cases added (trigger_fired, trigger_status, rss_item); updateTriggerState wired for all 3; rss_item → addFeedEvent also | Task #129 | PASS |
+| #130 | BUG-INSPECTOR-1 | SwarmCanvas: `handleUpdateNode` useCallback added; passed as `onUpdateNode` prop to AgentInspector | Task #131 | PASS |
+
+### AREA CHECKPOINT V3.1 Verification Results
+- **Build:** 477 modules, 0 errors
+- **Tests:** 187/187 passing, 0 failures
+- **WS contracts (PRD Section 11):**
+  - `agent_status` + `sessionId` field: RESOLVED (BUG-SESSION-1)
+  - `handoff_completed` emission + client handler: RESOLVED (BUG-HANDOFF-1)
+  - `rss_item` client handler + triggerStates update: RESOLVED (BUG-TRIGGER-1 partial; server-side `trigger_fired`/`trigger_status` emission remains a known gap, no TEST GATE regression)
+  - `AgentInspector.onUpdateNode` prop contract: RESOLVED (BUG-INSPECTOR-1)
+- **InterAgentFeed** now receives 4 WS event types: handoff_started, circuit_breaker, handoff_completed, rss_item
+- **AgentInspector** "Open Terminal" button now renders correctly when `agentState.sessionId` is truthy
+
+### Connection Changes
+No new connections introduced in this checkpoint task. All connection changes were documented in Tasks #124, #126, #128, #130 respectively.
+
+### Impact on Other Code
+- The full swarm V3 WS event pipeline is now end-to-end verified: SwarmEngine emission → WS broadcast → useSwarm dispatch → useSwarmStore mutation → React component re-render
+- `addFeedEvent` is now called from 4 event cases (was 2 before the V3.1 wave): handoff_started, circuit_breaker, handoff_completed, rss_item
+- All 4 PRD Section 11 known bugs are now RESOLVED or PARTIALLY resolved with no regressions
+
+### Known Remaining Gaps (out of scope for V3.1)
+| Gap | Description | Status |
+|-----|-------------|--------|
+| trigger_fired server emission | TriggerManager._fireTrigger does not broadcast `trigger_fired` WS event. Client handler exists (Task #128) but unreachable. | OPEN — future task |
+| trigger_status server emission | No SwarmEngine or TriggerManager path broadcasts `trigger_status`. Client handler exists (Task #128) but unreachable. | OPEN — future task |
+
+---
+
 ## 2026-04-02 — Task #130: BUG-INSPECTOR-1 — handleUpdateNode wired in SwarmCanvas
 **Agent:** frontend-dev
 **Triggered by:** BUG-INSPECTOR-1 — `AgentInspector` declared `onUpdateNode` as a prop in its interface but `SwarmCanvas` never passed it. The prop contract was unsatisfied: any call to `onUpdateNode` inside `AgentInspector` would throw (undefined is not a function).
