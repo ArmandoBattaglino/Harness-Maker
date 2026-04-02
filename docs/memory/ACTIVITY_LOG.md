@@ -2334,3 +2334,13 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Task #123 (QA regression check via Puppeteer) — qa-tester should verify all fixes hold; project-manager to confirm all tasks complete
 ---
+---
+## 2026-04-02 — code-mapper — PRD Section 11 Component Specifications mapped
+**Outcome:** COMPLETED
+**Summary:** prd-writer added Section 11 (Component Specifications for 12 Swarm V3 components) and Section 11.1 (WS Event Field Reference for 8 event types) to docs/PRD.md. No source code changed. CODE_MAP.md updated: header timestamp refreshed, Design Documents section added to Module Index with authoritative PRD reference. CHANGELOG.md entry appended with full component spec table, WS event reference table, and 4 known bugs formally documented.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** none (documentation pass)
+**Decisions made:** Added Design Documents section to CODE_MAP Module Index — PRD.md is now explicitly tracked as part of the code map
+**Blockers:** none
+**Next:** TEST GATE tasks (#124+) should reference PRD Section 11 for acceptance criteria. 4 open bugs (sessionId gap, handoff_completed missing, trigger_fired/trigger_status not implemented, rss_item unhandled) need task entries.
+---

@@ -7928,3 +7928,354 @@ Acceptance Criteria:
   - [x] Puppeteer screenshot confirms AgentInspector renders in idle state
 Dependencies: TASK #120, TASK #121, TASK #122
 ---
+
+---
+
+## AREA: V3.1 — Swarm Bug Fixes
+_Components: SwarmEngine, useSwarm, SwarmCanvas, AgentInspector_
+_Tasks: #124 → #134_
+_Gate: ALL components in this area must pass their TEST GATE before any V3.2 feature work starts_
+_Source: PRD Section 11 + Section 11.1 — four bugs formally documented by prd-writer on 2026-04-02_
+
+---
+
+TASK #124: BUG-SESSION-1 — Add sessionId to agent_status WS event (SwarmEngine.js)
+Area: V3.1 — Swarm Bug Fixes
+Agent: debugger
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Component Spec (from PRD Section 11 — SwarmEngine):
+  File: server/services/SwarmEngine.js
+  Purpose: Central orchestration engine — manages lifecycle of workflow executions, spawns agent PTYs, routes handoffs, tracks budget, and broadcasts WS events.
+  WS event: agent_status
+    PRD Section 11.1 actual fields: { type: 'agent_status', nodeId: string, status: string }
+    Bug: sessionId is NOT included in the emitted event.
+    Impact: useSwarm.js handler calls updateAgentState(msg.nodeId, { status: msg.status }) — this only patches the 'status' field. agentState.sessionId is never set via WS. AgentInspector renders "Open Terminal" only when agentState?.sessionId is truthy, so the button never appears during live execution.
+    Fix location: _spawnAgentPty() at line ~198: the emit currently reads:
+      this._wsBroadcast(executionId, { type: 'agent_status', nodeId, status: 'running' });
+    sessionId is available as a local variable in that scope (const sessionId = session.sessionId).
+    All other places that emit agent_status (pauseExecution, resumeExecution, _onDone, _onHandoff, freezeAgent, unfreezeAgent) must also include sessionId, reading it from execution.agentStates.get(nodeId)?.sessionId.
+  useSwarm.js handler must be updated:
+    Current: updateAgentState(msg.nodeId, { status: msg.status })
+    Required: updateAgentState(msg.nodeId, { status: msg.status, ...(msg.sessionId ? { sessionId: msg.sessionId } : {}) })
+    File: client/src/hooks/useSwarm.js, line 34 in the 'agent_status' case.
+Context:
+  Root cause: SwarmEngine._spawnAgentPty() builds the agent_status broadcast at line ~198 using only { type, nodeId, status }. The sessionId variable is in scope but was never included. All other emission sites (pauseExecution, resumeExecution, _onHandoff steps 9+10, _onDone, freezeAgent, unfreezeAgent) also omit sessionId. The client-side handler in useSwarm.js only spreads { status } into agentState, so even if the server sent sessionId, the current client code would silently drop it.
+  Files to change:
+    server/services/SwarmEngine.js — all _wsBroadcast calls for agent_status (approximately 8 call sites)
+    client/src/hooks/useSwarm.js — 'agent_status' case in onmessage switch (line 34)
+  Risk: LOW — additive change only; existing fields unchanged; sessionId is undefined for agents whose PTY has been killed (safe — AgentInspector checks agentState?.sessionId truthiness already).
+Acceptance Criteria:
+  - [ ] After an agent is spawned, the next agent_status WS event for that node includes a non-null sessionId field
+  - [ ] After receiving the event, agentStates[nodeId].sessionId in the Zustand store is a non-empty string
+  - [ ] AgentInspector "Open Terminal" button becomes visible for an agent node whose PTY has started
+  - [ ] Existing agent_status consumers (AgentNode status color, pauseExecution, resumeExecution) are not broken by the new field
+  - [ ] npm test passes (0 regressions)
+Dependencies: none
+---
+
+TASK #125: TEST GATE — SwarmEngine agent_status sessionId field
+Area: V3.1 — Swarm Bug Fixes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — TASK #126 CANNOT start until this gate returns PASS
+Context:
+  Component being tested: SwarmEngine (server/services/SwarmEngine.js) + useSwarm.js client handler
+  Component spec (from PRD Section 11 + 11.1):
+    WS event agent_status — REQUIRED fields after fix: { type: 'agent_status', nodeId: string, status: string, sessionId: string }
+    useSwarm.js handler — REQUIRED behavior: updateAgentState(msg.nodeId, { status: msg.status, sessionId: msg.sessionId })
+    AgentInspector — REQUIRED behavior: "Open Terminal" button visible when agentState?.sessionId is truthy
+  What to test:
+    1. Behavioral: start a workflow execution; intercept the first agent_status WS message for the triage node; verify the message JSON contains a 'sessionId' field that is a non-empty UUID string.
+    2. WS contract: confirm the full message shape is { type: 'agent_status', nodeId: <string>, status: 'running', sessionId: <uuid-string> } — all four fields present.
+    3. Store contract: after the WS message is received, read agentStates[nodeId] from the Zustand store via React DevTools or a test helper; confirm sessionId is set.
+    4. User verification: open SwarmView, generate a workflow, click Run; click on a running agent node; confirm "Open Terminal" button appears in AgentInspector panel.
+    5. Regression: confirm agent_status events that arrive for pauseExecution, resumeExecution also include sessionId.
+  WS contracts to verify:
+    agent_status: type (string 'agent_status'), nodeId (string, matches a known node ID), status (string, one of 'running'/'done'/'paused'), sessionId (string, non-empty UUID)
+Acceptance Criteria:
+  - [ ] agent_status WS message contains all four required fields: type, nodeId, status, sessionId
+  - [ ] sessionId in the WS message matches the PTY sessionId stored in SwarmEngine.agentStates
+  - [ ] agentStates[nodeId].sessionId in Zustand store is populated after receiving the event
+  - [ ] "Open Terminal" button renders in AgentInspector when a running agent node is selected
+  - [ ] npm test passes
+Gate Result: PASS → proceed to TASK #126 | FAIL → return to TASK #124 with bug report
+Dependencies: TASK #124
+---
+
+TASK #126: BUG-HANDOFF-1 — Emit handoff_completed event from SwarmEngine._onHandoff() (SwarmEngine.js)
+Area: V3.1 — Swarm Bug Fixes
+Agent: debugger
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Component Spec (from PRD Section 11 — SwarmEngine):
+  File: server/services/SwarmEngine.js
+  Method: _onHandoff(executionId, sourceNodeId, event)
+  Required WS event (FR-V3-43): { type: 'handoff_completed', sourceNodeId: string, targetNodeId: string }
+  Current behavior: _onHandoff() emits handoff_started (step 6), then agent_status for source (step 9) and target (step 10). It never emits handoff_completed.
+  PRD Section 11 Outputs/Emits table does NOT include handoff_completed — this is a discrepancy between FR-V3-43 (which lists it) and Section 11. The fix must add the emission.
+  Section 11.1 WS Event Reference:
+    handoff_completed — Emitted by: NEVER (not implemented)
+    PRD requirement: { type: 'handoff_completed', sourceNodeId: string, targetNodeId: string }
+  Client-side (useSwarm.js): currently has no 'handoff_completed' case in the onmessage switch. A handler must be added that calls addFeedEvent({ ...msg, timestamp: Date.now() }) so the completion appears in the InterAgentFeed.
+Context:
+  Root cause: _onHandoff() was implemented before FR-V3-43 was finalized. The method correctly emits handoff_started but the handoff_completed emission was never added.
+  Fix location — server: after step 10 (target status set to 'running'), add:
+    if (this._wsBroadcast) {
+      this._wsBroadcast(executionId, { type: 'handoff_completed', sourceNodeId, targetNodeId: targetId });
+    }
+  Fix location — client: useSwarm.js onmessage switch, add a new case:
+    case 'handoff_completed':
+      addFeedEvent({ ...msg, timestamp: Date.now() });
+      break;
+  Files to change:
+    server/services/SwarmEngine.js — _onHandoff() (line ~386, after step 10)
+    client/src/hooks/useSwarm.js — onmessage switch (add case after 'handoff_started' block)
+  Risk: LOW — additive only; handoff_started remains unchanged; existing feed already accumulates handoff_started events so handoff_completed will slot in cleanly.
+Acceptance Criteria:
+  - [ ] After a handoff completes, a handoff_completed WS message is broadcast with fields { type, sourceNodeId, targetNodeId }
+  - [ ] sourceNodeId in the message matches the agent that sent the __HANDOFF__ token
+  - [ ] targetNodeId in the message matches the agent that received the handoff
+  - [ ] The handoff_completed event appears in the InterAgentFeed in SwarmView
+  - [ ] handoff_started event continues to be emitted (no regression)
+  - [ ] npm test passes
+Dependencies: TASK #125
+---
+
+TASK #127: TEST GATE — SwarmEngine handoff_completed event
+Area: V3.1 — Swarm Bug Fixes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — TASK #128 CANNOT start until this gate returns PASS
+Context:
+  Component being tested: SwarmEngine._onHandoff() + useSwarm.js 'handoff_completed' handler + InterAgentFeed display
+  Component spec (from PRD Section 11.1):
+    WS event handoff_completed — REQUIRED fields: { type: 'handoff_completed', sourceNodeId: string, targetNodeId: string }
+    useSwarm.js — REQUIRED handler: case 'handoff_completed' → addFeedEvent({ ...msg, timestamp: Date.now() })
+    InterAgentFeed — REQUIRED: shows handoff_completed events in the feed list
+  What to test:
+    1. Behavioral: in a 2-node workflow (A → B), simulate agent A emitting __HANDOFF__:<B-id>:<base64>; verify the WS channel receives both handoff_started AND handoff_completed for this handoff.
+    2. WS contract: handoff_completed message must contain exactly { type: 'handoff_completed', sourceNodeId: <A-id>, targetNodeId: <B-id> }. No extra required fields.
+    3. Order contract: handoff_started must be emitted BEFORE handoff_completed in the WS message stream for the same handoff.
+    4. Client contract: after receiving handoff_completed, interAgentFeed in the store contains an entry with type === 'handoff_completed'.
+    5. User verification: open InterAgentFeed in SwarmView during a live 2-agent handoff; confirm a "handoff completed" entry appears after the "handoff started" entry.
+    6. Regression: handoff_started behavior must be unchanged.
+  WS contracts to verify:
+    handoff_completed: type (string 'handoff_completed'), sourceNodeId (string), targetNodeId (string)
+    handoff_started: type (string 'handoff_started'), sourceNodeId, targetNodeId, edgeId, counter — must still be present
+Acceptance Criteria:
+  - [ ] handoff_completed WS message received after every handoff (same execution, same handoff as handoff_started)
+  - [ ] handoff_completed message fields: type='handoff_completed', sourceNodeId=string, targetNodeId=string — all present
+  - [ ] interAgentFeed store entry created with type='handoff_completed' and timestamp (number)
+  - [ ] handoff_started still emitted on same handoff (no regression)
+  - [ ] npm test passes
+Gate Result: PASS → proceed to TASK #128 | FAIL → return to TASK #126 with bug report
+Dependencies: TASK #126
+---
+
+TASK #128: BUG-TRIGGER-1 — Handle trigger_fired and trigger_status events in useSwarm.js (useSwarm.js)
+Area: V3.1 — Swarm Bug Fixes
+Agent: debugger
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Component Spec (from PRD Section 11 — useSwarm):
+  File: client/src/hooks/useSwarm.js
+  Purpose: Manages WebSocket connection to the swarm execution channel, dispatches incoming events to the Zustand store.
+  Known issue (from PRD Section 11): 'trigger_fired' and 'trigger_status' event types are not handled in the onmessage switch. They fall through to the default case and are silently ignored. As a result, triggerStates in the store is never updated from WS events.
+  Store slice: triggerStates — shape: { [triggerId]: { fired: boolean, lastFiredAt: number|null, status: string } }
+  Store action: updateTriggerState(triggerId, patch) — already exists in SwarmContext store.
+  PRD Section 11.1 WS Event Reference:
+    trigger_fired / trigger_status — Emitted by: NEVER (not yet implemented by TriggerManager/SwarmEngine)
+    Client handling: NOT handled
+  Note: The server does not yet emit trigger_fired or trigger_status. However, the rss_item event IS emitted by TriggerManager._fireTrigger() with fields { type: 'rss_item', nodeId: string, guid: string|null }. This event is also unhandled on the client.
+  Scope of this task:
+    1. Add case 'trigger_fired' in useSwarm.js onmessage switch:
+       Expected fields: { type: 'trigger_fired', triggerId: string, nodeId?: string, firedAt?: number }
+       Handler: updateTriggerState(msg.triggerId ?? msg.nodeId, { fired: true, lastFiredAt: msg.firedAt ?? Date.now(), status: 'fired' })
+    2. Add case 'trigger_status' in useSwarm.js onmessage switch:
+       Expected fields: { type: 'trigger_status', triggerId: string, status: string }
+       Handler: updateTriggerState(msg.triggerId, { status: msg.status })
+    3. Add case 'rss_item' in useSwarm.js onmessage switch:
+       Expected fields: { type: 'rss_item', nodeId: string, guid: string|null }
+       Handler: updateTriggerState(msg.nodeId, { fired: true, lastFiredAt: Date.now(), status: 'fired' }) + addFeedEvent({ ...msg, timestamp: Date.now() })
+  File to change: client/src/hooks/useSwarm.js — onmessage switch (add 3 new cases after 'hitl_required')
+  Risk: LOW — additive only; the default silently-ignore case still handles any unknown types.
+Context:
+  Root cause: useSwarm.js was written before TriggerManager was fully specced. The trigger-related event types were never added to the switch statement. The store slice (triggerStates + updateTriggerState) already exists but is never written to from WS events. TriggerManager._fireTrigger() already emits rss_item but no client handles it.
+  Secondary note: TriggerNode.jsx reads triggerStates from the store to display visual status. Without these handlers, TriggerNode always shows the default 'idle' state regardless of server activity.
+Acceptance Criteria:
+  - [ ] case 'trigger_fired' added to useSwarm.js onmessage switch — calls updateTriggerState correctly
+  - [ ] case 'trigger_status' added to useSwarm.js onmessage switch — calls updateTriggerState correctly
+  - [ ] case 'rss_item' added to useSwarm.js onmessage switch — calls updateTriggerState and addFeedEvent
+  - [ ] After a simulated 'rss_item' WS message, triggerStates[nodeId].fired === true in the Zustand store
+  - [ ] After a simulated 'rss_item' WS message, interAgentFeed contains the event
+  - [ ] npm test passes
+Dependencies: TASK #127
+---
+
+TASK #129: TEST GATE — useSwarm trigger event handlers
+Area: V3.1 — Swarm Bug Fixes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: MEDIUM
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — TASK #130 CANNOT start until this gate returns PASS
+Context:
+  Component being tested: useSwarm.js onmessage switch — cases 'trigger_fired', 'trigger_status', 'rss_item'
+  Component spec (from PRD Section 11 — useSwarm Known Issues):
+    trigger_fired — fields expected: { type, triggerId, nodeId?, firedAt? } → updateTriggerState(triggerId|nodeId, { fired: true, lastFiredAt, status: 'fired' })
+    trigger_status — fields expected: { type, triggerId, status } → updateTriggerState(triggerId, { status })
+    rss_item — fields expected: { type: 'rss_item', nodeId: string, guid: string|null } → updateTriggerState + addFeedEvent
+  What to test:
+    1. Behavioral: inject a synthetic 'trigger_fired' WS message via test harness; verify triggerStates[triggerId].fired === true in the store.
+    2. Behavioral: inject a synthetic 'trigger_status' WS message with status='active'; verify triggerStates[triggerId].status === 'active'.
+    3. Behavioral: inject a synthetic 'rss_item' WS message with nodeId='trigger-1' and guid='guid-123'; verify triggerStates['trigger-1'].fired === true AND interAgentFeed contains the event.
+    4. WS contract: for rss_item, verify the event stored in interAgentFeed has { type: 'rss_item', nodeId, guid, timestamp } — all four fields.
+    5. Regression: verify existing handlers ('agent_status', 'handoff_started', 'execution_status', 'budget_update', 'circuit_breaker', 'hitl_required') still work after adding the new cases.
+    6. User verification: in a workflow with a TriggerNode, after simulating an RSS item delivery, the TriggerNode border color or status indicator reflects the 'fired' state.
+  WS contracts to verify:
+    rss_item event stored in feed: type (string 'rss_item'), nodeId (string), guid (string|null), timestamp (number)
+Acceptance Criteria:
+  - [ ] trigger_fired handler: triggerStates[triggerId].fired === true after receiving event
+  - [ ] trigger_status handler: triggerStates[triggerId].status updated correctly
+  - [ ] rss_item handler: triggerStates[nodeId].fired === true AND interAgentFeed entry created
+  - [ ] rss_item feed entry has all four required fields: type, nodeId, guid, timestamp
+  - [ ] All existing WS handlers pass regression check (no switch statement breakage)
+  - [ ] npm test passes
+Gate Result: PASS → proceed to TASK #130 | FAIL → return to TASK #128 with bug report
+Dependencies: TASK #128
+---
+
+TASK #130: BUG-INSPECTOR-1 — Define and pass onUpdateNode prop from SwarmCanvas to AgentInspector (SwarmCanvas.jsx + AgentInspector.jsx)
+Area: V3.1 — Swarm Bug Fixes
+Agent: debugger
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Component Spec (from PRD Section 11 — AgentInspector):
+  File: client/src/canvas/AgentInspector.jsx
+  Purpose: Right-side panel showing detailed information about the selected agent node.
+  Inputs:
+    nodes — object[] — yes — All React Flow nodes (used to find selectedNode by ID)
+    onUpdateNode — function — no — Callback for editing node data
+  Known issue (PRD Section 11): onUpdateNode is accepted as a prop by AgentInspector but is never defined or passed in SwarmCanvas.jsx. AgentInspector receives onUpdateNode={undefined}. Any future code in AgentInspector that calls onUpdateNode() will throw TypeError: onUpdateNode is not a function.
+Component Spec (from PRD Section 11 — SwarmCanvas):
+  File: client/src/canvas/SwarmCanvas.jsx
+  Renders: AgentInspector at line 125: <AgentInspector nodes={nodes} />
+  Known issue: onUpdateNode is not passed. SwarmCanvas has no updateNode handler defined.
+Context:
+  Root cause: AgentInspector was designed to accept an onUpdateNode callback for future inline editing of node properties (label, systemPrompt). SwarmCanvas never implemented this callback and never passes it as a prop. The component currently doesn't call onUpdateNode anywhere in its body, so no TypeError fires today — but the prop contract is broken and any future AgentInspector enhancement that uses onUpdateNode would immediately crash.
+  Fix plan:
+    1. In SwarmCanvas.jsx, define a handleUpdateNode callback using useCallback:
+       const handleUpdateNode = useCallback((nodeId, data) => {
+         setNodes((nds) => nds.map((n) => n.id === nodeId ? { ...n, data: { ...n.data, ...data } } : n));
+       }, [setNodes]);
+    2. Pass it to AgentInspector: <AgentInspector nodes={nodes} onUpdateNode={handleUpdateNode} />
+    3. In AgentInspector.jsx, if the component currently does not use onUpdateNode in the body at all, no UI change is required — the prop is simply wired up so future code can safely call it. If the component has a TODO or commented-out edit field that relies on it, enable that UI.
+  Files to change:
+    client/src/canvas/SwarmCanvas.jsx — add handleUpdateNode useCallback + pass as prop
+    client/src/canvas/AgentInspector.jsx — confirm prop is received (no change needed if already declared in signature)
+  Risk: LOW — additive; onUpdateNode is optional ('no' in Required column); passing a defined function instead of undefined cannot break existing behavior.
+Acceptance Criteria:
+  - [ ] SwarmCanvas.jsx defines handleUpdateNode as a useCallback that maps over nodes and patches data
+  - [ ] AgentInspector receives onUpdateNode as a defined function (not undefined) when rendered by SwarmCanvas
+  - [ ] Calling onUpdateNode('some-node-id', { label: 'New Name' }) from AgentInspector updates that node's data in the canvas without error
+  - [ ] No TypeError is thrown when any code path in AgentInspector calls props.onUpdateNode
+  - [ ] Existing AgentInspector behaviors (status display, Open Terminal button, system prompt view) are unchanged
+  - [ ] npm test passes
+Dependencies: TASK #129
+---
+
+TASK #131: TEST GATE — SwarmCanvas onUpdateNode prop wiring
+Area: V3.1 — Swarm Bug Fixes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: MEDIUM
+Difficulty: LOW
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — TASK #132 CANNOT start until this gate returns PASS
+Context:
+  Component being tested: SwarmCanvas.jsx (handleUpdateNode callback) + AgentInspector.jsx (onUpdateNode prop receipt)
+  Component spec (from PRD Section 11 — AgentInspector):
+    onUpdateNode — function|undefined — no — Callback for editing node data; must be a defined function when passed from SwarmCanvas
+  What to test:
+    1. Prop contract: render SwarmCanvas with a test workflowDef containing 1 agent node; inspect the props passed to AgentInspector via React Testing Library; confirm typeof onUpdateNode === 'function'.
+    2. Behavioral: simulate calling onUpdateNode('node-id', { label: 'Updated' }) from within an AgentInspector context; verify that the node in SwarmCanvas's local React Flow state now has data.label === 'Updated'.
+    3. TypeError regression: mock any code path in AgentInspector that calls props.onUpdateNode() — verify it does not throw when the prop is properly wired.
+    4. Existing behavior: after the change, click a node; AgentInspector still opens and shows status, system prompt, and (if sessionId is truthy) the Open Terminal button.
+    5. User verification: in SwarmView, click an agent node; AgentInspector panel opens without errors visible in browser console.
+  WS contracts to verify: none — this bug is prop-wiring only, no WS events involved.
+Acceptance Criteria:
+  - [ ] typeof onUpdateNode === 'function' in AgentInspector's received props when rendered by SwarmCanvas
+  - [ ] Calling onUpdateNode(nodeId, patch) causes the corresponding node's data to be updated in SwarmCanvas state
+  - [ ] No TypeError thrown anywhere in AgentInspector when onUpdateNode is called
+  - [ ] All existing AgentInspector behaviors unchanged (node selection, status display, close button, Open Terminal)
+  - [ ] npm test passes
+Gate Result: PASS → proceed to TASK #132 | FAIL → return to TASK #130 with bug report
+Dependencies: TASK #130
+---
+
+TASK #132: AREA CHECKPOINT — V3.1 Swarm Bug Fixes (full integration verification)
+Area: V3.1 — Swarm Bug Fixes
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: HIGH
+Difficulty: HIGH
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — No V3.2 work may begin until this checkpoint returns PASS for ALL components
+Context:
+  This checkpoint verifies that all four bug fixes in AREA V3.1 work correctly together as an integrated system. It must be run after ALL four TEST GATE tasks (#125, #127, #129, #131) have individually passed.
+  Components verified:
+    1. SwarmEngine (BUG-SESSION-1 fix) — agent_status includes sessionId
+    2. SwarmEngine (BUG-HANDOFF-1 fix) — handoff_completed emitted
+    3. useSwarm.js (BUG-TRIGGER-1 fix) — trigger_fired, trigger_status, rss_item handled
+    4. SwarmCanvas + AgentInspector (BUG-INSPECTOR-1 fix) — onUpdateNode properly wired
+  End-to-end scenario to run:
+    Step 1: Generate a 2-agent workflow (Triage → Researcher) via PromptToFlowBar.
+    Step 2: Click Run. Verify execution starts (executionStatus becomes 'running').
+    Step 3: Click on the Triage agent node while it is running. Verify:
+      (a) AgentInspector panel opens and shows the node label.
+      (b) "Open Terminal" button is visible (requires BUG-SESSION-1 fix to be active).
+    Step 4: Wait for or simulate agent A doing __HANDOFF__ to agent B. Verify:
+      (a) InterAgentFeed shows both 'handoff_started' and 'handoff_completed' events (BUG-HANDOFF-1 fix).
+      (b) Agent B status changes to 'running' in the canvas (AgentNode border animates).
+    Step 5: Click on Agent B node while it is running. Verify "Open Terminal" button is visible for agent B too.
+    Step 6: Click "Open Terminal" for any agent node. Verify PtyExplosion modal opens showing the PTY terminal.
+    Step 7: Check browser DevTools console — no TypeError, no unhandled exceptions.
+    Step 8: Run npm test. All tests must pass (0 failures).
+    Step 9: Run npm run build. Build must complete with 0 errors.
+  WS contracts verified in this checkpoint:
+    agent_status: { type, nodeId, status, sessionId } — all four fields
+    handoff_started: { type, sourceNodeId, targetNodeId, edgeId, counter } — all five fields
+    handoff_completed: { type, sourceNodeId, targetNodeId } — all three fields
+    rss_item (if triggerable in test): { type, nodeId, guid } — all three fields
+Acceptance Criteria:
+  - [ ] BUG-SESSION-1: agent_status WS event contains sessionId; agentStates[nodeId].sessionId populated in store; "Open Terminal" button visible in AgentInspector for running agents
+  - [ ] BUG-HANDOFF-1: handoff_completed WS event emitted after every handoff; event appears in InterAgentFeed; handoff_started still emitted (no regression)
+  - [ ] BUG-TRIGGER-1: trigger_fired, trigger_status, rss_item cases present in useSwarm.js switch; rss_item handler calls updateTriggerState and addFeedEvent
+  - [ ] BUG-INSPECTOR-1: onUpdateNode prop passed as a defined function from SwarmCanvas to AgentInspector; calling it updates node data without TypeError
+  - [ ] Full end-to-end scenario (Steps 1-7 above) completes without console errors
+  - [ ] npm test: 0 failures
+  - [ ] npm run build: 0 errors
+  - [ ] Puppeteer screenshot after Step 3 shows "Open Terminal" button visible in AgentInspector panel
+Dependencies: TASK #125, TASK #127, TASK #129, TASK #131
+---

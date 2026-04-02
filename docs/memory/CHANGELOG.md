@@ -2068,3 +2068,66 @@ Comprehensive QA pass on all Phase 9 frontend redesign work (Tasks #23-#30). Cod
 - All 187 tests pass; zero regressions
 
 ---
+---
+## 2026-04-02 — PRD Section 11 Component Specifications (Swarm V3)
+**Agent:** prd-writer
+**Triggered by:** Add Section 11 (Component Specifications) to docs/PRD.md for all Swarm V3 components, to establish single source of truth for TEST GATE acceptance criteria and bug comparisons.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| docs/PRD.md | MODIFIED | Added Section 11 (Component Specifications — 12 Swarm components) and Section 11.1 (WS Event Field Reference — 8 event types). No source code changed. |
+
+### Functions Added
+- None (documentation-only change)
+
+### Functions Modified
+- None
+
+### Functions Removed
+- None
+
+### Connection Changes
+- `docs/PRD.md` is now the authoritative source for all Swarm component contracts. TEST GATE tasks must derive acceptance criteria from Section 11. Bug reports must compare actual vs specified behavior using Section 11 as ground truth.
+- Section 11.1 formalizes which WS event fields the server actually emits vs what PRD Section 9 specified — establishes the discrepancy record.
+
+### Component Specifications Added (Section 11)
+| Component | File | Layer | Key contracts documented |
+|-----------|------|-------|--------------------------|
+| SwarmEngine | server/services/SwarmEngine.js | server | startExecution, _spawnAgentPty, _onHandoff, _onDone, stopExecution, pauseExecution, resumeExecution, freezeAgent, unfreezeAgent, getStatus. All WS events emitted. 2 known bugs (agent_status missing sessionId; handoff_completed never emitted). |
+| HandoffParser | server/services/HandoffParser.js | server | feed(), _validateContext(), reset(). 4KB buffer cap, ANSI stripping, base64+JSON validation, 50-key limit. |
+| WorkflowStore | server/services/WorkflowStore.js | server | list(), get(), create(), update(), delete(). Schema validation rules (nodes/edges arrays required, string IDs, edge source/target validation). Path-traversal guard. |
+| TriggerManager | server/services/TriggerManager.js | server | register(), startPolling(), stopPolling(), cleanupExecution(), _fireTrigger(). RSS polling and webhook registration lifecycle. |
+| swarmRoutes | server/routes/swarm.js | server | 7 endpoints: start, pause, resume, stop, status, agent output, broadcast, scaffold. Factory function accepts swarmEngine + sessionManager + claudeBin. |
+| swarmHandler | server/ws/swarmHandler.js | server | handleSwarmConnection(), broadcast(). Initial execution_status snapshot on WS connect. _subscribers Map. |
+| SwarmContext/useSwarmStore | client/src/store/SwarmContext.jsx | client | All store slices and actions. Section 11 documents the workflowDef slice (added BUG-SWARM-3 fix Task #117) and setPtyExplosionNodeId (Task #121). |
+| useSwarm | client/src/hooks/useSwarm.js | client | connectWs(), startExecution(), stopExecution(). All 8 WS message type handlers. Cleanup useEffect depends on [workflowId]. |
+| useInbox | client/src/hooks/useInbox.js | client | GET /api/v1/swarm/:id/inbox polling every 10s when wsConnected is false. resolveInboxItem() via PUT. |
+| SwarmView | client/src/views/SwarmView.jsx | client | SwarmView() — full lifecycle: useSwarm, useInbox, PtyExplosion, toolbar, breadcrumb. workflowDef read from useSwarmStore (not useState — BUG-SWARM-3 fix). |
+| SwarmCanvas | client/src/canvas/SwarmCanvas.jsx | client | React Flow canvas: nodeTypes, edgeTypes, drill-down, fitView (50ms timeout — BUG-SWARM-1), AgentInspector always rendered (BUG-AUDIT-1 fix). |
+| AgentNode/HandoffEdge/AgentInspector/BroadcastBar/InterAgentFeed | various canvas/ files | client | UI components; spec documents inputs (nodeId, data props), outputs (store reads/writes), WS event consumption path. |
+
+### WS Event Reference Added (Section 11.1)
+| Event | Emitted by | Actual fields | vs PRD Section 9 |
+|-------|-----------|---------------|-----------------|
+| agent_status | SwarmEngine (multiple methods) | `{ type, nodeId, status }` | Missing `lastOutputSnippet` and `sessionId` — both documented as known issues |
+| handoff_started | SwarmEngine._onHandoff() | `{ type, sourceNodeId, targetNodeId, edgeId, counter }` | Matches PRD |
+| handoff_completed | NEVER emitted | — | Required by FR-V3-43, not implemented |
+| circuit_breaker | SwarmEngine._onHandoff() | `{ type, edgeId, counter, threshold }` | Matches PRD |
+| hitl_required / inbox_item | SwarmEngine.freezeAgent() | `{ type: 'hitl_required', nodeId, item }` | PRD specifies type 'inbox_item'; actual is 'hitl_required'; client handles 'hitl_required' correctly |
+| execution_status | SwarmEngine._onDone() + swarmHandler on connect | on _onDone: `{ type, status:'agent_done', nodeId }` / on connect: full getStatus() spread | PRD specifies `{ type, status }` only — discrepancy documented |
+| budget_update | SwarmEngine tapFn (budget exceeded) | `{ type, estimatedTokensUsed, limitTokens }` | Matches PRD |
+| trigger_fired / trigger_status / rss_item | NEVER / NEVER / TriggerManager._fireTrigger() | rss_item: `{ type, nodeId, guid }` | trigger_fired + trigger_status not implemented; rss_item not in original PRD; client handles none of these |
+
+### Known Bugs Formally Documented in PRD (Section 11)
+1. **BUG: agent_status missing sessionId** — SwarmEngine emits `{ type, nodeId, status }` without `sessionId`; useSwarm.js never sets `agentState.sessionId` from WS; AgentInspector "Open Terminal" button requires sessionId to be truthy. Only populated via explicit GET /status fetch.
+2. **BUG: handoff_completed never emitted** — FR-V3-43 requires it; not implemented. No client handler exists for it.
+3. **BUG: trigger_fired / trigger_status not implemented** — TriggerManager does not emit these; client has no handlers; triggerStates store slice is never updated from WS.
+4. **BUG: rss_item event not handled by client** — TriggerManager._fireTrigger() emits `{ type: 'rss_item', nodeId, guid }` but useSwarm.js has no case for it; silently dropped.
+
+### Impact on Other Code
+- All TEST GATE tasks (#124+) MUST derive acceptance criteria from PRD Section 11 entries — this is the new ground truth
+- Bug reports for Swarm components MUST now reference Section 11 to compare actual vs specified behavior
+- The 4 known bugs documented here (sessionId gap, handoff_completed missing, trigger events missing, rss_item unhandled) are open items for future tasks
+
+---

@@ -1918,3 +1918,55 @@ CODE_MAP.md and CHANGELOG.md are fully up to date through Task #122. All 122 tas
 ### Handoff
 Task #123 (QA regression check via Puppeteer) is PENDING — qa-tester should verify all 8 fixes hold visually in the browser.
 ---
+---
+## 2026-04-02 — PRD Section 11 Component Specifications
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation after prd-writer completed)
+
+### Context when I started
+CODE_MAP.md was last updated 2026-03-31 after the Swarm Bug-Fix Wave (#116–#122). All 122 tasks documented, 8 bugs closed. prd-writer had just added Section 11 (Component Specifications) and Section 11.1 (WS Event Field Reference) to docs/PRD.md. No source code was changed — this is a documentation-only task.
+
+### What I did
+1. Read CODE_MAP.md header and Module Index (lines 1–90) to understand existing structure and confirm no PRD entry existed.
+2. Read CHANGELOG.md tail (lines 2045–2070) to find append point and confirm last entry was the Swarm Bug-Fix Wave.
+3. Read code-mapper.md tail (lines 1895–1920) to confirm last session context.
+4. Read ACTIVITY_LOG.md tail (lines 2307–2327) to confirm last entries.
+5. Read docs/PRD.md Section 11 (lines 538–636) and Section 11.1 (lines 1246–1318) to understand what was added.
+6. Read TASK_PLAN.md tail (lines 7865–7931) to confirm last task number is #123.
+7. Updated CODE_MAP.md header timestamp to 2026-04-02.
+8. Added "Design Documents" subsection to Module Index with a full entry for docs/PRD.md.
+9. Appended CHANGELOG.md entry covering: 12 component specs table, 8 WS event types table, 4 known bugs formally documented.
+10. Appended ACTIVITY_LOG.md entry.
+11. Appended this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header timestamp updated; Design Documents section added to Module Index with authoritative PRD.md entry |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended entry for PRD Section 11 addition — component specs table, WS event table, 4 known bugs |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session summary |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- PRD.md is now tracked in CODE_MAP.md as a first-class design document
+- 4 known implementation gaps formally documented in CHANGELOG as open bugs for future task planning
+- Section 11 WS event discrepancies (vs PRD Section 9) are captured in the changelog for cross-reference
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None — code-mapper only documents | — | — | — |
+
+### Decisions I made
+- Added a "Design Documents" section to CODE_MAP Module Index (before Server Modules) — PRD.md is now a tracked artifact because it defines component contracts that affect implementation decisions. Future PRD changes should trigger a code-mapper update.
+- Did not add Function Graph entries for the 12 PRD components — they already exist in the Function Graph from prior tasks. Section 11 adds spec coverage to existing mapped functions, it does not introduce new ones.
+
+### What I learned
+- The 4 bugs documented in Section 11 (agent_status missing sessionId, handoff_completed never emitted, trigger events not implemented, rss_item unhandled) were already known from prior bug analysis but had never been formally recorded in the PRD. The prd-writer task formalizes them as verifiable acceptance criteria gaps.
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md are fully up to date through the PRD Section 11 task (post-Task #123). PRD.md is now listed in the Module Index as a design document. 4 open implementation gaps documented — need task entries.
+
+### Handoff
+Future sessions: 4 known bugs (sessionId missing from agent_status, handoff_completed never emitted, trigger_fired/trigger_status not implemented, rss_item unhandled by client) should be registered as formal task entries in TASK_PLAN.md.
+---
