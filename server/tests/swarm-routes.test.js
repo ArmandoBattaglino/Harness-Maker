@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveBroadcastNodeTargets } from '../routes/swarm.js';
+import { resolveBroadcastNodeTargets, serializeSessionOutput } from '../routes/swarm.js';
 
 describe('resolveBroadcastNodeTargets', () => {
   const execution = {
@@ -51,5 +51,25 @@ describe('resolveBroadcastNodeTargets', () => {
     expect(targets).toEqual([
       { nodeId: 'agent-billing', sessionId: 'sess-billing', label: 'Billing Agent' },
     ]);
+  });
+});
+
+describe('serializeSessionOutput', () => {
+  it('serializes RingBuffer-backed session output to utf8 text', () => {
+    const session = {
+      buffer: {
+        toBuffer: () => Buffer.from('hello from ring buffer', 'utf8'),
+      },
+    };
+
+    expect(serializeSessionOutput(session)).toBe('hello from ring buffer');
+  });
+
+  it('falls back to String(buffer) for non-RingBuffer sessions', () => {
+    const session = {
+      buffer: 'plain text buffer',
+    };
+
+    expect(serializeSessionOutput(session)).toBe('plain text buffer');
   });
 });

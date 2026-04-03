@@ -152,3 +152,41 @@
 **Alternatives rejected:** Hard-fail with 500/503 - leaves Swarm unusable. Silent empty workflow - violates the product contract and gives the user no runnable graph.
 **Revisit if:** Provider reliability improves enough that the local fallback is no longer needed, or if a richer local planner replaces the current deterministic template.
 ---
+
+## DEC-018: Swarm runtime blockers must transition executions into an explicit blocked state
+**Date:** 2026-04-02
+**Made by:** architect/debugger follow-up on TASK #145 blocker analysis
+**Decision:** Swarm executions may not remain in a generic `running` state when the backing AI CLI is blocked by interactive provider UI. The canonical contract now includes an explicit `blocked` execution/agent state plus structured `runtimeBlocker` metadata with blocker type and provider. The blocker taxonomy must cover both Claude and Codex interactive dead-ends, including Claude rate-limit UI, Codex trust/bootstrap prompts, Codex usage-limit/credit-exhaustion UI, and Codex prompt-rejection loops such as "Conversation interrupted - tell the model what to do differently."
+**Reasoning:** TASK #145 proved that a healthy Swarm control plane can still fail at runtime because the AI provider enters an interactive blocker flow (`/rate-limit-options`, trust prompts, bootstrap questions, usage-limit purchase prompts, steering-prompt rejection loops) before any useful handoff output is produced. Treating that as ordinary `running` leaves the UI and QA with a false-positive live state and makes it impossible to distinguish prompt/handoff bugs from provider readiness issues.
+**Alternatives rejected:** Keep `running` until timeout - misleading UX and impossible QA triage. Collapse all blockers into `failed` - loses actionable provider-specific recovery context. Implement provider fallback before blocker classification - too risky without first making blocked states observable.
+**Revisit if:** Swarm gains full provider selection/fallback support and needs a richer provider lifecycle model than the current `blocked` + `runtimeBlocker` contract.
+---
+
+## DEC-019: Swarm runtime defaults to auto provider selection with Claude-first and Codex fallback
+**Date:** 2026-04-02
+**Made by:** backend-dev/frontend-dev during TASKS #151-#153
+**Decision:** Swarm executions now accept an explicit runtime choice (`claude`, `codex`) or `auto`. The default UI/runtime mode is `auto`: start on Claude when available, but if the first agent hits a pre-work Claude rate-limit blocker, the execution may switch to Codex and surface `lastFallback` metadata plus provider state in the execution snapshot.
+**Reasoning:** This keeps the existing Claude-first behavior for normal runs while removing the Claude-only bottleneck that blocked TASK #145 verification. It also gives the UI a stable contract (`runtimeProvider`, `activeProvider`, `providerStrategy`, `lastFallback`) instead of forcing it to infer provider behavior from PTY text.
+**Alternatives rejected:** Codex-only default - unnecessary behavior change for existing users. Claude-only with no fallback - leaves Swarm vulnerable to provider usage-limit dead ends. Implicit provider switching with no surfaced metadata - too opaque for QA and users.
+**Revisit if:** The product later adds per-workflow persisted runtime settings or more than two supported interactive AI providers.
+---
+
+## DEC-020: HandoffParser accepts plain JSON payloads as primary format, base64 as fallback
+**Date:** 2026-04-03
+**Agent:** debugger
+**Task:** #145 — BUG-UX-HANDOFF-1
+**Decision:** HandoffParser now tries to parse handoff token payloads as plain JSON first (`__HANDOFF__:target:{"key":"value"}`), falling back to base64-decoded JSON if plain JSON parsing fails. The system prompt instructs the AI to emit plain JSON, not base64.
+**Reasoning:** LLMs cannot reliably produce base64-encoded text in their output. The original base64-only format caused silent handoff failures: the AI would emit `__HANDOFF__:target:{"summary":"..."}` which the parser's base64-only regex (`HANDOFF_WINDOW_RE`) silently rejected because `{`, `}`, `"` are not valid base64 characters. This was the primary root cause of the "first agent emits __DONE__ without handoff" bug.
+**Alternatives rejected:** Making the AI produce base64 via stronger prompt instructions - unreliable, LLMs are not base64 encoders. Removing base64 support entirely - would break backward compatibility if any existing system produces base64 tokens.
+**Revisit if:** A future handoff payload format is needed that cannot be expressed as flat JSON (e.g., binary data).
+---
+
+## DEC-021: _onDone reinject is bounded at 3 attempts with forced synthetic handoff
+**Date:** 2026-04-03
+**Agent:** debugger
+**Task:** #145 — BUG-UX-HANDOFF-1
+**Decision:** When a non-terminal agent emits `__DONE__` instead of `__HANDOFF__`, SwarmEngine reinjects a continuation prompt up to MAX_DONE_REINJECT_ATTEMPTS (3) times. After 3 failed attempts, a synthetic `_onHandoff` is triggered to the first downstream target, advancing the workflow automatically.
+**Reasoning:** Without a limit, the _onDone → reinject → _onDone cycle would loop infinitely when the AI model consistently emits __DONE__ despite protocol instructions. The forced handoff ensures the workflow always advances, even if the current agent fails to produce a handoff token.
+**Alternatives rejected:** Unlimited reinjects - causes infinite loop. Marking agent as failed/done - leaves downstream agents permanently idle. Higher limit (10+) - wastes provider tokens on an agent that won't cooperate.
+**Revisit if:** A smarter reinject strategy is needed (e.g., escalating prompt firmness, or switching to a different provider mid-reinject).
+---

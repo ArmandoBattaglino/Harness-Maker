@@ -18,12 +18,17 @@ const statusColors = {
   idle: 'text-gray-400',
   running: 'text-blue-400 animate-pulse',
   paused: 'text-yellow-400',
+  blocked: 'text-orange-400',
   stopped: 'text-red-400',
 };
 
 export default function SwarmView() {
   const executionStatus = useSwarmStore((s) => s.executionStatus);
   const activeExecutionId = useSwarmStore((s) => s.activeExecutionId);
+  const runtimeBlocker = useSwarmStore((s) => s.runtimeBlocker);
+  const runtimeProvider = useSwarmStore((s) => s.runtimeProvider);
+  const providerStrategy = useSwarmStore((s) => s.providerStrategy);
+  const lastFallback = useSwarmStore((s) => s.lastFallback);
   const inboxItems = useSwarmStore((s) => s.inboxItems);
   const setPaused = useSwarmStore((s) => s.setPaused);
   const setResumed = useSwarmStore((s) => s.setResumed);
@@ -37,6 +42,7 @@ export default function SwarmView() {
   const [inboxOpen, setInboxOpen] = useState(false);
   const [executing, setExecuting] = useState(false);
   const [pausing, setPausing] = useState(false);
+  const [selectedRuntimeProvider, setSelectedRuntimeProvider] = useState('auto');
 
   const { activeProjectId, projects } = useAppState();
   const projectPath = projects.find((p) => p.id === activeProjectId)?.path ?? '';
@@ -51,7 +57,8 @@ export default function SwarmView() {
   useInbox(activeExecutionId);
 
   const pendingCount = getPendingCount(inboxItems);
-  const isExecutionActive = executionStatus === 'running' || executionStatus === 'paused';
+  const isExecutionActive = ['running', 'paused', 'blocked'].includes(executionStatus);
+  const showMissingProjectMessage = Boolean(workflowDef && !activeProjectId);
   const savedWorkflows = useMemo(() => {
     return workflows
       .filter((workflow) => !activeProjectId || !workflow.projectId || workflow.projectId === activeProjectId)
@@ -82,7 +89,7 @@ export default function SwarmView() {
   const handleRun = async () => {
     setExecuting(true);
     try {
-      await startExecution(activeProjectId, projectPath);
+      await startExecution(activeProjectId, projectPath, selectedRuntimeProvider);
     } finally {
       setExecuting(false);
     }
@@ -127,6 +134,24 @@ export default function SwarmView() {
     setWorkflowDef(selected);
   };
 
+  const providerLabel = runtimeProvider
+    ? runtimeProvider === 'codex'
+      ? 'Codex'
+      : 'Claude'
+    : selectedRuntimeProvider === 'codex'
+    ? 'Codex'
+    : selectedRuntimeProvider === 'claude'
+    ? 'Claude'
+    : 'Auto';
+
+  const providerStrategyLabel = providerStrategy?.mode === 'auto'
+    ? 'Auto fallback'
+    : providerStrategy?.mode === 'codex'
+    ? 'Codex only'
+    : providerStrategy?.mode === 'claude'
+    ? 'Claude only'
+    : 'Auto fallback';
+
   return (
     <div className="flex flex-col w-full h-full bg-gray-950 text-white">
       <div className="flex items-center gap-3 px-4 py-2 bg-gray-900 border-b border-gray-700 shrink-0">
@@ -141,6 +166,21 @@ export default function SwarmView() {
         >
           {'\uD83D\uDCE5'} HITL{pendingCount > 0 ? ` (${pendingCount})` : ''}
         </button>
+
+        <label className="flex items-center gap-2 text-[11px] text-gray-400">
+          <span>Runtime</span>
+          <select
+            value={selectedRuntimeProvider}
+            onChange={(e) => setSelectedRuntimeProvider(e.target.value)}
+            disabled={isExecutionActive || executing}
+            className="bg-gray-800 text-white text-xs rounded px-2 py-1 border border-gray-600 disabled:opacity-50"
+            title="Choose the provider strategy for the next run"
+          >
+            <option value="auto">Auto</option>
+            <option value="claude">Claude</option>
+            <option value="codex">Codex</option>
+          </select>
+        </label>
 
         {(executionStatus === 'idle' || executionStatus === 'completed') && (
           <button
@@ -179,7 +219,7 @@ export default function SwarmView() {
           </button>
         )}
 
-        {(executionStatus === 'running' || executionStatus === 'paused') && (
+        {(executionStatus === 'running' || executionStatus === 'paused' || executionStatus === 'blocked') && (
           <button
             onClick={handleStop}
             disabled={executing}
@@ -193,6 +233,14 @@ export default function SwarmView() {
           ● {executionStatus}
         </span>
 
+        <span className="text-[11px] px-2 py-1 rounded bg-gray-800 text-gray-300 border border-gray-700">
+          Provider: {providerLabel}
+        </span>
+
+        <span className="text-[11px] text-gray-500">
+          {providerStrategyLabel}
+        </span>
+
         {(executionStatus === 'stopped' || executionStatus === 'completed') && (
           <button
             onClick={reset}
@@ -202,6 +250,26 @@ export default function SwarmView() {
           </button>
         )}
       </div>
+
+      {showMissingProjectMessage && (
+        <div className="px-4 py-2 text-xs text-amber-300 bg-amber-950/40 border-b border-amber-900/60">
+          Select a project in the sidebar to run this workflow.
+        </div>
+      )}
+
+      {executionStatus === 'blocked' && runtimeBlocker && (
+        <div className="px-4 py-2 text-xs text-orange-200 bg-orange-950/40 border-b border-orange-900/60">
+          {runtimeBlocker.message}
+          {runtimeBlocker.provider ? ` Provider: ${runtimeBlocker.provider}.` : ''}
+        </div>
+      )}
+
+      {lastFallback && (
+        <div className="px-4 py-2 text-xs text-sky-200 bg-sky-950/30 border-b border-sky-900/60">
+          Runtime fallback: {lastFallback.fromProvider} to {lastFallback.toProvider}
+          {lastFallback.reason ? ` because ${lastFallback.reason}` : ''}.
+        </div>
+      )}
 
       <PromptToFlowBar
         onWorkflowGenerated={(workflowId, animatedDef) => {

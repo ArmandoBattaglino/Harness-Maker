@@ -1,3 +1,12 @@
+## 2026-04-03 — debugger — Task #145: BUG-UX-HANDOFF-1 — Fix handoff chain failure
+**Outcome:** COMPLETED
+**Summary:** Fixed three root causes preventing multi-agent handoff chains from working: (1) HandoffParser only accepted base64-encoded payloads but LLMs emit plain JSON — added _parseDirectJsonHandoff() to accept both formats; (2) No max retry limit on _onDone reinject — added MAX_DONE_REINJECT_ATTEMPTS=3 with forced synthetic handoff; (3) System prompt lacked concrete handoff token example — added __HANDOFF__:target:{"summary":"..."} examples. 227/227 tests pass (9 new).
+**Files changed:** server/services/HandoffParser.js, server/services/SwarmEngine.js, server/tests/HandoffParser.test.js, server/tests/swarm-engine.test.js
+**Bugs fixed:** BUG-A (HandoffParser base64-only rejection), BUG-B (infinite _onDone reinject loop), BUG-C (missing concrete handoff example in system prompt)
+**Decisions made:** Plain JSON is now the primary handoff format (tried first); base64 kept as fallback. MAX_DONE_REINJECT_ATTEMPTS=3 with forced handoff to first downstream target.
+**Blockers:** none
+**Next:** TASK #148 (AREA CHECKPOINT V3.4) — qa-tester verifies full handoff chain end-to-end.
+---
 ## 2026-04-02 — documenter — Task #132: AREA CHECKPOINT PASS — V3.1 Swarm Bug Fix Wave closed
 **Outcome:** COMPLETED
 **Summary:** Updated DOC_STATUS.md to reflect all four V3.1 bugs fixed (BUG-SESSION-1, BUG-HANDOFF-1, BUG-TRIGGER-1, BUG-INSPECTOR-1); replaced "Known Bugs" section with "ALL FIXED" summary; added 4 rows to Fixed Bugs table. Updated ARCHITECTURE.md Swarm WS event table: `agent_status` corrected (sessionId field added), `handoff_completed` row added, `trigger_fired`/`trigger_status`/`rss_item` rows added. 132/132 tasks complete, zero open bugs.

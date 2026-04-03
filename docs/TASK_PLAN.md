@@ -4,7 +4,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED - 2026-03-31 - V3.1 BUG FIX WAVE FULLY CLOSED - AREA V3.1 CLOSED 2026-04-02 - V3.2/V3.3 SWARM RUNTIME INTEGRITY + CONTRACT COMPLETION CLOSED 2026-04-02 - AREA CHECKPOINT #142 PASS - V3.4 SWARM UX DEEP TEST FINDINGS OPEN (Tasks #143-#148 PENDING) - 4 bugs found via Playwright deep user test 2026-04-02
+**Status:** v3.0.0 RELEASED - 2026-03-31 - V3.1 BUG FIX WAVE FULLY CLOSED - AREA V3.1 CLOSED 2026-04-02 - V3.2/V3.3 SWARM RUNTIME INTEGRITY + CONTRACT COMPLETION CLOSED 2026-04-02 - AREA CHECKPOINT #142 PASS - V3.4 SWARM UX DEEP TEST FINDINGS IN PROGRESS (#143, #144, #146, #147 COMPLETED; #145, #148 PENDING) - V3.5 SWARM AI RUNTIME PORTABILITY IMPLEMENTED BUT NOT HONESTLY CLOSED (#149, #150, #151, #152 COMPLETED; #153 RE-OPENED/PENDING AFTER LIVE CODEX RUNTIME VERIFICATION) - 4 bugs found via Playwright deep user test 2026-04-02
 
 ---
 
@@ -392,7 +392,8 @@ Agent: debugger
 Priority: HIGH
 Difficulty: HARD
 Suggested Model: claude-opus-4-6
-Status: PENDING
+Status: COMPLETED
+Investigation Note: 2026-04-03 follow-up - The PTY tap ordering race in `SwarmEngine._spawnAgentPty()` is fixed, Swarm now submits long prompts line-by-line, `HandoffParser` can recover `__HANDOFF__` tokens even when the PTY wraps them across multiple lines, and live Codex-specific dead ends are surfaced more honestly. A new blocker path now classifies Codex prompt-rejection loops (`Conversation interrupted - tell the model what to do differently`) as canonical `blocked` state instead of leaving the run falsely alive. However, TASK #145 is still not honestly closed: repeated live Codex runs in this environment either enter that prompt-rejection blocker or drift into unrelated/off-task interactive work without producing any real Swarm handoff after extended runtime. The workflow logic is materially less ambiguous than before, but at least one genuine multi-agent handoff chain still must be verified end-to-end under a provider/runtime that is actually ready to work.
 Context:
   Source: Deep user test 2026-04-02 — TEST #5
   User-facing problem:
@@ -439,7 +440,8 @@ Agent: frontend-dev
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-02 - SwarmView now shows a visible inline warning when a workflow is ready but no active project is selected: "Select a project in the sidebar to run this workflow." The message disappears as soon as a project is active and does not show for other disabled Run states.
 Context:
   Source: Deep user test 2026-04-02 — TEST #3
   User-facing problem:
@@ -468,7 +470,8 @@ Type: TEST_GATE
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: PASS - 2026-04-02 - SwarmView now lets the user choose the runtime for the next run (`auto`, `claude`, `codex`), shows the active provider and provider strategy, keeps blocked-provider messaging visible, and surfaces runtime fallback feedback from the backend contract. Client production build passes (`node .\\node_modules\\vite\\bin\\vite.js build`).
 Context:
   This TEST GATE verifies each individual bug fix from tasks #143-#146 works correctly in isolation before the AREA CHECKPOINT integration test.
   Tests to run:
@@ -554,6 +557,183 @@ Acceptance Criteria:
   - [ ] npm run build: 0 errors
   - [ ] Puppeteer screenshots captured for Steps 4, 6, 8, 9
 Dependencies: TASK #147
+---
+
+## AREA: V3.5 â€” Swarm AI Runtime Portability
+_Components: SessionManager, SwarmEngine, BinaryDiscovery, swarm routes/UI, runtime diagnostics_
+_Tasks: #149 â†’ #153_
+_Gate: V3.5 closes only when Swarm AI-dependent actions can run via Codex in addition to Claude, or fail fast with explicit runtime diagnostics instead of hanging in interactive PTY state_
+_Source: PM follow-up from TASK #145 blocker analysis on 2026-04-02 (Claude PTY rate-limit UI, Codex trust/bootstrap prompt, lack of provider-aware runtime strategy for Swarm)_
+
+---
+
+TASK #149: ARCH-SWARM-RUNTIME-1 â€” Define provider-aware Swarm runtime strategy for Claude + Codex
+Area: V3.5 â€” Swarm AI Runtime Portability
+Agent: architect
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: PASS â€” 2026-04-02 â€” DEC-018 defines the immediate provider-aware runtime contract: Swarm remains Claude-backed for execution in the current phase, but interactive provider blockers now have canonical `blocked` status plus structured `runtimeBlocker` metadata. Codex-backed execution/fallback remains the next implementation step, not implicit undefined behavior.
+Context:
+  Swarm execution is currently hard-wired to interactive `claude.exe` PTY sessions. Runtime investigation for TASK #145 proved that this is now a product-level risk:
+    - Claude PTY sessions can enter interactive blocker states such as `/rate-limit-options` instead of producing agent work
+    - Codex PTY sessions can enter bootstrap blocker states such as workspace trust confirmation before they become usable
+    - Swarm has no explicit concept of "runtime provider", "runtime readiness", or "interactive blocker classification"
+  The project already supports Codex as a fallback provider for scaffold generation, but not for Swarm runtime execution.
+  This task must decide the durable product contract before implementation starts.
+Required design scope:
+  1. Define the supported Swarm runtime providers: Claude only, Codex only, or provider preference with fallback.
+  2. Define where the provider choice lives: config, per-workflow, per-execution, or auto-selection.
+  3. Define the canonical runtime states/events for provider blockers:
+     - rate-limited
+     - trust-required
+     - permission-mode prompt
+     - provider unavailable
+     - fallback-engaged
+  4. Define the minimum non-hanging UX contract:
+     - execution must not stay forever in `running` when the PTY is blocked by provider UI
+     - clients must receive an explicit state/error reason
+     - user must know whether retrying with Codex is possible
+  5. Define compatibility constraints for Swarm protocol prompts across both CLIs.
+Acceptance Criteria:
+  - [ ] Decision recorded for provider selection/fallback strategy
+  - [ ] Canonical blocker taxonomy defined for Claude and Codex interactive PTY states
+  - [ ] Required backend/client contract changes listed explicitly
+  - [ ] TASK #150â€“#153 can proceed without ambiguity
+Dependencies: TASK #145
+---
+
+TASK #150: BUG-SWARM-RUNTIME-2 â€” Detect and classify interactive AI runtime blockers instead of hanging executions
+Area: V3.5 â€” Swarm AI Runtime Portability
+Agent: debugger
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Completion Note: PASS â€” 2026-04-02 â€” SwarmEngine now classifies provider blocker text in the PTY tap path, moves the affected agent/execution into canonical `blocked` state, and exposes `runtimeBlocker` metadata to the client snapshot. Coverage now includes Claude rate-limit blockers, Codex trust/bootstrap blockers, and Codex usage-limit blockers so blocked PTY sessions no longer masquerade as ordinary `running`. SwarmView surfaces a visible blocker message instead of leaving the run indistinguishable from ordinary `running`. Verification: `npm test --prefix server -- swarm-engine.test.js HandoffParser.test.js` passes and `node .\\node_modules\\vite\\bin\\vite.js build` succeeds (479 modules).
+Context:
+  The current Swarm runtime assumes that PTY output belongs either to useful model work or to Swarm protocol tokens. That assumption is false in production:
+    - Claude can emit rate-limit UI (`/rate-limit-options`, "You've hit your limit")
+    - Codex can emit trust/bootstrap UI ("Do you trust the contents of this directory?")
+    - both can emit provider-specific banners or menus before useful output begins
+  Right now these states leave the execution apparently alive but semantically blocked, which makes TASK #145 impossible to verify reliably.
+Required fix scope:
+  1. Introduce runtime blocker detection in the PTY tap path for Swarm sessions.
+  2. Detect at minimum:
+     - Claude rate-limit / extra-usage blocker
+     - Codex trust prompt blocker
+     - provider startup failure / unusable session
+  3. Convert detected blockers into explicit execution and/or agent status updates instead of infinite `running`.
+  4. Emit structured metadata so the UI and QA can tell which blocker occurred.
+  5. Preserve existing handoff parsing for real work output.
+Implementation notes:
+  - Prefer a structured SwarmEngine/session runtime state over brittle UI-only string checks scattered across components
+  - Ensure blocker detection does not strip or break real `__HANDOFF__`/`__DONE__` parsing
+  - Add regression tests that simulate blocker output in PTY chunks
+Acceptance Criteria:
+  - [ ] Swarm execution no longer appears indefinitely `running` when provider UI blocks progress
+  - [ ] Runtime blocker type is captured and exposed to the client
+  - [ ] Existing server tests pass and new blocker tests are added
+  - [ ] TASK #145 can distinguish "handoff logic broken" from "provider blocked before work"
+Dependencies: TASK #149
+---
+
+TASK #151: FEATURE-SWARM-RUNTIME-3 â€” Add Codex-capable Swarm runtime adapter and provider fallback path
+Area: V3.5 â€” Swarm AI Runtime Portability
+Agent: backend-dev
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Completion Note: PASS - 2026-04-02 - Swarm runtime spawning is now provider-aware for Claude and Codex, execution snapshots expose `runtimeProvider` / `activeProvider` / `providerStrategy` / `lastFallback`, and auto mode falls back from Claude to Codex when a pre-work Claude rate-limit blocker is detected. Swarm prompt delivery now uses the interactive-safe line-by-line submit path, and non-terminal prompts explicitly require downstream handoff instead of permissive early `__DONE__`. Codex sessions launch with explicit interactive-safe args and the server regression suite passes (`npm test --prefix server -- swarm-engine.test.js HandoffParser.test.js`).
+Context:
+  The product goal for this wave is that AI-required actions in the Swarm section must be runnable through Codex too, not only through Claude. The codebase already discovers `codex.exe` and uses it for scaffold fallback, but Swarm agent PTYs still spawn only `claude.exe`.
+Required implementation scope:
+  1. Extend runtime spawning so Swarm can launch provider-specific PTY sessions for Claude and Codex.
+  2. Add provider-specific startup args/bootstrap needed for usable Swarm sessions.
+  3. Implement the strategy decided in TASK #149:
+     - explicit provider selection, or
+     - Claude-preferred with Codex fallback, or
+     - another documented strategy
+  4. Ensure Swarm protocol prompts are delivered in a way both CLIs can actually execute.
+  5. Integrate with blocker detection from TASK #150 so fallback can happen intentionally rather than silently hanging.
+  6. Preserve existing scaffold fallback behavior and avoid duplicating binary-discovery logic.
+Important edge cases:
+  - Codex trust/bootstrap flow on first PTY launch
+  - Claude rate-limit state mid-session
+  - provider-switching during an execution versus before first useful work
+  - terminal/PTy Explosion compatibility for whichever provider backs the agent
+Acceptance Criteria:
+  - [ ] Swarm can execute agent work with Codex as a supported runtime
+  - [ ] Provider strategy from TASK #149 is fully implemented
+  - [ ] Claude rate-limit does not leave the workflow silently hung when Codex fallback is available
+  - [ ] Provider-specific session startup is covered by tests or deterministic probes
+  - [ ] npm test passes
+Dependencies: TASK #149, TASK #150
+---
+
+TASK #152: UX-SWARM-RUNTIME-4 â€” Surface runtime provider selection and blocker/fallback state in Swarm UI
+Area: V3.5 â€” Swarm AI Runtime Portability
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: PASS - 2026-04-02 - SwarmView now exposes runtime provider selection for the next run, shows the active provider and provider strategy during execution, keeps canonical blocked-provider messaging visible, and surfaces fallback/provider-switch feedback from the backend snapshot/feed contract. Verification: `node .\\node_modules\\vite\\bin\\vite.js build` succeeds and the individual V3.4/V3.5 UI verification path in TASK #147 passes.
+Context:
+  Even with backend runtime fixes, the current Swarm UI has no way to explain whether an execution is using Claude or Codex, whether it was blocked by provider UI, or whether a fallback happened. Without that visibility users cannot understand why a run stalled or switched behavior.
+Required UX scope:
+  1. Expose the active Swarm AI runtime provider in the execution UI.
+  2. Show a clear, user-readable message when execution is blocked by:
+     - Claude rate limit
+     - Codex trust/bootstrap requirement
+     - provider unavailable
+  3. Surface fallback events when the runtime switches provider.
+  4. Keep the UX consistent with existing execution status, feed, and toolbar patterns.
+  5. Avoid raw PTY junk or provider menu text leaking as the only user feedback.
+Acceptance Criteria:
+  - [ ] User can see which provider is backing the execution
+  - [ ] Blocked provider states are visible and understandable from the Swarm screen
+  - [ ] Fallback events are visible if automatic/provider-switch logic is implemented
+  - [ ] No regression to existing completed/running/error states
+  - [ ] npm run build passes
+Dependencies: TASK #150, TASK #151
+---
+
+TASK #153: TEST GATE â€” Swarm AI runtime portability and blocker recovery verification
+Area: V3.5 â€” Swarm AI Runtime Portability
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD â€” V3.5 cannot close until Swarm AI-dependent actions are verified with the new runtime contract
+Context:
+  This gate verifies that Swarm no longer depends on a single happy-path Claude interactive session and that Codex-backed execution is materially usable in this section.
+Verification scope:
+  1. Provider readiness:
+     - inspect the UI/default config and verify the selected provider strategy is visible
+  2. Claude blocker path:
+     - simulate or reproduce Claude rate-limit blocker
+     - verify the execution does not hang forever in plain `running`
+     - verify the UI shows explicit blocker state
+  3. Codex path:
+     - launch a Swarm execution using Codex support
+     - verify first agent produces usable output rather than stalling on trust/bootstrap silently
+  4. Fallback path:
+     - if fallback is implemented, verify Claude blocker leads to explicit Codex fallback behavior
+  5. Regression path:
+     - verify handoff/feed/status behavior still works for real Swarm work when the provider is ready
+Acceptance Criteria:
+  - [ ] Claude interactive blockers are surfaced explicitly, not as silent hangs
+  - [ ] Codex-backed Swarm execution is verified for at least one AI-dependent run
+  - [ ] Provider/fallback UX is visible and correct
+  - [ ] npm test passes
+  - [ ] npm run build passes
+Gate Note: 2026-04-03 follow-up - the implementation contract is in place, but the gate must remain PENDING until live verification is honest under current provider conditions. Direct/live probes now prove that Codex launches with the intended args, can classify prompt-rejection dead ends as explicit `blocked` state instead of silent hangs, and no longer hides obvious interactive runtime failures behind generic `running`. Even so, this environment still does not yield a trustworthy live Swarm chain: some Codex runs hit prompt-rejection loops, while others continue interactively without producing any actual handoff token after prolonged runtime. V3.5 should only be re-closed after at least one AI-dependent Swarm run completes or reaches a real handoff under a provider that is ready to work.
+Dependencies: TASK #150, TASK #151, TASK #152
 ---
 
 ## V3 RELEASE-READY

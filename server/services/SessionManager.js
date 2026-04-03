@@ -55,12 +55,21 @@ export class SessionManager {
   // -------------------------------------------------------------------------
   // createSession
   // -------------------------------------------------------------------------
-  async createSession(projectId, projectPath, claudeBinaryPath) {
+  async createSession(projectId, projectPath, binaryPath, launchProfile = {}) {
     const sessionId = uuidv4();
     const buffer = new RingBuffer(100 * 1024);
+    const launchArgs = Array.isArray(launchProfile.args) ? [...launchProfile.args] : [];
+    const runtimeProvider = launchProfile.provider ?? 'claude';
+    const initialPrompt = typeof launchProfile.initialPrompt === 'string'
+      ? launchProfile.initialPrompt.trim()
+      : '';
+
+    if (runtimeProvider === 'codex' && initialPrompt) {
+      launchArgs.push(initialPrompt);
+    }
 
     // Spawn PTY — all PTY operations must stay on main thread
-    const ptyProcess = pty.spawn(claudeBinaryPath, [], {
+    const ptyProcess = pty.spawn(binaryPath, launchArgs, {
       name: 'xterm-color',
       cwd: projectPath,
       env: process.env,
@@ -79,6 +88,11 @@ export class SessionManager {
       status: 'active',
       createdAt: new Date(),
       lastActivityAt: new Date(),
+      binaryPath,
+      runtimeProvider,
+      launchArgs,
+      bootstrapPrompt: launchProfile.bootstrapPrompt ?? null,
+      initialPrompt: initialPrompt || null,
     };
 
     // Wire PERMANENT onData handler — NEVER removed (DEC-009, ConPTY deadlock prevention).

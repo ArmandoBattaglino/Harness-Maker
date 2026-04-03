@@ -83,6 +83,30 @@ describe('HandoffParser', () => {
       expect(results).toHaveLength(1);
       expect(results[0].targetId).toBe('agent-c');
     });
+
+    it('should detect a handoff token when terminal wrapping inserts newlines and indentation', () => {
+      const contextUpdate = {
+        summary:
+          'Explained that the sky appears blue because air molecules scatter shorter wavelengths more strongly.',
+      };
+      const payload = b64(contextUpdate);
+      const splitOne = Math.floor(payload.length / 3);
+      const splitTwo = Math.floor((payload.length * 2) / 3);
+      const chunk = [
+        '__HANDOFF__:node-',
+        `  b:${payload.slice(0, splitOne)}`,
+        `  ${payload.slice(splitOne, splitTwo)}`,
+        `  ${payload.slice(splitTwo)}`,
+      ].join('\n');
+
+      const results = parser.feed(chunk);
+      expect(results).toHaveLength(1);
+      expect(results[0]).toEqual({
+        type: 'handoff',
+        targetId: 'node-b',
+        contextUpdate,
+      });
+    });
   });
 
   describe('Scenario 4: Oversized contextUpdate (>50 keys)', () => {
@@ -274,6 +298,74 @@ describe('HandoffParser', () => {
       const payload = b64(obj);
       const results = parser.feed(`__HANDOFF__:agent-b:${payload}`);
       expect(results).toHaveLength(1);
+    });
+  });
+
+  describe('Scenario 10: Plain JSON payload (LLM-friendly format)', () => {
+    it('should detect a handoff with plain JSON context (no base64)', () => {
+      const chunk = '__HANDOFF__:agent-b:{"summary": "Research complete", "count": 42}';
+      const results = parser.feed(chunk);
+      expect(results).toHaveLength(1);
+      expect(results[0]).toEqual({
+        type: 'handoff',
+        targetId: 'agent-b',
+        contextUpdate: { summary: 'Research complete', count: 42 },
+      });
+    });
+
+    it('should detect a plain JSON handoff with surrounding text', () => {
+      const chunk = 'some output\n__HANDOFF__:node-2:{"task": "write article"}\nmore text';
+      const results = parser.feed(chunk);
+      expect(results).toHaveLength(1);
+      expect(results[0].type).toBe('handoff');
+      expect(results[0].targetId).toBe('node-2');
+      expect(results[0].contextUpdate).toEqual({ task: 'write article' });
+    });
+
+    it('should detect a plain JSON handoff with empty object', () => {
+      const chunk = '__HANDOFF__:agent-b:{}';
+      const results = parser.feed(chunk);
+      expect(results).toHaveLength(1);
+      expect(results[0]).toEqual({
+        type: 'handoff',
+        targetId: 'agent-b',
+        contextUpdate: {},
+      });
+    });
+
+    it('should prefer plain JSON over base64 when both could match', () => {
+      const chunk = '__HANDOFF__:agent-b:{"key": "value"}';
+      const results = parser.feed(chunk);
+      expect(results).toHaveLength(1);
+      expect(results[0].contextUpdate).toEqual({ key: 'value' });
+    });
+
+    it('should reject plain JSON handoff with nested objects', () => {
+      const chunk = '__HANDOFF__:agent-b:{"nested": {"inner": "val"}}';
+      const results = parser.feed(chunk);
+      // Should not match as a valid handoff (nested objects are rejected by _validateContext)
+      expect(results.filter(r => r.type === 'handoff')).toHaveLength(0);
+    });
+
+    it('should still detect base64 handoffs after plain JSON path fails', () => {
+      const payload = b64({ key: 'val' });
+      const chunk = `__HANDOFF__:agent-b:${payload}`;
+      const results = parser.feed(chunk);
+      expect(results).toHaveLength(1);
+      expect(results[0].contextUpdate).toEqual({ key: 'val' });
+    });
+
+    it('should detect plain JSON handoff split across two chunks', () => {
+      const r1 = parser.feed('output __HANDOFF__:agent-b:{"summ');
+      expect(r1).toEqual([]);
+
+      const r2 = parser.feed('ary": "done"}');
+      expect(r2).toHaveLength(1);
+      expect(r2[0]).toEqual({
+        type: 'handoff',
+        targetId: 'agent-b',
+        contextUpdate: { summary: 'done' },
+      });
     });
   });
 });

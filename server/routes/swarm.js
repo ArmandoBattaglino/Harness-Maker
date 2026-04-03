@@ -49,6 +49,14 @@ export function resolveBroadcastNodeTargets(execution, scope, targetId) {
   return targets;
 }
 
+export function serializeSessionOutput(session) {
+  if (!session?.buffer) return '';
+  if (typeof session.buffer.toBuffer === 'function') {
+    return session.buffer.toBuffer().toString('utf8');
+  }
+  return String(session.buffer);
+}
+
 /**
  * Factory function — returns an Express router with all swarm execution control endpoints.
  *
@@ -110,15 +118,15 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
 
   // -------------------------------------------------------------------------
   // POST /api/v1/swarm/:workflowId/start
-  // Body: { projectId, projectPath }
-  // → 201 { executionId, status: 'running' }
+  // Body: { projectId, projectPath, runtimeProvider? }
+  // → 201 { executionId, status, runtimeProvider, providerStrategy, lastFallback? }
   // → 400 if projectId or projectPath missing
   // → 404 if workflowId not found
   // -------------------------------------------------------------------------
   router.post('/:workflowId/start', async (req, res) => {
     try {
       const { workflowId } = req.params;
-      const { projectId, projectPath } = req.body ?? {};
+      const { projectId, projectPath, runtimeProvider, provider } = req.body ?? {};
 
       if (!projectId || typeof projectId !== 'string' || projectId.trim() === '') {
         return res.status(400).json({ error: 'projectId is required' });
@@ -129,7 +137,9 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
 
       let executionId;
       try {
-        executionId = await swarmEngine.startExecution(workflowId, projectId.trim(), projectPath.trim());
+        executionId = await swarmEngine.startExecution(workflowId, projectId.trim(), projectPath.trim(), {
+          runtimeProvider: runtimeProvider ?? provider,
+        });
       } catch (err) {
         if (err.message === 'Workflow not found') {
           return res.status(404).json({ error: 'Workflow not found' });
@@ -137,7 +147,15 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
         throw err;
       }
 
-      return res.status(201).json({ executionId, status: 'running' });
+      const status = swarmEngine.getStatus(executionId);
+      return res.status(201).json({
+        executionId,
+        status: status?.status ?? 'running',
+        runtimeProvider: status?.runtimeProvider ?? null,
+        activeProvider: status?.activeProvider ?? null,
+        providerStrategy: status?.providerStrategy ?? null,
+        lastFallback: status?.lastFallback ?? null,
+      });
     } catch (err) {
       console.error(`[swarm] POST /:workflowId/start error: ${err.message}`);
       return res.status(500).json({ error: 'Internal server error' });
@@ -263,7 +281,7 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
         return res.status(404).json({ error: 'Agent session not found' });
       }
 
-      return res.status(200).json({ output: session.buffer.toString() });
+      return res.status(200).json({ output: serializeSessionOutput(session) });
     } catch (err) {
       console.error(`[swarm] GET /:executionId/agent/:nodeId/output error: ${err.message}`);
       return res.status(500).json({ error: 'Internal server error' });

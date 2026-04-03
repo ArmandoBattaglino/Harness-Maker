@@ -17,12 +17,88 @@ const ANSI_ESC = /\x1b[@-_][0-?]*[ -/]*[@-~]/g;       // other ESC sequences
 // Token patterns
 // targetId: must match agent name validation (^[a-z][a-z0-9-]*$)
 // base64 payload: standard base64 alphabet with padding
-const HANDOFF_RE = /__HANDOFF__:([a-z][a-z0-9-]*):((?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{4})?)/g;
+const HANDOFF_PREFIX = '__HANDOFF__:';
+const HANDOFF_WINDOW_RE = /^__HANDOFF__:[A-Za-z0-9+/=:_\-\s]+/;
+const TARGET_RE = /^[a-z][a-z0-9-]*$/;
+const BASE64_RE = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{4})$/;
 const DONE_RE = /__DONE__/;
 
 export class HandoffParser {
   constructor() {
     this._buf = ''; // rolling string accumulator, max 4096 chars
+  }
+
+  /**
+   * Try to parse a handoff token where the context is plain JSON (not base64).
+   * LLMs often emit plain JSON instead of base64-encoding it.
+   * Format: __HANDOFF__:<targetId>:<json_object>
+   */
+  _parseDirectJsonHandoff(buf, startIndex) {
+    const slice = buf.slice(startIndex);
+    if (!slice.startsWith(HANDOFF_PREFIX)) return null;
+
+    const afterPrefix = slice.slice(HANDOFF_PREFIX.length);
+    const colonIndex = afterPrefix.indexOf(':');
+    if (colonIndex <= 0) return null;
+
+    const targetId = afterPrefix.slice(0, colonIndex);
+    if (!TARGET_RE.test(targetId)) return null;
+
+    const afterTarget = afterPrefix.slice(colonIndex + 1);
+    const braceStart = afterTarget.indexOf('{');
+    if (braceStart === -1 || braceStart > 2) return null; // allow up to 2 chars of whitespace before {
+
+    // Scan for the matching closing brace (handles nested strings with braces)
+    const jsonStart = braceStart;
+    for (let end = afterTarget.indexOf('}', jsonStart); end !== -1; end = afterTarget.indexOf('}', end + 1)) {
+      const jsonCandidate = afterTarget.slice(jsonStart, end + 1);
+      try {
+        const ctx = JSON.parse(jsonCandidate);
+        if (this._validateContext(ctx)) {
+          const totalConsumed = HANDOFF_PREFIX.length + colonIndex + 1 + end + 1;
+          return { type: 'handoff', targetId, contextUpdate: ctx, consumed: totalConsumed };
+        }
+      } catch {
+        // Try a longer substring ending at the next '}'
+      }
+    }
+    return null;
+  }
+
+  _parseWrappedHandoff(window) {
+    const compact = window.replace(/\s+/g, '');
+    if (!compact.startsWith(HANDOFF_PREFIX)) {
+      return null;
+    }
+
+    const remainder = compact.slice(HANDOFF_PREFIX.length);
+    const separatorIndex = remainder.indexOf(':');
+    if (separatorIndex <= 0) {
+      return null;
+    }
+
+    const targetId = remainder.slice(0, separatorIndex);
+    if (!TARGET_RE.test(targetId)) {
+      return null;
+    }
+
+    const payloadCandidate = remainder.slice(separatorIndex + 1);
+    for (let end = payloadCandidate.length; end >= 4; end -= 1) {
+      const payload = payloadCandidate.slice(0, end);
+      if (!BASE64_RE.test(payload)) continue;
+
+      try {
+        const raw = Buffer.from(payload, 'base64').toString('utf8');
+        const ctx = JSON.parse(raw);
+        if (this._validateContext(ctx)) {
+          return { type: 'handoff', targetId, contextUpdate: ctx };
+        }
+      } catch (err) {
+        // continue scanning shorter payload prefixes
+      }
+    }
+
+    return null;
   }
 
   /**
@@ -51,24 +127,35 @@ export class HandoffParser {
 
     const results = [];
 
-    // 3. Extract __HANDOFF__ tokens
-    // Reset lastIndex since we reuse the regex conceptually (but create fresh each call
-    // because the global flag means lastIndex persists)
-    const handoffRe = new RegExp(HANDOFF_RE.source, 'g');
-    let match;
-    while ((match = handoffRe.exec(this._buf)) !== null) {
-      try {
-        const raw = Buffer.from(match[2], 'base64').toString('utf8');
-        const ctx = JSON.parse(raw);
-        if (this._validateContext(ctx)) {
-          results.push({ type: 'handoff', targetId: match[1], contextUpdate: ctx });
-        } else {
-          console.warn(`[HandoffParser] contextUpdate rejected (schema violation) from target ${match[1]}`);
-        }
-      } catch (err) {
-        // Malformed base64 or JSON - skip silently, log warning
-        console.warn(`[HandoffParser] malformed handoff payload: ${err.message}`);
+    // 3. Extract __HANDOFF__ tokens, including PTY-wrapped variants where the
+    // terminal inserts hard newlines/spaces inside the target or payload.
+    // Also supports plain JSON payloads (LLMs often emit JSON directly instead of base64).
+    let searchIndex = 0;
+    while (searchIndex < this._buf.length) {
+      const handoffIndex = this._buf.indexOf(HANDOFF_PREFIX, searchIndex);
+      if (handoffIndex === -1) break;
+
+      // 3a. Try plain JSON payload first (most common LLM output)
+      const jsonParsed = this._parseDirectJsonHandoff(this._buf, handoffIndex);
+      if (jsonParsed) {
+        results.push({ type: jsonParsed.type, targetId: jsonParsed.targetId, contextUpdate: jsonParsed.contextUpdate });
+        searchIndex = handoffIndex + jsonParsed.consumed;
+        continue;
       }
+
+      // 3b. Try base64-encoded payload (original format)
+      const candidate = this._buf.slice(handoffIndex).match(HANDOFF_WINDOW_RE)?.[0] ?? null;
+      if (!candidate) {
+        searchIndex = handoffIndex + HANDOFF_PREFIX.length;
+        continue;
+      }
+
+      const parsed = this._parseWrappedHandoff(candidate);
+      if (parsed) {
+        results.push(parsed);
+      }
+
+      searchIndex = handoffIndex + HANDOFF_PREFIX.length;
     }
 
     // 4. Extract __DONE__ token

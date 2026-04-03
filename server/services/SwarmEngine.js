@@ -5,6 +5,72 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import HandoffParser from './HandoffParser.js';
+import { discoverCodexBinary } from './BinaryDiscovery.js';
+
+const SWARM_PROMPT_ECHO_MARKER = '--- END SWARM INPUT ---';
+const SWARM_PROMPT_SUBMIT_DELAY_MS = 100;
+const SWARM_PROMPT_READY_FALLBACK_MS = 2500;
+const SWARM_PROMPT_LINE_INTERVAL_MS = 25;
+const SWARM_PROMPT_INTERRUPT_DELAY_MS = 120;
+const MAX_DONE_REINJECT_ATTEMPTS = 3;
+const RUNTIME_PROVIDER = {
+  AUTO: 'auto',
+  CLAUDE: 'claude',
+  CODEX: 'codex',
+};
+const RUNTIME_BLOCKER_PATTERNS = [
+  {
+    type: 'rate_limited',
+    provider: 'claude',
+    matches: (text) =>
+      text.includes("/rate-limit-options")
+      || text.includes("you've hit your limit")
+      || text.includes('you have hit your limit')
+      || text.includes('usage limit reached'),
+    message: 'Claude hit its usage limit before the swarm agent could continue.',
+  },
+  {
+    type: 'trust_required',
+    provider: 'codex',
+    matches: (text) =>
+      text.includes('do you trust the contents of this directory')
+      || text.includes('trust this folder')
+      || text.includes('trust this directory'),
+    message: 'Codex requires workspace trust before the swarm agent can continue.',
+  },
+  {
+    type: 'rate_limited',
+    provider: 'codex',
+    matches: (text) =>
+      text.includes("you've hit your usage limit")
+      || text.includes('purchase more credits')
+      || text.includes('try again at')
+      || text.includes('approaching rate limits'),
+    message: 'Codex hit its usage or credit limit before the swarm agent could continue.',
+  },
+  {
+    type: 'prompt_rejected',
+    provider: 'codex',
+    matches: (text) =>
+      text.includes('conversation interrupted - tell the model what to do differently')
+      || text.includes('something went wrong? hit `/feedback` to report the issue'),
+    message: 'Codex rejected the injected swarm steering prompt and could not continue the workflow in interactive mode.',
+  },
+];
+const RUNTIME_PROVIDER_PROFILES = {
+  [RUNTIME_PROVIDER.CLAUDE]: { args: [] },
+  [RUNTIME_PROVIDER.CODEX]: {
+    args: ['--no-alt-screen', '-a', 'never', '-s', 'workspace-write'],
+  },
+};
+
+function normalizeRuntimeProvider(provider) {
+  const value = String(provider ?? '').trim().toLowerCase();
+  if (value === RUNTIME_PROVIDER.CLAUDE || value === RUNTIME_PROVIDER.CODEX || value === RUNTIME_PROVIDER.AUTO) {
+    return value;
+  }
+  return RUNTIME_PROVIDER.AUTO;
+}
 
 // ---------------------------------------------------------------------------
 // WorkflowExecution shape (in-memory only, never persisted):
@@ -58,10 +124,90 @@ class SwarmEngine {
   _serializeAgentState(state = {}) {
     return {
       sessionId: state.sessionId ?? null,
+      provider: state.provider ?? null,
+      runtimeProvider: state.runtimeProvider ?? state.provider ?? null,
       status: state.status ?? 'idle',
       handoffCount: state.handoffCount ?? 0,
       lastOutputSnippet: state.lastOutputSnippet ?? '',
+      ...(state.runtimeBlocker ? { runtimeBlocker: { ...state.runtimeBlocker } } : {}),
     };
+  }
+
+  _serializeRuntimeBlocker(blocker = null) {
+    if (!blocker) return null;
+    return {
+      type: blocker.type,
+      provider: blocker.provider,
+      message: blocker.message,
+      nodeId: blocker.nodeId ?? null,
+      detectedAt: blocker.detectedAt ?? null,
+    };
+  }
+
+  _buildRuntimeProviderStrategy(workflowDef, requestedProvider = null) {
+    const normalized = normalizeRuntimeProvider(requestedProvider ?? workflowDef?.settings?.runtimeProvider);
+    if (normalized === RUNTIME_PROVIDER.CLAUDE) {
+      return {
+        mode: RUNTIME_PROVIDER.CLAUDE,
+        activeProvider: RUNTIME_PROVIDER.CLAUDE,
+        fallbackProvider: null,
+        allowFallback: false,
+      };
+    }
+    if (normalized === RUNTIME_PROVIDER.CODEX) {
+      return {
+        mode: RUNTIME_PROVIDER.CODEX,
+        activeProvider: RUNTIME_PROVIDER.CODEX,
+        fallbackProvider: null,
+        allowFallback: false,
+      };
+    }
+    return {
+      mode: RUNTIME_PROVIDER.AUTO,
+      activeProvider: RUNTIME_PROVIDER.CLAUDE,
+      fallbackProvider: RUNTIME_PROVIDER.CODEX,
+      allowFallback: true,
+    };
+  }
+
+  async _resolveRuntimeProviderBinary(provider) {
+    if (provider === RUNTIME_PROVIDER.CODEX) {
+      if (this._sessionManager.codexBin) {
+        return this._sessionManager.codexBin;
+      }
+      return discoverCodexBinary();
+    }
+
+    const claudeBin = this._sessionManager.claudeBin;
+    if (!claudeBin) {
+      throw new Error('claudeBin not set on SessionManager');
+    }
+    return claudeBin;
+  }
+
+  _buildRuntimeProviderArgs(provider) {
+    // The runtime CLI entrypoints are interactive by default. Provider-specific
+    // launch behavior is represented here so Swarm can select the correct
+    // binary/launch profile without duplicating discovery logic.
+    return [...(RUNTIME_PROVIDER_PROFILES[provider]?.args ?? [])];
+  }
+
+  _buildRuntimeProviderBootstrapPrompt(provider, { fallbackFrom = null, fallbackReason = null } = {}) {
+    const providerLabel = provider === RUNTIME_PROVIDER.CODEX ? 'Codex' : 'Claude';
+    const lines = [
+      `${providerLabel} runtime is active for this Swarm agent.`,
+      'Continue the workflow using the shared task context below.',
+    ];
+
+    if (fallbackFrom) {
+      const fallbackLabel = fallbackFrom === RUNTIME_PROVIDER.CODEX ? 'Codex' : 'Claude';
+      lines.unshift(`${providerLabel} replaced ${fallbackLabel} because the previous provider could not continue.`);
+    }
+    if (fallbackReason) {
+      lines.push(`Fallback reason: ${fallbackReason}`);
+    }
+
+    return lines.join('\n');
   }
 
   _getBudgetSnapshot(execution) {
@@ -88,9 +234,14 @@ class SwarmEngine {
     this._wsBroadcast(executionId, {
       type: 'agent_status',
       nodeId,
+      provider: state?.provider ?? null,
+      runtimeProvider: state?.runtimeProvider ?? state?.provider ?? null,
       status: state?.status ?? 'idle',
       sessionId: state?.sessionId ?? null,
       lastOutputSnippet: state?.lastOutputSnippet ?? '',
+      ...(state?.runtimeBlocker
+        ? { runtimeBlocker: this._serializeRuntimeBlocker(state.runtimeBlocker) }
+        : {}),
     });
   }
 
@@ -100,18 +251,250 @@ class SwarmEngine {
     this._broadcastExecutionSnapshot(execution);
   }
 
+  _buildInitialWorkflowContext(workflowDef) {
+    const initialContext =
+      workflowDef?.initialContext && typeof workflowDef.initialContext === 'object'
+        ? { ...workflowDef.initialContext }
+        : {};
+
+    const workflowName = workflowDef?.name || 'Workflow';
+    const workflowDescription = workflowDef?.description || '';
+    const defaultCurrentTask = workflowDescription
+      ? `Execute the workflow goal described here: ${workflowDescription}`
+      : `Execute the workflow "${workflowName}" and advance it through the agent graph.`;
+
+    return {
+      workflowName,
+      workflowDescription,
+      currentTask: initialContext.currentTask || defaultCurrentTask,
+      ...initialContext,
+    };
+  }
+
+  _normalizeParserChunk(rawChunk = '') {
+    return rawChunk
+      .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
+      .replace(/\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)/g, '')
+      .replace(/\x1b[@-_][0-?]*[ -/]*[@-~]/g, '')
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n');
+  }
+
+  _detectRuntimeBlocker(rawChunk = '') {
+    const normalized = this._normalizeParserChunk(rawChunk).toLowerCase();
+    if (!normalized.trim()) return null;
+
+    const match = RUNTIME_BLOCKER_PATTERNS.find((candidate) => candidate.matches(normalized));
+    if (!match) return null;
+
+    return {
+      type: match.type,
+      provider: match.provider,
+      message: match.message,
+      detectedAt: new Date().toISOString(),
+    };
+  }
+
+  _isRuntimePromptReady(rawChunk = '', provider = null) {
+    const normalized = this._normalizeParserChunk(rawChunk).toLowerCase();
+    if (!normalized.trim()) return false;
+
+    if (provider === RUNTIME_PROVIDER.CLAUDE) {
+      return normalized.includes('bypass permissions on')
+        || normalized.includes('ctrl+g to edit in notepad')
+        || normalized.includes('/buddy');
+    }
+
+    if (provider === RUNTIME_PROVIDER.CODEX) {
+      return normalized.includes('workspace-write')
+        || normalized.includes('approval')
+        || normalized.includes('model')
+        || normalized.includes('esc to interrupt');
+    }
+
+    return false;
+  }
+
+  _flushSwarmPrompt(sessionId, state = null) {
+    const prompt = state?.pendingPrompt ?? null;
+    if (!sessionId || !prompt) return;
+
+    if (state) {
+      if (state.promptReadyTimer) {
+        clearTimeout(state.promptReadyTimer);
+        state.promptReadyTimer = null;
+      }
+      state.pendingPrompt = null;
+      state.ignoreParserUntil = SWARM_PROMPT_ECHO_MARKER;
+      state.ignoreParserBuffer = '';
+    }
+
+    const payload = `${prompt}\n${SWARM_PROMPT_ECHO_MARKER}`;
+    const writePayload = () => {
+      if (state?.runtimeSession) {
+        const shouldInterruptFirst =
+          state?.provider === RUNTIME_PROVIDER.CODEX && (state?.promptSubmissionCount ?? 0) > 0;
+        const lines = payload.split('\n');
+        const baseDelay = shouldInterruptFirst ? SWARM_PROMPT_INTERRUPT_DELAY_MS : 0;
+
+        if (shouldInterruptFirst) {
+          this._sessionManager.writeInput(sessionId, '\x1b');
+        }
+
+        lines.forEach((line, index) => {
+          setTimeout(() => {
+            this._sessionManager.writeInput(sessionId, `${line}\n`);
+          }, baseDelay + (index * SWARM_PROMPT_LINE_INTERVAL_MS));
+        });
+        return baseDelay + (lines.length * SWARM_PROMPT_LINE_INTERVAL_MS);
+      }
+
+      this._sessionManager.writeInput(sessionId, payload);
+      return 0;
+    };
+
+    const submitAfterMs = writePayload();
+    if (state) {
+      state.promptSubmissionCount = (state.promptSubmissionCount ?? 0) + 1;
+    }
+
+    // Claude/Codex treat large multi-line writes as a paste operation. Submit on
+    // the next tick so the interactive CLI executes the pasted swarm prompt.
+    setTimeout(() => {
+      this._sessionManager.writeInput(sessionId, '\r');
+    }, submitAfterMs + SWARM_PROMPT_SUBMIT_DELAY_MS);
+  }
+
+  _writeSwarmPrompt(sessionId, prompt, state = null) {
+    if (!sessionId || !prompt) return;
+
+    if (!state) {
+      this._flushSwarmPrompt(sessionId, { pendingPrompt: prompt });
+      return;
+    }
+
+    state.pendingPrompt = prompt;
+
+    if (state.promptReady) {
+      this._flushSwarmPrompt(sessionId, state);
+      return;
+    }
+
+    if (!state.promptReadyTimer) {
+      state.promptReadyTimer = setTimeout(() => {
+        state.promptReady = true;
+        state.promptReadyTimer = null;
+        this._flushSwarmPrompt(sessionId, state);
+      }, SWARM_PROMPT_READY_FALLBACK_MS);
+    }
+  }
+
+  _shouldFallbackToCodex(execution, blocker, state) {
+    if (!execution || !blocker || !state) return false;
+    if (execution.providerStrategy?.mode !== RUNTIME_PROVIDER.AUTO) return false;
+    if (state.provider !== RUNTIME_PROVIDER.CLAUDE) return false;
+    if (blocker.provider !== RUNTIME_PROVIDER.CLAUDE) return false;
+    return blocker.type === 'rate_limited' || blocker.type === 'provider_unavailable';
+  }
+
+  async _attemptRuntimeFallback(executionId, nodeId, blocker) {
+    const execution = this._executions.get(executionId);
+    if (!execution) return false;
+
+    const currentState = execution.agentStates.get(nodeId);
+    if (!this._shouldFallbackToCodex(execution, blocker, currentState)) {
+      return false;
+    }
+
+    const previousSessionId = currentState?.sessionId ?? null;
+    const previousTapFn = currentState?.tapFn ?? null;
+
+    try {
+      await this._spawnAgentPty(executionId, nodeId, {
+        requestedProvider: RUNTIME_PROVIDER.CODEX,
+        fallbackFrom: RUNTIME_PROVIDER.CLAUDE,
+        fallbackReason: blocker.message,
+        previousSessionId,
+        previousTapFn,
+      });
+
+      execution.lastFallback = {
+        fromProvider: RUNTIME_PROVIDER.CLAUDE,
+        toProvider: RUNTIME_PROVIDER.CODEX,
+        reason: blocker.message,
+        type: blocker.type,
+        nodeId,
+        detectedAt: blocker.detectedAt ?? new Date().toISOString(),
+      };
+      execution.runtimeBlocker = null;
+
+      const latestState = execution.agentStates.get(nodeId);
+      if (latestState) {
+        latestState.runtimeBlocker = null;
+      }
+
+      this._syncExecutionStatusFromAgents(execution);
+      this._broadcastExecutionSnapshot(execution);
+      return true;
+    } catch (error) {
+      const failure = {
+        fromProvider: RUNTIME_PROVIDER.CLAUDE,
+        toProvider: RUNTIME_PROVIDER.CODEX,
+        reason: error.message,
+        type: 'fallback_failed',
+        nodeId,
+        detectedAt: new Date().toISOString(),
+      };
+      execution.lastFallback = failure;
+      this._broadcastExecutionSnapshot(execution);
+      return false;
+    }
+  }
+
+  async _handleRuntimeBlocker(executionId, nodeId, blocker) {
+    const execution = this._executions.get(executionId);
+    if (!execution || !blocker) return false;
+
+    const state = execution.agentStates.get(nodeId);
+    if (!state) return false;
+
+    const nextBlocker = {
+      ...blocker,
+      nodeId,
+    };
+
+    state.runtimeBlocker = nextBlocker;
+    state.status = 'blocked';
+    execution.runtimeBlocker = nextBlocker;
+    this._broadcastAgentStatus(executionId, nodeId, state);
+    this._setExecutionStatus(execution, 'blocked');
+
+    const fallbackApplied = await this._attemptRuntimeFallback(executionId, nodeId, nextBlocker);
+    if (!fallbackApplied) {
+      this._broadcastExecutionSnapshot(execution);
+    }
+
+    return fallbackApplied;
+  }
+
   _syncExecutionStatusFromAgents(execution) {
     if (!execution || ['stopping', 'stopped', 'failed', 'completed'].includes(execution.status)) {
       return execution?.status ?? null;
     }
 
     const agentStates = [...execution.agentStates.values()];
+    const hasRuntimeBlocker =
+      Boolean(execution.runtimeBlocker)
+      || agentStates.some((state) => Boolean(state.runtimeBlocker));
     const hasRunning = agentStates.some((state) => state.status === 'running');
     const hasPaused = agentStates.some((state) => state.status === 'paused');
+    const hasBlocked = agentStates.some((state) => state.status === 'blocked');
     const hasFailed = agentStates.some((state) => state.status === 'failed');
 
     if (hasFailed) {
       this._setExecutionStatus(execution, 'failed');
+    } else if (hasBlocked || hasRuntimeBlocker) {
+      this._setExecutionStatus(execution, 'blocked');
     } else if (hasRunning) {
       this._setExecutionStatus(execution, 'running');
     } else if (hasPaused) {
@@ -135,10 +518,15 @@ class SwarmEngine {
    * @param {string} projectPath
    * @returns {Promise<object>} execution status
    */
-  async startExecution(workflowId, projectId, projectPath) {
+  async startExecution(workflowId, projectId, projectPath, runtimeOptions = {}) {
     // 1. Load workflow definition from store
     const wf = await this._workflowStore.get(workflowId);
     if (!wf) throw new Error('Workflow not found');
+
+    const providerStrategy = this._buildRuntimeProviderStrategy(
+      wf,
+      runtimeOptions.provider ?? runtimeOptions.runtimeProvider
+    );
 
     // 2. Build execution record
     const executionId = uuidv4();
@@ -151,9 +539,14 @@ class SwarmEngine {
       status: 'running',
       agentStates: new Map(),
       edgeCounters: new Map(),
-      workflowContext: {},
+      workflowContext: this._buildInitialWorkflowContext(wf),
       heartbeatTimer: null,
       inboxItems: [],
+      runtimeBlocker: null,
+      providerStrategy,
+      runtimeProvider: providerStrategy.activeProvider,
+      activeProvider: providerStrategy.activeProvider,
+      lastFallback: null,
     };
 
     // 3. Store BEFORE spawning (so _spawnAgentPty can look it up)
@@ -163,7 +556,9 @@ class SwarmEngine {
     const triageNode = wf.nodes.find((n) => n.data && n.data.isTriageNode === true) || wf.nodes[0];
 
     // 5. Spawn triage agent PTY
-    await this._spawnAgentPty(executionId, triageNode.id);
+    await this._spawnAgentPty(executionId, triageNode.id, {
+      requestedProvider: providerStrategy.mode,
+    });
 
     // 6. Start heartbeat to keep agent PTYs alive
     this._startHeartbeat(executionId);
@@ -180,7 +575,7 @@ class SwarmEngine {
    * @param {string} nodeId
    * @returns {Promise<void>}
    */
-  async _spawnAgentPty(executionId, nodeId) {
+  async _spawnAgentPty(executionId, nodeId, spawnOptions = {}) {
     const execution = this._executions.get(executionId);
     if (!execution) throw new Error(`Execution ${executionId} not found`);
 
@@ -192,85 +587,199 @@ class SwarmEngine {
       .filter((e) => e.source === nodeId)
       .map((e) => e.target);
 
-    // Build system prompt (stub in #46.3 — returns empty string or placeholder)
-    const systemPrompt = this._buildSystemPrompt(node, execution.workflowContext, handoffTargets);
-
-    // Spawn PTY session via SessionManager
-    const claudeBin = this._sessionManager.claudeBin;
-    if (!claudeBin) throw new Error('claudeBin not set on SessionManager');
-    const session = await this._sessionManager.createSession(
-      execution.projectId,
-      execution.projectPath,
-      claudeBin
+    const requestedProvider = normalizeRuntimeProvider(
+      spawnOptions.requestedProvider ?? spawnOptions.provider ?? execution.activeProvider
     );
-    const sessionId = session.sessionId;
+    const candidateProviders = requestedProvider === RUNTIME_PROVIDER.AUTO
+      ? [RUNTIME_PROVIDER.CLAUDE, RUNTIME_PROVIDER.CODEX]
+      : [requestedProvider];
 
-    // Write system prompt to the PTY (if available)
-    if (systemPrompt) {
-      this._sessionManager.writeInput(sessionId, systemPrompt + '\n');
-    }
-
-    // Register session with BudgetTracker so getTotal(executionId) includes it
-    if (this._budgetTracker) {
-      this._budgetTracker.registerSession(executionId, sessionId);
-    }
-
-    // Set up HandoffParser tap on the PTY output
+    const previousState = execution.agentStates.get(nodeId) ?? null;
+    const previousSessionId = previousState?.sessionId ?? null;
+    const previousTapFn = previousState?.tapFn ?? null;
     const parser = new HandoffParser();
+    let lastError = null;
 
-    // Initialize agent state BEFORE registering tap (tap references it)
-    execution.agentStates.set(nodeId, {
-      sessionId,
-      tapFn: null,         // set below after tapFn is defined
-      status: 'running',
-      handoffCount: 0,
-      lastOutputSnippet: '',
-    });
+    for (let index = 0; index < candidateProviders.length; index += 1) {
+      const provider = candidateProviders[index];
+      const isFallbackAttempt = index > 0 || spawnOptions.fallbackFrom != null;
 
-    const tapFn = (chunk) => {
-      // Update lastOutputSnippet (last 500 chars)
-      const state = execution.agentStates.get(nodeId);
-      if (state) {
-        state.lastOutputSnippet = (state.lastOutputSnippet + chunk).slice(-500);
-        this._broadcastAgentStatus(executionId, nodeId, state);
-      }
-
-      // Budget tracking (if budgetTracker attached later — #49)
-      if (this._budgetTracker) {
-        this._budgetTracker.track(sessionId, chunk);
-        const limit = execution.workflowDef.settings?.budgetTokens || 0;
-        if (limit > 0) {
-          const result = this._budgetTracker.checkBudget(executionId, limit);
-          if (result.exceeded && this._wsBroadcast) {
-            this._wsBroadcast(executionId, {
-              type: 'budget_update',
-              estimatedTokensUsed: result.estimatedUsed,
-              limitTokens: limit,
-            });
+      try {
+        const binaryPath = await this._resolveRuntimeProviderBinary(provider);
+        const launchArgs = this._buildRuntimeProviderArgs(provider);
+        const bootstrapPrompt = this._buildRuntimeProviderBootstrapPrompt(provider, {
+          fallbackFrom: spawnOptions.fallbackFrom ?? null,
+          fallbackReason: spawnOptions.fallbackReason ?? null,
+        });
+        const systemPrompt = this._buildSystemPrompt(
+          node,
+          execution.workflowContext,
+          handoffTargets,
+          provider
+        );
+        const combinedPrompt = [bootstrapPrompt, systemPrompt].filter(Boolean).join('\n\n');
+        const codexInitialPrompt = provider === RUNTIME_PROVIDER.CODEX ? combinedPrompt : null;
+        const session = await this._sessionManager.createSession(
+          execution.projectId,
+          execution.projectPath,
+          binaryPath,
+          {
+            provider,
+            args: launchArgs,
+            bootstrapPrompt,
+            initialPrompt: codexInitialPrompt,
           }
+        );
+        const sessionId = session.sessionId;
+
+        const state = {
+          sessionId,
+          tapFn: null,         // set below after tapFn is defined
+          status: 'running',
+          handoffCount: 0,
+          lastOutputSnippet: '',
+          provider,
+          runtimeProvider: provider,
+          runtimeBlocker: null,
+          ignoreParserUntil: null,
+          ignoreParserBuffer: '',
+          promptReady: false,
+          pendingPrompt: null,
+          promptReadyTimer: null,
+          promptSubmissionCount: 0,
+          runtimeSession: true,
+          doneReinjectCount: 0,
+        };
+
+        execution.activeProvider = provider;
+        execution.runtimeProvider = provider;
+        execution.providerStrategy = {
+          ...execution.providerStrategy,
+          activeProvider: provider,
+        };
+        execution.agentStates.set(nodeId, state);
+
+        // Register session with BudgetTracker so getTotal(executionId) includes it
+        if (this._budgetTracker) {
+          this._budgetTracker.registerSession(executionId, sessionId);
+        }
+
+        const tapFn = (chunk) => {
+          const currentState = execution.agentStates.get(nodeId);
+          if (currentState && !currentState.promptReady && this._isRuntimePromptReady(chunk, currentState.provider)) {
+            currentState.promptReady = true;
+          }
+          if (currentState) {
+            currentState.lastOutputSnippet = (currentState.lastOutputSnippet + chunk).slice(-500);
+            this._broadcastAgentStatus(executionId, nodeId, currentState);
+          }
+
+          if (this._budgetTracker) {
+            this._budgetTracker.track(sessionId, chunk);
+            const limit = execution.workflowDef.settings?.budgetTokens || 0;
+            if (limit > 0) {
+              const result = this._budgetTracker.checkBudget(executionId, limit);
+              if (result.exceeded && this._wsBroadcast) {
+                this._wsBroadcast(executionId, {
+                  type: 'budget_update',
+                  estimatedTokensUsed: result.estimatedUsed,
+                  limitTokens: limit,
+                });
+              }
+            }
+          }
+
+          let chunkForParser = chunk;
+          if (currentState?.ignoreParserUntil) {
+            const normalized = this._normalizeParserChunk(chunk);
+            currentState.ignoreParserBuffer = (currentState.ignoreParserBuffer + normalized).slice(-8192);
+            const markerIndex = currentState.ignoreParserBuffer.indexOf(currentState.ignoreParserUntil);
+
+            if (markerIndex === -1) {
+              return;
+            }
+
+            const remainder = currentState.ignoreParserBuffer.slice(
+              markerIndex + currentState.ignoreParserUntil.length
+            );
+            currentState.ignoreParserUntil = null;
+            currentState.ignoreParserBuffer = '';
+
+            if (!remainder) {
+              return;
+            }
+
+            chunkForParser = remainder;
+          }
+
+          const runtimeBlocker = this._detectRuntimeBlocker(chunkForParser);
+          if (runtimeBlocker) {
+            void this._handleRuntimeBlocker(executionId, nodeId, runtimeBlocker);
+            return;
+          }
+
+          const events = parser.feed(chunkForParser);
+          for (const evt of events) {
+            if (evt.type === 'handoff') this._onHandoff(executionId, nodeId, evt);
+            if (evt.type === 'done') this._onDone(executionId, nodeId);
+          }
+        };
+
+        state.tapFn = tapFn;
+
+        // Register tap on swarmListeners (DEC-014)
+        const ptySession = this._sessionManager.getSession(sessionId);
+        if (ptySession) {
+          ptySession.swarmListeners.add(tapFn);
+          state.runtimeSession = Object.prototype.hasOwnProperty.call(ptySession, 'pty');
+          state.promptReady = !state.runtimeSession;
+        }
+
+        // Remove the previous provider session after the replacement is live.
+        if (isFallbackAttempt && previousSessionId && previousSessionId !== sessionId) {
+          if (previousTapFn) {
+            const previousSession = this._sessionManager.getSession(previousSessionId);
+            previousSession?.swarmListeners?.delete(previousTapFn);
+          }
+          await this._sessionManager.killSession(previousSessionId);
+        }
+
+        if (combinedPrompt && !codexInitialPrompt) {
+          this._writeSwarmPrompt(sessionId, combinedPrompt, state);
+        }
+
+        if (isFallbackAttempt && this._wsBroadcast) {
+          const fallbackFrom = spawnOptions.fallbackFrom ?? candidateProviders[0];
+          execution.lastFallback = {
+            fromProvider: fallbackFrom,
+            toProvider: provider,
+            reason: spawnOptions.fallbackReason ?? 'provider_fallback',
+            nodeId,
+            detectedAt: new Date().toISOString(),
+          };
+          this._wsBroadcast(executionId, {
+            type: 'runtime_provider_switch',
+            nodeId,
+            fromProvider: fallbackFrom,
+            toProvider: provider,
+            reason: spawnOptions.fallbackReason ?? 'provider_fallback',
+          });
+        }
+
+        this._broadcastAgentStatus(executionId, nodeId, state);
+        this._syncExecutionStatusFromAgents(execution);
+        return;
+      } catch (error) {
+        lastError = error;
+
+        // Only the auto strategy may fall through to the next candidate.
+        if (requestedProvider !== RUNTIME_PROVIDER.AUTO || index === candidateProviders.length - 1) {
+          throw error;
         }
       }
-
-      // Parse handoff / done tokens from PTY output
-      const events = parser.feed(chunk);
-      for (const evt of events) {
-        if (evt.type === 'handoff') this._onHandoff(executionId, nodeId, evt);
-        if (evt.type === 'done') this._onDone(executionId, nodeId);
-      }
-    };
-
-    // Store tapFn in agent state for cleanup on stop
-    execution.agentStates.get(nodeId).tapFn = tapFn;
-
-    // Register tap on swarmListeners (DEC-014)
-    const ptySession = this._sessionManager.getSession(sessionId);
-    if (ptySession) {
-      ptySession.swarmListeners.add(tapFn);
     }
 
-    // Emit WS status update
-    this._broadcastAgentStatus(executionId, nodeId, execution.agentStates.get(nodeId));
-    this._syncExecutionStatusFromAgents(execution);
+    throw lastError ?? new Error('Unable to spawn runtime provider');
   }
 
   /**
@@ -301,16 +810,22 @@ class SwarmEngine {
    * @param {string[]} handoffTargets - list of valid target agent IDs
    * @returns {string} assembled system prompt
    */
-  _buildSystemPrompt(node, workflowContext, handoffTargets) {
+  _buildSystemPrompt(node, workflowContext, handoffTargets, provider = null) {
     const lines = [];
+
+    if (provider === RUNTIME_PROVIDER.CODEX) {
+      lines.push('You are running inside the Codex interactive CLI.');
+      lines.push('Answer directly in terminal text and continue the swarm task without setup chatter.');
+      lines.push('');
+    }
 
     // Agent's own system prompt / role instructions
     const agentPrompt = (node.data && node.data.systemPrompt) || '';
     lines.push(agentPrompt);
     lines.push('');
-    lines.push('--- SWARM PROTOCOL (mandatory — never skip) ---');
+    lines.push('--- SWARM PROTOCOL (mandatory - never skip) ---');
 
-    // Workflow context section — omit entirely if empty
+    // Workflow context section - omit entirely if empty
     const contextKeys = Object.keys(workflowContext);
     if (contextKeys.length > 0) {
       lines.push('Current workflow context:');
@@ -320,16 +835,42 @@ class SwarmEngine {
       lines.push('');
     }
 
-    // Handoff instructions — vary based on whether targets exist
+    lines.push('You have an active task right now. Do real work before deciding you are done.');
+    if (workflowContext.currentTask) {
+      lines.push(`Current task: ${workflowContext.currentTask}`);
+    }
+    if (workflowContext.workflowDescription) {
+      lines.push(`Workflow goal: ${workflowContext.workflowDescription}`);
+    }
+    lines.push('');
+
+    // Handoff instructions - vary based on whether targets exist
     if (handoffTargets.length > 0) {
-      lines.push('When your task is complete and must pass to another agent, output EXACTLY as last line:');
-      lines.push('__HANDOFF__:<targetId>:<base64_json_context_update>');
+      lines.push('This agent is not terminal in the workflow.');
+      lines.push('When your stage is complete, you MUST hand off to exactly one downstream agent.');
+      if (handoffTargets.length === 1) {
+        lines.push(`Your required downstream target is: ${handoffTargets[0]}`);
+      } else {
+        lines.push(`Choose exactly one downstream target from: ${handoffTargets.join(', ')}`);
+      }
+      lines.push('If another agent is better suited to continue, hand off with the most useful context you can provide.');
+      lines.push('Do not emit __DONE__ immediately just because you understand the instructions.');
+      lines.push('When your task is complete and must pass to another agent, output EXACTLY as the last line:');
+      lines.push('__HANDOFF__:<targetId>:{"key": "value"}');
+      lines.push('The final handoff token must be plain text on a single line with no bullets, quotes, code fences, or indentation.');
       lines.push('');
       lines.push(`Valid target IDs: ${handoffTargets.join(', ')}`);
-      lines.push('Context update format: {"key": "value", ...} — flat dict only, max 50 keys, values max 1024 chars');
+      lines.push('Context update: a flat JSON object with string values summarizing your work. Max 50 keys, values max 1024 chars.');
       lines.push('');
-      lines.push('When fully done (no further handoff needed):');
-      lines.push('__DONE__');
+      if (handoffTargets.length === 1) {
+        lines.push(`CONCRETE EXAMPLE (use exactly this format with your real summary):`);
+        lines.push(`__HANDOFF__:${handoffTargets[0]}:{"summary": "Completed my stage of the task", "result": "key findings here"}`);
+      } else {
+        lines.push(`CONCRETE EXAMPLE (use exactly this format with the chosen target and your real summary):`);
+        lines.push(`__HANDOFF__:${handoffTargets[0]}:{"summary": "Completed my stage of the task", "result": "key findings here"}`);
+      }
+      lines.push('');
+      lines.push('Do NOT output __DONE__ from this agent while downstream handoff targets still exist.');
     } else {
       lines.push('When fully done:');
       lines.push('__DONE__');
@@ -338,6 +879,31 @@ class SwarmEngine {
     lines.push('');
     lines.push('Do NOT output the handoff or done token mid-response. Only as the very LAST line.');
     lines.push('--- END PROTOCOL ---');
+
+    return lines.join('\n');
+  }
+
+  _buildContinueAfterDonePrompt(node, workflowContext, handoffTargets) {
+    const agentLabel = node?.data?.label || node?.id || 'This agent';
+    const lines = [
+      `${agentLabel} is not the end of the workflow yet.`,
+      'Do not stop at __DONE__ while downstream agents still need your output.',
+    ];
+
+    if (workflowContext?.currentTask) {
+      lines.push(`Continue this task: ${workflowContext.currentTask}`);
+    }
+
+    if (handoffTargets.length === 1) {
+      lines.push(`Finish your work, then hand off to ${handoffTargets[0]}.`);
+    } else if (handoffTargets.length > 1) {
+      lines.push(`Finish your work, then hand off to the most appropriate next agent: ${handoffTargets.join(', ')}.`);
+    }
+
+    lines.push('Your very last line must be a valid handoff token in this EXACT format:');
+    lines.push(`__HANDOFF__:${handoffTargets[0]}:{"summary": "your work summary here"}`);
+    lines.push('Output that final handoff token as plain text on a single line with no bullets, quotes, code fences, or indentation.');
+    lines.push('Replace the summary value with an actual description of what you accomplished.');
 
     return lines.join('\n');
   }
@@ -438,7 +1004,7 @@ class SwarmEngine {
           targetNode, execution.workflowContext, handoffTargets
         );
         if (contextPrompt) {
-          this._sessionManager.writeInput(targetState.sessionId, contextPrompt + '\n');
+          this._writeSwarmPrompt(targetState.sessionId, contextPrompt, targetState);
         }
       }
     }
@@ -446,12 +1012,15 @@ class SwarmEngine {
     // 9. Update source agent status to 'done' after handoff
     if (sourceState) {
       sourceState.status = 'done';
+      sourceState.runtimeBlocker = null;
       this._broadcastAgentStatus(executionId, sourceNodeId, sourceState);
     }
 
     // 10. Update target agent status to 'running'
     if (targetState) {
       targetState.status = 'running';
+      targetState.runtimeBlocker = null;
+      execution.runtimeBlocker = null;
       this._broadcastAgentStatus(executionId, targetId, targetState);
     }
 
@@ -476,8 +1045,56 @@ class SwarmEngine {
   _onDone(executionId, nodeId) {
     const execution = this._executions.get(executionId);
     if (!execution) return;
+
+    const node = execution.workflowDef.nodes.find((candidate) => candidate.id === nodeId);
     const state = execution.agentStates.get(nodeId);
-    if (state) state.status = 'done';
+    const handoffTargets = execution.workflowDef.edges
+      .filter((edge) => edge.source === nodeId)
+      .map((edge) => edge.target);
+
+    if (state?.runtimeBlocker || execution.runtimeBlocker) {
+      state.status = 'blocked';
+      this._broadcastAgentStatus(executionId, nodeId, state);
+      this._syncExecutionStatusFromAgents(execution);
+      return;
+    }
+
+    if (state && handoffTargets.length > 0) {
+      state.doneReinjectCount = (state.doneReinjectCount ?? 0) + 1;
+
+      if (state.doneReinjectCount <= MAX_DONE_REINJECT_ATTEMPTS && state.sessionId) {
+        this._writeSwarmPrompt(
+          state.sessionId,
+          this._buildContinueAfterDonePrompt(node, execution.workflowContext, handoffTargets),
+          state
+        );
+        state.status = 'running';
+        this._broadcastAgentStatus(executionId, nodeId, state);
+        this._syncExecutionStatusFromAgents(execution);
+        return;
+      }
+
+      // Max reinject attempts exhausted — force handoff to first downstream target
+      // rather than leaving the workflow stuck in a reinject loop.
+      const forcedTarget = handoffTargets[0];
+      const syntheticEvent = {
+        type: 'handoff',
+        targetId: forcedTarget,
+        contextUpdate: {
+          currentTask: execution.workflowContext?.currentTask ?? '',
+          forcedHandoff: 'true',
+          reason: `Agent emitted __DONE__ ${state.doneReinjectCount} times without producing __HANDOFF__`,
+        },
+      };
+      this._onHandoff(executionId, nodeId, syntheticEvent);
+      return;
+    }
+
+    if (state) {
+      state.status = 'done';
+      state.runtimeBlocker = null;
+    }
+    execution.runtimeBlocker = null;
     this._broadcastAgentStatus(executionId, nodeId, state);
     this._syncExecutionStatusFromAgents(execution);
   }
@@ -534,9 +1151,16 @@ class SwarmEngine {
       if (!['done', 'failed'].includes(state.status)) {
         state.status = 'stopped';
       }
+      if (state.promptReadyTimer) {
+        clearTimeout(state.promptReadyTimer);
+        state.promptReadyTimer = null;
+      }
       state.sessionId = null;
       state.tapFn = null;
+      state.runtimeBlocker = null;
     }
+
+    execution.runtimeBlocker = null;
 
     for (const [nodeId, state] of execution.agentStates) {
       this._broadcastAgentStatus(executionId, nodeId, state);
@@ -676,12 +1300,17 @@ class SwarmEngine {
       executionId: e.executionId,
       workflowId: e.workflowId,
       status: e.status,
+      runtimeProvider: e.runtimeProvider ?? e.activeProvider ?? null,
+      activeProvider: e.activeProvider ?? e.runtimeProvider ?? null,
+      providerStrategy: e.providerStrategy ? { ...e.providerStrategy } : null,
+      lastFallback: e.lastFallback ? { ...e.lastFallback } : null,
       agentStates: Object.fromEntries(
         [...e.agentStates.entries()].map(([nodeId, state]) => [nodeId, this._serializeAgentState(state)])
       ),
       edgeCounters: Object.fromEntries(e.edgeCounters),
       budget: this._getBudgetSnapshot(e),
       inboxItems: e.inboxItems.map((item) => ({ ...item })),
+      ...(e.runtimeBlocker ? { runtimeBlocker: this._serializeRuntimeBlocker(e.runtimeBlocker) } : {}),
     };
   }
 }

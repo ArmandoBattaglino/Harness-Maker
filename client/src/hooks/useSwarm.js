@@ -54,6 +54,22 @@ export function useSwarm(workflowId) {
     useSwarmStore.setState({
       activeExecutionId: nextExecutionId,
       executionStatus: nextStatus,
+      runtimeBlocker: Object.prototype.hasOwnProperty.call(snapshot, 'runtimeBlocker')
+        ? snapshot.runtimeBlocker
+        : nextStatus === 'blocked'
+        ? currentState.runtimeBlocker
+        : null,
+      runtimeProvider: Object.prototype.hasOwnProperty.call(snapshot, 'runtimeProvider')
+        ? snapshot.runtimeProvider
+        : Object.prototype.hasOwnProperty.call(snapshot, 'activeProvider')
+        ? snapshot.activeProvider
+        : currentState.runtimeProvider,
+      providerStrategy: Object.prototype.hasOwnProperty.call(snapshot, 'providerStrategy')
+        ? snapshot.providerStrategy
+        : currentState.providerStrategy,
+      lastFallback: Object.prototype.hasOwnProperty.call(snapshot, 'lastFallback')
+        ? snapshot.lastFallback
+        : currentState.lastFallback,
       ...(snapshot.agentStates ? { agentStates: snapshot.agentStates } : {}),
       ...(snapshot.triggerStates ? { triggerStates: snapshot.triggerStates } : {}),
       ...(snapshot.edgeCounters ? { edgeCounters: snapshot.edgeCounters } : {}),
@@ -151,6 +167,12 @@ export function useSwarm(workflowId) {
         case 'agent_status':
           updateAgentState(msg.nodeId, {
             status: msg.status,
+            ...(Object.prototype.hasOwnProperty.call(msg, 'runtimeProvider')
+              ? { runtimeProvider: msg.runtimeProvider }
+              : {}),
+            ...(Object.prototype.hasOwnProperty.call(msg, 'runtimeBlocker')
+              ? { runtimeBlocker: msg.runtimeBlocker }
+              : {}),
             ...(Object.prototype.hasOwnProperty.call(msg, 'sessionId') ? { sessionId: msg.sessionId } : {}),
             ...(Object.prototype.hasOwnProperty.call(msg, 'lastOutputSnippet')
               ? { lastOutputSnippet: msg.lastOutputSnippet }
@@ -188,6 +210,19 @@ export function useSwarm(workflowId) {
         case 'hitl_resolved':
           resolveInboxItem(msg.itemId);
           break;
+        case 'runtime_provider_switch':
+          useSwarmStore.setState((state) => ({
+            runtimeProvider: msg.toProvider ?? state.runtimeProvider,
+            lastFallback: {
+              fromProvider: msg.fromProvider ?? null,
+              toProvider: msg.toProvider ?? null,
+              reason: msg.reason ?? null,
+              nodeId: msg.nodeId ?? null,
+              detectedAt: Date.now(),
+            },
+          }));
+          addFeedEvent({ ...msg, timestamp: Date.now() });
+          break;
         case 'trigger_fired': {
           const tfId = msg.triggerId ?? msg.nodeId;
           const prevTf = useSwarmStore.getState().triggerStates[tfId] ?? {};
@@ -223,15 +258,19 @@ export function useSwarm(workflowId) {
   }, [setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, setExecution, updateBudget, addInboxItem, resolveInboxItem, updateTriggerState, applyExecutionSnapshot]);
 
   // Start execution
-  const startExecution = useCallback(async (projectId, projectPath) => {
+  const startExecution = useCallback(async (projectId, projectPath, runtimeProvider = 'auto') => {
     if (!workflowId) throw new Error('No workflow selected');
-    const data = await apiPost(`/api/v1/swarm/${workflowId}/start`, { projectId, projectPath });
+    const data = await apiPost(`/api/v1/swarm/${workflowId}/start`, {
+      projectId,
+      projectPath,
+      runtimeProvider,
+    });
     const { executionId } = data;
-    setExecution(executionId, 'running');
-    writeStoredExecution({ executionId, workflowId });
+    setExecution(executionId, data.status ?? 'running');
+    await applyExecutionSnapshot({ ...data, executionId, workflowId });
     connectWs(executionId);
     return executionId;
-  }, [workflowId, setExecution, connectWs]);
+  }, [workflowId, setExecution, connectWs, applyExecutionSnapshot]);
 
   // Stop execution
   const stopExecution = useCallback(async (executionId) => {

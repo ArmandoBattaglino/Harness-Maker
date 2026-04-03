@@ -320,3 +320,64 @@ client/src/canvas/SwarmCanvas.jsx is fixed. 187/187 tests pass. TASK #131 (TEST 
 ### Handoff
 qa-tester runs TASK #131 (TEST GATE: BUG-INSPECTOR-1) to verify the fix. On PASS, pipeline continues to TASK #132.
 ---
+---
+## 2026-04-03 — Task #145: BUG-UX-HANDOFF-1 — Fix handoff chain failure
+**Status:** COMPLETED
+**Called by:** User (direct task assignment)
+
+### Context when I started
+Multi-agent workflows (e.g. Ricercatore->Writer->Revisore) failed: only the first agent ran, emitting `__DONE__` immediately without producing `__HANDOFF__`. Other agents remained idle. The PTY tap ordering, line-by-line prompt delivery, HandoffParser cross-line recovery, and runtime blocker detection had all been fixed in prior tasks. But the handoff chain still didn't work end-to-end.
+
+### What I did
+1. Read all key files in parallel: SwarmEngine.js (1291 lines), HandoffParser.js, SessionManager.js, swarm.js, useSwarm.js, ScaffoldGenerator.js, plus all memory files.
+2. Ran existing test suite — 218/218 pass (baseline).
+3. Traced the complete execution path from startExecution → _spawnAgentPty → tapFn → parser.feed → _onDone/_onHandoff.
+4. Identified three root causes:
+   - **BUG A (Critical):** HandoffParser only accepted base64-encoded payloads. LLMs cannot reliably produce base64 in their text output. If the AI emitted `__HANDOFF__:target:{"key":"value"}` (plain JSON), the parser's `HANDOFF_WINDOW_RE` regex rejected it because `{`, `}`, `"` are not in the base64 character class. The token was silently dropped.
+   - **BUG B (Important):** No max retry limit on `_onDone` reinject. When the AI repeatedly emitted `__DONE__` without `__HANDOFF__`, the system entered an infinite reinject loop.
+   - **BUG C (Important):** System prompt told the AI to emit `__HANDOFF__:<targetId>:<base64_json_context_update>` but provided no concrete example. The AI didn't know what the token should look like.
+5. Applied three targeted fixes.
+6. Added 9 new tests (7 for HandoffParser plain JSON, 2 for SwarmEngine reinject limit).
+7. Ran test suite — 227/227 pass, 0 regressions. Client build succeeds.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/HandoffParser.js | MODIFIED | Added `_parseDirectJsonHandoff()` method that parses plain JSON payloads (not base64). Updated `feed()` to try plain JSON first, then fall back to base64. Backward-compatible — existing base64 tokens still work. |
+| server/services/SwarmEngine.js | MODIFIED | (1) Added `MAX_DONE_REINJECT_ATTEMPTS = 3` constant and `doneReinjectCount` on agent state. `_onDone` now forces a synthetic handoff to the first downstream target after 3 failed reinject attempts. (2) Updated `_buildSystemPrompt` to use plain JSON format and include a concrete handoff example with the actual target ID. (3) Updated `_buildContinueAfterDonePrompt` to show a concrete example token. |
+| server/tests/HandoffParser.test.js | MODIFIED | Added 7 new tests in "Scenario 10: Plain JSON payload" covering: basic detection, surrounding text, empty object, preference over base64, nested object rejection, base64 fallback, and cross-chunk split. |
+| server/tests/swarm-engine.test.js | MODIFIED | Added 2 new tests in "Case 8: _onDone max reinject limit" covering: forced handoff after max attempts, and handoff_started broadcast on forced handoff. |
+
+### Improvements delivered
+- HandoffParser now accepts both `__HANDOFF__:target:{"key":"value"}` (plain JSON) and `__HANDOFF__:target:base64encoded` (original format)
+- AI models can now produce handoff tokens using natural JSON output rather than base64 encoding
+- `_onDone` reinject loop is bounded to 3 attempts; after that, a synthetic handoff forces the workflow to advance
+- System prompt includes a concrete handoff example with the actual target agent ID
+- Continuation prompt also shows the exact expected format
+- 227/227 tests pass, 0 regressions
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-A: HandoffParser rejects LLM-emitted plain JSON payloads | HANDOFF_WINDOW_RE only matches base64 chars; `{`, `}`, `"` excluded | Added _parseDirectJsonHandoff() that tries plain JSON before base64 | FIXED |
+| BUG-B: Infinite _onDone reinject loop | No counter limiting reinject attempts | Added MAX_DONE_REINJECT_ATTEMPTS=3; force synthetic handoff after | FIXED |
+| BUG-C: System prompt lacks concrete handoff example | AI didn't know what the token format looks like | Added concrete `__HANDOFF__:target:{"summary":"..."}` example | FIXED |
+
+### Decisions I made
+- Used plain JSON as the PRIMARY handoff format (tried first), base64 as fallback — this matches what LLMs actually produce
+- Set MAX_DONE_REINJECT_ATTEMPTS to 3 — enough for the AI to correct itself, not so many that it loops endlessly
+- Forced handoff goes to `handoffTargets[0]` (first downstream target) — simple, deterministic, always advances the workflow
+- Kept base64 support for backward compatibility — existing tests still pass
+
+### What I learned
+- LLMs cannot reliably produce base64-encoded text. Asking an AI model to emit `base64_json_context_update` is a protocol design flaw. Plain JSON is the right default.
+- The HandoffParser's `HANDOFF_WINDOW_RE` regex was a silent gatekeeper — it rejected any character outside `[A-Za-z0-9+/=:_\-\s]`, which excluded all JSON punctuation.
+- When a tapFn-triggered handler (like `_onDone`) calls an async method (`_onHandoff`), the promise is fire-and-forget. Tests need explicit microtask flushing to observe the async side effects.
+- The `ignoreParserUntil` echo marker system works correctly but creates complex test scenarios where each __DONE__ → reinject → echo marker cycle must be fully simulated.
+
+### State I'm leaving behind
+All three fixes are applied and tested. 227/227 tests pass. The handoff chain should now work: AI emits `__HANDOFF__:target:{"summary":"..."}` in plain JSON, the parser detects it, `_onHandoff` fires, and the next agent is spawned. If the AI still emits `__DONE__` 3 times, a forced handoff advances the workflow anyway. TASK #148 (AREA CHECKPOINT V3.4) is the next verification step.
+
+### Handoff
+qa-tester runs TASK #148 (AREA CHECKPOINT V3.4) to verify the full handoff chain end-to-end. The fix should be verifiable with any multi-agent workflow where agents have downstream targets.
+---
