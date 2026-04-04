@@ -230,3 +230,13 @@
 **Alternatives rejected:** Remove the echo suppression entirely — would re-expose the fake-handoff bug from echoed prompt examples (DEC-023). Reduce the timeout below 5s — risks false-clearing when a slow Codex session has not yet echoed. Provider-conditional suppression (skip for Claude) — fragile, couples prompt injection to provider identity in a way that breaks if provider detection is wrong.
 **Revisit if:** A future provider appears that echoes the marker with \>10s latency, or if Swarm gains a non-PTY output channel.
 ---
+
+## DEC-026: Gemini CLI Harness Integration as Tertiary Provider
+**Date:** 2026-04-04
+**Agent:** backend-dev / frontend-dev
+**Task:** #154-159 — V4.0
+**Decision:** Gemini CLI (`@google/gemini-cli`) is integrated as a tertiary runtime provider (after Claude and Codex). The architecture natively supports an `auto` mode fallback chain: `claude` (primary) → `codex` (secondary) → `gemini` (tertiary).
+**Reasoning:** Provider diversity mitigates single-provider outages or rate limits. During V3 testing, Claude hitting usage limits completely stalled workflows. While Codex added a fallback layer, adding Gemini ensures even higher reliability. The engine handles provider-specific interactive blockers identical to how it handles Claude and Codex blockers, formally observing blocked states and falling back automatically.
+**Alternatives rejected:** Only relying on Claude and Codex.
+**Revisit if:** Additional major providers need to be supported, prompting a refactor towards a broader generic provider plugin interface.
+---

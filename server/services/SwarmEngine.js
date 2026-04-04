@@ -414,7 +414,7 @@ class SwarmEngine {
 
   _detectRuntimePromptIntervention(rawChunk = '', provider = null) {
     const normalized = this._normalizeParserChunk(rawChunk).toLowerCase();
-    if (!normalized.trim() || provider !== RUNTIME_PROVIDER.CODEX) return null;
+    if (!normalized.trim() || (provider !== RUNTIME_PROVIDER.CODEX && provider !== RUNTIME_PROVIDER.GEMINI)) return null;
     const compact = normalized.replace(/[^a-z0-9]+/g, '');
     const hasHardUsageLimit =
       normalized.includes("you've hit your usage limit")
@@ -446,6 +446,18 @@ class SwarmEngine {
       };
     }
 
+    if (provider === RUNTIME_PROVIDER.GEMINI) {
+      if (
+        compact.includes('doyoutrustthefollowingfolders')
+        || compact.includes('trustingafolderallows')
+      ) {
+        return {
+          type: 'gemini_trust_menu',
+          provider: RUNTIME_PROVIDER.GEMINI,
+        };
+      }
+    }
+
     return null;
   }
 
@@ -455,20 +467,26 @@ class SwarmEngine {
     if (
       intervention.type === 'model_selection_menu'
       || intervention.type === 'rate_limit_menu_keep_current_model'
+      || intervention.type === 'gemini_trust_menu'
     ) {
-      const handledKey = intervention.type === 'model_selection_menu'
-        ? 'modelSelectionMenuHandled'
-        : 'rateLimitMenuHandled';
+      let handledKey = 'rateLimitMenuHandled';
+      if (intervention.type === 'model_selection_menu') handledKey = 'modelSelectionMenuHandled';
+      if (intervention.type === 'gemini_trust_menu') handledKey = 'geminiTrustMenuHandled';
+
       if (state[handledKey]) return false;
       state[handledKey] = true;
 
-      // Prefer staying on the configured model when Codex renders an
-      // interactive model-choice menu so Swarm can continue without silently
-      // accepting a provider-driven model change.
-      this._sessionManager.writeInput(sessionId, '\x1b[B');
-      setTimeout(() => {
+      if (intervention.type === 'gemini_trust_menu') {
         this._sessionManager.writeInput(sessionId, '\r');
-      }, SWARM_RUNTIME_MENU_SUBMIT_DELAY_MS);
+      } else {
+        // Prefer staying on the configured model when Codex renders an
+        // interactive model-choice menu so Swarm can continue without silently
+        // accepting a provider-driven model change.
+        this._sessionManager.writeInput(sessionId, '\x1b[B');
+        setTimeout(() => {
+          this._sessionManager.writeInput(sessionId, '\r');
+        }, SWARM_RUNTIME_MENU_SUBMIT_DELAY_MS);
+      }
 
       return true;
     }
@@ -797,7 +815,7 @@ class SwarmEngine {
       spawnOptions.requestedProvider ?? spawnOptions.provider ?? execution.activeProvider
     );
     const candidateProviders = requestedProvider === RUNTIME_PROVIDER.AUTO
-      ? [RUNTIME_PROVIDER.CLAUDE, RUNTIME_PROVIDER.CODEX]
+      ? [RUNTIME_PROVIDER.CLAUDE, RUNTIME_PROVIDER.CODEX, RUNTIME_PROVIDER.GEMINI]
       : [requestedProvider];
 
     const previousState = execution.agentStates.get(nodeId) ?? null;

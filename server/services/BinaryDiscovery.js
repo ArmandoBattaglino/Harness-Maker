@@ -26,8 +26,10 @@ function fileExists(filePath) {
 
 function validateBinary(binaryPath) {
   // Confirm the binary runs and responds to --version
+  // Modern Node.js versions on Windows reject spawning .cmd files without shell:true (CVE-2024-27980)
+  const isCmd = process.platform === 'win32' && (binaryPath.toLowerCase().endsWith('.cmd') || binaryPath.toLowerCase().endsWith('.bat'));
   execFileSync(binaryPath, ['--version'], {
-    shell: false,
+    shell: isCmd,
     stdio: 'pipe',
     timeout: 10000,
   });

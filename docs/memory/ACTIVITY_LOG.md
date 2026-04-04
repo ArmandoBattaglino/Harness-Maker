@@ -1,3 +1,12 @@
+## 2026-04-04 — project-manager — V4.0 E2E Bug Triage: 3 bugs found, tasks #160-#165 created
+**Outcome:** COMPLETED
+**Summary:** E2E testing of V4.0 Gemini CLI integration (tasks #154-#159 all COMPLETED) revealed 3 bugs blocking V4.0 closure. BUG-GEMINI-1 (CRITICAL): prompt injection fails because Gemini Ink TUI treats `\n` as in-field newline. BUG-GEMINI-2 (MEDIUM): prompt-ready detection uses wrong pattern. BUG-GEMINI-3 (LOW): cosmetic strategy label issue. Created 6 new tasks (#160-#165: 3 bug fixes + 3 test gates). Renumbered docs/gate/checkpoint tasks to #166-#168. Renumbered V4.1 tasks to #169-#170. Updated PROGRESS.md with E2E findings.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none (triage and task creation only)
+**Decisions made:** BUG-GEMINI-1 assigned to debugger (CRITICAL, requires deep PTY knowledge). BUG-GEMINI-2 assigned to debugger (straightforward pattern fix). BUG-GEMINI-3 assigned to frontend-dev (cosmetic UI fix).
+**Blockers:** BUG-GEMINI-1 is a hard blocker for V4.0 closure — Gemini cannot function as a Swarm runtime until prompt injection works.
+**Next:** debugger runs TASK #160 (BUG-GEMINI-1) immediately as highest priority.
+---
 ## 2026-04-04 — project-manager — Tasks #154–#164: V4.0 and V4.1 Planning
 **Outcome:** COMPLETED
 **Summary:** Analyzed TASK_PLAN.md for the new V4.0 (Gemini CLI Harness Integration) and V4.1 (Per-Harness Runtime Model Selection) items. Updated docs/memory/PROJECT.md and docs/memory/PROGRESS.md to reflect this new wave formally in the system memory. 

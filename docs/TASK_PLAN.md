@@ -4,7 +4,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED - 2026-03-31 - V3.1 BUG FIX WAVE FULLY CLOSED - AREA V3.1 CLOSED 2026-04-02 - V3.2/V3.3 SWARM RUNTIME INTEGRITY + CONTRACT COMPLETION CLOSED 2026-04-02 - AREA CHECKPOINT #142 PASS - V3.4 SWARM UX DEEP TEST FINDINGS IN PROGRESS (#143, #144, #146, #147 COMPLETED; #145, #148 PENDING) - V3.5 SWARM AI RUNTIME PORTABILITY IMPLEMENTED BUT NOT HONESTLY CLOSED (#149, #150, #151, #152 COMPLETED; #153 RE-OPENED/PENDING AFTER LIVE CODEX RUNTIME VERIFICATION) - 4 bugs found via Playwright deep user test 2026-04-02 - V4.0 GEMINI CLI HARNESS INTEGRATION PLANNED (#154-#162 PENDING) - V4.1 PER-HARNESS MODEL SELECTION PLANNED (#163-#164 PENDING)
+**Status:** v3.0.0 RELEASED - 2026-03-31 - V3.1 BUG FIX WAVE FULLY CLOSED - AREA V3.1 CLOSED 2026-04-02 - V3.2/V3.3 SWARM RUNTIME INTEGRITY + CONTRACT COMPLETION CLOSED 2026-04-02 - AREA CHECKPOINT #142 PASS - V3.4 SWARM UX DEEP TEST FINDINGS IN PROGRESS (#143, #144, #146, #147 COMPLETED; #145, #148 PENDING) - V3.5 SWARM AI RUNTIME PORTABILITY IMPLEMENTED BUT NOT HONESTLY CLOSED (#149, #150, #151, #152 COMPLETED; #153 RE-OPENED/PENDING AFTER LIVE CODEX RUNTIME VERIFICATION) - V4.0 GEMINI CLI HARNESS INTEGRATION: #154-#159 COMPLETED (code review pass) — E2E TEST FOUND 3 BUGS: BUG-GEMINI-1 (CRITICAL prompt injection), BUG-GEMINI-2 (MEDIUM prompt-ready detection), BUG-GEMINI-3 (LOW strategy label) — Bug fix tasks #160-#165 PENDING — #166-#168 PENDING (docs/gate/checkpoint) - V4.1 PER-HARNESS MODEL SELECTION PLANNED (#169-#170 PENDING)
 
 ---
 
@@ -9071,7 +9071,7 @@ Dependencies: TASK #125, TASK #127, TASK #129, TASK #131
 
 ## AREA: V4.0 — Gemini CLI Harness Integration
 _Components: BinaryDiscovery, ScaffoldGenerator, SwarmEngine, swarm.js, SwarmView, SwarmContext, constants.js, HandoffParser_
-_Tasks: #154 → #162_
+_Tasks: #154 → #168_
 _Gate: V4.0 closes only when Gemini CLI is a fully functional third runtime provider for both scaffold generation and Swarm agent PTY execution, with fallback chain Claude → Codex → Gemini (or user-selected), and all blocker patterns handled_
 _Source: User request 2026-04-04 — integrate Google Gemini CLI (`@google/gemini-cli`) as a third provider harness alongside Claude and Codex. Gemini CLI has near-identical interface: `-p` for non-interactive, `--output-format json` for structured output, `-m` for model selection, interactive PTY by default._
 
@@ -9185,7 +9185,7 @@ Agent: backend-dev
 Priority: HIGH
 Difficulty: HARD
 Suggested Model: claude-opus-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   This is the core integration task. The SwarmEngine currently supports `RUNTIME_PROVIDER.CLAUDE` and `RUNTIME_PROVIDER.CODEX` as runtime providers for agent PTY execution. Gemini CLI's interactive mode makes it a third viable runtime.
   File: server/services/SwarmEngine.js
@@ -9277,7 +9277,7 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   The SwarmView toolbar currently shows a Runtime dropdown with 3 options: Auto, Claude, Codex. The provider indicator shows "Provider: Claude" or "Provider: Codex". Both need to include Gemini.
   Files to modify:
@@ -9322,7 +9322,7 @@ Agent: qa-tester
 Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   Before live testing, the Gemini-specific blocker patterns and prompt-ready detection must have deterministic test coverage, following the same pattern as existing Claude/Codex blocker tests.
   File: server/tests/swarm-engine.test.js
@@ -9367,7 +9367,7 @@ Agent: backend-dev
 Priority: HIGH
 Difficulty: EASY
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   The server startup (server/index.js) and swarm routes (server/routes/swarm.js) need to be wired to discover, store, and pass the Gemini binary path through the system.
   Files to modify:
@@ -9396,7 +9396,348 @@ Acceptance Criteria:
 Dependencies: TASK #154
 ---
 
-TASK #160: GEMINI-DOCS-1 — Update DECISIONS.md, CODE_MAP.md, and ARCHITECTURE.md for Gemini provider
+TASK #160: BUG-GEMINI-1 — Fix prompt injection for Gemini CLI (Ink/React TUI newline handling)
+Area: V4.0 — Gemini CLI Harness Integration
+Agent: debugger
+Priority: CRITICAL
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Bug ID: BUG-GEMINI-1
+Severity: CRITICAL — completely blocks Gemini as a Swarm runtime provider
+Context:
+  OVERVIEW:
+  The `_flushSwarmPrompt()` method in SwarmEngine.js is the core mechanism that injects a swarm prompt
+  into an agent's PTY session. It works correctly for Claude and Codex but FAILS COMPLETELY for Gemini CLI.
+  This bug makes Gemini unusable as a Swarm runtime — the prompt text appears in Gemini's input area
+  but is NEVER submitted. The agent sits idle indefinitely.
+
+  ROOT CAUSE:
+  Gemini CLI v0.36.0 uses an Ink/React-based TUI (text user interface) for its interactive mode.
+  Unlike Claude and Codex which treat multi-line paste + `\r` as "submit the entire pasted block",
+  Gemini's Ink TUI interprets `\n` characters as literal newlines WITHIN the input field, and `\r`
+  is ALSO treated as an in-field newline, NOT as a submit action.
+
+  The current code in `_flushSwarmPrompt()` (file: server/services/SwarmEngine.js, lines 530-564):
+  1. Builds `payload = prompt + \n + ECHO_MARKER` (line 530)
+  2. Splits payload by `\n` into lines (line 535)
+  3. Writes each line with `${line}\n` appended (line 544) at 25ms intervals (SWARM_PROMPT_LINE_INTERVAL_MS)
+  4. After all lines are written, sends `\r` as the submit keystroke (line 562) with 100ms delay (SWARM_PROMPT_SUBMIT_DELAY_MS)
+
+  For Claude/Codex: step 3 pastes the text, step 4 submits it. Works perfectly.
+  For Gemini: step 3 creates a multi-line text block IN the input field (each `\n` adds a new line
+  inside the editor), step 4 adds yet another newline. Nothing is ever submitted.
+
+  PROOF FROM E2E TESTING:
+  - Bulk write + `\r` approach: text enters Gemini's input field but sits there indefinitely (45+ seconds observed)
+  - Char-by-char write with 1000ms delay + separate `\r`: Gemini RESPONDS correctly with "OK"
+  - This proves the issue is specifically about how `\n` is interpreted by the Ink TUI, not about timing
+
+  EXACT CODE TO MODIFY:
+  File: server/services/SwarmEngine.js
+  Method: `_flushSwarmPrompt()` (lines 530-564)
+
+  Current code (lines 530-564):
+  ```javascript
+  const payload = `${prompt}\n${SWARM_PROMPT_ECHO_MARKER}`;
+  const writePayload = () => {
+    if (state?.runtimeSession) {
+      const shouldInterruptFirst =
+        state?.provider === RUNTIME_PROVIDER.CODEX && (state?.promptSubmissionCount ?? 0) > 0;
+      const lines = payload.split('\n');
+      const baseDelay = shouldInterruptFirst ? SWARM_PROMPT_INTERRUPT_DELAY_MS : 0;
+      if (shouldInterruptFirst) {
+        this._sessionManager.writeInput(sessionId, '\x1b');
+      }
+      lines.forEach((line, index) => {
+        setTimeout(() => {
+          this._sessionManager.writeInput(sessionId, `${line}\n`);
+        }, baseDelay + (index * SWARM_PROMPT_LINE_INTERVAL_MS));
+      });
+      return baseDelay + (lines.length * SWARM_PROMPT_LINE_INTERVAL_MS);
+    }
+    this._sessionManager.writeInput(sessionId, payload);
+    return 0;
+  };
+  const submitAfterMs = writePayload();
+  // ...
+  setTimeout(() => {
+    this._sessionManager.writeInput(sessionId, '\r');
+  }, submitAfterMs + SWARM_PROMPT_SUBMIT_DELAY_MS);
+  ```
+
+  FIX APPROACH:
+  When `state?.provider === RUNTIME_PROVIDER.GEMINI`, use a completely different write strategy:
+  1. Join all prompt lines with spaces (NOT newlines) to avoid Ink TUI multiline interpretation
+  2. Append the ECHO_MARKER separated by a space (not `\n`)
+  3. Write the entire single-line string in ONE write call (no line-by-line splitting)
+  4. After a sufficient delay (e.g., 150-300ms to let the Ink TUI buffer the text), send `\r` to submit
+  5. The delay is critical — Gemini's Ink renderer needs time to process the pasted text before submit
+
+  ALTERNATIVE APPROACH (if single-write does not work):
+  Write character-by-character with small delays (5-10ms per char), then `\r` after a 200ms pause.
+  This was proven to work in testing but is slower. Use as fallback if bulk single-write fails.
+
+  CONSTANTS TO ADD:
+  - `SWARM_GEMINI_PROMPT_SUBMIT_DELAY_MS = 200` (or 300) — delay between text write and `\r` for Gemini
+  - The existing `SWARM_PROMPT_SUBMIT_DELAY_MS = 100` is too short for Gemini's Ink TUI
+
+  IMPORTANT: The fix must NOT break Claude or Codex prompt injection. The Gemini path should be
+  a conditional branch inside `_flushSwarmPrompt()` that only activates when `provider === RUNTIME_PROVIDER.GEMINI`.
+Acceptance Criteria:
+  - [ ] When provider is GEMINI, `_flushSwarmPrompt()` writes the prompt WITHOUT `\n` between lines (spaces instead)
+  - [ ] When provider is GEMINI, `\r` is sent after a sufficient delay (>= 150ms) to allow Ink TUI buffering
+  - [ ] Gemini PTY actually receives and processes the prompt (verified by observing Gemini response output)
+  - [ ] Claude and Codex prompt injection behavior is UNCHANGED (no regression)
+  - [ ] The ECHO_MARKER is still appended (for echo detection) but without a `\n` separator for Gemini
+  - [ ] npm test passes (existing tests unbroken)
+  - [ ] New unit test added: Gemini prompt write uses single-line format (no `\n` in written payload)
+Dependencies: TASK #156
+---
+
+TASK #161: TEST GATE — BUG-GEMINI-1 (Prompt injection fix for Gemini CLI)
+Area: V4.0 — Gemini CLI Harness Integration
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Difficulty: HARD
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — TASK #162 CANNOT start until this gate returns PASS
+Context:
+  Component being tested: SwarmEngine._flushSwarmPrompt() — Gemini-specific prompt injection path
+  Implementation task: TASK #160
+  What to test:
+    1. Unit test: call `_flushSwarmPrompt()` with a Gemini provider state → verify the written payload
+       does NOT contain `\n` between prompt lines (spaces or concatenation instead)
+    2. Unit test: verify `\r` submit is sent with a delay >= 150ms after the text write for Gemini
+    3. Unit test: call `_flushSwarmPrompt()` with a Claude provider state → verify the original
+       line-by-line `\n` behavior is preserved (no regression)
+    4. Unit test: call `_flushSwarmPrompt()` with a Codex provider state → verify the original
+       behavior including interrupt-first logic is preserved (no regression)
+    5. Live test (if Gemini CLI installed): start a Swarm execution with Gemini provider,
+       inject a simple prompt (e.g., "Say OK"), verify Gemini responds (not stuck at input)
+  WS contracts to verify: N/A (this is an internal PTY write mechanism, no WS events)
+Acceptance Criteria:
+  - [ ] Gemini prompt write confirmed to use single-line format (no `\n` splitting)
+  - [ ] Gemini `\r` submit delay is >= 150ms
+  - [ ] Claude prompt write behavior unchanged
+  - [ ] Codex prompt write behavior unchanged (including interrupt-first)
+  - [ ] npm test passes with 0 failures
+  - [ ] If Gemini CLI available: live prompt injection produces a response from Gemini
+Gate Result: PASS -> proceed to TASK #162 | FAIL -> return to TASK #160 with bug report
+Dependencies: TASK #160
+---
+
+TASK #162: BUG-GEMINI-2 — Fix prompt-ready detection patterns for Gemini CLI
+Area: V4.0 — Gemini CLI Harness Integration
+Agent: debugger
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Bug ID: BUG-GEMINI-2
+Severity: MEDIUM — mitigated by 2500ms fallback timer but adds unnecessary delay to every prompt cycle
+Context:
+  OVERVIEW:
+  The `_isRuntimePromptReady()` method in SwarmEngine.js detects when a runtime CLI has finished
+  processing and is ready to accept the next prompt. For Gemini, it currently checks for
+  `'esc to interrupt'` in the PTY output, but Gemini CLI v0.36.0 does NOT emit this text.
+
+  ROOT CAUSE:
+  The Gemini prompt-ready detection (lines 408-410 of SwarmEngine.js) was copied from the Codex
+  pattern without verifying what Gemini actually outputs. Gemini's interactive prompt shows:
+    `> Type your message or @path/to/file`
+    `? for shortcuts`
+  Neither of these contains "esc to interrupt".
+
+  CURRENT CODE (lines 408-410):
+  ```javascript
+  if (provider === RUNTIME_PROVIDER.GEMINI) {
+    return normalized.includes('esc to interrupt');
+  }
+  ```
+
+  CURRENT BEHAVIOR:
+  Prompt-ready is NEVER detected by content matching for Gemini. The system always falls back to
+  the 2500ms timer (`SWARM_PROMPT_READY_FALLBACK_MS`), adding 2.5 seconds of unnecessary delay
+  to every prompt injection cycle. For a 5-agent swarm with 3 handoffs each, this adds ~37.5 seconds
+  of pure waiting time.
+
+  EXPECTED BEHAVIOR:
+  Prompt-ready should be detected as soon as Gemini shows its input prompt text, triggering
+  immediate prompt injection without waiting for the 2500ms fallback.
+
+  FIX:
+  Replace the Gemini case in `_isRuntimePromptReady()` with patterns that match Gemini's actual output:
+  ```javascript
+  if (provider === RUNTIME_PROVIDER.GEMINI) {
+    return normalized.includes('type your message')
+      || normalized.includes('? for shortcuts');
+  }
+  ```
+
+  EXACT FILE AND LOCATION:
+  File: server/services/SwarmEngine.js
+  Method: `_isRuntimePromptReady()`, lines 408-410
+  Replace the body of the `if (provider === RUNTIME_PROVIDER.GEMINI)` block.
+
+  NOTE: The `normalized` variable is already lowercased (line 394: `.toLowerCase()`), so the
+  pattern strings should be lowercase.
+
+  IMPORTANT: Do NOT remove the 2500ms fallback timer — it is a safety net for edge cases.
+  The fix only improves the happy path by detecting readiness sooner.
+Acceptance Criteria:
+  - [ ] `_isRuntimePromptReady()` returns true when Gemini PTY output contains 'type your message'
+  - [ ] `_isRuntimePromptReady()` returns true when Gemini PTY output contains '? for shortcuts'
+  - [ ] The old pattern 'esc to interrupt' is removed from the Gemini case (it is a false pattern)
+  - [ ] Claude and Codex prompt-ready detection is UNCHANGED
+  - [ ] npm test passes
+  - [ ] New unit test: feed Gemini prompt text to `_isRuntimePromptReady()` → returns true
+  - [ ] New unit test: feed non-prompt Gemini output → returns false
+Dependencies: TASK #156
+---
+
+TASK #163: TEST GATE — BUG-GEMINI-2 (Prompt-ready detection fix for Gemini CLI)
+Area: V4.0 — Gemini CLI Harness Integration
+Agent: qa-tester
+Type: TEST_GATE
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — TASK #164 CANNOT start until this gate returns PASS
+Context:
+  Component being tested: SwarmEngine._isRuntimePromptReady() — Gemini-specific ready detection
+  Implementation task: TASK #162
+  What to test:
+    1. Unit test: `_isRuntimePromptReady('> Type your message or @path/to/file', 'gemini')` returns true
+    2. Unit test: `_isRuntimePromptReady('? for shortcuts', 'gemini')` returns true
+    3. Unit test: `_isRuntimePromptReady('some random output', 'gemini')` returns false
+    4. Unit test: `_isRuntimePromptReady('esc to interrupt', 'gemini')` returns false (old pattern removed)
+    5. Regression: `_isRuntimePromptReady('esc to interrupt', 'codex')` still returns true
+    6. Regression: `_isRuntimePromptReady('workspace-write', 'codex')` still returns true
+    7. Regression: Claude patterns still work
+Acceptance Criteria:
+  - [ ] Gemini ready detection fires on 'type your message' and '? for shortcuts'
+  - [ ] Old false pattern 'esc to interrupt' no longer triggers for Gemini
+  - [ ] Claude prompt-ready detection unchanged
+  - [ ] Codex prompt-ready detection unchanged
+  - [ ] npm test passes with 0 failures
+Gate Result: PASS -> proceed to TASK #164 | FAIL -> return to TASK #162 with bug report
+Dependencies: TASK #162
+---
+
+TASK #164: BUG-GEMINI-3 — Fix strategy label showing "Auto fallback" before execution starts
+Area: V4.0 — Gemini CLI Harness Integration
+Agent: frontend-dev
+Priority: LOW
+Difficulty: TRIVIAL
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Bug ID: BUG-GEMINI-3
+Severity: LOW — cosmetic only, no functional impact
+Context:
+  OVERVIEW:
+  The SwarmView toolbar shows a "strategy label" next to the provider indicator (e.g., "Claude only",
+  "Auto fallback"). Before execution starts, this label always shows "Auto fallback" regardless of
+  which provider the user has selected in the dropdown.
+
+  ROOT CAUSE:
+  The `providerStrategyLabel` variable (SwarmView.jsx, lines 151-159) reads from `providerStrategy?.mode`,
+  which comes from the backend's `_buildRuntimeProviderStrategy()` response. Before execution starts,
+  `providerStrategy` is null (it is only set when the backend sends a `provider_strategy` WS event
+  during `startExecution`). When null, the ternary chain falls through to the default `'Auto fallback'`.
+
+  CURRENT CODE (client/src/views/SwarmView.jsx, lines 151-159):
+  ```javascript
+  const providerStrategyLabel = providerStrategy?.mode === 'auto'
+    ? 'Auto fallback'
+    : providerStrategy?.mode === 'codex'
+    ? 'Codex only'
+    : providerStrategy?.mode === 'gemini'
+    ? 'Gemini only'
+    : providerStrategy?.mode === 'claude'
+    ? 'Claude only'
+    : 'Auto fallback';
+  ```
+
+  CURRENT BEHAVIOR:
+  Before clicking Run:
+  - User selects "Gemini" in the dropdown
+  - Provider label shows "Gemini" correctly (line 143-149 uses `selectedRuntimeProvider`)
+  - Strategy label shows "Auto fallback" (incorrect — should show "Gemini only")
+
+  EXPECTED BEHAVIOR:
+  Before execution, the strategy label should derive from the user's dropdown selection
+  (`selectedRuntimeProvider`), not from the null `providerStrategy.mode`.
+
+  FIX:
+  When `providerStrategy` is null (pre-execution), derive the label from `selectedRuntimeProvider`:
+  ```javascript
+  const providerStrategyLabel = providerStrategy
+    ? (providerStrategy.mode === 'auto'
+      ? 'Auto fallback'
+      : providerStrategy.mode === 'codex'
+      ? 'Codex only'
+      : providerStrategy.mode === 'gemini'
+      ? 'Gemini only'
+      : providerStrategy.mode === 'claude'
+      ? 'Claude only'
+      : 'Auto fallback')
+    : (selectedRuntimeProvider === 'codex'
+      ? 'Codex only'
+      : selectedRuntimeProvider === 'gemini'
+      ? 'Gemini only'
+      : selectedRuntimeProvider === 'claude'
+      ? 'Claude only'
+      : 'Auto fallback');
+  ```
+
+  EXACT FILE AND LOCATION:
+  File: client/src/views/SwarmView.jsx
+  Lines: 151-159
+  The `selectedRuntimeProvider` variable is already available in scope (used for `providerLabel` on lines 143-149).
+
+  NOTE: This is a cosmetic fix. The functional behavior is correct — once execution starts,
+  the backend sends the real strategy and the label updates.
+Acceptance Criteria:
+  - [ ] Before execution, selecting "Gemini" in dropdown shows "Gemini only" as strategy label
+  - [ ] Before execution, selecting "Claude" shows "Claude only"
+  - [ ] Before execution, selecting "Codex" shows "Codex only"
+  - [ ] Before execution, selecting "Auto" shows "Auto fallback"
+  - [ ] During execution, the label still reflects the backend's `providerStrategy.mode` (no change)
+  - [ ] npm run build passes
+Dependencies: TASK #157
+---
+
+TASK #165: TEST GATE — BUG-GEMINI-3 (Strategy label cosmetic fix)
+Area: V4.0 — Gemini CLI Harness Integration
+Agent: qa-tester
+Type: TEST_GATE
+Priority: LOW
+Difficulty: TRIVIAL
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Gate: HARD — TASK #166 CANNOT start until this gate returns PASS
+Context:
+  Component being tested: SwarmView.jsx providerStrategyLabel display
+  Implementation task: TASK #164
+  What to test:
+    1. Visual test: open SwarmView, select "Gemini" in Runtime dropdown, verify strategy label shows "Gemini only" (NOT "Auto fallback")
+    2. Visual test: select "Claude" → "Claude only"
+    3. Visual test: select "Codex" → "Codex only"
+    4. Visual test: select "Auto" → "Auto fallback"
+    5. Build test: npm run build passes with 0 errors
+Acceptance Criteria:
+  - [ ] Pre-execution strategy label reflects dropdown selection for all 4 options
+  - [ ] Post-execution strategy label still reflects backend providerStrategy.mode
+  - [ ] npm run build passes
+Gate Result: PASS -> proceed to TASK #166 | FAIL -> return to TASK #164 with bug report
+Dependencies: TASK #164
+---
+
+TASK #166: GEMINI-DOCS-1 — Update DECISIONS.md, CODE_MAP.md, and ARCHITECTURE.md for Gemini provider
 Area: V4.0 — Gemini CLI Harness Integration
 Agent: documenter
 Priority: MEDIUM
@@ -9431,10 +9772,10 @@ Acceptance Criteria:
   - [ ] CODE_MAP.md reflects all new Gemini-related exports and modifications
   - [ ] ARCHITECTURE.md updated with 3-provider model
   - [ ] No stale references to "Claude and Codex only" remain in updated sections
-Dependencies: TASK #154, TASK #155, TASK #156, TASK #157
+Dependencies: TASK #154, TASK #155, TASK #156, TASK #157, TASK #160, TASK #162, TASK #164
 ---
 
-TASK #161: TEST GATE — Gemini CLI harness integration verification
+TASK #167: TEST GATE — Gemini CLI harness integration verification
 Area: V4.0 — Gemini CLI Harness Integration
 Agent: qa-tester
 Type: TEST_GATE
@@ -9486,10 +9827,10 @@ Acceptance Criteria:
   - [ ] No regressions to existing Claude/Codex behavior
   - [ ] npm test passes
   - [ ] npm run build passes
-Dependencies: TASK #154, TASK #155, TASK #156, TASK #157, TASK #158, TASK #159, TASK #160
+Dependencies: TASK #154, TASK #155, TASK #156, TASK #157, TASK #158, TASK #159, TASK #160, TASK #161, TASK #162, TASK #163, TASK #164, TASK #165, TASK #166
 ---
 
-TASK #162: AREA CHECKPOINT — V4.0 Gemini Harness Full Integration (end-to-end)
+TASK #168: AREA CHECKPOINT — V4.0 Gemini Harness Full Integration (end-to-end)
 Area: V4.0 — Gemini CLI Harness Integration
 Agent: qa-tester
 Type: AREA_CHECKPOINT
@@ -9521,12 +9862,12 @@ Acceptance Criteria:
   - [ ] Blocker classification for all known Gemini interactive dead-ends
   - [ ] npm test passes
   - [ ] npm run build passes
-Dependencies: TASK #161
+Dependencies: TASK #167
 ---
 
 ## AREA: V4.1 — Per-Harness Runtime Model Selection
 _Components: SwarmView.jsx, SwarmContext.jsx, SwarmEngine.js, swarm.js, server/index.js_
-_Tasks: #163 → #164_
+_Tasks: #169 → #170_
 _Gate: V4.1 closes when users can select which AI model each provider harness uses, and the selection is persisted per-workflow_
 _Source: User request 2026-04-04 — "vorrei poter scegliere per ogni HARNESS quale modello deve essere usato, in modo che l'utente possa decidere con cosa runnare un determinato progetto"_
 
@@ -9538,7 +9879,7 @@ _Technical Preamble — Model Selection by Provider:_
 
 ---
 
-TASK #163: FEATURE-MODEL-1 — Per-harness model selection UI and backend contract
+TASK #169: FEATURE-MODEL-1 — Per-harness model selection UI and backend contract
 Area: V4.1 — Per-Harness Runtime Model Selection
 Agent: architect
 Priority: MEDIUM
@@ -9603,7 +9944,7 @@ Acceptance Criteria:
 Dependencies: TASK #156
 ---
 
-TASK #164: FEATURE-MODEL-2 — Implement per-harness model selection (backend + frontend)
+TASK #170: FEATURE-MODEL-2 — Implement per-harness model selection (backend + frontend)
 Area: V4.1 — Per-Harness Runtime Model Selection
 Agent: backend-dev, frontend-dev
 Priority: MEDIUM
@@ -9650,4 +9991,4 @@ Acceptance Criteria:
   - [ ] PTY spawned with correct `-m` flag for selected model
   - [ ] npm test passes
   - [ ] npm run build passes
-Dependencies: TASK #163
+Dependencies: TASK #169

@@ -1454,14 +1454,20 @@ STEP 1 — Validate node-pty prebuilt binary (DEC-010 BLOCKER)
     console.error("Solution: run 'npm install' again, or check Node.js version compatibility.")
     process.exit(1)
 
-STEP 2 — Discover Claude binary
+STEP 2 — Discover Provider Binaries
   claudeBin = discoverClaudeBinary()
   // throws on failure → uncaughtException handler exits with code 1
+  geminiBin = discoverGeminiBinary() // Optional, gracefully degrades
 
-STEP 3 — Validate Claude binary (version check)
+STEP 3 — Validate Provider Binaries (version check)
   versionOutput = execFileSync(claudeBin, ["--version"])
   log.info("claude binary:", claudeBin)
   log.info("claude version:", versionOutput.toString().trim())
+  if (geminiBin) {
+    geminiVersionOutput = execFileSync(geminiBin, ["--version"])
+    log.info("gemini binary:", geminiBin)
+    log.info("gemini version:", geminiVersionOutput.toString().trim())
+  }
 
 STEP 4 — Initialize ConfigStore
   ConfigStore.load()

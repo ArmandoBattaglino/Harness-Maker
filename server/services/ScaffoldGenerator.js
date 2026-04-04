@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 import { randomUUID } from 'crypto';
-import { spawn } from 'child_process';
+import spawn from 'cross-spawn';
 
 const WORKFLOW_OUTPUT_SCHEMA = {
   type: 'object',
@@ -382,8 +382,7 @@ async function runCodexScaffold(codexBin, prompt) {
 async function runGeminiScaffold(geminiBin, prompt) {
   const fullPrompt = buildWorkflowPrompt(prompt);
   const args = [
-    '-p', fullPrompt,
-    '--output-format', 'json'
+    '-p', fullPrompt
   ];
 
   const model = process.env.SWARM_GEMINI_MODEL;

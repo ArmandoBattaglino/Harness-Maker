@@ -1,4 +1,67 @@
 ---
+## 2026-04-04 — V4.0 E2E Bug Triage: 3 bugs found, tasks #160-#165 created
+**Status:** COMPLETED
+**Called by:** user (post-E2E-test bug triage)
+
+### Context when I started
+Tasks #154-#159 (V4.0 Gemini CLI Harness Integration) were all COMPLETED with code review pass. However, live E2E testing with Gemini CLI v0.36.0 revealed 3 bugs that prevent V4.0 from closing. The old tasks #160-#162 (docs, test gate, area checkpoint) were still PENDING and needed to be renumbered to make room for bug fix tasks.
+
+### What I did
+1. Read TASK_PLAN.md V4.0 section (lines 9072-9525), PROGRESS.md, ACTIVITY_LOG.md, and my agent memory
+2. Read the exact code locations referenced by each bug: SwarmEngine.js lines 530-564 (prompt injection), lines 408-410 (prompt-ready detection), and SwarmView.jsx lines 151-159 (strategy label)
+3. Created 6 new tasks in TASK_PLAN.md:
+   - #160: BUG-GEMINI-1 fix (debugger, CRITICAL) — Gemini Ink TUI prompt injection
+   - #161: TEST GATE for #160 (qa-tester)
+   - #162: BUG-GEMINI-2 fix (debugger, MEDIUM) — prompt-ready detection patterns
+   - #163: TEST GATE for #162 (qa-tester)
+   - #164: BUG-GEMINI-3 fix (frontend-dev, LOW) — strategy label cosmetic
+   - #165: TEST GATE for #164 (qa-tester)
+4. Renumbered old #160 -> #166, #161 -> #167, #162 -> #168
+5. Renumbered V4.1 tasks: #163 -> #169, #164 -> #170
+6. Updated all cross-references and dependencies
+7. Updated TASK_PLAN.md header status line
+8. Updated PROGRESS.md with E2E findings and new task list
+9. Updated tasks #156, #157, #158, #159 from PENDING to COMPLETED status
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | 6 new bug fix + test gate tasks inserted (#160-#165); old #160-#162 renumbered to #166-#168; V4.1 tasks renumbered to #169-#170; header updated; task statuses corrected |
+| docs/memory/PROGRESS.md | MODIFIED | E2E findings documented; new tasks listed; V4.1 renumbered |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Session entry appended |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log prepended |
+
+### Improvements delivered
+- All 3 E2E bugs are now fully documented with exact code references, root causes, fix approaches, and acceptance criteria
+- Each bug task is self-contained — the debugger/frontend-dev can fix the bug without re-investigating
+- Task numbering is consistent and all cross-references are updated
+
+### Bugs I encountered
+None in this PM session (bugs were reported to me, not discovered by me).
+
+### Decisions I made
+- BUG-GEMINI-1 assigned to debugger (not backend-dev) because it requires understanding PTY write timing and Ink TUI behavior — classic debugging territory
+- BUG-GEMINI-2 also assigned to debugger — simple pattern replacement but same file/method
+- BUG-GEMINI-3 assigned to frontend-dev — purely cosmetic UI fix, no backend knowledge needed
+- Suggested model for BUG-GEMINI-1: claude-opus-4-6 (HARD difficulty, needs careful reasoning about PTY timing)
+- Suggested model for BUG-GEMINI-3: claude-haiku-4-5 (TRIVIAL difficulty, simple ternary refactor)
+
+### What I learned
+- Gemini CLI uses an Ink/React-based TUI that interprets `\n` and `\r` differently from Claude/Codex CLIs
+- The `_flushSwarmPrompt()` approach of line-by-line write + `\r` submit is provider-specific and needs branching
+- E2E testing catches bugs that unit tests miss — the prompt injection pattern was "correct" in isolation but fails against the real Gemini TUI
+
+### State I'm leaving behind
+- TASK_PLAN.md: tasks #154-#159 COMPLETED, #160-#165 PENDING (bug fixes + gates), #166-#168 PENDING (docs/gate/checkpoint), #169-#170 PENDING (V4.1)
+- Next action: debugger should run TASK #160 (BUG-GEMINI-1, CRITICAL) immediately
+- After #160 + #161 PASS: debugger runs #162 (BUG-GEMINI-2)
+- After #162 + #163 PASS: frontend-dev runs #164 (BUG-GEMINI-3)
+- After all gates pass: documenter runs #166, then qa-tester runs #167 + #168
+
+### Handoff
+Orchestrator should dispatch TASK #160 to the debugger agent immediately. BUG-GEMINI-1 is CRITICAL and blocks all downstream V4.0 work. The task entry in TASK_PLAN.md contains complete context including exact code, root cause, fix approach, and test expectations.
+
+---
 ## 2026-04-02 — Task #132 COMPLETED — AREA V3.1 CLOSED — Full session recap
 **Status:** COMPLETED
 **Called by:** user (post-task status update after qa-tester completed AREA CHECKPOINT #132 PASS)

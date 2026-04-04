@@ -95,7 +95,11 @@
   Added to server/index.js: browser auto-open (exec, NO_OPEN guard), in-memory rate limiter (200 req/min on /api/v1/*), GET /api/v1/version endpoint (appVersion, nodeVersion, platform), improved /health (uptime, activeSessions, activeJobs), improved startup logging ([startup] prefixed with version, binary path, config dir). Build verified clean.
 
 ## In Progress
-_None._
+
+### V4.0 — Gemini CLI Harness Integration (Bug Fix Phase)
+- [TASK-160] BUG-GEMINI-1 — Fix prompt injection for Gemini CLI (CRITICAL — blocks Gemini as runtime) (PENDING)
+- [TASK-162] BUG-GEMINI-2 — Fix prompt-ready detection patterns for Gemini CLI (MEDIUM) (PENDING)
+- [TASK-164] BUG-GEMINI-3 — Fix strategy label showing "Auto fallback" before execution (LOW/cosmetic) (PENDING)
 
 ## Blocked
 _None._
@@ -115,13 +119,23 @@ _None._
 - [TASK-157] GEMINI-UI-1 — Add Gemini to the Runtime provider dropdown and status indicators in SwarmView (COMPLETED 2026-04-04)
 - [TASK-158] GEMINI-BLOCKER-1 — Add Gemini interactive PTY blocker and prompt-ready detection tests (COMPLETED 2026-04-04)
 - [TASK-159] GEMINI-ROUTE-1 — Wire Gemini binary into swarm routes and server startup (COMPLETED 2026-04-04)
-- [TASK-160] GEMINI-DOCS-1 — Update DECISIONS.md, CODE_MAP.md, and ARCHITECTURE.md for Gemini provider (PENDING)
-- [TASK-161] TEST GATE — Gemini CLI harness integration verification (PENDING)
-- [TASK-162] AREA CHECKPOINT — V4.0 Gemini Harness Full Integration (end-to-end) (PENDING)
+- **E2E TEST 2026-04-04: Tasks #154-#159 passed code review but live E2E test with Gemini CLI found 3 bugs:**
+  - BUG-GEMINI-1 (CRITICAL): Prompt injection fails — Gemini Ink TUI treats `\n` as in-field newline, prompt never submitted
+  - BUG-GEMINI-2 (MEDIUM): Prompt-ready pattern `esc to interrupt` not emitted by Gemini — always falls to 2500ms timer
+  - BUG-GEMINI-3 (LOW/cosmetic): Strategy label shows "Auto fallback" before execution regardless of dropdown selection
+- [TASK-160] BUG-GEMINI-1 — Fix prompt injection for Gemini CLI (PENDING)
+- [TASK-161] TEST GATE — BUG-GEMINI-1 (PENDING)
+- [TASK-162] BUG-GEMINI-2 — Fix prompt-ready detection patterns for Gemini CLI (PENDING)
+- [TASK-163] TEST GATE — BUG-GEMINI-2 (PENDING)
+- [TASK-164] BUG-GEMINI-3 — Fix strategy label cosmetic issue (PENDING)
+- [TASK-165] TEST GATE — BUG-GEMINI-3 (PENDING)
+- [TASK-166] GEMINI-DOCS-1 — Update DECISIONS.md, CODE_MAP.md, and ARCHITECTURE.md for Gemini provider (PENDING)
+- [TASK-167] TEST GATE — Gemini CLI harness integration verification (PENDING)
+- [TASK-168] AREA CHECKPOINT — V4.0 Gemini Harness Full Integration (end-to-end) (PENDING)
 
 ### V4.1 — Per-Harness Runtime Model Selection
-- [TASK-163] FEATURE-MODEL-1 — Per-harness model selection UI and backend contract (PENDING)
-- [TASK-164] FEATURE-MODEL-2 — Implement per-harness model selection (backend + frontend) (PENDING)
+- [TASK-169] FEATURE-MODEL-1 — Per-harness model selection UI and backend contract (PENDING)
+- [TASK-170] FEATURE-MODEL-2 — Implement per-harness model selection (backend + frontend) (PENDING)
 
 ### Phase 7 — v1.1 Maintenance Backlog (ALL INDEPENDENT, run in parallel)
 - [TASK-19] v1.1 — Fix JobRunner memory leak — backend-dev — COMPLETED 2026-03-24
