@@ -9,9 +9,9 @@ import { discoverCodexBinary, discoverGeminiBinary } from './BinaryDiscovery.js'
 
 const SWARM_PROMPT_ECHO_MARKER = '--- END SWARM INPUT ---';
 const SWARM_PROMPT_SUBMIT_DELAY_MS = 100;
-const SWARM_GEMINI_SUBMIT_DELAY_MS = 500;
-const SWARM_GEMINI_ECHO_DELAY_MS = 300;
-const SWARM_PROMPT_READY_FALLBACK_MS = 2500;
+const SWARM_GEMINI_SUBMIT_DELAY_MS = 800;
+const SWARM_GEMINI_ECHO_DELAY_MS = 400;
+const SWARM_PROMPT_READY_FALLBACK_MS = 20000;
 const SWARM_PROMPT_LINE_INTERVAL_MS = 25;
 const SWARM_PROMPT_INTERRUPT_DELAY_MS = 120;
 const SWARM_RUNTIME_MENU_SUBMIT_DELAY_MS = 75;
@@ -83,7 +83,7 @@ const RUNTIME_BLOCKER_PATTERNS = [
     provider: 'gemini',
     matches: (text) =>
       text.includes('resource exhausted')
-      || text.includes('rate limit')
+      || (text.includes('rate limit') && !text.includes('approaching rate limit'))
       || text.includes('quota exceeded')
       || text.includes('429'),
     message: 'Gemini hit its usage or rate limit before the swarm agent could continue.',
@@ -271,15 +271,32 @@ class SwarmEngine {
     return claudeBin;
   }
 
-  _buildRuntimeProviderArgs(provider) {
+  _buildRuntimeProviderArgs(provider, runtimeModels = null) {
     // The runtime CLI entrypoints are interactive by default. Provider-specific
     // launch behavior is represented here so Swarm can select the correct
     // binary/launch profile without duplicating discovery logic.
     const profile = RUNTIME_PROVIDER_PROFILES[provider] ?? {};
+    let args;
     if (typeof profile.buildArgs === 'function') {
-      return [...profile.buildArgs()];
+      args = [...profile.buildArgs()];
+    } else {
+      args = [...(profile.args ?? [])];
     }
-    return [...(profile.args ?? [])];
+
+    // Per-workflow model override: if runtimeModels[provider] is set, replace the
+    // -m flag with the user-selected model. Claude has no -m flag (account-based).
+    const overrideModel = runtimeModels?.[provider];
+    if (overrideModel && typeof overrideModel === 'string' && overrideModel.trim()
+        && provider !== RUNTIME_PROVIDER.CLAUDE) {
+      const mIndex = args.indexOf('-m');
+      if (mIndex !== -1 && mIndex + 1 < args.length) {
+        args[mIndex + 1] = overrideModel.trim();
+      } else {
+        args.push('-m', overrideModel.trim());
+      }
+    }
+
+    return args;
   }
 
   _buildRuntimeProviderBootstrapPrompt(provider, { fallbackFrom = null, fallbackReason = null } = {}) {
@@ -375,7 +392,7 @@ class SwarmEngine {
       .replace(/\r/g, '\n');
   }
 
-  _detectRuntimeBlocker(rawChunk = '') {
+  _detectPatternBlocker(rawChunk = '') {
     const normalized = this._normalizeParserChunk(rawChunk).toLowerCase();
     if (!normalized.trim()) return null;
 
@@ -408,15 +425,44 @@ class SwarmEngine {
     }
 
     if (provider === RUNTIME_PROVIDER.GEMINI) {
-      return normalized.includes('esc to interrupt');
+      // Ignore prompt-ready signals while Gemini is still authenticating or
+      // showing the startup banner — TUI box borders contain '>' characters
+      // that cause false positives.
+      if (normalized.includes('waiting for authentication')
+        || normalized.includes('press esc or ctrl+c to cancel')
+        || normalized.includes('geminicli-updates')
+        || normalized.includes('making changes to gemini cli')) {
+        return false;
+      }
+      return normalized.includes('type your message')
+        || normalized.includes('? for shortcuts')
+        || normalized.includes('apply this change?')
+        || normalized.includes('allow once')
+        || /^\s*>\s+$/.test(normalized)
+        || /\n\s*>\s+/.test(normalized);
     }
 
     return false;
   }
 
-  _detectRuntimePromptIntervention(rawChunk = '', provider = null) {
+  _detectRuntimeBlocker(rawChunk = '', provider = null, state = null) {
+    // Intervention detection often fails on split PTY packets.
+    // Use a small stateful buffer (Task #172)
+    if (state) {
+      state.interventionBuffer = ((state.interventionBuffer ?? '') + rawChunk).slice(-1024);
+      rawChunk = state.interventionBuffer;
+    }
+
     const normalized = this._normalizeParserChunk(rawChunk).toLowerCase();
-    if (!normalized.trim() || (provider !== RUNTIME_PROVIDER.CODEX && provider !== RUNTIME_PROVIDER.GEMINI)) return null;
+    if (!normalized.trim()) return null;
+
+    // Check universal pattern-based blockers first (rate limits, auth failures) —
+    // these apply to ALL providers including Claude.
+    const patternBlocker = this._detectPatternBlocker(rawChunk);
+    if (patternBlocker) return patternBlocker;
+
+    // Interactive menu detection only applies to Codex and Gemini TUIs.
+    if (provider !== RUNTIME_PROVIDER.CODEX && provider !== RUNTIME_PROVIDER.GEMINI) return null;
     const compact = normalized.replace(/[^a-z0-9]+/g, '');
     const hasHardUsageLimit =
       normalized.includes("you've hit your usage limit")
@@ -428,6 +474,7 @@ class SwarmEngine {
       && compact.includes('trynewmodel')
       && compact.includes('useexistingmodel')
     ) {
+      if (state) state.interventionBuffer = '';
       return {
         type: 'model_selection_menu',
         provider: RUNTIME_PROVIDER.CODEX,
@@ -442,20 +489,35 @@ class SwarmEngine {
       && (compact.includes('switchtogpt') || compact.includes('codexmini'))
       )
     ) {
+      if (state) state.interventionBuffer = '';
       return {
         type: 'rate_limit_menu_keep_current_model',
         provider: RUNTIME_PROVIDER.CODEX,
       };
     }
 
-    if (provider === RUNTIME_PROVIDER.GEMINI) {
+    if (provider === RUNTIME_PROVIDER.GEMINI || provider === RUNTIME_PROVIDER.CODEX) {
       if (
         compact.includes('doyoutrustthefollowingfolders')
         || compact.includes('trustingafolderallows')
       ) {
+        if (state) state.interventionBuffer = '';
         return {
           type: 'gemini_trust_menu',
-          provider: RUNTIME_PROVIDER.GEMINI,
+          provider: provider,
+        };
+      }
+
+      // Detection for "Permission menu" on Gemini/Codex (Allow once / Allow for this session)
+      if (
+        (compact.includes('allowonce') && compact.includes('allowforthissession'))
+        || (normalized.includes('1. allow once') && normalized.includes('2. allow for this session'))
+        || (normalized.includes('apply this change?') && compact.includes('1allowonce'))
+      ) {
+        if (state) state.interventionBuffer = '';
+        return {
+          type: 'permission_menu_allow_once',
+          provider: provider,
         };
       }
     }
@@ -470,13 +532,27 @@ class SwarmEngine {
       intervention.type === 'model_selection_menu'
       || intervention.type === 'rate_limit_menu_keep_current_model'
       || intervention.type === 'gemini_trust_menu'
+      || intervention.type === 'permission_menu_allow_once'
     ) {
       let handledKey = 'rateLimitMenuHandled';
       if (intervention.type === 'model_selection_menu') handledKey = 'modelSelectionMenuHandled';
       if (intervention.type === 'gemini_trust_menu') handledKey = 'geminiTrustMenuHandled';
+      if (intervention.type === 'permission_menu_allow_once') handledKey = 'permissionMenuHandled';
 
-      if (state[handledKey]) return false;
+      const now = Date.now();
+      const lastHandled = state[`${handledKey}At`] ?? 0;
+      // Allow retrying if the menu persists for more than 2 seconds (Task #173)
+      if (state[handledKey] && (now - lastHandled < 2000)) return false;
+      
       state[handledKey] = true;
+      state[`${handledKey}At`] = now;
+
+      if (intervention.type === 'permission_menu_allow_once') {
+        // Robust approval sequence
+        this._sessionManager.writeInput(sessionId, '1\r\n');
+        setTimeout(() => this._sessionManager.writeInput(sessionId, '\r'), 100);
+        return true;
+      }
 
       if (intervention.type === 'gemini_trust_menu') {
         this._sessionManager.writeInput(sessionId, '\r');
@@ -533,23 +609,40 @@ class SwarmEngine {
     // Write the prompt as a single line (no \n), submit with delayed \r, then
     // write the echo marker separately after submission.
     if (state?.provider === RUNTIME_PROVIDER.GEMINI) {
-      const flatPrompt = prompt.replace(/\n/g, ' ');
+      // Flatten prompt into a single line to avoid Ink TUI multi-line editor trap.
+      // We also trim and remove carriage returns explicitly.
+      const flatPrompt = prompt.replace(/[\r\n]+/g, ' ').trim();
       this._sessionManager.writeInput(sessionId, flatPrompt);
 
       if (state) {
         state.promptSubmissionCount = (state.promptSubmissionCount ?? 0) + 1;
       }
 
-      // Submit the prompt text
+      // Submit the prompt text with multiple terminators to ensure Ink registers it
       setTimeout(() => {
-        this._sessionManager.writeInput(sessionId, '\r');
+        // Redundant sequence: \r\n followed by a delayed \r and \n to ensure submission
+        this._sessionManager.writeInput(sessionId, '\r\n');
+        setTimeout(() => {
+          this._sessionManager.writeInput(sessionId, '\r');
+          // Third fallback: \n if \r fails to trigger the TUI editor submit
+          setTimeout(() => {
+            this._sessionManager.writeInput(sessionId, '\n');
+            // Final flush
+            setTimeout(() => {
+              this._sessionManager.writeInput(sessionId, '\r');
+            }, 50);
+          }, 100);
+        }, 100);
       }, SWARM_GEMINI_SUBMIT_DELAY_MS);
 
       // Write the echo marker as a separate submission after the prompt is sent
       setTimeout(() => {
         this._sessionManager.writeInput(sessionId, SWARM_PROMPT_ECHO_MARKER);
         setTimeout(() => {
-          this._sessionManager.writeInput(sessionId, '\r');
+          this._sessionManager.writeInput(sessionId, '\r\n');
+          setTimeout(() => {
+            this._sessionManager.writeInput(sessionId, '\r');
+          }, 100);
         }, SWARM_GEMINI_SUBMIT_DELAY_MS);
       }, SWARM_GEMINI_SUBMIT_DELAY_MS + SWARM_GEMINI_ECHO_DELAY_MS);
 
@@ -776,6 +869,12 @@ class SwarmEngine {
     const wf = await this._workflowStore.get(workflowId);
     if (!wf) throw new Error('Workflow not found');
 
+    // Apply per-execution runtime model overrides into workflow settings
+    if (runtimeOptions.runtimeModels && typeof runtimeOptions.runtimeModels === 'object') {
+      wf.settings = wf.settings ?? {};
+      wf.settings.runtimeModels = { ...wf.settings.runtimeModels, ...runtimeOptions.runtimeModels };
+    }
+
     const providerStrategy = this._buildRuntimeProviderStrategy(
       wf,
       runtimeOptions.provider ?? runtimeOptions.runtimeProvider
@@ -859,7 +958,7 @@ class SwarmEngine {
 
       try {
         const binaryPath = await this._resolveRuntimeProviderBinary(provider);
-        const launchArgs = this._buildRuntimeProviderArgs(provider);
+        const launchArgs = this._buildRuntimeProviderArgs(provider, execution.workflowDef?.settings?.runtimeModels);
         const bootstrapPrompt = this._buildRuntimeProviderBootstrapPrompt(provider, {
           fallbackFrom: spawnOptions.fallbackFrom ?? null,
           fallbackReason: spawnOptions.fallbackReason ?? null,
@@ -907,6 +1006,8 @@ class SwarmEngine {
           modelSelectionMenuHandled: false,
           rateLimitMenuHandled: false,
           echoMarkerTimer: null,
+          doneReminderSent: false,
+          doneReminderTimer: null,
         };
 
         execution.activeProvider = provider;
@@ -924,16 +1025,26 @@ class SwarmEngine {
 
         const tapFn = (chunk) => {
           const currentState = execution.agentStates.get(nodeId);
-          if (currentState && !currentState.promptReady && this._isRuntimePromptReady(chunk, currentState.provider)) {
-            currentState.promptReady = true;
-          }
           if (currentState) {
-            currentState.lastOutputSnippet = (currentState.lastOutputSnippet + chunk).slice(-500);
+            // Accumulate ANSI-stripped output into lastOutputSnippet first,
+            // so prompt-ready detection can scan the full rolling buffer.
+            const cleanChunk = this._normalizeParserChunk(chunk);
+            currentState.lastOutputSnippet = (currentState.lastOutputSnippet + cleanChunk).slice(-500);
             this._broadcastAgentStatus(executionId, nodeId, currentState);
+          }
+          if (currentState && !currentState.promptReady) {
+            // Check both the single chunk AND the accumulated buffer — ConPTY can
+            // split prompt-ready indicators (e.g. "bypass permissions on") across
+            // multiple onData callbacks, so the single chunk may never contain
+            // the full string.  Checking lastOutputSnippet covers this.
+            if (this._isRuntimePromptReady(chunk, currentState.provider)
+              || this._isRuntimePromptReady(currentState.lastOutputSnippet, currentState.provider)) {
+              currentState.promptReady = true;
+            }
           }
 
           const promptIntervention = currentState
-            ? this._detectRuntimePromptIntervention(currentState.lastOutputSnippet, currentState.provider)
+            ? this._detectRuntimeBlocker(currentState.lastOutputSnippet, currentState.provider, currentState)
             : null;
           if (promptIntervention && this._applyRuntimePromptIntervention(sessionId, currentState, promptIntervention)) {
             return;
@@ -982,16 +1093,62 @@ class SwarmEngine {
             chunkForParser = remainder;
           }
 
-          const runtimeBlocker = this._detectRuntimeBlocker(chunkForParser);
+          const runtimeBlocker = this._detectRuntimeBlocker(chunkForParser, currentState.provider, currentState);
           if (runtimeBlocker) {
             void this._handleRuntimeBlocker(executionId, nodeId, runtimeBlocker);
             return;
           }
 
           const events = parser.feed(chunkForParser);
+          
+          // Fuzzy fallback for handoff detection (Task #171)
+          // If the parser didn't find a formal __HANDOFF__ token, we check for
+          // common natural language patterns emitted by smaller models in TUIs.
+          if (events.length === 0 && currentState.provider === RUNTIME_PROVIDER.GEMINI) {
+            const cleanText = chunkForParser.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '').toLowerCase();
+            const handoffMatch = cleanText.match(/handoff[ \s]to[ \s:'"]+([a-z][a-z0-9-]*)/);
+            if (handoffMatch) {
+              const targetId = handoffMatch[1];
+              // Verify target exists in workflow
+              const isValidTarget = execution.workflowDef.edges.some(e => e.source === nodeId && e.target === targetId);
+              if (isValidTarget) {
+                this._onHandoff(executionId, nodeId, { type: 'handoff', targetId, contextUpdate: {} });
+              }
+            }
+          }
+
           for (const evt of events) {
             if (evt.type === 'handoff') this._onHandoff(executionId, nodeId, evt);
             if (evt.type === 'done') this._onDone(executionId, nodeId);
+          }
+
+          // Terminal-node done reminder: if this node has no handoff targets,
+          // the prompt has already been flushed (promptReady + promptSubmissionCount > 0),
+          // and Claude is back at the interactive prompt (prompt-ready detected again),
+          // the agent likely finished its work but forgot to emit __DONE__.
+          // Schedule a one-shot reminder after a brief debounce.
+          if (currentState && currentState.promptReady && !currentState.doneReminderSent
+            && currentState.status === 'running' && (currentState.promptSubmissionCount ?? 0) > 0) {
+            const nodeHandoffTargets = execution.workflowDef.edges
+              .filter((e) => e.source === nodeId)
+              .map((e) => e.target);
+            if (nodeHandoffTargets.length === 0
+              && this._isRuntimePromptReady(currentState.lastOutputSnippet, currentState.provider)) {
+              // Debounce: wait 3s to avoid false triggers during streaming
+              if (!currentState.doneReminderTimer) {
+                currentState.doneReminderTimer = setTimeout(() => {
+                  currentState.doneReminderTimer = null;
+                  if (currentState.status !== 'running' || currentState.doneReminderSent) return;
+                  currentState.doneReminderSent = true;
+                  const reminder = [
+                    'You have completed your work but did not emit the required done marker.',
+                    'Please output exactly this on a new line now:',
+                    '__DONE__',
+                  ].join('\n');
+                  this._writeSwarmPrompt(sessionId, reminder, currentState);
+                }, 3000);
+              }
+            }
           }
         };
 
@@ -1144,8 +1301,11 @@ class SwarmEngine {
       lines.push('');
       lines.push('Do NOT output __DONE__ from this agent while downstream handoff targets still exist.');
     } else {
-      lines.push('When fully done:');
+      lines.push('You are the FINAL agent in this workflow — no downstream handoffs exist.');
+      lines.push('After completing your work, you MUST output the done marker on its own line:');
       lines.push('__DONE__');
+      lines.push('This is MANDATORY. The workflow cannot complete without this exact token.');
+      lines.push('Output __DONE__ as the very last line of your response, after all your content.');
     }
 
     lines.push('');
@@ -1412,6 +1572,11 @@ class SwarmEngine {
       if (state.echoMarkerTimer) {
         clearTimeout(state.echoMarkerTimer);
         state.echoMarkerTimer = null;
+      }
+      // Clear done-reminder timeout to prevent leaked timers
+      if (state.doneReminderTimer) {
+        clearTimeout(state.doneReminderTimer);
+        state.doneReminderTimer = null;
       }
     }
 

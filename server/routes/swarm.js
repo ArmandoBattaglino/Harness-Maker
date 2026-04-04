@@ -127,7 +127,7 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
   router.post('/:workflowId/start', async (req, res) => {
     try {
       const { workflowId } = req.params;
-      const { projectId, projectPath, runtimeProvider, provider } = req.body ?? {};
+      const { projectId, projectPath, runtimeProvider, provider, runtimeModels } = req.body ?? {};
 
       if (!projectId || typeof projectId !== 'string' || projectId.trim() === '') {
         return res.status(400).json({ error: 'projectId is required' });
@@ -140,6 +140,7 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
       try {
         executionId = await swarmEngine.startExecution(workflowId, projectId.trim(), projectPath.trim(), {
           runtimeProvider: runtimeProvider ?? provider,
+          runtimeModels: runtimeModels && typeof runtimeModels === 'object' ? runtimeModels : undefined,
         });
       } catch (err) {
         if (err.message === 'Workflow not found') {

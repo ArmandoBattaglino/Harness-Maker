@@ -1,6 +1,13 @@
 # Progress
 
-## Completed- [TASKS #138-#142] Swarm runtime integrity + contract completion wave - COMPLETED 2026-04-02
+- [TASKS #169-#170] V4.1 Per-Harness Model Selection — COMPLETED 2026-04-05
+  Backend: _buildRuntimeProviderArgs accepts runtimeModels override, route POST /start accepts runtimeModels. Frontend: Models dropdown in SwarmView toolbar for Codex/Gemini. 7 new tests (70/70 pass). V4.1 CLOSED.
+- [TASKS #171-#176] V4.0.1 Gemini Runtime Bug Fixes — COMPLETED 2026-04-05
+  BUG-GEMINI-4 through BUG-GEMINI-7: Fixed 4 Gemini runtime bugs in SwarmEngine.js. 63/63 tests pass. V4.0.1 CLOSED.
+## Completed- [TASKS #160, #162, #164] Gemini CLI Bug-Fix Wave — definitive patch (backend+frontend) — COMPLETED 2026-04-04
+  BUG-GEMINI-1 (CRITICAL): Refined `_flushSwarmPrompt` to flatten prompts and increase submission delays (800ms) to avoid Gemini's Ink TUI multi-line traps. BUG-GEMINI-2 (MEDIUM): Updated `_isRuntimePromptReady` with actual Gemini patterns (`type your message`, `>`). BUG-GEMINI-3 (LOW): Corrected `providerStrategyLabel` in `SwarmView.jsx` to show selection-specific labels even before execution. E2E verification: Playwright confirmed UI fix, vitest confirmed engine logic.
+
+- [TASKS #138-#142] Swarm runtime integrity + contract completion wave - COMPLETED 2026-04-02
   Verified the Swarm runtime lifecycle/browser recovery gate, added deterministic local scaffold fallback when external providers are unavailable, completed scoped broadcast delivery (`all` / `department` / `agent`) with explicit recipient reporting, and restored live `lastOutputSnippet` propagation through `agent_status`. Docs/API/PRD contracts were aligned to the implemented behavior. Verification: `npm test --prefix server` = 203/203 pass, `npm run build --prefix client` succeeds, browser run verified Prompt-to-Flow generation, saved workflow loading, and execution completion.
 
 
@@ -96,10 +103,8 @@
 
 ## In Progress
 
-### V4.0 — Gemini CLI Harness Integration (Bug Fix Phase)
-- [TASK-160] BUG-GEMINI-1 — Fix prompt injection for Gemini CLI (CRITICAL — blocks Gemini as runtime) (PENDING)
-- [TASK-162] BUG-GEMINI-2 — Fix prompt-ready detection patterns for Gemini CLI (MEDIUM) (PENDING)
-- [TASK-164] BUG-GEMINI-3 — Fix strategy label showing "Auto fallback" before execution (LOW/cosmetic) (PENDING)
+### V4.0 — Gemini CLI Harness Integration (COMPLETED 2026-04-04)
+_Integration finalized after fixing 3 E2E regressions (BUG-GEMINI-1, 2, 3)._
 
 ## Blocked
 _None._

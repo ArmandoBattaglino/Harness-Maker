@@ -43,6 +43,8 @@ export default function SwarmView() {
   const [executing, setExecuting] = useState(false);
   const [pausing, setPausing] = useState(false);
   const [selectedRuntimeProvider, setSelectedRuntimeProvider] = useState('auto');
+  const [runtimeModels, setRuntimeModels] = useState({ codex: '', gemini: '' });
+  const [showModelSettings, setShowModelSettings] = useState(false);
 
   const { activeProjectId, projects } = useAppState();
   const projectPath = projects.find((p) => p.id === activeProjectId)?.path ?? '';
@@ -89,7 +91,10 @@ export default function SwarmView() {
   const handleRun = async () => {
     setExecuting(true);
     try {
-      await startExecution(activeProjectId, projectPath, selectedRuntimeProvider);
+      const models = {};
+      if (runtimeModels.codex) models.codex = runtimeModels.codex;
+      if (runtimeModels.gemini) models.gemini = runtimeModels.gemini;
+      await startExecution(activeProjectId, projectPath, selectedRuntimeProvider, Object.keys(models).length > 0 ? models : null);
     } finally {
       setExecuting(false);
     }
@@ -148,15 +153,23 @@ export default function SwarmView() {
     ? 'Claude'
     : 'Auto';
 
-  const providerStrategyLabel = providerStrategy?.mode === 'auto'
-    ? 'Auto fallback'
-    : providerStrategy?.mode === 'codex'
-    ? 'Codex only'
-    : providerStrategy?.mode === 'gemini'
-    ? 'Gemini only'
-    : providerStrategy?.mode === 'claude'
-    ? 'Claude only'
-    : 'Auto fallback';
+  const providerStrategyLabel = providerStrategy?.mode
+    ? (providerStrategy.mode === 'auto'
+      ? 'Auto fallback'
+      : providerStrategy.mode === 'codex'
+      ? 'Codex only'
+      : providerStrategy.mode === 'gemini'
+      ? 'Gemini only'
+      : providerStrategy.mode === 'claude'
+      ? 'Claude only'
+      : 'Auto fallback')
+    : (selectedRuntimeProvider === 'codex'
+      ? 'Codex only'
+      : selectedRuntimeProvider === 'gemini'
+      ? 'Gemini only'
+      : selectedRuntimeProvider === 'claude'
+      ? 'Claude only'
+      : 'Auto fallback');
 
   return (
     <div className="flex flex-col w-full h-full bg-gray-950 text-white">
@@ -188,6 +201,53 @@ export default function SwarmView() {
             <option value="gemini">Gemini</option>
           </select>
         </label>
+
+        <div className="relative">
+          <button
+            onClick={() => setShowModelSettings((v) => !v)}
+            disabled={isExecutionActive || executing}
+            className="text-[11px] px-2 py-1 rounded bg-gray-800 text-gray-400 border border-gray-600 hover:border-gray-500 disabled:opacity-50 transition-colors"
+            title="Configure model per provider"
+          >
+            Models {(runtimeModels.codex || runtimeModels.gemini) ? '*' : ''}
+          </button>
+          {showModelSettings && (
+            <div className="absolute right-0 top-full mt-1 z-50 bg-gray-800 border border-gray-600 rounded-lg shadow-xl p-3 min-w-[220px]">
+              <div className="text-[11px] text-gray-300 font-semibold mb-2">Model per Provider</div>
+              <label className="flex items-center gap-2 text-[11px] text-gray-400 mb-1.5">
+                <span className="w-14">Claude</span>
+                <select disabled className="flex-1 bg-gray-700 text-gray-500 text-xs rounded px-2 py-1 border border-gray-600 cursor-not-allowed">
+                  <option>Account Default</option>
+                </select>
+              </label>
+              <label className="flex items-center gap-2 text-[11px] text-gray-400 mb-1.5">
+                <span className="w-14">Codex</span>
+                <select
+                  value={runtimeModels.codex}
+                  onChange={(e) => setRuntimeModels((m) => ({ ...m, codex: e.target.value }))}
+                  className="flex-1 bg-gray-700 text-white text-xs rounded px-2 py-1 border border-gray-600"
+                >
+                  <option value="">Default</option>
+                  <option value="gpt-5.1-codex">gpt-5.1-codex</option>
+                  <option value="gpt-4.1-codex">gpt-4.1-codex</option>
+                </select>
+              </label>
+              <label className="flex items-center gap-2 text-[11px] text-gray-400">
+                <span className="w-14">Gemini</span>
+                <select
+                  value={runtimeModels.gemini}
+                  onChange={(e) => setRuntimeModels((m) => ({ ...m, gemini: e.target.value }))}
+                  className="flex-1 bg-gray-700 text-white text-xs rounded px-2 py-1 border border-gray-600"
+                >
+                  <option value="">Default</option>
+                  <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+                  <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                  <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+                </select>
+              </label>
+            </div>
+          )}
+        </div>
 
         {(executionStatus === 'idle' || executionStatus === 'completed') && (
           <button

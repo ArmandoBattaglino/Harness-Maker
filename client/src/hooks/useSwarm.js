@@ -258,13 +258,13 @@ export function useSwarm(workflowId) {
   }, [setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, setExecution, updateBudget, addInboxItem, resolveInboxItem, updateTriggerState, applyExecutionSnapshot]);
 
   // Start execution
-  const startExecution = useCallback(async (projectId, projectPath, runtimeProvider = 'auto') => {
+  const startExecution = useCallback(async (projectId, projectPath, runtimeProvider = 'auto', runtimeModels = null) => {
     if (!workflowId) throw new Error('No workflow selected');
-    const data = await apiPost(`/api/v1/swarm/${workflowId}/start`, {
-      projectId,
-      projectPath,
-      runtimeProvider,
-    });
+    const body = { projectId, projectPath, runtimeProvider };
+    if (runtimeModels && typeof runtimeModels === 'object') {
+      body.runtimeModels = runtimeModels;
+    }
+    const data = await apiPost(`/api/v1/swarm/${workflowId}/start`, body);
     const { executionId } = data;
     setExecution(executionId, data.status ?? 'running');
     await applyExecutionSnapshot({ ...data, executionId, workflowId });

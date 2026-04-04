@@ -1,4 +1,25 @@
 ## 2026-04-04 — debugger — Task #160: BUG-GEMINI-1 — Fix Gemini CLI prompt injection
+
+---
+## 2026-04-05 — orchestrator — Tasks #169-#170: V4.1 Per-Harness Model Selection
+**Outcome:** COMPLETED
+**Summary:** Implemented per-harness model selection. Backend: _buildRuntimeProviderArgs() accepts runtimeModels override (replaces -m flag), startExecution merges runtimeModels into workflow settings, route accepts runtimeModels in body. Frontend: "Models" button in SwarmView toolbar with dropdowns for Codex (gpt-5.1-codex, gpt-4.1-codex) and Gemini (gemini-2.5-pro, gemini-2.5-flash, gemini-2.0-flash). Claude shown as "Account Default" (disabled). 7 new unit tests, 70/70 pass, build OK. V4.1 CLOSED.
+**Files changed:** server/services/SwarmEngine.js, server/routes/swarm.js, client/src/hooks/useSwarm.js, client/src/views/SwarmView.jsx, server/tests/swarm-engine.test.js
+**Bugs fixed:** none
+**Decisions made:** Per-execution model selection (not persisted in workflow JSON). Static model lists. Claude not configurable (account-based).
+**Blockers:** none
+**Next:** No pending tasks in V4.x. Ready for next feature wave or user request.
+---
+---
+## 2026-04-05 — debugger — Tasks #171-#176: V4.0.1 Gemini Runtime Bug Fixes
+**Outcome:** COMPLETED
+**Summary:** E2E debugging session revealed 4 critical Gemini runtime bugs in SwarmEngine.js. BUG-GEMINI-4: SWARM_PROMPT_READY_FALLBACK_MS too low (2.5s vs Gemini's 15s startup), causing prompts to be lost during auth. BUG-GEMINI-5: False positive prompt-ready from TUI box borders during auth. BUG-GEMINI-6: Ghost method _detectRuntimePromptIntervention causing TypeError. BUG-GEMINI-7: Duplicate _detectRuntimeBlocker name collision silently breaking all pattern-based blocker detection. All 4 fixed. 63/63 swarm-engine tests pass. V4.0.1 CLOSED.
+**Files changed:** server/services/SwarmEngine.js, docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** BUG-GEMINI-4, BUG-GEMINI-5, BUG-GEMINI-6, BUG-GEMINI-7
+**Decisions made:** Raised fallback timer to 20s to accommodate Gemini CLI startup time. Renamed _detectRuntimeBlocker → _detectPatternBlocker for the pattern-matching variant.
+**Blockers:** none
+**Next:** V4.1 Per-Harness Model Selection (TASK #169-#170 PENDING)
+---
 **Outcome:** COMPLETED
 **Summary:** Fixed _flushSwarmPrompt() in SwarmEngine.js to handle Gemini CLI's Ink TUI. Added Gemini-specific branch that writes prompt as a single line (no \n), submits with 500ms delayed \r, and writes echo marker separately. Claude/Codex behavior unchanged.
 **Files changed:** server/services/SwarmEngine.js (added 2 constants + Gemini branch in _flushSwarmPrompt)

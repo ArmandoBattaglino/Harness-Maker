@@ -1623,4 +1623,104 @@ describe('SwarmEngine', () => {
       expect(status.status).toBe('completed');
     });
   });
+
+  // -------------------------------------------------------------------------
+  // BUG-GEMINI-2: Gemini prompt-ready detection patterns
+  // -------------------------------------------------------------------------
+  describe('_isRuntimePromptReady — Gemini patterns (BUG-GEMINI-2)', () => {
+    it('should detect Gemini prompt-ready on "type your message"', () => {
+      const result = engine._isRuntimePromptReady(
+        '> Type your message or @path/to/file', 'gemini'
+      );
+      expect(result).toBe(true);
+    });
+
+    it('should detect Gemini prompt-ready on "? for shortcuts"', () => {
+      const result = engine._isRuntimePromptReady(
+        '? for shortcuts', 'gemini'
+      );
+      expect(result).toBe(true);
+    });
+
+    it('should NOT detect Gemini prompt-ready on random output', () => {
+      const result = engine._isRuntimePromptReady(
+        'some random output from gemini', 'gemini'
+      );
+      expect(result).toBe(false);
+    });
+
+    it('should NOT detect Gemini prompt-ready on old false pattern "esc to interrupt"', () => {
+      const result = engine._isRuntimePromptReady(
+        'esc to interrupt', 'gemini'
+      );
+      expect(result).toBe(false);
+    });
+
+    it('should still detect Codex prompt-ready on "esc to interrupt" (no regression)', () => {
+      const result = engine._isRuntimePromptReady(
+        'esc to interrupt', 'codex'
+      );
+      expect(result).toBe(true);
+    });
+
+    it('should still detect Codex prompt-ready on "workspace-write" (no regression)', () => {
+      const result = engine._isRuntimePromptReady(
+        'workspace-write', 'codex'
+      );
+      expect(result).toBe(true);
+    });
+
+    it('should still detect Claude prompt-ready patterns (no regression)', () => {
+      const result = engine._isRuntimePromptReady(
+        'bypass permissions on', 'claude'
+      );
+      expect(result).toBe(true);
+    });
+
+    it('should NOT detect Gemini prompt-ready during auth phase', () => {
+      expect(engine._isRuntimePromptReady(
+        'Waiting for authentication... (Press Esc or Ctrl+C to cancel)', 'gemini'
+      )).toBe(false);
+    });
+
+    it('should NOT detect Gemini prompt-ready on geminicli-updates banner', () => {
+      expect(engine._isRuntimePromptReady(
+        'Read more: https://goo.gle/geminicli-updates', 'gemini'
+      )).toBe(false);
+    });
+  });
+
+  describe('_buildRuntimeProviderArgs — per-workflow model override (V4.1)', () => {
+    it('should use default model when no runtimeModels provided', () => {
+      const args = engine._buildRuntimeProviderArgs('codex', null);
+      expect(args).toContain('-m');
+      const mIdx = args.indexOf('-m');
+      expect(args[mIdx + 1]).toBe('gpt-5.1-codex');
+    });
+
+    it('should override Codex model from runtimeModels', () => {
+      const args = engine._buildRuntimeProviderArgs('codex', { codex: 'gpt-4.1-codex' });
+      const mIdx = args.indexOf('-m');
+      expect(mIdx).toBeGreaterThan(-1);
+      expect(args[mIdx + 1]).toBe('gpt-4.1-codex');
+    });
+
+    it('should override Gemini model from runtimeModels', () => {
+      const args = engine._buildRuntimeProviderArgs('gemini', { gemini: 'gemini-2.5-flash' });
+      const mIdx = args.indexOf('-m');
+      expect(mIdx).toBeGreaterThan(-1);
+      expect(args[mIdx + 1]).toBe('gemini-2.5-flash');
+    });
+
+    it('should NOT add -m flag for Claude even with runtimeModels', () => {
+      const args = engine._buildRuntimeProviderArgs('claude', { claude: 'some-model' });
+      expect(args).not.toContain('-m');
+    });
+
+    it('should ignore empty string model override', () => {
+      const args = engine._buildRuntimeProviderArgs('codex', { codex: '' });
+      const mIdx = args.indexOf('-m');
+      expect(args[mIdx + 1]).toBe('gpt-5.1-codex');
+    });
+  });
 });
