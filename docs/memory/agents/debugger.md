@@ -381,3 +381,54 @@ All three fixes are applied and tested. 227/227 tests pass. The handoff chain sh
 ### Handoff
 qa-tester runs TASK #148 (AREA CHECKPOINT V3.4) to verify the full handoff chain end-to-end. The fix should be verifiable with any multi-agent workflow where agents have downstream targets.
 ---
+---
+## 2026-04-04 — Task #160: BUG-GEMINI-1 — Fix Gemini CLI prompt injection in SwarmEngine._flushSwarmPrompt()
+**Status:** COMPLETED
+**Called by:** User (direct task assignment — V4.0 Gemini Bug Fix Wave)
+
+### Context when I started
+V4.0 Gemini CLI harness integration was code-complete (tasks #154-#159), but E2E testing found that Gemini CLI never submits swarm prompts. The `_flushSwarmPrompt()` method writes lines with `\n` separators, which Gemini's Ink/React TUI interprets as multi-line input mode. In that mode, `\r` is treated as another newline rather than submit. Result: prompt text appears in Gemini's input but is never executed.
+
+### What I did
+1. Read memory files and SwarmEngine.js `_flushSwarmPrompt()` method (lines 500-564).
+2. Confirmed root cause: `\n` characters in writeInput calls trigger Gemini's multi-line editing mode. The final `\r` is then another newline, not submit.
+3. Added two new constants: `SWARM_GEMINI_SUBMIT_DELAY_MS = 500` and `SWARM_GEMINI_ECHO_DELAY_MS = 300`.
+4. Added a Gemini-specific early-return branch at the top of the payload writing section in `_flushSwarmPrompt()`:
+   - Flattens the prompt into a single line (newlines replaced with spaces)
+   - Writes the flat prompt as a single writeInput call (no `\n`)
+   - Sends `\r` after 500ms delay to submit
+   - Writes the echo marker as a separate submission 800ms later (500+300)
+   - Returns early, so Claude/Codex path is untouched
+5. Ran `npm test --prefix server` — 255/255 pass, 0 regressions.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SwarmEngine.js | MODIFIED | Added constants SWARM_GEMINI_SUBMIT_DELAY_MS (500) and SWARM_GEMINI_ECHO_DELAY_MS (300) at line 12. Added Gemini-specific branch in _flushSwarmPrompt() at lines 532-557 that writes prompt without \n, submits with delayed \r, and writes echo marker separately. |
+
+### Improvements delivered
+- Gemini CLI prompt injection now writes text WITHOUT \n characters (uses space-joined single line)
+- Gemini prompt submission uses 500ms delayed \r (sufficient for Ink TUI to process text)
+- Echo marker is written as a separate submission after the prompt, not inline
+- Claude/Codex behavior is completely unchanged (Gemini branch returns early)
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-GEMINI-1: Gemini prompt never submitted | \n in writeInput triggers Ink multi-line mode; \r then treated as newline not submit | Gemini branch: flat prompt (no \n) + delayed \r + separate echo marker | FIXED |
+
+### Decisions I made
+- Used 500ms for Gemini submit delay (vs 100ms for Claude/Codex) — E2E testing showed Gemini needs more time between text write and submit
+- Echo marker written as separate submission — cannot be part of prompt text or it would appear in Gemini's input and confuse the model
+- Replaced \n with spaces (not pipes or other separators) — simplest transformation, preserves readability
+
+### What I learned
+- Gemini CLI uses Ink (React for CLI) with a multi-line text editor component. Unlike Claude/Codex which treat pasted multi-line text as a single input, Gemini's TUI interprets \n as "add a new line in the editor" and keeps the cursor in editing mode.
+- The key insight is that \r works as submit ONLY when no \n has been written. Once \n enters the stream, the TUI switches to multi-line mode and \r becomes another newline.
+
+### State I'm leaving behind
+SwarmEngine.js is fixed. 255/255 tests pass. Gemini prompts will now be submitted correctly. TASK #161 (TEST GATE for BUG-GEMINI-1) is the next action.
+
+### Handoff
+qa-tester runs TASK #161 (TEST GATE: BUG-GEMINI-1) to verify the fix. On PASS, proceed to TASK #162 (BUG-GEMINI-2).
+---

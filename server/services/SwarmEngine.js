@@ -9,6 +9,8 @@ import { discoverCodexBinary, discoverGeminiBinary } from './BinaryDiscovery.js'
 
 const SWARM_PROMPT_ECHO_MARKER = '--- END SWARM INPUT ---';
 const SWARM_PROMPT_SUBMIT_DELAY_MS = 100;
+const SWARM_GEMINI_SUBMIT_DELAY_MS = 500;
+const SWARM_GEMINI_ECHO_DELAY_MS = 300;
 const SWARM_PROMPT_READY_FALLBACK_MS = 2500;
 const SWARM_PROMPT_LINE_INTERVAL_MS = 25;
 const SWARM_PROMPT_INTERRUPT_DELAY_MS = 120;
@@ -525,6 +527,33 @@ class SwarmEngine {
       if (state.echoMarkerTimer.unref) {
         state.echoMarkerTimer.unref();
       }
+    }
+
+    // Gemini CLI (Ink/React TUI) treats \n as multi-line input — NOT as submit.
+    // Write the prompt as a single line (no \n), submit with delayed \r, then
+    // write the echo marker separately after submission.
+    if (state?.provider === RUNTIME_PROVIDER.GEMINI) {
+      const flatPrompt = prompt.replace(/\n/g, ' ');
+      this._sessionManager.writeInput(sessionId, flatPrompt);
+
+      if (state) {
+        state.promptSubmissionCount = (state.promptSubmissionCount ?? 0) + 1;
+      }
+
+      // Submit the prompt text
+      setTimeout(() => {
+        this._sessionManager.writeInput(sessionId, '\r');
+      }, SWARM_GEMINI_SUBMIT_DELAY_MS);
+
+      // Write the echo marker as a separate submission after the prompt is sent
+      setTimeout(() => {
+        this._sessionManager.writeInput(sessionId, SWARM_PROMPT_ECHO_MARKER);
+        setTimeout(() => {
+          this._sessionManager.writeInput(sessionId, '\r');
+        }, SWARM_GEMINI_SUBMIT_DELAY_MS);
+      }, SWARM_GEMINI_SUBMIT_DELAY_MS + SWARM_GEMINI_ECHO_DELAY_MS);
+
+      return;
     }
 
     const payload = `${prompt}\n${SWARM_PROMPT_ECHO_MARKER}`;

@@ -1,3 +1,13 @@
+## 2026-04-04 — debugger — Task #160: BUG-GEMINI-1 — Fix Gemini CLI prompt injection
+**Outcome:** COMPLETED
+**Summary:** Fixed _flushSwarmPrompt() in SwarmEngine.js to handle Gemini CLI's Ink TUI. Added Gemini-specific branch that writes prompt as a single line (no \n), submits with 500ms delayed \r, and writes echo marker separately. Claude/Codex behavior unchanged.
+**Files changed:** server/services/SwarmEngine.js (added 2 constants + Gemini branch in _flushSwarmPrompt)
+**Bugs fixed:** BUG-GEMINI-1 — Gemini prompt injection never submitted due to \n triggering multi-line mode
+**Decisions made:** SWARM_GEMINI_SUBMIT_DELAY_MS=500, echo marker as separate submission
+**Blockers:** none
+**Next:** TASK #161 (TEST GATE for BUG-GEMINI-1), then TASK #162 (BUG-GEMINI-2)
+---
+
 ## 2026-04-04 — project-manager — V4.0 E2E Bug Triage: 3 bugs found, tasks #160-#165 created
 **Outcome:** COMPLETED
 **Summary:** E2E testing of V4.0 Gemini CLI integration (tasks #154-#159 all COMPLETED) revealed 3 bugs blocking V4.0 closure. BUG-GEMINI-1 (CRITICAL): prompt injection fails because Gemini Ink TUI treats `\n` as in-field newline. BUG-GEMINI-2 (MEDIUM): prompt-ready detection uses wrong pattern. BUG-GEMINI-3 (LOW): cosmetic strategy label issue. Created 6 new tasks (#160-#165: 3 bug fixes + 3 test gates). Renumbered docs/gate/checkpoint tasks to #166-#168. Renumbered V4.1 tasks to #169-#170. Updated PROGRESS.md with E2E findings.
