@@ -1,5 +1,35 @@
-import { describe, it, expect } from 'vitest';
-import { resolveBroadcastNodeTargets, serializeSessionOutput } from '../routes/swarm.js';
+import { describe, it, expect, vi } from 'vitest';
+import swarmRoutes, { resolveBroadcastNodeTargets, serializeSessionOutput } from '../routes/swarm.js';
+
+function getRouteHandler(router, method, path) {
+  const layer = router.stack.find(
+    (candidate) => candidate.route?.path === path && candidate.route.methods?.[method]
+  );
+  if (!layer) {
+    throw new Error(`Route ${method.toUpperCase()} ${path} not found`);
+  }
+  return layer.route.stack[0].handle;
+}
+
+function createMockRes() {
+  return {
+    statusCode: 200,
+    body: null,
+    ended: false,
+    status(code) {
+      this.statusCode = code;
+      return this;
+    },
+    json(payload) {
+      this.body = payload;
+      return this;
+    },
+    end() {
+      this.ended = true;
+      return this;
+    },
+  };
+}
 
 describe('resolveBroadcastNodeTargets', () => {
   const execution = {
@@ -71,5 +101,47 @@ describe('serializeSessionOutput', () => {
     };
 
     expect(serializeSessionOutput(session)).toBe('plain text buffer');
+  });
+});
+
+describe('swarmRoutes pause/resume contract', () => {
+  it('returns 409 and skips pauseExecution when the execution is already blocked', async () => {
+    const swarmEngine = {
+      getStatus: vi.fn().mockReturnValue({ status: 'blocked' }),
+      pauseExecution: vi.fn(),
+      resumeExecution: vi.fn(),
+      stopExecution: vi.fn(),
+      getExecution: vi.fn(),
+    };
+    const router = swarmRoutes(swarmEngine, { getSession: vi.fn() });
+    const handler = getRouteHandler(router, 'post', '/:executionId/pause');
+    const req = { params: { executionId: 'exec-1' }, body: {}, app: { locals: {} } };
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(409);
+    expect(res.body).toEqual({ error: "Execution cannot be paused from status 'blocked'" });
+    expect(swarmEngine.pauseExecution).not.toHaveBeenCalled();
+  });
+
+  it('returns 409 and skips resumeExecution when the execution is blocked instead of paused', () => {
+    const swarmEngine = {
+      getStatus: vi.fn().mockReturnValue({ status: 'blocked' }),
+      pauseExecution: vi.fn(),
+      resumeExecution: vi.fn(),
+      stopExecution: vi.fn(),
+      getExecution: vi.fn(),
+    };
+    const router = swarmRoutes(swarmEngine, { getSession: vi.fn() });
+    const handler = getRouteHandler(router, 'post', '/:executionId/resume');
+    const req = { params: { executionId: 'exec-1' }, body: {}, app: { locals: {} } };
+    const res = createMockRes();
+
+    handler(req, res);
+
+    expect(res.statusCode).toBe(409);
+    expect(res.body).toEqual({ error: "Execution cannot be resumed from status 'blocked'" });
+    expect(swarmEngine.resumeExecution).not.toHaveBeenCalled();
   });
 });

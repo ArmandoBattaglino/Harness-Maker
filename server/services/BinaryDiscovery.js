@@ -9,6 +9,7 @@ import { execFileSync } from 'child_process';
 // Module-level cache
 let _cachedClaudePath = null;
 let _cachedCodexPath = null;
+let _cachedGeminiPath = null;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -170,5 +171,56 @@ export async function discoverCodexBinary() {
 
   throw new Error(
     'Codex CLI not found. Set CODEX_BIN or install/configure a local Codex executable.'
+  );
+}
+
+export async function discoverGeminiBinary() {
+  if (_cachedGeminiPath !== null) {
+    return _cachedGeminiPath;
+  }
+
+  // Step 1: Explicit env override
+  if (process.env.GEMINI_BIN) {
+    const envPath = process.env.GEMINI_BIN;
+    if (!fileExists(envPath)) {
+      throw new Error(
+        `GEMINI_BIN is set to "${envPath}" but the file does not exist or is not executable.`
+      );
+    }
+    validateBinary(envPath);
+    _cachedGeminiPath = envPath;
+    return _cachedGeminiPath;
+  }
+
+  // Step 2: PATH lookup
+  const pathCandidate = findOnPath('gemini');
+  if (pathCandidate) {
+    try {
+      validateBinary(pathCandidate);
+      _cachedGeminiPath = pathCandidate;
+      return _cachedGeminiPath;
+    } catch {
+      // Binary found on PATH but failed --version; continue to next step
+    }
+  }
+
+  // Step 3: npm global bin
+  const appData = process.env.APPDATA;
+  if (appData) {
+    const npmCandidate = path.join(appData, 'npm', 'gemini.cmd');
+    if (fileExists(npmCandidate)) {
+      try {
+        validateBinary(npmCandidate);
+        _cachedGeminiPath = npmCandidate;
+        return _cachedGeminiPath;
+      } catch {
+         // fall through to error
+      }
+    }
+  }
+
+  // Step 4: Not found
+  throw new Error(
+    'Gemini CLI not found. Install with: npm install -g @google/gemini-cli or set GEMINI_BIN env var.'
   );
 }

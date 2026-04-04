@@ -1,0 +1,10 @@
+{
+  "request_id": "3e7b139e-d1c4-47fb-bc53-2959e68b53c0",
+  "created_at": "2026-04-03T12:41:47.102Z",
+  "user_prompt": "Read the TASK #148 and TASK #153 sections in docs/TASK_PLAN.md and reply with exactly 3 lines. Line 1: which criteria still require live provider evidence. Line 2: the minimum artifact set needed. Line 3: the smallest next verification sequence. No edits.",
+  "requested_agent": "qa-tester",
+  "status": "active",
+  "steps": [],
+  "next_actions": [],
+  "summary": null
+}

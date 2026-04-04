@@ -99,6 +99,7 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
         prompt: prompt.trim(),
         claudeBin: scaffoldProviders.claudeBin,
         codexBin: scaffoldProviders.codexBin,
+        geminiBin: scaffoldProviders.geminiBin,
       });
 
       if (projectId && typeof projectId === 'string') {

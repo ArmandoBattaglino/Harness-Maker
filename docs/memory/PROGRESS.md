@@ -108,6 +108,21 @@ _None._
 
 ## Pending
 
+### V4.0 — Gemini CLI Harness Integration
+- [TASK-154] GEMINI-DISCOVERY-1 — Add Gemini CLI binary discovery to BinaryDiscovery.js (COMPLETED 2026-04-04)
+- [TASK-155] GEMINI-SCAFFOLD-1 — Add Gemini scaffold provider to ScaffoldGenerator.js (COMPLETED 2026-04-04)
+- [TASK-156] GEMINI-RUNTIME-1 — Add Gemini as a Swarm runtime provider in SwarmEngine.js (COMPLETED 2026-04-04)
+- [TASK-157] GEMINI-UI-1 — Add Gemini to the Runtime provider dropdown and status indicators in SwarmView (COMPLETED 2026-04-04)
+- [TASK-158] GEMINI-BLOCKER-1 — Add Gemini interactive PTY blocker and prompt-ready detection tests (COMPLETED 2026-04-04)
+- [TASK-159] GEMINI-ROUTE-1 — Wire Gemini binary into swarm routes and server startup (COMPLETED 2026-04-04)
+- [TASK-160] GEMINI-DOCS-1 — Update DECISIONS.md, CODE_MAP.md, and ARCHITECTURE.md for Gemini provider (PENDING)
+- [TASK-161] TEST GATE — Gemini CLI harness integration verification (PENDING)
+- [TASK-162] AREA CHECKPOINT — V4.0 Gemini Harness Full Integration (end-to-end) (PENDING)
+
+### V4.1 — Per-Harness Runtime Model Selection
+- [TASK-163] FEATURE-MODEL-1 — Per-harness model selection UI and backend contract (PENDING)
+- [TASK-164] FEATURE-MODEL-2 — Implement per-harness model selection (backend + frontend) (PENDING)
+
 ### Phase 7 — v1.1 Maintenance Backlog (ALL INDEPENDENT, run in parallel)
 - [TASK-19] v1.1 — Fix JobRunner memory leak — backend-dev — COMPLETED 2026-03-24
   BUG-06 FIXED: Added _scheduleEviction() method with 10-minute TTL setTimeout (.unref()).
@@ -265,3 +280,6 @@ _None._
 
 - [TASK-65] AgentNode Live Updates — frontend-dev — COMPLETED 2026-03-27
   Enhanced micro PTY log in AgentNode.jsx: scrollable dark code block, green monospace, last 4 lines, blinking cursor when running. animate-pulse border and handoffCount badge already existed. Build clean at 472 modules.
+- [TASKS #145/#153 follow-up] Live runtime evidence + parser hardening - PARTIAL PROGRESS 2026-04-03
+  2026-04-03 additional follow-up: live probe `b3c645a8-4ba6-473f-96e7-c80050a5bc18` exposed a second truthfulness bug because ConPTY replayed the prompt's concrete handoff example after the echo marker, causing a fake handoff into node-b with the example payload. SwarmEngine now keeps prompt/recovery examples templated with `<targetId>` so echoed guidance cannot become a parser-consumable handoff; probe `284de139-3fac-44f1-8b07-cf9356157f71` confirmed that the fake handoff disappeared (`running`, `handoffCount: 0`), and probe `9a7c81ae-ec1d-4b3b-a7c5-7abd01c10a22` confirmed that when Codex prints both a hard usage-limit stop and the softer `Approaching rate limits` chooser, Swarm now prefers the hard blocker and returns explicit `blocked` instead of hanging in ambiguous `running`. Verification now: `npm test --prefix server -- HandoffParser.test.js swarm-engine.test.js` = 83/83 pass, `vite build` succeeds. Remaining blocker: no usable non-blocked AI-dependent handoff run yet, so `#145`, `#148`, and `#153` remain open.
+  Added HandoffParser tolerance for terminal-rendered `HANDOFF:` tokens after a live Codex run showed the interactive CLI stripping underscores from a real handoff attempt before the parser could consume it. Added deterministic test coverage for the Codex trust/bootstrap blocker. Fresh live artifacts now exist for: explicit Claude blocker (`e1e02b24-45b1-49f4-878c-8b1e1c2530e1`), explicit Codex blocker (`badef6de-2bb8-4259-8135-0df1e2f2db94`), and auto fallback Claude→Codex (`50962eb0-ee1a-4409-804b-a835f1ba8f8e`). Verification: `npm test --prefix server -- HandoffParser.test.js swarm-engine.test.js` = 72/72 pass, `vite build` succeeds. Remaining blocker: no usable non-blocked AI-dependent handoff run yet, so `#145`, `#148`, and `#153` remain open.

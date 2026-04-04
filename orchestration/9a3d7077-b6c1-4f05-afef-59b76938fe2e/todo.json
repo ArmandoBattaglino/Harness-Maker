@@ -1,0 +1,10 @@
+{
+  "request_id": "9a3d7077-b6c1-4f05-afef-59b76938fe2e",
+  "created_at": "2026-04-03T12:43:55.084Z",
+  "user_prompt": "Read only TASK #153 in docs/TASK_PLAN.md and answer with exactly 2 lines. Line 1: which acceptance criteria still require live provider evidence. Line 2: the minimum artifact set needed to close it honestly. No edits.",
+  "requested_agent": "qa-tester",
+  "status": "active",
+  "steps": [],
+  "next_actions": [],
+  "summary": null
+}

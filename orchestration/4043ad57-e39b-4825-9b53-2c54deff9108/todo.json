@@ -1,0 +1,10 @@
+{
+  "request_id": "4043ad57-e39b-4825-9b53-2c54deff9108",
+  "created_at": "2026-04-03T12:27:58.888Z",
+  "user_prompt": "Read docs/TASK_PLAN.md and reply with exactly three lines: Line 1 current open tasks among #145 #148 #153. Line 2 the critical path task. Line 3 one immediate next step. No file edits.",
+  "requested_agent": "project-manager",
+  "status": "active",
+  "steps": [],
+  "next_actions": [],
+  "summary": null
+}

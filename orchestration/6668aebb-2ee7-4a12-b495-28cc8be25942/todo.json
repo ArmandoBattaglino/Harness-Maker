@@ -1,0 +1,10 @@
+{
+  "request_id": "6668aebb-2ee7-4a12-b495-28cc8be25942",
+  "created_at": "2026-04-03T12:41:08.902Z",
+  "user_prompt": "Read server/tests/HandoffParser.test.js and answer with exactly 2 lines. Line 1: whether there is an explicit test for plain JSON handoff tokens like __HANDOFF__:node:{\"k\":\"v\"}. Line 2: one short recommendation. No edits.",
+  "requested_agent": "debugger",
+  "status": "active",
+  "steps": [],
+  "next_actions": [],
+  "summary": null
+}

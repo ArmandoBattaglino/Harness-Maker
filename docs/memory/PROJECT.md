@@ -1,7 +1,7 @@
 # Project: Claude Code Visual Manager
 **Created:** 2026-03-18
 **Last updated:** 2026-03-28
-**Implementation status:** v3.0 — V3 Swarm Orchestrator complete. All 82 tasks COMPLETED. Git tag v3.0.0 created. Release-ready.
+**Implementation status:** v3.0 — V3 Swarm Orchestrator complete. V4.0 (Gemini Integration) and V4.1 (Model Selection) planned and in progress.
 
 ## What it is
 A locally-hosted web application that provides a graphical user interface for the Claude Code CLI. It spawns Claude Code processes directly using the user's installed binary and delivers two interaction modes: a live PTY terminal (xterm.js over WebSocket) and a job mode (prompt → formatted Markdown result). It also provides visual editors for agents, skills, and CLAUDE.md files, with multi-project support and session persistence across browser tab closures.

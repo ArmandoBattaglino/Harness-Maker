@@ -1,8 +1,8 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-02 — Task #132: AREA CHECKPOINT V3.1 PASS — 132/132 tasks complete, AREA V3.1 CLOSED — mapped by code-mapper_
+_Last updated: 2026-04-03 — Task #145 follow-up: Swarm runtime hardening (prompt templating, menu auto-dismiss, hard-blocker precedence) — mapped by code-mapper_
 
-> **V3.1 SWARM SYSTEM STATUS: COMPLETE**
-> All 4 BUG-SWARM wave bugs resolved (BUG-SESSION-1, BUG-HANDOFF-1, BUG-TRIGGER-1, BUG-INSPECTOR-1). 8 TEST GATE passes. 1 AREA CHECKPOINT PASS. Build: 477 modules. Tests: 187/187 passing. All WS contracts from PRD Section 11 are now satisfied. Area V3.1 CLOSED 2026-04-02.
+> **V3.4/V3.5 SWARM RUNTIME STATUS: IN PROGRESS**
+> TASK #145 (BUG-UX-HANDOFF-1) partially addressed: prompt examples templated with `<targetId>` to prevent fake handoffs from PTY redraw (DEC-023); Codex model-selection and rate-limit menus auto-dismissed; hard usage-limit now takes precedence over soft `Approaching rate limits` chooser (DEC-024). 83/83 server tests pass. Build: 479 modules. Live handoff proof still pending — no provider has completed a real multi-agent chain yet.
 
 ## Entry Points
 - `server/index.js` — Express server bootstrap, binds to 127.0.0.1:PORT, WebSocket server
@@ -40,7 +40,7 @@ _Last updated: 2026-04-02 — Task #132: AREA CHECKPOINT V3.1 PASS — 132/132 t
 | server/ws/terminalHandler.js | setupTerminalWebSocket | WebSocket handler: sessionId from URL query, attach/detach client, route input/resize messages |
 | server/services/WorkflowStore.js | WorkflowStore (class) | CRUD + schema validation for workflow definitions; persists to %APPDATA%\ClaudeCodeManager\workflows\<id>.json via write-file-atomic; server-generated UUIDs; path-traversal guard on all reads/writes (Task #43) |
 | server/services/HandoffParser.js | HandoffParser (class), default HandoffParser | Stateful rolling 4KB buffer extractor for ConPTY __HANDOFF__ and __DONE__ tokens; handles chunk-split across multiple PTY onData callbacks; ANSI escape stripping; JSON payload validation (Task #45, DEC-012) |
-| server/services/SwarmEngine.js | SwarmEngine (class), default SwarmEngine | V3 swarm orchestrator — spawns agent PTY sessions, registers HandoffParser swarmListeners taps, routes handoff/done events, tracks per-node agent state and budget; in-memory only (never persisted). Constructor accepts circuitBreaker + budgetTracker optional params (Tasks #46, #46.3, #62.1, DEC-014) |
+| server/services/SwarmEngine.js | SwarmEngine (class), default SwarmEngine | V3 swarm orchestrator — spawns agent PTY sessions, registers HandoffParser swarmListeners taps, routes handoff/done events, tracks per-node agent state and budget; in-memory only (never persisted). Constructor accepts circuitBreaker + budgetTracker optional params. **2026-04-03 updates (Task #145 follow-up):** added `_detectRuntimePromptIntervention()` to detect Codex model-selection and rate-limit menus; added `_applyRuntimePromptIntervention()` to auto-dismiss menus via cursor-down + Enter keystrokes (DEC-024); `_buildSystemPrompt()` and `_buildContinueAfterDonePrompt()` now use templated `<targetId>` in handoff examples instead of real node IDs to prevent fake handoffs from PTY echo replay (DEC-023); hard Codex usage-limit blocker takes precedence over soft `Approaching rate limits` chooser; `SWARM_RUNTIME_MENU_SUBMIT_DELAY_MS` constant added. (Tasks #46, #46.3, #62.1, #145, DEC-014, DEC-023, DEC-024) |
 | server/services/CircuitBreaker.js | CircuitBreaker (class), default CircuitBreaker | Advisory circuit breaker for handoff loops — check(edgeId, counter, threshold) returns boolean; never stops execution, caller emits WS advisory (FR-V3-17, Task #49) |
 | server/services/BudgetTracker.js | BudgetTracker (class), default BudgetTracker | Soft budget tracker — accumulates char counts per session, estimates tokens (÷4), provides checkBudget advisory signal; never stops execution (FR-V3-18, Task #49) |
 | server/routes/swarm.js | swarmRoutes (factory fn), generateWorkflowFromPrompt (module-private) | 7-endpoint REST API for swarm execution control: start, pause, resume, stop, status, agent output, broadcast. POST /scaffold uses spawn(claudeBin, ['-p', prompt, '--output-format', 'json', ...]) — no Anthropic SDK. Factory pattern: accepts swarmEngine + sessionManager + claudeBin. (Tasks #47.1 + #59 + #112) |
@@ -115,7 +115,8 @@ _Last updated: 2026-04-02 — Task #132: AREA CHECKPOINT V3.1 PASS — 132/132 t
 | server/tests/pathValidation.test.js | Vitest | server/middleware/pathValidation.js | 13 |
 | server/tests/SessionManager.test.js | Vitest | server/services/SessionManager.js | 18 |
 | server/tests/JobRunner.test.js | Vitest | server/services/JobRunner.js | 18 |
-| server/tests/HandoffParser.test.js | Vitest | server/services/HandoffParser.js | 22 |
+| server/tests/HandoffParser.test.js | Vitest | server/services/HandoffParser.js | 22+ |
+| server/tests/swarm-engine.test.js | Vitest | server/services/SwarmEngine.js | 61+ (was ~45; added: templated prompt examples, Codex menu auto-dismiss, hard-blocker precedence over soft menu, echo marker suppression, replayed template rejection, _onDone recovery prompt) |
 | server/tests/security-v3.test.js | Vitest | server/utils/ssrfGuard.js, server/services/WorkflowStore.js, server/services/HandoffParser.js, server/middleware/hitlValidation.js | 36 |
 
 ## Build Artifacts

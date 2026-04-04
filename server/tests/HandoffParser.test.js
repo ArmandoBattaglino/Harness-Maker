@@ -367,5 +367,66 @@ describe('HandoffParser', () => {
         contextUpdate: { summary: 'done' },
       });
     });
+
+    it('should detect a plain JSON handoff when PTY wrapping moves the payload onto the next line', () => {
+      const chunk = '__HANDOFF__:agent-b:\n  {"summary": "Research complete", "count": 2}';
+      const results = parser.feed(chunk);
+
+      expect(results).toHaveLength(1);
+      expect(results[0]).toEqual({
+        type: 'handoff',
+        targetId: 'agent-b',
+        contextUpdate: { summary: 'Research complete', count: 2 },
+      });
+    });
+
+    it('should detect a plain JSON handoff split across chunks when the payload starts on a wrapped line', () => {
+      const r1 = parser.feed('output __HANDOFF__:agent-b:\n');
+      expect(r1).toEqual([]);
+
+      const r2 = parser.feed('  {"summary": "done"}');
+      expect(r2).toHaveLength(1);
+      expect(r2[0]).toEqual({
+        type: 'handoff',
+        targetId: 'agent-b',
+        contextUpdate: { summary: 'done' },
+      });
+    });
+
+    it('should detect a plain JSON handoff when terminal rendering strips underscore formatting from the token', () => {
+      const chunk = 'HANDOFF:agent-b:{"summary": "rendered without underscores"}';
+      const results = parser.feed(chunk);
+
+      expect(results).toHaveLength(1);
+      expect(results[0]).toEqual({
+        type: 'handoff',
+        targetId: 'agent-b',
+        contextUpdate: { summary: 'rendered without underscores' },
+      });
+    });
+
+    it('should detect a plain JSON handoff when ConPTY wrapping inserts newlines and padding inside the payload', () => {
+      // ConPTY wraps long output at 80 columns, inserting literal \n and spaces
+      // inside JSON string values. The parser must collapse whitespace before JSON.parse.
+      const chunk = 'HANDOFF:node-b:{"projectName": "Claude Code Visual\n    Manager", "version":         "3.0.0",\n    "description": "A locally-hosted\n    web app"}';
+      const results = parser.feed(chunk);
+
+      expect(results).toHaveLength(1);
+      expect(results[0].type).toBe('handoff');
+      expect(results[0].targetId).toBe('node-b');
+      expect(results[0].contextUpdate.projectName).toBe('Claude Code Visual Manager');
+      expect(results[0].contextUpdate.version).toBe('3.0.0');
+    });
+
+    it('should detect a multi-line wrapped HANDOFF alias (no underscores) with ConPTY padding', () => {
+      const chunk = 'HANDOFF:node-b:{"summary": "Research\n    findings about the project",\n    "result": "key data\n    collected"}';
+      const results = parser.feed(chunk);
+
+      expect(results).toHaveLength(1);
+      expect(results[0].type).toBe('handoff');
+      expect(results[0].targetId).toBe('node-b');
+      expect(results[0].contextUpdate.summary).toBe('Research findings about the project');
+      expect(results[0].contextUpdate.result).toBe('key data collected');
+    });
   });
 });

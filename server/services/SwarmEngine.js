@@ -5,18 +5,23 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import HandoffParser from './HandoffParser.js';
-import { discoverCodexBinary } from './BinaryDiscovery.js';
+import { discoverCodexBinary, discoverGeminiBinary } from './BinaryDiscovery.js';
 
 const SWARM_PROMPT_ECHO_MARKER = '--- END SWARM INPUT ---';
 const SWARM_PROMPT_SUBMIT_DELAY_MS = 100;
 const SWARM_PROMPT_READY_FALLBACK_MS = 2500;
 const SWARM_PROMPT_LINE_INTERVAL_MS = 25;
 const SWARM_PROMPT_INTERRUPT_DELAY_MS = 120;
+const SWARM_RUNTIME_MENU_SUBMIT_DELAY_MS = 75;
+const SWARM_ECHO_MARKER_TIMEOUT_MS = 10000;
 const MAX_DONE_REINJECT_ATTEMPTS = 3;
+const DEFAULT_SWARM_CODEX_MODEL = 'gpt-5.1-codex';
+const DEFAULT_SWARM_GEMINI_MODEL = 'gemini-2.5-pro';
 const RUNTIME_PROVIDER = {
   AUTO: 'auto',
   CLAUDE: 'claude',
   CODEX: 'codex',
+  GEMINI: 'gemini',
 };
 const RUNTIME_BLOCKER_PATTERNS = [
   {
@@ -28,6 +33,22 @@ const RUNTIME_BLOCKER_PATTERNS = [
       || text.includes('you have hit your limit')
       || text.includes('usage limit reached'),
     message: 'Claude hit its usage limit before the swarm agent could continue.',
+  },
+  {
+    type: 'provider_unavailable',
+    provider: 'codex',
+    matches: (text) =>
+      text.includes('error: unexpected argument')
+      && text.includes('usage: codex'),
+    message: 'Codex rejected the configured Swarm launch arguments and could not start an interactive session.',
+  },
+  {
+    type: 'provider_unavailable',
+    provider: 'codex',
+    matches: (text) =>
+      text.includes('unsupported value')
+      && text.includes('reasoning.effort'),
+    message: 'Codex rejected the current model and reasoning-effort combination before the swarm task could run.',
   },
   {
     type: 'trust_required',
@@ -44,8 +65,7 @@ const RUNTIME_BLOCKER_PATTERNS = [
     matches: (text) =>
       text.includes("you've hit your usage limit")
       || text.includes('purchase more credits')
-      || text.includes('try again at')
-      || text.includes('approaching rate limits'),
+      || text.includes('try again at'),
     message: 'Codex hit its usage or credit limit before the swarm agent could continue.',
   },
   {
@@ -56,17 +76,66 @@ const RUNTIME_BLOCKER_PATTERNS = [
       || text.includes('something went wrong? hit `/feedback` to report the issue'),
     message: 'Codex rejected the injected swarm steering prompt and could not continue the workflow in interactive mode.',
   },
+  {
+    type: 'rate_limited',
+    provider: 'gemini',
+    matches: (text) =>
+      text.includes('resource exhausted')
+      || text.includes('rate limit')
+      || text.includes('quota exceeded')
+      || text.includes('429'),
+    message: 'Gemini hit its usage or rate limit before the swarm agent could continue.',
+  },
+  {
+    type: 'provider_unavailable',
+    provider: 'gemini',
+    matches: (text) =>
+      text.includes('not authenticated')
+      || text.includes('please sign in')
+      || text.includes('login required')
+      || text.includes('GEMINI_API_KEY')
+      || text.includes('authentication failed')
+      || text.includes('api key'),
+    message: 'Gemini requires authentication or an API key before the swarm agent can continue.',
+  },
 ];
 const RUNTIME_PROVIDER_PROFILES = {
   [RUNTIME_PROVIDER.CLAUDE]: { args: [] },
   [RUNTIME_PROVIDER.CODEX]: {
-    args: ['--no-alt-screen', '-a', 'never', '-s', 'workspace-write'],
+    buildArgs: () => {
+      const args = ['--no-alt-screen', '-a', 'never', '-s', 'workspace-write'];
+      const configuredModel = String(process.env.SWARM_CODEX_MODEL ?? '').trim();
+      const runtimeModel = configuredModel || DEFAULT_SWARM_CODEX_MODEL;
+
+      if (runtimeModel) {
+        args.push('-m', runtimeModel);
+      }
+
+      if (process.env.SWARM_CODEX_SKIP_GIT_REPO_CHECK === '1') {
+        args.push('--skip-git-repo-check');
+      }
+
+      return args;
+    },
+  },
+  [RUNTIME_PROVIDER.GEMINI]: {
+    buildArgs: () => {
+      const args = [];
+      const configuredModel = String(process.env.SWARM_GEMINI_MODEL ?? '').trim();
+      const runtimeModel = configuredModel || DEFAULT_SWARM_GEMINI_MODEL;
+
+      if (runtimeModel) {
+        args.push('-m', runtimeModel);
+      }
+
+      return args;
+    },
   },
 };
 
 function normalizeRuntimeProvider(provider) {
   const value = String(provider ?? '').trim().toLowerCase();
-  if (value === RUNTIME_PROVIDER.CLAUDE || value === RUNTIME_PROVIDER.CODEX || value === RUNTIME_PROVIDER.AUTO) {
+  if (value === RUNTIME_PROVIDER.CLAUDE || value === RUNTIME_PROVIDER.CODEX || value === RUNTIME_PROVIDER.GEMINI || value === RUNTIME_PROVIDER.AUTO) {
     return value;
   }
   return RUNTIME_PROVIDER.AUTO;
@@ -162,10 +231,19 @@ class SwarmEngine {
         allowFallback: false,
       };
     }
+    if (normalized === RUNTIME_PROVIDER.GEMINI) {
+      return {
+        mode: RUNTIME_PROVIDER.GEMINI,
+        activeProvider: RUNTIME_PROVIDER.GEMINI,
+        fallbackProvider: null,
+        allowFallback: false,
+      };
+    }
     return {
       mode: RUNTIME_PROVIDER.AUTO,
       activeProvider: RUNTIME_PROVIDER.CLAUDE,
       fallbackProvider: RUNTIME_PROVIDER.CODEX,
+      tertiaryProvider: RUNTIME_PROVIDER.GEMINI,
       allowFallback: true,
     };
   }
@@ -176,6 +254,12 @@ class SwarmEngine {
         return this._sessionManager.codexBin;
       }
       return discoverCodexBinary();
+    }
+    if (provider === RUNTIME_PROVIDER.GEMINI) {
+      if (this._sessionManager.geminiBin) {
+        return this._sessionManager.geminiBin;
+      }
+      return discoverGeminiBinary();
     }
 
     const claudeBin = this._sessionManager.claudeBin;
@@ -189,18 +273,27 @@ class SwarmEngine {
     // The runtime CLI entrypoints are interactive by default. Provider-specific
     // launch behavior is represented here so Swarm can select the correct
     // binary/launch profile without duplicating discovery logic.
-    return [...(RUNTIME_PROVIDER_PROFILES[provider]?.args ?? [])];
+    const profile = RUNTIME_PROVIDER_PROFILES[provider] ?? {};
+    if (typeof profile.buildArgs === 'function') {
+      return [...profile.buildArgs()];
+    }
+    return [...(profile.args ?? [])];
   }
 
   _buildRuntimeProviderBootstrapPrompt(provider, { fallbackFrom = null, fallbackReason = null } = {}) {
-    const providerLabel = provider === RUNTIME_PROVIDER.CODEX ? 'Codex' : 'Claude';
+    let providerLabel = 'Claude';
+    if (provider === RUNTIME_PROVIDER.CODEX) providerLabel = 'Codex';
+    if (provider === RUNTIME_PROVIDER.GEMINI) providerLabel = 'Gemini';
+
     const lines = [
       `${providerLabel} runtime is active for this Swarm agent.`,
       'Continue the workflow using the shared task context below.',
     ];
 
     if (fallbackFrom) {
-      const fallbackLabel = fallbackFrom === RUNTIME_PROVIDER.CODEX ? 'Codex' : 'Claude';
+      let fallbackLabel = 'Claude';
+      if (fallbackFrom === RUNTIME_PROVIDER.CODEX) fallbackLabel = 'Codex';
+      if (fallbackFrom === RUNTIME_PROVIDER.GEMINI) fallbackLabel = 'Gemini';
       lines.unshift(`${providerLabel} replaced ${fallbackLabel} because the previous provider could not continue.`);
     }
     if (fallbackReason) {
@@ -312,6 +405,74 @@ class SwarmEngine {
         || normalized.includes('esc to interrupt');
     }
 
+    if (provider === RUNTIME_PROVIDER.GEMINI) {
+      return normalized.includes('esc to interrupt');
+    }
+
+    return false;
+  }
+
+  _detectRuntimePromptIntervention(rawChunk = '', provider = null) {
+    const normalized = this._normalizeParserChunk(rawChunk).toLowerCase();
+    if (!normalized.trim() || provider !== RUNTIME_PROVIDER.CODEX) return null;
+    const compact = normalized.replace(/[^a-z0-9]+/g, '');
+    const hasHardUsageLimit =
+      normalized.includes("you've hit your usage limit")
+      || normalized.includes('purchase more credits')
+      || normalized.includes('try again at');
+
+    if (
+      compact.includes('choosehowyoudlikecodextoproceed')
+      && compact.includes('trynewmodel')
+      && compact.includes('useexistingmodel')
+    ) {
+      return {
+        type: 'model_selection_menu',
+        provider: RUNTIME_PROVIDER.CODEX,
+      };
+    }
+
+    if (
+      !hasHardUsageLimit
+      && (
+      compact.includes('approachingratelimits')
+      && compact.includes('keepcurrentmodel')
+      && (compact.includes('switchtogpt') || compact.includes('codexmini'))
+      )
+    ) {
+      return {
+        type: 'rate_limit_menu_keep_current_model',
+        provider: RUNTIME_PROVIDER.CODEX,
+      };
+    }
+
+    return null;
+  }
+
+  _applyRuntimePromptIntervention(sessionId, state, intervention) {
+    if (!sessionId || !state || !intervention) return false;
+
+    if (
+      intervention.type === 'model_selection_menu'
+      || intervention.type === 'rate_limit_menu_keep_current_model'
+    ) {
+      const handledKey = intervention.type === 'model_selection_menu'
+        ? 'modelSelectionMenuHandled'
+        : 'rateLimitMenuHandled';
+      if (state[handledKey]) return false;
+      state[handledKey] = true;
+
+      // Prefer staying on the configured model when Codex renders an
+      // interactive model-choice menu so Swarm can continue without silently
+      // accepting a provider-driven model change.
+      this._sessionManager.writeInput(sessionId, '\x1b[B');
+      setTimeout(() => {
+        this._sessionManager.writeInput(sessionId, '\r');
+      }, SWARM_RUNTIME_MENU_SUBMIT_DELAY_MS);
+
+      return true;
+    }
+
     return false;
   }
 
@@ -324,9 +485,28 @@ class SwarmEngine {
         clearTimeout(state.promptReadyTimer);
         state.promptReadyTimer = null;
       }
+      // Clear any previous echo-marker timeout before setting a new one
+      if (state.echoMarkerTimer) {
+        clearTimeout(state.echoMarkerTimer);
+        state.echoMarkerTimer = null;
+      }
       state.pendingPrompt = null;
       state.ignoreParserUntil = SWARM_PROMPT_ECHO_MARKER;
       state.ignoreParserBuffer = '';
+
+      // Fallback: if the echo marker is never observed (e.g. Claude's
+      // interactive CLI does not echo pasted text), clear the gate after
+      // a timeout so the parser can resume detecting __DONE__ / __HANDOFF__.
+      state.echoMarkerTimer = setTimeout(() => {
+        if (state.ignoreParserUntil) {
+          state.ignoreParserUntil = null;
+          state.ignoreParserBuffer = '';
+        }
+        state.echoMarkerTimer = null;
+      }, SWARM_ECHO_MARKER_TIMEOUT_MS);
+      if (state.echoMarkerTimer.unref) {
+        state.echoMarkerTimer.unref();
+      }
     }
 
     const payload = `${prompt}\n${SWARM_PROMPT_ECHO_MARKER}`;
@@ -389,12 +569,24 @@ class SwarmEngine {
     }
   }
 
-  _shouldFallbackToCodex(execution, blocker, state) {
+  _shouldFallback(execution, blocker, state) {
     if (!execution || !blocker || !state) return false;
     if (execution.providerStrategy?.mode !== RUNTIME_PROVIDER.AUTO) return false;
-    if (state.provider !== RUNTIME_PROVIDER.CLAUDE) return false;
-    if (blocker.provider !== RUNTIME_PROVIDER.CLAUDE) return false;
-    return blocker.type === 'rate_limited' || blocker.type === 'provider_unavailable';
+    if (!execution.providerStrategy?.allowFallback) return false;
+
+    const currentProvider = state.provider;
+    const blockerProvider = blocker.provider;
+
+    if (currentProvider !== blockerProvider) return false;
+
+    if (currentProvider === RUNTIME_PROVIDER.CLAUDE) {
+      return blocker.type === 'rate_limited' || blocker.type === 'provider_unavailable';
+    }
+    if (currentProvider === RUNTIME_PROVIDER.CODEX) {
+      return blocker.type === 'rate_limited' || blocker.type === 'provider_unavailable' || blocker.type === 'trust_required' || blocker.type === 'prompt_rejected';
+    }
+
+    return false;
   }
 
   async _attemptRuntimeFallback(executionId, nodeId, blocker) {
@@ -402,30 +594,44 @@ class SwarmEngine {
     if (!execution) return false;
 
     const currentState = execution.agentStates.get(nodeId);
-    if (!this._shouldFallbackToCodex(execution, blocker, currentState)) {
+    if (!this._shouldFallback(execution, blocker, currentState)) {
       return false;
     }
 
     const previousSessionId = currentState?.sessionId ?? null;
     const previousTapFn = currentState?.tapFn ?? null;
+    const currentProvider = currentState.provider;
+
+    let nextProvider;
+    if (currentProvider === RUNTIME_PROVIDER.CLAUDE) {
+      nextProvider = RUNTIME_PROVIDER.CODEX;
+    } else if (currentProvider === RUNTIME_PROVIDER.CODEX) {
+      nextProvider = RUNTIME_PROVIDER.GEMINI;
+    } else {
+      return false;
+    }
 
     try {
       await this._spawnAgentPty(executionId, nodeId, {
-        requestedProvider: RUNTIME_PROVIDER.CODEX,
-        fallbackFrom: RUNTIME_PROVIDER.CLAUDE,
+        requestedProvider: nextProvider,
+        fallbackFrom: currentProvider,
         fallbackReason: blocker.message,
         previousSessionId,
         previousTapFn,
       });
 
       execution.lastFallback = {
-        fromProvider: RUNTIME_PROVIDER.CLAUDE,
-        toProvider: RUNTIME_PROVIDER.CODEX,
+        fromProvider: currentProvider,
+        toProvider: nextProvider,
         reason: blocker.message,
         type: blocker.type,
         nodeId,
         detectedAt: blocker.detectedAt ?? new Date().toISOString(),
       };
+
+      if (execution.providerStrategy) {
+        execution.providerStrategy.activeProvider = nextProvider;
+      }
       execution.runtimeBlocker = null;
 
       const latestState = execution.agentStates.get(nodeId);
@@ -618,7 +824,9 @@ class SwarmEngine {
           provider
         );
         const combinedPrompt = [bootstrapPrompt, systemPrompt].filter(Boolean).join('\n\n');
-        const codexInitialPrompt = provider === RUNTIME_PROVIDER.CODEX ? combinedPrompt : null;
+        const codexInitialPrompt = provider === RUNTIME_PROVIDER.CODEX
+          ? `${combinedPrompt}\n${SWARM_PROMPT_ECHO_MARKER}`
+          : null;
         const session = await this._sessionManager.createSession(
           execution.projectId,
           execution.projectPath,
@@ -641,7 +849,7 @@ class SwarmEngine {
           provider,
           runtimeProvider: provider,
           runtimeBlocker: null,
-          ignoreParserUntil: null,
+          ignoreParserUntil: codexInitialPrompt ? SWARM_PROMPT_ECHO_MARKER : null,
           ignoreParserBuffer: '',
           promptReady: false,
           pendingPrompt: null,
@@ -649,6 +857,9 @@ class SwarmEngine {
           promptSubmissionCount: 0,
           runtimeSession: true,
           doneReinjectCount: 0,
+          modelSelectionMenuHandled: false,
+          rateLimitMenuHandled: false,
+          echoMarkerTimer: null,
         };
 
         execution.activeProvider = provider;
@@ -672,6 +883,13 @@ class SwarmEngine {
           if (currentState) {
             currentState.lastOutputSnippet = (currentState.lastOutputSnippet + chunk).slice(-500);
             this._broadcastAgentStatus(executionId, nodeId, currentState);
+          }
+
+          const promptIntervention = currentState
+            ? this._detectRuntimePromptIntervention(currentState.lastOutputSnippet, currentState.provider)
+            : null;
+          if (promptIntervention && this._applyRuntimePromptIntervention(sessionId, currentState, promptIntervention)) {
+            return;
           }
 
           if (this._budgetTracker) {
@@ -704,6 +922,11 @@ class SwarmEngine {
             );
             currentState.ignoreParserUntil = null;
             currentState.ignoreParserBuffer = '';
+            // Cancel the fallback timer — the marker arrived in time
+            if (currentState.echoMarkerTimer) {
+              clearTimeout(currentState.echoMarkerTimer);
+              currentState.echoMarkerTimer = null;
+            }
 
             if (!remainder) {
               return;
@@ -860,14 +1083,16 @@ class SwarmEngine {
       lines.push('The final handoff token must be plain text on a single line with no bullets, quotes, code fences, or indentation.');
       lines.push('');
       lines.push(`Valid target IDs: ${handoffTargets.join(', ')}`);
-      lines.push('Context update: a flat JSON object with string values summarizing your work. Max 50 keys, values max 1024 chars.');
+      lines.push('Context update: a flat JSON object with primitive values only (string, number, or boolean). Max 50 keys, strings max 1024 chars. Keep it compact.');
       lines.push('');
       if (handoffTargets.length === 1) {
-        lines.push(`CONCRETE EXAMPLE (use exactly this format with your real summary):`);
-        lines.push(`__HANDOFF__:${handoffTargets[0]}:{"summary": "Completed my stage of the task", "result": "key findings here"}`);
+        lines.push('CONCRETE EXAMPLE (replace the placeholders with your real work):');
+        lines.push(`For this workflow, <targetId> must be ${handoffTargets[0]}.`);
+        lines.push('__HANDOFF__:<targetId>:{"summary": "your real work summary", "result": "your real findings"}');
       } else {
-        lines.push(`CONCRETE EXAMPLE (use exactly this format with the chosen target and your real summary):`);
-        lines.push(`__HANDOFF__:${handoffTargets[0]}:{"summary": "Completed my stage of the task", "result": "key findings here"}`);
+        lines.push('CONCRETE EXAMPLE (replace the placeholders with the chosen target and your real work):');
+        lines.push(`Choose one target from: ${handoffTargets.join(', ')}`);
+        lines.push('__HANDOFF__:<targetId>:{"summary": "your real work summary", "result": "your real findings"}');
       }
       lines.push('');
       lines.push('Do NOT output __DONE__ from this agent while downstream handoff targets still exist.');
@@ -901,7 +1126,9 @@ class SwarmEngine {
     }
 
     lines.push('Your very last line must be a valid handoff token in this EXACT format:');
-    lines.push(`__HANDOFF__:${handoffTargets[0]}:{"summary": "your work summary here"}`);
+    lines.push(`Use ${handoffTargets[0]} in place of <targetId> for this workflow.`);
+    lines.push('__HANDOFF__:<targetId>:{"summary": "your work summary here"}');
+    lines.push('Use only flat JSON with primitive values (string, number, or boolean). Keep the handoff line compact.');
     lines.push('Output that final handoff token as plain text on a single line with no bullets, quotes, code fences, or indentation.');
     lines.push('Replace the summary value with an actual description of what you accomplished.');
 
@@ -1133,6 +1360,11 @@ class SwarmEngine {
         if (session) {
           session.swarmListeners.delete(state.tapFn);
         }
+      }
+      // Clear echo-marker timeout to prevent leaked timers
+      if (state.echoMarkerTimer) {
+        clearTimeout(state.echoMarkerTimer);
+        state.echoMarkerTimer = null;
       }
     }
 

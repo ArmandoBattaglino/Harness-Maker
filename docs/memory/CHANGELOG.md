@@ -1,5 +1,44 @@
 # CHANGELOG — Claude Code Visual Manager
 
+## 2026-04-03
+
+### [Task #145 follow-up] Swarm runtime hardening — prompt templating, menu auto-dismiss, hard-blocker precedence
+- Agent: debugger (Codex)
+- Modified: server/services/SwarmEngine.js, server/tests/swarm-engine.test.js, docs/TASK_PLAN.md, docs/memory/DECISIONS.md, docs/memory/PROGRESS.md
+
+#### server/services/SwarmEngine.js
+- **Change type:** MODIFIED (3 behavioral changes)
+- **What changed:**
+  1. `_buildSystemPrompt()` (line ~969): Handoff example now uses `__HANDOFF__:<targetId>:{"summary": "..."}` instead of `__HANDOFF__:${handoffTargets[0]}:{"summary": "..."}`. Prevents ConPTY echo replay from creating parser-consumable fake handoffs. Real target ID listed separately with instruction "Use X in place of `<targetId>`".
+  2. `_buildContinueAfterDonePrompt()` (line ~1016): Same templating approach — example uses `<targetId>` placeholder, real target named separately.
+  3. New method `_detectRuntimePromptIntervention()` (line ~353): Detects Codex model-selection menu ("Choose how you'd like Codex to proceed") and rate-limit menu ("Approaching rate limits") via normalized compact text matching. Returns `null` when a hard usage-limit is also present in the same chunk (DEC-024 precedence rule).
+  4. New method `_applyRuntimePromptIntervention()` (line ~390): Auto-dismisses detected menus by sending cursor-down (`\x1b[B`) + Enter (`\r`) with configurable delay (`SWARM_RUNTIME_MENU_SUBMIT_DELAY_MS = 50`). Tracks `modelSelectionMenuHandled` and `rateLimitMenuHandled` flags on agent state to prevent double-handling.
+  5. `tapFn` in `_spawnAgentPty()`: Now calls `_detectRuntimePromptIntervention()` before blocker detection and parser feed. If intervention is detected and applied, the chunk is consumed (not forwarded to parser or blocker detector).
+- **Why (DEC-023):** Live probe `b3c645a8` proved ConPTY replayed prompt text after echo marker, causing HandoffParser to consume example token as a real handoff.
+- **Why (DEC-024):** Live probe `9a7c81ae` showed hard usage-limit + soft rate-limit menu arriving in same chunk; treating soft menu first left workflow falsely `running`.
+
+#### server/tests/swarm-engine.test.js
+- **Change type:** MODIFIED (7+ new test cases)
+- **What changed:** Added regression tests for:
+  - Templated initial prompt (no parser-consumable example with real node ID)
+  - Templated recovery prompt (`_buildContinueAfterDonePrompt`)
+  - Codex model-selection menu auto-dismiss (clean text + ANSI-stripped variants)
+  - Codex rate-limit menu auto-dismiss (clean text + ANSI-stripped variants)
+  - Hard usage-limit precedence over soft rate-limit menu
+  - Echo marker suppression prevents prompt examples from counting as handoffs
+  - Replayed `<targetId>` template after echo marker is ignored
+  - _onDone keeps non-terminal agent running and sends recovery prompt
+- **Test count:** 83/83 pass (combined with HandoffParser.test.js)
+
+#### docs/memory/DECISIONS.md
+- **Change type:** MODIFIED (2 new decisions appended)
+- **What changed:** DEC-023 (templated prompt examples, DEC-024 (hard-limit precedence over soft menu)
+
+#### docs/TASK_PLAN.md
+- **Change type:** MODIFIED (TASK #145 investigation note updated with latest probe results and subtask breakdown 145.1/145.2/145.3)
+
+---
+
 ## 2026-03-25
 
 ### [Task #23] Design System Foundation (Phase 9)

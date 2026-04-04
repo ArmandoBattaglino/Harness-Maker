@@ -1,0 +1,10 @@
+{
+  "request_id": "d1e04a22-2ae8-41d8-bd17-771ff2edafda",
+  "created_at": "2026-04-03T16:26:43.397Z",
+  "user_prompt": "Review docs/TASK_PLAN.md open tasks #145/#148/#153 and state exactly what evidence is still missing for an honest closure after the latest runtime blocker fixes. Do not edit files.",
+  "requested_agent": "qa-tester",
+  "status": "active",
+  "steps": [],
+  "next_actions": [],
+  "summary": null
+}

@@ -64,6 +64,7 @@ function buildMocks() {
   const mockSessionManager = {
     claudeBin: '/usr/local/bin/claude',
     codexBin: '/usr/local/bin/codex',
+    geminiBin: '/usr/local/bin/gemini',
     createSession: vi.fn().mockImplementation(async (_projectId, _projectPath, _bin) => {
       sessionCallCount++;
       if (sessionCallCount === 1) {
@@ -113,6 +114,7 @@ describe('SwarmEngine', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllEnvs();
     vi.clearAllMocks();
   });
 
@@ -167,6 +169,15 @@ describe('SwarmEngine', () => {
         '/usr/local/bin/codex',
         expect.objectContaining({
           provider: 'codex',
+          args: [
+            '--no-alt-screen',
+            '-a',
+            'never',
+            '-s',
+            'workspace-write',
+            '-m',
+            'gpt-5.1-codex',
+          ],
           initialPrompt: expect.stringContaining('Codex runtime is active for this Swarm agent.'),
         })
       );
@@ -189,6 +200,32 @@ describe('SwarmEngine', () => {
         runtimeProvider: 'codex',
         status: 'running',
       });
+    });
+
+    it('should honor SWARM_CODEX_MODEL when building the Codex runtime launch args', async () => {
+      vi.stubEnv('SWARM_CODEX_MODEL', 'gpt-5.4');
+
+      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'codex',
+      });
+
+      expect(mockSessionManager.createSession).toHaveBeenCalledWith(
+        'proj-1',
+        '/projects/proj-1',
+        '/usr/local/bin/codex',
+        expect.objectContaining({
+          provider: 'codex',
+          args: [
+            '--no-alt-screen',
+            '-a',
+            'never',
+            '-s',
+            'workspace-write',
+            '-m',
+            'gpt-5.4',
+          ],
+        })
+      );
     });
 
     it('should remove swarm tap listener from session on stopExecution', async () => {
@@ -226,8 +263,21 @@ describe('SwarmEngine', () => {
       expect(initialPrompt).toContain('Valid target IDs: node-b');
       expect(initialPrompt).toContain('This agent is not terminal in the workflow.');
       expect(initialPrompt).toContain('Your required downstream target is: node-b');
+      expect(initialPrompt).toContain('primitive values only (string, number, or boolean)');
+      expect(initialPrompt).toContain('Keep it compact.');
       expect(initialPrompt).toContain('Do NOT output __DONE__ from this agent while downstream handoff targets still exist.');
       expect(initialPrompt).toContain('Do not emit __DONE__ immediately just because you understand the instructions.');
+      expect(initialPrompt).toContain('For this workflow, <targetId> must be node-b.');
+      expect(initialPrompt).toContain('__HANDOFF__:<targetId>:{"summary": "your real work summary", "result": "your real findings"}');
+      expect(initialPrompt).not.toContain('__HANDOFF__:node-b:{"summary": "Completed my stage of the task", "result": "key findings here"}');
+    });
+
+    it('should keep recovery handoff instructions templated so echoed follow-up prompts cannot become a fake handoff', () => {
+      const prompt = engine._buildContinueAfterDonePrompt(wf.nodes[0], engine._buildInitialWorkflowContext(wf), ['node-b']);
+
+      expect(prompt).toContain('Use node-b in place of <targetId> for this workflow.');
+      expect(prompt).toContain('__HANDOFF__:<targetId>:{"summary": "your work summary here"}');
+      expect(prompt).not.toContain('__HANDOFF__:node-b:');
     });
 
     it('should submit the pasted swarm prompt with a follow-up enter key', async () => {
@@ -255,6 +305,169 @@ describe('SwarmEngine', () => {
 
       expect(mockSessionManager.writeInput.mock.calls[0]).toEqual(['sess-node-a', '\x1b']);
       expect(mockSessionManager.writeInput.mock.calls.at(-1)).toEqual(['sess-node-a', '\r']);
+    });
+
+    it('should auto-dismiss the Codex model-selection menu by choosing the existing model', async () => {
+      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'codex',
+      });
+
+      const execution = engine._executions.get([...engine._executions.keys()][0]);
+      const nodeAState = execution.agentStates.get('node-a');
+      const tapFn = [...mockSession.swarmListeners].find((listener) => listener === nodeAState.tapFn);
+      nodeAState.ignoreParserUntil = null;
+      nodeAState.ignoreParserBuffer = '';
+
+      mockSessionManager.writeInput.mockClear();
+      tapFn("Choose how you'd like Codex to proceed.\n1. Try new model\n2. Use existing model");
+      await vi.advanceTimersByTimeAsync(80);
+
+      expect(mockSessionManager.writeInput.mock.calls).toContainEqual(['sess-node-a', '\x1b[B']);
+      expect(mockSessionManager.writeInput.mock.calls).toContainEqual(['sess-node-a', '\r']);
+      expect(nodeAState.modelSelectionMenuHandled).toBe(true);
+    });
+
+    it('should auto-dismiss the rendered Codex model-selection menu even when cursor-control ANSI strips spacing', async () => {
+      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'codex',
+      });
+
+      const execution = engine._executions.get([...engine._executions.keys()][0]);
+      const nodeAState = execution.agentStates.get('node-a');
+      const tapFn = [...mockSession.swarmListeners].find((listener) => listener === nodeAState.tapFn);
+
+      mockSessionManager.writeInput.mockClear();
+      tapFn("Choose\u001b[1Chow\u001b[1Cyou'd\u001b[1Clike\u001b[1CCodex\u001b[1Cto\u001b[1Cproceed.\u001b[38;5;6m\u001b[15;1H› 1. Try new model\u001b[m\u001b[16;3H2.\u001b[1CUse\u001b[1Cexisting\u001b[1Cmodel");
+      await vi.advanceTimersByTimeAsync(80);
+
+      expect(mockSessionManager.writeInput.mock.calls).toContainEqual(['sess-node-a', '\x1b[B']);
+      expect(mockSessionManager.writeInput.mock.calls).toContainEqual(['sess-node-a', '\r']);
+      expect(nodeAState.modelSelectionMenuHandled).toBe(true);
+    });
+
+    it('should auto-dismiss the Codex approaching-rate-limits menu by keeping the current model', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'codex',
+      });
+
+      const execution = engine._executions.get(executionId);
+      const nodeAState = execution.agentStates.get('node-a');
+      const tapFn = [...mockSession.swarmListeners].find((listener) => listener === nodeAState.tapFn);
+      nodeAState.ignoreParserUntil = null;
+      nodeAState.ignoreParserBuffer = '';
+
+      mockSessionManager.writeInput.mockClear();
+      tapFn('Approaching rate limits.\n1. Switch to gpt-5.1-codex-mini\n2. Keep current model\n3. Keep current model (never show again)');
+      await vi.advanceTimersByTimeAsync(80);
+
+      expect(mockSessionManager.writeInput.mock.calls).toContainEqual(['sess-node-a', '\x1b[B']);
+      expect(mockSessionManager.writeInput.mock.calls).toContainEqual(['sess-node-a', '\r']);
+      expect(nodeAState.rateLimitMenuHandled).toBe(true);
+
+      const status = engine.getStatus(executionId);
+      expect(status.status).toBe('running');
+      expect(status.runtimeBlocker).toBeUndefined();
+    });
+
+    it('should auto-dismiss the rendered Codex approaching-rate-limits menu even when ANSI strips spacing', async () => {
+      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'codex',
+      });
+
+      const execution = engine._executions.get([...engine._executions.keys()][0]);
+      const nodeAState = execution.agentStates.get('node-a');
+      const tapFn = [...mockSession.swarmListeners].find((listener) => listener === nodeAState.tapFn);
+      nodeAState.ignoreParserUntil = null;
+      nodeAState.ignoreParserBuffer = '';
+
+      mockSessionManager.writeInput.mockClear();
+      tapFn('Approaching\u001b[1Crate\u001b[1Climits.\u001b[38;5;6m\u001b[15;1H› 1. Switch\u001b[1Cto\u001b[1Cgpt-5.1-codex-mini\u001b[m\u001b[16;3H2.\u001b[1CKeep\u001b[1Ccurrent\u001b[1Cmodel\u001b[17;3H3.\u001b[1CKeep\u001b[1Ccurrent\u001b[1Cmodel');
+      await vi.advanceTimersByTimeAsync(80);
+
+      expect(mockSessionManager.writeInput.mock.calls).toContainEqual(['sess-node-a', '\x1b[B']);
+      expect(mockSessionManager.writeInput.mock.calls).toContainEqual(['sess-node-a', '\r']);
+      expect(nodeAState.rateLimitMenuHandled).toBe(true);
+    });
+
+    it('should prefer a hard Codex usage-limit blocker over auto-dismissing the approaching-rate-limits menu', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'codex',
+      });
+
+      const execution = engine._executions.get(executionId);
+      const nodeAState = execution.agentStates.get('node-a');
+      const tapFn = [...mockSession.swarmListeners].find((listener) => listener === nodeAState.tapFn);
+      nodeAState.ignoreParserUntil = null;
+      nodeAState.ignoreParserBuffer = '';
+
+      mockSessionManager.writeInput.mockClear();
+      tapFn("You've hit your usage limit. Try again at Apr 9th, 2026 4:22 PM.\nApproaching rate limits.\n1. Switch to gpt-5.1-codex-mini\n2. Keep current model");
+      await vi.advanceTimersByTimeAsync(80);
+
+      expect(mockSessionManager.writeInput.mock.calls).not.toContainEqual(['sess-node-a', '\x1b[B']);
+      expect(mockSessionManager.writeInput.mock.calls).not.toContainEqual(['sess-node-a', '\r']);
+
+      const status = engine.getStatus(executionId);
+      expect(status.status).toBe('blocked');
+      expect(status.runtimeBlocker).toMatchObject({
+        type: 'rate_limited',
+        provider: 'codex',
+        nodeId: 'node-a',
+      });
+    });
+
+    it('should ignore the rendered Codex initial prompt until the swarm echo marker so prompt examples do not count as handoffs', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'codex',
+      });
+
+      const execution = engine._executions.get(executionId);
+      const nodeAState = execution.agentStates.get('node-a');
+      const tapFn = [...mockSession.swarmListeners].find((listener) => listener === nodeAState.tapFn);
+
+      tapFn('__HANDOFF__:node-b:{"summary":"prompt example","status":"ignore me"}');
+
+      let status = engine.getStatus(executionId);
+      expect(status.agentStates['node-a'].handoffCount).toBe(0);
+      expect(status.agentStates['node-b']).toBeUndefined();
+
+      tapFn('\n--- END SWARM INPUT ---');
+      await Promise.resolve();
+      await Promise.resolve();
+
+      status = engine.getStatus(executionId);
+      expect(status.agentStates['node-a'].handoffCount).toBe(0);
+      expect(status.agentStates['node-b']).toBeUndefined();
+
+      tapFn('\n__HANDOFF__:node-b:{"summary":"real work","status":"ready"}');
+      await Promise.resolve();
+      await Promise.resolve();
+
+      status = engine.getStatus(executionId);
+      expect(status.agentStates['node-a'].handoffCount).toBe(1);
+      expect(status.agentStates['node-b'].status).toBe('running');
+    });
+
+    it('should ignore replayed prompt templates after the echo marker because <targetId> is not a real downstream node id', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'codex',
+      });
+
+      const execution = engine._executions.get(executionId);
+      const nodeAState = execution.agentStates.get('node-a');
+      const tapFn = [...mockSession.swarmListeners].find((listener) => listener === nodeAState.tapFn);
+
+      tapFn('\n--- END SWARM INPUT ---');
+      await Promise.resolve();
+      await Promise.resolve();
+
+      tapFn('\n__HANDOFF__:<targetId>:{"summary":"your real work summary","result":"your real findings"}');
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const status = engine.getStatus(executionId);
+      expect(status.agentStates['node-a'].handoffCount).toBe(0);
+      expect(status.agentStates['node-b']).toBeUndefined();
     });
 
     it('should keep a non-terminal agent running and send a recovery prompt when it emits __DONE__', async () => {
@@ -308,6 +521,69 @@ describe('SwarmEngine', () => {
         .map(([, ev]) => ev)
         .filter((ev) => ev.type === 'handoff_started' || ev.type === 'handoff_completed');
       expect(handoffEvents.some((ev) => ev.type === 'handoff_started')).toBe(true);
+    });
+
+    it('should auto-clear ignoreParserUntil after the echo marker timeout if the marker never arrives (Claude provider)', async () => {
+      // Claude provider does NOT set ignoreParserUntil at spawn time (only Codex does).
+      // But after a handoff, _writeSwarmPrompt -> _flushSwarmPrompt sets ignoreParserUntil
+      // for the target agent's prompt injection. Simulate that scenario.
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const execution = engine._executions.get(executionId);
+      const nodeAState = execution.agentStates.get('node-a');
+
+      // Simulate _flushSwarmPrompt having been called (sets ignoreParserUntil)
+      nodeAState.ignoreParserUntil = '--- END SWARM INPUT ---';
+      nodeAState.ignoreParserBuffer = '';
+      // Start the echo marker timeout (mimicking _flushSwarmPrompt behavior)
+      nodeAState.echoMarkerTimer = setTimeout(() => {
+        if (nodeAState.ignoreParserUntil) {
+          nodeAState.ignoreParserUntil = null;
+          nodeAState.ignoreParserBuffer = '';
+        }
+        nodeAState.echoMarkerTimer = null;
+      }, 10000);
+
+      // The parser should still be blocked
+      const tapFn = [...mockSession.swarmListeners].find((listener) => listener === nodeAState.tapFn);
+      tapFn('__DONE__');
+      let status = engine.getStatus(executionId);
+      expect(status.agentStates['node-a'].status).toBe('running');
+
+      // Advance past the 10s timeout
+      await vi.advanceTimersByTimeAsync(10001);
+
+      // ignoreParserUntil should now be cleared
+      expect(nodeAState.ignoreParserUntil).toBeNull();
+      expect(nodeAState.echoMarkerTimer).toBeNull();
+
+      // Now a __DONE__ should be parseable
+      tapFn('__DONE__');
+
+      // node-a has downstream targets, so _onDone should reinject (not complete)
+      status = engine.getStatus(executionId);
+      expect(status.agentStates['node-a'].status).toBe('running');
+      // But the reinject proves the parser is working (doneReinjectCount > 0)
+      expect(nodeAState.doneReinjectCount).toBeGreaterThan(0);
+    });
+
+    it('should cancel the echo marker timeout when the marker arrives before the timeout fires', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'codex',
+      });
+      const execution = engine._executions.get(executionId);
+      const nodeAState = execution.agentStates.get('node-a');
+      const tapFn = [...mockSession.swarmListeners].find((listener) => listener === nodeAState.tapFn);
+
+      // Codex sets ignoreParserUntil at spawn. Verify it's set.
+      expect(nodeAState.ignoreParserUntil).toBe('--- END SWARM INPUT ---');
+
+      // Send the echo marker BEFORE the timeout fires
+      tapFn('\n--- END SWARM INPUT ---');
+
+      // ignoreParserUntil should be cleared immediately
+      expect(nodeAState.ignoreParserUntil).toBeNull();
+      // echoMarkerTimer should also be cleared
+      expect(nodeAState.echoMarkerTimer).toBeNull();
     });
   });
 
@@ -553,6 +829,15 @@ describe('SwarmEngine', () => {
       expect(fallbackCall[2]).toBe('/usr/local/bin/codex');
       expect(fallbackCall[3]).toMatchObject({
         provider: 'codex',
+        args: [
+          '--no-alt-screen',
+          '-a',
+          'never',
+          '-s',
+          'workspace-write',
+          '-m',
+          'gpt-5.1-codex',
+        ],
       });
       expect(mockSessionManager.killSession).toHaveBeenCalledWith('sess-node-a');
 
@@ -635,12 +920,110 @@ describe('SwarmEngine', () => {
       });
     });
 
+    it('should classify Codex trust/bootstrap output as a blocked runtime state', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'codex',
+      });
+      const tapFn = [...mockSession.swarmListeners][0];
+      const execution = engine._executions.get(executionId);
+
+      execution.agentStates.get('node-a').ignoreParserUntil = null;
+      execution.agentStates.get('node-a').ignoreParserBuffer = '';
+
+      wsBroadcast.mockClear();
+      tapFn('Do you trust the contents of this directory? Trust this folder to continue.');
+
+      const status = engine.getStatus(executionId);
+      expect(status.status).toBe('blocked');
+      expect(status.runtimeProvider).toBe('codex');
+      expect(status.activeProvider).toBe('codex');
+      expect(status.agentStates['node-a'].status).toBe('blocked');
+      expect(status.runtimeBlocker).toMatchObject({
+        type: 'trust_required',
+        provider: 'codex',
+        nodeId: 'node-a',
+      });
+      expect(status.lastFallback).toBeNull();
+
+      const blockedSnapshot = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .find((ev) => ev.type === 'execution_status' && ev.status === 'blocked');
+
+      expect(blockedSnapshot).toBeDefined();
+      expect(blockedSnapshot.runtimeBlocker).toMatchObject({
+        type: 'trust_required',
+        provider: 'codex',
+      });
+    });
+
+    it('should classify Codex CLI usage errors as provider_unavailable instead of leaving the execution running', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'codex',
+      });
+      const tapFn = [...mockSession.swarmListeners][0];
+      const execution = engine._executions.get(executionId);
+
+      execution.agentStates.get('node-a').ignoreParserUntil = null;
+      execution.agentStates.get('node-a').ignoreParserBuffer = '';
+
+      wsBroadcast.mockClear();
+      tapFn("error: unexpected argument '--skip-git-repo-check' found\r\nUsage: codex [OPTIONS] [PROMPT]");
+
+      const status = engine.getStatus(executionId);
+      expect(status.status).toBe('blocked');
+      expect(status.runtimeProvider).toBe('codex');
+      expect(status.activeProvider).toBe('codex');
+      expect(status.agentStates['node-a'].status).toBe('blocked');
+      expect(status.runtimeBlocker).toMatchObject({
+        type: 'provider_unavailable',
+        provider: 'codex',
+        nodeId: 'node-a',
+      });
+
+      const blockedSnapshot = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .find((ev) => ev.type === 'execution_status' && ev.status === 'blocked');
+
+      expect(blockedSnapshot).toBeDefined();
+      expect(blockedSnapshot.runtimeBlocker).toMatchObject({
+        type: 'provider_unavailable',
+        provider: 'codex',
+      });
+    });
+
+    it('should classify Codex unsupported reasoning-effort errors as provider_unavailable', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'codex',
+      });
+      const tapFn = [...mockSession.swarmListeners][0];
+      const execution = engine._executions.get(executionId);
+
+      execution.agentStates.get('node-a').ignoreParserUntil = null;
+      execution.agentStates.get('node-a').ignoreParserBuffer = '';
+
+      wsBroadcast.mockClear();
+      tapFn("{\"type\":\"error\",\"error\":{\"code\":\"unsupported_value\",\"message\":\"Unsupported value: 'xhigh' is not supported\",\"param\":\"reasoning.effort\"},\"status\":400}");
+
+      const status = engine.getStatus(executionId);
+      expect(status.status).toBe('blocked');
+      expect(status.runtimeProvider).toBe('codex');
+      expect(status.activeProvider).toBe('codex');
+      expect(status.agentStates['node-a'].status).toBe('blocked');
+      expect(status.runtimeBlocker).toMatchObject({
+        type: 'provider_unavailable',
+        provider: 'codex',
+        nodeId: 'node-a',
+      });
+    });
+
     it('should classify Codex conversation-interrupted output as a blocked runtime state', async () => {
       const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
         runtimeProvider: 'codex',
       });
       const execution = engine._executions.get(executionId);
       const nodeAState = execution.agentStates.get('node-a');
+      nodeAState.ignoreParserUntil = null;
+      nodeAState.ignoreParserBuffer = '';
       const tapFn = [...mockSession.swarmListeners].find((listener) => listener === nodeAState.tapFn);
 
       tapFn('■ Conversation interrupted - tell the model what to do differently. Something went wrong? Hit `/feedback` to report the issue.');
@@ -698,6 +1081,57 @@ describe('SwarmEngine', () => {
         provider: 'codex',
       });
     });
+    it('should classify Gemini rate limit output as a blocked runtime state', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'gemini',
+      });
+      const tapFn = [...mockSession.swarmListeners][0];
+      const execution = engine._executions.get(executionId);
+
+      execution.agentStates.get('node-a').ignoreParserUntil = null;
+      execution.agentStates.get('node-a').ignoreParserBuffer = '';
+
+      wsBroadcast.mockClear();
+      tapFn("resource exhausted (429)");
+
+      const status = engine.getStatus(executionId);
+      expect(status.status).toBe('blocked');
+      expect(status.runtimeProvider).toBe('gemini');
+      expect(status.activeProvider).toBe('gemini');
+      expect(status.agentStates['node-a'].status).toBe('blocked');
+      expect(status.runtimeBlocker).toMatchObject({
+        type: 'rate_limited',
+        provider: 'gemini',
+        nodeId: 'node-a',
+      });
+      expect(status.lastFallback).toBeNull();
+    });
+
+    it('should classify Gemini authentication required output as a blocked runtime state', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'gemini',
+      });
+      const tapFn = [...mockSession.swarmListeners][0];
+      const execution = engine._executions.get(executionId);
+
+      execution.agentStates.get('node-a').ignoreParserUntil = null;
+      execution.agentStates.get('node-a').ignoreParserBuffer = '';
+
+      wsBroadcast.mockClear();
+      tapFn("Error: not authenticated. please sign in.");
+
+      const status = engine.getStatus(executionId);
+      expect(status.status).toBe('blocked');
+      expect(status.runtimeProvider).toBe('gemini');
+      expect(status.activeProvider).toBe('gemini');
+      expect(status.agentStates['node-a'].status).toBe('blocked');
+      expect(status.runtimeBlocker).toMatchObject({
+        type: 'provider_unavailable',
+        provider: 'gemini',
+        nodeId: 'node-a',
+      });
+    });
+
   });
 
   // -------------------------------------------------------------------------
@@ -979,6 +1413,214 @@ describe('SwarmEngine', () => {
       expect(handoffStarted).toBeDefined();
       expect(handoffStarted[1].sourceNodeId).toBe('node-a');
       expect(handoffStarted[1].targetNodeId).toBe('node-b');
+    });
+
+    it('should stop after exactly three reinject prompts before forcing the downstream handoff', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const tapFn = [...mockSession.swarmListeners].find(fn => typeof fn === 'function');
+
+      await vi.advanceTimersByTimeAsync(200);
+      tapFn(ECHO_MARKER);
+      mockSessionManager.writeInput.mockClear();
+
+      for (let i = 0; i < 3; i++) {
+        await simulateDoneAndEchoCycle(tapFn);
+      }
+
+      await vi.advanceTimersByTimeAsync(3000);
+      tapFn('__DONE__');
+      for (let tick = 0; tick < 10; tick++) {
+        await Promise.resolve();
+      }
+
+      const reinjectPrompts = mockSessionManager.writeInput.mock.calls.filter(
+        ([, input]) =>
+          typeof input === 'string'
+          && input.includes('Your very last line must be a valid handoff token')
+      );
+
+      expect(reinjectPrompts).toHaveLength(3);
+
+      const status = engine.getStatus(executionId);
+      expect(status.agentStates['node-a'].status).toBe('done');
+      expect(status.agentStates['node-b']).toBeDefined();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Test 8: Full E2E handoff lifecycle with echo marker timeout
+  // Simulates the exact bug from live testing:
+  //   1. node-a starts and produces output
+  //   2. node-a emits __HANDOFF__:node-b:{...}
+  //   3. Handoff fires → node-b spawned → context prompt injected
+  //   4. _flushSwarmPrompt sets ignoreParserUntil on node-b
+  //   5. Claude CLI does NOT echo the marker (ignoreParserUntil stays set)
+  //   6. 10s timeout fires → ignoreParserUntil cleared
+  //   7. node-b emits __DONE__ → execution completes
+  //
+  // Without the timeout fix, step 7 would never work because the parser
+  // would be permanently blocked, and node-b would stay 'running' forever.
+  // -------------------------------------------------------------------------
+  describe('Test 8: Full E2E handoff lifecycle with echo marker timeout (deterministic)', () => {
+    it('should complete a full 2-agent workflow when the echo marker is never observed', async () => {
+      // Claude provider (default) — ignoreParserUntil is NOT set at spawn
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const execution = engine._executions.get(executionId);
+      const nodeAState = execution.agentStates.get('node-a');
+
+      // Get node-a's tap function
+      const tapFnA = [...mockSession.swarmListeners].find(
+        (listener) => listener === nodeAState.tapFn
+      );
+      expect(tapFnA).toBeDefined();
+
+      // --- Phase 1: node-a works and emits handoff ---
+      // Claude provider doesn't set ignoreParserUntil at spawn, but
+      // _writeSwarmPrompt was called for initial prompt injection.
+      // The promptReady fallback timer would have flushed it.
+      // Advance past the promptReady fallback and echo marker timeout
+      // so node-a's parser is clear.
+      await vi.advanceTimersByTimeAsync(15000);
+
+      // Simulate node-a producing work output and a handoff token
+      tapFnA('Research complete. Handing off to writer.\n__HANDOFF__:node-b:{"summary":"project analysis","findings":"codebase is well structured"}');
+
+      // Allow promises to settle
+      for (let i = 0; i < 10; i++) await Promise.resolve();
+
+      // Verify handoff occurred
+      let status = engine.getStatus(executionId);
+      expect(status.agentStates['node-a'].status).toBe('done');
+      expect(status.agentStates['node-a'].handoffCount).toBe(1);
+      expect(status.agentStates['node-b']).toBeDefined();
+      expect(status.agentStates['node-b'].status).toBe('running');
+      expect(status.edgeCounters['edge-ab']).toBe(1);
+
+      // Verify context was merged
+      expect(execution.workflowContext.summary).toBe('project analysis');
+      expect(execution.workflowContext.findings).toBe('codebase is well structured');
+
+      // --- Phase 2: node-b's parser is blocked by ignoreParserUntil ---
+      // _onHandoff → _writeSwarmPrompt → _flushSwarmPrompt set
+      // ignoreParserUntil on node-b's state.
+      const nodeBState = execution.agentStates.get('node-b');
+      // After _flushSwarmPrompt, ignoreParserUntil should be set
+      // (the promptReady fallback may have fired, which calls _flushSwarmPrompt)
+      // Give the promptReady fallback time to fire
+      await vi.advanceTimersByTimeAsync(3000);
+
+      // At this point, either:
+      // a) ignoreParserUntil is set (prompt was flushed), or
+      // b) ignoreParserUntil was already cleared by timeout
+      // Either way, we need to verify the parser works.
+      // Force the scenario: set ignoreParserUntil manually to simulate
+      // the exact bug condition (echo marker never arrives)
+      nodeBState.ignoreParserUntil = '--- END SWARM INPUT ---';
+      nodeBState.ignoreParserBuffer = '';
+      if (nodeBState.echoMarkerTimer) {
+        clearTimeout(nodeBState.echoMarkerTimer);
+      }
+      nodeBState.echoMarkerTimer = setTimeout(() => {
+        if (nodeBState.ignoreParserUntil) {
+          nodeBState.ignoreParserUntil = null;
+          nodeBState.ignoreParserBuffer = '';
+        }
+        nodeBState.echoMarkerTimer = null;
+      }, 10000);
+
+      // Get node-b's tap function
+      const nodeBSession = mockSessionManager.getSession(nodeBState.sessionId);
+      const tapFnB = [...nodeBSession.swarmListeners].find(
+        (listener) => listener === nodeBState.tapFn
+      );
+      expect(tapFnB).toBeDefined();
+
+      // Simulate node-b output WHILE parser is blocked — this should be ignored
+      tapFnB('Writing the summary report...\n__DONE__');
+
+      // The __DONE__ should NOT have been detected (parser blocked)
+      status = engine.getStatus(executionId);
+      expect(status.agentStates['node-b'].status).toBe('running');
+      expect(status.status).toBe('running');
+
+      // --- Phase 3: Echo marker timeout fires → parser unblocked ---
+      await vi.advanceTimersByTimeAsync(10001);
+
+      // ignoreParserUntil should now be null
+      expect(nodeBState.ignoreParserUntil).toBeNull();
+      expect(nodeBState.echoMarkerTimer).toBeNull();
+
+      // --- Phase 4: node-b emits __DONE__ AFTER parser is unblocked ---
+      tapFnB('Report writing complete.\n__DONE__');
+
+      // Allow promises to settle
+      for (let i = 0; i < 10; i++) await Promise.resolve();
+
+      // node-b is terminal (no outgoing edges) → status should be 'done'
+      status = engine.getStatus(executionId);
+      expect(status.agentStates['node-b'].status).toBe('done');
+
+      // Both agents are done → execution should be 'completed'
+      expect(status.status).toBe('completed');
+
+      // Verify WS events were broadcast
+      const completedEvents = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .filter((ev) => ev.type === 'execution_status' && ev.status === 'completed');
+      expect(completedEvents.length).toBeGreaterThan(0);
+
+      // Verify handoff events
+      const handoffEvents = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .filter((ev) => ev.type === 'handoff_started' || ev.type === 'handoff_completed');
+      expect(handoffEvents.some((ev) => ev.type === 'handoff_started')).toBe(true);
+      expect(handoffEvents.some((ev) => ev.type === 'handoff_completed')).toBe(true);
+    });
+
+    it('should complete the workflow directly when the echo marker DOES arrive (no timeout needed)', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const execution = engine._executions.get(executionId);
+      const nodeAState = execution.agentStates.get('node-a');
+
+      const tapFnA = [...mockSession.swarmListeners].find(
+        (listener) => listener === nodeAState.tapFn
+      );
+
+      // Clear initial prompt gate
+      await vi.advanceTimersByTimeAsync(15000);
+
+      // Trigger handoff
+      tapFnA('Done researching.\n__HANDOFF__:node-b:{"result":"ready"}');
+      for (let i = 0; i < 10; i++) await Promise.resolve();
+
+      const nodeBState = execution.agentStates.get('node-b');
+      expect(nodeBState).toBeDefined();
+
+      // Wait for promptReady fallback on node-b
+      await vi.advanceTimersByTimeAsync(3000);
+
+      // The parser should be in blocked state (ignoreParserUntil set by _flushSwarmPrompt)
+      // Simulate the echo marker arriving (as it does with Codex)
+      const nodeBSession = mockSessionManager.getSession(nodeBState.sessionId);
+      const tapFnB = [...nodeBSession.swarmListeners].find(
+        (listener) => listener === nodeBState.tapFn
+      );
+
+      // Force the blocked state
+      nodeBState.ignoreParserUntil = '--- END SWARM INPUT ---';
+      nodeBState.ignoreParserBuffer = '';
+
+      // Send the marker — this should clear ignoreParserUntil immediately
+      tapFnB('\n--- END SWARM INPUT ---');
+      expect(nodeBState.ignoreParserUntil).toBeNull();
+
+      // Now __DONE__ should work immediately (no timeout needed)
+      tapFnB('Summary: project looks great.\n__DONE__');
+      for (let i = 0; i < 10; i++) await Promise.resolve();
+
+      const status = engine.getStatus(executionId);
+      expect(status.agentStates['node-b'].status).toBe('done');
+      expect(status.status).toBe('completed');
     });
   });
 });

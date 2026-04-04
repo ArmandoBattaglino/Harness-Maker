@@ -1,0 +1,10 @@
+{
+  "request_id": "429ee18d-2a28-4de3-b7d0-34d3240944ab",
+  "created_at": "2026-04-03T12:49:01.462Z",
+  "user_prompt": "Ispeziona solo server/services/SwarmEngine.js e server/tests/swarm-engine.test.js. Dimmi se ciascun blocker runtime dichiarato in TASK #145/#153 ha test deterministico esplicito: Claude rate limit, Codex trust/bootstrap, Codex usage limit, Codex prompt-rejection. Rispondi con una tabella breve case -> yes/no -> where/gap.",
+  "requested_agent": "debugger",
+  "status": "active",
+  "steps": [],
+  "next_actions": [],
+  "summary": null
+}

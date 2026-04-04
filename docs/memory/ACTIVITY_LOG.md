@@ -1,3 +1,12 @@
+## 2026-04-04 — project-manager — Tasks #154–#164: V4.0 and V4.1 Planning
+**Outcome:** COMPLETED
+**Summary:** Analyzed TASK_PLAN.md for the new V4.0 (Gemini CLI Harness Integration) and V4.1 (Per-Harness Runtime Model Selection) items. Updated docs/memory/PROJECT.md and docs/memory/PROGRESS.md to reflect this new wave formally in the system memory. 
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (status update and documentation only)
+**Decisions made:** Integrated Gemini CLI as a third runtime provider due to excessive Claude Code interactive UI blockers. Added UI for selecting models per harness.
+**Blockers:** none
+**Next:** backend-dev runs Task #154 (GEMINI-DISCOVERY-1).
+---
 ## 2026-04-03 — debugger — Task #145: BUG-UX-HANDOFF-1 — Fix handoff chain failure
 **Outcome:** COMPLETED
 **Summary:** Fixed three root causes preventing multi-agent handoff chains from working: (1) HandoffParser only accepted base64-encoded payloads but LLMs emit plain JSON — added _parseDirectJsonHandoff() to accept both formats; (2) No max retry limit on _onDone reinject — added MAX_DONE_REINJECT_ATTEMPTS=3 with forced synthetic handoff; (3) System prompt lacked concrete handoff token example — added __HANDOFF__:target:{"summary":"..."} examples. 227/227 tests pass (9 new).

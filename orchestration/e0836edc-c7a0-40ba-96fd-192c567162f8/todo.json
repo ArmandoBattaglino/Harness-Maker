@@ -1,0 +1,10 @@
+{
+  "request_id": "e0836edc-c7a0-40ba-96fd-192c567162f8",
+  "created_at": "2026-04-03T12:51:01.469Z",
+  "user_prompt": "Leggi solo TASK #153 in docs/TASK_PLAN.md e proponi il minimo set di evidenze concrete per chiuderla onestamente oggi. Restituisci al massimo 8 righe e separa: must-have, nice-to-have, cannot-infer.",
+  "requested_agent": "qa-tester",
+  "status": "active",
+  "steps": [],
+  "next_actions": [],
+  "summary": null
+}

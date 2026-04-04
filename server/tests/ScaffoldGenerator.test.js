@@ -3,6 +3,7 @@ import {
   buildWorkflowPrompt,
   generateWorkflowFromPrompt,
   parseClaudeCliEnvelope,
+  parseGeminiCliEnvelope,
   parseWorkflowDefinition,
 } from '../services/ScaffoldGenerator.js';
 
@@ -22,6 +23,20 @@ describe('ScaffoldGenerator', () => {
 
     expect(envelope.isError).toBe(true);
     expect(envelope.text).toContain("You've hit your limit");
+  });
+
+  it('parseGeminiCliEnvelope surfaces structured Gemini CLI errors and responses', () => {
+    const envelope1 = parseGeminiCliEnvelope(JSON.stringify({
+      response: "Here is your JSON layout",
+      error: null,
+    }));
+    expect(envelope1.isError).toBe(false);
+    expect(envelope1.text).toContain("Here is your JSON layout");
+
+    const envelope2 = parseGeminiCliEnvelope(JSON.stringify({
+      error: { message: "Resource Exhausted" },
+    }));
+    expect(envelope2.isError).toBe(true);
   });
 
   it('parseWorkflowDefinition strips markdown fences', () => {
@@ -76,6 +91,31 @@ describe('ScaffoldGenerator', () => {
     expect(runCodex).toHaveBeenCalledOnce();
   });
 
+  it('falls back to Gemini when Claude and Codex fail', async () => {
+    const runClaude = vi.fn().mockRejectedValue(new Error("Claude limit"));
+    const runCodex = vi.fn().mockRejectedValue(new Error("Codex limit"));
+    const runGemini = vi.fn().mockResolvedValue({
+      name: 'Gemini Workflow',
+      nodes: [{ id: 'node-1' }],
+      edges: [],
+    });
+
+    const workflow = await generateWorkflowFromPrompt({
+      prompt: 'Create a simple workflow',
+      claudeBin: 'claude.exe',
+      codexBin: 'codex.exe',
+      geminiBin: 'gemini.exe',
+      runClaude,
+      runCodex,
+      runGemini,
+    });
+
+    expect(workflow.name).toBe('Gemini Workflow');
+    expect(runClaude).toHaveBeenCalledOnce();
+    expect(runCodex).toHaveBeenCalledOnce();
+    expect(runGemini).toHaveBeenCalledOnce();
+  });
+
   it('returns a combined provider error when both providers fail', async () => {
     const runClaude = vi.fn().mockRejectedValue(Object.assign(new Error("You've hit your limit"), {
       provider: 'claude',
@@ -106,13 +146,19 @@ describe('ScaffoldGenerator', () => {
       provider: 'codex',
       statusCode: 503,
     }));
+    const runGemini = vi.fn().mockRejectedValue(Object.assign(new Error('Resource Exhausted'), {
+      provider: 'gemini',
+      statusCode: 503,
+    }));
 
     const workflow = await generateWorkflowFromPrompt({
       prompt: 'Create a customer support workflow that routes billing and technical requests.',
       claudeBin: 'claude.exe',
       codexBin: 'codex.exe',
+      geminiBin: 'gemini.exe',
       runClaude,
       runCodex,
+      runGemini,
     });
 
     expect(workflow.name).toContain('Workflow');

@@ -1,0 +1,10 @@
+{
+  "request_id": "cb555bfa-16d7-4aeb-88d3-a6b9b33f339b",
+  "created_at": "2026-04-03T12:23:08.292Z",
+  "user_prompt": "Reply with exactly two lines. Line 1: READY. Line 2: Confirm that subagent orchestration via MCP is responding for this repository.",
+  "requested_agent": "orchestrator",
+  "status": "active",
+  "steps": [],
+  "next_actions": [],
+  "summary": null
+}

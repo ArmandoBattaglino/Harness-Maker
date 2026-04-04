@@ -190,3 +190,43 @@
 **Alternatives rejected:** Unlimited reinjects - causes infinite loop. Marking agent as failed/done - leaves downstream agents permanently idle. Higher limit (10+) - wastes provider tokens on an agent that won't cooperate.
 **Revisit if:** A smarter reinject strategy is needed (e.g., escalating prompt firmness, or switching to a different provider mid-reinject).
 ---
+
+## DEC-022: HandoffParser accepts terminal-rendered `HANDOFF:` alias when interactive CLI formatting strips underscores
+**Date:** 2026-04-03
+**Agent:** debugger
+**Task:** #145 â€” BUG-UX-HANDOFF-1 live follow-up
+**Decision:** HandoffParser now accepts both the canonical token prefix `__HANDOFF__:` and the rendered alias `HANDOFF:` for handoff detection.
+**Reasoning:** A real Codex Swarm probe (`executionId=badef6de-2bb8-4259-8135-0df1e2f2db94`) showed the model attempting a downstream handoff, but the interactive terminal rendering surfaced the generated token as `HANDOFF:node-b:{...}` without underscores. Because the Swarm tap parses the rendered PTY byte stream rather than a raw model output channel, treating `HANDOFF:` as invalid would silently drop a genuine handoff intent even when the agent followed the protocol semantically.
+**Alternatives rejected:** Keep only `__HANDOFF__:` - loses real handoff attempts under CLI rendering. Switch the protocol to a wholly new token immediately - larger cross-surface churn while the project still needs compatibility with existing tests/prompts. Accept arbitrary free-text "handoff" phrases - too ambiguous and unsafe for parser matching.
+**Revisit if:** The runtime moves to a non-rendered model output channel, or if the project adopts a new token format that is guaranteed to survive interactive rendering verbatim.
+---
+
+## DEC-023: Swarm prompt examples stay templated with `<targetId>` so PTY redraws cannot create fake handoffs
+**Date:** 2026-04-03
+**Agent:** debugger
+**Task:** #145 - BUG-UX-HANDOFF-1 live follow-up
+**Decision:** SwarmEngine's initial handoff prompt and `_buildContinueAfterDonePrompt()` now keep the example token templated as `__HANDOFF__:<targetId>:{...}` and describe the real downstream node separately, instead of embedding a parser-consumable `__HANDOFF__:<realNodeId>:{...}` example directly in the prompt.
+**Reasoning:** Live Codex probe `b3c645a8-4ba6-473f-96e7-c80050a5bc18` proved that ConPTY can replay old prompt text after the echo marker. When the prompt contained a real downstream target plus valid JSON example payload, the parser consumed the echoed example as a fake handoff and spawned node-b with the prompt's placeholder payload instead of real work. Keeping `<targetId>` in the token line preserves the exact token shape for the model while making echoed examples unparseable by HandoffParser.
+**Alternatives rejected:** Keep the fully valid example and rely only on end-marker suppression - insufficient, because the PTY can redraw earlier prompt lines after the marker. Remove all examples entirely - regresses prompt clarity and risks reintroducing the original early-`__DONE__` failure mode.
+**Revisit if:** The runtime gains access to a non-rendered model output channel, or if a safer way appears to show examples that cannot be replayed into the parser path.
+---
+
+## DEC-024: Hard Codex usage-limit output takes precedence over the softer `Approaching rate limits` chooser
+**Date:** 2026-04-03
+**Agent:** debugger
+**Task:** #145 / #153 live follow-up
+**Decision:** SwarmEngine only auto-dismisses the Codex `Approaching rate limits` menu when the chunk does not also contain a hard usage-limit stop (`You've hit your usage limit`, `purchase more credits`, `try again at`). If both appear together, the execution is classified as canonical `blocked`.
+**Reasoning:** Probe `284de139-3fac-44f1-8b07-cf9356157f71` showed that the softer menu can arrive in the same rendered chunk as a hard limit message. Treating the chooser first left the workflow falsely `running` even though the provider had already stopped useful work. Probe `9a7c81ae-ec1d-4b3b-a7c5-7abd01c10a22` confirmed that preferring the hard blocker restores honest runtime state.
+**Alternatives rejected:** Always treat `Approaching rate limits` as a blocker - too pessimistic when it is only a chooser and no hard stop is present. Always auto-dismiss the chooser first - hides real provider exhaustion and recreates ambiguous `running` state.
+**Revisit if:** Codex changes the wording/structure of its rate-limit UI or introduces a supported non-interactive way to answer those menus.
+---
+
+## DEC-025: Echo marker timeout fallback for ignoreParserUntil gate
+**Date:** 2026-04-03
+**Agent:** debugger
+**Task:** #145 — BUG-UX-HANDOFF-1 live follow-up (handoff chain completion)
+**Decision:** When `_flushSwarmPrompt` sets `ignoreParserUntil` to wait for the echo marker (`--- END SWARM INPUT ---`), a 10-second fallback timer (`SWARM_ECHO_MARKER_TIMEOUT_MS`) now auto-clears the gate if the marker is never observed. If the marker arrives before the timeout, the timer is cancelled immediately (existing path).
+**Reasoning:** Live E2E testing proved that the Claude interactive CLI does not echo pasted text through the PTY output stream. This left `ignoreParserUntil` permanently set on the target agent (node-b) after a handoff, blocking the parser from detecting `__DONE__` or subsequent `__HANDOFF__` tokens. The workflow would hang indefinitely in `running` status even though the AI agent had completed its work. Codex does echo the marker, so the existing path is preserved. The 10-second window is generous enough to capture any delayed echo while short enough to unblock the parser quickly.
+**Alternatives rejected:** Remove the echo suppression entirely — would re-expose the fake-handoff bug from echoed prompt examples (DEC-023). Reduce the timeout below 5s — risks false-clearing when a slow Codex session has not yet echoed. Provider-conditional suppression (skip for Claude) — fragile, couples prompt injection to provider identity in a way that breaks if provider detection is wrong.
+**Revisit if:** A future provider appears that echoes the marker with \>10s latency, or if Swarm gains a non-PTY output channel.
+---

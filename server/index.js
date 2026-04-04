@@ -2,6 +2,10 @@
 // Full server bootstrap for Claude Code Visual Manager.
 // Startup sequence matches docs/ARCHITECTURE.md § 10.
 
+// server/index.js
+// Full server bootstrap for Claude Code Visual Manager.
+// Startup sequence matches docs/ARCHITECTURE.md § 10.
+
 import { createServer } from 'http';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -10,7 +14,7 @@ import { spawn } from 'child_process';
 import express from 'express';
 import { WebSocketServer } from 'ws';
 
-import { discoverClaudeBinary, discoverCodexBinary } from './services/BinaryDiscovery.js';
+import { discoverClaudeBinary, discoverCodexBinary, discoverGeminiBinary } from './services/BinaryDiscovery.js';
 import { ConfigStore } from './services/ConfigStore.js';
 import { WorkflowStore } from './services/WorkflowStore.js';
 import { ProcessRegistry } from './services/ProcessRegistry.js';
@@ -121,6 +125,7 @@ const PORT = parseInt(process.env.PORT ?? '3000', 10);
 // ---------------------------------------------------------------------------
 let claudeBin;
 let codexBin = null;
+let geminiBin = null;
 
 async function startup() {
   console.log(`[startup] Starting Claude Code Visual Manager v${APP_VERSION}`);
@@ -142,6 +147,13 @@ async function startup() {
     console.log(`[startup] Discovered codex binary for scaffold fallback: ${codexBin}`);
   } catch (err) {
     console.warn(`[startup] Codex scaffold fallback unavailable: ${err.message}`);
+  }
+
+  try {
+    geminiBin = await discoverGeminiBinary();
+    console.log(`[startup] Discovered gemini binary: ${geminiBin}`);
+  } catch (err) {
+    console.warn(`[startup] Gemini CLI unavailable (optional): ${err.message}`);
   }
 
   // Step 3: Load config (creates defaults if file missing)
@@ -242,9 +254,11 @@ async function startup() {
   const swarmEngine = new SwarmEngine(sessionManager, workflowStore, circuitBreaker, budgetTracker);
   app.locals.swarmEngine = swarmEngine;
   app.locals.sessionManager = sessionManager;
+  app.locals.geminiBin = geminiBin;
+  sessionManager.geminiBin = geminiBin;
 
   // Swarm execution control routes — mounted here so swarmEngine is already assigned
-  app.use('/api/v1/swarm', swarmRoutes(swarmEngine, sessionManager, { claudeBin, codexBin }));
+  app.use('/api/v1/swarm', swarmRoutes(swarmEngine, sessionManager, { claudeBin, codexBin, geminiBin }));
 
   // HITL inbox routes (approve/reject — separate router, same /api/v1/swarm prefix)
   app.use('/api/v1/swarm', inboxRoutes(swarmEngine));

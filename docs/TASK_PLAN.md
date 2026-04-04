@@ -4,7 +4,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED - 2026-03-31 - V3.1 BUG FIX WAVE FULLY CLOSED - AREA V3.1 CLOSED 2026-04-02 - V3.2/V3.3 SWARM RUNTIME INTEGRITY + CONTRACT COMPLETION CLOSED 2026-04-02 - AREA CHECKPOINT #142 PASS - V3.4 SWARM UX DEEP TEST FINDINGS IN PROGRESS (#143, #144, #146, #147 COMPLETED; #145, #148 PENDING) - V3.5 SWARM AI RUNTIME PORTABILITY IMPLEMENTED BUT NOT HONESTLY CLOSED (#149, #150, #151, #152 COMPLETED; #153 RE-OPENED/PENDING AFTER LIVE CODEX RUNTIME VERIFICATION) - 4 bugs found via Playwright deep user test 2026-04-02
+**Status:** v3.0.0 RELEASED - 2026-03-31 - V3.1 BUG FIX WAVE FULLY CLOSED - AREA V3.1 CLOSED 2026-04-02 - V3.2/V3.3 SWARM RUNTIME INTEGRITY + CONTRACT COMPLETION CLOSED 2026-04-02 - AREA CHECKPOINT #142 PASS - V3.4 SWARM UX DEEP TEST FINDINGS IN PROGRESS (#143, #144, #146, #147 COMPLETED; #145, #148 PENDING) - V3.5 SWARM AI RUNTIME PORTABILITY IMPLEMENTED BUT NOT HONESTLY CLOSED (#149, #150, #151, #152 COMPLETED; #153 RE-OPENED/PENDING AFTER LIVE CODEX RUNTIME VERIFICATION) - 4 bugs found via Playwright deep user test 2026-04-02 - V4.0 GEMINI CLI HARNESS INTEGRATION PLANNED (#154-#162 PENDING) - V4.1 PER-HARNESS MODEL SELECTION PLANNED (#163-#164 PENDING)
 
 ---
 
@@ -41,6 +41,10 @@ Acceptance Criteria:
   - [ ] Generated workflowDef is persisted/loadable by the existing workflow flow
   - [ ] npm test passes
 Completion Note: PASS — 2026-04-02 — scaffold now parses structured Claude CLI stdout errors, returns non-generic provider failures, and falls back to Codex when Claude is usage-limited or unavailable. Verified with server tests plus a real generation run returning a valid 2-node workflow.
+Additional closure requirements:
+  - [ ] All known logic-side gaps are either fixed or explicitly ruled out with tests
+  - [ ] Known provider dead-ends are distinguishable from handoff-logic failure
+  - [ ] Closure includes one concrete execution artifact set (executionId + observed runtimeProvider + evidence of handoff or blocker)
 Dependencies: none
 ---
 
@@ -392,8 +396,36 @@ Agent: debugger
 Priority: HIGH
 Difficulty: HARD
 Suggested Model: claude-opus-4-6
-Status: COMPLETED
-Investigation Note: 2026-04-03 follow-up - The PTY tap ordering race in `SwarmEngine._spawnAgentPty()` is fixed, Swarm now submits long prompts line-by-line, `HandoffParser` can recover `__HANDOFF__` tokens even when the PTY wraps them across multiple lines, and live Codex-specific dead ends are surfaced more honestly. A new blocker path now classifies Codex prompt-rejection loops (`Conversation interrupted - tell the model what to do differently`) as canonical `blocked` state instead of leaving the run falsely alive. However, TASK #145 is still not honestly closed: repeated live Codex runs in this environment either enter that prompt-rejection blocker or drift into unrelated/off-task interactive work without producing any real Swarm handoff after extended runtime. The workflow logic is materially less ambiguous than before, but at least one genuine multi-agent handoff chain still must be verified end-to-end under a provider/runtime that is actually ready to work.
+Status: PENDING
+Investigation Note: 2026-04-03 follow-up - The PTY tap ordering race in `SwarmEngine._spawnAgentPty()` is fixed, Swarm now submits long prompts line-by-line, `HandoffParser` can recover `__HANDOFF__` tokens even when the PTY wraps them across multiple lines, and live Codex-specific dead ends are surfaced more honestly. A new blocker path now classifies Codex prompt-rejection loops (`Conversation interrupted - tell the model what to do differently`) as canonical `blocked` state instead of leaving the run falsely alive. Additional live probes on 2026-04-03 exposed two more logic/runtime wrinkles: a real Codex run (`executionId=badef6de-2bb8-4259-8135-0df1e2f2db94`) attempted a downstream handoff, but the terminal-rendered byte stream showed `HANDOFF:node-b:{...}` without the surrounding underscores, so the parser had to be widened to accept the rendered alias; later, probe `b3c645a8-4ba6-473f-96e7-c80050a5bc18` showed a false-positive handoff because Codex/ConPTY replayed the concrete prompt example after the echo marker, causing node-b to receive the example payload instead of real work. The prompt contract is now templated with `<targetId>` placeholders so echoed guidance cannot become a parser-consumable handoff, and hard Codex usage-limit text now wins over the softer `Approaching rate limits` menu so probe `9a7c81ae-ec1d-4b3b-a7c5-7abd01c10a22` returns explicit `blocked` instead of a fake forever-`running` state. Even with those improvements, TASK #145 is still not honestly closed because no provider in this environment has yet yielded a parser-consumed first handoff plus downstream `running` state.
+Current blocker summary:
+  - Logic-side fixes now exist for prompt clarity, `__DONE__` reinject limiting, wrapped handoff parsing, direct JSON handoff parsing, terminal-rendered `HANDOFF:` alias parsing, prompt-example templating that prevents fake handoffs on PTY redraw, and explicit runtime blocker classification with hard-usage-limit precedence over the softer rate-limit menu.
+  - The remaining failure is live runtime behavior, not a confirmed pure parser bug:
+    1. Claude can enter interactive rate-limit UI before producing agent work
+    2. Codex can enter trust/bootstrap or usage-limit flows
+    3. Codex can reject steering reinjection with `Conversation interrupted - tell the model what to do differently`
+    4. Some Codex runs remain `running` but drift off-task and never emit a real `__HANDOFF__`
+    5. Some Codex runs appear to emit a handoff intent, but the interactive renderer can strip the token underscores (`HANDOFF:` instead of `__HANDOFF__`) before the parser sees it
+    6. Codex can show the softer `Approaching rate limits` chooser alongside a hard usage-limit stop, so the runtime must classify the hard blocker instead of treating the chooser as a recoverable prompt
+Direction note:
+  TASK #145 is now a proof task, not only a code-change task. It cannot be re-closed without live evidence from at least one real execution showing a first downstream handoff.
+Execution subtasks:
+  145.1 - Contract verification:
+    - confirm parser + prompt contract in code and tests covers:
+      (a) direct JSON handoff format `__HANDOFF__:target:{"key":"value"}`
+      (b) wrapped/base64 handoff format
+      (c) bounded `__DONE__` reinject behavior
+      (d) terminal-rendered handoff alias `HANDOFF:target:{...}` when CLI formatting strips underscores
+      (e) prompt/recovery examples remain templated so PTY redraws cannot replay a parser-consumable fake handoff
+    - required evidence: named tests and files updated if any gap is found
+  145.2 - Runtime dead-end classification:
+    - verify every known live dead-end is surfaced canonically and not left as ambiguous `running`
+    - minimum cases: Claude rate limit, Codex trust/bootstrap, Codex usage limit, Codex prompt-rejection loop, and Codex hard-limit-vs-soft-menu precedence
+    - required evidence: execution snapshot or deterministic test coverage for each blocker class
+  145.3 - Live handoff proof:
+    - run a minimal 2-agent workflow under a provider that is actually ready
+    - required evidence: executionId, first agent `handoffCount > 0`, second agent enters `running`, visible handoff/feed event, and output excerpt containing a real handoff token or equivalent parser-consumed evidence
+    - if no provider is ready, document the blocker honestly and leave task pending
 Context:
   Source: Deep user test 2026-04-02 — TEST #5
   User-facing problem:
@@ -431,6 +463,10 @@ Acceptance Criteria:
   - [ ] `__DONE__` emits soft notification only — does NOT stop the entire execution (FR-V3-11)
   - [ ] Agent status transitions visible in UI: idle → running → done (with handoff) or running (receiver)
   - [ ] npm test passes
+Additional closure requirements:
+  - [ ] All known logic-side gaps are either fixed or explicitly ruled out with tests
+  - [ ] Known provider dead-ends are distinguishable from handoff-logic failure
+  - [ ] Closure includes one concrete execution artifact set (executionId + observed runtimeProvider + evidence of handoff or blocker)
 Dependencies: none
 ---
 
@@ -515,6 +551,8 @@ Difficulty: HIGH
 Suggested Model: claude-opus-4-6
 Status: PENDING
 Gate: HARD — V3.4 is not closed until this checkpoint returns PASS
+Blocker note:
+  This checkpoint is intentionally blocked by TASK #145 until a real handoff chain is verified or the provider/runtime conditions change enough to make such verification honest. Running this checkpoint before that proof will produce noise rather than a meaningful release signal.
 Context:
   This checkpoint repeats the EXACT user test scenario from the 2026-04-02 deep test session, verifying that ALL bugs found are now fixed. The tester must follow these steps as a new user, from scratch, using NO pre-saved workflows.
   Full end-to-end re-test scenario:
@@ -726,13 +764,30 @@ Verification scope:
      - if fallback is implemented, verify Claude blocker leads to explicit Codex fallback behavior
   5. Regression path:
      - verify handoff/feed/status behavior still works for real Swarm work when the provider is ready
+Execution subtasks:
+  153.1 - Claude blocker gate:
+    - produce one verified blocked run or deterministic repro showing Claude no longer hangs silently on rate-limit UI
+  153.2 - Codex blocker gate:
+    - produce one verified blocked run or deterministic repro for Codex interactive dead-end classes now covered by DEC-018
+  153.3 - Codex usable-run gate:
+    - produce one verified AI-dependent run where Codex either emits a real handoff or reaches a useful non-blocked task outcome
+  153.4 - Fallback evidence gate:
+    - if `auto` mode is used, capture one execution showing provider metadata / `lastFallback` behavior is surfaced correctly
+Evidence required for closure:
+  - executionId(s)
+  - runtimeProvider / activeProvider / providerStrategy snapshot
+  - blocker metadata when blocked
+  - output excerpt or feed evidence when a real handoff/work result is claimed
 Acceptance Criteria:
   - [ ] Claude interactive blockers are surfaced explicitly, not as silent hangs
+  - [ ] Codex interactive blockers are surfaced explicitly, not as silent hangs
   - [ ] Codex-backed Swarm execution is verified for at least one AI-dependent run
   - [ ] Provider/fallback UX is visible and correct
+  - [ ] Gate result is backed by concrete execution artifacts, not only local inference
   - [ ] npm test passes
   - [ ] npm run build passes
 Gate Note: 2026-04-03 follow-up - the implementation contract is in place, but the gate must remain PENDING until live verification is honest under current provider conditions. Direct/live probes now prove that Codex launches with the intended args, can classify prompt-rejection dead ends as explicit `blocked` state instead of silent hangs, and no longer hides obvious interactive runtime failures behind generic `running`. Even so, this environment still does not yield a trustworthy live Swarm chain: some Codex runs hit prompt-rejection loops, while others continue interactively without producing any actual handoff token after prolonged runtime. V3.5 should only be re-closed after at least one AI-dependent Swarm run completes or reaches a real handoff under a provider that is ready to work.
+Gate Note: 2026-04-03 additional evidence - live artifacts now exist for the blocker/fallback parts of this gate: explicit Claude blocked run `e1e02b24-45b1-49f4-878c-8b1e1c2530e1` (`rate_limited`, no silent hang), explicit Codex blocked run `badef6de-2bb8-4259-8135-0df1e2f2db94` (`rate_limited`, no silent hang), and `auto` fallback run `50962eb0-ee1a-4409-804b-a835f1ba8f8e` (Claude → Codex with surfaced `lastFallback`, then Codex blocked explicitly). Additional 2026-04-03 probes sharpened the remaining truthfulness gap: `b3c645a8-4ba6-473f-96e7-c80050a5bc18` looked like a handoff at first, but node-b received the prompt's example payload, proving it was a fake handoff caused by PTY replay; `284de139-3fac-44f1-8b07-cf9356157f71` confirmed that templating the prompt with `<targetId>` removed that false positive (`running`, `handoffCount: 0`); and `9a7c81ae-ec1d-4b3b-a7c5-7abd01c10a22` confirmed that a hard Codex usage-limit message now wins over the softer `Approaching rate limits` chooser and ends in explicit `blocked` rather than ambiguous `running`. The only honest blocker still preventing closure is `153.3`: at least one usable non-blocked AI-dependent run with a real handoff or useful outcome is still missing in this provider state.
 Dependencies: TASK #150, TASK #151, TASK #152
 ---
 
@@ -9013,3 +9068,586 @@ Acceptance Criteria:
   - [ ] Puppeteer screenshot after Step 3 shows "Open Terminal" button visible in AgentInspector panel
 Dependencies: TASK #125, TASK #127, TASK #129, TASK #131
 ---
+
+## AREA: V4.0 — Gemini CLI Harness Integration
+_Components: BinaryDiscovery, ScaffoldGenerator, SwarmEngine, swarm.js, SwarmView, SwarmContext, constants.js, HandoffParser_
+_Tasks: #154 → #162_
+_Gate: V4.0 closes only when Gemini CLI is a fully functional third runtime provider for both scaffold generation and Swarm agent PTY execution, with fallback chain Claude → Codex → Gemini (or user-selected), and all blocker patterns handled_
+_Source: User request 2026-04-04 — integrate Google Gemini CLI (`@google/gemini-cli`) as a third provider harness alongside Claude and Codex. Gemini CLI has near-identical interface: `-p` for non-interactive, `--output-format json` for structured output, `-m` for model selection, interactive PTY by default._
+
+_Technical Preamble — Gemini CLI Interface Reference:_
+  - Package: `@google/gemini-cli` (npm global install: `npm install -g @google/gemini-cli`)
+  - Binary: `gemini` (Windows: `gemini.exe`, or `gemini.cmd` via npm global bin)
+  - Non-interactive: `gemini -p "<prompt>" --output-format json` → JSON stdout `{response, stats, error}`
+  - Interactive: `gemini` (default, PTY-compatible)
+  - Model selection: `-m <model>` or `--model <model>` (e.g. `gemini-2.5-pro`, `gemini-3-pro-preview`)
+  - Environment variable: `GEMINI_MODEL` for persistent default
+  - Session persistence: `--no-session-persistence` (flag TBD, verify at implementation time)
+  - Rate limit error pattern: `429`, `Resource Exhausted`, `rate limit`, `quota exceeded`
+  - Auth: Google account login on first run, or `GEMINI_API_KEY` env var for API key auth
+
+---
+
+TASK #154: GEMINI-DISCOVERY-1 — Add Gemini CLI binary discovery to BinaryDiscovery.js
+Area: V4.0 — Gemini CLI Harness Integration
+Agent: backend-dev
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Context:
+  The BinaryDiscovery.js service currently discovers `claude` and `codex` binaries using a multi-step chain (env var → PATH → known locations → error). Gemini CLI follows the same pattern.
+  File: server/services/BinaryDiscovery.js
+  Current structure:
+    - `_cachedClaudePath`, `_cachedCodexPath` — module-level caches
+    - `discoverClaudeBinary()` — 4-step discovery: CLAUDE_BIN env → PATH → %LOCALAPPDATA%\AnthropicClaude → error
+    - `discoverCodexBinary()` — 3-step discovery: CODEX_BIN env → PATH → sandbox fallback → error
+  Required changes:
+    1. Add `_cachedGeminiPath` module-level cache (line 11 area)
+    2. Add `discoverGeminiBinary()` export function:
+       Step 1: Check `process.env.GEMINI_BIN` — if set, validate with fileExists() + validateBinary(), cache, return
+       Step 2: `findOnPath('gemini')` — try `gemini` on PATH (npm global bin installs as `gemini` or `gemini.cmd` on Windows)
+       Step 3: Check npm global bin directory: `path.join(process.env.APPDATA, 'npm', 'gemini.cmd')` on Windows
+       Step 4: Throw Error('Gemini CLI not found. Install with: npm install -g @google/gemini-cli')
+    3. validateBinary() already works generically — `gemini --version` should return 0 exit code
+  Edge cases:
+    - On Windows, npm global installs create `.cmd` wrapper files, not `.exe` — `findOnPath('gemini')` via `where.exe` should find `gemini.cmd`
+    - The Gemini CLI requires Node.js 18+, which is already a project prerequisite
+  Integration point:
+    - server/index.js startup: call `discoverGeminiBinary()` alongside existing claude/codex discovery, store in `app.locals.geminiBin` (soft failure — Gemini is optional, not mandatory for startup)
+Acceptance Criteria:
+  - [x] `discoverGeminiBinary()` exported from BinaryDiscovery.js
+  - [x] Discovery chain: GEMINI_BIN env → PATH → npm global bin → error
+  - [x] Binary validated with `--version` before caching
+  - [x] Server startup does NOT crash if Gemini CLI is not installed (soft failure, log warning)
+  - [x] `app.locals.geminiBin` populated when available, null when not
+  - [x] npm test passes
+Dependencies: none
+---
+
+TASK #155: GEMINI-SCAFFOLD-1 — Add Gemini scaffold provider to ScaffoldGenerator.js
+Area: V4.0 — Gemini CLI Harness Integration
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Context:
+  The ScaffoldGenerator currently has two scaffold providers with fallback: `runClaudeScaffold()` → `runCodexScaffold()` → `buildLocalFallbackWorkflow()`. Gemini CLI's non-interactive mode is almost identical to Claude's, making it a natural third provider in the chain.
+  File: server/services/ScaffoldGenerator.js
+  Current chain in `generateWorkflowFromPrompt()` (lines 362-414):
+    1. if (claudeBin) → runClaudeScaffold()
+    2. if (codexBin) → runCodexScaffold()
+    3. if all fail with 503 → buildLocalFallbackWorkflow()
+  Gemini CLI non-interactive interface:
+    - Command: `gemini -p "<prompt>" --output-format json`
+    - Stdout: JSON object `{response: "...", stats: {...}, error: {...}}`
+    - The `response` field contains the model's text output
+    - Exit code 0 = success, non-zero = failure
+    - Rate limit: stderr or error field contains "Resource Exhausted" / "429" / "rate limit"
+  Required changes:
+    1. Add `runGeminiScaffold(geminiBin, prompt)` function (lines ~298-322 area):
+       - Build args: `['-p', fullPrompt, '--output-format', 'json']`
+       - Optionally add `--model` flag if `process.env.SWARM_GEMINI_MODEL` is set
+       - Spawn via `runSpawn(geminiBin, args, { cwd: os.tmpdir() })`
+       - Parse stdout: `JSON.parse(stdout)` → extract `.response` field (not `.result` like Claude)
+       - Parse the `.response` text as workflow JSON via `parseWorkflowDefinition()`
+       - On failure: use `classifyScaffoldFailure('gemini', ...)`
+    2. Add Gemini blocker patterns to `classifyScaffoldFailure()` (line 157):
+       - Add: `/resource exhausted|429|quota exceeded/i` → 503
+    3. Update `generateWorkflowFromPrompt()` signature to accept `geminiBin` parameter
+    4. Add Gemini as third provider in the chain:
+       ```
+       if (claudeBin) → runClaudeScaffold()
+       if (codexBin) → runCodexScaffold()
+       if (geminiBin) → runGeminiScaffold()
+       if all fail with 503 → buildLocalFallbackWorkflow()
+       ```
+  Integration point:
+    - server/routes/swarm.js: pass `geminiBin` from `app.locals.geminiBin` to `generateWorkflowFromPrompt()`
+  Testing:
+    - Add unit test for `runGeminiScaffold` with mocked spawn
+    - Add test for Gemini failure → fallback to local workflow
+    - Add test for Gemini 429 classification as 503
+Acceptance Criteria:
+  - [x] `runGeminiScaffold()` function added and tested
+  - [x] Gemini CLI stdout envelope `{response}` correctly parsed
+  - [x] Gemini rate-limit errors classified as 503 (triggering fallback chain)
+  - [x] `generateWorkflowFromPrompt()` tries Claude → Codex → Gemini → local fallback
+  - [x] swarm.js route passes `geminiBin` to scaffold generator
+  - [x] npm test passes with new scaffold tests
+Dependencies: TASK #154
+---
+
+TASK #156: GEMINI-RUNTIME-1 — Add Gemini as a Swarm runtime provider in SwarmEngine.js
+Area: V4.0 — Gemini CLI Harness Integration
+Agent: backend-dev
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Context:
+  This is the core integration task. The SwarmEngine currently supports `RUNTIME_PROVIDER.CLAUDE` and `RUNTIME_PROVIDER.CODEX` as runtime providers for agent PTY execution. Gemini CLI's interactive mode makes it a third viable runtime.
+  File: server/services/SwarmEngine.js
+  Required changes across multiple sections:
+  
+  156.1 — Constants and provider registry (lines 19-97):
+    - Add `RUNTIME_PROVIDER.GEMINI = 'gemini'` to the RUNTIME_PROVIDER enum (line 23 area)
+    - Add `DEFAULT_SWARM_GEMINI_MODEL = 'gemini-2.5-pro'` constant
+    - Add Gemini-specific blocker patterns to `RUNTIME_BLOCKER_PATTERNS` array:
+      Pattern 1: rate_limited / gemini — matches `resource exhausted` / `rate limit` / `quota exceeded` / `429`
+      Pattern 2: provider_unavailable / gemini — matches `not authenticated` / `please sign in` / `login required`
+      Pattern 3: provider_unavailable / gemini — matches `GEMINI_API_KEY` / `api key` / `authentication failed`
+    - Add Gemini to `RUNTIME_PROVIDER_PROFILES`:
+      ```js
+      [RUNTIME_PROVIDER.GEMINI]: {
+        buildArgs: () => {
+          const args = [];
+          const model = String(process.env.SWARM_GEMINI_MODEL ?? '').trim() || DEFAULT_SWARM_GEMINI_MODEL;
+          if (model) args.push('-m', model);
+          return args;
+        },
+      }
+      ```
+
+  156.2 — Provider normalization (lines 99-105):
+    - Update `normalizeRuntimeProvider()` to accept 'gemini' as valid value
+    - No change needed to the fallback (still defaults to 'auto')
+
+  156.3 — Provider strategy (lines 179-203):
+    - Update `_buildRuntimeProviderStrategy()`:
+      - Add case for `RUNTIME_PROVIDER.GEMINI`: returns `{ mode: 'gemini', activeProvider: 'gemini', fallbackProvider: null, allowFallback: false }`
+      - Update AUTO mode to include Gemini in the fallback chain:
+        ```js
+        return {
+          mode: RUNTIME_PROVIDER.AUTO,
+          activeProvider: RUNTIME_PROVIDER.CLAUDE,
+          fallbackProvider: RUNTIME_PROVIDER.CODEX,
+          tertiaryProvider: RUNTIME_PROVIDER.GEMINI,
+          allowFallback: true,
+        };
+        ```
+
+  156.4 — Binary resolution (lines 205-218):
+    - Update `_resolveRuntimeProviderBinary()`:
+      - Add case for `RUNTIME_PROVIDER.GEMINI`: discover via `discoverGeminiBinary()` or use cached `this._sessionManager.geminiBin`
+    - Import `discoverGeminiBinary` from BinaryDiscovery.js
+
+  156.5 — Bootstrap prompt (lines 231-247):
+    - Update `_buildRuntimeProviderBootstrapPrompt()`:
+      - Add `gemini` case for provider label generation
+      - Gemini-compatible bootstrap prompt should be identical in structure to Claude/Codex
+
+  156.6 — Prompt ready detection (lines 334-352):
+    - Update `_isRuntimePromptReady()`:
+      - Add Gemini-specific ready patterns: Gemini interactive CLI shows a `>` prompt or a welcome message
+      - Possible patterns: `model:`, `gemini>`, or a prompt indicator
+
+  156.7 — Fallback chain expansion (lines 511-571):
+    - Current fallback: `_shouldFallbackToCodex()` checks Claude → Codex only
+    - Rename or generalize to `_shouldFallback()` that supports:
+      - Claude blocked → try Codex → try Gemini
+      - Codex blocked → try Gemini
+      - Gemini blocked → exhausted, stay blocked
+    - Update `_attemptRuntimeFallback()` to handle tertiary provider fallback
+
+  156.8 — Candidate provider list (lines 712-714):
+    - Update `_spawnAgentPty()`: when `requestedProvider === RUNTIME_PROVIDER.AUTO`, the candidate list should be `[CLAUDE, CODEX, GEMINI]` instead of `[CLAUDE, CODEX]`
+  
+  Important considerations:
+    - Gemini PTY output may differ from Claude/Codex — the echo marker behavior must be tested
+    - The `SWARM_ECHO_MARKER_TIMEOUT_MS` fallback timer (DEC-025) should apply to Gemini as well
+    - Gemini may or may not echo the `--- END SWARM INPUT ---` marker — the timeout fallback handles this
+    - Model selection via `-m` flag should be configurable via `SWARM_GEMINI_MODEL` env var
+Acceptance Criteria:
+  - [ ] `RUNTIME_PROVIDER.GEMINI` registered in provider enum, profiles, blocker patterns
+  - [ ] `normalizeRuntimeProvider()` accepts 'gemini'
+  - [ ] Auto mode fallback chain: Claude → Codex → Gemini
+  - [ ] Gemini binary resolved via BinaryDiscovery
+  - [ ] Gemini-specific blocker patterns detect auth failures and rate limits
+  - [ ] Gemini PTY sessions spawned with correct args (model flag)
+  - [ ] Fallback to Gemini works when Claude and Codex are both blocked
+  - [ ] npm test passes with new engine tests
+Dependencies: TASK #154
+---
+
+TASK #157: GEMINI-UI-1 — Add Gemini to the Runtime provider dropdown and status indicators in SwarmView
+Area: V4.0 — Gemini CLI Harness Integration
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  The SwarmView toolbar currently shows a Runtime dropdown with 3 options: Auto, Claude, Codex. The provider indicator shows "Provider: Claude" or "Provider: Codex". Both need to include Gemini.
+  Files to modify:
+    1. client/src/views/SwarmView.jsx — Runtime dropdown options + provider indicator display
+    2. client/src/store/SwarmContext.jsx — Provider state handling in Zustand store
+    3. client/src/lib/constants.js — If runtime options are defined as constants
+  Required changes:
+  
+  157.1 — SwarmView.jsx Runtime dropdown:
+    - Add "Gemini" option to the runtime selector dropdown (currently: Auto / Claude / Codex)
+    - The value should be 'gemini' to match `RUNTIME_PROVIDER.GEMINI` on backend
+    - Option label: "Gemini" with Google-style icon or color (blue/green)
+  
+  157.2 — Provider indicator:
+    - When the active provider is 'gemini', show "Provider: Gemini"
+    - Color coding: use a distinct color for Gemini (suggest: Google blue #4285F4 or teal)
+  
+  157.3 — Provider fallback banner:
+    - Current banners: "Runtime fallback: claude to codex" — extend to support Gemini as source/target
+    - Add Gemini to fallback banner label mapping: 'gemini' → 'Gemini'
+  
+  157.4 — Blocker messages:
+    - Gemini blocker messages should be displayed with the same banner pattern as Claude/Codex
+    - Provider name in banner: "Gemini hit its rate limit..." / "Gemini requires authentication..."
+  
+  157.5 — SwarmContext.jsx:
+    - Ensure the store can hold 'gemini' as a valid `runtimeProvider` / `activeProvider` value
+    - No structural changes needed — the store is already generic with string values
+Acceptance Criteria:
+  - [ ] Runtime dropdown shows 4 options: Auto, Claude, Codex, Gemini
+  - [ ] Selecting "Gemini" sends `provider: 'gemini'` to the start execution API
+  - [ ] Provider indicator shows "Provider: Gemini" with appropriate color when Gemini is active
+  - [ ] Fallback banners correctly show Gemini as source or target of fallback
+  - [ ] Gemini blocker messages displayed in the same banner style as Claude/Codex
+  - [ ] npm run build passes
+Dependencies: TASK #156
+---
+
+TASK #158: GEMINI-BLOCKER-1 — Add Gemini interactive PTY blocker and prompt-ready detection tests
+Area: V4.0 — Gemini CLI Harness Integration
+Agent: qa-tester
+Priority: MEDIUM
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Before live testing, the Gemini-specific blocker patterns and prompt-ready detection must have deterministic test coverage, following the same pattern as existing Claude/Codex blocker tests.
+  File: server/tests/swarm-engine.test.js
+  Required tests:
+  
+  158.1 — Gemini rate-limit blocker detection:
+    - Feed simulated PTY output containing "Resource Exhausted" → verify state transitions to 'blocked'
+    - Feed simulated PTY output containing "429" → verify 'blocked' state
+    - Feed simulated PTY output containing "quota exceeded" → verify 'blocked' state
+  
+  158.2 — Gemini auth blocker detection:
+    - Feed simulated PTY output containing "not authenticated" / "please sign in" → verify 'blocked' state
+    - Feed simulated PTY output containing "GEMINI_API_KEY" / "authentication failed" → verify 'blocked' state
+  
+  158.3 — Gemini prompt-ready detection:
+    - Test `_isRuntimePromptReady()` with Gemini-specific patterns
+    - Verify function returns true for valid Gemini ready indicators
+  
+  158.4 — Gemini fallback chain test:
+    - Set up auto mode with Claude blocked → Codex blocked → verify Gemini attempted as tertiary
+    - Verify `lastFallback` metadata shows correct `fromProvider` / `toProvider`
+  
+  158.5 — Gemini scaffold test:
+    - Mock Gemini CLI stdout format `{response: "...", stats: {...}}`
+    - Verify `runGeminiScaffold()` correctly extracts and parses the workflow JSON
+    - Verify Gemini failure falls back to local workflow
+  
+  Test count target: ~10-12 new tests
+Acceptance Criteria:
+  - [ ] All Gemini blocker patterns have deterministic test coverage
+  - [ ] Gemini prompt-ready detection tested
+  - [ ] Gemini fallback chain tested (Claude → Codex → Gemini)
+  - [ ] Gemini scaffold extraction tested with mock stdout
+  - [ ] All existing tests continue to pass (no regressions)
+  - [ ] npm test passes with 0 failures
+Dependencies: TASK #155, TASK #156
+---
+
+TASK #159: GEMINI-ROUTE-1 — Wire Gemini binary into swarm routes and server startup
+Area: V4.0 — Gemini CLI Harness Integration
+Agent: backend-dev
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  The server startup (server/index.js) and swarm routes (server/routes/swarm.js) need to be wired to discover, store, and pass the Gemini binary path through the system.
+  Files to modify:
+  
+  159.1 — server/index.js:
+    - Import `discoverGeminiBinary` from BinaryDiscovery.js
+    - In startup(): call `discoverGeminiBinary()` in a try/catch (soft failure — Gemini is optional)
+    - Store result in `app.locals.geminiBin` (null if not found)
+    - Store on sessionManager: `sessionManager.geminiBin = geminiBin`
+    - Log: "Gemini CLI found: <path>" or "Gemini CLI not found (optional)"
+  
+  159.2 — server/routes/swarm.js:
+    - In the scaffold POST handler: extract `geminiBin` from `req.app.locals.geminiBin`
+    - Pass `geminiBin` to `generateWorkflowFromPrompt({ prompt, claudeBin, codexBin, geminiBin })`
+    - In the start execution handler: pass `geminiBin` availability info if needed for provider strategy
+  
+  159.3 — SessionManager changes (if needed):
+    - Add `geminiBin` property alongside existing `claudeBin` and `codexBin`
+    - SwarmEngine reads this in `_resolveRuntimeProviderBinary()` for Gemini provider
+Acceptance Criteria:
+  - [ ] Server startup discovers Gemini binary without crashing when not found
+  - [ ] `app.locals.geminiBin` set correctly (path or null)
+  - [ ] SessionManager exposes `geminiBin` for SwarmEngine consumption
+  - [ ] Scaffold route passes geminiBin to scaffold generator
+  - [ ] npm test passes
+Dependencies: TASK #154
+---
+
+TASK #160: GEMINI-DOCS-1 — Update DECISIONS.md, CODE_MAP.md, and ARCHITECTURE.md for Gemini provider
+Area: V4.0 — Gemini CLI Harness Integration
+Agent: documenter
+Priority: MEDIUM
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  All project documentation that references the Claude/Codex dual-provider architecture must be updated to reflect the Gemini third provider.
+  Files to update:
+  
+  160.1 — docs/memory/DECISIONS.md:
+    - Add DEC-026: "Gemini CLI as third runtime provider"
+      Decision: Add @google/gemini-cli as a third Swarm runtime harness. Gemini integrates via the same binary-discovery + PTY-spawn pattern as Claude and Codex. In auto mode, the fallback chain is Claude → Codex → Gemini. Gemini is optional — the system degrades gracefully if the binary is not installed.
+      Reasoning: Gemini CLI has near-identical interface to Claude CLI (-p, --output-format json, interactive PTY), making it a low-risk addition. Having three providers maximizes availability when any single provider hits rate limits or credit exhaustion.
+    - Add DEC-027: "Gemini scaffold uses {response} envelope, not {result}"
+      Decision: Gemini CLI's non-interactive JSON output uses `{response: "..."}` not `{result: "..."}` like Claude. The scaffold parser extracts from `.response`.
+  
+  160.2 — docs/memory/CODE_MAP.md:
+    - Update BinaryDiscovery.js entry: add `discoverGeminiBinary`
+    - Update ScaffoldGenerator.js entry: add `runGeminiScaffold`
+    - Update SwarmEngine.js entry: add `RUNTIME_PROVIDER.GEMINI` + Gemini blocker patterns
+    - Update server/index.js entry: add Gemini binary discovery at startup
+    - Update client entries: Gemini in runtime dropdown
+  
+  160.3 — docs/ARCHITECTURE.md:
+    - Update provider architecture section (if exists)
+    - Update runtime selection model
+    - Update blocker taxonomy with Gemini patterns
+    - Update scaffold fallback chain description
+Acceptance Criteria:
+  - [ ] DEC-026 and DEC-027 recorded in DECISIONS.md
+  - [ ] CODE_MAP.md reflects all new Gemini-related exports and modifications
+  - [ ] ARCHITECTURE.md updated with 3-provider model
+  - [ ] No stale references to "Claude and Codex only" remain in updated sections
+Dependencies: TASK #154, TASK #155, TASK #156, TASK #157
+---
+
+TASK #161: TEST GATE — Gemini CLI harness integration verification
+Area: V4.0 — Gemini CLI Harness Integration
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — V4.0 cannot close until Gemini is verified as functional at the scaffold, runtime, and UI layers
+Context:
+  End-to-end verification of the Gemini harness integration. This gate requires both deterministic tests AND at least one live or simulated Gemini interaction.
+Verification scope:
+  1. Binary discovery:
+     - Verify `discoverGeminiBinary()` finds the Gemini binary on the test machine (if installed)
+     - Verify server startup with Gemini available logs the correct path
+     - Verify server startup without Gemini logs a non-fatal warning
+  2. Scaffold:
+     - Send a scaffold POST with Gemini as the ONLY available provider
+     - Verify valid workflow JSON returned OR fallback to local workflow
+     - Verify Gemini stdout envelope `{response}` correctly parsed
+  3. Runtime (PTY):
+     - Start a Swarm execution with runtime provider set to 'gemini'
+     - Verify PTY spawned with correct binary and args
+     - Verify blocker detection works (simulate or reproduce rate-limit)
+     - Verify prompt injection into Gemini interactive PTY
+  4. UI:
+     - Verify Runtime dropdown shows "Gemini" option
+     - Verify selecting Gemini and starting execution shows "Provider: Gemini"
+     - Verify Gemini fallback banners display correctly
+  5. Fallback chain:
+     - Set runtime to Auto
+     - Simulate Claude blocked + Codex blocked → verify Gemini attempted
+     - Verify `lastFallback` metadata tracks the full chain
+  6. Regression:
+     - Verify Claude-only and Codex-only modes still work identically
+     - npm test passes (0 failures)
+     - npm run build passes (0 errors)
+Evidence required for closure:
+  - Server startup log showing Gemini binary detection (or graceful skip)
+  - At least one scaffold attempt via Gemini (success or classified failure)
+  - At least one runtime PTY session with Gemini (or classified blocker)
+  - UI screenshot showing Gemini in Runtime dropdown
+  - All deterministic tests passing
+Acceptance Criteria:
+  - [ ] Binary discovery works for Gemini (found or graceful skip)
+  - [ ] Scaffold via Gemini produces valid workflow or classified fallback
+  - [ ] Runtime PTY with Gemini spawned correctly
+  - [ ] UI shows Gemini as selectable provider
+  - [ ] Fallback chain Claude → Codex → Gemini verified
+  - [ ] No regressions to existing Claude/Codex behavior
+  - [ ] npm test passes
+  - [ ] npm run build passes
+Dependencies: TASK #154, TASK #155, TASK #156, TASK #157, TASK #158, TASK #159, TASK #160
+---
+
+TASK #162: AREA CHECKPOINT — V4.0 Gemini Harness Full Integration (end-to-end)
+Area: V4.0 — Gemini CLI Harness Integration
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: HIGH
+Difficulty: HIGH
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Gate: HARD — V4.0 is not closed until this checkpoint returns PASS
+Blocker note:
+  This checkpoint depends on Gemini CLI being installed on the machine and authenticated. If Gemini CLI is not available, the checkpoint should verify graceful degradation (fallback to Claude/Codex/local) and mark partial pass with documented blocker.
+Verification scenario:
+  Step 1: Start server → verify startup logs show 3 binary discovery results (Claude, Codex, Gemini)
+  Step 2: Navigate to Swarm → verify Runtime dropdown shows Auto/Claude/Codex/Gemini
+  Step 3: Select "Gemini" runtime, generate a workflow via Prompt-to-Flow
+  Step 4: Click Run → verify "Provider: Gemini" indicator active
+  Step 5: Observe agent execution:
+    (a) If Gemini is available and working: verify agent produces output, handoff attempted
+    (b) If Gemini hits rate limit: verify blocker banner shows "Gemini hit its rate limit...", state transitions to 'blocked'
+    (c) If Gemini requires auth: verify blocker banner shows auth-required message
+  Step 6: Switch runtime to Auto → run again → verify fallback chain operates correctly (Claude → Codex → Gemini)
+  Step 7: Reset → select Claude explicitly → verify Claude-only mode unaffected
+  Step 8: npm test: 0 failures. npm run build: 0 errors.
+Acceptance Criteria:
+  - [ ] All 8 steps pass or are documented with honest blockers
+  - [ ] Gemini scaffold produces valid workflow or classified error
+  - [ ] Gemini runtime PTY spawns correctly or shows classified blocker
+  - [ ] Auto fallback chain includes Gemini as tertiary
+  - [ ] No regressions to Claude/Codex behavior
+  - [ ] Blocker classification for all known Gemini interactive dead-ends
+  - [ ] npm test passes
+  - [ ] npm run build passes
+Dependencies: TASK #161
+---
+
+## AREA: V4.1 — Per-Harness Runtime Model Selection
+_Components: SwarmView.jsx, SwarmContext.jsx, SwarmEngine.js, swarm.js, server/index.js_
+_Tasks: #163 → #164_
+_Gate: V4.1 closes when users can select which AI model each provider harness uses, and the selection is persisted per-workflow_
+_Source: User request 2026-04-04 — "vorrei poter scegliere per ogni HARNESS quale modello deve essere usato, in modo che l'utente possa decidere con cosa runnare un determinato progetto"_
+
+_Technical Preamble — Model Selection by Provider:_
+  - Claude: model is determined by Claude account/subscription tier, NOT by CLI flag (cannot be overridden at CLI level)
+  - Codex: model selected via `-m <model>` flag (e.g. `gpt-5.1-codex`, configurable via `SWARM_CODEX_MODEL` env)
+  - Gemini: model selected via `-m <model>` flag (e.g. `gemini-2.5-pro`, `gemini-3-pro-preview`, configurable via `SWARM_GEMINI_MODEL` env)
+  - This feature exposes model selection as a UI-level per-workflow setting rather than only env vars
+
+---
+
+TASK #163: FEATURE-MODEL-1 — Per-harness model selection UI and backend contract
+Area: V4.1 — Per-Harness Runtime Model Selection
+Agent: architect
+Priority: MEDIUM
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Context:
+  Currently, model selection is hardcoded or env-var-only:
+    - Claude: no model flag (determined by account)
+    - Codex: uses `DEFAULT_SWARM_CODEX_MODEL` ('gpt-5.1-codex') or `SWARM_CODEX_MODEL` env
+    - Gemini: uses `DEFAULT_SWARM_GEMINI_MODEL` or `SWARM_GEMINI_MODEL` env
+  The user wants to be able to select models per-harness from the UI.
+  
+  Design scope:
+  163.1 — Data model:
+    - Workflow definition gains optional `settings.runtimeModels` field:
+      ```json
+      {
+        "settings": {
+          "runtimeProvider": "auto",
+          "runtimeModels": {
+            "claude": null,
+            "codex": "gpt-5.1-codex",
+            "gemini": "gemini-2.5-pro"
+          }
+        }
+      }
+      ```
+    - `null` means "use provider default / account default"
+    - Each provider has a known list of available models (can be static or queried)
+  
+  163.2 — Backend contract:
+    - `_buildRuntimeProviderArgs()` reads `execution.workflowDef.settings.runtimeModels[provider]` and uses it instead of env var / hardcoded default
+    - Start execution API (POST /api/v1/swarm/:workflowId/start) accepts optional `runtimeModels` in the body
+    - WorkflowStore schema validation updated to accept the new field
+  
+  163.3 — UI contract:
+    - SwarmView toolbar or settings panel shows model selection per provider:
+      - Codex model dropdown: gpt-5.1-codex, gpt-4.1-codex, etc.
+      - Gemini model dropdown: gemini-2.5-pro, gemini-3-pro-preview, gemini-2.5-flash
+      - Claude model: "Account Default (not configurable)" or disabled dropdown
+    - Model selection saved in workflow definition settings
+    - Selection persisted across page reloads (stored in workflow JSON)
+  
+  163.4 — Available models:
+    - Static lists as starting point (can be enhanced with dynamic discovery later):
+      Codex: ['gpt-5.1-codex', 'gpt-4.1-codex']
+      Gemini: ['gemini-2.5-pro', 'gemini-3-pro-preview', 'gemini-2.5-flash', 'gemini-3-flash-preview']
+      Claude: ['account-default'] (non-editable)
+  
+  Decision points for user:
+    - Should model selection be per-workflow (saved in workflow JSON) or per-execution (transient)?
+    - Should the UI expose ALL available models or only recommended ones?
+    - Should there be a "Test Model" button to verify the selected model works before running?
+Acceptance Criteria:
+  - [ ] Design decision for per-workflow vs per-execution model selection documented
+  - [ ] Data model for `runtimeModels` defined and documented
+  - [ ] Backend contract for model override defined
+  - [ ] UI wireframe or specification for model selection panel
+  - [ ] Available model lists for each provider defined
+  - [ ] WorkflowStore schema update specified
+Dependencies: TASK #156
+---
+
+TASK #164: FEATURE-MODEL-2 — Implement per-harness model selection (backend + frontend)
+Area: V4.1 — Per-Harness Runtime Model Selection
+Agent: backend-dev, frontend-dev
+Priority: MEDIUM
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Context:
+  Implementation of the per-harness model selection feature designed in TASK #163.
+  
+  164.1 — Backend implementation:
+    Files: SwarmEngine.js, swarm.js, WorkflowStore.js
+    - WorkflowStore.js: update schema validation to accept `settings.runtimeModels` (optional object with provider keys)
+    - SwarmEngine._buildRuntimeProviderArgs(): read model from `workflowDef.settings.runtimeModels[provider]`, fall back to env var, then to hardcoded default
+    - swarm.js start route: accept `runtimeModels` in request body and pass to SwarmEngine.startExecution()
+    - Scaffold route: accept `model` parameter for scaffold generation and pass to the selected provider's scaffold function
+  
+  164.2 — Frontend implementation:
+    Files: SwarmView.jsx, SwarmContext.jsx, hooks/useWorkflow.js
+    - SwarmView.jsx: add a "Model Settings" panel (collapsible, next to Runtime dropdown):
+      - For each configured provider (Auto selects all, specific selects one):
+        - Dropdown showing available models for that provider
+        - "Default" option as first choice
+      - Changes saved to workflow definition via useWorkflow hook
+    - SwarmContext.jsx: add `runtimeModels` state slice if needed for transient selection
+    - useWorkflow.js: include runtimeModels in workflow save/update payload
+  
+  164.3 — Testing:
+    - Unit test: verify `_buildRuntimeProviderArgs()` uses model from workflowDef over env var
+    - Unit test: verify WorkflowStore accepts and persists runtimeModels
+    - Build test: npm run build passes
+    - UI test: model dropdown renders and persists selection
+  
+  164.4 — Integration:
+    - Verify selecting "gpt-5.1-codex" for Codex → PTY spawned with `-m gpt-5.1-codex`
+    - Verify selecting "gemini-2.5-pro" for Gemini → PTY spawned with `-m gemini-2.5-pro`
+    - Verify Claude shows "Account Default" (no model flag sent to CLI)
+Acceptance Criteria:
+  - [ ] WorkflowStore accepts `settings.runtimeModels` field
+  - [ ] SwarmEngine uses per-workflow model selection when available
+  - [ ] Model falls back to env var → hardcoded default when not set in workflow
+  - [ ] UI shows model selection dropdowns for Codex and Gemini
+  - [ ] Claude model shown as "Account Default" (non-editable)
+  - [ ] Selected models persisted in workflow JSON
+  - [ ] PTY spawned with correct `-m` flag for selected model
+  - [ ] npm test passes
+  - [ ] npm run build passes
+Dependencies: TASK #163

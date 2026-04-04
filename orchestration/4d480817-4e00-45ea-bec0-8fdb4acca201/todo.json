@@ -1,0 +1,10 @@
+{
+  "request_id": "4d480817-4e00-45ea-bec0-8fdb4acca201",
+  "created_at": "2026-04-03T12:47:19.739Z",
+  "user_prompt": "Leggi solo docs/TASK_PLAN.md e dimmi in massimo 8 righe cosa manca OGGETTIVAMENTE per poter chiudere #145, #148 e #153 senza mentire. Restituisci solo: open blockers, evidence missing, next critical action.",
+  "requested_agent": "project-manager",
+  "status": "active",
+  "steps": [],
+  "next_actions": [],
+  "summary": null
+}

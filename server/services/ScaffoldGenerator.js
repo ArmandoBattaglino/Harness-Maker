@@ -145,6 +145,26 @@ export function parseClaudeCliEnvelope(stdout) {
   };
 }
 
+export function parseGeminiCliEnvelope(stdout) {
+  const trimmed = String(stdout ?? '').trim();
+  if (!trimmed) {
+    return { text: '', isError: false };
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(trimmed);
+  } catch {
+    return { text: trimmed, isError: false };
+  }
+
+  const text = String(parsed.response ?? trimmed).trim();
+  return {
+    text,
+    isError: !!parsed.error,
+  };
+}
+
 function buildProviderError(providerName, message, statusCode = 500, options = {}) {
   const error = new Error(message);
   error.provider = providerName;
@@ -156,7 +176,7 @@ function buildProviderError(providerName, message, statusCode = 500, options = {
 
 function classifyScaffoldFailure(providerName, rawMessage) {
   const message = String(rawMessage ?? '').trim() || `${providerName} scaffold failed`;
-  if (/hit your limit|rate limit|quota|credits?/i.test(message)) {
+  if (/hit your limit|rate limit|quota|credits?|resource exhausted|429/i.test(message)) {
     return buildProviderError(providerName, message, 503);
   }
   if (/403 Forbidden|usage limit|try again at|cloudflare|Enable JavaScript and cookies to continue/i.test(message)) {
@@ -359,12 +379,41 @@ async function runCodexScaffold(codexBin, prompt) {
   }
 }
 
+async function runGeminiScaffold(geminiBin, prompt) {
+  const fullPrompt = buildWorkflowPrompt(prompt);
+  const args = [
+    '-p', fullPrompt,
+    '--output-format', 'json'
+  ];
+
+  const model = process.env.SWARM_GEMINI_MODEL;
+  if (model) {
+    args.push('-m', String(model).trim());
+  }
+
+  const { code, stdout, stderr } = await runSpawn(geminiBin, args, { cwd: os.tmpdir() });
+  const envelope = parseGeminiCliEnvelope(stdout);
+
+  if (code !== 0 || envelope.isError) {
+    const providerMessage = envelope.text || stderr.trim() || `Gemini exited ${code}`;
+    throw classifyScaffoldFailure('gemini', providerMessage);
+  }
+
+  try {
+    return parseWorkflowDefinition(envelope.text || stdout, 'Gemini');
+  } catch (error) {
+    throw classifyScaffoldFailure('gemini', `Failed to parse workflow JSON: ${error.message}`);
+  }
+}
+
 export async function generateWorkflowFromPrompt({
   prompt,
   claudeBin,
   codexBin,
+  geminiBin,
   runClaude = runClaudeScaffold,
   runCodex = runCodexScaffold,
+  runGemini = runGeminiScaffold,
 }) {
   if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
     throw buildProviderError('scaffold', 'prompt is required', 400);
@@ -384,6 +433,14 @@ export async function generateWorkflowFromPrompt({
   if (codexBin) {
     try {
       return await runCodex(codexBin, normalizedPrompt);
+    } catch (error) {
+      providerErrors.push(error);
+    }
+  }
+
+  if (geminiBin) {
+    try {
+      return await runGemini(geminiBin, normalizedPrompt);
     } catch (error) {
       providerErrors.push(error);
     }

@@ -137,9 +137,13 @@ export default function SwarmView() {
   const providerLabel = runtimeProvider
     ? runtimeProvider === 'codex'
       ? 'Codex'
+      : runtimeProvider === 'gemini'
+      ? 'Gemini'
       : 'Claude'
     : selectedRuntimeProvider === 'codex'
     ? 'Codex'
+    : selectedRuntimeProvider === 'gemini'
+    ? 'Gemini'
     : selectedRuntimeProvider === 'claude'
     ? 'Claude'
     : 'Auto';
@@ -148,6 +152,8 @@ export default function SwarmView() {
     ? 'Auto fallback'
     : providerStrategy?.mode === 'codex'
     ? 'Codex only'
+    : providerStrategy?.mode === 'gemini'
+    ? 'Gemini only'
     : providerStrategy?.mode === 'claude'
     ? 'Claude only'
     : 'Auto fallback';
@@ -179,6 +185,7 @@ export default function SwarmView() {
             <option value="auto">Auto</option>
             <option value="claude">Claude</option>
             <option value="codex">Codex</option>
+            <option value="gemini">Gemini</option>
           </select>
         </label>
 
