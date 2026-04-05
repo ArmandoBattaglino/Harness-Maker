@@ -2363,3 +2363,64 @@ No new connections introduced in this checkpoint task. All connection changes we
 - BUG-INSPECTOR-1 resolved: the undefined-prop crash path is eliminated
 
 ---
+
+---
+## 2026-04-06 — Task #231: BUG-WF-1 — Snippet noise filter extended for swarm preamble
+**Agent:** debugger
+**Triggered by:** V5.0 debugger loop — swarm protocol preamble lines (agent role declarations, task descriptions, workflow goals) leaked through snippet noise filter into AgentNode lastOutputSnippet display
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/SwarmEngine.js | MODIFIED | Added 13 new regex patterns to SNIPPET_NOISE_LINE_PATTERNS (lines 137-149) covering swarm agent role declarations, task descriptions, and workflow goal phrases; added SWARM INPUT block regex to _stripSnippetProtocolArtifacts() |
+
+### Functions Added
+- None
+
+### Functions Modified
+- `SNIPPET_NOISE_LINE_PATTERNS` (module-level const) in `server/services/SwarmEngine.js` — 13 new patterns appended: `/^you are a \w+ agent/i`, `/^you have an active task right now/i`, `/^current task:/i`, `/^workflow goal:/i`, `/^your output will be handed off/i`, `/^when you are done with your part/i`, `/^execute the workflow goal/i`, `/^research the .+ project/i`, `/^write a .+ summary/i`, `/^you are the .+ in this workflow/i`, `/^your role is/i`, `/^--- swarm input ---$/i`, `/^--- end swarm input ---$/i`
+- `SwarmEngine._stripSnippetProtocolArtifacts(rawText)` in `server/services/SwarmEngine.js` — added second `.replace()` call: `/----?\s*SWARM INPUT[\s\S]*?----?\s*END SWARM INPUT\s*----?/gi` to strip SWARM INPUT blocks (line 912)
+
+### Functions Removed
+- None
+
+### Connection Changes
+- No new call-graph edges — the 13 new patterns are consumed by the existing `_isSnippetNoiseLine()` call path via `SNIPPET_NOISE_LINE_PATTERNS.some()`
+- The new SWARM INPUT block regex in `_stripSnippetProtocolArtifacts()` runs in the same pipeline position (called by `_buildSemanticSnippet()`)
+
+### Impact on Other Code
+- `_buildSemanticSnippet()` now produces cleaner snippets — fewer protocol preamble lines will survive into the final snippet shown in AgentNode.lastOutputSnippet on the canvas
+- `_isSnippetNoiseLine()` filtering is more aggressive — any line matching the 13 new swarm preamble patterns will be discarded before block scoring
+- No interface changes — all modifications are internal to the snippet pipeline
+
+---
+
+---
+## 2026-04-06 — Task #232: BUG-WF-3 — PtyExplosion key prop for React remount
+**Agent:** debugger
+**Triggered by:** V5.0 debugger loop — PtyExplosion overlay showed stale xterm.js output when switching between agent terminals because React reused the component instance
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/views/SwarmView.jsx | MODIFIED | Added `key={ptyExplosionNodeId}` to PtyExplosion component at line 520, forcing React to unmount/remount when the user switches agent terminals |
+
+### Functions Added
+- None
+
+### Functions Modified
+- `SwarmView()` in `client/src/views/SwarmView.jsx` — PtyExplosion JSX element now has `key={ptyExplosionNodeId}` (line 520). This is a single-prop addition, not an interface change.
+
+### Functions Removed
+- None
+
+### Connection Changes
+- No new dependencies. The `key` prop is a React built-in mechanism — it does not create a new function call or import.
+- `PtyExplosion` component in `client/src/canvas/PtyExplosion.jsx` is now fully remounted (constructor + useEffect rerun) each time `ptyExplosionNodeId` changes, ensuring the xterm.js Terminal instance is freshly created for the new sessionId.
+
+### Impact on Other Code
+- `PtyExplosion` component (`client/src/canvas/PtyExplosion.jsx`) will now have its full lifecycle (mount/unmount) invoked on every agent switch. Any useEffect cleanup in PtyExplosion will run correctly between switches.
+- `SwarmContext.setPtyExplosionNodeId()` callers (AgentInspector "Open Terminal" button, SwarmView Escape key handler) are unaffected — the store action is unchanged.
+- xterm.js Terminal instance inside PtyExplosion is now guaranteed fresh per agent — no stale buffer content.
+
+---

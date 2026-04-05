@@ -2222,4 +2222,50 @@ CODE_MAP.md fully reflects Task #130. `handleUpdateNode` has a complete Function
 
 ### Handoff
 Task #132 is next (per ACTIVITY_LOG.md showing Task #131 TEST GATE PASS). Code-mapper will need to update entries after Task #132 completes.
+
+---
+## 2026-04-06 — Tasks #231 + #232: V5.0 Debugger Loop Fixes (BUG-WF-1, BUG-WF-3)
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+Tasks #231 and #232 were just completed by the debugger as part of the V5.0 debugger loop. Two files were modified: server/services/SwarmEngine.js (snippet noise filter extended) and client/src/views/SwarmView.jsx (PtyExplosion key prop). The snippet pipeline functions (_stripSnippetProtocolArtifacts, _isSnippetNoiseLine, _buildSemanticSnippet, SNIPPET_NOISE_LINE_PATTERNS) were NOT yet mapped in CODE_MAP.md — this was the first time they needed updating.
+
+### What I did
+1. Read both modified source files to identify exact changes
+2. Searched CODE_MAP.md for existing entries — found SwarmEngine Module Index entry (line 43), SwarmView Module Index entry (line 89), SwarmView function graph entry (around line 2016), but NO entries for the snippet pipeline functions
+3. Updated the "Last updated" header in CODE_MAP.md
+4. Updated SwarmEngine.js Module Index entry — appended Task #231 changes description and task number
+5. Updated SwarmView.jsx Module Index entry — added BUG-WF-3 description and Task #232
+6. Updated SwarmView() function graph entry — added key prop complexity note and updated Last modified
+7. Added 4 new Function Graph entries for the snippet pipeline: SNIPPET_NOISE_LINE_PATTERNS (const), _stripSnippetProtocolArtifacts(), _isSnippetNoiseLine(), _buildSemanticSnippet()
+8. Added 2 new Bug Registry entries: BUG-WF-1 and BUG-WF-3
+9. Appended 2 CHANGELOG.md entries (one per task) with full connection/impact analysis
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Updated header, Module Index (2 entries), SwarmView function graph, added 4 new snippet pipeline function entries, added 2 Bug Registry entries |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended 2 new entries for Tasks #231 and #232 |
+
+### Improvements delivered
+- Snippet pipeline functions now fully mapped in CODE_MAP.md for the first time
+- Bug Registry covers BUG-WF-1 and BUG-WF-3 with root cause and fix details
+
+### Bugs I encountered
+None
+
+### Decisions I made
+- Mapped 4 snippet pipeline functions (SNIPPET_NOISE_LINE_PATTERNS, _stripSnippetProtocolArtifacts, _isSnippetNoiseLine, _buildSemanticSnippet) even though only the first two were directly modified — the other two are directly affected and completing the pipeline graph aids future debugging
+- Placed the new entries in a new section "SwarmEngine Snippet Pipeline" between the existing SwarmEngine function entries and the inbox routes section
+
+### What I learned
+- CODE_MAP.md is now ~2740+ lines. The snippet pipeline (noise filter -> strip protocol -> normalize -> score -> extract) is a 5-function pipeline that was previously unmapped despite being core to the UI display quality.
+- SNIPPET_NOISE_LINE_PATTERNS is a module-level const, not a class method — documented as such.
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md fully reflect Tasks #231 and #232. All modified functions have accurate entries. The snippet pipeline is now mapped end-to-end.
+
+### Handoff
+None — task fully self-contained. Next code-mapper invocation will be after whatever task follows in the V5.0 debugger loop.
 ---

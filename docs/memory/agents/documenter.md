@@ -1,4 +1,55 @@
 ---
+## 2026-04-06 -- Tasks #231, #232: V5.0 Debugger Loop Fix Wave documentation update
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel post-task documentation update)
+
+### Context when I started
+Two V5.0 debugger-loop bug fixes had just been completed by the debugger agent. TASK #231 (BUG-WF-1) expanded the snippet noise filtering in SwarmEngine.js with 13 new swarm protocol preamble patterns and a SWARM INPUT block regex. TASK #232 (BUG-WF-3) added `key={ptyExplosionNodeId}` to the PtyExplosion component in SwarmView.jsx to force remount when switching terminals. TASK #233 (BUG-WF-2) was deferred as acceptable for MVP. PROGRESS.md already had the TASK #232 entry from a previous agent, and CONTEXT.md was stale (still referencing V3 Planning). DOC_STATUS.md was last updated 2026-04-02 after the V3.1 wave.
+
+### What I did
+1. Read all modified files (SwarmEngine.js lines 120-200 for snippet patterns, SwarmView.jsx lines 1-50 and grep for key={ptyExplosionNodeId}) to understand exact code changes.
+2. Read all memory files in parallel: PROGRESS.md, CONTEXT.md, PROJECT.md, DECISIONS.md, DOC_STATUS.md, ACTIVITY_LOG.md (head), TASK_PLAN.md (grep for #231/#232/#233), documenter agent log.
+3. Audited README.md, ARCHITECTURE.md, API.md for staleness -- none reference snippet filtering internals or PtyExplosion implementation details that changed. The `lastOutputSnippet` field name/type in the WS event contract is unchanged. The PtyExplosion tree entry in ARCHITECTURE.md is still accurate (component name and location unchanged).
+4. Updated PROGRESS.md: prepended V5.0 fix wave entry covering both tasks and noting TASK #233 PENDING status.
+5. Updated CONTEXT.md: changed focus line from stale "V3 Planning" to current "V5.0 Debugger Loop Deep Check" status.
+6. Updated DOC_STATUS.md: refreshed header date, updated every row in the Documentation Health table with current notes, added V5.0-specific context to Inline comments row.
+7. Appended documenter entry to ACTIVITY_LOG.md.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/PROGRESS.md | MODIFIED | V5.0 fix wave entry prepended -- TASK #231 and #232 completion summary |
+| docs/memory/CONTEXT.md | MODIFIED | Focus line updated from stale V3 Planning to V5.0 Debugger Loop status |
+| docs/memory/DOC_STATUS.md | MODIFIED | Header refreshed to 2026-04-06, all Documentation Health rows re-verified, Inline comments row updated for V5.0 |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Documenter entry appended for V5.0 fix wave |
+| docs/memory/agents/documenter.md | MODIFIED | This session log prepended |
+
+### Improvements delivered
+- PROGRESS.md now accurately reflects V5.0 completion state (TASK #231 done, #232 done, #233 pending)
+- CONTEXT.md no longer references stale "V3 Planning" focus -- updated to current V5.0 debugger loop status
+- DOC_STATUS.md Health table re-verified against current code -- all documents confirmed UP_TO_DATE
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Did NOT update README.md -- V5.0 fixes are internal (snippet regex array expansion and React key prop). No features, setup steps, env vars, or endpoints changed.
+- Did NOT update ARCHITECTURE.md -- PtyExplosion tree entry still accurate. The `key=` prop is a standard React pattern, not an architectural change.
+- Did NOT update API.md -- `lastOutputSnippet` field name and type in `agent_status` WS event are unchanged. Only the internal sanitization pipeline that produces the value was improved.
+- Did NOT update DECISIONS.md -- no new architectural decisions. Expanding a regex array and adding a React key prop are standard bug-fix patterns, not decision-worthy.
+
+### What I learned
+- CONTEXT.md can drift significantly (still referenced V3 Planning despite being on V5.0). Need to check focus line every time.
+- The snippet filtering pipeline (SNIPPET_NOISE_LINE_PATTERNS + _stripSnippetProtocolArtifacts) is an internal detail that does not surface in any external-facing documentation -- API.md only documents the `lastOutputSnippet` contract field, not how it is produced.
+- PtyExplosion `key=` fix is the canonical React pattern for forcing remount on identity change -- no documentation needed beyond task context.
+
+### State I'm leaving behind
+All documentation artifacts UP_TO_DATE as of 2026-04-06. TASK #233 (BUG-WF-2, done-token recovery prompt noise) is the only remaining V5.0 bug fix task. TEST GATE #229 and AREA CHECKPOINT #230 are still pending, gated on either #233 completion or its formal deferral.
+
+### Handoff
+None -- documentation fully current. Next documenter invocation needed after TASK #233 is either completed or formally skipped, and after TEST GATE #229 runs.
+
+---
 ## 2026-04-02 — Task #132: AREA CHECKPOINT PASS — V3.1 Swarm Bug Fix Wave closed
 **Status:** COMPLETED
 **Called by:** user (parallel post-task documentation update)

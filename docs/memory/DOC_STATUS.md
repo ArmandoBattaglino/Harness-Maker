@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-02 after AREA CHECKPOINT #132 PASS — V3.1 Swarm Bug Fix Wave fully closed. All 4 BUG-PRD-* bugs fixed (Tasks #124-#132, 9 tasks). 132/132 tasks COMPLETED. Zero open bugs._
+_Last updated: 2026-04-06 after V5.0 Debugger Loop Fix Wave (Tasks #231, #232). Snippet preamble filtering expanded in SwarmEngine.js, PTY Explosion terminal switching fixed in SwarmView.jsx._
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**
@@ -35,19 +35,20 @@ _Last updated: 2026-04-02 after AREA CHECKPOINT #132 PASS — V3.1 Swarm Bug Fix
 
 | Document | Status | Last Updated | Notes |
 |----------|--------|--------------|-------|
-| README.md | UP_TO_DATE | 2026-03-31 | Task #112: Removed ANTHROPIC_API_KEY requirement from Swarm Quick Start step 2, removed "Environment Variable Required for Swarm" section, updated Known Limitations entry. Prompt-to-Flow now uses claude binary — no API key needed. |
-| docs/ARCHITECTURE.md | UP_TO_DATE | 2026-04-02 | V3.1 wave: Swarm WS event table updated. `agent_status` payload corrected (added `sessionId` field, removed stale `handoffCount?`). `handoff_completed` row added. `trigger_fired`, `trigger_status`, `rss_item` rows updated with executionId and correct payload fields. All changes reference fix tasks #124, #126, #128. |
-| docs/PRD.md | UP_TO_DATE | 2026-04-02 | Section 11 (Component Specifications) and Section 11.1 (WS Event Field Reference) added by prd-writer. All 12 Swarm components spec'd. All four BUG-PRD-* bugs now FIXED in V3.1 wave (Tasks #124-#130). Known Issues entries in Section 11 now reflect resolved state. |
-| docs/API.md | UP_TO_DATE | 2026-03-28 | pause endpoint: full state update + WS broadcast (BUG-94). resume endpoint: actual resumeExecution() behavior (BUG-95). budget field in status response: real budgetTracker data (BUG-98). Verified clean at V3 RELEASE-READY closure. |
-| docs/memory/PROJECT.md | UP_TO_DATE | 2026-03-28 | Version updated to v3.0, implementation status updated to complete. @anthropic-ai/sdk row added to tech stack. @xyflow/react and zustand rows updated (no longer "not yet imported"). V3-Specific Constraints section added (DEC-011 through DEC-016, SEC-V3-01 through SEC-V3-07). |
-| docs/memory/DECISIONS.md | UP_TO_DATE | 2026-03-27 | DEC-011 through DEC-016 added by architect during V3 tasks. No changes needed. |
-| docs/memory/PROGRESS.md | UP_TO_DATE | 2026-03-31 | All 115 tasks COMPLETED. Tasks #32–#40 stale PENDING status corrected to COMPLETED. 187/187 regression tests pass at v3.0.0. Project confirmed stable. Zero open bugs. |
+| README.md | UP_TO_DATE | 2026-03-31 | No changes needed for V5.0 fixes (internal snippet filtering and React key prop — no public API/setup/feature changes). |
+| docs/ARCHITECTURE.md | UP_TO_DATE | 2026-04-02 | PtyExplosion component tree entry still accurate. The `key=` prop is an internal React implementation detail, not an architectural change. |
+| docs/PRD.md | UP_TO_DATE | 2026-04-02 | Section 11 spec unchanged by V5.0 fixes — snippet contract (`lastOutputSnippet` field name/type) is the same; only internal filtering logic improved. |
+| docs/API.md | UP_TO_DATE | 2026-03-28 | `lastOutputSnippet` field in `agent_status` WS event unchanged — same field, same type, same contract. Only the backend sanitization pipeline that produces the value was improved. |
+| docs/memory/PROJECT.md | UP_TO_DATE | 2026-03-28 | No stack/constraint changes in V5.0 fixes. |
+| docs/memory/DECISIONS.md | UP_TO_DATE | 2026-04-03 | DEC-001 through DEC-026 — no new architectural decisions from V5.0 bug fixes. |
+| docs/memory/PROGRESS.md | UP_TO_DATE | 2026-04-06 | V5.0 fix wave entry added: TASK #231 (snippet preamble noise) and TASK #232 (PTY Explosion wrong terminal) COMPLETED. TASK #233 still PENDING. |
+| docs/memory/CONTEXT.md | UP_TO_DATE | 2026-04-06 | Focus updated to V5.0 Debugger Loop Deep Check status. |
 | docs/memory/CODE_MAP.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No changes from documenter. |
 | docs/memory/CHANGELOG.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No changes from documenter. |
-| docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-03-28 | V3 RELEASE-READY closure entry appended by project-manager and documenter. |
-| docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-03-18 | V1 audit. V3 audit is docs/security-v3-audit.md (Task #79). |
-| docs/security-v3-audit.md | UP_TO_DATE | 2026-03-28 | BUG-99 fix note added: SEC-V3-01 now enforced via express.raw() — body-size bypass resolved. MEDIUM-V3-01 CSRF mismatch unchanged (not blocking; app is localhost-only). Verified clean at V3 RELEASE-READY closure. |
-| Inline comments | UP_TO_DATE | 2026-04-02 | All V3 route files have comprehensive block comments. Post-release patches: SwarmCanvas.jsx useEffect comment updated (fitView rationale). SwarmContext.jsx workflowDef field comment added (BUG-SWARM-3). useSwarm.js startExecution null guard comment present. SwarmView.jsx useInbox call added (BUG-AUDIT-4). AgentInspector.jsx Open Terminal button (BUG-AUDIT-2+3). V3.1 wave: SwarmEngine.js _spawnAgentPty WS broadcast includes sessionId field; _onHandoff step 11 handoff_completed broadcast block added. useSwarm.js connectWs switch includes trigger_fired, trigger_status, rss_item cases. SwarmCanvas.jsx handleUpdateNode useCallback block (lines 96-103) and AgentInspector mount with onUpdateNode prop. |
+| docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-06 | V5.0 fix wave entry appended by documenter. |
+| docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-03-18 | V1 audit. V3 audit is docs/security-v3-audit.md (Task #79). No security changes in V5.0 fixes. |
+| docs/security-v3-audit.md | UP_TO_DATE | 2026-03-28 | No security changes in V5.0 fixes. |
+| Inline comments | UP_TO_DATE | 2026-04-06 | V5.0 fixes: SwarmEngine.js SNIPPET_NOISE_LINE_PATTERNS array is self-documenting (regex patterns with inline comments not needed — the pattern names and regex literals are clear). SwarmView.jsx PtyExplosion `key={ptyExplosionNodeId}` is a standard React pattern for forced remount — no "why" comment needed beyond the PR/task context. |
 | docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. Deferred indefinitely. |
 
 ## Stale Sections (known gaps)

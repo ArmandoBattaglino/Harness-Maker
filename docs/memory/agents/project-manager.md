@@ -1,4 +1,62 @@
 ---
+## 2026-04-06 — V5.0 Post-Phase-3 Task Plan Review and Update
+**Status:** COMPLETED
+**Called by:** user (post-debugger-loop Phase 3 review)
+
+### Context when I started
+V5.0 debugger loop Phase 3 had just completed. Three bug tasks were created during Phase 1 deep testing:
+- #231 (BUG-WF-1, system prompt snippet noise) -- debugger fixed it, 13 noise patterns added
+- #232 (BUG-WF-3, wrong PTY Explosion terminal) -- debugger fixed it, key prop added
+- #233 (BUG-WF-2, done-token recovery noise) -- assessed as MVP-acceptable, no code change needed
+The task plan needed updating to reflect these completions and to identify what remains.
+
+### What I did
+1. Read TASK_PLAN.md V5.0 section (lines 11862-12094), V4.5 section (lines 11647-11860), status header (line 7), and PROGRESS.md
+2. Verified #231 status: already marked COMPLETED at line 11992 with completion note. Checked acceptance criteria boxes.
+3. Verified #232 status: already marked COMPLETED at line 12036 with resolution note. Acceptance criteria already checked.
+4. Marked #233 as DEFERRED with detailed deferral note explaining MVP acceptability.
+5. Assessed CHECK tasks #225-#228 based on Phase 1 testing evidence:
+   - #225 (workflow lifecycle): COMPLETED -- Phase 1 deep check executed this directly, found 3 bugs, all resolved/deferred
+   - #226 (HITL): remains PENDING -- was not explicitly tested during Phase 1, now UNBLOCKED (dependency #225 met)
+   - #227 (agent terminals): COMPLETED -- PTY Explosion was tested and BUG-WF-3 found/fixed during Phase 1
+   - #228 (persistence): remains PENDING -- was not tested during Phase 1, no blocking dependencies
+6. Updated TEST GATE #229 as BLOCKED with detailed progress note (2/4 checks done)
+7. Updated AREA CHECKPOINT #230 as BLOCKED (waiting on #229)
+8. Updated V5.0 area header with current status line
+9. Updated main status header at top of TASK_PLAN.md
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Updated tasks #225, #226, #227, #228, #229, #230, #233 statuses; updated V5.0 area header; updated main status header; checked acceptance criteria on #231 |
+| docs/memory/PROGRESS.md | MODIFIED | Added PM session entry for V5.0 Phase 3 review |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added session entry |
+| docs/memory/agents/project-manager.md | MODIFIED | Added this session log |
+
+### Improvements delivered
+- Task plan now accurately reflects V5.0 state after Phase 3 bug fixes
+- Clear path forward identified: #226 + #228 in parallel, then #229 gate
+
+### Bugs I encountered
+None -- this was a review/planning task.
+
+### Decisions I made
+- #225 is honestly COMPLETED: Phase 1 testing exercised the full workflow lifecycle and found 3 real bugs, all addressed
+- #227 is honestly COMPLETED: PTY Explosion was tested, BUG-WF-3 was found and fixed, terminal output verified
+- #226 and #228 are honestly still PENDING: no evidence they were tested during Phase 1
+- #233 DEFERRED reasoning: the done-token recovery prompt is only visible in raw terminal (PTY Explosion), not in node card snippets; the recovery mechanism works correctly; this is cosmetic noise in a power-user view
+
+### What I learned
+- The V5.0 debugger loop structure (Phase 1: deep test, Phase 2: bug plan, Phase 3: fix) is working well -- all critical bugs from Phase 1 were resolved
+- Two CHECK tasks (#226 HITL, #228 persistence) were not covered by Phase 1 and need explicit testing before the area can close
+
+### State I'm leaving behind
+V5.0 status: 5 tasks COMPLETED (#225, #227, #231, #232, and implicit V4.5 completions), 1 DEFERRED (#233), 2 PENDING (#226, #228), 2 BLOCKED (#229, #230). The critical path is: execute #226 + #228 -> evaluate #229 -> if PASS, run #230 -> V5.0 CLOSED.
+
+### Handoff
+Next action for orchestrator: assign qa-tester to execute #226 (HITL check) and #228 (persistence check) in parallel. Both are unblocked and ready. After both complete (with any bugs found and fixed), TEST GATE #229 can be evaluated.
+
+---
 ## 2026-04-04 — V4.0 E2E Bug Triage: 3 bugs found, tasks #160-#165 created
 **Status:** COMPLETED
 **Called by:** user (post-E2E-test bug triage)

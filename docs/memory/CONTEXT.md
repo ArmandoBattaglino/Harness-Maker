@@ -1,6 +1,6 @@
 # Current Context
 **Session date:** 2026-04-06
-**Focus:** V3 Planning — Multi-Agent Swarm Orchestrator PRD written. Next: V3 task planning and architecture.
+**Focus:** V5.0 Debugger Loop Deep Check — fixing V5.0 bugs found during deep E2E browser test. TASK #231 (snippet preamble noise) and TASK #232 (PTY Explosion wrong terminal) COMPLETED. TASK #233 (done-token recovery prompt noise) still PENDING.
 
 _Project initialized via /create pipeline on 2026-03-18_
 
