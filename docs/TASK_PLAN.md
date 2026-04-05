@@ -10059,6 +10059,458 @@ Acceptance Criteria:
 Dependencies: TASK #175
 ---
 
+## AREA: V4.0.2 — Gemini E2E PTY / UI Bug Fixes (Post-E2E Testing Patch)
+_Components: PtyExplosion.jsx, useSession.js, SessionManager.js (attachClient/onData broadcast), terminalHandler.js, RingBuffer.js, SwarmEngine.js (_detectRuntimeBlocker, tapFn/lastOutputSnippet, RUNTIME_BLOCKER_PATTERNS), InterAgentFeed.jsx_
+_Tasks: #177 → #191_
+_Gate: ALL 6 bugs must be verified fixed. PTY Explosion shows live output, ring buffer replay is readable, no false blockers, lastOutputSnippet shows real content, InterAgentFeed icons correct_
+_Source: E2E testing session on 2026-04-05 — Swarm execution with Gemini CLI provider revealed 6 bugs (1 CRITICAL, 2 HIGH, 2 LOW, 1 COSMETIC). BUG-2 and BUG-5 share the same root cause (ANSI cursor positioning from Gemini Ink TUI in ring buffer replay)._
+
+---
+
+TASK #177: BUG-PTY-EXPLOSION-1 — PTY Explosion does not receive live output after ring buffer replay (CRITICAL)
+Area: V4.0.2 — Gemini E2E PTY / UI Bug Fixes
+Agent: debugger
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Component Spec:
+  PtyExplosion is a full-screen terminal overlay that opens when a user clicks "Open Terminal" on a running
+  Swarm agent node. It creates a new Terminal component (xterm.js) connected via a new WebSocket to the
+  server's terminal handler. The server's attachClient method sends the ring buffer replay, then live PTY
+  data should continue flowing to this new client in real time.
+Context:
+  **Bug description:** When PTY Explosion is opened for a running Swarm agent (especially the Writer agent
+  running Gemini CLI), the terminal shows only the ring buffer replay (the injected prompt text) and then
+  NO live output arrives. The terminal scrollHeight does not grow. The WebSocket appears connected but
+  receives no new data after the initial replay.
+
+  **Reproduction steps:**
+  1. Open Swarm view
+  2. Run a workflow with Gemini as the runtime provider
+  3. Wait for the Writer agent to start (status: running)
+  4. Click on the Writer agent node
+  5. Click "Open Terminal" to launch PTY Explosion overlay
+  6. Terminal shows only the initial prompt injection text
+  7. Wait 50+ seconds — no live Gemini output appears even though the agent is actively running
+
+  **Root cause hypothesis:** When PtyExplosion mounts, it creates a new useSession hook instance that opens
+  a new WebSocket connection. The server's SessionManager.attachClient() sends the ring buffer replay to
+  this new client. After that, live PTY data from the agent's PTY process does NOT reach this new WebSocket
+  client. Possible causes:
+  - The broadcast loop in SessionManager.onData only broadcasts to the ORIGINAL WebSocket client, not to
+    newly attached clients
+  - The swarmListeners tap in SessionManager may not forward data to additional attached clients
+  - The Gemini TUI (Ink framework) uses ANSI cursor positioning that writes data without appending new
+    lines, so the data arrives but is invisible due to cursor repositioning
+  - The terminalHandler.js may not correctly register the new WebSocket for receiving ongoing data
+
+  **Files to investigate:**
+  - client/src/canvas/PtyExplosion.jsx — how the Terminal is created and connected
+  - client/src/hooks/useSession.js — WebSocket connection lifecycle
+  - server/services/SessionManager.js — attachClient(), onData broadcast, client list management
+  - server/ws/terminalHandler.js — WebSocket message routing
+
+  **Critical constraint:** The permanent pty.onData handler must NEVER be removed (DEC-009, ConPTY deadlock
+  prevention). Any fix must add broadcasting to additional clients WITHOUT modifying the primary onData flow.
+Acceptance Criteria:
+  - [ ] Root cause identified and documented
+  - [ ] Live PTY output streams to PtyExplosion terminal in real time after ring buffer replay
+  - [ ] Multiple simultaneous PtyExplosion instances (different agents) each receive their own live data
+  - [ ] Original terminal session (if any) continues to work normally when PtyExplosion is opened
+  - [ ] No regression in V2 terminal behavior (non-swarm sessions)
+  - [ ] DEC-009 (permanent onData handler) not violated
+Dependencies: none (can start immediately — this is the highest priority bug)
+---
+
+TASK #178: TEST GATE — BUG-PTY-EXPLOSION-1 (Live output in PTY Explosion)
+Area: V4.0.2 — Gemini E2E PTY / UI Bug Fixes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — TASK #179 CANNOT start until this gate returns PASS
+Context:
+  Component being tested: PtyExplosion live output streaming
+  Component spec: PtyExplosion overlay must show real-time PTY data from a running Swarm agent
+  Implementation task: TASK #177
+  What to test:
+    1. Open PtyExplosion for a running Gemini agent → verify terminal scrollHeight grows over time
+    2. Verify ring buffer replay is displayed, THEN live output continues arriving
+    3. Open PtyExplosion for two different agents simultaneously → both receive independent live data
+    4. Close and reopen PtyExplosion → ring buffer replays again, then live output resumes
+    5. Verify original terminal (non-explosion) still works after PtyExplosion is opened
+  WS contracts to verify:
+    - terminal WebSocket receives binary/text frames continuously while agent is running
+    - attachClient sends ring buffer replay as initial frames
+Acceptance Criteria:
+  - [ ] Live PTY output visible in PtyExplosion for a running Gemini agent
+  - [ ] ScrollHeight grows over time (not stuck at initial replay size)
+  - [ ] Multiple explosion instances work independently
+  - [ ] No regression in non-swarm terminal sessions
+Gate Result: PASS -> proceed to TASK #179 | FAIL -> return to TASK #177 with bug report
+Dependencies: TASK #177
+---
+
+TASK #179: BUG-RINGBUFFER-ANSI-1 — Ring buffer replay shows blank output due to Gemini Ink TUI ANSI cursor codes (HIGH)
+Area: V4.0.2 — Gemini E2E PTY / UI Bug Fixes
+Agent: debugger
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Component Spec:
+  RingBuffer stores the last N bytes of PTY output for replay when a new client attaches. SessionManager's
+  attachClient() sends this buffer to the new xterm instance. The replayed content must be visually
+  readable and represent the current terminal state.
+Context:
+  **Bug description:** The Gemini CLI uses the Ink framework (React for CLIs) which renders its TUI by
+  rewriting the same screen area using ANSI escape sequences. Specifically:
+  - `\x1b[2J` — clear entire screen
+  - `\x1b[H` — cursor home (move to 0,0)
+  - `\x1b[<row>;<col>H` — cursor positioning
+  - Various cursor save/restore and erase-line codes
+
+  When the ring buffer stores ALL of these ANSI codes and replays them into a fresh xterm instance, the
+  cursor positioning codes move the cursor around and clear areas, resulting in only the last "frame"
+  being visible — which is often blank or shows only the injected prompt.
+
+  **Reproduction steps:**
+  1. Run a workflow with Gemini as the runtime provider
+  2. Wait for the Writer agent to complete (or run for a while)
+  3. Open Terminal for the Writer agent
+  4. Only the injected prompt text is visible — the rest of the terminal is blank
+  5. Large empty gaps appear in the terminal area
+
+  **Root cause:** Gemini CLI (Ink framework) renders its TUI by:
+  1. Writing content to specific cursor positions
+  2. Clearing and redrawing the "Thinking..." spinner area
+  3. Using cursor-home + clear-screen between rendering passes
+  The ring buffer faithfully stores all these sequences. On replay, the clear-screen codes wipe out
+  previously replayed content, and cursor positioning codes create empty areas.
+
+  **NOTE: This bug also covers BUG-5 (Empty gap in terminal due to TUI cursor codes) since they share
+  the same root cause.**
+
+  **Possible fix approaches:**
+  A) Strip ANSI cursor positioning and clear-screen codes from the ring buffer BEFORE storing data
+     (Pros: simple, works for replay. Cons: destroys TUI formatting for live view)
+  B) Strip ANSI cursor/clear codes only DURING replay, not during storage
+     (Pros: preserves live view, fixes replay. Cons: more complex)
+  C) Implement a virtual terminal state machine (e.g., node-pty's built-in or a headless xterm parser)
+     that captures the final visible screen state and replays THAT instead of raw bytes
+     (Pros: most correct. Cons: significant implementation effort)
+  D) For replay only: detect Ink-style TUI output and send only the last "frame" (content after the
+     last clear-screen sequence)
+     (Pros: pragmatic. Cons: fragile heuristic)
+
+  **Files to investigate:**
+  - server/services/RingBuffer.js — how data is stored and retrieved
+  - server/services/SessionManager.js — attachClient replay logic
+
+  **Recommendation:** Start with approach B or D — strip cursor positioning/clear codes during replay only.
+  This preserves the live terminal experience while making replay readable.
+Acceptance Criteria:
+  - [ ] Root cause confirmed and documented
+  - [ ] Ring buffer replay in PtyExplosion shows readable agent output (not blank areas)
+  - [ ] Gemini Ink TUI ANSI cursor codes do not produce empty gaps on replay
+  - [ ] Live terminal view (non-replay) still shows Gemini TUI correctly
+  - [ ] Ring buffer replay for Claude and Codex agents (non-Ink) not degraded
+  - [ ] BUG-5 (empty gap in terminal) also resolved by this fix
+Dependencies: TASK #177 (needs live output fix first to properly test replay quality)
+---
+
+TASK #180: TEST GATE — BUG-RINGBUFFER-ANSI-1 (Ring buffer replay readability)
+Area: V4.0.2 — Gemini E2E PTY / UI Bug Fixes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — TASK #181 CANNOT start until this gate returns PASS
+Context:
+  Component being tested: RingBuffer replay quality with Gemini Ink TUI output
+  Component spec: Ring buffer replay must show readable terminal content, not blank areas
+  Implementation task: TASK #179
+  What to test:
+    1. Run Gemini agent → wait for output → open PtyExplosion → verify content is readable (not blank)
+    2. Run Claude agent → open PtyExplosion → verify replay still works correctly (no regression)
+    3. Run Codex agent → open PtyExplosion → verify replay still works correctly (no regression)
+    4. Verify no empty gaps or large blank areas in replayed terminal content
+    5. Verify live terminal view still shows Gemini TUI formatting correctly
+  WS contracts to verify:
+    - attachClient replay sends sanitized (cursor-stripped) content for new clients
+    - Live data stream remains unsanitized for real-time display
+Acceptance Criteria:
+  - [ ] Gemini agent PtyExplosion replay shows readable output (not blank)
+  - [ ] No large empty areas or cursor-positioning artifacts in replay
+  - [ ] Claude and Codex replay quality unchanged (no regression)
+  - [ ] Live terminal view unaffected
+Gate Result: PASS -> proceed to TASK #181 | FAIL -> return to TASK #179 with bug report
+Dependencies: TASK #179
+---
+
+TASK #181: BUG-BLOCKER-FALSE-POS-1 — False "Blocked" status with erroneous rate limit detection during Gemini Thinking phase (HIGH)
+Area: V4.0.2 — Gemini E2E PTY / UI Bug Fixes
+Agent: debugger
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Component Spec:
+  SwarmEngine._detectRuntimeBlocker() and _detectPatternBlocker() scan PTY output for patterns that
+  indicate the AI runtime has hit a usage/rate limit or interactive prompt that blocks execution.
+  RUNTIME_BLOCKER_PATTERNS contains regex patterns for known blocker strings. When a match is found,
+  the agent status is set to "blocked" with a reason message.
+Context:
+  **Bug description:** During Gemini's "Thinking..." phase, the _detectRuntimeBlocker (or
+  _detectPatternBlocker) generates a false positive, reporting: "Gemini hit its usage or rate limit
+  before the swarm agent could continue. Provider: gemini." The agent status changes to "Blocked" in
+  the UI, which alarms the user. After a few seconds, the blocker self-resolves and the agent goes
+  back to "Running" status.
+
+  **Reproduction steps:**
+  1. Run a workflow with Gemini as the runtime provider
+  2. During the Researcher agent's active Thinking phase (visible in terminal)
+  3. Agent status in the UI changes to "Blocked" with rate limit message
+  4. After several seconds, status returns to "Running"
+  5. Execution continues normally
+
+  **Root cause hypothesis:** One of the RUNTIME_BLOCKER_PATTERNS regex patterns is matching something
+  in the Gemini TUI output during the "Thinking..." animation or status display. The Ink framework
+  renders status text that may contain substrings matching the rate limit patterns. Needs investigation
+  of what exact text triggers the false positive.
+
+  **Investigation approach:**
+  1. Add temporary debug logging to _detectRuntimeBlocker and _detectPatternBlocker to capture the
+     exact text that triggers the match
+  2. Identify which pattern in RUNTIME_BLOCKER_PATTERNS matches
+  3. Tighten the regex to avoid false positives during Thinking phase
+  4. OR add a "debounce" mechanism: only report a blocker if the pattern matches for N consecutive
+     seconds (not a single transient match)
+
+  **Files to investigate:**
+  - server/services/SwarmEngine.js — _detectRuntimeBlocker, _detectPatternBlocker, RUNTIME_BLOCKER_PATTERNS
+Acceptance Criteria:
+  - [ ] Root cause identified: exact text and pattern that triggers the false positive
+  - [ ] Pattern or detection logic updated to avoid false positives during Gemini Thinking phase
+  - [ ] Legitimate rate limit blockers still detected correctly
+  - [ ] No false "Blocked" status during normal Gemini Thinking phase
+  - [ ] Agent status remains "Running" throughout the Thinking phase
+  - [ ] Existing blocker detection tests still pass
+  - [ ] npm test passes with 0 failures
+Dependencies: none (independent of PTY bugs — can run in parallel with #177)
+---
+
+TASK #182: TEST GATE — BUG-BLOCKER-FALSE-POS-1 (False blocker detection fix)
+Area: V4.0.2 — Gemini E2E PTY / UI Bug Fixes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — TASK #183 CANNOT start until this gate returns PASS
+Context:
+  Component being tested: SwarmEngine blocker detection accuracy
+  Component spec: _detectRuntimeBlocker must not produce false positives during Gemini Thinking phase
+  Implementation task: TASK #181
+  What to test:
+    1. Run Gemini workflow → during Thinking phase → verify agent stays "Running" (no false "Blocked")
+    2. Simulate actual rate limit text → verify blocker IS detected correctly
+    3. Run Claude workflow → verify blocker detection unchanged (no regression)
+    4. Run existing swarm-engine test suite → all tests pass
+  WS contracts to verify:
+    - agent_status WS event: status field should NOT flip to "blocked" during Thinking phase
+    - agent_status WS event: status field SHOULD flip to "blocked" for actual rate limits
+Acceptance Criteria:
+  - [ ] No false "Blocked" during Gemini Thinking phase
+  - [ ] Legitimate blockers still detected
+  - [ ] All swarm-engine tests pass
+  - [ ] No regression in Claude/Codex blocker detection
+Gate Result: PASS -> proceed to TASK #183 | FAIL -> return to TASK #181 with bug report
+Dependencies: TASK #181
+---
+
+TASK #183: BUG-SNIPPET-PROTOCOL-1 — lastOutputSnippet shows SwarmEngine protocol text instead of agent output (LOW)
+Area: V4.0.2 — Gemini E2E PTY / UI Bug Fixes
+Agent: backend-dev
+Priority: LOW
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Component Spec:
+  SwarmEngine's tapFn (the swarmListener attached to each agent's PTY session) updates the
+  lastOutputSnippet field in the agent's execution state. This snippet is displayed in the AgentNode
+  mini-terminal and in the AgentInspector "Last Output" section. It should show the most recent
+  MEANINGFUL output from the AI agent, not internal protocol text.
+Context:
+  **Bug description:** The mini-terminal in the Writer node and the "Last Output" in the AgentInspector
+  show the SwarmEngine's internal protocol text:
+  "Do NOT output the handoff or done token mid-response. Only as the very LAST line."
+  instead of the actual useful agent output.
+
+  **Root cause:** The lastOutputSnippet is set from the PTY output in the tapFn. The protocol text
+  (injected system prompt containing handoff/done instructions) arrives via PTY output after the actual
+  prompt injection. For the Writer agent specifically, the protocol text comes as part of the injected
+  prompt and becomes the "last" snippet because it arrives after the main prompt.
+
+  **Fix approach:**
+  1. In the tapFn that updates lastOutputSnippet, filter out known protocol strings before updating
+  2. Maintain a list of protocol text patterns to exclude:
+     - "Do NOT output the handoff or done token mid-response"
+     - "__HANDOFF__" / "__DONE__" token patterns
+     - Any other injected protocol text
+  3. Only update lastOutputSnippet if the incoming text does NOT match a protocol pattern
+  4. Alternative: set a flag when protocol text is being injected and suppress snippet updates during
+     that window
+
+  **Files to modify:**
+  - server/services/SwarmEngine.js — tapFn in _spawnAgentPty (or wherever lastOutputSnippet is updated)
+Acceptance Criteria:
+  - [ ] lastOutputSnippet never shows SwarmEngine protocol text
+  - [ ] lastOutputSnippet shows actual meaningful agent output
+  - [ ] Protocol text filtering does not accidentally hide real agent output
+  - [ ] Mini-terminal in AgentNode shows useful content
+  - [ ] AgentInspector "Last Output" shows useful content
+  - [ ] npm test passes
+Dependencies: none (independent — can run in parallel with other bugs)
+---
+
+TASK #184: TEST GATE — BUG-SNIPPET-PROTOCOL-1 (lastOutputSnippet content quality)
+Area: V4.0.2 — Gemini E2E PTY / UI Bug Fixes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: LOW
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — TASK #185 CANNOT start until this gate returns PASS
+Context:
+  Component being tested: lastOutputSnippet content filtering in SwarmEngine tapFn
+  Component spec: lastOutputSnippet must show real agent output, not protocol text
+  Implementation task: TASK #183
+  What to test:
+    1. Run Gemini workflow → check Writer agent's mini-terminal → should not show protocol text
+    2. Run Gemini workflow → check Writer agent's AgentInspector Last Output → should not show protocol text
+    3. Verify the snippet shows actual meaningful content from the agent's output
+    4. Run swarm-engine tests → all pass
+  WS contracts to verify:
+    - agent_status WS event: lastOutputSnippet field contains real output, not protocol strings
+Acceptance Criteria:
+  - [ ] Mini-terminal does not show protocol text
+  - [ ] AgentInspector Last Output does not show protocol text
+  - [ ] Snippets contain real agent output
+  - [ ] No regression in existing swarm-engine tests
+Gate Result: PASS -> proceed to TASK #185 | FAIL -> return to TASK #183 with bug report
+Dependencies: TASK #183
+---
+
+TASK #185: BUG-FEED-ICON-1 — InterAgentFeed shows '?' icon for handoff_completed event (COSMETIC)
+Area: V4.0.2 — Gemini E2E PTY / UI Bug Fixes
+Agent: frontend-dev
+Priority: LOW
+Difficulty: TRIVIAL
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Component Spec:
+  InterAgentFeed.jsx displays a scrolling log of inter-agent events (handoffs, completions, etc.).
+  Each event type has an icon defined in the EVENT_ICONS map. Missing entries render as '?'.
+Context:
+  **Bug description:** The EVENT_ICONS map in InterAgentFeed.jsx does not have an entry for the
+  'handoff_completed' event type. When a handoff completes, the feed shows a '?' icon instead of
+  a meaningful icon.
+
+  **Fix:** Add 'handoff_completed' to the EVENT_ICONS map with an appropriate icon. Suggested icon:
+  a checkmark or completion symbol consistent with the existing icon set.
+
+  **Files to modify:**
+  - client/src/canvas/InterAgentFeed.jsx — add entry to EVENT_ICONS map
+
+  **Investigation:** Also check if there are any other event types that are emitted by the backend
+  but missing from EVENT_ICONS. Common event types to verify:
+  - handoff_started
+  - handoff_completed
+  - agent_started
+  - agent_completed
+  - agent_blocked
+  - execution_completed
+  - execution_failed
+Acceptance Criteria:
+  - [ ] 'handoff_completed' has a proper icon in EVENT_ICONS (not '?')
+  - [ ] All event types emitted by SwarmEngine have corresponding icons in EVENT_ICONS
+  - [ ] No '?' icons appear in the InterAgentFeed during normal workflow execution
+  - [ ] npm run build passes
+Dependencies: none (independent cosmetic fix)
+---
+
+TASK #186: TEST GATE — BUG-FEED-ICON-1 (InterAgentFeed icon completeness)
+Area: V4.0.2 — Gemini E2E PTY / UI Bug Fixes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: LOW
+Difficulty: TRIVIAL
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Gate: HARD — TASK #187 CANNOT start until this gate returns PASS
+Context:
+  Component being tested: InterAgentFeed EVENT_ICONS map completeness
+  Component spec: All event types must have proper icons, no '?' fallbacks
+  Implementation task: TASK #185
+  What to test:
+    1. Verify EVENT_ICONS map has entries for ALL event types emitted by SwarmEngine
+    2. Verify 'handoff_completed' renders a proper icon (not '?')
+    3. Verify build passes
+  WS contracts to verify:
+    - Cross-reference all WS event types emitted by swarmHandler.js with EVENT_ICONS keys
+Acceptance Criteria:
+  - [ ] handoff_completed icon renders correctly
+  - [ ] No '?' icons in InterAgentFeed during normal execution
+  - [ ] Build passes
+Gate Result: PASS -> proceed to TASK #187 | FAIL -> return to TASK #185 with bug report
+Dependencies: TASK #185
+---
+
+TASK #187: AREA CHECKPOINT — V4.0.2 Gemini E2E PTY / UI Bug Fixes (all 6 bugs verified)
+Area: V4.0.2 — Gemini E2E PTY / UI Bug Fixes
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Gate: HARD — V4.0.2 is not closed until this checkpoint returns PASS. Next area (V4.1) implementation CANNOT start until all bugs are verified fixed.
+Context:
+  Full integration verification for all 6 Gemini E2E bugs fixed in V4.0.2. This checkpoint must verify
+  that the entire PTY Explosion → ring buffer → live output → blocker detection → snippet display →
+  feed icons pipeline works correctly end-to-end with Gemini CLI.
+
+  **End-to-end scenario to test:**
+  1. Open Swarm view, load a multi-agent workflow
+  2. Select Gemini as runtime provider
+  3. Start execution
+  4. During Researcher Thinking phase: verify NO false "Blocked" status (BUG-3)
+  5. Click on Writer agent → Open Terminal (PTY Explosion)
+  6. Verify live output streams in real time (BUG-1)
+  7. Verify ring buffer replay shows readable content, no blank areas (BUG-2 + BUG-5)
+  8. Close terminal → reopen → verify replay + live output works again
+  9. Check Writer mini-terminal: shows real output, not protocol text (BUG-4)
+  10. Check InterAgentFeed: handoff_completed shows proper icon, no '?' (BUG-6)
+  11. Verify npm test passes with 0 failures
+  12. Verify npm run build passes
+Acceptance Criteria:
+  - [  ] All TEST GATE tasks in this area COMPLETED with PASS result (#178, #180, #182, #184, #186)
+  - [ ] Integration test: Gemini E2E — start execution → PTY Explosion shows live output → replay readable → no false blockers → snippets correct → feed icons correct
+  - [ ] No regression in Claude/Codex runtime behavior
+  - [ ] No regression in V2 terminal sessions
+  - [ ] npm test passes with 0 failures
+  - [ ] npm run build passes with 0 errors
+Dependencies: TASK #178, TASK #180, TASK #182, TASK #184, TASK #186
+---
+
 ## AREA: V4.1 — Per-Harness Runtime Model Selection
 _Components: SwarmView.jsx, SwarmContext.jsx, SwarmEngine.js, swarm.js, server/index.js_
 _Tasks: #169 → #170_

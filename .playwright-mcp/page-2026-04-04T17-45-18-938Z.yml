@@ -1,0 +1,194 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e7]: terminal
+      - generic [ref=e8]:
+        - heading "Claude Code" [level=1] [ref=e9]
+        - paragraph [ref=e10]: Visual Manager
+    - navigation [ref=e11]:
+      - button "dashboard Projects" [ref=e12] [cursor=pointer]:
+        - generic [ref=e13]: dashboard
+        - generic [ref=e14]: Projects
+      - button "terminal Live Terminal" [ref=e15] [cursor=pointer]:
+        - generic [ref=e16]: terminal
+        - generic [ref=e17]: Live Terminal
+      - button "play_arrow Job Runner" [ref=e18] [cursor=pointer]:
+        - generic [ref=e19]: play_arrow
+        - generic [ref=e20]: Job Runner
+      - button "memory Deployments" [ref=e21] [cursor=pointer]:
+        - generic [ref=e22]: memory
+        - generic [ref=e23]: Deployments
+      - button "description Context Editor" [ref=e24] [cursor=pointer]:
+        - generic [ref=e25]: description
+        - generic [ref=e26]: Context Editor
+      - button "hub Swarm" [ref=e27] [cursor=pointer]:
+        - generic [ref=e28]: hub
+        - generic [ref=e29]: Swarm
+    - generic [ref=e30]:
+      - generic [ref=e31]:
+        - generic [ref=e32]: Active PTY Sessions
+        - generic [ref=e33]: 1 Total
+      - list [ref=e34]:
+        - listitem [ref=e276]:
+          - button "Prova PID 38312" [ref=e277] [cursor=pointer]:
+            - generic [ref=e278]:
+              - generic [ref=e281]: Prova
+              - generic [ref=e282]: PID 38312
+      - button "add New Local Session" [ref=e37] [cursor=pointer]:
+        - generic [ref=e38]: add
+        - generic [ref=e39]: New Local Session
+    - generic [ref=e41]:
+      - generic [ref=e44]: Active
+      - generic [ref=e45]:
+        - button "Open settings" [ref=e46] [cursor=pointer]:
+          - generic [ref=e47]: settings
+        - generic [ref=e48]: v3.0.0
+  - main [ref=e49]:
+    - generic [ref=e446]:
+      - generic [ref=e447]:
+        - generic [ref=e448]: Swarm Orchestrator
+        - button "📥 HITL" [ref=e449] [cursor=pointer]
+        - generic [ref=e450]:
+          - generic [ref=e451]: Runtime
+          - combobox "Runtime" [disabled] [ref=e452]:
+            - option "Auto"
+            - option "Claude" [selected]
+            - option "Codex"
+            - option "Gemini"
+        - button "Pause" [ref=e551] [cursor=pointer]
+        - button "Stop" [ref=e552] [cursor=pointer]
+        - generic [ref=e454]: ● running
+        - generic [ref=e455]: "Provider: Claude"
+        - generic [ref=e456]: Claude only
+      - generic [ref=e458]:
+        - generic [ref=e459]: ✨
+        - textbox "Describe your workflow... e.g. 'Triage customer requests then route to billing or support agents'" [ref=e460]
+        - button "Generate" [disabled] [ref=e461]
+      - generic [ref=e462]:
+        - generic [ref=e463]: Saved workflows
+        - combobox [disabled] [ref=e464]:
+          - option "Select a saved workflow"
+          - option "Text Document Review Pipeline" [selected]
+          - option "Marketing Agency Workflow"
+          - option "Research and Summarize"
+          - option "Write A Greeting Workflow"
+          - option "A Code Reviewer Analyzes Code Quality Workflow"
+          - option "Code Review and Documentation"
+          - option "Frontend UI Audit and CSS Optimization"
+          - option "Frontend UI Audit and CSS Optimization"
+          - option "A Researcher To Analyze A Writer Workflow"
+          - option "A Two Agents Explorer Reporter Explorer Workflow"
+          - option "2 Agents Researcher Analyzes Writer Summarizes Workflow"
+          - option "A 2 Agent A Researcher Analyzes The Workflow"
+          - option "A 2 Agent A Researcher Analyzes The Workflow"
+          - option "Research and Report Team"
+          - option "Data Collection and Summarization Pipeline"
+          - option "Research-Write-Review Team"
+          - option "Customer Support Triage"
+          - option "A Customer Support Triage Routes Requests Workflow"
+          - option "Customer Request Router"
+          - option "Test Workflow"
+          - option "Test Workflow"
+          - option "Customer Support Triage Workflow"
+          - option "Customer Triage Workflow"
+          - option "Customer Support Ticket Router"
+          - option "Customer Support Triage Workflow"
+          - option "Button State Verification Workflow"
+          - option "Customer Support Triage Workflow"
+          - option "Workflow di Marketing"
+          - option "Prova Workflow"
+          - option "Customer Request Triage Workflow"
+        - button "Load workflow" [disabled] [ref=e465]
+        - button "Refresh" [ref=e466] [cursor=pointer]
+        - generic [ref=e467]: Shows current-project workflows plus unscoped ones
+      - generic [ref=e469]:
+        - button "All Agents" [ref=e471] [cursor=pointer]
+        - generic [ref=e472]:
+          - application [ref=e473]:
+            - generic [ref=e475]:
+              - generic:
+                - generic:
+                  - img:
+                    - group "Edge from node-1 to node-2" [ref=e553] [cursor=pointer]
+                  - img:
+                    - group "Edge from node-2 to node-3" [ref=e556] [cursor=pointer]
+                  - img:
+                    - group "Edge from node-3 to node-4" [ref=e559] [cursor=pointer]
+                - generic:
+                  - generic [ref=e577]: "1"
+                  - generic [ref=e591]: "1"
+                - generic:
+                  - group [ref=e485]:
+                    - generic [ref=e486] [cursor=pointer]:
+                      - generic [ref=e488]:
+                        - img "agent" [ref=e489]: 🤖
+                        - generic [ref=e490]: Triage Router
+                      - generic [ref=e491]: done
+                      - generic [ref=e563]: ────────────────────────────────────────────────────────────────────────────────❯ ────────────────────────────────────────────────────────────────────────────────⏵⏵bypasspermissionson (shift+tabFound1settingsissue·/doctorfor…
+                      - generic [ref=e578]: 1 handoff
+                  - group [ref=e493]:
+                    - generic [ref=e494] [cursor=pointer]:
+                      - generic [ref=e496]:
+                        - img "agent" [ref=e497]: 🤖
+                        - generic [ref=e498]: Grammar Checker
+                      - generic [ref=e499]: done
+                      - generic [ref=e580]: ────────────────────────────────────────────────────────────────────────────────❯ ────────────────────────────────────────────────────────────────────────────────⏵⏵bypasspermissionson (shift+tabFound1settingsissue·/doctorfor…
+                      - generic [ref=e592]: 1 handoff
+                  - group [ref=e501]:
+                    - generic [ref=e502] [cursor=pointer]:
+                      - generic [ref=e504]:
+                        - img "agent" [ref=e505]: 🤖
+                        - generic [ref=e506]: Style Reviewer
+                      - generic [ref=e507]: running
+                      - generic [ref=e594]: ✶ *em ✢ ·Pa▋
+                  - group [ref=e509]:
+                    - generic [ref=e510] [cursor=pointer]:
+                      - generic [ref=e512]:
+                        - img "agent" [ref=e513]: 🤖
+                        - generic [ref=e514]: Final Reporter
+                      - generic [ref=e515]: idle
+            - img
+            - generic "Control Panel" [ref=e517]:
+              - button "Zoom In" [ref=e518] [cursor=pointer]:
+                - img [ref=e519]
+              - button "Zoom Out" [ref=e521] [cursor=pointer]:
+                - img [ref=e522]
+              - button "Fit View" [ref=e524] [cursor=pointer]:
+                - img [ref=e525]
+            - img "Mini Map" [ref=e528]
+            - link "React Flow attribution" [ref=e534] [cursor=pointer]:
+              - /url: https://reactflow.dev
+              - text: React Flow
+          - generic [ref=e568]:
+            - generic [ref=e569]:
+              - generic [ref=e581]: Inter-Agent Feed
+              - generic [ref=e582]: "4"
+            - generic [ref=e570]:
+              - generic [ref=e583]:
+                - generic [ref=e584]: 19:44:38
+                - generic [ref=e585]: →
+                - generic [ref=e586]: node-1 → node-2
+              - generic [ref=e587]:
+                - generic [ref=e588]: 19:44:38
+                - generic [ref=e589]: "?"
+                - generic [ref=e590]: handoff_completed
+              - generic [ref=e595]:
+                - generic [ref=e596]: 19:45:06
+                - generic [ref=e597]: →
+                - generic [ref=e598]: node-2 → node-3
+              - generic [ref=e599]:
+                - generic [ref=e600]: 19:45:06
+                - generic [ref=e601]: "?"
+                - generic [ref=e602]: handoff_completed
+          - generic [ref=e537]: Select a node to inspect
+      - generic [ref=e571]:
+        - generic [ref=e572]: Broadcast
+        - combobox [ref=e573]:
+          - option "All Agents" [selected]
+          - option "Department"
+          - option "Specific Agent"
+        - textbox "Broadcast to all agents..." [ref=e574]
+        - combobox [ref=e575]:
+          - option "Soft" [selected]
+          - option "Hard"
+        - button "Send" [disabled] [ref=e576]

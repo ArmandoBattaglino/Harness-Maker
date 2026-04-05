@@ -1,0 +1,97 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e7]: terminal
+      - generic [ref=e8]:
+        - heading "Claude Code" [level=1] [ref=e9]
+        - paragraph [ref=e10]: Visual Manager
+    - navigation [ref=e11]:
+      - button "dashboard Projects" [active] [ref=e12] [cursor=pointer]:
+        - generic [ref=e13]: dashboard
+        - generic [ref=e14]: Projects
+      - button "terminal Live Terminal" [ref=e15] [cursor=pointer]:
+        - generic [ref=e16]: terminal
+        - generic [ref=e17]: Live Terminal
+      - button "play_arrow Job Runner" [ref=e18] [cursor=pointer]:
+        - generic [ref=e19]: play_arrow
+        - generic [ref=e20]: Job Runner
+      - button "memory Deployments" [ref=e21] [cursor=pointer]:
+        - generic [ref=e22]: memory
+        - generic [ref=e23]: Deployments
+      - button "description Context Editor" [ref=e24] [cursor=pointer]:
+        - generic [ref=e25]: description
+        - generic [ref=e26]: Context Editor
+      - button "hub Swarm" [ref=e27] [cursor=pointer]:
+        - generic [ref=e28]: hub
+        - generic [ref=e29]: Swarm
+    - generic [ref=e30]:
+      - generic [ref=e31]:
+        - generic [ref=e32]: Active PTY Sessions
+        - generic [ref=e33]: 0 Total
+      - list [ref=e34]:
+        - listitem [ref=e35]: No active sessions.
+      - button "add New Local Session" [ref=e37] [cursor=pointer]:
+        - generic [ref=e38]: add
+        - generic [ref=e39]: New Local Session
+    - generic [ref=e41]:
+      - generic [ref=e44]: Active
+      - generic [ref=e45]:
+        - button "Open settings" [ref=e46] [cursor=pointer]:
+          - generic [ref=e47]: settings
+        - generic [ref=e48]: v3.0.0
+  - main [ref=e49]:
+    - generic [ref=e217]:
+      - generic [ref=e218]:
+        - heading "Project Dashboard" [level=2] [ref=e220]
+        - generic [ref=e221]:
+          - generic:
+            - generic: search
+          - textbox "Search projects, paths, or active tasks..." [ref=e222]
+          - generic:
+            - generic: /
+        - generic [ref=e223]:
+          - button "notifications" [ref=e224] [cursor=pointer]:
+            - generic [ref=e225]: notifications
+          - generic [ref=e227] [cursor=pointer]: U
+      - main [ref=e228]:
+        - generic [ref=e229]:
+          - generic [ref=e230]:
+            - generic [ref=e231]:
+              - heading "Active Environments" [level=3] [ref=e232]
+              - paragraph [ref=e233]: You have 2 local projects being managed by Claude Code.
+            - generic [ref=e234]:
+              - generic [ref=e235]: 2 TOTAL
+              - button "grid_view" [ref=e236] [cursor=pointer]:
+                - generic [ref=e237]: grid_view
+              - button "list" [ref=e238] [cursor=pointer]:
+                - generic [ref=e239]: list
+          - generic [ref=e240]:
+            - generic [ref=e241] [cursor=pointer]:
+              - generic [ref=e242]:
+                - generic [ref=e243]:
+                  - heading "SmokeTestProject" [level=4] [ref=e244]
+                  - button "more_vert" [ref=e245]
+                - paragraph [ref=e246]: C:\Users\arman\Downloads\Test workflows
+              - generic [ref=e247]:
+                - generic [ref=e250]: Idle
+                - generic [ref=e251]: 17d ago
+            - generic [ref=e252] [cursor=pointer]:
+              - generic [ref=e253]:
+                - generic [ref=e254]:
+                  - heading "Prova" [level=4] [ref=e255]
+                  - button "more_vert" [ref=e256]
+                - paragraph [ref=e257]: C:\Users\arman\Downloads\Test workflows - Copia
+              - generic [ref=e258]:
+                - generic [ref=e261]: Idle
+                - generic [ref=e262]: 8d ago
+            - generic [ref=e263] [cursor=pointer]:
+              - generic [ref=e265]: add
+              - generic [ref=e266]: Register Existing Project
+              - generic [ref=e267]: Link a local directory
+          - generic [ref=e268]:
+            - generic [ref=e269]:
+              - generic [ref=e271]: rocket_launch
+              - generic [ref=e272]:
+                - heading "Start a new project with AI?" [level=4] [ref=e273]
+                - paragraph [ref=e274]: Generate a boilerplate project structure with automated scaffolding.
+            - button "Scaffold New Project" [ref=e275] [cursor=pointer]

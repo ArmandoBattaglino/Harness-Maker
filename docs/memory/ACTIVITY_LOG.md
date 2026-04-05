@@ -1,3 +1,13 @@
+## 2026-04-05 — project-manager — Tasks #177-#187: V4.0.2 Gemini E2E PTY / UI Bug Fixes (Planning)
+**Outcome:** COMPLETED
+**Summary:** Added 11 new tasks (#177-#187) to TASK_PLAN.md under new area V4.0.2 for 6 bugs found during E2E testing with Gemini CLI provider. Bugs: BUG-PTY-EXPLOSION-1 (CRITICAL, no live output in PtyExplosion), BUG-RINGBUFFER-ANSI-1 (HIGH, blank replay from Ink TUI ANSI codes — also covers BUG-5), BUG-BLOCKER-FALSE-POS-1 (HIGH, false rate limit detection during Thinking phase), BUG-SNIPPET-PROTOCOL-1 (LOW, protocol text in lastOutputSnippet), BUG-FEED-ICON-1 (COSMETIC, missing handoff_completed icon). Each bug has a fix task + TEST GATE, plus an AREA CHECKPOINT #187.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (planning only)
+**Decisions made:** Grouped BUG-2 and BUG-5 into single task #179 (shared root cause). Ordered: #177 (CRITICAL) first, #181 parallel (independent), #179 depends on #177, cosmetic fixes (#183, #185) independent.
+**Blockers:** none
+**Next:** Assign debugger to #177 (PTY Explosion live output) and #181 (false blocker detection) in parallel as Wave 1. Then #179 (ring buffer ANSI) after #177. Then #183 + #185 in parallel.
+---
+
 ## 2026-04-04 — debugger — Task #160: BUG-GEMINI-1 — Fix Gemini CLI prompt injection
 
 ---

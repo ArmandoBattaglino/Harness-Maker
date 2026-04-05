@@ -2902,3 +2902,54 @@ Three tasks required status reconciliation: #64 (useHandoff.js) and #65 (AgentNo
 ### Handoff
 Wait for #62.1 retry result before proceeding. If it succeeds, mark COMPLETED and launch #62.2 (context injection + status updates, depends on #62.1).
 ---
+
+---
+## 2026-04-05 — Tasks #177-#187: V4.0.2 Gemini E2E PTY / UI Bug Fixes (Planning)
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+V4.0.1 (Gemini runtime bug fixes) CLOSED. V4.1 (per-harness model selection) COMPLETED. User ran E2E testing session with Gemini CLI provider and found 6 new bugs spanning PTY Explosion live output, ring buffer replay quality, false blocker detection, protocol text leaking into snippets, and missing InterAgentFeed icons.
+
+### What I did
+1. Read current TASK_PLAN.md structure (last task was #176 in V4.0.1, then #169-#170 in V4.1)
+2. Created new area "V4.0.2 — Gemini E2E PTY / UI Bug Fixes" with 11 tasks (#177-#187)
+3. Grouped BUG-2 (blank ring buffer replay) and BUG-5 (empty gap in terminal) into single task #179 since they share the same root cause (Gemini Ink TUI ANSI cursor codes)
+4. Assigned agents: debugger for investigation tasks (#177, #179, #181), backend-dev for #183, frontend-dev for #185, qa-tester for all TEST GATEs and AREA CHECKPOINT
+5. Set dependency chain: #177 (CRITICAL) first, #181 independent/parallel, #179 depends on #177, #183/#185 independent
+6. Updated PROGRESS.md and ACTIVITY_LOG.md
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Added V4.0.2 area with 11 tasks (#177-#187) for 6 E2E bugs |
+| docs/memory/PROGRESS.md | MODIFIED | Added V4.0.2 pending entry at top |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added planning session entry |
+| docs/memory/agents/project-manager.md | MODIFIED | Added this session log |
+
+### Improvements delivered
+- Complete bug tracking for all 6 E2E Gemini bugs with detailed reproduction steps, root cause hypotheses, and fix approaches
+- Proper dependency ordering for efficient parallel execution
+
+### Bugs I encountered
+None (planning task only)
+
+### Decisions I made
+- Merged BUG-2 and BUG-5 into single task #179 — same root cause (ANSI cursor codes from Ink TUI in ring buffer replay)
+- Made #177 (PTY Explosion live output) and #181 (false blocker detection) independent — they can run in parallel as Wave 1
+- Made #179 depend on #177 — need live output fix first to properly test replay quality
+- Made #183 and #185 independent of all other bugs — can run any time
+
+### What I learned
+- Gemini CLI uses Ink (React for CLIs) which renders TUI by rewriting screen areas with ANSI cursor codes — this creates unique challenges for ring buffer replay that Claude/Codex don't have
+- The false blocker detection during Thinking phase suggests the RUNTIME_BLOCKER_PATTERNS regexes may be too broad
+
+### State I'm leaving behind
+V4.0.2 area fully planned with 11 tasks. No tasks started yet. Ready for execution.
+
+### Handoff
+**Wave 1 (parallel):** Assign debugger to #177 (PTY Explosion live output, CRITICAL) and #181 (false blocker detection, HIGH) simultaneously.
+**Wave 2 (after #177 passes gate #178):** Assign debugger to #179 (ring buffer ANSI replay).
+**Wave 3 (independent, any time):** Assign backend-dev to #183 (snippet protocol text) and frontend-dev to #185 (feed icon) in parallel.
+**Wave 4:** AREA CHECKPOINT #187 after all gates pass.
+---

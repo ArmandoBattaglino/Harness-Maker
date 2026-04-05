@@ -1,5 +1,7 @@
 # Progress
 
+- [TASKS #177-#187] V4.0.2 Gemini E2E PTY / UI Bug Fixes — PENDING 2026-04-05
+  6 bugs from E2E testing with Gemini CLI: BUG-PTY-EXPLOSION-1 (CRITICAL: no live output), BUG-RINGBUFFER-ANSI-1 (HIGH: blank replay from Ink TUI ANSI codes), BUG-BLOCKER-FALSE-POS-1 (HIGH: false rate limit during Thinking), BUG-SNIPPET-PROTOCOL-1 (LOW: protocol text in snippet), BUG-FEED-ICON-1 (COSMETIC: missing handoff_completed icon). Tasks #177-#187 added to TASK_PLAN.md.
 - [TASKS #169-#170] V4.1 Per-Harness Model Selection — COMPLETED 2026-04-05
   Backend: _buildRuntimeProviderArgs accepts runtimeModels override, route POST /start accepts runtimeModels. Frontend: Models dropdown in SwarmView toolbar for Codex/Gemini. 7 new tests (70/70 pass). V4.1 CLOSED.
 - [TASKS #171-#176] V4.0.1 Gemini Runtime Bug Fixes — COMPLETED 2026-04-05

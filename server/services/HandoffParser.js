@@ -7,7 +7,7 @@
 
 import { Buffer } from 'buffer';
 
-const MAX_BUF = 4096; // SEC-V3-07: 4KB rolling buffer cap
+const MAX_BUF = 8192; // SEC-V3-07: 8KB rolling buffer cap to handle TUI frames
 
 // ANSI escape sequence patterns
 const ANSI_CSI = /\x1b\[[0-9;]*[a-zA-Z]/g;           // CSI sequences (colors, cursor)
