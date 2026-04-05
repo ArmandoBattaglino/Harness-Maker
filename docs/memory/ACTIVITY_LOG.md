@@ -1,3 +1,14 @@
+## 2026-04-06 — documenter — V5.0 Debugger Loop Phase 1 Deep E2E Test documentation update
+**Outcome:** COMPLETED
+**Summary:** Updated DOC_STATUS.md with Phase 1 deep test results. Added structured bug table for BUG-API-1 (HIGH, webhook CSRF — cross-referenced to existing MEDIUM-V3-01 debt) and BUG-UI-1 (LOW, ConPTY garble — deferred per DEC-009). No code was modified in Phase 1, so no README/ARCHITECTURE/API updates needed. All documentation artifacts verified UP_TO_DATE.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none (documentation only)
+**Decisions made:** Cross-referenced BUG-API-1 with MEDIUM-V3-01 instead of creating duplicate debt entry
+**Blockers:** none
+**Next:** Phase 2 bulk bug-to-task planning (if orchestrator proceeds with BUG-API-1 fix)
+
+---
+
 ## 2026-04-06 — qa-tester — Debugger Loop Phase 1 Micro-Area B: Browser E2E Deep Test
 **Outcome:** COMPLETED
 **Summary:** Full-UI browser E2E deep test via Puppeteer MCP covering all 6 views (Projects, Live Terminal, Job Runner, Deployments, Context Editor, Swarm) plus modals, search, navigation, canvas, and inspector panels. Zero console errors, zero ANSI leakage, zero broken layouts. 1 LOW severity bug found (BUG-UI-1: terminal prompt garble after view switch due to ConPTY buffer race).

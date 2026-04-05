@@ -12110,3 +12110,161 @@ Context:
 Acceptance Criteria:
   - [x] Acknowledged as known behavior — recovery prompt visible only in raw terminal
 Dependencies: none
+
+---
+
+## AREA: V5.1 — Debugger Loop Full-App Deep Check
+_Components: CSRF middleware webhook exemption, ConPTY terminal prompt rendering (deferred)_
+_Tasks: #234 → #237_
+_Gate: ALL components in this area must pass their TEST GATE before the next AREA starts_
+_Source: Debugger Loop Phase 1 full-application E2E deep test, 2026-04-06_
+_Status: IN PROGRESS — 2026-04-06_
+
+---
+
+TASK #234: BUG-API-1 — Webhook endpoint blocked by global CSRF middleware (server/middleware/csrf.js + server/index.js)
+Area: V5.1 — Debugger Loop Full-App Deep Check
+Agent: debugger
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Component Spec:
+  POST /api/v1/triggers/webhooks/:path is the external webhook receiver endpoint.
+  Per server/routes/triggers.js lines 64-109, this endpoint is explicitly documented as
+  "NOT CSRF-protected (no X-Requested-With header expected)" because it must be callable
+  by external systems (GitHub webhooks, CI pipelines, cron services, etc.) that cannot
+  add the custom CSRF header. The endpoint always returns 200 {"received":true} per SEC-V3-07.
+Context:
+  User-facing problem:
+    External webhook callers POST to /api/v1/triggers/webhooks/:path without the
+    X-Requested-With: ClaudeCodeManager header. The global CSRF middleware at
+    server/index.js line 201 intercepts ALL POST requests before they reach the route
+    handler and returns 403 {"error":"CSRF validation failed"}. This makes the entire
+    webhook trigger subsystem non-functional for its intended use case.
+
+  Root cause:
+    The CSRF middleware (server/middleware/csrf.js) is mounted globally via
+    app.use(csrfMiddleware) at server/index.js line 201. The triggers router is mounted
+    later at server/index.js line 277: app.use('/api/v1/triggers', triggersRouter(triggerManager)).
+    Since Express middleware runs in mount order, every POST to /api/v1/triggers/webhooks/:path
+    hits the CSRF check first and gets rejected before the route handler can execute.
+
+  Fix approach (choose ONE — debugger decides which is cleanest):
+    Option A — Path-based exemption in csrf.js:
+      Add a whitelist check in csrfMiddleware for paths matching /api/v1/triggers/webhooks/.
+      This keeps all middleware centralized but couples csrf.js to route knowledge.
+    Option B — Mount webhook route before CSRF middleware:
+      In server/index.js, mount the webhook-specific sub-route before app.use(csrfMiddleware).
+      This keeps csrf.js generic but splits trigger route mounting into two locations.
+    Option C — Per-route CSRF skip:
+      Add a middleware on the webhook route itself that sets a flag (e.g., req._skipCsrf = true)
+      and teach csrfMiddleware to check for it. This is clean but adds indirection.
+
+  Files to examine:
+    - server/middleware/csrf.js (full file — 26 lines)
+    - server/index.js line 201 (CSRF mount) and line 277 (triggers mount)
+    - server/routes/triggers.js lines 64-109 (webhook handler — do NOT modify the handler logic)
+
+  Constraints:
+    - The fix must ONLY exempt /api/v1/triggers/webhooks/:path — all other POST endpoints
+      must remain CSRF-protected
+    - The webhook handler logic (rate limiting, body parsing, 200 response) must NOT change
+    - The fix must not introduce a new dependency
+    - npm test must pass after the fix
+Acceptance Criteria:
+  - [ ] POST /api/v1/triggers/webhooks/test-path WITHOUT X-Requested-With header returns 200 {"received":true}
+  - [ ] POST /api/v1/triggers/webhooks/test-path WITH X-Requested-With header also returns 200 (not broken by the fix)
+  - [ ] POST /api/v1/triggers (non-webhook trigger endpoints) WITHOUT X-Requested-With header still returns 403
+  - [ ] POST /api/v1/sessions (example non-trigger endpoint) WITHOUT X-Requested-With header still returns 403
+  - [ ] No new dependencies added
+  - [ ] npm test passes
+Dependencies: none
+---
+
+TASK #235: TEST GATE — BUG-API-1 (Webhook CSRF Exemption)
+Area: V5.1 — Debugger Loop Full-App Deep Check
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — Task #236 CANNOT start until this gate returns PASS
+Context:
+  Component being tested: CSRF middleware webhook exemption
+  Implementation task: TASK #234
+  What to test:
+    1. HTTP test: POST /api/v1/triggers/webhooks/test-path with NO headers → expect 200 {"received":true}
+    2. HTTP test: POST /api/v1/triggers/webhooks/test-path with X-Requested-With: ClaudeCodeManager → expect 200 {"received":true}
+    3. HTTP test: POST /api/v1/triggers/webhooks/test-path with Content-Type: application/json body {"event":"push"} and NO CSRF header → expect 200 {"received":true}
+    4. Negative test: POST /api/v1/triggers (list endpoint, actually GET but verify POST is blocked) without CSRF → expect 403
+    5. Negative test: POST /api/v1/sessions without CSRF → expect 403
+    6. Negative test: POST /api/v1/agents without CSRF → expect 403
+    7. Verify the webhook rate limiter still functions (10 req/min per IP)
+    8. Verify the 32KB body size limit still functions on the webhook endpoint
+  Approach: Use supertest or direct HTTP requests against the running server. If supertest is already in the test suite, use that pattern.
+Acceptance Criteria:
+  - [ ] Webhook endpoint accepts external POST without CSRF header — returns 200
+  - [ ] Webhook endpoint still works with CSRF header present — returns 200
+  - [ ] All other POST endpoints remain CSRF-protected — return 403 without header
+  - [ ] Rate limiting on webhook endpoint still functional
+  - [ ] Body size limit on webhook endpoint still functional
+  - [ ] npm test passes (no regressions)
+Gate Result: PASS → proceed to TASK #236 | FAIL → return to TASK #234 with bug report
+Dependencies: TASK #234
+---
+
+TASK #236: BUG-UI-1 — Terminal prompt garble after navigation (DEFERRED — ConPTY artifact)
+Area: V5.1 — Debugger Loop Full-App Deep Check
+Agent: none
+Priority: LOW
+Difficulty: N/A
+Suggested Model: N/A
+Status: DEFERRED
+Deferral Note: 2026-04-06 — This is a known Windows ConPTY artifact already documented as DEC-009.
+  The terminal prompt line shows garbled text after navigating away from Live Terminal view and
+  returning. A ConPTY notification fragment partially overwrites the prompt line. This self-corrects
+  on new terminal output and does not affect terminal functionality.
+
+  Rationale for deferral:
+    - Same class as known DEC-009 ConPTY issues (already documented and accepted)
+    - Self-corrects on any new terminal output — no data loss or functional impact
+    - Root cause is in Windows ConPTY layer, not in our application code
+    - The PTY onData handler must NEVER be removed per DEC-009 (removing it causes deadlocks)
+    - Attempting to fix prompt rendering would risk violating DEC-009 constraints
+    - MVP-acceptable — does not block any user workflow
+Context:
+  This bug was found during V5.1 Phase 1 deep E2E testing. The terminal prompt line shows
+  garbled text after navigating away from Live Terminal view and returning. It is a pre-existing
+  Windows ConPTY artifact that has been present since initial terminal implementation.
+Acceptance Criteria:
+  - [x] Acknowledged as known ConPTY artifact — DEC-009 documented
+  - [x] No code change needed for MVP
+Dependencies: none
+---
+
+TASK #237: AREA CHECKPOINT — V5.1 Debugger Loop Full-App Deep Check
+Area: V5.1 — Debugger Loop Full-App Deep Check
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — Next area CANNOT start until ALL component test gates in this area have PASSED
+Context:
+  Run a full integration smoke test for all components in V5.1. The only active fix task is
+  #234 (BUG-API-1 webhook CSRF exemption). BUG-UI-1 (#236) is DEFERRED as a known ConPTY artifact.
+  This checkpoint verifies:
+    1. The webhook endpoint is accessible to external callers without CSRF headers
+    2. All other endpoints remain CSRF-protected
+    3. No regression in previously passing areas (V5.0, V4.x, V3.x)
+    4. The deferred BUG-UI-1 is confirmed as non-blocking (terminal still functions after navigation)
+Acceptance Criteria:
+  - [ ] TEST GATE #235 is COMPLETED with PASS result
+  - [ ] TASK #236 is acknowledged as DEFERRED (no fix needed)
+  - [ ] Integration test: external webhook POST → 200, then internal POST without CSRF → 403
+  - [ ] No regression in Swarm execution, terminal, session management, or agent CRUD
+  - [ ] Terminal still functions after navigation (BUG-UI-1 is cosmetic only, confirmed)
+Dependencies: TASK #235, TASK #236

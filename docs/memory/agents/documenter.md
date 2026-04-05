@@ -1,4 +1,46 @@
 ---
+## 2026-04-06 -- V5.0 Debugger Loop Phase 1 Deep E2E Test — documentation update
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel post-task documentation update)
+
+### Context when I started
+V5.0 Debugger Loop Phase 1 had just completed a full-app deep E2E test. No code was modified — this was testing only. The test covered all 10 server route files and all 7 client views. 312 server tests pass, client build 480 modules/0 errors. Two bugs were found: BUG-API-1 (HIGH — webhook CSRF, same as existing MEDIUM-V3-01) and BUG-UI-1 (LOW — ConPTY garble, known/deferred per DEC-009).
+
+### What I did
+1. Read DOC_STATUS.md, ACTIVITY_LOG.md (head), PROGRESS.md, CONTEXT.md, documenter agent log to understand current documentation state.
+2. Verified no code was modified — no README, ARCHITECTURE, API, or inline comment updates needed.
+3. Updated DOC_STATUS.md: refreshed header with Phase 1 test context, added V5.0 Phase 1 Deep Test Results section with bug table, updated MEDIUM-V3-01 debt entry to cross-reference BUG-API-1 and note re-confirmation date, updated ACTIVITY_LOG note in Health table.
+4. Appended documenter session log and ACTIVITY_LOG entry.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Header updated, Phase 1 test results section added, debt entry cross-referenced with BUG-API-1 |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Phase 1 documenter entry appended |
+| docs/memory/agents/documenter.md | MODIFIED | This session log prepended |
+
+### Improvements delivered
+- DOC_STATUS.md now records the V5.0 Phase 1 deep test findings with a structured bug table
+- BUG-API-1 is cross-referenced to the existing MEDIUM-V3-01 debt entry, preventing duplicate tracking
+- BUG-UI-1 is explicitly linked to DEC-009, so future agents know this is accepted behavior
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Did not update README, ARCHITECTURE, or API docs because no code was modified and no public contracts changed.
+- Cross-referenced BUG-API-1 with MEDIUM-V3-01 rather than creating a new debt entry, since they share the same root cause and fix path.
+
+### What I learned
+- The webhook CSRF issue (MEDIUM-V3-01) has now been independently confirmed by two separate test phases. It remains the only actionable bug in the app.
+
+### State I'm leaving behind
+DOC_STATUS.md is fully current with V5.0 Phase 1 results. All documentation artifacts verified as UP_TO_DATE. One actionable bug (BUG-API-1 / MEDIUM-V3-01) remains in debt.
+
+### Handoff
+None — documentation-only task, fully self-contained.
+
+---
 ## 2026-04-06 -- Tasks #231, #232: V5.0 Debugger Loop Fix Wave documentation update
 **Status:** COMPLETED
 **Called by:** orchestrator (parallel post-task documentation update)
