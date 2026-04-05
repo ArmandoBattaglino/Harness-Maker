@@ -1,3 +1,14 @@
+## 2026-04-06 — documenter — Task #234: BUG-API-1 documentation update
+**Outcome:** COMPLETED
+**Summary:** Updated security audit docs (v1 and v3) to reflect CSRF webhook exemption fix. MEDIUM-V3-01 marked FIXED in security-v3-audit.md. SEC-06 entry in SECURITY_AUDIT.md updated with exemption note. DOC_STATUS.md BUG-API-1 moved to FIXED, debt entry resolved. API.md already accurate (no change needed). README and ARCHITECTURE not affected.
+**Files changed:** docs/security-v3-audit.md, docs/SECURITY_AUDIT.md, docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none (documentation only)
+**Decisions made:** API.md line 12 already documented the webhook CSRF exception correctly — no edit needed, just verified it now matches reality
+**Blockers:** none
+**Next:** qa-tester runs TEST GATE #235
+
+---
+
 ## 2026-04-06 — project-manager — Task #234 Review + #235 Confirmation
 **Outcome:** COMPLETED
 **Summary:** Verified Task #234 (BUG-API-1 webhook CSRF exemption) is COMPLETED. Checked all 6 acceptance criteria. Confirmed Task #235 (TEST GATE) is the next action — assigned to qa-tester. Updated TASK_PLAN.md status header, V5.1 area status, and acceptance criteria checkboxes. Critical path: #235 (qa-tester) then #237 (AREA CHECKPOINT).

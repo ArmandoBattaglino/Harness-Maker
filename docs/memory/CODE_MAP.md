@@ -28,7 +28,7 @@ _Last updated: 2026-04-06 — after V5.0 Debugger Loop Phase 1 Deep E2E Test (no
 | server/services/SessionManager.js | sessionManager (singleton) | Sole PTY owner: createSession, attachClient, detachClient, writeInput, resizePty, killSession, idle sweeper |
 | server/utils/frontmatter.js | parseFrontmatter, serializeFrontmatter, filePathToId | YAML frontmatter parse/serialize; stable hex ID from file path |
 | server/middleware/security.js | securityMiddleware | helmet + CSP (script-src: self, style-src: self+unsafe-inline+fonts.googleapis.com, font-src: self+fonts.gstatic.com) |
-| server/middleware/csrf.js | csrfMiddleware | 403 on POST/PUT/PATCH/DELETE without X-Requested-With: ClaudeCodeManager |
+| server/middleware/csrf.js | csrfMiddleware, CSRF_EXEMPT_PREFIXES | 403 on POST/PUT/PATCH/DELETE without X-Requested-With: ClaudeCodeManager; path-based exemptions for webhook endpoints (Task #234) |
 | server/middleware/pathValidation.js | validateProjectPath, validateClaudePath, ApiError | Path traversal prevention, ApiError class |
 | server/routes/projects.js | projectsRouter | GET/POST/DELETE /api/v1/projects — project CRUD, scaffold .claude/ on creation |
 | server/routes/sessions.js | sessionsRouter | GET/POST/DELETE /api/v1/sessions — session CRUD |
@@ -935,8 +935,24 @@ _Last updated: 2026-04-06 — after V5.0 Debugger Loop Phase 1 Deep E2E Test (no
 
 ---
 
+### `server/middleware/csrf.js` :: `csrfMiddleware(req, res, next)`
+- **Purpose:** Express middleware enforcing CSRF protection via custom header on mutating HTTP methods. Checks method against MUTATING_METHODS set (POST/PUT/PATCH/DELETE); exempts safe methods, WebSocket upgrades, and paths matching CSRF_EXEMPT_PREFIXES. Rejects non-exempt requests missing `X-Requested-With: ClaudeCodeManager` with 403.
+- **Called by:** server/index.js::startup() (mounted as app-level middleware before all routes)
+- **Calls:** next() (Express chain), res.status(403).json() on rejection
+- **Inputs:** req (Express Request — reads req.method, req.path, req.url, req.headers.upgrade, req.headers['x-requested-with']), res (Express Response), next (Express NextFunction)
+- **Output:** void — calls next() or sends 403 JSON response `{ error: 'CSRF validation failed' }`
+- **Side effects:** none (stateless per-request check)
+- **Constants:**
+  - `MUTATING_METHODS` — Set: POST, PUT, PATCH, DELETE
+  - `REQUIRED_HEADER_VALUE` — 'ClaudeCodeManager'
+  - `CSRF_EXEMPT_PREFIXES` — Array: ['/api/v1/triggers/webhooks/'] (added Task #234 BUG-API-1)
+- **Bypass logic (Task #234):** After mutating-method check, reads `req.path || req.url` and tests against CSRF_EXEMPT_PREFIXES via `.some(prefix => reqPath.startsWith(prefix))`. If matched, calls next() without header validation. This allows external webhook callers (which cannot set custom headers) to POST to webhook receiver endpoints.
+- **Last modified:** 2026-04-06 in Task #234 by debugger (added CSRF_EXEMPT_PREFIXES + path bypass — BUG-API-1 fix)
+
+---
+
 ### `server/tests/csrf.test.js` :: (test suite)
-- **Purpose:** 13 unit tests for csrfMiddleware. Covers: safe methods (GET/HEAD/OPTIONS) always call next(); mutating methods (POST/PUT/PATCH/DELETE) require exact header `X-Requested-With: ClaudeCodeManager`; wrong value or empty string returns 403; WebSocket upgrade requests (GET + upgrade header) pass; response body on rejection is `{ error: 'CSRF validation failed' }`.
+- **Purpose:** 13 unit tests for csrfMiddleware. Covers: safe methods (GET/HEAD/OPTIONS) always call next(); mutating methods (POST/PUT/PATCH/DELETE) require exact header `X-Requested-With: ClaudeCodeManager`; wrong value or empty string returns 403; WebSocket upgrade requests (GET + upgrade header) pass; response body on rejection is `{ error: 'CSRF validation failed' }`. Note: may need additional tests for CSRF_EXEMPT_PREFIXES bypass (added Task #234).
 - **Tests:** `server/middleware/csrf.js` — imports `{ csrfMiddleware }` directly; uses mock req/res/next (no HTTP server needed)
 - **Called by:** vitest test runner
 - **Calls:** csrfMiddleware (with mock req/res/next), vi.fn (vitest mock)

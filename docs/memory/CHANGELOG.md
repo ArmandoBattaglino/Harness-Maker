@@ -2485,3 +2485,33 @@ No new connections introduced in this checkpoint task. All connection changes we
 - BUG-UI-1 is a known platform limitation (Windows ConPTY + xterm.js) — no code fix planned.
 
 ---
+
+---
+## 2026-04-06 — Task #234: BUG-API-1 — CSRF exemption for webhook endpoints
+**Agent:** debugger
+**Triggered by:** BUG-API-1 discovered in Task #233 deep check — external webhook POSTs to `/api/v1/triggers/webhooks/:path` were blocked by CSRF middleware because external callers cannot set the `X-Requested-With: ClaudeCodeManager` header.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/middleware/csrf.js | MODIFIED | Added `CSRF_EXEMPT_PREFIXES` array with `/api/v1/triggers/webhooks/` and a path-based bypass check before header validation |
+
+### Functions Added
+- None (no new exported functions)
+
+### Functions Modified
+- `csrfMiddleware(req, res, next)` in `server/middleware/csrf.js` — Added path exemption logic: reads `req.path || req.url`, checks against `CSRF_EXEMPT_PREFIXES` via `.some(prefix => reqPath.startsWith(prefix))`, calls `next()` without header check if matched. New module-level constant `CSRF_EXEMPT_PREFIXES = ['/api/v1/triggers/webhooks/']`.
+
+### Functions Removed
+- None
+
+### Connection Changes
+- `csrfMiddleware` now has an additional bypass path: requests to `/api/v1/triggers/webhooks/*` skip CSRF header validation entirely. This complements the existing safe-method and WebSocket-upgrade bypasses.
+- The `server/routes/triggers.js` webhook POST handler (`POST /webhooks/:path`) is the primary beneficiary — external webhook callers can now reach it without the custom header.
+
+### Impact on Other Code
+- `server/tests/csrf.test.js` — existing 13 tests still pass but do not cover the new CSRF_EXEMPT_PREFIXES bypass. Additional tests recommended for: (1) POST to exempt path without header passes, (2) POST to non-exempt path without header still 403s, (3) prefix matching edge cases.
+- `server/routes/triggers.js` — no code change needed; the webhook receiver endpoint now works as originally designed for external callers.
+- Any future endpoints needing CSRF exemption can be added to the `CSRF_EXEMPT_PREFIXES` array.
+
+---

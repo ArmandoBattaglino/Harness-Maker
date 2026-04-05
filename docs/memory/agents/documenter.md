@@ -1,4 +1,50 @@
 ---
+## 2026-04-06 -- Task #234: BUG-API-1 — Webhook CSRF exemption documentation update
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel post-task documentation update)
+
+### Context when I started
+Task #234 had just been completed by the debugger agent. The fix added a `CSRF_EXEMPT_PREFIXES` array to `server/middleware/csrf.js` that exempts `/api/v1/triggers/webhooks/` from CSRF validation, allowing external webhook callers (GitHub, CI/CD) to POST without the `X-Requested-With` header. This resolved BUG-API-1 (HIGH) and the long-standing MEDIUM-V3-01 from the V3 security audit.
+
+### What I did
+1. Read `server/middleware/csrf.js` to understand the exact fix implementation.
+2. Read `docs/API.md` — line 12 already documented the webhook CSRF exception correctly. The documentation was aspirationally accurate before the fix; now it matches the actual code. No edit needed.
+3. Updated `docs/security-v3-audit.md`: rewrote MEDIUM-V3-01 section from open finding to FIXED status with the applied fix details. Updated the summary table entry.
+4. Updated `docs/SECURITY_AUDIT.md`: added webhook exemption note to SEC-06 entry and the "All mutating endpoints require CSRF header" check.
+5. Updated `docs/memory/DOC_STATUS.md`: moved BUG-API-1 to FIXED, updated security audit health entries with 2026-04-06 date, closed the MEDIUM-V3-01 debt entry, updated header.
+6. Verified README.md and ARCHITECTURE.md are not affected (no setup/feature/architecture changes).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/security-v3-audit.md | MODIFIED | MEDIUM-V3-01 marked FIXED with fix details and code snippet; summary table updated |
+| docs/SECURITY_AUDIT.md | MODIFIED | SEC-06 entry and CSRF check section updated with webhook exemption note |
+| docs/memory/DOC_STATUS.md | MODIFIED | BUG-API-1 FIXED, debt entry resolved, security audit dates updated, header refreshed |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Documenter entry appended |
+| docs/memory/agents/documenter.md | MODIFIED | This session log prepended |
+
+### Improvements delivered
+- Both security audit documents now accurately reflect the CSRF exemption for webhooks
+- MEDIUM-V3-01 is officially closed after being open since 2026-03-28
+- DOC_STATUS.md debt is reduced by one item
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Did not edit API.md because line 12 already correctly documented the exception — the aspirational documentation became factually accurate after the code fix
+- Did not update README or ARCHITECTURE because the CSRF exemption is an internal middleware detail, not a user-facing setup/feature/architecture change
+
+### What I learned
+- API.md was written with forward-looking accuracy for the webhook endpoint, documenting the CSRF exception before the code actually implemented it. This is unusual but means the doc was already correct once the code caught up.
+
+### State I'm leaving behind
+All documentation artifacts are UP_TO_DATE. Both security audit docs reflect the CSRF exemption fix. No remaining documentation debt related to webhook CSRF.
+
+### Handoff
+None — documentation-only task, fully self-contained.
+
+---
 ## 2026-04-06 -- V5.0 Debugger Loop Phase 1 Deep E2E Test — documentation update
 **Status:** COMPLETED
 **Called by:** orchestrator (parallel post-task documentation update)
