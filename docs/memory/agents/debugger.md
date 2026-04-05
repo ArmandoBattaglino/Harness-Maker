@@ -478,3 +478,46 @@ Fix is complete. All 312 tests pass. The 13 new patterns cover the known system 
 ### Handoff
 None -- task is fully self-contained. The fix only adds filtering patterns; no downstream components are affected.
 ---
+
+---
+## 2026-04-06 — Task #232: BUG-WF-3 — PTY Explosion opens wrong agent terminal after switching nodes
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+PTY Explosion (full-screen terminal overlay) was showing the wrong agent's terminal content when switching between agent nodes. The Swarm Orchestrator V3+ canvas allows users to click an agent node and open its PTY session in a full-screen overlay via AgentInspector's "Open Terminal" button.
+
+### What I did
+1. Read all four files in the PTY Explosion rendering chain: AgentInspector.jsx (button handler), SwarmView.jsx (PtyExplosion render site), PtyExplosion.jsx (overlay wrapper), Terminal.jsx (xterm.js component).
+2. Read useSession.js (the WS connection hook) to understand how session connections are managed.
+3. Traced the execution path for both the close-then-reopen and direct-switch scenarios.
+4. Identified the root cause: when ptyExplosionNodeId changes from one truthy value to another (direct switch without closing), React reuses the same PtyExplosion component instance. Terminal.jsx's xterm is created once on mount (empty deps array) and while useSession does reconnect on sessionId change, there is a race between the WS reconnection delivering ring buffer replay and the terminal reset effect, both triggered by the same sessionId dependency.
+5. Applied a one-line fix: added key={ptyExplosionNodeId} to the PtyExplosion component in SwarmView.jsx. This forces React to fully destroy the old component tree (xterm instance, WS connection, all refs) and create a fresh one whenever the sessionId changes.
+6. Verified the build passes (480 modules, 0 errors).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/views/SwarmView.jsx | MODIFIED | Added key={ptyExplosionNodeId} to PtyExplosion at line 520 — forces React to unmount/remount the entire component tree when sessionId changes |
+| docs/TASK_PLAN.md | MODIFIED | Marked TASK #232 as COMPLETED with resolution notes |
+
+### Improvements delivered
+- PTY Explosion now correctly displays the selected agent's terminal session regardless of whether the user closes the overlay between switches or switches directly
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| PTY Explosion shows wrong terminal on node switch | Missing React key prop on PtyExplosion — React reuses same component instance when ptyExplosionNodeId changes between truthy values, causing stale xterm/WS state | Added key={ptyExplosionNodeId} to force unmount/remount | FIXED |
+
+### Decisions I made
+- Used key prop approach over adding useEffect cleanup in Terminal.jsx — the key approach is simpler (1 line), guaranteed correct (full teardown), and avoids touching the shared Terminal component which is used in other contexts
+
+### What I learned
+- Terminal.jsx creates its xterm instance with an empty dependency array (line 71: `[]`), meaning it never recreates the xterm on prop changes. The useSession hook does react to sessionId changes, but relying on coordinated effects for cleanup is fragile. The React key pattern is the canonical solution for "reset component on identity change".
+
+### State I'm leaving behind
+Fix is complete. Build passes (480 modules, 0 errors). The change is a single added prop (key={ptyExplosionNodeId}) at SwarmView.jsx line 520.
+
+### Handoff
+None — task is fully self-contained. No downstream components affected.
+---

@@ -2747,6 +2747,17 @@ full self-contained context and acceptance criteria.
 **Next:** Tasks #145 (BUG-UX-HANDOFF-1) and #146 (BUG-UX-FEEDBACK-1) should be completed, then TEST GATE #147.
 ---
 
+---
+## 2026-04-06 — debugger — Task #232: BUG-WF-3 — PTY Explosion opens wrong agent terminal after switching nodes
+**Outcome:** COMPLETED
+**Summary:** Added key={ptyExplosionNodeId} to PtyExplosion component in SwarmView.jsx (line 520). This forces React to fully unmount/remount the PtyExplosion+Terminal component tree when switching between agent sessions, eliminating stale xterm and WebSocket state from the previous agent's terminal. Build passes (480 modules, 0 errors).
+**Files changed:** client/src/views/SwarmView.jsx, docs/TASK_PLAN.md
+**Bugs fixed:** BUG-WF-3 — PTY Explosion displaying wrong agent terminal after node switch (missing React key prop)
+**Decisions made:** Used React key prop pattern over useEffect cleanup in Terminal.jsx — simpler, guaranteed correct, avoids touching shared component
+**Blockers:** none
+**Next:** Remaining debugger-loop tasks from V5.0 wave (TASK #233 BUG-WF-2 etc.)
+---
+
 
 
 
