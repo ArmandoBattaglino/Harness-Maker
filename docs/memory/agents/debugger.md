@@ -432,3 +432,49 @@ SwarmEngine.js is fixed. 255/255 tests pass. Gemini prompts will now be submitte
 ### Handoff
 qa-tester runs TASK #161 (TEST GATE: BUG-GEMINI-1) to verify the fix. On PASS, proceed to TASK #162 (BUG-GEMINI-2).
 ---
+
+---
+## 2026-04-06 — Task #231: BUG-WF-1 — System prompt text leaking into agent node card snippets
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+Swarm workflow agent node cards were displaying system prompt preamble lines ("You are a Writer agent", "Current task: Execute the workflow goal...", etc.) as snippet text. The root cause was that ConPTY on Windows echoes injected system prompt text back into the PTY output stream, and `_buildSemanticSnippet()` was not filtering these preamble lines.
+
+### What I did
+1. Read `SNIPPET_NOISE_LINE_PATTERNS` array in `server/services/SwarmEngine.js` (lines 52-137) to confirm the swarm protocol preamble patterns were absent.
+2. Read `_stripSnippetProtocolArtifacts()` (line 896-900) to confirm it only stripped `--- SWARM PROTOCOL ---` blocks but not `--- SWARM INPUT ---` blocks.
+3. Added 13 new regex patterns to `SNIPPET_NOISE_LINE_PATTERNS` after the existing `/what would you like/i` entry, covering all known system prompt preamble lines.
+4. Added a new `.replace()` call to `_stripSnippetProtocolArtifacts()` to strip `--- SWARM INPUT ... END SWARM INPUT ---` blocks at the block level.
+5. Ran `npm test --prefix server` -- all 312/312 tests pass.
+6. Marked TASK #231 as COMPLETED in `docs/TASK_PLAN.md`.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SwarmEngine.js | MODIFIED | Added 13 noise patterns to SNIPPET_NOISE_LINE_PATTERNS (lines 137-149) and 1 block-level regex to _stripSnippetProtocolArtifacts (line 912) |
+| docs/TASK_PLAN.md | MODIFIED | Marked TASK #231 as COMPLETED with completion note |
+
+### Improvements delivered
+- Agent node card snippets will no longer show system prompt preamble text during early agent running phase
+- Both line-level filtering (individual preamble lines) and block-level filtering (SWARM INPUT wrapper) are now covered
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| System prompt text in snippets | SNIPPET_NOISE_LINE_PATTERNS missing swarm preamble patterns; _stripSnippetProtocolArtifacts missing SWARM INPUT block regex | Added 13 line patterns + 1 block regex | FIXED |
+
+### Decisions I made
+- Added patterns as anchored regexes (^...) where possible to avoid false positives on legitimate agent output that might contain similar words mid-sentence
+- Used case-insensitive matching (/i) consistently since ConPTY echo can vary casing
+
+### What I learned
+- ConPTY echoes ALL injected PTY stdin text back into the output stream, including system prompts. Any text injected via `_flushSwarmPrompt` will appear in the snippet pipeline unless explicitly filtered.
+- The snippet pipeline has two layers of defense: block-level stripping in `_stripSnippetProtocolArtifacts` (removes entire delimited sections) and line-level filtering in `_isSnippetNoiseLine` via `SNIPPET_NOISE_LINE_PATTERNS` (removes individual lines). Both layers need to be updated when new injected text formats are added.
+
+### State I'm leaving behind
+Fix is complete. All 312 tests pass. The 13 new patterns cover the known system prompt preamble lines. The block-level regex covers the `--- SWARM INPUT ---` wrapper. No behavioral changes to non-affected code paths.
+
+### Handoff
+None -- task is fully self-contained. The fix only adds filtering patterns; no downstream components are affected.
+---

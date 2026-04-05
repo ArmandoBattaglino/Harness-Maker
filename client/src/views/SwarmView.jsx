@@ -517,6 +517,7 @@ export default function SwarmView() {
 
       {ptyExplosionNodeId && (
         <PtyExplosion
+          key={ptyExplosionNodeId}
           sessionId={ptyExplosionNodeId}
           onClose={() => setPtyExplosionNodeId(null)}
         />

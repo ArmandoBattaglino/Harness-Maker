@@ -1,0 +1,10 @@
+{
+  "request_id": "3d8329e2-21db-490b-a71e-0f8e549eaa5e",
+  "created_at": "2026-04-05T02:18:31.275Z",
+  "user_prompt": "Repository: Test workflows. We are running a real Gemini end-to-end verification for V4.0.2 tasks #178, #180, #182, #184, #186, #187, and we specifically also want to validate the automatic Gemini model switching behavior under usage-limit menus. Please read docs/TASK_PLAN.md around tasks #177-#187 and give me a compact verification matrix: exact pass/fail criteria per gate, what evidence to capture from UI/runtime, and whether the automatic model-switch validation should be documented as part of #182/#187 or as extra evidence tied to V4.1. Do not edit files. Return concise, actionable notes.",
+  "requested_agent": "qa-tester",
+  "status": "active",
+  "steps": [],
+  "next_actions": [],
+  "summary": null
+}

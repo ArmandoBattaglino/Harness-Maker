@@ -7,6 +7,15 @@
 **Blockers:** none for V4.0.3; Claude full-chain live verification remains quota-sensitive but is no longer a blocker for this wave because the closed gates were satisfied through Gemini live runs plus browser/backend agreement.
 **Next:** Resume from V4.1+ or any newly discovered live-provider anomalies.
 ---
+## 2026-04-06 - debugger - Task #231: BUG-WF-1 â€” System prompt text leaking into agent node card snippets
+**Outcome:** COMPLETED
+**Summary:** Added 13 swarm protocol preamble patterns to SNIPPET_NOISE_LINE_PATTERNS and a SWARM INPUT block-level regex to _stripSnippetProtocolArtifacts in SwarmEngine.js. This prevents ConPTY-echoed system prompt text from appearing in agent node card snippets. All 312 tests pass.
+**Files changed:** server/services/SwarmEngine.js, docs/TASK_PLAN.md
+**Bugs fixed:** System prompt preamble lines ("You are a Writer agent", "Current task:", "Workflow goal:", etc.) no longer leak into snippet display
+**Decisions made:** Used anchored regexes where possible to minimize false-positive risk on legitimate agent output
+**Blockers:** none
+**Next:** Continue with remaining V5.0 bugs from Phase 1 Deep Test
+---
 ## 2026-04-05 - project-manager - V4.0.3 task planning for Swarm hydration + Gemini control-flow stability
 **Outcome:** COMPLETED
 **Summary:** Opened a new V4.0.3 area in `docs/TASK_PLAN.md` for the post-V4.0.2 reliability bugs found during real E2E retests. The new task set (#188-#196) is intentionally split into three bug streams: (1) stale Swarm ghost execution hydration and lifecycle-sync correctness, (2) Gemini runtime model registry drift between UI and installed CLI, and (3) oversized Gemini pre-handoff budget burn with no honest stop reason. Each stream now has a dedicated implementation task and TEST GATE, plus a final AREA CHECKPOINT requiring browser/backend agreement before closure.
@@ -70,7 +79,7 @@
 **Blockers:** Gemini terminal behavior is still semantically unreliable under full E2E load: the Researcher can surface provider API errors while the run still completes, and the Writer can emit stale/wrong output unrelated to the requested goal.
 **Next:** Investigate why the Writer session replays stale content and why execution can complete after repeated Gemini `INVALID_ARGUMENT` failures, then rerun the same exact-user scenario until the Writer produces the requested target text.
 ---
-## 2026-04-05 — debugger — Gemini auto model-switch syntax correction + live rerun after restart
+## 2026-04-05 ï¿½ debugger ï¿½ Gemini auto model-switch syntax correction + live rerun after restart
 **Outcome:** PARTIAL
 **Summary:** Corrected the Gemini fallback command to use the actual CLI syntax `/model set <model>` after verifying the installed Gemini CLI command metadata. Re-ran the targeted backend suites (`npm test --prefix server -- SessionManager.test.js swarm-engine.test.js` = 100/100, plus `npm test --prefix server -- swarm-engine.test.js` after the final comment cleanup = 75/75), restarted the local server on `http://127.0.0.1:3000`, and launched a fresh real Gemini execution for `Research and Report Team` with runtime model `gemini-2.5-pro`. The live session stayed `running` for several minutes and consumed a large token budget without reproducing the usage-limit menu again, so the new `/model set` path is active in code and covered by tests but was not freshly observed firing in a natural quota event during this rerun.
 **Files changed:** server/services/SwarmEngine.js, server/tests/swarm-engine.test.js, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md

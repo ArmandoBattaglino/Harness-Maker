@@ -11856,3 +11856,238 @@ Context:
     Added /^~[A-Z]/i to catch path-like fragments starting with ~ followed by a letter.
   Key file: server/services/SwarmEngine.js — SNIPPET_NOISE_LINE_PATTERNS line 117
 Dependencies: none
+
+---
+
+## AREA: V5.0 — Debugger Loop Deep Check (2026-04-06)
+_Source: /debugger-loop Phase 0 scaffold — user-requested deep checks on workflow execution, terminals, HITL, and tangible output verification_
+_Tasks: #225+_
+_Gate: HARD — MVP is not ready until all micro-area checks pass with zero bugs_
+
+### Micro-Area A: Workflow Generation & Execution Lifecycle
+_Check: Generate a workflow via Prompt-to-Flow, run it, expect a specific tangible output from the agents. Verify execution goes Idle→Running→Completed (not just Stopped). Verify each agent node transitions correctly._
+**Phase 1 deep check task:**
+
+TASK #225: CHECK-WORKFLOW-LIFECYCLE — Deep E2E check: workflow generation, execution, and completion with tangible output
+Area: V5.0 — Debugger Loop Deep Check
+Agent: qa-tester
+Type: DEEP_CHECK
+Priority: CRITICAL
+Difficulty: HARD
+Status: IN_PROGRESS
+Context:
+  Generate a workflow via Prompt-to-Flow (e.g. "Analyze a code snippet and report its complexity").
+  Run it with a real project. Expect:
+  1. Execution reaches Completed (not just Stopped)
+  2. All agent nodes show meaningful, readable output
+  3. Agent terminals (Open Terminal in inspector) are accessible and show real PTY output
+  4. Inter-Agent Feed shows all handoff events
+  5. The final agent produces a tangible, useful result the user can read
+  Bug sub-tasks will be added below this check if bugs are found.
+Dependencies: none
+---
+
+### Micro-Area B: HITL (Human-in-the-Loop) Approval Panel
+_Check: Toggle HITL on, run a workflow, verify the HITL Approvals panel appears with pending items when an agent needs approval, verify approve/reject actions work._
+
+TASK #226: CHECK-HITL-FUNCTIONALITY — Deep E2E check: HITL toggle, approval panel, pending items during execution
+Area: V5.0 — Debugger Loop Deep Check
+Agent: qa-tester
+Type: DEEP_CHECK
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  1. Toggle HITL on in the toolbar
+  2. Run a workflow
+  3. Verify the HITL Approvals panel shows pending items when agents need approval
+  4. Verify approve/reject buttons work
+  5. Verify execution pauses when HITL is waiting and resumes after approval
+  If HITL is purely UI-only (no backend enforcement), note this as a design gap.
+  Bug sub-tasks will be added below this check if bugs are found.
+Dependencies: TASK #225
+---
+
+### Micro-Area C: Agent Terminals (PTY Explosion)
+_Check: Click "Open Terminal" on an agent node during/after execution, verify the terminal opens in full-screen, shows real PTY output, can be interacted with._
+
+TASK #227: CHECK-AGENT-TERMINALS — Deep E2E check: agent terminal open, PTY output visible, interaction works
+Area: V5.0 — Debugger Loop Deep Check
+Agent: qa-tester
+Type: DEEP_CHECK
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  1. Run a workflow to completion (or at least until one agent is Done)
+  2. Click on a Done agent node to open the inspector
+  3. Click "Open Terminal" button in the inspector
+  4. Verify the PTY terminal view opens (full-screen or panel)
+  5. Verify it shows real agent PTY output (not blank)
+  6. Verify the user can see what the agent actually did
+  Bug sub-tasks will be added below this check if bugs are found.
+Dependencies: TASK #225
+---
+
+### Micro-Area D: Workflow Save, Load, and Re-run
+_Check: After generating and running a workflow, verify it can be saved, loaded from the dropdown, and re-run successfully._
+
+TASK #228: CHECK-WORKFLOW-PERSISTENCE — Deep E2E check: save, load, re-run workflow
+Area: V5.0 — Debugger Loop Deep Check
+Agent: qa-tester
+Type: DEEP_CHECK
+Priority: MEDIUM
+Difficulty: EASY
+Status: PENDING
+Context:
+  1. Generate a new workflow
+  2. Verify it appears in the Saved Workflows dropdown
+  3. Navigate away and back to Swarm view
+  4. Select the workflow from dropdown and click Load
+  5. Run it again — verify it works identically
+  Bug sub-tasks will be added below this check if bugs are found.
+Dependencies: none
+---
+
+TASK #229: TEST GATE — V5.0 Debugger Loop Deep Check
+Area: V5.0 — Debugger Loop Deep Check
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Verify ALL micro-area checks (#225-#228) pass. Run server tests + client build.
+  All bugs found during checks must be fixed before this gate can pass.
+Acceptance Criteria:
+  - [ ] All 4 micro-area checks pass
+  - [ ] npm test 0 failures
+  - [ ] npm run build 0 errors
+  - [ ] No visible bugs in browser
+Dependencies: TASK #225, TASK #226, TASK #227, TASK #228
+---
+
+TASK #230: AREA CHECKPOINT — V5.0 Debugger Loop Deep Check
+Area: V5.0 — Debugger Loop Deep Check
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: CRITICAL
+Difficulty: HARD
+Status: PENDING
+Gate: HARD — V5.0 is not closed until this checkpoint returns PASS
+Context:
+  Full E2E re-verification of ALL micro-areas after all bugs are fixed.
+Dependencies: TASK #229
+
+---
+
+### Bugs found during Phase 1 Deep Test (2026-04-06)
+
+TASK #231: BUG-WF-1 — System prompt text appears as snippet during early agent running phase
+Area: V5.0 — Debugger Loop Deep Check
+Agent: debugger
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 — Added 13 swarm protocol preamble patterns to SNIPPET_NOISE_LINE_PATTERNS and a SWARM INPUT block-level regex to _stripSnippetProtocolArtifacts. All 312 tests pass.
+Context:
+  User-facing problem:
+    During the first seconds of an agent running (observed on Researcher node), the node card
+    snippet shows the system prompt text: "You are a research agent. Read the project README
+    file and any other relevant..." instead of actual agent output.
+  Root cause:
+    The SwarmEngine injects the swarm protocol + system prompt via PTY stdin. Windows ConPTY
+    echoes this text back in the PTY output stream. The tapFn receives these echo chunks and
+    stores them in _snippetSourceBuffer. The _buildSemanticSnippet() pipeline picks up the
+    system prompt text because it looks like natural-language text that passes all noise filters.
+  Required fix:
+    Add the system prompt injection text to SNIPPET_NOISE_LINE_PATTERNS or
+    SNIPPET_STALE_FOREIGN_LINE_PATTERNS. Key phrases to filter:
+    - /^you are a \w+ agent/i
+    - /^read the project readme/i
+    - /^compile your findings/i
+    - /^based on the research notes/i
+    - /^analyze each incoming/i
+    - /^you have an active task right now/i
+    - /^current task: execute the workflow/i
+    - /^workflow goal:/i
+    - /^you are the final agent/i
+    - /^after completing your work/i
+    - /^this is mandatory/i
+    - /^do not output the handoff or done token mid-response/i
+    These are all swarm protocol preamble lines that should never appear in the user-visible
+    snippet.
+  Key file: server/services/SwarmEngine.js — SNIPPET_NOISE_LINE_PATTERNS
+Acceptance Criteria:
+  - [ ] System prompt text never appears as node card snippet
+  - [ ] Actual agent output still appears correctly
+  - [ ] npm test passes
+Dependencies: none
+---
+
+TASK #232: BUG-WF-3 — PTY Explosion opens wrong agent terminal after switching nodes
+Area: V5.0 — Debugger Loop Deep Check
+Agent: debugger
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Context:
+  User-facing problem:
+    After opening Agent A's terminal via PTY Explosion (full-screen terminal view), closing it,
+    then clicking on Agent B's node and clicking "Open Terminal", the PTY Explosion re-opens
+    showing Agent A's terminal (same session ID) instead of Agent B's terminal.
+  Root cause hypothesis:
+    The ptyExplosionNodeId state in SwarmStore may not be properly cleared when the PTY Explosion
+    is closed, or the "Open Terminal" button in the inspector sets the explosion node ID without
+    checking if the session ID belongs to the correct agent.
+    Alternatively, the PTY Explosion component may be caching the previous session and not
+    re-querying when the node ID changes.
+  Required fix:
+    1. Read client/src/views/SwarmView.jsx — find where ptyExplosionNodeId is set
+    2. Read client/src/canvas/AgentInspector.jsx — find the "Open Terminal" click handler
+    3. Verify that closing PTY Explosion properly clears the state
+    4. Verify that opening a new terminal queries the correct session for the new node
+  Key files:
+    - client/src/views/SwarmView.jsx — PTY Explosion rendering
+    - client/src/canvas/AgentInspector.jsx — Open Terminal button handler
+    - client/src/store/SwarmContext.jsx — ptyExplosionNodeId state
+  Resolution (2026-04-06):
+    Added key={ptyExplosionNodeId} to PtyExplosion in SwarmView.jsx line 520.
+    This forces React to fully unmount/remount the component (and its Terminal child)
+    whenever the sessionId changes, eliminating stale xterm/WS state from the previous session.
+Acceptance Criteria:
+  - [x] Clicking "Open Terminal" on Node A opens Node A's session
+  - [x] Clicking "Open Terminal" on Node B opens Node B's session (different from A's)
+  - [x] Closing PTY Explosion properly clears state
+  - [x] npm run build passes
+Dependencies: none
+---
+
+TASK #233: BUG-WF-2 — Done-token recovery prompt noise pattern filtering
+Area: V5.0 — Debugger Loop Deep Check
+Agent: debugger
+Priority: LOW
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  User-facing problem:
+    In the agent terminal (PTY Explosion view), after the agent completes its work, a red
+    recovery message appears: "You have completed your work but did not emit the required done
+    marker. Please output exactly this on a new line: __DONE__". While this is a valid protocol
+    recovery mechanism (the workflow still completes), it creates visual noise.
+  Root cause:
+    The SwarmEngine done-token recovery system injects this prompt when an agent finishes but
+    doesn't emit __DONE__. This is intentional behavior and the recovery works correctly.
+    The issue is purely cosmetic — the snippet pipeline already filters this, but the raw
+    terminal shows it.
+  Required fix:
+    This is acceptable for MVP. The recovery prompt is only visible in the raw terminal view,
+    not in the node card snippet. No code change needed unless the user explicitly requests it.
+    Mark as WONTFIX or DEFERRED.
+  Note: The snippet pipeline already handles this correctly — the node cards show clean output.
+Acceptance Criteria:
+  - [ ] Acknowledged as known behavior — recovery prompt visible only in raw terminal
+Dependencies: none

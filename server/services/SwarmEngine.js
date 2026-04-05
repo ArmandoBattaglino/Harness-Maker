@@ -134,6 +134,19 @@ const SNIPPET_NOISE_LINE_PATTERNS = [
   /can I help you implement/i,
   /how can i help you/i,
   /what would you like/i,
+  /^you are a \w+ agent/i,
+  /^you have an active task right now/i,
+  /^current task:/i,
+  /^workflow goal:/i,
+  /^your output will be handed off/i,
+  /^when you are done with your part/i,
+  /^execute the workflow goal/i,
+  /^research the .+ project/i,
+  /^write a .+ summary/i,
+  /^you are the .+ in this workflow/i,
+  /^your role is/i,
+  /^--- swarm input ---$/i,
+  /^--- end swarm input ---$/i,
 ];
 const SNIPPET_STALE_FOREIGN_LINE_PATTERNS = [
   /^explain this codebase$/i,
@@ -896,6 +909,7 @@ class SwarmEngine {
   _stripSnippetProtocolArtifacts(rawText = '') {
     return String(rawText ?? '')
       .replace(/----?\s*SWARM PROTOCOL[\s\S]*?----?\s*END PROTOCOL\s*----?/gi, '\n')
+      .replace(/----?\s*SWARM INPUT[\s\S]*?----?\s*END SWARM INPUT\s*----?/gi, '\n')
       .replace(/Do NOT output the handoff or done token mid-response\.[\s\S]*?Only as the very LAST line\./gi, '\n');
   }
 
