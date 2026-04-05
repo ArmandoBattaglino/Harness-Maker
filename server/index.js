@@ -145,6 +145,7 @@ async function startup() {
   try {
     codexBin = await discoverCodexBinary();
     console.log(`[startup] Discovered codex binary for scaffold fallback: ${codexBin}`);
+    sessionManager.codexBin = codexBin;
   } catch (err) {
     console.warn(`[startup] Codex scaffold fallback unavailable: ${err.message}`);
   }
@@ -254,6 +255,7 @@ async function startup() {
   const swarmEngine = new SwarmEngine(sessionManager, workflowStore, circuitBreaker, budgetTracker);
   app.locals.swarmEngine = swarmEngine;
   app.locals.sessionManager = sessionManager;
+  app.locals.codexBin = codexBin;
   app.locals.geminiBin = geminiBin;
   sessionManager.geminiBin = geminiBin;
 

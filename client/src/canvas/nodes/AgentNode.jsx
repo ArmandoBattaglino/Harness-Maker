@@ -3,7 +3,6 @@
 import { Handle, Position } from '@xyflow/react';
 import { useSwarmStore } from '../../store/SwarmContext';
 import { stripAnsi } from '../../utils/stripAnsi';
-
 // type: "agent"
 export default function AgentNode({ id, data, selected }) {
   const agentState = useSwarmStore((s) => s.agentStates[id]);

@@ -6,7 +6,12 @@
 // SessionManager is FULLY MOCKED — no real PTY processes are spawned.
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import SwarmEngine from '../services/SwarmEngine.js';
+import SwarmEngine, {
+  getDefaultRuntimeModel,
+  getRuntimeCapabilitySnapshot,
+  getSupportedRuntimeModels,
+  validateRuntimeModels,
+} from '../services/SwarmEngine.js';
 import CircuitBreaker from '../services/CircuitBreaker.js';
 import BudgetTracker from '../services/BudgetTracker.js';
 
@@ -51,12 +56,23 @@ function b64(obj) {
 function buildMocks() {
   const sessions = new Map();
   const sessionIds = ['sess-node-a', 'sess-node-b'];
-  const createMockSession = (sessionId) => ({
-    swarmListeners: new Set(),
-    writeInput: vi.fn(),
-    onData: vi.fn(),   // pre-existing handler — must NOT be removed or replaced
-    sessionId,
-  });
+  const createMockSession = (sessionId) => {
+    const replayChunks = [];
+    return {
+      swarmListeners: new Set(),
+      writeInput: vi.fn(),
+      onData: vi.fn(),   // pre-existing handler — must NOT be removed or replaced
+      sessionId,
+      buffer: {
+        push(chunk) {
+          replayChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk ?? '')));
+        },
+        toBuffer() {
+          return Buffer.concat(replayChunks);
+        },
+      },
+    };
+  };
   const mockSession = createMockSession('sess-node-a');
   sessions.set(mockSession.sessionId, mockSession);
 
@@ -176,9 +192,9 @@ describe('SwarmEngine', () => {
             '-s',
             'workspace-write',
             '-m',
-            'gpt-5.1-codex',
+            'gpt-5.4',
           ],
-          initialPrompt: expect.stringContaining('Codex runtime is active for this Swarm agent.'),
+          initialPrompt: null,
         })
       );
 
@@ -226,6 +242,22 @@ describe('SwarmEngine', () => {
           ],
         })
       );
+    });
+
+    it('should reject unsupported Gemini runtime models before spawning a PTY session', async () => {
+      await expect(
+        engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+          runtimeProvider: 'gemini',
+          runtimeModels: { gemini: 'gemini-2.0-flash' },
+        })
+      ).rejects.toMatchObject({
+        statusCode: 400,
+        code: 'UNSUPPORTED_RUNTIME_MODEL',
+        provider: 'gemini',
+        model: 'gemini-2.0-flash',
+      });
+
+      expect(mockSessionManager.createSession).not.toHaveBeenCalled();
     });
 
     it('should remove swarm tap listener from session on stopExecution', async () => {
@@ -280,6 +312,54 @@ describe('SwarmEngine', () => {
       expect(prompt).not.toContain('__HANDOFF__:node-b:');
     });
 
+    it('should build a short Codex resume prompt after prompt rejection instead of replaying the full agent instructions', () => {
+      const verboseNode = {
+        id: 'node-a',
+        data: {
+          systemPrompt: 'Inspect the repo carefully. '.repeat(80),
+        },
+      };
+
+      const prompt = engine._buildSystemPrompt(
+        verboseNode,
+        {
+          currentTask: 'Validate the app version, confirm the host binding, and prepare the downstream route handoff.',
+          workflowDescription: 'Longer workflow description that should not be replayed verbatim during a Codex resume retry.',
+        },
+        ['node-b'],
+        'codex',
+        {
+          compactCodexPrompt: true,
+          resumeCodexPrompt: true,
+          recoverySnippet: 'VERSION=3.0.0 | HOST=127.0.0.1 | finder already checked package.json and server startup.',
+        }
+      );
+
+      expect(prompt).toContain('Resume the same swarm task from your current progress.');
+      expect(prompt).toContain('Last progress: VERSION=3.0.0 | HOST=127.0.0.1 | finder already checked package.json and server startup.');
+      expect(prompt).toContain('Last line only: __HANDOFF__:<targetId>:{"summary":"actual completed work","result":"actual findings"}');
+      expect(prompt).not.toContain('Workflow goal:');
+      expect(prompt).not.toContain('Inspect the repo carefully. Inspect the repo carefully. Inspect the repo carefully.');
+    });
+
+    it('should keep non-terminal compact Codex prompts focused on the node task instead of replaying the full workflow task block', () => {
+      const prompt = engine._buildSystemPrompt(
+        wf.nodes[0],
+        engine._buildInitialWorkflowContext(wf),
+        ['node-b'],
+        'codex',
+        {
+          compactCodexPrompt: true,
+        }
+      );
+
+      expect(prompt).toContain('You are agent A.');
+      expect(prompt).toContain('When your work is complete, hand off to node-b.');
+      expect(prompt).toContain('Last line only: __HANDOFF__:<targetId>:{"summary":"actual completed work","result":"actual findings"}');
+      expect(prompt).not.toContain('Workflow goal:');
+      expect(prompt).not.toContain('Current task: Execute the workflow goal described here: Analyze the request, hand off the useful context, and complete the workflow.');
+    });
+
     it('should submit the pasted swarm prompt with a follow-up enter key', async () => {
       await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
       await vi.advanceTimersByTimeAsync(101);
@@ -305,6 +385,47 @@ describe('SwarmEngine', () => {
 
       expect(mockSessionManager.writeInput.mock.calls[0]).toEqual(['sess-node-a', '\x1b']);
       expect(mockSessionManager.writeInput.mock.calls.at(-1)).toEqual(['sess-node-a', '\r']);
+    });
+
+    it('should treat the initial Codex swarm prompt injection as an already-submitted prompt', async () => {
+      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'codex',
+      });
+
+      const execution = engine._executions.get([...engine._executions.keys()][0]);
+      const nodeAState = execution.agentStates.get('node-a');
+
+      expect(nodeAState.promptSubmissionCount).toBe(1);
+    });
+
+    it('should remind an idle Codex agent to emit the required handoff when work is finished but no token was produced', async () => {
+      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'codex',
+      });
+
+      const execution = engine._executions.get([...engine._executions.keys()][0]);
+      const nodeAState = execution.agentStates.get('node-a');
+      const tapFn = [...mockSession.swarmListeners].find((listener) => listener === nodeAState.tapFn);
+      nodeAState.ignoreParserUntil = null;
+      nodeAState.ignoreParserBuffer = '';
+
+      await vi.advanceTimersByTimeAsync(101);
+      mockSessionManager.writeInput.mockClear();
+
+      tapFn('• Working (12s • esc to interrupt)\ngpt-5.4 high · 80% left');
+      await vi.advanceTimersByTimeAsync(180001);
+      expect(mockSessionManager.writeInput).not.toHaveBeenCalled();
+
+      tapFn('workspace-write\napproval policy never\nmodel gpt-5.4');
+      await vi.advanceTimersByTimeAsync(2999);
+      expect(mockSessionManager.writeInput).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(1);
+
+      expect(mockSessionManager.writeInput.mock.calls.some(([, input]) => String(input).includes('appears to be back at the interactive prompt without emitting the required final handoff token.'))).toBe(true);
+      expect(mockSessionManager.writeInput.mock.calls.some(([, input]) => input === '\x1b')).toBe(false);
+      expect(mockSessionManager.writeInput.mock.calls.some(([, input]) => String(input).includes('--- END SWARM INPUT ---'))).toBe(false);
+      expect(nodeAState.missingHandoffReminderSent).toBe(true);
     });
 
     it('should auto-dismiss the Codex model-selection menu by choosing the existing model', async () => {
@@ -468,6 +589,31 @@ describe('SwarmEngine', () => {
       const status = engine.getStatus(executionId);
       expect(status.agentStates['node-a'].handoffCount).toBe(0);
       expect(status.agentStates['node-b']).toBeUndefined();
+    });
+
+    it('should recover a valid buffered Codex handoff alias after ignoreParserUntil temporarily suppressed live parsing', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'codex',
+      });
+
+      const execution = engine._executions.get(executionId);
+      const nodeAState = execution.agentStates.get('node-a');
+      const tapFn = [...mockSession.swarmListeners].find((listener) => listener === nodeAState.tapFn);
+
+      nodeAState.ignoreParserUntil = 'marker-that-never-arrives';
+      tapFn('HANDOFF:node-b:{"summary":"done","result":"ok"}');
+      expect(nodeAState.handoffCount).toBe(0);
+
+      nodeAState.ignoreParserUntil = null;
+      nodeAState.ignoreParserBuffer = '';
+      tapFn('workspace-write');
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const status = engine.getStatus(executionId);
+      expect(['handoffing', 'done']).toContain(status.agentStates['node-a'].status);
+      expect(status.agentStates['node-a'].handoffCount).toBe(1);
+      expect(status.agentStates['node-b'].status).toBe('running');
     });
 
     it('should keep a non-terminal agent running and send a recovery prompt when it emits __DONE__', async () => {
@@ -654,6 +800,42 @@ describe('SwarmEngine', () => {
       const exec = engine._executions.get(executionId);
       expect(exec.agentStates.get('node-a').status).toBe('done');
     });
+
+    it('should ignore repeated Gemini handoff chunks once the source agent is already handoffing', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'gemini',
+      });
+
+      const exec = engine._executions.get(executionId);
+      const nodeAState = exec.agentStates.get('node-a');
+      const tapFn = [...mockSession.swarmListeners].find((listener) => listener === nodeAState.tapFn);
+
+      nodeAState.ignoreParserUntil = null;
+      nodeAState.ignoreParserBuffer = '';
+
+      let resolveEnsure;
+      const ensurePromise = new Promise((resolve) => {
+        resolveEnsure = resolve;
+      });
+      const ensureSpy = vi.spyOn(engine, '_ensureAgentPty').mockImplementation(() => ensurePromise);
+
+      tapFn('handoff to node-b');
+      expect(exec.agentStates.get('node-a').status).toBe('handoffing');
+      expect(exec.edgeCounters.get('edge-ab')).toBe(1);
+
+      tapFn('handoff to node-b');
+      expect(exec.edgeCounters.get('edge-ab')).toBe(1);
+      expect(exec.agentStates.get('node-a').handoffCount).toBe(1);
+
+      resolveEnsure();
+      await ensurePromise;
+      await vi.runAllTimersAsync();
+
+      expect(ensureSpy).toHaveBeenCalledTimes(1);
+      expect(exec.agentStates.get('node-a').status).toBe('done');
+      expect(exec.agentStates.get('node-a').handoffCount).toBe(1);
+      expect(exec.edgeCounters.get('edge-ab')).toBe(1);
+    });
   });
 
   // -------------------------------------------------------------------------
@@ -781,6 +963,267 @@ describe('SwarmEngine', () => {
       });
     });
 
+    it('should strip echoed swarm protocol text from lastOutputSnippet while keeping meaningful agent output', async () => {
+      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const tapFn = [...mockSession.swarmListeners][0];
+
+      wsBroadcast.mockClear();
+      tapFn('--- SWARM PROTOCOL (mandatory - never skip) ---\nDo NOT output the handoff or done token mid-response. Only as the very LAST line.\n--- END PROTOCOL ---\n');
+      tapFn('Meaningful draft content for the user');
+
+      const statusEvents = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .filter((ev) => ev.type === 'agent_status' && ev.nodeId === 'node-a');
+
+      expect(statusEvents.at(-1)?.lastOutputSnippet).toContain('Meaningful draft content for the user');
+      expect(statusEvents.at(-1)?.lastOutputSnippet).not.toContain('SWARM PROTOCOL');
+      expect(statusEvents.at(-1)?.lastOutputSnippet).not.toContain('Do NOT output the handoff or done token');
+    });
+
+    it('should keep finder-style snippets focused on workflow-local facts even when stale repo-inspection noise arrives later', async () => {
+      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const tapFn = [...mockSession.swarmListeners][0];
+
+      wsBroadcast.mockClear();
+      tapFn([
+        'Finder result:',
+        'Version: v3.0.0',
+        'Host binding: 127.0.0.1:3000',
+        '__HANDOFF__:node-b:{"summary":"verified host binding"}',
+      ].join('\n'));
+      tapFn([
+        'print_handoff.py',
+        'server.pid',
+        'Run /review on my current changes',
+        'Use /skills to list available skills',
+      ].join('\n'));
+
+      const statusEvents = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .filter((ev) => ev.type === 'agent_status' && ev.nodeId === 'node-a');
+
+      expect(statusEvents.at(-1)?.lastOutputSnippet).toContain('Finder result:');
+      expect(statusEvents.at(-1)?.lastOutputSnippet).toContain('Host binding: 127.0.0.1:3000');
+      expect(statusEvents.at(-1)?.lastOutputSnippet).not.toContain('print_handoff.py');
+      expect(statusEvents.at(-1)?.lastOutputSnippet).not.toContain('server.pid');
+      expect(statusEvents.at(-1)?.lastOutputSnippet).not.toContain('/review');
+      expect(statusEvents.at(-1)?.lastOutputSnippet).not.toContain('/skills');
+    });
+
+    it('should keep route-checker-style snippets centered on semantic route facts instead of footer noise', async () => {
+      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const tapFn = [...mockSession.swarmListeners][0];
+
+      wsBroadcast.mockClear();
+      tapFn([
+        'Route audit:',
+        '- POST /api/v1/swarm/start is present',
+        '- GET /api/v1/swarm/:executionId/status is present',
+        'Use /skills to list available skills',
+        'gpt-5.1-codex high · 42k context',
+        'AAAAA',
+      ].join('\n'));
+
+      const statusEvents = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .filter((ev) => ev.type === 'agent_status' && ev.nodeId === 'node-a');
+
+      expect(statusEvents.at(-1)?.lastOutputSnippet).toContain('Route audit:');
+      expect(statusEvents.at(-1)?.lastOutputSnippet).toContain('POST /api/v1/swarm/start is present');
+      expect(statusEvents.at(-1)?.lastOutputSnippet).toContain('GET /api/v1/swarm/:executionId/status is present');
+      expect(statusEvents.at(-1)?.lastOutputSnippet).not.toContain('/skills');
+      expect(statusEvents.at(-1)?.lastOutputSnippet).not.toContain('gpt-5.1-codex');
+      expect(statusEvents.at(-1)?.lastOutputSnippet).not.toContain('AAAAA');
+    });
+
+    it('should keep formatter-style snippets on the final report block instead of stale foreign prompt text', async () => {
+      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const tapFn = [...mockSession.swarmListeners][0];
+
+      wsBroadcast.mockClear();
+      tapFn([
+        'Final report:',
+        '1. Version: v3.0.0',
+        '2. Host binding: 127.0.0.1:3000',
+        '__DONE__',
+      ].join('\n'));
+      tapFn([
+        'Explain this codebase',
+        'Messages to be submitted after next tool call',
+      ].join('\n'));
+
+      const statusEvents = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .filter((ev) => ev.type === 'agent_status' && ev.nodeId === 'node-a');
+
+      expect(statusEvents.at(-1)?.lastOutputSnippet).toContain('Final report:');
+      expect(statusEvents.at(-1)?.lastOutputSnippet).toContain('__DONE__');
+      expect(statusEvents.at(-1)?.lastOutputSnippet).not.toContain('Explain this codebase');
+      expect(statusEvents.at(-1)?.lastOutputSnippet).not.toContain('Messages to be submitted after next tool call');
+    });
+
+    it('should refresh terminal-state snippets from the full session replay so older semantic blocks survive a noisy tail', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const execution = engine._executions.get(executionId);
+      const state = execution.agentStates.get('node-a');
+
+      mockSession.buffer.push([
+        'exactly these lines and then __DONE__: PROMPT-CONTROL-REPORT | VERSION=3.0.0',
+        '| HOST=127.0.0.1 | START_ROUTE=/api/v1/swarm/:workflowId/start |',
+        'STATUS_ROUTE=/api/v1/swarm/:executionId/status |',
+        'PROMPT_BUILDER=_buildSystemPrompt | DONE_TOKEN=__DONE__',
+      ].join('\n'));
+      mockSession.buffer.push('\n');
+      mockSession.buffer.push(Array.from({ length: 900 }, () => '• Working (90s • esc to interrupt)').join('\n'));
+      mockSession.buffer.push('\n');
+      mockSession.buffer.push([
+        'Messages to be submitted after next tool call',
+        'After completing your work, you MUST output the done marker on its own line:',
+        '__DONE__',
+        'This is MANDATORY. The workflow cannot complete without this exact token.',
+        'Output __DONE__ as the very last line of your response, after all your content.',
+      ].join('\n'));
+
+      state.status = 'done';
+
+      const status = engine.getStatus(executionId);
+      expect(status.agentStates['node-a'].lastOutputSnippet).toContain('PROMPT-CONTROL-REPORT | VERSION=3.0.0');
+      expect(status.agentStates['node-a'].lastOutputSnippet).toContain('DONE_TOKEN=__DONE__');
+      expect(status.agentStates['node-a'].lastOutputSnippet).not.toContain('esc to interrupt');
+      expect(status.agentStates['node-a'].lastOutputSnippet).not.toContain('Messages to be submitted after next tool call');
+    });
+
+    it('should prefer reconstructed structured fact lines over replayed command errors in terminal-state snippets', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const execution = engine._executions.get(executionId);
+      const state = execution.agentStates.get('node-a');
+
+      mockSession.buffer.push([
+        'Ran rg -n "/api/v1/swarm"',
+        "Impossibile eseguire il programma 'rg.exe': Accesso negato",
+        '+ rg -n "/api/v1/swarm"',
+        '+ FullyQualifiedErrorId : NativeCommandFailed',
+        '',
+        'VERSION=3.0.0 | HOST=127.0.0.1 | START_ROUTE=/api/v1/swarm/:workflowId/start |',
+        '',
+        'STATUS_ROUTE=/api/v1/swarm/:executionId/status |',
+        '',
+        'PROMPT_BUILDER=_buildSystemPrompt | DONE_TOKEN=__DONE__',
+        '',
+        '__HANDOFF__:node-b:{"summary":"verified route facts"}',
+      ].join('\n'));
+
+      state.status = 'done';
+
+      const status = engine.getStatus(executionId);
+      expect(status.agentStates['node-a'].lastOutputSnippet).toContain('START_ROUTE=/api/v1/swarm/:workflowId/start');
+      expect(status.agentStates['node-a'].lastOutputSnippet).toContain('STATUS_ROUTE=/api/v1/swarm/:executionId/status');
+      expect(status.agentStates['node-a'].lastOutputSnippet).toContain('DONE_TOKEN=__DONE__');
+      expect(status.agentStates['node-a'].lastOutputSnippet).not.toContain('Ran rg -n');
+      expect(status.agentStates['node-a'].lastOutputSnippet).not.toContain('NativeCommandFailed');
+    });
+
+    it('should reconstruct a final report block from scattered fact lines instead of prompt instructions in terminal-state snippets', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const execution = engine._executions.get(executionId);
+      const state = execution.agentStates.get('node-a');
+
+      mockSession.buffer.push([
+        'Print exactly the expected final report lines from currentTask/expectedReport',
+        'with no extra prose, then output __DONE__ on its own line.',
+        '',
+        'PROMPT-CONTROL-REPORT',
+        '',
+        'VERSION=3.0.0',
+        '',
+        'HOST=127.0.0.1',
+        '',
+        'START_ROUTE=/api/v1/swarm/:workflowId/start',
+        '',
+        'STATUS_ROUTE=/api/v1/swarm/:executionId/status',
+        '',
+        'PROMPT_BUILDER=_buildSystemPrompt',
+        '',
+        'DONE_TOKEN=__DONE__',
+        '',
+        '__DONE__',
+      ].join('\n'));
+
+      state.status = 'done';
+
+      const status = engine.getStatus(executionId);
+      expect(status.agentStates['node-a'].lastOutputSnippet).toContain('PROMPT-CONTROL-REPORT');
+      expect(status.agentStates['node-a'].lastOutputSnippet).toContain('START_ROUTE=/api/v1/swarm/:workflowId/start');
+      expect(status.agentStates['node-a'].lastOutputSnippet).toContain('DONE_TOKEN=__DONE__');
+      expect(status.agentStates['node-a'].lastOutputSnippet).toContain('__DONE__');
+      expect(status.agentStates['node-a'].lastOutputSnippet).not.toContain('Print exactly');
+      expect(status.agentStates['node-a'].lastOutputSnippet).not.toContain('with no extra prose');
+    });
+
+    it('should return an empty snippet when the Codex tail only contains working chrome and redraw fragments', async () => {
+      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const tapFn = [...mockSession.swarmListeners][0];
+
+      wsBroadcast.mockClear();
+      tapFn([
+        '• Working (20s • esc to interrupt)',
+        '› Find and fix a bug in @filename',
+        'gpt-5.1-codex high · 96% left · ~\\Downloads\\Test workflows - Copia',
+        'W',
+        'Wo',
+        'or',
+      ].join('\n'));
+
+      const statusEvents = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .filter((ev) => ev.type === 'agent_status' && ev.nodeId === 'node-a');
+
+      expect(statusEvents.at(-1)?.lastOutputSnippet).toBe('');
+    });
+
+    it('should fall back to the blocker message when prompt rejection leaves only Codex chrome in the tail', async () => {
+      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const tapFn = [...mockSession.swarmListeners][0];
+
+      wsBroadcast.mockClear();
+      tapFn([
+        '• Working (0s • esc to interrupt)',
+        '› [Pasted Content 2010 chars]',
+        '■ Conversation interrupted - tell the model what to do differently. Something',
+        'went wrong? Hit `/feedback` to report the issue.',
+        'gpt-5.1-codex high · 100% left · ~\\Downloads\\Test workflows - Copia',
+      ].join('\n'));
+
+      const statusEvents = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .filter((ev) => ev.type === 'agent_status' && ev.nodeId === 'node-a');
+
+      expect(statusEvents.at(-1)?.lastOutputSnippet).toContain('Conversation interrupted');
+      expect(statusEvents.at(-1)?.lastOutputSnippet).not.toContain('[Pasted Content');
+      expect(statusEvents.at(-1)?.lastOutputSnippet).not.toContain('gpt-5.1-codex');
+    });
+
+    it('should strip the echoed swarm-input wrapper while preserving the semantic payload line', async () => {
+      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const tapFn = [...mockSession.swarmListeners][0];
+
+      wsBroadcast.mockClear();
+      tapFn([
+        '--- END SWARM INPUT ---',
+        'exactly these lines and then __DONE__: PROMPT-CONTROL-REPORT | VERSION=3.0.0',
+        'Finish your work, then hand off to route-checker.',
+      ].join('\n'));
+
+      const statusEvents = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .filter((ev) => ev.type === 'agent_status' && ev.nodeId === 'node-a');
+
+      expect(statusEvents.at(-1)?.lastOutputSnippet).toContain('PROMPT-CONTROL-REPORT | VERSION=3.0.0');
+      expect(statusEvents.at(-1)?.lastOutputSnippet).not.toContain('END SWARM INPUT');
+      expect(statusEvents.at(-1)?.lastOutputSnippet).not.toContain('exactly these lines and then __DONE__');
+      expect(statusEvents.at(-1)?.lastOutputSnippet).not.toContain('Finish your work, then hand off to route-checker.');
+    });
+
     it('should classify provider blocker output and move the execution into blocked state', async () => {
       const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
       const tapFn = [...mockSession.swarmListeners][0];
@@ -836,7 +1279,7 @@ describe('SwarmEngine', () => {
           '-s',
           'workspace-write',
           '-m',
-          'gpt-5.1-codex',
+          'gpt-5.4',
         ],
       });
       expect(mockSessionManager.killSession).toHaveBeenCalledWith('sess-node-a');
@@ -1052,6 +1495,43 @@ describe('SwarmEngine', () => {
       });
     });
 
+    it('should retry Codex once with a compact prompt before falling back to Gemini on prompt_rejected in auto mode', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'codex',
+      });
+      const execution = engine._executions.get(executionId);
+      const nodeAState = execution.agentStates.get('node-a');
+      const tapFn = [...mockSession.swarmListeners].find((listener) => listener === nodeAState.tapFn);
+
+      execution.providerStrategy = {
+        mode: 'auto',
+        activeProvider: 'codex',
+        fallbackProvider: 'codex',
+        tertiaryProvider: 'gemini',
+        allowFallback: true,
+      };
+      execution.activeProvider = 'codex';
+      execution.runtimeProvider = 'codex';
+      nodeAState.ignoreParserUntil = null;
+      nodeAState.ignoreParserBuffer = '';
+
+      tapFn('Conversation interrupted - tell the model what to do differently. Something went wrong? Hit `/feedback` to report the issue.');
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(mockSessionManager.createSession).toHaveBeenCalledTimes(2);
+      expect(mockSessionManager.createSession.mock.calls[1][2]).toBe('/usr/local/bin/codex');
+      expect(mockSessionManager.createSession.mock.calls[1][3]).toMatchObject({
+        provider: 'codex',
+        initialPrompt: null,
+      });
+
+      const status = engine.getStatus(executionId);
+      expect(status.activeProvider).toBe('codex');
+      expect(status.runtimeProvider).toBe('codex');
+      expect(status.runtimeBlocker).toBeUndefined();
+    });
+
     it('should keep the execution blocked when a done event arrives after a runtime blocker', async () => {
       const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
         runtimeProvider: 'codex',
@@ -1130,6 +1610,190 @@ describe('SwarmEngine', () => {
         provider: 'gemini',
         nodeId: 'node-a',
       });
+    });
+
+    it('should ignore transient Gemini thinking-phase request failures instead of flipping to blocked', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'gemini',
+      });
+      const tapFn = [...mockSession.swarmListeners][0];
+      const execution = engine._executions.get(executionId);
+
+      execution.agentStates.get('node-a').ignoreParserUntil = null;
+      execution.agentStates.get('node-a').ignoreParserBuffer = '';
+
+      wsBroadcast.mockClear();
+      tapFn('Thinking...\nThis request failed with status INVALID_ARGUMENT, retrying automatically...');
+
+      const status = engine.getStatus(executionId);
+      expect(status.status).toBe('running');
+      expect(status.agentStates['node-a'].status).toBe('running');
+
+      const blockedSnapshot = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .find((ev) => ev.type === 'execution_status' && ev.status === 'blocked');
+      expect(blockedSnapshot).toBeUndefined();
+    });
+
+    it('should block Gemini when INVALID_ARGUMENT indicates a broken function-call turn without auto-retry', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'gemini',
+      });
+      const tapFn = [...mockSession.swarmListeners][0];
+      const execution = engine._executions.get(executionId);
+
+      execution.agentStates.get('node-a').ignoreParserUntil = null;
+      execution.agentStates.get('node-a').ignoreParserBuffer = '';
+
+      wsBroadcast.mockClear();
+      tapFn('API Error: {"error":{"code":400,"message":"Please ensure that the number of function response parts is equal to the number of function call parts of the function call turn.","status":"INVALID_ARGUMENT"}}');
+
+      const status = engine.getStatus(executionId);
+      expect(status.status).toBe('blocked');
+      expect(status.agentStates['node-a'].status).toBe('blocked');
+      expect(status.runtimeBlocker).toMatchObject({
+        type: 'provider_unavailable',
+        provider: 'gemini',
+        nodeId: 'node-a',
+      });
+    });
+
+    it('should auto-handle the Gemini usage-limit menu without marking the execution blocked', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'gemini',
+      });
+      const tapFn = [...mockSession.swarmListeners][0];
+      const execution = engine._executions.get(executionId);
+
+      execution.agentStates.get('node-a').ignoreParserUntil = null;
+      execution.agentStates.get('node-a').ignoreParserBuffer = '';
+      mockSessionManager.writeInput.mockClear();
+      wsBroadcast.mockClear();
+
+      tapFn('Usage limit reached for gemini-2.5-pro.\n● Keep trying\n/model\nstop');
+      expect(mockSessionManager.writeInput).toHaveBeenCalledWith('sess-node-a', '\u001b');
+      expect(mockSessionManager.writeInput).not.toHaveBeenCalledWith('sess-node-a', '/model set gemini-2.5-flash\n');
+
+      tapFn('Type your message or @path/to/file');
+
+      expect(mockSessionManager.writeInput).toHaveBeenCalledWith('sess-node-a', '/model set gemini-2.5-flash\n');
+
+      const status = engine.getStatus(executionId);
+      expect(status.status).toBe('running');
+      expect(status.agentStates['node-a'].status).toBe('running');
+      expect(status.agentStates['node-a'].lastModelFallback).toBe('gemini-2.5-flash');
+    });
+
+    it('should not misclassify Gemini usage-limit recovery output as an auth blocker', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'gemini',
+      });
+      const tapFn = [...mockSession.swarmListeners][0];
+      const execution = engine._executions.get(executionId);
+
+      execution.agentStates.get('node-a').ignoreParserUntil = null;
+      execution.agentStates.get('node-a').ignoreParserBuffer = '';
+      mockSessionManager.writeInput.mockClear();
+      wsBroadcast.mockClear();
+
+      tapFn('Usage limit reached for all Pro models.\n● 1. Keep trying\n2. Stop\n/model to switch models.');
+      tapFn('Request cancelled.\nWaiting for authentication...\nType your message or @path/to/file\nAPI Error: You have exhausted your capacity on this model.\nUsage limit reached for all Pro models.\n● 1. Keep trying\n2. Stop\n/model to switch models.');
+
+      const status = engine.getStatus(executionId);
+      expect(status.status).toBe('running');
+      expect(status.agentStates['node-a'].status).toBe('running');
+      expect(status.runtimeBlocker).toBeUndefined();
+
+      const blockedSnapshot = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .find((ev) => ev.type === 'execution_status' && ev.status === 'blocked');
+      expect(blockedSnapshot).toBeUndefined();
+    });
+
+    it('should detect Gemini quota blocker when banner is too long for menu detection buffer', () => {
+      // Test _detectRuntimeBlocker directly — the E2E showed that Gemini quota messages
+      // with a long banner (no "keep trying" in the same buffer) were silently swallowed.
+      // After the fix, the pattern blocker fallback should fire.
+      const longBanner = [
+        'Plan: Gemini Code Assist in Google One AI Pro /upgrade',
+        "We're making changes to Gemini CLI that may impact your workflow.",
+        "What's Changing: We are adding more robust detection of policy-violating use cases and changing how we prioritize traffic.",
+        "How it affects you: This may result in higher capacity-related errors during periods of high traffic.",
+        'Read more: https://goo.gle/geminicli-updates',
+        '> Gemini runtime is active for this Swarm agent. Continue the workflow.',
+        '--- SWARM PROTOCOL (mandatory) --- Current workflow context: workflowName: Write A Greeting Workflow ---',
+        'i Request cancelled.',
+        'X [API Error: You have exhausted your capacity on this model. Your quota will reset after 12h22m45s.]',
+        'i This request failed. Press F12 for diagnostics.',
+        'X [API Error: You have exhausted your capacity on this model. Your quota will reset after 12h22m44s.]',
+        'Usage limit reached for all Pro models.',
+        'Access resets at 11:00 AM GMT+2.',
+      ].join('\n');
+
+      const fakeState = { interventionBuffer: '' };
+      const result = engine._detectRuntimeBlocker(longBanner, 'gemini', fakeState);
+
+      // Should detect rate_limited blocker since "keep trying" menu is absent
+      expect(result).not.toBeNull();
+      expect(result.type).toBe('rate_limited');
+      expect(result.provider).toBe('gemini');
+    });
+
+    it('should switch Gemini models when usage-limit recovery only exposes request-cancelled readiness', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'gemini',
+      });
+      const tapFn = [...mockSession.swarmListeners][0];
+      const execution = engine._executions.get(executionId);
+
+      execution.agentStates.get('node-a').ignoreParserUntil = null;
+      execution.agentStates.get('node-a').ignoreParserBuffer = '';
+      mockSessionManager.writeInput.mockClear();
+
+      tapFn('Usage limit reached for all Pro models.\n● 1. Keep trying\n2. Stop\n/model to switch models.');
+      tapFn('Request cancelled.\nUsage limit reached for all Pro models.\n● 1. Keep trying\n2. Stop\nReady (Test workflows - Copia)');
+
+      expect(mockSessionManager.writeInput).toHaveBeenCalledWith('sess-node-a', '\u001b');
+      expect(mockSessionManager.writeInput).toHaveBeenCalledWith('sess-node-a', '/model set gemini-2.5-flash\n');
+    });
+
+    it('should queue Gemini broadcasts while the runtime is busy instead of interrupting the tool turn', async () => {
+      mockSession.pty = {};
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'gemini',
+      });
+      const tapFn = [...mockSession.swarmListeners][0];
+      const execution = engine._executions.get(executionId);
+      const nodeAState = execution.agentStates.get('node-a');
+
+      tapFn('Type your message or @path/to/file');
+      mockSessionManager.writeInput.mockClear();
+
+      const result = engine.sendBroadcast(executionId, 'node-a', 'High-priority operator update', { mode: 'hard' });
+
+      expect(result).toEqual({ sent: true, delivery: 'queued' });
+      expect(nodeAState.pendingOperatorPrompt).toBe('High-priority operator update');
+      expect(mockSessionManager.writeInput).not.toHaveBeenCalledWith('sess-node-a', '\x03');
+    });
+
+    it('should flush a queued Gemini broadcast when the prompt becomes writable again', async () => {
+      mockSession.pty = {};
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'gemini',
+      });
+      const tapFn = [...mockSession.swarmListeners][0];
+      const execution = engine._executions.get(executionId);
+      const nodeAState = execution.agentStates.get('node-a');
+
+      tapFn('Type your message or @path/to/file');
+      mockSessionManager.writeInput.mockClear();
+      engine.sendBroadcast(executionId, 'node-a', 'High-priority operator update', { mode: 'hard' });
+
+      tapFn('Type your message or @path/to/file');
+
+      expect(nodeAState.pendingOperatorPrompt).toBeNull();
+      expect(mockSessionManager.writeInput).toHaveBeenCalledWith('sess-node-a', 'High-priority operator update');
+      expect(mockSessionManager.writeInput).not.toHaveBeenCalledWith('sess-node-a', '\x03');
     });
 
   });
@@ -1695,7 +2359,14 @@ describe('SwarmEngine', () => {
       const args = engine._buildRuntimeProviderArgs('codex', null);
       expect(args).toContain('-m');
       const mIdx = args.indexOf('-m');
-      expect(args[mIdx + 1]).toBe('gpt-5.1-codex');
+      expect(args[mIdx + 1]).toBe('gpt-5.4');
+    });
+
+    it('should use the detected default Claude model when no runtimeModels provided', () => {
+      const args = engine._buildRuntimeProviderArgs('claude', null);
+      expect(args).toContain('--model');
+      const modelIdx = args.indexOf('--model');
+      expect(args[modelIdx + 1]).toBe('opus');
     });
 
     it('should override Codex model from runtimeModels', () => {
@@ -1712,15 +2383,197 @@ describe('SwarmEngine', () => {
       expect(args[mIdx + 1]).toBe('gemini-2.5-flash');
     });
 
-    it('should NOT add -m flag for Claude even with runtimeModels', () => {
-      const args = engine._buildRuntimeProviderArgs('claude', { claude: 'some-model' });
-      expect(args).not.toContain('-m');
+    it('should override Claude model from runtimeModels via --model', () => {
+      const args = engine._buildRuntimeProviderArgs('claude', { claude: 'claude-sonnet-4-6' });
+      const modelIdx = args.indexOf('--model');
+      expect(modelIdx).toBeGreaterThan(-1);
+      expect(args[modelIdx + 1]).toBe('claude-sonnet-4-6');
     });
 
     it('should ignore empty string model override', () => {
       const args = engine._buildRuntimeProviderArgs('codex', { codex: '' });
       const mIdx = args.indexOf('-m');
-      expect(args[mIdx + 1]).toBe('gpt-5.1-codex');
+      expect(args[mIdx + 1]).toBe('gpt-5.4');
+    });
+
+    it('should ignore unsupported Gemini overrides and keep the validated default model', () => {
+      const args = engine._buildRuntimeProviderArgs('gemini', { gemini: 'gemini-2.0-flash' });
+      const mIdx = args.indexOf('-m');
+      expect(args[mIdx + 1]).toBe('gemini-2.5-pro');
+    });
+  });
+
+  describe('runtime model registry (V4.0.3)', () => {
+    it('should expose the highest supported model as the default for each selectable runtime', () => {
+      expect(getDefaultRuntimeModel('claude')).toBe('opus');
+      expect(getDefaultRuntimeModel('codex')).toBe('gpt-5.4');
+      expect(getDefaultRuntimeModel('gemini')).toBe('gemini-2.5-pro');
+    });
+
+    it('should derive capability defaults only for providers detected on the server', () => {
+      const snapshot = getRuntimeCapabilitySnapshot({
+        claudeBin: '/usr/local/bin/claude',
+        codexBin: '/usr/local/bin/codex',
+        geminiBin: null,
+      });
+
+      expect(snapshot.availability).toEqual({
+        claude: true,
+        codex: true,
+        gemini: false,
+      });
+      expect(snapshot.defaults).toEqual({
+        claude: 'opus',
+        codex: 'gpt-5.4',
+        gemini: null,
+      });
+    });
+
+    it('should expose curated Claude aliases and full model ids for explicit selection', () => {
+      expect(getSupportedRuntimeModels('claude')).toEqual([
+        'opus',
+        'claude-opus-4-6',
+        'sonnet',
+        'claude-sonnet-4-6',
+        'haiku',
+        'claude-haiku-4-5-20251001',
+      ]);
+    });
+
+    it('should expose only curated Gemini models and exclude invalid CLI targets', () => {
+      expect(getSupportedRuntimeModels('gemini')).toEqual(['gemini-2.5-pro', 'gemini-2.5-flash']);
+      expect(getSupportedRuntimeModels('gemini')).not.toContain('gemini-2.0-flash');
+    });
+
+    it('should throw a precise validation error for unsupported Gemini models', () => {
+      expect(() => validateRuntimeModels({ gemini: 'gemini-2.0-flash' })).toThrow(
+        "Unsupported gemini model 'gemini-2.0-flash'. Supported models: gemini-2.5-pro, gemini-2.5-flash"
+      );
+    });
+  });
+
+  describe('Gemini no-progress guard (V4.0.3)', () => {
+    it('should block Gemini when budget grows without forward progress before the first handoff', async () => {
+      vi.stubEnv('SWARM_GEMINI_NO_PROGRESS_TIMEOUT_MS', '1000');
+      vi.stubEnv('SWARM_GEMINI_NO_PROGRESS_TOKEN_DELTA', '10');
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'gemini',
+      });
+      const tapFn = [...mockSession.swarmListeners][0];
+      const execution = engine._executions.get(executionId);
+      const state = execution.agentStates.get('node-a');
+
+      state.ignoreParserUntil = null;
+      state.ignoreParserBuffer = '';
+      wsBroadcast.mockClear();
+
+      tapFn('Research log entry: checking source A and source B for the route summary.');
+      await vi.advanceTimersByTimeAsync(1100);
+      tapFn('Another long narrative chunk keeps streaming without any handoff token or downstream transition.');
+
+      const status = engine.getStatus(executionId);
+      expect(status.status).toBe('blocked');
+      expect(status.runtimeBlocker).toMatchObject({
+        type: 'no_progress_timeout',
+        provider: 'gemini',
+        nodeId: 'node-a',
+        progressReason: 'meaningful_output',
+      });
+      expect(status.runtimeBlocker.message).toContain('no forward progress toward the first handoff');
+    });
+
+    it('should not trigger the no-progress blocker once Gemini produces a valid handoff in time', async () => {
+      vi.stubEnv('SWARM_GEMINI_NO_PROGRESS_TIMEOUT_MS', '1000');
+      vi.stubEnv('SWARM_GEMINI_NO_PROGRESS_TOKEN_DELTA', '10');
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'gemini',
+      });
+      const tapFn = [...mockSession.swarmListeners][0];
+      const execution = engine._executions.get(executionId);
+      const state = execution.agentStates.get('node-a');
+
+      state.ignoreParserUntil = null;
+      state.ignoreParserBuffer = '';
+
+      tapFn(`__HANDOFF__:node-b:${b64({ summary: 'handoff completed' })}`);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const status = engine.getStatus(executionId);
+      expect(status.status).toBe('running');
+      expect(status.runtimeBlocker).toBeUndefined();
+      expect(status.agentStates['node-a'].handoffCount).toBe(1);
+      expect(status.agentStates['node-b']).toBeDefined();
+    });
+
+    it('should block a silent Gemini pre-handoff stall when no new chunks arrive after the first progress marker', async () => {
+      vi.stubEnv('SWARM_GEMINI_NO_PROGRESS_TIMEOUT_MS', '1000');
+      vi.stubEnv('SWARM_GEMINI_NO_PROGRESS_TOKEN_DELTA', '999999');
+      vi.stubEnv('SWARM_GEMINI_NO_PROGRESS_HARD_TIMEOUT_MS', '1500');
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'gemini',
+      });
+      const tapFn = [...mockSession.swarmListeners][0];
+      const execution = engine._executions.get(executionId);
+      const state = execution.agentStates.get('node-a');
+
+      state.ignoreParserUntil = null;
+      state.ignoreParserBuffer = '';
+      tapFn('Research log entry: checked the local route definitions and host binding.');
+
+      await vi.advanceTimersByTimeAsync(1600);
+
+      const status = engine.getStatus(executionId);
+      expect(status.status).toBe('blocked');
+      expect(status.runtimeBlocker).toMatchObject({
+        type: 'no_progress_timeout',
+        provider: 'gemini',
+        nodeId: 'node-a',
+      });
+    });
+
+    it('should prefer a real Gemini quota blocker over no-progress timeout when recent output shows exhausted capacity', async () => {
+      vi.stubEnv('SWARM_GEMINI_NO_PROGRESS_TIMEOUT_MS', '1000');
+      vi.stubEnv('SWARM_GEMINI_NO_PROGRESS_TOKEN_DELTA', '999999');
+      vi.stubEnv('SWARM_GEMINI_NO_PROGRESS_HARD_TIMEOUT_MS', '1500');
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'gemini',
+      });
+      const tapFn = [...mockSession.swarmListeners][0];
+      const execution = engine._executions.get(executionId);
+      const state = execution.agentStates.get('node-a');
+
+      state.ignoreParserUntil = null;
+      state.ignoreParserBuffer = '';
+      tapFn('Research log entry: checked the local route definitions and host binding.');
+      state._runtimeScanBuffer = [
+        'API Error: You have exhausted your capacity on this model.',
+        'Usage limit reached for all Pro models.',
+        'Access resets at 11:00 AM GMT+2.',
+      ].join('\n');
+
+      await vi.advanceTimersByTimeAsync(1600);
+
+      const status = engine.getStatus(executionId);
+      expect(status.status).toBe('blocked');
+      expect(status.runtimeBlocker).toMatchObject({
+        type: 'rate_limited',
+        provider: 'gemini',
+        nodeId: 'node-a',
+      });
+      expect(status.runtimeBlocker.message).toContain('usage or rate limit');
     });
   });
 });

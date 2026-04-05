@@ -17,7 +17,15 @@ const SWARM_PROMPT_INTERRUPT_DELAY_MS = 120;
 const SWARM_RUNTIME_MENU_SUBMIT_DELAY_MS = 75;
 const SWARM_ECHO_MARKER_TIMEOUT_MS = 10000;
 const MAX_DONE_REINJECT_ATTEMPTS = 3;
-const DEFAULT_SWARM_CODEX_MODEL = 'gpt-5.1-codex';
+const SWARM_CODEX_MISSING_HANDOFF_IDLE_MS = 180000;
+const SWARM_MISSING_HANDOFF_REMINDER_DELAY_MS = 3000;
+const RUNTIME_SCAN_BUFFER_CHARS = 4000;
+const SNIPPET_SCAN_BUFFER_CHARS = 120000;
+const COMPACT_CODEX_AGENT_PROMPT_CHARS = 480;
+const COMPACT_CODEX_TASK_CHARS = 320;
+const COMPACT_CODEX_PROGRESS_CHARS = 220;
+const DEFAULT_SWARM_CLAUDE_MODEL = 'opus';
+const DEFAULT_SWARM_CODEX_MODEL = 'gpt-5.4';
 const DEFAULT_SWARM_GEMINI_MODEL = 'gemini-2.5-pro';
 const RUNTIME_PROVIDER = {
   AUTO: 'auto',
@@ -25,6 +33,143 @@ const RUNTIME_PROVIDER = {
   CODEX: 'codex',
   GEMINI: 'gemini',
 };
+// Curated runtime model registry.
+// These are the only explicit provider models that Swarm will advertise,
+// accept from the UI, or auto-select during recovery on this installation.
+export const SUPPORTED_RUNTIME_MODELS = {
+  [RUNTIME_PROVIDER.CLAUDE]: [
+    'opus',
+    'claude-opus-4-6',
+    'sonnet',
+    'claude-sonnet-4-6',
+    'haiku',
+    'claude-haiku-4-5-20251001',
+  ],
+  [RUNTIME_PROVIDER.CODEX]: ['gpt-5.4', 'gpt-5.1-codex', 'gpt-4.1-codex'],
+  [RUNTIME_PROVIDER.GEMINI]: ['gemini-2.5-pro', 'gemini-2.5-flash'],
+};
+const SUPPORTED_GEMINI_FALLBACK_MODELS = ['gemini-2.5-flash'];
+const SNIPPET_NOISE_LINE_PATTERNS = [
+  /^---\s*swarm protocol/i,
+  /^---\s*end protocol/i,
+  /^---\s*end swarm input\s*---$/i,
+  /^do not output the handoff or done token/i,
+  /^do not stop at __done__/i,
+  /^your very last line must be a valid handoff token/i,
+  /^use [a-z0-9-]+ in place of <targetid>/i,
+  /^use only flat json/i,
+  /^output that final handoff token/i,
+  /^replace the summary value/i,
+  /^finish your work, then hand off to /i,
+  /^messages to be submitted after next tool call/i,
+  /^run \/review\b/i,
+  /^use \/skills\b/i,
+  /^find and fix a bug in @/i,
+  /^[•·]\s*working\b/i,
+  /^working\b/i,
+  /^›\s+/i,
+  /^\[pasted content\b/i,
+  /^conversation interrupted\b/i,
+  /^went wrong\? hit `\/feedback`/i,
+  /^type your message(?: or @path\/to\/file)?/i,
+  /^\? for shortcuts/i,
+  /^apply this change\?/i,
+  /^allow once$/i,
+  /^esc to interrupt/i,
+  /^press esc or ctrl\+c to cancel/i,
+  /^waiting for authentication/i,
+  /^usage limit reached/i,
+  /^you have exhausted your capacity on this model/i,
+  /^keep trying$/i,
+  /^ready \(/i,
+  /^(gpt|claude|gemini)-[a-z0-9.\-]+.*[·•]/i,
+  /^tokens?( used)?[:\s]/i,
+  /^context window[:\s]/i,
+  /^we're making changes to gemini cli/i,
+  /^what's changing:/i,
+  /^how it affects you:/i,
+  /^read more: https:\/\/goo\.gle\//i,
+  /^plan: gemini code assist/i,
+  /^\/upgrade$/i,
+  /^access resets at /i,
+  /^\/stats model for usage details$/i,
+  /^\/model to switch models\.?$/i,
+  /^\/auth to switch to api key\.?$/i,
+  /^this request failed/i,
+  /^\[?api error:/i,
+  /^request cancelled\.?$/i,
+  /^╭─+╮$/,
+  /^╰─+╯$/,
+  /^│/,
+  /bypass\s*permissions\s*on\b/i,
+  /bypasspermissionson/i,
+  /ctrl\+g to edit in\b/i,
+  /esc to interrupt/i,
+  /^✢\s*herding/i,
+  /^herding…$/i,
+  /^herd$/i,
+  /^claude code v\d/i,
+  /^opus \d\.\d/i,
+  /^sonnet \d\.\d/i,
+  /^haiku \d\.\d/i,
+  /^\w+ \d+\.\d+ with \w+ effort/i,
+  /^~[\\/]/,
+  /^~[A-Z]/i,
+  /^found \d+ settings? issues?/i,
+  /^\/doctor for details?/i,
+  /^.\w+…/,
+  /^\w+…$/,
+  /\w+…\s*$/,
+  /thinking with \w+ effort/i,
+  /thought for \d+s/i,
+  /stop says:/i,
+  /MEMORIA NON SCRITTA/i,
+  /ACTIVITY_LOG\.md/i,
+  /session log prima di chiudere/i,
+  /nessun agente ha aggiornato/i,
+  /stop hook/i,
+  /verifica che ogni agente/i,
+  /claude code visual manager/i,
+  /posso aiutarti a implementarlo/i,
+  /can I help you implement/i,
+  /how can i help you/i,
+  /what would you like/i,
+];
+const SNIPPET_STALE_FOREIGN_LINE_PATTERNS = [
+  /^explain this codebase$/i,
+  /\bprint_handoff\.py\b/i,
+  /\bserver\.pid\b/i,
+];
+const SNIPPET_RECOVERY_LINE_PATTERNS = [
+  /^after completing your work, you must output the done marker on its own line:?$/i,
+  /^this is mandatory\. the workflow cannot complete without this exact token\.?$/i,
+  /^output __done__ as the very last line of your response, after all your content\.?$/i,
+  /^reason: agent emitted __done__/i,
+];
+const SNIPPET_PROGRESS_LINE_PATTERNS = [
+  /^worked for \d+[smhd]/i,
+  /^preparing\b/i,
+  /^summarizing\b/i,
+];
+const SNIPPET_PROMPT_LINE_PATTERNS = [
+  /^inspect local .* only\./i,
+  /^verify .* then hand off/i,
+  /^print exactly .*expected report/i,
+  /^with no extra prose, then output __done__/i,
+  /^codex runtime is active for this swarm agent\./i,
+  /^gemini runtime is active for this swarm agent\./i,
+  /^claude runtime is active for this swarm agent\./i,
+  /^continue the workflow using the shared task context below\./i,
+  /^fallback reason:/i,
+];
+const SNIPPET_COMMAND_LINE_PATTERNS = [
+  /^ran\s+/i,
+  /^commandtype\s+name\s+version/i,
+  /^impossibile eseguire il programma/i,
+  /^fullyqualifiederrorid\s*:/i,
+  /^nativecommandfailed$/i,
+  /^[+~]\s/i,
+];
 const RUNTIME_BLOCKER_PATTERNS = [
   {
     type: 'rate_limited',
@@ -83,9 +228,12 @@ const RUNTIME_BLOCKER_PATTERNS = [
     provider: 'gemini',
     matches: (text) =>
       text.includes('resource exhausted')
-      || (text.includes('rate limit') && !text.includes('approaching rate limit'))
+      || text.includes('you have exhausted your capacity on this model')
+      || text.includes('usage limit reached for all pro models')
+      || text.includes('access resets at')
+      || (text.includes('rate limit') && !text.includes('approaching rate limit') && !text.includes('approaching rate limits'))
       || text.includes('quota exceeded')
-      || text.includes('429'),
+      || (text.includes('429') && (text.includes('resource exhausted') || text.includes('quota') || text.includes('too many requests'))),
     message: 'Gemini hit its usage or rate limit before the swarm agent could continue.',
   },
   {
@@ -95,19 +243,31 @@ const RUNTIME_BLOCKER_PATTERNS = [
       text.includes('not authenticated')
       || text.includes('please sign in')
       || text.includes('login required')
-      || text.includes('GEMINI_API_KEY')
+      || text.includes('gemini_api_key')
       || text.includes('authentication failed')
-      || text.includes('api key'),
+      || (text.includes('api key') && !text.includes('usage limit') && !text.includes('/auth to switch')),
     message: 'Gemini requires authentication or an API key before the swarm agent can continue.',
   },
 ];
 const RUNTIME_PROVIDER_PROFILES = {
-  [RUNTIME_PROVIDER.CLAUDE]: { args: [] },
+  [RUNTIME_PROVIDER.CLAUDE]: {
+    buildArgs: () => {
+      const args = [];
+      const configuredModel = String(process.env.SWARM_CLAUDE_MODEL ?? '').trim();
+      const runtimeModel = getDefaultRuntimeModel(RUNTIME_PROVIDER.CLAUDE, configuredModel);
+
+      if (runtimeModel) {
+        args.push('--model', runtimeModel);
+      }
+
+      return args;
+    },
+  },
   [RUNTIME_PROVIDER.CODEX]: {
     buildArgs: () => {
       const args = ['--no-alt-screen', '-a', 'never', '-s', 'workspace-write'];
       const configuredModel = String(process.env.SWARM_CODEX_MODEL ?? '').trim();
-      const runtimeModel = configuredModel || DEFAULT_SWARM_CODEX_MODEL;
+      const runtimeModel = getDefaultRuntimeModel(RUNTIME_PROVIDER.CODEX, configuredModel);
 
       if (runtimeModel) {
         args.push('-m', runtimeModel);
@@ -124,7 +284,7 @@ const RUNTIME_PROVIDER_PROFILES = {
     buildArgs: () => {
       const args = [];
       const configuredModel = String(process.env.SWARM_GEMINI_MODEL ?? '').trim();
-      const runtimeModel = configuredModel || DEFAULT_SWARM_GEMINI_MODEL;
+      const runtimeModel = getDefaultRuntimeModel(RUNTIME_PROVIDER.GEMINI, configuredModel);
 
       if (runtimeModel) {
         args.push('-m', runtimeModel);
@@ -141,6 +301,120 @@ function normalizeRuntimeProvider(provider) {
     return value;
   }
   return RUNTIME_PROVIDER.AUTO;
+}
+
+export function getSupportedRuntimeModels(provider) {
+  const normalized = normalizeRuntimeProvider(provider);
+  return [...(SUPPORTED_RUNTIME_MODELS[normalized] ?? [])];
+}
+
+export function getDefaultRuntimeModel(provider, preferredModel = null) {
+  const normalizedProvider = normalizeRuntimeProvider(provider);
+  if (normalizedProvider === RUNTIME_PROVIDER.AUTO) {
+    return null;
+  }
+
+  const normalizedPreferred = String(preferredModel ?? '').trim();
+  if (normalizedPreferred && isSupportedRuntimeModel(normalizedProvider, normalizedPreferred)) {
+    return normalizedPreferred;
+  }
+
+  const supportedModels = getSupportedRuntimeModels(normalizedProvider);
+  if (supportedModels.length === 0) return null;
+
+  if (normalizedProvider === RUNTIME_PROVIDER.CLAUDE) {
+    return supportedModels.includes(DEFAULT_SWARM_CLAUDE_MODEL)
+      ? DEFAULT_SWARM_CLAUDE_MODEL
+      : supportedModels[0];
+  }
+
+  if (normalizedProvider === RUNTIME_PROVIDER.CODEX) {
+    return supportedModels.includes(DEFAULT_SWARM_CODEX_MODEL)
+      ? DEFAULT_SWARM_CODEX_MODEL
+      : supportedModels[0];
+  }
+
+  if (normalizedProvider === RUNTIME_PROVIDER.GEMINI) {
+    return supportedModels.includes(DEFAULT_SWARM_GEMINI_MODEL)
+      ? DEFAULT_SWARM_GEMINI_MODEL
+      : supportedModels[0];
+  }
+
+  return supportedModels[0];
+}
+
+export function getRuntimeCapabilitySnapshot(sessionManager = null) {
+  const providers = {
+    claude: getSupportedRuntimeModels(RUNTIME_PROVIDER.CLAUDE),
+    codex: getSupportedRuntimeModels(RUNTIME_PROVIDER.CODEX),
+    gemini: getSupportedRuntimeModels(RUNTIME_PROVIDER.GEMINI),
+  };
+
+  const availability = {
+    claude: Boolean(sessionManager?.claudeBin),
+    codex: Boolean(sessionManager?.codexBin),
+    gemini: Boolean(sessionManager?.geminiBin),
+  };
+
+  return {
+    providers,
+    availability,
+    defaults: {
+      claude: availability.claude ? getDefaultRuntimeModel(RUNTIME_PROVIDER.CLAUDE, process.env.SWARM_CLAUDE_MODEL) : null,
+      codex: availability.codex ? getDefaultRuntimeModel(RUNTIME_PROVIDER.CODEX, process.env.SWARM_CODEX_MODEL) : null,
+      gemini: availability.gemini ? getDefaultRuntimeModel(RUNTIME_PROVIDER.GEMINI, process.env.SWARM_GEMINI_MODEL) : null,
+    },
+  };
+}
+
+export function isSupportedRuntimeModel(provider, model) {
+  const normalizedProvider = normalizeRuntimeProvider(provider);
+  const normalizedModel = String(model ?? '').trim();
+  if (!normalizedModel) return true;
+  if (normalizedProvider === RUNTIME_PROVIDER.AUTO) {
+    return false;
+  }
+  return getSupportedRuntimeModels(normalizedProvider).includes(normalizedModel);
+}
+
+export function validateRuntimeModels(runtimeModels = null) {
+  if (!runtimeModels || typeof runtimeModels !== 'object') return null;
+
+  for (const [provider, model] of Object.entries(runtimeModels)) {
+    const normalizedProvider = normalizeRuntimeProvider(provider);
+    const normalizedModel = String(model ?? '').trim();
+    if (!normalizedModel) continue;
+    if (!isSupportedRuntimeModel(normalizedProvider, normalizedModel)) {
+      const supported = getSupportedRuntimeModels(normalizedProvider);
+      const providerLabel = normalizedProvider || provider;
+      const message = supported.length > 0
+        ? `Unsupported ${providerLabel} model '${normalizedModel}'. Supported models: ${supported.join(', ')}`
+        : `Unsupported ${providerLabel} model '${normalizedModel}'.`;
+      const error = new Error(message);
+      error.statusCode = 400;
+      error.code = 'UNSUPPORTED_RUNTIME_MODEL';
+      error.provider = normalizedProvider;
+      error.model = normalizedModel;
+      throw error;
+    }
+  }
+
+  return runtimeModels;
+}
+
+function getGeminiNoProgressTimeoutMs() {
+  return Number(process.env.SWARM_GEMINI_NO_PROGRESS_TIMEOUT_MS ?? 45000);
+}
+
+function getGeminiNoProgressTokenDelta() {
+  return Number(process.env.SWARM_GEMINI_NO_PROGRESS_TOKEN_DELTA ?? 6000);
+}
+
+function getGeminiNoProgressHardTimeoutMs() {
+  const configured = Number(process.env.SWARM_GEMINI_NO_PROGRESS_HARD_TIMEOUT_MS ?? 0);
+  if (configured > 0) return configured;
+  const softTimeout = getGeminiNoProgressTimeoutMs();
+  return Math.max(softTimeout + 15000, Math.ceil(softTimeout * 1.5));
 }
 
 // ---------------------------------------------------------------------------
@@ -200,8 +474,36 @@ class SwarmEngine {
       status: state.status ?? 'idle',
       handoffCount: state.handoffCount ?? 0,
       lastOutputSnippet: state.lastOutputSnippet ?? '',
+      lastModelFallback: state.lastModelFallback ?? null,
       ...(state.runtimeBlocker ? { runtimeBlocker: { ...state.runtimeBlocker } } : {}),
     };
+  }
+
+  _readAgentSessionReplay(state = null) {
+    if (!state?.sessionId || typeof this._sessionManager?.getSession !== 'function') return '';
+    const session = this._sessionManager.getSession(state.sessionId);
+    const replayBuffer = session?.buffer?.toBuffer?.();
+    if (!replayBuffer) return '';
+    const replayText = Buffer.isBuffer(replayBuffer)
+      ? replayBuffer.toString('utf8')
+      : String(replayBuffer ?? '');
+    return replayText.slice(-SNIPPET_SCAN_BUFFER_CHARS);
+  }
+
+  _refreshAgentSnippet(state = null, { preferSessionReplay = false } = {}) {
+    if (!state) return '';
+
+    const sessionReplay = preferSessionReplay ? this._readAgentSessionReplay(state) : '';
+    const snippetSource = sessionReplay || state._snippetSourceBuffer || state._runtimeScanBuffer || '';
+    const nextSnippet = this._buildSemanticSnippet(snippetSource);
+
+    // Always update: prefer filtered result, even if empty (prevents stale noise).
+    state.lastOutputSnippet = nextSnippet;
+    if (sessionReplay) {
+      state._snippetSourceBuffer = sessionReplay;
+    }
+
+    return state.lastOutputSnippet ?? '';
   }
 
   _serializeRuntimeBlocker(blocker = null) {
@@ -212,7 +514,36 @@ class SwarmEngine {
       message: blocker.message,
       nodeId: blocker.nodeId ?? null,
       detectedAt: blocker.detectedAt ?? null,
+      progressReason: blocker.progressReason ?? null,
+      elapsedMs: blocker.elapsedMs ?? null,
+      tokenDelta: blocker.tokenDelta ?? null,
     };
+  }
+
+  _recoverBufferedHandoffEvent(execution, nodeId, state) {
+    if (!execution || !state) return null;
+
+    const candidateText = [
+      this._readAgentSessionReplay(state),
+      state._runtimeScanBuffer ?? '',
+      state.lastOutputSnippet ?? '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    if (!candidateText || (!candidateText.includes('__HANDOFF__') && !candidateText.includes('HANDOFF:'))) {
+      return null;
+    }
+
+    const parser = new HandoffParser();
+    const recoveryEvents = parser.feed(candidateText.replace(/__DONE__/g, ''));
+    const handoffEvent = recoveryEvents.find((evt) => evt.type === 'handoff') ?? null;
+    if (!handoffEvent) return null;
+
+    const isValidTarget = execution.workflowDef.edges.some(
+      (edge) => edge.source === nodeId && edge.target === handoffEvent.targetId
+    );
+    return isValidTarget ? handoffEvent : null;
   }
 
   _buildRuntimeProviderStrategy(workflowDef, requestedProvider = null) {
@@ -284,15 +615,39 @@ class SwarmEngine {
     }
 
     // Per-workflow model override: if runtimeModels[provider] is set, replace the
-    // -m flag with the user-selected model. Claude has no -m flag (account-based).
+    // explicit runtime model flag with the user-selected model.
     const overrideModel = runtimeModels?.[provider];
-    if (overrideModel && typeof overrideModel === 'string' && overrideModel.trim()
-        && provider !== RUNTIME_PROVIDER.CLAUDE) {
-      const mIndex = args.indexOf('-m');
-      if (mIndex !== -1 && mIndex + 1 < args.length) {
-        args[mIndex + 1] = overrideModel.trim();
+    if (
+      overrideModel
+      && typeof overrideModel === 'string'
+      && overrideModel.trim()
+      && isSupportedRuntimeModel(provider, overrideModel)
+    ) {
+      const modelFlag = provider === RUNTIME_PROVIDER.CLAUDE ? '--model' : '-m';
+      const modelIndex = args.indexOf(modelFlag);
+      if (modelIndex !== -1 && modelIndex + 1 < args.length) {
+        args[modelIndex + 1] = overrideModel.trim();
       } else {
-        args.push('-m', overrideModel.trim());
+        args.push(modelFlag, overrideModel.trim());
+      }
+    }
+
+    const modelFlag = provider === RUNTIME_PROVIDER.CLAUDE ? '--model' : '-m';
+    const modelIndex = args.indexOf(modelFlag);
+    if (modelIndex !== -1 && modelIndex + 1 < args.length) {
+      const currentModel = String(args[modelIndex + 1] ?? '').trim();
+      if (!isSupportedRuntimeModel(provider, currentModel)) {
+        const fallbackModel = getDefaultRuntimeModel(provider);
+        if (fallbackModel) {
+          args[modelIndex + 1] = fallbackModel;
+        } else {
+          args.splice(modelIndex, 2);
+        }
+      }
+    } else {
+      const fallbackModel = getDefaultRuntimeModel(provider);
+      if (fallbackModel) {
+        args.push(modelFlag, fallbackModel);
       }
     }
 
@@ -333,6 +688,149 @@ class SwarmEngine {
     return budget;
   }
 
+  _markAgentProgress(execution, nodeId, state, reason) {
+    if (!execution || !state || !reason) return;
+    const now = Date.now();
+    const estimatedTokens = this._budgetTracker ? this._budgetTracker.getTotal(execution.executionId) : 0;
+
+    state.lastForwardProgressAt = now;
+    state.lastForwardProgressReason = reason;
+    state.lastForwardProgressTokens = estimatedTokens;
+
+    if (reason === 'meaningful_output' && !state.firstMeaningfulOutputAt) {
+      state.firstMeaningfulOutputAt = now;
+    }
+    if (reason === 'parser_token' && !state.firstParserTokenAt) {
+      state.firstParserTokenAt = now;
+    }
+    if (reason === 'downstream_spawn' && !state.firstDownstreamSpawnAt) {
+      state.firstDownstreamSpawnAt = now;
+    }
+
+    if (state.noProgressBlocked) {
+      state.noProgressBlocked = false;
+    }
+
+    this._scheduleNoProgressWatch(execution.executionId, nodeId, state);
+  }
+
+  _hasMeaningfulGeminiOutput(rawChunk = '') {
+    const normalized = this._normalizeParserChunk(rawChunk)
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+
+    if (!normalized || normalized.length < 24) return false;
+
+    const nonMeaningfulFragments = [
+      'type your message or @path/to/file',
+      'ready (',
+      'thinking...',
+      'keep trying',
+      '/model to switch',
+      'usage limit reached',
+      'waiting for authentication',
+      'request cancelled',
+      'press esc or ctrl+c to cancel',
+      SWARM_PROMPT_ECHO_MARKER.toLowerCase(),
+    ];
+
+    return !nonMeaningfulFragments.some((fragment) => normalized.includes(fragment));
+  }
+
+  _clearNoProgressWatch(state) {
+    if (!state?.noProgressTimer) return;
+    clearTimeout(state.noProgressTimer);
+    state.noProgressTimer = null;
+  }
+
+  _scheduleNoProgressWatch(executionId, nodeId, state) {
+    if (!state || state.provider !== RUNTIME_PROVIDER.GEMINI) return;
+    const execution = this._executions.get(executionId);
+    if (!execution) return;
+
+    const hasDownstreamTargets = execution.workflowDef.edges.some((edge) => edge.source === nodeId);
+    if (!hasDownstreamTargets || state.status !== 'running' || state.runtimeBlocker || execution.runtimeBlocker || (state.handoffCount ?? 0) > 0) {
+      this._clearNoProgressWatch(state);
+      return;
+    }
+
+    this._clearNoProgressWatch(state);
+    const lastProgressAt = state.lastForwardProgressAt ?? state.spawnedAt ?? Date.now();
+    const elapsedMs = Date.now() - lastProgressAt;
+    const softRemainingMs = Math.max(0, getGeminiNoProgressTimeoutMs() - elapsedMs);
+    const hardRemainingMs = Math.max(0, getGeminiNoProgressHardTimeoutMs() - elapsedMs);
+    const nextDelayMs = softRemainingMs > 0
+      ? Math.min(softRemainingMs, hardRemainingMs || softRemainingMs)
+      : Math.max(1, hardRemainingMs || getGeminiNoProgressTimeoutMs());
+
+    state.noProgressTimer = setTimeout(() => {
+      const currentExecution = this._executions.get(executionId);
+      const currentState = currentExecution?.agentStates.get(nodeId);
+      if (!currentExecution || !currentState) return;
+
+      if (!this._maybeBlockForNoProgress(executionId, nodeId, currentState, { allowSilentTimeout: true })) {
+        this._scheduleNoProgressWatch(executionId, nodeId, currentState);
+      }
+    }, nextDelayMs);
+
+    if (state.noProgressTimer?.unref) {
+      state.noProgressTimer.unref();
+    }
+  }
+
+  _maybeBlockForNoProgress(executionId, nodeId, state, { allowSilentTimeout = false } = {}) {
+    const execution = this._executions.get(executionId);
+    if (!execution || !state) return false;
+    if (state.provider !== RUNTIME_PROVIDER.GEMINI) return false;
+    if (state.status !== 'running') return false;
+    if (state.runtimeBlocker || execution.runtimeBlocker) return false;
+    if ((state.handoffCount ?? 0) > 0) return false;
+
+    const hasDownstreamTargets = execution.workflowDef.edges.some((edge) => edge.source === nodeId);
+    if (!hasDownstreamTargets) return false;
+
+    const lastProgressAt = state.lastForwardProgressAt ?? state.spawnedAt ?? Date.now();
+    const elapsedMs = Date.now() - lastProgressAt;
+    if (elapsedMs < getGeminiNoProgressTimeoutMs()) return false;
+
+    const currentEstimatedTokens = this._budgetTracker ? this._budgetTracker.getTotal(execution.executionId) : 0;
+    const lastProgressTokens = state.lastForwardProgressTokens ?? 0;
+    const tokenDelta = Math.max(0, currentEstimatedTokens - lastProgressTokens);
+    const softTimeoutSatisfied = tokenDelta >= getGeminiNoProgressTokenDelta();
+    const hardTimeoutSatisfied = allowSilentTimeout && elapsedMs >= getGeminiNoProgressHardTimeoutMs();
+    if (!softTimeoutSatisfied && !hardTimeoutSatisfied) return false;
+    if (state.noProgressBlocked) return true;
+
+    const recentRuntimeOutput = [
+      state._runtimeScanBuffer ?? '',
+      state.interventionBuffer ?? '',
+      state.lastOutputSnippet ?? '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+    const recentGeminiBlocker = this._detectPatternBlocker(recentRuntimeOutput, RUNTIME_PROVIDER.GEMINI);
+    if (recentGeminiBlocker?.type === 'rate_limited' || recentGeminiBlocker?.type === 'provider_unavailable') {
+      state.noProgressBlocked = true;
+      this._clearNoProgressWatch(state);
+      void this._handleRuntimeBlocker(executionId, nodeId, recentGeminiBlocker);
+      return true;
+    }
+
+    state.noProgressBlocked = true;
+    this._clearNoProgressWatch(state);
+    void this._handleRuntimeBlocker(executionId, nodeId, {
+      type: 'no_progress_timeout',
+      provider: RUNTIME_PROVIDER.GEMINI,
+      message: `Gemini made no forward progress toward the first handoff for ${elapsedMs} ms and about ${tokenDelta} tokens.`,
+      progressReason: state.lastForwardProgressReason ?? 'spawn',
+      elapsedMs,
+      tokenDelta,
+      detectedAt: new Date().toISOString(),
+    });
+    return true;
+  }
+
   _broadcastExecutionSnapshot(execution) {
     if (!this._wsBroadcast || !execution) return;
     this._wsBroadcast(execution.executionId, {
@@ -343,6 +841,9 @@ class SwarmEngine {
 
   _broadcastAgentStatus(executionId, nodeId, state) {
     if (!this._wsBroadcast) return;
+    const lastOutputSnippet = state?.status && state.status !== 'running'
+      ? this._refreshAgentSnippet(state, { preferSessionReplay: true })
+      : (state?.lastOutputSnippet ?? '');
     this._wsBroadcast(executionId, {
       type: 'agent_status',
       nodeId,
@@ -350,7 +851,7 @@ class SwarmEngine {
       runtimeProvider: state?.runtimeProvider ?? state?.provider ?? null,
       status: state?.status ?? 'idle',
       sessionId: state?.sessionId ?? null,
-      lastOutputSnippet: state?.lastOutputSnippet ?? '',
+      lastOutputSnippet,
       ...(state?.runtimeBlocker
         ? { runtimeBlocker: this._serializeRuntimeBlocker(state.runtimeBlocker) }
         : {}),
@@ -392,11 +893,327 @@ class SwarmEngine {
       .replace(/\r/g, '\n');
   }
 
-  _detectPatternBlocker(rawChunk = '') {
+  _stripSnippetProtocolArtifacts(rawText = '') {
+    return String(rawText ?? '')
+      .replace(/----?\s*SWARM PROTOCOL[\s\S]*?----?\s*END PROTOCOL\s*----?/gi, '\n')
+      .replace(/Do NOT output the handoff or done token mid-response\.[\s\S]*?Only as the very LAST line\./gi, '\n');
+  }
+
+  _normalizeSnippetLine(rawLine = '') {
+    return String(rawLine ?? '')
+      .replace(/^[\s\u2022\u00b7\u203a\u25e6\u25cf\u2500-\u257f\u2580-\u259f\u2720-\u2740*+|>]+/, '')
+      .replace(/\t/g, ' ')
+      .replace(/[ ]{2,}/g, ' ')
+      .replace(/^\s*exactly these lines and then __done__:\s*/i, '')
+      .replace(/\s*Explain this codebase.*$/i, '')
+      .replace(/\s*Messages to be submitted after next tool call.*$/i, '')
+      .replace(/\s*Run \/review\b.*$/i, '')
+      .replace(/\s*Use \/skills\b.*$/i, '')
+      .replace(/\s*Type your message(?: or @path\/to\/file)?.*$/i, '')
+      .replace(/\s*\? for shortcuts.*$/i, '')
+      .trim();
+  }
+
+  _isSnippetRecoveryLine(line = '') {
+    const normalized = this._normalizeSnippetLine(line);
+    if (!normalized) return false;
+    return SNIPPET_RECOVERY_LINE_PATTERNS.some((pattern) => pattern.test(normalized));
+  }
+
+  _isSnippetNoiseLine(line = '') {
+    const normalized = this._normalizeSnippetLine(line);
+    if (!normalized) return true;
+    if (SNIPPET_NOISE_LINE_PATTERNS.some((pattern) => pattern.test(normalized))) return true;
+    if (/^[,.;:|/\\<>\[\]()\-_=+*`~]+$/.test(normalized)) return true;
+    if (/^([A-Za-z])\1{3,}$/.test(normalized)) return true;
+    if (/^[A-Za-z]{1,3}$/.test(normalized)) return true;
+    if ((/\.(?:py|pid|js|jsx|ts|tsx|md|json)$/i.test(normalized) || normalized.includes('server.pid'))
+      && normalized.split(/\s+/).length <= 3) {
+      return true;
+    }
+    return false;
+  }
+
+  _scoreSnippetBlock(block = '') {
+    const normalized = String(block ?? '').trim();
+    if (!normalized) return Number.NEGATIVE_INFINITY;
+
+    const words = normalized.split(/\s+/).filter(Boolean);
+    let score = Math.min(normalized.length, 320);
+    score += Math.min(words.length * 8, 160);
+    score += Math.min(normalized.split('\n').filter(Boolean).length * 12, 60);
+
+    if (normalized.includes('__HANDOFF__')) score += 80;
+    if (normalized.includes('__DONE__')) score += 60;
+    if (/[:.]/.test(normalized)) score += 20;
+    if (/[-*]\s/.test(normalized) || /^\d+\./m.test(normalized)) score += 15;
+    if ((normalized.match(/\b[A-Z_]+=[^\s|]+/g) ?? []).length >= 2) score += 120;
+    if ((normalized.match(/\/api\/v1\//g) ?? []).length >= 1) score += 80;
+    if (/127\.0\.0\.1|v\d+\.\d+\.\d+/i.test(normalized)) score += 40;
+    if (SNIPPET_STALE_FOREIGN_LINE_PATTERNS.some((pattern) => pattern.test(normalized))) score -= 180;
+    if (SNIPPET_RECOVERY_LINE_PATTERNS.some((pattern) => pattern.test(normalized))) score -= 260;
+    if (SNIPPET_PROGRESS_LINE_PATTERNS.some((pattern) => pattern.test(normalized))) score -= 180;
+    if (SNIPPET_PROMPT_LINE_PATTERNS.some((pattern) => pattern.test(normalized))) score -= 180;
+    if (SNIPPET_COMMAND_LINE_PATTERNS.some((pattern) => pattern.test(normalized))) score -= 260;
+    if (/heads up, you have less than \d+%/i.test(normalized)) score -= 180;
+    if (/api error:|this request failed|access resets at/i.test(normalized)) score -= 180;
+    if (/^(?:ran|running)\b/im.test(normalized)) score -= 160;
+    if (words.length <= 3) score -= 80;
+
+    return score;
+  }
+
+  _isSnippetStructuredFactLine(line = '') {
+    const normalized = this._normalizeSnippetLine(line);
+    if (!normalized || this._isSnippetNoiseLine(normalized)) return false;
+
+    return /PROMPT-CONTROL-REPORT\b/i.test(normalized)
+      || /\b(?:VERSION|HOST|START_ROUTE|STATUS_ROUTE|PROMPT_BUILDER|DONE_TOKEN)=[^\s|]+/i.test(normalized)
+      || /^__HANDOFF__:[a-z0-9-]+:/i.test(normalized)
+      || /^__DONE__$/i.test(normalized);
+  }
+
+  _buildStructuredFactSnippet(lines = []) {
+    const factLines = [];
+    const seen = new Set();
+
+    for (const rawLine of lines) {
+      const line = this._normalizeSnippetLine(rawLine);
+      if (!this._isSnippetStructuredFactLine(line)) continue;
+
+      const key = line.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      factLines.push(line);
+    }
+
+    if (factLines.length < 3) return '';
+
+    const head = [];
+    const tail = [];
+
+    factLines.forEach((line) => {
+      if (/^__HANDOFF__:/i.test(line) || /^__DONE__$/i.test(line)) {
+        tail.push(line);
+        return;
+      }
+      head.push(line);
+    });
+
+    return [...head, ...tail].slice(0, 8).join('\n').slice(-500);
+  }
+
+  _buildRecoverySnippet(rawText = '') {
+    const normalized = this._normalizeParserChunk(rawText);
+    if (!normalized.trim()) return '';
+
+    if (SNIPPET_RECOVERY_LINE_PATTERNS.some((pattern) => pattern.test(normalized))) {
+      return 'Runtime reminder: final agent was prompted to output __DONE__ after its content.';
+    }
+
+    if (/conversation interrupted|went wrong|usage limit|not authenticated|authentication failed|rate limit|quota exceeded|resource exhausted|error/i.test(normalized)) {
+      return normalized
+        .split('\n')
+        .map((line) => this._normalizeSnippetLine(line))
+        .find((line) => /conversation interrupted|went wrong|usage limit|not authenticated|authentication failed|rate limit|quota exceeded|resource exhausted|error/i.test(line))
+        ?.slice(-500) ?? '';
+    }
+
+    return '';
+  }
+
+  _buildSemanticSnippet(rawText = '') {
+    const sanitizedText = this._stripSnippetProtocolArtifacts(this._normalizeParserChunk(rawText));
+    const normalizedLines = sanitizedText
+      .split('\n')
+      .map((line) => this._normalizeSnippetLine(line))
+      .filter(Boolean);
+    const blocks = [];
+    let currentBlock = [];
+    let previousLine = '';
+    let sawRecoveryPrompt = false;
+
+    const flushBlock = () => {
+      if (currentBlock.length === 0) return;
+      const blockText = currentBlock.join('\n').trim();
+      if (blockText) blocks.push(blockText);
+      currentBlock = [];
+      previousLine = '';
+    };
+
+    for (const rawLine of sanitizedText.split('\n')) {
+      const line = this._normalizeSnippetLine(rawLine);
+
+      if (!line) {
+        flushBlock();
+        continue;
+      }
+
+      if (this._isSnippetRecoveryLine(line)) {
+        sawRecoveryPrompt = true;
+        flushBlock();
+        continue;
+      }
+
+      if (this._isSnippetNoiseLine(line)) {
+        flushBlock();
+        continue;
+      }
+
+      if (line === previousLine) {
+        continue;
+      }
+
+      currentBlock.push(line);
+      previousLine = line;
+    }
+
+    flushBlock();
+
+    const structuredFactSnippet = this._buildStructuredFactSnippet(normalizedLines);
+    const structuredFactScore = structuredFactSnippet
+      ? this._scoreSnippetBlock(structuredFactSnippet)
+        + (structuredFactSnippet.includes('PROMPT-CONTROL-REPORT') ? 240 : 180)
+      : Number.NEGATIVE_INFINITY;
+
+    if (blocks.length === 0) {
+      if (structuredFactSnippet) {
+        return structuredFactSnippet;
+      }
+
+      const fallbackLines = normalizedLines.filter((line) => {
+        if (this._isSnippetNoiseLine(line)) return false;
+        return line.split(/\s+/).filter(Boolean).length > 3;
+      });
+
+      if (fallbackLines.length > 0) {
+        return this._decompressConPTYSpaces(fallbackLines.slice(-6).join('\n').slice(-500));
+      }
+
+      const blockerLines = normalizedLines.filter((line) =>
+        /conversation interrupted|went wrong|usage limit|not authenticated|authentication failed|rate limit|quota exceeded|resource exhausted|error/i.test(line)
+      );
+
+      if (blockerLines.length > 0) {
+        return this._decompressConPTYSpaces(blockerLines.at(-1)?.slice(-500) ?? '');
+      }
+
+      return sawRecoveryPrompt ? this._buildRecoverySnippet(sanitizedText) : '';
+    }
+
+    let bestBlock = blocks[0];
+    let bestScore = Number.NEGATIVE_INFINITY;
+
+    blocks.forEach((block, index) => {
+      const score = this._scoreSnippetBlock(block) + (index * 5);
+      if (score >= bestScore) {
+        bestBlock = block;
+        bestScore = score;
+      }
+    });
+
+    if (structuredFactScore > bestScore) {
+      bestBlock = structuredFactSnippet;
+      bestScore = structuredFactScore;
+    }
+
+    if (bestScore < 0) {
+      const recoveryFallback = this._buildRecoverySnippet(sanitizedText);
+      if (recoveryFallback) return recoveryFallback;
+    }
+
+    return this._decompressConPTYSpaces(bestBlock.slice(-500));
+  }
+
+  /**
+   * Restore spaces lost by Windows ConPTY compression.
+   * ConPTY sometimes strips spaces between words, producing output like
+   * "Sonol'agenteditriageperilrouting" instead of "Sono l'agente di triage per il routing".
+   * Applied per-line; skips lines that look like code, URLs, paths, or structured facts.
+   */
+  _decompressConPTYSpaces(text) {
+    if (!text) return text;
+    return text.split('\n').map((line) => {
+      // Skip lines that look like code/URLs/paths/structured data
+      if (/[={}()\[\]\/:].*[={}()\[\]\/:]/.test(line)) return line;
+      if (/^[A-Z_]+=/.test(line)) return line;  // KEY=VALUE
+      if (/^\s*[-•]/.test(line) && /\/api\//.test(line)) return line;  // route list items
+      if (/https?:\/\//.test(line)) return line;
+      if (/PROMPT-CONTROL-REPORT/.test(line)) return line;
+      return line
+        // Space after sentence-ending punctuation followed by a letter: ".A" → ". A"
+        .replace(/([.!?])([A-ZÀ-Ö])/g, '$1 $2')
+        // Space after comma/semicolon followed by a letter: ",a" → ", a" (skip colon — used in URLs/keys)
+        .replace(/([,;])([a-zA-ZÀ-ö])/g, '$1 $2')
+        // Space before uppercase after lowercase (word boundary): "aB" → "a B"
+        .replace(/([a-zà-ö])([A-ZÀ-Ö])/g, '$1 $2');
+    }).join('\n');
+  }
+
+  _detectPatternBlocker(rawChunk = '', provider = null) {
     const normalized = this._normalizeParserChunk(rawChunk).toLowerCase();
     if (!normalized.trim()) return null;
+    const recentNormalized = normalized.slice(-500);
 
-    const match = RUNTIME_BLOCKER_PATTERNS.find((candidate) => candidate.matches(normalized));
+    if (provider === RUNTIME_PROVIDER.GEMINI) {
+      const hasFunctionCallMismatch =
+        recentNormalized.includes('number of function response parts is equal to the number of function call parts')
+        || recentNormalized.includes('function call parts of the function call turn');
+      const hasAutoRetrySignal = recentNormalized.includes('retrying automatically');
+
+      if (hasFunctionCallMismatch && !hasAutoRetrySignal) {
+        return {
+          type: 'provider_unavailable',
+          provider: RUNTIME_PROVIDER.GEMINI,
+          message: 'Gemini corrupted the current tool/function turn and cannot safely continue in this session.',
+          detectedAt: new Date().toISOString(),
+        };
+      }
+
+      // Ignore transient Gemini request failures that self-recover during
+      // Thinking/streaming. Only suppress if the signal appears in the recent tail,
+      // not in old scrolled output.
+      if ((recentNormalized.includes('this request failed')
+        || recentNormalized.includes('invalid_argument')
+        || recentNormalized.includes('badrequest'))
+        && !recentNormalized.includes('usage limit')
+        && hasAutoRetrySignal) {
+        return null;
+      }
+
+      const hasUsageLimitSignal =
+        recentNormalized.includes('usage limit reached')
+        || recentNormalized.includes('usage limit for')
+        || recentNormalized.includes('/model to switch')
+        || recentNormalized.includes('keep trying');
+      const hasHardUsageLimitSignal =
+        recentNormalized.includes('you have exhausted your capacity on this model')
+        || recentNormalized.includes('usage limit reached for all pro models')
+        || recentNormalized.includes('access resets at');
+      const hasPromptReadySignal = this._isRuntimePromptReady(recentNormalized, provider);
+      const hasStaleAuthBanner =
+        recentNormalized.includes('waiting for authentication')
+        || recentNormalized.includes('press esc or ctrl+c to cancel');
+      const hasAuthFailureSignal =
+        recentNormalized.includes('not authenticated')
+        || recentNormalized.includes('please sign in')
+        || recentNormalized.includes('login required')
+        || recentNormalized.includes('gemini_api_key')
+        || recentNormalized.includes('authentication failed')
+        || recentNormalized.includes('api key');
+
+      if (hasUsageLimitSignal && !hasHardUsageLimitSignal) {
+        return null;
+      }
+
+      if ((hasPromptReadySignal && hasAuthFailureSignal) || (hasPromptReadySignal && hasStaleAuthBanner)) {
+        return null;
+      }
+    }
+
+    const match = RUNTIME_BLOCKER_PATTERNS.find(
+      (candidate) => candidate.provider === provider && candidate.matches(normalized)
+    );
     if (!match) return null;
 
     return {
@@ -449,7 +1266,7 @@ class SwarmEngine {
     // Intervention detection often fails on split PTY packets.
     // Use a small stateful buffer (Task #172)
     if (state) {
-      state.interventionBuffer = ((state.interventionBuffer ?? '') + rawChunk).slice(-1024);
+      state.interventionBuffer = ((state.interventionBuffer ?? '') + rawChunk).slice(-2048);
       rawChunk = state.interventionBuffer;
     }
 
@@ -458,8 +1275,18 @@ class SwarmEngine {
 
     // Check universal pattern-based blockers first (rate limits, auth failures) —
     // these apply to ALL providers including Claude.
-    const patternBlocker = this._detectPatternBlocker(rawChunk);
-    if (patternBlocker) return patternBlocker;
+    // EXCEPTION: for Gemini, skip pattern blockers if the usage-limit interactive menu
+    // is detected, because the menu should be handled as an intervention, not a hard blocker.
+    // However, if the menu is NOT detected (buffer too short, banner too long), fall back
+    // to the pattern blocker so quota exhaustion is never silently swallowed.
+    let geminiUsageLimitSkipped = false;
+    if (provider === RUNTIME_PROVIDER.GEMINI && normalized.includes('usage limit reached')) {
+      // Defer pattern blocker — try menu detection first, fall back below if menu not found
+      geminiUsageLimitSkipped = true;
+    } else {
+      const patternBlocker = this._detectPatternBlocker(rawChunk, provider);
+      if (patternBlocker) return patternBlocker;
+    }
 
     // Interactive menu detection only applies to Codex and Gemini TUIs.
     if (provider !== RUNTIME_PROVIDER.CODEX && provider !== RUNTIME_PROVIDER.GEMINI) return null;
@@ -496,6 +1323,22 @@ class SwarmEngine {
       };
     }
 
+    // Gemini rate-limit / usage-limit interactive menu — auto-switch to a smaller model
+    if (provider === RUNTIME_PROVIDER.GEMINI) {
+      if (
+        (normalized.includes('usage limit reached') || normalized.includes('usage limit for'))
+        && (compact.includes('keeptrying') || normalized.includes('keep trying')
+          || compact.includes('1keeptrying') || normalized.includes('1. keep trying')
+          || (normalized.includes('/model') && normalized.includes('stop')))
+      ) {
+        if (state) state.interventionBuffer = '';
+        return {
+          type: 'gemini_usage_limit_menu',
+          provider: RUNTIME_PROVIDER.GEMINI,
+        };
+      }
+    }
+
     if (provider === RUNTIME_PROVIDER.GEMINI || provider === RUNTIME_PROVIDER.CODEX) {
       if (
         compact.includes('doyoutrustthefollowingfolders')
@@ -522,11 +1365,57 @@ class SwarmEngine {
       }
     }
 
+    // Fallback: if Gemini "usage limit reached" was detected but the interactive menu
+    // was NOT found in the buffer (banner too long, buffer split), fall back to the
+    // pattern blocker so quota exhaustion is never silently swallowed as "running".
+    if (geminiUsageLimitSkipped) {
+      const patternBlocker = this._detectPatternBlocker(rawChunk, provider);
+      if (patternBlocker) return patternBlocker;
+    }
+
     return null;
   }
 
   _applyRuntimePromptIntervention(sessionId, state, intervention) {
     if (!sessionId || !state || !intervention) return false;
+
+    // Gemini usage-limit menu: cancel the current request with Esc so the CLI
+    // returns to a prompt, then switch to a flash model via /model set.
+    // Gemini Ink TUI uses SelectInput — Esc is the most reliable way we found
+    // to "stop" the in-flight request without choosing "Keep trying".
+    if (intervention.type === 'gemini_usage_limit_menu') {
+      const now = Date.now();
+      const lastHandled = state.geminiUsageLimitHandledAt ?? 0;
+      // Debounce: don't re-handle within 8s (Gemini needs time to process)
+      if (state.geminiUsageLimitHandled && (now - lastHandled < 8000)) return false;
+
+      state.geminiUsageLimitHandled = true;
+      state.geminiUsageLimitHandledAt = now;
+      const fallbackCount = state.geminiModelFallbackCount ?? 0;
+      state.geminiModelFallbackCount = fallbackCount + 1;
+
+      const targetModel = SUPPORTED_GEMINI_FALLBACK_MODELS[fallbackCount] ?? null;
+
+      if (targetModel) {
+        state.pendingGeminiModelSwitch = targetModel;
+        state.pendingGeminiModelSwitchAt = now;
+      } else {
+        state.pendingGeminiModelSwitch = null;
+        state.pendingGeminiModelSwitchAt = 0;
+      }
+
+      // Step 1: Cancel the current request so Gemini returns to a writable prompt.
+      console.log(`[SwarmEngine] Gemini usage limit (attempt ${fallbackCount + 1}) — dismissing menu for session ${sessionId}`);
+      this._sessionManager.writeInput(sessionId, '\u001b');
+
+      if (targetModel) {
+        console.log(`[SwarmEngine] Queued Gemini model fallback to ${targetModel} once prompt is ready`);
+      }
+
+      state.interventionBuffer = '';
+
+      return true;
+    }
 
     if (
       intervention.type === 'model_selection_menu'
@@ -575,6 +1464,8 @@ class SwarmEngine {
   _flushSwarmPrompt(sessionId, state = null) {
     const prompt = state?.pendingPrompt ?? null;
     if (!sessionId || !prompt) return;
+    const promptOptions = state?.pendingPromptOptions ?? {};
+    const skipParserEchoGate = promptOptions.skipParserEchoGate === true;
 
     if (state) {
       if (state.promptReadyTimer) {
@@ -587,21 +1478,27 @@ class SwarmEngine {
         state.echoMarkerTimer = null;
       }
       state.pendingPrompt = null;
-      state.ignoreParserUntil = SWARM_PROMPT_ECHO_MARKER;
+      state.pendingPromptOptions = null;
+      if (state.runtimeSession) {
+        state.promptReady = false;
+      }
+      state.ignoreParserUntil = skipParserEchoGate ? null : SWARM_PROMPT_ECHO_MARKER;
       state.ignoreParserBuffer = '';
 
-      // Fallback: if the echo marker is never observed (e.g. Claude's
-      // interactive CLI does not echo pasted text), clear the gate after
-      // a timeout so the parser can resume detecting __DONE__ / __HANDOFF__.
-      state.echoMarkerTimer = setTimeout(() => {
-        if (state.ignoreParserUntil) {
-          state.ignoreParserUntil = null;
-          state.ignoreParserBuffer = '';
+      if (!skipParserEchoGate) {
+        // Fallback: if the echo marker is never observed (e.g. Claude's
+        // interactive CLI does not echo pasted text), clear the gate after
+        // a timeout so the parser can resume detecting __DONE__ / __HANDOFF__.
+        state.echoMarkerTimer = setTimeout(() => {
+          if (state.ignoreParserUntil) {
+            state.ignoreParserUntil = null;
+            state.ignoreParserBuffer = '';
+          }
+          state.echoMarkerTimer = null;
+        }, SWARM_ECHO_MARKER_TIMEOUT_MS);
+        if (state.echoMarkerTimer.unref) {
+          state.echoMarkerTimer.unref();
         }
-        state.echoMarkerTimer = null;
-      }, SWARM_ECHO_MARKER_TIMEOUT_MS);
-      if (state.echoMarkerTimer.unref) {
-        state.echoMarkerTimer.unref();
       }
     }
 
@@ -635,25 +1532,29 @@ class SwarmEngine {
         }, 100);
       }, SWARM_GEMINI_SUBMIT_DELAY_MS);
 
-      // Write the echo marker as a separate submission after the prompt is sent
-      setTimeout(() => {
-        this._sessionManager.writeInput(sessionId, SWARM_PROMPT_ECHO_MARKER);
+      if (!skipParserEchoGate) {
+        // Write the echo marker as a separate submission after the prompt is sent
         setTimeout(() => {
-          this._sessionManager.writeInput(sessionId, '\r\n');
+          this._sessionManager.writeInput(sessionId, SWARM_PROMPT_ECHO_MARKER);
           setTimeout(() => {
-            this._sessionManager.writeInput(sessionId, '\r');
-          }, 100);
-        }, SWARM_GEMINI_SUBMIT_DELAY_MS);
-      }, SWARM_GEMINI_SUBMIT_DELAY_MS + SWARM_GEMINI_ECHO_DELAY_MS);
+            this._sessionManager.writeInput(sessionId, '\r\n');
+            setTimeout(() => {
+              this._sessionManager.writeInput(sessionId, '\r');
+            }, 100);
+          }, SWARM_GEMINI_SUBMIT_DELAY_MS);
+        }, SWARM_GEMINI_SUBMIT_DELAY_MS + SWARM_GEMINI_ECHO_DELAY_MS);
+      }
 
       return;
     }
 
-    const payload = `${prompt}\n${SWARM_PROMPT_ECHO_MARKER}`;
+    const payload = skipParserEchoGate ? prompt : `${prompt}\n${SWARM_PROMPT_ECHO_MARKER}`;
     const writePayload = () => {
       if (state?.runtimeSession) {
         const shouldInterruptFirst =
-          state?.provider === RUNTIME_PROVIDER.CODEX && (state?.promptSubmissionCount ?? 0) > 0;
+          state?.provider === RUNTIME_PROVIDER.CODEX
+          && (state?.promptSubmissionCount ?? 0) > 0
+          && promptOptions.interruptActiveCodex !== false;
         const lines = payload.split('\n');
         const baseDelay = shouldInterruptFirst ? SWARM_PROMPT_INTERRUPT_DELAY_MS : 0;
 
@@ -685,15 +1586,19 @@ class SwarmEngine {
     }, submitAfterMs + SWARM_PROMPT_SUBMIT_DELAY_MS);
   }
 
-  _writeSwarmPrompt(sessionId, prompt, state = null) {
+  _writeSwarmPrompt(sessionId, prompt, state = null, options = {}) {
     if (!sessionId || !prompt) return;
 
     if (!state) {
-      this._flushSwarmPrompt(sessionId, { pendingPrompt: prompt });
+      this._flushSwarmPrompt(sessionId, {
+        pendingPrompt: prompt,
+        pendingPromptOptions: options,
+      });
       return;
     }
 
     state.pendingPrompt = prompt;
+    state.pendingPromptOptions = options;
 
     if (state.promptReady) {
       this._flushSwarmPrompt(sessionId, state);
@@ -707,6 +1612,43 @@ class SwarmEngine {
         this._flushSwarmPrompt(sessionId, state);
       }, SWARM_PROMPT_READY_FALLBACK_MS);
     }
+  }
+
+  sendBroadcast(executionId, nodeId, text, { mode = 'soft' } = {}) {
+    const execution = this._executions.get(executionId);
+    const state = execution?.agentStates.get(nodeId);
+    const sessionId = state?.sessionId ?? null;
+    const prompt = String(text ?? '').trim();
+
+    if (!execution || !state || state.status !== 'running' || !sessionId || !prompt) {
+      return { sent: false, delivery: 'skipped' };
+    }
+
+    if (state.provider === RUNTIME_PROVIDER.GEMINI) {
+      if (state.runtimeSession && !state.promptReady) {
+        state.pendingOperatorPrompt = prompt;
+        state.pendingOperatorPromptMode = mode;
+        state.pendingOperatorPromptQueuedAt = Date.now();
+        return { sent: true, delivery: 'queued' };
+      }
+
+      this._writeSwarmPrompt(sessionId, prompt, state);
+      return { sent: true, delivery: 'injected' };
+    }
+
+    if (mode === 'hard') {
+      this._sessionManager.writeInput(sessionId, '\x03');
+      setTimeout(() => {
+        this._sessionManager.writeInput(sessionId, `${prompt}\x1b`);
+        setTimeout(() => {
+          this._sessionManager.writeInput(sessionId, '\n');
+        }, 100);
+      }, 300);
+      return { sent: true, delivery: 'interrupted' };
+    }
+
+    this._sessionManager.writeInput(sessionId, `${prompt}\x1b\n`);
+    return { sent: true, delivery: 'injected' };
   }
 
   _shouldFallback(execution, blocker, state) {
@@ -741,6 +1683,47 @@ class SwarmEngine {
     const previousSessionId = currentState?.sessionId ?? null;
     const previousTapFn = currentState?.tapFn ?? null;
     const currentProvider = currentState.provider;
+    const codexPromptRetryCounts = execution.codexPromptRetryCounts ?? new Map();
+
+    if (currentProvider === RUNTIME_PROVIDER.CODEX && blocker.type === 'prompt_rejected') {
+      const currentRetryCount = codexPromptRetryCounts.get(nodeId) ?? 0;
+      if (currentRetryCount < 1) {
+        codexPromptRetryCounts.set(nodeId, currentRetryCount + 1);
+        execution.codexPromptRetryCounts = codexPromptRetryCounts;
+        execution.runtimeBlocker = null;
+        const recoverySnippet = this._buildCodexRecoverySnippet(currentState);
+        if (currentState) {
+          currentState.runtimeBlocker = null;
+          currentState.status = 'running';
+        }
+        this._syncExecutionStatusFromAgents(execution);
+
+        try {
+          await this._spawnAgentPty(executionId, nodeId, {
+            requestedProvider: RUNTIME_PROVIDER.CODEX,
+            replaceCurrentSession: true,
+            compactCodexPrompt: true,
+            resumeCodexPrompt: true,
+            deferCodexInitialPrompt: true,
+            recoverySnippet,
+            previousSessionId,
+            previousTapFn,
+          });
+
+          execution.runtimeBlocker = null;
+          const latestState = execution.agentStates.get(nodeId);
+          if (latestState) {
+            latestState.runtimeBlocker = null;
+          }
+
+          this._syncExecutionStatusFromAgents(execution);
+          this._broadcastExecutionSnapshot(execution);
+          return true;
+        } catch (error) {
+          // Fall through to provider fallback on retry failure.
+        }
+      }
+    }
 
     let nextProvider;
     if (currentProvider === RUNTIME_PROVIDER.CLAUDE) {
@@ -871,6 +1854,7 @@ class SwarmEngine {
 
     // Apply per-execution runtime model overrides into workflow settings
     if (runtimeOptions.runtimeModels && typeof runtimeOptions.runtimeModels === 'object') {
+      validateRuntimeModels(runtimeOptions.runtimeModels);
       wf.settings = wf.settings ?? {};
       wf.settings.runtimeModels = { ...wf.settings.runtimeModels, ...runtimeOptions.runtimeModels };
     }
@@ -898,6 +1882,7 @@ class SwarmEngine {
       providerStrategy,
       runtimeProvider: providerStrategy.activeProvider,
       activeProvider: providerStrategy.activeProvider,
+      codexPromptRetryCounts: new Map(),
       lastFallback: null,
     };
 
@@ -955,22 +1940,37 @@ class SwarmEngine {
     for (let index = 0; index < candidateProviders.length; index += 1) {
       const provider = candidateProviders[index];
       const isFallbackAttempt = index > 0 || spawnOptions.fallbackFrom != null;
+      const shouldCompactCodexPrompt = provider === RUNTIME_PROVIDER.CODEX
+        && (
+          spawnOptions.compactCodexPrompt === true
+          || spawnOptions.fallbackFrom != null
+          || (spawnOptions.compactCodexPrompt !== false && execution.agentStates.size > 0)
+        );
 
       try {
         const binaryPath = await this._resolveRuntimeProviderBinary(provider);
         const launchArgs = this._buildRuntimeProviderArgs(provider, execution.workflowDef?.settings?.runtimeModels);
-        const bootstrapPrompt = this._buildRuntimeProviderBootstrapPrompt(provider, {
-          fallbackFrom: spawnOptions.fallbackFrom ?? null,
-          fallbackReason: spawnOptions.fallbackReason ?? null,
-        });
+        const bootstrapPrompt = provider === RUNTIME_PROVIDER.CODEX && spawnOptions.resumeCodexPrompt === true
+          ? ''
+          : this._buildRuntimeProviderBootstrapPrompt(provider, {
+            fallbackFrom: spawnOptions.fallbackFrom ?? null,
+            fallbackReason: spawnOptions.fallbackReason ?? null,
+          });
         const systemPrompt = this._buildSystemPrompt(
           node,
           execution.workflowContext,
           handoffTargets,
-          provider
+          provider,
+          {
+            ...spawnOptions,
+            compactCodexPrompt: shouldCompactCodexPrompt,
+          }
         );
         const combinedPrompt = [bootstrapPrompt, systemPrompt].filter(Boolean).join('\n\n');
+        const deferCodexInitialPrompt = provider === RUNTIME_PROVIDER.CODEX
+          && spawnOptions.deferCodexInitialPrompt !== false;
         const codexInitialPrompt = provider === RUNTIME_PROVIDER.CODEX
+          && !deferCodexInitialPrompt
           ? `${combinedPrompt}\n${SWARM_PROMPT_ECHO_MARKER}`
           : null;
         const session = await this._sessionManager.createSession(
@@ -1003,12 +2003,38 @@ class SwarmEngine {
           promptSubmissionCount: 0,
           runtimeSession: true,
           doneReinjectCount: 0,
+          _runtimeScanBuffer: '',
+          _snippetSourceBuffer: '',
           modelSelectionMenuHandled: false,
           rateLimitMenuHandled: false,
           echoMarkerTimer: null,
+          geminiUsageLimitHandled: false,
+          geminiUsageLimitHandledAt: 0,
+          geminiModelFallbackCount: 0,
+          pendingGeminiModelSwitch: null,
+          pendingGeminiModelSwitchAt: 0,
+          pendingOperatorPrompt: null,
+          pendingOperatorPromptMode: null,
+          pendingOperatorPromptQueuedAt: 0,
           doneReminderSent: false,
           doneReminderTimer: null,
+          missingHandoffReminderSent: false,
+          missingHandoffReminderTimer: null,
+          spawnedAt: Date.now(),
+          lastRuntimeBusyAt: Date.now(),
+          lastForwardProgressAt: Date.now(),
+          lastForwardProgressReason: 'spawn',
+          lastForwardProgressTokens: this._budgetTracker ? this._budgetTracker.getTotal(execution.executionId) : 0,
+          firstMeaningfulOutputAt: null,
+          firstParserTokenAt: null,
+          firstDownstreamSpawnAt: null,
+          noProgressBlocked: false,
+          noProgressTimer: null,
         };
+
+        if (codexInitialPrompt) {
+          state.promptSubmissionCount = 1;
+        }
 
         execution.activeProvider = provider;
         execution.runtimeProvider = provider;
@@ -1017,6 +2043,7 @@ class SwarmEngine {
           activeProvider: provider,
         };
         execution.agentStates.set(nodeId, state);
+        this._scheduleNoProgressWatch(executionId, nodeId, state);
 
         // Register session with BudgetTracker so getTotal(executionId) includes it
         if (this._budgetTracker) {
@@ -1029,24 +2056,104 @@ class SwarmEngine {
             // Accumulate ANSI-stripped output into lastOutputSnippet first,
             // so prompt-ready detection can scan the full rolling buffer.
             const cleanChunk = this._normalizeParserChunk(chunk);
-            currentState.lastOutputSnippet = (currentState.lastOutputSnippet + cleanChunk).slice(-500);
+            // Keep the raw tail for runtime detection, but derive the
+            // user-facing snippet from a semantic sanitization pass.
+            currentState._runtimeScanBuffer = ((currentState._runtimeScanBuffer ?? '') + cleanChunk).slice(-RUNTIME_SCAN_BUFFER_CHARS);
+            if (!currentState || currentState.status !== 'running') {
+              // Agent is no longer running — still accumulate for runtime detection
+              // but do NOT update the public snippet or broadcast, since post-done
+              // PTY output (CLI chrome, hooks) would overwrite the clean snippet.
+              return;
+            }
+            currentState._snippetSourceBuffer = ((currentState._snippetSourceBuffer ?? '') + cleanChunk).slice(-SNIPPET_SCAN_BUFFER_CHARS);
+            currentState.lastOutputSnippet = this._buildSemanticSnippet(currentState._snippetSourceBuffer);
             this._broadcastAgentStatus(executionId, nodeId, currentState);
           }
           if (currentState && !currentState.promptReady) {
             // Check both the single chunk AND the accumulated buffer — ConPTY can
             // split prompt-ready indicators (e.g. "bypass permissions on") across
             // multiple onData callbacks, so the single chunk may never contain
-            // the full string.  Checking lastOutputSnippet covers this.
+            // the full string.  Checking the raw rolling buffer covers this.
             if (this._isRuntimePromptReady(chunk, currentState.provider)
-              || this._isRuntimePromptReady(currentState.lastOutputSnippet, currentState.provider)) {
+              || this._isRuntimePromptReady(currentState._runtimeScanBuffer, currentState.provider)) {
               currentState.promptReady = true;
             }
           }
 
+          const pendingGeminiChunkText = this._normalizeParserChunk(chunk).toLowerCase();
+          const pendingGeminiInterventionText = this._normalizeParserChunk(currentState?.interventionBuffer ?? '').toLowerCase();
+          const normalizedChunkText = this._normalizeParserChunk(chunk).toLowerCase();
+
+          if (currentState?.provider === RUNTIME_PROVIDER.CODEX && normalizedChunkText.includes('working (')) {
+            currentState.lastRuntimeBusyAt = Date.now();
+            currentState.missingHandoffReminderSent = false;
+            if (currentState.missingHandoffReminderTimer) {
+              clearTimeout(currentState.missingHandoffReminderTimer);
+              currentState.missingHandoffReminderTimer = null;
+            }
+          }
+
+          const pendingGeminiSwitchReady = currentState
+            && currentState.provider === RUNTIME_PROVIDER.GEMINI
+            && currentState.pendingGeminiModelSwitch
+            && (
+              this._isRuntimePromptReady(chunk, currentState.provider)
+              || this._isRuntimePromptReady(currentState.interventionBuffer ?? '', currentState.provider)
+              || pendingGeminiChunkText.includes('request cancelled')
+              || pendingGeminiChunkText.includes('ready (')
+              || pendingGeminiInterventionText.includes('request cancelled')
+              || pendingGeminiInterventionText.includes('ready (')
+            );
+          if (pendingGeminiSwitchReady) {
+            const targetModel = currentState.pendingGeminiModelSwitch;
+            currentState.pendingGeminiModelSwitch = null;
+            currentState.pendingGeminiModelSwitchAt = 0;
+            currentState.lastModelFallback = targetModel;
+            currentState.interventionBuffer = '';
+            this._markAgentProgress(execution, nodeId, currentState, 'provider_intervention');
+            console.log(`[SwarmEngine] Gemini prompt ready again - switching to ${targetModel} via /model set`);
+            this._sessionManager.writeInput(sessionId, `/model set ${targetModel}\n`);
+            this._broadcastAgentStatus(executionId, nodeId, currentState);
+            return;
+          }
+
+          if (currentState?.pendingPrompt && currentState.promptReady) {
+            this._flushSwarmPrompt(sessionId, currentState);
+            return;
+          }
+
+          if (
+            currentState
+            && currentState.provider === RUNTIME_PROVIDER.GEMINI
+            && currentState.pendingOperatorPrompt
+            && currentState.promptReady
+          ) {
+            const operatorPrompt = currentState.pendingOperatorPrompt;
+            currentState.pendingOperatorPrompt = null;
+            currentState.pendingOperatorPromptMode = null;
+            currentState.pendingOperatorPromptQueuedAt = 0;
+            this._writeSwarmPrompt(sessionId, operatorPrompt, currentState);
+            return;
+          }
+
+          const interventionInput = currentState?._runtimeScanBuffer ?? currentState?.lastOutputSnippet ?? '';
           const promptIntervention = currentState
-            ? this._detectRuntimeBlocker(currentState.lastOutputSnippet, currentState.provider, currentState)
+            ? this._detectRuntimeBlocker(interventionInput, currentState.provider, currentState)
             : null;
           if (promptIntervention && this._applyRuntimePromptIntervention(sessionId, currentState, promptIntervention)) {
+            this._markAgentProgress(execution, nodeId, currentState, 'provider_intervention');
+            return;
+          }
+          if (
+            promptIntervention
+            && (
+              promptIntervention.type === 'gemini_usage_limit_menu'
+              || promptIntervention.type === 'model_selection_menu'
+              || promptIntervention.type === 'rate_limit_menu_keep_current_model'
+              || promptIntervention.type === 'gemini_trust_menu'
+              || promptIntervention.type === 'permission_menu_allow_once'
+            )
+          ) {
             return;
           }
 
@@ -1063,6 +2170,10 @@ class SwarmEngine {
                 });
               }
             }
+          }
+
+          if (currentState.provider === RUNTIME_PROVIDER.GEMINI && !currentState.firstMeaningfulOutputAt && this._hasMeaningfulGeminiOutput(chunk)) {
+            this._markAgentProgress(execution, nodeId, currentState, 'meaningful_output');
           }
 
           let chunkForParser = chunk;
@@ -1100,6 +2211,12 @@ class SwarmEngine {
           }
 
           const events = parser.feed(chunkForParser);
+          if (events.length === 0) {
+            const recoveredHandoff = this._recoverBufferedHandoffEvent(execution, nodeId, currentState);
+            if (recoveredHandoff) {
+              events.push(recoveredHandoff);
+            }
+          }
           
           // Fuzzy fallback for handoff detection (Task #171)
           // If the parser didn't find a formal __HANDOFF__ token, we check for
@@ -1112,14 +2229,25 @@ class SwarmEngine {
               // Verify target exists in workflow
               const isValidTarget = execution.workflowDef.edges.some(e => e.source === nodeId && e.target === targetId);
               if (isValidTarget) {
+                this._markAgentProgress(execution, nodeId, currentState, 'parser_token');
                 this._onHandoff(executionId, nodeId, { type: 'handoff', targetId, contextUpdate: {} });
               }
             }
           }
 
           for (const evt of events) {
-            if (evt.type === 'handoff') this._onHandoff(executionId, nodeId, evt);
-            if (evt.type === 'done') this._onDone(executionId, nodeId);
+            if (evt.type === 'handoff') {
+              this._markAgentProgress(execution, nodeId, currentState, 'parser_token');
+              this._onHandoff(executionId, nodeId, evt);
+            }
+            if (evt.type === 'done') {
+              this._markAgentProgress(execution, nodeId, currentState, 'parser_token');
+              this._onDone(executionId, nodeId);
+            }
+          }
+
+          if (this._maybeBlockForNoProgress(executionId, nodeId, currentState)) {
+            return;
           }
 
           // Terminal-node done reminder: if this node has no handoff targets,
@@ -1133,7 +2261,7 @@ class SwarmEngine {
               .filter((e) => e.source === nodeId)
               .map((e) => e.target);
             if (nodeHandoffTargets.length === 0
-              && this._isRuntimePromptReady(currentState.lastOutputSnippet, currentState.provider)) {
+              && this._isRuntimePromptReady(currentState._runtimeScanBuffer, currentState.provider)) {
               // Debounce: wait 3s to avoid false triggers during streaming
               if (!currentState.doneReminderTimer) {
                 currentState.doneReminderTimer = setTimeout(() => {
@@ -1150,6 +2278,36 @@ class SwarmEngine {
               }
             }
           }
+
+          if (this._shouldSendMissingHandoffReminder(execution, nodeId, currentState)) {
+            if (!currentState.missingHandoffReminderTimer && !currentState.missingHandoffReminderSent) {
+              currentState.missingHandoffReminderTimer = setTimeout(() => {
+                currentState.missingHandoffReminderTimer = null;
+                const currentExecution = this._executions.get(executionId);
+                const latestState = currentExecution?.agentStates.get(nodeId);
+                if (!currentExecution || !latestState) return;
+                if (!this._shouldSendMissingHandoffReminder(currentExecution, nodeId, latestState)) return;
+
+                const currentNode = currentExecution.workflowDef.nodes.find((candidate) => candidate.id === nodeId);
+                const nodeHandoffTargets = currentExecution.workflowDef.edges
+                  .filter((e) => e.source === nodeId)
+                  .map((e) => e.target);
+                latestState.missingHandoffReminderSent = true;
+                this._writeSwarmPrompt(
+                  latestState.sessionId,
+                  this._buildMissingHandoffReminderPrompt(currentNode, currentExecution.workflowContext, nodeHandoffTargets),
+                  latestState,
+                  {
+                    interruptActiveCodex: false,
+                    skipParserEchoGate: true,
+                  }
+                );
+              }, SWARM_MISSING_HANDOFF_REMINDER_DELAY_MS);
+            }
+          } else if (currentState?.missingHandoffReminderTimer) {
+            clearTimeout(currentState.missingHandoffReminderTimer);
+            currentState.missingHandoffReminderTimer = null;
+          }
         };
 
         state.tapFn = tapFn;
@@ -1163,7 +2321,8 @@ class SwarmEngine {
         }
 
         // Remove the previous provider session after the replacement is live.
-        if (isFallbackAttempt && previousSessionId && previousSessionId !== sessionId) {
+        const shouldReplaceCurrentSession = isFallbackAttempt || spawnOptions.replaceCurrentSession === true;
+        if (shouldReplaceCurrentSession && previousSessionId && previousSessionId !== sessionId) {
           if (previousTapFn) {
             const previousSession = this._sessionManager.getSession(previousSessionId);
             previousSession?.swarmListeners?.delete(previousTapFn);
@@ -1175,7 +2334,7 @@ class SwarmEngine {
           this._writeSwarmPrompt(sessionId, combinedPrompt, state);
         }
 
-        if (isFallbackAttempt && this._wsBroadcast) {
+        if (isFallbackAttempt && previousState?.provider !== provider && this._wsBroadcast) {
           const fallbackFrom = spawnOptions.fallbackFrom ?? candidateProviders[0];
           execution.lastFallback = {
             fromProvider: fallbackFrom,
@@ -1237,13 +2396,65 @@ class SwarmEngine {
    * @param {string[]} handoffTargets - list of valid target agent IDs
    * @returns {string} assembled system prompt
    */
-  _buildSystemPrompt(node, workflowContext, handoffTargets, provider = null) {
+  _buildSystemPrompt(node, workflowContext, handoffTargets, provider = null, options = {}) {
+    const compactCodexPrompt = options.compactCodexPrompt === true;
+    const resumeCodexPrompt = options.resumeCodexPrompt === true;
     const lines = [];
 
-    if (provider === RUNTIME_PROVIDER.CODEX) {
+    if (provider === RUNTIME_PROVIDER.CODEX && !compactCodexPrompt) {
       lines.push('You are running inside the Codex interactive CLI.');
       lines.push('Answer directly in terminal text and continue the swarm task without setup chatter.');
       lines.push('');
+    }
+
+    if (provider === RUNTIME_PROVIDER.CODEX && compactCodexPrompt) {
+      const agentPrompt = this._compactCodexInstructionText((node.data && node.data.systemPrompt) || '', COMPACT_CODEX_AGENT_PROMPT_CHARS);
+      const currentTask = this._compactCodexInstructionText(workflowContext.currentTask, COMPACT_CODEX_TASK_CHARS);
+      const expectedReport = this._compactCodexInstructionText(
+        String(workflowContext.expectedReport ?? '').replace(/[\r\n`]+/g, ' | '),
+        COMPACT_CODEX_TASK_CHARS
+      );
+      const recoverySnippet = this._compactCodexInstructionText(options.recoverySnippet, COMPACT_CODEX_PROGRESS_CHARS);
+
+      if (resumeCodexPrompt) {
+        lines.push('Resume the same swarm task from your current progress.');
+        if (recoverySnippet) {
+          lines.push(`Last progress: ${recoverySnippet}`);
+        } else if (currentTask) {
+          lines.push(`Current task: ${currentTask}`);
+        }
+      } else {
+        if (agentPrompt) {
+          lines.push(agentPrompt);
+        }
+        if (!agentPrompt && currentTask) {
+          lines.push(`Current task: ${currentTask}`);
+        }
+        if (handoffTargets.length === 0) {
+          if (expectedReport) {
+            lines.push(`Required final report: ${expectedReport}`);
+          } else if (currentTask && agentPrompt) {
+            lines.push(`Current task: ${currentTask}`);
+          }
+        }
+      }
+      lines.push('');
+
+      if (handoffTargets.length > 0) {
+        if (handoffTargets.length === 1) {
+          lines.push(`When your work is complete, hand off to ${handoffTargets[0]}.`);
+          lines.push('Last line only: __HANDOFF__:<targetId>:{"summary":"actual completed work","result":"actual findings"}');
+          lines.push(`For this workflow, replace <targetId> with ${handoffTargets[0]}.`);
+        } else {
+          lines.push(`When your work is complete, hand off to one of: ${handoffTargets.join(', ')}.`);
+          lines.push('Last line only: __HANDOFF__:<targetId>:{"summary":"actual completed work","result":"actual findings"}');
+        }
+        lines.push('No extra text after that last handoff line.');
+      } else {
+        lines.push('You are the final agent. After completing your work, output __DONE__ on its own last line.');
+      }
+
+      return lines.join('\n');
     }
 
     // Agent's own system prompt / role instructions
@@ -1315,6 +2526,26 @@ class SwarmEngine {
     return lines.join('\n');
   }
 
+  _compactCodexInstructionText(text, maxChars) {
+    const normalized = String(text ?? '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!normalized) return '';
+    if (!Number.isFinite(maxChars) || maxChars < 16 || normalized.length <= maxChars) {
+      return normalized;
+    }
+    return `${normalized.slice(0, maxChars - 3).trimEnd()}...`;
+  }
+
+  _buildCodexRecoverySnippet(state = null) {
+    if (!state) return '';
+    const snippet = this._compactCodexInstructionText(
+      state.lastOutputSnippet || this._buildSemanticSnippet(state._snippetSourceBuffer ?? ''),
+      COMPACT_CODEX_PROGRESS_CHARS
+    );
+    return snippet;
+  }
+
   _buildContinueAfterDonePrompt(node, workflowContext, handoffTargets) {
     const agentLabel = node?.data?.label || node?.id || 'This agent';
     const lines = [
@@ -1340,6 +2571,54 @@ class SwarmEngine {
     lines.push('Replace the summary value with an actual description of what you accomplished.');
 
     return lines.join('\n');
+  }
+
+  _buildMissingHandoffReminderPrompt(node, workflowContext, handoffTargets) {
+    const agentLabel = node?.data?.label || node?.id || 'This agent';
+    const lines = [
+      `${agentLabel} appears to be back at the interactive prompt without emitting the required final handoff token.`,
+      'If your analysis is complete, do not continue with more setup or explanation.',
+    ];
+
+    if (workflowContext?.currentTask) {
+      lines.push(`Current task: ${workflowContext.currentTask}`);
+    }
+
+    if (handoffTargets.length === 1) {
+      lines.push(`Output the final handoff now to ${handoffTargets[0]}.`);
+    } else if (handoffTargets.length > 1) {
+      lines.push(`Output the final handoff now to the best next agent: ${handoffTargets.join(', ')}.`);
+    }
+
+    lines.push('Reuse the exact swarm handoff syntax from the original instructions on your final line.');
+    lines.push('That final line must use the real downstream target id plus a compact flat JSON object with primitive values only.');
+    lines.push('Do not emit the final-agent done marker while downstream targets still exist.');
+
+    return lines.join('\n');
+  }
+
+  _shouldSendMissingHandoffReminder(execution, nodeId, state) {
+    if (!execution || !state) return false;
+    if (state.provider !== RUNTIME_PROVIDER.CODEX) return false;
+    if (state.status !== 'running') return false;
+    if (state.runtimeBlocker || execution.runtimeBlocker) return false;
+    if ((state.handoffCount ?? 0) > 0) return false;
+    if ((state.promptSubmissionCount ?? 0) <= 0) return false;
+    if (!state.promptReady || state.pendingPrompt) return false;
+
+    const handoffTargets = execution.workflowDef.edges
+      .filter((edge) => edge.source === nodeId)
+      .map((edge) => edge.target);
+    if (handoffTargets.length === 0) return false;
+
+    const now = Date.now();
+    const lastBusyAt = state.lastRuntimeBusyAt ?? state.spawnedAt ?? now;
+    if ((now - lastBusyAt) < SWARM_CODEX_MISSING_HANDOFF_IDLE_MS) return false;
+
+    const recentRuntimeOutput = this._normalizeParserChunk(state._runtimeScanBuffer ?? '').toLowerCase();
+    if (!recentRuntimeOutput.trim()) return false;
+
+    return true;
   }
 
   /**
@@ -1383,6 +2662,26 @@ class SwarmEngine {
     if (!execution) return;
 
     const { targetId, contextUpdate } = event;
+    const sourceState = execution.agentStates.get(sourceNodeId);
+
+    // Ignore duplicate handoff processing once the source agent has already
+    // left the active running state. This prevents repeated PTY redraws from
+    // re-triggering the same downstream transition while the first handoff is
+    // still opening the target session.
+    if (sourceState && sourceState.status !== 'running') {
+      return;
+    }
+
+    if (sourceState) {
+      this._clearNoProgressWatch(sourceState);
+      if (sourceState.missingHandoffReminderTimer) {
+        clearTimeout(sourceState.missingHandoffReminderTimer);
+        sourceState.missingHandoffReminderTimer = null;
+      }
+      sourceState.status = 'handoffing';
+      sourceState.runtimeBlocker = null;
+      this._markAgentProgress(execution, sourceNodeId, sourceState, 'parser_token');
+    }
 
     // 1. Shallow merge context update (DEC-V3-05: OpenAI Swarm pattern)
     if (contextUpdate && typeof contextUpdate === 'object') {
@@ -1407,7 +2706,6 @@ class SwarmEngine {
     }
 
     // 5. Increment source agent handoffCount
-    const sourceState = execution.agentStates.get(sourceNodeId);
     if (sourceState) {
       sourceState.handoffCount = (sourceState.handoffCount ?? 0) + 1;
     }
@@ -1429,6 +2727,7 @@ class SwarmEngine {
     // 8. Inject updated context into target agent's PTY
     const targetState = execution.agentStates.get(targetId);
     if (targetState && targetState.sessionId) {
+      this._markAgentProgress(execution, targetId, targetState, 'downstream_spawn');
       const targetNode = execution.workflowDef.nodes.find((n) => n.id === targetId);
       if (targetNode) {
         const handoffTargets = execution.workflowDef.edges
@@ -1487,6 +2786,10 @@ class SwarmEngine {
       .map((edge) => edge.target);
 
     if (state?.runtimeBlocker || execution.runtimeBlocker) {
+      if (state?.missingHandoffReminderTimer) {
+        clearTimeout(state.missingHandoffReminderTimer);
+        state.missingHandoffReminderTimer = null;
+      }
       state.status = 'blocked';
       this._broadcastAgentStatus(executionId, nodeId, state);
       this._syncExecutionStatusFromAgents(execution);
@@ -1525,6 +2828,11 @@ class SwarmEngine {
     }
 
     if (state) {
+      if (state.missingHandoffReminderTimer) {
+        clearTimeout(state.missingHandoffReminderTimer);
+        state.missingHandoffReminderTimer = null;
+      }
+      this._clearNoProgressWatch(state);
       state.status = 'done';
       state.runtimeBlocker = null;
     }
@@ -1578,6 +2886,14 @@ class SwarmEngine {
         clearTimeout(state.doneReminderTimer);
         state.doneReminderTimer = null;
       }
+      if (state.missingHandoffReminderTimer) {
+        clearTimeout(state.missingHandoffReminderTimer);
+        state.missingHandoffReminderTimer = null;
+      }
+      if (state.noProgressTimer) {
+        clearTimeout(state.noProgressTimer);
+        state.noProgressTimer = null;
+      }
     }
 
     try {
@@ -1598,6 +2914,10 @@ class SwarmEngine {
       if (state.promptReadyTimer) {
         clearTimeout(state.promptReadyTimer);
         state.promptReadyTimer = null;
+      }
+      if (state.noProgressTimer) {
+        clearTimeout(state.noProgressTimer);
+        state.noProgressTimer = null;
       }
       state.sessionId = null;
       state.tapFn = null;
@@ -1739,6 +3059,10 @@ class SwarmEngine {
   getStatus(executionId, executionOverride = null) {
     const e = executionOverride || this._executions.get(executionId);
     if (!e) return null;
+
+    for (const state of e.agentStates.values()) {
+      this._refreshAgentSnippet(state, { preferSessionReplay: state.status !== 'running' });
+    }
 
     return {
       executionId: e.executionId,

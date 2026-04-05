@@ -2,6 +2,7 @@
 // Side panel for inspecting and editing agent node configuration.
 import { useSwarmStore } from '../store/SwarmContext';
 import { stripAnsi } from '../utils/stripAnsi';
+import { inspectControlTokens } from '../utils/controlTokens';
 
 export default function AgentInspector({ nodes, onUpdateNode }) {
   const selectedNodeId = useSwarmStore((s) => s.selectedNodeId);
@@ -10,6 +11,7 @@ export default function AgentInspector({ nodes, onUpdateNode }) {
   const setPtyExplosionNodeId = useSwarmStore((s) => s.setPtyExplosionNodeId);
 
   const selectedNode = nodes?.find((n) => n.id === selectedNodeId);
+  const tokenSemantics = inspectControlTokens(agentState?.lastOutputSnippet);
 
   if (!selectedNodeId || !selectedNode) {
     return (
@@ -78,6 +80,13 @@ export default function AgentInspector({ nodes, onUpdateNode }) {
           <div className="bg-gray-800 rounded p-2 text-xs font-mono whitespace-pre-wrap max-h-32 overflow-y-auto text-green-300">
             {stripAnsi(agentState.lastOutputSnippet)}
           </div>
+          {tokenSemantics.notes.length > 0 && (
+            <div className="bg-gray-800/80 border border-gray-700 rounded p-2 text-[11px] text-amber-200 flex flex-col gap-1">
+              {tokenSemantics.notes.map((note) => (
+                <div key={note}>{note}</div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

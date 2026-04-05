@@ -1,3 +1,104 @@
+## 2026-04-05 - debugger - V4.0.3 completion: validated Gemini model registry, bounded pre-handoff blocker, and Swarm runtime sync
+**Outcome:** COMPLETED
+**Summary:** Closed the remaining V4.0.3 tasks (#189-#196) with implementation plus live/browser verification. Backend now owns the runtime model contract through `/api/v1/swarm/runtime-capabilities`, start-route validation rejects unsupported Gemini model overrides before PTY spawn, and the Swarm toolbar renders only backend-approved Gemini options (`gemini-2.5-pro`, `gemini-2.5-flash`). SwarmEngine now tracks per-agent Gemini forward-progress markers and runs a watchdog timer so deterministic control workflows either achieve the first handoff or block honestly with `runtimeBlocker.type=no_progress_timeout` instead of sitting in `running` indefinitely. Frontend lifecycle sync was tightened by clearing execution-only state before new runs, preserving the loaded workflow across reset, and re-keying `SwarmCanvas` by workflow/execution identity so stale node/feed state cannot survive new runs or workflow switches. Live QA against `Prompt Reliability Control Workflow` on 2026-04-05 produced execution `e17a6ea7-818e-4ef0-8420-e1c6f00b7cd7`, which blocked honestly after ~67.5s with no ghost execution left behind after stop/reload/navigation.
+**Files changed:** server/services/SwarmEngine.js, server/routes/swarm.js, server/tests/swarm-engine.test.js, server/tests/swarm-routes.test.js, client/src/hooks/useSwarm.js, client/src/store/SwarmContext.jsx, client/src/views/SwarmView.jsx, docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** stale Swarm ghost rehydration gate closure, invalid Gemini model registry drift, silent pre-handoff Gemini stall, runtime sync drift across start/stop/reset/navigation
+**Decisions made:** Treat a bounded honest `blocked` outcome as an acceptable control-workflow result when Gemini cannot make real forward progress; do not leave the run in silent `running`. Keep runtime model choice backend-authoritative instead of duplicating static lists in the client.
+**Blockers:** none for V4.0.3; Claude full-chain live verification remains quota-sensitive but is no longer a blocker for this wave because the closed gates were satisfied through Gemini live runs plus browser/backend agreement.
+**Next:** Resume from V4.1+ or any newly discovered live-provider anomalies.
+---
+## 2026-04-05 - project-manager - V4.0.3 task planning for Swarm hydration + Gemini control-flow stability
+**Outcome:** COMPLETED
+**Summary:** Opened a new V4.0.3 area in `docs/TASK_PLAN.md` for the post-V4.0.2 reliability bugs found during real E2E retests. The new task set (#188-#196) is intentionally split into three bug streams: (1) stale Swarm ghost execution hydration and lifecycle-sync correctness, (2) Gemini runtime model registry drift between UI and installed CLI, and (3) oversized Gemini pre-handoff budget burn with no honest stop reason. Each stream now has a dedicated implementation task and TEST GATE, plus a final AREA CHECKPOINT requiring browser/backend agreement before closure.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (planning only)
+**Decisions made:** Kept the new bugs in a separate V4.0.3 wave rather than overloading V4.0.2, because the new failures are about runtime hydration integrity and honest Gemini control-flow behavior, not only PTY/replay cosmetics.
+**Blockers:** Claude full-chain verification remains quota-blocked, so the new gates rely on Gemini live runs plus deterministic browser/backend cross-checks.
+**Next:** Highest-priority unresolved implementation task is TASK #190 (validated Gemini model registry) or TASK #192 (bounded pre-handoff progress), depending on whether we want to remove invalid runtime choices first or stop silent budget burn first.
+---
+## 2026-04-05 - debugger - Swarm ghost execution hydration fix
+**Outcome:** COMPLETED
+**Summary:** Investigated why Swarm could reopen showing a stale completed/stopped execution that no longer matched reality. The backend duplicate-handoff mitigation helped, but the browser still rendered ghost state because `useSwarm.restorePersistedExecution()` only had logic for the "there is a stored execution" case. If there was no persisted active execution, Zustand could keep a dead execution snapshot in memory; if there was a persisted execution that had already become terminal, the hook still rehydrated that dead snapshot into the store before clearing localStorage. Added `clearExecutionState()` to preserve the loaded workflow while wiping execution-only data, then updated `useSwarm.js` to clear stale execution state when there is no persisted execution, when the persisted execution lookup fails, and immediately after hydrating a terminal execution. Browser verification after rebuild showed the intended behavior: after reload, Swarm returns to an idle canvas instead of reopening on the stale stopped run.
+**Files changed:** client/src/hooks/useSwarm.js, client/src/store/SwarmContext.jsx, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** Swarm ghost execution state / stale canvas rehydration after stopped-completed runs
+**Decisions made:** Preserve `workflowDef` across view changes, but treat execution state as disposable unless there is a real active persisted execution to restore.
+**Blockers:** Same-session project selection through the sidebar remained awkward during browser automation, but the stale-execution rehydration path itself was verified after rebuild.
+**Next:** If needed, add a dedicated frontend test harness around `useSwarm.restorePersistedExecution()` so this hydration regression is covered automatically.
+---
+## 2026-04-05 - debugger - Fresh Gemini/Claude E2E retest after duplicate-handoff mitigation
+**Outcome:** PARTIAL
+**Summary:** Re-ran the deterministic `Prompt Reliability Control Workflow` as a real E2E after the SwarmEngine duplicate-handoff mitigation. The fresh Gemini execution `c578b338-1f29-445f-a869-5626231aa02e` did not reproduce the old backend edge explosion during the retest window: while the browser initially showed a stale ghost canvas from an older execution (`Completed`, `13 handoffs`), the live backend status for the new execution kept only `finder` running for over a minute, then ended up with `edgeCounters.c1=1` and `finder.handoffCount=1` after stop. This points to two separate remaining problems: the backend duplicate-handoff race appears improved, but the Swarm UI can still render stale execution state that does not match the active runtime. The same Gemini run also consumed a very large budget while the first agent stayed active, so the chain is still not healthy enough to call fixed. A fresh Claude run `8655a46f-43f3-4c09-b586-fd5ee70872b8` again hit the real usage-limit menu within ~12 seconds and correctly surfaced a `rate_limited` blocker instead of continuing.
+**Files changed:** docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (verification-only retest)
+**Decisions made:** Treat the original backend prompt-chain explosion and the current stale-UI/ghost-canvas problem as separate bugs. Do not declare the E2E healthy until the browser reflects the current execution accurately and Gemini no longer stalls the first agent for an outsized budget window.
+**Blockers:** Claude full-chain verification is still blocked by provider quota. Gemini still shows long-running first-agent behavior and stale UI state during retest.
+**Next:** Investigate how `useSwarm`/store hydration selects the active execution and why the canvas can render a previous completed run while a new execution is live.
+---
+## 2026-04-05 - debugger - Duplicate handoff chain analysis + SwarmEngine mitigation
+**Outcome:** COMPLETED
+**Summary:** Investigated why some agents appeared to receive many chained prompts/messages. Code inspection and the Gemini control-flow audit showed that this was not only normal orchestration chatter: `_onHandoff()` left the source agent effectively parseable while the target PTY was still being ensured, so repeated PTY redraws or repeated Gemini handoff text could re-trigger the same downstream transition many times before the source was finally marked done. SwarmEngine now marks the source as internal `handoffing` at the start of `_onHandoff()`, ignores duplicate handoff attempts once the source has left `running`, and stops parser/runtime-blocker processing in the PTY tap for non-running agents. Added regression test proving repeated Gemini handoff chunks during an in-flight handoff no longer increase `handoffCount`/edge counters beyond 1.
+**Files changed:** server/services/SwarmEngine.js, server/tests/swarm-engine.test.js, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** Duplicate downstream handoff/prompt processing during an in-flight handoff window
+**Decisions made:** Treat one prompt per agent start/handoff plus bounded recovery prompts as expected behavior, but treat repeated edge-counter growth for one logical transition as a bug.
+**Blockers:** Live Claude chain verification remains blocked by provider quota; Gemini still has separate runtime/model-list issues (`gemini-2.0-flash` invalid in installed CLI, occasional provider INVALID_ARGUMENT corruption).
+**Next:** Re-run the lean 3-agent control workflow live against Gemini/Claude when available to confirm the repeated `handoffCount` spike is gone outside the mock regression.
+---
+## 2026-04-05 - debugger - Claude/Gemini prompt-delivery stress audit via browser + Swarm APIs
+**Outcome:** PARTIAL
+**Summary:** Ran a browser-driven Swarm stress audit with two new deterministic workflows: a 5-agent `Prompt Stress Audit Workflow` and a lean 3-agent `Prompt Reliability Control Workflow`, both targeting exact repo-derived final outputs. Claude-only execution was blocked immediately by a real usage-limit menu, so it validated blocker detection but not downstream handoffs. Gemini execution exposed three fresh runtime findings: the advertised model option `gemini-2.0-flash` is rejected by the installed Gemini CLI (`Model "gemini-2.0-flash" was not found or is invalid.`), the 3-agent control workflow produced repeated downstream delivery (`finder` finished with `handoffCount=18`, edge `c1=18`) while `route-checker` stayed running, and the Swarm UI left `Run` disabled after a reset/model-selection sequence even though the workflow remained visibly loaded. PTY replay/live rendering stayed visible in the UI throughout, so the main failures were runtime/model-selection and handoff duplication rather than blank terminals.
+**Files changed:** docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (QA discovery only)
+**Decisions made:** Treat `gemini-2.0-flash` as non-validated until the model list is reconciled with the real CLI; prioritize investigation of repeated `_onHandoff` / prompt-delivery duplication before trusting Gemini multi-agent chains.
+**Blockers:** Claude provider quota prevented a full Claude-chain verification on 2026-04-05. Gemini repeated-handoff behavior prevents declaring prompt delivery healthy even when PTY visibility looks good.
+**Next:** Investigate why a single Gemini source agent can increment `handoffCount`/edge counters many times for one downstream step, then rerun the 3-agent control workflow as the regression proof.
+---
+## 2026-04-05 - debugger - Gemini INVALID_ARGUMENT investigation, backend mitigation, and live repro retest
+**Outcome:** PARTIAL
+**Summary:** Investigated the repeated Gemini error `Please ensure that the number of function response parts is equal to the number of function call parts` from the live Swarm E2E. The strongest local reproduction path was the BroadcastBar `hard` mode against a running Gemini Researcher: the old route wrote raw `Ctrl-C` / PTY input directly while Gemini was inside tool/function execution, which can corrupt the provider turn. The backend now routes broadcasts through `SwarmEngine.sendBroadcast()`, queues Gemini operator prompts until the runtime prompt is writable again instead of interrupting mid-turn, flushes pending prompts immediately on prompt-ready detection, and stops treating non-retrying Gemini function-call mismatch errors as harmless noise. Targeted verification passed (`npm test --prefix server -- swarm-engine.test.js swarm-routes.test.js` = 86/86), and a fresh live Puppeteer rerun after restarting the server reproduced the same `hard` Gemini broadcast flow without reintroducing `INVALID_ARGUMENT` in the Researcher PTY buffer.
+**Files changed:** server/services/SwarmEngine.js, server/routes/swarm.js, server/tests/swarm-engine.test.js, server/tests/swarm-routes.test.js, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** Gemini hard broadcasts no longer blindly interrupt active tool/function turns; broken Gemini function-call mismatch output is now surfaced as a real runtime blocker unless the CLI explicitly says it is retrying automatically.
+**Decisions made:** Treat prompt-ready as a true writable-prompt signal for Gemini runtime injection; prefer queued delivery over destructive interruption when a Gemini agent is actively working.
+**Blockers:** The broader semantic issue remains open: a queued operator broadcast does not automatically rewrite shared workflow context, so changing the downstream final content goal mid-run is still best-effort rather than guaranteed.
+**Next:** If we want operator redirects to propagate deterministically to downstream agents, add an explicit workflow-context mutation path for broadcasts instead of relying only on PTY text injection.
+---
+## 2026-04-05 - debugger - Gemini-only full E2E user-flow with PTY terminal inspection
+**Outcome:** PARTIAL
+**Summary:** Ran a full browser E2E on `Research and Report Team` with runtime provider `Gemini` only, forced a precise Writer target output (`Roman Aqueducts Brief` in 5 exact lines), and validated the agent terminals in detail through Puppeteer plus backend status/output endpoints. The Researcher PTY Explosion now replays real content instead of showing a blank panel, but it also exposes repeated Gemini `INVALID_ARGUMENT` API errors and visible stray `]]` fragments. The execution eventually moved to the Writer and finished as `completed`, yet the Writer PTY replay was stable across close/reopen and showed unrelated stale output about `2026 Development Strategy`; the requested Roman-aqueduct text never appeared, and the run wrote an incorrect `summary_report.md` artifact in the repo root which was removed after inspection.
+**Files changed:** docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** None in this pass; this was a verification-only E2E run.
+**Decisions made:** Keep the remaining V4.0.2 Gemini QA gates open because provider-only completion is not enough; the flow must also produce the correct downstream Writer content.
+**Blockers:** Gemini terminal behavior is still semantically unreliable under full E2E load: the Researcher can surface provider API errors while the run still completes, and the Writer can emit stale/wrong output unrelated to the requested goal.
+**Next:** Investigate why the Writer session replays stale content and why execution can complete after repeated Gemini `INVALID_ARGUMENT` failures, then rerun the same exact-user scenario until the Writer produces the requested target text.
+---
+## 2026-04-05 � debugger � Gemini auto model-switch syntax correction + live rerun after restart
+**Outcome:** PARTIAL
+**Summary:** Corrected the Gemini fallback command to use the actual CLI syntax `/model set <model>` after verifying the installed Gemini CLI command metadata. Re-ran the targeted backend suites (`npm test --prefix server -- SessionManager.test.js swarm-engine.test.js` = 100/100, plus `npm test --prefix server -- swarm-engine.test.js` after the final comment cleanup = 75/75), restarted the local server on `http://127.0.0.1:3000`, and launched a fresh real Gemini execution for `Research and Report Team` with runtime model `gemini-2.5-pro`. The live session stayed `running` for several minutes and consumed a large token budget without reproducing the usage-limit menu again, so the new `/model set` path is active in code and covered by tests but was not freshly observed firing in a natural quota event during this rerun.
+**Files changed:** server/services/SwarmEngine.js, server/tests/swarm-engine.test.js, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** Gemini auto-recovery now uses the real slash-command syntax required by the CLI when switching models after a usage-limit stop/cancel flow.
+**Decisions made:** Keep the live Gemini QA gates honest/open until a natural usage-limit menu reappears and the updated `/model set` recovery can be re-observed end to end in the UI.
+**Blockers:** The latest live Gemini rerun did not reproduce the quota/menu state needed to witness the fallback path in production, so only code/test verification was possible for the command-syntax correction.
+**Next:** Re-run the same Gemini workflow when the account/model state reproduces the usage-limit menu, then confirm `lastModelFallback` and downstream Writer progression with the corrected slash command.
+---
+## 2026-04-05 — debugger — Real Gemini rerun for V4.0.2 QA gates (#182 partial pass, area still open)
+**Outcome:** PARTIAL
+**Summary:** Re-ran `Research and Report Team` in the browser with runtime provider `Gemini` and model `gemini-2.5-pro` after the follow-up SwarmEngine patch. The execution now stays `running` during Gemini Thinking/auth output, the usage-limit recovery path no longer misclassifies into a false auth blocker, and the engine records `lastModelFallback = gemini-2.5-flash`, proving the automatic fallback command is triggered in a real session. However Gemini CLI still returns `API Error: You have exhausted your capacity on this model` and redraws the same usage-limit menu instead of advancing to the Writer node, so PTY Explosion / Writer snippet / feed-icon end-to-end verification remains blocked by provider/runtime behavior.
+**Files changed:** server/services/SwarmEngine.js, server/tests/swarm-engine.test.js, docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** BUG-BLOCKER-FALSE-POS-1 fully validated in real Gemini; Gemini auto-model-switch flow improved but not yet sufficient to close the full V4.0.2 area
+**Decisions made:** Treat request-cancelled / ready markers as valid Gemini fallback readiness signals. Keep TASK #184, TASK #186, and TASK #187 open until a real Gemini run advances past the usage-limit menu and reaches the Writer stage.
+**Blockers:** Gemini CLI account/runtime still reports exhausted capacity even after the fallback to `gemini-2.5-flash` is queued/sent, preventing downstream handoff and UI-gate validation.
+**Next:** Either reproduce with a Gemini account/quota state that allows the flash fallback to proceed, or add another recovery strategy once the exact CLI behavior is understood.
+---
+
+## 2026-04-05 — debugger — V4.0.2 code-side fix completion for TASKS #177, #179, #181, #183, #185
+**Outcome:** COMPLETED
+**Summary:** Closed the implementation side of the V4.0.2 Gemini PTY/UI bug wave. `SessionManager.attachClient()` now sanitizes replay-only TUI control sequences (DEC private modes, save/restore, cursor-home/clear-line) so fresh PTY Explosion terminals replay readable content without corrupting the live stream, and new SessionManager regressions prove replay-then-live streaming plus session isolation. `SwarmEngine` now scopes transient Gemini retry suppression to Gemini, auto-handles Gemini usage-limit menus before classifying the execution as blocked, and strips echoed `SWARM PROTOCOL` text from user-facing `lastOutputSnippet` while keeping the raw buffer for runtime detection. `InterAgentFeed` now maps `handoff_completed` and the current live feed event types used by `useSwarm`, removing the `?` fallback.
+**Files changed:** server/services/SessionManager.js, server/services/SwarmEngine.js, client/src/canvas/InterAgentFeed.jsx, server/tests/SessionManager.test.js, server/tests/swarm-engine.test.js, docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** BUG-PTY-EXPLOSION-1, BUG-RINGBUFFER-ANSI-1, BUG-BLOCKER-FALSE-POS-1, BUG-SNIPPET-PROTOCOL-1, BUG-FEED-ICON-1
+**Decisions made:** Treat the PTY Explosion "no live output" symptom as replay-state corruption, not as a missing `onData` fan-out bug. Keep the V4.0.2 QA TEST GATE tasks open until real Gemini browser verification is run.
+**Blockers:** Remaining TEST GATE / AREA CHECKPOINT work (#178, #180, #182, #184, #186, #187) still requires manual Gemini runtime verification.
+**Next:** Run the remaining V4.0.2 QA gates against a real Gemini execution before declaring the area closed.
+---
+
 ## 2026-04-05 — project-manager — Tasks #177-#187: V4.0.2 Gemini E2E PTY / UI Bug Fixes (Planning)
 **Outcome:** COMPLETED
 **Summary:** Added 11 new tasks (#177-#187) to TASK_PLAN.md under new area V4.0.2 for 6 bugs found during E2E testing with Gemini CLI provider. Bugs: BUG-PTY-EXPLOSION-1 (CRITICAL, no live output in PtyExplosion), BUG-RINGBUFFER-ANSI-1 (HIGH, blank replay from Ink TUI ANSI codes — also covers BUG-5), BUG-BLOCKER-FALSE-POS-1 (HIGH, false rate limit detection during Thinking phase), BUG-SNIPPET-PROTOCOL-1 (LOW, protocol text in lastOutputSnippet), BUG-FEED-ICON-1 (COSMETIC, missing handoff_completed icon). Each bug has a fix task + TEST GATE, plus an AREA CHECKPOINT #187.
@@ -2636,3 +2737,20 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Tasks #145 (BUG-UX-HANDOFF-1) and #146 (BUG-UX-FEEDBACK-1) should be completed, then TEST GATE #147.
 ---
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

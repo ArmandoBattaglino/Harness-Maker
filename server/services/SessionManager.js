@@ -23,6 +23,24 @@ const IDLE_TIMEOUT_MS =
 // Idle sweeper runs every 5 minutes
 const SWEEP_INTERVAL_MS = 5 * 60 * 1000;
 
+function sanitizeReplayOutput(replayBuffer) {
+  let replayStr = Buffer.isBuffer(replayBuffer)
+    ? replayBuffer.toString('utf8')
+    : String(replayBuffer ?? '');
+
+  // Strip DEC private mode toggles (alternate screen, mouse mode, cursor visibility, etc.)
+  replayStr = replayStr.replace(/\x1b\[\?\d+[hl]/g, '');
+  // Strip cursor save/restore sequences commonly emitted by TUIs
+  replayStr = replayStr.replace(/\x1b7|\x1b8|\x1b\[[su]/g, '');
+  // Strip clear-screen and cursor-positioning controls that make replay render blank
+  replayStr = replayStr.replace(/\x1b\[[0-9;]*[Hf]/g, '');
+  replayStr = replayStr.replace(/\x1b\[[012]?J/g, '');
+  replayStr = replayStr.replace(/\x1b\[[012]?K/g, '');
+  replayStr = replayStr.replace(/\x1b\[\d*[AB]/g, '');
+
+  return replayStr;
+}
+
 // -------------------------------------------------------------------------
 // SessionRecord shape (internal):
 // {
@@ -174,11 +192,13 @@ export class SessionManager {
     session.clients.add(ws);
     session.lastActivityAt = new Date();
 
-    // Replay buffered output so the client catches up on missed output
+    // Replay buffered output so the client catches up on missed output.
+    // Strip ANSI cursor-positioning and screen-clearing codes that TUI
+    // frameworks (Gemini Ink) emit — these produce blank areas on replay.
     const replay = session.buffer.toBuffer();
     if (replay.length > 0) {
       try {
-        ws.send(replay, { binary: false });
+        ws.send(sanitizeReplayOutput(replay), { binary: false });
       } catch (err) {
         // Client may have closed between the check and send — log type only (SEC-08)
         console.error(`[SessionManager] Ring buffer replay send error: ${err.constructor.name}`);

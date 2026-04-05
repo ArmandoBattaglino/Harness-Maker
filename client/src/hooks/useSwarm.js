@@ -45,6 +45,7 @@ export function useSwarm(workflowId) {
   const addFeedEvent = useSwarmStore((s) => s.addFeedEvent);
   const updateTriggerState = useSwarmStore((s) => s.updateTriggerState);
   const setWsConnected = useSwarmStore((s) => s.setWsConnected);
+  const clearExecutionState = useSwarmStore((s) => s.clearExecutionState);
 
   const applyExecutionSnapshot = useCallback(async (snapshot) => {
     const currentState = useSwarmStore.getState();
@@ -114,11 +115,25 @@ export function useSwarm(workflowId) {
     if (wsRef.current) return;
 
     const stored = readStoredExecution();
-    if (!stored?.executionId) return;
+    if (!stored?.executionId) {
+      const currentState = useSwarmStore.getState();
+      const hasStaleExecutionState = Boolean(
+        currentState.activeExecutionId ||
+        currentState.executionStatus !== 'idle' ||
+        Object.keys(currentState.agentStates ?? {}).length > 0 ||
+        Object.keys(currentState.edgeCounters ?? {}).length > 0 ||
+        currentState.interAgentFeed?.length > 0
+      );
+      if (hasStaleExecutionState) {
+        clearExecutionState();
+      }
+      return;
+    }
 
     const status = await apiGet(`/api/v1/swarm/${stored.executionId}/status`).catch(() => null);
     if (!status) {
       clearStoredExecution();
+      clearExecutionState();
       return;
     }
 
@@ -128,10 +143,13 @@ export function useSwarm(workflowId) {
     };
     const hydrated = await applyExecutionSnapshot(snapshot);
 
-    if (!['stopped', 'completed', 'failed'].includes(hydrated.status)) {
-      connectWs(stored.executionId);
+    if (['stopped', 'completed', 'failed'].includes(hydrated.status)) {
+      clearExecutionState();
+      return;
     }
-  }, [applyExecutionSnapshot]);
+
+    connectWs(stored.executionId);
+  }, [applyExecutionSnapshot, clearExecutionState]);
 
   // Connect WS for a running execution
   const connectWs = useCallback((executionId) => {
@@ -260,6 +278,9 @@ export function useSwarm(workflowId) {
   // Start execution
   const startExecution = useCallback(async (projectId, projectPath, runtimeProvider = 'auto', runtimeModels = null) => {
     if (!workflowId) throw new Error('No workflow selected');
+    wsRef.current?.close();
+    wsRef.current = null;
+    clearExecutionState();
     const body = { projectId, projectPath, runtimeProvider };
     if (runtimeModels && typeof runtimeModels === 'object') {
       body.runtimeModels = runtimeModels;
@@ -270,7 +291,7 @@ export function useSwarm(workflowId) {
     await applyExecutionSnapshot({ ...data, executionId, workflowId });
     connectWs(executionId);
     return executionId;
-  }, [workflowId, setExecution, connectWs, applyExecutionSnapshot]);
+  }, [workflowId, setExecution, connectWs, applyExecutionSnapshot, clearExecutionState]);
 
   // Stop execution
   const stopExecution = useCallback(async (executionId) => {

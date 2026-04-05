@@ -145,3 +145,126 @@ describe('swarmRoutes pause/resume contract', () => {
     expect(swarmEngine.resumeExecution).not.toHaveBeenCalled();
   });
 });
+
+describe('swarmRoutes runtime model contract', () => {
+  it('returns backend-authoritative runtime capabilities', () => {
+    const swarmEngine = {
+      getStatus: vi.fn(),
+      pauseExecution: vi.fn(),
+      resumeExecution: vi.fn(),
+      stopExecution: vi.fn(),
+      getExecution: vi.fn(),
+    };
+    const router = swarmRoutes(swarmEngine, {
+      getSession: vi.fn(),
+      claudeBin: '/usr/local/bin/claude',
+      codexBin: '/usr/local/bin/codex',
+      geminiBin: '/usr/local/bin/gemini',
+    });
+    const handler = getRouteHandler(router, 'get', '/runtime-capabilities');
+    const req = { params: {}, body: {}, app: { locals: {} } };
+    const res = createMockRes();
+
+    handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.availability).toEqual({
+      claude: true,
+      codex: true,
+      gemini: true,
+    });
+    expect(res.body.defaults).toEqual({
+      claude: 'opus',
+      codex: 'gpt-5.4',
+      gemini: 'gemini-2.5-pro',
+    });
+    expect(res.body.providers.claude).toEqual([
+      'opus',
+      'claude-opus-4-6',
+      'sonnet',
+      'claude-sonnet-4-6',
+      'haiku',
+      'claude-haiku-4-5-20251001',
+    ]);
+    expect(res.body.providers.gemini).toEqual(['gemini-2.5-pro', 'gemini-2.5-flash']);
+    expect(res.body.providers.codex).toEqual(['gpt-5.4', 'gpt-5.1-codex', 'gpt-4.1-codex']);
+    expect(res.body.providers.gemini).not.toContain('gemini-2.0-flash');
+  });
+
+  it('returns a precise 400 when startExecution rejects an unsupported runtime model', async () => {
+    const error = new Error("Unsupported gemini model 'gemini-2.0-flash'. Supported models: gemini-2.5-pro, gemini-2.5-flash");
+    error.statusCode = 400;
+    error.code = 'UNSUPPORTED_RUNTIME_MODEL';
+
+    const swarmEngine = {
+      startExecution: vi.fn().mockRejectedValue(error),
+      getStatus: vi.fn(),
+      pauseExecution: vi.fn(),
+      resumeExecution: vi.fn(),
+      stopExecution: vi.fn(),
+      getExecution: vi.fn(),
+    };
+    const router = swarmRoutes(swarmEngine, { getSession: vi.fn() });
+    const handler = getRouteHandler(router, 'post', '/:workflowId/start');
+    const req = {
+      params: { workflowId: 'wf-1' },
+      body: {
+        projectId: 'proj-1',
+        projectPath: '/projects/proj-1',
+        runtimeProvider: 'gemini',
+        runtimeModels: { gemini: 'gemini-2.0-flash' },
+      },
+      app: { locals: {} },
+    };
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toEqual({
+      error: "Unsupported gemini model 'gemini-2.0-flash'. Supported models: gemini-2.5-pro, gemini-2.5-flash",
+      code: 'UNSUPPORTED_RUNTIME_MODEL',
+    });
+  });
+});
+
+describe('swarmRoutes broadcast delivery', () => {
+  it('uses SwarmEngine.sendBroadcast so Gemini sessions can queue safe injections', () => {
+    const swarmEngine = {
+      getStatus: vi.fn().mockReturnValue({
+        status: 'running',
+        agentStates: {
+          'agent-a': { status: 'running', sessionId: 'sess-a' },
+        },
+      }),
+      getExecution: vi.fn().mockReturnValue({
+        workflowDef: {
+          nodes: [
+            { id: 'agent-a', type: 'agent', data: { label: 'Agent A' } },
+          ],
+        },
+      }),
+      sendBroadcast: vi.fn().mockReturnValue({ sent: true, delivery: 'queued' }),
+    };
+    const sessionManager = { writeInput: vi.fn(), getSession: vi.fn() };
+    const router = swarmRoutes(swarmEngine, sessionManager);
+    const handler = getRouteHandler(router, 'post', '/:executionId/broadcast');
+    const req = {
+      params: { executionId: 'exec-1' },
+      body: { text: 'Redirect the task', scope: 'all', mode: 'hard' },
+      app: { locals: {} },
+    };
+    const res = createMockRes();
+
+    handler(req, res);
+
+    expect(swarmEngine.sendBroadcast).toHaveBeenCalledWith('exec-1', 'agent-a', 'Redirect the task', { mode: 'hard' });
+    expect(sessionManager.writeInput).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toMatchObject({
+      sent: 1,
+      recipientNodeIds: ['agent-a'],
+      deliveries: [{ nodeId: 'agent-a', delivery: 'queued' }],
+    });
+  });
+});

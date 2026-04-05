@@ -221,12 +221,12 @@ describe('HandoffParser oversized payload (SEC-V3-07)', () => {
     }).not.toThrow();
   });
 
-  it('should enforce 4KB buffer cap and not crash on oversized accumulation', () => {
-    // Feed 6 KB of garbage — should not throw and buffer stays at max 4096
+  it('should enforce 8KB buffer cap and not crash on oversized accumulation', () => {
+    // Feed 10 KB of garbage — should not throw and buffer stays at max 8192 (SEC-V3-07 raised for TUI frames)
     expect(() => {
-      parser.feed('Z'.repeat(6144));
+      parser.feed('Z'.repeat(10240));
     }).not.toThrow();
-    expect(parser._buf.length).toBeLessThanOrEqual(4096);
+    expect(parser._buf.length).toBeLessThanOrEqual(8192);
   });
 });
 

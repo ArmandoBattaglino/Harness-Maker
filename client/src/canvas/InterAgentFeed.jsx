@@ -5,9 +5,13 @@ import { useSwarmStore } from '../store/SwarmContext';
 
 const EVENT_ICONS = {
   handoff_started: '→',
+  handoff_completed: '✓',
   agent_status: '●',
   circuit_breaker: '⚠',
   execution_status: '⚡',
+  runtime_provider_switch: '⇄',
+  trigger_fired: '⏰',
+  rss_item: '📡',
 };
 
 function formatTimestamp(ts) {
@@ -53,6 +57,8 @@ export default function InterAgentFeed() {
             </span>
             <span className="truncate">
               {event.type === 'handoff_started'
+                ? `${event.sourceNodeId?.slice(0, 6)} → ${event.targetNodeId?.slice(0, 6)}`
+                : event.type === 'handoff_completed'
                 ? `${event.sourceNodeId?.slice(0, 6)} → ${event.targetNodeId?.slice(0, 6)}`
                 : event.type === 'circuit_breaker'
                 ? `⚠ loop ${event.edgeId?.slice(0, 8)} (${event.counter})`

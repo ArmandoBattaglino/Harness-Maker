@@ -166,6 +166,42 @@ describe('SessionManager', () => {
       expect(sentData.toString()).toContain('buffered output');
     });
 
+    it('should sanitize replay-only TUI cursor controls while preserving readable content', async () => {
+      const session = await createTestSession(manager);
+      session.buffer.push('\x1b[?1049h\x1b[2J\x1b[H\x1b[32mVisible line\x1b[0m\r\n\x1b7\x1b[10;5HReplayed text\x1b8');
+      const ws = {
+        readyState: 1,
+        bufferedAmount: 0,
+        send: vi.fn(),
+      };
+
+      manager.attachClient(session.sessionId, ws);
+
+      const replayed = ws.send.mock.calls[0][0].toString();
+      expect(replayed).toContain('\x1b[32mVisible line\x1b[0m');
+      expect(replayed).toContain('Replayed text');
+      expect(replayed).not.toContain('\x1b[?1049h');
+      expect(replayed).not.toContain('\x1b[2J');
+      expect(replayed).not.toContain('\x1b[H');
+      expect(replayed).not.toContain('\x1b7');
+    });
+
+    it('should continue streaming live PTY output after the replay is sent', async () => {
+      const session = await createTestSession(manager);
+      session.buffer.push('buffered output');
+      const ws = {
+        readyState: 1,
+        bufferedAmount: 0,
+        send: vi.fn(),
+      };
+
+      manager.attachClient(session.sessionId, ws);
+      session.pty._emit(' live output');
+
+      expect(ws.send).toHaveBeenNthCalledWith(1, 'buffered output', { binary: false });
+      expect(ws.send).toHaveBeenNthCalledWith(2, ' live output', { binary: false });
+    });
+
     it('should do nothing for unknown sessionId', () => {
       // Should not throw
       expect(() => manager.attachClient('bad-id', {})).not.toThrow();
@@ -298,6 +334,24 @@ describe('SessionManager', () => {
       expect(s1.projectId).toBe('proj-A');
       expect(s2.projectId).toBe('proj-B');
       expect(manager.listSessions()).toHaveLength(2);
+    });
+
+    it('should keep live PTY streams isolated per session when multiple clients are attached', async () => {
+      const sessionA = await manager.createSession('proj-A', '/path/A', FAKE_CLAUDE_BIN);
+      const sessionB = await manager.createSession('proj-B', '/path/B', FAKE_CLAUDE_BIN);
+      const wsA = { readyState: 1, bufferedAmount: 0, send: vi.fn() };
+      const wsB = { readyState: 1, bufferedAmount: 0, send: vi.fn() };
+
+      manager.attachClient(sessionA.sessionId, wsA);
+      manager.attachClient(sessionB.sessionId, wsB);
+
+      sessionA.pty._emit('A-only output');
+      sessionB.pty._emit('B-only output');
+
+      expect(wsA.send).toHaveBeenCalledTimes(1);
+      expect(wsA.send).toHaveBeenCalledWith('A-only output', { binary: false });
+      expect(wsB.send).toHaveBeenCalledTimes(1);
+      expect(wsB.send).toHaveBeenCalledWith('B-only output', { binary: false });
     });
   });
 });

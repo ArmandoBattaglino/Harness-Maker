@@ -12,6 +12,7 @@
 
 import { Router } from 'express';
 import { generateWorkflowFromPrompt } from '../services/ScaffoldGenerator.js';
+import { getRuntimeCapabilitySnapshot } from '../services/SwarmEngine.js';
 
 function getAgentNodeById(workflowDef, nodeId) {
   return workflowDef?.nodes?.find((node) => node.id === nodeId && node.type === 'agent') ?? null;
@@ -67,6 +68,10 @@ export function serializeSessionOutput(session) {
  */
 export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProviders = {}) {
   const router = Router();
+
+  router.get('/runtime-capabilities', (_req, res) => {
+    return res.status(200).json(getRuntimeCapabilitySnapshot(sessionManager));
+  });
 
   // -------------------------------------------------------------------------
   // POST /api/v1/swarm/scaffold
@@ -146,6 +151,9 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
         if (err.message === 'Workflow not found') {
           return res.status(404).json({ error: 'Workflow not found' });
         }
+        if (err.statusCode) {
+          return res.status(err.statusCode).json({ error: err.message, code: err.code ?? null });
+        }
         throw err;
       }
 
@@ -160,7 +168,7 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
       });
     } catch (err) {
       console.error(`[swarm] POST /:workflowId/start error: ${err.message}`);
-      return res.status(500).json({ error: 'Internal server error' });
+      return res.status(err.statusCode ?? 500).json({ error: err.message ?? 'Internal server error' });
     }
   });
 
@@ -331,25 +339,26 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
         targetId
       );
 
+      const deliveries = [];
       for (const target of targets) {
-        if (broadcastMode === 'soft') {
-          sessionManager.writeInput(target.sessionId, text + '\x1b\n');
-        } else {
-          sessionManager.writeInput(target.sessionId, '\x03');
-          setTimeout(() => {
-            sessionManager.writeInput(target.sessionId, text + '\x1b');
-            setTimeout(() => {
-              sessionManager.writeInput(target.sessionId, '\n');
-            }, 100);
-          }, 300);
-        }
+        const result = typeof swarmEngine.sendBroadcast === 'function'
+          ? swarmEngine.sendBroadcast(executionId, target.nodeId, text.trim(), { mode: broadcastMode })
+          : null;
+
+        if (!result?.sent) continue;
+
+        deliveries.push({
+          nodeId: target.nodeId,
+          delivery: result.delivery ?? 'injected',
+        });
       }
 
       return res.status(200).json({
-        sent: targets.length,
+        sent: deliveries.length,
         scope: scope ?? 'all',
         targetId: targetId ?? null,
-        recipientNodeIds: targets.map((target) => target.nodeId),
+        recipientNodeIds: deliveries.map((target) => target.nodeId),
+        deliveries,
       });
     } catch (err) {
       console.error(`[swarm] POST /:executionId/broadcast error: ${err.message}`);

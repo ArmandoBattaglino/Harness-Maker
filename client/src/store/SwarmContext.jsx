@@ -25,6 +25,9 @@ const useSwarmStore = create((set, get) => ({
   // PTY Explosion — node whose terminal is shown full-screen
   ptyExplosionNodeId: null,
 
+  // Runtime provider selection (persisted across view navigation — BUG-RUNTIME-SELECT-PERSIST-1)
+  selectedRuntimeProvider: 'auto',
+
   // Workflow definition (persisted across view navigation — BUG-SWARM-3)
   workflowDef: null,
 
@@ -83,7 +86,32 @@ const useSwarmStore = create((set, get) => ({
   setPtyExplosionNodeId: (id) => set({ ptyExplosionNodeId: id }),
   setWsConnected: (b) => set({ wsConnected: b }),
 
+  setSelectedRuntimeProvider: (providerOrFn) => set((state) => ({
+    selectedRuntimeProvider: typeof providerOrFn === 'function'
+      ? providerOrFn(state.selectedRuntimeProvider)
+      : providerOrFn,
+  })),
   setWorkflowDef: (def) => set({ workflowDef: def }),
+
+  clearExecutionState: () => set({
+    activeExecutionId: null,
+    executionStatus: 'idle',
+    runtimeBlocker: null,
+    runtimeProvider: null,
+    providerStrategy: null,
+    lastFallback: null,
+    agentStates: {},
+    triggerStates: {},
+    edgeCounters: {},
+    budget: { estimatedTokensUsed: 0, limitTokens: 0 },
+    inboxItems: [],
+    interAgentFeed: [],
+    focusedDepartmentId: null,
+    departmentStack: [],
+    selectedNodeId: null,
+    ptyExplosionNodeId: null,
+    wsConnected: false,
+  }),
 
   reset: () => set({
     activeExecutionId: null,
@@ -103,7 +131,6 @@ const useSwarmStore = create((set, get) => ({
     selectedNodeId: null,
     ptyExplosionNodeId: null,
     wsConnected: false,
-    workflowDef: null,
   }),
 }));
 

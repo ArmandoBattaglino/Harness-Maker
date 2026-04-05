@@ -201,15 +201,15 @@ describe('HandoffParser', () => {
       });
     });
 
-    it('should drop oldest bytes when buffer exceeds 4096 chars', () => {
+    it('should drop oldest bytes when buffer exceeds 8192 chars', () => {
       // Fill buffer to capacity with a marker at the start
-      parser.feed('MARKER' + 'x'.repeat(4090));
+      parser.feed('MARKER' + 'x'.repeat(8186));
       // Push more to overflow
       parser.feed('y'.repeat(100));
-      // The internal buffer should be 4096 chars max
+      // The internal buffer should be 8192 chars max (SEC-V3-07 raised for TUI frames)
       // MARKER should have been dropped
       // Access internal state for verification
-      expect(parser._buf.length).toBeLessThanOrEqual(4096);
+      expect(parser._buf.length).toBeLessThanOrEqual(8192);
       expect(parser._buf.includes('MARKER')).toBe(false);
     });
   });

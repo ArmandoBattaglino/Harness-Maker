@@ -12,7 +12,7 @@ import { useSwarm } from '../hooks/useSwarm';
 import { useInbox } from '../hooks/useInbox.js';
 import { useWorkflowList } from '../hooks/useWorkflow.js';
 import { useAppState } from '../store/AppContext';
-import { apiPost } from '../hooks/useApi.js';
+import { apiGet, apiPost } from '../hooks/useApi.js';
 
 const statusColors = {
   idle: 'text-gray-400',
@@ -21,6 +21,16 @@ const statusColors = {
   blocked: 'text-orange-400',
   stopped: 'text-red-400',
 };
+
+function resolveRuntimeModelSelection(currentModel, availableModels = [], detectedDefault = null) {
+  if (currentModel && availableModels.includes(currentModel)) {
+    return currentModel;
+  }
+  if (detectedDefault && availableModels.includes(detectedDefault)) {
+    return detectedDefault;
+  }
+  return availableModels[0] ?? '';
+}
 
 export default function SwarmView() {
   const executionStatus = useSwarmStore((s) => s.executionStatus);
@@ -42,9 +52,18 @@ export default function SwarmView() {
   const [inboxOpen, setInboxOpen] = useState(false);
   const [executing, setExecuting] = useState(false);
   const [pausing, setPausing] = useState(false);
-  const [selectedRuntimeProvider, setSelectedRuntimeProvider] = useState('auto');
-  const [runtimeModels, setRuntimeModels] = useState({ codex: '', gemini: '' });
+  const selectedRuntimeProvider = useSwarmStore((s) => s.selectedRuntimeProvider);
+  const setSelectedRuntimeProvider = useSwarmStore((s) => s.setSelectedRuntimeProvider);
+  const [runtimeModels, setRuntimeModels] = useState({ claude: '', codex: '', gemini: '' });
+  const [runtimeDefaults, setRuntimeDefaults] = useState({ claude: '', codex: '', gemini: '' });
+  const [runtimeAvailability, setRuntimeAvailability] = useState({ claude: false, codex: false, gemini: false });
   const [showModelSettings, setShowModelSettings] = useState(false);
+  const [runtimeCapabilities, setRuntimeCapabilities] = useState({
+    claude: [],
+    codex: [],
+    gemini: [],
+  });
+  const [runtimeCapabilityError, setRuntimeCapabilityError] = useState('');
 
   const { activeProjectId, projects } = useAppState();
   const projectPath = projects.find((p) => p.id === activeProjectId)?.path ?? '';
@@ -88,10 +107,62 @@ export default function SwarmView() {
     }
   }, [workflowDef?.id]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    apiGet('/api/v1/swarm/runtime-capabilities')
+      .then((data) => {
+        if (cancelled) return;
+        const nextCapabilities = {
+          claude: data?.providers?.claude ?? [],
+          codex: data?.providers?.codex ?? [],
+          gemini: data?.providers?.gemini ?? [],
+        };
+        const nextDefaults = {
+          claude: data?.defaults?.claude ?? '',
+          codex: data?.defaults?.codex ?? '',
+          gemini: data?.defaults?.gemini ?? '',
+        };
+        const nextAvailability = {
+          claude: Boolean(data?.availability?.claude),
+          codex: Boolean(data?.availability?.codex),
+          gemini: Boolean(data?.availability?.gemini),
+        };
+
+        setRuntimeCapabilities(nextCapabilities);
+        setRuntimeDefaults(nextDefaults);
+        setRuntimeAvailability(nextAvailability);
+        setRuntimeModels((current) => ({
+          claude: resolveRuntimeModelSelection(current.claude, nextCapabilities.claude, nextDefaults.claude),
+          codex: resolveRuntimeModelSelection(current.codex, nextCapabilities.codex, nextDefaults.codex),
+          gemini: resolveRuntimeModelSelection(current.gemini, nextCapabilities.gemini, nextDefaults.gemini),
+        }));
+        setSelectedRuntimeProvider((current) => {
+          if (current === 'codex' && !nextAvailability.codex) return 'auto';
+          if (current === 'gemini' && !nextAvailability.gemini) return 'auto';
+          if (current === 'claude' && !nextAvailability.claude) return 'auto';
+          return current;
+        });
+        setRuntimeCapabilityError('');
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setRuntimeCapabilities({ claude: [], codex: [], gemini: [] });
+        setRuntimeDefaults({ claude: '', codex: '', gemini: '' });
+        setRuntimeAvailability({ claude: false, codex: false, gemini: false });
+        setRuntimeCapabilityError(error.message || 'Unable to load runtime model capabilities');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleRun = async () => {
     setExecuting(true);
     try {
       const models = {};
+      if (runtimeModels.claude) models.claude = runtimeModels.claude;
       if (runtimeModels.codex) models.codex = runtimeModels.codex;
       if (runtimeModels.gemini) models.gemini = runtimeModels.gemini;
       await startExecution(activeProjectId, projectPath, selectedRuntimeProvider, Object.keys(models).length > 0 ? models : null);
@@ -171,6 +242,11 @@ export default function SwarmView() {
       ? 'Claude only'
       : 'Auto fallback');
 
+  const hasCustomRuntimeSelections =
+    (runtimeModels.claude && runtimeModels.claude !== runtimeDefaults.claude)
+    || (runtimeModels.codex && runtimeModels.codex !== runtimeDefaults.codex)
+    || (runtimeModels.gemini && runtimeModels.gemini !== runtimeDefaults.gemini);
+
   return (
     <div className="flex flex-col w-full h-full bg-gray-950 text-white">
       <div className="flex items-center gap-3 px-4 py-2 bg-gray-900 border-b border-gray-700 shrink-0">
@@ -196,9 +272,9 @@ export default function SwarmView() {
             title="Choose the provider strategy for the next run"
           >
             <option value="auto">Auto</option>
-            <option value="claude">Claude</option>
-            <option value="codex">Codex</option>
-            <option value="gemini">Gemini</option>
+            <option value="claude" disabled={!runtimeAvailability.claude}>Claude{runtimeAvailability.claude ? '' : ' (Unavailable)'}</option>
+            <option value="codex" disabled={!runtimeAvailability.codex}>Codex{runtimeAvailability.codex ? '' : ' (Unavailable)'}</option>
+            <option value="gemini" disabled={!runtimeAvailability.gemini}>Gemini{runtimeAvailability.gemini ? '' : ' (Unavailable)'}</option>
           </select>
         </label>
 
@@ -209,42 +285,70 @@ export default function SwarmView() {
             className="text-[11px] px-2 py-1 rounded bg-gray-800 text-gray-400 border border-gray-600 hover:border-gray-500 disabled:opacity-50 transition-colors"
             title="Configure model per provider"
           >
-            Models {(runtimeModels.codex || runtimeModels.gemini) ? '*' : ''}
+            Models {hasCustomRuntimeSelections ? '*' : ''}
           </button>
           {showModelSettings && (
             <div className="absolute right-0 top-full mt-1 z-50 bg-gray-800 border border-gray-600 rounded-lg shadow-xl p-3 min-w-[220px]">
               <div className="text-[11px] text-gray-300 font-semibold mb-2">Model per Provider</div>
               <label className="flex items-center gap-2 text-[11px] text-gray-400 mb-1.5">
                 <span className="w-14">Claude</span>
-                <select disabled className="flex-1 bg-gray-700 text-gray-500 text-xs rounded px-2 py-1 border border-gray-600 cursor-not-allowed">
-                  <option>Account Default</option>
+                <select
+                  value={runtimeModels.claude}
+                  onChange={(e) => setRuntimeModels((m) => ({ ...m, claude: e.target.value }))}
+                  disabled={!runtimeAvailability.claude}
+                  className="flex-1 bg-gray-700 text-white text-xs rounded px-2 py-1 border border-gray-600 disabled:text-gray-500 disabled:cursor-not-allowed"
+                >
+                  {runtimeCapabilities.claude.map((model) => (
+                    <option key={model} value={model}>{model}</option>
+                  ))}
                 </select>
               </label>
+              <div className="text-[10px] text-gray-500 mb-2">
+                {runtimeAvailability.claude
+                  ? `Default detected: ${runtimeDefaults.claude || 'none'}`
+                  : 'Claude runtime not detected on this server'}
+              </div>
               <label className="flex items-center gap-2 text-[11px] text-gray-400 mb-1.5">
                 <span className="w-14">Codex</span>
                 <select
                   value={runtimeModels.codex}
                   onChange={(e) => setRuntimeModels((m) => ({ ...m, codex: e.target.value }))}
+                  disabled={!runtimeAvailability.codex}
                   className="flex-1 bg-gray-700 text-white text-xs rounded px-2 py-1 border border-gray-600"
                 >
-                  <option value="">Default</option>
-                  <option value="gpt-5.1-codex">gpt-5.1-codex</option>
-                  <option value="gpt-4.1-codex">gpt-4.1-codex</option>
+                  {runtimeCapabilities.codex.map((model) => (
+                    <option key={model} value={model}>{model}</option>
+                  ))}
                 </select>
               </label>
+              <div className="text-[10px] text-gray-500 mb-2">
+                {runtimeAvailability.codex
+                  ? `Default detected: ${runtimeDefaults.codex || 'none'}`
+                  : 'Codex runtime not detected on this server'}
+              </div>
               <label className="flex items-center gap-2 text-[11px] text-gray-400">
                 <span className="w-14">Gemini</span>
                 <select
                   value={runtimeModels.gemini}
                   onChange={(e) => setRuntimeModels((m) => ({ ...m, gemini: e.target.value }))}
+                  disabled={!runtimeAvailability.gemini}
                   className="flex-1 bg-gray-700 text-white text-xs rounded px-2 py-1 border border-gray-600"
                 >
-                  <option value="">Default</option>
-                  <option value="gemini-2.5-pro">gemini-2.5-pro</option>
-                  <option value="gemini-2.5-flash">gemini-2.5-flash</option>
-                  <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+                  {runtimeCapabilities.gemini.map((model) => (
+                    <option key={model} value={model}>{model}</option>
+                  ))}
                 </select>
               </label>
+              <div className="text-[10px] text-gray-500">
+                {runtimeAvailability.gemini
+                  ? `Default detected: ${runtimeDefaults.gemini || 'none'}`
+                  : 'Gemini runtime not detected on this server'}
+              </div>
+              {runtimeCapabilityError && (
+                <div className="mt-2 text-[10px] text-amber-300">
+                  Runtime model list unavailable: {runtimeCapabilityError}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -395,7 +499,7 @@ export default function SwarmView() {
 
       <div className="flex-1 overflow-hidden">
         <ReactFlowProvider>
-          <SwarmCanvas workflowDef={workflowDef} />
+          <SwarmCanvas key={`${workflowDef?.id ?? 'none'}:${activeExecutionId ?? 'idle'}`} workflowDef={workflowDef} />
         </ReactFlowProvider>
       </div>
 
