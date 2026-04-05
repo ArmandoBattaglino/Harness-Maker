@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-06 after V5.0 Debugger Loop Fix Wave (Tasks #231, #232). Snippet preamble filtering expanded in SwarmEngine.js, PTY Explosion terminal switching fixed in SwarmView.jsx._
+_Last updated: 2026-04-06 after V5.0 Debugger Loop Phase 1 Deep E2E Test. No code modified — testing-only phase. 12 server route files, 312 tests all pass. Client build: 480 modules, 0 errors. 2 bugs found: BUG-API-1 (HIGH, webhook CSRF — same as existing MEDIUM-V3-01) and BUG-UI-1 (LOW, ConPTY garble — known/deferred per DEC-009)._
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**
@@ -45,7 +45,7 @@ _Last updated: 2026-04-06 after V5.0 Debugger Loop Fix Wave (Tasks #231, #232). 
 | docs/memory/CONTEXT.md | UP_TO_DATE | 2026-04-06 | Focus updated to V5.0 Debugger Loop Deep Check status. |
 | docs/memory/CODE_MAP.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No changes from documenter. |
 | docs/memory/CHANGELOG.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No changes from documenter. |
-| docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-06 | V5.0 fix wave entry appended by documenter. |
+| docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-06 | V5.0 Phase 1 deep test entry appended by documenter. |
 | docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-03-18 | V1 audit. V3 audit is docs/security-v3-audit.md (Task #79). No security changes in V5.0 fixes. |
 | docs/security-v3-audit.md | UP_TO_DATE | 2026-03-28 | No security changes in V5.0 fixes. |
 | Inline comments | UP_TO_DATE | 2026-04-06 | V5.0 fixes: SwarmEngine.js SNIPPET_NOISE_LINE_PATTERNS array is self-documenting (regex patterns with inline comments not needed — the pattern names and regex literals are clear). SwarmView.jsx PtyExplosion `key={ptyExplosionNodeId}` is a standard React pattern for forced remount — no "why" comment needed beyond the PR/task context. |
@@ -68,6 +68,19 @@ All four BUG-PRD-* bugs identified by prd-writer's code audit have been fixed in
 | BUG-PRD-3 / BUG-TRIGGER-1 | MEDIUM | useSwarm.js (client) | `trigger_fired`, `trigger_status`, and `rss_item` WS events unhandled on client — switch statement had no cases for them | #128 | FIXED 2026-04-02 |
 | BUG-PRD-4 / BUG-INSPECTOR-1 | LOW | SwarmCanvas.jsx | `onUpdateNode` prop was never defined in SwarmCanvas.jsx — `handleUpdateNode` useCallback added and passed to AgentInspector | #130 | FIXED 2026-04-02 |
 
+## V5.0 Debugger Loop Phase 1 — Deep E2E Test Results (2026-04-06)
+
+No code was modified in this phase — testing only. Full-app deep E2E test covered all 10 server route files and all 7 client views.
+
+**Test health:** 12 server files, 312 tests, all pass. Client build: 480 modules, 0 errors.
+
+| ID | Severity | Location | Description | Status |
+|----|----------|----------|-------------|--------|
+| BUG-API-1 | HIGH | server/index.js (CSRF middleware) | Webhook endpoint blocked by global CSRF middleware — external callers receive 403. Same root cause as MEDIUM-V3-01 documented since v3.0. Fix: CSRF exemption path in server/middleware/csrf.js. | OPEN — tracked in Documentation Debt |
+| BUG-UI-1 | LOW | ConPTY terminal buffer | Terminal prompt garble after view switch due to ConPTY buffer race. Known limitation per DEC-009 (ConPTY deadlock prevention). | DEFERRED — known/accepted per DEC-009 |
+
+**Overall assessment:** App is in healthy state. Only 1 actionable bug (BUG-API-1 / MEDIUM-V3-01).
+
 ## Documentation Debt
 
 | Item | Priority | Reason deferred |
@@ -79,5 +92,5 @@ All four BUG-PRD-* bugs identified by prd-writer's code audit have been fixed in
 | SECURITY_AUDIT.md LOW-04 fix | Low | Refactor safeRead to cover claudemd GET path — deferred to v3.1 |
 | Swarm execution state persistence | Medium | In-memory only in v3.0; restart clears all executions. Disk persistence planned for v3.1. |
 | docs/memory/CODE_MAP.md TriggerNode "(stub)" notation | Low | Code-mapper should update the map entry — TriggerNode is now fully implemented (Task #76). |
-| MEDIUM-V3-01 (webhook CSRF mismatch) | Medium | Functional issue: external callers receive 403. Fix is CSRF exemption path in server/middleware/csrf.js. Not blocking v3.0 (app is localhost-only). |
+| MEDIUM-V3-01 / BUG-API-1 (webhook CSRF mismatch) | Medium | Functional issue: external callers receive 403. Fix is CSRF exemption path in server/middleware/csrf.js. Not blocking v3.0 (app is localhost-only). Re-confirmed by V5.0 Phase 1 deep E2E test (2026-04-06). |
 | ~~BUG-PRD-1 through BUG-PRD-4 code fixes~~ | RESOLVED | All four bugs fixed in V3.1 wave (Tasks #124-#130). AREA CHECKPOINT #132 PASS confirmed. No remaining debt from this item. |

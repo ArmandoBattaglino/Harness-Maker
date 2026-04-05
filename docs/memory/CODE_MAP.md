@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-06 — after Tasks #231 (BUG-WF-1) and #232 (BUG-WF-3) — V5.0 debugger loop fixes — mapped by code-mapper_
+_Last updated: 2026-04-06 — after V5.0 Debugger Loop Phase 1 Deep E2E Test (no code changes) — mapped by code-mapper_
 
 > **V3.4/V3.5 SWARM RUNTIME STATUS: IN PROGRESS**
 > TASK #145 (BUG-UX-HANDOFF-1) partially addressed: prompt examples templated with `<targetId>` to prevent fake handoffs from PTY redraw (DEC-023); Codex model-selection and rate-limit menus auto-dismissed; hard usage-limit now takes precedence over soft `Approaching rate limits` chooser (DEC-024). 83/83 server tests pass. Build: 479 modules. Live handoff proof still pending — no provider has completed a real multi-agent chain yet.

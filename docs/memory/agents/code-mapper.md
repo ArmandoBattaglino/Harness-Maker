@@ -2269,3 +2269,41 @@ CODE_MAP.md and CHANGELOG.md fully reflect Tasks #231 and #232. All modified fun
 ### Handoff
 None — task fully self-contained. Next code-mapper invocation will be after whatever task follows in the V5.0 debugger loop.
 ---
+
+---
+## 2026-04-06 — V5.0 Debugger Loop Phase 1: Deep E2E Test (code-mapper post-task)
+**Status:** COMPLETED
+**Called by:** orchestrator (post-debugger-loop-phase-1 code-mapper invocation)
+
+### Context when I started
+V5.0 debugger loop Phase 1 just completed a full-app deep E2E test. No code was modified. 312 server tests pass, client builds with 480 modules. Two bugs found: BUG-API-1 (CSRF blocks webhooks) and BUG-UI-1 (ConPTY garble, deferred).
+
+### What I did
+1. Read CODE_MAP.md header and CHANGELOG.md tail to understand current state.
+2. Updated CODE_MAP.md header timestamp to reflect this task (no structural changes needed since no code was modified).
+3. Appended a comprehensive CHANGELOG.md entry documenting the full E2E test coverage, quantitative results, and two bugs found.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Updated "Last updated" header line to reflect Phase 1 test task |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended full Phase 1 E2E test entry with coverage details and bug findings |
+
+### Improvements delivered
+- CHANGELOG.md now has a permanent record of the V5.0 Phase 1 deep test, its coverage scope, and bugs discovered.
+
+### Bugs I encountered
+- None
+
+### Decisions I made
+- No structural CODE_MAP.md changes needed since no code was modified — only updated the header timestamp.
+
+### What I learned
+- Testing-only phases still warrant detailed CHANGELOG entries to capture test coverage scope and bug discoveries.
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md are up to date through V5.0 Phase 1. BUG-API-1 and BUG-UI-1 are documented in CHANGELOG. Next code-mapper invocation should map any fixes from Phase 2/3.
+
+### Handoff
+None — task fully self-contained. Phase 2/3 fixes will trigger separate code-mapper runs.
+---

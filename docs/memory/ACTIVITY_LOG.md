@@ -2840,3 +2840,14 @@ full self-contained context and acceptance criteria.
 **Blockers:** BUG-API-1 blocks webhook trigger functionality for external callers
 **Next:** Route BUG-API-1 to debugger for fix (CSRF path exception or route reordering)
 ---
+
+---
+## 2026-04-06 — code-mapper — V5.0 Debugger Loop Phase 1: Deep E2E Test
+**Outcome:** COMPLETED
+**Summary:** Appended CHANGELOG.md entry for V5.0 Phase 1 deep E2E test covering all server routes and client views. No CODE_MAP.md structural changes needed (no code modified). Documented BUG-API-1 (CSRF blocks webhooks) and BUG-UI-1 (ConPTY garble, deferred).
+**Files changed:** docs/memory/CODE_MAP.md (header only), docs/memory/CHANGELOG.md (new entry)
+**Bugs fixed:** none (testing-only phase)
+**Decisions made:** No CODE_MAP structural changes for testing-only tasks
+**Blockers:** none
+**Next:** Phase 2/3 bug fixes will require full code-mapper trace of modified files
+---

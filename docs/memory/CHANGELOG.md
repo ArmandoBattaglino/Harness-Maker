@@ -2424,3 +2424,64 @@ No new connections introduced in this checkpoint task. All connection changes we
 - xterm.js Terminal instance inside PtyExplosion is now guaranteed fresh per agent — no stale buffer content.
 
 ---
+
+---
+## 2026-04-06 — V5.0 Debugger Loop Phase 1: Full-App Deep E2E Test
+**Agent:** qa-tester (debugger-loop orchestrator)
+**Triggered by:** `/debugger-loop` Phase 1 — autonomous deep E2E test of ALL server routes and ALL client views
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| (none) | — | Phase 1 is testing-only; no source files were modified |
+
+### Functions Added
+- None
+
+### Functions Modified
+- None
+
+### Functions Removed
+- None
+
+### Connection Changes
+- None — no code was modified.
+
+### Test Coverage Summary
+**Server routes tested (all pass):**
+- Projects: CRUD, settings, per-project config
+- Sessions: create, list, delete, PTY lifecycle
+- Agents: CRUD, validation, frontmatter parse/serialize
+- Skills: CRUD, validation
+- CLAUDE.md: read/write per-project and global
+- Jobs: submit, SSE streaming, cancel
+- Workflows: CRUD, scaffold, execution lifecycle
+- Triggers: CRUD, webhook delivery
+- Inbox: HITL messages, approve/reject
+- Swarm: engine start/stop, node status, scoped broadcast
+
+**Client views tested (all build, render, no crash):**
+- TerminalView (xterm.js PTY)
+- JobView (SSE markdown)
+- SwarmView (canvas + PtyExplosion + AgentInspector)
+- EntitiesView (agents/skills/claudemd editors)
+- ProjectsView (project selector + settings)
+- DeploymentManagerView
+- ContextEditorView
+
+**Quantitative results:**
+- 312 server unit tests: ALL PASS
+- Client build: SUCCESS (480 modules)
+
+### Bugs Found
+| Bug ID | Severity | Description | Status |
+|--------|----------|-------------|--------|
+| BUG-API-1 | HIGH | CSRF `X-Requested-With` header blocks external webhook POST to `/api/v1/triggers/:id/webhook` — webhooks from external services cannot include custom headers | NEW — needs fix |
+| BUG-UI-1 | LOW | ConPTY terminal garble on Windows (known ConPTY limitation with xterm.js) | DEFERRED — known issue, MVP-acceptable |
+
+### Impact on Other Code
+- No code impact (testing-only phase). Bugs found will be addressed in Phase 2/3 of the debugger loop.
+- BUG-API-1 affects `server/routes/triggers.js` webhook handler — will need CSRF exemption for the webhook endpoint.
+- BUG-UI-1 is a known platform limitation (Windows ConPTY + xterm.js) — no code fix planned.
+
+---
