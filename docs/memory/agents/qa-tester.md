@@ -1,4 +1,61 @@
 ---
+## 2026-04-06 — Debugger Loop Phase 1: Micro-Area A — Swarm Server API Deep Test
+**Status:** COMPLETED
+**Called by:** user (direct)
+
+### Context when I started
+Debugger Loop Phase 1 for Micro-Area A: Swarm Server API. Server running on 127.0.0.1:3000. All V5.1 tasks closed. Need to deep-test all 17 Swarm/Workflow/Inbox endpoints.
+
+### What I did
+1. Read all 3 route files: swarm.js (371 lines), workflows.js (138 lines), inbox.js (141 lines)
+2. Read server/index.js for mount paths, error handler, SPA fallback, rate limiter config
+3. Read WorkflowStore.js validate() function for validation rules
+4. Read hitlValidation.js for resumeText 8KB cap
+5. Ran ~55 systematic curl tests covering:
+   - Happy paths for all endpoints
+   - Missing required fields (prompt, projectId, projectPath, text)
+   - Invalid values (empty strings, whitespace-only, non-strings, numbers)
+   - Boundary values (name 100/101, prompt 2000/2001, systemPrompt 16384/16385, resumeText 8192/8193, nodes 50/51)
+   - Nonexistent IDs (workflow, execution, inbox item)
+   - CSRF enforcement on all 8 mutating endpoints
+   - No CSRF required on 5 GET endpoints
+   - Malformed JSON bodies
+   - Wrong Content-Type headers
+   - Path traversal attempts
+   - XSS in name field
+   - HTTP method mismatches
+   - Rate limiter behavior (hit 200 req/min limit during testing)
+
+### Files I touched
+None (test-only task)
+
+### Improvements delivered
+- Comprehensive API surface coverage report with 2 documented bugs
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-SWARM-API-1: Malformed JSON returns 500 | Global error handler only checks ApiError, misses SyntaxError from express.json() | None (report only) | REPORTED |
+| BUG-SWARM-API-2: SPA catch-all serves HTML for unmatched API GETs | app.get('*') doesn't exclude /api/ paths | None (report only) | REPORTED |
+
+### Decisions I made
+- Classified BUG-SWARM-API-1 as MEDIUM (affects all JSON-accepting endpoints, returns misleading 500)
+- Classified BUG-SWARM-API-2 as LOW (only affects unrouted API GET paths normal clients won't hit)
+
+### What I learned
+- Rate limiter is 200 req/min per IP. Deep testing burns through it fast.
+- express.json() SyntaxError has a `status: 400` property and `type: 'entity.parse.failed'` that can be used for detection
+- WorkflowStore validation is thorough: name regex, length limits, node ID regex, systemPrompt cap, node count cap
+- Path traversal protection in WorkflowStore._resolveFilePath is solid
+- Broadcast validation order checks execution existence before body validation (execution 404 takes precedence over body 400)
+
+### State I'm leaving behind
+All 17 endpoints tested. 2 bugs documented. No fixes applied. Server still running.
+
+### Handoff
+BUG-SWARM-API-1 should be assigned to debugger for fix. BUG-SWARM-API-2 is low priority and can be deferred.
+
+---
 ## 2026-04-06 — Task #237: AREA CHECKPOINT — V5.1 Debugger Loop Full-App Deep Check
 **Status:** COMPLETED
 **Called by:** orchestrator

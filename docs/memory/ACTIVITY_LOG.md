@@ -1,3 +1,14 @@
+## 2026-04-06 — qa-tester — Debugger Loop Phase 1: Micro-Area A — Swarm Server API Deep Test
+**Outcome:** COMPLETED
+**Summary:** Deep-tested all 17 Swarm/Workflow/Inbox API endpoints (~55 curl tests). Found 2 bugs: BUG-SWARM-API-1 (malformed JSON returns 500 instead of 400, MEDIUM), BUG-SWARM-API-2 (SPA catch-all serves HTML for unmatched API GET paths, LOW). All CSRF enforcement, validation, 404 handling, path traversal protection, and boundary checks are correct.
+**Files changed:** none (test-only)
+**Bugs fixed:** none (report only, no fixes applied)
+**Decisions made:** none
+**Blockers:** none
+**Next:** Debugger should fix BUG-SWARM-API-1 (medium priority). BUG-SWARM-API-2 is low priority.
+
+---
+
 ## 2026-04-06 — qa-tester — Task #237: AREA CHECKPOINT — V5.1 Debugger Loop Full-App Deep Check
 **Outcome:** COMPLETED
 **Summary:** AREA CHECKPOINT PASS. All 5 acceptance criteria verified: npm test 312/312, client build 480 modules, health 200, webhook POST 200 without CSRF, non-webhook POST 403 without CSRF. V5.1 area is CLOSED.

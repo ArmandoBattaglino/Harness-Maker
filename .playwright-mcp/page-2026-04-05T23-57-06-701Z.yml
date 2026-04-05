@@ -1,0 +1,174 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e7]: terminal
+      - generic [ref=e8]:
+        - heading "Claude Code" [level=1] [ref=e9]
+        - paragraph [ref=e10]: Visual Manager
+    - navigation [ref=e11]:
+      - button "dashboard Projects" [ref=e12] [cursor=pointer]:
+        - generic [ref=e13]: dashboard
+        - generic [ref=e14]: Projects
+      - button "terminal Live Terminal" [ref=e15] [cursor=pointer]:
+        - generic [ref=e16]: terminal
+        - generic [ref=e17]: Live Terminal
+      - button "play_arrow Job Runner" [ref=e18] [cursor=pointer]:
+        - generic [ref=e19]: play_arrow
+        - generic [ref=e20]: Job Runner
+      - button "memory Deployments" [ref=e21] [cursor=pointer]:
+        - generic [ref=e22]: memory
+        - generic [ref=e23]: Deployments
+      - button "description Context Editor" [ref=e24] [cursor=pointer]:
+        - generic [ref=e25]: description
+        - generic [ref=e26]: Context Editor
+      - button "hub Swarm" [ref=e27] [cursor=pointer]:
+        - generic [ref=e28]: hub
+        - generic [ref=e29]: Swarm
+    - generic [ref=e30]:
+      - generic [ref=e31]:
+        - generic [ref=e32]: Active PTY Sessions
+        - generic [ref=e33]: 1 Total
+      - list [ref=e34]:
+        - listitem [ref=e283]:
+          - button "Prova PID 32364" [ref=e284] [cursor=pointer]:
+            - generic [ref=e285]:
+              - generic [ref=e288]: Prova
+              - generic [ref=e289]: PID 32364
+      - button "add New Local Session" [ref=e37] [cursor=pointer]:
+        - generic [ref=e38]: add
+        - generic [ref=e39]: New Local Session
+    - generic [ref=e41]:
+      - generic [ref=e44]: Active
+      - generic [ref=e45]:
+        - button "Open settings" [ref=e46] [cursor=pointer]:
+          - generic [ref=e47]: settings
+        - generic [ref=e48]: v3.0.0
+  - main [ref=e49]:
+    - generic [ref=e290]:
+      - generic [ref=e291]:
+        - generic [ref=e292]: Swarm Orchestrator
+        - button "📥 HITL" [active] [ref=e293] [cursor=pointer]
+        - generic [ref=e294]:
+          - generic [ref=e295]: Runtime
+          - combobox "Runtime" [ref=e296]:
+            - option "Auto" [selected]
+            - option "Claude"
+            - option "Codex"
+            - option "Gemini"
+        - button "Models" [ref=e298] [cursor=pointer]
+        - button "Run" [ref=e299] [cursor=pointer]
+        - generic [ref=e300]: ● idle
+        - generic [ref=e301]: "Provider: Auto"
+        - generic [ref=e302]: Auto fallback
+      - generic [ref=e304]:
+        - generic [ref=e305]: ✨
+        - textbox "Describe your workflow... e.g. 'Triage customer requests then route to billing or support agents'" [ref=e306]
+        - button "Generate" [disabled] [ref=e307]
+      - generic [ref=e308]:
+        - generic [ref=e309]: Saved workflows
+        - combobox [ref=e310]:
+          - option "Select a saved workflow"
+          - option "test"
+          - option "Node-js Feature Research and Summary"
+          - option "Project Research and Summary"
+          - option "Customer Request Router"
+          - option "Analyst-Reporter Pipeline"
+          - option "Roman Aqueducts Research Team"
+          - option "Prompt Reliability Control Workflow" [selected]
+          - option "Prompt Stress Audit Workflow"
+          - option "Workflow di 3 Agenti"
+          - option "Node.js Best Practices Research and Summary"
+          - option "Billing Support Triage"
+          - option "Marketing Team - Report to Posts"
+          - option "Billing Triage Workflow"
+          - option "Triage to Billing Workflow"
+          - option "Text Document Review Pipeline"
+          - option "Marketing Agency Workflow"
+          - option "Research and Summarize"
+          - option "Write A Greeting Workflow"
+          - option "A Code Reviewer Analyzes Code Quality Workflow"
+          - option "Code Review and Documentation"
+          - option "Frontend UI Audit and CSS Optimization"
+          - option "Frontend UI Audit and CSS Optimization"
+          - option "A Researcher To Analyze A Writer Workflow"
+          - option "A Two Agents Explorer Reporter Explorer Workflow"
+          - option "2 Agents Researcher Analyzes Writer Summarizes Workflow"
+          - option "A 2 Agent A Researcher Analyzes The Workflow"
+          - option "A 2 Agent A Researcher Analyzes The Workflow"
+          - option "Research and Report Team"
+          - option "Data Collection and Summarization Pipeline"
+          - option "Research-Write-Review Team"
+          - option "Customer Support Triage"
+          - option "A Customer Support Triage Routes Requests Workflow"
+          - option "Customer Request Router"
+          - option "Test Workflow"
+          - option "Test Workflow"
+          - option "Customer Support Triage Workflow"
+          - option "Customer Triage Workflow"
+          - option "Customer Support Ticket Router"
+          - option "Customer Support Triage Workflow"
+          - option "Button State Verification Workflow"
+          - option "Customer Support Triage Workflow"
+          - option "Workflow di Marketing"
+          - option "Prova Workflow"
+          - option "Customer Request Triage Workflow"
+        - button "Load workflow" [ref=e311] [cursor=pointer]
+        - button "Refresh" [ref=e312] [cursor=pointer]
+        - generic [ref=e313]: Shows current-project workflows plus unscoped ones
+      - generic [ref=e315]:
+        - button "All Agents" [ref=e317] [cursor=pointer]
+        - generic [ref=e318]:
+          - application [ref=e319]:
+            - generic [ref=e321]:
+              - generic:
+                - generic:
+                  - img:
+                    - group "Edge from finder to route-checker" [ref=e322] [cursor=pointer]
+                  - img:
+                    - group "Edge from route-checker to formatter" [ref=e325] [cursor=pointer]
+                - generic:
+                  - group [ref=e328]:
+                    - generic [ref=e329] [cursor=pointer]:
+                      - generic [ref=e331]:
+                        - img "agent" [ref=e332]: 🤖
+                        - generic [ref=e333]: Finder
+                      - generic [ref=e334]: idle
+                  - group [ref=e336]:
+                    - generic [ref=e337] [cursor=pointer]:
+                      - generic [ref=e339]:
+                        - img "agent" [ref=e340]: 🤖
+                        - generic [ref=e341]: Route Checker
+                      - generic [ref=e342]: idle
+                  - group [ref=e344]:
+                    - generic [ref=e345] [cursor=pointer]:
+                      - generic [ref=e347]:
+                        - img "agent" [ref=e348]: 🤖
+                        - generic [ref=e349]: Formatter
+                      - generic [ref=e350]: idle
+            - img
+            - generic "Control Panel" [ref=e352]:
+              - button "Zoom In" [ref=e353] [cursor=pointer]:
+                - img [ref=e354]
+              - button "Zoom Out" [ref=e356] [cursor=pointer]:
+                - img [ref=e357]
+              - button "Fit View" [ref=e359] [cursor=pointer]:
+                - img [ref=e360]
+            - img "Mini Map" [ref=e363]
+            - link "React Flow attribution" [ref=e368] [cursor=pointer]:
+              - /url: https://reactflow.dev
+              - text: React Flow
+          - generic [ref=e370]:
+            - generic [ref=e371]:
+              - generic [ref=e372]: Finder
+              - button "Close inspector" [ref=e373] [cursor=pointer]: ×
+            - generic [ref=e374]: "Type: agent"
+            - generic [ref=e375]:
+              - generic [ref=e376]: System Prompt
+              - generic [ref=e377]: Inspect local files only. Verify version and host binding, then hand off flat JSON facts to route-checker.
+      - generic [ref=e392]:
+        - generic [ref=e393]:
+          - generic [ref=e394]: HITL Approvals
+          - button "✕" [ref=e395] [cursor=pointer]
+        - generic [ref=e396]:
+          - generic [ref=e397]: ✓
+          - generic [ref=e398]: No pending approvals
