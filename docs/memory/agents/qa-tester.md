@@ -1186,3 +1186,61 @@ Server running at http://127.0.0.1:3000. 10 route files (projects, sessions, age
 ### Handoff
 BUG-API-1 needs to be routed to debugger for fix. The CSRF middleware needs a path exception for /api/v1/triggers/webhooks/* or the triggers router needs to be mounted before the CSRF middleware.
 ---
+
+---
+## 2026-04-06 — Debugger Loop Phase 1 Micro-Area B: Browser E2E Deep Test
+**Status:** COMPLETED
+**Called by:** orchestrator (debugger-loop)
+
+### Context when I started
+V5.0 debugger loop Phase 1 deep testing. Previous Phase 1 testing covered Swarm workflow lifecycle and agent terminals (TASK #225, #227 both COMPLETED). This session is the full-UI browser E2E deep test covering ALL views and components.
+
+### What I did
+1. Navigated to http://127.0.0.1:3000 via Puppeteer MCP
+2. Set up console error/warning interceptors
+3. Tested Projects view: grid view, list view, search filtering, project cards, context menu (three-dot), Register modal, Scaffold modal
+4. Tested Live Terminal view: empty state ("No project selected"), session creation by clicking project card, terminal rendering (xterm.js), Claude Code v2.1.92 banner, status bar (CONNECTED/Local Daemon/TOKENS/LATENCY), header toolbar
+5. Tested Job Runner view: active jobs panel, new job form, prompt textarea, Advanced options, Run Job button
+6. Tested Deployments view: Profiles tab (agent list, config panel with identifier/description/model/directives/hooks/REVERT/COMMIT), Active Processes tab (running session with PID), Environment tab (skills list and skill detail)
+7. Tested Context Editor view: Project Rules and User Global tabs, Rule Explorer, CLAUDE.MD OUTPUT with line numbers and syntax highlighting, context budget warning
+8. Tested Swarm view: toolbar (HITL/Runtime/Models/Run/Provider), PromptToFlowBar, workflow loading (tested 2 workflows: Customer Request Router and Analyst-Reporter Pipeline), canvas rendering, agent nodes, edges, AgentInspector, Models panel, minimap
+9. Tested search bar, notification bell, settings button, sidebar session navigation
+10. Checked for console errors (0), warnings (0), ANSI escape codes (0), error DOM elements (0), React error boundaries (0)
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/agents/qa-tester.md | MODIFIED | Appended this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended activity entry |
+
+### Improvements delivered
+- Complete visual verification of all 6 application views + sub-views
+- Confirmed zero JavaScript errors across full navigation cycle
+- Confirmed no ANSI escape code leakage in any view
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-UI-1: Terminal prompt garbled after view switch | ConPTY buffer write race during xterm.js re-attach | None (observe only) | REPORTED - LOW severity |
+
+### Decisions I made
+- Classified the terminal garble as LOW severity since it's a cosmetic ConPTY artifact, does not affect terminal functionality, and is in the same class as known DEC-009 issues
+
+### What I learned
+- The app is remarkably stable with zero console errors across full navigation
+- All 6 views render correctly without blank screens or broken layouts
+- The AddProjectModal correctly differentiates between Register and Scaffold modes
+- Search filtering works in real-time on the Projects view
+- Context Editor context budget warning triggers correctly
+- Swarm canvas renders workflows with proper node layout, edges, minimap, and inspector
+- Models panel correctly shows per-provider model selection
+- Settings is a placeholder ("coming soon" toast)
+
+### State I'm leaving behind
+- 1 LOW severity bug reported (BUG-UI-1: terminal prompt garble on view switch)
+- All views verified functional and rendering correctly
+- Active PTY session still running (SmokeTestProject PID 4620)
+
+### Handoff
+BUG-UI-1 is LOW severity and does not need immediate fixing. The terminal garble self-corrects on new terminal output. No blocking issues found in the entire UI.
+---
