@@ -1,4 +1,48 @@
 ---
+## 2026-04-06 — V5.1 Area Closure
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+V5.1 Debugger Loop Full-App Deep Check was nearly closed. #234 COMPLETED, #235 PASS (confirmed by qa-tester after server restart), #236 DEFERRED (ConPTY artifact, DEC-009), #237 PENDING (AREA CHECKPOINT awaiting verification). User requested closure updates to PROGRESS.md, ACTIVITY_LOG.md, and TASK_PLAN.md status header.
+
+### What I did
+1. Read TASK_PLAN.md V5.1 section (lines 12116-12273), PROGRESS.md, ACTIVITY_LOG.md, and my own agent memory
+2. Updated TASK_PLAN.md main status header: changed V5.1 from "IN PROGRESS" to "AREA CLOSED 2026-04-06" with full per-task breakdown
+3. Updated V5.1 area _Status line from "IN PROGRESS" to "AREA CLOSED"
+4. Marked #237 (AREA CHECKPOINT) Status: COMPLETED with completion note
+5. Prepended V5.1 closure entry to PROGRESS.md
+6. Prepended PM session entry to ACTIVITY_LOG.md
+7. Appended this session log to project-manager.md
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Status header V5.1 CLOSED, area status line CLOSED, #237 marked COMPLETED |
+| docs/memory/PROGRESS.md | MODIFIED | V5.1 closure entry prepended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | PM session entry prepended |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- V5.1 is now formally closed in all tracking documents
+- TASK_PLAN.md status header is the single source of truth for area status
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+None — straightforward closure bookkeeping.
+
+### What I learned
+Nothing new — standard area closure.
+
+### State I'm leaving behind
+V5.1 AREA CLOSED. All tasks #234-#237 resolved. No open tasks remain across any area. The project is in a clean state awaiting user direction for the next work area.
+
+### Handoff
+No pending work. User determines next direction.
+
+---
 ## 2026-04-06 — Task #234 Completion Review + #235 Confirmation
 **Status:** COMPLETED
 **Called by:** user
