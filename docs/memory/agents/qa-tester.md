@@ -1128,3 +1128,61 @@ None — all four fixes are present and correct. No regressions detected.
 ### Handoff
 V3.2 planning may proceed. project-manager should be called to register next tasks.
 ---
+
+---
+## 2026-04-06 — Debugger Loop Phase 1: Micro-Area A — Server API Routes Deep Test
+**Status:** COMPLETED
+**Called by:** user (debugger-loop Phase 1)
+
+### Context when I started
+Server running at http://127.0.0.1:3000. 10 route files (projects, sessions, agents, skills, claudemd, jobs, workflows, triggers, inbox, swarm) plus health and version endpoints. All need E2E testing via curl.
+
+### What I did
+1. Read all 10 route files to understand endpoints, parameters, and expected behavior
+2. Verified server is running (GET /health returns 200)
+3. Tested 77 individual endpoint scenarios via curl:
+   - Happy path GETs for all list endpoints
+   - Full CRUD cycle for workflows (create, read, update, delete)
+   - POST project creation with valid data + deletion
+   - All error cases: missing params, invalid types, nonexistent IDs
+   - Agent name validation regex (uppercase, numbers, special chars)
+   - Path traversal protection (filePath outside allowed directories)
+   - CSRF protection on all mutating endpoints (without header = 403)
+   - CSRF bypass for webhook endpoints (FOUND BUG)
+   - Skills, claudemd, jobs, swarm scaffold, swarm execution control
+   - Inbox approve/reject 404 handling
+   - Runtime capabilities endpoint
+4. Found 1 bug: BUG-API-1 (webhook CSRF blocking)
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/agents/qa-tester.md | MODIFIED | Appended session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended activity entry |
+
+### Improvements delivered
+- Full E2E test coverage of all 10 route files with 77 test scenarios
+- Identified 1 HIGH severity bug that blocks webhook functionality
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-API-1: Webhook blocked by CSRF | Global csrfMiddleware at index.js:201 runs before triggers router; no path exception for /webhooks/ | None (observe only) | REPORTED |
+
+### Decisions I made
+- None (observation-only phase)
+
+### What I learned
+- The app has very solid input validation across all endpoints (400 for all invalid inputs, 404 for missing resources, 409 for duplicates)
+- Path traversal protection works correctly on agents and skills
+- CSRF middleware is applied globally and has no path-based exceptions
+- The webhook endpoint design expects to be CSRF-exempt but the global middleware doesn't know this
+
+### State I'm leaving behind
+- 1 bug reported: BUG-API-1 (HIGH) — webhook endpoint blocked by CSRF
+- 76/77 tests PASS, 1 BUG found
+- All other API routes are functioning correctly
+
+### Handoff
+BUG-API-1 needs to be routed to debugger for fix. The CSRF middleware needs a path exception for /api/v1/triggers/webhooks/* or the triggers router needs to be mounted before the CSRF middleware.
+---

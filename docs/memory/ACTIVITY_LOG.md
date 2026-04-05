@@ -2818,3 +2818,14 @@ full self-contained context and acceptance criteria.
 
 
 
+
+---
+## 2026-04-06 — qa-tester — Debugger Loop Phase 1: Micro-Area A — Server API Routes Deep Test
+**Outcome:** COMPLETED
+**Summary:** Deep E2E tested all 10 server route files (77 test scenarios) via curl against the running server. Found 1 HIGH-severity bug: BUG-API-1 — webhook endpoint POST /api/v1/triggers/webhooks/:path is blocked by the global CSRF middleware, returning 403 instead of 200 for external callers. All other endpoints (projects, sessions, agents, skills, claudemd, jobs, workflows, swarm, inbox) pass validation, error handling, and CSRF protection tests.
+**Files changed:** docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (observation only)
+**Decisions made:** none
+**Blockers:** BUG-API-1 blocks webhook trigger functionality for external callers
+**Next:** Route BUG-API-1 to debugger for fix (CSRF path exception or route reordering)
+---
