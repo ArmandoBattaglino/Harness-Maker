@@ -1,4 +1,7 @@
 # Progress
+- [V5.1 AREA CHECKPOINT VERIFIED 2026-04-06] Task #237 AREA CHECKPOINT PASS — V5.1 CLOSED
+  qa-tester ran all 5 acceptance checks: npm test 312/312, client build 480 modules, health 200, webhook POST 200 (no CSRF), non-webhook POST 403 (CSRF enforced). All green. V5.1 area fully closed.
+
 - [V5.1 AREA CLOSED 2026-04-06] V5.1 Debugger Loop Full-App Deep Check — CLOSED
   All tasks resolved: #234 COMPLETED (BUG-API-1 webhook CSRF exemption), #235 COMPLETED (TEST GATE PASS), #236 DEFERRED (BUG-UI-1 ConPTY artifact, DEC-009, MVP-acceptable), #237 COMPLETED (AREA CHECKPOINT verified). Webhook endpoint is now accessible to external callers. No regressions in V5.0, V4.x, or V3.x. No open tasks remain in V5.1.
 

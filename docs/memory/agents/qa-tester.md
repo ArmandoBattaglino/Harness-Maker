@@ -1,4 +1,44 @@
 ---
+## 2026-04-06 — Task #237: AREA CHECKPOINT — V5.1 Debugger Loop Full-App Deep Check
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+V5.1 area had three tasks: #234 (BUG-API-1 CSRF fix, COMPLETED by debugger), #235 (TEST GATE, COMPLETED PASS by qa-tester in previous session), #236 (BUG-UI-1 ConPTY garble, DEFERRED). Task #237 is the final AREA CHECKPOINT to close V5.1.
+
+### What I did
+1. Ran `npm test --prefix server` — 312/312 tests pass across 12 test files (6.70s).
+2. Ran `npm run build --prefix client` — 480 modules transformed, build success in 4.28s.
+3. Curled `GET /api/v1/health` — HTTP 200.
+4. Curled `POST /api/v1/triggers/webhooks/test-path` without CSRF header — HTTP 200, body `{"received":true}`. BUG-API-1 fix confirmed.
+5. Curled `POST /api/v1/projects` without CSRF header — HTTP 403, body `{"error":"CSRF validation failed"}`. CSRF protection still enforced on non-exempt endpoints.
+6. Confirmed #235 status COMPLETED (PASS) and #236 status DEFERRED in TASK_PLAN.md.
+7. Checked all 5 acceptance criteria boxes on Task #237.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Task #237 acceptance criteria checkboxes marked [x] |
+
+### Improvements delivered
+- V5.1 AREA CHECKPOINT confirmed PASS — area is CLOSED, pipeline can proceed to next area
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- All 5 checks passed on first attempt; no need for deeper investigation or retesting.
+
+### What I learned
+- Server was already running with the CSRF fix from the previous TEST GATE session (#235), so no restart was needed this time.
+
+### State I'm leaving behind
+V5.1 is fully CLOSED. All tasks in the area are either COMPLETED or DEFERRED (with justification). No open bugs, no blockers.
+
+### Handoff
+V5.1 area is closed. The project-manager should identify the next priority area or task.
+
+---
 ## 2026-04-06 — Task #235: TEST GATE — BUG-API-1 (Webhook CSRF Exemption)
 **Status:** COMPLETED
 **Called by:** orchestrator
