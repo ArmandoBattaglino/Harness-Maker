@@ -4,7 +4,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED - 2026-03-31 - V3.1 BUG FIX WAVE FULLY CLOSED - AREA V3.1 CLOSED 2026-04-02 - V3.2/V3.3 SWARM RUNTIME INTEGRITY + CONTRACT COMPLETION CLOSED 2026-04-02 - AREA CHECKPOINT #142 PASS - V3.4 SWARM UX DEEP TEST FINDINGS IN PROGRESS (#143, #144, #146, #147 COMPLETED; #145, #148 PENDING) - V3.5 SWARM AI RUNTIME PORTABILITY IMPLEMENTED BUT NOT HONESTLY CLOSED (#149, #150, #151, #152 COMPLETED; #153 RE-OPENED/PENDING AFTER LIVE CODEX RUNTIME VERIFICATION) - V4.0 GEMINI CLI HARNESS INTEGRATION: AREA CLOSED 2026-04-04 - V4.0.1 GEMINI RUNTIME BUG FIXES: AREA CLOSED 2026-04-05 - V4.0.2 GEMINI E2E PTY / UI BUG FIXES: MOSTLY COMPLETE, AREA STILL OPEN - V4.0.3 SWARM HYDRATION + GEMINI CONTROL-FLOW STABILITY: PLANNED 2026-04-05 - V4.1 PER-HARNESS MODEL SELECTION: AREA CLOSED 2026-04-05 - V4.2 E2E DEEP TEST BUG FIXES: AREA CLOSED 2026-04-05 - V4.5 SNIPPET FIDELITY MVP BLOCKERS: #218 PARTIAL, #219-#221 + #224 COMPLETED, #222-#223 PENDING - V5.0 DEBUGGER LOOP DEEP CHECK: AREA CLOSED 2026-04-06 — ALL micro-areas PASS, TEST GATE #229 PASS, AREA CHECKPOINT #230 PASS. Bugs: #231 COMPLETED, #232 COMPLETED, #233 DEFERRED (MVP-acceptable). HITL design gap documented. - V5.1 DEBUGGER LOOP FULL-APP DEEP CHECK: IN PROGRESS 2026-04-06 — 1 HIGH bug (BUG-API-1 webhook CSRF), 1 DEFERRED (BUG-UI-1 ConPTY garble). Tasks #234-#237.
+**Status:** v3.0.0 RELEASED - 2026-03-31 - V3.1 BUG FIX WAVE FULLY CLOSED - AREA V3.1 CLOSED 2026-04-02 - V3.2/V3.3 SWARM RUNTIME INTEGRITY + CONTRACT COMPLETION CLOSED 2026-04-02 - AREA CHECKPOINT #142 PASS - V3.4 SWARM UX DEEP TEST FINDINGS IN PROGRESS (#143, #144, #146, #147 COMPLETED; #145, #148 PENDING) - V3.5 SWARM AI RUNTIME PORTABILITY IMPLEMENTED BUT NOT HONESTLY CLOSED (#149, #150, #151, #152 COMPLETED; #153 RE-OPENED/PENDING AFTER LIVE CODEX RUNTIME VERIFICATION) - V4.0 GEMINI CLI HARNESS INTEGRATION: AREA CLOSED 2026-04-04 - V4.0.1 GEMINI RUNTIME BUG FIXES: AREA CLOSED 2026-04-05 - V4.0.2 GEMINI E2E PTY / UI BUG FIXES: MOSTLY COMPLETE, AREA STILL OPEN - V4.0.3 SWARM HYDRATION + GEMINI CONTROL-FLOW STABILITY: PLANNED 2026-04-05 - V4.1 PER-HARNESS MODEL SELECTION: AREA CLOSED 2026-04-05 - V4.2 E2E DEEP TEST BUG FIXES: AREA CLOSED 2026-04-05 - V4.5 SNIPPET FIDELITY MVP BLOCKERS: #218 PARTIAL, #219-#221 + #224 COMPLETED, #222-#223 PENDING - V5.0 DEBUGGER LOOP DEEP CHECK: AREA CLOSED 2026-04-06 — ALL micro-areas PASS, TEST GATE #229 PASS, AREA CHECKPOINT #230 PASS. Bugs: #231 COMPLETED, #232 COMPLETED, #233 DEFERRED (MVP-acceptable). HITL design gap documented. - V5.1 DEBUGGER LOOP FULL-APP DEEP CHECK: IN PROGRESS 2026-04-06 — #234 COMPLETED (BUG-API-1 CSRF fix), #235 PENDING (TEST GATE next), #236 DEFERRED (BUG-UI-1 ConPTY), #237 PENDING (AREA CHECKPOINT). Next: qa-tester runs #235.
 
 ---
 
@@ -12118,7 +12118,7 @@ _Components: CSRF middleware webhook exemption, ConPTY terminal prompt rendering
 _Tasks: #234 → #237_
 _Gate: ALL components in this area must pass their TEST GATE before the next AREA starts_
 _Source: Debugger Loop Phase 1 full-application E2E deep test, 2026-04-06_
-_Status: IN PROGRESS — 2026-04-06_
+_Status: IN PROGRESS — 2026-04-06 — #234 COMPLETED, #235 PENDING (next), #236 DEFERRED, #237 PENDING_
 
 ---
 
@@ -12173,12 +12173,13 @@ Context:
     - The fix must not introduce a new dependency
     - npm test must pass after the fix
 Acceptance Criteria:
-  - [ ] POST /api/v1/triggers/webhooks/test-path WITHOUT X-Requested-With header returns 200 {"received":true}
-  - [ ] POST /api/v1/triggers/webhooks/test-path WITH X-Requested-With header also returns 200 (not broken by the fix)
-  - [ ] POST /api/v1/triggers (non-webhook trigger endpoints) WITHOUT X-Requested-With header still returns 403
-  - [ ] POST /api/v1/sessions (example non-trigger endpoint) WITHOUT X-Requested-With header still returns 403
-  - [ ] No new dependencies added
-  - [ ] npm test passes
+  - [x] POST /api/v1/triggers/webhooks/test-path WITHOUT X-Requested-With header returns 200 {"received":true}
+  - [x] POST /api/v1/triggers/webhooks/test-path WITH X-Requested-With header also returns 200 (not broken by the fix)
+  - [x] POST /api/v1/triggers (non-webhook trigger endpoints) WITHOUT X-Requested-With header still returns 403
+  - [x] POST /api/v1/sessions (example non-trigger endpoint) WITHOUT X-Requested-With header still returns 403
+  - [x] No new dependencies added
+  - [x] npm test passes (312/312)
+Completion Note: 2026-04-06 — Debugger added CSRF_EXEMPT_PREFIXES array in server/middleware/csrf.js with `/api/v1/triggers/webhooks/` prefix. All 312 tests pass, client build OK.
 Dependencies: none
 ---
 

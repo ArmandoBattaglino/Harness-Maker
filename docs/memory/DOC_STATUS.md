@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-06 after V5.0 Debugger Loop Phase 1 Deep E2E Test. No code modified — testing-only phase. 12 server route files, 312 tests all pass. Client build: 480 modules, 0 errors. 2 bugs found: BUG-API-1 (HIGH, webhook CSRF — same as existing MEDIUM-V3-01) and BUG-UI-1 (LOW, ConPTY garble — known/deferred per DEC-009)._
+_Last updated: 2026-04-06 after Task #234: BUG-API-1 fix. server/middleware/csrf.js now has CSRF_EXEMPT_PREFIXES array exempting /api/v1/triggers/webhooks/ from CSRF validation. Security audit docs updated to reflect the fix. MEDIUM-V3-01 resolved._
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**
@@ -38,7 +38,7 @@ _Last updated: 2026-04-06 after V5.0 Debugger Loop Phase 1 Deep E2E Test. No cod
 | README.md | UP_TO_DATE | 2026-03-31 | No changes needed for V5.0 fixes (internal snippet filtering and React key prop — no public API/setup/feature changes). |
 | docs/ARCHITECTURE.md | UP_TO_DATE | 2026-04-02 | PtyExplosion component tree entry still accurate. The `key=` prop is an internal React implementation detail, not an architectural change. |
 | docs/PRD.md | UP_TO_DATE | 2026-04-02 | Section 11 spec unchanged by V5.0 fixes — snippet contract (`lastOutputSnippet` field name/type) is the same; only internal filtering logic improved. |
-| docs/API.md | UP_TO_DATE | 2026-03-28 | `lastOutputSnippet` field in `agent_status` WS event unchanged — same field, same type, same contract. Only the backend sanitization pipeline that produces the value was improved. |
+| docs/API.md | UP_TO_DATE | 2026-03-28 | Webhook CSRF exception already documented at line 12. Now factually accurate — code matches the documented behavior after Task #234. |
 | docs/memory/PROJECT.md | UP_TO_DATE | 2026-03-28 | No stack/constraint changes in V5.0 fixes. |
 | docs/memory/DECISIONS.md | UP_TO_DATE | 2026-04-03 | DEC-001 through DEC-026 — no new architectural decisions from V5.0 bug fixes. |
 | docs/memory/PROGRESS.md | UP_TO_DATE | 2026-04-06 | V5.0 fix wave entry added: TASK #231 (snippet preamble noise) and TASK #232 (PTY Explosion wrong terminal) COMPLETED. TASK #233 still PENDING. |
@@ -46,8 +46,8 @@ _Last updated: 2026-04-06 after V5.0 Debugger Loop Phase 1 Deep E2E Test. No cod
 | docs/memory/CODE_MAP.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No changes from documenter. |
 | docs/memory/CHANGELOG.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No changes from documenter. |
 | docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-06 | V5.0 Phase 1 deep test entry appended by documenter. |
-| docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-03-18 | V1 audit. V3 audit is docs/security-v3-audit.md (Task #79). No security changes in V5.0 fixes. |
-| docs/security-v3-audit.md | UP_TO_DATE | 2026-03-28 | No security changes in V5.0 fixes. |
+| docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-04-06 | V1 audit. SEC-06 entry updated with webhook CSRF exemption note (Task #234). |
+| docs/security-v3-audit.md | UP_TO_DATE | 2026-04-06 | MEDIUM-V3-01 marked FIXED (Task #234). Summary table updated. |
 | Inline comments | UP_TO_DATE | 2026-04-06 | V5.0 fixes: SwarmEngine.js SNIPPET_NOISE_LINE_PATTERNS array is self-documenting (regex patterns with inline comments not needed — the pattern names and regex literals are clear). SwarmView.jsx PtyExplosion `key={ptyExplosionNodeId}` is a standard React pattern for forced remount — no "why" comment needed beyond the PR/task context. |
 | docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. Deferred indefinitely. |
 
@@ -76,7 +76,7 @@ No code was modified in this phase — testing only. Full-app deep E2E test cove
 
 | ID | Severity | Location | Description | Status |
 |----|----------|----------|-------------|--------|
-| BUG-API-1 | HIGH | server/index.js (CSRF middleware) | Webhook endpoint blocked by global CSRF middleware — external callers receive 403. Same root cause as MEDIUM-V3-01 documented since v3.0. Fix: CSRF exemption path in server/middleware/csrf.js. | OPEN — tracked in Documentation Debt |
+| BUG-API-1 | HIGH | server/middleware/csrf.js | Webhook endpoint blocked by global CSRF middleware — external callers received 403. Fixed: CSRF_EXEMPT_PREFIXES array exempts /api/v1/triggers/webhooks/ from CSRF validation. | FIXED 2026-04-06 (Task #234) |
 | BUG-UI-1 | LOW | ConPTY terminal buffer | Terminal prompt garble after view switch due to ConPTY buffer race. Known limitation per DEC-009 (ConPTY deadlock prevention). | DEFERRED — known/accepted per DEC-009 |
 
 **Overall assessment:** App is in healthy state. Only 1 actionable bug (BUG-API-1 / MEDIUM-V3-01).
@@ -92,5 +92,5 @@ No code was modified in this phase — testing only. Full-app deep E2E test cove
 | SECURITY_AUDIT.md LOW-04 fix | Low | Refactor safeRead to cover claudemd GET path — deferred to v3.1 |
 | Swarm execution state persistence | Medium | In-memory only in v3.0; restart clears all executions. Disk persistence planned for v3.1. |
 | docs/memory/CODE_MAP.md TriggerNode "(stub)" notation | Low | Code-mapper should update the map entry — TriggerNode is now fully implemented (Task #76). |
-| MEDIUM-V3-01 / BUG-API-1 (webhook CSRF mismatch) | Medium | Functional issue: external callers receive 403. Fix is CSRF exemption path in server/middleware/csrf.js. Not blocking v3.0 (app is localhost-only). Re-confirmed by V5.0 Phase 1 deep E2E test (2026-04-06). |
+| ~~MEDIUM-V3-01 / BUG-API-1 (webhook CSRF mismatch)~~ | RESOLVED | Fixed in Task #234 (2026-04-06). CSRF_EXEMPT_PREFIXES array added to server/middleware/csrf.js. Security audit docs updated. |
 | ~~BUG-PRD-1 through BUG-PRD-4 code fixes~~ | RESOLVED | All four bugs fixed in V3.1 wave (Tasks #124-#130). AREA CHECKPOINT #132 PASS confirmed. No remaining debt from this item. |

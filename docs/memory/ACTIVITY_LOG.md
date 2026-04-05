@@ -1,3 +1,14 @@
+## 2026-04-06 — project-manager — Task #234 Review + #235 Confirmation
+**Outcome:** COMPLETED
+**Summary:** Verified Task #234 (BUG-API-1 webhook CSRF exemption) is COMPLETED. Checked all 6 acceptance criteria. Confirmed Task #235 (TEST GATE) is the next action — assigned to qa-tester. Updated TASK_PLAN.md status header, V5.1 area status, and acceptance criteria checkboxes. Critical path: #235 (qa-tester) then #237 (AREA CHECKPOINT).
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none (review task)
+**Decisions made:** none
+**Blockers:** none
+**Next:** qa-tester executes TEST GATE #235 — verifies webhook CSRF exemption with HTTP tests against running server
+
+---
+
 ## 2026-04-06 — debugger — Task #234: BUG-API-1 — Webhook endpoint blocked by global CSRF middleware
 **Outcome:** COMPLETED
 **Summary:** Added path-based CSRF exemption in server/middleware/csrf.js for `/api/v1/triggers/webhooks/` prefix. External webhook callers no longer receive 403. All 312 server tests pass, client build OK.

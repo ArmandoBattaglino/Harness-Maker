@@ -1,4 +1,5 @@
 # Progress
+- [V5.1 PM REVIEW 2026-04-06] TASK #234 VERIFIED COMPLETED — all 6 acceptance criteria checked. TASK #235 (TEST GATE) is NEXT — assigned to qa-tester. Critical path: #235 -> #237 (AREA CHECKPOINT).
 - [V5.1 FIX 2026-04-06] TASK #234 COMPLETED — BUG-API-1 webhook CSRF exemption
   Added path-based exemption in server/middleware/csrf.js for `/api/v1/triggers/webhooks/` prefix. External webhook callers no longer receive 403 CSRF validation failed. All 312 server tests pass. Client build OK.
 

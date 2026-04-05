@@ -262,33 +262,20 @@ Dependency chain: tailwindcss@3.4.19 → chokidar → picomatch@2.3.1
 
 ### MEDIUM-V3-01: Webhook endpoint blocked by global CSRF middleware (design mismatch)
 **Severity: MEDIUM (functional correctness issue, net security positive)**
-**Location:** `server/routes/triggers.js:67` (design comment), `server/index.js:180` and `283`
-**Note (2026-03-28):** BUG-99 fix (express.raw body parser) does not change the CSRF interaction — the CSRF middleware runs before the body parser and is unaffected by this change. MEDIUM-V3-01 remains open.
+**Location:** `server/middleware/csrf.js:9` (CSRF_EXEMPT_PREFIXES), `server/routes/triggers.js:67` (design comment)
+**STATUS: FIXED — Task #234 (2026-04-06)**
 
-The webhook receiver comment states: "External caller: NOT CSRF-protected (no X-Requested-With header expected)". However, the global `csrfMiddleware` is mounted at `server/index.js:180` before all routes, including the triggers router mounted at line 283.
+The webhook receiver was designed to accept external POSTs without the `X-Requested-With: ClaudeCodeManager` CSRF header. However, the global `csrfMiddleware` blocked these requests with HTTP 403 before they reached the webhook handler.
 
-This means that any external POST to `/api/v1/triggers/webhooks/:path` without the `X-Requested-With: ClaudeCodeManager` header will receive HTTP 403 before reaching the webhook handler. External webhook senders (GitHub, Zapier, etc.) do not send this header.
+**Fix applied (Task #234):** Added a `CSRF_EXEMPT_PREFIXES` array to `server/middleware/csrf.js` containing `'/api/v1/triggers/webhooks/'`. The middleware now skips CSRF validation for any request whose path starts with an exempt prefix. This is Option 1 from the original analysis — path-based exemption inside the middleware itself.
 
-**Attack scenario:** Not exploitable as a vulnerability — this makes the webhook endpoint more restrictive than designed, not less. However, it means the webhook trigger feature is non-functional for genuine external callers.
-
-**Consequence if left unfixed:** The webhook trigger system (SEC-V3-01, SEC-V3-04) works correctly at the code level, but is effectively disabled for external callers due to the CSRF 403. Since the app binds to 127.0.0.1 only, external callers require deliberate port forwarding anyway — so this is unlikely to be noticed in development.
-
-**Fix options (in order of preference):**
-1. In `csrfMiddleware`, exempt routes matching `/api/v1/triggers/webhooks/` from CSRF validation (path-based exemption)
-2. In `triggersRouter`, apply CSRF exemption by catching the 403 at the router level with a path-specific bypass
-3. Mount the triggers router before `app.use(csrfMiddleware)` (not recommended — breaks the middleware ordering principle)
-
-Option 1 example fix in `server/middleware/csrf.js`:
 ```js
-// Exempt external webhook receiver from CSRF
-const CSRF_EXEMPT_PATHS = [/^\/api\/v1\/triggers\/webhooks\//];
-
-export function csrfMiddleware(req, res, next) {
-  if (!MUTATING_METHODS.has(req.method)) return next();
-  if (CSRF_EXEMPT_PATHS.some(p => p.test(req.path))) return next();
-  // ... existing header check
-}
+const CSRF_EXEMPT_PREFIXES = ['/api/v1/triggers/webhooks/'];
+// In csrfMiddleware:
+if (CSRF_EXEMPT_PREFIXES.some((prefix) => reqPath.startsWith(prefix))) return next();
 ```
+
+**Security impact:** The webhook endpoint is now the only mutating route exempt from CSRF validation. This is by design — external callers (GitHub webhooks, CI/CD systems) cannot send the custom header. The endpoint remains protected by its dedicated rate limiter (SEC-V3-04: 10 req/min/IP) and body size cap (SEC-V3-01: 32KB). The server still binds to 127.0.0.1 only, so external access requires deliberate port forwarding.
 
 ---
 
@@ -389,7 +376,7 @@ All 187 tests pass. No regressions introduced by V3 additions.
 |---------|----------|--------|------|
 | path-to-regexp ReDoS (transitive dep) | HIGH (dep) | Note — non-exploitable in current routing | root/node_modules |
 | picomatch ReDoS (client dev dep) | HIGH (dep) | Note — dev-only, no production exposure | client/node_modules |
-| Webhook CSRF mismatch | MEDIUM | Design note — net security positive | server/middleware/csrf.js + triggers.js |
+| Webhook CSRF mismatch | MEDIUM | FIXED (Task #234, 2026-04-06) — path-based exemption in csrf.js | server/middleware/csrf.js |
 | swarmHandler open WS on missing execution | LOW | Informational | server/ws/swarmHandler.js |
 | BudgetTracker unbounded char accumulation | LOW | Informational | server/services/BudgetTracker.js |
 | RSS URL logged in error paths | LOW | Informational | server/services/TriggerManager.js |

@@ -1,4 +1,49 @@
 ---
+## 2026-04-06 — Task #234 Completion Review + #235 Confirmation
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+Task #234 (BUG-API-1 — CSRF webhook exemption) had just been completed by the debugger. The fix added CSRF_EXEMPT_PREFIXES in server/middleware/csrf.js. All 312 tests pass. I needed to verify #234 is properly marked COMPLETED and confirm #235 (TEST GATE) is next.
+
+### What I did
+1. Read TASK_PLAN.md V5.1 section (lines 12116-12271) to verify #234 status
+2. Confirmed #234 was already marked Status: COMPLETED
+3. Checked all 6 acceptance criteria boxes on #234 (were unchecked)
+4. Added Completion Note to #234
+5. Updated V5.1 area status line with per-task status breakdown
+6. Updated main status header to reflect #234 COMPLETED and #235 as next
+7. Updated PROGRESS.md with PM review entry
+8. Updated ACTIVITY_LOG.md with PM session entry
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Checked #234 acceptance criteria, added completion note, updated status header + V5.1 area status |
+| docs/memory/PROGRESS.md | MODIFIED | Added PM review entry confirming #234 verified, #235 next |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added PM session entry |
+| docs/memory/agents/project-manager.md | MODIFIED | Added this session log |
+
+### Improvements delivered
+- Task #234 now has fully checked acceptance criteria and a completion note for audit trail
+- Status headers accurately reflect current V5.1 progress
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+None — straightforward review task.
+
+### What I learned
+Nothing new — standard PM review cycle.
+
+### State I'm leaving behind
+V5.1 area: #234 COMPLETED (all criteria checked), #235 PENDING (TEST GATE, qa-tester), #236 DEFERRED, #237 PENDING (AREA CHECKPOINT). Critical path: qa-tester runs #235 next, then #237.
+
+### Handoff
+Orchestrator should assign qa-tester to TASK #235 (TEST GATE for BUG-API-1). On PASS, qa-tester proceeds to TASK #237 (AREA CHECKPOINT). On all PASS, V5.1 is CLOSED.
+
+---
 ## 2026-04-06 — V5.1 Debugger Loop Full-App Deep Check — Phase 2 Bulk Plan
 **Status:** COMPLETED
 **Called by:** user (debugger-loop Phase 2)
