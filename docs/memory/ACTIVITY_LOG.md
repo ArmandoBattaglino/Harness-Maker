@@ -1,3 +1,36 @@
+## 2026-04-06 — project-manager — V5.0 Post-Phase-3 Task Plan Review and Update
+**Outcome:** COMPLETED
+**Summary:** Reviewed and updated TASK_PLAN.md after V5.0 debugger loop Phase 3 fixes. Verified #231 and #232 as COMPLETED, marked #233 as DEFERRED (MVP-acceptable). Marked CHECK tasks #225 (workflow lifecycle) and #227 (agent terminals) as COMPLETED based on testing done during Phase 1. Updated #226 and #228 as PENDING/UNBLOCKED. Updated TEST GATE #229 as BLOCKED (waiting on #226 + #228). Updated AREA CHECKPOINT #230 as BLOCKED (waiting on #229). Updated V5.0 area header and main status header.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none (review task)
+**Decisions made:** #225 and #227 are honestly COMPLETED based on Phase 1 testing evidence; #226 and #228 were NOT tested during Phase 1 and remain PENDING
+**Blockers:** none
+**Next:** Execute #226 (HITL check) and #228 (persistence check) in parallel via qa-tester, then evaluate TEST GATE #229
+
+---
+
+## 2026-04-06 — orchestrator — Tasks #231-#232: V5.0 Debugger Loop Phase 3 — Snippet + PTY Explosion fixes
+**Outcome:** COMPLETED
+**Summary:** Fixed 2 HIGH-priority bugs from debugger-loop Phase 1 E2E testing. Task #231 (BUG-WF-1): added 13 swarm protocol preamble patterns to SNIPPET_NOISE_LINE_PATTERNS + SWARM INPUT block regex to _stripSnippetProtocolArtifacts — system prompt text no longer leaks into agent node snippets. Task #232 (BUG-WF-3): added key={ptyExplosionNodeId} to PtyExplosion in SwarmView.jsx — terminal now correctly switches when selecting different agent nodes. Task #233 (BUG-WF-2, LOW) deferred as acceptable for MVP. Server tests 312/312 pass, client build OK.
+**Files changed:** server/services/SwarmEngine.js, client/src/views/SwarmView.jsx, docs/TASK_PLAN.md, docs/memory/agents/debugger.md, docs/memory/ACTIVITY_LOG.md, docs/memory/PROGRESS.md
+**Bugs fixed:** BUG-WF-1 (system prompt in snippet), BUG-WF-3 (wrong PTY terminal on node switch)
+**Decisions made:** BUG-WF-2 deferred — done-token recovery noise is acceptable for MVP
+**Blockers:** none
+**Next:** Phase 3.3 browser re-verification of fixes, then TEST GATE #229 and AREA CHECKPOINT #230
+
+---
+
+## 2026-04-06 -- documenter -- V5.0 Debugger Loop Fix Wave documentation update
+**Outcome:** COMPLETED
+**Summary:** Updated PROGRESS.md, CONTEXT.md, DOC_STATUS.md after V5.0 fix wave (Tasks #231, #232). Audited README.md, ARCHITECTURE.md, API.md, PRD.md -- none stale from these changes (internal snippet filtering and React key prop, no public API/contract changes). TASK #233 remains PENDING.
+**Files changed:** docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none (documenter only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** TASK #233 (BUG-WF-2 done-token recovery prompt noise) fix, then TEST GATE #229 and AREA CHECKPOINT #230
+
+---
+
 ## 2026-04-05 - debugger - V4.0.3 completion: validated Gemini model registry, bounded pre-handoff blocker, and Swarm runtime sync
 **Outcome:** COMPLETED
 **Summary:** Closed the remaining V4.0.3 tasks (#189-#196) with implementation plus live/browser verification. Backend now owns the runtime model contract through `/api/v1/swarm/runtime-capabilities`, start-route validation rejects unsupported Gemini model overrides before PTY spawn, and the Swarm toolbar renders only backend-approved Gemini options (`gemini-2.5-pro`, `gemini-2.5-flash`). SwarmEngine now tracks per-agent Gemini forward-progress markers and runs a watchdog timer so deterministic control workflows either achieve the first handoff or block honestly with `runtimeBlocker.type=no_progress_timeout` instead of sitting in `running` indefinitely. Frontend lifecycle sync was tightened by clearing execution-only state before new runs, preserving the loaded workflow across reset, and re-keying `SwarmCanvas` by workflow/execution identity so stale node/feed state cannot survive new runs or workflow switches. Live QA against `Prompt Reliability Control Workflow` on 2026-04-05 produced execution `e17a6ea7-818e-4ef0-8420-e1c6f00b7cd7`, which blocked honestly after ~67.5s with no ghost execution left behind after stop/reload/navigation.
@@ -2756,6 +2789,17 @@ full self-contained context and acceptance criteria.
 **Decisions made:** Used React key prop pattern over useEffect cleanup in Terminal.jsx — simpler, guaranteed correct, avoids touching shared component
 **Blockers:** none
 **Next:** Remaining debugger-loop tasks from V5.0 wave (TASK #233 BUG-WF-2 etc.)
+---
+
+---
+## 2026-04-06 — code-mapper — Tasks #231 + #232: V5.0 Debugger Loop Code Map Update
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md and CHANGELOG.md for V5.0 debugger loop fixes. Mapped 4 snippet pipeline functions (SNIPPET_NOISE_LINE_PATTERNS, _stripSnippetProtocolArtifacts, _isSnippetNoiseLine, _buildSemanticSnippet) for the first time. Updated SwarmEngine.js and SwarmView.jsx Module Index entries. Added BUG-WF-1 and BUG-WF-3 to Bug Registry. Appended 2 CHANGELOG entries.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
+**Bugs fixed:** none (documentation only)
+**Decisions made:** Mapped full snippet pipeline (4 functions) even though only 2 were directly modified — completes the pipeline graph
+**Blockers:** none
+**Next:** Next code-mapper invocation after the next completed task
 ---
 
 
