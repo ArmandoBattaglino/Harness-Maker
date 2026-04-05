@@ -1,3 +1,14 @@
+## 2026-04-06 — code-mapper — Task #234: BUG-API-1 — CSRF exemption code mapping
+**Outcome:** COMPLETED
+**Summary:** Mapped the CSRF_EXEMPT_PREFIXES addition and path-bypass logic in csrfMiddleware. Created a full Function Graph entry for csrfMiddleware (previously missing). Updated Module Index. Appended CHANGELOG entry with impact analysis noting test gap in csrf.test.js.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
+**Bugs fixed:** none (mapping only)
+**Decisions made:** Created full Function Graph entry for csrfMiddleware — it previously only had a Module Index row
+**Blockers:** none
+**Next:** qa-tester runs TEST GATE #235 (should include tests for CSRF exempt paths)
+
+---
+
 ## 2026-04-06 — documenter — Task #234: BUG-API-1 documentation update
 **Outcome:** COMPLETED
 **Summary:** Updated security audit docs (v1 and v3) to reflect CSRF webhook exemption fix. MEDIUM-V3-01 marked FIXED in security-v3-audit.md. SEC-06 entry in SECURITY_AUDIT.md updated with exemption note. DOC_STATUS.md BUG-API-1 moved to FIXED, debt entry resolved. API.md already accurate (no change needed). README and ARCHITECTURE not affected.

@@ -2307,3 +2307,47 @@ CODE_MAP.md and CHANGELOG.md are up to date through V5.0 Phase 1. BUG-API-1 and 
 ### Handoff
 None — task fully self-contained. Phase 2/3 fixes will trigger separate code-mapper runs.
 ---
+
+---
+## 2026-04-06 — Task #234: BUG-API-1 — CSRF exemption for webhook endpoints
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+Task #234 (BUG-API-1) had just been completed by the debugger. The fix modified `server/middleware/csrf.js` to add a `CSRF_EXEMPT_PREFIXES` array and path-based bypass logic so external webhook callers can POST without the custom CSRF header. CODE_MAP.md had no Function Graph entry for csrfMiddleware — only a Module Index row and test suite entry.
+
+### What I did
+1. Read `server/middleware/csrf.js` to understand the new code: CSRF_EXEMPT_PREFIXES constant, path extraction via `req.path || req.url`, prefix matching via `.some()`.
+2. Grepped codebase for all references to `csrfMiddleware` and `CSRF_EXEMPT_PREFIXES` to trace connections.
+3. Updated Module Index row for csrf.js — added CSRF_EXEMPT_PREFIXES to key exports, expanded description.
+4. Created a new Function Graph entry for `csrfMiddleware(req, res, next)` with full details: purpose, callers, inputs, outputs, constants, bypass logic.
+5. Updated the csrf test suite entry to note potential test gap for the new exemption paths.
+6. Appended full CHANGELOG.md entry for Task #234 with file changes, function modifications, connection changes, and impact analysis.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Updated Module Index row for csrf.js; added Function Graph entry for csrfMiddleware; updated test suite entry note |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Task #234 entry with full change details and impact analysis |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended activity entry |
+
+### Improvements delivered
+- CODE_MAP.md now has a complete Function Graph entry for csrfMiddleware (previously missing — only had Module Index row)
+- CHANGELOG.md documents the BUG-API-1 fix with connection changes and impact on tests
+
+### Bugs I encountered
+- None
+
+### Decisions I made
+- Created a full Function Graph entry for csrfMiddleware rather than just updating the Module Index — the function lacked any graph entry despite being a core security middleware
+
+### What I learned
+- csrfMiddleware had no Function Graph entry before this task — only a Module Index row and test suite entry. Future code-mapper runs should check for this gap in other middleware.
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md are up to date through Task #234. The csrf test suite (13 tests) does not yet cover the CSRF_EXEMPT_PREFIXES bypass — flagged in both CODE_MAP.md and CHANGELOG.md.
+
+### Handoff
+None — task fully self-contained. Test gap for CSRF exemption paths noted for qa-tester in Task #235.
+---
