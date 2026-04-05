@@ -1,3 +1,14 @@
+## 2026-04-06 — qa-tester — Task #235: TEST GATE — BUG-API-1 (Webhook CSRF Exemption)
+**Outcome:** COMPLETED
+**Summary:** TEST GATE PASS. Verified webhook CSRF exemption works after server restart. POST /api/v1/triggers/webhooks/test-path returns 200 without CSRF header. Non-webhook POSTs still return 403. 312/312 server tests pass, 480-module client build clean.
+**Files changed:** docs/TASK_PLAN.md (status update)
+**Bugs fixed:** none — fix was correct, server just needed restart
+**Decisions made:** none
+**Blockers:** none
+**Next:** TASK #237 (AREA CHECKPOINT V5.1) can proceed after #236 is acknowledged as DEFERRED
+
+---
+
 ## 2026-04-06 — code-mapper — Task #234: BUG-API-1 — CSRF exemption code mapping
 **Outcome:** COMPLETED
 **Summary:** Mapped the CSRF_EXEMPT_PREFIXES addition and path-bypass logic in csrfMiddleware. Created a full Function Graph entry for csrfMiddleware (previously missing). Updated Module Index. Appended CHANGELOG entry with impact analysis noting test gap in csrf.test.js.

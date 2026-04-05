@@ -1,4 +1,52 @@
 ---
+## 2026-04-06 — Task #235: TEST GATE — BUG-API-1 (Webhook CSRF Exemption)
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+Task #234 (BUG-API-1) was completed by debugger: `CSRF_EXEMPT_PREFIXES` array added to server/middleware/csrf.js exempting `/api/v1/triggers/webhooks/` from CSRF validation. The code on disk was correct but the running server had not been restarted.
+
+### What I did
+1. Read csrf.js middleware — confirmed CSRF_EXEMPT_PREFIXES array with `/api/v1/triggers/webhooks/` and path-check logic at lines 8-9, 18-20.
+2. Ran curl test 1: POST /api/v1/triggers/webhooks/test-path without CSRF header — got 403 (server stale).
+3. Investigated: confirmed git diff shows no uncommitted changes, code on disk is correct. Running server was using pre-fix module.
+4. Killed old server process (PID 58444 on port 3000), restarted with `node server/index.js`.
+5. Re-ran all 3 curl tests after restart — all passed:
+   - Webhook POST without CSRF: 200 `{"received":true}`
+   - Non-webhook POST without CSRF: 403 `{"error":"CSRF validation failed"}`
+   - Trigger POST with CSRF header: 404 (route doesn't exist for POST, but not 403 — CSRF passed)
+6. Ran `npm test --prefix server` — 312/312 tests pass, 12 test files.
+7. Ran `npm run build --prefix client` — 480 modules, 0 errors.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Task #235 Status: PENDING -> COMPLETED, area status updated |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended task completion entry |
+| docs/memory/agents/qa-tester.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- TEST GATE #235 cleared: pipeline can proceed to #236/#237
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| Initial 403 on webhook | Server not restarted after code fix | Killed old process, restarted server | FIXED (operational, not code bug) |
+
+### Decisions I made
+- Verified via live HTTP requests rather than only unit tests, since csrf.test.js mock does not include `path` property and has no webhook exemption tests. The live test is the authoritative verification.
+
+### What I learned
+- The csrf.test.js `makeReq()` helper does not set `path` or `url` properties. The CSRF_EXEMPT_PREFIXES check relies on `req.path`, so existing unit tests cannot cover the exemption. This is a test gap that should be addressed.
+- Server restart is required after code changes — Node.js ESM modules are cached after first import.
+
+### State I'm leaving behind
+TEST GATE #235: PASS. All verification checks green. Server running on port 3000 with fresh code.
+
+### Handoff
+Task #237 (AREA CHECKPOINT V5.1) is the next gate. Task #236 is DEFERRED (BUG-UI-1 ConPTY garble — cosmetic).
+
+---
 ## 2026-04-02 — Task #131: TEST GATE — SwarmCanvas onUpdateNode prop wiring
 **Status:** COMPLETED
 **Called by:** orchestrator

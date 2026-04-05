@@ -12118,7 +12118,7 @@ _Components: CSRF middleware webhook exemption, ConPTY terminal prompt rendering
 _Tasks: #234 → #237_
 _Gate: ALL components in this area must pass their TEST GATE before the next AREA starts_
 _Source: Debugger Loop Phase 1 full-application E2E deep test, 2026-04-06_
-_Status: IN PROGRESS — 2026-04-06 — #234 COMPLETED, #235 PENDING (next), #236 DEFERRED, #237 PENDING_
+_Status: IN PROGRESS — 2026-04-06 — #234 COMPLETED, #235 COMPLETED (PASS), #236 DEFERRED, #237 PENDING_
 
 ---
 
@@ -12190,7 +12190,8 @@ Type: TEST_GATE
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-06 — PASS. All 5 verification tests passed after server restart. Webhook POST returns 200, non-webhook POST returns 403, server tests 312/312 pass, client build 480 modules clean.
 Gate: HARD — Task #236 CANNOT start until this gate returns PASS
 Context:
   Component being tested: CSRF middleware webhook exemption
