@@ -1,4 +1,51 @@
 ---
+## 2026-04-06 — V5.1 Debugger Loop Full-App Deep Check — Phase 2 Bulk Plan
+**Status:** COMPLETED
+**Called by:** user (debugger-loop Phase 2)
+
+### Context when I started
+V5.0 area was CLOSED. Phase 1 of a new full-application deep E2E test found 2 bugs: BUG-API-1 (HIGH, webhook endpoint blocked by global CSRF middleware) and BUG-UI-1 (LOW, terminal prompt garble after navigation — ConPTY artifact). My job was to create a new V5.1 area with fix tasks, test gates, and an area checkpoint.
+
+### What I did
+1. Read TASK_PLAN.md to find last task number (#233)
+2. Read csrf.js, server/index.js CSRF mount (line 201), triggers router mount (line 277), and webhook handler (triggers.js lines 64-109) to build full self-contained context for BUG-API-1
+3. Created 4 tasks in V5.1 area:
+   - #234: BUG-API-1 fix (debugger, HIGH) — webhook CSRF exemption
+   - #235: TEST GATE for #234 (qa-tester)
+   - #236: BUG-UI-1 DEFERRED — ConPTY artifact, DEC-009
+   - #237: AREA CHECKPOINT (qa-tester)
+4. Updated status header with V5.1 reference
+5. Updated PROGRESS.md, ACTIVITY_LOG.md, and this agent memory
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Added V5.1 area with tasks #234-#237; updated status header |
+| docs/memory/PROGRESS.md | MODIFIED | Added V5.1 planning entry |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added session entry |
+| docs/memory/agents/project-manager.md | MODIFIED | Added this session log |
+
+### Improvements delivered
+- All Phase 1 bugs are now tracked with full self-contained context for assigned agents
+- BUG-UI-1 properly deferred with DEC-009 rationale instead of creating unnecessary work
+
+### Bugs I encountered
+None — planning task.
+
+### Decisions I made
+- BUG-UI-1 DEFERRED: Known ConPTY artifact (DEC-009), self-corrects on new output, no functional impact, MVP-acceptable. Creating a fix task would risk violating the DEC-009 constraint that PTY onData handlers must never be removed.
+- BUG-API-1 fix approach left to debugger's discretion: provided three options (path exemption in csrf.js, mount before CSRF, per-route flag) with trade-offs documented.
+
+### What I learned
+- The CSRF middleware is a simple global app.use() with no path filtering — any new external-facing POST endpoint will hit the same problem unless exempted.
+
+### State I'm leaving behind
+V5.1 area: 4 tasks created. #234 PENDING (debugger), #235 PENDING (qa-tester, blocked on #234), #236 DEFERRED, #237 PENDING (blocked on #235). Critical path: #234 -> #235 -> #237.
+
+### Handoff
+Orchestrator should assign debugger to TASK #234 immediately. After #234 completes, qa-tester runs #235. On PASS, qa-tester runs #237. On all PASS, V5.1 is CLOSED.
+
+---
 ## 2026-04-06 — V5.0 Post-Phase-3 Task Plan Review and Update
 **Status:** COMPLETED
 **Called by:** user (post-debugger-loop Phase 3 review)

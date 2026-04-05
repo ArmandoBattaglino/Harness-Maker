@@ -1,3 +1,14 @@
+## 2026-04-06 — project-manager — V5.1 Debugger Loop Full-App Deep Check Phase 2 Bulk Plan
+**Outcome:** COMPLETED
+**Summary:** Created V5.1 area in TASK_PLAN.md with tasks #234-#237 from Phase 1 bug report. BUG-API-1 (HIGH, webhook CSRF block) gets a fix task (#234, debugger) + TEST GATE (#235, qa-tester) + AREA CHECKPOINT (#237, qa-tester). BUG-UI-1 (LOW, ConPTY garble) is DEFERRED as #236 — known DEC-009 artifact, MVP-acceptable.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none (planning only)
+**Decisions made:** BUG-UI-1 deferred per DEC-009 — ConPTY artifact, self-corrects, no functional impact
+**Blockers:** none
+**Next:** Debugger executes TASK #234 (BUG-API-1 fix), then qa-tester runs TEST GATE #235, then AREA CHECKPOINT #237
+
+---
+
 ## 2026-04-06 — documenter — V5.0 Debugger Loop Phase 1 Deep E2E Test documentation update
 **Outcome:** COMPLETED
 **Summary:** Updated DOC_STATUS.md with Phase 1 deep test results. Added structured bug table for BUG-API-1 (HIGH, webhook CSRF — cross-referenced to existing MEDIUM-V3-01 debt) and BUG-UI-1 (LOW, ConPTY garble — deferred per DEC-009). No code was modified in Phase 1, so no README/ARCHITECTURE/API updates needed. All documentation artifacts verified UP_TO_DATE.

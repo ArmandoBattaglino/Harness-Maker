@@ -1,4 +1,7 @@
 # Progress
+- [V5.1 PLAN 2026-04-06] Debugger Loop Full-App Deep Check — Phase 2 bulk plan created
+  Tasks #234-#237 added to TASK_PLAN.md. BUG-API-1 (HIGH): webhook endpoint blocked by global CSRF middleware — assigned to debugger (#234), TEST GATE (#235), AREA CHECKPOINT (#237). BUG-UI-1 (LOW): terminal prompt garble after navigation — DEFERRED as known ConPTY artifact per DEC-009 (#236). Next: debugger fixes #234, then qa-tester runs #235 gate, then #237 checkpoint.
+
 - [V5.0 FIX 2026-04-06] TASK #231 COMPLETED + TASK #232 COMPLETED — Swarm snippet preamble filtering and PTY Explosion terminal switching
   Two V5.0 debugger-loop bug fixes landed. (1) TASK #231 (BUG-WF-1): SwarmEngine.js `SNIPPET_NOISE_LINE_PATTERNS` expanded with 13 new regexes filtering swarm protocol preamble text ("You are a ... agent", "Current task:", "Workflow goal:", etc.) from agent node snippets. `_stripSnippetProtocolArtifacts()` also gained a `--- SWARM INPUT ... END SWARM INPUT ---` block-level regex so the entire injected prompt block is stripped before snippet scoring. (2) TASK #232 (BUG-WF-3): SwarmView.jsx `PtyExplosion` now carries `key={ptyExplosionNodeId}`, forcing React to unmount/remount the component when the user switches between agent terminals. This eliminates the stale xterm.js / WebSocket state that previously showed Agent A's terminal when the user clicked "Open Terminal" on Agent B. Build: 480 modules, 0 errors. TASK #233 (BUG-WF-2, done-token recovery prompt filtering) remains PENDING.
 
