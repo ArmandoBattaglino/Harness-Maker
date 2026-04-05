@@ -5,9 +5,18 @@
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 const REQUIRED_HEADER_VALUE = 'ClaudeCodeManager';
 
+// Paths exempt from CSRF validation (called by external systems without the custom header)
+const CSRF_EXEMPT_PREFIXES = ['/api/v1/triggers/webhooks/'];
+
 export function csrfMiddleware(req, res, next) {
   // Exempt safe methods and WebSocket upgrade requests
   if (!MUTATING_METHODS.has(req.method)) {
+    return next();
+  }
+
+  // Exempt paths that receive external traffic (e.g. webhook receivers)
+  const reqPath = req.path || req.url || '';
+  if (CSRF_EXEMPT_PREFIXES.some((prefix) => reqPath.startsWith(prefix))) {
     return next();
   }
 

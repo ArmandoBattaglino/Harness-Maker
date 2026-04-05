@@ -1,3 +1,14 @@
+## 2026-04-06 — debugger — Task #234: BUG-API-1 — Webhook endpoint blocked by global CSRF middleware
+**Outcome:** COMPLETED
+**Summary:** Added path-based CSRF exemption in server/middleware/csrf.js for `/api/v1/triggers/webhooks/` prefix. External webhook callers no longer receive 403. All 312 server tests pass, client build OK.
+**Files changed:** server/middleware/csrf.js
+**Bugs fixed:** BUG-API-1 (webhook CSRF block)
+**Decisions made:** Used CSRF_EXEMPT_PREFIXES array for extensibility; used req.path||req.url fallback for test compatibility
+**Blockers:** none
+**Next:** qa-tester runs TEST GATE #235 to verify acceptance criteria, then AREA CHECKPOINT #237
+
+---
+
 ## 2026-04-06 — project-manager — V5.1 Debugger Loop Full-App Deep Check Phase 2 Bulk Plan
 **Outcome:** COMPLETED
 **Summary:** Created V5.1 area in TASK_PLAN.md with tasks #234-#237 from Phase 1 bug report. BUG-API-1 (HIGH, webhook CSRF block) gets a fix task (#234, debugger) + TEST GATE (#235, qa-tester) + AREA CHECKPOINT (#237, qa-tester). BUG-UI-1 (LOW, ConPTY garble) is DEFERRED as #236 — known DEC-009 artifact, MVP-acceptable.

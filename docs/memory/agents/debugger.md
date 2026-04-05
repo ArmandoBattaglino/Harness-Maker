@@ -521,3 +521,46 @@ Fix is complete. Build passes (480 modules, 0 errors). The change is a single ad
 ### Handoff
 None — task is fully self-contained. No downstream components affected.
 ---
+---
+## 2026-04-06 — Task #234: BUG-API-1 — Webhook endpoint blocked by global CSRF middleware
+**Status:** COMPLETED
+**Called by:** User (direct task assignment — V5.1 Debugger Loop Full-App Deep Check)
+
+### Context when I started
+The CSRF middleware in server/middleware/csrf.js applied globally to all mutating requests, blocking external webhook callers from POSTing to /api/v1/triggers/webhooks/:path without the X-Requested-With: ClaudeCodeManager header. The triggers.js route explicitly documents this endpoint as not CSRF-protected (lines 67-68), but the global middleware ran first and rejected the request with 403.
+
+### What I did
+1. Read memory files (debugger.md, DECISIONS.md, ACTIVITY_LOG.md, CODE_MAP.md) in parallel with the three source files (csrf.js, index.js, triggers.js).
+2. Confirmed the root cause: csrfMiddleware at server/middleware/csrf.js checked all POST/PUT/PATCH/DELETE requests for the X-Requested-With header with no path exemptions.
+3. Added a CSRF_EXEMPT_PREFIXES array containing '/api/v1/triggers/webhooks/' and a path check before the header validation.
+4. First attempt used req.path directly, which caused 15 test failures because the csrf.test.js mocks don't set req.path. Fixed by falling back to req.url when req.path is undefined.
+5. Ran npm test --prefix server: 312/312 pass.
+6. Ran npm run build --prefix client: success.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/middleware/csrf.js | MODIFIED | Added CSRF_EXEMPT_PREFIXES array and path-based exemption check for webhook endpoints |
+
+### Improvements delivered
+- External webhook callers can now POST to /api/v1/triggers/webhooks/:path without the CSRF header
+- All other mutating endpoints remain CSRF-protected
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| Test failures after first fix attempt | csrf.test.js mocks don't set req.path (only req.method and req.headers) | Used `req.path \|\| req.url \|\| ''` fallback | FIXED |
+
+### Decisions I made
+- Used a CSRF_EXEMPT_PREFIXES array rather than hardcoding the path check inline — makes it easy to add future exemptions if needed
+- Used req.path with req.url fallback rather than requiring all test mocks to be updated — minimal change principle
+
+### What I learned
+- The existing csrf.test.js mocks create minimal request objects without req.path — Express normally populates req.path from the URL, but unit test mocks may not
+
+### State I'm leaving behind
+Fix is complete. 312/312 server tests pass. Client build OK. The webhook endpoint now bypasses CSRF validation.
+
+### Handoff
+qa-tester should run TEST GATE #235 to verify the full acceptance criteria for this fix.
+---
