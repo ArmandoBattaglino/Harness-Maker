@@ -1,4 +1,7 @@
 # Progress
+- [V5.1 AREA CLOSED 2026-04-06] V5.1 Debugger Loop Full-App Deep Check — CLOSED
+  All tasks resolved: #234 COMPLETED (BUG-API-1 webhook CSRF exemption), #235 COMPLETED (TEST GATE PASS), #236 DEFERRED (BUG-UI-1 ConPTY artifact, DEC-009, MVP-acceptable), #237 COMPLETED (AREA CHECKPOINT verified). Webhook endpoint is now accessible to external callers. No regressions in V5.0, V4.x, or V3.x. No open tasks remain in V5.1.
+
 - [V5.1 PM REVIEW 2026-04-06] TASK #234 VERIFIED COMPLETED — all 6 acceptance criteria checked. TASK #235 (TEST GATE) is NEXT — assigned to qa-tester. Critical path: #235 -> #237 (AREA CHECKPOINT).
 - [V5.1 FIX 2026-04-06] TASK #234 COMPLETED — BUG-API-1 webhook CSRF exemption
   Added path-based exemption in server/middleware/csrf.js for `/api/v1/triggers/webhooks/` prefix. External webhook callers no longer receive 403 CSRF validation failed. All 312 server tests pass. Client build OK.

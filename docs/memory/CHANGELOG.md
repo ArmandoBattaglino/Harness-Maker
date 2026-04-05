@@ -1,5 +1,21 @@
 # CHANGELOG — Claude Code Visual Manager
 
+## 2026-04-06
+
+### [Tasks #234–#236] V5.1 Debugger Loop Full-App Deep Check — AREA CLOSED
+- Agent: code-mapper (area closure entry)
+- Scope: V5.1 post-V5.0 full-app deep check wave
+
+| Task | Title | Verdict | Agent |
+|------|-------|---------|-------|
+| #234 | BUG-API-1 — Webhook CSRF Exemption | COMPLETED (fix in `server/middleware/csrf.js` — `CSRF_EXEMPT_PREFIXES`) | debugger |
+| #235 | TEST GATE — BUG-API-1 | PASS — POST /api/v1/triggers/webhooks/* returns 200 without CSRF header; non-webhook POSTs still 403; 312/312 tests pass | qa-tester |
+| #236 | BUG-UI-1 — React hydration warning (deferred) | DEFERRED — cosmetic, no user impact | — |
+
+**Area result:** V5.1 CLOSED. 1 bug fixed, 1 deferred. No remaining blockers.
+
+---
+
 ## 2026-04-03
 
 ### [Task #145 follow-up] Swarm runtime hardening — prompt templating, menu auto-dismiss, hard-blocker precedence

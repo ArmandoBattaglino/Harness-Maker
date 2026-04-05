@@ -1,4 +1,44 @@
 ---
+## 2026-04-06 -- V5.1 Debugger Loop Full-App Deep Check CLOSED — DOC_STATUS update
+**Status:** COMPLETED
+**Called by:** orchestrator (V5.1 area closure)
+
+### Context when I started
+V5.1 Debugger Loop Full-App Deep Check was being closed. BUG-API-1 had been fixed in Task #234 and passed TEST GATE #235. BUG-UI-1 was deferred as a known ConPTY limitation (DEC-009). DOC_STATUS.md still referenced the area as "V5.0 Phase 1" and described BUG-API-1 as the only actionable bug rather than reflecting the closed state.
+
+### What I did
+1. Updated DOC_STATUS.md header to reflect V5.1 CLOSED status.
+2. Renamed the V5.0 Phase 1 section to "V5.1 Debugger Loop Full-App Deep Check -- AREA CLOSED".
+3. Updated BUG-API-1 entry to include TEST GATE #235 PASS.
+4. Updated overall assessment to "AREA CLOSED" with zero remaining actionable bugs.
+5. Updated ACTIVITY_LOG.md and this agent log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Header and V5.1 section updated to AREA CLOSED status |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Documenter entry appended |
+| docs/memory/agents/documenter.md | MODIFIED | This session log prepended |
+
+### Improvements delivered
+- DOC_STATUS.md now accurately reflects V5.1 closure status
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- No code documentation updates needed -- only the status tracking file (DOC_STATUS.md) was stale
+
+### What I learned
+- Brief status updates require only DOC_STATUS.md changes when no code was modified
+
+### State I'm leaving behind
+All documentation artifacts are UP_TO_DATE. V5.1 area is cleanly closed in DOC_STATUS.md.
+
+### Handoff
+None -- V5.1 area closed, status tracking complete.
+
+---
 ## 2026-04-06 -- Task #234: BUG-API-1 — Webhook CSRF exemption documentation update
 **Status:** COMPLETED
 **Called by:** orchestrator (parallel post-task documentation update)

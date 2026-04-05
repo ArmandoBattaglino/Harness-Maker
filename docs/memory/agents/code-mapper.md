@@ -2351,3 +2351,46 @@ CODE_MAP.md and CHANGELOG.md are up to date through Task #234. The csrf test sui
 ### Handoff
 None — task fully self-contained. Test gap for CSRF exemption paths noted for qa-tester in Task #235.
 ---
+
+---
+## 2026-04-06 — V5.1 Area Closure (Tasks #234-#236)
+**Status:** COMPLETED
+**Called by:** orchestrator (area closure mapping)
+
+### Context when I started
+V5.1 Debugger Loop Deep Check completed: Task #234 (BUG-API-1 CSRF fix) done, TEST GATE #235 PASS, BUG-UI-1 #236 DEFERRED. Needed CHANGELOG entry and CODE_MAP header update to formally close the area.
+
+### What I did
+1. Read CHANGELOG.md, CODE_MAP.md header, ACTIVITY_LOG.md, and agent log.
+2. Updated CODE_MAP.md header timestamp to reflect V5.1 area closure.
+3. Appended CHANGELOG.md entry with task/verdict table for the full V5.1 wave.
+4. Appended ACTIVITY_LOG.md entry.
+5. Appended this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header timestamp updated to V5.1 area closure |
+| docs/memory/CHANGELOG.md | MODIFIED | V5.1 area closure entry with task table |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended area closure entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log |
+
+### Improvements delivered
+- CHANGELOG.md now has a consolidated V5.1 wave summary for future reference
+- CODE_MAP.md header reflects the latest project state
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Kept the CHANGELOG entry brief since V5.1 was a small wave (1 fix + 1 deferred)
+
+### What I learned
+- Area closure entries for small waves can be compact — a table is sufficient when there are only 2-3 tasks
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md fully up to date through V5.1 area closure. V5.1 CLOSED.
+
+### Handoff
+None — area fully closed.
+---

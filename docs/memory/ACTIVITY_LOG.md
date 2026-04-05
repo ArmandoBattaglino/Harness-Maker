@@ -1,3 +1,36 @@
+## 2026-04-06 — project-manager — V5.1 Area Closure
+**Outcome:** COMPLETED
+**Summary:** Closed V5.1 Debugger Loop Full-App Deep Check area. Updated TASK_PLAN.md status header to reflect V5.1 CLOSED. Marked #237 (AREA CHECKPOINT) as COMPLETED. Updated PROGRESS.md with closure entry. All 4 tasks resolved: #234 COMPLETED, #235 PASS, #236 DEFERRED, #237 VERIFIED.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none (closure bookkeeping)
+**Decisions made:** none
+**Blockers:** none
+**Next:** No open tasks. Next area TBD by user direction.
+
+---
+
+## 2026-04-06 — documenter — V5.1 Debugger Loop Full-App Deep Check CLOSED — DOC_STATUS update
+**Outcome:** COMPLETED
+**Summary:** Updated DOC_STATUS.md to reflect V5.1 area closure. BUG-API-1 FIXED with TEST GATE PASS, BUG-UI-1 DEFERRED. Section header renamed to V5.1 AREA CLOSED. No code docs needed updating — only status tracking.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none (status update only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** nothing — V5.1 area closed, awaiting next user direction
+
+---
+
+## 2026-04-06 — code-mapper — V5.1 Area Closure (Tasks #234-#236)
+**Outcome:** COMPLETED
+**Summary:** Appended CHANGELOG.md entry for V5.1 Debugger Loop area closure. Updated CODE_MAP.md header timestamp. Task #234 BUG-API-1 fixed, TEST GATE #235 PASS, BUG-UI-1 #236 DEFERRED. Area closed.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
+**Bugs fixed:** none (mapping only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** V5.1 area fully closed. Ready for next scope.
+
+---
+
 ## 2026-04-06 — qa-tester — Task #235: TEST GATE — BUG-API-1 (Webhook CSRF Exemption)
 **Outcome:** COMPLETED
 **Summary:** TEST GATE PASS. Verified webhook CSRF exemption works after server restart. POST /api/v1/triggers/webhooks/test-path returns 200 without CSRF header. Non-webhook POSTs still return 403. 312/312 server tests pass, 480-module client build clean.

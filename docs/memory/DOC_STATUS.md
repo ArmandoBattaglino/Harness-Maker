@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-06 after Task #234: BUG-API-1 fix. server/middleware/csrf.js now has CSRF_EXEMPT_PREFIXES array exempting /api/v1/triggers/webhooks/ from CSRF validation. Security audit docs updated to reflect the fix. MEDIUM-V3-01 resolved._
+_Last updated: 2026-04-06 after V5.1 Debugger Loop Full-App Deep Check CLOSED. BUG-API-1 FIXED (Task #234), TEST GATE #235 PASS. BUG-UI-1 DEFERRED (ConPTY known limitation per DEC-009). Area closed — no remaining actionable bugs._
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**
@@ -68,18 +68,18 @@ All four BUG-PRD-* bugs identified by prd-writer's code audit have been fixed in
 | BUG-PRD-3 / BUG-TRIGGER-1 | MEDIUM | useSwarm.js (client) | `trigger_fired`, `trigger_status`, and `rss_item` WS events unhandled on client — switch statement had no cases for them | #128 | FIXED 2026-04-02 |
 | BUG-PRD-4 / BUG-INSPECTOR-1 | LOW | SwarmCanvas.jsx | `onUpdateNode` prop was never defined in SwarmCanvas.jsx — `handleUpdateNode` useCallback added and passed to AgentInspector | #130 | FIXED 2026-04-02 |
 
-## V5.0 Debugger Loop Phase 1 — Deep E2E Test Results (2026-04-06)
+## V5.1 Debugger Loop Full-App Deep Check — AREA CLOSED (2026-04-06)
 
-No code was modified in this phase — testing only. Full-app deep E2E test covered all 10 server route files and all 7 client views.
+Full-app deep E2E test covered all 10 server route files and all 7 client views. One actionable bug found and fixed; one known limitation deferred.
 
 **Test health:** 12 server files, 312 tests, all pass. Client build: 480 modules, 0 errors.
 
 | ID | Severity | Location | Description | Status |
 |----|----------|----------|-------------|--------|
-| BUG-API-1 | HIGH | server/middleware/csrf.js | Webhook endpoint blocked by global CSRF middleware — external callers received 403. Fixed: CSRF_EXEMPT_PREFIXES array exempts /api/v1/triggers/webhooks/ from CSRF validation. | FIXED 2026-04-06 (Task #234) |
+| BUG-API-1 | HIGH | server/middleware/csrf.js | Webhook endpoint blocked by global CSRF middleware — external callers received 403. Fixed: CSRF_EXEMPT_PREFIXES array exempts /api/v1/triggers/webhooks/ from CSRF validation. | FIXED 2026-04-06 (Task #234). TEST GATE #235 PASS. |
 | BUG-UI-1 | LOW | ConPTY terminal buffer | Terminal prompt garble after view switch due to ConPTY buffer race. Known limitation per DEC-009 (ConPTY deadlock prevention). | DEFERRED — known/accepted per DEC-009 |
 
-**Overall assessment:** App is in healthy state. Only 1 actionable bug (BUG-API-1 / MEDIUM-V3-01).
+**Overall assessment:** AREA CLOSED. App is in healthy state. Zero remaining actionable bugs. BUG-UI-1 is a known Windows ConPTY limitation, not a code defect.
 
 ## Documentation Debt
 
