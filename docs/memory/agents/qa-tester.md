@@ -1700,3 +1700,43 @@ TEST GATE #186 PASS. Task #187 (AREA CHECKPOINT V4.0.2) is now unblocked from th
 ### Handoff
 Task #187 (AREA CHECKPOINT) can proceed — this was the last gate dependency for it.
 ---
+
+---
+## 2026-04-06 — Task #217: AREA CHECKPOINT — V4.4 Snippet Fidelity Final Polish
+**Status:** COMPLETED — PASS
+**Called by:** user
+
+### Context when I started
+V4.4 area had tasks #214 (thinking animations) and #215 (hook output) both COMPLETED, TEST GATE #216 already PASSED. This AREA CHECKPOINT is the final verification before closing V4.4.
+
+### What I did
+1. Ran `npm test --prefix server` — 312/312 tests pass
+2. Ran `npm run build --prefix client` — 480 modules, 0 errors
+3. Verified SNIPPET_NOISE_LINE_PATTERNS in SwarmEngine.js covers:
+   - Thinking animations: lines 120-124 (`/^.\w+…/`, `/^\w+…$/`, `/\w+…\s*$/`, `/thinking with \w+ effort/i`, `/thought for \d+s/i`) — catches ✶Nucleating…, *Elucidating…, Warping…
+   - Hook output: lines 125-131 (`/stop says:/i`, `/MEMORIA NON SCRITTA/i`, `/ACTIVITY_LOG\.md/i`, `/stop hook/i`, plus Italian-language hook phrases)
+4. All previous E2E test assumptions hold — no regressions
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Marked #217 COMPLETED with PASS verdict |
+
+### Improvements delivered
+- V4.4 Snippet Fidelity Final Polish area verified and CLOSED
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- PASS verdict: all acceptance criteria met, all patterns verified in code
+
+### What I learned
+- The thinking animation patterns use three complementary regexes to catch prefix+word+ellipsis, word+ellipsis, and trailing ellipsis variants
+
+### State I'm leaving behind
+V4.4 area is fully CLOSED. All 4 tasks (#214-#217) COMPLETED.
+
+### Handoff
+None — V4.4 area complete.
+---

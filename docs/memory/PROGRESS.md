@@ -1,4 +1,6 @@
 # Progress
+- [V4.4 AREA CLOSED 2026-04-06] TASK #217 COMPLETED — AREA CHECKPOINT PASS. 312/312 tests, build OK. Thinking animations + hook output filtering verified in SNIPPET_NOISE_LINE_PATTERNS. V4.4 Snippet Fidelity Final Polish is CLOSED.
+
 - [V4.0.4 TEST GATE PASS 2026-04-06] TASK #198 COMPLETED — TEST GATE PASS for BUG-SNIPPET-FIDELITY-1
   All 10+ snippet quality tests pass (107/107 swarm-engine, 312/312 full suite). Finder/Route Checker/Formatter
   contamination filtered. No stale foreign text survives. Redraw fragments -> empty snippet. Structured fact
