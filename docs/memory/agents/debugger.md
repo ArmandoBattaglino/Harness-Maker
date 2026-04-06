@@ -564,3 +564,42 @@ Fix is complete. 312/312 server tests pass. Client build OK. The webhook endpoin
 ### Handoff
 qa-tester should run TEST GATE #235 to verify the full acceptance criteria for this fix.
 ---
+---
+## 2026-04-06 — Task #238: BUG-SWARM-API-1 — Malformed JSON body returns HTTP 500 instead of 400
+**Status:** COMPLETED
+**Called by:** orchestrator (Wave 1 of V5.2)
+
+### Context when I started
+Phase 1 Swarm Server API Deep Test found that sending malformed JSON (e.g., `{invalid`) to any JSON-accepting endpoint returned HTTP 500 instead of 400. The global error handler in server/index.js did not have a specific check for Express body-parser SyntaxError.
+
+### What I did
+1. Read server/index.js global error handler (lines 296-303).
+2. Added a check for `err.type === 'entity.parse.failed'` OR `(err instanceof SyntaxError && err.status === 400)` before the generic 500 handler.
+3. The new check returns HTTP 400 with `{ "error": "Invalid JSON in request body" }`.
+4. Ran `npm test --prefix server` — 312/312 tests pass, zero regressions.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/index.js | MODIFIED | Added malformed JSON detection in global error handler (line 300-302) — returns 400 instead of falling through to 500 |
+
+### Improvements delivered
+- All endpoints that accept JSON bodies now return proper 400 for malformed input instead of 500
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-SWARM-API-1 | Global error handler had no SyntaxError check for body-parser failures | Added entity.parse.failed / SyntaxError check returning 400 | FIXED |
+
+### Decisions I made
+- Used dual condition (`err.type === 'entity.parse.failed'` OR `instanceof SyntaxError && err.status === 400`) for maximum compatibility across Express versions
+
+### What I learned
+- Express body-parser sets `err.type = 'entity.parse.failed'` and `err.status = 400` on JSON parse failures — both should be checked for robustness
+
+### State I'm leaving behind
+Fix is complete. 312/312 server tests pass. Global error handler now properly returns 400 for malformed JSON.
+
+### Handoff
+qa-tester should verify via TEST GATE #243 that malformed JSON to multiple endpoints all return 400.
+---

@@ -1,3 +1,14 @@
+## 2026-04-06 — debugger — Task #238: BUG-SWARM-API-1 — Malformed JSON returns 400
+**Outcome:** COMPLETED
+**Summary:** Added malformed JSON detection to global error handler in server/index.js. Express body-parser SyntaxError now returns HTTP 400 with clear error message instead of 500. 312/312 tests pass.
+**Files changed:** server/index.js (global error handler, +3 lines)
+**Bugs fixed:** BUG-SWARM-API-1
+**Decisions made:** Dual condition check (err.type + instanceof SyntaxError) for Express version compatibility
+**Blockers:** none
+**Next:** Wave 1 continues with #239, #240, #241 in parallel; then TEST GATE #243
+
+---
+
 ## 2026-04-06 — project-manager — V5.2 Swarm Deep Test Bug Fixes — Phase 2 Bulk Plan
 **Outcome:** COMPLETED
 **Summary:** Created V5.2 area in TASK_PLAN.md with tasks #238-#244 from Phase 1 Swarm E2E test findings (5 bugs). 4 active fix tasks assigned to debugger, 1 deferred (cosmetic). TEST GATE #243 and AREA CHECKPOINT #244 added. Parallel wave grouping: Wave 1 = #238+#239+#240+#241 (all independent, all debugger), Wave 2 = #243 (TEST GATE), Wave 3 = #244 (AREA CHECKPOINT).

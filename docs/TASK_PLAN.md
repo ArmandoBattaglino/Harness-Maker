@@ -12289,7 +12289,7 @@ Agent: debugger
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Component Spec:
   File: server/index.js (global error handler, approximately line 296)
   Current behavior: Express body-parser throws a SyntaxError with `type: 'entity.parse.failed'` when receiving
@@ -12333,7 +12333,7 @@ Agent: debugger
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Component Spec:
   File: client/src/hooks/useSwarm.js (hydration / restorePersistedExecution logic)
   Current behavior: On page load, useSwarm reads a persisted execution ID from localStorage and calls
@@ -12376,7 +12376,7 @@ Agent: debugger
 Priority: LOW
 Difficulty: EASY
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Component Spec:
   File: server middleware — rate limiter configuration (likely server/index.js or server/middleware/)
   Current behavior: Switching between Swarm and Projects views triggers HTTP 429 Too Many Requests on
@@ -12418,7 +12418,7 @@ Agent: debugger
 Priority: LOW
 Difficulty: EASY
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Component Spec:
   File: server/index.js (SPA catch-all route, approximately line 287)
   Current behavior: The SPA catch-all `app.get('*', (req, res) => res.sendFile('index.html'))` matches ALL

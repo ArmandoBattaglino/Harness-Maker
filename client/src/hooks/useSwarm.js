@@ -130,8 +130,18 @@ export function useSwarm(workflowId) {
       return;
     }
 
-    const status = await apiGet(`/api/v1/swarm/${stored.executionId}/status`).catch(() => null);
-    if (!status) {
+    let status;
+    try {
+      const res = await fetch(`/api/v1/swarm/${stored.executionId}/status`);
+      if (!res.ok) {
+        // 404 means the execution no longer exists on the server — clear stale ID.
+        clearStoredExecution();
+        clearExecutionState();
+        return;
+      }
+      status = await res.json();
+    } catch {
+      // Network error — clear stale state to avoid perpetual retries.
       clearStoredExecution();
       clearExecutionState();
       return;

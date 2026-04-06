@@ -215,8 +215,9 @@ async function startup() {
     });
   });
 
-  // Rate limiting on all /api/v1/* routes (200 req/min — guards against runaway loops)
-  app.use('/api/v1', rateLimit(200, 60000));
+  // Rate limiting on all /api/v1/* routes (300 req/min — guards against runaway loops)
+  // Generous limit: localhost single-user app where rapid view switches are normal (BUG-SWARM-UI-3)
+  app.use('/api/v1', rateLimit(300, 60000));
 
   // Version endpoint
   app.get('/api/v1/version', (req, res) => {
@@ -282,7 +283,16 @@ async function startup() {
   app.use(express.static(join(__dirname, 'public')));
 
   // -------------------------------------------------------------------------
-  // 9. SPA fallback — non-API routes return index.html
+  // 9a. API 404 catch-all — must come BEFORE the SPA fallback so unmatched
+  //     /api/* requests get a proper JSON 404 instead of index.html.
+  //     (BUG-SWARM-API-2 fix)
+  // -------------------------------------------------------------------------
+  app.all('/api/*', (req, res) => {
+    res.status(404).json({ error: 'Not found' });
+  });
+
+  // -------------------------------------------------------------------------
+  // 9b. SPA fallback — non-API routes return index.html
   // -------------------------------------------------------------------------
   app.get('*', (req, res) => {
     res.sendFile(join(__dirname, 'public', 'index.html'));
@@ -296,6 +306,10 @@ async function startup() {
   app.use((err, req, res, next) => {
     if (err instanceof ApiError) {
       return res.status(err.statusCode).json({ error: err.message });
+    }
+    // Malformed JSON body — Express body-parser SyntaxError
+    if (err.type === 'entity.parse.failed' || (err instanceof SyntaxError && err.status === 400)) {
+      return res.status(400).json({ error: 'Invalid JSON in request body' });
     }
     // Unexpected error — log for debugging but never expose internals
     console.error(`[ERROR] ${req.method} ${req.path} —`, err.message);
