@@ -1,3 +1,10 @@
+## 2026-04-06 — qa-tester — Task #178: TEST GATE BUG-PTY-EXPLOSION-1 — PASS
+**Outcome:** COMPLETED
+**Summary:** Verified PtyExplosion WS connection, ring buffer replay, multiple clients, DEC-009. 312/312 tests pass. Client build clean.
+**Next:** TASK #179 (already COMPLETED).
+
+---
+
 ## 2026-04-06 — qa-tester — Task #180: TEST GATE BUG-RINGBUFFER-ANSI-1 — PASS
 **Outcome:** COMPLETED
 **Summary:** Verified sanitizeReplayOutput() strips all 6 TUI sequence classes during ring buffer replay while live stream remains unsanitized. 312/312 server tests pass. Client build clean. TEST GATE PASS.

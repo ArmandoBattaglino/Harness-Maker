@@ -1,4 +1,16 @@
 ---
+## 2026-04-06 — Task #178: TEST GATE — BUG-PTY-EXPLOSION-1 (Live output in PTY Explosion)
+**Status:** COMPLETED
+**Called by:** user (direct)
+
+### What I did
+Code review + 312/312 server tests + client build. Verified: PtyExplosion connects to correct session WS via useSession hook, ring buffer replay on attachClient (sanitized), multiple simultaneous connections (Set iteration), DEC-009 permanent onData handler. All checks PASS.
+
+### State I'm leaving behind
+TEST GATE #178 PASS. Pipeline can proceed to TASK #179 (already COMPLETED).
+---
+
+---
 ## 2026-04-06 — Task #180: TEST GATE — BUG-RINGBUFFER-ANSI-1 (Ring buffer replay readability)
 **Status:** COMPLETED
 **Called by:** user (direct)

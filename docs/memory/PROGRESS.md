@@ -1,4 +1,8 @@
 # Progress
+- [V4.3 AREA CLOSED 2026-04-06] TASK #213 COMPLETED PASS — AREA CHECKPOINT for V4.3 E2E Deep Test Round 2
+  312/312 server tests pass. Client build 480 modules 0 errors. SNIPPET_NOISE_LINE_PATTERNS covers all CLI chrome noise:
+  bypass permissions, ctrl+g, Herding variants, version banner, model effort, thinking animations. V4.3 AREA CLOSED.
+
 - [V4.0.2 TEST GATE PASS 2026-04-06] TASK #186 COMPLETED — TEST GATE PASS for BUG-FEED-ICON-1
   All 6 feed event types have matching EVENT_ICONS entries. handoff_completed renders checkmark. 312/312 server tests. Client build clean.
 - [V4.0.2 TEST GATE PASS 2026-04-06] TASK #178 COMPLETED — TEST GATE PASS for BUG-PTY-EXPLOSION-1
