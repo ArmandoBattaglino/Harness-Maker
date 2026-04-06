@@ -1,3 +1,9 @@
+- [PM STATUS SYNC 2026-04-06] Wave 1 verified — 8 parallel tasks confirmed COMPLETED:
+  #178 PASS, #180 PASS, #184 PASS, #186 PASS, #198 PASS, #213 PASS (V4.3 CLOSED),
+  #216 PASS (V4.4 CLOSED via #217), #218 COMPLETED. Status header updated: V4.0.2 CLOSED,
+  V4.0.3 CLOSED, V4.0.4 #198 PASS, V4.3 CLOSED, V4.4 CLOSED, V5.2 CLOSED.
+  Open areas: V4.0.4 (#199-#205), V4.5 (#223 PENDING).
+
 - [V4.0.2 AREA CLOSED 2026-04-06] TASK #187 COMPLETED — AREA CHECKPOINT PASS. 312/312 tests, build OK. All 6 Gemini E2E PTY/UI bugs verified fixed: PtyExplosion live output, ring buffer TUI sanitization, blocker false-positive suppression, snippet protocol filtering, InterAgentFeed icons. No regressions.
 
 - [V4.0.4 TASK #199 COMPLETED 2026-04-06] Verified no change needed — control tokens __DONE__ and __HANDOFF__ are already preserved literally throughout the full pipeline (server snippet generation, WS broadcast, client rendering). Not a bug. TEST GATE #200 can proceed.

@@ -1,4 +1,47 @@
 ---
+## 2026-04-06 — Wave 1 Status Sync: 8 parallel tasks verified COMPLETED
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+User reported Wave 1 completed with 8 tasks done in parallel: #178, #180, #184, #186, #198, #213, #216, #218. Asked to verify all marked correctly, update status header, PROGRESS.md, and ACTIVITY_LOG.md.
+
+### What I did
+1. Read TASK_PLAN.md body — confirmed all 8 tasks already marked COMPLETED by their respective agents
+2. Read status header — found V5.2 still showing "CLOSING" with #244 IN_PROGRESS; V4.0.3 showing "PLANNED"; V4.0.4, V4.3, V4.4 missing from header
+3. Updated status header comprehensively: V4.0.3 CLOSED, V4.0.4 visible with #198 PASS, V4.3 CLOSED, V4.4 CLOSED (#217 PASS landed during session), V5.2 CLOSED
+4. External agents had also landed #187 (V4.0.2 AREA CHECKPOINT PASS), #199, #217, #222 during this session — incorporated those into header
+5. Prepended PROGRESS.md with Wave 1 sync summary
+6. Prepended ACTIVITY_LOG.md with PM session entry
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Status header: added V4.0.3 CLOSED, V4.0.4 visible, V4.3 CLOSED, V4.4 CLOSED, V5.2 CLOSED |
+| docs/memory/PROGRESS.md | MODIFIED | Wave 1 sync summary prepended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | PM session entry prepended |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log prepended |
+
+### Improvements delivered
+- Status header now accurately reflects all area closures through V5.2
+- V4.0.4, V4.3, V4.4 areas now visible in header for the first time
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+None — status bookkeeping only.
+
+### What I learned
+- Multiple agents were landing tasks concurrently (qa-tester #187, #199, #217, #222) causing repeated file-modified-since-read errors. Required multiple re-reads.
+
+### State I'm leaving behind
+All closed areas: V3.1-V3.5, V4.0-V4.0.3, V4.1, V4.2, V4.3, V4.4, V5.0, V5.1, V5.2. Open areas: V4.0.4 (#199-#205, #198 gate passed), V4.5 (#223 AREA CHECKPOINT PENDING). No blockers.
+
+### Handoff
+Next priority: V4.0.4 remaining tasks (#199 may now be done per PROGRESS.md, check #200-#205) and V4.5 AREA CHECKPOINT #223.
+
+---
 ## 2026-04-06 — V5.2 Closing: #243 COMPLETED, #244 IN_PROGRESS
 **Status:** COMPLETED
 **Called by:** user
