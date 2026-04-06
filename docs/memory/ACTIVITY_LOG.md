@@ -1,3 +1,14 @@
+## 2026-04-06 — qa-tester — Task #205: AREA CHECKPOINT V4.0.4 Agent Terminal Fidelity + Snippet Hygiene
+**Outcome:** COMPLETED
+**Summary:** AREA CHECKPOINT PASS. V4.0.4 IS CLOSED. All 4 prerequisite TEST GATEs verified PASS (#198, #200, #202, #204). 312/312 server tests, 107/107 swarm-engine tests, client build 480 modules 0 errors. Full fidelity stack verified across SwarmEngine (97+ snippet noise patterns, recovery scoring, semantic pipeline), SessionManager (35+ replay noise patterns, sanitizeReplayOutput), and Client (stripAnsi, controlTokens annotation-only). No regressions.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/qa-tester.md
+**Bugs fixed:** none
+**Decisions made:** V4.0.4 area closed — all acceptance criteria met
+**Blockers:** none
+**Next:** Project manager to identify next priority area
+
+---
+
 ## 2026-04-06 — qa-tester — Task #204: TEST GATE BUG-RECOVERY-LABELING-1
 **Outcome:** COMPLETED
 **Summary:** TEST GATE PASS. Verified recovery/system prompt handling across all 3 pipeline levels: SNIPPET_RECOVERY_LINE_PATTERNS (4 patterns, -260 scoring penalty), _buildRecoverySnippet (labeled "Runtime reminder" output), REPLAY_NOISE_LINE_PATTERNS (done/handoff token instructions filtered). 312/312 server tests pass, client build 480 modules 0 errors. TASK #205 AREA CHECKPOINT unblocked.

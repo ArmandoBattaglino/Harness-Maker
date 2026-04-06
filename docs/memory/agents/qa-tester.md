@@ -1,4 +1,48 @@
 ---
+## 2026-04-06 — Task #205: AREA CHECKPOINT — V4.0.4 Agent Terminal Fidelity + Snippet Hygiene
+**Status:** COMPLETED — PASS
+**Called by:** user (direct)
+
+### Context when I started
+All 4 prerequisite TEST GATEs (#198, #200, #202, #204) were COMPLETED PASS. Tasks #197 (snippet fidelity fix), #199 (token fidelity — no bug), #201 (PTY replay contamination fix), #203 (recovery labeling — already resolved) were all COMPLETED. This was the final area checkpoint to close V4.0.4.
+
+### What I did
+1. Ran npm test --prefix server — 312/312 tests passed
+2. Ran npm run build --prefix client — 480 modules, 0 errors
+3. Ran swarm-engine.test.js specifically — 107/107 tests passed
+4. Verified SwarmEngine fidelity stack: 97+ SNIPPET_NOISE_LINE_PATTERNS, SNIPPET_RECOVERY_LINE_PATTERNS with -260 penalty, _buildSemanticSnippet pipeline, _decompressConPTYSpaces, _buildRecoverySnippet
+5. Verified SessionManager fidelity stack: 35+ REPLAY_NOISE_LINE_PATTERNS, sanitizeReplayOutput function at line 80, called at line 284 for replay broadcast
+6. Verified Client fidelity stack: stripAnsi in AgentNode.jsx + AgentInspector.jsx, controlTokens.inspectControlTokens in controlTokens.js (annotation-only, no mutation)
+7. Confirmed all 4 prerequisite gates PASS in TASK_PLAN.md
+8. Marked #205 COMPLETED in TASK_PLAN.md
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Marked TASK #205 Status: COMPLETED with full completion note |
+| docs/memory/PROGRESS.md | MODIFIED | Added V4.0.4 AREA CLOSED entry |
+| docs/memory/agents/qa-tester.md | MODIFIED | Added session log for Task #205 |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added activity log entry |
+
+### Improvements delivered
+- V4.0.4 area is now officially CLOSED with full verification evidence
+
+### Bugs I encountered
+None — all checks passed cleanly.
+
+### Decisions I made
+- Accepted the area as closed based on all 4 gates PASS + clean test/build runs + code-level verification of the fidelity stack
+
+### What I learned
+- The V4.0.4 fidelity stack is three-layered: SwarmEngine (snippet generation), SessionManager (replay sanitization), Client (display annotation). Each layer has independent noise pattern arrays tuned to their specific context.
+
+### State I'm leaving behind
+V4.0.4 Agent Terminal Fidelity + Snippet Hygiene is fully closed. No open tasks remain in this area. All acceptance criteria met.
+
+### Handoff
+None — V4.0.4 area is complete. Next areas to address are whatever the project manager identifies.
+
+---
 ## 2026-04-06 — Task #204: TEST GATE — BUG-RECOVERY-LABELING-1
 **Status:** COMPLETED — PASS
 **Called by:** user (direct)
