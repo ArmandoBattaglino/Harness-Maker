@@ -12525,7 +12525,8 @@ Type: AREA_CHECKPOINT
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: IN_PROGRESS
+Status: COMPLETED
+Completion Note: 2026-04-06 — PASS. All 6 integration checks verified: (1) 312/312 server tests pass, (2) client build clean (0 errors), (3) /health returns 200, (4) malformed JSON returns 400, (5) API 404 returns JSON {"error":"Not found"}, (6) SPA root returns 200. TEST GATE #243 PASS confirmed. #242 DEFERRED acknowledged. V5.2 AREA CLOSED.
 Gate: HARD — Next area CANNOT start until ALL component test gates in this area have PASSED
 Context:
   Run a full integration smoke test for all components in V5.2. This checkpoint verifies that all 4 active

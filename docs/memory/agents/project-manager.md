@@ -1,4 +1,48 @@
 ---
+## 2026-04-06 — V5.2 Closing: #243 COMPLETED, #244 IN_PROGRESS
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+V5.2 TEST GATE #243 had just PASSED. AREA CHECKPOINT #244 was running. User asked to mark #243 COMPLETED if not already done, update status header to note V5.2 closing, and update PROGRESS.md and ACTIVITY_LOG.md.
+
+### What I did
+1. Read TASK_PLAN.md (header + #243 + #244 sections), PROGRESS.md, ACTIVITY_LOG.md, agent memory
+2. Verified #243 was already marked COMPLETED PASS in TASK_PLAN.md body — no change needed there
+3. Updated TASK_PLAN.md status header: changed V5.2 from "IN PROGRESS" to "CLOSING", #244 from PENDING to IN_PROGRESS
+4. Updated #244 task body status from PENDING to IN_PROGRESS
+5. Prepended PROGRESS.md entry for #244 running
+6. Prepended ACTIVITY_LOG.md entry
+7. Appended this session log to agent memory
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Status header: V5.2 IN PROGRESS -> CLOSING, #244 PENDING -> IN_PROGRESS |
+| docs/memory/PROGRESS.md | MODIFIED | Added #244 IN_PROGRESS entry |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | PM session entry prepended |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log prepended |
+
+### Improvements delivered
+- All tracking documents now accurately reflect V5.2 closing state
+- #244 correctly marked IN_PROGRESS as checkpoint is running
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+None — purely bookkeeping.
+
+### What I learned
+- #243 was already correctly marked COMPLETED by qa-tester, so no double-update needed
+
+### State I'm leaving behind
+V5.2 is in CLOSING state. #244 AREA CHECKPOINT is IN_PROGRESS. Once qa-tester returns PASS, the status header should be updated to "AREA CLOSED" and #244 marked COMPLETED.
+
+### Handoff
+Await qa-tester #244 AREA CHECKPOINT result. If PASS -> update status header to V5.2 CLOSED, mark #244 COMPLETED. If FAIL -> route to debugger.
+
+---
 ## 2026-04-06 — V5.2 Wave 1 Complete — Status Update
 **Status:** COMPLETED
 **Called by:** user
