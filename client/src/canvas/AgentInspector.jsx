@@ -238,6 +238,275 @@ function DepartmentFields({ node, onUpdateNode }) {
   );
 }
 
+function ConditionalFields({ node, nodes, onUpdateNode }) {
+  const nodeId = node.id;
+  const data = node.data || {};
+  const rules = data.rules || [];
+
+  const addRule = () => {
+    const updated = [...rules, { condition: '', targetNodeId: '' }];
+    onUpdateNode(nodeId, { rules: updated });
+  };
+
+  const removeRule = (idx) => {
+    const updated = rules.filter((_, i) => i !== idx);
+    onUpdateNode(nodeId, { rules: updated });
+  };
+
+  const updateRule = (idx, field, value) => {
+    const updated = rules.map((r, i) => (i === idx ? { ...r, [field]: value } : r));
+    onUpdateNode(nodeId, { rules: updated });
+  };
+
+  const targetableNodes = nodes.filter((n) => n.id !== nodeId);
+
+  return (
+    <CollapsibleSection title="Conditional Rules">
+      {rules.map((rule, idx) => (
+        <div key={idx} className="bg-gray-800 rounded p-2 flex flex-col gap-1">
+          <div className="flex items-center justify-between">
+            <FieldLabel>Rule {idx + 1}</FieldLabel>
+            <button
+              onClick={() => removeRule(idx)}
+              className="text-red-400 hover:text-red-300 text-xs"
+            >
+              Remove
+            </button>
+          </div>
+          <input
+            type="text"
+            className={INPUT_CLS}
+            value={rule.condition}
+            onChange={(e) => updateRule(idx, 'condition', e.target.value)}
+            placeholder="Condition expression"
+          />
+          <select
+            className={INPUT_CLS}
+            value={rule.targetNodeId || ''}
+            onChange={(e) => updateRule(idx, 'targetNodeId', e.target.value)}
+          >
+            <option value="">— target node —</option>
+            {targetableNodes.map((n) => (
+              <option key={n.id} value={n.id}>{n.data?.label || n.id}</option>
+            ))}
+          </select>
+        </div>
+      ))}
+      <button
+        onClick={addRule}
+        className="text-xs text-amber-400 hover:text-amber-300 transition-colors"
+      >
+        + Add Rule
+      </button>
+
+      <div className="flex flex-col gap-0.5 mt-1">
+        <FieldLabel>Default Target</FieldLabel>
+        <select
+          className={INPUT_CLS}
+          value={data.defaultTargetNodeId || ''}
+          onChange={(e) => onUpdateNode(nodeId, { defaultTargetNodeId: e.target.value })}
+        >
+          <option value="">— none —</option>
+          {targetableNodes.map((n) => (
+            <option key={n.id} value={n.id}>{n.data?.label || n.id}</option>
+          ))}
+        </select>
+      </div>
+    </CollapsibleSection>
+  );
+}
+
+function MergeFields({ node, onUpdateNode }) {
+  const nodeId = node.id;
+  const data = node.data || {};
+  const waitFor = data.waitFor ?? 'all';
+  const isNumber = typeof waitFor === 'number' || (typeof waitFor === 'string' && !['all', 'any'].includes(waitFor));
+
+  return (
+    <CollapsibleSection title="Configuration">
+      <FieldLabel>Wait For</FieldLabel>
+      <div className="flex flex-col gap-1.5">
+        <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
+          <input
+            type="radio"
+            name={`merge-wait-${nodeId}`}
+            checked={waitFor === 'all'}
+            onChange={() => onUpdateNode(nodeId, { waitFor: 'all' })}
+            className="accent-cyan-500"
+          />
+          All inputs
+        </label>
+        <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
+          <input
+            type="radio"
+            name={`merge-wait-${nodeId}`}
+            checked={waitFor === 'any'}
+            onChange={() => onUpdateNode(nodeId, { waitFor: 'any' })}
+            className="accent-cyan-500"
+          />
+          Any input
+        </label>
+        <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
+          <input
+            type="radio"
+            name={`merge-wait-${nodeId}`}
+            checked={isNumber}
+            onChange={() => onUpdateNode(nodeId, { waitFor: 2 })}
+            className="accent-cyan-500"
+          />
+          Specific count
+        </label>
+        {isNumber && (
+          <input
+            type="number"
+            className={INPUT_CLS}
+            min={1}
+            max={20}
+            value={typeof waitFor === 'number' ? waitFor : 2}
+            onChange={(e) => onUpdateNode(nodeId, { waitFor: Number(e.target.value) })}
+          />
+        )}
+      </div>
+    </CollapsibleSection>
+  );
+}
+
+function DelayFields({ node, onUpdateNode }) {
+  const nodeId = node.id;
+  const data = node.data || {};
+
+  return (
+    <CollapsibleSection title="Configuration">
+      <div className="flex flex-col gap-0.5">
+        <FieldLabel>Delay (seconds)</FieldLabel>
+        <input
+          type="number"
+          className={INPUT_CLS}
+          min={1}
+          max={3600}
+          value={data.delaySeconds ?? 30}
+          onChange={(e) => onUpdateNode(nodeId, { delaySeconds: Number(e.target.value) })}
+        />
+        <span className="text-[10px] text-gray-500">1 – 3600 seconds</span>
+      </div>
+    </CollapsibleSection>
+  );
+}
+
+function LoopFields({ node, nodes, onUpdateNode }) {
+  const nodeId = node.id;
+  const data = node.data || {};
+  const targetableNodes = nodes.filter((n) => n.id !== nodeId);
+
+  const commit = useCallback(
+    (field) => (val) => onUpdateNode(nodeId, { [field]: val }),
+    [nodeId, onUpdateNode]
+  );
+
+  const [exitCondLocal, setExitCondLocal] = useDebouncedField(
+    data.exitCondition,
+    commit('exitCondition')
+  );
+
+  return (
+    <CollapsibleSection title="Configuration">
+      <div className="flex flex-col gap-0.5">
+        <FieldLabel>Max Iterations</FieldLabel>
+        <input
+          type="number"
+          className={INPUT_CLS}
+          min={1}
+          max={100}
+          value={data.maxIterations ?? 10}
+          onChange={(e) => onUpdateNode(nodeId, { maxIterations: Number(e.target.value) })}
+        />
+      </div>
+
+      <div className="flex flex-col gap-0.5">
+        <FieldLabel>Exit Condition</FieldLabel>
+        <input
+          type="text"
+          className={INPUT_CLS}
+          value={exitCondLocal}
+          onChange={(e) => setExitCondLocal(e.target.value)}
+          placeholder="e.g. result.status === 'done'"
+        />
+      </div>
+
+      <div className="flex flex-col gap-0.5">
+        <FieldLabel>Exit Target Node</FieldLabel>
+        <select
+          className={INPUT_CLS}
+          value={data.exitTargetNodeId || ''}
+          onChange={(e) => onUpdateNode(nodeId, { exitTargetNodeId: e.target.value })}
+        >
+          <option value="">— none —</option>
+          {targetableNodes.map((n) => (
+            <option key={n.id} value={n.id}>{n.data?.label || n.id}</option>
+          ))}
+        </select>
+      </div>
+    </CollapsibleSection>
+  );
+}
+
+function ErrorHandlerFields({ node, nodes, onUpdateNode }) {
+  const nodeId = node.id;
+  const data = node.data || {};
+  const watchedNodes = data.watchedNodes || [];
+  const watchableNodes = nodes.filter((n) => n.id !== nodeId && n.type !== 'errorHandler');
+
+  const toggleWatch = (targetId) => {
+    const updated = watchedNodes.includes(targetId)
+      ? watchedNodes.filter((id) => id !== targetId)
+      : [...watchedNodes, targetId];
+    onUpdateNode(nodeId, { watchedNodes: updated });
+  };
+
+  return (
+    <CollapsibleSection title="Watched Nodes">
+      {watchableNodes.length === 0 && (
+        <span className="text-xs text-gray-500">No other nodes in workflow</span>
+      )}
+      <div className="flex flex-col gap-1 max-h-40 overflow-y-auto">
+        {watchableNodes.map((n) => (
+          <label key={n.id} className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={watchedNodes.includes(n.id)}
+              onChange={() => toggleWatch(n.id)}
+              className="accent-red-500"
+            />
+            {n.data?.label || n.id}
+          </label>
+        ))}
+      </div>
+    </CollapsibleSection>
+  );
+}
+
+function SubWorkflowFields({ node, onUpdateNode }) {
+  const nodeId = node.id;
+  const data = node.data || {};
+
+  // Workflow list would come from useWorkflowList() hook in a full implementation.
+  // For now, provide a text input for workflow ID.
+  return (
+    <CollapsibleSection title="Configuration">
+      <div className="flex flex-col gap-0.5">
+        <FieldLabel>Workflow ID</FieldLabel>
+        <input
+          type="text"
+          className={INPUT_CLS}
+          value={data.workflowId || ''}
+          onChange={(e) => onUpdateNode(nodeId, { workflowId: e.target.value })}
+          placeholder="Enter workflow ID"
+        />
+      </div>
+    </CollapsibleSection>
+  );
+}
+
 function TriggerFields({ node, onUpdateNode }) {
   const nodeId = node.id;
   const data = node.data || {};
@@ -423,6 +692,24 @@ export default function AgentInspector({ nodes, onUpdateNode }) {
       )}
       {nodeType === 'trigger' && (
         <TriggerFields node={selectedNode} onUpdateNode={onUpdateNode} />
+      )}
+      {nodeType === 'conditional' && (
+        <ConditionalFields node={selectedNode} nodes={nodes} onUpdateNode={onUpdateNode} />
+      )}
+      {nodeType === 'merge' && (
+        <MergeFields node={selectedNode} onUpdateNode={onUpdateNode} />
+      )}
+      {nodeType === 'delay' && (
+        <DelayFields node={selectedNode} onUpdateNode={onUpdateNode} />
+      )}
+      {nodeType === 'loop' && (
+        <LoopFields node={selectedNode} nodes={nodes} onUpdateNode={onUpdateNode} />
+      )}
+      {nodeType === 'errorHandler' && (
+        <ErrorHandlerFields node={selectedNode} nodes={nodes} onUpdateNode={onUpdateNode} />
+      )}
+      {nodeType === 'subWorkflow' && (
+        <SubWorkflowFields node={selectedNode} onUpdateNode={onUpdateNode} />
       )}
 
       {/* Open Terminal button — only when agent has an active session */}

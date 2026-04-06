@@ -4,7 +4,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED - 2026-03-31 — 286 tasks total, 284 COMPLETED, 2 DEFERRED, 0 PENDING. V5.0-Wave1 CLOSED. V5.0-Wave2 CLOSED. V5.0-Wave3 CLOSED. V5.0-BugFix1 CLOSED. Build OK: 487 modules, 0 errors. Tests: 312/312 pass.
+**Status:** v3.0.0 RELEASED - 2026-03-31 — 300 tasks total, 298 COMPLETED, 2 DEFERRED, 0 PENDING. V5.0-Wave1 CLOSED. V5.0-Wave2 CLOSED. V5.0-Wave3 CLOSED. V5.0-BugFix1 CLOSED. V5.0-Wave4 CLOSED. Build OK: 490 modules, 0 errors. Tests: 312/312 pass.
   **Completed Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 ALL COMPLETED/PASS. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#267 ALL COMPLETED. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave2 NODE CREATION & CONFIG — Tasks #268-#272 ALL COMPLETED. AREA CLOSED 2026-04-06.
@@ -32,6 +32,7 @@
   - V5.0-Wave2 NODE CREATION & CONFIG: AREA CLOSED 2026-04-06 — NodePalette (#268) + WorkflowSettingsModal (#270) COMPLETED, TEST GATES #269/#271 PASS, AREA CHECKPOINT #272 PASS. Build OK, 312/312 tests.
   - V5.0-Wave3 VALIDATION, SHORTCUTS & WORKFLOW OPS: AREA CLOSED 2026-04-06 — useCanvasValidation (#273), snap-to-grid (#274), keyboard shortcuts (#275), validation badges (#276), validation before Run (#277), export/import JSON (#278), duplicate workflow (#279) ALL COMPLETED. TEST GATE #280 PASS. AREA CHECKPOINT #281 PASS. Build: 487 modules, 0 errors. Tests: 312/312 pass.
   - V5.0-BugFix1 E2E CONTEXT MENU + KEYBOARD SHORTCUT FIXES: AREA CLOSED 2026-04-06 — BUG-CTX-1 (#282), BUG-CTX-2 (#283), BUG-KEYS-1 (#284) ALL COMPLETED. TEST GATE #285 PASS. AREA CHECKPOINT #286 PASS. Build: 487 modules, 0 errors. Tests: 312/312 pass.
+  - V5.0-Wave4 EXECUTION VISIBILITY: AREA CLOSED 2026-04-06 — ExecutionHistoryStore (#287), WorkflowStore version history (#288), TemplateStore (#289), per-node timing (#290), ExecutionHistory.jsx (#291), TemplateGallery.jsx (#292), VersionHistory.jsx (#293), SwarmView toolbar buttons (#294) ALL COMPLETED. TEST GATE #295 PASS. AREA CHECKPOINT #300 PASS. Build: 490 modules, 0 errors. Tests: 312/312 pass.
   DEFERRED (2 tasks, both MVP-acceptable, no fix possible):
     - #236: BUG-UI-1 — ConPTY terminal prompt garble after navigation (Windows platform limitation, DEC-009)
     - (none other — #233 and #242 previously marked DEFERRED are now COMPLETED)

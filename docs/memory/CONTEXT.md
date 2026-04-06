@@ -1,6 +1,6 @@
 # Current Context
 **Session date:** 2026-04-06
-**Focus:** V5 Waves 1, 2, 3, and BugFix1 ALL CLOSED. BugFix1 resolved 3 E2E bugs found during Debugger Loop Phase 1: context menu propagation (node + edge) and Ctrl+S stale closure. 286 tasks total, 284 COMPLETED, 2 DEFERRED. All areas CLOSED. Build: 487 modules, 0 errors. Tests: 312/312 pass. No remaining open areas or pending tasks.
+**Focus:** V5 Waves 1, 2, 3, BugFix1, and Wave 4 ALL CLOSED. Wave 4 added execution history persistence (ExecutionHistoryStore), 5 built-in workflow templates (TemplateStore), version history on workflow save (WorkflowStore), and 3 new UI panels (ExecutionHistory, TemplateGallery, VersionHistory). 6 new API endpoints added. All areas CLOSED. No remaining open areas or pending tasks.
 
 _Project initialized via /create pipeline on 2026-03-18_
 

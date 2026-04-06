@@ -23,6 +23,9 @@ Absence of this header returns `403 Forbidden`. Exception: `POST /api/v1/trigger
 - [CLAUDE.md](#claudemd)
 - [Workflows (V3)](#workflows-v3)
 - [Swarm Execution (V3)](#swarm-execution-v3)
+- [Execution History (V5)](#execution-history-v5)
+- [Workflow Templates (V5)](#workflow-templates-v5)
+- [Workflow Versions (V5)](#workflow-versions-v5)
 - [HITL Inbox (V3)](#hitl-inbox-v3)
 - [Triggers (V3)](#triggers-v3)
 - [WebSocket Channels](#websocket-channels)
@@ -323,6 +326,165 @@ List all currently registered triggers (webhooks + RSS pollers).
   }
 }
 ```
+
+---
+
+## Execution History (V5)
+
+### `GET /api/v1/swarm/history/:workflowId`
+
+List all execution history entries for a workflow. Returns up to 100 entries (oldest trimmed), ordered oldest-first.
+
+**Response 200:**
+```json
+{
+  "executions": [
+    {
+      "executionId": "uuid-v4",
+      "workflowId": "uuid-v4",
+      "status": "completed",
+      "startedAt": "2026-04-06T10:00:00.000Z",
+      "endedAt": "2026-04-06T10:05:30.000Z",
+      "durationMs": 330000,
+      "nodesRun": 3,
+      "outcome": "All agents completed successfully.",
+      "nodeSnapshots": {}
+    }
+  ]
+}
+```
+
+**Errors:** `500` — internal server error.
+
+---
+
+### `GET /api/v1/swarm/history/:workflowId/:executionId`
+
+Get a single execution history entry.
+
+**Response 200:**
+```json
+{
+  "execution": {
+    "executionId": "uuid-v4",
+    "workflowId": "uuid-v4",
+    "status": "completed",
+    "startedAt": "2026-04-06T10:00:00.000Z",
+    "endedAt": "2026-04-06T10:05:30.000Z",
+    "durationMs": 330000,
+    "nodesRun": 3,
+    "outcome": "All agents completed successfully.",
+    "nodeSnapshots": {}
+  }
+}
+```
+
+**Errors:**
+- `404` — execution history entry not found.
+- `500` — internal server error.
+
+---
+
+## Workflow Templates (V5)
+
+### `GET /api/v1/workflows/templates`
+
+List all built-in workflow templates. Returns summary metadata (no full node/edge definitions).
+
+**Response 200:**
+```json
+{
+  "templates": [
+    {
+      "id": "content-agency",
+      "name": "Content Agency",
+      "description": "A three-agent pipeline: writer drafts content, editor refines it, publisher formats and delivers.",
+      "nodeCount": 3,
+      "edgeCount": 2
+    }
+  ]
+}
+```
+
+Available templates: `content-agency`, `code-review-chain`, `research-loop`, `customer-support-triage`, `data-pipeline`.
+
+---
+
+### `POST /api/v1/workflows/templates/:templateId/instantiate`
+
+Create a new workflow from a built-in template. Deep-clones the template's nodes, edges, and settings into a new workflow via `WorkflowStore.create()`.
+
+**Request body:** `{}` (empty object — no fields required)
+
+**Response 201:**
+```json
+{
+  "workflow": {
+    "id": "uuid-v4",
+    "name": "Content Agency",
+    "description": "A three-agent pipeline: ...",
+    "nodes": [ ... ],
+    "edges": [ ... ],
+    "settings": { "maxConcurrentAgents": 1, "circuitBreakerThreshold": 10 },
+    "createdAt": "2026-04-06T10:00:00.000Z",
+    "updatedAt": "2026-04-06T10:00:00.000Z"
+  }
+}
+```
+
+**Errors:**
+- `404` — template not found (`{ "error": "Template not found", "templateId": "..." }`).
+- `503` — WorkflowStore unavailable.
+
+---
+
+## Workflow Versions (V5)
+
+### `GET /api/v1/workflows/:id/versions`
+
+List version history metadata for a workflow. Versions are created automatically on each `PUT /api/v1/workflows/:id` (save). Maximum 50 versions per workflow; oldest are trimmed.
+
+**Response 200:**
+```json
+{
+  "versions": [
+    {
+      "timestamp": "2026-04-06T10-00-00-000Z",
+      "name": "My Workflow",
+      "nodeCount": 4,
+      "savedAt": "2026-04-06T10-00-00-000Z"
+    }
+  ]
+}
+```
+
+**Errors:**
+- `404` — workflow not found.
+
+---
+
+### `POST /api/v1/workflows/:id/versions/:timestamp/restore`
+
+Restore a previous version as the current workflow. The current workflow is saved as a new version before restoring (so no data is lost). Returns the restored workflow definition.
+
+**Request body:** `{}` (empty object)
+
+**Response 200:**
+```json
+{
+  "workflow": {
+    "id": "uuid-v4",
+    "name": "My Workflow",
+    "nodes": [ ... ],
+    "edges": [ ... ],
+    "settings": { ... },
+    "updatedAt": "2026-04-06T10:05:00.000Z"
+  }
+}
+```
+
+**Errors:**
+- `404` — version not found (`"Version not found: <id>@<timestamp>"`).
 
 ---
 

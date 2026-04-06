@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-06 after V5 Bugfix commit — SwarmCanvas.jsx context menu stopPropagation, SwarmView.jsx stale closure keyboard shortcut fix._
+_Last updated: 2026-04-06 after V5 Wave 4 — Execution History, Workflow Templates, Version History (6 new API endpoints, 5 new files, 6 modified files)._
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**
@@ -47,20 +47,20 @@ _Last updated: 2026-04-06 after V5 Bugfix commit — SwarmCanvas.jsx context men
 
 | Document | Status | Last Updated | Notes |
 |----------|--------|--------------|-------|
-| README.md | UP_TO_DATE | 2026-04-06 | Rate limit updated 200->300 req/min per V5.2 Task #240. |
-| docs/ARCHITECTURE.md | PARTIAL | 2026-04-06 | Section 11.4 Handoff Protocol up to date. V5 Wave 1+2+3 new components (ContextMenu.jsx, useCanvasHistory.js, sanitizeWorkflow.js, nodeIdGenerator.js, NodePalette.jsx, WorkflowSettingsModal.jsx, useCanvasValidation.js) not yet added to component tree — deferred to ARCHITECTURE.md V5 batch update. |
+| README.md | UP_TO_DATE | 2026-04-06 | V5 Wave 4 features added: Execution History, Workflow Templates, Version History. |
+| docs/ARCHITECTURE.md | PARTIAL | 2026-04-06 | Section 11.4 Handoff Protocol up to date. V5 Wave 1-4 new components (ContextMenu.jsx, useCanvasHistory.js, sanitizeWorkflow.js, nodeIdGenerator.js, NodePalette.jsx, WorkflowSettingsModal.jsx, useCanvasValidation.js, ExecutionHistory.jsx, TemplateGallery.jsx, VersionHistory.jsx) and new stores (ExecutionHistoryStore.js, TemplateStore.js) not yet added to component tree — deferred to ARCHITECTURE.md V5 batch update. |
 | docs/PRD.md | UP_TO_DATE | 2026-04-06 | Version bumped to v5.0 with N8N-Style Visual Workflow Editor addendum (81 FRs, 5 waves, 6 new node types, 5 new SEC requirements). |
-| docs/API.md | UP_TO_DATE | 2026-04-06 | No endpoint signature changes in V5.2. Malformed JSON 400, API 404 JSON, and rate limit 300 are internal behavior improvements — existing API docs remain accurate. |
+| docs/API.md | UP_TO_DATE | 2026-04-06 | V5 Wave 4 endpoints added: execution history (2), templates (2), versions (2). All 6 new endpoints documented with full request/response examples. |
 | docs/memory/PROJECT.md | UP_TO_DATE | 2026-04-06 | Implementation status updated to reflect V5.0 planning complete + V4.x-V7.0 status. |
 | docs/memory/DECISIONS.md | UP_TO_DATE | 2026-04-03 | DEC-001 through DEC-026 — no new architectural decisions from V5.0 bug fixes. |
-| docs/memory/PROGRESS.md | UP_TO_DATE | 2026-04-06 | V5.0 PRD planning milestone entry added. Focus shifting to V5 Wave 1. |
-| docs/memory/CONTEXT.md | UP_TO_DATE | 2026-04-06 | Focus updated to V5 Wave 1 implementation. V6.0 CLOSED, V7.0 in progress. |
+| docs/memory/PROGRESS.md | UP_TO_DATE | 2026-04-06 | V5 Wave 4 completion entry added. |
+| docs/memory/CONTEXT.md | UP_TO_DATE | 2026-04-06 | Focus updated to reflect V5 Wave 4 completion. All areas CLOSED. |
 | docs/memory/CODE_MAP.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No changes from documenter. |
 | docs/memory/CHANGELOG.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No changes from documenter. |
 | docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-06 | V5.0 Phase 1 deep test entry appended by documenter. |
 | docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-04-06 | V1 audit. SEC-06 entry updated with webhook CSRF exemption note (Task #234). |
 | docs/security-v3-audit.md | UP_TO_DATE | 2026-04-06 | MEDIUM-V3-01 marked FIXED (Task #234). Summary table updated. |
-| Inline comments | UP_TO_DATE | 2026-04-06 | V5 Wave 1+2+3 + bugfix: all new/modified files have accurate header comments and FR references. SwarmCanvas.jsx context menu handlers have correct FR-V5-21-24 refs. SwarmView.jsx keyboard shortcut refs (FR-V5-43) documented at lines 117-124 and 329-330. No stale comments. |
+| Inline comments | UP_TO_DATE | 2026-04-06 | V5 Wave 1-4 + bugfix: all new/modified files have accurate header comments and FR references. New stores have JSDoc on all public methods. New UI panels have FR references in header comments. No stale comments. |
 | docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. Deferred indefinitely. |
 
 ## Stale Sections (known gaps)
@@ -251,6 +251,26 @@ Frontend-only changes. No new API endpoints, no env var changes, no backend chan
 
 **Documentation impact:** No README, API, or PRD changes needed. ARCHITECTURE.md V5 component tree update deferred to batch (useCanvasValidation.js added to deferred list). Inline comments in all new/modified files are accurate.
 
+## V5 Wave 4 — Execution History + Templates + Version History (2026-04-06)
+
+Full-stack changes. 6 new API endpoints, 2 new server stores, 3 new client panels, 6 modified files.
+
+| File | Type | Change Summary | Doc Impact |
+|------|------|----------------|------------|
+| server/stores/ExecutionHistoryStore.js | NEW | Persists execution history per workflow to %APPDATA%/execution-history/<workflowId>.json. Max 100 entries, trimmed oldest. Path traversal prevention. Atomic writes. | API.md updated with 2 new endpoints |
+| server/stores/TemplateStore.js | NEW | In-memory read-only store with 5 built-in templates: content-agency, code-review-chain, research-loop, customer-support-triage, data-pipeline. | API.md updated with 2 new endpoints |
+| client/src/canvas/ExecutionHistory.jsx | NEW | Slide-in right panel showing past executions with status badges, relative time, duration, node count, expandable per-node snapshots. FR-V5-48. | ARCHITECTURE.md V5 component tree update deferred |
+| client/src/canvas/TemplateGallery.jsx | NEW | Modal gallery with 2-column grid of template cards. "Use Template" instantiates via POST. FR-V5-51/52. | ARCHITECTURE.md V5 component tree update deferred |
+| client/src/canvas/VersionHistory.jsx | NEW | Slide-out right panel with timeline UI, preview toggle, restore button. FR-V5-53/54/55. | ARCHITECTURE.md V5 component tree update deferred |
+| server/services/WorkflowStore.js | MODIFIED | Added version history: _saveVersion() on update(), listVersions(), getVersion(), restoreVersion(). Max 50 versions per workflow. Versions stored in workflows/versions/<id>/. | API.md updated with 2 new endpoints |
+| server/routes/swarm.js | MODIFIED | Added GET /history/:workflowId and GET /history/:workflowId/:executionId routes. Lazy-initialized ExecutionHistoryStore. | API.md updated |
+| server/routes/workflows.js | MODIFIED | Added GET /templates, POST /templates/:templateId/instantiate, GET /:id/versions, POST /:id/versions/:timestamp/restore. TemplateStore instantiated at module level. | API.md updated |
+| client/src/store/SwarmContext.jsx | MODIFIED | updateAgentState auto-tracks timestamps (started, done, error) for per-agent execution timing. | None |
+| client/src/canvas/AgentInspector.jsx | MODIFIED | Added ExecutionInfo section with live timer: shows started time, running duration (auto-updates every second), and status. FR-V5-49/50. | None |
+| client/src/views/SwarmView.jsx | MODIFIED | Added History, Templates, Versions toolbar buttons. Imports and renders ExecutionHistory, TemplateGallery, VersionHistory panels. showHistory/showTemplates/showVersions state. | None |
+
+**Documentation impact:** README.md updated with 3 new features. API.md updated with 6 new endpoints (full request/response examples). ARCHITECTURE.md V5 component tree update deferred to batch (3 new components + 2 new stores added to deferred list). Inline comments in all new files are accurate with FR references and JSDoc.
+
 ## V5 Bugfix — Context Menu + Keyboard Shortcut Stale Closure (2026-04-06)
 
 Frontend-only bugfixes. No new API endpoints, no env var changes, no backend changes, no new files. Two modified files.
@@ -273,7 +293,7 @@ Frontend-only bugfixes. No new API endpoints, no env var changes, no backend cha
 | SECURITY_AUDIT.md LOW-04 fix | Low | Refactor safeRead to cover claudemd GET path — deferred to v3.1 |
 | Swarm execution state persistence | Medium | In-memory only in v3.0; restart clears all executions. Disk persistence planned for v3.1. |
 | docs/memory/CODE_MAP.md TriggerNode "(stub)" notation | Low | Code-mapper should update the map entry — TriggerNode is now fully implemented (Task #76). |
-| docs/API.md V5 endpoints | Medium | V5 PRD defines new API endpoints (workflow versions, execution history, templates, agent discovery) — docs/API.md must be updated once these endpoints are implemented in code. |
-| docs/ARCHITECTURE.md V5 components | Medium | V5 PRD defines new UI components — ContextMenu.jsx (Wave 1), NodePalette.jsx (Wave 2), WorkflowSettingsModal.jsx (Wave 2), useCanvasValidation.js (Wave 3) now implemented. Remaining: EdgeInspector, WorkflowToolbar, and new node types (conditional, merge, delay, loop, errorHandler, subWorkflow). Update ARCHITECTURE.md component tree once full wave or batch is complete. |
+| ~~docs/API.md V5 endpoints~~ | RESOLVED | V5 Wave 4 endpoints (execution history, templates, versions) documented in API.md on 2026-04-06. Agent discovery endpoint still pending future wave. |
+| docs/ARCHITECTURE.md V5 components | Medium | V5 Waves 1-4 components implemented but not yet added to ARCHITECTURE.md component tree: ContextMenu.jsx, useCanvasHistory.js, sanitizeWorkflow.js, nodeIdGenerator.js, NodePalette.jsx, WorkflowSettingsModal.jsx, useCanvasValidation.js, ExecutionHistory.jsx, TemplateGallery.jsx, VersionHistory.jsx, ExecutionHistoryStore.js, TemplateStore.js. Remaining unimplemented: EdgeInspector, WorkflowToolbar, new node types. Update component tree once full V5 is complete. |
 | ~~MEDIUM-V3-01 / BUG-API-1 (webhook CSRF mismatch)~~ | RESOLVED | Fixed in Task #234 (2026-04-06). CSRF_EXEMPT_PREFIXES array added to server/middleware/csrf.js. Security audit docs updated. |
 | ~~BUG-PRD-1 through BUG-PRD-4 code fixes~~ | RESOLVED | All four bugs fixed in V3.1 wave (Tasks #124-#130). AREA CHECKPOINT #132 PASS confirmed. No remaining debt from this item. |

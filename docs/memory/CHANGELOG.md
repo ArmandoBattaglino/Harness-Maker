@@ -3110,3 +3110,69 @@ No new connections introduced in this checkpoint task. All connection changes we
 - sanitizeWorkflow is also imported by server/services/ScaffoldGenerator.js — no changes needed there
 
 ---
+
+---
+## 2026-04-06 — V5 Wave 4: Execution History, Templates, Version History
+**Agent:** code-mapper (post-task mapping)
+**Triggered by:** V5 Wave 4 implementation — added execution history persistence, workflow templates, and version history features
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/stores/ExecutionHistoryStore.js | ADDED | Per-workflow execution history persistence (CONFIG_DIR/execution-history/). Methods: init, addEntry, getHistory, getEntry. Max 100 entries. Uses write-file-atomic + path-traversal guard. |
+| server/stores/TemplateStore.js | ADDED | 5 hardcoded workflow templates (Content Agency, Code Review Chain, Research Loop, Customer Support Triage, Data Pipeline). In-memory read-only. Methods: listTemplates, getTemplate. |
+| client/src/canvas/ExecutionHistory.jsx | ADDED | Slide-in right panel showing past executions with status badges, relative times, expandable per-node snapshots. |
+| client/src/canvas/TemplateGallery.jsx | ADDED | Modal with 2-column grid of template cards. "Use Template" instantiates and loads workflow. |
+| client/src/canvas/VersionHistory.jsx | ADDED | Slide-out right panel with version timeline, preview toggle, and restore action. |
+| server/services/WorkflowStore.js | MODIFIED | Added _saveVersion() called before update(). New methods: listVersions, getVersion, restoreVersion, _resolveVersionsDir. Versions stored in workflows/versions/<id>/<timestamp>.json. Max 50 per workflow. |
+| server/routes/swarm.js | MODIFIED | Added GET /history/:workflowId and GET /history/:workflowId/:executionId. Lazy-inits ExecutionHistoryStore. Imports ExecutionHistoryStore and ConfigStore. |
+| server/routes/workflows.js | MODIFIED | Added GET /templates, POST /templates/:id/instantiate, GET /:id/versions, POST /:id/versions/:timestamp/restore. Imports TemplateStore. |
+| client/src/store/SwarmContext.jsx | MODIFIED | updateAgentState now auto-tracks timestamps (started, done, error) on status transitions. |
+| client/src/canvas/AgentInspector.jsx | MODIFIED | Added ExecutionInfo collapsible section with live timer (formatTime, formatDuration helpers). |
+| client/src/views/SwarmView.jsx | MODIFIED | Added History, Templates, Versions toolbar buttons. State: showHistory, showTemplates, showVersions. Imports ExecutionHistory, TemplateGallery, VersionHistory. Conditional panel rendering. |
+
+### Functions Added
+- `ExecutionHistoryStore` class (constructor, init, addEntry, getHistory, getEntry, _resolveFilePath, _readEntries, _writeEntries) in `server/stores/ExecutionHistoryStore.js`
+- `TemplateStore` class (listTemplates, getTemplate) in `server/stores/TemplateStore.js`
+- `WorkflowStore.listVersions(id)` in `server/services/WorkflowStore.js`
+- `WorkflowStore.getVersion(id, timestamp)` in `server/services/WorkflowStore.js`
+- `WorkflowStore.restoreVersion(id, timestamp)` in `server/services/WorkflowStore.js`
+- `WorkflowStore._resolveVersionsDir(id)` in `server/services/WorkflowStore.js`
+- `WorkflowStore._saveVersion(id, workflowData)` in `server/services/WorkflowStore.js`
+- `getHistoryStore()` in `server/routes/swarm.js` — lazy singleton for ExecutionHistoryStore
+- `GET /history/:workflowId` route in `server/routes/swarm.js`
+- `GET /history/:workflowId/:executionId` route in `server/routes/swarm.js`
+- `GET /templates` route in `server/routes/workflows.js`
+- `POST /templates/:templateId/instantiate` route in `server/routes/workflows.js`
+- `GET /:id/versions` route in `server/routes/workflows.js`
+- `POST /:id/versions/:timestamp/restore` route in `server/routes/workflows.js`
+- `ExecutionHistory({ workflowId, onClose })` in `client/src/canvas/ExecutionHistory.jsx`
+- `TemplateGallery({ onInstantiate, onClose })` in `client/src/canvas/TemplateGallery.jsx`
+- `VersionHistory({ workflowId, onRestore, onPreview, onClose })` in `client/src/canvas/VersionHistory.jsx`
+- `ExecutionInfo({ timestamps, status })` in `client/src/canvas/AgentInspector.jsx`
+
+### Functions Modified
+- `WorkflowStore.update(id, data)` in `server/services/WorkflowStore.js` — now calls _saveVersion before overwriting (FR-V5-53)
+- `updateAgentState(nodeId, patch)` in `client/src/store/SwarmContext.jsx` — auto-tracks timestamps.started/done/error on status transitions
+- `SwarmView()` in `client/src/views/SwarmView.jsx` — added showHistory/showTemplates/showVersions state, toolbar buttons, panel rendering
+
+### Functions Removed
+- None
+
+### Connection Changes
+- NEW: server/routes/swarm.js → imports ExecutionHistoryStore from server/stores/ExecutionHistoryStore.js
+- NEW: server/routes/swarm.js → imports ConfigStore from server/services/ConfigStore.js (for CONFIG_DIR)
+- NEW: server/routes/workflows.js → imports TemplateStore from server/stores/TemplateStore.js
+- NEW: server/routes/workflows.js → calls WorkflowStore.listVersions, WorkflowStore.restoreVersion
+- NEW: WorkflowStore.update → calls WorkflowStore._saveVersion (version snapshot before every update)
+- NEW: client/src/views/SwarmView.jsx → imports ExecutionHistory, TemplateGallery, VersionHistory
+- NEW: client/src/canvas/ExecutionHistory.jsx → calls apiGet (GET /api/v1/swarm/history/:workflowId)
+- NEW: client/src/canvas/TemplateGallery.jsx → calls apiGet (GET /api/v1/workflows/templates) + apiPost (POST /templates/:id/instantiate)
+- NEW: client/src/canvas/VersionHistory.jsx → calls apiGet (GET /api/v1/workflows/:id/versions) + apiPost (POST /versions/:timestamp/restore)
+
+### Impact on Other Code
+- WorkflowStore.update now has a side effect of saving a version snapshot before every update — any callers of update() will trigger version creation (currently: PUT /api/v1/workflows/:id and WorkflowStore.restoreVersion)
+- SwarmContext.updateAgentState now mutates a timestamps sub-object — any component reading agentStates[nodeId].timestamps will see auto-populated started/done/error fields
+- No breaking changes to existing function signatures
+
+---

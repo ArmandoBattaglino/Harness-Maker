@@ -61,6 +61,9 @@ The server binds exclusively to `127.0.0.1` — it is never accessible from the 
 | **Human-in-the-Loop (V3)** | Agents can pause and request human approval. The HITL inbox lets you approve or reject decisions with optional resume text. |
 | **Broadcast (V3)** | Send a text message to all running agents simultaneously (soft or hard interrupt mode). |
 | **Trigger Nodes (V3)** | Webhooks and RSS pollers can fire a workflow automatically. Rate-limited webhook receiver with SSRF-safe RSS polling. |
+| **Execution History (V5)** | Browse past workflow executions with status, duration, nodes run, and per-node snapshots. Up to 100 entries persisted per workflow. |
+| **Workflow Templates (V5)** | Start from 5 built-in templates (Content Agency, Code Review Chain, Research Loop, Customer Support Triage, Data Pipeline). One click creates a new workflow from a template. |
+| **Version History (V5)** | Every workflow save creates a version snapshot. Browse, preview, and restore any previous version. Up to 50 versions retained per workflow. |
 
 ---
 

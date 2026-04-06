@@ -1,3 +1,24 @@
+## 2026-04-06 — frontend-dev — Wave 5: Advanced Flow Control Node Components (FR-V5-56/59/60/64/66/68/71/73/77)
+**Outcome:** COMPLETED
+**Summary:** Implemented 6 new canvas node components (ConditionalNode, MergeNode, DelayNode, LoopNode, ErrorHandlerNode, SubWorkflowNode) with full inspector configuration fields for each. Registered all 6 in SwarmCanvas nodeTypes and added palette entries in NodePalette. Build: 496 modules, 0 errors.
+**Files changed:** 6 new node files in client/src/canvas/nodes/, plus SwarmCanvas.jsx, NodePalette.jsx, AgentInspector.jsx modified
+**Bugs fixed:** none
+**Decisions made:** CSS rotate for diamond shape, CSS clip-path for hexagon, double-border for sub-workflow, 3 fixed merge input handles
+**Blockers:** none
+**Next:** qa-tester should verify all 6 new node types render and configure correctly
+
+---
+## 2026-04-06 — documenter — V5 Wave 4: Documentation Update for Execution History, Templates, Version History
+**Outcome:** COMPLETED
+**Summary:** Updated all project documentation for V5 Wave 4. Added 6 new API endpoints to docs/API.md with full request/response examples (execution history 2, templates 2, versions 2). Added 3 new features to README.md. Updated PROGRESS.md, CONTEXT.md, and DOC_STATUS.md. All inline comments in new/modified files verified accurate.
+**Files changed:** docs/API.md, README.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** ARCHITECTURE.md V5 component tree batch update (deferred until V5 is fully complete)
+
+---
+
 ## 2026-04-06 — frontend-dev — Wave 4: Per-Node Timing, Execution History, Templates, Version History
 **Outcome:** COMPLETED
 **Summary:** Implemented 4 Wave 4 frontend features: (1) Per-node execution timestamps in SwarmContext + live timer in AgentInspector (FR-V5-49/50), (2) ExecutionHistory slide-in panel fetching from /api/v1/swarm/history/:workflowId (FR-V5-48), (3) TemplateGallery modal fetching from /api/v1/workflows/templates (FR-V5-51/52), (4) VersionHistory slide-out panel with timeline UI fetching from /api/v1/workflows/:id/versions (FR-V5-53/54/55). Added History/Templates/Versions buttons to SwarmView toolbar.

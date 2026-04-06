@@ -1,4 +1,57 @@
 ---
+## 2026-04-06 — V5 Wave 4: Execution History, Templates, Version History Documentation
+**Status:** COMPLETED
+**Called by:** user (post-V5-Wave-4 documentation sync)
+
+### Context when I started
+V5 Waves 1-3 and BugFix1 were fully documented. Wave 4 had just landed with 5 new files (2 server stores, 3 client panels), 6 modified files, and 6 new API endpoints. No documentation had been updated yet for these changes.
+
+### What I did
+1. Read all 11 new/modified source files to understand exact APIs, data shapes, and behavior
+2. Read existing docs: DOC_STATUS.md, API.md, README.md, ARCHITECTURE.md, PROGRESS.md, CONTEXT.md, agents/documenter.md, ACTIVITY_LOG.md
+3. Updated docs/API.md: added 3 new sections (Execution History V5, Workflow Templates V5, Workflow Versions V5) with 6 endpoints, full request/response JSON examples, error codes, and notes. Updated table of contents.
+4. Updated README.md: added 3 new feature rows (Execution History, Workflow Templates, Version History) to the Features table
+5. Updated docs/memory/PROGRESS.md: prepended V5 Wave 4 completion entry
+6. Updated docs/memory/CONTEXT.md: updated focus line to reflect Wave 4 completion
+7. Updated docs/memory/DOC_STATUS.md: header date, health table entries (README, ARCHITECTURE, API, PROGRESS, CONTEXT, inline comments), new V5 Wave 4 section with full file-by-file change table, resolved API.md debt entry, updated ARCHITECTURE.md debt entry
+8. Updated docs/memory/ACTIVITY_LOG.md: added documenter entry
+9. Appended this session log to agents/documenter.md
+10. Verified inline comments in all new files: ExecutionHistoryStore.js has JSDoc on constructor, addEntry, getHistory, getEntry, _resolveFilePath, _readEntries, _writeEntries. TemplateStore.js has JSDoc on listTemplates, getTemplate. ExecutionHistory.jsx has FR-V5-48 header. TemplateGallery.jsx has FR-V5-51/52 header. VersionHistory.jsx has FR-V5-53/54/55 header. All accurate.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/API.md | MODIFIED | Added 6 new endpoint docs (execution history, templates, versions) with full examples |
+| README.md | MODIFIED | Added 3 new feature rows to Features table |
+| docs/memory/PROGRESS.md | MODIFIED | Added V5 Wave 4 completion entry |
+| docs/memory/CONTEXT.md | MODIFIED | Updated focus to reflect Wave 4 completion |
+| docs/memory/DOC_STATUS.md | MODIFIED | Added Wave 4 section, updated health table, resolved API debt |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added documenter entry for Wave 4 |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- docs/API.md now covers all V5 Wave 4 endpoints with copy-pasteable examples
+- README.md advertises the 3 major new capabilities (execution history, templates, version history)
+- DOC_STATUS.md API.md V5 endpoint debt item is now RESOLVED
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Deferred ARCHITECTURE.md component tree update: 12 new components/stores from Waves 1-4 are accumulating. Better to batch-update the component diagram once V5 is fully complete rather than incrementally adding entries that will shift again.
+
+### What I learned
+- WorkflowStore.update() now automatically saves a version snapshot before overwriting, which means version history is transparent to callers -- no separate "save version" API needed
+- TemplateStore is purely in-memory with hardcoded templates -- no persistence, no user-created templates
+- ExecutionHistoryStore follows the same ConfigStore.CONFIG_DIR pattern for file persistence
+
+### State I'm leaving behind
+All documentation is up to date for V5 Wave 4. The only known gap is ARCHITECTURE.md component tree, which is intentionally deferred (12 components from Waves 1-4 pending batch update). API.md, README.md, PROGRESS.md, CONTEXT.md, and DOC_STATUS.md are all current.
+
+### Handoff
+ARCHITECTURE.md component tree batch update should happen after V5 is fully complete (all 5 waves). No urgent documentation work remaining.
+
+---
 ## 2026-04-06 — V5 Bugfix: Context Menu stopPropagation + Keyboard Shortcut Stale Closure
 **Status:** COMPLETED
 **Called by:** user (post-V5-bugfix documentation sync)

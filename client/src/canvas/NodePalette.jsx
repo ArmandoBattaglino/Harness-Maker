@@ -32,6 +32,48 @@ const NODE_CARDS = [
     label: 'RSS Trigger',
     description: 'RSS feed trigger',
   },
+  {
+    type: 'conditional',
+    subType: '',
+    icon: '\u25C6',
+    label: 'Conditional Router',
+    description: 'IF/THEN branching logic',
+  },
+  {
+    type: 'merge',
+    subType: '',
+    icon: '\u2B21',
+    label: 'Merge / Join',
+    description: 'Wait for multiple inputs',
+  },
+  {
+    type: 'delay',
+    subType: '',
+    icon: '\u23F1',
+    label: 'Delay Timer',
+    description: 'Pause flow for N seconds',
+  },
+  {
+    type: 'loop',
+    subType: '',
+    icon: '\uD83D\uDD04',
+    label: 'Loop',
+    description: 'Iterate with exit condition',
+  },
+  {
+    type: 'errorHandler',
+    subType: '',
+    icon: '\u26A1',
+    label: 'Error Handler',
+    description: 'Catch errors from nodes',
+  },
+  {
+    type: 'subWorkflow',
+    subType: '',
+    icon: '\uD83D\uDCE6',
+    label: 'Sub-Workflow',
+    description: 'Nested workflow reference',
+  },
 ];
 
 function PaletteCard({ card }) {

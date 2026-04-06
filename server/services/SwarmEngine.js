@@ -443,6 +443,70 @@ function getGeminiNoProgressHardTimeoutMs() {
 }
 
 // ---------------------------------------------------------------------------
+// Flow-control node types — these never spawn a PTY
+// ---------------------------------------------------------------------------
+const FLOW_CONTROL_NODE_TYPES = new Set([
+  'conditional',
+  'merge',
+  'delay',
+  'loop',
+  'errorHandler',
+  'subWorkflow',
+]);
+
+/**
+ * Evaluate a simple condition string against a context object.
+ * Supported syntax:
+ *   key == "value"   — equality
+ *   key != "value"   — inequality
+ *   key contains "text" — string includes
+ *   key exists        — key is present and not null/undefined
+ *
+ * Returns true if the condition matches, false otherwise.
+ * Invalid/unparseable conditions return false (safe default).
+ */
+function evaluateCondition(condition, context) {
+  if (!condition || typeof condition !== 'string') return false;
+  const trimmed = condition.trim();
+
+  // key exists
+  const existsMatch = trimmed.match(/^([a-zA-Z0-9_.]+)\s+exists$/);
+  if (existsMatch) {
+    const key = existsMatch[1];
+    const val = context?.[key];
+    return val !== undefined && val !== null;
+  }
+
+  // key contains "text"
+  const containsMatch = trimmed.match(/^([a-zA-Z0-9_.]+)\s+contains\s+"([^"]*)"$/);
+  if (containsMatch) {
+    const key = containsMatch[1];
+    const searchText = containsMatch[2];
+    const val = context?.[key];
+    if (val === undefined || val === null) return false;
+    return String(val).includes(searchText);
+  }
+
+  // key == "value"
+  const eqMatch = trimmed.match(/^([a-zA-Z0-9_.]+)\s*==\s*"([^"]*)"$/);
+  if (eqMatch) {
+    const key = eqMatch[1];
+    const expected = eqMatch[2];
+    return String(context?.[key] ?? '') === expected;
+  }
+
+  // key != "value"
+  const neqMatch = trimmed.match(/^([a-zA-Z0-9_.]+)\s*!=\s*"([^"]*)"$/);
+  if (neqMatch) {
+    const key = neqMatch[1];
+    const expected = neqMatch[2];
+    return String(context?.[key] ?? '') !== expected;
+  }
+
+  return false;
+}
+
+// ---------------------------------------------------------------------------
 // WorkflowExecution shape (in-memory only, never persisted):
 // {
 //   executionId: string,
@@ -470,6 +534,13 @@ class SwarmEngine {
     this._executions = new Map();   // executionId -> WorkflowExecution
     this._wsBroadcast = null;       // function(executionId, event) — set by swarmHandler
     this._triggerManager = null;    // set by setTriggerManager() after TriggerManager is instantiated
+
+    // Wave 5 — Advanced Flow Control state tracking
+    this._mergeStates = new Map();  // `${executionId}:${nodeId}` -> { received: Set, required: number }
+    this._loopStates = new Map();   // `${executionId}:${nodeId}` -> { iteration, maxIterations }
+    this._delayTimers = new Map();  // `${executionId}:${nodeId}` -> timeout handle
+    this._errorWatchers = new Map(); // executionId -> Map<watchedNodeId, Set<errorHandlerNodeId>>
+    this._subWorkflowExecutions = new Map(); // `${executionId}:${nodeId}` -> child executionId
   }
 
   /**
@@ -1945,13 +2016,20 @@ class SwarmEngine {
     // 3. Store BEFORE spawning (so _spawnAgentPty can look it up)
     this._executions.set(executionId, execution);
 
+    // 3b. Register error handler watchers (Wave 5 — FR-V5-74)
+    this._registerErrorWatchers(executionId, execution);
+
     // 4. Find triage node: first node with isTriageNode === true, else first node
     const triageNode = wf.nodes.find((n) => n.data && n.data.isTriageNode === true) || wf.nodes[0];
 
-    // 5. Spawn triage agent PTY
-    await this._spawnAgentPty(executionId, triageNode.id, {
-      requestedProvider: providerStrategy.mode,
-    });
+    // 5. Spawn triage agent PTY (or activate flow-control node)
+    if (this._isFlowControlNode(triageNode)) {
+      await this._activateFlowControlNode(executionId, triageNode.id);
+    } else {
+      await this._spawnAgentPty(executionId, triageNode.id, {
+        requestedProvider: providerStrategy.mode,
+      });
+    }
 
     // 6. Start heartbeat to keep agent PTYs alive
     this._startHeartbeat(executionId);
@@ -2689,6 +2767,588 @@ class SwarmEngine {
     if (!recentRuntimeOutput.trim()) return false;
 
     return true;
+  }
+
+  // =========================================================================
+  // Wave 5 — Advanced Flow Control Node Handlers
+  // =========================================================================
+
+  /**
+   * Check whether a node is a flow-control node (no PTY spawn needed).
+   * @param {object} node - workflow node definition
+   * @returns {boolean}
+   */
+  _isFlowControlNode(node) {
+    return node && FLOW_CONTROL_NODE_TYPES.has(node.type);
+  }
+
+  /**
+   * Route a flow-control node activation to its specific handler.
+   * Called instead of _spawnAgentPty when a flow-control node receives a handoff.
+   * @param {string} executionId
+   * @param {string} nodeId
+   * @param {string} sourceNodeId - the node that triggered this activation (for merge tracking)
+   */
+  async _activateFlowControlNode(executionId, nodeId, sourceNodeId = null) {
+    const execution = this._executions.get(executionId);
+    if (!execution) return;
+
+    const node = execution.workflowDef.nodes.find((n) => n.id === nodeId);
+    if (!node) return;
+
+    // Ensure an agentState entry exists for status tracking
+    if (!execution.agentStates.has(nodeId)) {
+      execution.agentStates.set(nodeId, {
+        sessionId: null,
+        provider: null,
+        status: 'idle',
+        handoffCount: 0,
+        lastOutputSnippet: '',
+      });
+    }
+
+    switch (node.type) {
+      case 'conditional':
+        await this._handleConditionalNode(executionId, nodeId, node, execution);
+        break;
+      case 'merge':
+        await this._handleMergeNode(executionId, nodeId, node, execution, sourceNodeId);
+        break;
+      case 'delay':
+        this._handleDelayNode(executionId, nodeId, node, execution);
+        break;
+      case 'loop':
+        await this._handleLoopNode(executionId, nodeId, node, execution, sourceNodeId);
+        break;
+      case 'errorHandler':
+        await this._handleErrorHandlerNode(executionId, nodeId, node, execution);
+        break;
+      case 'subWorkflow':
+        await this._handleSubWorkflowNode(executionId, nodeId, node, execution);
+        break;
+      default:
+        break;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // FR-V5-57/58 — Conditional Router
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Evaluate conditional rules and route to the first matching target.
+   * Pure routing logic — no PTY spawned.
+   */
+  async _handleConditionalNode(executionId, nodeId, node, execution) {
+    const state = execution.agentStates.get(nodeId);
+    if (state) {
+      state.status = 'running';
+      this._broadcastAgentStatus(executionId, nodeId, state);
+    }
+
+    const rules = node.data?.rules ?? [];
+    const context = execution.workflowContext;
+    let targetNodeId = null;
+
+    // Evaluate rules top-to-bottom; first match wins
+    for (const rule of rules) {
+      if (rule && rule.condition && evaluateCondition(rule.condition, context)) {
+        targetNodeId = rule.targetNodeId;
+        break;
+      }
+    }
+
+    // Fallback to default target if no rule matched
+    if (!targetNodeId) {
+      targetNodeId = node.data?.defaultTargetNodeId ?? null;
+    }
+
+    if (state) {
+      state.status = 'done';
+      state.lastOutputSnippet = targetNodeId
+        ? `Routed to ${targetNodeId}`
+        : 'No matching route found';
+      this._broadcastAgentStatus(executionId, nodeId, state);
+    }
+
+    if (targetNodeId) {
+      await this._onHandoff(executionId, nodeId, {
+        type: 'handoff',
+        targetId: targetNodeId,
+        contextUpdate: { _lastConditionalRoute: targetNodeId },
+      });
+    }
+
+    this._syncExecutionStatusFromAgents(execution);
+  }
+
+  // ---------------------------------------------------------------------------
+  // FR-V5-61/62/63 — Merge/Join Node
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Track incoming edges and trigger merge when convergence threshold is met.
+   */
+  async _handleMergeNode(executionId, nodeId, node, execution, sourceNodeId) {
+    const stateKey = `${executionId}:${nodeId}`;
+    const state = execution.agentStates.get(nodeId);
+
+    // Initialize merge tracking if not yet present
+    if (!this._mergeStates.has(stateKey)) {
+      const waitFor = node.data?.waitFor ?? 'all';
+      let required;
+      if (waitFor === 'any') {
+        required = 1;
+      } else if (typeof waitFor === 'number' && waitFor > 0) {
+        required = waitFor;
+      } else {
+        // 'all' — count incoming edges to this merge node
+        required = execution.workflowDef.edges.filter((e) => e.target === nodeId).length;
+      }
+      this._mergeStates.set(stateKey, { received: new Set(), required });
+    }
+
+    const mergeState = this._mergeStates.get(stateKey);
+
+    // Record the incoming source
+    if (sourceNodeId) {
+      mergeState.received.add(sourceNodeId);
+    }
+
+    if (state) {
+      state.status = 'running';
+      state.lastOutputSnippet = `Waiting: ${mergeState.received.size}/${mergeState.required}`;
+      this._broadcastAgentStatus(executionId, nodeId, state);
+    }
+
+    // Check if convergence threshold is met
+    if (mergeState.received.size >= mergeState.required) {
+      // Merge complete — forward to outgoing edges
+      if (state) {
+        state.status = 'done';
+        state.lastOutputSnippet = `Merged ${mergeState.received.size} inputs`;
+        this._broadcastAgentStatus(executionId, nodeId, state);
+      }
+
+      // Reset merge state for potential re-trigger (loop scenarios)
+      this._mergeStates.delete(stateKey);
+
+      // Forward to all outgoing edge targets
+      const outgoingTargets = execution.workflowDef.edges
+        .filter((e) => e.source === nodeId)
+        .map((e) => e.target);
+
+      for (const targetId of outgoingTargets) {
+        await this._onHandoff(executionId, nodeId, {
+          type: 'handoff',
+          targetId,
+          contextUpdate: { _mergeCompleted: nodeId },
+        });
+      }
+
+      this._syncExecutionStatusFromAgents(execution);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // FR-V5-65/67 — Delay/Timer Node
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Wait for a configured number of seconds, then forward to outgoing edges.
+   * No PTY spawned — pure timer logic.
+   */
+  _handleDelayNode(executionId, nodeId, node, execution) {
+    const state = execution.agentStates.get(nodeId);
+    const delaySeconds = Number(node.data?.delaySeconds ?? 0);
+
+    if (state) {
+      state.status = 'running';
+      state.lastOutputSnippet = `Waiting ${delaySeconds}s...`;
+      this._broadcastAgentStatus(executionId, nodeId, state);
+    }
+
+    const timerKey = `${executionId}:${nodeId}`;
+
+    const handle = setTimeout(async () => {
+      this._delayTimers.delete(timerKey);
+
+      const exec = this._executions.get(executionId);
+      if (!exec || ['stopping', 'stopped', 'failed'].includes(exec.status)) return;
+
+      const currentState = exec.agentStates.get(nodeId);
+      if (currentState) {
+        currentState.status = 'done';
+        currentState.lastOutputSnippet = `Delay ${delaySeconds}s completed`;
+        this._broadcastAgentStatus(executionId, nodeId, currentState);
+      }
+
+      // Forward to all outgoing edge targets
+      const outgoingTargets = exec.workflowDef.edges
+        .filter((e) => e.source === nodeId)
+        .map((e) => e.target);
+
+      for (const targetId of outgoingTargets) {
+        await this._onHandoff(executionId, nodeId, {
+          type: 'handoff',
+          targetId,
+          contextUpdate: { _delayCompleted: nodeId },
+        });
+      }
+
+      this._syncExecutionStatusFromAgents(exec);
+    }, delaySeconds * 1000);
+
+    // Allow Node.js to exit even if delay timer is active
+    if (handle.unref) {
+      handle.unref();
+    }
+
+    this._delayTimers.set(timerKey, handle);
+  }
+
+  // ---------------------------------------------------------------------------
+  // FR-V5-69/70/72 — Loop Node
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Manage loop iteration state. On first activation, forward to "loop" edges.
+   * On return from sub-graph, increment and check exit condition.
+   */
+  async _handleLoopNode(executionId, nodeId, node, execution, sourceNodeId) {
+    const stateKey = `${executionId}:${nodeId}`;
+    const state = execution.agentStates.get(nodeId);
+    const maxIterations = Number(node.data?.maxIterations ?? 10);
+    const exitCondition = node.data?.exitCondition ?? null;
+
+    // Separate outgoing edges by handle/label: "loop" vs "exit"
+    const loopEdges = execution.workflowDef.edges.filter(
+      (e) => e.source === nodeId && (e.sourceHandle === 'loop' || e.data?.label === 'loop')
+    );
+    const exitEdges = execution.workflowDef.edges.filter(
+      (e) => e.source === nodeId && (e.sourceHandle === 'exit' || e.data?.label === 'exit')
+    );
+    // Fallback: if no labeled edges, first edge is loop, rest are exit
+    const allOutgoing = execution.workflowDef.edges.filter((e) => e.source === nodeId);
+    const effectiveLoopEdges = loopEdges.length > 0 ? loopEdges : (allOutgoing.length > 0 ? [allOutgoing[0]] : []);
+    const effectiveExitEdges = exitEdges.length > 0 ? exitEdges : allOutgoing.slice(1);
+
+    if (!this._loopStates.has(stateKey)) {
+      // First activation — start iteration 1
+      this._loopStates.set(stateKey, { iteration: 1, maxIterations });
+
+      if (state) {
+        state.status = 'running';
+        state.lastOutputSnippet = `Loop iteration 1/${maxIterations}`;
+        this._broadcastAgentStatus(executionId, nodeId, state);
+      }
+
+      // Forward to loop edges (inner sub-graph)
+      for (const edge of effectiveLoopEdges) {
+        await this._onHandoff(executionId, nodeId, {
+          type: 'handoff',
+          targetId: edge.target,
+          contextUpdate: { _loopIteration: 1, _loopNodeId: nodeId },
+        });
+      }
+      return;
+    }
+
+    // Return from sub-graph — increment iteration
+    const loopState = this._loopStates.get(stateKey);
+    loopState.iteration += 1;
+
+    // Check exit conditions
+    const shouldExit =
+      loopState.iteration > loopState.maxIterations
+      || (exitCondition && evaluateCondition(exitCondition, execution.workflowContext));
+
+    if (shouldExit) {
+      // Exit the loop
+      if (state) {
+        state.status = 'done';
+        state.lastOutputSnippet = `Loop completed after ${loopState.iteration - 1} iterations`;
+        this._broadcastAgentStatus(executionId, nodeId, state);
+      }
+      this._loopStates.delete(stateKey);
+
+      for (const edge of effectiveExitEdges) {
+        await this._onHandoff(executionId, nodeId, {
+          type: 'handoff',
+          targetId: edge.target,
+          contextUpdate: {
+            _loopCompleted: nodeId,
+            _loopTotalIterations: loopState.iteration - 1,
+          },
+        });
+      }
+    } else {
+      // Continue looping
+      if (state) {
+        state.status = 'running';
+        state.lastOutputSnippet = `Loop iteration ${loopState.iteration}/${loopState.maxIterations}`;
+        this._broadcastAgentStatus(executionId, nodeId, state);
+      }
+
+      for (const edge of effectiveLoopEdges) {
+        await this._onHandoff(executionId, nodeId, {
+          type: 'handoff',
+          targetId: edge.target,
+          contextUpdate: { _loopIteration: loopState.iteration, _loopNodeId: nodeId },
+        });
+      }
+    }
+
+    this._syncExecutionStatusFromAgents(execution);
+  }
+
+  // ---------------------------------------------------------------------------
+  // FR-V5-74/75/76 — Error Handler Node
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Register error watchers for a given execution.
+   * Called during startExecution for every errorHandler node in the workflow.
+   */
+  _registerErrorWatchers(executionId, execution) {
+    const errorHandlerNodes = execution.workflowDef.nodes.filter(
+      (n) => n.type === 'errorHandler'
+    );
+    if (errorHandlerNodes.length === 0) return;
+
+    const watcherMap = new Map(); // watchedNodeId -> Set<errorHandlerNodeId>
+    for (const ehNode of errorHandlerNodes) {
+      const watchedNodes = ehNode.data?.watchedNodes ?? [];
+      for (const watchedId of watchedNodes) {
+        if (!watcherMap.has(watchedId)) {
+          watcherMap.set(watchedId, new Set());
+        }
+        watcherMap.get(watchedId).add(ehNode.id);
+      }
+    }
+    this._errorWatchers.set(executionId, watcherMap);
+  }
+
+  /**
+   * Check if any error handlers are watching a node that just transitioned to 'error'.
+   * If so, activate the error handler node.
+   */
+  async _checkErrorWatchers(executionId, nodeId, errorMessage, lastOutput) {
+    const watcherMap = this._errorWatchers.get(executionId);
+    if (!watcherMap) return;
+
+    const handlers = watcherMap.get(nodeId);
+    if (!handlers || handlers.size === 0) return;
+
+    const execution = this._executions.get(executionId);
+    if (!execution) return;
+
+    for (const handlerId of handlers) {
+      // Inject error context into workflow context
+      execution.workflowContext._errorNodeId = nodeId;
+      execution.workflowContext._errorMessage = errorMessage || 'Unknown error';
+      execution.workflowContext._errorLastOutput = lastOutput || '';
+
+      await this._handleErrorHandlerNode(executionId, handlerId,
+        execution.workflowDef.nodes.find((n) => n.id === handlerId),
+        execution
+      );
+    }
+  }
+
+  /**
+   * Handle an error handler node activation.
+   * Forwards to outgoing agent nodes with augmented error context in system prompts.
+   */
+  async _handleErrorHandlerNode(executionId, nodeId, node, execution) {
+    if (!node) return;
+
+    const state = execution.agentStates.get(nodeId);
+    if (state) {
+      state.status = 'running';
+      state.lastOutputSnippet = `Handling error from ${execution.workflowContext._errorNodeId || 'unknown'}`;
+      this._broadcastAgentStatus(executionId, nodeId, state);
+    }
+
+    // Forward to outgoing edges — downstream agents get error context
+    const outgoingTargets = execution.workflowDef.edges
+      .filter((e) => e.source === nodeId)
+      .map((e) => e.target);
+
+    for (const targetId of outgoingTargets) {
+      await this._onHandoff(executionId, nodeId, {
+        type: 'handoff',
+        targetId,
+        contextUpdate: {
+          _errorHandlerActivated: nodeId,
+          _errorNodeId: execution.workflowContext._errorNodeId,
+          _errorMessage: execution.workflowContext._errorMessage,
+          _errorLastOutput: execution.workflowContext._errorLastOutput,
+        },
+      });
+    }
+
+    if (state) {
+      state.status = 'done';
+      this._broadcastAgentStatus(executionId, nodeId, state);
+    }
+
+    this._syncExecutionStatusFromAgents(execution);
+  }
+
+  // ---------------------------------------------------------------------------
+  // FR-V5-79/80/81 — Sub-Workflow Execution
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Load and execute a nested workflow within the parent execution.
+   * On completion, merge child context back and forward to parent outgoing edges.
+   */
+  async _handleSubWorkflowNode(executionId, nodeId, node, execution) {
+    const state = execution.agentStates.get(nodeId);
+    const childWorkflowId = node.data?.workflowId;
+
+    if (!childWorkflowId) {
+      if (state) {
+        state.status = 'failed';
+        state.lastOutputSnippet = 'No workflowId configured';
+        this._broadcastAgentStatus(executionId, nodeId, state);
+      }
+      this._syncExecutionStatusFromAgents(execution);
+      return;
+    }
+
+    if (state) {
+      state.status = 'running';
+      state.lastOutputSnippet = `Starting sub-workflow ${childWorkflowId}`;
+      this._broadcastAgentStatus(executionId, nodeId, state);
+    }
+
+    try {
+      // Load the child workflow definition
+      const childWf = await this._workflowStore.get(childWorkflowId);
+      if (!childWf) {
+        throw new Error(`Sub-workflow ${childWorkflowId} not found`);
+      }
+
+      // Create a nested execution
+      const childExecutionId = uuidv4();
+      const childExecution = {
+        executionId: childExecutionId,
+        workflowId: childWorkflowId,
+        workflowDef: childWf,
+        projectId: execution.projectId,
+        projectPath: execution.projectPath,
+        status: 'running',
+        agentStates: new Map(),
+        edgeCounters: new Map(),
+        workflowContext: {
+          ...this._buildInitialWorkflowContext(childWf),
+          ...execution.workflowContext, // Inherit parent context
+        },
+        heartbeatTimer: null,
+        inboxItems: [],
+        runtimeBlocker: null,
+        providerStrategy: execution.providerStrategy
+          ? { ...execution.providerStrategy }
+          : null,
+        runtimeProvider: execution.runtimeProvider,
+        activeProvider: execution.activeProvider,
+        codexPromptRetryCounts: new Map(),
+        lastFallback: null,
+        _parentExecutionId: executionId,
+        _parentNodeId: nodeId,
+      };
+
+      // Store the child execution
+      this._executions.set(childExecutionId, childExecution);
+      const subKey = `${executionId}:${nodeId}`;
+      this._subWorkflowExecutions.set(subKey, childExecutionId);
+
+      // Find triage node in child workflow
+      const triageNode = childWf.nodes.find(
+        (n) => n.data && n.data.isTriageNode === true
+      ) || childWf.nodes[0];
+
+      if (!triageNode) {
+        throw new Error(`Sub-workflow ${childWorkflowId} has no nodes`);
+      }
+
+      // Spawn the triage agent with namespaced session ID
+      await this._spawnAgentPty(childExecutionId, triageNode.id, {
+        requestedProvider: execution.activeProvider,
+        sessionIdPrefix: `${executionId}/${childExecutionId}`,
+      });
+
+      this._startHeartbeat(childExecutionId);
+
+      // Watch for child completion — poll via interval
+      const pollHandle = setInterval(() => {
+        const child = this._executions.get(childExecutionId);
+        if (!child) {
+          clearInterval(pollHandle);
+          return;
+        }
+
+        if (['completed', 'stopped', 'failed'].includes(child.status)) {
+          clearInterval(pollHandle);
+
+          // Merge child context back into parent
+          const parentExec = this._executions.get(executionId);
+          if (parentExec) {
+            Object.assign(parentExec.workflowContext, child.workflowContext);
+
+            const parentState = parentExec.agentStates.get(nodeId);
+            if (parentState) {
+              parentState.status = child.status === 'completed' ? 'done' : 'failed';
+              parentState.lastOutputSnippet = `Sub-workflow ${child.status}`;
+              this._broadcastAgentStatus(executionId, nodeId, parentState);
+            }
+
+            // Forward to parent outgoing edges on success
+            if (child.status === 'completed') {
+              const outgoingTargets = parentExec.workflowDef.edges
+                .filter((e) => e.source === nodeId)
+                .map((e) => e.target);
+
+              (async () => {
+                for (const targetId of outgoingTargets) {
+                  await this._onHandoff(executionId, nodeId, {
+                    type: 'handoff',
+                    targetId,
+                    contextUpdate: { _subWorkflowCompleted: childWorkflowId },
+                  });
+                }
+                this._syncExecutionStatusFromAgents(parentExec);
+              })();
+            } else {
+              this._syncExecutionStatusFromAgents(parentExec);
+            }
+          }
+
+          // Clean up child execution reference
+          this._subWorkflowExecutions.delete(subKey);
+        }
+      }, 1000);
+
+      // Allow Node.js to exit
+      if (pollHandle.unref) {
+        pollHandle.unref();
+      }
+
+      // Store the poll handle on the state for cleanup
+      if (state) {
+        state._subWorkflowPollHandle = pollHandle;
+      }
+
+    } catch (error) {
+      if (state) {
+        state.status = 'failed';
+        state.lastOutputSnippet = `Sub-workflow error: ${error.message}`;
+        this._broadcastAgentStatus(executionId, nodeId, state);
+      }
+      this._syncExecutionStatusFromAgents(execution);
+    }
   }
 
   /**

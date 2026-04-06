@@ -16,6 +16,12 @@ import '@xyflow/react/dist/style.css';
 import AgentNode from './nodes/AgentNode';
 import DepartmentNode from './nodes/DepartmentNode';
 import TriggerNode from './nodes/TriggerNode';
+import ConditionalNode from './nodes/ConditionalNode';
+import MergeNode from './nodes/MergeNode';
+import DelayNode from './nodes/DelayNode';
+import LoopNode from './nodes/LoopNode';
+import ErrorHandlerNode from './nodes/ErrorHandlerNode';
+import SubWorkflowNode from './nodes/SubWorkflowNode';
 import HandoffEdge from './edges/HandoffEdge';
 import AgentInspector from './AgentInspector';
 import BreadcrumbBar from './BreadcrumbBar';
@@ -31,6 +37,12 @@ const nodeTypes = {
   agent: AgentNode,
   department: DepartmentNode,
   trigger: TriggerNode,
+  conditional: ConditionalNode,
+  merge: MergeNode,
+  delay: DelayNode,
+  loop: LoopNode,
+  errorHandler: ErrorHandlerNode,
+  subWorkflow: SubWorkflowNode,
 };
 
 const edgeTypes = {
@@ -219,6 +231,18 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange }) 
         } else {
           data = { label: 'Webhook Trigger', triggerType: 'webhook', webhookPath: '' };
         }
+      } else if (type === 'conditional') {
+        data = { label: 'Conditional', rules: [], defaultTargetNodeId: '' };
+      } else if (type === 'merge') {
+        data = { label: 'Merge', waitFor: 'all' };
+      } else if (type === 'delay') {
+        data = { label: 'Delay', delaySeconds: 30 };
+      } else if (type === 'loop') {
+        data = { label: 'Loop', maxIterations: 10, exitCondition: '', exitTargetNodeId: '' };
+      } else if (type === 'errorHandler') {
+        data = { label: 'Error Handler', watchedNodes: [] };
+      } else if (type === 'subWorkflow') {
+        data = { label: 'Sub-Workflow', workflowId: '' };
       } else {
         data = { label: `New ${type}` };
       }

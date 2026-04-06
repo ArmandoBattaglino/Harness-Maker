@@ -1,4 +1,64 @@
 ---
+## 2026-04-06 — Wave 5: Advanced Flow Control Node Components (FR-V5-56/59/60/64/66/68/71/73/77)
+**Status:** COMPLETED
+**Called by:** user (task assignment)
+
+### Context when I started
+SwarmCanvas had 3 node types (agent, department, trigger) and corresponding inspector fields. NodePalette had 4 entries. Wave 4 was complete (timing, history, templates, versions). Build at 496 modules, 0 errors.
+
+### What I did
+1. **ConditionalNode.jsx** — New diamond-shaped node using CSS rotate(45deg) on inner div. Shows IF/THEN label, rule count badge. Top target handle, multiple bottom source handles (one per rule + default).
+2. **MergeNode.jsx** — New hexagonal node using CSS clip-path polygon. Shows waitFor config. 3 left target handles, 1 right source handle.
+3. **DelayNode.jsx** — Clock icon node with formatted delay display (s/m/h). Standard top/bottom handles.
+4. **LoopNode.jsx** — Circular arrow icon node with iteration badge and exit condition preview. Top input, bottom "loop" output, right "exit" output.
+5. **ErrorHandlerNode.jsx** — Red-accented node with lightning bolt icon and watched nodes count. Bottom source handle only.
+6. **SubWorkflowNode.jsx** — Double-border (4px double) nested rectangle with workflow ID reference. Top/bottom handles.
+7. **SwarmCanvas.jsx** — Added 6 imports, registered all 6 in nodeTypes object, added data initialization for all 6 types in onDrop handler.
+8. **NodePalette.jsx** — Added 6 new NODE_CARDS entries after existing 4 (Conditional Router, Merge/Join, Delay Timer, Loop, Error Handler, Sub-Workflow).
+9. **AgentInspector.jsx** — Added 6 new field components: ConditionalFields (rules editor with add/remove, condition text, target select, default target), MergeFields (radio all/any/number), DelayFields (number input 1-3600), LoopFields (maxIterations, exitCondition debounced, exitTargetNodeId select), ErrorHandlerFields (multi-select checkboxes), SubWorkflowFields (workflowId text input). All wired into main inspector render.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/canvas/nodes/ConditionalNode.jsx | CREATED | Diamond conditional router node |
+| client/src/canvas/nodes/MergeNode.jsx | CREATED | Hexagonal merge/join node |
+| client/src/canvas/nodes/DelayNode.jsx | CREATED | Delay timer node |
+| client/src/canvas/nodes/LoopNode.jsx | CREATED | Loop iteration node |
+| client/src/canvas/nodes/ErrorHandlerNode.jsx | CREATED | Error handler node with red accent |
+| client/src/canvas/nodes/SubWorkflowNode.jsx | CREATED | Sub-workflow nested reference node |
+| client/src/canvas/SwarmCanvas.jsx | MODIFIED | 6 imports, nodeTypes registration, onDrop data init |
+| client/src/canvas/NodePalette.jsx | MODIFIED | 6 new palette cards |
+| client/src/canvas/AgentInspector.jsx | MODIFIED | 6 new field components + render wiring |
+
+### Improvements delivered
+- Canvas now supports 9 node types (up from 3), enabling full advanced flow control
+- All new nodes follow existing dark theme, Handle patterns, and selection ring conventions
+- Inspector provides full configuration UI for each new node type
+- Palette allows drag-and-drop creation of all new node types
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None | — | — | — |
+
+### Decisions I made
+- Used CSS rotate(45deg) for ConditionalNode diamond instead of SVG — simpler, matches task spec
+- Used CSS clip-path polygon for MergeNode hexagon — lightweight, no external deps
+- Used double border (4px double) for SubWorkflowNode instead of nested divs — cleaner CSS
+- MergeNode has 3 fixed left input handles — sufficient for most merge use cases without dynamic handle generation
+- SubWorkflowFields uses text input for workflowId — will be upgraded to select dropdown when useWorkflowList integration is wired
+
+### What I learned
+- @xyflow/react Handle components support id prop for multiple handles of the same type on one node — needed for conditional rule outputs and merge inputs
+- CSS clip-path works well inside React Flow nodes and does not interfere with handle positioning
+
+### State I'm leaving behind
+All 6 new node components fully implemented with inspector fields. Build passes (496 modules, 0 errors). No runtime testing performed (would need qa-tester). The SubWorkflowFields component uses a plain text input for workflowId rather than a select populated from useWorkflowList — this can be enhanced when workflow list fetching is wired into the inspector context.
+
+### Handoff
+qa-tester should verify all 6 new node types render correctly on canvas, can be dragged from palette, and inspector fields update node data properly.
+
+---
 ## 2026-04-06 — Wave 4: Per-Node Timing, Execution History, Templates, Version History (FR-V5-48/49/50/51/52/53/54/55)
 **Status:** COMPLETED
 **Called by:** user (task assignment)

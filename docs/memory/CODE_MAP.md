@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-06 — after V5 bugfix commit 41b9a0e (context menu stopPropagation + stale closure refs) — mapped by code-mapper_
+_Last updated: 2026-04-06 — after V5 Wave 4 implementation (ExecutionHistory, Templates, VersionHistory) — mapped by code-mapper_
 
 > **V3.4/V3.5 SWARM RUNTIME STATUS: IN PROGRESS**
 > TASK #145 (BUG-UX-HANDOFF-1) partially addressed: prompt examples templated with `<targetId>` to prevent fake handoffs from PTY redraw (DEC-023); Codex model-selection and rate-limit menus auto-dismissed; hard usage-limit now takes precedence over soft `Approaching rate limits` chooser (DEC-024). 83/83 server tests pass. Build: 479 modules. Live handoff proof still pending — no provider has completed a real multi-agent chain yet.
@@ -38,12 +38,14 @@ _Last updated: 2026-04-06 — after V5 bugfix commit 41b9a0e (context menu stopP
 | server/services/JobRunner.js | JobRunner (class), jobRunner (singleton) | One-shot Claude job executor: spawns claude -p, streams JSON output line-by-line to SSE clients, cancelAll on shutdown, TTL eviction of terminal jobs (BUG-06 fix) |
 | server/routes/jobs.js | jobsRouter | POST/GET/DELETE /api/v1/jobs, GET /api/v1/jobs/:id (status+result), GET /api/v1/jobs/:id/stream (SSE) — job lifecycle REST + streaming |
 | server/ws/terminalHandler.js | setupTerminalWebSocket | WebSocket handler: sessionId from URL query, attach/detach client, route input/resize messages |
-| server/services/WorkflowStore.js | WorkflowStore (class) | CRUD + schema validation for workflow definitions; persists to %APPDATA%\ClaudeCodeManager\workflows\<id>.json via write-file-atomic; server-generated UUIDs; path-traversal guard on all reads/writes (Task #43) |
+| server/services/WorkflowStore.js | WorkflowStore (class) | CRUD + schema validation + version history for workflow definitions; persists to %APPDATA%\ClaudeCodeManager\workflows\<id>.json via write-file-atomic; server-generated UUIDs; path-traversal guard on all reads/writes. V5 Wave 4: added _saveVersion() on update, listVersions, getVersion, restoreVersion; versions stored in workflows/versions/<id>/<timestamp>.json, max 50 per workflow. (Tasks #43, V5-W4) |
+| server/stores/ExecutionHistoryStore.js | ExecutionHistoryStore (class) | Per-workflow execution history persistence to CONFIG_DIR/execution-history/<workflowId>.json. Methods: init, addEntry, getHistory, getEntry. Max 100 entries per workflow, trims oldest on overflow. Uses write-file-atomic + path-traversal guard. (V5 Wave 4) |
+| server/stores/TemplateStore.js | TemplateStore (class) | Read-only in-memory provider of 5 hardcoded workflow templates (Content Agency, Code Review Chain, Research Loop, Customer Support Triage, Data Pipeline). Methods: listTemplates, getTemplate. No file storage. (V5 Wave 4) |
 | server/services/HandoffParser.js | HandoffParser (class), default HandoffParser | Stateful rolling 4KB buffer extractor for ConPTY __HANDOFF__ and __DONE__ tokens; handles chunk-split across multiple PTY onData callbacks; ANSI escape stripping; JSON payload validation. DONE_RE now also accepts bare `DONE` on its own line (Task #254 BUG-DONE-BARE-1). (Task #45, DEC-012) |
 | server/services/SwarmEngine.js | SwarmEngine (class), default SwarmEngine | V3 swarm orchestrator — spawns agent PTY sessions, registers HandoffParser swarmListeners taps, routes handoff/done events, tracks per-node agent state and budget; in-memory only (never persisted). Constructor accepts circuitBreaker + budgetTracker optional params. **Tertiary Provider update:** handles Gemini CLI runtime with pattern-matched blocker definitions (`resource exhausted`, `not authenticated`) identical to Claude/Codex limits (DEC-026). **2026-04-03 updates (Task #145 follow-up):** added `_detectRuntimePromptIntervention()` to detect Codex model-selection and rate-limit menus; added `_applyRuntimePromptIntervention()` to auto-dismiss menus via cursor-down + Enter keystrokes (DEC-024); `_buildSystemPrompt()` and `_buildContinueAfterDonePrompt()` now use templated `<targetId>` in handoff examples instead of real node IDs to prevent fake handoffs from PTY echo replay (DEC-023); hard Codex usage-limit blocker takes precedence over soft `Approaching rate limits` chooser; `SWARM_RUNTIME_MENU_SUBMIT_DELAY_MS` constant added. **2026-04-06 updates (Task #231 BUG-WF-1):** SNIPPET_NOISE_LINE_PATTERNS extended with 13 new swarm protocol preamble regexes (agent role declarations, task descriptions, workflow goals); `_stripSnippetProtocolArtifacts()` now also strips `--- SWARM INPUT ---` blocks. **Task #255 (BUG-SNIPPET-INIT-1):** tapFn snippet update gated by `ignoreParserUntil` check — system prompt echo no longer flashes in agent card during echo gate. (Tasks #46, #46.3, #62.1, #145, #154, #231, #255, DEC-014, DEC-023, DEC-024, DEC-026) |
 | server/services/CircuitBreaker.js | CircuitBreaker (class), default CircuitBreaker | Advisory circuit breaker for handoff loops — check(edgeId, counter, threshold) returns boolean; never stops execution, caller emits WS advisory (FR-V3-17, Task #49) |
 | server/services/BudgetTracker.js | BudgetTracker (class), default BudgetTracker | Soft budget tracker — accumulates char counts per session, estimates tokens (÷4), provides checkBudget advisory signal; never stops execution (FR-V3-18, Task #49) |
-| server/routes/swarm.js | swarmRoutes (factory fn), generateWorkflowFromPrompt (module-private) | 7-endpoint REST API for swarm execution control: start, pause, resume, stop, status, agent output, broadcast. POST /scaffold uses spawn(claudeBin, ['-p', prompt, '--output-format', 'json', ...]) — no Anthropic SDK. Factory pattern: accepts swarmEngine + sessionManager + claudeBin. (Tasks #47.1 + #59 + #112) |
+| server/routes/swarm.js | swarmRoutes (factory fn), resolveBroadcastNodeTargets, serializeSessionOutput | 9-endpoint REST API for swarm execution control: start, pause, resume, stop, status, agent output, broadcast + 2 execution history endpoints. Lazy-inits ExecutionHistoryStore. Factory pattern: accepts swarmEngine + sessionManager + scaffoldProviders. (Tasks #47.1 + #59 + #112 + V5-W4) |
 | server/ws/swarmHandler.js | handleSwarmConnection (default), getSubscribers, broadcast | WebSocket connection handler for /ws/swarm path. Module-level _subscribers Map keyed by executionId → Set\<WebSocket\>. Sends initial execution_status snapshot on connect. broadcast() fans out JSON events to all OPEN connections for an executionId. (Tasks #48.1, #48.2) |
 | server/utils/ssrfGuard.js | isSafeUrl | Synchronous SSRF prevention guard — rejects private/loopback IP literals and localhost in URLs before any outbound server fetch. Covers IPv4, IPv6 loopback, IPv4-mapped IPv6, link-local. Does NOT perform DNS lookup (sync-only design). (SEC-V3-03, Task #50) |
 | server/middleware/webhookLimit.js | webhookLimit (default) | Express JSON body-parser capped at 32 KB. Apply before any route that ingests untrusted webhook payloads. Awaiting use in routes/triggers.js (Task #75). (SEC-V3-01, Task #50) |
@@ -75,12 +77,15 @@ _Last updated: 2026-04-06 — after V5 bugfix commit 41b9a0e (context menu stopP
 | client/src/views/DeploymentManagerView.jsx | default DeploymentManagerView, AgentCard, SkillCard, AgentDetail, CreateAgentModal, ActiveProcessesTab, TabBar, FormSection, FormField, Toast (internals) | Phase 9 Deployment Manager: 3-tab layout (Profiles/Active Processes/Environment), master-detail agent editing, skill viewer, agent CRUD with modal, search filter. Task #29 new file. |
 | client/src/lib/constants.js | NAV_ITEMS, STATUS_COLORS | Shared UI constants: sidebar navigation items (icon/label/view — 6 items including swarm added Task #58), status-to-Tailwind-class mapping for badges (Phase 9 design tokens) |
 | client/src/views/ProjectsView.jsx | default ProjectsView, ConfirmDialog, CardMenu, StatusDot, ProjectCard, AddCard, ListRow (internals) | Phase 9 Project Dashboard: grid/list dual-view, search with "/" keyboard shortcut, project cards with status dots, delete confirmation modal, scaffold CTA banner. Task #25 rewrite. |
-| client/src/store/SwarmContext.jsx | useSwarmStore (default + named) | Zustand v4 store for V3 swarm execution state. Holds agentStates, edgeCounters, budget, inboxItems, interAgentFeed, departmentStack breadcrumb, selectedNodeId, ptyExplosionNodeId, wsConnected, workflowDef. Added workflowDef state + setWorkflowDef action + workflowDef: null in reset() (Task #117 — BUG-SWARM-3). Isolated from AppContext — no cross-imports. (Tasks #52, #117) |
+| client/src/store/SwarmContext.jsx | useSwarmStore (default + named) | Zustand v4 store for V3 swarm execution state. Holds agentStates, edgeCounters, budget, inboxItems, interAgentFeed, departmentStack breadcrumb, selectedNodeId, ptyExplosionNodeId, wsConnected, workflowDef. V5 Wave 4: updateAgentState now auto-tracks timestamps (started/done/error) on status transitions. (Tasks #52, #117, V5-W4) |
 | client/src/canvas/nodes/AgentNode.jsx | default AgentNode | React Flow custom node type="agent". Subscribes to useSwarmStore(agentStates[id]). 5 status colors (idle/running/done/paused/error), target Handle top + source Handle bottom, lastOutputSnippet scrollable bg-black/40 container (last 4 lines, green monospace pre, blinking cursor when running), handoffCount badge, validation warning badge (amber ! when empty systemPrompt — FR-V5-45). (Tasks #53.1, #65, V5 Wave 3) |
 | client/src/canvas/nodes/DepartmentNode.jsx | default DepartmentNode | React Flow group container node type="department". Subscribes to focusedDepartmentId + setFocusedDepartment from useSwarmStore. Click on header calls setFocusedDepartment(id). Sized by React Flow to contain child nodes. (Task #53.2) |
 | client/src/canvas/nodes/TriggerNode.jsx | default TriggerNode | React Flow source-only node type="trigger". webhook/rss icon variants (triggerIcons map), purple theme, source Handle bottom only. Full implementation deferred to Task #76. (Task #53.3) |
 | client/src/canvas/edges/HandoffEdge.jsx | default HandoffEdge | React Flow custom edge type="handoff". Animated dashed blue line when edgeCounters[id] > 0; grey static line when idle. Counter badge via EdgeLabelRenderer. (Task #54) |
-| client/src/canvas/AgentInspector.jsx | default AgentInspector, AgentFields, DepartmentFields, TriggerFields, useDebouncedField, CollapsibleSection (internals) | Full edit panel for selected canvas node. Editable label, type-specific configuration sections (agent: model/systemPrompt/tools/maxTurns/triage/department; department: color/collapsed; trigger: type/webhook/rss). Live status + output from Zustand. "Open Terminal" button. V5 Wave 1 upgrade from read-only inspector. |
+| client/src/canvas/AgentInspector.jsx | default AgentInspector, AgentFields, DepartmentFields, TriggerFields, ExecutionInfo, useDebouncedField, CollapsibleSection (internals) | Full edit panel for selected canvas node. Editable label, type-specific configuration sections. Live status + output from Zustand. "Open Terminal" button. V5 Wave 4: added ExecutionInfo collapsible section with live timer showing started/duration/status. |
+| client/src/canvas/ExecutionHistory.jsx | default ExecutionHistory | Slide-in right panel showing past workflow executions. Fetches from GET /api/v1/swarm/history/:workflowId. Status badges, relative times, expandable per-node snapshots. Props: workflowId, onClose. (V5 Wave 4, FR-V5-48) |
+| client/src/canvas/TemplateGallery.jsx | default TemplateGallery | Modal with 2-column grid of template cards. Fetches from GET /api/v1/workflows/templates. "Use Template" instantiates via POST /templates/:id/instantiate. Props: onInstantiate, onClose. (V5 Wave 4, FR-V5-51/52) |
+| client/src/canvas/VersionHistory.jsx | default VersionHistory | Slide-out right panel with version timeline. Fetches from GET /api/v1/workflows/:id/versions. Preview + restore actions. Props: workflowId, onRestore, onPreview, onClose. (V5 Wave 4, FR-V5-53/54/55) |
 | client/src/canvas/ContextMenu.jsx | default ContextMenu | Right-click context menu for SwarmCanvas — renders positioned overlay with action buttons. Supports canvas/node/edge contexts. Click-away and Escape close. (FR-V5-21 through FR-V5-24, V5 Wave 1) |
 | client/src/hooks/useCanvasHistory.js | useCanvasHistory (named) | Undo/redo history hook for React Flow canvas. 50-entry stack with structuredClone snapshots. Provides pushHistory/undo/redo/canUndo/canRedo. Canvas-only — does not touch Zustand execution state (DEC-011). (FR-V5-16 through FR-V5-20, V5 Wave 1) |
 | client/src/utils/sanitizeWorkflow.js | sanitizeWorkflow (named) | Strips React Flow internal runtime fields (measured, width, height, selected, dragging, positionAbsolute) from nodes/edges before persisting workflow definitions. (FR-V5-01, V5 Wave 1) |
@@ -1395,13 +1400,13 @@ _Last updated: 2026-04-06 — after V5 bugfix commit 41b9a0e (context menu stopP
 - **Last modified:** 2026-03-27 in Task #43 by backend-dev
 
 ### `server/services/WorkflowStore.js` :: `WorkflowStore.update(id, data)`
-- **Purpose:** Load existing workflow (throws 404 if missing), validate new data, merge with existing fields, write atomically. Preserves id, createdAt; updates updatedAt.
-- **Called by:** workflow routes (not yet implemented — reserved for PUT /api/v1/workflows/:id)
-- **Calls:** WorkflowStore.get, WorkflowStore.validate, WorkflowStore._writeWorkflow
+- **Purpose:** Load existing workflow (throws 404 if missing), validate new data, **save version snapshot before overwriting** (FR-V5-53), merge with existing fields, write atomically. Preserves id, createdAt; updates updatedAt.
+- **Called by:** server/routes/workflows.js PUT /:id handler
+- **Calls:** WorkflowStore.get, WorkflowStore.validate, WorkflowStore._saveVersion, WorkflowStore._writeWorkflow
 - **Inputs:** id (string), data (object — same shape as create)
 - **Output:** Promise\<WorkflowDefinition\> — throws Error (statusCode=404 or 400)
-- **Side effects:** atomic write overwrites existing .json file
-- **Last modified:** 2026-03-27 in Task #43 by backend-dev
+- **Side effects:** atomic write overwrites existing .json file; saves prior version to workflows/versions/<id>/<timestamp>.json
+- **Last modified:** 2026-04-06 in V5 Wave 4 by backend-dev (added _saveVersion call before overwrite)
 
 ### `server/services/WorkflowStore.js` :: `WorkflowStore.delete(id)`
 - **Purpose:** Unlink the workflow JSON file. Returns true on success, false if not found or path invalid.
@@ -1432,12 +1437,278 @@ _Last updated: 2026-04-06 — after V5 bugfix commit 41b9a0e (context menu stopP
 
 ### `server/services/WorkflowStore.js` :: `WorkflowStore._writeWorkflow(workflow)` (internal)
 - **Purpose:** Atomically write a workflow object as JSON (2-space indented) to `<id>.json`. Creates workflows directory if missing. Validates path before write.
-- **Called by:** WorkflowStore.create, WorkflowStore.update
+- **Called by:** WorkflowStore.create, WorkflowStore.update, WorkflowStore.restoreVersion
 - **Calls:** fs.existsSync, fs.mkdirSync, WorkflowStore._resolveFilePath, writeFileAtomic, JSON.stringify
 - **Inputs:** workflow (WorkflowDefinition — must have valid .id field)
 - **Output:** Promise\<void\> — throws if _resolveFilePath returns null
 - **Side effects:** atomic filesystem write; may create directory
-- **Last modified:** 2026-03-27 in Task #43 by backend-dev
+- **Last modified:** 2026-04-06 in V5 Wave 4 by backend-dev (now also called by restoreVersion)
+
+### `server/services/WorkflowStore.js` :: `WorkflowStore._resolveVersionsDir(id)` (internal)
+- **Purpose:** Resolve workflow ID to the versions subdirectory path (workflows/versions/<id>). Returns null if ID is invalid or contains traversal characters.
+- **Called by:** WorkflowStore.listVersions, WorkflowStore.getVersion, WorkflowStore.restoreVersion, WorkflowStore._saveVersion
+- **Calls:** path.resolve, String.includes
+- **Inputs:** id (string)
+- **Output:** string (absolute path) | null
+- **Side effects:** none
+- **Last modified:** 2026-04-06 in V5 Wave 4 by backend-dev
+
+### `server/services/WorkflowStore.js` :: `WorkflowStore._saveVersion(id, workflowData)` (internal)
+- **Purpose:** Save a version snapshot of a workflow before it is overwritten. Creates versions/<id>/ directory if needed. Timestamp filename uses ISO with colons/dots replaced by hyphens. Trims to MAX_VERSIONS_PER_WORKFLOW (50) oldest first.
+- **Called by:** WorkflowStore.update, WorkflowStore.restoreVersion
+- **Calls:** WorkflowStore._resolveVersionsDir, fs.existsSync, fs.mkdirSync, path.resolve, writeFileAtomic, fs.readdirSync, fs.unlinkSync
+- **Inputs:** id (string), workflowData (WorkflowDefinition object)
+- **Output:** Promise\<void\>
+- **Side effects:** atomic write to workflows/versions/<id>/<timestamp>.json; may delete oldest version files
+- **Last modified:** 2026-04-06 in V5 Wave 4 by backend-dev
+
+### `server/services/WorkflowStore.js` :: `WorkflowStore.listVersions(id)`
+- **Purpose:** Returns version metadata (timestamp, name, nodeCount, savedAt) for all saved versions of a workflow, sorted chronologically (oldest first).
+- **Called by:** server/routes/workflows.js GET /:id/versions handler
+- **Calls:** WorkflowStore._resolveVersionsDir, fs.existsSync, fs.readdirSync, fs.readFileSync, JSON.parse
+- **Inputs:** id (string)
+- **Output:** Promise\<Array\<{ timestamp, name, nodeCount, savedAt }\>\>
+- **Side effects:** none (read-only)
+- **Last modified:** 2026-04-06 in V5 Wave 4 by backend-dev
+
+### `server/services/WorkflowStore.js` :: `WorkflowStore.getVersion(id, timestamp)`
+- **Purpose:** Returns a specific version snapshot or null. Validates timestamp for path-traversal characters.
+- **Called by:** WorkflowStore.restoreVersion
+- **Calls:** WorkflowStore._resolveVersionsDir, path.resolve, fs.existsSync, fs.readFileSync, JSON.parse
+- **Inputs:** id (string), timestamp (string)
+- **Output:** Promise\<WorkflowDefinition | null\>
+- **Side effects:** none (read-only)
+- **Last modified:** 2026-04-06 in V5 Wave 4 by backend-dev
+
+### `server/services/WorkflowStore.js` :: `WorkflowStore.restoreVersion(id, timestamp)`
+- **Purpose:** Copies a saved version as the current workflow. Saves the current state as a version before overwriting. Throws 404 if version not found.
+- **Called by:** server/routes/workflows.js POST /:id/versions/:timestamp/restore handler
+- **Calls:** WorkflowStore.getVersion, WorkflowStore.get, WorkflowStore._saveVersion, WorkflowStore._writeWorkflow
+- **Inputs:** id (string), timestamp (string)
+- **Output:** Promise\<WorkflowDefinition\> — throws Error (statusCode=404)
+- **Side effects:** atomic write overwrites current workflow file; saves current state as a version before restore
+- **Last modified:** 2026-04-06 in V5 Wave 4 by backend-dev
+
+---
+
+## ExecutionHistoryStore (V5 Wave 4)
+
+### `server/stores/ExecutionHistoryStore.js` :: `ExecutionHistoryStore.constructor(configDir)`
+- **Purpose:** Constructor. Sets _historyDir to configDir/execution-history/.
+- **Called by:** server/routes/swarm.js getHistoryStore() (lazy init)
+- **Calls:** path.join
+- **Inputs:** configDir (string — same CONFIG_DIR as WorkflowStore)
+- **Output:** ExecutionHistoryStore instance
+- **Side effects:** none
+- **Last modified:** 2026-04-06 in V5 Wave 4 by backend-dev
+
+### `server/stores/ExecutionHistoryStore.js` :: `ExecutionHistoryStore.init()`
+- **Purpose:** Create the execution-history/ directory if it does not exist.
+- **Called by:** server/routes/swarm.js getHistoryStore() (fire-and-forget)
+- **Calls:** fs.existsSync, fs.mkdirSync
+- **Inputs:** none
+- **Output:** Promise\<void\>
+- **Side effects:** creates directory on filesystem
+- **Last modified:** 2026-04-06 in V5 Wave 4 by backend-dev
+
+### `server/stores/ExecutionHistoryStore.js` :: `ExecutionHistoryStore.addEntry(workflowId, entry)`
+- **Purpose:** Append a normalized execution history entry. Trims to 100 entries max (oldest first). Validates workflowId and entry.executionId.
+- **Called by:** (not yet wired — awaiting SwarmEngine integration to call after execution completes)
+- **Calls:** ExecutionHistoryStore._readEntries, ExecutionHistoryStore._writeEntries
+- **Inputs:** workflowId (string), entry ({ executionId, status?, startedAt?, endedAt?, durationMs?, nodesRun?, outcome?, nodeSnapshots? })
+- **Output:** Promise\<NormalizedEntry\>
+- **Side effects:** atomic write to execution-history/<workflowId>.json
+- **Last modified:** 2026-04-06 in V5 Wave 4 by backend-dev
+
+### `server/stores/ExecutionHistoryStore.js` :: `ExecutionHistoryStore.getHistory(workflowId)`
+- **Purpose:** Returns all entries for a workflow (newest last). Returns [] on invalid ID.
+- **Called by:** server/routes/swarm.js GET /history/:workflowId handler
+- **Calls:** ExecutionHistoryStore._readEntries
+- **Inputs:** workflowId (string)
+- **Output:** Promise\<Array\<Entry\>\>
+- **Side effects:** none (read-only)
+- **Last modified:** 2026-04-06 in V5 Wave 4 by backend-dev
+
+### `server/stores/ExecutionHistoryStore.js` :: `ExecutionHistoryStore.getEntry(workflowId, executionId)`
+- **Purpose:** Returns a single entry or null.
+- **Called by:** server/routes/swarm.js GET /history/:workflowId/:executionId handler
+- **Calls:** ExecutionHistoryStore._readEntries, Array.find
+- **Inputs:** workflowId (string), executionId (string)
+- **Output:** Promise\<Entry | null\>
+- **Side effects:** none (read-only)
+- **Last modified:** 2026-04-06 in V5 Wave 4 by backend-dev
+
+### `server/stores/ExecutionHistoryStore.js` :: `ExecutionHistoryStore._resolveFilePath(workflowId)` (internal)
+- **Purpose:** Resolve workflowId to absolute file path within _historyDir. Returns null on path-traversal attempts.
+- **Called by:** ExecutionHistoryStore._readEntries, ExecutionHistoryStore._writeEntries
+- **Calls:** path.resolve, String.includes
+- **Inputs:** workflowId (string)
+- **Output:** string | null
+- **Side effects:** none
+- **Last modified:** 2026-04-06 in V5 Wave 4 by backend-dev
+
+### `server/stores/ExecutionHistoryStore.js` :: `ExecutionHistoryStore._readEntries(workflowId)` (internal)
+- **Purpose:** Read all entries from disk for a workflow. Returns [] on any error or missing file.
+- **Called by:** ExecutionHistoryStore.addEntry, ExecutionHistoryStore.getHistory, ExecutionHistoryStore.getEntry
+- **Calls:** ExecutionHistoryStore._resolveFilePath, fs.existsSync, fs.readFileSync, JSON.parse
+- **Inputs:** workflowId (string)
+- **Output:** Array\<Entry\>
+- **Side effects:** none (read-only)
+- **Last modified:** 2026-04-06 in V5 Wave 4 by backend-dev
+
+### `server/stores/ExecutionHistoryStore.js` :: `ExecutionHistoryStore._writeEntries(workflowId, entries)` (internal)
+- **Purpose:** Write all entries to disk using write-file-atomic. Creates _historyDir if needed.
+- **Called by:** ExecutionHistoryStore.addEntry
+- **Calls:** fs.existsSync, fs.mkdirSync, ExecutionHistoryStore._resolveFilePath, writeFileAtomic
+- **Inputs:** workflowId (string), entries (Array)
+- **Output:** Promise\<void\>
+- **Side effects:** atomic filesystem write
+- **Last modified:** 2026-04-06 in V5 Wave 4 by backend-dev
+
+---
+
+## TemplateStore (V5 Wave 4)
+
+### `server/stores/TemplateStore.js` :: `TemplateStore.listTemplates()`
+- **Purpose:** Returns summary metadata (id, name, description, nodeCount, edgeCount) for all 5 hardcoded templates.
+- **Called by:** server/routes/workflows.js GET /templates handler
+- **Calls:** Array.map on TEMPLATES constant
+- **Inputs:** none
+- **Output:** Array\<{ id, name, description, nodeCount, edgeCount }\>
+- **Side effects:** none (pure, in-memory)
+- **Last modified:** 2026-04-06 in V5 Wave 4 by backend-dev
+
+### `server/stores/TemplateStore.js` :: `TemplateStore.getTemplate(templateId)`
+- **Purpose:** Returns the full template definition (nodes, edges, settings) or null if not found.
+- **Called by:** server/routes/workflows.js POST /templates/:templateId/instantiate handler
+- **Calls:** Array.find on TEMPLATES constant
+- **Inputs:** templateId (string)
+- **Output:** TemplateDefinition | null
+- **Side effects:** none (pure, in-memory)
+- **Last modified:** 2026-04-06 in V5 Wave 4 by backend-dev
+
+---
+
+## Swarm Execution History Routes (V5 Wave 4)
+
+### `server/routes/swarm.js` :: `getHistoryStore()` (module-private)
+- **Purpose:** Lazy singleton initializer for ExecutionHistoryStore. Creates on first call, fire-and-forget init().
+- **Called by:** swarm.js GET /history/:workflowId, GET /history/:workflowId/:executionId handlers
+- **Calls:** new ExecutionHistoryStore(ConfigStore.CONFIG_DIR), ExecutionHistoryStore.init
+- **Inputs:** none
+- **Output:** ExecutionHistoryStore instance
+- **Side effects:** may create execution-history/ directory on first call
+- **Last modified:** 2026-04-06 in V5 Wave 4 by backend-dev
+
+### `server/routes/swarm.js` :: `GET /history/:workflowId`
+- **Purpose:** Returns all execution history entries for a workflow.
+- **Called by:** client/src/canvas/ExecutionHistory.jsx fetchHistory()
+- **Calls:** getHistoryStore, ExecutionHistoryStore.getHistory
+- **Inputs:** params.workflowId (string)
+- **Output:** 200 `{ executions: [...] }` | 500
+- **Side effects:** none (read-only)
+- **Last modified:** 2026-04-06 in V5 Wave 4 by backend-dev
+
+### `server/routes/swarm.js` :: `GET /history/:workflowId/:executionId`
+- **Purpose:** Returns a single execution history entry. 404 if not found.
+- **Called by:** (external REST clients)
+- **Calls:** getHistoryStore, ExecutionHistoryStore.getEntry
+- **Inputs:** params.workflowId (string), params.executionId (string)
+- **Output:** 200 `{ execution: {...} }` | 404/500
+- **Side effects:** none (read-only)
+- **Last modified:** 2026-04-06 in V5 Wave 4 by backend-dev
+
+---
+
+## Workflow Template & Version Routes (V5 Wave 4)
+
+### `server/routes/workflows.js` :: `GET /templates`
+- **Purpose:** Returns summary metadata for all built-in workflow templates.
+- **Called by:** client/src/canvas/TemplateGallery.jsx useEffect
+- **Calls:** TemplateStore.listTemplates
+- **Inputs:** none
+- **Output:** 200 `{ templates: [...] }`
+- **Side effects:** none
+- **Last modified:** 2026-04-06 in V5 Wave 4 by backend-dev
+
+### `server/routes/workflows.js` :: `POST /templates/:templateId/instantiate`
+- **Purpose:** Creates a new workflow from a template. Deep-clones template nodes/edges/settings, creates via WorkflowStore.create. 404 if template not found.
+- **Called by:** client/src/canvas/TemplateGallery.jsx handleUseTemplate()
+- **Calls:** TemplateStore.getTemplate, JSON.parse(JSON.stringify()) (deep clone), WorkflowStore.create
+- **Inputs:** params.templateId (string)
+- **Output:** 201 `{ workflow }` | 404
+- **Side effects:** creates a new workflow file on disk via WorkflowStore.create
+- **Last modified:** 2026-04-06 in V5 Wave 4 by backend-dev
+
+### `server/routes/workflows.js` :: `GET /:id/versions`
+- **Purpose:** Returns version history metadata for a workflow. 404 if workflow not found.
+- **Called by:** client/src/canvas/VersionHistory.jsx fetchVersions()
+- **Calls:** WorkflowStore.get, WorkflowStore.listVersions
+- **Inputs:** params.id (string)
+- **Output:** 200 `{ versions: [...] }` | 404
+- **Side effects:** none
+- **Last modified:** 2026-04-06 in V5 Wave 4 by backend-dev
+
+### `server/routes/workflows.js` :: `POST /:id/versions/:timestamp/restore`
+- **Purpose:** Restores a previous version as the current workflow. Delegates to WorkflowStore.restoreVersion.
+- **Called by:** client/src/canvas/VersionHistory.jsx handleRestore()
+- **Calls:** WorkflowStore.restoreVersion
+- **Inputs:** params.id (string), params.timestamp (string)
+- **Output:** 200 `{ workflow }` | 404
+- **Side effects:** overwrites current workflow file; saves current state as version before restore
+- **Last modified:** 2026-04-06 in V5 Wave 4 by backend-dev
+
+---
+
+## Client: ExecutionHistory (V5 Wave 4)
+
+### `client/src/canvas/ExecutionHistory.jsx` :: `ExecutionHistory({ workflowId, onClose })`
+- **Purpose:** Slide-in right panel showing past workflow executions with status badges, relative times, and expandable per-node snapshots.
+- **Called by:** client/src/views/SwarmView.jsx (conditional render when showHistory && workflowDef?.id)
+- **Calls:** apiGet(`/api/v1/swarm/history/${workflowId}`), relativeTime (internal), formatDuration (internal)
+- **Inputs:** workflowId (string), onClose (callback)
+- **Output:** JSX — fixed right panel
+- **Side effects:** Escape key listener (add/remove on mount/unmount)
+- **Last modified:** 2026-04-06 in V5 Wave 4 by frontend-dev
+
+---
+
+## Client: TemplateGallery (V5 Wave 4)
+
+### `client/src/canvas/TemplateGallery.jsx` :: `TemplateGallery({ onInstantiate, onClose })`
+- **Purpose:** Modal overlay with 2-column grid of template cards. Fetches template list on mount, "Use Template" button instantiates via POST and calls onInstantiate with the created workflow.
+- **Called by:** client/src/views/SwarmView.jsx (conditional render when showTemplates)
+- **Calls:** apiGet('/api/v1/workflows/templates'), apiPost(`/api/v1/workflows/templates/${templateId}/instantiate`), onInstantiate (callback)
+- **Inputs:** onInstantiate (callback(workflow)), onClose (callback)
+- **Output:** JSX — fixed modal overlay
+- **Side effects:** Escape key listener; creates workflow on server when template is used
+- **Last modified:** 2026-04-06 in V5 Wave 4 by frontend-dev
+
+---
+
+## Client: VersionHistory (V5 Wave 4)
+
+### `client/src/canvas/VersionHistory.jsx` :: `VersionHistory({ workflowId, onRestore, onPreview, onClose })`
+- **Purpose:** Slide-out right panel with version timeline. Preview button toggles version preview (calls onPreview), Restore button calls POST restore endpoint then calls onRestore.
+- **Called by:** client/src/views/SwarmView.jsx (conditional render when showVersions && workflowDef?.id)
+- **Calls:** apiGet(`/api/v1/workflows/${workflowId}/versions`), apiPost(`/api/v1/workflows/${workflowId}/versions/${timestamp}/restore`), onRestore (callback), onPreview (callback), formatTimestamp (internal)
+- **Inputs:** workflowId (string), onRestore (callback(workflow)), onPreview (callback(version|null)), onClose (callback)
+- **Output:** JSX — fixed right panel with timeline dots
+- **Side effects:** Escape key listener; restore action modifies workflow on server
+- **Last modified:** 2026-04-06 in V5 Wave 4 by frontend-dev
+
+---
+
+## Client: AgentInspector ExecutionInfo (V5 Wave 4)
+
+### `client/src/canvas/AgentInspector.jsx` :: `ExecutionInfo({ timestamps, status })`
+- **Purpose:** Collapsible section showing execution timing — started time, live duration counter (updates every 1s while running), and status.
+- **Called by:** AgentInspector (renders when agentState.timestamps.started is truthy)
+- **Calls:** formatTime (internal), formatDuration (internal), CollapsibleSection
+- **Inputs:** timestamps ({ started?, done?, error? } — ISO strings), status (string)
+- **Output:** JSX
+- **Side effects:** setInterval every 1s while status === 'running' (cleanup on unmount/status change)
+- **Last modified:** 2026-04-06 in V5 Wave 4 by frontend-dev
 
 ---
 
@@ -1653,14 +1924,14 @@ _Last updated: 2026-04-06 — after V5 bugfix commit 41b9a0e (context menu stopP
 
 ## Swarm REST API (Task #47.1)
 
-### `server/routes/swarm.js` :: `swarmRoutes(swarmEngine, sessionManager, claudeBin)`
-- **Purpose:** Factory function — creates and returns an Express Router with all 8 swarm execution control endpoints. Accepts live swarmEngine, sessionManager, and claudeBin (resolved binary path) at creation time so handlers close over them.
-- **Called by:** server/index.js startup() (line: `app.use('/api/v1/swarm', swarmRoutes(swarmEngine, sessionManager, claudeBin))`)
-- **Calls:** Router() (express), SwarmEngine.startExecution, SwarmEngine.getStatus, SwarmEngine.stopExecution, SessionManager.writeInput, SessionManager.getSession, generateWorkflowFromPrompt
-- **Inputs:** swarmEngine (SwarmEngine instance), sessionManager (SessionManager singleton), claudeBin (string — absolute path to claude binary, set by BinaryDiscovery at startup)
+### `server/routes/swarm.js` :: `swarmRoutes(swarmEngine, sessionManager, scaffoldProviders)`
+- **Purpose:** Factory function — creates and returns an Express Router with 9 swarm execution control endpoints + 2 execution history endpoints. Lazy-initializes ExecutionHistoryStore on first history request.
+- **Called by:** server/index.js startup() (line: `app.use('/api/v1/swarm', swarmRoutes(swarmEngine, sessionManager, scaffoldProviders))`)
+- **Calls:** Router() (express), SwarmEngine.startExecution, SwarmEngine.getStatus, SwarmEngine.stopExecution, generateWorkflowFromPrompt, new ExecutionHistoryStore, ExecutionHistoryStore.getHistory, ExecutionHistoryStore.getEntry
+- **Inputs:** swarmEngine (SwarmEngine instance), sessionManager (SessionManager singleton), scaffoldProviders ({ claudeBin?, codexBin?, geminiBin? })
 - **Output:** Express Router instance
 - **Side effects:** none (factory — side effects happen per-request)
-- **Last modified:** 2026-03-31 in Task #112 by orchestrator (BREAKING CHANGE: added claudeBin 3rd param; was swarmRoutes(swarmEngine, sessionManager))
+- **Last modified:** 2026-04-06 in V5 Wave 4 by backend-dev (added 2 history endpoints, lazy ExecutionHistoryStore init, scaffoldProviders param)
 
 ### `server/routes/swarm.js` :: `POST /:workflowId/start`
 - **Purpose:** Start a new workflow execution. Validates projectId (non-empty string) and projectPath (non-empty string). Calls swarmEngine.startExecution. Returns 201 { executionId, status: 'running' }. Returns 400 on missing params, 404 if workflow not found ('Workflow not found' error from SwarmEngine).
