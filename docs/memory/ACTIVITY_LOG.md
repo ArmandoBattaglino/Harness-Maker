@@ -1,3 +1,14 @@
+## 2026-04-06 — frontend-dev — Task #242: BUG-SWARM-UI-1 — Duplicate workflow names in saved workflows dropdown
+**Outcome:** COMPLETED
+**Summary:** Fixed duplicate workflow names in the SwarmView saved workflows dropdown. Added name-based deduplication (keeping most recent per name) in the savedWorkflows useMemo, plus a date suffix on each option for visual clarity. Client build passes with 0 errors.
+**Files changed:** client/src/views/SwarmView.jsx, docs/TASK_PLAN.md
+**Bugs fixed:** BUG-SWARM-UI-1 — duplicate workflow names in dropdown
+**Decisions made:** Combined dedup-by-name (Option A) with date suffix (Option C) for maximum clarity at zero cost.
+**Blockers:** none
+**Next:** nothing — task fully self-contained
+
+---
+
 ## 2026-04-06 — qa-tester — Task #205: AREA CHECKPOINT V4.0.4 Agent Terminal Fidelity + Snippet Hygiene
 **Outcome:** COMPLETED
 **Summary:** AREA CHECKPOINT PASS. V4.0.4 IS CLOSED. All 4 prerequisite TEST GATEs verified PASS (#198, #200, #202, #204). 312/312 server tests, 107/107 swarm-engine tests, client build 480 modules 0 errors. Full fidelity stack verified across SwarmEngine (97+ snippet noise patterns, recovery scoring, semantic pipeline), SessionManager (35+ replay noise patterns, sanitizeReplayOutput), and Client (stripAnsi, controlTokens annotation-only). No regressions.

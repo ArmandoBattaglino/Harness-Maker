@@ -2146,3 +2146,49 @@ Task #203 is COMPLETED. No code changes. The next task in the chain is #204 (TES
 ### Handoff
 qa-tester should verify #204 TEST GATE — the gate should pass since the filtering is already in place.
 ---
+
+---
+## 2026-04-06 — Task #242: BUG-SWARM-UI-1 — Duplicate workflow names in saved workflows dropdown
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+The saved workflows dropdown in SwarmView.jsx displayed duplicate workflow names (e.g., "Customer Support Triage Workflow" appeared 3 times). The `savedWorkflows` useMemo filtered by project and sorted by date, but did not deduplicate. The `useWorkflowList` hook fetches all workflows from the API without any dedup.
+
+### What I did
+1. Read SwarmView.jsx, useSwarm.js, and useWorkflow.js to understand the data flow.
+2. Added name-based deduplication in the `savedWorkflows` useMemo — since the array is already sorted newest-first, the first occurrence per lowercased-trimmed name wins and duplicates are filtered out.
+3. Added a date suffix (toLocaleDateString) to each dropdown option text for extra visual clarity.
+4. Ran `npm run build --prefix client` — 480 modules, 0 errors.
+5. Marked TASK #242 as COMPLETED in TASK_PLAN.md.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/views/SwarmView.jsx | MODIFIED | Added Set-based dedup in savedWorkflows useMemo; added date suffix to dropdown option text |
+| docs/TASK_PLAN.md | MODIFIED | Changed TASK #242 from DEFERRED to COMPLETED |
+
+### Improvements delivered
+- Duplicate workflow names no longer appear in the dropdown
+- Each entry now shows the workflow date for additional context
+- Selecting any workflow still loads correctly (selection uses workflow.id, not name)
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | — | — | — |
+
+### Decisions I made
+- Combined Option A (deduplicate by name, keep newest) with Option C (show date suffix) for belt-and-suspenders clarity. Dedup alone would be sufficient but the date suffix costs nothing and helps users identify when a workflow was last updated.
+- Used case-insensitive trimmed name as the dedup key to handle minor capitalization differences.
+
+### What I learned
+- Workflow objects have `updatedAt` and `createdAt` fields available for display.
+- The dropdown uses `workflow.id` for `key` and `value`, so deduplication by name is safe — it does not break the load mechanism.
+
+### State I'm leaving behind
+Task #242 is COMPLETED. The dropdown now deduplicates by name and shows dates. No new tests added (cosmetic UI fix). Build passes.
+
+### Handoff
+None — task fully self-contained. No test gate was assigned for this deferred task.
+---
