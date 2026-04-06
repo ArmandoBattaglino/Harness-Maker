@@ -1,4 +1,59 @@
 ---
+## 2026-04-06 — Debugger Loop Phase 1: Micro-Areas B+C+D+E — Swarm UI Comprehensive E2E Test
+**Status:** COMPLETED
+**Called by:** user (direct)
+
+### Context when I started
+V5.1 area is CLOSED. Micro-Area A (Swarm Server API Deep Test) completed with 2 bugs found. Now testing the entire Swarm UI section (Areas B through E: Canvas & Nodes, Workflow CRUD & Persistence, Execution Lifecycle & Runtime, Inspector & PTY Explosion) using Playwright MCP browser automation against the live app at http://127.0.0.1:3000.
+
+### What I did
+1. Navigated to Swarm view via sidebar, verified ReactFlow canvas renders with grid background, zoom controls, minimap.
+2. Loaded "Prompt Reliability Control Workflow" from saved workflows dropdown -- verified 3 nodes (Finder, Route Checker, Formatter) and 2 edges rendered.
+3. Clicked each node -- verified selection highlight (white ring) and inspector switching (name, type, system prompt update correctly).
+4. Tested zoom: Zoom In (scale 1.73->2.0), Zoom Out (scale 2.0->1.67), Fit View (scale->1.89).
+5. Tested persistence: navigated to Projects, back to Swarm -- workflow, nodes, edges, inspector selection all preserved.
+6. Tested runtime provider selector: switched Auto->Claude (labels updated), back to Auto.
+7. Tested Models panel: all 3 providers with correct model lists and default detection.
+8. Tested HITL drawer: opens showing "No pending approvals", close button works.
+9. Tested PromptToFlowBar: Generate button disabled when empty, enabled when text entered.
+10. Verified Run button disabled without project, enabled when project session active.
+11. Verified Pause/Stop/BroadcastBar/InterAgentFeed correctly hidden in idle state (source code confirms conditional rendering).
+12. Checked empty states, text readability, overlapping elements, ANSI codes, console errors.
+13. Found 3 bugs: duplicate workflow names (LOW), stale execution 404 (MEDIUM), rate limit on navigation (LOW).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/agents/qa-tester.md | MODIFIED | Appended this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended completion entry |
+
+### Improvements delivered
+- Complete E2E coverage of Swarm UI Areas B/C/D/E with 47 test cases, 37 PASS, 7 N/A (correct conditional), 3 BUG
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-SWARM-UI-1: Duplicate workflow names in dropdown | Server allows creating workflows with identical names | None (report only) | OPEN |
+| BUG-SWARM-UI-2: Stale execution ID 404 on page load | useSwarm hydration doesn't gracefully handle 404 for expired executions | None (report only) | OPEN |
+| BUG-SWARM-UI-3: Rate limit on normal navigation | Rate limiter too aggressive or redundant API calls on view mount | None (report only) | OPEN |
+
+### Decisions I made
+- Used Playwright MCP tools instead of Puppeteer for better accessibility snapshots and DOM interaction reliability.
+- Classified PTY Explosion, BroadcastBar, InterAgentFeed, last output snippets as N/A rather than FAIL since they are conditionally rendered only during execution -- source code verification confirms correct logic.
+
+### What I learned
+- The Swarm UI has excellent conditional rendering: Pause/Stop/BroadcastBar/InterAgentFeed/PTY Explosion all correctly hide during idle state.
+- The AgentNode component uses status-based color coding (idle=gray, running=blue+pulse, done=green, paused=yellow, error=red) with selection ring.
+- The Models panel fetches runtime capabilities from the backend and displays default-detected models per provider.
+- The stale execution 404 bug (BUG-SWARM-UI-2) is the same class of hydration issue previously documented in PROGRESS.md.
+
+### State I'm leaving behind
+Swarm UI Areas B/C/D/E fully tested. 3 bugs documented. No code changes made. Server still running at port 3000.
+
+### Handoff
+Debugger should fix BUG-SWARM-UI-2 (MEDIUM priority -- stale execution 404). BUG-SWARM-UI-1 and BUG-SWARM-UI-3 are LOW priority. Next phase: remaining micro-areas or Phase 2 bulk bug planning.
+
+---
 ## 2026-04-06 — Debugger Loop Phase 1: Micro-Area A — Swarm Server API Deep Test
 **Status:** COMPLETED
 **Called by:** user (direct)

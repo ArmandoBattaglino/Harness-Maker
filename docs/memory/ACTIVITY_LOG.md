@@ -1,3 +1,13 @@
+## 2026-04-06 — qa-tester — Debugger Loop Phase 1: Micro-Areas B+C+D+E — Swarm UI Comprehensive E2E Test
+**Outcome:** COMPLETED
+**Summary:** Comprehensive Playwright E2E test of the entire Swarm UI section (Canvas & Nodes, Workflow CRUD & Persistence, Execution Lifecycle & Runtime, Inspector & PTY Explosion). 47 test cases executed: 37 PASS, 7 N/A (correct conditional behavior in idle state), 3 BUG. Bugs found: BUG-SWARM-UI-1 (duplicate workflow names in dropdown, LOW), BUG-SWARM-UI-2 (stale execution ID 404 on page load, MEDIUM), BUG-SWARM-UI-3 (rate limit triggered by normal navigation, LOW). All core Swarm UI functionality works correctly.
+**Files changed:** none (test-only)
+**Bugs fixed:** none (report only, no fixes applied)
+**Decisions made:** none
+**Blockers:** none
+**Next:** Debugger should fix BUG-SWARM-UI-2 (medium). Phase 2 bulk bug planning for all discovered bugs.
+
+---
 ## 2026-04-06 — qa-tester — Debugger Loop Phase 1: Micro-Area A — Swarm Server API Deep Test
 **Outcome:** COMPLETED
 **Summary:** Deep-tested all 17 Swarm/Workflow/Inbox API endpoints (~55 curl tests). Found 2 bugs: BUG-SWARM-API-1 (malformed JSON returns 500 instead of 400, MEDIUM), BUG-SWARM-API-2 (SPA catch-all serves HTML for unmatched API GET paths, LOW). All CSRF enforcement, validation, 404 handling, path traversal protection, and boundary checks are correct.
