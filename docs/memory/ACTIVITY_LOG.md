@@ -1,3 +1,14 @@
+## 2026-04-06 — debugger — Task #201: BUG-PTY-REPLAY-CONTAMINATION-1 — PTY replay content-level sanitization
+**Outcome:** COMPLETED
+**Summary:** Enhanced sanitizeReplayOutput() in SessionManager.js with content-level filtering. Root cause: replay sanitization only stripped ANSI control codes but not semantic noise (swarm protocol preamble, CLI chrome, stale prompts, corruption tails). Added 30+ noise line patterns, multi-line protocol block stripping, and corruption tail detection. 312/312 server tests pass, client build clean.
+**Files changed:** server/services/SessionManager.js, docs/TASK_PLAN.md, docs/memory/agents/debugger.md
+**Bugs fixed:** BUG-PTY-REPLAY-CONTAMINATION-1 — replay-only sanitization gap
+**Decisions made:** Line-by-line filtering with ANSI-stripped matching to preserve terminal colors; duplicated relevant patterns from SwarmEngine rather than creating a cross-dependency
+**Blockers:** none
+**Next:** TEST GATE #202 (qa-tester) should verify replay fidelity in a live workflow
+
+---
+
 ## 2026-04-06 — qa-tester — Task #223: AREA CHECKPOINT — V4.5 Snippet Fidelity MVP Blockers
 **Outcome:** COMPLETED — PASS
 **Summary:** V4.5 AREA CHECKPOINT passed. 312/312 server tests, 107/107 swarm-engine tests, client build 480 modules 0 errors. All 5 prerequisite tasks verified COMPLETED. Full snippet pipeline confirmed: _decompressConPTYSpaces, 97 noise patterns + inline checks, _normalizeSnippetLine thinking symbol strip, TOKEN ALIAS badge removed, path fragment filter. No regressions. V4.5 AREA IS CLOSED.

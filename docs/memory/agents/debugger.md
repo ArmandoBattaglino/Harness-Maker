@@ -808,3 +808,58 @@ No code changes. Task verified as not-a-bug. The next step is TEST GATE #200 whi
 ### Handoff
 TEST GATE #200 (qa-tester) can now proceed. The tokens are already preserved literally — the gate should pass.
 ---
+---
+## 2026-04-06 — Task #201: BUG-PTY-REPLAY-CONTAMINATION-1 — Per-agent PTY replay content-level sanitization
+**Status:** COMPLETED
+**Called by:** User (direct task assignment — V4.0.4 Agent Terminal Fidelity)
+
+### Context when I started
+The PtyExplosion terminal overlay replays the ring buffer when a WebSocket client connects to an agent's PTY session. The `sanitizeReplayOutput()` function in SessionManager.js only stripped low-level ANSI control sequences (cursor positioning, screen clearing, DEC private modes). It did NOT strip semantic content like swarm protocol preamble blocks, CLI chrome, stale foreign prompt text, or ConPTY redraw corruption. As a result, opening any agent's PTY terminal showed contaminated output mixing the agent's actual work with system noise.
+
+### What I did
+1. Read all memory files in parallel (debugger.md, DECISIONS.md, ACTIVITY_LOG.md, CODE_MAP.md, PROGRESS.md, CONTEXT.md).
+2. Read SwarmEngine.js, SessionManager.js, RingBuffer.js, terminalHandler.js, PtyExplosion.jsx to trace the full replay path.
+3. Confirmed root cause: each agent gets a new session with a fresh RingBuffer (no cross-session leakage), but the ring buffer captures ALL PTY output including system prompts, CLI chrome, and ConPTY artifacts. The sanitizeReplayOutput() only stripped ANSI control codes, not semantic content.
+4. Enhanced sanitizeReplayOutput() with three new filtering layers:
+   a. Multi-line swarm protocol block stripping (same patterns as _stripSnippetProtocolArtifacts)
+   b. Line-by-line noise filtering using 30+ regex patterns (CLI chrome, stale prompts, shell furniture, agent preamble declarations)
+   c. Corruption tail detection (repeated punctuation strings, repeated character strings)
+5. Added a stripAnsiForMatching() helper that removes ANSI color/style codes for pattern matching while preserving them in surviving content lines.
+6. Ran npm test --prefix server: 312/312 pass. Client build: clean (480 modules).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SessionManager.js | MODIFIED | Enhanced sanitizeReplayOutput() with REPLAY_NOISE_LINE_PATTERNS (30+ patterns), REPLAY_CORRUPTION_TAIL_RE, REPLAY_REPEATED_CHAR_RE, stripAnsiForMatching() helper, swarm protocol block stripping, line-by-line noise filtering, leading/trailing blank line trimming |
+| docs/TASK_PLAN.md | MODIFIED | Marked TASK #201 as COMPLETED |
+
+### Improvements delivered
+- PTY replay no longer shows swarm protocol preamble blocks
+- Stale foreign prompt text ("Explain this codebase") is filtered from replay
+- CLI chrome (permission prompts, shortcut hints, authentication waits) is filtered
+- Corruption tails (repeated punctuation/chars) are filtered
+- Agent preamble declarations ("You are the Finder...", "Current workflow context:") are filtered
+- ANSI color codes are preserved for surviving content so xterm.js still renders colors
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-PTY-REPLAY-CONTAMINATION-1 | sanitizeReplayOutput() only stripped ANSI control codes, not semantic noise | Added content-level filtering with 30+ patterns + corruption tail detection | FIXED |
+
+### Decisions I made
+- Used line-by-line filtering with ANSI-stripped text for matching: this preserves ANSI color codes in surviving content while accurately matching noise patterns. The alternative (stripping all ANSI) would lose terminal colors in PtyExplosion.
+- Added a stripAnsiForMatching() helper separate from _normalizeParserChunk in SwarmEngine: keeps the SessionManager self-contained without importing from SwarmEngine.
+- Trimmed leading/trailing blank lines after filtering to avoid empty-looking replay starts.
+- Did NOT reuse SwarmEngine's SNIPPET_NOISE_LINE_PATTERNS directly because SessionManager should not depend on SwarmEngine (wrong dependency direction). Instead duplicated the most relevant patterns.
+
+### What I learned
+- The PtyExplosion replay path is entirely through SessionManager.attachClient() -> sanitizeReplayOutput(). It is separate from the snippet pipeline in SwarmEngine._buildSemanticSnippet().
+- Each swarm agent gets a fresh RingBuffer via createSession() -- there is no session reuse or cross-session leakage. The "stale foreign prompt text" was actually content from the CLI echoing back the system prompt or from the CLI's own startup output.
+- The ring buffer captures everything the PTY outputs, including system prompts sent via _writeSwarmPrompt(). This is by design (DEC-009: permanent onData handler), but the replay sanitization needed to catch up to what the snippet pipeline already handles.
+
+### State I'm leaving behind
+sanitizeReplayOutput() in SessionManager.js now has content-level filtering. All 312 tests pass. The fix is minimal and self-contained -- only one file modified (plus TASK_PLAN.md status).
+
+### Handoff
+TEST GATE #202 (qa-tester) should verify the replay fidelity for Finder, Route Checker, and Formatter agents in a live workflow.
+---

@@ -11030,7 +11030,8 @@ Agent: debugger, backend-dev
 Priority: CRITICAL
 Difficulty: HARD
 Suggested Model: claude-opus-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-06 — Enhanced sanitizeReplayOutput() in SessionManager.js with content-level filtering: swarm protocol block stripping, 30+ noise line patterns (CLI chrome, stale prompts, shell furniture, agent preamble), corruption tail detection. Root cause was replay-only sanitization gap — ANSI control codes were stripped but semantic noise was not. 312/312 tests pass, client build clean.
 Context:
   Deep inspection of the current open session found three concrete replay failures:
     - Finder replay showed unrelated/stale content about `print_handoff.py`, `server.pid`, and staging guidance

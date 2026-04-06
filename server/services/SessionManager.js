@@ -23,6 +23,60 @@ const IDLE_TIMEOUT_MS =
 // Idle sweeper runs every 5 minutes
 const SWEEP_INTERVAL_MS = 5 * 60 * 1000;
 
+// Patterns for content lines that should be removed from replay because they are
+// swarm protocol preamble, CLI chrome, stale foreign prompt text, or shell furniture.
+// These operate on ANSI-stripped text so color codes don't interfere with matching.
+const REPLAY_NOISE_LINE_PATTERNS = [
+  // Swarm protocol preamble
+  /^---\s*swarm protocol/i,
+  /^---\s*end protocol/i,
+  /^---\s*swarm input/i,
+  /^---\s*end swarm input\s*---$/i,
+  /^do not output the handoff or done token/i,
+  /^do not stop at __done__/i,
+  /^your very last line must be a valid handoff token/i,
+  /^use [a-z0-9-]+ in place of <targetid>/i,
+  /^use only flat json/i,
+  /^output that final handoff token/i,
+  /^replace the summary value/i,
+  /^finish your work, then hand off to /i,
+  // CLI chrome / shell furniture
+  /^messages to be submitted after next tool call/i,
+  /^type your message(?: or @path\/to\/file)?/i,
+  /^\? for shortcuts/i,
+  /^esc to interrupt/i,
+  /^press esc or ctrl\+c to cancel/i,
+  /^waiting for authentication/i,
+  /^apply this change\?/i,
+  /^allow once$/i,
+  /^conversation interrupted\b/i,
+  /^went wrong\? hit `\/feedback`/i,
+  // Stale foreign prompt text
+  /^explain this codebase/i,
+  // Agent role / swarm preamble declarations
+  /^you are (?:the |a )?(?:finder|route checker|formatter|triage|orchestrat)/i,
+  /^you have an active task right now/i,
+  /^current workflow context:/i,
+  /^current task:/i,
+  /^continue the workflow using the shared task context/i,
+  /^\w+ runtime is active for this swarm agent/i,
+  /^you are running inside the \w+ interactive cli/i,
+  /^answer directly in terminal text and continue the swarm task/i,
+];
+
+// Matches trailing corruption: lines that are only repeated punctuation or single repeated chars.
+const REPLAY_CORRUPTION_TAIL_RE = /^[,.;:|/\\<>\[\]()\-_=+*`~]{4,}$/;
+const REPLAY_REPEATED_CHAR_RE = /^([A-Za-z])\1{3,}$/;
+
+/**
+ * Strip ANSI escape codes from a string for pattern-matching purposes.
+ * This removes color/style codes but preserves the visible text.
+ */
+function stripAnsiForMatching(str) {
+  // eslint-disable-next-line no-control-regex
+  return str.replace(/\x1b\[[0-9;]*m/g, '').replace(/\x1b\[\d*[A-Za-z]/g, '');
+}
+
 function sanitizeReplayOutput(replayBuffer) {
   let replayStr = Buffer.isBuffer(replayBuffer)
     ? replayBuffer.toString('utf8')
@@ -38,7 +92,36 @@ function sanitizeReplayOutput(replayBuffer) {
   replayStr = replayStr.replace(/\x1b\[[012]?K/g, '');
   replayStr = replayStr.replace(/\x1b\[\d*[AB]/g, '');
 
-  return replayStr;
+  // --- Content-level sanitization ---
+  // Strip swarm protocol blocks (multi-line) before line-by-line filtering.
+  replayStr = replayStr.replace(/----?\s*SWARM PROTOCOL[\s\S]*?----?\s*END PROTOCOL\s*----?/gi, '\n');
+  replayStr = replayStr.replace(/----?\s*SWARM INPUT[\s\S]*?----?\s*END SWARM INPUT\s*----?/gi, '\n');
+
+  // Line-by-line filtering: remove noise lines using ANSI-stripped text for matching.
+  const lines = replayStr.split('\n');
+  const filtered = [];
+  for (const line of lines) {
+    const clean = stripAnsiForMatching(line).trim();
+    // Keep empty lines (preserve visual spacing)
+    if (!clean) {
+      filtered.push(line);
+      continue;
+    }
+    // Skip noise lines
+    if (REPLAY_NOISE_LINE_PATTERNS.some((p) => p.test(clean))) continue;
+    // Skip corruption tails (only repeated punctuation or repeated chars)
+    if (REPLAY_CORRUPTION_TAIL_RE.test(clean)) continue;
+    if (REPLAY_REPEATED_CHAR_RE.test(clean)) continue;
+    filtered.push(line);
+  }
+
+  // Trim leading/trailing blank lines that accumulate after filtering
+  let start = 0;
+  while (start < filtered.length && !stripAnsiForMatching(filtered[start]).trim()) start++;
+  let end = filtered.length - 1;
+  while (end > start && !stripAnsiForMatching(filtered[end]).trim()) end--;
+
+  return filtered.slice(start, end + 1).join('\n');
 }
 
 // -------------------------------------------------------------------------

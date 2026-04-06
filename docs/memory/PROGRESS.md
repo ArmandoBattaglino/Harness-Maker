@@ -1,4 +1,7 @@
 
+- [V4.0.4 FIX 2026-04-06] TASK #201 COMPLETED — BUG-PTY-REPLAY-CONTAMINATION-1 fixed
+  Enhanced sanitizeReplayOutput() in SessionManager.js with content-level filtering (30+ noise patterns, protocol block stripping, corruption tail detection). 312/312 tests pass. TEST GATE #202 is next.
+
 - [V4.0.4 TEST GATE PASS 2026-04-06] TASK #200 COMPLETED — TEST GATE PASS for BUG-TOKEN-FIDELITY-1
   312/312 server tests, client build clean. Control tokens __DONE__/__HANDOFF__ preserved literally in server snippet pipeline and client controlTokens.js. No code change needed. TASK #201 unblocked.
 - [PM STATUS SYNC 2026-04-06] Wave 2 verified — 4 tasks confirmed COMPLETED:
