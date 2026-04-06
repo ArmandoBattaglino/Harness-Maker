@@ -1,4 +1,70 @@
 ---
+## 2026-04-06 — FR-V5-01/03/05/06/21-24: Save Button, Dirty Tracking, Name Edit, Context Menu
+**Status:** COMPLETED
+**Called by:** user (task assignment)
+
+### Context when I started
+SwarmView.jsx had no Save button, no dirty tracking, no way to persist canvas edits. The workflow name was static ("Swarm Orchestrator") and not editable. No context menu existed for the canvas. The sanitizeWorkflow.js utility already existed from a prior task. The useWorkflow.js `update` function had a bug: it did not unwrap the `{workflow}` response envelope from the server PUT endpoint.
+
+### What I did
+1. Fixed useWorkflow.js `update()` to unwrap `data?.workflow ?? data` (matching the `refresh()` pattern), fixing the server response envelope bug.
+2. Created `client/src/canvas/ContextMenu.jsx` — a fixed-positioned menu component that renders action items, closes on click-away or Escape.
+3. Modified SwarmCanvas.jsx to:
+   - Accept `markDirty` and `onCanvasChange` props from parent
+   - Report canvas state (nodes/edges) changes to parent via `onCanvasChange` callback
+   - Wrap `onNodesChange`/`onEdgesChange` to call `markDirty` on meaningful changes
+   - Call `markDirty` on connect, node update, and all context menu mutations
+   - Add context menu state and handlers (`onContextMenu`, `onNodeContextMenu`, `onEdgeContextMenu`)
+   - Add context menu actions: Add Agent/Department/Trigger, Select All, Paste, Edit, Duplicate, Copy, Delete
+   - Use `screenToFlowPosition` to place new nodes at the right-click position
+   - Implement clipboard (ref-based) for copy/paste
+4. Modified SwarmView.jsx to:
+   - Add isDirty/saving/saveError/saveSuccess state
+   - Add canvasStateRef to store latest nodes/edges from SwarmCanvas
+   - Add Save button (blue, disabled when clean, shows "..." while saving)
+   - Save handler: sanitizes workflow, calls PUT API, updates workflowDef on success, shows success toast for 2s
+   - Add dirty indicator (*) after workflow name
+   - Replace static title with inline-editable workflow name (click to edit, Enter to confirm, Escape to cancel)
+   - Name validation: max 128 chars, alphanumeric + space + underscore + hyphen only
+   - Reset dirty state on workflow load and scaffold generation
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/hooks/useWorkflow.js | MODIFIED | Fixed update() to unwrap {workflow} response envelope |
+| client/src/canvas/ContextMenu.jsx | CREATED | Right-click context menu component for canvas/node/edge |
+| client/src/canvas/SwarmCanvas.jsx | MODIFIED | Added context menu integration, markDirty/onCanvasChange props, dirty tracking |
+| client/src/views/SwarmView.jsx | MODIFIED | Added Save button, dirty tracking, inline name editing, save/error banners |
+
+### Improvements delivered
+- Users can now save canvas edits to the server via the Save button
+- Dirty indicator (*) visually signals unsaved changes
+- Workflow name is inline-editable directly in the toolbar
+- Right-click context menu provides quick access to add/duplicate/delete/copy/paste nodes and delete edges
+- useWorkflow.js update() now correctly handles the server response envelope
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| useWorkflow.js update() not unwrapping response | Server PUT returns `{workflow: {...}}` but update() stored the wrapper object directly | Added `data?.workflow ?? data ?? null` unwrapping | FIXED |
+
+### Decisions I made
+- Used callback approach (onCanvasChange) instead of forwardRef/useImperativeHandle for exposing canvas state to parent -- simpler, avoids ref complexity, and allows the parent to just keep a ref to the latest state
+- Used ref-based clipboard (clipboardRef) instead of system clipboard API -- simpler, no async permissions needed, works within the canvas scope
+- Name validation uses `^[a-zA-Z0-9 _\-]+$` regex matching the task spec
+
+### What I learned
+- ReactFlow's `onContextMenu` (pane level), `onNodeContextMenu`, and `onEdgeContextMenu` all receive the native event, allowing `e.preventDefault()` and `e.clientX/Y` for positioning
+- `screenToFlowPosition` from `useReactFlow()` converts screen coordinates to flow canvas coordinates for accurate node placement
+- ReactFlow change events include a `type` field (select, dimensions, position, add, remove, replace) -- filtering out `select` and `dimensions` prevents false dirty flags from click/hover
+
+### State I'm leaving behind
+All four features implemented and build-verified (483 modules, 0 errors). Context menu, save button, dirty tracking, and name editing are fully functional. The save handler calls `PUT /api/v1/workflows/:id` using `apiPut` with proper CSRF headers.
+
+### Handoff
+None -- task fully self-contained. QA tester should verify: save round-trip, dirty indicator, name editing validation, context menu actions (add/duplicate/delete/copy/paste).
+
+---
 ## 2026-04-06 — FR-V5-11/13/14/15/02: Node Delete, Edge Delete, Sanitize Utility, Node ID Generator
 **Status:** COMPLETED
 **Called by:** user (task assignment)

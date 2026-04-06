@@ -1,3 +1,24 @@
+## 2026-04-06 — frontend-dev — FR-V5-01/03/05/06/21-24: Save Button, Dirty Tracking, Name Edit, Context Menu
+**Outcome:** COMPLETED
+**Summary:** Implemented save button with dirty tracking, inline-editable workflow name, and right-click context menu for SwarmCanvas. Fixed useWorkflow.js update() response unwrapping bug. Build: 483 modules, 0 errors.
+**Files changed:** client/src/hooks/useWorkflow.js, client/src/canvas/ContextMenu.jsx (new), client/src/canvas/SwarmCanvas.jsx, client/src/views/SwarmView.jsx
+**Bugs fixed:** useWorkflow.js update() not unwrapping {workflow} response envelope from server PUT
+**Decisions made:** Callback approach for canvas state exposure (onCanvasChange), ref-based clipboard for copy/paste
+**Blockers:** none
+**Next:** QA test gate for save round-trip, name editing, context menu actions
+
+---
+## 2026-04-06 — code-mapper — Tasks #254-#255: V7.0 BUG-DONE-BARE-1 + BUG-SNIPPET-INIT-1
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md (HandoffParser DONE_RE regex widened, SwarmEngine tapFn snippet guard, test entry updated) and CHANGELOG.md (detailed entry for both bug fixes). No breaking changes — both fixes are additive.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** none (mapping only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** TEST GATE #256 and #257 pending for these fixes
+
+---
+
 ## 2026-04-06 — project-manager — V7.0 Status Sync: #254 + #255 COMPLETED
 **Outcome:** COMPLETED
 **Summary:** Updated TASK_PLAN.md status header to reflect 253 COMPLETED, 2 DEFERRED, 3 PENDING (V7.0 test gates + area checkpoint). V7.0 bug fixes #254 and #255 confirmed COMPLETED. Updated PROGRESS.md, CONTEXT.md.

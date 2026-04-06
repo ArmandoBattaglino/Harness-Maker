@@ -351,6 +351,7 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange }) 
       setNodes((nds) =>
         nds.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, ...patch } } : n))
       );
+      if (markDirtyRef.current) markDirtyRef.current();
     },
     [setNodes, pushHistory, nodes, edges]
   );
@@ -386,8 +387,8 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange }) 
         <ReactFlow
           nodes={visibleNodes}
           edges={visibleEdges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
+          onNodesChange={handleNodesChange}
+          onEdgesChange={handleEdgesChange}
           onConnect={onConnect}
           onNodeClick={onNodeClick}
           onPaneClick={onPaneClick}
@@ -395,6 +396,9 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange }) 
           onNodeDragStop={onNodeDragStop}
           onNodesDelete={onNodesDelete}
           onEdgesDelete={onEdgesDelete}
+          onContextMenu={handlePaneContextMenu}
+          onNodeContextMenu={handleNodeContextMenu}
+          onEdgeContextMenu={handleEdgeContextMenu}
           deleteKeyCode={['Delete', 'Backspace']}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
@@ -412,6 +416,14 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange }) 
             nodeColor="#6366f1"
           />
         </ReactFlow>
+        {contextMenu && (
+          <ContextMenu
+            x={contextMenu.x}
+            y={contextMenu.y}
+            actions={contextMenuActions}
+            onClose={closeContextMenu}
+          />
+        )}
         {showSidePanels && <InterAgentFeed />}
         <AgentInspector nodes={nodes} onUpdateNode={handleUpdateNode} />
       </div>

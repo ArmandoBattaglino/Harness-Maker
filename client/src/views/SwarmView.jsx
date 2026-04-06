@@ -1,6 +1,6 @@
 // client/src/views/SwarmView.jsx
 // Layout shell for the Swarm Orchestrator — toolbar + canvas.
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { ReactFlowProvider } from '@xyflow/react';
 import SwarmCanvas from '../canvas/SwarmCanvas';
 import PromptToFlowBar from '../canvas/PromptToFlowBar';
@@ -12,7 +12,8 @@ import { useSwarm } from '../hooks/useSwarm';
 import { useInbox } from '../hooks/useInbox.js';
 import { useWorkflowList } from '../hooks/useWorkflow.js';
 import { useAppState } from '../store/AppContext';
-import { apiGet, apiPost } from '../hooks/useApi.js';
+import { apiGet, apiPost, apiPut } from '../hooks/useApi.js';
+import { sanitizeWorkflow } from '../utils/sanitizeWorkflow.js';
 
 const statusColors = {
   idle: 'text-gray-400',
@@ -52,6 +53,13 @@ export default function SwarmView() {
   const [inboxOpen, setInboxOpen] = useState(false);
   const [executing, setExecuting] = useState(false);
   const [pausing, setPausing] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState('');
+  const canvasStateRef = useRef({ nodes: [], edges: [] });
   const selectedRuntimeProvider = useSwarmStore((s) => s.selectedRuntimeProvider);
   const setSelectedRuntimeProvider = useSwarmStore((s) => s.setSelectedRuntimeProvider);
   const [runtimeModels, setRuntimeModels] = useState({ claude: '', codex: '', gemini: '' });
@@ -218,6 +226,73 @@ export default function SwarmView() {
 
     reset();
     setWorkflowDef(selected);
+    setIsDirty(false);
+    setSaveError(null);
+  };
+
+  // FR-V5-01: markDirty callback for SwarmCanvas
+  const markDirty = useCallback(() => {
+    setIsDirty(true);
+    setSaveError(null);
+  }, []);
+
+  // FR-V5-01: track latest canvas nodes/edges for save
+  const onCanvasChange = useCallback((nodes, edges) => {
+    canvasStateRef.current = { nodes, edges };
+  }, []);
+
+  // FR-V5-01: save handler — persist canvas state to server
+  const handleSave = async () => {
+    if (!workflowDef?.id || !isDirty) return;
+    setSaving(true);
+    setSaveError(null);
+    setSaveSuccess(false);
+    try {
+      const { nodes, edges } = canvasStateRef.current;
+      const updated = sanitizeWorkflow({
+        ...workflowDef,
+        nodes,
+        edges,
+      });
+      const result = await apiPut(`/api/v1/workflows/${workflowDef.id}`, updated);
+      const saved = result?.workflow ?? result;
+      if (saved) setWorkflowDef(saved);
+      setIsDirty(false);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
+      refreshWorkflows();
+    } catch (err) {
+      setSaveError(err.message || 'Failed to save workflow');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // FR-V5-05/06: name editing
+  const NAME_PATTERN = /^[a-zA-Z0-9 _\-]+$/;
+  const handleNameEditStart = () => {
+    if (!workflowDef) return;
+    setNameInput(workflowDef.name || '');
+    setEditingName(true);
+  };
+  const handleNameEditConfirm = () => {
+    const trimmed = nameInput.trim();
+    if (!trimmed || trimmed.length > 128 || !NAME_PATTERN.test(trimmed)) {
+      setEditingName(false);
+      return;
+    }
+    if (trimmed !== workflowDef?.name) {
+      setWorkflowDef({ ...workflowDef, name: trimmed });
+      markDirty();
+    }
+    setEditingName(false);
+  };
+  const handleNameEditCancel = () => {
+    setEditingName(false);
+  };
+  const handleNameKeyDown = (e) => {
+    if (e.key === 'Enter') handleNameEditConfirm();
+    if (e.key === 'Escape') handleNameEditCancel();
   };
 
   const providerLabel = runtimeProvider
@@ -260,7 +335,25 @@ export default function SwarmView() {
   return (
     <div className="flex flex-col w-full h-full bg-gray-950 text-white">
       <div className="flex items-center gap-3 px-4 py-2 bg-gray-900 border-b border-gray-700 shrink-0">
-        <span className="text-sm font-semibold text-white">Swarm Orchestrator</span>
+        {workflowDef && editingName ? (
+          <input
+            autoFocus
+            value={nameInput}
+            onChange={(e) => setNameInput(e.target.value.slice(0, 128))}
+            onKeyDown={handleNameKeyDown}
+            onBlur={handleNameEditConfirm}
+            className="text-sm font-semibold text-white bg-gray-800 border border-gray-600 rounded px-2 py-0.5 outline-none focus:border-blue-500 max-w-[240px]"
+            maxLength={128}
+          />
+        ) : (
+          <span
+            className="text-sm font-semibold text-white cursor-pointer hover:text-blue-300 transition-colors"
+            onClick={handleNameEditStart}
+            title={workflowDef ? 'Click to rename workflow' : ''}
+          >
+            {workflowDef?.name || 'Swarm Orchestrator'}{isDirty ? ' *' : ''}
+          </span>
+        )}
         <div className="flex-1" />
 
         <button
@@ -363,6 +456,15 @@ export default function SwarmView() {
           )}
         </div>
 
+        <button
+          onClick={handleSave}
+          disabled={!isDirty || !workflowDef || saving}
+          title={!workflowDef ? 'No workflow loaded' : !isDirty ? 'No unsaved changes' : 'Save workflow'}
+          className="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {saving ? '...' : 'Save'}
+        </button>
+
         {(executionStatus === 'idle' || executionStatus === 'completed') && (
           <button
             onClick={workflowDef && activeProjectId ? handleRun : undefined}
@@ -452,10 +554,24 @@ export default function SwarmView() {
         </div>
       )}
 
+      {saveError && (
+        <div className="px-4 py-2 text-xs text-red-300 bg-red-950/40 border-b border-red-900/60">
+          Save failed: {saveError}
+        </div>
+      )}
+
+      {saveSuccess && (
+        <div className="px-4 py-2 text-xs text-green-300 bg-green-950/40 border-b border-green-900/60">
+          Workflow saved successfully.
+        </div>
+      )}
+
       <PromptToFlowBar
         onWorkflowGenerated={(workflowId, animatedDef) => {
           setWorkflowDef(animatedDef);
           setSelectedWorkflowId(workflowId);
+          setIsDirty(false);
+          setSaveError(null);
           refreshWorkflows();
         }}
       />
@@ -515,7 +631,7 @@ export default function SwarmView() {
 
       <div className="flex-1 overflow-hidden">
         <ReactFlowProvider>
-          <SwarmCanvas key={`${workflowDef?.id ?? 'none'}:${activeExecutionId ?? 'idle'}`} workflowDef={workflowDef} />
+          <SwarmCanvas key={`${workflowDef?.id ?? 'none'}:${activeExecutionId ?? 'idle'}`} workflowDef={workflowDef} markDirty={markDirty} onCanvasChange={onCanvasChange} />
         </ReactFlowProvider>
       </div>
 

@@ -2493,3 +2493,51 @@ All documentation is UP_TO_DATE. DOC_STATUS.md reflects the complete closure of 
 ### Handoff
 None -- all areas closed. Next documentation work will come when new features or bug areas are opened.
 ---
+
+---
+## 2026-04-06 — V7.0 Documentation Update (Tasks #254-#255)
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel with code-mapper and project-manager)
+
+### Context when I started
+V7.0 Swarm Terminal Deep Test Bug Fixes: Tasks #254 (BUG-DONE-BARE-1) and #255 (BUG-SNIPPET-INIT-1) were just completed by the debugger. Two files modified: HandoffParser.js (DONE_RE regex widened) and SwarmEngine.js (snippet update gated by echo gate). TEST GATES #256-#257 and AREA CHECKPOINT #258 still pending.
+
+### What I did
+1. Read DOC_STATUS.md, CONTEXT.md, PROGRESS.md, and last segment of documenter.md in parallel. Also grepped for DONE_RE references across codebase.
+2. Read the actual modified code: HandoffParser.js DONE_RE (line 25) and SwarmEngine.js echo gate guard (lines ~2125-2130).
+3. Checked README.md, ARCHITECTURE.md, and API.md for references to DONE token format.
+4. Found ARCHITECTURE.md Section 11.4 (line 1845) says "Output `__DONE__`" — this is now stale since bare DONE is also accepted.
+5. Updated ARCHITECTURE.md Section 11.4 to document both `__DONE__` and bare `DONE`.
+6. Updated DOC_STATUS.md: timestamp, ARCHITECTURE.md row, inline comments row, two new fixed bug entries, new V7.0 section.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/ARCHITECTURE.md | MODIFIED | Section 11.4 line 1845: added "(or bare `DONE` on its own line)" to DONE token description |
+| docs/memory/DOC_STATUS.md | MODIFIED | Timestamp updated, ARCHITECTURE.md row refreshed, two BUG entries added (BUG-DONE-BARE-1, BUG-SNIPPET-INIT-1), V7.0 section added |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended V7.0 documenter entry |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- ARCHITECTURE.md Section 11.4 now accurately reflects the HandoffParser's DONE token acceptance (both `__DONE__` and bare `DONE`)
+- DOC_STATUS.md tracks V7.0 bug fixes with full detail
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | -- | -- | -- |
+
+### Decisions I made
+- Updated ARCHITECTURE.md even though this is a "minor bug fix wave" — the DONE token format is a protocol-level detail documented in Section 11.4, and the change from "__DONE__ only" to "both __DONE__ and bare DONE" is architecturally relevant.
+- Did NOT update README.md, API.md, or PRD.md — none reference the DONE token format.
+- Did NOT add inline comments to HandoffParser.js — the DONE_RE regex is self-documenting with its alternation pattern.
+
+### What I learned
+- The echo gate mechanism (ignoreParserUntil) in SwarmEngine.js serves dual purpose: it prevents both parser false positives AND snippet contamination from echoed system prompts. Task #255 leveraged this for snippet filtering.
+
+### State I'm leaving behind
+All docs are UP_TO_DATE for V7.0 Tasks #254-#255. TEST GATES #256-#257 and AREA CHECKPOINT #258 are pending — when those complete (no code changes expected), DOC_STATUS.md needs no further update.
+
+### Handoff
+None — documentation is complete for V7.0 bug fixes. Next documenter invocation will be after TEST GATES pass or V5.0 Wave 1 implementation begins.
+---

@@ -1,4 +1,6 @@
 
+- [V5.0-Wave1 FR-V5-01/03/05/06/21-24 COMPLETED 2026-04-06] Save button, dirty tracking, inline name editing, context menu. Fixed useWorkflow.js update() unwrapping bug. Build: 483 modules, 0 errors.
+
 - [V5.0-Wave1 FR-V5-11/13/14/15/02 COMPLETED 2026-04-06] Node/edge delete + sanitize utility + node ID generator. SwarmCanvas.jsx enhanced with department cascade delete and deleteKeyCode prop. Two new utils created (sanitizeWorkflow.js, nodeIdGenerator.js). Build: 481 modules, 0 errors.
 
 - [V7.0 STATUS SYNC 2026-04-06] V7.0 bug fixes both COMPLETED (#254, #255). 253 COMPLETED, 2 DEFERRED, 3 PENDING (#256 test gate, #257 test gate, #258 area checkpoint). Next: run test gates to verify fixes, then area checkpoint to close V7.0.

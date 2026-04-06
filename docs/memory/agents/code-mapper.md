@@ -1,4 +1,47 @@
 ---
+## 2026-04-06 — Tasks #254-#255: V7.0 BUG-DONE-BARE-1 + BUG-SNIPPET-INIT-1
+**Status:** COMPLETED
+**Called by:** user (post-task code mapping request)
+
+### Context when I started
+Two V7.0 bug fixes just completed: #254 widened HandoffParser DONE_RE to accept bare DONE; #255 gated snippet updates in SwarmEngine tapFn behind ignoreParserUntil. 8 tests updated to clear the echo gate before testing snippets.
+
+### What I did
+1. Read CODE_MAP.md, CHANGELOG.md, agent log, PROGRESS.md, CONTEXT.md, source files (HandoffParser.js line 25, SwarmEngine.js lines 2115-2145).
+2. Updated CODE_MAP.md: header timestamp, HandoffParser Module Index entry (bare DONE note), SwarmEngine Module Index entry (Task #255 note), test entry (8 tests updated note), HandoffParser.feed Function Graph (DONE_RE description + complexity note + last-modified), SwarmEngine._spawnAgentPty Function Graph (tapFn complexity note + last-modified).
+3. Prepended CHANGELOG.md with detailed entry for both bug fixes + test file changes.
+4. Appended ACTIVITY_LOG.md and this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Updated header, 3 Module Index entries, 2 Function Graph entries for Tasks #254-#255 |
+| docs/memory/CHANGELOG.md | MODIFIED | Prepended Tasks #254-#255 entry with file-level change details |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Entry prepended |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log prepended |
+
+### Improvements delivered
+- CODE_MAP accurately reflects DONE_RE regex widening (bare DONE acceptance)
+- CODE_MAP documents ignoreParserUntil snippet guard in tapFn
+- Test infrastructure entry notes the 8 updated tests
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+None (mapping only).
+
+### What I learned
+- The ignoreParserUntil echo gate was already used for runtime prompt detection but was not applied to snippet updates in tapFn — Task #255 closed that gap
+- DONE_RE now uses `/m` multiline flag for line-boundary matching of bare DONE
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md fully up to date through Tasks #254-#255. TEST GATE #256 and #257 still pending.
+
+### Handoff
+None — task fully self-contained.
+
+---
 ## 2026-04-06 — V5 PRD Addendum: N8N-Style Visual Workflow Editor (Planning Milestone)
 **Status:** COMPLETED
 **Called by:** user (post-planning code mapping request)
