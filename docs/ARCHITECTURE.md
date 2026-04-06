@@ -1,7 +1,7 @@
 # Claude Code Visual Manager — Architecture Reference
-**Version:** 3.0 (updated for V3 Swarm Orchestrator)
-**Date:** 2026-03-28 (originally 2026-03-18; V3 additions in Section 11)
-**Status:** Locked — DEC-001 through DEC-016 are final. V3 architecture in Section 11.
+**Version:** 5.0 (updated for V5 N8N-Style Visual Workflow Editor)
+**Date:** 2026-04-06 (originally 2026-03-18; V3 in Section 11; V5 in Section 12)
+**Status:** Locked — DEC-001 through DEC-026 are final. V3 architecture in Section 11. V5 architecture in Section 12.
 **Audience:** Every agent assigned to this project. Read this before writing a single line of code.
 
 ---
@@ -19,6 +19,7 @@
 9. [Error Handling Matrix](#9-error-handling-matrix)
 10. [Startup Sequence](#10-startup-sequence)
 11. [V3 Swarm Orchestrator Architecture](#11-v3-swarm-orchestrator-architecture)
+12. [V5 N8N-Style Visual Workflow Editor Architecture](#12-v5-n8n-style-visual-workflow-editor-architecture)
 
 ---
 
@@ -1832,7 +1833,7 @@ No client-to-server messages on the swarm channel. The swarm WS channel is serve
 }
 ```
 
-**Node types:** `"agent"` (executes Claude Code), `"department"` (group container — no PTY), `"trigger"` (webhook or RSS source — no PTY).
+**Node types:** `"agent"` (executes Claude Code), `"department"` (group container — no PTY), `"trigger"` (webhook or RSS source — no PTY), `"conditional"` (V5 — diamond router, no PTY), `"merge"` (V5 — hexagonal join, no PTY), `"delay"` (V5 — timer, no PTY), `"loop"` (V5 — iteration tracker, no PTY), `"errorHandler"` (V5 — error watcher, no PTY), `"subWorkflow"` (V5 — nested workflow reference, no PTY).
 
 **Edge types:** `"handoff"` (only type currently defined). Handoff edges are directional: `source` → `target`.
 
@@ -1958,3 +1959,139 @@ Hooks (V3):
 Store (V3):
   client/src/store/SwarmContext.jsx  — useSwarmStore (Zustand v4)
 ```
+
+---
+
+## 12. V5 N8N-Style Visual Workflow Editor Architecture
+
+_Added: 2026-04-06. Covers all V5 components shipped across Waves 1-5 (81 FRs, Tasks #259-#300+)._
+
+### 12.1 V5 System Diagram (Canvas Layer)
+
+```
+SwarmView.jsx (view: swarm)
+│
+├── PromptToFlowBar.jsx          (V3 — prompt → scaffold)
+├── WorkflowSettingsModal.jsx    (V5-W1 — name, description, initial context editor)
+├── ReactFlowProvider
+│     └── SwarmCanvas.jsx        (V3 base + V5 enhancements)
+│           │
+│           ├── NodePalette.jsx  (V5-W2 — draggable sidebar with 10 node types)
+│           ├── ContextMenu.jsx  (V5-W1 — right-click canvas/node/edge menu)
+│           │
+│           ├── Node Types (registered in nodeTypes constant):
+│           │     ├── AgentNode.jsx       (V3 — "agent", spawns PTY)
+│           │     ├── DepartmentNode.jsx  (V3 — "department", group container)
+│           │     ├── TriggerNode.jsx     (V3 — "trigger", webhook/RSS)
+│           │     ├── ConditionalNode.jsx (V5-W5 — "conditional", diamond router)
+│           │     ├── MergeNode.jsx       (V5-W5 — "merge", hexagonal join)
+│           │     ├── DelayNode.jsx       (V5-W5 — "delay", timer)
+│           │     ├── LoopNode.jsx        (V5-W5 — "loop", iteration tracker)
+│           │     ├── ErrorHandlerNode.jsx(V5-W5 — "errorHandler", error watcher)
+│           │     └── SubWorkflowNode.jsx (V5-W5 — "subWorkflow", nested ref)
+│           │
+│           ├── Edge Types:
+│           │     └── HandoffEdge.jsx     (V3 — "handoff", animated)
+│           │
+│           ├── AgentInspector.jsx  (V3 base + V5-W5 flow-control field components)
+│           │     ├── ConditionalFields  (rules editor with per-rule target selection)
+│           │     ├── MergeFields        (wait mode: all / any / N radio selector)
+│           │     ├── DelayFields        (seconds slider 1-3600)
+│           │     ├── LoopFields         (max iterations + exit condition)
+│           │     ├── ErrorHandlerFields (watched nodes checkbox list)
+│           │     └── SubWorkflowFields  (workflow ID selector)
+│           │
+│           └── InterAgentFeed.jsx (V3 — event log sidebar)
+│
+├── ExecutionHistory.jsx    (V5-W4 — past execution browser)
+├── TemplateGallery.jsx     (V5-W4 — 5 built-in workflow templates)
+├── VersionHistory.jsx      (V5-W4 — workflow version browser + restore)
+├── HitlInbox.jsx           (V3 — approval drawer)
+├── BroadcastBar.jsx        (V3 — broadcast to all agents)
+└── PtyExplosion.jsx        (V3 — full-screen PTY overlay)
+
+Hooks (V5 additions):
+  useCanvasHistory.js    (V5-W1 — undo/redo for canvas operations)
+  useCanvasValidation.js (V5-W3 — 5 validation rules, error/warning severity)
+
+Utils (V5 additions):
+  sanitizeWorkflow.js    (V5-W1 — strips transient state before persist)
+  nodeIdGenerator.js     (V5-W1 — generateNodeId() with type prefix)
+
+Stores (V5 additions, server):
+  ExecutionHistoryStore.js (V5-W4 — %APPDATA%\ClaudeCodeManager\execution-history\)
+  TemplateStore.js         (V5-W4 — in-memory, 5 hardcoded templates)
+  WorkflowStore.js         (V3 base + V5-W4 version history: saves snapshot before overwrite)
+```
+
+### 12.2 V5 Node Types — Flow Control
+
+All six flow-control node types are registered in `SwarmCanvas.jsx` via the `nodeTypes` constant. They are pure routing/control nodes that never spawn a PTY. `SwarmEngine.js` identifies them via the `FLOW_CONTROL_NODE_TYPES` Set and dispatches to `_activateFlowControlNode()` instead of `_spawnAgentPty()`.
+
+| Node Type | Component | Shape | Color | Handles | Engine Handler |
+|-----------|-----------|-------|-------|---------|----------------|
+| `conditional` | ConditionalNode.jsx | Diamond (45deg rotated square) | Amber | 1 target (top), N source (bottom, one per rule + default) | `_handleConditionalNode` — evaluates rules against workflow context, routes to first match or default |
+| `merge` | MergeNode.jsx | Hexagon (CSS clip-path) | Cyan | 3 target (left), 1 source (right) | `_handleMergeNode` — tracks incoming edges, forwards when convergence threshold met (all/any/N) |
+| `delay` | DelayNode.jsx | Rounded rectangle | Orange | 1 target (top), 1 source (bottom) | `_handleDelayNode` — setTimeout for `data.delaySeconds`, forwards on completion |
+| `loop` | LoopNode.jsx | Rounded rectangle | Violet | 1 target (top), 2 source (bottom=loop, right=exit) | `_handleLoopNode` — tracks iteration count, routes to loop or exit edges based on max/condition |
+| `errorHandler` | ErrorHandlerNode.jsx | Rounded rectangle | Red | 0 target, 1 source (bottom) | `_handleErrorHandlerNode` — registers watchers on specified nodes, triggers on error |
+| `subWorkflow` | SubWorkflowNode.jsx | Double-bordered rectangle | Gray | 1 target (top), 1 source (bottom) | `_handleSubWorkflowNode` — loads referenced workflow, creates child execution |
+
+### 12.3 V5 Engine State Maps
+
+SwarmEngine tracks flow-control state via five Maps, all keyed by `${executionId}:${nodeId}`:
+
+| Map | Purpose | Lifecycle |
+|-----|---------|-----------|
+| `_mergeStates` | `{ received: Set<sourceNodeId>, required: number }` — convergence tracker | Created on first activation, deleted after merge completes (allows re-trigger in loops) |
+| `_loopStates` | `{ iteration: number, maxIterations: number }` — loop counter | Created on first activation, deleted when loop exits |
+| `_delayTimers` | `setTimeout` handle — active delay timer | Created on activation, deleted on completion or execution stop. `handle.unref()` called so timers do not prevent Node.js exit. |
+| `_errorWatchers` | `Map<watchedNodeId, Set<errorHandlerNodeId>>` keyed by executionId only | Created when errorHandler activates, persists for execution lifetime |
+| `_subWorkflowExecutions` | Child `executionId` string | Created on sub-workflow launch, deleted on child completion |
+
+### 12.4 V5 NodePalette
+
+`NodePalette.jsx` provides a draggable sidebar with 10 node type cards (4 from V3 + 6 from V5 Wave 5). Each card is draggable via HTML5 drag-and-drop (`onDragStart` sets `application/reactflow` data). `SwarmCanvas.jsx` handles `onDrop` to create a new node at the drop position.
+
+V5 Wave 5 palette entries:
+| Type | Icon | Label | Description |
+|------|------|-------|-------------|
+| `conditional` | Diamond | Conditional | Route flow based on conditions |
+| `merge` | Hexagon | Merge | Wait for multiple inputs |
+| `delay` | Stopwatch | Delay | Pause flow for a set time |
+| `loop` | Arrows | Loop | Repeat a sub-flow N times |
+| `errorHandler` | Lightning | Error Handler | Catch errors from other nodes |
+| `subWorkflow` | Package | Sub-Workflow | Nest another workflow |
+
+### 12.5 V5 AgentInspector Field Components
+
+`AgentInspector.jsx` renders type-specific configuration panels when a flow-control node is selected. Each field component receives `(node, onUpdateNode)` props and uses `useDebouncedField` for text inputs.
+
+| Component | Node Type | Fields Exposed |
+|-----------|-----------|----------------|
+| `ConditionalFields` | `conditional` | Rules array (field, operator, value, targetNodeId per rule), default target |
+| `MergeFields` | `merge` | Wait mode radio: all / any / custom count |
+| `DelayFields` | `delay` | Delay seconds (number input, range 1-3600) |
+| `LoopFields` | `loop` | Max iterations (number), exit condition (text) |
+| `ErrorHandlerFields` | `errorHandler` | Watched nodes (checkbox list of all non-errorHandler nodes) |
+| `SubWorkflowFields` | `subWorkflow` | Workflow ID (text input for referenced workflow) |
+
+### 12.6 V5 Wave Summary
+
+| Wave | Scope | Key Deliverables |
+|------|-------|-----------------|
+| Wave 1 | Canvas Foundation | Save/load, dirty tracking, inline name editing, context menu, delete with cascade, sanitizeWorkflow.js, nodeIdGenerator.js, WorkflowSettingsModal.jsx |
+| Wave 2 | Node Palette + Settings | NodePalette.jsx (4 V3 types), onDrop handler in SwarmCanvas, WorkflowSettingsModal integration |
+| Wave 3 | Validation + Shortcuts | useCanvasValidation.js (5 rules), snap-to-grid (20px), Ctrl+S/Ctrl+Enter shortcuts, export/import JSON, duplicate workflow |
+| Wave 4 | Execution Visibility | ExecutionHistoryStore.js, TemplateStore.js, ExecutionHistory.jsx, TemplateGallery.jsx, VersionHistory.jsx, 6 new API endpoints |
+| Wave 5 | Advanced Flow Control | 6 new node types (conditional, merge, delay, loop, errorHandler, subWorkflow), 6 new NodePalette cards, 6 new AgentInspector field components, SwarmEngine flow-control dispatch + 5 state maps |
+
+### 12.7 V5 Security Requirements
+
+| # | Requirement | Implementation |
+|---|------------|---------------|
+| SEC-V5-01 | Workflow version count cap: 50 per workflow | WorkflowStore trims oldest versions on save |
+| SEC-V5-02 | Execution history cap: 100 entries per workflow | ExecutionHistoryStore trims oldest entries |
+| SEC-V5-03 | Template content is read-only | TemplateStore serves hardcoded templates, no write API |
+| SEC-V5-04 | Sub-workflow recursion guard | SwarmEngine checks nesting depth before launching child execution |
+| SEC-V5-05 | Delay timer ceiling: 3600 seconds | DelayFields enforces max=3600; engine enforces on activation |

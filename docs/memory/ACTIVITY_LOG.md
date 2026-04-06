@@ -1,3 +1,25 @@
+## 2026-04-06 — project-manager — V5.0-BugFix2 Task Plan Registration + Project State Analysis
+**Outcome:** COMPLETED
+**Summary:** Registered V5.0-BugFix2 area (E2E Debugger Loop Fixes) in TASK_PLAN.md. 6 tasks (#321-#326): 4 bug fixes + 1 TEST GATE + 1 AREA CHECKPOINT, all COMPLETED. Bugs fixed: BUG-SAVE-1 (node ID kebab-case), BUG-DUP-1 (duplicate name format), BUG-DUP-2/IMP-1 (API response unwrapping), BUG-VER-DATE (version timestamp parsing). Updated status header: 326 tasks total, 324 COMPLETED, 2 DEFERRED, 0 PENDING. V5.0-BugFix2 AREA CLOSED. Provided full project state analysis in Italian.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** BUG-SAVE-1, BUG-DUP-1, BUG-DUP-2/IMP-1, BUG-VER-DATE (registered, fixes applied in commit 895ddd7)
+**Decisions made:** Task numbering #321-#326
+**Blockers:** none
+**Next:** No remaining open areas or pending tasks. Project is feature-complete for V5.
+
+---
+
+## 2026-04-06 — project-manager — V5.0-Wave5 Task Plan Registration
+**Outcome:** COMPLETED
+**Summary:** Registered V5.0-Wave5 area (Advanced Flow Control Nodes) in TASK_PLAN.md. 20 tasks (#301-#320): 10 component tasks (6 new node components, SwarmCanvas registration, NodePalette cards, AgentInspector config panels, SwarmEngine flow control logic) + 9 TEST GATEs + 1 AREA CHECKPOINT, all COMPLETED. Updated status header: 320 tasks total, 318 COMPLETED, 2 DEFERRED, 0 PENDING. V5.0-Wave5 AREA CLOSED. Updated PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** Task numbering #301-#320; 9 separate TEST GATEs (1 per node component, 1 for palette, 1 for SwarmEngine, 1 for AgentInspector) plus AREA CHECKPOINT
+**Blockers:** none
+**Next:** All Wave 5 areas CLOSED. No remaining open areas or pending tasks.
+
+---
+
 ## 2026-04-06 — project-manager — V5.0-Wave4 Task Plan Registration
 **Outcome:** COMPLETED
 **Summary:** Registered V5.0-Wave4 area (Execution Visibility) in TASK_PLAN.md. 14 tasks (#287-#300): 8 component tasks (3 backend stores, 4 frontend panels, 1 toolbar integration) + 5 TEST GATEs + 1 AREA CHECKPOINT, all COMPLETED. Updated status header: 300 tasks total, 298 COMPLETED, 2 DEFERRED, 0 PENDING. V5.0-Wave4 AREA CLOSED. Updated PROGRESS.md (task numbers added), CONTEXT.md (focus updated).

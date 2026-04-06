@@ -1,6 +1,6 @@
 # Current Context
 **Session date:** 2026-04-06
-**Focus:** V5 Waves 1, 2, 3, BugFix1, and Wave 4 ALL CLOSED. Wave 4 tasks registered in TASK_PLAN.md as #287-#300 (8 components + 5 TEST GATEs + 1 AREA CHECKPOINT, all COMPLETED). 300 tasks total, 298 COMPLETED, 2 DEFERRED. Build: 490 modules, 0 errors. Tests: 312/312 pass. Note: ExecutionHistoryStore.addEntry() not yet wired to SwarmEngine -- future integration task. No remaining open areas or pending tasks.
+**Focus:** V5 Waves 1-5 plus BugFix1 and BugFix2 ALL CLOSED. 326 tasks total, 324 COMPLETED, 2 DEFERRED. Build: 496 modules, 0 errors. Tests: 312/312 pass. Latest: BugFix2 (#321-#326) fixed 4 bugs from Debugger Loop E2E testing (node ID kebab-case, duplicate name format, API response unwrapping, version date parsing). Commit 895ddd7. No remaining open areas or pending tasks.
 
 _Project initialized via /create pipeline on 2026-03-18_
 

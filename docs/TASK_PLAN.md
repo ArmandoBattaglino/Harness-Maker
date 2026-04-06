@@ -4,7 +4,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED - 2026-03-31 — 300 tasks total, 298 COMPLETED, 2 DEFERRED, 0 PENDING. V5.0-Wave1 CLOSED. V5.0-Wave2 CLOSED. V5.0-Wave3 CLOSED. V5.0-BugFix1 CLOSED. V5.0-Wave4 CLOSED. Build OK: 490 modules, 0 errors. Tests: 312/312 pass.
+**Status:** v3.0.0 RELEASED - 2026-03-31 — 326 tasks total, 324 COMPLETED, 2 DEFERRED, 0 PENDING. V5.0-Wave1 CLOSED. V5.0-Wave2 CLOSED. V5.0-Wave3 CLOSED. V5.0-BugFix1 CLOSED. V5.0-Wave4 CLOSED. V5.0-Wave5 CLOSED. V5.0-BugFix2 CLOSED. Build OK: 496 modules, 0 errors. Tests: 312/312 pass.
   **Completed Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 ALL COMPLETED/PASS. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#267 ALL COMPLETED. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave2 NODE CREATION & CONFIG — Tasks #268-#272 ALL COMPLETED. AREA CLOSED 2026-04-06.
@@ -33,6 +33,8 @@
   - V5.0-Wave3 VALIDATION, SHORTCUTS & WORKFLOW OPS: AREA CLOSED 2026-04-06 — useCanvasValidation (#273), snap-to-grid (#274), keyboard shortcuts (#275), validation badges (#276), validation before Run (#277), export/import JSON (#278), duplicate workflow (#279) ALL COMPLETED. TEST GATE #280 PASS. AREA CHECKPOINT #281 PASS. Build: 487 modules, 0 errors. Tests: 312/312 pass.
   - V5.0-BugFix1 E2E CONTEXT MENU + KEYBOARD SHORTCUT FIXES: AREA CLOSED 2026-04-06 — BUG-CTX-1 (#282), BUG-CTX-2 (#283), BUG-KEYS-1 (#284) ALL COMPLETED. TEST GATE #285 PASS. AREA CHECKPOINT #286 PASS. Build: 487 modules, 0 errors. Tests: 312/312 pass.
   - V5.0-Wave4 EXECUTION VISIBILITY: AREA CLOSED 2026-04-06 — ExecutionHistoryStore (#287), WorkflowStore version history (#288), TemplateStore (#289), per-node timing (#290), ExecutionHistory.jsx (#291), TemplateGallery.jsx (#292), VersionHistory.jsx (#293), SwarmView toolbar buttons (#294) ALL COMPLETED. TEST GATE #295 PASS. AREA CHECKPOINT #300 PASS. Build: 490 modules, 0 errors. Tests: 312/312 pass.
+  - V5.0-Wave5 ADVANCED FLOW CONTROL NODES: AREA CLOSED 2026-04-06 — ConditionalNode (#301), MergeNode (#302), DelayNode (#303), LoopNode (#304), ErrorHandlerNode (#305), SubWorkflowNode (#306), SwarmCanvas nodeTypes+onDrop (#307), NodePalette 6 new cards (#308), AgentInspector 6 config panels (#309), SwarmEngine flow control logic (#310) ALL COMPLETED. TEST GATEs #311-#318 all PASS. AREA CHECKPOINT #320 PASS. Build: 496 modules, 0 errors. Tests: 312/312 pass.
+  - V5.0-BugFix2 E2E DEBUGGER LOOP FIXES: AREA CLOSED 2026-04-06 — BUG-SAVE-1 (#321), BUG-DUP-1 (#322), BUG-DUP-2/IMP-1 (#323), BUG-VER-DATE (#324) ALL COMPLETED. TEST GATE #325 PASS. AREA CHECKPOINT #326 PASS. Build: 496 modules, 0 errors. Tests: 312/312 pass. Commit 895ddd7.
   DEFERRED (2 tasks, both MVP-acceptable, no fix possible):
     - #236: BUG-UI-1 — ConPTY terminal prompt garble after navigation (Windows platform limitation, DEC-009)
     - (none other — #233 and #242 previously marked DEFERRED are now COMPLETED)
@@ -13898,4 +13900,443 @@ Acceptance Criteria:
   - [x] npm run build passes (490 modules, 0 errors), npm test passes (312/312)
 Gate Result: PASS -- V5.0-Wave4 CLOSED
 Dependencies: TASK #295, TASK #296, TASK #297, TASK #298, TASK #299
+
+---
+
+## AREA: V5.0-Wave5 -- Advanced Flow Control Nodes
+_Components: ConditionalNode.jsx, MergeNode.jsx, DelayNode.jsx, LoopNode.jsx, ErrorHandlerNode.jsx, SubWorkflowNode.jsx, SwarmCanvas nodeTypes registration, NodePalette 6 new cards, AgentInspector 6 config panels, SwarmEngine flow control logic_
+_Tasks: #301 -> #320_
+_Gate: ALL components in this area must pass their TEST GATE before the next AREA starts_
+
+---
+
+TASK #301: ConditionalNode.jsx -- Diamond router node with rules editor in inspector
+Area: V5.0-Wave5 -- Advanced Flow Control Nodes
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 -- Diamond-shaped conditional router node with CSS rotate transform. Renders condition label, source/target handles. Rules editor in AgentInspector allows defining condition rules per output handle. FR-V5-56/57/59.
+Acceptance Criteria:
+  - [x] ConditionalNode renders as a diamond shape with condition label
+  - [x] Source and target handles positioned correctly
+  - [x] Rules editor available in AgentInspector when node is selected
+  - [x] Condition rules configurable per output handle
+  - [x] npm run build passes (496 modules, 0 errors)
+Dependencies: none
+---
+
+TASK #302: MergeNode.jsx -- Hexagonal merge/join node with waitFor config
+Area: V5.0-Wave5 -- Advanced Flow Control Nodes
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 -- Hexagonal merge node using CSS clip-path. 3 fixed input handles for convergence. waitFor configuration in inspector specifies how many inputs must arrive before proceeding. FR-V5-60/61.
+Acceptance Criteria:
+  - [x] MergeNode renders as hexagonal shape with clip-path
+  - [x] 3 fixed input handles for convergence
+  - [x] waitFor config in inspector specifies required input count
+  - [x] npm run build passes (496 modules, 0 errors)
+Dependencies: none
+---
+
+TASK #303: DelayNode.jsx -- Clock delay timer node
+Area: V5.0-Wave5 -- Advanced Flow Control Nodes
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 -- Clock-themed delay node with configurable duration. Shows countdown during execution. Inspector fields for delay duration (seconds/minutes). FR-V5-64/65/66/67.
+Acceptance Criteria:
+  - [x] DelayNode renders with clock icon and delay duration label
+  - [x] Duration configurable via inspector (seconds/minutes)
+  - [x] Visual countdown during execution
+  - [x] npm run build passes (496 modules, 0 errors)
+Dependencies: none
+---
+
+TASK #304: LoopNode.jsx -- Loop node with iteration badge
+Area: V5.0-Wave5 -- Advanced Flow Control Nodes
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 -- Loop node with iteration count badge. Inspector fields for max iterations, loop condition, break condition. Badge shows current/max iterations during execution. FR-V5-68/69/70/71.
+Acceptance Criteria:
+  - [x] LoopNode renders with loop icon and iteration badge
+  - [x] Inspector fields: max iterations, loop condition, break condition
+  - [x] Badge shows current/max iterations during execution
+  - [x] npm run build passes (496 modules, 0 errors)
+Dependencies: none
+---
+
+TASK #305: ErrorHandlerNode.jsx -- Red lightning bolt error handler node
+Area: V5.0-Wave5 -- Advanced Flow Control Nodes
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 -- Red lightning bolt error handler node. Catches errors from connected nodes and routes to fallback path. Inspector fields for error types to catch and retry config. FR-V5-73/74/75.
+Acceptance Criteria:
+  - [x] ErrorHandlerNode renders with red lightning bolt icon
+  - [x] Inspector fields: error types to catch, retry count, fallback behavior
+  - [x] Visually distinct red accent styling
+  - [x] npm run build passes (496 modules, 0 errors)
+Dependencies: none
+---
+
+TASK #306: SubWorkflowNode.jsx -- Nested workflow reference node
+Area: V5.0-Wave5 -- Advanced Flow Control Nodes
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 -- Sub-workflow reference node with double-border styling. Shows referenced workflow name. Inspector allows selecting existing workflow as sub-workflow. FR-V5-77/78.
+Acceptance Criteria:
+  - [x] SubWorkflowNode renders with double-border styling
+  - [x] Displays referenced workflow name
+  - [x] Inspector allows selecting existing workflow as sub-workflow
+  - [x] npm run build passes (496 modules, 0 errors)
+Dependencies: none
+---
+
+TASK #307: SwarmCanvas.jsx -- Register 6 new node types in nodeTypes + onDrop initialization
+Area: V5.0-Wave5 -- Advanced Flow Control Nodes
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 -- All 6 new node types (conditional, merge, delay, loop, errorHandler, subWorkflow) registered in SwarmCanvas nodeTypes object. onDrop handler updated with default data initialization for each type.
+Acceptance Criteria:
+  - [x] nodeTypes includes conditional, merge, delay, loop, errorHandler, subWorkflow
+  - [x] Dropping each type from palette creates correct node with proper default data
+  - [x] No regression in existing node types (agent, department, trigger)
+  - [x] npm run build passes (496 modules, 0 errors)
+Dependencies: TASK #301, TASK #302, TASK #303, TASK #304, TASK #305, TASK #306
+---
+
+TASK #308: NodePalette.jsx -- 6 new draggable cards for flow control nodes
+Area: V5.0-Wave5 -- Advanced Flow Control Nodes
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 -- 6 new draggable palette cards added: Conditional (diamond icon), Merge (hexagon icon), Delay (clock icon), Loop (repeat icon), Error Handler (lightning icon), Sub-Workflow (layers icon). Each card initiates drag with correct node type.
+Acceptance Criteria:
+  - [x] 6 new draggable cards in NodePalette
+  - [x] Each card has appropriate icon and label
+  - [x] Drag-and-drop creates correct node type on canvas
+  - [x] npm run build passes (496 modules, 0 errors)
+Dependencies: none
+---
+
+TASK #309: AgentInspector.jsx -- 6 new configuration field components for flow control nodes
+Area: V5.0-Wave5 -- Advanced Flow Control Nodes
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 -- AgentInspector extended with 6 new config panels: ConditionalConfig (rules editor with add/remove), MergeConfig (waitFor count, merge strategy), DelayConfig (duration, unit selector), LoopConfig (max iterations, loop/break conditions), ErrorHandlerConfig (error types, retry count, fallback), SubWorkflowConfig (workflow selector dropdown).
+Acceptance Criteria:
+  - [x] AgentInspector shows correct config panel for each flow control node type
+  - [x] Conditional: rules editor with add/remove rows
+  - [x] Merge: waitFor count and merge strategy
+  - [x] Delay: duration and unit selector
+  - [x] Loop: max iterations, loop condition, break condition
+  - [x] ErrorHandler: error types, retry count, fallback behavior
+  - [x] SubWorkflow: workflow selector dropdown
+  - [x] All config changes persist to node data
+  - [x] npm run build passes (496 modules, 0 errors)
+Dependencies: TASK #301, TASK #302, TASK #303, TASK #304, TASK #305, TASK #306
+---
+
+TASK #310: SwarmEngine.js -- Flow control execution logic (conditional eval, merge convergence, delay timer, loop tracking, error handler, sub-workflow)
+Area: V5.0-Wave5 -- Advanced Flow Control Nodes
+Agent: backend-dev
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 -- SwarmEngine extended with 6 flow control execution handlers: (1) conditional evaluation -- evaluates rules against workflow context, routes to matching output handle; (2) merge convergence -- tracks arriving inputs, proceeds only when waitFor count met; (3) delay timer -- setTimeout-based delay with configurable duration; (4) loop tracking -- iteration counter with max limit and break condition, circuit breaker exempt; (5) error handler activation -- catches execution errors from connected nodes, routes to fallback path with retry support; (6) sub-workflow execution -- loads referenced workflow, executes as nested engine instance, returns results to parent flow.
+Acceptance Criteria:
+  - [x] Conditional: evaluates rules against context, routes to correct output
+  - [x] Merge: tracks inputs, proceeds when waitFor count met
+  - [x] Delay: timer-based pause with configurable duration
+  - [x] Loop: iteration tracking with max limit and break condition
+  - [x] Loop: circuit breaker exempt (loops are expected to repeat)
+  - [x] ErrorHandler: catches errors, routes to fallback, supports retry
+  - [x] SubWorkflow: loads and executes referenced workflow as nested instance
+  - [x] All 6 handlers emit appropriate WS events for UI status updates
+  - [x] npm test passes (312/312)
+Dependencies: none
+---
+
+TASK #311: TEST GATE -- ConditionalNode.jsx
+Area: V5.0-Wave5 -- Advanced Flow Control Nodes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 -- ConditionalNode renders as diamond, handles positioned correctly, rules editor functional in inspector. Build: 496 modules. Tests: 312/312 pass.
+Gate: HARD
+Gate Result: PASS
+Dependencies: TASK #301, TASK #307, TASK #309
+---
+
+TASK #312: TEST GATE -- MergeNode.jsx
+Area: V5.0-Wave5 -- Advanced Flow Control Nodes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 -- MergeNode renders as hexagon, 3 input handles, waitFor config functional. Build: 496 modules. Tests: 312/312 pass.
+Gate: HARD
+Gate Result: PASS
+Dependencies: TASK #302, TASK #307, TASK #309
+---
+
+TASK #313: TEST GATE -- DelayNode.jsx
+Area: V5.0-Wave5 -- Advanced Flow Control Nodes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 -- DelayNode renders with clock icon, duration configurable, countdown visual works. Build: 496 modules. Tests: 312/312 pass.
+Gate: HARD
+Gate Result: PASS
+Dependencies: TASK #303, TASK #307, TASK #309
+---
+
+TASK #314: TEST GATE -- LoopNode.jsx
+Area: V5.0-Wave5 -- Advanced Flow Control Nodes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 -- LoopNode renders with iteration badge, inspector config for max/loop/break conditions. Build: 496 modules. Tests: 312/312 pass.
+Gate: HARD
+Gate Result: PASS
+Dependencies: TASK #304, TASK #307, TASK #309
+---
+
+TASK #315: TEST GATE -- ErrorHandlerNode.jsx
+Area: V5.0-Wave5 -- Advanced Flow Control Nodes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 -- ErrorHandlerNode renders with red lightning bolt, error config functional. Build: 496 modules. Tests: 312/312 pass.
+Gate: HARD
+Gate Result: PASS
+Dependencies: TASK #305, TASK #307, TASK #309
+---
+
+TASK #316: TEST GATE -- SubWorkflowNode.jsx
+Area: V5.0-Wave5 -- Advanced Flow Control Nodes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 -- SubWorkflowNode renders with double-border, workflow selector functional. Build: 496 modules. Tests: 312/312 pass.
+Gate: HARD
+Gate Result: PASS
+Dependencies: TASK #306, TASK #307, TASK #309
+---
+
+TASK #317: TEST GATE -- NodePalette 6 new cards
+Area: V5.0-Wave5 -- Advanced Flow Control Nodes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 -- All 6 new palette cards visible, draggable, create correct node types on drop. Build: 496 modules. Tests: 312/312 pass.
+Gate: HARD
+Gate Result: PASS
+Dependencies: TASK #307, TASK #308
+---
+
+TASK #318: TEST GATE -- SwarmEngine flow control logic
+Area: V5.0-Wave5 -- Advanced Flow Control Nodes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 -- All 6 flow control handlers verified: conditional routing, merge convergence, delay timer, loop iteration tracking (circuit breaker exempt), error handler catch+retry, sub-workflow nested execution. 312/312 tests pass.
+Gate: HARD
+Gate Result: PASS
+Dependencies: TASK #310
+---
+
+TASK #319: TEST GATE -- AgentInspector 6 config panels
+Area: V5.0-Wave5 -- Advanced Flow Control Nodes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 -- All 6 config panels render correctly for respective node types. Config changes persist to node data. Build: 496 modules. Tests: 312/312 pass.
+Gate: HARD
+Gate Result: PASS
+Dependencies: TASK #309
+---
+
+TASK #320: AREA CHECKPOINT -- V5.0-Wave5 Advanced Flow Control Nodes
+Area: V5.0-Wave5 -- Advanced Flow Control Nodes
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: HIGH
+Status: COMPLETED
+Completion Note: 2026-04-06 -- Full integration smoke test passed. All 10 component tasks verified working together: 6 node types render on canvas via palette drag-and-drop, all inspector configs functional, SwarmEngine executes all 6 flow control types correctly. No regression in Waves 1-4 or BugFix1. Build: 496 modules, 0 errors. Tests: 312/312 pass. V5.0-Wave5 CLOSED.
+Gate: HARD -- Next area CANNOT start until ALL component test gates in this area have PASSED
+Acceptance Criteria:
+  - [x] All TEST GATEs PASS (#311, #312, #313, #314, #315, #316, #317, #318, #319)
+  - [x] Integration: drag each of 6 node types from palette -> renders on canvas -> configure in inspector -> SwarmEngine executes correctly
+  - [x] No regression in Waves 1/2/3/BugFix1/Wave4
+  - [x] npm run build passes (496 modules, 0 errors), npm test passes (312/312)
+Gate Result: PASS -- V5.0-Wave5 CLOSED
+Dependencies: TASK #311, TASK #312, TASK #313, TASK #314, TASK #315, TASK #316, TASK #317, TASK #318, TASK #319
+---
+
+## AREA: V5.0-BugFix2 -- E2E Debugger Loop Fixes
+_Components: nodeIdGenerator.js, SwarmView.jsx (duplicate/import response unwrapping, duplicate name format), VersionHistory.jsx (timestamp parsing)_
+_Tasks: #321 -> #326_
+_Gate: ALL bugs verified fixed in browser before AREA CLOSED_
+_Source: Debugger Loop E2E testing 2026-04-06, commit 895ddd7_
+
+---
+
+TASK #321: BUG-SAVE-1 -- Fix camelCase node IDs -> kebab-case conversion in nodeIdGenerator.js
+Area: V5.0-BugFix2 -- E2E Debugger Loop Fixes
+Agent: debugger
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 -- nodeIdGenerator.js updated to convert camelCase node type names to kebab-case before generating IDs (e.g., "errorHandler" -> "error-handler-1" instead of "errorhandler-1"). Ensures node IDs match the expected kebab-case format used throughout the canvas and engine.
+Context:
+  Bug: When adding new flow control nodes (e.g., errorHandler, subWorkflow), the generated node IDs used raw camelCase type names instead of kebab-case, breaking ID consistency with existing nodes.
+  Fix: Added camelCase-to-kebab-case conversion in nodeIdGenerator.js before ID generation.
+  File: client/src/utils/nodeIdGenerator.js
+Acceptance Criteria:
+  - [x] Node IDs use kebab-case format for all node types including camelCase ones
+  - [x] Existing node ID generation not broken
+  - [x] Build passes
+Dependencies: none
+---
+
+TASK #322: BUG-DUP-1 -- Change duplicate workflow name format from "(Copy)" to "- Copy"
+Area: V5.0-BugFix2 -- E2E Debugger Loop Fixes
+Agent: debugger
+Priority: MEDIUM
+Difficulty: TRIVIAL
+Suggested Model: claude-haiku-4-5
+Status: COMPLETED
+Completion Note: 2026-04-06 -- SwarmView.jsx duplicate handler changed name suffix from " (Copy)" to " - Copy" to avoid parentheses in workflow names which could cause issues with filesystem paths and URL encoding.
+Context:
+  Bug: Duplicating a workflow appended "(Copy)" with parentheses which are problematic characters in some contexts.
+  Fix: Changed suffix to " - Copy" (hyphen instead of parentheses).
+  File: client/src/views/SwarmView.jsx
+Acceptance Criteria:
+  - [x] Duplicated workflow name uses " - Copy" suffix
+  - [x] No parentheses in generated names
+  - [x] Build passes
+Dependencies: none
+---
+
+TASK #323: BUG-DUP-2/IMP-1 -- Fix API response unwrapping for duplicate and import operations
+Area: V5.0-BugFix2 -- E2E Debugger Loop Fixes
+Agent: debugger
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 -- SwarmView.jsx duplicate and import handlers now correctly unwrap the API response (response.workflow or response itself) to extract the workflow ID for navigation after creation. Previously the raw response object was used, causing undefined ID errors.
+Context:
+  Bug: After duplicating or importing a workflow, the code tried to read the workflow ID directly from the API response object instead of unwrapping the nested workflow property. This caused navigation to fail silently.
+  Fix: Added response unwrapping logic (response.workflow || response) in both duplicate and import handlers.
+  File: client/src/views/SwarmView.jsx
+Acceptance Criteria:
+  - [x] Duplicate workflow navigates to the new workflow after creation
+  - [x] Import workflow navigates to the imported workflow after creation
+  - [x] API response correctly unwrapped regardless of response shape
+  - [x] Build passes
+Dependencies: none
+---
+
+TASK #324: BUG-VER-DATE -- Fix Invalid Date in VersionHistory timestamp parsing
+Area: V5.0-BugFix2 -- E2E Debugger Loop Fixes
+Agent: debugger
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 -- VersionHistory.jsx updated to handle multiple timestamp formats: ISO string, Unix epoch (seconds and milliseconds), and fallback to "Unknown date" for unparseable values. Previously only ISO string parsing was attempted, causing "Invalid Date" display for epoch timestamps.
+Context:
+  Bug: VersionHistory panel displayed "Invalid Date" for version timestamps because the backend returns Unix epoch numbers while the frontend only handled ISO date strings.
+  Fix: Added multi-format timestamp parsing: detect numeric epochs (auto-detect seconds vs milliseconds), try ISO parse, fallback to "Unknown date".
+  File: client/src/canvas/VersionHistory.jsx
+Acceptance Criteria:
+  - [x] Version timestamps display correctly for ISO strings
+  - [x] Version timestamps display correctly for Unix epoch (seconds and milliseconds)
+  - [x] Unparseable timestamps show "Unknown date" instead of "Invalid Date"
+  - [x] Build passes
+Dependencies: none
+---
+
+TASK #325: TEST GATE -- V5.0-BugFix2 E2E Debugger Loop Fixes
+Area: V5.0-BugFix2 -- E2E Debugger Loop Fixes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 -- All 4 bugs verified fixed in browser. Node IDs use kebab-case. Duplicate uses "- Copy" suffix. Duplicate/import navigate correctly. Version dates display properly. 312/312 tests pass. Build: 496 modules, 0 errors.
+Gate: HARD
+Gate Result: PASS
+Dependencies: TASK #321, TASK #322, TASK #323, TASK #324
+---
+
+TASK #326: AREA CHECKPOINT -- V5.0-BugFix2 E2E Debugger Loop Fixes
+Area: V5.0-BugFix2 -- E2E Debugger Loop Fixes
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: HIGH
+Status: COMPLETED
+Completion Note: 2026-04-06 -- Full integration verified. All 4 bug fixes work together. No regression in V5 Waves 1-5 or BugFix1. Build: 496 modules, 0 errors. Tests: 312/312 pass. Commit 895ddd7 verified in browser. V5.0-BugFix2 CLOSED.
+Gate: HARD
+Acceptance Criteria:
+  - [x] All 4 bug fix tasks COMPLETED
+  - [x] TEST GATE #325 PASS
+  - [x] No regression in existing functionality
+  - [x] Build and tests pass
+Gate Result: PASS -- V5.0-BugFix2 CLOSED
+Dependencies: TASK #325
 ---

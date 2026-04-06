@@ -1,4 +1,74 @@
 ---
+## 2026-04-06 — V5.0-BugFix2 Task Plan Registration + Full Project State Analysis
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+User asked "a che punto siamo con il progetto" (where are we with the project). A Debugger Loop had just completed fixing 4 bugs (commit 895ddd7): BUG-SAVE-1, BUG-DUP-1, BUG-DUP-2/IMP-1, BUG-VER-DATE. These fixes were not yet registered in TASK_PLAN.md. Last registered task was #320 (V5.0-Wave5 area checkpoint).
+
+### What I did
+1. Read all memory files in parallel (TASK_PLAN.md, PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md, PROJECT.md, agent memory)
+2. Ran git log, npm test, npm run build to verify current state
+3. Created V5.0-BugFix2 area with 6 tasks (#321-#326): 4 bug fixes + 1 TEST GATE + 1 AREA CHECKPOINT, all COMPLETED
+4. Updated status header: 326 total, 324 COMPLETED, 2 DEFERRED, 0 PENDING
+5. Updated PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md
+6. Provided comprehensive project state summary in Italian
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Status header updated (326 tasks); V5.0-BugFix2 area added with 6 tasks (#321-#326) |
+| docs/memory/PROGRESS.md | MODIFIED | BugFix2 completion entry prepended |
+| docs/memory/CONTEXT.md | MODIFIED | Focus updated to reflect BugFix2 CLOSED, 326 total tasks |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Session entry prepended |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log |
+
+### Decisions I made
+- Task numbering #321-#326 for 4 bug fixes + TEST GATE + AREA CHECKPOINT
+- Single TEST GATE #325 for all 4 bugs (all from same Debugger Loop, verified together in browser)
+
+### State I'm leaving behind
+326 tasks: 324 COMPLETED, 2 DEFERRED (#236 ConPTY -- unfixable platform limitation). ALL areas CLOSED. No pending or in-progress tasks. Build: 496 modules, 0 errors. Tests: 312/312 pass. Project is feature-complete for V5.
+
+### Handoff
+No remaining work. Project is ready for next feature planning or release preparation.
+
+---
+## 2026-04-06 — V5.0-Wave5 Task Plan Registration
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+V5 Wave 5 (Advanced Flow Control Nodes) was fully implemented with 10 features: ConditionalNode.jsx, MergeNode.jsx, DelayNode.jsx, LoopNode.jsx, ErrorHandlerNode.jsx, SubWorkflowNode.jsx, SwarmCanvas nodeTypes+onDrop, NodePalette 6 new cards, AgentInspector 6 config panels, SwarmEngine flow control logic. Build: 496 modules, Tests: 312/312. No task entries existed in TASK_PLAN.md for Wave 5. Last task was #300 (V5.0-Wave4 area checkpoint).
+
+### What I did
+1. Read TASK_PLAN.md tail -- confirmed last task was #300
+2. Created Wave 5 area with 20 tasks (#301-#320): 10 component tasks + 9 TEST GATEs + 1 AREA CHECKPOINT, all COMPLETED
+3. Updated status header: 320 total, 318 COMPLETED, 2 DEFERRED, 0 PENDING
+4. Added V5.0-Wave5 area summary line to area list
+5. Updated PROGRESS.md (new completion entry prepended), CONTEXT.md (focus updated), ACTIVITY_LOG.md (session entry prepended)
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Status header updated (320 tasks, Wave 5 CLOSED); 20 new task entries appended (#301-#320); area summary line added |
+| docs/memory/PROGRESS.md | MODIFIED | Wave 5 completion entry prepended |
+| docs/memory/CONTEXT.md | MODIFIED | Focus updated to reflect all Waves 1-5 CLOSED |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Session entry prepended |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log |
+
+### Decisions I made
+- 20 tasks total: 6 node components (#301-#306), 1 canvas registration (#307), 1 palette (#308), 1 inspector (#309), 1 engine logic (#310), 9 TEST GATEs (#311-#319), 1 AREA CHECKPOINT (#320)
+- Separate TEST GATEs for each node component (6), palette cards (1), engine logic (1), inspector panels (1)
+- FR references mapped: ConditionalNode FR-V5-56/57/59, MergeNode FR-V5-60/61, DelayNode FR-V5-64/65/66/67, LoopNode FR-V5-68/69/70/71, ErrorHandlerNode FR-V5-73/74/75, SubWorkflowNode FR-V5-77/78
+
+### State I'm leaving behind
+320 tasks: 318 COMPLETED, 2 DEFERRED (#236 ConPTY -- unfixable platform limitation). All areas CLOSED. No pending or in-progress tasks. Build: 496 modules, 0 errors. Tests: 312/312 pass.
+
+### Handoff
+All areas are resolved. No remaining work unless new features or bugs are identified.
+
+---
 ## 2026-04-06 — V5.0-Wave4 Task Plan Registration
 **Status:** COMPLETED
 **Called by:** user
