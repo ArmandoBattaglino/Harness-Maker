@@ -1,3 +1,14 @@
+## 2026-04-06 — architect — Analysis: PTY/Terminal Output Data Flow Map
+**Outcome:** COMPLETED
+**Summary:** Mapped the complete data flow from node-pty spawn through SessionManager, SwarmEngine tapFn, HandoffParser, _buildSemanticSnippet (120+ noise regex filters), WS broadcast, Zustand store, to AgentNode/AgentInspector/PtyExplosion rendering. Identified 10 stages, catalogued what data is available and lost at each stage, mapped all 13 WS event types, and identified 4 candidate insertion points for future chat message extraction (recommended Point A: inside tapFn after echo gate, before snippet pipeline).
+**Files changed:** docs/memory/agents/architect.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (pure analysis)
+**Decisions made:** Recommended Point A as best chat message extraction insertion point
+**Blockers:** none
+**Next:** If chat message extraction is requested, architect should produce a design document for the feature.
+
+---
+
 ## 2026-04-06 — project-manager — V5.0-BugFix2 Task Plan Registration + Project State Analysis
 **Outcome:** COMPLETED
 **Summary:** Registered V5.0-BugFix2 area (E2E Debugger Loop Fixes) in TASK_PLAN.md. 6 tasks (#321-#326): 4 bug fixes + 1 TEST GATE + 1 AREA CHECKPOINT, all COMPLETED. Bugs fixed: BUG-SAVE-1 (node ID kebab-case), BUG-DUP-1 (duplicate name format), BUG-DUP-2/IMP-1 (API response unwrapping), BUG-VER-DATE (version timestamp parsing). Updated status header: 326 tasks total, 324 COMPLETED, 2 DEFERRED, 0 PENDING. V5.0-BugFix2 AREA CLOSED. Provided full project state analysis in Italian.
