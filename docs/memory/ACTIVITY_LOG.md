@@ -1,3 +1,14 @@
+## 2026-04-06 — code-mapper — V5 PRD Addendum: Code Map + Changelog Update
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md with full V5 Planned Architecture section (16 planned client files, 3 planned server files, 9 existing files to be modified, 8 new data models, 8 new API endpoints, 5 security requirements, 5 pending decisions). Updated CHANGELOG.md with detailed planning milestone entry. No code was written — this is a PRD/planning mapping task only.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** Architect needs to make DEC-027/028/029 decisions before Wave 5 can be planned in detail. Task planning for V5 waves can begin.
+
+---
+
 ## 2026-04-06 — debugger — Task #255: BUG-SNIPPET-INIT-1 — Filter system prompt text from initial agent snippet display
 **Outcome:** COMPLETED
 **Summary:** Wrapped snippet update in SwarmEngine.js tapFn inside `if (!currentState.ignoreParserUntil)` guard so echoed system prompt text is suppressed from agent card display during echo gate period. Updated 8 tests to clear echo gate before testing snippet content. 312/312 tests pass, client build clean.

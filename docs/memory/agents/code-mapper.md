@@ -1,4 +1,51 @@
 ---
+## 2026-04-06 — V5 PRD Addendum: N8N-Style Visual Workflow Editor (Planning Milestone)
+**Status:** COMPLETED
+**Called by:** user (post-planning code mapping request)
+
+### Context when I started
+PRD (docs/PRD.md) was updated with a major V5 addendum adding 81 functional requirements for an N8N-style visual workflow editor across 5 implementation waves. No code files were modified — this is purely a planning/design update. The existing codebase is at V3.4/V4 with 253 tasks, 242 completed.
+
+### What I did
+1. Read CODE_MAP.md header + Module Index + tail (Bug Registry), CHANGELOG.md header + tail, agent log, PROJECT.md, CONTEXT.md.
+2. Read the full V5 PRD addendum (docs/PRD.md lines 1322-1857) — 81 FRs, 5 waves, data models, API endpoints, architecture changes, security requirements.
+3. Updated CODE_MAP.md: (a) header timestamp, (b) PRD Module Index entry to reflect V5 addendum, (c) added complete "V5 Planned Architecture" section at end with tables for: 16 planned new client files, 3 planned new server files, 9 planned modifications to existing files, 8 new data models, 8 new API endpoints, 5 security requirements, 5 pending decisions.
+4. Prepended CHANGELOG.md with detailed planning milestone entry covering all 5 waves, planned files, existing file modifications, and impact analysis (BREAKING change on AgentInspector.jsx noted).
+5. Appended ACTIVITY_LOG.md and this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Updated header, PRD module index entry, added V5 Planned Architecture section (~100 lines) |
+| docs/memory/CHANGELOG.md | MODIFIED | Prepended V5 PRD planning milestone entry (~60 lines) |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Entry prepended |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log prepended |
+
+### Improvements delivered
+- CODE_MAP.md now contains a complete map of all planned V5 files, their connections to existing code, and expected modifications
+- CHANGELOG.md documents the planning milestone with full impact analysis
+- AgentInspector.jsx BREAKING interface change flagged for all future implementers
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- None (mapping only).
+
+### What I learned
+- V5 is the largest planned expansion yet: 16 new client files, 3 new server files, 9 existing files modified
+- AgentInspector.jsx read-only → edit panel is the highest-impact breaking change
+- Wave 5 (advanced flow control) requires 3 architectural decisions (DEC-027/028/029) before implementation
+- CircuitBreaker.js needs loop-awareness for FR-V5-72 (loop edges exempt from false triggering)
+- Sub-workflow execution (FR-V5-77-81) is the most complex feature — nested PTY sessions, circular reference prevention, shared budget pools
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md fully up to date through V5 PRD addendum. V5 Planned Architecture section provides complete forward-looking map. No code was written.
+
+### Handoff
+Architect needs DEC-027/028/029 before Wave 5 tasks can be fully specified. Project-manager should create task plan for V5 waves. All connection points between planned V5 files and existing code are documented in CODE_MAP.md.
+
+---
 ## 2026-04-06 — Tasks #233, #242, #148: BUG-WF-2 + BUG-SWARM-UI-1 + V3.4 AREA CHECKPOINT
 **Status:** COMPLETED
 **Called by:** user (post-task code mapping request)
