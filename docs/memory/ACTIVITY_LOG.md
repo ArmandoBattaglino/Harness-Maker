@@ -1,3 +1,25 @@
+## 2026-04-06 — creative-director — Phase 0: N8N-style Swarm Editor Creative/Product Analysis
+**Outcome:** COMPLETED
+**Summary:** Analyzed all gaps between current Swarm canvas (viewer/runner) and full N8N-style editor. Produced 37-feature inventory across 8 categories (Node Creation, Node Config, Edge Config, Workflow Config, Workflow Management, Canvas UX, Advanced Flow Control, Execution Visibility). Prioritized into MUST HAVE (8), SHOULD HAVE (17), NICE TO HAVE (12). Built dependency graph and 5-wave implementation plan. Wave 1 (Save, Name Edit, Editable Prompt, Label Edit, Node Delete, Edge Delete, Undo/Redo, Context Menu) is the phase transition from viewer to editor.
+**Files changed:** docs/memory/agents/creative-director.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** Save Button is highest priority (without persistence all editing is useless); Undo/Redo must ship same wave as deletion; Advanced flow control nodes deferred to Wave 5 despite being flashiest N8N features
+**Blockers:** none
+**Next:** Project-manager should create implementation tasks for Wave 1 (8 MUST HAVE features)
+
+---
+
+## 2026-04-06 — documenter — Tasks #245-#248: V6.0 Runtime Deep Test Bug Fixes documentation audit
+**Outcome:** COMPLETED
+**Summary:** Audited all project docs after V6.0 Wave A (#245-#247 SwarmEngine.js) and Wave B (#248 PromptToFlowBar.jsx). All changes are internal snippet filtering logic and client-side validation — no external API, architecture, config, or env var changes. All docs remain UP_TO_DATE. Updated DOC_STATUS.md with V6.0 section and refreshed inline comments status.
+**Files changed:** docs/memory/DOC_STATUS.md (V6.0 section added, inline comments row refreshed), docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none
+**Decisions made:** none — no doc changes needed for internal filtering improvements
+**Blockers:** none
+**Next:** TEST GATES #249-#252 and AREA CHECKPOINT #253 will need doc audit when completed
+
+---
+
 ## 2026-04-06 — tech-lead — Phase 0: N8N-style Swarm Editor Technical Feasibility
 **Outcome:** COMPLETED
 **Summary:** Analyzed 9 feature categories (node palette, inline editing, edge config, save/update, settings panel, advanced flow control nodes, undo/redo, export/import, validation) for technical feasibility. Features A-E, G-I are FEASIBLE with S-M complexity. Features F1 (Conditional), F2 (Merge/Join), F4 (Loop) are COMPLEX and require DEC decisions. F5 (Sub-workflow) is XL complexity. Identified 5 critical risks including NODE_ID_REGEX validation, React Flow internal field persistence, useWorkflow.update() return bug, execution snapshot timing, and CircuitBreaker/loop conflict.

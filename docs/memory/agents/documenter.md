@@ -1,4 +1,44 @@
 ---
+## 2026-04-06 — Tasks #245-#248: V6.0 Runtime Deep Test Bug Fixes doc audit
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel post-task documentation update)
+
+### Context when I started
+V6.0 Runtime Deep Test Bug Fixes: Wave A (#245-#247, SwarmEngine.js) and Wave B (#248, PromptToFlowBar.jsx) just completed. Four LOW bugs fixed: thinking token collapse, Codex auth ANSI filter, Gemini system prompt echo filter, empty prompt validation. TEST GATES #249-#252 and AREA CHECKPOINT #253 still pending.
+
+### What I did
+1. Read all modified files: SwarmEngine.js (lines 52-162 noise patterns, lines 518-541 _refreshAgentSnippet, lines 970-988 _snippetOverlapsPrompt, lines 1179-1181 thinking collapse), PromptToFlowBar.jsx (full file, 104 lines)
+2. Read DOC_STATUS.md, README.md, API.md, ARCHITECTURE.md (sampled), PROGRESS.md, CONTEXT.md
+3. Audited all docs against the changes: all are internal filtering logic and client-side validation — no external surface area changed
+4. Updated DOC_STATUS.md: added V6.0 section with per-task detail table, refreshed inline comments health row
+5. Updated ACTIVITY_LOG.md and this agent log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Added V6.0 section documenting tasks #245-#248 impact; refreshed inline comments row |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended V6.0 doc audit entry |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- DOC_STATUS.md now tracks V6.0 changes with per-task granularity
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- No README/ARCHITECTURE/API updates needed: all V6.0 changes are internal filtering logic (SNIPPET_NOISE_LINE_PATTERNS additions, regex collapse, word-overlap prompt detection, client-side validation). The `lastOutputSnippet` WS field contract and all endpoint signatures are unchanged.
+
+### What I learned
+- `_snippetOverlapsPrompt()` is a new reusable method (Task #247) that detects when ANY provider echoes the system prompt. It works at word-level with >60% overlap threshold. This is provider-agnostic, not Gemini-specific — though Gemini was the trigger.
+
+### State I'm leaving behind
+All docs UP_TO_DATE. DOC_STATUS.md reflects V6.0 state. TEST GATES #249-#252 and AREA CHECKPOINT #253 will need a follow-up audit when completed, but are unlikely to change docs (they are verification tasks).
+
+### Handoff
+None — doc audit complete for this wave. Next audit after TEST GATES complete.
+
+---
 ## 2026-04-06 -- Wave 4 — #202 PASS, #203 COMPLETED (no code). V4.0.4 nearly closed.
 **Status:** COMPLETED
 **Called by:** orchestrator (parallel post-task documentation update)

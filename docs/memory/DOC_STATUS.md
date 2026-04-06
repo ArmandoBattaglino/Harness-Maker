@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-06 after Tasks #233, #242, #148 — final post-fix trio. All areas V3.1 through V5.2 are now CLOSED._
+_Last updated: 2026-04-06 after Tasks #245-#248 — V6.0 Runtime Deep Test Bug Fixes (Wave A + Wave B). Snippet fidelity and UX improvements._
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**
@@ -56,7 +56,7 @@ _Last updated: 2026-04-06 after Tasks #233, #242, #148 — final post-fix trio. 
 | docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-06 | V5.0 Phase 1 deep test entry appended by documenter. |
 | docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-04-06 | V1 audit. SEC-06 entry updated with webhook CSRF exemption note (Task #234). |
 | docs/security-v3-audit.md | UP_TO_DATE | 2026-04-06 | MEDIUM-V3-01 marked FIXED (Task #234). Summary table updated. |
-| Inline comments | UP_TO_DATE | 2026-04-06 | SessionManager.js REPLAY_NOISE_LINE_PATTERNS array extended with 3 done-token recovery patterns (Task #233) — group comment on lines 65-68 is accurate and self-documenting. SwarmView.jsx dedup logic (Task #242) has clear inline comment. No stale comments. |
+| Inline comments | UP_TO_DATE | 2026-04-06 | V6.0: SwarmEngine.js thinking collapse (line 1179-1180) has clear inline comment. `_snippetOverlapsPrompt()` (line 973-988) has JSDoc. SNIPPET_NOISE_LINE_PATTERNS auth/thinking entries (lines 123, 153-161) are self-documenting regexes. PromptToFlowBar.jsx empty prompt validation is straightforward. No stale comments. |
 | docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. Deferred indefinitely. |
 
 ## Stale Sections (known gaps)
@@ -179,6 +179,19 @@ Three tasks completed. Two modified source code, one was verification-only. All 
 | #148 | AREA CHECKPOINT | V3.4 — Swarm UX Deep Test | PASS (15/15, 3 skipped) | No — Puppeteer E2E verification only |
 
 **Documentation impact:** No README, ARCHITECTURE, API, or PRD changes needed. Task #233 is internal filtering logic within an existing function. Task #242 is a UI bug fix with no new APIs or config. Task #148 is verification-only. Inline comments in both modified files are accurate.
+
+## V6.0 Runtime Deep Test Bug Fixes — Tasks #245-#248 (2026-04-06)
+
+Wave A (#245-#247, SwarmEngine.js) and Wave B (#248, PromptToFlowBar.jsx) completed. All changes are internal logic — no new endpoints, components, config, or env vars.
+
+| Task | Type | File | Change Summary | Doc Impact |
+|------|------|------|----------------|------------|
+| #245 | BUG FIX | SwarmEngine.js | Collapse repeated "(thinking)" tokens in `_buildSemanticSnippet()` via regex replace; added `/(thinking)(thinking))*$/i` to SNIPPET_NOISE_LINE_PATTERNS | None — internal snippet filtering |
+| #246 | BUG FIX | SwarmEngine.js | Added Codex auth prompt ANSI patterns to SNIPPET_NOISE_LINE_PATTERNS (`/codex auth/i`, `/openai api/i`, `/authentication required/i`, etc.) | None — internal snippet filtering |
+| #247 | BUG FIX | SwarmEngine.js | Added `_snippetOverlapsPrompt()` method for word-level overlap detection (>60%); integrated into `_refreshAgentSnippet()` to filter Gemini system prompt echoes | None — internal snippet filtering |
+| #248 | BUG FIX | PromptToFlowBar.jsx | Added `promptError` state + empty prompt inline validation with red border feedback before fetch | None — client-side UX guard, no API change |
+
+**Documentation impact:** None. All changes are internal filtering logic and client validation. No README, ARCHITECTURE, API, or PRD updates needed. Inline comments in modified files are accurate and self-documenting. TEST GATES #249-#252 and AREA CHECKPOINT #253 are pending.
 
 ## Documentation Debt
 

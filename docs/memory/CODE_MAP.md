@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-06 — after Tasks #233, #242, #148 (BUG-WF-2 done-token replay noise, BUG-SWARM-UI-1 duplicate workflows, V3.4 AREA CHECKPOINT) — mapped by code-mapper_
+_Last updated: 2026-04-06 — after Tasks #245-#248 (thinking token collapse, Codex auth filter, Gemini prompt echo filter, empty prompt validation) — mapped by code-mapper_
 
 > **V3.4/V3.5 SWARM RUNTIME STATUS: IN PROGRESS**
 > TASK #145 (BUG-UX-HANDOFF-1) partially addressed: prompt examples templated with `<targetId>` to prevent fake handoffs from PTY redraw (DEC-023); Codex model-selection and rate-limit menus auto-dismissed; hard usage-limit now takes precedence over soft `Approaching rate limits` chooser (DEC-024). 83/83 server tests pass. Build: 479 modules. Live handoff proof still pending — no provider has completed a real multi-agent chain yet.
@@ -2659,13 +2659,13 @@ _Last updated: 2026-04-06 — after Tasks #233, #242, #148 (BUG-WF-2 done-token 
 ## SwarmEngine Snippet Pipeline (first mapped 2026-04-06 — Tasks #231)
 
 ### `server/services/SwarmEngine.js` :: `SNIPPET_NOISE_LINE_PATTERNS` (module-level const)
-- **Purpose:** Array of regex patterns that identify "noise" lines in PTY output that should be excluded from the semantic snippet shown in the UI. Covers: swarm protocol headers/footers, CLI UI chrome (menus, prompts, shortcuts, status lines), provider-specific noise (model selectors, rate limit messages, Gemini CLI banners), prompt injection artifacts (thinking effort, version strings), and swarm preamble lines (agent role declarations, task descriptions, workflow goals).
+- **Purpose:** Array of regex patterns that identify "noise" lines in PTY output that should be excluded from the semantic snippet shown in the UI. Covers: swarm protocol headers/footers, CLI UI chrome (menus, prompts, shortcuts, status lines), provider-specific noise (model selectors, rate limit messages, Gemini CLI banners), prompt injection artifacts (thinking effort, version strings), swarm preamble lines (agent role declarations, task descriptions, workflow goals), collapsed thinking tokens (`(thinking)(thinking)*`), Codex/OpenAI auth noise (`api.?key`, `codex auth`, `openai api`, `unauthorized`, `invalid.*token`, `sign.?in|log.?in`, `authentication required`, `enter your.*key`), and Gemini prompt echo patterns (covered by `_snippetOverlapsPrompt` word-level check).
 - **Called by:** `SwarmEngine._isSnippetNoiseLine()` — tested via `.some(pattern => pattern.test(normalized))`
 - **Calls:** N/A (data constant — array of RegExp)
 - **Inputs:** N/A
 - **Output:** RegExp[]
 - **Side effects:** none
-- **Last modified:** 2026-04-06 in Task #231 by debugger (BUG-WF-1: added 13 new patterns at lines 137-149 for swarm protocol preamble filtering — agent role declarations, task descriptions, workflow goals, SWARM INPUT markers)
+- **Last modified:** 2026-04-06 in Tasks #245-#246 by debugger (Task #245: added `/^\(thinking\)(\(thinking\))*$/i` for collapsed thinking tokens; Task #246: added 8 patterns for Codex/OpenAI auth noise — `api.?key`, `enter your.*key`, `authentication required`, `sign.?in|log.?in`, `codex auth`, `openai api`, `unauthorized[:\s]`, `invalid.*token`)
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine._stripSnippetProtocolArtifacts(rawText)`
 - **Purpose:** Remove large multi-line protocol blocks from raw PTY output before snippet extraction. Strips: (1) `--- SWARM PROTOCOL ... END PROTOCOL ---` blocks, (2) `--- SWARM INPUT ... END SWARM INPUT ---` blocks (added Task #231), (3) handoff/done token instruction paragraphs. All replacements collapse to `\n`.
@@ -2686,13 +2686,32 @@ _Last updated: 2026-04-06 — after Tasks #233, #242, #148 (BUG-WF-2 done-token 
 - **Last modified:** 2026-04-06 in Task #231 by debugger (indirectly affected — consumes SNIPPET_NOISE_LINE_PATTERNS which gained 13 new patterns)
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine._buildSemanticSnippet(rawText)`
-- **Purpose:** Main snippet extraction pipeline. Sanitizes input via `_stripSnippetProtocolArtifacts` + `_normalizeParserChunk`, splits into lines, normalizes each line via `_normalizeSnippetLine`, groups into blocks (separated by blank lines), scores each block via `_scoreSnippetBlock`, filters noise lines via `_isSnippetNoiseLine`, and returns the highest-scoring block as the snippet to display in the UI.
-- **Called by:** SwarmEngine._spawnAgentPty tapFn (via the PTY output handler closure that feeds chunks to the snippet pipeline)
-- **Calls:** `SwarmEngine._stripSnippetProtocolArtifacts()`, `SwarmEngine._normalizeParserChunk()`, `SwarmEngine._normalizeSnippetLine()`, `SwarmEngine._isSnippetNoiseLine()`, `SwarmEngine._isSnippetRecoveryLine()`, `SwarmEngine._scoreSnippetBlock()`
+- **Purpose:** Main snippet extraction pipeline. Sanitizes input via `_stripSnippetProtocolArtifacts` + `_normalizeParserChunk`, splits into lines, normalizes each line via `_normalizeSnippetLine`, groups into blocks (separated by blank lines), scores each block via `_scoreSnippetBlock`, filters noise lines via `_isSnippetNoiseLine`, and returns the highest-scoring block as the snippet to display in the UI. Post-processing in `_refreshAgentSnippet` applies prompt-overlap detection via `_snippetOverlapsPrompt` to discard snippets that are echoes of the agent's system prompt.
+- **Called by:** `SwarmEngine._refreshAgentSnippet()` (line 523, 529), `SwarmEngine._spawnAgentPty` tapFn (line 2126), swarm status serializer (line 2600)
+- **Calls:** `SwarmEngine._stripSnippetProtocolArtifacts()`, `SwarmEngine._normalizeParserChunk()`, `SwarmEngine._normalizeSnippetLine()`, `SwarmEngine._isSnippetNoiseLine()`, `SwarmEngine._isSnippetRecoveryLine()`, `SwarmEngine._scoreSnippetBlock()`, `SwarmEngine._buildStructuredFactSnippet()`, `SwarmEngine._decompressConPTYSpaces()`, `SwarmEngine._buildRecoverySnippet()`
 - **Inputs:** rawText (string — raw PTY output buffer, default '')
 - **Output:** string — best semantic snippet extracted from the PTY output
 - **Side effects:** none (pure function)
-- **Last modified:** 2026-04-06 — first mapped (function existed since earlier tasks; mapped now because Tasks #231 modified its dependencies)
+- **Last modified:** 2026-04-06 in Tasks #245-#247 — callers updated: _refreshAgentSnippet now wraps this with prompt-overlap post-processing (Task #247)
+
+### `server/services/SwarmEngine.js` :: `SwarmEngine._refreshAgentSnippet(state, { preferSessionReplay })`
+- **Purpose:** Orchestrator for snippet refresh. Reads snippet source from session replay or _snippetSourceBuffer, calls `_buildSemanticSnippet`, then applies prompt-overlap detection (`_snippetOverlapsPrompt`). If the snippet matches the agent's system prompt (>60% word overlap), strips that text and rebuilds. Updates `state.lastOutputSnippet`.
+- **Called by:** SwarmEngine.getStatus (line 880), SwarmEngine._spawnAgentPty onData handler (line 3121)
+- **Calls:** `SwarmEngine._readAgentSessionReplay()`, `SwarmEngine._buildSemanticSnippet()`, `SwarmEngine._snippetOverlapsPrompt()`
+- **Inputs:** state (agent state object, default null), options.preferSessionReplay (boolean — true when agent not running)
+- **Output:** string — the final snippet stored in state.lastOutputSnippet
+- **Side effects:** mutates state.lastOutputSnippet, conditionally mutates state._snippetSourceBuffer
+- **Last modified:** 2026-04-06 in Task #247 by debugger (added prompt-overlap check: calls _snippetOverlapsPrompt, rebuilds snippet without echoed text if overlap > 60%)
+
+### `server/services/SwarmEngine.js` :: `SwarmEngine._snippetOverlapsPrompt(snippet, systemPrompt)`
+- **Purpose:** Detects whether a snippet is substantially a copy of the agent's system prompt (i.e., the CLI echoed the prompt back). Normalizes both texts to lowercase alphanumeric words, counts how many snippet words appear in the prompt, returns true if overlap exceeds 60%. This catches Gemini and other providers echoing the system prompt as output.
+- **Called by:** `SwarmEngine._refreshAgentSnippet()` (line 528)
+- **Calls:** String methods only (toLowerCase, replace, split, filter, includes)
+- **Inputs:** snippet (string — candidate snippet text), systemPrompt (string — the agent's injected system prompt)
+- **Output:** boolean — true if >60% word-level overlap (prompt echo detected)
+- **Side effects:** none (pure function)
+- **Complexity note:** Uses word-level bag overlap rather than substring match to handle reordered or partially echoed prompts. Threshold is 0.6 (60%). Snippets with fewer than 4 words are never flagged as overlapping.
+- **Last modified:** 2026-04-06 in Task #247 by debugger (new method — Gemini prompt echo filter)
 
 ---
 
