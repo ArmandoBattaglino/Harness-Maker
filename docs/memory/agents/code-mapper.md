@@ -1,4 +1,48 @@
 ---
+## 2026-04-06 — Wave 3: Tasks #200, #201, #223
+**Status:** COMPLETED
+**Called by:** user (post-wave code mapping request)
+
+### Context when I started
+Wave 3 completed: #200 TEST GATE PASS, #223 AREA CHECKPOINT V4.5 PASS (V4.5 CLOSED), #201 COMPLETED. Only code change was in server/services/SessionManager.js — enhanced sanitizeReplayOutput with content-level filtering. CODE_MAP.md had no prior entry for sanitizeReplayOutput or stripAnsiForMatching.
+
+### What I did
+1. Read CODE_MAP.md, CHANGELOG.md, ACTIVITY_LOG.md, agent session log.
+2. Read SessionManager.js to analyze the enhanced sanitizeReplayOutput function (lines 29-125): 30+ REPLAY_NOISE_LINE_PATTERNS, stripAnsiForMatching helper, two-phase sanitization, protocol block stripping, corruption tail detection.
+3. Grep'd for callers of sanitizeReplayOutput — only called in attachClient (line 284).
+4. Updated CODE_MAP.md: header timestamp, SessionManager module index description, updated attachClient entry (now calls sanitizeReplayOutput), added 3 new function entries (sanitizeReplayOutput, stripAnsiForMatching, REPLAY_NOISE_LINE_PATTERNS).
+5. Prepended CHANGELOG.md with Wave 3 summary (3-task table + detailed SessionManager.js change description).
+6. Prepended ACTIVITY_LOG.md entry.
+7. Appended this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header updated, SessionManager module index expanded, 3 new function entries added, attachClient entry updated |
+| docs/memory/CHANGELOG.md | MODIFIED | Wave 3 summary entry prepended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Wave 3 entry prepended |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log |
+
+### Improvements delivered
+- CODE_MAP.md now documents the full replay sanitization pipeline (sanitizeReplayOutput -> stripAnsiForMatching -> REPLAY_NOISE_LINE_PATTERNS)
+- attachClient entry updated to reflect it now calls sanitizeReplayOutput instead of raw buffer send
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+None.
+
+### What I learned
+- sanitizeReplayOutput intentionally duplicates noise patterns from SwarmEngine rather than importing them, to avoid cross-module dependency between SessionManager and SwarmEngine
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md current through Wave 3. All 3 new SessionManager functions mapped. V4.5 AREA CLOSED.
+
+### Handoff
+None — bookkeeping task fully self-contained.
+
+---
 ## 2026-04-06 — Verification Wave 2: Tasks #187, #199, #217, #222
 **Status:** COMPLETED
 **Called by:** user (direct request to append CHANGELOG entry for wave 2 completion)

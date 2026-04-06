@@ -1,3 +1,14 @@
+## 2026-04-06 — code-mapper — Wave 3 (Tasks #200, #201, #223)
+**Outcome:** COMPLETED
+**Summary:** Mapped Wave 3 changes: Task #201 enhanced sanitizeReplayOutput in SessionManager.js with 30+ noise patterns, protocol block stripping, corruption tail detection. Added 3 new function entries to CODE_MAP.md (sanitizeReplayOutput, stripAnsiForMatching, REPLAY_NOISE_LINE_PATTERNS). Updated attachClient entry. Appended CHANGELOG.md wave summary. #200 TEST GATE PASS, #223 V4.5 AREA CLOSED.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** Next wave tasks as determined by project-manager
+
+---
+
 ## 2026-04-06 — documenter — Wave 3 DOC_STATUS update (#200, #223, #201)
 **Outcome:** COMPLETED
 **Summary:** Updated DOC_STATUS.md with Wave 3 results. V4.5 area confirmed CLOSED via #223 AREA CHECKPOINT PASS. Task #201 (BUG-PTY-REPLAY-CONTAMINATION-1) added to Fixed Bugs table -- only code change in this wave (SessionManager.js sanitizeReplayOutput enhanced). All existing docs (README, ARCHITECTURE, API) remain accurate -- internal function enhancement only.
@@ -3415,4 +3426,15 @@ full self-contained context and acceptance criteria.
 **Decisions made:** none
 **Blockers:** none
 **Next:** TASK #201 (BUG-PTY-REPLAY-CONTAMINATION-1) can proceed
+---
+
+---
+## 2026-04-06 — frontend-dev — Task #203: BUG-RECOVERY-LABELING-1
+**Outcome:** COMPLETED (no code change)
+**Summary:** Investigated whether recovery/system prompts are visually distinguishable from agent output. Confirmed the existing sanitization pipeline already handles this: SNIPPET_NOISE_LINE_PATTERNS, SNIPPET_RECOVERY_LINE_PATTERNS, and REPLAY_NOISE_LINE_PATTERNS all filter recovery text. Recovery-only snippets produce a "Runtime reminder:" label. All three acceptance criteria met by existing code.
+**Files changed:** docs/TASK_PLAN.md (status update only)
+**Bugs fixed:** none needed — already resolved by existing pipeline
+**Decisions made:** No UI code change required — server-side filtering already resolves the issue
+**Blockers:** none
+**Next:** TASK #204 TEST GATE for recovery labeling verification
 ---

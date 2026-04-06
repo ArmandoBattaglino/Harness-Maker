@@ -2099,3 +2099,50 @@ Task #144 fully complete. Build: 479 modules, 0 errors. Tasks #145-#148 remain i
 ### Handoff
 Tasks #145 and #146 should be completed, then qa-tester runs TEST GATE #147 covering all four V3.4 bug fixes.
 ---
+
+---
+## 2026-04-06 — Task #203: BUG-RECOVERY-LABELING-1 — Recovery prompts visual distinction
+**Status:** COMPLETED (no code change needed)
+**Called by:** orchestrator
+
+### Context when I started
+Task #201 had just been completed by the debugger, adding 30+ REPLAY_NOISE_LINE_PATTERNS to SessionManager.js sanitizeReplayOutput(). Task #202 (TEST GATE) passed. Task #203 asked whether recovery/system prompts still appear indistinguishable from agent output in the Inspector and Terminal views.
+
+### What I did
+1. Read AgentInspector.jsx — confirmed it displays `stripAnsi(agentState.lastOutputSnippet)` which comes from the server-side `_buildSemanticSnippet` pipeline
+2. Read Terminal.jsx — confirmed it is a raw xterm.js terminal; replay data goes through `sanitizeReplayOutput()` in SessionManager.js
+3. Read SwarmEngine.js SNIPPET_NOISE_LINE_PATTERNS (52 patterns), SNIPPET_RECOVERY_LINE_PATTERNS (4 patterns), SNIPPET_PROMPT_LINE_PATTERNS, and the _buildSemanticSnippet pipeline
+4. Read SessionManager.js REPLAY_NOISE_LINE_PATTERNS (30+ patterns) and sanitizeReplayOutput()
+5. Verified all three specific patterns from the bug report are already filtered:
+   - "Messages to be submitted after next tool call" — matched by SNIPPET_NOISE (line 64), REPLAY_NOISE (line 44), and inline-stripped in _normalizeSnippetLine (line 923)
+   - "print the expected report then __DONE__" — matched by SNIPPET_PROMPT_LINE_PATTERNS (line 170)
+   - Protocol reminders — matched by swarm protocol patterns in both filter arrays
+6. Confirmed recovery-only snippets produce a human-friendly label: "Runtime reminder: final agent was prompted to output __DONE__ after its content."
+7. Ran client build (success) and server tests (312/312 pass)
+8. Marked task COMPLETED in TASK_PLAN.md
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Marked #203 COMPLETED with detailed resolution explaining existing filtering |
+
+### Improvements delivered
+- No code change needed — confirmed the existing pipeline already resolves this issue
+
+### Bugs I encountered
+None — the bug was already resolved by existing code.
+
+### Decisions I made
+- Decided no UI code change needed because the server-side snippet + replay filtering already removes or replaces recovery text before it reaches the frontend
+
+### What I learned
+- The snippet pipeline has four separate pattern arrays: NOISE, RECOVERY, PROMPT, PROGRESS — each with different scoring penalties
+- Recovery lines get -260 score penalty, making them the most aggressively deprioritized content
+- When all content is recovery text, _buildRecoverySnippet produces a human-friendly summary instead of raw protocol text
+
+### State I'm leaving behind
+Task #203 is COMPLETED. No code changes. The next task in the chain is #204 (TEST GATE for this task).
+
+### Handoff
+qa-tester should verify #204 TEST GATE — the gate should pass since the filtering is already in place.
+---
