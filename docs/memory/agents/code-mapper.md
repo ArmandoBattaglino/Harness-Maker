@@ -1,4 +1,45 @@
 ---
+## 2026-04-06 — Verification Wave 1: Tasks #178, #180, #184, #186, #198, #213, #216, #218
+**Status:** COMPLETED
+**Called by:** user (direct request to append CHANGELOG entry for wave 1 completion)
+
+### Context when I started
+CHANGELOG.md last entry was V5.2 area closure (Tasks #237-#244). 8 parallel verification tasks just completed: 6 TEST GATEs (#178, #180, #184, #186, #198, #216), 1 AREA CHECKPOINT (#213 closing V4.3), and 1 already-completed fix (#218 ConPTY spaces). No code was modified in any of these tasks.
+
+### What I did
+1. Read CHANGELOG.md, CODE_MAP.md, ACTIVITY_LOG.md, PROGRESS.md, and agent session log.
+2. Prepended CHANGELOG.md entry with full 8-task summary table under 2026-04-06 heading.
+3. Updated CODE_MAP.md header timestamp to reference this verification wave.
+4. Prepended ACTIVITY_LOG.md entry.
+5. Appended this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CHANGELOG.md | MODIFIED | Verification Wave 1 summary entry (8 tasks) |
+| docs/memory/CODE_MAP.md | MODIFIED | Header timestamp updated |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Wave 1 entry prepended |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log |
+
+### Improvements delivered
+- CHANGELOG.md now documents all 8 verification tasks from Wave 1 in a single consolidated table
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+None.
+
+### What I learned
+- Verification-only waves (no code changes) still need CHANGELOG documentation for traceability
+
+### State I'm leaving behind
+CHANGELOG.md and CODE_MAP.md current through Verification Wave 1. No function graph changes needed (zero code modifications).
+
+### Handoff
+None — bookkeeping task fully self-contained.
+
+---
 ## 2026-04-06 — Tasks #237-#244: V5.2 Swarm Deep Check — AREA CLOSED
 **Status:** COMPLETED
 **Called by:** user (direct request to append CHANGELOG entry)

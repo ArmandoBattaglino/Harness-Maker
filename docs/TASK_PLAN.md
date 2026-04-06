@@ -11633,7 +11633,8 @@ Type: AREA_CHECKPOINT
 Priority: CRITICAL
 Difficulty: MEDIUM
 Suggested Model: claude-opus-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-06 — AREA CHECKPOINT PASS. All 312 server tests pass. Client build 0 errors. SNIPPET_NOISE_LINE_PATTERNS verified: thinking animations (✶Nucleating…, *Elucidating…, Warping… via /^.\w+…/, /^\w+…$/, /\w+…\s*$/, /thinking with \w+ effort/), hook output (Stop says:, MEMORIA NON SCRITTA, ACTIVITY_LOG.md, stop hook). V4.4 area is CLOSED.
 Gate: HARD — V4.4 is not closed until this checkpoint returns PASS
 Context:
   Full E2E re-test verifying:

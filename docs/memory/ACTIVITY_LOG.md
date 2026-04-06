@@ -1,3 +1,14 @@
+## 2026-04-06 — code-mapper — Verification Wave 1: Tasks #178, #180, #184, #186, #198, #213, #216, #218
+**Outcome:** COMPLETED
+**Summary:** Appended CHANGELOG.md summary for 8 parallel verification tasks (TEST GATEs + AREA CHECKPOINTs + ConPTY fix). No code modified — all verification-only. Updated CODE_MAP.md header timestamp.
+**Files changed:** docs/memory/CHANGELOG.md, docs/memory/CODE_MAP.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** Next wave of tasks as determined by project-manager
+
+---
+
 ## 2026-04-06 — qa-tester — Task #198: TEST GATE BUG-SNIPPET-FIDELITY-1 — PASS
 **Outcome:** COMPLETED
 **Summary:** TEST GATE PASS. All 10+ snippet quality tests pass (107/107 swarm-engine, 312/312 full suite). Finder/Route Checker/Formatter contamination verified filtered. No stale foreign text survives in any snippet. Redraw fragments produce empty snippet. Structured fact reconstruction works. Protocol echo and prompt wrappers stripped. Pipeline can proceed to TASK #199.

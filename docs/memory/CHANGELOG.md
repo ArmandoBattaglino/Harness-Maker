@@ -2,6 +2,25 @@
 
 ## 2026-04-06
 
+### [Tasks #178, #180, #184, #186, #198, #213, #216, #218] Verification Wave 1 — 8 TEST GATEs / AREA CHECKPOINTs / Fixes PASS
+- Agent: code-mapper (wave summary entry)
+- Scope: Parallel verification wave covering V4.0–V4.5 test gates and area checkpoints. No code modified — all tasks were verification-only or already-completed fixes.
+
+| Task | Title | Verdict | Agent |
+|------|-------|---------|-------|
+| #178 | TEST GATE BUG-PTY-EXPLOSION-1 | PASS — PtyExplosion WS, ring buffer replay, DEC-009 | qa-tester |
+| #180 | TEST GATE BUG-RINGBUFFER-ANSI-1 | PASS — Ring buffer ANSI handling verified | qa-tester |
+| #184 | TEST GATE BUG-SNIPPET-PROTOCOL-1 | PASS — 80+ noise patterns, semantic block scoring | qa-tester |
+| #186 | TEST GATE BUG-FEED-ICON-1 | PASS — all 6 feed event types have EVENT_ICONS entries | qa-tester |
+| #198 | TEST GATE BUG-SNIPPET-FIDELITY-1 | PASS — 107/107 swarm-engine, 312/312 full suite | qa-tester |
+| #213 | AREA CHECKPOINT V4.3 E2E Deep Test Round 2 | PASS — V4.3 AREA CLOSED | qa-tester |
+| #216 | TEST GATE V4.4 Snippet Fidelity | PASS — 6 required patterns verified | qa-tester |
+| #218 | BUG-SNIPPET-CONPTY-SPACES | COMPLETED — ConPTY space decompression heuristic done | debugger |
+
+**Wave result:** All 8 tasks PASS/COMPLETED. 312/312 server tests across all gates. No code changes in this wave — all verification-only. V4.3 AREA CLOSED by #213.
+
+---
+
 ### [Tasks #237–#244] V5.2 Debugger Loop Swarm Deep Check — AREA CLOSED
 - Agent: code-mapper (area closure entry)
 - Scope: V5.2 Swarm-focused deep check wave (4 bug fixes + TEST GATE + AREA CHECKPOINT)

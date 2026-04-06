@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-06 after V5.2 Debugger Loop Swarm Deep Check — AREA CLOSED. TEST GATE #243 PASS._
+_Last updated: 2026-04-06 after Wave 1 verification sweep — 8 TEST GATES/CHECKPOINTS PASS (V4.3 AREA CLOSED, V4.0.2/V4.4/V4.5 gates confirmed)._
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**
@@ -96,6 +96,23 @@ Phase 1 (deep E2E test) found 5 bugs. Phase 2 (bulk plan) created tasks #238-#24
 **Overall assessment:** AREA CLOSED. TEST GATE #243 PASS confirmed all 4 fixes. Zero remaining actionable bugs. BUG-SWARM-UI-1 deferred as cosmetic.
 
 **Documentation impact:** README.md rate limit updated 200->300. docs/TEST_RESULTS.md and docs/research_complete.md rate limit references updated. No API endpoint signature changes.
+
+## Wave 1 Verification Sweep — 8 Gates PASS (2026-04-06)
+
+No code modified. Eight verification tasks completed, all PASS. Summary:
+
+| Task | Type | Area | Verdict |
+|------|------|------|---------|
+| #178 | TEST GATE | V4.0.2 — BUG-PTY-EXPLOSION-1 | PASS |
+| #180 | TEST GATE | V4.0.2 — BUG-RINGBUFFER-ANSI-1 | PASS |
+| #184 | TEST GATE | V4.0.2 — BUG-SNIPPET-PROTOCOL-1 | PASS |
+| #186 | TEST GATE | V4.0.2 — BUG-FEED-ICON-1 | PASS |
+| #198 | TEST GATE | V4.0.4 — BUG-SNIPPET-FIDELITY-1 | PASS |
+| #213 | AREA CHECKPOINT | V4.3 E2E Deep Test Round 2 | PASS — V4.3 AREA CLOSED |
+| #216 | TEST GATE | V4.4 — Snippet Fidelity | PASS |
+| #218 | TASK | V4.5 — BUG-SNIPPET-CONPTY-SPACES | COMPLETED (known limitation accepted) |
+
+**Documentation impact:** None — no code changes, no API changes, no config changes. All existing docs remain accurate.
 
 ## Documentation Debt
 
