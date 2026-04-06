@@ -81,13 +81,23 @@ export default function SwarmView() {
   const isExecutionActive = ['running', 'paused', 'blocked'].includes(executionStatus);
   const showMissingProjectMessage = Boolean(workflowDef && !activeProjectId);
   const savedWorkflows = useMemo(() => {
-    return workflows
+    const filtered = workflows
       .filter((workflow) => !activeProjectId || !workflow.projectId || workflow.projectId === activeProjectId)
       .sort((a, b) => {
         const aTime = new Date(a.updatedAt ?? a.createdAt ?? 0).getTime();
         const bTime = new Date(b.updatedAt ?? b.createdAt ?? 0).getTime();
         return bTime - aTime;
       });
+
+    // Deduplicate by name — keep only the most recent workflow per name.
+    // The array is already sorted newest-first, so the first occurrence wins.
+    const seen = new Set();
+    return filtered.filter((workflow) => {
+      const key = (workflow.name ?? '').toLowerCase().trim();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }, [workflows, activeProjectId]);
 
   useEffect(() => {
@@ -465,11 +475,17 @@ export default function SwarmView() {
               ? 'No saved workflows available'
               : 'Select a saved workflow'}
           </option>
-          {savedWorkflows.map((workflow) => (
-            <option key={workflow.id} value={workflow.id}>
-              {workflow.name}
-            </option>
-          ))}
+          {savedWorkflows.map((workflow) => {
+            const dateStr = workflow.updatedAt ?? workflow.createdAt;
+            const suffix = dateStr
+              ? ` (${new Date(dateStr).toLocaleDateString()})`
+              : '';
+            return (
+              <option key={workflow.id} value={workflow.id}>
+                {workflow.name}{suffix}
+              </option>
+            );
+          })}
         </select>
         <button
           onClick={handleLoadWorkflow}

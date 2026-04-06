@@ -62,6 +62,10 @@ const REPLAY_NOISE_LINE_PATTERNS = [
   /^\w+ runtime is active for this swarm agent/i,
   /^you are running inside the \w+ interactive cli/i,
   /^answer directly in terminal text and continue the swarm task/i,
+  // Done-token recovery prompt (injected when agent finishes without emitting __DONE__)
+  /^you have completed your work but did not emit the required done marker/i,
+  /^please output exactly this on a new line/i,
+  /^__DONE__$/,
 ];
 
 // Matches trailing corruption: lines that are only repeated punctuation or single repeated chars.

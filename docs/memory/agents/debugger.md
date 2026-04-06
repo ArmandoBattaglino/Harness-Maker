@@ -863,3 +863,46 @@ sanitizeReplayOutput() in SessionManager.js now has content-level filtering. All
 ### Handoff
 TEST GATE #202 (qa-tester) should verify the replay fidelity for Finder, Route Checker, and Formatter agents in a live workflow.
 ---
+
+---
+## 2026-04-06 — Task #233: BUG-WF-2 — Done-token recovery prompt noise pattern filtering
+**Status:** COMPLETED
+**Called by:** User (direct task assignment)
+
+### Context when I started
+The done-token recovery prompt ("You have completed your work but did not emit the required done marker...") was visible in the PTY Explosion replay view. The snippet pipeline already filtered it, but SessionManager.sanitizeReplayOutput() did not. Task was previously DEFERRED as cosmetic-only.
+
+### What I did
+1. Read memory files (debugger.md, ACTIVITY_LOG.md, DECISIONS.md) in parallel with source grep.
+2. Found the exact recovery prompt text in SwarmEngine.js line 2286 (3-line message).
+3. Found REPLAY_NOISE_LINE_PATTERNS in SessionManager.js line 29.
+4. Added 3 new regex patterns to filter the recovery prompt lines from replay output.
+5. Ran npm test -- 312/312 pass.
+6. Marked task COMPLETED in TASK_PLAN.md.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SessionManager.js | MODIFIED | Added 3 patterns to REPLAY_NOISE_LINE_PATTERNS (lines 66-68): done-token recovery prompt, "please output exactly this", and bare `__DONE__` line |
+
+### Improvements delivered
+- Done-token recovery prompt no longer appears in PTY Explosion replay view
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| Recovery prompt in replay | REPLAY_NOISE_LINE_PATTERNS missing patterns for done-token recovery text | Added 3 regex patterns | FIXED |
+
+### Decisions I made
+- Used 3 separate line patterns (one per line of the recovery prompt) rather than a multi-line regex, consistent with existing pattern style in the array
+- Used `$` anchor on `__DONE__` pattern to avoid filtering lines that merely mention __DONE__ in context
+
+### What I learned
+- The recovery prompt is 3 lines: the explanation, the instruction, and the bare token. All three needed individual patterns.
+
+### State I'm leaving behind
+REPLAY_NOISE_LINE_PATTERNS now has 38 patterns (was 35). All 312 tests pass. Fix is minimal -- 3 lines added to one file.
+
+### Handoff
+None -- task fully self-contained.
+---

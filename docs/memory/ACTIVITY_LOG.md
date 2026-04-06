@@ -3493,3 +3493,14 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** TASK #204 TEST GATE for recovery labeling verification
 ---
+
+---
+## 2026-04-06 — debugger — Task #233: BUG-WF-2 — Done-token recovery prompt noise pattern filtering
+**Outcome:** COMPLETED
+**Summary:** Added 3 regex patterns to REPLAY_NOISE_LINE_PATTERNS in SessionManager.js to filter the done-token recovery prompt from PTY Explosion replay output. Live PTY stream unaffected. 312/312 tests pass.
+**Files changed:** server/services/SessionManager.js (3 patterns added), docs/TASK_PLAN.md (status DEFERRED -> COMPLETED)
+**Bugs fixed:** Done-token recovery prompt visible in replay output
+**Decisions made:** Used per-line patterns consistent with existing array style; anchored __DONE__ pattern with $
+**Blockers:** none
+**Next:** none -- task self-contained
+---

@@ -12112,26 +12112,12 @@ Agent: debugger
 Priority: LOW
 Difficulty: EASY
 Suggested Model: claude-sonnet-4-6
-Status: DEFERRED
-Deferral Note: 2026-04-06 — Acceptable for MVP. The done-token recovery prompt is only visible in the raw PTY Explosion terminal view, not in node card snippets. The snippet pipeline already filters it correctly. The recovery mechanism itself works as intended (workflows complete successfully). No code change needed for MVP; revisit post-launch if users report confusion.
-Context:
-  User-facing problem:
-    In the agent terminal (PTY Explosion view), after the agent completes its work, a red
-    recovery message appears: "You have completed your work but did not emit the required done
-    marker. Please output exactly this on a new line: __DONE__". While this is a valid protocol
-    recovery mechanism (the workflow still completes), it creates visual noise.
-  Root cause:
-    The SwarmEngine done-token recovery system injects this prompt when an agent finishes but
-    doesn't emit __DONE__. This is intentional behavior and the recovery works correctly.
-    The issue is purely cosmetic — the snippet pipeline already filters this, but the raw
-    terminal shows it.
-  Required fix:
-    This is acceptable for MVP. The recovery prompt is only visible in the raw terminal view,
-    not in the node card snippet. No code change needed unless the user explicitly requests it.
-    Mark as WONTFIX or DEFERRED.
-  Note: The snippet pipeline already handles this correctly — the node cards show clean output.
+Status: COMPLETED
+Completion Note: 2026-04-06 — Added 3 patterns to REPLAY_NOISE_LINE_PATTERNS in SessionManager.js to filter the done-token recovery prompt from replay output. Live PTY stream unaffected. 312/312 tests pass.
 Acceptance Criteria:
-  - [x] Acknowledged as known behavior — recovery prompt visible only in raw terminal
+  - [x] Done-token recovery prompt filtered from replay output
+  - [x] Live PTY stream NOT affected
+  - [x] npm test passes (312 tests)
 Dependencies: none
 
 ---
@@ -12483,11 +12469,10 @@ Agent: frontend-dev
 Priority: LOW
 Difficulty: EASY
 Suggested Model: claude-sonnet-4-6
-Status: DEFERRED
-Deferral Reason: Cosmetic issue only. Duplicate workflow names in the dropdown do not affect functionality —
-  users can still select and load any workflow. The fix requires either a unique constraint on workflow names
-  (which could break existing saved workflows) or showing additional distinguishing info (date/ID) in the
-  dropdown, which is a UX design decision. Deferred to a future UX polish pass.
+Status: COMPLETED
+Completion Note: 2026-04-06 — Fixed by deduplicating workflows by name (keeping most recent per name) in
+  the savedWorkflows useMemo in SwarmView.jsx. Also added date suffix to all dropdown entries for extra
+  clarity. Client build passes. No regressions — workflow selection still loads correctly by unique ID.
 Component Spec:
   File: WorkflowStore + client/src/views/SwarmView.jsx (workflow dropdown)
   Current behavior: Six workflow names appear multiple times in the dropdown (e.g., "Customer Support Triage
