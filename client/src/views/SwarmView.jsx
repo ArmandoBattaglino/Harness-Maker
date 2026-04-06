@@ -397,8 +397,9 @@ export default function SwarmView() {
         settings: parsed.settings || {},
         initialContext: parsed.initialContext || {},
       });
-      setWorkflowDef(res);
-      setSelectedWorkflowId(res.id);
+      const imported = res?.workflow ?? res;
+      setWorkflowDef(imported);
+      setSelectedWorkflowId(imported.id);
       setIsDirty(false);
       refreshWorkflows();
     } catch (e) {
@@ -417,7 +418,7 @@ export default function SwarmView() {
       edges: canvasStateRef.current?.edges ?? workflowDef.edges,
     });
     const copy = {
-      name: `${sanitized.name || 'Workflow'} (Copy)`,
+      name: `${sanitized.name || 'Workflow'} - Copy`,
       description: sanitized.description || '',
       nodes: sanitized.nodes,
       edges: sanitized.edges,
@@ -426,8 +427,9 @@ export default function SwarmView() {
       projectId: sanitized.projectId,
     };
     const res = await apiPost('/api/v1/workflows', copy);
-    setWorkflowDef(res);
-    setSelectedWorkflowId(res.id);
+    const created = res?.workflow ?? res;
+    setWorkflowDef(created);
+    setSelectedWorkflowId(created.id);
     setIsDirty(false);
     refreshWorkflows();
   };

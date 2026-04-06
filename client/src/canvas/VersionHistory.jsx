@@ -9,7 +9,14 @@ import { apiGet, apiPost } from '../hooks/useApi.js';
 
 function formatTimestamp(isoStr) {
   if (!isoStr) return '—';
-  const d = new Date(isoStr);
+  // Server stores timestamps with '-' instead of ':' and '.' — restore ISO format
+  // e.g. "2026-04-06T21-16-32-123Z" → "2026-04-06T21:16:32.123Z"
+  const restored = isoStr.replace(
+    /^(\d{4}-\d{2}-\d{2}T)(\d{2})-(\d{2})-(\d{2})-(\d+Z?)$/,
+    '$1$2:$3:$4.$5'
+  );
+  const d = new Date(restored);
+  if (isNaN(d.getTime())) return isoStr; // fallback to raw string
   return d.toLocaleString([], {
     month: 'short',
     day: 'numeric',
