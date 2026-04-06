@@ -1,4 +1,46 @@
 ---
+## 2026-04-07 — Repository State Audit + Follow-up Reopen
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+User asked "a che punto siamo" and requested a concrete project-state review across docs/, README/CLAUDE files, and the current task plan. The existing plan claimed there was no remaining work, but the memory/docs layer already contained signs of drift: Wave 4 notes said `ExecutionHistoryStore.addEntry()` was not wired to `SwarmEngine`, recent activity logs showed Unified Chat implementation not represented in TASK_PLAN.md, and README/package metadata still advertised pre-V5 test/task totals.
+
+### What I did
+1. Read repository guidance, docs/memory files, README.md, CLAUDE.md, TASK_PLAN.md, DOC_STATUS.md, API.md, ARCHITECTURE.md, SECURITY_AUDIT.md, and the recent activity log
+2. Verified from code-level grep that `chat_message` exists in `SwarmEngine.js` and `useSwarm.js`
+3. Verified from code-level grep that `ExecutionHistoryStore.addEntry()` exists only in the store and is not referenced from `SwarmEngine.js` or the routes
+4. Reopened TASK_PLAN.md with POST-V5 follow-up tasks #327-#330
+5. Updated PROJECT.md, PROGRESS.md, CONTEXT.md, DOC_STATUS.md, and ACTIVITY_LOG.md so the repo memory no longer claims "no remaining work"
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Reopened plan with tasks #327-#330 and updated top-level status counts |
+| docs/memory/PROJECT.md | MODIFIED | Corrected implementation-status line to reflect reopened follow-up work |
+| docs/memory/PROGRESS.md | MODIFIED | Added PM audit entry describing the reopened follow-up area |
+| docs/memory/CONTEXT.md | MODIFIED | Replaced stale "no remaining work" focus with the new active follow-up focus |
+| docs/memory/DOC_STATUS.md | MODIFIED | Marked README as PARTIAL and refreshed status metadata |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added this session as a top-level audit entry |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log |
+
+### Decisions I made
+- Treat execution-history persistence as the top real implementation gap because the store/API surface exists but the persistence write path is still missing
+- Treat Unified Chat as implemented-but-unverified work until a dedicated QA gate closes it
+- Track README/package/docs drift explicitly as a task instead of leaving the repo in a misleading "complete" state
+
+### State I'm leaving behind
+TASK_PLAN is reopened at 330 total tasks: 324 COMPLETED, 2 DEFERRED, 4 PENDING. The next task is #327 (backend-dev). #329 (Unified Chat verification) can run in parallel. Documentation truthfulness sync is deferred until those results land.
+
+### Handoff
+1. backend-dev -> TASK #327
+2. qa-tester -> TASK #329 in parallel
+3. qa-tester -> TASK #328 after #327
+4. documenter -> TASK #330 after #328 and #329
+
+---
+
+---
 ## 2026-04-06 — V5.0-BugFix2 Task Plan Registration + Full Project State Analysis
 **Status:** COMPLETED
 **Called by:** user

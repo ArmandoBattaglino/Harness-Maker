@@ -1,0 +1,10 @@
+{
+  "request_id": "79f1b605-7da6-48ea-bb19-f2be4359a005",
+  "created_at": "2026-04-06T22:25:41.406Z",
+  "user_prompt": "Indaga un bug nel repo Test workflows - Copia: 'i nodi agent danno problemi nel terminale quando viene cambiata runtime in automatico come fallback'. Obiettivo: trovare la root cause nel flusso Swarm/agent terminal quando la runtime provider cambia automaticamente (es. Claude -> Codex/Gemini fallback), applicare il fix minimo se necessario e riportare file/linee coinvolti. Leggi prima docs/memory rilevanti, poi concentra l'analisi su SwarmEngine, runtime fallback metadata, agent PTY session binding e client terminal/PtyExplosion/Open Terminal. Verifica con test mirati se fai modifiche. Non fare refactor ampi.",
+  "requested_agent": "debugger",
+  "status": "active",
+  "steps": [],
+  "next_actions": [],
+  "summary": null
+}

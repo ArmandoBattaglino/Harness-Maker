@@ -1,3 +1,4 @@
+- [PM AUDIT 2026-04-07] Repository state review reopened the plan with POST-V5 follow-up tasks #327-#330. Core V5 areas remain closed, but the repo is not fully truthy yet: `ExecutionHistoryStore.addEntry()` is still tracked as unwired to `SwarmEngine`, Unified Chat exists in code/activity logs without TASK_PLAN registration or QA gate, and README/package metadata still advertise pre-V5 counts.
 
 - [Unified Chat View Wave 2 (Client-side) COMPLETED 2026-04-06] ChatMessage.jsx + ChatPanel.jsx created. SwarmContext.jsx: chatMessages/chatFilter/sidePanelMode state + actions. useSwarm.js: chat_message WS handler. SwarmCanvas.jsx: Feed/Chat tab toggle. Build: 498 modules, 0 errors. Server-side chat_message emission pending (backend task).
 
@@ -560,3 +561,4 @@ _None._
 - Modified: AgentNode.jsx — validation warning badge (amber circle with !) for empty system prompts (FR-V5-45)
 - Modified: SwarmView.jsx — export (FR-V5-38: download as JSON), import (FR-V5-39: upload JSON + create via API), duplicate (FR-V5-37: clone workflow), keyboard shortcuts (FR-V5-43: Ctrl+S save, Ctrl+Enter run), validation banner + run guard (FR-V5-44/46), stable refs for shortcut handlers
 - FRs covered: FR-V5-37 (duplicate), FR-V5-38 (export), FR-V5-39 (import), FR-V5-41 (snap-to-grid), FR-V5-43 (keyboard shortcuts), FR-V5-44/45/46 (canvas validation)
+- [Debugger Loop Fix COMPLETED 2026-04-07] Agent terminal overlay now survives automatic runtime fallback. Root cause: AgentInspector stored the current sessionId in PTY Explosion state, so when SwarmEngine replaced the session during provider fallback the overlay remained bound to the killed PTY. Fix: open PTY Explosion by nodeId and resolve the live sessionId from agentStates in SwarmView. Verification: `npm run build --prefix client` passes (498 modules, 0 errors).

@@ -4,7 +4,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED - 2026-03-31 — 326 tasks total, 324 COMPLETED, 2 DEFERRED, 0 PENDING. V5.0-Wave1 CLOSED. V5.0-Wave2 CLOSED. V5.0-Wave3 CLOSED. V5.0-BugFix1 CLOSED. V5.0-Wave4 CLOSED. V5.0-Wave5 CLOSED. V5.0-BugFix2 CLOSED. Build OK: 496 modules, 0 errors. Tests: 312/312 pass.
+**Status:** v3.0.0 RELEASED - 2026-03-31 — 330 tasks total, 324 COMPLETED, 2 DEFERRED, 4 PENDING. V5.0-Wave1 CLOSED. V5.0-Wave2 CLOSED. V5.0-Wave3 CLOSED. V5.0-BugFix1 CLOSED. V5.0-Wave4 CLOSED. V5.0-Wave5 CLOSED. V5.0-BugFix2 CLOSED. POST-V5 FOLLOW-UP OPEN. Last fully verified baseline: build OK (496 modules, 0 errors), tests 312/312 pass.
   **Completed Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 ALL COMPLETED/PASS. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#267 ALL COMPLETED. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave2 NODE CREATION & CONFIG — Tasks #268-#272 ALL COMPLETED. AREA CLOSED 2026-04-06.
@@ -14339,4 +14339,116 @@ Acceptance Criteria:
   - [x] Build and tests pass
 Gate Result: PASS -- V5.0-BugFix2 CLOSED
 Dependencies: TASK #325
+---
+
+## AREA: POST-V5 FOLLOW-UP -- Runtime Completion + Truthfulness Sync
+_Components: SwarmEngine execution-history persistence, Unified Chat View verification, README/package/docs truthfulness sync_
+_Tasks: #327 -> #330_
+_Gate: The repo cannot be considered truthfully "complete" until runtime history persistence is wired and the docs/status layer matches the codebase again_
+_Source: Project-manager repository state audit on 2026-04-07_
+
+---
+
+TASK #327: Wire ExecutionHistoryStore persistence into SwarmEngine terminal paths
+Area: POST-V5 FOLLOW-UP -- Runtime Completion + Truthfulness Sync
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Evidence from the current repo state:
+    - `server/stores/ExecutionHistoryStore.js` exposes `addEntry(workflowId, entry)`
+    - `docs/memory/PROGRESS.md` explicitly notes that `ExecutionHistoryStore.addEntry()` is not yet wired to `SwarmEngine`
+    - Current Swarm history UI/API were implemented in Wave 4, but no verified write path is tracked in the plan
+  User-facing problem:
+    Users can open execution history surfaces, but completed/failed/stopped executions may never be persisted, which makes the feature partially implemented rather than complete.
+  Required fix scope:
+    1. Inject or initialize execution-history persistence where Swarm executions reach a terminal state (`completed`, `failed`, `stopped`, and any equivalent final state).
+    2. Persist the summary payload expected by `GET /api/v1/swarm/history/:workflowId` and the ExecutionHistory UI.
+    3. Guard against duplicate writes when cleanup/stop paths are triggered more than once for the same execution.
+    4. Keep the existing localhost-only, atomic-write, and path-safety guarantees intact.
+Acceptance Criteria:
+  - [ ] Completing a workflow produces an execution-history entry for that workflow
+  - [ ] Stopped/failed executions produce truthful persisted history entries
+  - [ ] Repeated stop/cleanup calls do not create duplicate history rows
+  - [ ] Existing history endpoints continue to return the expected response shape
+  - [ ] npm test passes
+Dependencies: none
+---
+
+TASK #328: TEST GATE -- Execution history persistence round-trip
+Area: POST-V5 FOLLOW-UP -- Runtime Completion + Truthfulness Sync
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD -- TASK #330 should not close the follow-up area until this gate passes
+Context:
+  Component being tested: execution-history persistence from SwarmEngine into ExecutionHistoryStore and the existing history endpoints/UI.
+  What to test:
+    1. Start a workflow, let it reach a terminal state, and verify a new history row exists through the API.
+    2. Stop a workflow early and verify the persisted status is truthful rather than silently missing.
+    3. Re-run stop/cleanup paths and verify duplicate entries are not created.
+    4. Open the Execution History UI and verify the persisted entry is renderable.
+Acceptance Criteria:
+  - [ ] History entry appears after a completed execution
+  - [ ] History entry appears after a stopped/failed execution with the correct final status
+  - [ ] No duplicate entry is created for the same execution
+  - [ ] UI and API round-trip match the persisted data
+  - [ ] npm test passes
+Dependencies: TASK #327
+---
+
+TASK #329: Unified Chat View -- end-to-end verification and WS contract audit
+Area: POST-V5 FOLLOW-UP -- Runtime Completion + Truthfulness Sync
+Agent: qa-tester
+Priority: MEDIUM
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Evidence from the current repo state:
+    - `server/services/SwarmEngine.js` imports `ChatExtractor`, feeds chunks into it, and broadcasts `chat_message`
+    - `client/src/hooks/useSwarm.js` handles `chat_message`
+    - Activity log entries say Unified Chat was implemented, but TASK_PLAN.md has no registered tasks or verification gate for it
+  User-facing risk:
+    The feature exists in code but is not yet truthfully represented in the plan or verified end-to-end, so regressions or contract gaps could be hidden behind stale status reporting.
+  Required scope:
+    1. Verify `chat_message` is emitted during real Swarm activity and consumed by the client.
+    2. Verify Feed/Chat tab switching, filtering, and message rendering in the current UI.
+    3. If the contract is incomplete or broken, file concrete follow-up bugs instead of silently declaring the feature done.
+Acceptance Criteria:
+  - [ ] Server emits `chat_message` events with the fields the client expects
+  - [ ] Client receives, stores, and renders chat messages in the Chat panel
+  - [ ] Feed/Chat switching does not regress the existing InterAgentFeed
+  - [ ] Any discovered issue is converted into an explicit follow-up task
+Dependencies: none
+---
+
+TASK #330: Documentation and status truthfulness sync
+Area: POST-V5 FOLLOW-UP -- Runtime Completion + Truthfulness Sync
+Agent: documenter
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Evidence from the current repo state:
+    - `README.md` and `package.json` still advertise `187/187 tests` and `115 tasks completed`
+    - `docs/memory/DOC_STATUS.md` marks README and PROJECT as `UP_TO_DATE`
+    - `docs/memory/PROJECT.md`, `CONTEXT.md`, and TASK_PLAN history previously asserted that no work remained, which is no longer true after this audit
+    - Unified Chat implementation is present in code/activity logs but not registered in the task plan or summarized in the user-facing docs
+  Required scope:
+    1. Update README/package metadata and project-memory status documents to match the actual repo state.
+    2. Reflect the reopened follow-up area and the current next task honestly.
+    3. Register Unified Chat in the appropriate docs if verification confirms it is complete.
+Acceptance Criteria:
+  - [ ] README and package metadata no longer report stale test/task counts
+  - [ ] PROJECT/PROGRESS/CONTEXT/DOC_STATUS reflect the reopened follow-up area truthfully
+  - [ ] Unified Chat is either documented accurately or tracked as unfinished
+  - [ ] No document still claims "no remaining work" unless the follow-up area is actually closed
+Dependencies: TASK #328, TASK #329
 ---

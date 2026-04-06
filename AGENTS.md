@@ -138,6 +138,7 @@ Preferred local bug run:
 
 For full-project bug sweeps or release-hardening, use:
 - `$bug-hunt-and-fix`
+- `$claude-cmd-debugger-loop` for the iterative deep E2E -> bulk-plan -> fix -> verify loop
 - usually starting from `orchestrator` or `qa-tester`, then routing into `project-manager`, `debugger`, `backend-dev`, `frontend-dev`, `documenter`, and `code-mapper`
 
 ## Post-task Discipline
@@ -170,3 +171,4 @@ Repo-local skills are available under `.codex/skills`:
 
 Use them as supporting guidance and source preservation.
 Prefer subagents for actual Claude-like execution inside this repo.
+Global migrated command skills can also apply here, especially `$claude-cmd-debugger-loop` for multi-phase deep debug sweeps.

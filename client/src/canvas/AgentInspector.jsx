@@ -713,9 +713,9 @@ export default function AgentInspector({ nodes, onUpdateNode }) {
       )}
 
       {/* Open Terminal button — only when agent has an active session */}
-      {agentState?.sessionId && (
+      {agentState?.sessionId && selectedNode?.id && (
         <button
-          onClick={() => setPtyExplosionNodeId(agentState.sessionId)}
+          onClick={() => setPtyExplosionNodeId(selectedNode.id)}
           className="w-full text-xs px-2 py-1.5 rounded bg-indigo-700 hover:bg-indigo-600 text-white transition-colors flex items-center gap-1.5"
         >
           <span>⌨</span> Open Terminal

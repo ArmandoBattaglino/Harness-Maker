@@ -1127,3 +1127,48 @@ Fix is complete. 312/312 tests pass, client build clean. TEST GATE #257 should v
 ### Handoff
 TEST GATE #257 should verify the fix. No remaining work for this task.
 ---
+## 2026-04-07 - Ad-hoc debugger-loop follow-up: agent terminal breaks after automatic runtime fallback
+**Status:** COMPLETED
+**Called by:** User
+
+### Context when I started
+The user reported that agent nodes had terminal issues when the runtime changed automatically as a fallback. Recent repo history already contained fixes for PTY switching and runtime fallback metadata, so the likely failure zone was the UI binding between agent terminal overlay state and the live provider session.
+
+### What I did
+1. Read project memory and traced runtime fallback handling through `server/services/SwarmEngine.js`, `client/src/hooks/useSwarm.js`, `client/src/canvas/AgentInspector.jsx`, and `client/src/views/SwarmView.jsx`.
+2. Confirmed that SwarmEngine replaces the node session during automatic fallback and broadcasts the new `sessionId` in `agent_status`.
+3. Found the UI bug: AgentInspector opened PTY Explosion with `agentState.sessionId`, and SwarmView reused that same stored value as the overlay key and terminal `sessionId` prop.
+4. Applied the minimal client fix: AgentInspector now stores the selected `nodeId`, and SwarmView derives the current `sessionId` from `agentStates[nodeId]`, so the overlay follows provider-driven session replacement automatically.
+5. Ran `npm run build --prefix client` to verify the frontend still compiles cleanly.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/canvas/AgentInspector.jsx | MODIFIED | Open Terminal now stores the selected nodeId instead of the current sessionId |
+| client/src/views/SwarmView.jsx | MODIFIED | PTY Explosion now resolves the live sessionId from agent state and remounts when that session changes |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Logged the regression and fix |
+| docs/memory/PROGRESS.md | MODIFIED | Recorded the completed debugger-loop fix |
+
+### Improvements delivered
+- Open agent terminals no longer remain attached to a killed PTY when runtime fallback swaps provider sessions
+- The overlay now follows the same agent node across session replacement without needing the user to close and reopen it
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| Agent terminal stale after fallback | UI stored transient sessionId instead of stable node identity | Bound PTY Explosion state to nodeId and derived the live sessionId from `agentStates` | FIXED |
+
+### Decisions I made
+- Kept the fix client-only because the backend already emits the correct replacement `sessionId`
+- Used the nodeId as stable UI state because runtime fallback is expected to replace sessions, not nodes
+
+### What I learned
+- The server already does the right thing during fallback: it spawns the replacement PTY, broadcasts the new agent status, and only then kills the previous session.
+- The regression lived entirely in the overlay binding layer, not in the runtime fallback logic itself.
+
+### State I'm leaving behind
+The PTY overlay now tracks the currently open node instead of a stale session handle. Frontend build passes.
+
+### Handoff
+If needed, the next step is a live browser retest that keeps PTY Explosion open while forcing a provider fallback and confirms the stream continues without reopening the terminal.
+---

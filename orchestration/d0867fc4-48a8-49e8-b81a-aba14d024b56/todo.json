@@ -1,0 +1,10 @@
+{
+  "request_id": "d0867fc4-48a8-49e8-b81a-aba14d024b56",
+  "created_at": "2026-04-06T22:23:17.869Z",
+  "user_prompt": "Analyze the current project state for the repository. Read the docs/ area, root README/CLAUDE files, and any existing task plan. Understand what is done, missing, or broken. Create or update docs/TASK_PLAN.md with a prioritized task list if needed. Then report clearly: current project status, the next task to work on, which agent should handle it, and any blockers or risks. Additional context from user: '/pm a che punto siamo'. Please answer succinctly but concretely, with file references when useful.",
+  "requested_agent": "project-manager",
+  "status": "active",
+  "steps": [],
+  "next_actions": [],
+  "summary": null
+}

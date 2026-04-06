@@ -50,6 +50,9 @@ export default function SwarmView() {
   const setResumed = useSwarmStore((s) => s.setResumed);
   const reset = useSwarmStore((s) => s.reset);
   const ptyExplosionNodeId = useSwarmStore((s) => s.ptyExplosionNodeId);
+  const ptyExplosionSessionId = useSwarmStore((s) => (
+    s.ptyExplosionNodeId ? (s.agentStates[s.ptyExplosionNodeId]?.sessionId ?? null) : null
+  ));
   const setPtyExplosionNodeId = useSwarmStore((s) => s.setPtyExplosionNodeId);
   const workflowDef = useSwarmStore((s) => s.workflowDef);
   const setWorkflowDef = useSwarmStore((s) => s.setWorkflowDef);
@@ -875,10 +878,10 @@ export default function SwarmView() {
 
       <BroadcastBar />
 
-      {ptyExplosionNodeId && (
+      {ptyExplosionNodeId && ptyExplosionSessionId && (
         <PtyExplosion
-          key={ptyExplosionNodeId}
-          sessionId={ptyExplosionNodeId}
+          key={`${ptyExplosionNodeId}:${ptyExplosionSessionId}`}
+          sessionId={ptyExplosionSessionId}
           onClose={() => setPtyExplosionNodeId(null)}
         />
       )}

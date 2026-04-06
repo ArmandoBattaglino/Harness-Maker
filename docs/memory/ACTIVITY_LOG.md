@@ -1,3 +1,36 @@
+## 2026-04-07 — project-manager — Repository State Audit + Follow-up Reopen
+**Outcome:** COMPLETED
+**Summary:** Reviewed the repository state across README/CLAUDE/docs/memory/TASK_PLAN and the recent activity log. Confirmed that the project is not truthfully at "zero work" despite closed V5 areas. Opened POST-V5 follow-up tasks #327-#330 in TASK_PLAN.md for execution-history persistence wiring, execution-history QA, Unified Chat end-to-end verification, and documentation/status truthfulness sync. Updated PROJECT.md, PROGRESS.md, CONTEXT.md, and DOC_STATUS.md to reflect the reopened state.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** Treat missing execution-history persistence and stale status reporting as real follow-up work rather than hidden debt
+**Blockers:** none
+**Next:** backend-dev should take TASK #327 first; qa-tester can verify Unified Chat in parallel via TASK #329
+
+---
+
+## 2026-04-06 — orchestrator — Unified Chat View: Wave 1 + Wave 2 Complete
+**Outcome:** COMPLETED
+**Summary:** Implemented the full Unified Chat View feature in parallel (Wave 1 backend + Wave 2 frontend). Server-side ChatExtractor intercepts PTY output, strips noise, detects response boundaries, emits chat_message WS events. Flow-control nodes emit system messages. Client-side ChatPanel/ChatMessage provide conversation UI with agent filter, toggling with existing InterAgentFeed via Feed/Chat tabs. Both server and client build successfully.
+**Files changed:** server/services/ChatExtractor.js (new), server/services/SwarmEngine.js (modified), client/src/canvas/ChatMessage.jsx (new), client/src/canvas/ChatPanel.jsx (new), client/src/store/SwarmContext.jsx (modified), client/src/hooks/useSwarm.js (modified), client/src/canvas/SwarmCanvas.jsx (modified)
+**Bugs fixed:** none
+**Decisions made:** ChatExtractor inserted in tapFn after echo gate; 500-msg cap; silence timeout 3s for boundary detection; Feed/Chat tab toggle preserves both panels
+**Blockers:** none
+**Next:** E2E test with live workflow to verify chat messages appear correctly; Wave 3 polish (click-to-select, message grouping)
+
+---
+
+## 2026-04-06 — backend-dev — Unified Chat View Wave 1 (Server-side)
+**Outcome:** COMPLETED
+**Summary:** Created ChatExtractor.js with noise stripping, boundary detection (handoff/done/silence), per-agent buffering. Integrated into SwarmEngine.js: import, constructor init, _broadcastChatMessage method, feed() in tapFn, flush() on agent done, systemMessage() in delay/conditional/merge/loop handlers, cleanup() on execution end.
+**Files changed:** server/services/ChatExtractor.js (new), server/services/SwarmEngine.js (modified)
+**Bugs fixed:** none
+**Decisions made:** ChatExtractor as separate module for testability; 3s silence timeout; cleanup on execution stop/complete/fail
+**Blockers:** none
+**Next:** Integration test with frontend chat_message handler
+
+---
+
 ## 2026-04-06 — frontend-dev — Unified Chat View Wave 2 (Client-side)
 **Outcome:** COMPLETED
 **Summary:** Created ChatMessage.jsx and ChatPanel.jsx components. Added chatMessages/chatFilter/sidePanelMode state to SwarmContext.jsx with actions and reset integration. Added chat_message WS handler in useSwarm.js. Replaced bare InterAgentFeed in SwarmCanvas.jsx with Feed/Chat tab toggle. Build: 498 modules, 0 errors.
@@ -4066,4 +4099,24 @@ full self-contained context and acceptance criteria.
 **Decisions made:** none
 **Blockers:** none
 **Next:** QA test gate for Wave 4 features
+---
+## 2026-04-07 - codex - debugger-loop Codex skill migration
+**Outcome:** COMPLETED
+**Summary:** Migrated the global Claude `/debugger-loop` command into a Codex skill at `C:\Users\arman\.codex\skills\claude-cmd-debugger-loop`. Added Codex-facing SKILL.md guidance, UI metadata, and preserved the original command text as a reference file. Updated the repo-local AGENTS contract so this repository explicitly points to the new skill for deep debug sweeps.
+**Files changed:** C:\Users\arman\.codex\skills\claude-cmd-debugger-loop\SKILL.md (new), C:\Users\arman\.codex\skills\claude-cmd-debugger-loop\agents\openai.yaml (new), C:\Users\arman\.codex\skills\claude-cmd-debugger-loop\references\original-command.md (new), AGENTS.md (modified), docs/memory/ACTIVITY_LOG.md (modified)
+**Bugs fixed:** none
+**Decisions made:** Migrated as a global Codex skill to match the original global Claude command location; kept the executable guidance concise in SKILL.md and preserved the full original text in references/original-command.md
+**Blockers:** none
+**Next:** Validate the skill structure and, in a future session, invoke `$claude-cmd-debugger-loop` through `orchestrator` on a real deep-check request.
+
+---
+## 2026-04-07 - debugger - PTY Explosion now follows agent session replacement during runtime fallback
+**Outcome:** COMPLETED
+**Summary:** Fixed a Swarm terminal regression where opening an agent terminal from AgentInspector bound the PTY overlay to the current sessionId instead of the nodeId. When automatic runtime fallback replaced the provider session for that same node, the overlay stayed attached to the killed session and stopped updating even though the agent continued on the new provider session. SwarmView now resolves the live sessionId from the selected node's agent state, and AgentInspector opens the overlay by nodeId so provider fallback swaps keep the terminal attached.
+**Files changed:** client/src/canvas/AgentInspector.jsx, client/src/views/SwarmView.jsx
+**Bugs fixed:** ad-hoc debugger-loop terminal/fallback regression
+**Decisions made:** Keep the fix client-only and minimal; derive PTY overlay session binding from node state instead of persisting a transient sessionId in UI state
+**Blockers:** none
+**Next:** Live Swarm retest should confirm that an already-open agent terminal survives Claude -> Codex/Gemini automatic fallback without needing to reopen it
+
 ---
