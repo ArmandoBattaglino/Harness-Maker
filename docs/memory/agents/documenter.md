@@ -1,4 +1,44 @@
 ---
+## 2026-04-06 -- Wave 4 — #202 PASS, #203 COMPLETED (no code). V4.0.4 nearly closed.
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel post-task documentation update)
+
+### Context when I started
+Wave 4 completed: #202 TEST GATE PASS (BUG-PTY-REPLAY-CONTAMINATION-1 verified) and #203 COMPLETED (BUG-RECOVERY-LABELING-1 resolved without code changes -- existing sanitization pipeline already handles recovery labeling at three levels). DOC_STATUS.md was last updated after Wave 3.
+
+### What I did
+1. Read DOC_STATUS.md, PROGRESS.md, ACTIVITY_LOG.md, TASK_PLAN.md entries for #202-#205
+2. Verified no source code was modified in this wave -- both tasks were verification/analysis only
+3. Confirmed all existing documentation (README, ARCHITECTURE, API, inline comments) remains accurate
+4. Updated DOC_STATUS.md: header updated for Wave 4, new Wave 4 section added with task table, area status updated
+5. Appended session log and ACTIVITY_LOG entry
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Header updated for Wave 4; Wave 4 verification table added; area status updated (V4.0.4 down to #204+#205 remaining) |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended documenter Wave 4 entry |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- DOC_STATUS.md now reflects Wave 4 results and V4.0.4 near-closure status
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- No README/ARCHITECTURE/API updates needed -- no source code was modified in this wave
+
+### What I learned
+- Tasks that complete with "already resolved by existing pipeline" still need DOC_STATUS tracking but no doc content changes
+
+### State I'm leaving behind
+DOC_STATUS.md is current through Wave 4. V4.0.4 has only #204 (TEST GATE) and #205 (AREA CHECKPOINT) remaining.
+
+### Handoff
+None -- task fully self-contained. Next doc update when #204/#205 complete and V4.0.4 closes.
+
+---
 ## 2026-04-06 -- Wave 3 — #200 PASS, #223 PASS (V4.5 CLOSED), #201 COMPLETED (replay sanitization)
 **Status:** COMPLETED
 **Called by:** orchestrator (parallel post-task documentation update)

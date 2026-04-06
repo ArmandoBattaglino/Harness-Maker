@@ -146,6 +146,21 @@ Task #201 modified source code (SessionManager.js). Tasks #200 and #223 were ver
 
 **Area status after Wave 3:** V4.0.2 CLOSED, V4.0.3 CLOSED, V4.3 CLOSED, V4.4 CLOSED, V4.5 CLOSED, V5.1 CLOSED, V5.2 CLOSED. Open area: V4.0.4 (#202-#205 remaining).
 
+## Wave 4 — #202 PASS, #203 COMPLETED (no code change) (2026-04-06)
+
+No source code modified. Two tasks completed, both verification/analysis only.
+
+| Task | Type | Area | Verdict | Code Modified |
+|------|------|------|---------|---------------|
+| #202 | TEST GATE | V4.0.4 — BUG-PTY-REPLAY-CONTAMINATION-1 | PASS | No |
+| #203 | BUG FIX (resolved) | V4.0.4 — BUG-RECOVERY-LABELING-1 | COMPLETED — already handled by existing pipeline | No |
+
+**Task #203 details:** Recovery prompts and system-authored correction messages are already visually distinguished from agent output by the existing sanitization pipeline at three levels: SNIPPET_RECOVERY_LINE_PATTERNS (SwarmEngine.js), SNIPPET_NOISE_LINE_PATTERNS (SwarmEngine.js), and REPLAY_NOISE_LINE_PATTERNS (SessionManager.js). Recovery-only content produces a human-friendly "Runtime reminder" summary. No code change needed.
+
+**Documentation impact:** None — no code changes, no API changes, no config changes. All existing docs remain accurate.
+
+**Area status after Wave 4:** V4.0.2 CLOSED, V4.0.3 CLOSED, V4.3 CLOSED, V4.4 CLOSED, V4.5 CLOSED, V5.1 CLOSED, V5.2 CLOSED. Open area: V4.0.4 (#204 TEST GATE + #205 AREA CHECKPOINT remaining).
+
 ## Documentation Debt
 
 | Item | Priority | Reason deferred |

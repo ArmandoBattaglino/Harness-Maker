@@ -1,4 +1,15 @@
 
+- [PM STATUS SYNC 2026-04-06] Wave 4/5 transition — #202 PASS, #203 COMPLETED (no code change), #204+#205 launched:
+  V4.0.4 chain nearly complete. #203 resolved without code change — existing sanitization pipeline already handles
+  recovery prompt filtering at 3 levels (SNIPPET_RECOVERY_LINE_PATTERNS, SNIPPET_NOISE_LINE_PATTERNS, REPLAY_NOISE_LINE_PATTERNS).
+  Wave 5 launched: #204 (TEST GATE) + #205 (AREA CHECKPOINT) — both IN_PROGRESS.
+  After #205 passes, V4.0.4 will be CLOSED. Only #148 (V3.4 AREA CHECKPOINT) remains as the last open task.
+
+- [V4.0.4 TASK #203 COMPLETED 2026-04-06] BUG-RECOVERY-LABELING-1 — no code change needed.
+  Recovery prompts already filtered by existing pipeline: SNIPPET_RECOVERY_LINE_PATTERNS (SwarmEngine.js:156),
+  SNIPPET_NOISE_LINE_PATTERNS (SwarmEngine.js:52), REPLAY_NOISE_LINE_PATTERNS (SessionManager.js:29).
+  Recovery-only snippets produce human-friendly summary; recovery lines get -260 scoring penalty.
+
 - [V4.0.4 TEST GATE PASS 2026-04-06] TASK #202 COMPLETED — TEST GATE PASS for BUG-PTY-REPLAY-CONTAMINATION-1
   36 REPLAY_NOISE_LINE_PATTERNS + 2 corruption tail regexes verified. Multi-line protocol block stripping verified. Live PTY unfiltered confirmed. 312/312 tests, client build clean. TASK #203 unblocked.
 
