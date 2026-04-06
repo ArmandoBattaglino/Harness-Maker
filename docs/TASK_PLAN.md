@@ -11005,8 +11005,10 @@ Type: TEST_GATE
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-opus-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-06 — PASS. 312/312 server tests, client build clean. Control tokens __DONE__ and __HANDOFF__ preserved literally throughout server snippet pipeline (score boosts +60/+80) and client controlTokens.js (annotate-only, no mutation). No code change was needed (Task #199 confirmed no bug existed).
 Gate: HARD â€” TASK #201 CANNOT start until this gate returns PASS
+Gate Result: PASS -> proceed to TASK #201
 Context:
   Component being tested: control-token rendering in browser and status/debug surfaces
   Implementation task: TASK #199
@@ -11826,7 +11828,8 @@ Type: AREA_CHECKPOINT
 Priority: CRITICAL
 Difficulty: MEDIUM
 Suggested Model: claude-opus-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-06 — AREA CHECKPOINT PASS. 312/312 server tests, 107/107 swarm-engine tests, client build 480 modules 0 errors. All 5 prerequisite tasks (#218-#221, #224) verified COMPLETED. Snippet pipeline fully verified: _decompressConPTYSpaces (3 regex rules + 6 skip guards), 97 SNIPPET_NOISE_LINE_PATTERNS + inline noise checks, _normalizeSnippetLine strips thinking symbols, TOKEN ALIAS badge removed from AgentNode.jsx, path fragment filter present. No regressions. V4.5 AREA IS CLOSED.
 Gate: HARD — V4.5 is not closed until this checkpoint returns PASS
 Context:
   Full E2E re-test of the entire Swarm section:

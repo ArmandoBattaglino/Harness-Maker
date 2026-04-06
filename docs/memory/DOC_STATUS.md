@@ -114,6 +114,21 @@ No code modified. Eight verification tasks completed, all PASS. Summary:
 
 **Documentation impact:** None — no code changes, no API changes, no config changes. All existing docs remain accurate.
 
+## Wave 2 Verification Sweep — 4 Tasks PASS/COMPLETED (2026-04-06)
+
+No source code modified. Four verification/gate tasks completed. V4.0.2 and V4.4 areas now fully closed.
+
+| Task | Type | Area | Verdict |
+|------|------|------|---------|
+| #187 | AREA CHECKPOINT | V4.0.2 — Gemini E2E PTY/UI Bug Fixes | PASS — V4.0.2 AREA CLOSED |
+| #217 | AREA CHECKPOINT | V4.4 — Snippet Fidelity Final Polish | PASS — V4.4 AREA CLOSED |
+| #199 | TASK | V4.0.4 — BUG-TOKEN-FIDELITY-1 | COMPLETED (no code change needed — control tokens already preserved) |
+| #222 | TEST GATE | V4.5 — Snippet Fidelity MVP Blockers | PASS — #223 AREA CHECKPOINT unblocked |
+
+**Documentation impact:** None — no source code changes, no API changes, no config changes. All existing docs remain accurate.
+
+**Area status after Wave 2:** V4.0.2 CLOSED, V4.0.3 CLOSED, V4.3 CLOSED, V4.4 CLOSED, V5.1 CLOSED, V5.2 CLOSED. Open areas: V4.0.4 (#200-#205 remaining), V4.5 (#223 AREA CHECKPOINT pending).
+
 ## Documentation Debt
 
 | Item | Priority | Reason deferred |

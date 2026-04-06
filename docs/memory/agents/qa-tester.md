@@ -1797,3 +1797,41 @@ V4.4 area is fully CLOSED. All 4 tasks (#214-#217) COMPLETED.
 ### Handoff
 None — V4.4 area complete.
 ---
+
+---
+## 2026-04-06 — Task #200: TEST GATE — BUG-TOKEN-FIDELITY-1 (literal control-token visibility)
+**Status:** COMPLETED — PASS
+**Called by:** user (direct)
+
+### Context when I started
+Task #199 (BUG-TOKEN-FIDELITY-1) was COMPLETED with no code change needed — the debugger verified control tokens were already preserved literally. Task #200 TEST GATE was PENDING.
+
+### What I did
+1. Ran `npm test --prefix server` — 312/312 pass, 12 test files
+2. Ran `npm run build --prefix client` — 480 modules, 0 errors
+3. Verified SwarmEngine.js `_scoreSnippetBlock` gives __HANDOFF__ +80 and __DONE__ +60 score boosts (lines 960-961)
+4. Verified `_buildStructuredFactSnippet` pushes __HANDOFF__/__DONE__ lines to tail unchanged (line 1010)
+5. Verified all prompt generation methods emit literal __DONE__ and __HANDOFF__ tokens throughout
+6. Verified client `controlTokens.js` `inspectControlTokens()` is annotation-only — returns metadata flags, never mutates text
+7. Marked #200 COMPLETED PASS in TASK_PLAN.md
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Marked #200 COMPLETED PASS with gate result |
+
+### Improvements delivered
+- TEST GATE #200 verified, unblocking TASK #201
+
+### Bugs I encountered
+None — control tokens are correctly preserved.
+
+### What I learned
+- Control tokens get explicit score boosts in the snippet scorer, making them prioritized in snippet selection
+
+### State I'm leaving behind
+TEST GATE #200 PASS. TASK #201 is unblocked.
+
+### Handoff
+None — gate complete. Pipeline can proceed to TASK #201.
+---

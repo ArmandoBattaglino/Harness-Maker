@@ -1,4 +1,46 @@
 ---
+## 2026-04-06 — Wave 2 Status Sync: #187, #199, #217, #222 verified COMPLETED
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+User reported Wave 2 completed: #187 PASS (V4.0.2 AREA CHECKPOINT), #217 PASS (V4.4 AREA CHECKPOINT), #199 COMPLETED (no bug), #222 PASS (V4.5 TEST GATE). Asked to update status header, PROGRESS.md, ACTIVITY_LOG.md. V4.0.2 and V4.4 are now CLOSED.
+
+### What I did
+1. Read TASK_PLAN.md — confirmed all 4 tasks already marked COMPLETED by their agents
+2. Updated status header: V4.0.4 now shows #199 COMPLETED, V4.5 now annotates #223 as last gate
+3. Prepended PROGRESS.md with Wave 2 sync summary
+4. Prepended ACTIVITY_LOG.md with PM session entry
+5. Updated this agent memory file
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Status header: V4.0.4 updated with #199 COMPLETED, V4.5 annotated #223 |
+| docs/memory/PROGRESS.md | MODIFIED | Wave 2 sync summary prepended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | PM session entry prepended |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log |
+
+### Improvements delivered
+- Status tracking now reflects Wave 2 completion accurately
+- V4.0.2 and V4.4 area closures confirmed in all tracking files
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+None — status bookkeeping only.
+
+### What I learned
+- code-mapper had already written its Wave 2 entry to ACTIVITY_LOG.md before PM ran, causing a file-modified-since-read error on first attempt.
+
+### State I'm leaving behind
+Closed areas: V3.1-V3.5, V4.0-V4.0.3, V4.1, V4.2, V4.3, V4.4, V5.0, V5.1, V5.2. Open areas: V4.0.4 (#199 done, #200-#205 PENDING — sequential chain), V4.5 (#223 AREA CHECKPOINT PENDING — unblocked). No blockers.
+
+### Handoff
+Next priority: V4.5 AREA CHECKPOINT #223 (can run immediately — #222 TEST GATE already PASS). Then V4.0.4 sequential chain starting at TEST GATE #200.
+
+---
 ## 2026-04-06 — Wave 1 Status Sync: 8 parallel tasks verified COMPLETED
 **Status:** COMPLETED
 **Called by:** user

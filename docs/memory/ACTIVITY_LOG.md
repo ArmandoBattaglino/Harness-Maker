@@ -1,3 +1,14 @@
+## 2026-04-06 — project-manager — Wave 2 Status Sync (#187, #199, #217, #222 verified)
+**Outcome:** COMPLETED
+**Summary:** Verified Wave 2 results: #187 PASS (V4.0.2 AREA CHECKPOINT — area CLOSED), #217 PASS (V4.4 AREA CHECKPOINT — area CLOSED), #199 COMPLETED (no bug found), #222 PASS (V4.5 TEST GATE). Updated TASK_PLAN.md status header with #199 COMPLETED and V4.5 #223 annotation. Two areas confirmed CLOSED: V4.0.2, V4.4. Remaining open: V4.0.4 (#200-#205), V4.5 (#223).
+**Files changed:** docs/TASK_PLAN.md (status header), docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** V4.5 AREA CHECKPOINT #223 (unblocked now that #222 PASS). Then V4.0.4 sequential chain starting at #200.
+
+---
+
 ## 2026-04-06 — code-mapper — Verification Wave 2 (Tasks #187, #199, #217, #222)
 **Outcome:** COMPLETED
 **Summary:** Appended CHANGELOG.md entry for Wave 2: #187 AREA CHECKPOINT V4.0.2 PASS (CLOSED), #217 AREA CHECKPOINT V4.4 PASS (CLOSED), #199 BUG-TOKEN-FIDELITY-1 no code change needed, #222 TEST GATE V4.5 PASS. No code modified. CODE_MAP.md header updated.
@@ -3328,4 +3339,15 @@ full self-contained context and acceptance criteria.
 **Decisions made:** none
 **Blockers:** none
 **Next:** TEST GATE #200 can proceed
+---
+
+---
+## 2026-04-06 — qa-tester — Task #200: TEST GATE BUG-TOKEN-FIDELITY-1
+**Outcome:** COMPLETED
+**Summary:** TEST GATE PASS. 312/312 server tests, client build clean. Control tokens __DONE__ and __HANDOFF__ preserved literally in server snippet pipeline (score boosts +60/+80) and client controlTokens.js (annotate-only). No code change needed per Task #199. TASK #201 unblocked.
+**Files changed:** docs/TASK_PLAN.md (marked #200 COMPLETED PASS)
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** TASK #201 (BUG-PTY-REPLAY-CONTAMINATION-1) can proceed
 ---

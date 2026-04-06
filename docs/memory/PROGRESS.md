@@ -1,3 +1,6 @@
+
+- [V4.0.4 TEST GATE PASS 2026-04-06] TASK #200 COMPLETED — TEST GATE PASS for BUG-TOKEN-FIDELITY-1
+  312/312 server tests, client build clean. Control tokens __DONE__/__HANDOFF__ preserved literally in server snippet pipeline and client controlTokens.js. No code change needed. TASK #201 unblocked.
 - [PM STATUS SYNC 2026-04-06] Wave 2 verified — 4 tasks confirmed COMPLETED:
   #187 PASS (V4.0.2 AREA CHECKPOINT — V4.0.2 CLOSED), #217 PASS (V4.4 AREA CHECKPOINT — V4.4 CLOSED),
   #199 COMPLETED (no bug — control tokens already preserved), #222 PASS (V4.5 TEST GATE).
