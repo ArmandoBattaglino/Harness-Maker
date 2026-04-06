@@ -11150,7 +11150,13 @@ Type: AREA_CHECKPOINT
 Priority: CRITICAL
 Difficulty: HARD
 Suggested Model: claude-opus-4-6
-Status: IN_PROGRESS
+Status: COMPLETED
+Completion: 2026-04-06 — AREA CHECKPOINT PASS. V4.0.4 AREA IS CLOSED.
+  All 4 prerequisite TEST GATEs PASS (#198, #200, #202, #204).
+  312/312 server tests, 107/107 swarm-engine tests, client build 480 modules 0 errors.
+  Full fidelity stack verified: SwarmEngine (97+ SNIPPET_NOISE patterns, recovery scoring, semantic pipeline),
+  SessionManager (35+ REPLAY_NOISE patterns, sanitizeReplayOutput), Client (stripAnsi, controlTokens annotation-only).
+  No regressions. V4.0.4 Agent Terminal Fidelity + Snippet Hygiene is fully resolved.
 Gate: HARD â€” V4.0.4 is not closed until this checkpoint returns PASS
 Context:
   This checkpoint closes the current wave only if a deep browser/backend inspection proves that:

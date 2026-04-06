@@ -1,4 +1,10 @@
 
+- [V4.0.4 AREA CLOSED 2026-04-06] TASK #205 COMPLETED — AREA CHECKPOINT PASS. V4.0.4 IS CLOSED.
+  All 4 prerequisite TEST GATEs PASS (#198, #200, #202, #204). 312/312 server tests, 107/107 swarm-engine,
+  client build 480 modules 0 errors. Full fidelity stack verified: SwarmEngine semantic snippet pipeline (97+ noise patterns,
+  recovery scoring, ConPTY decompression), SessionManager replay sanitization (35+ noise patterns), Client stripAnsi + controlTokens.
+  No regressions. V4.0.4 Agent Terminal Fidelity + Snippet Hygiene area is fully resolved and closed.
+
 - [V4.0.4 TEST GATE PASS 2026-04-06] TASK #204 COMPLETED — TEST GATE PASS for BUG-RECOVERY-LABELING-1
   Recovery/system prompt handling verified at all 3 levels: SNIPPET_RECOVERY_LINE_PATTERNS (4 patterns, -260 penalty),
   _buildRecoverySnippet ("Runtime reminder..." label), REPLAY_NOISE_LINE_PATTERNS (done/handoff token patterns).

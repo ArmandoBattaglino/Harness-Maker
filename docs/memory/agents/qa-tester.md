@@ -1,4 +1,52 @@
 ---
+## 2026-04-06 — Task #204: TEST GATE — BUG-RECOVERY-LABELING-1
+**Status:** COMPLETED — PASS
+**Called by:** user (direct)
+
+### Context when I started
+Task #203 COMPLETED with no code change — the existing sanitization pipeline already handles recovery prompts at three levels. This TEST GATE #204 verifies that claim before #205 AREA CHECKPOINT can proceed.
+
+### What I did
+1. Ran `npm test --prefix server` -- 312/312 tests pass (12 files)
+2. Ran `npm run build --prefix client` -- 480 modules, 0 errors
+3. Code-verified SNIPPET_RECOVERY_LINE_PATTERNS (SwarmEngine.js:156) has 4 patterns:
+   - "after completing your work, you must output the done marker"
+   - "this is mandatory. the workflow cannot complete without this exact token"
+   - "output __done__ as the very last line of your response"
+   - "reason: agent emitted __done__"
+4. Verified -260 scoring penalty in _scoreSnippetBlock (line 968) for recovery lines
+5. Verified _buildRecoverySnippet (line 1020) produces: "Runtime reminder: final agent was prompted to output __DONE__ after its content."
+6. Verified sawRecoveryPrompt flag in _buildSemanticSnippet (lines 1048, 1067, 1115) correctly routes recovery-only scenarios to _buildRecoverySnippet
+7. Verified REPLAY_NOISE_LINE_PATTERNS (SessionManager.js:29) covers done/handoff token instructions (lines 35-40)
+8. Verified recovery fallback at line 1135: when bestScore < 0, _buildRecoverySnippet is called as final fallback
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Marked #204 COMPLETED PASS, updated status header |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended gate result entry |
+| docs/memory/PROGRESS.md | MODIFIED | Added TEST GATE PASS entry |
+| docs/memory/agents/qa-tester.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- TEST GATE #204 PASS formally unblocks TASK #205 (V4.0.4 AREA CHECKPOINT)
+
+### Bugs I encountered
+None -- all checks pass.
+
+### Decisions I made
+- Verified 4 SNIPPET_RECOVERY_LINE_PATTERNS and 6 done/handoff-related REPLAY_NOISE_LINE_PATTERNS are sufficient coverage for recovery prompt filtering
+
+### What I learned
+- The recovery pipeline has two fallback paths: (1) sawRecoveryPrompt flag when only recovery text remains after block extraction, and (2) bestScore < 0 fallback when all blocks score negatively. Both route to _buildRecoverySnippet.
+
+### State I'm leaving behind
+TEST GATE #204 PASS. V4.0.4 chain: #198 PASS, #199 done, #200 PASS, #201 done, #202 PASS, #203 done, #204 PASS. Only #205 AREA CHECKPOINT remains.
+
+### Handoff
+TASK #205 (V4.0.4 AREA CHECKPOINT) is now unblocked. It depends on this gate passing.
+
+---
 ## 2026-04-06 — Task #202: TEST GATE — BUG-PTY-REPLAY-CONTAMINATION-1
 **Status:** COMPLETED — PASS
 **Called by:** user (direct)
