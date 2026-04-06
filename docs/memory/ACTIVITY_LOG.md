@@ -3028,6 +3028,17 @@ full self-contained context and acceptance criteria.
 
 ---
 
+## 2026-04-06 — debugger — Task #241: BUG-SWARM-API-2 — SPA catch-all serves HTML for unmatched API GET requests
+**Outcome:** COMPLETED
+**Summary:** Added `app.all('/api/*')` 404 catch-all before the SPA `app.get('*')` fallback in server/index.js. Unmatched API paths now return JSON 404 instead of HTML 200. 312/312 tests pass.
+**Files changed:** server/index.js, docs/TASK_PLAN.md
+**Bugs fixed:** BUG-SWARM-API-2
+**Decisions made:** Used app.all() to cover all HTTP methods, not just GET
+**Blockers:** none
+**Next:** TEST GATE #243 verifies all V5.2 Wave 1 fixes
+
+---
+
 ## 2026-04-06 — code-mapper — Debugger Loop Phase 1: Swarm Deep Test
 **Outcome:** COMPLETED
 **Summary:** Appended CHANGELOG.md entry for Swarm deep test phase. No code modified — 5 bugs discovered (2 API, 3 UI). No CODE_MAP.md changes needed.
@@ -3047,4 +3058,15 @@ full self-contained context and acceptance criteria.
 **Decisions made:** none
 **Blockers:** none
 **Next:** Phase 2 will assign bug IDs and create tasks; Phase 3 will fix bugs. Documenter will update docs after code changes land.
+---
+
+---
+## 2026-04-06 — debugger — Task #240: BUG-SWARM-UI-3 — Rate limiting triggered during normal localhost navigation
+**Outcome:** COMPLETED
+**Summary:** Increased global API rate limit from 200 to 300 requests per minute in server/index.js. This is a localhost single-user app where rapid view switching is normal usage. 312/312 tests pass.
+**Files changed:** server/index.js (line 219, rate limit call site)
+**Bugs fixed:** BUG-SWARM-UI-3
+**Decisions made:** 300 req/min chosen as balance between protection against runaway loops and permitting normal power-user navigation
+**Blockers:** none
+**Next:** TEST GATE #243 should verify no 429 during 15+ rapid view switches
 ---

@@ -644,3 +644,78 @@ Fix is complete. Client builds successfully. The hydration path now gracefully h
 ### Handoff
 qa-tester should verify via TEST GATE #243: restart server, load Swarm view, confirm no 404 in DevTools console and localStorage is clean.
 ---
+---
+## 2026-04-06 — Task #241: BUG-SWARM-API-2 — SPA catch-all serves HTML for unmatched API GET requests
+**Status:** COMPLETED
+**Called by:** orchestrator (V5.2 Wave 1)
+
+### Context when I started
+SPA catch-all `app.get('*')` in server/index.js matched GET requests to nonexistent API paths, returning 200 with HTML instead of JSON 404.
+
+### What I did
+1. Read server/index.js, confirmed no API 404 guard before SPA catch-all.
+2. Added `app.all('/api/*')` returning `res.status(404).json({ error: 'Not found' })` before the SPA fallback.
+3. Ran `npm test --prefix server` — 312/312 pass.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/index.js | MODIFIED | Added API 404 catch-all before SPA fallback |
+| docs/TASK_PLAN.md | MODIFIED | Marked task #241 COMPLETED |
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-SWARM-API-2 | No API 404 handler before SPA catch-all | Added `app.all('/api/*')` 404 handler | FIXED |
+
+### Decisions I made
+- Used `app.all()` not `app.get()` so all HTTP methods to nonexistent API paths get JSON 404.
+
+### What I learned
+- Express SPA fallbacks must always have an API guard above them.
+
+### State I'm leaving behind
+Fix is complete. 312/312 server tests pass.
+
+### Handoff
+qa-tester should run TEST GATE #243.
+---
+---
+## 2026-04-06 — Task #240: BUG-SWARM-UI-3 — Rate limiting triggered during normal localhost navigation
+**Status:** COMPLETED
+**Called by:** orchestrator (V5.2 Wave 1)
+
+### Context when I started
+QA E2E testing found that rapidly switching between Swarm and Projects views triggered HTTP 429 Too Many Requests. The rate limiter in server/index.js was set to 200 req/min.
+
+### What I did
+1. Located the rate limiter in server/index.js (line 84: function definition, line 219: call site).
+2. Increased the limit from 200 to 300 requests per minute at the call site.
+3. Ran npm test -- 312/312 pass, no regressions.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/index.js | MODIFIED | Changed rateLimit call from 200 to 300 req/min. Updated comment. |
+| docs/TASK_PLAN.md | MODIFIED | Marked TASK #240 Status: COMPLETED |
+
+### Improvements delivered
+- Normal rapid navigation between views no longer triggers 429 errors
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-SWARM-UI-3 | Rate limit 200 req/min too strict for localhost single-user rapid navigation | Increased to 300 req/min | FIXED |
+
+### Decisions I made
+- Chose 300 req/min rather than disabling entirely -- still protects against runaway client bugs
+
+### What I learned
+- Each SPA view switch triggers multiple API calls, so 200 req/min exhausted by ~15-20 rapid switches
+
+### State I'm leaving behind
+Fix is complete. 312/312 server tests pass. Rate limiter now allows 300 req/min per IP.
+
+### Handoff
+qa-tester should verify via TEST GATE #243 that rapid view switching (15+ switches) produces no 429 errors.
+---

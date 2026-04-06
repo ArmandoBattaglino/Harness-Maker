@@ -1,4 +1,10 @@
 # Progress
+- [V5.2 FIX 2026-04-06] TASK #241 COMPLETED — BUG-SWARM-API-2 API 404 catch-all before SPA fallback
+  Unmatched /api/* paths now return JSON 404 instead of HTML 200. 312/312 tests pass.
+
+- [V5.2 FIX 2026-04-06] TASK #240 COMPLETED — BUG-SWARM-UI-3 rate limiter relaxed from 200 to 300 req/min
+  Normal rapid view switching no longer triggers 429 errors. 312/312 tests pass.
+
 - [V5.2 PLAN 2026-04-06] Debugger Loop Phase 2 — Swarm Deep Test Bug Fixes bulk plan created
   Tasks #238-#244 added to TASK_PLAN.md. 5 bugs from Phase 1 E2E testing. MEDIUM: #238 (malformed JSON 500→400), #239 (stale execution hydration 404). LOW: #240 (rate limiter too strict), #241 (SPA catch-all for API paths). DEFERRED: #242 (duplicate workflow names). TEST GATE #243, AREA CHECKPOINT #244. Wave 1: #238+#239+#240+#241 in parallel. Wave 2: #243. Wave 3: #244.
 
