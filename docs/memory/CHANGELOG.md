@@ -2,6 +2,40 @@
 
 ## 2026-04-06
 
+### [Tasks #233, #242, #148] V5.0 Post-Fix — BUG-WF-2 Done-Token Replay Noise, BUG-SWARM-UI-1 Duplicate Workflows, V3.4 AREA CHECKPOINT PASS
+- Agent: code-mapper (post-task entry)
+- Scope: 2 bug fixes + 1 AREA CHECKPOINT
+
+| Task | Title | Verdict | Agent |
+|------|-------|---------|-------|
+| #233 | BUG-WF-2 — Done-token recovery prompt replay noise | COMPLETED | debugger |
+| #242 | BUG-SWARM-UI-1 — Duplicate workflows in saved dropdown | COMPLETED | debugger |
+| #148 | V3.4 AREA CHECKPOINT | PASS | qa-tester |
+
+#### server/services/SessionManager.js
+- **Change type:** MODIFIED
+- **What changed:**
+  1. `REPLAY_NOISE_LINE_PATTERNS` extended with 3 new RegExp patterns for done-token recovery prompt text that SwarmEngine injects when an agent finishes without emitting `__DONE__`: `/^you have completed your work but did not emit the required done marker/i`, `/^please output exactly this on a new line/i`, `/^__DONE__$/`
+- **Why:** When SwarmEngine's `_buildContinueAfterDonePrompt()` fires and injects recovery text into the PTY, that text gets stored in the RingBuffer and replayed to reconnecting clients, appearing as noise in the terminal.
+
+#### client/src/views/SwarmView.jsx
+- **Change type:** MODIFIED
+- **What changed:**
+  1. `savedWorkflows` useMemo now includes name-based deduplication: workflows sorted newest-first, then filtered through a `Set` keyed on `workflow.name.toLowerCase().trim()` — first (newest) occurrence wins
+  2. Each `<option>` in the dropdown now appends a date suffix `(MM/DD/YYYY)` from `workflow.updatedAt ?? workflow.createdAt`
+- **Why:** Multiple workflow saves with the same name created duplicate entries in the dropdown, confusing users. Date suffix helps distinguish versions.
+
+### Functions Modified
+- `REPLAY_NOISE_LINE_PATTERNS` in `server/services/SessionManager.js` — 3 new done-token recovery prompt regexes added (30+ → 33+)
+
+### Connection Changes
+- No new cross-module dependencies. The 3 new patterns in SessionManager mirror text produced by SwarmEngine._buildContinueAfterDonePrompt() but remain decoupled (no import).
+
+### Impact on Other Code
+- None. Both changes are additive (new regex patterns, new useMemo filter logic). No interface changes.
+
+---
+
 ### [Tasks #202, #203] Wave 4 — TEST GATE #202 PASS, Task #203 COMPLETED (no code change)
 - Agent: code-mapper (wave summary entry)
 - Scope: 2 tasks — 1 TEST GATE, 1 bug investigation. No code modified.

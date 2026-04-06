@@ -2355,3 +2355,53 @@ DOC_STATUS.md is current. V5.2 section exists with preliminary bug counts. All o
 ### Handoff
 After Phase 2 assigns bug IDs and Phase 3 fixes code, documenter should update DOC_STATUS.md with real bug IDs, descriptions, and fix status. Other docs (API.md, ARCHITECTURE.md, etc.) may need updates depending on which code is modified.
 ---
+
+---
+## 2026-04-06 -- Final Post-Fix Trio: Tasks #233, #242, #148
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel post-task documentation update)
+
+### Context when I started
+Three tasks just completed: Task #233 (debugger added 3 done-token recovery patterns to REPLAY_NOISE_LINE_PATTERNS in SessionManager.js), Task #242 (frontend-dev fixed duplicate workflow names in SwarmView.jsx with name dedup + date suffix), Task #148 (qa-tester ran V3.4 AREA CHECKPOINT via Puppeteer, 15/15 PASS with 3 skipped). All areas V3.1-V5.2 now CLOSED.
+
+### What I did
+1. Read all modified files (SessionManager.js lines 65-68 for new patterns, SwarmView.jsx lines 85-101 for dedup logic)
+2. Audited README.md -- still accurate (no new features, config, or endpoints)
+3. Audited ARCHITECTURE.md -- still accurate (no new components or data flow changes)
+4. Audited API.md -- still accurate (no endpoint changes)
+5. Updated DOC_STATUS.md:
+   - Updated header to reflect final trio completion
+   - Fixed BUG-SWARM-UI-1 from DEFERRED to FIXED 2026-04-06 in V5.2 table
+   - Updated V5.2 overall assessment (all 5 bugs now fixed)
+   - Added new "Fixed Bugs (post-v3.0.0 -- latest additions)" section with #233 and #242
+   - Added "Final Post-Fix Trio" wave section documenting all 3 tasks
+   - Updated inline comments status note for Task #233 patterns and Task #242 dedup
+   - Updated PROGRESS.md and CONTEXT.md status notes
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Updated BUG-SWARM-UI-1 to FIXED, added new bug entries, new wave section, refreshed status notes |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended activity entry |
+
+### Improvements delivered
+- DOC_STATUS.md now accurately reflects all areas CLOSED with zero remaining bugs
+- BUG-SWARM-UI-1 correctly marked FIXED instead of DEFERRED
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- No README/ARCHITECTURE/API updates needed -- both code changes are internal (filtering patterns, UI dedup logic) with no new APIs, config, or components
+
+### What I learned
+- Done-token recovery prompts are a specific case where the swarm engine injects text when an agent finishes without emitting __DONE__ -- these are now filtered at the replay level too
+- Name-based dedup in SwarmView uses a Set on lowercased names, keeping only the most recent per name (array is pre-sorted newest-first)
+
+### State I'm leaving behind
+All documentation is UP_TO_DATE. DOC_STATUS.md reflects the complete closure of all areas V3.1-V5.2. Zero staleness anywhere. Zero remaining actionable bugs.
+
+### Handoff
+None -- all areas closed. Next documentation work will come when new features or bug areas are opened.
+---

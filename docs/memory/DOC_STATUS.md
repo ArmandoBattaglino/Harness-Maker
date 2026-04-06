@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-06 after Wave 4 — #202 TEST GATE PASS, #203 COMPLETED (no code change — recovery labeling already handled by existing pipeline). V4.0.4 nearly closed: only #204 TEST GATE and #205 AREA CHECKPOINT remain._
+_Last updated: 2026-04-06 after Tasks #233, #242, #148 — final post-fix trio. All areas V3.1 through V5.2 are now CLOSED._
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**
@@ -26,6 +26,13 @@ _Last updated: 2026-04-06 after Wave 4 — #202 TEST GATE PASS, #203 COMPLETED (
 | BUG-INSPECTOR-1 / BUG-PRD-4 | LOW | `onUpdateNode` prop undefined in SwarmCanvas.jsx — `handleUpdateNode` useCallback defined and wired to AgentInspector; performs shallow merge on `node.data` via `setNodes` | #130 | FIXED 2026-04-02 |
 | BUG-PTY-REPLAY-CONTAMINATION-1 | MEDIUM | `sanitizeReplayOutput()` only stripped ANSI control codes, not semantic noise (swarm protocol preamble, CLI chrome, stale prompts, corruption tails) — replay showed raw system prompts to users | #201 | FIXED 2026-04-06 |
 
+## Fixed Bugs (post-v3.0.0 — latest additions)
+
+| ID | Severity | Description | Task | Status |
+|----|----------|-------------|------|--------|
+| BUG-DONE-TOKEN-REPLAY-1 | LOW | `sanitizeReplayOutput()` did not filter done-token recovery prompts injected when agent finishes without emitting __DONE__ — 3 patterns added to REPLAY_NOISE_LINE_PATTERNS | #233 | FIXED 2026-04-06 |
+| BUG-SWARM-UI-1 | LOW | Duplicate workflow names in saved workflows dropdown — name-based deduplication + date suffix added to SwarmView.jsx | #242 | FIXED 2026-04-06 |
+
 ## Status Legend
 - UP_TO_DATE -- matches current code
 - PARTIAL -- partially updated, known gaps noted
@@ -42,14 +49,14 @@ _Last updated: 2026-04-06 after Wave 4 — #202 TEST GATE PASS, #203 COMPLETED (
 | docs/API.md | UP_TO_DATE | 2026-04-06 | No endpoint signature changes in V5.2. Malformed JSON 400, API 404 JSON, and rate limit 300 are internal behavior improvements — existing API docs remain accurate. |
 | docs/memory/PROJECT.md | UP_TO_DATE | 2026-03-28 | No stack/constraint changes in V5.0 fixes. |
 | docs/memory/DECISIONS.md | UP_TO_DATE | 2026-04-03 | DEC-001 through DEC-026 — no new architectural decisions from V5.0 bug fixes. |
-| docs/memory/PROGRESS.md | UP_TO_DATE | 2026-04-06 | V5.0 fix wave entry added: TASK #231 (snippet preamble noise) and TASK #232 (PTY Explosion wrong terminal) COMPLETED. TASK #233 still PENDING. |
-| docs/memory/CONTEXT.md | UP_TO_DATE | 2026-04-06 | Focus updated to V5.0 Debugger Loop Deep Check status. |
+| docs/memory/PROGRESS.md | UP_TO_DATE | 2026-04-06 | All areas V3.1-V5.2 CLOSED. Tasks #233, #242, #148 COMPLETED. |
+| docs/memory/CONTEXT.md | UP_TO_DATE | 2026-04-06 | All areas CLOSED. Final post-fix trio completed. |
 | docs/memory/CODE_MAP.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No changes from documenter. |
 | docs/memory/CHANGELOG.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No changes from documenter. |
 | docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-06 | V5.0 Phase 1 deep test entry appended by documenter. |
 | docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-04-06 | V1 audit. SEC-06 entry updated with webhook CSRF exemption note (Task #234). |
 | docs/security-v3-audit.md | UP_TO_DATE | 2026-04-06 | MEDIUM-V3-01 marked FIXED (Task #234). Summary table updated. |
-| Inline comments | UP_TO_DATE | 2026-04-06 | V5.0 fixes: SwarmEngine.js SNIPPET_NOISE_LINE_PATTERNS array is self-documenting. SessionManager.js REPLAY_NOISE_LINE_PATTERNS + sanitizeReplayOutput enhancement (Task #201) has clear inline group comments and JSDoc on stripAnsiForMatching. No stale comments. |
+| Inline comments | UP_TO_DATE | 2026-04-06 | SessionManager.js REPLAY_NOISE_LINE_PATTERNS array extended with 3 done-token recovery patterns (Task #233) — group comment on lines 65-68 is accurate and self-documenting. SwarmView.jsx dedup logic (Task #242) has clear inline comment. No stale comments. |
 | docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. Deferred indefinitely. |
 
 ## Stale Sections (known gaps)
@@ -92,9 +99,9 @@ Phase 1 (deep E2E test) found 5 bugs. Phase 2 (bulk plan) created tasks #238-#24
 | BUG-SWARM-UI-2 | MEDIUM | client/src/hooks/useSwarm.js | Stale execution ID caused 404 on page load — hydration now clears dead state | #239 | FIXED 2026-04-06 |
 | BUG-SWARM-UI-3 | LOW | server/index.js | Rate limiter 200 req/min too strict for rapid view switching — raised to 300 | #240 | FIXED 2026-04-06 |
 | BUG-SWARM-API-2 | LOW | server/index.js | Unmatched /api/* paths returned SPA HTML 200 — now returns JSON 404 | #241 | FIXED 2026-04-06 |
-| BUG-SWARM-UI-1 | LOW | Swarm UI | Duplicate workflow names in dropdown — cosmetic | DEFERRED (#242) | DEFERRED |
+| BUG-SWARM-UI-1 | LOW | client/src/views/SwarmView.jsx | Duplicate workflow names in dropdown — name-based dedup + date suffix | #242 | FIXED 2026-04-06 |
 
-**Overall assessment:** AREA CLOSED. TEST GATE #243 PASS confirmed all 4 fixes. Zero remaining actionable bugs. BUG-SWARM-UI-1 deferred as cosmetic.
+**Overall assessment:** AREA CLOSED. All 5 bugs fixed. TEST GATE #243 PASS confirmed fixes #238-#241. Task #242 fixed the deferred cosmetic bug (BUG-SWARM-UI-1). Zero remaining bugs.
 
 **Documentation impact:** README.md rate limit updated 200->300. docs/TEST_RESULTS.md and docs/research_complete.md rate limit references updated. No API endpoint signature changes.
 
@@ -160,6 +167,18 @@ No source code modified. Two tasks completed, both verification/analysis only.
 **Documentation impact:** None — no code changes, no API changes, no config changes. All existing docs remain accurate.
 
 **Area status after Wave 4:** V4.0.2 CLOSED, V4.0.3 CLOSED, V4.3 CLOSED, V4.4 CLOSED, V4.5 CLOSED, V5.1 CLOSED, V5.2 CLOSED. Open area: V4.0.4 (#204 TEST GATE + #205 AREA CHECKPOINT remaining).
+
+## Final Post-Fix Trio — Tasks #233, #242, #148 (2026-04-06)
+
+Three tasks completed. Two modified source code, one was verification-only. All areas V3.1 through V5.2 are now CLOSED.
+
+| Task | Type | Area | Verdict | Code Modified |
+|------|------|------|---------|---------------|
+| #233 | BUG FIX | V5.0 — Done-token recovery prompt noise | COMPLETED | Yes — server/services/SessionManager.js (3 patterns added to REPLAY_NOISE_LINE_PATTERNS) |
+| #242 | BUG FIX | V5.2 — Duplicate workflow names | COMPLETED | Yes — client/src/views/SwarmView.jsx (name dedup + date suffix) |
+| #148 | AREA CHECKPOINT | V3.4 — Swarm UX Deep Test | PASS (15/15, 3 skipped) | No — Puppeteer E2E verification only |
+
+**Documentation impact:** No README, ARCHITECTURE, API, or PRD changes needed. Task #233 is internal filtering logic within an existing function. Task #242 is a UI bug fix with no new APIs or config. Task #148 is verification-only. Inline comments in both modified files are accurate.
 
 ## Documentation Debt
 

@@ -1,4 +1,46 @@
 ---
+## 2026-04-06 — Tasks #233, #242, #148: BUG-WF-2 + BUG-SWARM-UI-1 + V3.4 AREA CHECKPOINT
+**Status:** COMPLETED
+**Called by:** user (post-task code mapping request)
+
+### Context when I started
+Three tasks just completed: #233 added 3 done-token recovery prompt patterns to SessionManager REPLAY_NOISE_LINE_PATTERNS; #242 added name-based deduplication + date suffix to SwarmView saved workflows dropdown; #148 V3.4 AREA CHECKPOINT passed.
+
+### What I did
+1. Read CODE_MAP.md, CHANGELOG.md, agent log, source files (SessionManager.js, SwarmView.jsx).
+2. Updated CODE_MAP.md Module Index entries for SessionManager (30+ → 33+ patterns) and SwarmView (dedup + date suffix note).
+3. Updated Function Graph entries: REPLAY_NOISE_LINE_PATTERNS last-modified + description; SwarmView() added complexity note for Task #242 dedup logic + updated last-modified.
+4. Prepended CHANGELOG.md with 3-task summary entry including file-level change descriptions.
+5. Appended ACTIVITY_LOG.md and this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Updated Module Index + Function Graph for SessionManager (3 new patterns) and SwarmView (dedup logic) |
+| docs/memory/CHANGELOG.md | MODIFIED | Prepended Tasks #233, #242, #148 entry |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Entry prepended |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- CODE_MAP accurately reflects done-token recovery prompt filtering (3 new regexes)
+- CODE_MAP documents SwarmView name-based workflow deduplication + date suffix
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- None (mapping only).
+
+### What I learned
+- SwarmEngine._buildContinueAfterDonePrompt() injects recovery text into PTY when agent finishes without __DONE__; SessionManager now filters this from replay (intentional cross-module pattern duplication to avoid coupling).
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md fully up to date through Tasks #233, #242, #148. No open items.
+
+### Handoff
+None — task fully self-contained.
+
+---
 ## 2026-04-06 — Wave 4: Tasks #202, #203
 **Status:** COMPLETED
 **Called by:** user (post-wave code mapping request)
