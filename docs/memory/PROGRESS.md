@@ -1,6 +1,8 @@
 
 - [V5.0 PRD PLANNING COMPLETE 2026-04-06] PRD updated from v3.0 to v5.0 with "N8N-Style Visual Workflow Editor" addendum. 81 new functional requirements (FR-V5-01 through FR-V5-81), 5 implementation waves, 6 new node types (conditional, merge, delay, loop, errorHandler, subWorkflow), 5 new security requirements (SEC-V5-01 through SEC-V5-05). New API endpoints planned: workflow versions, execution history, templates, agent discovery. New UI components planned: NodePalette, ContextMenu, EdgeInspector, WorkflowSettingsModal, WorkflowToolbar, etc. No code changes — planning/design only. Next: task planning for V5 Wave 1.
 
+- [V7.0 TASK #255 COMPLETED 2026-04-06] BUG-SNIPPET-INIT-1 — Wrapped snippet update in SwarmEngine.js tapFn inside ignoreParserUntil guard. System prompt text no longer flashes in agent card during echo gate. 312/312 tests pass. TEST GATE #257 pending.
+
 - [V7.0 TASK #254 COMPLETED 2026-04-06] BUG-DONE-BARE-1 — DONE_RE regex widened in HandoffParser.js to accept bare DONE on its own line. All HandoffParser tests pass. TEST GATE #256 pending.
 
 - [V6.0 AREA CLOSED 2026-04-06] Runtime Deep Test Bug Fixes CLOSED. All 9 tasks (#245-#253) COMPLETED. 4 bug fixes verified: BUG-RUNTIME-1 (thinking token collapse), BUG-RUNTIME-2 (Codex auth filter), BUG-RUNTIME-3 (Gemini prompt echo filter), BUG-RUNTIME-4 (empty prompt validation). TEST GATES #249-#252 all PASS. AREA CHECKPOINT #253 PASS. 312/312 server tests, 480 module client build, 0 errors. V6.0 IS CLOSED.

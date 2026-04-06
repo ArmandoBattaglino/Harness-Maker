@@ -2875,3 +2875,98 @@ _All bugs identified in QA Swarm Inspection (2026-03-31) and Swarm Code Audit (2
 | BUG-AUDIT-4 | `client/src/hooks/useInbox.js` | useInbox hook imported by no component — dead code, HITL polling unreachable | Added `useInbox(activeExecutionId)` call in SwarmView.jsx line 53 | FIXED | Task #122 |
 | BUG-WF-1 | `server/services/SwarmEngine.js` | Swarm protocol preamble lines (agent role declarations, task descriptions, workflow goals) leaked through snippet noise filter into AgentNode lastOutputSnippet | Added 13 new patterns to SNIPPET_NOISE_LINE_PATTERNS (lines 137-149) + SWARM INPUT block regex to _stripSnippetProtocolArtifacts() | FIXED | Task #231 |
 | BUG-WF-3 | `client/src/views/SwarmView.jsx` | PtyExplosion not remounting when switching agent terminals — xterm.js showed stale session output | Added `key={ptyExplosionNodeId}` to PtyExplosion component (line 520) to force React remount | FIXED | Task #232 |
+
+---
+
+## V5 Planned Architecture — N8N-Style Visual Workflow Editor (PRD Addendum 2026-04-06)
+
+> **Status:** PLANNED — no code written yet. This section maps planned files, their connections to existing code, and expected impact.
+
+### Planned New Client Files
+
+| File | Purpose | Connects To |
+|------|---------|-------------|
+| `client/src/canvas/NodePalette.jsx` | Draggable node type sidebar — Agent, Department, Trigger cards + "From Project Agents" | SwarmCanvas.jsx (drop target), agents discover endpoint |
+| `client/src/canvas/ContextMenu.jsx` | Right-click context menu for canvas/nodes/edges | SwarmCanvas.jsx (event handlers) |
+| `client/src/canvas/EdgeInspector.jsx` | Edge configuration panel — circuit breaker threshold, label | SwarmCanvas.jsx (edge click), SwarmView.jsx |
+| `client/src/canvas/WorkflowSettingsModal.jsx` | Settings (mode, budget, circuit breaker, default model) + Initial Context editor | SwarmView.jsx (toolbar button) |
+| `client/src/canvas/WorkflowToolbar.jsx` | Save, Save As, undo/redo buttons, inline name/description edit | SwarmView.jsx (replaces inline toolbar), useWorkflow.js, useCanvasHistory.js |
+| `client/src/canvas/ValidationBadge.jsx` | Warning indicators on invalid nodes/edges | useCanvasValidation.js, AgentNode.jsx, HandoffEdge.jsx |
+| `client/src/canvas/nodes/ConditionalNode.jsx` | Diamond conditional router — evaluates context vars (Wave 5) | SwarmEngine.js (server eval), WorkflowStore.js |
+| `client/src/canvas/nodes/MergeNode.jsx` | Hexagon merge/join — waits for N upstream agents (Wave 5) | SwarmEngine.js (convergence tracking) |
+| `client/src/canvas/nodes/DelayNode.jsx` | Clock delay timer — pure timer, no PTY (Wave 5) | SwarmEngine.js (setTimeout) |
+| `client/src/canvas/nodes/LoopNode.jsx` | Circular loop iterator — maxIterations + exitCondition (Wave 5) | SwarmEngine.js, CircuitBreaker.js (loop edge exemption) |
+| `client/src/canvas/nodes/ErrorHandlerNode.jsx` | Red error handler — watches node error status (Wave 5) | SwarmEngine.js (error routing) |
+| `client/src/canvas/nodes/SubWorkflowNode.jsx` | Nested workflow runner — embeds another workflow (Wave 5) | SwarmEngine.js (nested execution), WorkflowStore.js |
+| `client/src/hooks/useCanvasHistory.js` | Undo/redo — 50-entry snapshot stack of {nodes, edges} | SwarmCanvas.jsx (keyboard shortcuts), SwarmView.jsx |
+| `client/src/hooks/useCanvasValidation.js` | Pre-run validation — checks triage node, orphans, empty prompts | SwarmView.jsx (Run button gating), ValidationBadge.jsx |
+| `client/src/utils/sanitizeWorkflow.js` | Strips React Flow internal fields before save | WorkflowToolbar.jsx (save path), useWorkflow.js |
+| `client/src/utils/nodeIdGenerator.js` | Generates `^[a-z][a-z0-9-]*$` IDs for new nodes | NodePalette.jsx (drop handler), ContextMenu.jsx (Add Node) |
+
+### Planned New Server Files
+
+| File | Purpose | Connects To |
+|------|---------|-------------|
+| `server/services/ExecutionHistory.js` | Append-only execution log persistence to CONFIG_DIR/execution-history/ | swarm.js (new history endpoints), SwarmEngine.js (writes on execution end) |
+| `server/services/WorkflowVersionStore.js` | Version snapshot storage at CONFIG_DIR/workflows/versions/ | workflows.js (version endpoints), WorkflowStore.js (save trigger) |
+| `server/routes/templates.js` | Template CRUD — GET list, POST instantiate | server/index.js (route mount), WorkflowStore.js (create from template) |
+
+### Planned Modifications to Existing Files
+
+| File | What Changes | Impact |
+|------|-------------|--------|
+| `client/src/canvas/SwarmCanvas.jsx` | Add palette integration, context menu, keyboard shortcuts, onNodesDelete/onEdgesDelete handlers, snap-to-grid toggle | Core canvas component — most V5 features touch this file |
+| `client/src/canvas/AgentInspector.jsx` | Upgrade from read-only to full edit panel (systemPrompt textarea, model select, tools multi-input, maxTurns, triage toggle, department select) | FR-V5-07 through FR-V5-10 — BREAKING: component interface changes from display-only to edit mode |
+| `client/src/views/SwarmView.jsx` | Add WorkflowToolbar, dirty state tracking, save/save-as handlers, validation gating on Run button | Already the most modified file in codebase; V5 adds significant new state |
+| `client/src/store/SwarmContext.jsx` | Add canvasHistory, dirtyState, clipboard to Zustand store | Must remain separate from execution state per DEC-011 |
+| `server/services/SwarmEngine.js` | Conditional/merge/delay/loop/error/sub-workflow evaluation (Wave 5) | Major expansion of node type handling — currently only handles agent/department/trigger |
+| `server/services/WorkflowStore.js` | Validate new node types, version snapshots on PUT | Schema validation must expand for 6 new node types |
+| `server/routes/workflows.js` | Version history endpoints (GET versions, GET version, POST restore) | 3 new routes |
+| `server/routes/swarm.js` | Execution history endpoints (GET history by workflow, GET by execution) | 2 new routes |
+| `server/services/CircuitBreaker.js` | Loop edge exemption — loop edges exempt up to maxIterations (Wave 5, FR-V5-72) | check() method needs loop-awareness |
+
+### New Data Models (V5.5)
+
+| Model | Location | Fields |
+|-------|----------|--------|
+| CanvasHistoryEntry | client-side only | nodes[], edges[], timestamp |
+| ConditionalData | extends NodeDefinition | label, rules[{condition, targetNodeId}], defaultTargetNodeId |
+| MergeData | extends NodeDefinition | label, waitFor ("all"/"any"/number) |
+| DelayData | extends NodeDefinition | label, delaySeconds (1-3600) |
+| LoopData | extends NodeDefinition | label, maxIterations (1-100), exitCondition, exitTargetNodeId |
+| ErrorHandlerData | extends NodeDefinition | label, watchedNodes[] |
+| SubWorkflowData | extends NodeDefinition | label, workflowId |
+| ExecutionHistoryEntry | server-side persisted | executionId, workflowId, status, startedAt, endedAt, duration, agentOutcomes |
+
+### New API Endpoints (V5.6)
+
+| Endpoint | Method | Purpose | Server File |
+|----------|--------|---------|-------------|
+| `/api/v1/workflows/:id/versions` | GET | List workflow versions | workflows.js |
+| `/api/v1/workflows/:id/versions/:timestamp` | GET | Get specific version | workflows.js |
+| `/api/v1/workflows/:id/versions/:timestamp/restore` | POST | Restore version | workflows.js |
+| `/api/v1/swarm/history/:workflowId` | GET | Execution history list | swarm.js |
+| `/api/v1/swarm/history/:workflowId/:executionId` | GET | Execution detail | swarm.js |
+| `/api/v1/agents/discover?projectPath=` | GET | List project .claude/agents/*.md | agents.js (modified) |
+| `/api/v1/workflows/templates` | GET | List templates | templates.js (new) |
+| `/api/v1/workflows/templates/:templateId/instantiate` | POST | Create from template | templates.js (new) |
+
+### Security Requirements (V5.9)
+
+| ID | Requirement | Enforcement Point |
+|----|-------------|-------------------|
+| SEC-V5-01 | Client-generated node IDs re-validated server-side (`^[a-z][a-z0-9-]*$`) | WorkflowStore.js |
+| SEC-V5-02 | Imported workflow JSON fully validated against schema | WorkflowStore.js, workflows.js |
+| SEC-V5-03 | Sub-workflow circular reference prevention (max depth 3) | SwarmEngine.js |
+| SEC-V5-04 | Safe condition expression evaluator (no eval, whitelist operators only) | SwarmEngine.js |
+| SEC-V5-05 | Execution history uses atomic-write + path-validation | ExecutionHistory.js |
+
+### Open Decisions Needed Before Implementation
+
+| Decision | Context | Blocking |
+|----------|---------|----------|
+| DEC-027 | Conditional expression evaluator implementation | Wave 5 (ConditionalNode) |
+| DEC-028 | Merge convergence state tracking strategy | Wave 5 (MergeNode) |
+| DEC-029 | Loop node + circuit breaker interaction | Wave 5 (LoopNode) |
+| Auto-layout library | dagre (simpler) vs elkjs (hierarchical) | Wave 3 (FR-V5-42) |
+| Template source | Bundled static JSON vs remote repo | Wave 4 (FR-V5-51) |

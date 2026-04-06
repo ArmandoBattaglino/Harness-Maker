@@ -2,6 +2,58 @@
 
 ## 2026-04-06
 
+### V5 PRD Addendum — N8N-Style Visual Workflow Editor (Planning Milestone)
+- Agent: code-mapper (post-planning entry)
+- Scope: PRD update only — no code files modified
+
+| File | Change Type | Description |
+|------|-------------|-------------|
+| docs/PRD.md | MODIFIED | Added V5 addendum (~450 lines): 81 functional requirements (FR-V5-01 through FR-V5-81), 5 implementation waves, 7 new data models, 5 new API endpoint groups, 5 security requirements (SEC-V5-01 through SEC-V5-05), architecture plan for ~15 new files + 4 modified files |
+
+#### Summary
+Major PRD expansion adding "N8N-Style Visual Workflow Editor" capabilities to transform the Swarm canvas from a viewer/runner into a full editor. Five waves planned:
+
+- **Wave 1 (V5.0 MVP):** Save/persist canvas, undo/redo (50-step), node/edge delete, inspector editing (agent/dept/trigger), context menu, workflow name/description edit. FR-V5-01 through FR-V5-24.
+- **Wave 2 (V5.0):** Node Palette sidebar with drag-drop, node duplication, per-node model/tools/maxTurns config, triage toggle, department assignment, workflow settings modal, initial context editor. FR-V5-25 through FR-V5-36.
+- **Wave 3 (V5.1):** Clone workflow, export/import JSON, copy/paste nodes, snap-to-grid, auto-layout (dagre), keyboard shortcuts, validation indicators, edge inspector. FR-V5-37 through FR-V5-47.
+- **Wave 4 (V5.1):** Execution history persistence + UI, per-node timing, workflow templates library, version history (backend + UI). FR-V5-48 through FR-V5-55.
+- **Wave 5 (V5.2+):** Advanced flow control — Conditional Router (diamond), Merge/Join (hexagon), Delay/Timer (clock), Loop (circular), Error Handler (red bolt), Sub-workflow (nested). FR-V5-56 through FR-V5-81. Requires DEC-027, DEC-028, DEC-029.
+
+#### Planned New Files
+- **Client (16):** NodePalette.jsx, ContextMenu.jsx, EdgeInspector.jsx, WorkflowSettingsModal.jsx, WorkflowToolbar.jsx, ValidationBadge.jsx, ConditionalNode.jsx, MergeNode.jsx, DelayNode.jsx, LoopNode.jsx, ErrorHandlerNode.jsx, SubWorkflowNode.jsx, useCanvasHistory.js, useCanvasValidation.js, sanitizeWorkflow.js, nodeIdGenerator.js
+- **Server (3):** ExecutionHistory.js, WorkflowVersionStore.js, templates.js
+
+#### Existing Files That Will Be Modified
+- SwarmCanvas.jsx (palette, context menu, keyboard shortcuts, delete handlers)
+- AgentInspector.jsx (read-only → full edit panel — **BREAKING interface change**)
+- SwarmView.jsx (toolbar, dirty state, save handlers, validation gating)
+- SwarmContext.jsx (canvasHistory, dirtyState, clipboard in Zustand store)
+- SwarmEngine.js (6 new node type evaluations — Wave 5)
+- WorkflowStore.js (6 new node type schema validation, version snapshots)
+- workflows.js (3 version history routes)
+- swarm.js (2 execution history routes)
+- CircuitBreaker.js (loop edge exemption)
+
+#### Impact on Other Code
+- AgentInspector.jsx interface change is BREAKING — all callers (SwarmCanvas.jsx) must pass `onUpdateNode` callback
+- SwarmContext.jsx Zustand store expansion must respect DEC-011 (canvas state separate from execution state)
+- WorkflowStore.js schema changes will affect all existing workflow create/update paths
+- CircuitBreaker.js loop exemption requires coordination with SwarmEngine loop tracking
+
+### Functions Added
+- None (planning only — no code written)
+
+### Functions Modified
+- None (planning only — no code written)
+
+### Functions Removed
+- None
+
+### Connection Changes
+- None yet — planned connections documented in CODE_MAP.md V5 Planned Architecture section
+
+---
+
 ### [Tasks #233, #242, #148] V5.0 Post-Fix — BUG-WF-2 Done-Token Replay Noise, BUG-SWARM-UI-1 Duplicate Workflows, V3.4 AREA CHECKPOINT PASS
 - Agent: code-mapper (post-task entry)
 - Scope: 2 bug fixes + 1 AREA CHECKPOINT

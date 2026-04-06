@@ -1,3 +1,14 @@
+## 2026-04-06 — debugger — Task #255: BUG-SNIPPET-INIT-1 — Filter system prompt text from initial agent snippet display
+**Outcome:** COMPLETED
+**Summary:** Wrapped snippet update in SwarmEngine.js tapFn inside `if (!currentState.ignoreParserUntil)` guard so echoed system prompt text is suppressed from agent card display during echo gate period. Updated 8 tests to clear echo gate before testing snippet content. 312/312 tests pass, client build clean.
+**Files changed:** server/services/SwarmEngine.js, server/tests/swarm-engine.test.js, docs/TASK_PLAN.md
+**Bugs fixed:** BUG-SNIPPET-INIT-1 — system prompt text flashing in agent node card during first ~3s of execution
+**Decisions made:** Guard only snippet update (not _runtimeScanBuffer) to preserve runtime detection during echo gate
+**Blockers:** none
+**Next:** TEST GATE #257 should verify the fix
+
+---
+
 ## 2026-04-06 — documenter — V5.0 PRD Planning Milestone: Documentation update
 **Outcome:** COMPLETED
 **Summary:** Updated project docs to reflect V5.0 PRD addendum (N8N-Style Visual Workflow Editor). PRD bumped from v3.0 to v5.0 with 81 new FRs, 5 implementation waves, 6 new node types, 5 security requirements, and new API endpoints planned. No code changes — planning/design only. Updated PROGRESS.md, CONTEXT.md, PROJECT.md, and DOC_STATUS.md.

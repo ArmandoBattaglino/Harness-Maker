@@ -204,5 +204,7 @@ Wave A (#245-#247, SwarmEngine.js) and Wave B (#248, PromptToFlowBar.jsx) comple
 | SECURITY_AUDIT.md LOW-04 fix | Low | Refactor safeRead to cover claudemd GET path — deferred to v3.1 |
 | Swarm execution state persistence | Medium | In-memory only in v3.0; restart clears all executions. Disk persistence planned for v3.1. |
 | docs/memory/CODE_MAP.md TriggerNode "(stub)" notation | Low | Code-mapper should update the map entry — TriggerNode is now fully implemented (Task #76). |
+| docs/API.md V5 endpoints | Medium | V5 PRD defines new API endpoints (workflow versions, execution history, templates, agent discovery) — docs/API.md must be updated once these endpoints are implemented in code. |
+| docs/ARCHITECTURE.md V5 components | Medium | V5 PRD defines new UI components (NodePalette, ContextMenu, EdgeInspector, WorkflowSettingsModal, WorkflowToolbar) and node types (conditional, merge, delay, loop, errorHandler, subWorkflow) — update ARCHITECTURE.md once implemented. |
 | ~~MEDIUM-V3-01 / BUG-API-1 (webhook CSRF mismatch)~~ | RESOLVED | Fixed in Task #234 (2026-04-06). CSRF_EXEMPT_PREFIXES array added to server/middleware/csrf.js. Security audit docs updated. |
 | ~~BUG-PRD-1 through BUG-PRD-4 code fixes~~ | RESOLVED | All four bugs fixed in V3.1 wave (Tasks #124-#130). AREA CHECKPOINT #132 PASS confirmed. No remaining debt from this item. |
