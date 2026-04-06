@@ -2906,3 +2906,48 @@ CODE_MAP.md and CHANGELOG.md fully updated through V5 Wave 1. All new and modifi
 ### Handoff
 None — mapping task fully self-contained.
 ---
+
+---
+## 2026-04-06 — V5 Wave 2: NodePalette + WorkflowSettingsModal
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task mapping)
+
+### Context when I started
+V5 Wave 2 was just implemented. Two new files (NodePalette.jsx, WorkflowSettingsModal.jsx) and two modified files (SwarmCanvas.jsx, SwarmView.jsx). CODE_MAP.md and CHANGELOG.md were current through V5 Wave 1.
+
+### What I did
+1. Read all 4 files (2 new, 2 modified)
+2. Traced connections: NodePalette -> SwarmCanvas (drag-drop), WorkflowSettingsModal -> SwarmView (settings persistence), SwarmCanvas -> generateNodeId (new import)
+3. Updated CODE_MAP.md: header date, 3 Module Index entries updated/added, SwarmCanvas function graph updated, SwarmView function graph updated, 6 new function graph entries added (NodePalette, PaletteCard, WorkflowSettingsModal, SettingsTab, ContextTab, onDrop/onDragOver documented in SwarmCanvas entry)
+4. Appended CHANGELOG.md entry with full file/function/connection change detail
+5. Appended ACTIVITY_LOG.md
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Updated header, 2 Module Index rows updated (SwarmCanvas, SwarmView), 2 new Module Index rows (NodePalette, WorkflowSettingsModal), updated SwarmCanvas + SwarmView function graph entries, added 6 new function graph entries |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended V5 Wave 2 entry with full details |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended code-mapper session entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- CODE_MAP.md now fully documents V5 Wave 2 drag-and-drop data flow and settings persistence flow
+- New connection: PaletteCard.dataTransfer -> SwarmCanvas.onDrop documented
+- New connection: WorkflowSettingsModal.onApply -> SwarmView -> workflowDef.settings/initialContext documented
+
+### Bugs I encountered
+None
+
+### Decisions I made
+None
+
+### What I learned
+- onDrop in SwarmCanvas uses generateNodeId (compliant IDs) while addNodeAtPosition still uses `${type}-${Date.now()}` — potential inconsistency
+- WorkflowSettingsModal stores contextVars as array internally but converts to flat dict on apply — bidirectional: initialContext dict -> array on init, array -> dict on apply
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md fully updated through V5 Wave 2. All new and modified functions mapped.
+
+### Handoff
+None — mapping task fully self-contained.
+---

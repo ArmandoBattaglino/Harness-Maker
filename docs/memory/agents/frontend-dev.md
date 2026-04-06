@@ -1,4 +1,45 @@
 ---
+## 2026-04-06 — FR-V5-41/43/44/45/46: Canvas Validation + Keyboard Shortcuts + Snap-to-Grid
+**Status:** COMPLETED
+**Called by:** user (task assignment)
+
+### Context when I started
+SwarmCanvas had full editing (Wave 1+2) but lacked pre-run validation, keyboard shortcuts for save/run, and snap-to-grid alignment.
+
+### What I did
+1. Created `client/src/hooks/useCanvasValidation.js` — custom hook that validates canvas nodes/edges with 5 rules: no agents, no triage node, empty system prompt (warning), invalid trigger config (error), disconnected agents (warning). Returns `{ isValid, errors }`.
+2. Modified `client/src/canvas/nodes/AgentNode.jsx` — added `relative` positioning to container, added amber warning badge (!) when system prompt is empty (FR-V5-45).
+3. Modified `client/src/canvas/SwarmCanvas.jsx` — added `snapToGrid` and `snapGrid={[20, 20]}` to ReactFlow (FR-V5-41).
+4. Modified `client/src/views/SwarmView.jsx` — imported useCanvasValidation, added validationErrors state synced from hook, added keyboard shortcuts (Ctrl+S save, Ctrl+Enter run) via useEffect listener with stable refs (FR-V5-43), validation banner showing errors/warnings, Run button disabled with tooltip when validation errors exist (FR-V5-46), handleRun early-returns on validation errors.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/hooks/useCanvasValidation.js | CREATED | New validation hook for FR-V5-44 |
+| client/src/canvas/nodes/AgentNode.jsx | MODIFIED | Added relative positioning + amber warning badge for empty system prompt (FR-V5-45) |
+| client/src/canvas/SwarmCanvas.jsx | MODIFIED | Added snapToGrid + snapGrid props to ReactFlow (FR-V5-41) |
+| client/src/views/SwarmView.jsx | MODIFIED | Validation state, keyboard shortcuts, validation banner, Run button validation guard (FR-V5-43/44/46) |
+
+### Improvements delivered
+- Nodes snap to 20px grid when dragged
+- Ctrl+S saves workflow, Ctrl+Enter runs workflow
+- Pre-run validation warns about missing triage node, empty prompts, disconnected nodes
+- AgentNode shows amber badge when system prompt empty
+- Run button disabled with error count tooltip when validation errors exist
+- Validation banner shows all errors/warnings below toolbar
+
+### Decisions I made
+- Used stable refs (handleSaveRef/handleRunRef) for keyboard shortcut handler to avoid stale closure issues without excessive useEffect deps
+- Validation severity split: missing agents/triage/trigger config are errors (block run), empty prompts/disconnected nodes are warnings (don't block run)
+- Validation banner only shown when execution is idle/completed to avoid clutter during runs
+
+### State I'm leaving behind
+Build passes 0 errors (487 modules). All acceptance criteria met.
+
+### Handoff
+QA test gate needed for: snap-to-grid behavior, Ctrl+S/Ctrl+Enter shortcuts, validation badge, validation banner, Run button disable on errors.
+
+---
 ## 2026-04-06 — FR-V5-34/35/36: Workflow Settings Modal + Initial Context Editor
 **Status:** COMPLETED
 **Called by:** user (task assignment)

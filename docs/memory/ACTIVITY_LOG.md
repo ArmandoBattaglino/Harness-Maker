@@ -1,3 +1,13 @@
+## 2026-04-06 — frontend-dev — FR-V5-41/43/44/45/46: Canvas Validation + Keyboard Shortcuts + Snap-to-Grid
+**Outcome:** COMPLETED
+**Summary:** Implemented canvas snap-to-grid (20px), keyboard shortcuts (Ctrl+S save, Ctrl+Enter run), pre-run validation hook (5 rules), AgentNode warning badge for empty prompts, validation banner, and Run button validation guard. Build: 487 modules, 0 errors.
+**Files changed:** client/src/hooks/useCanvasValidation.js (CREATED), client/src/canvas/nodes/AgentNode.jsx, client/src/canvas/SwarmCanvas.jsx, client/src/views/SwarmView.jsx
+**Bugs fixed:** none
+**Decisions made:** Validation severity split (errors block run, warnings don't); stable refs for keyboard shortcuts to avoid stale closures
+**Blockers:** none
+**Next:** QA test gate for validation + shortcuts + snap-to-grid
+
+---
 ## 2026-04-06 — project-manager — V5 Wave 1 + Wave 2 Task Plan Registration
 **Outcome:** COMPLETED
 **Summary:** Registered all V5 Wave 1 tasks (#259-#267) and Wave 2 tasks (#268-#272) in TASK_PLAN.md as COMPLETED. Wave 1: 8 component tasks + 1 test gate (undo/redo, save, dirty tracking, name editing, context menu, AgentInspector, node/edge delete, sanitize/ID utils). Wave 2: 2 component tasks (NodePalette, WorkflowSettingsModal) + 2 test gates + 1 area checkpoint. Updated status header: 272 tasks total, 267 COMPLETED, 2 DEFERRED, 3 PENDING (V7.0 gates). Both Wave 1 and Wave 2 areas CLOSED.
