@@ -399,13 +399,13 @@ _Last updated: 2026-04-06 — after V5.2 Wave 1 (Tasks #238-#241) — mapped by 
 ---
 
 ### `server/index.js` :: `startup()`
-- **Purpose:** Full server bootstrap — binary discovery, config load, stale PID cleanup, Express setup, middleware, route mounting, WebSocket, HTTP bind.
+- **Purpose:** Full server bootstrap — binary discovery, config load, stale PID cleanup, Express setup, middleware, route mounting, WebSocket, HTTP bind. Includes entity.parse.failed error handler (BUG-SWARM-API-1), app.all('/api/*') 404 catch-all before SPA fallback (BUG-SWARM-API-2), rate limit at 300 req/min (BUG-SWARM-UI-3).
 - **Called by:** entry point (module level)
-- **Calls:** discoverClaudeBinary, ConfigStore.load, ProcessRegistry.cleanupStale, securityMiddleware, csrfMiddleware, projectsRouter, sessionsRouter, agentsRouter, skillsRouter, claudemdRouter, jobsRouter, setupTerminalWebSocket, openBrowser
+- **Calls:** discoverClaudeBinary, ConfigStore.load, ProcessRegistry.cleanupStale, securityMiddleware, csrfMiddleware, rateLimit(300,60000), projectsRouter, sessionsRouter, agentsRouter, skillsRouter, claudemdRouter, jobsRouter, workflowsRouter, swarmRoutes, inboxRoutes, triggersRouter, setupTerminalWebSocket, openBrowser
 - **Inputs:** none (reads env: PORT, IDLE_TIMEOUT_MINUTES, CLAUDE_BINARY_PATH)
 - **Output:** Promise\<void\>
 - **Side effects:** HTTP server listening on 127.0.0.1:PORT, WebSocket server, SIGTERM/SIGINT handlers; sets jobRunner.claudeBin after binary discovery; calls openBrowser(url) unless NO_OPEN=1
-- **Last modified:** 2026-03-18 in Task #16 by security (openBrowser refactored exec→spawn shell:false)
+- **Last modified:** 2026-04-06 in Tasks #238-#241 by backend-dev (V5.2 Wave 1: entity.parse.failed handler, API 404 catch-all, rate limit 200→300)
 
 ---
 
@@ -618,14 +618,41 @@ _Last updated: 2026-04-06 — after V5.2 Wave 1 (Tasks #238-#241) — mapped by 
 - **Side effects:** sets job._evictionTimer; eventually deletes job from #jobs Map
 - **Last modified:** 2026-03-24 in Task #19 by backend-dev (BUG-06 fix)
 
+### `server/index.js` :: `rateLimit(maxRequests, windowMs)` (module-private factory)
+- **Purpose:** In-memory per-IP rate limiter middleware factory. Returns Express middleware that tracks request counts per IP in _rateLimitMap. Returns 429 when maxRequests exceeded within windowMs.
+- **Called by:** startup() — `app.use('/api/v1', rateLimit(300, 60000))` (was 200 before Tasks #238-#241; raised for BUG-SWARM-UI-3)
+- **Calls:** _rateLimitMap.get/set, Date.now()
+- **Inputs:** maxRequests (number, default 200), windowMs (number, default 60000)
+- **Output:** Express middleware function
+- **Side effects:** mutates _rateLimitMap; returns 429 JSON response on excess
+- **Last modified:** 2026-04-06 in Tasks #238-#241 by backend-dev (call site changed from rateLimit(200) to rateLimit(300) — BUG-SWARM-UI-3 fix; function signature unchanged)
+
 ### `server/index.js` :: rate-limit stale sweep (module-level setInterval)
 - **Purpose:** Periodic cleanup of stale entries in _rateLimitMap. Every 60s, deletes entries where the rate limit window has expired (now > record.resetAt).
-- **Called by:** (automatic — setInterval at module load, lines 93-101)
+- **Called by:** (automatic — setInterval at module load)
 - **Calls:** _rateLimitMap.delete
 - **Inputs:** none (reads _rateLimitMap, Date.now())
 - **Output:** void
 - **Side effects:** deletes expired IP entries from _rateLimitMap; timer.unref() prevents blocking process exit
 - **Last modified:** 2026-03-24 in Task #20 by backend-dev (BUG-07 fix)
+
+### `server/index.js` :: entity.parse.failed error handler (in global error middleware)
+- **Purpose:** Catches malformed JSON request bodies that Express body-parser rejects with a SyntaxError (type === 'entity.parse.failed' or SyntaxError with status 400). Returns a clean 400 JSON error instead of letting it fall through to the generic 500 handler.
+- **Called by:** Express error middleware chain (after all routes)
+- **Calls:** res.status(400).json()
+- **Inputs:** err (Error — checked for err.type === 'entity.parse.failed' or instanceof SyntaxError && err.status === 400)
+- **Output:** 400 JSON `{ error: 'Invalid JSON in request body' }`
+- **Side effects:** none
+- **Last modified:** 2026-04-06 in Tasks #238-#241 by backend-dev (BUG-SWARM-API-1 fix — was HTTP 500 before)
+
+### `server/index.js` :: `app.all('/api/*')` 404 catch-all
+- **Purpose:** Catches any request to /api/* that did not match a defined route. Returns JSON 404 instead of falling through to the SPA catch-all (which would serve index.html with 200).
+- **Called by:** Express route chain — positioned after all /api/v1/* routes and before the SPA res.sendFile(index.html) catch-all
+- **Calls:** res.status(404).json()
+- **Inputs:** any HTTP method to /api/* path
+- **Output:** 404 JSON `{ error: 'Not found' }`
+- **Side effects:** none
+- **Last modified:** 2026-04-06 in Tasks #238-#241 by backend-dev (BUG-SWARM-API-2 fix — unknown API paths previously returned index.html)
 
 ---
 

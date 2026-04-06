@@ -1,4 +1,50 @@
 ---
+## 2026-04-06 -- V5.2 Wave 1 fixes (#238-#241) — documentation update
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel post-task documentation update)
+
+### Context when I started
+V5.2 Wave 1 debugger fixes had just completed: #238 (malformed JSON 400), #239 (stale execution hydration), #240 (rate limit 200->300), #241 (API 404 JSON). DOC_STATUS.md still showed V5.2 as "Phase 1 COMPLETE" with TBD bug IDs.
+
+### What I did
+1. Read server/index.js and useSwarm.js to verify the fixes.
+2. Updated README.md rate limit from 200 to 300 req/min.
+3. Updated docs/TEST_RESULTS.md rate limit reference from 200+ to 300+.
+4. Updated docs/research_complete.md rate limit reference from 200 to 300.
+5. Updated DOC_STATUS.md with V5.2 Wave 1 completion status and all bug IDs.
+6. Verified docs/API.md, docs/ARCHITECTURE.md need no changes (no endpoint signature changes).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| README.md | MODIFIED | Rate limit 200->300 in Security section |
+| docs/TEST_RESULTS.md | MODIFIED | Rate limit test threshold 200+->300+ |
+| docs/research_complete.md | MODIFIED | Main rate limit reference 200->300 |
+| docs/memory/DOC_STATUS.md | MODIFIED | V5.2 section updated with completed bug fixes and IDs |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Documenter entry appended |
+| docs/memory/agents/documenter.md | MODIFIED | This session log prepended |
+
+### Improvements delivered
+- All documentation now reflects the 300 req/min rate limit
+- DOC_STATUS.md accurately tracks V5.2 Wave 1 completion with real bug IDs
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- docs/API.md does not need updating -- the fixes are internal behavior improvements (error codes, rate limits) not endpoint signature changes
+- docs/ARCHITECTURE.md does not need updating -- no new components or data flow changes
+
+### What I learned
+- Rate limit values are documented in 4 places (README, TEST_RESULTS, research_complete, SECURITY_AUDIT) -- the SECURITY_AUDIT reference is specifically about the webhook rate limit (10/min) not the main API limit, so it was correctly left unchanged
+
+### State I'm leaving behind
+All documentation artifacts are UP_TO_DATE. V5.2 Wave 1 fixes fully reflected. TEST GATE #243 and AREA CHECKPOINT #244 still pending.
+
+### Handoff
+None -- documentation update complete. Awaiting TEST GATE #243 results for next DOC_STATUS update.
+
+---
 ## 2026-04-06 -- V5.1 Debugger Loop Full-App Deep Check CLOSED — DOC_STATUS update
 **Status:** COMPLETED
 **Called by:** orchestrator (V5.1 area closure)

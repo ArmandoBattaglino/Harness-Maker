@@ -1,3 +1,14 @@
+## 2026-04-06 — documenter — V5.2 Wave 1 fixes (#238-#241) — documentation update
+**Outcome:** COMPLETED
+**Summary:** Updated rate limit from 200 to 300 req/min in README.md, TEST_RESULTS.md, and research_complete.md. Updated DOC_STATUS.md with V5.2 Wave 1 bug fix details (4 bugs fixed, 1 deferred). No API.md or ARCHITECTURE.md changes needed.
+**Files changed:** README.md, docs/TEST_RESULTS.md, docs/research_complete.md, docs/memory/DOC_STATUS.md, docs/memory/agents/documenter.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (documentation only)
+**Decisions made:** API.md and ARCHITECTURE.md remain accurate -- V5.2 fixes are internal behavior, not endpoint/architecture changes
+**Blockers:** none
+**Next:** Await TEST GATE #243 and AREA CHECKPOINT #244
+
+---
+
 ## 2026-04-06 — project-manager — V5.2 Wave 1 Complete — Status Update
 **Outcome:** COMPLETED
 **Summary:** V5.2 Wave 1 (tasks #238, #239, #240, #241) all COMPLETED by debugger. Updated TASK_PLAN.md status header to reflect Wave 1 done. Marked TEST GATE #243 as IN_PROGRESS. Added missing PROGRESS.md entries for #238 and #239. Wave 1 summary prepended to PROGRESS.md. Next: await TEST GATE #243 result from qa-tester, then AREA CHECKPOINT #244.
