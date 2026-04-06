@@ -1,4 +1,44 @@
 ---
+## 2026-04-06 — Wave 4: Tasks #202, #203
+**Status:** COMPLETED
+**Called by:** user (post-wave code mapping request)
+
+### Context when I started
+Wave 4 completed: #202 TEST GATE PASS (verified sanitizeReplayOutput — 3 filtering layers, 312/312 tests), #203 COMPLETED with no code change. No files modified in either task. V4.0.4 chain progressing.
+
+### What I did
+1. Read CHANGELOG.md, ACTIVITY_LOG.md, agent session log for current state.
+2. Confirmed no code changes in this wave — both tasks were verification/investigation only.
+3. Prepended CHANGELOG.md with Wave 4 summary (2-task table, no file changes).
+4. Prepended ACTIVITY_LOG.md entry.
+5. Appended this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CHANGELOG.md | MODIFIED | Wave 4 summary entry prepended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Wave 4 entry prepended |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log |
+
+### Improvements delivered
+- CHANGELOG.md now records V4.0.4 chain progress through Wave 4
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+None.
+
+### What I learned
+- Nothing new — straightforward bookkeeping for a no-code wave
+
+### State I'm leaving behind
+CODE_MAP.md unchanged (no new functions). CHANGELOG.md current through Wave 4. V4.0.4 chain: #202 PASS, #203 COMPLETED, remaining #204-#205.
+
+### Handoff
+None — bookkeeping task fully self-contained.
+
+---
 ## 2026-04-06 — Wave 3: Tasks #200, #201, #223
 **Status:** COMPLETED
 **Called by:** user (post-wave code mapping request)

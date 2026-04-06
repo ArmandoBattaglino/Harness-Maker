@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-06 after Wave 3 — #200 PASS, #223 PASS (V4.5 CLOSED), #201 COMPLETED (SessionManager.js replay sanitization enhanced). V4.5 area fully closed. V4.0.4 progressing._
+_Last updated: 2026-04-06 after Wave 4 — #202 TEST GATE PASS, #203 COMPLETED (no code change — recovery labeling already handled by existing pipeline). V4.0.4 nearly closed: only #204 TEST GATE and #205 AREA CHECKPOINT remain._
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**

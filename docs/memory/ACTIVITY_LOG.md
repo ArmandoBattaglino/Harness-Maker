@@ -1,3 +1,14 @@
+## 2026-04-06 — code-mapper — Wave 4 (Tasks #202, #203)
+**Outcome:** COMPLETED
+**Summary:** Appended CHANGELOG.md with Wave 4 summary. Tasks #202 (TEST GATE PASS) and #203 (COMPLETED, no code change) recorded. No code modified — V4.0.4 chain progressing. CODE_MAP.md unchanged (no new/modified functions).
+**Files changed:** docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** Remaining V4.0.4 tasks (#204-#205) as determined by project-manager
+
+---
+
 ## 2026-04-06 — code-mapper — Wave 3 (Tasks #200, #201, #223)
 **Outcome:** COMPLETED
 **Summary:** Mapped Wave 3 changes: Task #201 enhanced sanitizeReplayOutput in SessionManager.js with 30+ noise patterns, protocol block stripping, corruption tail detection. Added 3 new function entries to CODE_MAP.md (sanitizeReplayOutput, stripAnsiForMatching, REPLAY_NOISE_LINE_PATTERNS). Updated attachClient entry. Appended CHANGELOG.md wave summary. #200 TEST GATE PASS, #223 V4.5 AREA CLOSED.

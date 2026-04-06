@@ -2,6 +2,19 @@
 
 ## 2026-04-06
 
+### [Tasks #202, #203] Wave 4 — TEST GATE #202 PASS, Task #203 COMPLETED (no code change)
+- Agent: code-mapper (wave summary entry)
+- Scope: 2 tasks — 1 TEST GATE, 1 bug investigation. No code modified.
+
+| Task | Title | Verdict | Agent |
+|------|-------|---------|-------|
+| #202 | TEST GATE BUG-PTY-REPLAY-CONTAMINATION-1 | PASS — sanitizeReplayOutput verified: 3 filtering layers (protocol block stripping, 36 line-by-line noise regexes, 2 corruption tail regexes), live PTY unfiltered, 312/312 tests pass | qa-tester |
+| #203 | BUG-RECOVERY-LABELING-1 | COMPLETED — no code change needed | debugger/investigator |
+
+**Wave result:** V4.0.4 chain progressing. #202 TEST GATE PASS unblocked #203. #203 COMPLETED with no code change. No files modified in either task.
+
+---
+
 ### [Tasks #200, #201, #223] Wave 3 — TEST GATE #200 PASS, Task #201 Replay Sanitization, AREA CHECKPOINT V4.5 PASS (CLOSED)
 - Agent: code-mapper (wave summary entry)
 - Scope: 3 tasks — 1 TEST GATE, 1 bug fix, 1 AREA CHECKPOINT
