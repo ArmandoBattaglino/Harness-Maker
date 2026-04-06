@@ -4,10 +4,11 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED - 2026-03-31 — 272 tasks total, 267 COMPLETED, 2 DEFERRED, 3 PENDING (V7.0 test gates + checkpoint). V5.0-Wave1 CLOSED (8/8 features + test gate). V5.0-Wave2 CLOSED (NodePalette + WorkflowSettingsModal + test gates + area checkpoint). Build OK, 312/312 tests pass.
-  **Active Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 (#254 COMPLETED, #255 COMPLETED, #256 PENDING test gate, #257 PENDING test gate, #258 PENDING area checkpoint)
+**Status:** v3.0.0 RELEASED - 2026-03-31 — 281 tasks total, 279 COMPLETED, 2 DEFERRED, 0 PENDING. V5.0-Wave1 CLOSED. V5.0-Wave2 CLOSED. V5.0-Wave3 CLOSED. Build OK: 487 modules, 0 errors. Tests: 312/312 pass.
+  **Completed Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 ALL COMPLETED/PASS. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#267 ALL COMPLETED. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave2 NODE CREATION & CONFIG — Tasks #268-#272 ALL COMPLETED. AREA CLOSED 2026-04-06.
+  **Completed Area:** V5.0-Wave3 VALIDATION, SHORTCUTS & WORKFLOW OPS — Tasks #273-#281 ALL COMPLETED. AREA CLOSED 2026-04-06.
   - V3.1 BUG FIX WAVE: AREA CLOSED 2026-04-02
   - V3.2/V3.3 SWARM RUNTIME INTEGRITY + CONTRACT COMPLETION: AREA CLOSED 2026-04-02 — AREA CHECKPOINT #142 PASS
   - V3.4 SWARM UX DEEP TEST FINDINGS: AREA CLOSED 2026-04-06 — all tasks COMPLETED, AREA CHECKPOINT #148 PASS (15/15 Puppeteer E2E, 3 skipped provider-dependent)
@@ -26,9 +27,10 @@
   - V5.1 DEBUGGER LOOP FULL-APP DEEP CHECK: AREA CLOSED 2026-04-06 — #234 COMPLETED, #235 PASS, #236 DEFERRED (ConPTY — unfixable), #237 PASS
   - V5.2 SWARM DEEP TEST BUG FIXES: AREA CLOSED 2026-04-06 — #238-#241 COMPLETED, #242 COMPLETED (duplicate workflow names fixed), #243 PASS, #244 PASS
   - V6.0 RUNTIME DEEP TEST BUG FIXES: AREA CLOSED 2026-04-06 — AREA CHECKPOINT #253 PASS. All 4 bug fixes verified, 312/312 tests, build clean.
-  - V7.0 SWARM TERMINAL DEEP TEST BUG FIXES: IN PROGRESS — #254 COMPLETED, #255 COMPLETED, #256-#258 PENDING (test gates + area checkpoint)
+  - V7.0 SWARM TERMINAL DEEP TEST BUG FIXES: AREA CLOSED 2026-04-06 — #254 COMPLETED, #255 COMPLETED, #256 PASS, #257 PASS, #258 PASS (area checkpoint)
   - V5.0-Wave1 SWARM EDITOR TRANSITION: AREA CLOSED 2026-04-06 — All 8 features COMPLETED (#259-#266), TEST GATE #267 PASS. Build: 483 modules, 0 errors. Tests: 312/312 pass.
   - V5.0-Wave2 NODE CREATION & CONFIG: AREA CLOSED 2026-04-06 — NodePalette (#268) + WorkflowSettingsModal (#270) COMPLETED, TEST GATES #269/#271 PASS, AREA CHECKPOINT #272 PASS. Build OK, 312/312 tests.
+  - V5.0-Wave3 VALIDATION, SHORTCUTS & WORKFLOW OPS: AREA CLOSED 2026-04-06 — useCanvasValidation (#273), snap-to-grid (#274), keyboard shortcuts (#275), validation badges (#276), validation before Run (#277), export/import JSON (#278), duplicate workflow (#279) ALL COMPLETED. TEST GATE #280 PASS. AREA CHECKPOINT #281 PASS. Build: 487 modules, 0 errors. Tests: 312/312 pass.
   DEFERRED (2 tasks, both MVP-acceptable, no fix possible):
     - #236: BUG-UI-1 — ConPTY terminal prompt garble after navigation (Windows platform limitation, DEC-009)
     - (none other — #233 and #242 previously marked DEFERRED are now COMPLETED)
@@ -12973,7 +12975,8 @@ Area: V7.0 — Swarm Terminal Deep Test Bug Fixes
 Agent: qa-tester
 Priority: LOW
 Difficulty: EASY
-Status: PENDING
+Status: PASS
+Completion: 2026-04-06. Browser E2E verified: Writer emits bare DONE, parser detects it, no reinject prompt, workflow completes in one pass. 312/312 tests pass, build clean.
 Context:
   Verify that Task #254 fix works correctly:
   1. npm test --prefix server — 312/312 pass
@@ -12995,7 +12998,8 @@ Area: V7.0 — Swarm Terminal Deep Test Bug Fixes
 Agent: qa-tester
 Priority: LOW
 Difficulty: EASY
-Status: PENDING
+Status: PASS
+Completion: 2026-04-06. Browser E2E verified: Writer snippet shows semantic content ("sia lato client che server..."), NOT system prompt text. Researcher snippet also correct ("3. Ecosistema npm e JavaScript Full-Stack..."). Echo gate prevents CLI banner from appearing in snippets.
 Context:
   Verify that Task #255 fix works correctly:
   1. npm test --prefix server — 312/312 pass
@@ -13017,7 +13021,8 @@ Area: V7.0 — Swarm Terminal Deep Test Bug Fixes
 Agent: qa-tester
 Priority: LOW
 Difficulty: EASY
-Status: PENDING
+Status: PASS
+Completion: 2026-04-06. Full E2E verification: Generated "Node.js Feature Research and Summary" workflow → Ran → Researcher (Done, 1 handoff) → Writer (Done) → Completed. PTY Explosion works for both agents, correct session content. No done reinject, no system prompt in snippets, correct semantic snippets. 312/312 tests, build clean.
 Context:
   Final verification that all V7.0 bug fixes are working:
   1. npm test --prefix server — all tests pass
@@ -13346,4 +13351,194 @@ Acceptance Criteria:
   - [x] npm run build passes, npm test passes (312/312)
 Gate Result: PASS — V5.0-Wave2 CLOSED
 Dependencies: TASK #269, TASK #271
+---
+
+## AREA: V5.0-Wave3 — Validation, Shortcuts & Workflow Operations
+_Components: useCanvasValidation.js, snap-to-grid, keyboard shortcuts (Ctrl+S/Ctrl+Enter), AgentNode validation badges, validation before Run, export/import JSON, duplicate workflow_
+_Tasks: #273 → #281_
+_Gate: ALL components must pass TEST GATE before next area starts_
+_Status: AREA CLOSED 2026-04-06 — All 7 features COMPLETED, TEST GATE #280 PASS, AREA CHECKPOINT #281 PASS. Build: 487 modules, 0 errors. Tests: 312/312 pass._
+
+---
+
+TASK #273: FR-V5-41/43 — useCanvasValidation.js Hook (Canvas Validation Engine)
+Area: V5.0-Wave3 — Validation, Shortcuts & Workflow Operations
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 — Created client/src/hooks/useCanvasValidation.js with 5 validation rules: no nodes, disconnected nodes, empty agent prompts, missing triggers, self-referencing edges. Errors block Run, warnings do not. Stable refs for keyboard shortcuts to avoid stale closures. Build: 487 modules, 0 errors.
+Context:
+  Create a validation hook that inspects the current canvas state (nodes, edges) and returns a list of validation results with severity levels (error, warning). Rules: (1) no nodes = error, (2) disconnected nodes = warning, (3) empty agent prompt = warning, (4) missing triggers = warning, (5) self-referencing edges = error. Hook is called before Run and on-demand.
+Acceptance Criteria:
+  - [x] Hook returns array of {rule, severity, message, nodeId?} objects
+  - [x] 5 validation rules implemented
+  - [x] Errors block execution, warnings do not
+  - [x] Stable refs to avoid stale closures in keyboard shortcuts
+  - [x] npm run build passes with 0 errors
+Dependencies: TASK #272
+---
+
+TASK #274: FR-V5-44 — Snap-to-Grid (20px Grid Snapping)
+Area: V5.0-Wave3 — Validation, Shortcuts & Workflow Operations
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: COMPLETED
+Completion Note: 2026-04-06 — Added snapToGrid={true} snapGrid={[20, 20]} props to ReactFlow in SwarmCanvas.jsx. Nodes now snap to 20px grid when dragged. Build: 487 modules, 0 errors.
+Context:
+  Enable snap-to-grid on the SwarmCanvas ReactFlow instance. Nodes snap to a 20px grid when dragged, providing cleaner visual alignment.
+Acceptance Criteria:
+  - [x] ReactFlow snapToGrid={true} snapGrid={[20, 20]} configured
+  - [x] Nodes snap to 20px grid when dragged
+  - [x] No interference with existing drag-and-drop from NodePalette
+  - [x] npm run build passes with 0 errors
+Dependencies: TASK #272
+---
+
+TASK #275: FR-V5-45 — Keyboard Shortcuts (Ctrl+S Save, Ctrl+Enter Run)
+Area: V5.0-Wave3 — Validation, Shortcuts & Workflow Operations
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 — Added global keyboard event listeners in SwarmCanvas.jsx for Ctrl+S (save workflow, prevents browser default) and Ctrl+Enter (run workflow with validation). Stable refs via useRef to avoid stale closures in event handlers. Build: 487 modules, 0 errors.
+Context:
+  Add keyboard shortcuts to SwarmCanvas/SwarmView: Ctrl+S triggers save workflow (same as Save button), Ctrl+Enter triggers run workflow (same as Run button, with validation). Must prevent browser default for Ctrl+S. Use stable refs to avoid stale closure issues in event listeners.
+Acceptance Criteria:
+  - [x] Ctrl+S saves workflow (prevents browser Save dialog)
+  - [x] Ctrl+Enter runs workflow (with validation check)
+  - [x] Stable refs prevent stale closures
+  - [x] No interference with text input fields (inspector, modals)
+  - [x] npm run build passes with 0 errors
+Dependencies: TASK #273
+---
+
+TASK #276: FR-V5-46 — Validation Badges on AgentNode
+Area: V5.0-Wave3 — Validation, Shortcuts & Workflow Operations
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: COMPLETED
+Completion Note: 2026-04-06 — Added warning badge (yellow triangle icon) to AgentNode.jsx that appears when the agent has an empty prompt. Badge uses validation results from useCanvasValidation. Build: 487 modules, 0 errors.
+Context:
+  Display a visual warning badge on AgentNode when validation issues exist for that node (e.g., empty prompt). Badge is a small yellow triangle icon overlay on the node card. Validation state comes from useCanvasValidation hook results filtered by nodeId.
+Acceptance Criteria:
+  - [x] Yellow warning badge visible on AgentNode with empty prompt
+  - [x] Badge disappears when prompt is filled in
+  - [x] Badge does not interfere with node selection or drag
+  - [x] npm run build passes with 0 errors
+Dependencies: TASK #273
+---
+
+TASK #277: FR-V5-41 — Validation Before Run (Run Button Guard)
+Area: V5.0-Wave3 — Validation, Shortcuts & Workflow Operations
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: COMPLETED
+Completion Note: 2026-04-06 — Added validation guard to Run button in SwarmView.jsx. On click, runs useCanvasValidation. If errors exist, shows validation banner with error messages and blocks execution. Warnings are shown but do not block. Build: 487 modules, 0 errors.
+Context:
+  Add a validation guard to the Run button in SwarmView. Before starting execution, call useCanvasValidation. If any errors exist, display a validation banner with the error messages and block execution. Warnings are displayed but do not prevent running.
+Acceptance Criteria:
+  - [x] Run button calls validation before starting execution
+  - [x] Errors block execution and show banner
+  - [x] Warnings show banner but allow execution
+  - [x] Banner is dismissible
+  - [x] npm run build passes with 0 errors
+Dependencies: TASK #273
+---
+
+TASK #278: FR-V5-47/48 — Export/Import Workflow JSON
+Area: V5.0-Wave3 — Validation, Shortcuts & Workflow Operations
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 — Added Export and Import buttons to SwarmView toolbar. Export downloads workflowDef as JSON file (workflow-{name}-{timestamp}.json). Import opens file picker, reads JSON, validates structure, and loads into canvas. Build: 487 modules, 0 errors.
+Context:
+  Add export and import functionality for workflow definitions as JSON files. Export button downloads the current workflowDef as a .json file with a descriptive filename. Import button opens a file picker, reads the selected JSON file, validates its structure (must have nodes and edges arrays), and loads it into the canvas state.
+Acceptance Criteria:
+  - [x] Export button downloads workflowDef as JSON file
+  - [x] Filename format: workflow-{name}-{timestamp}.json
+  - [x] Import button opens file picker for .json files
+  - [x] Imported JSON validated (must have nodes[] and edges[])
+  - [x] Invalid JSON shows error message
+  - [x] Imported workflow loads into canvas and marks dirty
+  - [x] npm run build passes with 0 errors
+Dependencies: TASK #272
+---
+
+TASK #279: FR-V5-49 — Duplicate Workflow
+Area: V5.0-Wave3 — Validation, Shortcuts & Workflow Operations
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: COMPLETED
+Completion Note: 2026-04-06 — Added Duplicate button to SwarmView toolbar. Creates a deep copy of the current workflowDef with a new name ("{original name} (copy)") and new node IDs (via generateNodeId). Saves as a new workflow and navigates to it. Build: 487 modules, 0 errors.
+Context:
+  Add a Duplicate Workflow button to the SwarmView toolbar. Creates a deep copy of the current workflowDef with a new name ("{original name} (copy)"), generates new node IDs for all nodes (using generateNodeId), updates edge references to match new IDs, saves as a new workflow via the API, and navigates to the duplicated workflow.
+Acceptance Criteria:
+  - [x] Duplicate button visible in SwarmView toolbar
+  - [x] Creates deep copy with new name "{original name} (copy)"
+  - [x] All nodes get new IDs (generateNodeId)
+  - [x] Edge source/target references updated to new IDs
+  - [x] Saved as new workflow via API
+  - [x] Navigates to the new duplicated workflow
+  - [x] npm run build passes with 0 errors
+Dependencies: TASK #272
+---
+
+TASK #280: TEST GATE — V5.0-Wave3 Validation, Shortcuts & Workflow Operations
+Area: V5.0-Wave3 — Validation, Shortcuts & Workflow Operations
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 — All 7 Wave 3 features verified. Build: 487 modules, 0 errors. Tests: 312/312 pass.
+Gate: HARD — AREA CHECKPOINT #281 CANNOT start until this gate returns PASS
+Context:
+  Components being tested: All 7 Wave 3 components (#273-#279)
+  What to test:
+    1. useCanvasValidation returns correct errors/warnings for 5 rules
+    2. Snap-to-grid: drag node → snaps to 20px grid
+    3. Ctrl+S saves, Ctrl+Enter runs (with validation)
+    4. AgentNode shows warning badge when prompt is empty, hides when filled
+    5. Run button blocked by validation errors, allowed with warnings only
+    6. Export downloads JSON, Import loads valid JSON, rejects invalid
+    7. Duplicate creates new workflow with new IDs and "(copy)" name
+Acceptance Criteria:
+  - [x] All 7 features functional
+  - [x] npm run build passes (487 modules, 0 errors)
+  - [x] npm test passes (312/312)
+  - [x] No regression in Wave 1 or Wave 2 features
+Gate Result: PASS — proceed to AREA CHECKPOINT #281
+Dependencies: TASK #273, TASK #274, TASK #275, TASK #276, TASK #277, TASK #278, TASK #279
+---
+
+TASK #281: AREA CHECKPOINT — V5.0-Wave3 Validation, Shortcuts & Workflow Operations
+Area: V5.0-Wave3 — Validation, Shortcuts & Workflow Operations
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: HIGH
+Status: COMPLETED
+Completion Note: 2026-04-06 — All Wave 3 components verified working together with Waves 1 and 2. Full flow: create workflow (palette drag) -> configure (inspector + settings modal) -> validate (badges + run guard) -> save (Ctrl+S) -> export JSON -> import JSON -> duplicate -> run (Ctrl+Enter). Build: 487 modules, 0 errors. Tests: 312/312 pass. V5.0-Wave3 CLOSED.
+Gate: HARD — Next area CANNOT start until ALL component test gates in this area have PASSED
+Context: Run a full integration smoke test for all components in V5.0-Wave3. Verify that validation, shortcuts, export/import, and duplicate work together with Wave 1 (save, dirty, undo/redo) and Wave 2 (palette, settings modal) features.
+Acceptance Criteria:
+  - [x] TEST GATE #280 COMPLETED with PASS result
+  - [x] Integration test: create workflow -> add nodes -> validate -> save (Ctrl+S) -> export -> import -> duplicate -> run (Ctrl+Enter with validation)
+  - [x] No regression in Wave 1 or Wave 2 features
+  - [x] npm run build passes (487 modules, 0 errors), npm test passes (312/312)
+Gate Result: PASS — V5.0-Wave3 CLOSED
+Dependencies: TASK #280
 ---
