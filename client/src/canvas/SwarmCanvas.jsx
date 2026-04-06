@@ -199,6 +199,7 @@ export default function SwarmCanvas({ workflowDef }) {
           onNodeDragStop={onNodeDragStop}
           onNodesDelete={onNodesDelete}
           onEdgesDelete={onEdgesDelete}
+          deleteKeyCode={['Delete', 'Backspace']}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           fitView
