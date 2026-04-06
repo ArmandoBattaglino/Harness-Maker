@@ -1,4 +1,8 @@
 
+- [V5.0-Wave1 FR-V5-11/13/14/15/02 COMPLETED 2026-04-06] Node/edge delete + sanitize utility + node ID generator. SwarmCanvas.jsx enhanced with department cascade delete and deleteKeyCode prop. Two new utils created (sanitizeWorkflow.js, nodeIdGenerator.js). Build: 481 modules, 0 errors.
+
+- [V7.0 STATUS SYNC 2026-04-06] V7.0 bug fixes both COMPLETED (#254, #255). 253 COMPLETED, 2 DEFERRED, 3 PENDING (#256 test gate, #257 test gate, #258 area checkpoint). Next: run test gates to verify fixes, then area checkpoint to close V7.0.
+
 - [V5.0 PRD PLANNING COMPLETE 2026-04-06] PRD updated from v3.0 to v5.0 with "N8N-Style Visual Workflow Editor" addendum. 81 new functional requirements (FR-V5-01 through FR-V5-81), 5 implementation waves, 6 new node types (conditional, merge, delay, loop, errorHandler, subWorkflow), 5 new security requirements (SEC-V5-01 through SEC-V5-05). New API endpoints planned: workflow versions, execution history, templates, agent discovery. New UI components planned: NodePalette, ContextMenu, EdgeInspector, WorkflowSettingsModal, WorkflowToolbar, etc. No code changes — planning/design only. Next: task planning for V5 Wave 1.
 
 - [V7.0 TASK #255 COMPLETED 2026-04-06] BUG-SNIPPET-INIT-1 — Wrapped snippet update in SwarmEngine.js tapFn inside ignoreParserUntil guard. System prompt text no longer flashes in agent card during echo gate. 312/312 tests pass. TEST GATE #257 pending.

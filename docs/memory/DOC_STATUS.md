@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-06 after V5.0 PRD Planning Milestone — N8N-Style Visual Workflow Editor addendum. No code changes._
+_Last updated: 2026-04-06 after V7.0 Swarm Terminal Deep Test Bug Fixes (Tasks #254-#255)._
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**
@@ -44,7 +44,7 @@ _Last updated: 2026-04-06 after V5.0 PRD Planning Milestone — N8N-Style Visual
 | Document | Status | Last Updated | Notes |
 |----------|--------|--------------|-------|
 | README.md | UP_TO_DATE | 2026-04-06 | Rate limit updated 200->300 req/min per V5.2 Task #240. |
-| docs/ARCHITECTURE.md | UP_TO_DATE | 2026-04-02 | PtyExplosion component tree entry still accurate. The `key=` prop is an internal React implementation detail, not an architectural change. |
+| docs/ARCHITECTURE.md | UP_TO_DATE | 2026-04-06 | Section 11.4 Handoff Protocol updated: DONE token now documents both `__DONE__` and bare `DONE` per Task #254 (BUG-DONE-BARE-1). |
 | docs/PRD.md | UP_TO_DATE | 2026-04-06 | Version bumped to v5.0 with N8N-Style Visual Workflow Editor addendum (81 FRs, 5 waves, 6 new node types, 5 new SEC requirements). |
 | docs/API.md | UP_TO_DATE | 2026-04-06 | No endpoint signature changes in V5.2. Malformed JSON 400, API 404 JSON, and rate limit 300 are internal behavior improvements — existing API docs remain accurate. |
 | docs/memory/PROJECT.md | UP_TO_DATE | 2026-04-06 | Implementation status updated to reflect V5.0 planning complete + V4.x-V7.0 status. |

@@ -1842,7 +1842,7 @@ No client-to-server messages on the swarm channel. The swarm WS channel is serve
 
 Each Claude agent is injected with a SWARM PROTOCOL block in its system prompt by `SwarmEngine._buildSystemPrompt()`. The block instructs the agent to:
 - Output `HANDOFF:<targetNodeId>:<base64-encoded JSON context update>` when delegating work.
-- Output `__DONE__` when the task is complete.
+- Output `__DONE__` (or bare `DONE` on its own line) when the task is complete.
 
 `HandoffParser` maintains a per-session rolling string accumulator. When `pty.onData` fires, the chunk is appended and scanned for these tokens. Because ConPTY delivers output in arbitrary byte chunks, a token can be split across chunks — the accumulator retains the unmatched tail for the next chunk (DEC-012).
 

@@ -1,3 +1,23 @@
+## 2026-04-06 — project-manager — V7.0 Status Sync: #254 + #255 COMPLETED
+**Outcome:** COMPLETED
+**Summary:** Updated TASK_PLAN.md status header to reflect 253 COMPLETED, 2 DEFERRED, 3 PENDING (V7.0 test gates + area checkpoint). V7.0 bug fixes #254 and #255 confirmed COMPLETED. Updated PROGRESS.md, CONTEXT.md.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** Run TEST GATE #256 + #257 (can be parallel), then AREA CHECKPOINT #258 to close V7.0
+
+---
+
+## 2026-04-06 — frontend-dev — FR-V5-11/13/14/15/02: Node Delete, Edge Delete, Sanitize Utility
+**Outcome:** COMPLETED
+**Summary:** Created sanitizeWorkflow.js and nodeIdGenerator.js utilities. Enhanced SwarmCanvas.jsx onNodesDelete with department cascade deletion (children + edges). Added deleteKeyCode prop to enable Delete/Backspace keyboard deletion. Build: 481 modules, 0 errors.
+**Files changed:** client/src/utils/sanitizeWorkflow.js (CREATED), client/src/utils/nodeIdGenerator.js (CREATED), client/src/canvas/SwarmCanvas.jsx (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Used crypto.randomUUID() instead of uuid package; department cascade deletes children AND their connected edges
+**Blockers:** none
+**Next:** Downstream tasks import sanitizeWorkflow for save and generateNodeId for add-node flows
+---
 ## 2026-04-06 — code-mapper — V5 PRD Addendum: Code Map + Changelog Update
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md with full V5 Planned Architecture section (16 planned client files, 3 planned server files, 9 existing files to be modified, 8 new data models, 8 new API endpoints, 5 security requirements, 5 pending decisions). Updated CHANGELOG.md with detailed planning milestone entry. No code was written — this is a PRD/planning mapping task only.
@@ -3722,4 +3742,15 @@ full self-contained context and acceptance criteria.
 **Decisions made:** Fixed in PromptToFlowBar.jsx (not SwarmView.jsx) since that is where the prompt input lives. Changed button from disabled-when-empty to always-clickable so validation fires on click.
 **Blockers:** none
 **Next:** TEST GATE #249 — qa-tester verifies empty prompt validation behavior
+---
+
+---
+## 2026-04-06 — frontend-dev — Task: FR-V5-07/09/10 — AgentInspector Full Edit Panel
+**Outcome:** COMPLETED
+**Summary:** Converted AgentInspector.jsx from read-only display to full edit panel with type-specific fields (agent: label/model/systemPrompt/tools/maxTurns/isTriageNode/parentDepartmentId; department: label/color/collapsed; trigger: label/triggerType/webhookPath/rssUrl/pollInterval). Debounced text fields, collapsible sections, all inputs immediately update canvas state. Build: 481 modules, 0 errors.
+**Files changed:** client/src/canvas/AgentInspector.jsx
+**Bugs fixed:** none
+**Decisions made:** Width w-64 to w-72 for input usability; debounce only on high-keystroke text fields; output section collapsed by default
+**Blockers:** none
+**Next:** V5 Wave 1 remaining tasks (save-to-server, other editor components)
 ---

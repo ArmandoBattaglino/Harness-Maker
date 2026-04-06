@@ -1,6 +1,6 @@
 # Current Context
 **Session date:** 2026-04-06
-**Focus:** V5.0 PRD planning COMPLETE. PRD updated to v5.0 with N8N-Style Visual Workflow Editor addendum (81 FRs, 5 waves, 6 new node types, 5 security requirements). V6.0 CLOSED. V7.0 Task #254 done (TEST GATE #256 pending). Next priority: V5 Wave 1 task planning and implementation — the transition from swarm viewer/runner to full visual editor.
+**Focus:** V7.0 bug fixes COMPLETED (#254 + #255). Three verification tasks remain PENDING: TEST GATE #256 (bare DONE token), TEST GATE #257 (snippet init filter), AREA CHECKPOINT #258. After V7.0 closes, next priority is V5 Wave 1 task planning and implementation — the transition from swarm viewer/runner to full visual editor.
 
 _Project initialized via /create pipeline on 2026-03-18_
 

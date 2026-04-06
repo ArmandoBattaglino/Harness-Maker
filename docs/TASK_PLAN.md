@@ -4,8 +4,8 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED - 2026-03-31 — 280 tasks total, 251 COMPLETED, 2 DEFERRED, 5 PENDING (V7.0), 22 PENDING (V5.0-Wave1). V7.0 Swarm Terminal Deep Test Bug Fixes IN PROGRESS. V5.0-Wave1 Swarm Editor Transition PLANNED.
-  **Active Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 (1 fix + 1 fix + 1 test gate + 1 test gate + 1 area checkpoint)
+**Status:** v3.0.0 RELEASED - 2026-03-31 — 280 tasks total, 253 COMPLETED, 2 DEFERRED, 3 PENDING (V7.0 test gates + checkpoint), 22 PENDING (V5.0-Wave1). V7.0 bug fixes COMPLETED, verification gates PENDING. V5.0-Wave1 Swarm Editor Transition PLANNED.
+  **Active Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 (#254 COMPLETED, #255 COMPLETED, #256 PENDING test gate, #257 PENDING test gate, #258 PENDING area checkpoint)
   **Planned Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#280 (9 component tasks + 9 test gates + 2 mount/wire tasks + 1 backend save-as + 1 area checkpoint)
   - V3.1 BUG FIX WAVE: AREA CLOSED 2026-04-02
   - V3.2/V3.3 SWARM RUNTIME INTEGRITY + CONTRACT COMPLETION: AREA CLOSED 2026-04-02 — AREA CHECKPOINT #142 PASS
@@ -25,7 +25,7 @@
   - V5.1 DEBUGGER LOOP FULL-APP DEEP CHECK: AREA CLOSED 2026-04-06 — #234 COMPLETED, #235 PASS, #236 DEFERRED (ConPTY — unfixable), #237 PASS
   - V5.2 SWARM DEEP TEST BUG FIXES: AREA CLOSED 2026-04-06 — #238-#241 COMPLETED, #242 COMPLETED (duplicate workflow names fixed), #243 PASS, #244 PASS
   - V6.0 RUNTIME DEEP TEST BUG FIXES: AREA CLOSED 2026-04-06 — AREA CHECKPOINT #253 PASS. All 4 bug fixes verified, 312/312 tests, build clean.
-  - V7.0 SWARM TERMINAL DEEP TEST BUG FIXES: IN PROGRESS — Tasks #254-#258
+  - V7.0 SWARM TERMINAL DEEP TEST BUG FIXES: IN PROGRESS — #254 COMPLETED, #255 COMPLETED, #256-#258 PENDING (test gates + area checkpoint)
   DEFERRED (2 tasks, both MVP-acceptable, no fix possible):
     - #236: BUG-UI-1 — ConPTY terminal prompt garble after navigation (Windows platform limitation, DEC-009)
     - (none other — #233 and #242 previously marked DEFERRED are now COMPLETED)

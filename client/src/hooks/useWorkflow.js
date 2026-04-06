@@ -30,7 +30,8 @@ export function useWorkflow(workflowId) {
 
   const update = useCallback(async (patch) => {
     if (!workflowId) return;
-    const updated = await apiPut(`${API_BASE}/${workflowId}`, patch);
+    const data = await apiPut(`${API_BASE}/${workflowId}`, patch);
+    const updated = data?.workflow ?? data ?? null;
     setWorkflow(updated);
     return updated;
   }, [workflowId]);

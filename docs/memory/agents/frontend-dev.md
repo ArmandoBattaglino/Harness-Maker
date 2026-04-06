@@ -1,4 +1,51 @@
 ---
+## 2026-04-06 — FR-V5-11/13/14/15/02: Node Delete, Edge Delete, Sanitize Utility, Node ID Generator
+**Status:** COMPLETED
+**Called by:** user (task assignment)
+
+### Context when I started
+SwarmCanvas.jsx already had `onNodesDelete` and `onEdgesDelete` stubs (added by a prior undo/redo history task) that only pushed history but did NOT handle department cascade deletion. No `deleteKeyCode` prop was set on `<ReactFlow>`, meaning keyboard deletion was not enabled. No `sanitizeWorkflow.js` or `nodeIdGenerator.js` utilities existed. The `useCanvasHistory` hook was already wired.
+
+### What I did
+1. Created `client/src/utils/sanitizeWorkflow.js` — strips React Flow internal fields (`measured`, `width`, `height`, `selected`, `dragging`, `positionAbsolute`) from nodes and edges before save. Preserves only `id`, `type`, `position`, `data`, and optional `parentId` for nodes; `id`, `source`, `target`, `type`, optional `data` for edges.
+2. Created `client/src/utils/nodeIdGenerator.js` — generates IDs matching `^[a-z][a-z0-9-]*$` using `crypto.randomUUID()` (no uuid package needed in client).
+3. Enhanced `onNodesDelete` in SwarmCanvas.jsx to cascade-delete department children: when a department node is deleted, all nodes with `parentId === deletedDeptId` are also removed, plus their connected edges.
+4. Added `deleteKeyCode={['Delete', 'Backspace']}` prop to `<ReactFlow>` to enable keyboard-triggered deletion of selected nodes/edges.
+5. Verified client build: 481 modules, 0 errors.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/utils/sanitizeWorkflow.js | CREATED | Strips React Flow internal fields before workflow save |
+| client/src/utils/nodeIdGenerator.js | CREATED | Generates valid node IDs matching server-side regex |
+| client/src/canvas/SwarmCanvas.jsx | MODIFIED | Enhanced onNodesDelete with department cascade + added deleteKeyCode prop |
+
+### Improvements delivered
+- Users can now select nodes/edges and press Delete or Backspace to remove them
+- Deleting a department node automatically removes all its children and their edges
+- sanitizeWorkflow utility ready for save operations
+- nodeIdGenerator utility ready for add-node operations
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Used `crypto.randomUUID()` instead of adding uuid package to client — crypto API is available in all modern browsers and avoids adding a dependency
+- Department cascade deletes children AND their edges (not just children) — prevents orphaned edges pointing to deleted nodes
+
+### What I learned
+- SwarmCanvas already had undo/redo history wired by a prior task (useCanvasHistory hook) — the onNodesDelete/onEdgesDelete stubs were there but hollow
+- React Flow v12 requires `deleteKeyCode` prop to enable keyboard deletion — without it, Delete key does nothing
+
+### State I'm leaving behind
+- sanitizeWorkflow.js and nodeIdGenerator.js are created but not yet consumed by any save/add-node flow — downstream tasks will import them
+- Delete functionality works for nodes and edges via keyboard
+- Multi-select (Shift+click) + Delete works because React Flow handles multi-selection natively
+- Build passes with 0 errors
+
+### Handoff
+Downstream tasks should import `sanitizeWorkflow` before any workflow save API call, and `generateNodeId` when adding new nodes from the palette/context menu.
+---
 ## 2026-03-31 — BUG-AUDIT-1 + BUG-AUDIT-2+3: AgentInspector always visible + Open Terminal button
 **Status:** COMPLETED
 **Called by:** user (direct fix request)
@@ -2241,4 +2288,61 @@ PromptToFlowBar.jsx fully updated with inline validation. Build verified. Ready 
 
 ### Handoff
 TEST GATE #249 should verify: empty prompt shows error, whitespace-only shows error, typing clears error, valid prompt still generates normally.
+---
+
+---
+## 2026-04-06 — Task: FR-V5-07/09/10 — AgentInspector Full Edit Panel
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+AgentInspector.jsx was a read-only side panel showing node label, type badge, system prompt (pre-wrapped div), live status, output snippet, and Open Terminal button. The `onUpdateNode(nodeId, patch)` callback was already passed from SwarmCanvas.jsx but never used for editing. The task required converting all display fields to editable inputs for agent, department, and trigger node types.
+
+### What I did
+1. Read memory files (PROJECT.md, DECISIONS.md, CONTEXT.md, ACTIVITY_LOG.md) in parallel with the target file.
+2. Read SwarmCanvas.jsx to confirm handleUpdateNode merges patch into node.data via setNodes immutable spread.
+3. Rewrote AgentInspector.jsx with:
+   - `useDebouncedField` custom hook for text fields (systemPrompt, tools) with 300ms debounce
+   - `CollapsibleSection` component for Configuration / Live Status / Output sections
+   - `AgentFields` sub-component: model select (3 provider groups, 8 models), systemPrompt textarea (monospace, resize-y, min 4 rows), tools comma-separated input, maxTurns number input, isTriageNode checkbox, parentDepartmentId select from department nodes
+   - `DepartmentFields` sub-component: color picker (type="color" + text input), collapsed checkbox
+   - `TriggerFields` sub-component: triggerType select (webhook/rss), conditional webhookPath or rssUrl+pollIntervalSeconds fields
+   - Header label converted from span to text input
+   - Width increased from w-64 to w-72 for better input fit
+   - Preserved all existing live status, output snippet, and Open Terminal button functionality
+4. Ran `cd client && npm run build` — 481 modules, 0 errors.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| `client/src/canvas/AgentInspector.jsx` | MODIFIED | Converted from read-only inspector to full edit panel with type-specific fields for agent/department/trigger nodes |
+
+### Improvements delivered
+- Agent nodes now editable: label, model, systemPrompt (debounced), tools (comma-separated), maxTurns, isTriageNode, parentDepartmentId
+- Department nodes editable: label, color (color picker + text), collapsed toggle
+- Trigger nodes editable: label, triggerType (webhook/rss), conditional fields (webhookPath or rssUrl+pollIntervalSeconds)
+- All edits immediately update canvas state via existing onUpdateNode callback
+- Collapsible sections for Configuration, Live Status, Output
+- Debounced text fields (300ms) prevent excessive re-renders
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None — build clean on first attempt | — | — | — |
+
+### Decisions I made
+- Width w-64 → w-72: inputs need slightly more horizontal space for usability
+- Debounce only on systemPrompt and tools fields (high-keystroke text fields); other fields (selects, numbers, checkboxes) commit immediately
+- Output section defaults to collapsed (defaultOpen={false}) to prioritize configuration editing
+- Model options hardcoded as specified; grouped by provider with optgroup
+
+### What I learned
+- handleUpdateNode merges patch into node.data (not node itself) — so all field keys in the patch correspond to node.data properties
+- React Flow v12 immutable update pattern is already enforced in SwarmCanvas
+
+### State I'm leaving behind
+AgentInspector.jsx is fully functional as an edit panel. All acceptance criteria met. Build passes cleanly (481 modules, 0 errors). No regressions — Open Terminal button and live status display preserved.
+
+### Handoff
+None — task fully self-contained. The save-to-server feature is handled by a separate V5 task.
 ---

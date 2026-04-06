@@ -1,6 +1,6 @@
 // client/src/canvas/SwarmCanvas.jsx
 // Main React Flow canvas for swarm visualization with drill-down filtering.
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ReactFlow,
   Background,
@@ -20,6 +20,7 @@ import HandoffEdge from './edges/HandoffEdge';
 import AgentInspector from './AgentInspector';
 import BreadcrumbBar from './BreadcrumbBar';
 import InterAgentFeed from './InterAgentFeed';
+import ContextMenu from './ContextMenu';
 import { useSwarmStore } from '../store/SwarmContext';
 import { useCanvasHistory } from '../hooks/useCanvasHistory';
 
@@ -34,8 +35,8 @@ const edgeTypes = {
   handoff: HandoffEdge,
 };
 
-export default function SwarmCanvas({ workflowDef }) {
-  const { fitView } = useReactFlow();
+export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange }) {
+  const { fitView, screenToFlowPosition } = useReactFlow();
   const focusedDepartmentId = useSwarmStore((s) => s.focusedDepartmentId);
   const setSelectedNode = useSwarmStore((s) => s.setSelectedNode);
   const executionStatus = useSwarmStore((s) => s.executionStatus);
@@ -54,6 +55,9 @@ export default function SwarmCanvas({ workflowDef }) {
 
   // Debounce timer ref for node data edits (FR-V5-18 — batch rapid edits into one history entry)
   const updateNodeDebounceRef = useRef(null);
+
+  // Capture pre-drag state so onNodeDragStop records the correct pre-move snapshot
+  const preDragSnapshotRef = useRef(null);
 
   // React to workflowDef changes: when scaffold generates a new workflow or workflowDef is updated,
   // update the canvas nodes and edges immediately
@@ -103,12 +107,22 @@ export default function SwarmCanvas({ workflowDef }) {
     [setSelectedNode]
   );
 
-  // FR-V5-18: record history on node drag end (position change), NOT during drag
+  // FR-V5-18: capture pre-drag snapshot at drag start, push it at drag stop
+  const onNodeDragStart = useCallback(
+    () => {
+      preDragSnapshotRef.current = { nodes, edges };
+    },
+    [nodes, edges]
+  );
+
   const onNodeDragStop = useCallback(
     () => {
-      pushHistory(nodes, edges);
+      if (preDragSnapshotRef.current) {
+        pushHistory(preDragSnapshotRef.current.nodes, preDragSnapshotRef.current.edges);
+        preDragSnapshotRef.current = null;
+      }
     },
-    [pushHistory, nodes, edges]
+    [pushHistory]
   );
 
   // FR-V5-11/13: record history + cascade-delete department children
@@ -196,6 +210,7 @@ export default function SwarmCanvas({ workflowDef }) {
           onConnect={onConnect}
           onNodeClick={onNodeClick}
           onPaneClick={onPaneClick}
+          onNodeDragStart={onNodeDragStart}
           onNodeDragStop={onNodeDragStop}
           onNodesDelete={onNodesDelete}
           onEdgesDelete={onEdgesDelete}
