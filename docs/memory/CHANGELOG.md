@@ -2,6 +2,30 @@
 
 ## 2026-04-06
 
+### [Tasks #200, #201, #223] Wave 3 — TEST GATE #200 PASS, Task #201 Replay Sanitization, AREA CHECKPOINT V4.5 PASS (CLOSED)
+- Agent: code-mapper (wave summary entry)
+- Scope: 3 tasks — 1 TEST GATE, 1 bug fix, 1 AREA CHECKPOINT
+
+| Task | Title | Verdict | Agent |
+|------|-------|---------|-------|
+| #200 | TEST GATE | PASS | qa-tester |
+| #201 | BUG-PTY-REPLAY-CONTAMINATION-1 — Enhanced sanitizeReplayOutput in SessionManager.js | COMPLETED | debugger |
+| #223 | AREA CHECKPOINT V4.5 Snippet Fidelity MVP Blockers | PASS — V4.5 AREA CLOSED | qa-tester |
+
+#### server/services/SessionManager.js
+- **Change type:** MODIFIED
+- **What changed:**
+  1. New module-level constant `REPLAY_NOISE_LINE_PATTERNS` — 30+ RegExp patterns for swarm protocol preamble, CLI chrome, shell furniture, stale prompt text, agent role declarations
+  2. New module-level constants `REPLAY_CORRUPTION_TAIL_RE` and `REPLAY_REPEATED_CHAR_RE` — detect trailing corruption (repeated punctuation or single chars)
+  3. New function `stripAnsiForMatching(str)` — strips ANSI escape codes for pattern matching while preserving visible text
+  4. Enhanced `sanitizeReplayOutput(replayBuffer)` — two-phase sanitization: (a) ANSI control code stripping (DEC private modes, cursor positioning, screen clear), (b) content-level filtering: multi-line protocol block removal (`SWARM PROTOCOL`, `SWARM INPUT`), line-by-line noise pattern filtering, corruption tail detection, leading/trailing blank line trim
+  5. `attachClient()` now calls `sanitizeReplayOutput(replay)` instead of sending raw buffer
+- **Why:** Replay-only sanitization gap — previously only stripped ANSI control codes but not semantic noise (swarm protocol preamble, CLI chrome, stale prompts, corruption tails). Patterns duplicated from SwarmEngine intentionally to avoid cross-module dependency.
+
+**Wave result:** #200 TEST GATE PASS. #201 COMPLETED (30+ replay noise patterns). #223 AREA CHECKPOINT V4.5 PASS — V4.5 AREA CLOSED.
+
+---
+
 ### [Tasks #187, #199, #217, #222] Verification Wave 2 — AREA CHECKPOINTs, TEST GATE, Token Fidelity Verification
 - Agent: code-mapper (wave summary entry)
 - Scope: 4 parallel verification tasks. No code modified — all tasks were verification-only or confirmed no change needed.

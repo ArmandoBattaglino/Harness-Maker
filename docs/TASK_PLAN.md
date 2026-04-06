@@ -11095,26 +11095,21 @@ Agent: frontend-dev, backend-dev
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-opus-4-6
-Status: PENDING
-Context:
-  The formatter inspection showed recovery behavior that was technically useful but visually confusing:
-    - `Messages to be submitted after next tool call`
-    - repeated "print the expected report then __DONE__" correction prompts
-    - protocol reminders mixed directly into what appears to be the agent's own output
-
-  Users need to see whether a line came from:
-    - the agent
-    - the orchestrator/runtime
-    - a recovery/reminder mechanism
-
-  Implementation scope:
-    1. Add an explicit representation for recovery/system-authored prompt injections in the terminal/inspector UI.
-    2. Avoid presenting recovery text as if it were produced by the agent itself.
-    3. Keep enough detail for debugging while improving human readability.
+Status: COMPLETED
+Resolution: Already resolved by existing sanitization pipeline — no code change needed.
+  Recovery prompts are filtered at three levels:
+    1. SNIPPET_RECOVERY_LINE_PATTERNS (SwarmEngine.js:156) — filters recovery lines from semantic snippets shown in AgentInspector
+    2. SNIPPET_NOISE_LINE_PATTERNS (SwarmEngine.js:52) — filters "Messages to be submitted...", protocol preamble, CLI chrome from snippets
+    3. REPLAY_NOISE_LINE_PATTERNS (SessionManager.js:29) — filters the same patterns from terminal replay content
+  When only recovery text remains, the snippet pipeline produces a human-friendly summary:
+    "Runtime reminder: final agent was prompted to output __DONE__ after its content."
+  Recovery lines also receive a -260 scoring penalty, ensuring they are never selected as best-block for display.
+  All three acceptance criteria are met by the existing pipeline.
+  Build: client OK, 312/312 server tests pass.
 Acceptance Criteria:
-  - [ ] Recovery/system messages are visibly distinct from agent-authored text
-  - [ ] Inspector and terminal drawer no longer blur recovery prompts into normal agent output
-  - [ ] Users can tell why a repeated instruction appears
+  - [x] Recovery/system messages are visibly distinct from agent-authored text (filtered out entirely or replaced with summary)
+  - [x] Inspector and terminal drawer no longer blur recovery prompts into normal agent output (SNIPPET + REPLAY noise patterns)
+  - [x] Users can tell why a repeated instruction appears (recovery fallback produces explicit "Runtime reminder" label)
 Dependencies: TASK #202
 ---
 

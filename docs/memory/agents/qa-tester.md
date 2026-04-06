@@ -1,4 +1,53 @@
 ---
+## 2026-04-06 — Task #202: TEST GATE — BUG-PTY-REPLAY-CONTAMINATION-1
+**Status:** COMPLETED — PASS
+**Called by:** user (direct)
+
+### Context when I started
+Task #201 had just COMPLETED, enhancing sanitizeReplayOutput() in SessionManager.js with content-level filtering for PTY replay. This TEST GATE #202 is the hard gate before #203 can proceed.
+
+### What I did
+1. Ran `npm test --prefix server` -- 312/312 tests pass (12 files)
+2. Ran `npm run build --prefix client` -- 480 modules, 0 errors
+3. Code-verified sanitizeReplayOutput() (lines 80-125) has three filtering layers:
+   - Multi-line protocol block stripping (lines 97-98): SWARM PROTOCOL and SWARM INPUT blocks
+   - Line-by-line noise filtering (lines 100-116): 36 REPLAY_NOISE_LINE_PATTERNS regexes
+   - Corruption tail detection (lines 113-114): REPLAY_CORRUPTION_TAIL_RE + REPLAY_REPEATED_CHAR_RE
+4. Verified REPLAY_NOISE_LINE_PATTERNS covers all required categories:
+   - "Explain this codebase" (line 55)
+   - Protocol preamble: swarm protocol, do not output, handoff token instructions (lines 31-42)
+   - CLI chrome: "messages to be submitted", "type your message", "esc to interrupt", etc. (lines 44-53)
+   - Agent declarations: "you are the finder/route checker/formatter", "current workflow context" (lines 57-64)
+5. Verified corruption tail regexes handle repeated punctuation (4+ chars) and repeated letters (4+ chars)
+6. Verified live PTY data is NOT filtered: onData handler (line 201) sends raw data directly to clients (line 211), sanitizeReplayOutput only called at line 284 during replay to newly attached clients
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Marked #202 COMPLETED PASS with completion note |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended gate result entry |
+| docs/memory/PROGRESS.md | MODIFIED | Added TEST GATE PASS entry |
+| docs/memory/agents/qa-tester.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- TEST GATE #202 PASS formally unblocks TASK #203 (BUG-RECOVERY-LABELING-1)
+
+### Bugs I encountered
+None -- all checks pass.
+
+### Decisions I made
+- Counted 36 patterns in REPLAY_NOISE_LINE_PATTERNS array (exceeds the "30+" requirement stated in the task)
+
+### What I learned
+- The replay sanitization architecture correctly separates live vs replay paths: live onData sends raw, replay attachClient calls sanitizeReplayOutput. This is the right pattern per DEC-009.
+
+### State I'm leaving behind
+TEST GATE #202 PASS. V4.0.4 chain: #198 PASS, #199 done, #200 PASS, #201 done, #202 PASS. Next: #203 (BUG-RECOVERY-LABELING-1).
+
+### Handoff
+TASK #203 is now unblocked. It depends on this gate passing.
+
+---
 ## 2026-04-06 — Task #223: AREA CHECKPOINT — V4.5 Snippet Fidelity MVP Blockers
 **Status:** COMPLETED — PASS
 **Called by:** user (direct)
