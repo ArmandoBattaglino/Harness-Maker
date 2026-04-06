@@ -1,6 +1,6 @@
 # Current Context
 **Session date:** 2026-04-06
-**Focus:** V5 Wave 1 + Wave 2 BOTH CLOSED (tasks #259-#272 all COMPLETED). Only remaining open area: V7.0 test gates (#256, #257 PENDING) + area checkpoint (#258 PENDING). Next: run V7.0 test gates to close V7.0.
+**Focus:** V5 Waves 1, 2, and 3 ALL CLOSED. Wave 3 delivered: useCanvasValidation.js (pre-run validation hook), snap-to-grid (20px), AgentNode validation badge, SwarmView export/import/duplicate/keyboard shortcuts/validation banner. Only remaining open area: V7.0 test gates (#256, #257 PENDING) + area checkpoint (#258 PENDING). Next: run V7.0 test gates to close V7.0, then V5 Wave 4+5.
 
 _Project initialized via /create pipeline on 2026-03-18_
 

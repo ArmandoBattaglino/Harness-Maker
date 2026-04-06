@@ -1,3 +1,25 @@
+## 2026-04-06 — documenter — V5 Wave 3 Documentation Update
+**Outcome:** COMPLETED
+**Summary:** Updated PROGRESS.md (V5 Wave 2 + Wave 3 entries), CONTEXT.md (focus shifted to V5 Wave 3 closed), DOC_STATUS.md (V5 Wave 3 section added, ARCHITECTURE.md debt updated with useCanvasValidation.js, inline comments status updated), ACTIVITY_LOG.md (this entry). No README, API, or ARCHITECTURE changes needed — all changes are frontend-only with no new endpoints, config, or env vars.
+**Files changed:** docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/DOC_STATUS.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** QA test gate for V5 Wave 3 features
+
+---
+
+## 2026-04-06 — project-manager — V5 Wave 3 Task Plan Registration
+**Outcome:** COMPLETED
+**Summary:** Registered all V5 Wave 3 tasks (#273-#281) in TASK_PLAN.md as COMPLETED. 7 component tasks (useCanvasValidation, snap-to-grid, keyboard shortcuts, validation badges, validation before Run, export/import JSON, duplicate workflow) + 1 test gate + 1 area checkpoint. Updated status header: 281 tasks total, 276 COMPLETED, 2 DEFERRED, 3 PENDING (V7.0 gates). V5.0-Wave3 AREA CLOSED.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md, docs/memory/CONTEXT.md, docs/memory/PROGRESS.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** Mapped Wave 3 features to individual tasks: FR-V5-41/43 (validation hook), FR-V5-44 (snap-to-grid), FR-V5-45 (shortcuts), FR-V5-46 (badges), FR-V5-41 (run guard), FR-V5-47/48 (export/import), FR-V5-49 (duplicate)
+**Blockers:** none
+**Next:** V7.0 test gates (#256, #257) then area checkpoint (#258) to close V7.0 — the only remaining open area
+
+---
+
 ## 2026-04-06 — frontend-dev — FR-V5-41/43/44/45/46: Canvas Validation + Keyboard Shortcuts + Snap-to-Grid
 **Outcome:** COMPLETED
 **Summary:** Implemented canvas snap-to-grid (20px), keyboard shortcuts (Ctrl+S save, Ctrl+Enter run), pre-run validation hook (5 rules), AgentNode warning badge for empty prompts, validation banner, and Run button validation guard. Build: 487 modules, 0 errors.
@@ -3891,4 +3913,15 @@ full self-contained context and acceptance criteria.
 **Decisions made:** Buttons placed in saved-workflows row after Refresh, matching existing button style
 **Blockers:** none
 **Next:** QA test gate for export/import/duplicate features
+---
+
+---
+## 2026-04-06 — code-mapper — V5 Wave 3: Code Map Update
+**Outcome:** COMPLETED
+**Summary:** Mapped all V5 Wave 3 changes: new useCanvasValidation.js hook (5 validation rules), SwarmCanvas snapToGrid, AgentNode validation badge, SwarmView export/import/duplicate/keyboard shortcuts/validation integration. Updated CODE_MAP.md (4 Module Index entries, 3 function updates, 4 new functions, 1 planned item marked IMPLEMENTED) and appended CHANGELOG.md entry.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** QA test gate for V5 Wave 3 features
 ---

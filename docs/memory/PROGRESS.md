@@ -1,4 +1,6 @@
 
+- [V5.0-Wave3 COMPLETED 2026-04-06] useCanvasValidation.js (5 rules, error/warning severity), snap-to-grid (20px), keyboard shortcuts (Ctrl+S save, Ctrl+Enter run), AgentNode validation badges, validation before Run (error blocks, warning allows), export/import workflow JSON, duplicate workflow. Tasks #273-#281 all COMPLETED. Build: 487 modules, 0 errors. Tests: 312/312 pass. AREA CLOSED.
+
 - [V5.0-Wave2 COMPLETED 2026-04-06] NodePalette.jsx (draggable sidebar, 4 node types), WorkflowSettingsModal.jsx (settings+context editor), SwarmCanvas onDrop from palette, SwarmView Settings button. All frontend-only, no new API endpoints. Build passes.
 
 - [V5.0-Wave1 FR-V5-34/35/36 COMPLETED 2026-04-06] Workflow Settings Modal + Initial Context Editor. WorkflowSettingsModal.jsx created, SwarmView.jsx integrated. Build: 486 modules, 0 errors.
@@ -532,3 +534,19 @@ _None._
 - Modified: SwarmView.jsx — save button with sanitizeWorkflow, dirty state indicator (*), inline-editable workflow name with validation, save success/error feedback banners
 - Modified: useWorkflow.js — bug fix: update() now unwraps {workflow} response envelope from server PUT
 - FRs covered: FR-V5-01 (save), FR-V5-03 (dirty tracking), FR-V5-05/06 (name edit), FR-V5-11/13 (delete with cascade), FR-V5-16 through FR-V5-20 (undo/redo), FR-V5-21 through FR-V5-24 (context menu)
+
+### V5 Wave 2 — NodePalette + WorkflowSettingsModal (2026-04-06)
+- V5 Wave 2 COMPLETED — Drag-and-drop node palette and workflow settings modal.
+- New: NodePalette.jsx (collapsible sidebar, 4 draggable node types: Agent, Department, Webhook Trigger, RSS Trigger)
+- New: WorkflowSettingsModal.jsx (two-tab modal: Settings + Initial Context editor)
+- Modified: SwarmCanvas.jsx — onDragOver/onDrop handlers for NodePalette integration
+- Modified: SwarmView.jsx — gear Settings button, WorkflowSettingsModal wiring
+- FRs covered: FR-V5-25 through FR-V5-29 (node palette), FR-V5-34/35/36 (workflow settings)
+
+### V5 Wave 3 — Validation + Shortcuts + Snap-to-Grid + Export/Import/Duplicate (2026-04-06)
+- V5 Wave 3 COMPLETED — Canvas validation, keyboard shortcuts, snap-to-grid, and workflow export/import/duplicate.
+- New: useCanvasValidation.js (pre-run validation hook with 5 rules: no agents, no triage, empty prompt, invalid trigger config, disconnected nodes)
+- Modified: SwarmCanvas.jsx — snapToGrid enabled (20px grid), snapGrid={[20, 20]} prop added to ReactFlow
+- Modified: AgentNode.jsx — validation warning badge (amber circle with !) for empty system prompts (FR-V5-45)
+- Modified: SwarmView.jsx — export (FR-V5-38: download as JSON), import (FR-V5-39: upload JSON + create via API), duplicate (FR-V5-37: clone workflow), keyboard shortcuts (FR-V5-43: Ctrl+S save, Ctrl+Enter run), validation banner + run guard (FR-V5-44/46), stable refs for shortcut handlers
+- FRs covered: FR-V5-37 (duplicate), FR-V5-38 (export), FR-V5-39 (import), FR-V5-41 (snap-to-grid), FR-V5-43 (keyboard shortcuts), FR-V5-44/45/46 (canvas validation)

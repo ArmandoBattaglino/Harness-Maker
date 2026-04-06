@@ -1,4 +1,53 @@
 ---
+## 2026-04-06 — V5 Wave 3: Validation + Shortcuts + Snap-to-Grid + Export/Import/Duplicate Documentation Update
+**Status:** COMPLETED
+**Called by:** user (post-V5-Wave-3 implementation documentation sync)
+
+### Context when I started
+V5 Waves 1 and 2 were already documented. V5 Wave 3 had just been implemented: useCanvasValidation.js (pre-run validation hook), snap-to-grid (20px), AgentNode validation badge, SwarmView export/import/duplicate/keyboard shortcuts/validation banner. All frontend-only changes. No new endpoints, config, or env vars.
+
+### What I did
+1. Read all 4 modified/new files (useCanvasValidation.js, AgentNode.jsx, SwarmCanvas.jsx, SwarmView.jsx)
+2. Read PROGRESS.md, CONTEXT.md, DOC_STATUS.md, ACTIVITY_LOG.md, README.md
+3. Verified README.md is still accurate — no new features for the Features table (all Wave 3 features are enhancements within existing Swarm Orchestrator), no env var changes
+4. Verified docs/API.md is still accurate — no new API endpoints
+5. Updated PROGRESS.md with V5 Wave 2 and Wave 3 entries (Wave 2 was missing, Wave 3 is new)
+6. Updated CONTEXT.md focus to reflect V5 Wave 3 closed
+7. Updated DOC_STATUS.md: header date, ARCHITECTURE.md debt note (added useCanvasValidation.js), inline comments status, new V5 Wave 3 section, debt table updated
+8. Updated ACTIVITY_LOG.md with documenter entry
+9. Appended this session log to agents/documenter.md
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/PROGRESS.md | MODIFIED | Added V5 Wave 2 + Wave 3 sections with all new/modified files and FRs covered |
+| docs/memory/CONTEXT.md | MODIFIED | Updated focus line to reflect V5 Wave 3 closed |
+| docs/memory/DOC_STATUS.md | MODIFIED | Updated header, ARCHITECTURE.md debt, inline comments note, added V5 Wave 3 section, updated debt table |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added documenter entry for V5 Wave 3 |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- All memory files now accurately reflect V5 Wave 3 completion
+- ARCHITECTURE.md debt table tracks useCanvasValidation.js as a new deferred component
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- No README update needed: Wave 3 features (validation, shortcuts, snap-to-grid, export/import/duplicate) are enhancements within the existing "Swarm Orchestrator (V3)" feature row. No new top-level feature warranted.
+- No ARCHITECTURE.md update yet: deferred to batch when more V5 waves complete, consistent with prior waves.
+
+### What I learned
+- SwarmView.jsx has grown significantly with Wave 3 additions (export/import/duplicate/validation/shortcuts) but still follows the same pattern: stable refs for keyboard handlers to avoid stale closures.
+- useCanvasValidation is a pure memoized hook with no side effects — clean pattern for other validation needs.
+
+### State I'm leaving behind
+All documentation is up to date for V5 Waves 1, 2, and 3. ARCHITECTURE.md component tree remains deferred (tracked in debt table). Next documentation trigger: V5 Wave 4 or V7.0 test gate results.
+
+### Handoff
+None -- task fully self-contained.
+
+---
 ## 2026-04-06 — V5 Wave 2: NodePalette + WorkflowSettingsModal Documentation Update
 **Status:** COMPLETED
 **Called by:** user (post-V5-Wave-2 implementation documentation sync)

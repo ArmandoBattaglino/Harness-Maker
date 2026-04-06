@@ -2,6 +2,40 @@
 
 ## 2026-04-06
 
+### V5 Wave 3 — Validation, Export/Import/Duplicate, Keyboard Shortcuts, Snap-to-Grid
+- Agent: code-mapper (post-task entry)
+- Scope: 1 new file, 3 modified files
+
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/hooks/useCanvasValidation.js | ADDED | Pre-run validation hook — 5 rules (agent exists, triage node, empty prompt, trigger config, disconnected nodes). Returns { isValid, errors[] }. FR-V5-44 through FR-V5-46. |
+| client/src/canvas/SwarmCanvas.jsx | MODIFIED | Enabled snapToGrid with 20x20 grid (`snapToGrid` + `snapGrid={[20, 20]}` props on ReactFlow). |
+| client/src/canvas/nodes/AgentNode.jsx | MODIFIED | Added validation warning badge — amber circle with "!" at top-right when data.systemPrompt is empty/whitespace (FR-V5-45). |
+| client/src/views/SwarmView.jsx | MODIFIED | Added: handleExport (JSON download — FR-V5-38), handleImport (JSON file upload — FR-V5-39), handleDuplicate (copy workflow — FR-V5-37), Ctrl+S save shortcut (FR-V5-43), Ctrl+Enter run shortcut (FR-V5-43), useCanvasValidation integration (validation banner + Run gating — FR-V5-44/46), validationErrors/importError state, fileInputRef, Duplicate/Export/Import buttons in saved-workflows bar. |
+
+### Functions Added
+- `useCanvasValidation(nodes, edges)` in `client/src/hooks/useCanvasValidation.js` — validates canvas state before execution (5 rules, error/warning severity)
+- `handleExport()` in `client/src/views/SwarmView.jsx` — downloads current workflow as sanitized JSON file
+- `handleImport(event)` in `client/src/views/SwarmView.jsx` — imports workflow from user-selected JSON file via apiPost
+- `handleDuplicate()` in `client/src/views/SwarmView.jsx` — duplicates workflow with "(Copy)" suffix via apiPost
+
+### Functions Modified
+- `SwarmView()` in `client/src/views/SwarmView.jsx` — added validation integration, keyboard shortcuts (Ctrl+S/Ctrl+Enter via stable refs), export/import/duplicate handlers, validation banner UI, Duplicate/Export/Import buttons
+- `SwarmCanvas({ workflowDef, markDirty, onCanvasChange })` in `client/src/canvas/SwarmCanvas.jsx` — enabled snapToGrid (20x20 grid) on ReactFlow component
+- `AgentNode({ id, data, selected })` in `client/src/canvas/nodes/AgentNode.jsx` — added validation warning badge for empty systemPrompt
+
+### Connection Changes
+- NEW: SwarmView.jsx now imports and calls `useCanvasValidation` from `hooks/useCanvasValidation.js`
+- NEW: SwarmView.jsx::handleExport and SwarmView.jsx::handleDuplicate now call `sanitizeWorkflow` (previously only handleSave called it)
+- NEW: SwarmView.jsx::handleImport and handleDuplicate call `apiPost('/api/v1/workflows', ...)` — same endpoint used by PromptToFlowBar scaffold
+- NEW: AgentNode.jsx now reads `data.systemPrompt` (previously only read `data.label` from props)
+
+### Impact on Other Code
+- Run button in SwarmView.jsx is now gated on `hasValidationErrors` — workflows with zero agent nodes or no triage node cannot be started
+- Ctrl+S and Ctrl+Enter document-level listeners may conflict with other components that handle the same shortcuts — currently mitigated by skipping when active element is INPUT/TEXTAREA/SELECT
+
+---
+
 ### [Tasks #254-#255] V7.0 Swarm Terminal Deep Test Bug Fixes — BUG-DONE-BARE-1 + BUG-SNIPPET-INIT-1
 - Agent: code-mapper (post-task entry)
 - Scope: 2 bug fixes, 1 test file updated

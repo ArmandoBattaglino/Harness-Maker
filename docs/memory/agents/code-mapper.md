@@ -2951,3 +2951,47 @@ CODE_MAP.md and CHANGELOG.md fully updated through V5 Wave 2. All new and modifi
 ### Handoff
 None — mapping task fully self-contained.
 ---
+
+---
+## 2026-04-06 — V5 Wave 3: Code Map Update
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task mapping)
+
+### Context when I started
+V5 Wave 3 had just been implemented. Four files affected: new useCanvasValidation.js hook, modified SwarmCanvas.jsx (snapToGrid), AgentNode.jsx (validation badge), SwarmView.jsx (export/import/duplicate, Ctrl+S/Ctrl+Enter, validation integration).
+
+### What I did
+1. Read all 4 source files (useCanvasValidation.js fully, SwarmCanvas.jsx, AgentNode.jsx, SwarmView.jsx in chunks)
+2. Traced connections: useCanvasValidation called only by SwarmView; sanitizeWorkflow now has 3 callers from SwarmView (handleSave, handleExport, handleDuplicate); AgentNode now reads data.systemPrompt
+3. Updated CODE_MAP.md Module Index entries for AgentNode, SwarmCanvas, SwarmView; added useCanvasValidation row
+4. Updated Function Graph entries for AgentNode, SwarmCanvas, SwarmView with V5 Wave 3 details
+5. Added V5 Wave 3 function section with entries for useCanvasValidation, handleExport, handleImport, handleDuplicate
+6. Updated sanitizeWorkflow callers list
+7. Marked useCanvasValidation as IMPLEMENTED in planned architecture table
+8. Appended CHANGELOG.md entry with full file/function/connection details
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Updated Module Index (4 entries), Function Graph (3 updated, 4 new), planned architecture table (1 marked IMPLEMENTED), sanitizeWorkflow callers |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended V5 Wave 3 entry with files, functions added/modified, connection changes, impact |
+
+### Improvements delivered
+- CODE_MAP.md now reflects all V5 Wave 3 additions and modifications
+- CHANGELOG.md documents the full delta including new connections
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Listed handleExport/handleImport/handleDuplicate as separate function entries rather than inline in SwarmView — they are substantial enough to warrant individual tracking
+
+### What I learned
+- SwarmView.jsx continues to grow (now ~850 lines) and accumulates more handler functions each wave — may benefit from extraction into custom hooks
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md fully updated through V5 Wave 3. All new and modified functions mapped.
+
+### Handoff
+None — mapping task fully self-contained.
+---
