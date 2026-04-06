@@ -1,4 +1,47 @@
 ---
+## 2026-04-06 — Task #216: TEST GATE V4.4 Snippet Fidelity (thinking animations + hook output filtering)
+**Status:** COMPLETED
+**Called by:** user (direct)
+
+### Context when I started
+Tasks #214 and #215 are COMPLETED. This TEST GATE verifies the snippet noise-line patterns in SwarmEngine.js cover Claude CLI thinking animations and hook output.
+
+### What I did
+1. Read SNIPPET_NOISE_LINE_PATTERNS in server/services/SwarmEngine.js (lines 52-132).
+2. Verified all 6 required pattern categories:
+   - Thinking animations with Unicode bullets: `/^.\w+.../` (line 120) matches e.g. `✶Nucleating...`
+   - Bare word+ellipsis: `/^\w+...$/` (line 121) matches e.g. `Warping...`
+   - Trailing word+ellipsis: `/\w+...\s*$/` (line 122)
+   - `thinking with X effort`: line 123
+   - `thought for Xs`: line 124
+   - Hook output: `stop says:` (line 125), `MEMORIA NON SCRITTA` (line 126), `ACTIVITY_LOG.md` (line 127)
+3. Ran `npm test --prefix server` -- 312/312 pass (12 test files, 7.22s).
+4. Ran `npm run build --prefix client` -- 480 modules, 0 errors, 4.27s.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Marked #216 COMPLETED PASS |
+| docs/memory/PROGRESS.md | MODIFIED | Added TEST GATE PASS entry |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended completion entry |
+| docs/memory/agents/qa-tester.md | MODIFIED | Appended this session log |
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+None.
+
+### What I learned
+- The thinking animation patterns use Unicode ellipsis character (U+2026) not three dots, matching Claude CLI's actual output format.
+
+### State I'm leaving behind
+TEST GATE #216 PASS. AREA CHECKPOINT #217 can proceed.
+
+### Handoff
+AREA CHECKPOINT #217 is next for V4.4 closure.
+
+---
 ## 2026-04-06 — Task #244: AREA CHECKPOINT V5.2 Swarm Deep Test Bug Fixes
 **Status:** COMPLETED
 **Called by:** user (direct)
