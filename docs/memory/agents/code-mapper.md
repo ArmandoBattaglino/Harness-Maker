@@ -2434,3 +2434,51 @@ CHANGELOG.md and ACTIVITY_LOG.md updated. CODE_MAP.md unchanged. 5 bugs awaiting
 ### Handoff
 Phase 2/3 fixes for BUG-SWARM-API-1/2, BUG-SWARM-UI-1/2/3 will each need full code-mapper trace when code is modified.
 ---
+
+---
+## 2026-04-06 — Tasks #238-#241: V5.2 Wave 1 Bug Fixes
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+V5.2 Wave 1 just completed. Four bugs from the Debugger Loop Phase 1 deep test were fixed: BUG-SWARM-API-1 (malformed JSON → 500), BUG-SWARM-API-2 (API 404 returns HTML), BUG-SWARM-UI-2 (stale execution ID hydration), BUG-SWARM-UI-3 (rate limit too strict). Two files modified: server/index.js and client/src/hooks/useSwarm.js.
+
+### What I did
+1. Read both modified source files to identify all changed/new functions.
+2. Searched CODE_MAP.md for existing entries — found startup(), rate-limit sweep, useSwarm(), connectWs(), startExecution(), stopExecution(). Found that rateLimit factory, restorePersistedExecution, applyExecutionSnapshot, and localStorage helpers were never mapped.
+3. Updated CODE_MAP.md header, Module Index entries for server/index.js and useSwarm.js.
+4. Updated startup() entry with new middleware and call list.
+5. Added 4 new server/index.js entries: rateLimit factory, entity.parse.failed handler, app.all('/api/*') 404 catch-all.
+6. Added 5 new useSwarm.js entries: readStoredExecution, writeStoredExecution, clearStoredExecution, applyExecutionSnapshot, restorePersistedExecution.
+7. Updated useSwarm(workflowId) main entry with new internal callbacks.
+8. Appended CHANGELOG.md entry with full file/function/connection change details.
+9. Appended ACTIVITY_LOG.md and this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header updated; Module Index for server/index.js and useSwarm.js updated; startup() entry updated; 9 new function entries added; useSwarm main entry updated |
+| docs/memory/CHANGELOG.md | MODIFIED | New entry for V5.2 Wave 1 (Tasks #238-#241) |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log |
+
+### Improvements delivered
+- CODE_MAP.md now documents all V5.2 Wave 1 changes including 9 previously unmapped functions
+- CHANGELOG.md documents the connection between Phase 1 bugs and their Wave 1 fixes
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Mapped rateLimit as a module-private factory (was previously undocumented despite existing since early tasks) — it now has a formal entry showing the 200→300 change
+- Mapped all 5 useSwarm localStorage helpers and internal callbacks that were never previously documented despite existing
+
+### What I learned
+- useSwarm.js has significant undocumented complexity around execution persistence/hydration — the readStoredExecution/writeStoredExecution/clearStoredExecution/applyExecutionSnapshot/restorePersistedExecution chain was entirely unmapped before this task
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md fully updated for V5.2 Wave 1. All 4 fixed bugs (BUG-SWARM-API-1, BUG-SWARM-API-2, BUG-SWARM-UI-2, BUG-SWARM-UI-3) are documented with their code changes.
+
+### Handoff
+BUG-SWARM-UI-1 (duplicate workflow names) was NOT part of this wave — still pending fix. Any future /api/* routes must be mounted before the new app.all('/api/*') catch-all.
+---

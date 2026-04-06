@@ -3103,3 +3103,14 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** TEST GATE #243 should verify no 429 during 15+ rapid view switches
 ---
+
+---
+## 2026-04-06 — code-mapper — Tasks #238-#241: V5.2 Wave 1 Code Map Update
+**Outcome:** COMPLETED
+**Summary:** Mapped all V5.2 Wave 1 changes across server/index.js (entity.parse.failed handler, API 404 catch-all, rateLimit 200→300) and client/src/hooks/useSwarm.js (raw fetch hydration with 404 → clearStoredExecution). Added 9 new function entries to CODE_MAP.md (4 server, 5 client). Appended CHANGELOG.md with full change details.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** none (mapping only)
+**Decisions made:** Mapped rateLimit factory and 5 useSwarm localStorage/hydration helpers that were previously undocumented
+**Blockers:** none
+**Next:** BUG-SWARM-UI-1 (duplicate workflow names) still pending fix — will need mapping when addressed
+---

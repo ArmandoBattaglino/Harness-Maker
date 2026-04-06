@@ -2569,3 +2569,44 @@ No new connections introduced in this checkpoint task. All connection changes we
 - BUG-SWARM-UI-3 affects all localhost API consumers — rate limiter config needs a localhost exemption or higher threshold.
 
 ---
+
+---
+## 2026-04-06 — V5.2 Wave 1 (Tasks #238-#241)
+**Agent:** backend-dev (server), frontend-dev (client)
+**Triggered by:** V5.2 Wave 1 — fixing BUG-SWARM-API-1, BUG-SWARM-API-2, BUG-SWARM-UI-2, BUG-SWARM-UI-3 discovered in Debugger Loop Phase 1 deep test
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/index.js | MODIFIED | Added entity.parse.failed → 400 error handler (BUG-SWARM-API-1); added app.all('/api/*') 404 catch-all before SPA fallback (BUG-SWARM-API-2); raised rateLimit from 200 to 300 req/min (BUG-SWARM-UI-3) |
+| client/src/hooks/useSwarm.js | MODIFIED | restorePersistedExecution now uses raw fetch for hydration; 404 response → clearStoredExecution + clearExecutionState (BUG-SWARM-UI-2) |
+
+### Functions Added
+- `rateLimit(maxRequests, windowMs)` in `server/index.js` — already existed as module-private but was never mapped; now formally documented with 300 req/min call site
+- `entity.parse.failed` error handler in `server/index.js` — catches malformed JSON bodies, returns 400 instead of 500
+- `app.all('/api/*')` 404 catch-all in `server/index.js` — returns JSON 404 for unknown API paths instead of SPA HTML
+- `readStoredExecution()` in `client/src/hooks/useSwarm.js` — reads persisted execution ID from localStorage
+- `writeStoredExecution(snapshot)` in `client/src/hooks/useSwarm.js` — persists execution snapshot to localStorage
+- `clearStoredExecution()` in `client/src/hooks/useSwarm.js` — removes stale execution ID from localStorage
+- `applyExecutionSnapshot(snapshot)` in `client/src/hooks/useSwarm.js` — applies execution state to Zustand store + localStorage
+- `restorePersistedExecution()` in `client/src/hooks/useSwarm.js` — hydrates execution state on mount via raw fetch
+
+### Functions Modified
+- `startup()` in `server/index.js` — rate limit call site changed from rateLimit(200) to rateLimit(300); two new route-level handlers added (entity.parse.failed, API 404 catch-all)
+- `useSwarm(workflowId)` in `client/src/hooks/useSwarm.js` — now includes applyExecutionSnapshot + restorePersistedExecution internal callbacks; localStorage persistence helpers
+
+### Functions Removed
+- None
+
+### Connection Changes
+- `restorePersistedExecution` now calls raw `fetch('/api/v1/swarm/:id/status')` instead of (or in addition to) apiGet — new direct dependency on fetch API
+- `applyExecutionSnapshot` is called from both `restorePersistedExecution` (hydration) and `connectWs` onmessage `execution_status` case — shared state application path
+- `app.all('/api/*')` intercepts before SPA catch-all — any new `/api/` routes must be mounted before this handler
+
+### Impact on Other Code
+- All POST/PUT/PATCH endpoints now get clean 400 errors on malformed JSON bodies (previously 500)
+- Client code that hits unknown /api/* paths now gets JSON 404 instead of index.html — API error handling in client is cleaner
+- Rate limit headroom increased from 200 to 300 req/min — reduces false 429s during rapid Swarm orchestration
+- Any future /api/* routes must be mounted in startup() before the app.all('/api/*') catch-all or they will be shadowed
+
+---
