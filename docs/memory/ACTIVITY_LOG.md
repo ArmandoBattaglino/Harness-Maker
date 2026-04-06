@@ -1,3 +1,24 @@
+## 2026-04-06 — qa-tester — Task #180: TEST GATE BUG-RINGBUFFER-ANSI-1 — PASS
+**Outcome:** COMPLETED
+**Summary:** Verified sanitizeReplayOutput() strips all 6 TUI sequence classes during ring buffer replay while live stream remains unsanitized. 312/312 server tests pass. Client build clean. TEST GATE PASS.
+**Files changed:** docs/TASK_PLAN.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** TASK #181 (BUG-BLOCKER-FALSE-POS-1) hard gate cleared, can proceed.
+
+---
+
+## 2026-04-06 — qa-tester — Task #184: TEST GATE BUG-SNIPPET-PROTOCOL-1 — PASS
+**Outcome:** COMPLETED
+**Summary:** Verified snippet semantic sanitization pipeline in SwarmEngine: _stripSnippetProtocolArtifacts removes block-level protocol text, SNIPPET_NOISE_LINE_PATTERNS has 80+ regexes for CLI chrome/protocol/system prompt noise, _buildSemanticSnippet scores blocks and returns best semantic content. 107/107 swarm-engine tests pass, 312/312 total server tests pass. 12+ dedicated snippet quality tests confirm protocol text excluded.
+**Files changed:** docs/TASK_PLAN.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** TASK #185 (BUG-FEED-ICON-1) can now proceed
+---
+
 ## 2026-04-06 — qa-tester — Task #216: TEST GATE V4.4 Snippet Fidelity — PASS
 **Outcome:** COMPLETED
 **Summary:** Verified all 6 required noise-line patterns (thinking animations, hook output) exist in SNIPPET_NOISE_LINE_PATTERNS. 312/312 server tests pass. Client build clean (480 modules). TEST GATE PASS.
@@ -3168,4 +3189,15 @@ full self-contained context and acceptance criteria.
 **Decisions made:** Mapped rateLimit factory and 5 useSwarm localStorage/hydration helpers that were previously undocumented
 **Blockers:** none
 **Next:** BUG-SWARM-UI-1 (duplicate workflow names) still pending fix — will need mapping when addressed
+---
+
+---
+## 2026-04-06 — qa-tester — Task #186: TEST GATE BUG-FEED-ICON-1 — PASS
+**Outcome:** COMPLETED
+**Summary:** Verified InterAgentFeed EVENT_ICONS map completeness. All 6 event types routed to the feed (handoff_started, handoff_completed, circuit_breaker, runtime_provider_switch, trigger_fired, rss_item) have matching icon entries. No '?' fallback possible during normal execution. Build clean, 312/312 server tests pass.
+**Files changed:** docs/TASK_PLAN.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** Task #187 AREA CHECKPOINT V4.0.2 is now unblocked from this gate dependency
 ---

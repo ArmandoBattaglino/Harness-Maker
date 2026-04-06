@@ -1,4 +1,32 @@
 ---
+## 2026-04-06 — Task #180: TEST GATE — BUG-RINGBUFFER-ANSI-1 (Ring buffer replay readability)
+**Status:** COMPLETED
+**Called by:** user (direct)
+
+### Context when I started
+Task #179 (BUG-RINGBUFFER-ANSI-1) COMPLETED. Debugger added sanitizeReplayOutput() to SessionManager.js.
+
+### What I did
+1. Verified sanitizeReplayOutput() strips 6 TUI sequence classes: DEC private modes, cursor save/restore, cursor home/position, clear screen, clear line, cursor up/down.
+2. Verified attachClient() uses sanitizeReplayOutput() for replay; live onData sends raw data.
+3. Verified test coverage: dedicated replay sanitization test + live stream non-sanitization test exist.
+4. npm test --prefix server: 312/312 pass. npm run build --prefix client: 480 modules, 0 errors.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Marked #180 COMPLETED PASS |
+
+### Bugs I encountered
+None.
+
+### State I'm leaving behind
+TEST GATE #180 PASS. TASK #181 can proceed.
+
+### Handoff
+TASK #181 (BUG-BLOCKER-FALSE-POS-1) hard gate cleared.
+
+---
 ## 2026-04-06 — Task #216: TEST GATE V4.4 Snippet Fidelity (thinking animations + hook output filtering)
 **Status:** COMPLETED
 **Called by:** user (direct)
@@ -1573,4 +1601,43 @@ V5.0 debugger loop Phase 1 deep testing. Previous Phase 1 testing covered Swarm 
 
 ### Handoff
 BUG-UI-1 is LOW severity and does not need immediate fixing. The terminal garble self-corrects on new terminal output. No blocking issues found in the entire UI.
+---
+
+---
+## 2026-04-06 — Task #186: TEST GATE — BUG-FEED-ICON-1 (InterAgentFeed icon completeness)
+**Status:** COMPLETED
+**Called by:** user (direct)
+
+### Context when I started
+Task #185 (BUG-FEED-ICON-1) was COMPLETED by frontend-dev. The fix added handoff_completed, runtime_provider_switch, trigger_fired, and rss_item to the EVENT_ICONS map in InterAgentFeed.jsx.
+
+### What I did
+1. Confirmed Task #185 status is COMPLETED in TASK_PLAN.md
+2. Read InterAgentFeed.jsx — verified EVENT_ICONS map has 8 entries including handoff_completed mapped to checkmark
+3. Cross-referenced all event types routed to addFeedEvent in useSwarm.js (6 types: handoff_started, handoff_completed, circuit_breaker, runtime_provider_switch, trigger_fired, rss_item) — all 6 have matching EVENT_ICONS entries
+4. Ran npm run build --prefix client — clean build, 480 modules, 0 errors
+5. Ran npm test --prefix server — 312/312 tests pass across 12 test files
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Marked #186 COMPLETED PASS |
+| docs/memory/agents/qa-tester.md | MODIFIED | Appended this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended checkpoint entry |
+| docs/memory/PROGRESS.md | MODIFIED | Added #186 PASS entry |
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Verified that EVENT_ICONS also includes agent_status and execution_status which are NOT routed to the feed — these are harmless extras, not a concern.
+
+### What I learned
+- The interAgentFeed only receives 6 specific event types via addFeedEvent calls in useSwarm.js. Other WS events (agent_status, execution_status, budget_update, hitl_required) are handled separately and never appear in the feed.
+
+### State I'm leaving behind
+TEST GATE #186 PASS. Task #187 (AREA CHECKPOINT V4.0.2) is now unblocked from this dependency.
+
+### Handoff
+Task #187 (AREA CHECKPOINT) can proceed — this was the last gate dependency for it.
 ---

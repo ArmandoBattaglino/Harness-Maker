@@ -1,4 +1,8 @@
 # Progress
+- [V4.0.2 TEST GATE PASS 2026-04-06] TASK #186 COMPLETED — TEST GATE PASS for BUG-FEED-ICON-1
+  All 6 feed event types have matching EVENT_ICONS entries. handoff_completed renders checkmark. 312/312 server tests. Client build clean.
+- [V4.0.2 TEST GATE PASS 2026-04-06] TASK #178 COMPLETED — TEST GATE PASS for BUG-PTY-EXPLOSION-1
+  PtyExplosion connects to correct session WS, ring buffer replay on attachClient, multiple clients supported, DEC-009 respected. 312/312 tests. Client build clean.
 - [V4.4 TEST GATE PASS 2026-04-06] TASK #216 COMPLETED — TEST GATE PASS for V4.4 Snippet Fidelity
   All 6 required patterns verified in SNIPPET_NOISE_LINE_PATTERNS (thinking animations, hook output). 312/312 server tests. Client build clean. AREA CHECKPOINT #217 is next.
 
