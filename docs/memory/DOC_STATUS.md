@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-06 after V5 Wave 3 — useCanvasValidation.js, snapToGrid, AgentNode validation badge, SwarmView export/import/duplicate/shortcuts/validation._
+_Last updated: 2026-04-06 after V5 Bugfix commit — SwarmCanvas.jsx context menu stopPropagation, SwarmView.jsx stale closure keyboard shortcut fix._
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**
@@ -34,6 +34,8 @@ _Last updated: 2026-04-06 after V5 Wave 3 — useCanvasValidation.js, snapToGrid
 | BUG-SWARM-UI-1 | LOW | Duplicate workflow names in saved workflows dropdown — name-based deduplication + date suffix added to SwarmView.jsx | #242 | FIXED 2026-04-06 |
 | BUG-DONE-BARE-1 | LOW | `DONE_RE` only matched `__DONE__` — bare `DONE` on its own line now also accepted by HandoffParser, eliminating unnecessary done reminder reinject | #254 | FIXED 2026-04-06 |
 | BUG-SNIPPET-INIT-1 | LOW | Agent card showed system prompt text for ~3s during startup — snippet update now gated by echo gate (`ignoreParserUntil`) in SwarmEngine.js tapFn | #255 | FIXED 2026-04-06 |
+| BUG-WF-1 | LOW | Context menu on node/edge right-click showed wrong menu type (canvas menu instead of node/edge menu) — `event.stopPropagation()` missing in `handleNodeContextMenu` and `handleEdgeContextMenu` in SwarmCanvas.jsx | V5-bugfix | FIXED 2026-04-06 |
+| BUG-WF-2 | LOW | Ctrl+S keyboard shortcut in SwarmView.jsx captured stale closure of `handleSave`/`handleRun` — added `handleSaveFnRef` and `handleRunFnRef` refs so `useEffect` keydown handler always calls the latest function | V5-bugfix | FIXED 2026-04-06 |
 
 ## Status Legend
 - UP_TO_DATE -- matches current code
@@ -58,7 +60,7 @@ _Last updated: 2026-04-06 after V5 Wave 3 — useCanvasValidation.js, snapToGrid
 | docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-06 | V5.0 Phase 1 deep test entry appended by documenter. |
 | docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-04-06 | V1 audit. SEC-06 entry updated with webhook CSRF exemption note (Task #234). |
 | docs/security-v3-audit.md | UP_TO_DATE | 2026-04-06 | MEDIUM-V3-01 marked FIXED (Task #234). Summary table updated. |
-| Inline comments | UP_TO_DATE | 2026-04-06 | V5 Wave 1+2+3: all new/modified files have accurate header comments and FR references. useCanvasValidation.js documents FR-V5-44-46. AgentNode.jsx validation badge comment references FR-V5-45. SwarmView.jsx export/import/duplicate/shortcuts comments reference FR-V5-37/38/39/43. No stale comments. |
+| Inline comments | UP_TO_DATE | 2026-04-06 | V5 Wave 1+2+3 + bugfix: all new/modified files have accurate header comments and FR references. SwarmCanvas.jsx context menu handlers have correct FR-V5-21-24 refs. SwarmView.jsx keyboard shortcut refs (FR-V5-43) documented at lines 117-124 and 329-330. No stale comments. |
 | docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. Deferred indefinitely. |
 
 ## Stale Sections (known gaps)
@@ -248,6 +250,17 @@ Frontend-only changes. No new API endpoints, no env var changes, no backend chan
 | client/src/views/SwarmView.jsx | MODIFIED | Added: export as JSON (FR-V5-38), import from JSON file (FR-V5-39), duplicate workflow (FR-V5-37), keyboard shortcuts via stable refs (FR-V5-43: Ctrl+S save, Ctrl+Enter run), validation banner showing errors/warnings (FR-V5-44), run button gated by validation errors (FR-V5-46), `useCanvasValidation` integration, `fileInputRef` for import, `importError` state. | None |
 
 **Documentation impact:** No README, API, or PRD changes needed. ARCHITECTURE.md V5 component tree update deferred to batch (useCanvasValidation.js added to deferred list). Inline comments in all new/modified files are accurate.
+
+## V5 Bugfix — Context Menu + Keyboard Shortcut Stale Closure (2026-04-06)
+
+Frontend-only bugfixes. No new API endpoints, no env var changes, no backend changes, no new files. Two modified files.
+
+| File | Type | Change Summary | Doc Impact |
+|------|------|----------------|------------|
+| client/src/canvas/SwarmCanvas.jsx | MODIFIED | Added `event.stopPropagation()` to `handleNodeContextMenu` and `handleEdgeContextMenu` — without it, right-clicking a node/edge also triggered the pane context menu handler, showing the wrong menu type (BUG-WF-1) | None |
+| client/src/views/SwarmView.jsx | MODIFIED | Added `handleSaveFnRef` and `handleRunFnRef` refs. The `useEffect` keydown handler for Ctrl+S and Ctrl+Enter now calls `handleSaveFnRef.current?.()` and `handleRunFnRef.current?.()` instead of capturing `handleSave`/`handleRun` directly, preventing stale closure bugs where the shortcut used outdated state (BUG-WF-2) | None |
+
+**Documentation impact:** None. Both fixes are internal event handling corrections with no new APIs, components, config, or env vars. Existing inline comments in SwarmView.jsx (FR-V5-43 refs at lines 117-124, 329-330) and SwarmCanvas.jsx (FR-V5-21 through FR-V5-24 refs at line 234) are accurate.
 
 ## Documentation Debt
 

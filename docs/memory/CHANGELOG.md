@@ -2,6 +2,36 @@
 
 ## 2026-04-06
 
+### V5 Bugfix (commit 41b9a0e) — Context menu stopPropagation + stale closure keyboard shortcut fix
+- Agent: code-mapper (post-task entry)
+- Scope: 2 modified files, 2 bugs fixed
+
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/canvas/SwarmCanvas.jsx | MODIFIED | Added `event.stopPropagation()` to `handleNodeContextMenu` (line 246) and `handleEdgeContextMenu` (line 255). Prevents pane-level `onContextMenu` from overriding node/edge context menus. |
+| client/src/views/SwarmView.jsx | MODIFIED | Added `handleSaveFnRef` and `handleRunFnRef` refs (lines 120-121). After `handleSave`/`handleRun` definitions, refs are updated (lines 329-330). Keydown handler now calls `handleSaveFnRef.current?.()` / `handleRunFnRef.current?.()` instead of directly calling `handleSave()` / `handleRun()`, fixing stale closure where Ctrl+S would not trigger save. |
+
+### Functions Added
+- None (no new exported functions)
+
+### Functions Modified
+- `handleNodeContextMenu(event, node)` in `client/src/canvas/SwarmCanvas.jsx` — added `event.stopPropagation()` to prevent pane context menu override
+- `handleEdgeContextMenu(event, edge)` in `client/src/canvas/SwarmCanvas.jsx` — added `event.stopPropagation()` to prevent pane context menu override
+- `SwarmView()` in `client/src/views/SwarmView.jsx` — added `handleSaveFnRef` / `handleRunFnRef` refs; keydown handler uses function refs instead of direct calls to fix stale closure bug
+
+### Functions Removed
+- None
+
+### Connection Changes
+- CHANGED: SwarmView.jsx keydown useEffect handler no longer calls handleSave/handleRun directly — instead calls via handleSaveFnRef.current / handleRunFnRef.current (fixes stale closure since useEffect captures initial function references)
+
+### Impact on Other Code
+- No external impact. Both fixes are internal to their respective components.
+- SwarmCanvas context menu behavior: right-clicking a node or edge will now correctly show the node/edge menu instead of the pane (canvas background) menu.
+- Ctrl+S in SwarmView will now correctly save the workflow even after state changes that would previously cause the captured handleSave reference to be stale.
+
+---
+
 ### V5 Wave 3 — Validation, Export/Import/Duplicate, Keyboard Shortcuts, Snap-to-Grid
 - Agent: code-mapper (post-task entry)
 - Scope: 1 new file, 3 modified files

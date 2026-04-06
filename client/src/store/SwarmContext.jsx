@@ -37,9 +37,30 @@ const useSwarmStore = create((set, get) => ({
   // Actions
   setExecution: (id, status) => set({ activeExecutionId: id, executionStatus: status }),
 
-  updateAgentState: (nodeId, patch) => set((state) => ({
-    agentStates: { ...state.agentStates, [nodeId]: { ...state.agentStates[nodeId], ...patch } }
-  })),
+  updateAgentState: (nodeId, patch) => set((state) => {
+    const prev = state.agentStates[nodeId] || {};
+    const timestamps = { ...(prev.timestamps || {}) };
+
+    // Auto-set timestamps based on status transitions
+    if (patch.status) {
+      if (patch.status === 'running' && !timestamps.started) {
+        timestamps.started = new Date().toISOString();
+      }
+      if (patch.status === 'done' || patch.status === 'completed') {
+        timestamps.done = new Date().toISOString();
+      }
+      if (patch.status === 'error') {
+        timestamps.error = new Date().toISOString();
+      }
+    }
+
+    return {
+      agentStates: {
+        ...state.agentStates,
+        [nodeId]: { ...prev, ...patch, timestamps },
+      },
+    };
+  }),
 
   updateTriggerState: (triggerId, patch) => set((state) => ({
     triggerStates: { ...state.triggerStates, [triggerId]: { ...state.triggerStates[triggerId], ...patch } }

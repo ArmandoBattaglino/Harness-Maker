@@ -1,3 +1,47 @@
+## 2026-04-06 — frontend-dev — Wave 4: Per-Node Timing, Execution History, Templates, Version History
+**Outcome:** COMPLETED
+**Summary:** Implemented 4 Wave 4 frontend features: (1) Per-node execution timestamps in SwarmContext + live timer in AgentInspector (FR-V5-49/50), (2) ExecutionHistory slide-in panel fetching from /api/v1/swarm/history/:workflowId (FR-V5-48), (3) TemplateGallery modal fetching from /api/v1/workflows/templates (FR-V5-51/52), (4) VersionHistory slide-out panel with timeline UI fetching from /api/v1/workflows/:id/versions (FR-V5-53/54/55). Added History/Templates/Versions buttons to SwarmView toolbar.
+**Files changed:** client/src/store/SwarmContext.jsx, client/src/canvas/AgentInspector.jsx, client/src/canvas/ExecutionHistory.jsx (NEW), client/src/canvas/TemplateGallery.jsx (NEW), client/src/canvas/VersionHistory.jsx (NEW), client/src/views/SwarmView.jsx
+**Bugs fixed:** none
+**Decisions made:** Timestamps nested under agentStates[nodeId].timestamps; History/Versions as slide-in panels, Templates as modal; toggle behavior for History/Versions buttons
+**Blockers:** Backend endpoints not yet implemented (history, templates, versions)
+**Next:** Backend implementation for 5 new API endpoints; QA test gate for Wave 4 features
+
+---
+
+## 2026-04-06 — code-mapper — V5 Bugfix (commit 41b9a0e)
+**Outcome:** COMPLETED
+**Summary:** Mapped V5 bugfix commit 41b9a0e: (1) SwarmCanvas.jsx — added event.stopPropagation() to handleNodeContextMenu and handleEdgeContextMenu to prevent pane context menu from overriding node/edge menus; (2) SwarmView.jsx — added handleSaveFnRef/handleRunFnRef to fix stale closure where Ctrl+S keyboard shortcut would not trigger save. Updated CODE_MAP.md (2 function entries + 2 module index entries) and prepended CHANGELOG.md entry.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** none (mapped two bugs fixed by others)
+**Decisions made:** none
+**Blockers:** none
+**Next:** nothing — task chain complete
+
+---
+
+## 2026-04-06 — project-manager — V5.0-BugFix1 Task Plan Registration
+**Outcome:** COMPLETED
+**Summary:** Registered V5.0-BugFix1 area (E2E Context Menu + Keyboard Shortcut Fixes) in TASK_PLAN.md. 3 bug fix tasks (#282-#284) + TEST GATE #285 + AREA CHECKPOINT #286, all COMPLETED. Bugs found during Debugger Loop Phase 1 E2E testing: BUG-CTX-1 (node context menu propagation), BUG-CTX-2 (edge context menu propagation), BUG-KEYS-1 (Ctrl+S stale closure). Updated status header: 286 tasks total, 284 COMPLETED, 2 DEFERRED, 0 PENDING. V5.0-BugFix1 AREA CLOSED.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** BUG-CTX-1 (stopPropagation in handleNodeContextMenu), BUG-CTX-2 (stopPropagation in handleEdgeContextMenu), BUG-KEYS-1 (ref-based function refs for keyboard shortcuts)
+**Decisions made:** none
+**Blockers:** none
+**Next:** All areas CLOSED. No pending tasks remain (2 DEFERRED are platform limitations).
+
+---
+
+## 2026-04-06 — documenter — V5 Bugfix Documentation Update
+**Outcome:** COMPLETED
+**Summary:** Updated DOC_STATUS.md for V5 bugfix commit: SwarmCanvas.jsx context menu stopPropagation fix (BUG-WF-1) and SwarmView.jsx stale closure keyboard shortcut fix (BUG-WF-2). Both are internal event handling corrections — no README, ARCHITECTURE, API, or PRD changes needed. Added two entries to Fixed Bugs table and a new V5 Bugfix section.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none (documented two bugs fixed by others: BUG-WF-1, BUG-WF-2)
+**Decisions made:** none
+**Blockers:** none
+**Next:** V7.0 test gates to close V7.0, then V5 Wave 4+5
+
+---
+
 ## 2026-04-06 — documenter — V5 Wave 3 Documentation Update
 **Outcome:** COMPLETED
 **Summary:** Updated PROGRESS.md (V5 Wave 2 + Wave 3 entries), CONTEXT.md (focus shifted to V5 Wave 3 closed), DOC_STATUS.md (V5 Wave 3 section added, ARCHITECTURE.md debt updated with useCanvasValidation.js, inline comments status updated), ACTIVITY_LOG.md (this entry). No README, API, or ARCHITECTURE changes needed — all changes are frontend-only with no new endpoints, config, or env vars.

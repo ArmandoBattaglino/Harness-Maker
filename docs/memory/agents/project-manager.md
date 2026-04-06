@@ -1,4 +1,39 @@
 ---
+## 2026-04-06 — V5.0-BugFix1 Task Plan Registration
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+V5 Waves 1-3 all CLOSED (281 tasks). Debugger Loop Phase 1 E2E testing found and fixed 3 bugs: BUG-CTX-1 (node context menu propagation), BUG-CTX-2 (edge context menu propagation), BUG-KEYS-1 (Ctrl+S stale closure). All fixes verified in browser. Build: 487 modules, Tests: 312/312. No task entries existed for these fixes.
+
+### What I did
+1. Read TASK_PLAN.md tail -- confirmed last task was #281 (V5.0-Wave3 area checkpoint)
+2. Created V5.0-BugFix1 area with 5 tasks (#282-#286): 3 bug fix tasks + 1 TEST GATE + 1 AREA CHECKPOINT, all COMPLETED
+3. Updated status header: 286 total, 284 COMPLETED, 2 DEFERRED, 0 PENDING
+4. Added V5.0-BugFix1 area summary line to area list
+5. Updated PROGRESS.md (new completion entry), CONTEXT.md (focus updated), ACTIVITY_LOG.md (session entry), this agent memory file
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Status header updated (286 tasks, BugFix1 CLOSED); 5 new task entries appended (#282-#286); area summary line added |
+| docs/memory/PROGRESS.md | MODIFIED | BugFix1 completion entry prepended |
+| docs/memory/CONTEXT.md | MODIFIED | Focus updated to reflect all areas CLOSED |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Session entry prepended |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log |
+
+### Decisions I made
+- Mapped the 3 bugs to BUG-CTX-1/BUG-CTX-2/BUG-KEYS-1 identifiers matching debugger reports
+- Single TEST GATE #285 for all 3 fixes (all are closely related E2E interaction bugs)
+- Task numbering: #282 (BUG-CTX-1), #283 (BUG-CTX-2), #284 (BUG-KEYS-1), #285 (TEST GATE), #286 (AREA CHECKPOINT)
+
+### State I'm leaving behind
+286 tasks: 284 COMPLETED, 2 DEFERRED (#236 ConPTY — unfixable platform limitation). All areas CLOSED. No pending or in-progress tasks. Build: 487 modules, 0 errors. Tests: 312/312 pass.
+
+### Handoff
+All areas are resolved. No remaining work unless new features or bugs are identified.
+
+---
 ## 2026-04-06 — V5 Wave 3 Task Plan Registration
 **Status:** COMPLETED
 **Called by:** user

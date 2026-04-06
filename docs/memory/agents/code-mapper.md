@@ -1,4 +1,46 @@
 ---
+## 2026-04-06 — V5 Bugfix (commit 41b9a0e): Context Menu + Stale Closure Fixes
+**Status:** COMPLETED
+**Called by:** user (post-task code mapping request)
+
+### Context when I started
+V5 Wave 3 had been completed and mapped. Two bugs were discovered during E2E testing: (1) right-clicking a node/edge showed the pane context menu instead of the node/edge menu, (2) Ctrl+S keyboard shortcut failed to trigger save due to stale closure in useEffect.
+
+### What I did
+1. Read the modified files (SwarmCanvas.jsx lines 235-259, SwarmView.jsx lines 110-160 and 320-330) to verify changes
+2. Grepped for callers of handleNodeContextMenu, handleEdgeContextMenu, handleSaveFnRef, handleRunFnRef — all internal to their files
+3. Updated CODE_MAP.md: SwarmCanvas function entry (context menu complexity note updated with stopPropagation detail), SwarmView function entry (keyboard shortcuts complexity note rewritten to describe two-layer ref pattern), module index entries for both files, last-modified dates
+4. Prepended CHANGELOG.md entry with full details of both fixes
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Updated SwarmCanvas + SwarmView function entries and module index for V5 bugfix 41b9a0e |
+| docs/memory/CHANGELOG.md | MODIFIED | Prepended new entry documenting both bug fixes |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- CODE_MAP.md now accurately reflects the stopPropagation pattern in context menu handlers
+- CODE_MAP.md now documents the two-layer ref pattern (state refs + function refs) for keyboard shortcuts
+- CHANGELOG.md has a full record of the bugfix commit
+
+### Bugs I encountered
+None
+
+### Decisions I made
+None
+
+### What I learned
+- SwarmView uses a two-layer ref strategy for keyboard shortcuts: (1) state snapshot refs for gating conditions, (2) function refs for the actual handler invocations. This avoids the common React stale closure problem where useEffect captures initial function references.
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md are up to date through commit 41b9a0e. All V5 bugfix changes are mapped.
+
+### Handoff
+None — task fully self-contained.
+
+---
 ## 2026-04-06 — Tasks #254-#255: V7.0 BUG-DONE-BARE-1 + BUG-SNIPPET-INIT-1
 **Status:** COMPLETED
 **Called by:** user (post-task code mapping request)

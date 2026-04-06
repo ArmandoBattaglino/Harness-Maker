@@ -1,4 +1,6 @@
 
+- [V5.0-BugFix1 COMPLETED 2026-04-06] E2E Context Menu + Keyboard Shortcut Fixes. 3 bugs found during Debugger Loop Phase 1 E2E testing, all fixed and verified: BUG-CTX-1 (node right-click showed canvas menu — fixed with stopPropagation in SwarmCanvas.jsx handleNodeContextMenu), BUG-CTX-2 (edge right-click showed canvas menu — fixed with stopPropagation in handleEdgeContextMenu), BUG-KEYS-1 (Ctrl+S stale closure — fixed with ref-based function references in SwarmView.jsx). Tasks #282-#286 all COMPLETED. TEST GATE #285 PASS. AREA CHECKPOINT #286 PASS. Build: 487 modules, 0 errors. Tests: 312/312 pass. AREA CLOSED.
+
 - [V5.0-Wave3 COMPLETED 2026-04-06] useCanvasValidation.js (5 rules, error/warning severity), snap-to-grid (20px), keyboard shortcuts (Ctrl+S save, Ctrl+Enter run), AgentNode validation badges, validation before Run (error blocks, warning allows), export/import workflow JSON, duplicate workflow. Tasks #273-#281 all COMPLETED. Build: 487 modules, 0 errors. Tests: 312/312 pass. AREA CLOSED.
 
 - [V5.0-Wave2 COMPLETED 2026-04-06] NodePalette.jsx (draggable sidebar, 4 node types), WorkflowSettingsModal.jsx (settings+context editor), SwarmCanvas onDrop from palette, SwarmView Settings button. All frontend-only, no new API endpoints. Build passes.

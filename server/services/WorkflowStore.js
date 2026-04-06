@@ -15,6 +15,7 @@ const MAX_NAME_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 500;
 const MAX_NODES = 50;
 const MAX_SYSTEM_PROMPT_LENGTH = 16384; // 16 KB
+const MAX_VERSIONS_PER_WORKFLOW = 50;
 const NAME_REGEX = /^[\w\s\-.]+$/;
 const NODE_ID_REGEX = /^[a-z][a-z0-9-]*$/;
 
@@ -135,6 +136,9 @@ export class WorkflowStore {
       throw err;
     }
 
+    // Save version snapshot BEFORE overwriting (FR-V5-53)
+    await this._saveVersion(id, existing);
+
     const updated = {
       ...existing,
       name: data.name,
@@ -240,6 +244,101 @@ export class WorkflowStore {
   }
 
   // -------------------------------------------------------------------------
+  // listVersions(id) — returns version metadata for a workflow
+  // -------------------------------------------------------------------------
+  async listVersions(id) {
+    const versionsDir = this._resolveVersionsDir(id);
+    if (versionsDir === null) return [];
+    if (!fs.existsSync(versionsDir)) return [];
+
+    let entries;
+    try {
+      entries = fs.readdirSync(versionsDir);
+    } catch {
+      return [];
+    }
+
+    const versions = [];
+    for (const entry of entries) {
+      if (!entry.endsWith('.json')) continue;
+      const timestamp = entry.slice(0, -5); // strip .json
+      const filePath = path.join(versionsDir, entry);
+      try {
+        const raw = fs.readFileSync(filePath, 'utf8');
+        const wf = JSON.parse(raw);
+        versions.push({
+          timestamp,
+          name: wf.name ?? '',
+          nodeCount: Array.isArray(wf.nodes) ? wf.nodes.length : 0,
+          savedAt: timestamp,
+        });
+      } catch {
+        // Skip corrupt version files
+      }
+    }
+
+    // Sort chronologically (oldest first)
+    versions.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+    return versions;
+  }
+
+  // -------------------------------------------------------------------------
+  // getVersion(id, timestamp) — returns a specific version snapshot or null
+  // -------------------------------------------------------------------------
+  async getVersion(id, timestamp) {
+    const versionsDir = this._resolveVersionsDir(id);
+    if (versionsDir === null) return null;
+
+    // Validate timestamp format to prevent traversal
+    if (typeof timestamp !== 'string' || timestamp.includes('/') || timestamp.includes('\\') || timestamp.includes('..') || timestamp.includes('\0')) {
+      return null;
+    }
+
+    const filePath = path.resolve(versionsDir, `${timestamp}.json`);
+    if (!filePath.startsWith(versionsDir + path.sep) && filePath !== versionsDir) {
+      return null;
+    }
+
+    if (!fs.existsSync(filePath)) return null;
+
+    try {
+      const raw = fs.readFileSync(filePath, 'utf8');
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // restoreVersion(id, timestamp) — copies a version as the current workflow
+  // Returns the restored WorkflowDefinition, or throws 404.
+  // -------------------------------------------------------------------------
+  async restoreVersion(id, timestamp) {
+    const version = await this.getVersion(id, timestamp);
+    if (version === null) {
+      const err = new Error(`Version not found: ${id}@${timestamp}`);
+      err.statusCode = 404;
+      throw err;
+    }
+
+    // Save the current workflow as a version before restoring
+    const current = await this.get(id);
+    if (current !== null) {
+      await this._saveVersion(id, current);
+    }
+
+    // Restore the version as the current workflow
+    const restored = {
+      ...version,
+      id, // Ensure the ID stays the same
+      updatedAt: new Date().toISOString(),
+    };
+
+    await this._writeWorkflow(restored);
+    return restored;
+  }
+
+  // -------------------------------------------------------------------------
   // Internal helpers
   // -------------------------------------------------------------------------
 
@@ -264,6 +363,69 @@ export class WorkflowStore {
     }
 
     return resolved;
+  }
+
+  /**
+   * Resolves the versions directory for a given workflow ID.
+   * Returns null if the ID is invalid or contains traversal characters.
+   */
+  _resolveVersionsDir(id) {
+    if (typeof id !== 'string' || id.trim() === '') return null;
+    if (id.includes('/') || id.includes('\\') || id.includes('..') || id.includes('\0')) {
+      return null;
+    }
+
+    const resolved = path.resolve(this._workflowsDir, 'versions', id);
+
+    // Assert the resolved path is within the workflows/versions/ directory
+    const versionsBase = path.resolve(this._workflowsDir, 'versions');
+    if (!resolved.startsWith(versionsBase + path.sep) && resolved !== versionsBase) {
+      return null;
+    }
+
+    return resolved;
+  }
+
+  /**
+   * Saves a version snapshot of a workflow before it is overwritten.
+   * Trims to MAX_VERSIONS_PER_WORKFLOW (oldest first).
+   */
+  async _saveVersion(id, workflowData) {
+    const versionsDir = this._resolveVersionsDir(id);
+    if (versionsDir === null) return;
+
+    if (!fs.existsSync(versionsDir)) {
+      fs.mkdirSync(versionsDir, { recursive: true });
+    }
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filePath = path.resolve(versionsDir, `${timestamp}.json`);
+
+    // Path safety check
+    if (!filePath.startsWith(versionsDir + path.sep) && filePath !== versionsDir) {
+      return;
+    }
+
+    await writeFileAtomic(filePath, JSON.stringify(workflowData, null, 2));
+
+    // Trim old versions if over limit
+    try {
+      const entries = fs.readdirSync(versionsDir)
+        .filter((e) => e.endsWith('.json'))
+        .sort(); // Chronological order (ISO timestamps sort lexicographically)
+
+      while (entries.length > MAX_VERSIONS_PER_WORKFLOW) {
+        const oldest = entries.shift();
+        const oldPath = path.join(versionsDir, oldest);
+        try {
+          fs.unlinkSync(oldPath);
+        } catch {
+          // Best-effort cleanup
+        }
+      }
+    } catch {
+      // Best-effort — version trimming is not critical
+    }
   }
 
   /**

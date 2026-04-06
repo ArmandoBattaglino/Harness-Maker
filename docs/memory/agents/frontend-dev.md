@@ -1,4 +1,56 @@
 ---
+## 2026-04-06 — Wave 4: Per-Node Timing, Execution History, Templates, Version History (FR-V5-48/49/50/51/52/53/54/55)
+**Status:** COMPLETED
+**Called by:** user (task assignment)
+
+### Context when I started
+SwarmView had a full Wave 1-3 feature set (save, dirty tracking, name editing, context menu, node palette, settings modal, validation, snap-to-grid, keyboard shortcuts, export/import, duplicate). The Zustand store (SwarmContext.jsx) tracked agentStates with status/lastOutputSnippet/handoffCount but had no timestamps. AgentInspector showed live status and output but no timing info. No execution history, template gallery, or version history panels existed.
+
+### What I did
+1. **SwarmContext.jsx** — Enhanced `updateAgentState` to auto-set `timestamps.started` when status becomes `running`, `timestamps.done` on `done`/`completed`, and `timestamps.error` on `error`. Timestamps are nested under `agentStates[nodeId].timestamps`.
+2. **AgentInspector.jsx** — Added `ExecutionInfo` component with `formatTime`/`formatDuration` helpers and a live 1s interval timer for running agents. Shows started time, duration (live counting up while running), and status. Only renders when `timestamps.started` exists.
+3. **ExecutionHistory.jsx** — New slide-in panel (right side, 384px width). Fetches from `GET /api/v1/swarm/history/:workflowId`. Shows execution list with status badges, relative time, duration, node count. Click to expand per-node snapshots. Empty state message. Closes on Escape.
+4. **TemplateGallery.jsx** — New modal. Fetches from `GET /api/v1/workflows/templates`. 2-column grid of template cards with name, description, node count. "Use Template" button calls `POST /api/v1/workflows/templates/:id/instantiate`. After instantiation, loads new workflow and refreshes list.
+5. **VersionHistory.jsx** — New slide-out panel (right side, 320px width). Fetches from `GET /api/v1/workflows/:id/versions`. Timeline UI with dots, timestamps, node count. Preview/Restore buttons. Restore calls `POST /api/v1/workflows/:id/versions/:timestamp/restore`.
+6. **SwarmView.jsx** — Added imports for 3 new components. Added 3 state vars (showHistory, showTemplates, showVersions). Added History/Templates/Versions toolbar buttons (between Runtime select and Settings). Rendered 3 new panels conditionally. History and Versions toggle on/off; Templates opens a modal.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/store/SwarmContext.jsx | MODIFIED | Auto-timestamp tracking in updateAgentState (FR-V5-49/50) |
+| client/src/canvas/AgentInspector.jsx | MODIFIED | ExecutionInfo section with live timer (FR-V5-49/50) |
+| client/src/canvas/ExecutionHistory.jsx | CREATED | Execution history panel (FR-V5-48) |
+| client/src/canvas/TemplateGallery.jsx | CREATED | Template gallery modal (FR-V5-51/52) |
+| client/src/canvas/VersionHistory.jsx | CREATED | Version history panel (FR-V5-53/54/55) |
+| client/src/views/SwarmView.jsx | MODIFIED | Toolbar buttons + panel rendering for all 3 new features |
+
+### Improvements delivered
+- Agents now track start/done/error timestamps automatically
+- AgentInspector shows live execution timer that counts up during running state
+- Users can view past execution history with per-node snapshots
+- Template gallery provides one-click workflow instantiation from templates
+- Version history with timeline UI, preview and restore capabilities
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Timestamps stored nested under `agentStates[nodeId].timestamps` to keep backward compatibility with existing status/lastOutputSnippet/handoffCount fields
+- ExecutionInfo only renders when `timestamps.started` exists (not on idle nodes)
+- Live timer uses simple 1s setInterval, cleaned up on unmount or status change
+- History/Versions panels are slide-in from right (consistent with AgentInspector pattern), Templates uses a centered modal (consistent with WorkflowSettingsModal)
+- Used toggle behavior for History/Versions buttons (click again to close), modal behavior for Templates
+
+### What I learned
+- The `updateAgentState` function receives partial patches, so timestamp logic needed to merge with existing timestamps carefully to avoid overwriting `started` when subsequent status updates arrive
+
+### State I'm leaving behind
+Build passes 490 modules, 0 errors. All 4 features implemented. The API endpoints (history, templates, versions) need corresponding server-side implementation for the panels to show real data.
+
+### Handoff
+Backend-dev needs to implement: `GET /api/v1/swarm/history/:workflowId`, `GET /api/v1/workflows/templates`, `POST /api/v1/workflows/templates/:id/instantiate`, `GET /api/v1/workflows/:id/versions`, `POST /api/v1/workflows/:id/versions/:timestamp/restore`. QA test gate needed for all 4 features.
+
+---
 ## 2026-04-06 — FR-V5-41/43/44/45/46: Canvas Validation + Keyboard Shortcuts + Snap-to-Grid
 **Status:** COMPLETED
 **Called by:** user (task assignment)

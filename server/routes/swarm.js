@@ -13,6 +13,8 @@
 import { Router } from 'express';
 import { generateWorkflowFromPrompt } from '../services/ScaffoldGenerator.js';
 import { getRuntimeCapabilitySnapshot } from '../services/SwarmEngine.js';
+import { ExecutionHistoryStore } from '../stores/ExecutionHistoryStore.js';
+import { ConfigStore } from '../services/ConfigStore.js';
 
 function getAgentNodeById(workflowDef, nodeId) {
   return workflowDef?.nodes?.find((node) => node.id === nodeId && node.type === 'agent') ?? null;
@@ -71,6 +73,61 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
 
   router.get('/runtime-capabilities', (_req, res) => {
     return res.status(200).json(getRuntimeCapabilitySnapshot(sessionManager));
+  });
+
+  // -------------------------------------------------------------------------
+  // Execution History Store — initialized lazily on first use
+  // -------------------------------------------------------------------------
+  let _historyStore = null;
+  function getHistoryStore() {
+    if (!_historyStore) {
+      _historyStore = new ExecutionHistoryStore(ConfigStore.CONFIG_DIR);
+      // Fire-and-forget init (creates directory if needed)
+      _historyStore.init().catch((err) => {
+        console.error(`[swarm] ExecutionHistoryStore init error: ${err.message}`);
+      });
+    }
+    return _historyStore;
+  }
+
+  // -------------------------------------------------------------------------
+  // GET /api/v1/swarm/history/:workflowId
+  // Returns all execution history entries for a workflow.
+  // → 200 { executions: [...] }
+  // -------------------------------------------------------------------------
+  router.get('/history/:workflowId', async (req, res) => {
+    try {
+      const { workflowId } = req.params;
+      const store = getHistoryStore();
+      const executions = await store.getHistory(workflowId);
+      return res.status(200).json({ executions });
+    } catch (err) {
+      console.error(`[swarm] GET /history/:workflowId error: ${err.message}`);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // -------------------------------------------------------------------------
+  // GET /api/v1/swarm/history/:workflowId/:executionId
+  // Returns a single execution history entry.
+  // → 200 { execution: {...} }
+  // → 404 if entry not found
+  // -------------------------------------------------------------------------
+  router.get('/history/:workflowId/:executionId', async (req, res) => {
+    try {
+      const { workflowId, executionId } = req.params;
+      const store = getHistoryStore();
+      const entry = await store.getEntry(workflowId, executionId);
+
+      if (!entry) {
+        return res.status(404).json({ error: 'Execution history entry not found' });
+      }
+
+      return res.status(200).json({ execution: entry });
+    } catch (err) {
+      console.error(`[swarm] GET /history/:workflowId/:executionId error: ${err.message}`);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
   });
 
   // -------------------------------------------------------------------------

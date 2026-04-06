@@ -4,7 +4,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED - 2026-03-31 — 281 tasks total, 279 COMPLETED, 2 DEFERRED, 0 PENDING. V5.0-Wave1 CLOSED. V5.0-Wave2 CLOSED. V5.0-Wave3 CLOSED. Build OK: 487 modules, 0 errors. Tests: 312/312 pass.
+**Status:** v3.0.0 RELEASED - 2026-03-31 — 286 tasks total, 284 COMPLETED, 2 DEFERRED, 0 PENDING. V5.0-Wave1 CLOSED. V5.0-Wave2 CLOSED. V5.0-Wave3 CLOSED. V5.0-BugFix1 CLOSED. Build OK: 487 modules, 0 errors. Tests: 312/312 pass.
   **Completed Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 ALL COMPLETED/PASS. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#267 ALL COMPLETED. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave2 NODE CREATION & CONFIG — Tasks #268-#272 ALL COMPLETED. AREA CLOSED 2026-04-06.
@@ -31,6 +31,7 @@
   - V5.0-Wave1 SWARM EDITOR TRANSITION: AREA CLOSED 2026-04-06 — All 8 features COMPLETED (#259-#266), TEST GATE #267 PASS. Build: 483 modules, 0 errors. Tests: 312/312 pass.
   - V5.0-Wave2 NODE CREATION & CONFIG: AREA CLOSED 2026-04-06 — NodePalette (#268) + WorkflowSettingsModal (#270) COMPLETED, TEST GATES #269/#271 PASS, AREA CHECKPOINT #272 PASS. Build OK, 312/312 tests.
   - V5.0-Wave3 VALIDATION, SHORTCUTS & WORKFLOW OPS: AREA CLOSED 2026-04-06 — useCanvasValidation (#273), snap-to-grid (#274), keyboard shortcuts (#275), validation badges (#276), validation before Run (#277), export/import JSON (#278), duplicate workflow (#279) ALL COMPLETED. TEST GATE #280 PASS. AREA CHECKPOINT #281 PASS. Build: 487 modules, 0 errors. Tests: 312/312 pass.
+  - V5.0-BugFix1 E2E CONTEXT MENU + KEYBOARD SHORTCUT FIXES: AREA CLOSED 2026-04-06 — BUG-CTX-1 (#282), BUG-CTX-2 (#283), BUG-KEYS-1 (#284) ALL COMPLETED. TEST GATE #285 PASS. AREA CHECKPOINT #286 PASS. Build: 487 modules, 0 errors. Tests: 312/312 pass.
   DEFERRED (2 tasks, both MVP-acceptable, no fix possible):
     - #236: BUG-UI-1 — ConPTY terminal prompt garble after navigation (Windows platform limitation, DEC-009)
     - (none other — #233 and #242 previously marked DEFERRED are now COMPLETED)
@@ -13541,4 +13542,134 @@ Acceptance Criteria:
   - [x] npm run build passes (487 modules, 0 errors), npm test passes (312/312)
 Gate Result: PASS — V5.0-Wave3 CLOSED
 Dependencies: TASK #280
+
+---
+
+## AREA: V5.0-BugFix1 — E2E Context Menu + Keyboard Shortcut Fixes
+_Components: SwarmCanvas.jsx context menu propagation, SwarmView.jsx keyboard shortcut closure_
+_Tasks: #282 → #288_
+_Gate: ALL bug fixes must pass their TEST GATE before the next AREA starts_
+_Source: Debugger Loop Phase 1 E2E testing (Puppeteer browser verification) on 2026-04-06_
+
+---
+
+TASK #282: BUG-CTX-1 — Fix node right-click showing canvas menu instead of node menu
+Area: V5.0-BugFix1 — E2E Context Menu + Keyboard Shortcut Fixes
+Agent: debugger
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: COMPLETED
+Completion Note: 2026-04-06 — Added event.stopPropagation() in SwarmCanvas.jsx handleNodeContextMenu to prevent the canvas-level context menu from firing when right-clicking on a node. Node context menu (Edit/Duplicate/Copy/Delete) now appears correctly. Verified in browser.
+Context:
+  Bug source: Debugger Loop Phase 1 E2E testing (Puppeteer)
+  User-facing problem:
+    Right-clicking on a node in the SwarmCanvas showed the canvas-level context menu (Add Node / Paste) instead of the node-specific context menu (Edit / Duplicate / Copy / Delete). The canvas onContextMenu handler was firing because the node handler did not stop propagation.
+  Root cause:
+    SwarmCanvas.jsx handleNodeContextMenu was missing event.stopPropagation(), so the event bubbled up to the canvas onContextMenu handler which overwrote the node menu with the canvas menu.
+  Fix applied:
+    Added event.stopPropagation() at the start of handleNodeContextMenu in SwarmCanvas.jsx.
+Acceptance Criteria:
+  - [x] Right-click on node shows node context menu (Edit/Duplicate/Copy/Delete)
+  - [x] Right-click on canvas still shows canvas context menu (Add Node/Paste)
+  - [x] No regression in other context menu functionality
+  - [x] npm run build passes with 0 errors
+Dependencies: none
+---
+
+TASK #283: BUG-CTX-2 — Fix edge right-click showing canvas menu instead of edge menu
+Area: V5.0-BugFix1 — E2E Context Menu + Keyboard Shortcut Fixes
+Agent: debugger
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: COMPLETED
+Completion Note: 2026-04-06 — Added event.stopPropagation() in SwarmCanvas.jsx handleEdgeContextMenu to prevent the canvas-level context menu from firing when right-clicking on an edge. Edge context menu (Delete) now appears correctly. Verified in browser.
+Context:
+  Bug source: Debugger Loop Phase 1 E2E testing (Puppeteer)
+  User-facing problem:
+    Right-clicking on an edge in the SwarmCanvas showed the canvas-level context menu instead of the edge-specific context menu (Delete). Same propagation issue as BUG-CTX-1 but on edges.
+  Root cause:
+    SwarmCanvas.jsx handleEdgeContextMenu was missing event.stopPropagation(), so the event bubbled up to the canvas onContextMenu handler.
+  Fix applied:
+    Added event.stopPropagation() at the start of handleEdgeContextMenu in SwarmCanvas.jsx.
+Acceptance Criteria:
+  - [x] Right-click on edge shows edge context menu (Delete)
+  - [x] Right-click on canvas still shows canvas context menu
+  - [x] No regression in node context menu
+  - [x] npm run build passes with 0 errors
+Dependencies: none
+---
+
+TASK #284: BUG-KEYS-1 — Fix Ctrl+S keyboard shortcut not saving workflow due to stale closure
+Area: V5.0-BugFix1 — E2E Context Menu + Keyboard Shortcut Fixes
+Agent: debugger
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 — Fixed stale closure in SwarmView.jsx useEffect keyboard shortcut handler by switching to ref-based function references. Ctrl+S now always calls the current save function. Ctrl+Enter now always calls the current run function. Verified in browser.
+Context:
+  Bug source: Debugger Loop Phase 1 E2E testing (Puppeteer)
+  User-facing problem:
+    Pressing Ctrl+S did not save the workflow. The keyboard shortcut handler in SwarmView.jsx captured a stale closure of the save function from the initial render, so subsequent calls to save had no effect (the function reference pointed to an outdated version with outdated state).
+  Root cause:
+    SwarmView.jsx useEffect for keyboard shortcuts had a stale closure. The event listener captured the save/run functions from the initial render and never updated when those functions changed. Classic React useEffect stale closure bug.
+  Fix applied:
+    Replaced direct function references in the useEffect with refs (useRef) that are updated on every render. The keyboard event handler reads from the ref, ensuring it always calls the current version of the function.
+Acceptance Criteria:
+  - [x] Ctrl+S saves the workflow (dirty indicator clears)
+  - [x] Ctrl+Enter runs the workflow (with validation)
+  - [x] Shortcuts work after multiple edits (no stale closure)
+  - [x] npm run build passes with 0 errors
+  - [x] npm test passes (312/312)
+Dependencies: none
+---
+
+TASK #285: TEST GATE — V5.0-BugFix1 Context Menu + Keyboard Shortcut Fixes
+Area: V5.0-BugFix1 — E2E Context Menu + Keyboard Shortcut Fixes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-06 — All 3 bug fixes verified in browser via Puppeteer E2E testing. Node context menu, edge context menu, and Ctrl+S/Ctrl+Enter shortcuts all working correctly. Build: 487 modules, 0 errors. Tests: 312/312 pass. No regressions.
+Gate: HARD — AREA CHECKPOINT #286 CANNOT start until this gate returns PASS
+Context:
+  Components being tested: All 3 bug fixes (#282, #283, #284)
+  What to test:
+    1. BUG-CTX-1: Right-click on node -> node context menu appears (Edit/Duplicate/Copy/Delete), NOT canvas menu
+    2. BUG-CTX-2: Right-click on edge -> edge context menu appears (Delete), NOT canvas menu
+    3. BUG-KEYS-1: Ctrl+S saves workflow (dirty indicator clears), Ctrl+Enter runs with validation
+    4. Regression: Right-click on empty canvas -> canvas context menu still works
+    5. Regression: Ctrl+S after multiple edits (stale closure regression)
+Acceptance Criteria:
+  - [x] Node right-click shows node menu
+  - [x] Edge right-click shows edge menu
+  - [x] Canvas right-click shows canvas menu
+  - [x] Ctrl+S saves, Ctrl+Enter runs
+  - [x] npm run build passes (487 modules, 0 errors)
+  - [x] npm test passes (312/312)
+  - [x] No regression in Wave 1/2/3 features
+Gate Result: PASS — proceed to AREA CHECKPOINT #286
+Dependencies: TASK #282, TASK #283, TASK #284
+---
+
+TASK #286: AREA CHECKPOINT — V5.0-BugFix1 E2E Context Menu + Keyboard Shortcut Fixes
+Area: V5.0-BugFix1 — E2E Context Menu + Keyboard Shortcut Fixes
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: HIGH
+Status: COMPLETED
+Completion Note: 2026-04-06 — Full integration smoke test passed. All 3 bug fixes verified working together with existing Wave 1/2/3 features. Context menus (node, edge, canvas) all show correct menus. Keyboard shortcuts (Ctrl+S, Ctrl+Enter) work reliably after multiple edits. Build: 487 modules, 0 errors. Tests: 312/312 pass. V5.0-BugFix1 CLOSED.
+Gate: HARD — Next area CANNOT start until ALL component test gates in this area have PASSED
+Context: Run a full integration smoke test for all bug fixes in V5.0-BugFix1. Verify that context menus and keyboard shortcuts work correctly together with all existing Wave 1/2/3 features. Test the complete flow: create workflow -> add nodes via palette -> right-click node (node menu) -> right-click edge (edge menu) -> right-click canvas (canvas menu) -> edit workflow -> Ctrl+S (saves) -> Ctrl+Enter (runs with validation).
+Acceptance Criteria:
+  - [x] TEST GATE #285 COMPLETED with PASS result
+  - [x] Integration test: create workflow -> add nodes -> right-click node/edge/canvas (correct menus) -> edit -> Ctrl+S (saves) -> Ctrl+Enter (runs)
+  - [x] No regression in Wave 1, Wave 2, or Wave 3 features
+  - [x] npm run build passes (487 modules, 0 errors), npm test passes (312/312)
+Gate Result: PASS — V5.0-BugFix1 CLOSED
+Dependencies: TASK #285
 ---

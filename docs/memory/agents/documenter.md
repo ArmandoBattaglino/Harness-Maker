@@ -1,4 +1,49 @@
 ---
+## 2026-04-06 — V5 Bugfix: Context Menu stopPropagation + Keyboard Shortcut Stale Closure
+**Status:** COMPLETED
+**Called by:** user (post-V5-bugfix documentation sync)
+
+### Context when I started
+V5 Waves 1-3 were fully documented. A bugfix commit had just landed modifying two files: SwarmCanvas.jsx (context menu event propagation fix) and SwarmView.jsx (stale closure fix for Ctrl+S/Ctrl+Enter keyboard shortcuts). No new files, no API changes, no new features.
+
+### What I did
+1. Read both modified files (SwarmCanvas.jsx full, SwarmView.jsx relevant sections around refs and keyboard handlers)
+2. Read DOC_STATUS.md, ACTIVITY_LOG.md, CONTEXT.md, agents/documenter.md, README.md header
+3. Verified README.md is still accurate — no new features, no env var changes
+4. Verified docs/API.md is still accurate — no new endpoints
+5. Verified docs/ARCHITECTURE.md has no impact — no new components or data flow changes
+6. Verified inline comments in both files are accurate: SwarmCanvas.jsx has FR-V5-21-24 header at line 234, SwarmView.jsx has FR-V5-43 refs at lines 117-124 and 329-330
+7. Updated DOC_STATUS.md: header date, two new Fixed Bugs entries (BUG-WF-1, BUG-WF-2), new V5 Bugfix section, inline comments status note updated
+8. Updated ACTIVITY_LOG.md with documenter entry
+9. Appended this session log to agents/documenter.md
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Added V5 Bugfix section, two Fixed Bugs entries, updated header and inline comments status |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added documenter entry for V5 bugfix |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- DOC_STATUS.md now tracks both V5 bugfixes (BUG-WF-1, BUG-WF-2) with full descriptions
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- No README/ARCHITECTURE/API updates needed — both fixes are internal event handling corrections with zero external-facing impact.
+
+### What I learned
+- React Flow's context menu event system requires explicit stopPropagation on node/edge handlers to prevent the pane handler from also firing. This is a common React Flow gotcha worth noting.
+- Stale closures in useEffect-based keyboard handlers are a recurring pattern in this codebase. The ref-based approach (storing the function in a ref, updating it on every render, calling ref.current in the effect) is the established pattern here (see FR-V5-43 implementation).
+
+### State I'm leaving behind
+All documentation is up to date for the V5 bugfix commit. No stale docs. ARCHITECTURE.md V5 component tree update remains deferred (existing debt item, waiting for full wave batch).
+
+### Handoff
+None — task fully self-contained.
+
+---
 ## 2026-04-06 — V5 Wave 3: Validation + Shortcuts + Snap-to-Grid + Export/Import/Duplicate Documentation Update
 **Status:** COMPLETED
 **Called by:** user (post-V5-Wave-3 implementation documentation sync)

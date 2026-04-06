@@ -7,6 +7,9 @@ import PromptToFlowBar from '../canvas/PromptToFlowBar';
 import BroadcastBar from '../canvas/BroadcastBar';
 import PtyExplosion from '../canvas/PtyExplosion';
 import WorkflowSettingsModal from '../canvas/WorkflowSettingsModal';
+import ExecutionHistory from '../canvas/ExecutionHistory';
+import TemplateGallery from '../canvas/TemplateGallery';
+import VersionHistory from '../canvas/VersionHistory';
 import HitlInbox, { getPendingCount } from '../panels/HitlInbox';
 import { useSwarmStore } from '../store/SwarmContext';
 import { useSwarm } from '../hooks/useSwarm';
@@ -72,6 +75,9 @@ export default function SwarmView() {
   const [runtimeAvailability, setRuntimeAvailability] = useState({ claude: false, codex: false, gemini: false });
   const [showSettings, setShowSettings] = useState(false);
   const [showModelSettings, setShowModelSettings] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [showVersions, setShowVersions] = useState(false);
   const [runtimeCapabilities, setRuntimeCapabilities] = useState({
     claude: [],
     codex: [],
@@ -588,6 +594,35 @@ export default function SwarmView() {
         </div>
 
         <button
+          onClick={() => setShowHistory((v) => !v)}
+          disabled={!workflowDef}
+          title={!workflowDef ? 'No workflow loaded' : 'Execution history'}
+          className={`text-xs px-2 py-1 rounded border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+            showHistory ? 'bg-gray-600 border-gray-500 text-white' : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
+          }`}
+        >
+          History
+        </button>
+
+        <button
+          onClick={() => setShowTemplates(true)}
+          className="text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 border border-gray-600 transition-colors"
+        >
+          Templates
+        </button>
+
+        <button
+          onClick={() => setShowVersions((v) => !v)}
+          disabled={!workflowDef}
+          title={!workflowDef ? 'No workflow loaded' : 'Version history'}
+          className={`text-xs px-2 py-1 rounded border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+            showVersions ? 'bg-gray-600 border-gray-500 text-white' : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
+          }`}
+        >
+          Versions
+        </button>
+
+        <button
           onClick={() => setShowSettings(true)}
           disabled={!workflowDef}
           title={!workflowDef ? 'No workflow loaded' : 'Workflow settings'}
@@ -859,6 +894,42 @@ export default function SwarmView() {
             setShowSettings(false);
           }}
           onClose={() => setShowSettings(false)}
+        />
+      )}
+
+      {showHistory && workflowDef?.id && (
+        <ExecutionHistory
+          workflowId={workflowDef.id}
+          onClose={() => setShowHistory(false)}
+        />
+      )}
+
+      {showTemplates && (
+        <TemplateGallery
+          onInstantiate={(workflow) => {
+            setWorkflowDef(workflow);
+            setSelectedWorkflowId(workflow.id);
+            setIsDirty(false);
+            setSaveError(null);
+            refreshWorkflows();
+            setShowTemplates(false);
+          }}
+          onClose={() => setShowTemplates(false)}
+        />
+      )}
+
+      {showVersions && workflowDef?.id && (
+        <VersionHistory
+          workflowId={workflowDef.id}
+          onRestore={(restored) => {
+            setWorkflowDef(restored);
+            setIsDirty(false);
+            setSaveError(null);
+            refreshWorkflows();
+            setShowVersions(false);
+          }}
+          onPreview={() => {}}
+          onClose={() => setShowVersions(false)}
         />
       )}
     </div>

@@ -1,6 +1,6 @@
 // client/src/canvas/AgentInspector.jsx
 // Side panel for inspecting and editing agent node configuration.
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSwarmStore } from '../store/SwarmContext';
 import { stripAnsi } from '../utils/stripAnsi';
 import { inspectControlTokens } from '../utils/controlTokens';
@@ -306,6 +306,70 @@ function TriggerFields({ node, onUpdateNode }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Execution Info section with live timer                             */
+/* ------------------------------------------------------------------ */
+
+function formatTime(isoStr) {
+  if (!isoStr) return '—';
+  const d = new Date(isoStr);
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function formatDuration(ms) {
+  if (ms < 0 || !Number.isFinite(ms)) return '—';
+  const totalSec = Math.floor(ms / 1000);
+  if (totalSec < 60) return `${totalSec}s`;
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  if (min < 60) return `${min}m ${sec}s`;
+  const hr = Math.floor(min / 60);
+  return `${hr}h ${min % 60}m ${sec}s`;
+}
+
+function ExecutionInfo({ timestamps, status }) {
+  const [now, setNow] = useState(Date.now());
+  const isRunning = status === 'running';
+
+  useEffect(() => {
+    if (!isRunning) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [isRunning]);
+
+  const started = timestamps?.started;
+  const done = timestamps?.done;
+  const errTime = timestamps?.error;
+  const endTime = done || errTime;
+
+  const durationMs = started
+    ? (endTime ? new Date(endTime).getTime() : now) - new Date(started).getTime()
+    : null;
+
+  return (
+    <CollapsibleSection title="Execution Info">
+      <div className="bg-gray-800 rounded p-2 text-xs flex flex-col gap-1.5">
+        <div className="flex justify-between">
+          <span className="text-gray-400">Started</span>
+          <span className="text-white">{formatTime(started)}</span>
+        </div>
+        {durationMs !== null && (
+          <div className="flex justify-between">
+            <span className="text-gray-400">Duration</span>
+            <span className={isRunning ? 'text-blue-300 tabular-nums' : 'text-white'}>
+              {formatDuration(durationMs)}{isRunning ? ' ...' : ''}
+            </span>
+          </div>
+        )}
+        <div className="flex justify-between">
+          <span className="text-gray-400">Status</span>
+          <span className="capitalize text-white">{status}</span>
+        </div>
+      </div>
+    </CollapsibleSection>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Main Inspector                                                     */
 /* ------------------------------------------------------------------ */
 
@@ -369,6 +433,11 @@ export default function AgentInspector({ nodes, onUpdateNode }) {
         >
           <span>⌨</span> Open Terminal
         </button>
+      )}
+
+      {/* Execution Info — timing data (FR-V5-49/50) */}
+      {agentState?.timestamps?.started && (
+        <ExecutionInfo timestamps={agentState.timestamps} status={agentState.status} />
       )}
 
       {/* Live status (from Zustand) */}
