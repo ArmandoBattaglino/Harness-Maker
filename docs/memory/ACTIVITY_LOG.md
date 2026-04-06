@@ -1,3 +1,14 @@
+## 2026-04-06 — project-manager — V5.0-Wave4 Task Plan Registration
+**Outcome:** COMPLETED
+**Summary:** Registered V5.0-Wave4 area (Execution Visibility) in TASK_PLAN.md. 14 tasks (#287-#300): 8 component tasks (3 backend stores, 4 frontend panels, 1 toolbar integration) + 5 TEST GATEs + 1 AREA CHECKPOINT, all COMPLETED. Updated status header: 300 tasks total, 298 COMPLETED, 2 DEFERRED, 0 PENDING. V5.0-Wave4 AREA CLOSED. Updated PROGRESS.md (task numbers added), CONTEXT.md (focus updated).
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** Task numbering #287-#300; 5 separate TEST GATEs (1 for backend stores, 1 per frontend component group) plus AREA CHECKPOINT
+**Blockers:** none
+**Next:** All Wave 4 areas CLOSED. ExecutionHistoryStore.addEntry() wiring to SwarmEngine is a future integration task.
+
+---
+
 ## 2026-04-06 — frontend-dev — Wave 5: Advanced Flow Control Node Components (FR-V5-56/59/60/64/66/68/71/73/77)
 **Outcome:** COMPLETED
 **Summary:** Implemented 6 new canvas node components (ConditionalNode, MergeNode, DelayNode, LoopNode, ErrorHandlerNode, SubWorkflowNode) with full inspector configuration fields for each. Registered all 6 in SwarmCanvas nodeTypes and added palette entries in NodePalette. Build: 496 modules, 0 errors.

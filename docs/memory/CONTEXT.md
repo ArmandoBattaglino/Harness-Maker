@@ -1,6 +1,6 @@
 # Current Context
 **Session date:** 2026-04-06
-**Focus:** V5 Waves 1, 2, 3, BugFix1, and Wave 4 ALL CLOSED. Wave 4 added execution history persistence (ExecutionHistoryStore), 5 built-in workflow templates (TemplateStore), version history on workflow save (WorkflowStore), and 3 new UI panels (ExecutionHistory, TemplateGallery, VersionHistory). 6 new API endpoints added. All areas CLOSED. No remaining open areas or pending tasks.
+**Focus:** V5 Waves 1, 2, 3, BugFix1, and Wave 4 ALL CLOSED. Wave 4 tasks registered in TASK_PLAN.md as #287-#300 (8 components + 5 TEST GATEs + 1 AREA CHECKPOINT, all COMPLETED). 300 tasks total, 298 COMPLETED, 2 DEFERRED. Build: 490 modules, 0 errors. Tests: 312/312 pass. Note: ExecutionHistoryStore.addEntry() not yet wired to SwarmEngine -- future integration task. No remaining open areas or pending tasks.
 
 _Project initialized via /create pipeline on 2026-03-18_
 

@@ -3037,3 +3037,47 @@ CODE_MAP.md and CHANGELOG.md fully updated through V5 Wave 3. All new and modifi
 ### Handoff
 None — mapping task fully self-contained.
 ---
+
+---
+## 2026-04-06 — V5 Wave 4: Code Map + Changelog Update
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task mapping)
+
+### Context when I started
+V5 Wave 4 implementation completed by backend-dev and frontend-dev. 5 new files created (ExecutionHistoryStore, TemplateStore, ExecutionHistory.jsx, TemplateGallery.jsx, VersionHistory.jsx) and 6 files modified (WorkflowStore, swarm.js, workflows.js, SwarmContext.jsx, AgentInspector.jsx, SwarmView.jsx). CODE_MAP.md and CHANGELOG.md were current through V5 Wave 3 + bugfix commit 41b9a0e.
+
+### What I did
+1. Read all 11 modified/new source files to identify functions, imports, exports
+2. Updated CODE_MAP.md header timestamp
+3. Updated 4 existing Module Index entries (WorkflowStore, swarm.js, SwarmContext.jsx, AgentInspector.jsx)
+4. Added 4 new Module Index entries (ExecutionHistoryStore, TemplateStore, ExecutionHistory.jsx, TemplateGallery.jsx, VersionHistory.jsx)
+5. Updated 3 existing function graph entries (WorkflowStore.update — added _saveVersion call; _writeWorkflow — added restoreVersion as caller; swarmRoutes — updated signature and description)
+6. Added 25+ new function graph entries across 7 new sections
+7. Appended full CHANGELOG entry with all files, functions added/modified, connection changes, and impact analysis
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Updated header, 4 Module Index rows, 3 function entries; added 4 new Module Index rows, 25+ new function graph entries |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended V5 Wave 4 entry with 11 files, 18 functions added, 3 functions modified, 10 connection changes |
+
+### Improvements delivered
+- Complete function graph for all V5 Wave 4 code
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Organized new function graph entries into clear sections by feature area for readability
+- Listed internal helpers as separate entries since they have non-trivial path-traversal prevention logic
+
+### What I learned
+- WorkflowStore.update now has an implicit side effect (version save) — bulk updates will generate one version file per call
+- swarm.js uses lazy singleton pattern (getHistoryStore) rather than constructor injection
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md fully updated through V5 Wave 4. All 11 files mapped.
+
+### Handoff
+None — mapping task fully self-contained.
+---

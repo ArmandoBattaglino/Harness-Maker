@@ -1,4 +1,39 @@
 ---
+## 2026-04-06 — V5.0-Wave4 Task Plan Registration
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+V5 Wave 4 (Execution Visibility) was fully implemented with 8 features: ExecutionHistoryStore.js, WorkflowStore version history, TemplateStore.js, per-node execution timing, ExecutionHistory.jsx, TemplateGallery.jsx, VersionHistory.jsx, SwarmView toolbar buttons. Build: 490 modules, Tests: 312/312. No task entries existed in TASK_PLAN.md for Wave 4. Last task was #286 (V5.0-BugFix1 area checkpoint).
+
+### What I did
+1. Read TASK_PLAN.md tail -- confirmed last task was #286
+2. Created Wave 4 area with 14 tasks (#287-#300): 8 component tasks + 5 TEST GATEs + 1 AREA CHECKPOINT, all COMPLETED
+3. Updated status header: 300 total, 298 COMPLETED, 2 DEFERRED, 0 PENDING
+4. Added V5.0-Wave4 area summary line to area list
+5. Updated PROGRESS.md (task numbers added to existing entry), CONTEXT.md (focus updated), ACTIVITY_LOG.md (session entry prepended)
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Status header updated (300 tasks, Wave 4 CLOSED); 14 new task entries appended (#287-#300); area summary line added |
+| docs/memory/PROGRESS.md | MODIFIED | Wave 4 entry updated with task numbers |
+| docs/memory/CONTEXT.md | MODIFIED | Focus updated to reflect Wave 4 task registration |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Session entry prepended |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log |
+
+### Decisions I made
+- 14 tasks total: 3 backend (#287-#289), 5 frontend (#290-#294), 5 TEST GATEs (#295-#299), 1 AREA CHECKPOINT (#300)
+- Separate TEST GATEs for backend stores (#295), per-node timing (#296), and each frontend panel (#297-#299)
+- Noted ExecutionHistoryStore.addEntry() not yet wired to SwarmEngine as a known future integration task
+
+### State I'm leaving behind
+300 tasks: 298 COMPLETED, 2 DEFERRED (#236 ConPTY -- unfixable platform limitation). All areas CLOSED. No pending or in-progress tasks. Build: 490 modules, 0 errors. Tests: 312/312 pass. ExecutionHistoryStore.addEntry() wiring to SwarmEngine remains as a future integration task.
+
+### Handoff
+All areas are resolved. No remaining work unless new features or bugs are identified. The ExecutionHistoryStore.addEntry() -> SwarmEngine wiring should be tracked as a future task when Wave 5 or later integration work begins.
+
+---
 ## 2026-04-06 — V5.0-BugFix1 Task Plan Registration
 **Status:** COMPLETED
 **Called by:** user
