@@ -516,3 +516,15 @@ _None._
   No code change needed. Recovery prompts are already filtered by SNIPPET_RECOVERY_LINE_PATTERNS,
   SNIPPET_NOISE_LINE_PATTERNS, and REPLAY_NOISE_LINE_PATTERNS. Recovery-only snippets produce
   "Runtime reminder:" label. 312/312 tests, client build clean. TASK #204 TEST GATE unblocked.
+
+### V5 Wave 1 — Swarm Editor Transition (2026-04-06)
+- V5 Wave 1 COMPLETED — Canvas transitions from viewer to full visual editor.
+- New: useCanvasHistory.js (undo/redo with 50-entry stack, Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y)
+- New: sanitizeWorkflow.js (strips React Flow runtime fields before persistence)
+- New: nodeIdGenerator.js (generates node IDs matching WorkflowStore NODE_ID_REGEX)
+- New: ContextMenu.jsx (right-click context menus for canvas, nodes, and edges)
+- Modified: SwarmCanvas.jsx — undo/redo integration, delete with cascade (department children), context menu (add/duplicate/copy/paste/delete), dirty tracking via markDirty/onCanvasChange callbacks, node drag history
+- Modified: AgentInspector.jsx — full edit panel with per-type config sections (AgentFields, DepartmentFields, TriggerFields), debounced field commits, collapsible sections, editable label header
+- Modified: SwarmView.jsx — save button with sanitizeWorkflow, dirty state indicator (*), inline-editable workflow name with validation, save success/error feedback banners
+- Modified: useWorkflow.js — bug fix: update() now unwraps {workflow} response envelope from server PUT
+- FRs covered: FR-V5-01 (save), FR-V5-03 (dirty tracking), FR-V5-05/06 (name edit), FR-V5-11/13 (delete with cascade), FR-V5-16 through FR-V5-20 (undo/redo), FR-V5-21 through FR-V5-24 (context menu)

@@ -1,6 +1,6 @@
 # Current Context
 **Session date:** 2026-04-06
-**Focus:** V7.0 bug fixes COMPLETED (#254 + #255). Three verification tasks remain PENDING: TEST GATE #256 (bare DONE token), TEST GATE #257 (snippet init filter), AREA CHECKPOINT #258. After V7.0 closes, next priority is V5 Wave 1 task planning and implementation — the transition from swarm viewer/runner to full visual editor.
+**Focus:** V5 Wave 1 (Swarm Editor Transition) IMPLEMENTED. New capabilities: undo/redo, save workflow, inline name editing, right-click context menus (add/duplicate/copy/paste/delete), full AgentInspector edit panel with per-type config. V7.0 verification tasks still PENDING: TEST GATE #256 (bare DONE token), TEST GATE #257 (snippet init filter), AREA CHECKPOINT #258. Next: QA test gate for V5 Wave 1 save round-trip, name editing, and context menu actions.
 
 _Project initialized via /create pipeline on 2026-03-18_
 

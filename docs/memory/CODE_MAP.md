@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-06 — after Tasks #254-#255 (V7.0 Swarm Terminal Deep Test Bug Fixes: BUG-DONE-BARE-1 + BUG-SNIPPET-INIT-1) — mapped by code-mapper_
+_Last updated: 2026-04-06 — after V5 Wave 1 (Swarm Editor Transition) — mapped by code-mapper_
 
 > **V3.4/V3.5 SWARM RUNTIME STATUS: IN PROGRESS**
 > TASK #145 (BUG-UX-HANDOFF-1) partially addressed: prompt examples templated with `<targetId>` to prevent fake handoffs from PTY redraw (DEC-023); Codex model-selection and rate-limit menus auto-dismissed; hard usage-limit now takes precedence over soft `Approaching rate limits` chooser (DEC-024). 83/83 server tests pass. Build: 479 modules. Live handoff proof still pending — no provider has completed a real multi-agent chain yet.
@@ -58,7 +58,7 @@ _Last updated: 2026-04-06 — after Tasks #254-#255 (V7.0 Swarm Terminal Deep Te
 | client/src/main.jsx | (entry) | ReactDOM.createRoot bootstrap |
 | client/src/store/AppContext.jsx | AppContext, useAppState | Global React context: activeProjectId, projects list |
 | client/src/hooks/useApi.js | apiGet, apiPost, apiPut, apiDelete, apiDeleteWithBody | Fetch wrappers with CSRF header injection and error normalization |
-| client/src/hooks/useWorkflow.js | useWorkflow (named), useWorkflowList (named) | CRUD React hooks for workflow definitions: useWorkflow(id) — fetch/update/remove single workflow; useWorkflowList() — fetch all + create. Both use apiGet/apiPost/apiPut/apiDelete from useApi.js. (Task #61) |
+| client/src/hooks/useWorkflow.js | useWorkflow (named), useWorkflowList (named) | CRUD React hooks for workflow definitions: useWorkflow(id) — fetch/update/remove single workflow; useWorkflowList() — fetch all + create. Both use apiGet/apiPost/apiPut/apiDelete from useApi.js. V5 Wave 1: fixed update() response unwrapping (data?.workflow ?? data). (Task #61, V5 Wave 1) |
 | client/src/hooks/useHandoff.js | useHandoff (named), useRecentHandoffs (named) | Edge animation hooks for reacting to handoff counter changes. useHandoff(callback) fires callback on each edgeCounter increase; useRecentHandoffs(durationMs) returns a Set of recently-active edgeIds. Both subscribe to useSwarmStore.edgeCounters via refs for previous-state diffing. (Task #64) |
 | client/src/hooks/useSession.js | useSession | WebSocket hook for PTY terminal: manages WS lifecycle, reconnect logic, send+resize callbacks |
 | client/src/components/Sidebar.jsx | default Sidebar, SidebarHeader, NavItem, SessionItem, SidebarFooter (internals) | Phase 9 redesign: imports NAV_ITEMS from constants.js, 6-view navigation (swarm added Task #58), Active PTY Sessions list, New Local Session button, AddProjectModal trigger. Task #24 rewrite. |
@@ -80,13 +80,17 @@ _Last updated: 2026-04-06 — after Tasks #254-#255 (V7.0 Swarm Terminal Deep Te
 | client/src/canvas/nodes/DepartmentNode.jsx | default DepartmentNode | React Flow group container node type="department". Subscribes to focusedDepartmentId + setFocusedDepartment from useSwarmStore. Click on header calls setFocusedDepartment(id). Sized by React Flow to contain child nodes. (Task #53.2) |
 | client/src/canvas/nodes/TriggerNode.jsx | default TriggerNode | React Flow source-only node type="trigger". webhook/rss icon variants (triggerIcons map), purple theme, source Handle bottom only. Full implementation deferred to Task #76. (Task #53.3) |
 | client/src/canvas/edges/HandoffEdge.jsx | default HandoffEdge | React Flow custom edge type="handoff". Animated dashed blue line when edgeCounters[id] > 0; grey static line when idle. Counter badge via EdgeLabelRenderer. (Task #54) |
-| client/src/canvas/AgentInspector.jsx | default AgentInspector | Right-panel component for inspecting a selected canvas node. Reads selectedNodeId + agentStates + setPtyExplosionNodeId from useSwarmStore. Shows label, type, status, handoffCount, systemPrompt, lastOutputSnippet. Close button calls setSelectedNode(null). "Open Terminal" button (conditionally rendered when agentState.sessionId is set) calls setPtyExplosionNodeId(agentState.sessionId) — BUG-AUDIT-2+3 fix (Tasks #55, #121). |
+| client/src/canvas/AgentInspector.jsx | default AgentInspector, AgentFields, DepartmentFields, TriggerFields, useDebouncedField, CollapsibleSection (internals) | Full edit panel for selected canvas node. Editable label, type-specific configuration sections (agent: model/systemPrompt/tools/maxTurns/triage/department; department: color/collapsed; trigger: type/webhook/rss). Live status + output from Zustand. "Open Terminal" button. V5 Wave 1 upgrade from read-only inspector. |
+| client/src/canvas/ContextMenu.jsx | default ContextMenu | Right-click context menu for SwarmCanvas — renders positioned overlay with action buttons. Supports canvas/node/edge contexts. Click-away and Escape close. (FR-V5-21 through FR-V5-24, V5 Wave 1) |
+| client/src/hooks/useCanvasHistory.js | useCanvasHistory (named) | Undo/redo history hook for React Flow canvas. 50-entry stack with structuredClone snapshots. Provides pushHistory/undo/redo/canUndo/canRedo. Canvas-only — does not touch Zustand execution state (DEC-011). (FR-V5-16 through FR-V5-20, V5 Wave 1) |
+| client/src/utils/sanitizeWorkflow.js | sanitizeWorkflow (named) | Strips React Flow internal runtime fields (measured, width, height, selected, dragging, positionAbsolute) from nodes/edges before persisting workflow definitions. (FR-V5-01, V5 Wave 1) |
+| client/src/utils/nodeIdGenerator.js | generateNodeId (named) | Generates node IDs matching WorkflowStore NODE_ID_REGEX `^[a-z][a-z0-9-]*$` using crypto.randomUUID(). (V5 Wave 1) |
 | client/src/canvas/BreadcrumbBar.jsx | default BreadcrumbBar | Top-bar breadcrumb nav for drill-down into department nodes. Reads departmentStack + navigateBreadcrumb from useSwarmStore. Root crumb always visible; each depth level rendered as a clickable button. (Task #56) |
-| client/src/canvas/SwarmCanvas.jsx | default SwarmCanvas | Root React Flow canvas for swarm visualization. Registers nodeTypes (agent, department, trigger) + edgeTypes (handoff). Manages nodes/edges state via useNodesState/useEdgesState. Drill-down filtering: computes visibleNodes/visibleEdges via focusedDepartmentId. onNodeClick→setSelectedNode; onPaneClick→setSelectedNode(null). Mounts BreadcrumbBar + AgentInspector. Added useReactFlow() + imperative fitView() after setNodes/setEdges with 50ms timeout (Tasks #116+#117 — BUG-SWARM-1+2 fix). AgentInspector now always rendered (was gated on showSidePanels — BUG-AUDIT-1 fix, Task #120); InterAgentFeed still gated on showSidePanels. (Tasks #57.1, #116, #117, #120) |
+| client/src/canvas/SwarmCanvas.jsx | default SwarmCanvas | Root React Flow canvas for swarm visualization. V5 Wave 1: added undo/redo (useCanvasHistory), delete handlers with cascade, context menu (ContextMenu), markDirty/onCanvasChange callbacks, copy/paste/duplicate node actions, keyboard shortcuts (Ctrl+Z/Y). Registers nodeTypes + edgeTypes, drill-down filtering, BreadcrumbBar + AgentInspector + InterAgentFeed + ContextMenu. (Tasks #57.1, #116, #117, #120, V5 Wave 1) |
 | client/src/canvas/PromptToFlowBar.jsx | default PromptToFlowBar | Natural-language prompt input bar. POSTs to /api/v1/swarm/scaffold, calls onWorkflowGenerated(workflowId, animatedDef) on success. Empty prompt shows red validation message + red border highlight (Task #248). (Tasks #60, #116, #248) |
 | client/src/canvas/BroadcastBar.jsx | default BroadcastBar | Broadcasts text to all running agent PTYs via POST /api/v1/swarm/:executionId/broadcast. Only renders when executionStatus === 'running'. Soft/hard mode selector. (Task #66) |
 | client/src/hooks/useSwarm.js | useSwarm (named), readStoredExecution, writeStoredExecution, clearStoredExecution (module-private) | WebSocket hook for swarm execution lifecycle: connectWs(executionId) → /ws/swarm?executionId=X; startExecution() POSTs + connects WS; stopExecution() DELETEs + closes WS. Dispatches 10 WS message types to useSwarmStore (was 7 before Task #128). restorePersistedExecution uses raw fetch for hydration with 404 → clearStoredExecution + clearExecutionState (BUG-SWARM-UI-2 fix, Tasks #238-#241). agentStates top-level subscription removed (Task #109); uses useSwarmStore.getState() inside handler. Cleanup useEffect depends on [workflowId] (Task #114 — BUG-TOOLBAR-2). updateTriggerState selector added + 3 trigger event cases (Task #128 — BUG-TRIGGER-1). (Tasks #63, #109, #114, #128, #238-#241) |
-| client/src/views/SwarmView.jsx | default SwarmView | Layout shell for the Swarm Orchestrator page. Toolbar: title, executionStatus indicator, Run/Stop/Pause/Resume/Reset buttons. Run button disabled+tooltip when preconditions unmet (Task #112). runError state removed (Task #113 — BUG-TOOLBAR-1). handlePause/handleResume guard against null activeExecutionId (Task #115 — BUG-TOOLBAR-3). workflowDef migrated from useState to Zustand (useSwarmStore — Task #117 — BUG-SWARM-3). Reset simplified to single reset() call (resets all including workflowDef via store — Task #117). Now imports and calls useInbox(activeExecutionId) at line 53 — polling fallback when WS disconnected (BUG-AUDIT-4 fix, Task #122). PtyExplosion now keyed by ptyExplosionNodeId to force React remount on agent switch (BUG-WF-3 fix, Task #232). savedWorkflows useMemo: name-based deduplication (case-insensitive, keeps newest) + date suffix in dropdown options (BUG-SWARM-UI-1 fix, Task #242). (Tasks #57.2, #60, #66, #101, #103, #105, #106, #107, #112, #113, #115, #117, #122, #232, #242) |
+| client/src/views/SwarmView.jsx | default SwarmView | Layout shell for the Swarm Orchestrator page. V5 Wave 1: added Save button (isDirty tracking, sanitizeWorkflow before PUT), workflow name editing (click-to-edit with validation), markDirty/onCanvasChange callbacks passed to SwarmCanvas, save success/error banners. Toolbar: title (editable), Save/Run/Stop/Pause/Resume/Reset buttons, runtime provider selector, model settings, HITL inbox toggle. (Tasks #57.2, ..., #242, V5 Wave 1) |
 | client/src/canvas/InterAgentFeed.jsx | default InterAgentFeed | Real-time sidebar log of agent handoff events. Empty-state container now has w-56 shrink-0 (Task #104 — prevents canvas collapse when feed is empty). Auto-scrolls to bottom. Renders event icon + timestamp + details for handoff_started/agent_status/circuit_breaker/execution_status types. (Tasks #72, #104) |
 | client/src/panels/HitlInbox.jsx | default HitlInbox, getPendingCount (named) | HITL approval panel. InboxItem.handleApproveConfirm and handleReject now call setError() instead of silently returning when executionId/itemId is null (Task #108). (Tasks #69, #108) |
 | client/src/hooks/useInbox.js | useInbox (named), default useInbox | HITL inbox polling + approve/reject hook. Normalizes REST vs WS inbox item shapes. Polls /api/v1/swarm/:executionId/inbox every 10s when WS disconnected. Calls resolveInboxItem(itemId) on success. Imported and called in SwarmView.jsx (line 53) as polling fallback — BUG-AUDIT-4 fix (Task #122). (Tasks #73, #84, #85, #92, #122) |
@@ -2033,14 +2037,50 @@ _Last updated: 2026-04-06 — after Tasks #254-#255 (V7.0 Swarm Terminal Deep Te
 ---
 
 ### `client/src/canvas/AgentInspector.jsx` :: `AgentInspector({ nodes, onUpdateNode })`
-- **Purpose:** Side panel that renders details for the currently selected canvas node. Reads selectedNodeId and agentStates[selectedNodeId] from useSwarmStore. Shows: node label, type badge, live status from Zustand (status string + handoffCount), "Open Terminal" button (when agentState.sessionId is set — BUG-AUDIT-2+3 fix), system prompt (from node.data.systemPrompt, read-only), and last output snippet (from agentState.lastOutputSnippet). Close button calls setSelectedNode(null) to deselect. Returns an empty placeholder div when no node is selected. Component is always rendered in SwarmCanvas — not gated on executionStatus (BUG-AUDIT-1 fix, Task #120).
-- **Called by:** SwarmCanvas.jsx (Task #57.1; always rendered without showSidePanels gate — BUG-AUDIT-1 fix, Task #120)
-- **Calls:** useSwarmStore (selector: s.selectedNodeId), useSwarmStore (selector: s.agentStates[selectedNodeId]), useSwarmStore (selector: s.setSelectedNode), useSwarmStore (selector: s.setPtyExplosionNodeId), nodes.find() (prop traversal), setPtyExplosionNodeId (on "Open Terminal" button click)
-- **Inputs:** nodes (array — React Flow node objects from parent canvas; used to find label, type, data.systemPrompt), onUpdateNode (function — callback from SwarmCanvas.handleUpdateNode; shallow-merges patch into node.data via setNodes; wired in Task #130 BUG-INSPECTOR-1)
-- **Output:** JSX — w-64 right panel; empty placeholder if no selection; detail view with header, type badge, optional "Open Terminal" button, status block, system prompt block, last output block
-- **Side effects:** calls setSelectedNode(null) on close button click; calls setPtyExplosionNodeId(agentState.sessionId) on "Open Terminal" button click — both mutate SwarmStore
-- **Complexity note:** Four separate useSwarmStore selectors (selectedNodeId, agentState, setSelectedNode, setPtyExplosionNodeId). agentState data comes from Zustand (live runtime state); systemPrompt comes from node.data (static workflow definition). "Open Terminal" button is conditionally rendered: only when agentState?.sessionId is truthy — sessionId is set by SwarmEngine when a PTY session is assigned to that agent node.
-- **Last modified:** 2026-04-02 in Task #130 by frontend-dev (BUG-INSPECTOR-1: onUpdateNode prop now wired — was passed as prop but never implemented in SwarmCanvas; Task #121 — setPtyExplosionNodeId + "Open Terminal" button; Task #120 — rendering no longer gated on showSidePanels)
+- **Purpose:** Full edit panel for the currently selected canvas node. V5 Wave 1 upgrade from read-only inspector to complete editing interface. Renders editable label (input field), type badge, type-specific configuration section (AgentFields/DepartmentFields/TriggerFields), optional "Open Terminal" button (when agentState.sessionId set), live status from Zustand, last output snippet with control token semantics. Returns empty placeholder when no node selected.
+- **Called by:** SwarmCanvas.jsx (always rendered — not gated on showSidePanels)
+- **Calls:** useSwarmStore (selectors: selectedNodeId, agentStates[id], setSelectedNode, setPtyExplosionNodeId), nodes.find(), stripAnsi(), inspectControlTokens(), AgentFields, DepartmentFields, TriggerFields, CollapsibleSection
+- **Inputs:** nodes (array — React Flow node objects), onUpdateNode (function — `(nodeId, patch) => void` callback from SwarmCanvas.handleUpdateNode)
+- **Output:** JSX — w-72 right panel; editable header + type badge + type-specific fields + optional terminal button + live status + output
+- **Side effects:** calls onUpdateNode() on every field edit (label, model, systemPrompt, tools, etc.); calls setSelectedNode(null) on close; calls setPtyExplosionNodeId on terminal button
+- **Complexity note (V5 Wave 1):** Type-specific editing delegated to 3 sub-components (AgentFields, DepartmentFields, TriggerFields). useDebouncedField helper provides local state + delayed commit for text fields (systemPrompt, tools) to avoid per-keystroke history entries. MODEL_OPTIONS constant defines grouped model choices (Claude/Codex/Gemini).
+- **Last modified:** 2026-04-06 in V5 Wave 1 by frontend-dev (BREAKING: upgraded from read-only to full edit panel — new sub-components AgentFields/DepartmentFields/TriggerFields/useDebouncedField/CollapsibleSection; editable label; panel width 64→72)
+
+### `client/src/canvas/AgentInspector.jsx` :: `useDebouncedField(nodeValue, onCommit, delay=300)` (internal)
+- **Purpose:** Helper hook providing a local/remote field sync pattern. Returns [localValue, setLocalValue] where setLocalValue updates local state immediately and calls onCommit after `delay` ms of inactivity.
+- **Called by:** AgentFields (systemPrompt, tools fields)
+- **Calls:** useState, useEffect, useCallback, useRef (timer cleanup)
+- **Inputs:** nodeValue (string — initial/external value), onCommit (function — called with final value), delay (number — debounce ms, default 300)
+- **Output:** [local: string, onChange: (val: string) => void]
+- **Side effects:** triggers onCommit callback after debounce
+- **Last modified:** 2026-04-06 in V5 Wave 1 by frontend-dev (new function)
+
+### `client/src/canvas/AgentInspector.jsx` :: `AgentFields({ node, nodes, onUpdateNode })` (internal)
+- **Purpose:** Renders agent-specific config fields: model dropdown (grouped by provider), system prompt textarea (debounced), tools input (comma-separated, debounced), max turns number, triage checkbox, parent department dropdown.
+- **Called by:** AgentInspector (when nodeType === 'agent')
+- **Calls:** useDebouncedField (x2), onUpdateNode callback, CollapsibleSection, FieldLabel
+- **Inputs:** node (React Flow node), nodes (all nodes — for department dropdown), onUpdateNode (callback)
+- **Output:** JSX — CollapsibleSection with form fields
+- **Side effects:** calls onUpdateNode on each field change
+- **Last modified:** 2026-04-06 in V5 Wave 1 by frontend-dev (new function)
+
+### `client/src/canvas/AgentInspector.jsx` :: `DepartmentFields({ node, onUpdateNode })` (internal)
+- **Purpose:** Renders department-specific config: color picker (dual input: color + text) and collapsed checkbox.
+- **Called by:** AgentInspector (when nodeType === 'department')
+- **Calls:** onUpdateNode callback, CollapsibleSection, FieldLabel
+- **Inputs:** node (React Flow node), onUpdateNode (callback)
+- **Output:** JSX — CollapsibleSection with color + collapsed fields
+- **Side effects:** calls onUpdateNode on field change
+- **Last modified:** 2026-04-06 in V5 Wave 1 by frontend-dev (new function)
+
+### `client/src/canvas/AgentInspector.jsx` :: `TriggerFields({ node, onUpdateNode })` (internal)
+- **Purpose:** Renders trigger-specific config: trigger type dropdown (webhook/rss), conditional webhook path input, conditional RSS URL + poll interval inputs.
+- **Called by:** AgentInspector (when nodeType === 'trigger')
+- **Calls:** onUpdateNode callback, CollapsibleSection, FieldLabel
+- **Inputs:** node (React Flow node), onUpdateNode (callback)
+- **Output:** JSX — CollapsibleSection with type-conditional fields
+- **Side effects:** calls onUpdateNode on field change
+- **Last modified:** 2026-04-06 in V5 Wave 1 by frontend-dev (new function)
 
 ---
 
@@ -2058,27 +2098,27 @@ _Last updated: 2026-04-06 — after Tasks #254-#255 (V7.0 Swarm Terminal Deep Te
 
 ## React Flow Canvas Container (Task #57.1)
 
-### `client/src/canvas/SwarmCanvas.jsx` :: `SwarmCanvas({ workflowDef })`
-- **Purpose:** Root canvas component for swarm workflow visualization. Initializes React Flow with workflowDef.nodes + workflowDef.edges, registers all custom node/edge types, applies drill-down filtering via focusedDepartmentId, wires user interaction (onNodeClick, onPaneClick, onConnect), mounts BreadcrumbBar + AgentInspector (always — BUG-AUDIT-1 fix) + InterAgentFeed (gated on showSidePanels only). BUG-89 fix: workflowDef changes after mount reflected via useEffect. BUG-SWARM-1+2 fix (Task #116): useReactFlow() + imperative fitView(padding: 0.2, duration: 400) called inside useEffect after 50ms timeout so React Flow can measure nodes before fit.
-- **Called by:** SwarmView.jsx (Task #57.2 — first live caller; mounted inside ReactFlowProvider with `workflowDef` prop)
-- **Calls:** useReactFlow (from @xyflow/react — provides fitView), useSwarmStore (selector: s.focusedDepartmentId), useSwarmStore (selector: s.setSelectedNode), useSwarmStore (selector: s.executionStatus), useNodesState (from @xyflow/react), useEdgesState (from @xyflow/react), useEffect (React — workflowDef change sync + fitView), useMemo (React — visibleNodes, visibleNodeIds, visibleEdges), useCallback (React — onConnect, onNodeClick, onPaneClick), addEdge (from @xyflow/react), ReactFlow + Background + Controls + MiniMap (from @xyflow/react), AgentNode, DepartmentNode, TriggerNode, HandoffEdge, AgentInspector, BreadcrumbBar, InterAgentFeed
-- **Inputs:** workflowDef (object — `{ nodes: ReactFlowNode[], edges: ReactFlowEdge[] }` or undefined; defaults to empty arrays)
-- **Output:** JSX — flex column: BreadcrumbBar (top) + flex row: ReactFlow canvas (flex-1) + optional InterAgentFeed (right, when showSidePanels) + AgentInspector (always-right panel)
-- **Side effects:** calls setSelectedNode(nodeId) on node click; calls setSelectedNode(null) on pane click; calls setEdges to append a new handoff edge on connect; calls setNodes/setEdges + fitView when workflowDef prop changes; calls setNodes (shallow-merge patch into node.data) via handleUpdateNode. No server I/O.
-- **Complexity note (BUG-89 fix):** useEffect watches workflowDef — calls setNodes/setEdges on prop change so scaffold output after mount is reflected.
-- **Complexity note (BUG-SWARM-1+2 fix — Task #116):** useReactFlow() provides `fitView` imperative function. After setNodes/setEdges, a `setTimeout(() => fitView({ padding: 0.2, duration: 400 }), 50)` gives React Flow one tick to run its ResizeObserver and measure node dimensions before fitting. Without the delay, fitView fires before nodes have nonzero dimensions and is a no-op. nodeTypes/edgeTypes still declared outside component per React Flow v12 requirement.
-- **Complexity note (BUG-AUDIT-1 fix — Task #120):** AgentInspector is now always rendered unconditionally — not gated on `showSidePanels`. The component itself handles its empty state ("Select a node to inspect"). InterAgentFeed remains gated on `showSidePanels` (only shown when running or paused).
-- **Complexity note (BUG-INSPECTOR-1 — Task #130):** `handleUpdateNode(nodeId, patch)` useCallback (lines 96-103) shallow-merges `patch` into the target node's `data` object via `setNodes`. Passed as `onUpdateNode` prop to `<AgentInspector>`. This satisfies the prop contract AgentInspector expected — prior to this task, `onUpdateNode` was defined as a prop on AgentInspector's interface but was never passed by SwarmCanvas.
-- **Last modified:** 2026-04-02 in Task #130 by frontend-dev (BUG-INSPECTOR-1: handleUpdateNode useCallback added; passed as onUpdateNode to AgentInspector — prop contract now fulfilled; Task #120: AgentInspector always rendered; Task #116: useReactFlow fitView with 50ms delay)
+### `client/src/canvas/SwarmCanvas.jsx` :: `SwarmCanvas({ workflowDef, markDirty, onCanvasChange })`
+- **Purpose:** Root canvas component for swarm workflow visualization. V5 Wave 1: added undo/redo (useCanvasHistory), delete handlers with cascade (onNodesDelete removes department children), context menu (3 contexts: canvas/node/edge), copy/paste/duplicate node actions, drag history capture, keyboard shortcuts (Ctrl+Z undo, Ctrl+Shift+Z/Ctrl+Y redo), markDirty/onCanvasChange callbacks for parent save tracking. Registers nodeTypes + edgeTypes, drill-down filtering, fitView on workflowDef change.
+- **Called by:** SwarmView.jsx (mounted inside ReactFlowProvider with workflowDef, markDirty, onCanvasChange props)
+- **Calls:** useReactFlow (fitView, screenToFlowPosition), useSwarmStore (focusedDepartmentId, setSelectedNode, executionStatus), useNodesState, useEdgesState, useCanvasHistory (pushHistory/undo/redo/canUndo/canRedo), useEffect (workflowDef sync, canvas change reporting, keyboard shortcuts), useMemo (visibleNodes, visibleNodeIds, visibleEdges, contextMenuActions), useCallback (onConnect, onNodeClick, onPaneClick, onNodeDragStart/Stop, onNodesDelete, onEdgesDelete, handleNodesChange, handleEdgesChange, context menu handlers, addNodeAtPosition, duplicateNode, deleteNode, deleteEdge, copyNode, pasteNode, handleUpdateNode), ContextMenu, AgentInspector, BreadcrumbBar, InterAgentFeed
+- **Inputs:** workflowDef (object or undefined), markDirty (function — `() => void`, called on meaningful canvas changes), onCanvasChange (function — `(nodes, edges) => void`, called on every nodes/edges state change)
+- **Output:** JSX — flex column: BreadcrumbBar + flex row: ReactFlow canvas + ContextMenu (conditional) + InterAgentFeed (gated on showSidePanels) + AgentInspector (always)
+- **Side effects:** calls markDirty on meaningful node/edge changes; calls onCanvasChange on every nodes/edges update; calls setSelectedNode on click; mutates nodes/edges via delete/add/duplicate/paste; keyboard event listeners on window. No server I/O.
+- **Complexity note (V5 Wave 1 — undo/redo):** useCanvasHistory stores structuredClone snapshots in refs. pushHistory called BEFORE mutation with pre-state. Drag operations use preDragSnapshotRef to capture state at onNodeDragStart, push at onNodeDragStop. handleUpdateNode debounces 500ms — first edit in burst captures snapshot, subsequent edits within 500ms share the same undo entry.
+- **Complexity note (V5 Wave 1 — context menu):** Three context handlers (handlePaneContextMenu, handleNodeContextMenu, handleEdgeContextMenu) set contextMenu state with position + type + optional nodeId/edgeId. contextMenuActions useMemo builds action arrays per type. Canvas context: add agent/department/trigger, select all, paste. Node context: edit, duplicate, copy, delete. Edge context: delete.
+- **Complexity note (V5 Wave 1 — cascade delete):** onNodesDelete callback detects department deletions and cascades to remove child nodes (nodes with parentId matching deleted department ID) + their connected edges.
+- **BREAKING CHANGE:** Signature changed from `SwarmCanvas({ workflowDef })` to `SwarmCanvas({ workflowDef, markDirty, onCanvasChange })`. Caller (SwarmView.jsx) updated.
+- **Last modified:** 2026-04-06 in V5 Wave 1 by frontend-dev
 
 ### `client/src/canvas/SwarmCanvas.jsx` :: `handleUpdateNode(nodeId, patch)`
-- **Purpose:** useCallback that shallow-merges a patch object into a specific node's `data` slice within the React Flow nodes state. Enables AgentInspector (and any future panel) to write back edits to node properties without lifting state out of SwarmCanvas.
-- **Called by:** `<AgentInspector onUpdateNode={handleUpdateNode} />` (prop — AgentInspector calls it when user edits a node field in the inspector panel)
-- **Calls:** setNodes (React Flow state setter — maps over nodes array, replaces matching node with spread-merged data)
-- **Inputs:** nodeId (string — id of the target React Flow node), patch (object — key/value pairs to merge into node.data; non-overlapping keys are preserved via `{ ...n.data, ...patch }`)
-- **Output:** void (triggers React Flow re-render of the updated node)
-- **Side effects:** mutates the React Flow `nodes` state array (via setNodes); causes a re-render of the affected node component
-- **Last modified:** 2026-04-02 in Task #130 by frontend-dev (BUG-INSPECTOR-1: new function — resolves missing prop contract between SwarmCanvas and AgentInspector)
+- **Purpose:** useCallback that shallow-merges a patch into a node's data, with 500ms debounce for history grouping. First edit in a burst captures undo snapshot; subsequent edits within 500ms share the same history entry.
+- **Called by:** `<AgentInspector onUpdateNode={handleUpdateNode} />`
+- **Calls:** pushHistory (useCanvasHistory — on first edit in burst), setNodes (React Flow), markDirty (parent callback)
+- **Inputs:** nodeId (string), patch (object — key/value pairs merged into node.data)
+- **Output:** void
+- **Side effects:** mutates nodes state; calls markDirty; pushes undo history on first edit per burst
+- **Last modified:** 2026-04-06 in V5 Wave 1 by frontend-dev (added debounced history grouping + markDirty call)
 
 ---
 

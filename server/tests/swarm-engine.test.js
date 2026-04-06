@@ -1794,6 +1794,8 @@ describe('SwarmEngine', () => {
       const execution = engine._executions.get(executionId);
       const nodeAState = execution.agentStates.get('node-a');
 
+      // Clear echo gate so prompt-ready detection can work
+      nodeAState.ignoreParserUntil = null;
       tapFn('Type your message or @path/to/file');
       mockSessionManager.writeInput.mockClear();
       engine.sendBroadcast(executionId, 'node-a', 'High-priority operator update', { mode: 'hard' });

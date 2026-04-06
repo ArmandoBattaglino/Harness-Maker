@@ -1,3 +1,24 @@
+## 2026-04-06 — frontend-dev — FR-V5-25/29: Node Palette Sidebar
+**Outcome:** COMPLETED
+**Summary:** Created NodePalette.jsx collapsible left sidebar with 4 draggable node type cards (Agent, Department, Webhook Trigger, RSS Trigger). Integrated into SwarmCanvas.jsx with onDragOver/onDrop handlers that create nodes at drop position with proper IDs (generateNodeId) and type-specific default data. Build: 485 modules, 0 errors.
+**Files changed:** client/src/canvas/NodePalette.jsx (CREATED), client/src/canvas/SwarmCanvas.jsx (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Palette is a flex sibling of ReactFlow (not a child), uses shrink-0 to prevent collapse
+**Blockers:** none
+**Next:** TEST GATE for palette drag-and-drop; context menu IDs could be migrated to generateNodeId for consistency
+
+---
+
+## 2026-04-06 — documenter — V5 Wave 1 Documentation Update
+**Outcome:** COMPLETED
+**Summary:** Updated PROGRESS.md (V5 Wave 1 section with all new/modified files and FRs covered), CONTEXT.md (focus shifted to V5 Wave 1 implemented), DOC_STATUS.md (V5 Wave 1 components noted, ARCHITECTURE.md debt entry updated), ACTIVITY_LOG.md (this entry). No README, API, or ARCHITECTURE doc changes needed — all changes are frontend-only with no new endpoints or config.
+**Files changed:** docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/DOC_STATUS.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** QA test gate for V5 Wave 1 features
+
+---
 ## 2026-04-06 — frontend-dev — FR-V5-01/03/05/06/21-24: Save Button, Dirty Tracking, Name Edit, Context Menu
 **Outcome:** COMPLETED
 **Summary:** Implemented save button with dirty tracking, inline-editable workflow name, and right-click context menu for SwarmCanvas. Fixed useWorkflow.js update() response unwrapping bug. Build: 483 modules, 0 errors.

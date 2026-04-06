@@ -2135,8 +2135,13 @@ class SwarmEngine {
             // split prompt-ready indicators (e.g. "bypass permissions on") across
             // multiple onData callbacks, so the single chunk may never contain
             // the full string.  Checking the raw rolling buffer covers this.
-            if (this._isRuntimePromptReady(chunk, currentState.provider)
-              || this._isRuntimePromptReady(currentState._runtimeScanBuffer, currentState.provider)) {
+            // Gate: skip prompt-ready detection while the echo gate is active —
+            // the CLI banner (which contains "bypass permissions on") would falsely
+            // trigger promptReady before the agent starts working, causing the
+            // done reminder to fire prematurely (BUG-DONE-BARE-1 root cause).
+            if (!currentState.ignoreParserUntil
+              && (this._isRuntimePromptReady(chunk, currentState.provider)
+                || this._isRuntimePromptReady(currentState._runtimeScanBuffer, currentState.provider))) {
               currentState.promptReady = true;
             }
           }
@@ -2252,6 +2257,10 @@ class SwarmEngine {
             );
             currentState.ignoreParserUntil = null;
             currentState.ignoreParserBuffer = '';
+            // Clear the runtime scan buffer so old CLI banner text (e.g.
+            // "bypass permissions on") doesn't falsely trigger promptReady
+            // once the echo gate opens (BUG-DONE-BARE-1 root cause fix).
+            currentState._runtimeScanBuffer = '';
             // Cancel the fallback timer — the marker arrived in time
             if (currentState.echoMarkerTimer) {
               clearTimeout(currentState.echoMarkerTimer);

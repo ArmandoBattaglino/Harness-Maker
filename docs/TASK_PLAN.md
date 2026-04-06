@@ -4,9 +4,10 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED - 2026-03-31 — 280 tasks total, 253 COMPLETED, 2 DEFERRED, 3 PENDING (V7.0 test gates + checkpoint), 22 PENDING (V5.0-Wave1). V7.0 bug fixes COMPLETED, verification gates PENDING. V5.0-Wave1 Swarm Editor Transition PLANNED.
+**Status:** v3.0.0 RELEASED - 2026-03-31 — 284 tasks total, 261 COMPLETED, 2 DEFERRED, 3 PENDING (V7.0 test gates + checkpoint), 18 PENDING (V5.0-Wave2). V5.0-Wave1 Swarm Editor Transition IMPLEMENTED (8/8 features, 483 modules, 312/312 tests). V5.0-Wave2 Node Creation & Config PLANNED.
   **Active Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 (#254 COMPLETED, #255 COMPLETED, #256 PENDING test gate, #257 PENDING test gate, #258 PENDING area checkpoint)
-  **Planned Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#280 (9 component tasks + 9 test gates + 2 mount/wire tasks + 1 backend save-as + 1 area checkpoint)
+  **Completed Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#266 ALL COMPLETED. TEST GATE #267 PENDING.
+  **Planned Area:** V5.0-Wave2 NODE CREATION & CONFIG — Tasks #268-#284 (8 component tasks + 8 test gates + 1 area checkpoint)
   - V3.1 BUG FIX WAVE: AREA CLOSED 2026-04-02
   - V3.2/V3.3 SWARM RUNTIME INTEGRITY + CONTRACT COMPLETION: AREA CLOSED 2026-04-02 — AREA CHECKPOINT #142 PASS
   - V3.4 SWARM UX DEEP TEST FINDINGS: AREA CLOSED 2026-04-06 — all tasks COMPLETED, AREA CHECKPOINT #148 PASS (15/15 Puppeteer E2E, 3 skipped provider-dependent)
@@ -26,6 +27,8 @@
   - V5.2 SWARM DEEP TEST BUG FIXES: AREA CLOSED 2026-04-06 — #238-#241 COMPLETED, #242 COMPLETED (duplicate workflow names fixed), #243 PASS, #244 PASS
   - V6.0 RUNTIME DEEP TEST BUG FIXES: AREA CLOSED 2026-04-06 — AREA CHECKPOINT #253 PASS. All 4 bug fixes verified, 312/312 tests, build clean.
   - V7.0 SWARM TERMINAL DEEP TEST BUG FIXES: IN PROGRESS — #254 COMPLETED, #255 COMPLETED, #256-#258 PENDING (test gates + area checkpoint)
+  - V5.0-Wave1 SWARM EDITOR TRANSITION: IMPLEMENTED 2026-04-06 — All 8 features COMPLETED (#259-#266), TEST GATE #267 PENDING. Build: 483 modules, 0 errors. Tests: 312/312 pass.
+  - V5.0-Wave2 NODE CREATION & CONFIG: PLANNED — Tasks #268-#284 (8 components + 8 test gates + 1 area checkpoint)
   DEFERRED (2 tasks, both MVP-acceptable, no fix possible):
     - #236: BUG-UI-1 — ConPTY terminal prompt garble after navigation (Windows platform limitation, DEC-009)
     - (none other — #233 and #242 previously marked DEFERRED are now COMPLETED)

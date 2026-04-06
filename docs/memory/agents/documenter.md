@@ -1,4 +1,51 @@
 ---
+## 2026-04-06 — V5 Wave 1: Swarm Editor Transition Documentation Update
+**Status:** COMPLETED
+**Called by:** user (post-V5-Wave-1 implementation documentation sync)
+
+### Context when I started
+V5 Wave 1 (Swarm Editor Transition) had just been implemented by frontend-dev. Four new files and four modified files, all frontend. No backend or API changes. DOC_STATUS.md last reflected V7.0 bug fixes.
+
+### What I did
+1. Read all 8 new/modified source files to understand exact changes
+2. Read PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md, DOC_STATUS.md, PROJECT.md
+3. Audited all docs for staleness: README (still accurate), API (still accurate), ARCHITECTURE (partially stale — new components not in tree), inline comments (accurate)
+4. Updated PROGRESS.md: added V5 Wave 1 section with all files, FRs, and change descriptions
+5. Updated CONTEXT.md: shifted focus from V7.0 pending to V5 Wave 1 implemented
+6. Updated ACTIVITY_LOG.md: prepended documenter entry
+7. Updated DOC_STATUS.md: header timestamp, ARCHITECTURE.md marked PARTIAL, inline comments section updated, V5 Wave 1 table added, documentation debt entry refined
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/PROGRESS.md | MODIFIED | Added V5 Wave 1 section at end with full file list and FR coverage |
+| docs/memory/CONTEXT.md | MODIFIED | Updated focus line to reflect V5 Wave 1 implementation complete |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Prepended documenter entry for V5 Wave 1 doc update |
+| docs/memory/DOC_STATUS.md | MODIFIED | Updated timestamp, ARCHITECTURE status to PARTIAL, inline comments section, added V5 Wave 1 table, refined debt entry |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- Memory docs now accurately reflect V5 Wave 1 implementation status
+- DOC_STATUS.md tracks ARCHITECTURE.md as PARTIAL with clear note about what is missing
+- V5 Wave 1 change table provides at-a-glance summary for future agents
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Deferred ARCHITECTURE.md component tree update to a batch when more V5 waves complete — updating for one wave would be immediately stale when Wave 2 adds more components
+- No README or API.md changes needed — all V5 Wave 1 changes are frontend-only with no new endpoints or config
+
+### What I learned
+- V5 Wave 1 introduces the first editor capabilities (vs viewer): undo/redo, save, name edit, context menus, full inspector editing. This is a significant UX shift but has zero backend impact.
+
+### State I'm leaving behind
+All memory docs up to date for V5 Wave 1. ARCHITECTURE.md is the only partially stale doc (new components not in tree — deferred intentionally). Next documentation update needed after V5 Wave 2 or when ARCHITECTURE.md batch update is triggered.
+
+### Handoff
+QA test gate needed for V5 Wave 1 save round-trip, name editing, and context menu actions.
+
+---
 ## 2026-04-06 — V5.0 PRD Planning Milestone: Documentation update
 **Status:** COMPLETED
 **Called by:** user (post-PRD-update documentation sync)

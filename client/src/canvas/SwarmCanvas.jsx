@@ -21,8 +21,10 @@ import AgentInspector from './AgentInspector';
 import BreadcrumbBar from './BreadcrumbBar';
 import InterAgentFeed from './InterAgentFeed';
 import ContextMenu from './ContextMenu';
+import NodePalette from './NodePalette';
 import { useSwarmStore } from '../store/SwarmContext';
 import { useCanvasHistory } from '../hooks/useCanvasHistory';
+import { generateNodeId } from '../utils/nodeIdGenerator';
 
 // Register custom node and edge types — defined OUTSIDE component to prevent re-registration
 const nodeTypes = {
@@ -189,6 +191,44 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange }) 
       pushHistory(nodes, edges);
     },
     [pushHistory, nodes, edges]
+  );
+
+  // ---- Drag-and-drop from NodePalette (FR-V5-25 through FR-V5-29) ----
+  const onDragOver = useCallback((event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  const onDrop = useCallback(
+    (event) => {
+      event.preventDefault();
+      const type = event.dataTransfer.getData('application/reactflow-type');
+      if (!type) return;
+      const subType = event.dataTransfer.getData('application/reactflow-subtype');
+      const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+      const id = generateNodeId(type);
+
+      let data;
+      if (type === 'agent') {
+        data = { label: 'New Agent', systemPrompt: '', model: '', tools: [], isTriageNode: false, maxTurns: 0 };
+      } else if (type === 'department') {
+        data = { label: 'New Department' };
+      } else if (type === 'trigger') {
+        if (subType === 'rss') {
+          data = { label: 'RSS Trigger', triggerType: 'rss', feedUrl: '', pollIntervalSeconds: 300 };
+        } else {
+          data = { label: 'Webhook Trigger', triggerType: 'webhook', webhookPath: '' };
+        }
+      } else {
+        data = { label: `New ${type}` };
+      }
+
+      const newNode = { id, type, position, data };
+      pushHistory(nodes, edges);
+      setNodes((nds) => [...nds, newNode]);
+      if (markDirtyRef.current) markDirtyRef.current();
+    },
+    [screenToFlowPosition, pushHistory, nodes, edges, setNodes]
   );
 
   // ---- Context menu handlers (FR-V5-21 through FR-V5-24) ----
@@ -384,6 +424,7 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange }) 
     <div className="flex flex-col w-full h-full">
       <BreadcrumbBar nodes={nodes} />
       <div className="flex flex-1 overflow-hidden">
+        <NodePalette />
         <ReactFlow
           nodes={visibleNodes}
           edges={visibleEdges}
@@ -396,6 +437,8 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange }) 
           onNodeDragStop={onNodeDragStop}
           onNodesDelete={onNodesDelete}
           onEdgesDelete={onEdgesDelete}
+          onDragOver={onDragOver}
+          onDrop={onDrop}
           onContextMenu={handlePaneContextMenu}
           onNodeContextMenu={handleNodeContextMenu}
           onEdgeContextMenu={handleEdgeContextMenu}

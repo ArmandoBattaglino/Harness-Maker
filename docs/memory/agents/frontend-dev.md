@@ -2468,3 +2468,58 @@ useCanvasHistory.js is complete and integrated. Build passes (481 modules, 0 err
 ### Handoff
 canUndo/canRedo booleans are available in SwarmCanvas.jsx scope. A toolbar task can either lift them to Zustand or accept them as props from SwarmCanvas. The hook API is: pushHistory(prevNodes, prevEdges), undo(currentNodes, currentEdges, setNodes, setEdges), redo(currentNodes, currentEdges, setNodes, setEdges).
 ---
+
+---
+## 2026-04-06 — FR-V5-25/29: Node Palette Sidebar (drag-and-drop node creation)
+**Status:** COMPLETED
+**Called by:** user (task assignment)
+
+### Context when I started
+SwarmCanvas had right-click context menu for adding nodes (FR-V5-21 through FR-V5-24), but no visual palette sidebar like N8N. Node IDs in the context menu used `${type}-${Date.now()}` instead of the proper `generateNodeId()` from `nodeIdGenerator.js`. The canvas layout was: BreadcrumbBar on top, then flex row with ReactFlow + InterAgentFeed + AgentInspector.
+
+### What I did
+1. Created `client/src/canvas/NodePalette.jsx` — collapsible left sidebar with 4 draggable node cards (Agent, Department, Webhook Trigger, RSS Trigger)
+2. Each card sets `application/reactflow-type` and `application/reactflow-subtype` on drag start via `dataTransfer`
+3. Modified `client/src/canvas/SwarmCanvas.jsx`:
+   - Imported `NodePalette` and `generateNodeId`
+   - Added `onDragOver` handler (preventDefault + set dropEffect to 'move')
+   - Added `onDrop` handler that reads type/subType from dataTransfer, converts screen coords to flow coords, creates a node with proper default data per type, pushes history, marks dirty
+   - Placed `<NodePalette />` before `<ReactFlow>` in the flex layout
+   - Wired `onDragOver` and `onDrop` props on `<ReactFlow>`
+4. Agent nodes get full default data: label, systemPrompt, model, tools, isTriageNode, maxTurns
+5. Trigger nodes get subtype-specific data (webhook vs rss fields)
+6. All new node IDs use `generateNodeId(type)` matching WorkflowStore NODE_ID_REGEX
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/canvas/NodePalette.jsx | CREATED | Collapsible sidebar with 4 draggable node type cards |
+| client/src/canvas/SwarmCanvas.jsx | MODIFIED | Imported NodePalette + generateNodeId, added onDragOver/onDrop handlers, placed palette in layout |
+
+### Improvements delivered
+- Users can now drag node types from a visual palette onto the canvas to create new nodes
+- Palette is collapsible (w-48 expanded, w-8 collapsed with chevron toggle)
+- Node IDs now use crypto.randomUUID-based generateNodeId instead of Date.now()
+- History push before drop enables undo of palette-created nodes
+- markDirty called on drop so save button activates
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| (none) | - | - | - |
+
+### Decisions I made
+- Used `active:opacity-50` on cards instead of a separate drag state — simpler, achieves the visual feedback spec without useState overhead
+- Put NodePalette outside ReactFlow in the flex row (sibling, not child) — palette should not scroll/pan with the canvas
+- Used `shrink-0` on palette to prevent flex shrinking when canvas is large
+
+### What I learned
+- ReactFlow's `onDrop` fires on the ReactFlow wrapper div, and `screenToFlowPosition` correctly converts client coordinates to flow coordinates accounting for zoom/pan
+- HTML5 drag-and-drop `dataTransfer.setData` works across React component boundaries as expected
+
+### State I'm leaving behind
+NodePalette.jsx is complete and integrated. Build passes (485 modules, 0 errors). The palette renders 4 cards. Dragging any card onto the canvas creates the correct node type with proper ID and default data. Collapse/expand works via local state.
+
+### Handoff
+None — task fully self-contained. The context menu addNodeAtPosition still uses `${type}-${Date.now()}` IDs — a future cleanup task could switch those to generateNodeId too for consistency.
+---
