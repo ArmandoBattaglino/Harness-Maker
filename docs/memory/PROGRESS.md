@@ -1,4 +1,12 @@
 
+- [V4.0.4 TEST GATE PASS 2026-04-06] TASK #202 COMPLETED — TEST GATE PASS for BUG-PTY-REPLAY-CONTAMINATION-1
+  36 REPLAY_NOISE_LINE_PATTERNS + 2 corruption tail regexes verified. Multi-line protocol block stripping verified. Live PTY unfiltered confirmed. 312/312 tests, client build clean. TASK #203 unblocked.
+
+- [PM STATUS SYNC 2026-04-06] Wave 3 verified — #200 PASS, #223 PASS (V4.5 CLOSED), #201 COMPLETED:
+  V4.5 AREA IS NOW CLOSED (AREA CHECKPOINT #223 PASS). V4.0.4 chain progressing: #198 done, #199 done,
+  #200 done (TEST GATE PASS), #201 done (PTY replay fix). Remaining: #202-#205 PENDING (sequential chain).
+  Next priority: TEST GATE #202 for replay fidelity verification, then #203-#205.
+
 - [V4.0.4 FIX 2026-04-06] TASK #201 COMPLETED — BUG-PTY-REPLAY-CONTAMINATION-1 fixed
   Enhanced sanitizeReplayOutput() in SessionManager.js with content-level filtering (30+ noise patterns, protocol block stripping, corruption tail detection). 312/312 tests pass. TEST GATE #202 is next.
 

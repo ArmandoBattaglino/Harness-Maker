@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-06 — after Verification Wave 2 (Tasks #187, #199, #217, #222) — mapped by code-mapper_
+_Last updated: 2026-04-06 — after Wave 3 (Tasks #200, #201, #223) — mapped by code-mapper_
 
 > **V3.4/V3.5 SWARM RUNTIME STATUS: IN PROGRESS**
 > TASK #145 (BUG-UX-HANDOFF-1) partially addressed: prompt examples templated with `<targetId>` to prevent fake handoffs from PTY redraw (DEC-023); Codex model-selection and rate-limit menus auto-dismissed; hard usage-limit now takes precedence over soft `Approaching rate limits` chooser (DEC-024). 83/83 server tests pass. Build: 479 modules. Live handoff proof still pending — no provider has completed a real multi-agent chain yet.
@@ -25,7 +25,7 @@ _Last updated: 2026-04-06 — after Verification Wave 2 (Tasks #187, #199, #217,
 | server/services/FileManager.js | FileManager (class), fileManager (singleton) | Atomic file I/O with path-traversal protection for all entity writes |
 | server/services/index.js | (barrel) | Re-exports ConfigStore, ProcessRegistry, discoverClaudeBinary |
 | server/services/RingBuffer.js | RingBuffer | Fixed 100KB circular buffer for PTY output; push() with wrap-around, toBuffer() for replay |
-| server/services/SessionManager.js | sessionManager (singleton) | Sole PTY owner: createSession, attachClient, detachClient, writeInput, resizePty, killSession, idle sweeper |
+| server/services/SessionManager.js | sessionManager (singleton) | Sole PTY owner: createSession, attachClient, detachClient, writeInput, resizePty, killSession, idle sweeper. Content-level replay sanitization via sanitizeReplayOutput (30+ noise patterns, protocol block stripping, corruption tail detection — Task #201) |
 | server/utils/frontmatter.js | parseFrontmatter, serializeFrontmatter, filePathToId | YAML frontmatter parse/serialize; stable hex ID from file path |
 | server/middleware/security.js | securityMiddleware | helmet + CSP (script-src: self, style-src: self+unsafe-inline+fonts.googleapis.com, font-src: self+fonts.gstatic.com) |
 | server/middleware/csrf.js | csrfMiddleware, CSRF_EXEMPT_PREFIXES | 403 on POST/PUT/PATCH/DELETE without X-Requested-With: ClaudeCodeManager; path-based exemptions for webhook endpoints (Task #234) |
@@ -1116,13 +1116,13 @@ _Last updated: 2026-04-06 — after Verification Wave 2 (Tasks #187, #199, #217,
 - **Last modified:** 2026-03-18 in Debug Session (BUG-02) by debugger
 
 ### `server/services/SessionManager.js` :: `SessionManager.attachClient(sessionId, ws)`
-- **Purpose:** Add a WebSocket to a session's client set and immediately replay the ring buffer so the client catches up on all prior output.
+- **Purpose:** Add a WebSocket to a session's client set and immediately replay the ring buffer (sanitized) so the client catches up on all prior output.
 - **Called by:** server/ws/terminalHandler.js::setupTerminalWebSocket (on WS connection)
-- **Calls:** session.clients.add, session.buffer.toBuffer, ws.send
+- **Calls:** session.clients.add, session.buffer.toBuffer, sanitizeReplayOutput, ws.send
 - **Inputs:** sessionId (string), ws (WebSocket)
 - **Output:** void
-- **Side effects:** replays buffered bytes to ws; logs attach event
-- **Last modified:** 2026-03-18 in Task #5 by backend-dev
+- **Side effects:** replays sanitized buffered output to ws; logs attach event
+- **Last modified:** 2026-04-06 in Task #201 by debugger (now calls sanitizeReplayOutput instead of raw replay)
 
 ### `server/services/SessionManager.js` :: `SessionManager.detachClient(sessionId, ws)`
 - **Purpose:** Remove a WebSocket from a session's client set. PTY stays alive (DEC-009 — user may reconnect).
@@ -1187,6 +1187,34 @@ _Last updated: 2026-04-06 — after Verification Wave 2 (Tasks #187, #199, #217,
 - **Output:** SessionRecord[]
 - **Side effects:** none
 - **Last modified:** 2026-03-18 in Task #5 by backend-dev
+
+### `server/services/SessionManager.js` :: `stripAnsiForMatching(str)` (module-private)
+- **Purpose:** Strip ANSI color/style escape codes from a string for pattern-matching purposes. Preserves visible text content.
+- **Called by:** sanitizeReplayOutput (line-by-line noise filtering + leading/trailing blank trim)
+- **Calls:** String.replace (two regex passes: SGR codes `\x1b[...m` and cursor codes `\x1b[...X`)
+- **Inputs:** str (string — raw terminal line possibly containing ANSI escapes)
+- **Output:** string (visible text only)
+- **Side effects:** none
+- **Last modified:** 2026-04-06 in Task #201 by debugger (NEW)
+
+### `server/services/SessionManager.js` :: `sanitizeReplayOutput(replayBuffer)` (module-private)
+- **Purpose:** Sanitize PTY ring buffer output before replaying to a reconnecting WebSocket client. Removes DEC private mode toggles, cursor save/restore, screen-clearing codes, swarm protocol blocks, line-by-line noise patterns (30+ regexes), and trailing corruption.
+- **Called by:** SessionManager.attachClient (line 284)
+- **Calls:** stripAnsiForMatching, REPLAY_NOISE_LINE_PATTERNS (array of RegExp), REPLAY_CORRUPTION_TAIL_RE, REPLAY_REPEATED_CHAR_RE
+- **Inputs:** replayBuffer (Buffer | string — raw PTY output from RingBuffer.toBuffer())
+- **Output:** string (cleaned replay content, leading/trailing blank lines trimmed)
+- **Side effects:** none (pure transform)
+- **Complexity note:** Two-phase sanitization: (1) regex-based ANSI control code stripping (DEC private modes, cursor positioning, screen clear, erase-in-line, cursor movement); (2) content-level filtering — multi-line protocol block removal (`SWARM PROTOCOL...END PROTOCOL`, `SWARM INPUT...END SWARM INPUT`), then line-by-line noise filtering using ANSI-stripped text for matching while preserving original ANSI colors in kept lines. Corruption tail detection catches lines of 4+ repeated punctuation or 4+ repeated single characters. Duplicates relevant patterns from SwarmEngine.SNIPPET_NOISE_LINE_PATTERNS intentionally to avoid cross-module dependency (design decision per Task #201).
+- **Last modified:** 2026-04-06 in Task #201 by debugger (NEW — enhanced from simple ANSI-only sanitization to full content-level filtering)
+
+### `server/services/SessionManager.js` :: `REPLAY_NOISE_LINE_PATTERNS` (module-level constant)
+- **Purpose:** Array of 30+ RegExp patterns matching swarm protocol preamble, CLI chrome, shell furniture, stale prompt text, and agent role declarations that should be stripped from replay output.
+- **Called by:** sanitizeReplayOutput (line-by-line noise filter)
+- **Calls:** N/A (data)
+- **Inputs:** N/A
+- **Output:** RegExp[]
+- **Side effects:** none
+- **Last modified:** 2026-04-06 in Task #201 by debugger (NEW)
 
 ### `server/services/SessionManager.js` :: `treeKillAsync(pid)` (internal)
 - **Purpose:** Wrap tree-kill in a Promise. Resolves on callback regardless of error (process may already be dead).

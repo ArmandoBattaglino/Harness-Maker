@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-06 after Wave 2 verification sweep — #187 PASS (V4.0.2 CLOSED), #217 PASS (V4.4 CLOSED), #199 COMPLETED, #222 PASS. V4.0.2 and V4.4 areas fully closed._
+_Last updated: 2026-04-06 after Wave 3 — #200 PASS, #223 PASS (V4.5 CLOSED), #201 COMPLETED (SessionManager.js replay sanitization enhanced). V4.5 area fully closed. V4.0.4 progressing._
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**
@@ -24,6 +24,7 @@ _Last updated: 2026-04-06 after Wave 2 verification sweep — #187 PASS (V4.0.2 
 | BUG-HANDOFF-1 / BUG-PRD-2 | MEDIUM | `_onHandoff()` emitted `handoff_started` but never `handoff_completed` — FR-V3-43 + PRD Section 11 require both events; `useSwarm.js` case was also missing | #126 | FIXED 2026-04-02 |
 | BUG-TRIGGER-1 / BUG-PRD-3 | MEDIUM | `trigger_fired`, `trigger_status`, and `rss_item` WS events silently dropped — `useSwarm.js` switch had no cases; all three now handled with `updateTriggerState` + `addFeedEvent` | #128 | FIXED 2026-04-02 |
 | BUG-INSPECTOR-1 / BUG-PRD-4 | LOW | `onUpdateNode` prop undefined in SwarmCanvas.jsx — `handleUpdateNode` useCallback defined and wired to AgentInspector; performs shallow merge on `node.data` via `setNodes` | #130 | FIXED 2026-04-02 |
+| BUG-PTY-REPLAY-CONTAMINATION-1 | MEDIUM | `sanitizeReplayOutput()` only stripped ANSI control codes, not semantic noise (swarm protocol preamble, CLI chrome, stale prompts, corruption tails) — replay showed raw system prompts to users | #201 | FIXED 2026-04-06 |
 
 ## Status Legend
 - UP_TO_DATE -- matches current code
@@ -48,7 +49,7 @@ _Last updated: 2026-04-06 after Wave 2 verification sweep — #187 PASS (V4.0.2 
 | docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-06 | V5.0 Phase 1 deep test entry appended by documenter. |
 | docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-04-06 | V1 audit. SEC-06 entry updated with webhook CSRF exemption note (Task #234). |
 | docs/security-v3-audit.md | UP_TO_DATE | 2026-04-06 | MEDIUM-V3-01 marked FIXED (Task #234). Summary table updated. |
-| Inline comments | UP_TO_DATE | 2026-04-06 | V5.0 fixes: SwarmEngine.js SNIPPET_NOISE_LINE_PATTERNS array is self-documenting (regex patterns with inline comments not needed — the pattern names and regex literals are clear). SwarmView.jsx PtyExplosion `key={ptyExplosionNodeId}` is a standard React pattern for forced remount — no "why" comment needed beyond the PR/task context. |
+| Inline comments | UP_TO_DATE | 2026-04-06 | V5.0 fixes: SwarmEngine.js SNIPPET_NOISE_LINE_PATTERNS array is self-documenting. SessionManager.js REPLAY_NOISE_LINE_PATTERNS + sanitizeReplayOutput enhancement (Task #201) has clear inline group comments and JSDoc on stripAnsiForMatching. No stale comments. |
 | docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. Deferred indefinitely. |
 
 ## Stale Sections (known gaps)
@@ -128,6 +129,22 @@ No source code modified. Four verification/gate tasks completed. V4.0.2 and V4.4
 **Documentation impact:** None — no source code changes, no API changes, no config changes. All existing docs remain accurate.
 
 **Area status after Wave 2:** V4.0.2 CLOSED, V4.0.3 CLOSED, V4.3 CLOSED, V4.4 CLOSED, V5.1 CLOSED, V5.2 CLOSED. Open areas: V4.0.4 (#200-#205 remaining), V4.5 (#223 AREA CHECKPOINT pending).
+
+## Wave 3 — #200 PASS, #223 PASS (V4.5 CLOSED), #201 COMPLETED (2026-04-06)
+
+Task #201 modified source code (SessionManager.js). Tasks #200 and #223 were verification-only (no code changes).
+
+| Task | Type | Area | Verdict | Code Modified |
+|------|------|------|---------|---------------|
+| #200 | TEST GATE | V4.0.4 — BUG-TOKEN-FIDELITY-1 | PASS | No |
+| #223 | AREA CHECKPOINT | V4.5 — Snippet Fidelity MVP Blockers | PASS — V4.5 AREA CLOSED | No |
+| #201 | BUG FIX | V4.0.4 — BUG-PTY-REPLAY-CONTAMINATION-1 | COMPLETED | Yes — server/services/SessionManager.js |
+
+**Task #201 details:** Enhanced `sanitizeReplayOutput()` in SessionManager.js with content-level filtering. Added `REPLAY_NOISE_LINE_PATTERNS` (30+ patterns for swarm protocol preamble, CLI chrome, stale prompts, agent role declarations), `stripAnsiForMatching()` helper, multi-line swarm protocol block stripping, and corruption tail detection (`REPLAY_CORRUPTION_TAIL_RE`, `REPLAY_REPEATED_CHAR_RE`). 312/312 tests pass. TEST GATE #202 is next.
+
+**Documentation impact:** No README, ARCHITECTURE, or API doc changes needed. The enhancement is internal to an existing function — no new endpoints, no new components, no config changes. Inline comments in the modified file are accurate and self-documenting.
+
+**Area status after Wave 3:** V4.0.2 CLOSED, V4.0.3 CLOSED, V4.3 CLOSED, V4.4 CLOSED, V4.5 CLOSED, V5.1 CLOSED, V5.2 CLOSED. Open area: V4.0.4 (#202-#205 remaining).
 
 ## Documentation Debt
 
