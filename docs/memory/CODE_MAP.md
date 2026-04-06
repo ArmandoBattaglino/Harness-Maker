@@ -1437,14 +1437,14 @@ _Last updated: 2026-04-06 — after Tasks #254-#255 (V7.0 Swarm Terminal Deep Te
 ## HandoffParser (Task #45)
 
 ### `server/services/HandoffParser.js` :: `HandoffParser.feed(rawChunk)`
-- **Purpose:** Accept a raw PTY onData chunk (may be partial), strip ANSI escape codes, append to rolling 4KB buffer, then scan for `__HANDOFF__:target:base64` and `__DONE__` tokens. Returns array of parsed events (empty if no tokens found yet). Clears buffer when tokens are found.
+- **Purpose:** Accept a raw PTY onData chunk (may be partial), strip ANSI escape codes, append to rolling 4KB buffer, then scan for `__HANDOFF__:target:base64` and `__DONE__` (or bare `DONE` on its own line) tokens. Returns array of parsed events (empty if no tokens found yet). Clears buffer when tokens are found.
 - **Called by:** SwarmEngine._spawnAgentPty (via tapFn closure registered on ptySession.swarmListeners — Task #46.2)
 - **Calls:** String.replace (ANSI strip × 4), HandoffParser._validateContext, Buffer.from, JSON.parse, RegExp.exec, DONE_RE.test, console.warn
 - **Inputs:** rawChunk (string — raw PTY output from node-pty onData)
 - **Output:** `Array<{ type: 'handoff', targetId: string, contextUpdate: object } | { type: 'done' }>` — empty array when no tokens present
 - **Side effects:** mutates `this._buf`; console.warn on malformed payload or schema violation
-- **Complexity note:** Global regex with `g` flag retains `lastIndex` between calls — a new RegExp is constructed from `HANDOFF_RE.source` inside each `feed()` call to avoid stale `lastIndex` bugs. The module-level `HANDOFF_RE` is used only as a source template.
-- **Last modified:** 2026-03-27 in Task #45 by backend-dev
+- **Complexity note:** Global regex with `g` flag retains `lastIndex` between calls — a new RegExp is constructed from `HANDOFF_RE.source` inside each `feed()` call to avoid stale `lastIndex` bugs. The module-level `HANDOFF_RE` is used only as a source template. DONE_RE (Task #254) uses `/m` multiline flag and now matches: `__DONE__` anywhere, OR bare `DONE` on its own line (with optional bullet prefix `[●•]`). This handles agents that emit `DONE` without the double-underscore wrapper.
+- **Last modified:** 2026-04-06 in Task #254 by debugger (BUG-DONE-BARE-1: DONE_RE regex widened to accept bare DONE on own line)
 
 ### `server/services/HandoffParser.js` :: `HandoffParser._validateContext(obj)` (internal)
 - **Purpose:** Validate that a decoded contextUpdate is a flat non-null non-array object with max 50 keys, each key a string, each value a primitive (string/number/boolean), string values max 1024 chars (SEC-V3-07).

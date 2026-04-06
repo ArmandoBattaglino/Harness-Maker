@@ -56,6 +56,11 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange }) 
   // Debounce timer ref for node data edits (FR-V5-18 — batch rapid edits into one history entry)
   const updateNodeDebounceRef = useRef(null);
 
+  // Context menu state (FR-V5-21 through FR-V5-24)
+  const [contextMenu, setContextMenu] = useState(null);
+  // Clipboard for copy/paste
+  const clipboardRef = useRef(null);
+
   // Capture pre-drag state so onNodeDragStop records the correct pre-move snapshot
   const preDragSnapshotRef = useRef(null);
 

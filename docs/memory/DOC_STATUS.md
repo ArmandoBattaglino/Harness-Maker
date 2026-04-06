@@ -193,6 +193,17 @@ Wave A (#245-#247, SwarmEngine.js) and Wave B (#248, PromptToFlowBar.jsx) comple
 
 **Documentation impact:** None. All changes are internal filtering logic and client validation. No README, ARCHITECTURE, API, or PRD updates needed. Inline comments in modified files are accurate and self-documenting. TEST GATES #249-#252 and AREA CHECKPOINT #253 are pending.
 
+## V7.0 Swarm Terminal Deep Test Bug Fixes — Tasks #254-#255 (2026-04-06)
+
+Two bug fixes completed. One required a minor ARCHITECTURE.md update (DONE token format). Both are internal logic changes with no new endpoints, components, config, or env vars.
+
+| Task | Type | File | Change Summary | Doc Impact |
+|------|------|------|----------------|------------|
+| #254 | BUG FIX | HandoffParser.js | `DONE_RE` regex widened: now accepts bare `DONE` on its own line (with optional bullet prefix) in addition to `__DONE__` | ARCHITECTURE.md Section 11.4 updated — DONE token format now documents both variants |
+| #255 | BUG FIX | SwarmEngine.js | Snippet update in `tapFn` gated by echo gate (`ignoreParserUntil`) — prevents system prompt text from appearing in agent card during startup | None — internal snippet filtering logic |
+
+**Documentation impact:** docs/ARCHITECTURE.md Section 11.4 (Handoff Protocol) updated to reflect that both `__DONE__` and bare `DONE` are accepted. No README, API, or PRD changes needed. Inline comments in SwarmEngine.js (echo gate guard at line ~2125-2130) are accurate and self-documenting. TEST GATES #256-#257 and AREA CHECKPOINT #258 are pending.
+
 ## Documentation Debt
 
 | Item | Priority | Reason deferred |
