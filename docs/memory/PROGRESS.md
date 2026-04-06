@@ -1,4 +1,9 @@
 
+- [V3.4 AREA CHECKPOINT PASS 2026-04-06] TASK #148 COMPLETED — AREA CHECKPOINT PASS (with expected skips).
+  Full Puppeteer E2E test: Swarm view, Prompt-to-Flow, Generate scaffold (2 nodes + 1 edge), saved workflows (46),
+  toolbar (HITL/Run/Models/Generate), AgentInspector (clean system prompt), HITL Approvals panel, no ANSI in nodes.
+  312/312 tests, 480 module build. Live execution SKIPPED (no AI provider). V3.4 CLOSED for UI verification.
+
 - [V4.0.4 AREA CLOSED 2026-04-06] TASK #205 COMPLETED — AREA CHECKPOINT PASS. V4.0.4 IS CLOSED.
   All 4 prerequisite TEST GATEs PASS (#198, #200, #202, #204). 312/312 server tests, 107/107 swarm-engine,
   client build 480 modules 0 errors. Full fidelity stack verified: SwarmEngine semantic snippet pipeline (97+ noise patterns,

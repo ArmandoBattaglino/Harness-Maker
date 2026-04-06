@@ -1,3 +1,14 @@
+## 2026-04-06 — qa-tester — Task #148: AREA CHECKPOINT — V3.4 Swarm UX Deep Test (full integration re-test)
+**Outcome:** COMPLETED — PASS (with expected skips)
+**Summary:** Full 15-step Puppeteer E2E test of Swarm Orchestrator. All UI components verified: Swarm view loads, Prompt-to-Flow bar works, Generate scaffold succeeds (2 nodes + 1 edge), saved workflows dropdown (46 items), toolbar buttons present, AgentInspector opens with clean system prompt, HITL Approvals panel toggles, AgentNode text clean (no ANSI). 312/312 server tests, 480 module client build. Live execution steps SKIPPED (need AI provider).
+**Files changed:** docs/TASK_PLAN.md, docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md, docs/memory/PROGRESS.md
+**Bugs fixed:** none
+**Decisions made:** PASS verdict despite skipped live execution — UI layer fixes verified, external provider dependency is not a code defect
+**Blockers:** none
+**Next:** V3.4 can be considered CLOSED for UI verification. Live handoff testing deferred to when AI provider is available.
+
+---
+
 ## 2026-04-06 — frontend-dev — Task #242: BUG-SWARM-UI-1 — Duplicate workflow names in saved workflows dropdown
 **Outcome:** COMPLETED
 **Summary:** Fixed duplicate workflow names in the SwarmView saved workflows dropdown. Added name-based deduplication (keeping most recent per name) in the savedWorkflows useMemo, plus a date suffix on each option for visual clarity. Client build passes with 0 errors.
