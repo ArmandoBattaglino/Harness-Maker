@@ -762,3 +762,49 @@ Task #218 is COMPLETED. The _decompressConPTYSpaces() heuristic in SwarmEngine.j
 ### Handoff
 None — task fully self-contained. TEST GATE #222 and AREA CHECKPOINT #223 can proceed.
 ---
+
+---
+## 2026-04-06 — Task #199: BUG-TOKEN-FIDELITY-1 — UI/debug views must preserve literal control-token semantics
+**Status:** COMPLETED (verified — no change needed)
+**Called by:** orchestrator
+
+### Context when I started
+TEST GATE #198 had passed, unblocking this task. The concern was that the UI silently normalizes control tokens like __DONE__ to DONE and __HANDOFF__:route-checker:{...} to HANDOFF:route-checker:{...}, destroying debugging fidelity.
+
+### What I did
+1. Read all memory files in parallel (debugger.md, DECISIONS.md, ACTIVITY_LOG.md, CODE_MAP.md)
+2. Read all 4 files named in the task in parallel: SwarmEngine.js, AgentNode.jsx, AgentInspector.jsx, controlTokens.js
+3. Traced the full data path for lastOutputSnippet: SwarmEngine._buildSemanticSnippet() -> WS broadcast -> Zustand store -> AgentNode/AgentInspector render
+4. Verified server-side: _normalizeSnippetLine() does NOT strip underscores from __DONE__/__HANDOFF__; _scoreSnippetBlock() BOOSTS scores for tokens containing these; _isSnippetStructuredFactLine() recognizes them as high-value
+5. Verified client-side: AgentNode.jsx applies only stripAnsi(); AgentInspector.jsx applies only stripAnsi(); controlTokens.js inspectControlTokens() correctly detects literal vs alias forms
+6. Confirmed: no code path normalizes __DONE__ to DONE or __HANDOFF__ to HANDOFF anywhere in the pipeline
+7. Ran npm test --prefix server (312/312 pass) and npm run build --prefix client (480 modules, 0 errors)
+8. Marked task COMPLETED in TASK_PLAN.md
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Marked #199 COMPLETED with verification note |
+
+### Improvements delivered
+- Confirmed that control token fidelity is already correct — no regression risk introduced
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| (none) | Bug was not real | N/A | VERIFIED NOT A BUG |
+
+### Decisions I made
+- No code changes needed — the token pipeline is already correct
+
+### What I learned
+- The SwarmEngine snippet pipeline actively preserves __DONE__ and __HANDOFF__ tokens (scores them higher, recognizes them as structured facts)
+- stripAnsi() in the client only removes ANSI escape codes, never touches underscores
+- controlTokens.js inspectControlTokens() is a dedicated analysis utility that annotates tokens but never modifies them
+
+### State I'm leaving behind
+No code changes. Task verified as not-a-bug. The next step is TEST GATE #200 which should verify the same thing via browser testing.
+
+### Handoff
+TEST GATE #200 (qa-tester) can now proceed. The tokens are already preserved literally — the gate should pass.
+---

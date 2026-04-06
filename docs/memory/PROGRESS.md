@@ -1,4 +1,9 @@
+- [V4.0.4 TASK #199 COMPLETED 2026-04-06] Verified no change needed — control tokens __DONE__ and __HANDOFF__ are already preserved literally throughout the full pipeline (server snippet generation, WS broadcast, client rendering). Not a bug. TEST GATE #200 can proceed.
+
 # Progress
+- [V4.5 TEST GATE PASS 2026-04-06] TASK #222 COMPLETED — TEST GATE PASS for V4.5 Snippet Fidelity MVP Blockers
+  312/312 server tests, client build 480 modules 0 errors. All 5 prerequisite tasks verified COMPLETED. _decompressConPTYSpaces handles case transitions + punctuation, SNIPPET_NOISE_LINE_PATTERNS 98+ patterns, _buildSemanticSnippet pipeline complete. TASK #223 AREA CHECKPOINT unblocked.
+
 - [V4.4 AREA CLOSED 2026-04-06] TASK #217 COMPLETED — AREA CHECKPOINT PASS. 312/312 tests, build OK. Thinking animations + hook output filtering verified in SNIPPET_NOISE_LINE_PATTERNS. V4.4 Snippet Fidelity Final Polish is CLOSED.
 
 - [V4.0.4 TEST GATE PASS 2026-04-06] TASK #198 COMPLETED — TEST GATE PASS for BUG-SNIPPET-FIDELITY-1

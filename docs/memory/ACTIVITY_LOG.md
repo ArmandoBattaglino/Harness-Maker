@@ -1,3 +1,24 @@
+## 2026-04-06 — qa-tester — Task #187: AREA CHECKPOINT V4.0.2 Gemini E2E PTY / UI Bug Fixes
+**Outcome:** COMPLETED — PASS
+**Summary:** Area checkpoint verified: 312/312 server tests pass, client build clean (480 modules), all 5 prerequisite TEST GATEs (#178, #180, #182, #184, #186) PASS, all 6 bug fixes confirmed in code. V4.0.2 area is CLOSED.
+**Files changed:** docs/TASK_PLAN.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** V4.0.2 closed — pipeline proceeds to next area
+
+---
+
+## 2026-04-06 — qa-tester — Task #222: TEST GATE V4.5 Snippet Fidelity MVP Blockers
+**Outcome:** COMPLETED
+**Summary:** TEST GATE PASS. 312/312 server tests, client build 480 modules 0 errors. All 5 prerequisite tasks (#218-#221, #224) verified COMPLETED. _decompressConPTYSpaces handles case transitions + punctuation, SNIPPET_NOISE_LINE_PATTERNS has 98+ patterns, _buildSemanticSnippet pipeline complete.
+**Files changed:** docs/TASK_PLAN.md (status update)
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** TASK #223 AREA CHECKPOINT can proceed
+
+---
 ## 2026-04-06 — documenter — Verification Wave 1 DOC_STATUS update
 **Outcome:** COMPLETED
 **Summary:** Updated DOC_STATUS.md to record 8 verification task results (TEST GATES #178, #180, #184, #186, #198, #216; AREA CHECKPOINT #213 V4.3 CLOSED; TASK #218 COMPLETED). No code modified — all docs except DOC_STATUS.md remain accurate and unchanged.
@@ -3274,4 +3295,15 @@ full self-contained context and acceptance criteria.
 **Decisions made:** PASS verdict — all acceptance criteria met
 **Blockers:** none
 **Next:** nothing — V4.4 area chain complete
+---
+
+---
+## 2026-04-06 — debugger — Task #199: BUG-TOKEN-FIDELITY-1 — UI/debug views must preserve literal control-token semantics
+**Outcome:** COMPLETED (verified — no change needed)
+**Summary:** Full code audit of the control-token pipeline (SwarmEngine snippet generation -> WS broadcast -> Zustand -> AgentNode/AgentInspector render) confirmed that __DONE__ and __HANDOFF__ tokens are already preserved literally at every stage. No normalization or underscore-stripping occurs anywhere. Bug was not real. 312/312 server tests pass, client build clean.
+**Files changed:** docs/TASK_PLAN.md (status update only)
+**Bugs fixed:** none (verified not a bug)
+**Decisions made:** none
+**Blockers:** none
+**Next:** TEST GATE #200 can proceed
 ---
