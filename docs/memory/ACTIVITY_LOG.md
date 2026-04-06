@@ -1,3 +1,14 @@
+## 2026-04-06 -- project-manager -- V6.0 Task Plan: Runtime Deep Test Bug Fixes
+**Outcome:** COMPLETED
+**Summary:** Created 9 tasks (#245-#253) for V6.0 area based on debugger-loop Phase 1 bug report (4 LOW bugs). Wave A: #245->#246->#247 sequential (SwarmEngine.js snippet noise patterns for Claude thinking tokens, Codex auth prompt, Gemini prompt echo). Wave B: #248 parallel (SwarmView.jsx empty prompt validation). TEST GATES #249-#252. AREA CHECKPOINT #253. Updated status header, PROGRESS.md, CONTEXT.md.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none (planning only)
+**Decisions made:** SwarmEngine.js tasks sequential to avoid merge conflicts; SwarmView.jsx task parallel since different file
+**Blockers:** none
+**Next:** Orchestrator should launch Wave A (#245 debugger) + Wave B (#248 frontend-dev) in parallel
+
+---
+
 ## 2026-04-06 — qa-tester — Debugger Loop Phase 1: Complete User Test — All Runtime Models
 **Outcome:** COMPLETED
 **Summary:** Full 11-section, 72-step E2E Puppeteer test of Swarm Orchestrator with all 3 runtime providers. Claude: full end-to-end execution with handoff chain PASS. Codex: BLOCKED by CLI authentication (external dependency). Gemini: full end-to-end execution PASS. Model selection, provider strategy, scaffold generation, agent inspector, HITL toggle, persistence, saved workflows, edge cases — all PASS. 4 LOW severity cosmetic findings logged. 0 console errors. 0 CRITICAL/HIGH bugs.

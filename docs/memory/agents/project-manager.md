@@ -1,4 +1,39 @@
 ---
+## 2026-04-06 — V6.0 Task Plan: Runtime Deep Test Bug Fixes (#245-#253)
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+Project was at 244 tasks, all closed. Debugger-loop Phase 1 completed deep E2E runtime testing across Claude, Codex, and Gemini providers and found 4 LOW severity bugs. User requested V6.0 task creation.
+
+### What I did
+1. Read TASK_PLAN.md tail to confirm last task was #244
+2. Updated status header: 253 tasks, 242 COMPLETED, 2 DEFERRED, 9 PENDING
+3. Added V6.0 area summary line to the area list
+4. Appended 9 tasks (#245-#253): 4 bug fixes, 4 test gates, 1 area checkpoint
+5. Updated PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Status header updated, V6.0 area with 9 tasks appended |
+| docs/memory/PROGRESS.md | MODIFIED | V6.0 entry prepended |
+| docs/memory/CONTEXT.md | MODIFIED | Focus updated to V6.0 |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Session entry prepended |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log |
+
+### Decisions I made
+- SwarmEngine.js tasks (#245, #246, #247) are SEQUENTIAL because they all modify the same file -- avoids merge conflicts
+- SwarmView.jsx task (#248) runs PARALLEL with Wave A since it touches a different file
+- Each test gate depends only on its own implementation task, not on the other gates
+
+### State I'm leaving behind
+V6.0 area fully planned with 9 PENDING tasks. Ready for orchestration.
+
+### Handoff
+Orchestrator should launch: Wave A start (#245 debugger) + Wave B (#248 frontend-dev) in parallel. After #245 completes, launch #246. After #246, launch #247. Test gates run after their respective implementation tasks complete.
+
+---
 ## 2026-04-06 — Final Status Sync: ALL AREAS CLOSED, PROJECT COMPLETE
 **Status:** COMPLETED
 **Called by:** user

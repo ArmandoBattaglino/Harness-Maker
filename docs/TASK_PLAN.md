@@ -4,7 +4,8 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED - 2026-03-31 — ALL AREAS CLOSED 2026-04-06 — 244 tasks total, 242 COMPLETED, 2 DEFERRED (unfixable platform constraints). ZERO PENDING/IN_PROGRESS/BLOCKED tasks remain. PROJECT COMPLETE.
+**Status:** v3.0.0 RELEASED - 2026-03-31 — 253 tasks total, 242 COMPLETED, 2 DEFERRED, 9 PENDING. V6.0 Runtime Deep Test Bug Fixes IN PROGRESS.
+  **Active Area:** V6.0 RUNTIME DEEP TEST BUG FIXES — Tasks #245-#253 (9 tasks: 4 fixes + 4 test gates + 1 area checkpoint)
   - V3.1 BUG FIX WAVE: AREA CLOSED 2026-04-02
   - V3.2/V3.3 SWARM RUNTIME INTEGRITY + CONTRACT COMPLETION: AREA CLOSED 2026-04-02 — AREA CHECKPOINT #142 PASS
   - V3.4 SWARM UX DEEP TEST FINDINGS: AREA CLOSED 2026-04-06 — all tasks COMPLETED, AREA CHECKPOINT #148 PASS (15/15 Puppeteer E2E, 3 skipped provider-dependent)
@@ -22,6 +23,7 @@
   - V5.0 DEBUGGER LOOP DEEP CHECK: AREA CLOSED 2026-04-06 — AREA CHECKPOINT #230 PASS. #231-#233 COMPLETED.
   - V5.1 DEBUGGER LOOP FULL-APP DEEP CHECK: AREA CLOSED 2026-04-06 — #234 COMPLETED, #235 PASS, #236 DEFERRED (ConPTY — unfixable), #237 PASS
   - V5.2 SWARM DEEP TEST BUG FIXES: AREA CLOSED 2026-04-06 — #238-#241 COMPLETED, #242 COMPLETED (duplicate workflow names fixed), #243 PASS, #244 PASS
+  - V6.0 RUNTIME DEEP TEST BUG FIXES: IN PROGRESS — #245-#253 (snippet noise for Claude/Codex/Gemini + empty prompt validation)
   DEFERRED (2 tasks, both MVP-acceptable, no fix possible):
     - #236: BUG-UI-1 — ConPTY terminal prompt garble after navigation (Windows platform limitation, DEC-009)
     - (none other — #233 and #242 previously marked DEFERRED are now COMPLETED)
@@ -12591,3 +12593,283 @@ Acceptance Criteria:
   - [ ] No regression in V5.0, V5.1, V4.x, or V3.x functionality
   - [ ] All server tests pass, client build clean
 Dependencies: TASK #243
+
+
+---
+
+## AREA: V6.0 -- Runtime Deep Test Bug Fixes
+_Components: SwarmEngine.js snippet noise patterns (Claude thinking, Codex auth, Gemini prompt echo), SwarmView.jsx prompt validation_
+_Tasks: #245 to #253_
+_Gate: ALL components in this area must pass their TEST GATE before the next AREA starts_
+_Source: Debugger-loop Phase 1 deep E2E runtime testing across all providers (Claude, Codex, Gemini) -- 2026-04-06_
+_Wave grouping: Wave A (#245, #246, #247 SEQUENTIAL -- same file SwarmEngine.js) PARALLEL with Wave B (#248 -- SwarmView.jsx). Then TEST GATES #249-#252, then AREA CHECKPOINT #253._
+
+---
+
+TASK #245: BUG-RUNTIME-1 -- SwarmEngine snippet: collapse repeated "(thinking)" tokens during Claude execution
+Area: V6.0 -- Runtime Deep Test Bug Fixes
+Agent: debugger
+Priority: LOW
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Component Spec:
+  File: server/services/SwarmEngine.js
+  Current behavior: During Claude execution, Researcher node snippet shows
+    "(thinking)(thinking)(thinking)(thinking)(thinking)(thinking)" -- raw repeated thinking tokens
+    concatenated without any filtering.
+  Expected behavior: Repeated "(thinking)" tokens should be collapsed to a single clean indicator
+    (e.g., one "(thinking)" or removed entirely), matching the existing SNIPPET_NOISE_LINE_PATTERNS
+    approach used for other noise lines.
+  Root cause: SNIPPET_NOISE_LINE_PATTERNS in SwarmEngine.js does not have a pattern to match/collapse
+    repeated "(thinking)" tokens. The snippet extraction pipeline passes them through verbatim.
+Context:
+  Bug ID: BUG-RUNTIME-1
+  Severity: LOW
+  Discovery: Debugger-loop Phase 1 -- Claude provider runtime E2E test.
+  The SNIPPET_NOISE_LINE_PATTERNS array in SwarmEngine.js already handles various CLI noise patterns
+  (progress indicators, ANSI sequences, etc.). This fix adds a new pattern or post-processing step
+  to detect lines that are just repeated "(thinking)" tokens and either collapse them to one instance
+  or remove them entirely.
+  IMPORTANT: This task modifies SwarmEngine.js. Tasks #246 and #247 also modify this file.
+  Execute #245, #246, #247 SEQUENTIALLY to avoid merge conflicts.
+Acceptance Criteria:
+  - [ ] SNIPPET_NOISE_LINE_PATTERNS (or equivalent post-processing) handles "(thinking)" repetitions
+  - [ ] A snippet line like "(thinking)(thinking)(thinking)" is collapsed to at most one "(thinking)" or removed
+  - [ ] Existing noise patterns are not broken
+  - [ ] npm test passes
+Dependencies: none
+---
+
+TASK #246: BUG-RUNTIME-2 -- SwarmEngine snippet: filter Codex auth prompt ANSI artifacts from node snippet
+Area: V6.0 -- Runtime Deep Test Bug Fixes
+Agent: debugger
+Priority: LOW
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Component Spec:
+  File: server/services/SwarmEngine.js
+  Current behavior: When Codex execution is stopped after auth failure, the node snippet shows
+    "API key" with ANSI color artifacts. The Codex CLI emits ANSI-colored auth prompts that are
+    not matched by SNIPPET_NOISE_LINE_PATTERNS.
+  Expected behavior: Codex auth prompt lines (containing "API key" or similar auth-related text)
+    should be filtered from the snippet. This also addresses a minor info leak concern -- showing
+    "API key" text in the UI snippet is undesirable.
+  Root cause: No pattern in SNIPPET_NOISE_LINE_PATTERNS matches Codex CLI auth prompt output.
+Context:
+  Bug ID: BUG-RUNTIME-2
+  Severity: LOW
+  Discovery: Debugger-loop Phase 1 -- Codex provider runtime E2E test.
+  Add a noise pattern to SNIPPET_NOISE_LINE_PATTERNS that matches Codex auth-related prompt lines
+  (e.g., lines containing "API key", "authentication", "auth token", or similar). The ANSI stripping
+  should already be handled by the existing stripAnsi step, but the semantic content ("API key") should
+  also be filtered as noise.
+  IMPORTANT: This task modifies SwarmEngine.js. Execute AFTER #245 (sequential -- same file).
+Acceptance Criteria:
+  - [ ] SNIPPET_NOISE_LINE_PATTERNS includes pattern(s) for Codex auth prompt lines
+  - [ ] Lines containing "API key" or similar auth prompts are filtered from snippets
+  - [ ] No info leak of auth-related text in node snippets
+  - [ ] Existing noise patterns are not broken
+  - [ ] npm test passes
+Dependencies: TASK #245
+---
+
+TASK #247: BUG-RUNTIME-3 -- SwarmEngine snippet: filter Gemini system prompt echo from node snippet
+Area: V6.0 -- Runtime Deep Test Bug Fixes
+Agent: debugger
+Priority: LOW
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Component Spec:
+  File: server/services/SwarmEngine.js
+  Current behavior: After Gemini completes, Writer node snippet shows the system prompt text
+    instead of actual output. The Gemini CLI echoes the full prompt before generating, and the
+    snippet extraction picks up this echo.
+  Expected behavior: Gemini system prompt echo lines should be filtered from the snippet so that
+    only actual generated output is shown.
+  Root cause: Gemini CLI echoes the full prompt before generating output. No pattern in
+    SNIPPET_NOISE_LINE_PATTERNS matches these echo lines. The snippet pipeline treats them as
+    valid output.
+Context:
+  Bug ID: BUG-RUNTIME-3
+  Severity: LOW
+  Discovery: Debugger-loop Phase 1 -- Gemini provider runtime E2E test.
+  The Gemini CLI (via GeminiHarness) echoes the system prompt and user prompt before generating.
+  The snippet extraction should filter lines that match common prompt echo patterns. This could be:
+  (a) Lines that start with known prompt prefixes (e.g., "You are a", "Your role is")
+  (b) Lines matching the exact prompt text that was sent to the node (compare against node.systemPrompt)
+  (c) A Gemini-specific noise pattern that matches the echo format
+  Approach (a) or (c) is preferred -- pattern-based, consistent with existing SNIPPET_NOISE_LINE_PATTERNS.
+  IMPORTANT: This task modifies SwarmEngine.js. Execute AFTER #246 (sequential -- same file).
+Acceptance Criteria:
+  - [ ] SNIPPET_NOISE_LINE_PATTERNS includes Gemini prompt echo pattern(s)
+  - [ ] After Gemini execution, node snippet shows actual output, not system prompt echo
+  - [ ] Existing noise patterns are not broken
+  - [ ] npm test passes
+Dependencies: TASK #246
+---
+
+TASK #248: BUG-RUNTIME-4 -- SwarmView.jsx: add inline validation for empty prompt on Generate click
+Area: V6.0 -- Runtime Deep Test Bug Fixes
+Agent: frontend-dev
+Priority: LOW
+Difficulty: TRIVIAL
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Component Spec:
+  File: client/src/views/SwarmView.jsx
+  Current behavior: Clicking the Generate button with an empty prompt silently does nothing.
+    No error message, toast, or visual feedback is shown. The user has no indication of why
+    nothing happened.
+  Expected behavior: When the user clicks Generate with an empty or whitespace-only prompt,
+    an inline validation message should appear (e.g., red text below the input saying
+    "Please enter a prompt" or similar). The Generate action should not fire.
+  Root cause: The Generate handler likely has an early return for empty input but no UI feedback.
+Context:
+  Bug ID: BUG-RUNTIME-4
+  Severity: LOW
+  Discovery: Debugger-loop Phase 1 -- Swarm UI E2E test.
+  This is a simple UX improvement. Add state for a validation error message, set it when the user
+  clicks Generate with empty/whitespace prompt, clear it when they start typing. Display inline
+  below the prompt input.
+  This task modifies SwarmView.jsx only -- can run IN PARALLEL with Wave A (#245-#247).
+Acceptance Criteria:
+  - [ ] Clicking Generate with empty prompt shows inline validation message
+  - [ ] Clicking Generate with whitespace-only prompt shows inline validation message
+  - [ ] Validation message clears when user starts typing
+  - [ ] Generate does not fire when prompt is empty/whitespace
+  - [ ] Normal Generate flow (non-empty prompt) is not affected
+  - [ ] Client build passes (npm run build --prefix client)
+Dependencies: none
+---
+
+TASK #249: TEST GATE -- BUG-RUNTIME-1 (Claude thinking token collapse)
+Area: V6.0 -- Runtime Deep Test Bug Fixes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD -- Next tasks CANNOT proceed until this gate returns PASS
+Context:
+  Component being tested: SwarmEngine.js -- thinking token collapse (TASK #245)
+  What to test:
+    1. Verify SNIPPET_NOISE_LINE_PATTERNS (or post-processing) handles "(thinking)(thinking)(thinking)" input
+    2. Unit-level: feed a snippet string with repeated "(thinking)" tokens through the filtering pipeline -- output must have at most one "(thinking)" or none
+    3. Regression: npm test passes, existing snippet filtering still works (e.g., progress bars, ANSI sequences)
+Acceptance Criteria:
+  - [ ] Repeated "(thinking)" tokens are collapsed or removed in snippet output
+  - [ ] Existing noise patterns still filter correctly
+  - [ ] npm test passes
+Gate Result: PENDING
+Dependencies: TASK #245
+---
+
+TASK #250: TEST GATE -- BUG-RUNTIME-2 (Codex auth prompt filtering)
+Area: V6.0 -- Runtime Deep Test Bug Fixes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD -- Next tasks CANNOT proceed until this gate returns PASS
+Context:
+  Component being tested: SwarmEngine.js -- Codex auth prompt filtering (TASK #246)
+  What to test:
+    1. Verify SNIPPET_NOISE_LINE_PATTERNS matches Codex auth prompt lines (containing "API key", etc.)
+    2. Unit-level: feed a snippet string with "API key" auth prompt text through filtering -- output must not contain auth-related text
+    3. Regression: npm test passes, existing snippet filtering still works
+Acceptance Criteria:
+  - [ ] Auth prompt lines containing "API key" are filtered from snippets
+  - [ ] No info leak of auth text in snippet output
+  - [ ] Existing noise patterns still filter correctly
+  - [ ] npm test passes
+Gate Result: PENDING
+Dependencies: TASK #246
+---
+
+TASK #251: TEST GATE -- BUG-RUNTIME-3 (Gemini prompt echo filtering)
+Area: V6.0 -- Runtime Deep Test Bug Fixes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD -- Next tasks CANNOT proceed until this gate returns PASS
+Context:
+  Component being tested: SwarmEngine.js -- Gemini prompt echo filtering (TASK #247)
+  What to test:
+    1. Verify SNIPPET_NOISE_LINE_PATTERNS includes Gemini system prompt echo patterns
+    2. Unit-level: feed a snippet string containing typical Gemini prompt echo (e.g., "You are a skilled researcher...") through filtering -- output must not contain prompt echo
+    3. Regression: npm test passes, existing snippet filtering still works
+Acceptance Criteria:
+  - [ ] Gemini prompt echo lines are filtered from snippets
+  - [ ] Actual Gemini output is preserved (not over-filtered)
+  - [ ] Existing noise patterns still filter correctly
+  - [ ] npm test passes
+Gate Result: PENDING
+Dependencies: TASK #247
+---
+
+TASK #252: TEST GATE -- BUG-RUNTIME-4 (Empty prompt validation)
+Area: V6.0 -- Runtime Deep Test Bug Fixes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD -- AREA CHECKPOINT #253 CANNOT run until this gate returns PASS
+Context:
+  Component being tested: SwarmView.jsx -- empty prompt validation (TASK #248)
+  What to test:
+    1. Puppeteer E2E: navigate to Swarm view, click Generate with empty prompt -- verify inline error message appears
+    2. Puppeteer E2E: type whitespace-only in prompt, click Generate -- verify inline error message appears
+    3. Puppeteer E2E: type valid prompt after error -- verify error message disappears
+    4. Regression: client build passes (npm run build --prefix client)
+Acceptance Criteria:
+  - [ ] Empty prompt shows inline validation message visible
+  - [ ] Whitespace-only prompt shows inline validation message visible
+  - [ ] Typing clears validation message
+  - [ ] Client build passes
+Gate Result: PENDING
+Dependencies: TASK #248
+---
+
+TASK #253: AREA CHECKPOINT -- V6.0 Runtime Deep Test Bug Fixes
+Area: V6.0 -- Runtime Deep Test Bug Fixes
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD -- Next area CANNOT start until ALL component test gates in this area have PASSED
+Context:
+  Run a full integration smoke test for all components in V6.0. Verify that all 4 bug fixes work
+  together and have not regressed any previously passing functionality.
+  Components:
+    - #245: BUG-RUNTIME-1 -- Claude thinking token collapse (SwarmEngine.js)
+    - #246: BUG-RUNTIME-2 -- Codex auth prompt filtering (SwarmEngine.js)
+    - #247: BUG-RUNTIME-3 -- Gemini prompt echo filtering (SwarmEngine.js)
+    - #248: BUG-RUNTIME-4 -- Empty prompt validation (SwarmView.jsx)
+  Integration scenario:
+    1. npm test -- all server tests pass
+    2. npm run build --prefix client -- clean build
+    3. Start server, navigate to Swarm view
+    4. Verify Generate with empty prompt shows validation error
+    5. Verify snippet filtering: feed test strings with thinking tokens, auth prompts, and Gemini echoes through the pipeline -- all filtered correctly
+    6. Verify no regression in V5.x, V4.x, V3.x functionality
+    7. Full health check: /api/v1/health returns 200
+Acceptance Criteria:
+  - [ ] All TEST GATE tasks (#249, #250, #251, #252) are COMPLETED with PASS result
+  - [ ] Integration scenario (steps 1-7 above) passes
+  - [ ] No regression in previously passing areas
+  - [ ] npm test passes, client build clean
+Dependencies: TASK #249, TASK #250, TASK #251, TASK #252
+---
