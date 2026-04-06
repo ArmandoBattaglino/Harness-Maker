@@ -117,8 +117,11 @@ export default function SwarmView() {
   // Stable refs for keyboard shortcut handlers (FR-V5-43)
   const handleSaveRef = useRef(null);
   const handleRunRef = useRef(null);
+  const handleSaveFnRef = useRef(null);
+  const handleRunFnRef = useRef(null);
   handleSaveRef.current = { isDirty, workflowDef, saving };
-  handleRunRef.current = { workflowDef, activeProjectId, executing, executionStatus, hasValidationErrors };
+  handleRunRef.current = { workflowDef, activeProjectId, executing, executionStatus, validationErrors };
+  // Updated after handleSave/handleRun are defined (see below)
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -136,7 +139,7 @@ export default function SwarmView() {
         e.preventDefault();
         const s = handleSaveRef.current;
         if (s.isDirty && s.workflowDef && !s.saving) {
-          handleSave();
+          handleSaveFnRef.current?.();
         }
         return;
       }
@@ -147,9 +150,9 @@ export default function SwarmView() {
         const r = handleRunRef.current;
         const canRun = r.workflowDef && r.activeProjectId && !r.executing
           && (r.executionStatus === 'idle' || r.executionStatus === 'completed')
-          && !r.hasValidationErrors;
+          && !(r.validationErrors?.filter(ve => ve.severity === 'error').length > 0);
         if (canRun) {
-          handleRun();
+          handleRunFnRef.current?.();
         }
         return;
       }
@@ -321,6 +324,10 @@ export default function SwarmView() {
       setSaving(false);
     }
   };
+
+  // Keep function refs updated for keyboard shortcuts (avoids stale closures in useEffect)
+  handleSaveFnRef.current = handleSave;
+  handleRunFnRef.current = handleRun;
 
   // FR-V5-05/06: name editing
   const NAME_PATTERN = /^[a-zA-Z0-9 _\-]+$/;

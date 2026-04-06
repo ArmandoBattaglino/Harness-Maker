@@ -243,6 +243,7 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange }) 
   const handleNodeContextMenu = useCallback(
     (event, node) => {
       event.preventDefault();
+      event.stopPropagation();
       setContextMenu({ x: event.clientX, y: event.clientY, type: 'node', nodeId: node.id });
     },
     []
@@ -251,6 +252,7 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange }) 
   const handleEdgeContextMenu = useCallback(
     (event, edge) => {
       event.preventDefault();
+      event.stopPropagation();
       setContextMenu({ x: event.clientX, y: event.clientY, type: 'edge', edgeId: edge.id });
     },
     []
