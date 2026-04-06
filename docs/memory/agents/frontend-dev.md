@@ -1,4 +1,37 @@
 ---
+## 2026-04-06 — FR-V5-34/35/36: Workflow Settings Modal + Initial Context Editor
+**Status:** COMPLETED
+**Called by:** user (task assignment)
+
+### Context when I started
+SwarmView.jsx had Run/Pause/Stop/Save/Models buttons but no way to configure workflow-level settings (mode, budget, circuit breaker, default model) or initial context variables.
+
+### What I did
+1. Created `client/src/canvas/WorkflowSettingsModal.jsx` — two-tab modal: Settings tab (mode radio, budget presets + number, circuit breaker, model select) and Initial Context tab (dynamic key-value editor with add/delete).
+2. Modified `client/src/views/SwarmView.jsx` — added showSettings state, gear Settings button in toolbar, WorkflowSettingsModal rendering with onApply that merges into workflowDef and marks dirty.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/canvas/WorkflowSettingsModal.jsx | CREATED | New modal for FR-V5-34/35/36 |
+| client/src/views/SwarmView.jsx | MODIFIED | Settings button + modal state + import + onApply |
+
+### Improvements delivered
+- Workflow mode, budget, circuit breaker, default model configurable via UI
+- Initial context variables editable as key-value pairs
+
+### Decisions I made
+- Purple accent for modal to distinguish from blue save/run theme
+- Local state in modal, committed only on Apply
+- Reused MODEL_OPTIONS from AgentInspector for consistency
+
+### State I'm leaving behind
+Build passes 0 errors (486 modules). Modal fully functional.
+
+### Handoff
+None — task self-contained.
+
+---
 ## 2026-04-06 — FR-V5-01/03/05/06/21-24: Save Button, Dirty Tracking, Name Edit, Context Menu
 **Status:** COMPLETED
 **Called by:** user (task assignment)

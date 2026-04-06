@@ -1,3 +1,14 @@
+## 2026-04-06 — frontend-dev — FR-V5-34/35/36: Workflow Settings Modal + Initial Context Editor
+**Outcome:** COMPLETED
+**Summary:** Created WorkflowSettingsModal.jsx with two tabs: Settings (mode radio, budget presets + number input, circuit breaker threshold, default model dropdown) and Initial Context (dynamic key-value editor). Integrated into SwarmView.jsx with gear Settings button in toolbar. Apply merges into workflowDef and marks dirty. Build: 486 modules, 0 errors.
+**Files changed:** client/src/canvas/WorkflowSettingsModal.jsx (CREATED), client/src/views/SwarmView.jsx (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Purple accent for modal, local state committed only on Apply, MODEL_OPTIONS reused from AgentInspector
+**Blockers:** none
+**Next:** QA test gate for FR-V5-34/35/36
+
+---
+
 ## 2026-04-06 — frontend-dev — FR-V5-25/29: Node Palette Sidebar
 **Outcome:** COMPLETED
 **Summary:** Created NodePalette.jsx collapsible left sidebar with 4 draggable node type cards (Agent, Department, Webhook Trigger, RSS Trigger). Integrated into SwarmCanvas.jsx with onDragOver/onDrop handlers that create nodes at drop position with proper IDs (generateNodeId) and type-specific default data. Build: 485 modules, 0 errors.

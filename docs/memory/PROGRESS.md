@@ -1,4 +1,6 @@
 
+- [V5.0-Wave1 FR-V5-34/35/36 COMPLETED 2026-04-06] Workflow Settings Modal + Initial Context Editor. WorkflowSettingsModal.jsx created, SwarmView.jsx integrated. Build: 486 modules, 0 errors.
+
 - [V5.0-Wave1 FR-V5-01/03/05/06/21-24 COMPLETED 2026-04-06] Save button, dirty tracking, inline name editing, context menu. Fixed useWorkflow.js update() unwrapping bug. Build: 483 modules, 0 errors.
 
 - [V5.0-Wave1 FR-V5-11/13/14/15/02 COMPLETED 2026-04-06] Node/edge delete + sanitize utility + node ID generator. SwarmCanvas.jsx enhanced with department cascade delete and deleteKeyCode prop. Two new utils created (sanitizeWorkflow.js, nodeIdGenerator.js). Build: 481 modules, 0 errors.
