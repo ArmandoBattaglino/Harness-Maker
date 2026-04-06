@@ -2,6 +2,21 @@
 
 ## 2026-04-06
 
+### [Tasks #187, #199, #217, #222] Verification Wave 2 — AREA CHECKPOINTs, TEST GATE, Token Fidelity Verification
+- Agent: code-mapper (wave summary entry)
+- Scope: 4 parallel verification tasks. No code modified — all tasks were verification-only or confirmed no change needed.
+
+| Task | Title | Verdict | Agent |
+|------|-------|---------|-------|
+| #187 | AREA CHECKPOINT V4.0.2 Gemini E2E PTY / UI Bug Fixes | PASS — V4.0.2 AREA CLOSED. 312/312 tests, 480 modules, all 6 bug fixes verified | qa-tester |
+| #217 | AREA CHECKPOINT V4.4 Snippet Fidelity Final Polish | PASS — V4.4 AREA CLOSED. 312/312 tests, thinking animations + hook output filtering verified | qa-tester |
+| #199 | BUG-TOKEN-FIDELITY-1 — Control token preservation | COMPLETED — No code change needed. __DONE__ and __HANDOFF__ tokens already preserved through full pipeline | debugger |
+| #222 | TEST GATE V4.5 Snippet Fidelity MVP Blockers | PASS — 312/312 tests, 480 modules. All 5 prerequisite tasks (#218-#221, #224) verified | qa-tester |
+
+**Wave result:** All 4 tasks PASS/COMPLETED. No code changes. V4.0.2 AREA CLOSED by #187. V4.4 AREA CLOSED by #217. V4.5 TEST GATE #222 PASS (AREA CHECKPOINT #223 unblocked).
+
+---
+
 ### [Tasks #178, #180, #184, #186, #198, #213, #216, #218] Verification Wave 1 — 8 TEST GATEs / AREA CHECKPOINTs / Fixes PASS
 - Agent: code-mapper (wave summary entry)
 - Scope: Parallel verification wave covering V4.0–V4.5 test gates and area checkpoints. No code modified — all tasks were verification-only or already-completed fixes.

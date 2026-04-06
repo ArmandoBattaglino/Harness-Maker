@@ -1,3 +1,10 @@
+- [PM STATUS SYNC 2026-04-06] Wave 2 verified — 4 tasks confirmed COMPLETED:
+  #187 PASS (V4.0.2 AREA CHECKPOINT — V4.0.2 CLOSED), #217 PASS (V4.4 AREA CHECKPOINT — V4.4 CLOSED),
+  #199 COMPLETED (no bug — control tokens already preserved), #222 PASS (V4.5 TEST GATE).
+  Areas now CLOSED: V4.0.2, V4.4 (both confirmed via AREA CHECKPOINT PASS).
+  Open areas: V4.0.4 (#200-#205 PENDING, #199 done), V4.5 (#223 AREA CHECKPOINT PENDING).
+  Next priority: V4.5 AREA CHECKPOINT #223, then V4.0.4 sequential chain #200-#205.
+
 - [PM STATUS SYNC 2026-04-06] Wave 1 verified — 8 parallel tasks confirmed COMPLETED:
   #178 PASS, #180 PASS, #184 PASS, #186 PASS, #198 PASS, #213 PASS (V4.3 CLOSED),
   #216 PASS (V4.4 CLOSED via #217), #218 COMPLETED. Status header updated: V4.0.2 CLOSED,

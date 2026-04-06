@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-06 after Wave 1 verification sweep — 8 TEST GATES/CHECKPOINTS PASS (V4.3 AREA CLOSED, V4.0.2/V4.4/V4.5 gates confirmed)._
+_Last updated: 2026-04-06 after Wave 2 verification sweep — #187 PASS (V4.0.2 CLOSED), #217 PASS (V4.4 CLOSED), #199 COMPLETED, #222 PASS. V4.0.2 and V4.4 areas fully closed._
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**

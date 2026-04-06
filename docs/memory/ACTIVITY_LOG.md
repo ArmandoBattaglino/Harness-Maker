@@ -1,3 +1,14 @@
+## 2026-04-06 — code-mapper — Verification Wave 2 (Tasks #187, #199, #217, #222)
+**Outcome:** COMPLETED
+**Summary:** Appended CHANGELOG.md entry for Wave 2: #187 AREA CHECKPOINT V4.0.2 PASS (CLOSED), #217 AREA CHECKPOINT V4.4 PASS (CLOSED), #199 BUG-TOKEN-FIDELITY-1 no code change needed, #222 TEST GATE V4.5 PASS. No code modified. CODE_MAP.md header updated.
+**Files changed:** docs/memory/CHANGELOG.md, docs/memory/CODE_MAP.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** V4.5 AREA CHECKPOINT #223, then V4.0.4 remaining tasks (#200-#205)
+
+---
+
 ## 2026-04-06 — project-manager — Wave 1 Status Sync (8 parallel tasks verified)
 **Outcome:** COMPLETED
 **Summary:** Verified all 8 Wave 1 parallel tasks are correctly marked COMPLETED in TASK_PLAN.md: #178 PASS, #180 PASS, #184 PASS, #186 PASS, #198 PASS, #213 PASS (V4.3 CLOSED), #216 PASS, #218 COMPLETED. Updated status header: V4.0.2 CLOSED, V4.0.3 CLOSED, V4.0.4 visible with #198 PASS, V4.3 CLOSED, V4.4 CLOSED, V5.2 CLOSED. Remaining open areas: V4.0.4 (#199-#205 PENDING), V4.5 (#223 PENDING).

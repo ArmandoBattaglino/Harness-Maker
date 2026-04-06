@@ -1,4 +1,45 @@
 ---
+## 2026-04-06 — Verification Wave 2: Tasks #187, #199, #217, #222
+**Status:** COMPLETED
+**Called by:** user (direct request to append CHANGELOG entry for wave 2 completion)
+
+### Context when I started
+CHANGELOG.md last entry was Verification Wave 1 (8 tasks). Wave 2 just completed: 4 parallel verification tasks — 2 AREA CHECKPOINTs (#187 V4.0.2, #217 V4.4), 1 token fidelity verification (#199), 1 TEST GATE (#222 V4.5). No code was modified.
+
+### What I did
+1. Read CHANGELOG.md, CODE_MAP.md, ACTIVITY_LOG.md, PROGRESS.md, and agent session log.
+2. Prepended CHANGELOG.md entry with 4-task summary table under 2026-04-06 heading.
+3. Updated CODE_MAP.md header timestamp to reference Wave 2.
+4. Prepended ACTIVITY_LOG.md entry.
+5. Appended this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CHANGELOG.md | MODIFIED | Verification Wave 2 summary entry (4 tasks) |
+| docs/memory/CODE_MAP.md | MODIFIED | Header timestamp updated |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Wave 2 entry prepended |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log |
+
+### Improvements delivered
+- CHANGELOG.md now documents all 4 verification tasks from Wave 2 in a single consolidated table
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+None.
+
+### What I learned
+- #199 BUG-TOKEN-FIDELITY-1 confirmed no code change was needed — __DONE__ and __HANDOFF__ tokens already preserved through full pipeline (server snippet gen, WS broadcast, client render)
+
+### State I'm leaving behind
+CHANGELOG.md and CODE_MAP.md current through Verification Wave 2. No function graph changes (zero code modifications). V4.0.2 and V4.4 areas now CLOSED. V4.5 TEST GATE passed, AREA CHECKPOINT #223 unblocked.
+
+### Handoff
+None — bookkeeping task fully self-contained.
+
+---
 ## 2026-04-06 — Verification Wave 1: Tasks #178, #180, #184, #186, #198, #213, #216, #218
 **Status:** COMPLETED
 **Called by:** user (direct request to append CHANGELOG entry for wave 1 completion)
