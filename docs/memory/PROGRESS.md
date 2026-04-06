@@ -1,4 +1,7 @@
 # Progress
+- [V5.2 PLAN 2026-04-06] Debugger Loop Phase 2 — Swarm Deep Test Bug Fixes bulk plan created
+  Tasks #238-#244 added to TASK_PLAN.md. 5 bugs from Phase 1 E2E testing. MEDIUM: #238 (malformed JSON 500→400), #239 (stale execution hydration 404). LOW: #240 (rate limiter too strict), #241 (SPA catch-all for API paths). DEFERRED: #242 (duplicate workflow names). TEST GATE #243, AREA CHECKPOINT #244. Wave 1: #238+#239+#240+#241 in parallel. Wave 2: #243. Wave 3: #244.
+
 - [V5.1 AREA CHECKPOINT VERIFIED 2026-04-06] Task #237 AREA CHECKPOINT PASS — V5.1 CLOSED
   qa-tester ran all 5 acceptance checks: npm test 312/312, client build 480 modules, health 200, webhook POST 200 (no CSRF), non-webhook POST 403 (CSRF enforced). All green. V5.1 area fully closed.
 

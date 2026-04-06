@@ -1,3 +1,14 @@
+## 2026-04-06 — project-manager — V5.2 Swarm Deep Test Bug Fixes — Phase 2 Bulk Plan
+**Outcome:** COMPLETED
+**Summary:** Created V5.2 area in TASK_PLAN.md with tasks #238-#244 from Phase 1 Swarm E2E test findings (5 bugs). 4 active fix tasks assigned to debugger, 1 deferred (cosmetic). TEST GATE #243 and AREA CHECKPOINT #244 added. Parallel wave grouping: Wave 1 = #238+#239+#240+#241 (all independent, all debugger), Wave 2 = #243 (TEST GATE), Wave 3 = #244 (AREA CHECKPOINT).
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none (planning only)
+**Decisions made:** BUG-SWARM-UI-1 deferred as cosmetic; MEDIUM bugs ordered before LOW bugs
+**Blockers:** none
+**Next:** Orchestrator launches Wave 1: debugger fixes #238, #239, #240, #241 in parallel
+
+---
+
 ## 2026-04-06 — qa-tester — Debugger Loop Phase 1: Micro-Areas B+C+D+E — Swarm UI Comprehensive E2E Test
 **Outcome:** COMPLETED
 **Summary:** Comprehensive Playwright E2E test of the entire Swarm UI section (Canvas & Nodes, Workflow CRUD & Persistence, Execution Lifecycle & Runtime, Inspector & PTY Explosion). 47 test cases executed: 37 PASS, 7 N/A (correct conditional behavior in idle state), 3 BUG. Bugs found: BUG-SWARM-UI-1 (duplicate workflow names in dropdown, LOW), BUG-SWARM-UI-2 (stale execution ID 404 on page load, MEDIUM), BUG-SWARM-UI-3 (rate limit triggered by normal navigation, LOW). All core Swarm UI functionality works correctly.

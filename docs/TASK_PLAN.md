@@ -12271,3 +12271,285 @@ Acceptance Criteria:
   - [x] No regression in Swarm execution, terminal, session management, or agent CRUD (312/312 server tests pass, 480-module client build clean)
   - [x] Terminal still functions after navigation (BUG-UI-1 is cosmetic only, confirmed per DEC-009)
 Dependencies: TASK #235, TASK #236
+
+---
+
+## AREA: V5.2 — Swarm Deep Test Bug Fixes
+_Components: server/index.js error handler, server/index.js SPA catch-all, client/src/hooks/useSwarm.js hydration, server middleware rateLimiter, WorkflowStore dropdown_
+_Tasks: #238 → #244_
+_Status: IN PROGRESS_
+_Gate: ALL component TEST GATES must PASS before AREA CHECKPOINT #244 can run_
+_Source: Debugger Loop Phase 1 — Swarm Server API Deep Test (55 curl tests, 2 bugs) + Swarm UI Comprehensive E2E Test (47 test cases, 3 bugs). Phase 2 bulk plan created 2026-04-06._
+
+---
+
+TASK #238: BUG-SWARM-API-1 — Malformed JSON body returns HTTP 500 instead of 400 (server/index.js error handler)
+Area: V5.2 — Swarm Deep Test Bug Fixes
+Agent: debugger
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Component Spec:
+  File: server/index.js (global error handler, approximately line 296)
+  Current behavior: Express body-parser throws a SyntaxError with `type: 'entity.parse.failed'` when receiving
+  malformed JSON (e.g., `{invalid`). The global error handler does not check for this specific error type and
+  falls through to the generic 500 Internal Server Error response.
+  Expected behavior: The error handler should detect SyntaxError with `type === 'entity.parse.failed'` and
+  return HTTP 400 with a clear JSON error message like `{ "error": "Invalid JSON in request body" }`.
+Context:
+  Bug ID: BUG-SWARM-API-1
+  Severity: MEDIUM
+  Discovery: Phase 1 Swarm Server API Deep Test — qa-tester sent `{invalid` as body to JSON-accepting endpoints
+  and received HTTP 500 instead of 400.
+  Root cause: The global Express error handler in server/index.js (around line 296) has a catch-all that sends
+  500 for any unhandled error. It does not check for the specific SyntaxError that Express body-parser throws
+  when JSON parsing fails. Express body-parser sets `err.type = 'entity.parse.failed'` and `err.status = 400`
+  on these errors, but the handler ignores both properties.
+  Fix approach:
+    1. In the global error handler (`app.use((err, req, res, next) => { ... })`), add a check BEFORE the
+       generic 500 fallback:
+       ```
+       if (err.type === 'entity.parse.failed' || (err instanceof SyntaxError && err.status === 400)) {
+         return res.status(400).json({ error: 'Invalid JSON in request body' });
+       }
+       ```
+    2. This must be the FIRST check in the error handler, before any logging of the error as "unhandled".
+    3. Do NOT log malformed JSON errors as server errors — they are client errors.
+  Files to modify: server/index.js (global error handler only)
+  Testing: After fix, `curl -X POST http://127.0.0.1:3000/api/v1/swarm/scaffold -H "Content-Type: application/json" -H "X-Requested-With: ClaudeCodeManager" -d "{invalid"` should return HTTP 400, not 500.
+Acceptance Criteria:
+  - [ ] Malformed JSON body on any endpoint returns HTTP 400 (not 500)
+  - [ ] Response body is JSON with a clear error message (e.g., `{ "error": "Invalid JSON in request body" }`)
+  - [ ] Valid JSON requests are unaffected (no regression)
+  - [ ] Malformed JSON errors are NOT logged as unhandled server errors
+  - [ ] npm test passes (all existing tests still green)
+Dependencies: none
+---
+
+TASK #239: BUG-SWARM-UI-2 — Stale execution ID produces 404 console error on page load (useSwarm.js hydration)
+Area: V5.2 — Swarm Deep Test Bug Fixes
+Agent: debugger
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Component Spec:
+  File: client/src/hooks/useSwarm.js (hydration / restorePersistedExecution logic)
+  Current behavior: On page load, useSwarm reads a persisted execution ID from localStorage and calls
+  `GET /api/v1/swarm/<executionId>/status`. If that execution no longer exists on the server (e.g., server
+  restarted, execution expired), the endpoint returns 404. The hook logs the error to DevTools console but
+  does NOT clear the stale execution ID from localStorage, so the error recurs on every page load.
+  Expected behavior: When the hydration fetch returns 404, the hook should call `clearStoredExecution()` (or
+  equivalent), reset execution state to idle, and NOT log an error to the console for this expected condition.
+Context:
+  Bug ID: BUG-SWARM-UI-2
+  Severity: MEDIUM
+  Discovery: Phase 1 Swarm UI E2E Test — after server restart, navigating to Swarm view showed a 404 error
+  in DevTools console for the stale execution ID fetch. The app still functioned but the error is noisy and
+  the stale ID persists indefinitely.
+  Root cause: The hydration logic in useSwarm.js fetches the persisted execution status but only handles
+  success responses. A 404 response (execution not found) is treated as a network error and logged, but the
+  persisted execution ID is not cleared from localStorage.
+  Fix approach:
+    1. In the hydration/restore function of useSwarm.js, wrap the fetch in a try-catch or check response.status.
+    2. If response.status === 404, call the existing `clearStoredExecution()` or equivalent method to remove
+       the stale execution ID from localStorage.
+    3. Reset the execution state to idle (no active execution).
+    4. Do NOT log this as an error — it is an expected condition after server restart.
+    5. For non-404 errors (network failure, 500), existing error handling can remain.
+  Files to modify: client/src/hooks/useSwarm.js (hydration logic only)
+  Testing: After fix, restart server, load Swarm view — no 404 error in DevTools console, execution state
+  shows idle, localStorage no longer contains stale execution ID.
+Acceptance Criteria:
+  - [ ] 404 response during hydration clears stale execution ID from localStorage
+  - [ ] Execution state resets to idle after 404 hydration failure
+  - [ ] No 404 error logged in DevTools console for this expected condition
+  - [ ] Non-404 errors (500, network failure) still handled/logged appropriately
+  - [ ] Client build passes (npm run build --prefix client)
+Dependencies: none
+---
+
+TASK #240: BUG-SWARM-UI-3 — Rate limiting triggered during normal localhost navigation (server middleware rateLimiter)
+Area: V5.2 — Swarm Deep Test Bug Fixes
+Agent: debugger
+Priority: LOW
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Component Spec:
+  File: server middleware — rate limiter configuration (likely server/index.js or server/middleware/)
+  Current behavior: Switching between Swarm and Projects views triggers HTTP 429 Too Many Requests on
+  `/api/v1/projects`. The rate limiter is configured too strictly for localhost single-user usage, where
+  rapid view switches cause multiple API calls in quick succession.
+  Expected behavior: Normal navigation between views on localhost should never trigger rate limiting.
+  The rate limiter exists for abuse prevention, not for penalizing normal single-user UI navigation.
+Context:
+  Bug ID: BUG-SWARM-UI-3
+  Severity: LOW
+  Discovery: Phase 1 Swarm UI E2E Test — switching between Swarm and Projects views a few times rapidly
+  triggered 429 errors on /api/v1/projects.
+  Root cause: The rate limiter is configured with limits appropriate for a multi-user web service, not a
+  localhost single-user desktop tool. Since this app is exclusively bound to 127.0.0.1 and serves a single
+  user, the rate limits can be significantly relaxed.
+  Fix approach (choose one or combine):
+    Option A — Increase rate limit window/max for localhost:
+      Increase the request limit (e.g., from 100/15min to 300/15min or higher) since there is only one user.
+    Option B — Reduce redundant API calls on view mount:
+      If Swarm or Projects views re-fetch data on every mount even when the data hasn't changed, add a
+      short cache or deduplication (e.g., don't re-fetch if last fetch was < 5 seconds ago).
+    Option C — Exempt localhost from rate limiting entirely:
+      Since the server only binds to 127.0.0.1, rate limiting provides minimal security value. Consider
+      disabling or significantly relaxing it.
+    Recommended: Option A (increase limits) is the safest minimal fix. Option C is acceptable given the
+    localhost-only constraint documented in CLAUDE.md.
+  Files to modify: server/index.js or server/middleware/ (rate limiter configuration)
+  Testing: After fix, rapidly switch between Swarm and Projects views 10+ times — no 429 errors.
+Acceptance Criteria:
+  - [ ] Rapidly switching between views 10+ times does NOT trigger 429 errors
+  - [ ] Rate limiter still provides some protection against runaway automated requests
+  - [ ] npm test passes
+Dependencies: none
+---
+
+TASK #241: BUG-SWARM-API-2 — SPA catch-all serves HTML for unmatched API GET requests (server/index.js)
+Area: V5.2 — Swarm Deep Test Bug Fixes
+Agent: debugger
+Priority: LOW
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Component Spec:
+  File: server/index.js (SPA catch-all route, approximately line 287)
+  Current behavior: The SPA catch-all `app.get('*', (req, res) => res.sendFile('index.html'))` matches ALL
+  GET requests, including those to nonexistent API paths like `/api/v1/nonexistent`. This returns HTTP 200
+  with HTML content instead of a proper JSON 404 error.
+  Expected behavior: GET requests to `/api/*` paths that don't match any route should return JSON 404
+  (`{ "error": "Not found" }`), not the SPA HTML.
+Context:
+  Bug ID: BUG-SWARM-API-2
+  Severity: LOW
+  Discovery: Phase 1 Swarm Server API Deep Test — `GET /api/v1/nonexistent` returned 200 with HTML content
+  instead of a JSON 404.
+  Root cause: The SPA catch-all route `app.get('*')` is defined after all API routes but matches any GET
+  path, including `/api/*`. There is no API-specific 404 handler before the SPA catch-all.
+  Fix approach:
+    1. Add a catch-all 404 handler for API paths BEFORE the SPA catch-all:
+       ```
+       app.all('/api/*', (req, res) => {
+         res.status(404).json({ error: 'Not found' });
+       });
+       ```
+    2. This must be placed AFTER all real API route registrations but BEFORE the SPA catch-all `app.get('*')`.
+    3. Using `app.all` (not just `app.get`) ensures POST/PUT/DELETE to nonexistent API paths also get JSON 404.
+  Files to modify: server/index.js (add one route before SPA catch-all)
+  Testing: After fix, `curl http://127.0.0.1:3000/api/v1/nonexistent` returns `{"error":"Not found"}` with
+  status 404, while `curl http://127.0.0.1:3000/some-spa-route` still returns the SPA HTML.
+Acceptance Criteria:
+  - [ ] GET /api/v1/nonexistent returns HTTP 404 with JSON body (not HTML)
+  - [ ] POST/PUT/DELETE to nonexistent API paths also return JSON 404
+  - [ ] SPA catch-all still works for non-API paths (e.g., /swarm, /projects return HTML)
+  - [ ] All existing API routes are unaffected (no regression)
+  - [ ] npm test passes
+Dependencies: none
+---
+
+TASK #242: BUG-SWARM-UI-1 — Duplicate workflow names in saved workflows dropdown (DEFERRED — cosmetic)
+Area: V5.2 — Swarm Deep Test Bug Fixes
+Agent: frontend-dev
+Priority: LOW
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: DEFERRED
+Deferral Reason: Cosmetic issue only. Duplicate workflow names in the dropdown do not affect functionality —
+  users can still select and load any workflow. The fix requires either a unique constraint on workflow names
+  (which could break existing saved workflows) or showing additional distinguishing info (date/ID) in the
+  dropdown, which is a UX design decision. Deferred to a future UX polish pass.
+Component Spec:
+  File: WorkflowStore + client/src/views/SwarmView.jsx (workflow dropdown)
+  Current behavior: Six workflow names appear multiple times in the dropdown (e.g., "Customer Support Triage
+  Workflow" appears 3 times). Users cannot distinguish between duplicate entries.
+  Expected behavior: Either prevent duplicate names on save, or show distinguishing info (creation date, ID
+  suffix) in the dropdown so users can tell entries apart.
+Context:
+  Bug ID: BUG-SWARM-UI-1
+  Severity: LOW
+  Discovery: Phase 1 Swarm UI E2E Test — dropdown showed identical entries with no distinguishing info.
+  This is cosmetic — users can still select any workflow and it loads correctly.
+Acceptance Criteria:
+  - [ ] Dropdown entries are distinguishable (unique names OR additional info shown)
+  - [ ] Existing saved workflows are not broken by the fix
+Dependencies: none
+---
+
+TASK #243: TEST GATE — V5.2 Swarm Deep Test Bug Fixes (All Components)
+Area: V5.2 — Swarm Deep Test Bug Fixes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — AREA CHECKPOINT #244 CANNOT run until this gate returns PASS
+Context:
+  Components being tested: All 4 active bug fixes in V5.2 (#238, #239, #240, #241)
+  Implementation tasks: TASK #238, #239, #240, #241
+  What to test:
+    1. BUG-SWARM-API-1 (#238): Send malformed JSON to at least 3 different API endpoints → verify all return
+       HTTP 400 with JSON error body (not 500). Verify valid JSON requests still work.
+       Test command: `curl -s -o /dev/null -w "%{http_code}" -X POST http://127.0.0.1:3000/api/v1/swarm/scaffold -H "Content-Type: application/json" -H "X-Requested-With: ClaudeCodeManager" -d "{invalid"`
+       Expected: 400
+    2. BUG-SWARM-UI-2 (#239): Restart server (clearing in-memory executions), then load Swarm view in browser.
+       Verify no 404 error in DevTools console, execution state is idle, localStorage does not contain stale ID.
+    3. BUG-SWARM-UI-3 (#240): Rapidly switch between Swarm and Projects views 15+ times. Verify no 429 errors
+       in DevTools console or network tab.
+    4. BUG-SWARM-API-2 (#241): `curl http://127.0.0.1:3000/api/v1/nonexistent` → verify 404 JSON response.
+       Then `curl http://127.0.0.1:3000/swarm` → verify SPA HTML is returned (200).
+    5. Regression: `npm test` passes all existing tests. `npm run build --prefix client` passes.
+  Note: TASK #242 is DEFERRED and excluded from this gate.
+Acceptance Criteria:
+  - [ ] BUG-SWARM-API-1: Malformed JSON → 400 (tested on 3+ endpoints)
+  - [ ] BUG-SWARM-UI-2: No stale execution 404 after server restart
+  - [ ] BUG-SWARM-UI-3: No 429 during rapid view switching (15+ switches)
+  - [ ] BUG-SWARM-API-2: API 404 returns JSON, non-API paths return SPA HTML
+  - [ ] Regression: npm test passes, client build passes
+Gate Result: PENDING
+Dependencies: TASK #238, TASK #239, TASK #240, TASK #241
+---
+
+TASK #244: AREA CHECKPOINT — V5.2 Swarm Deep Test Bug Fixes
+Area: V5.2 — Swarm Deep Test Bug Fixes
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — Next area CANNOT start until ALL component test gates in this area have PASSED
+Context:
+  Run a full integration smoke test for all components in V5.2. This checkpoint verifies that all 4 active
+  bug fixes work together and have not regressed any previously passing functionality.
+  Components:
+    - #238: Malformed JSON error handler (server/index.js)
+    - #239: Stale execution hydration cleanup (useSwarm.js)
+    - #240: Rate limiter relaxation (server middleware)
+    - #241: API 404 catch-all (server/index.js)
+    - #242: DEFERRED (duplicate workflow names — cosmetic)
+  Integration scenario:
+    1. Start fresh server
+    2. Verify health endpoint returns 200
+    3. Send malformed JSON to /api/v1/swarm/scaffold → 400
+    4. GET /api/v1/nonexistent → JSON 404
+    5. GET /swarm → SPA HTML 200
+    6. Navigate to Swarm → no console errors (no stale execution 404)
+    7. Rapidly switch Swarm ↔ Projects 15 times → no 429
+    8. npm test → all tests pass
+    9. npm run build --prefix client → clean build
+    10. Verify V5.0 and V5.1 fixes still hold (agent snippet filtering, CSRF exemption)
+Acceptance Criteria:
+  - [ ] TEST GATE #243 is COMPLETED with PASS result
+  - [ ] TASK #242 is acknowledged as DEFERRED (no fix needed for checkpoint)
+  - [ ] Full integration scenario (steps 1-10 above) passes
+  - [ ] No regression in V5.0, V5.1, V4.x, or V3.x functionality
+  - [ ] All server tests pass, client build clean
+Dependencies: TASK #243

@@ -1,4 +1,47 @@
 ---
+## 2026-04-06 — V5.2 Phase 2 Bulk Plan — Swarm Deep Test Bug Fixes
+**Status:** COMPLETED
+**Called by:** user (debugger-loop Phase 2)
+
+### Context when I started
+V5.1 was fully closed. Phase 1 of the Swarm debugger loop found 5 bugs: 2 from API deep test (BUG-SWARM-API-1 malformed JSON 500, BUG-SWARM-API-2 SPA catch-all), 3 from UI E2E test (BUG-SWARM-UI-1 duplicate names, BUG-SWARM-UI-2 stale execution hydration, BUG-SWARM-UI-3 rate limiter). Last task was #237.
+
+### What I did
+1. Read TASK_PLAN.md (header + last section), PROGRESS.md, ACTIVITY_LOG.md, agent memory
+2. Updated TASK_PLAN.md status header with V5.2 summary
+3. Created full V5.2 area with 7 tasks (#238-#244): 4 active fixes, 1 deferred, 1 TEST GATE, 1 AREA CHECKPOINT
+4. Ordered MEDIUM bugs (#238, #239) before LOW bugs (#240, #241), deferred #242
+5. Updated PROGRESS.md, ACTIVITY_LOG.md, agent memory
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Added V5.2 area (#238-#244), updated status header |
+| docs/memory/PROGRESS.md | MODIFIED | V5.2 plan entry prepended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | PM session entry prepended |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log prepended |
+
+### Improvements delivered
+- V5.2 area fully planned with verbose self-contained task descriptions for all 5 bugs
+- Clear parallel wave groupings for orchestrator
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- BUG-SWARM-UI-1 (#242) DEFERRED — cosmetic only, no functional impact, requires UX design decision
+- MEDIUM bugs sorted before LOW bugs in task numbering for priority clarity
+
+### What I learned
+Nothing new — standard Phase 2 bulk planning from debugger-loop findings.
+
+### State I'm leaving behind
+V5.2 area IN PROGRESS with 4 active PENDING tasks, 1 DEFERRED, 1 TEST GATE, 1 AREA CHECKPOINT. Ready for Wave 1 parallel execution.
+
+### Handoff
+Orchestrator should launch Wave 1: debugger runs #238, #239, #240, #241 in parallel. After all 4 complete, Wave 2: qa-tester runs TEST GATE #243. After PASS, Wave 3: qa-tester runs AREA CHECKPOINT #244.
+
+---
 ## 2026-04-06 — V5.1 Area Closure
 **Status:** COMPLETED
 **Called by:** user
