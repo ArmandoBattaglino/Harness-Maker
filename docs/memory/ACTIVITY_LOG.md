@@ -1,3 +1,14 @@
+## 2026-04-06 — debugger — Task #247: BUG-RUNTIME-3 — Filter Gemini system prompt echo from snippet
+**Outcome:** COMPLETED
+**Summary:** Widened "you are a" pattern, added 3 new regex patterns for Gemini prompt echo lines, and implemented a general-purpose prompt-overlap detection in _refreshAgentSnippet that catches ANY provider echoing the system prompt. Stored _agentSystemPrompt on agent state. All 312 server tests pass.
+**Files changed:** server/services/SwarmEngine.js, docs/TASK_PLAN.md
+**Bugs fixed:** BUG-RUNTIME-3 — Gemini system prompt echo no longer appears in agent node snippets
+**Decisions made:** Dual approach (regex patterns + semantic word-overlap check at 60% threshold) for maximum coverage
+**Blockers:** none
+**Next:** TEST GATES #249-#251 should verify Wave A fixes; Task #248 (SwarmView.jsx empty prompt) may already be in progress
+
+---
+
 ## 2026-04-06 — debugger — Task #246: BUG-RUNTIME-2 — Filter Codex auth prompt from snippet
 **Outcome:** COMPLETED
 **Summary:** Added 8 regex patterns to SNIPPET_NOISE_LINE_PATTERNS in SwarmEngine.js to filter Codex CLI auth prompt lines (api key, authentication required, sign-in, codex auth, openai api, unauthorized, invalid token). All 312 server tests pass.

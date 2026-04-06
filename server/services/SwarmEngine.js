@@ -134,7 +134,7 @@ const SNIPPET_NOISE_LINE_PATTERNS = [
   /can I help you implement/i,
   /how can i help you/i,
   /what would you like/i,
-  /^you are a \w+ agent/i,
+  /^you are a\b/i,
   /^you have an active task right now/i,
   /^current task:/i,
   /^workflow goal:/i,
@@ -145,6 +145,9 @@ const SNIPPET_NOISE_LINE_PATTERNS = [
   /^write a .+ summary/i,
   /^you are the .+ in this workflow/i,
   /^your role is/i,
+  /^you receive\b/i,
+  /^your task is/i,
+  /^---\s*system prompt/i,
   /^--- swarm input ---$/i,
   /^--- end swarm input ---$/i,
   /^\(thinking\)(\(thinking\))*$/i,
@@ -517,7 +520,17 @@ class SwarmEngine {
 
     const sessionReplay = preferSessionReplay ? this._readAgentSessionReplay(state) : '';
     const snippetSource = sessionReplay || state._snippetSourceBuffer || state._runtimeScanBuffer || '';
-    const nextSnippet = this._buildSemanticSnippet(snippetSource);
+    let nextSnippet = this._buildSemanticSnippet(snippetSource);
+
+    // If the selected snippet closely matches the agent's system prompt, discard it
+    // and rebuild without that text.  This catches ANY provider echoing the prompt.
+    if (nextSnippet && state._agentSystemPrompt) {
+      if (this._snippetOverlapsPrompt(nextSnippet, state._agentSystemPrompt)) {
+        nextSnippet = this._buildSemanticSnippet(
+          snippetSource.replace(nextSnippet, '').trim()
+        );
+      }
+    }
 
     // Always update: prefer filtered result, even if empty (prevents stale noise).
     state.lastOutputSnippet = nextSnippet;
@@ -955,6 +968,24 @@ class SwarmEngine {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Returns true if the snippet text is substantially a substring of the
+   * agent's system prompt — meaning the CLI echoed the prompt back rather
+   * than producing original output.  Uses word-level overlap (>60%).
+   */
+  _snippetOverlapsPrompt(snippet, systemPrompt) {
+    if (!snippet || !systemPrompt) return false;
+    const normalize = (t) => t.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+    const snippetWords = normalize(snippet).split(' ').filter(Boolean);
+    if (snippetWords.length < 4) return false;
+    const promptNorm = ` ${normalize(systemPrompt)} `;
+    let matchCount = 0;
+    for (const w of snippetWords) {
+      if (promptNorm.includes(` ${w} `)) matchCount++;
+    }
+    return (matchCount / snippetWords.length) > 0.6;
   }
 
   _scoreSnippetBlock(block = '') {
@@ -2055,6 +2086,7 @@ class SwarmEngine {
           firstDownstreamSpawnAt: null,
           noProgressBlocked: false,
           noProgressTimer: null,
+          _agentSystemPrompt: (node.data && node.data.systemPrompt) || '',
         };
 
         if (codexInitialPrompt) {

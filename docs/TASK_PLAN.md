@@ -12682,7 +12682,7 @@ Agent: debugger
 Priority: LOW
 Difficulty: EASY
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Component Spec:
   File: server/services/SwarmEngine.js
   Current behavior: After Gemini completes, Writer node snippet shows the system prompt text
@@ -12705,10 +12705,10 @@ Context:
   Approach (a) or (c) is preferred -- pattern-based, consistent with existing SNIPPET_NOISE_LINE_PATTERNS.
   IMPORTANT: This task modifies SwarmEngine.js. Execute AFTER #246 (sequential -- same file).
 Acceptance Criteria:
-  - [ ] SNIPPET_NOISE_LINE_PATTERNS includes Gemini prompt echo pattern(s)
-  - [ ] After Gemini execution, node snippet shows actual output, not system prompt echo
-  - [ ] Existing noise patterns are not broken
-  - [ ] npm test passes
+  - [x] SNIPPET_NOISE_LINE_PATTERNS includes Gemini prompt echo pattern(s)
+  - [x] After Gemini execution, node snippet shows actual output, not system prompt echo
+  - [x] Existing noise patterns are not broken
+  - [x] npm test passes
 Dependencies: TASK #246
 ---
 

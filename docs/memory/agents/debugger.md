@@ -991,3 +991,49 @@ SNIPPET_NOISE_LINE_PATTERNS now has 8 additional auth-related patterns. All 312 
 ### Handoff
 Task #247 (BUG-RUNTIME-3 Gemini prompt echo) is next in the sequential wave.
 ---
+---
+## 2026-04-06 — Task #247: BUG-RUNTIME-3 — Filter Gemini system prompt echo from snippet
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+Tasks #245 and #246 had just been completed on SwarmEngine.js. SNIPPET_NOISE_LINE_PATTERNS had patterns for thinking tokens and Codex auth but nothing to catch Gemini CLI echoing the system prompt. The existing `/^you are a \w+ agent/i` pattern was too narrow — it only matched "You are a X agent" but not "You are a concise Writer" or other prompt forms.
+
+### What I did
+1. Widened `/^you are a \w+ agent/i` to `/^you are a\b/i` — now matches any system prompt starting with "You are a..."
+2. Added 3 new regex patterns: `/^you receive\b/i`, `/^your task is/i`, `/^---\s*system prompt/i`
+3. Note: `/^your role is/i` was already present (line 147)
+4. Stored `_agentSystemPrompt` on agent state object so the prompt text is available at snippet refresh time
+5. Added `_snippetOverlapsPrompt()` method: word-level overlap check (>60% match = prompt echo)
+6. Modified `_refreshAgentSnippet()` to check if the selected snippet overlaps the agent's system prompt; if so, rebuilds without that text
+7. Ran npm test — all 312 tests pass
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SwarmEngine.js | MODIFIED | Widened "you are a" pattern, added 3 new patterns, added _agentSystemPrompt to state, added _snippetOverlapsPrompt() method, added prompt overlap check in _refreshAgentSnippet() |
+| docs/TASK_PLAN.md | MODIFIED | Marked #247 COMPLETED with all acceptance criteria checked |
+
+### Improvements delivered
+- Gemini system prompt echo text is filtered from snippets via both regex patterns and semantic overlap detection
+- The overlap detection is provider-agnostic — works for ANY provider that echoes prompts
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-RUNTIME-3: Gemini prompt echo in snippet | Gemini CLI echoes full system prompt; existing patterns too narrow and no semantic check | Widened patterns + added prompt overlap detection | FIXED |
+
+### Decisions I made
+- Implemented both approaches: (a) regex patterns for common prompt prefixes, and (b) semantic word-overlap check in _refreshAgentSnippet for a general catch-all
+- Used 60% word overlap threshold — high enough to avoid false positives on actual output, low enough to catch paraphrased echoes
+
+### What I learned
+- The state object is the right place to store per-agent metadata like system prompt text — it's already available in _refreshAgentSnippet
+- Word-level overlap is a lightweight similarity check that doesn't require any library dependencies
+
+### State I'm leaving behind
+SNIPPET_NOISE_LINE_PATTERNS now has widened "you are a" pattern + 3 new Gemini echo patterns. _refreshAgentSnippet performs a secondary prompt-overlap check. All 312 tests pass.
+
+### Handoff
+Wave A (#245-#247) is complete. TEST GATE #249-#251 should verify all three fixes.
+---
