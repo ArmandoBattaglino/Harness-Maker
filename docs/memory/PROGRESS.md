@@ -1,4 +1,9 @@
 
+- [V4.0.4 TEST GATE PASS 2026-04-06] TASK #204 COMPLETED — TEST GATE PASS for BUG-RECOVERY-LABELING-1
+  Recovery/system prompt handling verified at all 3 levels: SNIPPET_RECOVERY_LINE_PATTERNS (4 patterns, -260 penalty),
+  _buildRecoverySnippet ("Runtime reminder..." label), REPLAY_NOISE_LINE_PATTERNS (done/handoff token patterns).
+  312/312 tests, client build clean. TASK #205 AREA CHECKPOINT unblocked.
+
 - [PM STATUS SYNC 2026-04-06] Wave 4/5 transition — #202 PASS, #203 COMPLETED (no code change), #204+#205 launched:
   V4.0.4 chain nearly complete. #203 resolved without code change — existing sanitization pipeline already handles
   recovery prompt filtering at 3 levels (SNIPPET_RECOVERY_LINE_PATTERNS, SNIPPET_NOISE_LINE_PATTERNS, REPLAY_NOISE_LINE_PATTERNS).

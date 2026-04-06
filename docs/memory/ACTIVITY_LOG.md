@@ -1,3 +1,25 @@
+## 2026-04-06 — qa-tester — Task #204: TEST GATE BUG-RECOVERY-LABELING-1
+**Outcome:** COMPLETED
+**Summary:** TEST GATE PASS. Verified recovery/system prompt handling across all 3 pipeline levels: SNIPPET_RECOVERY_LINE_PATTERNS (4 patterns, -260 scoring penalty), _buildRecoverySnippet (labeled "Runtime reminder" output), REPLAY_NOISE_LINE_PATTERNS (done/handoff token instructions filtered). 312/312 server tests pass, client build 480 modules 0 errors. TASK #205 AREA CHECKPOINT unblocked.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/qa-tester.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** TASK #205 AREA CHECKPOINT V4.0.4 — final gate to close the area
+
+---
+
+## 2026-04-06 — project-manager — Wave 4/5 Transition: #202 PASS, #203 COMPLETED, #204+#205 launched
+**Outcome:** COMPLETED
+**Summary:** Updated TASK_PLAN.md status header to reflect #202 PASS and #203 COMPLETED (no code change — recovery prompt filtering already handled by existing sanitization pipeline). Launched Wave 5: #204 (TEST GATE) + #205 (AREA CHECKPOINT) now IN_PROGRESS. After #205 passes, V4.0.4 will be CLOSED and only #148 (V3.4 AREA CHECKPOINT — blocked by provider handoff verification) remains as the last open task in the entire project.
+**Files changed:** docs/TASK_PLAN.md (status header + #204/#205 status), docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** #204 (TEST GATE for BUG-RECOVERY-LABELING-1) + #205 (V4.0.4 AREA CHECKPOINT) — both running in Wave 5. On #205 PASS, V4.0.4 closes. Then only #148 remains.
+
+---
+
 ## 2026-04-06 — documenter — Wave 4 DOC_STATUS update (#202, #203)
 **Outcome:** COMPLETED
 **Summary:** Updated DOC_STATUS.md with Wave 4 results. #202 TEST GATE PASS and #203 COMPLETED (no code change -- recovery labeling already handled by existing sanitization pipeline). No source code modified. All existing docs remain accurate. V4.0.4 nearly closed: only #204 TEST GATE and #205 AREA CHECKPOINT remain.

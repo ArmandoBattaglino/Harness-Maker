@@ -1,4 +1,47 @@
 ---
+## 2026-04-06 — Wave 4/5 Transition: #202 PASS, #203 COMPLETED, #204+#205 launched
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+User reported Wave 4 completed: #202 PASS (TEST GATE for BUG-PTY-REPLAY-CONTAMINATION-1) and #203 COMPLETED (BUG-RECOVERY-LABELING-1 — no code change needed, existing sanitization pipeline already handles recovery prompt filtering). Wave 5 launching with #204 (TEST GATE) and #205 (AREA CHECKPOINT). V4.0.4 near closure.
+
+### What I did
+1. Read TASK_PLAN.md — confirmed #202 already marked COMPLETED PASS, #203 already marked COMPLETED with resolution note
+2. Updated status header: V4.0.4 now shows #202 PASS, #203 COMPLETED, #204-#205 PENDING (Wave 5 launched)
+3. Changed #204 and #205 status from PENDING to IN_PROGRESS
+4. Prepended PROGRESS.md with Wave 4/5 transition summary and #203 completion note
+5. Prepended ACTIVITY_LOG.md with PM session entry
+6. Updated this agent memory file
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Status header updated with #202 PASS, #203 COMPLETED; #204/#205 set to IN_PROGRESS |
+| docs/memory/PROGRESS.md | MODIFIED | Wave 4/5 transition + #203 resolution prepended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | PM session entry prepended |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log |
+
+### Improvements delivered
+- Status tracking reflects Wave 4 completion and Wave 5 launch
+- Clear documentation that #203 required no code change (existing pipeline sufficient)
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+None — status bookkeeping only.
+
+### What I learned
+- #203 (BUG-RECOVERY-LABELING-1) was resolved without any code change — the existing 3-level sanitization pipeline (SNIPPET_RECOVERY_LINE_PATTERNS, SNIPPET_NOISE_LINE_PATTERNS, REPLAY_NOISE_LINE_PATTERNS) already handles recovery prompt filtering. Good example of defensive over-engineering paying off.
+
+### State I'm leaving behind
+Closed areas: V3.1-V3.3, V3.5, V4.0-V4.0.3, V4.1, V4.2, V4.3, V4.4, V4.5, V5.0, V5.1, V5.2. Open: V4.0.4 (#198-#203 done, #204+#205 IN_PROGRESS — Wave 5). Blocked: V3.4 (#148 AREA CHECKPOINT — blocked by provider handoff verification). After #205 PASS, V4.0.4 closes and only #148 remains.
+
+### Handoff
+Wave 5 is now running: #204 (TEST GATE for BUG-RECOVERY-LABELING-1) + #205 (V4.0.4 AREA CHECKPOINT). Both assigned to qa-tester. On #205 PASS, V4.0.4 closes. Only #148 (V3.4 AREA CHECKPOINT) will remain as the last open task — it is blocked pending real provider handoff chain verification.
+
+---
 ## 2026-04-06 — Wave 3 Status Sync: #200 PASS, #223 PASS (V4.5 CLOSED), #201 COMPLETED
 **Status:** COMPLETED
 **Called by:** user
