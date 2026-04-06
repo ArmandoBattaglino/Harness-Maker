@@ -1800,6 +1800,8 @@ describe('SwarmEngine', () => {
       mockSessionManager.writeInput.mockClear();
       engine.sendBroadcast(executionId, 'node-a', 'High-priority operator update', { mode: 'hard' });
 
+      // Clear echo gate again (sendBroadcast → _writeSwarmPrompt → _flushSwarmPrompt sets new gate)
+      nodeAState.ignoreParserUntil = null;
       tapFn('Type your message or @path/to/file');
 
       expect(nodeAState.pendingOperatorPrompt).toBeNull();
