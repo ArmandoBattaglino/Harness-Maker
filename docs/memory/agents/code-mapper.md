@@ -2729,3 +2729,44 @@ CODE_MAP.md and CHANGELOG.md fully updated for V5.2 Wave 1. All 4 fixed bugs (BU
 ### Handoff
 BUG-SWARM-UI-1 (duplicate workflow names) was NOT part of this wave — still pending fix. Any future /api/* routes must be mounted before the new app.all('/api/*') catch-all.
 ---
+
+---
+## 2026-04-06 — Tasks #245-#248: Thinking Token Collapse + Codex Auth Filter + Gemini Prompt Echo Filter + Empty Prompt Validation
+**Status:** COMPLETED
+**Called by:** user (post-task code mapping request)
+
+### Context when I started
+Tasks #245-#248 completed as part of V5.0 snippet fidelity work. SwarmEngine snippet pipeline already mapped from Tasks #231. PromptToFlowBar mapped since Task #60.
+
+### What I did
+1. Read modified files: SwarmEngine.js (SNIPPET_NOISE_LINE_PATTERNS additions, new _snippetOverlapsPrompt method, _refreshAgentSnippet update) and PromptToFlowBar.jsx (promptError state, empty validation)
+2. Traced connections: _snippetOverlapsPrompt called only by _refreshAgentSnippet; _refreshAgentSnippet called by getStatus and _spawnAgentPty onData
+3. Updated CODE_MAP.md: updated SNIPPET_NOISE_LINE_PATTERNS entry (Tasks #245-#246 patterns), updated _buildSemanticSnippet entry, added _refreshAgentSnippet entry, added _snippetOverlapsPrompt entry, updated PromptToFlowBar + handleGenerate entries, updated Module Index
+4. Appended 4 CHANGELOG.md entries (one per task)
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Updated 4 existing entries, added 2 new entries (_refreshAgentSnippet, _snippetOverlapsPrompt), updated Module Index |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended 4 new entries for Tasks #245-#248 |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- CODE_MAP now documents the full snippet post-processing pipeline: _buildSemanticSnippet -> _refreshAgentSnippet -> _snippetOverlapsPrompt
+- All 4 tasks logged in CHANGELOG with precise file/function change details
+
+### Bugs I encountered
+None
+
+### Decisions I made
+- Mapped _refreshAgentSnippet as a new entry even though it existed before — it was never in CODE_MAP and is now a key orchestrator in the snippet pipeline
+
+### What I learned
+- The snippet pipeline has 3 layers: (1) noise line filtering via SNIPPET_NOISE_LINE_PATTERNS, (2) semantic block extraction via _buildSemanticSnippet, (3) prompt-overlap post-processing via _refreshAgentSnippet + _snippetOverlapsPrompt
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md fully updated for Tasks #245-#248. The snippet pipeline section now documents all key functions including the new prompt-echo detection path.
+
+### Handoff
+None — task fully self-contained.
+---

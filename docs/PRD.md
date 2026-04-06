@@ -1316,3 +1316,543 @@ This section documents the exact fields emitted by the server implementation, as
 **Client handling:** NOT handled in `useSwarm.js`. The event is silently dropped by the `default` case.
 
 ---
+
+---
+
+# V5: N8N-Style Visual Workflow Editor
+
+**Version:** 5.0
+**Date:** 2026-04-06
+**Status:** Draft
+**Depends on:** V3 (Swarm Orchestrator) + V4 (Multi-Provider Runtime)
+
+---
+
+## V5.1. Problem Statement
+
+The Swarm canvas in V3/V4 is a **viewer and runner**, not an **editor**. Users can generate workflows via Prompt-to-Flow or load saved ones, but they cannot:
+- Create nodes manually (no "Add Node" button, no palette)
+- Edit node properties inline (system prompt, label, model, tools are read-only)
+- Delete nodes or edges from the canvas
+- Save canvas modifications back to the server
+- Configure workflow settings (mode, budget, circuit breaker)
+- Set initial context variables before execution
+- Undo/redo canvas changes
+- Use advanced flow-control patterns (conditionals, merge/join, loops, error handlers)
+
+Power users (workflow builders, not just watchers) need **full manual control** over workflow topology, node configuration, and execution settings — comparable to what N8N provides for integration workflows, but for AI agent orchestration.
+
+---
+
+## V5.2. Goals & Success Metrics
+
+| Goal | Metric | Target |
+|------|--------|--------|
+| Manual workflow creation | User can build a workflow from scratch without Prompt-to-Flow | Complete in < 5 min for a 5-node workflow |
+| Inline node editing | All node properties editable from inspector panel | 100% of AgentData, DepartmentData, TriggerData fields |
+| Canvas persistence | All canvas changes saveable to server | Save round-trip < 500ms |
+| Undo/redo reliability | Canvas state recoverable after any edit | 50-step undo history |
+| Workflow validation | Invalid workflows flagged before execution | Zero silent failures from missing connections |
+| Advanced flow control | Conditional routing, merge/join, error handling | All 5 advanced node types functional |
+| N8N parity (core) | Feature coverage vs N8N workflow editor | 80%+ for AI agent use case |
+
+---
+
+## V5.3. User Stories
+
+### Wave 1 — Editor Transition (MUST HAVE, V5.0 MVP)
+- As a user, I want to **save my canvas changes** so that node positions, new connections, and edits persist across sessions.
+- As a user, I want to **edit the workflow name and description** directly from the toolbar so I can organize my workflows.
+- As a user, I want to **edit an agent's system prompt** in the inspector panel so I can customize agent behavior without regenerating the workflow.
+- As a user, I want to **edit an agent's label** in the inspector panel so I can rename agents.
+- As a user, I want to **delete nodes** by selecting them and pressing Delete or via right-click context menu.
+- As a user, I want to **delete edges** by clicking them and pressing Delete or via context menu.
+- As a user, I want **undo/redo** (Ctrl+Z / Ctrl+Shift+Z) so I can revert mistakes.
+- As a user, I want a **right-click context menu** on the canvas, nodes, and edges for quick actions.
+
+### Wave 2 — Node Creation & Configuration (MUST HAVE, V5.0)
+- As a user, I want a **node palette sidebar** where I can see all available node types and drag them onto the canvas.
+- As a user, I want to **duplicate a node** via context menu to quickly create similar agents.
+- As a user, I want to **select an AI model per agent** from a dropdown in the inspector.
+- As a user, I want to **configure tools per agent** (multi-select from available tools list).
+- As a user, I want to **set maxTurns per agent** to limit agent execution length.
+- As a user, I want to **toggle the triage node flag** to designate which agent receives initial context.
+- As a user, I want to **assign agents to departments** via the inspector.
+- As a user, I want a **workflow settings panel** (modal) to configure mode, budget, circuit breaker threshold, default model.
+- As a user, I want an **initial context editor** (key-value pairs) to set workflow variables before execution.
+
+### Wave 3 — Workflow Management & UX (SHOULD HAVE, V5.1)
+- As a user, I want to **duplicate/clone a workflow** to iterate on designs without modifying the original.
+- As a user, I want to **export a workflow as JSON** and **import from JSON file** for sharing and backup.
+- As a user, I want to **copy/paste nodes** (Ctrl+C/Ctrl+V) for rapid canvas building.
+- As a user, I want **snap-to-grid** for clean node alignment.
+- As a user, I want **auto-layout** to automatically arrange nodes in a readable flow.
+- As a user, I want **keyboard shortcuts** for all common operations (add node, delete, save, run).
+- As a user, I want **validation indicators** (red borders, warning badges) on nodes/edges that have problems.
+- As a user, I want to **set circuit breaker threshold per edge** via edge inspector.
+- As a user, I want to **add labels/descriptions to edges** for documentation.
+
+### Wave 4 — Execution Visibility (SHOULD HAVE, V5.1)
+- As a user, I want an **execution history** showing past runs with status, duration, and node outcomes.
+- As a user, I want **per-node execution timing** (start, end, duration) visible in the inspector during/after runs.
+- As a user, I want a **workflow templates library** with pre-built patterns I can load and customize.
+- As a user, I want **workflow version history** so I can revert to previous versions.
+
+### Wave 5 — Advanced Flow Control (NICE TO HAVE, V5.2+)
+- As a user, I want a **Conditional Router node** that routes handoffs to different targets based on context variable values.
+- As a user, I want a **Merge/Join node** that waits for N upstream agents to complete before forwarding.
+- As a user, I want a **Delay/Timer node** that waits N seconds before forwarding context to the next agent.
+- As a user, I want a **Loop node** that repeats a sub-graph N times or until a condition is met.
+- As a user, I want an **Error Handler node** that activates when an upstream agent errors.
+- As a user, I want a **Sub-workflow node** that embeds and runs another saved workflow.
+
+---
+
+## V5.4. Functional Requirements
+
+### Wave 1 — Editor Transition (V5.0 MVP)
+
+**Save & Persistence**
+- FR-V5-01: The SwarmView toolbar must include a "Save" button that serializes the current canvas state (nodes, edges, settings) and calls `PUT /api/v1/workflows/:id`. The button must be disabled when no workflow is loaded or when no changes have been made (clean state). A "dirty" indicator (asterisk on workflow name or dot on Save button) must be visible when unsaved changes exist.
+- FR-V5-02: Before saving, a sanitizer must strip React Flow internal fields (`measured`, `width`, `height`, `selected`, `dragging`, `positionAbsolute`) from node objects. Only `id`, `type`, `position`, `data`, `parentId` fields are persisted. Edge objects persist: `id`, `source`, `target`, `type`, `data`.
+- FR-V5-03: After a successful save, the "dirty" indicator must clear. Save errors must display an inline error banner (not an alert/modal).
+- FR-V5-04: "Save As New" option must be available (creates a new workflow copy via `POST /api/v1/workflows`). A prompt asks for the new name.
+
+**Workflow Name & Description Editing**
+- FR-V5-05: The toolbar must display the current workflow name as an editable inline text field (click to edit, Enter to confirm, Escape to cancel). Below or beside it, a smaller editable field for description.
+- FR-V5-06: Name changes mark the workflow as dirty (unsaved). Validation: name max 128 chars, `^[a-zA-Z0-9 _\-]+$`. Description max 512 chars.
+
+**Inspector Editing**
+- FR-V5-07: AgentInspector must upgrade from read-only display to a full edit panel. Editable fields for agent nodes: `label` (text input), `systemPrompt` (expandable textarea with line numbers), `model` (select dropdown from SUPPORTED_RUNTIME_MODELS), `tools` (multi-select or comma-separated input), `maxTurns` (number input), `isTriageNode` (toggle switch), `parentDepartmentId` (select from available departments or null).
+- FR-V5-08: Inspector changes must call `onUpdateNode(nodeId, patch)` immediately (optimistic local update) and mark the workflow as dirty.
+- FR-V5-09: For department nodes: editable `label`, `color` (color picker), `collapsed` (toggle).
+- FR-V5-10: For trigger nodes: editable `label`, `triggerType` (select: webhook/rss), `webhookPath` (text), `rssUrl` (text), `pollIntervalSeconds` (number, min 60), `targetNodeId` (select from connected agents).
+
+**Node Deletion**
+- FR-V5-11: Selecting one or more nodes and pressing the Delete key must remove them from the canvas. All edges connected to deleted nodes must also be removed. Multi-select via Shift+click or drag-select box.
+- FR-V5-12: Node deletion must be undoable (see FR-V5-17).
+- FR-V5-13: When deleting a department node, a confirmation dialog must appear: "Delete department and all N child agents?" with options "Delete All" / "Ungroup Only" (moves children to root level) / "Cancel".
+
+**Edge Deletion**
+- FR-V5-14: Clicking an edge selects it (visual highlight). Pressing Delete removes it. React Flow's `onEdgesDelete` callback must be wired.
+- FR-V5-15: Edge deletion must be undoable (see FR-V5-17).
+
+**Undo/Redo**
+- FR-V5-16: The canvas must maintain a history stack of up to 50 state snapshots. Each snapshot captures the full `{ nodes, edges }` arrays.
+- FR-V5-17: `Ctrl+Z` triggers undo (pop from history, push current to redo stack). `Ctrl+Shift+Z` or `Ctrl+Y` triggers redo.
+- FR-V5-18: Actions that create history entries: add node, delete node, move node (on drag end, not during drag), add edge, delete edge, update node data (debounced — batch rapid edits into one entry).
+- FR-V5-19: Toolbar must display Undo/Redo buttons with visual state (grayed out when stack is empty).
+- FR-V5-20: Undo/redo operates only on canvas state (nodes/edges). It does NOT affect execution state (Zustand store) per DEC-011.
+
+**Context Menu**
+- FR-V5-21: Right-clicking the canvas background must show a context menu with: "Add Agent Node", "Add Department Node", "Add Trigger Node", "Paste" (if clipboard has nodes), "Select All", "Auto-Layout".
+- FR-V5-22: Right-clicking a node must show: "Edit" (opens inspector), "Duplicate", "Delete", "Copy", "Open Terminal" (if agent with active session).
+- FR-V5-23: Right-clicking an edge must show: "Delete", "Configure" (opens edge settings if applicable).
+- FR-V5-24: Context menus must close on click-away or Escape.
+
+### Wave 2 — Node Creation & Configuration (V5.0)
+
+**Node Palette Sidebar**
+- FR-V5-25: A collapsible left sidebar ("Node Palette") must display all available node types as draggable cards: Agent, Department, Trigger (webhook), Trigger (RSS). Each card shows an icon, label, and brief description.
+- FR-V5-26: Dragging a card from the palette onto the canvas creates a new node at the drop position. The new node must have a server-valid ID generated as `[type]-[short-uuid]` matching `^[a-z][a-z0-9-]*$` (WorkflowStore NODE_ID_REGEX).
+- FR-V5-27: New nodes are created with sensible defaults: Agent — label "New Agent", empty systemPrompt, default model, empty tools, maxTurns 0, isTriageNode false. Department — label "New Department", random pastel color. Trigger — label "New Trigger", type "webhook".
+- FR-V5-28: The palette must also include a section "From Project Agents" that lists `.claude/agents/*.md` files from the active project. Dragging one creates an agent node pre-populated with that agent's name and system prompt content.
+- FR-V5-29: When advanced flow control nodes are implemented (V5.2+), the palette gains new sections: "Flow Control" with Conditional Router, Merge/Join, Delay, Loop, Error Handler, Sub-workflow.
+
+**Node Duplication**
+- FR-V5-30: Right-click → "Duplicate" on any node creates a copy offset by (+40px, +40px) from the original. The copy gets a new unique ID but inherits all data properties. Edges are NOT duplicated.
+
+**Full Node Configuration (Inspector)**
+- FR-V5-31: Model selection dropdown must be populated from `SUPPORTED_RUNTIME_MODELS` (fetched from `/api/v1/swarm/runtime-capabilities` or hardcoded list). Must show provider groupings: Claude models, Codex models, Gemini models.
+- FR-V5-32: Tools configuration must support free-text comma-separated input with validation. Common tools can be offered as quick-add chips (e.g., "Read", "Write", "Bash", "WebSearch").
+- FR-V5-33: Triage node toggle: when enabled, sets `isTriageNode: true` on the node. A visual indicator (star icon on node) must appear on the canvas. Only ONE node per workflow should be triage — toggling on a new node should auto-disable the previous triage node with a toast notification.
+
+**Workflow Settings Panel**
+- FR-V5-34: A "Settings" button in the toolbar opens a modal with workflow-level configuration:
+  - `mode`: Radio buttons "Autonomous" / "HITL (Human-in-the-Loop)"
+  - `budgetTokens`: Number input with presets (10K, 50K, 100K, 500K, Unlimited)
+  - `circuitBreakerThreshold`: Number input (default 10)
+  - `defaultModel`: Select from supported models
+  - Changes mark workflow as dirty.
+- FR-V5-35: Settings are stored in `workflowDef.settings` and persisted on save.
+
+**Initial Context Editor**
+- FR-V5-36: The Settings modal includes an "Initial Context" tab with a dynamic key-value editor:
+  - "Add Variable" button adds a new row with key (text input) and value (text input)
+  - Delete button per row
+  - Keys must be non-empty strings, values must be strings
+  - This maps to `workflowDef.initialContext`
+  - Changes mark workflow as dirty.
+
+### Wave 3 — Workflow Management & UX (V5.1)
+
+**Duplicate/Clone Workflow**
+- FR-V5-37: "Duplicate Workflow" button or menu option creates a copy with name "[Original Name] (Copy)" via `POST /api/v1/workflows`. Opens the copy immediately.
+
+**Export/Import**
+- FR-V5-38: "Export" button downloads the current WorkflowDefinition as a `.json` file (browser download dialog).
+- FR-V5-39: "Import" button opens a file picker. Selected JSON is validated against WorkflowDefinition schema. On success, creates a new workflow and loads it. On failure, shows validation errors.
+
+**Copy/Paste Nodes**
+- FR-V5-40: `Ctrl+C` copies selected nodes to an internal clipboard (not system clipboard — node data is too complex for plain text). `Ctrl+V` pastes copies at the current mouse position with new unique IDs.
+
+**Snap-to-Grid**
+- FR-V5-41: ReactFlow prop `snapToGrid={true}` with `snapGrid={[20, 20]}`. A toggle in the toolbar enables/disables snap.
+
+**Auto-Layout**
+- FR-V5-42: An "Auto-Layout" button arranges all nodes using a directed-graph layout algorithm (dagre or elkjs). Must handle departments as groups. Layout must not destroy user-placed positions without confirmation.
+
+**Keyboard Shortcuts**
+- FR-V5-43: Keyboard shortcut map:
+  - `Ctrl+S` — Save workflow
+  - `Ctrl+Z` — Undo
+  - `Ctrl+Shift+Z` / `Ctrl+Y` — Redo
+  - `Delete` / `Backspace` — Delete selected nodes/edges
+  - `Ctrl+C` — Copy selected
+  - `Ctrl+V` — Paste
+  - `Ctrl+D` — Duplicate selected
+  - `Ctrl+A` — Select all
+  - `Escape` — Deselect all / close panels
+  - `Space` (hold) — Pan mode
+  - `Ctrl+Enter` — Run workflow (when idle)
+
+**Validation Indicators**
+- FR-V5-44: Before execution, the canvas must validate:
+  - At least one agent node exists
+  - At least one node is marked as triage (isTriageNode)
+  - No orphan nodes (all nodes connected to at least one edge, except triage which may be a sole entry point)
+  - Agent nodes have non-empty systemPrompt
+  - Trigger nodes have valid configuration (webhookPath or rssUrl set)
+- FR-V5-45: Invalid nodes show a red warning badge (!) on the top-right corner. Hovering shows the validation error. Invalid edges show a dashed red line.
+- FR-V5-46: The Run button must be disabled when validation fails, with a tooltip showing the error count.
+
+**Edge Inspector**
+- FR-V5-47: Clicking an edge opens an Edge Inspector panel (replaces or shares space with AgentInspector):
+  - Circuit breaker threshold override (number or "Use workflow default")
+  - Edge label (optional descriptive text displayed on the edge)
+  - Edge source and target (read-only, showing node labels)
+
+### Wave 4 — Execution Visibility (V5.1)
+
+**Execution History**
+- FR-V5-48: A new tab or panel "History" in SwarmView shows past executions for the current workflow:
+  - Columns: executionId (truncated), status, started, duration, nodes run, outcome
+  - Data persisted to `CONFIG_DIR/execution-history/<workflowId>.json` (append-only log, max 100 entries)
+  - Click to view execution details (per-node status snapshot)
+
+**Per-Node Execution Timing**
+- FR-V5-49: During and after execution, AgentInspector shows timing:
+  - "Started at: HH:MM:SS"
+  - "Duration: Xs" (running timer during execution, final value after completion)
+  - "Handoffs received: N, Handoffs sent: M"
+- FR-V5-50: Agent status transitions are timestamped in the Zustand store: `agentStates[nodeId].timestamps: { started, done, error }`.
+
+**Workflow Templates Library**
+- FR-V5-51: A "Templates" section in the Node Palette sidebar (or a separate modal) offers pre-built workflow patterns:
+  - Content Agency (writer → editor → publisher)
+  - Code Review Chain (coder → reviewer → merger)
+  - Research Loop (researcher → analyst → fact-checker → researcher)
+  - Customer Support Triage (triage → billing / support / escalation)
+  - Data Pipeline (fetcher → transformer → validator → loader)
+- FR-V5-52: Each template is a complete WorkflowDefinition JSON. Selecting one creates a new workflow and loads it onto the canvas.
+
+**Workflow Version History**
+- FR-V5-53: Each `PUT /api/v1/workflows/:id` stores the previous version in `CONFIG_DIR/workflows/versions/<workflowId>/<timestamp>.json`.
+- FR-V5-54: `GET /api/v1/workflows/:id/versions` returns a list of versions with timestamps.
+- FR-V5-55: UI: "Version History" button opens a panel showing versions as a timeline. Click to preview, "Restore" to revert.
+
+### Wave 5 — Advanced Flow Control Nodes (V5.2+)
+
+**Conditional Router Node**
+- FR-V5-56: New node type `conditional`. Renders as a diamond shape on canvas.
+- FR-V5-57: Configuration: array of `{ condition: string, targetNodeId: string }` rules evaluated top-to-bottom against `workflowContext`. Conditions use simple expression syntax: `key == "value"`, `key != "value"`, `key contains "text"`, `key exists`. A "default" (else) route is mandatory.
+- FR-V5-58: SwarmEngine evaluates conditions locally (no AI call). The conditional node does NOT spawn a PTY — it's a pure routing node.
+- FR-V5-59: Canvas shows outgoing edges labeled with condition text and colored differently per branch.
+
+**Merge/Join Node**
+- FR-V5-60: New node type `merge`. Renders as a hexagon shape.
+- FR-V5-61: Configuration: `waitFor: "all" | "any" | number`. "all" waits for ALL upstream agents to reach `done` status. "any" fires on the first upstream `done`. A number N waits for exactly N.
+- FR-V5-62: On trigger, the merge node shallow-merges all upstream workflowContext contributions and forwards the combined context to its outgoing edge targets.
+- FR-V5-63: SwarmEngine tracks convergence state per merge node: `{ received: Set<nodeId>, required: number }`.
+
+**Delay/Timer Node**
+- FR-V5-64: New node type `delay`. Renders as a clock icon node.
+- FR-V5-65: Configuration: `delaySeconds: number` (1-3600). After receiving a handoff, waits the configured duration then forwards context unchanged.
+- FR-V5-66: During the delay, the node shows a countdown timer on the canvas.
+- FR-V5-67: No PTY is spawned — pure timer node.
+
+**Loop Node**
+- FR-V5-68: New node type `loop`. Renders as a circular arrow shape.
+- FR-V5-69: Configuration: `maxIterations: number` (1-100) and optional `exitCondition: string` (expression against workflowContext, same syntax as conditional).
+- FR-V5-70: On each iteration, the loop node forwards context to its inner sub-graph (outgoing edges). When the sub-graph's exit edge returns to the loop node, iteration counter increments. If `maxIterations` reached or `exitCondition` evaluates true, forwards to the loop's "exit" edge instead.
+- FR-V5-71: Canvas shows iteration counter `[3/10]` badge on the loop node.
+- FR-V5-72: Circuit breaker must not false-trigger on loop edges — loop edges are exempt up to `maxIterations`.
+
+**Error Handler Node**
+- FR-V5-73: New node type `errorHandler`. Renders with a red lightning bolt icon.
+- FR-V5-74: Configuration: `watchedNodes: string[]` (node IDs to monitor). When any watched node transitions to `error` status, the error handler activates.
+- FR-V5-75: On activation, receives the error context (node ID, error message, last output) and forwards to its outgoing edges.
+- FR-V5-76: Error handler agents receive a system prompt augmented with the error context automatically.
+
+**Sub-Workflow Node**
+- FR-V5-77: New node type `subWorkflow`. Renders as a nested rectangle with a miniature workflow icon.
+- FR-V5-78: Configuration: `workflowId: string` (reference to another saved WorkflowDefinition).
+- FR-V5-79: On activation, SwarmEngine starts a nested execution of the referenced workflow. The parent execution's workflowContext is passed as the sub-workflow's initialContext.
+- FR-V5-80: When the sub-workflow's last agent signals `__DONE__`, the sub-workflow node forwards the merged context to its outgoing edges in the parent workflow.
+- FR-V5-81: PTY sessions for sub-workflow agents are namespaced: `<parentExecId>/<subExecId>/<nodeId>`.
+
+---
+
+## V5.5. New Data Model Additions
+
+### CanvasHistoryEntry (client-side only)
+- `nodes`: array of NodeDefinition (snapshot)
+- `edges`: array of EdgeDefinition (snapshot)
+- `timestamp`: number (Date.now())
+
+### ConditionalData (extends NodeDefinition)
+- `label`: string
+- `rules`: array of `{ condition: string, targetNodeId: string }`
+- `defaultTargetNodeId`: string
+
+### MergeData (extends NodeDefinition)
+- `label`: string
+- `waitFor`: `"all"` | `"any"` | number
+
+### DelayData (extends NodeDefinition)
+- `label`: string
+- `delaySeconds`: number
+
+### LoopData (extends NodeDefinition)
+- `label`: string
+- `maxIterations`: number
+- `exitCondition`: string | null
+- `exitTargetNodeId`: string
+
+### ErrorHandlerData (extends NodeDefinition)
+- `label`: string
+- `watchedNodes`: string[]
+
+### SubWorkflowData (extends NodeDefinition)
+- `label`: string
+- `workflowId`: string
+
+### ExecutionHistoryEntry (server-side, persisted)
+- `executionId`: string
+- `workflowId`: string
+- `status`: string
+- `startedAt`: ISO 8601
+- `endedAt`: ISO 8601 | null
+- `duration`: number (seconds)
+- `agentOutcomes`: `{ [nodeId]: { status, handoffCount, duration } }`
+
+---
+
+## V5.6. New API Endpoints
+
+### Workflow Versioning
+```
+GET    /api/v1/workflows/:id/versions
+       Response: { versions: [{ timestamp, name, description }] }
+
+GET    /api/v1/workflows/:id/versions/:timestamp
+       Response: WorkflowDefinition (the version at that timestamp)
+
+POST   /api/v1/workflows/:id/versions/:timestamp/restore
+       Response: WorkflowDefinition (restored version becomes current)
+```
+
+### Execution History
+```
+GET    /api/v1/swarm/history/:workflowId
+       Response: { executions: ExecutionHistoryEntry[] }
+
+GET    /api/v1/swarm/history/:workflowId/:executionId
+       Response: ExecutionHistoryEntry (detailed)
+```
+
+### Project Agents Discovery
+```
+GET    /api/v1/agents/discover?projectPath=<path>
+       Response: { agents: [{ name, systemPrompt, filePath }] }
+       Purpose: List .claude/agents/*.md files for Node Palette "From Project Agents" section.
+```
+
+### Workflow Templates
+```
+GET    /api/v1/workflows/templates
+       Response: { templates: [{ id, name, description, nodeCount, preview }] }
+
+POST   /api/v1/workflows/templates/:templateId/instantiate
+       Body: { name?: string, projectId?: string }
+       Response: WorkflowDefinition (new workflow created from template)
+```
+
+---
+
+## V5.7. Architecture Changes
+
+### New Client Components
+```
+client/src/canvas/NodePalette.jsx          — Draggable node type sidebar
+client/src/canvas/ContextMenu.jsx          — Right-click context menu
+client/src/canvas/EdgeInspector.jsx         — Edge configuration panel
+client/src/canvas/WorkflowSettingsModal.jsx — Settings + initial context editor
+client/src/canvas/WorkflowToolbar.jsx       — Save, undo/redo, name edit, settings button
+client/src/canvas/ValidationBadge.jsx       — Warning indicators on nodes/edges
+client/src/canvas/nodes/ConditionalNode.jsx — Diamond conditional router
+client/src/canvas/nodes/MergeNode.jsx       — Hexagon merge/join
+client/src/canvas/nodes/DelayNode.jsx       — Clock delay timer
+client/src/canvas/nodes/LoopNode.jsx        — Circular loop iterator
+client/src/canvas/nodes/ErrorHandlerNode.jsx— Red error handler
+client/src/canvas/nodes/SubWorkflowNode.jsx — Nested workflow runner
+client/src/hooks/useCanvasHistory.js        — Undo/redo state management
+client/src/hooks/useCanvasValidation.js     — Pre-run validation
+client/src/utils/sanitizeWorkflow.js        — Strip RF internal fields before save
+client/src/utils/nodeIdGenerator.js         — Generate ^[a-z][a-z0-9-]*$ IDs
+```
+
+### Modified Client Components
+```
+client/src/canvas/SwarmCanvas.jsx           — Add palette, context menu, keyboard shortcuts, onDelete handlers
+client/src/canvas/AgentInspector.jsx        — Upgrade to full edit panel
+client/src/views/SwarmView.jsx              — Add toolbar (save, undo, settings), dirty state tracking
+client/src/store/SwarmContext.jsx            — Add canvasHistory, dirtyState, clipboard
+```
+
+### New Server Components
+```
+server/services/ExecutionHistory.js         — Append-only execution log persistence
+server/services/WorkflowVersionStore.js     — Version snapshot storage
+server/routes/templates.js                  — Template CRUD endpoints
+```
+
+### Modified Server Components
+```
+server/services/SwarmEngine.js              — Conditional/merge/delay/loop/error/sub-workflow evaluation
+server/services/WorkflowStore.js            — Validate new node types, version snapshots on PUT
+server/routes/workflows.js                  — Version endpoints
+server/routes/swarm.js                      — Execution history endpoints
+```
+
+---
+
+## V5.8. Implementation Phase Plan
+
+### Wave 1 — Editor Transition (8 features, ~15 tasks)
+**Goal:** Transform Swarm from viewer to editor. This is the critical phase transition.
+**Scope:** FR-V5-01 through FR-V5-24
+
+| Order | Feature | Files | Complexity |
+|-------|---------|-------|------------|
+| 1.1 | Undo/Redo hook | useCanvasHistory.js (new), SwarmCanvas.jsx | M |
+| 1.2 | Node delete + Edge delete | SwarmCanvas.jsx | S |
+| 1.3 | Sanitize utility | sanitizeWorkflow.js (new) | S |
+| 1.4 | Save button + dirty tracking | SwarmView.jsx, useWorkflow.js | M |
+| 1.5 | Workflow name/description edit | SwarmView.jsx → WorkflowToolbar.jsx (new) | S |
+| 1.6 | Inspector editing (agent) | AgentInspector.jsx | M |
+| 1.7 | Inspector editing (dept, trigger) | AgentInspector.jsx | S |
+| 1.8 | Context menu | ContextMenu.jsx (new), SwarmCanvas.jsx | M |
+| 1.9 | TEST GATE Wave 1 | qa-tester | — |
+
+### Wave 2 — Node Creation & Config (9 features, ~12 tasks)
+**Goal:** Users can build workflows from scratch.
+**Scope:** FR-V5-25 through FR-V5-36
+**Depends on:** Wave 1 (save, inspector editing, context menu)
+
+| Order | Feature | Files | Complexity |
+|-------|---------|-------|------------|
+| 2.1 | Node ID generator | nodeIdGenerator.js (new) | S |
+| 2.2 | Node Palette sidebar | NodePalette.jsx (new), SwarmCanvas.jsx | M |
+| 2.3 | Node duplication | SwarmCanvas.jsx, ContextMenu.jsx | S |
+| 2.4 | Model selection per node | AgentInspector.jsx | S |
+| 2.5 | Tools config per node | AgentInspector.jsx | S |
+| 2.6 | maxTurns + triage toggle | AgentInspector.jsx | S |
+| 2.7 | Department assignment | AgentInspector.jsx | S |
+| 2.8 | Workflow Settings modal | WorkflowSettingsModal.jsx (new) | M |
+| 2.9 | Initial Context editor | WorkflowSettingsModal.jsx | M |
+| 2.10 | "From Project Agents" palette section | NodePalette.jsx, agents discover endpoint | M |
+| 2.11 | TEST GATE Wave 2 | qa-tester | — |
+
+### Wave 3 — Workflow Management & UX (9 features, ~12 tasks)
+**Scope:** FR-V5-37 through FR-V5-47
+**Depends on:** Wave 2
+
+| Order | Feature | Files | Complexity |
+|-------|---------|-------|------------|
+| 3.1 | Duplicate workflow | SwarmView.jsx | S |
+| 3.2 | Export JSON | SwarmView.jsx | S |
+| 3.3 | Import JSON | SwarmView.jsx | S |
+| 3.4 | Copy/paste nodes | SwarmCanvas.jsx, SwarmContext.jsx | M |
+| 3.5 | Snap-to-grid toggle | SwarmCanvas.jsx | S (one prop) |
+| 3.6 | Auto-layout (dagre) | SwarmCanvas.jsx + dagre dependency | M |
+| 3.7 | Keyboard shortcuts | SwarmCanvas.jsx | S |
+| 3.8 | Validation indicators | useCanvasValidation.js (new), ValidationBadge.jsx | M |
+| 3.9 | Edge inspector | EdgeInspector.jsx (new) | M |
+| 3.10 | TEST GATE Wave 3 | qa-tester | — |
+
+### Wave 4 — Execution Visibility (4 features, ~8 tasks)
+**Scope:** FR-V5-48 through FR-V5-55
+**Depends on:** Wave 1 (save infrastructure)
+
+| Order | Feature | Files | Complexity |
+|-------|---------|-------|------------|
+| 4.1 | Execution history persistence | ExecutionHistory.js (new), swarm.js | M |
+| 4.2 | Execution history UI | SwarmView.jsx | M |
+| 4.3 | Per-node timing | SwarmContext.jsx, AgentInspector.jsx | S |
+| 4.4 | Workflow templates | templates.js (new), NodePalette.jsx | M |
+| 4.5 | Version history backend | WorkflowVersionStore.js (new), workflows.js | M |
+| 4.6 | Version history UI | SwarmView.jsx | M |
+| 4.7 | TEST GATE Wave 4 | qa-tester | — |
+
+### Wave 5 — Advanced Flow Control (6 features, ~20 tasks)
+**Scope:** FR-V5-56 through FR-V5-81
+**Depends on:** Wave 2 (palette), Wave 3 (validation)
+**Requires DEC decisions:** DEC-027 (conditional eval), DEC-028 (merge convergence), DEC-029 (loop + circuit breaker interaction)
+
+| Order | Feature | Files | Complexity |
+|-------|---------|-------|------------|
+| 5.1 | Conditional Router node | ConditionalNode.jsx, SwarmEngine.js, WorkflowStore.js | L |
+| 5.2 | Merge/Join node | MergeNode.jsx, SwarmEngine.js | L |
+| 5.3 | Delay/Timer node | DelayNode.jsx, SwarmEngine.js | M |
+| 5.4 | Loop node | LoopNode.jsx, SwarmEngine.js, CircuitBreaker.js | L |
+| 5.5 | Error Handler node | ErrorHandlerNode.jsx, SwarmEngine.js | M |
+| 5.6 | Sub-workflow node | SubWorkflowNode.jsx, SwarmEngine.js | XL |
+| 5.7 | TEST GATE Wave 5 | qa-tester | — |
+
+---
+
+## V5.9. Security Considerations
+
+- SEC-V5-01: Node ID generation must be server-side or validated server-side. Client-generated IDs must match `^[a-z][a-z0-9-]*$` and be re-validated by WorkflowStore on save.
+- SEC-V5-02: Imported workflow JSON must be fully validated against WorkflowDefinition schema before creation. No bypass of SEC-V3-02 through SEC-V3-06.
+- SEC-V5-03: Sub-workflow execution must not create circular references (workflow A embeds B which embeds A). Maximum nesting depth: 3 levels.
+- SEC-V5-04: Condition expressions in Conditional Router and Loop nodes must be evaluated with a safe parser (no `eval()`, no arbitrary JS). Use a whitelist-based expression evaluator: `==`, `!=`, `contains`, `exists`, `>`, `<`, `>=`, `<=` operators only, operating on string/number values from workflowContext.
+- SEC-V5-05: Execution history files must follow the same atomic-write and path-validation discipline as WorkflowStore (write-file-atomic, resolved path prefix check).
+
+---
+
+## V5.10. Open Questions (V5)
+
+1. **Auto-layout library:** dagre vs elkjs? Dagre is simpler and lighter. ELK is more powerful for hierarchical layouts with departments. Recommend dagre for V5.0, evaluate ELK for V5.2.
+2. **Template source:** Should templates be bundled in the app (static JSON) or fetched from a remote repository? Recommend bundled for V5.0 (no network dependency).
+3. **Sub-workflow PTY budget:** Should sub-workflow PTY sessions share the parent's budget pool or have their own? Recommend shared pool for simplicity.
+4. **Execution history retention:** How many past executions to keep per workflow? Recommend 100, auto-prune oldest.
+5. **Version history retention:** How many workflow versions to keep? Recommend 50, auto-prune oldest.
+
+---
+
+## V5.11. Component Specifications (V5 Additions)
+
+Detailed component specs for V5 new components will be added as tasks are created. The pattern follows Section 11 (V3 Component Specs) — each component gets: Inputs, Outputs, Step-by-step Behavior, Contracts, Acceptance Criteria.
+
+Components requiring specs before implementation:
+- `useCanvasHistory` — undo/redo hook
+- `NodePalette` — drag-and-drop sidebar
+- `ContextMenu` — right-click menus
+- `WorkflowSettingsModal` — settings + context editor
+- `sanitizeWorkflow` — RF field stripper
+- `ConditionalNode` + SwarmEngine conditional evaluation
+- `MergeNode` + SwarmEngine convergence tracking
+- `LoopNode` + SwarmEngine iteration management
+- `SubWorkflowNode` + SwarmEngine nested execution

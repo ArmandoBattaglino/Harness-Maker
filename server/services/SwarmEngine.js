@@ -2122,9 +2122,13 @@ class SwarmEngine {
               // PTY output (CLI chrome, hooks) would overwrite the clean snippet.
               return;
             }
-            currentState._snippetSourceBuffer = ((currentState._snippetSourceBuffer ?? '') + cleanChunk).slice(-SNIPPET_SCAN_BUFFER_CHARS);
-            currentState.lastOutputSnippet = this._buildSemanticSnippet(currentState._snippetSourceBuffer);
-            this._broadcastAgentStatus(executionId, nodeId, currentState);
+            // Only update the user-facing snippet AFTER the echo gate has cleared,
+            // so echoed system prompt text never appears in the agent card.
+            if (!currentState.ignoreParserUntil) {
+              currentState._snippetSourceBuffer = ((currentState._snippetSourceBuffer ?? '') + cleanChunk).slice(-SNIPPET_SCAN_BUFFER_CHARS);
+              currentState.lastOutputSnippet = this._buildSemanticSnippet(currentState._snippetSourceBuffer);
+              this._broadcastAgentStatus(executionId, nodeId, currentState);
+            }
           }
           if (currentState && !currentState.promptReady) {
             // Check both the single chunk AND the accumulated buffer — ConPTY can

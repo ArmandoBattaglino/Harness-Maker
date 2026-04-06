@@ -944,8 +944,10 @@ describe('SwarmEngine', () => {
     });
 
     it('should emit agent_status updates with lastOutputSnippet as PTY output arrives', async () => {
-      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
       const tapFn = [...mockSession.swarmListeners][0];
+      // Clear echo gate so snippet updates flow through
+      engine._executions.get(executionId).agentStates.get('node-a').ignoreParserUntil = null;
 
       wsBroadcast.mockClear();
       tapFn('first chunk');
@@ -964,8 +966,9 @@ describe('SwarmEngine', () => {
     });
 
     it('should strip echoed swarm protocol text from lastOutputSnippet while keeping meaningful agent output', async () => {
-      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
       const tapFn = [...mockSession.swarmListeners][0];
+      engine._executions.get(executionId).agentStates.get('node-a').ignoreParserUntil = null;
 
       wsBroadcast.mockClear();
       tapFn('--- SWARM PROTOCOL (mandatory - never skip) ---\nDo NOT output the handoff or done token mid-response. Only as the very LAST line.\n--- END PROTOCOL ---\n');
@@ -981,8 +984,9 @@ describe('SwarmEngine', () => {
     });
 
     it('should keep finder-style snippets focused on workflow-local facts even when stale repo-inspection noise arrives later', async () => {
-      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
       const tapFn = [...mockSession.swarmListeners][0];
+      engine._executions.get(executionId).agentStates.get('node-a').ignoreParserUntil = null;
 
       wsBroadcast.mockClear();
       tapFn([
@@ -1011,8 +1015,9 @@ describe('SwarmEngine', () => {
     });
 
     it('should keep route-checker-style snippets centered on semantic route facts instead of footer noise', async () => {
-      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
       const tapFn = [...mockSession.swarmListeners][0];
+      engine._executions.get(executionId).agentStates.get('node-a').ignoreParserUntil = null;
 
       wsBroadcast.mockClear();
       tapFn([
@@ -1037,8 +1042,9 @@ describe('SwarmEngine', () => {
     });
 
     it('should keep formatter-style snippets on the final report block instead of stale foreign prompt text', async () => {
-      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
       const tapFn = [...mockSession.swarmListeners][0];
+      engine._executions.get(executionId).agentStates.get('node-a').ignoreParserUntil = null;
 
       wsBroadcast.mockClear();
       tapFn([

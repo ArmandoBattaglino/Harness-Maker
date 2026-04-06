@@ -4,8 +4,8 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED - 2026-03-31 — 253 tasks total, 251 COMPLETED, 2 DEFERRED, 0 PENDING. V6.0 Runtime Deep Test Bug Fixes CLOSED.
-  **Active Area:** NONE — All areas CLOSED.
+**Status:** v3.0.0 RELEASED - 2026-03-31 — 258 tasks total, 251 COMPLETED, 2 DEFERRED, 5 PENDING. V7.0 Swarm Terminal Deep Test Bug Fixes IN PROGRESS.
+  **Active Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 (1 fix + 1 fix + 1 test gate + 1 test gate + 1 area checkpoint)
   - V3.1 BUG FIX WAVE: AREA CLOSED 2026-04-02
   - V3.2/V3.3 SWARM RUNTIME INTEGRITY + CONTRACT COMPLETION: AREA CLOSED 2026-04-02 — AREA CHECKPOINT #142 PASS
   - V3.4 SWARM UX DEEP TEST FINDINGS: AREA CLOSED 2026-04-06 — all tasks COMPLETED, AREA CHECKPOINT #148 PASS (15/15 Puppeteer E2E, 3 skipped provider-dependent)
@@ -24,6 +24,7 @@
   - V5.1 DEBUGGER LOOP FULL-APP DEEP CHECK: AREA CLOSED 2026-04-06 — #234 COMPLETED, #235 PASS, #236 DEFERRED (ConPTY — unfixable), #237 PASS
   - V5.2 SWARM DEEP TEST BUG FIXES: AREA CLOSED 2026-04-06 — #238-#241 COMPLETED, #242 COMPLETED (duplicate workflow names fixed), #243 PASS, #244 PASS
   - V6.0 RUNTIME DEEP TEST BUG FIXES: AREA CLOSED 2026-04-06 — AREA CHECKPOINT #253 PASS. All 4 bug fixes verified, 312/312 tests, build clean.
+  - V7.0 SWARM TERMINAL DEEP TEST BUG FIXES: IN PROGRESS — Tasks #254-#258
   DEFERRED (2 tasks, both MVP-acceptable, no fix possible):
     - #236: BUG-UI-1 — ConPTY terminal prompt garble after navigation (Windows platform limitation, DEC-009)
     - (none other — #233 and #242 previously marked DEFERRED are now COMPLETED)
@@ -12879,4 +12880,157 @@ Acceptance Criteria:
   - [x] No regression in previously passing areas
   - [x] npm test passes, client build clean
 Dependencies: TASK #249, TASK #250, TASK #251, TASK #252
+---
+
+---
+
+## AREA: V7.0 — Swarm Terminal Deep Test Bug Fixes
+_Components: HandoffParser.js done token matching, SwarmEngine.js snippet extraction_
+_Tasks: #254 → #258_
+_Source: Debugger Loop Phase 1 — Deep E2E test of Swarm runtime terminals (2026-04-06)_
+_Gate: All fixes verified via browser re-test before AREA CHECKPOINT_
+
+---
+
+TASK #254: BUG-DONE-BARE-1 — Accept bare DONE token in HandoffParser for terminal node completion
+Area: V7.0 — Swarm Terminal Deep Test Bug Fixes
+Agent: debugger
+Priority: LOW
+Difficulty: EASY
+Status: COMPLETED
+Completion Note: 2026-04-06 — DONE_RE regex widened to accept bare DONE on its own line (with optional bullet prefix) in addition to __DONE__. All 114 HandoffParser tests pass, no regressions.
+Context:
+  Bug ID: BUG-DONE-BARE-1
+  Severity: LOW
+  Component: server/services/HandoffParser.js (DONE_RE pattern) + server/services/SwarmEngine.js (done reminder logic)
+  Description:
+    Claude consistently emits just "DONE" (without double underscores) instead of "__DONE__" as the final agent token.
+    The HandoffParser.js uses `DONE_RE = /__DONE__/` (line 25) which requires exact `__DONE__` match.
+    When the parser fails to detect the bare DONE, the done reminder timer (SwarmEngine.js:2324-2334) fires after 3s,
+    sending a reinject prompt: "You have completed your work but did not emit the required done marker."
+    The agent then outputs __DONE__ on the second try, wasting ~40 tokens per terminal node.
+    Reproduced in 2/2 test runs on the Writer node of "TypeScript Features Research and Summary" workflow.
+  Expected: Parser should recognize both `__DONE__` and bare `DONE` on its own line (with boundary checks to avoid false positives)
+  Actual: Parser only matches `__DONE__`, causing unnecessary done reminder reinject for terminal nodes
+  Root cause: DONE_RE regex is too strict — only matches `__DONE__` with double underscores
+  Fix approach:
+    1. In HandoffParser.js, update DONE_RE to also match bare `DONE` on its own line:
+       Change: `const DONE_RE = /__DONE__/;`
+       To: `const DONE_RE = /(?:^|\n)\s*(?:●\s*)?(?:__)?DONE(?:__)?\s*(?:\n|$)/m;`
+       This matches: `__DONE__`, `DONE`, `● DONE` on their own line (with optional whitespace/bullet prefix)
+    2. Ensure no false positives: the regex requires DONE to be on its own line (not part of sentences like "I am DONE with the task")
+    3. Run npm test to verify 312/312 pass
+Acceptance Criteria:
+  - [ ] HandoffParser.js DONE_RE updated to match bare DONE on its own line
+  - [ ] No false positives in existing test suite (312/312 tests pass)
+  - [ ] Browser re-test: Writer node completes WITHOUT done reminder reinject
+  - [ ] npm run build --prefix client passes
+Dependencies: none
+---
+
+TASK #255: BUG-SNIPPET-INIT-1 — Filter system prompt text from initial agent snippet display
+Area: V7.0 — Swarm Terminal Deep Test Bug Fixes
+Agent: debugger
+Priority: LOW
+Difficulty: EASY
+Status: PENDING
+Context:
+  Bug ID: BUG-SNIPPET-INIT-1
+  Severity: LOW
+  Component: server/services/SwarmEngine.js (SNIPPET_NOISE_LINE_PATTERNS + _buildSemanticSnippet)
+  Description:
+    During the first ~3s of agent execution, the agent node card in SwarmView shows system prompt text
+    (e.g., "You are a technical Researcher. Your task is to list exactly 3 notable features")
+    instead of showing blank or a loading indicator. The snippet is quickly replaced by real agent output,
+    but the initial flash of system prompt text is noticeable and confusing.
+  Expected: Agent node card should show blank or "Starting..." until real agent output arrives
+  Actual: Agent node card shows system prompt text for ~3s before real output replaces it
+  Root cause: The tapFn (SwarmEngine.js:2070-2098) updates `_snippetSourceBuffer` and `lastOutputSnippet`
+    with ALL PTY output including echoed system prompt text, before the echo gate filters parser input.
+    The SNIPPET_NOISE_LINE_PATTERNS don't cover all system prompt patterns (e.g., "You are a technical Researcher").
+  Fix approach:
+    Option A (simple): Add more patterns to SNIPPET_NOISE_LINE_PATTERNS to catch common system prompt lines:
+      - /^you are a \w+ \w+\. your task/i
+      - /^you receive a list of/i
+    Option B (robust): Don't update lastOutputSnippet while the echo gate is active (ignoreParserUntil is set).
+      This is the more correct fix — it means the snippet only shows content that arrived after the echo marker.
+      In tapFn, wrap the snippet update in: `if (!currentState.ignoreParserUntil) { ... update snippet ... }`
+    Recommend Option B as it's more robust and prevents ALL echoed prompt text from appearing.
+Acceptance Criteria:
+  - [ ] Agent node card does NOT show system prompt text during initial execution
+  - [ ] Agent node card shows real agent output once available
+  - [ ] npm test passes (312/312)
+  - [ ] npm run build --prefix client passes
+Dependencies: none
+---
+
+TASK #256: TEST GATE — BUG-DONE-BARE-1 verification
+Area: V7.0 — Swarm Terminal Deep Test Bug Fixes
+Agent: qa-tester
+Priority: LOW
+Difficulty: EASY
+Status: PENDING
+Context:
+  Verify that Task #254 fix works correctly:
+  1. npm test --prefix server — 312/312 pass
+  2. npm run build --prefix client — clean build
+  3. Start server, navigate to Swarm view
+  4. Load "TypeScript Features Research and Summary" workflow
+  5. Run workflow, wait for completion
+  6. Open Writer terminal (PTY Explosion) — verify NO done reinject prompt appears
+  7. Verify workflow completes normally (Researcher → handoff → Writer → done → Completed)
+Acceptance Criteria:
+  - [ ] Writer terminal shows NO "You have completed your work but did not emit the required done marker" reinject
+  - [ ] Workflow completes in one pass (no extra DONE prompt)
+  - [ ] npm test passes, build clean
+Dependencies: TASK #254
+---
+
+TASK #257: TEST GATE — BUG-SNIPPET-INIT-1 verification
+Area: V7.0 — Swarm Terminal Deep Test Bug Fixes
+Agent: qa-tester
+Priority: LOW
+Difficulty: EASY
+Status: PENDING
+Context:
+  Verify that Task #255 fix works correctly:
+  1. npm test --prefix server — 312/312 pass
+  2. npm run build --prefix client — clean build
+  3. Start server, navigate to Swarm view
+  4. Load workflow and run it
+  5. Watch Researcher node card during first 5 seconds of execution
+  6. Verify the snippet does NOT show system prompt text (e.g., "You are a technical Researcher")
+  7. Verify the snippet shows real agent output once it starts arriving
+Acceptance Criteria:
+  - [ ] Researcher node card does NOT flash system prompt text during startup
+  - [ ] Snippet correctly shows real agent output
+  - [ ] npm test passes, build clean
+Dependencies: TASK #255
+---
+
+TASK #258: AREA CHECKPOINT — V7.0 Swarm Terminal Deep Test Bug Fixes
+Area: V7.0 — Swarm Terminal Deep Test Bug Fixes
+Agent: qa-tester
+Priority: LOW
+Difficulty: EASY
+Status: PENDING
+Context:
+  Final verification that all V7.0 bug fixes are working:
+  1. npm test --prefix server — all tests pass
+  2. npm run build --prefix client — clean build
+  3. Full Swarm workflow E2E:
+     a. Load saved workflow
+     b. Run workflow
+     c. Verify agent terminals work (PTY Explosion opens/closes correctly for each agent)
+     d. Verify no done reinject for terminal nodes
+     e. Verify no system prompt text in initial snippets
+     f. Verify snippet content is real agent output
+     g. Verify workflow lifecycle (idle → running → done → completed)
+  4. No regression in any previous area
+Acceptance Criteria:
+  - [ ] All TEST GATE tasks (#256, #257) PASS
+  - [ ] Integration scenario (steps 1-4 above) passes
+  - [ ] No regression in previously passing areas
+  - [ ] npm test passes, build clean
+Dependencies: TASK #256, TASK #257
 ---

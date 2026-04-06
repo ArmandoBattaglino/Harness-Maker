@@ -22,7 +22,7 @@ const HANDOFF_PREFIX_ALIASES = [HANDOFF_PREFIX, 'HANDOFF:'];
 const HANDOFF_WINDOW_RE = /^(?:__HANDOFF__:|HANDOFF:)[A-Za-z0-9+/=:_\-\s]+/;
 const TARGET_RE = /^[a-z][a-z0-9-]*$/;
 const BASE64_RE = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{4})$/;
-const DONE_RE = /__DONE__/;
+const DONE_RE = /__DONE__|(?:^|\n)\s*(?:[●•]\s*)?DONE\s*(?:\n|$)/m;
 
 export class HandoffParser {
   constructor() {

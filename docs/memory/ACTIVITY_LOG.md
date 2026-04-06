@@ -1,3 +1,14 @@
+## 2026-04-06 — code-mapper — Tasks #245-#248: Thinking Token Collapse + Codex Auth Filter + Gemini Prompt Echo Filter + Empty Prompt Validation
+**Outcome:** COMPLETED
+**Summary:** Mapped all 4 tasks to CODE_MAP.md: updated SNIPPET_NOISE_LINE_PATTERNS (Tasks #245-#246), added _snippetOverlapsPrompt + _refreshAgentSnippet entries (Task #247), updated PromptToFlowBar + handleGenerate for promptError state (Task #248). Appended 4 CHANGELOG entries.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** none
+**Decisions made:** Mapped _refreshAgentSnippet as new CODE_MAP entry (previously unmapped orchestrator function)
+**Blockers:** none
+**Next:** nothing — task chain complete
+
+---
+
 ## 2026-04-06 — qa-tester — Tasks #249-#253: V6.0 TEST GATES + AREA CHECKPOINT
 **Outcome:** COMPLETED
 **Summary:** Verified all 4 V6.0 bug fixes. TEST GATE #249 (thinking token collapse) PASS -- SNIPPET_NOISE_LINE_PATTERNS has /^\(thinking\)(\(thinking\))*$/i and _buildSemanticSnippet collapses repeated tokens. TEST GATE #250 (Codex auth filter) PASS -- 8 auth-related patterns present. TEST GATE #251 (Gemini prompt echo) PASS -- regex patterns + _snippetOverlapsPrompt() 60% word overlap method. TEST GATE #252 (empty prompt validation) PASS -- Puppeteer E2E confirmed red error message on empty Generate, clears on typing. AREA CHECKPOINT #253 PASS -- 312/312 tests, 480 module build, no regressions. V6.0 AREA IS CLOSED.
