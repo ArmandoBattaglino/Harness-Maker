@@ -32,6 +32,8 @@ _Last updated: 2026-04-06 after V7.0 Swarm Terminal Deep Test Bug Fixes (Tasks #
 |----|----------|-------------|------|--------|
 | BUG-DONE-TOKEN-REPLAY-1 | LOW | `sanitizeReplayOutput()` did not filter done-token recovery prompts injected when agent finishes without emitting __DONE__ — 3 patterns added to REPLAY_NOISE_LINE_PATTERNS | #233 | FIXED 2026-04-06 |
 | BUG-SWARM-UI-1 | LOW | Duplicate workflow names in saved workflows dropdown — name-based deduplication + date suffix added to SwarmView.jsx | #242 | FIXED 2026-04-06 |
+| BUG-DONE-BARE-1 | LOW | `DONE_RE` only matched `__DONE__` — bare `DONE` on its own line now also accepted by HandoffParser, eliminating unnecessary done reminder reinject | #254 | FIXED 2026-04-06 |
+| BUG-SNIPPET-INIT-1 | LOW | Agent card showed system prompt text for ~3s during startup — snippet update now gated by echo gate (`ignoreParserUntil`) in SwarmEngine.js tapFn | #255 | FIXED 2026-04-06 |
 
 ## Status Legend
 - UP_TO_DATE -- matches current code
@@ -56,7 +58,7 @@ _Last updated: 2026-04-06 after V7.0 Swarm Terminal Deep Test Bug Fixes (Tasks #
 | docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-06 | V5.0 Phase 1 deep test entry appended by documenter. |
 | docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-04-06 | V1 audit. SEC-06 entry updated with webhook CSRF exemption note (Task #234). |
 | docs/security-v3-audit.md | UP_TO_DATE | 2026-04-06 | MEDIUM-V3-01 marked FIXED (Task #234). Summary table updated. |
-| Inline comments | UP_TO_DATE | 2026-04-06 | V6.0: SwarmEngine.js thinking collapse (line 1179-1180) has clear inline comment. `_snippetOverlapsPrompt()` (line 973-988) has JSDoc. SNIPPET_NOISE_LINE_PATTERNS auth/thinking entries (lines 123, 153-161) are self-documenting regexes. PromptToFlowBar.jsx empty prompt validation is straightforward. No stale comments. |
+| Inline comments | UP_TO_DATE | 2026-04-06 | V7.0: SwarmEngine.js echo gate snippet guard (line ~2125-2130) has clear inline comment explaining why snippet updates are deferred until echo gate clears. HandoffParser.js DONE_RE regex is self-documenting. No stale comments. |
 | docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. Deferred indefinitely. |
 
 ## Stale Sections (known gaps)

@@ -2,6 +2,46 @@
 
 ## 2026-04-06
 
+### [Tasks #254-#255] V7.0 Swarm Terminal Deep Test Bug Fixes — BUG-DONE-BARE-1 + BUG-SNIPPET-INIT-1
+- Agent: code-mapper (post-task entry)
+- Scope: 2 bug fixes, 1 test file updated
+
+| Task | Title | Verdict | Agent |
+|------|-------|---------|-------|
+| #254 | BUG-DONE-BARE-1 — DONE_RE regex widened to accept bare DONE | COMPLETED | debugger |
+| #255 | BUG-SNIPPET-INIT-1 — Snippet update gated by ignoreParserUntil | COMPLETED | debugger |
+
+#### server/services/HandoffParser.js
+- **Change type:** MODIFIED
+- **What changed:**
+  1. `DONE_RE` regex (line 25) updated from `/__DONE__/` to `/__DONE__|(?:^|\n)\s*(?:[●•]\s*)?DONE\s*(?:\n|$)/m` — now accepts bare `DONE` on its own line, with optional bullet prefix (`●` or `•`), in addition to the `__DONE__` wrapped form. Uses `/m` multiline flag.
+- **Why:** Some AI providers emit `DONE` without the double-underscore wrapper. The HandoffParser was missing these done signals, leaving agents stuck in "running" state.
+
+#### server/services/SwarmEngine.js
+- **Change type:** MODIFIED
+- **What changed:**
+  1. Lines 2125-2131: The snippet update block in tapFn (`_snippetSourceBuffer` append + `_buildSemanticSnippet` + `_broadcastAgentStatus`) is now wrapped in `if (!currentState.ignoreParserUntil)` guard
+- **Why:** During the echo gate period (when the PTY echoes back the system prompt text), the snippet update was running unguarded, causing system prompt text to flash briefly in the agent card UI. The `ignoreParserUntil` timestamp is already set by the echo gate mechanism — this change respects it during snippet updates too.
+
+#### server/tests/swarm-engine.test.js
+- **Change type:** MODIFIED
+- **What changed:**
+  1. 8 tests updated to clear `ignoreParserUntil` (set it to `0` or `undefined`) before testing snippet content — ensures tests verify snippet behavior with the echo gate disabled, matching the real-world steady-state
+- **Why:** The new `ignoreParserUntil` guard in tapFn would cause these tests to silently skip snippet updates since the echo gate was still active during test execution.
+
+### Functions Modified
+- `HandoffParser.feed(rawChunk)` in `server/services/HandoffParser.js` — DONE_RE regex widened (bare DONE acceptance)
+- `SwarmEngine._spawnAgentPty` tapFn in `server/services/SwarmEngine.js` — snippet update gated by ignoreParserUntil
+
+### Connection Changes
+- No new cross-module dependencies. Both changes are internal to their respective modules.
+
+### Impact on Other Code
+- HandoffParser.feed callers (SwarmEngine tapFn) now receive `{ type: 'done' }` events for bare `DONE` tokens — this is additive (more done signals detected), not a breaking change.
+- The ignoreParserUntil guard in tapFn means snippet updates are delayed until after the echo gate clears — this is the intended behavior and matches what `_refreshAgentSnippet` already does.
+
+---
+
 ### V5 PRD Addendum — N8N-Style Visual Workflow Editor (Planning Milestone)
 - Agent: code-mapper (post-planning entry)
 - Scope: PRD update only — no code files modified

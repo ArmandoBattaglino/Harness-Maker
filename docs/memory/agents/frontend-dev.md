@@ -2346,3 +2346,59 @@ AgentInspector.jsx is fully functional as an edit panel. All acceptance criteria
 ### Handoff
 None — task fully self-contained. The save-to-server feature is handled by a separate V5 task.
 ---
+
+---
+## 2026-04-06 — Task: FR-V5-16/17/18/19/20 — useCanvasHistory.js Undo/Redo
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+SwarmCanvas.jsx had useNodesState/useEdgesState from @xyflow/react but NO undo/redo support. Recent prior task had added onNodesDelete with cascade and deleteKeyCode. No useCanvasHistory hook existed. Zustand SwarmContext.jsx has execution state that must NOT be affected by undo/redo (DEC-011).
+
+### What I did
+1. Read SwarmCanvas.jsx, SwarmContext.jsx, package.json, existing hooks (useHandoff.js for style reference)
+2. Created client/src/hooks/useCanvasHistory.js — custom hook with useRef-based undo/redo stacks (max 50 entries), structuredClone for deep copying, version counter for canUndo/canRedo reactivity
+3. Integrated into SwarmCanvas.jsx:
+   - pushHistory before onConnect (edge add), onNodesDelete, onEdgesDelete
+   - onNodeDragStart captures pre-drag snapshot in ref, onNodeDragStop pushes it to history
+   - handleUpdateNode debounces rapid edits (500ms) — only first edit in a burst creates a history entry
+   - Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y keyboard shortcuts with input/textarea/contentEditable exclusion
+4. Verified build: 481 modules, 0 errors
+5. Verified server tests: 312/312 pass
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/hooks/useCanvasHistory.js | CREATED | Undo/redo hook with ref-based stacks, structuredClone, 50-entry cap |
+| client/src/canvas/SwarmCanvas.jsx | MODIFIED | Integrated useCanvasHistory — added history push points, drag start/stop pair, keyboard listener, debounced data edit history |
+
+### Improvements delivered
+- Ctrl+Z undoes node moves, edge adds, node/edge deletes, node data edits
+- Ctrl+Shift+Z / Ctrl+Y redoes
+- History capped at 50 entries (oldest dropped on overflow)
+- canUndo/canRedo booleans exported for toolbar button state
+- Rapid node data edits debounced into single history entry (500ms)
+- Undo/redo never touches Zustand execution state (DEC-011)
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| onNodeDragStop would snapshot post-drag state | nodes in closure already have updated positions when DragStop fires | Added onNodeDragStart to capture pre-drag state in preDragSnapshotRef, DragStop pushes the ref | FIXED |
+
+### Decisions I made
+- Used useRef for stacks instead of useState — avoids re-renders on every history push (only bump version when canUndo/canRedo changes)
+- Used structuredClone for deep cloning — available in all modern browsers, more reliable than JSON parse/stringify for edge cases
+- pushHistory takes prevNodes/prevEdges (state BEFORE the change) — the caller passes current state before applying the mutation
+- Drag handling uses a start/stop ref pair instead of relying on closure state at stop time
+- Debounce pattern: first edit in burst captures snapshot, subsequent edits within 500ms just reset the timer
+
+### What I learned
+- React Flow's onNodeDragStop fires AFTER positions are updated in the nodes array — need onNodeDragStart to capture pre-drag state
+- React Flow's onNodesDelete and onEdgesDelete fire BEFORE the actual deletion is applied by the internal change handler — so `nodes` in the closure still has the deleted items, which is correct for history snapshots
+
+### State I'm leaving behind
+useCanvasHistory.js is complete and integrated. Build passes (481 modules, 0 errors). 312/312 server tests pass. canUndo/canRedo are available in SwarmCanvas scope but not yet wired to a toolbar — a future task can consume them from SwarmCanvas or expose them via Zustand.
+
+### Handoff
+canUndo/canRedo booleans are available in SwarmCanvas.jsx scope. A toolbar task can either lift them to Zustand or accept them as props from SwarmCanvas. The hook API is: pushHistory(prevNodes, prevEdges), undo(currentNodes, currentEdges, setNodes, setEdges), redo(currentNodes, currentEdges, setNodes, setEdges).
+---

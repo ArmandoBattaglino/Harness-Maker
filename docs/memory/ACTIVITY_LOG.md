@@ -3754,3 +3754,25 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** V5 Wave 1 remaining tasks (save-to-server, other editor components)
 ---
+
+---
+## 2026-04-06 — frontend-dev — Task: FR-V5-16/17/18/19/20 — useCanvasHistory.js Undo/Redo
+**Outcome:** COMPLETED
+**Summary:** Created useCanvasHistory.js hook (ref-based undo/redo stacks, 50-entry cap, structuredClone). Integrated into SwarmCanvas.jsx with Ctrl+Z/Ctrl+Shift+Z/Ctrl+Y shortcuts, history push on connect/delete/drag-stop/data-edit (debounced). Canvas-only — no execution state affected (DEC-011). Build: 481 modules, 0 errors. Tests: 312/312 pass.
+**Files changed:** client/src/hooks/useCanvasHistory.js (CREATED), client/src/canvas/SwarmCanvas.jsx (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** useRef for stacks (no re-renders); structuredClone for deep copy; onNodeDragStart/Stop pair for correct pre-drag snapshot; 500ms debounce on data edits
+**Blockers:** none
+**Next:** Toolbar integration for canUndo/canRedo button state (separate V5 task)
+---
+
+---
+## 2026-04-06 — documenter — V7.0 Documentation Update (Tasks #254-#255)
+**Outcome:** COMPLETED
+**Summary:** Updated docs/ARCHITECTURE.md Section 11.4 to reflect that DONE token now accepts both `__DONE__` and bare `DONE`. Updated DOC_STATUS.md with V7.0 section, two new fixed bug entries, and refreshed documentation health table timestamps. No README, API, or PRD changes needed — both fixes are internal logic.
+**Files changed:** docs/ARCHITECTURE.md, docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** TEST GATES #256-#257 and AREA CHECKPOINT #258 to close V7.0
+---

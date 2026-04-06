@@ -75,6 +75,39 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange }) 
     }
   }, [workflowDef, setNodes, setEdges, fitView]);
 
+  // Report canvas state changes to parent for save (FR-V5-01)
+  const canvasChangeRef = useRef(onCanvasChange);
+  canvasChangeRef.current = onCanvasChange;
+  const markDirtyRef = useRef(markDirty);
+  markDirtyRef.current = markDirty;
+
+  useEffect(() => {
+    if (canvasChangeRef.current) {
+      canvasChangeRef.current(nodes, edges);
+    }
+  }, [nodes, edges]);
+
+  // Wraps onNodesChange to also mark dirty
+  const handleNodesChange = useCallback(
+    (changes) => {
+      onNodesChange(changes);
+      // Mark dirty for meaningful changes (position, add, remove, replace)
+      const meaningful = changes.some((c) => c.type !== 'select' && c.type !== 'dimensions');
+      if (meaningful && markDirtyRef.current) markDirtyRef.current();
+    },
+    [onNodesChange]
+  );
+
+  // Wraps onEdgesChange to also mark dirty
+  const handleEdgesChange = useCallback(
+    (changes) => {
+      onEdgesChange(changes);
+      const meaningful = changes.some((c) => c.type !== 'select');
+      if (meaningful && markDirtyRef.current) markDirtyRef.current();
+    },
+    [onEdgesChange]
+  );
+
   // Drill-down filtering: when focusedDepartmentId is set, show only nodes
   // that are children of that department (parentId === focusedDepartmentId) + the dept itself
   const visibleNodes = useMemo(() => {
@@ -98,6 +131,7 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange }) 
     (params) => {
       pushHistory(nodes, edges);
       setEdges((eds) => addEdge({ ...params, type: 'handoff' }, eds));
+      if (markDirtyRef.current) markDirtyRef.current();
     },
     [setEdges, pushHistory, nodes, edges]
   );
@@ -156,6 +190,148 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange }) 
     },
     [pushHistory, nodes, edges]
   );
+
+  // ---- Context menu handlers (FR-V5-21 through FR-V5-24) ----
+  const handlePaneContextMenu = useCallback(
+    (event) => {
+      event.preventDefault();
+      setContextMenu({ x: event.clientX, y: event.clientY, type: 'canvas', screenX: event.clientX, screenY: event.clientY });
+    },
+    []
+  );
+
+  const handleNodeContextMenu = useCallback(
+    (event, node) => {
+      event.preventDefault();
+      setContextMenu({ x: event.clientX, y: event.clientY, type: 'node', nodeId: node.id });
+    },
+    []
+  );
+
+  const handleEdgeContextMenu = useCallback(
+    (event, edge) => {
+      event.preventDefault();
+      setContextMenu({ x: event.clientX, y: event.clientY, type: 'edge', edgeId: edge.id });
+    },
+    []
+  );
+
+  const closeContextMenu = useCallback(() => setContextMenu(null), []);
+
+  // Context menu action: add a new agent node at click position
+  const addNodeAtPosition = useCallback(
+    (type, screenX, screenY) => {
+      const position = screenToFlowPosition({ x: screenX, y: screenY });
+      const id = `${type}-${Date.now()}`;
+      const newNode = {
+        id,
+        type,
+        position,
+        data: { label: type === 'agent' ? 'New Agent' : type === 'department' ? 'New Department' : 'New Trigger' },
+      };
+      pushHistory(nodes, edges);
+      setNodes((nds) => [...nds, newNode]);
+      if (markDirtyRef.current) markDirtyRef.current();
+    },
+    [screenToFlowPosition, pushHistory, nodes, edges, setNodes]
+  );
+
+  // Context menu action: duplicate a node
+  const duplicateNode = useCallback(
+    (nodeId) => {
+      const node = nodes.find((n) => n.id === nodeId);
+      if (!node) return;
+      const newId = `${node.type}-${Date.now()}`;
+      const duplicated = {
+        ...node,
+        id: newId,
+        position: { x: node.position.x + 40, y: node.position.y + 40 },
+        data: { ...node.data },
+        selected: false,
+      };
+      pushHistory(nodes, edges);
+      setNodes((nds) => [...nds, duplicated]);
+      if (markDirtyRef.current) markDirtyRef.current();
+    },
+    [nodes, edges, pushHistory, setNodes]
+  );
+
+  // Context menu action: delete a node
+  const deleteNode = useCallback(
+    (nodeId) => {
+      pushHistory(nodes, edges);
+      setNodes((nds) => nds.filter((n) => n.id !== nodeId && n.parentId !== nodeId));
+      setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+      if (markDirtyRef.current) markDirtyRef.current();
+    },
+    [nodes, edges, pushHistory, setNodes, setEdges]
+  );
+
+  // Context menu action: delete an edge
+  const deleteEdge = useCallback(
+    (edgeId) => {
+      pushHistory(nodes, edges);
+      setEdges((eds) => eds.filter((e) => e.id !== edgeId));
+      if (markDirtyRef.current) markDirtyRef.current();
+    },
+    [nodes, edges, pushHistory, setEdges]
+  );
+
+  // Context menu action: copy node to clipboard
+  const copyNode = useCallback(
+    (nodeId) => {
+      const node = nodes.find((n) => n.id === nodeId);
+      if (node) clipboardRef.current = structuredClone(node);
+    },
+    [nodes]
+  );
+
+  // Context menu action: paste from clipboard
+  const pasteNode = useCallback(
+    (screenX, screenY) => {
+      if (!clipboardRef.current) return;
+      const position = screenToFlowPosition({ x: screenX, y: screenY });
+      const newId = `${clipboardRef.current.type}-${Date.now()}`;
+      const pasted = {
+        ...clipboardRef.current,
+        id: newId,
+        position,
+        selected: false,
+      };
+      pushHistory(nodes, edges);
+      setNodes((nds) => [...nds, pasted]);
+      if (markDirtyRef.current) markDirtyRef.current();
+    },
+    [screenToFlowPosition, nodes, edges, pushHistory, setNodes]
+  );
+
+  // Build context menu actions based on type
+  const contextMenuActions = useMemo(() => {
+    if (!contextMenu) return [];
+    if (contextMenu.type === 'canvas') {
+      return [
+        { label: 'Add Agent Node', icon: '\uD83E\uDD16', onClick: () => addNodeAtPosition('agent', contextMenu.screenX ?? contextMenu.x, contextMenu.screenY ?? contextMenu.y) },
+        { label: 'Add Department', icon: '\uD83C\uDFE2', onClick: () => addNodeAtPosition('department', contextMenu.screenX ?? contextMenu.x, contextMenu.screenY ?? contextMenu.y) },
+        { label: 'Add Trigger', icon: '\u26A1', onClick: () => addNodeAtPosition('trigger', contextMenu.screenX ?? contextMenu.x, contextMenu.screenY ?? contextMenu.y) },
+        { label: 'Select All', icon: '\u2610', onClick: () => setNodes((nds) => nds.map((n) => ({ ...n, selected: true }))) },
+        { label: 'Paste', icon: '\uD83D\uDCCB', onClick: () => pasteNode(contextMenu.x, contextMenu.y), disabled: !clipboardRef.current },
+      ];
+    }
+    if (contextMenu.type === 'node') {
+      return [
+        { label: 'Edit', icon: '\u270F\uFE0F', onClick: () => setSelectedNode(contextMenu.nodeId) },
+        { label: 'Duplicate', icon: '\uD83D\uDCC4', onClick: () => duplicateNode(contextMenu.nodeId) },
+        { label: 'Copy', icon: '\uD83D\uDCCB', onClick: () => copyNode(contextMenu.nodeId) },
+        { label: 'Delete', icon: '\uD83D\uDDD1\uFE0F', onClick: () => deleteNode(contextMenu.nodeId) },
+      ];
+    }
+    if (contextMenu.type === 'edge') {
+      return [
+        { label: 'Delete', icon: '\uD83D\uDDD1\uFE0F', onClick: () => deleteEdge(contextMenu.edgeId) },
+      ];
+    }
+    return [];
+  }, [contextMenu, addNodeAtPosition, pasteNode, setSelectedNode, duplicateNode, copyNode, deleteNode, deleteEdge, setNodes]);
 
   const handleUpdateNode = useCallback(
     (nodeId, patch) => {
