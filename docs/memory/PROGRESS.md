@@ -1,3 +1,5 @@
+- [V4.0.2 AREA CLOSED 2026-04-06] TASK #187 COMPLETED — AREA CHECKPOINT PASS. 312/312 tests, build OK. All 6 Gemini E2E PTY/UI bugs verified fixed: PtyExplosion live output, ring buffer TUI sanitization, blocker false-positive suppression, snippet protocol filtering, InterAgentFeed icons. No regressions.
+
 - [V4.0.4 TASK #199 COMPLETED 2026-04-06] Verified no change needed — control tokens __DONE__ and __HANDOFF__ are already preserved literally throughout the full pipeline (server snippet generation, WS broadcast, client rendering). Not a bug. TEST GATE #200 can proceed.
 
 # Progress
