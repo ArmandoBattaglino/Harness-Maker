@@ -4001,3 +4001,14 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** SwarmEngine integration to call addEntry() on execution complete; QA test gate for Wave 4
 ---
+
+---
+## 2026-04-06 — code-mapper — V5 Wave 4: Code Map + Changelog Update
+**Outcome:** COMPLETED
+**Summary:** Mapped all 11 V5 Wave 4 files (5 new, 6 modified). Added 25+ new function entries to CODE_MAP.md, updated 3 existing entries (WorkflowStore.update, _writeWorkflow, swarmRoutes factory), updated 4 Module Index rows, added 4 new Module Index rows. Appended full CHANGELOG entry.
+**Files changed:** docs/memory/CODE_MAP.md (MODIFIED), docs/memory/CHANGELOG.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** QA test gate for Wave 4 features
+---

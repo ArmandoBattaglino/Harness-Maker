@@ -3428,8 +3428,11 @@ class SwarmEngine {
     execution.edgeCounters.set(edgeId, counter);
 
     // 4. Circuit breaker check (advisory only — does not stop execution)
+    //    Loop node edges are exempt from circuit breaker (FR-V5-72).
+    const sourceNode = execution.workflowDef.nodes.find((n) => n.id === sourceNodeId);
+    const isLoopEdge = sourceNode?.type === 'loop';
     const threshold = execution.workflowDef.settings?.circuitBreakerThreshold ?? 10;
-    if (this._circuitBreaker && this._circuitBreaker.check(edgeId, counter, threshold)) {
+    if (!isLoopEdge && this._circuitBreaker && this._circuitBreaker.check(edgeId, counter, threshold)) {
       if (this._wsBroadcast) {
         this._wsBroadcast(executionId, { type: 'circuit_breaker', edgeId, counter, threshold });
       }
@@ -3451,14 +3454,35 @@ class SwarmEngine {
       });
     }
 
-    // 7. Spawn or reuse target agent PTY
+    // 7. Check if target is a flow-control node (Wave 5)
+    const targetNode = execution.workflowDef.nodes.find((n) => n.id === targetId);
+    if (targetNode && this._isFlowControlNode(targetNode)) {
+      // Flow-control nodes handle their own status and downstream routing.
+      // Update source status, broadcast handoff_completed, then delegate.
+      if (sourceState) {
+        sourceState.status = 'done';
+        sourceState.runtimeBlocker = null;
+        this._broadcastAgentStatus(executionId, sourceNodeId, sourceState);
+      }
+      if (this._wsBroadcast) {
+        this._wsBroadcast(executionId, {
+          type: 'handoff_completed',
+          sourceNodeId,
+          targetNodeId: targetId,
+        });
+      }
+      await this._activateFlowControlNode(executionId, targetId, sourceNodeId);
+      this._syncExecutionStatusFromAgents(execution);
+      return;
+    }
+
+    // 7b. Spawn or reuse target agent PTY (standard agent node)
     await this._ensureAgentPty(executionId, targetId);
 
     // 8. Inject updated context into target agent's PTY
     const targetState = execution.agentStates.get(targetId);
     if (targetState && targetState.sessionId) {
       this._markAgentProgress(execution, targetId, targetState, 'downstream_spawn');
-      const targetNode = execution.workflowDef.nodes.find((n) => n.id === targetId);
       if (targetNode) {
         const handoffTargets = execution.workflowDef.edges
           .filter((e) => e.source === targetId)
