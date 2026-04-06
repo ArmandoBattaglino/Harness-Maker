@@ -1956,11 +1956,22 @@ class SwarmEngine {
     } else if (hasPaused) {
       this._setExecutionStatus(execution, 'paused');
     } else if (agentStates.length > 0) {
-      this._setExecutionStatus(execution, 'completed');
-      if (execution.heartbeatTimer) {
-        clearInterval(execution.heartbeatTimer);
-        execution.heartbeatTimer = null;
+      // Check for pending flow-control nodes before declaring completed:
+      // active delay timers, pending merge convergences, or active loops
+      const execId = execution.id;
+      const delayKeys = [...this._delayTimers.keys()].filter((k) => k.startsWith(execId + ':'));
+      const mergeKeys = [...this._mergeStates.keys()].filter((k) => k.startsWith(execId + ':'));
+      const loopKeys = [...this._loopStates.keys()].filter((k) => k.startsWith(execId + ':'));
+      const hasPendingFlowControl = delayKeys.length > 0 || mergeKeys.length > 0 || loopKeys.length > 0;
+
+      if (!hasPendingFlowControl) {
+        this._setExecutionStatus(execution, 'completed');
+        if (execution.heartbeatTimer) {
+          clearInterval(execution.heartbeatTimer);
+          execution.heartbeatTimer = null;
+        }
       }
+      // else: keep status as 'running' — flow-control nodes are still active
     }
 
     return execution.status;
@@ -2865,7 +2876,6 @@ class SwarmEngine {
     }
 
     if (state) {
-      state.status = 'done';
       state.lastOutputSnippet = targetNodeId
         ? `Routed to ${targetNodeId}`
         : 'No matching route found';
@@ -2878,6 +2888,12 @@ class SwarmEngine {
         targetId: targetNodeId,
         contextUpdate: { _lastConditionalRoute: targetNodeId },
       });
+    }
+
+    // Mark as done AFTER forwarding so _onHandoff's duplicate guard doesn't drop it
+    if (state) {
+      state.status = 'done';
+      this._broadcastAgentStatus(executionId, nodeId, state);
     }
 
     this._syncExecutionStatusFromAgents(execution);
@@ -2926,7 +2942,6 @@ class SwarmEngine {
     if (mergeState.received.size >= mergeState.required) {
       // Merge complete — forward to outgoing edges
       if (state) {
-        state.status = 'done';
         state.lastOutputSnippet = `Merged ${mergeState.received.size} inputs`;
         this._broadcastAgentStatus(executionId, nodeId, state);
       }
@@ -2947,6 +2962,12 @@ class SwarmEngine {
         });
       }
 
+      // Mark as done AFTER forwarding so _onHandoff's duplicate guard doesn't drop it
+      if (state) {
+        state.status = 'done';
+        this._broadcastAgentStatus(executionId, nodeId, state);
+      }
+
       this._syncExecutionStatusFromAgents(execution);
     }
   }
@@ -2962,7 +2983,6 @@ class SwarmEngine {
   _handleDelayNode(executionId, nodeId, node, execution) {
     const state = execution.agentStates.get(nodeId);
     const delaySeconds = Number(node.data?.delaySeconds ?? 0);
-
     if (state) {
       state.status = 'running';
       state.lastOutputSnippet = `Waiting ${delaySeconds}s...`;
@@ -2978,8 +2998,10 @@ class SwarmEngine {
       if (!exec || ['stopping', 'stopped', 'failed'].includes(exec.status)) return;
 
       const currentState = exec.agentStates.get(nodeId);
+      // Set status to 'running' during forwarding so _onHandoff's
+      // duplicate-handoff guard (sourceState.status !== 'running') doesn't
+      // silently drop the downstream handoff.
       if (currentState) {
-        currentState.status = 'done';
         currentState.lastOutputSnippet = `Delay ${delaySeconds}s completed`;
         this._broadcastAgentStatus(executionId, nodeId, currentState);
       }
@@ -2995,6 +3017,12 @@ class SwarmEngine {
           targetId,
           contextUpdate: { _delayCompleted: nodeId },
         });
+      }
+
+      // Mark delay node as done AFTER forwarding completes
+      if (currentState) {
+        currentState.status = 'done';
+        this._broadcastAgentStatus(executionId, nodeId, currentState);
       }
 
       this._syncExecutionStatusFromAgents(exec);
@@ -3067,7 +3095,6 @@ class SwarmEngine {
     if (shouldExit) {
       // Exit the loop
       if (state) {
-        state.status = 'done';
         state.lastOutputSnippet = `Loop completed after ${loopState.iteration - 1} iterations`;
         this._broadcastAgentStatus(executionId, nodeId, state);
       }
@@ -3082,6 +3109,12 @@ class SwarmEngine {
             _loopTotalIterations: loopState.iteration - 1,
           },
         });
+      }
+
+      // Mark as done AFTER forwarding so _onHandoff's duplicate guard doesn't drop it
+      if (state) {
+        state.status = 'done';
+        this._broadcastAgentStatus(executionId, nodeId, state);
       }
     } else {
       // Continue looping
@@ -3300,14 +3333,14 @@ class SwarmEngine {
             Object.assign(parentExec.workflowContext, child.workflowContext);
 
             const parentState = parentExec.agentStates.get(nodeId);
-            if (parentState) {
-              parentState.status = child.status === 'completed' ? 'done' : 'failed';
-              parentState.lastOutputSnippet = `Sub-workflow ${child.status}`;
-              this._broadcastAgentStatus(executionId, nodeId, parentState);
-            }
 
             // Forward to parent outgoing edges on success
             if (child.status === 'completed') {
+              if (parentState) {
+                parentState.lastOutputSnippet = `Sub-workflow ${child.status}`;
+                this._broadcastAgentStatus(executionId, nodeId, parentState);
+              }
+
               const outgoingTargets = parentExec.workflowDef.edges
                 .filter((e) => e.source === nodeId)
                 .map((e) => e.target);
@@ -3320,9 +3353,19 @@ class SwarmEngine {
                     contextUpdate: { _subWorkflowCompleted: childWorkflowId },
                   });
                 }
+                // Mark as done AFTER forwarding so _onHandoff's duplicate guard doesn't drop it
+                if (parentState) {
+                  parentState.status = 'done';
+                  this._broadcastAgentStatus(executionId, nodeId, parentState);
+                }
                 this._syncExecutionStatusFromAgents(parentExec);
               })();
             } else {
+              if (parentState) {
+                parentState.status = 'failed';
+                parentState.lastOutputSnippet = `Sub-workflow ${child.status}`;
+                this._broadcastAgentStatus(executionId, nodeId, parentState);
+              }
               this._syncExecutionStatusFromAgents(parentExec);
             }
           }
