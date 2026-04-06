@@ -1,4 +1,7 @@
 # Progress
+- [V4.5 FIX CLOSED 2026-04-06] TASK #218 COMPLETED — BUG-SNIPPET-CONPTY-SPACES marked COMPLETED after review
+  _decompressConPTYSpaces() heuristic handles mixed-case English text and punctuation-separated text. Known limitation:
+  all-lowercase text (Italian prose) unsolvable without dictionary — accepted as platform constraint. 312/312 tests pass.
 - [V4.3 AREA CLOSED 2026-04-06] TASK #213 COMPLETED PASS — AREA CHECKPOINT for V4.3 E2E Deep Test Round 2
   312/312 server tests pass. Client build 480 modules 0 errors. SNIPPET_NOISE_LINE_PATTERNS covers all CLI chrome noise:
   bypass permissions, ctrl+g, Herding variants, version banner, model effort, thinking animations. V4.3 AREA CLOSED.

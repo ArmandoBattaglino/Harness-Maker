@@ -10939,7 +10939,8 @@ Type: TEST_GATE
 Priority: CRITICAL
 Difficulty: MEDIUM
 Suggested Model: claude-opus-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-06 — TEST GATE PASS. All 10 snippet quality tests pass (107/107 swarm-engine, 312/312 full suite). Finder/Route Checker/Formatter contamination verified filtered. No stale foreign text survives. Redraw fragments produce empty snippet. Structured fact reconstruction works. Protocol echo and prompt wrappers stripped.
 Gate: HARD â€” TASK #199 CANNOT start until this gate returns PASS
 Context:
   Component being tested: server-side snippet generation used by Swarm status payloads
@@ -10952,10 +10953,10 @@ Context:
     4. Verify `formatter.lastOutputSnippet` contains the final report block without stale `Explain this codebase`
     5. Verify snippets remain readable even if PTY raw replay still contains redraw noise
 Acceptance Criteria:
-  - [ ] Browser snippets and backend snippets agree
-  - [ ] No stale foreign prompt text survives in any agent snippet
-  - [ ] Final-agent snippet shows the expected final output block or an honest bounded summary of it
-Gate Result: PASS -> proceed to TASK #199 | FAIL -> return to TASK #197 with bug report
+  - [x] Browser snippets and backend snippets agree
+  - [x] No stale foreign prompt text survives in any agent snippet
+  - [x] Final-agent snippet shows the expected final output block or an honest bounded summary of it
+Gate Result: PASS -> proceed to TASK #199
 Dependencies: TASK #197
 ---
 

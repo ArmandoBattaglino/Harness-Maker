@@ -1,4 +1,8 @@
 ---
+## 2026-04-06 — Task #184: TEST GATE BUG-SNIPPET-PROTOCOL-1
+**Status:** COMPLETED — PASS. 312/312 server tests, 107/107 swarm-engine tests. Snippet pipeline verified: semantic sanitization via _stripSnippetProtocolArtifacts + SNIPPET_NOISE_LINE_PATTERNS (80+ regexes) + _buildSemanticSnippet block scoring. 12+ dedicated quality tests. Proceed to #185.
+
+---
 ## 2026-04-06 — Task #178: TEST GATE — BUG-PTY-EXPLOSION-1 (Live output in PTY Explosion)
 **Status:** COMPLETED
 **Called by:** user (direct)

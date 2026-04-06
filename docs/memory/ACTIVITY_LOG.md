@@ -1,3 +1,14 @@
+## 2026-04-06 — qa-tester — Task #213: AREA CHECKPOINT V4.3 E2E Deep Test Round 2 — PASS
+**Outcome:** COMPLETED
+**Summary:** Verified all V4.3 acceptance criteria. 312/312 server tests pass, client build 480 modules 0 errors. SNIPPET_NOISE_LINE_PATTERNS covers all CLI chrome noise patterns (bypass permissions, ctrl+g, Herding, version banner, model effort, thinking animations). Task #212 dependency confirmed COMPLETED. V4.3 AREA CLOSED.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/qa-tester.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** V4.4 Snippet Fidelity Final Polish can proceed
+
+---
+
 ## 2026-04-06 — qa-tester — Task #178: TEST GATE BUG-PTY-EXPLOSION-1 — PASS
 **Outcome:** COMPLETED
 **Summary:** Verified PtyExplosion WS connection, ring buffer replay, multiple clients, DEC-009. 312/312 tests pass. Client build clean.
@@ -3207,4 +3218,16 @@ full self-contained context and acceptance criteria.
 **Decisions made:** none
 **Blockers:** none
 **Next:** Task #187 AREA CHECKPOINT V4.0.2 is now unblocked from this gate dependency
+---
+
+---
+
+## 2026-04-06 — debugger — Task #218: BUG-SNIPPET-CONPTY-SPACES — Review and close
+**Outcome:** COMPLETED
+**Summary:** Reviewed PARTIAL status of _decompressConPTYSpaces() heuristic. Confirmed the implementation handles mixed-case English text and punctuation-separated text correctly. The all-lowercase limitation (Italian prose) is a genuine platform constraint unsolvable without a dictionary. Marked COMPLETED with known-limitation note. 312/312 tests pass.
+**Files changed:** docs/TASK_PLAN.md (status PARTIAL -> COMPLETED, updated completion note)
+**Bugs fixed:** none (review task)
+**Decisions made:** Accepted all-lowercase limitation as known platform constraint for MVP
+**Blockers:** none
+**Next:** TEST GATE #222 and AREA CHECKPOINT #223 can proceed.
 ---
