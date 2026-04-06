@@ -1,3 +1,14 @@
+## 2026-04-06 — documenter — V5.0 PRD Planning Milestone: Documentation update
+**Outcome:** COMPLETED
+**Summary:** Updated project docs to reflect V5.0 PRD addendum (N8N-Style Visual Workflow Editor). PRD bumped from v3.0 to v5.0 with 81 new FRs, 5 implementation waves, 6 new node types, 5 security requirements, and new API endpoints planned. No code changes — planning/design only. Updated PROGRESS.md, CONTEXT.md, PROJECT.md, and DOC_STATUS.md.
+**Files changed:** docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/PROJECT.md, docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none
+**Decisions made:** none — documentation-only update for planning milestone
+**Blockers:** none
+**Next:** V5 Wave 1 task planning, then implementation
+
+---
+
 ## 2026-04-06 — debugger — Task #254: BUG-DONE-BARE-1 — Accept bare DONE token in HandoffParser
 **Outcome:** COMPLETED
 **Summary:** Widened DONE_RE regex in HandoffParser.js to accept bare `DONE` on its own line (with optional bullet prefix) in addition to `__DONE__`. Eliminates unnecessary done reminder reinject prompts for terminal nodes. All 114 HandoffParser tests pass, no regressions.

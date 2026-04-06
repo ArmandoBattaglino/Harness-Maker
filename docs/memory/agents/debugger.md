@@ -1081,3 +1081,49 @@ DONE_RE now matches both `__DONE__` (original) and bare `DONE` on its own line. 
 ### Handoff
 TEST GATE #256 should verify this fix. The swarm-engine test failures need to be addressed by whoever is working on Task #255.
 ---
+---
+## 2026-04-06 — Task #255: BUG-SNIPPET-INIT-1 — Filter system prompt text from initial agent snippet display
+**Status:** COMPLETED
+**Called by:** User
+
+### Context when I started
+During the first ~3s of agent execution in the Swarm view, the agent node card showed system prompt text before real agent output replaced it. This happened because the tapFn in SwarmEngine.js updated `_snippetSourceBuffer` and `lastOutputSnippet` with ALL PTY output unconditionally, including the echoed system prompt, BEFORE the echo gate filters parser input.
+
+### What I did
+1. Read memory files and SwarmEngine.js tapFn code (lines 2110-2170).
+2. Identified that snippet update at lines 2125-2127 ran unconditionally, while the echo gate check at lines 2237-2262 happened later in the same function.
+3. Wrapped the snippet update (`_snippetSourceBuffer`, `lastOutputSnippet`, `_broadcastAgentStatus`) inside `if (!currentState.ignoreParserUntil)` guard.
+4. Left `_runtimeScanBuffer` update (line 2118) outside the guard — needed for prompt-ready detection during echo gate.
+5. Fixed 8 failing tests that tested snippet content quality but didn't clear the echo gate before calling tapFn. Added `ignoreParserUntil = null` to each.
+6. Verified 312/312 tests pass, client build clean.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SwarmEngine.js | MODIFIED | Wrapped snippet update (lines 2125-2131) inside `if (!currentState.ignoreParserUntil)` guard to prevent system prompt text from appearing in agent card during echo gate period |
+| server/tests/swarm-engine.test.js | MODIFIED | Added `ignoreParserUntil = null` to 8 snippet-content-quality tests that need the echo gate cleared before sending test data through tapFn |
+| docs/TASK_PLAN.md | MODIFIED | Marked Task #255 as COMPLETED |
+
+### Improvements delivered
+- Agent node cards no longer flash system prompt text during the first ~3s of execution
+- Snippet display now correctly waits for real agent output after the echo gate clears
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-SNIPPET-INIT-1 | tapFn snippet update ran before echo gate check, showing echoed system prompt in agent card | Added ignoreParserUntil guard around snippet update | FIXED |
+
+### Decisions I made
+- Guard only the snippet update, not the `_runtimeScanBuffer` update — runtime detection (prompt-ready, blockers) must work even during echo gate
+- Updated tests to explicitly clear echo gate rather than changing the guard logic — the tests were testing snippet quality, not echo gate behavior
+
+### What I learned
+- For Claude (non-CODEX) providers, `_writeSwarmPrompt` is called at spawn time (line 2395), which calls `_flushSwarmPrompt`, which sets `ignoreParserUntil`. So even non-CODEX providers have an active echo gate at startup.
+- The tapFn has two distinct sections: snippet update (early, lines 2119-2131) and parser echo gate (late, lines 2237-2262). The snippet update was missing the same guard the parser already had.
+
+### State I'm leaving behind
+Fix is complete. 312/312 tests pass, client build clean. TEST GATE #257 should verify this fix with a live Puppeteer test.
+
+### Handoff
+TEST GATE #257 should verify the fix. No remaining work for this task.
+---

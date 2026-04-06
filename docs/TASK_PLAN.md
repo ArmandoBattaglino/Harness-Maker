@@ -4,8 +4,9 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED - 2026-03-31 — 258 tasks total, 251 COMPLETED, 2 DEFERRED, 5 PENDING. V7.0 Swarm Terminal Deep Test Bug Fixes IN PROGRESS.
+**Status:** v3.0.0 RELEASED - 2026-03-31 — 280 tasks total, 251 COMPLETED, 2 DEFERRED, 5 PENDING (V7.0), 22 PENDING (V5.0-Wave1). V7.0 Swarm Terminal Deep Test Bug Fixes IN PROGRESS. V5.0-Wave1 Swarm Editor Transition PLANNED.
   **Active Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 (1 fix + 1 fix + 1 test gate + 1 test gate + 1 area checkpoint)
+  **Planned Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#280 (9 component tasks + 9 test gates + 2 mount/wire tasks + 1 backend save-as + 1 area checkpoint)
   - V3.1 BUG FIX WAVE: AREA CLOSED 2026-04-02
   - V3.2/V3.3 SWARM RUNTIME INTEGRITY + CONTRACT COMPLETION: AREA CLOSED 2026-04-02 — AREA CHECKPOINT #142 PASS
   - V3.4 SWARM UX DEEP TEST FINDINGS: AREA CLOSED 2026-04-06 — all tasks COMPLETED, AREA CHECKPOINT #148 PASS (15/15 Puppeteer E2E, 3 skipped provider-dependent)
@@ -12933,7 +12934,7 @@ Area: V7.0 — Swarm Terminal Deep Test Bug Fixes
 Agent: debugger
 Priority: LOW
 Difficulty: EASY
-Status: PENDING
+Status: COMPLETED
 Context:
   Bug ID: BUG-SNIPPET-INIT-1
   Severity: LOW

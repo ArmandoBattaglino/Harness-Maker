@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-06 — after Tasks #245-#248 (thinking token collapse, Codex auth filter, Gemini prompt echo filter, empty prompt validation) — mapped by code-mapper_
+_Last updated: 2026-04-06 — after V5 PRD Addendum (N8N-Style Visual Workflow Editor planning milestone) — mapped by code-mapper_
 
 > **V3.4/V3.5 SWARM RUNTIME STATUS: IN PROGRESS**
 > TASK #145 (BUG-UX-HANDOFF-1) partially addressed: prompt examples templated with `<targetId>` to prevent fake handoffs from PTY redraw (DEC-023); Codex model-selection and rate-limit menus auto-dismissed; hard usage-limit now takes precedence over soft `Approaching rate limits` chooser (DEC-024). 83/83 server tests pass. Build: 479 modules. Live handoff proof still pending — no provider has completed a real multi-agent chain yet.
@@ -13,7 +13,7 @@ _Last updated: 2026-04-06 — after Tasks #245-#248 (thinking token collapse, Co
 ### Design Documents
 | File | Key Exports | Purpose |
 |------|-------------|---------|
-| docs/PRD.md | Sections 1–11.1 | Product Requirements Document for Claude Code Visual Manager V3. Added Section 11 (Component Specifications — 12 Swarm components) + Section 11.1 (WS Event Field Reference — 8 event types + 4 known implementation gaps) in 2026-04-02 by prd-writer. **This is now the authoritative single source of truth for all Swarm component contracts, inputs, outputs, and acceptance criteria.** Section 11 covers: SwarmEngine, HandoffParser, WorkflowStore, TriggerManager, swarmRoutes, swarmHandler, SwarmContext/useSwarmStore, useSwarm, useInbox, SwarmView, SwarmCanvas, AgentNode/HandoffEdge/AgentInspector/BroadcastBar/InterAgentFeed. Section 11.1 documents exact WS event fields vs PRD Section 9 discrepancies. 4 known bugs formally documented. |
+| docs/PRD.md | Sections 1–11.1 + V5 Addendum | Product Requirements Document for Claude Code Visual Manager V3/V5. V3 Sections 1-11.1 unchanged (authoritative for Swarm component contracts). **V5 Addendum added 2026-04-06:** "N8N-Style Visual Workflow Editor" — 81 FRs (FR-V5-01 through FR-V5-81), 5 implementation waves, 7 new data models, 5 new API endpoint groups, 5 security requirements (SEC-V5-01 through SEC-V5-05), ~67 implementation tasks across ~15 new files + 4 modified files. Depends on V3+V4. |
 
 ### Server Modules
 | File | Key Exports | Purpose |

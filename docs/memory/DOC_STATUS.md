@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-06 after Tasks #245-#248 — V6.0 Runtime Deep Test Bug Fixes (Wave A + Wave B). Snippet fidelity and UX improvements._
+_Last updated: 2026-04-06 after V5.0 PRD Planning Milestone — N8N-Style Visual Workflow Editor addendum. No code changes._
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**
@@ -45,12 +45,12 @@ _Last updated: 2026-04-06 after Tasks #245-#248 — V6.0 Runtime Deep Test Bug F
 |----------|--------|--------------|-------|
 | README.md | UP_TO_DATE | 2026-04-06 | Rate limit updated 200->300 req/min per V5.2 Task #240. |
 | docs/ARCHITECTURE.md | UP_TO_DATE | 2026-04-02 | PtyExplosion component tree entry still accurate. The `key=` prop is an internal React implementation detail, not an architectural change. |
-| docs/PRD.md | UP_TO_DATE | 2026-04-02 | Section 11 spec unchanged by V5.0 fixes — snippet contract (`lastOutputSnippet` field name/type) is the same; only internal filtering logic improved. |
+| docs/PRD.md | UP_TO_DATE | 2026-04-06 | Version bumped to v5.0 with N8N-Style Visual Workflow Editor addendum (81 FRs, 5 waves, 6 new node types, 5 new SEC requirements). |
 | docs/API.md | UP_TO_DATE | 2026-04-06 | No endpoint signature changes in V5.2. Malformed JSON 400, API 404 JSON, and rate limit 300 are internal behavior improvements — existing API docs remain accurate. |
-| docs/memory/PROJECT.md | UP_TO_DATE | 2026-03-28 | No stack/constraint changes in V5.0 fixes. |
+| docs/memory/PROJECT.md | UP_TO_DATE | 2026-04-06 | Implementation status updated to reflect V5.0 planning complete + V4.x-V7.0 status. |
 | docs/memory/DECISIONS.md | UP_TO_DATE | 2026-04-03 | DEC-001 through DEC-026 — no new architectural decisions from V5.0 bug fixes. |
-| docs/memory/PROGRESS.md | UP_TO_DATE | 2026-04-06 | All areas V3.1-V5.2 CLOSED. Tasks #233, #242, #148 COMPLETED. |
-| docs/memory/CONTEXT.md | UP_TO_DATE | 2026-04-06 | All areas CLOSED. Final post-fix trio completed. |
+| docs/memory/PROGRESS.md | UP_TO_DATE | 2026-04-06 | V5.0 PRD planning milestone entry added. Focus shifting to V5 Wave 1. |
+| docs/memory/CONTEXT.md | UP_TO_DATE | 2026-04-06 | Focus updated to V5 Wave 1 implementation. V6.0 CLOSED, V7.0 in progress. |
 | docs/memory/CODE_MAP.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No changes from documenter. |
 | docs/memory/CHANGELOG.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No changes from documenter. |
 | docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-06 | V5.0 Phase 1 deep test entry appended by documenter. |
