@@ -1,3 +1,14 @@
+## 2026-04-06 — debugger — Task #246: BUG-RUNTIME-2 — Filter Codex auth prompt from snippet
+**Outcome:** COMPLETED
+**Summary:** Added 8 regex patterns to SNIPPET_NOISE_LINE_PATTERNS in SwarmEngine.js to filter Codex CLI auth prompt lines (api key, authentication required, sign-in, codex auth, openai api, unauthorized, invalid token). All 312 server tests pass.
+**Files changed:** server/services/SwarmEngine.js
+**Bugs fixed:** BUG-RUNTIME-2 — Codex auth prompt text no longer leaks into agent node snippets
+**Decisions made:** Used broad auth patterns rather than Codex-specific ones for wider coverage
+**Blockers:** none
+**Next:** Task #247 (BUG-RUNTIME-3 Gemini prompt echo filtering) — next in sequential wave
+
+---
+
 ## 2026-04-06 -- project-manager -- V6.0 Task Plan: Runtime Deep Test Bug Fixes
 **Outcome:** COMPLETED
 **Summary:** Created 9 tasks (#245-#253) for V6.0 area based on debugger-loop Phase 1 bug report (4 LOW bugs). Wave A: #245->#246->#247 sequential (SwarmEngine.js snippet noise patterns for Claude thinking tokens, Codex auth prompt, Gemini prompt echo). Wave B: #248 parallel (SwarmView.jsx empty prompt validation). TEST GATES #249-#252. AREA CHECKPOINT #253. Updated status header, PROGRESS.md, CONTEXT.md.

@@ -951,3 +951,43 @@ SNIPPET_NOISE_LINE_PATTERNS now has one additional pattern. _buildSemanticSnippe
 ### Handoff
 Task #246 (BUG-RUNTIME-2 Codex auth prompt) is next in the sequential wave.
 ---
+
+---
+## 2026-04-06 — Task #246: BUG-RUNTIME-2 — Filter Codex auth prompt ANSI artifacts from snippet
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+Task #245 had just been completed on the same file (SwarmEngine.js), adding a "(thinking)" collapse pattern. SNIPPET_NOISE_LINE_PATTERNS had ~100 patterns but none matching Codex CLI auth prompts like "API key", "Enter your API key", "authentication required", etc.
+
+### What I did
+1. Read SNIPPET_NOISE_LINE_PATTERNS array in SwarmEngine.js (lines 52-151)
+2. Added 8 new regex patterns at the end of the array (before closing bracket) to filter Codex auth-related noise
+3. Ran npm test — all 312 tests pass, no regressions
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SwarmEngine.js | MODIFIED | Added 8 patterns to SNIPPET_NOISE_LINE_PATTERNS: /api.?key/i, /enter your.*key/i, /authentication required/i, /sign.?in\|log.?in/i, /codex auth/i, /openai api/i, /unauthorized[:\s]/i, /invalid.*token/i |
+
+### Improvements delivered
+- Codex CLI auth prompt text ("API key", "Enter your API key", "authentication required", etc.) is now filtered from agent node snippets
+- No info leak of auth-related text in UI snippets
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-RUNTIME-2: Codex auth prompt in snippet | No SNIPPET_NOISE_LINE_PATTERNS matched Codex CLI auth output | Added 8 auth-related regex patterns | FIXED |
+
+### Decisions I made
+- Added broad auth patterns (api.?key, sign.?in, log.?in, unauthorized) rather than narrow Codex-only patterns — these will also catch similar prompts from other CLI tools
+
+### What I learned
+- The SNIPPET_NOISE_LINE_PATTERNS array is the single filter for all CLI noise in SwarmEngine snippets — it operates on normalized (stripped ANSI, trimmed) lines
+
+### State I'm leaving behind
+SNIPPET_NOISE_LINE_PATTERNS now has 8 additional auth-related patterns. All 312 tests pass.
+
+### Handoff
+Task #247 (BUG-RUNTIME-3 Gemini prompt echo) is next in the sequential wave.
+---

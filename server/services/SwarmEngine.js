@@ -148,6 +148,14 @@ const SNIPPET_NOISE_LINE_PATTERNS = [
   /^--- swarm input ---$/i,
   /^--- end swarm input ---$/i,
   /^\(thinking\)(\(thinking\))*$/i,
+  /api.?key/i,
+  /enter your.*key/i,
+  /authentication required/i,
+  /sign.?in|log.?in/i,
+  /codex auth/i,
+  /openai api/i,
+  /unauthorized[:\s]/i,
+  /invalid.*token/i,
 ];
 const SNIPPET_STALE_FOREIGN_LINE_PATTERNS = [
   /^explain this codebase$/i,
