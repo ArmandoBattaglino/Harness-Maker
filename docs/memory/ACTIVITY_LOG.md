@@ -3017,6 +3017,17 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
+## 2026-04-06 — debugger — Task #239: BUG-SWARM-UI-2 — Stale execution ID 404 on page load
+**Outcome:** COMPLETED
+**Summary:** Fixed useSwarm.js hydration to use raw fetch instead of apiGet, so 404 responses for stale execution IDs are handled gracefully without console errors. localStorage is cleared and store resets to idle.
+**Files changed:** client/src/hooks/useSwarm.js (restorePersistedExecution function)
+**Bugs fixed:** BUG-SWARM-UI-2
+**Decisions made:** Used raw fetch() instead of apiGet() since 404 is expected/normal in this path
+**Blockers:** none
+**Next:** TEST GATE #243 verifies fix along with other Wave 1 fixes
+
+---
+
 ## 2026-04-06 — code-mapper — Debugger Loop Phase 1: Swarm Deep Test
 **Outcome:** COMPLETED
 **Summary:** Appended CHANGELOG.md entry for Swarm deep test phase. No code modified — 5 bugs discovered (2 API, 3 UI). No CODE_MAP.md changes needed.

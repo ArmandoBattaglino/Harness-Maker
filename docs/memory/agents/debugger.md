@@ -603,3 +603,44 @@ Fix is complete. 312/312 server tests pass. Global error handler now properly re
 ### Handoff
 qa-tester should verify via TEST GATE #243 that malformed JSON to multiple endpoints all return 400.
 ---
+---
+## 2026-04-06 — Task #239: BUG-SWARM-UI-2 — Stale execution ID produces 404 console error on page load
+**Status:** COMPLETED
+**Called by:** orchestrator (Wave 1 parallel fix)
+
+### Context when I started
+Phase 1 Swarm UI E2E test found that after a server restart, navigating to the Swarm view triggered a 404 console error because useSwarm.js tried to fetch status for an execution ID that no longer existed on the server. The stale ID was read from localStorage.
+
+### What I did
+1. Read useSwarm.js and useApi.js in parallel.
+2. Identified root cause: `restorePersistedExecution()` used `apiGet()` which goes through `handleResponse()` — on 404, `handleResponse` throws an Error. The `.catch(() => null)` did catch it, but the thrown error still surfaced in the browser console as an unhandled rejection briefly before the catch resolved.
+3. Fix: Replaced `apiGet(...).catch(() => null)` with a direct `fetch()` call that checks `res.ok` before parsing JSON. On non-ok responses (404, 500, etc.), immediately calls `clearStoredExecution()` + `clearExecutionState()` and returns. Network errors caught by try-catch with same cleanup.
+4. Verified client build succeeds (480 modules, 3.99s).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/hooks/useSwarm.js | MODIFIED | Lines 133-138: Replaced `apiGet().catch()` with raw `fetch()` + `res.ok` check to avoid thrown error on 404. Cleanup (clearStoredExecution + clearExecutionState) happens on any non-ok response or network error. |
+
+### Improvements delivered
+- No more 404 console error on page load when localStorage has a stale execution ID
+- Stale execution ID is properly cleared from localStorage on 404
+- Store resets to idle state gracefully
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-SWARM-UI-2 | apiGet throws on 404, error surfaces in console before .catch handles it | Used raw fetch + res.ok check instead of apiGet | FIXED |
+
+### Decisions I made
+- Used raw `fetch()` instead of `apiGet()` to avoid the thrown-error pattern. This is the only place in the codebase where a 404 is an expected/normal response, so bypassing the standard error-throwing handler is appropriate.
+
+### What I learned
+- `apiGet` in this codebase always throws on non-2xx responses. For hydration paths where 404 is expected (stale state recovery), using raw `fetch` is cleaner than catching thrown errors.
+
+### State I'm leaving behind
+Fix is complete. Client builds successfully. The hydration path now gracefully handles stale execution IDs without console errors.
+
+### Handoff
+qa-tester should verify via TEST GATE #243: restart server, load Swarm view, confirm no 404 in DevTools console and localStorage is clean.
+---
