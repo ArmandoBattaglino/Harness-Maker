@@ -1,4 +1,7 @@
 # Progress
+- [V4.0.2 TEST GATE PASS 2026-04-06] TASK #184 COMPLETED — TEST GATE BUG-SNIPPET-PROTOCOL-1 PASS
+  Snippet semantic sanitization verified: 80+ noise patterns, block-level protocol stripping, semantic block scoring. 312/312 server tests, 107/107 swarm-engine tests. TASK #185 unblocked.
+
 - [V4.5 FIX CLOSED 2026-04-06] TASK #218 COMPLETED — BUG-SNIPPET-CONPTY-SPACES marked COMPLETED after review
   _decompressConPTYSpaces() heuristic handles mixed-case English text and punctuation-separated text. Known limitation:
   all-lowercase text (Italian prose) unsolvable without dictionary — accepted as platform constraint. 312/312 tests pass.
