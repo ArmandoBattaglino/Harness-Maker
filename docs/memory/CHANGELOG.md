@@ -2732,3 +2732,114 @@ No new connections introduced in this checkpoint task. All connection changes we
 - Any future /api/* routes must be mounted in startup() before the app.all('/api/*') catch-all or they will be shadowed
 
 ---
+
+---
+## 2026-04-06 — Task #245: Thinking Token Collapse
+**Agent:** debugger
+**Triggered by:** Thinking tokens `(thinking)(thinking)...` leaked through snippet noise filter into AgentNode UI
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/SwarmEngine.js | MODIFIED | Added `/^\(thinking\)(\(thinking\))*$/i` pattern to SNIPPET_NOISE_LINE_PATTERNS (line 153) — collapses repeated thinking tokens into noise |
+
+### Functions Added
+- None
+
+### Functions Modified
+- `SNIPPET_NOISE_LINE_PATTERNS` in `server/services/SwarmEngine.js` — added 1 new regex for collapsed thinking token sequences
+
+### Functions Removed
+- None
+
+### Connection Changes
+- No new dependencies — existing `_isSnippetNoiseLine` consumes SNIPPET_NOISE_LINE_PATTERNS unchanged
+
+### Impact on Other Code
+- All snippet consumers (AgentNode, AgentInspector, BroadcastBar status) benefit from cleaner output — thinking tokens no longer appear in UI snippets
+
+---
+
+---
+## 2026-04-06 — Task #246: Codex Auth Filter
+**Agent:** debugger
+**Triggered by:** Codex/OpenAI authentication prompts and API key requests leaked through snippet noise filter
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/SwarmEngine.js | MODIFIED | Added 8 new patterns to SNIPPET_NOISE_LINE_PATTERNS (lines 154-161): `api.?key`, `enter your.*key`, `authentication required`, `sign.?in\|log.?in`, `codex auth`, `openai api`, `unauthorized[:\s]`, `invalid.*token` |
+
+### Functions Added
+- None
+
+### Functions Modified
+- `SNIPPET_NOISE_LINE_PATTERNS` in `server/services/SwarmEngine.js` — added 8 new regexes for Codex/OpenAI auth noise
+
+### Functions Removed
+- None
+
+### Connection Changes
+- No new dependencies
+
+### Impact on Other Code
+- Codex provider agents no longer show auth prompts or API key requests in their snippet display
+
+---
+
+---
+## 2026-04-06 — Task #247: Gemini Prompt Echo Filter
+**Agent:** debugger
+**Triggered by:** Gemini provider echoes the agent's system prompt as output, polluting the snippet display
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/SwarmEngine.js | MODIFIED | Added `_snippetOverlapsPrompt(snippet, systemPrompt)` method (lines 978-989). Updated `_refreshAgentSnippet` (lines 527-532) to call `_snippetOverlapsPrompt` and rebuild snippet if >60% word overlap with system prompt detected. |
+
+### Functions Added
+- `_snippetOverlapsPrompt(snippet, systemPrompt)` in `server/services/SwarmEngine.js` — word-level overlap detector (>60% threshold) that identifies when a snippet is an echo of the agent's system prompt
+
+### Functions Modified
+- `_refreshAgentSnippet(state, options)` in `server/services/SwarmEngine.js` — now calls `_snippetOverlapsPrompt` after `_buildSemanticSnippet`; if overlap detected, strips the echoed text and rebuilds
+
+### Functions Removed
+- None
+
+### Connection Changes
+- `_refreshAgentSnippet` → NEW call → `_snippetOverlapsPrompt` (post-processing step after `_buildSemanticSnippet`)
+- `_snippetOverlapsPrompt` reads `state._agentSystemPrompt` (set during agent spawn)
+
+### Impact on Other Code
+- All providers benefit — any provider that echoes the system prompt will have the echo stripped from snippets
+- Requires `_agentSystemPrompt` to be populated in agent state (set during `_spawnAgentPty`)
+
+---
+
+---
+## 2026-04-06 — Task #248: Empty Prompt Validation
+**Agent:** frontend-dev
+**Triggered by:** PromptToFlowBar allowed submitting empty/whitespace-only prompts to scaffold endpoint
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/canvas/PromptToFlowBar.jsx | MODIFIED | Added `promptError` state via useState. handleGenerate now checks for empty trimmed prompt, sets promptError('Please enter a workflow description.') and returns early. Input border toggles red on promptError. Red validation message rendered below input. onChange clears promptError. |
+
+### Functions Added
+- None (promptError is state, not a function)
+
+### Functions Modified
+- `PromptToFlowBar({ onWorkflowGenerated })` in `client/src/canvas/PromptToFlowBar.jsx` — added promptError state, conditional red border class, validation message div
+- `handleGenerate()` in `client/src/canvas/PromptToFlowBar.jsx` — added empty prompt guard with setPromptError; clears promptError on valid input
+
+### Functions Removed
+- None
+
+### Connection Changes
+- No new external dependencies
+
+### Impact on Other Code
+- Server scaffold endpoint no longer receives empty prompt POSTs from this component — reduces unnecessary 400/500 errors
+
+---

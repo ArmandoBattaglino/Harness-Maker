@@ -1,5 +1,5 @@
 
-- [V6.0 IN PROGRESS 2026-04-06] Runtime Deep Test Bug Fixes. 9 new tasks (#245-#253). 4 LOW bugs from debugger-loop Phase 1: BUG-RUNTIME-1 (Claude thinking tokens), BUG-RUNTIME-2 (Codex auth ANSI), BUG-RUNTIME-3 (Gemini prompt echo), BUG-RUNTIME-4 (empty prompt validation). Wave A: #245->#246->#247 sequential (SwarmEngine.js). Wave B: #248 parallel (SwarmView.jsx). Gates: #249-#252. Checkpoint: #253.
+- [V6.0 AREA CLOSED 2026-04-06] Runtime Deep Test Bug Fixes CLOSED. All 9 tasks (#245-#253) COMPLETED. 4 bug fixes verified: BUG-RUNTIME-1 (thinking token collapse), BUG-RUNTIME-2 (Codex auth filter), BUG-RUNTIME-3 (Gemini prompt echo filter), BUG-RUNTIME-4 (empty prompt validation). TEST GATES #249-#252 all PASS. AREA CHECKPOINT #253 PASS. 312/312 server tests, 480 module client build, 0 errors. V6.0 IS CLOSED.
 
 - [PROJECT COMPLETE 2026-04-06] ALL AREAS CLOSED (V3.1 through V5.2). 244 tasks total: 242 COMPLETED, 1 DEFERRED (#236 ConPTY — unfixable platform limitation), 0 PENDING/IN_PROGRESS/BLOCKED. Final status sync: #233 (BUG-WF-2) COMPLETED, #242 (BUG-SWARM-UI-1) COMPLETED, #148 (V3.4 AREA CHECKPOINT) PASS. No blockers. No remaining work.
 

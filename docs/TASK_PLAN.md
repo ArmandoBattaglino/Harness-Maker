@@ -4,8 +4,8 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED - 2026-03-31 — 253 tasks total, 242 COMPLETED, 2 DEFERRED, 9 PENDING. V6.0 Runtime Deep Test Bug Fixes IN PROGRESS.
-  **Active Area:** V6.0 RUNTIME DEEP TEST BUG FIXES — Tasks #245-#253 (9 tasks: 4 fixes + 4 test gates + 1 area checkpoint)
+**Status:** v3.0.0 RELEASED - 2026-03-31 — 253 tasks total, 251 COMPLETED, 2 DEFERRED, 0 PENDING. V6.0 Runtime Deep Test Bug Fixes CLOSED.
+  **Active Area:** NONE — All areas CLOSED.
   - V3.1 BUG FIX WAVE: AREA CLOSED 2026-04-02
   - V3.2/V3.3 SWARM RUNTIME INTEGRITY + CONTRACT COMPLETION: AREA CLOSED 2026-04-02 — AREA CHECKPOINT #142 PASS
   - V3.4 SWARM UX DEEP TEST FINDINGS: AREA CLOSED 2026-04-06 — all tasks COMPLETED, AREA CHECKPOINT #148 PASS (15/15 Puppeteer E2E, 3 skipped provider-dependent)
@@ -23,7 +23,7 @@
   - V5.0 DEBUGGER LOOP DEEP CHECK: AREA CLOSED 2026-04-06 — AREA CHECKPOINT #230 PASS. #231-#233 COMPLETED.
   - V5.1 DEBUGGER LOOP FULL-APP DEEP CHECK: AREA CLOSED 2026-04-06 — #234 COMPLETED, #235 PASS, #236 DEFERRED (ConPTY — unfixable), #237 PASS
   - V5.2 SWARM DEEP TEST BUG FIXES: AREA CLOSED 2026-04-06 — #238-#241 COMPLETED, #242 COMPLETED (duplicate workflow names fixed), #243 PASS, #244 PASS
-  - V6.0 RUNTIME DEEP TEST BUG FIXES: IN PROGRESS — #245-#253 (snippet noise for Claude/Codex/Gemini + empty prompt validation)
+  - V6.0 RUNTIME DEEP TEST BUG FIXES: AREA CLOSED 2026-04-06 — AREA CHECKPOINT #253 PASS. All 4 bug fixes verified, 312/312 tests, build clean.
   DEFERRED (2 tasks, both MVP-acceptable, no fix possible):
     - #236: BUG-UI-1 — ConPTY terminal prompt garble after navigation (Windows platform limitation, DEC-009)
     - (none other — #233 and #242 previously marked DEFERRED are now COMPLETED)
@@ -12854,7 +12854,8 @@ Type: AREA_CHECKPOINT
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-06 -- AREA CHECKPOINT PASS. All 4 TEST GATEs PASS (#249, #250, #251, #252). 312/312 server tests pass. Client build 480 modules 0 errors. Swarm view loads correctly. Empty prompt validation works (Puppeteer verified). All snippet noise patterns present in SwarmEngine.js. No regressions. V6.0 AREA IS CLOSED.
 Gate: HARD -- Next area CANNOT start until ALL component test gates in this area have PASSED
 Context:
   Run a full integration smoke test for all components in V6.0. Verify that all 4 bug fixes work
@@ -12873,9 +12874,9 @@ Context:
     6. Verify no regression in V5.x, V4.x, V3.x functionality
     7. Full health check: /api/v1/health returns 200
 Acceptance Criteria:
-  - [ ] All TEST GATE tasks (#249, #250, #251, #252) are COMPLETED with PASS result
-  - [ ] Integration scenario (steps 1-7 above) passes
-  - [ ] No regression in previously passing areas
-  - [ ] npm test passes, client build clean
+  - [x] All TEST GATE tasks (#249, #250, #251, #252) are COMPLETED with PASS result
+  - [x] Integration scenario (steps 1-7 above) passes
+  - [x] No regression in previously passing areas
+  - [x] npm test passes, client build clean
 Dependencies: TASK #249, TASK #250, TASK #251, TASK #252
 ---

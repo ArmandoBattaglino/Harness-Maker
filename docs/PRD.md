@@ -1,7 +1,7 @@
-# PRD: Claude Code Visual Manager — V3 (Multi-Agent Swarm Orchestrator)
-**Version:** 3.0
-**Date:** 2026-03-27
-**Status:** Draft
+# PRD: Claude Code Visual Manager — V3/V5 (Multi-Agent Swarm Orchestrator + Visual Workflow Editor)
+**Version:** 5.0
+**Date:** 2026-04-06
+**Status:** Draft — V5 Addendum (N8N-Style Workflow Editor)
 
 ---
 
