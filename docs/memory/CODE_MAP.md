@@ -2204,7 +2204,53 @@ _Last updated: 2026-04-06 — after V5.2 Wave 1 (Tasks #238-#241) — mapped by 
 - **Complexity note (Task #109):** The `agentStates` subscription was removed from the top-level hook body. Instead, `useSwarmStore.getState().agentStates[msg.sourceNodeId]` is called directly inside the `handoff_started` onmessage handler. This prevents the hook from re-rendering its consumer (SwarmView) every time any agent state changes while still allowing the handler to read current handoffCount when processing handoff events.
 - **Complexity note (Task #114 — BUG-TOOLBAR-2):** useEffect cleanup dependency was `[]` (only fired on unmount). Changed to `[workflowId]` so React tears down + re-runs the cleanup whenever workflowId changes. The cleanup closes the old WS (`wsRef.current?.close(); wsRef.current = null`), preventing a stale socket from the previous workflow from remaining open when a new workflow is generated.
 - **Complexity note (Task #128 — BUG-TRIGGER-1):** `updateTriggerState` destructured at hook top level (line 14) and added to useCallback deps array (line 92). Three new cases added to onmessage switch: (1) `trigger_fired` — reads triggerStates snapshot via getState(), increments fireCount, sets status:'fired', lastFiredAt; (2) `trigger_status` — thin wrapper, passes status patch directly; (3) `rss_item` — same fireCount increment as trigger_fired + sets lastItem:msg.guid, then addFeedEvent. Note: only `rss_item` currently has a live server-side emitter (TriggerManager._fireTrigger). `trigger_fired` and `trigger_status` cases are preemptive — no server-side emission exists yet.
-- **Last modified:** 2026-04-02 in Task #128 by frontend-dev (BUG-TRIGGER-1: updateTriggerState selector added; 3 new WS message cases: trigger_fired, trigger_status, rss_item)
+- **Last modified:** 2026-04-06 in Tasks #238-#241 by frontend-dev (V5.2 Wave 1: added applyExecutionSnapshot + restorePersistedExecution internal callbacks; readStoredExecution/writeStoredExecution/clearStoredExecution module-private helpers; raw fetch hydration with 404 → clearStoredExecution — BUG-SWARM-UI-2 fix)
+
+### `client/src/hooks/useSwarm.js` :: `readStoredExecution()` (module-private)
+- **Purpose:** Read the persisted execution snapshot from localStorage under key 'swarm-active-execution'. Returns parsed JSON or null.
+- **Called by:** restorePersistedExecution (internal)
+- **Calls:** window.localStorage.getItem, JSON.parse
+- **Inputs:** none
+- **Output:** `{ executionId, workflowId }` | null
+- **Side effects:** reads localStorage
+- **Last modified:** 2026-04-06 in Tasks #238-#241 by frontend-dev
+
+### `client/src/hooks/useSwarm.js` :: `writeStoredExecution(snapshot)` (module-private)
+- **Purpose:** Persist a minimal execution snapshot to localStorage so the app can rehydrate after page reload.
+- **Called by:** applyExecutionSnapshot (when execution is active/running)
+- **Calls:** window.localStorage.setItem, JSON.stringify
+- **Inputs:** snapshot `{ executionId, workflowId }`
+- **Output:** void
+- **Side effects:** writes to localStorage
+- **Last modified:** 2026-04-06 in Tasks #238-#241 by frontend-dev
+
+### `client/src/hooks/useSwarm.js` :: `clearStoredExecution()` (module-private)
+- **Purpose:** Remove the persisted execution snapshot from localStorage. Called when execution ends or hydration finds a stale/nonexistent execution ID.
+- **Called by:** applyExecutionSnapshot (when status is stopped/completed/failed), restorePersistedExecution (when server returns 404 or network error — BUG-SWARM-UI-2 fix)
+- **Calls:** window.localStorage.removeItem
+- **Inputs:** none
+- **Output:** void
+- **Side effects:** removes localStorage key
+- **Last modified:** 2026-04-06 in Tasks #238-#241 by frontend-dev
+
+### `client/src/hooks/useSwarm.js` :: `applyExecutionSnapshot(snapshot)` (internal useCallback)
+- **Purpose:** Apply a full or partial execution snapshot to useSwarmStore. Handles executionId, status, runtimeBlocker, runtimeProvider, providerStrategy, lastFallback, agentStates, triggerStates, edgeCounters, budget, inboxItems, interAgentFeed. Persists to localStorage when active, clears when terminal. Lazily loads workflowDef via apiGet if not in snapshot and not already in store.
+- **Called by:** restorePersistedExecution (hydration path), connectWs onmessage 'execution_status' case
+- **Calls:** useSwarmStore.getState, useSwarmStore.setState, writeStoredExecution, clearStoredExecution, apiGet(`/api/v1/workflows/:id`), setWorkflowDef
+- **Inputs:** snapshot (object — partial execution state from server hydration or WS event)
+- **Output:** Promise\<{ executionId, status }\>
+- **Side effects:** mutates Zustand store; reads/writes localStorage; HTTP GET for workflow def on cache miss
+- **Last modified:** 2026-04-06 in Tasks #238-#241 by frontend-dev
+
+### `client/src/hooks/useSwarm.js` :: `restorePersistedExecution()` (internal useCallback)
+- **Purpose:** On mount (before WS is connected), check localStorage for a persisted execution ID. If found, fetch its status from server via raw fetch (not apiGet). If server returns 404, clear the stale ID and reset execution state (BUG-SWARM-UI-2 fix). If execution is still active, apply snapshot and open WS. If terminal, clear state. Also detects and clears stale in-memory execution state when no persisted ID exists.
+- **Called by:** useSwarm useEffect (on mount / workflowId change)
+- **Calls:** readStoredExecution, fetch(`/api/v1/swarm/:id/status`), clearStoredExecution, clearExecutionState, applyExecutionSnapshot, connectWs
+- **Inputs:** none (reads localStorage + server state)
+- **Output:** void
+- **Side effects:** HTTP GET (raw fetch); may clear localStorage; may reset Zustand store; may open WebSocket
+- **Complexity note (BUG-SWARM-UI-2 fix):** Uses raw `fetch()` instead of `apiGet()` because the hydration path needs fine-grained control over the 404 response — apiGet would throw and the error handling would not distinguish 404 (stale execution) from other failures. On 404 or network error, both localStorage and in-memory store are cleared to prevent perpetual retry loops.
+- **Last modified:** 2026-04-06 in Tasks #238-#241 by frontend-dev (BUG-SWARM-UI-2 fix: raw fetch with 404 → clearStoredExecution + clearExecutionState)
 
 ### `client/src/hooks/useSwarm.js` :: `connectWs(executionId)` (returned callback)
 - **Purpose:** Open a WebSocket connection to /ws/swarm?executionId=X. Closes any existing WS first. Dispatches 10 message types to useSwarmStore: agent_status → updateAgentState (now includes sessionId — Task #124 BUG-SESSION-1); handoff_started → updateEdgeCounter + addFeedEvent + updateAgentState(handoffCount increment); handoff_completed → addFeedEvent (Task #126 — BUG-HANDOFF-1); execution_status → setExecution; budget_update → updateBudget; circuit_breaker → addFeedEvent; hitl_required → addInboxItem; trigger_fired → updateTriggerState(fired/status/lastFiredAt/fireCount++) (Task #128); trigger_status → updateTriggerState(status) (Task #128); rss_item → updateTriggerState(fired/lastItem/fireCount++) + addFeedEvent (Task #128). BUG-88 fix: handoff_started now correctly increments handoffCount. Task #109: agentStates read via useSwarmStore.getState() instead of stale closure.

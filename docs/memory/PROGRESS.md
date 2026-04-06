@@ -1,4 +1,7 @@
 # Progress
+- [V5.2 TEST GATE PASS 2026-04-06] TASK #243 COMPLETED — TEST GATE PASS for all V5.2 bug fixes
+  Malformed JSON 400 (3 endpoints), fetch-based hydration with 404 cleanup, rate limit 300, API 404 JSON. 312/312 tests. Client build OK. AREA CHECKPOINT #244 is next.
+
 - [V5.2 WAVE 1 COMPLETE 2026-04-06] Tasks #238, #239, #240, #241 ALL COMPLETED — V5.2 Wave 1 done
   All 4 active bug fixes in V5.2 are complete. TEST GATE #243 now IN_PROGRESS (qa-tester running).
   Wave 1 summary: BUG-SWARM-API-1 (malformed JSON 400), BUG-SWARM-UI-2 (stale execution hydration cleared),

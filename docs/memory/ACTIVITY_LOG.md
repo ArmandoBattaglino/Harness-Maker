@@ -1,3 +1,14 @@
+## 2026-04-06 — qa-tester — Task #243: TEST GATE V5.2 Swarm Deep Test Bug Fixes
+**Outcome:** COMPLETED
+**Summary:** TEST GATE PASS. All 4 V5.2 bug fixes verified after server restart with fresh code: malformed JSON returns 400 on 3 endpoints (#238), useSwarm fetch-based hydration with 404 cleanup confirmed (#239), rate limit at 300 (#240), API 404 returns JSON while SPA fallback returns HTML (#241). 312/312 server tests pass. Client build OK.
+**Files changed:** docs/TASK_PLAN.md (#243 status updated to COMPLETED PASS)
+**Bugs fixed:** none (verification only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** AREA CHECKPOINT #244 can now proceed.
+
+---
+
 ## 2026-04-06 — documenter — V5.2 Wave 1 fixes (#238-#241) — documentation update
 **Outcome:** COMPLETED
 **Summary:** Updated rate limit from 200 to 300 req/min in README.md, TEST_RESULTS.md, and research_complete.md. Updated DOC_STATUS.md with V5.2 Wave 1 bug fix details (4 bugs fixed, 1 deferred). No API.md or ARCHITECTURE.md changes needed.

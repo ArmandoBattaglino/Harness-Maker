@@ -1,4 +1,48 @@
 ---
+## 2026-04-06 — Task #243: TEST GATE V5.2 Swarm Deep Test Bug Fixes
+**Status:** COMPLETED
+**Called by:** user (direct)
+
+### Context when I started
+V5.2 Wave 1 (tasks #238-#241) all completed by debugger. Server running at port 3000 but with old code. Needed to restart server to pick up fresh code before testing.
+
+### What I did
+1. Attempted all curl tests against running server -- found old code was still running (malformed JSON returned 500, API 404 returned HTML).
+2. Stopped server via PowerShell, restarted with NO_OPEN=1 node server/index.js.
+3. Re-ran all 5 verification checks:
+   - #238: Malformed JSON on 3 endpoints (scaffold, workflows, swarm/start) -- all returned 400 with JSON error body.
+   - #239: Read useSwarm.js -- confirmed fetch-based hydration, 404 handling calls clearStoredExecution() + clearExecutionState(). Client build passed (4.11s).
+   - #240: Grep confirmed rateLimit(300, 60000) on line 220.
+   - #241: /api/v1/nonexistent returned JSON 404. /some-page returned 200 HTML (SPA fallback).
+   - Regression: npm test --prefix server -- 312/312 pass.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Marked #243 COMPLETED PASS, updated status header |
+| docs/memory/PROGRESS.md | MODIFIED | Added TEST GATE PASS entry |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended completion entry |
+| docs/memory/agents/qa-tester.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- TEST GATE #243 formally verified -- AREA CHECKPOINT #244 can proceed
+
+### Bugs I encountered
+None. All fixes working correctly after server restart.
+
+### Decisions I made
+- Server restart was necessary because old code was loaded. After restart all tests passed immediately.
+
+### What I learned
+- The server must be restarted to pick up code changes -- it does not hot-reload. Always verify server is running fresh code before TEST GATE.
+
+### State I'm leaving behind
+TEST GATE #243 PASS. Server running at port 3000 with fresh V5.2 code. AREA CHECKPOINT #244 is next.
+
+### Handoff
+AREA CHECKPOINT #244 can proceed. The server is already running with the correct code.
+
+---
 ## 2026-04-06 — Debugger Loop Phase 1: Micro-Areas B+C+D+E — Swarm UI Comprehensive E2E Test
 **Status:** COMPLETED
 **Called by:** user (direct)
