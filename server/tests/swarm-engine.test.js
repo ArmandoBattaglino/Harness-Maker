@@ -1167,8 +1167,9 @@ describe('SwarmEngine', () => {
     });
 
     it('should return an empty snippet when the Codex tail only contains working chrome and redraw fragments', async () => {
-      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
       const tapFn = [...mockSession.swarmListeners][0];
+      engine._executions.get(executionId).agentStates.get('node-a').ignoreParserUntil = null;
 
       wsBroadcast.mockClear();
       tapFn([
@@ -1188,8 +1189,9 @@ describe('SwarmEngine', () => {
     });
 
     it('should fall back to the blocker message when prompt rejection leaves only Codex chrome in the tail', async () => {
-      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
       const tapFn = [...mockSession.swarmListeners][0];
+      engine._executions.get(executionId).agentStates.get('node-a').ignoreParserUntil = null;
 
       wsBroadcast.mockClear();
       tapFn([

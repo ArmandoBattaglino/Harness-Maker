@@ -1037,3 +1037,47 @@ SNIPPET_NOISE_LINE_PATTERNS now has widened "you are a" pattern + 3 new Gemini e
 ### Handoff
 Wave A (#245-#247) is complete. TEST GATE #249-#251 should verify all three fixes.
 ---
+---
+## 2026-04-06 — Task #254: BUG-DONE-BARE-1 — Accept bare DONE token in HandoffParser
+**Status:** COMPLETED
+**Called by:** User (direct task assignment)
+
+### Context when I started
+HandoffParser.js used `DONE_RE = /__DONE__/` which only matched the `__DONE__` format. Claude consistently emits bare `DONE` (without double underscores) as the final agent token. When the parser failed to detect bare DONE, the done reminder timer in SwarmEngine fired after 3s, wasting ~40 tokens per terminal node on unnecessary reinject prompts.
+
+### What I did
+1. Read memory files (debugger.md, DECISIONS.md, ACTIVITY_LOG.md) and HandoffParser.js in parallel.
+2. Read the TASK #254 spec in TASK_PLAN.md and the HandoffParser test file.
+3. Changed DONE_RE regex from `/__DONE__/` to `/__DONE__|(?:^|\n)\s*(?:[●•]\s*)?DONE\s*(?:\n|$)/m`.
+4. The regex uses two alternatives: (a) `__DONE__` matches anywhere (preserving original behavior), (b) bare `DONE` only matches on its own line with optional bullet prefix (preventing false positives from sentences like "I am DONE with research").
+5. First attempt used a single unified regex but it broke the existing test for `__DONE__` embedded mid-line. Switched to dual-alternative approach.
+6. Ran full test suite: all 114 HandoffParser tests pass, all 205 non-swarm-engine tests pass. 8 swarm-engine test failures are pre-existing from an uncommitted SwarmEngine.js change from a concurrent agent (Task #255), confirmed by running tests with and without my change.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/HandoffParser.js | MODIFIED | Line 25: DONE_RE regex widened to accept bare DONE on its own line |
+| docs/TASK_PLAN.md | MODIFIED | TASK #254 marked COMPLETED |
+
+### Improvements delivered
+- HandoffParser now recognizes bare `DONE`, `● DONE`, and `• DONE` on their own lines as done tokens
+- Eliminates unnecessary done reminder reinject prompts (~40 token savings per terminal node)
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-DONE-BARE-1 | DONE_RE only matched `__DONE__` with underscores | Widened regex with line-anchored bare DONE alternative | FIXED |
+
+### Decisions I made
+- Used dual-alternative regex (original `__DONE__` anywhere + line-anchored bare `DONE`) instead of a unified pattern, because `__DONE__` with underscores is already boundary-protected and existing tests expect it to match mid-line.
+
+### What I learned
+- The `m` flag on the regex enables `^` and `$` to match line boundaries, which is essential for the bare DONE alternative to avoid false positives.
+- 8 swarm-engine test failures were pre-existing from concurrent Task #255 SwarmEngine.js changes, not from this fix.
+
+### State I'm leaving behind
+DONE_RE now matches both `__DONE__` (original) and bare `DONE` on its own line. All HandoffParser tests pass. 8 pre-existing swarm-engine test failures from concurrent Task #255 are unrelated.
+
+### Handoff
+TEST GATE #256 should verify this fix. The swarm-engine test failures need to be addressed by whoever is working on Task #255.
+---
