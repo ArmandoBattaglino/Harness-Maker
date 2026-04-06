@@ -3969,3 +3969,14 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** QA test gate for V5 Wave 3 features
 ---
+
+---
+## 2026-04-06 — backend-dev — Wave 4 Backend: Execution History, Version History, Templates
+**Outcome:** COMPLETED
+**Summary:** Implemented 3 Wave 4 backend features: (1) ExecutionHistoryStore + 2 API routes for execution history per workflow, (2) Workflow version history in WorkflowStore with auto-save on update + 2 API routes for list/restore, (3) TemplateStore with 5 hardcoded templates + 2 API routes for list/instantiate. 312/312 tests pass.
+**Files changed:** server/stores/ExecutionHistoryStore.js (NEW), server/stores/TemplateStore.js (NEW), server/services/WorkflowStore.js (MODIFIED), server/routes/swarm.js (MODIFIED), server/routes/workflows.js (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Stores in server/stores/ dir (separate from services/); lazy history store init; version timestamps with filesystem-safe format; template deep-clone on instantiate
+**Blockers:** none
+**Next:** SwarmEngine integration to call addEntry() on execution complete; QA test gate for Wave 4
+---

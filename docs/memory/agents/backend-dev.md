@@ -1660,3 +1660,62 @@ _onDone fully implemented per spec. BudgetTracker fully wired. lastOutputSnippet
 ### Handoff
 Task #78 (SwarmEngine integration tests) and #77 (HandoffParser unit tests) can now proceed — both depend on the full SwarmEngine being complete.
 ---
+
+---
+## 2026-04-06 — Wave 4 Backend: Execution History Store, Workflow Version History, Workflow Templates
+**Status:** COMPLETED
+**Called by:** user (direct task assignment — 3 Wave 4 backend features)
+
+### Context when I started
+Frontend dev had already implemented the UI components for Wave 4 (ExecutionHistory panel, TemplateGallery modal, VersionHistory panel) but the backend API endpoints did not exist yet. The frontend was calling 5 endpoints that returned 404. All 312 existing tests passing.
+
+### What I did
+1. Read docs/memory/ files (PROJECT, DECISIONS, PROGRESS, agent log) in parallel.
+2. Read existing WorkflowStore.js, ConfigStore.js, swarm.js routes, workflows.js routes, and server/index.js to understand patterns.
+3. Created server/stores/ExecutionHistoryStore.js — persists execution history per workflow to CONFIG_DIR/execution-history/<workflowId>.json, max 100 entries per workflow with oldest-first trimming. Methods: addEntry, getHistory, getEntry. Uses write-file-atomic, path validation with prefix assertion.
+4. Created server/stores/TemplateStore.js — 5 hardcoded built-in templates (Content Agency, Code Review Chain, Research Loop, Customer Support Triage, Data Pipeline). All node IDs match ^[a-z][a-z0-9-]*$. Read-only, no file storage.
+5. Modified server/services/WorkflowStore.js — added version history: on every update(), saves previous version to workflows/versions/<workflowId>/<timestamp>.json before overwriting. Max 50 versions per workflow. Added listVersions(), getVersion(), restoreVersion(), _saveVersion(), _resolveVersionsDir() methods.
+6. Modified server/routes/swarm.js — added GET /api/v1/swarm/history/:workflowId and GET /api/v1/swarm/history/:workflowId/:executionId routes. Lazily initializes ExecutionHistoryStore using ConfigStore.CONFIG_DIR.
+7. Modified server/routes/workflows.js — added GET /api/v1/workflows/templates, POST /api/v1/workflows/templates/:templateId/instantiate, GET /api/v1/workflows/:id/versions, POST /api/v1/workflows/:id/versions/:timestamp/restore. Template and literal routes placed before /:id param routes.
+8. No changes to server/index.js needed — new routes use existing router mounts.
+9. Ran npm test — 312/312 pass, no regressions.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/stores/ExecutionHistoryStore.js | CREATED | Execution history persistence store with addEntry/getHistory/getEntry, max 100 entries, write-file-atomic |
+| server/stores/TemplateStore.js | CREATED | 5 hardcoded workflow templates with listTemplates/getTemplate |
+| server/services/WorkflowStore.js | MODIFIED | Added version history: _saveVersion on update(), listVersions(), getVersion(), restoreVersion(), MAX_VERSIONS_PER_WORKFLOW=50 |
+| server/routes/swarm.js | MODIFIED | Added execution history GET routes, lazy ExecutionHistoryStore init |
+| server/routes/workflows.js | MODIFIED | Added template list/instantiate routes and version list/restore routes |
+
+### Improvements delivered
+- Execution history API endpoints now available for the frontend ExecutionHistory panel
+- Workflow version history — every PUT saves the previous version; users can list and restore versions
+- 5 built-in workflow templates — users can browse and instantiate pre-built workflows
+- All 6 new API endpoints follow existing conventions (CSRF via global middleware, path validation, error handling)
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | - | - | - |
+
+### Decisions I made
+- ExecutionHistoryStore lives in server/stores/ (new directory) rather than server/services/ — stores are data-persistence modules, services are business logic. This separation mirrors the task spec and keeps the services/ directory focused.
+- Template instantiate route does deep clone of template data via JSON.parse(JSON.stringify()) to prevent mutation of the singleton template objects.
+- Version timestamps use ISO 8601 with colons/dots replaced by hyphens for filesystem compatibility.
+- History routes placed as literal paths (/history/:workflowId) before param routes (/:workflowId/start) in swarm.js to avoid Express treating "history" as a workflowId.
+- Lazy init of ExecutionHistoryStore in swarm routes (not in index.js) to minimize startup changes.
+
+### What I learned
+- The project uses factory-function pattern for swarm routes (receives swarmEngine, sessionManager) but static-instance pattern for workflow routes (gets store from app.locals). Both patterns coexist.
+- ConfigStore.CONFIG_DIR is a module-level constant exported from ConfigStore.js — can be imported directly without instantiation.
+- Express route ordering is critical: literal path segments (/templates, /history) must be registered before param segments (/:id, /:workflowId) or they get swallowed.
+
+### State I'm leaving behind
+All 6 new API endpoints implemented and tested (312/312 pass). Frontend components can now call: GET /api/v1/swarm/history/:workflowId, GET /api/v1/swarm/history/:workflowId/:executionId, GET /api/v1/workflows/templates, POST /api/v1/workflows/templates/:templateId/instantiate, GET /api/v1/workflows/:id/versions, POST /api/v1/workflows/:id/versions/:timestamp/restore. ExecutionHistoryStore.addEntry() is available for SwarmEngine to call when executions complete (wiring not done — that's a separate integration task).
+
+### Handoff
+- SwarmEngine needs to call ExecutionHistoryStore.addEntry() when executions complete/stop/fail — this is a separate integration task.
+- QA test gate for Wave 4 can now proceed with all backend endpoints available.
+---
