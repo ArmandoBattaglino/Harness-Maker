@@ -2394,3 +2394,43 @@ CODE_MAP.md and CHANGELOG.md fully up to date through V5.1 area closure. V5.1 CL
 ### Handoff
 None — area fully closed.
 ---
+
+---
+## 2026-04-06 — Debugger Loop Phase 1: Swarm Deep Test (log-only)
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+V5.1 area was closed. A new Debugger Loop Phase 1 Swarm deep test was run by qa-tester, finding 5 bugs across server and client code. No files were modified.
+
+### What I did
+1. Read tail of CHANGELOG.md, ACTIVITY_LOG.md, and my agent log for context.
+2. Appended a CHANGELOG.md entry documenting all 5 bugs found, their locations, and impact on other code.
+3. Appended ACTIVITY_LOG.md entry.
+4. Appended this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CHANGELOG.md | MODIFIED | New entry for Swarm deep test with 5 bug descriptions |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log |
+
+### Improvements delivered
+- CHANGELOG.md now documents all 5 Swarm deep test bugs with affected files and impact analysis
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- No CODE_MAP.md changes since no source code was modified — bugs are documented in CHANGELOG only until fixes land
+
+### What I learned
+- Swarm deep tests can surface multiple cross-cutting bugs (API error handling, SPA routing, UI state management, rate limiting) in a single pass
+
+### State I'm leaving behind
+CHANGELOG.md and ACTIVITY_LOG.md updated. CODE_MAP.md unchanged. 5 bugs awaiting Phase 2/3 fixes.
+
+### Handoff
+Phase 2/3 fixes for BUG-SWARM-API-1/2, BUG-SWARM-UI-1/2/3 will each need full code-mapper trace when code is modified.
+---

@@ -2531,3 +2531,41 @@ No new connections introduced in this checkpoint task. All connection changes we
 - Any future endpoints needing CSRF exemption can be added to the `CSRF_EXEMPT_PREFIXES` array.
 
 ---
+
+---
+## 2026-04-06 — Debugger Loop Phase 1: Swarm Deep Test (testing only, no code modified)
+**Agent:** qa-tester (deep test), code-mapper (log)
+**Triggered by:** Debugger Loop Phase 1 Swarm deep test — autonomous E2E testing of Swarm API and UI paths
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| (none) | — | Testing-only phase; no source files were modified |
+
+### Functions Added
+- None
+
+### Functions Modified
+- None
+
+### Functions Removed
+- None
+
+### Bugs Discovered (5)
+- **BUG-SWARM-API-1:** Malformed JSON request body causes HTTP 500 instead of 400 — `server/index.js` global error handler does not catch JSON parse errors before they propagate as unhandled.
+- **BUG-SWARM-API-2:** SPA catch-all route serves HTML for unknown `/api/` paths — `server/index.js` catch-all `res.sendFile(index.html)` fires for API 404s instead of returning JSON `{ error: "Not Found" }`.
+- **BUG-SWARM-UI-1:** Duplicate workflow names appear in the workflow dropdown — `WorkflowStore` does not deduplicate when reloading or merging workflow lists.
+- **BUG-SWARM-UI-2:** Stale execution ID after navigation causes 404 on hydration — `useSwarm.js` retains a previous execution ID that no longer exists on the server, leading to a failed hydration fetch.
+- **BUG-SWARM-UI-3:** Rate limiter is too strict for localhost development — `rateLimiter` middleware rejects rapid sequential requests that are normal during local Swarm orchestration.
+
+### Connection Changes
+- None (no code modified)
+
+### Impact on Other Code
+- BUG-SWARM-API-1 affects all POST/PUT/PATCH endpoints routed through the Express JSON body parser — the global error handler in `server/index.js` needs a JSON SyntaxError guard.
+- BUG-SWARM-API-2 affects any client-side code that expects JSON 404 responses from `/api/v1/*` paths — the SPA catch-all in `server/index.js` must be scoped to exclude `/api/` prefixes.
+- BUG-SWARM-UI-1 affects `WorkflowStore` consumers (likely `SwarmView` and any workflow selector component).
+- BUG-SWARM-UI-2 affects `useSwarm.js` callers — the hook must validate execution ID freshness before hydration.
+- BUG-SWARM-UI-3 affects all localhost API consumers — rate limiter config needs a localhost exemption or higher threshold.
+
+---

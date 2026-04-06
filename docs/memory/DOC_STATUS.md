@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-06 after V5.1 Debugger Loop Full-App Deep Check CLOSED. BUG-API-1 FIXED (Task #234), TEST GATE #235 PASS. BUG-UI-1 DEFERRED (ConPTY known limitation per DEC-009). Area closed — no remaining actionable bugs._
+_Last updated: 2026-04-06 after V5.2 Debugger Loop Swarm Deep Check — Phase 1 (testing only, no code changes). 5 bugs found (2 MEDIUM, 3 LOW) across server API and Swarm UI._
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**
@@ -80,6 +80,17 @@ Full-app deep E2E test covered all 10 server route files and all 7 client views.
 | BUG-UI-1 | LOW | ConPTY terminal buffer | Terminal prompt garble after view switch due to ConPTY buffer race. Known limitation per DEC-009 (ConPTY deadlock prevention). | DEFERRED — known/accepted per DEC-009 |
 
 **Overall assessment:** AREA CLOSED. App is in healthy state. Zero remaining actionable bugs. BUG-UI-1 is a known Windows ConPTY limitation, not a code defect.
+
+## V5.2 Debugger Loop Swarm Deep Check — Phase 1 COMPLETE (2026-04-06)
+
+Phase 1 (deep E2E test) completed. Testing only — no code was modified. 5 bugs found across server API and Swarm UI. Pending Phase 2 (bulk bug-to-task plan) and Phase 3 (parallel fix wave).
+
+| ID | Severity | Location | Description | Status |
+|----|----------|----------|-------------|--------|
+| TBD | MEDIUM | Server API / Swarm | 2 medium-severity bugs found during Swarm deep test | PENDING FIX (Phase 2/3) |
+| TBD | LOW | Server API / Swarm UI | 3 low-severity bugs found during Swarm deep test | PENDING FIX (Phase 2/3) |
+
+**Note:** Bug IDs and detailed descriptions will be assigned during Phase 2 (bulk bug-to-task planning). No documentation changes required from Phase 1 since no code was modified.
 
 ## Documentation Debt
 

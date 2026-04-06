@@ -2993,3 +2993,25 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Phase 2/3 bug fixes will require full code-mapper trace of modified files
 ---
+
+---
+## 2026-04-06 — code-mapper — Debugger Loop Phase 1: Swarm Deep Test
+**Outcome:** COMPLETED
+**Summary:** Appended CHANGELOG.md entry for Swarm deep test phase. No code modified — 5 bugs discovered (2 API, 3 UI). No CODE_MAP.md changes needed.
+**Files changed:** docs/memory/CHANGELOG.md (new entry), docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (testing-only)
+**Decisions made:** No CODE_MAP.md structural changes for testing-only phases
+**Blockers:** none
+**Next:** Phase 2/3 bug fixes for BUG-SWARM-API-1/2, BUG-SWARM-UI-1/2/3 will require code-mapper trace
+---
+
+---
+## 2026-04-06 — documenter — V5.2 Debugger Loop Swarm Deep Check Phase 1 doc update
+**Outcome:** COMPLETED
+**Summary:** Quick DOC_STATUS.md update to note V5.2 Swarm deep test findings (5 bugs: 2 MEDIUM, 3 LOW). No code was modified — testing only. All other docs remain accurate; no staleness introduced.
+**Files changed:** docs/memory/DOC_STATUS.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** Phase 2 will assign bug IDs and create tasks; Phase 3 will fix bugs. Documenter will update docs after code changes land.
+---
