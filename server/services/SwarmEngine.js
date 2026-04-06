@@ -2137,6 +2137,7 @@ class SwarmEngine {
           promptSubmissionCount: 0,
           runtimeSession: true,
           doneReinjectCount: 0,
+          _parser: parser,
           _runtimeScanBuffer: '',
           _snippetSourceBuffer: '',
           modelSelectionMenuHandled: false,
@@ -2698,7 +2699,7 @@ class SwarmEngine {
     const agentLabel = node?.data?.label || node?.id || 'This agent';
     const lines = [
       `${agentLabel} is not the end of the workflow yet.`,
-      'Do not stop at __DONE__ while downstream agents still need your output.',
+      'Do not stop at the done marker while downstream agents still need your output.',
     ];
 
     if (workflowContext?.currentTask) {
@@ -3554,6 +3555,10 @@ class SwarmEngine {
       state.doneReinjectCount = (state.doneReinjectCount ?? 0) + 1;
 
       if (state.doneReinjectCount <= MAX_DONE_REINJECT_ATTEMPTS && state.sessionId) {
+        // Reset the parser rolling buffer so that the reinject prompt echo
+        // (which may contain tokens like __HANDOFF__) does not cause a
+        // false-positive parse on the next chunk after the echo gate opens.
+        if (state._parser) state._parser.reset();
         this._writeSwarmPrompt(
           state.sessionId,
           this._buildContinueAfterDonePrompt(node, execution.workflowContext, handoffTargets),
