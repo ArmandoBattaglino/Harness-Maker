@@ -14,6 +14,9 @@ const useSwarmStore = create((set, get) => ({
   budget: { estimatedTokensUsed: 0, limitTokens: 0 },
   inboxItems: [],          // HITL pending approvals
   interAgentFeed: [],      // last 100 handoff events
+  chatMessages: [],          // Unified chat view messages
+  chatFilter: 'all',         // 'all' or specific nodeId
+  sidePanelMode: 'feed',     // 'feed' | 'chat' — which panel is shown
 
   // Canvas navigation
   focusedDepartmentId: null,
@@ -82,6 +85,13 @@ const useSwarmStore = create((set, get) => ({
     interAgentFeed: [...state.interAgentFeed, event].slice(-100)  // keep last 100
   })),
 
+  addChatMessage: (msg) => set((state) => ({
+    chatMessages: [...state.chatMessages, msg].slice(-500)  // keep last 500
+  })),
+
+  setChatFilter: (filter) => set({ chatFilter: filter }),
+  setSidePanelMode: (mode) => set({ sidePanelMode: mode }),
+
   setFocusedDepartment: (id) => set((state) => {
     // Avoid pushing duplicate if id is already the last item on the stack
     const lastId = state.departmentStack[state.departmentStack.length - 1];
@@ -127,6 +137,9 @@ const useSwarmStore = create((set, get) => ({
     budget: { estimatedTokensUsed: 0, limitTokens: 0 },
     inboxItems: [],
     interAgentFeed: [],
+    chatMessages: [],
+    chatFilter: 'all',
+    sidePanelMode: 'feed',
     focusedDepartmentId: null,
     departmentStack: [],
     selectedNodeId: null,
@@ -147,6 +160,9 @@ const useSwarmStore = create((set, get) => ({
     budget: { estimatedTokensUsed: 0, limitTokens: 0 },
     inboxItems: [],
     interAgentFeed: [],
+    chatMessages: [],
+    chatFilter: 'all',
+    sidePanelMode: 'feed',
     focusedDepartmentId: null,
     departmentStack: [],
     selectedNodeId: null,

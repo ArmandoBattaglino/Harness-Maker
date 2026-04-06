@@ -1,3 +1,14 @@
+## 2026-04-06 — frontend-dev — Unified Chat View Wave 2 (Client-side)
+**Outcome:** COMPLETED
+**Summary:** Created ChatMessage.jsx and ChatPanel.jsx components. Added chatMessages/chatFilter/sidePanelMode state to SwarmContext.jsx with actions and reset integration. Added chat_message WS handler in useSwarm.js. Replaced bare InterAgentFeed in SwarmCanvas.jsx with Feed/Chat tab toggle. Build: 498 modules, 0 errors.
+**Files changed:** ChatMessage.jsx (new), ChatPanel.jsx (new), SwarmContext.jsx (modified), useSwarm.js (modified), SwarmCanvas.jsx (modified)
+**Bugs fixed:** none
+**Decisions made:** 500-msg cap for chat, tab toggle preserves existing Feed panel
+**Blockers:** Server-side chat_message WS emission not yet implemented (backend task)
+**Next:** Backend should emit chat_message WS events from SwarmEngine; then integration-validator verifies contract
+
+---
+
 ## 2026-04-06 — architect — Analysis: PTY/Terminal Output Data Flow Map
 **Outcome:** COMPLETED
 **Summary:** Mapped the complete data flow from node-pty spawn through SessionManager, SwarmEngine tapFn, HandoffParser, _buildSemanticSnippet (120+ noise regex filters), WS broadcast, Zustand store, to AgentNode/AgentInspector/PtyExplosion rendering. Identified 10 stages, catalogued what data is available and lost at each stage, mapped all 13 WS event types, and identified 4 candidate insertion points for future chat message extraction (recommended Point A: inside tapFn after echo gate, before snippet pipeline).

@@ -6,6 +6,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import HandoffParser from './HandoffParser.js';
 import { discoverCodexBinary, discoverGeminiBinary } from './BinaryDiscovery.js';
+import { ChatExtractor } from './ChatExtractor.js';
 
 const SWARM_PROMPT_ECHO_MARKER = '--- END SWARM INPUT ---';
 const SWARM_PROMPT_SUBMIT_DELAY_MS = 100;
@@ -541,6 +542,10 @@ class SwarmEngine {
     this._delayTimers = new Map();  // `${executionId}:${nodeId}` -> timeout handle
     this._errorWatchers = new Map(); // executionId -> Map<watchedNodeId, Set<errorHandlerNodeId>>
     this._subWorkflowExecutions = new Map(); // `${executionId}:${nodeId}` -> child executionId
+
+    this._chatExtractor = new ChatExtractor({
+      onMessage: (msg) => this._broadcastChatMessage(msg),
+    });
   }
 
   /**
@@ -961,6 +966,22 @@ class SwarmEngine {
       ...(state?.runtimeBlocker
         ? { runtimeBlocker: this._serializeRuntimeBlocker(state.runtimeBlocker) }
         : {}),
+    });
+
+    // Flush chat extractor when agent is done
+    if (state?.status === 'done' || state?.status === 'completed' || state?.status === 'error') {
+      this._chatExtractor.flush(executionId, nodeId);
+    }
+  }
+
+  _broadcastChatMessage(msg) {
+    if (!this._wsBroadcast || !msg?.executionId) return;
+    this._wsBroadcast(msg.executionId, {
+      type: 'chat_message',
+      nodeId: msg.nodeId,
+      role: msg.role,
+      text: msg.text,
+      timestamp: msg.timestamp,
     });
   }
 
@@ -1965,6 +1986,7 @@ class SwarmEngine {
       const hasPendingFlowControl = delayKeys.length > 0 || mergeKeys.length > 0 || loopKeys.length > 0;
 
       if (!hasPendingFlowControl) {
+        this._chatExtractor.cleanup(execution.executionId ?? execution.id);
         this._setExecutionStatus(execution, 'completed');
         if (execution.heartbeatTimer) {
           clearInterval(execution.heartbeatTimer);
@@ -2218,6 +2240,8 @@ class SwarmEngine {
               currentState._snippetSourceBuffer = ((currentState._snippetSourceBuffer ?? '') + cleanChunk).slice(-SNIPPET_SCAN_BUFFER_CHARS);
               currentState.lastOutputSnippet = this._buildSemanticSnippet(currentState._snippetSourceBuffer);
               this._broadcastAgentStatus(executionId, nodeId, currentState);
+              // Feed to ChatExtractor for unified chat view
+              this._chatExtractor.feed(executionId, nodeId, cleanChunk);
             }
           }
           if (currentState && !currentState.promptReady) {
@@ -2881,6 +2905,7 @@ class SwarmEngine {
         : 'No matching route found';
       this._broadcastAgentStatus(executionId, nodeId, state);
     }
+    this._chatExtractor.systemMessage(executionId, nodeId, `Routed to: ${targetNodeId || 'default'}`);
 
     if (targetNodeId) {
       await this._onHandoff(executionId, nodeId, {
@@ -2945,6 +2970,7 @@ class SwarmEngine {
         state.lastOutputSnippet = `Merged ${mergeState.received.size} inputs`;
         this._broadcastAgentStatus(executionId, nodeId, state);
       }
+      this._chatExtractor.systemMessage(executionId, nodeId, `All ${mergeState.required} inputs received — merging`);
 
       // Reset merge state for potential re-trigger (loop scenarios)
       this._mergeStates.delete(stateKey);
@@ -3005,6 +3031,7 @@ class SwarmEngine {
         currentState.lastOutputSnippet = `Delay ${delaySeconds}s completed`;
         this._broadcastAgentStatus(executionId, nodeId, currentState);
       }
+      this._chatExtractor.systemMessage(executionId, nodeId, `Delay of ${delaySeconds}s completed`);
 
       // Forward to all outgoing edge targets
       const outgoingTargets = exec.workflowDef.edges
@@ -3071,6 +3098,7 @@ class SwarmEngine {
         state.lastOutputSnippet = `Loop iteration 1/${maxIterations}`;
         this._broadcastAgentStatus(executionId, nodeId, state);
       }
+      this._chatExtractor.systemMessage(executionId, nodeId, `Loop iteration 1`);
 
       // Forward to loop edges (inner sub-graph)
       for (const edge of effectiveLoopEdges) {
@@ -3098,6 +3126,7 @@ class SwarmEngine {
         state.lastOutputSnippet = `Loop completed after ${loopState.iteration - 1} iterations`;
         this._broadcastAgentStatus(executionId, nodeId, state);
       }
+      this._chatExtractor.systemMessage(executionId, nodeId, `Loop completed after ${loopState.iteration - 1} iterations`);
       this._loopStates.delete(stateKey);
 
       for (const edge of effectiveExitEdges) {
@@ -3123,6 +3152,7 @@ class SwarmEngine {
         state.lastOutputSnippet = `Loop iteration ${loopState.iteration}/${loopState.maxIterations}`;
         this._broadcastAgentStatus(executionId, nodeId, state);
       }
+      this._chatExtractor.systemMessage(executionId, nodeId, `Loop iteration ${loopState.iteration}`);
 
       for (const edge of effectiveLoopEdges) {
         await this._onHandoff(executionId, nodeId, {
@@ -3739,6 +3769,8 @@ class SwarmEngine {
     if (this._budgetTracker) {
       this._budgetTracker.clearExecution(executionId);
     }
+
+    this._chatExtractor.cleanup(executionId);
 
     this._setExecutionStatus(execution, 'stopped');
     return this.getStatus(executionId, execution);

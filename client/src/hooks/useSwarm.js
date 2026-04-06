@@ -43,6 +43,7 @@ export function useSwarm(workflowId) {
   const addInboxItem = useSwarmStore((s) => s.addInboxItem);
   const resolveInboxItem = useSwarmStore((s) => s.resolveInboxItem);
   const addFeedEvent = useSwarmStore((s) => s.addFeedEvent);
+  const addChatMessage = useSwarmStore((s) => s.addChatMessage);
   const updateTriggerState = useSwarmStore((s) => s.updateTriggerState);
   const setWsConnected = useSwarmStore((s) => s.setWsConnected);
   const clearExecutionState = useSwarmStore((s) => s.clearExecutionState);
@@ -277,13 +278,21 @@ export function useSwarm(workflowId) {
           addFeedEvent({ ...msg, timestamp: Date.now() });
           break;
         }
+        case 'chat_message':
+          addChatMessage({
+            nodeId: msg.nodeId,
+            role: msg.role ?? 'assistant',
+            text: msg.text,
+            timestamp: msg.timestamp ?? Date.now(),
+          });
+          break;
         default:
           break;
       }
     };
 
     wsRef.current = ws;
-  }, [setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, setExecution, updateBudget, addInboxItem, resolveInboxItem, updateTriggerState, applyExecutionSnapshot]);
+  }, [setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, addChatMessage, setExecution, updateBudget, addInboxItem, resolveInboxItem, updateTriggerState, applyExecutionSnapshot]);
 
   // Start execution
   const startExecution = useCallback(async (projectId, projectPath, runtimeProvider = 'auto', runtimeModels = null) => {

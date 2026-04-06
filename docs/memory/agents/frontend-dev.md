@@ -1,4 +1,54 @@
 ---
+## 2026-04-06 — Unified Chat View — Wave 2 (Client-side)
+**Status:** COMPLETED
+**Called by:** orchestrator (task assignment)
+
+### Context when I started
+Project at 496 modules, V5.0-BugFix2 was the last area closed. SwarmCanvas had InterAgentFeed as the only side panel during execution. No chat/conversation view existed. Store had no chatMessages state.
+
+### What I did
+1. Created `ChatMessage.jsx` — individual message bubble component with role-based styling (assistant/system/user). System messages render as centered dividers, others as bordered bubbles with agent label and timestamp.
+2. Created `ChatPanel.jsx` — main unified chat panel with filter dropdown (all agents or specific nodeId), auto-scroll to bottom, empty state, message count badge. Builds agent label map from workflowDef nodes.
+3. Modified `SwarmContext.jsx` — added 3 new state fields (chatMessages, chatFilter, sidePanelMode) and 3 new actions (addChatMessage with 500-msg cap, setChatFilter, setSidePanelMode). Added all 3 fields to both clearExecutionState and reset.
+4. Modified `useSwarm.js` — added addChatMessage store selector, added `chat_message` WS case handler that extracts nodeId/role/text/timestamp, added addChatMessage to connectWs dependency array.
+5. Modified `SwarmCanvas.jsx` — imported ChatPanel, added sidePanelMode/setSidePanelMode selectors, replaced bare `<InterAgentFeed />` with a tabbed container (Feed/Chat toggle buttons with active indicator) that conditionally renders InterAgentFeed or ChatPanel.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/canvas/ChatMessage.jsx | CREATED | Individual chat message bubble component |
+| client/src/canvas/ChatPanel.jsx | CREATED | Unified chat panel with filtering and auto-scroll |
+| client/src/store/SwarmContext.jsx | MODIFIED | Added chatMessages/chatFilter/sidePanelMode state + actions + reset |
+| client/src/hooks/useSwarm.js | MODIFIED | Added chat_message WS handler + addChatMessage selector |
+| client/src/canvas/SwarmCanvas.jsx | MODIFIED | Added ChatPanel import, tab toggle UI replacing bare InterAgentFeed |
+
+### Improvements delivered
+- Unified Chat View shows agent outputs as a conversation during workflow execution
+- Filter dropdown lets users focus on a single agent's messages
+- Feed/Chat tab toggle preserves existing InterAgentFeed functionality
+- 500-message cap prevents memory issues on long runs
+- Auto-scroll keeps latest messages visible
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None | — | — | — |
+
+### Decisions I made
+- 500 message cap for chatMessages (vs 100 for interAgentFeed) — chat messages are smaller and users need more history
+- Tab toggle instead of replacing InterAgentFeed — preserves existing functionality per task spec
+- System messages always visible even when filtering by agent — provides context continuity
+
+### What I learned
+- Build uses `npm run build --prefix client` not direct npx vite (project-local vite v6.4.1)
+
+### State I'm leaving behind
+Build: 498 modules, 0 errors. Chat view is fully wired on the client side. Server-side `chat_message` WS event emission is NOT yet implemented — that is a separate backend task. The client handler is ready and will display messages as soon as the server emits them.
+
+### Handoff
+Backend needs to emit `chat_message` WS events with `{ type: 'chat_message', nodeId, role, text, timestamp }` from the swarm engine. Integration validator should verify the WS contract once both sides are complete.
+
+---
 ## 2026-04-06 — Wave 5: Advanced Flow Control Node Components (FR-V5-56/59/60/64/66/68/71/73/77)
 **Status:** COMPLETED
 **Called by:** user (task assignment)

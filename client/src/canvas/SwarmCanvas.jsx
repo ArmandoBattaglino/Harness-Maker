@@ -26,6 +26,7 @@ import HandoffEdge from './edges/HandoffEdge';
 import AgentInspector from './AgentInspector';
 import BreadcrumbBar from './BreadcrumbBar';
 import InterAgentFeed from './InterAgentFeed';
+import ChatPanel from './ChatPanel';
 import ContextMenu from './ContextMenu';
 import NodePalette from './NodePalette';
 import { useSwarmStore } from '../store/SwarmContext';
@@ -54,6 +55,8 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange }) 
   const focusedDepartmentId = useSwarmStore((s) => s.focusedDepartmentId);
   const setSelectedNode = useSwarmStore((s) => s.setSelectedNode);
   const executionStatus = useSwarmStore((s) => s.executionStatus);
+  const sidePanelMode = useSwarmStore((s) => s.sidePanelMode);
+  const setSidePanelMode = useSwarmStore((s) => s.setSidePanelMode);
   // Side panels only visible during active or paused execution (not idle/stopped)
   const showSidePanels = executionStatus === 'running' || executionStatus === 'paused';
 
@@ -495,7 +498,33 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange }) 
             onClose={closeContextMenu}
           />
         )}
-        {showSidePanels && <InterAgentFeed />}
+        {showSidePanels && (
+          <div className="flex flex-col h-full shrink-0">
+            <div className="flex bg-gray-900 border-l border-b border-gray-700">
+              <button
+                onClick={() => setSidePanelMode('feed')}
+                className={`flex-1 text-[10px] py-1.5 transition-colors ${
+                  sidePanelMode === 'feed'
+                    ? 'text-white bg-gray-800 border-b-2 border-blue-500'
+                    : 'text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                Feed
+              </button>
+              <button
+                onClick={() => setSidePanelMode('chat')}
+                className={`flex-1 text-[10px] py-1.5 transition-colors ${
+                  sidePanelMode === 'chat'
+                    ? 'text-white bg-gray-800 border-b-2 border-blue-500'
+                    : 'text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                Chat
+              </button>
+            </div>
+            {sidePanelMode === 'feed' ? <InterAgentFeed /> : <ChatPanel />}
+          </div>
+        )}
         <AgentInspector nodes={nodes} onUpdateNode={handleUpdateNode} />
       </div>
     </div>
