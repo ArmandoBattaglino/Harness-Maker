@@ -325,7 +325,7 @@ await workflowStore.create(projectId, workflow);
 
 ### SEC-V3-04: Webhook Rate Limiting
 - **Risk:** Flood of webhook triggers overwhelming the swarm
-- **Implementation:** Separate rate limiter for `/api/v1/triggers/webhooks/*`: 10 req/min per source IP (vs main 200 req/min)
+- **Implementation:** Separate rate limiter for `/api/v1/triggers/webhooks/*`: 10 req/min per source IP (vs main 300 req/min)
 - **Verification:** Send 11 webhook calls in 60s → 11th returns 429
 
 ### SEC-V3-05: HITL Resume Text Size Cap

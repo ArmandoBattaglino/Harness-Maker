@@ -175,7 +175,7 @@ If the session is gone, start a new terminal from the project view.
 - **Atomic file writes.** All config, agent, skill, and CLAUDE.md writes use `write-file-atomic` to prevent file corruption on crash.
 - **Path traversal protection.** All file write paths are resolved and validated against their expected base directory before any write is performed.
 - **Security headers.** Helmet provides CSP, `X-Content-Type-Options`, `X-Frame-Options`, and related headers on every response.
-- **Rate limiting.** API routes are limited to 200 requests per minute per IP to guard against runaway client loops.
+- **Rate limiting.** API routes are limited to 300 requests per minute per IP to guard against runaway client loops.
 
 ---
 

@@ -1,3 +1,14 @@
+## 2026-04-06 — project-manager — V5.2 Wave 1 Complete — Status Update
+**Outcome:** COMPLETED
+**Summary:** V5.2 Wave 1 (tasks #238, #239, #240, #241) all COMPLETED by debugger. Updated TASK_PLAN.md status header to reflect Wave 1 done. Marked TEST GATE #243 as IN_PROGRESS. Added missing PROGRESS.md entries for #238 and #239. Wave 1 summary prepended to PROGRESS.md. Next: await TEST GATE #243 result from qa-tester, then AREA CHECKPOINT #244.
+**Files changed:** docs/TASK_PLAN.md (status header + #243 status), docs/memory/PROGRESS.md (4 new entries), docs/memory/ACTIVITY_LOG.md (this entry), docs/memory/agents/project-manager.md
+**Bugs fixed:** none (bookkeeping only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** TEST GATE #243 running — await PASS/FAIL verdict. If PASS -> #244 AREA CHECKPOINT. If FAIL -> route to debugger.
+
+---
+
 ## 2026-04-06 — debugger — Task #238: BUG-SWARM-API-1 — Malformed JSON returns 400
 **Outcome:** COMPLETED
 **Summary:** Added malformed JSON detection to global error handler in server/index.js. Express body-parser SyntaxError now returns HTTP 400 with clear error message instead of 500. 312/312 tests pass.

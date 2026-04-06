@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-06 after V5.2 Debugger Loop Swarm Deep Check — Phase 1 (testing only, no code changes). 5 bugs found (2 MEDIUM, 3 LOW) across server API and Swarm UI._
+_Last updated: 2026-04-06 after V5.2 Debugger Loop Swarm Deep Check — Wave 1 fixes (#238-#241). 4 bugs fixed in server/index.js and useSwarm.js._
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**
@@ -35,10 +35,10 @@ _Last updated: 2026-04-06 after V5.2 Debugger Loop Swarm Deep Check — Phase 1 
 
 | Document | Status | Last Updated | Notes |
 |----------|--------|--------------|-------|
-| README.md | UP_TO_DATE | 2026-03-31 | No changes needed for V5.0 fixes (internal snippet filtering and React key prop — no public API/setup/feature changes). |
+| README.md | UP_TO_DATE | 2026-04-06 | Rate limit updated 200->300 req/min per V5.2 Task #240. |
 | docs/ARCHITECTURE.md | UP_TO_DATE | 2026-04-02 | PtyExplosion component tree entry still accurate. The `key=` prop is an internal React implementation detail, not an architectural change. |
 | docs/PRD.md | UP_TO_DATE | 2026-04-02 | Section 11 spec unchanged by V5.0 fixes — snippet contract (`lastOutputSnippet` field name/type) is the same; only internal filtering logic improved. |
-| docs/API.md | UP_TO_DATE | 2026-03-28 | Webhook CSRF exception already documented at line 12. Now factually accurate — code matches the documented behavior after Task #234. |
+| docs/API.md | UP_TO_DATE | 2026-04-06 | No endpoint signature changes in V5.2. Malformed JSON 400, API 404 JSON, and rate limit 300 are internal behavior improvements — existing API docs remain accurate. |
 | docs/memory/PROJECT.md | UP_TO_DATE | 2026-03-28 | No stack/constraint changes in V5.0 fixes. |
 | docs/memory/DECISIONS.md | UP_TO_DATE | 2026-04-03 | DEC-001 through DEC-026 — no new architectural decisions from V5.0 bug fixes. |
 | docs/memory/PROGRESS.md | UP_TO_DATE | 2026-04-06 | V5.0 fix wave entry added: TASK #231 (snippet preamble noise) and TASK #232 (PTY Explosion wrong terminal) COMPLETED. TASK #233 still PENDING. |
@@ -81,16 +81,19 @@ Full-app deep E2E test covered all 10 server route files and all 7 client views.
 
 **Overall assessment:** AREA CLOSED. App is in healthy state. Zero remaining actionable bugs. BUG-UI-1 is a known Windows ConPTY limitation, not a code defect.
 
-## V5.2 Debugger Loop Swarm Deep Check — Phase 1 COMPLETE (2026-04-06)
+## V5.2 Debugger Loop Swarm Deep Check — Wave 1 COMPLETE (2026-04-06)
 
-Phase 1 (deep E2E test) completed. Testing only — no code was modified. 5 bugs found across server API and Swarm UI. Pending Phase 2 (bulk bug-to-task plan) and Phase 3 (parallel fix wave).
+Phase 1 (deep E2E test) found 5 bugs. Phase 2 (bulk plan) created tasks #238-#244. Wave 1 (parallel fixes #238-#241) completed. TEST GATE #243 and AREA CHECKPOINT #244 pending.
 
-| ID | Severity | Location | Description | Status |
-|----|----------|----------|-------------|--------|
-| TBD | MEDIUM | Server API / Swarm | 2 medium-severity bugs found during Swarm deep test | PENDING FIX (Phase 2/3) |
-| TBD | LOW | Server API / Swarm UI | 3 low-severity bugs found during Swarm deep test | PENDING FIX (Phase 2/3) |
+| ID | Severity | Location | Description | Fixed in Task | Status |
+|----|----------|----------|-------------|---------------|--------|
+| BUG-SWARM-API-1 | MEDIUM | server/index.js | Malformed JSON body returned 500 instead of 400 | #238 | FIXED 2026-04-06 |
+| BUG-SWARM-UI-2 | MEDIUM | client/src/hooks/useSwarm.js | Stale execution ID caused 404 on page load — hydration now clears dead state | #239 | FIXED 2026-04-06 |
+| BUG-SWARM-UI-3 | LOW | server/index.js | Rate limiter 200 req/min too strict for rapid view switching — raised to 300 | #240 | FIXED 2026-04-06 |
+| BUG-SWARM-API-2 | LOW | server/index.js | Unmatched /api/* paths returned SPA HTML 200 — now returns JSON 404 | #241 | FIXED 2026-04-06 |
+| BUG-SWARM-UI-1 | LOW | Swarm UI | Duplicate workflow names in dropdown — cosmetic | DEFERRED (#242) | DEFERRED |
 
-**Note:** Bug IDs and detailed descriptions will be assigned during Phase 2 (bulk bug-to-task planning). No documentation changes required from Phase 1 since no code was modified.
+**Documentation impact:** README.md rate limit updated 200->300. docs/TEST_RESULTS.md and docs/research_complete.md rate limit references updated. No API endpoint signature changes.
 
 ## Documentation Debt
 

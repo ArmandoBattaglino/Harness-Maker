@@ -1,4 +1,18 @@
 # Progress
+- [V5.2 WAVE 1 COMPLETE 2026-04-06] Tasks #238, #239, #240, #241 ALL COMPLETED — V5.2 Wave 1 done
+  All 4 active bug fixes in V5.2 are complete. TEST GATE #243 now IN_PROGRESS (qa-tester running).
+  Wave 1 summary: BUG-SWARM-API-1 (malformed JSON 400), BUG-SWARM-UI-2 (stale execution hydration cleared),
+  BUG-SWARM-UI-3 (rate limit relaxed), BUG-SWARM-API-2 (API 404 catch-all). 312/312 tests pass across all fixes.
+  Next: #243 TEST GATE result -> if PASS -> #244 AREA CHECKPOINT -> V5.2 CLOSED.
+
+- [V5.2 FIX 2026-04-06] TASK #239 COMPLETED — BUG-SWARM-UI-2 stale execution hydration 404 cleared
+  useSwarm.js hydration now detects 404 on persisted execution fetch, clears stale ID from localStorage,
+  resets to idle. No more spurious 404 console errors after server restart. Client build passes.
+
+- [V5.2 FIX 2026-04-06] TASK #238 COMPLETED — BUG-SWARM-API-1 malformed JSON returns 400 not 500
+  Global error handler in server/index.js now detects Express body-parser SyntaxError and returns HTTP 400
+  with clear JSON error. 312/312 tests pass.
+
 - [V5.2 FIX 2026-04-06] TASK #241 COMPLETED — BUG-SWARM-API-2 API 404 catch-all before SPA fallback
   Unmatched /api/* paths now return JSON 404 instead of HTML 200. 312/312 tests pass.
 

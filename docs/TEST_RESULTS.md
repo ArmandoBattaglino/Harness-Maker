@@ -231,6 +231,6 @@ Key critical-path behaviours verified:
 
 2. **Consider adding idle sweeper tests**: The `#startIdleSweeper` / `IDLE_TIMEOUT_MS` logic is not directly tested. A unit test using `vi.useFakeTimers()` to advance the clock could verify sessions are killed after idle timeout.
 
-3. **Add rate limiter tests**: The in-memory rate limiter in `server/index.js` is not covered because it is wired at the Express app level. An integration test could verify the 429 response after 200+ requests.
+3. **Add rate limiter tests**: The in-memory rate limiter in `server/index.js` is not covered because it is wired at the Express app level. An integration test could verify the 429 response after 300+ requests.
 
 4. **All 110 current tests should run in CI**: No real PTY, filesystem writes outside `/tmp`, or network access is needed — all external dependencies are mocked. The test suite is safe to run in any CI environment.
