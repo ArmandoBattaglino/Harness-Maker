@@ -1,4 +1,50 @@
 ---
+## 2026-04-06 — V5 Wave 2: NodePalette + WorkflowSettingsModal Documentation Update
+**Status:** COMPLETED
+**Called by:** user (post-V5-Wave-2 implementation documentation sync)
+
+### Context when I started
+V5 Wave 1 was already documented. V5 Wave 2 had just been implemented: NodePalette.jsx (draggable sidebar), WorkflowSettingsModal.jsx (settings+context editor), SwarmCanvas onDrop integration, SwarmView Settings button. All frontend-only changes.
+
+### What I did
+1. Read all 4 modified/new files (NodePalette.jsx, WorkflowSettingsModal.jsx, SwarmCanvas.jsx, SwarmView.jsx)
+2. Audited all docs for staleness — confirmed README, API.md, PRD.md need no changes (frontend-only, no new endpoints/config)
+3. Updated PROGRESS.md with V5 Wave 2 completion entry
+4. Updated CONTEXT.md focus line to reflect Wave 2 completion
+5. Updated DOC_STATUS.md: last-updated line, V5 Wave 2 section added, ARCHITECTURE.md debt entry updated, inline comments status updated
+6. Appended ACTIVITY_LOG.md entry
+7. Appended this session log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/PROGRESS.md | MODIFIED | Prepended V5 Wave 2 completion entry |
+| docs/memory/CONTEXT.md | MODIFIED | Updated focus line to V5 Wave 2 |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Prepended documenter entry for V5 Wave 2 |
+| docs/memory/DOC_STATUS.md | MODIFIED | Updated header, added V5 Wave 2 section, updated ARCHITECTURE debt entry and inline comments status |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- Documentation accurately tracks V5 Wave 2 implementation status
+- ARCHITECTURE.md debt entry now lists NodePalette and WorkflowSettingsModal as implemented (awaiting batch component tree update)
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Deferred ARCHITECTURE.md component tree update to batch (same as Wave 1) — updating the ASCII diagram for individual waves creates churn; better to do once when V5 is substantially complete
+
+### What I learned
+- NodePalette uses HTML5 drag-and-drop with dataTransfer MIME types (application/reactflow-type, application/reactflow-subtype) — this is a clean pattern for RF integration
+- WorkflowSettingsModal has local state committed only on Apply — avoids dirty tracking noise from settings exploration
+
+### State I'm leaving behind
+All memory docs are up to date for V5 Wave 2. ARCHITECTURE.md component tree still deferred (PARTIAL status). No blockers.
+
+### Handoff
+QA test gate for V5 Wave 2 features (palette drag-drop, settings modal apply flow).
+
+---
 ## 2026-04-06 — V5 Wave 1: Swarm Editor Transition Documentation Update
 **Status:** COMPLETED
 **Called by:** user (post-V5-Wave-1 implementation documentation sync)

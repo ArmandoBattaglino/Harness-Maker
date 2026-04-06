@@ -443,6 +443,8 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange }) 
           onNodeContextMenu={handleNodeContextMenu}
           onEdgeContextMenu={handleEdgeContextMenu}
           deleteKeyCode={['Delete', 'Backspace']}
+          snapToGrid
+          snapGrid={[20, 20]}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           fitView

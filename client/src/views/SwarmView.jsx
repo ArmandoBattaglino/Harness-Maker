@@ -15,6 +15,7 @@ import { useWorkflowList } from '../hooks/useWorkflow.js';
 import { useAppState } from '../store/AppContext';
 import { apiGet, apiPost, apiPut } from '../hooks/useApi.js';
 import { sanitizeWorkflow } from '../utils/sanitizeWorkflow.js';
+import { useCanvasValidation } from '../hooks/useCanvasValidation.js';
 
 const statusColors = {
   idle: 'text-gray-400',
@@ -60,7 +61,10 @@ export default function SwarmView() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState('');
+  const [importError, setImportError] = useState(null);
   const canvasStateRef = useRef({ nodes: [], edges: [] });
+  const [validationErrors, setValidationErrors] = useState([]);
+  const fileInputRef = useRef(null);
   const selectedRuntimeProvider = useSwarmStore((s) => s.selectedRuntimeProvider);
   const setSelectedRuntimeProvider = useSwarmStore((s) => s.setSelectedRuntimeProvider);
   const [runtimeModels, setRuntimeModels] = useState({ claude: '', codex: '', gemini: '' });
@@ -110,11 +114,44 @@ export default function SwarmView() {
     });
   }, [workflows, activeProjectId]);
 
+  // Stable refs for keyboard shortcut handlers (FR-V5-43)
+  const handleSaveRef = useRef(null);
+  const handleRunRef = useRef(null);
+  handleSaveRef.current = { isDirty, workflowDef, saving };
+  handleRunRef.current = { workflowDef, activeProjectId, executing, executionStatus, hasValidationErrors };
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && ptyExplosionNodeId !== null) {
         e.preventDefault();
         setPtyExplosionNodeId(null);
+        return;
+      }
+
+      const isCtrl = e.ctrlKey || e.metaKey;
+      if (!isCtrl) return;
+
+      // FR-V5-43: Ctrl+S — save workflow
+      if (e.key === 's' && !e.shiftKey) {
+        e.preventDefault();
+        const s = handleSaveRef.current;
+        if (s.isDirty && s.workflowDef && !s.saving) {
+          handleSave();
+        }
+        return;
+      }
+
+      // FR-V5-43: Ctrl+Enter — run workflow
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const r = handleRunRef.current;
+        const canRun = r.workflowDef && r.activeProjectId && !r.executing
+          && (r.executionStatus === 'idle' || r.executionStatus === 'completed')
+          && !r.hasValidationErrors;
+        if (canRun) {
+          handleRun();
+        }
+        return;
       }
     };
     document.addEventListener('keydown', handleKeyDown);
@@ -179,6 +216,8 @@ export default function SwarmView() {
   }, []);
 
   const handleRun = async () => {
+    // FR-V5-46: validate before run — block if errors exist
+    if (hasValidationErrors) return;
     setExecuting(true);
     try {
       const models = {};
@@ -238,10 +277,23 @@ export default function SwarmView() {
     setSaveError(null);
   }, []);
 
-  // FR-V5-01: track latest canvas nodes/edges for save
+  // FR-V5-01: track latest canvas nodes/edges for save + FR-V5-44 validation
   const onCanvasChange = useCallback((nodes, edges) => {
     canvasStateRef.current = { nodes, edges };
   }, []);
+
+  // FR-V5-44: canvas validation — computed from latest canvas state
+  const canvasValidation = useCanvasValidation(
+    canvasStateRef.current.nodes,
+    canvasStateRef.current.edges
+  );
+  // Keep validation errors in state so banners react to changes
+  useEffect(() => {
+    setValidationErrors(canvasValidation.errors);
+  }, [canvasValidation.errors]);
+
+  const validationErrorCount = validationErrors.filter((e) => e.severity === 'error').length;
+  const hasValidationErrors = validationErrorCount > 0;
 
   // FR-V5-01: save handler — persist canvas state to server
   const handleSave = async () => {
@@ -295,6 +347,76 @@ export default function SwarmView() {
   const handleNameKeyDown = (e) => {
     if (e.key === 'Enter') handleNameEditConfirm();
     if (e.key === 'Escape') handleNameEditCancel();
+  };
+
+  // FR-V5-38: Export workflow as JSON
+  const handleExport = () => {
+    if (!workflowDef) return;
+    const sanitized = sanitizeWorkflow({
+      ...workflowDef,
+      nodes: canvasStateRef.current?.nodes ?? workflowDef.nodes,
+      edges: canvasStateRef.current?.edges ?? workflowDef.edges,
+    });
+    const blob = new Blob([JSON.stringify(sanitized, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${workflowDef.name || 'workflow'}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // FR-V5-39: Import workflow from JSON
+  const handleImport = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setImportError(null);
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      if (!parsed.nodes || !Array.isArray(parsed.nodes)) throw new Error('Invalid workflow: missing nodes');
+      if (!parsed.edges || !Array.isArray(parsed.edges)) throw new Error('Invalid workflow: missing edges');
+      const res = await apiPost('/api/v1/workflows', {
+        name: parsed.name || file.name.replace('.json', ''),
+        description: parsed.description || '',
+        nodes: parsed.nodes,
+        edges: parsed.edges,
+        settings: parsed.settings || {},
+        initialContext: parsed.initialContext || {},
+      });
+      setWorkflowDef(res);
+      setSelectedWorkflowId(res.id);
+      setIsDirty(false);
+      refreshWorkflows();
+    } catch (e) {
+      setImportError(e.message);
+    }
+    // Reset file input so the same file can be re-imported
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  // FR-V5-37: Duplicate workflow
+  const handleDuplicate = async () => {
+    if (!workflowDef) return;
+    const sanitized = sanitizeWorkflow({
+      ...workflowDef,
+      nodes: canvasStateRef.current?.nodes ?? workflowDef.nodes,
+      edges: canvasStateRef.current?.edges ?? workflowDef.edges,
+    });
+    const copy = {
+      name: `${sanitized.name || 'Workflow'} (Copy)`,
+      description: sanitized.description || '',
+      nodes: sanitized.nodes,
+      edges: sanitized.edges,
+      settings: sanitized.settings || {},
+      initialContext: sanitized.initialContext || {},
+      projectId: sanitized.projectId,
+    };
+    const res = await apiPost('/api/v1/workflows', copy);
+    setWorkflowDef(res);
+    setSelectedWorkflowId(res.id);
+    setIsDirty(false);
+    refreshWorkflows();
   };
 
   const providerLabel = runtimeProvider
@@ -470,7 +592,7 @@ export default function SwarmView() {
         <button
           onClick={handleSave}
           disabled={!isDirty || !workflowDef || saving}
-          title={!workflowDef ? 'No workflow loaded' : !isDirty ? 'No unsaved changes' : 'Save workflow'}
+          title={!workflowDef ? 'No workflow loaded' : !isDirty ? 'No unsaved changes' : 'Save workflow (Ctrl+S)'}
           className="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {saving ? '...' : 'Save'}
@@ -478,14 +600,16 @@ export default function SwarmView() {
 
         {(executionStatus === 'idle' || executionStatus === 'completed') && (
           <button
-            onClick={workflowDef && activeProjectId ? handleRun : undefined}
-            disabled={executing || !workflowDef || !activeProjectId}
+            onClick={workflowDef && activeProjectId && !hasValidationErrors ? handleRun : undefined}
+            disabled={executing || !workflowDef || !activeProjectId || hasValidationErrors}
             title={
               !activeProjectId
                 ? 'Select a project first'
                 : !workflowDef
                 ? 'Generate or load a workflow first'
-                : 'Run workflow'
+                : hasValidationErrors
+                ? `${validationErrorCount} validation error${validationErrorCount !== 1 ? 's' : ''} — fix before running`
+                : 'Run workflow (Ctrl+Enter)'
             }
             className="bg-green-600 hover:bg-green-500 text-white text-xs px-3 py-1 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
@@ -577,6 +701,17 @@ export default function SwarmView() {
         </div>
       )}
 
+      {validationErrors.length > 0 && (executionStatus === 'idle' || executionStatus === 'completed') && (
+        <div className="px-4 py-2 text-xs border-b border-amber-900/60 bg-amber-950/30">
+          <span className="text-amber-300 font-semibold">Validation ({validationErrors.length}):</span>
+          {validationErrors.map((err, i) => (
+            <span key={i} className={err.severity === 'error' ? 'text-red-300 ml-2' : 'text-amber-200 ml-2'}>
+              {err.severity === 'error' ? '[ERR]' : '[WARN]'} {err.message}{i < validationErrors.length - 1 ? ';' : ''}
+            </span>
+          ))}
+        </div>
+      )}
+
       <PromptToFlowBar
         onWorkflowGenerated={(workflowId, animatedDef) => {
           setWorkflowDef(animatedDef);
@@ -628,6 +763,37 @@ export default function SwarmView() {
         >
           Refresh
         </button>
+        <button
+          onClick={handleDuplicate}
+          disabled={!workflowDef || isExecutionActive}
+          title={!workflowDef ? 'No workflow loaded' : 'Duplicate workflow'}
+          className="text-xs px-2 py-1.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Duplicate
+        </button>
+        <button
+          onClick={handleExport}
+          disabled={!workflowDef || isExecutionActive}
+          title={!workflowDef ? 'No workflow loaded' : 'Export workflow as JSON'}
+          className="text-xs px-2 py-1.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Export
+        </button>
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isExecutionActive}
+          title="Import workflow from JSON file"
+          className="text-xs px-2 py-1.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Import
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json"
+          className="hidden"
+          onChange={handleImport}
+        />
         <div className="flex-1" />
         <span className="text-xs text-gray-500">
           {activeProjectId ? 'Shows current-project workflows plus unscoped ones' : 'Shows all saved workflows'}
@@ -637,6 +803,13 @@ export default function SwarmView() {
       {workflowsError && (
         <div className="px-4 py-2 text-xs text-red-400 bg-gray-900 border-b border-gray-800">
           Failed to load saved workflows: {workflowsError}
+        </div>
+      )}
+
+      {importError && (
+        <div className="px-4 py-2 text-xs text-red-300 bg-red-950/40 border-b border-red-900/60 flex items-center gap-2">
+          <span>Import failed: {importError}</span>
+          <button onClick={() => setImportError(null)} className="text-red-400 hover:text-white text-xs ml-auto">Dismiss</button>
         </div>
       )}
 

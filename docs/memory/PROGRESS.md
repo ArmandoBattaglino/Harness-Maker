@@ -1,4 +1,6 @@
 
+- [V5.0-Wave2 COMPLETED 2026-04-06] NodePalette.jsx (draggable sidebar, 4 node types), WorkflowSettingsModal.jsx (settings+context editor), SwarmCanvas onDrop from palette, SwarmView Settings button. All frontend-only, no new API endpoints. Build passes.
+
 - [V5.0-Wave1 FR-V5-34/35/36 COMPLETED 2026-04-06] Workflow Settings Modal + Initial Context Editor. WorkflowSettingsModal.jsx created, SwarmView.jsx integrated. Build: 486 modules, 0 errors.
 
 - [V5.0-Wave1 FR-V5-01/03/05/06/21-24 COMPLETED 2026-04-06] Save button, dirty tracking, inline name editing, context menu. Fixed useWorkflow.js update() unwrapping bug. Build: 483 modules, 0 errors.

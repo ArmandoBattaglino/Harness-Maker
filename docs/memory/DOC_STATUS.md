@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-06 after V5 Wave 1 — Swarm Editor Transition (undo/redo, save, name edit, context menus, full AgentInspector edit panel)._
+_Last updated: 2026-04-06 after V5 Wave 2 — NodePalette (draggable sidebar), WorkflowSettingsModal (settings+context editor), SwarmCanvas onDrop, SwarmView Settings button._
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**
@@ -46,7 +46,7 @@ _Last updated: 2026-04-06 after V5 Wave 1 — Swarm Editor Transition (undo/redo
 | Document | Status | Last Updated | Notes |
 |----------|--------|--------------|-------|
 | README.md | UP_TO_DATE | 2026-04-06 | Rate limit updated 200->300 req/min per V5.2 Task #240. |
-| docs/ARCHITECTURE.md | PARTIAL | 2026-04-06 | Section 11.4 Handoff Protocol up to date. V5 Wave 1 new components (ContextMenu.jsx, useCanvasHistory.js, sanitizeWorkflow.js, nodeIdGenerator.js) not yet added to component tree — deferred to ARCHITECTURE.md V5 batch update. |
+| docs/ARCHITECTURE.md | PARTIAL | 2026-04-06 | Section 11.4 Handoff Protocol up to date. V5 Wave 1+2 new components (ContextMenu.jsx, useCanvasHistory.js, sanitizeWorkflow.js, nodeIdGenerator.js, NodePalette.jsx, WorkflowSettingsModal.jsx) not yet added to component tree — deferred to ARCHITECTURE.md V5 batch update. |
 | docs/PRD.md | UP_TO_DATE | 2026-04-06 | Version bumped to v5.0 with N8N-Style Visual Workflow Editor addendum (81 FRs, 5 waves, 6 new node types, 5 new SEC requirements). |
 | docs/API.md | UP_TO_DATE | 2026-04-06 | No endpoint signature changes in V5.2. Malformed JSON 400, API 404 JSON, and rate limit 300 are internal behavior improvements — existing API docs remain accurate. |
 | docs/memory/PROJECT.md | UP_TO_DATE | 2026-04-06 | Implementation status updated to reflect V5.0 planning complete + V4.x-V7.0 status. |
@@ -58,7 +58,7 @@ _Last updated: 2026-04-06 after V5 Wave 1 — Swarm Editor Transition (undo/redo
 | docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-06 | V5.0 Phase 1 deep test entry appended by documenter. |
 | docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-04-06 | V1 audit. SEC-06 entry updated with webhook CSRF exemption note (Task #234). |
 | docs/security-v3-audit.md | UP_TO_DATE | 2026-04-06 | MEDIUM-V3-01 marked FIXED (Task #234). Summary table updated. |
-| Inline comments | UP_TO_DATE | 2026-04-06 | V5 Wave 1: all new files have accurate header comments and JSDoc. useCanvasHistory.js documents DEC-011 separation, ContextMenu.jsx documents FR-V5-21-24, sanitizeWorkflow.js explains RF field stripping rationale. SwarmCanvas.jsx inline comments cover FR references. No stale comments. |
+| Inline comments | UP_TO_DATE | 2026-04-06 | V5 Wave 1+2: all new files have accurate header comments and FR references. NodePalette.jsx documents FR-V5-25-29, WorkflowSettingsModal.jsx documents FR-V5-34/35/36. SwarmCanvas.jsx onDrop handler comments accurate. No stale comments. |
 | docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. Deferred indefinitely. |
 
 ## Stale Sections (known gaps)
@@ -223,6 +223,19 @@ Frontend-only changes. No new API endpoints, no env var changes, no backend chan
 
 **Documentation impact:** No README, API, or PRD changes needed. ARCHITECTURE.md V5 component tree update deferred to batch (when more V5 waves complete). Inline comments in all new/modified files are accurate.
 
+## V5 Wave 2 — NodePalette + WorkflowSettingsModal + Canvas Drop + Settings Button (2026-04-06)
+
+Frontend-only changes. No new API endpoints, no env var changes, no backend changes. Two new files, two modified files.
+
+| File | Type | Change Summary | Doc Impact |
+|------|------|----------------|------------|
+| client/src/canvas/NodePalette.jsx | NEW | Collapsible left sidebar with 4 draggable node type cards (Agent, Department, Webhook Trigger, RSS Trigger). HTML5 drag-and-drop via dataTransfer with `application/reactflow-type` and `application/reactflow-subtype`. FR-V5-25 through FR-V5-29. | ARCHITECTURE.md V5 component tree update deferred |
+| client/src/canvas/WorkflowSettingsModal.jsx | NEW | Two-tab modal: Settings (execution mode radio, budget token presets + number input, circuit breaker threshold, default model grouped select) and Initial Context (dynamic key-value editor with add/delete rows). Escape closes, Apply commits. FR-V5-34/35/36. | ARCHITECTURE.md V5 component tree update deferred |
+| client/src/canvas/SwarmCanvas.jsx | MODIFIED | Added onDragOver/onDrop handlers for NodePalette integration. Drop creates nodes at cursor position with generateNodeId and type-specific default data. NodePalette rendered as flex sibling of ReactFlow. | None |
+| client/src/views/SwarmView.jsx | MODIFIED | Added gear Settings button in toolbar (disabled when no workflow loaded). WorkflowSettingsModal shown on click; Apply merges settings + initialContext into workflowDef and marks dirty. showSettings state added. | None |
+
+**Documentation impact:** No README, API, or PRD changes needed. ARCHITECTURE.md V5 component tree update deferred to batch. Inline comments in all new/modified files are accurate (FR references, header comments).
+
 ## Documentation Debt
 
 | Item | Priority | Reason deferred |
@@ -235,6 +248,6 @@ Frontend-only changes. No new API endpoints, no env var changes, no backend chan
 | Swarm execution state persistence | Medium | In-memory only in v3.0; restart clears all executions. Disk persistence planned for v3.1. |
 | docs/memory/CODE_MAP.md TriggerNode "(stub)" notation | Low | Code-mapper should update the map entry — TriggerNode is now fully implemented (Task #76). |
 | docs/API.md V5 endpoints | Medium | V5 PRD defines new API endpoints (workflow versions, execution history, templates, agent discovery) — docs/API.md must be updated once these endpoints are implemented in code. |
-| docs/ARCHITECTURE.md V5 components | Medium | V5 PRD defines new UI components — ContextMenu.jsx now implemented (Wave 1). Remaining: NodePalette, EdgeInspector, WorkflowSettingsModal, WorkflowToolbar, and new node types (conditional, merge, delay, loop, errorHandler, subWorkflow). Update ARCHITECTURE.md component tree once full wave or batch is complete. |
+| docs/ARCHITECTURE.md V5 components | Medium | V5 PRD defines new UI components — ContextMenu.jsx (Wave 1), NodePalette.jsx (Wave 2), WorkflowSettingsModal.jsx (Wave 2) now implemented. Remaining: EdgeInspector, WorkflowToolbar, and new node types (conditional, merge, delay, loop, errorHandler, subWorkflow). Update ARCHITECTURE.md component tree once full wave or batch is complete. |
 | ~~MEDIUM-V3-01 / BUG-API-1 (webhook CSRF mismatch)~~ | RESOLVED | Fixed in Task #234 (2026-04-06). CSRF_EXEMPT_PREFIXES array added to server/middleware/csrf.js. Security audit docs updated. |
 | ~~BUG-PRD-1 through BUG-PRD-4 code fixes~~ | RESOLVED | All four bugs fixed in V3.1 wave (Tasks #124-#130). AREA CHECKPOINT #132 PASS confirmed. No remaining debt from this item. |

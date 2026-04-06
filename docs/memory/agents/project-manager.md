@@ -1,4 +1,42 @@
 ---
+## 2026-04-06 — V5 Wave 1 + Wave 2 Task Plan Registration
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+V5 Wave 1 (8 features) and Wave 2 (NodePalette + WorkflowSettingsModal) were both implemented and working (build OK, 312/312 tests pass), but no task entries existed in TASK_PLAN.md. The status header referenced tasks #259-#284 that had never been written. Last actual task in the file was #258.
+
+### What I did
+1. Read TASK_PLAN.md — confirmed tasks #259-#284 referenced in header but absent from file body
+2. Created Wave 1 task entries (#259-#267): 8 component tasks + 1 test gate, all COMPLETED
+3. Created Wave 2 task entries (#268-#272): 2 component tasks + 2 test gates + 1 area checkpoint, all COMPLETED
+4. Rescoped Wave 2 from original 8-component plan (17 tasks) to 2-component plan (5 tasks) reflecting actual implementation
+5. Updated status header: 272 total, 267 COMPLETED, 2 DEFERRED, 3 PENDING (V7.0 only)
+6. Both Wave 1 and Wave 2 areas marked CLOSED in the area summary lines
+7. Updated CONTEXT.md, ACTIVITY_LOG.md, this agent memory file
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Status header updated (272 tasks, both waves CLOSED); 14 new task entries appended (#259-#272) |
+| docs/memory/CONTEXT.md | MODIFIED | Focus updated to reflect both waves closed, V7.0 gates remaining |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Session entry prepended |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log |
+
+### Decisions I made
+- Rescoped Wave 2 from 8 components (#268-#284, 17 tasks) to 2 components (#268-#272, 5 tasks) — the original plan was aspirational; actual implementation delivered NodePalette + WorkflowSettingsModal only
+- Mapped Wave 1 features to individual tasks based on ACTIVITY_LOG entries: FR-V5-11/13/14/15 (delete), FR-V5-02 (sanitize + ID gen), FR-V5-01/03 (save), FR-V5-05/06 (name edit), FR-V5-21-24 (context menu), FR-V5-07-10 (inspector), FR-V5-16/17 (undo/redo)
+
+### What I learned
+- Status headers referencing tasks that don't exist create confusion. Always write task bodies before or immediately after referencing them in the header.
+
+### State I'm leaving behind
+272 tasks: 267 COMPLETED, 2 DEFERRED (#236 ConPTY), 3 PENDING (#256 test gate, #257 test gate, #258 area checkpoint — all V7.0). V5.0-Wave1 and V5.0-Wave2 both CLOSED. Only V7.0 remains open.
+
+### Handoff
+Orchestrator should launch qa-tester for #256 and #257 in parallel. After both PASS, launch #258 (area checkpoint). After #258 PASS, V7.0 is CLOSED and all areas are resolved.
+
+---
 ## 2026-04-06 — V7.0 Status Sync: #254 + #255 COMPLETED, gates PENDING
 **Status:** COMPLETED
 **Called by:** user

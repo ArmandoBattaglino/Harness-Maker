@@ -2935,3 +2935,114 @@ No new connections introduced in this checkpoint task. All connection changes we
 - Server scaffold endpoint no longer receives empty prompt POSTs from this component — reduces unnecessary 400/500 errors
 
 ---
+
+---
+## 2026-04-06 — V5 Wave 2: NodePalette + WorkflowSettingsModal
+**Agent:** frontend-dev
+**Triggered by:** V5 Wave 2 implementation — drag-and-drop node palette sidebar and workflow settings/context modal
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/canvas/NodePalette.jsx | ADDED | New collapsible left sidebar with 4 draggable node type cards (Agent, Department, Webhook Trigger, RSS Trigger). Sets reactflow-type/subtype on dataTransfer for SwarmCanvas.onDrop consumption. Collapsible to narrow 32px strip. |
+| client/src/canvas/WorkflowSettingsModal.jsx | ADDED | New modal with two tabs: Settings (mode autonomous/hitl, budget tokens with presets, circuit breaker threshold, default model with grouped provider options) and Initial Context (key-value CRUD editor). Initializes from workflowDef.settings + workflowDef.initialContext. |
+| client/src/canvas/SwarmCanvas.jsx | MODIFIED | Added import of NodePalette + generateNodeId. Added onDragOver callback (preventDefault + dropEffect=move). Added onDrop callback (reads type/subtype from dataTransfer, screenToFlowPosition, generateNodeId, type-specific default data, pushHistory, setNodes, markDirty). NodePalette rendered left of ReactFlow. onDragOver/onDrop passed as props to ReactFlow. |
+| client/src/views/SwarmView.jsx | MODIFIED | Added import of WorkflowSettingsModal. Added showSettings useState. Added Settings button in toolbar (disabled when !workflowDef). Renders WorkflowSettingsModal conditionally (showSettings && workflowDef). onApply merges updatedSettings into workflowDef.settings, replaces initialContext, calls markDirty, closes modal. |
+
+### Functions Added
+- `NodePalette()` in `client/src/canvas/NodePalette.jsx` — collapsible sidebar with draggable node type cards
+- `PaletteCard({ card })` in `client/src/canvas/NodePalette.jsx` — individual draggable card, sets dataTransfer
+- `WorkflowSettingsModal({ workflowDef, onApply, onClose })` in `client/src/canvas/WorkflowSettingsModal.jsx` — two-tab modal for workflow settings + initial context
+- `SettingsTab({ settings, onChange })` in `client/src/canvas/WorkflowSettingsModal.jsx` — mode/budget/circuit-breaker/model form
+- `ContextTab({ contextVars, onChange })` in `client/src/canvas/WorkflowSettingsModal.jsx` — key-value CRUD editor
+- `onDragOver(event)` in `client/src/canvas/SwarmCanvas.jsx` — preventDefault + dropEffect for palette drag
+- `onDrop(event)` in `client/src/canvas/SwarmCanvas.jsx` — creates node from palette drag data with generateNodeId
+
+### Functions Modified
+- `SwarmCanvas({ workflowDef, markDirty, onCanvasChange })` in `client/src/canvas/SwarmCanvas.jsx` — added NodePalette rendering, onDragOver/onDrop handlers, generateNodeId import
+- `SwarmView()` in `client/src/views/SwarmView.jsx` — added showSettings state, Settings button, WorkflowSettingsModal rendering with onApply/onClose
+
+### Functions Removed
+- None
+
+### Connection Changes
+- NodePalette.PaletteCard → sets dataTransfer → consumed by SwarmCanvas.onDrop (new drag-and-drop data flow)
+- SwarmCanvas → imports + renders NodePalette (new dependency)
+- SwarmCanvas → imports generateNodeId from utils/nodeIdGenerator.js (new dependency — previously only used by addNodeAtPosition which used Date.now() IDs)
+- SwarmView → imports + conditionally renders WorkflowSettingsModal (new dependency)
+- WorkflowSettingsModal.onApply → SwarmView merges into workflowDef.settings + workflowDef.initialContext → markDirty (new data flow for settings persistence)
+
+### Impact on Other Code
+- workflowDef object shape now expected to carry `.settings` (mode, budgetTokens, circuitBreakerThreshold, defaultModel) and `.initialContext` (flat key-value dict) — server WorkflowStore schema may need updating to persist these fields
+- handleSave in SwarmView already persists full workflowDef via sanitizeWorkflow + apiPut, so settings/context will be included in save if the server schema accepts them
+
+---
+
+## 2026-04-06 — V5 Wave 1: Swarm Editor Transition
+**Agent:** frontend-dev (mapped by code-mapper)
+**Triggered by:** V5 Wave 1 implementation — converting SwarmCanvas from read-only visualizer to interactive editor with undo/redo, context menu, save, and full node editing
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/hooks/useCanvasHistory.js | ADDED | Undo/redo hook: 50-entry history stack, structuredClone snapshots, ref-based stacks for minimal re-renders (FR-V5-16 through FR-V5-20) |
+| client/src/utils/sanitizeWorkflow.js | ADDED | Strips React Flow internal fields (measured, width, height, selected, dragging, etc.) before save |
+| client/src/utils/nodeIdGenerator.js | ADDED | Generates `^[a-z][a-z0-9-]*$` compliant node IDs via crypto.randomUUID() |
+| client/src/canvas/ContextMenu.jsx | ADDED | Right-click context menu component with canvas/node/edge action sets, click-away + Escape close (FR-V5-21 through FR-V5-24) |
+| client/src/canvas/SwarmCanvas.jsx | MODIFIED | Added undo/redo, delete handlers with cascade, context menu, markDirty/onCanvasChange callbacks, copy/paste/duplicate, keyboard shortcuts. BREAKING: signature changed from `({ workflowDef })` to `({ workflowDef, markDirty, onCanvasChange })` |
+| client/src/canvas/AgentInspector.jsx | MODIFIED | Upgraded from read-only inspector to full edit panel: editable label, type-specific config sections (AgentFields/DepartmentFields/TriggerFields), debounced text fields, model dropdown, panel width 64→72 |
+| client/src/views/SwarmView.jsx | MODIFIED | Added Save button (isDirty tracking, sanitizeWorkflow before PUT), workflow name editing (click-to-edit, validation), markDirty/onCanvasChange callbacks, save success/error banners |
+| client/src/hooks/useWorkflow.js | MODIFIED | Fixed update() and refresh() response unwrapping: `data?.workflow ?? data ?? null` |
+| docs/PRD.md | MODIFIED | V5 addendum with 81 FRs for N8N-Style Visual Workflow Editor |
+
+### Functions Added
+- `useCanvasHistory()` in `client/src/hooks/useCanvasHistory.js` — undo/redo hook with 50-entry capped stacks
+- `cloneState(nodes, edges)` in `client/src/hooks/useCanvasHistory.js` — structuredClone deep copy helper
+- `sanitizeWorkflow(workflowDef)` in `client/src/utils/sanitizeWorkflow.js` — strip React Flow internals before save
+- `generateNodeId(type)` in `client/src/utils/nodeIdGenerator.js` — regex-compliant node ID generator
+- `ContextMenu({ x, y, actions, onClose })` in `client/src/canvas/ContextMenu.jsx` — positioned right-click menu
+- `useDebouncedField(nodeValue, onCommit, delay)` in `client/src/canvas/AgentInspector.jsx` — local/remote field sync with debounce
+- `AgentFields({ node, nodes, onUpdateNode })` in `client/src/canvas/AgentInspector.jsx` — agent config editor (model, prompt, tools, maxTurns, triage, department)
+- `DepartmentFields({ node, onUpdateNode })` in `client/src/canvas/AgentInspector.jsx` — department config editor (color, collapsed)
+- `TriggerFields({ node, onUpdateNode })` in `client/src/canvas/AgentInspector.jsx` — trigger config editor (type, webhook path, RSS URL/interval)
+- `CollapsibleSection({ title, defaultOpen, children })` in `client/src/canvas/AgentInspector.jsx` — collapsible UI section wrapper
+- `handleNodesChange(changes)` in `SwarmCanvas.jsx` — wraps onNodesChange + markDirty
+- `handleEdgesChange(changes)` in `SwarmCanvas.jsx` — wraps onEdgesChange + markDirty
+- `onNodeDragStart/onNodeDragStop` in `SwarmCanvas.jsx` — capture pre-drag snapshot for undo
+- `onNodesDelete(deletedNodes)` in `SwarmCanvas.jsx` — cascade-delete department children
+- `onEdgesDelete()` in `SwarmCanvas.jsx` — push undo history on edge deletion
+- `handlePaneContextMenu/handleNodeContextMenu/handleEdgeContextMenu` in `SwarmCanvas.jsx` — right-click handlers
+- `addNodeAtPosition(type, screenX, screenY)` in `SwarmCanvas.jsx` — add node at click position
+- `duplicateNode(nodeId)` in `SwarmCanvas.jsx` — duplicate node with offset
+- `deleteNode(nodeId)` / `deleteEdge(edgeId)` in `SwarmCanvas.jsx` — programmatic deletion with undo
+- `copyNode(nodeId)` / `pasteNode(screenX, screenY)` in `SwarmCanvas.jsx` — clipboard operations
+- `markDirty()` in `SwarmView.jsx` — sets isDirty flag
+- `onCanvasChange(nodes, edges)` in `SwarmView.jsx` — tracks latest canvas state in ref
+- `handleSave()` in `SwarmView.jsx` — sanitize + PUT workflow + refresh
+- `handleNameEditStart/Confirm/Cancel/KeyDown` in `SwarmView.jsx` — inline workflow name editing
+
+### Functions Modified
+- `SwarmCanvas({ workflowDef })` → `SwarmCanvas({ workflowDef, markDirty, onCanvasChange })` — BREAKING signature change
+- `handleUpdateNode(nodeId, patch)` in `SwarmCanvas.jsx` — added debounced undo history grouping + markDirty call
+- `AgentInspector({ nodes, onUpdateNode })` — complete rewrite from read-only to full edit panel
+- `useWorkflow(workflowId).update()` — fixed response unwrapping bug
+- `useWorkflow(workflowId).refresh()` — fixed response unwrapping bug
+- `SwarmView()` — added save/dirty/name-editing state and callbacks
+
+### Functions Removed
+- None
+
+### Connection Changes
+- SwarmCanvas now receives `markDirty` and `onCanvasChange` callbacks from SwarmView (new dependency)
+- SwarmCanvas now imports and uses `useCanvasHistory` hook (new dependency)
+- SwarmCanvas now imports and renders `ContextMenu` component (new dependency)
+- SwarmView now imports `sanitizeWorkflow` from utils (new dependency)
+- SwarmView now imports `apiPut` from useApi.js (new dependency — was already imported but not used for workflow save)
+- AgentInspector now imports `stripAnsi` and `inspectControlTokens` utilities
+
+### Impact on Other Code
+- SwarmCanvas signature change is a BREAKING CHANGE — only caller (SwarmView.jsx) was updated in this wave
+- AgentInspector's onUpdateNode callback is now called much more frequently (on every field edit, not just label) — handleUpdateNode in SwarmCanvas handles this via debounced history grouping
+- sanitizeWorkflow is also imported by server/services/ScaffoldGenerator.js — no changes needed there
+
+---

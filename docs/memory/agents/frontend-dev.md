@@ -2556,3 +2556,51 @@ NodePalette.jsx is complete and integrated. Build passes (485 modules, 0 errors)
 ### Handoff
 None — task fully self-contained. The context menu addNodeAtPosition still uses `${type}-${Date.now()}` IDs — a future cleanup task could switch those to generateNodeId too for consistency.
 ---
+
+---
+## 2026-04-06 — FR-V5-37/38/39: Workflow Export/Import JSON + Duplicate Workflow
+**Status:** COMPLETED
+**Called by:** user (task assignment)
+
+### Context when I started
+SwarmView.jsx had Save button and a saved-workflows toolbar row (dropdown, Load, Refresh) but no way to export, import, or duplicate workflows. All needed imports (apiPost, sanitizeWorkflow) were already present.
+
+### What I did
+1. Added `importError` state and `fileInputRef` ref to SwarmView.
+2. Added `handleExport` — sanitizes current workflow (including canvas state), creates a Blob, triggers download as JSON.
+3. Added `handleImport` — opens hidden file input, reads JSON, validates nodes/edges arrays, POSTs to /api/v1/workflows, loads the new workflow. Shows importError banner on failure.
+4. Added `handleDuplicate` — sanitizes current workflow, POSTs a copy with "(Copy)" suffix, loads the duplicate.
+5. Added Duplicate/Export/Import buttons in the saved-workflows toolbar row after Refresh.
+6. Added hidden `<input type="file">` for import.
+7. Added dismissible importError banner between workflowsError and canvas.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/views/SwarmView.jsx | MODIFIED | Added importError state, fileInputRef, handleExport/handleImport/handleDuplicate handlers, 3 buttons in toolbar, hidden file input, import error banner |
+
+### Improvements delivered
+- Users can export any loaded workflow as a .json file
+- Users can import a workflow from a .json file (validated, creates new workflow)
+- Users can duplicate the current workflow with one click
+- All three buttons disabled appropriately (no workflow loaded / during execution)
+- Import errors shown inline with dismiss button
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Buttons placed in saved-workflows row (after Refresh) to keep them grouped with workflow management controls
+- Same button style (bg-gray-800, text-xs) as existing Load/Refresh for visual consistency
+- File input reset after import so same file can be re-imported
+- Import error uses dismissible banner matching save error pattern
+
+### What I learned
+- Linter auto-modifies the file on save (adds useCanvasValidation import), need to re-read after each edit
+
+### State I'm leaving behind
+Build passes: 487 modules, 0 errors. All three features functional. No new dependencies added.
+
+### Handoff
+QA should verify: export downloads valid JSON, import creates workflow from JSON, duplicate creates "(Copy)" workflow. All buttons disabled when no workflow loaded.
+---

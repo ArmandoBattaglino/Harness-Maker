@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-06 — after V5 Wave 1 (Swarm Editor Transition) — mapped by code-mapper_
+_Last updated: 2026-04-06 — after V5 Wave 2 (NodePalette + WorkflowSettingsModal) — mapped by code-mapper_
 
 > **V3.4/V3.5 SWARM RUNTIME STATUS: IN PROGRESS**
 > TASK #145 (BUG-UX-HANDOFF-1) partially addressed: prompt examples templated with `<targetId>` to prevent fake handoffs from PTY redraw (DEC-023); Codex model-selection and rate-limit menus auto-dismissed; hard usage-limit now takes precedence over soft `Approaching rate limits` chooser (DEC-024). 83/83 server tests pass. Build: 479 modules. Live handoff proof still pending — no provider has completed a real multi-agent chain yet.
@@ -86,11 +86,13 @@ _Last updated: 2026-04-06 — after V5 Wave 1 (Swarm Editor Transition) — mapp
 | client/src/utils/sanitizeWorkflow.js | sanitizeWorkflow (named) | Strips React Flow internal runtime fields (measured, width, height, selected, dragging, positionAbsolute) from nodes/edges before persisting workflow definitions. (FR-V5-01, V5 Wave 1) |
 | client/src/utils/nodeIdGenerator.js | generateNodeId (named) | Generates node IDs matching WorkflowStore NODE_ID_REGEX `^[a-z][a-z0-9-]*$` using crypto.randomUUID(). (V5 Wave 1) |
 | client/src/canvas/BreadcrumbBar.jsx | default BreadcrumbBar | Top-bar breadcrumb nav for drill-down into department nodes. Reads departmentStack + navigateBreadcrumb from useSwarmStore. Root crumb always visible; each depth level rendered as a clickable button. (Task #56) |
-| client/src/canvas/SwarmCanvas.jsx | default SwarmCanvas | Root React Flow canvas for swarm visualization. V5 Wave 1: added undo/redo (useCanvasHistory), delete handlers with cascade, context menu (ContextMenu), markDirty/onCanvasChange callbacks, copy/paste/duplicate node actions, keyboard shortcuts (Ctrl+Z/Y). Registers nodeTypes + edgeTypes, drill-down filtering, BreadcrumbBar + AgentInspector + InterAgentFeed + ContextMenu. (Tasks #57.1, #116, #117, #120, V5 Wave 1) |
+| client/src/canvas/NodePalette.jsx | default NodePalette, PaletteCard (internal), NODE_CARDS (const) | Collapsible left sidebar with draggable node type cards (Agent, Department, Webhook Trigger, RSS Trigger). Drag sets application/reactflow-type + application/reactflow-subtype on dataTransfer. (FR-V5-25 through FR-V5-29, V5 Wave 2) |
+| client/src/canvas/WorkflowSettingsModal.jsx | default WorkflowSettingsModal, SettingsTab (internal), ContextTab (internal), MODEL_OPTIONS (const), BUDGET_PRESETS (const), DEFAULTS (const) | Modal for editing workflow settings (mode, budget tokens, circuit breaker threshold, default model) and initial context variables (key-value CRUD). Two tabs: Settings + Initial Context. (V5 Wave 2) |
+| client/src/canvas/SwarmCanvas.jsx | default SwarmCanvas | Root React Flow canvas for swarm visualization. V5 Wave 2: added NodePalette sidebar, onDragOver/onDrop handlers for palette drag-and-drop (generates nodes via generateNodeId). V5 Wave 1: undo/redo, delete handlers with cascade, context menu, copy/paste/duplicate, keyboard shortcuts. (Tasks #57.1, #116, #117, #120, V5 Wave 1, V5 Wave 2) |
 | client/src/canvas/PromptToFlowBar.jsx | default PromptToFlowBar | Natural-language prompt input bar. POSTs to /api/v1/swarm/scaffold, calls onWorkflowGenerated(workflowId, animatedDef) on success. Empty prompt shows red validation message + red border highlight (Task #248). (Tasks #60, #116, #248) |
 | client/src/canvas/BroadcastBar.jsx | default BroadcastBar | Broadcasts text to all running agent PTYs via POST /api/v1/swarm/:executionId/broadcast. Only renders when executionStatus === 'running'. Soft/hard mode selector. (Task #66) |
 | client/src/hooks/useSwarm.js | useSwarm (named), readStoredExecution, writeStoredExecution, clearStoredExecution (module-private) | WebSocket hook for swarm execution lifecycle: connectWs(executionId) → /ws/swarm?executionId=X; startExecution() POSTs + connects WS; stopExecution() DELETEs + closes WS. Dispatches 10 WS message types to useSwarmStore (was 7 before Task #128). restorePersistedExecution uses raw fetch for hydration with 404 → clearStoredExecution + clearExecutionState (BUG-SWARM-UI-2 fix, Tasks #238-#241). agentStates top-level subscription removed (Task #109); uses useSwarmStore.getState() inside handler. Cleanup useEffect depends on [workflowId] (Task #114 — BUG-TOOLBAR-2). updateTriggerState selector added + 3 trigger event cases (Task #128 — BUG-TRIGGER-1). (Tasks #63, #109, #114, #128, #238-#241) |
-| client/src/views/SwarmView.jsx | default SwarmView | Layout shell for the Swarm Orchestrator page. V5 Wave 1: added Save button (isDirty tracking, sanitizeWorkflow before PUT), workflow name editing (click-to-edit with validation), markDirty/onCanvasChange callbacks passed to SwarmCanvas, save success/error banners. Toolbar: title (editable), Save/Run/Stop/Pause/Resume/Reset buttons, runtime provider selector, model settings, HITL inbox toggle. (Tasks #57.2, ..., #242, V5 Wave 1) |
+| client/src/views/SwarmView.jsx | default SwarmView | Layout shell for the Swarm Orchestrator page. V5 Wave 2: added Settings button + WorkflowSettingsModal (showSettings state, onApply merges settings/initialContext into workflowDef + markDirty). V5 Wave 1: Save button, workflow name editing, markDirty/onCanvasChange. Toolbar: title (editable), Settings/Save/Run/Stop/Pause/Resume/Reset buttons, runtime provider selector, model settings, HITL inbox toggle. (Tasks #57.2, ..., #242, V5 Wave 1, V5 Wave 2) |
 | client/src/canvas/InterAgentFeed.jsx | default InterAgentFeed | Real-time sidebar log of agent handoff events. Empty-state container now has w-56 shrink-0 (Task #104 — prevents canvas collapse when feed is empty). Auto-scrolls to bottom. Renders event icon + timestamp + details for handoff_started/agent_status/circuit_breaker/execution_status types. (Tasks #72, #104) |
 | client/src/panels/HitlInbox.jsx | default HitlInbox, getPendingCount (named) | HITL approval panel. InboxItem.handleApproveConfirm and handleReject now call setError() instead of silently returning when executionId/itemId is null (Task #108). (Tasks #69, #108) |
 | client/src/hooks/useInbox.js | useInbox (named), default useInbox | HITL inbox polling + approve/reject hook. Normalizes REST vs WS inbox item shapes. Polls /api/v1/swarm/:executionId/inbox every 10s when WS disconnected. Calls resolveInboxItem(itemId) on success. Imported and called in SwarmView.jsx (line 53) as polling fallback — BUG-AUDIT-4 fix (Task #122). (Tasks #73, #84, #85, #92, #122) |
@@ -2099,17 +2101,18 @@ _Last updated: 2026-04-06 — after V5 Wave 1 (Swarm Editor Transition) — mapp
 ## React Flow Canvas Container (Task #57.1)
 
 ### `client/src/canvas/SwarmCanvas.jsx` :: `SwarmCanvas({ workflowDef, markDirty, onCanvasChange })`
-- **Purpose:** Root canvas component for swarm workflow visualization. V5 Wave 1: added undo/redo (useCanvasHistory), delete handlers with cascade (onNodesDelete removes department children), context menu (3 contexts: canvas/node/edge), copy/paste/duplicate node actions, drag history capture, keyboard shortcuts (Ctrl+Z undo, Ctrl+Shift+Z/Ctrl+Y redo), markDirty/onCanvasChange callbacks for parent save tracking. Registers nodeTypes + edgeTypes, drill-down filtering, fitView on workflowDef change.
+- **Purpose:** Root canvas component for swarm workflow visualization. V5 Wave 2: added NodePalette sidebar (rendered left of ReactFlow), onDragOver (preventDefault + dropEffect=move) and onDrop (reads reactflow-type/subtype from dataTransfer, creates node with generateNodeId, type-specific default data). V5 Wave 1: undo/redo, delete handlers with cascade, context menu, copy/paste/duplicate, keyboard shortcuts, markDirty/onCanvasChange callbacks.
 - **Called by:** SwarmView.jsx (mounted inside ReactFlowProvider with workflowDef, markDirty, onCanvasChange props)
-- **Calls:** useReactFlow (fitView, screenToFlowPosition), useSwarmStore (focusedDepartmentId, setSelectedNode, executionStatus), useNodesState, useEdgesState, useCanvasHistory (pushHistory/undo/redo/canUndo/canRedo), useEffect (workflowDef sync, canvas change reporting, keyboard shortcuts), useMemo (visibleNodes, visibleNodeIds, visibleEdges, contextMenuActions), useCallback (onConnect, onNodeClick, onPaneClick, onNodeDragStart/Stop, onNodesDelete, onEdgesDelete, handleNodesChange, handleEdgesChange, context menu handlers, addNodeAtPosition, duplicateNode, deleteNode, deleteEdge, copyNode, pasteNode, handleUpdateNode), ContextMenu, AgentInspector, BreadcrumbBar, InterAgentFeed
+- **Calls:** useReactFlow (fitView, screenToFlowPosition), useSwarmStore (focusedDepartmentId, setSelectedNode, executionStatus), useNodesState, useEdgesState, useCanvasHistory (pushHistory/undo/redo/canUndo/canRedo), generateNodeId (utils/nodeIdGenerator.js — used in onDrop), useEffect (workflowDef sync, canvas change reporting, keyboard shortcuts), useMemo (visibleNodes, visibleNodeIds, visibleEdges, contextMenuActions), useCallback (onConnect, onNodeClick, onPaneClick, onNodeDragStart/Stop, onNodesDelete, onEdgesDelete, handleNodesChange, handleEdgesChange, onDragOver, onDrop, context menu handlers, addNodeAtPosition, duplicateNode, deleteNode, deleteEdge, copyNode, pasteNode, handleUpdateNode), NodePalette, ContextMenu, AgentInspector, BreadcrumbBar, InterAgentFeed
 - **Inputs:** workflowDef (object or undefined), markDirty (function — `() => void`, called on meaningful canvas changes), onCanvasChange (function — `(nodes, edges) => void`, called on every nodes/edges state change)
-- **Output:** JSX — flex column: BreadcrumbBar + flex row: ReactFlow canvas + ContextMenu (conditional) + InterAgentFeed (gated on showSidePanels) + AgentInspector (always)
-- **Side effects:** calls markDirty on meaningful node/edge changes; calls onCanvasChange on every nodes/edges update; calls setSelectedNode on click; mutates nodes/edges via delete/add/duplicate/paste; keyboard event listeners on window. No server I/O.
+- **Output:** JSX — flex column: BreadcrumbBar + flex row: NodePalette + ReactFlow canvas + ContextMenu (conditional) + InterAgentFeed (gated on showSidePanels) + AgentInspector (always)
+- **Side effects:** calls markDirty on meaningful node/edge changes; calls onCanvasChange on every nodes/edges update; calls setSelectedNode on click; mutates nodes/edges via delete/add/duplicate/paste/drop; keyboard event listeners on window. No server I/O.
+- **Complexity note (V5 Wave 2 — drag-and-drop):** onDrop reads `application/reactflow-type` and `application/reactflow-subtype` from dataTransfer, converts screen coords to flow position via screenToFlowPosition, generates compliant ID via generateNodeId, builds type-specific default data (agent: label/systemPrompt/model/tools/isTriageNode/maxTurns; department: label; trigger/webhook: label/triggerType/webhookPath; trigger/rss: label/triggerType/feedUrl/pollIntervalSeconds), pushes undo history, appends node, calls markDirty.
 - **Complexity note (V5 Wave 1 — undo/redo):** useCanvasHistory stores structuredClone snapshots in refs. pushHistory called BEFORE mutation with pre-state. Drag operations use preDragSnapshotRef to capture state at onNodeDragStart, push at onNodeDragStop. handleUpdateNode debounces 500ms — first edit in burst captures snapshot, subsequent edits within 500ms share the same undo entry.
 - **Complexity note (V5 Wave 1 — context menu):** Three context handlers (handlePaneContextMenu, handleNodeContextMenu, handleEdgeContextMenu) set contextMenu state with position + type + optional nodeId/edgeId. contextMenuActions useMemo builds action arrays per type. Canvas context: add agent/department/trigger, select all, paste. Node context: edit, duplicate, copy, delete. Edge context: delete.
 - **Complexity note (V5 Wave 1 — cascade delete):** onNodesDelete callback detects department deletions and cascades to remove child nodes (nodes with parentId matching deleted department ID) + their connected edges.
-- **BREAKING CHANGE:** Signature changed from `SwarmCanvas({ workflowDef })` to `SwarmCanvas({ workflowDef, markDirty, onCanvasChange })`. Caller (SwarmView.jsx) updated.
-- **Last modified:** 2026-04-06 in V5 Wave 1 by frontend-dev
+- **BREAKING CHANGE (V5 Wave 1):** Signature changed from `SwarmCanvas({ workflowDef })` to `SwarmCanvas({ workflowDef, markDirty, onCanvasChange })`. Caller (SwarmView.jsx) updated.
+- **Last modified:** 2026-04-06 in V5 Wave 2 by frontend-dev (NodePalette integration, onDragOver/onDrop handlers, generateNodeId import)
 
 ### `client/src/canvas/SwarmCanvas.jsx` :: `handleUpdateNode(nodeId, patch)`
 - **Purpose:** useCallback that shallow-merges a patch into a node's data, with 500ms debounce for history grouping. First edit in a burst captures undo snapshot; subsequent edits within 500ms share the same history entry.
@@ -2125,15 +2128,16 @@ _Last updated: 2026-04-06 — after V5 Wave 1 (Swarm Editor Transition) — mapp
 ## Swarm View Shell (Task #57.2)
 
 ### `client/src/views/SwarmView.jsx` :: `SwarmView()`
-- **Purpose:** Top-level page shell for the Swarm Orchestrator. V5 Wave 1: added Save button (isDirty/saving/saveError/saveSuccess state), workflow name editing (editingName/nameInput state, click-to-edit with NAME_PATTERN validation `^[a-zA-Z0-9 _\-]+$`, max 128 chars), markDirty/onCanvasChange callbacks passed to SwarmCanvas, sanitizeWorkflow called before apiPut on save. Renders toolbar + PromptToFlowBar + saved-workflows selector + canvas + HITL drawer + BroadcastBar + PtyExplosion overlay. Provides ReactFlowProvider boundary.
+- **Purpose:** Top-level page shell for the Swarm Orchestrator. V5 Wave 2: added Settings button (showSettings state) + WorkflowSettingsModal integration — onApply merges updatedSettings into workflowDef.settings and replaces workflowDef.initialContext, calls markDirty + closes modal. V5 Wave 1: Save button, workflow name editing, markDirty/onCanvasChange. Renders toolbar + PromptToFlowBar + saved-workflows selector + canvas + HITL drawer + BroadcastBar + PtyExplosion overlay + WorkflowSettingsModal (conditional). Provides ReactFlowProvider boundary.
 - **Called by:** App.jsx::MainContent (case 'swarm')
-- **Calls:** useSwarmStore (selectors: executionStatus, activeExecutionId, inboxItems, setPaused, setResumed, reset, ptyExplosionNodeId, setPtyExplosionNodeId, workflowDef, setWorkflowDef, selectedRuntimeProvider, setSelectedRuntimeProvider), useAppState, useSwarm, useInbox, useWorkflowList, getPendingCount, apiGet (runtime-capabilities), apiPost (pause/resume), apiPut (save workflow), sanitizeWorkflow, ReactFlowProvider, SwarmCanvas (with markDirty + onCanvasChange props), PromptToFlowBar, BroadcastBar, PtyExplosion, HitlInbox
+- **Calls:** useSwarmStore (selectors: executionStatus, activeExecutionId, inboxItems, setPaused, setResumed, reset, ptyExplosionNodeId, setPtyExplosionNodeId, workflowDef, setWorkflowDef, selectedRuntimeProvider, setSelectedRuntimeProvider), useAppState, useSwarm, useInbox, useWorkflowList, getPendingCount, apiGet (runtime-capabilities), apiPost (pause/resume), apiPut (save workflow), sanitizeWorkflow, ReactFlowProvider, SwarmCanvas (with markDirty + onCanvasChange props), PromptToFlowBar, BroadcastBar, PtyExplosion, HitlInbox, WorkflowSettingsModal (conditional on showSettings && workflowDef)
 - **Inputs:** none (no props)
-- **Output:** JSX — flex-col full-height: toolbar (editable name + Save + Run/Stop/Pause/Resume/Reset + runtime selector + models + HITL + status) + banners (save error/success, runtime blocker, fallback) + PromptToFlowBar + saved-workflows bar + canvas + HITL drawer + BroadcastBar + PtyExplosion
+- **Output:** JSX — flex-col full-height: toolbar (editable name + Settings + Save + Run/Stop/Pause/Resume/Reset + runtime selector + models + HITL + status) + banners (save error/success, runtime blocker, fallback) + PromptToFlowBar + saved-workflows bar + canvas + HITL drawer + BroadcastBar + PtyExplosion + WorkflowSettingsModal (conditional)
 - **Side effects:** Escape key listener. apiPost to pause/resume. apiPut to save workflow. apiGet for runtime capabilities on mount. Calls store mutations. Calls refreshWorkflows after save/scaffold.
+- **Complexity note (V5 Wave 2 — Settings modal):** Settings button disabled when !workflowDef. onApply receives (updatedSettings, updatedContext), spreads updatedSettings onto workflowDef.settings, replaces workflowDef.initialContext with updatedContext dict, calls markDirty + setShowSettings(false). Changes are local until Save is clicked.
 - **Complexity note (V5 Wave 1 — Save):** handleSave reads canvasStateRef.current (nodes/edges set by onCanvasChange callback), calls sanitizeWorkflow to strip React Flow internals, apiPut to /api/v1/workflows/:id, unwraps result?.workflow ?? result, calls setWorkflowDef + setIsDirty(false) + refreshWorkflows. Save button disabled when !isDirty or !workflowDef or saving.
 - **Complexity note (V5 Wave 1 — Name editing):** Click on name span opens inline input. Enter confirms, Escape cancels, blur confirms. Validation: non-empty, <= 128 chars, matches NAME_PATTERN. On confirm, updates workflowDef in store + calls markDirty.
-- **Last modified:** 2026-04-06 in V5 Wave 1 by frontend-dev (Save button, dirty tracking, name editing, markDirty/onCanvasChange callbacks, sanitizeWorkflow import)
+- **Last modified:** 2026-04-06 in V5 Wave 2 by frontend-dev (Settings button, WorkflowSettingsModal import + integration)
 
 ---
 
@@ -3017,6 +3021,60 @@ _All bugs identified in QA Swarm Inspection (2026-03-31) and Swarm Code Audit (2
 - **Output:** string — e.g. `agent-a1b2c3d4`
 - **Side effects:** none (pure function using crypto)
 - **Last modified:** 2026-04-06 in V5 Wave 1 by frontend-dev (new file)
+
+---
+
+## Node Palette (V5 Wave 2)
+
+### `client/src/canvas/NodePalette.jsx` :: `NodePalette()`
+- **Purpose:** Collapsible left sidebar rendered inside SwarmCanvas. Displays draggable cards for each node type (Agent, Department, Webhook Trigger, RSS Trigger). Collapsed state shows a narrow expand button; expanded state shows cards + collapse button.
+- **Called by:** SwarmCanvas.jsx (rendered as `<NodePalette />` left of the ReactFlow component)
+- **Calls:** useState (collapsed), PaletteCard (internal component — maps over NODE_CARDS)
+- **Inputs:** none (no props)
+- **Output:** JSX — w-48 sidebar (expanded) or w-8 strip (collapsed). Contains header "Nodes", PaletteCard list, collapse/expand button.
+- **Side effects:** none (drag data set via PaletteCard.onDragStart)
+- **Last modified:** 2026-04-06 in V5 Wave 2 by frontend-dev (new file)
+
+### `client/src/canvas/NodePalette.jsx` :: `PaletteCard({ card })`
+- **Purpose:** Internal draggable card component. Sets `application/reactflow-type` and `application/reactflow-subtype` on the drag event's dataTransfer, with effectAllowed='move'.
+- **Called by:** NodePalette (mapped from NODE_CARDS array)
+- **Calls:** useCallback (onDragStart)
+- **Inputs:** card (object — `{ type, subType, icon, label, description }` from NODE_CARDS constant)
+- **Output:** JSX — draggable div with icon, label, description
+- **Side effects:** Sets dataTransfer data on drag start (consumed by SwarmCanvas.onDrop)
+- **Last modified:** 2026-04-06 in V5 Wave 2 by frontend-dev (new file)
+
+---
+
+## Workflow Settings Modal (V5 Wave 2)
+
+### `client/src/canvas/WorkflowSettingsModal.jsx` :: `WorkflowSettingsModal({ workflowDef, onApply, onClose })`
+- **Purpose:** Modal dialog with two tabs (Settings + Initial Context). Settings tab controls mode (autonomous/hitl), budgetTokens (presets + custom), circuitBreakerThreshold, defaultModel (grouped by provider). Context tab manages key-value pairs. onApply converts contextVars array back to flat dict and passes (settings, contextDict) to parent.
+- **Called by:** SwarmView.jsx (conditional: `showSettings && workflowDef`)
+- **Calls:** useState (tab, settings, contextVars), useEffect (init from workflowDef, Escape key listener), useCallback (handleApply), SettingsTab (internal), ContextTab (internal), onApply (prop callback), onClose (prop callback)
+- **Inputs:** workflowDef (object — reads `.settings` and `.initialContext`), onApply (function — `(settings, contextDict) => void`), onClose (function — `() => void`)
+- **Output:** JSX — fixed overlay with modal card (header + tab bar + content + footer with Cancel/Apply buttons)
+- **Side effects:** Escape keydown listener added/removed on mount/unmount. Calls onApply with merged settings on Apply click. Calls onClose on Cancel/X/Escape.
+- **Complexity note:** Initializes from workflowDef in useEffect (not constructor) — re-syncs if workflowDef reference changes. contextVars stored as array of `{ key, value }` internally, converted to flat dict `{ [key]: value }` on apply (empty keys filtered out).
+- **Last modified:** 2026-04-06 in V5 Wave 2 by frontend-dev (new file)
+
+### `client/src/canvas/WorkflowSettingsModal.jsx` :: `SettingsTab({ settings, onChange })`
+- **Purpose:** Internal tab component for workflow execution settings. Renders radio buttons for mode, budget preset pills + custom number input, circuit breaker threshold input, model selector (grouped optgroups: Claude/Codex/Gemini).
+- **Called by:** WorkflowSettingsModal (when tab === 'settings')
+- **Calls:** onChange (prop callback — passes full updated settings object on any change)
+- **Inputs:** settings (object — `{ mode, budgetTokens, circuitBreakerThreshold, defaultModel }`), onChange (function — `(updatedSettings) => void`)
+- **Output:** JSX — form fields for all settings
+- **Side effects:** none
+- **Last modified:** 2026-04-06 in V5 Wave 2 by frontend-dev (new file)
+
+### `client/src/canvas/WorkflowSettingsModal.jsx` :: `ContextTab({ contextVars, onChange })`
+- **Purpose:** Internal tab component for initial context variable CRUD. Renders a key-value grid with add/delete. Supports empty state message.
+- **Called by:** WorkflowSettingsModal (when tab === 'context')
+- **Calls:** useCallback (handleKeyChange, handleValueChange, handleDelete, handleAdd), onChange (prop callback — passes full updated array)
+- **Inputs:** contextVars (array of `{ key, value }`), onChange (function — `(updatedArray) => void`)
+- **Output:** JSX — header with "Add Variable" button + grid of key-value rows with delete buttons
+- **Side effects:** none
+- **Last modified:** 2026-04-06 in V5 Wave 2 by frontend-dev (new file)
 
 ---
 

@@ -2860,3 +2860,49 @@ CODE_MAP.md and CHANGELOG.md fully updated for Tasks #245-#248. The snippet pipe
 ### Handoff
 None — task fully self-contained.
 ---
+
+---
+## 2026-04-06 — V5 Wave 1: Swarm Editor Transition
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task mapping)
+
+### Context when I started
+V5 Wave 1 had just been implemented by frontend-dev. 4 new files created, 4 existing files modified. CODE_MAP.md and CHANGELOG.md needed updating to reflect the Swarm Editor Transition — the first wave of converting the read-only swarm canvas into a full interactive editor.
+
+### What I did
+1. Read all 4 new files (useCanvasHistory.js, sanitizeWorkflow.js, nodeIdGenerator.js, ContextMenu.jsx) and all 4 modified files (SwarmCanvas.jsx, AgentInspector.jsx, SwarmView.jsx, useWorkflow.js)
+2. Grepped for all cross-file references to verify callers and callees
+3. Updated CODE_MAP.md Module Index entries for all 8 files (4 new + 4 updated)
+4. Updated CODE_MAP.md Function Graph: updated 4 existing entries (SwarmCanvas, handleUpdateNode, AgentInspector, SwarmView, useWorkflow), added 10+ new entries
+5. Documented BREAKING CHANGE: SwarmCanvas signature change
+6. Appended comprehensive CHANGELOG.md entry
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Module Index + Function Graph updated for V5 Wave 1 |
+| docs/memory/CHANGELOG.md | MODIFIED | New entry appended for V5 Wave 1 |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Activity log entry appended |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log |
+
+### Improvements delivered
+- Complete function-level map of all V5 Wave 1 additions and changes
+- BREAKING CHANGE documented for SwarmCanvas signature
+
+### Bugs I encountered
+None
+
+### Decisions I made
+None
+
+### What I learned
+- SwarmCanvas is now the most complex React component in the codebase with 20+ useCallback hooks
+- sanitizeWorkflow is shared between client (SwarmView save) and server (ScaffoldGenerator)
+- useCanvasHistory uses a clever ref-based approach to avoid re-renders — stacks in refs, version counter only bumped when emptiness changes
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md fully updated through V5 Wave 1. All new and modified functions mapped with callers, callees, inputs, outputs, side effects.
+
+### Handoff
+None — mapping task fully self-contained.
+---

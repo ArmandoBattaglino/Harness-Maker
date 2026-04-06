@@ -20,13 +20,23 @@ export default function AgentNode({ id, data, selected }) {
 
   return (
     <div
-      className={`rounded-lg border-2 p-3 min-w-[160px] max-w-[220px] text-white text-sm
+      className={`relative rounded-lg border-2 p-3 min-w-[160px] max-w-[220px] text-white text-sm
         ${colorClass}
         ${selected ? 'ring-2 ring-white ring-offset-1 ring-offset-transparent' : ''}
         cursor-pointer transition-all duration-200`}
     >
       {/* Top handle — accepts handoffs from other agents */}
       <Handle type="target" position={Position.Top} className="!bg-gray-400 !border-gray-600" />
+
+      {/* Validation warning badge — empty system prompt (FR-V5-45) */}
+      {!data?.systemPrompt?.trim() && (
+        <div
+          className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center text-[10px] text-black font-bold z-10"
+          title="Empty system prompt"
+        >
+          !
+        </div>
+      )}
 
       {/* Agent icon + name */}
       <div className="flex items-center gap-2 mb-1">

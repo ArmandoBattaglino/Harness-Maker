@@ -1,3 +1,25 @@
+## 2026-04-06 — project-manager — V5 Wave 1 + Wave 2 Task Plan Registration
+**Outcome:** COMPLETED
+**Summary:** Registered all V5 Wave 1 tasks (#259-#267) and Wave 2 tasks (#268-#272) in TASK_PLAN.md as COMPLETED. Wave 1: 8 component tasks + 1 test gate (undo/redo, save, dirty tracking, name editing, context menu, AgentInspector, node/edge delete, sanitize/ID utils). Wave 2: 2 component tasks (NodePalette, WorkflowSettingsModal) + 2 test gates + 1 area checkpoint. Updated status header: 272 tasks total, 267 COMPLETED, 2 DEFERRED, 3 PENDING (V7.0 gates). Both Wave 1 and Wave 2 areas CLOSED.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md, docs/memory/CONTEXT.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** Rescoped Wave 2 from original 8-component plan to 2 components (NodePalette + WorkflowSettingsModal) reflecting actual implementation
+**Blockers:** none
+**Next:** V7.0 test gates (#256, #257) then area checkpoint (#258) to close V7.0
+
+---
+
+## 2026-04-06 — documenter — V5 Wave 2 Documentation Update
+**Outcome:** COMPLETED
+**Summary:** Updated PROGRESS.md (V5 Wave 2 entry), CONTEXT.md (focus shifted to V5 Wave 2), DOC_STATUS.md (V5 Wave 2 components noted in debt table), ACTIVITY_LOG.md (this entry), agents/documenter.md (session log). No README, API, or ARCHITECTURE changes needed — all changes are frontend-only with no new endpoints or config.
+**Files changed:** docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/DOC_STATUS.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** QA test gate for V5 Wave 2 features
+
+---
+
 ## 2026-04-06 — frontend-dev — FR-V5-34/35/36: Workflow Settings Modal + Initial Context Editor
 **Outcome:** COMPLETED
 **Summary:** Created WorkflowSettingsModal.jsx with two tabs: Settings (mode radio, budget presets + number input, circuit breaker threshold, default model dropdown) and Initial Context (dynamic key-value editor). Integrated into SwarmView.jsx with gear Settings button in toolbar. Apply merges into workflowDef and marks dirty. Build: 486 modules, 0 errors.
@@ -3828,4 +3850,35 @@ full self-contained context and acceptance criteria.
 **Decisions made:** none
 **Blockers:** none
 **Next:** TEST GATES #256-#257 and AREA CHECKPOINT #258 to close V7.0
+---
+
+---
+## 2026-04-06 — code-mapper — V5 Wave 1: Swarm Editor Transition
+**Outcome:** COMPLETED
+**Summary:** Mapped all V5 Wave 1 changes: 4 new files (useCanvasHistory, sanitizeWorkflow, nodeIdGenerator, ContextMenu), 4 modified files (SwarmCanvas, AgentInspector, SwarmView, useWorkflow). 20+ new functions added, 6 existing functions updated. SwarmCanvas signature BREAKING CHANGE documented. CODE_MAP.md Module Index and Function Graph updated. CHANGELOG.md entry appended.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
+**Bugs fixed:** none (mapping only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** V5 Wave 1 TEST GATE — qa-tester should verify undo/redo, context menu, save, name editing, inspector editing
+---
+## 2026-04-06 — code-mapper — V5 Wave 2: NodePalette + WorkflowSettingsModal
+**Outcome:** COMPLETED
+**Summary:** Mapped V5 Wave 2 changes: 2 new files (NodePalette.jsx, WorkflowSettingsModal.jsx), 2 modified files (SwarmCanvas.jsx — onDragOver/onDrop + NodePalette integration, SwarmView.jsx — Settings button + WorkflowSettingsModal). 7 new functions mapped, 2 existing functions updated. New drag-and-drop data flow (PaletteCard dataTransfer -> SwarmCanvas.onDrop) and settings persistence flow (WorkflowSettingsModal.onApply -> SwarmView -> workflowDef.settings/initialContext) documented.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (mapping only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** V5 Wave 2 TEST GATE — verify palette drag-and-drop creates correct node types, settings modal persists settings/context
+---
+
+---
+## 2026-04-06 — frontend-dev — FR-V5-37/38/39: Workflow Export/Import JSON + Duplicate Workflow
+**Outcome:** COMPLETED
+**Summary:** Added Export (download as JSON), Import (file picker + validation + POST), and Duplicate (copy with "(Copy)" suffix) buttons to SwarmView.jsx saved-workflows toolbar. Import errors shown as dismissible inline banner. Build: 487 modules, 0 errors.
+**Files changed:** client/src/views/SwarmView.jsx
+**Bugs fixed:** none
+**Decisions made:** Buttons placed in saved-workflows row after Refresh, matching existing button style
+**Blockers:** none
+**Next:** QA test gate for export/import/duplicate features
 ---
