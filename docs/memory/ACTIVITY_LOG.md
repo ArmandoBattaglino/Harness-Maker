@@ -3580,3 +3580,25 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** nothing -- all areas V3.1-V5.2 CLOSED, documentation fully current
 ---
+
+---
+## 2026-04-06 — debugger — Task #245: BUG-RUNTIME-1 — Collapse repeated "(thinking)" tokens
+**Outcome:** COMPLETED
+**Summary:** Added noise pattern for lines composed entirely of "(thinking)" tokens to SNIPPET_NOISE_LINE_PATTERNS, plus a post-processing step in _buildSemanticSnippet that collapses inline repetitions to "(thinking...)". 312/312 server tests pass.
+**Files changed:** server/services/SwarmEngine.js (2 insertions), docs/TASK_PLAN.md (#245 marked COMPLETED)
+**Bugs fixed:** BUG-RUNTIME-1 — repeated thinking tokens in agent node snippet
+**Decisions made:** Two-layer defense (noise pattern + post-processing collapse); collapsed form is "(thinking...)" not removal
+**Blockers:** none
+**Next:** Task #246 (BUG-RUNTIME-2 Codex auth prompt filtering) — next in Wave A sequence
+---
+
+---
+## 2026-04-06 — frontend-dev — Task #248: BUG-RUNTIME-4 — Empty prompt inline validation
+**Outcome:** COMPLETED
+**Summary:** Added inline validation to PromptToFlowBar.jsx so clicking Generate with an empty prompt shows a red error message below the input instead of silently doing nothing. Input border highlights red on validation failure and error auto-clears on typing. Build passes (480 modules, 0 errors).
+**Files changed:** client/src/canvas/PromptToFlowBar.jsx
+**Bugs fixed:** BUG-RUNTIME-4 (empty prompt silent failure)
+**Decisions made:** Fixed in PromptToFlowBar.jsx (not SwarmView.jsx) since that is where the prompt input lives. Changed button from disabled-when-empty to always-clickable so validation fires on click.
+**Blockers:** none
+**Next:** TEST GATE #249 — qa-tester verifies empty prompt validation behavior
+---

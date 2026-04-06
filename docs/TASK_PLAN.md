@@ -12612,7 +12612,8 @@ Agent: debugger
 Priority: LOW
 Difficulty: EASY
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-06 — Added SNIPPET_NOISE_LINE_PATTERNS entry for lines entirely composed of (thinking) tokens + post-processing collapse of inline repeats to "(thinking...)". 312/312 tests pass.
 Component Spec:
   File: server/services/SwarmEngine.js
   Current behavior: During Claude execution, Researcher node snippet shows
@@ -12717,7 +12718,8 @@ Agent: frontend-dev
 Priority: LOW
 Difficulty: TRIVIAL
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-06 -- Added promptError state to PromptToFlowBar.jsx with inline red validation message, red border highlight on input, and auto-clear on typing. Build passes (480 modules, 0 errors).
 Component Spec:
   File: client/src/views/SwarmView.jsx
   Current behavior: Clicking the Generate button with an empty prompt silently does nothing.

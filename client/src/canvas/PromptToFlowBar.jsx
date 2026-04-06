@@ -11,10 +11,16 @@ export default function PromptToFlowBar({ onWorkflowGenerated }) {
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [promptError, setPromptError] = useState('');
 
   const handleGenerate = useCallback(async () => {
+    if (loading) return;
     const trimmed = prompt.trim();
-    if (!trimmed || loading) return;
+    if (!trimmed) {
+      setPromptError('Please enter a workflow description.');
+      return;
+    }
+    setPromptError('');
 
     setLoading(true);
     setError(null);
@@ -64,18 +70,22 @@ export default function PromptToFlowBar({ onWorkflowGenerated }) {
         <input
           type="text"
           value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
+          onChange={(e) => { setPrompt(e.target.value); setPromptError(''); }}
           onKeyDown={handleKeyDown}
           placeholder="Describe your workflow... e.g. 'Triage customer requests then route to billing or support agents'"
           disabled={loading}
-          className="flex-1 bg-gray-800 text-white text-sm rounded px-3 py-1.5
-                     border border-gray-600 focus:border-purple-500 focus:outline-none
-                     placeholder-gray-500 disabled:opacity-50"
+          className={`flex-1 bg-gray-800 text-white text-sm rounded px-3 py-1.5
+                     border focus:outline-none
+                     placeholder-gray-500 disabled:opacity-50 ${
+                       promptError
+                         ? 'border-red-500 focus:border-red-400'
+                         : 'border-gray-600 focus:border-purple-500'
+                     }`}
           maxLength={2000}
         />
         <button
           onClick={handleGenerate}
-          disabled={!prompt.trim() || loading}
+          disabled={loading}
           className="text-sm px-3 py-1.5 rounded bg-purple-600 hover:bg-purple-500
                      disabled:opacity-40 disabled:cursor-not-allowed text-white
                      transition-colors shrink-0"
@@ -83,6 +93,9 @@ export default function PromptToFlowBar({ onWorkflowGenerated }) {
           {loading ? 'Generating...' : 'Generate'}
         </button>
       </div>
+      {promptError && (
+        <div className="text-xs text-red-400 pl-7">{promptError}</div>
+      )}
       {error && (
         <div className="text-xs text-red-400 pl-7">{error}</div>
       )}

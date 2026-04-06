@@ -2192,3 +2192,53 @@ Task #242 is COMPLETED. The dropdown now deduplicates by name and shows dates. N
 ### Handoff
 None — task fully self-contained. No test gate was assigned for this deferred task.
 ---
+
+---
+## 2026-04-06 — Task #248: BUG-RUNTIME-4 — Empty prompt inline validation for Prompt-to-Flow
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+The PromptToFlowBar component had an early return (`if (!trimmed || loading) return;`) for empty prompts and the Generate button was disabled when prompt was empty, but neither path provided any visual feedback to the user. Clicking Generate with an empty prompt silently did nothing.
+
+### What I did
+1. Read SwarmView.jsx — confirmed the Generate button and prompt input live in the child component PromptToFlowBar.jsx, not in SwarmView directly.
+2. Read PromptToFlowBar.jsx (91 lines) — found the silent early return at line 17 and disabled button at line 78.
+3. Added `promptError` state variable initialized to empty string.
+4. Modified `handleGenerate`: moved `loading` check before trim, added explicit validation that sets `promptError` when trimmed input is empty, and clears `promptError` before proceeding with valid input.
+5. Changed button `disabled` from `!prompt.trim() || loading` to just `loading` — so clicking with empty prompt triggers validation instead of being silently blocked.
+6. Added `setPromptError('')` to the `onChange` handler so typing clears the error.
+7. Added conditional red border class on the input when `promptError` is set.
+8. Added inline `{promptError && ...}` red text message below the input bar.
+9. Ran `npm run build --prefix client` — 480 modules, 0 errors, 4.42s.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/canvas/PromptToFlowBar.jsx | MODIFIED | Added promptError state, validation in handleGenerate, red border + inline error message, auto-clear on typing |
+
+### Improvements delivered
+- Empty or whitespace-only prompt now shows "Please enter a workflow description." in red below the input
+- Input border turns red when validation fails
+- Error clears automatically when user starts typing
+- Generate button remains clickable (not grayed out) so the validation message can trigger
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-RUNTIME-4 | Silent early return + disabled button with no feedback | Added promptError state with inline validation message | FIXED |
+
+### Decisions I made
+- Fixed in PromptToFlowBar.jsx (not SwarmView.jsx as task description suggested) because that is where the prompt input and Generate button actually live.
+- Changed button from disabled-when-empty to always-clickable (except during loading) so the validation message fires on click rather than the button being silently unresponsive.
+- Used Option A (inline red text + red border) as recommended in task spec.
+
+### What I learned
+- The task description pointed to SwarmView.jsx but the actual component to fix was PromptToFlowBar.jsx — always verify component structure before editing.
+
+### State I'm leaving behind
+PromptToFlowBar.jsx fully updated with inline validation. Build verified. Ready for TEST GATE #249.
+
+### Handoff
+TEST GATE #249 should verify: empty prompt shows error, whitespace-only shows error, typing clears error, valid prompt still generates normally.
+---

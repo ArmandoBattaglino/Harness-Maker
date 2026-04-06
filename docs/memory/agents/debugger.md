@@ -906,3 +906,48 @@ REPLAY_NOISE_LINE_PATTERNS now has 38 patterns (was 35). All 312 tests pass. Fix
 ### Handoff
 None -- task fully self-contained.
 ---
+
+---
+## 2026-04-06 — Task #245: BUG-RUNTIME-1 — Collapse repeated "(thinking)" tokens in snippet extraction
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+SwarmEngine.js snippet extraction was passing through raw "(thinking)(thinking)(thinking)..." tokens from Claude CLI output. The SNIPPET_NOISE_LINE_PATTERNS array had no pattern for this. The _buildSemanticSnippet method's duplicate-line check (line === previousLine) wouldn't catch these since the entire string is one line of concatenated tokens.
+
+### What I did
+1. Read SwarmEngine.js to understand the snippet noise filtering pipeline
+2. Added a regex `/^\(thinking\)(\(thinking\))*$/i` to SNIPPET_NOISE_LINE_PATTERNS (line 150) — catches lines that are entirely one or more "(thinking)" tokens
+3. Added a post-processing step in _buildSemanticSnippet (line 1141) that collapses any surviving inline "(thinking)" repetitions to a single "(thinking...)" using `.replace(/(\(thinking\)){2,}/gi, '(thinking...')`
+4. Ran npm test — 312/312 pass, no regressions
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SwarmEngine.js | MODIFIED | Added thinking-token noise pattern (line ~150) + post-processing collapse (line ~1141) |
+| docs/TASK_PLAN.md | MODIFIED | Marked #245 COMPLETED |
+
+### Improvements delivered
+- Agent node snippets no longer show ugly "(thinking)(thinking)(thinking)..." during Claude execution
+- Single "(thinking)" lines are also filtered as noise
+- Inline repetitions that survive block selection are collapsed to "(thinking...)"
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| Repeated thinking tokens in snippet | No pattern in SNIPPET_NOISE_LINE_PATTERNS for (thinking) tokens | Added regex pattern + post-processing collapse | FIXED |
+
+### Decisions I made
+- Two-layer defense: noise pattern filters full lines, post-processing catches inline remnants — belt and suspenders approach
+- Used "(thinking...)" as collapsed form rather than removing entirely — gives user a signal that the agent is thinking
+
+### What I learned
+- Claude CLI emits "(thinking)" tokens concatenated without spaces or newlines when the model is in extended thinking mode
+- The snippet pipeline's duplicate-line check doesn't help here because the tokens are all on one line
+
+### State I'm leaving behind
+SNIPPET_NOISE_LINE_PATTERNS now has one additional pattern. _buildSemanticSnippet has a one-line post-processing step. All 312 tests pass.
+
+### Handoff
+Task #246 (BUG-RUNTIME-2 Codex auth prompt) is next in the sequential wave.
+---

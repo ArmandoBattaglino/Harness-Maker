@@ -147,6 +147,7 @@ const SNIPPET_NOISE_LINE_PATTERNS = [
   /^your role is/i,
   /^--- swarm input ---$/i,
   /^--- end swarm input ---$/i,
+  /^\(thinking\)(\(thinking\))*$/i,
 ];
 const SNIPPET_STALE_FOREIGN_LINE_PATTERNS = [
   /^explain this codebase$/i,
@@ -1136,7 +1137,9 @@ class SwarmEngine {
       if (recoveryFallback) return recoveryFallback;
     }
 
-    return this._decompressConPTYSpaces(bestBlock.slice(-500));
+    // Collapse repeated "(thinking)" tokens that survived block selection
+    const collapsed = bestBlock.replace(/(\(thinking\)){2,}/gi, '(thinking...)');
+    return this._decompressConPTYSpaces(collapsed.slice(-500));
   }
 
   /**
