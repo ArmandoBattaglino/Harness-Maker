@@ -1969,6 +1969,7 @@ class SwarmEngine {
     const hasFailed = agentStates.some((state) => state.status === 'failed');
 
     if (hasFailed) {
+      this._chatExtractor.cleanup(execution.executionId ?? execution.id);
       this._setExecutionStatus(execution, 'failed');
     } else if (hasBlocked || hasRuntimeBlocker) {
       this._setExecutionStatus(execution, 'blocked');
