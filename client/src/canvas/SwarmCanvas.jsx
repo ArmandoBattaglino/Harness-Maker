@@ -57,8 +57,11 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange }) 
   const executionStatus = useSwarmStore((s) => s.executionStatus);
   const sidePanelMode = useSwarmStore((s) => s.sidePanelMode);
   const setSidePanelMode = useSwarmStore((s) => s.setSidePanelMode);
-  // Side panels only visible during active or paused execution (not idle/stopped)
-  const showSidePanels = executionStatus === 'running' || executionStatus === 'paused';
+  // Side panels visible during execution and after completion (so user can read chat history)
+  const chatMessages = useSwarmStore((s) => s.chatMessages);
+  const showSidePanels = executionStatus === 'running' || executionStatus === 'paused'
+    || executionStatus === 'completed' || executionStatus === 'stopped'
+    || chatMessages.length > 0;
 
   // Initial nodes/edges from workflowDef (or empty)
   const initialNodes = workflowDef?.nodes ?? [];
