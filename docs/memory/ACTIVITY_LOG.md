@@ -1,3 +1,14 @@
+## 2026-04-06 — qa-tester — Task #198: TEST GATE BUG-SNIPPET-FIDELITY-1 — PASS
+**Outcome:** COMPLETED
+**Summary:** TEST GATE PASS. All 10+ snippet quality tests pass (107/107 swarm-engine, 312/312 full suite). Finder/Route Checker/Formatter contamination verified filtered. No stale foreign text survives in any snippet. Redraw fragments produce empty snippet. Structured fact reconstruction works. Protocol echo and prompt wrappers stripped. Pipeline can proceed to TASK #199.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/qa-tester.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** TASK #199 (BUG-TOKEN-FIDELITY-1) can now start
+
+---
+
 ## 2026-04-06 — qa-tester — Task #213: AREA CHECKPOINT V4.3 E2E Deep Test Round 2 — PASS
 **Outcome:** COMPLETED
 **Summary:** Verified all V4.3 acceptance criteria. 312/312 server tests pass, client build 480 modules 0 errors. SNIPPET_NOISE_LINE_PATTERNS covers all CLI chrome noise patterns (bypass permissions, ctrl+g, Herding, version banner, model effort, thinking animations). Task #212 dependency confirmed COMPLETED. V4.3 AREA CLOSED.

@@ -1,4 +1,9 @@
 # Progress
+- [V4.0.4 TEST GATE PASS 2026-04-06] TASK #198 COMPLETED — TEST GATE PASS for BUG-SNIPPET-FIDELITY-1
+  All 10+ snippet quality tests pass (107/107 swarm-engine, 312/312 full suite). Finder/Route Checker/Formatter
+  contamination filtered. No stale foreign text survives. Redraw fragments -> empty snippet. Structured fact
+  reconstruction works. Protocol echo stripped. TASK #199 can proceed.
+
 - [V4.0.2 TEST GATE PASS 2026-04-06] TASK #184 COMPLETED — TEST GATE BUG-SNIPPET-PROTOCOL-1 PASS
   Snippet semantic sanitization verified: 80+ noise patterns, block-level protocol stripping, semantic block scoring. 312/312 server tests, 107/107 swarm-engine tests. TASK #185 unblocked.
 
