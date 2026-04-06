@@ -1,4 +1,43 @@
 ---
+## 2026-04-06 — Tasks #237-#244: V5.2 Swarm Deep Check — AREA CLOSED
+**Status:** COMPLETED
+**Called by:** user (direct request to append CHANGELOG entry)
+
+### Context when I started
+CHANGELOG.md last entry was V5.1 area closure (Tasks #234-#236). TEST GATE #243 had just PASSED (qa-tester verified all 4 V5.2 bug fixes, 312/312 tests). AREA CHECKPOINT #244 running.
+
+### What I did
+1. Read CHANGELOG.md and ACTIVITY_LOG.md to find insert points.
+2. Appended V5.2 area closure entry to CHANGELOG.md with full task table (#238-#241 fixes, #243 TEST GATE PASS, #244 AREA CHECKPOINT).
+3. Appended ACTIVITY_LOG.md entry.
+4. Appended this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CHANGELOG.md | MODIFIED | V5.2 area closure entry prepended to 2026-04-06 section |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | code-mapper entry for V5.2 closure |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log |
+
+### Improvements delivered
+- CHANGELOG.md now documents V5.2 wave closure with all 6 tasks in a single summary table
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+None.
+
+### What I learned
+- V5.2 wave was 4 bugs: malformed JSON 400, useSwarm hydration, rate limit 300, API 404 JSON vs HTML
+
+### State I'm leaving behind
+CHANGELOG.md current through V5.2 closure. CODE_MAP.md not updated (no function changes in this task — V5.2 bugs were fixed by debugger in earlier tasks and already mapped).
+
+### Handoff
+None — bookkeeping task fully self-contained.
+
+---
 ## 2026-04-02 — Task #132: AREA CHECKPOINT V3.1 PASS
 **Status:** COMPLETED
 **Called by:** orchestrator (post-task code-mapper invocation)

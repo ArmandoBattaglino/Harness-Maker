@@ -1,4 +1,8 @@
 # Progress
+- [V5.2 AREA CHECKPOINT RUNNING 2026-04-06] TASK #244 IN_PROGRESS — AREA CHECKPOINT for V5.2 Swarm Deep Test Bug Fixes
+  TEST GATE #243 PASSED. All component fixes verified. Checkpoint running full integration scenario (steps 1-10).
+  V5.2 is in closing state — once #244 PASSES, area is fully CLOSED.
+
 - [V5.2 TEST GATE PASS 2026-04-06] TASK #243 COMPLETED — TEST GATE PASS for all V5.2 bug fixes
   Malformed JSON 400 (3 endpoints), fetch-based hydration with 404 cleanup, rate limit 300, API 404 JSON. 312/312 tests. Client build OK. AREA CHECKPOINT #244 is next.
 

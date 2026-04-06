@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-06 after V5.2 Debugger Loop Swarm Deep Check — Wave 1 fixes (#238-#241). 4 bugs fixed in server/index.js and useSwarm.js._
+_Last updated: 2026-04-06 after V5.2 Debugger Loop Swarm Deep Check — AREA CLOSED. TEST GATE #243 PASS._
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**
@@ -81,9 +81,9 @@ Full-app deep E2E test covered all 10 server route files and all 7 client views.
 
 **Overall assessment:** AREA CLOSED. App is in healthy state. Zero remaining actionable bugs. BUG-UI-1 is a known Windows ConPTY limitation, not a code defect.
 
-## V5.2 Debugger Loop Swarm Deep Check — Wave 1 COMPLETE (2026-04-06)
+## V5.2 Debugger Loop Swarm Deep Check — AREA CLOSED (2026-04-06)
 
-Phase 1 (deep E2E test) found 5 bugs. Phase 2 (bulk plan) created tasks #238-#244. Wave 1 (parallel fixes #238-#241) completed. TEST GATE #243 and AREA CHECKPOINT #244 pending.
+Phase 1 (deep E2E test) found 5 bugs. Phase 2 (bulk plan) created tasks #238-#244. Wave 1 (parallel fixes #238-#241) completed. TEST GATE #243 PASS. Area closed.
 
 | ID | Severity | Location | Description | Fixed in Task | Status |
 |----|----------|----------|-------------|---------------|--------|
@@ -92,6 +92,8 @@ Phase 1 (deep E2E test) found 5 bugs. Phase 2 (bulk plan) created tasks #238-#24
 | BUG-SWARM-UI-3 | LOW | server/index.js | Rate limiter 200 req/min too strict for rapid view switching — raised to 300 | #240 | FIXED 2026-04-06 |
 | BUG-SWARM-API-2 | LOW | server/index.js | Unmatched /api/* paths returned SPA HTML 200 — now returns JSON 404 | #241 | FIXED 2026-04-06 |
 | BUG-SWARM-UI-1 | LOW | Swarm UI | Duplicate workflow names in dropdown — cosmetic | DEFERRED (#242) | DEFERRED |
+
+**Overall assessment:** AREA CLOSED. TEST GATE #243 PASS confirmed all 4 fixes. Zero remaining actionable bugs. BUG-SWARM-UI-1 deferred as cosmetic.
 
 **Documentation impact:** README.md rate limit updated 200->300. docs/TEST_RESULTS.md and docs/research_complete.md rate limit references updated. No API endpoint signature changes.
 

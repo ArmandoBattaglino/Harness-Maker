@@ -1,3 +1,25 @@
+## 2026-04-06 — documenter — V5.2 Swarm Deep Check — AREA CLOSED — DOC_STATUS update
+**Outcome:** COMPLETED
+**Summary:** Updated DOC_STATUS.md to mark V5.2 area as CLOSED after TEST GATE #243 PASS. All 4 bug fixes verified, zero remaining actionable bugs.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none (documentation only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** Nothing -- V5.2 area fully closed.
+
+---
+
+## 2026-04-06 — code-mapper — Tasks #237-#244: V5.2 Swarm Deep Check — AREA CLOSED
+**Outcome:** COMPLETED
+**Summary:** Appended CHANGELOG.md entry for V5.2 area closure. TEST GATE #243 PASS (312/312 tests, all 4 bug fixes verified). AREA CHECKPOINT #244 running/closing. 4 bugs fixed (#238-#241), 0 deferred. No code changes — bookkeeping only.
+**Files changed:** docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** none (documentation only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** V5.2 fully closed. Await next task wave.
+
+---
+
 ## 2026-04-06 — qa-tester — Task #243: TEST GATE V5.2 Swarm Deep Test Bug Fixes
 **Outcome:** COMPLETED
 **Summary:** TEST GATE PASS. All 4 V5.2 bug fixes verified after server restart with fresh code: malformed JSON returns 400 on 3 endpoints (#238), useSwarm fetch-based hydration with 404 cleanup confirmed (#239), rate limit at 300 (#240), API 404 returns JSON while SPA fallback returns HTML (#241). 312/312 server tests pass. Client build OK.

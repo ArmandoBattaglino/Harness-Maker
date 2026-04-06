@@ -2,6 +2,23 @@
 
 ## 2026-04-06
 
+### [Tasks #237–#244] V5.2 Debugger Loop Swarm Deep Check — AREA CLOSED
+- Agent: code-mapper (area closure entry)
+- Scope: V5.2 Swarm-focused deep check wave (4 bug fixes + TEST GATE + AREA CHECKPOINT)
+
+| Task | Title | Verdict | Agent |
+|------|-------|---------|-------|
+| #238 | BUG-SWARM-JSON-1 — Malformed JSON 400 on 3 endpoints | COMPLETED | debugger |
+| #239 | BUG-SWARM-HYDRATE-1 — useSwarm fetch-based hydration + 404 cleanup | COMPLETED | debugger |
+| #240 | BUG-RATE-LIMIT-1 — Rate limit raised to 300 req/min | COMPLETED | debugger |
+| #241 | BUG-API-404-1 — API 404 returns JSON, SPA fallback returns HTML | COMPLETED | debugger |
+| #243 | TEST GATE — V5.2 Bug Fixes | PASS — 312/312 tests, all 4 fixes verified | qa-tester |
+| #244 | AREA CHECKPOINT — V5.2 Swarm Deep Check | Running / closing | qa-tester |
+
+**Area result:** V5.2 CLOSED. 4 bugs fixed, 0 deferred. TEST GATE #243 PASS. No remaining blockers.
+
+---
+
 ### [Tasks #234–#236] V5.1 Debugger Loop Full-App Deep Check — AREA CLOSED
 - Agent: code-mapper (area closure entry)
 - Scope: V5.1 post-V5.0 full-app deep check wave
