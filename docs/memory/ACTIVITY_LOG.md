@@ -1,3 +1,14 @@
+## 2026-04-06 — debugger — Task #254: BUG-DONE-BARE-1 — Accept bare DONE token in HandoffParser
+**Outcome:** COMPLETED
+**Summary:** Widened DONE_RE regex in HandoffParser.js to accept bare `DONE` on its own line (with optional bullet prefix) in addition to `__DONE__`. Eliminates unnecessary done reminder reinject prompts for terminal nodes. All 114 HandoffParser tests pass, no regressions.
+**Files changed:** server/services/HandoffParser.js (line 25), docs/TASK_PLAN.md
+**Bugs fixed:** BUG-DONE-BARE-1 — bare DONE token not recognized by HandoffParser
+**Decisions made:** Dual-alternative regex preserves original `__DONE__` matching while adding line-anchored bare DONE
+**Blockers:** none
+**Next:** TEST GATE #256 should verify the fix
+
+---
+
 ## 2026-04-06 — code-mapper — Tasks #245-#248: Thinking Token Collapse + Codex Auth Filter + Gemini Prompt Echo Filter + Empty Prompt Validation
 **Outcome:** COMPLETED
 **Summary:** Mapped all 4 tasks to CODE_MAP.md: updated SNIPPET_NOISE_LINE_PATTERNS (Tasks #245-#246), added _snippetOverlapsPrompt + _refreshAgentSnippet entries (Task #247), updated PromptToFlowBar + handleGenerate for promptError state (Task #248). Appended 4 CHANGELOG entries.

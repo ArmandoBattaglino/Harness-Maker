@@ -1212,8 +1212,9 @@ describe('SwarmEngine', () => {
     });
 
     it('should strip the echoed swarm-input wrapper while preserving the semantic payload line', async () => {
-      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
       const tapFn = [...mockSession.swarmListeners][0];
+      engine._executions.get(executionId).agentStates.get('node-a').ignoreParserUntil = null;
 
       wsBroadcast.mockClear();
       tapFn([
