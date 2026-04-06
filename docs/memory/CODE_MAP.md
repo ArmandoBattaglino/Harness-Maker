@@ -2206,13 +2206,13 @@ _Last updated: 2026-04-06 — after V5 Wave 1 (Swarm Editor Transition) — mapp
 
 ### `client/src/hooks/useWorkflow.js` :: `useWorkflow(workflowId)`
 - **Purpose:** React hook that manages the lifecycle of a single workflow definition. Fetches the workflow by ID on mount (and on workflowId change). Exposes `update(patch)` to PUT changes and `remove()` to DELETE the workflow. Returns `{ workflow, loading, error, refresh, update, remove }`.
-- **Called by:** (no live callers yet — intended for SwarmView.jsx workflow selector, Task #61 follow-up wiring)
-- **Calls:** `apiGet(\`/api/v1/workflows/${workflowId}\`)`, `apiPut(\`/api/v1/workflows/${workflowId}\`, patch)`, `apiDelete(\`/api/v1/workflows/${workflowId}\`)`, `useState` (workflow/loading/error), `useEffect` (triggers refresh on workflowId change), `useCallback` (refresh/update/remove memoized)
+- **Called by:** (no live callers yet — intended for SwarmView.jsx workflow selector)
+- **Calls:** apiGet, apiPut, apiDelete, useState, useEffect, useCallback
 - **Inputs:** workflowId (string | undefined — if falsy, refresh and mutation calls are no-ops)
 - **Output:** `{ workflow: object|null, loading: boolean, error: string|null, refresh: () => Promise<void>, update: (patch) => Promise<object>, remove: () => Promise<void> }`
-- **Side effects:** GET /api/v1/workflows/:id on mount and on workflowId change; PUT on update(); DELETE on remove(); sets component state (loading/error/workflow)
-- **Complexity note:** refresh is wrapped in useCallback with [workflowId] dep and passed to useEffect — this guarantees a new fetch fires whenever workflowId changes without lint-warning for missing deps. `update()` does NOT re-call refresh after PUT — it sets workflow directly from the server response (optimistic-free, server-truth approach).
-- **Last modified:** 2026-03-27 in Task #61 by frontend-dev
+- **Side effects:** GET on mount/change; PUT on update(); DELETE on remove()
+- **Complexity note (V5 Wave 1 bug fix):** `update()` and `refresh()` now unwrap server response via `data?.workflow ?? data ?? null` — the server may return `{ workflow: {...} }` or the workflow directly. Previous version did not unwrap, causing update() to return the envelope instead of the workflow object.
+- **Last modified:** 2026-04-06 in V5 Wave 1 by frontend-dev (fixed response unwrapping in update() and refresh())
 
 ### `client/src/hooks/useWorkflow.js` :: `useWorkflowList()`
 - **Purpose:** React hook that fetches all workflow definitions and allows creating new ones. Fetches all workflows on mount. Exposes `create(workflowDef)` to POST a new workflow (appends to local list optimistically after server confirms). Returns `{ workflows, loading, error, refresh, create }`.
@@ -2974,6 +2974,63 @@ _All bugs identified in QA Swarm Inspection (2026-03-31) and Swarm Code Audit (2
 | ErrorHandlerData | extends NodeDefinition | label, watchedNodes[] |
 | SubWorkflowData | extends NodeDefinition | label, workflowId |
 | ExecutionHistoryEntry | server-side persisted | executionId, workflowId, status, startedAt, endedAt, duration, agentOutcomes |
+
+## V5 Wave 1 — New Functions (2026-04-06)
+
+### `client/src/hooks/useCanvasHistory.js` :: `useCanvasHistory()`
+- **Purpose:** Custom hook providing undo/redo for React Flow canvas state. Maintains two stacks (undo/redo) in refs, capped at 50 entries. Uses structuredClone for deep snapshots. Version counter (useState) bumped only when stack emptiness changes — minimizes re-renders.
+- **Called by:** SwarmCanvas.jsx (destructured: pushHistory, undo, redo, canUndo, canRedo)
+- **Calls:** useRef (x2 — undoStackRef, redoStackRef), useState (version counter), useCallback (pushHistory, undo, redo), structuredClone (via cloneState helper)
+- **Inputs:** none
+- **Output:** `{ pushHistory: (prevNodes, prevEdges) => void, undo: (currentNodes, currentEdges, setNodes, setEdges) => void, redo: (currentNodes, currentEdges, setNodes, setEdges) => void, canUndo: boolean, canRedo: boolean }`
+- **Side effects:** pushHistory clears redo stack. undo/redo call setNodes/setEdges (React Flow state setters passed by caller). No server I/O.
+- **Complexity note:** Stacks stored in refs to avoid re-renders on every push. The version counter is bumped only to trigger re-evaluation of canUndo/canRedo — the actual stack data is never in React state. pushHistory receives the PRE-mutation state (caller must snapshot before applying the change). MAX_HISTORY = 50; oldest entries dropped via shift().
+- **Last modified:** 2026-04-06 in V5 Wave 1 by frontend-dev (new file)
+
+### `client/src/hooks/useCanvasHistory.js` :: `cloneState(nodes, edges)` (module-private)
+- **Purpose:** Deep-clone nodes and edges arrays using structuredClone to prevent React Flow mutation side-effects.
+- **Called by:** useCanvasHistory (pushHistory, undo, redo)
+- **Calls:** structuredClone (browser built-in)
+- **Inputs:** nodes (array), edges (array)
+- **Output:** `{ nodes: array, edges: array }`
+- **Side effects:** none
+- **Last modified:** 2026-04-06 in V5 Wave 1 by frontend-dev (new function)
+
+---
+
+### `client/src/utils/sanitizeWorkflow.js` :: `sanitizeWorkflow(workflowDef)`
+- **Purpose:** Strips React Flow internal runtime fields (measured, width, height, selected, dragging, positionAbsolute, etc.) from nodes and edges before persisting a workflow definition to the server. Preserves only id, type, position, data, and optional parentId for nodes; id, source, target, type, and optional data for edges.
+- **Called by:** SwarmView.jsx::handleSave (before apiPut), server/services/ScaffoldGenerator.js
+- **Calls:** none (pure data transformation)
+- **Inputs:** workflowDef (object — `{ nodes: array, edges: array, ...rest }`)
+- **Output:** sanitized workflowDef (same shape, stripped of React Flow internals)
+- **Side effects:** none (pure function)
+- **Last modified:** 2026-04-06 in V5 Wave 1 by frontend-dev (new file)
+
+---
+
+### `client/src/utils/nodeIdGenerator.js` :: `generateNodeId(type='agent')`
+- **Purpose:** Generate node IDs matching WorkflowStore NODE_ID_REGEX `^[a-z][a-z0-9-]*$`. Uses crypto.randomUUID() and takes the first 8 hex chars as suffix.
+- **Called by:** (no live callers yet — intended for future node creation flows)
+- **Calls:** crypto.randomUUID()
+- **Inputs:** type (string — node type prefix, default 'agent')
+- **Output:** string — e.g. `agent-a1b2c3d4`
+- **Side effects:** none (pure function using crypto)
+- **Last modified:** 2026-04-06 in V5 Wave 1 by frontend-dev (new file)
+
+---
+
+### `client/src/canvas/ContextMenu.jsx` :: `ContextMenu({ x, y, actions, onClose })`
+- **Purpose:** Positioned right-click context menu overlay. Renders a list of action buttons at fixed (x, y) screen coordinates. Supports click-away close (mousedown outside menu) and Escape key close. Each action button calls action.onClick() then onClose(). Supports disabled actions (grayed out). Returns null if actions array is empty.
+- **Called by:** SwarmCanvas.jsx (conditionally rendered when contextMenu state is non-null)
+- **Calls:** useRef (menuRef), useEffect (x2 — click-away listener with microtask delay, Escape key listener), onClose (prop callback)
+- **Inputs:** x (number — CSS left), y (number — CSS top), actions (array of `{ label, icon?, onClick, disabled? }`), onClose (function — `() => void`)
+- **Output:** JSX — fixed-position div with action buttons; or null if no actions
+- **Side effects:** adds/removes document mousedown + keydown event listeners. Calls action.onClick() on button click.
+- **Complexity note:** Click-away uses setTimeout(0) (microtask delay) before adding mousedown listener — prevents the same right-click event that opened the menu from immediately closing it.
+- **Last modified:** 2026-04-06 in V5 Wave 1 by frontend-dev (new file)
+
+---
 
 ### New API Endpoints (V5.6)
 
