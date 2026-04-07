@@ -468,7 +468,13 @@ function tidyWorkflowLayout(nodes, edges) {
   });
 }
 
-export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange, layoutNonce = 0 }) {
+export default function SwarmCanvas({
+  workflowDef,
+  markDirty,
+  onCanvasChange,
+  layoutNonce = 0,
+  focusConnections = true,
+}) {
   const { fitView, screenToFlowPosition } = useReactFlow();
   const focusedDepartmentId = useSwarmStore((s) => s.focusedDepartmentId);
   const setSelectedNode = useSwarmStore((s) => s.setSelectedNode);
@@ -517,6 +523,11 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange, la
   // update the canvas nodes and edges immediately
   useEffect(() => {
     if (workflowDef) {
+      setDropPreviewNode(null);
+      if (dropPreviewTimeoutRef.current) {
+        clearTimeout(dropPreviewTimeoutRef.current);
+        dropPreviewTimeoutRef.current = null;
+      }
       setNodes(workflowDef.nodes ?? []);
       setEdges(workflowDef.edges ?? []);
       // Give React Flow a tick to measure nodes before calling fitView
@@ -538,6 +549,7 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange, la
 
   useEffect(() => {
     if (!layoutNonce) return;
+    setDropPreviewNode(null);
     setNodes((currentNodes) => tidyWorkflowLayout(currentNodes, edges));
     if (markDirtyRef.current) markDirtyRef.current();
     setTimeout(() => fitView({ padding: 0.2, duration: 300 }), 50);
@@ -600,14 +612,16 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange, la
         ...(layoutMap.get(edge.id) ?? {}),
         selected: selectedEdgeId === edge.id,
         selectionActive: Boolean(selectedEdgeId),
-        nodeSelectionActive: Boolean(selectedNodeId),
+        nodeSelectionActive: Boolean(focusConnections && selectedNodeId),
         relatedToSelectedNode: Boolean(
-          selectedNodeId && (edge.source === selectedNodeId || edge.target === selectedNodeId)
+          focusConnections
+          && selectedNodeId
+          && (edge.source === selectedNodeId || edge.target === selectedNodeId)
         ),
-        hasFocusedSelection: Boolean(selectedEdgeId || selectedNodeId),
+        hasFocusedSelection: Boolean(selectedEdgeId || (focusConnections && selectedNodeId)),
       },
     }));
-  }, [visibleEdges, visibleNodes, selectedEdgeId, selectedNodeId]);
+  }, [visibleEdges, visibleNodes, selectedEdgeId, selectedNodeId, focusConnections]);
 
   const clearDropPreview = useCallback(() => {
     if (dropPreviewTimeoutRef.current) {
@@ -1096,6 +1110,11 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange, la
             nodeId={outputPanelNodeId}
             nodeLabel={nodes.find((n) => n.id === outputPanelNodeId)?.data?.label || 'Agent'}
             onClose={() => setOutputPanelNodeId(null)}
+            onSwitchToInspector={() => {
+              const nid = outputPanelNodeId;
+              setOutputPanelNodeId(null);
+              setSelectedNode(nid);
+            }}
           />
         ) : showInspector ? (
           <AgentInspector nodes={nodes} onUpdateNode={handleUpdateNode} />

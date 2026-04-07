@@ -66,6 +66,8 @@ const NOISE_PATTERNS = [
   /medium\s*[·•●◉.]\s*\/eff/gi,          // "medium · /eff" status bar
   /^\s*.?\s*esc to int.*$/gm,             // full line with "esc to int"
   /^\s*.?\s*medium\s*.?\s*\/eff.*$/gm,   // full line with "medium · /eff"
+  /^\s*[⎿⏐⏎│]\s*Tip:\s*Use\s*\/feedback.*$/gm, // Claude Code feedback tip
+  /^\s*Tip:\s*Use\s*\/feedback.*$/gm,             // feedback tip without leader
 ];
 
 // Only strip noise here when it is unquestionably chrome. Aggressive fragment
@@ -100,6 +102,8 @@ const CHUNK_NOISE_PATTERNS = [
   /^\s*Forming\.\.\.\s*$/gm,
   /Found \d+ settings? issues?/gm,
   /^\s*---\s*$/gm,
+  /^\s*[⎿⏐⏎│]\s*Tip:\s*Use\s*\/feedback.*$/gm,
+  /^\s*Tip:\s*Use\s*\/feedback.*$/gm,
 ];
 
 // Patterns that indicate a response boundary (agent is done speaking)
@@ -112,6 +116,50 @@ const BOUNDARY_PATTERNS = [
 
 const MIN_MESSAGE_LENGTH = 20;    // Default floor for normal chat messages
 const MIN_SHORT_MESSAGE_LENGTH = 8; // Allow compact but meaningful greetings/replies
+
+/**
+ * Reflow a block of text by joining ConPTY column-wrapped lines back into
+ * single-line paragraphs. Paragraph boundaries (blank lines) are preserved.
+ *
+ * Heuristic: within a paragraph, join consecutive non-empty lines together.
+ * - If the previous line ended mid-word (last char is a letter, next line
+ *   starts with a lowercase letter, AND the previous line is "long" — i.e.
+ *   close to a typical ConPTY wrap width of ≥48 chars), join with NO space
+ *   so "publish\ner" becomes "publisher".
+ * - Otherwise join with a single space (the terminal usually wraps at a
+ *   word boundary and consumes the space, so we restore it).
+ *
+ * This is intentionally conservative: a real markdown paragraph emitted by
+ * an agent rarely contains internal newlines, so collapsing them is the
+ * correct default. Multi-paragraph output is preserved via the `\n\n` split.
+ */
+function reflowParagraphs(text) {
+  if (!text) return text;
+  const paragraphs = String(text).split(/\n{2,}/);
+  return paragraphs
+    .map((paragraph) => {
+      const lines = paragraph.split('\n').map((l) => l.trim()).filter(Boolean);
+      if (lines.length <= 1) return lines.join('');
+      let out = lines[0];
+      for (let i = 1; i < lines.length; i++) {
+        const next = lines[i];
+        const prevEndChar = out.charAt(out.length - 1);
+        const nextStartChar = next.charAt(0);
+        const prevEndsWithLetter = /[\p{L}]/u.test(prevEndChar);
+        const nextStartsLowerLetter = /[\p{Ll}]/u.test(nextStartChar);
+        const prevIsLongWrap = out.length >= 48;
+        if (prevEndsWithLetter && nextStartsLowerLetter && prevIsLongWrap) {
+          // Likely a mid-word ConPTY break — join with no space.
+          out = out + next;
+        } else {
+          // Word-boundary wrap (terminal consumed the space) — restore it.
+          out = out + ' ' + next;
+        }
+      }
+      return out;
+    })
+    .join('\n\n');
+}
 
 function shouldEmitChatMessage(text = '') {
   const trimmed = String(text ?? '').trim();
@@ -261,8 +309,13 @@ export class ChatExtractor {
       if (!t) return false;
       // Lines that are just dots or ellipsis
       if (/^[.…·>]+$/.test(t)) return false;
-      // Single word or fragment lines (no spaces = not a real sentence)
-      if (t.length < 25 && !t.includes(' ')) return false;
+      // Drop only ultra-short alpha fragments (1-3 chars). Do NOT drop longer
+      // single-word lines like "Inoltre," or "Salve!" — those are the legitimate
+      // start of an agent message that ConPTY column-wrapped onto its own line.
+      // Aggressive fragment patterns above (NOISE_PATTERNS) already strip the
+      // genuine 1-4 char chrome fragments, so this filter only needs to catch
+      // residual noise that survived.
+      if (/^[A-Za-z]{1,3}$/.test(t)) return false;
       // Short lines with only middots, slashes, and keywords (status bar)
       if (t.length < 60 && /^[·\s/\w.-]*$/.test(t) && (t.includes('· ') || t.includes('esc '))) return false;
       // Lines that are just a word + ellipsis (Determining..., etermining…, Processing...)
@@ -301,6 +354,15 @@ export class ChatExtractor {
     }, []).join('\n');
 
     text = text.replace(/\n{3,}/g, '\n\n').trim();
+
+    // Reflow ConPTY column-wraps: terminal output is hard-wrapped at the
+    // column width, leaving literal `\n` chars mid-paragraph. Without this
+    // step the chat panel renders broken lines like
+    //   "Inoltre, il publisher si occupa\ndella formattazione finale".
+    // We split on blank lines (real paragraph boundaries) and rejoin the
+    // soft-wrapped lines inside each paragraph back into a single line so
+    // the client's CSS can wrap them naturally.
+    text = reflowParagraphs(text);
 
     if (typeof this._sanitizeMessage === 'function') {
       const sanitizedText = this._sanitizeMessage(text, {
@@ -349,9 +411,15 @@ export class ChatExtractor {
    * Clean up all buffers and timers for an execution.
    */
   cleanup(executionId) {
+    // Flush any remaining buffered text before clearing — otherwise agent
+    // output accumulated since the last silence-timeout flush is silently lost.
     for (const [nodeId, buf] of this._buffers.entries()) {
       if (buf.timer) clearTimeout(buf.timer);
       if (buf.periodicTimer) clearInterval(buf.periodicTimer);
+      // Force a final flush so the text makes it into chatMessages
+      if (buf.text && buf.text.trim()) {
+        this._flush(buf.executionId || executionId, nodeId);
+      }
     }
     this._buffers.clear();
   }

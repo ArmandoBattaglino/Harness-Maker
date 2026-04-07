@@ -54,7 +54,7 @@ function HandoffCard({ handoff }) {
 // ---------------------------------------------------------------------------
 // Main panel
 // ---------------------------------------------------------------------------
-export default function AgentOutputPanel({ nodeId, nodeLabel, onClose }) {
+export default function AgentOutputPanel({ nodeId, nodeLabel, onClose, onSwitchToInspector }) {
   const agentResult = useSwarmStore((s) => s.agentResults[nodeId]);
   const markViewed = useSwarmStore((s) => s.markAgentResultViewed);
 
@@ -158,7 +158,7 @@ export default function AgentOutputPanel({ nodeId, nodeLabel, onClose }) {
           {copyLabel}
         </button>
         <button
-          onClick={onClose}
+          onClick={onSwitchToInspector || onClose}
           className="flex-1 text-xs px-2 py-1.5 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors"
         >
           &larr; Inspector
