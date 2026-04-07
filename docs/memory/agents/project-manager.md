@@ -1,4 +1,40 @@
 ---
+## 2026-04-07 — Task Plan Update: #327 + #329 COMPLETED, #328 Unblocked
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+Two tasks had just completed: Task #327 (backend-dev wired ExecutionHistoryStore into SwarmEngine, 312/312 tests pass) and Task #329 (qa-tester verified Unified Chat View E2E, PASS verdict, no bugs). The task plan needed status updates and the next tasks needed to be identified.
+
+### What I did
+1. Read TASK_PLAN.md, PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md, and agent memory in parallel
+2. Verified both tasks were already marked COMPLETED in their individual entries
+3. Updated the TASK_PLAN.md status header: 324 -> 326 COMPLETED, 4 -> 2 PENDING
+4. Updated PROGRESS.md with the new completion state
+5. Updated CONTEXT.md to reflect the current focus on #328 -> #330
+6. Appended session entry to ACTIVITY_LOG.md
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Status header updated to 326 COMPLETED, 2 PENDING; POST-V5 area status reflects #327/#329 done |
+| docs/memory/PROGRESS.md | MODIFIED | Prepended completion entry for #327 and #329 |
+| docs/memory/CONTEXT.md | MODIFIED | Focus updated to #328 (next) and #330 (after) |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Prepended session entry |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log |
+
+### Decisions I made
+- No re-prioritization needed; the dependency chain is simple and correct: #328 (TEST GATE) -> #330 (docs sync)
+- No new tasks needed; #329 PASS with zero bugs means no follow-up bug tasks
+
+### State I'm leaving behind
+330 tasks: 326 COMPLETED, 2 DEFERRED, 2 PENDING (#328 TEST GATE, #330 docs sync). Task #328 is unblocked and ready for qa-tester. Task #330 is blocked on #328.
+
+### Handoff
+1. qa-tester -> TASK #328 (TEST GATE -- execution history persistence round-trip) -- IMMEDIATE, no blockers
+2. documenter -> TASK #330 (docs truthfulness sync) -- AFTER #328 passes
+
+---
 ## 2026-04-07 — Repository State Audit + Follow-up Reopen
 **Status:** COMPLETED
 **Called by:** user

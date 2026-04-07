@@ -1,4 +1,52 @@
 ---
+## 2026-04-07 — Tasks #327/#329: ExecutionHistoryStore Wiring + Unified Chat Verification Documentation
+**Status:** COMPLETED
+**Called by:** user (post-task documentation audit)
+
+### Context when I started
+Task #327 had just completed: backend-dev wired ExecutionHistoryStore into SwarmEngine via setter injection, adding `_executionHistoryStore`, `_persistedHistoryIds`, `setExecutionHistoryStore()`, and `_persistExecutionHistory()` to SwarmEngine.js, plus wiring code in server/index.js. Task #329 was a verification-only task (no code changes). ARCHITECTURE.md Section 11.8 dependency graph did not list ExecutionHistoryStore as a SwarmEngine dependency.
+
+### What I did
+1. Read both modified files: server/services/SwarmEngine.js (new properties and methods at lines 550-551, 575-580, 1004-1078) and server/index.js (wiring at lines 260-265)
+2. Read all existing docs: DOC_STATUS.md, ARCHITECTURE.md (dependency graph, SwarmEngine service box), API.md, README.md, PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md, agents/documenter.md
+3. Updated ARCHITECTURE.md Section 11.8: added ExecutionHistoryStore to dependency graph, added `_persistExecutionHistory` as sub-item under SwarmEngine, updated SwarmEngine service box ASCII diagram to include `_persistHist`
+4. Verified README.md: Execution History feature already documented from V5 Wave 4. No changes needed.
+5. Verified API.md: Execution history endpoints already documented. No new endpoints from Task #327.
+6. Verified inline comments: New methods in SwarmEngine.js have accurate JSDoc (`setExecutionHistoryStore` at line 575, `_persistExecutionHistory` at line 1013). No stale comments.
+7. Updated DOC_STATUS.md: header date, ARCHITECTURE.md status note, PROGRESS.md date, inline comments date/note
+8. Updated ACTIVITY_LOG.md with documenter entry
+9. Appended this session log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/ARCHITECTURE.md | MODIFIED | Section 11.8 dependency graph: added ExecutionHistoryStore node, updated SwarmEngine deps to include it as setter-injected, added _persistExecutionHistory sub-item. Service box: added _persistHist label. |
+| docs/memory/DOC_STATUS.md | MODIFIED | Updated header date, ARCHITECTURE.md status note, PROGRESS.md date, inline comments note |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added documenter entry for Tasks #327/#329 |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- ARCHITECTURE.md dependency graph now accurately reflects that SwarmEngine depends on ExecutionHistoryStore for persisting terminal execution states
+- DOC_STATUS.md health table is current
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- No README or API.md changes needed: Task #327 is internal wiring (setter injection of an existing store into an existing engine). The user-facing execution history feature and its API endpoints were already documented in V5 Wave 4.
+- Task #329 produced no code changes (verification only), so no doc impact beyond DOC_STATUS acknowledgment.
+
+### What I learned
+- SwarmEngine uses setter injection for ExecutionHistoryStore (not constructor injection) because the store is instantiated separately in index.js after SwarmEngine is created. This avoids a circular dependency since the store needs ConfigStore.CONFIG_DIR which is only available after config loading.
+- The _persistExecutionHistory method has a duplicate-write guard (`_persistedHistoryIds` Set) because stop/cleanup paths can be called multiple times for the same execution.
+
+### State I'm leaving behind
+All documentation is current for Tasks #327 and #329. ARCHITECTURE.md dependency graph is accurate. Remaining known gap: ARCHITECTURE.md V5 UI component tree batch update still deferred (12 components from Waves 1-4).
+
+### Handoff
+Task #330 (documentation truthfulness sync) is blocked on Task #328 (TEST GATE). When #328 passes, #330 should address the README top-line counts (187/187 tests, 115 tasks) which are stale.
+
+---
 ## 2026-04-06 — V5 Wave 4: Execution History, Templates, Version History Documentation
 **Status:** COMPLETED
 **Called by:** user (post-V5-Wave-4 documentation sync)

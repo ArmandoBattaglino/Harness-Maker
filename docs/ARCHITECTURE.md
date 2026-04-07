@@ -1747,7 +1747,7 @@ Node.js Server Process
 │  │  │ _onHandoff   │  └───────────────┘                          │    │
 │  │  │ _onDone      │                                             │    │
 │  │  │ _spawnAgentPty│  ┌───────────────┐  ┌────────────────────┐   │    │
-│  │  │ _ensureAgent  │  │ HandoffParser │  │  CircuitBreaker    │   │    │
+│  │  │ _persistHist │  │ HandoffParser │  │  CircuitBreaker    │   │    │
 │  │  │ _buildSysPromt│  │               │  │                    │   │    │
 │  │  │ _startHrtbeat │  │ Stateful accum│  │ Per-edge counter   │   │    │
 │  │  └──────┬───────┘  │ HANDOFF/DONE  │  │ Advisory (no stop) │   │    │
@@ -1905,8 +1905,10 @@ server/index.js
   ├── CircuitBreaker        (no deps — pure service, stateless per call)
   ├── BudgetTracker         (no deps — in-memory per execution)
   ├── TriggerManager        (depends on: WorkflowStore, ssrfGuard, SwarmEngine)
-  ├── SwarmEngine           (depends on: SessionManager, WorkflowStore, CircuitBreaker, BudgetTracker)
-  │     └── HandoffParser   (instantiated per agent session inside SwarmEngine)
+  ├── ExecutionHistoryStore  (no deps — file-persisted per workflow, injected into SwarmEngine)
+  ├── SwarmEngine           (depends on: SessionManager, WorkflowStore, CircuitBreaker, BudgetTracker, ExecutionHistoryStore [setter-injected])
+  │     ├── HandoffParser   (instantiated per agent session inside SwarmEngine)
+  │     └── _persistExecutionHistory  (called on terminal states: completed/stopped/failed)
   ├── swarmHandler.js       (depends on: SwarmEngine — broadcast() wired via setWsBroadcast)
   └── Express V3 routes
         ├── workflows.js    → WorkflowStore

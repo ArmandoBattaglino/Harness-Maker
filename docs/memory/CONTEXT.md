@@ -1,6 +1,6 @@
 # Current Context
 **Session date:** 2026-04-07
-**Focus:** Post-V5 follow-up audit. Core V5 waves and BugFix1/BugFix2 are still closed, but the repo is not actually at zero work: the plan has been reopened with tasks #327-#330 for execution-history persistence wiring, execution-history QA, Unified Chat end-to-end verification, and documentation/status truthfulness sync.
+**Focus:** POST-V5 FOLLOW-UP in progress. #327 (ExecutionHistoryStore wiring) and #329 (Unified Chat E2E) both COMPLETED. Next immediate task: #328 (TEST GATE -- execution history persistence round-trip) assigned to qa-tester. After #328 passes: #330 (docs truthfulness sync) assigned to documenter. Two tasks remain to close the follow-up area.
 
 _Project initialized via /create pipeline on 2026-03-18_
 

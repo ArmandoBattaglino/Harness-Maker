@@ -1,3 +1,5 @@
+- [PM UPDATE 2026-04-07] POST-V5 FOLLOW-UP progress: #327 (ExecutionHistoryStore wiring) COMPLETED by backend-dev, #329 (Unified Chat E2E verification) COMPLETED by qa-tester (PASS, no bugs). #328 (TEST GATE for execution history) is now UNBLOCKED and ready for qa-tester. #330 (docs sync) remains BLOCKED on #328. Status: 326/330 COMPLETED, 2 DEFERRED, 2 PENDING.
+
 - [PM AUDIT 2026-04-07] Repository state review reopened the plan with POST-V5 follow-up tasks #327-#330. Core V5 areas remain closed, but the repo is not fully truthy yet: `ExecutionHistoryStore.addEntry()` is still tracked as unwired to `SwarmEngine`, Unified Chat exists in code/activity logs without TASK_PLAN registration or QA gate, and README/package metadata still advertise pre-V5 counts.
 
 - [Unified Chat View Wave 2 (Client-side) COMPLETED 2026-04-06] ChatMessage.jsx + ChatPanel.jsx created. SwarmContext.jsx: chatMessages/chatFilter/sidePanelMode state + actions. useSwarm.js: chat_message WS handler. SwarmCanvas.jsx: Feed/Chat tab toggle. Build: 498 modules, 0 errors. Server-side chat_message emission pending (backend task).

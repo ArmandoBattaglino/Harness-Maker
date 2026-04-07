@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-06 — after V5 Wave 5 implementation (Advanced Flow Control Nodes) — mapped by code-mapper_
+_Last updated: 2026-04-07 — after Task #327 (Wire ExecutionHistoryStore into SwarmEngine) + Task #329 (Unified Chat View E2E verification) — mapped by code-mapper_
 
 > **V3.4/V3.5 SWARM RUNTIME STATUS: IN PROGRESS**
 > TASK #145 (BUG-UX-HANDOFF-1) partially addressed: prompt examples templated with `<targetId>` to prevent fake handoffs from PTY redraw (DEC-023); Codex model-selection and rate-limit menus auto-dismissed; hard usage-limit now takes precedence over soft `Approaching rate limits` chooser (DEC-024). 83/83 server tests pass. Build: 479 modules. Live handoff proof still pending — no provider has completed a real multi-agent chain yet.
@@ -18,7 +18,7 @@ _Last updated: 2026-04-06 — after V5 Wave 5 implementation (Advanced Flow Cont
 ### Server Modules
 | File | Key Exports | Purpose |
 |------|-------------|---------|
-| server/index.js | (main) | Full bootstrap: binary discovery, config load, stale PID cleanup, middleware, routes (incl. /api/v1/swarm), static SPA, error handler (incl. entity.parse.failed → 400 for malformed JSON — BUG-SWARM-API-1 fix), app.all('/api/*') 404 catch-all before SPA fallback (BUG-SWARM-API-2 fix), rate limit raised to 300 req/min (BUG-SWARM-UI-3 fix), 127.0.0.1 binding, two noServer WSS instances (wssTerminal + wssSwarm) routed by pathname, CircuitBreaker + BudgetTracker instantiated and passed to SwarmEngine constructor, SwarmEngine stored in app.locals, sessionManager stored in app.locals, swarmEngine.setWsBroadcast(broadcast) wired at startup, SIGTERM/SIGINT, rate-limit stale sweep (BUG-07 fix). Last modified Tasks #238-#241 (V5.2 Wave 1). |
+| server/index.js | (main) | Full bootstrap: binary discovery, config load, stale PID cleanup, middleware, routes (incl. /api/v1/swarm), static SPA, error handler (incl. entity.parse.failed → 400 for malformed JSON — BUG-SWARM-API-1 fix), app.all('/api/*') 404 catch-all before SPA fallback (BUG-SWARM-API-2 fix), rate limit raised to 300 req/min (BUG-SWARM-UI-3 fix), 127.0.0.1 binding, two noServer WSS instances (wssTerminal + wssSwarm) routed by pathname, CircuitBreaker + BudgetTracker instantiated and passed to SwarmEngine constructor, SwarmEngine stored in app.locals, sessionManager stored in app.locals, swarmEngine.setWsBroadcast(broadcast) wired at startup, ExecutionHistoryStore instantiated and wired via swarmEngine.setExecutionHistoryStore() (Task #327), SIGTERM/SIGINT, rate-limit stale sweep (BUG-07 fix). Last modified Task #327 (2026-04-07). |
 | server/services/ConfigStore.js | ConfigStore | Manages %APPDATA%\ClaudeCodeManager\config.json — projects CRUD, settings, write-file-atomic |
 | server/services/ProcessRegistry.js | ProcessRegistry | Tracks active PIDs in active_pids.json, cleanupStale() on startup; isValidPid() guards register+cleanup against out-of-range values |
 | server/services/BinaryDiscovery.js | discoverClaudeBinary, discoverGeminiBinary | 4-step Claude binary lookup; plus Gemini binary auto-discovery via global npm prefix or env var |
@@ -42,7 +42,7 @@ _Last updated: 2026-04-06 — after V5 Wave 5 implementation (Advanced Flow Cont
 | server/stores/ExecutionHistoryStore.js | ExecutionHistoryStore (class) | Per-workflow execution history persistence to CONFIG_DIR/execution-history/<workflowId>.json. Methods: init, addEntry, getHistory, getEntry. Max 100 entries per workflow, trims oldest on overflow. Uses write-file-atomic + path-traversal guard. (V5 Wave 4) |
 | server/stores/TemplateStore.js | TemplateStore (class) | Read-only in-memory provider of 5 hardcoded workflow templates (Content Agency, Code Review Chain, Research Loop, Customer Support Triage, Data Pipeline). Methods: listTemplates, getTemplate. No file storage. (V5 Wave 4) |
 | server/services/HandoffParser.js | HandoffParser (class), default HandoffParser | Stateful rolling 4KB buffer extractor for ConPTY __HANDOFF__ and __DONE__ tokens; handles chunk-split across multiple PTY onData callbacks; ANSI escape stripping; JSON payload validation. DONE_RE now also accepts bare `DONE` on its own line (Task #254 BUG-DONE-BARE-1). (Task #45, DEC-012) |
-| server/services/SwarmEngine.js | SwarmEngine (class), default SwarmEngine | V3 swarm orchestrator — spawns agent PTY sessions, registers HandoffParser swarmListeners taps, routes handoff/done events, tracks per-node agent state and budget; in-memory only (never persisted). Constructor accepts circuitBreaker + budgetTracker optional params. **Tertiary Provider update:** handles Gemini CLI runtime with pattern-matched blocker definitions (`resource exhausted`, `not authenticated`) identical to Claude/Codex limits (DEC-026). **2026-04-03 updates (Task #145 follow-up):** added `_detectRuntimePromptIntervention()` to detect Codex model-selection and rate-limit menus; added `_applyRuntimePromptIntervention()` to auto-dismiss menus via cursor-down + Enter keystrokes (DEC-024); `_buildSystemPrompt()` and `_buildContinueAfterDonePrompt()` now use templated `<targetId>` in handoff examples instead of real node IDs to prevent fake handoffs from PTY echo replay (DEC-023); hard Codex usage-limit blocker takes precedence over soft `Approaching rate limits` chooser; `SWARM_RUNTIME_MENU_SUBMIT_DELAY_MS` constant added. **2026-04-06 updates (Task #231 BUG-WF-1):** SNIPPET_NOISE_LINE_PATTERNS extended with 13 new swarm protocol preamble regexes (agent role declarations, task descriptions, workflow goals); `_stripSnippetProtocolArtifacts()` now also strips `--- SWARM INPUT ---` blocks. **Task #255 (BUG-SNIPPET-INIT-1):** tapFn snippet update gated by `ignoreParserUntil` check — system prompt echo no longer flashes in agent card during echo gate. (Tasks #46, #46.3, #62.1, #145, #154, #231, #255, DEC-014, DEC-023, DEC-024, DEC-026) |
+| server/services/SwarmEngine.js | SwarmEngine (class), default SwarmEngine | V3 swarm orchestrator — spawns agent PTY sessions, registers HandoffParser swarmListeners taps, routes handoff/done events, tracks per-node agent state and budget; now persists terminal execution states via ExecutionHistoryStore (Task #327). Constructor accepts circuitBreaker + budgetTracker optional params. **Tertiary Provider update:** handles Gemini CLI runtime with pattern-matched blocker definitions (`resource exhausted`, `not authenticated`) identical to Claude/Codex limits (DEC-026). **2026-04-03 updates (Task #145 follow-up):** added `_detectRuntimePromptIntervention()` to detect Codex model-selection and rate-limit menus; added `_applyRuntimePromptIntervention()` to auto-dismiss menus via cursor-down + Enter keystrokes (DEC-024); `_buildSystemPrompt()` and `_buildContinueAfterDonePrompt()` now use templated `<targetId>` in handoff examples instead of real node IDs to prevent fake handoffs from PTY echo replay (DEC-023); hard Codex usage-limit blocker takes precedence over soft `Approaching rate limits` chooser; `SWARM_RUNTIME_MENU_SUBMIT_DELAY_MS` constant added. **2026-04-06 updates (Task #231 BUG-WF-1):** SNIPPET_NOISE_LINE_PATTERNS extended with 13 new swarm protocol preamble regexes (agent role declarations, task descriptions, workflow goals); `_stripSnippetProtocolArtifacts()` now also strips `--- SWARM INPUT ---` blocks. **Task #255 (BUG-SNIPPET-INIT-1):** tapFn snippet update gated by `ignoreParserUntil` check — system prompt echo no longer flashes in agent card during echo gate. **Task #327:** added `_executionHistoryStore` field, `_persistedHistoryIds` Set, `setExecutionHistoryStore()` setter, `_persistExecutionHistory()` method hooked into `_setExecutionStatus` for terminal states (completed/stopped/failed). (Tasks #46, #46.3, #62.1, #145, #154, #231, #255, #327, DEC-014, DEC-023, DEC-024, DEC-026) |
 | server/services/CircuitBreaker.js | CircuitBreaker (class), default CircuitBreaker | Advisory circuit breaker for handoff loops — check(edgeId, counter, threshold) returns boolean; never stops execution, caller emits WS advisory (FR-V3-17, Task #49) |
 | server/services/BudgetTracker.js | BudgetTracker (class), default BudgetTracker | Soft budget tracker — accumulates char counts per session, estimates tokens (÷4), provides checkBudget advisory signal; never stops execution (FR-V3-18, Task #49) |
 | server/routes/swarm.js | swarmRoutes (factory fn), resolveBroadcastNodeTargets, serializeSessionOutput | 9-endpoint REST API for swarm execution control: start, pause, resume, stop, status, agent output, broadcast + 2 execution history endpoints. Lazy-inits ExecutionHistoryStore. Factory pattern: accepts swarmEngine + sessionManager + scaffoldProviders. (Tasks #47.1 + #59 + #112 + V5-W4) |
@@ -1752,14 +1752,14 @@ _Last updated: 2026-04-06 — after V5 Wave 5 implementation (Advanced Flow Cont
 
 ## SwarmEngine (Task #46.2)
 
-### `server/services/SwarmEngine.js` :: `SwarmEngine(sessionManager, workflowStore)`
-- **Purpose:** Constructor. Stores references to SessionManager and WorkflowStore. Initializes empty _executions Map and null _wsBroadcast. _budgetTracker is undefined until a future task wires it in.
-- **Called by:** server/index.js (future — not yet integrated at server startup as of Task #46.2)
-- **Calls:** none (assignment only)
-- **Inputs:** sessionManager (SessionManager singleton), workflowStore (WorkflowStore instance)
+### `server/services/SwarmEngine.js` :: `SwarmEngine(sessionManager, workflowStore, circuitBreaker, budgetTracker)`
+- **Purpose:** Constructor. Stores references to SessionManager, WorkflowStore, CircuitBreaker, BudgetTracker. Initializes empty _executions Map, null _wsBroadcast, ChatExtractor, null _executionHistoryStore, empty _persistedHistoryIds Set.
+- **Called by:** server/index.js::startup()
+- **Calls:** new ChatExtractor()
+- **Inputs:** sessionManager (SessionManager singleton), workflowStore (WorkflowStore instance), circuitBreaker (CircuitBreaker instance), budgetTracker (BudgetTracker instance)
 - **Output:** SwarmEngine instance
 - **Side effects:** none
-- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev
+- **Last modified:** 2026-04-07 in Task #327 by backend-dev (added _executionHistoryStore + _persistedHistoryIds fields)
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine.setWsBroadcast(fn)`
 - **Purpose:** Wire the WebSocket broadcast function (called by swarmHandler.js after WS channel setup). Stored as this._wsBroadcast for use by all methods that emit execution status events.
@@ -1769,6 +1769,25 @@ _Last updated: 2026-04-06 — after V5 Wave 5 implementation (Advanced Flow Cont
 - **Output:** void
 - **Side effects:** sets this._wsBroadcast
 - **Last modified:** 2026-03-27 in Task #48.2 by backend-dev (caller updated — was "future task", now wired from server/index.js)
+
+### `server/services/SwarmEngine.js` :: `SwarmEngine.setExecutionHistoryStore(store)` (NEW — Task #327)
+- **Purpose:** Setter injection for the ExecutionHistoryStore instance. Enables persistence of terminal execution states (completed/stopped/failed) to disk.
+- **Called by:** server/index.js::startup() — `swarmEngine.setExecutionHistoryStore(executionHistoryStore)` called after ExecutionHistoryStore is instantiated
+- **Calls:** none (assignment only)
+- **Inputs:** store (ExecutionHistoryStore instance)
+- **Output:** void
+- **Side effects:** sets this._executionHistoryStore
+- **Last modified:** 2026-04-07 in Task #327 by backend-dev
+
+### `server/services/SwarmEngine.js` :: `SwarmEngine._persistExecutionHistory(execution)` (NEW — Task #327)
+- **Purpose:** Persist a terminal (completed/stopped/failed) execution to ExecutionHistoryStore. Guarded against duplicate writes via _persistedHistoryIds Set. Builds a history entry with executionId, status, startedAt, endedAt, durationMs, outcome (from agent states), and nodeSnapshots.
+- **Called by:** server/services/SwarmEngine.js::_setExecutionStatus() — called when status is 'completed', 'stopped', or 'failed'
+- **Calls:** ExecutionHistoryStore.addEntry
+- **Inputs:** execution (object — in-memory execution record)
+- **Output:** Promise\<void\>
+- **Side effects:** writes to ExecutionHistoryStore (disk persistence via write-file-atomic); adds executionId to _persistedHistoryIds Set; on error, removes from _persistedHistoryIds to allow retry
+- **Complexity note:** On addEntry failure, the execId is removed from the guard set so a retry is possible. The catch block re-throws so the outer .catch() in _setExecutionStatus logs the error.
+- **Last modified:** 2026-04-07 in Task #327 by backend-dev
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine.startExecution(workflowId, projectId, projectPath)`
 - **Purpose:** Start a new workflow execution. Loads workflow definition from WorkflowStore, creates an in-memory WorkflowExecution record, identifies the triage node (first node with isTriageNode===true or fallback to nodes[0]), spawns a PTY session for that node, then starts the heartbeat timer.
@@ -2953,15 +2972,15 @@ _Last updated: 2026-04-06 — after V5 Wave 5 implementation (Advanced Flow Cont
 
 ## server/index.js — Route Init Order Bugfix (Task #80)
 
-### `server/index.js` :: `startup()` — MODIFIED (route init order)
-- **Purpose:** Full server bootstrap. Key change in Task #80: swarmEngine + triggerManager are now instantiated BEFORE any route handlers are mounted. This fixes a race where route handlers accessing `req.app.locals.swarmEngine` would receive undefined if a request arrived during startup before the engine was attached.
+### `server/index.js` :: `startup()` — MODIFIED (route init order + ExecutionHistoryStore wiring)
+- **Purpose:** Full server bootstrap. Key change in Task #80: swarmEngine + triggerManager are now instantiated BEFORE any route handlers are mounted. Task #327: now also instantiates ExecutionHistoryStore and wires it into SwarmEngine via setter injection for persisting terminal execution states.
 - **Called by:** entry point (module top-level call)
-- **Calls:** (same as prior — all existing service instantiation, route mounts, WS setup); now also: `new TriggerManager(swarmEngine)`, `triggersRouter(triggerManager)`, app.use('/api/v1/triggers', ...)
+- **Calls:** (same as prior — all existing service instantiation, route mounts, WS setup); now also: `new TriggerManager(swarmEngine)`, `triggersRouter(triggerManager)`, app.use('/api/v1/triggers', ...), `new ExecutionHistoryStore(ConfigStore.CONFIG_DIR)`, `executionHistoryStore.init()`, `swarmEngine.setExecutionHistoryStore(executionHistoryStore)`
 - **Inputs:** none
 - **Output:** HTTP server listening on 127.0.0.1:PORT
-- **Side effects:** imports TriggerManager + triggersRouter; instantiates triggerManager after swarmEngine; mounts /api/v1/triggers route; order: swarmEngine → triggerManager → routes mounted
-- **Complexity note (ordering constraint):** swarmEngine must be instantiated before TriggerManager (TriggerManager constructor takes swarmEngine). Both must be instantiated before route handlers are mounted (routes capture them via closure or app.locals). This ordering is enforced by declaration order in startup().
-- **Last modified:** 2026-03-28 in Task #80 by debugger (route init order fixed; TriggerManager + triggersRouter wired)
+- **Side effects:** imports TriggerManager + triggersRouter + ExecutionHistoryStore; instantiates triggerManager after swarmEngine; mounts /api/v1/triggers route; order: swarmEngine → executionHistoryStore → triggerManager → routes mounted
+- **Complexity note (ordering constraint):** swarmEngine must be instantiated before TriggerManager and before ExecutionHistoryStore is wired. executionHistoryStore.init() is fire-and-forget (.catch logs error) — non-blocking.
+- **Last modified:** 2026-04-07 in Task #327 by backend-dev (ExecutionHistoryStore wired via setter injection)
 
 ---
 

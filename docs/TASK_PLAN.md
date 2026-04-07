@@ -4,7 +4,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED - 2026-03-31 — 330 tasks total, 324 COMPLETED, 2 DEFERRED, 4 PENDING. V5.0-Wave1 CLOSED. V5.0-Wave2 CLOSED. V5.0-Wave3 CLOSED. V5.0-BugFix1 CLOSED. V5.0-Wave4 CLOSED. V5.0-Wave5 CLOSED. V5.0-BugFix2 CLOSED. POST-V5 FOLLOW-UP OPEN. Last fully verified baseline: build OK (496 modules, 0 errors), tests 312/312 pass.
+**Status:** v3.0.0 RELEASED - 2026-03-31 — 330 tasks total, 327 COMPLETED, 2 DEFERRED, 1 PENDING. V5.0-Wave1 CLOSED. V5.0-Wave2 CLOSED. V5.0-Wave3 CLOSED. V5.0-BugFix1 CLOSED. V5.0-Wave4 CLOSED. V5.0-Wave5 CLOSED. V5.0-BugFix2 CLOSED. POST-V5 FOLLOW-UP IN PROGRESS (#327 COMPLETED, #328 PASS, #329 COMPLETED; #330 unblocked). Last verified baseline: build OK (498 modules, 0 errors), tests 312/312 pass.
   **Completed Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 ALL COMPLETED/PASS. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#267 ALL COMPLETED. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave2 NODE CREATION & CONFIG — Tasks #268-#272 ALL COMPLETED. AREA CLOSED 2026-04-06.
@@ -14385,7 +14385,8 @@ Type: TEST_GATE
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Result: PASS -- All behavioral, contract, integration, and round-trip checks verified. 312/312 tests pass. Client build 0 errors.
 Gate: HARD -- TASK #330 should not close the follow-up area until this gate passes
 Context:
   Component being tested: execution-history persistence from SwarmEngine into ExecutionHistoryStore and the existing history endpoints/UI.

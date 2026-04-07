@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-07 after project-manager repository state audit and TASK_PLAN follow-up reopening._
+_Last updated: 2026-04-07 after Task #327 (ExecutionHistoryStore wiring into SwarmEngine) and Task #329 (Unified Chat View E2E verification)._
 
 ## Release Status
 **v3.0.0 — RELEASED 2026-03-31**
@@ -48,19 +48,19 @@ _Last updated: 2026-04-07 after project-manager repository state audit and TASK_
 | Document | Status | Last Updated | Notes |
 |----------|--------|--------------|-------|
 | README.md | PARTIAL | 2026-04-07 | Feature list is broadly useful, but the top-level task/test counts are stale (`187/187`, `115 tasks`) and do not reflect the reopened follow-up area. |
-| docs/ARCHITECTURE.md | PARTIAL | 2026-04-06 | Section 11.4 Handoff Protocol up to date. V5 Wave 1-4 new components (ContextMenu.jsx, useCanvasHistory.js, sanitizeWorkflow.js, nodeIdGenerator.js, NodePalette.jsx, WorkflowSettingsModal.jsx, useCanvasValidation.js, ExecutionHistory.jsx, TemplateGallery.jsx, VersionHistory.jsx) and new stores (ExecutionHistoryStore.js, TemplateStore.js) not yet added to component tree — deferred to ARCHITECTURE.md V5 batch update. |
+| docs/ARCHITECTURE.md | PARTIAL | 2026-04-07 | Section 11.8 dependency graph updated: SwarmEngine now lists ExecutionHistoryStore as setter-injected dependency, _persistExecutionHistory method documented. V5 Wave 1-4 new UI components still deferred for batch update. |
 | docs/PRD.md | UP_TO_DATE | 2026-04-06 | Version bumped to v5.0 with N8N-Style Visual Workflow Editor addendum (81 FRs, 5 waves, 6 new node types, 5 new SEC requirements). |
 | docs/API.md | UP_TO_DATE | 2026-04-06 | V5 Wave 4 endpoints added: execution history (2), templates (2), versions (2). All 6 new endpoints documented with full request/response examples. |
 | docs/memory/PROJECT.md | UP_TO_DATE | 2026-04-07 | Implementation status corrected during PM audit to reflect that post-V5 follow-up work is open. |
 | docs/memory/DECISIONS.md | UP_TO_DATE | 2026-04-03 | DEC-001 through DEC-026 — no new architectural decisions from V5.0 bug fixes. |
-| docs/memory/PROGRESS.md | UP_TO_DATE | 2026-04-06 | V5 Wave 4 completion entry added. |
+| docs/memory/PROGRESS.md | UP_TO_DATE | 2026-04-07 | PM updated with Task #327/#329 completion status. |
 | docs/memory/CONTEXT.md | UP_TO_DATE | 2026-04-06 | Focus updated to reflect V5 Wave 4 completion. All areas CLOSED. |
 | docs/memory/CODE_MAP.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No changes from documenter. |
 | docs/memory/CHANGELOG.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No changes from documenter. |
 | docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-07 | PM audit entry appended/prepended for follow-up reopening. |
 | docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-04-06 | V1 audit. SEC-06 entry updated with webhook CSRF exemption note (Task #234). |
 | docs/security-v3-audit.md | UP_TO_DATE | 2026-04-06 | MEDIUM-V3-01 marked FIXED (Task #234). Summary table updated. |
-| Inline comments | UP_TO_DATE | 2026-04-06 | V5 Wave 1-4 + bugfix: all new/modified files have accurate header comments and FR references. New stores have JSDoc on all public methods. New UI panels have FR references in header comments. No stale comments. |
+| Inline comments | UP_TO_DATE | 2026-04-07 | Task #327: SwarmEngine new methods have JSDoc (setExecutionHistoryStore, _persistExecutionHistory). All inline comments verified accurate. |
 | docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. Deferred indefinitely. |
 
 ## Stale Sections (known gaps)

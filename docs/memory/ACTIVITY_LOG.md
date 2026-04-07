@@ -1,3 +1,35 @@
+## 2026-04-07 — qa-tester — Task #328: TEST GATE — Execution history persistence round-trip
+**Outcome:** COMPLETED
+**Summary:** TEST GATE PASS. Verified _persistExecutionHistory is called for all terminal states (completed/stopped/failed), entry shape matches addEntry contract, duplicate guard works correctly with retry support, store injection is wired in server/index.js, and API routes read from the same on-disk files. 312/312 tests pass, client build 498 modules 0 errors.
+**Files changed:** docs/TASK_PLAN.md (status updated), docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** PASS verdict — all code paths verified by inspection + test suite + build
+**Blockers:** none
+**Next:** Task #330 (documentation truthfulness sync) is now unblocked
+
+---
+## 2026-04-07 — documenter — Tasks #327/#329: Documentation audit for ExecutionHistoryStore wiring + Unified Chat verification
+**Outcome:** COMPLETED
+**Summary:** Audited all docs after Task #327 (SwarmEngine execution history persistence wiring) and Task #329 (Unified Chat E2E verification, no code changes). Updated ARCHITECTURE.md Section 11.8 dependency graph to include ExecutionHistoryStore as SwarmEngine dependency. Verified inline JSDoc on new SwarmEngine methods is accurate. Verified README.md, API.md, and all other docs remain current. Updated DOC_STATUS.md health table.
+**Files changed:** docs/ARCHITECTURE.md, docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none
+**Decisions made:** No README/API changes needed -- execution history feature was already documented in V5 Wave 4; Task #327 only wired internal persistence, no new endpoints or user-facing features.
+**Blockers:** none
+**Next:** Task #330 (documentation truthfulness sync) when unblocked by #328
+
+---
+
+## 2026-04-07 — project-manager — Task plan update: #327 and #329 COMPLETED, #328 unblocked
+**Outcome:** COMPLETED
+**Summary:** Marked Task #327 (ExecutionHistoryStore wiring, backend-dev) and Task #329 (Unified Chat E2E verification, qa-tester PASS) as COMPLETED. Updated status header to 326/330 COMPLETED, 2 DEFERRED, 2 PENDING. Task #328 (TEST GATE for execution history persistence) is now unblocked and assigned to qa-tester as the next priority. Task #330 (docs sync) remains blocked on #328.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** No re-prioritization needed; sequential dependency chain #328 then #330 remains correct
+**Blockers:** none
+**Next:** qa-tester -> TASK #328 (TEST GATE); then documenter -> TASK #330 after #328 passes
+
+---
+
 ## 2026-04-07 — backend-dev — Task #327: Wire ExecutionHistoryStore persistence into SwarmEngine terminal paths
 **Outcome:** COMPLETED
 **Summary:** Wired ExecutionHistoryStore into SwarmEngine so terminal execution states (completed/stopped/failed) are now persisted to disk. Added setter injection, startedAt tracking, duplicate-write guard, and node snapshot collection. 312/312 tests pass.
