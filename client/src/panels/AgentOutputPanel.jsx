@@ -1,10 +1,56 @@
 // client/src/panels/AgentOutputPanel.jsx
 // Side panel showing clean semantic output of a specific agent node,
 // its handoff data, and copy-to-clipboard functionality.
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSwarmStore } from '../store/SwarmContext';
+import { stripAnsi } from '../utils/stripAnsi';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+
+// ---------------------------------------------------------------------------
+// Client-side character cleanup for agent output text.
+// Catches residual CLI noise that the server-side ChatExtractor may miss.
+// ---------------------------------------------------------------------------
+const OUTPUT_NOISE_PATTERNS = [
+  /\x1b\[[0-9;]*[a-zA-Z]/g,                          // residual ANSI escapes
+  /^\s*[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏●◐◑◒◓⣾⣽⣻⢿⡿⣟⣯⣷▁▂▃▄▅▆▇█]+\s*/gm, // spinners
+  /^\s*[─━═╌╍┄┅┈┉╴╶╸╺]+\s*$/gm,                     // horizontal rules
+  /^\s*[\u2500-\u257F]+\s*$/gm,                       // box-drawing lines
+  /^╭[─╌]+.*╮$/gm,                                    // box top borders
+  /^╰[─╌]+.*╯$/gm,                                    // box bottom borders
+  /^│.*│$/gm,                                          // box content lines
+  /^\s*Claude Code v[\d.]+/gm,                         // version strings
+  /^\s*Opus \d[\d.]*\s*with\s*\w+\s*effort/gm,        // "Opus 4.6 with medium effort"
+  /Opus\d[\d.]*with\w+effort/gi,                       // concatenated version (no spaces)
+  /\(shift\+tab\s*to\s*cycle\)/gi,                     // key hint
+  /shift\+?tab\s*to\s*cycle/gi,                        // variant
+  /bypass\s*permissions?\s*on/gi,                       // permissions prompt
+  /^\s*[✢✶✻✽·*]+\s*$/gm,                             // bare decoration chars
+  /^\s*[※✳✻✽✢✶·*☆★⊛⊕⊙◉◎⚡⚙].*$/gm,                 // decorative symbol lines
+  /^\s*[▸▶►‣⏵]+\s*/gm,                                // arrow prompts
+  /[·•●◉]\s*(esc|medium|high|low|\/\w)/gi,             // status bar fragments
+  /esc\s*to\s*int[.…]*/gi,                             // "esc to int..."
+  /medium\s*[·•●◉.]\s*\/eff/gi,                        // status bar
+  /^\s*Deliberating[.…]*\s*$/gm,                       // "Deliberating..."
+  /^\s*\w{1,20}ing[.…]{2,3}\s*$/gm,                   // gerund + ellipsis fragments
+  /^\s*[⎿⏐⏎│]\s*Tip:\s*Use\s*\/feedback.*$/gm,       // feedback tip
+  /^\s*Tip:\s*Use\s*\/feedback.*$/gm,                  // feedback tip variant
+  /^\s*MEMORIA NON SCRITTA:.*$/gm,                     // memory hook warnings
+  /^\s*⚠\s*MEMORIA NON SCRITTA.*$/gm,                 // memory hook variant
+  /\/buddy\b/gi,                                        // /buddy command noise
+];
+
+function cleanOutputText(raw) {
+  if (!raw) return '';
+  let text = stripAnsi(String(raw));
+  for (const pat of OUTPUT_NOISE_PATTERNS) {
+    pat.lastIndex = 0;
+    text = text.replace(pat, '');
+  }
+  // Collapse excessive blank lines
+  text = text.replace(/\n{3,}/g, '\n\n').trim();
+  return text;
+}
 
 // ---------------------------------------------------------------------------
 // Tab bar pill button
@@ -58,9 +104,10 @@ export default function AgentOutputPanel({ nodeId, nodeLabel, onClose, onSwitchT
   const agentResult = useSwarmStore((s) => s.agentResults[nodeId]);
   const markViewed = useSwarmStore((s) => s.markAgentResultViewed);
 
-  const finalText = agentResult?.finalText || '';
+  const rawFinalText = agentResult?.finalText || '';
   const handoffs = agentResult?.handoffPayloads || [];
   const hasHandoffs = handoffs.length > 0;
+  const finalText = useMemo(() => cleanOutputText(rawFinalText), [rawFinalText]);
 
   const [activeTab, setActiveTab] = useState('output');
   const [copyLabel, setCopyLabel] = useState('Copy');

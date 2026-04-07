@@ -56,7 +56,7 @@ export default function ChatPanel() {
   const filteredMessages = useMemo(() => {
     if (chatFilter === 'all') return chatMessages;
     return chatMessages.filter(
-      (msg) => msg.role === 'system' || msg.nodeId === chatFilter
+      (msg) => msg.role === 'system' || msg.role === 'hitl' || msg.nodeId === chatFilter
     );
   }, [chatMessages, chatFilter]);
 

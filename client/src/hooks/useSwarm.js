@@ -347,10 +347,10 @@ export function useSwarm(workflowId) {
           addChatMessage({
             nodeId: msg.nodeId,
             role: 'hitl',
-            text: (msg.item?.message || msg.message || 'Approval required'),
-            timestamp: msg.item?.timestamp || msg.timestamp || Date.now(),
-            hitlItemId: msg.item?.id || msg.id,
-            hitlType: msg.item?.type || msg.type || 'user_requested',
+            text: (msg.item?.message || msg.item?.reason || msg.message || 'Approval required'),
+            timestamp: msg.item?.timestamp || Date.now(),
+            hitlItemId: msg.item?.id,
+            hitlType: msg.item?.type || 'user_requested',
           });
           break;
         case 'hitl_resolved':

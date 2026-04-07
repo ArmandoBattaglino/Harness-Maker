@@ -605,7 +605,7 @@ class SwarmEngine {
       // snippet display on agent cards and aggressively strips actual agent
       // content (BUG-V8-7 root cause). ChatExtractor's own NOISE_PATTERNS
       // and line-level filters are sufficient for chat/artifact output.
-      periodicFlushMs: 0,
+      periodicFlushMs: 8000,
     });
 
     this._executionHistoryStore = null; // set via setExecutionHistoryStore()
@@ -3084,10 +3084,8 @@ class SwarmEngine {
               // output chunks often arrive after the status transitions to 'done'
               // due to PTY buffering. Without this, the actual response content
               // is silently lost (BUG-V8-7 root cause).
-              if (cleanChunk.length > 5) console.log(`[SE:chat-feed] node=${nodeId} status=${currentState.status} len=${cleanChunk.length}`);
               this._chatExtractor.feed(executionId, nodeId, cleanChunk);
             } else {
-              if (cleanChunk.length > 5) console.log(`[SE:echo-gate] node=${nodeId} len=${cleanChunk.length}`);
             }
             if (!currentState || currentState.status !== 'running') {
               // Agent is no longer running — still accumulate for runtime detection

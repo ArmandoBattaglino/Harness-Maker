@@ -19,12 +19,12 @@ export default function HitlChatCard({ message, agentLabel, executionId }) {
   const { nodeId, text, timestamp, hitlItemId, hitlType } = message;
   const resolveInboxItem = useSwarmStore((s) => s.resolveInboxItem);
   const inboxItems = useSwarmStore((s) => s.inboxItems);
+  const resolvedHitlIds = useSwarmStore((s) => s.resolvedHitlIds || []);
 
   const [showTextarea, setShowTextarea] = useState(false);
   const [resumeText, setResumeText] = useState('');
   const [approving, setApproving] = useState(false);
   const [rejecting, setRejecting] = useState(false);
-  const [resolved, setResolved] = useState(false);
   const [resolvedAction, setResolvedAction] = useState(null);
   const [error, setError] = useState(null);
 
@@ -34,7 +34,9 @@ export default function HitlChatCard({ message, agentLabel, executionId }) {
     return item.id === hitlItemId;
   });
 
-  const isActionable = stillPending && !resolved;
+  // Derive resolved state from store (survives remount) OR local action
+  const wasResolved = resolvedHitlIds.includes(hitlItemId);
+  const isActionable = stillPending && !wasResolved;
   const badgeClass = TYPE_BADGE[hitlType] || 'bg-gray-500/20 text-gray-300 border-gray-500/40';
 
   const handleApproveClick = () => {
@@ -51,7 +53,6 @@ export default function HitlChatCard({ message, agentLabel, executionId }) {
         resumeText: resumeText.trim() || undefined,
       });
       resolveInboxItem(hitlItemId);
-      setResolved(true);
       setResolvedAction('approved');
     } catch (e) {
       setError(e.message);
@@ -72,7 +73,6 @@ export default function HitlChatCard({ message, agentLabel, executionId }) {
     try {
       await apiPost(`/api/v1/swarm/${executionId}/inbox/${hitlItemId}/reject`, {});
       resolveInboxItem(hitlItemId);
-      setResolved(true);
       setResolvedAction('rejected');
     } catch (e) {
       setError(e.message);
@@ -92,16 +92,18 @@ export default function HitlChatCard({ message, agentLabel, executionId }) {
             {(hitlType || 'approval').replace('_', ' ')}
           </span>
           <span className="text-[10px] text-gray-600">{formatTime(timestamp)}</span>
-          {resolved && (
+          {wasResolved && (
             <span className={`text-[9px] ml-auto px-1.5 py-0.5 rounded font-medium ${
               resolvedAction === 'approved'
                 ? 'bg-green-500/20 text-green-300'
-                : 'bg-red-500/20 text-red-300'
+                : resolvedAction === 'rejected'
+                ? 'bg-red-500/20 text-red-300'
+                : 'bg-gray-500/20 text-gray-300'
             }`}>
-              {resolvedAction}
+              {resolvedAction || 'resolved'}
             </span>
           )}
-          {!isActionable && !resolved && (
+          {!isActionable && !wasResolved && (
             <span className="text-[9px] ml-auto text-gray-500 italic">resolved</span>
           )}
         </div>

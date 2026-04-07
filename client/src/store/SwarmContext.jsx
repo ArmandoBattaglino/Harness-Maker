@@ -14,6 +14,7 @@ const useSwarmStore = create((set, get) => ({
   edgeCounters: {},        // { [edgeId]: number }
   budget: { estimatedTokensUsed: 0, limitTokens: 0 },
   inboxItems: [],          // HITL pending approvals
+  resolvedHitlIds: [],     // IDs of resolved HITL items (survives component remount)
   interAgentFeed: [],      // last 100 handoff events
   chatMessages: [],          // Unified chat view messages
   chatFilter: 'all',         // 'all' or specific nodeId
@@ -85,7 +86,12 @@ const useSwarmStore = create((set, get) => ({
   })),
 
   resolveInboxItem: (itemId) => set((state) => ({
-    inboxItems: state.inboxItems.filter((i) => i?.id !== itemId)
+    inboxItems: state.inboxItems.filter((i) => {
+      const id = i?.item?.id ?? i?.id;
+      return id !== itemId;
+    }),
+    // Track resolved IDs so HitlChatCard can show "resolved" even after remount
+    resolvedHitlIds: [...(state.resolvedHitlIds || []), itemId],
   })),
 
   addFeedEvent: (event) => set((state) => ({
@@ -205,6 +211,7 @@ const useSwarmStore = create((set, get) => ({
     edgeCounters: {},
     budget: { estimatedTokensUsed: 0, limitTokens: 0 },
     inboxItems: [],
+    resolvedHitlIds: [],
     interAgentFeed: [],
     chatMessages: [],
     chatFilter: 'all',
@@ -233,6 +240,7 @@ const useSwarmStore = create((set, get) => ({
       edgeCounters: {},
       budget: { estimatedTokensUsed: 0, limitTokens: 0 },
       inboxItems: [],
+      resolvedHitlIds: [],
       interAgentFeed: [],
       chatMessages: [],
       chatFilter: 'all',

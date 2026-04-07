@@ -9,11 +9,13 @@ import { useSwarmStore } from '../store/SwarmContext';
  * @param {Object} item - Raw item from API or WS
  * @returns {Object} Normalized item
  */
-function normalizeInboxItem(item) {
+function normalizeInboxItem(entry) {
+  // Unwrap WS message wrapper: WS stores { type: 'hitl_required', nodeId, item: {...} }
+  const item = entry?.item ?? entry;
   return {
     id: item?.id || '',
-    type: item?.type || 'hitl',
-    agentId: item?.agentId || item?.agent_id || '',
+    type: item?.type || 'user_requested',
+    agentId: item?.nodeId || item?.agentId || item?.agent_id || entry?.nodeId || '',
     status: item?.status || 'pending',
     payload: item?.payload || item?.resume_text || item?.resumeText || '',
   };

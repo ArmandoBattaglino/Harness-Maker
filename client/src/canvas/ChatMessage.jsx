@@ -32,7 +32,8 @@ function formatChatText(rawText = '') {
     .map((line) => line.trim())
     .filter(Boolean)
     .filter((line) => !/^(?:\w{2,20}ing(?:\.{2,}|…)\s*){2,}$/i.test(line))
-    .filter((line) => !/(?:bypass ?permissions ?on|shift\+tab ?to ?cycle|\/buddy)/i.test(line));
+    .filter((line) => !/(?:bypass ?permissions ?on|shift\+tab ?to ?cycle|\/buddy)/i.test(line))
+    .filter((line) => !/(?:ctrl\+[a-z]|to (?:edit|cycle)|now using extra usage|╭|╰|─{3,}|▸▸|❯❯)/i.test(line));
 
   return cleanedLines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
 }

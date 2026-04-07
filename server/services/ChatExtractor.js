@@ -68,6 +68,14 @@ const NOISE_PATTERNS = [
   /^\s*.?\s*medium\s*.?\s*\/eff.*$/gm,   // full line with "medium · /eff"
   /^\s*[⎿⏐⏎│]\s*Tip:\s*Use\s*\/feedback.*$/gm, // Claude Code feedback tip
   /^\s*Tip:\s*Use\s*\/feedback.*$/gm,             // feedback tip without leader
+  /^\s*⎿\s+.{0,200}$/gm,                         // Claude Code tool-output leader lines (⎿  Stop says: ...)
+  /^\s*[⎿⏐⏎│]\s*Stop says:.*$/gm,               // hook "Stop says:" output
+  /⚠️?\s*MEMORIA NON SCRITTA[^]*/gm,             // memory-keeper hook warning
+  /Now using extra usage/g,                        // Claude CLI "Now using extra usage" status
+  /^\s*running\s*stop\s*hook\b.*$/gm,             // "running stop hook" CLI indicator
+  /^\s*stop\s*hook\b.*$/gm,                       // "stop hook" CLI indicator
+  /^\s*thought for \d+s?\b.*$/gm,                 // "thought for 1s" bare line
+  /^\s*[▝▜▛▘▟▙▚▞▐]+[^a-zA-Z]*$/gm,              // half-block/quadrant character noise lines
 ];
 
 // Only strip noise here when it is unquestionably chrome. Aggressive fragment
@@ -142,12 +150,15 @@ function reflowParagraphs(text) {
       if (lines.length <= 1) return lines.join('');
       let out = lines[0];
       for (let i = 1; i < lines.length; i++) {
+        const prev = lines[i - 1];
         const next = lines[i];
-        const prevEndChar = out.charAt(out.length - 1);
+        const prevEndChar = prev.charAt(prev.length - 1);
         const nextStartChar = next.charAt(0);
         const prevEndsWithLetter = /[\p{L}]/u.test(prevEndChar);
         const nextStartsLowerLetter = /[\p{Ll}]/u.test(nextStartChar);
-        const prevIsLongWrap = out.length >= 48;
+        // Use the ORIGINAL previous line length, not the accumulated output,
+        // so that short lines don't trigger mid-word join.
+        const prevIsLongWrap = prev.length >= 48;
         if (prevEndsWithLetter && nextStartsLowerLetter && prevIsLongWrap) {
           // Likely a mid-word ConPTY break — join with no space.
           out = out + next;
@@ -394,7 +405,6 @@ export class ChatExtractor {
     // Keep normal messages, but also allow short human-readable replies
     // such as greetings that would otherwise disappear from the Chat view.
     const shouldEmit = shouldEmitChatMessage(text);
-    console.log(`[ChatExtractor:flush-decision] nodeId=${nodeId} textLen=${text.length} shouldEmit=${shouldEmit} preview=${JSON.stringify(text.slice(0, 120))}`);
     if (shouldEmit) {
       this._onMessage({
         executionId,
@@ -421,10 +431,8 @@ export class ChatExtractor {
       if (buf.periodicTimer) clearInterval(buf.periodicTimer);
       // Force a final flush so the text makes it into chatMessages
       if (buf.text && buf.text.trim()) {
-        console.log(`[ChatExtractor:cleanup-flush] nodeId=${nodeId} bufLen=${buf.text.length} preview=${JSON.stringify(buf.text.trim().slice(0, 120))}`);
         this._flush(buf.executionId || executionId, nodeId);
       } else {
-        console.log(`[ChatExtractor:cleanup] nodeId=${nodeId} empty buffer`);
       }
     }
     this._buffers.clear();
