@@ -20,6 +20,7 @@ export default function ChatPanel() {
   const [targetId, setTargetId] = useState('');
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState(null);
+  const sendingRef = useRef(false); // sync guard against rapid clicks
 
   // Build nodeId → label map from workflow definition
   const agentLabels = useMemo(() => {
@@ -76,9 +77,10 @@ export default function ChatPanel() {
 
   const handleChatSend = useCallback(async () => {
     const trimmed = inputText.trim();
-    if (!trimmed || !activeExecutionId || sending) return;
+    if (!trimmed || !activeExecutionId || sendingRef.current) return;
     if ((scope === 'department' || scope === 'agent') && !targetId) return;
 
+    sendingRef.current = true;
     setSending(true);
     setSendResult(null);
     try {
@@ -89,6 +91,11 @@ export default function ChatPanel() {
         mode,
       });
       const { sent, recipientNodeIds = [] } = res;
+      if (sent === 0) {
+        setSendResult('No active agents to receive the message');
+        setTimeout(() => setSendResult(null), 4000);
+        return;
+      }
       const labels = recipientNodeIds
         .map((nid) => agentLabels[nid] || nid.slice(0, 12))
         .slice(0, 3);
@@ -102,9 +109,10 @@ export default function ChatPanel() {
       setSendResult(`Error: ${err.message}`);
       setTimeout(() => setSendResult(null), 5000);
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
-  }, [inputText, activeExecutionId, scope, targetId, mode, sending, agentLabels]);
+  }, [inputText, activeExecutionId, scope, targetId, mode, agentLabels]);
 
   const canSend = activeExecutionId && executionStatus !== 'idle';
 
