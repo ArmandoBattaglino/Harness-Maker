@@ -82,8 +82,10 @@ export function useSwarm(workflowId) {
     });
 
     const workflowIdToPersist = snapshot.workflowId ?? snapshot.workflowDef?.id ?? currentState.workflowDef?.id ?? null;
-    if (nextExecutionId && !['stopped', 'completed', 'failed'].includes(nextStatus)) {
-      writeStoredExecution({ executionId: nextExecutionId, workflowId: workflowIdToPersist });
+    if (nextExecutionId) {
+      // Persist execution ID for both active and terminal states so that
+      // agentResults can be rehydrated after navigating away and back.
+      writeStoredExecution({ executionId: nextExecutionId, workflowId: workflowIdToPersist, status: nextStatus });
     } else {
       clearStoredExecution();
     }
@@ -118,10 +120,9 @@ export function useSwarm(workflowId) {
 
     try {
       const status = await apiGet(`/api/v1/swarm/${executionId}/status`);
-      const hydrated = await applyExecutionSnapshot(status);
-      if (['stopped', 'completed', 'failed'].includes(hydrated.status)) {
-        clearStoredExecution();
-      }
+      await applyExecutionSnapshot(status);
+      // Keep stored execution for terminal states so agentResults can be
+      // rehydrated after navigating away and back (BUG-V8-2 fix).
       return;
     } catch {
       const currentState = useSwarmStore.getState();
@@ -145,7 +146,6 @@ export function useSwarm(workflowId) {
                 ? state.agentStates
                 : state.agentStates,
             }));
-            clearStoredExecution();
             return;
           }
         } catch {
@@ -220,7 +220,18 @@ export function useSwarm(workflowId) {
     const hydrated = await applyExecutionSnapshot(snapshot);
 
     if (['stopped', 'completed', 'failed'].includes(hydrated.status)) {
-      clearExecutionState();
+      // Rehydrate agentResults so red dots and output panels survive navigation
+      try {
+        const resultsResp = await fetch(`/api/v1/swarm/executions/${stored.executionId}/results`);
+        if (resultsResp.ok) {
+          const resultsData = await resultsResp.json();
+          if (resultsData?.agentOutputs) {
+            useSwarmStore.getState().hydrateAgentResults(resultsData.agentOutputs);
+          }
+        }
+      } catch {
+        // Silent — output panel just won't have data
+      }
       return;
     }
 

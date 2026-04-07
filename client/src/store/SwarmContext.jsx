@@ -170,14 +170,15 @@ const useSwarmStore = create((set, get) => ({
     };
   }),
 
-  hydrateAgentResults: (agentOutputs) => set(() => {
+  hydrateAgentResults: (agentOutputs) => set((state) => {
     const agentResults = {};
     for (const nodeId of Object.keys(agentOutputs)) {
       const ao = agentOutputs[nodeId];
+      const existing = state.agentResults[nodeId];
       agentResults[nodeId] = {
         finalText: ao.finalText,
         handoffPayloads: ao.handoffPayloads || [],
-        viewed: true,
+        viewed: existing?.viewed ?? false,
         updatedAt: Date.now(),
       };
     }
@@ -211,30 +212,34 @@ const useSwarmStore = create((set, get) => ({
     wsConnected: false,
   }),
 
-  reset: () => set({
-    activeExecutionId: null,
-    executionStatus: 'idle',
-    runtimeBlocker: null,
-    runtimeProvider: null,
-    providerStrategy: null,
-    lastFallback: null,
-    agentStates: {},
-    agentResults: {},
-    triggerStates: {},
-    edgeCounters: {},
-    budget: { estimatedTokensUsed: 0, limitTokens: 0 },
-    inboxItems: [],
-    interAgentFeed: [],
-    chatMessages: [],
-    chatFilter: 'all',
-    sidePanelMode: 'chat',
-    sidePanelOpen: true,
-    focusedDepartmentId: null,
-    departmentStack: [],
-    selectedNodeId: null,
-    ptyExplosionNodeId: null,
-    wsConnected: false,
-  }),
+  reset: () => {
+    // Clear persisted execution ID so navigation doesn't rehydrate stale results
+    try { window.localStorage.removeItem('swarm-active-execution'); } catch { /* ignore */ }
+    return set({
+      activeExecutionId: null,
+      executionStatus: 'idle',
+      runtimeBlocker: null,
+      runtimeProvider: null,
+      providerStrategy: null,
+      lastFallback: null,
+      agentStates: {},
+      agentResults: {},
+      triggerStates: {},
+      edgeCounters: {},
+      budget: { estimatedTokensUsed: 0, limitTokens: 0 },
+      inboxItems: [],
+      interAgentFeed: [],
+      chatMessages: [],
+      chatFilter: 'all',
+      sidePanelMode: 'chat',
+      sidePanelOpen: true,
+      focusedDepartmentId: null,
+      departmentStack: [],
+      selectedNodeId: null,
+      ptyExplosionNodeId: null,
+      wsConnected: false,
+    });
+  },
 }));
 
 // Thin context wrapper for App.jsx compatibility (optional — components can use useSwarmStore directly)
