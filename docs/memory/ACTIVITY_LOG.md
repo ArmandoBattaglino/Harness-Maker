@@ -1,3 +1,14 @@
+## 2026-04-07 — qa-tester — Task #329: Unified Chat View — end-to-end verification and WS contract audit
+**Outcome:** COMPLETED
+**Summary:** Full verification of the Unified Chat View feature. Read all 7 implementation files, verified WS contract field-by-field (server emits type/nodeId/role/text/timestamp, client consumes exact same fields — zero mismatches). Confirmed ChatExtractor integration in SwarmEngine (import, init, feed in tapFn behind echo gate, flush on agent done, systemMessage for 4 flow-control node types, cleanup on execution end). Confirmed client integration (useSwarm handler, SwarmContext state with 500-msg cap, ChatPanel with filter/auto-scroll, SwarmCanvas Feed/Chat toggle). 312/312 server tests pass, 498-module client build clean.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** PASS verdict — no contract gaps or integration issues found
+**Blockers:** none
+**Next:** Task #330 (documentation truthfulness sync) is unblocked
+
+---
+
 ## 2026-04-07 — project-manager — Repository State Audit + Follow-up Reopen
 **Outcome:** COMPLETED
 **Summary:** Reviewed the repository state across README/CLAUDE/docs/memory/TASK_PLAN and the recent activity log. Confirmed that the project is not truthfully at "zero work" despite closed V5 areas. Opened POST-V5 follow-up tasks #327-#330 in TASK_PLAN.md for execution-history persistence wiring, execution-history QA, Unified Chat end-to-end verification, and documentation/status truthfulness sync. Updated PROJECT.md, PROGRESS.md, CONTEXT.md, and DOC_STATUS.md to reflect the reopened state.

@@ -1,4 +1,50 @@
 ---
+## 2026-04-07 — Task #329: Unified Chat View — end-to-end verification and WS contract audit
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+Unified Chat View was implemented in a previous session (Wave 1 backend + Wave 2 frontend) but had no TASK_PLAN registration or QA gate. PM audit created Task #329 to verify the feature end-to-end and audit the WS contract.
+
+### What I did
+1. Read all 7 implementation files: ChatExtractor.js, SwarmEngine.js (ChatExtractor integration points), ChatPanel.jsx, ChatMessage.jsx, SwarmContext.jsx, useSwarm.js, SwarmCanvas.jsx
+2. Verified WS contract field-by-field: server emits `{ type, nodeId, role, text, timestamp }` at SwarmEngine.js:977-986, client consumes exact same fields at useSwarm.js:281-288
+3. Verified ChatExtractor integration in SwarmEngine: import (line 9), constructor init (line 546), feed() in tapFn inside ignoreParserUntil guard (line 2240-2245), flush() on agent done/completed/error (line 972-973), systemMessage() for conditional/merge/delay/loop (lines 2909, 2974, 3035, 3102, 3130, 3156), cleanup() on execution end (lines 1972, 1990, 3774)
+4. Verified client integration: useSwarm.js case 'chat_message' (line 281), SwarmContext chatMessages/chatFilter/sidePanelMode state + addChatMessage with 500-msg cap (line 88-89), ChatPanel with filter dropdown and auto-scroll, SwarmCanvas Feed/Chat tab toggle (lines 506-529), showSidePanels includes completed/stopped/chatMessages.length > 0 (lines 62-64)
+5. Ran `npm test --prefix server` — 312/312 PASS
+6. Ran `npm run build --prefix client` — 498 modules, 0 errors
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Task #329 marked COMPLETED with PASS |
+| docs/memory/agents/qa-tester.md | MODIFIED | Added this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added session entry |
+
+### Improvements delivered
+- Unified Chat View feature formally verified and registered in the project tracking system
+- WS contract confirmed complete with zero field mismatches
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None | N/A | N/A | N/A |
+
+### Decisions I made
+- PASS verdict: all code paths verified by code inspection + build + test suite. No contract gaps found.
+
+### What I learned
+- ChatExtractor.feed() is correctly gated behind `!currentState.ignoreParserUntil` (line 2240), preventing echo-gate noise from reaching the chat view
+- The 500-msg cap in SwarmContext and 2s periodic flush in ChatExtractor work together for streaming UX
+- showSidePanels logic correctly includes post-execution states (completed, stopped) and non-empty chatMessages for reading history after execution ends
+
+### State I'm leaving behind
+Task #329 COMPLETED. Unified Chat View is fully verified: server emission, client consumption, WS contract, and UI rendering all confirmed. No bugs found. No follow-up tasks needed from this verification.
+
+### Handoff
+Task #330 (Documentation truthfulness sync) can now proceed — it depends on #329 being verified.
+
+---
 ## 2026-04-06 — Tasks #249-#253: V6.0 TEST GATES + AREA CHECKPOINT
 **Status:** COMPLETED
 **Called by:** user (debugger-loop Phase 3 verification)

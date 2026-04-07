@@ -546,6 +546,9 @@ class SwarmEngine {
     this._chatExtractor = new ChatExtractor({
       onMessage: (msg) => this._broadcastChatMessage(msg),
     });
+
+    this._executionHistoryStore = null; // set via setExecutionHistoryStore()
+    this._persistedHistoryIds = new Set(); // guard against duplicate history writes
   }
 
   /**
@@ -565,6 +568,15 @@ class SwarmEngine {
    */
   setTriggerManager(tm) {
     this._triggerManager = tm;
+  }
+
+  /**
+   * Set the ExecutionHistoryStore instance for persisting terminal execution states.
+   * Called by server/index.js after the store is instantiated.
+   * @param {import('../stores/ExecutionHistoryStore.js').ExecutionHistoryStore} store
+   */
+  setExecutionHistoryStore(store) {
+    this._executionHistoryStore = store;
   }
 
   _serializeAgentState(state = {}) {
@@ -989,6 +1001,80 @@ class SwarmEngine {
     if (!execution || execution.status === status) return;
     execution.status = status;
     this._broadcastExecutionSnapshot(execution);
+
+    // Persist execution history on terminal states
+    if (['completed', 'stopped', 'failed'].includes(status)) {
+      this._persistExecutionHistory(execution).catch((err) => {
+        console.error(`[swarm] Failed to persist execution history: ${err.message}`);
+      });
+    }
+  }
+
+  /**
+   * Persist a terminal execution to the ExecutionHistoryStore.
+   * Guarded against duplicate writes via _persistedHistoryIds.
+   * @param {object} execution
+   */
+  async _persistExecutionHistory(execution) {
+    if (!this._executionHistoryStore) return;
+
+    const execId = execution.executionId ?? execution.id;
+    if (!execId || !execution.workflowId) return;
+
+    // Guard against duplicate writes (stop/cleanup can be called multiple times)
+    if (this._persistedHistoryIds.has(execId)) return;
+    this._persistedHistoryIds.add(execId);
+
+    const endedAt = new Date().toISOString();
+    const startedAt = execution.startedAt || null;
+    let durationMs = null;
+    if (startedAt) {
+      durationMs = Date.now() - new Date(startedAt).getTime();
+      if (durationMs < 0) durationMs = null;
+    }
+
+    // Build node snapshots: which agents ran and their final states
+    const nodeSnapshots = {};
+    let nodesRun = 0;
+    if (execution.agentStates) {
+      for (const [nodeId, state] of execution.agentStates) {
+        nodesRun++;
+        nodeSnapshots[nodeId] = {
+          status: state.status ?? 'unknown',
+          provider: state.runtimeProvider ?? state.provider ?? null,
+          handoffCount: state.handoffCount ?? 0,
+        };
+      }
+    }
+
+    // Build a human-readable outcome summary
+    let outcome = '';
+    if (execution.status === 'completed') {
+      outcome = `Workflow completed successfully. ${nodesRun} node(s) executed.`;
+    } else if (execution.status === 'stopped') {
+      outcome = `Workflow stopped by user. ${nodesRun} node(s) were active.`;
+    } else if (execution.status === 'failed') {
+      outcome = `Workflow failed. ${nodesRun} node(s) were active.`;
+    }
+
+    const entry = {
+      executionId: execId,
+      status: execution.status,
+      startedAt,
+      endedAt,
+      durationMs,
+      nodesRun,
+      outcome,
+      nodeSnapshots,
+    };
+
+    try {
+      await this._executionHistoryStore.addEntry(execution.workflowId, entry);
+    } catch (err) {
+      // Remove from guard set so a retry is possible
+      this._persistedHistoryIds.delete(execId);
+      throw err;
+    }
   }
 
   _buildInitialWorkflowContext(workflowDef) {
@@ -2034,6 +2120,7 @@ class SwarmEngine {
       projectId,
       projectPath,
       status: 'running',
+      startedAt: new Date().toISOString(),
       agentStates: new Map(),
       edgeCounters: new Map(),
       workflowContext: this._buildInitialWorkflowContext(wf),

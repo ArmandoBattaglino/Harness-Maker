@@ -22,6 +22,7 @@ import SwarmEngine from './services/SwarmEngine.js';
 import CircuitBreaker from './services/CircuitBreaker.js';
 import BudgetTracker from './services/BudgetTracker.js';
 import TriggerManager from './services/TriggerManager.js';
+import { ExecutionHistoryStore } from './stores/ExecutionHistoryStore.js';
 import { securityMiddleware } from './middleware/security.js';
 import { csrfMiddleware } from './middleware/csrf.js';
 import { ApiError } from './middleware/pathValidation.js';
@@ -255,6 +256,13 @@ async function startup() {
   const budgetTracker = new BudgetTracker();
   const swarmEngine = new SwarmEngine(sessionManager, workflowStore, circuitBreaker, budgetTracker);
   app.locals.swarmEngine = swarmEngine;
+
+  // Wire ExecutionHistoryStore for persisting terminal execution states (Task #327)
+  const executionHistoryStore = new ExecutionHistoryStore(ConfigStore.CONFIG_DIR);
+  executionHistoryStore.init().catch((err) => {
+    console.error(`[swarm] ExecutionHistoryStore init error: ${err.message}`);
+  });
+  swarmEngine.setExecutionHistoryStore(executionHistoryStore);
   app.locals.sessionManager = sessionManager;
   app.locals.codexBin = codexBin;
   app.locals.geminiBin = geminiBin;
