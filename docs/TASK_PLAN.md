@@ -4,7 +4,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v5.1.0 — 347 tasks total, 331 COMPLETED, 2 DEFERRED, 14 PENDING. V8.0 AGENT OUTPUT VIEWER & WORKFLOW DELIVERABLE in progress (#334-#347). Last verified baseline: build OK (498 modules, 0 errors), tests 312/312 pass.
+**Status:** v5.1.0 — 347 tasks total, 342 COMPLETED, 2 DEFERRED, 3 PENDING. V8.0 implementation tasks (#334-#344) ALL COMPLETED. TEST GATEs #345-#346 + AREA CHECKPOINT #347 PENDING. Last verified baseline: build OK (502 modules, 0 errors), tests 370/370 pass.
   **Completed Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 ALL COMPLETED/PASS. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#267 ALL COMPLETED. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave2 NODE CREATION & CONFIG — Tasks #268-#272 ALL COMPLETED. AREA CLOSED 2026-04-06.
@@ -14574,7 +14574,8 @@ Agent: backend-dev
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-07 — Added lastHandoffPayload + handoffPayloads array to agentState in _onHandoff. 362 tests pass.
 Context:
   Goal:
     When SwarmEngine processes a handoff (`_onHandoff`), save the parsed handoff payload into the
@@ -14613,7 +14614,8 @@ Agent: backend-dev
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-07 — Extended schema + getEntry() method + backward compat defaults + 10 new tests. 347 tests pass.
 Context:
   Goal:
     Extend the execution history entry schema to include per-agent output data and a pre-built
@@ -14673,7 +14675,8 @@ Agent: backend-dev
 Priority: HIGH
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-07 — New service with buildWorkflowArtifact() pure function + 15 tests. All edge cases covered.
 Context:
   Goal:
     Create a pure function that takes execution data and produces a clean, readable markdown
@@ -14741,7 +14744,8 @@ Agent: backend-dev
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-07 — Groups chatMessages by nodeId, builds agentOutputs + calls buildWorkflowArtifact, persists both. 362 tests pass.
 Context:
   Goal:
     When a Swarm execution reaches a terminal state (completed/stopped/failed), build the
@@ -14797,7 +14801,8 @@ Agent: backend-dev
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-07 — GET /results + GET /artifact.md with UUID validation, live+persisted lookup, Content-Disposition header + 8 tests. 370 tests pass.
 Context:
   Goal:
     Expose two read-only REST endpoints so the frontend can fetch per-agent outputs and download
@@ -14869,7 +14874,8 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-07 — agentResults slice + 5 actions (append, setHandoff, markViewed, hydrate, clear) + reset coverage. Build OK.
 Context:
   Goal:
     Add a dedicated Zustand slice to SwarmContext for tracking per-agent output results on the
@@ -14934,7 +14940,8 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-07 — chat_message→appendAgentChatText, handoff→setAgentHandoffPayload, terminal→fetch+hydrate, start→clear. Build OK.
 Context:
   Goal:
     Make the existing useSwarm WebSocket hook feed the new `agentResults` store in real-time
@@ -14989,7 +14996,8 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-07 — Red dot at -top-1 -left-1 with pulse + glow, shows when done+unviewed. Build OK.
 Context:
   Goal:
     Add a pulsing red dot to the top-left corner of AgentNode when the agent has produced
@@ -15047,7 +15055,8 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: HARD
 Suggested Model: claude-opus-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-07 — New side panel with Output (react-markdown) + Handoff (JSON) tabs, copy, markViewed on mount. Build OK.
 Context:
   Goal:
     New side panel that shows the clean semantic output of a specific agent, its handoff data,
@@ -15122,7 +15131,8 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: HARD
 Suggested Model: claude-opus-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-07 — New modal with react-markdown rendering, Copy All + Download .md, Escape/backdrop close. Build OK.
 Context:
   Goal:
     New modal/panel that shows the aggregated markdown artifact for the entire workflow execution,
@@ -15202,7 +15212,8 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-07 — Wired in SwarmCanvas (output panel replaces inspector on done+output click) + SwarmView (Final Report toolbar button + modal). Build OK 502 modules.
 Context:
   Goal:
     Wire the new panels into SwarmView so that:

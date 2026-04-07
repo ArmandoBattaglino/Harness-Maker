@@ -1,4 +1,15 @@
-﻿## 2026-04-07 - codex - Swarm canvas drop preview for Agent Node palette drags
+﻿## 2026-04-07 - orchestrator - V8.0 Agent Output Viewer & Workflow Deliverable (Tasks #334-#344)
+**Outcome:** COMPLETED (implementation phase — TEST GATEs pending)
+**Summary:** Implemented the full V8.0 feature: red dot badge on done agents with unviewed output, AgentOutputPanel (per-agent clean output + handoff JSON, tabbed side panel with copy), WorkflowArtifactPanel (aggregated markdown modal with copy/download), REST endpoints for results/artifact.md, persistence via ExecutionHistoryStore extension. 4 waves executed in parallel worktrees: Wave 1 (#334-336,339: backend persistence + frontend state), Wave 2 (#337-338,340: persist integration + REST + WS wiring), Wave 3 (#341-343: red dot + both panels), Wave 4 (#344: SwarmView/SwarmCanvas integration). All 11 implementation tasks completed. 370 tests pass (33 new), 502 modules build clean.
+**Files changed:** server/services/SwarmEngine.js, server/stores/ExecutionHistoryStore.js, server/services/WorkflowArtifactBuilder.js (NEW), server/routes/swarm.js, server/tests/execution-history-outputs.test.js (NEW), server/tests/workflow-artifact-builder.test.js (NEW), server/tests/execution-results-api.test.js (NEW), client/src/store/SwarmContext.jsx, client/src/hooks/useSwarm.js, client/src/canvas/nodes/AgentNode.jsx, client/src/panels/AgentOutputPanel.jsx (NEW), client/src/panels/WorkflowArtifactPanel.jsx (NEW), client/src/canvas/SwarmCanvas.jsx, client/src/views/SwarmView.jsx
+**Bugs fixed:** none (clean implementation)
+**Decisions made:** Reuse ChatExtractor+chatMessages instead of new parser; extend ExecutionHistoryStore instead of new store; markdown as artifact format; red dot at -top-1 -left-1 to avoid collision with amber badge
+**Blockers:** none
+**Next:** TEST GATE #345 (E2E Puppeteer verification) + #346 (server test gate) + #347 (AREA CHECKPOINT)
+
+---
+
+## 2026-04-07 - codex - Swarm canvas drop preview for Agent Node palette drags
 **Outcome:** COMPLETED
 **Summary:** Added a live drop preview for Agent Node palette drags in the Swarm canvas. `SwarmCanvas.jsx` now builds a temporary `__palette-drop-preview__` ghost node while dragover is active, using the same snapped flow coordinates as the final drop path so the preview matches the real placement. `AgentNode.jsx` renders a preview-specific dashed style and hides handles and warnings for the ghost state. During browser QA, SwarmView exposed an unrelated hook-order crash in `useSwarm.js` (`applyExecutionSnapshot` referenced before initialization); moving `reconcileClosedExecution` below that callback fixed the mount blocker and allowed end-to-end verification. Verified in browser: preview node appears during drag, dropped node lands on the same transform, preview clears after timeout/drop. Client build passes (498 modules).
 **Files changed:** client/src/canvas/SwarmCanvas.jsx, client/src/canvas/nodes/AgentNode.jsx, client/src/hooks/useSwarm.js, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/CONTEXT.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
