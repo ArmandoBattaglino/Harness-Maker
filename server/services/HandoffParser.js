@@ -22,6 +22,24 @@ const HANDOFF_PREFIX_ALIASES = [HANDOFF_PREFIX, 'HANDOFF:'];
 const HANDOFF_WINDOW_RE = /^(?:__HANDOFF__:|HANDOFF:)[A-Za-z0-9+/=:_\-\s]+/;
 const TARGET_RE = /^[a-z][a-z0-9-]*$/;
 const BASE64_RE = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{4})$/;
+
+function normalizeTargetIdToken(rawTarget = '') {
+  let normalized = rawTarget.trim();
+
+  // Some interactive runtimes occasionally wrap the target with lightweight
+  // emphasis/quotes, e.g. `_loop-main` or `"node-b"`.
+  while (normalized && !TARGET_RE.test(normalized)) {
+    const trimmed = normalized
+      .replace(/^[`"'*_]+/, '')
+      .replace(/[`"'*_]+$/, '')
+      .trim();
+
+    if (!trimmed || trimmed === normalized) break;
+    normalized = trimmed;
+  }
+
+  return normalized;
+}
 const DONE_RE = /__DONE__|(?:^|\n)\s*(?:[●•]\s*)?DONE\s*(?:\n|$)/m;
 
 export class HandoffParser {
@@ -63,7 +81,7 @@ export class HandoffParser {
     const colonIndex = afterPrefix.indexOf(':');
     if (colonIndex <= 0) return null;
 
-    const targetId = afterPrefix.slice(0, colonIndex);
+    const targetId = normalizeTargetIdToken(afterPrefix.slice(0, colonIndex));
     if (!TARGET_RE.test(targetId)) return null;
 
     const afterTarget = afterPrefix.slice(colonIndex + 1);
@@ -107,7 +125,7 @@ export class HandoffParser {
       return null;
     }
 
-    const targetId = remainder.slice(0, separatorIndex);
+    const targetId = normalizeTargetIdToken(remainder.slice(0, separatorIndex));
     if (!TARGET_RE.test(targetId)) {
       return null;
     }

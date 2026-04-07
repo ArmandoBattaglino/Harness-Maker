@@ -16,7 +16,7 @@ const useSwarmStore = create((set, get) => ({
   interAgentFeed: [],      // last 100 handoff events
   chatMessages: [],          // Unified chat view messages
   chatFilter: 'all',         // 'all' or specific nodeId
-  sidePanelMode: 'feed',     // 'feed' | 'chat' — which panel is shown
+  sidePanelMode: 'chat',     // 'feed' | 'chat' — which panel is shown
 
   // Canvas navigation
   focusedDepartmentId: null,
@@ -24,6 +24,7 @@ const useSwarmStore = create((set, get) => ({
 
   // Selected node (for AgentInspector panel)
   selectedNodeId: null,
+  sidePanelOpen: true,
 
   // PTY Explosion — node whose terminal is shown full-screen
   ptyExplosionNodeId: null,
@@ -91,6 +92,7 @@ const useSwarmStore = create((set, get) => ({
 
   setChatFilter: (filter) => set({ chatFilter: filter }),
   setSidePanelMode: (mode) => set({ sidePanelMode: mode }),
+  setSidePanelOpen: (open) => set({ sidePanelOpen: open }),
 
   setFocusedDepartment: (id) => set((state) => {
     // Avoid pushing duplicate if id is already the last item on the stack
@@ -139,7 +141,8 @@ const useSwarmStore = create((set, get) => ({
     interAgentFeed: [],
     chatMessages: [],
     chatFilter: 'all',
-    sidePanelMode: 'feed',
+    sidePanelMode: 'chat',
+    sidePanelOpen: true,
     focusedDepartmentId: null,
     departmentStack: [],
     selectedNodeId: null,
@@ -162,7 +165,8 @@ const useSwarmStore = create((set, get) => ({
     interAgentFeed: [],
     chatMessages: [],
     chatFilter: 'all',
-    sidePanelMode: 'feed',
+    sidePanelMode: 'chat',
+    sidePanelOpen: true,
     focusedDepartmentId: null,
     departmentStack: [],
     selectedNodeId: null,

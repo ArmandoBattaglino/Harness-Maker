@@ -78,6 +78,7 @@ export function useSwarm(workflowId) {
       ...(snapshot.budget ? { budget: snapshot.budget } : {}),
       ...(snapshot.inboxItems ? { inboxItems: snapshot.inboxItems } : {}),
       ...(snapshot.interAgentFeed ? { interAgentFeed: snapshot.interAgentFeed } : {}),
+      ...(snapshot.chatMessages ? { chatMessages: snapshot.chatMessages } : {}),
     });
 
     const workflowIdToPersist = snapshot.workflowId ?? snapshot.workflowDef?.id ?? currentState.workflowDef?.id ?? null;
@@ -111,6 +112,70 @@ export function useSwarm(workflowId) {
 
     return { executionId: nextExecutionId, status: nextStatus };
   }, [setWorkflowDef]);
+
+  const reconcileClosedExecution = useCallback(async (executionId) => {
+    if (!executionId) return;
+
+    try {
+      const status = await apiGet(`/api/v1/swarm/${executionId}/status`);
+      const hydrated = await applyExecutionSnapshot(status);
+      if (['stopped', 'completed', 'failed'].includes(hydrated.status)) {
+        clearStoredExecution();
+      }
+      return;
+    } catch {
+      const currentState = useSwarmStore.getState();
+      if (currentState.activeExecutionId !== executionId) return;
+
+      const workflowId = currentState.workflowDef?.id ?? readStoredExecution()?.workflowId ?? null;
+      if (workflowId) {
+        try {
+          const historyResponse = await apiGet(`/api/v1/swarm/history/${workflowId}/${executionId}`);
+          const terminalExecution = historyResponse?.execution ?? historyResponse;
+          if (terminalExecution?.status) {
+            useSwarmStore.setState((state) => ({
+              activeExecutionId: null,
+              executionStatus: terminalExecution.status,
+              wsConnected: false,
+              runtimeBlocker: null,
+              runtimeProvider: null,
+              providerStrategy: null,
+              lastFallback: null,
+              agentStates: Object.keys(state.agentStates ?? {}).length > 0
+                ? state.agentStates
+                : state.agentStates,
+            }));
+            clearStoredExecution();
+            return;
+          }
+        } catch {
+          // Fall through to stale-state cleanup below.
+        }
+      }
+
+      const fallbackStatus = Object.values(currentState.agentStates ?? {}).some(
+        (state) => state?.status === 'error' || state?.status === 'failed'
+      )
+        ? 'failed'
+        : Object.values(currentState.agentStates ?? {}).length > 0
+        && Object.values(currentState.agentStates ?? {}).every(
+          (state) => ['done', 'completed', 'idle'].includes(state?.status)
+        )
+          ? 'completed'
+          : 'stopped';
+
+      useSwarmStore.setState({
+        activeExecutionId: null,
+        executionStatus: fallbackStatus,
+        wsConnected: false,
+        runtimeBlocker: null,
+        runtimeProvider: null,
+        providerStrategy: null,
+        lastFallback: null,
+      });
+      clearStoredExecution();
+    }
+  }, [applyExecutionSnapshot]);
 
   const restorePersistedExecution = useCallback(async () => {
     if (wsRef.current) return;
@@ -180,6 +245,7 @@ export function useSwarm(workflowId) {
       if (wsRef.current === ws) {
         wsRef.current = null;
         setWsConnected(false);
+        void reconcileClosedExecution(executionId);
       }
     };
     ws.onerror = () => {
@@ -292,7 +358,7 @@ export function useSwarm(workflowId) {
     };
 
     wsRef.current = ws;
-  }, [setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, addChatMessage, setExecution, updateBudget, addInboxItem, resolveInboxItem, updateTriggerState, applyExecutionSnapshot]);
+  }, [setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, addChatMessage, setExecution, updateBudget, addInboxItem, resolveInboxItem, updateTriggerState, applyExecutionSnapshot, reconcileClosedExecution]);
 
   // Start execution
   const startExecution = useCallback(async (projectId, projectPath, runtimeProvider = 'auto', runtimeModels = null) => {

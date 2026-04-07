@@ -50,6 +50,30 @@ export const SUPPORTED_RUNTIME_MODELS = {
   [RUNTIME_PROVIDER.GEMINI]: ['gemini-2.5-pro', 'gemini-2.5-flash'],
 };
 const SUPPORTED_GEMINI_FALLBACK_MODELS = ['gemini-2.5-flash'];
+const COMPRESSED_CHAT_WORDS = [
+  'a', 'agent', 'agents', 'al', 'all', 'and', 'augurando', 'base', 'be', 'bene', 'benvenuti',
+  'agenti', 'auguro', 'benvenuto', 'best', 'both', 'caloroso', 'che', 'ciao', 'ciascuno', 'collected', 'completed',
+  'completato', 'compito', 'con', 'conciso', 'condividono', 'context', 'contesto',
+  'consolidated',
+  'connect', 'correttamente', 'day', 'del', 'di', 'different', 'dispatching', 'diversa', 'downstream',
+  'due', 'e', 'english', 'entrambi', 'esprimendo', 'essere', 'everyone', 'execute', 'final', 'finale',
+  'filled', 'form', 'forma', 'friend', 'friendliness', 'funzionato', 'generate', 'generated', 'generato', 'giornata',
+  'generera', 'genererà',
+  'gioia', 'gli', 'good', 'great', 'greater', 'greeted', 'greeting', 'greetings', 'ha', 'handoff', 'hanno', 'has', 'hello',
+  'ho', 'i', 'il', 'in', 'inglese', 'is', 'it', 'italian', 'joy', 'kind', 'la', 'life', 'lingua',
+  'lo', 'lunghezza', 'lavoreranno', 'may', 'meglio', 'merge', 'meravigliosa', 'meravigliosamente', 'messaggi', 'moments', 'nodo', 'nodes',
+  'now', 'offer', 'output', 'parallelo', 'parallel', 'partecipanti', 'per', 'piacere', 'positivo',
+  'personal', 'piena', 'piacere', 'pleasure', 'poi', 'presente', 'procedo', 'producing', 'produrre', 'pur', 'questa', 'questo', 'qui',
+  'raccolto', 'received', 'report', 'reporter', 'riceveranno', 'runtime', 'saluti', 'saluto', 'serenita', 'share',
+  'riassumera', 'riassumerà', 'risultati', 'smile', 'so', 'sono', 'spero', 'splendida', 'stati', 'stesso', 'stiate', 'success',
+  'such', 'successfully', 'successi', 'successo', 'summary', 'suo', 'sulla', 'task', 'the', 'they', 'things', 'tono',
+  'ti', 'to', 'today', 'together', 'true', 'tutti', 'un', 'una', 'uniti', 'verranno', 'vero', 'voi', 'warmth', 'welcome', 'will', 'with',
+  'wonderful', 'word', 'workflow', 'wishing', 'you', 'your', 'duplicate', 'da', 'here', 'ahead', 'conversations', 'even'
+];
+const COMPRESSED_CHAT_WORD_SET = new Set(COMPRESSED_CHAT_WORDS);
+const COMPRESSED_CHAT_MAX_WORD_LEN = COMPRESSED_CHAT_WORDS.reduce((max, word) => Math.max(max, word.length), 0);
+const RESTORABLE_CHAT_TOKEN_RE = /^(?:[A-Z\u00C0-\u00D6\u00D8-\u00DE][a-z\u00DF-\u00F6\u00F8-\u00FF]{6,}|[a-z\u00DF-\u00F6\u00F8-\u00FF]{7,})$/u;
+const RESTORABLE_CHAT_TOKEN_MATCH_RE = /(?:[A-Z\u00C0-\u00D6\u00D8-\u00DE][a-z\u00DF-\u00F6\u00F8-\u00FF]{6,}|[a-z\u00DF-\u00F6\u00F8-\u00FF]{7,})/gu;
 const SNIPPET_NOISE_LINE_PATTERNS = [
   /^---\s*swarm protocol/i,
   /^---\s*end protocol/i,
@@ -187,6 +211,9 @@ const SNIPPET_PROMPT_LINE_PATTERNS = [
   /^claude runtime is active for this swarm agent\./i,
   /^continue the workflow using the shared task context below\./i,
   /^fallback reason:/i,
+  /^you are the /i,
+  /^current workflow context:?/i,
+  /^(?:workflow name|workflow description|currenttask|task|instruction|workflow|merge_with|triage_note|agent(?:_[ab])?|language|greeting|status|translation|agent_[ab]_(?:language|greeting|translation)|merge_status)\s*:/i,
 ];
 const SNIPPET_COMMAND_LINE_PATTERNS = [
   /^ran\s+/i,
@@ -266,7 +293,8 @@ const RUNTIME_BLOCKER_PATTERNS = [
     type: 'provider_unavailable',
     provider: 'gemini',
     matches: (text) =>
-      text.includes('not authenticated')
+      text.includes('waiting for authentication')
+      || text.includes('not authenticated')
       || text.includes('please sign in')
       || text.includes('login required')
       || text.includes('gemini_api_key')
@@ -545,6 +573,8 @@ class SwarmEngine {
 
     this._chatExtractor = new ChatExtractor({
       onMessage: (msg) => this._broadcastChatMessage(msg),
+      sanitizeMessage: (text) => this._sanitizeChatMessage(text),
+      periodicFlushMs: 0,
     });
 
     this._executionHistoryStore = null; // set via setExecutionHistoryStore()
@@ -667,6 +697,59 @@ class SwarmEngine {
       (edge) => edge.source === nodeId && edge.target === handoffEvent.targetId
     );
     return isValidTarget ? handoffEvent : null;
+  }
+
+  _getOutgoingTargets(workflowDef, nodeId) {
+    if (!workflowDef || !nodeId) return [];
+    return [...new Set(
+      (workflowDef.edges ?? [])
+        .filter((edge) => edge.source === nodeId)
+        .map((edge) => edge.target)
+        .filter(Boolean)
+    )];
+  }
+
+  _getStartNodes(workflowDef) {
+    if (!workflowDef || !Array.isArray(workflowDef.nodes) || workflowDef.nodes.length === 0) {
+      return [];
+    }
+
+    const agentNodes = workflowDef.nodes.filter((node) => (node?.type ?? 'agent') === 'agent');
+    const explicitStartNodes = agentNodes.filter((node) => node?.data?.isTriageNode === true);
+    if (explicitStartNodes.length > 0) {
+      return explicitStartNodes;
+    }
+
+    const incomingTargets = new Set((workflowDef.edges ?? []).map((edge) => edge.target).filter(Boolean));
+    const rootAgentNodes = agentNodes.filter((node) => !incomingTargets.has(node.id));
+    if (rootAgentNodes.length > 0) {
+      return rootAgentNodes;
+    }
+
+    const firstAgentNode = agentNodes[0];
+    if (firstAgentNode) {
+      return [firstAgentNode];
+    }
+
+    return [workflowDef.nodes[0]].filter(Boolean);
+  }
+
+  _resolveHandoffFanOutTargets(execution, sourceNodeId, requestedTargetId) {
+    if (!execution || !sourceNodeId || !requestedTargetId) return [requestedTargetId].filter(Boolean);
+
+    const sourceNode = execution.workflowDef.nodes.find((node) => node.id === sourceNodeId);
+    const outgoingTargets = this._getOutgoingTargets(execution.workflowDef, sourceNodeId);
+    const sourceNodeType = sourceNode?.type ?? 'agent';
+
+    if (
+      sourceNodeType === 'agent'
+      && outgoingTargets.length > 1
+      && outgoingTargets.includes(requestedTargetId)
+    ) {
+      return outgoingTargets;
+    }
+
+    return [requestedTargetId];
   }
 
   _buildRuntimeProviderStrategy(workflowDef, requestedProvider = null) {
@@ -987,7 +1070,17 @@ class SwarmEngine {
   }
 
   _broadcastChatMessage(msg) {
-    if (!this._wsBroadcast || !msg?.executionId) return;
+    if (!msg?.executionId) return;
+    const execution = this._executions.get(msg.executionId);
+    if (execution) {
+      execution.chatMessages = [...(execution.chatMessages ?? []), {
+        nodeId: msg.nodeId ?? null,
+        role: msg.role ?? 'assistant',
+        text: msg.text ?? '',
+        timestamp: msg.timestamp ?? Date.now(),
+      }].slice(-500);
+    }
+    if (!this._wsBroadcast) return;
     this._wsBroadcast(msg.executionId, {
       type: 'chat_message',
       nodeId: msg.nodeId,
@@ -1254,6 +1347,123 @@ class SwarmEngine {
     return '';
   }
 
+  _sanitizeChatMessage(rawText = '', context = null) {
+    const normalized = this._stripSnippetProtocolArtifacts(this._normalizeParserChunk(rawText));
+    if (!normalized.trim()) return '';
+
+    const cleanedLines = [];
+    let previousLine = '';
+
+    for (const rawLine of normalized.split('\n')) {
+      const line = this._normalizeSnippetLine(rawLine);
+      const compactLine = line
+        ? line.toLowerCase().replace(/[\s~\\/_.\-·▝▜▛▘▞▟█─]+/g, '')
+        : '';
+      if (!line) continue;
+      if (this._isSnippetNoiseLine(line)) continue;
+      if (this._isSnippetRecoveryLine(line)) continue;
+      if (/^claude\s*codev?\d/i.test(line)) continue;
+      if (/^(?:opus|sonnet|haiku)\s*\d/i.test(line)) continue;
+      if (/^(?:opus|sonnet|haiku)\d/i.test(line)) continue;
+      if (/(?:medium|high|low)\s*effort/i.test(line)) continue;
+      if (/(?:medium|high|low)effort/i.test(line)) continue;
+      if (/claude\s*(?:api|max)/i.test(line)) continue;
+      if (/claude(?:api|max)/i.test(line)) continue;
+      if (compactLine.includes('opus46withmediumeffortclaudemax')) continue;
+      if (compactLine.includes('downloadstestworkflowscopia')) continue;
+      if (/^you are the /i.test(line)) continue;
+      if (/^current workflow context:?/i.test(line)) continue;
+      if (/^(?:workflow name|workflow description|currenttask|task|instruction|workflow|merge_with|triage_note|agent(?:_[ab])?|language|greeting|status|translation|agent_[ab]_(?:language|greeting|translation)|merge_status)\s*:/i.test(line)) continue;
+      if (/^["'{[]/.test(line)) continue;
+      if (/"[^"\n]{1,80}"\s*:/.test(line)) continue;
+      if ((line.match(/[{}":[\]]/g) ?? []).length > Math.max(4, Math.floor(line.length * 0.12))) continue;
+      if (/^(?:[A-Z_]+=[^\s|]+|\w+:\s*\{)/.test(line)) continue;
+      if (line === previousLine) continue;
+      cleanedLines.push(line);
+      previousLine = line;
+    }
+
+    let text = this._decompressConPTYSpaces(cleanedLines.join('\n')).trim();
+    text = text.replace(/\n{3,}/g, '\n\n').trim();
+
+    if (!text) {
+      text = this._buildRecoverySnippet(normalized);
+    }
+
+    const stateFallback = this._getChatSanitizationFallback(context);
+    if (!text) {
+      if (!stateFallback) return '';
+      text = this._decompressConPTYSpaces(stateFallback).replace(/\n{3,}/g, '\n\n').trim();
+    }
+
+    if (/(?:bypass permissions on|claude code v\d|opus \d|sonnet \d|haiku \d|\/buddy|shift\+tab to cycle)/i.test(text)) {
+      if (!stateFallback) return '';
+      const fallbackText = this._decompressConPTYSpaces(stateFallback).replace(/\n{3,}/g, '\n\n').trim();
+      if (!fallbackText) return '';
+      text = fallbackText;
+    }
+
+    if ((!text || this._chatTextLooksCorrupted(text)) && stateFallback) {
+      const fallbackText = this._decompressConPTYSpaces(stateFallback).replace(/\n{3,}/g, '\n\n').trim();
+      if (fallbackText && this._chatTextQualityScore(fallbackText) >= this._chatTextQualityScore(text)) {
+        text = fallbackText;
+      }
+    }
+
+    if (this._chatTextLooksCorrupted(text)) {
+      const semanticCandidate = this._buildSemanticSnippet(rawText);
+      if (semanticCandidate) {
+        const semanticText = this._decompressConPTYSpaces(semanticCandidate).replace(/\n{3,}/g, '\n\n').trim();
+        if (semanticText && this._chatTextQualityScore(semanticText) >= this._chatTextQualityScore(text)) {
+          text = semanticText;
+        }
+      }
+    }
+
+    return text;
+  }
+
+  _getChatSanitizationFallback(context = null) {
+    const executionId = context?.executionId;
+    const nodeId = context?.nodeId;
+    if (!executionId || !nodeId) return '';
+
+    const execution = this._executions.get(executionId);
+    const state = execution?.agentStates?.get(nodeId);
+    if (!state) return '';
+
+    return state.lastOutputSnippet
+      || this._buildSemanticSnippet(state._snippetSourceBuffer ?? '')
+      || '';
+  }
+
+  _chatTextLooksCorrupted(text = '') {
+    const normalized = String(text ?? '').trim();
+    if (!normalized) return false;
+    if (/^you are the /im.test(normalized)) return true;
+    if (/^current workflow context:?/im.test(normalized)) return true;
+    if (/^(?:workflow name|workflow description|currenttask|task|instruction|workflow|merge_with|triage_note|agent(?:_[ab])?|language|greeting|status|translation|agent_[ab]_(?:language|greeting|translation)|merge_status)\s*:/im.test(normalized)) {
+      return true;
+    }
+    if ((normalized.match(/\b[A-Za-z\u00C0-\u00FF]{12,}\b/gu) ?? []).length >= 2) return true;
+    if ((normalized.match(/\b(?:[A-Za-z\u00C0-\u00FF]\s+){3,}[A-Za-z\u00C0-\u00FF]\b/gu) ?? []).length >= 1) return true;
+    if ((normalized.match(/[a-z\u00E0-\u00FF][A-Z\u00C0-\u00D6]/gu) ?? []).length >= 2) return true;
+    return false;
+  }
+
+  _chatTextQualityScore(text = '') {
+    const normalized = String(text ?? '').trim();
+    if (!normalized) return Number.NEGATIVE_INFINITY;
+
+    let score = this._scoreSnippetBlock(normalized);
+    score -= (normalized.match(/\b[A-Za-z\u00C0-\u00FF]{12,}\b/gu) ?? []).length * 60;
+    score -= (normalized.match(/\b(?:[A-Za-z\u00C0-\u00FF]\s+){3,}[A-Za-z\u00C0-\u00FF]\b/gu) ?? []).length * 80;
+    score -= (normalized.match(/[a-z\u00E0-\u00FF][A-Z\u00C0-\u00D6]/gu) ?? []).length * 20;
+    if (/^you are the /im.test(normalized)) score -= 240;
+    if (/^current workflow context:?/im.test(normalized)) score -= 240;
+    return score;
+  }
+
   _buildSemanticSnippet(rawText = '') {
     const sanitizedText = this._stripSnippetProtocolArtifacts(this._normalizeParserChunk(rawText));
     const normalizedLines = sanitizedText
@@ -1384,6 +1594,131 @@ class SwarmEngine {
     }).join('\n');
   }
 
+  _decompressConPTYSpaces(text) {
+    if (!text) return text;
+    return text.split('\n').map((line) => {
+      if (/[={}()\[\]\/:].*[={}()\[\]\/:]/.test(line)) return line;
+      if (/^[A-Z_]+=/.test(line)) return line;
+      if (/^\s*[-â€¢]/.test(line) && /\/api\//.test(line)) return line;
+      if (/https?:\/\//.test(line)) return line;
+      if (/PROMPT-CONTROL-REPORT/.test(line)) return line;
+      return line
+        .replace(/([.!?])([A-Z\u00C0-\u00D6])/gu, '$1 $2')
+        .replace(/([,;])([a-zA-Z\u00C0-\u00F6])/gu, '$1 $2')
+        .replace(/(-[A-Z])([a-z\u00E0-\u00F6])/gu, '$1 $2')
+        .replace(/([a-z\u00E0-\u00F6])([A-Z\u00C0-\u00D6])/gu, '$1 $2')
+        .replace(/\b([a-zA-Z\u00C0-\u00F6]+(?:['’](?:s|re|ve|ll|d|m)|n['’]t))(?=[a-zA-Z\u00C0-\u00F6])/gu, '$1 ')
+        .replace(RESTORABLE_CHAT_TOKEN_MATCH_RE, (token) => this._restoreCompressedChatToken(token))
+        .replace(/\s{2,}/g, ' ')
+        .trimEnd();
+    }).join('\n');
+  }
+
+  _restoreCompressedChatToken(token = '') {
+    if (!token || !RESTORABLE_CHAT_TOKEN_RE.test(token)) return token;
+
+    const lower = token.toLowerCase();
+    const states = new Array(lower.length + 1).fill(null);
+    states[0] = { score: 0, matchedChars: 0, matchedWords: 0, parts: [] };
+
+    const pickBetterState = (candidate, current) => {
+      if (!candidate) return current;
+      if (!current) return candidate;
+      if (candidate.score !== current.score) return candidate.score > current.score ? candidate : current;
+      if (candidate.matchedChars !== current.matchedChars) {
+        return candidate.matchedChars > current.matchedChars ? candidate : current;
+      }
+      if (candidate.matchedWords !== current.matchedWords) {
+        return candidate.matchedWords > current.matchedWords ? candidate : current;
+      }
+      return candidate.parts.length < current.parts.length ? candidate : current;
+    };
+
+    for (let index = 0; index < lower.length; index += 1) {
+      const current = states[index];
+      if (!current) continue;
+
+      const unmatchedState = {
+        score: current.score - 3,
+        matchedChars: current.matchedChars,
+        matchedWords: current.matchedWords,
+        parts: [...current.parts, { start: index, end: index + 1, matched: false }],
+      };
+      states[index + 1] = pickBetterState(unmatchedState, states[index + 1]);
+
+      for (let length = 1; length <= COMPRESSED_CHAT_MAX_WORD_LEN && index + length <= lower.length; length += 1) {
+        const slice = lower.slice(index, index + length);
+        if (!COMPRESSED_CHAT_WORD_SET.has(slice)) continue;
+        const matchState = {
+          score: current.score + (length * 2) - (length === 1 ? 2 : 0),
+          matchedChars: current.matchedChars + length,
+          matchedWords: current.matchedWords + 1,
+          parts: [...current.parts, { start: index, end: index + length, matched: true }],
+        };
+        states[index + length] = pickBetterState(matchState, states[index + length]);
+      }
+    }
+
+      const result = states[lower.length];
+      if (!result) return this._restoreCompressedChatTokenGreedy(token, lower) ?? token;
+
+      const coverage = result.matchedChars / token.length;
+      const minimumScore = token.length * 0.35;
+      if (result.matchedWords < 2 || coverage < 0.6 || result.score <= minimumScore) {
+        return this._restoreCompressedChatTokenGreedy(token, lower) ?? token;
+      }
+
+    const matchedParts = result.parts.filter((part) => part.matched);
+    const singleCharMatches = matchedParts.filter((part) => (part.end - part.start) === 1).length;
+    const tinyMatches = matchedParts.filter((part) => (part.end - part.start) <= 2).length;
+    if (singleCharMatches > 1 || tinyMatches > 2) {
+      return this._restoreCompressedChatTokenGreedy(token, lower) ?? token;
+    }
+
+    const mergedParts = [];
+    for (const part of result.parts) {
+      const previous = mergedParts.at(-1);
+      if (previous && !previous.matched && !part.matched && previous.end === part.start) {
+        previous.end = part.end;
+      } else {
+        mergedParts.push({ ...part });
+      }
+    }
+
+      return mergedParts
+        .map((part) => token.slice(part.start, part.end))
+        .join(' ');
+    }
+
+  _restoreCompressedChatTokenGreedy(token = '', lowerToken = token.toLowerCase()) {
+    if (!token || !RESTORABLE_CHAT_TOKEN_RE.test(token)) return null;
+
+    const parts = [];
+    let index = 0;
+
+    while (index < lowerToken.length) {
+      let bestEnd = -1;
+
+      for (
+        let length = Math.min(COMPRESSED_CHAT_MAX_WORD_LEN, lowerToken.length - index);
+        length >= 1;
+        length -= 1
+      ) {
+        const slice = lowerToken.slice(index, index + length);
+        if (!COMPRESSED_CHAT_WORD_SET.has(slice)) continue;
+        bestEnd = index + length;
+        break;
+      }
+
+      if (bestEnd === -1) return null;
+      parts.push({ start: index, end: bestEnd });
+      index = bestEnd;
+    }
+
+    if (parts.length < 2) return null;
+    return parts.map((part) => token.slice(part.start, part.end)).join(' ');
+  }
+
   _detectPatternBlocker(rawChunk = '', provider = null) {
     const normalized = this._normalizeParserChunk(rawChunk).toLowerCase();
     if (!normalized.trim()) return null;
@@ -1435,12 +1770,13 @@ class SwarmEngine {
         || recentNormalized.includes('gemini_api_key')
         || recentNormalized.includes('authentication failed')
         || recentNormalized.includes('api key');
+      const hasAnyUsageSignal = hasUsageLimitSignal || hasHardUsageLimitSignal;
 
       if (hasUsageLimitSignal && !hasHardUsageLimitSignal) {
         return null;
       }
 
-      if ((hasPromptReadySignal && hasAuthFailureSignal) || (hasPromptReadySignal && hasStaleAuthBanner)) {
+      if (hasPromptReadySignal && hasStaleAuthBanner && hasAnyUsageSignal) {
         return null;
       }
     }
@@ -1885,6 +2221,19 @@ class SwarmEngine {
     return { sent: true, delivery: 'injected' };
   }
 
+  /**
+   * Emit a user-originated chat message (e.g. from broadcast bar).
+   */
+  emitUserChatMessage(executionId, nodeId, text) {
+    this._broadcastChatMessage({
+      executionId,
+      nodeId,
+      role: 'user',
+      text,
+      timestamp: Date.now(),
+    });
+  }
+
   _shouldFallback(execution, blocker, state) {
     if (!execution || !blocker || !state) return false;
     if (execution.providerStrategy?.mode !== RUNTIME_PROVIDER.AUTO) return false;
@@ -2126,6 +2475,7 @@ class SwarmEngine {
       workflowContext: this._buildInitialWorkflowContext(wf),
       heartbeatTimer: null,
       inboxItems: [],
+      chatMessages: [],
       runtimeBlocker: null,
       providerStrategy,
       runtimeProvider: providerStrategy.activeProvider,
@@ -2140,16 +2490,23 @@ class SwarmEngine {
     // 3b. Register error handler watchers (Wave 5 — FR-V5-74)
     this._registerErrorWatchers(executionId, execution);
 
-    // 4. Find triage node: first node with isTriageNode === true, else first node
-    const triageNode = wf.nodes.find((n) => n.data && n.data.isTriageNode === true) || wf.nodes[0];
+    // 4. Resolve entry nodes. All explicit triage/start agents begin immediately;
+    // otherwise root agent nodes auto-start together as an implicit parallel entry.
+    const startNodes = this._getStartNodes(wf);
+    if (startNodes.length === 0) {
+      throw new Error(`Workflow ${workflowId} has no startable nodes`);
+    }
 
-    // 5. Spawn triage agent PTY (or activate flow-control node)
-    if (this._isFlowControlNode(triageNode)) {
-      await this._activateFlowControlNode(executionId, triageNode.id);
-    } else {
-      await this._spawnAgentPty(executionId, triageNode.id, {
-        requestedProvider: providerStrategy.mode,
-      });
+    // 5. Start each entry node. This supports parallel fan-out workflows where
+    // multiple branches intentionally begin at the same time and converge later.
+    for (const startNode of startNodes) {
+      if (this._isFlowControlNode(startNode)) {
+        await this._activateFlowControlNode(executionId, startNode.id);
+      } else {
+        await this._spawnAgentPty(executionId, startNode.id, {
+          requestedProvider: providerStrategy.mode,
+        });
+      }
     }
 
     // 6. Start heartbeat to keep agent PTYs alive
@@ -2196,16 +2553,15 @@ class SwarmEngine {
       const provider = candidateProviders[index];
       const isFallbackAttempt = index > 0 || spawnOptions.fallbackFrom != null;
       const shouldCompactCodexPrompt = provider === RUNTIME_PROVIDER.CODEX
-        && (
-          spawnOptions.compactCodexPrompt === true
-          || spawnOptions.fallbackFrom != null
-          || (spawnOptions.compactCodexPrompt !== false && execution.agentStates.size > 0)
-        );
+        && spawnOptions.compactCodexPrompt !== false;
 
       try {
         const binaryPath = await this._resolveRuntimeProviderBinary(provider);
         const launchArgs = this._buildRuntimeProviderArgs(provider, execution.workflowDef?.settings?.runtimeModels);
-        const bootstrapPrompt = provider === RUNTIME_PROVIDER.CODEX && spawnOptions.resumeCodexPrompt === true
+        const bootstrapPrompt = (
+          (provider === RUNTIME_PROVIDER.CODEX && spawnOptions.resumeCodexPrompt === true)
+          || (provider === RUNTIME_PROVIDER.CODEX && shouldCompactCodexPrompt)
+        )
           ? ''
           : this._buildRuntimeProviderBootstrapPrompt(provider, {
             fallbackFrom: spawnOptions.fallbackFrom ?? null,
@@ -2718,7 +3074,8 @@ class SwarmEngine {
           lines.push('Last line only: __HANDOFF__:<targetId>:{"summary":"actual completed work","result":"actual findings"}');
           lines.push(`For this workflow, replace <targetId> with ${handoffTargets[0]}.`);
         } else {
-          lines.push(`When your work is complete, hand off to one of: ${handoffTargets.join(', ')}.`);
+          lines.push(`When your work is complete, emit one valid handoff token using any connected target ID: ${handoffTargets.join(', ')}.`);
+          lines.push('The runtime will fan out that handoff to every connected downstream node for you.');
           lines.push('Last line only: __HANDOFF__:<targetId>:{"summary":"actual completed work","result":"actual findings"}');
         }
         lines.push('No extra text after that last handoff line.');
@@ -2757,11 +3114,12 @@ class SwarmEngine {
     // Handoff instructions - vary based on whether targets exist
     if (handoffTargets.length > 0) {
       lines.push('This agent is not terminal in the workflow.');
-      lines.push('When your stage is complete, you MUST hand off to exactly one downstream agent.');
+      lines.push('When your stage is complete, you MUST emit a handoff token so the workflow can continue.');
       if (handoffTargets.length === 1) {
         lines.push(`Your required downstream target is: ${handoffTargets[0]}`);
       } else {
-        lines.push(`Choose exactly one downstream target from: ${handoffTargets.join(', ')}`);
+        lines.push(`Use any one of these connected target IDs in your final handoff token: ${handoffTargets.join(', ')}`);
+        lines.push('The runtime will duplicate that handoff across every connected downstream node.');
       }
       lines.push('If another agent is better suited to continue, hand off with the most useful context you can provide.');
       lines.push('Do not emit __DONE__ immediately just because you understand the instructions.');
@@ -2832,11 +3190,16 @@ class SwarmEngine {
     if (handoffTargets.length === 1) {
       lines.push(`Finish your work, then hand off to ${handoffTargets[0]}.`);
     } else if (handoffTargets.length > 1) {
-      lines.push(`Finish your work, then hand off to the most appropriate next agent: ${handoffTargets.join(', ')}.`);
+      lines.push(`Finish your work, then emit one handoff token using any connected target ID: ${handoffTargets.join(', ')}.`);
+      lines.push('The runtime will fan out that handoff to every connected downstream node.');
     }
 
     lines.push('Your very last line must be a valid handoff token in this EXACT format:');
-    lines.push(`Use ${handoffTargets[0]} in place of <targetId> for this workflow.`);
+    if (handoffTargets.length === 1) {
+      lines.push(`Use ${handoffTargets[0]} in place of <targetId> for this workflow.`);
+    } else {
+      lines.push(`Use any connected target ID in place of <targetId> for this workflow: ${handoffTargets.join(', ')}.`);
+    }
     lines.push('__HANDOFF__:<targetId>:{"summary": "your work summary here"}');
     lines.push('Use only flat JSON with primitive values (string, number, or boolean). Keep the handoff line compact.');
     lines.push('Output that final handoff token as plain text on a single line with no bullets, quotes, code fences, or indentation.');
@@ -3400,6 +3763,7 @@ class SwarmEngine {
         },
         heartbeatTimer: null,
         inboxItems: [],
+        chatMessages: [],
         runtimeBlocker: null,
         providerStrategy: execution.providerStrategy
           ? { ...execution.providerStrategy }
@@ -3417,20 +3781,23 @@ class SwarmEngine {
       const subKey = `${executionId}:${nodeId}`;
       this._subWorkflowExecutions.set(subKey, childExecutionId);
 
-      // Find triage node in child workflow
-      const triageNode = childWf.nodes.find(
-        (n) => n.data && n.data.isTriageNode === true
-      ) || childWf.nodes[0];
+      const childStartNodes = this._getStartNodes(childWf);
 
-      if (!triageNode) {
+      if (childStartNodes.length === 0) {
         throw new Error(`Sub-workflow ${childWorkflowId} has no nodes`);
       }
 
-      // Spawn the triage agent with namespaced session ID
-      await this._spawnAgentPty(childExecutionId, triageNode.id, {
-        requestedProvider: execution.activeProvider,
-        sessionIdPrefix: `${executionId}/${childExecutionId}`,
-      });
+      for (const childStartNode of childStartNodes) {
+        if (this._isFlowControlNode(childStartNode)) {
+          await this._activateFlowControlNode(childExecutionId, childStartNode.id);
+          continue;
+        }
+
+        await this._spawnAgentPty(childExecutionId, childStartNode.id, {
+          requestedProvider: execution.activeProvider,
+          sessionIdPrefix: `${executionId}/${childExecutionId}`,
+        });
+      }
 
       this._startHeartbeat(childExecutionId);
 
@@ -3555,6 +3922,7 @@ class SwarmEngine {
 
     const { targetId, contextUpdate } = event;
     const sourceState = execution.agentStates.get(sourceNodeId);
+    const targetIds = this._resolveHandoffFanOutTargets(execution, sourceNodeId, targetId);
 
     // Ignore duplicate handoff processing once the source agent has already
     // left the active running state. This prevents repeated PTY redraws from
@@ -3580,106 +3948,87 @@ class SwarmEngine {
       Object.assign(execution.workflowContext, contextUpdate);
     }
 
-    // 2. Find edge ID (source-target pair)
-    const edgeId = execution.workflowDef.edges.find(
-      (e) => e.source === sourceNodeId && e.target === targetId
-    )?.id ?? `${sourceNodeId}->${targetId}`;
-
-    // 3. Increment edge counter
-    const counter = (execution.edgeCounters.get(edgeId) ?? 0) + 1;
-    execution.edgeCounters.set(edgeId, counter);
-
-    // 4. Circuit breaker check (advisory only — does not stop execution)
-    //    Loop node edges are exempt from circuit breaker (FR-V5-72).
     const sourceNode = execution.workflowDef.nodes.find((n) => n.id === sourceNodeId);
     const isLoopEdge = sourceNode?.type === 'loop';
     const threshold = execution.workflowDef.settings?.circuitBreakerThreshold ?? 10;
-    if (!isLoopEdge && this._circuitBreaker && this._circuitBreaker.check(edgeId, counter, threshold)) {
-      if (this._wsBroadcast) {
-        this._wsBroadcast(executionId, { type: 'circuit_breaker', edgeId, counter, threshold });
+
+    for (const nextTargetId of targetIds) {
+      const edgeId = execution.workflowDef.edges.find(
+        (e) => e.source === sourceNodeId && e.target === nextTargetId
+      )?.id ?? `${sourceNodeId}->${nextTargetId}`;
+
+      const counter = (execution.edgeCounters.get(edgeId) ?? 0) + 1;
+      execution.edgeCounters.set(edgeId, counter);
+
+      if (!isLoopEdge && this._circuitBreaker && this._circuitBreaker.check(edgeId, counter, threshold)) {
+        if (this._wsBroadcast) {
+          this._wsBroadcast(executionId, { type: 'circuit_breaker', edgeId, counter, threshold });
+        }
       }
-    }
 
-    // 5. Increment source agent handoffCount
-    if (sourceState) {
-      sourceState.handoffCount = (sourceState.handoffCount ?? 0) + 1;
-    }
-
-    // 6. Broadcast handoff event
-    if (this._wsBroadcast) {
-      this._wsBroadcast(executionId, {
-        type: 'handoff_started',
-        sourceNodeId,
-        targetNodeId: targetId,
-        edgeId,
-        counter,
-      });
-    }
-
-    // 7. Check if target is a flow-control node (Wave 5)
-    const targetNode = execution.workflowDef.nodes.find((n) => n.id === targetId);
-    if (targetNode && this._isFlowControlNode(targetNode)) {
-      // Flow-control nodes handle their own status and downstream routing.
-      // Update source status, broadcast handoff_completed, then delegate.
       if (sourceState) {
-        sourceState.status = 'done';
-        sourceState.runtimeBlocker = null;
-        this._broadcastAgentStatus(executionId, sourceNodeId, sourceState);
+        sourceState.handoffCount = (sourceState.handoffCount ?? 0) + 1;
       }
+
+      if (this._wsBroadcast) {
+        this._wsBroadcast(executionId, {
+          type: 'handoff_started',
+          sourceNodeId,
+          targetNodeId: nextTargetId,
+          edgeId,
+          counter,
+        });
+      }
+
+      const targetNode = execution.workflowDef.nodes.find((n) => n.id === nextTargetId);
+      if (targetNode && this._isFlowControlNode(targetNode)) {
+        if (this._wsBroadcast) {
+          this._wsBroadcast(executionId, {
+            type: 'handoff_completed',
+            sourceNodeId,
+            targetNodeId: nextTargetId,
+          });
+        }
+        await this._activateFlowControlNode(executionId, nextTargetId, sourceNodeId);
+        continue;
+      }
+
+      await this._ensureAgentPty(executionId, nextTargetId);
+
+      const targetState = execution.agentStates.get(nextTargetId);
+      if (targetState && targetState.sessionId) {
+        this._markAgentProgress(execution, nextTargetId, targetState, 'downstream_spawn');
+        if (targetNode) {
+          const handoffTargets = this._getOutgoingTargets(execution.workflowDef, nextTargetId);
+          const contextPrompt = this._buildSystemPrompt(
+            targetNode, execution.workflowContext, handoffTargets
+          );
+          if (contextPrompt) {
+            this._writeSwarmPrompt(targetState.sessionId, contextPrompt, targetState);
+          }
+        }
+      }
+
+      if (targetState) {
+        targetState.status = 'running';
+        targetState.runtimeBlocker = null;
+        execution.runtimeBlocker = null;
+        this._broadcastAgentStatus(executionId, nextTargetId, targetState);
+      }
+
       if (this._wsBroadcast) {
         this._wsBroadcast(executionId, {
           type: 'handoff_completed',
           sourceNodeId,
-          targetNodeId: targetId,
+          targetNodeId: nextTargetId,
         });
       }
-      await this._activateFlowControlNode(executionId, targetId, sourceNodeId);
-      this._syncExecutionStatusFromAgents(execution);
-      return;
     }
 
-    // 7b. Spawn or reuse target agent PTY (standard agent node)
-    await this._ensureAgentPty(executionId, targetId);
-
-    // 8. Inject updated context into target agent's PTY
-    const targetState = execution.agentStates.get(targetId);
-    if (targetState && targetState.sessionId) {
-      this._markAgentProgress(execution, targetId, targetState, 'downstream_spawn');
-      if (targetNode) {
-        const handoffTargets = execution.workflowDef.edges
-          .filter((e) => e.source === targetId)
-          .map((e) => e.target);
-        const contextPrompt = this._buildSystemPrompt(
-          targetNode, execution.workflowContext, handoffTargets
-        );
-        if (contextPrompt) {
-          this._writeSwarmPrompt(targetState.sessionId, contextPrompt, targetState);
-        }
-      }
-    }
-
-    // 9. Update source agent status to 'done' after handoff
     if (sourceState) {
       sourceState.status = 'done';
       sourceState.runtimeBlocker = null;
       this._broadcastAgentStatus(executionId, sourceNodeId, sourceState);
-    }
-
-    // 10. Update target agent status to 'running'
-    if (targetState) {
-      targetState.status = 'running';
-      targetState.runtimeBlocker = null;
-      execution.runtimeBlocker = null;
-      this._broadcastAgentStatus(executionId, targetId, targetState);
-    }
-
-    // 11. Broadcast handoff_completed (FR-V3-43)
-    if (this._wsBroadcast) {
-      this._wsBroadcast(executionId, {
-        type: 'handoff_completed',
-        sourceNodeId,
-        targetNodeId: targetId,
-      });
     }
 
     this._syncExecutionStatusFromAgents(execution);
@@ -4000,6 +4349,7 @@ class SwarmEngine {
       edgeCounters: Object.fromEntries(e.edgeCounters),
       budget: this._getBudgetSnapshot(e),
       inboxItems: e.inboxItems.map((item) => ({ ...item })),
+      chatMessages: (e.chatMessages ?? []).map((msg) => ({ ...msg })),
       ...(e.runtimeBlocker ? { runtimeBlocker: this._serializeRuntimeBlocker(e.runtimeBlocker) } : {}),
     };
   }

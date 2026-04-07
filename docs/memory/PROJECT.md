@@ -1,10 +1,10 @@
-# Project: Claude Code Visual Manager
+﻿# Project: Claude Code Visual Manager
 **Created:** 2026-03-18
 **Last updated:** 2026-04-07
-**Implementation status:** v5.0 codebase — ALL AREAS CLOSED. V3 Swarm Orchestrator, V4.x Gemini harness, V5 Waves 1-5 (N8N-style editor, advanced flow control nodes, execution visibility), BugFix1/BugFix2, V6.0/V7.0 bug waves, and POST-V5 FOLLOW-UP (execution-history persistence wiring, Unified Chat verification, documentation truthfulness sync) all complete. 330 tasks total: 328 completed, 2 deferred (both MVP-acceptable platform limitations). 312/312 tests pass, 498 modules build clean.
+**Implementation status:** v5.0 codebase â€” ALL AREAS CLOSED. V3 Swarm Orchestrator, V4.x Gemini harness, V5 Waves 1-5 (N8N-style editor, advanced flow control nodes, execution visibility), BugFix1/BugFix2, V6.0/V7.0 bug waves, POST-V5 FOLLOW-UP, and POST-V5 FOLLOW-UP 2 (Swarm canvas drop preview) all complete. 333 tasks total: 331 completed, 2 deferred (both MVP-acceptable platform limitations). 312/312 tests pass, 498 modules build clean.
 
 ## What it is
-A locally-hosted web application that provides a graphical user interface for the Claude Code CLI. It spawns Claude Code processes directly using the user's installed binary and delivers two interaction modes: a live PTY terminal (xterm.js over WebSocket) and a job mode (prompt → formatted Markdown result). It also provides visual editors for agents, skills, and CLAUDE.md files, with multi-project support and session persistence across browser tab closures.
+A locally-hosted web application that provides a graphical user interface for the Claude Code CLI. It spawns Claude Code processes directly using the user's installed binary and delivers two interaction modes: a live PTY terminal (xterm.js over WebSocket) and a job mode (prompt â†’ formatted Markdown result). It also provides visual editors for agents, skills, and CLAUDE.md files, with multi-project support and session persistence across browser tab closures.
 
 ## Tech Stack
 | Layer | Technology | Version | Notes |
@@ -12,7 +12,7 @@ A locally-hosted web application that provides a graphical user interface for th
 | Runtime | Node.js | 20 LTS | Required for node-pty compatibility |
 | HTTP server | Express | 4.x | REST API + static SPA serving |
 | WebSocket | ws | 8.x | PTY streaming; no transport fallbacks |
-| PTY | node-pty-prebuilt-multiarch | latest | Prebuilt binaries — avoids MSVC Build Tools on Windows |
+| PTY | node-pty-prebuilt-multiarch | latest | Prebuilt binaries â€” avoids MSVC Build Tools on Windows |
 | Process kill | tree-kill | latest | Kills full process tree including Claude sub-processes |
 | Atomic writes | write-atomic | latest | Prevents config/agent/skill file corruption on crash |
 | YAML | js-yaml | 4.x | Agent and skill YAML frontmatter parse/serialize |
@@ -27,15 +27,15 @@ A locally-hosted web application that provides a graphical user interface for th
 | Icons | Material Symbols Outlined | via Google Fonts CDN | Variable weight+fill; used for sidebar navigation and status indicators |
 | Markdown render | react-markdown | 9.x | Safe Markdown for job results |
 | Markdown tables | remark-gfm | latest | GFM plugin (tables, code fences) for react-markdown |
-| Canvas / flow | @xyflow/react | 12.x | V3 swarm canvas — node/edge graph rendering. ReactFlow + custom node/edge types. |
-| Client state | zustand | 4.x | V3 execution store — fine-grained subscription for live swarm state (DEC-011). useSwarmStore in SwarmContext.jsx. |
-| Claude API | @anthropic-ai/sdk | latest | V3 Prompt-to-Flow scaffold endpoint — calls claude-haiku-4-5-20251001 to generate workflow JSON. |
+| Canvas / flow | @xyflow/react | 12.x | V3 swarm canvas â€” node/edge graph rendering. ReactFlow + custom node/edge types. |
+| Client state | zustand | 4.x | V3 execution store â€” fine-grained subscription for live swarm state (DEC-011). useSwarmStore in SwarmContext.jsx. |
+| Claude API | @anthropic-ai/sdk | latest | V3 Prompt-to-Flow scaffold endpoint â€” calls claude-haiku-4-5-20251001 to generate workflow JSON. |
 
 ## Core Goals (from PRD)
 - Live PTY terminal in browser connected to real Claude Code process (session starts < 2s)
 - Session persistence: PTY survives browser tab close/reopen (ring buffer replay)
 - Multi-project simultaneous sessions (at least 5 concurrent without instability)
-- Job mode: prompt submitted → streaming progress → formatted Markdown result (starts < 1s)
+- Job mode: prompt submitted â†’ streaming progress â†’ formatted Markdown result (starts < 1s)
 - Entity management: CRUD for agents, skills, CLAUDE.md files
 - Project registration and scaffolding (both flows, no manual filesystem steps)
 - Clean process lifecycle: zero orphaned claude.exe / conhost.exe after shutdown
@@ -56,9 +56,9 @@ A locally-hosted web application that provides a graphical user interface for th
 - Job history persistence across restarts (deferred to v1.1)
 
 ## Key Constraints
-- Server must bind EXCLUSIVELY to 127.0.0.1 — never 0.0.0.0 (SEC-01)
-- node-pty (plain, not prebuilt-multiarch) is the actual installed package — prebuilt-multiarch did not resolve on the target environment (DEC-001 revised by Task #2 devops)
-- write-file-atomic (not write-atomic) is the actual installed package — write-atomic does not exist on npm (corrected by Task #2 devops)
+- Server must bind EXCLUSIVELY to 127.0.0.1 â€” never 0.0.0.0 (SEC-01)
+- node-pty (plain, not prebuilt-multiarch) is the actual installed package â€” prebuilt-multiarch did not resolve on the target environment (DEC-001 revised by Task #2 devops)
+- write-file-atomic (not write-atomic) is the actual installed package â€” write-atomic does not exist on npm (corrected by Task #2 devops)
 - child.stdin.end() must be called immediately after every job spawn (GitHub issue #7497 hang bug)
 - Primary platform: Windows 11 23H2 or later (ConPTY deadlock risk on older builds)
 - No shell: true in any spawn call (command injection risk, SEC-02)
@@ -70,12 +70,13 @@ A locally-hosted web application that provides a graphical user interface for th
 - X-Requested-With: ClaudeCodeManager header required on all mutating requests (SEC-06)
 
 ## V3-Specific Constraints (DEC-011 through DEC-016)
-- Execution state (Zustand) and canvas state (@xyflow/react) must NEVER be merged — DEC-011
-- HandoffParser must use a stateful rolling byte accumulator — line-by-line parsing drops split ConPTY tokens (DEC-012)
+- Execution state (Zustand) and canvas state (@xyflow/react) must NEVER be merged â€” DEC-011
+- HandoffParser must use a stateful rolling byte accumulator â€” line-by-line parsing drops split ConPTY tokens (DEC-012)
 - WorkflowStore writes one file per workflow to %APPDATA%\ClaudeCodeManager\workflows\ (DEC-013)
-- SwarmEngine must attach secondary swarmListeners Set to session records — NEVER replace the primary pty.onData handler (DEC-014, DEC-009)
-- Circuit breaker is keyed by directed edge pair (sourceId:targetId), not by node — DEC-015
-- Prompt-to-Flow calls Anthropic SDK directly (claude-haiku-4-5-20251001) — DEC-016
+- SwarmEngine must attach secondary swarmListeners Set to session records â€” NEVER replace the primary pty.onData handler (DEC-014, DEC-009)
+- Circuit breaker is keyed by directed edge pair (sourceId:targetId), not by node â€” DEC-015
+- Prompt-to-Flow calls Anthropic SDK directly (claude-haiku-4-5-20251001) â€” DEC-016
 - SEC-V3-01: Webhook body cap 32 KB | SEC-V3-03: SSRF guard on RSS URLs | SEC-V3-04: Webhook rate limit 10 req/min/IP
 - SEC-V3-05: HITL resumeText cap 8 KB | SEC-V3-06: HandoffParser payload cap 64 KB
 - SEC-V3-07: Webhook receiver always returns 200 to external callers (information leakage prevention)
+

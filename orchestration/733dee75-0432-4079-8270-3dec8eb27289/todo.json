@@ -1,0 +1,10 @@
+{
+  "request_id": "733dee75-0432-4079-8270-3dec8eb27289",
+  "created_at": "2026-04-07T12:31:22.215Z",
+  "user_prompt": "Investigate this live Swarm/Gemini bug in the current repo state. Context: recent fixes already changed Codex compact prompts and Gemini auth blocker classification in server/services/SwarmEngine.js, but a new live repro shows Gemini actually emitted valid __HANDOFF__ lines in the PTY and still ended up blocked in the UI with a no-progress-style banner. Focus on backend root cause only. Please inspect SwarmEngine/HandoffParser and identify the most likely bug path that can leave an execution blocked after Gemini already emitted a valid handoff. Do not edit files. Report the exact functions/conditions likely responsible and the minimal safe fix.",
+  "requested_agent": "debugger",
+  "status": "active",
+  "steps": [],
+  "next_actions": [],
+  "summary": null
+}

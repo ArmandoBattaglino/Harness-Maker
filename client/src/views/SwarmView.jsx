@@ -56,6 +56,9 @@ export default function SwarmView() {
   const setPtyExplosionNodeId = useSwarmStore((s) => s.setPtyExplosionNodeId);
   const workflowDef = useSwarmStore((s) => s.workflowDef);
   const setWorkflowDef = useSwarmStore((s) => s.setWorkflowDef);
+  const ptyExplosionNodeLabel = useMemo(() => (
+    workflowDef?.nodes?.find((node) => node.id === ptyExplosionNodeId)?.data?.label || ptyExplosionNodeId || 'Agent'
+  ), [workflowDef, ptyExplosionNodeId]);
 
   const [selectedWorkflowId, setSelectedWorkflowId] = useState('');
   const [inboxOpen, setInboxOpen] = useState(false);
@@ -81,6 +84,7 @@ export default function SwarmView() {
   const [showHistory, setShowHistory] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showVersions, setShowVersions] = useState(false);
+  const [layoutNonce, setLayoutNonce] = useState(0);
   const [runtimeCapabilities, setRuntimeCapabilities] = useState({
     claude: [],
     codex: [],
@@ -437,6 +441,12 @@ export default function SwarmView() {
     refreshWorkflows();
   };
 
+  const handleTidyLayout = () => {
+    if (!workflowDef) return;
+    setLayoutNonce((value) => value + 1);
+    markDirty();
+  };
+
   const providerLabel = runtimeProvider
     ? runtimeProvider === 'codex'
       ? 'Codex'
@@ -475,7 +485,7 @@ export default function SwarmView() {
     || (runtimeModels.gemini && runtimeModels.gemini !== runtimeDefaults.gemini);
 
   return (
-    <div className="flex flex-col w-full h-full bg-gray-950 text-white">
+    <div className="flex h-full min-h-0 min-w-0 w-full flex-col overflow-hidden bg-gray-950 text-white">
       <div className="flex items-center gap-3 px-4 py-2 bg-gray-900 border-b border-gray-700 shrink-0">
         {workflowDef && editingName ? (
           <input
@@ -634,6 +644,15 @@ export default function SwarmView() {
           className="text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 border border-gray-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {'\u2699'} Settings
+        </button>
+
+        <button
+          onClick={handleTidyLayout}
+          disabled={!workflowDef}
+          title={!workflowDef ? 'No workflow loaded' : 'Reorder the workflow layout'}
+          className="bg-gray-700 hover:bg-gray-600 text-white text-xs px-3 py-1 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Tidy
         </button>
 
         <button
@@ -860,9 +879,15 @@ export default function SwarmView() {
         </div>
       )}
 
-      <div className="flex-1 overflow-hidden">
+      <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
         <ReactFlowProvider>
-          <SwarmCanvas key={`${workflowDef?.id ?? 'none'}:${activeExecutionId ?? 'idle'}`} workflowDef={workflowDef} markDirty={markDirty} onCanvasChange={onCanvasChange} />
+          <SwarmCanvas
+            key={`${workflowDef?.id ?? 'none'}:${activeExecutionId ?? 'idle'}`}
+            workflowDef={workflowDef}
+            markDirty={markDirty}
+            onCanvasChange={onCanvasChange}
+            layoutNonce={layoutNonce}
+          />
         </ReactFlowProvider>
       </div>
 
@@ -878,10 +903,13 @@ export default function SwarmView() {
 
       <BroadcastBar />
 
-      {ptyExplosionNodeId && ptyExplosionSessionId && (
+      {ptyExplosionNodeId && activeExecutionId && (
         <PtyExplosion
-          key={`${ptyExplosionNodeId}:${ptyExplosionSessionId}`}
+          key={`${ptyExplosionNodeId}:${ptyExplosionSessionId ?? 'archived'}`}
           sessionId={ptyExplosionSessionId}
+          executionId={activeExecutionId}
+          nodeId={ptyExplosionNodeId}
+          nodeLabel={ptyExplosionNodeLabel}
           onClose={() => setPtyExplosionNodeId(null)}
         />
       )}

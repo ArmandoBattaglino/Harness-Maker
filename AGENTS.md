@@ -49,27 +49,28 @@ At the start of substantial work:
 - read `docs/memory/ACTIVITY_LOG.md`
 
 For significant sessions, start with:
-- `subagents.delegate(agent="project-manager", task="Review the current project state, verify docs/memory/, and identify the next priority task.", cwd="<repo-root>")`
+- review the current project state, verify `docs/memory/`, and identify the next priority task
 
 If the session is multi-step or cross-role, prefer:
-- `subagents.delegate(agent="orchestrator", task="<goal>", cwd="<repo-root>")`
+- decompose the work into dependency waves and parallelize independent tracks with Codex's native agents
 
 ## Local Claude-like Workflow
 
 Within this repo, preserve the same working model Claude used:
-- use `orchestrator` as the normal entrypoint for multi-step or cross-role work
+- use the main Codex thread as supervisor for multi-step or cross-role work
 - use specialists for planning, implementation, debugging, QA, documentation, and security
 - keep docs/memory/ current as part of the work, not as an afterthought
 - treat websocket contracts and task gates as first-class constraints
 - keep the main thread more as supervisor/synthesizer than as the direct worker of first resort
 - treat the original local `CLAUDE.md` files as source material and this file as the active Codex runtime contract
 
-Primary local delegation:
-- `subagents.delegate(agent="orchestrator", task="<goal>", cwd="<repo-root>")`
+Primary local execution pattern:
+- keep the main thread steering the work
+- parallelize independent specialist slices with Codex's native agents when that reduces the critical path
 
 Delegate-first rule for this repo:
-- if the work spans more than one role, start with `orchestrator`
-- if the work is clearly single-role, route straight to that specialist
+- if the work spans more than one role, decompose it first and parallelize the independent parts with Codex agents
+- if the work is clearly single-role, handle it directly in that specialist lane
 - only skip delegation entirely for trivial tasks
 
 Common specialist runs:
@@ -84,7 +85,7 @@ Common specialist runs:
 - `code-mapper`
 
 Skills in `.codex/skills` are supporting guidance.
-Subagents are the primary execution path for Claude-like behavior in this repo.
+Codex native agents and native parallelization are the preferred execution path for Claude-like behavior in this repo.
 
 ## Mandatory Local Rules
 
@@ -134,12 +135,12 @@ Any error or unexpected behavior:
 3. verify the fix
 
 Preferred local bug run:
-- `subagents.delegate(agent="debugger", task="Investigate the bug, find the root cause, apply the minimal safe fix, and report what changed.", cwd="<repo-root>")`
+- run the debugger workflow, find the root cause, apply the minimal safe fix, and report what changed
 
 For full-project bug sweeps or release-hardening, use:
 - `$bug-hunt-and-fix`
 - `$claude-cmd-debugger-loop` for the iterative deep E2E -> bulk-plan -> fix -> verify loop
-- usually starting from `orchestrator` or `qa-tester`, then routing into `project-manager`, `debugger`, `backend-dev`, `frontend-dev`, `documenter`, and `code-mapper`
+- usually starting from QA/debug discovery, then parallelizing planning, fixes, documentation, and code-map updates with Codex agents when dependencies allow
 
 ## Post-task Discipline
 
@@ -170,5 +171,5 @@ Repo-local skills are available under `.codex/skills`:
 - `$bug-hunt-and-fix`
 
 Use them as supporting guidance and source preservation.
-Prefer subagents for actual Claude-like execution inside this repo.
+Prefer Codex native agents and native parallelization for actual execution inside this repo.
 Global migrated command skills can also apply here, especially `$claude-cmd-debugger-loop` for multi-phase deep debug sweeps.

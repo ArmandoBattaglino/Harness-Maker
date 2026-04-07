@@ -13,16 +13,29 @@ export function useCanvasValidation(nodes, edges) {
   return useMemo(() => {
     const errors = [];
     const agentNodes = nodes.filter((n) => n.type === 'agent');
+    const incomingTargets = new Set(edges.map((edge) => edge.target).filter(Boolean));
+    const explicitStartNodes = agentNodes.filter((n) => n.data?.isTriageNode);
+    const rootAgentNodes = agentNodes.filter((n) => !incomingTargets.has(n.id));
 
     // Rule 1: At least one agent node exists
     if (agentNodes.length === 0) {
       errors.push({ message: 'No agent nodes — add at least one agent', severity: 'error' });
     }
 
-    // Rule 2: At least one node has isTriageNode: true
-    const hasTriageNode = agentNodes.some((n) => n.data?.isTriageNode);
-    if (!hasTriageNode && agentNodes.length > 0) {
-      errors.push({ message: 'No triage node — mark one agent as triage', severity: 'error' });
+    // Rule 2: Start resolution must be possible.
+    // Explicit start/triage nodes win; otherwise root agents auto-start together.
+    if (explicitStartNodes.length === 0 && rootAgentNodes.length === 0 && agentNodes.length > 0) {
+      errors.push({
+        message: 'No start node — mark one or more agents as Start Node, or keep at least one root agent with no incoming edges',
+        severity: 'error',
+      });
+    }
+
+    if (explicitStartNodes.length === 0 && rootAgentNodes.length > 1) {
+      errors.push({
+        message: 'Multiple root agents will auto-start together — mark them as Start Node if you want this to stay explicit',
+        severity: 'warning',
+      });
     }
 
     // Check each node

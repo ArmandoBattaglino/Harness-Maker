@@ -410,6 +410,13 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
         });
       }
 
+      // Emit user message to chat for each recipient
+      for (const delivery of deliveries) {
+        if (typeof swarmEngine.emitUserChatMessage === 'function') {
+          swarmEngine.emitUserChatMessage(executionId, delivery.nodeId, text.trim());
+        }
+      }
+
       return res.status(200).json({
         sent: deliveries.length,
         scope: scope ?? 'all',

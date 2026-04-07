@@ -1,7 +1,7 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-07 — after Task #328 (TEST GATE — Execution history persistence round-trip, PASS, no code changes) — mapped by code-mapper_
+_Last updated: 2026-04-07 — after Task #330 (Documentation and status truthfulness sync — FINAL TASK, project complete) — mapped by code-mapper_
 
-> **V3.4/V3.5 SWARM RUNTIME STATUS: IN PROGRESS**
+> **PROJECT STATUS: COMPLETE — ALL 330 TASKS ACCOUNTED FOR (328 COMPLETED, 2 DEFERRED)**
 > TASK #145 (BUG-UX-HANDOFF-1) partially addressed: prompt examples templated with `<targetId>` to prevent fake handoffs from PTY redraw (DEC-023); Codex model-selection and rate-limit menus auto-dismissed; hard usage-limit now takes precedence over soft `Approaching rate limits` chooser (DEC-024). 83/83 server tests pass. Build: 479 modules. Live handoff proof still pending — no provider has completed a real multi-agent chain yet.
 
 ## Entry Points
@@ -112,7 +112,7 @@ _Last updated: 2026-04-07 — after Task #328 (TEST GATE — Execution history p
 ### Root Config
 | File | Key Exports | Purpose |
 |------|-------------|---------|
-| package.json | (config) | Root package.json: version bumped to **3.0.0** (was 0.1.0) in Task #110. npm scripts: start, dev, build, install:all, test. devDependencies: concurrently. dependencies: @google/stitch-sdk. |
+| package.json | (config) | Root package.json: version bumped to **5.0.0** (was 3.0.0) in Task #330. npm scripts: start, dev, build, install:all, test. devDependencies: concurrently. dependencies: @google/stitch-sdk. Last modified Task #330 (2026-04-07). |
 
 ### Client Config & Styles
 | File | Key Exports | Purpose |

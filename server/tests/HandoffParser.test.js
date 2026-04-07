@@ -107,6 +107,16 @@ describe('HandoffParser', () => {
         contextUpdate,
       });
     });
+
+    it('should normalize lightweight emphasis around a direct JSON handoff target', () => {
+      const results = parser.feed('__HANDOFF__:_loop-main:{"summary":"fact ready","result":"forward"}');
+      expect(results).toHaveLength(1);
+      expect(results[0]).toEqual({
+        type: 'handoff',
+        targetId: 'loop-main',
+        contextUpdate: { summary: 'fact ready', result: 'forward' },
+      });
+    });
   });
 
   describe('Scenario 4: Oversized contextUpdate (>50 keys)', () => {

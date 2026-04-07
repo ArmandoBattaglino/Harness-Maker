@@ -36,6 +36,70 @@ const NOISE_PATTERNS = [
   /^\s*>\s*$/gm,                         // bare ">" prompt
   /^\s*\/\w+/gm,                         // bare slash commands (/doc, /buddy)
   /HANDOFF:[a-z0-9-]+:\s*\{/gm,         // raw HANDOFF JSON markers
+  /\(thinking with \w+ effort\)/gi,      // "(thinking with medium effort)" CLI indicators
+  /\(thought for \d+s?\)/gi,             // "(thought for 1s)" thinking summaries
+  /^\s*\w{1,12}ing[.…]{2,3}\s*$/gm,     // partial ConPTY fragments like "ctioning...", "Determining…"
+  /^\s*\w{1,12}ing\s*$/gm,              // bare "ing" words without dots: "etermining", "Determining"
+  /^\s*\w{1,4}[.…]{2,3}\s*$/gm,        // ultra-short fragments like "tn...", "i..."
+  /^\s*[a-z]{1,3}\s*$/gm,               // bare 1-3 char fragments: "i", "tn", "ii"
+  /^\s*[A-Za-z]{1,4}\s*$/gm,            // bare 1-4 char fragments: "T", "Thnd", "Tun"
+  /^\s*\w{1,25}[.…]{2,3}\s*$/gm,       // any word + ellipsis: "Determining...", "restidigitating..."
+  /^\s*[A-Z]\w{0,24}ing[.…]*\s*$/gm,   // capitalized gerund fragments: "Determining", "Processing..."
+  /^\s*[▸▶►‣⏵]+\s*/gm,                  // arrow prompt indicators (▸ ▸)
+  /^\s*>\s*·/gm,                          // "> ·" prompt style
+  /^\s*·\s*\/\w+/gm,                     // "· /doc" style prompts
+  /^\s*[▸▶►]\s*[▸▶►]/gm,               // double arrow prompts
+  /^\s*Claude Code v[\d.]+/gm,           // "Claude Code v2.1.92" version
+  /^\s*Opus \d/gm,                       // "Opus 4.6..." model info
+  /^\s*Welcome back \w+/gm,              // "Welcome back nicolò!"
+  /^\s*·\s*esc\b.*$/gm,                  // "· esc to int..." status line
+  /^\s*·\s*medium\b.*$/gm,              // "· medium · /eff..." status line
+  /^\s*·[^a-zA-Z]*·/gm,                 // lines with multiple middots (status bar fragments)
+  /^\s*[A-Z][a-z]?\s*$/gm,              // bare 1-2 char capital fragments: "Cn", "A"
+  /^\s*\.{2,4}\s*$/gm,                   // bare dots: "...", "...."
+  /^\s*…\s*$/gm,                          // bare unicode ellipsis
+  /^\s*>\s*$/gm,                          // bare ">" prompt
+  /[·•●◉]\s*esc\s+to\s+int[^·•●\n]*/gi, // inline "· esc to int..." fragments
+  /[·•●◉]\s*medium\s*[·•●◉]/gi,         // inline "· medium ·" fragments
+  /[·•●◉]\s*\/\w+[^·•●\n]*/gi,          // inline "· /eff..." fragments
+  /esc to int[.…]*/gi,                    // bare "esc to int..." anywhere
+  /medium\s*[·•●◉.]\s*\/eff/gi,          // "medium · /eff" status bar
+  /^\s*.?\s*esc to int.*$/gm,             // full line with "esc to int"
+  /^\s*.?\s*medium\s*.?\s*\/eff.*$/gm,   // full line with "medium · /eff"
+];
+
+// Only strip noise here when it is unquestionably chrome. Aggressive fragment
+// filtering belongs in the final flush pass, otherwise legitimate short PTY
+// chunks like "Ill" + "uminating..." lose their leading characters.
+const CHUNK_NOISE_PATTERNS = [
+  /^\s*[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏●◐◑◒◓⣾⣽⣻⢿⡿⣟⣯⣷▁▂▃▄▅▆▇█]+\s*/gm,
+  /\x1b\[[0-9;]*[a-zA-Z]/g,
+  /^\s*[─━═╌╍┄┅┈┉╴╶╸╺]+\s*$/gm,
+  /^\s*[\u2500-\u257F]+\s*$/gm,
+  /^\s*Working \([\d.]+s\)/gm,
+  /^\s*\>\s*$/gm,
+  /^╭[─╌]+.*╮$/gm,
+  /^╰[─╌]+.*╯$/gm,
+  /^│.*│$/gm,
+  /^\s*\d+\s*│/gm,
+  /^Press Enter to continue/gm,
+  /^Type a message/gm,
+  /^\s*claude[\s>]+$/gmi,
+  /ClaudeCodev[\d.]+/g,
+  /Tips for getting started/g,
+  /Welcome back \w+!/g,
+  /Run \/init to create/g,
+  /Recent activity/g,
+  /No recent activity/g,
+  /Opus \d[\d.]+ with \w+ effort/g,
+  /bypass permissions on/g,
+  /\(shift\+tab to cycle\)/g,
+  /^\s*[✢✶✻✽·*]+\s*$/gm,
+  /^\s*[※✳✻✽✢✶·*☆★⊛⊕⊙◉◎⚡⚙].*$/gm,
+  /^\s*Honking\.\.\.\s*$/gm,
+  /^\s*Forming\.\.\.\s*$/gm,
+  /Found \d+ settings? issues?/gm,
+  /^\s*---\s*$/gm,
 ];
 
 // Patterns that indicate a response boundary (agent is done speaking)
@@ -46,13 +110,32 @@ const BOUNDARY_PATTERNS = [
   /\bnext_agent\s*:/i,
 ];
 
-const PERIODIC_FLUSH_MS = 2000;   // Flush buffer every 2s if it has content
-const MIN_MESSAGE_LENGTH = 10;    // Skip very short noise fragments
+const MIN_MESSAGE_LENGTH = 20;    // Default floor for normal chat messages
+const MIN_SHORT_MESSAGE_LENGTH = 8; // Allow compact but meaningful greetings/replies
+
+function shouldEmitChatMessage(text = '') {
+  const trimmed = String(text ?? '').trim();
+  if (!trimmed) return false;
+  if (trimmed.length >= MIN_MESSAGE_LENGTH) return true;
+  if (trimmed.length < MIN_SHORT_MESSAGE_LENGTH) return false;
+
+  const letterCount = (trimmed.match(/[A-Za-z\u00C0-\u00FF]/g) || []).length;
+  if (letterCount < 4) return false;
+
+  return /[\s.!?,;:]/.test(trimmed);
+}
 
 export class ChatExtractor {
-  constructor({ onMessage, silenceTimeoutMs = 3000 }) {
+  constructor({
+    onMessage,
+    silenceTimeoutMs = 5000,
+    sanitizeMessage = null,
+    periodicFlushMs = 0,
+  }) {
     this._onMessage = onMessage;
     this._silenceTimeoutMs = silenceTimeoutMs;
+    this._sanitizeMessage = sanitizeMessage;
+    this._periodicFlushMs = Number(periodicFlushMs) > 0 ? Number(periodicFlushMs) : 0;
     this._buffers = new Map();          // nodeId -> { text, timer, periodicTimer, lastChunkAt, executionId }
   }
 
@@ -64,24 +147,31 @@ export class ChatExtractor {
 
     let buf = this._buffers.get(nodeId);
     if (!buf) {
-      buf = { text: '', timer: null, periodicTimer: null, lastChunkAt: 0, executionId };
+      buf = { text: '', timer: null, periodicTimer: null, lastChunkAt: 0, firstChunkAt: 0, lastEmittedText: '', executionId };
       this._buffers.set(nodeId, buf);
-      // Start periodic flush timer for this node
-      buf.periodicTimer = setInterval(() => {
-        this._periodicFlush(nodeId);
-      }, PERIODIC_FLUSH_MS);
+      if (this._periodicFlushMs > 0) {
+        // Optional progressive flushes for long-running agents.
+        buf.periodicTimer = setInterval(() => {
+          this._periodicFlush(nodeId);
+        }, this._periodicFlushMs);
+      }
     }
     buf.executionId = executionId;
 
     // Strip noise
     let cleaned = cleanChunk;
-    for (const pat of NOISE_PATTERNS) {
+    for (const pat of CHUNK_NOISE_PATTERNS) {
+      pat.lastIndex = 0;  // Reset regex state (g flag preserves lastIndex)
       cleaned = cleaned.replace(pat, '');
     }
-    cleaned = cleaned.replace(/\n{3,}/g, '\n\n').trim();
-    if (!cleaned) return;
+    cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+    if (!cleaned.trim()) return;
 
-    buf.text += (buf.text ? '\n' : '') + cleaned;
+    if (!buf.text) buf.firstChunkAt = Date.now();
+    // Preserve the original PTY chunk boundaries exactly as received.
+    // Adding synthetic spaces/newlines here corrupts split words and produces
+    // visibly broken chat messages.
+    buf.text += cleaned;
     buf.lastChunkAt = Date.now();
 
     // Check for boundary — immediate flush
@@ -106,9 +196,13 @@ export class ChatExtractor {
     const buf = this._buffers.get(nodeId);
     if (!buf || !buf.text.trim() || buf.text.trim().length < MIN_MESSAGE_LENGTH) return;
 
+    // Buffer age guard — don't flush if buffer is too young
+    const bufferAge = Date.now() - (buf.firstChunkAt || buf.lastChunkAt);
+    if (bufferAge < 2000) return;
+
     // Only flush if there's been recent activity (within 2x the period)
     const timeSinceLastChunk = Date.now() - buf.lastChunkAt;
-    if (timeSinceLastChunk > PERIODIC_FLUSH_MS * 2) return;
+    if (this._periodicFlushMs > 0 && timeSinceLastChunk > this._periodicFlushMs * 2) return;
 
     this._flush(buf.executionId, nodeId);
   }
@@ -152,11 +246,91 @@ export class ChatExtractor {
       .replace(/\bhandoff\s*:\s*\{[\s\S]*/gi, '')
       .replace(/^\s*---\s*$/gm, '')
       .replace(/^\s*DONE\s*$/gm, '')
-      .replace(/\n{3,}/g, '\n\n')
       .trim();
 
-    // Skip very short fragments (likely noise)
-    if (text && text.length >= MIN_MESSAGE_LENGTH) {
+    // Re-apply ALL noise patterns on the accumulated buffer (catches noise that
+    // survived chunk-level filtering because ConPTY split words across chunks)
+    for (const pat of NOISE_PATTERNS) {
+      pat.lastIndex = 0;  // Reset regex state (g flag preserves lastIndex)
+      text = text.replace(pat, '');
+    }
+
+    // Line-level filter: remove lines that are pure noise fragments
+    text = text.split('\n').filter(line => {
+      const t = line.trim();
+      if (!t) return false;
+      // Lines that are just dots or ellipsis
+      if (/^[.…·>]+$/.test(t)) return false;
+      // Single word or fragment lines (no spaces = not a real sentence)
+      if (t.length < 25 && !t.includes(' ')) return false;
+      // Short lines with only middots, slashes, and keywords (status bar)
+      if (t.length < 60 && /^[·\s/\w.-]*$/.test(t) && (t.includes('· ') || t.includes('esc '))) return false;
+      // Lines that are just a word + ellipsis (Determining..., etermining…, Processing...)
+      if (/^\w{1,20}[.…]{2,3}$/.test(t)) return false;
+      // Lines that are just a gerund or partial word
+      if (/^\w{1,20}ing$/.test(t)) return false;
+      // Lines that are just punctuation/symbols
+      if (/^[^a-zA-Z0-9]*$/.test(t)) return false;
+      // Lines that are CLI status fragments (· esc to int... · medium · /eff...)
+      if (/[·•●◉]\s*(esc|medium|high|low|\/\w)/.test(t)) return false;
+      // Lines containing status bar patterns
+      if (/esc to int/.test(t) && /medium|high|low/.test(t)) return false;
+      if (/\/eff/.test(t) && /medium|high|low/.test(t)) return false;
+      return true;
+    }).join('\n').trim();
+
+    // Deduplicate consecutive identical lines
+    text = text.split('\n').reduce((acc, line) => {
+      if (acc.length === 0 || acc[acc.length - 1] !== line) acc.push(line);
+      return acc;
+    }, []).join('\n');
+
+    // Fuzzy dedup: collapse consecutive lines that differ by ≤3 chars (ConPTY variations)
+    text = text.split('\n').reduce((acc, line) => {
+      if (acc.length > 0) {
+        const prev = acc[acc.length - 1].trim();
+        const curr = line.trim();
+        // Skip if one is a substring of the other (e.g., "etermining" vs "Determining")
+        if (prev.length > 5 && curr.length > 5) {
+          if (prev.includes(curr) || curr.includes(prev)) return acc;
+          if (prev.toLowerCase() === curr.toLowerCase()) return acc;
+        }
+      }
+      acc.push(line);
+      return acc;
+    }, []).join('\n');
+
+    text = text.replace(/\n{3,}/g, '\n\n').trim();
+
+    if (typeof this._sanitizeMessage === 'function') {
+      const sanitizedText = this._sanitizeMessage(text, {
+        executionId,
+        nodeId,
+        rawText: buf.text,
+      });
+      if (typeof sanitizedText === 'string') {
+        text = sanitizedText.trim();
+      }
+    }
+
+    // Cross-flush dedup — skip if identical to last emitted text
+    if (text === buf.lastEmittedText) {
+      buf.text = '';
+      buf.firstChunkAt = 0;
+      return;
+    }
+
+    // Skip messages that are predominantly JSON (likely handoff context payload)
+    const jsonPunctuation = (text.match(/[{}":\[\]]/g) || []).length;
+    if (text.length > 0 && jsonPunctuation > text.length * 0.25) {
+      buf.text = '';
+      buf.firstChunkAt = 0;
+      return;
+    }
+
+    // Keep normal messages, but also allow short human-readable replies
+    // such as greetings that would otherwise disappear from the Chat view.
+    if (shouldEmitChatMessage(text)) {
       this._onMessage({
         executionId,
         nodeId,
@@ -164,9 +338,11 @@ export class ChatExtractor {
         text,
         timestamp: Date.now(),
       });
+      buf.lastEmittedText = text;
     }
 
     buf.text = '';
+    buf.firstChunkAt = 0;
   }
 
   /**

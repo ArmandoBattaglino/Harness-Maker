@@ -1,0 +1,10 @@
+{
+  "request_id": "8aa970c3-3968-4ca2-9fec-d74d8091fd71",
+  "created_at": "2026-04-07T12:17:36.525Z",
+  "user_prompt": "Investigate the Swarm UI bug where the agent chat / side-panel conversation does not always appear. Focus on Unified Chat / InterAgentFeed / side panel state and identify the likely root cause with file-level evidence and a concrete fix recommendation. Do not edit files yet; return findings and the minimal safe patch plan.",
+  "requested_agent": "debugger",
+  "status": "active",
+  "steps": [],
+  "next_actions": [],
+  "summary": null
+}

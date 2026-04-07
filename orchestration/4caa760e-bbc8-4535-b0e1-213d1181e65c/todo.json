@@ -1,0 +1,10 @@
+{
+  "request_id": "4caa760e-bbc8-4535-b0e1-213d1181e65c",
+  "created_at": "2026-04-07T12:41:20.269Z",
+  "user_prompt": "Investigate the current Unified Chat bug visible in Swarm where chat cards show garbled or fragmented text (characters spaced out, merged protocol fragments, odd corruption in Italian text). Context: the repo already has uncommitted changes in client/src/canvas/ChatMessage.jsx, client/src/canvas/ChatPanel.jsx, client/src/canvas/SwarmCanvas.jsx, client/src/hooks/useSwarm.js, client/src/store/SwarmContext.jsx, server/routes/swarm.js, server/services/ChatExtractor.js, server/services/HandoffParser.js, server/services/SwarmEngine.js, and related tests. Please inspect without reverting any user changes. Determine likely root cause(s), point to the exact files/functions involved, and if you make code changes keep them minimal and report the changed files. Focus on whether the problem is in server extraction/sanitization, message boundary detection, or client rendering/whitespace handling.",
+  "requested_agent": "debugger",
+  "status": "active",
+  "steps": [],
+  "next_actions": [],
+  "summary": null
+}

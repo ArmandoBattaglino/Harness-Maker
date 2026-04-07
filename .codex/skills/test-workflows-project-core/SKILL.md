@@ -1,6 +1,6 @@
 ---
 name: test-workflows-project-core
-description: Project-local operating model for the Test Workflows repository. Use as the local compatibility/reference layer while subagents remain the preferred execution path for Claude-like work in this repo.
+description: Project-local operating model for the Test Workflows repository. Use as the local compatibility/reference layer while Codex native agents and parallel execution remain the preferred path for Claude-like work in this repo.
 ---
 
 # Test Workflows Project Core
@@ -13,7 +13,7 @@ Use this skill mainly as:
 - support for the main thread or delegated runs when exact repo guidance is useful
 
 Do not treat this skill as the primary runtime for specialist execution in this repo.
-Prefer local `subagents.delegate(...)` runs.
+Prefer Codex's native agents and native parallel execution when the work benefits from decomposition.
 
 ## Project Identity
 
@@ -52,11 +52,13 @@ Before substantial work, read:
 
 ## Claude-like Routing
 
-Use Claude-like delegation inside this repo through:
-- `subagents.delegate(agent="orchestrator", task="<goal>", cwd="<repo-root>")`
+Use Codex-native agent parallelization inside this repo:
+- keep the main thread supervising the task
+- decompose multi-step work into dependency waves
+- parallelize independent specialist tracks with Codex's native agents when useful
 
 This is the preferred runtime path.
-Use this skill as backing guidance, not as the default substitute for delegation.
+Use this skill as backing guidance, not as the default substitute for native agent execution.
 
 Common roles:
 - `project-manager` for planning

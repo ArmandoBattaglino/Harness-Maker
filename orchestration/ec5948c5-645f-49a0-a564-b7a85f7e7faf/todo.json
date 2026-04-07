@@ -1,0 +1,10 @@
+{
+  "request_id": "ec5948c5-645f-49a0-a564-b7a85f7e7faf",
+  "created_at": "2026-04-07T12:30:48.870Z",
+  "user_prompt": "Usa il contesto del repo per analizzare la leggibilità delle frecce nel canvas Swarm. Focus solo su client/src/canvas/SwarmCanvas.jsx, client/src/canvas/edges/HandoffEdge.jsx e i node components rilevanti. Dammi una raccomandazione concreta e low-risk per rendere le frecce più facili da comprendere e meno ingarbugliate, con priorità a modifiche implementabili subito. Non fare modifiche: voglio proposta + eventuali rischi/verification steps.",
+  "requested_agent": "frontend-dev",
+  "status": "active",
+  "steps": [],
+  "next_actions": [],
+  "summary": null
+}

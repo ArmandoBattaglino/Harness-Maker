@@ -8,7 +8,7 @@ description: Full QA bug hunt, planning, fix, verification, and documentation wo
 This is the repo-local Codex translation of `.agent/workflows/bug-hunt-and-fix.md`.
 
 Use it as workflow guidance and source preservation for the original local Claude-style QA pipeline.
-For actual Claude-like execution, prefer routing through `orchestrator` and specialist subagents.
+For actual execution, prefer Codex's native agents and parallelize independent QA, fix, and verification tracks when the dependencies allow.
 
 ## Goal
 
@@ -36,14 +36,13 @@ Run a full cycle:
 6. Update `TASK_PLAN.md`, `ACTIVITY_LOG.md`, `CHANGELOG.md`, `CODE_MAP.md`, `CONTEXT.md`, `PROGRESS.md`, and agent memory files as applicable.
 7. Run a final regression pass.
 
-## Best Delegation Pattern
+## Best Parallel Pattern
 
-For a Claude-like run:
-- start with `subagents.delegate(agent="orchestrator", task="Run the full bug-hunt-and-fix pipeline for this repository.", cwd="<repo-root>")` when the scope is broad
-- start with `subagents.delegate(agent="qa-tester", task="Run a bug discovery pass and produce a structured bug report.", cwd="<repo-root>")`
-- route fix planning through `project-manager`
-- route bug fixing through `debugger`, `backend-dev`, or `frontend-dev`
-- finish with `qa-tester`, `documenter`, and `code-mapper`
+For a Codex-native run:
+- start with a bug discovery pass and capture a structured bug report
+- split planning, backend fixes, frontend fixes, and verification into separate tracks when they do not block each other
+- keep the main thread supervising dependencies and sequencing
+- finish with QA, documentation, and code-map updates so the repo state stays truthy
 
 ## Source Workflow
 

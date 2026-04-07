@@ -40,6 +40,55 @@ function buildTwoNodeWorkflow({ budgetTokens = 0, circuitBreakerThreshold = 10 }
   };
 }
 
+function buildParallelFanOutWorkflow({ budgetTokens = 0, circuitBreakerThreshold = 10 } = {}) {
+  return {
+    id: 'wf-parallel',
+    name: 'Parallel Fan Out Workflow',
+    description: 'Split the work across both downstream agents and then merge the results.',
+    nodes: [
+      { id: 'node-a', data: { isTriageNode: true, systemPrompt: 'You are the fan-out triage agent.' } },
+      { id: 'node-b', data: { systemPrompt: 'You are branch B.' } },
+      { id: 'node-c', data: { systemPrompt: 'You are branch C.' } },
+      { id: 'node-merge', type: 'merge', data: { waitFor: 'all' } },
+      { id: 'node-final', data: { systemPrompt: 'You are the final reporter.' } },
+    ],
+    edges: [
+      { id: 'edge-ab', source: 'node-a', target: 'node-b' },
+      { id: 'edge-ac', source: 'node-a', target: 'node-c' },
+      { id: 'edge-bm', source: 'node-b', target: 'node-merge' },
+      { id: 'edge-cm', source: 'node-c', target: 'node-merge' },
+      { id: 'edge-mf', source: 'node-merge', target: 'node-final' },
+    ],
+    settings: { budgetTokens, circuitBreakerThreshold },
+    initialContext: {},
+  };
+}
+
+function buildParallelStartWorkflow({
+  budgetTokens = 0,
+  circuitBreakerThreshold = 10,
+  explicitStart = true,
+} = {}) {
+  return {
+    id: explicitStart ? 'wf-parallel-start-explicit' : 'wf-parallel-start-implicit',
+    name: explicitStart ? 'Parallel Start Workflow' : 'Implicit Parallel Start Workflow',
+    description: 'Start two agents in parallel and wait for both before reporting.',
+    nodes: [
+      { id: 'node-en', data: { isTriageNode: explicitStart, systemPrompt: 'You are the English greeter.' } },
+      { id: 'node-it', data: { isTriageNode: explicitStart, systemPrompt: 'You are the Italian greeter.' } },
+      { id: 'node-merge', type: 'merge', data: { waitFor: 'all' } },
+      { id: 'node-report', data: { systemPrompt: 'You are the reporter.' } },
+    ],
+    edges: [
+      { id: 'edge-en-merge', source: 'node-en', target: 'node-merge' },
+      { id: 'edge-it-merge', source: 'node-it', target: 'node-merge' },
+      { id: 'edge-merge-report', source: 'node-merge', target: 'node-report' },
+    ],
+    settings: { budgetTokens, circuitBreakerThreshold },
+    initialContext: {},
+  };
+}
+
 /**
  * Encode a context update as base64 JSON (matches HandoffParser token format).
  */
@@ -163,6 +212,50 @@ describe('SwarmEngine', () => {
       expect(stoppedStatus.agentStates['node-a'].sessionId).toBeNull();
     });
 
+    it('should retain chat messages in the execution snapshot for reconnect hydration', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+
+      engine.emitUserChatMessage(executionId, 'node-a', 'Please summarize the result.');
+      engine._broadcastChatMessage({
+        executionId,
+        nodeId: 'node-a',
+        role: 'assistant',
+        text: 'Mercury is the smallest planet in our solar system.',
+        timestamp: 12345,
+      });
+
+      const status = engine.getStatus(executionId);
+
+      expect(status.chatMessages).toEqual([
+        expect.objectContaining({
+          nodeId: 'node-a',
+          role: 'user',
+          text: 'Please summarize the result.',
+        }),
+        {
+          nodeId: 'node-a',
+          role: 'assistant',
+          text: 'Mercury is the smallest planet in our solar system.',
+          timestamp: 12345,
+        },
+      ]);
+    });
+
+    it('should not split already-correct Italian words while sanitizing chat text', () => {
+      const sanitized = engine._sanitizeChatMessage('Spero che la tua giornata sia piena di sorrisi e successi');
+      expect(sanitized).toBe('Spero che la tua giornata sia piena di sorrisi e successi');
+    });
+
+    it('should still restore long compressed chat tokens into readable Italian text', () => {
+      const restored = engine._decompressConPTYSpaces('Sonoilnododimergeehoraccoltoglioutputdientrambigliagenti');
+      expect(restored).toBe('Sono il nodo di merge e ho raccolto gli output di entrambi gli agenti');
+    });
+
+    it('should keep already-correct English words intact while restoring nearby compressed tokens', () => {
+      const restored = engine._decompressConPTYSpaces("Here'stogreatconversationsandevengreatermomentsahead! friendliness");
+      expect(restored).toBe("Here's to great conversations and even greater moments ahead! friendliness");
+    });
+
     it('should seed workflowContext with the workflow goal before the first agent starts', async () => {
       const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
 
@@ -172,6 +265,31 @@ describe('SwarmEngine', () => {
         workflowDescription: 'Analyze the request, hand off the useful context, and complete the workflow.',
         currentTask: 'Execute the workflow goal described here: Analyze the request, hand off the useful context, and complete the workflow.',
       });
+    });
+
+    it('should start every explicit Start Node immediately so parallel entry agents run together', async () => {
+      const parallelWorkflow = buildParallelStartWorkflow({ explicitStart: true });
+      workflowStoreMock.get.mockResolvedValueOnce(parallelWorkflow);
+
+      const executionId = await engine.startExecution(parallelWorkflow.id, 'proj-1', '/projects/proj-1');
+      const status = engine.getStatus(executionId);
+
+      expect(mockSessionManager.createSession).toHaveBeenCalledTimes(2);
+      expect(status.agentStates['node-en']).toMatchObject({ status: 'running' });
+      expect(status.agentStates['node-it']).toMatchObject({ status: 'running' });
+      expect(status.agentStates['node-merge']).toBeUndefined();
+    });
+
+    it('should auto-start all root agents when no explicit Start Node is marked', async () => {
+      const implicitParallelWorkflow = buildParallelStartWorkflow({ explicitStart: false });
+      workflowStoreMock.get.mockResolvedValueOnce(implicitParallelWorkflow);
+
+      const executionId = await engine.startExecution(implicitParallelWorkflow.id, 'proj-1', '/projects/proj-1');
+      const status = engine.getStatus(executionId);
+
+      expect(mockSessionManager.createSession).toHaveBeenCalledTimes(2);
+      expect(status.agentStates['node-en']).toMatchObject({ status: 'running' });
+      expect(status.agentStates['node-it']).toMatchObject({ status: 'running' });
     });
 
     it('should start an explicit Codex execution with provider metadata in the snapshot contract', async () => {
@@ -216,6 +334,16 @@ describe('SwarmEngine', () => {
         runtimeProvider: 'codex',
         status: 'running',
       });
+
+      await vi.advanceTimersByTimeAsync(20000);
+      const codexPromptWrites = mockSessionManager.writeInput.mock.calls
+        .map(([, input]) => String(input ?? ''))
+        .join('\n');
+      expect(codexPromptWrites).toContain('You are agent A.');
+      expect(codexPromptWrites).toContain('When your work is complete, hand off to node-b.');
+      expect(codexPromptWrites).not.toContain('--- SWARM PROTOCOL');
+      expect(codexPromptWrites).not.toContain('Workflow goal:');
+      expect(codexPromptWrites).not.toContain('Codex runtime is active for this Swarm agent.');
     });
 
     it('should honor SWARM_CODEX_MODEL when building the Codex runtime launch args', async () => {
@@ -836,6 +964,36 @@ describe('SwarmEngine', () => {
       expect(exec.agentStates.get('node-a').handoffCount).toBe(1);
       expect(exec.edgeCounters.get('edge-ab')).toBe(1);
     });
+
+    it('should fan out a single agent handoff across every connected downstream target', async () => {
+      const parallelWorkflow = buildParallelFanOutWorkflow();
+      workflowStoreMock = { get: vi.fn().mockResolvedValue(parallelWorkflow) };
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-parallel', 'proj-1', '/projects/proj-1');
+      await engine._onHandoff(executionId, 'node-a', {
+        type: 'handoff',
+        targetId: 'node-b',
+        contextUpdate: { greetingTask: 'split' },
+      });
+
+      const exec = engine._executions.get(executionId);
+      expect(exec.workflowContext.greetingTask).toBe('split');
+      expect(exec.edgeCounters.get('edge-ab')).toBe(1);
+      expect(exec.edgeCounters.get('edge-ac')).toBe(1);
+      expect(exec.agentStates.get('node-a').handoffCount).toBe(2);
+      expect(exec.agentStates.get('node-a').status).toBe('done');
+      expect(exec.agentStates.get('node-b').status).toBe('running');
+      expect(exec.agentStates.get('node-c').status).toBe('running');
+
+      const startedTargets = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .filter((ev) => ev.type === 'handoff_started' && ev.sourceNodeId === 'node-a')
+        .map((ev) => ev.targetNodeId)
+        .sort();
+      expect(startedTargets).toEqual(['node-b', 'node-c']);
+    });
   });
 
   // -------------------------------------------------------------------------
@@ -1209,6 +1367,82 @@ describe('SwarmEngine', () => {
       expect(statusEvents.at(-1)?.lastOutputSnippet).toContain('Conversation interrupted');
       expect(statusEvents.at(-1)?.lastOutputSnippet).not.toContain('[Pasted Content');
       expect(statusEvents.at(-1)?.lastOutputSnippet).not.toContain('gpt-5.1-codex');
+    });
+
+    it('should strip CLI chrome and JSON payload lines from chat-oriented sanitization', () => {
+      const sanitized = engine._sanitizeChatMessage([
+        'Claude Code v2.1.92',
+        'Opus 4.6 with medium effort · Claude API',
+        'bypass permissions on (shift+tab to cycle) /buddy',
+        'Hello! Welcome to the Parallel Greetings Workflow. Wishing you a wonderful day!',
+        '"greetingA_lang":"English","greetingA_text":"Hello!"',
+      ].join('\n'));
+
+      expect(sanitized).toContain('Hello! Welcome to the Parallel Greetings Workflow. Wishing you a wonderful day!');
+      expect(sanitized).not.toContain('Claude Code v2.1.92');
+      expect(sanitized).not.toContain('bypass permissions on');
+      expect(sanitized).not.toContain('greetingA_lang');
+    });
+
+    it('should restore spaces inside long compressed natural-language chat tokens', () => {
+      const sanitized = engine._sanitizeChatMessage([
+        'Theruntimewillduplicatethehandofftobothdownstreamnodessotheyexecuteinparallel.',
+        'Sonoilnododimerge.Horaccoltoglioutputdientrambigliagenti.',
+        'Ciaoatutti!BenvenutieuncalorososalutodaAgent-B!Sperochestiatetuttimeravigliosamentebeneinquestasplendidagiornata.',
+        'Entrambi i saluti sono stati ricevuti con successo e unitiper questo reportfinale.',
+      ].join('\n'));
+
+      expect(sanitized).toContain('The runtime will duplicate the handoff to both downstream nodes so they execute in parallel.');
+      expect(sanitized).toContain('Sono il nodo di merge. Ho raccolto gli output di entrambi gli agenti.');
+      expect(sanitized).toContain('Ciao a tutti! Benvenuti e un caloroso saluto da Agent-B!');
+      expect(sanitized).toContain('successo e uniti per questo report finale.');
+    });
+
+    it('should restore compact English contractions and short merged words in final chat snippets', () => {
+      const sanitized = engine._sanitizeChatMessage([
+        "It'ssuchapleasuretoconnectwithyou-mayyourdaybefilledwithjoy,andallthegoodthingslifehastooffer.",
+        "Here'stogreatconversationsandevengreatermomentsahead!",
+        'Together, they paint a welcoming picture of friendliness and cooperation across languages.',
+      ].join('\n'));
+
+      expect(sanitized).toContain("It's such a pleasure to connect with you");
+      expect(sanitized).toContain('life has to offer.');
+      expect(sanitized).toContain("Here's to great conversations and even greater moments ahead!");
+      expect(sanitized).toContain('friendliness and cooperation across languages.');
+    });
+
+    it('should prefer a semantic fallback when prompt echo survives the chat sanitizer', () => {
+      const sanitized = engine._sanitizeChatMessage([
+        'You are the Final Reporter. You receive two greetings: one in English from Agent-A and one in Italian from Agent-B.',
+        'Current workflow context:',
+        'workflow Name: Parallel Greetings Workflow',
+        'workflow Description: Two agents greet in different languages in parallel.',
+        'Hello everyone! It is truly wonderful to be here with all of you today.',
+        'I wishyouadayfilledwithhappiness,inspiration,andmeaningfulconnections.',
+        'Warmest regards to each and every one of you!',
+      ].join('\n'));
+
+      expect(sanitized).toContain('Hello everyone! It is truly wonderful to be here with all of you today.');
+      expect(sanitized).not.toContain('You are the Final Reporter');
+      expect(sanitized).not.toContain('Current workflow context');
+      expect(sanitized).not.toContain('workflow Name:');
+    });
+
+    it('should reuse the node semantic snippet when a chat flush would otherwise emit provider chrome', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const state = engine._executions.get(executionId).agentStates.get('node-a');
+      state.lastOutputSnippet = 'Hello everyone! Warm greetings from Agent-A.';
+
+      const sanitized = engine._sanitizeChatMessage(
+        [
+          'Claude Code v2.1.92',
+          'Opus4.6withmediumeffort·ClaudeMax',
+          '~\\Downloads\\Test workflows - Copia',
+        ].join('\n'),
+        { executionId, nodeId: 'node-a' }
+      );
+
+      expect(sanitized).toBe('Hello everyone! Warm greetings from Agent-A.');
     });
 
     it('should strip the echoed swarm-input wrapper while preserving the semantic payload line', async () => {
@@ -1608,6 +1842,31 @@ describe('SwarmEngine', () => {
 
       wsBroadcast.mockClear();
       tapFn("Error: not authenticated. please sign in.");
+
+      const status = engine.getStatus(executionId);
+      expect(status.status).toBe('blocked');
+      expect(status.runtimeProvider).toBe('gemini');
+      expect(status.activeProvider).toBe('gemini');
+      expect(status.agentStates['node-a'].status).toBe('blocked');
+      expect(status.runtimeBlocker).toMatchObject({
+        type: 'provider_unavailable',
+        provider: 'gemini',
+        nodeId: 'node-a',
+      });
+    });
+
+    it('should classify Gemini waiting-for-authentication output as a blocked runtime state', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'gemini',
+      });
+      const tapFn = [...mockSession.swarmListeners][0];
+      const execution = engine._executions.get(executionId);
+
+      execution.agentStates.get('node-a').ignoreParserUntil = null;
+      execution.agentStates.get('node-a').ignoreParserBuffer = '';
+
+      wsBroadcast.mockClear();
+      tapFn('Waiting for authentication...\n(Press Esc or Ctrl+C to cancel)');
 
       const status = engine.getStatus(executionId);
       expect(status.status).toBe('blocked');
@@ -2515,6 +2774,33 @@ describe('SwarmEngine', () => {
       state.ignoreParserBuffer = '';
 
       tapFn(`__HANDOFF__:node-b:${b64({ summary: 'handoff completed' })}`);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const status = engine.getStatus(executionId);
+      expect(status.status).toBe('running');
+      expect(status.runtimeBlocker).toBeUndefined();
+      expect(status.agentStates['node-a'].handoffCount).toBe(1);
+      expect(status.agentStates['node-b']).toBeDefined();
+    });
+
+    it('should accept a Gemini handoff whose target id is wrapped with a leading underscore from TUI emphasis', async () => {
+      vi.stubEnv('SWARM_GEMINI_NO_PROGRESS_TIMEOUT_MS', '1000');
+      vi.stubEnv('SWARM_GEMINI_NO_PROGRESS_TOKEN_DELTA', '10');
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'gemini',
+      });
+      const tapFn = [...mockSession.swarmListeners][0];
+      const execution = engine._executions.get(executionId);
+      const state = execution.agentStates.get('node-a');
+
+      state.ignoreParserUntil = null;
+      state.ignoreParserBuffer = '';
+
+      tapFn('__HANDOFF__:_node-b:{"summary":"handoff completed","result":"ready"}');
       await Promise.resolve();
       await Promise.resolve();
 

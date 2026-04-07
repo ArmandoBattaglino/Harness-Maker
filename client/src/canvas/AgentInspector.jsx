@@ -164,7 +164,7 @@ function AgentFields({ node, nodes, onUpdateNode }) {
         />
       </div>
 
-      {/* Triage Node */}
+      {/* Start Node */}
       <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
         <input
           type="checkbox"
@@ -172,8 +172,11 @@ function AgentFields({ node, nodes, onUpdateNode }) {
           onChange={(e) => onUpdateNode(nodeId, { isTriageNode: e.target.checked })}
           className="accent-blue-500"
         />
-        Triage Node
+        Start Node
       </label>
+      <div className="text-[10px] text-gray-500 -mt-1">
+        All start nodes run immediately. Mark multiple agents to launch parallel branches together.
+      </div>
 
       {/* Parent Department */}
       <div className="flex flex-col gap-0.5">
@@ -645,6 +648,7 @@ function ExecutionInfo({ timestamps, status }) {
 export default function AgentInspector({ nodes, onUpdateNode }) {
   const selectedNodeId = useSwarmStore((s) => s.selectedNodeId);
   const agentState = useSwarmStore((s) => s.agentStates[selectedNodeId]);
+  const activeExecutionId = useSwarmStore((s) => s.activeExecutionId);
   const setSelectedNode = useSwarmStore((s) => s.setSelectedNode);
   const setPtyExplosionNodeId = useSwarmStore((s) => s.setPtyExplosionNodeId);
 
@@ -652,17 +656,13 @@ export default function AgentInspector({ nodes, onUpdateNode }) {
   const tokenSemantics = inspectControlTokens(agentState?.lastOutputSnippet);
 
   if (!selectedNodeId || !selectedNode) {
-    return (
-      <div className="w-72 bg-gray-900 border-l border-gray-700 p-4 text-gray-400 text-sm flex items-center justify-center">
-        <span>Select a node to inspect</span>
-      </div>
-    );
+    return null;
   }
 
   const nodeType = selectedNode.type || 'agent';
 
   return (
-    <div className="w-72 bg-gray-900 border-l border-gray-700 p-4 text-white text-sm flex flex-col gap-3 overflow-y-auto">
+    <div className="w-[19rem] min-w-[19rem] shrink-0 bg-gray-900 border-l border-gray-700 p-4 text-white text-sm flex flex-col gap-3 overflow-y-auto">
       {/* Header — editable label */}
       <div className="flex items-center justify-between gap-2">
         <input
@@ -713,7 +713,7 @@ export default function AgentInspector({ nodes, onUpdateNode }) {
       )}
 
       {/* Open Terminal button — only when agent has an active session */}
-      {agentState?.sessionId && selectedNode?.id && (
+      {selectedNode?.id && (agentState?.sessionId || activeExecutionId) && (
         <button
           onClick={() => setPtyExplosionNodeId(selectedNode.id)}
           className="w-full text-xs px-2 py-1.5 rounded bg-indigo-700 hover:bg-indigo-600 text-white transition-colors flex items-center gap-1.5"

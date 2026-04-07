@@ -4,7 +4,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v5.0.0 — 330 tasks total, 328 COMPLETED, 2 DEFERRED, 0 PENDING. ALL AREAS CLOSED including POST-V5 FOLLOW-UP (#327 COMPLETED, #328 PASS, #329 PASS, #330 COMPLETED). Last verified baseline: build OK (498 modules, 0 errors), tests 312/312 pass.
+**Status:** v5.0.0 — 333 tasks total, 331 COMPLETED, 2 DEFERRED, 0 PENDING. ALL AREAS CLOSED including POST-V5 FOLLOW-UP 2 (#331 COMPLETED, #332 PASS, #333 COMPLETED). Last verified baseline: build OK (498 modules, 0 errors), tests 312/312 pass.
   **Completed Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 ALL COMPLETED/PASS. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#267 ALL COMPLETED. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave2 NODE CREATION & CONFIG — Tasks #268-#272 ALL COMPLETED. AREA CLOSED 2026-04-06.
@@ -36,6 +36,7 @@
   - V5.0-Wave5 ADVANCED FLOW CONTROL NODES: AREA CLOSED 2026-04-06 — ConditionalNode (#301), MergeNode (#302), DelayNode (#303), LoopNode (#304), ErrorHandlerNode (#305), SubWorkflowNode (#306), SwarmCanvas nodeTypes+onDrop (#307), NodePalette 6 new cards (#308), AgentInspector 6 config panels (#309), SwarmEngine flow control logic (#310) ALL COMPLETED. TEST GATEs #311-#318 all PASS. AREA CHECKPOINT #320 PASS. Build: 496 modules, 0 errors. Tests: 312/312 pass.
   - V5.0-BugFix2 E2E DEBUGGER LOOP FIXES: AREA CLOSED 2026-04-06 — BUG-SAVE-1 (#321), BUG-DUP-1 (#322), BUG-DUP-2/IMP-1 (#323), BUG-VER-DATE (#324) ALL COMPLETED. TEST GATE #325 PASS. AREA CHECKPOINT #326 PASS. Build: 496 modules, 0 errors. Tests: 312/312 pass. Commit 895ddd7.
   - POST-V5 FOLLOW-UP RUNTIME COMPLETION + TRUTHFULNESS SYNC: AREA CLOSED 2026-04-07 — #327 (ExecutionHistoryStore wiring) COMPLETED, #328 (TEST GATE persistence round-trip) PASS, #329 (Unified Chat E2E verification) PASS, #330 (documentation truthfulness sync) COMPLETED. All docs updated. Build: 498 modules, 0 errors. Tests: 312/312 pass.
+  - POST-V5 FOLLOW-UP 2 SWARM CANVAS DROP PREVIEW: AREA CLOSED 2026-04-07 — #331 COMPLETED, #332 PASS, #333 COMPLETED. Agent Node palette drags now show a live ghost preview and the dropped node lands on the same snapped position shown during drag.
   DEFERRED (2 tasks, both MVP-acceptable, no fix possible):
     - #236: BUG-UI-1 — ConPTY terminal prompt garble after navigation (Windows platform limitation, DEC-009)
     - (none other — #233 and #242 previously marked DEFERRED are now COMPLETED)
@@ -14466,4 +14467,76 @@ Acceptance Criteria:
   - [ ] Unified Chat is either documented accurately or tracked as unfinished
   - [ ] No document still claims "no remaining work" unless the follow-up area is actually closed
 Dependencies: TASK #328, TASK #329
+---
+
+## AREA: POST-V5 FOLLOW-UP 2 -- Swarm Canvas Drop Preview
+_Components: NodePalette drag flow, SwarmCanvas drag/drop UX, AgentNode preview styling_
+_Tasks: #331 -> #333_
+_Gate: The area does not close until the preview is visible during drag and the canvas still creates the node at the same previewed position_
+_Source: User request on 2026-04-07_
+
+---
+
+TASK #331: Show live drop preview while dragging an Agent Node onto the Swarm canvas
+Area: POST-V5 FOLLOW-UP 2 -- Swarm Canvas Drop Preview
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-07 — SwarmCanvas now renders a live ghost Agent Node while palette drag is over the canvas, using the same snapped flow position as the final drop. Preview clears on drop, cancel, and drag leave timeout. During verification an unrelated `useSwarm.js` hook-order ReferenceError was also fixed so the Swarm view can mount for browser QA.
+Context:
+  User-facing problem:
+    While dragging an Agent Node from the palette, the canvas does not show where the node will land until after drop, which makes placement feel guessy and less precise.
+  Required fix scope:
+    1. Track palette drag hover position over the React Flow canvas.
+    2. Render a visible ghost/preview for the incoming node while the drag is active.
+    3. Make the preview use the same final snapped position that the real node will use on drop.
+    4. Clear the preview reliably when the drag ends or leaves the canvas.
+Acceptance Criteria:
+  - [x] Dragging an Agent Node over the canvas shows a clear preview before drop
+  - [x] The dropped node appears where the preview indicated
+  - [x] Preview state does not persist after drop/cancel/leave
+  - [x] Existing node creation from palette still works
+Dependencies: none
+---
+
+TASK #332: TEST GATE -- Swarm canvas palette drop preview
+Area: POST-V5 FOLLOW-UP 2 -- Swarm Canvas Drop Preview
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completed: 2026-04-07
+Result: PASS -- Browser verification plus client build succeeded. Preview appears during drag, final drop matches preview coordinates, and preview clears after timeout/drop.
+Gate: HARD -- TASK #333 should not close the area until this gate passes
+Context:
+  What to verify:
+    1. Drag an Agent Node across multiple positions on the canvas and confirm the preview follows the cursor.
+    2. Drop the node and verify the final position matches the preview.
+    3. Cancel the drag or leave the canvas and verify the preview disappears cleanly.
+    4. Run the client build to ensure no React Flow regression was introduced.
+Acceptance Criteria:
+  - [x] Preview is visible during drag
+  - [x] Final node position matches the previewed position
+  - [x] Preview clears after cancel/drop
+  - [x] `npm run build --prefix client` passes
+Dependencies: TASK #331
+---
+
+TASK #333: AREA CHECKPOINT -- POST-V5 FOLLOW-UP 2 Swarm Canvas Drop Preview
+Area: POST-V5 FOLLOW-UP 2 -- Swarm Canvas Drop Preview
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: HIGH
+Status: COMPLETED
+Completion Note: 2026-04-07 — Area checkpoint PASS. Implementation and browser/build verification both completed without regression to palette-driven node creation.
+Gate: HARD
+Acceptance Criteria:
+  - [x] TASK #331 COMPLETED
+  - [x] TEST GATE #332 PASS
+  - [x] No regression to palette-driven node creation or canvas editing flow
+Dependencies: TASK #332
 ---
