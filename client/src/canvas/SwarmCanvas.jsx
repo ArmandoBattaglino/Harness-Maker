@@ -600,9 +600,14 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange, la
         ...(layoutMap.get(edge.id) ?? {}),
         selected: selectedEdgeId === edge.id,
         selectionActive: Boolean(selectedEdgeId),
+        nodeSelectionActive: Boolean(selectedNodeId),
+        relatedToSelectedNode: Boolean(
+          selectedNodeId && (edge.source === selectedNodeId || edge.target === selectedNodeId)
+        ),
+        hasFocusedSelection: Boolean(selectedEdgeId || selectedNodeId),
       },
     }));
-  }, [visibleEdges, visibleNodes, selectedEdgeId]);
+  }, [visibleEdges, visibleNodes, selectedEdgeId, selectedNodeId]);
 
   const clearDropPreview = useCallback(() => {
     if (dropPreviewTimeoutRef.current) {

@@ -19,6 +19,17 @@
 **Next:** Optional follow-up - extend the same ghost-preview treatment to the other palette node types if desired
 
 ---
+## 2026-04-07 - codex - Swarm contextual edge emphasis
+**Outcome:** COMPLETED
+**Summary:** Continued the Swarm edge simplification pass by making selection contextual instead of purely edge-based. The canvas now tags every rendered edge with whether it is related to the currently selected node, and the edge renderer uses that to strongly fade unrelated connections when a node is selected. Feedback edges become especially quiet outside the current context: they are thinner, lighter, and can drop their arrowhead while not selected/relevant. This keeps the full graph intact but lets users read one local flow at a time instead of parsing every arrow simultaneously. Client build passes.
+**Files changed:** client/src/canvas/SwarmCanvas.jsx, client/src/canvas/edges/HandoffEdge.jsx, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** Swarm canvas readability issue - dense graphs still forced the user to visually parse too many unrelated edges at once even after primary/feedback separation
+**Decisions made:** Use contextual fading keyed off selected node/edge rather than hiding edges entirely; keep non-selected context visible at low opacity so the graph still feels continuous
+**Blockers:** Browser spot-check in this thread did not reload the intended saved workflow reliably, so this pass is verified by build and code-path inspection rather than a targeted final visual capture
+**Next:** Optional follow-up - add a toggle for `Focus connections` mode so users can turn contextual fading on/off depending on whether they are editing structure or debugging execution
+
+---
+
 ## 2026-04-07 - codex - Swarm edge hierarchy simplification
 **Outcome:** COMPLETED
 **Summary:** Simplified Swarm edge rendering after continued readability issues. Removed the live node auto-reflow during drag so node placement stays fully user-controlled. Added explicit edge-role classification in the canvas metadata: forward/bundled edges remain the primary visual path, while feedback/return edges are now treated as a separate class. In the edge renderer, primary edges keep the stronger corridor style, while feedback edges route on an outer side lane with a lighter, thinner dashed treatment so they stop competing visually with the main flow. Verified with `npm run build --prefix client` and a browser spot-check on the running app.
@@ -4353,4 +4364,3 @@ full self-contained context and acceptance criteria.
 **Next:** Optional follow-up - add a dedicated visual badge or legend on the canvas for multi-start workflows if users want the entry semantics even more visible
 
 ---
-

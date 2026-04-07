@@ -1488,6 +1488,26 @@ describe('SwarmEngine', () => {
       expect(sanitized).toBe('Hello everyone! Warm greetings from Agent-A.');
     });
 
+    it('should prefer the provider blocker line over echoed prompt instructions when a run is usage-limited', () => {
+      const sanitized = engine._sanitizeChatMessage([
+        'Write tests for @filename',
+        'Tip: New Try the Codex App, now available on Windows, with 2x rate limits until April 2nd.',
+        'Run \'codex app\' or visit https://chatgpt.com/codex?app-landing-page=true',
+        'Agent-B in parallel for greeting generation.',
+        'When your work is complete, emit one valid handoff token using any connected target ID: node-2, node-3.',
+        'The runtime will fan out that handoff to every connected downstream node for parallel execution.',
+        'Last line only:',
+        'No extra text after that last handoff line.',
+        'You\'ve hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro), visit https://chatgpt.com/codex/settings/usage to purchase more credits or try again later.',
+      ].join('\n'));
+
+      expect(sanitized).toContain("You've hit your usage limit.");
+      expect(sanitized).not.toContain('Write tests for @filename');
+      expect(sanitized).not.toContain('codex app');
+      expect(sanitized).not.toContain('greeting generation');
+      expect(sanitized).not.toContain('Last line only');
+    });
+
     it('should strip the echoed swarm-input wrapper while preserving the semantic payload line', async () => {
       const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
       const tapFn = [...mockSession.swarmListeners][0];

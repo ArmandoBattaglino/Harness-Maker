@@ -171,6 +171,9 @@ export default function HandoffEdge({
   const isActive = counter > 0;
   const isSelected = Boolean(data?.selected);
   const selectionActive = Boolean(data?.selectionActive);
+  const nodeSelectionActive = Boolean(data?.nodeSelectionActive);
+  const relatedToSelectedNode = Boolean(data?.relatedToSelectedNode);
+  const hasFocusedSelection = Boolean(data?.hasFocusedSelection);
   const sourceOffsetX = getSlotOffset(
     data?.sourceSlotIndex ?? 0,
     data?.sourceSlotCount ?? 1,
@@ -184,6 +187,7 @@ export default function HandoffEdge({
   const corridorLift = data?.corridorLift ?? 0;
   const edgeRole = data?.edgeRole ?? 'direct';
   const isFeedbackEdge = edgeRole === 'feedback';
+  const isContextHighlighted = isSelected || relatedToSelectedNode;
   const sourceLaneOffsetY = getLaneOffset(
     data?.sourceLaneIndex ?? 0,
     data?.sourceLaneCount ?? 1
@@ -208,7 +212,15 @@ export default function HandoffEdge({
       : isActive
         ? '#60a5fa'
         : '#64748b';
-  const dimmedOpacity = selectionActive && !isSelected ? 0.18 : isFeedbackEdge ? 0.62 : 0.92;
+  const passiveOpacity = isFeedbackEdge ? 0.34 : 0.88;
+  const contextOpacity = isFeedbackEdge
+    ? (isContextHighlighted ? 0.78 : nodeSelectionActive ? 0.1 : passiveOpacity)
+    : (isContextHighlighted ? 0.96 : nodeSelectionActive ? 0.16 : passiveOpacity);
+  const dimmedOpacity = selectionActive && !isSelected
+    ? 0.16
+    : hasFocusedSelection
+      ? contextOpacity
+      : passiveOpacity;
   const resolvedMarkerEnd = markerEnd ?? {
     type: MarkerType.Arrow,
     width: isSelected ? 15 : isFeedbackEdge ? 11 : 14,
@@ -270,23 +282,27 @@ export default function HandoffEdge({
           }}
         />
       )}
+      {(!isFeedbackEdge || isContextHighlighted || !hasFocusedSelection) && (
+        <BaseEdge
+          path={edgePath}
+          style={{
+            stroke: selectionActive && !isSelected
+              ? 'rgba(15, 23, 42, 0.22)'
+              : isFeedbackEdge
+                ? 'rgba(15, 23, 42, 0.4)'
+                : 'rgba(15, 23, 42, 0.92)',
+            strokeWidth: isFeedbackEdge ? (isSelected ? 4.5 : 3) : isSelected ? 9 : isActive ? 8 : 6,
+            strokeLinecap: 'round',
+            strokeLinejoin: 'round',
+            opacity: hasFocusedSelection
+              ? (isContextHighlighted ? 0.72 : 0.12)
+              : isFeedbackEdge ? 0.46 : 1,
+          }}
+        />
+      )}
       <BaseEdge
         path={edgePath}
-        style={{
-          stroke: selectionActive && !isSelected
-            ? 'rgba(15, 23, 42, 0.22)'
-            : isFeedbackEdge
-              ? 'rgba(15, 23, 42, 0.48)'
-              : 'rgba(15, 23, 42, 0.92)',
-          strokeWidth: isFeedbackEdge ? (isSelected ? 5 : 4) : isSelected ? 9 : isActive ? 8 : 6,
-          strokeLinecap: 'round',
-          strokeLinejoin: 'round',
-          opacity: selectionActive && !isSelected ? 0.35 : isFeedbackEdge ? 0.76 : 1,
-        }}
-      />
-      <BaseEdge
-        path={edgePath}
-        markerEnd={resolvedMarkerEnd}
+        markerEnd={isFeedbackEdge && hasFocusedSelection && !isContextHighlighted && !isActive ? undefined : resolvedMarkerEnd}
         style={{
           stroke: strokeColor,
           strokeWidth: isFeedbackEdge ? (isSelected ? 2.2 : 1.4) : isSelected ? 3.8 : isActive ? 3 : 2.1,

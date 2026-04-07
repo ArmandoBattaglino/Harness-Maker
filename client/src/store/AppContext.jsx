@@ -1,4 +1,15 @@
-import React, { createContext, useContext, useReducer } from 'react';
+import React, { createContext, useContext, useEffect, useReducer } from 'react';
+
+const ACTIVE_PROJECT_STORAGE_KEY = 'ccvm-active-project-id';
+
+function readPersistedActiveProjectId() {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage.getItem(ACTIVE_PROJECT_STORAGE_KEY) || null;
+  } catch {
+    return null;
+  }
+}
 
 // --- Initial State ---
 const initialState = {
@@ -55,13 +66,41 @@ function appReducer(state, action) {
   }
 }
 
+function initAppState() {
+  return {
+    ...initialState,
+    activeProjectId: readPersistedActiveProjectId(),
+  };
+}
+
 // --- Contexts ---
 const AppStateContext = createContext(null);
 const AppDispatchContext = createContext(null);
 
 // --- Provider ---
 export function AppProvider({ children }) {
-  const [state, dispatch] = useReducer(appReducer, initialState);
+  const [state, dispatch] = useReducer(appReducer, initialState, initAppState);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      if (state.activeProjectId) {
+        window.localStorage.setItem(ACTIVE_PROJECT_STORAGE_KEY, state.activeProjectId);
+      } else {
+        window.localStorage.removeItem(ACTIVE_PROJECT_STORAGE_KEY);
+      }
+    } catch {
+      // Ignore persistence failures; the in-memory app state still works.
+    }
+  }, [state.activeProjectId]);
+
+  useEffect(() => {
+    if (!state.activeProjectId) return;
+    const projectStillExists = state.projects.some((project) => project.id === state.activeProjectId);
+    if (!projectStillExists) {
+      dispatch({ type: 'SET_ACTIVE_PROJECT', payload: null });
+    }
+  }, [state.activeProjectId, state.projects]);
 
   return (
     <AppStateContext.Provider value={state}>
