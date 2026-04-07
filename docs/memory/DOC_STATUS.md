@@ -1,11 +1,12 @@
 # Documentation Status
-_Last updated: 2026-04-07 after Task #327 (ExecutionHistoryStore wiring into SwarmEngine) and Task #329 (Unified Chat View E2E verification)._
+_Last updated: 2026-04-07 after Task #330 (Documentation and status truthfulness sync). POST-V5 FOLLOW-UP area CLOSED._
 
 ## Release Status
-**v3.0.0 — RELEASED 2026-03-31**
-- QA inspection: CLEAN at release — zero bugs found at release gate
-- Test suite: 187/187 passing (confirmed post all patches including V3.1 wave)
-- Tasks completed: 132/132 (Tasks #124-#132 V3.1 Swarm bug fix wave — all COMPLETED, AREA CHECKPOINT PASS)
+**v5.0.0 — ALL AREAS CLOSED 2026-04-07**
+- QA inspection: CLEAN — zero remaining actionable bugs
+- Test suite: 312/312 passing
+- Build: 498 modules, 0 errors
+- Tasks: 330 total — 328 completed, 2 deferred (both MVP-acceptable platform limitations)
 - Open bugs: 0
 
 ## Fixed Bugs (v3.0.0 post-release patches)
@@ -47,14 +48,14 @@ _Last updated: 2026-04-07 after Task #327 (ExecutionHistoryStore wiring into Swa
 
 | Document | Status | Last Updated | Notes |
 |----------|--------|--------------|-------|
-| README.md | PARTIAL | 2026-04-07 | Feature list is broadly useful, but the top-level task/test counts are stale (`187/187`, `115 tasks`) and do not reflect the reopened follow-up area. |
-| docs/ARCHITECTURE.md | PARTIAL | 2026-04-07 | Section 11.8 dependency graph updated: SwarmEngine now lists ExecutionHistoryStore as setter-injected dependency, _persistExecutionHistory method documented. V5 Wave 1-4 new UI components still deferred for batch update. |
+| README.md | UP_TO_DATE | 2026-04-07 | Test count (312/312), task count (330/328 completed/2 deferred), module count (498), version (v5.0.0), Unified Chat View, Advanced Flow Control Nodes, N8N-Style Editor features all current. |
+| docs/ARCHITECTURE.md | PARTIAL | 2026-04-07 | Section 11.8 dependency graph current. V5 Wave 1-4 new UI components still deferred for batch update (12 components). Unified Chat View components (ChatExtractor, ChatPanel, ChatMessage) not yet in component tree. |
 | docs/PRD.md | UP_TO_DATE | 2026-04-06 | Version bumped to v5.0 with N8N-Style Visual Workflow Editor addendum (81 FRs, 5 waves, 6 new node types, 5 new SEC requirements). |
 | docs/API.md | UP_TO_DATE | 2026-04-06 | V5 Wave 4 endpoints added: execution history (2), templates (2), versions (2). All 6 new endpoints documented with full request/response examples. |
-| docs/memory/PROJECT.md | UP_TO_DATE | 2026-04-07 | Implementation status corrected during PM audit to reflect that post-V5 follow-up work is open. |
+| docs/memory/PROJECT.md | UP_TO_DATE | 2026-04-07 | Implementation status reflects all areas closed, v5.0, 330 tasks. |
 | docs/memory/DECISIONS.md | UP_TO_DATE | 2026-04-03 | DEC-001 through DEC-026 — no new architectural decisions from V5.0 bug fixes. |
-| docs/memory/PROGRESS.md | UP_TO_DATE | 2026-04-07 | PM updated with Task #327/#329 completion status. |
-| docs/memory/CONTEXT.md | UP_TO_DATE | 2026-04-06 | Focus updated to reflect V5 Wave 4 completion. All areas CLOSED. |
+| docs/memory/PROGRESS.md | UP_TO_DATE | 2026-04-07 | POST-V5 FOLLOW-UP area closure entry added. |
+| docs/memory/CONTEXT.md | UP_TO_DATE | 2026-04-07 | Focus reflects all areas closed, project feature-complete at v5.0. |
 | docs/memory/CODE_MAP.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No changes from documenter. |
 | docs/memory/CHANGELOG.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No changes from documenter. |
 | docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-07 | PM audit entry appended/prepended for follow-up reopening. |
@@ -294,6 +295,25 @@ Frontend-only bugfixes. No new API endpoints, no env var changes, no backend cha
 | Swarm execution state persistence | Medium | In-memory only in v3.0; restart clears all executions. Disk persistence planned for v3.1. |
 | docs/memory/CODE_MAP.md TriggerNode "(stub)" notation | Low | Code-mapper should update the map entry — TriggerNode is now fully implemented (Task #76). |
 | ~~docs/API.md V5 endpoints~~ | RESOLVED | V5 Wave 4 endpoints (execution history, templates, versions) documented in API.md on 2026-04-06. Agent discovery endpoint still pending future wave. |
-| docs/ARCHITECTURE.md V5 components | Medium | V5 Waves 1-4 components implemented but not yet added to ARCHITECTURE.md component tree: ContextMenu.jsx, useCanvasHistory.js, sanitizeWorkflow.js, nodeIdGenerator.js, NodePalette.jsx, WorkflowSettingsModal.jsx, useCanvasValidation.js, ExecutionHistory.jsx, TemplateGallery.jsx, VersionHistory.jsx, ExecutionHistoryStore.js, TemplateStore.js. Remaining unimplemented: EdgeInspector, WorkflowToolbar, new node types. Update component tree once full V5 is complete. |
+| docs/ARCHITECTURE.md V5 components | Medium | V5 Waves 1-5 components implemented but not yet added to ARCHITECTURE.md component tree: ContextMenu.jsx, useCanvasHistory.js, sanitizeWorkflow.js, nodeIdGenerator.js, NodePalette.jsx, WorkflowSettingsModal.jsx, useCanvasValidation.js, ExecutionHistory.jsx, TemplateGallery.jsx, VersionHistory.jsx, ExecutionHistoryStore.js, TemplateStore.js, ChatExtractor.js, ChatPanel.jsx, ChatMessage.jsx, ConditionalNode.jsx, MergeNode.jsx, DelayNode.jsx, LoopNode.jsx, ErrorHandlerNode.jsx, SubWorkflowNode.jsx. All implemented; component tree diagram not yet updated. |
 | ~~MEDIUM-V3-01 / BUG-API-1 (webhook CSRF mismatch)~~ | RESOLVED | Fixed in Task #234 (2026-04-06). CSRF_EXEMPT_PREFIXES array added to server/middleware/csrf.js. Security audit docs updated. |
 | ~~BUG-PRD-1 through BUG-PRD-4 code fixes~~ | RESOLVED | All four bugs fixed in V3.1 wave (Tasks #124-#130). AREA CHECKPOINT #132 PASS confirmed. No remaining debt from this item. |
+
+## POST-V5 FOLLOW-UP — AREA CLOSED (2026-04-07)
+
+Task #330 (documentation and status truthfulness sync) completed. All stale claims fixed:
+
+| Document | What was stale | What was fixed |
+|----------|---------------|----------------|
+| README.md | Version v3.0.0, 187/187 tests, 115 tasks | Updated to v5.0.0, 312/312 tests, 330 tasks (328 completed, 2 deferred), 498 modules. Added Unified Chat View, Advanced Flow Control Nodes, N8N-Style Editor features. Known Limitations section renamed to v5. |
+| package.json | Version 3.0.0, description "187/187 tests, 115 tasks" | Version bumped to 5.0.0, description updated to current project summary |
+| docs/memory/PROJECT.md | Last updated 2026-03-28, status said follow-up work active | Updated to 2026-04-07, all areas closed |
+| docs/memory/CONTEXT.md | Focus said follow-up in progress, 2 tasks remaining | Updated to all areas closed, no remaining work |
+| docs/memory/PROGRESS.md | No entry for POST-V5 area closure | Area closure entry prepended |
+| docs/TASK_PLAN.md | Status header said 1 PENDING, POST-V5 IN PROGRESS | Updated to 0 PENDING, all areas closed, #330 COMPLETED |
+| docs/memory/DOC_STATUS.md | README marked PARTIAL, release status said v3.0.0 187/187 | All updated to reflect v5.0.0, 312/312, all areas closed |
+
+**Unified Chat View** documented for the first time in README features table:
+- Server: `ChatExtractor.js` — noise-filters PTY output (40+ regex patterns for spinners, ANSI, CLI chrome, box drawing) and emits clean `chat_message` WS events with periodic 500ms flush
+- Client: `ChatPanel.jsx` — conversation panel with per-agent filter dropdown; `ChatMessage.jsx` — role-styled message bubbles (assistant/system/user)
+- Integration: `SwarmCanvas.jsx` Feed/Chat tab toggle in side panel; `SwarmContext.jsx` chatMessages/chatFilter/sidePanelMode state; `useSwarm.js` chat_message WS handler

@@ -1,6 +1,6 @@
 # Claude Code Visual Manager
 
-**Current Version: v3.0.0** — QA CLEAN, 187/187 tests passing, all 115 tasks completed.
+**Current Version: v5.0.0** — QA CLEAN, 312/312 tests passing, 330 tasks total (328 completed, 2 deferred). Build: 498 modules, 0 errors.
 
 A locally-hosted web application that provides a graphical interface for the Claude Code CLI. Run Claude Code sessions in a live browser terminal, submit background jobs, and manage your agents, skills, and CLAUDE.md files — all from a single-command launch.
 
@@ -61,9 +61,12 @@ The server binds exclusively to `127.0.0.1` — it is never accessible from the 
 | **Human-in-the-Loop (V3)** | Agents can pause and request human approval. The HITL inbox lets you approve or reject decisions with optional resume text. |
 | **Broadcast (V3)** | Send a text message to all running agents simultaneously (soft or hard interrupt mode). |
 | **Trigger Nodes (V3)** | Webhooks and RSS pollers can fire a workflow automatically. Rate-limited webhook receiver with SSRF-safe RSS polling. |
-| **Execution History (V5)** | Browse past workflow executions with status, duration, nodes run, and per-node snapshots. Up to 100 entries persisted per workflow. |
+| **Execution History (V5)** | Browse past workflow executions with status, duration, nodes run, and per-node snapshots. Up to 100 entries persisted per workflow. History survives server restarts. |
 | **Workflow Templates (V5)** | Start from 5 built-in templates (Content Agency, Code Review Chain, Research Loop, Customer Support Triage, Data Pipeline). One click creates a new workflow from a template. |
 | **Version History (V5)** | Every workflow save creates a version snapshot. Browse, preview, and restore any previous version. Up to 50 versions retained per workflow. |
+| **Unified Chat View (V5)** | Conversation-style display of agent outputs. Server-side ChatExtractor filters PTY noise (spinners, ANSI, CLI chrome) and flushes clean messages via `chat_message` WebSocket events. Feed/Chat tab toggle in the side panel lets you switch between the inter-agent event feed and the chat conversation. Per-agent filtering via dropdown. |
+| **Advanced Flow Control Nodes (V5)** | Six new node types for complex workflows: Conditional (if/else branching), Merge (fan-in synchronization), Delay (timed pause), Loop (repeat N times), Error Handler (catch + retry/fallback), and Sub-Workflow (nested execution). All configurable via AgentInspector. |
+| **N8N-Style Editor (V5)** | Drag-and-drop node palette, snap-to-grid canvas, right-click context menus, undo/redo history, keyboard shortcuts (Ctrl+S save, Ctrl+Enter run), pre-run validation with warning badges, export/import workflow JSON, and duplicate workflow. |
 
 ---
 
@@ -182,11 +185,11 @@ If the session is gone, start a new terminal from the project view.
 
 ---
 
-## Known Limitations (v3)
+## Known Limitations (v5)
 
 - **No authentication.** The app relies on network isolation (localhost-only binding) rather than user authentication. Do not change the bind address.
 - **Windows primary.** The PTY layer targets Windows 11 with ConPTY. macOS and Linux work but are not the primary test target.
-- **No job history persistence.** Completed job results are held in memory and lost on server restart. Persistence is planned for a future release.
+- **No job history persistence.** Completed job results are held in memory and lost on server restart. (Workflow execution history is persisted; job-mode results are not.)
 - **No settings.json editor.** The Claude Code `settings.json` file is readable but not editable via the UI.
 - **No git integration.** No commit, diff, or branch management UI. Out of scope.
 - **No MCP server editor.** MCP server configuration is display-only. Out of scope.

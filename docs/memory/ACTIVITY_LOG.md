@@ -1,3 +1,44 @@
+## 2026-04-07 — documenter — Task #330: Documentation and status truthfulness sync
+**Outcome:** COMPLETED
+**Summary:** Final task in POST-V5 FOLLOW-UP area. Fixed all stale claims across README.md (312/312 tests, 330 tasks, 498 modules, v5.0.0), package.json (v5.0.0, new description), PROJECT.md (all areas closed), CONTEXT.md (no remaining work), PROGRESS.md (area closure entry). Documented Unified Chat View, Advanced Flow Control Nodes, and N8N-Style Editor as features in README. Marked #330 COMPLETED in TASK_PLAN.md. Updated DOC_STATUS.md with full audit results. POST-V5 FOLLOW-UP AREA CLOSED.
+**Files changed:** README.md, package.json, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/CONTEXT.md, docs/memory/PROGRESS.md, docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none
+**Decisions made:** ARCHITECTURE.md V5 component tree update remains deferred (21 components) since there is no active development -- batch update when/if new development resumes
+**Blockers:** none
+**Next:** none -- all 330 tasks accounted for, project feature-complete
+
+---
+
+## 2026-04-07 — project-manager — Task #328 PASS: Update plan, unblock #330
+**Outcome:** COMPLETED
+**Summary:** Marked #328 TEST GATE as COMPLETED/PASS (full round-trip verified, 312/312 tests, 498 modules). Updated #330 status from PENDING to READY — both dependencies (#328 PASS, #329 PASS) are now met. #330 (documenter — docs truthfulness sync) is the last task before POST-V5 FOLLOW-UP area can be CLOSED. Updated status header: 328/330 COMPLETED, 2 DEFERRED, 1 READY.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** Assign #330 to documenter agent. After #330 completes, POST-V5 FOLLOW-UP area is CLOSED and the project is fully complete (330 tasks, 328 COMPLETED, 2 DEFERRED).
+---
+
+## 2026-04-07 — code-mapper — Task #328: TEST GATE — Execution history persistence round-trip (mapping)
+**Outcome:** COMPLETED
+**Summary:** No code changes — verification-only TEST GATE. Updated CODE_MAP.md header timestamp, appended CHANGELOG.md with verified paths documentation (write: SwarmEngine → ExecutionHistoryStore → disk; read: API → store → disk). No structural changes to function graph.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** Task #330 (documentation truthfulness sync) now unblocked
+
+---
+## 2026-04-07 — code-mapper — Tasks #327/#329: Map ExecutionHistoryStore wiring + Unified Chat verification
+**Outcome:** COMPLETED
+**Summary:** Mapped 2 new SwarmEngine functions (setExecutionHistoryStore, _persistExecutionHistory) and updated 3 existing entries (constructor, _setExecutionStatus via startup, startup). Updated CODE_MAP.md Module Index for server/index.js and SwarmEngine.js. Appended 2 CHANGELOG entries. Task #329 was verification-only (no code changes).
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** none — mapping complete
+
+---
 ## 2026-04-07 — qa-tester — Task #328: TEST GATE — Execution history persistence round-trip
 **Outcome:** COMPLETED
 **Summary:** TEST GATE PASS. Verified _persistExecutionHistory is called for all terminal states (completed/stopped/failed), entry shape matches addEntry contract, duplicate guard works correctly with retry support, store injection is wired in server/index.js, and API routes read from the same on-disk files. 312/312 tests pass, client build 498 modules 0 errors.

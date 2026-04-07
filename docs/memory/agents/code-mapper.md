@@ -1,4 +1,85 @@
 ---
+## 2026-04-07 — Task #328: TEST GATE — Execution history persistence round-trip (PASS)
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code mapping)
+
+### Context when I started
+Task #328 was a verification-only TEST GATE by qa-tester. No code was modified. The gate verified the full write/read round-trip for execution history persistence wired in Task #327.
+
+### What I did
+1. Read CODE_MAP.md, CHANGELOG.md, ACTIVITY_LOG.md, PROGRESS.md, and my agent log
+2. Updated CODE_MAP.md header timestamp to reflect Task #328
+3. Appended CHANGELOG.md with a verification entry documenting the verified paths
+4. Appended ACTIVITY_LOG.md and this session log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header timestamp updated to Task #328 |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Task #328 verification entry with verified paths |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log |
+
+### Improvements delivered
+- CHANGELOG.md now documents the verified execution history persistence paths for future reference
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+None (mapping only).
+
+### What I learned
+- The execution history persistence chain is: SwarmEngine._setExecutionStatus → _persistExecutionHistory → ExecutionHistoryStore.addEntry → write-file-atomic; with a _persistedHistoryIds Set guard against duplicate writes
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md up to date through Task #328. Task #330 (docs sync) is now unblocked.
+
+### Handoff
+None — task fully self-contained.
+
+---
+## 2026-04-07 — Tasks #327/#329: ExecutionHistoryStore wiring + Unified Chat E2E verification
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task mapping)
+
+### Context when I started
+Task #327 wired ExecutionHistoryStore into SwarmEngine via setter injection (server/services/SwarmEngine.js + server/index.js). Task #329 was a verification-only task (no code changes) confirming all Unified Chat View components pass E2E.
+
+### What I did
+1. Read server/index.js (full) and SwarmEngine.js (grep for new methods) to identify all changes
+2. Grepped for callers of setExecutionHistoryStore (only server/index.js) and _persistExecutionHistory (only _setExecutionStatus)
+3. Updated CODE_MAP.md: header timestamp, Module Index entries for server/index.js and SwarmEngine.js, SwarmEngine constructor entry (new fields), added 2 new function entries (setExecutionHistoryStore, _persistExecutionHistory), updated startup() entry (Task #80 variant)
+4. Appended 2 CHANGELOG entries (Task #327 code changes, Task #329 verification-only)
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Updated 4 existing entries, added 2 new function entries for SwarmEngine |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended 2 new entries for Tasks #327 and #329 |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- CODE_MAP now tracks the full execution history persistence chain: startup → setExecutionHistoryStore → _setExecutionStatus → _persistExecutionHistory → ExecutionHistoryStore.addEntry
+- Connection graph shows the new dependency from SwarmEngine to ExecutionHistoryStore
+
+### Bugs I encountered
+None
+
+### Decisions I made
+None
+
+### What I learned
+- ExecutionHistoryStore has two independent instances: one lazy-inited in routes/swarm.js for reads, one wired at startup for writes via SwarmEngine. Both use the same CONFIG_DIR.
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md are current through Tasks #327 and #329. All new functions mapped with full caller/callee chains.
+
+### Handoff
+None — mapping complete.
+
+---
 ## 2026-04-06 — V5 Bugfix (commit 41b9a0e): Context Menu + Stale Closure Fixes
 **Status:** COMPLETED
 **Called by:** user (post-task code mapping request)

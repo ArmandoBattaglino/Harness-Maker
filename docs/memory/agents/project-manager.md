@@ -3853,3 +3853,47 @@ V4.0.2 area fully planned with 11 tasks. No tasks started yet. Ready for executi
 **Wave 3 (independent, any time):** Assign backend-dev to #183 (snippet protocol text) and frontend-dev to #185 (feed icon) in parallel.
 **Wave 4:** AREA CHECKPOINT #187 after all gates pass.
 ---
+
+---
+## 2026-04-07 — Task #328 PASS: Update plan, unblock #330
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+POST-V5 FOLLOW-UP area had 4 tasks: #327 COMPLETED (backend-dev wired ExecutionHistoryStore), #328 just completed as PASS by qa-tester (full round-trip verified, 312/312 tests, 498 modules), #329 COMPLETED/PASS (Unified Chat E2E verification, no gaps). #330 (documenter — docs truthfulness sync) was PENDING, blocked on #328 + #329.
+
+### What I did
+1. Read TASK_PLAN.md to locate #328 and #330 entries
+2. Marked #328 as COMPLETED with date, PASS result, and gate result
+3. Updated #330 from PENDING to READY with enriched context (both dependencies met, current verified baseline stats)
+4. Updated TASK_PLAN.md status header: 328/330 COMPLETED, 2 DEFERRED, 1 READY
+5. Updated PROGRESS.md with new status entry
+6. Updated ACTIVITY_LOG.md with session entry
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | #328 marked COMPLETED/PASS with gate result; #330 updated to READY with enriched context; status header updated |
+| docs/memory/PROGRESS.md | MODIFIED | Added status entry for #328 PASS and #330 unblocked |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added session entry |
+| docs/memory/agents/project-manager.md | MODIFIED | Added this session log |
+
+### Improvements delivered
+- #330 is now unblocked and ready for assignment to documenter
+- Status header accurately reflects 328/330 COMPLETED, 2 DEFERRED, 1 READY
+
+### Bugs I encountered
+None
+
+### Decisions I made
+None — straightforward status update
+
+### What I learned
+Nothing new — routine plan maintenance
+
+### State I'm leaving behind
+POST-V5 FOLLOW-UP: 3 of 4 tasks done (#327, #328, #329). Only #330 (documenter) remains. Once #330 completes, the entire POST-V5 FOLLOW-UP area can be CLOSED and the project reaches final completion: 330 tasks, 328 COMPLETED, 2 DEFERRED.
+
+### Handoff
+Assign TASK #330 to the **documenter** agent. Full context is in the task entry. After #330 completes, close the POST-V5 FOLLOW-UP area.
+---

@@ -4,7 +4,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v3.0.0 RELEASED - 2026-03-31 — 330 tasks total, 327 COMPLETED, 2 DEFERRED, 1 PENDING. V5.0-Wave1 CLOSED. V5.0-Wave2 CLOSED. V5.0-Wave3 CLOSED. V5.0-BugFix1 CLOSED. V5.0-Wave4 CLOSED. V5.0-Wave5 CLOSED. V5.0-BugFix2 CLOSED. POST-V5 FOLLOW-UP IN PROGRESS (#327 COMPLETED, #328 PASS, #329 COMPLETED; #330 unblocked). Last verified baseline: build OK (498 modules, 0 errors), tests 312/312 pass.
+**Status:** v5.0.0 — 330 tasks total, 328 COMPLETED, 2 DEFERRED, 0 PENDING. ALL AREAS CLOSED including POST-V5 FOLLOW-UP (#327 COMPLETED, #328 PASS, #329 PASS, #330 COMPLETED). Last verified baseline: build OK (498 modules, 0 errors), tests 312/312 pass.
   **Completed Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 ALL COMPLETED/PASS. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#267 ALL COMPLETED. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave2 NODE CREATION & CONFIG — Tasks #268-#272 ALL COMPLETED. AREA CLOSED 2026-04-06.
@@ -35,6 +35,7 @@
   - V5.0-Wave4 EXECUTION VISIBILITY: AREA CLOSED 2026-04-06 — ExecutionHistoryStore (#287), WorkflowStore version history (#288), TemplateStore (#289), per-node timing (#290), ExecutionHistory.jsx (#291), TemplateGallery.jsx (#292), VersionHistory.jsx (#293), SwarmView toolbar buttons (#294) ALL COMPLETED. TEST GATE #295 PASS. AREA CHECKPOINT #300 PASS. Build: 490 modules, 0 errors. Tests: 312/312 pass.
   - V5.0-Wave5 ADVANCED FLOW CONTROL NODES: AREA CLOSED 2026-04-06 — ConditionalNode (#301), MergeNode (#302), DelayNode (#303), LoopNode (#304), ErrorHandlerNode (#305), SubWorkflowNode (#306), SwarmCanvas nodeTypes+onDrop (#307), NodePalette 6 new cards (#308), AgentInspector 6 config panels (#309), SwarmEngine flow control logic (#310) ALL COMPLETED. TEST GATEs #311-#318 all PASS. AREA CHECKPOINT #320 PASS. Build: 496 modules, 0 errors. Tests: 312/312 pass.
   - V5.0-BugFix2 E2E DEBUGGER LOOP FIXES: AREA CLOSED 2026-04-06 — BUG-SAVE-1 (#321), BUG-DUP-1 (#322), BUG-DUP-2/IMP-1 (#323), BUG-VER-DATE (#324) ALL COMPLETED. TEST GATE #325 PASS. AREA CHECKPOINT #326 PASS. Build: 496 modules, 0 errors. Tests: 312/312 pass. Commit 895ddd7.
+  - POST-V5 FOLLOW-UP RUNTIME COMPLETION + TRUTHFULNESS SYNC: AREA CLOSED 2026-04-07 — #327 (ExecutionHistoryStore wiring) COMPLETED, #328 (TEST GATE persistence round-trip) PASS, #329 (Unified Chat E2E verification) PASS, #330 (documentation truthfulness sync) COMPLETED. All docs updated. Build: 498 modules, 0 errors. Tests: 312/312 pass.
   DEFERRED (2 tasks, both MVP-acceptable, no fix possible):
     - #236: BUG-UI-1 — ConPTY terminal prompt garble after navigation (Windows platform limitation, DEC-009)
     - (none other — #233 and #242 previously marked DEFERRED are now COMPLETED)
@@ -14386,8 +14387,10 @@ Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
 Status: COMPLETED
-Result: PASS -- All behavioral, contract, integration, and round-trip checks verified. 312/312 tests pass. Client build 0 errors.
+Completed: 2026-04-07
+Result: PASS -- Full round-trip verified. 312/312 tests, 498 modules build. All behavioral, contract, integration, and round-trip checks verified.
 Gate: HARD -- TASK #330 should not close the follow-up area until this gate passes
+Gate Result: PASS -- #330 unblocked
 Context:
   Component being tested: execution-history persistence from SwarmEngine into ExecutionHistoryStore and the existing history endpoints/UI.
   What to test:
@@ -14438,17 +14441,25 @@ Agent: documenter
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-07 — README updated (312/312 tests, 330 tasks, 498 modules, Unified Chat View + Advanced Flow Control + N8N Editor features added), package.json bumped to v5.0.0, PROJECT.md/CONTEXT.md/PROGRESS.md/DOC_STATUS.md all updated to reflect all areas closed. POST-V5 FOLLOW-UP AREA CLOSED.
 Context:
   Evidence from the current repo state:
     - `README.md` and `package.json` still advertise `187/187 tests` and `115 tasks completed`
     - `docs/memory/DOC_STATUS.md` marks README and PROJECT as `UP_TO_DATE`
     - `docs/memory/PROJECT.md`, `CONTEXT.md`, and TASK_PLAN history previously asserted that no work remained, which is no longer true after this audit
     - Unified Chat implementation is present in code/activity logs but not registered in the task plan or summarized in the user-facing docs
+    - Execution history persistence is now wired and verified (TASK #327 COMPLETED, #328 PASS)
+    - Unified Chat verified end-to-end (TASK #329 PASS, no gaps found)
   Required scope:
     1. Update README/package metadata and project-memory status documents to match the actual repo state.
     2. Reflect the reopened follow-up area and the current next task honestly.
     3. Register Unified Chat in the appropriate docs if verification confirms it is complete.
+    4. After this task completes, the POST-V5 FOLLOW-UP area can be CLOSED.
+  Current verified baseline:
+    - Build: 498 modules, 0 errors
+    - Tests: 312/312 pass
+    - Tasks: 330 total, 328 COMPLETED, 2 DEFERRED
 Acceptance Criteria:
   - [ ] README and package metadata no longer report stale test/task counts
   - [ ] PROJECT/PROGRESS/CONTEXT/DOC_STATUS reflect the reopened follow-up area truthfully

@@ -1,4 +1,61 @@
 ---
+## 2026-04-07 — Task #330: Documentation and status truthfulness sync
+**Status:** COMPLETED
+**Called by:** orchestrator (final POST-V5 FOLLOW-UP task)
+
+### Context when I started
+Task #330 is the last task in the POST-V5 FOLLOW-UP area. All prerequisites met: #327 (ExecutionHistoryStore wiring) COMPLETED, #328 (TEST GATE persistence round-trip) PASS, #329 (Unified Chat E2E verification) PASS. The repo had accumulated stale claims: README.md and package.json still advertised v3.0.0, 187/187 tests, and 115 tasks. Unified Chat View (ChatExtractor, ChatPanel, ChatMessage, Feed/Chat toggle) was implemented but never documented in user-facing docs. Advanced Flow Control Nodes (6 new node types from V5 Wave 5) and N8N-Style Editor features were also missing from README.
+
+### What I did
+1. Read all target files: README.md, package.json, PROJECT.md, PROGRESS.md, CONTEXT.md, DOC_STATUS.md, TASK_PLAN.md header, agents/documenter.md, ACTIVITY_LOG.md
+2. Read ChatExtractor.js, ChatPanel.jsx, ChatMessage.jsx, and SwarmCanvas.jsx chat integration to understand the Unified Chat implementation
+3. Updated README.md: version v3.0.0 -> v5.0.0, tests 187/187 -> 312/312, tasks 115 -> 330 (328 completed, 2 deferred), modules 498. Added 3 new feature rows: Unified Chat View, Advanced Flow Control Nodes, N8N-Style Editor. Renamed Known Limitations section from v3 to v5. Updated job history note.
+4. Updated package.json: version 3.0.0 -> 5.0.0, description rewritten to remove stale counts
+5. Updated PROJECT.md: last updated date, implementation status reflects all areas closed
+6. Updated CONTEXT.md: focus reflects all areas closed, no remaining work
+7. Updated PROGRESS.md: prepended area closure entry
+8. Updated TASK_PLAN.md: header status (0 PENDING, all areas closed), #330 status COMPLETED, POST-V5 area closure line added
+9. Updated DOC_STATUS.md: release status (v5.0.0, 312/312, 498 modules), health table (README UP_TO_DATE, ARCHITECTURE notes updated), POST-V5 closure section with full change table, Unified Chat documentation detail, architecture debt list expanded with 9 more components
+10. Updated ACTIVITY_LOG.md and this agent log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| README.md | MODIFIED | Version, test/task/module counts, 3 new feature rows, Known Limitations heading |
+| package.json | MODIFIED | Version 3.0.0 -> 5.0.0, description rewritten |
+| docs/TASK_PLAN.md | MODIFIED | Status header (0 PENDING, all closed), #330 COMPLETED, POST-V5 area closure line |
+| docs/memory/PROJECT.md | MODIFIED | Last updated date, implementation status all areas closed |
+| docs/memory/CONTEXT.md | MODIFIED | Focus: all areas closed, no remaining work |
+| docs/memory/PROGRESS.md | MODIFIED | Prepended area closure entry |
+| docs/memory/DOC_STATUS.md | MODIFIED | Release status, health table, POST-V5 closure section, debt list expanded |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Task #330 entry |
+| docs/memory/agents/documenter.md | MODIFIED | This session log |
+
+### Improvements delivered
+- README and package.json now report truthful, current numbers (312/312 tests, 330 tasks, 498 modules, v5.0.0)
+- Unified Chat View is documented as a feature for the first time (ChatExtractor server-side noise filtering, ChatPanel/ChatMessage client-side, Feed/Chat toggle, chat_message WS event)
+- Advanced Flow Control Nodes and N8N-Style Editor features documented in README
+- All project memory docs (PROJECT, CONTEXT, PROGRESS) reflect that all areas are closed
+- DOC_STATUS.md has a complete audit trail for the POST-V5 area closure
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- ARCHITECTURE.md V5 component tree update remains deferred (now 21 components). The project has no active development, so a batch update would be appropriate only if new development resumes. This is the single remaining documentation debt item of substance.
+- Did not create docs/CONTRIBUTING.md -- private tool with no external contributors, deferred indefinitely.
+
+### What I learned
+- The Unified Chat View spans 5 files across server and client: ChatExtractor.js (server, 40+ noise regex patterns, 500ms periodic flush), ChatPanel.jsx (conversation panel with per-agent filter), ChatMessage.jsx (role-styled bubbles), SwarmContext.jsx (chatMessages/chatFilter/sidePanelMode state), useSwarm.js (chat_message WS handler). The Feed/Chat tab toggle is in SwarmCanvas.jsx.
+- package.json description field was being used as a status billboard rather than a proper npm description. Changed to a stable descriptive string.
+
+### State I'm leaving behind
+All documentation is current. README, package.json, PROJECT, CONTEXT, PROGRESS, DOC_STATUS, and TASK_PLAN all reflect the true state: 330 tasks, 328 completed, 2 deferred, 312/312 tests, 498 modules, v5.0.0. The only remaining documentation debt is the ARCHITECTURE.md V5 component tree (21 components not yet in the diagram), which is deferred until active development resumes.
+
+### Handoff
+None -- this is the final task. All areas are closed. Project is feature-complete.
+
+---
 ## 2026-04-07 — Tasks #327/#329: ExecutionHistoryStore Wiring + Unified Chat Verification Documentation
 **Status:** COMPLETED
 **Called by:** user (post-task documentation audit)

@@ -1,5 +1,38 @@
 # CHANGELOG — Claude Code Visual Manager
 
+## 2026-04-07
+
+### Task #328: TEST GATE — Execution history persistence round-trip (PASS)
+- Agent: qa-tester (verification), code-mapper (mapping)
+- Scope: 0 files modified — verification-only gate
+
+| File | Change Type | Description |
+|------|-------------|-------------|
+| (none) | — | No code changes. QA verified the full write/read round-trip: SwarmEngine._persistExecutionHistory() → ExecutionHistoryStore.addEntry() → writeFileAtomic → GET /api/v1/swarm/history/:workflowId |
+
+### Functions Added
+- None
+
+### Functions Modified
+- None
+
+### Functions Removed
+- None
+
+### Connection Changes
+- None — this task verified existing connections without modifying them
+
+### Impact on Other Code
+- Task #330 (documentation truthfulness sync) is now unblocked by this PASS verdict
+
+### Verified Paths
+- **Write path:** SwarmEngine._setExecutionStatus (terminal state) → SwarmEngine._persistExecutionHistory() → ExecutionHistoryStore.addEntry() → write-file-atomic to CONFIG_DIR/execution-history/<workflowId>.json
+- **Read path:** GET /api/v1/swarm/history/:workflowId → ExecutionHistoryStore.getHistory() → fs.readFile
+- **Wiring:** server/index.js instantiates ExecutionHistoryStore and injects via swarmEngine.setExecutionHistoryStore()
+- **Guard:** _persistedHistoryIds Set prevents duplicate writes on retry
+
+---
+
 ## 2026-04-06
 
 ### V5 Bugfix (commit 41b9a0e) — Context menu stopPropagation + stale closure keyboard shortcut fix
