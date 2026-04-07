@@ -26,6 +26,7 @@ import ErrorHandlerNode from './nodes/ErrorHandlerNode';
 import SubWorkflowNode from './nodes/SubWorkflowNode';
 import HandoffEdge from './edges/HandoffEdge';
 import AgentInspector from './AgentInspector';
+import AgentOutputPanel from '../panels/AgentOutputPanel';
 import BreadcrumbBar from './BreadcrumbBar';
 import InterAgentFeed from './InterAgentFeed';
 import ChatPanel from './ChatPanel';
@@ -478,6 +479,8 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange, la
   const setSidePanelOpen = useSwarmStore((s) => s.setSidePanelOpen);
   const interAgentFeed = useSwarmStore((s) => s.interAgentFeed);
   const selectedNodeId = useSwarmStore((s) => s.selectedNodeId);
+  const agentResults = useSwarmStore((s) => s.agentResults);
+  const [outputPanelNodeId, setOutputPanelNodeId] = useState(null);
   // Keep the activity rail visible for every non-idle execution state, and
   // also after the run if chat/feed history already exists.
   const chatMessages = useSwarmStore((s) => s.chatMessages);
@@ -665,9 +668,16 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange, la
   const onNodeClick = useCallback(
     (event, node) => {
       setSelectedEdgeId(null);
-      setSelectedNode(node.id);
+      const hasOutput = agentResults[node.id]?.finalText;
+      if (node.type === 'agent' && hasOutput) {
+        setOutputPanelNodeId(node.id);
+        setSelectedNode(null);
+      } else {
+        setOutputPanelNodeId(null);
+        setSelectedNode(node.id);
+      }
     },
-    [setSelectedNode]
+    [setSelectedNode, agentResults]
   );
 
   const onPaneClick = useCallback(
@@ -675,6 +685,7 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange, la
       clearDropPreview();
       setSelectedEdgeId(null);
       setSelectedNode(null);
+      setOutputPanelNodeId(null);
     },
     [clearDropPreview, setSelectedNode]
   );
@@ -1075,7 +1086,15 @@ export default function SwarmCanvas({ workflowDef, markDirty, onCanvasChange, la
             </div>
           </div>
         )}
-        {showInspector && <AgentInspector nodes={nodes} onUpdateNode={handleUpdateNode} />}
+        {outputPanelNodeId ? (
+          <AgentOutputPanel
+            nodeId={outputPanelNodeId}
+            nodeLabel={nodes.find((n) => n.id === outputPanelNodeId)?.data?.label || 'Agent'}
+            onClose={() => setOutputPanelNodeId(null)}
+          />
+        ) : showInspector ? (
+          <AgentInspector nodes={nodes} onUpdateNode={handleUpdateNode} />
+        ) : null}
       </div>
     </div>
   );

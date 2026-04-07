@@ -19,6 +19,7 @@ import { useAppState } from '../store/AppContext';
 import { apiGet, apiPost, apiPut } from '../hooks/useApi.js';
 import { sanitizeWorkflow } from '../utils/sanitizeWorkflow.js';
 import { useCanvasValidation } from '../hooks/useCanvasValidation.js';
+import WorkflowArtifactPanel from '../panels/WorkflowArtifactPanel';
 
 const statusColors = {
   idle: 'text-gray-400',
@@ -84,6 +85,7 @@ export default function SwarmView() {
   const [showHistory, setShowHistory] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showVersions, setShowVersions] = useState(false);
+  const [showArtifactPanel, setShowArtifactPanel] = useState(false);
   const [layoutNonce, setLayoutNonce] = useState(0);
   const [runtimeCapabilities, setRuntimeCapabilities] = useState({
     claude: [],
@@ -733,6 +735,15 @@ export default function SwarmView() {
             Reset
           </button>
         )}
+
+        <button
+          onClick={() => setShowArtifactPanel(true)}
+          disabled={!['completed', 'stopped', 'failed'].includes(executionStatus)}
+          className="px-3 py-1.5 rounded text-xs font-medium bg-emerald-700 hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-colors flex items-center gap-1.5"
+          title={!['completed', 'stopped', 'failed'].includes(executionStatus) ? 'Run the workflow first' : 'View workflow deliverable'}
+        >
+          Final Report
+        </button>
       </div>
 
       {showMissingProjectMessage && (
@@ -963,6 +974,14 @@ export default function SwarmView() {
           }}
           onPreview={() => {}}
           onClose={() => setShowVersions(false)}
+        />
+      )}
+
+      {showArtifactPanel && activeExecutionId && (
+        <WorkflowArtifactPanel
+          executionId={activeExecutionId}
+          workflowName={workflowDef?.name || 'Workflow'}
+          onClose={() => setShowArtifactPanel(false)}
         />
       )}
     </div>
