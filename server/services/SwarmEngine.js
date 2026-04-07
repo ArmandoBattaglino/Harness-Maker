@@ -50,6 +50,10 @@ export const SUPPORTED_RUNTIME_MODELS = {
   [RUNTIME_PROVIDER.GEMINI]: ['gemini-2.5-pro', 'gemini-2.5-flash'],
 };
 const SUPPORTED_GEMINI_FALLBACK_MODELS = ['gemini-2.5-flash'];
+const normalizeCompressedChatWord = (word = '') => String(word ?? '')
+  .normalize('NFD')
+  .replace(/\p{M}+/gu, '')
+  .toLowerCase();
 const COMPRESSED_CHAT_WORDS = [
   'a', 'agent', 'agents', 'al', 'all', 'and', 'augurando', 'base', 'be', 'bene', 'benvenuti',
   'agenti', 'auguro', 'benvenuto', 'best', 'both', 'caloroso', 'che', 'ciao', 'ciascuno', 'collected', 'completed',
@@ -59,19 +63,23 @@ const COMPRESSED_CHAT_WORDS = [
   'due', 'e', 'english', 'entrambi', 'esprimendo', 'essere', 'everyone', 'execute', 'final', 'finale',
   'filled', 'form', 'forma', 'friend', 'friendliness', 'funzionato', 'generate', 'generated', 'generato', 'giornata',
   'generera', 'genererà',
-  'gioia', 'gli', 'good', 'great', 'greater', 'greeted', 'greeting', 'greetings', 'ha', 'handoff', 'hanno', 'has', 'hello',
+  'gioia', 'gli', 'going', 'good', 'great', 'greater', 'greeted', 'greeting', 'greetings', 'ha', 'handoff', 'handing', 'hanno', 'has', 'hello', 'hope',
   'ho', 'i', 'il', 'in', 'inglese', 'is', 'it', 'italian', 'joy', 'kind', 'la', 'life', 'lingua',
-  'lo', 'lunghezza', 'lavoreranno', 'may', 'meglio', 'merge', 'meravigliosa', 'meravigliosamente', 'messaggi', 'moments', 'nodo', 'nodes',
+  'lo', 'lunghezza', 'lavoreranno', 'making', 'may', 'meglio', 'merge', 'meravigliosa', 'meravigliosamente', 'messaggi', 'moments', 'most', 'nodo', 'nodes',
   'now', 'offer', 'output', 'parallelo', 'parallel', 'partecipanti', 'per', 'piacere', 'positivo',
-  'personal', 'piena', 'piacere', 'pleasure', 'poi', 'presente', 'procedo', 'producing', 'produrre', 'pur', 'questa', 'questo', 'qui',
-  'raccolto', 'received', 'report', 'reporter', 'riceveranno', 'runtime', 'saluti', 'saluto', 'serenita', 'share',
+  'our', 'personal', 'piena', 'piacere', 'pleasure', 'poi', 'presente', 'procedo', 'producing', 'produrre', 'pur', 'questa', 'questo', 'qui',
+  'raccolto', 'received', 'report', 'reporter', 'riceveranno', 'runtime', 'saluti', 'saluto', 'serenita', 'share', 'shared', 'should',
   'riassumera', 'riassumerà', 'risultati', 'smile', 'so', 'sono', 'spero', 'splendida', 'stati', 'stesso', 'stiate', 'success',
-  'such', 'successfully', 'successi', 'successo', 'summary', 'suo', 'sulla', 'task', 'the', 'they', 'things', 'tono',
+  'smiles', 'splendidly', 'such', 'successfully', 'successi', 'successo', 'summary', 'suo', 'sulla', 'task', 'the', 'they', 'things', 'time', 'tono',
   'ti', 'to', 'today', 'together', 'true', 'tutti', 'un', 'una', 'uniti', 'verranno', 'vero', 'voi', 'warmth', 'welcome', 'will', 'with',
-  'wonderful', 'word', 'workflow', 'wishing', 'you', 'your', 'duplicate', 'da', 'here', 'ahead', 'conversations', 'even'
+  'wonderful', 'word', 'workflow', 'wishing', 'you', 'your', 'duplicate', 'da', 'here', 'ahead', 'absolutely', 'connection', 'conversations', 'even'
 ];
-const COMPRESSED_CHAT_WORD_SET = new Set(COMPRESSED_CHAT_WORDS);
-const COMPRESSED_CHAT_MAX_WORD_LEN = COMPRESSED_CHAT_WORDS.reduce((max, word) => Math.max(max, word.length), 0);
+const EXTRA_COMPRESSED_CHAT_WORDS = [
+  'altra', 'bello', 'ci', 'genera', 'incontriamo', 'mondo', 'piu', 'quando', 'summarize',
+];
+const ALL_COMPRESSED_CHAT_WORDS = [...COMPRESSED_CHAT_WORDS, ...EXTRA_COMPRESSED_CHAT_WORDS];
+const COMPRESSED_CHAT_WORD_SET = new Set(ALL_COMPRESSED_CHAT_WORDS.map((word) => normalizeCompressedChatWord(word)));
+const COMPRESSED_CHAT_MAX_WORD_LEN = ALL_COMPRESSED_CHAT_WORDS.reduce((max, word) => Math.max(max, word.length), 0);
 const RESTORABLE_CHAT_TOKEN_RE = /^(?:[A-Z\u00C0-\u00D6\u00D8-\u00DE][a-z\u00DF-\u00F6\u00F8-\u00FF]{6,}|[a-z\u00DF-\u00F6\u00F8-\u00FF]{7,})$/u;
 const RESTORABLE_CHAT_TOKEN_MATCH_RE = /(?:[A-Z\u00C0-\u00D6\u00D8-\u00DE][a-z\u00DF-\u00F6\u00F8-\u00FF]{6,}|[a-z\u00DF-\u00F6\u00F8-\u00FF]{7,})/gu;
 const SNIPPET_NOISE_LINE_PATTERNS = [
@@ -1373,6 +1381,15 @@ class SwarmEngine {
       if (compactLine.includes('downloadstestworkflowscopia')) continue;
       if (/^you are the /i.test(line)) continue;
       if (/^current workflow context:?/i.test(line)) continue;
+      if (/^this agent is not terminal in the workflow\.?$/i.test(line)) continue;
+      if (/^when your stage is complete, you must emit a handoff token/i.test(line)) continue;
+      if (/^your required downstream target is:/i.test(line)) continue;
+      if (/^if another agent is better suited to /i.test(line)) continue;
+      if (/^do not emit\b/i.test(line)) continue;
+      if (/^agent[-_\s]?[ab]\s*:\s*(?:greeting|translation|language)\b/i.test(line)) continue;
+      if (compactLine.includes('agenta:greeting') || compactLine.includes('agentb:greeting')) continue;
+      if (compactLine.includes('agenta:translation') || compactLine.includes('agentb:translation')) continue;
+      if (compactLine.includes('agenta:language') || compactLine.includes('agentb:language')) continue;
       if (/^(?:workflow name|workflow description|currenttask|task|instruction|workflow|merge_with|triage_note|agent(?:_[ab])?|language|greeting|status|translation|agent_[ab]_(?:language|greeting|translation)|merge_status)\s*:/i.test(line)) continue;
       if (/^["'{[]/.test(line)) continue;
       if (/"[^"\n]{1,80}"\s*:/.test(line)) continue;
@@ -1420,6 +1437,10 @@ class SwarmEngine {
       }
     }
 
+    if (/(?:must emit a handoff token|your required downstream target|do not stop at the done marker|finish your work, then hand off to|very last line must be a valid handoff token|this agent is not terminal in the workflow|is not the end of the workflow yet)/i.test(text)) {
+      return '';
+    }
+
     return text;
   }
 
@@ -1442,6 +1463,9 @@ class SwarmEngine {
     if (!normalized) return false;
     if (/^you are the /im.test(normalized)) return true;
     if (/^current workflow context:?/im.test(normalized)) return true;
+    if (/(?:must emit a handoff token|your required downstream target|do not stop at the done marker|finish your work, then hand off to|very last line must be a valid handoff token|this agent is not terminal in the workflow|is not the end of the workflow yet)/i.test(normalized)) {
+      return true;
+    }
     if (/^(?:workflow name|workflow description|currenttask|task|instruction|workflow|merge_with|triage_note|agent(?:_[ab])?|language|greeting|status|translation|agent_[ab]_(?:language|greeting|translation)|merge_status)\s*:/im.test(normalized)) {
       return true;
     }
@@ -1461,6 +1485,7 @@ class SwarmEngine {
     score -= (normalized.match(/[a-z\u00E0-\u00FF][A-Z\u00C0-\u00D6]/gu) ?? []).length * 20;
     if (/^you are the /im.test(normalized)) score -= 240;
     if (/^current workflow context:?/im.test(normalized)) score -= 240;
+    if (/(?:must emit a handoff token|your required downstream target|do not stop at the done marker|finish your work, then hand off to|very last line must be a valid handoff token|this agent is not terminal in the workflow|is not the end of the workflow yet)/i.test(normalized)) score -= 320;
     return score;
   }
 
@@ -1608,6 +1633,7 @@ class SwarmEngine {
         .replace(/(-[A-Z])([a-z\u00E0-\u00F6])/gu, '$1 $2')
         .replace(/([a-z\u00E0-\u00F6])([A-Z\u00C0-\u00D6])/gu, '$1 $2')
         .replace(/\b([a-zA-Z\u00C0-\u00F6]+(?:['’](?:s|re|ve|ll|d|m)|n['’]t))(?=[a-zA-Z\u00C0-\u00F6])/gu, '$1 ')
+        .replace(/\b([a-zA-Z\u00C0-\u00F6]+['’])([a-zA-Z\u00C0-\u00F6]{7,})/gu, (_, prefix, suffix) => `${prefix}${this._restoreCompressedChatToken(suffix)}`)
         .replace(RESTORABLE_CHAT_TOKEN_MATCH_RE, (token) => this._restoreCompressedChatToken(token))
         .replace(/\s{2,}/g, ' ')
         .trimEnd();
@@ -1705,6 +1731,141 @@ class SwarmEngine {
         length -= 1
       ) {
         const slice = lowerToken.slice(index, index + length);
+        if (!COMPRESSED_CHAT_WORD_SET.has(slice)) continue;
+        bestEnd = index + length;
+        break;
+      }
+
+      if (bestEnd === -1) return null;
+      parts.push({ start: index, end: bestEnd });
+      index = bestEnd;
+    }
+
+    if (parts.length < 2) return null;
+    return parts.map((part) => token.slice(part.start, part.end)).join(' ');
+  }
+
+  _shouldSkipConPTYDecompression(line = '') {
+    if (!line) return false;
+    if (/[{}\[\]]/.test(line)) return true;
+    if (/^[A-Z_]+=/.test(line)) return true;
+    if (/^\s*\w+\s*:\s*[{[]/.test(line)) return true;
+    if (/^\s*[-Ã¢â‚¬Â¢]/.test(line) && /\/api\//.test(line)) return true;
+    if (/https?:\/\//.test(line)) return true;
+    if (/PROMPT-CONTROL-REPORT/.test(line)) return true;
+    if (/^(?:~[\\/]|[A-Za-z]:[\\/])/.test(line)) return true;
+    return false;
+  }
+
+  _decompressConPTYSpaces(text) {
+    if (!text) return text;
+    return text.split('\n').map((line) => {
+      if (this._shouldSkipConPTYDecompression(line)) return line;
+      return line
+        .replace(/([.!?])([A-Z\u00C0-\u00D6])/gu, '$1 $2')
+        .replace(/([,;])([a-zA-Z\u00C0-\u00F6])/gu, '$1 $2')
+        .replace(/([):])([A-Z\u00C0-\u00D6])/gu, '$1 $2')
+        .replace(/(-[A-Z])([a-z\u00E0-\u00F6])/gu, '$1 $2')
+        .replace(/([a-z\u00E0-\u00F6])([A-Z\u00C0-\u00D6])/gu, '$1 $2')
+        .replace(/\b([a-zA-Z\u00C0-\u00F6]+(?:['â€™](?:s|re|ve|ll|d|m)|n['â€™]t))(?=[a-zA-Z\u00C0-\u00F6])/gu, '$1 ')
+        .replace(/\b([a-zA-Z\u00C0-\u00F6]+['â€™])([a-zA-Z\u00C0-\u00F6]{7,})/gu, (_, prefix, suffix) => `${prefix}${this._restoreCompressedChatToken(suffix)}`)
+        .replace(RESTORABLE_CHAT_TOKEN_MATCH_RE, (token) => this._restoreCompressedChatToken(token))
+        .replace(/\s{2,}/g, ' ')
+        .trimEnd();
+    }).join('\n');
+  }
+
+  _restoreCompressedChatToken(token = '') {
+    if (!token || !RESTORABLE_CHAT_TOKEN_RE.test(token)) return token;
+
+    const normalizedToken = normalizeCompressedChatWord(token);
+    const states = new Array(normalizedToken.length + 1).fill(null);
+    states[0] = { score: 0, matchedChars: 0, matchedWords: 0, parts: [] };
+
+    const pickBetterState = (candidate, current) => {
+      if (!candidate) return current;
+      if (!current) return candidate;
+      if (candidate.score !== current.score) return candidate.score > current.score ? candidate : current;
+      if (candidate.matchedChars !== current.matchedChars) {
+        return candidate.matchedChars > current.matchedChars ? candidate : current;
+      }
+      if (candidate.matchedWords !== current.matchedWords) {
+        return candidate.matchedWords > current.matchedWords ? candidate : current;
+      }
+      return candidate.parts.length < current.parts.length ? candidate : current;
+    };
+
+    for (let index = 0; index < normalizedToken.length; index += 1) {
+      const current = states[index];
+      if (!current) continue;
+
+      const unmatchedState = {
+        score: current.score - 3,
+        matchedChars: current.matchedChars,
+        matchedWords: current.matchedWords,
+        parts: [...current.parts, { start: index, end: index + 1, matched: false }],
+      };
+      states[index + 1] = pickBetterState(unmatchedState, states[index + 1]);
+
+      for (let length = 1; length <= COMPRESSED_CHAT_MAX_WORD_LEN && index + length <= normalizedToken.length; length += 1) {
+        const slice = normalizedToken.slice(index, index + length);
+        if (!COMPRESSED_CHAT_WORD_SET.has(slice)) continue;
+        const matchState = {
+          score: current.score + (length * 2) - (length === 1 ? 2 : 0),
+          matchedChars: current.matchedChars + length,
+          matchedWords: current.matchedWords + 1,
+          parts: [...current.parts, { start: index, end: index + length, matched: true }],
+        };
+        states[index + length] = pickBetterState(matchState, states[index + length]);
+      }
+    }
+
+    const result = states[normalizedToken.length];
+    if (!result) return this._restoreCompressedChatTokenGreedy(token, normalizedToken) ?? token;
+
+    const coverage = result.matchedChars / token.length;
+    const minimumScore = token.length * 0.35;
+    if (result.matchedWords < 2 || coverage < 0.6 || result.score <= minimumScore) {
+      return this._restoreCompressedChatTokenGreedy(token, normalizedToken) ?? token;
+    }
+
+    const matchedParts = result.parts.filter((part) => part.matched);
+    const singleCharMatches = matchedParts.filter((part) => (part.end - part.start) === 1).length;
+    const tinyMatches = matchedParts.filter((part) => (part.end - part.start) <= 2).length;
+    if (singleCharMatches > 1 || tinyMatches > 3) {
+      return this._restoreCompressedChatTokenGreedy(token, normalizedToken) ?? token;
+    }
+
+    const mergedParts = [];
+    for (const part of result.parts) {
+      const previous = mergedParts.at(-1);
+      if (previous && !previous.matched && !part.matched && previous.end === part.start) {
+        previous.end = part.end;
+      } else {
+        mergedParts.push({ ...part });
+      }
+    }
+
+    return mergedParts
+      .map((part) => token.slice(part.start, part.end))
+      .join(' ');
+  }
+
+  _restoreCompressedChatTokenGreedy(token = '', normalizedToken = normalizeCompressedChatWord(token)) {
+    if (!token || !RESTORABLE_CHAT_TOKEN_RE.test(token)) return null;
+
+    const parts = [];
+    let index = 0;
+
+    while (index < normalizedToken.length) {
+      let bestEnd = -1;
+
+      for (
+        let length = Math.min(COMPRESSED_CHAT_MAX_WORD_LEN, normalizedToken.length - index);
+        length >= 1;
+        length -= 1
+      ) {
+        const slice = normalizedToken.slice(index, index + length);
         if (!COMPRESSED_CHAT_WORD_SET.has(slice)) continue;
         bestEnd = index + length;
         break;

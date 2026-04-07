@@ -4,7 +4,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v5.0.0 — 333 tasks total, 331 COMPLETED, 2 DEFERRED, 0 PENDING. ALL AREAS CLOSED including POST-V5 FOLLOW-UP 2 (#331 COMPLETED, #332 PASS, #333 COMPLETED). Last verified baseline: build OK (498 modules, 0 errors), tests 312/312 pass.
+**Status:** v5.1.0 — 347 tasks total, 331 COMPLETED, 2 DEFERRED, 14 PENDING. V8.0 AGENT OUTPUT VIEWER & WORKFLOW DELIVERABLE in progress (#334-#347). Last verified baseline: build OK (498 modules, 0 errors), tests 312/312 pass.
   **Completed Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 ALL COMPLETED/PASS. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#267 ALL COMPLETED. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave2 NODE CREATION & CONFIG — Tasks #268-#272 ALL COMPLETED. AREA CLOSED 2026-04-06.
@@ -37,6 +37,7 @@
   - V5.0-BugFix2 E2E DEBUGGER LOOP FIXES: AREA CLOSED 2026-04-06 — BUG-SAVE-1 (#321), BUG-DUP-1 (#322), BUG-DUP-2/IMP-1 (#323), BUG-VER-DATE (#324) ALL COMPLETED. TEST GATE #325 PASS. AREA CHECKPOINT #326 PASS. Build: 496 modules, 0 errors. Tests: 312/312 pass. Commit 895ddd7.
   - POST-V5 FOLLOW-UP RUNTIME COMPLETION + TRUTHFULNESS SYNC: AREA CLOSED 2026-04-07 — #327 (ExecutionHistoryStore wiring) COMPLETED, #328 (TEST GATE persistence round-trip) PASS, #329 (Unified Chat E2E verification) PASS, #330 (documentation truthfulness sync) COMPLETED. All docs updated. Build: 498 modules, 0 errors. Tests: 312/312 pass.
   - POST-V5 FOLLOW-UP 2 SWARM CANVAS DROP PREVIEW: AREA CLOSED 2026-04-07 — #331 COMPLETED, #332 PASS, #333 COMPLETED. Agent Node palette drags now show a live ghost preview and the dropped node lands on the same snapped position shown during drag.
+  - V8.0 AGENT OUTPUT VIEWER & WORKFLOW DELIVERABLE: IN PROGRESS — #334-#347 (14 tasks). Red dot badge on done agents, per-agent output panel, workflow-level markdown artifact, full persistence via ExecutionHistoryStore.
   DEFERRED (2 tasks, both MVP-acceptable, no fix possible):
     - #236: BUG-UI-1 — ConPTY terminal prompt garble after navigation (Windows platform limitation, DEC-009)
     - (none other — #233 and #242 previously marked DEFERRED are now COMPLETED)
@@ -14539,4 +14540,880 @@ Acceptance Criteria:
   - [x] TEST GATE #332 PASS
   - [x] No regression to palette-driven node creation or canvas editing flow
 Dependencies: TASK #332
+---
+
+================================================================================
+## AREA: V8.0 — AGENT OUTPUT VIEWER & WORKFLOW DELIVERABLE
+================================================================================
+
+_Feature: when a Swarm agent completes (status `done`), a red dot badge appears on its canvas node indicating output is ready. Clicking the node opens a dedicated **AgentOutputPanel** showing the clean semantic output + any handoff payload emitted. A toolbar button opens a **WorkflowArtifactPanel** with the aggregated markdown of the entire workflow execution, copyable and downloadable as `.md`. All output data is persisted to disk via ExecutionHistoryStore so it survives reload/restart._
+
+_Origin: user request via `/feature` pipeline, 2026-04-07_
+_Tasks: #334 → #347 (14 tasks)_
+_Waves: 4 (Backend contracts → Frontend state → Frontend UI → TEST GATE + AREA CHECKPOINT)_
+_Dependencies: none (builds on existing ChatExtractor, ExecutionHistoryStore, SwarmContext infrastructure)_
+
+**Key design decisions:**
+- Reuses existing `ChatExtractor` (already extracts clean text from PTY) — no new parser needed
+- Reuses existing `execution.chatMessages[]` (already tracked in SwarmEngine RAM) — no new WS events
+- Extends `ExecutionHistoryStore` schema (already persists execution history) — no new store
+- Markdown chosen as artifact format (consistent with job-mode, universal, copiable)
+- Red dot is per-agent, appears only when `status === 'done'` AND agent produced ≥ 1 chat message
+- Panel replaces AgentInspector when node has `hasFinalOutput === true`, otherwise Inspector opens as usual
+
+---
+
+### GROUP A: Backend — Persistence & REST contracts
+_Wave 1 — all 4 tasks run in parallel (touch different files)_
+
+---
+
+TASK #334: Capture handoff payload per agent in SwarmEngine execution state
+Area: V8.0 — Agent Output Viewer & Workflow Deliverable
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Goal:
+    When SwarmEngine processes a handoff (`_onHandoff`), save the parsed handoff payload into the
+    source agent's state so it can be included in the persisted execution history later.
+
+  What exists today:
+    - `_onHandoff(executionId, sourceNodeId, targetNodeId, parsedPayload)` already receives the
+      parsed JSON payload from HandoffParser
+    - `execution.agentStates` Map already tracks per-agent state with `status`, `lastOutputSnippet`,
+      `handoffCount`, `sessionId`, `timestamps`, etc.
+    - `execution.chatMessages` array already collects all chat messages extracted by ChatExtractor
+
+  Sub-components to create/modify:
+    1. In `SwarmEngine._onHandoff()` — after incrementing `handoffCount`, store:
+       `state.lastHandoffPayload = { target: targetNodeId, payload: parsedPayload, timestamp: ISO }`
+    2. In `SwarmEngine._onHandoff()` — also store all handoff payloads in an array for history:
+       `state.handoffPayloads = [...(state.handoffPayloads || []), { target, payload, timestamp }]`
+    3. Verify that this does NOT break the existing `_broadcastAgentStatus` — the new field is
+       ignored by the existing WS broadcast (only known fields are sent)
+    4. No new WS events needed — the client will read handoff data from the REST endpoint
+
+  File: server/services/SwarmEngine.js
+  Lines to modify: `_onHandoff` method (around line ~3000+, find `handoffCount` increment)
+
+Acceptance Criteria:
+  - [ ] After a handoff, `execution.agentStates.get(sourceNodeId).lastHandoffPayload` contains `{ target, payload, timestamp }`
+  - [ ] `execution.agentStates.get(sourceNodeId).handoffPayloads` is an array of all handoff records
+  - [ ] Existing `_broadcastAgentStatus` still works (no extra unknown fields sent over WS)
+  - [ ] `npm test --prefix server` passes with no regressions
+Dependencies: none
+---
+
+TASK #335: Extend ExecutionHistoryStore schema with agentOutputs and aggregatedArtifact
+Area: V8.0 — Agent Output Viewer & Workflow Deliverable
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Goal:
+    Extend the execution history entry schema to include per-agent output data and a pre-built
+    markdown artifact so results survive restart and can be fetched by the REST API.
+
+  What exists today:
+    - `server/stores/ExecutionHistoryStore.js` persists execution entries as JSON files in
+      `%APPDATA%\ClaudeCodeManager\workflows\history\<workflowId>\<executionId>.json`
+    - Current entry schema: `{ executionId, status, startedAt, endedAt, durationMs, nodesRun, outcome, nodeSnapshots }`
+    - `nodeSnapshots` only contains `{ status, provider, handoffCount }` per node — no output text
+
+  Sub-components to create/modify:
+    1. Extend the entry schema with two new top-level fields:
+       ```
+       agentOutputs: {
+         [nodeId]: {
+           label: string,             // human-readable agent name
+           finalText: string,         // concatenated clean chat messages for this node
+           handoffPayloads: array,    // [{ target, payload, timestamp }] or []
+           status: string,            // final agent status
+           provider: string|null,     // runtime provider used
+           messageCount: number,      // how many chat messages this agent produced
+           firstMessageAt: ISO|null,  // timestamp of first chat message
+           lastMessageAt: ISO|null    // timestamp of last chat message
+         }
+       }
+       aggregatedArtifact: string     // pre-compiled markdown of the entire workflow execution
+       ```
+    2. In `addEntry(workflowId, entry)` — no schema change needed (it already writes whatever
+       object is passed). Just ensure the new fields are preserved through read/write cycle.
+    3. Add a `getEntry(workflowId, executionId)` method if it doesn't exist — needed by the
+       REST endpoint to fetch a single execution's results. Read from disk, parse JSON, return.
+       Path validation: same pattern as existing methods (prevent directory traversal).
+    4. In the `get`/`getEntry` return path — ensure backward compatibility: if an older entry
+       lacks `agentOutputs`, return it with `agentOutputs: {}` and `aggregatedArtifact: ''`
+    5. Write a test file: `server/tests/execution-history-outputs.test.js`
+       - Test that an entry with `agentOutputs` + `aggregatedArtifact` round-trips through save/load
+       - Test that an older entry without these fields returns defaults
+       - Test that `getEntry` returns null for non-existent execution
+       - Test path traversal prevention on `getEntry`
+
+  File: server/stores/ExecutionHistoryStore.js (modify) + server/tests/execution-history-outputs.test.js (NEW)
+
+Acceptance Criteria:
+  - [ ] `addEntry` accepts and persists `agentOutputs` and `aggregatedArtifact` fields
+  - [ ] `getEntry(workflowId, executionId)` returns a single execution entry or null
+  - [ ] Older entries without new fields are returned with safe defaults (`{}` and `''`)
+  - [ ] Path traversal attacks on `getEntry` return null (not file content)
+  - [ ] All new tests pass, existing tests unaffected
+  - [ ] `npm test --prefix server` passes
+Dependencies: none
+---
+
+TASK #336: Create WorkflowArtifactBuilder service — markdown generator
+Area: V8.0 — Agent Output Viewer & Workflow Deliverable
+Agent: backend-dev
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  Goal:
+    Create a pure function that takes execution data and produces a clean, readable markdown
+    document aggregating all agent outputs into a single workflow deliverable.
+
+  What exists today:
+    - Nothing — this is a new file
+
+  Sub-components to create:
+    1. New file: `server/services/WorkflowArtifactBuilder.js`
+    2. Export: `buildWorkflowArtifact({ workflowName, workflowDescription, executionId, status,
+       startedAt, endedAt, durationMs, agentOutputs })` → `string` (markdown)
+    3. Markdown structure:
+       ```markdown
+       # Workflow: <workflowName>
+       > <workflowDescription>
+
+       **Execution:** `<executionId>` · **Status:** <status> · **Duration:** Xm Ys
+       **Started:** <ISO> · **Ended:** <ISO>
+
+       ---
+
+       ## <label> (`<nodeId>`)
+       **Provider:** <provider> · **Status:** <status> · **Messages:** <messageCount>
+
+       <finalText>
+
+       ### Handoff → <target>
+       ```json
+       <handoffPayload>
+       ```
+
+       ---
+       (repeat for each agent in temporal order, sorted by firstMessageAt)
+
+       ---
+       *Generated by Claude Code Visual Manager · <ISO timestamp>*
+       ```
+    4. Edge cases:
+       - Agent with no `finalText` → show "(No output captured)"
+       - Agent with no handoffs → omit the Handoff subsection
+       - No agents at all → show "No agent outputs were captured for this execution."
+       - `durationMs` formatting: `<60s` → "Xs", `<3600s` → "Xm Ys", else "Xh Ym Zs"
+    5. Write test file: `server/tests/workflow-artifact-builder.test.js`
+       - Test basic 2-agent workflow with handoff produces correct markdown
+       - Test empty agentOutputs produces fallback message
+       - Test agent without handoff omits handoff section
+       - Test duration formatting for all 3 ranges
+
+  Files: server/services/WorkflowArtifactBuilder.js (NEW) + server/tests/workflow-artifact-builder.test.js (NEW)
+
+Acceptance Criteria:
+  - [ ] `buildWorkflowArtifact(data)` returns valid markdown string
+  - [ ] Agents are sorted by `firstMessageAt` (temporal execution order)
+  - [ ] Handoff payloads are rendered as JSON code blocks
+  - [ ] Edge cases (no output, no handoff, empty execution) produce graceful fallbacks
+  - [ ] Duration formatting is correct for seconds/minutes/hours
+  - [ ] All tests pass
+Dependencies: none
+---
+
+TASK #337: Populate agentOutputs and aggregatedArtifact in SwarmEngine._persistExecutionHistory
+Area: V8.0 — Agent Output Viewer & Workflow Deliverable
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Goal:
+    When a Swarm execution reaches a terminal state (completed/stopped/failed), build the
+    `agentOutputs` map and `aggregatedArtifact` markdown from in-memory data and include them
+    in the history entry that gets persisted to disk.
+
+  What exists today:
+    - `SwarmEngine._persistExecutionHistory(execution)` already builds `nodeSnapshots` from
+      `execution.agentStates` and calls `this._executionHistoryStore.addEntry(workflowId, entry)`
+    - `execution.chatMessages` is an in-memory array of `{ nodeId, role, text, timestamp }`
+      capped at 500 entries, populated by ChatExtractor via `_broadcastChatMessage`
+    - After TASK #334: `execution.agentStates.get(nodeId).handoffPayloads` is available
+    - After TASK #336: `buildWorkflowArtifact()` is available
+
+  Sub-components to modify:
+    1. In `_persistExecutionHistory()` — after building `nodeSnapshots`, build `agentOutputs`:
+       - Group `execution.chatMessages` by `nodeId`
+       - For each nodeId with messages:
+         - `finalText` = concatenate all `.text` values with `\n\n` separator
+         - `messageCount` = count
+         - `firstMessageAt` = min timestamp ISO
+         - `lastMessageAt` = max timestamp ISO
+         - `label` = from workflow definition node data (find node by id in `execution.workflowDef.nodes`)
+         - `handoffPayloads` = from `agentState.handoffPayloads || []`
+         - `status` = from `agentState.status`
+         - `provider` = from `agentState.runtimeProvider || agentState.provider`
+    2. Call `buildWorkflowArtifact()` with execution metadata + `agentOutputs` → get markdown string
+    3. Add both to the `entry` object before calling `addEntry()`
+    4. Import `buildWorkflowArtifact` from `./WorkflowArtifactBuilder.js`
+    5. Handle edge case: if `execution.chatMessages` is empty → `agentOutputs = {}`,
+       `aggregatedArtifact` = fallback message from builder
+
+  File: server/services/SwarmEngine.js (modify `_persistExecutionHistory` method)
+
+Acceptance Criteria:
+  - [ ] Terminal executions persist `agentOutputs` with per-node `finalText`, `handoffPayloads`, metadata
+  - [ ] Terminal executions persist `aggregatedArtifact` as valid markdown
+  - [ ] `chatMessages` are correctly grouped by `nodeId` and concatenated
+  - [ ] Agent labels are resolved from the workflow definition nodes array
+  - [ ] Empty `chatMessages` produces graceful fallback (no crash)
+  - [ ] `npm test --prefix server` passes
+Dependencies: TASK #334, TASK #335, TASK #336
+---
+
+### GROUP B: Backend — REST endpoints
+_Wave 1 continued — can run in parallel with #334-#336 (different file)_
+
+---
+
+TASK #338: Two GET endpoints for execution results and artifact download
+Area: V8.0 — Agent Output Viewer & Workflow Deliverable
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Goal:
+    Expose two read-only REST endpoints so the frontend can fetch per-agent outputs and download
+    the aggregated workflow artifact as a markdown file.
+
+  What exists today:
+    - `server/routes/swarm.js` has execution control endpoints (start, stop, status, etc.)
+    - ExecutionHistoryStore has `listEntries(workflowId)` — after TASK #335 also `getEntry()`
+    - No existing endpoint returns execution output or artifact content
+
+  Sub-components to create:
+    1. `GET /api/v1/swarm/executions/:executionId/results`
+       - Looks up execution first in live `swarmEngine._executions` Map (for in-progress),
+         then falls back to `executionHistoryStore.getEntry()` scanning all workflows
+         (or accept `?workflowId=` query param to speed up lookup)
+       - Response 200:
+         ```json
+         {
+           "executionId": "...",
+           "workflowName": "...",
+           "status": "completed",
+           "agentOutputs": { ... },   // per-node output data
+           "aggregatedArtifact": "...", // markdown string
+           "meta": { "startedAt", "endedAt", "durationMs", "nodesRun" }
+         }
+         ```
+       - Response 404 if execution not found
+       - No CSRF required (GET, read-only)
+
+    2. `GET /api/v1/swarm/executions/:executionId/artifact.md`
+       - Same lookup as above
+       - Response 200 with `Content-Type: text/markdown; charset=utf-8`
+       - Response header: `Content-Disposition: attachment; filename="<workflowName>-<shortId>.md"`
+         where `shortId` is first 8 chars of executionId
+       - Response body: the `aggregatedArtifact` markdown string
+       - Response 404 if execution not found or no artifact available
+
+    3. Validate `executionId` path param: must be UUID format, reject with 400 otherwise
+    4. Path validation on `workflowId` query param if provided
+
+    5. Test file: `server/tests/execution-results-api.test.js`
+       - Test GET /results returns 200 with correct shape for a persisted execution
+       - Test GET /results returns 404 for unknown execution
+       - Test GET /artifact.md returns text/markdown content type + attachment header
+       - Test GET /artifact.md returns 404 for unknown execution
+       - Test invalid executionId format returns 400
+
+  Files: server/routes/swarm.js (modify — add 2 routes) + server/tests/execution-results-api.test.js (NEW)
+
+Acceptance Criteria:
+  - [ ] `GET /api/v1/swarm/executions/:id/results` returns 200 with `agentOutputs` + `aggregatedArtifact`
+  - [ ] `GET /api/v1/swarm/executions/:id/artifact.md` returns text/markdown with Content-Disposition attachment
+  - [ ] Both endpoints return 404 for unknown executions
+  - [ ] Invalid UUID format returns 400
+  - [ ] No CSRF header required (read-only GET)
+  - [ ] All new tests pass, existing tests unaffected
+  - [ ] `npm test --prefix server` passes
+Dependencies: TASK #335 (needs `getEntry`)
+---
+
+### GROUP C: Frontend — State management & WS wiring
+_Wave 2 — depends on Wave 1 backend being committed (needs REST endpoints + WS contract stable)_
+
+---
+
+TASK #339: Extend SwarmContext with agentResults slice and actions
+Area: V8.0 — Agent Output Viewer & Workflow Deliverable
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Goal:
+    Add a dedicated Zustand slice to SwarmContext for tracking per-agent output results on the
+    client side, separate from the existing `agentStates` (which tracks live execution status).
+
+  What exists today:
+    - `client/src/store/SwarmContext.jsx` has `agentStates: {}` with per-node
+      `{ status, lastOutputSnippet, handoffCount, sessionId, timestamps, ... }`
+    - `setAgentState(nodeId, partial)` merges partial updates into `agentStates[nodeId]`
+    - No concept of "final output" or "viewed" flag
+
+  Sub-components to create/modify:
+    1. New state field: `agentResults: {}`
+       Shape: `{ [nodeId]: { finalText: '', handoffPayloads: [], viewed: false, updatedAt: null } }`
+
+    2. New actions:
+       a. `appendAgentChatText(nodeId, text)`:
+          - Appends `text` to `agentResults[nodeId].finalText` (with `\n\n` separator if not empty)
+          - Sets `viewed: false` (new content arrived)
+          - Sets `updatedAt: Date.now()`
+          - Creates the entry if it doesn't exist
+
+       b. `setAgentHandoffPayload(nodeId, target, payload)`:
+          - Pushes `{ target, payload, timestamp: Date.now() }` to `agentResults[nodeId].handoffPayloads`
+          - Creates the entry if it doesn't exist
+
+       c. `markAgentResultViewed(nodeId)`:
+          - Sets `agentResults[nodeId].viewed = true`
+          - Used when the user opens the output panel for this node (clears the red dot)
+
+       d. `hydrateAgentResults(agentOutputs)`:
+          - Bulk-sets `agentResults` from a server response (used after fetching persisted results)
+          - Maps `agentOutputs[nodeId]` → `{ finalText, handoffPayloads, viewed: true, updatedAt }`
+          - Sets `viewed: true` because these are historical (no notification needed)
+
+       e. `clearAgentResults()`:
+          - Resets `agentResults` to `{}` (called on new execution start or workflow switch)
+
+    3. Derived selector (inline with Zustand pattern):
+       - `hasUnviewedOutput(nodeId)`: `s.agentResults[nodeId]?.finalText && !s.agentResults[nodeId]?.viewed`
+       - Used by AgentNode for the red dot
+
+    4. IMPORTANT: Do NOT merge this into `agentStates` — keep it separate per DEC-011 spirit
+       (execution data separate from canvas state, and output results are a third concern)
+
+  File: client/src/store/SwarmContext.jsx
+
+Acceptance Criteria:
+  - [ ] `agentResults` slice exists in store with correct initial shape
+  - [ ] `appendAgentChatText` accumulates text and resets `viewed` to false
+  - [ ] `setAgentHandoffPayload` pushes to handoffPayloads array
+  - [ ] `markAgentResultViewed` sets viewed to true
+  - [ ] `hydrateAgentResults` bulk-sets from server data with viewed=true
+  - [ ] `clearAgentResults` resets to empty
+  - [ ] `npm run build --prefix client` passes (0 errors)
+Dependencies: none (pure frontend state, no backend dependency)
+---
+
+TASK #340: Wire useSwarm.js to consume chat_message WS + hydrate from history on terminal state
+Area: V8.0 — Agent Output Viewer & Workflow Deliverable
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Goal:
+    Make the existing useSwarm WebSocket hook feed the new `agentResults` store in real-time
+    via the existing `chat_message` WS event, and hydrate from persisted results when an
+    execution reaches a terminal state.
+
+  What exists today:
+    - `client/src/hooks/useSwarm.js` connects to the Swarm WS channel and handles events:
+      `execution_status`, `agent_status`, `handoff`, `chat_message`, `budget_update`, etc.
+    - `chat_message` handler currently does nothing meaningful on the client (messages are
+      only used for InterAgentFeed which reads from a different store path)
+    - `handoff` handler updates `handoffCount` in `agentStates`
+
+  Sub-components to modify:
+    1. In the `chat_message` WS handler:
+       - Call `appendAgentChatText(msg.nodeId, msg.text)` from SwarmContext
+       - Only for `msg.role === 'assistant'` (skip 'user' messages — those are prompts, not output)
+
+    2. In the `handoff` WS handler:
+       - Call `setAgentHandoffPayload(msg.sourceNodeId, msg.targetNodeId, msg.payload)`
+         (only if `msg.payload` exists — not all handoff events carry parsed payload)
+
+    3. In the `execution_status` handler, when status transitions to `completed`/`stopped`/`failed`:
+       - Fetch `GET /api/v1/swarm/executions/${executionId}/results`
+       - On 200: call `hydrateAgentResults(response.agentOutputs)` to ensure persisted data
+         overwrites any incomplete WS-accumulated data
+       - On 404/error: silently skip (WS-accumulated data is still available)
+       - This ensures consistency even if some `chat_message` events were missed
+
+    4. When a new execution starts (`execution_status` with status `running` and new executionId):
+       - Call `clearAgentResults()` to reset from previous execution
+
+  File: client/src/hooks/useSwarm.js
+
+Acceptance Criteria:
+  - [ ] `chat_message` WS events with `role === 'assistant'` feed `appendAgentChatText`
+  - [ ] `handoff` WS events with payload feed `setAgentHandoffPayload`
+  - [ ] Terminal execution status triggers fetch of `/results` and `hydrateAgentResults`
+  - [ ] New execution start clears previous results
+  - [ ] `npm run build --prefix client` passes
+Dependencies: TASK #339 (needs SwarmContext actions), TASK #338 (needs REST endpoint for hydration)
+---
+
+### GROUP D: Frontend — UI components (red dot, output panel, artifact panel)
+_Wave 3 — depends on Wave 2 state being available_
+
+---
+
+TASK #341: AgentNode red dot badge for unviewed final output
+Area: V8.0 — Agent Output Viewer & Workflow Deliverable
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  Goal:
+    Add a pulsing red dot to the top-left corner of AgentNode when the agent has produced
+    final output that hasn't been viewed yet.
+
+  What exists today:
+    - `client/src/canvas/nodes/AgentNode.jsx` already has:
+      - Amber warning badge at `-top-1 -right-1` for empty system prompt (line ~36-43)
+      - `handoffCount` badge below the snippet
+      - `agentState` subscription via `useSwarmStore`
+    - After TASK #339: `agentResults[nodeId]` available in store
+
+  Sub-components to modify:
+    1. Add a new Zustand subscription in AgentNode:
+       ```js
+       const hasUnviewedOutput = useSwarmStore(
+         (s) => s.agentResults[id]?.finalText && !s.agentResults[id]?.viewed
+       );
+       ```
+
+    2. Add red dot badge JSX (positioned at `-top-1 -left-1` to avoid collision with amber badge):
+       ```jsx
+       {!isDropPreview && hasUnviewedOutput && status === 'done' && (
+         <div
+           className="absolute -top-1 -left-1 w-3.5 h-3.5 bg-red-500 rounded-full animate-pulse
+                      border border-red-300 shadow-[0_0_6px_rgba(239,68,68,0.6)] z-10"
+           title="Output ready — click to view"
+         />
+       )}
+       ```
+
+    3. Visual spec:
+       - Size: `w-3.5 h-3.5` (14px) — slightly smaller than the amber badge
+       - Color: `bg-red-500` with `border-red-300` for depth
+       - Glow: `shadow-[0_0_6px_rgba(239,68,68,0.6)]` for attention
+       - Animation: `animate-pulse` (Tailwind built-in)
+       - Position: top-left (`-top-1 -left-1`) — opposite corner from amber warning
+       - Only visible when: `status === 'done'` AND `hasUnviewedOutput === true` AND NOT drop preview
+
+  File: client/src/canvas/nodes/AgentNode.jsx
+
+Acceptance Criteria:
+  - [ ] Red dot appears on AgentNode when agent is `done` with unviewed output
+  - [ ] Red dot disappears after `markAgentResultViewed` is called
+  - [ ] Red dot does NOT appear on drop preview nodes
+  - [ ] Red dot does NOT collide with existing amber warning badge (opposite corners)
+  - [ ] Red dot does NOT appear for agents in `running`, `idle`, `error` states
+  - [ ] `npm run build --prefix client` passes
+Dependencies: TASK #339
+---
+
+TASK #342: Create AgentOutputPanel — dedicated per-agent output viewer
+Area: V8.0 — Agent Output Viewer & Workflow Deliverable
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Context:
+  Goal:
+    New side panel that shows the clean semantic output of a specific agent, its handoff data,
+    and provides copy functionality. Replaces AgentInspector when the selected node has final output.
+
+  What exists today:
+    - `AgentInspector.jsx` (308 lines) shows config editing + live status + raw snippet
+    - `stripAnsi` utility already available in `client/src/utils/stripAnsi.js`
+    - `react-markdown` + `remark-gfm` already in the client dependency tree
+    - After TASK #339: `agentResults[nodeId]` has `finalText`, `handoffPayloads`, `viewed`
+
+  Sub-components to create:
+    1. New file: `client/src/panels/AgentOutputPanel.jsx`
+
+    2. Props: `{ nodeId, nodeLabel, onClose }`
+
+    3. Layout (side panel, same width as AgentInspector — `w-[19rem]`):
+       ```
+       ┌──────────────────────────┐
+       │ [Agent Name]         [×] │  ← header with close button
+       ├──────────────────────────┤
+       │ [Output] [Handoff]       │  ← tab bar (Handoff tab hidden if no handoffs)
+       ├──────────────────────────┤
+       │                          │
+       │  <tab content>           │  ← scrollable content area
+       │                          │
+       ├──────────────────────────┤
+       │ [📋 Copy]                │  ← footer action bar
+       └──────────────────────────┘
+       ```
+
+    4. Tab "Output":
+       - Renders `agentResults[nodeId].finalText` via `react-markdown` + `remark-gfm`
+       - If text is empty: show "No output captured for this agent."
+       - Scrollable container with `max-h-[calc(100vh-200px)] overflow-y-auto`
+       - Monospace font for code blocks, proportional for prose
+
+    5. Tab "Handoff" (only shown if `handoffPayloads.length > 0`):
+       - For each handoff in `handoffPayloads`:
+         - Header: `→ <target>` with timestamp
+         - Payload: rendered as formatted JSON in a `<pre>` block with syntax highlighting
+           (simple approach: just `JSON.stringify(payload, null, 2)` in a styled pre)
+       - If multiple handoffs: vertical stack with dividers
+
+    6. Footer:
+       - "Copy" button: copies the active tab's content to clipboard via `navigator.clipboard.writeText`
+       - Success feedback: button text changes to "Copied!" for 2 seconds, then reverts
+       - "Back to Inspector" link/button: calls `onClose` to switch back to AgentInspector
+
+    7. On mount: call `markAgentResultViewed(nodeId)` to clear the red dot
+
+    8. Styling: consistent with AgentInspector — dark gray background, same border, same padding
+
+  File: client/src/panels/AgentOutputPanel.jsx (NEW)
+
+Acceptance Criteria:
+  - [ ] Panel renders clean output text via react-markdown (no raw ANSI, no CLI chrome)
+  - [ ] Handoff tab shows JSON payload formatted with proper indentation
+  - [ ] Handoff tab is hidden when no handoffs exist
+  - [ ] Copy button copies active tab content to clipboard
+  - [ ] "Copied!" feedback appears for 2 seconds after copy
+  - [ ] On mount, `markAgentResultViewed(nodeId)` is called (red dot clears)
+  - [ ] "Back to Inspector" returns to AgentInspector view
+  - [ ] Styling matches existing AgentInspector panel dimensions and colors
+  - [ ] `npm run build --prefix client` passes
+Dependencies: TASK #339
+---
+
+TASK #343: Create WorkflowArtifactPanel — aggregated workflow deliverable viewer
+Area: V8.0 — Agent Output Viewer & Workflow Deliverable
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Context:
+  Goal:
+    New modal/panel that shows the aggregated markdown artifact for the entire workflow execution,
+    with copy and download functionality.
+
+  What exists today:
+    - `react-markdown` + `remark-gfm` in client deps
+    - After TASK #338: `GET /api/v1/swarm/executions/:id/artifact.md` endpoint available
+    - After TASK #339: `agentResults` available in store for live fallback
+
+  Sub-components to create:
+    1. New file: `client/src/panels/WorkflowArtifactPanel.jsx`
+
+    2. Props: `{ executionId, workflowName, onClose }`
+
+    3. Layout (centered modal overlay, wider than side panel — `max-w-3xl w-full`):
+       ```
+       ┌─────────────────────────────────────────┐
+       │ 📄 Final Report: <workflowName>    [×]  │  ← header
+       ├─────────────────────────────────────────┤
+       │                                         │
+       │  <rendered markdown>                    │  ← scrollable, max-h-[80vh]
+       │                                         │
+       ├─────────────────────────────────────────┤
+       │ [📋 Copy All]  [⬇ Download .md]        │  ← footer action bar
+       └─────────────────────────────────────────┘
+       ```
+
+    4. Data fetching:
+       - On mount, fetch `GET /api/v1/swarm/executions/${executionId}/results`
+       - Use `response.aggregatedArtifact` as the markdown content
+       - While loading: show spinner/skeleton
+       - On error: show "Could not load results. The execution may still be in progress."
+       - Fallback for live executions (not yet persisted): compile client-side from
+         `agentResults` store (concatenate all `finalText` with headers per node)
+
+    5. Markdown rendering:
+       - Use `react-markdown` with `remark-gfm` plugin
+       - Wrap in `prose prose-invert` Tailwind typography classes for readable dark-mode rendering
+       - Code blocks: `bg-gray-900 rounded p-3 overflow-x-auto` with monospace font
+
+    6. "Copy All" button:
+       - Copies the raw markdown string (not the rendered HTML) to clipboard
+       - Feedback: "Copied!" for 2 seconds
+
+    7. "Download .md" button:
+       - Creates a Blob with `text/markdown` type from the raw markdown string
+       - Triggers download with filename `<workflowName>-<shortExecutionId>.md`
+       - Uses `URL.createObjectURL` + temporary anchor click pattern
+
+    8. Modal overlay:
+       - Dark semi-transparent backdrop (`bg-black/50`)
+       - Click outside or press Escape → close
+       - Body scroll locked while open
+
+  File: client/src/panels/WorkflowArtifactPanel.jsx (NEW)
+
+Acceptance Criteria:
+  - [ ] Panel fetches and renders aggregated markdown artifact
+  - [ ] Markdown renders with proper headings, code blocks, JSON blocks
+  - [ ] "Copy All" copies raw markdown to clipboard with feedback
+  - [ ] "Download .md" triggers browser download with correct filename
+  - [ ] Loading state shows spinner, error state shows user-friendly message
+  - [ ] Escape key and backdrop click close the modal
+  - [ ] `npm run build --prefix client` passes
+Dependencies: TASK #338, TASK #339
+---
+
+### GROUP E: Frontend — Integration & wiring into SwarmView
+_Wave 3 continued — depends on the panels existing_
+
+---
+
+TASK #344: Integrate AgentOutputPanel and WorkflowArtifactPanel into SwarmView
+Area: V8.0 — Agent Output Viewer & Workflow Deliverable
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Goal:
+    Wire the new panels into SwarmView so that:
+    (a) Clicking an agent node with `hasFinalOutput` opens AgentOutputPanel instead of AgentInspector
+    (b) A "Final Report" toolbar button opens WorkflowArtifactPanel
+    (c) Panel state transitions are smooth and don't break existing Inspector flow
+
+  What exists today:
+    - `client/src/views/SwarmView.jsx` renders `<AgentInspector>` when `selectedNodeId` is set
+    - `selectedNodeId` is managed by SwarmContext (`setSelectedNode`)
+    - Toolbar area has buttons for Run, Stop, HITL toggle, Save, History, Templates, etc.
+
+  Sub-components to modify:
+    1. New state in SwarmView:
+       - `outputPanelNodeId` (string|null) — when set, show AgentOutputPanel instead of Inspector
+       - `showArtifactPanel` (boolean) — when true, show WorkflowArtifactPanel modal
+
+    2. Node click logic (modify `onNodeClick` or equivalent):
+       - If clicked node is `agent` type AND `agentResults[nodeId]?.finalText` exists:
+         → Set `outputPanelNodeId = nodeId`
+       - Else: normal behavior (Inspector opens)
+       - User can switch from OutputPanel back to Inspector via "Back to Inspector" button
+
+    3. AgentOutputPanel wiring:
+       ```jsx
+       {outputPanelNodeId ? (
+         <AgentOutputPanel
+           nodeId={outputPanelNodeId}
+           nodeLabel={nodes.find(n => n.id === outputPanelNodeId)?.data?.label}
+           onClose={() => setOutputPanelNodeId(null)}
+         />
+       ) : selectedNodeId ? (
+         <AgentInspector nodes={nodes} onUpdateNode={onUpdateNode} />
+       ) : null}
+       ```
+
+    4. Toolbar "Final Report" button:
+       - Label: "📄 Final Report"
+       - Visible only when execution status is `completed`, `stopped`, or `failed`
+       - Disabled with tooltip "Run the workflow first" when no terminal execution
+       - `onClick`: `setShowArtifactPanel(true)`
+
+    5. WorkflowArtifactPanel wiring:
+       ```jsx
+       {showArtifactPanel && activeExecutionId && (
+         <WorkflowArtifactPanel
+           executionId={activeExecutionId}
+           workflowName={currentWorkflow?.name || 'Workflow'}
+           onClose={() => setShowArtifactPanel(false)}
+         />
+       )}
+       ```
+
+    6. Edge case: if `outputPanelNodeId` is set but node is deselected (clicked elsewhere on canvas),
+       clear `outputPanelNodeId` as well
+
+  File: client/src/views/SwarmView.jsx
+
+Acceptance Criteria:
+  - [ ] Clicking agent node with final output opens AgentOutputPanel (not Inspector)
+  - [ ] Clicking agent node without final output opens Inspector as before
+  - [ ] "Back to Inspector" in AgentOutputPanel switches to Inspector
+  - [ ] "Final Report" button appears in toolbar when execution is terminal
+  - [ ] "Final Report" button is disabled/hidden when no terminal execution exists
+  - [ ] WorkflowArtifactPanel opens as modal overlay on "Final Report" click
+  - [ ] Both panels close cleanly (Escape, close button, click-away)
+  - [ ] No regression to existing Inspector/toolbar/canvas behavior
+  - [ ] `npm run build --prefix client` passes
+Dependencies: TASK #341, TASK #342, TASK #343
+---
+
+### GROUP F: Verification — TEST GATE + AREA CHECKPOINT
+_Wave 4 — depends on all implementation being committed_
+
+---
+
+TASK #345: TEST GATE — Agent Output Viewer & Workflow Deliverable E2E verification
+Area: V8.0 — Agent Output Viewer & Workflow Deliverable
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Context:
+  Full E2E verification via Puppeteer MCP. Test plan:
+
+  Pre-requisites:
+    - Server running on http://127.0.0.1:3000
+    - At least one project registered
+
+  Test scenario:
+    1. Navigate to Swarm view
+    2. Generate a test workflow via Prompt-to-Flow:
+       "Two agents: a Researcher that lists 3 features of Node.js, then hands off to a Writer
+        that writes a one-paragraph summary of the research"
+    3. Run the workflow
+
+  Verification steps (per test):
+    A. RED DOT BADGE:
+       - Wait for Researcher agent to reach `done` status
+       - Screenshot the canvas
+       - Verify via DOM evaluation: Researcher node has a red dot element (`.bg-red-500.rounded-full`)
+       - Verify Writer node gets red dot after it completes
+       - Verify idle/running nodes do NOT have red dot
+
+    B. AGENT OUTPUT PANEL:
+       - Click on the Researcher node (should have red dot)
+       - Verify AgentOutputPanel opens (not AgentInspector — check for unique panel identifiers)
+       - Verify "Output" tab shows readable text (not raw ANSI, not system prompt)
+       - Verify "Handoff" tab exists and shows JSON payload with `target` field
+       - Click "Copy" and verify clipboard content via `puppeteer_evaluate`
+       - Click "Back to Inspector" and verify AgentInspector opens
+
+    C. RED DOT CLEARS:
+       - After viewing Researcher output, verify red dot is gone from Researcher node
+       - Writer node (if not yet viewed) should still have red dot
+
+    D. FINAL REPORT:
+       - Verify "Final Report" button is visible in toolbar (execution is terminal)
+       - Click "Final Report"
+       - Verify WorkflowArtifactPanel modal opens
+       - Verify markdown contains sections for both Researcher and Writer
+       - Verify markdown contains actual semantic content (not empty, not system prompt)
+       - Click "Copy All" — verify clipboard
+       - Click "Download .md" — verify download triggers (check DOM for blob URL creation)
+       - Press Escape — verify modal closes
+
+    E. PERSISTENCE:
+       - Reload the page (navigate away and back to Swarm view)
+       - Click on Researcher node again
+       - Verify AgentOutputPanel still shows output (hydrated from ExecutionHistoryStore)
+       - Open "Final Report" — verify artifact is still available
+
+    F. REGRESSION:
+       - Click on an agent node that was never executed (idle, no output)
+       - Verify AgentInspector opens (not OutputPanel)
+       - Verify "Final Report" is disabled/hidden when no terminal execution exists
+       - Run `npm test --prefix server` — all tests pass
+       - Run `npm run build --prefix client` — build succeeds
+
+  Result format:
+    PASS — all 6 verification groups pass
+    FAIL — list each failing check with bug report
+
+Gate: HARD — TASK #347 (AREA CHECKPOINT) CANNOT close until this passes
+Acceptance Criteria:
+  - [ ] Red dot appears on done agents with output
+  - [ ] AgentOutputPanel shows clean text + handoff
+  - [ ] Red dot clears after viewing
+  - [ ] Final Report shows aggregated markdown with both agents
+  - [ ] Copy and download work
+  - [ ] Data persists across reload
+  - [ ] No regression to Inspector, toolbar, or canvas
+Dependencies: TASK #334, #335, #336, #337, #338, #339, #340, #341, #342, #343, #344
+---
+
+TASK #346: TEST GATE — Server unit tests pass (execution results + artifact builder)
+Area: V8.0 — Agent Output Viewer & Workflow Deliverable
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  What to verify:
+    1. Run `npm test --prefix server` — ALL tests must pass (existing 312 + new tests from #335, #336, #338)
+    2. Run `npm run build --prefix client` — 0 errors
+    3. Verify new test files exist and cover:
+       - execution-history-outputs.test.js (round-trip, backward compat, getEntry)
+       - workflow-artifact-builder.test.js (formatting, edge cases, duration)
+       - execution-results-api.test.js (REST endpoint responses, 404, 400)
+    4. Report total test count (should be 312 + ~15-20 new = ~327-332)
+
+Gate: HARD — must pass before AREA CHECKPOINT
+Acceptance Criteria:
+  - [ ] `npm test --prefix server` passes (0 failures)
+  - [ ] `npm run build --prefix client` passes (0 errors)
+  - [ ] New test files exist and have meaningful coverage
+Dependencies: TASK #335, #336, #338
+---
+
+TASK #347: AREA CHECKPOINT — V8.0 Agent Output Viewer & Workflow Deliverable
+Area: V8.0 — Agent Output Viewer & Workflow Deliverable
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: CRITICAL
+Status: PENDING
+Gate: HARD
+Context:
+  Final verification that the entire V8.0 feature area is complete and working.
+  All implementation tasks (#334-#344) must be COMPLETED.
+  Both TEST GATEs (#345, #346) must PASS.
+
+Acceptance Criteria:
+  - [ ] TASK #334 COMPLETED (handoff payload capture)
+  - [ ] TASK #335 COMPLETED (ExecutionHistoryStore schema extension)
+  - [ ] TASK #336 COMPLETED (WorkflowArtifactBuilder)
+  - [ ] TASK #337 COMPLETED (persist agentOutputs + artifact)
+  - [ ] TASK #338 COMPLETED (REST endpoints)
+  - [ ] TASK #339 COMPLETED (SwarmContext agentResults slice)
+  - [ ] TASK #340 COMPLETED (useSwarm WS wiring + hydration)
+  - [ ] TASK #341 COMPLETED (AgentNode red dot badge)
+  - [ ] TASK #342 COMPLETED (AgentOutputPanel)
+  - [ ] TASK #343 COMPLETED (WorkflowArtifactPanel)
+  - [ ] TASK #344 COMPLETED (SwarmView integration)
+  - [ ] TEST GATE #345 PASS (E2E Puppeteer verification)
+  - [ ] TEST GATE #346 PASS (server tests + build)
+  - [ ] No regression to existing Swarm features
+  - [ ] Build: 498+ modules, 0 errors
+  - [ ] Tests: 312+ pass (plus new V8.0 tests)
+Dependencies: TASK #345, TASK #346
 ---

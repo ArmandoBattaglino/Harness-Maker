@@ -1398,17 +1398,60 @@ describe('SwarmEngine', () => {
       expect(sanitized).toContain('successo e uniti per questo report finale.');
     });
 
+    it('should keep labeled agent lines readable instead of skipping ConPTY restoration', () => {
+      const sanitized = engine._sanitizeChatMessage(
+        'Agent-B(Italian):Completatoconsuccesso.Saluto:"Ciaoatutti!BenvenutieuncalorososalutodaAgent-B!"'
+      );
+
+      expect(sanitized).toContain('Agent-B(Italian): Completato con successo.');
+      expect(sanitized).toContain('Saluto:');
+      expect(sanitized).toContain('Ciao a tutti! Benvenuti e un caloroso saluto da Agent-B!');
+    });
+
+    it('should restore accented Italian merged text by matching normalized dictionary words', () => {
+      const sanitized = engine._sanitizeChatMessage(
+        'Ilmondoèpiùbelloquandociincontriamo.Generaunsalutoinun\'altralingua.'
+      );
+
+      expect(sanitized).toBe("Il mondo è più bello quando ci incontriamo. Genera un saluto in un'altra lingua.");
+    });
+
+    it('should drop hybrid merge fact lines that leak agent greeting metadata into chat', () => {
+      const sanitized = engine._sanitizeChatMessage([
+        '"Ciao a tutti! Benvenuti e un caloroso saluto da Agent-B!" Agent-B:greeting generato(completato)',
+        'Inoltro entrambi al Final Reporter (node-5).',
+      ].join('\n'));
+
+      expect(sanitized).toContain('Inoltro entrambi al Final Reporter (node-5).');
+      expect(sanitized).not.toContain('Agent-B:greeting');
+      expect(sanitized).not.toContain('generato(completato)');
+    });
+
     it('should restore compact English contractions and short merged words in final chat snippets', () => {
       const sanitized = engine._sanitizeChatMessage([
         "It'ssuchapleasuretoconnectwithyou-mayyourdaybefilledwithjoy,andallthegoodthingslifehastooffer.",
-        "Here'stogreatconversationsandevengreatermomentsahead!",
+        "Here'stogreatconversationsandevengreatermomentsahead! andmakingthemostofourtimetogether.",
         'Together, they paint a welcoming picture of friendliness and cooperation across languages.',
       ].join('\n'));
 
       expect(sanitized).toContain("It's such a pleasure to connect with you");
       expect(sanitized).toContain('life has to offer.');
       expect(sanitized).toContain("Here's to great conversations and even greater moments ahead!");
+      expect(sanitized).toContain('making the most of our time together.');
       expect(sanitized).toContain('friendliness and cooperation across languages.');
+    });
+
+    it('should strip echoed workflow instructions from chat-oriented merge output', () => {
+      const sanitized = engine._sanitizeChatMessage([
+        'This agent is not terminal in the workflow.',
+        'When your stage is complete, you MUST emit a handoff token so the workflow can continue.',
+        'Your required downstream target is: node-5',
+        'If another agent is better suited to continue, hand off with the most useful context you can provide.',
+        'Do not emit raw JSON.',
+        'Entrambi i saluti sono stati ricevuti. Inoltro i risultati unificati al Final Reporter.',
+      ].join('\n'));
+
+      expect(sanitized).toBe('Entrambi i saluti sono stati ricevuti. Inoltro i risultati unificati al Final Reporter.');
     });
 
     it('should prefer a semantic fallback when prompt echo survives the chat sanitizer', () => {
