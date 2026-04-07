@@ -1,4 +1,12 @@
-﻿## 2026-04-07 - orchestrator - V8.0 Agent Output Viewer & Workflow Deliverable (Tasks #334-#344)
+﻿## 2026-04-07 - qa-tester - V8.0 Debugger Loop: CLEAN (0 bugs)
+**Outcome:** COMPLETED — CLEAN
+**Summary:** Deep E2E test on all V8.0 components. 14 tests: 12 PASS, 0 FAIL, 2 UNTESTABLE. Zero bugs found.
+**Files changed:** none
+**Next:** V8.0 feature-complete and verified.
+
+---
+
+## 2026-04-07 - orchestrator - V8.0 Agent Output Viewer & Workflow Deliverable (Tasks #334-#344)
 **Outcome:** COMPLETED (implementation phase — TEST GATEs pending)
 **Summary:** Implemented the full V8.0 feature: red dot badge on done agents with unviewed output, AgentOutputPanel (per-agent clean output + handoff JSON, tabbed side panel with copy), WorkflowArtifactPanel (aggregated markdown modal with copy/download), REST endpoints for results/artifact.md, persistence via ExecutionHistoryStore extension. 4 waves executed in parallel worktrees: Wave 1 (#334-336,339: backend persistence + frontend state), Wave 2 (#337-338,340: persist integration + REST + WS wiring), Wave 3 (#341-343: red dot + both panels), Wave 4 (#344: SwarmView/SwarmCanvas integration). All 11 implementation tasks completed. 370 tests pass (33 new), 502 modules build clean.
 **Files changed:** server/services/SwarmEngine.js, server/stores/ExecutionHistoryStore.js, server/services/WorkflowArtifactBuilder.js (NEW), server/routes/swarm.js, server/tests/execution-history-outputs.test.js (NEW), server/tests/workflow-artifact-builder.test.js (NEW), server/tests/execution-results-api.test.js (NEW), client/src/store/SwarmContext.jsx, client/src/hooks/useSwarm.js, client/src/canvas/nodes/AgentNode.jsx, client/src/panels/AgentOutputPanel.jsx (NEW), client/src/panels/WorkflowArtifactPanel.jsx (NEW), client/src/canvas/SwarmCanvas.jsx, client/src/views/SwarmView.jsx
@@ -4354,6 +4362,17 @@ full self-contained context and acceptance criteria.
 **Next:** Verify visually in the canvas; if needed, do a second pass on radius or step position
 
 ---
+## 2026-04-07 - codex - Persist active project selection across reloads
+**Outcome:** COMPLETED
+**Summary:** Follow-up UX fix after orchestrated Swarm verification. Persisted `activeProjectId` in AppContext using localStorage so reloading the app no longer drops the selected project context before returning to Swarm. Added a safety guard that clears the stored id if the project no longer exists. Verified with `npm run build --prefix client`.
+**Files changed:** client/src/store/AppContext.jsx, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** Swarm/project UX gap - selected project was lost on full reload because AppContext always reinitialized `activeProjectId` to null
+**Decisions made:** Keep the fix minimal and local to AppContext; do not persist the whole view/router state, only the active project identity
+**Blockers:** none
+**Next:** Optional follow-up - persist the current view as well if reload should restore the user directly to Swarm or Terminal instead of the Projects dashboard
+
+---
+
 ## 2026-04-07 - codex - Swarm parallel entry-node start fix
 **Outcome:** COMPLETED
 **Summary:** Fixed a Swarm execution gap where workflows with multiple entry agents only started the first `isTriageNode`, leaving sibling branches idle and merge nodes waiting forever. SwarmEngine now resolves all explicit start nodes together, falls back to all root agent nodes when no explicit start node is marked, and applies the same rule to sub-workflows. Updated canvas validation and inspector copy so the behavior is visible in UI as "Start Node" with an explicit parallel-start hint. Added regression tests for explicit and implicit parallel starts. Focused verification passed: `npm test -- tests/swarm-engine.test.js` (115/115) and `npm run build` (client, 498 modules).
