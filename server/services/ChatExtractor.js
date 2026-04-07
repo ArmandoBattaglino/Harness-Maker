@@ -192,7 +192,6 @@ export class ChatExtractor {
    */
   feed(executionId, nodeId, cleanChunk) {
     if (!cleanChunk || !nodeId) return;
-    if (cleanChunk.length > 10) console.log(`[CE:feed] node=${nodeId} len=${cleanChunk.length} p=${JSON.stringify(cleanChunk.slice(0,60))}`);
 
     let buf = this._buffers.get(nodeId);
     if (!buf) {

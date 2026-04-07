@@ -601,7 +601,10 @@ class SwarmEngine {
 
     this._chatExtractor = new ChatExtractor({
       onMessage: (msg) => this._broadcastChatMessage(msg),
-      sanitizeMessage: (text) => this._sanitizeChatMessage(text),
+      // NOTE: Do NOT pass _sanitizeChatMessage here — it is designed for
+      // snippet display on agent cards and aggressively strips actual agent
+      // content (BUG-V8-7 root cause). ChatExtractor's own NOISE_PATTERNS
+      // and line-level filters are sufficient for chat/artifact output.
       periodicFlushMs: 0,
     });
 
