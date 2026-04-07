@@ -10,7 +10,7 @@ import WorkflowSettingsModal from '../canvas/WorkflowSettingsModal';
 import ExecutionHistory from '../canvas/ExecutionHistory';
 import TemplateGallery from '../canvas/TemplateGallery';
 import VersionHistory from '../canvas/VersionHistory';
-import HitlInbox, { getPendingCount } from '../panels/HitlInbox';
+import { getPendingCount } from '../panels/HitlInbox';
 import { useSwarmStore } from '../store/SwarmContext';
 import { useSwarm } from '../hooks/useSwarm';
 import { useInbox } from '../hooks/useInbox.js';
@@ -24,7 +24,7 @@ import WorkflowArtifactPanel from '../panels/WorkflowArtifactPanel';
 const statusColors = {
   idle: 'text-gray-400',
   running: 'text-blue-400 animate-pulse',
-  paused: 'text-yellow-400',
+  paused: 'text-orange-400',
   blocked: 'text-orange-400',
   stopped: 'text-red-400',
 };
@@ -62,7 +62,8 @@ export default function SwarmView() {
   ), [workflowDef, ptyExplosionNodeId]);
 
   const [selectedWorkflowId, setSelectedWorkflowId] = useState('');
-  const [inboxOpen, setInboxOpen] = useState(false);
+  const setSidePanelOpen = useSwarmStore((s) => s.setSidePanelOpen);
+  const setSidePanelMode = useSwarmStore((s) => s.setSidePanelMode);
   const [executing, setExecuting] = useState(false);
   const [pausing, setPausing] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
@@ -565,9 +566,9 @@ export default function SwarmView() {
         <div className="flex-1" />
 
         <button
-          onClick={(e) => { e.stopPropagation(); setInboxOpen((open) => !open); }}
+          onClick={(e) => { e.stopPropagation(); setSidePanelOpen(true); setSidePanelMode('chat'); }}
           className={`text-xs px-2 py-1 rounded transition-colors ${
-            pendingCount > 0 ? 'bg-orange-600 hover:bg-orange-500 text-white' : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+            pendingCount > 0 ? 'bg-orange-600 hover:bg-orange-500 text-white animate-pulse' : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
           }`}
         >
           {'\uD83D\uDCE5'} HITL{pendingCount > 0 ? ` (${pendingCount})` : ''}
@@ -976,15 +977,7 @@ export default function SwarmView() {
         </ReactFlowProvider>
       </div>
 
-      {inboxOpen && (
-        <div className="border-t border-gray-700 bg-gray-900 max-h-64 overflow-y-auto">
-          <div className="flex items-center justify-between px-3 py-2 border-b border-gray-700">
-            <span className="text-xs font-semibold text-gray-300">HITL Approvals</span>
-            <button onClick={() => setInboxOpen(false)} className="text-gray-500 hover:text-white text-xs">✕</button>
-          </div>
-          <HitlInbox />
-        </div>
-      )}
+      {/* HITL inbox drawer removed — approvals now appear inline in ChatPanel */}
 
       {/* BroadcastBar removed — controls now live inside ChatPanel */}
 

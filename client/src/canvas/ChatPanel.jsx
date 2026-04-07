@@ -5,6 +5,7 @@ import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import { useSwarmStore } from '../store/SwarmContext';
 import { apiPost } from '../hooks/useApi.js';
 import ChatMessage from './ChatMessage';
+import HitlChatCard from './HitlChatCard';
 
 export default function ChatPanel() {
   const chatMessages = useSwarmStore((s) => s.chatMessages);
@@ -167,13 +168,22 @@ export default function ChatPanel() {
         <span className="text-gray-600">{filteredMessages.length}</span>
       </div>
       <div className="flex-1 overflow-y-auto py-1 custom-scrollbar min-h-0">
-        {filteredMessages.map((msg, i) => (
-          <ChatMessage
-            key={`${msg.nodeId}-${msg.timestamp}-${i}`}
-            message={msg}
-            agentLabel={agentLabels[msg.nodeId]}
-          />
-        ))}
+        {filteredMessages.map((msg, i) =>
+          msg.role === 'hitl' ? (
+            <HitlChatCard
+              key={`hitl-${msg.hitlItemId}-${i}`}
+              message={msg}
+              agentLabel={agentLabels[msg.nodeId]}
+              executionId={activeExecutionId}
+            />
+          ) : (
+            <ChatMessage
+              key={`${msg.nodeId}-${msg.timestamp}-${i}`}
+              message={msg}
+              agentLabel={agentLabels[msg.nodeId]}
+            />
+          )
+        )}
         <div ref={bottomRef} />
       </div>
       {canSend && (

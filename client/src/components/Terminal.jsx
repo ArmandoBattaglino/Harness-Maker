@@ -20,7 +20,7 @@ function debounce(fn, wait) {
   };
 }
 
-export default function Terminal({ sessionId, projectPath }) {
+export default function Terminal({ sessionId, projectPath, onSessionDead }) {
   const containerRef = useRef(null);
   const termRef = useRef(null);
   const fitAddonRef = useRef(null);
@@ -33,7 +33,16 @@ export default function Terminal({ sessionId, projectPath }) {
     }
   }
 
-  const { send, resize } = useSession(sessionId, handleData);
+  const { send, resize, sessionDead } = useSession(sessionId, handleData);
+
+  // Notify parent when session is dead (server rejected connection)
+  const onSessionDeadRef = useRef(onSessionDead);
+  onSessionDeadRef.current = onSessionDead;
+  useEffect(() => {
+    if (sessionDead && onSessionDeadRef.current) {
+      onSessionDeadRef.current();
+    }
+  }, [sessionDead]);
 
   const sendRef = useRef(send);
   useEffect(() => {
@@ -57,9 +66,16 @@ export default function Terminal({ sessionId, projectPath }) {
 
     if (containerRef.current) {
       term.open(containerRef.current);
-      // Initial fit after DOM paint
+      // Initial fit after DOM paint — retry once if container not yet laid out
       requestAnimationFrame(() => {
-        fitAddon.fit();
+        try {
+          fitAddon.fit();
+        } catch (_) {
+          // Container may not be laid out yet (0x0) — retry after a short delay
+          setTimeout(() => {
+            try { fitAddon.fit(); } catch (_e) { /* ResizeObserver will catch it */ }
+          }, 150);
+        }
       });
     }
 

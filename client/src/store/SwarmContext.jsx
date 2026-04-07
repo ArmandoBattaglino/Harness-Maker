@@ -77,7 +77,12 @@ const useSwarmStore = create((set, get) => ({
 
   updateBudget: (used, limit) => set({ budget: { estimatedTokensUsed: used, limitTokens: limit } }),
 
-  addInboxItem: (item) => set((state) => ({ inboxItems: [...state.inboxItems, item] })),
+  addInboxItem: (item) => set((state) => ({
+    inboxItems: [...state.inboxItems, item],
+    // Auto-open chat panel when HITL arrives
+    sidePanelOpen: true,
+    sidePanelMode: 'chat',
+  })),
 
   resolveInboxItem: (itemId) => set((state) => ({
     inboxItems: state.inboxItems.filter((i) => i?.id !== itemId)

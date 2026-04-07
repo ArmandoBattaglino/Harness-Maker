@@ -1,6 +1,9 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 
 const WS_BASE = `ws://127.0.0.1:${window.location.port || 3000}`;
+
+// Server close codes that mean the session is permanently unavailable
+const SESSION_DEAD_CODES = new Set([4001, 4004]);
 
 export function useSession(sessionId, onData) {
   const wsRef = useRef(null);
@@ -9,6 +12,8 @@ export function useSession(sessionId, onData) {
   const unmountedRef = useRef(false);
   // Track whether this is a retry (reconnect once on unexpected close)
   const isRetryRef = useRef(false);
+  // Expose connection state so callers can detect dead sessions
+  const [sessionDead, setSessionDead] = useState(false);
 
   const onDataRef = useRef(onData);
   onDataRef.current = onData;
@@ -27,6 +32,7 @@ export function useSession(sessionId, onData) {
 
   useEffect(() => {
     unmountedRef.current = false;
+    setSessionDead(false);
 
     if (!sessionId) {
       // Close any existing connection when sessionId cleared
@@ -81,6 +87,12 @@ export function useSession(sessionId, onData) {
         connectedRef.current = false;
         wsRef.current = null;
 
+        // Session is permanently dead (not found or not active) — signal to caller
+        if (SESSION_DEAD_CODES.has(event.code)) {
+          if (!unmountedRef.current) setSessionDead(true);
+          return; // no retry — session won't come back
+        }
+
         // Reconnect once on unexpected close (not a deliberate 1000 or 1001)
         if (
           !unmountedRef.current &&
@@ -115,5 +127,5 @@ export function useSession(sessionId, onData) {
     };
   }, [sessionId]);
 
-  return { send, resize };
+  return { send, resize, sessionDead };
 }

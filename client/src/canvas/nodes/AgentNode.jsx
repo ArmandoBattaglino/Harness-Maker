@@ -17,7 +17,7 @@ export default function AgentNode({ id, data, selected }) {
     idle: 'border-gray-400 bg-gray-800',
     running: 'border-blue-400 bg-blue-950 animate-pulse',
     done: 'border-green-400 bg-green-950',
-    paused: 'border-yellow-400 bg-yellow-950',
+    paused: 'border-orange-400 bg-orange-950',
     error: 'border-red-400 bg-red-950',
     preview: 'border-sky-400/80 bg-sky-950/40 border-dashed',
   };
@@ -64,11 +64,11 @@ export default function AgentNode({ id, data, selected }) {
         {isDropPreview ? 'Drop preview' : status}
       </div>
 
-      {/* lastOutputSnippet — micro PTY log (last 4 lines, scrollable) */}
-      {agentState?.lastOutputSnippet && !isDropPreview && (
+      {/* Node snippet — prefer clean chat message (Option B) over raw PTY */}
+      {(agentState?.lastChatSnippet || agentState?.lastOutputSnippet) && !isDropPreview && (
         <div className="mt-2 bg-black/40 rounded p-1.5 max-h-16 overflow-y-auto">
           <pre className="text-xs text-green-300 font-mono whitespace-pre-wrap break-all leading-tight">
-            {stripAnsi(agentState.lastOutputSnippet).split('\n').slice(-4).join('\n')}
+            {(agentState.lastChatSnippet || stripAnsi(agentState.lastOutputSnippet)).split('\n').slice(-4).join('\n')}
             {status === 'running' && <span className="animate-pulse">▋</span>}
           </pre>
         </div>

@@ -343,6 +343,15 @@ export function useSwarm(workflowId) {
           break;
         case 'hitl_required':
           addInboxItem(msg);
+          // Inject HITL request as a special chat message so it appears inline
+          addChatMessage({
+            nodeId: msg.nodeId,
+            role: 'hitl',
+            text: (msg.item?.message || msg.message || 'Approval required'),
+            timestamp: msg.item?.timestamp || msg.timestamp || Date.now(),
+            hitlItemId: msg.item?.id || msg.id,
+            hitlType: msg.item?.type || msg.type || 'user_requested',
+          });
           break;
         case 'hitl_resolved':
           resolveInboxItem(msg.itemId);
@@ -393,9 +402,11 @@ export function useSwarm(workflowId) {
             text: msg.text,
             timestamp: msg.timestamp ?? Date.now(),
           });
-          // Feed assistant messages into agentResults store
+          // Feed assistant messages into agentResults store + update node snippet
+          // with clean chat text (Option B: replaces noisy raw PTY snippets)
           if ((msg.role === 'assistant' || (!msg.role)) && msg.nodeId && msg.text) {
             useSwarmStore.getState().appendAgentChatText(msg.nodeId, msg.text);
+            updateAgentState(msg.nodeId, { lastChatSnippet: msg.text });
           }
           break;
         default:

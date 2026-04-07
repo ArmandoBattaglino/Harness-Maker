@@ -10,11 +10,16 @@ export default function PtyExplosion({ sessionId, executionId, nodeId, nodeLabel
   const [archivedOutput, setArchivedOutput] = useState('');
   const [loadingArchivedOutput, setLoadingArchivedOutput] = useState(false);
   const [archivedOutputError, setArchivedOutputError] = useState('');
+  // When the live WebSocket connection fails (session killed/not found),
+  // fall back to the archived transcript view automatically.
+  const [liveSessionDead, setLiveSessionDead] = useState(false);
+
+  const effectiveSessionId = liveSessionDead ? null : sessionId;
 
   useEffect(() => {
     let cancelled = false;
 
-    if (sessionId || !executionId || !nodeId) {
+    if (effectiveSessionId || !executionId || !nodeId) {
       setArchivedOutput('');
       setLoadingArchivedOutput(false);
       setArchivedOutputError('');
@@ -42,7 +47,12 @@ export default function PtyExplosion({ sessionId, executionId, nodeId, nodeLabel
     return () => {
       cancelled = true;
     };
-  }, [executionId, nodeId, sessionId]);
+  }, [executionId, nodeId, effectiveSessionId]);
+
+  // Reset liveSessionDead when sessionId changes (new session)
+  useEffect(() => {
+    setLiveSessionDead(false);
+  }, [sessionId]);
 
   if (!sessionId && !executionId) return null;
 
@@ -54,8 +64,8 @@ export default function PtyExplosion({ sessionId, executionId, nodeId, nodeLabel
     >
       <div className="pty-explosion-header">
         <span className="pty-explosion-title terminal-text">
-          {sessionId
-            ? `PTY Explosion - ${nodeLabel || 'Agent'} - Session ${sessionId.slice(0, 8)}`
+          {effectiveSessionId
+            ? `PTY Explosion - ${nodeLabel || 'Agent'} - Session ${effectiveSessionId.slice(0, 8)}`
             : `PTY Explosion - ${nodeLabel || 'Agent'} - Saved Transcript`}
         </span>
         <button
@@ -68,8 +78,8 @@ export default function PtyExplosion({ sessionId, executionId, nodeId, nodeLabel
       </div>
 
       <div className="pty-explosion-body">
-        {sessionId ? (
-          <Terminal sessionId={sessionId} />
+        {effectiveSessionId ? (
+          <Terminal sessionId={effectiveSessionId} onSessionDead={() => setLiveSessionDead(true)} />
         ) : (
           <div className="h-full overflow-auto bg-[#0b1220] p-4 font-mono text-xs leading-6 text-slate-200">
             {loadingArchivedOutput && <div className="text-slate-400">Loading saved terminal output...</div>}
