@@ -14355,7 +14355,8 @@ Agent: backend-dev
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-07 — ExecutionHistoryStore wired into SwarmEngine via setter pattern. Terminal states (completed/stopped/failed) now persist history entries with duration, node snapshots, and outcome summaries. Duplicate write guard via _persistedHistoryIds Set. 312/312 tests pass.
 Context:
   Evidence from the current repo state:
     - `server/stores/ExecutionHistoryStore.js` exposes `addEntry(workflowId, entry)`

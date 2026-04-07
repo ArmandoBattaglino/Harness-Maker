@@ -1,3 +1,14 @@
+## 2026-04-07 — backend-dev — Task #327: Wire ExecutionHistoryStore persistence into SwarmEngine terminal paths
+**Outcome:** COMPLETED
+**Summary:** Wired ExecutionHistoryStore into SwarmEngine so terminal execution states (completed/stopped/failed) are now persisted to disk. Added setter injection, startedAt tracking, duplicate-write guard, and node snapshot collection. 312/312 tests pass.
+**Files changed:** server/services/SwarmEngine.js, server/index.js, docs/TASK_PLAN.md
+**Bugs fixed:** none
+**Decisions made:** Setter injection pattern for store; single hook point in _setExecutionStatus; startedAt field added to execution record
+**Blockers:** none
+**Next:** Task #328 (TEST GATE — execution history persistence round-trip)
+
+---
+
 ## 2026-04-07 — qa-tester — Task #329: Unified Chat View — end-to-end verification and WS contract audit
 **Outcome:** COMPLETED
 **Summary:** Full verification of the Unified Chat View feature. Read all 7 implementation files, verified WS contract field-by-field (server emits type/nodeId/role/text/timestamp, client consumes exact same fields — zero mismatches). Confirmed ChatExtractor integration in SwarmEngine (import, init, feed in tapFn behind echo gate, flush on agent done, systemMessage for 4 flow-control node types, cleanup on execution end). Confirmed client integration (useSwarm handler, SwarmContext state with 500-msg cap, ChatPanel with filter/auto-scroll, SwarmCanvas Feed/Chat toggle). 312/312 server tests pass, 498-module client build clean.

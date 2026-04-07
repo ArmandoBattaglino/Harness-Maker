@@ -1,4 +1,56 @@
 ---
+## 2026-04-07 — Task #327: Wire ExecutionHistoryStore persistence into SwarmEngine terminal paths
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+ExecutionHistoryStore existed at server/stores/ExecutionHistoryStore.js with a working addEntry(workflowId, entry) API. The store was instantiated lazily in server/routes/swarm.js for read-only use by the history GET endpoints. SwarmEngine had no reference to the store and never called addEntry — meaning completed/failed/stopped executions were never persisted to disk.
+
+### What I did
+1. Read ExecutionHistoryStore.js to understand the addEntry API shape (executionId, status, startedAt, endedAt, durationMs, nodesRun, outcome, nodeSnapshots)
+2. Read SwarmEngine.js to map all terminal state transitions: completed (line 1991 via _syncExecutionStatusFromAgents), failed (line 1973 and 3739), stopped (line 3776 via stopExecution)
+3. Identified _setExecutionStatus as the single chokepoint for all execution status changes
+4. Added _executionHistoryStore field and _persistedHistoryIds Set to SwarmEngine constructor
+5. Added setExecutionHistoryStore(store) setter method following the existing setter pattern (setTriggerManager, setWsBroadcast)
+6. Hooked _setExecutionStatus to call _persistExecutionHistory on terminal states (completed/stopped/failed)
+7. Implemented _persistExecutionHistory with: duplicate guard via Set, duration calculation from startedAt, node snapshot collection, human-readable outcome summary
+8. Added startedAt field to the execution record in startExecution
+9. Imported ExecutionHistoryStore in server/index.js and wired it into SwarmEngine after construction
+10. Ran npm test — 312/312 pass
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SwarmEngine.js | MODIFIED | Added _executionHistoryStore, _persistedHistoryIds, setExecutionHistoryStore(), _persistExecutionHistory(), startedAt field on execution, history persistence hook in _setExecutionStatus |
+| server/index.js | MODIFIED | Added ExecutionHistoryStore import, instantiation, init, and wiring via setExecutionHistoryStore() |
+| docs/TASK_PLAN.md | MODIFIED | Marked task #327 COMPLETED |
+
+### Improvements delivered
+- Completing a workflow now persists an execution-history entry with status, duration, node snapshots, and outcome
+- Stopped and failed executions also produce truthful history entries
+- Duplicate writes are prevented by a Set guard on execution IDs
+- Error in persistence is caught and logged without crashing the execution flow
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Used setter injection pattern (setExecutionHistoryStore) instead of constructor param to avoid breaking existing SwarmEngine constructor callers and tests
+- Hooked into _setExecutionStatus rather than each individual call site to guarantee coverage of all terminal paths with a single integration point
+- Added startedAt to execution record for duration calculation — this field did not exist before
+- On persistence error, remove the execution ID from the guard set so retry is possible
+
+### What I learned
+- All execution status transitions in SwarmEngine flow through _setExecutionStatus, making it the ideal single hook point
+- The existing pattern for optional dependencies is setter injection (setTriggerManager, setWsBroadcast)
+
+### State I'm leaving behind
+ExecutionHistoryStore is fully wired. Any execution reaching completed/stopped/failed will have a history entry persisted. The qa-tester gate (Task #328) can now verify the round-trip.
+
+### Handoff
+Task #328 (TEST GATE — execution history persistence round-trip) can now proceed to verify the integration end-to-end.
+
+---
 ## 2026-03-28 — Tasks #94 + #95 + #99: Backend route bug fixes
 **Status:** COMPLETED
 **Called by:** user (direct task assignment — three route bugs)
