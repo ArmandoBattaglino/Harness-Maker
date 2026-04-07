@@ -6,6 +6,9 @@ import { stripAnsi } from '../../utils/stripAnsi';
 // type: "agent"
 export default function AgentNode({ id, data, selected }) {
   const agentState = useSwarmStore((s) => s.agentStates[id]);
+  const hasUnviewedOutput = useSwarmStore(
+    (s) => !!(s.agentResults[id]?.finalText && !s.agentResults[id]?.viewed)
+  );
   const isDropPreview = Boolean(data?.isDropPreview);
   const status = isDropPreview ? 'preview' : agentState?.status ?? 'idle';
 
@@ -40,6 +43,14 @@ export default function AgentNode({ id, data, selected }) {
         >
           !
         </div>
+      )}
+
+      {/* Unviewed output badge — pulsing red dot (top-left) */}
+      {!isDropPreview && hasUnviewedOutput && status === 'done' && (
+        <div
+          className="absolute -top-1 -left-1 w-3.5 h-3.5 bg-red-500 rounded-full animate-pulse border border-red-300 shadow-[0_0_6px_rgba(239,68,68,0.6)] z-10"
+          title="Output ready — click to view"
+        />
       )}
 
       {/* Agent icon + name */}
