@@ -19,7 +19,7 @@ const PIDS_FILE_NAME = 'active_pids.json';
 // ---------------------------------------------------------------------------
 
 const MIN_PID = 1;
-const MAX_PID = 65535; // safe upper bound; covers all realistic OS PID ranges
+const MAX_PID = 0x7fffffff; // signed 32-bit upper bound; safely covers modern Windows/Linux/macOS PIDs
 
 /**
  * Returns true if pid is a valid OS process identifier: a positive integer
@@ -29,7 +29,7 @@ const MAX_PID = 65535; // safe upper bound; covers all realistic OS PID ranges
  * @param {unknown} pid
  * @returns {boolean}
  */
-function isValidPid(pid) {
+export function isValidPid(pid) {
   return typeof pid === 'number' && Number.isInteger(pid) && pid >= MIN_PID && pid <= MAX_PID;
 }
 

@@ -57,26 +57,28 @@ const normalizeCompressedChatWord = (word = '') => String(word ?? '')
   .toLowerCase();
 const COMPRESSED_CHAT_WORDS = [
   'a', 'agent', 'agents', 'al', 'all', 'and', 'augurando', 'base', 'be', 'bene', 'benvenuti',
-  'agenti', 'auguro', 'benvenuto', 'best', 'both', 'caloroso', 'che', 'ciao', 'ciascuno', 'collected', 'completed',
+  'agenti', 'auguro', 'benvenuto', 'best', 'bella', 'both', 'caloroso', 'carissimi', 'che', 'ciao', 'ciascuno', 'collected', 'completed',
   'completato', 'compito', 'con', 'conciso', 'condividono', 'context', 'contesto',
   'consolidated',
   'connect', 'correttamente', 'day', 'del', 'di', 'different', 'dispatching', 'diversa', 'downstream',
   'due', 'e', 'english', 'entrambi', 'esprimendo', 'essere', 'everyone', 'execute', 'final', 'finale',
-  'filled', 'form', 'forma', 'friend', 'friendliness', 'funzionato', 'generate', 'generated', 'generato', 'giornata',
-  'generera', 'genererà',
-  'gioia', 'gli', 'going', 'good', 'great', 'greater', 'greeted', 'greeting', 'greetings', 'ha', 'handoff', 'handing', 'hanno', 'has', 'hello', 'hope',
+  'fantastic', 'filled', 'for', 'form', 'forma', 'friend', 'friendliness', 'funzionato', 'generate', 'generated', 'generato', 'giornata',
+  'generare', 'generera', 'genererà',
+  'gioia', 'gli', 'going', 'good', 'great', 'greater', 'greeted', 'greeting', 'greetings', 'ha', 'handoff', 'handing', 'hanno', 'has', 'have', 'having', 'hello', 'hope',
   'ho', 'i', 'il', 'in', 'inglese', 'is', 'it', 'italian', 'joy', 'kind', 'la', 'life', 'lingua',
-  'lo', 'lunghezza', 'lavoreranno', 'making', 'may', 'meglio', 'merge', 'meravigliosa', 'meravigliosamente', 'messaggi', 'moments', 'most', 'nodo', 'nodes',
+  'lo', 'lunghezza', 'lavorano', 'lavoreranno', 'making', 'may', 'meglio', 'merge', 'meravigliosa', 'meravigliosamente', 'messaggi', 'moments', 'most', 'nodo', 'node', 'nodes',
   'now', 'offer', 'output', 'parallelo', 'parallel', 'partecipanti', 'per', 'piacere', 'positivo',
-  'our', 'personal', 'piena', 'piacere', 'pleasure', 'poi', 'presente', 'procedo', 'producing', 'produrre', 'pur', 'questa', 'questo', 'qui',
-  'raccolto', 'received', 'report', 'reporter', 'riceveranno', 'runtime', 'saluti', 'saluto', 'serenita', 'share', 'shared', 'should',
+  'appreciated', 'incontrarci', 'italiana', 'know', 'our', 'personal', 'piena', 'piacere', 'pleasure', 'poi', 'presente', 'procedo', 'producing', 'produrre', 'pur', 'questa', 'questo', 'qui',
+  'raccolto', 'received', 'report', 'reporter', 'resoconto', 'riceveranno', 'runtime', 'saluti', 'saluto', 'serenita', 'share', 'shared', 'should',
   'riassumera', 'riassumerà', 'risultati', 'smile', 'so', 'sono', 'spero', 'splendida', 'stati', 'stesso', 'stiate', 'success',
   'smiles', 'splendidly', 'such', 'successfully', 'successi', 'successo', 'summary', 'suo', 'sulla', 'task', 'the', 'they', 'things', 'time', 'tono',
-  'ti', 'to', 'today', 'together', 'true', 'tutti', 'un', 'una', 'uniti', 'verranno', 'vero', 'voi', 'warmth', 'welcome', 'will', 'with',
+  'that', 'ti', 'to', 'today', 'together', 'triage', 'true', 'tutti', 'un', 'una', 'uniti', 'valued', 'vengono', 'verranno', 'vero', 'vibes', 'voi', 'warmth', 'welcome', 'will', 'with',
   'wonderful', 'word', 'workflow', 'wishing', 'you', 'your', 'duplicate', 'da', 'here', 'ahead', 'absolutely', 'connection', 'conversations', 'even'
 ];
 const EXTRA_COMPRESSED_CHAT_WORDS = [
-  'altra', 'bello', 'ci', 'genera', 'incontriamo', 'mondo', 'piu', 'quando', 'summarize',
+  'altra', 'bello', 'ci', 'connections', 'falling', 'finds', 'genera', 'incontriamo',
+  'instradare', 'laughter', 'message', 'mondo', 'piu', 'quando', 'reporter', 'requested',
+  'request', 'richiesta', 'riassunti', 'spirits', 'summarize',
 ];
 const ALL_COMPRESSED_CHAT_WORDS = [...COMPRESSED_CHAT_WORDS, ...EXTRA_COMPRESSED_CHAT_WORDS];
 const COMPRESSED_CHAT_WORD_SET = new Set(ALL_COMPRESSED_CHAT_WORDS.map((word) => normalizeCompressedChatWord(word)));
@@ -88,7 +90,7 @@ const SNIPPET_NOISE_LINE_PATTERNS = [
   /^---\s*end protocol/i,
   /^---\s*end swarm input\s*---$/i,
   /^do not output the handoff or done token/i,
-  /^do not stop at __done__/i,
+  /^do not stop at (?:__done__|the done marker)/i,
   /^your very last line must be a valid handoff token/i,
   /^use [a-z0-9-]+ in place of <targetid>/i,
   /^use only flat json/i,
@@ -183,6 +185,13 @@ const SNIPPET_NOISE_LINE_PATTERNS = [
   /target id:\s*node-[a-z0-9-]+/i,
   /^last line only:?$/i,
   /^no extra text after that last handoff line\.?$/i,
+  /^the last line:?\s/i,
+  /^the final handoff tok/i,
+  /^concrete example\b/i,
+  /^for this workflow,?\s/i,
+  /^valid target ids?:/i,
+  /^context update:/i,
+  /^__handoff__:<targetid>/i,
   /^when you are done with your part/i,
   /^execute the workflow goal/i,
   /^research the .+ project/i,
@@ -657,6 +666,9 @@ class SwarmEngine {
 
     const sessionReplay = preferSessionReplay ? this._readAgentSessionReplay(state) : '';
     const snippetSource = sessionReplay || state._snippetSourceBuffer || state._runtimeScanBuffer || '';
+    if (!String(snippetSource).trim()) {
+      return state.lastOutputSnippet ?? '';
+    }
     let nextSnippet = this._buildSemanticSnippet(snippetSource);
 
     // If the selected snippet closely matches the agent's system prompt, discard it
@@ -685,6 +697,8 @@ class SwarmEngine {
       provider: blocker.provider,
       message: blocker.message,
       nodeId: blocker.nodeId ?? null,
+      childExecutionId: blocker.childExecutionId ?? null,
+      childNodeId: blocker.childNodeId ?? null,
       detectedAt: blocker.detectedAt ?? null,
       progressReason: blocker.progressReason ?? null,
       elapsedMs: blocker.elapsedMs ?? null,
@@ -733,24 +747,70 @@ class SwarmEngine {
       return [];
     }
 
-    const agentNodes = workflowDef.nodes.filter((node) => (node?.type ?? 'agent') === 'agent');
-    const explicitStartNodes = agentNodes.filter((node) => node?.data?.isTriageNode === true);
+    const explicitStartNodes = workflowDef.nodes.filter((node) => node?.data?.isTriageNode === true);
     if (explicitStartNodes.length > 0) {
       return explicitStartNodes;
     }
 
     const incomingTargets = new Set((workflowDef.edges ?? []).map((edge) => edge.target).filter(Boolean));
-    const rootAgentNodes = agentNodes.filter((node) => !incomingTargets.has(node.id));
-    if (rootAgentNodes.length > 0) {
-      return rootAgentNodes;
+    const rootNodes = workflowDef.nodes.filter((node) => !incomingTargets.has(node.id));
+    if (rootNodes.length > 0) {
+      return rootNodes;
     }
 
+    const agentNodes = workflowDef.nodes.filter((node) => (node?.type ?? 'agent') === 'agent');
     const firstAgentNode = agentNodes[0];
     if (firstAgentNode) {
       return [firstAgentNode];
     }
 
     return [workflowDef.nodes[0]].filter(Boolean);
+  }
+
+  _clearSubWorkflowPollHandle(state) {
+    if (!state?._subWorkflowPollHandle) return;
+    clearInterval(state._subWorkflowPollHandle);
+    state._subWorkflowPollHandle = null;
+  }
+
+  _getChildExecutionIds(parentExecutionId) {
+    if (!parentExecutionId) return [];
+    return [...this._subWorkflowExecutions.entries()]
+      .filter(([key]) => key.startsWith(`${parentExecutionId}:`))
+      .map(([, childExecutionId]) => childExecutionId);
+  }
+
+  _detachChildExecutionIds(parentExecutionId) {
+    if (!parentExecutionId) return [];
+    const childExecutionIds = [];
+    for (const [key, childExecutionId] of [...this._subWorkflowExecutions.entries()]) {
+      if (!key.startsWith(`${parentExecutionId}:`)) continue;
+      childExecutionIds.push(childExecutionId);
+      this._subWorkflowExecutions.delete(key);
+    }
+    return childExecutionIds;
+  }
+
+  _clearExecutionFlowControlState(executionId) {
+    if (!executionId) return;
+
+    for (const [key, handle] of [...this._delayTimers.entries()]) {
+      if (!key.startsWith(`${executionId}:`)) continue;
+      clearTimeout(handle);
+      this._delayTimers.delete(key);
+    }
+
+    for (const key of [...this._mergeStates.keys()]) {
+      if (key.startsWith(`${executionId}:`)) {
+        this._mergeStates.delete(key);
+      }
+    }
+
+    for (const key of [...this._loopStates.keys()]) {
+      if (key.startsWith(`${executionId}:`)) {
+        this._loopStates.delete(key);
+      }
+    }
   }
 
   _resolveHandoffFanOutTargets(execution, sourceNodeId, requestedTargetId) {
@@ -1251,6 +1311,73 @@ class SwarmEngine {
     };
   }
 
+  _recordInboundHandoff(execution, sourceNodeId, targetNodeId, contextUpdate = {}) {
+    if (!execution || !targetNodeId) return;
+    if (!execution.inboundHandoffs) {
+      execution.inboundHandoffs = new Map();
+    }
+
+    const sourceNode = execution.workflowDef?.nodes?.find((node) => node.id === sourceNodeId) ?? null;
+    const sourceLabel = sourceNode?.data?.label || sourceNodeId;
+    const payload = contextUpdate && typeof contextUpdate === 'object'
+      ? { ...contextUpdate }
+      : {};
+    const existing = execution.inboundHandoffs.get(targetNodeId) ?? [];
+    const nextEntries = existing.filter((entry) => entry.sourceNodeId !== sourceNodeId);
+
+    nextEntries.push({
+      sourceNodeId,
+      sourceLabel,
+      payload,
+      timestamp: new Date().toISOString(),
+    });
+
+    execution.inboundHandoffs.set(targetNodeId, nextEntries.slice(-8));
+  }
+
+  _getInboundHandoffsForTarget(execution, targetNodeId) {
+    if (!execution?.inboundHandoffs || !targetNodeId) return [];
+    return execution.inboundHandoffs.get(targetNodeId) ?? [];
+  }
+
+  _shouldWaitForAllAgentInputs(execution, targetNodeId) {
+    if (!execution || !targetNodeId) return false;
+    const targetNode = execution.workflowDef?.nodes?.find((node) => node.id === targetNodeId) ?? null;
+    if (!targetNode || this._isFlowControlNode(targetNode)) return false;
+
+    const incomingSourceCount = new Set(
+      (execution.workflowDef?.edges ?? [])
+        .filter((edge) => edge.target === targetNodeId)
+        .map((edge) => edge.source)
+        .filter(Boolean)
+    ).size;
+    if (incomingSourceCount <= 1) return false;
+
+    const descriptor = `${targetNode.data?.label || ''} ${targetNode.data?.systemPrompt || ''}`;
+    return /\b(wait for|collect|both|merge|combine|combined|summariz(?:e|es|ed|ing)?|aggregate|all inputs|all results|together)\b/i.test(descriptor);
+  }
+
+  _registerPendingAgentInput(execution, targetNodeId, sourceNodeId) {
+    if (!execution || !targetNodeId) return { required: 0, received: 0 };
+    if (!execution.agentInputBarriers) {
+      execution.agentInputBarriers = new Map();
+    }
+
+    const required = new Set(
+      (execution.workflowDef?.edges ?? [])
+        .filter((edge) => edge.target === targetNodeId)
+        .map((edge) => edge.source)
+        .filter(Boolean)
+    ).size;
+    const barrier = execution.agentInputBarriers.get(targetNodeId) ?? { required, received: new Set() };
+    barrier.required = required;
+    if (sourceNodeId) {
+      barrier.received.add(sourceNodeId);
+    }
+    execution.agentInputBarriers.set(targetNodeId, barrier);
+    return { required: barrier.required, received: barrier.received.size };
+  }
+
   _normalizeParserChunk(rawChunk = '') {
     return rawChunk
       .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
@@ -1264,7 +1391,9 @@ class SwarmEngine {
     return String(rawText ?? '')
       .replace(/----?\s*SWARM PROTOCOL[\s\S]*?----?\s*END PROTOCOL\s*----?/gi, '\n')
       .replace(/----?\s*SWARM INPUT[\s\S]*?----?\s*END SWARM INPUT\s*----?/gi, '\n')
-      .replace(/Do NOT output the handoff or done token mid-response\.[\s\S]*?Only as the very LAST line\./gi, '\n');
+      .replace(/Do NOT output the handoff or done token mid-response\.[\s\S]*?Only as the very LAST line\./gi, '\n')
+      .replace(/^__HANDOFF__:[^\n]*/gm, '\n')
+      .replace(/^HANDOFF:[^\n]*/gm, '\n');
   }
 
   _normalizeSnippetLine(rawLine = '') {
@@ -1329,8 +1458,8 @@ class SwarmEngine {
     score += Math.min(words.length * 8, 160);
     score += Math.min(normalized.split('\n').filter(Boolean).length * 12, 60);
 
-    if (normalized.includes('__HANDOFF__')) score += 80;
-    if (normalized.includes('__DONE__')) score += 60;
+    if (/^__HANDOFF__:/m.test(normalized) || /^HANDOFF:/m.test(normalized)) score -= 120;
+    if (/do not (?:output|stop at) (?:the (?:handoff|done)|__done__|__handoff__)/i.test(normalized)) score -= 200;
     if (/[:.]/.test(normalized)) score += 20;
     if (/[-*]\s/.test(normalized) || /^\d+\./m.test(normalized)) score += 15;
     if ((normalized.match(/\b[A-Z_]+=[^\s|]+/g) ?? []).length >= 2) score += 120;
@@ -1354,9 +1483,7 @@ class SwarmEngine {
     if (!normalized || this._isSnippetNoiseLine(normalized)) return false;
 
     return /PROMPT-CONTROL-REPORT\b/i.test(normalized)
-      || /\b(?:VERSION|HOST|START_ROUTE|STATUS_ROUTE|PROMPT_BUILDER|DONE_TOKEN)=[^\s|]+/i.test(normalized)
-      || /^__HANDOFF__:[a-z0-9-]+:/i.test(normalized)
-      || /^__DONE__$/i.test(normalized);
+      || /\b(?:VERSION|HOST|START_ROUTE|STATUS_ROUTE|PROMPT_BUILDER|DONE_TOKEN)=[^\s|]+/i.test(normalized);
   }
 
   _buildStructuredFactSnippet(lines = []) {
@@ -1375,18 +1502,7 @@ class SwarmEngine {
 
     if (factLines.length < 3) return '';
 
-    const head = [];
-    const tail = [];
-
-    factLines.forEach((line) => {
-      if (/^__HANDOFF__:/i.test(line) || /^__DONE__$/i.test(line)) {
-        tail.push(line);
-        return;
-      }
-      head.push(line);
-    });
-
-    return [...head, ...tail].slice(0, 8).join('\n').slice(-500);
+    return factLines.slice(0, 8).join('\n').slice(-500);
   }
 
   _buildRecoverySnippet(rawText = '') {
@@ -1430,8 +1546,17 @@ class SwarmEngine {
       if (/(?:medium|high|low)effort/i.test(line)) continue;
       if (/claude\s*(?:api|max)/i.test(line)) continue;
       if (/claude(?:api|max)/i.test(line)) continue;
+      if (/extra\s*usage/i.test(line)) continue;
       if (compactLine.includes('opus46withmediumeffortclaudemax')) continue;
+      if (compactLine.includes('extrausage')) continue;
+      if (compactLine.includes('claudecodev')) continue;
       if (compactLine.includes('downloadstestworkflowscopia')) continue;
+      if (compactLine.includes('clauderuntimeisactiveforthisswarmagent')) continue;
+      if (compactLine.includes('codexruntimeisactiveforthisswarmagent')) continue;
+      if (compactLine.includes('geminiruntimeisactiveforthisswarmagent')) continue;
+      if (compactLine.includes('continuetheworkflowusingthesharedtaskcontextbelow')) continue;
+      if (compactLine.includes('useanyoneoftheseconnectedtargetidsinyourfinalhandofftoken')) continue;
+      if (compactLine.includes('theruntimewillduplicatethathandoffacrosseveryconnecteddownstreamnode')) continue;
       if (/^you are the /i.test(line)) continue;
       if (/^current workflow context:?/i.test(line)) continue;
       if (/^this agent is not terminal in the workflow\.?$/i.test(line)) continue;
@@ -1439,6 +1564,7 @@ class SwarmEngine {
       if (/^your required downstream target is:/i.test(line)) continue;
       if (/^if another agent is better suited to /i.test(line)) continue;
       if (/^do not emit\b/i.test(line)) continue;
+      if (/^HANDOFF:[a-z0-9-]+:/i.test(line)) continue;
       if (/^agent[-_\s]?[ab]\s*:\s*(?:greeting|translation|language)\b/i.test(line)) continue;
       if (compactLine.includes('agenta:greeting') || compactLine.includes('agentb:greeting')) continue;
       if (compactLine.includes('agenta:translation') || compactLine.includes('agentb:translation')) continue;
@@ -1490,7 +1616,7 @@ class SwarmEngine {
       }
     }
 
-    if (/(?:must emit a handoff token|your required downstream target|do not stop at the done marker|finish your work, then hand off to|very last line must be a valid handoff token|this agent is not terminal in the workflow|is not the end of the workflow yet)/i.test(text)) {
+    if (/(?:must emit a handoff token|your required downstream target|do not stop at the done marker|finish your work, then hand off to|very last line must be a valid handoff token|this agent is not terminal in the workflow|is not the end of the workflow yet|runtime is active for this swarm agent|continue the workflow using the shared task context below|use any one of these connected target ids|the runtime will duplicate that handoff across every connected downstream node)/i.test(text)) {
       return '';
     }
 
@@ -1506,9 +1632,22 @@ class SwarmEngine {
     const state = execution?.agentStates?.get(nodeId);
     if (!state) return '';
 
-    return state.lastOutputSnippet
-      || this._buildSemanticSnippet(state._snippetSourceBuffer ?? '')
-      || '';
+    const snippetFallback = this._buildSemanticSnippet(
+      state._snippetSourceBuffer
+      || state._runtimeScanBuffer
+      || ''
+    );
+    const lastSnippet = state.lastOutputSnippet || '';
+
+    if (!lastSnippet) return snippetFallback || '';
+    if (!snippetFallback) return lastSnippet;
+    if (!this._chatTextLooksCorrupted(snippetFallback) && snippetFallback.length > lastSnippet.length + 40) {
+      return snippetFallback;
+    }
+
+    return this._chatTextQualityScore(snippetFallback) >= this._chatTextQualityScore(lastSnippet)
+      ? snippetFallback
+      : lastSnippet;
   }
 
   _chatTextLooksCorrupted(text = '') {
@@ -1516,10 +1655,13 @@ class SwarmEngine {
     if (!normalized) return false;
     if (/^you are the /im.test(normalized)) return true;
     if (/^current workflow context:?/im.test(normalized)) return true;
-    if (/(?:must emit a handoff token|your required downstream target|do not stop at the done marker|finish your work, then hand off to|very last line must be a valid handoff token|this agent is not terminal in the workflow|is not the end of the workflow yet)/i.test(normalized)) {
+    if (/(?:must emit a handoff token|your required downstream target|do not stop at the done marker|finish your work, then hand off to|very last line must be a valid handoff token|this agent is not terminal in the workflow|is not the end of the workflow yet|runtime is active for this swarm agent|continue the workflow using the shared task context below|use any one of these connected target ids|the runtime will duplicate that handoff across every connected downstream node)/i.test(normalized)) {
       return true;
     }
     if (/^(?:workflow name|workflow description|currenttask|task|instruction|workflow|merge_with|triage_note|agent(?:_[ab])?|language|greeting|status|translation|agent_[ab]_(?:language|greeting|translation)|merge_status)\s*:/im.test(normalized)) {
+      return true;
+    }
+    if (/(?:extra\s*usage|claude\s*max|claude codev?\d|opus\s*4(?:\.\d+)?\s*with\s*(?:medium|high|low)\s*effort)/i.test(normalized)) {
       return true;
     }
     if ((normalized.match(/\b[A-Za-z\u00C0-\u00FF]{12,}\b/gu) ?? []).length >= 2) return true;
@@ -1538,7 +1680,8 @@ class SwarmEngine {
     score -= (normalized.match(/[a-z\u00E0-\u00FF][A-Z\u00C0-\u00D6]/gu) ?? []).length * 20;
     if (/^you are the /im.test(normalized)) score -= 240;
     if (/^current workflow context:?/im.test(normalized)) score -= 240;
-    if (/(?:must emit a handoff token|your required downstream target|do not stop at the done marker|finish your work, then hand off to|very last line must be a valid handoff token|this agent is not terminal in the workflow|is not the end of the workflow yet)/i.test(normalized)) score -= 320;
+    if (/(?:must emit a handoff token|your required downstream target|do not stop at the done marker|finish your work, then hand off to|very last line must be a valid handoff token|this agent is not terminal in the workflow|is not the end of the workflow yet|runtime is active for this swarm agent|continue the workflow using the shared task context below|use any one of these connected target ids|the runtime will duplicate that handoff across every connected downstream node)/i.test(normalized)) score -= 320;
+    if (/(?:extra\s*usage|claude\s*max|claude codev?\d|opus\s*4(?:\.\d+)?\s*with\s*(?:medium|high|low)\s*effort)/i.test(normalized)) score -= 320;
     return score;
   }
 
@@ -1810,11 +1953,41 @@ class SwarmEngine {
     return false;
   }
 
+  _restoreFragmentedChatSequence(sequence = '') {
+    const raw = String(sequence ?? '').trim();
+    if (!raw.includes(' ')) return raw;
+
+    const parts = raw.split(/\s+/).filter(Boolean);
+    if (parts.length < 2) return raw;
+    if (!parts.every((part) => /^[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]{1,8}$/u.test(part))) return raw;
+
+    const singleCharCount = parts.filter((part) => part.length === 1).length;
+    if (singleCharCount === 0) return raw;
+    if (singleCharCount === 1 && parts.length !== 2) return raw;
+
+    const knownParts = parts.filter((part) => COMPRESSED_CHAT_WORD_SET.has(normalizeCompressedChatWord(part))).length;
+    if (knownParts === parts.length) return raw;
+
+    const merged = parts.join('');
+    const normalizedMerged = normalizeCompressedChatWord(merged);
+    if (COMPRESSED_CHAT_WORD_SET.has(normalizedMerged)) return merged;
+
+    if (merged.length < 5) {
+      return raw;
+    }
+
+    const restored = merged.length >= 7 ? this._restoreCompressedChatToken(merged) : merged;
+    if (restored !== merged) return restored;
+    return raw;
+  }
+
   _decompressConPTYSpaces(text) {
     if (!text) return text;
     return text.split('\n').map((line) => {
       if (this._shouldSkipConPTYDecompression(line)) return line;
       return line
+        .replace(/\b[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]{1}\s+(?:[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]{1,8}\s+){1,4}[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]{1,8}\b/gu, (sequence) => this._restoreFragmentedChatSequence(sequence))
+        .replace(/\b[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]{1,8}\s+[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]{1}(?:\s+[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]{1,8}){0,2}\b/gu, (sequence) => this._restoreFragmentedChatSequence(sequence))
         .replace(/([.!?])([A-Z\u00C0-\u00D6])/gu, '$1 $2')
         .replace(/([,;])([a-zA-Z\u00C0-\u00F6])/gu, '$1 $2')
         .replace(/([):])([A-Z\u00C0-\u00D6])/gu, '$1 $2')
@@ -1832,6 +2005,7 @@ class SwarmEngine {
     if (!token || !RESTORABLE_CHAT_TOKEN_RE.test(token)) return token;
 
     const normalizedToken = normalizeCompressedChatWord(token);
+    if (COMPRESSED_CHAT_WORD_SET.has(normalizedToken)) return token;
     const states = new Array(normalizedToken.length + 1).fill(null);
     states[0] = { score: 0, matchedChars: 0, matchedWords: 0, parts: [] };
 
@@ -2276,7 +2450,6 @@ class SwarmEngine {
         state.echoMarkerTimer = setTimeout(() => {
           if (state.ignoreParserUntil) {
             state.ignoreParserUntil = null;
-            state.ignoreParserBuffer = '';
           }
           state.echoMarkerTimer = null;
         }, SWARM_ECHO_MARKER_TIMEOUT_MS);
@@ -2629,7 +2802,7 @@ class SwarmEngine {
     } else if (agentStates.length > 0) {
       // Check for pending flow-control nodes before declaring completed:
       // active delay timers, pending merge convergences, or active loops
-      const execId = execution.id;
+      const execId = execution.executionId ?? execution.id;
       const delayKeys = [...this._delayTimers.keys()].filter((k) => k.startsWith(execId + ':'));
       const mergeKeys = [...this._mergeStates.keys()].filter((k) => k.startsWith(execId + ':'));
       const loopKeys = [...this._loopStates.keys()].filter((k) => k.startsWith(execId + ':'));
@@ -2686,6 +2859,8 @@ class SwarmEngine {
       startedAt: new Date().toISOString(),
       agentStates: new Map(),
       edgeCounters: new Map(),
+      agentInputBarriers: new Map(),
+      inboundHandoffs: new Map(),
       workflowContext: this._buildInitialWorkflowContext(wf),
       heartbeatTimer: null,
       inboxItems: [],
@@ -2704,8 +2879,8 @@ class SwarmEngine {
     // 3b. Register error handler watchers (Wave 5 — FR-V5-74)
     this._registerErrorWatchers(executionId, execution);
 
-    // 4. Resolve entry nodes. All explicit triage/start agents begin immediately;
-    // otherwise root agent nodes auto-start together as an implicit parallel entry.
+    // 4. Resolve entry nodes. All explicit start nodes begin immediately;
+    // otherwise root nodes auto-start together as an implicit parallel entry.
     const startNodes = this._getStartNodes(wf);
     if (startNodes.length === 0) {
       throw new Error(`Workflow ${workflowId} has no startable nodes`);
@@ -2772,6 +2947,16 @@ class SwarmEngine {
       try {
         const binaryPath = await this._resolveRuntimeProviderBinary(provider);
         const launchArgs = this._buildRuntimeProviderArgs(provider, execution.workflowDef?.settings?.runtimeModels);
+
+        // Pass the agent's user-defined system prompt via --append-system-prompt
+        // so the Claude CLI treats it as a real system-level instruction rather
+        // than a user message that can be deprioritized.  This is the primary
+        // mechanism for ensuring the agent follows its configured role.
+        const agentSystemPromptText = (node.data && node.data.systemPrompt) || '';
+        if (provider === RUNTIME_PROVIDER.CLAUDE && agentSystemPromptText.trim()) {
+          launchArgs.push('--append-system-prompt', agentSystemPromptText.trim());
+        }
+
         const bootstrapPrompt = (
           (provider === RUNTIME_PROVIDER.CODEX && spawnOptions.resumeCodexPrompt === true)
           || (provider === RUNTIME_PROVIDER.CODEX && shouldCompactCodexPrompt)
@@ -2879,13 +3064,28 @@ class SwarmEngine {
 
         const tapFn = (chunk) => {
           const currentState = execution.agentStates.get(nodeId);
+          let processingChunk = chunk;
+          if (currentState && !currentState.ignoreParserUntil && currentState.ignoreParserBuffer) {
+            processingChunk = `${currentState.ignoreParserBuffer}${chunk}`;
+            currentState.ignoreParserBuffer = '';
+          }
           if (currentState) {
             // Accumulate ANSI-stripped output into lastOutputSnippet first,
             // so prompt-ready detection can scan the full rolling buffer.
-            const cleanChunk = this._normalizeParserChunk(chunk);
+            const cleanChunk = this._normalizeParserChunk(processingChunk);
             // Keep the raw tail for runtime detection, but derive the
             // user-facing snippet from a semantic sanitization pass.
             currentState._runtimeScanBuffer = ((currentState._runtimeScanBuffer ?? '') + cleanChunk).slice(-RUNTIME_SCAN_BUFFER_CHARS);
+            if (!currentState.ignoreParserUntil) {
+              // Always feed ChatExtractor regardless of agent status — agent
+              // output chunks often arrive after the status transitions to 'done'
+              // due to PTY buffering. Without this, the actual response content
+              // is silently lost (BUG-V8-7 root cause).
+              if (cleanChunk.length > 5) console.log(`[SE:chat-feed] node=${nodeId} status=${currentState.status} len=${cleanChunk.length}`);
+              this._chatExtractor.feed(executionId, nodeId, cleanChunk);
+            } else {
+              if (cleanChunk.length > 5) console.log(`[SE:echo-gate] node=${nodeId} len=${cleanChunk.length}`);
+            }
             if (!currentState || currentState.status !== 'running') {
               // Agent is no longer running — still accumulate for runtime detection
               // but do NOT update the public snippet or broadcast, since post-done
@@ -2898,8 +3098,6 @@ class SwarmEngine {
               currentState._snippetSourceBuffer = ((currentState._snippetSourceBuffer ?? '') + cleanChunk).slice(-SNIPPET_SCAN_BUFFER_CHARS);
               currentState.lastOutputSnippet = this._buildSemanticSnippet(currentState._snippetSourceBuffer);
               this._broadcastAgentStatus(executionId, nodeId, currentState);
-              // Feed to ChatExtractor for unified chat view
-              this._chatExtractor.feed(executionId, nodeId, cleanChunk);
             }
           }
           if (currentState && !currentState.promptReady) {
@@ -2912,15 +3110,15 @@ class SwarmEngine {
             // trigger promptReady before the agent starts working, causing the
             // done reminder to fire prematurely (BUG-DONE-BARE-1 root cause).
             if (!currentState.ignoreParserUntil
-              && (this._isRuntimePromptReady(chunk, currentState.provider)
+              && (this._isRuntimePromptReady(processingChunk, currentState.provider)
                 || this._isRuntimePromptReady(currentState._runtimeScanBuffer, currentState.provider))) {
               currentState.promptReady = true;
             }
           }
 
-          const pendingGeminiChunkText = this._normalizeParserChunk(chunk).toLowerCase();
+          const pendingGeminiChunkText = this._normalizeParserChunk(processingChunk).toLowerCase();
           const pendingGeminiInterventionText = this._normalizeParserChunk(currentState?.interventionBuffer ?? '').toLowerCase();
-          const normalizedChunkText = this._normalizeParserChunk(chunk).toLowerCase();
+          const normalizedChunkText = this._normalizeParserChunk(processingChunk).toLowerCase();
 
           if (currentState?.provider === RUNTIME_PROVIDER.CODEX && normalizedChunkText.includes('working (')) {
             currentState.lastRuntimeBusyAt = Date.now();
@@ -2936,6 +3134,7 @@ class SwarmEngine {
             && currentState.pendingGeminiModelSwitch
             && (
               this._isRuntimePromptReady(chunk, currentState.provider)
+              || this._isRuntimePromptReady(processingChunk, currentState.provider)
               || this._isRuntimePromptReady(currentState.interventionBuffer ?? '', currentState.provider)
               || pendingGeminiChunkText.includes('request cancelled')
               || pendingGeminiChunkText.includes('ready (')
@@ -2996,7 +3195,7 @@ class SwarmEngine {
           }
 
           if (this._budgetTracker) {
-            this._budgetTracker.track(sessionId, chunk);
+            this._budgetTracker.track(sessionId, processingChunk);
             const limit = execution.workflowDef.settings?.budgetTokens || 0;
             if (limit > 0) {
               const result = this._budgetTracker.checkBudget(executionId, limit);
@@ -3010,13 +3209,13 @@ class SwarmEngine {
             }
           }
 
-          if (currentState.provider === RUNTIME_PROVIDER.GEMINI && !currentState.firstMeaningfulOutputAt && this._hasMeaningfulGeminiOutput(chunk)) {
+          if (currentState.provider === RUNTIME_PROVIDER.GEMINI && !currentState.firstMeaningfulOutputAt && this._hasMeaningfulGeminiOutput(processingChunk)) {
             this._markAgentProgress(execution, nodeId, currentState, 'meaningful_output');
           }
 
-          let chunkForParser = chunk;
+          let chunkForParser = processingChunk;
           if (currentState?.ignoreParserUntil) {
-            const normalized = this._normalizeParserChunk(chunk);
+            const normalized = this._normalizeParserChunk(processingChunk);
             currentState.ignoreParserBuffer = (currentState.ignoreParserBuffer + normalized).slice(-8192);
             const markerIndex = currentState.ignoreParserBuffer.indexOf(currentState.ignoreParserUntil);
 
@@ -3241,6 +3440,7 @@ class SwarmEngine {
   _buildSystemPrompt(node, workflowContext, handoffTargets, provider = null, options = {}) {
     const compactCodexPrompt = options.compactCodexPrompt === true;
     const resumeCodexPrompt = options.resumeCodexPrompt === true;
+    const inboundHandoffs = Array.isArray(options.inboundHandoffs) ? options.inboundHandoffs : [];
     const lines = [];
 
     if (provider === RUNTIME_PROVIDER.CODEX && !compactCodexPrompt) {
@@ -3257,6 +3457,17 @@ class SwarmEngine {
         COMPACT_CODEX_TASK_CHARS
       );
       const recoverySnippet = this._compactCodexInstructionText(options.recoverySnippet, COMPACT_CODEX_PROGRESS_CHARS);
+      const compactInboundHandoffs = inboundHandoffs
+        .map((handoff) => {
+          const payloadText = this._compactCodexInstructionText(
+            JSON.stringify(handoff.payload ?? {}).replace(/[\r\n`]+/g, ' | '),
+            180
+          );
+          return payloadText
+            ? `${handoff.sourceLabel || handoff.sourceNodeId}: ${payloadText}`
+            : `${handoff.sourceLabel || handoff.sourceNodeId}: {}`;
+        })
+        .join(' | ');
 
       if (resumeCodexPrompt) {
         lines.push('Resume the same swarm task from your current progress.');
@@ -3271,6 +3482,9 @@ class SwarmEngine {
         }
         if (!agentPrompt && currentTask) {
           lines.push(`Current task: ${currentTask}`);
+        }
+        if (compactInboundHandoffs) {
+          lines.push(`Upstream handoffs: ${compactInboundHandoffs}`);
         }
         if (handoffTargets.length === 0) {
           if (expectedReport) {
@@ -3313,6 +3527,16 @@ class SwarmEngine {
       for (const key of contextKeys) {
         lines.push(`${key}: ${workflowContext[key]}`);
       }
+      lines.push('');
+    }
+
+    if (inboundHandoffs.length > 0) {
+      lines.push('Recent upstream handoffs for this agent:');
+      inboundHandoffs.forEach((handoff) => {
+        lines.push(
+          `From ${handoff.sourceLabel || handoff.sourceNodeId} (${handoff.sourceNodeId}): ${JSON.stringify(handoff.payload ?? {})}`
+        );
+      });
       lines.push('');
     }
 
@@ -3610,7 +3834,12 @@ class SwarmEngine {
         required = waitFor;
       } else {
         // 'all' — count incoming edges to this merge node
-        required = execution.workflowDef.edges.filter((e) => e.target === nodeId).length;
+        required = new Set(
+          execution.workflowDef.edges
+            .filter((e) => e.target === nodeId)
+            .map((e) => e.source)
+            .filter(Boolean)
+        ).size;
       }
       this._mergeStates.set(stateKey, { received: new Set(), required });
     }
@@ -4018,55 +4247,111 @@ class SwarmEngine {
       // Watch for child completion — poll via interval
       const pollHandle = setInterval(() => {
         const child = this._executions.get(childExecutionId);
-        if (!child) {
+        const parentExec = this._executions.get(executionId);
+        const parentState = parentExec?.agentStates.get(nodeId);
+
+        if (!child || !parentExec || !parentState) {
           clearInterval(pollHandle);
+          if (parentState) {
+            parentState._subWorkflowPollHandle = null;
+          }
+          return;
+        }
+
+        if (this._subWorkflowExecutions.get(subKey) !== childExecutionId) {
+          clearInterval(pollHandle);
+          parentState._subWorkflowPollHandle = null;
+          return;
+        }
+
+        if (['stopping', 'stopped', 'failed', 'completed'].includes(parentExec.status)) {
+          clearInterval(pollHandle);
+          parentState._subWorkflowPollHandle = null;
+          return;
+        }
+
+        if (child.status === 'blocked') {
+          parentState.status = 'blocked';
+          parentState.runtimeBlocker = child.runtimeBlocker
+            ? {
+                ...child.runtimeBlocker,
+                nodeId,
+                childExecutionId,
+                childNodeId: child.runtimeBlocker.nodeId ?? null,
+              }
+            : {
+                type: 'subworkflow_blocked',
+                message: `Sub-workflow ${childWorkflowId} is blocked`,
+                nodeId,
+                childExecutionId,
+              };
+          parentState.lastOutputSnippet = `Sub-workflow blocked`;
+          parentExec.runtimeBlocker = parentState.runtimeBlocker;
+          this._broadcastAgentStatus(executionId, nodeId, parentState);
+          this._syncExecutionStatusFromAgents(parentExec);
+          return;
+        }
+
+        if (child.status === 'paused') {
+          parentState.status = 'paused';
+          parentState.runtimeBlocker = null;
+          parentState.lastOutputSnippet = `Sub-workflow paused`;
+          if (parentExec.runtimeBlocker?.nodeId === nodeId) {
+            parentExec.runtimeBlocker = null;
+          }
+          this._broadcastAgentStatus(executionId, nodeId, parentState);
+          this._syncExecutionStatusFromAgents(parentExec);
+          return;
+        }
+
+        if (child.status === 'running' && (parentState.status !== 'running' || parentState.runtimeBlocker)) {
+          parentState.status = 'running';
+          parentState.runtimeBlocker = null;
+          parentState.lastOutputSnippet = `Sub-workflow ${childWorkflowId} running`;
+          if (parentExec.runtimeBlocker?.nodeId === nodeId) {
+            parentExec.runtimeBlocker = null;
+          }
+          this._broadcastAgentStatus(executionId, nodeId, parentState);
+          this._syncExecutionStatusFromAgents(parentExec);
           return;
         }
 
         if (['completed', 'stopped', 'failed'].includes(child.status)) {
           clearInterval(pollHandle);
+          parentState._subWorkflowPollHandle = null;
 
           // Merge child context back into parent
-          const parentExec = this._executions.get(executionId);
-          if (parentExec) {
-            Object.assign(parentExec.workflowContext, child.workflowContext);
+          Object.assign(parentExec.workflowContext, child.workflowContext);
 
-            const parentState = parentExec.agentStates.get(nodeId);
+          // Forward to parent outgoing edges on success
+          if (child.status === 'completed') {
+            parentState.runtimeBlocker = null;
+            parentState.lastOutputSnippet = `Sub-workflow ${child.status}`;
+            this._broadcastAgentStatus(executionId, nodeId, parentState);
 
-            // Forward to parent outgoing edges on success
-            if (child.status === 'completed') {
-              if (parentState) {
-                parentState.lastOutputSnippet = `Sub-workflow ${child.status}`;
-                this._broadcastAgentStatus(executionId, nodeId, parentState);
+            const outgoingTargets = parentExec.workflowDef.edges
+              .filter((e) => e.source === nodeId)
+              .map((e) => e.target);
+
+            (async () => {
+              for (const targetId of outgoingTargets) {
+                await this._onHandoff(executionId, nodeId, {
+                  type: 'handoff',
+                  targetId,
+                  contextUpdate: { _subWorkflowCompleted: childWorkflowId },
+                });
               }
-
-              const outgoingTargets = parentExec.workflowDef.edges
-                .filter((e) => e.source === nodeId)
-                .map((e) => e.target);
-
-              (async () => {
-                for (const targetId of outgoingTargets) {
-                  await this._onHandoff(executionId, nodeId, {
-                    type: 'handoff',
-                    targetId,
-                    contextUpdate: { _subWorkflowCompleted: childWorkflowId },
-                  });
-                }
-                // Mark as done AFTER forwarding so _onHandoff's duplicate guard doesn't drop it
-                if (parentState) {
-                  parentState.status = 'done';
-                  this._broadcastAgentStatus(executionId, nodeId, parentState);
-                }
-                this._syncExecutionStatusFromAgents(parentExec);
-              })();
-            } else {
-              if (parentState) {
-                parentState.status = 'failed';
-                parentState.lastOutputSnippet = `Sub-workflow ${child.status}`;
-                this._broadcastAgentStatus(executionId, nodeId, parentState);
-              }
+              // Mark as done AFTER forwarding so _onHandoff's duplicate guard doesn't drop it
+              parentState.status = 'done';
+              this._broadcastAgentStatus(executionId, nodeId, parentState);
               this._syncExecutionStatusFromAgents(parentExec);
-            }
+            })();
+          } else {
+            parentState.runtimeBlocker = null;
+            parentState.status = 'failed';
+            parentState.lastOutputSnippet = `Sub-workflow ${child.status}`;
+            this._broadcastAgentStatus(executionId, nodeId, parentState);
+            this._syncExecutionStatusFromAgents(parentExec);
           }
 
           // Clean up child execution reference
@@ -4187,6 +4472,8 @@ class SwarmEngine {
         sourceState.handoffPayloads = [...(sourceState.handoffPayloads || []), handoffRecord];
       }
 
+      this._recordInboundHandoff(execution, sourceNodeId, nextTargetId, contextUpdate);
+
       if (this._wsBroadcast) {
         this._wsBroadcast(executionId, {
           type: 'handoff_started',
@@ -4210,27 +4497,45 @@ class SwarmEngine {
         continue;
       }
 
+      const targetState = execution.agentStates.get(nextTargetId);
+      if (targetNode && this._shouldWaitForAllAgentInputs(execution, nextTargetId) && !targetState?.sessionId) {
+        const pendingInputs = this._registerPendingAgentInput(execution, nextTargetId, sourceNodeId);
+        if (pendingInputs.received < pendingInputs.required) {
+          if (targetState) {
+            targetState.status = 'waiting';
+            targetState.lastOutputSnippet = `Waiting for upstream inputs ${pendingInputs.received}/${pendingInputs.required}`;
+            this._broadcastAgentStatus(executionId, nextTargetId, targetState);
+          }
+          continue;
+        }
+        execution.agentInputBarriers?.delete(nextTargetId);
+      }
+
       await this._ensureAgentPty(executionId, nextTargetId);
 
-      const targetState = execution.agentStates.get(nextTargetId);
-      if (targetState && targetState.sessionId) {
-        this._markAgentProgress(execution, nextTargetId, targetState, 'downstream_spawn');
+      const activeTargetState = execution.agentStates.get(nextTargetId);
+      if (activeTargetState && activeTargetState.sessionId) {
+        this._markAgentProgress(execution, nextTargetId, activeTargetState, 'downstream_spawn');
         if (targetNode) {
           const handoffTargets = this._getOutgoingTargets(execution.workflowDef, nextTargetId);
           const contextPrompt = this._buildSystemPrompt(
-            targetNode, execution.workflowContext, handoffTargets
+            targetNode,
+            execution.workflowContext,
+            handoffTargets,
+            undefined,
+            { inboundHandoffs: this._getInboundHandoffsForTarget(execution, nextTargetId) }
           );
           if (contextPrompt) {
-            this._writeSwarmPrompt(targetState.sessionId, contextPrompt, targetState);
+            this._writeSwarmPrompt(activeTargetState.sessionId, contextPrompt, activeTargetState);
           }
         }
       }
 
-      if (targetState) {
-        targetState.status = 'running';
-        targetState.runtimeBlocker = null;
+      if (activeTargetState) {
+        activeTargetState.status = 'running';
+        activeTargetState.runtimeBlocker = null;
         execution.runtimeBlocker = null;
-        this._broadcastAgentStatus(executionId, nextTargetId, targetState);
+        this._broadcastAgentStatus(executionId, nextTargetId, activeTargetState);
       }
 
       if (this._wsBroadcast) {
@@ -4342,6 +4647,8 @@ class SwarmEngine {
 
     this._setExecutionStatus(execution, 'stopping');
 
+    const childExecutionIds = this._detachChildExecutionIds(executionId);
+
     if (execution.heartbeatTimer) {
       clearInterval(execution.heartbeatTimer);
       execution.heartbeatTimer = null;
@@ -4380,7 +4687,17 @@ class SwarmEngine {
         clearTimeout(state.noProgressTimer);
         state.noProgressTimer = null;
       }
+      this._clearSubWorkflowPollHandle(state);
     }
+
+    for (const childExecutionId of childExecutionIds) {
+      const childExecution = this._executions.get(childExecutionId);
+      if (childExecution && !['stopped', 'failed', 'completed'].includes(childExecution.status)) {
+        await this.stopExecution(childExecutionId);
+      }
+    }
+
+    this._clearExecutionFlowControlState(executionId);
 
     try {
       for (const [, state] of execution.agentStates) {
@@ -4448,6 +4765,9 @@ class SwarmEngine {
         this._broadcastAgentStatus(executionId, nodeId, state);
       }
     }
+    for (const childExecutionId of this._getChildExecutionIds(executionId)) {
+      this.pauseExecution(childExecutionId);
+    }
     this._syncExecutionStatusFromAgents(execution);
     return this.getStatus(executionId, execution);
   }
@@ -4472,6 +4792,9 @@ class SwarmEngine {
         state.status = 'running';
         this._broadcastAgentStatus(executionId, nodeId, state);
       }
+    }
+    for (const childExecutionId of this._getChildExecutionIds(executionId)) {
+      this.resumeExecution(childExecutionId);
     }
     this._syncExecutionStatusFromAgents(execution);
     return this.getStatus(executionId, execution);

@@ -13,8 +13,11 @@
 import { Router } from 'express';
 import { generateWorkflowFromPrompt } from '../services/ScaffoldGenerator.js';
 import { getRuntimeCapabilitySnapshot } from '../services/SwarmEngine.js';
+import { buildWorkflowArtifact } from '../services/WorkflowArtifactBuilder.js';
 import { ExecutionHistoryStore } from '../stores/ExecutionHistoryStore.js';
 import { ConfigStore } from '../services/ConfigStore.js';
+
+const TERMINAL_EXECUTION_STATUSES = new Set(['completed', 'stopped', 'failed']);
 
 function getAgentNodeById(workflowDef, nodeId) {
   return workflowDef?.nodes?.find((node) => node.id === nodeId && node.type === 'agent') ?? null;
@@ -23,6 +26,90 @@ function getAgentNodeById(workflowDef, nodeId) {
 function isAgentInDepartment(agentNode, departmentId) {
   if (!agentNode || !departmentId) return false;
   return agentNode.parentId === departmentId || agentNode.data?.parentDepartmentId === departmentId;
+}
+
+function normalizeAgentStates(agentStates) {
+  if (agentStates instanceof Map) return agentStates;
+  if (agentStates && typeof agentStates === 'object') {
+    return new Map(Object.entries(agentStates));
+  }
+  return new Map();
+}
+
+function buildAgentOutputsFromExecution(execution) {
+  const agentOutputs = {};
+  const groupedMessages = {};
+  const chatMessages = Array.isArray(execution?.chatMessages) ? execution.chatMessages : [];
+
+  for (const msg of chatMessages) {
+    if (msg.role !== 'assistant' || !msg.nodeId) continue;
+    if (!groupedMessages[msg.nodeId]) groupedMessages[msg.nodeId] = [];
+    groupedMessages[msg.nodeId].push(msg);
+  }
+
+  const agentStates = normalizeAgentStates(execution?.agentStates);
+  for (const [nodeId, messages] of Object.entries(groupedMessages)) {
+    const state = agentStates.get(nodeId);
+    const nodeDef = execution?.workflowDef?.nodes?.find((node) => node.id === nodeId);
+    const timestamps = messages
+      .map((msg) => msg.timestamp)
+      .filter(Boolean)
+      .sort((a, b) => a - b);
+
+    agentOutputs[nodeId] = {
+      label: nodeDef?.data?.label || nodeId,
+      finalText: messages
+        .map((msg) => msg.text || msg.content || '')
+        .filter(Boolean)
+        .join('\n\n'),
+      handoffPayloads: Array.isArray(state?.handoffPayloads) ? state.handoffPayloads : [],
+      status: state?.status || 'unknown',
+      provider: state?.runtimeProvider || state?.provider || null,
+      messageCount: messages.length,
+      firstMessageAt: timestamps[0] ? new Date(timestamps[0]).toISOString() : null,
+      lastMessageAt: timestamps[timestamps.length - 1] ? new Date(timestamps[timestamps.length - 1]).toISOString() : null,
+    };
+  }
+
+  return agentOutputs;
+}
+
+function buildLiveExecutionResults(execution, workflowName = '') {
+  const agentOutputs = buildAgentOutputsFromExecution(execution);
+  const status = execution?.status || 'unknown';
+  const startedAt = execution?.startedAt ?? execution?.budget?.startedAt ?? null;
+  const endedAt = TERMINAL_EXECUTION_STATUSES.has(status)
+    ? (execution?.endedAt ?? new Date().toISOString())
+    : null;
+  const durationMs = startedAt && endedAt
+    ? Math.max(0, new Date(endedAt).getTime() - new Date(startedAt).getTime())
+    : null;
+  const normalizedWorkflowName = workflowName || execution?.workflowDef?.name || 'Workflow';
+
+  return {
+    executionId: execution?.executionId,
+    workflowName: normalizedWorkflowName,
+    status,
+    agentOutputs,
+    aggregatedArtifact: TERMINAL_EXECUTION_STATUSES.has(status)
+      ? buildWorkflowArtifact({
+          workflowName: normalizedWorkflowName,
+          workflowDescription: execution?.workflowDef?.description || '',
+          executionId: execution?.executionId,
+          status,
+          startedAt,
+          endedAt,
+          durationMs,
+          agentOutputs,
+        })
+      : '',
+    meta: {
+      startedAt,
+      endedAt,
+      durationMs,
+      nodesRun: normalizeAgentStates(execution?.agentStates).size,
+    },
+  };
 }
 
 export function resolveBroadcastNodeTargets(execution, scope, targetId) {
@@ -79,7 +166,10 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
   // Execution History Store — initialized lazily on first use
   // -------------------------------------------------------------------------
   let _historyStore = null;
-  function getHistoryStore() {
+  function getHistoryStore(appLocals = null) {
+    if (appLocals?.executionHistoryStore) {
+      return appLocals.executionHistoryStore;
+    }
     if (!_historyStore) {
       _historyStore = new ExecutionHistoryStore(ConfigStore.CONFIG_DIR);
       // Fire-and-forget init (creates directory if needed)
@@ -440,38 +530,14 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
   // then in persisted ExecutionHistoryStore.
   // Returns { source: 'live'|'history', data: {...}, workflowName?: string } or null.
   // -------------------------------------------------------------------------
-  async function lookupExecution(executionId, workflowIdHint, appLocals) {
-    // 1. Try live execution from SwarmEngine
-    const liveStatus = swarmEngine.getStatus(executionId);
-    if (liveStatus) {
-      // Resolve workflow name from workflowStore if possible
-      let workflowName = '';
-      try {
-        const store = appLocals.workflowStore;
-        if (store && liveStatus.workflowId) {
-          const wf = await store.get(liveStatus.workflowId);
-          workflowName = wf?.name || '';
-        }
-      } catch {
-        // Ignore — name is best-effort
-      }
-
-      return {
-        source: 'live',
-        data: liveStatus,
-        workflowName,
-      };
-    }
-
-    // 2. Try persisted history
-    const store = getHistoryStore();
+  async function lookupHistoryExecution(executionId, workflowIdHint, appLocals) {
+    const store = getHistoryStore(appLocals);
     let entry = null;
     let workflowName = '';
 
     if (workflowIdHint) {
       entry = await store.getEntry(workflowIdHint, executionId);
       if (entry) {
-        // Try to resolve workflow name
         try {
           const wfStore = appLocals.workflowStore;
           if (wfStore) {
@@ -483,7 +549,6 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
         }
       }
     } else {
-      // Scan all workflows (slower, but works without workflowId)
       const wfStore = appLocals.workflowStore;
       if (wfStore) {
         try {
@@ -502,11 +567,56 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
     }
 
     if (!entry) return null;
+    return { data: entry, workflowName };
+  }
+
+  async function lookupExecution(executionId, workflowIdHint, appLocals) {
+    // 1. Try live execution from SwarmEngine
+    const liveStatus = swarmEngine.getStatus(executionId);
+    if (liveStatus) {
+      const liveExecution = typeof swarmEngine.getExecution === 'function'
+        ? swarmEngine.getExecution(executionId)
+        : null;
+      const liveWorkflowId = workflowIdHint || liveStatus.workflowId || liveExecution?.workflowId || null;
+
+      if (TERMINAL_EXECUTION_STATUSES.has(liveStatus.status)) {
+        const persisted = await lookupHistoryExecution(executionId, liveWorkflowId, appLocals);
+        if (persisted) {
+          return {
+            source: 'history',
+            data: persisted.data,
+            workflowName: persisted.workflowName,
+          };
+        }
+      }
+
+      // Resolve workflow name from workflowStore if possible
+      let workflowName = liveExecution?.workflowDef?.name || '';
+      try {
+        const store = appLocals.workflowStore;
+        if (store && liveWorkflowId) {
+          const wf = await store.get(liveWorkflowId);
+          workflowName = wf?.name || '';
+        }
+      } catch {
+        // Ignore — name is best-effort
+      }
+
+      return {
+        source: 'live',
+        data: liveExecution ?? liveStatus,
+        workflowName,
+      };
+    }
+
+    // 2. Try persisted history
+    const persisted = await lookupHistoryExecution(executionId, workflowIdHint, appLocals);
+    if (!persisted) return null;
 
     return {
       source: 'history',
-      data: entry,
-      workflowName,
+      data: persisted.data,
+      workflowName: persisted.workflowName,
     };
   }
 
@@ -535,29 +645,7 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
       }
 
       if (result.source === 'live') {
-        // Build agentOutputs from live chatMessages
-        const agentOutputs = {};
-        const chatMessages = result.data.chatMessages || [];
-        for (const msg of chatMessages) {
-          if (msg.role === 'assistant' && msg.nodeId) {
-            if (!agentOutputs[msg.nodeId]) agentOutputs[msg.nodeId] = '';
-            agentOutputs[msg.nodeId] += (msg.text || msg.content || '') + '\n';
-          }
-        }
-
-        return res.status(200).json({
-          executionId: result.data.executionId,
-          workflowName: result.workflowName,
-          status: result.data.status,
-          agentOutputs,
-          aggregatedArtifact: '',
-          meta: {
-            startedAt: result.data.budget?.startedAt ?? null,
-            endedAt: null,
-            durationMs: null,
-            nodesRun: Object.keys(result.data.agentStates || {}).length,
-          },
-        });
+        return res.status(200).json(buildLiveExecutionResults(result.data, result.workflowName));
       }
 
       // Persisted history entry
@@ -608,11 +696,12 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
       let artifactContent = '';
       if (result.source === 'history') {
         artifactContent = result.data.aggregatedArtifact || '';
+      } else if (TERMINAL_EXECUTION_STATUSES.has(result.data?.status)) {
+        artifactContent = buildLiveExecutionResults(result.data, result.workflowName).aggregatedArtifact || '';
       }
-      // Live executions don't have aggregatedArtifact yet — return empty markdown
 
       // Build safe filename
-      const safeName = (result.workflowName || 'workflow')
+      const safeName = (result.workflowName || result.data?.workflowDef?.name || 'workflow')
         .replace(/[^a-zA-Z0-9_-]/g, '-')
         .replace(/-+/g, '-')
         .replace(/^-|-$/g, '')

@@ -64,7 +64,7 @@ export default function ChatMessage({ message, agentLabel }) {
           )}
           <span className="text-[10px] text-gray-600">{formatTime(timestamp)}</span>
         </div>
-        <div className="text-[12px] whitespace-pre-wrap break-words [overflow-wrap:anywhere] leading-5 text-gray-100">
+        <div className="text-[12px] whitespace-pre-wrap break-words leading-5 text-gray-100">
           {displayText || 'Structured handoff sent.'}
         </div>
       </div>

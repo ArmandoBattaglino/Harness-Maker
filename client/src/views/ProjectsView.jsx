@@ -101,14 +101,20 @@ function StatusDot({ status }) {
       </span>
     );
   }
+  if (status === 'selected') {
+    return <div className="w-2 h-2 rounded-full bg-sky-400" />;
+  }
   return <div className="w-2 h-2 rounded-full bg-border-hover" />;
 }
 
 function ProjectCard({ project, status, onOpenTerminal, onDelete }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const isActive = status === 'active';
+  const isSelected = status === 'selected';
+  const isHighlighted = isActive || isSelected;
+  const statusLabel = isActive ? 'Active' : isSelected ? 'Selected' : 'Idle';
 
-  const hoverBorder = isActive
+  const hoverBorder = isHighlighted
     ? 'hover:border-primary/50'
     : 'hover:border-border-hover';
 
@@ -120,7 +126,7 @@ function ProjectCard({ project, status, onOpenTerminal, onDelete }) {
       <div>
         <div className="flex justify-between items-start mb-2">
           <h4
-            className={`text-base font-semibold text-text-main truncate pr-4 ${isActive ? 'group-hover:text-primary' : ''} transition-colors`}
+            className={`text-base font-semibold text-text-main truncate pr-4 ${isHighlighted ? 'group-hover:text-primary' : ''} transition-colors`}
           >
             {project.name}
           </h4>
@@ -146,9 +152,9 @@ function ProjectCard({ project, status, onOpenTerminal, onDelete }) {
         <div className="flex items-center gap-2">
           <StatusDot status={status} />
           <span
-            className={`text-[12px] font-medium ${isActive ? 'text-text-main' : 'text-text-muted'}`}
+            className={`text-[12px] font-medium ${isHighlighted ? 'text-text-main' : 'text-text-muted'}`}
           >
-            {isActive ? 'Active' : 'Idle'}
+            {statusLabel}
           </span>
         </div>
         <span className="text-[11px] text-text-muted">
@@ -196,6 +202,9 @@ function AddCard({ onClick }) {
 
 function ListRow({ project, status, onOpenTerminal, onDelete }) {
   const isActive = status === 'active';
+  const isSelected = status === 'selected';
+  const isHighlighted = isActive || isSelected;
+  const statusLabel = isActive ? 'Active' : isSelected ? 'Selected' : 'Idle';
   return (
     <tr className="border-b border-border-color hover:bg-surface-hover transition-colors">
       <td className="py-3 pr-4 text-sm font-medium text-text-main">{project.name}</td>
@@ -207,8 +216,8 @@ function ListRow({ project, status, onOpenTerminal, onDelete }) {
       <td className="py-3 pr-4">
         <div className="flex items-center gap-2">
           <StatusDot status={status} />
-          <span className={`text-[12px] font-medium ${isActive ? 'text-text-main' : 'text-text-muted'}`}>
-            {isActive ? 'Active' : 'Idle'}
+          <span className={`text-[12px] font-medium ${isHighlighted ? 'text-text-main' : 'text-text-muted'}`}>
+            {statusLabel}
           </span>
         </div>
       </td>
@@ -236,7 +245,7 @@ function ListRow({ project, status, onOpenTerminal, onDelete }) {
 /* ── main view ──────────────────────────────────────── */
 
 export default function ProjectsView() {
-  const { projects, sessions } = useAppState();
+  const { projects, sessions, activeProjectId } = useAppState();
   const dispatch = useAppDispatch();
 
   const [loading, setLoading] = useState(false);
@@ -333,7 +342,9 @@ export default function ProjectsView() {
     : projects;
 
   function getStatus(project) {
-    return sessions[project.id] ? 'active' : 'idle';
+    if (sessions[project.id]) return 'active';
+    if (activeProjectId === project.id) return 'selected';
+    return 'idle';
   }
 
   return (

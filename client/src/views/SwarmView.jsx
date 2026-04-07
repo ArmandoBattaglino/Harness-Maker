@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { ReactFlowProvider } from '@xyflow/react';
 import SwarmCanvas from '../canvas/SwarmCanvas';
 import PromptToFlowBar from '../canvas/PromptToFlowBar';
-import BroadcastBar from '../canvas/BroadcastBar';
+// BroadcastBar removed — broadcast controls are now integrated into ChatPanel
 import PtyExplosion from '../canvas/PtyExplosion';
 import WorkflowSettingsModal from '../canvas/WorkflowSettingsModal';
 import ExecutionHistory from '../canvas/ExecutionHistory';
@@ -86,7 +86,9 @@ export default function SwarmView() {
   const [showTemplates, setShowTemplates] = useState(false);
   const [showVersions, setShowVersions] = useState(false);
   const [showArtifactPanel, setShowArtifactPanel] = useState(false);
+  const [promptToFlowResetKey, setPromptToFlowResetKey] = useState(0);
   const [layoutNonce, setLayoutNonce] = useState(0);
+  const [focusConnections, setFocusConnections] = useState(true);
   const [runtimeCapabilities, setRuntimeCapabilities] = useState({
     claude: [],
     codex: [],
@@ -94,8 +96,14 @@ export default function SwarmView() {
   });
   const [runtimeCapabilityError, setRuntimeCapabilityError] = useState('');
 
-  const { activeProjectId, projects } = useAppState();
-  const projectPath = projects.find((p) => p.id === activeProjectId)?.path ?? '';
+  const { activeProjectId, projects, projectsHydrated } = useAppState();
+  const activeProject = useMemo(
+    () => projects.find((p) => p.id === activeProjectId) ?? null,
+    [projects, activeProjectId]
+  );
+  const projectPath = activeProject?.path ?? '';
+  const activeProjectReady = Boolean(activeProjectId && activeProject);
+  const isResolvingActiveProject = Boolean(activeProjectId && !activeProject && !projectsHydrated);
   const {
     workflows,
     loading: workflowsLoading,
@@ -108,7 +116,7 @@ export default function SwarmView() {
 
   const pendingCount = getPendingCount(inboxItems);
   const isExecutionActive = ['running', 'paused', 'blocked'].includes(executionStatus);
-  const showMissingProjectMessage = Boolean(workflowDef && !activeProjectId);
+  const showMissingProjectMessage = Boolean(workflowDef && projectsHydrated && !activeProjectId);
   const savedWorkflows = useMemo(() => {
     const filtered = workflows
       .filter((workflow) => !activeProjectId || !workflow.projectId || workflow.projectId === activeProjectId)
@@ -135,7 +143,7 @@ export default function SwarmView() {
   const handleSaveFnRef = useRef(null);
   const handleRunFnRef = useRef(null);
   handleSaveRef.current = { isDirty, workflowDef, saving };
-  handleRunRef.current = { workflowDef, activeProjectId, executing, executionStatus, validationErrors };
+  handleRunRef.current = { workflowDef, activeProjectReady, executing, executionStatus, validationErrors };
   // Updated after handleSave/handleRun are defined (see below)
 
   useEffect(() => {
@@ -163,7 +171,7 @@ export default function SwarmView() {
       if (e.key === 'Enter') {
         e.preventDefault();
         const r = handleRunRef.current;
-        const canRun = r.workflowDef && r.activeProjectId && !r.executing
+        const canRun = r.activeProjectReady && !r.executing
           && (r.executionStatus === 'idle' || r.executionStatus === 'completed')
           && !(r.validationErrors?.filter(ve => ve.severity === 'error').length > 0);
         if (canRun) {
@@ -236,13 +244,43 @@ export default function SwarmView() {
   const handleRun = async () => {
     // FR-V5-46: validate before run — block if errors exist
     if (hasValidationErrors) return;
+
+    let runWorkflowId = workflowDef?.id;
+
+    // Auto-create workflow on the server when the user built a canvas from scratch
+    if (!runWorkflowId) {
+      const { nodes, edges } = canvasStateRef.current;
+      if (!nodes.length) return;
+      try {
+        const res = await apiPost('/api/v1/workflows', {
+          name: 'Untitled Workflow',
+          description: '',
+          nodes,
+          edges,
+          settings: {},
+          initialContext: {},
+          projectId: activeProjectId,
+        });
+        const created = res?.workflow ?? res;
+        setWorkflowDef(created);
+        setSelectedWorkflowId(created.id);
+        setIsDirty(false);
+        refreshWorkflows();
+        runWorkflowId = created.id;
+      } catch (e) {
+        console.error('[SwarmView] auto-create workflow failed:', e);
+        return;
+      }
+    }
+
+    setPromptToFlowResetKey((value) => value + 1);
     setExecuting(true);
     try {
       const models = {};
       if (runtimeModels.claude) models.claude = runtimeModels.claude;
       if (runtimeModels.codex) models.codex = runtimeModels.codex;
       if (runtimeModels.gemini) models.gemini = runtimeModels.gemini;
-      await startExecution(activeProjectId, projectPath, selectedRuntimeProvider, Object.keys(models).length > 0 ? models : null);
+      await startExecution(activeProjectId, projectPath, selectedRuntimeProvider, Object.keys(models).length > 0 ? models : null, runWorkflowId);
     } finally {
       setExecuting(false);
     }
@@ -287,6 +325,7 @@ export default function SwarmView() {
     setWorkflowDef(selected);
     setIsDirty(false);
     setSaveError(null);
+    setPromptToFlowResetKey((value) => value + 1);
   };
 
   // FR-V5-01: markDirty callback for SwarmCanvas
@@ -296,14 +335,20 @@ export default function SwarmView() {
   }, []);
 
   // FR-V5-01: track latest canvas nodes/edges for save + FR-V5-44 validation
+  // Also keep a state copy so validation re-runs when the child canvas
+  // reports changes (the ref alone doesn't trigger parent re-renders).
+  const [canvasNodesForValidation, setCanvasNodesForValidation] = useState([]);
+  const [canvasEdgesForValidation, setCanvasEdgesForValidation] = useState([]);
   const onCanvasChange = useCallback((nodes, edges) => {
     canvasStateRef.current = { nodes, edges };
+    setCanvasNodesForValidation(nodes);
+    setCanvasEdgesForValidation(edges);
   }, []);
 
   // FR-V5-44: canvas validation — computed from latest canvas state
   const canvasValidation = useCanvasValidation(
-    canvasStateRef.current.nodes,
-    canvasStateRef.current.edges
+    canvasNodesForValidation,
+    canvasEdgesForValidation
   );
   // Keep validation errors in state so banners react to changes
   useEffect(() => {
@@ -410,6 +455,7 @@ export default function SwarmView() {
       setWorkflowDef(imported);
       setSelectedWorkflowId(imported.id);
       setIsDirty(false);
+      setPromptToFlowResetKey((value) => value + 1);
       refreshWorkflows();
     } catch (e) {
       setImportError(e.message);
@@ -440,6 +486,7 @@ export default function SwarmView() {
     setWorkflowDef(created);
     setSelectedWorkflowId(created.id);
     setIsDirty(false);
+    setPromptToFlowResetKey((value) => value + 1);
     refreshWorkflows();
   };
 
@@ -508,6 +555,13 @@ export default function SwarmView() {
             {workflowDef?.name || 'Swarm Orchestrator'}{isDirty ? ' *' : ''}
           </span>
         )}
+        <span className="text-[11px] px-2 py-1 rounded bg-gray-800 text-gray-300 border border-gray-700">
+          {isResolvingActiveProject
+            ? 'Project: loading...'
+            : activeProject
+            ? `Project: ${activeProject.name}`
+            : 'Project: none selected'}
+        </span>
         <div className="flex-1" />
 
         <button
@@ -649,6 +703,19 @@ export default function SwarmView() {
         </button>
 
         <button
+          onClick={() => setFocusConnections((value) => !value)}
+          disabled={!workflowDef}
+          title={!workflowDef ? 'No workflow loaded' : 'Fade unrelated connections when selecting a node'}
+          className={`text-xs px-3 py-1 rounded border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+            focusConnections
+              ? 'bg-sky-700 border-sky-500 text-white hover:bg-sky-600'
+              : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
+          }`}
+        >
+          Focus
+        </button>
+
+        <button
           onClick={handleTidyLayout}
           disabled={!workflowDef}
           title={!workflowDef ? 'No workflow loaded' : 'Reorder the workflow layout'}
@@ -668,13 +735,13 @@ export default function SwarmView() {
 
         {(executionStatus === 'idle' || executionStatus === 'completed') && (
           <button
-            onClick={workflowDef && activeProjectId && !hasValidationErrors ? handleRun : undefined}
-            disabled={executing || !workflowDef || !activeProjectId || hasValidationErrors}
+            onClick={activeProjectReady && !hasValidationErrors ? handleRun : undefined}
+            disabled={executing || !activeProjectReady || hasValidationErrors}
             title={
-              !activeProjectId
+              isResolvingActiveProject
+                ? 'Loading active project...'
+                : !activeProjectId
                 ? 'Select a project first'
-                : !workflowDef
-                ? 'Generate or load a workflow first'
                 : hasValidationErrors
                 ? `${validationErrorCount} validation error${validationErrorCount !== 1 ? 's' : ''} — fix before running`
                 : 'Run workflow (Ctrl+Enter)'
@@ -790,11 +857,13 @@ export default function SwarmView() {
       )}
 
       <PromptToFlowBar
+        resetSignal={promptToFlowResetKey}
         onWorkflowGenerated={(workflowId, animatedDef) => {
           setWorkflowDef(animatedDef);
           setSelectedWorkflowId(workflowId);
           setIsDirty(false);
           setSaveError(null);
+          setPromptToFlowResetKey((value) => value + 1);
           refreshWorkflows();
         }}
       />
@@ -873,7 +942,11 @@ export default function SwarmView() {
         />
         <div className="flex-1" />
         <span className="text-xs text-gray-500">
-          {activeProjectId ? 'Shows current-project workflows plus unscoped ones' : 'Shows all saved workflows'}
+          {isResolvingActiveProject
+            ? 'Resolving the active project...'
+            : activeProject
+            ? `Shows workflows for ${activeProject.name} plus unscoped ones`
+            : 'Shows all saved workflows'}
         </span>
       </div>
 
@@ -898,6 +971,7 @@ export default function SwarmView() {
             markDirty={markDirty}
             onCanvasChange={onCanvasChange}
             layoutNonce={layoutNonce}
+            focusConnections={focusConnections}
           />
         </ReactFlowProvider>
       </div>
@@ -912,7 +986,7 @@ export default function SwarmView() {
         </div>
       )}
 
-      <BroadcastBar />
+      {/* BroadcastBar removed — controls now live inside ChatPanel */}
 
       {ptyExplosionNodeId && activeExecutionId && (
         <PtyExplosion
@@ -955,6 +1029,7 @@ export default function SwarmView() {
             setSelectedWorkflowId(workflow.id);
             setIsDirty(false);
             setSaveError(null);
+            setPromptToFlowResetKey((value) => value + 1);
             refreshWorkflows();
             setShowTemplates(false);
           }}
@@ -969,6 +1044,7 @@ export default function SwarmView() {
             setWorkflowDef(restored);
             setIsDirty(false);
             setSaveError(null);
+            setPromptToFlowResetKey((value) => value + 1);
             refreshWorkflows();
             setShowVersions(false);
           }}

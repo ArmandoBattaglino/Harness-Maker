@@ -5,3 +5,5 @@ server/public/
 dist/
 .env
 *.log
+tests/visual/swarm/.appdata/
+tests/visual/swarm/artifacts/

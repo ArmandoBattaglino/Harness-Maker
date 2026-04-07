@@ -1,4 +1,47 @@
 ---
+## 2026-04-07 - Tasks #331-#333: Swarm canvas drop preview + useSwarm mount blocker
+**Status:** COMPLETED
+**Called by:** orchestrator (continue after implementation/verification)
+
+### Context when I started
+Task-plan and memory updates for POST-V5 FOLLOW-UP 2 were already in place, and the feature had been implemented and verified. What was still missing was the targeted code-mapper trace in CODE_MAP.md and CHANGELOG.md for the drag-preview flow and the incidental `useSwarm.js` blocker fix discovered during browser QA.
+
+### What I did
+1. Read the relevant source changes in `SwarmCanvas.jsx`, `AgentNode.jsx`, and `useSwarm.js`
+2. Updated CODE_MAP.md module rows and function entries for `AgentNode()`, `SwarmCanvas()`, `useSwarm()`, and `applyExecutionSnapshot()`
+3. Added a new CODE_MAP entry for `reconcileClosedExecution(executionId)` so the WS close-recovery path is explicitly documented
+4. Prepended CHANGELOG.md with a Tasks #331-#333 entry covering both the live drop preview and the SwarmView mount blocker fix
+5. Appended this session log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Updated module rows and function graphs for the live Agent-node ghost preview and the `useSwarm` hook-order fix |
+| docs/memory/CHANGELOG.md | MODIFIED | Added a dedicated Tasks #331-#333 entry with file/function/connection impact |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log |
+
+### Improvements delivered
+- CODE_MAP.md now documents the full preview path: palette drag -> onDragOver -> preview node -> shared snapped onDrop path
+- The `useSwarm` close-reconciliation chain is now explicit, including why declaration order matters for `applyExecutionSnapshot`
+- CHANGELOG.md now records both the UX improvement and the browser-blocking hook fix
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Kept this pass scoped to the tasks I had full source context for, rather than trying to remap unrelated later work in the repo
+
+### What I learned
+- The drag-preview UX is intentionally ephemeral: the ghost node lives only in a render-time `renderedNodes` list and never touches persisted workflow data
+- The `useSwarm` hydration path is sensitive to callback declaration order because `reconcileClosedExecution()` awaits `applyExecutionSnapshot()` inside the same hook body
+
+### State I'm leaving behind
+Targeted mapping is now current for Tasks #331-#333. The drag-preview flow and the `useSwarm` initialization-order fix both have code-map and changelog coverage.
+
+### Handoff
+None - this bookkeeping pass is complete.
+
+---
 ## 2026-04-07 — Task #330: Documentation and status truthfulness sync (FINAL TASK)
 **Status:** COMPLETED
 **Called by:** orchestrator (post-task code mapping — final task)

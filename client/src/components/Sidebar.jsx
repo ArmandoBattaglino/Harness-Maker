@@ -50,6 +50,8 @@ export default function Sidebar() {
     const project = state.projects.find((p) => p.id === projectId);
     return { projectId, session, projectName: project?.name ?? 'Unknown' };
   });
+  const selectedProject = state.projects.find((project) => project.id === state.activeProjectId) ?? null;
+  const selectedProjectSession = selectedProject ? state.sessions[selectedProject.id] ?? null : null;
 
   return (
     <>
@@ -87,10 +89,29 @@ export default function Sidebar() {
             <p className="px-4 pb-2 text-xs text-error">Session failed: {sessionError}</p>
           )}
 
+          {selectedProject && !selectedProjectSession && (
+            <div className="px-2 pb-2">
+              <div className="px-2 pb-1 text-[10px] font-bold text-text-muted uppercase tracking-widest">
+                Current Project
+              </div>
+              <ul className="flex flex-col gap-1">
+                <SessionItem
+                  projectId={selectedProject.id}
+                  session={null}
+                  projectName={selectedProject.name}
+                  isActive
+                  statusTone="selected"
+                  subtitle="Selected context"
+                  onClick={() => handleNavClick('swarm')}
+                />
+              </ul>
+            </div>
+          )}
+
           <ul className="flex-1 overflow-y-auto custom-scrollbar px-2 pb-2 flex flex-col gap-1">
             {activeSessions.length === 0 && !loadError && (
               <li className="px-3 py-3 text-[11px] text-text-muted italic">
-                No active sessions.
+                No active PTY sessions.
               </li>
             )}
             {activeSessions.map(({ projectId, session, projectName }) => (
@@ -172,7 +193,17 @@ function NavItem({ item, isActive, onClick }) {
   );
 }
 
-function SessionItem({ projectId, session, projectName, isActive, onClick }) {
+function SessionItem({
+  projectId,
+  session,
+  projectName,
+  isActive,
+  onClick,
+  statusTone = 'live',
+  subtitle = null,
+}) {
+  const dotClassName = statusTone === 'selected' ? 'bg-sky-400' : 'bg-success';
+
   return (
     <li>
       <button
@@ -186,7 +217,7 @@ function SessionItem({ projectId, session, projectName, isActive, onClick }) {
       >
         <div className="flex items-center justify-between mb-0.5">
           <div className="flex items-center gap-2 overflow-hidden">
-            <div className="w-1.5 h-1.5 rounded-full bg-success shrink-0" />
+            <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotClassName}`} />
             <span className={
               'truncate text-[13px]' +
               (isActive ? ' font-semibold text-text-main' : ' font-medium text-text-muted')
@@ -200,6 +231,11 @@ function SessionItem({ projectId, session, projectName, isActive, onClick }) {
             </span>
           )}
         </div>
+        {subtitle && (
+          <div className="pl-[14px] text-[10px] text-text-dimmer">
+            {subtitle}
+          </div>
+        )}
       </button>
     </li>
   );

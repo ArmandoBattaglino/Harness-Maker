@@ -5,6 +5,16 @@
 **Next:** V8.0 feature-complete and verified.
 
 ---
+## 2026-04-07 - codex - Debugger-loop hardening for live final report, Prompt-to-Flow reset, and Windows PID validation
+**Outcome:** COMPLETED
+**Summary:** Closed three debugger-loop findings from a beta-style Swarm session. `ProcessRegistry` now accepts valid signed 32-bit PIDs so Windows child processes above 65535 are no longer rejected. `PromptToFlowBar` now clears stale inline validation when the user transitions into a real workflow action (load, generate, import, duplicate, template instantiate, version restore, run). `server/routes/swarm.js` now returns terminal execution results/artifacts correctly even while an execution is still present in live memory by preferring persisted history and falling back to synthesized live artifacts when persistence has not landed yet. Added route-level tests for live terminal artifact fallback/history preference and a new PID validation unit test. Verified with `npm test --prefix server -- --runInBand` (383/383), `npm run build --prefix client`, and a browser run of `Content Agency` where `Final Report` rendered real markdown immediately after completion and no PID warnings appeared in `codex-server.err.log`.
+**Files changed:** server/services/ProcessRegistry.js, server/routes/swarm.js, server/tests/execution-results-api.test.js, server/tests/process-registry.test.js, client/src/canvas/PromptToFlowBar.jsx, client/src/views/SwarmView.jsx, docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md, docs/memory/CHANGELOG.md, docs/memory/CODE_MAP.md
+**Bugs fixed:** Windows PID validation rejected legitimate child PIDs; Prompt-to-Flow validation message lingered across unrelated workflow actions; Final Report modal could open empty right after a completed run
+**Decisions made:** Use a signed 32-bit PID ceiling as the safety bound; keep prompt-error clearing explicit via a parent-driven reset signal; make terminal result retrieval robust by preferring persisted history but synthesizing live artifacts when history is not yet readable
+**Blockers:** none
+**Next:** Optional future pass on output sanitization for noisy final agent transcripts if we want cleaner artifact text for runtime-heavy providers
+
+---
 
 ## 2026-04-07 - orchestrator - V8.0 Agent Output Viewer & Workflow Deliverable (Tasks #334-#344)
 **Outcome:** COMPLETED (implementation phase — TEST GATEs pending)
@@ -27,6 +37,39 @@
 **Next:** Optional follow-up - extend the same ghost-preview treatment to the other palette node types if desired
 
 ---
+## 2026-04-07 - codex - Swarm visual regression suite
+**Outcome:** COMPLETED
+**Summary:** Added a dedicated screenshot-based visual regression suite for the Swarm canvas. The new harness runs against an isolated local server on port 3310 with repo-owned workflow fixtures, so it does not depend on the user's saved workflows. It uses `playwright-core` with a locally installed Chrome/Edge executable, captures the React Flow viewport, and compares screenshots against committed baselines with diff artifacts on failure. Six canonical cases are covered: parallel greetings overview, selected merge focus state, research loop overview, selected analyst focus state, flow control overview, and a dense infinite-loop graph overview. Baselines were generated and the suite was verified both directly and via the public npm script.
+**Files changed:** package.json, .gitignore, scripts/swarm-visual-regression.mjs, tests/visual/swarm/README.md, tests/visual/swarm/fixtures/*.json, tests/visual/swarm/baselines/*.png, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** Use an isolated APPDATA sandbox instead of live user workflows; prefer browser-canvas image comparison over adding new native/image diff dependencies; keep focus and loop-heavy workflows in the canonical set because they were the active regression risk
+**Blockers:** none
+**Next:** Optional follow-up - add this suite to CI once the project is ready to provision a stable local browser executable there
+
+---
+
+## 2026-04-07 - codex - Swarm edge hardening sweep
+**Outcome:** COMPLETED
+**Summary:** Performed a broader hardening sweep on Swarm edge readability after iterative routing/focus changes. Added an explicit `Focus` toolbar toggle so contextual fading is controllable, then refined feedback/loop edges again to reduce perimeter noise: smaller outer detours, lower default opacity, no arrowhead when not relevant, and no heavy dark rail unless the feedback edge is active or part of the current context. Verified with repeated client builds and browser spot-checks across multiple saved workflows, including `Parallel Greetings Workflow`, `Research Loop`, `Infinite Loop All Components v2`, and `Flow Control Test Workflow`, covering simple parallel fan-out, loop/feedback behavior, dense mixed-node graphs, and flow-control nodes.
+**Files changed:** client/src/views/SwarmView.jsx, client/src/canvas/SwarmCanvas.jsx, client/src/canvas/edges/HandoffEdge.jsx, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** Swarm edge readability regressions in dense canvases - feedback edges still read too loudly in some looped workflows; contextual fading needed an explicit user control
+**Decisions made:** Keep the graph complete rather than hiding connections, but make feedback edges almost ambient unless selected, active, or related to the focused node; validate on multiple real saved workflows instead of a single showcase graph
+**Blockers:** No automated visual regression suite exists yet for canvas edge aesthetics, so final validation remains build plus manual browser passes on representative workflows
+**Next:** Optional follow-up - add a screenshot-based visual regression test set for 4-6 canonical workflows if this area continues to evolve
+
+---
+
+## 2026-04-07 - codex - Swarm focus connections toggle
+**Outcome:** COMPLETED
+**Summary:** Added an explicit `Focus` control to the Swarm toolbar so contextual edge fading is user-controlled instead of always-on. The view now owns a `focusConnections` toggle, passes it into the canvas, and the canvas only applies node-based edge focus when that mode is enabled. This keeps the simpler, guided reading mode available for dense graphs while still allowing a full always-visible graph view during editing. Client build passes.
+**Files changed:** client/src/views/SwarmView.jsx, client/src/canvas/SwarmCanvas.jsx, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** UX issue - contextual edge fading was helpful but implicit, making it harder to switch between “read one local flow” and “inspect the whole graph” modes
+**Decisions made:** Default the toggle to enabled because dense workflows were the active pain point; expose it in the top toolbar next to other canvas organization controls
+**Blockers:** none
+**Next:** Optional follow-up - persist the Focus preference per workflow or per user session
+
+---
+
 ## 2026-04-07 - codex - Swarm contextual edge emphasis
 **Outcome:** COMPLETED
 **Summary:** Continued the Swarm edge simplification pass by making selection contextual instead of purely edge-based. The canvas now tags every rendered edge with whether it is related to the currently selected node, and the edge renderer uses that to strongly fade unrelated connections when a node is selected. Feedback edges become especially quiet outside the current context: they are thinner, lighter, and can drop their arrowhead while not selected/relevant. This keeps the full graph intact but lets users read one local flow at a time instead of parsing every arrow simultaneously. Client build passes.
@@ -4381,5 +4424,35 @@ full self-contained context and acceptance criteria.
 **Decisions made:** Preserve `isTriageNode` in the data model for compatibility, but expose the behavior in UI as a clearer "Start Node"; when no explicit start node exists, auto-start every root agent instead of picking only the first node
 **Blockers:** none
 **Next:** Optional follow-up - add a dedicated visual badge or legend on the canvas for multi-start workflows if users want the entry semantics even more visible
+
+---
+## 2026-04-07 - codex - Swarm active-project hydration gate for Run
+**Outcome:** COMPLETED
+**Summary:** Fixed a frontend race introduced by active-project persistence. After reload, `activeProjectId` is restored from `localStorage` before the projects list hydrates, so `SwarmView` could briefly treat the project as selected while `projectPath` was still empty and allow a `/start` call that the backend rejects with `400 projectPath is required`. `SwarmView.jsx` now derives `activeProjectReady` from the resolved project object, blocks the Run button and `Ctrl+Enter` until hydration resolves the active project, and shows `Loading active project...` during that window. Browser verification confirmed: selecting project `Prova` persists `ccvm-active-project-id`, reload keeps the project context, and a fake persisted project id is cleared back to `null` after hydration.
+**Files changed:** client/src/views/SwarmView.jsx, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** Swarm reload race - Run could become eligible before the persisted active project had a resolved `projectPath`
+**Decisions made:** Gate execution on the resolved active project object, not on persisted `activeProjectId` alone
+**Blockers:** none
+**Next:** Optional follow-up - persist the current app view as well if reloads should return directly to Swarm/Terminal instead of only preserving project context
+
+---
+## 2026-04-07 - codex - App context persistence hardening for project + view reload continuity
+**Outcome:** COMPLETED
+**Summary:** Extended `AppContext.jsx` persistence so the selected app view now survives reload alongside `activeProjectId`. Added a strict view whitelist (`projects`, `terminal`, `jobs`, `deployments`, `context`, `swarm`), lazy reducer initialization from `localStorage`, and fallback-to-Projects behavior for invalid persisted values. Also fixed the earlier active-project cleanup race by gating stale-project removal behind `projectsHydrated`, so a valid saved project is not cleared before the async project list arrives. Verification: `npm run build --prefix client` PASS, `npm test --prefix server -- tests/swarm-engine.test.js` PASS (128/128), browser reload on isolated server `:3001` restored `Swarm` with the persisted project, and a corrupted `ccvm-app-view` value safely fell back to `Projects`.
+**Files changed:** client/src/store/AppContext.jsx, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** Lost navigation context on reload after project persistence; race where a valid persisted project could be cleared before projects finished hydrating
+**Decisions made:** Persist only validated view identifiers; keep invalid storage values non-fatal and self-healing; preserve existing behavior for views that already handle missing project selection gracefully
+**Blockers:** none
+**Next:** none for this follow-up area
+
+---
+## 2026-04-07 - codex - Swarm backend flow-control hardening + persisted-project UI truthfulness
+**Outcome:** COMPLETED
+**Summary:** Closed a second bug-hardening pass around Swarm multi-start and nested flow-control behavior. `SwarmEngine` now allows non-agent root nodes to auto-start, keeps execution-completion gating keyed to `executionId`, counts merge `waitFor: 'all'` by unique incoming sources instead of raw duplicate edges, recursively stops nested sub-workflow executions, propagates child `blocked`/`paused` state back to the parent sub-workflow node, and preserves child blocker metadata in serialized execution snapshots. On the client, persisted project selection is now surfaced truthfully in `Sidebar.jsx`, `ProjectsView.jsx`, and `SwarmView.jsx` so reload no longer leaves a hidden active project with misleading `Idle`/`No active sessions` affordances. Verification: `npm test --prefix server -- tests/swarm-engine.test.js` PASS (133/133), `npm run build --prefix client` PASS.
+**Files changed:** server/services/SwarmEngine.js, server/tests/swarm-engine.test.js, client/src/components/Sidebar.jsx, client/src/views/ProjectsView.jsx, client/src/views/SwarmView.jsx, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** Non-agent root flow-control nodes skipped by start resolution; parent stop leaving child sub-workflows alive; parent sub-workflow nodes not reflecting child blocked states; completion guard reading the wrong execution key; merge nodes overcounting duplicate incoming edges from the same source; persisted project selection being invisible/misleading in UI after reload
+**Decisions made:** Preserve `isTriageNode` compatibility but treat start resolution as a whole-node concern; serialize child blocker metadata so execution snapshots remain truthful; distinguish `Selected` from live `Active` project state in the dashboard/sidebar instead of conflating both with PTY session presence
+**Blockers:** none
+**Next:** none in the verified scope
 
 ---

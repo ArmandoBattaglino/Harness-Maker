@@ -1,5 +1,6 @@
 // client/src/canvas/ChatPanel.jsx
 // Unified Chat View — shows agent outputs as a conversation.
+// Integrates broadcast controls (scope, mode, target) directly in the input area.
 import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import { useSwarmStore } from '../store/SwarmContext';
 import { apiPost } from '../hooks/useApi.js';
@@ -14,6 +15,11 @@ export default function ChatPanel() {
   const executionStatus = useSwarmStore((s) => s.executionStatus);
   const bottomRef = useRef(null);
   const [inputText, setInputText] = useState('');
+  const [scope, setScope] = useState('all');
+  const [mode, setMode] = useState('soft');
+  const [targetId, setTargetId] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sendResult, setSendResult] = useState(null);
 
   // Build nodeId → label map from workflow definition
   const agentLabels = useMemo(() => {
@@ -33,6 +39,17 @@ export default function ChatPanel() {
     return Array.from(ids);
   }, [chatMessages]);
 
+  // All agents and departments from workflow for scope targeting
+  const agents = useMemo(
+    () => (workflowDef?.nodes ?? []).filter((n) => n.type === 'agent'),
+    [workflowDef]
+  );
+  const departments = useMemo(
+    () => (workflowDef?.nodes ?? []).filter((n) => n.type === 'department'),
+    [workflowDef]
+  );
+  const targetOptions = scope === 'department' ? departments : agents;
+
   // Filter messages
   const filteredMessages = useMemo(() => {
     if (chatFilter === 'all') return chatMessages;
@@ -46,25 +63,50 @@ export default function ChatPanel() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [filteredMessages.length]);
 
+  // Sync scope with chatFilter — if filtering by agent, default scope to that agent
+  useEffect(() => {
+    if (chatFilter !== 'all') {
+      setScope('agent');
+      setTargetId(chatFilter);
+    } else {
+      setScope('all');
+      setTargetId('');
+    }
+  }, [chatFilter]);
+
   const handleChatSend = useCallback(async () => {
     const trimmed = inputText.trim();
-    if (!trimmed || !activeExecutionId) return;
+    if (!trimmed || !activeExecutionId || sending) return;
+    if ((scope === 'department' || scope === 'agent') && !targetId) return;
 
-    const scope = chatFilter === 'all' ? 'all' : 'agent';
-    const targetId = chatFilter === 'all' ? null : chatFilter;
-
+    setSending(true);
+    setSendResult(null);
     try {
-      await apiPost(`/api/v1/swarm/${activeExecutionId}/broadcast`, {
+      const res = await apiPost(`/api/v1/swarm/${activeExecutionId}/broadcast`, {
         text: trimmed,
         scope,
-        targetId,
-        mode: 'soft',
+        targetId: scope === 'all' ? null : targetId,
+        mode,
       });
+      const { sent, recipientNodeIds = [] } = res;
+      const labels = recipientNodeIds
+        .map((nid) => agentLabels[nid] || nid.slice(0, 12))
+        .slice(0, 3);
+      const suffix = labels.length > 0
+        ? `: ${labels.join(', ')}${recipientNodeIds.length > 3 ? ', ...' : ''}`
+        : '';
+      setSendResult(`Sent to ${sent} agent${sent !== 1 ? 's' : ''}${suffix}`);
       setInputText('');
+      setTimeout(() => setSendResult(null), 3000);
     } catch (err) {
-      console.error('Chat send failed:', err);
+      setSendResult(`Error: ${err.message}`);
+      setTimeout(() => setSendResult(null), 5000);
+    } finally {
+      setSending(false);
     }
-  }, [inputText, activeExecutionId, chatFilter]);
+  }, [inputText, activeExecutionId, scope, targetId, mode, sending, agentLabels]);
+
+  const canSend = activeExecutionId && executionStatus !== 'idle';
 
   if (chatMessages.length === 0) {
     return (
@@ -75,6 +117,25 @@ export default function ChatPanel() {
         <div className="flex-1 flex items-center justify-center text-gray-600 text-xs">
           No messages yet — run a workflow to see agent output here
         </div>
+        {canSend && (
+          <ChatInputArea
+            inputText={inputText}
+            setInputText={setInputText}
+            scope={scope}
+            setScope={setScope}
+            mode={mode}
+            setMode={setMode}
+            targetId={targetId}
+            setTargetId={setTargetId}
+            targetOptions={targetOptions}
+            agentLabels={agentLabels}
+            chatFilter={chatFilter}
+            sending={sending}
+            sendResult={sendResult}
+            onSend={handleChatSend}
+            departments={departments}
+          />
+        )}
       </div>
     );
   }
@@ -107,31 +168,116 @@ export default function ChatPanel() {
         ))}
         <div ref={bottomRef} />
       </div>
-      {executionStatus === 'running' && activeExecutionId && (
-        <div className="px-2 py-2 border-t border-gray-700">
-          <div className="flex gap-1">
-            <input
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleChatSend();
-                }
-              }}
-              placeholder={chatFilter === 'all' ? 'Message all agents...' : `Message ${agentLabels[chatFilter] || 'agent'}...`}
-              className="flex-1 bg-gray-800 text-white text-xs rounded px-2 py-1.5 border border-gray-700 focus:border-blue-500 focus:outline-none placeholder-gray-500"
-              maxLength={500}
-            />
-            <button
-              onClick={handleChatSend}
-              disabled={!inputText.trim()}
-              className="text-xs px-2 py-1 rounded bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white shrink-0"
-            >
-              Send
-            </button>
-          </div>
+      {canSend && (
+        <ChatInputArea
+          inputText={inputText}
+          setInputText={setInputText}
+          scope={scope}
+          setScope={setScope}
+          mode={mode}
+          setMode={setMode}
+          targetId={targetId}
+          setTargetId={setTargetId}
+          targetOptions={targetOptions}
+          agentLabels={agentLabels}
+          chatFilter={chatFilter}
+          sending={sending}
+          sendResult={sendResult}
+          onSend={handleChatSend}
+          departments={departments}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── Chat Input Area with integrated broadcast controls ────────────────────
+function ChatInputArea({
+  inputText, setInputText, scope, setScope, mode, setMode,
+  targetId, setTargetId, targetOptions, agentLabels, chatFilter,
+  sending, sendResult, onSend, departments,
+}) {
+  const hasTarget = scope === 'all' || targetId;
+  const placeholder = scope === 'department'
+    ? `Message department${targetId ? ` "${targetOptions.find((n) => n.id === targetId)?.data?.label || targetId}"` : ''}...`
+    : scope === 'agent'
+    ? `Message ${targetId ? (agentLabels[targetId] || targetId.slice(0, 12)) : 'agent'}...`
+    : 'Message all agents...';
+
+  return (
+    <div className="border-t border-gray-700 px-2 py-2 space-y-1.5">
+      {/* Controls row — scope, target, mode */}
+      <div className="flex items-center gap-1.5">
+        <select
+          value={scope}
+          onChange={(e) => {
+            setScope(e.target.value);
+            if (e.target.value === 'all') setTargetId('');
+          }}
+          className="text-[10px] bg-gray-800 text-gray-400 rounded px-1.5 py-0.5 border border-gray-700 hover:border-gray-600"
+        >
+          <option value="all">All Agents</option>
+          {departments.length > 0 && <option value="department">Department</option>}
+          <option value="agent">Agent</option>
+        </select>
+        {scope !== 'all' && (
+          <select
+            value={targetId}
+            onChange={(e) => setTargetId(e.target.value)}
+            className="text-[10px] bg-gray-800 text-gray-400 rounded px-1.5 py-0.5 border border-gray-700 hover:border-gray-600 max-w-[8rem] truncate"
+          >
+            <option value="">
+              {scope === 'department' ? 'Select dept...' : 'Select agent...'}
+            </option>
+            {targetOptions.map((node) => (
+              <option key={node.id} value={node.id}>
+                {node.data?.label || node.id}
+              </option>
+            ))}
+          </select>
+        )}
+        <div className="flex-1" />
+        <button
+          onClick={() => setMode(mode === 'soft' ? 'hard' : 'soft')}
+          title={mode === 'soft' ? 'Soft: appends text gently' : 'Hard: Ctrl-C first, then sends text'}
+          className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors ${
+            mode === 'hard'
+              ? 'bg-red-900/40 border-red-700 text-red-400 hover:bg-red-900/60'
+              : 'bg-gray-800 border-gray-700 text-gray-500 hover:border-gray-600'
+          }`}
+        >
+          {mode === 'soft' ? 'Soft' : 'Hard'}
+        </button>
+      </div>
+      {/* Input row */}
+      <div className="flex gap-1">
+        <input
+          type="text"
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              onSend();
+            }
+          }}
+          placeholder={placeholder}
+          disabled={sending}
+          className="flex-1 bg-gray-800 text-white text-xs rounded px-2 py-1.5 border border-gray-700 focus:border-blue-500 focus:outline-none placeholder-gray-500 disabled:opacity-50"
+          maxLength={500}
+        />
+        <button
+          onClick={onSend}
+          disabled={!inputText.trim() || sending || !hasTarget}
+          className="text-xs px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white shrink-0 transition-colors"
+        >
+          {sending ? '...' : 'Send'}
+        </button>
+      </div>
+      {/* Result feedback */}
+      {sendResult && (
+        <div className={`text-[10px] px-1 ${sendResult.startsWith('Error') ? 'text-red-400' : 'text-gray-500'}`}>
+          {sendResult}
         </div>
       )}
     </div>

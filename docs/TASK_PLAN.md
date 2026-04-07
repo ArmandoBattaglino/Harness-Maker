@@ -15431,3 +15431,130 @@ Acceptance Criteria:
   - [ ] Tests: 312+ pass (plus new V8.0 tests)
 Dependencies: TASK #345, TASK #346
 ---
+
+### GROUP G: Debugger Loop Hardening — V8.1 Swarm Runtime Polish
+_Wave 5 — debugger-loop follow-up from detailed beta-style verification_
+
+---
+
+TASK #348: FIX — Accept valid high Windows PIDs in ProcessRegistry
+Area: V8.1 — Swarm Runtime Polish
+Agent: debugger
+Type: BUG_FIX
+Priority: HIGH
+Difficulty: SMALL
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-07 — Raised PID validation ceiling to signed 32-bit range in `ProcessRegistry` and added `server/tests/process-registry.test.js` coverage for valid high Windows PIDs plus invalid values.
+Context:
+  Beta verification on Windows surfaced repeated warnings like:
+  `[ProcessRegistry] Refusing to register out-of-range PID 68604`
+
+  Root cause:
+    - `server/services/ProcessRegistry.js` hard-codes `MAX_PID = 65535`
+    - real Windows child PIDs in this environment exceed that threshold
+    - valid runtime children are therefore skipped from restart cleanup tracking
+
+  Goal:
+    - Keep PID validation strict enough to reject malformed/tampered values
+    - Stop rejecting legitimate OS PIDs created by Node on Windows
+    - Preserve existing cleanup semantics
+
+Acceptance Criteria:
+  - [ ] Valid positive integer PIDs above 65535 are accepted
+  - [ ] Non-integer / zero / negative / non-finite values are still rejected
+  - [ ] No more out-of-range warnings for legitimate Windows child processes during normal runs
+Dependencies: none
+---
+
+TASK #349: FIX — Clear stale Prompt-to-Flow validation state after unrelated workflow actions
+Area: V8.1 — Swarm Runtime Polish
+Agent: frontend-dev
+Type: BUG_FIX
+Priority: MEDIUM
+Difficulty: SMALL
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-07 — Added `resetSignal` clearing in `PromptToFlowBar` and explicit reset increments in `SwarmView` for load/generate/import/duplicate/template/restore/run transitions so stale inline prompt errors do not linger across unrelated workflow actions.
+Context:
+  Repro:
+    1. Click `Generate` with empty prompt
+    2. Observe `Please enter a workflow description.`
+    3. Load or instantiate a workflow
+    4. Error remains visible even though user is no longer in the failed prompt-to-flow flow
+
+  Goal:
+    - Reset stale prompt validation when the canvas switches to a generated/loaded/template workflow
+    - Avoid lingering error UI from an unrelated prior action
+
+Acceptance Criteria:
+  - [ ] Empty generate still shows inline validation
+  - [ ] Loading or instantiating another workflow clears the stale validation message
+  - [ ] No regression to prompt generation behavior
+Dependencies: none
+---
+
+TASK #350: FIX — Final Report must show aggregated artifact immediately after terminal execution
+Area: V8.1 — Swarm Runtime Polish
+Agent: debugger
+Type: BUG_FIX
+Priority: CRITICAL
+Difficulty: MEDIUM
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Completion Note: 2026-04-07 — `server/routes/swarm.js` now prefers persisted history for terminal live executions, falls back to synthesized live artifacts/results when history is not available yet, and exposes a test injection seam for history-store route tests.
+Context:
+  Repro from debugger-loop:
+    1. Load runnable workflow
+    2. Run to `completed`
+    3. Click `Final Report`
+    4. Modal opens but shows `No artifact content available.`
+
+  Root-cause hypothesis confirmed by inspection:
+    - client keeps `activeExecutionId` after terminal state
+    - `/api/v1/swarm/executions/:executionId/results` prefers live SwarmEngine status first
+    - live branch returns `aggregatedArtifact: ''`
+    - persisted history does contain the built artifact
+
+  Goal:
+    - Make the modal return real aggregated markdown as soon as the run is terminal
+    - Work both in the immediate post-run window and after later reload/history hydration
+
+Acceptance Criteria:
+  - [ ] `Final Report` shows non-empty aggregated markdown right after a completed run
+  - [ ] Download endpoint returns the same artifact for the same terminal execution
+  - [ ] Persisted-history behavior still works
+  - [ ] No regression for genuinely in-progress executions
+Dependencies: none
+---
+
+TASK #351: TEST GATE — Detailed beta-style regression pass for V8.1
+Area: V8.1 — Swarm Runtime Polish
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Result: PASS — `npm test --prefix server -- --runInBand` 383/383, `npm run build --prefix client` OK (500 modules). Browser beta pass confirmed stale prompt validation clears after loading a workflow, completed run shows real `Final Report` markdown immediately, download wiring still fires with a markdown blob, and `codex-server.err.log` stayed free of ProcessRegistry out-of-range PID warnings during the verified run.
+Context:
+  After #348-#350:
+    1. Run `npm test --prefix server -- --runInBand`
+    2. Run `npm run build --prefix client`
+    3. Browser-verify:
+       - Prompt-to-Flow empty validation appears only for the failed prompt action
+       - Loading/template instantiation clears stale validation UI
+       - Run a workflow to terminal status
+       - `Final Report` opens with actual markdown content
+       - `Copy All` and `Download .md` still work
+       - No new ProcessRegistry out-of-range warnings appear for legitimate PIDs in server logs
+
+Gate: HARD
+Acceptance Criteria:
+  - [ ] Server tests pass
+  - [ ] Client build passes
+  - [ ] Prompt-to-Flow stale-validation bug is gone
+  - [ ] Final Report artifact bug is gone
+  - [ ] No regression found in detailed Swarm execution flow
+Dependencies: TASK #348, TASK #349, TASK #350
+---

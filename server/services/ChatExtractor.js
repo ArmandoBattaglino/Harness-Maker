@@ -192,6 +192,7 @@ export class ChatExtractor {
    */
   feed(executionId, nodeId, cleanChunk) {
     if (!cleanChunk || !nodeId) return;
+    if (cleanChunk.length > 10) console.log(`[CE:feed] node=${nodeId} len=${cleanChunk.length} p=${JSON.stringify(cleanChunk.slice(0,60))}`);
 
     let buf = this._buffers.get(nodeId);
     if (!buf) {
@@ -213,7 +214,8 @@ export class ChatExtractor {
       cleaned = cleaned.replace(pat, '');
     }
     cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
-    if (!cleaned.trim()) return;
+    if (!cleaned.trim()) { if (cleanChunk.length > 10) console.log(`[CE:feed-stripped] node=${nodeId} origLen=${cleanChunk.length} → ALL NOISE`); return; }
+    console.log(`[CE:feed-kept] node=${nodeId} cleanedLen=${cleaned.trim().length} p=${JSON.stringify(cleaned.trim().slice(0,100))}`);
 
     if (!buf.text) buf.firstChunkAt = Date.now();
     // Preserve the original PTY chunk boundaries exactly as received.
@@ -279,7 +281,8 @@ export class ChatExtractor {
 
   _flush(executionId, nodeId) {
     const buf = this._buffers.get(nodeId);
-    if (!buf || !buf.text.trim()) return;
+    if (!buf || !buf.text.trim()) { console.log(`[CE:flush] node=${nodeId} SKIP empty`); return; }
+    console.log(`[CE:flush-start] node=${nodeId} bufLen=${buf.text.length} p=${JSON.stringify(buf.text.trim().slice(0,100))}`);
 
     if (buf.timer) {
       clearTimeout(buf.timer);
@@ -300,8 +303,13 @@ export class ChatExtractor {
     // survived chunk-level filtering because ConPTY split words across chunks)
     for (const pat of NOISE_PATTERNS) {
       pat.lastIndex = 0;  // Reset regex state (g flag preserves lastIndex)
+      const prev = text;
       text = text.replace(pat, '');
+      if (text.length < prev.length && prev.length - text.length > 5) {
+        console.log(`[CE:flush-noise] node=${nodeId} pat=${pat.source.slice(0,40)} removed=${prev.length - text.length} chars`);
+      }
     }
+    console.log(`[CE:flush-after-noise] node=${nodeId} textLen=${text.trim().length} p=${JSON.stringify(text.trim().slice(0,100))}`);
 
     // Line-level filter: remove lines that are pure noise fragments
     text = text.split('\n').filter(line => {
@@ -375,8 +383,11 @@ export class ChatExtractor {
       }
     }
 
+    console.log(`[CE:flush-pre-dedup] node=${nodeId} textLen=${text.length} p=${JSON.stringify(text.slice(0,120))}`);
+
     // Cross-flush dedup — skip if identical to last emitted text
     if (text === buf.lastEmittedText) {
+      console.log(`[CE:flush-dedup] node=${nodeId} SKIP duplicate`);
       buf.text = '';
       buf.firstChunkAt = 0;
       return;
@@ -385,6 +396,7 @@ export class ChatExtractor {
     // Skip messages that are predominantly JSON (likely handoff context payload)
     const jsonPunctuation = (text.match(/[{}":\[\]]/g) || []).length;
     if (text.length > 0 && jsonPunctuation > text.length * 0.25) {
+      console.log(`[CE:flush-json] node=${nodeId} SKIP json ratio=${(jsonPunctuation/text.length).toFixed(2)}`);
       buf.text = '';
       buf.firstChunkAt = 0;
       return;
@@ -392,7 +404,9 @@ export class ChatExtractor {
 
     // Keep normal messages, but also allow short human-readable replies
     // such as greetings that would otherwise disappear from the Chat view.
-    if (shouldEmitChatMessage(text)) {
+    const shouldEmit = shouldEmitChatMessage(text);
+    console.log(`[ChatExtractor:flush-decision] nodeId=${nodeId} textLen=${text.length} shouldEmit=${shouldEmit} preview=${JSON.stringify(text.slice(0, 120))}`);
+    if (shouldEmit) {
       this._onMessage({
         executionId,
         nodeId,
@@ -418,7 +432,10 @@ export class ChatExtractor {
       if (buf.periodicTimer) clearInterval(buf.periodicTimer);
       // Force a final flush so the text makes it into chatMessages
       if (buf.text && buf.text.trim()) {
+        console.log(`[ChatExtractor:cleanup-flush] nodeId=${nodeId} bufLen=${buf.text.length} preview=${JSON.stringify(buf.text.trim().slice(0, 120))}`);
         this._flush(buf.executionId || executionId, nodeId);
+      } else {
+        console.log(`[ChatExtractor:cleanup] nodeId=${nodeId} empty buffer`);
       }
     }
     this._buffers.clear();

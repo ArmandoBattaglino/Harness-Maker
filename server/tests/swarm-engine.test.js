@@ -89,6 +89,98 @@ function buildParallelStartWorkflow({
   };
 }
 
+function buildParallelAgentMergeWorkflow({ budgetTokens = 0, circuitBreakerThreshold = 10 } = {}) {
+  return {
+    id: 'wf-agent-merge',
+    name: 'Parallel Agent Merge Workflow',
+    description: 'Two parallel agents hand off generic keys to a downstream merge agent.',
+    nodes: [
+      { id: 'node-a', data: { isTriageNode: true, systemPrompt: 'You are the triage agent.' } },
+      { id: 'node-b', data: { systemPrompt: 'You are Agent-A.' } },
+      { id: 'node-c', data: { systemPrompt: 'You are Agent-B.' } },
+      { id: 'node-merge', data: { systemPrompt: 'You are the merge agent.' } },
+      { id: 'node-final', data: { systemPrompt: 'You are the final reporter.' } },
+    ],
+    edges: [
+      { id: 'edge-ab', source: 'node-a', target: 'node-b' },
+      { id: 'edge-ac', source: 'node-a', target: 'node-c' },
+      { id: 'edge-bm', source: 'node-b', target: 'node-merge' },
+      { id: 'edge-cm', source: 'node-c', target: 'node-merge' },
+      { id: 'edge-mf', source: 'node-merge', target: 'node-final' },
+    ],
+    settings: { budgetTokens, circuitBreakerThreshold },
+    initialContext: {},
+  };
+}
+
+function buildRootDelayWorkflow({ budgetTokens = 0, circuitBreakerThreshold = 10 } = {}) {
+  return {
+    id: 'wf-root-delay',
+    name: 'Root Delay Workflow',
+    description: 'Begin with a delay node, then continue to a reporting agent.',
+    nodes: [
+      { id: 'node-delay', type: 'delay', data: { delaySeconds: 1 } },
+      { id: 'node-report', data: { systemPrompt: 'You are the delayed reporter.' } },
+    ],
+    edges: [
+      { id: 'edge-delay-report', source: 'node-delay', target: 'node-report' },
+    ],
+    settings: { budgetTokens, circuitBreakerThreshold },
+    initialContext: {},
+  };
+}
+
+function buildDuplicateMergeWorkflow({ budgetTokens = 0, circuitBreakerThreshold = 10 } = {}) {
+  return {
+    id: 'wf-duplicate-merge',
+    name: 'Duplicate Merge Workflow',
+    description: 'A single source connects to the same merge node through duplicate edges.',
+    nodes: [
+      { id: 'node-a', data: { isTriageNode: true, systemPrompt: 'You are agent A.' } },
+      { id: 'node-merge', type: 'merge', data: { waitFor: 'all' } },
+      { id: 'node-report', data: { systemPrompt: 'You are the reporter.' } },
+    ],
+    edges: [
+      { id: 'edge-a-merge-1', source: 'node-a', target: 'node-merge' },
+      { id: 'edge-a-merge-2', source: 'node-a', target: 'node-merge' },
+      { id: 'edge-merge-report', source: 'node-merge', target: 'node-report' },
+    ],
+    settings: { budgetTokens, circuitBreakerThreshold },
+    initialContext: {},
+  };
+}
+
+function buildChildWorkflow({ budgetTokens = 0, circuitBreakerThreshold = 10 } = {}) {
+  return {
+    id: 'wf-child',
+    name: 'Child Workflow',
+    description: 'Nested child workflow.',
+    nodes: [
+      { id: 'child-agent', data: { isTriageNode: true, systemPrompt: 'You are the child agent.' } },
+    ],
+    edges: [],
+    settings: { budgetTokens, circuitBreakerThreshold },
+    initialContext: {},
+  };
+}
+
+function buildParentSubWorkflow({ childWorkflowId = 'wf-child', budgetTokens = 0, circuitBreakerThreshold = 10 } = {}) {
+  return {
+    id: 'wf-parent-sub',
+    name: 'Parent Sub-Workflow',
+    description: 'Run a child workflow, then continue.',
+    nodes: [
+      { id: 'node-sub', type: 'subWorkflow', data: { workflowId: childWorkflowId } },
+      { id: 'node-report', data: { systemPrompt: 'You are the parent reporter.' } },
+    ],
+    edges: [
+      { id: 'edge-sub-report', source: 'node-sub', target: 'node-report' },
+    ],
+    settings: { budgetTokens, circuitBreakerThreshold },
+    initialContext: {},
+  };
+}
+
 /**
  * Encode a context update as base64 JSON (matches HandoffParser token format).
  */
@@ -246,6 +338,13 @@ describe('SwarmEngine', () => {
       expect(sanitized).toBe('Spero che la tua giornata sia piena di sorrisi e successi');
     });
 
+    it('should keep whole dictionary words intact when restoring compressed chat tokens', () => {
+      expect(engine._restoreCompressedChatToken('generato')).toBe('generato');
+      expect(engine._restoreCompressedChatToken('generare')).toBe('generare');
+      expect(engine._restoreCompressedChatToken('lavorano')).toBe('lavorano');
+      expect(engine._restoreCompressedChatToken('vengono')).toBe('vengono');
+    });
+
     it('should still restore long compressed chat tokens into readable Italian text', () => {
       const restored = engine._decompressConPTYSpaces('Sonoilnododimergeehoraccoltoglioutputdientrambigliagenti');
       expect(restored).toBe('Sono il nodo di merge e ho raccolto gli output di entrambi gli agenti');
@@ -290,6 +389,125 @@ describe('SwarmEngine', () => {
       expect(mockSessionManager.createSession).toHaveBeenCalledTimes(2);
       expect(status.agentStates['node-en']).toMatchObject({ status: 'running' });
       expect(status.agentStates['node-it']).toMatchObject({ status: 'running' });
+    });
+
+    it('should auto-start a root flow-control node when the workflow begins with delay/sub-workflow style nodes', async () => {
+      const rootDelayWorkflow = buildRootDelayWorkflow();
+      workflowStoreMock.get.mockResolvedValueOnce(rootDelayWorkflow);
+
+      const executionId = await engine.startExecution(rootDelayWorkflow.id, 'proj-1', '/projects/proj-1');
+      let status = engine.getStatus(executionId);
+
+      expect(mockSessionManager.createSession).not.toHaveBeenCalled();
+      expect(status.agentStates['node-delay']).toMatchObject({ status: 'running' });
+
+      await vi.advanceTimersByTimeAsync(1000);
+      status = engine.getStatus(executionId);
+
+      expect(mockSessionManager.createSession).toHaveBeenCalledTimes(1);
+      expect(status.agentStates['node-report']).toMatchObject({ status: 'running' });
+    });
+
+    it('should not wait forever on merge waitFor=all when duplicate edges share the same source node', async () => {
+      const duplicateMergeWorkflow = buildDuplicateMergeWorkflow();
+      workflowStoreMock.get.mockResolvedValueOnce(duplicateMergeWorkflow);
+
+      const executionId = await engine.startExecution(duplicateMergeWorkflow.id, 'proj-1', '/projects/proj-1');
+      const sessionCallsAfterStart = mockSessionManager.createSession.mock.calls.length;
+
+      await engine._onHandoff(executionId, 'node-a', {
+        type: 'handoff',
+        targetId: 'node-merge',
+        contextUpdate: { summary: 'branch complete' },
+      });
+
+      const status = engine.getStatus(executionId);
+      expect(mockSessionManager.createSession.mock.calls.length).toBe(sessionCallsAfterStart + 1);
+      expect(status.agentStates['node-report']).toMatchObject({ status: 'running' });
+      expect(status.agentStates['node-merge']).toBeDefined();
+      expect(engine._mergeStates.has(`${executionId}:node-merge`)).toBe(false);
+    });
+
+    it('should keep the execution running while flow-control state is still pending', () => {
+      const pendingDelayHandle = setTimeout(() => {}, 1000);
+      const execution = {
+        executionId: 'exec-flow',
+        status: 'running',
+        agentStates: new Map([
+          ['node-a', { status: 'done', runtimeBlocker: null }],
+        ]),
+        runtimeBlocker: null,
+        heartbeatTimer: null,
+      };
+
+      engine._delayTimers.set('exec-flow:node-delay', pendingDelayHandle);
+      engine._syncExecutionStatusFromAgents(execution);
+
+      expect(execution.status).toBe('running');
+
+      clearTimeout(pendingDelayHandle);
+      engine._delayTimers.delete('exec-flow:node-delay');
+    });
+
+    it('should stop nested sub-workflow executions when the parent execution is stopped', async () => {
+      const parentWorkflow = buildParentSubWorkflow();
+      const childWorkflow = buildChildWorkflow();
+      workflowStoreMock.get.mockImplementation(async (workflowId) => {
+        if (workflowId === parentWorkflow.id) return parentWorkflow;
+        if (workflowId === childWorkflow.id) return childWorkflow;
+        return null;
+      });
+
+      const executionId = await engine.startExecution(parentWorkflow.id, 'proj-1', '/projects/proj-1');
+      const subKey = `${executionId}:node-sub`;
+      const childExecutionId = engine._subWorkflowExecutions.get(subKey);
+
+      expect(childExecutionId).toBeDefined();
+      expect(engine.getStatus(childExecutionId).status).toBe('running');
+
+      await engine.stopExecution(executionId);
+
+      expect(engine.getStatus(executionId).status).toBe('stopped');
+      expect(engine.getStatus(childExecutionId).status).toBe('stopped');
+      expect(engine._subWorkflowExecutions.has(subKey)).toBe(false);
+      expect(mockSessionManager.killSession).toHaveBeenCalledTimes(1);
+    });
+
+    it('should propagate blocked child sub-workflow state back to the parent node and execution', async () => {
+      const parentWorkflow = buildParentSubWorkflow();
+      const childWorkflow = buildChildWorkflow();
+      workflowStoreMock.get.mockImplementation(async (workflowId) => {
+        if (workflowId === parentWorkflow.id) return parentWorkflow;
+        if (workflowId === childWorkflow.id) return childWorkflow;
+        return null;
+      });
+
+      const executionId = await engine.startExecution(parentWorkflow.id, 'proj-1', '/projects/proj-1');
+      const childExecutionId = engine._subWorkflowExecutions.get(`${executionId}:node-sub`);
+      const childExecution = engine._executions.get(childExecutionId);
+      const childState = childExecution.agentStates.get('child-agent');
+
+      childExecution.status = 'blocked';
+      childExecution.runtimeBlocker = {
+        type: 'rate_limited',
+        message: 'Child workflow blocked on provider quota',
+        nodeId: 'child-agent',
+      };
+      childState.status = 'blocked';
+      childState.runtimeBlocker = childExecution.runtimeBlocker;
+
+      await vi.advanceTimersByTimeAsync(1000);
+
+      const status = engine.getStatus(executionId);
+      expect(status.status).toBe('blocked');
+      expect(status.agentStates['node-sub']).toMatchObject({
+        status: 'blocked',
+      });
+      expect(status.runtimeBlocker).toMatchObject({
+        nodeId: 'node-sub',
+        childExecutionId,
+        childNodeId: 'child-agent',
+      });
     });
 
     it('should start an explicit Codex execution with provider metadata in the snapshot contract', async () => {
@@ -812,7 +1030,6 @@ describe('SwarmEngine', () => {
       nodeAState.echoMarkerTimer = setTimeout(() => {
         if (nodeAState.ignoreParserUntil) {
           nodeAState.ignoreParserUntil = null;
-          nodeAState.ignoreParserBuffer = '';
         }
         nodeAState.echoMarkerTimer = null;
       }, 10000);
@@ -838,6 +1055,36 @@ describe('SwarmEngine', () => {
       expect(status.agentStates['node-a'].status).toBe('running');
       // But the reinject proves the parser is working (doneReinjectCount > 0)
       expect(nodeAState.doneReinjectCount).toBeGreaterThan(0);
+    });
+
+    it('should preserve buffered Claude output that arrived before the echo marker timeout opened the parser', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const execution = engine._executions.get(executionId);
+      const nodeAState = execution.agentStates.get('node-a');
+      const tapFn = [...mockSession.swarmListeners].find((listener) => listener === nodeAState.tapFn);
+
+      nodeAState.ignoreParserUntil = '--- END SWARM INPUT ---';
+      nodeAState.ignoreParserBuffer = '';
+      nodeAState.echoMarkerTimer = setTimeout(() => {
+        if (nodeAState.ignoreParserUntil) {
+          nodeAState.ignoreParserUntil = null;
+        }
+        nodeAState.echoMarkerTimer = null;
+      }, 10000);
+
+      tapFn('Hello there, wonderful friend! ');
+      tapFn('Welcome to a joyful conversation. ');
+
+      expect(execution.chatMessages).toEqual([]);
+
+      await vi.advanceTimersByTimeAsync(10001);
+
+      tapFn('May your day shine brightly.__DONE__');
+
+      const lastChat = execution.chatMessages.at(-1);
+      expect(lastChat?.text).toContain('Hello there, wonderful friend!');
+      expect(lastChat?.text).toContain('Welcome to a joyful conversation.');
+      expect(lastChat?.text).toContain('May your day shine brightly.');
     });
 
     it('should cancel the echo marker timeout when the marker arrives before the timeout fires', async () => {
@@ -993,6 +1240,44 @@ describe('SwarmEngine', () => {
         .map((ev) => ev.targetNodeId)
         .sort();
       expect(startedTargets).toEqual(['node-b', 'node-c']);
+    });
+
+    it('should include recent upstream handoffs in a downstream agent prompt so parallel generic payloads do not overwrite each other silently', async () => {
+      const parallelWorkflow = buildParallelAgentMergeWorkflow();
+      workflowStoreMock = { get: vi.fn().mockResolvedValue(parallelWorkflow) };
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-agent-merge', 'proj-1', '/projects/proj-1');
+      const exec = engine._executions.get(executionId);
+
+      await engine._ensureAgentPty(executionId, 'node-b');
+      await engine._ensureAgentPty(executionId, 'node-c');
+      exec.agentStates.get('node-b').status = 'running';
+      exec.agentStates.get('node-c').status = 'running';
+
+      await engine._onHandoff(executionId, 'node-b', {
+        type: 'handoff',
+        targetId: 'node-merge',
+        contextUpdate: { agent: 'Agent-A', language: 'English', greeting: 'Hello there!' },
+      });
+
+      const pendingMergeState = exec.agentStates.get('node-merge');
+      expect(pendingMergeState?.sessionId ?? null).toBeNull();
+
+      await engine._onHandoff(executionId, 'node-c', {
+        type: 'handoff',
+        targetId: 'node-merge',
+        contextUpdate: { agent: 'Agent-B', language: 'Italian', greeting: 'Ciao a tutti!' },
+      });
+
+      const promptWrites = mockSessionManager.writeInput.mock.calls
+        .map(([, input]) => String(input))
+        .filter((input) => input.includes('Recent upstream handoffs for this agent:'));
+
+      expect(promptWrites.length).toBeGreaterThan(0);
+      expect(promptWrites.at(-1)).toContain('From node-b (node-b): {"agent":"Agent-A","language":"English","greeting":"Hello there!"}');
+      expect(promptWrites.at(-1)).toContain('From node-c (node-c): {"agent":"Agent-B","language":"Italian","greeting":"Ciao a tutti!"}');
     });
   });
 
@@ -1384,6 +1669,41 @@ describe('SwarmEngine', () => {
       expect(sanitized).not.toContain('greetingA_lang');
     });
 
+    it('should strip direct HANDOFF alias lines from chat-oriented sanitization', () => {
+      const sanitized = engine._sanitizeChatMessage([
+        'Warm welcome from the agent.',
+        'HANDOFF:node-4:{"agent":"Agent-B","language":"Italian","greeting":"Ciao a tutti!"}',
+        'The visible message should stay readable.',
+      ].join('\n'));
+
+      expect(sanitized).toContain('Warm welcome from the agent.');
+      expect(sanitized).toContain('The visible message should stay readable.');
+      expect(sanitized).not.toContain('HANDOFF:node-4');
+    });
+
+    it('should drop extra-usage and compact provider chrome from chat-oriented sanitization', () => {
+      const sanitized = engine._sanitizeChatMessage([
+        "You're now using extra usage for this session.",
+        'Opus4.6withmediumeffort·Claude Max',
+        'Workflow plan: route the request to both agents.',
+      ].join('\n'));
+
+      expect(sanitized).toBe('Workflow plan: route the request to both agents.');
+    });
+
+    it('should suppress swarm runtime prompt echo even when ConPTY inserts spaces inside the wrapper text', () => {
+      const sanitized = engine._sanitizeChatMessage([
+        'Claude runtime is active for this Swarm agent.',
+        'Con t in u e the workflow using the shared task context below.',
+        'workflow Name: Parallel Greetings Workflow',
+        'workflow Description: Two agents greet in different languages in parallel, merge results, and a final reporter summarizes both greetings.',
+        'Use any one of these connect e d target IDs in your final handoff token: node-2, node-3',
+        'The runtime will duplicate that handoff across every connect e d downstream node.',
+      ].join('\n'));
+
+      expect(sanitized).toBe('');
+    });
+
     it('should restore spaces inside long compressed natural-language chat tokens', () => {
       const sanitized = engine._sanitizeChatMessage([
         'Theruntimewillduplicatethehandofftobothdownstreamnodessotheyexecuteinparallel.',
@@ -1441,6 +1761,24 @@ describe('SwarmEngine', () => {
       expect(sanitized).toContain('friendliness and cooperation across languages.');
     });
 
+    it('should restore fragmented short-word chat sequences captured in the live merge output', () => {
+      const sanitized = engine._sanitizeChatMessage([
+        "Nodeforthe Parallel Greetings Workflow is active.",
+        "Whether you're just stopping by or settling in for a while, k now t ha t you're appreciatedandvalued.",
+        'Wishing you all the best, and may your day be filled with good v i be s!',
+        'Hello there! Welcome, and it\'s wonderful to ha v e you here! I hope you\'rehavingafantasticday.',
+        'Agent-B (Italian): "Ciaocarissimi! Chebellagiornataperincontrarci!"',
+        'Ecco il r e so con to finale della cultura italian a.',
+      ].join('\n'));
+
+      expect(sanitized).toContain('Node for the Parallel Greetings Workflow is active.');
+      expect(sanitized).toContain("know that you're appreciated and valued.");
+      expect(sanitized).toContain('good vibes!');
+      expect(sanitized).toContain("it's wonderful to have you here! I hope you're having a fantastic day.");
+      expect(sanitized).toContain('Agent-B (Italian): "Ciao carissimi! Che bella giornata per incontrarci!"');
+      expect(sanitized).toContain('Ecco il resoconto finale della cultura');
+    });
+
     it('should strip echoed workflow instructions from chat-oriented merge output', () => {
       const sanitized = engine._sanitizeChatMessage([
         'This agent is not terminal in the workflow.',
@@ -1486,6 +1824,24 @@ describe('SwarmEngine', () => {
       );
 
       expect(sanitized).toBe('Hello everyone! Warm greetings from Agent-A.');
+    });
+
+    it('should prefer the longer semantic fallback buffer over a shorter trailing snippet tail', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const state = engine._executions.get(executionId).agentStates.get('node-a');
+      state.lastOutputSnippet = "things life has to offer. Here's to great conversations and even greater connections!";
+      state._snippetSourceBuffer = "Hello there, wonderful friend! Welcome — it's absolutely fantastic to have you here today! May your day be filled with joy, laughter, and all the good things life has to offer. Here's to great conversations and even greater connections!";
+
+      const sanitized = engine._sanitizeChatMessage(
+        [
+          'Claude runtime is active for this Swarm agent.',
+          'Con t in u e the workflow using the shared task context below.',
+        ].join('\n'),
+        { executionId, nodeId: 'node-a' }
+      );
+
+      expect(sanitized).toContain('Hello there, wonderful friend!');
+      expect(sanitized).toContain("Here's to great conversations and even greater connections!");
     });
 
     it('should prefer the provider blocker line over echoed prompt instructions when a run is usage-limited', () => {

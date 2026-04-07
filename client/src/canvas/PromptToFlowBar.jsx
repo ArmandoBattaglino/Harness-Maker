@@ -1,17 +1,22 @@
 // client/src/canvas/PromptToFlowBar.jsx
 // Natural-language prompt bar that calls scaffold endpoint to generate a workflow.
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 const SCAFFOLD_HEADERS = {
   'Content-Type': 'application/json',
   'X-Requested-With': 'ClaudeCodeManager',
 };
 
-export default function PromptToFlowBar({ onWorkflowGenerated }) {
+export default function PromptToFlowBar({ onWorkflowGenerated, resetSignal }) {
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [promptError, setPromptError] = useState('');
+
+  useEffect(() => {
+    setPromptError('');
+    setError(null);
+  }, [resetSignal]);
 
   const handleGenerate = useCallback(async () => {
     if (loading) return;

@@ -2,6 +2,87 @@
 
 ## 2026-04-07
 
+### Tasks #331-#333: Swarm canvas drop preview + SwarmView hydration blocker fix
+- Agent: frontend-dev (implementation), qa-tester (verification), code-mapper (mapping)
+- Scope: 3 modified files, 1 UX improvement, 1 runtime blocker fix
+
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/canvas/SwarmCanvas.jsx | MODIFIED | Added live drop-preview support for Agent palette drags. New snapped-node helpers build the same position for the ghost node and the final dropped node. Preview state is rendered as an in-memory `__palette-drop-preview__` node and cleared on drop, dragend, pane click, or timeout. |
+| client/src/canvas/nodes/AgentNode.jsx | MODIFIED | Added preview mode for `data.isDropPreview`: ghost styling, pointer-events-none, "Drop preview" status label, and hidden handles/warning/snippet/handoff badges. |
+| client/src/hooks/useSwarm.js | MODIFIED | Moved `applyExecutionSnapshot` above `reconcileClosedExecution` so the hook no longer crashes with `ReferenceError: Cannot access 'applyExecutionSnapshot' before initialization` during SwarmView mount/hydration. |
+
+### Functions Added
+- `snapPosition(position)` in `client/src/canvas/SwarmCanvas.jsx` - snaps preview/drop positions to the 20x20 canvas grid
+- `buildNodeData(type, subType, isDropPreview)` in `client/src/canvas/SwarmCanvas.jsx` - centralizes default node payloads for both preview and real drop paths
+- `buildCanvasNode({ id, type, position, subType, isDropPreview })` in `client/src/canvas/SwarmCanvas.jsx` - builds React Flow nodes through one shared snapped path
+- `clearDropPreview()` in `client/src/canvas/SwarmCanvas.jsx` - clears the active ghost node and pending cleanup timeout
+- `scheduleDropPreviewClear()` in `client/src/canvas/SwarmCanvas.jsx` - short timeout fallback for clearing stale ghost nodes
+- `updateDropPreview(type, subType, screenX, screenY)` in `client/src/canvas/SwarmCanvas.jsx` - converts drag coordinates into the live preview node
+- `reconcileClosedExecution(executionId)` in `client/src/hooks/useSwarm.js` - close-reconciliation path for status/history fallback after WS shutdown
+
+### Functions Modified
+- `SwarmCanvas({ workflowDef, markDirty, onCanvasChange })` in `client/src/canvas/SwarmCanvas.jsx` - now keeps temporary drop-preview state and renders it during Agent palette drags
+- `onDragOver(event)` in `client/src/canvas/SwarmCanvas.jsx` - now updates the ghost node for Agent drags instead of only setting `dropEffect`
+- `onDrop(event)` in `client/src/canvas/SwarmCanvas.jsx` - now reuses the same snapped build path as the preview node before appending the real node
+- `addNodeAtPosition(type, screenX, screenY)` in `client/src/canvas/SwarmCanvas.jsx` - now reuses the shared node builder for consistency with drag-drop creation
+- `AgentNode({ id, data, selected })` in `client/src/canvas/nodes/AgentNode.jsx` - now branches into a non-interactive preview rendering mode when `data.isDropPreview` is set
+- `useSwarm(workflowId)` in `client/src/hooks/useSwarm.js` - internal callback ordering updated so hydration can safely await `applyExecutionSnapshot`
+- `applyExecutionSnapshot(snapshot)` in `client/src/hooks/useSwarm.js` - now safely serves both hydration and close-reconciliation paths without TDZ initialization crashes
+
+### Functions Removed
+- None
+
+### Connection Changes
+- NEW: `NodePalette` drag data -> `SwarmCanvas.onDragOver()` -> `updateDropPreview()` -> temporary `__palette-drop-preview__` node -> `AgentNode` preview rendering
+- CHANGED: `SwarmCanvas.onDrop()` now shares the same `snapPosition()` + `buildCanvasNode()` path used by the preview, so ghost placement and final placement match
+- CHANGED: `connectWs().onclose` -> `reconcileClosedExecution()` -> `applyExecutionSnapshot()` is now safe during SwarmView mount because the awaited callback is initialized first
+
+### Impact on Other Code
+- Agent palette drags now show an accurate ghost placement before drop, reducing placement guesswork on the Swarm canvas
+- Preview nodes stay purely ephemeral: they are rendered into `renderedNodes` only and are never persisted into workflow definitions
+- SwarmView no longer crashes on first mount due to the `applyExecutionSnapshot` initialization-order bug, which also unblocks browser QA for the canvas
+
+### Verification Note
+- Browser QA confirmed that the preview appears during drag, the dropped Agent node lands on the same snapped transform shown by the preview, and the ghost node clears after drop/timeout
+- `npm run build --prefix client` passed for the implementation
+
+---
+
+## 2026-04-07 - Debugger-loop hardening: terminal artifact fallback + prompt reset + Windows PID ceiling
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/ProcessRegistry.js | MODIFIED | Raised PID validation ceiling from 65535 to signed 32-bit max and exported `isValidPid` for direct unit coverage. |
+| server/routes/swarm.js | MODIFIED | Added live-result helpers, app-local history-store injection, terminal-history preference, and synthesized live artifact/results fallback for terminal executions still present in memory. |
+| client/src/canvas/PromptToFlowBar.jsx | MODIFIED | Added `resetSignal` effect that clears stale prompt and fetch error UI. |
+| client/src/views/SwarmView.jsx | MODIFIED | Added `promptToFlowResetKey` and bumped it on workflow transitions/run so Prompt-to-Flow validation state resets when the user moves into another workflow action. |
+| server/tests/execution-results-api.test.js | MODIFIED | Added coverage for synthesized live terminal artifacts and persisted-history preference. |
+| server/tests/process-registry.test.js | ADDED | Added PID validation coverage for high Windows PIDs and invalid values. |
+
+### Functions Added
+- `normalizeAgentStates(agentStates)` in `server/routes/swarm.js`
+- `buildAgentOutputsFromExecution(execution)` in `server/routes/swarm.js`
+- `buildLiveExecutionResults(execution, workflowName)` in `server/routes/swarm.js`
+- `lookupHistoryExecution(executionId, workflowIdHint, appLocals)` in `server/routes/swarm.js`
+- `isValidPid(pid)` exported from `server/services/ProcessRegistry.js`
+
+### Functions Modified
+- `getHistoryStore(appLocals)` in `server/routes/swarm.js` — now supports injected `app.locals.executionHistoryStore` for deterministic tests
+- `lookupExecution(executionId, workflowIdHint, appLocals)` in `server/routes/swarm.js` — now prefers persisted history for terminal live executions before falling back to live synthesis
+- `GET /executions/:executionId/results` in `server/routes/swarm.js` — now returns rich live agent outputs and terminal aggregated artifacts when needed
+- `GET /executions/:executionId/artifact.md` in `server/routes/swarm.js` — now serves synthesized markdown for terminal live executions when persisted history is not yet available
+- `PromptToFlowBar({ onWorkflowGenerated, resetSignal })` in `client/src/canvas/PromptToFlowBar.jsx` — clears stale validation/error UI on reset changes
+- `SwarmView()` in `client/src/views/SwarmView.jsx` — issues prompt-reset bumps on load/generate/import/duplicate/template/restore/run transitions
+
+### Verification
+- `npm test --prefix server -- --runInBand` PASS — 383/383
+- `npm run build --prefix client` PASS — 500 modules
+- Browser beta check PASS — stale prompt validation clears after loading a workflow, `Final Report` shows actual markdown immediately after completion, download flow still produces a markdown blob, no out-of-range PID warnings logged during the verified run
+
+---
+
 ### Task #330: Documentation and status truthfulness sync — FINAL TASK (PROJECT COMPLETE)
 - Agent: documenter (implementation), code-mapper (mapping)
 - Scope: Documentation-only — no source code function changes. Version bump + docs sync.

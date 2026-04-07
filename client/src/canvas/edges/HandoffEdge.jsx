@@ -13,7 +13,7 @@ const SLOT_SIDE_PADDING = 34;
 const SLOT_MAX_SPAN = 124;
 const CORRIDOR_OFFSET = 22;
 const CORRIDOR_LANE_GAP = 12;
-const FEEDBACK_ROUTE_OFFSET = 76;
+const FEEDBACK_ROUTE_OFFSET = 64;
 
 function getSlotOffset(index, count, nodeWidth) {
   if (!count || count <= 1 || !nodeWidth) {
@@ -212,7 +212,7 @@ export default function HandoffEdge({
       : isActive
         ? '#60a5fa'
         : '#64748b';
-  const passiveOpacity = isFeedbackEdge ? 0.34 : 0.88;
+  const passiveOpacity = isFeedbackEdge ? 0.18 : 0.88;
   const contextOpacity = isFeedbackEdge
     ? (isContextHighlighted ? 0.78 : nodeSelectionActive ? 0.1 : passiveOpacity)
     : (isContextHighlighted ? 0.96 : nodeSelectionActive ? 0.16 : passiveOpacity);
@@ -221,6 +221,7 @@ export default function HandoffEdge({
     : hasFocusedSelection
       ? contextOpacity
       : passiveOpacity;
+  const showFeedbackRail = !isFeedbackEdge || isContextHighlighted || isActive;
   const resolvedMarkerEnd = markerEnd ?? {
     type: MarkerType.Arrow,
     width: isSelected ? 15 : isFeedbackEdge ? 11 : 14,
@@ -282,32 +283,32 @@ export default function HandoffEdge({
           }}
         />
       )}
-      {(!isFeedbackEdge || isContextHighlighted || !hasFocusedSelection) && (
+      {showFeedbackRail && (
         <BaseEdge
           path={edgePath}
           style={{
             stroke: selectionActive && !isSelected
               ? 'rgba(15, 23, 42, 0.22)'
               : isFeedbackEdge
-                ? 'rgba(15, 23, 42, 0.4)'
+                ? 'rgba(15, 23, 42, 0.32)'
                 : 'rgba(15, 23, 42, 0.92)',
             strokeWidth: isFeedbackEdge ? (isSelected ? 4.5 : 3) : isSelected ? 9 : isActive ? 8 : 6,
             strokeLinecap: 'round',
             strokeLinejoin: 'round',
             opacity: hasFocusedSelection
               ? (isContextHighlighted ? 0.72 : 0.12)
-              : isFeedbackEdge ? 0.46 : 1,
+              : isFeedbackEdge ? 0.22 : 1,
           }}
         />
       )}
       <BaseEdge
         path={edgePath}
-        markerEnd={isFeedbackEdge && hasFocusedSelection && !isContextHighlighted && !isActive ? undefined : resolvedMarkerEnd}
+        markerEnd={isFeedbackEdge && !isContextHighlighted && !isActive ? undefined : resolvedMarkerEnd}
         style={{
           stroke: strokeColor,
           strokeWidth: isFeedbackEdge ? (isSelected ? 2.2 : 1.4) : isSelected ? 3.8 : isActive ? 3 : 2.1,
           opacity: isSelected ? 1 : dimmedOpacity,
-          strokeDasharray: isFeedbackEdge && !isActive ? '7 6' : undefined,
+          strokeDasharray: isFeedbackEdge && !isActive ? '6 8' : undefined,
           strokeLinecap: 'round',
           strokeLinejoin: 'round',
         }}
