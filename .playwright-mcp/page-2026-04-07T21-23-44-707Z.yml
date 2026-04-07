@@ -1,0 +1,244 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e7]: terminal
+      - generic [ref=e8]:
+        - heading "Claude Code" [level=1] [ref=e9]
+        - paragraph [ref=e10]: Visual Manager
+    - navigation [ref=e11]:
+      - button "dashboard Projects" [ref=e12] [cursor=pointer]:
+        - generic [ref=e13]: dashboard
+        - generic [ref=e14]: Projects
+      - button "terminal Live Terminal" [ref=e15] [cursor=pointer]:
+        - generic [ref=e16]: terminal
+        - generic [ref=e17]: Live Terminal
+      - button "play_arrow Job Runner" [ref=e18] [cursor=pointer]:
+        - generic [ref=e19]: play_arrow
+        - generic [ref=e20]: Job Runner
+      - button "memory Deployments" [ref=e21] [cursor=pointer]:
+        - generic [ref=e22]: memory
+        - generic [ref=e23]: Deployments
+      - button "description Context Editor" [ref=e24] [cursor=pointer]:
+        - generic [ref=e25]: description
+        - generic [ref=e26]: Context Editor
+      - button "hub Swarm" [ref=e27] [cursor=pointer]:
+        - generic [ref=e28]: hub
+        - generic [ref=e29]: Swarm
+    - generic [ref=e30]:
+      - generic [ref=e31]:
+        - generic [ref=e32]: Active PTY Sessions
+        - generic [ref=e33]: 0 Total
+      - generic [ref=e168]:
+        - generic [ref=e169]: Current Project
+        - list [ref=e170]:
+          - listitem [ref=e171]:
+            - button "Prova Selected context" [ref=e172] [cursor=pointer]:
+              - generic [ref=e176]: Prova
+              - generic [ref=e177]: Selected context
+      - list [ref=e34]:
+        - listitem [ref=e35]: No active PTY sessions.
+      - button "add New Local Session" [ref=e37] [cursor=pointer]:
+        - generic [ref=e38]: add
+        - generic [ref=e39]: New Local Session
+    - generic [ref=e41]:
+      - generic [ref=e44]: Active
+      - generic [ref=e45]:
+        - button "Open settings" [ref=e46] [cursor=pointer]:
+          - generic [ref=e47]: settings
+        - generic [ref=e48]: v5.0.0
+  - main [ref=e49]:
+    - generic [ref=e50]:
+      - generic [ref=e51]:
+        - generic "Click to rename workflow" [ref=e179] [cursor=pointer]: Pantheon Facts Research and Writing
+        - generic [ref=e53]: "Project: Prova"
+        - button "📥 HITL" [ref=e54] [cursor=pointer]
+        - generic [ref=e55]:
+          - generic [ref=e56]: Runtime
+          - combobox "Runtime" [ref=e57]:
+            - option "Auto" [selected]
+            - option "Claude"
+            - option "Codex"
+            - option "Gemini"
+        - button "Models" [ref=e59] [cursor=pointer]
+        - button "History" [ref=e60] [cursor=pointer]
+        - button "Templates" [ref=e61] [cursor=pointer]
+        - button "Versions" [ref=e62] [cursor=pointer]
+        - button "⚙ Settings" [ref=e63] [cursor=pointer]
+        - button "Focus" [ref=e64] [cursor=pointer]
+        - button "Tidy" [ref=e65] [cursor=pointer]
+        - button "Save" [disabled] [ref=e66]
+        - button "Run" [ref=e67] [cursor=pointer]
+        - generic [ref=e68]: ● idle
+        - generic [ref=e69]: "Provider: Auto"
+        - generic [ref=e70]: Auto fallback
+        - button "Final Report" [disabled] [ref=e71]
+      - generic [ref=e76]:
+        - generic [ref=e77]: ✨
+        - textbox "Describe your workflow... e.g. 'Triage customer requests then route to billing or support agents'" [ref=e78]
+        - button "Generate" [ref=e180] [cursor=pointer]
+      - generic [ref=e80]:
+        - generic [ref=e81]: Saved workflows
+        - combobox [ref=e82]:
+          - option "Select a saved workflow"
+          - option "Pantheon Facts Research and Writing (07/04/2026)" [selected]
+          - option "Penguin Fun Facts Pipeline (07/04/2026)"
+          - option "Rome Facts Research and Writing (07/04/2026)"
+          - option "Rome Facts Pipeline (07/04/2026)"
+          - option "Roman Colosseum Facts Pipeline (07/04/2026)"
+          - option "Personality Profile Interview (07/04/2026)"
+          - option "Node.js Interview Workflow (07/04/2026)"
+          - option "Cat Writer Workflow (07/04/2026)"
+          - option "Cat Writer (07/04/2026)"
+          - option "Node-js Features Research and Summary (07/04/2026)"
+          - option "Researcher and Writer (07/04/2026)"
+          - option "Colosseum Research and Formal Writing (07/04/2026)"
+          - option "Two Agent Hello Workflow (07/04/2026)"
+          - option "Content Agency (07/04/2026)"
+          - option "Webhook Conditional Router Workflow (07/04/2026)"
+          - option "Parallel Greetings Workflow (07/04/2026)"
+          - option "Data Pipeline (07/04/2026)"
+          - option "Customer Support Triage (07/04/2026)"
+          - option "Moon Facts Research and Writing (07/04/2026)"
+          - option "Node.js Feature Research and Summary (07/04/2026)"
+          - option "Mars Poetry Pipeline (07/04/2026)"
+          - option "Research Loop (07/04/2026)"
+          - option "Delay Test Workflow (06/04/2026)"
+          - option "Flow Control Test Workflow (06/04/2026)"
+          - option "TypeScript Advantages Pipeline - Copy (06/04/2026)"
+          - option "TypeScript Advantages Pipeline (06/04/2026)"
+          - option "TypeScript Feature Research and Summary (06/04/2026)"
+          - option "TypeScript Features Research and Summary (06/04/2026)"
+          - option "Test - Copy (06/04/2026)"
+          - option "Test (06/04/2026)"
+          - option "Node.js Feature Research and Report (06/04/2026)"
+          - option "Node-js Feature Research and Summary (06/04/2026)"
+          - option "Project Research and Summary (06/04/2026)"
+          - option "Customer Request Router (06/04/2026)"
+          - option "Analyst-Reporter Pipeline (05/04/2026)"
+          - option "Roman Aqueducts Research Team (05/04/2026)"
+          - option "Prompt Reliability Control Workflow (05/04/2026)"
+          - option "Prompt Stress Audit Workflow (05/04/2026)"
+          - option "Workflow di 3 Agenti (05/04/2026)"
+          - option "Node.js Best Practices Research and Summary (05/04/2026)"
+          - option "Billing Support Triage (05/04/2026)"
+          - option "Marketing Team - Report to Posts (05/04/2026)"
+          - option "Billing Triage Workflow (05/04/2026)"
+          - option "Triage to Billing Workflow (05/04/2026)"
+          - option "Text Document Review Pipeline (04/04/2026)"
+          - option "Marketing Agency Workflow (04/04/2026)"
+          - option "Research and Summarize (04/04/2026)"
+          - option "Write A Greeting Workflow (04/04/2026)"
+          - option "A Code Reviewer Analyzes Code Quality Workflow (04/04/2026)"
+          - option "Code Review and Documentation (04/04/2026)"
+          - option "Frontend UI Audit and CSS Optimization (04/04/2026)"
+          - option "A Researcher To Analyze A Writer Workflow (03/04/2026)"
+          - option "A Two Agents Explorer Reporter Explorer Workflow (03/04/2026)"
+          - option "2 Agents Researcher Analyzes Writer Summarizes Workflow (03/04/2026)"
+          - option "A 2 Agent A Researcher Analyzes The Workflow (03/04/2026)"
+          - option "Research and Report Team (03/04/2026)"
+          - option "Data Collection and Summarization Pipeline (02/04/2026)"
+          - option "Research-Write-Review Team (02/04/2026)"
+          - option "A Customer Support Triage Routes Requests Workflow (02/04/2026)"
+          - option "Test Workflow (02/04/2026)"
+          - option "Customer Support Triage Workflow (01/04/2026)"
+          - option "Customer Triage Workflow (01/04/2026)"
+          - option "Customer Support Ticket Router (01/04/2026)"
+          - option "Button State Verification Workflow (01/04/2026)"
+          - option "Workflow di Marketing (31/03/2026)"
+          - option "Prova Workflow (31/03/2026)"
+          - option "Customer Request Triage Workflow (31/03/2026)"
+        - button "Load workflow" [ref=e83] [cursor=pointer]
+        - button "Refresh" [ref=e84] [cursor=pointer]
+        - button "Duplicate" [ref=e85] [cursor=pointer]
+        - button "Export" [ref=e86] [cursor=pointer]
+        - button "Import" [ref=e87] [cursor=pointer]
+        - generic [ref=e88]: Shows workflows for Prova plus unscoped ones
+      - generic [ref=e181]:
+        - button "All Agents" [ref=e183] [cursor=pointer]
+        - generic [ref=e184]:
+          - generic [ref=e185]:
+            - generic [ref=e186]:
+              - heading "Nodes" [level=3] [ref=e187]
+              - generic [ref=e188]:
+                - generic [ref=e189]:
+                  - generic [ref=e190]: 🤖
+                  - generic [ref=e191]: Agent Node
+                - paragraph [ref=e192]: AI agent with system prompt
+              - generic [ref=e193]:
+                - generic [ref=e194]:
+                  - generic [ref=e195]: 🏢
+                  - generic [ref=e196]: Department
+                - paragraph [ref=e197]: Group of agents
+              - generic [ref=e198]:
+                - generic [ref=e199]:
+                  - generic [ref=e200]: 🔗
+                  - generic [ref=e201]: Webhook Trigger
+                - paragraph [ref=e202]: HTTP webhook trigger
+              - generic [ref=e203]:
+                - generic [ref=e204]:
+                  - generic [ref=e205]: 📡
+                  - generic [ref=e206]: RSS Trigger
+                - paragraph [ref=e207]: RSS feed trigger
+              - generic [ref=e208]:
+                - generic [ref=e209]:
+                  - generic [ref=e210]: ◆
+                  - generic [ref=e211]: Conditional Router
+                - paragraph [ref=e212]: IF/THEN branching logic
+              - generic [ref=e213]:
+                - generic [ref=e214]:
+                  - generic [ref=e215]: ⬡
+                  - generic [ref=e216]: Merge / Join
+                - paragraph [ref=e217]: Wait for multiple inputs
+              - generic [ref=e218]:
+                - generic [ref=e219]:
+                  - generic [ref=e220]: ⏱
+                  - generic [ref=e221]: Delay Timer
+                - paragraph [ref=e222]: Pause flow for N seconds
+              - generic [ref=e223]:
+                - generic [ref=e224]:
+                  - generic [ref=e225]: 🔄
+                  - generic [ref=e226]: Loop
+                - paragraph [ref=e227]: Iterate with exit condition
+              - generic [ref=e228]:
+                - generic [ref=e229]:
+                  - generic [ref=e230]: ⚡
+                  - generic [ref=e231]: Error Handler
+                - paragraph [ref=e232]: Catch errors from nodes
+              - generic [ref=e233]:
+                - generic [ref=e234]:
+                  - generic [ref=e235]: 📦
+                  - generic [ref=e236]: Sub-Workflow
+                - paragraph [ref=e237]: Nested workflow reference
+            - button "‹ hide" [ref=e239] [cursor=pointer]
+          - application [ref=e241]:
+            - generic [ref=e243]:
+              - generic:
+                - generic:
+                  - img
+                  - img:
+                    - group "Edge from node-1 to node-2" [ref=e244] [cursor=pointer]
+                - generic:
+                  - group [ref=e249]:
+                    - generic [ref=e250] [cursor=pointer]:
+                      - generic [ref=e252]:
+                        - img "agent" [ref=e253]: 🤖
+                        - generic [ref=e254]: Researcher
+                      - generic [ref=e255]: idle
+                  - group [ref=e257]:
+                    - generic [ref=e258] [cursor=pointer]:
+                      - generic [ref=e260]:
+                        - img "agent" [ref=e261]: 🤖
+                        - generic [ref=e262]: Writer
+                      - generic [ref=e263]: idle
+            - img
+            - generic "Control Panel" [ref=e265]:
+              - button "Zoom In" [disabled]:
+                - img
+              - button "Zoom Out" [ref=e266] [cursor=pointer]:
+                - img [ref=e267]
+              - button "Fit View" [ref=e269] [cursor=pointer]:
+                - img [ref=e270]
+            - img "Mini Map" [ref=e273]
+            - link "React Flow attribution" [ref=e277] [cursor=pointer]:
+              - /url: https://reactflow.dev
+              - text: React Flow
