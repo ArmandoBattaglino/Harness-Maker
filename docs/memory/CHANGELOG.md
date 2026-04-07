@@ -3176,3 +3176,67 @@ No new connections introduced in this checkpoint task. All connection changes we
 - No breaking changes to existing function signatures
 
 ---
+
+---
+## 2026-04-07 — Task #327: Wire ExecutionHistoryStore into SwarmEngine
+**Agent:** backend-dev
+**Triggered by:** Need to persist terminal execution states (completed/stopped/failed) to disk via ExecutionHistoryStore
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/SwarmEngine.js | MODIFIED | Added _executionHistoryStore field (null default), _persistedHistoryIds Set (duplicate guard), setExecutionHistoryStore() setter, _persistExecutionHistory() method. _setExecutionStatus() now calls _persistExecutionHistory() for terminal states. |
+| server/index.js | MODIFIED | Added import of ExecutionHistoryStore. startup() now instantiates ExecutionHistoryStore and wires it into SwarmEngine via setter injection. |
+
+### Functions Added
+- `setExecutionHistoryStore(store)` in `server/services/SwarmEngine.js` — setter to inject ExecutionHistoryStore instance
+- `_persistExecutionHistory(execution)` in `server/services/SwarmEngine.js` — builds history entry from execution record and persists via ExecutionHistoryStore.addEntry(); guarded against duplicate writes
+
+### Functions Modified
+- `SwarmEngine constructor` in `server/services/SwarmEngine.js` — added _executionHistoryStore (null) and _persistedHistoryIds (new Set()) fields
+- `_setExecutionStatus(execution, status)` in `server/services/SwarmEngine.js` — now calls _persistExecutionHistory() for terminal states (completed/stopped/failed)
+- `startup()` in `server/index.js` — now instantiates ExecutionHistoryStore and calls swarmEngine.setExecutionHistoryStore()
+
+### Functions Removed
+- None
+
+### Connection Changes
+- NEW: server/index.js → imports ExecutionHistoryStore from server/stores/ExecutionHistoryStore.js
+- NEW: server/index.js::startup() → calls swarmEngine.setExecutionHistoryStore(executionHistoryStore)
+- NEW: SwarmEngine._setExecutionStatus → calls SwarmEngine._persistExecutionHistory (for terminal states)
+- NEW: SwarmEngine._persistExecutionHistory → calls ExecutionHistoryStore.addEntry
+
+### Impact on Other Code
+- ExecutionHistoryStore was previously only used by server/routes/swarm.js (lazy-init for GET history endpoints). Now also wired at startup for write-path via SwarmEngine. The two instances are independent — route handler lazy-inits its own for reads, SwarmEngine uses setter-injected one for writes.
+- No breaking changes to any existing function signatures.
+
+---
+
+---
+## 2026-04-07 — Task #329: Unified Chat View E2E verification
+**Agent:** qa-tester
+**Triggered by:** E2E verification of all Unified Chat View components
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| docs/memory/agents/qa-tester.md | MODIFIED | Appended verification session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended verification entry |
+| docs/TASK_PLAN.md | MODIFIED | Marked task #329 COMPLETED |
+
+### Functions Added
+- None
+
+### Functions Modified
+- None
+
+### Functions Removed
+- None
+
+### Connection Changes
+- None — verification-only task, no code changes.
+
+### Impact on Other Code
+- None. All components verified: ChatExtractor, SwarmEngine integration, ChatPanel, ChatMessage, SwarmContext, useSwarm WS handler. WS contract confirmed COMPLETE. Verdict: PASS.
+
+---
