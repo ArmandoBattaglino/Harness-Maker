@@ -280,15 +280,46 @@ export function useSwarm(workflowId) {
           const sourceAgent = useSwarmStore.getState().agentStates[msg.sourceNodeId];
           const currentHandoffCount = sourceAgent?.handoffCount ?? 0;
           updateAgentState(msg.sourceNodeId, { handoffCount: currentHandoffCount + 1 });
+          // Track handoff payload in agentResults if present
+          if (msg.sourceNodeId && msg.payload) {
+            useSwarmStore.getState().setAgentHandoffPayload(msg.sourceNodeId, msg.targetNodeId, msg.payload);
+          }
           break;
         }
         case 'handoff_completed':
           addFeedEvent({ ...msg, timestamp: Date.now() });
           break;
         case 'execution_status': {
+          // Clear previous agentResults when a new execution starts running
+          if (msg.status === 'running') {
+            const currentExecId = useSwarmStore.getState().activeExecutionId;
+            const incomingExecId = msg.executionId ?? currentExecId;
+            if (incomingExecId !== currentExecId) {
+              useSwarmStore.getState().clearAgentResults();
+            }
+          }
           void applyExecutionSnapshot(msg).then(({ status }) => {
             if (['stopped', 'completed', 'failed'].includes(status) && wsRef.current === ws) {
               ws.close();
+            }
+            // Hydrate agentResults from persisted data on terminal states
+            if (['completed', 'stopped', 'failed'].includes(status)) {
+              const execId = msg.executionId || useSwarmStore.getState().activeExecutionId;
+              if (execId) {
+                fetch(`/api/v1/swarm/executions/${execId}/results`)
+                  .then((resp) => {
+                    if (resp.ok) return resp.json();
+                    return null;
+                  })
+                  .then((data) => {
+                    if (data?.agentOutputs) {
+                      useSwarmStore.getState().hydrateAgentResults(data.agentOutputs);
+                    }
+                  })
+                  .catch(() => {
+                    // Silently skip — WS-accumulated data is still available
+                  });
+              }
             }
           });
           break;
@@ -351,6 +382,10 @@ export function useSwarm(workflowId) {
             text: msg.text,
             timestamp: msg.timestamp ?? Date.now(),
           });
+          // Feed assistant messages into agentResults store
+          if ((msg.role === 'assistant' || (!msg.role)) && msg.nodeId && msg.text) {
+            useSwarmStore.getState().appendAgentChatText(msg.nodeId, msg.text);
+          }
           break;
         default:
           break;

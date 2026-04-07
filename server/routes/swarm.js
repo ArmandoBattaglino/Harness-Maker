@@ -430,5 +430,203 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
     }
   });
 
+  // -------------------------------------------------------------------------
+  // UUID validation regex — shared by results and artifact endpoints
+  // -------------------------------------------------------------------------
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  // -------------------------------------------------------------------------
+  // Internal helper: look up an execution by ID, first in live SwarmEngine,
+  // then in persisted ExecutionHistoryStore.
+  // Returns { source: 'live'|'history', data: {...}, workflowName?: string } or null.
+  // -------------------------------------------------------------------------
+  async function lookupExecution(executionId, workflowIdHint, appLocals) {
+    // 1. Try live execution from SwarmEngine
+    const liveStatus = swarmEngine.getStatus(executionId);
+    if (liveStatus) {
+      // Resolve workflow name from workflowStore if possible
+      let workflowName = '';
+      try {
+        const store = appLocals.workflowStore;
+        if (store && liveStatus.workflowId) {
+          const wf = await store.get(liveStatus.workflowId);
+          workflowName = wf?.name || '';
+        }
+      } catch {
+        // Ignore — name is best-effort
+      }
+
+      return {
+        source: 'live',
+        data: liveStatus,
+        workflowName,
+      };
+    }
+
+    // 2. Try persisted history
+    const store = getHistoryStore();
+    let entry = null;
+    let workflowName = '';
+
+    if (workflowIdHint) {
+      entry = await store.getEntry(workflowIdHint, executionId);
+      if (entry) {
+        // Try to resolve workflow name
+        try {
+          const wfStore = appLocals.workflowStore;
+          if (wfStore) {
+            const wf = await wfStore.get(workflowIdHint);
+            workflowName = wf?.name || '';
+          }
+        } catch {
+          // Ignore
+        }
+      }
+    } else {
+      // Scan all workflows (slower, but works without workflowId)
+      const wfStore = appLocals.workflowStore;
+      if (wfStore) {
+        try {
+          const workflows = await wfStore.list();
+          for (const wf of workflows) {
+            entry = await store.getEntry(wf.id, executionId);
+            if (entry) {
+              workflowName = wf.name || '';
+              break;
+            }
+          }
+        } catch {
+          // Ignore scan errors
+        }
+      }
+    }
+
+    if (!entry) return null;
+
+    return {
+      source: 'history',
+      data: entry,
+      workflowName,
+    };
+  }
+
+  // -------------------------------------------------------------------------
+  // GET /api/v1/swarm/executions/:executionId/results
+  // Returns execution results — agent outputs, aggregated artifact, and meta.
+  // Looks up in live SwarmEngine first, then in persisted history.
+  // Optional query param: ?workflowId= to speed up history lookup.
+  // → 200 { executionId, workflowName, status, agentOutputs, aggregatedArtifact, meta }
+  // → 400 if executionId is not a valid UUID
+  // → 404 if execution not found
+  // -------------------------------------------------------------------------
+  router.get('/executions/:executionId/results', async (req, res) => {
+    try {
+      const { executionId } = req.params;
+
+      if (!UUID_RE.test(executionId)) {
+        return res.status(400).json({ error: 'Invalid execution ID format' });
+      }
+
+      const workflowIdHint = req.query.workflowId || null;
+      const result = await lookupExecution(executionId, workflowIdHint, req.app.locals);
+
+      if (!result) {
+        return res.status(404).json({ error: 'Execution not found' });
+      }
+
+      if (result.source === 'live') {
+        // Build agentOutputs from live chatMessages
+        const agentOutputs = {};
+        const chatMessages = result.data.chatMessages || [];
+        for (const msg of chatMessages) {
+          if (msg.role === 'assistant' && msg.nodeId) {
+            if (!agentOutputs[msg.nodeId]) agentOutputs[msg.nodeId] = '';
+            agentOutputs[msg.nodeId] += (msg.text || msg.content || '') + '\n';
+          }
+        }
+
+        return res.status(200).json({
+          executionId: result.data.executionId,
+          workflowName: result.workflowName,
+          status: result.data.status,
+          agentOutputs,
+          aggregatedArtifact: '',
+          meta: {
+            startedAt: result.data.budget?.startedAt ?? null,
+            endedAt: null,
+            durationMs: null,
+            nodesRun: Object.keys(result.data.agentStates || {}).length,
+          },
+        });
+      }
+
+      // Persisted history entry
+      const entry = result.data;
+      return res.status(200).json({
+        executionId: entry.executionId,
+        workflowName: result.workflowName,
+        status: entry.status,
+        agentOutputs: entry.agentOutputs || {},
+        aggregatedArtifact: entry.aggregatedArtifact || '',
+        meta: {
+          startedAt: entry.startedAt ?? null,
+          endedAt: entry.endedAt ?? null,
+          durationMs: entry.durationMs ?? null,
+          nodesRun: entry.nodesRun ?? 0,
+        },
+      });
+    } catch (err) {
+      console.error(`[swarm] GET /executions/:executionId/results error: ${err.message}`);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // -------------------------------------------------------------------------
+  // GET /api/v1/swarm/executions/:executionId/artifact.md
+  // Downloads the aggregated artifact as a Markdown file.
+  // Optional query param: ?workflowId= to speed up history lookup.
+  // → 200 text/markdown with Content-Disposition attachment
+  // → 400 if executionId is not a valid UUID
+  // → 404 if execution not found
+  // -------------------------------------------------------------------------
+  router.get('/executions/:executionId/artifact.md', async (req, res) => {
+    try {
+      const { executionId } = req.params;
+
+      if (!UUID_RE.test(executionId)) {
+        return res.status(400).json({ error: 'Invalid execution ID format' });
+      }
+
+      const workflowIdHint = req.query.workflowId || null;
+      const result = await lookupExecution(executionId, workflowIdHint, req.app.locals);
+
+      if (!result) {
+        return res.status(404).json({ error: 'Execution not found' });
+      }
+
+      // Determine artifact content
+      let artifactContent = '';
+      if (result.source === 'history') {
+        artifactContent = result.data.aggregatedArtifact || '';
+      }
+      // Live executions don't have aggregatedArtifact yet — return empty markdown
+
+      // Build safe filename
+      const safeName = (result.workflowName || 'workflow')
+        .replace(/[^a-zA-Z0-9_-]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+        .substring(0, 64) || 'workflow';
+      const shortId = executionId.substring(0, 8);
+
+      res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${safeName}-${shortId}.md"`);
+      return res.send(artifactContent);
+    } catch (err) {
+      console.error(`[swarm] GET /executions/:executionId/artifact.md error: ${err.message}`);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
   return router;
 }

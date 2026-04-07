@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import HandoffParser from './HandoffParser.js';
 import { discoverCodexBinary, discoverGeminiBinary } from './BinaryDiscovery.js';
 import { ChatExtractor } from './ChatExtractor.js';
+import { buildWorkflowArtifact } from './WorkflowArtifactBuilder.js';
 
 const SWARM_PROMPT_ECHO_MARKER = '--- END SWARM INPUT ---';
 const SWARM_PROMPT_SUBMIT_DELAY_MS = 100;
@@ -1148,6 +1149,46 @@ class SwarmEngine {
       }
     }
 
+    // Build agentOutputs from chatMessages
+    const agentOutputs = {};
+    if (Array.isArray(execution.chatMessages)) {
+      const grouped = {};
+      for (const msg of execution.chatMessages) {
+        if (!msg.nodeId) continue;
+        if (!grouped[msg.nodeId]) grouped[msg.nodeId] = [];
+        grouped[msg.nodeId].push(msg);
+      }
+
+      for (const [nodeId, messages] of Object.entries(grouped)) {
+        const state = execution.agentStates?.get(nodeId);
+        const nodeDef = execution.workflowDef?.nodes?.find(n => n.id === nodeId);
+        const timestamps = messages.map(m => m.timestamp).filter(Boolean).sort();
+
+        agentOutputs[nodeId] = {
+          label: nodeDef?.data?.label || nodeId,
+          finalText: messages.map(m => m.text).filter(Boolean).join('\n\n'),
+          handoffPayloads: state?.handoffPayloads || [],
+          status: state?.status || 'unknown',
+          provider: state?.runtimeProvider || state?.provider || null,
+          messageCount: messages.length,
+          firstMessageAt: timestamps[0] ? new Date(timestamps[0]).toISOString() : null,
+          lastMessageAt: timestamps[timestamps.length - 1] ? new Date(timestamps[timestamps.length - 1]).toISOString() : null,
+        };
+      }
+    }
+
+    // Build aggregated markdown artifact
+    const aggregatedArtifact = buildWorkflowArtifact({
+      workflowName: execution.workflowDef?.name || 'Workflow',
+      workflowDescription: execution.workflowDef?.description || '',
+      executionId: execId,
+      status: execution.status,
+      startedAt,
+      endedAt,
+      durationMs,
+      agentOutputs,
+    });
+
     // Build a human-readable outcome summary
     let outcome = '';
     if (execution.status === 'completed') {
@@ -1167,6 +1208,8 @@ class SwarmEngine {
       nodesRun,
       outcome,
       nodeSnapshots,
+      agentOutputs,
+      aggregatedArtifact,
     };
 
     try {
