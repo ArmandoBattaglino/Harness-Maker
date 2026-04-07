@@ -9,6 +9,7 @@ const useSwarmStore = create((set, get) => ({
   providerStrategy: null,
   lastFallback: null,
   agentStates: {},         // { [nodeId]: { status, lastOutputSnippet, handoffCount } }
+  agentResults: {},        // { [nodeId]: { finalText, handoffPayloads, viewed, updatedAt } }
   triggerStates: {},       // { [triggerId]: { fired, lastFiredAt, status } }
   edgeCounters: {},        // { [edgeId]: number }
   budget: { estimatedTokensUsed: 0, limitTokens: 0 },
@@ -126,6 +127,65 @@ const useSwarmStore = create((set, get) => ({
   })),
   setWorkflowDef: (def) => set({ workflowDef: def }),
 
+  // --- agentResults actions ---
+
+  appendAgentChatText: (nodeId, text) => set((state) => {
+    const prev = state.agentResults[nodeId] || { finalText: '', handoffPayloads: [], viewed: false, updatedAt: null };
+    const separator = prev.finalText ? '\n\n' : '';
+    return {
+      agentResults: {
+        ...state.agentResults,
+        [nodeId]: {
+          ...prev,
+          finalText: prev.finalText + separator + text,
+          viewed: false,
+          updatedAt: Date.now(),
+        },
+      },
+    };
+  }),
+
+  setAgentHandoffPayload: (nodeId, target, payload) => set((state) => {
+    const prev = state.agentResults[nodeId] || { finalText: '', handoffPayloads: [], viewed: false, updatedAt: null };
+    return {
+      agentResults: {
+        ...state.agentResults,
+        [nodeId]: {
+          ...prev,
+          handoffPayloads: [...prev.handoffPayloads, { target, payload, timestamp: Date.now() }],
+          updatedAt: Date.now(),
+        },
+      },
+    };
+  }),
+
+  markAgentResultViewed: (nodeId) => set((state) => {
+    const prev = state.agentResults[nodeId];
+    if (!prev) return state;
+    return {
+      agentResults: {
+        ...state.agentResults,
+        [nodeId]: { ...prev, viewed: true },
+      },
+    };
+  }),
+
+  hydrateAgentResults: (agentOutputs) => set(() => {
+    const agentResults = {};
+    for (const nodeId of Object.keys(agentOutputs)) {
+      const ao = agentOutputs[nodeId];
+      agentResults[nodeId] = {
+        finalText: ao.finalText,
+        handoffPayloads: ao.handoffPayloads || [],
+        viewed: true,
+        updatedAt: Date.now(),
+      };
+    }
+    return { agentResults };
+  }),
+
+  clearAgentResults: () => set({ agentResults: {} }),
+
   clearExecutionState: () => set({
     activeExecutionId: null,
     executionStatus: 'idle',
@@ -134,6 +194,7 @@ const useSwarmStore = create((set, get) => ({
     providerStrategy: null,
     lastFallback: null,
     agentStates: {},
+    agentResults: {},
     triggerStates: {},
     edgeCounters: {},
     budget: { estimatedTokensUsed: 0, limitTokens: 0 },
@@ -158,6 +219,7 @@ const useSwarmStore = create((set, get) => ({
     providerStrategy: null,
     lastFallback: null,
     agentStates: {},
+    agentResults: {},
     triggerStates: {},
     edgeCounters: {},
     budget: { estimatedTokensUsed: 0, limitTokens: 0 },

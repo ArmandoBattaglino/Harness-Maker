@@ -4129,6 +4129,9 @@ class SwarmEngine {
 
       if (sourceState) {
         sourceState.handoffCount = (sourceState.handoffCount ?? 0) + 1;
+        const handoffRecord = { target: nextTargetId, payload: contextUpdate, timestamp: new Date().toISOString() };
+        sourceState.lastHandoffPayload = handoffRecord;
+        sourceState.handoffPayloads = [...(sourceState.handoffPayloads || []), handoffRecord];
       }
 
       if (this._wsBroadcast) {

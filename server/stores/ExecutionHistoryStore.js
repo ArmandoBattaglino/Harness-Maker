@@ -54,6 +54,8 @@ export class ExecutionHistoryStore {
       nodesRun: entry.nodesRun ?? 0,
       outcome: entry.outcome ?? '',
       nodeSnapshots: entry.nodeSnapshots ?? {},
+      agentOutputs: entry.agentOutputs ?? {},
+      aggregatedArtifact: entry.aggregatedArtifact ?? '',
     };
 
     entries.push(normalized);
@@ -81,7 +83,12 @@ export class ExecutionHistoryStore {
   // getEntry(workflowId, executionId) — returns a single entry or null
   // -------------------------------------------------------------------------
   async getEntry(workflowId, executionId) {
-    if (!workflowId || !executionId) return null;
+    if (!workflowId || typeof workflowId !== 'string') return null;
+    if (!executionId || typeof executionId !== 'string') return null;
+    // Validate executionId against traversal
+    if (executionId.includes('/') || executionId.includes('\\') || executionId.includes('..') || executionId.includes('\0')) {
+      return null;
+    }
     const entries = await this._readEntries(workflowId);
     return entries.find((e) => e.executionId === executionId) ?? null;
   }
@@ -121,7 +128,13 @@ export class ExecutionHistoryStore {
     try {
       const raw = fs.readFileSync(filePath, 'utf8');
       const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
+      if (!Array.isArray(parsed)) return [];
+      // Apply backward-compat defaults for newer fields
+      return parsed.map((entry) => ({
+        ...entry,
+        agentOutputs: entry.agentOutputs ?? {},
+        aggregatedArtifact: entry.aggregatedArtifact ?? '',
+      }));
     } catch {
       return [];
     }
