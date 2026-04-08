@@ -1,6 +1,58 @@
 # CHANGELOG — Claude Code Visual Manager
 
 ---
+## 2026-04-08 — Phase 1 E2E Debugger-Loop: 3 bugs discovered in Swarm stream-json pipeline (MAPPING ONLY — NO FIX)
+**Agent:** qa-tester (Phase 1 debugger-loop) — mapped by code-mapper
+**Triggered by:** Full Puppeteer E2E of Swarm view. Prompt-to-Flow generated a 2-agent Claude workflow (Researcher → Writer). Execution reached Completed state with correct Italian paragraph output. During the run, 3 defects were observed that affect user-visible text rendering and footer UX.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| (none) | — | Test-only session. No source code changed. This entry records bug discovery for future debugger task routing. |
+
+### Functions Added / Modified / Removed
+- none
+
+### Bugs Discovered
+
+#### BUG-DL-01 [HIGH] — Stream-json text_delta accumulator inserts spurious whitespace inside words
+- **Observed behavior:** Assistant text displayed on node cards AND in the Chat View contains intra-word whitespace (e.g. `"high Water Mark"`, `"Java Script"`, `"con su ma t or e"`). The corruption appears only in rendered text; the HANDOFF JSON payload passed downstream is clean, which proves the corruption is in the rendering pipeline, not in what the model produced.
+- **Scope:** Both the node card `lastChatSnippet` / `lastOutputSnippet` and the Chat View message bubble are affected. The underlying `state._streamJsonAccumulatedText` on the server is also suspicious because the same deltas are being concatenated there.
+- **Likely root cause (candidates, in priority order):**
+  1. **Client reducer `appendAgentChatText(nodeId, text)` in `client/src/store/SwarmContext.jsx:225-239`** — inserts a `'\n\n'` separator between each chunk whenever `prev.finalText` is non-empty: `const separator = prev.finalText ? '\n\n' : ''; finalText: prev.finalText + separator + text`. This is correct semantics for joining full messages, but WS `chat_message` events are emitted once per `text_delta` chunk from `_spawnAgentStreamJson` (`server/services/SwarmEngine.js:4266-4274`). Every delta chunk therefore gets a blank-line separator welded in between, and when the renderer collapses whitespace some of those `\n\n` become single spaces mid-word.
+  2. **Server `_streamJsonAccumulatedText` concatenation in `_spawnAgentStreamJson` text_delta case (`server/services/SwarmEngine.js:4257-4279`)** — this one is plain `+=`, no injected separator, so on its own it should NOT corrupt text. However the SAME text_delta chunks are then emitted one-by-one as discrete `chat_message` WS events, which is what the client reducer mishandles. If the Anthropic CLI ever splits inside a word boundary (which it does — delta chunks are arbitrary), the client reducer's separator logic is guaranteed to produce the exact artifacts observed.
+  3. **Chat View renderer** — if multiple per-delta `chat_message` entries in `state.chatMessages` are rendered as separate `<span>`s or list items joined with CSS `white-space` / flexbox gap, the visual result is the same word-breaking. `addChatMessage` in `SwarmContext.jsx:171-173` simply pushes each delta into `chatMessages`, so the Chat View ends up with dozens of tiny assistant bubbles per turn unless something merges them.
+- **Pipeline path (corroborated by code reading):**
+  `claude CLI --output-format stream-json` → `StreamJsonParser.parseLine` (server/services/StreamJsonParser.js:157-158, emits `{ type: 'text_delta', text }`) → readline 'line' handler in `SwarmEngine._spawnAgentStreamJson` (SwarmEngine.js:4244-4279) → `state._streamJsonAccumulatedText += evt.text` AND `this._wsBroadcast({ type: 'chat_message', role: 'assistant', text: evt.text })` → WS wire → `useSwarm.js:588-606` `chat_message` case → `addChatMessage(...)` (SwarmContext.jsx:171) + `appendAgentChatText(nodeId, msg.text)` (SwarmContext.jsx:225-239, **inserts `'\n\n'` separator** — prime suspect) → `agentResults[nodeId].finalText` → rendered on `AgentNode.jsx` card and in Chat View.
+- **Fix guidance for debugger (when routed):** First fix is in `appendAgentChatText` — drop the `'\n\n'` separator for same-turn delta concatenation (stream-json deltas are already raw text fragments, they must be joined with empty string). Consider rendering the whole turn as a single accumulating bubble in Chat View instead of one bubble per delta.
+- **Status:** UNFIXED — mapping/log only per task scope.
+
+#### BUG-DL-02 [LOW] — Stale previous-workflow node state rendered on freshly-generated workflow until Run is clicked
+- **Observed behavior:** After Prompt-to-Flow generates a new 2-agent workflow, the canvas briefly renders node cards carrying state (status badges, snippets, token counts) from the previous execution until the user clicks Run.
+- **Likely area:** `client/src/hooks/useSwarm.js` workflow-switch path — `clearExecutionState` / `pendingStreamJsonTurnsRef` / `agentStates` in `SwarmContext.jsx` are not reset when a new workflow is loaded via Prompt-to-Flow generation. Only `startExecution` (useSwarm.js:615-629) calls `clearExecutionState()`.
+- **Fix guidance:** Call `clearExecutionState()` in the workflow-generation success handler (wherever `setWorkflowDef` is invoked from the Prompt-to-Flow modal).
+- **Status:** UNFIXED — mapping/log only.
+
+#### BUG-DL-03 [LOW] — Cost/token footer disappears after Completed state
+- **Observed behavior:** The budget/cost/token footer is visible during `Running` but disappears once the execution transitions to `Completed`.
+- **Likely area:** Budget footer component render condition probably checks `execution.status === 'running'` instead of `execution.status !== 'idle'`. `totalCostUsd` / `totalInputTokens` / `totalOutputTokens` are accumulated in `SwarmEngine._handleStreamJsonResult` (SwarmEngine.js:1836 side effects) and broadcast via WS `agent_cost` — the data is still in the store after completion, only the render gate is too strict.
+- **Fix guidance:** Change footer visibility gate to show the final totals after Completed; optionally add a "Final totals" label.
+- **Status:** UNFIXED — mapping/log only.
+
+### Connection Changes
+- none (no code changed)
+
+### Impact on Other Code
+- **BUG-DL-01 is on the critical path of every Claude stream-json agent's visible output.** Any Task-GATE that asserts text fidelity (Italian paragraph, code blocks, JSON schemas rendered to users) will FAIL on stream-json runs until `appendAgentChatText` stops injecting `'\n\n'` between deltas. PTY-runtime agents (Codex, Gemini) are NOT affected — their text path goes through the PTY tap and does not call `appendAgentChatText`.
+- BUG-DL-02 is cosmetic and self-heals on first Run click, but can mislead TEST GATEs that read node state before the first run.
+- BUG-DL-03 is cosmetic; affects post-run cost reporting UX only.
+
+### Suggested follow-up tasks (for project-manager to schedule)
+- **BUG-DL-01 fix task →** debugger + frontend-dev. Primary fix in `client/src/store/SwarmContext.jsx::appendAgentChatText`. Consider also merging stream-json deltas into a single Chat View bubble per turn (introduce `patchLatestChatMessage` flow already present at SwarmContext.jsx:175-185 — or a new `appendToLatestChatMessage` reducer).
+- **BUG-DL-02 fix task →** frontend-dev. Trigger `clearExecutionState()` on workflow generation success.
+- **BUG-DL-03 fix task →** frontend-dev. Loosen budget footer visibility gate.
+
+---
 ## 2026-04-08 — BUG-AUTO-ROUTING: _spawnAgent AUTO mode provider strategy fix
 **Agent:** debugger
 **Triggered by:** When Runtime was "Auto" (default), all agents were spawned via PTY because `_spawnAgent` could not resolve the provider without an explicit model on the node. Claude agents should use stream-json even in AUTO mode.
