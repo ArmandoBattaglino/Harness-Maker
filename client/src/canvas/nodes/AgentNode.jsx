@@ -4,6 +4,7 @@ import { Handle, Position } from '@xyflow/react';
 import { useSwarmStore } from '../../store/SwarmContext';
 import { stripAnsi } from '../../utils/stripAnsi';
 import { isStructuredSpawnMode } from '../../utils/runtimeModes';
+import { repairAllTokenSpacing } from '../../utils/repairTokenSpacing';
 
 // type: "agent"
 export default function AgentNode({ id, data, selected }) {
@@ -91,7 +92,7 @@ export default function AgentNode({ id, data, selected }) {
       {(agentState?.lastChatSnippet || agentState?.lastOutputSnippet) && !isDropPreview && (
         <div className="mt-2 bg-black/40 rounded p-1.5 max-h-16 overflow-y-auto">
           <pre className="text-xs text-green-300 font-mono whitespace-pre-wrap break-all leading-tight">
-            {(agentState.lastChatSnippet || stripAnsi(agentState.lastOutputSnippet)).split('\n').slice(-4).join('\n')}
+            {repairAllTokenSpacing(agentState.lastChatSnippet || stripAnsi(agentState.lastOutputSnippet)).split('\n').slice(-4).join('\n')}
             {status === 'running' && <span className="animate-pulse">▋</span>}
           </pre>
         </div>

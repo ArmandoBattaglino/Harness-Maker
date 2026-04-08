@@ -4,6 +4,7 @@ import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { stripAnsi } from '../utils/stripAnsi';
+import { repairAllTokenSpacing } from '../utils/repairTokenSpacing';
 import { isStructuredSpawnMode } from '../utils/runtimeModes.js';
 
 const ROLE_STYLES = {
@@ -107,9 +108,11 @@ function formatChatText(rawText = '') {
 }
 
 function formatStreamJsonText(rawText = '') {
-  return stripAnsi(String(rawText ?? ''))
+  let text = stripAnsi(String(rawText ?? ''))
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n');
+  text = repairAllTokenSpacing(text);
+  return text;
 }
 
 function formatToolArgs(partialArgs = '') {
