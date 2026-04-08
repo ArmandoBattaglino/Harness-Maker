@@ -1,4 +1,14 @@
-﻿## 2026-04-08 — project-manager — V9.0 Stream-JSON Migration Task Plan
+﻿## 2026-04-08 — backend-dev — Task #354: SPIKE — Validate --resume -p --output-format stream-json multi-turn
+**Outcome:** COMPLETED
+**Summary:** Created standalone spike script (server/spike/stream-json-spike.mjs) that validates Claude CLI stream-json mode for multi-turn agent spawning. Script tests 3 turns (basic stream-json, --resume context continuity, --tools restriction), collects timing/cost/events, searches for session JSONL files, and prints structured PASS/FAIL verdicts. Syntax verified, all 414 existing tests pass.
+**Files changed:** server/spike/stream-json-spike.mjs (CREATED), docs/TASK_PLAN.md (#354 marked COMPLETED)
+**Bugs fixed:** none
+**Decisions made:** Used crypto.randomUUID() for standalone spike (no uuid dep); searched both ~/.claude/projects/ and ~/.claude/sessions/ for JSONL discovery
+**Blockers:** none
+**Next:** TASK #355 (TEST GATE) — qa-tester runs the spike and verifies all verdicts PASS
+
+---
+## 2026-04-08 — project-manager — V9.0 Stream-JSON Migration Task Plan
 **Outcome:** COMPLETED
 **Summary:** Created complete TASK_PLAN.md for V9.0 Stream-JSON Agent Migration. 40 tasks (#354-#393) across 4 phases: Phase 0 Spike (3 tasks), Phase 1 Backend Core (11 tasks, 5 components + 5 gates + 1 checkpoint), Phase 2 Frontend (16 tasks, 8 components + 7 gates + 1 checkpoint), Phase 3 Integration (10 tasks, 4 comment/doc tasks + 3 gates + 1 E2E + 1 doc + 1 final checkpoint). Every component has a TEST GATE. Every phase has an AREA CHECKPOINT. Dependency chain fully mapped with parallelizable tasks identified.
 **Files changed:** docs/TASK_PLAN.md (40 tasks appended), docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md

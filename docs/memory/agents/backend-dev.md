@@ -1,4 +1,58 @@
 ---
+## 2026-04-08 — Task #354: SPIKE — Validate --resume -p --output-format stream-json multi-turn
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+V9.0 Stream-JSON Agent Migration task plan was just created (40 tasks, #354-#393). This is the very first task (Phase 0, Wave 0) — a standalone spike to validate that Claude CLI's stream-json mode works for multi-turn agent spawning via --resume. The tech-lead rated feasibility UNCERTAIN. No production code should be written until this spike passes.
+
+### What I did
+1. Read memory files (PROJECT.md, DECISIONS.md, CONTEXT.md) to understand the full project context including DEC-027/028/029 (stream-json architecture decisions).
+2. Read existing patterns: JobRunner.js (stream-json spawn + readline parsing at line 109) and BinaryDiscovery.js (claude binary discovery chain).
+3. Created `server/spike/stream-json-spike.mjs` — a standalone Node.js test script that:
+   - Auto-discovers the claude binary (PATH -> LOCALAPPDATA, mirrors BinaryDiscovery.js)
+   - Turn 1: Spawns claude with --output-format stream-json --session-id <uuid> -p <prompt> --tools Bash,Read
+   - Turn 2: Uses --resume <same-uuid> to test context continuity
+   - Turn 3: Uses --tools Read (no Bash) to test tool restriction
+   - Collects all events, timing, cost/usage data per turn
+   - Searches for session JSONL file in ~/.claude/projects/ and ~/.claude/sessions/
+   - Analyzes JSONL structure (OQ4)
+   - Logs post-result hang timing per turn (OQ3)
+   - Prints structured PASS/FAIL verdict report
+4. Verified syntax with `node --check` — passes.
+5. Ran `npm test` — all 414/414 tests pass, no regressions.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/spike/stream-json-spike.mjs | CREATED | Standalone spike validation script for stream-json multi-turn |
+
+### Improvements delivered
+- Spike script ready to run (`node server/spike/stream-json-spike.mjs`) to resolve tech-lead UNCERTAIN feasibility rating
+- Validates all 4 open questions (OQ1-OQ4) from the PRD
+- Uses existing project patterns (shell:false, stdin.end(), binary discovery)
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None | N/A | N/A | N/A |
+
+### Decisions I made
+- Used crypto.randomUUID() instead of uuid package since this is a standalone spike (no production deps needed)
+- Searched both ~/.claude/projects/ and ~/.claude/sessions/ for JSONL files since the exact location was an open question (OQ1)
+- Used performance.now() for sub-millisecond timing precision on post-result hang measurement (OQ3)
+
+### What I learned
+- JobRunner already has the exact spawn pattern needed (line 109): spawn with shell:false, stdin.end(), readline on stdout
+- The event type field names in stream-json may vary (content_block_delta vs text vs assistant) — the spike checks all known variants
+
+### State I'm leaving behind
+The spike script is complete and syntactically valid. It has NOT been executed yet (requires a running claude CLI with API access). The qa-tester (TASK #355 TEST GATE) should run it and report results. All 414 existing tests still pass.
+
+### Handoff
+TASK #355 (TEST GATE) should run `node server/spike/stream-json-spike.mjs` and verify the PASS/FAIL output. If all verdicts PASS, the spike is validated and production work (Wave 1+) can begin.
+
+---
 ## 2026-04-07 — Task #327: Wire ExecutionHistoryStore persistence into SwarmEngine terminal paths
 **Status:** COMPLETED
 **Called by:** orchestrator
