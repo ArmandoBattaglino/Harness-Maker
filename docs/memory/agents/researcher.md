@@ -246,6 +246,44 @@ frontend-dev building DepartmentNode.jsx and SwarmCanvasView should read docs/re
 ---
 
 ---
+## 2026-04-08 — Research B: Claude CLI --allowedTools Syntax
+**Status:** COMPLETED
+**Called by:** orchestrator (parallel research for tool whitelist feature)
+
+### Context when I started
+Project is building configurable per-agent tool whitelists for Claude CLI agents in a swarm system. Each agent will have a persistent tool configuration. We always use --dangerously-skip-permissions so the tool whitelist is the security boundary.
+
+### What I did
+1. Read project memory files
+2. Ran 3 parallel web searches on --allowedTools syntax, glob patterns, tool list
+3. Fetched 5 official doc pages and 1 GitHub issue
+4. Synthesized into docs/research_b_tools.md
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/research_b_tools.md | CREATED | Full research report |
+| docs/memory/agents/researcher.md | MODIFIED | Session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Activity entry |
+
+### Improvements delivered
+- Identified --allowedTools is NOT a security boundary under bypassPermissions (bug #12232)
+- Documented --tools as the correct restriction mechanism
+- Complete 16-tool list with exact names
+- Glob pattern syntax with word boundary rules
+
+### Decisions I made
+- Use --tools + --disallowedTools (not --allowedTools) for swarm agent tool restriction
+
+### What I learned
+- --allowedTools = permission bypass only, --tools = tool availability restrictor, --disallowedTools = tool removal
+- Bash wildcard patterns fragile against shell tricks but safe against && chaining
+- --bare flag = minimal mode (Bash + Read + Edit only)
+
+### Handoff
+Architect/backend-dev MUST use --tools and --disallowedTools, NOT --allowedTools, for the tool whitelist feature.
+
+---
 ## 2026-04-08 — Quick Research Snapshot: Stream-JSON Agent Migration (Session Management + Event Types)
 **Status:** COMPLETED
 **Called by:** orchestrator (orientation scan for stream-json migration planning)
