@@ -1806,9 +1806,38 @@ _Last updated: 2026-04-08 — after Task #359 (SwarmEngine._spawnAgentStreamJson
 - **Complexity note:** The execution record is stored in _executions BEFORE _spawnAgentPty is called, so _spawnAgentPty can look it up during its own execution. Order matters.
 - **Last modified:** 2026-03-27 in Task #46.3 by backend-dev (added _startHeartbeat call)
 
+### `server/services/SwarmEngine.js` :: `SwarmEngine._spawnAgent(executionId, nodeId, spawnOptions)` (NEW — Task #359)
+- **Purpose:** Dispatcher that routes agent spawn to the correct path based on provider. Claude providers go to `_spawnAgentStreamJson` (DEC-027); all others go to `_spawnAgentPty`. Resolves effective provider from spawnOptions.requestedProvider / spawnOptions.provider / execution.activeProvider, defaulting 'auto' to 'claude'.
+- **Called by:** Not yet wired as primary entry point — future tasks will replace direct `_spawnAgentPty` calls with `_spawnAgent`
+- **Calls:** normalizeRuntimeProvider, SwarmEngine._spawnAgentStreamJson (Claude), SwarmEngine._spawnAgentPty (non-Claude)
+- **Inputs:** executionId (string), nodeId (string), spawnOptions (object — optional: requestedProvider, provider, reinjectPrompt)
+- **Output:** Promise\<void\>
+- **Side effects:** delegates to either _spawnAgentStreamJson or _spawnAgentPty (see their entries)
+- **Last modified:** 2026-04-08 in Task #359 by backend-dev
+
+### `server/services/SwarmEngine.js` :: `SwarmEngine._spawnAgentStreamJson(executionId, nodeId, spawnOptions)` (NEW — Task #359)
+- **Purpose:** Spawn a Claude agent using `--output-format stream-json` instead of PTY. Each turn is a separate `child_process.spawn`. Conversation continuity via `--session-id` (turn 0) / `--resume` (turn N). Builds args with `--verbose`, `--dangerously-skip-permissions`, `--model`, optional `--tools`. Sets up readline on child.stdout, pipes each line through StreamJsonParser.parseLine(), dispatches events (text_delta, tool_start/delta/stop, thinking_start/stop, text_start, api_retry, result, error). Accumulates assistant text in state._streamJsonAccumulatedText. On result event, delegates to _handleStreamJsonResult. On unexpected exit (no result event), marks agent as error with runtimeBlocker. Closes stdin immediately (DEC-005).
+- **Called by:** SwarmEngine._spawnAgent (Claude path), SwarmEngine._onDone (stream-json reinject path at line 5470)
+- **Calls:** BinaryDiscovery._resolveRuntimeProviderBinary, isSupportedRuntimeModel, uuidv4, child_process.spawn (shell: false — SEC-02), child.stdin.end (DEC-005), createInterface (readline), StreamJsonParser.parseLine, SwarmEngine._handleStreamJsonResult, SwarmEngine._broadcastAgentStatus, SwarmEngine._syncExecutionStatusFromAgents, SwarmEngine._buildSystemPrompt, SwarmEngine._getInboundHandoffsForTarget, ChatExtractor.feed, this._wsBroadcast
+- **Inputs:** executionId (string), nodeId (string), spawnOptions (object — optional: reinjectPrompt, requestedProvider, provider)
+- **Output:** Promise\<void\>
+- **Side effects:** spawns child process (claude CLI); sets execution.agentStates[nodeId] with spawnMode='stream-json', _streamJsonChild ref, streamJsonSessionId, turnCount, cost accumulators; broadcasts WS agent_status (running, spawnMode: 'stream-json'), chat_message (text_delta), agent_tool_use, agent_tool_delta, agent_thinking, agent_status (retrying); feeds text to ChatExtractor
+- **Complexity note:** The readline 'line' handler is a closure capturing execution, nodeId, parser, handoffTargets, and gotResultEvent flag. State mutations happen in-place on the agentStates Map entry. The 30s post-result tree-kill timeout is deferred to _handleStreamJsonResult (step 8). stderr is collected for diagnostics but capped at 500 chars on error (SEC-08).
+- **Last modified:** 2026-04-08 in Task #359 by backend-dev
+
+### `server/services/SwarmEngine.js` :: `SwarmEngine._handleStreamJsonResult(executionId, nodeId, resultEvt, handoffTargets)` (NEW — Task #359)
+- **Purpose:** Handle a stream-json `result` event for a Claude agent turn. (1) Increments turnCount, (2) extracts and broadcasts cost/token usage via WS agent_cost event, (3) stores sessionId from result for future --resume turns, (4) handles error results (sets needsRepair), (5) scans accumulated text for __HANDOFF__/__DONE__ tokens using a fresh HandoffParser instance, (6) routes to _onHandoff (first handoff found) or _onDone (explicit or implicit done — DEC-029), (7) checks doNotSpawnNextTurn graceful stop flag, (8) schedules 30s post-result tree-kill timeout via setTimeout + treeKill for child process cleanup, (9) resets _streamJsonAccumulatedText for next turn.
+- **Called by:** SwarmEngine._spawnAgentStreamJson (inside readline 'line' handler, on evt.type === 'result')
+- **Calls:** HandoffParser (constructor + feed — for token scanning), SwarmEngine._onHandoff, SwarmEngine._onDone, SwarmEngine._broadcastAgentStatus, SwarmEngine._syncExecutionStatusFromAgents, treeKill (npm tree-kill — 30s deferred), this._wsBroadcast
+- **Inputs:** executionId (string), nodeId (string), resultEvt (object — { usage: { input, output }, costUsd, durationMs, sessionId, isError, errorMessage }), handoffTargets (string[] — outgoing edge target IDs)
+- **Output:** void (synchronous)
+- **Side effects:** mutates state.turnCount, totalInputTokens, totalOutputTokens, totalCostUsd, streamJsonSessionId, needsRepair, _streamJsonAccumulatedText; broadcasts WS agent_cost event; may trigger _onHandoff or _onDone (which have their own side effects); schedules 30s setTimeout for tree-kill of child process; may set status='done' if doNotSpawnNextTurn is set
+- **Complexity note:** Uses a fresh HandoffParser instance to scan accumulated text (not the readline parser) — this is the same pattern as PTY path but applied to the full turn text rather than streaming chunks. Implicit __DONE__ (no token found) is treated as explicit done per DEC-029. The 30s tree-kill timeout is a safety net for processes that linger after sending the result event.
+- **Last modified:** 2026-04-08 in Task #359 by backend-dev
+
 ### `server/services/SwarmEngine.js` :: `SwarmEngine._spawnAgentPty(executionId, nodeId)`
 - **Purpose:** Spawn an agent PTY session for a workflow node. Looks up the execution and node, builds handoffTargets from outgoing edges, calls _buildSystemPrompt (stub), creates a PTY session via SessionManager.createSession, writes the system prompt to the PTY, initializes agent state in agentStates Map, creates a tapFn closure that feeds PTY output to a HandoffParser instance, registers tapFn on ptySession.swarmListeners (DEC-014), and emits WS agent_status event including sessionId.
-- **Called by:** SwarmEngine.startExecution, SwarmEngine._ensureAgentPty
+- **Called by:** SwarmEngine.startExecution, SwarmEngine._ensureAgentPty, SwarmEngine._spawnAgent (non-Claude path)
 - **Calls:** SessionManager.createSession, SessionManager.writeInput, SessionManager.getSession, HandoffParser (constructor), HandoffParser.feed, SwarmEngine._buildSystemPrompt, SwarmEngine._onHandoff, SwarmEngine._onDone, this._wsBroadcast
 - **Inputs:** executionId (string), nodeId (string)
 - **Output:** Promise\<void\>
@@ -1855,24 +1884,25 @@ _Last updated: 2026-04-08 — after Task #359 (SwarmEngine._spawnAgentStreamJson
 - **Complexity note:** CircuitBreaker check is advisory only — it does NOT stop the handoff or execution. If the circuit threshold is hit, only a WS advisory event is broadcast. The handoff proceeds regardless. edgeId resolution falls back to a synthetic "sourceNodeId->targetId" string if no matching edge is found in the workflow definition. `handoff_completed` is the 5th and final broadcast — emitted unconditionally after both agent_status updates, giving clients a reliable "handoff fully processed" signal.
 - **Last modified:** 2026-04-02 in Task #126 by backend-dev (BUG-HANDOFF-1: added step 11 — `handoff_completed` WS broadcast; previously the method emitted handoff_started + agent_status events but never signalled completion; was full impl since Task #62.1)
 
-### `server/services/SwarmEngine.js` :: `SwarmEngine._onDone(executionId, nodeId)`
-- **Purpose:** Handle a done event from the HandoffParser. Marks the agent state as 'done' in agentStates Map, then broadcasts both an execution_status (agent_done) and agent_status (done) WS event. Fully implemented in Task #62.3.
-- **Called by:** SwarmEngine._spawnAgentPty tapFn (via HandoffParser.feed returning evt.type === 'done')
-- **Calls:** this._wsBroadcast (twice — execution_status + agent_status)
+### `server/services/SwarmEngine.js` :: `SwarmEngine._onDone(executionId, nodeId)` — MODIFIED Task #359
+- **Purpose:** Handle a done event from either the HandoffParser (PTY path) or the _handleStreamJsonResult token scan (stream-json path). Manages done-reinject lifecycle: if handoff targets exist and doneReinjectCount < MAX_DONE_REINJECT_ATTEMPTS, re-injects a "continue after done" prompt. **Task #359 branch:** for `state.spawnMode === 'stream-json'`, spawns a NEW Claude process via `_spawnAgentStreamJson({ reinjectPrompt })` instead of writing to existing PTY stdin. For PTY agents, continues to reset parser and call `_writeSwarmPrompt`. After max attempts exhausted, forces synthetic handoff to first downstream target. Final fallback (no handoff targets): marks status='done' and broadcasts.
+- **Called by:** SwarmEngine._spawnAgentPty tapFn (via HandoffParser.feed returning evt.type === 'done'), SwarmEngine._handleStreamJsonResult (stream-json path — explicit or implicit done per DEC-029)
+- **Calls:** clearTimeout, SwarmEngine._broadcastAgentStatus, SwarmEngine._syncExecutionStatusFromAgents, SwarmEngine._buildContinueAfterDonePrompt, ChatExtractor.registerNodePrompt, SwarmEngine._spawnAgentStreamJson (stream-json reinject path — NEW Task #359), SwarmEngine._writeSwarmPrompt (PTY path), HandoffParser.reset, SwarmEngine._onHandoff (forced handoff fallback), SwarmEngine._clearNoProgressWatch, this._wsBroadcast (via _broadcastAgentStatus)
 - **Inputs:** executionId (string), nodeId (string)
 - **Output:** void
-- **Side effects:** mutates execution.agentStates.get(nodeId).status to 'done'; emits WS `{ type: 'execution_status', status: 'agent_done', nodeId }` and `{ type: 'agent_status', nodeId, status: 'done', sessionId }` — sessionId added in Task #124 (BUG-SESSION-1)
-- **Last modified:** 2026-04-02 in Task #124 by debugger (BUG-SESSION-1: sessionId field added to agent_status WS event)
+- **Side effects:** mutates execution.agentStates.get(nodeId).status ('done' | 'running' | 'blocked'); may spawn new stream-json child process via _spawnAgentStreamJson; may write reinject prompt to existing PTY via _writeSwarmPrompt; may trigger synthetic handoff via _onHandoff; emits WS agent_status events; clears timer handles (missingHandoffReminderTimer, noProgressTimer)
+- **Complexity note:** The stream-json reinject branch at line 5466 is a key V9.0 migration point: unlike PTY (which reuses one long-lived session), stream-json starts a fresh child process per turn with `--resume <sessionId>` to preserve conversation state. The reinject gate condition `(state.sessionId || state.spawnMode === 'stream-json')` allows stream-json agents to reinject even though they have no PTY sessionId.
+- **Last modified:** 2026-04-08 in Task #359 by backend-dev (added stream-json reinject branch — spawns new process instead of PTY stdin write)
 
-### `server/services/SwarmEngine.js` :: `SwarmEngine.stopExecution(executionId)`
-- **Purpose:** Stop a running workflow execution. Clears heartbeat timer, removes all swarm tap listeners from their respective PTY sessions (before killing), kills all agent PTY sessions via SessionManager.killSession, marks status 'stopped', deletes the execution record, calls TriggerManager.cleanupExecution (BUG-97 fix), and calls BudgetTracker.clearExecution (BUG-93 fix).
-- **Called by:** server/routes/swarm.js DELETE /:executionId handler
-- **Calls:** clearInterval, SessionManager.getSession, ptySession.swarmListeners.delete, SessionManager.killSession, this._triggerManager.cleanupExecution (if set), this._budgetTracker.clearExecution (if set)
+### `server/services/SwarmEngine.js` :: `SwarmEngine.stopExecution(executionId)` — MODIFIED Task #359
+- **Purpose:** Stop a running workflow execution. Clears heartbeat timer, removes all swarm tap listeners from their respective PTY sessions (before killing), kills all agent PTY sessions via SessionManager.killSession, marks status 'stopped', deletes the execution record, calls TriggerManager.cleanupExecution (BUG-97 fix), and calls BudgetTracker.clearExecution (BUG-93 fix). **Task #359:** also tree-kills any lingering stream-json child processes (state.spawnMode === 'stream-json' && state._streamJsonChild) via `treeKill(child.pid, 'SIGTERM')` (DEC-027).
+- **Called by:** server/routes/swarm.js DELETE /:executionId handler, SwarmEngine.stopExecution (recursive for child executions)
+- **Calls:** clearInterval, clearTimeout, SessionManager.getSession, ptySession.swarmListeners.delete, SessionManager.killSession, treeKill (stream-json child processes — NEW Task #359), this._triggerManager.cleanupExecution (if set), this._budgetTracker.clearExecution (if set), ChatExtractor.cleanup, SwarmEngine._setExecutionStatus, SwarmEngine._broadcastAgentStatus, SwarmEngine._detachChildExecutionIds, SwarmEngine._clearExecutionFlowControlState
 - **Inputs:** executionId (string)
-- **Output:** Promise\<void\>
-- **Side effects:** removes tapFn from swarmListeners Sets; kills all PTY sessions; removes execution from this._executions; clears trigger polling intervals; clears budget tracking data
-- **Complexity note (DEC-014):** tapFn removal happens BEFORE killSession — ensures the listener cannot fire on any final PTY output flushed during the kill sequence. TriggerManager cleanup prevents RSS polling intervals from leaking after execution end (BUG-97). BudgetTracker cleanup prevents memory accumulation (BUG-93).
-- **Last modified:** 2026-03-28 in Tasks #93/#97 by backend-dev (BUG-93 fix: added budgetTracker.clearExecution call; BUG-97 fix: added triggerManager.cleanupExecution call)
+- **Output:** Promise\<object | null\> — status snapshot from getStatus, or null if not found
+- **Side effects:** removes tapFn from swarmListeners Sets; kills all PTY sessions; **tree-kills stream-json child processes** (NEW Task #359); removes execution from this._executions; clears trigger polling intervals; clears budget tracking data; clears all timer handles (echoMarkerTimer, doneReminderTimer, missingHandoffReminderTimer, noProgressTimer, promptReadyTimer)
+- **Complexity note (DEC-014, DEC-027):** tapFn removal happens BEFORE killSession — ensures the listener cannot fire on any final PTY output flushed during the kill sequence. Stream-json child processes use `tree-kill` (npm pkg) to kill the entire process tree (parent + children) — necessary because Claude CLI may spawn subprocesses. Child reference is nulled BEFORE the kill call to prevent race conditions with the close handler in _spawnAgentStreamJson. TriggerManager cleanup prevents RSS polling intervals from leaking after execution end (BUG-97). BudgetTracker cleanup prevents memory accumulation (BUG-93).
+- **Last modified:** 2026-04-08 in Task #359 by backend-dev (added stream-json child tree-kill cleanup block)
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine.getStatus(executionId)`
 - **Purpose:** Return a serializable snapshot of an execution's status, agentStates, edgeCounters, and budget. BUG-98 fix: now reads real budget data from budgetTracker.getTotal(executionId) instead of returning an empty object.

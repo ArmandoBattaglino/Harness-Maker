@@ -3027,3 +3027,58 @@ ARCHITECTURE.md Section 13 exists with StreamJsonParser fully documented. Remain
 ### Handoff
 Next documenter run should occur after Task #358 (TEST GATE) or Task #359 (_spawnAgentStreamJson). Section 13 will need expansion for each new V9.0 component.
 ---
+
+---
+## 2026-04-08 — Post-Task #359: _spawnAgentStreamJson documentation
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task #359, parallel with code-mapper + project-manager)
+
+### Context when I started
+Task #359 (backend-dev) had just landed the core stream-json spawner in SwarmEngine.js — 3 new methods (_spawnAgent, _spawnAgentStreamJson, _handleStreamJsonResult) plus modifications to _onDone and stopExecution. ARCHITECTURE.md Section 13 previously only documented StreamJsonParser (Task #357) and listed _spawnAgentStreamJson under "Remaining V9.0 Components (pending)". DOC_STATUS.md marked ARCHITECTURE.md PARTIAL with Section 13 "created with StreamJsonParser spec only".
+
+### What I did
+1. Read the new methods in SwarmEngine.js at lines 3821 (_spawnAgent), 3865 (_spawnAgentStreamJson), 4179 (_handleStreamJsonResult), 5432 (_onDone stream-json branch), 5576 (stopExecution stream-json cleanup).
+2. Read existing Section 13 of ARCHITECTURE.md (lines 2110-2172) to plan surgical insertion.
+3. Expanded Section 13 from 3 subsections to 7:
+   - 13.3 _spawnAgent (provider router) — NEW
+   - 13.4 _spawnAgentStreamJson (13-step lifecycle, WS events table, state shape table) — NEW
+   - 13.5 _handleStreamJsonResult (9 steps, agent_cost WS event JSON example) — NEW
+   - 13.6 _onDone + stopExecution modifications — NEW
+   - 13.7 Remaining components (updated, _spawnAgentStreamJson removed from pending list)
+4. Updated DOC_STATUS.md: header date, release status V9.0 line, ARCHITECTURE.md row, Inline comments row, Stale Sections entry, Documentation Debt entry.
+5. Appended ACTIVITY_LOG.md entry.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/ARCHITECTURE.md | MODIFIED | Section 13.3-13.7 expanded with full spec of new SwarmEngine methods |
+| docs/memory/DOC_STATUS.md | MODIFIED | Updated status entries for ARCHITECTURE.md, Inline comments, stale sections, debt |
+| docs/memory/agents/documenter.md | MODIFIED | This session log appended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Task #359 post-task documentation entry appended |
+
+### Improvements delivered
+- ARCHITECTURE.md now fully describes the stream-json spawn path end-to-end: router, spawner, result handler, stop cleanup
+- WS event emission is documented in tables (type + when) so frontend-dev can consume them without reading SwarmEngine.js
+- Agent state shape for stream-json agents documented in a dedicated table (distinguishing from PTY state)
+- agent_cost event has a full JSON example for frontend hook authors
+
+### Bugs I encountered
+None — clean task.
+
+### Decisions I made
+- Split _spawnAgent (provider router) into its own subsection 13.3 since it's the new entry point; keeping it separate from 13.4 makes the dispatch logic clearer for future Codex/Gemini provider additions.
+- Left Section 13.2 (StreamJsonParser) untouched — still accurate.
+- Did not update README.md — stream-json features still not user-visible until UI components land (#372-#382).
+- Did not update API.md — no new REST endpoints from #359; WS events are documented in ARCHITECTURE.md until formal FR-SJ-19-23 docs wave.
+
+### What I learned
+- The implementation uses HandoffParser to scan accumulated stream-json text for __HANDOFF__/__DONE__ tokens — reusing PTY path logic. This is a key architectural choice worth documenting (consistency over parallel implementations).
+- _onDone has a dual-mode branch: PTY agents write reinject to stdin, stream-json agents re-call _spawnAgentStreamJson with --resume. Both respect MAX_DONE_REINJECT_ATTEMPTS identically.
+- Stream-json agents have sessionId: null (no PTY session) per DEC-028 — this is load-bearing for AgentInspector "Open Terminal" gating and must remain visible in the state table.
+
+### State I'm leaving behind
+ARCHITECTURE.md Section 13 is now complete through Task #359. Sections 13.3-13.6 document the full stream-json spawn/result/stop lifecycle. 13.7 pending-list has _spawnAgentStreamJson removed and retains #361 onward. DOC_STATUS.md health table is consistent. No new bugs detected during documentation review.
+
+### Handoff
+Next documenter run should occur after Task #361 (dispatcher integration into startExecution and all call sites) — Section 13.7 entry for #361 will move to a new 13.8 subsection. After #363 (stop/reset lifecycle), add a 13.9. After #380 (agent_status.spawnMode field), update 13.4 WS events table to reflect the frontend-visible field.
+---

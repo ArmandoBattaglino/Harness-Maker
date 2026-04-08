@@ -4791,3 +4791,14 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** #360 TEST GATE (qa-tester), then #361 dispatcher integration into startExecution and all call sites
 ---
+
+---
+## 2026-04-08 — documenter — Post-Task #359: _spawnAgentStreamJson documentation
+**Outcome:** COMPLETED
+**Summary:** Expanded docs/ARCHITECTURE.md Section 13 with 4 new subsections (13.3 _spawnAgent router, 13.4 _spawnAgentStreamJson 13-step lifecycle + WS events table + state shape table, 13.5 _handleStreamJsonResult + agent_cost JSON example, 13.6 _onDone/stopExecution modifications). Updated DOC_STATUS.md health row for ARCHITECTURE.md, Inline comments, stale sections, and debt entries.
+**Files changed:** docs/ARCHITECTURE.md, docs/memory/DOC_STATUS.md, docs/memory/agents/documenter.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** Split _spawnAgent router into its own subsection for clarity; deferred README.md/API.md updates until UI components and WS event FRs land
+**Blockers:** none
+**Next:** Next documenter run after Task #361 (dispatcher integration) — add Section 13.8
+---

@@ -1,4 +1,104 @@
 ---
+## 2026-04-08 — Task #360: TEST GATE — SwarmEngine._spawnAgentStreamJson()
+**Status:** COMPLETED (verdict: FAIL)
+**Called by:** orchestrator
+
+### Context when I started
+Task #359 (backend-dev) implemented three new methods in SwarmEngine.js: _spawnAgent() dispatcher, _spawnAgentStreamJson() spawner, _handleStreamJsonResult() turn handler. Also modified _onDone() to reinject via stream-json and stopExecution() to tree-kill stream-json children. I needed to verify all PRD acceptance criteria and WS contracts against the FR-SJ-04..23 and SEC-SJ requirements.
+
+### What I did
+1. Ran `npm test --prefix server` → 453/453 tests pass, 19 test files, no regressions
+2. Read SwarmEngine.js sections: lines 3820-4277 (_spawnAgent, _spawnAgentStreamJson, _handleStreamJsonResult), 5432-5504 (_onDone reinject branch), 5525-5586 (stopExecution cleanup), 1329-1345 (_broadcastAgentStatus), 18 (tree-kill import), 30 (STREAM_JSON_POST_RESULT_TIMEOUT_MS constant)
+3. Verified against PRD Section 11 component spec and FR-SJ-04..23, SEC-SJ-01/02/07
+4. Cross-referenced WS event contract against PRD Section 9 (lines 231-283)
+5. Found 2 WS contract violations → FAIL verdict
+
+### Verification matrix (each PRD criterion)
+| Criterion | Result | Evidence |
+|-----------|--------|----------|
+| Claude model routes to _spawnAgentStreamJson | PASS | L3838-3844: isClaudeProvider check + dispatch |
+| --output-format stream-json | PASS | L3905 |
+| --verbose (required, per spike #354) | PASS | L3906 |
+| --dangerously-skip-permissions | PASS | L3907 |
+| --tools (not --allowedTools) | PASS | L3923 (SEC-SJ-01) |
+| First turn --session-id | PASS | L3911-3912 (turnCount===0 && !previousState.streamJsonSessionId) |
+| Subsequent --resume same UUID | PASS | L3913-3914 |
+| child.stdin.end() immediately | PASS | L3934 (try-catch wrapped, DEC-005) |
+| shell: false | PASS | L3930 (SEC-SJ-07, SEC-02) |
+| text_delta → chat_message broadcast | PASS | L4007-4013 (nodeId, role, text, timestamp) |
+| tool_start → agent_tool_use broadcast | PASS | L4024-4029 (nodeId, toolName, toolUseId) |
+| tool_delta → agent_tool_delta broadcast | PASS | L4036-4041 |
+| thinking_start → agent_thinking {active:true} | PASS | L4054-4058 |
+| text_start ends thinking | PASS | L4064-4074 |
+| api_retry → agent_status retrying | PASS | L4091-4099 |
+| result → agent_cost broadcast | **FAIL** | L4199-4211: missing cacheReadTokens, cacheWriteTokens |
+| __HANDOFF__ → _onHandoff() called | PASS | L4229-4236 (HandoffParser scan of accumulated text) |
+| Implicit __DONE__ if no token | PASS | L4244-4250 |
+| Crash without result → error status | PASS | L4144-4162 (close handler check gotResultEvent) |
+| spawn error → error status | PASS | L4129-4141 |
+| 30s timeout → tree-kill | PASS | L4263-4272 (STREAM_JSON_POST_RESULT_TIMEOUT_MS=30000) |
+| _onDone stream-json reinject branch | PASS | L5456, 5466-5472 (spawn new process with --resume + reinjectPrompt) |
+| stopExecution tree-kills stream-json child | PASS | L5576-5585 (checks spawnMode==='stream-json') |
+| SEC-SJ-02: session IDs private | PASS | streamJsonSessionId stored only on state, state.sessionId=null (L3940), not broadcast. _broadcastAgentStatus L1340 sends state.sessionId (always null for stream-json) |
+| FR-SJ-23: agent_status gains spawnMode field | **PARTIAL FAIL** | Initial broadcast L3972-3979 includes spawnMode, but _broadcastAgentStatus (L1334-1345) does NOT include spawnMode — all subsequent status broadcasts omit it |
+
+### WS Contract verification (PRD Section 9 lines 260-272)
+| Event | Expected fields (PRD) | Actual fields (impl) | Match? |
+|-------|----------------------|----------------------|--------|
+| chat_message | type, nodeId, role, text, timestamp | type, nodeId, role, text, timestamp | YES |
+| agent_tool_use | type, nodeId, toolName, toolUseId | type, nodeId, toolName, toolUseId | YES |
+| agent_tool_delta | type, nodeId, toolUseId, partialJson | type, nodeId, toolUseId, partialJson | YES |
+| agent_thinking | type, nodeId, active | type, nodeId, active | YES |
+| agent_cost | type, nodeId, inputTokens, outputTokens, costUsd, **cacheReadTokens**, **cacheWriteTokens**, durationMs | type, nodeId, inputTokens, outputTokens, costUsd, durationMs, totalInputTokens, totalOutputTokens, totalCostUsd | **NO — missing cacheReadTokens, cacheWriteTokens** |
+| agent_status | type, nodeId, status, **spawnMode**, lastOutputSnippet | (initial) type, nodeId, status, spawnMode, provider, runtimeProvider; (subsequent via _broadcastAgentStatus) type, nodeId, provider, runtimeProvider, status, sessionId, lastOutputSnippet | **NO — spawnMode only in initial broadcast, not in _broadcastAgentStatus** |
+
+### Bug Report #1 — WS contract: agent_cost missing cache token fields
+**Location:** server/services/SwarmEngine.js:4199-4211 (_handleStreamJsonResult)
+**Description:** The agent_cost WS broadcast omits cacheReadTokens and cacheWriteTokens fields
+**Expected (PRD line 268-269, FR-SJ-22):** `{ type: 'agent_cost', nodeId, inputTokens, outputTokens, costUsd, cacheReadTokens, cacheWriteTokens, durationMs }`
+**Actual:** `{ type: 'agent_cost', nodeId, inputTokens, outputTokens, costUsd, durationMs, totalInputTokens, totalOutputTokens, totalCostUsd }`
+**Severity:** HIGH — WS contract violation; client cannot display cache metrics
+**Fix hint:** Add `cacheReadTokens: resultEvt.usage?.cacheRead ?? 0, cacheWriteTokens: resultEvt.usage?.cacheWrite ?? 0,` to the broadcast. StreamJsonParser already exposes these as `usage.cacheRead` / `usage.cacheWrite` (StreamJsonParser.js:221-222).
+
+### Bug Report #2 — WS contract: _broadcastAgentStatus missing spawnMode
+**Location:** server/services/SwarmEngine.js:1334-1345 (_broadcastAgentStatus)
+**Description:** The central _broadcastAgentStatus helper never includes spawnMode in the agent_status WS event
+**Expected (PRD lines 276-284, FR-SJ-23):** agent_status events must include spawnMode field
+**Actual:** Only the explicit initial broadcast at L3972-3979 includes spawnMode. All subsequent status updates (error, thinking change, stop, etc.) go through _broadcastAgentStatus and lose the field.
+**Severity:** MEDIUM — client gets spawnMode on initial status then loses it on subsequent updates; may cause rendering bugs if the client uses spawnMode for conditional logic per update
+**Fix hint:** Add `spawnMode: state?.spawnMode ?? 'pty',` to the _wsBroadcast payload in _broadcastAgentStatus.
+
+### Gate decision
+**FAIL** → return to TASK #359. Debugger/backend-dev must fix both WS contract bugs. Re-run TEST GATE #360 after fixes.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Task #360 marked FAIL with bug summary; header updated |
+| docs/memory/agents/qa-tester.md | MODIFIED | This session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Session entry |
+
+### Decisions I made
+- FAIL verdict despite the implementation being mostly correct because WS contracts are hard gates — missing fields break downstream consumers
+- Did not myself fix the bugs (per TEST GATE protocol — return FAIL, orchestrator routes to debugger/backend-dev)
+
+### What I learned
+- The PRD agent_cost schema in Section 9 includes cacheReadTokens/cacheWriteTokens, but the current SwarmEngine pass-through of resultEvt omits them
+- There are TWO code paths that emit agent_status on the stream-json side: the initial explicit broadcast (has spawnMode) and _broadcastAgentStatus (does not) — inconsistency must be fixed at _broadcastAgentStatus for full FR-SJ-23 compliance
+- StreamJsonParser already surfaces cacheRead/cacheWrite in usage (L221-222) — the data is available, just not wired through
+
+### State I'm leaving behind
+- TASK #360 FAIL with 2 bug reports logged
+- TASK #359 must be reopened for fixes
+- #361 and #363 remain blocked until re-run of #360 passes
+
+### Handoff
+backend-dev (or debugger if deeper analysis needed) must:
+1. Add cacheReadTokens/cacheWriteTokens to agent_cost broadcast in _handleStreamJsonResult (read from resultEvt.usage.cacheRead / .cacheWrite)
+2. Add spawnMode to _broadcastAgentStatus payload (default 'pty', 'stream-json' when state.spawnMode is set)
+3. Re-run TEST GATE #360
+
+---
 ## 2026-04-08 — Task #355: TEST GATE — Spike Validation
 **Status:** COMPLETED
 **Called by:** orchestrator
