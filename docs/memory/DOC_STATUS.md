@@ -62,7 +62,7 @@ _Last updated: 2026-04-08 after Task #357 (StreamJsonParser -- NDJSON line parse
 | docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-08 | V9.0 planning entries (prd-writer, researcher x2, project-manager, backend-dev spike). |
 | docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-04-06 | V1 audit. V9.0 adds SEC-SJ-01 through SEC-SJ-07 in PRD -- no code changes yet. |
 | docs/security-v3-audit.md | UP_TO_DATE | 2026-04-06 | MEDIUM-V3-01 marked FIXED (Task #234). No changes from V9.0 planning. |
-| Inline comments | UP_TO_DATE | 2026-04-08 | server/spike/stream-json-spike.mjs has appropriate inline comments. No production code modified. |
+| Inline comments | UP_TO_DATE | 2026-04-08 | StreamJsonParser.js has comprehensive JSDoc on parseLine() and reset(), plus header comment block explaining interface, state, and error contract. Test file has clear section headers. |
 | docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. Deferred indefinitely. |
 | docs/research_resume_after_kill.md | UP_TO_DATE | 2026-04-08 | NEW: Research on --resume behavior after process kill. Findings feed into FR-SJ-17/18. |
 | docs/research_b_tools.md | UP_TO_DATE | 2026-04-08 | NEW: Research on --allowedTools vs --tools vs --disallowedTools. Critical finding: --allowedTools is NOT a security boundary (bug #12232). |
