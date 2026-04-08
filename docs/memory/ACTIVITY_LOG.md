@@ -1,4 +1,14 @@
-﻿## 2026-04-08 — backend-dev — Task #354: SPIKE — Validate --resume -p --output-format stream-json multi-turn
+﻿## 2026-04-08 — project-manager — Task #354 status update + #355 activation
+**Outcome:** COMPLETED
+**Summary:** Marked TASK #354 COMPLETED in TASK_PLAN.md header (352/393). Updated #355 to IN_PROGRESS (qa-tester). Updated PROGRESS.md, CONTEXT.md. No blockers identified. V9.0 pipeline on track — Phase 0 spike done, TEST GATE running.
+**Files changed:** docs/TASK_PLAN.md (header + #355 status), docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** Await #355 TEST GATE result. If PASS -> #356 AREA CHECKPOINT -> #357 StreamJsonParser (backend-dev). If FAIL -> architect redesign.
+
+---
+## 2026-04-08 — backend-dev — Task #354: SPIKE — Validate --resume -p --output-format stream-json multi-turn
 **Outcome:** COMPLETED
 **Summary:** Created standalone spike script (server/spike/stream-json-spike.mjs) that validates Claude CLI stream-json mode for multi-turn agent spawning. Script tests 3 turns (basic stream-json, --resume context continuity, --tools restriction), collects timing/cost/events, searches for session JSONL files, and prints structured PASS/FAIL verdicts. Syntax verified, all 414 existing tests pass.
 **Files changed:** server/spike/stream-json-spike.mjs (CREATED), docs/TASK_PLAN.md (#354 marked COMPLETED)

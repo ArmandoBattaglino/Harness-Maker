@@ -1,7 +1,7 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-07 — after Task #330 (Documentation and status truthfulness sync — FINAL TASK, project complete) — mapped by code-mapper_
+_Last updated: 2026-04-08 — after Task #354 (SPIKE — Validate --resume -p stream-json multi-turn) by backend-dev — mapped by code-mapper_
 
-> **PROJECT STATUS: COMPLETE — ALL 330 TASKS ACCOUNTED FOR (328 COMPLETED, 2 DEFERRED)**
+> **PROJECT STATUS: V9.0 STREAM-JSON MIGRATION IN PROGRESS — 393 TASKS (351 COMPLETED, 2 DEFERRED, 40 PENDING)**
 > TASK #145 (BUG-UX-HANDOFF-1) partially addressed: prompt examples templated with `<targetId>` to prevent fake handoffs from PTY redraw (DEC-023); Codex model-selection and rate-limit menus auto-dismissed; hard usage-limit now takes precedence over soft `Approaching rate limits` chooser (DEC-024). 83/83 server tests pass. Build: 479 modules. Live handoff proof still pending — no provider has completed a real multi-agent chain yet.
 
 ## Entry Points
@@ -52,6 +52,11 @@ _Last updated: 2026-04-07 — after Task #330 (Documentation and status truthful
 | server/middleware/webhookRateLimit.js | webhookRateLimit (default) | Express middleware: 10 requests/minute/IP rate limiter for webhook endpoints. In-memory Map with periodic stale-entry sweep (mirrors server/index.js pattern). Returns HTTP 429 on excess. Awaiting use in routes/triggers.js (Task #75). (SEC-V3-04, Task #50) |
 | server/middleware/hitlValidation.js | validateResumeText | Express middleware: rejects resumeText body field exceeding 8 KB (8192 chars) with HTTP 400. Awaiting use in routes/inbox.js (Task #68). (SEC-V3-05, Task #50) |
 | server/tests/security-v3.test.js | (test suite) | 36-test Vitest suite covering SEC-V3-03 (isSafeUrl — 18 cases), SEC-V3-02+06 (WorkflowStore schema validation — 9 cases), SEC-V3-07 (HandoffParser oversized payload — 3 cases), SEC-V3-05 (validateResumeText — 5 cases). (Task #50) |
+
+### Spike / Validation Scripts
+| File | Key Exports | Purpose |
+|------|-------------|---------|
+| server/spike/stream-json-spike.mjs | (standalone script — main()) | Task #354 spike: validates `--resume -p --output-format stream-json` multi-turn CLI behavior. 3 turns (basic stream-json, --resume context continuity, --tools restriction). Measures spawn-to-first-event / result-to-exit timing (OQ3), discovers session JSONL files (OQ1/OQ4), catalogs all stream-json event types. Mirrors BinaryDiscovery.js pattern for claude binary lookup. NOT production code — standalone validation script. (Task #354, 2026-04-08) |
 
 ### Client Modules
 | File | Key Exports | Purpose |
@@ -3510,6 +3515,72 @@ _All bugs identified in QA Swarm Inspection (2026-03-31) and Swarm Code Audit (2
 - **Purpose:** Keep Unified Chat readable when terminal output arrives with ConPTY-compressed words, corrupted short-token leaders, or inline fallback prompt/status chrome.
 - **Flow:** `normalizeChatDisplayText(...)` now restores leading connector splits like `Ibenefici... -> I benefici...` and strips noisy short-token prefixes without removing the first readable words. `ChatExtractor._flush(...)` trims mojibake leaders, avoids over-greedy `Working (% left)` stripping on mixed lines, and suppresses lone routing/handoff-intent sentences that are still mostly orchestration chrome.
 - **Impact:** chat updates remain readable while avoiding false-positive assistant messages from fallback runtime noise; this also stabilizes the regression gate around archival finalText quality because live chat normalization no longer fails on those edge cases.
+
+### `server/spike/stream-json-spike.mjs` :: Spike Validation Script (Task #354)
+
+#### `fileExists(filePath)`
+- **Purpose:** Sync check for file existence and execute permission
+- **Called by:** findClaudeBinary
+- **Calls:** fs.accessSync
+- **Inputs:** filePath (string)
+- **Output:** boolean
+- **Side effects:** none
+- **Last modified:** 2026-04-08 in Task #354 by backend-dev
+
+#### `findClaudeBinary()`
+- **Purpose:** Locate the claude CLI binary — mirrors BinaryDiscovery.js 3-step lookup (env override -> PATH -> %LOCALAPPDATA%)
+- **Called by:** main
+- **Calls:** fileExists, child_process.execFileSync, path.join
+- **Inputs:** none (reads CLAUDE_BIN env, LOCALAPPDATA env)
+- **Output:** string (absolute path to claude binary)
+- **Side effects:** none (throws on not found)
+- **Complexity note:** Mirrors server/services/BinaryDiscovery.js logic but standalone — no shared code
+- **Last modified:** 2026-04-08 in Task #354 by backend-dev
+
+#### `runTurn(claudeBin, args, label)`
+- **Purpose:** Spawn a claude process with given args, collect all stream-json events, return structured result with timing data
+- **Called by:** main (3 times — Turn 1/2/3)
+- **Calls:** child_process.spawn, readline.createInterface, performance.now, JSON.parse
+- **Inputs:** claudeBin (string — binary path), args (string[] — CLI args), label (string — for logging)
+- **Output:** Promise<{ label, events[], resultEvent, exitCode, timing, stderr }>
+- **Side effects:** spawns external claude process (shell: false per SEC-02), closes stdin immediately (DEC-005)
+- **Last modified:** 2026-04-08 in Task #354 by backend-dev
+
+#### `findSessionJsonl(sessionId)`
+- **Purpose:** Discover the Claude CLI session JSONL file on disk for a given session ID (validates OQ1 + OQ4)
+- **Called by:** main
+- **Calls:** fs.existsSync, fs.readdirSync, fs.readFileSync, path.join, os.homedir
+- **Inputs:** sessionId (string — UUID)
+- **Output:** string|null (file path to JSONL, or null if not found)
+- **Side effects:** reads filesystem (~/.claude/projects/ and ~/.claude/sessions/)
+- **Last modified:** 2026-04-08 in Task #354 by backend-dev
+
+#### `analyzeJsonlFile(filePath)`
+- **Purpose:** Parse and summarize a session JSONL file — counts lines, byte size, message type distribution
+- **Called by:** main
+- **Calls:** fs.readFileSync, JSON.parse
+- **Inputs:** filePath (string)
+- **Output:** { totalLines, sizeBytes, messageTypes } | { error }
+- **Side effects:** none (reads only)
+- **Last modified:** 2026-04-08 in Task #354 by backend-dev
+
+#### `verdict(condition, label)`
+- **Purpose:** Create a pass/fail verdict object for test summary
+- **Called by:** main
+- **Calls:** none
+- **Inputs:** condition (boolean), label (string)
+- **Output:** { tag: 'PASS'|'FAIL', label, passed: boolean }
+- **Side effects:** none
+- **Last modified:** 2026-04-08 in Task #354 by backend-dev
+
+#### `main()`
+- **Purpose:** Entry point — runs 3 multi-turn spike validation turns, discovers session files, prints verdict summary
+- **Called by:** module top-level (self-invoking)
+- **Calls:** findClaudeBinary, runTurn (x3), findSessionJsonl, analyzeJsonlFile, verdict (x9+), crypto.randomUUID, console.log
+- **Inputs:** none
+- **Output:** void (prints to stdout, exits with code 0 on all pass, 1 on any fail)
+- **Side effects:** spawns 3 claude CLI processes sequentially, reads filesystem for session JSONL
+- **Last modified:** 2026-04-08 in Task #354 by backend-dev
 
 ### Open Decisions Needed Before Implementation
 

@@ -1,7 +1,7 @@
 ﻿# Project: Claude Code Visual Manager
 **Created:** 2026-03-18
-**Last updated:** 2026-04-07
-**Implementation status:** v5.0 codebase â€” ALL AREAS CLOSED. V3 Swarm Orchestrator, V4.x Gemini harness, V5 Waves 1-5 (N8N-style editor, advanced flow control nodes, execution visibility), BugFix1/BugFix2, V6.0/V7.0 bug waves, POST-V5 FOLLOW-UP, and POST-V5 FOLLOW-UP 2 (Swarm canvas drop preview) all complete. 333 tasks total: 331 completed, 2 deferred (both MVP-acceptable platform limitations). 312/312 tests pass, 498 modules build clean.
+**Last updated:** 2026-04-08
+**Implementation status:** v5.0 codebase stable. V9.0 Stream-JSON Agent Migration IN PROGRESS (planning phase complete, spike validated). 393 tasks total: 351 completed, 2 deferred, 40 pending (#354-#393). PRD v6.0 written. Research complete. Architect analysis done (DEC-027/028/029). Task #354 spike COMPLETED. 312/312 tests pass, 498 modules build clean.
 
 ## What it is
 A locally-hosted web application that provides a graphical user interface for the Claude Code CLI. It spawns Claude Code processes directly using the user's installed binary and delivers two interaction modes: a live PTY terminal (xterm.js over WebSocket) and a job mode (prompt â†’ formatted Markdown result). It also provides visual editors for agents, skills, and CLAUDE.md files, with multi-project support and session persistence across browser tab closures.

@@ -1,4 +1,6 @@
-﻿- [BACKEND-DEV 2026-04-08] TASK #354 (SPIKE — stream-json multi-turn validation) COMPLETED. Created server/spike/stream-json-spike.mjs: standalone script testing 3 turns (basic, --resume, --tools restriction), timing, cost, JSONL discovery. Syntax OK. 414/414 tests pass. Awaiting TASK #355 TEST GATE execution.
+﻿- [PM 2026-04-08] TASK #354 COMPLETED, #355 IN_PROGRESS (qa-tester). V9.0 Phase 0: 352/393 COMPLETED, 2 DEFERRED, 39 PENDING. No blockers. Pipeline on track.
+
+- [BACKEND-DEV 2026-04-08] TASK #354 (SPIKE — stream-json multi-turn validation) COMPLETED. Created server/spike/stream-json-spike.mjs: standalone script testing 3 turns (basic, --resume, --tools restriction), timing, cost, JSONL discovery. Syntax OK. 414/414 tests pass. Awaiting TASK #355 TEST GATE execution.
 
 - [PM TASK PLAN 2026-04-08] V9.0 STREAM-JSON AGENT MIGRATION task plan created. 40 new tasks (#354-#393) across 4 phases: Phase 0 Spike (3 tasks), Phase 1 Backend Core (11 tasks), Phase 2 Frontend (16 tasks), Phase 3 Integration (10 tasks). Total: 393 tasks, 351 COMPLETED, 2 DEFERRED, 40 PENDING. First task: #354 (spike validation) assigned to backend-dev, CRITICAL priority. Dependency chain: spike -> parser -> spawner -> dispatcher+lifecycle -> tools -> frontend -> integration -> docs.
 

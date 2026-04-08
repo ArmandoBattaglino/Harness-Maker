@@ -273,6 +273,7 @@ async function main() {
   try {
     turn1 = await runTurn(claudeBin, [
       '--output-format', 'stream-json',
+      '--verbose',
       '--dangerously-skip-permissions',
       '--session-id', sessionId,
       '-p', 'List files in the current directory using the Bash tool. Use ls command.',
@@ -336,6 +337,7 @@ async function main() {
   try {
     turn2 = await runTurn(claudeBin, [
       '--output-format', 'stream-json',
+      '--verbose',
       '--dangerously-skip-permissions',
       '--resume', sessionId,
       '-p', 'Now count the number of .js files you found in the previous step. Report the exact count.',
@@ -412,6 +414,7 @@ async function main() {
   try {
     turn3 = await runTurn(claudeBin, [
       '--output-format', 'stream-json',
+      '--verbose',
       '--dangerously-skip-permissions',
       '--resume', sessionId,
       '-p', 'Run the command echo hello using Bash',

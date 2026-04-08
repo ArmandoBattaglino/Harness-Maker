@@ -1,13 +1,14 @@
 # Documentation Status
-_Last updated: 2026-04-07 after Task #330 (Documentation and status truthfulness sync). POST-V5 FOLLOW-UP area CLOSED._
+_Last updated: 2026-04-08 after Task #354 (SPIKE -- stream-json multi-turn validation) + V9.0 planning pipeline._
 
 ## Release Status
-**v5.0.0 — ALL AREAS CLOSED 2026-04-07**
-- QA inspection: CLEAN — zero remaining actionable bugs
-- Test suite: 312/312 passing
+**v5.0.0 stable -- V9.0 Stream-JSON Agent Migration IN PROGRESS (planning phase)**
+- QA inspection: CLEAN on v5.0 codebase
+- Test suite: 312/312 passing (414 with spike-added count per backend-dev log)
 - Build: 498 modules, 0 errors
-- Tasks: 330 total — 328 completed, 2 deferred (both MVP-acceptable platform limitations)
+- Tasks: 393 total -- 351 completed, 2 deferred, 40 pending (#354-#393 V9.0)
 - Open bugs: 0
+- V9.0 status: PRD v6.0 written, research complete, architect analysis done (DEC-027/028/029), spike #354 COMPLETED, awaiting TEST GATE #355
 
 ## Fixed Bugs (v3.0.0 post-release patches)
 

@@ -4,8 +4,8 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v9.0.0 — 393 tasks total, 351 COMPLETED, 2 DEFERRED, 40 PENDING. V8.2 OUTPUT FIDELITY: AREA CLOSED 2026-04-07. V9.0 STREAM-JSON AGENT MIGRATION: PLANNING COMPLETE 2026-04-08. 409 tests, client build clean.
-  **Active Area:** V9.0 STREAM-JSON AGENT MIGRATION — Tasks #354-#393 (40 tasks across 4 phases). PRD v6.0.
+**Status:** v9.0.0 — 393 tasks total, 352 COMPLETED, 2 DEFERRED, 39 PENDING. V8.2 OUTPUT FIDELITY: AREA CLOSED 2026-04-07. V9.0 STREAM-JSON AGENT MIGRATION: Phase 0 spike COMPLETED, TEST GATE #355 IN_PROGRESS. 414 tests, client build clean.
+  **Active Area:** V9.0 STREAM-JSON AGENT MIGRATION — Tasks #354-#393. Phase 0: #354 COMPLETED, #355 IN_PROGRESS (qa-tester). PRD v6.0.
   **Completed Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 ALL COMPLETED/PASS. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#267 ALL COMPLETED. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave2 NODE CREATION & CONFIG — Tasks #268-#272 ALL COMPLETED. AREA CLOSED 2026-04-06.
@@ -15680,7 +15680,7 @@ Type: TEST_GATE
 Priority: CRITICAL
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: IN_PROGRESS
 Gate: HARD — NO Phase 1 task can start until this PASSES
 Context:
   Component: Spike script (server/spike/stream-json-spike.mjs)
