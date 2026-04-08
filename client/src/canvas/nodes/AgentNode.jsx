@@ -52,7 +52,7 @@ export default function AgentNode({ id, data, selected }) {
       )}
 
       {/* Unviewed output badge - pulsing blue dot (top-left) */}
-      {!isDropPreview && hasUnviewedOutput && status === 'done' && (
+      {!isDropPreview && hasUnviewedOutput && ['done', 'idle', 'completed', 'stopped'].includes(status) && (
         <div
           className="absolute -top-1 -left-1 w-3.5 h-3.5 bg-blue-500 rounded-full animate-pulse border border-blue-300 shadow-[0_0_6px_rgba(59,130,246,0.6)] z-10"
           title="Output ready - click to view"
@@ -71,7 +71,7 @@ export default function AgentNode({ id, data, selected }) {
       </div>
 
       {showThinking && !isDropPreview && (
-        <div className="mt-2 text-[11px] italic text-gray-200 animate-pulse">
+        <div className="mt-2 text-[11px] italic text-amber-300 animate-bounce">
           Thinking...
         </div>
       )}

@@ -4165,7 +4165,6 @@ class SwarmEngine {
       args.push('--resume', sessionId);
     }
 
-    args.push('-p', prompt);
     args.push('--model', model);
 
     // Append --tools if the node defines tool restrictions (SEC-SJ-01: use the modern tools flag)
@@ -4175,6 +4174,9 @@ class SwarmEngine {
     if (nodeTools.length > 0) {
       args.push('--tools', nodeTools.join(','));
     }
+
+    // FR-SJ-04: -p must come LAST to avoid positional ambiguity
+    args.push('-p', prompt);
 
     // 6. Spawn the process (SEC-02: shell: false always)
     const child = spawn(claudeBin, args, {

@@ -382,18 +382,24 @@ export function useSwarm(workflowId) {
             turnCost: {
               inputTokens: msg.inputTokens ?? 0,
               outputTokens: msg.outputTokens ?? 0,
+              cacheReadTokens: msg.cacheReadTokens ?? 0,
+              cacheWriteTokens: msg.cacheWriteTokens ?? 0,
               costUsd: msg.costUsd ?? 0,
               durationMs: msg.durationMs ?? 0,
             },
             totalCost: {
               inputTokens: previousTotal.inputTokens + (msg.inputTokens ?? 0),
               outputTokens: previousTotal.outputTokens + (msg.outputTokens ?? 0),
+              cacheReadTokens: (previousTotal.cacheReadTokens ?? 0) + (msg.cacheReadTokens ?? 0),
+              cacheWriteTokens: (previousTotal.cacheWriteTokens ?? 0) + (msg.cacheWriteTokens ?? 0),
               costUsd: previousTotal.costUsd + (msg.costUsd ?? 0),
             },
           });
           getPendingStreamJsonTurn(msg.nodeId).cost = {
             inputTokens: msg.inputTokens ?? 0,
             outputTokens: msg.outputTokens ?? 0,
+            cacheReadTokens: msg.cacheReadTokens ?? 0,
+            cacheWriteTokens: msg.cacheWriteTokens ?? 0,
             costUsd: msg.costUsd ?? 0,
             durationMs: msg.durationMs ?? 0,
           };

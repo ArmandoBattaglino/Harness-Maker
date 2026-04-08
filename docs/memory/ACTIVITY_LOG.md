@@ -1,4 +1,15 @@
-﻿## 2026-04-08 — qa-tester — Task #360: TEST GATE — SwarmEngine._spawnAgentStreamJson()
+﻿## 2026-04-08 — debugger — BUG-BACKEND-2: Move -p flag to end of spawn args
+**Outcome:** COMPLETED
+**Summary:** Moved `-p prompt` to be the last arguments in the spawn args array in SwarmEngine._spawnAgentStreamJson(), after --model and --tools, per PRD FR-SJ-04. All 478 server tests pass.
+**Files changed:** server/services/SwarmEngine.js
+**Bugs fixed:** BUG-BACKEND-2 — -p flag positional ambiguity
+**Decisions made:** Minimal reorder of existing push calls only
+**Blockers:** none
+**Next:** none — fix is self-contained
+
+---
+
+## 2026-04-08 — qa-tester — Task #360: TEST GATE — SwarmEngine._spawnAgentStreamJson()
 **Outcome:** COMPLETED (verdict: FAIL)
 **Summary:** Ran 453/453 tests (PASS). Reviewed _spawnAgent, _spawnAgentStreamJson, _handleStreamJsonResult, _onDone reinject branch, stopExecution cleanup. Most PRD criteria PASS: args (--output-format stream-json, --verbose, --dangerously-skip-permissions, --tools, --session-id/--resume, -p, --model), shell:false, child.stdin.end(), all event routes (text_delta→chat_message, tool_start→agent_tool_use, etc.), __HANDOFF__ via HandoffParser, crash→error status, 30s tree-kill timeout, reinject via new spawn, tree-kill cleanup in stopExecution, SEC-SJ-01/02/07. FAIL on 2 WS contract violations: (1) agent_cost missing cacheReadTokens/cacheWriteTokens (PRD line 268-269, FR-SJ-22); (2) _broadcastAgentStatus missing spawnMode field so subsequent status updates lose it (FR-SJ-23). Gate: FAIL → return to #359.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
@@ -4933,4 +4944,15 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** No registered pending task remains; next work requires a new planned area or repo housekeeping such as commit/release prep
 
+---
+
+---
+## 2026-04-08 — frontend-dev — BUG-FRONTEND-1 + BUG-FRONTEND-2: Cache token passthrough
+**Outcome:** COMPLETED
+**Summary:** Fixed two related bugs: useSwarm.js agent_cost handler now extracts cacheReadTokens/cacheWriteTokens from the server WS event and stores them in turnCost, totalCost, and pendingTurn.cost. ChatMessage.jsx formatCostFooter now conditionally displays cache token counts when present. Build clean (500 modules, 0 errors). WS contract fully satisfied.
+**Files changed:** client/src/hooks/useSwarm.js, client/src/canvas/ChatMessage.jsx
+**Bugs fixed:** BUG-FRONTEND-1 (cache tokens dropped in WS handler), BUG-FRONTEND-2 (cache tokens not displayed in cost footer)
+**Decisions made:** Show cache part only when cacheReadTokens > 0 or cacheWriteTokens > 0
+**Blockers:** none
+**Next:** nothing — bugs fully resolved
 ---

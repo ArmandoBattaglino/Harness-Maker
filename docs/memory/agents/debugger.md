@@ -1172,3 +1172,44 @@ The PTY overlay now tracks the currently open node instead of a stale session ha
 ### Handoff
 If needed, the next step is a live browser retest that keeps PTY Explosion open while forcing a provider fallback and confirms the stream continues without reopening the terminal.
 ---
+
+---
+## 2026-04-08 — BUG-BACKEND-2: Move -p flag to end of spawn args in SwarmEngine
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+SwarmEngine._spawnAgentStreamJson() placed `-p prompt` before `--model` and `--tools` in the spawn args array. Per PRD FR-SJ-04, `-p` should be last to avoid positional ambiguity since it consumes the next argument as the prompt string.
+
+### What I did
+1. Read _spawnAgentStreamJson() in server/services/SwarmEngine.js (lines 4109-4230)
+2. Found `-p prompt` at line 4168, before `--model` (4169) and `--tools` (4176)
+3. Moved `args.push('-p', prompt)` to after the --tools block, with a comment citing FR-SJ-04
+4. Ran full test suite: 478/478 pass across 20 test files
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SwarmEngine.js | MODIFIED | Moved `-p prompt` from line 4168 to after --tools block (now line 4179). Added FR-SJ-04 comment. |
+
+### Improvements delivered
+- Spawn args now follow canonical order: flags, --model, --tools, -p prompt (last)
+- Eliminates any risk of positional ambiguity with Claude CLI's -p flag
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| -p flag before --model/--tools | Original code placed -p early in args array | Moved -p to end of args | FIXED |
+
+### Decisions I made
+- Kept the fix minimal: only reordered the existing push calls, no other changes
+
+### What I learned
+- Claude CLI -p consumes next arg as prompt; placing it last is safest
+
+### State I'm leaving behind
+args order is now: --output-format, stream-json, --verbose, --dangerously-skip-permissions, [--session-id|--resume], uuid, --model, model, [--tools, toolList], -p, prompt. All 478 tests pass.
+
+### Handoff
+None — fix is self-contained.
+---

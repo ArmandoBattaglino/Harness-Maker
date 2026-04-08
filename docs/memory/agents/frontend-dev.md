@@ -2807,3 +2807,45 @@ Build passes: 487 modules, 0 errors. All three features functional. No new depen
 ### Handoff
 QA should verify: export downloads valid JSON, import creates workflow from JSON, duplicate creates "(Copy)" workflow. All buttons disabled when no workflow loaded.
 ---
+
+---
+## 2026-04-08 — BUG-FRONTEND-1 + BUG-FRONTEND-2: Cache token passthrough
+**Status:** COMPLETED
+**Called by:** user (direct task)
+
+### Context when I started
+The server (SwarmEngine.js) already emits cacheReadTokens and cacheWriteTokens in the agent_cost WS event (lines 4471-4472). However the client-side useSwarm.js agent_cost handler was not extracting these fields, and ChatMessage.jsx formatCostFooter was not displaying them.
+
+### What I did
+1. In useSwarm.js agent_cost handler: added cacheReadTokens and cacheWriteTokens to turnCost object, totalCost accumulator, and pendingTurn.cost object.
+2. In ChatMessage.jsx formatCostFooter: added conditional cache token display — only shown when either cacheReadTokens or cacheWriteTokens > 0. Format: "Tokens: Xin / Yout (cache: Rread / Wwrite) | Cost: $Z | Wms".
+3. Verified server emits both fields. Verified build passes (500 modules, 0 errors).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/hooks/useSwarm.js | MODIFIED | Added cacheReadTokens/cacheWriteTokens to turnCost, totalCost, and pendingTurn.cost in agent_cost handler |
+| client/src/canvas/ChatMessage.jsx | MODIFIED | Added conditional cache token display in formatCostFooter |
+
+### Improvements delivered
+- Cache token data now flows end-to-end from server WS event through store to UI display
+- Cost footer shows cache read/write tokens when present, giving visibility into prompt caching
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-FRONTEND-1 | agent_cost handler missing cache fields | Added cacheReadTokens/cacheWriteTokens extraction | FIXED |
+| BUG-FRONTEND-2 | formatCostFooter not showing cache tokens | Added conditional cache part to footer string | FIXED |
+
+### Decisions I made
+- Only show cache part in footer when at least one cache token count > 0, to avoid clutter on non-cached turns
+
+### What I learned
+- Server was already emitting cache tokens since the stream-json work; only the client passthrough was missing
+
+### State I'm leaving behind
+Both bugs fixed. Build clean. WS contract for agent_cost now fully satisfied on both server and client sides.
+
+### Handoff
+None — task fully self-contained.
+---

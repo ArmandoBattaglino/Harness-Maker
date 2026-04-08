@@ -124,9 +124,14 @@ function formatCostFooter(cost) {
   if (!cost) return '';
   const inputTokens = Number(cost.inputTokens ?? 0);
   const outputTokens = Number(cost.outputTokens ?? 0);
+  const cacheReadTokens = Number(cost.cacheReadTokens ?? 0);
+  const cacheWriteTokens = Number(cost.cacheWriteTokens ?? 0);
   const costUsd = Number(cost.costUsd ?? 0);
   const durationMs = Number(cost.durationMs ?? 0);
-  return `Tokens: ${inputTokens}in / ${outputTokens}out | Cost: $${costUsd.toFixed(4)} | ${durationMs}ms`;
+  const cachePart = (cacheReadTokens > 0 || cacheWriteTokens > 0)
+    ? ` (cache: ${cacheReadTokens}read / ${cacheWriteTokens}write)`
+    : '';
+  return `Tokens: ${inputTokens}in / ${outputTokens}out${cachePart} | Cost: $${costUsd.toFixed(4)} | ${durationMs}ms`;
 }
 
 function CollapsibleMetaBlock({ title, children, tone = 'gray' }) {
