@@ -1,4 +1,15 @@
-﻿## 2026-04-08 — creative-director — Stage 0: PTY-to-StreamJSON Migration Creative Analysis
+﻿## 2026-04-08 — tech-lead — Stage 0: Replace PTY with stream-json for Swarm Claude agents
+**Outcome:** COMPLETED
+**Summary:** Assessed feasibility of replacing PTY-based agent spawning with stream-json mode for Claude provider. Rated UNCERTAIN: core stream-json parsing is proven (JobRunner), but multi-turn continuation (done-reinject, HITL), terminal display, rate-limit handling, and dual-path maintenance complexity are unresolved. Produced 4 targeted technical questions.
+**Files changed:** docs/memory/agents/tech-lead.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** Feasibility UNCERTAIN, biggest unknown is multi-turn continuation via --resume
+**Blockers:** Answers to 4 questions needed before architecture design
+**Next:** User answers questions -> architect designs the stream-json agent lifecycle
+
+---
+
+## 2026-04-08 — creative-director — Stage 0: PTY-to-StreamJSON Migration Creative Analysis
 **Outcome:** COMPLETED
 **Summary:** Analyzed the idea to replace PTY-based Swarm agent output extraction with stream-json mode. All three clarity dimensions rated CLEAR -- this is a well-defined migration from a broken path to a proven one. Surfaced 2 questions: (1) what happens for non-Claude providers that lack stream-json, (2) whether switching from character-streaming PTY to chunk-based JSON changes perceived liveness.
 **Files changed:** docs/memory/agents/creative-director.md, docs/memory/ACTIVITY_LOG.md

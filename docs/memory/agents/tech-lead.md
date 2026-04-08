@@ -82,3 +82,45 @@ Analysis complete with 4-wave implementation roadmap. No code written. Five tech
 ### Handoff
 Results feed into task planning for the N8N-style editor feature set. The project-manager should create tasks following the 4-wave order. The architect should be called for DEC decisions on features F1, F2, and F4 before Wave 3 begins.
 ---
+
+---
+## 2026-04-08 — Stage 0 Assessment: Replace PTY with stream-json for Swarm Claude agents
+**Status:** COMPLETED
+**Called by:** user (via /create pipeline)
+
+### Context when I started
+Project at V8.2, 353 tasks total (351 COMPLETED, 2 DEFERRED). SwarmEngine._spawnAgentPty is ~500+ lines, spawns via SessionManager.createSession() which uses node-pty. Heavy use of PTY stdin for: done-reinject (DEC-021, up to 3 attempts), HITL chat, rate-limit dismissal (lines 2705-2718), model switching. JobRunner.js already has working stream-json mode (`claude -p --output-format stream-json`). Multi-provider support: Claude, Codex, Gemini -- stream-json is Claude-only.
+
+### What I did
+Analyzed the proposal to replace PTY-based agent spawning with stream-json mode for Claude provider in Swarm. Cross-referenced against 5 subsystems that depend on PTY bidirectionality: done-reinject, HITL, terminal display, session management, rate-limit dismissal. Identified multi-turn continuation as the biggest technical unknown (--resume spawns new process per turn, fundamentally different lifecycle model).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| none | — | Pure analysis, no code changes |
+
+### Improvements delivered
+- Identified 4 critical technical questions that must be answered before architecture can be designed
+- Flagged that this is NOT a simple swap but a fundamental interaction model change
+- Identified that --resume changes process lifecycle from 1 long-lived PTY to N short-lived processes per agent
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | — | — | — |
+
+### Decisions I made
+- Feasibility rated UNCERTAIN (not BLOCKED) because the core stream-json parsing is proven, but multi-turn and subsystem impact are unresolved
+- Flagged dual-path complexity (PTY for Codex/Gemini, stream-json for Claude) as a long-term maintenance concern
+
+### What I learned
+- SwarmEngine has at least 6 places that write to PTY stdin (reinject, HITL, rate-limit dismiss, model switch, echo marker, blocker dismiss)
+- Claude CLI -p mode is strictly one-shot; --resume exists but spawns a new process
+- The "keep PTY as commented fallback" framing understates the scope -- PTY code cannot simply be commented out because Codex/Gemini still need it
+
+### State I'm leaving behind
+Analysis complete. 4 targeted questions produced. No code written. Feasibility is UNCERTAIN pending answers to multi-turn, terminal display, rate-limit handling, and dual-path scope questions.
+
+### Handoff
+Answers to the 4 questions feed into architect design. Researcher finding (same date) about @anthropic-ai/claude-agent-sdk may be relevant as an alternative to --resume for multi-turn.
+---
