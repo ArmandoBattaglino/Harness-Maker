@@ -2339,3 +2339,50 @@ TEST GATE #200 PASS. TASK #201 is unblocked.
 ### Handoff
 None — gate complete. Pipeline can proceed to TASK #201.
 ---
+
+---
+## 2026-04-08 — Task #358: TEST GATE — StreamJsonParser
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+Task #357 (StreamJsonParser implementation) was COMPLETED. The parser at server/services/StreamJsonParser.js and tests at server/tests/StreamJsonParser.test.js were already written. My job was to verify the test gate: run tests, verify coverage of all event types, error cases, and spec compliance.
+
+### What I did
+1. Read StreamJsonParser.js (249 lines) and StreamJsonParser.test.js (605 lines)
+2. Ran `npm test --prefix server` — 453/453 tests pass, 19 test files, 0 failures
+3. Verified 39 StreamJsonParser-specific tests all pass
+4. Audited test coverage against acceptance criteria:
+   - All 10 event types covered: text_delta, tool_start, tool_delta, tool_stop, text_stop, thinking_start, thinking, api_retry, result, message (assistant)
+   - Both error cases covered: malformed JSON (3 tests), 1MB cap (2 tests)
+   - content_block_stop dispatch tested for all 3 block types + null fallback
+   - server_tool_use variant tested alongside tool_use
+   - Full lifecycle integration test (tool start -> deltas -> stop)
+   - Mixed block sequence test (text block then tool block)
+   - reset() clears state correctly
+5. Verified source code compliance: parseLine never throws (try/catch), 1MB cap via Buffer.byteLength, all event mappings match PRD spec
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Marked #358 COMPLETED/PASS, updated header counts |
+
+### Improvements delivered
+- TEST GATE #358 verified PASS, unblocking #359 (SwarmEngine._spawnAgentStreamJson)
+
+### Bugs I encountered
+None — all tests pass, implementation matches spec.
+
+### Decisions I made
+- PASS verdict: all acceptance criteria met with no gaps
+
+### What I learned
+- StreamJsonParser uses stateful activeBlockType tracking only for content_block_stop dispatch; everything else is stateless per-line parsing
+- server_tool_use is handled identically to tool_use (both map to tool_start)
+
+### State I'm leaving behind
+TEST GATE #358 PASS. Task #359 is unblocked and ready for backend-dev.
+
+### Handoff
+None — gate complete. Pipeline proceeds to TASK #359.
+---

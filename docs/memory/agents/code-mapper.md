@@ -3290,3 +3290,44 @@ CODE_MAP.md and CHANGELOG.md fully updated through V5 Wave 4. All 11 files mappe
 ### Handoff
 None — mapping task fully self-contained.
 ---
+
+---
+## 2026-04-08 — Task #357: StreamJsonParser — NDJSON line parser (code-mapper pass)
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task trio)
+
+### Context when I started
+Task #357 just completed by backend-dev. Two new files created: server/services/StreamJsonParser.js (core NDJSON parser class) and server/tests/StreamJsonParser.test.js (30+ Vitest tests). No production callers yet — this is Phase 1 of V9.0 stream-json migration.
+
+### What I did
+1. Read both new source files in full
+2. Searched codebase for StreamJsonParser references (14 files, mostly docs/PRD mentions)
+3. Searched for related modules: HandoffParser (sibling pattern), SwarmEngine (future consumer), JobRunner (reference for current JSON parsing)
+4. Updated CODE_MAP.md: added StreamJsonParser to Server Modules table, test to Test Infrastructure table, 12 function graph entries (class + 10 methods + reset)
+5. Appended CHANGELOG.md entry documenting all added functions and connection changes
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Added StreamJsonParser to Module Index + Test Infrastructure + 12 Function Graph entries |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Task #357 entry with all functions added and connection analysis |
+
+### Improvements delivered
+- CODE_MAP now documents the complete StreamJsonParser API surface (parseLine, reset, all 8 internal dispatch methods)
+- Connection graph shows future dependencies: SwarmEngine, StreamJsonSpawner, and relationship to HandoffParser sibling pattern
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Documented StreamJsonParser as "sibling pattern" to HandoffParser rather than replacement, since both will coexist (PTY mode uses HandoffParser, stream-json mode uses StreamJsonParser)
+
+### What I learned
+- StreamJsonParser uses minimal internal state (_activeBlockType + _activeToolUseId) unlike HandoffParser's 4KB rolling buffer — the structured JSON format eliminates the need for cross-chunk reassembly
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md both updated. StreamJsonParser has no production callers yet — next mapping update will be needed when StreamJsonSpawner (Task #358) wires it up.
+
+### Handoff
+None — mapping task self-contained.
+---

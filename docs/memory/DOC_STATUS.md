@@ -1,14 +1,14 @@
 # Documentation Status
-_Last updated: 2026-04-08 after Task #354 (SPIKE -- stream-json multi-turn validation) + V9.0 planning pipeline._
+_Last updated: 2026-04-08 after Task #357 (StreamJsonParser -- NDJSON line parser for Claude CLI stream-json output)._
 
 ## Release Status
 **v5.0.0 stable -- V9.0 Stream-JSON Agent Migration IN PROGRESS (planning phase)**
 - QA inspection: CLEAN on v5.0 codebase
 - Test suite: 312/312 passing (414 with spike-added count per backend-dev log)
 - Build: 498 modules, 0 errors
-- Tasks: 393 total -- 351 completed, 2 deferred, 40 pending (#354-#393 V9.0)
+- Tasks: 393 total -- 352 completed, 2 deferred, 39 pending (#358-#393 V9.0)
 - Open bugs: 0
-- V9.0 status: PRD v6.0 written, research complete, architect analysis done (DEC-027/028/029), spike #354 COMPLETED, awaiting TEST GATE #355
+- V9.0 status: PRD v6.0 written, research complete, architect analysis done (DEC-027/028/029), spike #354 COMPLETED, #357 StreamJsonParser COMPLETED. Awaiting TEST GATE #358.
 
 ## Fixed Bugs (v3.0.0 post-release patches)
 
@@ -50,7 +50,7 @@ _Last updated: 2026-04-08 after Task #354 (SPIKE -- stream-json multi-turn valid
 | Document | Status | Last Updated | Notes |
 |----------|--------|--------------|-------|
 | README.md | UP_TO_DATE | 2026-04-07 | Accurately describes v5.0.0 stable. V9.0 stream-json features not yet implemented so no README update needed yet. Will need update when stream-json code lands in production. |
-| docs/ARCHITECTURE.md | PARTIAL | 2026-04-07 | V5 component tree still deferred (12 components). V9.0 stream-json architecture (DEC-027/028/029) not yet reflected -- will need Section 13 when implementation begins. |
+| docs/ARCHITECTURE.md | PARTIAL | 2026-04-08 | V5 component tree still deferred (12 components). Section 13 (V9.0 Stream-JSON Architecture) added with StreamJsonParser spec (Task #357). V3 services diagram updated with StreamJsonParser box and dual spawn paths. Remaining V9.0 components (#358-#393) listed as pending. |
 | docs/PRD.md | UP_TO_DATE | 2026-04-08 | Rewritten to v6.0: Stream-JSON Agent Migration. 12 component specs, 27 FRs, 7 SEC-SJ-* requirements. |
 | docs/API.md | UP_TO_DATE | 2026-04-06 | No new endpoints from V9.0 planning. Will need update when WS events (FR-SJ-19 through FR-SJ-23) are implemented. |
 | docs/memory/PROJECT.md | UP_TO_DATE | 2026-04-08 | Implementation status reflects V9.0 planning phase, 393 tasks, spike completed. |

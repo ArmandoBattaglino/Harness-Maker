@@ -4736,3 +4736,25 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Architect/backend-dev design session cleanup service and history extraction for reset/save-to-memory
 ---
+
+---
+## 2026-04-08 — qa-tester — Task #358: TEST GATE — StreamJsonParser
+**Outcome:** COMPLETED
+**Summary:** TEST GATE PASS. All 39 StreamJsonParser unit tests pass. All 10 event types, 2 error cases, content_block_stop dispatch, and spec compliance verified. Full server suite: 453/453 tests, 0 failures. No bugs found.
+**Files changed:** docs/TASK_PLAN.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** PASS verdict — all acceptance criteria met
+**Blockers:** none
+**Next:** Task #359 (SwarmEngine._spawnAgentStreamJson) is unblocked for backend-dev
+---
+
+---
+## 2026-04-08 — code-mapper — Task #357: StreamJsonParser — NDJSON line parser
+**Outcome:** COMPLETED
+**Summary:** Mapped StreamJsonParser class (12 function entries) into CODE_MAP.md — Module Index, Test Infrastructure, and full Function Graph. Appended CHANGELOG.md entry. StreamJsonParser is a new standalone NDJSON parser with no production callers yet; future consumer is SwarmEngine (V9.0).
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
+**Bugs fixed:** none
+**Decisions made:** Documented as sibling pattern to HandoffParser (PTY vs stream-json), not a replacement
+**Blockers:** none
+**Next:** Map StreamJsonSpawner (Task #358) when it wires StreamJsonParser into the spawn pipeline
+---
