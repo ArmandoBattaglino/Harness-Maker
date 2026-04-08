@@ -572,6 +572,29 @@ export class ChatExtractor {
       return;
     }
 
+    // Skip messages that are system prompt / orchestration echos
+    // ConPTY often compresses these into a single long line, so line-level
+    // filters miss them. Check the full message text instead.
+    const SYSTEM_PROMPT_INDICATORS = [
+      /SWARM\s*PROTOCOL/i,
+      /You\s*are\s*(?:a|the)\s+\w+\.\s*You\s*(?:receive|will|must|should|are)/i,
+      /must\s*be\s*a\s*valid\s*handoff\s*token/i,
+      /in\s*place\s*of\s*<?\s*target\s*I?d?\s*>?/i,
+      /You\s*are\s*the\s*FINAL\s*agent/i,
+      /MUST\s*output\s*the\s*done\s*marker/i,
+      /Con\s*t\s*in\s*u\s*e\s*this\s*task/i,
+      /no\s*downstream\s*handoffs?\s*exist/i,
+      /workflow\s*(?:Name|Description)\s*:/i,
+      /current\s*(?:Task|workflow\s*context)\s*:/i,
+    ];
+    const promptScore = SYSTEM_PROMPT_INDICATORS.filter(p => p.test(text)).length;
+    if (promptScore >= 2) {
+      // Two or more system prompt indicators → entire message is protocol echo
+      buf.text = '';
+      buf.firstChunkAt = 0;
+      return;
+    }
+
     // Skip messages that are predominantly JSON (likely handoff context payload)
     const jsonPunctuation = (text.match(/[{}":\[\]]/g) || []).length;
     if (text.length > 0 && jsonPunctuation > text.length * 0.25) {
