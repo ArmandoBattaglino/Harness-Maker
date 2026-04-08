@@ -1213,3 +1213,48 @@ args order is now: --output-format, stream-json, --verbose, --dangerously-skip-p
 ### Handoff
 None — fix is self-contained.
 ---
+
+---
+## 2026-04-08 — Task: Fix test failures after _ensureAgentPty provider routing fix
+**Status:** COMPLETED
+**Called by:** User (test regression after bug fix)
+
+### Context when I started
+A bug fix in SwarmEngine._ensureAgentPty() was applied to pass `requestedProvider` to `_spawnAgent()` during handoffs. The original fix used `execution.activeProvider` (the last-used provider) as the hint. This caused: (1) tests that expected PTY handoffs to crash because stream-json mocks weren't set up, and (2) mixed-provider chain tests to break because all handoff targets were forced to the last provider instead of respecting per-node model configuration.
+
+### What I did
+1. Identified TWO issues: (a) tests needed default stream-json mocks for `mockSpawn` and `mockCreateInterface`, (b) the `_ensureAgentPty` fix itself was wrong — it should use `providerStrategy.mode` not `activeProvider`.
+2. Added default `mockSpawn.mockImplementation()` and `mockCreateInterface.mockImplementation()` in the `beforeEach` block of swarm-engine.test.js that return proper stream-json child objects (with stdout/stderr/stdin EventEmitters). Tests that set up their own mocks via `mockReturnValueOnce` take priority.
+3. Fixed `_ensureAgentPty` to use `execution.providerStrategy.mode` instead of `execution.activeProvider`. This correctly passes the workflow-level provider strategy (e.g. 'auto') so `_spawnAgent` can route each node according to its own model config, rather than forcing all handoff targets to the execution's current active provider.
+4. Verified all 478 server tests pass (20 test files).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SwarmEngine.js | MODIFIED | Changed _ensureAgentPty providerHint from `execution.activeProvider` to `execution.providerStrategy.mode` — fixes mixed-provider chain routing |
+| server/tests/swarm-engine.test.js | MODIFIED | Added default mockSpawn/mockCreateInterface implementations in beforeEach that return valid stream-json child objects |
+
+### Improvements delivered
+- All 478 server tests pass (was 16 failures in swarm-engine.test.js)
+- Mixed-provider chains now correctly route handoff targets to their proper runtime (Claude->stream-json, Codex->PTY)
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| _ensureAgentPty using activeProvider | activeProvider tracks the last-spawned provider, not the workflow-level strategy; mixed chains break | Use providerStrategy.mode instead | FIXED |
+| Missing stream-json mocks in tests | Tests predating stream-json migration had no mockSpawn setup | Added default implementations in beforeEach | FIXED |
+
+### Decisions I made
+- Use `providerStrategy.mode` over `activeProvider` — mode represents the workflow-level routing strategy (auto/claude/codex/gemini) while activeProvider tracks the last-used provider which changes during execution
+- Default mocks use `mockImplementation` (not `mockReturnValueOnce`) so explicit per-test mocks take priority
+
+### What I learned
+- `execution.activeProvider` is mutated at line 3629 and 4221 every time an agent is spawned — it tracks the LAST provider used, not the intended one. Using it as a routing hint in _ensureAgentPty forces ALL subsequent handoff targets to the same provider, breaking mixed-provider chains.
+- `providerStrategy.mode` is set once at execution creation and represents the workflow-level intent (auto = route per node model, claude = force all Claude, etc.)
+
+### State I'm leaving behind
+Both files modified. All 478 tests pass. The _ensureAgentPty fix correctly routes handoff targets per their node model configuration.
+
+### Handoff
+None — fix is self-contained.
+---

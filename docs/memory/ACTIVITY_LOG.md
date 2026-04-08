@@ -4958,6 +4958,17 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
+## 2026-04-08 — debugger — Fix test failures after _ensureAgentPty provider routing fix
+**Outcome:** COMPLETED
+**Summary:** Fixed 16 test failures caused by _ensureAgentPty routing fix. Root cause was twofold: (1) tests lacked default stream-json child mocks, (2) the fix itself used execution.activeProvider (last-used) instead of providerStrategy.mode (workflow-level strategy), breaking mixed-provider chains. Changed to providerStrategy.mode and added default mockSpawn/mockCreateInterface implementations. All 478 server tests pass.
+**Files changed:** server/services/SwarmEngine.js, server/tests/swarm-engine.test.js
+**Bugs fixed:** Wrong provider hint in _ensureAgentPty (activeProvider -> providerStrategy.mode); missing stream-json test mocks
+**Decisions made:** Use providerStrategy.mode for routing consistency; default mocks via mockImplementation for lowest priority
+**Blockers:** none
+**Next:** none — fix is self-contained
+
+---
+
 ## 2026-04-08 — frontend-dev — BUG-FRONTEND-1 + BUG-FRONTEND-2: Cache token passthrough
 **Outcome:** COMPLETED
 **Summary:** Fixed two related bugs: useSwarm.js agent_cost handler now extracts cacheReadTokens/cacheWriteTokens from the server WS event and stores them in turnCost, totalCost, and pendingTurn.cost. ChatMessage.jsx formatCostFooter now conditionally displays cache token counts when present. Build clean (500 modules, 0 errors). WS contract fully satisfied.

@@ -4593,7 +4593,17 @@ class SwarmEngine {
         return existing.sessionId;
       }
     }
-    await this._spawnAgent(executionId, nodeId);
+    // Pass the execution's provider strategy mode so _spawnAgent can route
+    // each node according to its own model configuration.  Using
+    // providerStrategy.mode (the workflow-level mode, e.g. 'auto', 'claude',
+    // 'codex') instead of execution.activeProvider avoids forcing all handoff
+    // targets to the last-used provider — critical for mixed-provider chains
+    // where a Claude node hands off to a Codex node.
+    const providerHint = execution?.providerStrategy?.mode;
+    await this._spawnAgent(executionId, nodeId, providerHint
+      ? { requestedProvider: providerHint }
+      : {}
+    );
     const state = this._executions.get(executionId)?.agentStates.get(nodeId);
     return state?.sessionId;
   }

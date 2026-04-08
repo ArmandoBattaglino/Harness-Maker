@@ -334,12 +334,38 @@ describe('SwarmEngine', () => {
   let engine;
   let wf;
 
+  // Helper: build a mock child process suitable for _spawnAgentStreamJson.
+  // Returns an EventEmitter with stdout/stderr/stdin so readline can attach.
+  function buildDefaultMockStreamJsonChild() {
+    const child = new EventEmitter();
+    child.stdout = new EventEmitter();
+    child.stderr = new EventEmitter();
+    child.stdin = { end: vi.fn() };
+    child.pid = 9900 + Math.floor(Math.random() * 100);
+    child.killed = false;
+    return child;
+  }
+
+  function buildDefaultMockReadline() {
+    const rl = new EventEmitter();
+    rl.close = vi.fn();
+    return rl;
+  }
+
   beforeEach(() => {
     vi.useFakeTimers();
     wsBroadcast = vi.fn();
     mockSpawn.mockReset();
     mockCreateInterface.mockReset();
     mockTreeKill.mockClear();
+
+    // Default implementations so that _spawnAgentStreamJson (called during
+    // handoff when activeProvider is 'claude') does not crash on child.stdout
+    // being undefined.  Tests that need specific stream-json child behavior
+    // can override with mockReturnValueOnce which takes priority.
+    mockSpawn.mockImplementation(() => buildDefaultMockStreamJsonChild());
+    mockCreateInterface.mockImplementation(() => buildDefaultMockReadline());
+
     ({ mockSession, mockSessionManager } = buildMocks());
 
     wf = buildTwoNodeWorkflow({ budgetTokens: 0, circuitBreakerThreshold: 10 });
