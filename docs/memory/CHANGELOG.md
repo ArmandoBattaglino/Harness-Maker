@@ -1,5 +1,47 @@
 # CHANGELOG — Claude Code Visual Manager
 
+---
+## 2026-04-08 — Task #359: SwarmEngine._spawnAgentStreamJson — Stream-JSON agent spawner
+**Agent:** backend-dev
+**Triggered by:** V9.0 stream-json migration — implement the stream-json spawn path for Claude providers, replacing the PTY path per DEC-027/028/029
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/SwarmEngine.js | MODIFIED | Added 3 new methods (_spawnAgent dispatcher, _spawnAgentStreamJson, _handleStreamJsonResult) + modified 3 existing methods (_onDone stream-json reinject branch, stopExecution stream-json tree-kill cleanup, _serializeAgentState stream-json fields). New imports: spawn (child_process), createInterface (readline), StreamJsonParser. New constant STREAM_JSON_POST_RESULT_TIMEOUT_MS = 30000. |
+
+### Functions Added
+- `SwarmEngine._spawnAgent(executionId, nodeId, spawnOptions)` in `server/services/SwarmEngine.js` — dispatcher routing Claude → _spawnAgentStreamJson, others → _spawnAgentPty (DEC-027). Resolves effective provider, defaults 'auto' to 'claude'.
+- `SwarmEngine._spawnAgentStreamJson(executionId, nodeId, spawnOptions)` in `server/services/SwarmEngine.js` — spawns a Claude child process with `--output-format stream-json`, `--verbose`, `--dangerously-skip-permissions`, and `--session-id` (turn 0) / `--resume` (turn N). Uses readline to parse stdout line-by-line, feeding each line through StreamJsonParser.parseLine(). Dispatches parsed events to WS (chat_message for text_delta, agent_tool_use/delta, agent_thinking, agent_status for api_retry). Accumulates assistant text in state._streamJsonAccumulatedText. Closes stdin immediately (DEC-005). Uses `shell: false` always (SEC-02).
+- `SwarmEngine._handleStreamJsonResult(executionId, nodeId, resultEvt, handoffTargets)` in `server/services/SwarmEngine.js` — handles the stream-json `result` event: increments turnCount, extracts and broadcasts cost via WS agent_cost, stores sessionId for future --resume turns, scans accumulated text with a fresh HandoffParser for __HANDOFF__/__DONE__ tokens, routes to _onHandoff or _onDone (implicit done per DEC-029), handles doNotSpawnNextTurn graceful stop, schedules 30s post-result tree-kill timeout.
+
+### Functions Modified
+- `SwarmEngine._onDone(executionId, nodeId)` in `server/services/SwarmEngine.js` — added stream-json reinject branch: for `state.spawnMode === 'stream-json'`, spawns a NEW Claude process via `_spawnAgentStreamJson({ reinjectPrompt })` instead of writing to PTY stdin. Reinject gate condition widened from `state.sessionId` to `(state.sessionId || state.spawnMode === 'stream-json')`.
+- `SwarmEngine.stopExecution(executionId)` in `server/services/SwarmEngine.js` — added tree-kill cleanup block for stream-json child processes: iterates agentStates, tree-kills any `state._streamJsonChild` with `treeKill(child.pid, 'SIGTERM')` after nulling the ref. Necessary because Claude CLI may spawn subprocesses that must be cleaned up with the whole tree.
+- `SwarmEngine._serializeAgentState(state)` in `server/services/SwarmEngine.js` — added conditional stream-json field block: when `state.spawnMode === 'stream-json'`, includes `spawnMode`, `turnCount`, `totalCostUsd`, `totalInputTokens`, `totalOutputTokens` in the serialized payload.
+
+### Functions Removed
+- none
+
+### Connection Changes
+- NEW dependency: SwarmEngine → StreamJsonParser (constructor + parseLine) — previously StreamJsonParser had no production consumers (only spike script)
+- NEW dependency: SwarmEngine → readline.createInterface for line-based parsing of child.stdout
+- NEW dependency: SwarmEngine → child_process.spawn (direct) — previously only SessionManager spawned processes; now SwarmEngine spawns Claude directly for stream-json mode, bypassing PTY
+- NEW dependency: SwarmEngine → tree-kill (existing import now used by stopExecution + _handleStreamJsonResult for stream-json child cleanup)
+- REUSED dependency: SwarmEngine._handleStreamJsonResult → HandoffParser (fresh instance per turn) — same token detection as PTY path, but applied to accumulated turn text rather than streaming chunks
+- REUSED dependency: SwarmEngine._spawnAgentStreamJson → BinaryDiscovery._resolveRuntimeProviderBinary (same binary lookup as PTY path)
+- NEW call edge: SwarmEngine._onDone → SwarmEngine._spawnAgentStreamJson (stream-json reinject path — spawns new process per turn)
+- NEW call edge: SwarmEngine._handleStreamJsonResult → SwarmEngine._onHandoff / _onDone (token-scan dispatch — reuses existing handoff/done pipeline)
+
+### Impact on Other Code
+- `SwarmEngine.startExecution` and `SwarmEngine._ensureAgentPty` still call `_spawnAgentPty` directly — they are NOT yet routed through the new `_spawnAgent` dispatcher. A follow-up task will migrate these call sites to use `_spawnAgent` so Claude executions actually take the stream-json path.
+- `_handleStreamJsonResult` reuses `_onHandoff` and `_onDone` which assume PTY-style state fields (`sessionId`, `tapFn`, `_parser`). The stream-json reinject branch in `_onDone` handles this correctly, but any other consumer of agent state that assumes `sessionId` is non-null must be audited — `_serializeAgentState` already handles this (returns `sessionId: null` for stream-json agents).
+- Clients consuming `agent_status` WS events now see a new `spawnMode: 'stream-json'` field on the initial running broadcast for Claude agents. Existing clients that ignore unknown fields are unaffected; clients that branch on spawn mode must be updated.
+- `getStatus` snapshots now include stream-json-specific fields (turnCount, totalCostUsd, totalInputTokens, totalOutputTokens) for Claude agents — useful for cost display in the swarm UI.
+- No BREAKING CHANGES — all new fields are additive; existing PTY path is unchanged.
+
+---
+
 ## 2026-04-07
 
 ### Tasks #331-#333: Swarm canvas drop preview + SwarmView hydration blocker fix

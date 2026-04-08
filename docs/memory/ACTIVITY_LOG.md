@@ -1,4 +1,14 @@
-﻿## 2026-04-08 — project-manager — Task #359 COMPLETED status update + #360 activation
+﻿## 2026-04-08 — qa-tester — Task #360: TEST GATE — SwarmEngine._spawnAgentStreamJson()
+**Outcome:** COMPLETED (verdict: FAIL)
+**Summary:** Ran 453/453 tests (PASS). Reviewed _spawnAgent, _spawnAgentStreamJson, _handleStreamJsonResult, _onDone reinject branch, stopExecution cleanup. Most PRD criteria PASS: args (--output-format stream-json, --verbose, --dangerously-skip-permissions, --tools, --session-id/--resume, -p, --model), shell:false, child.stdin.end(), all event routes (text_delta→chat_message, tool_start→agent_tool_use, etc.), __HANDOFF__ via HandoffParser, crash→error status, 30s tree-kill timeout, reinject via new spawn, tree-kill cleanup in stopExecution, SEC-SJ-01/02/07. FAIL on 2 WS contract violations: (1) agent_cost missing cacheReadTokens/cacheWriteTokens (PRD line 268-269, FR-SJ-22); (2) _broadcastAgentStatus missing spawnMode field so subsequent status updates lose it (FR-SJ-23). Gate: FAIL → return to #359.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (TEST GATE protocol — report only)
+**Decisions made:** FAIL despite mostly correct implementation; WS contract gaps are hard-gate failures
+**Blockers:** #361 + #363 blocked until #359 re-fixes and #360 re-runs PASS
+**Next:** backend-dev (or debugger) fixes (a) add cacheReadTokens/cacheWriteTokens to agent_cost broadcast in _handleStreamJsonResult from resultEvt.usage.cacheRead/.cacheWrite; (b) add spawnMode to _broadcastAgentStatus payload. Then re-run TEST GATE #360.
+
+---
+## 2026-04-08 — project-manager — Task #359 COMPLETED status update + #360 activation
 **Outcome:** COMPLETED
 **Summary:** Marked #359 COMPLETED (_spawnAgentStreamJson, all methods added by backend-dev, 453/453 tests pass). Activated #360 TEST GATE to IN_PROGRESS (qa-tester running). Updated header: 356/393 COMPLETED, 35 PENDING. Note: _spawnAgent dispatcher exists but not yet wired into startExecution (that is Task #361). After #360 PASS, #361 (dispatcher wiring) + #363 (session lifecycle) can run in PARALLEL per task plan.
 **Files changed:** docs/TASK_PLAN.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/CONTEXT.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/project-manager.md (MODIFIED)

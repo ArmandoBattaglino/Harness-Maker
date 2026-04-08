@@ -1,4 +1,6 @@
-﻿- [PM 2026-04-08] TASK #359 COMPLETED (_spawnAgentStreamJson, all methods added, 453/453 tests pass). #360 IN_PROGRESS (TEST GATE running by qa-tester). V9.0: 356/393 COMPLETED, 2 DEFERRED, 35 PENDING. Phase 1 progressing: #357 done, #358 PASS, #359 done. After #360 PASS: #361 (dispatcher) + #363 (session lifecycle) run PARALLEL.
+﻿- [QA-TESTER 2026-04-08] TASK #360 TEST GATE FAIL. _spawnAgentStreamJson mostly correct (args, stdin.end, shell:false, event routes, __HANDOFF__, crash, 30s tree-kill, reinject, stopExecution all PASS; 453/453 tests). Two WS contract violations: (1) agent_cost missing cacheReadTokens/cacheWriteTokens (FR-SJ-22, PRD 268-269); (2) _broadcastAgentStatus missing spawnMode field (FR-SJ-23 — only initial broadcast has it). Return to #359 for fixes; #361 + #363 remain blocked.
+
+- [PM 2026-04-08] TASK #359 COMPLETED (_spawnAgentStreamJson, all methods added, 453/453 tests pass). #360 IN_PROGRESS (TEST GATE running by qa-tester). V9.0: 356/393 COMPLETED, 2 DEFERRED, 35 PENDING. Phase 1 progressing: #357 done, #358 PASS, #359 done. After #360 PASS: #361 (dispatcher) + #363 (session lifecycle) run PARALLEL.
 
 - [PM 2026-04-08] TASK #357 COMPLETED, #356 COMPLETED (PASS), #358 IN_PROGRESS. V9.0: 354/393 COMPLETED, 2 DEFERRED, 37 PENDING. Phase 0 CLOSED. Phase 1 active: StreamJsonParser done, TEST GATE running. Next after #358 PASS: #359 _spawnAgentStreamJson (backend-dev, VERY HARD, opus).
 

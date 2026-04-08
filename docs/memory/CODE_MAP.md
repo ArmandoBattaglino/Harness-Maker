@@ -1913,6 +1913,15 @@ _Last updated: 2026-04-08 — after Task #359 (SwarmEngine._spawnAgentStreamJson
 - **Side effects:** none
 - **Last modified:** 2026-03-28 in Task #98 by backend-dev (BUG-98 fix: budget now sourced from budgetTracker.getTotal instead of undefined e.budget)
 
+### `server/services/SwarmEngine.js` :: `SwarmEngine._serializeAgentState(state)` — MODIFIED Task #359
+- **Purpose:** Serialize an in-memory agent state object to a JSON-safe payload for WS broadcast and status snapshots. Strips internal-only fields (tapFn, parser refs, timers, _streamJsonChild). **Task #359:** conditionally includes stream-json-specific fields (`spawnMode: 'stream-json'`, `turnCount`, `totalCostUsd`, `totalInputTokens`, `totalOutputTokens`) when `state.spawnMode === 'stream-json'`.
+- **Called by:** SwarmEngine.getStatus (via `[...e.agentStates.entries()].map(...)` at line 5782), other snapshot/broadcast paths
+- **Calls:** none (pure object construction)
+- **Inputs:** state (object — in-memory agent state; defaults to {})
+- **Output:** object — `{ sessionId, provider, runtimeProvider, status, handoffCount, lastOutputSnippet, lastModelFallback, runtimeBlocker?, spawnMode?, turnCount?, totalCostUsd?, totalInputTokens?, totalOutputTokens? }`
+- **Side effects:** none (pure function)
+- **Last modified:** 2026-04-08 in Task #359 by backend-dev (added conditional stream-json field block)
+
 ---
 
 ### `server/services/CircuitBreaker.js` :: `CircuitBreaker.check(edgeId, counter, threshold)`
