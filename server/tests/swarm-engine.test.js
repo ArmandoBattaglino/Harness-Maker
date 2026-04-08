@@ -4097,18 +4097,35 @@ describe('SwarmEngine', () => {
       fs.mkdirSync(companionDir, { recursive: true });
       fs.writeFileSync(jsonlPath, '{"type":"assistant","text":"hello"}\n', 'utf8');
 
-      buildLifecycleExecution(executionId, {
+      const { execution } = buildLifecycleExecution(executionId, {
+        status: 'blocked',
+        runtimeBlocker: {
+          type: 'rate_limited',
+          provider: 'claude',
+          message: 'Claude hit its usage limit before the swarm agent could continue.',
+          nodeId: 'node-a',
+        },
         streamJsonSessionId: oldSessionId,
         _streamJsonChild: buildRunningChild(5003),
       });
+      execution.status = 'blocked';
+      execution.runtimeBlocker = {
+        type: 'rate_limited',
+        provider: 'claude',
+        message: 'Claude hit its usage limit before the swarm agent could continue.',
+        nodeId: 'node-a',
+      };
 
       const reset = await engine.stopStreamJsonAgent(executionId, 'node-a', 'reset');
       const liveState = engine._executions.get(executionId).agentStates.get('node-a');
 
       expect(fs.existsSync(jsonlPath)).toBe(false);
       expect(fs.existsSync(companionDir)).toBe(false);
+      expect(reset.status).toBe('idle');
+      expect(reset.runtimeBlocker ?? null).toBeNull();
       expect(reset.agentStates['node-a'].status).toBe('idle');
       expect(reset.agentStates['node-a'].turnCount).toBe(0);
+      expect(liveState.runtimeBlocker).toBeNull();
       expect(liveState.streamJsonSessionId).toMatch(/^[0-9a-f-]{36}$/i);
       expect(liveState.streamJsonSessionId).not.toBe(oldSessionId);
       expect(liveState._lastResetArchive?.archivedJsonl).toContain('"assistant"');

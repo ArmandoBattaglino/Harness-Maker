@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
+    "@openai/codex-sdk": "^0.118.0",
     "claude-code-visual-manager": "file:..",
     "cross-spawn": "^7.0.6",
     "express": "^4.18.2",

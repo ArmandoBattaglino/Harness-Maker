@@ -25,7 +25,7 @@ import { create } from 'zustand';
 /**
  * Dynamic per-node runtime state stored in `agentStates[nodeId]`.
  *
- * Stream-json specific fields are added lazily through `updateAgentState`
+ * Structured-runtime specific fields are added lazily through `updateAgentState`
  * when the corresponding WS events arrive; they are never pre-seeded in the
  * initial store state.
  *
@@ -34,7 +34,7 @@ import { create } from 'zustand';
  * @property {string} [lastOutputSnippet]
  * @property {number} [handoffCount]
  * @property {{ started?: string, done?: string, error?: string }} [timestamps]
- * @property {'stream-json' | 'pty'} [spawnMode]
+ * @property {'stream-json' | 'codex-sdk' | 'pty'} [spawnMode]
  * @property {boolean} [isThinking]
  * @property {AgentCurrentTool | null} [currentTool]
  * @property {AgentTurnCost | null} [turnCost]
@@ -224,7 +224,7 @@ const useSwarmStore = create((set, get) => ({
 
   appendAgentChatText: (nodeId, text) => set((state) => {
     const prev = state.agentResults[nodeId] || { finalText: '', handoffPayloads: [], viewed: false, updatedAt: null };
-    const separator = prev.finalText ? '\n\n' : '';
+    const separator = '';
     return {
       agentResults: {
         ...state.agentResults,

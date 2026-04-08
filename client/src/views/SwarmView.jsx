@@ -19,6 +19,7 @@ import { useAppState } from '../store/AppContext';
 import { apiDelete, apiGet, apiPost, apiPut } from '../hooks/useApi.js';
 import { sanitizeWorkflow } from '../utils/sanitizeWorkflow.js';
 import { useCanvasValidation } from '../hooks/useCanvasValidation.js';
+import { isStructuredSpawnMode } from '../utils/runtimeModes.js';
 import WorkflowArtifactPanel from '../panels/WorkflowArtifactPanel';
 
 const statusColors = {
@@ -132,25 +133,25 @@ export default function SwarmView() {
   );
   const activeStreamJsonAgentIds = useMemo(
     () => activeAgentEntries
-      .filter(([, state]) => state?.spawnMode === 'stream-json' && ACTIVE_AGENT_STATUSES.includes(state.status))
+      .filter(([, state]) => isStructuredSpawnMode(state?.spawnMode) && ACTIVE_AGENT_STATUSES.includes(state.status))
       .map(([nodeId]) => nodeId),
     [activeAgentEntries]
   );
   const liveStreamJsonAgentIds = useMemo(
     () => activeAgentEntries
-      .filter(([, state]) => state?.spawnMode === 'stream-json' && LIVE_AGENT_STATUSES.includes(state.status))
+      .filter(([, state]) => isStructuredSpawnMode(state?.spawnMode) && LIVE_AGENT_STATUSES.includes(state.status))
       .map(([nodeId]) => nodeId),
     [activeAgentEntries]
   );
   const activePtyAgentIds = useMemo(
     () => activeAgentEntries
-      .filter(([, state]) => state?.spawnMode !== 'stream-json' && ACTIVE_AGENT_STATUSES.includes(state.status))
+      .filter(([, state]) => !isStructuredSpawnMode(state?.spawnMode) && ACTIVE_AGENT_STATUSES.includes(state.status))
       .map(([nodeId]) => nodeId),
     [activeAgentEntries]
   );
   const allStreamJsonAgentIds = useMemo(
     () => activeAgentEntries
-      .filter(([, state]) => state?.spawnMode === 'stream-json')
+      .filter(([, state]) => isStructuredSpawnMode(state?.spawnMode))
       .map(([nodeId]) => nodeId),
     [activeAgentEntries]
   );

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSwarmStore } from '../store/SwarmContext';
 import { stripAnsi } from '../utils/stripAnsi';
 import { inspectControlTokens } from '../utils/controlTokens';
+import { isStructuredSpawnMode } from '../utils/runtimeModes.js';
 
 const MODEL_OPTIONS = [
   { group: 'Claude', models: ['opus', 'sonnet', 'haiku'] },
@@ -794,7 +795,7 @@ export default function AgentInspector({ nodes, onUpdateNode }) {
       )}
 
       {/* Open Terminal button — only when agent has an active session */}
-      {selectedNode?.id && agentState?.spawnMode !== 'stream-json' && (agentState?.sessionId || activeExecutionId) && (
+      {selectedNode?.id && !isStructuredSpawnMode(agentState?.spawnMode) && (agentState?.sessionId || activeExecutionId) && (
         <button
           onClick={() => setPtyExplosionNodeId(selectedNode.id)}
           className="w-full text-xs px-2 py-1.5 rounded bg-indigo-700 hover:bg-indigo-600 text-white transition-colors flex items-center gap-1.5"

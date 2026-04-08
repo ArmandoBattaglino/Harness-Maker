@@ -12,6 +12,11 @@ import os from 'os';
 import path from 'path';
 import HandoffParser from './HandoffParser.js';
 import StreamJsonParser from './StreamJsonParser.js';
+import {
+  createCodexSdkClient,
+  normalizeCodexSdkItem,
+  runCodexSdkTurnStreamed,
+} from './CodexSdkAdapter.js';
 import { discoverCodexBinary, discoverGeminiBinary } from './BinaryDiscovery.js';
 import { ChatExtractor } from './ChatExtractor.js';
 import { buildWorkflowArtifact } from './WorkflowArtifactBuilder.js';
@@ -42,12 +47,39 @@ const DEFAULT_SWARM_CLAUDE_TOOLS = ['Bash', 'Read', 'Edit', 'Write', 'Grep', 'Gl
 const DEFAULT_SWARM_CLAUDE_MODEL = 'opus';
 const DEFAULT_SWARM_CODEX_MODEL = 'gpt-5.4';
 const DEFAULT_SWARM_GEMINI_MODEL = 'gemini-2.5-pro';
+const STRUCTURED_SPAWN_MODE = {
+  STREAM_JSON: 'stream-json',
+  CODEX_SDK: 'codex-sdk',
+};
+const STRUCTURED_SPAWN_MODES = new Set(Object.values(STRUCTURED_SPAWN_MODE));
 const RUNTIME_PROVIDER = {
   AUTO: 'auto',
   CLAUDE: 'claude',
   CODEX: 'codex',
   GEMINI: 'gemini',
 };
+
+function isStructuredSpawnMode(mode = null) {
+  return STRUCTURED_SPAWN_MODES.has(mode);
+}
+
+function getTextDelta(previousText = '', nextText = '') {
+  const previous = String(previousText ?? '');
+  const next = String(nextText ?? '');
+  if (!next) return '';
+  if (!previous) return next;
+  return next.startsWith(previous) ? next.slice(previous.length) : next;
+}
+
+function safeJsonStringify(value) {
+  if (value == null) return '';
+  if (typeof value === 'string') return value;
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+}
 // Curated runtime model registry.
 // These are the only explicit provider models that Swarm will advertise,
 // accept from the UI, or auto-select during recovery on this installation.
@@ -636,6 +668,11 @@ class SwarmEngine {
 
     this._executionHistoryStore = null; // set via setExecutionHistoryStore()
     this._persistedHistoryIds = new Set(); // guard against duplicate history writes
+    this._codexSdkFactory = {
+      createClient: createCodexSdkClient,
+      runTurnStreamed: runCodexSdkTurnStreamed,
+      normalizeItem: normalizeCodexSdkItem,
+    };
   }
 
   /**
@@ -666,6 +703,28 @@ class SwarmEngine {
     this._executionHistoryStore = store;
   }
 
+  _isStructuredAgentState(state = null) {
+    return isStructuredSpawnMode(state?.spawnMode);
+  }
+
+  _isCodexSdkAgentState(state = null) {
+    return state?.spawnMode === STRUCTURED_SPAWN_MODE.CODEX_SDK;
+  }
+
+  _clearCodexSdkAbortController(state = null) {
+    if (!state?._codexSdkAbortController) return;
+    state._codexSdkAbortController = null;
+  }
+
+  _collectStructuredAssistantText(itemSnapshots = null) {
+    if (!(itemSnapshots instanceof Map) || itemSnapshots.size === 0) return '';
+    return [...itemSnapshots.values()]
+      .filter((item) => item?.kind === 'agent_message' && item.text)
+      .map((item) => item.text)
+      .join('\n\n')
+      .trim();
+  }
+
   _serializeAgentState(state = {}) {
     return {
       sessionId: state.sessionId ?? null,
@@ -677,12 +736,15 @@ class SwarmEngine {
       lastModelFallback: state.lastModelFallback ?? null,
       ...(state.runtimeBlocker ? { runtimeBlocker: { ...state.runtimeBlocker } } : {}),
       // Stream-json specific fields (DEC-027)
-      ...(state.spawnMode === 'stream-json' ? {
-        spawnMode: 'stream-json',
+      ...(this._isStructuredAgentState(state) ? {
+        spawnMode: state.spawnMode,
         turnCount: state.turnCount ?? 0,
         totalCostUsd: state.totalCostUsd ?? 0,
         totalInputTokens: state.totalInputTokens ?? 0,
         totalOutputTokens: state.totalOutputTokens ?? 0,
+        ...(state.spawnMode === STRUCTURED_SPAWN_MODE.CODEX_SDK
+          ? { totalCachedInputTokens: state.totalCachedInputTokens ?? 0 }
+          : {}),
       } : {}),
     };
   }
@@ -811,7 +873,7 @@ class SwarmEngine {
     if (!execution) return null;
 
     const state = execution.agentStates.get(nodeId);
-    if (!state || state.spawnMode !== 'stream-json') return null;
+    if (!state || state.spawnMode !== STRUCTURED_SPAWN_MODE.STREAM_JSON) return null;
 
     this._clearStreamJsonPostResultTimer(state);
 
@@ -840,7 +902,7 @@ class SwarmEngine {
     if (!execution) return null;
 
     const state = execution.agentStates.get(nodeId);
-    if (!state || state.spawnMode !== 'stream-json') return null;
+    if (!state || state.spawnMode !== STRUCTURED_SPAWN_MODE.STREAM_JSON) return null;
 
     const previousSessionId = state.streamJsonSessionId ?? null;
     await this._forceStopStreamJsonAgent(executionId, nodeId);
@@ -864,9 +926,100 @@ class SwarmEngine {
     state._awaitingStreamJsonClose = false;
     state._streamJsonAccumulatedText = '';
     state.status = 'idle';
+    if (execution.runtimeBlocker?.nodeId === nodeId) {
+      execution.runtimeBlocker = null;
+    }
+
+    this._broadcastAgentStatus(executionId, nodeId, state);
+    const hasActiveAgents = [...execution.agentStates.values()].some(
+      (agentState) => ['running', 'paused', 'blocked'].includes(agentState?.status)
+    );
+    const hasAnyRuntimeBlockers =
+      Boolean(execution.runtimeBlocker)
+      || [...execution.agentStates.values()].some((agentState) => Boolean(agentState?.runtimeBlocker));
+
+    if (!hasActiveAgents && !hasAnyRuntimeBlockers) {
+      this._setExecutionStatus(execution, 'idle');
+    } else {
+      this._syncExecutionStatusFromAgents(execution);
+    }
+    return this.getStatus(executionId, execution);
+  }
+
+  async _forceStopCodexSdkAgent(executionId, nodeId) {
+    const execution = this._executions.get(executionId);
+    if (!execution) return null;
+
+    const state = execution.agentStates.get(nodeId);
+    if (!this._isCodexSdkAgentState(state)) return null;
+
+    state.doNotSpawnNextTurn = false;
+    state._pendingCodexSdkStopMode = 'forced';
+    state.currentToolUse = null;
+    state.isThinking = false;
+    state.needsRepair = true;
+    state.status = 'stopped';
+    state._codexSdkAssistantText = '';
+    state._codexSdkItemSnapshots = new Map();
+
+    if (state._codexSdkAbortController && !state._codexSdkAbortController.signal.aborted) {
+      state._codexSdkAbortController.abort();
+    }
 
     this._broadcastAgentStatus(executionId, nodeId, state);
     this._syncExecutionStatusFromAgents(execution);
+    return this.getStatus(executionId, execution);
+  }
+
+  async _resetCodexSdkAgent(executionId, nodeId) {
+    const execution = this._executions.get(executionId);
+    if (!execution) return null;
+
+    const state = execution.agentStates.get(nodeId);
+    if (!this._isCodexSdkAgentState(state)) return null;
+
+    const previousThreadId = state.codexThreadId ?? null;
+    await this._forceStopCodexSdkAgent(executionId, nodeId);
+
+    state._lastResetArchive = previousThreadId
+      ? {
+        threadId: previousThreadId,
+        archivedAt: new Date().toISOString(),
+      }
+      : null;
+    state.codexThreadId = null;
+    state.turnCount = 0;
+    state.totalCostUsd = 0;
+    state.totalInputTokens = 0;
+    state.totalOutputTokens = 0;
+    state.totalCachedInputTokens = 0;
+    state.lastOutputSnippet = '';
+    state.runtimeBlocker = null;
+    state.currentToolUse = null;
+    state.isThinking = false;
+    state.needsRepair = false;
+    state.doNotSpawnNextTurn = false;
+    state._pendingCodexSdkStopMode = null;
+    state._codexSdkAssistantText = '';
+    state._codexSdkItemSnapshots = new Map();
+    state.status = 'idle';
+    if (execution.runtimeBlocker?.nodeId === nodeId) {
+      execution.runtimeBlocker = null;
+    }
+
+    this._broadcastAgentStatus(executionId, nodeId, state);
+    const hasActiveAgents = [...execution.agentStates.values()].some(
+      (agentState) => ['running', 'paused', 'blocked'].includes(agentState?.status)
+    );
+    const hasAnyRuntimeBlockers =
+      Boolean(execution.runtimeBlocker)
+      || [...execution.agentStates.values()].some((agentState) => Boolean(agentState?.runtimeBlocker));
+
+    if (!hasActiveAgents && !hasAnyRuntimeBlockers) {
+      this._setExecutionStatus(execution, 'idle');
+    } else {
+      this._syncExecutionStatusFromAgents(execution);
+    }
     return this.getStatus(executionId, execution);
   }
 
@@ -875,10 +1028,31 @@ class SwarmEngine {
     if (!execution) return null;
 
     const state = execution.agentStates.get(nodeId);
-    if (!state || state.spawnMode !== 'stream-json') return null;
+    if (!state || !this._isStructuredAgentState(state)) return null;
 
     if (!['graceful', 'forced', 'reset'].includes(mode)) {
       throw new Error(`Unsupported stream-json stop mode '${mode}'`);
+    }
+
+    if (this._isCodexSdkAgentState(state)) {
+      if (mode === 'graceful') {
+        state.doNotSpawnNextTurn = true;
+        state._pendingCodexSdkStopMode = 'graceful';
+        if (state.status !== 'running' || !state._codexSdkAbortController) {
+          state.doNotSpawnNextTurn = false;
+          state._pendingCodexSdkStopMode = null;
+          state.status = 'paused';
+        }
+        this._broadcastAgentStatus(executionId, nodeId, state);
+        this._syncExecutionStatusFromAgents(execution);
+        return this.getStatus(executionId, execution);
+      }
+
+      if (mode === 'forced') {
+        return this._forceStopCodexSdkAgent(executionId, nodeId);
+      }
+
+      return this._resetCodexSdkAgent(executionId, nodeId);
     }
 
     if (mode === 'graceful') {
@@ -3194,7 +3368,7 @@ class SwarmEngine {
     // sessions. If Claude returns a terminal error result, falling across to a
     // different runtime mid-turn is not execution-coherent yet; block truthfully
     // instead of spawning a contaminated replacement session.
-    if (state.spawnMode === 'stream-json') return false;
+    if (this._isStructuredAgentState(state)) return false;
 
     const currentProvider = state.provider;
     const blockerProvider = blocker.provider;
@@ -4097,8 +4271,523 @@ class SwarmEngine {
       return this._spawnAgentStreamJson(executionId, nodeId, nextSpawnOptions);
     }
 
+    if (effectiveProvider === RUNTIME_PROVIDER.CODEX) {
+      const forceCodexSdk = nextSpawnOptions.forceCodexSdk === true || this._codexSdkFactory?.forceEnabled === true;
+      const codexBinHint = this._sessionManager?.codexBin ?? null;
+      if (!forceCodexSdk && codexBinHint && !fs.existsSync(codexBinHint)) {
+        return this._spawnAgentPty(executionId, nodeId, nextSpawnOptions);
+      }
+      if (configuredModel && isSupportedRuntimeModel(RUNTIME_PROVIDER.CODEX, configuredModel)) {
+        nextSpawnOptions.requestedModel = configuredModel;
+      }
+      return this._spawnAgentCodexSdk(executionId, nodeId, nextSpawnOptions);
+    }
+
     // [STREAM-JSON-MIGRATION] All other providers use the PTY path.
     return this._spawnAgentPty(executionId, nodeId, nextSpawnOptions);
+  }
+
+  async _spawnAgentCodexSdk(executionId, nodeId, spawnOptions = {}) {
+    const execution = this._executions.get(executionId);
+    if (!execution) throw new Error(`Execution ${executionId} not found`);
+
+    const node = execution.workflowDef.nodes.find((candidate) => candidate.id === nodeId);
+    if (!node) throw new Error(`Node ${nodeId} not found in workflow`);
+
+    const handoffTargets = execution.workflowDef.edges
+      .filter((edge) => edge.source === nodeId)
+      .map((edge) => edge.target);
+
+    const runtimeModels = execution.workflowDef?.settings?.runtimeModels;
+    const requestedModel = String(
+      spawnOptions.requestedModel
+      ?? node.data?.model
+      ?? ''
+    ).trim();
+    const modelOverride = runtimeModels?.[RUNTIME_PROVIDER.CODEX];
+    const model = (requestedModel && isSupportedRuntimeModel(RUNTIME_PROVIDER.CODEX, requestedModel))
+      ? requestedModel
+      : getDefaultRuntimeModel(
+        RUNTIME_PROVIDER.CODEX,
+        modelOverride || process.env.SWARM_CODEX_MODEL
+      );
+
+    const previousState = execution.agentStates.get(nodeId) ?? null;
+    const previousSessionId = previousState?.sessionId ?? null;
+    const previousTapFn = previousState?.tapFn ?? null;
+    const previousThreadId = previousState?.codexThreadId ?? null;
+    const compactCodexPrompt = spawnOptions.compactCodexPrompt !== false;
+    const prompt = spawnOptions.reinjectPrompt ?? this._buildSystemPrompt(
+      node,
+      execution.workflowContext,
+      handoffTargets,
+      RUNTIME_PROVIDER.CODEX,
+      {
+        ...spawnOptions,
+        compactCodexPrompt,
+        inboundHandoffs: this._getInboundHandoffsForTarget
+          ? this._getInboundHandoffsForTarget(execution, nodeId)
+          : [],
+      }
+    );
+
+    this._chatExtractor.registerNodePrompt(nodeId, prompt);
+    if (execution.workflowContext?.currentTask) {
+      this._chatExtractor.registerNodePrompt(nodeId, execution.workflowContext.currentTask);
+    }
+
+    try {
+      const codexBin = await this._resolveRuntimeProviderBinary(RUNTIME_PROVIDER.CODEX);
+      const forceCodexSdk = spawnOptions.forceCodexSdk === true || this._codexSdkFactory?.forceEnabled === true;
+      if (!forceCodexSdk && !fs.existsSync(codexBin)) {
+        console.warn(`[SwarmEngine] Codex SDK skipped for ${nodeId}; binary path does not exist: ${codexBin}`);
+        return this._spawnAgentPty(executionId, nodeId, {
+          ...spawnOptions,
+          requestedProvider: RUNTIME_PROVIDER.CODEX,
+        });
+      }
+      const client = this._codexSdkFactory.createClient({
+        codexPath: codexBin,
+      });
+      const abortController = new AbortController();
+      const { thread, events } = await this._codexSdkFactory.runTurnStreamed({
+        client,
+        input: prompt,
+        threadId: previousThreadId,
+        threadOptions: {
+          model: model || DEFAULT_SWARM_CODEX_MODEL,
+          workingDirectory: execution.projectPath || process.cwd(),
+          skipGitRepoCheck: true,
+          approvalPolicy: 'never',
+          sandboxMode: 'workspace-write',
+        },
+        turnOptions: {
+          signal: abortController.signal,
+        },
+      });
+
+      const state = {
+        ...(previousState ?? {}),
+        codexThreadId: thread?.id ?? previousThreadId ?? null,
+        sessionId: null,
+        tapFn: null,
+        spawnMode: STRUCTURED_SPAWN_MODE.CODEX_SDK,
+        status: 'running',
+        provider: RUNTIME_PROVIDER.CODEX,
+        runtimeProvider: RUNTIME_PROVIDER.CODEX,
+        runtimeBlocker: null,
+        turnCount: previousState?.turnCount ?? 0,
+        totalCostUsd: previousState?.totalCostUsd ?? 0,
+        totalInputTokens: previousState?.totalInputTokens ?? 0,
+        totalOutputTokens: previousState?.totalOutputTokens ?? 0,
+        totalCachedInputTokens: previousState?.totalCachedInputTokens ?? 0,
+        doNotSpawnNextTurn: previousState?.doNotSpawnNextTurn ?? false,
+        _pendingCodexSdkStopMode: null,
+        needsRepair: false,
+        currentToolUse: null,
+        isThinking: false,
+        handoffCount: previousState?.handoffCount ?? 0,
+        lastOutputSnippet: previousState?.lastOutputSnippet ?? '',
+        doneReinjectCount: previousState?.doneReinjectCount ?? 0,
+        _codexSdkClient: client,
+        _codexSdkThread: thread,
+        _codexSdkAbortController: abortController,
+        _codexSdkItemSnapshots: new Map(),
+        _codexSdkAssistantText: '',
+        _structuredRuntimeKind: STRUCTURED_SPAWN_MODE.CODEX_SDK,
+        _agentSystemPrompt: (node.data && node.data.systemPrompt) || '',
+        _agentFullPrompt: prompt || '',
+        spawnedAt: previousState?.spawnedAt ?? Date.now(),
+        lastForwardProgressAt: Date.now(),
+        lastForwardProgressReason: 'spawn',
+      };
+
+      execution.activeProvider = RUNTIME_PROVIDER.CODEX;
+      execution.runtimeProvider = RUNTIME_PROVIDER.CODEX;
+      execution.providerStrategy = {
+        ...execution.providerStrategy,
+        activeProvider: RUNTIME_PROVIDER.CODEX,
+      };
+      execution.agentStates.set(nodeId, state);
+
+      const shouldReplaceCurrentSession = spawnOptions.fallbackFrom != null || spawnOptions.replaceCurrentSession === true;
+      if (shouldReplaceCurrentSession && previousSessionId) {
+        if (previousTapFn) {
+          const previousSession = this._sessionManager.getSession(previousSessionId);
+          previousSession?.swarmListeners?.delete(previousTapFn);
+        }
+        await this._sessionManager.killSession(previousSessionId);
+      }
+
+      if (spawnOptions.fallbackFrom && previousState?.provider !== RUNTIME_PROVIDER.CODEX && this._wsBroadcast) {
+        execution.lastFallback = {
+          fromProvider: spawnOptions.fallbackFrom,
+          toProvider: RUNTIME_PROVIDER.CODEX,
+          reason: spawnOptions.fallbackReason ?? 'provider_fallback',
+          nodeId,
+          detectedAt: new Date().toISOString(),
+        };
+        this._wsBroadcast(executionId, {
+          type: 'runtime_provider_switch',
+          nodeId,
+          fromProvider: spawnOptions.fallbackFrom,
+          toProvider: RUNTIME_PROVIDER.CODEX,
+          reason: spawnOptions.fallbackReason ?? 'provider_fallback',
+        });
+      }
+
+      this._broadcastAgentStatus(executionId, nodeId, state);
+      this._syncExecutionStatusFromAgents(execution);
+
+      void this._consumeCodexSdkEvents(executionId, nodeId, events);
+      return;
+    } catch (error) {
+      console.warn(`[SwarmEngine] Codex SDK spawn/setup failed for ${nodeId}; falling back to PTY: ${error.message}`);
+      return this._spawnAgentPty(executionId, nodeId, {
+        ...spawnOptions,
+        requestedProvider: RUNTIME_PROVIDER.CODEX,
+      });
+    }
+  }
+
+  async _consumeCodexSdkEvents(executionId, nodeId, events) {
+    try {
+      for await (const event of events) {
+        const execution = this._executions.get(executionId);
+        const state = execution?.agentStates.get(nodeId);
+        if (!execution || !state) return;
+
+        if (event.type === 'thread.started' && event.thread_id) {
+          state.codexThreadId = event.thread_id;
+          continue;
+        }
+
+        if (event.type === 'item.started') {
+          this._applyCodexSdkItemEvent(executionId, nodeId, event.item, 'started');
+          continue;
+        }
+
+        if (event.type === 'item.updated') {
+          this._applyCodexSdkItemEvent(executionId, nodeId, event.item, 'updated');
+          continue;
+        }
+
+        if (event.type === 'item.completed') {
+          this._applyCodexSdkItemEvent(executionId, nodeId, event.item, 'completed');
+          continue;
+        }
+
+        if (event.type === 'turn.completed') {
+          await this._handleCodexSdkTurnCompleted(executionId, nodeId, event.usage);
+          return;
+        }
+
+        if (event.type === 'turn.failed') {
+          await this._handleCodexSdkTurnFailure(executionId, nodeId, event.error);
+          return;
+        }
+
+        if (event.type === 'error') {
+          await this._handleCodexSdkTurnFailure(executionId, nodeId, event);
+          return;
+        }
+      }
+    } catch (error) {
+      await this._handleCodexSdkTurnFailure(executionId, nodeId, error);
+    } finally {
+      const execution = this._executions.get(executionId);
+      const state = execution?.agentStates.get(nodeId);
+      if (!state) return;
+
+      this._clearCodexSdkAbortController(state);
+
+      if (state.isThinking) {
+        state.isThinking = false;
+        if (this._wsBroadcast) {
+          this._wsBroadcast(executionId, {
+            type: 'agent_thinking',
+            nodeId,
+            active: false,
+          });
+        }
+      }
+
+      state.currentToolUse = null;
+      state._codexSdkThread = null;
+    }
+  }
+
+  _applyCodexSdkItemEvent(executionId, nodeId, rawItem, phase = 'updated') {
+    const execution = this._executions.get(executionId);
+    const state = execution?.agentStates.get(nodeId);
+    if (!execution || !state) return;
+
+    const normalizeItem = this._codexSdkFactory?.normalizeItem ?? normalizeCodexSdkItem;
+    const item = normalizeItem(rawItem);
+    const itemSnapshots = state._codexSdkItemSnapshots instanceof Map
+      ? state._codexSdkItemSnapshots
+      : new Map();
+    state._codexSdkItemSnapshots = itemSnapshots;
+
+    const snapshotKey = item.id ?? `${item.kind}:${phase}`;
+    const previousItem = itemSnapshots.get(snapshotKey) ?? null;
+    itemSnapshots.set(snapshotKey, item);
+
+    if (item.kind === 'agent_message') {
+      const delta = getTextDelta(previousItem?.text, item.text);
+      if (delta) {
+        this._markAgentProgress(execution, nodeId, state, 'meaningful_output');
+        if (this._wsBroadcast) {
+          this._wsBroadcast(executionId, {
+            type: 'chat_message',
+            nodeId,
+            role: 'assistant',
+            text: delta,
+            timestamp: Date.now(),
+            spawnMode: STRUCTURED_SPAWN_MODE.CODEX_SDK,
+          });
+        }
+        this._chatExtractor.feed(executionId, nodeId, delta);
+      }
+
+      state._codexSdkAssistantText = this._collectStructuredAssistantText(itemSnapshots);
+      state.lastOutputSnippet = state._codexSdkAssistantText.length > 200
+        ? state._codexSdkAssistantText.slice(-200)
+        : state._codexSdkAssistantText;
+      this._broadcastAgentStatus(executionId, nodeId, state);
+      return;
+    }
+
+    if (item.kind === 'reasoning') {
+      if (!state.isThinking) {
+        state.isThinking = true;
+        if (this._wsBroadcast) {
+          this._wsBroadcast(executionId, {
+            type: 'agent_thinking',
+            nodeId,
+            active: true,
+          });
+        }
+      }
+
+      if (phase === 'completed') {
+        state.isThinking = false;
+        if (this._wsBroadcast) {
+          this._wsBroadcast(executionId, {
+            type: 'agent_thinking',
+            nodeId,
+            active: false,
+          });
+        }
+      }
+      return;
+    }
+
+    if (item.kind === 'command_execution') {
+      if (!previousItem && this._wsBroadcast) {
+        this._wsBroadcast(executionId, {
+          type: 'agent_tool_use',
+          nodeId,
+          toolName: 'command_execution',
+          toolUseId: item.id ?? '',
+        });
+      }
+
+      const outputDelta = getTextDelta(previousItem?.aggregatedOutput, item.aggregatedOutput);
+      const payload = [
+        !previousItem && item.command ? `$ ${item.command}` : '',
+        outputDelta,
+      ].filter(Boolean).join('\n');
+
+      if (payload && this._wsBroadcast) {
+        this._markAgentProgress(execution, nodeId, state, 'tool_progress');
+        this._wsBroadcast(executionId, {
+          type: 'agent_tool_delta',
+          nodeId,
+          toolUseId: item.id ?? '',
+          partialJson: payload,
+        });
+      }
+
+      state.currentToolUse = phase === 'completed'
+        ? null
+        : { toolName: 'command_execution', toolUseId: item.id ?? '' };
+      return;
+    }
+
+    if (item.kind === 'mcp_tool_call' || item.kind === 'web_search' || item.kind === 'file_change') {
+      const toolName = item.kind === 'mcp_tool_call'
+        ? (item.toolName || 'mcp_tool_call')
+        : item.kind;
+
+      if (!previousItem && this._wsBroadcast) {
+        this._wsBroadcast(executionId, {
+          type: 'agent_tool_use',
+          nodeId,
+          toolName,
+          toolUseId: item.id ?? '',
+        });
+      }
+
+      const previousPayload = item.kind === 'mcp_tool_call'
+        ? [safeJsonStringify(previousItem?.arguments), safeJsonStringify(previousItem?.result), previousItem?.error ?? ''].filter(Boolean).join('\n')
+        : safeJsonStringify(previousItem?.changes ?? previousItem?.query ?? '');
+      const nextPayload = item.kind === 'mcp_tool_call'
+        ? [safeJsonStringify(item.arguments), safeJsonStringify(item.result), item.error ?? ''].filter(Boolean).join('\n')
+        : safeJsonStringify(item.changes ?? item.query ?? '');
+      const payloadDelta = getTextDelta(previousPayload, nextPayload);
+
+      if (payloadDelta && this._wsBroadcast) {
+        this._markAgentProgress(execution, nodeId, state, 'tool_progress');
+        this._wsBroadcast(executionId, {
+          type: 'agent_tool_delta',
+          nodeId,
+          toolUseId: item.id ?? '',
+          partialJson: payloadDelta,
+        });
+      }
+
+      state.currentToolUse = phase === 'completed'
+        ? null
+        : { toolName, toolUseId: item.id ?? '' };
+      return;
+    }
+
+    if (item.kind === 'error' && item.message) {
+      state.lastOutputSnippet = item.message;
+      this._broadcastAgentStatus(executionId, nodeId, state);
+    }
+  }
+
+  async _handleCodexSdkTurnCompleted(executionId, nodeId, usage = null) {
+    const execution = this._executions.get(executionId);
+    if (!execution) return;
+
+    const state = execution.agentStates.get(nodeId);
+    if (!state) return;
+
+    state.turnCount = (state.turnCount ?? 0) + 1;
+
+    const cachedInputTokens = usage?.cached_input_tokens ?? 0;
+    const inputTokens = Math.max((usage?.input_tokens ?? 0) - cachedInputTokens, 0);
+    const outputTokens = usage?.output_tokens ?? 0;
+
+    state.totalInputTokens = (state.totalInputTokens ?? 0) + inputTokens;
+    state.totalOutputTokens = (state.totalOutputTokens ?? 0) + outputTokens;
+    state.totalCachedInputTokens = (state.totalCachedInputTokens ?? 0) + cachedInputTokens;
+
+    if (this._wsBroadcast) {
+      this._wsBroadcast(executionId, {
+        type: 'agent_cost',
+        nodeId,
+        inputTokens,
+        outputTokens,
+        costUsd: 0,
+        cacheReadTokens: cachedInputTokens,
+        cacheWriteTokens: 0,
+        durationMs: 0,
+        totalInputTokens: state.totalInputTokens,
+        totalOutputTokens: state.totalOutputTokens,
+        totalCostUsd: state.totalCostUsd ?? 0,
+      });
+    }
+
+    if (state.isThinking) {
+      state.isThinking = false;
+      if (this._wsBroadcast) {
+        this._wsBroadcast(executionId, {
+          type: 'agent_thinking',
+          nodeId,
+          active: false,
+        });
+      }
+    }
+    state.currentToolUse = null;
+
+    const gracefulStopPending = state._pendingCodexSdkStopMode === 'graceful' || state.doNotSpawnNextTurn;
+    if (gracefulStopPending) {
+      state.doNotSpawnNextTurn = false;
+      state._pendingCodexSdkStopMode = null;
+      state.status = 'paused';
+      state._codexSdkAssistantText = '';
+      state._codexSdkItemSnapshots = new Map();
+      this._broadcastAgentStatus(executionId, nodeId, state);
+      this._syncExecutionStatusFromAgents(execution);
+      return;
+    }
+
+    const accumulatedText = state._codexSdkAssistantText || this._collectStructuredAssistantText(state._codexSdkItemSnapshots);
+    const tokenParser = new HandoffParser();
+    const tokenEvents = tokenParser.feed(accumulatedText);
+    let foundHandoff = false;
+    let foundDone = false;
+
+    for (const event of tokenEvents) {
+      if (event.type === 'handoff') {
+        foundHandoff = true;
+        await this._onHandoff(executionId, nodeId, event);
+        break;
+      }
+      if (event.type === 'done') {
+        foundDone = true;
+      }
+    }
+
+    if (!foundHandoff) {
+      if (foundDone) {
+        this._onDone(executionId, nodeId);
+      } else {
+        this._onDone(executionId, nodeId);
+      }
+    }
+
+    state._codexSdkAssistantText = '';
+    state._codexSdkItemSnapshots = new Map();
+  }
+
+  async _handleCodexSdkTurnFailure(executionId, nodeId, errorLike = null) {
+    const execution = this._executions.get(executionId);
+    if (!execution) return;
+
+    const state = execution.agentStates.get(nodeId);
+    if (!state) return;
+
+    if (state._pendingCodexSdkStopMode === 'forced' || state._pendingCodexSdkStopMode === 'reset') {
+      state._pendingCodexSdkStopMode = null;
+      return;
+    }
+
+    const message = String(
+      errorLike?.message
+      ?? errorLike?.error?.message
+      ?? 'Codex SDK turn failed before the swarm agent could continue.'
+    ).trim();
+
+    state.needsRepair = true;
+    state.currentToolUse = null;
+    if (state.isThinking && this._wsBroadcast) {
+      this._wsBroadcast(executionId, {
+        type: 'agent_thinking',
+        nodeId,
+        active: false,
+      });
+    }
+    state.isThinking = false;
+
+    const detectedBlocker = this._detectPatternBlocker(
+      [message, state._codexSdkAssistantText ?? ''].filter(Boolean).join('\n'),
+      RUNTIME_PROVIDER.CODEX
+    ) ?? {
+      type: 'provider_unavailable',
+      provider: RUNTIME_PROVIDER.CODEX,
+      message,
+      detectedAt: new Date().toISOString(),
+    };
+
+    state.lastOutputSnippet = String(detectedBlocker.message ?? message).trim();
+    state._codexSdkAssistantText = '';
+    state._codexSdkItemSnapshots = new Map();
+    await this._handleRuntimeBlocker(executionId, nodeId, detectedBlocker);
   }
 
   // ---------------------------------------------------------------------------
@@ -4642,6 +5331,11 @@ class SwarmEngine {
     if (execution) {
       const existing = execution.agentStates.get(nodeId);
       if (existing && existing.status !== 'done') {
+        if (this._isStructuredAgentState(existing) && ['idle', 'paused', 'waiting'].includes(existing.status)) {
+          await this._spawnAgent(executionId, nodeId, {
+            requestedProvider: existing.provider ?? existing.runtimeProvider ?? execution?.providerStrategy?.mode,
+          });
+        }
         return existing.sessionId;
       }
     }
@@ -5825,7 +6519,7 @@ class SwarmEngine {
     if (state && handoffTargets.length > 0) {
       state.doneReinjectCount = (state.doneReinjectCount ?? 0) + 1;
 
-      if (state.doneReinjectCount <= MAX_DONE_REINJECT_ATTEMPTS && (state.sessionId || state.spawnMode === 'stream-json')) {
+      if (state.doneReinjectCount <= MAX_DONE_REINJECT_ATTEMPTS && (state.sessionId || this._isStructuredAgentState(state))) {
         const reinjectPrompt = this._buildContinueAfterDonePrompt(node, execution.workflowContext, handoffTargets);
         // Register reinject prompt text with ChatExtractor so _isPromptEcho
         // can detect Claude echoing the reinject instructions in its response.
@@ -5834,12 +6528,15 @@ class SwarmEngine {
           this._chatExtractor.registerNodePrompt(nodeId, execution.workflowContext.currentTask);
         }
 
-        // Stream-json agents: spawn a new process with --resume + reinject prompt
-        if (state.spawnMode === 'stream-json') {
+        // Structured runtimes: spawn a new process/turn with the preserved thread/session state.
+        if (this._isStructuredAgentState(state)) {
           state.status = 'running';
           this._broadcastAgentStatus(executionId, nodeId, state);
           this._syncExecutionStatusFromAgents(execution);
-          this._spawnAgentStreamJson(executionId, nodeId, { reinjectPrompt });
+          this._spawnAgent(executionId, nodeId, {
+            requestedProvider: state.provider ?? state.runtimeProvider ?? execution.activeProvider,
+            reinjectPrompt,
+          });
           return;
         }
 
@@ -5948,8 +6645,8 @@ class SwarmEngine {
       }
       this._clearStreamJsonPostResultTimer(state);
       this._clearSubWorkflowPollHandle(state);
-      // Kill stream-json child processes (DEC-027)
-      if (state.spawnMode === 'stream-json' && state._streamJsonChild) {
+      // Kill structured runtime workers (DEC-027 and Codex SDK migration)
+      if (state.spawnMode === STRUCTURED_SPAWN_MODE.STREAM_JSON && state._streamJsonChild) {
         const child = state._streamJsonChild;
         state._streamJsonChild = null;
         if (child.pid && !child.killed) {
@@ -5957,6 +6654,10 @@ class SwarmEngine {
             if (err) console.warn(`[SwarmEngine] tree-kill stream-json warning: ${err.message}`);
           });
         }
+      }
+      if (this._isCodexSdkAgentState(state) && state._codexSdkAbortController && !state._codexSdkAbortController.signal.aborted) {
+        state._pendingCodexSdkStopMode = 'forced';
+        state._codexSdkAbortController.abort();
       }
     }
 
@@ -5995,6 +6696,8 @@ class SwarmEngine {
       state.sessionId = null;
       state.tapFn = null;
       state.runtimeBlocker = null;
+      state._pendingCodexSdkStopMode = null;
+      this._clearCodexSdkAbortController(state);
     }
 
     execution.runtimeBlocker = null;
@@ -6053,10 +6756,11 @@ class SwarmEngine {
     if (!execution || execution.status !== 'paused') return null;
     for (const [nodeId, state] of execution.agentStates) {
       if (state.status === 'paused') {
-        if (state.spawnMode === 'stream-json') {
+        if (this._isStructuredAgentState(state)) {
           state.doNotSpawnNextTurn = false;
           state._pendingStreamJsonStopMode = null;
           state._awaitingStreamJsonClose = false;
+          state._pendingCodexSdkStopMode = null;
           await this._spawnAgent(executionId, nodeId, {
             requestedProvider: state.provider ?? state.runtimeProvider ?? execution.activeProvider,
           });

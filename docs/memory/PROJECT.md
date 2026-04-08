@@ -1,7 +1,7 @@
 ﻿# Project: Claude Code Visual Manager
 **Created:** 2026-03-18
 **Last updated:** 2026-04-08
-**Implementation status:** v9.0.0 release metadata synced. V9.0 Stream-JSON Agent Migration CLOSED on 2026-04-08 via TASK #393 PASS. Phase 0 CLOSED, Phase 1 Backend Core CLOSED, Phase 2 FRONTEND CLOSED, and Phase 3 INTEGRATION AND POLISH CLOSED. The debugger-loop mixed-provider fallback follow-up area (#394-#396) was also closed on 2026-04-08 after a truthful browser re-run showed `Claude Reader=Blocked` and `Codex Reporter=Idle` with no fallback contamination. Task numbering extends through #396; 393 tasks are currently registered in `docs/TASK_PLAN.md`, 392 are COMPLETE/PASS, 1 is DEFERRED (#236, ConPTY platform limitation), and 0 are PENDING. PRD v6.0 written. Research complete. Architect analysis done (DEC-027/028/029). Backend verification at 478/478 tests pass; client/root build clean at 500 modules.
+**Implementation status:** v9.0.0 release metadata synced. V9.0 Stream-JSON Agent Migration CLOSED on 2026-04-08 via TASK #393 PASS. Phase 0 CLOSED, Phase 1 Backend Core CLOSED, Phase 2 FRONTEND CLOSED, and Phase 3 INTEGRATION AND POLISH CLOSED. The debugger-loop follow-up fixes #394-#399 also closed on 2026-04-08. V9.1 Codex SDK Swarm Integration CLOSED on 2026-04-08 via TASK #405 PASS: Codex now has an SDK-backed structured runtime path that mirrors the existing Claude stream-json UX while preserving PTY fallback where needed. Task numbering extends through #405; 402 tasks are currently registered in `docs/TASK_PLAN.md`, 401 are COMPLETE/PASS, 1 is DEFERRED (#236, ConPTY platform limitation), and 0 are PENDING. PRD v6.0 written. Research complete. Architect analysis done (DEC-027/028/029). Backend verification at 488/488 tests pass; client build clean at 501 modules.
 
 ## What it is
 A locally-hosted web application that provides a graphical user interface for the Claude Code CLI. It spawns Claude Code processes directly using the user's installed binary and delivers two interaction modes: a live PTY terminal (xterm.js over WebSocket) and a job mode (prompt â†’ formatted Markdown result). It also provides visual editors for agents, skills, and CLAUDE.md files, with multi-project support and session persistence across browser tab closures.
@@ -12,7 +12,7 @@ A locally-hosted web application that provides a graphical user interface for th
 | Runtime | Node.js | 20 LTS | Required for node-pty compatibility |
 | HTTP server | Express | 4.x | REST API + static SPA serving |
 | WebSocket | ws | 8.x | PTY streaming; no transport fallbacks |
-| PTY | node-pty | 1.1.x | Native PTY bridge used by Codex/Gemini/live terminal paths |
+| PTY | node-pty | 1.1.x | Native PTY bridge used by Gemini/live terminal paths and Codex PTY fallback paths |
 | Process kill | tree-kill | latest | Kills full process tree including Claude sub-processes |
 | Atomic writes | write-file-atomic | 5.x | Prevents config/agent/skill file corruption on crash |
 | YAML | js-yaml | 4.x | Agent and skill YAML frontmatter parse/serialize |
@@ -30,6 +30,7 @@ A locally-hosted web application that provides a graphical user interface for th
 | Canvas / flow | @xyflow/react | 12.x | V3 swarm canvas â€” node/edge graph rendering. ReactFlow + custom node/edge types. |
 | Client state | zustand | 4.x | V3 execution store â€” fine-grained subscription for live swarm state (DEC-011). useSwarmStore in SwarmContext.jsx. |
 | Claude API | @anthropic-ai/sdk | latest | V3 Prompt-to-Flow scaffold endpoint â€” calls claude-haiku-4-5-20251001 to generate workflow JSON. |
+| Codex SDK | @openai/codex-sdk | latest | V9.1 structured Codex thread/run control for Swarm executions |
 
 ## Core Goals (from PRD)
 - Live PTY terminal in browser connected to real Claude Code process (session starts < 2s)

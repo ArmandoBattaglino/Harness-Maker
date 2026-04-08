@@ -9,6 +9,7 @@
 
 ---
 
+
 ## 2026-04-08 — code-mapper — BUG-AUTO-ROUTING: Code map update
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md _spawnAgent entry to reflect three-tier provider resolution (explicit > model-based > strategy-based via providerStrategy.activeProvider). Appended CHANGELOG.md entry for the AUTO routing fix. 39 test updates documented.
@@ -5065,4 +5066,35 @@ full self-contained context and acceptance criteria.
 **Decisions made:** Verdict PASS with bugs — core goal achieved but UX is visibly broken for all Claude swarms
 **Blockers:** none
 **Next:** Route BUG-DL-01/02/03 to debugger-loop Phase 2 bulk bug → task plan
+---
+
+## 2026-04-08 — debugger/qa-tester — Task #399: stream-json reset blocker truthfulness fix
+**Outcome:** COMPLETED
+**Summary:** Re-ran the latest stream-json swarm workflow on isolated server `http://127.0.0.1:3320` using `ZZ Debugger Loop Stream-JSON Mixed E2E` in project `Prova`. Reproduced a real reset bug: after Claude hit a truthful blocker, `Reset Session` returned the blocked node to `Idle` but left the execution globally `Blocked`, so the blocker banner and stop-state controls stayed visible. Root cause was stale execution-level blocker state in `_resetStreamJsonAgent`. The fix now clears `execution.runtimeBlocker` for the resetting node and restores the execution to `idle` when no active agents/blockers remain. Browser retest confirmed the full `Run -> Blocked -> Reset Session` path now returns the swarm to a truthful idle toolbar state.
+**Files changed:** server/services/SwarmEngine.js, server/tests/swarm-engine.test.js, docs/TASK_PLAN.md, docs/memory/CONTEXT.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** BUG-SJ-RESET-BLOCKER-1 (stale top-level blocked state after stream-json reset)
+**Decisions made:** Treat reset as a whole-execution truthfulness boundary: if the resetting node owned the runtime blocker and no agents/blockers remain afterward, the execution must become `idle` immediately instead of staying globally blocked
+**Blockers:** none
+**Next:** No registered pending task remains; next work is a new planned area or housekeeping/release prep
+---
+## 2026-04-08 — project-manager — V9.1 Codex SDK structured-runtime area registered and closed
+**Outcome:** COMPLETED
+**Summary:** Registered a new `V9.1 CODEX SDK SWARM INTEGRATION` task area (#400-#405) to mirror the completed Claude stream-json migration with a Codex-native structured runtime. The area captures the contract spike, server dependency + adapter foundation, SwarmEngine `codex-sdk` runtime path, backend gate, frontend structured-runtime parity, and final checkpoint. Verification is green: `npm test --prefix server` = 488/488, `npm run build --prefix client` = 501 modules. Plan totals now stand at 402 registered tasks, 401 COMPLETE/PASS, 1 DEFERRED, 0 PENDING.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/CONTEXT.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
+**Bugs fixed:** none (tracking + truthfulness sync for already-implemented Codex SDK integration)
+**Decisions made:** Codex adopts an SDK-backed structured runtime that reuses the existing structured WS/UI contract, with PTY retained as the truthful fallback path where the SDK should not be used.
+**Blockers:** none
+**Next:** Optional live authenticated Codex SDK browser smoke test if we want proof beyond the automated suite; otherwise no planned work remains
+
+---
+
+---
+## 2026-04-08 — debugger — Task #406: BUG-DL-TEXTDELTA-1 — Stream-json text_delta spurious spaces
+**Outcome:** COMPLETED
+**Summary:** Fixed two client-side accumulation bugs causing stream-json text_delta tokens to render with spurious `\n\n` separators between sub-word fragments. (1) SwarmContext.jsx `appendAgentChatText` separator changed from `'\n\n'` to `''`. (2) useSwarm.js `lastChatSnippet` changed from overwrite to accumulate. Build clean, 488/488 tests pass.
+**Files changed:** client/src/store/SwarmContext.jsx, client/src/hooks/useSwarm.js, docs/TASK_PLAN.md
+**Bugs fixed:** BUG-DL-TEXTDELTA-1 (spurious spaces in stream-json output), lastChatSnippet overwrite bug (node card shows only last token)
+**Decisions made:** Empty string separator unconditionally safe because appendAgentChatText is only called from chat_message handler
+**Blockers:** none
+**Next:** QA visual verification of stream-json output fidelity
 ---

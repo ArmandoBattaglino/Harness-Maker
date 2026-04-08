@@ -1299,3 +1299,50 @@ All 478 tests pass. Only test file modified. Routing fix untouched.
 ### Handoff
 None — fix is self-contained.
 ---
+
+---
+## 2026-04-08 — Task #406: BUG-DL-TEXTDELTA-1 — Stream-json text_delta accumulator inserts spurious spaces
+**Status:** COMPLETED
+**Called by:** User (bug task from TASK_PLAN)
+
+### Context when I started
+Stream-json Claude agents were producing corrupted text output where sub-word tokens were separated by `\n\n`. For example, "highWaterMark" appeared as "high\n\nWater\n\nMark" and "tramite" appeared as "tra\n\nmit\n\ne". The bug affected `agentResults.finalText` (used by Output tab and node card snippet) but not the Chat View which has its own merging logic.
+
+### What I did
+1. Read memory files and source files in parallel.
+2. Confirmed the root cause in `SwarmContext.jsx` line 227: `appendAgentChatText()` used `'\n\n'` as separator between every accumulated chunk. For stream-json, each `chat_message` WS event carries a single sub-word token, so this inserted `\n\n` between every token fragment.
+3. Confirmed a secondary bug in `useSwarm.js` line 609: `lastChatSnippet` was set to only the latest `msg.text` (overwrite, not accumulate), meaning the node card showed only the last token fragment.
+4. Verified that `appendAgentChatText` is called ONLY from the `chat_message` handler in useSwarm.js (line 608), so changing the separator to empty string has no PTY-mode side effects.
+5. Applied two fixes: (a) changed separator to `''`, (b) changed lastChatSnippet to accumulate.
+6. Verified: client build clean, 488/488 server tests pass.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/store/SwarmContext.jsx | MODIFIED | Line 227: changed separator from `prev.finalText ? '\n\n' : ''` to `''` — eliminates spurious double-newlines between token fragments |
+| client/src/hooks/useSwarm.js | MODIFIED | Line 609: changed `lastChatSnippet: msg.text` to accumulate previous + current text, so node card shows full output not just last token |
+| docs/TASK_PLAN.md | MODIFIED | Task #406 marked COMPLETED |
+
+### Improvements delivered
+- Stream-json text_delta tokens now concatenate cleanly without spurious separators
+- Node card snippet now shows the full accumulated assistant text, not just the last token fragment
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-DL-TEXTDELTA-1 (main) | appendAgentChatText separator was '\n\n' | Changed to '' | FIXED |
+| lastChatSnippet overwrite | updateAgentState set lastChatSnippet to latest delta only | Changed to accumulate prev + current | FIXED |
+
+### Decisions I made
+- Used empty string separator unconditionally (not conditional on spawnMode) because appendAgentChatText is only called from the chat_message handler, and the text already contains its own whitespace from Claude's tokenizer. No PTY code path calls this function.
+
+### What I learned
+- The `appendAgentChatText` function was designed for PTY mode where each call carries paragraph-sized chunks. When stream-json was added, it was reused without adjusting the separator logic for token-level granularity.
+- `lastChatSnippet` was a simple overwrite (last-wins), which is fine for PTY (large chunks) but breaks for stream-json (tiny tokens).
+
+### State I'm leaving behind
+Both fixes applied. Client build clean, 488/488 server tests pass. No regressions. The Chat View path (ChatPanel.jsx) was already correct — it concatenates with empty string.
+
+### Handoff
+None — task fully self-contained. QA should verify visually that stream-json output no longer has spurious spaces.
+---

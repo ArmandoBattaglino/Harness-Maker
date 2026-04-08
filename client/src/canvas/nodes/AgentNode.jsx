@@ -3,6 +3,7 @@
 import { Handle, Position } from '@xyflow/react';
 import { useSwarmStore } from '../../store/SwarmContext';
 import { stripAnsi } from '../../utils/stripAnsi';
+import { isStructuredSpawnMode } from '../../utils/runtimeModes';
 
 // type: "agent"
 export default function AgentNode({ id, data, selected }) {
@@ -12,7 +13,7 @@ export default function AgentNode({ id, data, selected }) {
   );
   const isDropPreview = Boolean(data?.isDropPreview);
   const status = isDropPreview ? 'preview' : agentState?.status ?? 'idle';
-  const isStreamJson = agentState?.spawnMode === 'stream-json';
+  const isStreamJson = isStructuredSpawnMode(agentState?.spawnMode);
   const showThinking = isStreamJson && status === 'running' && agentState?.isThinking;
   const currentToolName = isStreamJson ? agentState?.currentTool?.toolName : null;
   const totalCostUsd = Number(agentState?.totalCost?.costUsd ?? 0);

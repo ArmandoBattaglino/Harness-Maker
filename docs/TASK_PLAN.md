@@ -4,8 +4,8 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v9.0.0 — task numbering extends through #398; 395 tasks are currently registered in this plan, 394 are COMPLETE/PASS, 1 is DEFERRED, and 0 are PENDING. V8.2 OUTPUT FIDELITY: AREA CLOSED 2026-04-07. V9.0 STREAM-JSON AGENT MIGRATION: Phase 0 CLOSED, Phase 1 BACKEND CORE CLOSED, Phase 2 FRONTEND CLOSED, and Phase 3 INTEGRATION AND POLISH CLOSED through #393 PASS. Debugger-loop mixed-provider fallback follow-up (#394-#396) CLOSED. Debugger-loop handoff provider fix (#397) COMPLETED 2026-04-08. Debugger-loop AUTO routing fix (#398) COMPLETED 2026-04-08. 478 server tests pass, client/root build clean (500 modules).
-  **Active Area:** No registered pending area remains. V9.0 STREAM-JSON AGENT MIGRATION is CLOSED and all debugger-loop follow-ups are CLOSED: #394 COMPLETED, #395 PASS, #396 PASS, #397 COMPLETED (handoff provider bug), #398 COMPLETED (AUTO routing bug). PRD v6.0.
+**Status:** v9.1.1 — task numbering extends through #409; 406 tasks are currently registered in this plan, 402 are COMPLETE/PASS, 1 is DEFERRED, and 3 are PENDING + 1 TEST GATE. V9.1 CODEX SDK SWARM INTEGRATION CLOSED through #405 PASS. 488 server tests pass, client build clean (501 modules).
+  **Active Area:** V9.2 STREAM-JSON DISPLAY FIDELITY — Debugger-loop Phase 1 found 3 bugs in multi-agent E2E: text_delta word splitting (#406 HIGH), stale node state on workflow switch (#407 LOW), cost footer disappears after Completed (#408 LOW). TEST GATE #409.
   **Completed Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 ALL COMPLETED/PASS. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#267 ALL COMPLETED. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave2 NODE CREATION & CONFIG — Tasks #268-#272 ALL COMPLETED. AREA CLOSED 2026-04-06.
@@ -16694,4 +16694,251 @@ Acceptance Criteria:
   - [x] 39 test cases updated to reflect corrected routing behavior
   - [x] 478/478 server tests pass
 Dependencies: TASK #397
+---
+
+## AREA: DEBUGGER LOOP — STREAM-JSON RESET BLOCKER BUG (2026-04-08)
+_Components: SwarmEngine._resetStreamJsonAgent, SwarmView reset-state truthfulness_
+_Tasks: #399_
+_Gate: Standalone bug fix — no downstream tasks depend on this area_
+
+---
+
+TASK #399: BUG-SJ-RESET-BLOCKER-1 — Reset Session leaves the swarm globally blocked after a Claude blocker reset
+Area: DEBUGGER LOOP — STREAM-JSON RESET BLOCKER BUG (2026-04-08)
+Agent: debugger
+Priority: CRITICAL
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Context:
+  Found during debugger-loop retest on 2026-04-08 against isolated server `http://127.0.0.1:3320`
+  using workflow `ZZ Debugger Loop Stream-JSON Mixed E2E` (`c51f8534-5161-47af-bd10-7b6d428d6484`)
+  in project `Prova`.
+  Repro:
+  1. Run the workflow with runtime `Auto`.
+  2. Let Claude hit the truthful stream-json rate-limit blocker (`Claude Reader=Blocked`, `Codex Reporter=Idle`).
+  3. Click `Reset Session`.
+  4. Observe the node returns to `Idle`, but the top-level swarm status stays `Blocked`, the blocker banner remains visible,
+     and the toolbar still shows stop-state controls.
+  Root cause: `_resetStreamJsonAgent` cleared only the resetting node's `runtimeBlocker`, leaving
+  `execution.runtimeBlocker` stale. `_syncExecutionStatusFromAgents()` then kept the execution globally blocked
+  even though no agents were active anymore.
+  Fix applied: `_resetStreamJsonAgent` now clears `execution.runtimeBlocker` when it belongs to the resetting node
+  and restores the execution to `idle` when no active agents or runtime blockers remain. Regression coverage was
+  added to `server/tests/swarm-engine.test.js` for the blocked -> reset lifecycle.
+  Verification:
+  - `npm test --prefix server -- tests/swarm-engine.test.js` PASS (166/166)
+  - `npm test --prefix server -- tests/e2e/stream-json-e2e.test.js` PASS (3/3)
+  - `npm test --prefix server` PASS (478/478)
+  - Browser retest on `http://127.0.0.1:3320`: `Run -> Blocked -> Reset Session` now clears the blocker banner and returns the toolbar to `Run`
+Acceptance Criteria:
+  - [x] Resetting a blocked stream-json node clears the node-level runtime blocker
+  - [x] Resetting a blocked stream-json node clears the execution-level runtime blocker for that node
+  - [x] Execution returns to `idle` when no active agents or blockers remain after reset
+  - [x] Browser repro no longer shows a stale top-level blocker banner after `Reset Session`
+  - [x] Server tests pass
+Dependencies: TASK #398
+---
+
+## AREA: V9.1 CODEX SDK SWARM INTEGRATION (2026-04-08)
+_Components: SDK contract spike, server adapter foundation, SwarmEngine structured runtime, frontend structured-runtime parity_
+_Tasks: #400 to #405_
+_Gate: Codex SDK must coexist with Claude stream-json and PTY fallback without regressions before closure_
+
+---
+
+TASK #400: SPIKE — Map Codex SDK thread/run contract to the existing structured swarm runtime
+Area: V9.1 CODEX SDK SWARM INTEGRATION (2026-04-08)
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Context: Validate whether `@openai/codex-sdk` exposes enough thread/run/event semantics to mirror the existing Claude stream-json UX without inventing a new frontend contract.
+Acceptance Criteria:
+  - [x] Codex SDK thread lifecycle is mapped to the Swarm execution model
+  - [x] Streamed item/event shapes are classified for assistant text, thinking, tools, errors, and usage
+  - [x] A truthful fallback strategy is defined for environments that should stay on PTY
+  - [x] Initial rollout reuses the existing structured WS contract instead of creating a parallel UI contract
+Completion Note: COMPLETED — 2026-04-08 — Confirmed `@openai/codex-sdk` provides `startThread`/`resumeThread` + `runStreamed()` with enough signal to normalize assistant text, reasoning, command execution, MCP tool calls, file changes, search events, errors, and usage into the existing structured swarm contract. The rollout decision is SDK-first for Codex with PTY fallback preserved when the Codex runtime should not or cannot use the SDK path.
+Dependencies: TASK #399
+---
+
+TASK #401: BACKEND FOUNDATION — Add Codex SDK dependency and reusable server adapter
+Area: V9.1 CODEX SDK SWARM INTEGRATION (2026-04-08)
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Context: Add `@openai/codex-sdk`, create a thin adapter for client/thread option building and item normalization, and expose it from the service barrel so SwarmEngine can stay isolated from raw SDK shapes.
+Acceptance Criteria:
+  - [x] `@openai/codex-sdk` is added to server dependencies
+  - [x] A dedicated adapter wraps client/thread setup and item normalization
+  - [x] Service barrel exports the new adapter helpers
+  - [x] Focused adapter tests cover option mapping, thread start/resume, streamed turns, and item normalization
+Completion Note: COMPLETED — 2026-04-08 — Added `@openai/codex-sdk` to `server/package.json`, created `server/services/CodexSdkAdapter.js`, exported the helpers via `server/services/index.js`, and added `server/tests/CodexSdkAdapter.test.js` to lock the wrapper contract.
+Dependencies: TASK #400
+---
+
+TASK #402: BACKEND CORE — Add `_spawnAgentCodexSdk` structured runtime to SwarmEngine
+Area: V9.1 CODEX SDK SWARM INTEGRATION (2026-04-08)
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Context: Route Codex agents through an SDK-backed structured runtime similar to Claude stream-json, with truthful WS events, lifecycle handling, stop/reset/resume behavior, and safe PTY fallback where required.
+Acceptance Criteria:
+  - [x] `_spawnAgent` can route Codex to a dedicated SDK-backed structured path
+  - [x] Codex SDK events are normalized into the existing `agent_status` / `chat_message` / `agent_tool_*` / `agent_thinking` / `agent_cost` WS contract
+  - [x] Structured stop/reset/resume semantics work for `codex-sdk` runtime states
+  - [x] `_serializeAgentState` and status snapshots expose `spawnMode='codex-sdk'` and related token/thread metadata
+  - [x] PTY regression risk is contained with explicit fallback behavior for environments/tests that should stay on PTY
+Completion Note: COMPLETED — 2026-04-08 — SwarmEngine now includes a Codex SDK structured runtime (`_spawnAgentCodexSdk`, streamed event consumption, turn completion/failure handling, structured reset/stop/resume, codex-specific serialization) while preserving a fast PTY fallback for non-SDK paths. New focused backend coverage landed in `server/tests/swarm-engine-codex-sdk.test.js`, and the full server suite is green at 488/488.
+Dependencies: TASK #401
+---
+
+TASK #403: TEST GATE — Codex SDK backend structured-runtime contract
+Area: V9.1 CODEX SDK SWARM INTEGRATION (2026-04-08)
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PASS
+Gate: HARD
+Context: Verify the Codex SDK adapter contract, SwarmEngine structured-runtime behavior, PTY fallback safety, and the full backend regression surface.
+Acceptance Criteria:
+  - [x] Adapter tests pass
+  - [x] Focused SwarmEngine Codex SDK tests pass
+  - [x] Full backend suite passes with no PTY regression
+  - [x] Structured reset/abort behavior is verified
+Gate Result: PASS — 2026-04-08 -> #405 | FAIL -> #402. Verified `server/tests/CodexSdkAdapter.test.js`, `server/tests/swarm-engine-codex-sdk.test.js`, and full `npm test --prefix server` green at 488/488.
+Dependencies: TASK #401,#402
+---
+
+TASK #404: FRONTEND CONTRACT — Treat `codex-sdk` as a first-class structured runtime in the Swarm UI
+Area: V9.1 CODEX SDK SWARM INTEGRATION (2026-04-08)
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Context: Reuse the existing Claude structured-runtime UX for Codex SDK turns by teaching the client to recognize `spawnMode='codex-sdk'` anywhere it already understands `stream-json`.
+Acceptance Criteria:
+  - [x] Shared structured-runtime helpers recognize both `stream-json` and `codex-sdk`
+  - [x] Chat aggregation/rendering works for Codex SDK assistant/tool/thinking events
+  - [x] Agent cards, toolbar grouping, and inspector behavior stay truthful for Codex SDK agents
+  - [x] Structured runtimes do not expose PTY-only affordances such as `Open Terminal`
+  - [x] Client build passes
+Completion Note: COMPLETED — 2026-04-08 — Added `client/src/utils/runtimeModes.js` and updated `useSwarm`, `ChatPanel`, `ChatMessage`, `AgentNode`, `AgentInspector`, `SwarmView`, and `SwarmContext` so Codex SDK shares the same structured-runtime UX patterns already used for Claude stream-json. `npm run build --prefix client` passes at 501 modules.
+Dependencies: TASK #402
+---
+
+TASK #405: AREA CHECKPOINT — V9.1 Codex SDK swarm integration
+Area: V9.1 CODEX SDK SWARM INTEGRATION (2026-04-08)
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: CRITICAL
+Status: PASS
+Gate: HARD
+Context: Close the area once the server/runtime contract and client structured-runtime parity are both verified without regressions.
+Acceptance Criteria:
+  - [x] #403 PASS
+  - [x] #404 COMPLETED
+  - [x] Full backend suite passes
+  - [x] Client build passes
+  - [x] Codex SDK coexists truthfully with Claude stream-json and PTY fallback paths
+Completion Note: PASS — 2026-04-08 — V9.1 closed. Codex now has an SDK-backed structured swarm runtime parallel to Claude stream-json, the UI treats `codex-sdk` as a structured mode, the backend suite is green at 488/488, and the client build is green at 501 modules.
+Dependencies: TASK #403,#404
+---
+
+## AREA: V9.2 — Stream-JSON Display Fidelity
+_Components: SwarmEngine text_delta accumulator, useSwarm client reducer, SwarmView workflow-switch, node cost badges_
+_Tasks: #406 → #409_
+_Gate: All 3 display bugs must be fixed and verified via multi-agent E2E re-run_
+
+---
+TASK #406: BUG-DL-TEXTDELTA-1 — Stream-json text_delta accumulator inserts spurious spaces inside words
+Area: V9.2 STREAM-JSON DISPLAY FIDELITY (2026-04-08)
+Agent: debugger
+Type: BUG_FIX
+Priority: HIGH
+Status: COMPLETED
+Completion Note: 2026-04-08 — debugger fixed two client-side accumulation bugs: (1) SwarmContext.jsx appendAgentChatText used '\n\n' separator between every text_delta token, corrupting sub-word fragments; changed to empty string. (2) useSwarm.js lastChatSnippet was overwritten with only the latest delta; now accumulates. Build clean, 488/488 tests pass.
+Context:
+  Claude stream-json text output is rendered with spurious spaces inserted inside words.
+  Examples from multi-agent E2E test: "high Water Mark" (should be "highWaterMark"), "Java Script",
+  "tra m it e" (tramite), "r al le nt are" (rallentare), "con su ma t or e" (consumatore).
+  PROOF it's NOT CSS: Same corrupted text in both node-card Output (word-break: break-all) AND
+  Chat View (word-break: normal) — identical DOM text content.
+  PROOF it's NOT handoff data: Researcher's Handoff tab shows clean JSON
+  {"feature1":"backpressure via highWaterMark",...} — only the text_delta render pipeline corrupts.
+  HYPOTHESIS: The text_delta reducer joins sub-word tokens with an extra space separator instead of
+  concatenating raw delta.text values as-is. Check:
+  1. server/services/SwarmEngine.js _spawnAgentStreamJson text_delta handler — how it accumulates text
+  2. server/services/StreamJsonParser.js — how text_delta events are emitted
+  3. client/src/hooks/useSwarm.js — client-side text accumulation reducer (agent_chat / agent_output events)
+  4. client/src/canvas/ChatMessage.jsx — formatChatText / repairWordFusion post-processing
+Acceptance Criteria:
+  - Re-run multi-agent test: Writer output contains "highWaterMark" and "JavaScript" as single words
+  - No new spaces introduced inside any stream-json rendered output
+  - 488+ server tests still pass
+  - Client build clean
+Dependencies: none
+---
+TASK #407: BUG-DL-STALE-STATE-1 — Stale previous-workflow node state shown on freshly-generated workflow
+Area: V9.2 STREAM-JSON DISPLAY FIDELITY (2026-04-08)
+Agent: frontend-dev
+Type: BUG_FIX
+Priority: LOW
+Status: PENDING
+Context:
+  After Prompt-to-Flow generates a new workflow, the canvas shows the new workflow structure
+  but node cards initially render with status "Done" and chat snippets from the PREVIOUS execution.
+  Only clicking Run resets them. The workflow-switch or generate reducer doesn't clear per-node
+  execution state (agentStates, messages, outputs) for the old execution.
+  Files: client/src/hooks/useSwarm.js or client/src/views/SwarmView.jsx
+Acceptance Criteria:
+  - On workflow switch/generate/load, all node status and chat snippets reset to idle/empty immediately
+  - No regressions in existing workflow loading
+  - Client build clean
+Dependencies: none
+---
+TASK #408: BUG-DL-COST-VANISH-1 — Cost/token footer disappears after execution Completed state
+Area: V9.2 STREAM-JSON DISPLAY FIDELITY (2026-04-08)
+Agent: frontend-dev
+Type: BUG_FIX
+Priority: LOW
+Status: PENDING
+Context:
+  During Running state, node cards show cost badge (e.g. "$0.22"). After overall status becomes
+  Completed, all cost/token info disappears from the DOM. Should remain visible so user can see
+  total spend after execution completes.
+  Files: client/src/canvas/nodes/AgentNode.jsx or client/src/hooks/useSwarm.js cost state
+Acceptance Criteria:
+  - Cost/token/cache info remains displayed after Completed state
+  - Verify against PRD Section 11 cost-footer spec
+  - Client build clean
+Dependencies: none
+---
+TASK #409: TEST GATE — V9.2 Stream-JSON Display Fidelity verification
+Area: V9.2 STREAM-JSON DISPLAY FIDELITY (2026-04-08)
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Status: PENDING
+Gate: HARD
+Context:
+  Re-run the same multi-agent Puppeteer E2E test (2-agent Researcher → Writer, Node.js streams topic).
+  Verify:
+  1. Writer output has NO spurious spaces inside words (BUG-DL-TEXTDELTA-1 fixed)
+  2. Fresh workflow generation shows idle/empty nodes, NOT stale state (BUG-DL-STALE-STATE-1 fixed)
+  3. Cost footer remains visible after Completed (BUG-DL-COST-VANISH-1 fixed)
+  4. All tangible output is readable, correct Italian paragraph
+  5. 488+ server tests pass, client build clean
+Acceptance Criteria:
+  - All 5 checks PASS
+Dependencies: TASK #406,#407,#408
 ---

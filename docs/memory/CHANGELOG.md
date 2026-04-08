@@ -1,6 +1,45 @@
 # CHANGELOG — Claude Code Visual Manager
 
 ---
+## 2026-04-08 — V9.1 Codex SDK structured runtime integration
+**Agent:** backend-dev + frontend-dev + qa-tester — mapped by code-mapper
+**Triggered by:** User requested a Codex-side implementation similar to the new Claude stream-json runtime, but using the official Codex SDK instead of PTY scraping.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/package.json | MODIFIED | Added `@openai/codex-sdk` dependency. |
+| server/services/CodexSdkAdapter.js | CREATED | New adapter for client/thread setup and item normalization. |
+| server/services/index.js | MODIFIED | Re-exported Codex SDK adapter helpers. |
+| server/services/SwarmEngine.js | MODIFIED | Added `_spawnAgentCodexSdk` structured runtime, Codex SDK event consumption, structured stop/reset/resume handling, serialization, and PTY fallback guards. |
+| server/routes/swarm.js | MODIFIED | Structured per-node control route now accepts `codex-sdk` alongside `stream-json`. |
+| server/tests/CodexSdkAdapter.test.js | CREATED | Adapter contract coverage. |
+| server/tests/swarm-engine-codex-sdk.test.js | CREATED | Focused structured-runtime integration coverage. |
+| client/src/utils/runtimeModes.js | CREATED | Shared structured-runtime helper. |
+| client/src/hooks/useSwarm.js | MODIFIED | `codex-sdk` treated like existing structured runtimes in WS aggregation and pending-turn logic. |
+| client/src/canvas/ChatPanel.jsx | MODIFIED | Structured chat grouping expanded to include `codex-sdk`. |
+| client/src/canvas/ChatMessage.jsx | MODIFIED | Structured message rendering now applies to `codex-sdk`. |
+| client/src/canvas/nodes/AgentNode.jsx | MODIFIED | Thinking/tool/cost badges now treat `codex-sdk` as structured. |
+| client/src/canvas/AgentInspector.jsx | MODIFIED | PTY-only affordances hidden for `codex-sdk`. |
+| client/src/views/SwarmView.jsx | MODIFIED | Structured runtime grouping/filtering includes `codex-sdk`. |
+| client/src/store/SwarmContext.jsx | MODIFIED | Structured spawn-mode docs/state expanded to `codex-sdk`. |
+
+### Functions Added / Modified / Removed
+- Added `buildCodexSdkClientOptions`, `buildCodexSdkThreadOptions`, `createCodexSdkClient`, `getCodexSdkThread`, `runCodexSdkTurnStreamed`, and `normalizeCodexSdkItem` in `server/services/CodexSdkAdapter.js`.
+- Modified `SwarmEngine._spawnAgent()` to route Codex through a dedicated SDK path when appropriate, while preserving fast PTY fallback for environments/tests that should remain PTY-based.
+- Added `SwarmEngine._spawnAgentCodexSdk(...)`, `_consumeCodexSdkEvents(...)`, `_applyCodexSdkItemEvent(...)`, `_handleCodexSdkTurnCompleted(...)`, `_handleCodexSdkTurnFailure(...)`, `_forceStopCodexSdkAgent(...)`, and `_resetCodexSdkAgent(...)`.
+- Modified `SwarmEngine._serializeAgentState(...)`, `stopExecution(...)`, `resumeExecution(...)`, `_onDone(...)`, and `stopStreamJsonAgent(...)` to support `spawnMode='codex-sdk'`.
+
+### Connection Changes
+- Codex runtime can now flow through `SwarmEngine -> CodexSdkAdapter -> @openai/codex-sdk` instead of only `SwarmEngine -> SessionManager -> PTY`.
+- Client structured-runtime UI logic now uses `isStructuredSpawnMode()` so `stream-json` and `codex-sdk` share the same rendering path.
+
+### Impact on Other Code
+- Claude remains on the existing `stream-json` path; Gemini remains PTY.
+- Codex PTY behavior is still available as the truthful fallback path where the SDK route should not be used.
+- Verification is green: `npm test --prefix server` = 488/488 and `npm run build --prefix client` = 501 modules.
+
+---
 ## 2026-04-08 — Phase 1 E2E Debugger-Loop: 3 bugs discovered in Swarm stream-json pipeline (MAPPING ONLY — NO FIX)
 **Agent:** qa-tester (Phase 1 debugger-loop) — mapped by code-mapper
 **Triggered by:** Full Puppeteer E2E of Swarm view. Prompt-to-Flow generated a 2-agent Claude workflow (Researcher → Writer). Execution reached Completed state with correct Italian paragraph output. During the run, 3 defects were observed that affect user-visible text rendering and footer UX.

@@ -107,19 +107,20 @@ function getCorridorPath({
     targetY - CORRIDOR_OFFSET - Math.max(0, corridorLift * 0.4) + targetLaneOffsetY
   );
 
+  // Keep bundled fan-out/fan-in edges on their own slot lanes instead of
+  // collapsing back through the node center before branching again.
   const points = [
     { x: sourceSlotX, y: sourceY },
     { x: sourceSlotX, y: sourceCorridorY - 8 },
-    { x: sourceX, y: sourceCorridorY },
-    { x: targetX, y: sourceCorridorY },
-    { x: targetX, y: targetCorridorY },
+    { x: sourceSlotX, y: sourceCorridorY },
+    { x: targetSlotX, y: sourceCorridorY },
     { x: targetSlotX, y: targetCorridorY },
     { x: targetSlotX, y: targetY },
   ];
 
   return [
     buildRoundedPath(points),
-    sourceX + (targetX - sourceX) * 0.5,
+    sourceSlotX + (targetSlotX - sourceSlotX) * 0.5,
     sourceCorridorY - 18,
   ];
 }

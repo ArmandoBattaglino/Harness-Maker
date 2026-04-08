@@ -4,6 +4,7 @@
 import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import { useSwarmStore } from '../store/SwarmContext';
 import { apiPost } from '../hooks/useApi.js';
+import { isStructuredSpawnMode } from '../utils/runtimeModes.js';
 import ChatMessage from './ChatMessage';
 import HitlChatCard from './HitlChatCard';
 
@@ -66,23 +67,24 @@ export default function ChatPanel() {
 
     for (const rawMessage of filteredMessages) {
       const runtimeState = rawMessage?.nodeId ? agentStates[rawMessage.nodeId] : null;
-      const isStreamJsonAssistant = (rawMessage.role === 'assistant' || !rawMessage.role)
-        && (rawMessage.spawnMode === 'stream-json' || runtimeState?.spawnMode === 'stream-json');
-      const nextMessage = isStreamJsonAssistant
+      const structuredSpawnMode = rawMessage.spawnMode ?? runtimeState?.spawnMode ?? null;
+      const isStructuredAssistant = (rawMessage.role === 'assistant' || !rawMessage.role)
+        && isStructuredSpawnMode(structuredSpawnMode);
+      const nextMessage = isStructuredAssistant
         ? {
             ...rawMessage,
-            spawnMode: 'stream-json',
+            spawnMode: structuredSpawnMode,
             toolUse: rawMessage.toolUse ?? [],
             cost: rawMessage.cost ?? null,
             thinking: rawMessage.thinking ?? null,
           }
         : rawMessage;
 
-      if (isStreamJsonAssistant) {
+      if (isStructuredAssistant) {
         const previous = grouped[grouped.length - 1];
         if (
           previous
-          && previous.spawnMode === 'stream-json'
+          && isStructuredSpawnMode(previous.spawnMode)
           && previous.nodeId === nextMessage.nodeId
           && (previous.role === 'assistant' || !previous.role)
         ) {

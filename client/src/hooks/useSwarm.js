@@ -2,6 +2,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useSwarmStore } from '../store/SwarmContext';
 import { apiGet, apiPost, apiDelete } from './useApi.js';
+import { isStructuredSpawnMode } from '../utils/runtimeModes.js';
 
 const EXECUTION_STORAGE_KEY = 'swarm-active-execution';
 const STREAM_JSON_THINKING_PLACEHOLDER = 'Thinking block captured for this turn.';
@@ -76,7 +77,10 @@ export function useSwarm(workflowId) {
     const pendingTurn = pendingStreamJsonTurnsRef.current[nodeId];
     if (!pendingTurn) return;
 
-    const patch = { spawnMode: 'stream-json' };
+    const currentSpawnMode = useSwarmStore.getState().agentStates[nodeId]?.spawnMode;
+    const patch = {
+      spawnMode: isStructuredSpawnMode(currentSpawnMode) ? currentSpawnMode : 'stream-json',
+    };
     if (pendingTurn.toolUse.length > 0) {
       patch.toolUse = pendingTurn.toolUse.map((tool) => ({ ...tool }));
     }
@@ -427,7 +431,7 @@ export function useSwarm(workflowId) {
               : {}),
           });
           if (
-            (msg.spawnMode === 'stream-json' || useSwarmStore.getState().agentStates[msg.nodeId]?.spawnMode === 'stream-json')
+            (isStructuredSpawnMode(msg.spawnMode) || isStructuredSpawnMode(useSwarmStore.getState().agentStates[msg.nodeId]?.spawnMode))
             && ['done', 'idle', 'error', 'failed'].includes(msg.status)
           ) {
             flushPendingStreamJsonTurn(msg.nodeId);
@@ -587,20 +591,24 @@ export function useSwarm(workflowId) {
         }
         case 'chat_message': {
           const runtimeState = useSwarmStore.getState().agentStates[msg.nodeId];
-          const isStreamJsonMessage = (msg.role === 'assistant' || !msg.role)
-            && runtimeState?.spawnMode === 'stream-json';
+          const isStructuredAssistantMessage = (msg.role === 'assistant' || !msg.role)
+            && isStructuredSpawnMode(msg.spawnMode ?? runtimeState?.spawnMode);
           addChatMessage({
             nodeId: msg.nodeId,
             role: msg.role ?? 'assistant',
             text: msg.text,
             timestamp: msg.timestamp ?? Date.now(),
-            ...(isStreamJsonMessage ? { spawnMode: 'stream-json' } : {}),
+            ...(isStructuredAssistantMessage
+              ? { spawnMode: msg.spawnMode ?? runtimeState?.spawnMode ?? 'stream-json' }
+              : {}),
           });
           // Feed assistant messages into agentResults store + update node snippet
           // with clean chat text (Option B: replaces noisy raw PTY snippets)
           if ((msg.role === 'assistant' || (!msg.role)) && msg.nodeId && msg.text) {
             useSwarmStore.getState().appendAgentChatText(msg.nodeId, msg.text);
-            updateAgentState(msg.nodeId, { lastChatSnippet: msg.text });
+            // Accumulate lastChatSnippet so node card shows full text, not just the last token fragment
+            const prevSnippet = useSwarmStore.getState().agentStates[msg.nodeId]?.lastChatSnippet || '';
+            updateAgentState(msg.nodeId, { lastChatSnippet: prevSnippet + msg.text });
           }
           break;
         }

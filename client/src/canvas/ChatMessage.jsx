@@ -4,6 +4,7 @@ import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { stripAnsi } from '../utils/stripAnsi';
+import { isStructuredSpawnMode } from '../utils/runtimeModes.js';
 
 const ROLE_STYLES = {
   assistant: 'bg-gray-800 border-gray-700 text-gray-200',
@@ -164,7 +165,7 @@ function CollapsibleMetaBlock({ title, children, tone = 'gray' }) {
 export default function ChatMessage({ message, agentLabel }) {
   const { role, text, timestamp, nodeId, spawnMode, toolUse, thinking, cost } = message;
   const style = ROLE_STYLES[role] || ROLE_STYLES.assistant;
-  const isStreamJson = spawnMode === 'stream-json';
+  const isStreamJson = isStructuredSpawnMode(spawnMode);
   const displayText = role === 'system'
     ? text
     : isStreamJson

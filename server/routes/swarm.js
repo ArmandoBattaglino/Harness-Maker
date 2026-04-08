@@ -18,6 +18,7 @@ import { ExecutionHistoryStore } from '../stores/ExecutionHistoryStore.js';
 import { ConfigStore } from '../services/ConfigStore.js';
 
 const TERMINAL_EXECUTION_STATUSES = new Set(['completed', 'stopped', 'failed']);
+const STRUCTURED_AGENT_SPAWN_MODES = new Set(['stream-json', 'codex-sdk']);
 
 function getAgentNodeById(workflowDef, nodeId) {
   return workflowDef?.nodes?.find((node) => node.id === nodeId && node.type === 'agent') ?? null;
@@ -414,8 +415,8 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
         if (!agentState) {
           return res.status(404).json({ error: 'Agent not found' });
         }
-        if (agentState.spawnMode !== 'stream-json') {
-          return res.status(409).json({ error: 'Agent is not using stream-json mode' });
+        if (!STRUCTURED_AGENT_SPAWN_MODES.has(agentState.spawnMode)) {
+          return res.status(409).json({ error: 'Agent is not using a structured runtime mode' });
         }
         await swarmEngine.stopStreamJsonAgent(executionId, nodeId, mode);
         return res.status(204).end();
