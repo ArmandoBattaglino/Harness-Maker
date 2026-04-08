@@ -1,4 +1,14 @@
-﻿## 2026-04-08 — documenter — Post-Task #354: V9.0 documentation audit
+﻿## 2026-04-08 — qa-tester — Task #355: TEST GATE — Spike Validation
+**Outcome:** COMPLETED
+**Summary:** Ran spike script (server/spike/stream-json-spike.mjs). Initial run failed because Claude CLI requires --verbose with stream-json + -p mode. Fixed spike, re-ran: 10/10 verdicts PASS. Turn 1 text+result events, Turn 2 context continuity, Turn 3 tool restriction, session JSONL found, cost data parsed. Post-result hang ~640-700ms. 414/414 server tests pass (no regressions).
+**Files changed:** server/spike/stream-json-spike.mjs (MODIFIED — added --verbose flag), docs/TASK_PLAN.md (MODIFIED)
+**Bugs fixed:** Missing --verbose flag in spike spawn args (CLI requirement discovered and fixed)
+**Decisions made:** --verbose is mandatory for stream-json + print mode — must be included in production _spawnAgentStreamJson
+**Blockers:** none
+**Next:** AREA CHECKPOINT #356, then Phase 1 tasks can begin
+
+---
+## 2026-04-08 — documenter — Post-Task #354: V9.0 documentation audit
 **Outcome:** COMPLETED
 **Summary:** Audited all documentation after Task #354 spike completion and V9.0 /create pipeline (PRD v6.0, 40-task plan, 4 research files, DEC-027/028/029). Updated DOC_STATUS.md with current V9.0 state, new doc artifacts (research files, spike, PRD v6.0), documentation debt table, and forward-looking stale section notes. Updated PROJECT.md implementation status (393 tasks, V9.0 planning phase). No production code changed so README, ARCHITECTURE, and API docs remain accurate for v5.0.
 **Files changed:** docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/PROJECT.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/documenter.md (MODIFIED)

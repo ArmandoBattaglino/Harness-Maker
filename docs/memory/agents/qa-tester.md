@@ -1,4 +1,53 @@
 ---
+## 2026-04-08 — Task #355: TEST GATE — Spike Validation
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+Task #354 (backend-dev) created a spike script at server/spike/stream-json-spike.mjs to validate Claude CLI stream-json mode for multi-turn agent spawning. This is the critical gate before V9.0 production code can begin.
+
+### What I did
+1. Read the spike script and understood its 3-turn validation approach
+2. Ran the spike — first run failed 7/10 verdicts because Claude CLI requires `--verbose` when using `--output-format stream-json` with `-p` (print mode)
+3. Fixed the spike by adding `--verbose` flag to all 3 turn argument arrays
+4. Re-ran the spike — all 10/10 verdicts PASS
+5. Ran `npm test` — 414/414 tests pass across 18 test files, no regressions
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/spike/stream-json-spike.mjs | MODIFIED | Added `--verbose` flag to Turn 1, Turn 2, and Turn 3 spawn args — required by Claude CLI when using --output-format stream-json with -p |
+| docs/TASK_PLAN.md | MODIFIED | Marked TASK #355 as COMPLETED with gate result |
+
+### Improvements delivered
+- Spike now runs successfully end-to-end, proving stream-json multi-turn feasibility
+- Critical discovery: `--verbose` is mandatory for stream-json + print mode — must be included in production _spawnAgentStreamJson
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| Turn 1 exits code 1, no events | Claude CLI requires --verbose with stream-json + -p | Added --verbose to all spawn args | FIXED |
+
+### Decisions I made
+- Added --verbose to the spike rather than returning FAIL — this is a trivial CLI flag requirement, not a feasibility blocker
+
+### What I learned
+- Claude CLI stream-json + -p REQUIRES --verbose flag (error: "When using --print, --output-format=stream-json requires --verbose")
+- Post-result hang is consistently ~640-700ms across all turns (not a blocking issue)
+- Session JSONL files are stored at ~/.claude/projects/<encoded-path>/<session-id>.jsonl
+- Event types from stream-json: system, assistant, user, rate_limit_event, result
+- Result event keys include: total_cost_usd, usage, modelUsage, session_id, duration_ms, stop_reason
+- Cost/usage data is fully available in result events (input_tokens, output_tokens, cache stats)
+
+### State I'm leaving behind
+- Spike passes 10/10 verdicts, ready for AREA CHECKPOINT #356
+- 414/414 server tests pass
+- Key finding for production code: always include --verbose in stream-json spawn args
+
+### Handoff
+AREA CHECKPOINT #356 can now run. After that, Phase 1 tasks (#357+) can begin. The --verbose requirement must be documented for backend-dev implementing _spawnAgentStreamJson.
+
+---
 ## 2026-04-07 — Task #328: TEST GATE — Execution history persistence round-trip
 **Status:** COMPLETED
 **Called by:** orchestrator

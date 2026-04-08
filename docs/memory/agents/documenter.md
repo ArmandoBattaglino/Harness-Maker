@@ -1,4 +1,55 @@
 ---
+## 2026-04-08 — Post-Task #354: V9.0 documentation audit
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task #354 + V9.0 /create pipeline)
+
+### Context when I started
+Task #354 (SPIKE -- stream-json multi-turn validation) just completed by backend-dev. Additionally, the /create pipeline produced: PRD v6.0 (docs/PRD.md rewritten), 40-task TASK_PLAN.md section (V9.0, #354-#393), 4 research files (resume-after-kill, tools syntax, stream events, and earlier research), and architect analysis (DEC-027/028/029). No production code was modified -- only a standalone spike script (server/spike/stream-json-spike.mjs) was created.
+
+### What I did
+1. Read all memory files (PROJECT.md, DECISIONS.md, CONTEXT.md, ACTIVITY_LOG.md, DOC_STATUS.md, my agent log) in parallel
+2. Read the spike file, PRD v6.0 header, README.md, ARCHITECTURE.md to understand what changed
+3. Searched README, ARCHITECTURE, and API docs for any existing stream-json references (none found -- confirming these are clean)
+4. Audited all tracked documents for staleness:
+   - README.md: NOT stale (still accurately describes v5.0.0; no production code changed)
+   - ARCHITECTURE.md: NOT stale for current code, but will need Section 13 when V9.0 implementation begins
+   - API.md: NOT stale (no endpoints changed)
+   - PRD.md: freshly written v6.0 by prd-writer
+   - PROJECT.md: STALE (still showed "ALL AREAS CLOSED", 333 tasks)
+   - DOC_STATUS.md: STALE (showed v5.0 final state, missing V9.0 artifacts)
+5. Updated PROJECT.md: implementation status now reflects V9.0 planning phase, 393 tasks, spike completed
+6. Updated DOC_STATUS.md: release status, health table (19 entries now including research files and spike), stale sections, and new documentation debt table
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Updated release status, health table with V9.0 state and new artifacts, added documentation debt table |
+| docs/memory/PROJECT.md | MODIFIED | Updated implementation status line to reflect V9.0 planning phase (393 tasks) |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended this audit entry |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- DOC_STATUS.md now accurately tracks all V9.0 planning artifacts (PRD v6.0, 4 research files, spike script, DEC-027/028/029)
+- Documentation debt table created -- provides clear prioritized list of what needs updating as V9.0 implementation proceeds
+- PROJECT.md reflects current project phase (no longer says "ALL AREAS CLOSED")
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Deferred README/ARCHITECTURE/API updates until production code lands -- the spike is non-production and V9.0 features do not exist in the codebase yet
+- Added forward-looking stale section notes so future documenter sessions know exactly what to update when
+
+### What I learned
+- V9.0 planning phase created many doc artifacts (PRD, research, decisions) but no production code changes. This means user-facing docs (README, ARCHITECTURE, API) stay accurate for now. The key trigger for updating those will be Tasks #357+ when StreamJsonParser and _spawnAgentStreamJson land.
+
+### State I'm leaving behind
+All documentation is accurate for the current codebase state. DOC_STATUS.md has a clear debt table showing what will need updating as V9.0 implementation proceeds. Four documents are flagged for future updates: README (V9.0 features), ARCHITECTURE (Section 13), API (WS events), and inline comments (new production code).
+
+### Handoff
+After TEST GATE #355 passes and implementation Tasks #357+ begin modifying production code, documenter must be called again to update README, ARCHITECTURE, and API docs.
+
+---
 ## 2026-04-07 — Post-Task #330: Documentation verification audit
 **Status:** COMPLETED
 **Called by:** orchestrator (final verification pass)
