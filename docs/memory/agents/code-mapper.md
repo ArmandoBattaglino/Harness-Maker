@@ -1,4 +1,48 @@
 ---
+## 2026-04-08 — Task #354: SPIKE — stream-json multi-turn mapping
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task trio)
+
+### Context when I started
+V9.0 Stream-JSON Agent Migration plan created with 40 new tasks (#354-#393). Task #354 spike script was implemented by backend-dev as a standalone validation script in server/spike/stream-json-spike.mjs. CODE_MAP.md was last updated at Task #330 (project status said "COMPLETE").
+
+### What I did
+1. Read the new spike script (582 lines, 7 functions)
+2. Traced connections: standalone script, mirrors BinaryDiscovery.js pattern but no shared imports
+3. Added "Spike / Validation Scripts" subsection to CODE_MAP Module Index
+4. Added 7 function graph entries for all spike functions
+5. Updated CODE_MAP header/status to reflect V9.0 (393 tasks, 40 pending)
+6. Appended CHANGELOG entry documenting the new file and all 7 functions
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header updated to Task #354, status updated to V9.0, new Spike section in Module Index, 7 new Function Graph entries |
+| docs/memory/CHANGELOG.md | MODIFIED | New entry for Task #354 with file/function/connection details |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session log |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log |
+
+### Improvements delivered
+- CODE_MAP now tracks the spike validation script and its relationship to BinaryDiscovery.js
+- Project status header updated from "COMPLETE" to "V9.0 IN PROGRESS"
+
+### Bugs I encountered
+None
+
+### Decisions I made
+- Created new "Spike / Validation Scripts" subsection rather than mixing spike into Server Modules — keeps non-production code clearly separated
+
+### What I learned
+- The spike script mirrors BinaryDiscovery but does not import it — this is intentional for isolation
+- Spike uses the same SEC-02 (shell:false) and DEC-005 (stdin.end) conventions as production code
+
+### State I'm leaving behind
+CODE_MAP and CHANGELOG are current through Task #354. Next mapping needed after Task #355 (TEST GATE) or subsequent Phase 1 tasks.
+
+### Handoff
+None — mapping complete for this task.
+
+---
 ## 2026-04-07 - Tasks #331-#333: Swarm canvas drop preview + useSwarm mount blocker
 **Status:** COMPLETED
 **Called by:** orchestrator (continue after implementation/verification)

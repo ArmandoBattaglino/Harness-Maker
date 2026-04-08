@@ -3388,6 +3388,41 @@ No new connections introduced in this checkpoint task. All connection changes we
 - None. All components verified: ChatExtractor, SwarmEngine integration, ChatPanel, ChatMessage, SwarmContext, useSwarm WS handler. WS contract confirmed COMPLETE. Verdict: PASS.
 
 ---
+## 2026-04-08 — Task #354: SPIKE — Validate --resume -p stream-json multi-turn
+**Agent:** backend-dev
+**Triggered by:** V9.0 Stream-JSON Agent Migration — Phase 0 spike to validate Claude CLI `--output-format stream-json` + `--resume` + `-p` multi-turn behavior before building production StreamJsonParser/Spawner
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/spike/stream-json-spike.mjs | ADDED | Standalone spike script: 3-turn validation (basic stream-json, --resume context continuity, --tools restriction), timing measurement (OQ3), session JSONL discovery (OQ1/OQ4), event type cataloging. Mirrors BinaryDiscovery.js pattern. |
+
+### Functions Added
+- `fileExists(filePath)` in `server/spike/stream-json-spike.mjs` — sync file existence + execute permission check
+- `findClaudeBinary()` in `server/spike/stream-json-spike.mjs` — 3-step claude binary lookup (env -> PATH -> %LOCALAPPDATA%), mirrors BinaryDiscovery.js
+- `runTurn(claudeBin, args, label)` in `server/spike/stream-json-spike.mjs` — spawns claude process, collects stream-json events via readline, returns timing + events + result
+- `findSessionJsonl(sessionId)` in `server/spike/stream-json-spike.mjs` — discovers session JSONL files in ~/.claude/projects/ and ~/.claude/sessions/
+- `analyzeJsonlFile(filePath)` in `server/spike/stream-json-spike.mjs` — parses JSONL file, returns line count, byte size, message type distribution
+- `verdict(condition, label)` in `server/spike/stream-json-spike.mjs` — creates pass/fail verdict object
+- `main()` in `server/spike/stream-json-spike.mjs` — entry point: 3 turns, session discovery, verdict summary
+
+### Functions Modified
+- None
+
+### Functions Removed
+- None
+
+### Connection Changes
+- NEW standalone script — no production code imports or exports
+- PATTERN MIRROR: `findClaudeBinary()` replicates `server/services/BinaryDiscovery.js::discoverClaudeBinary()` logic (env -> PATH -> %LOCALAPPDATA%) but standalone — no shared code dependency
+- CONVENTION COMPLIANCE: Uses `shell: false` (SEC-02) and `child.stdin.end()` immediately (DEC-005), same as JobRunner and SwarmEngine spawn patterns
+
+### Impact on Other Code
+- No production code affected — spike is isolated in server/spike/ directory
+- Spike findings will inform the design of `StreamJsonParser` (Task #356) and `StreamJsonSpawner` (Task #358) in Phase 1 of V9.0
+- Event type catalog output will be used to define the parser's event schema
+
+---
 ## 2026-04-08 - Task #352-#353: Output fidelity closure
 **Agent:** debugger
 **Triggered by:** Continued debugger-loop verification after a completed history entry still showed truncated/mid-word `finalText`

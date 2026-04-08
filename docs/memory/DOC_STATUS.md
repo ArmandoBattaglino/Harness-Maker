@@ -49,27 +49,42 @@ _Last updated: 2026-04-08 after Task #354 (SPIKE -- stream-json multi-turn valid
 
 | Document | Status | Last Updated | Notes |
 |----------|--------|--------------|-------|
-| README.md | UP_TO_DATE | 2026-04-07 | Test count (312/312), task count (330/328 completed/2 deferred), module count (498), version (v5.0.0), Unified Chat View, Advanced Flow Control Nodes, N8N-Style Editor features all current. |
-| docs/ARCHITECTURE.md | PARTIAL | 2026-04-07 | Section 11.8 dependency graph current. V5 Wave 1-4 new UI components still deferred for batch update (12 components). Unified Chat View components (ChatExtractor, ChatPanel, ChatMessage) not yet in component tree. |
-| docs/PRD.md | UP_TO_DATE | 2026-04-06 | Version bumped to v5.0 with N8N-Style Visual Workflow Editor addendum (81 FRs, 5 waves, 6 new node types, 5 new SEC requirements). |
-| docs/API.md | UP_TO_DATE | 2026-04-06 | V5 Wave 4 endpoints added: execution history (2), templates (2), versions (2). All 6 new endpoints documented with full request/response examples. |
-| docs/memory/PROJECT.md | UP_TO_DATE | 2026-04-07 | Implementation status reflects all areas closed, v5.0, 330 tasks. |
-| docs/memory/DECISIONS.md | UP_TO_DATE | 2026-04-03 | DEC-001 through DEC-026 — no new architectural decisions from V5.0 bug fixes. |
-| docs/memory/PROGRESS.md | UP_TO_DATE | 2026-04-07 | POST-V5 FOLLOW-UP area closure entry added. |
-| docs/memory/CONTEXT.md | UP_TO_DATE | 2026-04-07 | Focus reflects all areas closed, project feature-complete at v5.0. |
-| docs/memory/CODE_MAP.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No changes from documenter. |
-| docs/memory/CHANGELOG.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No changes from documenter. |
-| docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-07 | PM audit entry appended/prepended for follow-up reopening. |
-| docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-04-06 | V1 audit. SEC-06 entry updated with webhook CSRF exemption note (Task #234). |
-| docs/security-v3-audit.md | UP_TO_DATE | 2026-04-06 | MEDIUM-V3-01 marked FIXED (Task #234). Summary table updated. |
-| Inline comments | UP_TO_DATE | 2026-04-07 | Task #327: SwarmEngine new methods have JSDoc (setExecutionHistoryStore, _persistExecutionHistory). All inline comments verified accurate. |
+| README.md | UP_TO_DATE | 2026-04-07 | Accurately describes v5.0.0 stable. V9.0 stream-json features not yet implemented so no README update needed yet. Will need update when stream-json code lands in production. |
+| docs/ARCHITECTURE.md | PARTIAL | 2026-04-07 | V5 component tree still deferred (12 components). V9.0 stream-json architecture (DEC-027/028/029) not yet reflected -- will need Section 13 when implementation begins. |
+| docs/PRD.md | UP_TO_DATE | 2026-04-08 | Rewritten to v6.0: Stream-JSON Agent Migration. 12 component specs, 27 FRs, 7 SEC-SJ-* requirements. |
+| docs/API.md | UP_TO_DATE | 2026-04-06 | No new endpoints from V9.0 planning. Will need update when WS events (FR-SJ-19 through FR-SJ-23) are implemented. |
+| docs/memory/PROJECT.md | UP_TO_DATE | 2026-04-08 | Implementation status reflects V9.0 planning phase, 393 tasks, spike completed. |
+| docs/memory/DECISIONS.md | UP_TO_DATE | 2026-04-08 | DEC-001 through DEC-029. DEC-027/028/029 added by architect for stream-json migration. |
+| docs/memory/PROGRESS.md | UP_TO_DATE | 2026-04-08 | Updated by project-manager with V9.0 area entry. |
+| docs/memory/CONTEXT.md | UP_TO_DATE | 2026-04-08 | Focus reflects V9.0 stream-json migration, dependency wave map, immediate next step. |
+| docs/memory/CODE_MAP.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No production code changed in V9.0 planning. |
+| docs/memory/CHANGELOG.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No production code changed yet. |
+| docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-08 | V9.0 planning entries (prd-writer, researcher x2, project-manager, backend-dev spike). |
+| docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-04-06 | V1 audit. V9.0 adds SEC-SJ-01 through SEC-SJ-07 in PRD -- no code changes yet. |
+| docs/security-v3-audit.md | UP_TO_DATE | 2026-04-06 | MEDIUM-V3-01 marked FIXED (Task #234). No changes from V9.0 planning. |
+| Inline comments | UP_TO_DATE | 2026-04-08 | server/spike/stream-json-spike.mjs has appropriate inline comments. No production code modified. |
 | docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. Deferred indefinitely. |
+| docs/research_resume_after_kill.md | UP_TO_DATE | 2026-04-08 | NEW: Research on --resume behavior after process kill. Findings feed into FR-SJ-17/18. |
+| docs/research_b_tools.md | UP_TO_DATE | 2026-04-08 | NEW: Research on --allowedTools vs --tools vs --disallowedTools. Critical finding: --allowedTools is NOT a security boundary (bug #12232). |
+| docs/research_d_stream_events.md | UP_TO_DATE | 2026-04-08 | NEW: Research on stream-json event types and structure. |
+| server/spike/stream-json-spike.mjs | UP_TO_DATE | 2026-04-08 | NEW: Standalone spike script for Task #354. Non-production validation. |
 
 ## Stale Sections (known gaps)
 
 - docs/memory/DECISIONS.md:DEC-001 -- Records "use node-pty-prebuilt-multiarch" but actual installed package is plain node-pty. Historical accuracy preserved intentionally; correction in PROJECT.md.
 - client/src/views/EntitiesView.jsx -- Still exists on disk but is no longer imported by App.jsx. Marked DEPRECATED in ARCHITECTURE.md component tree. Can be deleted in a future cleanup.
 - docs/memory/CODE_MAP.md:TriggerNode entry -- Still contains "(stub)" notation from Task #53.3; Task #76 fully implemented TriggerNode with store subscription, fired animation, and timestamp display. Code-mapper should update the map entry.
+- docs/ARCHITECTURE.md -- Will need Section 13 (V9.0 Stream-JSON Architecture) once implementation begins. DEC-027/028/029 define the architecture; component diagram needs stream-json spawn path alongside PTY spawn path.
+- README.md -- Will need V9.0 feature entries (stream-json agent mode, per-turn cost tracking, tool visibility, graceful stop/reset) once Tasks #357-#393 land production code.
+
+## Documentation Debt
+
+| Item | Priority | Reason deferred |
+|------|----------|-----------------|
+| ARCHITECTURE.md V5 component tree (12 components) | LOW | Deferred since v5.0; no active development on those components |
+| ARCHITECTURE.md Section 13 (V9.0 stream-json) | HIGH | Blocked until implementation begins (post-#355 TEST GATE) |
+| README.md V9.0 features | HIGH | Blocked until stream-json features land in production code |
+| API.md V9.0 WS events | MEDIUM | Blocked until FR-SJ-19 through FR-SJ-23 are implemented |
 
 ## V3.1 Bug Fix Wave — ALL FIXED (2026-04-02)
 

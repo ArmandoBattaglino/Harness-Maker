@@ -1,4 +1,24 @@
-﻿## 2026-04-08 — project-manager — Task #354 status update + #355 activation
+﻿## 2026-04-08 — documenter — Post-Task #354: V9.0 documentation audit
+**Outcome:** COMPLETED
+**Summary:** Audited all documentation after Task #354 spike completion and V9.0 /create pipeline (PRD v6.0, 40-task plan, 4 research files, DEC-027/028/029). Updated DOC_STATUS.md with current V9.0 state, new doc artifacts (research files, spike, PRD v6.0), documentation debt table, and forward-looking stale section notes. Updated PROJECT.md implementation status (393 tasks, V9.0 planning phase). No production code changed so README, ARCHITECTURE, and API docs remain accurate for v5.0.
+**Files changed:** docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/PROJECT.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/documenter.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** README/ARCHITECTURE/API updates deferred until V9.0 production code lands -- spike is non-production
+**Blockers:** none
+**Next:** After Tasks #357+ land production code, README needs V9.0 features, ARCHITECTURE needs Section 13, API needs WS event docs
+
+---
+## 2026-04-08 — code-mapper — Task #354: SPIKE stream-json multi-turn mapping
+**Outcome:** COMPLETED
+**Summary:** Mapped new spike script `server/spike/stream-json-spike.mjs` (7 functions) into CODE_MAP.md. Added Spike/Validation Scripts section to Module Index. Appended CHANGELOG entry for Task #354. Updated project status to V9.0 (393 tasks, 40 pending).
+**Files changed:** docs/memory/CODE_MAP.md (Module Index + Function Graph + header), docs/memory/CHANGELOG.md (new entry)
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** Task #355 TEST GATE execution by qa-tester, then Phase 1 backend core tasks (#356+)
+
+---
+## 2026-04-08 — project-manager — Task #354 status update + #355 activation
 **Outcome:** COMPLETED
 **Summary:** Marked TASK #354 COMPLETED in TASK_PLAN.md header (352/393). Updated #355 to IN_PROGRESS (qa-tester). Updated PROGRESS.md, CONTEXT.md. No blockers identified. V9.0 pipeline on track — Phase 0 spike done, TEST GATE running.
 **Files changed:** docs/TASK_PLAN.md (header + #355 status), docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md

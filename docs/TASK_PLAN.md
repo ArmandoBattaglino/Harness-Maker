@@ -15680,7 +15680,8 @@ Type: TEST_GATE
 Priority: CRITICAL
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: IN_PROGRESS
+Status: COMPLETED
+Completion Note: 2026-04-08 — PASS. All 10/10 spike verdicts pass after adding --verbose flag (required by Claude CLI for stream-json with -p). 414/414 server tests pass. Post-result hang ~643-695ms. Session JSONL found at ~/.claude/projects/. Cost/usage data parsed from result events.
 Gate: HARD — NO Phase 1 task can start until this PASSES
 Context:
   Component: Spike script (server/spike/stream-json-spike.mjs)
