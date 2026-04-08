@@ -4336,3 +4336,51 @@ All 396 tasks were registered, 392 COMPLETE/PASS, 1 DEFERRED. A critical bug fix
 ### Handoff
 No pending tasks. Next work would be a new planned area or release prep.
 ---
+
+---
+## 2026-04-08 — Task #406 phase 2 housekeeping + TEST GATE #409 re-run tracking
+**Status:** COMPLETED
+**Called by:** user (orchestrator notification — #406 phase 2 committed, #409 re-running)
+
+### Context when I started
+Task #406 (BUG-DL-TEXTDELTA-1) had a phase 2 canonical result text fix committed as 9029762. 490/490 tests pass, build clean. TEST GATE #409 was previously FAIL due to residual stream-json text_delta spurious spaces. The phase 2 fix addresses this, and #409 is being re-run.
+
+### What I did
+1. Read TASK_PLAN.md header (lines 1-80) to get current status summary
+2. Read PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md tail for current state
+3. Read TASK_PLAN.md lines 16864-16953 for #406 and #409 task entries
+4. Updated TASK_PLAN.md header: replaced Active Area description to reflect phase 2 fix and #409 re-running
+5. Updated TASK #409 status from FAIL to IN_PROGRESS with updated Completion Note
+6. Updated CONTEXT.md: focus now reflects phase 2 fix committed, #409 re-running
+7. Appended to PROGRESS.md: phase 2 fix entry with current totals
+8. Appended to ACTIVITY_LOG.md
+9. Wrote this session log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Header Active Area updated; #409 status FAIL -> IN_PROGRESS with phase 2 note |
+| docs/memory/PROGRESS.md | MODIFIED | Appended phase 2 fix entry with task totals |
+| docs/memory/CONTEXT.md | MODIFIED | Focus updated to reflect phase 2 fix and #409 re-run |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended PM session entry |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log |
+
+### Improvements delivered
+- All tracking files now accurately reflect the phase 2 fix and #409 re-test state
+- #406 confirmed still COMPLETED (phase 2 is a continuation, not a new task)
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Phase 2 canonical result text fix does not warrant a new task number; it is a continuation of #406's fix scope
+
+### What I learned
+- When a TEST GATE FAILs and a follow-up fix is applied, the gate status should move to IN_PROGRESS during re-test rather than staying FAIL
+
+### State I'm leaving behind
+409 tasks registered. 408 COMPLETE/PASS, 1 DEFERRED (#236), 1 IN_PROGRESS (#409 re-test). If #409 PASS, V9.2 closes and all planned work is complete. If FAIL, route to debugger.
+
+### Handoff
+Await TEST GATE #409 result. PASS -> close V9.2 area, update all docs. FAIL -> route residual bugs to debugger for another fix pass.
+---

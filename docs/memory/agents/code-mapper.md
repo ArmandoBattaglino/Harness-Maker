@@ -3571,3 +3571,50 @@ CODE_MAP.md and CHANGELOG.md are up to date through Task #406. The appendAgentCh
 ### Handoff
 None — task fully self-contained.
 ---
+
+---
+## 2026-04-08 — Task #406 phase 2: Canonical result text fix for token-boundary spacing
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+Task #406 phase 2 was completed (commit 9029762). Five files were modified to add canonical result text replacement: StreamJsonParser extracts resultText, SwarmEngine broadcasts it as an isCanonical chat_message, useSwarm.js handles it with a new replaceAgentChatText store action.
+
+### What I did
+1. Read all 5 modified files in full
+2. Traced connections: resultText flows StreamJsonParser._parseResult -> SwarmEngine._handleStreamJsonResult -> WS broadcast -> useSwarm.js connectWs -> replaceAgentChatText (store) + patchLatestChatMessage
+3. Updated CODE_MAP.md:
+   - Header timestamp updated to Task #406 phase 2
+   - StreamJsonParser module index description updated (resultText mention)
+   - `_parseResult` entry updated with resultText output field
+   - `_handleStreamJsonResult` entry updated with step 4b (canonical text replacement + isCanonical broadcast)
+   - New `replaceAgentChatText` entry added after `appendAgentChatText`
+   - `connectWs` entry updated with isCanonical complexity note
+   - SwarmContext store description updated with replaceAgentChatText mention
+4. Appended CHANGELOG.md entry for Task #406 phase 2
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Updated 6 existing entries + added 1 new entry (replaceAgentChatText) for canonical result text flow |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Task #406 phase 2 entry |
+
+### Improvements delivered
+- Full data flow for canonical result text is now documented end-to-end
+- New replaceAgentChatText action is mapped with its caller and purpose
+
+### Bugs I encountered
+- None
+
+### Decisions I made
+- Mapped replaceAgentChatText as a separate entry (like appendAgentChatText) since it has a distinct replace-not-append semantic
+
+### What I learned
+- The canonical text fix uses a two-phase approach: stream fragments for live display, then overwrite with correct text from result event. This is documented as a complexity note on connectWs.
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md are up to date through Task #406 phase 2. All 5 modified files are mapped.
+
+### Handoff
+None — task fully self-contained.
+---

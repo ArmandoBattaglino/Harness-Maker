@@ -2203,7 +2203,7 @@ Spawns a Claude agent using `child_process.spawn` with `--output-format stream-j
 | Event type | When |
 |------------|------|
 | `agent_status` | On spawn (step 8), on retry, on error |
-| `chat_message` | Each `text_delta` — role `assistant`, incremental text |
+| `chat_message` | Each `text_delta` — role `assistant`, incremental text. On `result` event, a corrective `chat_message` with `isCanonical: true` replaces all streamed fragments with the authoritative text (fixes token-boundary spacing). |
 | `agent_tool_use` | `tool_start` — includes `toolName`, `toolUseId` |
 | `agent_tool_delta` | `tool_delta` — partial JSON for tool input |
 | `agent_thinking` | `thinking_start` (active=true), `thinking_stop`/`text_start` (active=false) |
@@ -2227,7 +2227,7 @@ Spawns a Claude agent using `child_process.spawn` with `--output-format stream-j
 
 **File:** `server/services/SwarmEngine.js`
 
-Processes the `result` event emitted at the end of each Claude CLI turn. Responsible for cost extraction, handoff/done token scanning, and turn lifecycle management.
+Processes the `result` event emitted at the end of each Claude CLI turn. Responsible for cost extraction, canonical text replacement, handoff/done token scanning, and turn lifecycle management.
 
 **Steps:**
 
@@ -2235,6 +2235,7 @@ Processes the `result` event emitted at the end of each Claude CLI turn. Respons
 2. Extract cost/usage from result event (`inputTokens`, `outputTokens`, `costUsd`, `durationMs`); accumulate into agent state totals; broadcast `agent_cost` WS event
 3. Store `resultEvt.sessionId` into `state.streamJsonSessionId` for future `--resume` calls
 4. If `resultEvt.isError`, set `state.needsRepair = true`
+4b. If `resultEvt.resultText` is present, replace `_streamJsonAccumulatedText` with the canonical result text. Broadcast a corrective `chat_message` WS event with `isCanonical: true` so the client replaces all streamed `text_delta` fragments with the correctly assembled text (fixes token-boundary spacing where tokenizer splits produce artifacts like "con su ma t or e" instead of "consumatore").
 5. Scan `_streamJsonAccumulatedText` using `HandoffParser.feed()` for `__HANDOFF__` / `__DONE__` tokens — reuses the same token patterns as the PTY path
 6. Route: if handoff found → `_onHandoff()`; if done found or no token → `_onDone()` (implicit done per DEC-029)
 7. If `doNotSpawnNextTurn` is set, mark agent done immediately (graceful stop)

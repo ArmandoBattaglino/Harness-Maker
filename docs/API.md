@@ -519,12 +519,21 @@ Server-push only — no client-to-server messages. Control commands use the REST
 | `type` | Key payload fields | When sent |
 |--------|--------------------|-----------|
 | `execution_status` | `executionId`, `status`, `agentStates` | On connect (initial snapshot) + on status change |
-| `agent_status` | `executionId`, `nodeId`, `status`, `sessionId`, `lastOutputSnippet` | When a single agent's status changes or live PTY output updates its snippet |
-| `handoff_started` | `executionId`, `sourceNodeId`, `targetNodeId`, `edgeId`, `counter` | When a HANDOFF token is parsed |
+| `agent_status` | `executionId`, `nodeId`, `status`, `sessionId`, `lastOutputSnippet`, `spawnMode` | When a single agent's status changes or live PTY output updates its snippet |
+| `chat_message` | `nodeId`, `role`, `text`, `timestamp`, `isCanonical` (optional), `spawnMode` (optional) | Each `text_delta` during a stream-json turn (incremental text). When `isCanonical: true`, the `text` field contains the authoritative result text from the Claude CLI `result` event, replacing all previously streamed fragments (fixes token-boundary spacing). |
+| `agent_tool_use` | `nodeId`, `toolName`, `toolUseId` | When a stream-json agent starts a tool call |
+| `agent_tool_delta` | `nodeId`, `toolUseId`, `partialJson` | Partial tool input JSON during a stream-json tool call |
+| `agent_thinking` | `nodeId`, `active` | When a stream-json agent enters (`active: true`) or exits (`active: false`) a thinking block |
+| `agent_cost` | `nodeId`, `inputTokens`, `outputTokens`, `costUsd`, `durationMs`, `cacheReadTokens`, `cacheWriteTokens`, `totalInputTokens`, `totalOutputTokens`, `totalCostUsd` | After each stream-json turn completes (result event) |
+| `handoff_started` | `executionId`, `sourceNodeId`, `targetNodeId`, `edgeId`, `counter`, `payload` | When a HANDOFF token is parsed |
+| `handoff_completed` | `executionId`, `sourceNodeId`, `targetNodeId` | When the handoff target agent has been spawned |
 | `circuit_breaker` | `executionId`, `edgeId`, `counter` | When edge crossing threshold is reached (advisory) |
 | `budget_update` | `executionId`, `estimatedTokensUsed`, `limitTokens` | When budget estimate is updated |
 | `hitl_required` | `executionId`, `nodeId`, `itemId`, `question` | When an agent requests human approval |
 | `hitl_resolved` | `executionId`, `itemId`, `nodeId`, `decision` | After approve/reject API call |
+| `runtime_provider_switch` | `fromProvider`, `toProvider`, `reason`, `nodeId` | When AUTO mode falls back to a different provider |
+| `trigger_fired` | `triggerId`, `nodeId`, `firedAt` | When a trigger node fires |
+| `trigger_status` | `triggerId`, `nodeId`, `status` | When a trigger's lifecycle status changes |
 | `rss_item` | `url`, `title`, `link`, `pubDate` | When RSS poller finds a new item |
 
 **Example client subscription:**

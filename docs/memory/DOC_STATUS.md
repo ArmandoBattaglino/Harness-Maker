@@ -1,10 +1,10 @@
 # Documentation Status
-_Last updated: 2026-04-08 after Tasks #407 (BUG-DL-STALE-STATE-1) and #408 (BUG-DL-COST-VANISH-1)._
+_Last updated: 2026-04-08 after Task #406 phase 2 (canonical result text replaces streamed text_delta fragments)._
 
 ## Release Status
 **v9.0.0 — V9.0 Stream-JSON Agent Migration CLOSED for core semantics, display fidelity FIXED**
 - QA inspection: FUNCTIONAL PASS on v9.0 core (tangible multi-agent output achieved — Writer produced correct Italian paragraph end-to-end)
-- Display fidelity: FIXED — BUG-DL-TEXTDELTA-1 (#406) resolved text_delta concatenation corruption; BUG-DL-01 is now closed
+- Display fidelity: FIXED — BUG-DL-TEXTDELTA-1 (#406) resolved text_delta concatenation corruption via two-layer fix: (1) separator changed from `'\n\n'` to `''`, (2) phase 2 adds canonical `resultText` from result event that replaces all streamed fragments; BUG-DL-01 is now closed
 - Test suite: 488/488 passing (unit/integration)
 - Build: 501 modules, 0 errors
 - Tasks: numbering extends through #408.
@@ -60,9 +60,9 @@ _Last updated: 2026-04-08 after Tasks #407 (BUG-DL-STALE-STATE-1) and #408 (BUG-
 |----------|--------|--------------|-------|
 | README.md | UP_TO_DATE | 2026-04-08 | Updated to v9.0.0 release metadata and documents stream-json Claude agents, hybrid provider runtime behavior, and graceful stop/resume/reset controls. |
 | CLAUDE.md | UP_TO_DATE | 2026-04-08 | Updated with DEC-027/028/029 runtime constraints, `--tools` guidance, truthful blocker rule for Claude stream-json failures, and `write-file-atomic` correction. |
-| docs/ARCHITECTURE.md | PARTIAL | 2026-04-08 | V5 component tree still deferred (12 components). Section 13.3 updated with _ensureAgentPty handoff-routing fix and _spawnAgent AUTO mode provider strategy routing. WS event table updated: handoff_started description now reflects stream-json spawns. Remaining V9.0 components (#361-#393) listed as pending in 13.7. |
+| docs/ARCHITECTURE.md | PARTIAL | 2026-04-08 | V5 component tree still deferred (12 components). Section 13.5 updated with canonical resultText replacement step (4b) and isCanonical chat_message WS event. WS event table updated: chat_message row now describes canonical corrective message. Remaining V9.0 components (#361-#393) listed as pending in 13.7. |
 | docs/PRD.md | UP_TO_DATE | 2026-04-08 | Rewritten to v6.0: Stream-JSON Agent Migration. 12 component specs, 27 FRs, 7 SEC-SJ-* requirements. |
-| docs/API.md | UP_TO_DATE | 2026-04-06 | No new endpoints from V9.0 planning. Will need update when WS events (FR-SJ-19 through FR-SJ-23) are implemented. |
+| docs/API.md | UP_TO_DATE | 2026-04-08 | WS event table updated with V9.0 stream-json events: chat_message (including isCanonical), agent_tool_use, agent_tool_delta, agent_thinking, agent_cost, handoff_completed, runtime_provider_switch, trigger_fired, trigger_status. |
 | docs/memory/PROJECT.md | UP_TO_DATE | 2026-04-08 | Implementation status reflects V9.0 closure, release metadata sync, 396 total tasks, and 478/478 server-test verification. |
 | docs/memory/DECISIONS.md | UP_TO_DATE | 2026-04-08 | DEC-001 through DEC-029. DEC-027/028/029 added by architect for stream-json migration. |
 | docs/memory/PROGRESS.md | UP_TO_DATE | 2026-04-08 | Updated by project-manager with V9.0 area entry. |
@@ -72,7 +72,7 @@ _Last updated: 2026-04-08 after Tasks #407 (BUG-DL-STALE-STATE-1) and #408 (BUG-
 | docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-08 | Includes debugger-loop fallback closure plus the V9.0 close-out entries for #389-#393. |
 | docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-04-06 | V1 audit. V9.0 adds SEC-SJ-01 through SEC-SJ-07 in PRD -- no code changes yet. |
 | docs/security-v3-audit.md | UP_TO_DATE | 2026-04-06 | MEDIUM-V3-01 marked FIXED (Task #234). No changes from V9.0 planning. |
-| Inline comments | UP_TO_DATE | 2026-04-08 | StreamJsonParser.js has comprehensive JSDoc. SwarmEngine.js new methods (_spawnAgent, _spawnAgentStreamJson, _handleStreamJsonResult) have full JSDoc with param/return annotations. Inline comments reference DEC-027/028/029, SEC-02, SEC-SJ-01, DEC-005. _ensureAgentPty inline comment (lines 4606-4611) explains why providerStrategy.mode is used instead of activeProvider for mixed-provider chains. _spawnAgent lines 4071-4076 explain why providerStrategy.activeProvider is consulted for AUTO mode routing. useSwarm.js line 609 documents lastChatSnippet accumulation rationale (Task #406 fix). SwarmContext.jsx `setWorkflowDef` has inline comment explaining stale-state clearing on workflow switch (#407). AgentNode.jsx lines 19-23 document dual-format cost read for server/client format mismatch (#408). useSwarm.js `applyExecutionSnapshot` has inline comments explaining server-to-client cost normalization (#408). |
+| Inline comments | UP_TO_DATE | 2026-04-08 | StreamJsonParser.js `_parseResult` has inline comment documenting `resultText` field purpose (canonical complete text replacing streamed fragments). SwarmEngine.js `_handleStreamJsonResult` step 4b has inline comment explaining token-boundary spacing fix and canonical text replacement. useSwarm.js `chat_message` handler has inline comment explaining `isCanonical` flow: `replaceAgentChatText` + `patchLatestChatMessage` replace all streamed text_delta fragments. SwarmContext.jsx `replaceAgentChatText` action is self-documenting. All prior inline comment coverage (DEC-027/028/029, cost normalization, stale-state clearing, etc.) remains accurate. |
 | docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. Deferred indefinitely. |
 | docs/research_resume_after_kill.md | UP_TO_DATE | 2026-04-08 | NEW: Research on --resume behavior after process kill. Findings feed into FR-SJ-17/18. |
 | docs/research_b_tools.md | UP_TO_DATE | 2026-04-08 | NEW: Research on --allowedTools vs --tools vs --disallowedTools. Critical finding: --allowedTools is NOT a security boundary (bug #12232). |
@@ -94,7 +94,7 @@ _Last updated: 2026-04-08 after Tasks #407 (BUG-DL-STALE-STATE-1) and #408 (BUG-
 | ARCHITECTURE.md V5 component tree (12 components) | LOW | Deferred since v5.0; no active development on those components |
 | ARCHITECTURE.md Section 13 (V9.0 stream-json) | MEDIUM | Section 13.2-13.6 done (StreamJsonParser + spawner + result handler). Remaining components (#361-#393) need entries as implemented. |
 | docs/ARCHITECTURE.md Section 13 closure sweep | MEDIUM | Runtime landed and V9.0 is closed, but the narrative note still describes #361-#393 as pending work |
-| API.md V9.0 WS events | MEDIUM | Blocked until FR-SJ-19 through FR-SJ-23 are implemented |
+| API.md V9.0 WS events | DONE | Resolved 2026-04-08: all V9.0 WS events documented including isCanonical chat_message |
 
 ## V3.1 Bug Fix Wave — ALL FIXED (2026-04-02)
 

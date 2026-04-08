@@ -1,4 +1,48 @@
 ---
+## 2026-04-08 — Task #406 phase 2: Canonical result text documentation update
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task #406 phase 2)
+
+### Context when I started
+Task #406 phase 2 completed the fix for token-boundary spacing in stream-json text_delta output. The qa-tester's TEST GATE #409 had identified that client-side separator fixes were insufficient because the spacing artifacts originate from Claude CLI tokenizer boundaries. Phase 2 adds server-side canonical text replacement: the `result` event's `resultText` field provides authoritative text that replaces all accumulated text_delta fragments.
+
+### What I did
+1. Read all 5 modified files: StreamJsonParser.js, SwarmEngine.js, useSwarm.js, SwarmContext.jsx, StreamJsonParser.test.js
+2. Audited existing docs for staleness against the changes
+3. Updated ARCHITECTURE.md Section 13.5 to document step 4b (canonical resultText replacement) and updated the WS event table to describe isCanonical chat_message
+4. Updated API.md WS event table with all V9.0 stream-json events (chat_message with isCanonical, agent_tool_use, agent_tool_delta, agent_thinking, agent_cost, handoff_completed, runtime_provider_switch, trigger_fired, trigger_status) -- resolving a long-standing documentation debt item
+5. Updated DOC_STATUS.md: release notes, architecture status, API status, inline comment status, resolved API.md WS events debt
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/ARCHITECTURE.md | MODIFIED | Section 13.5 step 4b added (canonical resultText replacement); WS event table chat_message row updated with isCanonical description |
+| docs/API.md | MODIFIED | WS Swarm Channel event table expanded from 8 to 17 event types covering all V9.0 stream-json events |
+| docs/memory/DOC_STATUS.md | MODIFIED | Release notes, doc health table, inline comments, and debt table updated |
+| docs/memory/agents/documenter.md | MODIFIED | This session log appended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Session entry appended |
+
+### Improvements delivered
+- ARCHITECTURE.md now accurately describes the canonical text replacement flow end-to-end
+- API.md WS event table is comprehensive for the first time since V9.0 landed -- long-standing documentation debt resolved
+- DOC_STATUS.md reflects zero open bugs
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Expanded the API.md WS event table to include ALL V9.0 events (not just chat_message) since the debt item was already listed and all events are implemented
+
+### What I learned
+- The `isCanonical` flag on chat_message is the key architectural element: it tells the client to replace (not append) streamed text, which is critical because tokenizer boundaries produce spacing artifacts that can only be fixed by the authoritative result text
+
+### State I'm leaving behind
+All docs are up to date for Task #406 phase 2. README.md did not need changes (features table and swarm runtime notes were already accurate). CONTRIBUTING.md remains intentionally missing (private tool).
+
+### Handoff
+None -- task fully self-contained.
+
+---
 ## 2026-04-08 — Tasks #407+#408: BUG-DL-STALE-STATE-1 + BUG-DL-COST-VANISH-1 documentation update
 **Status:** COMPLETED
 **Called by:** orchestrator (post-bugfix)

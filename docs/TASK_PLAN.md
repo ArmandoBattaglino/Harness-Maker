@@ -5,7 +5,7 @@
 **Created:** 2026-03-18
 **PRD Version:** 1.0
 **Status:** v9.3.1 — task numbering extends through #412; 409 tasks are currently registered in this plan, 408 are COMPLETE/PASS, 1 is DEFERRED, 0 are PENDING, and 1 is IN_PROGRESS. V9.1 CODEX SDK SWARM INTEGRATION CLOSED through #405 PASS. 490 server tests pass, client build clean (501 modules).
-  **Active Area:** V9.2 STREAM-JSON DISPLAY FIDELITY — #406 COMPLETED, #407 COMPLETED, #408 COMPLETED. TEST GATE #409 FAIL: text fidelity check failed (spurious spaces from stream-json token boundaries persist despite client fix). #407/#408 fixes verified PASS. Residual bug: stream-json text_delta tokens carry whitespace at subword boundaries — needs server-side or post-processing fix.
+  **Active Area:** V9.2 STREAM-JSON DISPLAY FIDELITY — #406 COMPLETED (phase 2 fix 9029762 did NOT resolve text fidelity: Claude CLI result event result field itself has tokenizer spacing artifacts), #407 COMPLETED, #408 COMPLETED. TEST GATE #409 FAIL attempt 2 — text fidelity still broken, stale-state and cost-persistence PASS. Need phase 3 fix: post-processing to rejoin split tokens or alternative text source.
   **Completed Area:** V9.3 CODEX SDK DEBUGGER-LOOP HARDENING — #410 COMPLETED, #411 COMPLETED, TEST GATE #412 PASS. Live Codex SDK smoke on isolated updated server verified non-empty Chat rail output and clean Reset Session -> Idle behavior.
   **Completed Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 ALL COMPLETED/PASS. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#267 ALL COMPLETED. AREA CLOSED 2026-04-06.
@@ -16931,7 +16931,7 @@ Type: TEST_GATE
 Priority: CRITICAL
 Status: FAIL
 Gate: HARD
-Completion Note: 2026-04-08 — TEST GATE FAIL. Test 1 (text fidelity) FAIL: spurious spaces persist in stream-json output even with correct bundle (separator=''). Spaces come from raw Claude CLI text_delta tokens, NOT from client accumulation. The #406 fix was correct (eliminated '\n\n' separator) but insufficient — a NEW residual bug exists where stream-json token boundaries include whitespace. Examples: "con su ma t or e" (consumatore), "tra m it e" (tramite), "se con da" (seconda), "Java Script" (JavaScript). Tests 2-4 all PASS: stale state reset works (#407), cost badges persist (#408), 488/488 server tests, client build clean.
+Completion Note: 2026-04-08 — Attempt 2 FAIL. Phase 2 fix (9029762) replaced streamed text_delta with Claude CLI result event's `result` field, but that field ALSO contains tokenizer-boundary spacing artifacts (e.g. "al le m and" not "allemand", "fra nc e se" not "francese", "Java Script" not "JavaScript", "da t a base" not "database"). The root cause is that Claude CLI `--output-format stream-json` result event `result` field is NOT canonical clean text — it is the same tokenizer-concatenated text. Tests 2 (stale state reset) and 3 (cost persistence) PASS. Test 1 (text fidelity) FAIL. 490/490 server tests pass, client build clean. The fix approach must change: either post-process to rejoin split tokens, or use a different source for the final text (e.g. the `assistant` message event content blocks, or parse the result text to remove tokenizer artifacts).
 Context:
   Re-run the same multi-agent Puppeteer E2E test (2-agent Researcher → Writer, Node.js streams topic).
   Verify:

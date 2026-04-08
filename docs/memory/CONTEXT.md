@@ -1,8 +1,8 @@
 ﻿# Current Context
 **Session date:** 2026-04-08
-**Focus:** V9.3 CODEX SDK DEBUGGER-LOOP HARDENING is CLOSED. Deep live testing found and fixed two codex-sdk regressions: #410 reset/abort left executions blocked, and #411 completed runs could lose `chatMessages` while final output still existed. TEST GATE #412 PASS verified both fixes live on isolated server `http://127.0.0.1:3337`. Parallel status: V9.2 STREAM-JSON DISPLAY FIDELITY remains open only because TEST GATE #409 now FAILed on residual text-fidelity spacing, which is separate from the codex-sdk work. Task numbering extends through #412; 409 tasks registered, 408 COMPLETE/PASS, 1 DEFERRED (#236), 1 IN_PROGRESS/OPEN follow-up (#409). 490 backend tests pass, client build clean at 501 modules.
+**Focus:** V9.2 STREAM-JSON DISPLAY FIDELITY phase 2 fix committed (9029762). The canonical result text fix addresses the residual stream-json text_delta spurious-space bug that caused TEST GATE #409 to FAIL on its first run. 490/490 server tests pass, client build clean (501 modules). TEST GATE #409 is now re-running. V9.3 CODEX SDK DEBUGGER-LOOP HARDENING remains CLOSED (#410-#412 all COMPLETE/PASS). Task numbering extends through #412; 409 tasks registered, 408 COMPLETE/PASS, 1 DEFERRED (#236), 1 IN_PROGRESS (#409 re-test).
 
-**IMMEDIATE NEXT STEP:** return to V9.2 follow-up planning for the residual stream-json text-fidelity bug behind TEST GATE #409, or do housekeeping/commit prep for the completed codex-sdk debugger-loop fixes.
+**IMMEDIATE NEXT STEP:** Await TEST GATE #409 re-run result. If PASS, V9.2 area closes and all planned work is complete. If FAIL, route residual bugs back to debugger for another fix pass.
 
 **V9.1 dependency wave map:**
   Wave 9.1: #400 (SDK contract spike) -> #401 (adapter foundation) -> #402 (SwarmEngine codex-sdk runtime) -> #403 (backend TEST GATE) + #404 (frontend contract) IN PARALLEL -> #405 (AREA CHECKPOINT)

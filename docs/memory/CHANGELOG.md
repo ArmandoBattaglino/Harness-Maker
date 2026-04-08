@@ -3776,3 +3776,40 @@ No new connections introduced in this checkpoint task. All connection changes we
 - `server/tests/chat-snippet-option-b.test.js` — existing tests should still pass; accumulation behavior is more correct now.
 
 ---
+
+---
+## 2026-04-08 — Task #406 phase 2: Canonical result text fix for token-boundary spacing
+**Agent:** backend-dev + frontend-dev — mapped by code-mapper
+**Triggered by:** Token-boundary spacing bug in streamed text_delta concatenation. Claude CLI text_delta tokens carry tokenizer whitespace (e.g. " con", " su", "ma") that produces garbled text when concatenated directly. The result event's `result` field contains the correctly assembled text. Commit 9029762.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/StreamJsonParser.js | MODIFIED | `_parseResult` now extracts `resultText` from `obj.result` (string or null) |
+| server/services/SwarmEngine.js | MODIFIED | `_handleStreamJsonResult` step 4b: replaces accumulated text with canonical resultText, broadcasts `isCanonical` chat_message |
+| client/src/hooks/useSwarm.js | MODIFIED | `connectWs` chat_message handler: new `isCanonical` branch calls `replaceAgentChatText` + patches latest chat message |
+| client/src/store/SwarmContext.jsx | MODIFIED | New `replaceAgentChatText` action added to store |
+| server/tests/StreamJsonParser.test.js | MODIFIED | `resultText` added to expected output in result event test |
+
+### Functions Added
+- `replaceAgentChatText(nodeId, text)` in `client/src/store/SwarmContext.jsx` — replaces (not appends) `agentResults[nodeId].finalText` with canonical text from server
+
+### Functions Modified
+- `StreamJsonParser._parseResult(obj)` in `server/services/StreamJsonParser.js` — now returns `resultText: typeof obj.result === 'string' ? obj.result : null` in output
+- `SwarmEngine._handleStreamJsonResult(executionId, nodeId, resultEvt, handoffTargets)` in `server/services/SwarmEngine.js` — new step 4b: when `resultEvt.resultText` is present, overwrites `_streamJsonAccumulatedText`, updates `lastOutputSnippet`, broadcasts corrective `chat_message` with `isCanonical: true`
+- `connectWs(executionId)` in `client/src/hooks/useSwarm.js` — chat_message handler now has `if (msg.isCanonical)` branch that calls `replaceAgentChatText`, updates `lastChatSnippet`, and patches latest structured chat message
+
+### Functions Removed
+- (none)
+
+### Connection Changes
+- `SwarmEngine._handleStreamJsonResult` now broadcasts a new WS event shape: `{ type: 'chat_message', isCanonical: true, ... }` — consumed by `useSwarm.js::connectWs`
+- `useSwarm.js::connectWs` now calls new store action `replaceAgentChatText` (new dependency)
+- `StreamJsonParser._parseResult` output now includes `resultText` field — consumed by `SwarmEngine._handleStreamJsonResult`
+
+### Impact on Other Code
+- All WS consumers of `chat_message` events must handle the new `isCanonical` field gracefully (unknown fields are ignored by default, so no breakage expected)
+- `agentResults[nodeId].finalText` is now overwritten on canonical receipt — any consumer reading this value mid-stream will see the corrected text after the result event arrives
+- Test file `StreamJsonParser.test.js` updated to assert `resultText` in result event output
+
+---

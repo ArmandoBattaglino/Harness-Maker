@@ -1,4 +1,24 @@
-﻿## 2026-04-08 — qa-tester — Task #409: TEST GATE V9.2 Stream-JSON Display Fidelity
+﻿## 2026-04-08 — qa-tester — Task #409: TEST GATE V9.2 Stream-JSON Display Fidelity (attempt 2)
+**Outcome:** FAIL
+**Summary:** Phase 2 fix (9029762) replaced streamed text with Claude CLI result event's `result` field, but that field ALSO contains tokenizer-boundary spacing artifacts (e.g. "al le m and" not "allemand", "fra nc e se" not "francese"). The fix assumption that `obj.result` is canonical clean text is wrong. Tests 2 (stale state reset) PASS, 3 (cost persistence) PASS, 4 (build 490/490 + client) PASS. Overall FAIL due to text fidelity.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (testing only)
+**Decisions made:** FAIL verdict; phase 2 approach invalidated; need fundamentally different fix strategy
+**Blockers:** Claude CLI stream-json result event does not provide clean text -- need alternative approach (word-fusion heuristic, assistant message content blocks, or accept as limitation)
+**Next:** Debugger/backend-dev must attempt phase 3 fix with different strategy. Re-run TEST GATE #409 after.
+
+---
+## 2026-04-08 — documenter — Task #406 phase 2: Canonical result text documentation
+**Outcome:** COMPLETED
+**Summary:** Updated ARCHITECTURE.md Section 13.5 with canonical resultText replacement step (4b) and isCanonical chat_message WS event. Expanded API.md WS Swarm Channel event table from 8 to 17 event types, resolving a long-standing V9.0 documentation debt. Updated DOC_STATUS.md across 4 sections.
+**Files changed:** docs/ARCHITECTURE.md, docs/API.md, docs/memory/DOC_STATUS.md, docs/memory/agents/documenter.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (documentation only)
+**Decisions made:** Expanded API.md WS table to cover all V9.0 events (not just chat_message) since debt item was already tracked
+**Blockers:** none
+**Next:** nothing -- task fully self-contained
+
+---
+## 2026-04-08 — qa-tester — Task #409: TEST GATE V9.2 Stream-JSON Display Fidelity
 **Outcome:** FAIL
 **Summary:** Test 1 (text fidelity) FAIL: spurious spaces persist in stream-json Writer output even with correct bundle deployed (separator=''). Spaces originate from Claude CLI text_delta token boundaries, not client accumulation. The #406 fix was correct but insufficient. Tests 2 (stale state reset #407) PASS, 3 (cost persistence #408) PASS, 4 (build/tests 488/488) PASS. Overall FAIL due to criterion #1.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md, docs/memory/PROGRESS.md
@@ -5205,4 +5225,26 @@ full self-contained context and acceptance criteria.
 **Decisions made:** ARCHITECTURE.md not stale -- text_delta description is at correct abstraction level
 **Blockers:** none
 **Next:** frontend-dev completes #407 and #408, then qa-tester runs TEST GATE #409
+---
+
+---
+## 2026-04-08 — project-manager — Task #406 phase 2 housekeeping + TEST GATE #409 re-run tracking
+**Outcome:** COMPLETED
+**Summary:** Updated TASK_PLAN.md header, PROGRESS.md, and CONTEXT.md to reflect the phase 2 canonical result text fix (commit 9029762) for BUG-DL-TEXTDELTA-1. #406 remains COMPLETED (phase 2 is a continuation). TEST GATE #409 status changed from FAIL to IN_PROGRESS as it is being re-run against the phase 2 fix. 490/490 tests pass, build clean.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none (tracking only)
+**Decisions made:** Phase 2 fix does not warrant a new task number; it is a continuation of #406
+**Blockers:** none
+**Next:** Await TEST GATE #409 re-run result. If PASS, V9.2 closes and all planned work is complete. If FAIL, route to debugger for another fix pass.
+---
+
+---
+## 2026-04-08 — code-mapper — Task #406 phase 2: Canonical result text code mapping
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md and CHANGELOG.md for the canonical result text fix (commit 9029762). Mapped new `replaceAgentChatText` store action, updated `_parseResult` (resultText field), `_handleStreamJsonResult` (step 4b canonical replacement + isCanonical broadcast), and `connectWs` (isCanonical handler branch). 5 files analyzed, 1 function added, 4 updated, 0 removed.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** nothing — task fully self-contained
 ---

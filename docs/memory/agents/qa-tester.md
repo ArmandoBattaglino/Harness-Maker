@@ -1,4 +1,65 @@
 ---
+## 2026-04-08 — Task #409: TEST GATE — V9.2 Stream-JSON Display Fidelity verification (attempt 2)
+**Status:** COMPLETED (verdict: FAIL)
+**Called by:** user (direct)
+
+### Context when I started
+Phase 2 fix committed as 9029762: StreamJsonParser._parseResult extracts resultText from Claude CLI result event, SwarmEngine._handleStreamJsonResult replaces accumulated text_delta with canonical result text, client useSwarm handles isCanonical chat_messages by replacing agentResults and patching latest chat. 490/490 server tests pass, client build clean.
+
+### What I did
+1. Killed old server (PID 38696), rebuilt client (4.74s, 501 modules), ran server tests (490/490 pass)
+2. Started server with NO_OPEN=1 node server/index.js, verified health
+3. Navigated to Swarm view, generated "Node Streams Research and Write" workflow (Researcher -> Writer)
+4. Ran execution, waited for Completed state
+5. Examined Writer output text in both canvas node and Chat rail
+6. Found SAME spurious token-boundary spaces: "f all is c a" (fallisca), "r is or se" (risorse), "for ma to" (formato), "Java Script" (JavaScript), "da t a base" (database), "o per are" (operare), "struttura t i" (strutturati), "con c rete" (concrete)
+7. Took screenshot as evidence (test-gate-409-text-fidelity.png)
+8. Verified server fix code: StreamJsonParser._parseResult correctly reads obj.result, SwarmEngine correctly broadcasts isCanonical chat_message, client correctly handles replacement
+9. Concluded: Claude CLI result event `result` field ITSELF contains the same tokenizer-boundary spacing artifacts -- it is NOT canonical clean text
+10. Confirmed with second workflow ("French-German Greeting Translator"): "al le m and" (allemand), "fra nc e se" (francese) -- same bug pattern
+11. Test 2 (stale state reset): PASS -- new workflow showed idle nodes, no stale data
+12. Test 3 (cost persistence): PASS -- $0.10 and $0.06 badges visible after Completed
+13. Test 4 (build & tests): PASS -- 490/490 server tests, client build clean
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Task #409 marked FAIL attempt 2 with detailed root cause |
+| docs/memory/agents/qa-tester.md | MODIFIED | This session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Session entry |
+
+### Improvements delivered
+- Definitively proved that Claude CLI `--output-format stream-json` result event `result` field is NOT clean canonical text -- it has the same tokenizer spacing artifacts as text_delta accumulation
+- Previous handoff recommendation (approach #1: use result event text) was based on incorrect assumption and is now invalidated
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| Spurious spaces persist after phase 2 fix | Claude CLI result event `result` field contains same tokenizer-boundary artifacts as text_delta tokens | Phase 2 fix (9029762) correctly replaces text but replacement text itself is broken | OPEN -- phase 2 approach is wrong, need phase 3 |
+
+### Decisions I made
+- FAIL verdict because Test 1 (text fidelity) still fails despite phase 2 fix
+- Tests 2, 3, 4 all PASS but the hard gate requires ALL checks to pass
+
+### What I learned
+- The Claude CLI `--output-format stream-json` result event `result` field is NOT a canonical clean reassembly of text. It contains the same tokenizer-boundary whitespace artifacts as the accumulated text_delta tokens. This invalidates the phase 2 fix approach entirely.
+- The spacing pattern is consistent: multi-subword tokens for non-English words and camelCase (e.g., "JavaScript" -> "Java Script", "allemand" -> "al le m and", "consumatore" -> "con su ma t or e"). Single-token common English words are fine.
+- A fundamentally different approach is needed: either (a) a word-fusion heuristic that detects and removes spaces at subword boundaries, or (b) using the `assistant` message event's content blocks instead of the `result` event, or (c) client-side post-processing regex to rejoin obviously-split tokens.
+
+### State I'm leaving behind
+- TASK #409 FAIL attempt 2
+- Phase 2 fix (9029762) is committed but does not solve the problem
+- #407 (stale state) and #408 (cost persistence) remain verified PASS
+- V9.2 area CANNOT be closed until text fidelity is resolved
+
+### Handoff
+The phase 2 approach (use result event text) is invalidated. Need a phase 3 fix with a different strategy:
+1. **Word-fusion heuristic** (server-side): Post-process the result text to detect and rejoin obviously-split tokens. Pattern: space followed by 1-3 lowercase chars followed by space, in the middle of what should be a single word. Risky for false positives.
+2. **Use assistant message content blocks**: The `assistant` type event in stream-json may contain properly assembled content blocks. Check if those have clean text.
+3. **Client-side post-processing**: Regex to rejoin split subword tokens. Same risk as #1 but easier to iterate on.
+4. **Accept as Claude CLI limitation**: Document that stream-json output has tokenizer artifacts for non-English text and long compound words. Not ideal but may be the pragmatic choice if no clean text source exists.
+
+---
 ## 2026-04-08 — Task #409: TEST GATE — V9.2 Stream-JSON Display Fidelity verification
 **Status:** COMPLETED (verdict: FAIL)
 **Called by:** orchestrator
