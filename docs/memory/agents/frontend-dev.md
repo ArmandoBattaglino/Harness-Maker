@@ -1,4 +1,44 @@
 ---
+## 2026-04-08 — Markdown rendering for Swarm chat messages
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+ChatMessage.jsx displayed raw markdown text (bold, lists, headings) as plain text. The project already had `react-markdown` and `remark-gfm` in client/package.json and used them in AgentOutputPanel, WorkflowArtifactPanel, and JobView with `prose prose-invert` Tailwind typography classes.
+
+### What I did
+1. Added `react-markdown` and `remark-gfm` imports to ChatMessage.jsx
+2. Replaced the raw `{displayText}` output with `<ReactMarkdown remarkPlugins={[remarkGfm]}>` wrapped in Tailwind prose classes
+3. Used `prose prose-invert prose-sm` matching existing patterns, with additional prose modifiers for compact spacing suitable for chat bubbles (prose-p:my-1, prose-li:my-0, etc.)
+4. Verified build succeeds (500 modules, no errors)
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/canvas/ChatMessage.jsx | MODIFIED | Added react-markdown/remark-gfm imports; replaced raw text div with ReactMarkdown component using prose-invert styling |
+
+### Improvements delivered
+- Bold, italic, lists, headings, code, and GFM tables now render properly in swarm chat messages
+- Works for both stream-json and PTY messages (no spawnMode gating)
+- Consistent with markdown rendering in other panels
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Used react-markdown (Option B) since it was already in package.json and used elsewhere, rather than writing a custom parser
+- Added compact prose spacing modifiers (prose-p:my-1, prose-li:my-0) to keep chat messages dense
+
+### What I learned
+- The project has a consistent pattern: ReactMarkdown + remarkGfm + prose prose-invert for all markdown rendering
+
+### State I'm leaving behind
+ChatMessage.jsx now renders markdown in all chat messages. Build is clean.
+
+### Handoff
+None -- task fully self-contained.
+
+---
 ## 2026-04-06 — Unified Chat View — Wave 2 (Client-side)
 **Status:** COMPLETED
 **Called by:** orchestrator (task assignment)

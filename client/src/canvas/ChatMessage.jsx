@@ -1,6 +1,8 @@
 // client/src/canvas/ChatMessage.jsx
 // Single message in the Unified Chat View.
 import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { stripAnsi } from '../utils/stripAnsi';
 
 const ROLE_STYLES = {
@@ -191,8 +193,14 @@ export default function ChatMessage({ message, agentLabel }) {
           )}
           <span className="text-[10px] text-gray-600">{formatTime(timestamp)}</span>
         </div>
-        <div className="text-[12px] whitespace-pre-wrap break-words leading-5 text-gray-100">
-          {displayText || 'Structured handoff sent.'}
+        <div className="prose prose-invert prose-sm max-w-none text-[12px] break-words leading-5 text-gray-100 prose-strong:text-white prose-strong:font-semibold prose-em:text-gray-300 prose-li:my-0 prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-headings:text-gray-100 prose-headings:mt-2 prose-headings:mb-1 prose-code:text-amber-300 prose-code:text-[11px]">
+          {displayText ? (
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {displayText}
+            </ReactMarkdown>
+          ) : (
+            <p>Structured handoff sent.</p>
+          )}
         </div>
         {isStreamJson && Array.isArray(toolUse) && toolUse.map((tool, index) => (
           <CollapsibleMetaBlock
