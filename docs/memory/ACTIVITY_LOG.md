@@ -1,4 +1,15 @@
-﻿## 2026-04-08 - researcher - Research: Claude CLI Structured Output / Programmatic Parsing
+﻿## 2026-04-08 — creative-director — Stage 0: PTY-to-StreamJSON Migration Creative Analysis
+**Outcome:** COMPLETED
+**Summary:** Analyzed the idea to replace PTY-based Swarm agent output extraction with stream-json mode. All three clarity dimensions rated CLEAR -- this is a well-defined migration from a broken path to a proven one. Surfaced 2 questions: (1) what happens for non-Claude providers that lack stream-json, (2) whether switching from character-streaming PTY to chunk-based JSON changes perceived liveness.
+**Files changed:** docs/memory/agents/creative-director.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** Limited to 2 questions (not 4) -- vision is unambiguous
+**Blockers:** none
+**Next:** Tech-lead parallel analysis, then user Q&A, then research/PRD
+
+---
+
+## 2026-04-08 - researcher - Research: Claude CLI Structured Output / Programmatic Parsing
 **Outcome:** COMPLETED
 **Summary:** Researched whether Claude CLI provides structured output to avoid PTY parsing. Found three viable approaches: (1) CLI -p with --output-format stream-json (already used by JobRunner), (2) @anthropic-ai/claude-agent-sdk TypeScript package (native async generator, no PTY), (3) CLI -p with --output-format json + --json-schema for validated structured output. The project already uses approach 1 for job mode. The Agent SDK is the recommended path for new features needing clean semantic content extraction.
 **Files changed:** docs/memory/agents/researcher.md, docs/memory/ACTIVITY_LOG.md

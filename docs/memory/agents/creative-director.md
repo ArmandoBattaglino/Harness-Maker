@@ -91,3 +91,45 @@ Full feature analysis delivered as structured markdown in the conversation. No c
 ### Handoff
 Tech-lead analyzes in parallel. After both Stage 0 agents complete, the orchestrator should route to project-manager to break Wave 1 (8 MUST HAVE features) into concrete implementation tasks with acceptance criteria. Wave 1 features are: D2 (Save), D1 (Name Edit), B1 (Editable Prompt), B2 (Label Edit), A2 (Node Delete), C1 (Edge Delete), F1 (Undo/Redo), A5 (Context Menu).
 ---
+
+---
+## 2026-04-08 — Stage 0 Creative Analysis: PTY-to-StreamJSON Migration for Swarm Agents
+**Status:** COMPLETED
+**Called by:** /create pipeline (Stage 0)
+
+### Context when I started
+V8.2 just closed (353 tasks, 351 completed). The Swarm Orchestrator uses PTY-based output extraction with ChatExtractor (100+ regex patterns) to parse agent output. This approach suffers from ConPTY artifacts on Windows: space-splitting ("del f in i" instead of "delfini"), garbled snippets for downstream agents (2nd/3rd in chain get zero chat messages), system prompt echoes leaking into chat, and ANSI noise. The app already uses `--output-format stream-json` in JobRunner.js for non-interactive jobs -- that path produces clean structured JSON with zero ConPTY issues.
+
+### What I did
+1. Read project memory (CONTEXT.md, my own agent log) to understand current state.
+2. Analyzed the idea from product vision and UX perspective.
+3. Scored Vision / User / Value clarity -- all CLEAR. This is a well-defined bug-fix migration, not a speculative feature.
+4. Surfaced 2 product questions (not 4 -- the vision is clear enough that inventing more would be padding).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/agents/creative-director.md | MODIFIED | Added this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added activity log entry |
+
+### Improvements delivered
+- Creative analysis confirming all three clarity dimensions are CLEAR
+- Two targeted questions: (1) non-Claude provider experience gap, (2) streaming liveness perception change
+
+### Bugs I encountered
+None -- this was analysis only.
+
+### Decisions I made
+- Limited questions to 2 (not 4) because the vision is unambiguous: replace a broken extraction path with one that already works elsewhere in the same codebase. No product ambiguity to resolve.
+- Did NOT question the "keep PTY commented as fallback" approach -- it is prudent engineering and has no product downside.
+
+### What I learned
+- This project has been through 353 tasks and the PTY/ConPTY problem has been a persistent pain point across multiple versions. The ChatExtractor with 100+ regex patterns is a symptom of fighting the wrong abstraction. Stream-json is the right abstraction.
+- The researcher already found three viable approaches (stream-json, Agent SDK, json+schema). Stream-json is the lowest-risk because it is already proven in JobRunner.js.
+
+### State I'm leaving behind
+Creative analysis delivered. Two questions surfaced. No code touched. Ready for tech-lead parallel analysis and then user Q&A.
+
+### Handoff
+Tech-lead runs in parallel (Stage 0). After both Stage 0 agents complete, user answers the 2 creative + N technical questions, then pipeline proceeds to research/PRD.
+---
