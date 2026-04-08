@@ -74,6 +74,7 @@ export default function handleSwarmConnection(ws, req, swarmEngine) {
     return;
   }
 
+
   // 4. Add ws to per-execution subscriber set
   if (!_subscribers.has(executionId)) {
     _subscribers.set(executionId, new Set());

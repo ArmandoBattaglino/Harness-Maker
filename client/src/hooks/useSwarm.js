@@ -311,25 +311,56 @@ export function useSwarm(workflowId) {
           }
           void applyExecutionSnapshot(msg).then(({ status }) => {
             if (['stopped', 'completed', 'failed'].includes(status) && wsRef.current === ws) {
-              ws.close();
+              // Delay WS close to allow trailing chat_message events to arrive.
+              // The ChatExtractor may flush final messages after execution_status
+              // is broadcast, and closing immediately loses them.
+              setTimeout(() => {
+                if (wsRef.current === ws) ws.close();
+              }, 3000);
             }
-            // Hydrate agentResults from persisted data on terminal states
+            // Hydrate agentResults from persisted data on terminal states.
+            // Delay the fetch to give ChatExtractor time to flush final messages
+            // (echo gate timeout + silence timeout can deliver output after the
+            // execution_status:completed event).
             if (['completed', 'stopped', 'failed'].includes(status)) {
               const execId = msg.executionId || useSwarmStore.getState().activeExecutionId;
               if (execId) {
-                fetch(`/api/v1/swarm/executions/${execId}/results`)
-                  .then((resp) => {
-                    if (resp.ok) return resp.json();
-                    return null;
-                  })
-                  .then((data) => {
-                    if (data?.agentOutputs) {
-                      useSwarmStore.getState().hydrateAgentResults(data.agentOutputs);
-                    }
-                  })
-                  .catch(() => {
-                    // Silently skip — WS-accumulated data is still available
-                  });
+                const fetchResults = () => {
+                  fetch(`/api/v1/swarm/executions/${execId}/results`)
+                    .then((resp) => {
+                      if (resp.ok) return resp.json();
+                      return null;
+                    })
+                    .then((data) => {
+                      if (data?.agentOutputs) {
+                        useSwarmStore.getState().hydrateAgentResults(data.agentOutputs);
+                      }
+                      // Hydrate chat messages from server-stored data (dedup by timestamp+nodeId)
+                      if (data?.chatMessages && Array.isArray(data.chatMessages)) {
+                        const store = useSwarmStore.getState();
+                        const existing = new Set(
+                          store.chatMessages.map(m => `${m.nodeId}:${m.timestamp}`)
+                        );
+                        for (const cm of data.chatMessages) {
+                          const key = `${cm.nodeId}:${cm.timestamp}`;
+                          if (!existing.has(key)) {
+                            store.addChatMessage(cm);
+                            existing.add(key);
+                          }
+                        }
+                      }
+                    })
+                    .catch(() => {
+                      // Silently skip — WS-accumulated data is still available
+                    });
+                };
+                // First immediate fetch for fast terminal states
+                fetchResults();
+                // Delayed fetches to capture late ChatExtractor flushes.
+                // Echo gate timeout (7s) + silence timeout (5s) = ~12s max
+                // after execution start before all chat messages are emitted.
+                setTimeout(fetchResults, 5000);
+                setTimeout(fetchResults, 12000);
               }
             }
           });

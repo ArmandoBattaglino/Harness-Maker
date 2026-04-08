@@ -7,6 +7,8 @@ import { normalizeChatDisplayText } from './chatTextNormalization.js';
 const NOISE_PATTERNS = [
   /^\s*[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏●◐◑◒◓⣾⣽⣻⢿⡿⣟⣯⣷▁▂▃▄▅▆▇█]+\s*/gm,  // spinners
   /\x1b\[[0-9;]*[a-zA-Z]/g,            // ANSI escapes (residual)
+  /\x1b+/g,                             // orphan/double ESC characters (ConPTY artifacts)
+  /\[[\?]?\d+[a-zA-Z]/g,               // bare CSI sequences without ESC (ConPTY strips ESC): [?2026h, [?2026l, [1C, etc.
   /^\s*[─━═╌╍┄┅┈┉╴╶╸╺]+\s*$/gm,       // horizontal rules
   /^\s*[\u2500-\u257F]+\s*$/gm,         // box-drawing lines
   /^\s*Working \([\d.]+s\)/gm,          // Codex "Working (Xs)"
@@ -179,6 +181,8 @@ const NOISE_PATTERNS = [
 const CHUNK_NOISE_PATTERNS = [
   /^\s*[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏●◐◑◒◓⣾⣽⣻⢿⡿⣟⣯⣷▁▂▃▄▅▆▇█]+\s*/gm,
   /\x1b\[[0-9;]*[a-zA-Z]/g,
+  /\x1b+/g,                             // orphan/double ESC characters
+  /\[[\?]?\d+[a-zA-Z]/g,               // bare CSI without ESC: [?2026h, [?2026l, [1C
   /^\s*[─━═╌╍┄┅┈┉╴╶╸╺]+\s*$/gm,
   /^\s*[\u2500-\u257F]+\s*$/gm,
   /^\s*Working \([\d.]+s\)/gm,
@@ -775,7 +779,6 @@ export class ChatExtractor {
     ];
     const promptScore = SYSTEM_PROMPT_INDICATORS.filter(p => p.test(text)).length;
     if (promptScore >= 2) {
-      // Two or more system prompt indicators → entire message is protocol echo
       buf.text = '';
       buf.firstChunkAt = 0;
       return;

@@ -91,6 +91,7 @@ function buildLiveExecutionResults(execution, workflowName = '') {
     workflowName: normalizedWorkflowName,
     status,
     agentOutputs,
+    chatMessages: Array.isArray(execution?.chatMessages) ? execution.chatMessages : [],
     aggregatedArtifact: TERMINAL_EXECUTION_STATUSES.has(status)
       ? buildWorkflowArtifact({
           workflowName: normalizedWorkflowName,
@@ -580,13 +581,19 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
       const liveWorkflowId = workflowIdHint || liveStatus.workflowId || liveExecution?.workflowId || null;
 
       if (TERMINAL_EXECUTION_STATUSES.has(liveStatus.status)) {
-        const persisted = await lookupHistoryExecution(executionId, liveWorkflowId, appLocals);
-        if (persisted) {
-          return {
-            source: 'history',
-            data: persisted.data,
-            workflowName: persisted.workflowName,
-          };
+        // Prefer live data when the execution object has chatMessages —
+        // the persisted history may have been written before late
+        // ChatExtractor flushes delivered final chat messages.
+        const liveChatCount = Array.isArray(liveExecution?.chatMessages) ? liveExecution.chatMessages.length : 0;
+        if (liveChatCount === 0) {
+          const persisted = await lookupHistoryExecution(executionId, liveWorkflowId, appLocals);
+          if (persisted) {
+            return {
+              source: 'history',
+              data: persisted.data,
+              workflowName: persisted.workflowName,
+            };
+          }
         }
       }
 
