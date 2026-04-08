@@ -1,4 +1,45 @@
 ---
+## 2026-04-08 — Scope & Risk Analysis: PTY-to-StreamJSON Migration
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+User requested a Scope & Risk Analysis for replacing PTY-based agent spawning in SwarmEngine with Claude CLI's `--output-format stream-json` mode for Claude provider agents. Research (researcher), creative-director, and tech-lead Stage 0 analyses were already complete. Tech-lead rated feasibility UNCERTAIN. The project was at v8.2.0 with 353 tasks (351 COMPLETED, 2 DEFERRED), all areas closed.
+
+### What I did
+1. Read all 7 memory files in parallel (PROJECT.md, DECISIONS.md, PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md, CODE_MAP.md, agents/project-manager.md)
+2. Read SwarmEngine.js (5284 lines), JobRunner.js (proven stream-json pattern), HandoffParser.js, ChatExtractor.js, useSwarm.js, swarmHandler.js
+3. Analyzed the _spawnAgentPty method structure, provider routing, state management, WS broadcast contract
+4. Mapped all systems that would be affected: HandoffParser, ChatExtractor, echo marker suppression, runtime menu detection, done-reinject, HITL freeze/unfreeze, budget tracking, circuit breaker
+5. Produced full Scope & Risk Analysis covering: MVP definition, 4-phase breakdown, explicit non-scope, dependency map, 3-risk register, complexity estimates
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/agents/project-manager.md | MODIFIED | Added this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added activity entry |
+
+### Decisions I made
+- Phase 0 spike is mandatory before any production code (resolves tech-lead UNCERTAIN rating)
+- Reuse HandoffParser on text_delta content rather than building a new parser
+- Keep ChatExtractor/chatTextNormalization alive for Codex/Gemini PTY path
+- Extended thinking mode and Agent SDK are explicit non-scope for v1
+- Estimated 15-20 tasks across 4 phases, overall complexity HIGH
+
+### What I learned
+- SwarmEngine.js at 5284 lines is the riskiest file to modify -- 20+ interacting subsystems
+- JobRunner already proves the stream-json readline pattern works (line 109: `--output-format stream-json`)
+- The biggest unknown is whether `--resume -p` maintains full multi-turn context (tools, partial results)
+- ChatExtractor (856 lines) and HandoffParser (245 lines) become unnecessary for Claude path but must stay for Codex/Gemini
+- Dual-path maintenance is the highest-likelihood risk (MEDIUM severity, HIGH likelihood)
+
+### State I'm leaving behind
+Scope & Risk Analysis delivered as text output. No TASK_PLAN.md changes yet -- waiting for user approval of the scope before creating tasks. Phase 0 spike recommended as immediate next step.
+
+### Handoff
+User decides whether to proceed. If yes: assign backend-dev to Phase 0 spike, then architect to design the full lifecycle.
+
+---
 ## 2026-04-07 — Full Project State Audit (user: "stato progetto?")
 **Status:** COMPLETED
 **Called by:** user

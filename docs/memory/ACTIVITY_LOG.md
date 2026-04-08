@@ -1,4 +1,15 @@
-﻿## 2026-04-08 — researcher — Quick Research Snapshot: Stream-JSON Agent Migration
+﻿## 2026-04-08 — project-manager — Scope & Risk Analysis: PTY-to-StreamJSON Migration
+**Outcome:** COMPLETED
+**Summary:** Produced full scope analysis for replacing PTY with stream-json for Claude provider agents. Defined 4-phase breakdown (Spike, Backend Lifecycle, WS Events, Frontend Chat UI, Integration). Identified 3 risks: multi-turn --resume uncertainty (HIGH), handoff token detection change (MEDIUM), dual-path maintenance burden (MEDIUM/HIGH). Overall complexity HIGH due to SwarmEngine.js being 5284 lines with 20+ subsystems. Recommended Phase 0 spike as mandatory prerequisite.
+**Files changed:** docs/memory/agents/project-manager.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** Phase 0 spike mandatory; reuse HandoffParser on text deltas; extended thinking and Agent SDK are non-scope; 15-20 estimated tasks
+**Blockers:** none
+**Next:** User approval of scope, then backend-dev Phase 0 spike, then architect designs full lifecycle
+
+---
+
+## 2026-04-08 — researcher — Quick Research Snapshot: Stream-JSON Agent Migration
 **Outcome:** COMPLETED
 **Summary:** Confirmed --resume + -p combination works per official docs. --session-id accepts custom UUIDs. Assembled complete stream-json event type reference. Identified critical pitfall: extended thinking disables streaming events. --dangerously-skip-permissions is the auto-accept mechanism.
 **Files changed:** docs/memory/agents/researcher.md, docs/memory/ACTIVITY_LOG.md
