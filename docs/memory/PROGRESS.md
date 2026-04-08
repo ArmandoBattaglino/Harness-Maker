@@ -1,3 +1,5 @@
+- [PM 2026-04-08] V9.2 status update: #406 COMPLETED (commit e496745), #407 IN_PROGRESS (frontend-dev), #408 IN_PROGRESS (frontend-dev), #409 PENDING (TEST GATE, blocked on #407+#408). Total: 406 tasks registered, 403 COMPLETE/PASS, 1 DEFERRED, 2 IN_PROGRESS, 1 PENDING.
+
 - [DEBUGGER 2026-04-08] TASK #406 (BUG-DL-TEXTDELTA-1) COMPLETED. Fixed two client-side accumulation bugs: (1) SwarmContext.jsx appendAgentChatText separator changed from "
 
 " to "" — eliminates spurious double-newlines between stream-json token fragments. (2) useSwarm.js lastChatSnippet changed from overwrite to accumulate so node card shows full text. Build clean, 488/488 tests pass.

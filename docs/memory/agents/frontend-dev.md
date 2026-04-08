@@ -1,4 +1,47 @@
 ---
+## 2026-04-08 — Task #407: BUG-DL-STALE-STATE-1 — Stale node state on workflow switch
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+After Prompt-to-Flow generates a new workflow, the canvas showed the new workflow structure but node cards initially rendered with status "Done" and chat snippets from the PREVIOUS execution. `setWorkflowDef` in SwarmContext.jsx was a simple setter (`set({ workflowDef: def })`) that didn't clear per-node execution state. `clearExecutionState()` was only called inside `startExecution` (useSwarm.js line 630) and inside `reset()`. The `handleLoadWorkflow` handler correctly called `reset()` before setting the new def, but 5 other workflow-switch paths (PromptToFlowBar, import, duplicate, template, version restore) did not clear execution state.
+
+### What I did
+1. Read all `setWorkflowDef` call sites across SwarmView.jsx (lines 323, 452, 503, 533, 582, 613, 1025, 1161, 1183, 1199) and useSwarm.js (lines 145, 161)
+2. Modified `setWorkflowDef` in SwarmContext.jsx from a simple setter to a smart setter that detects workflow ID changes and auto-clears execution state via `buildClearedExecutionState()`
+3. The fix checks three conditions: (a) prevId and nextId differ (or either is null), (b) there is stale execution state (activeExecutionId, executionStatus, or agentStates), and (c) only then clears
+4. Same-workflow updates (save, rename, settings) are not affected because their IDs match
+5. Verified client build passes (501 modules, 0 errors)
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/store/SwarmContext.jsx | MODIFIED | `setWorkflowDef` changed from simple setter to smart setter that auto-clears execution state when workflow ID changes |
+
+### Improvements delivered
+- All workflow switch paths now automatically clear stale node status, chat messages, agent results, inter-agent feed, budget, inbox items, etc.
+- No regressions for same-workflow updates (save, rename, settings)
+- Future-proof: new `setWorkflowDef` call sites will automatically get the clearing behavior
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Centralized the fix in `setWorkflowDef` rather than adding `clearExecutionState()` at each of the 5+ call sites — this prevents future regressions when new workflow-switch paths are added
+- Used `buildClearedExecutionState()` (same as `clearExecutionState` and `reset`) to ensure all execution state fields are covered
+- Kept version restore as a same-workflow-ID operation (no clear) since it's restoring a previous version of the same workflow, not switching to a different one
+
+### What I learned
+- `buildClearedExecutionState()` is the canonical source of truth for "clean slate" execution state — used by both `clearExecutionState` and `reset`
+- The `reset` action additionally clears localStorage, while `clearExecutionState` and the new `setWorkflowDef` logic do not — this is fine since localStorage is only used for rehydration on page reload
+
+### State I'm leaving behind
+SwarmContext.jsx `setWorkflowDef` now auto-clears execution state on workflow ID change. Build clean. Task #407 marked COMPLETED.
+
+### Handoff
+TEST GATE #409 is blocked on #407 + #408. #408 (cost footer vanish) still IN_PROGRESS.
+
+---
 ## 2026-04-08 — Markdown rendering for Swarm chat messages
 **Status:** COMPLETED
 **Called by:** user

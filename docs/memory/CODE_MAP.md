@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-08 — after V9.1 Codex SDK structured-runtime integration — mapped by code-mapper_
+_Last updated: 2026-04-08 — after Task #406: BUG-DL-TEXTDELTA-1 (stream-json text_delta spurious spaces) — mapped by code-mapper_
 
 > **PROJECT STATUS: V9.0 STREAM-JSON MIGRATION CLOSED + V9.1 CODEX SDK SWARM INTEGRATION CLOSED — 402 TASKS (401 COMPLETE/PASS, 1 DEFERRED, 0 PENDING)**
 > Claude now uses the structured `stream-json` path and Codex now has a parallel `codex-sdk` structured path, with PTY retained for Gemini/live terminal work and truthful Codex fallback scenarios. Verification: 488/488 backend tests pass, client build 501 modules.
@@ -2338,6 +2338,16 @@ _Last updated: 2026-04-08 — after V9.1 Codex SDK structured-runtime integratio
 - **Side effects:** resets all state fields to initial values (null/idle/empty) — including workflowDef: null (added Task #117), ptyExplosionNodeId: null
 - **Last modified:** 2026-03-31 in Task #117 by frontend-dev (BUG-SWARM-3 fix: workflowDef: null added to reset payload)
 
+### `client/src/store/SwarmContext.jsx` :: `appendAgentChatText(nodeId, text)` (NEW — Task #406)
+- **Purpose:** Append a text fragment to `agentResults[nodeId].finalText`. Used by the `chat_message` WS handler to accumulate assistant output text across multiple stream-json text_delta events into a single concatenated string.
+- **Called by:** useSwarm.js::connectWs onmessage (case 'chat_message', when role === 'assistant' or no role); useSwarm.js::restorePersistedExecution (via hydrateAgentResults which overwrites finalText entirely)
+- **Calls:** Zustand set
+- **Inputs:** nodeId (string — agent node ID), text (string — text fragment to append)
+- **Output:** void (mutates store)
+- **Side effects:** Updates `agentResults[nodeId].finalText` by concatenating with empty separator (no newline/space). Sets `viewed: false` and `updatedAt: Date.now()`. Creates the agentResults entry if it does not exist (defaults: `{ finalText: '', handoffPayloads: [], viewed: false, updatedAt: null }`).
+- **Complexity note (Task #406 — BUG-DL-TEXTDELTA-1):** The separator was changed from `'\n\n'` to `''` (empty string). The old double-newline separator caused spurious blank lines between text_delta fragments, which are sub-word token pieces — joining them with any whitespace produces garbled output. The empty separator correctly reconstitutes the original text.
+- **Last modified:** 2026-04-08 in Task #406 by debugger (BUG-DL-TEXTDELTA-1: separator changed from '\n\n' to '')
+
 ---
 
 ## React Flow Canvas Nodes (Tasks #53.1 + #53.2 + #53.3)
@@ -2701,7 +2711,8 @@ _Last updated: 2026-04-08 — after V9.1 Codex SDK structured-runtime integratio
 - **Complexity note (Task #124 — BUG-SESSION-1):** The `agent_status` case now calls `updateAgentState(msg.nodeId, { status: msg.status, sessionId: msg.sessionId })`. Previously `sessionId` was absent from the WS payload — AgentInspector's "Open Terminal" button could never render because `agentState.sessionId` was always falsy. Fix was in SwarmEngine (all 8 emission sites); this handler required no code change — sessionId flows through automatically once the server emits it.
 - **Complexity note (Task #126 — BUG-HANDOFF-1):** Added `case 'handoff_completed': addFeedEvent({ ...msg, timestamp: Date.now() })` at line ~44-46. This is the client-side counterpart to the new step 11 emission in SwarmEngine._onHandoff. handoff_completed events now appear in the InterAgentFeed alongside handoff_started events.
 - **Complexity note (Task #128 — BUG-TRIGGER-1 trigger cases):** Three new cases added at lines 60-85: (1) `trigger_fired` — reads `useSwarmStore.getState().triggerStates[tfId]` for prevFireCount, calls updateTriggerState(tfId, { fired:true, status:'fired', lastFiredAt, fireCount: prev+1 }). Uses `msg.triggerId ?? msg.nodeId` for ID normalization. (2) `trigger_status` — thin: updateTriggerState(msg.triggerId ?? msg.nodeId, { status: msg.status }). (3) `rss_item` — reads triggerStates snapshot for prevFireCount, calls updateTriggerState(msg.nodeId, { fired:true, status:'fired', lastFiredAt:Date.now(), fireCount:prev+1, lastItem:msg.guid??null }), then addFeedEvent. IMPORTANT: only `rss_item` has a live server emitter (TriggerManager._fireTrigger → `_wsBroadcast`). `trigger_fired` and `trigger_status` have no current server-side emission — client handlers are preemptive.
-- **Last modified:** 2026-04-02 in Task #128 by frontend-dev (BUG-TRIGGER-1: 3 new message cases added — trigger_fired, trigger_status, rss_item; updateTriggerState now called from WS path; was Task #126 for BUG-HANDOFF-1 before)
+- **Last modified:** 2026-04-08 in Task #406 by debugger (BUG-DL-TEXTDELTA-1: chat_message handler now accumulates lastChatSnippet via `prevSnippet + msg.text` instead of overwriting; was Task #128 for BUG-TRIGGER-1 before)
+- **Complexity note (Task #406 — BUG-DL-TEXTDELTA-1):** The `chat_message` case (line ~607-612) now reads `useSwarmStore.getState().agentStates[msg.nodeId]?.lastChatSnippet || ''` and concatenates `prevSnippet + msg.text` before calling `updateAgentState`. Previously the handler passed `msg.text` alone, overwriting any prior snippet. This caused node cards (AgentNode.jsx) to show only the last text_delta fragment instead of the full accumulated assistant response. The accumulation pattern mirrors `appendAgentChatText` which concatenates into `agentResults[nodeId].finalText`.
 
 ### `client/src/hooks/useSwarm.js` :: `startExecution(projectId, projectPath)` (returned callback)
 - **Purpose:** POST to /api/v1/swarm/:workflowId/start with {projectId, projectPath}, then call connectWs(executionId) to open the WS stream. Sets store state to running. Returns the executionId. Guards against missing workflowId with explicit throw (BUG-SWARM-4 FIXED — Task #118).

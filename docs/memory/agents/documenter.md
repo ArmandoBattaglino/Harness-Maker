@@ -3180,3 +3180,43 @@ ARCHITECTURE.md Section 13 is now complete through Task #359. Sections 13.3-13.6
 ### Handoff
 Next documenter run should occur after Task #361 (dispatcher integration into startExecution and all call sites) — Section 13.7 entry for #361 will move to a new 13.8 subsection. After #363 (stop/reset lifecycle), add a 13.9. After #380 (agent_status.spawnMode field), update 13.4 WS events table to reflect the frontend-visible field.
 ---
+
+---
+## 2026-04-08 — Task #406: BUG-DL-TEXTDELTA-1 documentation audit
+**Status:** COMPLETED
+**Called by:** orchestrator (post-bugfix parallel trio)
+
+### Context when I started
+Task #406 fixed two client-side accumulation bugs in SwarmContext.jsx and useSwarm.js. The appendAgentChatText store action previously used '\n\n' as separator between text_delta chunks (corrupting sub-word fragments), and lastChatSnippet in the chat_message handler was overwriting instead of accumulating.
+
+### What I did
+1. Read both modified files (SwarmContext.jsx, useSwarm.js) to understand the exact changes.
+2. Read DOC_STATUS.md — found BUG-DL-01 listed as open HIGH bug describing this exact issue.
+3. Audited ARCHITECTURE.md — lines 2196 and 2206 describe text_delta accumulation in general terms ("accumulate + broadcast chat_message") without specifying the separator. Not stale.
+4. Audited README.md, API.md, CLAUDE.md — no references to the changed behavior. Not stale.
+5. Checked inline comments — useSwarm.js line 609 has an accurate comment explaining the accumulation rationale. SwarmContext.jsx separator change is self-documenting.
+6. Updated DOC_STATUS.md: marked BUG-DL-01/BUG-DL-TEXTDELTA-1 as FIXED, updated release status (display fidelity FIXED), added to fixed bugs table, updated test/build counts, updated inline comments notes.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Marked BUG-DL-01 FIXED, updated release status, added BUG-DL-TEXTDELTA-1 to fixed bugs table, updated open bug count 3->2 |
+
+### Improvements delivered
+- DOC_STATUS.md now accurately reflects the BUG-DL-TEXTDELTA-1 fix and the improved display fidelity status
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- No ARCHITECTURE.md update needed -- the existing description ("accumulate + broadcast chat_message") is accurate at the right level of abstraction and does not mention the separator implementation detail.
+
+### What I learned
+- The text_delta accumulation is described in ARCHITECTURE.md at the server dispatch level (line 2196), not at the client store level. Client-side store actions are not documented in ARCHITECTURE.md.
+
+### State I'm leaving behind
+DOC_STATUS.md is updated. All docs are accurate for the #406 fix. Two LOW bugs remain open (BUG-DL-02, BUG-DL-03).
+
+### Handoff
+None -- documentation audit complete for this task.
+---

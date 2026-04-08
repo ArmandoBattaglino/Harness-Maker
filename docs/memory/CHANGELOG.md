@@ -3697,3 +3697,34 @@ No new connections introduced in this checkpoint task. All connection changes we
 - SwarmEngine (server/services/SwarmEngine.js) will be the primary consumer once V9.0 stream-json migration completes
 
 ---
+
+---
+## 2026-04-08 — Task #406: BUG-DL-TEXTDELTA-1 — Stream-json text_delta spurious spaces
+**Agent:** debugger
+**Triggered by:** Stream-json text_delta fragments were being joined with double-newline separators and lastChatSnippet was being overwritten per fragment, causing garbled text in node cards and agentResults.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| `client/src/store/SwarmContext.jsx` | MODIFIED | `appendAgentChatText` separator changed from `'\n\n'` to `''` (empty string) — text_delta fragments are sub-word tokens that must concatenate without whitespace |
+| `client/src/hooks/useSwarm.js` | MODIFIED | `chat_message` handler now accumulates `lastChatSnippet` via `prevSnippet + msg.text` instead of overwriting with `msg.text` alone |
+
+### Functions Added
+- None
+
+### Functions Modified
+- `appendAgentChatText(nodeId, text)` in `client/src/store/SwarmContext.jsx` — separator changed from `'\n\n'` to `''`; sub-word token fragments now join cleanly
+- `connectWs(executionId)` in `client/src/hooks/useSwarm.js` — `chat_message` case now reads `prevSnippet = getState().agentStates[nodeId]?.lastChatSnippet || ''` and calls `updateAgentState(nodeId, { lastChatSnippet: prevSnippet + msg.text })` instead of `updateAgentState(nodeId, { lastChatSnippet: msg.text })`
+
+### Functions Removed
+- None
+
+### Connection Changes
+- No new dependencies. The data flow path is unchanged: WS `chat_message` -> `appendAgentChatText` (store finalText) + `updateAgentState` (node snippet). The fix is in how data accumulates within these existing calls.
+
+### Impact on Other Code
+- `client/src/canvas/nodes/AgentNode.jsx` — reads `lastChatSnippet` from agentStates; will now receive full accumulated text instead of last fragment only. No code change needed — the fix is upstream.
+- `server/routes/swarm.js` — reads `lastChatSnippet` from execution snapshots; unaffected (server-side snippet is set separately).
+- `server/tests/chat-snippet-option-b.test.js` — existing tests should still pass; accumulation behavior is more correct now.
+
+---

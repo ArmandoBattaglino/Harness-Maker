@@ -104,6 +104,46 @@ export function useSwarm(workflowId) {
     const nextExecutionId = snapshot.executionId ?? currentState.activeExecutionId;
     const nextStatus = snapshot.status ?? currentState.executionStatus ?? 'running';
 
+    // Normalize server-serialized agentStates to match client format.
+    // Server uses flat fields (totalCostUsd, totalInputTokens, totalOutputTokens)
+    // while client WS handler accumulates under nested totalCost object.
+    // Merge both so cost/token data survives reconciliation after completion.
+    let normalizedAgentStates = snapshot.agentStates;
+    if (normalizedAgentStates && typeof normalizedAgentStates === 'object') {
+      const clientAgentStates = currentState.agentStates ?? {};
+      normalizedAgentStates = { ...normalizedAgentStates };
+      for (const [nodeId, serverState] of Object.entries(normalizedAgentStates)) {
+        const clientState = clientAgentStates[nodeId];
+        // If server provides flat cost fields but no nested totalCost, synthesize it
+        if (serverState && !serverState.totalCost && (serverState.totalCostUsd > 0 || serverState.totalInputTokens > 0)) {
+          normalizedAgentStates[nodeId] = {
+            ...serverState,
+            totalCost: {
+              costUsd: serverState.totalCostUsd ?? 0,
+              inputTokens: serverState.totalInputTokens ?? 0,
+              outputTokens: serverState.totalOutputTokens ?? 0,
+              cacheReadTokens: serverState.totalCachedInputTokens ?? 0,
+              cacheWriteTokens: 0,
+            },
+          };
+        }
+        // Preserve client-accumulated totalCost if server didn't provide cost data
+        if (clientState?.totalCost && !normalizedAgentStates[nodeId].totalCost) {
+          normalizedAgentStates[nodeId] = {
+            ...normalizedAgentStates[nodeId],
+            totalCost: clientState.totalCost,
+          };
+        }
+        // Preserve client lastChatSnippet if server doesn't provide it
+        if (clientState?.lastChatSnippet && !normalizedAgentStates[nodeId].lastChatSnippet) {
+          normalizedAgentStates[nodeId] = {
+            ...normalizedAgentStates[nodeId],
+            lastChatSnippet: clientState.lastChatSnippet,
+          };
+        }
+      }
+    }
+
     useSwarmStore.setState({
       activeExecutionId: nextExecutionId,
       executionStatus: nextStatus,
@@ -123,7 +163,7 @@ export function useSwarm(workflowId) {
       lastFallback: Object.prototype.hasOwnProperty.call(snapshot, 'lastFallback')
         ? snapshot.lastFallback
         : currentState.lastFallback,
-      ...(snapshot.agentStates ? { agentStates: snapshot.agentStates } : {}),
+      ...(normalizedAgentStates ? { agentStates: normalizedAgentStates } : {}),
       ...(snapshot.triggerStates ? { triggerStates: snapshot.triggerStates } : {}),
       ...(snapshot.edgeCounters ? { edgeCounters: snapshot.edgeCounters } : {}),
       ...(snapshot.budget ? { budget: snapshot.budget } : {}),

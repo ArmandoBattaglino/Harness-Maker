@@ -3480,3 +3480,45 @@ CODE_MAP.md and CHANGELOG.md fully up to date with BUG-AUTO-ROUTING fix.
 ### Handoff
 None — mapping task self-contained.
 ---
+
+---
+## 2026-04-08 — Task #406: BUG-DL-TEXTDELTA-1 — Stream-json text_delta spurious spaces
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper run)
+
+### Context when I started
+Task #406 was completed by debugger. Two files were modified: SwarmContext.jsx (appendAgentChatText separator) and useSwarm.js (lastChatSnippet accumulation in chat_message handler).
+
+### What I did
+1. Read both modified source files in full
+2. Searched CODE_MAP.md for existing entries — found connectWs entry but no appendAgentChatText entry
+3. Traced callers/consumers: appendAgentChatText called only from useSwarm.js; lastChatSnippet consumed by AgentNode.jsx, swarm.js routes, and test file
+4. Updated connectWs entry with new complexity note about the accumulation pattern
+5. Added new appendAgentChatText entry to CODE_MAP.md Function Graph
+6. Appended detailed CHANGELOG entry
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Updated header, added appendAgentChatText entry, updated connectWs entry with Task #406 complexity note |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Task #406 entry |
+
+### Improvements delivered
+- CODE_MAP now documents the appendAgentChatText function (was previously unmapped)
+- Data flow for text_delta accumulation is now documented with the bug fix rationale
+
+### Bugs I encountered
+- None
+
+### Decisions I made
+- Added appendAgentChatText as a new CODE_MAP entry rather than just noting it in connectWs, because it has its own distinct purpose and the separator change is the core fix
+
+### What I learned
+- Stream-json text_delta fragments are sub-word tokens — any separator (even '\n') between them corrupts output
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md are up to date through Task #406. The appendAgentChatText function is now fully mapped.
+
+### Handoff
+None — task fully self-contained.
+---

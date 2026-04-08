@@ -4,8 +4,8 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v9.1.1 — task numbering extends through #409; 406 tasks are currently registered in this plan, 402 are COMPLETE/PASS, 1 is DEFERRED, and 3 are PENDING + 1 TEST GATE. V9.1 CODEX SDK SWARM INTEGRATION CLOSED through #405 PASS. 488 server tests pass, client build clean (501 modules).
-  **Active Area:** V9.2 STREAM-JSON DISPLAY FIDELITY — Debugger-loop Phase 1 found 3 bugs in multi-agent E2E: text_delta word splitting (#406 HIGH), stale node state on workflow switch (#407 LOW), cost footer disappears after Completed (#408 LOW). TEST GATE #409.
+**Status:** v9.2.0 — task numbering extends through #409; 406 tasks are currently registered in this plan, 403 are COMPLETE/PASS, 1 is DEFERRED, and 1 is PENDING (TEST GATE #409) + 2 are IN_PROGRESS (#407, #408). V9.1 CODEX SDK SWARM INTEGRATION CLOSED through #405 PASS. 488 server tests pass, client build clean (501 modules).
+  **Active Area:** V9.2 STREAM-JSON DISPLAY FIDELITY — #406 (text_delta spurious spaces) COMPLETED by debugger (commit e496745). #407 (stale node state) IN_PROGRESS by frontend-dev. #408 (cost footer vanish) IN_PROGRESS by frontend-dev. TEST GATE #409 PENDING (blocked on #407+#408).
   **Completed Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 ALL COMPLETED/PASS. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#267 ALL COMPLETED. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave2 NODE CREATION & CONFIG — Tasks #268-#272 ALL COMPLETED. AREA CLOSED 2026-04-06.
@@ -16893,7 +16893,7 @@ Area: V9.2 STREAM-JSON DISPLAY FIDELITY (2026-04-08)
 Agent: frontend-dev
 Type: BUG_FIX
 Priority: LOW
-Status: PENDING
+Status: COMPLETED
 Context:
   After Prompt-to-Flow generates a new workflow, the canvas shows the new workflow structure
   but node cards initially render with status "Done" and chat snippets from the PREVIOUS execution.
@@ -16911,7 +16911,7 @@ Area: V9.2 STREAM-JSON DISPLAY FIDELITY (2026-04-08)
 Agent: frontend-dev
 Type: BUG_FIX
 Priority: LOW
-Status: PENDING
+Status: IN_PROGRESS
 Context:
   During Running state, node cards show cost badge (e.g. "$0.22"). After overall status becomes
   Completed, all cost/token info disappears from the DOM. Should remain visible so user can see

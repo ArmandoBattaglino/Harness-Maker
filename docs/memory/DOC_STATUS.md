@@ -1,15 +1,15 @@
 # Documentation Status
-_Last updated: 2026-04-08 after debugger-loop Phase 1 E2E test (multi-agent swarm) — 3 new bugs discovered against the V9 stream-json runtime._
+_Last updated: 2026-04-08 after Task #406: BUG-DL-TEXTDELTA-1 — stream-json text_delta spurious spaces fixed._
 
 ## Release Status
-**v9.0.0 — V9.0 Stream-JSON Agent Migration CLOSED for core semantics, display fidelity RE-OPENED**
+**v9.0.0 — V9.0 Stream-JSON Agent Migration CLOSED for core semantics, display fidelity FIXED**
 - QA inspection: FUNCTIONAL PASS on v9.0 core (tangible multi-agent output achieved — Writer produced correct Italian paragraph end-to-end)
-- Display fidelity: BROKEN — BUG-DL-01 (HIGH) word-splitting on text_delta concatenation affects every Claude stream-json agent's rendered chat output
-- Test suite: 478/478 passing (unit/integration, unchanged — bugs are UI-level presentation defects not covered by existing gates)
-- Build: 500 modules, 0 errors
-- Tasks: numbering extends through #398; 3 new tasks (#399-#401) + TEST GATE about to be registered by project-manager for the debugger-loop Phase 2 wave. Previous "0 pending" claim is STALE as of this session.
-- Open bugs: 3 (was 0)
-  - BUG-DL-01 (HIGH) — text_delta word splitting: client/server concatenates text_delta chunks without preserving inter-chunk word boundaries, producing `helloworld` where two chunks should have joined as `hello world`. Affects all Claude stream-json output rendering.
+- Display fidelity: FIXED — BUG-DL-TEXTDELTA-1 (#406) resolved text_delta concatenation corruption; BUG-DL-01 is now closed
+- Test suite: 488/488 passing (unit/integration)
+- Build: 501 modules, 0 errors
+- Tasks: numbering extends through #406.
+- Open bugs: 2 (was 3)
+  - ~~BUG-DL-01 (HIGH) — text_delta word splitting~~ FIXED in Task #406 (BUG-DL-TEXTDELTA-1): `appendAgentChatText` separator changed from `'\n\n'` to `''`; `lastChatSnippet` now accumulates instead of overwriting.
   - BUG-DL-02 (LOW) — stale node state persists when a fresh workflow is loaded (agent cards retain previous execution's status/snippet until first new event).
   - BUG-DL-03 (LOW) — per-turn cost footer disappears from the chat view after the agent transitions to `Completed` status.
 - V9.0 status: PRD v6.0 written, research complete, architect analysis done (DEC-027/028/029), stream-json migration CLOSED through #393 PASS for core flow, debugger-loop follow-up #394-#396 CLOSED, handoff provider bug #397 COMPLETED, AUTO routing bug #398 COMPLETED. Deterministic stream-json/PTY E2E coverage lives in `server/tests/e2e/stream-json-e2e.test.js`. A second debugger-loop wave (Phase 1 complete this session) re-opens UI presentation fidelity — semantics are correct but the rendered output is not.
@@ -41,6 +41,7 @@ _Last updated: 2026-04-08 after debugger-loop Phase 1 E2E test (multi-agent swar
 | BUG-DONE-BARE-1 | LOW | `DONE_RE` only matched `__DONE__` — bare `DONE` on its own line now also accepted by HandoffParser, eliminating unnecessary done reminder reinject | #254 | FIXED 2026-04-06 |
 | BUG-HANDOFF-ROUTING-1 | HIGH | `_ensureAgentPty` did not pass `requestedProvider` to `_spawnAgent`, so handoff targets always spawned via PTY — Claude agents spawned after handoff got garbled ConPTY output instead of stream-json | #397 | FIXED 2026-04-08 |
 | BUG-AUTO-ROUTING-1 | HIGH | `_spawnAgent` did not consult `execution.providerStrategy.activeProvider` when effectiveProvider was AUTO — all generated workflows (no explicit model on nodes) fell through to PTY instead of stream-json for Claude | #398 | FIXED 2026-04-08 |
+| BUG-DL-TEXTDELTA-1 | HIGH | `appendAgentChatText` used `'\n\n'` separator between text_delta chunks, corrupting sub-word fragments; `lastChatSnippet` overwrote instead of accumulating | #406 | FIXED 2026-04-08 |
 | BUG-SNIPPET-INIT-1 | LOW | Agent card showed system prompt text for ~3s during startup — snippet update now gated by echo gate (`ignoreParserUntil`) in SwarmEngine.js tapFn | #255 | FIXED 2026-04-06 |
 | BUG-WF-1 | LOW | Context menu on node/edge right-click showed wrong menu type (canvas menu instead of node/edge menu) — `event.stopPropagation()` missing in `handleNodeContextMenu` and `handleEdgeContextMenu` in SwarmCanvas.jsx | V5-bugfix | FIXED 2026-04-06 |
 | BUG-WF-2 | LOW | Ctrl+S keyboard shortcut in SwarmView.jsx captured stale closure of `handleSave`/`handleRun` — added `handleSaveFnRef` and `handleRunFnRef` refs so `useEffect` keydown handler always calls the latest function | V5-bugfix | FIXED 2026-04-06 |
@@ -69,7 +70,7 @@ _Last updated: 2026-04-08 after debugger-loop Phase 1 E2E test (multi-agent swar
 | docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-08 | Includes debugger-loop fallback closure plus the V9.0 close-out entries for #389-#393. |
 | docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-04-06 | V1 audit. V9.0 adds SEC-SJ-01 through SEC-SJ-07 in PRD -- no code changes yet. |
 | docs/security-v3-audit.md | UP_TO_DATE | 2026-04-06 | MEDIUM-V3-01 marked FIXED (Task #234). No changes from V9.0 planning. |
-| Inline comments | UP_TO_DATE | 2026-04-08 | StreamJsonParser.js has comprehensive JSDoc. SwarmEngine.js new methods (_spawnAgent, _spawnAgentStreamJson, _handleStreamJsonResult) have full JSDoc with param/return annotations. Inline comments reference DEC-027/028/029, SEC-02, SEC-SJ-01, DEC-005. _ensureAgentPty inline comment (lines 4606-4611) explains why providerStrategy.mode is used instead of activeProvider for mixed-provider chains. _spawnAgent lines 4071-4076 explain why providerStrategy.activeProvider is consulted for AUTO mode routing. |
+| Inline comments | UP_TO_DATE | 2026-04-08 | StreamJsonParser.js has comprehensive JSDoc. SwarmEngine.js new methods (_spawnAgent, _spawnAgentStreamJson, _handleStreamJsonResult) have full JSDoc with param/return annotations. Inline comments reference DEC-027/028/029, SEC-02, SEC-SJ-01, DEC-005. _ensureAgentPty inline comment (lines 4606-4611) explains why providerStrategy.mode is used instead of activeProvider for mixed-provider chains. _spawnAgent lines 4071-4076 explain why providerStrategy.activeProvider is consulted for AUTO mode routing. useSwarm.js line 609 documents lastChatSnippet accumulation rationale (Task #406 fix). |
 | docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. Deferred indefinitely. |
 | docs/research_resume_after_kill.md | UP_TO_DATE | 2026-04-08 | NEW: Research on --resume behavior after process kill. Findings feed into FR-SJ-17/18. |
 | docs/research_b_tools.md | UP_TO_DATE | 2026-04-08 | NEW: Research on --allowedTools vs --tools vs --disallowedTools. Critical finding: --allowedTools is NOT a security boundary (bug #12232). |

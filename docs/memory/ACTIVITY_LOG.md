@@ -1,4 +1,26 @@
-﻿## 2026-04-08 — documenter — Task #398: BUG-AUTO-ROUTING documentation update
+﻿## 2026-04-08 — frontend-dev — Task #407: BUG-DL-STALE-STATE-1 — Stale node state on workflow switch
+**Outcome:** COMPLETED
+**Summary:** Fixed stale per-node execution state (agentStates, chatMessages, agentResults, etc.) persisting when switching workflows. Modified `setWorkflowDef` in SwarmContext.jsx to automatically call `buildClearedExecutionState()` when the workflow ID changes and stale execution state exists. Covers all workflow-switch paths: Prompt-to-Flow generation, import, duplicate, template instantiate. Client build clean (501 modules).
+**Files changed:** client/src/store/SwarmContext.jsx
+**Bugs fixed:** BUG-DL-STALE-STATE-1 — stale previous-workflow node status/chat/results shown on freshly-generated workflow
+**Decisions made:** Centralized the fix in `setWorkflowDef` rather than adding `clearExecutionState()` calls at each call site — prevents future regressions from new call sites
+**Blockers:** none
+**Next:** #408 (cost footer vanish) if assigned, then TEST GATE #409
+
+---
+
+## 2026-04-08 — project-manager — V9.2 status sync: #406 COMPLETED, #407/#408 IN_PROGRESS
+**Outcome:** COMPLETED
+**Summary:** Verified #406 (BUG-DL-TEXTDELTA-1) already marked COMPLETED in TASK_PLAN.md. Updated header status counts to 403 COMPLETE/PASS, 2 IN_PROGRESS, 1 PENDING. Marked #407 and #408 as IN_PROGRESS. Updated PROGRESS.md and CONTEXT.md to reflect current V9.2 state. TEST GATE #409 remains blocked on #407+#408.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** frontend-dev completes #407 and #408, then qa-tester runs TEST GATE #409
+
+---
+
+## 2026-04-08 — documenter — Task #398: BUG-AUTO-ROUTING documentation update
 **Outcome:** COMPLETED
 **Summary:** Updated DOC_STATUS.md (release status task counts, BUG-AUTO-ROUTING-1 added to fixed bugs table, inline comments note updated). Updated CONTEXT.md (focus and immediate next step reflect #398 fix). ARCHITECTURE.md docs health note updated. All docs now reflect the _spawnAgent AUTO mode provider strategy routing fix and the 39 test updates.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
@@ -5097,4 +5119,26 @@ full self-contained context and acceptance criteria.
 **Decisions made:** Empty string separator unconditionally safe because appendAgentChatText is only called from chat_message handler
 **Blockers:** none
 **Next:** QA visual verification of stream-json output fidelity
+---
+
+---
+## 2026-04-08 — code-mapper — Task #406: BUG-DL-TEXTDELTA-1 — Stream-json text_delta spurious spaces
+**Outcome:** COMPLETED
+**Summary:** Mapped the debugger's fix for text_delta fragment concatenation. Added new CODE_MAP entry for `appendAgentChatText` (separator '' instead of '\n\n') and updated `connectWs` entry documenting lastChatSnippet accumulation pattern (`prevSnippet + msg.text` instead of overwrite).
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
+**Bugs fixed:** none (mapping only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** nothing — task chain complete
+---
+
+---
+## 2026-04-08 — documenter — Task #406: BUG-DL-TEXTDELTA-1 documentation audit
+**Outcome:** COMPLETED
+**Summary:** Audited all docs after Task #406 fixed text_delta concatenation bug. Updated DOC_STATUS.md to mark BUG-DL-01 as FIXED, updated release status (display fidelity FIXED), added bug to fixed table, corrected open bug count. No changes needed to README, ARCHITECTURE, API, or CLAUDE.md.
+**Files changed:** docs/memory/DOC_STATUS.md
+**Bugs fixed:** none (documentation audit only)
+**Decisions made:** ARCHITECTURE.md not stale -- text_delta description is at correct abstraction level
+**Blockers:** none
+**Next:** frontend-dev completes #407 and #408, then qa-tester runs TEST GATE #409
 ---

@@ -221,7 +221,7 @@ export default function ChatMessage({ message, agentLabel }) {
             </div>
           </CollapsibleMetaBlock>
         )}
-        {isStreamJson && cost && (
+        {cost && (
           <div className="mt-2 text-[10px] text-gray-500">
             {formatCostFooter(cost)}
           </div>

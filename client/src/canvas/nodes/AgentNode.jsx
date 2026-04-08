@@ -16,8 +16,12 @@ export default function AgentNode({ id, data, selected }) {
   const isStreamJson = isStructuredSpawnMode(agentState?.spawnMode);
   const showThinking = isStreamJson && status === 'running' && agentState?.isThinking;
   const currentToolName = isStreamJson ? agentState?.currentTool?.toolName : null;
-  const totalCostUsd = Number(agentState?.totalCost?.costUsd ?? 0);
-  const showCostBadge = isStreamJson && Number.isFinite(totalCostUsd) && totalCostUsd > 0;
+  // Support both client-accumulated format (totalCost.costUsd from WS agent_cost events)
+  // and server-serialized format (flat totalCostUsd from getStatus/reconciliation).
+  // After execution completes, reconcileClosedExecution may replace agentStates with
+  // the server's format, which uses totalCostUsd instead of totalCost.costUsd.
+  const totalCostUsd = Number(agentState?.totalCost?.costUsd ?? agentState?.totalCostUsd ?? 0);
+  const showCostBadge = Number.isFinite(totalCostUsd) && totalCostUsd > 0;
 
   // Status -> color mapping
   const statusColors = {

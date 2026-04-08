@@ -218,7 +218,21 @@ const useSwarmStore = create((set, get) => ({
       ? providerOrFn(state.selectedRuntimeProvider)
       : providerOrFn,
   })),
-  setWorkflowDef: (def) => set({ workflowDef: def }),
+  setWorkflowDef: (def) => set((state) => {
+    const prevId = state.workflowDef?.id;
+    const nextId = def?.id;
+    const isSameWorkflow = prevId && nextId && prevId === nextId;
+    // When switching to a DIFFERENT workflow (or from null to a new one while
+    // execution state exists), clear all per-node runtime state so stale
+    // status / chat / results from the previous execution don't bleed through.
+    const hasStaleState = state.activeExecutionId !== null
+      || state.executionStatus !== 'idle'
+      || Object.keys(state.agentStates).length > 0;
+    if (!isSameWorkflow && hasStaleState) {
+      return { ...buildClearedExecutionState(), workflowDef: def };
+    }
+    return { workflowDef: def };
+  }),
 
   // --- agentResults actions ---
 
