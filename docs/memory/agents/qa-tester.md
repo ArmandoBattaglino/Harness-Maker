@@ -1,4 +1,54 @@
 ---
+## 2026-04-08 — Task #409: TEST GATE — V9.2 Stream-JSON Display Fidelity verification (attempt 3)
+**Status:** COMPLETED (verdict: FAIL)
+**Called by:** user (direct)
+
+### Context when I started
+Attempt 3 of TEST GATE #409. Previous attempt 2 failed because Claude CLI result field itself contains token-boundary spacing. New fix (commit c4f78f1) added client-side `repairTokenSpacing.js` with regex-based token fragment merging and camelCase repair, applied in ChatMessage.jsx and AgentNode.jsx.
+
+### What I did
+1. Read repairTokenSpacing.js source code -- understood the regex approach
+2. Verified integration: repairAllTokenSpacing imported and called in ChatMessage.jsx (line 114) and AgentNode.jsx (line 95)
+3. Ran server tests: 490/490 PASS
+4. Ran client build: clean, 0 errors
+5. Wrote and ran unit tests for repairTokenSpacing functions with 9 test cases
+6. Found 2 failures in basic tests, investigated deeper with realistic Italian text
+7. Discovered 3 critical bugs in the regex approach:
+   - Bug A: repairTokenSplitting merges across real Italian word boundaries (short words like "di", "un", "e" are treated as sub-word fragments)
+   - Bug B: repairCamelCaseSplitting("Java Script") returns unchanged (regex needs lowercase first word)
+   - Bug C: repairCamelCaseSplitting("using Java Script") merges to "usingJavaScript"
+8. Confirmed the fix makes display WORSE than original for realistic Italian text
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Updated #409 status to FAIL attempt 3 with detailed bug report |
+| docs/memory/PROGRESS.md | MODIFIED | Added attempt 3 FAIL entry |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added attempt 3 log entry |
+| docs/memory/agents/qa-tester.md | MODIFIED | Appended this session log |
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| repairTokenSplitting merges real word boundaries | Regex cannot distinguish Italian short words (di/un/e/il) from sub-word token fragments | None | REPORTED |
+| repairCamelCaseSplitting ignores "Java Script" | Regex requires lowercase first word `[a-z]` | None | REPORTED |
+| repairCamelCaseSplitting merges unrelated words | "using" matches lowercase prefix, "Java Script" matches upper parts | None | REPORTED |
+
+### Decisions I made
+- Verdict FAIL: the fix is worse than the disease for realistic Italian text
+
+### What I learned
+- Regex-based short-fragment merging is fundamentally unsuitable for Romance languages (Italian, French, Spanish, Portuguese) which have many common 1-3 character words
+- Any token-boundary repair for multilingual text needs either a stopword/dictionary approach or should be done server-side where the original tokens are available
+- Always test NLP-like text repair with realistic multilingual sentences, not just isolated token-split words
+
+### State I'm leaving behind
+TEST GATE #409 FAIL (attempt 3). repairTokenSpacing.js exists in codebase but is broken. Server tests 490/490 PASS, client build clean. Tests 2 (stale state) and 3 (cost persistence) continue to PASS.
+
+### Handoff
+Route to debugger for attempt 4 fix. Suggest: (1) stopword dictionary for common short words in target languages, (2) known-term dictionary for camelCase terms, or (3) server-side text accumulation fix where original token boundaries are known.
+
+---
 ## 2026-04-08 — Task #409: TEST GATE — V9.2 Stream-JSON Display Fidelity verification (attempt 2)
 **Status:** COMPLETED (verdict: FAIL)
 **Called by:** user (direct)

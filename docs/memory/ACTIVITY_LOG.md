@@ -1,4 +1,15 @@
-﻿## 2026-04-08 — qa-tester — Task #409: TEST GATE V9.2 Stream-JSON Display Fidelity (attempt 2)
+﻿## 2026-04-08 — qa-tester — Task #409: TEST GATE V9.2 Stream-JSON Display Fidelity (attempt 3)
+**Outcome:** FAIL
+**Summary:** repairTokenSpacing.js (commit c4f78f1) has critical regex bugs. repairTokenSplitting merges across real word boundaries in Italian (short words like "di", "un", "e", "il" are indistinguishable from sub-word fragments), producing "tramiteunconsumatoreeun" from "tramite un consumatore e un". repairCamelCaseSplitting fails on "Java Script" (needs lowercase first word) and merges unrelated words ("using Java Script" -> "usingJavaScript"). The fix makes display WORSE for realistic Italian text. Tests 2-4 PASS. Needs fundamentally different approach (stopword dictionary, known-term list, or server-side fix).
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/qa-tester.md
+**Bugs fixed:** none (testing only)
+**Decisions made:** none
+**Blockers:** repairTokenSpacing.js regex approach fundamentally flawed for Romance languages
+**Next:** Route to debugger for attempt 4 fix with different approach
+
+---
+
+## 2026-04-08 — qa-tester — Task #409: TEST GATE V9.2 Stream-JSON Display Fidelity (attempt 2)
 **Outcome:** FAIL
 **Summary:** Phase 2 fix (9029762) replaced streamed text with Claude CLI result event's `result` field, but that field ALSO contains tokenizer-boundary spacing artifacts (e.g. "al le m and" not "allemand", "fra nc e se" not "francese"). The fix assumption that `obj.result` is canonical clean text is wrong. Tests 2 (stale state reset) PASS, 3 (cost persistence) PASS, 4 (build 490/490 + client) PASS. Overall FAIL due to text fidelity.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
