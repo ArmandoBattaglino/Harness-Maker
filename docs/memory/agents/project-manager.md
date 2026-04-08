@@ -1,4 +1,48 @@
 ---
+## 2026-04-08 — V9.0 Stream-JSON Migration Task Plan Creation
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+PRD v6.0 for Stream-JSON Agent Migration was complete. Research (resume-after-kill, --tools syntax), architect analysis (DEC-027/028/029), and security assessment (SEC-SJ-01-07) were all done. Project was at v8.2.0 with 353 tasks (351 COMPLETED, 2 DEFERRED). User requested full task plan creation from PRD.
+
+### What I did
+1. Read PRD v6.0 (all 12 component specs, 4 phases, open questions, security requirements)
+2. Read current TASK_PLAN.md (last task #353), PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md, DECISIONS.md
+3. Read agent memory for previous session context (scope analysis)
+4. Created 40 tasks (#354-#393) organized into 4 phases with full dependency mapping
+5. Updated TASK_PLAN.md header to v9.0.0 with 393 total tasks
+6. Updated PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md with new initiative
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | 40 tasks appended (#354-#393), header updated to v9.0.0 |
+| docs/memory/PROGRESS.md | MODIFIED | Added V9.0 task plan entry |
+| docs/memory/CONTEXT.md | MODIFIED | Updated focus to V9.0, added dependency wave map |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added task plan creation entry |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log |
+
+### Decisions I made
+- Phase 0 spike (#354) is CRITICAL and blocks everything else
+- #361 (dispatcher) and #363 (lifecycle) can run in parallel after #360 gate
+- #372, #374, #376, #378, #382 can all run in parallel after #371 gate
+- #380 (spawnMode pty) can run in parallel with Phase 2 frontend tasks
+- #384, #385, #386 (bypass comments) can run in parallel
+- Every component has a TEST GATE. Every phase has an AREA CHECKPOINT. No exceptions.
+
+### What I learned
+- The PRD has 12 component specs but some are documentation-only (ChatExtractor bypass, SessionManager bypass, swarmHandler docs) — these are TRIVIAL tasks
+- The hardest task is #359 (_spawnAgentStreamJson) — VERY HARD, opus-recommended, modifying a 5284-line file
+- 7 implementation waves with clear dependency chain; max parallelism of 5 tasks in Phase 2 Wave 5
+
+### State I'm leaving behind
+40 tasks PENDING (#354-#393). Header updated. Memory files updated. Ready for orchestration. First assignment: backend-dev -> TASK #354 (spike).
+
+### Handoff
+Orchestrator should assign backend-dev to TASK #354 immediately. After spike PASS, StreamJsonParser (#357) is next. Dependency chain is fully specified in each task.
+
+---
 ## 2026-04-08 — Scope & Risk Analysis: PTY-to-StreamJSON Migration
 **Status:** COMPLETED
 **Called by:** user

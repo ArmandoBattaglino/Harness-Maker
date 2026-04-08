@@ -438,29 +438,62 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
   // -------------------------------------------------------------------------
   // GET /api/v1/swarm/:executionId/agent/:nodeId/output
   // Returns the ring buffer contents for the agent's PTY session.
+  // Falls back to persisted/live execution output when the PTY session no
+  // longer exists, so completed/stopped nodes remain inspectable.
   // → 200 { output: string }
   // → 404 if execution or agent not found
   // -------------------------------------------------------------------------
-  router.get('/:executionId/agent/:nodeId/output', (req, res) => {
+  router.get('/:executionId/agent/:nodeId/output', async (req, res) => {
     try {
       const { executionId, nodeId } = req.params;
-      const execution = swarmEngine.getStatus(executionId);
+      const workflowIdHint = req.query.workflowId || null;
+      let execution = swarmEngine.getStatus(executionId);
 
       if (!execution) {
-        return res.status(404).json({ error: 'Execution not found' });
+        const result = await lookupExecution(executionId, workflowIdHint, req.app.locals);
+        if (!result) {
+          return res.status(404).json({ error: 'Execution not found' });
+        }
+
+        if (result.source === 'persisted') {
+          const persistedOutput = result.data?.agentOutputs?.[nodeId]?.finalText || '';
+          if (!persistedOutput) {
+            return res.status(404).json({ error: 'Agent output not found' });
+          }
+          return res.status(200).json({ output: persistedOutput });
+        }
+
+        execution = result.data;
       }
 
-      const agentState = execution.agentStates[nodeId];
-      if (!agentState || !agentState.sessionId) {
+      const agentState = execution.agentStates?.[nodeId];
+      if (!agentState) {
         return res.status(404).json({ error: 'Agent not found in execution' });
       }
 
-      const session = sessionManager.getSession(agentState.sessionId);
-      if (!session) {
-        return res.status(404).json({ error: 'Agent session not found' });
+      if (agentState.sessionId) {
+        const session = sessionManager.getSession(agentState.sessionId);
+        if (session) {
+          return res.status(200).json({ output: serializeSessionOutput(session) });
+        }
       }
 
-      return res.status(200).json({ output: serializeSessionOutput(session) });
+      const liveResults = buildLiveExecutionResults(
+        execution,
+        execution?.workflowDef?.name || '',
+        swarmEngine
+      );
+      const fallbackOutput =
+        liveResults.agentOutputs?.[nodeId]?.finalText
+        || agentState.lastChatSnippet
+        || agentState.lastOutputSnippet
+        || '';
+
+      if (!fallbackOutput) {
+        return res.status(404).json({ error: 'Agent output not found' });
+      }
+
+      return res.status(200).json({ output: fallbackOutput });
     } catch (err) {
       console.error(`[swarm] GET /:executionId/agent/:nodeId/output error: ${err.message}`);
       return res.status(500).json({ error: 'Internal server error' });

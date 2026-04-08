@@ -104,6 +104,50 @@ describe('serializeSessionOutput', () => {
   });
 });
 
+describe('swarmRoutes agent output fallback', () => {
+  it('returns persisted live output when the agent PTY session is already gone', async () => {
+    const execution = {
+      executionId: 'exec-1',
+      workflowDef: {
+        name: 'Parallel Greetings Workflow',
+        nodes: [
+          { id: 'node-2', type: 'agent', data: { label: 'Agent-A English Greeter' } },
+        ],
+      },
+      agentStates: {
+        'node-2': { status: 'done', sessionId: 'sess-missing' },
+      },
+      chatMessages: [
+        { nodeId: 'node-2', role: 'assistant', text: 'Saved terminal transcript', timestamp: 1 },
+      ],
+    };
+
+    const swarmEngine = {
+      getStatus: vi.fn().mockReturnValue(execution),
+      getExecution: vi.fn().mockReturnValue(execution),
+      pauseExecution: vi.fn(),
+      resumeExecution: vi.fn(),
+      stopExecution: vi.fn(),
+    };
+    const sessionManager = {
+      getSession: vi.fn().mockReturnValue(null),
+    };
+    const router = swarmRoutes(swarmEngine, sessionManager);
+    const handler = getRouteHandler(router, 'get', '/:executionId/agent/:nodeId/output');
+    const req = {
+      params: { executionId: 'exec-1', nodeId: 'node-2' },
+      query: {},
+      app: { locals: {} },
+    };
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual({ output: 'Saved terminal transcript' });
+  });
+});
+
 describe('swarmRoutes pause/resume contract', () => {
   it('returns 409 and skips pauseExecution when the execution is already blocked', async () => {
     const swarmEngine = {

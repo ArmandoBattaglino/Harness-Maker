@@ -4,7 +4,8 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v8.2.0 — 353 tasks total, 351 COMPLETED, 2 DEFERRED, 0 PENDING. V8.2 OUTPUT FIDELITY: AREA CLOSED 2026-04-07. All areas closed. 409 tests, client build clean. UNCOMMITTED CHANGES PENDING (see below).
+**Status:** v9.0.0 — 393 tasks total, 351 COMPLETED, 2 DEFERRED, 40 PENDING. V8.2 OUTPUT FIDELITY: AREA CLOSED 2026-04-07. V9.0 STREAM-JSON AGENT MIGRATION: PLANNING COMPLETE 2026-04-08. 409 tests, client build clean.
+  **Active Area:** V9.0 STREAM-JSON AGENT MIGRATION — Tasks #354-#393 (40 tasks across 4 phases). PRD v6.0.
   **Completed Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 ALL COMPLETED/PASS. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#267 ALL COMPLETED. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave2 NODE CREATION & CONFIG — Tasks #268-#272 ALL COMPLETED. AREA CLOSED 2026-04-06.
@@ -15613,4 +15614,947 @@ Acceptance Criteria:
   - [x] Build passes
   - [x] Verified repro path no longer persists truncated output in regression coverage / API-serving path
 Dependencies: TASK #352
+---
+
+## AREA: V9.0-Phase0 — SPIKE VALIDATION
+_Components: standalone spike script validating --resume -p --output-format stream-json multi-turn_
+_Tasks: #354 to #356_
+_Gate: Spike must PASS before any production code is written._
+
+---
+
+TASK #354: SPIKE — Validate --resume -p --output-format stream-json multi-turn
+Area: V9.0-Phase0 — SPIKE VALIDATION
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Component Spec: PRD Appendix B Phase 1 + Open Questions 1-4. Standalone spike to resolve tech-lead UNCERTAIN feasibility rating.
+Context:
+  PURPOSE: Before writing any production code, validate that Claude CLI stream-json mode works for multi-turn agent spawning. The tech-lead rated feasibility UNCERTAIN. This spike resolves that.
+
+  WHAT TO BUILD: A standalone Node.js test script (server/spike/stream-json-spike.mjs) that:
+  1. Spawns claude --output-format stream-json --dangerously-skip-permissions --session-id <uuid> -p "List files in the current directory using the Bash tool" --tools "Bash,Read" via child_process.spawn with shell:false
+  2. Reads stdout line by line via readline.createInterface
+  3. Parses each line as JSON and logs the event type + key fields
+  4. After Turn 1 completes (result event), spawns Turn 2 using --resume <same-uuid> -p "Now count the number of .js files you found"
+  5. Verifies Turn 2 has context from Turn 1 (agent references the files it listed)
+  6. Logs cost/usage data from both result events
+  7. Turn 3: --tools "Read" (no Bash), asks agent to run bash. Verifies agent refuses or uses only Read.
+  8. Times process exit after result event for each turn.
+
+  WHAT TO VALIDATE (PRD Open Questions):
+  - OQ1: Session file path encoding in ~/.claude/projects/
+  - OQ2: Extended thinking interaction (test if possible, else document untested)
+  - OQ3: Post-result hang frequency (time gap between result and exit for all 3 turns)
+  - OQ4: JSONL structure (read session file after clean run, document structure)
+
+  REFERENCE: server/services/JobRunner.js line ~109 already uses --output-format stream-json.
+  Binary: use 'claude' from PATH or BinaryDiscovery
+  Turn 1 args: ['--output-format', 'stream-json', '--dangerously-skip-permissions', '--session-id', uuid, '-p', prompt, '--tools', 'Bash,Read', '--model', 'sonnet']
+  Turn 2 args: ['--output-format', 'stream-json', '--dangerously-skip-permissions', '--resume', uuid, '-p', prompt2, '--tools', 'Bash,Read', '--model', 'sonnet']
+  Always child.stdin.end() immediately (DEC-005). Always shell: false (SEC-02). crypto.randomUUID() for session ID.
+
+  OUTPUT: Structured console report with PASS/FAIL for each validation point.
+  FILE: server/spike/stream-json-spike.mjs (new directory and file)
+
+Acceptance Criteria:
+  - [ ] Spike runs end-to-end without crashes
+  - [ ] Turn 1 receives text_delta and result events
+  - [ ] Turn 2 with --resume demonstrates context continuity
+  - [ ] Turn 3 with restricted --tools demonstrates tool restriction
+  - [ ] Post-result hang timing documented per turn
+  - [ ] Session JSONL file location and encoding documented
+  - [ ] JSONL structure documented
+  - [ ] Cost/usage data correctly parsed from result events
+  - [ ] PASS/FAIL verdict logged per validation point
+  - [ ] npm test still passes (spike does not affect existing code)
+Dependencies: none
+---
+
+TASK #355: TEST GATE — Spike Validation
+Area: V9.0-Phase0 — SPIKE VALIDATION
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — NO Phase 1 task can start until this PASSES
+Context:
+  Component: Spike script (server/spike/stream-json-spike.mjs)
+  Task: #354
+  Tests: (1) Run spike script (2) Verify PASS verdicts for multi-turn, tool restriction, result parsing, cost data (3) Verify hang timing documented (4) Verify session JSONL found (5) npm test no regression (6) Flag any FAIL verdicts
+  Decision: If --resume does NOT work, escalate to architect for redesign.
+Acceptance Criteria:
+  - [ ] Spike executes without errors
+  - [ ] All validation points PASS
+  - [ ] FAIL verdicts produce bug report and escalation
+  - [ ] Hang timing data available
+  - [ ] npm test passes
+Gate Result: PASS -> Phase 1 | FAIL -> architect redesign
+Dependencies: TASK #354
+---
+
+TASK #356: AREA CHECKPOINT — V9.0-Phase0 Spike Validation
+Area: V9.0-Phase0 — SPIKE VALIDATION
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: CRITICAL
+Status: PENDING
+Gate: HARD — Phase 1 CANNOT start until this PASSES
+Context: Confirm all 4 PRD open questions answered. Spike proves: (1) --resume preserves multi-turn context, (2) --tools restricts access, (3) result events contain cost, (4) session JSONL files locatable.
+Acceptance Criteria:
+  - [ ] TEST GATE #355 PASSED
+  - [ ] All 4 open questions answered
+  - [ ] No blocking FAIL verdicts
+  - [ ] Phase 1 data available
+Dependencies: TASK #355
+---
+
+## AREA: V9.0-Phase1 — BACKEND CORE
+_Components: StreamJsonParser, _spawnAgentStreamJson, _spawnAgent dispatcher, Session Lifecycle, Per-Agent Tool Config_
+_Tasks: #357 to #367_
+_Gate: ALL backend components must pass TEST GATE before frontend work begins_
+
+---
+
+TASK #357: StreamJsonParser — NDJSON line parser for Claude CLI stream-json output
+Area: V9.0-Phase1 — BACKEND CORE
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Component Spec: PRD Section 11 — StreamJsonParser
+  File: server/services/StreamJsonParser.js (CREATE)
+  Test: server/tests/StreamJsonParser.test.js (CREATE)
+  Purpose: Stateless NDJSON line parser transforming Claude CLI stream-json lines into typed events.
+
+  Interface: new StreamJsonParser(), parseLine(line) -> { type, ...fields }
+  Tracks active block type (text/tool_use/thinking) for content_block_stop dispatch.
+
+  Event mapping:
+  - Line > 1MB -> { type: 'error', message: 'Line exceeds 1MB cap' } (SEC-SJ-03)
+  - JSON.parse fail -> { type: 'error', message: 'Malformed JSON line' }
+  - type 'system' + subtype 'api_retry' -> { type: 'api_retry', attempt, delay, errorCode }
+  - type 'stream_event':
+    content_block_start + tool_use -> { type: 'tool_start', toolName, toolUseId }
+    content_block_start + text -> { type: 'text_start' }
+    content_block_start + thinking -> { type: 'thinking_start' }
+    content_block_delta + text_delta -> { type: 'text_delta', text }
+    content_block_delta + input_json_delta -> { type: 'tool_delta', partialJson }
+    content_block_delta + thinking_delta -> { type: 'thinking', text }
+    content_block_stop -> tool_stop or text_stop based on active block
+  - type 'result' -> { type: 'result', sessionId, costUsd, durationMs, usage: { input, output, cacheRead, cacheWrite }, isError, errorMessage }
+  - type 'assistant' -> { type: 'message', content: obj.message.content }
+
+  Never throws. Pattern ref: server/services/HandoffParser.js, server/services/JobRunner.js
+
+Acceptance Criteria:
+  - [ ] content_block_start tool_use -> { type: 'tool_start', toolName, toolUseId }
+  - [ ] content_block_delta text_delta -> { type: 'text_delta', text }
+  - [ ] content_block_delta input_json_delta -> { type: 'tool_delta', partialJson }
+  - [ ] result line -> all cost/usage/session fields mapped
+  - [ ] Line > 1MB -> { type: 'error' }, no throw
+  - [ ] Malformed JSON -> { type: 'error' }, no throw
+  - [ ] system api_retry -> { type: 'api_retry', attempt, delay, errorCode }
+  - [ ] assistant -> { type: 'message', content }
+  - [ ] content_block_stop dispatches tool_stop vs text_stop correctly
+  - [ ] Unit tests cover all 9 event types + 2 error cases
+  - [ ] npm test passes
+Dependencies: TASK #356 (AREA CHECKPOINT Phase 0)
+---
+
+TASK #358: TEST GATE — StreamJsonParser
+Area: V9.0-Phase1 — BACKEND CORE
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — #359 blocked until PASS
+Context: Run StreamJsonParser.test.js. Verify all 9 event types, 1MB cap, malformed JSON, content_block_stop dispatch, result field mapping, no throws. npm test no regression.
+Acceptance Criteria:
+  - [ ] All unit tests pass
+  - [ ] Every event type tested
+  - [ ] Error handling tested
+  - [ ] npm test passes
+Gate Result: PASS -> #359 | FAIL -> #357
+Dependencies: TASK #357
+---
+
+TASK #359: SwarmEngine._spawnAgentStreamJson() — Stream-JSON agent spawner
+Area: V9.0-Phase1 — BACKEND CORE
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: VERY HARD
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Component Spec: PRD Section 11 — SwarmEngine._spawnAgentStreamJson()
+  File: server/services/SwarmEngine.js (MODIFY — 5284 lines, be surgical)
+  Method: async _spawnAgentStreamJson(executionId, nodeId, prompt, sessionId)
+
+  Behavior:
+  1. Look up execution + agent state
+  2. turnCount===0 -> --session-id; >0 -> --resume
+  3. Args: ['--output-format','stream-json','--dangerously-skip-permissions', sessionFlag, sessionId, '-p', prompt, '--model', model]. If tools array: append ['--tools', tools.join(',')]
+  4. spawn(claudeBin, args, { shell:false, stdio:['pipe','pipe','pipe'] })
+  5. child.stdin.end() (DEC-005)
+  6. readline on stdout, StreamJsonParser instance
+  7. Broadcast agent_status { nodeId, status:'running', spawnMode:'stream-json' }
+  8. Per line -> parseLine -> handle:
+     text_delta: accumulate, broadcast chat_message, update lastOutputSnippet
+     tool_start: set currentToolUse, broadcast agent_tool_use
+     tool_delta: append partialArgs, broadcast agent_tool_delta
+     tool_stop: clear currentToolUse
+     thinking: isThinking=true, broadcast agent_thinking { active:true }
+     text_start: isThinking=false, broadcast agent_thinking { active:false }
+     api_retry: broadcast agent_status { retrying:true }
+     result: step 9
+     error: log, continue
+  9. On result: increment turnCount, update costs, broadcast agent_cost, scan text for __HANDOFF__/__DONE__, call _onHandoff/_onDone, handle doNotSpawnNextTurn
+  10. Exit without result -> error status
+  11. Child error -> error status
+  12. 30s post-result timeout -> tree-kill
+
+  Integration: _onHandoff(), _onDone(), broadcast() from swarmHandler, BinaryDiscovery, tree-kill
+  Security: SEC-SJ-01 (--tools not --allowedTools), SEC-SJ-02 (session IDs private), SEC-SJ-07 (shell:false)
+
+  Agent state fields to add: streamJsonSessionId, spawnMode, turnCount, totalCostUsd, totalInputTokens, totalOutputTokens, doNotSpawnNextTurn, needsRepair, currentToolUse, isThinking
+
+  WS events emitted: agent_status, agent_thinking, agent_tool_use, agent_tool_delta, agent_cost, chat_message
+
+  Key files: SwarmEngine.js, StreamJsonParser.js, HandoffParser.js, swarmHandler.js, BinaryDiscovery.js, JobRunner.js
+
+Acceptance Criteria:
+  - [ ] Claude model routes to _spawnAgentStreamJson
+  - [ ] Args contain --output-format stream-json, --dangerously-skip-permissions
+  - [ ] --tools (not --allowedTools) when tools array exists
+  - [ ] First turn --session-id, subsequent --resume same UUID
+  - [ ] child.stdin.end() immediately
+  - [ ] shell: false
+  - [ ] text_delta -> chat_message broadcast
+  - [ ] tool_start -> agent_tool_use broadcast
+  - [ ] result -> agent_cost broadcast with all fields
+  - [ ] __HANDOFF__ -> _onHandoff() called
+  - [ ] Crash -> error status
+  - [ ] 30s timeout -> tree-kill
+  - [ ] npm test passes
+Dependencies: TASK #358 (TEST GATE StreamJsonParser PASS)
+---
+
+TASK #360: TEST GATE — SwarmEngine._spawnAgentStreamJson()
+Area: V9.0-Phase1 — BACKEND CORE
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Difficulty: HARD
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — #361 and #363 blocked until PASS
+Context: Mock spawn, feed parser lines, verify WS events. Test spawn args, session-id/resume, stdin.end, all event->broadcast mappings, __HANDOFF__, crash, timeout. Verify WS contracts: agent_status, agent_thinking, agent_tool_use, agent_tool_delta, agent_cost.
+Acceptance Criteria:
+  - [ ] All #359 criteria verified via mock tests
+  - [ ] WS contracts match PRD Section 9
+  - [ ] Error paths tested
+  - [ ] npm test passes
+Gate Result: PASS -> #361 + #363 (parallel) | FAIL -> #359
+Dependencies: TASK #359
+---
+
+TASK #361: SwarmEngine._spawnAgent() — Provider routing dispatcher
+Area: V9.0-Phase1 — BACKEND CORE
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Component Spec: PRD Section 11 — _spawnAgent() dispatcher
+  File: server/services/SwarmEngine.js (MODIFY)
+
+  Behavior:
+  1. Read agent model from workflow definition
+  2. If in SUPPORTED_RUNTIME_MODELS.claude -> look up/generate streamJsonSessionId, call _spawnAgentStreamJson()
+  3. Else -> call _spawnAgentPty() (unchanged)
+
+  Replace ALL direct _spawnAgentPty calls in startExecution(), _onHandoff(), _onDone() with _spawnAgent().
+  Session ID: crypto.randomUUID(), stored as streamJsonSessionId, reused within execution.
+
+  PARALLEL: Can run with #363 (different SwarmEngine sections).
+
+Acceptance Criteria:
+  - [ ] "opus" -> _spawnAgentStreamJson()
+  - [ ] "claude-opus-4-6" -> _spawnAgentStreamJson()
+  - [ ] "sonnet" -> _spawnAgentStreamJson()
+  - [ ] "haiku" -> _spawnAgentStreamJson()
+  - [ ] "gpt-5.4" -> _spawnAgentPty()
+  - [ ] "gemini-2.5-pro" -> _spawnAgentPty()
+  - [ ] New UUID on first dispatch, reused on subsequent
+  - [ ] All call sites use _spawnAgent()
+  - [ ] npm test passes
+Dependencies: TASK #360
+---
+
+TASK #362: TEST GATE — _spawnAgent() dispatcher
+Area: V9.0-Phase1 — BACKEND CORE
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — #365 blocked until PASS
+Context: Test model routing, session ID gen/reuse, all 3 call sites, mock executions. npm test.
+Acceptance Criteria:
+  - [ ] All #361 criteria verified
+  - [ ] Session ID reuse verified
+  - [ ] PTY tests pass
+  - [ ] npm test passes
+Gate Result: PASS -> #365 | FAIL -> #361
+Dependencies: TASK #361
+---
+
+TASK #363: SwarmEngine Session Lifecycle — graceful stop, forced stop, reset
+Area: V9.0-Phase1 — BACKEND CORE
+Agent: backend-dev
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Component Spec: PRD Section 11 — Session Lifecycle
+  File: server/services/SwarmEngine.js (MODIFY)
+  Method: async stopStreamJsonAgent(executionId, nodeId, mode)
+
+  GRACEFUL: doNotSpawnNextTurn=true, process continues, paused after result, 30s timeout escalation
+  FORCED: tree-kill, needsRepair=true, status 'stopped'
+  RESET: tree-kill, read+archive JSONL, delete file, new UUID, turnCount=0, status 'idle'
+
+  Security: SEC-SJ-05 (delete on reset), SEC-SJ-02 (IDs private)
+  Session path encoding from spike OQ1. Research: docs/research_resume_after_kill.md
+  Extend DELETE /api/v1/swarm/:workflowId for stream-json agents.
+  PARALLEL: Can run with #361.
+
+Acceptance Criteria:
+  - [ ] Graceful: completes turn before paused
+  - [ ] Graceful: --resume works after pause
+  - [ ] Forced: tree-kill called
+  - [ ] Forced: needsRepair=true
+  - [ ] Reset: JSONL deleted
+  - [ ] Reset: new UUID
+  - [ ] Reset: turnCount=0, idle
+  - [ ] 30s timeout escalation
+  - [ ] PTY stop unchanged
+  - [ ] npm test passes
+Dependencies: TASK #360
+---
+
+TASK #364: TEST GATE — Session Lifecycle
+Area: V9.0-Phase1 — BACKEND CORE
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — #365 blocked until PASS
+Context: Test graceful/forced/reset with mocks. Timeout with fake timers. File cleanup. PTY unaffected.
+Acceptance Criteria:
+  - [ ] All #363 criteria verified
+  - [ ] Timeout tested
+  - [ ] File cleanup verified
+  - [ ] npm test passes
+Gate Result: PASS -> #365 | FAIL -> #363
+Dependencies: TASK #363
+---
+
+TASK #365: Per-Agent Tool Configuration — tools array + spawn args
+Area: V9.0-Phase1 — BACKEND CORE
+Agent: backend-dev
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Component Spec: PRD FR-SJ-24/25/26
+  Files: SwarmEngine.js, WorkflowStore.js (verify)
+  Default tools: ["Bash","Read","Edit","Write","Grep","Glob","LS"]
+  Append --tools to spawn args. Use --tools NOT --allowedTools (SEC-SJ-01, bug #12232).
+  Persists through PUT /api/v1/workflows/:id. 16 built-in tools total.
+
+Acceptance Criteria:
+  - [ ] Tools array round-trip persistence
+  - [ ] Spawn args include --tools
+  - [ ] Default list when undefined
+  - [ ] No --allowedTools anywhere
+  - [ ] npm test passes
+Dependencies: TASK #362, TASK #364
+---
+
+TASK #366: TEST GATE — Per-Agent Tool Config
+Area: V9.0-Phase1 — BACKEND CORE
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — Phase 2 blocked until PASS
+Context: Test persistence, spawn args, default, grep for --allowedTools.
+Acceptance Criteria:
+  - [ ] Persistence verified
+  - [ ] Args verified
+  - [ ] No --allowedTools
+  - [ ] npm test passes
+Gate Result: PASS -> Phase 2 | FAIL -> #365
+Dependencies: TASK #365
+---
+
+TASK #367: AREA CHECKPOINT — V9.0-Phase1 Backend Core
+Area: V9.0-Phase1 — BACKEND CORE
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: CRITICAL
+Status: PENDING
+Gate: HARD — Phase 2 blocked until ALL Phase 1 gates PASS
+Context: Integration test: 2 Claude agents + 1 Codex agent. Claude->stream-json, Codex->PTY. Text/tool/result events. Handoff between Claude agents. Graceful stop. Tool restriction. WS contracts. npm test + build.
+Acceptance Criteria:
+  - [ ] All gates passed (#358,#360,#362,#364,#366)
+  - [ ] Mixed-provider integration passes
+  - [ ] No PTY regression
+  - [ ] npm test + build pass
+Dependencies: TASK #358, #360, #362, #364, #366
+---
+
+## AREA: V9.0-Phase2 — FRONTEND
+_Components: SwarmContext, useSwarm.js, AgentNode.jsx, ChatMessage.jsx, AgentInspector.jsx, ChatPanel, spawnMode field, Stop/Reset UI_
+_Tasks: #368 to #383_
+_Gate: ALL frontend gates must PASS before integration testing_
+
+---
+
+TASK #368: SwarmContext.jsx — Zustand store extensions
+Area: V9.0-Phase2 — FRONTEND
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Component Spec: PRD Section 11 — SwarmContext.jsx
+  File: client/src/store/SwarmContext.jsx (MODIFY)
+  1. updateAgentState already shallow-merges. No structural change.
+  2. clearExecutionState: also clear isThinking, currentTool, turnCost, totalCost, spawnMode
+  3. Add JSDoc for: spawnMode, isThinking, currentTool, turnCost, totalCost
+  Do NOT add to initial state. Fields added dynamically via updateAgentState.
+
+Acceptance Criteria:
+  - [ ] updateAgentState sets isThinking without losing other fields
+  - [ ] updateAgentState sets currentTool correctly
+  - [ ] updateAgentState sets totalCost correctly
+  - [ ] clearExecutionState resets new fields
+  - [ ] Existing fields unaffected
+  - [ ] JSDoc present
+  - [ ] Build passes
+Dependencies: TASK #367
+---
+
+TASK #369: TEST GATE — SwarmContext.jsx
+Area: V9.0-Phase2 — FRONTEND
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — #370, #374 blocked
+Context: Test updateAgentState, shallow merge, clearExecutionState, build.
+Acceptance Criteria:
+  - [ ] All #368 criteria verified
+  - [ ] Build passes
+Gate Result: PASS -> #370 + #374 | FAIL -> #368
+Dependencies: TASK #368
+---
+
+TASK #370: useSwarm.js — WS event handlers for stream-json events
+Area: V9.0-Phase2 — FRONTEND
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Component Spec: PRD Section 11 — useSwarm.js
+  File: client/src/hooks/useSwarm.js (MODIFY)
+  Add to existing WS handler:
+  1. agent_thinking -> updateAgentState(nodeId, { isThinking: active })
+  2. agent_tool_use -> updateAgentState(nodeId, { currentTool: { toolName, toolUseId, partialArgs:'' } })
+  3. agent_tool_delta -> read getState(), append partialJson to partialArgs
+  4. agent_cost -> set turnCost, accumulate totalCost via getState()
+  5. agent_status + spawnMode -> updateAgentState(nodeId, { spawnMode })
+  6. agent_status done/idle -> clear currentTool, isThinking
+
+Acceptance Criteria:
+  - [ ] thinking true/false -> isThinking set
+  - [ ] tool_use -> currentTool set
+  - [ ] tool_delta -> partialArgs appended
+  - [ ] cost -> turnCost set, totalCost accumulated
+  - [ ] spawnMode set from agent_status
+  - [ ] done -> currentTool null, isThinking false
+  - [ ] Build passes
+Dependencies: TASK #369
+---
+
+TASK #371: TEST GATE — useSwarm.js
+Area: V9.0-Phase2 — FRONTEND
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — #372, #374, #376, #378, #382 blocked
+Context: Mock WS, verify store updates, accumulation, cleanup on done, build.
+Acceptance Criteria:
+  - [ ] All #370 criteria verified
+  - [ ] Build passes
+Gate Result: PASS -> #372+#374+#376+#378+#382 (parallel) | FAIL -> #370
+Dependencies: TASK #370
+---
+
+TASK #372: ChatMessage.jsx — Stream-JSON message rendering
+Area: V9.0-Phase2 — FRONTEND
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Component Spec: PRD Section 11 — ChatMessage.jsx
+  File: client/src/canvas/ChatMessage.jsx (MODIFY or CREATE)
+  1. spawnMode !== 'stream-json' -> existing rendering
+  2. toolUse array -> collapsible block per tool (header=name, body=pretty JSON, monospace, collapsed)
+  3. thinking -> collapsible gray italic block, collapsed
+  4. cost -> footer "Tokens: Xin / Yout | Cost: $Z | Wms", gray 10px
+  5. Text as-is (clean from stream-json)
+
+Acceptance Criteria:
+  - [ ] toolUse renders collapsible blocks
+  - [ ] thinking renders collapsible gray block
+  - [ ] cost renders footer
+  - [ ] Non-stream-json unchanged
+  - [ ] Blocks collapsed by default, expand on click
+  - [ ] Build passes
+Dependencies: TASK #371
+---
+
+TASK #373: TEST GATE — ChatMessage.jsx
+Area: V9.0-Phase2 — FRONTEND
+Agent: qa-tester
+Type: TEST_GATE
+Priority: MEDIUM
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD
+Context: Test tool blocks, thinking blocks, cost footer, default collapsed, toggle, build.
+Acceptance Criteria:
+  - [ ] All #372 criteria verified
+  - [ ] Build passes
+Gate Result: PASS -> #383 | FAIL -> #372
+Dependencies: TASK #372
+---
+
+TASK #374: AgentNode.jsx — Stream-JSON rendering (thinking, tool, cost)
+Area: V9.0-Phase2 — FRONTEND
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Component Spec: PRD Section 11 — AgentNode.jsx
+  File: client/src/canvas/nodes/AgentNode.jsx (MODIFY)
+  If spawnMode==='stream-json':
+    isThinking+running -> "Thinking..." animated ellipsis
+    currentTool -> "Using: {toolName}"
+    totalCost -> "$X.XX" badge bottom-right (2 decimals)
+    Hide "Open Terminal" button
+  pty/undefined -> existing unchanged
+
+Acceptance Criteria:
+  - [ ] Thinking with animation
+  - [ ] Tool name display
+  - [ ] Cost badge 2 decimals
+  - [ ] No terminal button for stream-json
+  - [ ] PTY unchanged
+  - [ ] Done clears indicators
+  - [ ] Build passes
+Dependencies: TASK #371
+---
+
+TASK #375: TEST GATE — AgentNode.jsx
+Area: V9.0-Phase2 — FRONTEND
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD
+Context: Test all AgentNode states with store manipulation, build.
+Acceptance Criteria:
+  - [ ] All #374 criteria verified
+  - [ ] Build passes
+Gate Result: PASS -> #383 | FAIL -> #374
+Dependencies: TASK #374
+---
+
+TASK #376: AgentInspector.jsx — Tool Whitelist Configuration UI
+Area: V9.0-Phase2 — FRONTEND
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Component Spec: PRD Section 11 — AgentInspector.jsx
+  File: client/src/canvas/AgentInspector.jsx (MODIFY)
+  Collapsible "Tools" section with 16 checkboxes:
+  Bash, Read, Edit, MultiEdit, Write, Glob, Grep, LS, WebFetch, WebSearch, NotebookRead, NotebookEdit, TodoRead, TodoWrite, Agent, exit_plan_mode
+  Default: ["Bash","Read","Edit","Write","Grep","Glob","LS"]
+  Toggle -> debounce 300ms -> onUpdateNode(nodeId, { tools })
+  Select All / Deselect All button
+  Only for Claude models (isClaudeModel helper). Hidden for Codex/Gemini.
+
+Acceptance Criteria:
+  - [ ] Claude model -> visible 16 checkboxes
+  - [ ] Non-Claude -> hidden
+  - [ ] Default checked when undefined
+  - [ ] Uncheck/check updates correctly
+  - [ ] Select All / Deselect All
+  - [ ] 300ms debounce
+  - [ ] Persistence round-trip
+  - [ ] Build passes
+Dependencies: TASK #371
+---
+
+TASK #377: TEST GATE — AgentInspector Tool Whitelist
+Area: V9.0-Phase2 — FRONTEND
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD
+Context: Test visibility, defaults, toggle, select all, debounce, persistence, build.
+Acceptance Criteria:
+  - [ ] All #376 criteria verified
+  - [ ] Build passes
+Gate Result: PASS -> #383 | FAIL -> #376
+Dependencies: TASK #376
+---
+
+TASK #378: ChatPanel — Stream-JSON message enrichment
+Area: V9.0-Phase2 — FRONTEND
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+  File: client/src/canvas/ChatPanel.jsx (MODIFY)
+  Enrich chat messages from stream-json agents with spawnMode, toolUse, cost fields.
+  Collect tool_use events into toolUse array. Attach cost from result. PTY unchanged.
+
+Acceptance Criteria:
+  - [ ] Stream-json messages include spawnMode
+  - [ ] toolUse array present when tools used
+  - [ ] cost present after turn
+  - [ ] PTY unchanged
+  - [ ] Build passes
+Dependencies: TASK #371
+---
+
+TASK #379: TEST GATE — ChatPanel enrichment
+Area: V9.0-Phase2 — FRONTEND
+Agent: qa-tester
+Type: TEST_GATE
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD
+Context: Simulate WS events, verify enrichment, PTY unchanged, build.
+Acceptance Criteria:
+  - [ ] Enrichment verified
+  - [ ] PTY unchanged
+  - [ ] Build passes
+Gate Result: PASS -> #383 | FAIL -> #378
+Dependencies: TASK #378
+---
+
+TASK #380: SwarmEngine — Emit spawnMode:'pty' in PTY agent_status events
+Area: V9.0-Phase2 — FRONTEND
+Agent: backend-dev
+Priority: HIGH
+Difficulty: TRIVIAL
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+  File: server/services/SwarmEngine.js (MODIFY)
+  Add spawnMode:'pty' to ALL agent_status broadcasts in PTY code path. Purely additive.
+
+Acceptance Criteria:
+  - [ ] All PTY agent_status include spawnMode:'pty'
+  - [ ] Stream-json has spawnMode:'stream-json' (from #359)
+  - [ ] No behavior changes
+  - [ ] npm test passes
+Dependencies: TASK #367
+---
+
+TASK #381: TEST GATE — spawnMode field
+Area: V9.0-Phase2 — FRONTEND
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: TRIVIAL
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Gate: HARD
+Context: Grep agent_status broadcasts, verify all have spawnMode. npm test.
+Acceptance Criteria:
+  - [ ] All broadcasts have spawnMode
+  - [ ] npm test passes
+Gate Result: PASS -> proceed | FAIL -> #380
+Dependencies: TASK #380
+---
+
+TASK #382: Stop/Reset UI — SwarmView toolbar for stream-json agents
+Area: V9.0-Phase2 — FRONTEND
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+  File: client/src/views/SwarmView.jsx (MODIFY)
+  Stream-json: Stop -> graceful first, Force Stop after 5s/dropdown. Reset button.
+  PTY: existing Stop unchanged.
+  REST: DELETE /api/v1/swarm/:workflowId?mode=graceful|forced|reset
+  Visual feedback: "Stopping...", "Stopped", "Reset"
+
+Acceptance Criteria:
+  - [ ] Graceful stop works
+  - [ ] Forced stop available
+  - [ ] Reset available
+  - [ ] PTY unchanged
+  - [ ] Visual feedback
+  - [ ] Build passes
+Dependencies: TASK #371
+---
+
+TASK #383: AREA CHECKPOINT — V9.0-Phase2 Frontend
+Area: V9.0-Phase2 — FRONTEND
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: CRITICAL
+Status: PENDING
+Gate: HARD — Phase 3 blocked until ALL Phase 2 gates PASS
+Context: Full frontend integration. Simulate stream-json execution: running+thinking, tools, cost, stop, tool config, PTY unaffected.
+Acceptance Criteria:
+  - [ ] All gates passed (#369,#371,#373,#375,#377,#379,#381)
+  - [ ] Integration passes
+  - [ ] No PTY regression
+  - [ ] Build + tests pass
+Dependencies: TASK #369,#371,#373,#375,#377,#379,#381
+---
+
+## AREA: V9.0-Phase3 — INTEGRATION AND POLISH
+_Components: Bypass comments, old code marking, E2E test, documentation_
+_Tasks: #384 to #393_
+_Gate: ALL tasks must PASS for migration completion_
+
+---
+
+TASK #384: ChatExtractor.js — [STREAM-JSON-MIGRATION] bypass comment
+Area: V9.0-Phase3 — INTEGRATION AND POLISH
+Agent: backend-dev
+Priority: MEDIUM
+Difficulty: TRIVIAL
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+  File: server/services/ChatExtractor.js (MODIFY)
+  Add: // [STREAM-JSON-MIGRATION] This module is bypassed for Claude stream-json agents. Used only for Codex/Gemini PTY agents.
+  Verify not used in _spawnAgentStreamJson, still used in _spawnAgentPty.
+
+Acceptance Criteria:
+  - [ ] Comment present
+  - [ ] Not in stream-json path
+  - [ ] Still in PTY path
+  - [ ] Tests pass
+Dependencies: TASK #383
+---
+
+TASK #385: SessionManager.js — [STREAM-JSON-MIGRATION] bypass comment
+Area: V9.0-Phase3 — INTEGRATION AND POLISH
+Agent: backend-dev
+Priority: MEDIUM
+Difficulty: TRIVIAL
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+  File: server/services/SessionManager.js (MODIFY)
+  Add: // [STREAM-JSON-MIGRATION] Stream-json agents bypass SessionManager entirely (DEC-028).
+  Verify not called in stream-json path. PTY unchanged. DEC-009 intact.
+
+Acceptance Criteria:
+  - [ ] Comment present
+  - [ ] Not in stream-json path
+  - [ ] PTY unchanged
+  - [ ] DEC-009 intact
+  - [ ] Tests pass
+Dependencies: TASK #383
+---
+
+TASK #386: swarmHandler.js — Document new WS event types
+Area: V9.0-Phase3 — INTEGRATION AND POLISH
+Agent: backend-dev
+Priority: MEDIUM
+Difficulty: TRIVIAL
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+  File: server/ws/swarmHandler.js (MODIFY)
+  Add comment listing all WS event types (existing + stream-json new). broadcast() stays type-agnostic.
+
+Acceptance Criteria:
+  - [ ] Comment lists all types
+  - [ ] broadcast() unchanged
+  - [ ] Tests pass
+Dependencies: TASK #383
+---
+
+TASK #387: Old Code Commenting — [STREAM-JSON-MIGRATION] markers in SwarmEngine.js
+Area: V9.0-Phase3 — INTEGRATION AND POLISH
+Agent: backend-dev
+Priority: MEDIUM
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+  File: server/services/SwarmEngine.js (MODIFY)
+  Mark all PTY-specific blocks with [STREAM-JSON-MIGRATION] comments documenting dual-path. No code deleted.
+
+Acceptance Criteria:
+  - [ ] Major PTY blocks have markers
+  - [ ] Comments reference stream-json equivalents
+  - [ ] No code deleted
+  - [ ] Tests pass
+Dependencies: TASK #384, #385, #386
+---
+
+TASK #388: TEST GATE — Bypass Documentation and Old Code Markers
+Area: V9.0-Phase3 — INTEGRATION AND POLISH
+Agent: qa-tester
+Type: TEST_GATE
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD
+Context: Grep [STREAM-JSON-MIGRATION] in all files. Verify no behavior changes. Tests + build pass.
+Acceptance Criteria:
+  - [ ] All markers present
+  - [ ] No behavior changes
+  - [ ] npm test + build pass
+Gate Result: PASS -> #389 | FAIL -> relevant task
+Dependencies: TASK #384,#385,#386,#387
+---
+
+TASK #389: Full Pipeline E2E Test — Stream-JSON end-to-end
+Area: V9.0-Phase3 — INTEGRATION AND POLISH
+Agent: qa-tester
+Priority: CRITICAL
+Difficulty: VERY HARD
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Context:
+  File: server/tests/e2e/stream-json-e2e.test.js (CREATE)
+  Scenario: 2 agents (Claude sonnet + Codex). Start execution. Claude via stream-json, Codex via PTY.
+  Verify: thinking indicator, tool name, tool blocks in chat, cost badge/footer, tool whitelist, graceful stop, resume, reset. Codex unaffected.
+  If no real CLI: mock canned NDJSON. Document which tests need real CLI.
+
+Acceptance Criteria:
+  - [ ] Claude spawns stream-json correctly
+  - [ ] Codex spawns PTY (no regression)
+  - [ ] Thinking indicator visible
+  - [ ] Tool name on AgentNode
+  - [ ] Tool block in ChatMessage
+  - [ ] Cost badge + footer
+  - [ ] Tool whitelist respected
+  - [ ] Graceful stop, resume, reset work
+  - [ ] All PTY tests pass
+  - [ ] npm test + build pass
+Dependencies: TASK #388
+---
+
+TASK #390: TEST GATE — Full Pipeline E2E
+Area: V9.0-Phase3 — INTEGRATION AND POLISH
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Difficulty: HARD
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD
+Context: Re-run #389 E2E, verify all criteria, bug reports for failures.
+Acceptance Criteria:
+  - [ ] All #389 criteria verified
+  - [ ] No regressions
+Gate Result: PASS -> #391 | FAIL -> debugger
+Dependencies: TASK #389
+---
+
+TASK #391: Documentation — README, CLAUDE.md, PROJECT.md, version bump
+Area: V9.0-Phase3 — INTEGRATION AND POLISH
+Agent: documenter
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context: README: stream-json features. CLAUDE.md: DEC-027/028/029 + constraints. PROJECT.md: v9.0. package.json: 9.0.0.
+Acceptance Criteria:
+  - [ ] README documents stream-json
+  - [ ] CLAUDE.md has constraints
+  - [ ] PROJECT.md reflects v9.0
+  - [ ] Version 9.0.0
+Dependencies: TASK #390
+---
+
+TASK #392: TEST GATE — Documentation
+Area: V9.0-Phase3 — INTEGRATION AND POLISH
+Agent: qa-tester
+Type: TEST_GATE
+Priority: MEDIUM
+Difficulty: TRIVIAL
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Gate: HARD
+Context: Verify docs accuracy, version, build.
+Acceptance Criteria:
+  - [ ] Docs accurate
+  - [ ] Build passes
+Gate Result: PASS -> #393 | FAIL -> #391
+Dependencies: TASK #391
+---
+
+TASK #393: AREA CHECKPOINT — V9.0-Phase3 FINAL (Migration Complete)
+Area: V9.0-Phase3 — INTEGRATION AND POLISH
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: CRITICAL
+Status: PENDING
+Gate: HARD — V9.0 NOT complete until this PASSES
+Context: Final checkpoint. All Phase 3 gates passed. npm test + build. No regressions. Docs accurate. All markers in place.
+Acceptance Criteria:
+  - [ ] All gates passed (#388,#390,#392)
+  - [ ] npm test passes
+  - [ ] Build passes
+  - [ ] No PTY regression
+  - [ ] Stream-json E2E works
+  - [ ] Docs accurate
+  - [ ] V9.0 STREAM-JSON AGENT MIGRATION CLOSED
+Dependencies: TASK #388,#390,#392
 ---

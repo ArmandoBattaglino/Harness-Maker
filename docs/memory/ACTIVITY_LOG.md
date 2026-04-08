@@ -1,4 +1,14 @@
-﻿## 2026-04-08 — prd-writer — V6 PRD: Stream-JSON Agent Migration for Swarm Engine
+﻿## 2026-04-08 — project-manager — V9.0 Stream-JSON Migration Task Plan
+**Outcome:** COMPLETED
+**Summary:** Created complete TASK_PLAN.md for V9.0 Stream-JSON Agent Migration. 40 tasks (#354-#393) across 4 phases: Phase 0 Spike (3 tasks), Phase 1 Backend Core (11 tasks, 5 components + 5 gates + 1 checkpoint), Phase 2 Frontend (16 tasks, 8 components + 7 gates + 1 checkpoint), Phase 3 Integration (10 tasks, 4 comment/doc tasks + 3 gates + 1 E2E + 1 doc + 1 final checkpoint). Every component has a TEST GATE. Every phase has an AREA CHECKPOINT. Dependency chain fully mapped with parallelizable tasks identified.
+**Files changed:** docs/TASK_PLAN.md (40 tasks appended), docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** Task numbering starts at #354 (after existing #353). Phase 0 spike is mandatory gate. #361 and #363 can run in parallel. #372, #374, #376, #378, #382 can run in parallel after #371 gate.
+**Blockers:** none
+**Next:** Assign backend-dev to TASK #354 (spike validation). CRITICAL priority.
+---
+
+## 2026-04-08 — prd-writer — V6 PRD: Stream-JSON Agent Migration for Swarm Engine
 **Outcome:** COMPLETED
 **Summary:** Wrote complete V6 PRD (docs/PRD.md) for Stream-JSON Agent Migration. 13 sections + 2 appendices covering: StreamJsonParser, _spawnAgentStreamJson, provider routing dispatcher, session lifecycle (graceful/forced/reset), 4 new WS events, useSwarm.js/AgentNode/ChatMessage/AgentInspector extensions, SwarmContext store extensions, ChatExtractor/SessionManager bypasses. 12 component specifications with full acceptance criteria. 7 SEC-SJ-* security requirements. 4 open questions.
 **Files changed:** docs/PRD.md (REWRITTEN), docs/memory/agents/prd-writer.md, docs/memory/ACTIVITY_LOG.md

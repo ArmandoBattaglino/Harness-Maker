@@ -1,6 +1,18 @@
 ﻿# Current Context
 **Session date:** 2026-04-08
-**Focus:** ALL AREAS CLOSED through V8.2. 353 tasks total: 351 COMPLETED, 2 DEFERRED, 0 PENDING. V8.0 (Agent Output Viewer), V8.1 (Runtime Polish), V8.2 (Output Fidelity) all closed. 409 tests pass, client build clean. LARGE UNCOMMITTED CHANGESET pending commit (35 files, ~880 insertions). Known residual: ChatExtractor tests are flaky under parallel vitest execution (pass in isolation, occasional fail in full suite). Researcher agent "Structured handoff sent." fallback still possible in some cases.
+**Focus:** V9.0 STREAM-JSON AGENT MIGRATION — TASK PLAN COMPLETE, EXECUTION PENDING. 393 tasks total: 351 COMPLETED, 2 DEFERRED, 40 PENDING (#354-#393). PRD v6.0 written. Research complete (resume-after-kill, --tools syntax). Architect analysis complete (DEC-027/028/029). Security assessment complete (SEC-SJ-01 through SEC-SJ-07).
+
+**IMMEDIATE NEXT STEP:** Assign backend-dev to TASK #354 (spike validation). This is the highest priority — it must PASS before any production code is written. The spike resolves the tech-lead UNCERTAIN feasibility rating.
+
+**Dependency wave map:**
+  Wave 0: #354 (spike) -> #355 (gate) -> #356 (checkpoint)
+  Wave 1: #357 (StreamJsonParser) -> #358 (gate)
+  Wave 2: #359 (_spawnAgentStreamJson) -> #360 (gate)
+  Wave 3: #361 (dispatcher) + #363 (lifecycle) IN PARALLEL -> #362 + #364 (gates)
+  Wave 4: #365 (tool config) -> #366 (gate) -> #367 (area checkpoint)
+  Wave 5: #368 (store) -> #369 (gate) -> #370 (useSwarm) -> #371 (gate) -> #372+#374+#376+#378+#382 IN PARALLEL -> gates -> #383 (checkpoint)
+  Wave 6: #380 (spawnMode) -> #381 (gate) — can run in parallel with Wave 5
+  Wave 7: #384+#385+#386 IN PARALLEL -> #387 -> #388 (gate) -> #389 (E2E) -> #390 (gate) -> #391 (docs) -> #392 (gate) -> #393 (final)
 
 _Project initialized via /create pipeline on 2026-03-18_
 
