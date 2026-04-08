@@ -354,6 +354,21 @@ export class ChatExtractor {
   }
 
   /**
+   * Discard any accumulated buffer for a node without emitting.
+   * Called when the echo gate clears — pre-gate noise (CLI banner, system prompt
+   * echo fragments) has leaked into the buffer and must be discarded so that
+   * only post-gate agent content accumulates for the next flush.
+   */
+  resetBuffer(nodeId) {
+    const buf = this._buffers.get(nodeId);
+    if (buf) {
+      buf.text = '';
+      buf.firstChunkAt = 0;
+      buf.lastEmittedText = '';
+    }
+  }
+
+  /**
    * Emit a system message (for flow-control events like delays, routing, merging).
    */
   systemMessage(executionId, nodeId, text) {
