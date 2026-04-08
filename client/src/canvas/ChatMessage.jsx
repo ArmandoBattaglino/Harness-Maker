@@ -13,6 +13,41 @@ function formatTime(ts) {
   return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
+/**
+ * Repair ConPTY word fusion: when the terminal drops spaces between words,
+ * producing long runs of letters like "nonesistonocusciniéserrature".
+ * Insert spaces at camelCase boundaries and before/after common Italian
+ * function words embedded in long fused tokens.
+ */
+function repairWordFusion(text) {
+  // 1. Insert space at digit-letter boundaries (ConPTY fuses numbers and words)
+  //    "156metrieaIto48" → "156 metrieaIto 48"
+  //    Require 3+ letters to avoid breaking "v5", "m2", etc.
+  text = text.replace(/(\d)([a-zA-Z\u00C0-\u00FF]{3,})/g, '$1 $2');
+  text = text.replace(/([a-zA-Z\u00C0-\u00FF]{3,})(\d)/g, '$1 $2');
+
+  // 2. Process long letter-only tokens (18+ chars) for word fusion repair
+  text = text.replace(/[\p{L}\p{M}]{18,}/gu, (token) => {
+    // 2a. Insert space before uppercase after lowercase (camelCase fusion)
+    let fixed = token.replace(/([a-z\u00E0-\u00FF])([A-Z\u00C0-\u00D6])/g, '$1 $2');
+    if (fixed.includes(' ')) return fixed;
+    // 2b. All-lowercase fusion: insert spaces around common Italian function
+    //     words (articles, prepositions, conjunctions) flanked by 3+ letters.
+    const ITA_LONG = 'della|delle|degli|dello|nella|nelle|negli|nello|sulla|sulle|sugli|sullo|dalla|dalle|dagli|dallo|alla|alle|agli|allo|quando|anche|ancora|sempre|prima|dopo|senza|dentro|fuori|oltre|sotto|sopra|circa|insieme|durante|mentre|come|sono|tutto|questo|quella|quello|questi|quelle|immaginate|esistono|dormire|sveglia|potere|poter|occhio|aperto|capace|accogliere|marinai|flotta|imperiale|attraverso|spettatori|costruzione|sotterranei|destinati|gladiatori|macchinari|stupefacente|inaugurazione|interamente|autentiche|battaglie|prodigio|soltanto';
+    const reIta = new RegExp(`(?<=[a-z\\u00E0-\\u00FF]{3})(${ITA_LONG})(?=[a-z\\u00E0-\\u00FF]{2})`, 'gi');
+    fixed = token.replace(reIta, ' $1 ');
+    if (fixed !== token) return fixed.replace(/\s{2,}/g, ' ').trim();
+    // 2c. Shorter function words — require 4+ chars flanking to reduce false positives
+    const SHORT = 'non|del|dei|con|per|che|nel|sul|fra|tra|una|uno|gli';
+    const reShort = new RegExp(`(?<=[a-z\\u00E0-\\u00FF]{4})(${SHORT})(?=[a-z\\u00E0-\\u00FF]{3})`, 'gi');
+    fixed = token.replace(reShort, ' $1 ');
+    if (fixed !== token) return fixed.replace(/\s{2,}/g, ' ').trim();
+    return token;
+  });
+
+  return text;
+}
+
 function formatChatText(rawText = '') {
   let text = stripAnsi(String(rawText ?? ''))
     .replace(/\r\n/g, '\n')
@@ -37,9 +72,34 @@ function formatChatText(rawText = '') {
     .filter((line) => !/(?:fluttering|running stop hook|◐|◑|◒|◓|⠋|⠙|⠹|⠸|⠼|⠴|⠦|⠧|⠇|⠏)/i.test(line))
     .filter((line) => !/^[….\s\w]{0,10}cycle\)?[\s◐◑◒◓]*\w*$/i.test(line))
     .filter((line) => !/^❯\s/.test(line))
-    .filter((line) => !/(?:claude runtime is active|continue the workflow using the shared task context|is not the end of the workflow yet|do not stop at the done marker|you are a [a-z]+ agent\b|execute the workflow goal described|MUST emit a handoff token|downstream target is:|hand off with the most useful)/i.test(line));
+    .filter((line) => !/(?:claude runtime is active|continue the workflow using the shared task context|is not the end of the workflow yet|do not stop at the done marker|you are a [a-z]+ agent\b|execute the workflow goal described|MUST emit a handoff token|downstream target is:|hand off with the most useful)/i.test(line))
+    // Reject garbled ConPTY lines: dots/ellipsis scattered among fragments
+    .filter((line) => {
+      const dotRuns = line.match(/[.…]{2,}/g) || [];
+      const dotLen = dotRuns.reduce((s, r) => s + r.length, 0);
+      if (dotLen > 0 && dotLen / line.length > 0.12) {
+        const validWords = (line.match(/[A-Za-z\u00C0-\u00FF]{4,}/g) || [])
+          .filter(w => !/^(.)\1{2,}$/i.test(w));
+        if (validWords.length < 2) return false;
+      }
+      return true;
+    });
 
-  return cleanedLines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  let result = cleanedLines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+
+  // Strip leading garbled ConPTY prefix before a real sentence start.
+  // Matches runs of short fragments (1-4 chars) with dots/ellipsis, followed by
+  // a proper word (uppercase + 3+ lowercase = real sentence start).
+  // e.g. "gi...ng Ecco il paragrafo" → "Ecco il paragrafo"
+  // e.g. "Booo st pap ini …ng… tra o B Sembra che" → "Sembra che"
+  result = result.replace(/^(?:[a-zA-Z\u00C0-\u00FF.…]{1,4}\s+){3,}(?:[a-zA-Z\u00C0-\u00FF.…]{1,4}\s+)*(?=[A-Z\u00C0-\u00D6][a-z\u00E0-\u00FF]{3,})/u, '');
+  // Also strip lowercase-only prefix (original pattern)
+  result = result.replace(/^(?:[a-z\u00E0-\u00FF.…]{1,15}\s+)+(?=[A-Z\u00C0-\u00D6])/u, '');
+
+  // Repair word fusion from ConPTY space-stripping
+  result = repairWordFusion(result);
+
+  return result;
 }
 
 export default function ChatMessage({ message, agentLabel }) {

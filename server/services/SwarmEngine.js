@@ -2063,25 +2063,6 @@ class SwarmEngine {
   _decompressConPTYSpaces(text) {
     if (!text) return text;
     return text.split('\n').map((line) => {
-      // Skip lines that look like code/URLs/paths/structured data
-      if (/[={}()\[\]\/:].*[={}()\[\]\/:]/.test(line)) return line;
-      if (/^[A-Z_]+=/.test(line)) return line;  // KEY=VALUE
-      if (/^\s*[-•]/.test(line) && /\/api\//.test(line)) return line;  // route list items
-      if (/https?:\/\//.test(line)) return line;
-      if (/PROMPT-CONTROL-REPORT/.test(line)) return line;
-      return line
-        // Space after sentence-ending punctuation followed by a letter: ".A" → ". A"
-        .replace(/([.!?])([A-ZÀ-Ö])/g, '$1 $2')
-        // Space after comma/semicolon followed by a letter: ",a" → ", a" (skip colon — used in URLs/keys)
-        .replace(/([,;])([a-zA-ZÀ-ö])/g, '$1 $2')
-        // Space before uppercase after lowercase (word boundary): "aB" → "a B"
-        .replace(/([a-zà-ö])([A-ZÀ-Ö])/g, '$1 $2');
-    }).join('\n');
-  }
-
-  _decompressConPTYSpaces(text) {
-    if (!text) return text;
-    return text.split('\n').map((line) => {
       if (/[={}()\[\]\/:].*[={}()\[\]\/:]/.test(line)) return line;
       if (/^[A-Z_]+=/.test(line)) return line;
       if (/^\s*[-â€¢]/.test(line) && /\/api\//.test(line)) return line;

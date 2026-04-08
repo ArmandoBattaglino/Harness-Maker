@@ -341,12 +341,23 @@ export function useSwarm(workflowId) {
                         const existing = new Set(
                           store.chatMessages.map(m => `${m.nodeId}:${m.timestamp}`)
                         );
+                        // Track latest assistant message per nodeId for snippet update
+                        const latestAssistantByNode = new Map();
                         for (const cm of data.chatMessages) {
                           const key = `${cm.nodeId}:${cm.timestamp}`;
                           if (!existing.has(key)) {
                             store.addChatMessage(cm);
                             existing.add(key);
                           }
+                          // Track latest assistant message for node snippet hydration
+                          if ((cm.role === 'assistant' || !cm.role) && cm.nodeId && cm.text) {
+                            latestAssistantByNode.set(cm.nodeId, cm.text);
+                          }
+                        }
+                        // Update node snippets with clean chat text from REST data
+                        // (fixes garbled snippets when WS chat_message arrived after close)
+                        for (const [nodeId, text] of latestAssistantByNode) {
+                          updateAgentState(nodeId, { lastChatSnippet: text });
                         }
                       }
                     })

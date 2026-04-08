@@ -98,6 +98,11 @@ const NOISE_PATTERNS = [
   /Sign\s*in\s*with\s*Device\s*Code/gi,            // "SigninwithDeviceCode"
   /Provide\s*your\s*own\s*API\s*key/gi,            // "ProvideyourownAPIkey"
   /^\s*Boogieing.*$/gm,                             // "Boogieing..." Codex animation
+  /^\s*(?:\w{2,20}ing(?:[.…]{2,3}|…)\s*){2,}$/gmi,  // "Recombobulating... Fluttering..." spinner lines
+  /Recombobulat\w*/gi,                               // Claude CLI "Recombobulating" spinner
+  /Defenestrat\w*/gi,                                // Claude CLI "Defenestrating" spinner
+  /Topsy-?\s*turvy\w*/gi,                            // Claude CLI "Topsy-turvying" spinner
+  /Splendiferous\w*/gi,                              // Claude CLI whimsical spinner word
   /^\s*do you want to do\?\s*$/gm,                 // Codex interactive prompt
   /Upgrade your\s*plan/gi,                          // "Upgrade your plan"
   /Stop\s*and\s*wait\s*for\s*limit\s*to\s*reset/gi, // "Stopandwaitforlimittoreset"

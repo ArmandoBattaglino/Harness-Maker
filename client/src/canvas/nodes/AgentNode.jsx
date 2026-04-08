@@ -45,10 +45,10 @@ export default function AgentNode({ id, data, selected }) {
         </div>
       )}
 
-      {/* Unviewed output badge — pulsing red dot (top-left) */}
+      {/* Unviewed output badge — pulsing blue dot (top-left) */}
       {!isDropPreview && hasUnviewedOutput && status === 'done' && (
         <div
-          className="absolute -top-1 -left-1 w-3.5 h-3.5 bg-red-500 rounded-full animate-pulse border border-red-300 shadow-[0_0_6px_rgba(239,68,68,0.6)] z-10"
+          className="absolute -top-1 -left-1 w-3.5 h-3.5 bg-blue-500 rounded-full animate-pulse border border-blue-300 shadow-[0_0_6px_rgba(59,130,246,0.6)] z-10"
           title="Output ready — click to view"
         />
       )}
