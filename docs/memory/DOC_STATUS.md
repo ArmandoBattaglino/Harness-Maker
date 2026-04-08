@@ -1,14 +1,18 @@
 # Documentation Status
-_Last updated: 2026-04-08 after Task #398 BUG-AUTO-ROUTING (_spawnAgent AUTO mode stream-json routing + 39 test fixes)._
+_Last updated: 2026-04-08 after debugger-loop Phase 1 E2E test (multi-agent swarm) — 3 new bugs discovered against the V9 stream-json runtime._
 
 ## Release Status
-**v9.0.0 stable -- V9.0 Stream-JSON Agent Migration CLOSED**
-- QA inspection: CLEAN on v9.0 codebase
-- Test suite: 478/478 passing
+**v9.0.0 — V9.0 Stream-JSON Agent Migration CLOSED for core semantics, display fidelity RE-OPENED**
+- QA inspection: FUNCTIONAL PASS on v9.0 core (tangible multi-agent output achieved — Writer produced correct Italian paragraph end-to-end)
+- Display fidelity: BROKEN — BUG-DL-01 (HIGH) word-splitting on text_delta concatenation affects every Claude stream-json agent's rendered chat output
+- Test suite: 478/478 passing (unit/integration, unchanged — bugs are UI-level presentation defects not covered by existing gates)
 - Build: 500 modules, 0 errors
-- Tasks: numbering extends through #398; 394 tasks are registered, 393 are complete/pass, 1 is deferred (#236), 0 are pending
-- Open bugs: 0
-- V9.0 status: PRD v6.0 written, research complete, architect analysis done (DEC-027/028/029), stream-json migration CLOSED through #393 PASS, debugger-loop follow-up #394-#396 CLOSED, handoff provider bug #397 COMPLETED, AUTO routing bug #398 COMPLETED. Deterministic stream-json/PTY E2E coverage now lives in `server/tests/e2e/stream-json-e2e.test.js`.
+- Tasks: numbering extends through #398; 3 new tasks (#399-#401) + TEST GATE about to be registered by project-manager for the debugger-loop Phase 2 wave. Previous "0 pending" claim is STALE as of this session.
+- Open bugs: 3 (was 0)
+  - BUG-DL-01 (HIGH) — text_delta word splitting: client/server concatenates text_delta chunks without preserving inter-chunk word boundaries, producing `helloworld` where two chunks should have joined as `hello world`. Affects all Claude stream-json output rendering.
+  - BUG-DL-02 (LOW) — stale node state persists when a fresh workflow is loaded (agent cards retain previous execution's status/snippet until first new event).
+  - BUG-DL-03 (LOW) — per-turn cost footer disappears from the chat view after the agent transitions to `Completed` status.
+- V9.0 status: PRD v6.0 written, research complete, architect analysis done (DEC-027/028/029), stream-json migration CLOSED through #393 PASS for core flow, debugger-loop follow-up #394-#396 CLOSED, handoff provider bug #397 COMPLETED, AUTO routing bug #398 COMPLETED. Deterministic stream-json/PTY E2E coverage lives in `server/tests/e2e/stream-json-e2e.test.js`. A second debugger-loop wave (Phase 1 complete this session) re-opens UI presentation fidelity — semantics are correct but the rendered output is not.
 
 ## Fixed Bugs (v3.0.0 post-release patches)
 
