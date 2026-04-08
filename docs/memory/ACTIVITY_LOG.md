@@ -1,4 +1,14 @@
-﻿## 2026-04-08 — researcher — Research B: Claude CLI --allowedTools Syntax
+﻿## 2026-04-08 — prd-writer — V6 PRD: Stream-JSON Agent Migration for Swarm Engine
+**Outcome:** COMPLETED
+**Summary:** Wrote complete V6 PRD (docs/PRD.md) for Stream-JSON Agent Migration. 13 sections + 2 appendices covering: StreamJsonParser, _spawnAgentStreamJson, provider routing dispatcher, session lifecycle (graceful/forced/reset), 4 new WS events, useSwarm.js/AgentNode/ChatMessage/AgentInspector extensions, SwarmContext store extensions, ChatExtractor/SessionManager bypasses. 12 component specifications with full acceptance criteria. 7 SEC-SJ-* security requirements. 4 open questions.
+**Files changed:** docs/PRD.md (REWRITTEN), docs/memory/agents/prd-writer.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** Replaced V5 PRD entirely with V6 (distinct architectural scope). 12 components specified with behavioral acceptance criteria.
+**Blockers:** none
+**Next:** Project Manager builds TASK_PLAN.md from PRD. Researcher resolves open questions 1,2,4.
+---
+
+## 2026-04-08 — researcher — Research B: Claude CLI --allowedTools Syntax
 **Outcome:** COMPLETED
 **Summary:** Deep-dive research on Claude CLI --allowedTools, --disallowedTools, and --tools flags. Critical finding: --allowedTools is NOT a security boundary under --dangerously-skip-permissions (known bug #12232). The correct flags for our swarm tool whitelists are --tools (restricts available tool set) and --disallowedTools (blocks specific patterns). Complete list of 16 built-in tools documented. Glob patterns supported for Bash with * wildcards.
 **Files changed:** docs/research_b_tools.md (CREATED), docs/memory/agents/researcher.md, docs/memory/ACTIVITY_LOG.md

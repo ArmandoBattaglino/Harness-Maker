@@ -1,4 +1,62 @@
 ---
+## 2026-04-08 — Task: Write V6 PRD (Stream-JSON Agent Migration for Swarm Engine)
+**Status:** COMPLETED
+**Called by:** user (direct invocation with full discovery answers + research findings)
+
+### Context when I started
+The project was at V5.0 with 333+ tasks completed. A complete research phase had been done: stream-json event format, session management (--resume, --session-id), tool restriction (--tools vs --allowedTools bug #12232), security analysis (SEC-SJ-01 through SEC-SJ-07), and architect decisions (DEC-027 through DEC-029). The existing PRD was V5.0 dated 2026-04-06. The existing codebase uses PTY for all provider agents (Claude, Codex, Gemini) via SwarmEngine._spawnAgentPty().
+
+### What I did
+1. Read all memory files in parallel (PROJECT.md, DECISIONS.md, CONTEXT.md, prd-writer.md agent log).
+2. Read existing PRD structure, SwarmEngine.js, swarmHandler.js, useSwarm.js, AgentNode.jsx, ChatMessage.jsx, AgentInspector.jsx, SwarmContext.jsx, SessionManager.js, ChatExtractor.js, JobRunner.js to understand current architecture.
+3. Wrote complete V6 PRD at docs/PRD.md with all 13 sections + 2 appendices.
+4. Section 11 covers 12 components: StreamJsonParser, _spawnAgentStreamJson, _spawnAgent dispatcher, Session Lifecycle, useSwarm.js extensions, AgentNode.jsx extensions, ChatMessage.jsx extensions, AgentInspector.jsx tool config, SwarmContext.jsx store extensions, ChatExtractor bypass, SessionManager bypass, swarmHandler.js routing.
+5. Each component has full spec: inputs, outputs, step-by-step behavior, contracts, acceptance criteria.
+6. All WS events fully specified with every field.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/PRD.md | MODIFIED (full rewrite) | V5 PRD replaced with V6 PRD for Stream-JSON Agent Migration |
+| docs/memory/agents/prd-writer.md | MODIFIED | Appended this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended task entry |
+
+### Improvements delivered
+- Complete single-source-of-truth PRD for stream-json migration with 12 fully specified components
+- All 7 SEC-SJ-* security requirements documented with implementation references
+- 4 new WS event types fully specified (agent_thinking, agent_tool_use, agent_tool_delta, agent_cost)
+- Provider routing logic fully specified with model-to-method mapping
+- Two-tier stop (graceful/forced/reset) fully specified with session file management
+- Per-agent tool whitelist configuration fully specified with 16-tool checkbox UI
+- 4 open questions flagged for researcher/backend-dev
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| No TerminalManager.js exists | User requirement referenced "TerminalManager" but terminal management is in SessionManager.js | Documented as SessionManager bypass instead | RESOLVED (documentation) |
+
+### Decisions I made
+- Replaced V5 PRD entirely (V6 is a new feature, not an addendum to V5). Rationale: stream-json migration is architecturally distinct from V5 visual editor features.
+- Used 12 component specs covering both new (StreamJsonParser, _spawnAgentStreamJson) and modified (AgentNode, ChatMessage, AgentInspector, useSwarm, SwarmContext) and unchanged-but-documented (ChatExtractor, SessionManager, swarmHandler) components.
+- Specified ChatExtractor and SessionManager as "bypass" components with no code changes needed — only documentation comments. This ensures implementers know these modules are intentionally untouched for the stream-json path.
+- Kept agent_tool_delta as separate WS event rather than batching into agent_tool_use — real-time streaming requires individual delta events.
+
+### What I learned
+- The existing codebase has 120+ noise regexes across ChatExtractor, chatTextNormalization, and SessionManager replay filtering — all of which are bypassed by stream-json's clean structured output.
+- HandoffParser's rolling byte accumulator (DEC-012) is unnecessary for stream-json because handoff tokens appear in clean text blocks, not raw PTY bytes.
+- The existing SwarmContext.jsx updateAgentState action already supports arbitrary patches via shallow merge — no structural store changes needed, only new field documentation.
+- JobRunner.js already uses readline + stream-json parsing for job mode — _spawnAgentStreamJson follows the same pattern.
+
+### State I'm leaving behind
+docs/PRD.md is complete, version 6.0, status Draft. 13 sections + 2 appendices. 12 component specifications with full acceptance criteria. 4 open questions flagged. Ready for project-manager to build TASK_PLAN.md.
+
+### Handoff
+- Project Manager: Read docs/PRD.md and build V6 tasks in docs/TASK_PLAN.md. Phase plan is in Appendix B (4 phases, ~14 tasks).
+- Architect: Review open questions 1-4 (session file encoding, extended thinking, post-result hang, JSONL truncation).
+- Researcher: Resolve open questions 1, 2, 4 before Phase 2 backend tasks begin.
+---
+
+---
 ## 2026-04-02 — Task: Write Section 11 — Component Specifications (Swarm V3)
 **Status:** COMPLETED
 **Called by:** user (direct invocation with full context and file list)
