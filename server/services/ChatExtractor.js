@@ -472,6 +472,18 @@ export class ChatExtractor {
       if (/^You are the triage node\b/i.test(t)) return false;
       if (/^Route the incoming request to both Agent-A and Agent-B\b/i.test(t)) return false;
       if (/[>\u203A]\s*(?:You are the|When your work is complete|No extra text after that last handoff line)/i.test(t)) return false;
+      // Swarm protocol / system prompt lines
+      if (/SWARM\s*PROTOCOL/i.test(t)) return false;
+      if (/You\s*are\s*(?:a|the)\s+\w+\s*(?:agent|node)?\.?\s*You\s*(?:receive|will|must)/i.test(t)) return false;
+      if (/must\s*be\s*a\s*valid\s*handoff\s*token/i.test(t)) return false;
+      if (/in\s*place\s*of\s*<?\s*target/i.test(t)) return false;
+      if (/You\s*are\s*the\s*FINAL\s*agent/i.test(t)) return false;
+      if (/MUST\s*output\s*the\s*done\s*marker/i.test(t)) return false;
+      if (/Do\s*real\s*work\s*before\s*deciding/i.test(t)) return false;
+      if (/You\s*have\s*an\s*active\s*task\s*right\s*now/i.test(t)) return false;
+      if (/no\s*downstream\s*handoffs?\s*exist/i.test(t)) return false;
+      if (/workflow\s*(?:Name|Description|goal)\s*:/i.test(t)) return false;
+      if (/current\s*(?:Task|workflow\s*context)\s*:/i.test(t)) return false;
       if (/\bgpt-[\w.-]+\b/i.test(t) && (/%\s*left/i.test(t) || /~[\\/]/.test(t))) return false;
       if (/^gpt-[\w.-]+\s+(?:high|medium|low)\b/i.test(t)) return false;
       if (/\[[^\]]+\]/.test(t) && /\b(?:Spawned|Closed|Completed\s*-|Waiting for \d+ agents|Finished waiting)\b/i.test(t)) return false;
