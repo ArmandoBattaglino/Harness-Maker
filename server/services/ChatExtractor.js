@@ -120,6 +120,7 @@ const NOISE_PATTERNS = [
   /^\s*Nessun progetto con docs\/memory\/.*$/gm,   // hook/memory warning (Italian)
   /^\s*Stop says:.*$/gm,                            // "Stop says: ..." hook output
   /^\s*Structured handoff sent\.?\s*$/gm,          // "Structured handoff sent." — protocol echo, not semantic
+  /Structured\s*handoff\s*sent\.?/gi,               // inline variant (survives ConPTY line joining)
   // --- Claude Code banner / header (BUG-CE-4) ---
   /[▐▛▜▌▝▘█]+\s*Claude\s*Code\s*v[\d.]+/gi,       // "▐▛███▜▌   Claude Code v2.1.94"
   /[▐▛▜▌▝▘█]+[^a-zA-Z\n]*Claude\s*Max/gi,         // "▝▜█████▛▘   · Claude Max"
@@ -150,6 +151,26 @@ const NOISE_PATTERNS = [
   /Do\s*real\s*work\s*before\s*deciding/gi,
   /You\s*have\s*an\s*active\s*task\s*right\s*now/gi,
   /Con\s*t\s*in\s*u\s*e\s*this\s*task/gi,          // ConPTY-fragmented "Continue this task"
+  /in\s*this\s*EXACT\s*format\s*:\s*<?target/gi,   // handoff instruction echo
+  /\(?\s*mandatory\s*-?\s*never\s*skip\s*\)?/gi,   // SWARM PROTOCOL header echo
+  /forcedHandoff\s*:\s*(?:true|false)/gi,           // forced handoff metadata
+  /reason\s*:\s*Agent\s*emitted/gi,                 // forced handoff reason
+  /is\s*not\s*terminal\s*in\s*the\s*workflow/gi,    // handoff instruction echo
+  /you\s*MUST\s*emit\s*a\s*handoff\s*token/gi,     // handoff instruction echo
+  /required\s*downstream\s*target\s*is/gi,          // handoff instruction echo
+  /valid\s*target\s*IDs?\s*:/gi,                     // handoff instruction echo
+  /context\s*update\s*:\s*a\s*flat\s*JSON/gi,       // handoff instruction echo
+  /CONCRETE\s*EXAMPLE\s*\(replace/gi,               // example section echo
+  /^\s*Notepad\s*$/gm,                                // Windows Notepad ghost process echo
+  /Do\s*no\s*t?\s*stop\s*at\s*the\s*done\s*marker/gi, // ConPTY-garbled reinject prompt
+  /that\s*final\s*handoff\s*token\s*as\s*plain\s*text/gi, // reinject instruction echo
+  /Replace\s*the\s*summary\s*value\s*with/gi,          // reinject instruction echo
+  /Your\s*very\s*last\s*(?:line|lin)\s*must\s*be/gi,   // reinject instruction echo (+ garbled "lin")
+  /-+\s*END\s*SWARM\s*INPUT\s*-+/gi,                    // echo marker leaking through gate
+  /END\s*SWARM\s*INPUT/gi,                               // echo marker fragment
+  /flat\s*JSON\s*with\s*primitive\s*values/gi,           // reinject instruction echo
+  /Keep\s*the\s*handoff\s*line\s*compact/gi,             // reinject instruction echo
+  /emit\s*(?:one\s*)?(?:valid\s*)?handoff\s*token/gi,   // reinject instruction echo
 ];
 
 // Only strip noise here when it is unquestionably chrome. Aggressive fragment
@@ -273,9 +294,66 @@ export class ChatExtractor {
   }) {
     this._onMessage = onMessage;
     this._silenceTimeoutMs = silenceTimeoutMs;
+    this._nodePrompts = new Map();   // nodeId -> normalized prompt text for echo detection
     this._sanitizeMessage = sanitizeMessage;
     this._periodicFlushMs = Number(periodicFlushMs) > 0 ? Number(periodicFlushMs) : 0;
     this._buffers = new Map();          // nodeId -> { text, timer, periodicTimer, lastChunkAt, executionId }
+  }
+
+  /**
+   * Register the system prompt / workflow context text for a node so the
+   * flush logic can detect and discard messages that are just echo/summary
+   * of that prompt rather than actual agent work product.
+   */
+  registerNodePrompt(nodeId, promptText) {
+    if (!nodeId || !promptText) return;
+    // Normalize: lowercase, collapse whitespace, strip punctuation
+    const normalized = String(promptText).toLowerCase().replace(/[^a-z0-9\s]/gi, '').replace(/\s+/g, ' ').trim();
+    // Extract significant words (4+ chars) for matching
+    const words = normalized.split(' ').filter(w => w.length >= 4);
+    if (words.length > 0) {
+      // Merge with existing words (reinject prompts add more words over time)
+      const existing = this._nodePrompts.get(nodeId);
+      if (existing) {
+        for (const w of words) existing.add(w);
+      } else {
+        this._nodePrompts.set(nodeId, new Set(words));
+      }
+    }
+  }
+
+  /**
+   * Check if a message text is predominantly a repeat of the registered
+   * system prompt for the given node (high word overlap → prompt echo).
+   */
+  _isPromptEcho(nodeId, text) {
+    const promptWords = this._nodePrompts.get(nodeId);
+    if (!promptWords || promptWords.size === 0) return false;
+    const msgNormalized = String(text).toLowerCase().replace(/[^a-z0-9\s]/gi, '').replace(/\s+/g, ' ').trim();
+    const msgWords = msgNormalized.split(' ').filter(w => w.length >= 4);
+    if (msgWords.length === 0) return false;
+    // Exact word match
+    let overlap = msgWords.filter(w => promptWords.has(w)).length;
+    // Fuzzy match for ConPTY-garbled words: check if the word is a close
+    // substring of a prompt word (e.g., "ands" from "hands", "esearcher" from "researcher").
+    // Require the shorter word to be ≥70% of the longer word's length to avoid
+    // false positives like "brightly" matching "right".
+    const unmatched = msgWords.filter(w => !promptWords.has(w));
+    const promptArr = [...promptWords];
+    for (const word of unmatched) {
+      if (word.length >= 4) {
+        for (const pw of promptArr) {
+          const shorter = Math.min(word.length, pw.length);
+          const longer = Math.max(word.length, pw.length);
+          if (shorter / longer >= 0.7 && (pw.includes(word) || word.includes(pw))) {
+            overlap++;
+            break;
+          }
+        }
+      }
+    }
+    // If >55% of the message's words come from the prompt, it's an echo
+    return overlap / msgWords.length > 0.55;
   }
 
   /**
@@ -392,6 +470,38 @@ export class ChatExtractor {
       buf.timer = null;
     }
 
+    // Early system prompt detection — check the RAW buffer text BEFORE noise
+    // stripping, so key markers (node-\d+, SWARM PROTOCOL, etc.) are still
+    // present and detectable.
+    const RAW_PROMPT_INDICATORS = [
+      /SWARM\s*PROTOCOL/i,
+      /Con\s*t\s*in\s*u\s*e\s*this\s*task\s*:/i,
+      /Execute\s*the\s*workflow\s*goal/i,
+      /mandatory\s*-?\s*never\s*skip/i,
+      /Structured\s*handoff\s*sent/i,
+      /node-\d+[\s\S]*?\bfor\s+this\s+workflow/i,
+      /for\s+this\s+workflow[\s\S]*?\bnode-\d+/i,
+      /__HANDOFF__\s*:\s*<?\s*targetId/i,
+      /in\s*this\s*EXACT\s*format/i,
+      /Use\s+node-\d+\s+in\s+place\s+of/i,
+      /Your\s+(?:required\s+)?downstream\s+target\s+is/i,
+      /is\s+not\s+terminal\s+in\s+the\s+workflow/i,
+      /you\s+MUST\s+emit\s+a\s+handoff\s+token/i,
+      /Do\s+not\s+emit\s+__DONE__/i,
+      /CONCRETE\s+EXAMPLE\s+\(replace/i,
+      /Your\s+very\s+last\s+line\s+must\s+be/i,
+      /hands?\s*off\s*to\s*(?:a|the|an)\s+\w+[\s\S]*?node-\d+/i,
+      /then\s+hands?\s*off\s*to\s*(?:a|the|an)\s+\w+[\s\S]*?(?:who|that|which)\s+\w+/i,
+      /is\s+not\s+the\s+end\s+of\s+the\s+workflow/i,
+      /Do\s+not\s+stop\s+at\s+the\s+done\s+marker/i,
+    ];
+    const rawText = buf.text;
+    if (RAW_PROMPT_INDICATORS.some(p => p.test(rawText))) {
+      buf.text = '';
+      buf.firstChunkAt = 0;
+      return;
+    }
+
     // Remove handoff/done markers and raw HANDOFF JSON from the emitted text
     let text = buf.text
       .replace(/__HANDOFF__[\s\S]*/g, '')
@@ -487,7 +597,8 @@ export class ChatExtractor {
       if (/^You are the triage node\b/i.test(t)) return false;
       if (/^Route the incoming request to both Agent-A and Agent-B\b/i.test(t)) return false;
       if (/[>\u203A]\s*(?:You are the|When your work is complete|No extra text after that last handoff line)/i.test(t)) return false;
-      // Swarm protocol / system prompt lines
+      // Echo marker / swarm protocol
+      if (/END\s*SWARM\s*INPUT/i.test(t)) return false;
       if (/SWARM\s*PROTOCOL/i.test(t)) return false;
       if (/You\s*are\s*(?:a|the)\s+\w+\s*(?:agent|node)?\.?\s*You\s*(?:receive|will|must)/i.test(t)) return false;
       if (/must\s*be\s*a\s*valid\s*handoff\s*token/i.test(t)) return false;
@@ -497,6 +608,16 @@ export class ChatExtractor {
       if (/Do\s*real\s*work\s*before\s*deciding/i.test(t)) return false;
       if (/You\s*have\s*an\s*active\s*task\s*right\s*now/i.test(t)) return false;
       if (/no\s*downstream\s*handoffs?\s*exist/i.test(t)) return false;
+      if (/in\s*this\s*EXACT\s*format/i.test(t)) return false;
+      if (/mandatory\s*-?\s*never\s*skip/i.test(t)) return false;
+      if (/forcedHandoff\s*:\s*(?:true|false)/i.test(t)) return false;
+      if (/is\s*not\s*terminal\s*in\s*the\s*workflow/i.test(t)) return false;
+      if (/MUST\s*emit\s*a\s*handoff\s*token/i.test(t)) return false;
+      if (/required\s*downstream\s*target/i.test(t)) return false;
+      if (/Do\s*not\s*emit\s*__DONE__\s*immediately/i.test(t)) return false;
+      if (/CONCRETE\s*EXAMPLE\s*\(replace/i.test(t)) return false;
+      if (/valid\s*target\s*IDs?\s*:/i.test(t)) return false;
+      if (/context\s*update\s*:\s*a\s*flat\s*JSON/i.test(t)) return false;
       if (/workflow\s*(?:Name|Description|goal)\s*:/i.test(t)) return false;
       if (/current\s*(?:Task|workflow\s*context)\s*:/i.test(t)) return false;
       if (/\bgpt-[\w.-]+\b/i.test(t) && (/%\s*left/i.test(t) || /~[\\/]/.test(t))) return false;
@@ -508,6 +629,24 @@ export class ChatExtractor {
       if (lettersOnly.length >= 8 && longAlphaWords.length === 0 && shortAlphaFragments.length >= 6) return false;
       if (shortAlphaFragments.length >= 10 && longAlphaWords.length <= 1) return false;
       if (shortAlphaFragments.length >= 8 && longAlphaWords.length <= 2) return false;
+      // ConPTY garbled fragments: dots/ellipsis scattered among short char runs
+      // e.g. "in......ro Prpapatig...gtinatparar", "Thne.....erPro...cessing"
+      const dotRuns = t.match(/[.…]{2,}/g) || [];
+      const dotCharCount = dotRuns.reduce((s, r) => s + r.length, 0);
+      if (dotCharCount > 0 && dotCharCount / t.length > 0.12) {
+        const validWords = (t.match(/[A-Za-z\u00C0-\u00FF]{4,}/g) || [])
+          .filter(w => !/^(.)\1{2,}$/i.test(w));  // exclude repeated chars like "aaaa"
+        if (validWords.length < 2) return false;
+      }
+      // ConPTY scrambled text: mostly non-word characters mixed with letter fragments
+      // that don't form recognizable words (ratio of valid 4+ letter words is very low)
+      if (t.length > 15) {
+        const validWords4 = (t.match(/[A-Za-z\u00C0-\u00FF]{4,}/g) || [])
+          .filter(w => !/^(.)\1+$/i.test(w));
+        const letterRatio = lettersOnly.length / t.length;
+        // Mostly letters but almost no recognizable words → garbled
+        if (letterRatio > 0.6 && validWords4.length === 0) return false;
+      }
       return true;
     }).join('\n').trim();
 
@@ -534,6 +673,12 @@ export class ChatExtractor {
 
     text = text.replace(/\n{3,}/g, '\n\n').trim();
 
+    // Strip leading garbled ConPTY fragments before first real sentence.
+    // e.g. "gnanpa Ecco il paragrafo..." → "Ecco il paragrafo..."
+    // e.g. "gi...ng Ecco il paragrafo..." → "Ecco il paragrafo..."
+    // Pattern: one or more short garbled tokens (letters/dots) + space, before uppercase start
+    text = text.replace(/^(?:[a-z\u00E0-\u00FF.…]{1,15}\s+)+(?=[A-Z\u00C0-\u00D6])/u, '');
+
     // Reflow ConPTY column-wraps: terminal output is hard-wrapped at the
     // column width, leaving literal `\n` chars mid-paragraph. Without this
     // step the chat panel renders broken lines like
@@ -543,6 +688,11 @@ export class ChatExtractor {
     // the client's CSS can wrap them naturally.
     text = normalizeChatDisplayText(reflowParagraphs(text));
     text = text.replace(/^\.\s+/, '');
+
+    // Repair ConPTY digit-letter fusion: "156metrieaIto48" → "156 metrieaIto 48"
+    // Require 3+ letters to avoid breaking "v5", "m2", etc.
+    text = text.replace(/(\d)([a-zA-Z\u00C0-\u00FF]{3,})/g, '$1 $2');
+    text = text.replace(/([a-zA-Z\u00C0-\u00FF]{3,})(\d)/g, '$1 $2');
 
     // Some inline fallback payloads collapse to a single orchestration sentence
     // about future routing/handoff intent rather than user-meaningful output.
@@ -575,17 +725,53 @@ export class ChatExtractor {
     // Skip messages that are system prompt / orchestration echos
     // ConPTY often compresses these into a single long line, so line-level
     // filters miss them. Check the full message text instead.
-    const SYSTEM_PROMPT_INDICATORS = [
+    // Strong indicators — a SINGLE match means the whole message is protocol echo
+    const STRONG_PROMPT_INDICATORS = [
       /SWARM\s*PROTOCOL/i,
-      /You\s*are\s*(?:a|the)\s+\w+\.\s*You\s*(?:receive|will|must|should|are)/i,
+      /Con\s*t\s*in\s*u\s*e\s*this\s*task/i,
+      /Execute\s*the\s*workflow\s*goal/i,
+      /mandatory\s*-?\s*never\s*skip/i,
+      /Structured\s*handoff\s*sent/i,
+      /node-\d+\.\s*(?:Id>|<?\s*target)/i,              // "node-2. Id>" or "node-2. <targetId>"
+      /\bfor\s+this\s+workflow\b.*\bnode-\d+\b/i,        // "for this workflow...node-2"
+      /\bnode-\d+\b.*\bfor\s+this\s+workflow\b/i,        // "node-2...for this workflow"
+      /__HANDOFF__\s*:\s*<?\s*targetId\s*>?\s*:/i,       // handoff token template
+      /hands?\s*off\s*to\s*(?:a|the|an)\s+\w+[\s\S]*?(?:who|that|which)\s+\w+/i, // "hands off to a Writer who creates..."
+      /then\s+hands?\s*off\s*to\s*(?:a|the|an)\s+\w+/i,  // "then hands off to a Writer"
+      /You\s*are\s*(?:a|an|the)\s+(?:\w+\s+){0,8}\w+\.\s*(?:Take|List|Find|Write|Create|Compose|Analyze|Research|Summarize|Identify|Generate|Produce|Craft|Prepare)/i, // full system prompt role + directive
+      /is\s+not\s+the\s+end\s+of\s+the\s+workflow/i, // reinject: "is not the end of the workflow yet"
+      /Do\s+not\s+stop\s+at\s+the\s+done\s+marker/i, // reinject
+      /that\s+final\s+handoff\s+token\s+as\s+plain\s+text/i, // reinject
+      /Replace\s+the\s+summary\s+value\s+with/i, // reinject
+      /Keep\s+the\s+handoff\s+line\s+compact/i, // reinject
+    ];
+    if (STRONG_PROMPT_INDICATORS.some(p => p.test(text))) {
+      buf.text = '';
+      buf.firstChunkAt = 0;
+      return;
+    }
+
+    // Weak indicators — need ≥2 matches to filter the message
+    const SYSTEM_PROMPT_INDICATORS = [
+      /You\s*are\s*(?:a|the|an)\s+(?:\w+\s+){0,8}\w+\.\s*You\s*(?:receive|will|must|should|are)/i,
+      /You\s*are\s*(?:a|an|the)\s+(?:\w+\s+){0,8}\w+\.\s*(?:Take|List|Find|Write|Create|Compose|Analyze|Research|Summarize|Identify|Generate|Produce|Craft|Prepare|Your)/i,
       /must\s*be\s*a\s*valid\s*handoff\s*token/i,
       /in\s*place\s*of\s*<?\s*target\s*I?d?\s*>?/i,
+      /in\s*this\s*EXACT\s*format/i,
       /You\s*are\s*the\s*FINAL\s*agent/i,
       /MUST\s*output\s*the\s*done\s*marker/i,
-      /Con\s*t\s*in\s*u\s*e\s*this\s*task/i,
       /no\s*downstream\s*handoffs?\s*exist/i,
       /workflow\s*(?:Name|Description)\s*:/i,
       /current\s*(?:Task|workflow\s*context)\s*:/i,
+      /is\s*not\s*terminal\s*in\s*the\s*workflow/i,
+      /MUST\s*emit\s*a\s*handoff\s*token/i,
+      /forcedHandoff\s*:\s*(?:true|false)/i,
+      /required\s*downstream\s*target/i,
+      /hands?\s*off\s*to\s*(?:a|the|an)\s+\w+\s*(?:agent)?/i,
+      /Do\s*not\s*emit\s*__DONE__\s*immediately/i,
+      /(?:two|three|multi)-?\s*agent\s+workflow/i,
+      /workflow\s+where\s+(?:a|the|an)\s+\w+/i,
+      /Keep\s*it\s*concise\s*and\s*reader-?\s*friendly/i,
     ];
     const promptScore = SYSTEM_PROMPT_INDICATORS.filter(p => p.test(text)).length;
     if (promptScore >= 2) {
@@ -598,6 +784,14 @@ export class ChatExtractor {
     // Skip messages that are predominantly JSON (likely handoff context payload)
     const jsonPunctuation = (text.match(/[{}":\[\]]/g) || []).length;
     if (text.length > 0 && jsonPunctuation > text.length * 0.25) {
+      buf.text = '';
+      buf.firstChunkAt = 0;
+      return;
+    }
+
+    // Semantic prompt echo check: if the message's words are predominantly
+    // from the registered system prompt, it's not real agent output.
+    if (this._isPromptEcho(nodeId, text)) {
       buf.text = '';
       buf.firstChunkAt = 0;
       return;

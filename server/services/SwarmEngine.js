@@ -17,7 +17,7 @@ const SWARM_PROMPT_READY_FALLBACK_MS = 20000;
 const SWARM_PROMPT_LINE_INTERVAL_MS = 25;
 const SWARM_PROMPT_INTERRUPT_DELAY_MS = 120;
 const SWARM_RUNTIME_MENU_SUBMIT_DELAY_MS = 75;
-const SWARM_ECHO_MARKER_TIMEOUT_MS = 10000;
+const SWARM_ECHO_MARKER_TIMEOUT_MS = 7000;
 const MAX_DONE_REINJECT_ATTEMPTS = 3;
 const SWARM_CODEX_MISSING_HANDOFF_IDLE_MS = 180000;
 const SWARM_MISSING_HANDOFF_REMINDER_DELAY_MS = 3000;
@@ -89,6 +89,8 @@ const SNIPPET_NOISE_LINE_PATTERNS = [
   /^---\s*swarm protocol/i,
   /^---\s*end protocol/i,
   /^---\s*end swarm input\s*---$/i,
+  /^-+\s*end swarm input\s*-+$/i,
+  /end\s*swarm\s*input/i,
   /^do not output the handoff or done token/i,
   /^do not stop at (?:__done__|the done marker)/i,
   /^your very last line must be a valid handoff token/i,
@@ -175,6 +177,7 @@ const SNIPPET_NOISE_LINE_PATTERNS = [
   /codex app/i,
   /app-landing-page=true/i,
   /^you are a\b/i,
+  /^(?:a\s+)?\w+\s+(?:lists?|finds?|writes?|creates?|researche?s?|summarize?s?|analyze?s?)\b.*hands?\s*off\b/i,
   /^you have an active task right now/i,
   /^current task:/i,
   /^workflow goal:/i,
@@ -203,6 +206,16 @@ const SNIPPET_NOISE_LINE_PATTERNS = [
   /^---\s*system prompt/i,
   /^--- swarm input ---$/i,
   /^--- end swarm input ---$/i,
+  /con\s*t\s*in\s*u\s*e\s*this\s*task/i,
+  /is\s*not\s*the\s*end\s*of\s*the\s*workflow/i,
+  /downstream\s*agents?\s*still\s*need/i,
+  /then\s*hands?\s*off\s*to\s*(?:a|the|an)\s+\w+/i,
+  /hands?\s*off\s*to\s*a\s*\w+\s*who/i,
+  /emit\s*(?:one\s*)?(?:valid\s*)?handoff\s*token/i,
+  /that\s*final\s*handoff\s*token/i,
+  /replace\s*the\s*summary\s*value/i,
+  /keep\s*the\s*handoff\s*line\s*compact/i,
+  /flat\s*json\s*with\s*primitive\s*values/i,
   /^\(thinking\)(\(thinking\))*$/i,
   /api.?key/i,
   /enter your.*key/i,
@@ -755,13 +768,20 @@ class SwarmEngine {
     }
     let nextSnippet = this._buildSemanticSnippet(snippetSource);
 
-    // If the selected snippet closely matches the agent's system prompt, discard it
-    // and rebuild without that text.  This catches ANY provider echoing the prompt.
-    if (nextSnippet && state._agentSystemPrompt) {
-      if (this._snippetOverlapsPrompt(nextSnippet, state._agentSystemPrompt)) {
+    // If the selected snippet closely matches the agent's system prompt or the
+    // full combined prompt (including workflow context/task description), discard
+    // it and rebuild without that text.  This catches ANY provider echoing the prompt.
+    const promptTexts = [state._agentSystemPrompt, state._agentFullPrompt].filter(Boolean);
+    if (nextSnippet && promptTexts.length > 0) {
+      const isPromptEcho = promptTexts.some(p => this._snippetOverlapsPrompt(nextSnippet, p));
+      if (isPromptEcho) {
         nextSnippet = this._buildSemanticSnippet(
           snippetSource.replace(nextSnippet, '').trim()
         );
+        // Check the replacement too — it might also be prompt echo
+        if (nextSnippet && promptTexts.some(p => this._snippetOverlapsPrompt(nextSnippet, p))) {
+          nextSnippet = '';
+        }
       }
     }
 
@@ -1468,11 +1488,11 @@ class SwarmEngine {
     // Phase 1: Strip non-CUF escape sequences first
     let text = rawChunk
       .replace(/\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)/g, '')   // OSC sequences
-      .replace(/\x1b[@-_][0-?]*[ -/]*[@-~]/g, '');           // other 7-bit C1
+      .replace(/\x1b(?!\[)[@-_][0-?]*[ -/]*[@-~]/g, '');    // other 7-bit C1 (NOT CSI)
 
     // Phase 2: Smart CUF handling via segment analysis.
     // Split by CUF sequences to examine the text segments between them.
-    // Short segments (1-2 chars) on BOTH sides of a CUF(1) indicate
+    // Short segments (≤3 chars) on BOTH sides of a CUF(1) indicate
     // char-by-char ConPTY rendering — join without a space.
     // Otherwise CUF represents a real whitespace gap — insert space(s).
     const cufParts = text.split(/\x1b\[(\d*)C/);
@@ -1501,11 +1521,11 @@ class SwarmEngine {
           result += ' '.repeat(count);
         } else {
           // CUF(1): decide based on adjacent segment lengths.
-          // If BOTH neighbors are short (≤2 chars), it's char-by-char rendering.
-          // If either neighbor is ≥3 chars, it's a word boundary → insert space.
-          const prevTail = prevSeg.slice(-3);
-          const nextHead = nextSeg.slice(0, 3);
-          if (prevSeg.length <= 2 && nextSeg.length <= 2) {
+          // If BOTH neighbors are short (≤3 chars), it's likely char-by-char
+          // ConPTY rendering — join without space. ConPTY splits words into
+          // small 1-3 char chunks when rendering character-by-character.
+          // If either neighbor is ≥4 chars, it's a real word → insert space.
+          if (prevSeg.length <= 3 && nextSeg.length <= 3) {
             // Both short — char-by-char rendering, no space
           } else {
             result += ' ';
@@ -1528,7 +1548,22 @@ class SwarmEngine {
     return String(rawText ?? '')
       .replace(/----?\s*SWARM PROTOCOL[\s\S]*?----?\s*END PROTOCOL\s*----?/gi, '\n')
       .replace(/----?\s*SWARM INPUT[\s\S]*?----?\s*END SWARM INPUT\s*----?/gi, '\n')
+      .replace(/^-+\s*END SWARM INPUT\s*-+\s*$/gm, '\n')
       .replace(/Do NOT output the handoff or done token mid-response\.[\s\S]*?Only as the very LAST line\./gi, '\n')
+      .replace(/\w+\s+is\s+not\s+the\s+end\s+of\s+the\s+workflow\s+yet\.?[^\n]*/gi, '\n')
+      .replace(/Do\s+not\s+stop\s+at\s+the\s+done\s+marker[^\n]*/gi, '\n')
+      .replace(/Con\s*t\s*in\s*u\s*e\s*this\s*task\s*:[^\n]*/gi, '\n')
+      .replace(/Continue\s+this\s+task\s*:[^\n]*/gi, '\n')
+      .replace(/Finish\s+your\s+work,?\s+then\s+hand\s+off\s+to\s+[^\n]*/gi, '\n')
+      .replace(/Your\s+very\s+last\s+line\s+must\s+be\s+a\s+valid\s+handoff[^\n]*/gi, '\n')
+      .replace(/Execute\s+the\s+workflow\s+goal\s+described\s+here[^\n]*/gi, '\n')
+      .replace(/Use\s+\S+\s+in\s+place\s+of\s+<targetId>[^\n]*/gi, '\n')
+      .replace(/Output\s+that\s+final\s+handoff\s+token[^\n]*/gi, '\n')
+      .replace(/Replace\s+the\s+summary\s+value\s+with[^\n]*/gi, '\n')
+      // Strip role + directive blocks: "You are a [role]. Take/List/Find/Write..."
+      // ConPTY wraps these across multiple lines, so use [\s\S] to span them.
+      .replace(/You\s+are\s+(?:a|an|the)\s+[\s\S]*?(?:hands?\s+off|handoff|__DONE__|__HANDOFF__)/gi, '\n')
+      .replace(/You\s+are\s+(?:a|an|the)\s+\w[\w\s]*?\.\s*(?:Take|List|Find|Write|Create|Compose|Analyze|Research|Summarize|Identify|Generate|Produce|Craft|Prepare)[\s\S]*?(?:\.\s*\n|\n{2})/gi, '\n')
       .replace(/^__HANDOFF__:[^\n]*/gm, '\n')
       .replace(/^HANDOFF:[^\n]*/gm, '\n')
       .replace(/\s+(?:__HANDOFF__|HANDOFF):[^\n]*/g, '');
@@ -2681,11 +2716,47 @@ class SwarmEngine {
         state.echoMarkerTimer = setTimeout(() => {
           if (state.ignoreParserUntil) {
             state.ignoreParserUntil = null;
-            // Find this state's nodeId and reset its ChatExtractor buffer
-            if (state.sessionId) {
+            // On Windows, ConPTY often does NOT echo the marker text at all (the
+            // Claude Code CLI handles input internally). The gate buffer therefore
+            // contains BOTH the CLI banner/prompt echo AND Claude's real response.
+            // Instead of discarding everything, try to extract real output:
+            //
+            // 1. Fuzzy marker scan — if found, keep only post-marker text
+            // 2. Otherwise, feed the ENTIRE buffer through ChatExtractor's filtering
+            //    pipeline (NOISE_PATTERNS, STRONG_PROMPT_INDICATORS, _isPromptEcho)
+            //    which will strip prompt echo and keep real output.
+            const fuzzyMarker = /-+\s*E\s*N\s*D\s+S\s*W\s*A\s*R\s*M\s+I\s*N\s*P\s*U\s*T\s*-+/i;
+            const buf = state.ignoreParserBuffer || '';
+            const fuzzyMatch = buf ? fuzzyMarker.exec(buf) : null;
+            const contentToFeed = fuzzyMatch
+              ? buf.slice(fuzzyMatch.index + fuzzyMatch[0].length)
+              : buf;
+            state.ignoreParserBuffer = '';
+
+            if (state.sessionId && contentToFeed.trim()) {
               for (const ex of this._executions.values()) {
                 for (const [nId, s] of ex.agentStates.entries()) {
-                  if (s === state) { this._chatExtractor.resetBuffer(nId); break; }
+                  if (s === state) {
+                    // Pre-filter the gate buffer to remove prompt echo lines
+                    // before feeding to ChatExtractor. This prevents a single
+                    // protocol line from causing the ENTIRE message to be discarded.
+                    const preFiltered = this._stripSnippetProtocolArtifacts(contentToFeed);
+                    this._chatExtractor.resetBuffer(nId);
+                    // Split into paragraphs so prompt echo sections get filtered
+                    // independently from real output sections.
+                    const paragraphs = preFiltered.split(/\n{2,}/);
+                    for (const para of paragraphs) {
+                      if (para.trim()) {
+                        this._chatExtractor.feed(ex.id, nId, para + '\n\n');
+                      }
+                    }
+                    // Also update snippet buffer (use original for snippet — it
+                    // has its own filtering via _buildSemanticSnippet)
+                    s._snippetSourceBuffer = ((s._snippetSourceBuffer ?? '') + contentToFeed).slice(-120000);
+                    s.lastOutputSnippet = this._buildSemanticSnippet(s._snippetSourceBuffer);
+                    this._broadcastAgentStatus(ex.id, nId, s);
+                    break;
+                  }
                 }
               }
             }
@@ -3216,6 +3287,9 @@ class SwarmEngine {
           }
         );
         const combinedPrompt = [bootstrapPrompt, systemPrompt].filter(Boolean).join('\n\n');
+        // Register the full prompt text with ChatExtractor so it can detect
+        // and discard messages that are echo/summary of the system prompt.
+        this._chatExtractor.registerNodePrompt(nodeId, combinedPrompt);
         const deferCodexInitialPrompt = provider === RUNTIME_PROVIDER.CODEX
           && spawnOptions.deferCodexInitialPrompt !== false;
         const codexInitialPrompt = provider === RUNTIME_PROVIDER.CODEX
@@ -3281,6 +3355,7 @@ class SwarmEngine {
           noProgressBlocked: false,
           noProgressTimer: null,
           _agentSystemPrompt: (node.data && node.data.systemPrompt) || '',
+          _agentFullPrompt: combinedPrompt || '',
         };
 
         if (codexInitialPrompt) {
@@ -3304,9 +3379,15 @@ class SwarmEngine {
         const tapFn = (chunk) => {
           const currentState = execution.agentStates.get(nodeId);
           let processingChunk = chunk;
+          let gateBufferFlushed = false;
           if (currentState && !currentState.ignoreParserUntil && currentState.ignoreParserBuffer) {
+            // The echo gate timed out — the ignoreParserBuffer contains system
+            // prompt echo text from the gate period.  Prepend it for marker
+            // detection (__DONE__/__HANDOFF__) but flag it so the echo noise
+            // does NOT leak into ChatExtractor or the snippet buffer.
             processingChunk = `${currentState.ignoreParserBuffer}${chunk}`;
             currentState.ignoreParserBuffer = '';
+            gateBufferFlushed = true;
           }
           if (currentState) {
             // Accumulate ANSI-stripped output into lastOutputSnippet first,
@@ -3316,11 +3397,13 @@ class SwarmEngine {
             // user-facing snippet from a semantic sanitization pass.
             currentState._runtimeScanBuffer = ((currentState._runtimeScanBuffer ?? '') + cleanChunk).slice(-RUNTIME_SCAN_BUFFER_CHARS);
             if (!currentState.ignoreParserUntil) {
-              // Always feed ChatExtractor regardless of agent status — agent
-              // output chunks often arrive after the status transitions to 'done'
-              // due to PTY buffering. Without this, the actual response content
-              // is silently lost (BUG-V8-7 root cause).
-              this._chatExtractor.feed(executionId, nodeId, cleanChunk);
+              // When flushing the gate buffer, only feed the NEW chunk to
+              // ChatExtractor — the prepended buffer contains system prompt
+              // echo noise that would pollute the chat with protocol text.
+              const chatChunk = gateBufferFlushed
+                ? this._normalizeParserChunk(chunk)
+                : cleanChunk;
+              this._chatExtractor.feed(executionId, nodeId, chatChunk);
             } else {
             }
             if (!currentState || currentState.status !== 'running') {
@@ -3332,7 +3415,11 @@ class SwarmEngine {
             // Only update the user-facing snippet AFTER the echo gate has cleared,
             // so echoed system prompt text never appears in the agent card.
             if (!currentState.ignoreParserUntil) {
-              currentState._snippetSourceBuffer = ((currentState._snippetSourceBuffer ?? '') + cleanChunk).slice(-SNIPPET_SCAN_BUFFER_CHARS);
+              // Similarly, skip gate buffer content for snippets.
+              const snippetChunk = gateBufferFlushed
+                ? this._normalizeParserChunk(chunk)
+                : cleanChunk;
+              currentState._snippetSourceBuffer = ((currentState._snippetSourceBuffer ?? '') + snippetChunk).slice(-SNIPPET_SCAN_BUFFER_CHARS);
               currentState.lastOutputSnippet = this._buildSemanticSnippet(currentState._snippetSourceBuffer);
               this._broadcastAgentStatus(executionId, nodeId, currentState);
             }
@@ -3454,14 +3541,25 @@ class SwarmEngine {
           if (currentState?.ignoreParserUntil) {
             const normalized = this._normalizeParserChunk(processingChunk);
             currentState.ignoreParserBuffer = (currentState.ignoreParserBuffer + normalized).slice(-8192);
-            const markerIndex = currentState.ignoreParserBuffer.indexOf(currentState.ignoreParserUntil);
+            // Try exact match first, then fuzzy regex (ConPTY can garble the marker
+            // by inserting CUF spaces, stripping dashes, etc.)
+            let markerIndex = currentState.ignoreParserBuffer.indexOf(currentState.ignoreParserUntil);
+            let markerLength = currentState.ignoreParserUntil.length;
+            if (markerIndex === -1) {
+              const fuzzyMarker = /-+\s*E\s*N\s*D\s+S\s*W\s*A\s*R\s*M\s+I\s*N\s*P\s*U\s*T\s*-+/i;
+              const fuzzyMatch = fuzzyMarker.exec(currentState.ignoreParserBuffer);
+              if (fuzzyMatch) {
+                markerIndex = fuzzyMatch.index;
+                markerLength = fuzzyMatch[0].length;
+              }
+            }
 
             if (markerIndex === -1) {
               return;
             }
 
             const remainder = currentState.ignoreParserBuffer.slice(
-              markerIndex + currentState.ignoreParserUntil.length
+              markerIndex + markerLength
             );
             currentState.ignoreParserUntil = null;
             currentState.ignoreParserBuffer = '';
@@ -4832,9 +4930,16 @@ class SwarmEngine {
         // (which may contain tokens like __HANDOFF__) does not cause a
         // false-positive parse on the next chunk after the echo gate opens.
         if (state._parser) state._parser.reset();
+        const reinjectPrompt = this._buildContinueAfterDonePrompt(node, execution.workflowContext, handoffTargets);
+        // Register reinject prompt text with ChatExtractor so _isPromptEcho
+        // can detect Claude echoing the reinject instructions in its response.
+        this._chatExtractor.registerNodePrompt(nodeId, reinjectPrompt);
+        if (execution.workflowContext?.currentTask) {
+          this._chatExtractor.registerNodePrompt(nodeId, execution.workflowContext.currentTask);
+        }
         this._writeSwarmPrompt(
           state.sessionId,
-          this._buildContinueAfterDonePrompt(node, execution.workflowContext, handoffTargets),
+          reinjectPrompt,
           state
         );
         state.status = 'running';
