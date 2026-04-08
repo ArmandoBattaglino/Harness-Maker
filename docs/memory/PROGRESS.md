@@ -1,4 +1,6 @@
-﻿- [PM 2026-04-08] TASK #354 COMPLETED, #355 IN_PROGRESS (qa-tester). V9.0 Phase 0: 352/393 COMPLETED, 2 DEFERRED, 39 PENDING. No blockers. Pipeline on track.
+﻿- [QA-TESTER 2026-04-08] TASK #355 TEST GATE PASS. Spike runs 10/10 verdicts. Critical discovery: --verbose flag required for stream-json + -p mode. Fixed in spike. 414/414 tests pass. Post-result hang ~640-700ms. Session JSONL found. Cost/usage data available. Ready for AREA CHECKPOINT #356.
+
+- [PM 2026-04-08] TASK #354 COMPLETED, #355 IN_PROGRESS (qa-tester). V9.0 Phase 0: 352/393 COMPLETED, 2 DEFERRED, 39 PENDING. No blockers. Pipeline on track.
 
 - [BACKEND-DEV 2026-04-08] TASK #354 (SPIKE — stream-json multi-turn validation) COMPLETED. Created server/spike/stream-json-spike.mjs: standalone script testing 3 turns (basic, --resume, --tools restriction), timing, cost, JSONL discovery. Syntax OK. 414/414 tests pass. Awaiting TASK #355 TEST GATE execution.
 
