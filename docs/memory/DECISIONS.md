@@ -240,3 +240,31 @@
 **Alternatives rejected:** Only relying on Claude and Codex.
 **Revisit if:** Additional major providers need to be supported, prompting a refactor towards a broader generic provider plugin interface.
 ---
+
+## DEC-027: Claude agents use stream-json spawn (process-per-turn) instead of PTY
+**Date:** 2026-04-08
+**Agent:** architect
+**Task:** Stream-JSON Technical Analysis
+**Decision:** Claude provider agents in SwarmEngine spawn via `child_process.spawn` with `--output-format stream-json --resume <session-id>` instead of node-pty. Each turn is a separate process. Codex/Gemini keep PTY.
+**Reasoning:** Stream-json output is structured JSON, eliminating the entire ConPTY artifact handling pipeline (120+ noise regexes, echo gates, ANSI stripping, HandoffParser rolling accumulator, ChatExtractor, chatTextNormalization). Handoff/done tokens appear in clean text blocks. Rate limits are reported via structured `system.api_retry` events. Cost is reported via `result` events. The `--resume` flag provides full conversation continuity across turns without maintaining a long-lived PTY process.
+**Alternatives rejected:** (1) Keep PTY for all providers -- wastes the stream-json structured output, keeps all ConPTY complexity. (2) Full migration (all providers to stream-json) -- Codex/Gemini CLIs don't support stream-json. (3) Persistent process with `--input-format stream-json` -- undocumented, risky. (4) Integrate into HandoffParser -- the two parsers share zero code; merging creates a god-class.
+**Revisit if:** `--input-format stream-json` becomes documented and stable (would allow persistent process without PTY); Codex/Gemini add stream-json support.
+
+## DEC-028: Stream-json agents bypass SessionManager entirely
+**Date:** 2026-04-08
+**Agent:** architect
+**Task:** Stream-JSON Technical Analysis
+**Decision:** Stream-json agents do not create PTY sessions via SessionManager. SwarmEngine manages the child process directly. No ring buffer, no replay, no terminal view for these agents.
+**Reasoning:** SessionManager is built around node-pty lifecycle (permanent onData handler, ring buffer, swarmListeners Set, idle sweeper). Stream-json agents use child_process.spawn with structured stdout -- none of the PTY infrastructure applies. Creating a fake PTY session would add complexity without benefit.
+**Alternatives rejected:** Creating a lightweight SessionManager session for stream-json agents -- adds unnecessary abstraction layer, the session would have no PTY, no ring buffer, and no terminal clients.
+**Revisit if:** A need arises for terminal-style replay of stream-json agent output (unlikely given structured chat view).
+
+## DEC-029: `result` event is canonical turn-completion signal for stream-json agents
+**Date:** 2026-04-08
+**Agent:** architect
+**Task:** Stream-JSON Technical Analysis
+**Decision:** When a Claude stream-json process emits a `result` event and exits, the turn is complete. If no `__HANDOFF__` or `__DONE__` was found in text blocks during the turn, treat as implicit `__DONE__`.
+**Reasoning:** The `result` event is guaranteed to be the last substantive event before process exit. It contains session_id, cost, duration, and error status. Using it as the turn-completion signal is more reliable than detecting process exit alone (which could be a crash).
+**Alternatives rejected:** Relying solely on process exit code -- doesn't distinguish clean completion from crash. Requiring explicit __DONE__ always -- agents may complete without emitting the token, and forced reinject wastes tokens.
+**Revisit if:** Claude CLI changes the result event semantics.
+---

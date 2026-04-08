@@ -52,6 +52,52 @@ Pure analysis document delivered. No code changes. The analysis identifies Point
 If a chat message extraction feature is requested, the architect should produce a design document specifying the exact extraction logic, new WS event type, and client-side rendering. Then backend-dev and frontend-dev implement.
 
 ---
+## 2026-04-08 — Stream-JSON Agent Spawning Technical Analysis
+**Status:** COMPLETED
+**Called by:** user (direct request)
+
+### Context when I started
+V8.2 closed, 353 tasks total (351 COMPLETED, 2 DEFERRED). The user requested a technical feasibility analysis for replacing PTY-based agent spawning with Claude CLI's `--output-format stream-json` mode for Claude provider agents. Research snapshot confirmed `--resume <session-id>` + `-p` + `--output-format stream-json` works. Key finding: extended thinking disables streaming deltas.
+
+### What I did
+Analyzed the full PTY spawn pipeline in SwarmEngine._spawnAgentPty (lines 3266-3789), the tapFn closure (lines 3419-3731), _onHandoff, _onDone, _writeSwarmPrompt, SessionManager.createSession, JobRunner (existing stream-json pattern), ChatExtractor (100+ noise regexes), and the WS event contracts. Produced a complete technical analysis covering: new StreamJsonParser component, modified SwarmEngine dual-path architecture, data flow from CLI stdout through readline to WS broadcasts, integration with existing handoff/done/HITL/budget systems, 6 ranked risks, and 5 key design decisions.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DECISIONS.md | MODIFIED | Added DEC-027, DEC-028, DEC-029 |
+| docs/memory/agents/architect.md | MODIFIED | Added this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added session entry |
+
+### Improvements delivered
+- Complete technical analysis for stream-json migration path
+- Identified that 120+ noise regexes, echo gates, ANSI stripping, ChatExtractor, and HandoffParser are all bypassed for Claude agents
+- Mapped exact integration points with existing _onHandoff/_onDone pipeline
+- Identified process-per-turn as the right architecture (vs persistent process)
+
+### Bugs I encountered
+None -- pure analysis task.
+
+### Decisions I made
+- DEC-027: Claude agents use stream-json spawn (process-per-turn) instead of PTY
+- DEC-028: Stream-json agents bypass SessionManager entirely
+- DEC-029: `result` event is canonical turn-completion signal
+
+### What I learned
+- JobRunner.js already implements the exact spawn pattern needed (child_process.spawn + readline + stream-json parsing), providing a proven template
+- The tapFn closure in _spawnAgentPty is ~310 lines of complexity (echo gates, runtime blocker detection, prompt-ready detection, snippet building, Gemini model switching) -- all of which is unnecessary for stream-json
+- Done-reinject becomes trivially simple with --resume: just spawn a new process with the reinject prompt
+- HITL unfreeze similarly becomes a new spawn with --resume and the human's text
+- PtyExplosion (raw terminal view) will not be available for stream-json agents -- the structured chat view replaces it
+- Extended thinking is a real risk -- UI will show no incremental progress. Need a "Working..." indicator based on process-alive status.
+
+### State I'm leaving behind
+Technical analysis document delivered as response text. DEC-027/028/029 written. No code changes. Ready for task planning and implementation.
+
+### Handoff
+Next: project-manager should create implementation tasks. Backend-dev implements StreamJsonParser + SwarmEngine changes. Frontend-dev implements UI indicators. Backend first, frontend second.
+
+---
 ## 2026-03-27 — Task: V3 Swarm Orchestrator Technical Analysis
 **Status:** COMPLETED
 **Called by:** user (via /create pipeline Stage 2 — architect technical analysis)

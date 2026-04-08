@@ -1,4 +1,15 @@
-﻿## 2026-04-08 — project-manager — Scope & Risk Analysis: PTY-to-StreamJSON Migration
+﻿## 2026-04-08 — architect — Stream-JSON Agent Spawning Technical Analysis
+**Outcome:** COMPLETED
+**Summary:** Produced complete technical analysis for replacing PTY-based Claude agent spawning with `--output-format stream-json` mode. Designed new StreamJsonParser component, dual-path architecture (stream-json for Claude, PTY for Codex/Gemini), process-per-turn model with --resume for session persistence. Mapped integration with existing _onHandoff/_onDone/HITL/budget systems. Identified 6 risks (extended thinking blocking deltas is highest). Made 3 architectural decisions (DEC-027/028/029).
+**Files changed:** docs/memory/DECISIONS.md, docs/memory/agents/architect.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** DEC-027 (stream-json for Claude, PTY for others), DEC-028 (bypass SessionManager for stream-json), DEC-029 (result event = turn completion)
+**Blockers:** none
+**Next:** project-manager creates implementation tasks; backend-dev implements StreamJsonParser + SwarmEngine; frontend-dev implements UI indicators
+
+---
+
+## 2026-04-08 — project-manager — Scope & Risk Analysis: PTY-to-StreamJSON Migration
 **Outcome:** COMPLETED
 **Summary:** Produced full scope analysis for replacing PTY with stream-json for Claude provider agents. Defined 4-phase breakdown (Spike, Backend Lifecycle, WS Events, Frontend Chat UI, Integration). Identified 3 risks: multi-turn --resume uncertainty (HIGH), handoff token detection change (MEDIUM), dual-path maintenance burden (MEDIUM/HIGH). Overall complexity HIGH due to SwarmEngine.js being 5284 lines with 20+ subsystems. Recommended Phase 0 spike as mandatory prerequisite.
 **Files changed:** docs/memory/agents/project-manager.md, docs/memory/ACTIVITY_LOG.md
