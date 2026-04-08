@@ -4166,3 +4166,40 @@ POST-V5 FOLLOW-UP: 3 of 4 tasks done (#327, #328, #329). Only #330 (documenter) 
 ### Handoff
 Assign TASK #330 to the **documenter** agent. Full context is in the task entry. After #330 completes, close the POST-V5 FOLLOW-UP area.
 ---
+
+---
+## 2026-04-08 — Task #397: BUG-DL-HANDOFF-PROVIDER-1 registration
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+All 396 tasks were registered, 392 COMPLETE/PASS, 1 DEFERRED. A critical bug fix was just completed by the debugger: `_ensureAgentPty` in SwarmEngine.js was calling `_spawnAgent` without passing the execution's provider, causing all handoff targets to spawn via PTY instead of stream-json for Claude agents. This produced garbled ConPTY output in downstream agents. The fix was already applied and verified (478/478 tests pass).
+
+### What I did
+1. Read TASK_PLAN.md header, tail (#394-#396), PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md, agent memory
+2. Created TASK #397 (BUG-DL-HANDOFF-PROVIDER-1) as a new standalone area "DEBUGGER LOOP — HANDOFF PROVIDER BUG (2026-04-08)" at the end of TASK_PLAN.md
+3. Marked #397 as COMPLETED with all acceptance criteria checked
+4. Updated header counts: 394 registered, 393 COMPLETE/PASS, 1 DEFERRED, 0 PENDING
+5. Updated PROGRESS.md, ACTIVITY_LOG.md, CONTEXT.md
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Added TASK #397 as COMPLETED, updated header counts |
+| docs/memory/PROGRESS.md | MODIFIED | Appended #397 completion entry |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended PM session entry |
+| docs/memory/CONTEXT.md | MODIFIED | Updated task counts |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log |
+
+### Decisions I made
+- Created #397 as a standalone area rather than adding to the existing #394-#396 area, since it is a separate bug with a separate root cause discovered during a different phase of E2E testing
+
+### What I learned
+- Provider propagation through handoff chains is a recurring theme — _spawnAgent, _ensureAgentPty, and _onDone reinject all need consistent provider awareness
+
+### State I'm leaving behind
+394 tasks registered. 393 COMPLETED/PASS, 1 DEFERRED (#236 ConPTY platform limitation). 0 PENDING. No active areas. Project is in maintenance/release-ready state.
+
+### Handoff
+No pending tasks. Next work would be a new planned area or release prep.
+---

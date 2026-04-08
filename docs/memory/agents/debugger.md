@@ -1257,4 +1257,45 @@ Both files modified. All 478 tests pass. The _ensureAgentPty fix correctly route
 
 ### Handoff
 None — fix is self-contained.
+
+---
+## 2026-04-08 — BUG-AUTO-ROUTING-TESTS: Fix 39 failing PTY tests after AUTO→stream-json routing change
+**Status:** COMPLETED
+**Called by:** orchestrator (user)
+
+### Context when I started
+The _spawnAgent dispatcher in SwarmEngine.js was updated to route AUTO mode agents with activeProvider=claude to stream-json instead of PTY. This broke 39 of 478 tests because they all implicitly used AUTO mode (no provider specified in startExecution), which now routes to _spawnAgentStreamJson. The tests expected PTY-specific state: sessionManager.createSession calls, swarmListeners tap functions, writeInput calls, session buffers, etc.
+
+### What I did
+Used Approach B: explicitly set the runtime provider on startExecution calls in PTY-specific tests so they continue routing to _spawnAgentPty. For most tests, added `{ provider: 'codex' }`. For two tests checking non-compact prompt format (Claude-style), used `{ provider: 'gemini' }` since Codex generates compact prompts. For the "fallback from Claude to Codex in auto mode" test, used `{ provider: 'codex' }` then manually set execution.providerStrategy and agent state to simulate auto/claude before calling _handleRuntimeBlocker. For the "classify provider blocker" test, changed the injected blocker text from Claude-specific to Codex-specific since the pattern matcher filters by provider.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/tests/swarm-engine.test.js | MODIFIED | Added provider option to 39 startExecution calls |
+
+### Improvements delivered
+- All 478 tests pass (was 439 pass, 39 fail)
+- PTY tests now explicitly declare their runtime provider
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| 39 tests failing after routing change | Tests used implicit AUTO mode which now routes to stream-json | Explicit provider in startExecution | FIXED |
+
+### Decisions I made
+- Approach B over Approach A: explicit provider in tests is simpler and keeps PTY tests testing PTY behavior
+- Used 'gemini' for 2 tests checking non-compact prompt format (gemini uses same full prompt as Claude)
+- Manual state override for fallback test to preserve auto-mode test semantics
+
+### What I learned
+- _buildSystemPrompt generates compact prompt for Codex vs full for Claude/Gemini
+- _detectPatternBlocker matches patterns per-provider
+- _shouldFallback requires providerStrategy.mode === 'auto'
+
+### State I'm leaving behind
+All 478 tests pass. Only test file modified. Routing fix untouched.
+
+### Handoff
+None — fix is self-contained.
 ---

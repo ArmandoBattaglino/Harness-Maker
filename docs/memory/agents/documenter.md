@@ -1,4 +1,53 @@
 ---
+## 2026-04-08 — BUG-HANDOFF-ROUTING-1: Documentation update for _ensureAgentPty provider hint fix
+**Status:** COMPLETED
+**Called by:** orchestrator (post-bugfix)
+
+### Context when I started
+The debugger had just fixed a critical bug in SwarmEngine._ensureAgentPty: the method was not passing a provider hint to _spawnAgent, causing all handoff targets to spawn via PTY regardless of provider type. Claude agents spawned after handoff got garbled ConPTY output instead of clean stream-json. The fix passes execution.providerStrategy.mode as requestedProvider. The test file also gained default stream-json child mocks in beforeEach.
+
+### What I did
+1. Read the modified SwarmEngine.js _ensureAgentPty method (lines 4585-4609) to verify the fix and new inline comments
+2. Read the test file beforeEach block to see the new default mocks
+3. Audited ARCHITECTURE.md Section 13.3 (_spawnAgent provider router) -- found it described the dispatch correctly but did not mention that _ensureAgentPty (the handoff path) now correctly passes requestedProvider
+4. Audited ARCHITECTURE.md WS event table -- found handoff_started description said "PTY is being spawned" which is no longer accurate for Claude agents
+5. Updated Section 13.3 to document the _ensureAgentPty fix and that ALL spawn paths now pass requestedProvider
+6. Updated handoff_started WS event description to reflect both stream-json and PTY spawn paths
+7. Added BUG-HANDOFF-ROUTING-1 to DOC_STATUS.md fixed bugs table
+8. Updated DOC_STATUS.md metadata timestamps and ARCHITECTURE.md/inline comments status entries
+9. Appended ACTIVITY_LOG.md entry
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/ARCHITECTURE.md | MODIFIED | Section 13.3: added note about _ensureAgentPty now passing requestedProvider. WS event table: handoff_started description updated for stream-json spawns. |
+| docs/memory/DOC_STATUS.md | MODIFIED | Added BUG-HANDOFF-ROUTING-1 to fixed bugs table. Updated ARCHITECTURE.md and inline comments status entries. Updated last-updated header. |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Prepended documenter entry for this bug fix documentation pass. |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log. |
+
+### Improvements delivered
+- ARCHITECTURE.md Section 13.3 now accurately describes the provider routing for ALL spawn paths including handoff
+- WS event table no longer implies handoff targets are always PTY-spawned
+- DOC_STATUS.md tracks the bug fix for future reference
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Did not update README.md -- the bug fix is an internal engine correction, not a user-facing feature change
+- Did not update CONTEXT.md -- the current focus and next-step guidance remain accurate
+- Did not update DECISIONS.md -- this is a bugfix, not an architectural decision
+
+### What I learned
+- The _ensureAgentPty method is a secondary spawn entry point (used by handoff and done-reinject flows) that was missed during the original stream-json migration. Documentation should always enumerate ALL call sites for dispatch functions.
+
+### State I'm leaving behind
+All documentation is current with the _ensureAgentPty provider hint fix. No stale sections remain from this change.
+
+### Handoff
+None -- task fully self-contained.
+
+---
 ## 2026-04-08 — Post-Task #354: V9.0 documentation audit
 **Status:** COMPLETED
 **Called by:** orchestrator (post-task #354 + V9.0 /create pipeline)

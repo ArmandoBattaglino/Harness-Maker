@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-08 — after Task #359 (SwarmEngine._spawnAgentStreamJson — Stream-JSON agent spawner) by backend-dev — mapped by code-mapper_
+_Last updated: 2026-04-08 — after BUG-FIX: _ensureAgentPty handoff provider routing by debugger — mapped by code-mapper_
 
 > **PROJECT STATUS: V9.0 STREAM-JSON MIGRATION IN PROGRESS — 393 TASKS (351 COMPLETED, 2 DEFERRED, 40 PENDING)**
 > TASK #145 (BUG-UX-HANDOFF-1) partially addressed: prompt examples templated with `<targetId>` to prevent fake handoffs from PTY redraw (DEC-023); Codex model-selection and rate-limit menus auto-dismissed; hard usage-limit now takes precedence over soft `Approaching rate limits` chooser (DEC-024). 83/83 server tests pass. Build: 479 modules. Live handoff proof still pending — no provider has completed a real multi-agent chain yet.
@@ -1809,7 +1809,7 @@ _Last updated: 2026-04-08 — after Task #359 (SwarmEngine._spawnAgentStreamJson
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine._spawnAgent(executionId, nodeId, spawnOptions)` (NEW — Task #359)
 - **Purpose:** Dispatcher that routes agent spawn to the correct path based on provider. Claude providers go to `_spawnAgentStreamJson` (DEC-027); all others go to `_spawnAgentPty`. Resolves effective provider from spawnOptions.requestedProvider / spawnOptions.provider / execution.activeProvider, defaulting 'auto' to 'claude'.
-- **Called by:** Not yet wired as primary entry point — future tasks will replace direct `_spawnAgentPty` calls with `_spawnAgent`
+- **Called by:** SwarmEngine.startExecution (line 3465), SwarmEngine._ensureAgentPty (line 4603 — handoff path), SwarmEngine._spawnChildExecution (line 5419), SwarmEngine._onDone (line 6008 — stream-json reinject path)
 - **Calls:** normalizeRuntimeProvider, SwarmEngine._spawnAgentStreamJson (Claude), SwarmEngine._spawnAgentPty (non-Claude)
 - **Inputs:** executionId (string), nodeId (string), spawnOptions (object — optional: requestedProvider, provider, reinjectPrompt)
 - **Output:** Promise\<void\>
@@ -1838,7 +1838,7 @@ _Last updated: 2026-04-08 — after Task #359 (SwarmEngine._spawnAgentStreamJson
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine._spawnAgentPty(executionId, nodeId)`
 - **Purpose:** Spawn an agent PTY session for a workflow node. Looks up the execution and node, builds handoffTargets from outgoing edges, calls _buildSystemPrompt (stub), creates a PTY session via SessionManager.createSession, writes the system prompt to the PTY, initializes agent state in agentStates Map, creates a tapFn closure that feeds PTY output to a HandoffParser instance, registers tapFn on ptySession.swarmListeners (DEC-014), and emits WS agent_status event including sessionId.
-- **Called by:** SwarmEngine.startExecution, SwarmEngine._ensureAgentPty, SwarmEngine._spawnAgent (non-Claude path)
+- **Called by:** SwarmEngine.startExecution, SwarmEngine._spawnAgent (non-Claude path) — note: _ensureAgentPty no longer calls _spawnAgentPty directly (routes through _spawnAgent dispatcher as of 2026-04-08 bug fix)
 - **Calls:** SessionManager.createSession, SessionManager.writeInput, SessionManager.getSession, HandoffParser (constructor), HandoffParser.feed, SwarmEngine._buildSystemPrompt, SwarmEngine._onHandoff, SwarmEngine._onDone, this._wsBroadcast
 - **Inputs:** executionId (string), nodeId (string)
 - **Output:** Promise\<void\>
@@ -1846,14 +1846,15 @@ _Last updated: 2026-04-08 — after Task #359 (SwarmEngine._spawnAgentStreamJson
 - **Complexity note:** tapFn is a closure capturing executionId, nodeId, parser instance, and execution reference. It: (1) tracks lastOutputSnippet (last 500 chars) — **gated by `ignoreParserUntil` check** (Task #255): snippet update + broadcast are skipped while the echo gate timer is active, preventing system prompt text from flashing in the agent card, (2) optionally calls _budgetTracker if wired (Task #49), (3) feeds chunks to HandoffParser and dispatches handoff/done events. tapFn is stored in agentStates so stopExecution can remove it from swarmListeners during cleanup.
 - **Last modified:** 2026-04-06 in Task #255 by debugger (BUG-SNIPPET-INIT-1: snippet update in tapFn gated by `if (!currentState.ignoreParserUntil)` to suppress system prompt echo during echo gate period)
 
-### `server/services/SwarmEngine.js` :: `SwarmEngine._ensureAgentPty(executionId, nodeId)`
-- **Purpose:** Return the sessionId for a node's agent PTY if one is already active (status !== 'done'). If none exists or the existing one is done, spawn a new PTY and return its sessionId.
+### `server/services/SwarmEngine.js` :: `SwarmEngine._ensureAgentPty(executionId, nodeId)` — MODIFIED (BUG-FIX: handoff provider routing)
+- **Purpose:** Return the sessionId for a node's agent PTY/stream-json session if one is already active (status !== 'done'). If none exists or the existing one is done, spawn a new agent via `_spawnAgent` dispatcher (respecting provider strategy) and return its sessionId.
 - **Called by:** SwarmEngine._onHandoff (called with targetId to spawn/reuse target agent — wired in Task #62.1)
-- **Calls:** SwarmEngine._spawnAgentPty (conditional)
+- **Calls:** SwarmEngine._spawnAgent (conditional — passes `{ requestedProvider: execution.providerStrategy.mode }`)
 - **Inputs:** executionId (string), nodeId (string)
-- **Output:** Promise\<string | undefined\> — sessionId of active or newly spawned PTY
-- **Side effects:** may spawn PTY session (via _spawnAgentPty)
-- **Last modified:** 2026-03-27 in Task #46.2 by backend-dev; "Called by" updated Task #62.1 (was "future routing logic — not yet called")
+- **Output:** Promise\<string | undefined\> — sessionId of active or newly spawned session
+- **Side effects:** may spawn PTY or stream-json session (via _spawnAgent dispatcher)
+- **Complexity note:** Previously called `_spawnAgentPty` directly, bypassing the provider dispatcher. Now reads `execution.providerStrategy.mode` (workflow-level strategy, e.g. 'auto', 'claude', 'codex') instead of `execution.activeProvider` (last-spawned provider). This is critical for mixed-provider chains where a Claude node hands off to a Codex node — using activeProvider would force ALL handoff targets to the last-used provider.
+- **Last modified:** 2026-04-08 — BUG-FIX by debugger (was calling _spawnAgentPty directly, now routes through _spawnAgent with providerStrategy.mode); previously 2026-03-27 in Task #46.2 by backend-dev; "Called by" updated Task #62.1
 
 ### `server/services/SwarmEngine.js` :: `SwarmEngine._buildSystemPrompt(node, workflowContext, handoffTargets)`
 - **Purpose:** Assemble the full system prompt for an agent node per OpenAI Swarm pattern. Sections: (1) node.data.systemPrompt, (2) SWARM PROTOCOL header, (3) workflowContext key/value pairs (omitted if empty), (4) handoff target instructions with __HANDOFF__:<targetId>:<b64json> format (omitted if no targets), (5) __DONE__ instruction, (6) constraint: token only as very last line.

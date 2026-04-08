@@ -4,8 +4,8 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v9.0.0 — task numbering extends through #396; 393 tasks are currently registered in this plan, 392 are COMPLETE/PASS, 1 is DEFERRED, and 0 are PENDING. V8.2 OUTPUT FIDELITY: AREA CLOSED 2026-04-07. V9.0 STREAM-JSON AGENT MIGRATION: Phase 0 CLOSED, Phase 1 BACKEND CORE CLOSED, Phase 2 FRONTEND CLOSED, and Phase 3 INTEGRATION AND POLISH CLOSED through #393 PASS. Debugger-loop mixed-provider fallback follow-up (#394-#396) is also CLOSED after browser re-verification on 2026-04-08. 478 server tests pass, client/root build clean (500 modules).
-  **Active Area:** No registered pending area remains. V9.0 STREAM-JSON AGENT MIGRATION is CLOSED and the debugger-loop follow-up is also CLOSED: #394 COMPLETED, #395 PASS, #396 PASS. PRD v6.0.
+**Status:** v9.0.0 — task numbering extends through #397; 394 tasks are currently registered in this plan, 393 are COMPLETE/PASS, 1 is DEFERRED, and 0 are PENDING. V8.2 OUTPUT FIDELITY: AREA CLOSED 2026-04-07. V9.0 STREAM-JSON AGENT MIGRATION: Phase 0 CLOSED, Phase 1 BACKEND CORE CLOSED, Phase 2 FRONTEND CLOSED, and Phase 3 INTEGRATION AND POLISH CLOSED through #393 PASS. Debugger-loop mixed-provider fallback follow-up (#394-#396) CLOSED. Debugger-loop handoff provider fix (#397) COMPLETED 2026-04-08. 478 server tests pass, client/root build clean (500 modules).
+  **Active Area:** No registered pending area remains. V9.0 STREAM-JSON AGENT MIGRATION is CLOSED and the debugger-loop follow-up is also CLOSED: #394 COMPLETED, #395 PASS, #396 PASS. #397 COMPLETED (handoff provider bug). PRD v6.0.
   **Completed Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 ALL COMPLETED/PASS. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#267 ALL COMPLETED. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave2 NODE CREATION & CONFIG — Tasks #268-#272 ALL COMPLETED. AREA CLOSED 2026-04-06.
@@ -16632,4 +16632,38 @@ Acceptance Criteria:
   - [x] Browser repro clean
   - [x] No mixed-provider fallback truthfulness bug remains in this scenario
 Dependencies: TASK #395
+---
+
+## AREA: DEBUGGER LOOP — HANDOFF PROVIDER BUG (2026-04-08)
+_Components: SwarmEngine._ensureAgentPty handoff provider propagation_
+_Tasks: #397_
+_Gate: Standalone bug fix — no downstream tasks depend on this area_
+
+---
+
+TASK #397: BUG-DL-HANDOFF-PROVIDER-1 — _ensureAgentPty spawns handoff targets via PTY instead of stream-json
+Area: DEBUGGER LOOP — HANDOFF PROVIDER BUG (2026-04-08)
+Agent: debugger
+Priority: CRITICAL
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Context:
+  Found during debugger-loop Phase 1 E2E testing on 2026-04-08.
+  Root cause: `_ensureAgentPty` in SwarmEngine.js called `_spawnAgent` without passing the execution's
+  provider, causing ALL handoff targets (e.g., Writer agent after Researcher hands off) to be spawned
+  via PTY instead of stream-json for Claude agents. This was the root cause of garbled ConPTY output
+  in downstream agents after a handoff event.
+  Fix applied: Changed `_ensureAgentPty` to use `execution.providerStrategy.mode` as the provider hint
+  when calling `_spawnAgent`, so handoff targets now inherit the correct runtime (stream-json for Claude,
+  PTY for Codex/Gemini). Also updated test mocks to handle stream-json child processes for handoff targets.
+  Verification: 478/478 server tests pass after the fix.
+Acceptance Criteria:
+  - [x] `_ensureAgentPty` passes the execution's provider mode to `_spawnAgent` so handoff targets use the correct runtime
+  - [x] Claude handoff targets spawn via stream-json (not PTY) when the execution uses Claude provider
+  - [x] Codex/Gemini handoff targets continue to spawn via PTY
+  - [x] No garbled ConPTY output in downstream agents after handoff
+  - [x] Test mocks updated to handle stream-json child processes for handoff targets
+  - [x] 478/478 server tests pass
+Dependencies: TASK #394
 ---

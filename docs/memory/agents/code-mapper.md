@@ -3389,3 +3389,53 @@ None — mapping task self-contained. Future mapping updates will be needed when
 1. startExecution/_ensureAgentPty are migrated to _spawnAgent dispatcher
 2. Any test suite is added for _spawnAgentStreamJson (currently untested in swarm-engine.test.js)
 ---
+
+---
+## 2026-04-08 — BUG-FIX: _ensureAgentPty handoff provider routing
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task code-mapper invocation)
+
+### Context when I started
+Debugger had just fixed a critical bug in SwarmEngine._ensureAgentPty where handoff targets were all routed to PTY regardless of provider. The fix changes _ensureAgentPty to call _spawnAgent dispatcher with execution.providerStrategy.mode instead of calling _spawnAgentPty directly. Two test helpers were added in beforeEach.
+
+### What I did
+1. Read modified files: SwarmEngine.js lines 4580-4630, swarm-engine.test.js lines 320-380
+2. Grep'd for all callers of _ensureAgentPty (confirmed: _onHandoff is sole caller, tests use spy/mock)
+3. Grep'd for all call sites of _spawnAgent (found 4: startExecution, _ensureAgentPty, _spawnChildExecution, _onDone)
+4. Updated CODE_MAP.md:
+   - _ensureAgentPty entry: updated Purpose, Calls (now _spawnAgent not _spawnAgentPty), Side effects, added Complexity note about providerStrategy.mode vs activeProvider, updated Last modified
+   - _spawnAgent entry: updated "Called by" from "Not yet wired" to 4 actual call sites
+   - _spawnAgentPty entry: updated "Called by" to remove _ensureAgentPty (now routes through dispatcher)
+   - Updated header timestamp
+5. Appended CHANGELOG.md entry with full connection change details
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Updated 3 function entries (_ensureAgentPty, _spawnAgent, _spawnAgentPty) for new call graph |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended bug-fix entry with connection changes |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended mapping session entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- CODE_MAP now accurately reflects the _spawnAgent dispatcher as fully wired (was marked "not yet wired")
+- Call graph for handoff path is now correctly documented: _onHandoff → _ensureAgentPty → _spawnAgent → _spawnAgentStreamJson (Claude) / _spawnAgentPty (others)
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | — | — | — |
+
+### Decisions I made
+- Marked connection change as "BREAKING CHANGE in call graph" in CHANGELOG since _ensureAgentPty's Calls changed fundamentally (different function being called)
+
+### What I learned
+- My previous session correctly flagged _ensureAgentPty as still calling _spawnAgentPty directly — that prediction was validated and is now fixed
+- _spawnAgent dispatcher has 4 callers now, making it the central routing point for all agent spawns as intended by DEC-027
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md fully up to date. All _spawnAgent call sites are now documented. The handoff provider routing bug fix is fully mapped.
+
+### Handoff
+None — mapping task self-contained.
+---

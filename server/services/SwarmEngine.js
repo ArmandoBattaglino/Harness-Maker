@@ -4069,10 +4069,20 @@ class SwarmEngine {
     }
 
     // [STREAM-JSON-MIGRATION] No explicit provider override and no
-    // model-driven route: keep the legacy PTY path unchanged so existing
-    // auto/provider behavior stays stable.
+    // model-driven route: consult the execution's provider strategy.
+    // When Runtime is "Auto", providerStrategy.activeProvider defaults to
+    // 'claude'. If activeProvider is Claude, route to stream-json so that
+    // generated workflows (which have no explicit model on nodes) still get
+    // the clean structured output path instead of garbled PTY/ConPTY.
     if (effectiveProvider === RUNTIME_PROVIDER.AUTO) {
-      return this._spawnAgentPty(executionId, nodeId, spawnOptions);
+      const strategyActive = execution.providerStrategy?.activeProvider;
+      if (strategyActive === RUNTIME_PROVIDER.CLAUDE) {
+        effectiveProvider = RUNTIME_PROVIDER.CLAUDE;
+      } else if (strategyActive && strategyActive !== RUNTIME_PROVIDER.AUTO) {
+        effectiveProvider = strategyActive;
+      } else {
+        return this._spawnAgentPty(executionId, nodeId, spawnOptions);
+      }
     }
 
     const nextSpawnOptions = {

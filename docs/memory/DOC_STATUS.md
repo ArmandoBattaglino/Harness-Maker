@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-08 after Tasks #389-#393 (stream-json E2E + documentation/final checkpoint close-out)._
+_Last updated: 2026-04-08 after BUG-HANDOFF-ROUTING-1 fix (_ensureAgentPty provider hint)._
 
 ## Release Status
 **v9.0.0 stable -- V9.0 Stream-JSON Agent Migration CLOSED**
@@ -35,6 +35,7 @@ _Last updated: 2026-04-08 after Tasks #389-#393 (stream-json E2E + documentation
 | BUG-DONE-TOKEN-REPLAY-1 | LOW | `sanitizeReplayOutput()` did not filter done-token recovery prompts injected when agent finishes without emitting __DONE__ — 3 patterns added to REPLAY_NOISE_LINE_PATTERNS | #233 | FIXED 2026-04-06 |
 | BUG-SWARM-UI-1 | LOW | Duplicate workflow names in saved workflows dropdown — name-based deduplication + date suffix added to SwarmView.jsx | #242 | FIXED 2026-04-06 |
 | BUG-DONE-BARE-1 | LOW | `DONE_RE` only matched `__DONE__` — bare `DONE` on its own line now also accepted by HandoffParser, eliminating unnecessary done reminder reinject | #254 | FIXED 2026-04-06 |
+| BUG-HANDOFF-ROUTING-1 | HIGH | `_ensureAgentPty` did not pass `requestedProvider` to `_spawnAgent`, so handoff targets always spawned via PTY — Claude agents spawned after handoff got garbled ConPTY output instead of stream-json | post-#396 | FIXED 2026-04-08 |
 | BUG-SNIPPET-INIT-1 | LOW | Agent card showed system prompt text for ~3s during startup — snippet update now gated by echo gate (`ignoreParserUntil`) in SwarmEngine.js tapFn | #255 | FIXED 2026-04-06 |
 | BUG-WF-1 | LOW | Context menu on node/edge right-click showed wrong menu type (canvas menu instead of node/edge menu) — `event.stopPropagation()` missing in `handleNodeContextMenu` and `handleEdgeContextMenu` in SwarmCanvas.jsx | V5-bugfix | FIXED 2026-04-06 |
 | BUG-WF-2 | LOW | Ctrl+S keyboard shortcut in SwarmView.jsx captured stale closure of `handleSave`/`handleRun` — added `handleSaveFnRef` and `handleRunFnRef` refs so `useEffect` keydown handler always calls the latest function | V5-bugfix | FIXED 2026-04-06 |
@@ -51,7 +52,7 @@ _Last updated: 2026-04-08 after Tasks #389-#393 (stream-json E2E + documentation
 |----------|--------|--------------|-------|
 | README.md | UP_TO_DATE | 2026-04-08 | Updated to v9.0.0 release metadata and documents stream-json Claude agents, hybrid provider runtime behavior, and graceful stop/resume/reset controls. |
 | CLAUDE.md | UP_TO_DATE | 2026-04-08 | Updated with DEC-027/028/029 runtime constraints, `--tools` guidance, truthful blocker rule for Claude stream-json failures, and `write-file-atomic` correction. |
-| docs/ARCHITECTURE.md | PARTIAL | 2026-04-08 | V5 component tree still deferred (12 components). Section 13 updated with _spawnAgent (13.3), _spawnAgentStreamJson (13.4), _handleStreamJsonResult (13.5), _onDone/_stopExecution modifications (13.6) for Task #359. Remaining V9.0 components (#361-#393) listed as pending in 13.7. |
+| docs/ARCHITECTURE.md | PARTIAL | 2026-04-08 | V5 component tree still deferred (12 components). Section 13.3 updated with _ensureAgentPty handoff-routing fix (all spawn paths now pass requestedProvider). WS event table updated: handoff_started description now reflects stream-json spawns. Remaining V9.0 components (#361-#393) listed as pending in 13.7. |
 | docs/PRD.md | UP_TO_DATE | 2026-04-08 | Rewritten to v6.0: Stream-JSON Agent Migration. 12 component specs, 27 FRs, 7 SEC-SJ-* requirements. |
 | docs/API.md | UP_TO_DATE | 2026-04-06 | No new endpoints from V9.0 planning. Will need update when WS events (FR-SJ-19 through FR-SJ-23) are implemented. |
 | docs/memory/PROJECT.md | UP_TO_DATE | 2026-04-08 | Implementation status reflects V9.0 closure, release metadata sync, 396 total tasks, and 478/478 server-test verification. |
@@ -63,7 +64,7 @@ _Last updated: 2026-04-08 after Tasks #389-#393 (stream-json E2E + documentation
 | docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-08 | Includes debugger-loop fallback closure plus the V9.0 close-out entries for #389-#393. |
 | docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-04-06 | V1 audit. V9.0 adds SEC-SJ-01 through SEC-SJ-07 in PRD -- no code changes yet. |
 | docs/security-v3-audit.md | UP_TO_DATE | 2026-04-06 | MEDIUM-V3-01 marked FIXED (Task #234). No changes from V9.0 planning. |
-| Inline comments | UP_TO_DATE | 2026-04-08 | StreamJsonParser.js has comprehensive JSDoc. SwarmEngine.js new methods (_spawnAgent, _spawnAgentStreamJson, _handleStreamJsonResult) have full JSDoc with param/return annotations. Inline comments reference DEC-027/028/029, SEC-02, SEC-SJ-01, DEC-005. |
+| Inline comments | UP_TO_DATE | 2026-04-08 | StreamJsonParser.js has comprehensive JSDoc. SwarmEngine.js new methods (_spawnAgent, _spawnAgentStreamJson, _handleStreamJsonResult) have full JSDoc with param/return annotations. Inline comments reference DEC-027/028/029, SEC-02, SEC-SJ-01, DEC-005. _ensureAgentPty inline comment (lines 4596-4601) explains why providerStrategy.mode is used instead of activeProvider for mixed-provider chains. |
 | docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. Deferred indefinitely. |
 | docs/research_resume_after_kill.md | UP_TO_DATE | 2026-04-08 | NEW: Research on --resume behavior after process kill. Findings feed into FR-SJ-17/18. |
 | docs/research_b_tools.md | UP_TO_DATE | 2026-04-08 | NEW: Research on --allowedTools vs --tools vs --disallowedTools. Critical finding: --allowedTools is NOT a security boundary (bug #12232). |

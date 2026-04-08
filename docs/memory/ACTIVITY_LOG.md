@@ -1,4 +1,26 @@
-﻿## 2026-04-08 — frontend-dev — BUG-FRONTEND-3 & BUG-FRONTEND-4: AgentNode thinking indicator and unviewed badge
+﻿## 2026-04-08 — debugger — BUG-AUTO-ROUTING-TESTS: Fix 39 failing PTY tests after AUTO→stream-json routing
+**Outcome:** COMPLETED
+**Summary:** Fixed 39 of 478 tests that broke when _spawnAgent dispatcher started routing AUTO+claude to stream-json. Added explicit `{ provider: 'codex' }` or `{ provider: 'gemini' }` to startExecution calls in PTY-specific tests. Used manual state override for the auto-mode fallback test and Codex-specific blocker text for the blocker classification test.
+**Files changed:** server/tests/swarm-engine.test.js
+**Bugs fixed:** 39 test failures due to implicit AUTO mode routing to stream-json instead of PTY
+**Decisions made:** Approach B (explicit provider) over Approach A (stream-json mocks) for simplicity
+**Blockers:** none
+**Next:** nothing — all 478 tests pass
+
+---
+
+## 2026-04-08 — documenter — BUG-HANDOFF-ROUTING-1: Documentation update for _ensureAgentPty provider hint fix
+**Outcome:** COMPLETED
+**Summary:** Updated docs/ARCHITECTURE.md Section 13.3 to document that _ensureAgentPty now passes execution.providerStrategy.mode as requestedProvider to _spawnAgent, ensuring handoff targets are routed to the correct spawner (stream-json for Claude, PTY for Codex/Gemini). Updated WS event table handoff_started description. Added BUG-HANDOFF-ROUTING-1 to DOC_STATUS.md fixed bugs table.
+**Files changed:** docs/ARCHITECTURE.md, docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none (documentation update only; BUG-HANDOFF-ROUTING-1 was fixed by debugger in server/services/SwarmEngine.js)
+**Decisions made:** none
+**Blockers:** none
+**Next:** nothing -- documentation is current
+
+---
+
+## 2026-04-08 — frontend-dev — BUG-FRONTEND-3 & BUG-FRONTEND-4: AgentNode thinking indicator and unviewed badge
 **Outcome:** COMPLETED
 **Summary:** Fixed two AgentNode.jsx bugs: (1) thinking indicator changed from animate-pulse to animate-bounce with amber color, now visually distinct from running state; (2) unviewed output badge condition expanded from status === 'done' to include 'idle', 'completed', 'stopped' for stream-json agents. Build clean.
 **Files changed:** client/src/canvas/nodes/AgentNode.jsx
@@ -4977,4 +4999,26 @@ full self-contained context and acceptance criteria.
 **Decisions made:** Show cache part only when cacheReadTokens > 0 or cacheWriteTokens > 0
 **Blockers:** none
 **Next:** nothing — bugs fully resolved
+---
+
+---
+
+## 2026-04-08 — code-mapper — BUG-FIX: _ensureAgentPty handoff provider routing
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md and CHANGELOG.md for the _ensureAgentPty bug fix. Key connection change: _ensureAgentPty now routes through _spawnAgent dispatcher instead of calling _spawnAgentPty directly. _spawnAgent "Called by" updated from "not yet wired" to 4 actual call sites. Test helpers buildDefaultMockStreamJsonChild and buildDefaultMockReadline mapped.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
+**Bugs fixed:** none (mapping only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** nothing — mapping task self-contained
+
+---
+## 2026-04-08 — project-manager — Task #397: BUG-DL-HANDOFF-PROVIDER-1 registered and marked COMPLETED
+**Outcome:** COMPLETED
+**Summary:** Registered new task #397 in TASK_PLAN.md for the _ensureAgentPty handoff provider bug fix. The bug caused all handoff targets to spawn via PTY instead of stream-json for Claude agents, producing garbled ConPTY output in downstream agents. Fix: pass execution.providerStrategy.mode to _spawnAgent. 478/478 tests pass. Task created as COMPLETED since the fix was already applied by the debugger.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md, docs/memory/CONTEXT.md
+**Bugs fixed:** BUG-DL-HANDOFF-PROVIDER-1 (handoff provider propagation)
+**Decisions made:** Assigned task #397 as standalone debugger-loop area since the fix is self-contained
+**Blockers:** none
+**Next:** No registered pending tasks remain. Project is at 393 COMPLETED + 1 DEFERRED.
 ---

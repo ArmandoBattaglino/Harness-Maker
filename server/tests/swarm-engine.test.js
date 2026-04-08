@@ -465,7 +465,7 @@ describe('SwarmEngine', () => {
     });
 
     it('should prefer sanitized session replay over truncated chat fragments when persisting execution history', async () => {
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const execution = engine._executions.get(executionId);
       const state = execution.agentStates.get('node-a');
       const store = { addEntry: vi.fn().mockResolvedValue(undefined) };
@@ -503,7 +503,7 @@ describe('SwarmEngine', () => {
     });
 
     it('should persist agent outputs from session replay even when chatMessages are still empty', async () => {
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const execution = engine._executions.get(executionId);
       const state = execution.agentStates.get('node-a');
       const store = { addEntry: vi.fn().mockResolvedValue(undefined) };
@@ -533,7 +533,7 @@ describe('SwarmEngine', () => {
     });
 
     it('should prefer the semantic snippet over startup banners when resolving final agent text', async () => {
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const execution = engine._executions.get(executionId);
       const state = execution.agentStates.get('node-a');
       const session = mockSessionManager.getSession(state.sessionId);
@@ -572,7 +572,7 @@ describe('SwarmEngine', () => {
       const parallelWorkflow = buildParallelStartWorkflow({ explicitStart: true });
       workflowStoreMock.get.mockResolvedValueOnce(parallelWorkflow);
 
-      const executionId = await engine.startExecution(parallelWorkflow.id, 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution(parallelWorkflow.id, 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const status = engine.getStatus(executionId);
 
       expect(mockSessionManager.createSession).toHaveBeenCalledTimes(2);
@@ -585,7 +585,7 @@ describe('SwarmEngine', () => {
       const implicitParallelWorkflow = buildParallelStartWorkflow({ explicitStart: false });
       workflowStoreMock.get.mockResolvedValueOnce(implicitParallelWorkflow);
 
-      const executionId = await engine.startExecution(implicitParallelWorkflow.id, 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution(implicitParallelWorkflow.id, 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const status = engine.getStatus(executionId);
 
       expect(mockSessionManager.createSession).toHaveBeenCalledTimes(2);
@@ -597,7 +597,7 @@ describe('SwarmEngine', () => {
       const rootDelayWorkflow = buildRootDelayWorkflow();
       workflowStoreMock.get.mockResolvedValueOnce(rootDelayWorkflow);
 
-      const executionId = await engine.startExecution(rootDelayWorkflow.id, 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution(rootDelayWorkflow.id, 'proj-1', '/projects/proj-1', { provider: 'codex' });
       let status = engine.getStatus(executionId);
 
       expect(mockSessionManager.createSession).not.toHaveBeenCalled();
@@ -614,7 +614,7 @@ describe('SwarmEngine', () => {
       const duplicateMergeWorkflow = buildDuplicateMergeWorkflow();
       workflowStoreMock.get.mockResolvedValueOnce(duplicateMergeWorkflow);
 
-      const executionId = await engine.startExecution(duplicateMergeWorkflow.id, 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution(duplicateMergeWorkflow.id, 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const sessionCallsAfterStart = mockSessionManager.createSession.mock.calls.length;
 
       await engine._onHandoff(executionId, 'node-a', {
@@ -660,7 +660,7 @@ describe('SwarmEngine', () => {
         return null;
       });
 
-      const executionId = await engine.startExecution(parentWorkflow.id, 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution(parentWorkflow.id, 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const subKey = `${executionId}:node-sub`;
       const childExecutionId = engine._subWorkflowExecutions.get(subKey);
 
@@ -809,7 +809,7 @@ describe('SwarmEngine', () => {
     });
 
     it('should remove swarm tap listener from session on stopExecution', async () => {
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
 
       // swarmListeners must have the tap registered
       expect(mockSession.swarmListeners.size).toBeGreaterThan(0);
@@ -835,7 +835,7 @@ describe('SwarmEngine', () => {
     });
 
     it('should inject an explicit current task and valid handoff targets into the first agent prompt', async () => {
-      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
 
       const initialPrompt = mockSessionManager.writeInput.mock.calls[0]?.[1] ?? '';
       expect(initialPrompt).toContain('Current task: Execute the workflow goal described here: Analyze the request, hand off the useful context, and complete the workflow.');
@@ -909,7 +909,7 @@ describe('SwarmEngine', () => {
     });
 
     it('should submit the pasted swarm prompt with a follow-up enter key', async () => {
-      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       await vi.advanceTimersByTimeAsync(101);
 
       expect(mockSessionManager.writeInput.mock.calls[0]?.[1]).toContain('--- END SWARM INPUT ---');
@@ -1165,7 +1165,7 @@ describe('SwarmEngine', () => {
     });
 
     it('should keep a non-terminal agent running and send a recovery prompt when it emits __DONE__', async () => {
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
 
       wsBroadcast.mockClear();
       mockSessionManager.writeInput.mockClear();
@@ -1193,7 +1193,7 @@ describe('SwarmEngine', () => {
         }
       });
 
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const execution = engine._executions.get(executionId);
       const nodeAState = execution.agentStates.get('node-a');
       const handoffPayload = b64({ summary: 'handoff context' });
@@ -1221,7 +1221,7 @@ describe('SwarmEngine', () => {
       // Claude provider does NOT set ignoreParserUntil at spawn time (only Codex does).
       // But after a handoff, _writeSwarmPrompt -> _flushSwarmPrompt sets ignoreParserUntil
       // for the target agent's prompt injection. Simulate that scenario.
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const execution = engine._executions.get(executionId);
       const nodeAState = execution.agentStates.get('node-a');
 
@@ -1260,7 +1260,7 @@ describe('SwarmEngine', () => {
     });
 
     it('should feed gate-period buffer through chat filtering pipeline when echo marker times out', async () => {
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const execution = engine._executions.get(executionId);
       const nodeAState = execution.agentStates.get('node-a');
       const tapFn = [...mockSession.swarmListeners].find((listener) => listener === nodeAState.tapFn);
@@ -1344,7 +1344,7 @@ describe('SwarmEngine', () => {
     });
 
     it('should call createSession for target node after handoff', async () => {
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
 
       // createSession is called once for the triage node (node-a) at start
       const callsBeforeHandoff = mockSessionManager.createSession.mock.calls.length;
@@ -1460,7 +1460,7 @@ describe('SwarmEngine', () => {
       engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
       engine.setWsBroadcast(wsBroadcast);
 
-      const executionId = await engine.startExecution('wf-agent-merge', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-agent-merge', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
       const exec = engine._executions.get(executionId);
 
       await engine._ensureAgentPty(executionId, 'node-b');
@@ -1565,7 +1565,7 @@ describe('SwarmEngine', () => {
       const tinyBudgetWf = buildTwoNodeWorkflow({ budgetTokens: 10 });
       workflowStoreMock.get.mockResolvedValue(tinyBudgetWf);
 
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
 
       // Retrieve the tap function registered on swarmListeners
       const tapFn = [...mockSession.swarmListeners][0];
@@ -1587,7 +1587,7 @@ describe('SwarmEngine', () => {
       const wfWithBudget = buildTwoNodeWorkflow({ budgetTokens: 10000 });
       workflowStoreMock.get.mockResolvedValue(wfWithBudget);
 
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const tapFn = [...mockSession.swarmListeners][0];
 
       // Feed tiny chunk — well under the 10000-token limit
@@ -1599,7 +1599,7 @@ describe('SwarmEngine', () => {
     });
 
     it('should emit agent_status updates with lastOutputSnippet as PTY output arrives', async () => {
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const tapFn = [...mockSession.swarmListeners][0];
       // Clear echo gate so snippet updates flow through
       engine._executions.get(executionId).agentStates.get('node-a').ignoreParserUntil = null;
@@ -1621,7 +1621,7 @@ describe('SwarmEngine', () => {
     });
 
     it('should strip echoed swarm protocol text from lastOutputSnippet while keeping meaningful agent output', async () => {
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const tapFn = [...mockSession.swarmListeners][0];
       engine._executions.get(executionId).agentStates.get('node-a').ignoreParserUntil = null;
 
@@ -1639,7 +1639,7 @@ describe('SwarmEngine', () => {
     });
 
     it('should keep finder-style snippets focused on workflow-local facts even when stale repo-inspection noise arrives later', async () => {
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const tapFn = [...mockSession.swarmListeners][0];
       engine._executions.get(executionId).agentStates.get('node-a').ignoreParserUntil = null;
 
@@ -1670,7 +1670,7 @@ describe('SwarmEngine', () => {
     });
 
     it('should keep route-checker-style snippets centered on semantic route facts instead of footer noise', async () => {
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const tapFn = [...mockSession.swarmListeners][0];
       engine._executions.get(executionId).agentStates.get('node-a').ignoreParserUntil = null;
 
@@ -1697,7 +1697,7 @@ describe('SwarmEngine', () => {
     });
 
     it('should keep formatter-style snippets on the final report block instead of stale foreign prompt text', async () => {
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const tapFn = [...mockSession.swarmListeners][0];
       engine._executions.get(executionId).agentStates.get('node-a').ignoreParserUntil = null;
 
@@ -1724,7 +1724,7 @@ describe('SwarmEngine', () => {
     });
 
     it('should refresh terminal-state snippets from the full session replay so older semantic blocks survive a noisy tail', async () => {
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const execution = engine._executions.get(executionId);
       const state = execution.agentStates.get('node-a');
 
@@ -1755,7 +1755,7 @@ describe('SwarmEngine', () => {
     });
 
     it('should prefer reconstructed structured fact lines over replayed command errors in terminal-state snippets', async () => {
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const execution = engine._executions.get(executionId);
       const state = execution.agentStates.get('node-a');
 
@@ -1785,7 +1785,7 @@ describe('SwarmEngine', () => {
     });
 
     it('should reconstruct a final report block from scattered fact lines instead of prompt instructions in terminal-state snippets', async () => {
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const execution = engine._executions.get(executionId);
       const state = execution.agentStates.get('node-a');
 
@@ -1822,7 +1822,7 @@ describe('SwarmEngine', () => {
     });
 
     it('should return an empty snippet when the Codex tail only contains working chrome and redraw fragments', async () => {
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const tapFn = [...mockSession.swarmListeners][0];
       engine._executions.get(executionId).agentStates.get('node-a').ignoreParserUntil = null;
 
@@ -1852,7 +1852,7 @@ describe('SwarmEngine', () => {
     });
 
     it('should fall back to the blocker message when prompt rejection leaves only Codex chrome in the tail', async () => {
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const tapFn = [...mockSession.swarmListeners][0];
       engine._executions.get(executionId).agentStates.get('node-a').ignoreParserUntil = null;
 
@@ -2131,7 +2131,7 @@ describe('SwarmEngine', () => {
     });
 
     it('should strip the echoed swarm-input wrapper while preserving the semantic payload line', async () => {
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const tapFn = [...mockSession.swarmListeners][0];
       engine._executions.get(executionId).agentStates.get('node-a').ignoreParserUntil = null;
 
@@ -2153,7 +2153,7 @@ describe('SwarmEngine', () => {
     });
 
     it('should classify provider blocker output and move the execution into blocked state', async () => {
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const tapFn = [...mockSession.swarmListeners][0];
       const execution = engine._executions.get(executionId);
 
@@ -2161,14 +2161,15 @@ describe('SwarmEngine', () => {
       execution.agentStates.get('node-a').ignoreParserBuffer = '';
 
       wsBroadcast.mockClear();
-      tapFn("You've hit your limit\n/rate-limit-options");
+      // Use Codex-specific rate limit text (PTY tests now route via Codex provider)
+      tapFn("you've hit your usage limit\npurchase more credits");
 
       const status = engine.getStatus(executionId);
       expect(status.status).toBe('blocked');
       expect(status.agentStates['node-a'].status).toBe('blocked');
       expect(status.runtimeBlocker).toMatchObject({
         type: 'rate_limited',
-        provider: 'claude',
+        provider: 'codex',
         nodeId: 'node-a',
       });
 
@@ -2179,12 +2180,21 @@ describe('SwarmEngine', () => {
       expect(blockedSnapshot).toBeDefined();
       expect(blockedSnapshot.runtimeBlocker).toMatchObject({
         type: 'rate_limited',
-        provider: 'claude',
+        provider: 'codex',
       });
     });
 
     it('should fallback from Claude to Codex when a pre-work blocker is detected in auto mode', async () => {
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      // Start with codex to get a PTY session, then override state to simulate auto/claude
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
+      const execution = engine._executions.get(executionId);
+      const state = execution.agentStates.get('node-a');
+      // Simulate auto-mode with activeProvider=claude (the scenario this test exercises)
+      execution.providerStrategy = { mode: 'auto', activeProvider: 'claude', fallbackProvider: 'codex', allowFallback: true };
+      execution.runtimeProvider = 'claude';
+      execution.activeProvider = 'claude';
+      state.provider = 'claude';
+      state.runtimeProvider = 'claude';
       const initialCallCount = mockSessionManager.createSession.mock.calls.length;
 
       wsBroadcast.mockClear();
@@ -2915,7 +2925,7 @@ describe('SwarmEngine', () => {
     });
 
     it('should register tap via swarmListeners.add() — not by replacing onData', async () => {
-      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
 
       // swarmListeners Set must contain at least one tap function
       expect(mockSession.swarmListeners.size).toBeGreaterThan(0);
@@ -2941,7 +2951,7 @@ describe('SwarmEngine', () => {
       const sentinelFn = vi.fn();
       mockSession.swarmListeners.add(sentinelFn);
 
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       // swarmListeners now has sentinel + engine tap
       expect(mockSession.swarmListeners.size).toBe(2);
 
@@ -2976,7 +2986,7 @@ describe('SwarmEngine', () => {
     }
 
     it('should force a handoff to first downstream target after MAX_DONE_REINJECT_ATTEMPTS', async () => {
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
 
       // Get the tapFn registered on the mock session
       const tapFn = [...mockSession.swarmListeners].find(fn => typeof fn === 'function');
@@ -3009,7 +3019,7 @@ describe('SwarmEngine', () => {
     });
 
     it('should broadcast handoff_started when forcing handoff after max reinjects', async () => {
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const tapFn = [...mockSession.swarmListeners].find(fn => typeof fn === 'function');
 
       // Clear the initial prompt's ignoreParserUntil
@@ -3037,7 +3047,7 @@ describe('SwarmEngine', () => {
     });
 
     it('should stop after exactly three reinject prompts before forcing the downstream handoff', async () => {
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const tapFn = [...mockSession.swarmListeners].find(fn => typeof fn === 'function');
 
       await vi.advanceTimersByTimeAsync(200);
@@ -3084,8 +3094,8 @@ describe('SwarmEngine', () => {
   // -------------------------------------------------------------------------
   describe('Test 8: Full E2E handoff lifecycle with echo marker timeout (deterministic)', () => {
     it('should complete a full 2-agent workflow when the echo marker is never observed', async () => {
-      // Claude provider (default) — ignoreParserUntil is NOT set at spawn
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      // PTY provider — ignoreParserUntil is NOT set at spawn for non-Codex providers
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const execution = engine._executions.get(executionId);
       const nodeAState = execution.agentStates.get('node-a');
 
@@ -3199,7 +3209,7 @@ describe('SwarmEngine', () => {
     });
 
     it('should complete the workflow directly when the echo marker DOES arrive (no timeout needed)', async () => {
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const execution = engine._executions.get(executionId);
       const nodeAState = execution.agentStates.get('node-a');
 

@@ -1790,7 +1790,7 @@ All events are JSON objects sent over `ws://127.0.0.1:PORT/ws/swarm?executionId=
 |---|---|---|
 | `execution_status` | `executionId`, `status` ('running'\|'stopped'\|'done'), `agentStates` | Full execution state snapshot. Sent on connect and on status change. |
 | `agent_status` | `executionId`, `nodeId`, `status`, `sessionId` | Single agent's status changed (idle / running / paused / done / error). `sessionId` is required for AgentInspector "Open Terminal" activation. Fixed Task #124 (BUG-SESSION-1). |
-| `handoff_started` | `executionId`, `sourceNodeId`, `targetNodeId`, `edgeId`, `counter` | A HANDOFF token was parsed; target agent PTY is being spawned or reused. |
+| `handoff_started` | `executionId`, `sourceNodeId`, `targetNodeId`, `edgeId`, `counter` | A HANDOFF token was parsed; target agent is being spawned or reused (PTY for Codex/Gemini, stream-json for Claude). |
 | `handoff_completed` | `executionId`, `sourceNodeId`, `targetNodeId` | Target agent has been spawned/reused and is running. Emitted at end of `_onHandoff()` per FR-V3-43. Added Task #126 (BUG-HANDOFF-1). |
 | `circuit_breaker` | `executionId`, `edgeId`, `counter` | Edge crossing threshold reached (advisory — execution continues). |
 | `budget_update` | `executionId`, `estimatedTokensUsed`, `limitTokens` | Token budget estimate updated for the execution. |
@@ -2161,7 +2161,7 @@ parser.reset(); // call between turns if reusing instance
 
 **File:** `server/services/SwarmEngine.js`
 
-Routes agent spawn calls to the correct spawner based on runtime provider. All call sites that previously called `_spawnAgentPty()` directly now go through `_spawnAgent()`, which resolves the effective provider and dispatches:
+Routes agent spawn calls to the correct spawner based on runtime provider. All call sites that previously called `_spawnAgentPty()` directly now go through `_spawnAgent()`, which resolves the effective provider and dispatches. As of the `_ensureAgentPty` handoff-routing fix, ALL spawn paths (startExecution, handoff via `_ensureAgentPty`, done-reinject, resume, and child-execution) pass `execution.providerStrategy.mode` as `requestedProvider`, ensuring handoff targets are routed to the correct spawner (stream-json for Claude, PTY for Codex/Gemini) rather than always defaulting to PTY:
 
 - Claude provider (including `auto` default) → `_spawnAgentStreamJson()`
 - All other providers (Codex, Gemini, etc.) → `_spawnAgentPty()`

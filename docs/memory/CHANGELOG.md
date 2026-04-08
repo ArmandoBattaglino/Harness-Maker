@@ -1,6 +1,36 @@
 # CHANGELOG — Claude Code Visual Manager
 
 ---
+## 2026-04-08 — BUG-FIX: _ensureAgentPty handoff provider routing
+**Agent:** debugger
+**Triggered by:** Mixed-provider handoff chains routing all handoff targets to PTY regardless of provider — garbled ConPTY output in Writer agents after handoff
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/SwarmEngine.js | MODIFIED | `_ensureAgentPty` (lines 4596-4603): now reads `execution.providerStrategy.mode` (workflow-level strategy) instead of relying on `_spawnAgentPty` directly. Passes `{ requestedProvider: providerHint }` to `_spawnAgent` dispatcher so each handoff target is routed according to its model configuration (stream-json for Claude, PTY for Codex/Gemini). |
+| server/tests/swarm-engine.test.js | MODIFIED | Added `buildDefaultMockStreamJsonChild()` helper (lines 339-347) and `buildDefaultMockReadline()` helper (lines 349-353) in `beforeEach`. Default `mockSpawn` and `mockCreateInterface` implementations now return these mocks, preventing crashes when handoff spawns route through `_spawnAgentStreamJson`. |
+
+### Functions Added
+- `buildDefaultMockStreamJsonChild()` in `server/tests/swarm-engine.test.js` — test helper returning an EventEmitter with stdout/stderr/stdin for mock stream-json child processes
+- `buildDefaultMockReadline()` in `server/tests/swarm-engine.test.js` — test helper returning a closable EventEmitter for mock readline interface
+
+### Functions Modified
+- `SwarmEngine._ensureAgentPty(executionId, nodeId)` in `server/services/SwarmEngine.js` — **BREAKING CHANGE in call graph:** now calls `_spawnAgent` (dispatcher) instead of `_spawnAgentPty` directly, passing `execution.providerStrategy.mode` as `requestedProvider`. This ensures Claude nodes use stream-json and Codex/Gemini nodes use PTY during handoff.
+
+### Functions Removed
+- none
+
+### Connection Changes
+- `_ensureAgentPty` → `_spawnAgentPty` (REMOVED — was direct call)
+- `_ensureAgentPty` → `_spawnAgent` (NEW — routes through dispatcher with providerStrategy.mode hint)
+- `_spawnAgent` is now called from 4 sites: startExecution, _ensureAgentPty, _spawnChildExecution, _onDone (stream-json reinject)
+
+### Impact on Other Code
+- `_onHandoff` is the sole caller of `_ensureAgentPty` — it now benefits from correct provider routing without any changes to _onHandoff itself
+- All existing tests using `_ensureAgentPty` mock or spy now interact with the `_spawnAgent` dispatcher path; the new default mock implementations in beforeEach prevent test crashes
+
+---
 ## 2026-04-08 — Task #359: SwarmEngine._spawnAgentStreamJson — Stream-JSON agent spawner
 **Agent:** backend-dev
 **Triggered by:** V9.0 stream-json migration — implement the stream-json spawn path for Claude providers, replacing the PTY path per DEC-027/028/029
