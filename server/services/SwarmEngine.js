@@ -4,10 +4,18 @@
 // See DEC-014 for the swarmListeners tap design.
 
 import { v4 as uuidv4 } from 'uuid';
+import { spawn } from 'child_process';
+import { createInterface } from 'readline';
+import { createRequire } from 'module';
 import HandoffParser from './HandoffParser.js';
+import StreamJsonParser from './StreamJsonParser.js';
 import { discoverCodexBinary, discoverGeminiBinary } from './BinaryDiscovery.js';
 import { ChatExtractor } from './ChatExtractor.js';
 import { buildWorkflowArtifact } from './WorkflowArtifactBuilder.js';
+
+// tree-kill is CommonJS only — use createRequire to import it (DEC-006)
+const requireCjs = createRequire(import.meta.url);
+const treeKill = requireCjs('tree-kill');
 
 const SWARM_PROMPT_ECHO_MARKER = '--- END SWARM INPUT ---';
 const SWARM_PROMPT_SUBMIT_DELAY_MS = 100;
@@ -19,6 +27,7 @@ const SWARM_PROMPT_INTERRUPT_DELAY_MS = 120;
 const SWARM_RUNTIME_MENU_SUBMIT_DELAY_MS = 75;
 const SWARM_ECHO_MARKER_TIMEOUT_MS = 7000;
 const MAX_DONE_REINJECT_ATTEMPTS = 3;
+const STREAM_JSON_POST_RESULT_TIMEOUT_MS = 30000;
 const SWARM_CODEX_MISSING_HANDOFF_IDLE_MS = 180000;
 const SWARM_MISSING_HANDOFF_REMINDER_DELAY_MS = 3000;
 const RUNTIME_SCAN_BUFFER_CHARS = 4000;
@@ -663,6 +672,14 @@ class SwarmEngine {
       lastOutputSnippet: state.lastOutputSnippet ?? '',
       lastModelFallback: state.lastModelFallback ?? null,
       ...(state.runtimeBlocker ? { runtimeBlocker: { ...state.runtimeBlocker } } : {}),
+      // Stream-json specific fields (DEC-027)
+      ...(state.spawnMode === 'stream-json' ? {
+        spawnMode: 'stream-json',
+        turnCount: state.turnCount ?? 0,
+        totalCostUsd: state.totalCostUsd ?? 0,
+        totalInputTokens: state.totalInputTokens ?? 0,
+        totalOutputTokens: state.totalOutputTokens ?? 0,
+      } : {}),
     };
   }
 
@@ -3788,6 +3805,477 @@ class SwarmEngine {
     throw lastError ?? new Error('Unable to spawn runtime provider');
   }
 
+  // ---------------------------------------------------------------------------
+  // FR-SJ-09/10: Provider-aware spawn dispatcher
+  // Decides whether to use stream-json (Claude) or PTY (Codex/Gemini) path.
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Dispatch agent spawn to the appropriate path based on provider.
+   * Claude models use stream-json (process-per-turn); Codex/Gemini use PTY.
+   * @param {string} executionId
+   * @param {string} nodeId
+   * @param {object} [spawnOptions={}]
+   * @returns {Promise<void>}
+   */
+  async _spawnAgent(executionId, nodeId, spawnOptions = {}) {
+    const execution = this._executions.get(executionId);
+    if (!execution) throw new Error(`Execution ${executionId} not found`);
+
+    const node = execution.workflowDef.nodes.find((n) => n.id === nodeId);
+    if (!node) throw new Error(`Node ${nodeId} not found in workflow`);
+
+    // Determine the effective provider for this spawn
+    const requestedProvider = normalizeRuntimeProvider(
+      spawnOptions.requestedProvider ?? spawnOptions.provider ?? execution.activeProvider
+    );
+
+    // Resolve which single provider to check — for 'auto' default to claude
+    const effectiveProvider = requestedProvider === RUNTIME_PROVIDER.AUTO
+      ? RUNTIME_PROVIDER.CLAUDE
+      : requestedProvider;
+
+    // Claude models use stream-json path (DEC-027)
+    const isClaudeProvider = effectiveProvider === RUNTIME_PROVIDER.CLAUDE
+      || (SUPPORTED_RUNTIME_MODELS[RUNTIME_PROVIDER.CLAUDE] ?? []).includes(effectiveProvider);
+
+    if (isClaudeProvider) {
+      return this._spawnAgentStreamJson(executionId, nodeId, spawnOptions);
+    }
+
+    // All other providers use PTY path
+    return this._spawnAgentPty(executionId, nodeId, spawnOptions);
+  }
+
+  // ---------------------------------------------------------------------------
+  // FR-SJ-04..15: Stream-JSON agent spawner (Claude provider)
+  // Spawns claude with --output-format stream-json. One process per turn.
+  // Session continuity via --resume. See DEC-027, DEC-028, DEC-029.
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Spawn a Claude agent using --output-format stream-json instead of PTY.
+   * Each turn is a separate child_process.spawn. Conversation continuity
+   * is maintained via --session-id (turn 0) / --resume (turn N).
+   * @param {string} executionId
+   * @param {string} nodeId
+   * @param {object} [spawnOptions={}]
+   * @returns {Promise<void>}
+   */
+  async _spawnAgentStreamJson(executionId, nodeId, spawnOptions = {}) {
+    const execution = this._executions.get(executionId);
+    if (!execution) throw new Error(`Execution ${executionId} not found`);
+
+    const node = execution.workflowDef.nodes.find((n) => n.id === nodeId);
+    if (!node) throw new Error(`Node ${nodeId} not found in workflow`);
+
+    // 1. Build handoff targets from outgoing edges
+    const handoffTargets = execution.workflowDef.edges
+      .filter((e) => e.source === nodeId)
+      .map((e) => e.target);
+
+    // 2. Resolve binary and model
+    const claudeBin = await this._resolveRuntimeProviderBinary(RUNTIME_PROVIDER.CLAUDE);
+    const runtimeModels = execution.workflowDef?.settings?.runtimeModels;
+    const modelOverride = runtimeModels?.[RUNTIME_PROVIDER.CLAUDE];
+    const model = (modelOverride && isSupportedRuntimeModel(RUNTIME_PROVIDER.CLAUDE, modelOverride))
+      ? modelOverride
+      : DEFAULT_SWARM_CLAUDE_MODEL;
+
+    // 3. Get or create session ID and retrieve existing state
+    const previousState = execution.agentStates.get(nodeId) ?? null;
+    const sessionId = previousState?.streamJsonSessionId ?? uuidv4();
+    const turnCount = previousState?.turnCount ?? 0;
+
+    // 4. Build prompt
+    const prompt = spawnOptions.reinjectPrompt ?? this._buildSystemPrompt(
+      node,
+      execution.workflowContext,
+      handoffTargets,
+      RUNTIME_PROVIDER.CLAUDE,
+      {
+        inboundHandoffs: this._getInboundHandoffsForTarget
+          ? this._getInboundHandoffsForTarget(execution, nodeId)
+          : [],
+      }
+    );
+
+    // 5. Build args array
+    const args = [
+      '--output-format', 'stream-json',
+      '--verbose',                          // Required with stream-json (spike #354)
+      '--dangerously-skip-permissions',
+    ];
+
+    // Turn 0: --session-id; Turn N: --resume (DEC-027)
+    if (turnCount === 0 && !previousState?.streamJsonSessionId) {
+      args.push('--session-id', sessionId);
+    } else {
+      args.push('--resume', sessionId);
+    }
+
+    args.push('-p', prompt);
+    args.push('--model', model);
+
+    // Append --tools if the node defines tool restrictions (SEC-SJ-01: --tools not --allowedTools)
+    const nodeTools = node.data?.tools;
+    if (Array.isArray(nodeTools) && nodeTools.length > 0) {
+      args.push('--tools', nodeTools.join(','));
+    }
+
+    // 6. Spawn the process (SEC-02: shell: false always)
+    const child = spawn(claudeBin, args, {
+      cwd: execution.projectPath || process.cwd(),
+      stdio: ['pipe', 'pipe', 'pipe'],
+      shell: false,
+    });
+
+    // DEC-005: close stdin immediately to prevent hang
+    try { child.stdin.end(); } catch { /* already destroyed */ }
+
+    // 7. Initialize/update agent state
+    const state = {
+      ...(previousState ?? {}),
+      streamJsonSessionId: sessionId,
+      sessionId: null,           // No PTY session — DEC-028
+      spawnMode: 'stream-json',
+      status: 'running',
+      provider: RUNTIME_PROVIDER.CLAUDE,
+      runtimeProvider: RUNTIME_PROVIDER.CLAUDE,
+      runtimeBlocker: null,
+      turnCount,
+      totalCostUsd: previousState?.totalCostUsd ?? 0,
+      totalInputTokens: previousState?.totalInputTokens ?? 0,
+      totalOutputTokens: previousState?.totalOutputTokens ?? 0,
+      doNotSpawnNextTurn: previousState?.doNotSpawnNextTurn ?? false,
+      needsRepair: false,
+      currentToolUse: null,
+      isThinking: false,
+      handoffCount: previousState?.handoffCount ?? 0,
+      lastOutputSnippet: previousState?.lastOutputSnippet ?? '',
+      doneReinjectCount: previousState?.doneReinjectCount ?? 0,
+      _streamJsonChild: child,
+      _streamJsonAccumulatedText: '',
+      _agentSystemPrompt: (node.data && node.data.systemPrompt) || '',
+      _agentFullPrompt: prompt || '',
+      spawnedAt: previousState?.spawnedAt ?? Date.now(),
+      lastForwardProgressAt: Date.now(),
+      lastForwardProgressReason: 'spawn',
+    };
+
+    execution.activeProvider = RUNTIME_PROVIDER.CLAUDE;
+    execution.runtimeProvider = RUNTIME_PROVIDER.CLAUDE;
+    execution.agentStates.set(nodeId, state);
+
+    // 8. Broadcast initial status
+    if (this._wsBroadcast) {
+      this._wsBroadcast(executionId, {
+        type: 'agent_status',
+        nodeId,
+        status: 'running',
+        spawnMode: 'stream-json',
+        provider: RUNTIME_PROVIDER.CLAUDE,
+        runtimeProvider: RUNTIME_PROVIDER.CLAUDE,
+      });
+    }
+
+    // 9. Set up readline + StreamJsonParser on child.stdout
+    const parser = new StreamJsonParser();
+    const rl = createInterface({ input: child.stdout });
+    let gotResultEvent = false;
+
+    rl.on('line', (line) => {
+      if (!line.trim()) return;
+
+      const evt = parser.parseLine(line);
+      if (!evt || evt.type === 'ignore') return;
+
+      const currentState = execution.agentStates.get(nodeId);
+      if (!currentState || currentState.status === 'done' || currentState.status === 'stopped') return;
+
+      switch (evt.type) {
+        case 'text_delta': {
+          // Accumulate assistant text
+          currentState._streamJsonAccumulatedText += (evt.text ?? '');
+          // Update snippet with latest text
+          const accText = currentState._streamJsonAccumulatedText;
+          currentState.lastOutputSnippet = accText.length > 200
+            ? accText.slice(-200)
+            : accText;
+          // Broadcast chat message
+          if (this._wsBroadcast) {
+            this._wsBroadcast(executionId, {
+              type: 'chat_message',
+              nodeId,
+              role: 'assistant',
+              text: evt.text ?? '',
+              timestamp: Date.now(),
+            });
+          }
+          // Feed to ChatExtractor for artifact extraction
+          this._chatExtractor.feed(executionId, nodeId, evt.text ?? '');
+          this._broadcastAgentStatus(executionId, nodeId, currentState);
+          break;
+        }
+
+        case 'tool_start': {
+          currentState.currentToolUse = { toolName: evt.toolName, toolUseId: evt.toolUseId };
+          if (this._wsBroadcast) {
+            this._wsBroadcast(executionId, {
+              type: 'agent_tool_use',
+              nodeId,
+              toolName: evt.toolName,
+              toolUseId: evt.toolUseId,
+            });
+          }
+          break;
+        }
+
+        case 'tool_delta': {
+          if (this._wsBroadcast) {
+            this._wsBroadcast(executionId, {
+              type: 'agent_tool_delta',
+              nodeId,
+              toolUseId: currentState.currentToolUse?.toolUseId ?? '',
+              partialJson: evt.partialJson ?? '',
+            });
+          }
+          break;
+        }
+
+        case 'tool_stop': {
+          currentState.currentToolUse = null;
+          break;
+        }
+
+        case 'thinking_start': {
+          currentState.isThinking = true;
+          if (this._wsBroadcast) {
+            this._wsBroadcast(executionId, {
+              type: 'agent_thinking',
+              nodeId,
+              active: true,
+            });
+          }
+          break;
+        }
+
+        case 'text_start': {
+          // End of thinking block → text block starts
+          if (currentState.isThinking) {
+            currentState.isThinking = false;
+            if (this._wsBroadcast) {
+              this._wsBroadcast(executionId, {
+                type: 'agent_thinking',
+                nodeId,
+                active: false,
+              });
+            }
+          }
+          break;
+        }
+
+        case 'thinking_stop': {
+          currentState.isThinking = false;
+          if (this._wsBroadcast) {
+            this._wsBroadcast(executionId, {
+              type: 'agent_thinking',
+              nodeId,
+              active: false,
+            });
+          }
+          break;
+        }
+
+        case 'api_retry': {
+          if (this._wsBroadcast) {
+            this._wsBroadcast(executionId, {
+              type: 'agent_status',
+              nodeId,
+              status: 'running',
+              retrying: true,
+              attempt: evt.attempt ?? 0,
+              delay: evt.delay ?? 0,
+            });
+          }
+          break;
+        }
+
+        case 'result': {
+          gotResultEvent = true;
+          this._handleStreamJsonResult(executionId, nodeId, evt, handoffTargets);
+          break;
+        }
+
+        case 'error': {
+          // Non-fatal parse errors — log and continue
+          console.warn(`[SwarmEngine] stream-json parse warning node=${nodeId}: ${evt.message}`);
+          break;
+        }
+
+        // message_start, message_stop, message_delta, unknown, system — ignored
+        default:
+          break;
+      }
+    });
+
+    // 10. Collect stderr for diagnostics (never log full content — SEC-08)
+    const stderrChunks = [];
+    child.stderr.on('data', (chunk) => {
+      stderrChunks.push(chunk.toString());
+    });
+
+    // 11. Handle child error event
+    child.on('error', (err) => {
+      console.error(`[SwarmEngine] stream-json spawn error node=${nodeId}: ${err.message}`);
+      const currentState = execution.agentStates.get(nodeId);
+      if (currentState && currentState.status === 'running') {
+        currentState.status = 'error';
+        currentState.runtimeBlocker = {
+          type: 'spawn_error',
+          message: 'Stream-json process failed to start',
+        };
+        this._broadcastAgentStatus(executionId, nodeId, currentState);
+        this._syncExecutionStatusFromAgents(execution);
+      }
+    });
+
+    // 12. Handle process exit
+    child.on('close', (code) => {
+      const currentState = execution.agentStates.get(nodeId);
+      if (!currentState) return;
+
+      // Clean up child reference
+      currentState._streamJsonChild = null;
+
+      if (!gotResultEvent && currentState.status === 'running') {
+        // Process exited without a result event — mark as error
+        const stderrText = stderrChunks.join('').slice(0, 500);
+        console.warn(`[SwarmEngine] stream-json exited without result node=${nodeId} code=${code} stderr=${stderrText}`);
+        currentState.status = 'error';
+        currentState.runtimeBlocker = {
+          type: 'unexpected_exit',
+          message: `Stream-json process exited with code ${code} without result event`,
+        };
+        this._broadcastAgentStatus(executionId, nodeId, currentState);
+        this._syncExecutionStatusFromAgents(execution);
+      }
+    });
+
+    // 13. Set 30s safety timeout after result → tree-kill if still alive
+    // This is managed inside _handleStreamJsonResult via a deferred timer.
+
+    this._syncExecutionStatusFromAgents(execution);
+  }
+
+  /**
+   * Handle a stream-json result event for a Claude agent turn.
+   * Extracts cost, scans for handoff/done tokens, manages turn lifecycle.
+   * @param {string} executionId
+   * @param {string} nodeId
+   * @param {object} resultEvt - parsed result event from StreamJsonParser
+   * @param {string[]} handoffTargets - outgoing edge target IDs
+   */
+  _handleStreamJsonResult(executionId, nodeId, resultEvt, handoffTargets) {
+    const execution = this._executions.get(executionId);
+    if (!execution) return;
+
+    const state = execution.agentStates.get(nodeId);
+    if (!state) return;
+
+    // 1. Increment turn count
+    state.turnCount = (state.turnCount ?? 0) + 1;
+
+    // 2. Extract and broadcast cost
+    const inputTokens = resultEvt.usage?.input ?? 0;
+    const outputTokens = resultEvt.usage?.output ?? 0;
+    const costUsd = resultEvt.costUsd ?? 0;
+    const durationMs = resultEvt.durationMs ?? 0;
+
+    state.totalInputTokens = (state.totalInputTokens ?? 0) + inputTokens;
+    state.totalOutputTokens = (state.totalOutputTokens ?? 0) + outputTokens;
+    state.totalCostUsd = (state.totalCostUsd ?? 0) + costUsd;
+
+    if (this._wsBroadcast) {
+      this._wsBroadcast(executionId, {
+        type: 'agent_cost',
+        nodeId,
+        inputTokens,
+        outputTokens,
+        costUsd,
+        durationMs,
+        totalInputTokens: state.totalInputTokens,
+        totalOutputTokens: state.totalOutputTokens,
+        totalCostUsd: state.totalCostUsd,
+      });
+    }
+
+    // 3. Store session ID from result for future --resume turns
+    if (resultEvt.sessionId) {
+      state.streamJsonSessionId = resultEvt.sessionId;
+    }
+
+    // 4. Handle error results
+    if (resultEvt.isError) {
+      console.warn(`[SwarmEngine] stream-json result error node=${nodeId}: ${resultEvt.errorMessage}`);
+      state.needsRepair = true;
+    }
+
+    // 5. Scan accumulated text for handoff/done tokens
+    const accumulatedText = state._streamJsonAccumulatedText ?? '';
+    let foundHandoff = false;
+    let foundDone = false;
+
+    // Use HandoffParser for reliable token detection (same patterns as PTY path)
+    const tokenParser = new HandoffParser();
+    const tokenEvents = tokenParser.feed(accumulatedText);
+    for (const evt of tokenEvents) {
+      if (evt.type === 'handoff') {
+        foundHandoff = true;
+        this._onHandoff(executionId, nodeId, evt);
+        break; // Only process first handoff
+      }
+      if (evt.type === 'done') {
+        foundDone = true;
+      }
+    }
+
+    // 6. Route to done/handoff or implicit done
+    if (!foundHandoff) {
+      if (foundDone) {
+        this._onDone(executionId, nodeId);
+      } else {
+        // No explicit token → implicit __DONE__ (DEC-029)
+        this._onDone(executionId, nodeId);
+      }
+    }
+
+    // 7. Check graceful stop flag
+    if (state.doNotSpawnNextTurn) {
+      state.status = 'done';
+      this._broadcastAgentStatus(executionId, nodeId, state);
+      this._syncExecutionStatusFromAgents(execution);
+    }
+
+    // 8. Schedule 30s post-result timeout → tree-kill if process hasn't exited
+    const child = state._streamJsonChild;
+    if (child && child.pid && !child.killed) {
+      setTimeout(() => {
+        if (!child.killed && child.pid) {
+          console.warn(`[SwarmEngine] stream-json post-result timeout node=${nodeId} — tree-killing pid=${child.pid}`);
+          treeKill(child.pid, 'SIGTERM', (err) => {
+            if (err) {
+              console.warn(`[SwarmEngine] tree-kill warning node=${nodeId}: ${err.message}`);
+            }
+          });
+        }
+      }, STREAM_JSON_POST_RESULT_TIMEOUT_MS);
+    }
+
+    // Reset accumulated text for the next turn
+    state._streamJsonAccumulatedText = '';
+  }
+
   /**
    * Ensure an agent PTY exists for a node, reusing an active one if available.
    * @param {string} executionId
@@ -4965,11 +5453,7 @@ class SwarmEngine {
     if (state && handoffTargets.length > 0) {
       state.doneReinjectCount = (state.doneReinjectCount ?? 0) + 1;
 
-      if (state.doneReinjectCount <= MAX_DONE_REINJECT_ATTEMPTS && state.sessionId) {
-        // Reset the parser rolling buffer so that the reinject prompt echo
-        // (which may contain tokens like __HANDOFF__) does not cause a
-        // false-positive parse on the next chunk after the echo gate opens.
-        if (state._parser) state._parser.reset();
+      if (state.doneReinjectCount <= MAX_DONE_REINJECT_ATTEMPTS && (state.sessionId || state.spawnMode === 'stream-json')) {
         const reinjectPrompt = this._buildContinueAfterDonePrompt(node, execution.workflowContext, handoffTargets);
         // Register reinject prompt text with ChatExtractor so _isPromptEcho
         // can detect Claude echoing the reinject instructions in its response.
@@ -4977,6 +5461,21 @@ class SwarmEngine {
         if (execution.workflowContext?.currentTask) {
           this._chatExtractor.registerNodePrompt(nodeId, execution.workflowContext.currentTask);
         }
+
+        // Stream-json agents: spawn a new process with --resume + reinject prompt
+        if (state.spawnMode === 'stream-json') {
+          state.status = 'running';
+          this._broadcastAgentStatus(executionId, nodeId, state);
+          this._syncExecutionStatusFromAgents(execution);
+          this._spawnAgentStreamJson(executionId, nodeId, { reinjectPrompt });
+          return;
+        }
+
+        // PTY agents: write reinject prompt to existing PTY stdin
+        // Reset the parser rolling buffer so that the reinject prompt echo
+        // (which may contain tokens like __HANDOFF__) does not cause a
+        // false-positive parse on the next chunk after the echo gate opens.
+        if (state._parser) state._parser.reset();
         this._writeSwarmPrompt(
           state.sessionId,
           reinjectPrompt,
@@ -5074,6 +5573,16 @@ class SwarmEngine {
         state.noProgressTimer = null;
       }
       this._clearSubWorkflowPollHandle(state);
+      // Kill stream-json child processes (DEC-027)
+      if (state.spawnMode === 'stream-json' && state._streamJsonChild) {
+        const child = state._streamJsonChild;
+        state._streamJsonChild = null;
+        if (child.pid && !child.killed) {
+          treeKill(child.pid, 'SIGTERM', (err) => {
+            if (err) console.warn(`[SwarmEngine] tree-kill stream-json warning: ${err.message}`);
+          });
+        }
+      }
     }
 
     for (const childExecutionId of childExecutionIds) {

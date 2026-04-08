@@ -4769,3 +4769,14 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Update Section 13 when _spawnAgentStreamJson (#359) or other V9.0 components land
 ---
+
+---
+## 2026-04-08 — backend-dev — Task #359: SwarmEngine._spawnAgentStreamJson() — Stream-JSON agent spawner
+**Outcome:** COMPLETED
+**Summary:** Implemented _spawnAgentStreamJson(), _spawnAgent() dispatcher, and _handleStreamJsonResult() in SwarmEngine.js. Claude provider agents now have a stream-json spawn path alongside the existing PTY path. Modified _onDone for stream-json reinject, _serializeAgentState for new fields, stopExecution for child cleanup. 453/453 tests pass, build clean.
+**Files changed:** server/services/SwarmEngine.js (MODIFIED — imports, 3 new methods, 3 modified methods)
+**Bugs fixed:** none
+**Decisions made:** HandoffParser for token scanning (consistency), null sessionId for stream-json agents (DEC-028), requireCjs for tree-kill import
+**Blockers:** none
+**Next:** #360 TEST GATE (qa-tester), then #361 dispatcher integration into startExecution and all call sites
+---

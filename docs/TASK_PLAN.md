@@ -15795,7 +15795,7 @@ Agent: backend-dev
 Priority: CRITICAL
 Difficulty: VERY HARD
 Suggested Model: claude-opus-4-6
-Status: PENDING
+Status: COMPLETED
 Component Spec: PRD Section 11 — SwarmEngine._spawnAgentStreamJson()
   File: server/services/SwarmEngine.js (MODIFY — 5284 lines, be surgical)
   Method: async _spawnAgentStreamJson(executionId, nodeId, prompt, sessionId)

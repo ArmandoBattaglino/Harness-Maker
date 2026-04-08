@@ -1883,3 +1883,59 @@ StreamJsonParser is production-ready. 37 tests pass. The parser is stateless exc
 - TASK #358 (TEST GATE) should verify all acceptance criteria via the test file
 - TASK #359 (_spawnAgentStreamJson) will import StreamJsonParser and use parseLine() on each readline event from spawned Claude processes
 ---
+
+---
+## 2026-04-08 — Task #359: SwarmEngine._spawnAgentStreamJson() — Stream-JSON agent spawner
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+V9.0 Phase 1 Backend Core. StreamJsonParser (#357) was COMPLETED and TEST GATE #358 passed. SwarmEngine.js was 5284 lines with only PTY-based agent spawning (_spawnAgentPty). The task required adding a parallel stream-json spawn path for Claude providers using child_process.spawn instead of node-pty.
+
+### What I did
+1. Read all memory files (DECISIONS.md, CONTEXT.md, PROGRESS.md) and key reference files (StreamJsonParser.js, HandoffParser.js, spike script, JobRunner.js pattern)
+2. Studied _spawnAgentPty thoroughly (500+ lines) to understand the state model, broadcast patterns, tapFn architecture, and integration with _onDone/_onHandoff
+3. Added imports: `spawn` from child_process, `createInterface` from readline, `createRequire` from module, StreamJsonParser, tree-kill via CJS require
+4. Added `STREAM_JSON_POST_RESULT_TIMEOUT_MS = 30000` constant
+5. Implemented `_spawnAgent()` dispatcher (FR-SJ-09/10) that routes Claude models to stream-json, others to PTY
+6. Implemented `_spawnAgentStreamJson()` (FR-SJ-04..15) — full method with 12 steps: binary resolution, session ID management, args building, spawn, readline+parser pipeline, WS event broadcasting for all event types, result handling
+7. Implemented `_handleStreamJsonResult()` — cost extraction, HandoffParser token scanning on accumulated text, _onDone/_onHandoff routing, post-result tree-kill timeout
+8. Modified `_onDone()` to handle stream-json reinject: when spawnMode==='stream-json', spawns a new process with --resume instead of writing to PTY stdin
+9. Updated `_serializeAgentState()` to include stream-json fields in serialized snapshots
+10. Added stream-json child cleanup to `stopExecution()` via tree-kill
+11. Verified: 453/453 tests pass, client build succeeds
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SwarmEngine.js | MODIFIED | Added imports (spawn, readline, createRequire, StreamJsonParser, tree-kill). Added _spawnAgent dispatcher, _spawnAgentStreamJson, _handleStreamJsonResult. Modified _onDone for stream-json reinject. Updated _serializeAgentState. Added stream-json cleanup in stopExecution. |
+
+### Improvements delivered
+- Claude agents can now spawn via structured stream-json output instead of PTY
+- Eliminates ConPTY artifact handling for Claude provider (no ANSI stripping, no echo gates, no prompt-ready detection)
+- Cost/token tracking per turn with cumulative totals
+- Clean turn-based lifecycle: each turn is a separate process, continuity via --resume
+- All WS events broadcast: agent_status, chat_message, agent_tool_use, agent_tool_delta, agent_thinking, agent_cost, api_retry
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None | N/A | N/A | N/A |
+
+### Decisions I made
+- Used HandoffParser.feed() for token scanning on accumulated text rather than regex — ensures consistent handoff detection between PTY and stream-json paths
+- sessionId field on agent state stays null for stream-json agents (DEC-028: no PTY session) — streamJsonSessionId is the new field
+- _spawnAgent dispatcher checks SUPPORTED_RUNTIME_MODELS.claude array for provider determination, not just string comparison
+- tree-kill import uses separate `requireCjs` variable to avoid collision with any existing createRequire usage
+
+### What I learned
+- SwarmEngine state model is deeply tied to PTY assumptions (tapFn, promptReady, echoMarkerTimer, etc.) — stream-json agents skip all of that
+- The _onDone reinject path checked `state.sessionId` which is null for stream-json agents — needed to add `|| state.spawnMode === 'stream-json'` guard
+- stopExecution cleanup loop needed explicit stream-json child process handling since those processes aren't tracked by SessionManager
+
+### State I'm leaving behind
+_spawnAgentStreamJson is fully implemented but NOT yet wired into the main startExecution flow. The existing startExecution still calls _spawnAgentPty directly (line ~3245). Task #361 (_spawnAgent dispatcher integration) will wire _spawnAgent into all call sites. _handleRuntimeBlocker also still uses _spawnAgentPty directly — that's intentional for now since stream-json agents shouldn't hit the same runtime blockers.
+
+### Handoff
+Task #360 (TEST GATE) should test this via mock spawn. Then #361 will wire _spawnAgent into startExecution and other call sites. The _spawnAgent dispatcher method is already implemented here and ready for integration.
+---
