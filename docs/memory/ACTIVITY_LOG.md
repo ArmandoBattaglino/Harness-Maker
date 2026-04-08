@@ -1,4 +1,15 @@
-﻿## 2026-04-07 - qa-tester - V8.0 Debugger Loop: CLEAN (0 bugs)
+﻿## 2026-04-07 - project-manager - Full Project State Audit
+**Outcome:** COMPLETED
+**Summary:** Comprehensive project analysis requested by user. 353 tasks total: 351 COMPLETED, 2 DEFERRED, 0 PENDING. All areas V3.1 through V8.2 CLOSED. 409/409 server tests pass, client build clean. Identified critical action item: 35 files with uncommitted changes from V8.0-V8.2 work need to be committed. Known minor issues: ChatExtractor test flakiness under parallel vitest (passes in isolation), Researcher agent occasional "Structured handoff sent." fallback.
+**Files changed:** docs/TASK_PLAN.md (header update), docs/memory/CONTEXT.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none (audit only)
+**Decisions made:** Next priority is committing all pending changes before any new work
+**Blockers:** none
+**Next:** Commit the large uncommitted changeset, then project is fully closed
+
+---
+
+## 2026-04-07 - qa-tester - V8.0 Debugger Loop: CLEAN (0 bugs)
 **Outcome:** COMPLETED — CLEAN
 **Summary:** Deep E2E test on all V8.0 components. 14 tests: 12 PASS, 0 FAIL, 2 UNTESTABLE. Zero bugs found.
 **Files changed:** none
@@ -4454,5 +4465,66 @@ full self-contained context and acceptance criteria.
 **Decisions made:** Preserve `isTriageNode` compatibility but treat start resolution as a whole-node concern; serialize child blocker metadata so execution snapshots remain truthful; distinguish `Selected` from live `Active` project state in the dashboard/sidebar instead of conflating both with PTY session presence
 **Blockers:** none
 **Next:** none in the verified scope
+
+---
+## 2026-04-08 - codex - Full regression sweep after Swarm hardening
+**Outcome:** COMPLETED
+**Summary:** Ran a wider verification pass after the Swarm hardening wave. The first full `npm test --prefix server` attempt failed during Vitest/Vite bootstrap with a sandbox-level `spawn EPERM`, so the suite was rerun outside the sandbox to separate environment limits from application regressions. Result: all 18 server test files passed (`398/398`), and `npm run build --prefix client` remained green. This confirms the recent SwarmEngine and UI truthfulness fixes do not regress the broader server surface.
+**Files changed:** docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** Treat the initial EPERM as an environment constraint, not a product failure, and record the unrestricted rerun as the authoritative regression result
+**Blockers:** none
+**Next:** none
+
+---
+## 2026-04-08 - codex - Deterministic Swarm E2E smoke: sub-workflow + merge + reload
+**Outcome:** COMPLETED
+**Summary:** Ran a live deterministic smoke test against the local app at `http://127.0.0.1:3000` to verify the recent Swarm fixes without depending on external AI providers. Created a temporary child workflow with a root `delay` node and a parent workflow with `delay + subWorkflow + merge + final delay`, started it through `/api/v1/swarm/:workflowId/start`, and confirmed successful completion via `/status` and `/history`: `left-delay`, `sub-main`, `merge-main`, and `final-delay` all reached `done`, edge counters were `1/1/1`, and the parent history entry persisted correctly. Browser verification with Puppeteer confirmed `ccvm-active-project-id=Prova` + `ccvm-app-view=swarm` reloads back into Swarm with visible `Project: Prova` context and project-scoped workflow hint text; switching to `projects` also showed the project as `Selected`. All temporary workflows were deleted afterward.
+**Files changed:** docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** Use a no-provider deterministic flow for the live smoke so orchestration behavior can be verified independently from runtime quotas/auth state
+**Blockers:** none
+**Next:** none
+
+---
+- 2026-04-08: Hardened the Swarm visual regression harness so it can reuse an already running isolated server when child-process spawning is blocked by the environment; documented prepare/reuse fallback commands in README docs.
+
+---
+## 2026-04-08 - codex - Deterministic Swarm E2E smoke: parent stop propagates to child sub-workflow
+**Outcome:** COMPLETED
+**Summary:** Ran a final live deterministic smoke against `http://127.0.0.1:3000` to close the last open orchestration risk: stopping a parent execution while its nested sub-workflow child was still running. Created a temporary child workflow with a single `delay` root (`15s`) and a parent workflow with parallel root `delay + subWorkflow + merge + final delay`, started the parent, confirmed both `left-delay` and `sub-main` were `running`, then issued `DELETE /api/v1/swarm/:executionId` after about one second. Parent history persisted execution `ce6f0a72-08ec-4896-8072-a80bb313dd31` as `stopped`, child history persisted execution `77290845-8a7d-4df2-a129-3298fb6e6109` as `stopped`, and a second history poll after waiting past the child delay still showed both executions as `stopped` with no late completion. Temporary workflows were deleted after the smoke.
+**Files changed:** docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** Validate stop propagation with a deterministic no-provider workflow and re-poll history after the delay window to catch asynchronous completion leaks
+**Blockers:** none
+**Next:** none
+## 2026-04-08 - codex - Swarm chat fidelity cleanup for ConPTY text joins and Codex fallback chrome
+**Outcome:** COMPLETED WITH RESIDUAL RISK
+**Summary:** Continued the Swarm chat bug hunt from a live Parallel Greetings workflow reproduction. Hardened `SwarmEngine` chat sanitization against additional real ConPTY artifacts (`contains` over-splitting, `greeting in one language` joins, `Agent-B` label corruption, Italian `l'handoff` glue, compact English phrase joins). Then traced a second live bug to `ChatExtractor`: when Auto fell back from Claude to Codex after usage limit, Unified Chat was flooded with runtime chrome (`Working (...)`, `@filename` task text, `[default]` subagent traces, `/fast` tips, prompt echoes, and garbled working-meter fragments). Added targeted extractor cleanup and regression coverage. Verified with server regression suite PASS (`npm test --prefix server -- ChatExtractor.test.js swarm-engine.test.js`, 153/153) and fresh browser smokes on ports 3010/3011/3012. Result: the large Codex fallback contamination wave is gone, but the observed fallback path now showed only `Structured handoff sent.` in chat during the verification window, so there is a follow-up risk of over-filtering intermediate semantic progress.
+**Files changed:** server/services/SwarmEngine.js, server/services/ChatExtractor.js, server/tests/swarm-engine.test.js, server/tests/ChatExtractor.test.js, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** Additional live chat word-join corruption from ConPTY; Unified Chat polluted by Codex fallback runtime chrome and garbled status fragments
+**Decisions made:** Prefer cleaner chat over preserving Codex internal runtime/status chatter; keep the fix server-side in `ChatExtractor` rather than reusing the more aggressive snippet sanitizer directly for live chat
+**Blockers:** none
+**Next:** Optional follow-up - tune Codex fallback chat filtering so real semantic progress lines remain visible while keeping runtime chrome suppressed
+
+---
+## 2026-04-08 - codex - ChatExtractor normalization pass for compressed prose and corrupted chat prefixes
+**Outcome:** COMPLETED
+**Summary:** Extended the server-side Unified Chat cleanup with a dedicated `chatTextNormalization` helper and wired it into `ChatExtractor` after paragraph reflow. The new pass restores spaces in ConPTY-compressed long tokens when they can be segmented into known chat words, strips short noisy leader fragments before the first readable sentence, and keeps the existing fallback-chrome cleanup from leaking model/runtime residue into chat. Added focused regression coverage for compressed remote-work prose, corrupted short-token prefixes, Codex fallback payload recovery, and prompt-echo suppression. Verification: `npx vitest run tests/ChatExtractor.test.js tests/chat-snippet-option-b.test.js` PASS (`20/20`).
+**Files changed:** server/services/chatTextNormalization.js, server/services/ChatExtractor.js, server/tests/ChatExtractor.test.js, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** Chat messages keeping ConPTY-compressed words attached together; chat lines starting with short corrupted token fragments before otherwise readable content
+**Decisions made:** Keep the repair local to the chat extraction path instead of broadening `SwarmEngine` snippet sanitization; salvage semantic fallback sentences when possible, but continue dropping messages that remain mostly orchestration chrome after cleanup
+**Blockers:** none
+**Next:** Optional follow-up - run one more live Swarm browser verification against the Remote Work workflow to measure how much real semantic progress survives after the tighter cleanup
+
+---
+## 2026-04-08 - codex - Output fidelity closure for persisted final reports and chat normalization
+**Outcome:** COMPLETED
+**Summary:** Closed debugger-loop wave `#352-#353`. `SessionManager` now exposes sanitized replay output for archival use, and `SwarmEngine` resolves each persisted `agentOutputs[*].finalText` from the best available source instead of blindly trusting live chat fragments. During the regression gate, the full server suite surfaced three remaining `ChatExtractor` failures; fixing them required restoring leading connector splits in compressed prose, tightening corrupted-prefix stripping, and suppressing single-line fallback payloads that were still mostly orchestration chrome. Verification: `npm test --prefix server -- ChatExtractor.test.js` PASS (`11/11`), `npm test --prefix server -- --runInBand` PASS (`409/409`), `npm run build --prefix client` PASS.
+**Files changed:** server/services/SessionManager.js, server/services/SwarmEngine.js, server/services/chatTextNormalization.js, server/services/ChatExtractor.js, server/tests/swarm-engine.test.js, docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** Persisted final reports using truncated mid-sentence chat fragments; compressed chat prose missing spaces; corrupted short-token leaders deleting the start of readable sentences; inline fallback prompt-echo payloads leaking as false-positive assistant updates
+**Decisions made:** Prefer sanitized PTY replay over chatMessages for archival `finalText`; keep live-chat cleanup and persistence-quality heuristics separate; drop lone routing/handoff-intent sentences when they remain mostly orchestration chrome after cleanup
+**Blockers:** none
+**Next:** Optional follow-up - re-run a real provider-backed workflow when quota/runtime conditions are favorable to add a fresh live artifact example to history
 
 ---

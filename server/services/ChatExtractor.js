@@ -1,6 +1,8 @@
 // server/services/ChatExtractor.js
 // Extracts clean chat messages from agent PTY streams for the Unified Chat View.
 
+import { normalizeChatDisplayText } from './chatTextNormalization.js';
+
 // Noise patterns to strip — subset of SwarmEngine's snippet noise regexes
 const NOISE_PATTERNS = [
   /^\s*[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏●◐◑◒◓⣾⣽⣻⢿⡿⣟⣯⣷▁▂▃▄▅▆▇█]+\s*/gm,  // spinners
@@ -68,14 +70,68 @@ const NOISE_PATTERNS = [
   /^\s*.?\s*medium\s*.?\s*\/eff.*$/gm,   // full line with "medium · /eff"
   /^\s*[⎿⏐⏎│]\s*Tip:\s*Use\s*\/feedback.*$/gm, // Claude Code feedback tip
   /^\s*Tip:\s*Use\s*\/feedback.*$/gm,             // feedback tip without leader
-  /^\s*⎿\s+.{0,200}$/gm,                         // Claude Code tool-output leader lines (⎿  Stop says: ...)
-  /^\s*[⎿⏐⏎│]\s*Stop says:.*$/gm,               // hook "Stop says:" output
+  /⎿\s+.{0,200}$/gm,                              // Claude Code tool-output leader (⎿  Stop says: ...) — anywhere in line
+  /[⎿⏐⏎│]\s*Stop says:.*$/gm,                    // hook "Stop says:" output — anywhere in line
   /⚠️?\s*MEMORIA NON SCRITTA[^]*/gm,             // memory-keeper hook warning
   /Now using extra usage/g,                        // Claude CLI "Now using extra usage" status
-  /^\s*running\s*stop\s*hook\b.*$/gm,             // "running stop hook" CLI indicator
-  /^\s*stop\s*hook\b.*$/gm,                       // "stop hook" CLI indicator
+  /\(?\s*running\s*stop\s*hook\s*\)?\s*/gi,       // "(running stop hook)" CLI indicator
+  /\(?\s*stop\s*hook\s*\)?\s*/gi,                 // "(stop hook)" CLI indicator
   /^\s*thought for \d+s?\b.*$/gm,                 // "thought for 1s" bare line
+  /\b\w{3,20}ing[.…]{2,3}[^a-zA-Z\s]*(?:\s*[⎿⏐])/gm, // thinking indicator + hook leader: "Topsy-turvying...⎿"
   /^\s*[▝▜▛▘▟▙▚▞▐]+[^a-zA-Z]*$/gm,              // half-block/quadrant character noise lines
+  // --- Rate-limit / quota messages (BUG-CE-1) ---
+  /you've used \d+%\s*of your session limit/gi,   // "You've used 92% of your session limit"
+  /you've hit your limit/gi,                       // "You've hit your limit"
+  /you have hit your limit/gi,                     // variant
+  /^\s*.*session limit.*resets?\b.*$/gm,           // full line with "session limit ... resets"
+  /^\s*.*usage limit.*resets?\b.*$/gm,             // "usage limit ... resets"
+  /\/rate-limit-options/g,                          // "/rate-limit-options" menu reference
+  // --- ConPTY spaceless variants (BUG-CE-2) ---
+  /bypass\s*permissions?\s*on/gi,                   // "bypasspermissionson" or "bypass permissions on"
+  /\(?\s*shift\s*\+?\s*tab\s*(?:to\s*)?cycle\s*\)?/gi, // "(shift+tabtocycle)" or "(shift+tab to cycle)"
+  // --- Codex CLI noise (BUG-CE-3) ---
+  /Welcome\s*to\s*Codex/gi,                        // "WelcometoCodex" or "Welcome to Codex"
+  /OpenAI'?s?\s*command[\s-]*line\s*coding\s*agent/gi, // "OpenAI's command-line coding agent"
+  /Sign\s*in\s*with\s*ChatGPT/gi,                  // "SigninwithChatGPT"
+  /Sign\s*in\s*with\s*Device\s*Code/gi,            // "SigninwithDeviceCode"
+  /Provide\s*your\s*own\s*API\s*key/gi,            // "ProvideyourownAPIkey"
+  /^\s*Boogieing.*$/gm,                             // "Boogieing..." Codex animation
+  /^\s*do you want to do\?\s*$/gm,                 // Codex interactive prompt
+  /Upgrade your\s*plan/gi,                          // "Upgrade your plan"
+  /Stop\s*and\s*wait\s*for\s*limit\s*to\s*reset/gi, // "Stopandwaitforlimittoreset"
+  /based\s*billing/gi,                              // "basedbilling"
+  /Pay for what you use/gi,                         // Codex billing prompt
+  /Tip:\s*New\s*Use\s*\/fast[^\n]*/gi,             // Codex inline usage tip
+  /[>\u203A]?\s*Run\s*\/review\s*on\s*my\s*current\s*changes[^\n]*/gi, // leaked Codex review prompt
+  /Tip:\s*New\s*Try\s*the\s*Codex\s*App[^\n]*/gi,  // Codex app upsell banner
+  /Run\s*'codex\s*app'\s*or\s*visit[^\n]*/gi,      // Codex app upsell CTA
+  /[>\u203A]\s*No\s*extra\s*text\s*after\s*that\s*last\s*handoff\s*line[^\n]*/gi, // swarm prompt echo
+  /[>\u203A]\s*You\s*are\s*the\s*[^\n]*/gi,        // inline prompt echo in Codex fallback chat
+  /[>\u203A]\s*When\s*your\s*work\s*is\s*complete[^\n]*/gi, // prompt echo follow-up
+  /^(?!.*[.!?]).*[\u2022\u25E6\u00B7]?\s*Working\s*\(\d+s[^\n]*(?:% left|gpt-[\w.-]+)[^\n]*$/gmi, // inline Codex status meter
+  /[\u2022\u25E6\u00B7]?\s*Spawned\s+[^\n]*\[[^\]]+\][^\n]*/gi, // Codex subagent lifecycle
+  /[\u2022\u25E6\u00B7]?\s*Closed\s+[^\n]*\[[^\]]+\][^\n]*/gi,
+  /[\u2022\u25E6\u00B7]?\s*Waiting\s*for\s*\d+\s*agents?[^\n]*/gi,
+  /[\u2022\u25E6\u00B7]?\s*Finished\s*waiting[^\n]*/gi,
+  /[\u2514\u251C\u2502]?\s*\w+\s*\[[^\]]+\]:\s*Completed\s*-\s*[^\n]*/gi, // Codex worker summaries
+  /[\u2514\u251C\u2502]?\s*You\s*are\s*Agent-[^\n]*/gi, // echoed worker prompt line
+  /^\s*Nessun progetto con docs\/memory\/.*$/gm,   // hook/memory warning (Italian)
+  /^\s*Stop says:.*$/gm,                            // "Stop says: ..." hook output
+  /^\s*Structured handoff sent\.?\s*$/gm,          // "Structured handoff sent." — protocol echo, not semantic
+  // --- Claude Code banner / header (BUG-CE-4) ---
+  /[▐▛▜▌▝▘█]+\s*Claude\s*Code\s*v[\d.]+/gi,       // "▐▛███▜▌   Claude Code v2.1.94"
+  /[▐▛▜▌▝▘█]+[^a-zA-Z\n]*Claude\s*Max/gi,         // "▝▜█████▛▘   · Claude Max"
+  /[▐▛▜▌▝▘█]{2,}[^a-zA-Z\n]*/gm,                  // runs of half-block chars (banner fragments)
+  /Claude\s*runtime\s*is\s*active\s*for\s*this\s*Swarm/gi, // system prompt echo
+  /Continue\s*the\s*workflow\s*using\s*the\s*shared\s*task\s*context/gi, // system prompt echo
+  /is\s*not\s*the\s*end\s*of\s*the\s*workflow\s*yet/gi, // done-reinject prompt echo
+  /Do\s*not\s*stop\s*at\s*the\s*done\s*marker/gi,  // done-reinject prompt echo
+  /downstream\s*agents?\s*still\s*need\s*your\s*output/gi, // done-reinject echo
+  /Finish\s*your\s*work,?\s*then\s*hand\s*off\s*to/gi, // handoff instruction echo
+  /Your\s*very\s*last\s*line/gi,                    // handoff instruction echo
+  /Execute\s*the\s*workflow\s*goal\s*described\s*here/gi, // reinject prompt echo
+  /❯\s*Claude\s*runtime/gi,                         // prompt-style system prompt echo
+  /❯\s*\w+\s*is\s*not\s*the\s*end/gi,             // prompt-style reinject echo
 ];
 
 // Only strip noise here when it is unquestionably chrome. Aggressive fragment
@@ -102,16 +158,22 @@ const CHUNK_NOISE_PATTERNS = [
   /Recent activity/g,
   /No recent activity/g,
   /Opus \d[\d.]+ with \w+ effort/g,
-  /bypass permissions on/g,
-  /\(shift\+tab to cycle\)/g,
+  /bypass\s*permissions?\s*on/gi,
+  /\(?\s*shift\s*\+?\s*tab\s*(?:to\s*)?cycle\s*\)?/gi,
   /^\s*[✢✶✻✽·*]+\s*$/gm,
   /^\s*[※✳✻✽✢✶·*☆★⊛⊕⊙◉◎⚡⚙].*$/gm,
   /^\s*Honking\.\.\.\s*$/gm,
   /^\s*Forming\.\.\.\s*$/gm,
+  /^\s*Boogieing.*$/gm,
   /Found \d+ settings? issues?/gm,
   /^\s*---\s*$/gm,
   /^\s*[⎿⏐⏎│]\s*Tip:\s*Use\s*\/feedback.*$/gm,
   /^\s*Tip:\s*Use\s*\/feedback.*$/gm,
+  /you've used \d+%\s*of your session limit/gi,
+  /you've hit your limit/gi,
+  /Welcome\s*to\s*Codex/gi,
+  /^\s*Stop says:.*$/gm,
+  /^\s*Structured handoff sent\.?\s*$/gm,
 ];
 
 // Patterns that indicate a response boundary (agent is done speaking)
@@ -257,7 +319,7 @@ export class ChatExtractor {
 
     // Buffer age guard — don't flush if buffer is too young
     const bufferAge = Date.now() - (buf.firstChunkAt || buf.lastChunkAt);
-    if (bufferAge < 2000) return;
+    if (bufferAge < 6000) return;
 
     // Only flush if there's been recent activity (within 2x the period)
     const timeSinceLastChunk = Date.now() - buf.lastChunkAt;
@@ -315,6 +377,38 @@ export class ChatExtractor {
       text = text.replace(pat, '');
     }
 
+    // Targeted cleanup for Codex fallback chrome that can be injected inline
+    // around otherwise-useful assistant text during periodic flushes.
+    text = text
+      .replace(/^(?:â€¢|â€|Â·|•|·)+\s*/gi, '')
+      .replace(/Working\s*\(\d+s\s*[>\u203A]?\s*(?:Write tests for|Improve documentation in)\s+@[\w.-]+/gi, '')
+      .replace(/[>\u203A]?\s*(?:Write tests for|Improve documentation in)\s+@[\w.-]+/gi, '')
+      .replace(/Working\s*\(\d+s\s*[>\u203A]?\s*Find and fix a bug in @[\w.-]+/gi, '')
+      .replace(/[>\u203A]?\s*Find and fix a bug in @[\w.-]+/gi, '')
+      .replace(/[>\u203A]?\s*Run\s*\/review\s*on\s*my\s*current\s*changes[^\n]*/gi, '')
+      .replace(/Tip:\s*New\s*Try\s*the\s*Codex\s*App[^\n]*/gi, '')
+      .replace(/Run\s*'codex\s*app'\s*or\s*visit[^\n]*/gi, '')
+      .replace(/\b(?:Write tests for|Improve documentation in|Find and fix a bug in)\s+@[\w.-]+\b/gi, '')
+      .replace(/^\s*[^\w\s]?\s*Working\s*\(\d+s[^A-Za-z\n]*/i, '')
+      .replace(/[•◦●]?\s*Working\s*\(\d+s\b[^\n]*/gi, (segment) => {
+        const semanticMatch = [...segment.matchAll(/[A-Z\u00C0-\u00D6][a-z\u00DF-\u00F6\u00F8-\u00FF]{3,}/gu)]
+          .find((match) => !/^(?:Working|Write|Improve|Find)$/u.test(match[0]));
+        if (!semanticMatch || semanticMatch.index == null) return '';
+        return segment.slice(semanticMatch.index);
+      })
+      .replace(/[•◦●]?\s*Working\s*\([^)\n]*\)/gi, '')
+      .replace(/\bWhen your work is complete, emit one valid handoff token using any connected\s*target ID:[^.\n]*(?:\.|$)/gi, '')
+      .replace(/\bThe runtime will fan out that handoff to every connected downstream node for\s*you\.?/gi, '')
+      .replace(/\bYou are the triage node\.?/gi, '')
+      .replace(/\bRoute the incoming request to both Agent-A and Agent-B in parallel for greeting generation\.?/gi, '')
+      .replace(/\bLast line only:?/gi, '')
+      .replace(/\bNo extra text after that last handoff line\.?/gi, '')
+      .replace(/\b\d+%\s*left\b[^\n]*/gi, '')
+      .replace(/\b\d+%\s*left\s*[·•◦]?\s*~[^\s\n]+/gi, '')
+      .replace(/\bReturn only the greeting text\.?/gi, '')
+      .replace(/\b(?:Waiting for\s+)?\w+\s*\[default\]\b/gi, '')
+      .replace(/\s{2,}/g, ' ');
+
     // Line-level filter: remove lines that are pure noise fragments
     text = text.split('\n').filter(line => {
       const t = line.trim();
@@ -341,6 +435,30 @@ export class ChatExtractor {
       // Lines containing status bar patterns
       if (/esc to int/.test(t) && /medium|high|low/.test(t)) return false;
       if (/\/eff/.test(t) && /medium|high|low/.test(t)) return false;
+      // Codex garbled lines — ConPTY strips spaces, producing CamelCase word soup
+      // e.g. "WelcometoCodex,OpenAI'scommand-linecodingagentSigninwithChatGPT..."
+      if (/(?:WelcometoCodex|SigninwithChatGPT|SigninwithDeviceCode|ProvideyourownAPIkey|Stopandwaitforlimit)/i.test(t)) return false;
+      // Lines that are pure rate-limit / quota chrome
+      if (/session\s*limit.*reset|usage\s*limit.*reset|hit your limit|rate.limit.options/i.test(t)) return false;
+      if (/you(?:'ve| have)\s*hit\s*your\s*usage\s*limit|purchase more credits|codex\/settings\/usage/i.test(t)) return false;
+      if (/Tip:\s*New\s*Use\s*\/fast/i.test(t)) return false;
+      if (/Tip:\s*New\s*Try\s*the\s*Codex\s*App/i.test(t)) return false;
+      if (/run\s*\/review\s*on\s*my\s*current\s*changes/i.test(t)) return false;
+      if (/Working\s*\(\d+s/i.test(t) && !/[.!?].{10,}/.test(t)) return false;
+      if (/@filename/i.test(t) && !/\b(?:Routing|Both|Agent-[A-Z]|Hello|Ciao|Report|Results?|Saluto|Welcome)\b/.test(t)) return false;
+      if (/\[default\]/i.test(t)) return false;
+      if (/^You are the triage node\b/i.test(t)) return false;
+      if (/^Route the incoming request to both Agent-A and Agent-B\b/i.test(t)) return false;
+      if (/[>\u203A]\s*(?:You are the|When your work is complete|No extra text after that last handoff line)/i.test(t)) return false;
+      if (/\bgpt-[\w.-]+\b/i.test(t) && (/%\s*left/i.test(t) || /~[\\/]/.test(t))) return false;
+      if (/^gpt-[\w.-]+\s+(?:high|medium|low)\b/i.test(t)) return false;
+      if (/\[[^\]]+\]/.test(t) && /\b(?:Spawned|Closed|Completed\s*-|Waiting for \d+ agents|Finished waiting)\b/i.test(t)) return false;
+      const shortAlphaFragments = t.match(/\b[A-Za-z]{1,2}\b/g) || [];
+      const longAlphaWords = t.match(/\b[A-Za-z]{4,}\b/g) || [];
+      const lettersOnly = t.replace(/[^A-Za-z]/g, '');
+      if (lettersOnly.length >= 8 && longAlphaWords.length === 0 && shortAlphaFragments.length >= 6) return false;
+      if (shortAlphaFragments.length >= 10 && longAlphaWords.length <= 1) return false;
+      if (shortAlphaFragments.length >= 8 && longAlphaWords.length <= 2) return false;
       return true;
     }).join('\n').trim();
 
@@ -374,7 +492,18 @@ export class ChatExtractor {
     // We split on blank lines (real paragraph boundaries) and rejoin the
     // soft-wrapped lines inside each paragraph back into a single line so
     // the client's CSS can wrap them naturally.
-    text = reflowParagraphs(text);
+    text = normalizeChatDisplayText(reflowParagraphs(text));
+    text = text.replace(/^\.\s+/, '');
+
+    // Some inline fallback payloads collapse to a single orchestration sentence
+    // about future routing/handoff intent rather than user-meaningful output.
+    if (
+      /^Routing\b/i.test(text)
+      && /\bhandoff token\b/i.test(text)
+      && /\bthen I(?:['â€™]ll| will)\b/i.test(text)
+    ) {
+      text = '';
+    }
 
     if (typeof this._sanitizeMessage === 'function') {
       const sanitizedText = this._sanitizeMessage(text, {

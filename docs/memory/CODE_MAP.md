@@ -3491,6 +3491,26 @@ _All bugs identified in QA Swarm Inspection (2026-03-31) and Swarm Code Audit (2
 - **Purpose:** Keep registry validation strict without rejecting legitimate Windows child PIDs.
 - **Behavior:** `isValidPid(pid)` now accepts integers in `[1, 2147483647]` and is exported for unit testing. This preserves rejection of malformed/tampered values while allowing real PIDs above 65535.
 
+### `server/services/SwarmEngine.js` :: persisted finalText resolution
+- **Purpose:** Build archival `agentOutputs[*].finalText` from the best semantic source instead of whatever fragment most recently reached live chat.
+- **Key helpers:**
+  - `SwarmEngine._readAgentSessionOutput(state)` â€” pulls sanitized PTY replay text from the session manager.
+  - `SwarmEngine._looksLikeTruncatedLead(text)` â€” detects clipped candidates that start mid-word/mid-sentence.
+  - `SwarmEngine._scoreFinalOutputCandidate(text)` â€” ranks archival candidates using quality + completeness heuristics.
+  - `SwarmEngine._resolveAgentFinalText(execution, nodeId, messages, state)` â€” chooses the persisted `finalText` candidate for each node.
+- **Flow:** `_persistExecutionHistory(...)` now compares sanitized replay, normalized live chat text, and raw chat concatenation, then persists the highest-scoring candidate into `agentOutputs` and `aggregatedArtifact`.
+- **Impact:** Final Report history persistence is decoupled from the lossy live-chat stream and no longer archives obvious truncated fragments when replay text is available.
+
+### `server/services/SessionManager.js` :: sanitized replay reuse
+- **Purpose:** Expose the same replay sanitization used for reconnecting terminal clients to the history-persistence path.
+- **Key helper:** `getSanitizedSessionOutput(sessionId)` â€” returns the sanitized PTY ring-buffer text for one session, or an empty string if unavailable.
+- **Impact:** `SwarmEngine` can reuse session replay as an archival-quality source without duplicating sanitization logic.
+
+### `server/services/chatTextNormalization.js` + `server/services/ChatExtractor.js` :: compression/corruption cleanup
+- **Purpose:** Keep Unified Chat readable when terminal output arrives with ConPTY-compressed words, corrupted short-token leaders, or inline fallback prompt/status chrome.
+- **Flow:** `normalizeChatDisplayText(...)` now restores leading connector splits like `Ibenefici... -> I benefici...` and strips noisy short-token prefixes without removing the first readable words. `ChatExtractor._flush(...)` trims mojibake leaders, avoids over-greedy `Working (% left)` stripping on mixed lines, and suppresses lone routing/handoff-intent sentences that are still mostly orchestration chrome.
+- **Impact:** chat updates remain readable while avoiding false-positive assistant messages from fallback runtime noise; this also stabilizes the regression gate around archival finalText quality because live chat normalization no longer fails on those edge cases.
+
 ### Open Decisions Needed Before Implementation
 
 | Decision | Context | Blocking |

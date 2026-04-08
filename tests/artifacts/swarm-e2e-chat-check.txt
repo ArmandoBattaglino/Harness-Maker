@@ -1,0 +1,248 @@
+terminal
+Claude Code
+
+VISUAL MANAGER
+
+dashboard
+Projects
+terminal
+Live Terminal
+play_arrow
+Job Runner
+memory
+Deployments
+description
+Context Editor
+hub
+Swarm
+ACTIVE PTY SESSIONS
+0 Total
+CURRENT PROJECT
+Prova
+Selected context
+No active PTY sessions.
+add
+New Local Session
+ACTIVE
+settings
+v5.0.0
+Parallel Greetings Workflow
+Project: Prova
+📥 HITL
+Runtime
+Auto
+Claude
+Codex
+Gemini
+Models
+History
+Templates
+Versions
+⚙ Settings
+Focus
+Tidy
+Save
+Stop
+● Blocked
+Provider: Codex
+Codex only
+Final Report
+Codex hit its usage or credit limit before the swarm agent could continue. Provider: codex.
+✨
+Generate
+Saved workflows
+Select a saved workflow
+Codex Temp Stop Parent (08/04/2026)
+Codex Temp Stop Child Delay (08/04/2026)
+Venice Canals Research and Summary (08/04/2026)
+Mars Facts Writer (07/04/2026)
+Cats Are Great Pets (07/04/2026)
+Pizza Napoletana Research and Summary (07/04/2026)
+Remote Work Benefits Research and Summary (07/04/2026)
+Pantheon Facts Research and Writing (07/04/2026)
+Penguin Fun Facts Pipeline (07/04/2026)
+Rome Facts Research and Writing (07/04/2026)
+Rome Facts Pipeline (07/04/2026)
+Roman Colosseum Facts Pipeline (07/04/2026)
+Personality Profile Interview (07/04/2026)
+Node.js Interview Workflow (07/04/2026)
+Cat Writer Workflow (07/04/2026)
+Cat Writer (07/04/2026)
+Node-js Features Research and Summary (07/04/2026)
+Researcher and Writer (07/04/2026)
+Colosseum Research and Formal Writing (07/04/2026)
+Two Agent Hello Workflow (07/04/2026)
+Content Agency (07/04/2026)
+Webhook Conditional Router Workflow (07/04/2026)
+Parallel Greetings Workflow (07/04/2026)
+Data Pipeline (07/04/2026)
+Customer Support Triage (07/04/2026)
+Moon Facts Research and Writing (07/04/2026)
+Node.js Feature Research and Summary (07/04/2026)
+Mars Poetry Pipeline (07/04/2026)
+Research Loop (07/04/2026)
+Delay Test Workflow (06/04/2026)
+Flow Control Test Workflow (06/04/2026)
+TypeScript Advantages Pipeline - Copy (06/04/2026)
+TypeScript Advantages Pipeline (06/04/2026)
+TypeScript Feature Research and Summary (06/04/2026)
+TypeScript Features Research and Summary (06/04/2026)
+Test - Copy (06/04/2026)
+Test (06/04/2026)
+Node.js Feature Research and Report (06/04/2026)
+Node-js Feature Research and Summary (06/04/2026)
+Project Research and Summary (06/04/2026)
+Customer Request Router (06/04/2026)
+Analyst-Reporter Pipeline (05/04/2026)
+Roman Aqueducts Research Team (05/04/2026)
+Prompt Reliability Control Workflow (05/04/2026)
+Prompt Stress Audit Workflow (05/04/2026)
+Workflow di 3 Agenti (05/04/2026)
+Node.js Best Practices Research and Summary (05/04/2026)
+Billing Support Triage (05/04/2026)
+Marketing Team - Report to Posts (05/04/2026)
+Billing Triage Workflow (05/04/2026)
+Triage to Billing Workflow (05/04/2026)
+Text Document Review Pipeline (04/04/2026)
+Marketing Agency Workflow (04/04/2026)
+Research and Summarize (04/04/2026)
+Write A Greeting Workflow (04/04/2026)
+A Code Reviewer Analyzes Code Quality Workflow (04/04/2026)
+Code Review and Documentation (04/04/2026)
+Frontend UI Audit and CSS Optimization (04/04/2026)
+A Researcher To Analyze A Writer Workflow (03/04/2026)
+A Two Agents Explorer Reporter Explorer Workflow (03/04/2026)
+2 Agents Researcher Analyzes Writer Summarizes Workflow (03/04/2026)
+A 2 Agent A Researcher Analyzes The Workflow (03/04/2026)
+Research and Report Team (03/04/2026)
+Data Collection and Summarization Pipeline (02/04/2026)
+Research-Write-Review Team (02/04/2026)
+A Customer Support Triage Routes Requests Workflow (02/04/2026)
+Test Workflow (02/04/2026)
+Customer Support Triage Workflow (01/04/2026)
+Customer Triage Workflow (01/04/2026)
+Customer Support Ticket Router (01/04/2026)
+Button State Verification Workflow (01/04/2026)
+Workflow di Marketing (31/03/2026)
+Prova Workflow (31/03/2026)
+Customer Request Triage Workflow (31/03/2026)
+Load workflow
+Refresh
+Duplicate
+Export
+Import
+Shows workflows for Prova plus unscoped ones
+All Agents
+NODES
+🤖
+Agent Node
+
+AI agent with system prompt
+
+🏢
+Department
+
+Group of agents
+
+🔗
+Webhook Trigger
+
+HTTP webhook trigger
+
+📡
+RSS Trigger
+
+RSS feed trigger
+
+◆
+Conditional Router
+
+IF/THEN branching logic
+
+⬡
+Merge / Join
+
+Wait for multiple inputs
+
+⏱
+Delay Timer
+
+Pause flow for N seconds
+
+🔄
+Loop
+
+Iterate with exit condition
+
+⚡
+Error Handler
+
+Catch errors from nodes
+
+📦
+Sub-Workflow
+
+Nested workflow reference
+
+‹ hide
+🤖
+Triage
+Blocked
+• Working (0s › Explain this codebase ◦Wo W    ng  1 Wo    g •   rk 2 W    ng ◦          3 Wo    g ■ You've hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro), visit https://chatgpt.com/codex/settings/usage to purchase more credits or tryagain at 7:13 AM. › Explain this codebase
+🤖
+Agent-A English Greeter
+Idle
+🤖
+Agent-B Italian Greeter
+Idle
+🤖
+Merge Node
+Idle
+🤖
+Final Reporter
+Idle
+React Flow
+Feed
+Chat
+x
+Chat View
+All agents
+Triage
+1
+Triage
+03:06:41
+• Working (0s › Explain this codebase ◦Wo W    ng  1 Wo    g •   rk 2 W    ng ◦          3 Wo    g ■ You've hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro), visit https://chatgpt.com/codex/settings/usage to purchase more credits or tryagain at 7:13 AM. › Explain this codebase
+All Agents
+Agent
+Soft
+Send
+
+--- NODE TEXTS ---
+🤖
+Triage
+Blocked
+• Working (0s › Explain this codebase ◦Wo W    ng  1 Wo    g •   rk 2 W    ng ◦          3 Wo    g ■ You've hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro), visit https://chatgpt.com/codex/settings/usage to purchase more credits or tryagain at 7:13 AM. › Explain this codebase
+
+---
+
+🤖
+Agent-A English Greeter
+Idle
+
+---
+
+🤖
+Agent-B Italian Greeter
+Idle
+
+---
+
+🤖
+Merge Node
+Idle
+
+---
+
+🤖
+Final Reporter
+Idle

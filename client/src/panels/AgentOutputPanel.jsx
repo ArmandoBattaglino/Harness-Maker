@@ -38,6 +38,36 @@ const OUTPUT_NOISE_PATTERNS = [
   /^\s*MEMORIA NON SCRITTA:.*$/gm,                     // memory hook warnings
   /^\s*⚠\s*MEMORIA NON SCRITTA.*$/gm,                 // memory hook variant
   /\/buddy\b/gi,                                        // /buddy command noise
+  // Claude Code banner / header
+  /[▐▛▜▌▝▘█]+\s*Claude\s*Code\s*v[\d.]+/gi,           // banner + version
+  /[▐▛▜▌▝▘█]+[^a-zA-Z\n]*Claude\s*Max/gi,             // banner + Claude Max
+  /[▐▛▜▌▝▘█]{2,}[^a-zA-Z\n]*/gm,                      // half-block char runs
+  // System prompt / reinject echoes
+  /Claude\s*runtime\s*is\s*active\s*for\s*this\s*Swarm/gi,
+  /Continue\s*the\s*workflow\s*using\s*the\s*shared\s*task\s*context/gi,
+  /is\s*not\s*the\s*end\s*of\s*the\s*workflow\s*yet/gi,
+  /Do\s*not\s*stop\s*at\s*the\s*done\s*marker/gi,
+  /downstream\s*agents?\s*still\s*need\s*your\s*output/gi,
+  /Finish\s*your\s*work,?\s*then\s*hand\s*off\s*to/gi,
+  /Execute\s*the\s*workflow\s*goal\s*described\s*here/gi,
+  /❯\s*Claude\s*runtime/gi,
+  /❯\s*\w+\s*is\s*not\s*the\s*end/gi,
+  // Hook and CLI noise
+  /Now using extra usage/gi,
+  /\(?\s*running\s*stop\s*hook\s*\)?\s*/gi,
+  /Stop says:.*$/gm,
+  /⚠️?\s*MEMORIA NON SCRITTA.*/gm,
+  /^\s*\d+\s*settings?\s*issues?\s*$/gm,                // "1 settings issue"
+  /^\s*◐\s*medium\b.*$/gm,                              // "◐medium..." spinner status
+  // ACTIVITY_LOG / memory hook echoes
+  /ACTIVITY_LOG\.md\b[^]*?(?:chiudere|close)\./gi,      // hook echo about activity log
+  /Verifica\s*che\s*ogni\s*agente\b[^]*?(?:chiudere|close)\./gi, // hook verification echo
+  /Found\d*settings?issues?/gi,                          // "Found2settingsissues" (concatenated)
+  /\bFound\s*\d+\s*settings?\s*issues?\b/gi,            // "Found 2 settings issues" (spaced)
+  /^\s*[─━═]{4,}[^a-zA-Z]*$/gm,                         // long horizontal rules (────...────)
+  /[⏵⏴]{2,}/g,                                           // repeated arrow chars
+  /\(shift\+tab\b[^)]*\)/gi,                             // "(shift+tab ...)" any variant
+  /shift\+tab\s*\w+/gi,                                  // "shift+tab Found..." concatenated
 ];
 
 function cleanOutputText(raw) {

@@ -18,6 +18,8 @@ const appDataWorkflowsDir = path.join(appDataConfigRoot, 'workflows');
 const port = Number.parseInt(process.env.SWARM_VISREG_PORT ?? '3310', 10);
 const baseUrl = `http://127.0.0.1:${port}`;
 const updateBaselines = process.argv.includes('--update');
+const prepareOnly = process.argv.includes('--prepare-only');
+const reuseServer = process.argv.includes('--reuse-server') || process.env.SWARM_VISREG_REUSE_SERVER === '1';
 const viewport = { width: 1460, height: 920 };
 const diffPixelThreshold = 18;
 const maxChangedPixels = 140;
@@ -101,6 +103,15 @@ async function waitForHealth(timeoutMs = 120000) {
   throw new Error(`Timed out waiting for ${baseUrl}/health`);
 }
 
+async function isServerHealthy(timeoutMs = 2000) {
+  try {
+    await waitForHealth(timeoutMs);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
 async function startIsolatedServer() {
   await ensureDir(artifactsDir);
 
@@ -116,18 +127,34 @@ async function startIsolatedServer() {
     ? ['/d', '/s', '/c', 'npm run start']
     : ['run', 'start'];
 
-  const child = spawn(command, args, {
-    cwd: repoRoot,
-    env: {
-      ...process.env,
-      NO_OPEN: '1',
-      PORT: String(port),
-      APPDATA: appDataRoot,
-    },
-    shell: false,
-    windowsHide: true,
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
+  let child;
+  try {
+    child = spawn(command, args, {
+      cwd: repoRoot,
+      env: {
+        ...process.env,
+        NO_OPEN: '1',
+        PORT: String(port),
+        APPDATA: appDataRoot,
+      },
+      shell: false,
+      windowsHide: true,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+  } catch (error) {
+    if (error?.code === 'EPERM' || error?.code === 'EACCES' || error?.code === 'EINVAL') {
+      throw new Error(
+        [
+          `Unable to launch the isolated Swarm server (${error.code}).`,
+          'Prepare the fixture appdata and reuse an already running server instead:',
+          '1. node scripts/swarm-visual-regression.mjs --prepare-only',
+          `2. In PowerShell: $env:APPDATA='${appDataRoot}'; $env:PORT='${port}'; $env:NO_OPEN='1'; npm run start`,
+          '3. node scripts/swarm-visual-regression.mjs --reuse-server',
+        ].join('\n')
+      );
+    }
+    throw error;
+  }
 
   child.stdout.pipe(stdoutStream);
   child.stderr.pipe(stderrStream);
@@ -140,6 +167,28 @@ async function startIsolatedServer() {
   }
 
   return child;
+}
+
+async function acquireServer() {
+  if (prepareOnly) {
+    await resetHarnessAppData();
+    console.log(`Prepared Swarm visual regression appdata at ${appDataRoot}`);
+    return null;
+  }
+
+  if (await isServerHealthy()) {
+    console.log(`Reusing running Swarm server at ${baseUrl}`);
+    return null;
+  }
+
+  if (reuseServer) {
+    throw new Error(
+      `No running Swarm server found at ${baseUrl}. Start one first, then rerun with --reuse-server.`
+    );
+  }
+
+  await resetHarnessAppData();
+  return startIsolatedServer();
 }
 
 async function stopServer(child) {
@@ -373,9 +422,12 @@ async function loadFixtures() {
 async function run() {
   await ensureDir(baselinesDir);
   await ensureDir(artifactsDir);
-  await resetHarnessAppData();
 
-  const server = await startIsolatedServer();
+  const server = await acquireServer();
+  if (prepareOnly) {
+    return;
+  }
+
   const browserPath = getBrowserPath();
   const browser = await chromium.launch({
     executablePath: browserPath,

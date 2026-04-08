@@ -233,6 +233,14 @@ function buildMocks() {
       return session;
     }),
     getSession: vi.fn().mockImplementation((sessionId) => sessions.get(sessionId)),
+    getSanitizedSessionOutput: vi.fn().mockImplementation((sessionId) => {
+      const session = sessions.get(sessionId);
+      const replayBuffer = session?.buffer?.toBuffer?.();
+      if (!replayBuffer) return '';
+      return Buffer.isBuffer(replayBuffer)
+        ? replayBuffer.toString('utf8')
+        : String(replayBuffer ?? '');
+    }),
     writeInput: vi.fn(),
     killSession: vi.fn().mockResolvedValue(undefined),
   };
@@ -353,6 +361,44 @@ describe('SwarmEngine', () => {
     it('should keep already-correct English words intact while restoring nearby compressed tokens', () => {
       const restored = engine._decompressConPTYSpaces("Here'stogreatconversationsandevengreatermomentsahead! friendliness");
       expect(restored).toBe("Here's to great conversations and even greater moments ahead! friendliness");
+    });
+
+    it('should prefer sanitized session replay over truncated chat fragments when persisting execution history', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const execution = engine._executions.get(executionId);
+      const state = execution.agentStates.get('node-a');
+      const store = { addEntry: vi.fn().mockResolvedValue(undefined) };
+
+      engine.setExecutionHistoryStore(store);
+      execution.status = 'completed';
+      execution.startedAt = '2026-04-08T09:00:00.000Z';
+      execution.chatMessages = [
+        {
+          nodeId: 'node-a',
+          role: 'assistant',
+          text: 'ne, il publisher si occupa della formattazione finale.',
+          timestamp: Date.now(),
+        },
+      ];
+
+      const session = mockSessionManager.getSession(state.sessionId);
+      session.buffer.push([
+        'Claude Code v2.1.92',
+        "Negli ultimi anni, l'intelligenza artificiale ha trasformato il modo in cui creiamo contenuti.",
+        'In un tipico pipeline multi-agente, il writer prepara la prima bozza.',
+        "Infine, il publisher si occupa della formattazione finale e della consegna nel formato richiesto.",
+        '__DONE__',
+      ].join('\n'));
+
+      await engine._persistExecutionHistory(execution);
+
+      expect(store.addEntry).toHaveBeenCalledTimes(1);
+      const [, entry] = store.addEntry.mock.calls[0];
+      expect(entry.agentOutputs['node-a'].finalText).toContain("Negli ultimi anni, l'intelligenza artificiale");
+      expect(entry.agentOutputs['node-a'].finalText).toContain('pipeline multi-agente');
+      expect(entry.agentOutputs['node-a'].finalText).toContain('publisher si occupa della formattazione finale');
+      expect(entry.agentOutputs['node-a'].finalText).not.toBe('ne, il publisher si occupa della formattazione finale.');
+      expect(entry.aggregatedArtifact).toContain("Negli ultimi anni, l'intelligenza artificiale");
     });
 
     it('should seed workflowContext with the workflow goal before the first agent starts', async () => {
@@ -1631,6 +1677,14 @@ describe('SwarmEngine', () => {
       expect(statusEvents.at(-1)?.lastOutputSnippet).toBe('');
     });
 
+    it('should return an empty snippet when a live Claude provider menu leaks into the node card tail', () => {
+      const snippet = engine._buildSemanticSnippet(
+        'Opus4.6withmediumeffort·ClaudePro Downloads\\\\Testworkflows-Copia──────────────────────────────────────────── /buddy… What do you want to do? 1. 2.▋'
+      );
+
+      expect(snippet).toBe('');
+    });
+
     it('should fall back to the blocker message when prompt rejection leaves only Codex chrome in the tail', async () => {
       const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
       const tapFn = [...mockSession.swarmListeners][0];
@@ -1761,6 +1815,36 @@ describe('SwarmEngine', () => {
       expect(sanitized).toContain('friendliness and cooperation across languages.');
     });
 
+    it('should keep live compact merge phrases readable without splitting valid words or agent labels', () => {
+      const sanitized = engine._sanitizeChatMessage([
+        'contains an English greeting instead.',
+        'Should generate a greetinginonelanguage-Agent-B',
+        'Wishingyouabrightandbeautifuldaytomeetyou',
+      ].join('\n'));
+
+      expect(sanitized).toContain('contains an English greeting instead.');
+      expect(sanitized).toContain('Should generate a greeting in one language Agent-B');
+      expect(sanitized).toContain('Wishing you a bright and beautiful day to meet you');
+      expect(sanitized).not.toContain('con t a in s');
+      expect(sanitized).not.toContain('A gent-B');
+    });
+
+    it('should restore glued Italian apostrophe phrases captured from live handoff chatter', () => {
+      const sanitized = engine._sanitizeChatMessage(
+        "The runtime duplicher\u00E0l'handoff su entrambi."
+      );
+
+      expect(sanitized).toBe("The runtime duplicher\u00E0 l'handoff su entrambi.");
+    });
+
+    it('should strip inline HANDOFF payloads from semantic display snippets', () => {
+      const snippet = engine._buildSemanticSnippet(
+        'Hello there! Welcome to the workflow. HANDOFF:node-4:{"agent":"Agent-A","status":"completed"}'
+      );
+
+      expect(snippet).toBe('Hello there! Welcome to the workflow.');
+    });
+
     it('should restore fragmented short-word chat sequences captured in the live merge output', () => {
       const sanitized = engine._sanitizeChatMessage([
         "Nodeforthe Parallel Greetings Workflow is active.",
@@ -1777,6 +1861,22 @@ describe('SwarmEngine', () => {
       expect(sanitized).toContain("it's wonderful to have you here! I hope you're having a fantastic day.");
       expect(sanitized).toContain('Agent-B (Italian): "Ciao carissimi! Che bella giornata per incontrarci!"');
       expect(sanitized).toContain('Ecco il resoconto finale della cultura');
+    });
+
+    it('should prefer real merge content over echoed handoff protocol in semantic display snippets', () => {
+      const snippet = engine._buildSemanticSnippet([
+        'The last line:',
+        '__HANDOFF__:<targetId>:{"key": "value"}',
+        'The final handoff token must be plain text on a single line with no bullets.',
+        'Agent-A (English): "Hello there! Welcome!"',
+        'Agent-B (Italian): "Ciao a tutti! Benvenuti!"',
+        'Both agents completed successfully. Handing off merged results to the Final Reporter.',
+      ].join('\n'));
+
+      expect(snippet).toContain('Agent-A (English): "Hello there! Welcome!"');
+      expect(snippet).toContain('Agent-B (Italian): "Ciao a tutti! Benvenuti!"');
+      expect(snippet).not.toContain('The final handoff token must be plain text');
+      expect(snippet).not.toContain('__HANDOFF__:<targetId>');
     });
 
     it('should strip echoed workflow instructions from chat-oriented merge output', () => {

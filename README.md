@@ -173,6 +173,50 @@ If the session is gone, start a new terminal from the project view.
 
 ---
 
+## Visual Regression
+
+The Swarm canvas now has a dedicated screenshot-based visual regression suite for arrow routing, focus mode, merge fan-in, and loop/feedback readability.
+
+Run the suite with:
+
+```bash
+npm run test:visual:swarm
+```
+
+Refresh the committed baselines after an intentional visual change with:
+
+```bash
+npm run test:visual:swarm:update
+```
+
+If your environment blocks the harness from spawning its own server process, use the fallback:
+
+```powershell
+npm run test:visual:swarm:prepare
+$env:APPDATA='C:\Users\arman\Downloads\Test workflows - Copia\tests\visual\swarm\.appdata'
+$env:PORT='3310'
+$env:NO_OPEN='1'
+npm run start
+```
+
+Then, from a second terminal:
+
+```powershell
+npm run test:visual:swarm:reuse
+```
+
+The harness:
+1. Starts an isolated local server on port `3310`
+2. Loads repo-owned workflow fixtures instead of your personal saved workflows
+3. Captures canonical screenshots for 6 Swarm cases
+4. Compares them to the baselines in `tests/visual/swarm/baselines/`
+
+If browser auto-detection fails, set `SWARM_VISREG_BROWSER` to a local Chrome or Edge executable path.
+
+More details live in [tests/visual/swarm/README.md](/C:/Users/arman/Downloads/Test workflows - Copia/tests/visual/swarm/README.md).
+
+---
+
 ## Security
 
 - **Localhost only.** The server binds to `127.0.0.1` and is never accessible from the local network or internet.

@@ -56,17 +56,17 @@ const normalizeCompressedChatWord = (word = '') => String(word ?? '')
   .replace(/\p{M}+/gu, '')
   .toLowerCase();
 const COMPRESSED_CHAT_WORDS = [
-  'a', 'agent', 'agents', 'al', 'all', 'and', 'augurando', 'base', 'be', 'bene', 'benvenuti',
+  'a', 'agent', 'agents', 'al', 'all', 'and', 'augurando', 'base', 'be', 'beautiful', 'bene', 'benvenuti',
   'agenti', 'auguro', 'benvenuto', 'best', 'bella', 'both', 'caloroso', 'carissimi', 'che', 'ciao', 'ciascuno', 'collected', 'completed',
-  'completato', 'compito', 'con', 'conciso', 'condividono', 'context', 'contesto',
+  'completato', 'compito', 'con', 'conciso', 'condividono', 'contains', 'context', 'contesto',
   'consolidated',
   'connect', 'correttamente', 'day', 'del', 'di', 'different', 'dispatching', 'diversa', 'downstream',
   'due', 'e', 'english', 'entrambi', 'esprimendo', 'essere', 'everyone', 'execute', 'final', 'finale',
   'fantastic', 'filled', 'for', 'form', 'forma', 'friend', 'friendliness', 'funzionato', 'generate', 'generated', 'generato', 'giornata',
   'generare', 'generera', 'genererà',
   'gioia', 'gli', 'going', 'good', 'great', 'greater', 'greeted', 'greeting', 'greetings', 'ha', 'handoff', 'handing', 'hanno', 'has', 'have', 'having', 'hello', 'hope',
-  'ho', 'i', 'il', 'in', 'inglese', 'is', 'it', 'italian', 'joy', 'kind', 'la', 'life', 'lingua',
-  'lo', 'lunghezza', 'lavorano', 'lavoreranno', 'making', 'may', 'meglio', 'merge', 'meravigliosa', 'meravigliosamente', 'messaggi', 'moments', 'most', 'nodo', 'node', 'nodes',
+  'ho', 'i', 'il', 'in', 'inglese', 'is', 'it', 'italian', 'joy', 'kind', 'la', 'language', 'life', 'lingua',
+  'lo', 'lunghezza', 'lavorano', 'lavoreranno', 'making', 'may', 'meet', 'meglio', 'merge', 'meravigliosa', 'meravigliosamente', 'messaggi', 'moments', 'most', 'nodo', 'node', 'nodes',
   'now', 'offer', 'output', 'parallelo', 'parallel', 'partecipanti', 'per', 'piacere', 'positivo',
   'appreciated', 'incontrarci', 'italiana', 'know', 'our', 'personal', 'piena', 'piacere', 'pleasure', 'poi', 'presente', 'procedo', 'producing', 'produrre', 'pur', 'questa', 'questo', 'qui',
   'raccolto', 'received', 'report', 'reporter', 'resoconto', 'riceveranno', 'runtime', 'saluti', 'saluto', 'serenita', 'share', 'shared', 'should',
@@ -76,8 +76,8 @@ const COMPRESSED_CHAT_WORDS = [
   'wonderful', 'word', 'workflow', 'wishing', 'you', 'your', 'duplicate', 'da', 'here', 'ahead', 'absolutely', 'connection', 'conversations', 'even'
 ];
 const EXTRA_COMPRESSED_CHAT_WORDS = [
-  'altra', 'bello', 'ci', 'connections', 'falling', 'finds', 'genera', 'incontriamo',
-  'instradare', 'laughter', 'message', 'mondo', 'piu', 'quando', 'reporter', 'requested',
+  'altra', 'bello', 'bright', 'ci', 'connections', 'falling', 'finds', 'genera', 'incontriamo',
+  'instradare', 'instead', 'laughter', 'message', 'mondo', 'one', 'piu', 'quando', 'reporter', 'requested',
   'request', 'richiesta', 'riassunti', 'spirits', 'summarize',
 ];
 const ALL_COMPRESSED_CHAT_WORDS = [...COMPRESSED_CHAT_WORDS, ...EXTRA_COMPRESSED_CHAT_WORDS];
@@ -664,6 +664,87 @@ class SwarmEngine {
     return replayText.slice(-SNIPPET_SCAN_BUFFER_CHARS);
   }
 
+  _readAgentSessionOutput(state = null) {
+    if (!state?.sessionId) return '';
+
+    if (typeof this._sessionManager?.getSanitizedSessionOutput === 'function') {
+      return this._sessionManager.getSanitizedSessionOutput(state.sessionId) || '';
+    }
+
+    if (typeof this._sessionManager?.getSession !== 'function') return '';
+    const session = this._sessionManager.getSession(state.sessionId);
+    const replayBuffer = session?.buffer?.toBuffer?.();
+    if (!replayBuffer) return '';
+    return Buffer.isBuffer(replayBuffer)
+      ? replayBuffer.toString('utf8')
+      : String(replayBuffer ?? '');
+  }
+
+  _looksLikeTruncatedLead(text = '') {
+    const normalized = String(text ?? '').trim();
+    if (!normalized) return false;
+    if (/^[,.;:)\]}]/.test(normalized)) return true;
+    if (/^[a-z\u00E0-\u00FF]{1,3}\b/u.test(normalized) && normalized.length > 80) return true;
+    if (/^[a-z\u00E0-\u00FF][a-z\u00E0-\u00FF'’-]*[,.;:]/u.test(normalized) && normalized.length > 80) return true;
+    return false;
+  }
+
+  _scoreFinalOutputCandidate(text = '') {
+    const normalized = String(text ?? '').trim();
+    if (!normalized) return Number.NEGATIVE_INFINITY;
+
+    let score = this._chatTextQualityScore(normalized);
+    score += Math.min(normalized.length, 1200) / 8;
+    if (this._looksLikeTruncatedLead(normalized)) score -= 220;
+    return score;
+  }
+
+  _resolveAgentFinalText(execution, nodeId, messages = [], state = null) {
+    const messageText = messages
+      .map((msg) => msg?.text || msg?.content || '')
+      .filter(Boolean)
+      .join('\n\n')
+      .trim();
+
+    const sessionOutput = this._readAgentSessionOutput(state);
+    const executionContext = {
+      executionId: execution?.executionId ?? execution?.id ?? null,
+      nodeId,
+    };
+
+    const candidates = [
+      sessionOutput
+        ? this._sanitizeChatMessage(sessionOutput, {
+            ...executionContext,
+            rawText: sessionOutput,
+          })
+        : '',
+      messageText
+        ? this._sanitizeChatMessage(messageText, {
+            ...executionContext,
+            rawText: messageText,
+          })
+        : '',
+      messageText,
+    ]
+      .map((text) => String(text ?? '').trim())
+      .filter(Boolean);
+
+    if (candidates.length === 0) return '';
+
+    let bestText = candidates[0];
+    let bestScore = this._scoreFinalOutputCandidate(bestText);
+    for (const candidate of candidates.slice(1)) {
+      const score = this._scoreFinalOutputCandidate(candidate);
+      if (score > bestScore) {
+        bestText = candidate;
+        bestScore = score;
+      }
+    }
+
+    return bestText;
+  }
+
   _refreshAgentSnippet(state = null, { preferSessionReplay = false } = {}) {
     if (!state) return '';
 
@@ -1237,9 +1318,11 @@ class SwarmEngine {
         const nodeDef = execution.workflowDef?.nodes?.find(n => n.id === nodeId);
         const timestamps = messages.map(m => m.timestamp).filter(Boolean).sort();
 
+        const finalText = this._resolveAgentFinalText(execution, nodeId, messages, state);
+
         agentOutputs[nodeId] = {
           label: nodeDef?.data?.label || nodeId,
-          finalText: messages.map(m => m.text).filter(Boolean).join('\n\n'),
+          finalText,
           handoffPayloads: state?.handoffPayloads || [],
           status: state?.status || 'unknown',
           provider: state?.runtimeProvider || state?.provider || null,
@@ -1382,12 +1465,39 @@ class SwarmEngine {
   }
 
   _normalizeParserChunk(rawChunk = '') {
-    return rawChunk
+    let text = rawChunk
+      // Replace ALL cursor-forward (CUF) sequences with spaces.
+      // ConPTY uses CUF both for char-by-char grid rendering AND as actual
+      // whitespace between words. We convert every CUF(n) to n spaces here
+      // and fix char-by-char artifacts in a second pass below.
+      .replace(/\x1b\[(\d*)C/g, (_, n) => ' '.repeat(Number(n) || 1))
+      // Strip remaining CSI sequences (colors, cursor moves other than CUF, etc.)
       .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
       .replace(/\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)/g, '')
       .replace(/\x1b[@-_][0-?]*[ -/]*[@-~]/g, '')
       .replace(/\r\n/g, '\n')
       .replace(/\r/g, '\n');
+
+    // Collapse char-by-char ConPTY rendering artifacts.
+    // When ConPTY renders text character-by-character with CUF(1) between
+    // each glyph, the CUF→space replacement above produces patterns like
+    // "C o n t i n u e". We detect runs of 4+ single non-space characters
+    // each separated by a single space and join them back together.
+    // This preserves legitimate word spacing (multi-char tokens) while
+    // cleaning up the char-by-char noise.
+    text = text.replace(/(?:(?:^| )\S(?= \S)){3,}(?: \S)/gm, (match) => {
+      // Verify most tokens in this run are truly single characters
+      const tokens = match.trim().split(' ');
+      const singleCount = tokens.filter(t => t.length === 1).length;
+      if (singleCount >= tokens.length * 0.75) {
+        return match[0] === ' '
+          ? ' ' + tokens.join('')
+          : tokens.join('');
+      }
+      return match;
+    });
+
+    return text;
   }
 
   _stripSnippetProtocolArtifacts(rawText = '') {
@@ -1396,7 +1506,8 @@ class SwarmEngine {
       .replace(/----?\s*SWARM INPUT[\s\S]*?----?\s*END SWARM INPUT\s*----?/gi, '\n')
       .replace(/Do NOT output the handoff or done token mid-response\.[\s\S]*?Only as the very LAST line\./gi, '\n')
       .replace(/^__HANDOFF__:[^\n]*/gm, '\n')
-      .replace(/^HANDOFF:[^\n]*/gm, '\n');
+      .replace(/^HANDOFF:[^\n]*/gm, '\n')
+      .replace(/\s+(?:__HANDOFF__|HANDOFF):[^\n]*/g, '');
   }
 
   _normalizeSnippetLine(rawLine = '') {
@@ -1422,8 +1533,12 @@ class SwarmEngine {
 
   _isSnippetNoiseLine(line = '') {
     const normalized = this._normalizeSnippetLine(line);
+    const compactNormalized = normalized.toLowerCase().replace(/[\s~\\/_.\-Â·â€¢]+/g, '');
     if (!normalized) return true;
     if (SNIPPET_NOISE_LINE_PATTERNS.some((pattern) => pattern.test(normalized))) return true;
+    if (compactNormalized.includes('opus46withmediumeffort')) return true;
+    if (compactNormalized.includes('whatdoyouwanttodo')) return true;
+    if (compactNormalized.includes('claudeprodownloads')) return true;
     if (/^[,.;:|/\\<>\[\]()\-_=+*`~]+$/.test(normalized)) return true;
     if (/^([A-Za-z])\1{3,}$/.test(normalized)) return true;
     if (/^[A-Za-z]{1,3}$/.test(normalized)) return true;
@@ -1492,9 +1607,14 @@ class SwarmEngine {
   _buildStructuredFactSnippet(lines = []) {
     const factLines = [];
     const seen = new Set();
+    let sawExplicitDone = false;
 
     for (const rawLine of lines) {
       const line = this._normalizeSnippetLine(rawLine);
+      if (/^__DONE__$/i.test(line)) {
+        sawExplicitDone = true;
+        continue;
+      }
       if (!this._isSnippetStructuredFactLine(line)) continue;
 
       const key = line.toLowerCase();
@@ -1505,7 +1625,12 @@ class SwarmEngine {
 
     if (factLines.length < 3) return '';
 
-    return factLines.slice(0, 8).join('\n').slice(-500);
+    const snippetLines = factLines.slice(0, 8);
+    if (sawExplicitDone) {
+      snippetLines.push('__DONE__');
+    }
+
+    return snippetLines.join('\n').slice(-500);
   }
 
   _buildRecoverySnippet(rawText = '') {
@@ -1688,6 +1813,74 @@ class SwarmEngine {
     return score;
   }
 
+  _sanitizeDisplaySnippetText(rawText = '') {
+    const normalized = this._stripSnippetProtocolArtifacts(this._normalizeParserChunk(rawText));
+    if (!normalized.trim()) return '';
+
+    const cleanedLines = [];
+    let previousLine = '';
+
+    for (const rawLine of normalized.split('\n')) {
+      const line = this._normalizeSnippetLine(rawLine);
+      const compactLine = line
+        ? line.toLowerCase().replace(/[\s~\\/_.\-·]+/g, '')
+        : '';
+      if (!line) continue;
+      if (this._isSnippetNoiseLine(line)) continue;
+      if (this._isSnippetRecoveryLine(line)) continue;
+      if (SNIPPET_PROMPT_LINE_PATTERNS.some((pattern) => pattern.test(line))) continue;
+      if (SNIPPET_COMMAND_LINE_PATTERNS.some((pattern) => pattern.test(line))) continue;
+      if (/^(?:__HANDOFF__|HANDOFF:)/i.test(line)) continue;
+      if (/^claude\s*codev?\d/i.test(line)) continue;
+      if (/^(?:opus|sonnet|haiku)\s*\d/i.test(line)) continue;
+      if (/claude\s*(?:api|max)/i.test(line)) continue;
+      if (/extra\s*usage/i.test(line)) continue;
+      if (/^you are the /i.test(line)) continue;
+      if (/^current workflow context:?/i.test(line)) continue;
+      if (/^the last line:?$/i.test(line)) continue;
+      if (/^last line only:?$/i.test(line)) continue;
+      if (/^valid target ids?:/i.test(line)) continue;
+      if (/^context update:/i.test(line)) continue;
+      if (/^concrete example\b/i.test(line)) continue;
+      if (/^for this workflow,?\s/i.test(line)) continue;
+      if (/^the final handoff tok/i.test(line)) continue;
+      if (/^when your stage is complete, you must emit a handoff token/i.test(line)) continue;
+      if (/^your required downstream target is:/i.test(line)) continue;
+      if (/^if another agent is better suited to /i.test(line)) continue;
+      if (/^do not emit\b/i.test(line)) continue;
+      if (/^(?:workflow name|workflow description|currenttask|task|instruction|workflow|merge_with|triage_note|agent(?:_[ab])?|language|greeting|status|translation|agent_[ab]_(?:language|greeting|translation)|merge_status)\s*:/i.test(line)) continue;
+      if (compactLine.includes('opus46withmediumeffortclaudemax')) continue;
+      if (compactLine.includes('opus46withmediumeffort')) continue;
+      if (compactLine.includes('extrausage')) continue;
+      if (compactLine.includes('claudecodev')) continue;
+      if (compactLine.includes('whatdoyouwanttodo')) continue;
+      if (compactLine.includes('claudeprodownloads')) continue;
+      if (compactLine.includes('nowusingextra')) continue;
+      if (compactLine.includes('clauderuntimeisactiveforthisswarmagent')) continue;
+      if (compactLine.includes('continuetheworkflowusingthesharedtaskcontextbelow')) continue;
+      if ((line.match(/[{}":[\]]/g) ?? []).length > Math.max(4, Math.floor(line.length * 0.12))) continue;
+      if (line === previousLine) continue;
+      cleanedLines.push(line);
+      previousLine = line;
+    }
+
+    const text = this._decompressConPTYSpaces(cleanedLines.join('\n'))
+      .replace(/\n{3,}/g, '\n\n')
+      .trim()
+      .slice(-500);
+
+    if (!text) return '';
+    if (/^__DONE__$/i.test(text)) return '';
+    if (
+      /PROMPT-CONTROL-REPORT\b/i.test(text)
+      || (text.match(/\b[A-Z_]+=[^\s|]+/g) ?? []).length >= 2
+    ) {
+      return text;
+    }
+    if (this._chatTextLooksCorrupted(text)) return '';
+    return text;
+  }
+
   _buildSemanticSnippet(rawText = '') {
     const sanitizedText = this._stripSnippetProtocolArtifacts(this._normalizeParserChunk(rawText));
     const normalizedLines = sanitizedText
@@ -1742,9 +1935,16 @@ class SwarmEngine {
         + (structuredFactSnippet.includes('PROMPT-CONTROL-REPORT') ? 240 : 180)
       : Number.NEGATIVE_INFINITY;
 
+    if (structuredFactSnippet && structuredFactScore >= 280) {
+      const sanitizedStructuredFact = this._sanitizeDisplaySnippetText(structuredFactSnippet);
+      if (sanitizedStructuredFact) {
+        return sanitizedStructuredFact;
+      }
+    }
+
     if (blocks.length === 0) {
       if (structuredFactSnippet) {
-        return structuredFactSnippet;
+        return this._sanitizeDisplaySnippetText(structuredFactSnippet) || structuredFactSnippet;
       }
 
       const fallbackLines = normalizedLines.filter((line) => {
@@ -1753,7 +1953,8 @@ class SwarmEngine {
       });
 
       if (fallbackLines.length > 0) {
-        return this._decompressConPTYSpaces(fallbackLines.slice(-6).join('\n').slice(-500));
+        const fallbackText = fallbackLines.slice(-6).join('\n').slice(-500);
+        return this._sanitizeDisplaySnippetText(fallbackText) || this._decompressConPTYSpaces(fallbackText);
       }
 
       const blockerLines = normalizedLines.filter((line) =>
@@ -1761,36 +1962,37 @@ class SwarmEngine {
       );
 
       if (blockerLines.length > 0) {
-        return this._decompressConPTYSpaces(blockerLines.at(-1)?.slice(-500) ?? '');
+        const blockerText = blockerLines.at(-1)?.slice(-500) ?? '';
+        return this._sanitizeDisplaySnippetText(blockerText) || this._decompressConPTYSpaces(blockerText);
       }
 
       return sawRecoveryPrompt ? this._buildRecoverySnippet(sanitizedText) : '';
     }
 
-    let bestBlock = blocks[0];
-    let bestScore = Number.NEGATIVE_INFINITY;
-
-    blocks.forEach((block, index) => {
-      const score = this._scoreSnippetBlock(block) + (index * 5);
-      if (score >= bestScore) {
-        bestBlock = block;
-        bestScore = score;
-      }
-    });
-
-    if (structuredFactScore > bestScore) {
-      bestBlock = structuredFactSnippet;
-      bestScore = structuredFactScore;
+    const candidates = blocks.map((block, index) => ({
+      block,
+      score: this._scoreSnippetBlock(block) + (index * 5),
+    }));
+    if (structuredFactSnippet) {
+      candidates.push({ block: structuredFactSnippet, score: structuredFactScore });
     }
+    candidates.sort((a, b) => b.score - a.score);
+    const bestScore = candidates[0]?.score ?? Number.NEGATIVE_INFINITY;
 
     if (bestScore < 0) {
       const recoveryFallback = this._buildRecoverySnippet(sanitizedText);
       if (recoveryFallback) return recoveryFallback;
     }
 
-    // Collapse repeated "(thinking)" tokens that survived block selection
-    const collapsed = bestBlock.replace(/(\(thinking\)){2,}/gi, '(thinking...)');
-    return this._decompressConPTYSpaces(collapsed.slice(-500));
+    for (const candidate of candidates) {
+      const collapsed = candidate.block.replace(/(\(thinking\)){2,}/gi, '(thinking...)').slice(-500);
+      const sanitizedCandidate = this._sanitizeDisplaySnippetText(collapsed);
+      if (sanitizedCandidate) return sanitizedCandidate;
+    }
+
+    const fallbackCandidate = candidates[0]?.block?.replace(/(\(thinking\)){2,}/gi, '(thinking...)').slice(-500) ?? '';
+    if (!fallbackCandidate) return '';
+    return this._sanitizeDisplaySnippetText(fallbackCandidate) || this._decompressConPTYSpaces(fallbackCandidate);
   }
 
   /**
@@ -1994,8 +2196,10 @@ class SwarmEngine {
         .replace(/([.!?])([A-Z\u00C0-\u00D6])/gu, '$1 $2')
         .replace(/([,;])([a-zA-Z\u00C0-\u00F6])/gu, '$1 $2')
         .replace(/([):])([A-Z\u00C0-\u00D6])/gu, '$1 $2')
-        .replace(/(-[A-Z])([a-z\u00E0-\u00F6])/gu, '$1 $2')
+        .replace(/([a-z\u00E0-\u00F6])-(Agent-[A-Z]\b)/gu, '$1 $2')
+        .replace(/\bA gent(?=-[A-Z]\b)/gu, 'Agent')
         .replace(/([a-z\u00E0-\u00F6])([A-Z\u00C0-\u00D6])/gu, '$1 $2')
+        .replace(/([A-Za-z\u00C0-\u00FF]{5,})(l['’][A-Za-z\u00C0-\u00FF]{3,})/gu, '$1 $2')
         .replace(/\b([a-zA-Z\u00C0-\u00F6]+(?:['â€™](?:s|re|ve|ll|d|m)|n['â€™]t))(?=[a-zA-Z\u00C0-\u00F6])/gu, '$1 ')
         .replace(/\b([a-zA-Z\u00C0-\u00F6]+['â€™])([a-zA-Z\u00C0-\u00F6]{7,})/gu, (_, prefix, suffix) => `${prefix}${this._restoreCompressedChatToken(suffix)}`)
         .replace(RESTORABLE_CHAT_TOKEN_MATCH_RE, (token) => this._restoreCompressedChatToken(token))

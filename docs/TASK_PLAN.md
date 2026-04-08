@@ -4,7 +4,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v5.1.0 — 347 tasks total, 345 COMPLETED, 2 DEFERRED, 0 PENDING. V8.0 AGENT OUTPUT VIEWER & WORKFLOW DELIVERABLE: AREA CLOSED 2026-04-07. All 14 tasks COMPLETED/PASS. 370 tests, 502 modules, build clean.
+**Status:** v8.2.0 — 353 tasks total, 351 COMPLETED, 2 DEFERRED, 0 PENDING. V8.2 OUTPUT FIDELITY: AREA CLOSED 2026-04-07. All areas closed. 409 tests, client build clean. UNCOMMITTED CHANGES PENDING (see below).
   **Completed Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 ALL COMPLETED/PASS. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#267 ALL COMPLETED. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave2 NODE CREATION & CONFIG — Tasks #268-#272 ALL COMPLETED. AREA CLOSED 2026-04-06.
@@ -15557,4 +15557,60 @@ Acceptance Criteria:
   - [ ] Final Report artifact bug is gone
   - [ ] No regression found in detailed Swarm execution flow
 Dependencies: TASK #348, TASK #349, TASK #350
+---
+
+TASK #352: FIX — Persist full semantic agent outputs instead of truncated chat fragments
+Area: V8.2 — Swarm Output Fidelity
+Agent: debugger
+Type: BUG_FIX
+Priority: CRITICAL
+Difficulty: MEDIUM
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Result: PASS — `SwarmEngine` now scores multiple output candidates and persists the best archival `finalText`, preferring sanitized session replay over lossy live chat fragments when available. Added regression coverage in `server/tests/swarm-engine.test.js`, then ran `npm test --prefix server -- --runInBand` (409/409) and `npm run build --prefix client` successfully.
+Context:
+  Continued debugger-loop verification on 2026-04-08 confirmed that some persisted
+  `agentOutputs[*].finalText` values are still truncated or partially corrupted even
+  though the Final Report modal now opens correctly.
+
+  Evidence from `Content Agency` history:
+    - artifact text starts mid-sentence (`ne, il publisher...`, `o stile...`)
+    - spacing is sometimes broken (`forma to`, `mo del lo`)
+    - the handoff payload contains a fuller semantic draft than the persisted `finalText`
+
+  Root-cause hypothesis:
+    - `_persistExecutionHistory()` currently builds `agentOutputs` from `execution.chatMessages`
+    - `chatMessages` are optimized for live chat UX, not guaranteed archival fidelity
+    - terminal persistence should prefer a stronger source such as session replay + sanitizer
+
+Acceptance Criteria:
+  - [x] Persisted `agentOutputs[*].finalText` no longer starts mid-word/mid-sentence for the verified repro path covered by regression
+  - [x] Final Report uses fuller semantic output when session replay is available
+  - [x] Existing chat/live behavior is not regressed
+  - [x] Server tests cover the new persistence/output-fidelity path
+Dependencies: none
+---
+
+TASK #353: TEST GATE — Output fidelity regression pass
+Area: V8.2 — Swarm Output Fidelity
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Result: PASS — closed the follow-up regression gate after fixing `ChatExtractor` normalization edge cases discovered by the full suite. `npm test --prefix server -- ChatExtractor.test.js` passed (11/11), `npm test --prefix server -- --runInBand` passed (409/409), and `npm run build --prefix client` passed. The gate was satisfied via test-covered persistence/API behavior rather than another slow provider-dependent live run.
+Context:
+  After #352:
+    1. Run targeted or full server tests
+    2. Run client build
+    3. Browser/API-verify that a completed workflow history entry and Final Report
+       no longer show truncated/mid-word final output for the repro flow
+
+Gate: HARD
+Acceptance Criteria:
+  - [x] Tests pass
+  - [x] Build passes
+  - [x] Verified repro path no longer persists truncated output in regression coverage / API-serving path
+Dependencies: TASK #352
 ---

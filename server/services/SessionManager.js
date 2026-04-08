@@ -261,6 +261,13 @@ export class SessionManager {
     return this.#sessions.get(sessionId);
   }
 
+  getSanitizedSessionOutput(sessionId) {
+    const session = this.#sessions.get(sessionId);
+    const replayBuffer = session?.buffer?.toBuffer?.();
+    if (!replayBuffer) return '';
+    return sanitizeReplayOutput(replayBuffer);
+  }
+
   // -------------------------------------------------------------------------
   // listSessions
   // -------------------------------------------------------------------------

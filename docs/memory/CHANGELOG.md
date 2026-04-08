@@ -3388,3 +3388,42 @@ No new connections introduced in this checkpoint task. All connection changes we
 - None. All components verified: ChatExtractor, SwarmEngine integration, ChatPanel, ChatMessage, SwarmContext, useSwarm WS handler. WS contract confirmed COMPLETE. Verdict: PASS.
 
 ---
+## 2026-04-08 - Task #352-#353: Output fidelity closure
+**Agent:** debugger
+**Triggered by:** Continued debugger-loop verification after a completed history entry still showed truncated/mid-word `finalText`
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/SessionManager.js | MODIFIED | Added `getSanitizedSessionOutput(sessionId)` so archival code can reuse sanitized PTY replay text |
+| server/services/SwarmEngine.js | MODIFIED | Added best-candidate finalText resolution for persisted execution history, preferring sanitized replay over truncated chat fragments |
+| server/services/chatTextNormalization.js | MODIFIED | Restores leading connector splits in compressed prose and tightens corrupted-prefix stripping |
+| server/services/ChatExtractor.js | MODIFIED | Avoids over-greedy inline status stripping, trims mojibake leaders, and suppresses lone orchestration-only routing/handoff sentences |
+| server/tests/swarm-engine.test.js | MODIFIED | Added regression coverage for persisted history preferring sanitized replay output |
+| docs/TASK_PLAN.md | MODIFIED | Marked tasks `#352` and `#353` completed with verification results |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended closure log for the debugger-loop wave |
+
+### Functions Added
+- `SessionManager.getSanitizedSessionOutput(sessionId)` â€” returns sanitized PTY replay text suitable for archival/report generation
+- `SwarmEngine._readAgentSessionOutput(state)` â€” reads sanitized replay text for the agent session when available
+- `SwarmEngine._looksLikeTruncatedLead(text)` â€” penalizes obviously clipped archival candidates
+- `SwarmEngine._scoreFinalOutputCandidate(text)` â€” scores candidate persistence outputs
+- `SwarmEngine._resolveAgentFinalText(execution, nodeId, messages, state)` â€” selects the best persisted `finalText`
+
+### Functions Modified
+- `SwarmEngine._persistExecutionHistory(execution)` â€” no longer persists `finalText` directly from `execution.chatMessages`
+- `chatTextNormalization` restoration helpers â€” now preserve leading connectors like `I benefici...` when the source arrives compressed as `Ibenefici...`
+- `ChatExtractor._flush(...)` â€” now strips leftover inline fallback chrome more precisely and suppresses orchestration-only inline payloads
+
+### Functions Removed
+- None
+
+### Connection Changes
+- NEW: `SwarmEngine._persistExecutionHistory` â†’ `SessionManager.getSanitizedSessionOutput`
+- NEW: persisted history resolution now considers sanitized replay and chat fragments as competing sources instead of using chat fragments only
+
+### Impact on Other Code
+- Execution history and Final Report generation now archive fuller semantic output without changing the live chat transport.
+- Full regression gate is green again: `ChatExtractor.test.js` PASS (`11/11`), full server suite PASS (`409/409`), client build PASS.
+
+---

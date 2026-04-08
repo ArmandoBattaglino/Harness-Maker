@@ -155,6 +155,87 @@ describe('Option B — chat messages as node snippets', () => {
     expect(displaySnippet).not.toContain('Opus');
   });
 
+  it('should filter rate-limit messages (BUG-CE-1)', () => {
+    const extractor = new ChatExtractor({ onMessage, silenceTimeoutMs: 50 });
+
+    const rateLimitNoise = [
+      "You've used 92%of your session limit · resets 4am (Europe/Rome)\n",
+      "You've hit your limit · resets 2am (Europe/Rome)\n",
+    ].join('');
+
+    extractor.feed('test-exec', 'agent-limited', rateLimitNoise);
+    extractor.flush('test-exec', 'agent-limited');
+    vi.advanceTimersByTime(100);
+
+    // Should NOT emit — pure rate-limit noise
+    const assistantMsgs = onMessage.mock.calls.filter(c => c[0].role === 'assistant');
+    for (const [msg] of assistantMsgs) {
+      expect(msg.text).not.toMatch(/session limit/i);
+      expect(msg.text).not.toMatch(/hit your limit/i);
+    }
+
+    extractor.cleanup('test-exec');
+  });
+
+  it('should filter ConPTY spaceless patterns (BUG-CE-2)', () => {
+    const extractor = new ChatExtractor({ onMessage, silenceTimeoutMs: 50 });
+
+    const spacelessNoise = [
+      '⏵⏵bypasspermissionson (shift+tabtocycle)\n',
+      'Ho completato il task con successo.\n',
+    ].join('');
+
+    extractor.feed('test-exec', 'agent-conpty', spacelessNoise);
+    extractor.flush('test-exec', 'agent-conpty');
+    vi.advanceTimersByTime(100);
+
+    if (onMessage.mock.calls.length > 0) {
+      const chatMsg = onMessage.mock.calls[onMessage.mock.calls.length - 1][0];
+      expect(chatMsg.text).not.toMatch(/bypasspermission/i);
+      expect(chatMsg.text).not.toMatch(/shift.*tab.*cycle/i);
+      expect(chatMsg.text).toContain('completato il task');
+    }
+
+    extractor.cleanup('test-exec');
+  });
+
+  it('should filter Codex CLI garbled text (BUG-CE-3)', () => {
+    const extractor = new ChatExtractor({ onMessage, silenceTimeoutMs: 50 });
+
+    const codexNoise = [
+      'WelcometoCodex,OpenAI\'scommand-linecodingagentSigninwithChatGPTouseCodex\n',
+      'basedbilling > 1. Sign in with ChatGPT\n',
+      'Ecco la mia analisi del problema principale.\n',
+    ].join('');
+
+    extractor.feed('test-exec', 'agent-codex', codexNoise);
+    extractor.flush('test-exec', 'agent-codex');
+    vi.advanceTimersByTime(100);
+
+    if (onMessage.mock.calls.length > 0) {
+      const chatMsg = onMessage.mock.calls[onMessage.mock.calls.length - 1][0];
+      expect(chatMsg.text).not.toMatch(/WelcometoCodex/i);
+      expect(chatMsg.text).not.toMatch(/SigninwithChatGPT/i);
+      expect(chatMsg.text).toContain('analisi del problema');
+    }
+
+    extractor.cleanup('test-exec');
+  });
+
+  it('should filter "Structured handoff sent" protocol echo', () => {
+    const extractor = new ChatExtractor({ onMessage, silenceTimeoutMs: 50 });
+
+    extractor.feed('test-exec', 'agent-echo', 'Structured handoff sent.\n');
+    extractor.flush('test-exec', 'agent-echo');
+    vi.advanceTimersByTime(100);
+
+    // Should NOT emit — this is protocol echo, not agent content
+    const assistantMsgs = onMessage.mock.calls.filter(c => c[0].role === 'assistant');
+    expect(assistantMsgs.length).toBe(0);
+
+    extractor.cleanup('test-exec');
+  });
+
   it('should NOT set lastChatSnippet for non-assistant messages (hitl, system)', () => {
     const agentStates = {};
     const updateAgentState = (nodeId, patch) => {

@@ -9,7 +9,9 @@
     "install:all": "npm install && npm install --prefix server && npm install --prefix client",
     "test": "npm test --prefix server",
     "test:visual:swarm": "node scripts/swarm-visual-regression.mjs",
-    "test:visual:swarm:update": "node scripts/swarm-visual-regression.mjs --update"
+    "test:visual:swarm:update": "node scripts/swarm-visual-regression.mjs --update",
+    "test:visual:swarm:prepare": "node scripts/swarm-visual-regression.mjs --prepare-only",
+    "test:visual:swarm:reuse": "node scripts/swarm-visual-regression.mjs --reuse-server"
   },
   "devDependencies": {
     "concurrently": "^8.0.0"

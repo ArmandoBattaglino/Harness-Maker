@@ -1,6 +1,6 @@
 ﻿# Current Context
-**Session date:** 2026-04-07
-**Focus:** ALL AREAS CLOSED. POST-V5 FOLLOW-UP 2 completed: #331 (Swarm canvas drop preview) COMPLETED, #332 (TEST GATE) PASS, #333 (AREA CHECKPOINT) COMPLETED. During verification an unrelated SwarmView mount blocker in `useSwarm.js` was also fixed so browser QA could run. 333 tasks total: 331 completed, 2 deferred. No remaining work. Project is feature-complete at v5.0.
+**Session date:** 2026-04-08
+**Focus:** ALL AREAS CLOSED through V8.2. 353 tasks total: 351 COMPLETED, 2 DEFERRED, 0 PENDING. V8.0 (Agent Output Viewer), V8.1 (Runtime Polish), V8.2 (Output Fidelity) all closed. 409 tests pass, client build clean. LARGE UNCOMMITTED CHANGESET pending commit (35 files, ~880 insertions). Known residual: ChatExtractor tests are flaky under parallel vitest execution (pass in isolation, occasional fail in full suite). Researcher agent "Structured handoff sent." fallback still possible in some cases.
 
 _Project initialized via /create pipeline on 2026-03-18_
 
