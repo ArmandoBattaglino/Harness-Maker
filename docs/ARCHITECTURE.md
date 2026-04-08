@@ -2157,11 +2157,124 @@ parser.reset(); // call between turns if reusing instance
 
 **Security:** 1 MB per-line cap (SEC-SJ-03). Never throws -- all errors return error-type events.
 
-### 13.3 Remaining V9.0 Components (pending)
+### 13.3 `_spawnAgent()` — Provider Router (Task #359)
+
+**File:** `server/services/SwarmEngine.js`
+
+Routes agent spawn calls to the correct spawner based on runtime provider. All call sites that previously called `_spawnAgentPty()` directly now go through `_spawnAgent()`, which resolves the effective provider and dispatches:
+
+- Claude provider (including `auto` default) → `_spawnAgentStreamJson()`
+- All other providers (Codex, Gemini, etc.) → `_spawnAgentPty()`
+
+```
+_spawnAgent(executionId, nodeId, spawnOptions)
+  │
+  ├── isClaudeProvider? ──→ _spawnAgentStreamJson()
+  │
+  └── otherwise ──────────→ _spawnAgentPty()
+```
+
+Provider resolution: `spawnOptions.requestedProvider` → `spawnOptions.provider` → `execution.activeProvider` → normalize → if `auto` then `claude`.
+
+### 13.4 `_spawnAgentStreamJson()` — Stream-JSON Spawner (Task #359)
+
+**File:** `server/services/SwarmEngine.js`
+
+Spawns a Claude agent using `child_process.spawn` with `--output-format stream-json`. One process per turn. Conversation continuity via `--session-id` (turn 0) / `--resume` (turn N+).
+
+**Lifecycle (13 steps):**
+
+1. Look up execution and node; compute handoff targets from outgoing edges
+2. Resolve Claude binary path and model (workflow settings override or `DEFAULT_SWARM_CLAUDE_MODEL`)
+3. Get or create stream-json session ID (`uuidv4()` on first turn); retrieve existing turn count
+4. Build prompt via `_buildSystemPrompt()` or use `spawnOptions.reinjectPrompt` (done-reinject path)
+5. Build args: `--output-format stream-json`, `--verbose`, `--dangerously-skip-permissions`, session/resume flag, `-p <prompt>`, `--model`, optional `--tools` (SEC-SJ-01: uses `--tools` not `--allowedTools`)
+6. `spawn(claudeBin, args, { shell: false })` (SEC-02) + `child.stdin.end()` (DEC-005)
+7. Initialize/update agent state object with `spawnMode: 'stream-json'`, cost accumulators, turn count, child ref
+8. Broadcast `agent_status` WS event with `spawnMode: 'stream-json'`
+9. Attach `readline` on `child.stdout`, pipe each line through `StreamJsonParser.parseLine()`
+10. Dispatch parsed events: `text_delta` → accumulate + broadcast `chat_message`; `tool_start/delta/stop` → broadcast tool events; `thinking_start/stop` → broadcast thinking state; `api_retry` → broadcast retry status; `result` → call `_handleStreamJsonResult()`
+11. Collect stderr (capped, never full-logged — SEC-08)
+12. Handle `child.on('close')`: if no result event arrived, mark agent as error with `unexpected_exit` blocker
+13. Post-result 30s safety timeout managed inside `_handleStreamJsonResult()`
+
+**WS events emitted during a turn:**
+
+| Event type | When |
+|------------|------|
+| `agent_status` | On spawn (step 8), on retry, on error |
+| `chat_message` | Each `text_delta` — role `assistant`, incremental text |
+| `agent_tool_use` | `tool_start` — includes `toolName`, `toolUseId` |
+| `agent_tool_delta` | `tool_delta` — partial JSON for tool input |
+| `agent_thinking` | `thinking_start` (active=true), `thinking_stop`/`text_start` (active=false) |
+
+**Agent state shape (stream-json specific fields):**
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `streamJsonSessionId` | string | Claude session ID for `--resume` continuity |
+| `spawnMode` | `'stream-json'` | Distinguishes from PTY agents |
+| `sessionId` | `null` | No PTY session (DEC-028) |
+| `turnCount` | number | Incremented each result event |
+| `totalCostUsd` | number | Accumulated cost across turns |
+| `totalInputTokens` | number | Accumulated input tokens |
+| `totalOutputTokens` | number | Accumulated output tokens |
+| `_streamJsonChild` | ChildProcess\|null | Active child process ref (cleaned on close) |
+| `_streamJsonAccumulatedText` | string | Rolling text for handoff/done token scanning |
+| `doNotSpawnNextTurn` | boolean | Graceful stop flag (FR-SJ-16) |
+
+### 13.5 `_handleStreamJsonResult()` — Turn Result Handler (Task #359)
+
+**File:** `server/services/SwarmEngine.js`
+
+Processes the `result` event emitted at the end of each Claude CLI turn. Responsible for cost extraction, handoff/done token scanning, and turn lifecycle management.
+
+**Steps:**
+
+1. Increment `state.turnCount`
+2. Extract cost/usage from result event (`inputTokens`, `outputTokens`, `costUsd`, `durationMs`); accumulate into agent state totals; broadcast `agent_cost` WS event
+3. Store `resultEvt.sessionId` into `state.streamJsonSessionId` for future `--resume` calls
+4. If `resultEvt.isError`, set `state.needsRepair = true`
+5. Scan `_streamJsonAccumulatedText` using `HandoffParser.feed()` for `__HANDOFF__` / `__DONE__` tokens — reuses the same token patterns as the PTY path
+6. Route: if handoff found → `_onHandoff()`; if done found or no token → `_onDone()` (implicit done per DEC-029)
+7. If `doNotSpawnNextTurn` is set, mark agent done immediately (graceful stop)
+8. Schedule 30s post-result timeout: `tree-kill` the child if it hasn't exited (constant `STREAM_JSON_POST_RESULT_TIMEOUT_MS`)
+9. Reset `_streamJsonAccumulatedText` for the next turn
+
+**`agent_cost` WS event fields:**
+
+```json
+{
+  "type": "agent_cost",
+  "nodeId": "<nodeId>",
+  "inputTokens": 1234,
+  "outputTokens": 567,
+  "costUsd": 0.0042,
+  "durationMs": 8500,
+  "totalInputTokens": 5678,
+  "totalOutputTokens": 2345,
+  "totalCostUsd": 0.0180
+}
+```
+
+### 13.6 Modifications to `_onDone()` and `stopExecution()` (Task #359)
+
+**`_onDone()` — stream-json reinject path:**
+
+When a stream-json agent emits `__DONE__` but has downstream handoff targets, `_onDone()` now handles the reinject loop for stream-json agents differently from PTY agents:
+- PTY agents: writes reinject prompt to existing PTY stdin
+- Stream-json agents: spawns a new `_spawnAgentStreamJson()` call with `{ reinjectPrompt }`, which uses `--resume` to continue the same session
+
+The `doneReinjectCount` guard and forced-handoff fallback (`MAX_DONE_REINJECT_ATTEMPTS`) apply identically to both paths.
+
+**`stopExecution()` — stream-json cleanup:**
+
+Added a cleanup block that iterates `execution.agentStates` and, for any agent with `spawnMode === 'stream-json'` and a live `_streamJsonChild`, calls `treeKill(child.pid, 'SIGTERM')` to terminate the process. The child ref is nulled before kill to prevent double-kill.
+
+### 13.7 Remaining V9.0 Components (pending)
 
 | Component | Task | Status |
 |-----------|------|--------|
-| `_spawnAgentStreamJson()` | #359 | PENDING |
 | Stream-json event dispatcher | #361 | PENDING |
 | Agent lifecycle (stop/reset) | #363 | PENDING |
 | Tool config (`--tools` flag) | #365 | PENDING |

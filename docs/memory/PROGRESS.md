@@ -1,4 +1,6 @@
-﻿- [PM 2026-04-08] TASK #357 COMPLETED, #356 COMPLETED (PASS), #358 IN_PROGRESS. V9.0: 354/393 COMPLETED, 2 DEFERRED, 37 PENDING. Phase 0 CLOSED. Phase 1 active: StreamJsonParser done, TEST GATE running. Next after #358 PASS: #359 _spawnAgentStreamJson (backend-dev, VERY HARD, opus).
+﻿- [PM 2026-04-08] TASK #359 COMPLETED (_spawnAgentStreamJson, all methods added, 453/453 tests pass). #360 IN_PROGRESS (TEST GATE running by qa-tester). V9.0: 356/393 COMPLETED, 2 DEFERRED, 35 PENDING. Phase 1 progressing: #357 done, #358 PASS, #359 done. After #360 PASS: #361 (dispatcher) + #363 (session lifecycle) run PARALLEL.
+
+- [PM 2026-04-08] TASK #357 COMPLETED, #356 COMPLETED (PASS), #358 IN_PROGRESS. V9.0: 354/393 COMPLETED, 2 DEFERRED, 37 PENDING. Phase 0 CLOSED. Phase 1 active: StreamJsonParser done, TEST GATE running. Next after #358 PASS: #359 _spawnAgentStreamJson (backend-dev, VERY HARD, opus).
 
 - [BACKEND-DEV 2026-04-08] TASK #357 COMPLETED. StreamJsonParser.js + StreamJsonParser.test.js created. 37 new tests, 453/453 total pass. Parser handles all stream-json event types (text_delta, tool_start/delta/stop, thinking, result, api_retry, assistant->message, message_start/delta/stop). Ready for TEST GATE #358 and _spawnAgentStreamJson #359.
 

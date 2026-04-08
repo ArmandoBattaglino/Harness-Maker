@@ -1,4 +1,41 @@
 ---
+## 2026-04-08 — Task #359 COMPLETED status update + #360 activation
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+TASK #359 (_spawnAgentStreamJson) just completed by backend-dev. All methods added to SwarmEngine.js, 453/453 tests pass. TEST GATE #360 was PENDING and needed activation. #358 was already COMPLETED (PASS) from prior session.
+
+### What I did
+1. Read TASK_PLAN.md header, #358/#359/#360 task bodies, PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md, agent memory
+2. Confirmed #359 already marked COMPLETED in task body by backend-dev
+3. Confirmed #358 already marked COMPLETED with PASS verdict
+4. Changed #360 status from PENDING to IN_PROGRESS
+5. Updated header: 356 COMPLETED (was 355), 35 PENDING (was 36). Active area text updated to reflect #359 done and #360 running.
+6. Updated PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Header counts (356/393), #360 IN_PROGRESS, active area text |
+| docs/memory/PROGRESS.md | MODIFIED | Added PM status entry for #359 COMPLETED |
+| docs/memory/CONTEXT.md | MODIFIED | Updated focus to #359 done, #360 running, next steps |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added PM status update entry |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log |
+
+### Decisions I made
+- None -- straightforward status update
+
+### What I learned
+- The _spawnAgent dispatcher exists in code but is not yet wired into startExecution -- that is a separate task (#361). Important to note this distinction so the TEST GATE (#360) tests the method in isolation, not the full integration path.
+
+### State I'm leaving behind
+356/393 COMPLETED. Phase 1 active: #357 done, #358 PASS, #359 done, #360 IN_PROGRESS (qa-tester). After #360 PASS: #361 + #363 can run in parallel (both backend-dev, different SwarmEngine sections). No blockers.
+
+### Handoff
+Wait for #360 TEST GATE result. If PASS -> launch #361 (dispatcher wiring, MEDIUM difficulty) + #363 (session lifecycle cleanup, MEDIUM difficulty) in parallel, both assigned to backend-dev. If FAIL -> return to #359 with bug report.
+
+---
 ## 2026-04-08 — Task #357 COMPLETED status update + #358 activation
 **Status:** COMPLETED
 **Called by:** orchestrator

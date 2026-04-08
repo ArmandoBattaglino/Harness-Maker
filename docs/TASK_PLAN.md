@@ -4,8 +4,8 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v9.0.0 — 393 tasks total, 355 COMPLETED, 2 DEFERRED, 36 PENDING. V8.2 OUTPUT FIDELITY: AREA CLOSED 2026-04-07. V9.0 STREAM-JSON AGENT MIGRATION: Phase 0 CLOSED, Phase 1 IN_PROGRESS. #357 StreamJsonParser COMPLETED, TEST GATE #358 PASS. 453 tests, client build clean.
-  **Active Area:** V9.0 STREAM-JSON AGENT MIGRATION — Tasks #354-#393. Phase 0: CLOSED (#354 COMPLETED, #355 PASS, #356 PASS). Phase 1: #357 COMPLETED, #358 IN_PROGRESS (qa-tester). PRD v6.0.
+**Status:** v9.0.0 — 393 tasks total, 356 COMPLETED, 2 DEFERRED, 35 PENDING. V8.2 OUTPUT FIDELITY: AREA CLOSED 2026-04-07. V9.0 STREAM-JSON AGENT MIGRATION: Phase 0 CLOSED, Phase 1 IN_PROGRESS. #357 COMPLETED, #358 PASS, #359 COMPLETED, #360 FAIL (qa-tester — 2 WS contract bugs). 453 tests, client build clean.
+  **Active Area:** V9.0 STREAM-JSON AGENT MIGRATION — Tasks #354-#393. Phase 0: CLOSED (#354 COMPLETED, #355 PASS, #356 PASS). Phase 1: #357 COMPLETED, #358 PASS, #359 COMPLETED, #360 FAIL (qa-tester — WS contract bugs). Return to #359 for fixes, then re-run #360. PRD v6.0.
   **Completed Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 ALL COMPLETED/PASS. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#267 ALL COMPLETED. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave2 NODE CREATION & CONFIG — Tasks #268-#272 ALL COMPLETED. AREA CLOSED 2026-04-06.
@@ -15856,7 +15856,7 @@ Type: TEST_GATE
 Priority: CRITICAL
 Difficulty: HARD
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: IN_PROGRESS
 Gate: HARD — #361 and #363 blocked until PASS
 Context: Mock spawn, feed parser lines, verify WS events. Test spawn args, session-id/resume, stdin.end, all event->broadcast mappings, __HANDOFF__, crash, timeout. Verify WS contracts: agent_status, agent_thinking, agent_tool_use, agent_tool_delta, agent_cost.
 Acceptance Criteria:

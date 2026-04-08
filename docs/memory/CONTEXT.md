@@ -1,8 +1,8 @@
 ﻿# Current Context
 **Session date:** 2026-04-08
-**Focus:** V9.0 STREAM-JSON AGENT MIGRATION — Phase 0 CLOSED. Phase 1 Backend Core IN_PROGRESS. #357 StreamJsonParser COMPLETED (37 tests, 453/453 pass). TEST GATE #358 IN_PROGRESS (qa-tester). 393 tasks total: 354 COMPLETED, 2 DEFERRED, 37 PENDING. PRD v6.0. 453 tests, build clean.
+**Focus:** V9.0 STREAM-JSON AGENT MIGRATION — Phase 0 CLOSED. Phase 1 Backend Core IN_PROGRESS. #357 COMPLETED, #358 PASS, #359 COMPLETED (all _spawnAgentStreamJson methods added), #360 IN_PROGRESS (qa-tester running TEST GATE). 393 tasks total: 356 COMPLETED, 2 DEFERRED, 35 PENDING. PRD v6.0. 453 tests, build clean.
 
-**IMMEDIATE NEXT STEP:** Wait for TASK #358 TEST GATE result from qa-tester. If PASS, proceed to #359 _spawnAgentStreamJson (backend-dev, VERY HARD, opus recommended). If FAIL, return to #357 for fixes.
+**IMMEDIATE NEXT STEP:** Wait for TASK #360 TEST GATE result from qa-tester. If PASS, launch #361 (dispatcher wiring, backend-dev) + #363 (session lifecycle, backend-dev) IN PARALLEL. If FAIL, return to #359 for fixes.
 
 **Dependency wave map:**
   Wave 0: #354 (spike) -> #355 (gate) -> #356 (checkpoint)

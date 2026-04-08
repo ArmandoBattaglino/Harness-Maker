@@ -1,4 +1,15 @@
-﻿## 2026-04-08 — project-manager — Task #357 status update + #358 activation
+﻿## 2026-04-08 — project-manager — Task #359 COMPLETED status update + #360 activation
+**Outcome:** COMPLETED
+**Summary:** Marked #359 COMPLETED (_spawnAgentStreamJson, all methods added by backend-dev, 453/453 tests pass). Activated #360 TEST GATE to IN_PROGRESS (qa-tester running). Updated header: 356/393 COMPLETED, 35 PENDING. Note: _spawnAgent dispatcher exists but not yet wired into startExecution (that is Task #361). After #360 PASS, #361 (dispatcher wiring) + #363 (session lifecycle) can run in PARALLEL per task plan.
+**Files changed:** docs/TASK_PLAN.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/CONTEXT.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/project-manager.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** Wait for #360 TEST GATE result. If PASS -> launch #361 + #363 in parallel (both backend-dev). If FAIL -> return to #359 with bug report.
+
+---
+
+## 2026-04-08 — project-manager — Task #357 status update + #358 activation
 **Outcome:** COMPLETED
 **Summary:** Marked #357 COMPLETED (StreamJsonParser, 37 tests, 453/453 pass). Also marked #356 (AREA CHECKPOINT Phase 0) COMPLETED/PASS (was bypassed but implicitly passed). Activated #358 TEST GATE to IN_PROGRESS. Updated header: 354/393 COMPLETED, 37 PENDING. Phase 0 CLOSED, Phase 1 active. No blockers. Next after #358 PASS: #359 _spawnAgentStreamJson (backend-dev, VERY HARD).
 **Files changed:** docs/TASK_PLAN.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/CONTEXT.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/project-manager.md (MODIFIED)
