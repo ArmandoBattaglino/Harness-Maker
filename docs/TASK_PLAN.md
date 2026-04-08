@@ -4,8 +4,9 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v9.2.0 — task numbering extends through #409; 406 tasks are currently registered in this plan, 403 are COMPLETE/PASS, 1 is DEFERRED, and 1 is PENDING (TEST GATE #409) + 2 are IN_PROGRESS (#407, #408). V9.1 CODEX SDK SWARM INTEGRATION CLOSED through #405 PASS. 488 server tests pass, client build clean (501 modules).
-  **Active Area:** V9.2 STREAM-JSON DISPLAY FIDELITY — #406 (text_delta spurious spaces) COMPLETED by debugger (commit e496745). #407 (stale node state) IN_PROGRESS by frontend-dev. #408 (cost footer vanish) IN_PROGRESS by frontend-dev. TEST GATE #409 PENDING (blocked on #407+#408).
+**Status:** v9.3.1 — task numbering extends through #412; 409 tasks are currently registered in this plan, 408 are COMPLETE/PASS, 1 is DEFERRED, 0 are PENDING, and 1 is IN_PROGRESS. V9.1 CODEX SDK SWARM INTEGRATION CLOSED through #405 PASS. 490 server tests pass, client build clean (501 modules).
+  **Active Area:** V9.2 STREAM-JSON DISPLAY FIDELITY — #406 COMPLETED, #407 COMPLETED, #408 COMPLETED. TEST GATE #409 FAIL: text fidelity check failed (spurious spaces from stream-json token boundaries persist despite client fix). #407/#408 fixes verified PASS. Residual bug: stream-json text_delta tokens carry whitespace at subword boundaries — needs server-side or post-processing fix.
+  **Completed Area:** V9.3 CODEX SDK DEBUGGER-LOOP HARDENING — #410 COMPLETED, #411 COMPLETED, TEST GATE #412 PASS. Live Codex SDK smoke on isolated updated server verified non-empty Chat rail output and clean Reset Session -> Idle behavior.
   **Completed Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 ALL COMPLETED/PASS. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#267 ALL COMPLETED. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave2 NODE CREATION & CONFIG — Tasks #268-#272 ALL COMPLETED. AREA CLOSED 2026-04-06.
@@ -16928,8 +16929,9 @@ Area: V9.2 STREAM-JSON DISPLAY FIDELITY (2026-04-08)
 Agent: qa-tester
 Type: TEST_GATE
 Priority: CRITICAL
-Status: PENDING
+Status: FAIL
 Gate: HARD
+Completion Note: 2026-04-08 — TEST GATE FAIL. Test 1 (text fidelity) FAIL: spurious spaces persist in stream-json output even with correct bundle (separator=''). Spaces come from raw Claude CLI text_delta tokens, NOT from client accumulation. The #406 fix was correct (eliminated '\n\n' separator) but insufficient — a NEW residual bug exists where stream-json token boundaries include whitespace. Examples: "con su ma t or e" (consumatore), "tra m it e" (tramite), "se con da" (seconda), "Java Script" (JavaScript). Tests 2-4 all PASS: stale state reset works (#407), cost badges persist (#408), 488/488 server tests, client build clean.
 Context:
   Re-run the same multi-agent Puppeteer E2E test (2-agent Researcher → Writer, Node.js streams topic).
   Verify:
@@ -16941,4 +16943,95 @@ Context:
 Acceptance Criteria:
   - All 5 checks PASS
 Dependencies: TASK #406,#407,#408
+---
+
+## AREA: V9.3 — Codex SDK Debugger-Loop Hardening
+_Components: SwarmEngine codex reset flow, Codex SDK chat extraction/persistence, SwarmView chat rail/live run parity_
+_Tasks: #410 → #412_
+_Gate: Codex SDK live run must complete truthfully in node output and chat rail, and Reset Session must return to Idle without stale blocker_
+
+---
+TASK #410: BUG-DL-CODEX-RESET-1 — Reset Session leaves codex-sdk execution blocked after abort
+Area: V9.3 CODEX SDK DEBUGGER-LOOP HARDENING (2026-04-08)
+Agent: debugger
+Type: BUG_FIX
+Priority: HIGH
+Status: COMPLETED
+Context:
+  Deep live browser test on 2026-04-08 with workflow `ZZ Codex SDK Reset Test Live 2026-04-08`
+  reproduced a codex-sdk reset failure. Steps: load workflow in Swarm, set provider Codex,
+  click Run, wait for `● Running`, then click `Reset Session`. Expected outcome: execution and
+  node return to `idle`, blocker banner disappears, toolbar returns to `Run`.
+  Actual outcome: UI remains `● Blocked`, toolbar still shows `Stop` + `Reset Session`, and the
+  banner reads `The operation was aborted Provider: codex.` The server status endpoint confirms
+  both `execution.status='blocked'` and `execution.runtimeBlocker` remain set after reset.
+  Repro evidence:
+  - `/api/v1/swarm/c174bcb4-c3c7-445b-aafb-ab6057683664/status`
+  - `agentStates.codex-waiter.status = blocked`
+  - `runtimeBlocker.message = "The operation was aborted"`
+  Files to inspect first:
+  1. `server/services/SwarmEngine.js` `_forceStopCodexSdkAgent`, `_resetCodexSdkAgent`,
+     `stopStreamJsonAgent(...)`, and any async abort completion path that may reapply blocker state
+  2. `server/services/CodexSdkAdapter.js` abort/cancel handling surfaced back into SwarmEngine
+Acceptance Criteria:
+  - [x] Resetting a running codex-sdk node returns node + execution to `idle`
+  - [x] `execution.runtimeBlocker` and per-node `runtimeBlocker` are cleared after reset
+  - [x] Toolbar returns to `Run` and blocker banner disappears
+  - [x] Backend tests cover the regression
+Completion Note: COMPLETED — 2026-04-08 — Added per-turn `codex-sdk` run IDs in `server/services/SwarmEngine.js` so reset/forced-stop invalidates late SDK abort events instead of letting them reapply `blocked` state after the node was already reset. `_forceStopCodexSdkAgent` now records the actual stop mode, clears the abort controller immediately, and reset clears thread/controller/run metadata before returning idle. Regression coverage added in `server/tests/swarm-engine-codex-sdk.test.js`.
+Dependencies: none
+---
+TASK #411: BUG-DL-CODEX-CHAT-1 — Completed codex-sdk run can lose chatMessages while final output still exists
+Area: V9.3 CODEX SDK DEBUGGER-LOOP HARDENING (2026-04-08)
+Agent: debugger
+Type: BUG_FIX
+Priority: HIGH
+Status: COMPLETED
+Context:
+  Deep live browser test on 2026-04-08 with workflow `ZZ Codex SDK Deep Test Live 2026-04-08`
+  reproduced an output truthfulness gap. The node card and final artifact show correct assistant
+  output (`NAME=claude-code-visual-manager`, `VERSION=9.0.0`, `__DONE__`), but the Chat rail shows
+  `No messages yet — run a workflow to see agent output here`.
+  Repro evidence from live UI-started execution `9fef93d7-70ae-4903-a7c7-0bf59a5aad54`:
+  - `GET /api/v1/swarm/9fef93d7-70ae-4903-a7c7-0bf59a5aad54/status` returns `chatMessages: []`
+  - `GET /api/v1/swarm/executions/9fef93d7-70ae-4903-a7c7-0bf59a5aad54/results` returns the final text,
+    but `messageCount: 0`
+  Control case: API-started execution `1a00b92e-498a-49ef-b33f-174dcf83550d` on the same workflow
+  does persist one assistant chat message, so the gap is conditional rather than universal.
+  Files to inspect first:
+  1. `server/services/CodexSdkAdapter.js` item/event handling and final assistant text extraction
+  2. `server/services/SwarmEngine.js` codex-sdk turn completion and chat message persistence
+  3. `server/services/ChatExtractor.js` any conditions that can drop codex final text when the
+     answer includes a short narrative preamble before the expected payload
+  4. `client/src/hooks/useSwarm.js` / `client/src/canvas/ChatPanel.jsx` only after confirming
+     whether the server snapshot already lost the messages
+Acceptance Criteria:
+  - [x] Completed codex-sdk runs always surface at least one assistant chat message when final text exists
+  - [x] Chat rail shows the same truthful assistant payload the node/result artifact exposes
+  - [x] Results endpoint `messageCount` stays in sync with visible chat content
+  - [x] Regression coverage added
+Completion Note: COMPLETED — 2026-04-08 — Added per-turn assistant-message baseline tracking plus a structured-runtime fallback message in `server/services/SwarmEngine.js` so a completed Codex SDK turn persists a truthful assistant chat message even when `ChatExtractor` suppresses the raw buffer as prompt echo. This closes the live gap where node output/artifact had final text but the Chat rail stayed empty. Regression coverage added in `server/tests/swarm-engine-codex-sdk.test.js`.
+Dependencies: none
+---
+TASK #412: TEST GATE — V9.3 Codex SDK debugger-loop verification
+Area: V9.3 CODEX SDK DEBUGGER-LOOP HARDENING (2026-04-08)
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Status: PASS
+Gate: HARD
+Context:
+  Re-run live Codex SDK workflows after #410 and #411:
+  1. `ZZ Codex SDK Deep Test Live 2026-04-08`
+  2. `ZZ Codex SDK Reset Test Live 2026-04-08`
+  Verify:
+  - deep test completes with truthful node output and non-empty Chat rail assistant message
+  - reset test returns to `Idle` after `Reset Session` while running
+  - no stale blocker/banner remains after reset
+  - backend suite passes
+  - client build passes
+Acceptance Criteria:
+  - [x] All checks PASS
+Completion Note: PASS — 2026-04-08 — Verified on isolated updated server `http://127.0.0.1:3337`: `ZZ Codex SDK Deep Test Live 2026-04-08` completes with non-empty Chat rail and matching `chatMessages` in `/status`; `ZZ Codex SDK Reset Test Live 2026-04-08` returns to `Idle` after `Reset Session` while running, with no blocker banner and `/status` showing execution + node back to `idle`. Verification suite: `npm test --prefix server` => 490/490 PASS, `npm run build --prefix client` => 501 modules.
+Dependencies: TASK #410,#411
 ---

@@ -1,4 +1,68 @@
 ---
+## 2026-04-08 — Task #409: TEST GATE — V9.2 Stream-JSON Display Fidelity verification
+**Status:** COMPLETED (verdict: FAIL)
+**Called by:** orchestrator
+
+### Context when I started
+Three bugs were fixed: #406 (appendAgentChatText separator '\n\n' -> '', lastChatSnippet accumulate), #407 (setWorkflowDef auto-clears execution state), #408 (cost badge dual-format read, applyExecutionSnapshot normalization). Server running at 127.0.0.1:3000 with 488/488 tests. All three bug-fix tasks COMPLETED.
+
+### What I did
+1. Ran `npm test --prefix server` -- 488/488 pass (22 test files)
+2. Ran `npm run build --prefix client` -- clean (501 modules)
+3. Navigated to Swarm view via Puppeteer, generated workflow "Node Streams Research and Writing" (2-agent, Researcher -> Writer)
+4. First run used STALE browser-cached bundle (index-DQNwRsSN.js vs deployed index-VcJiB6nY.js). Detected spurious spaces.
+5. Discovered bundle mismatch: browser was serving old JS file. Verified via `document.querySelectorAll('script[src]')`.
+6. Forced hard reload -- confirmed new bundle loaded (index-VcJiB6nY.js with separator='')
+7. Re-generated workflow and re-ran execution with correct bundle
+8. Extracted full Writer text via JS evaluation -- spurious spaces STILL present
+9. Verified minified bundle contains `const c=""` (empty separator) -- fix IS deployed
+10. Concluded: spaces come from raw Claude CLI stream-json text_delta tokens, not client accumulation
+11. Verified Test 2 (stale state reset): generated new "Italian Cities" workflow, nodes showed Idle, no stale data -- PASS
+12. Verified Test 3 (cost persistence): Researcher $0.17, Writer $0.06 visible in Done state -- PASS
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Task #409 marked FAIL with detailed completion note |
+| docs/memory/agents/qa-tester.md | MODIFIED | This session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Session entry |
+| docs/memory/PROGRESS.md | MODIFIED | #409 FAIL noted |
+
+### Improvements delivered
+- Identified that #406 fix was correct but insufficient -- the residual spurious spaces are a DIFFERENT root cause (stream-json token boundary whitespace)
+- Confirmed #407 and #408 fixes are fully working
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| Spurious spaces in stream-json text (residual) | Claude CLI text_delta events contain whitespace at subword token boundaries (e.g. "con" + " su" + " ma" + " t" + " or" + " e" for "consumatore") | None -- #406 fix addressed client separator, not upstream token content | OPEN -- needs new task for server-side or post-processing word-fusion |
+| Browser serving stale bundle | Server was started before latest build; browser cached old index-DQNwRsSN.js | Hard reload after rebuild | FIXED (for this session) |
+
+### Decisions I made
+- FAIL verdict because acceptance criterion #1 ("Writer output has NO spurious spaces") is not met
+- Tests 2-4 PASS but the hard gate requires ALL checks to pass
+- Classified the remaining spaces as a NEW bug distinct from #406: the #406 fix (separator change) is confirmed correct and deployed, but the upstream stream-json output itself carries spaces at token boundaries
+
+### What I learned
+- The Claude CLI stream-json `text_delta` events emit tokens that include leading whitespace as part of the token text (e.g., " su", " ma", " t"). This is standard LLM tokenization behavior where subword tokens carry their preceding space.
+- For single-token words this is fine, but when a word is split into multiple subword tokens (common for non-English words and camelCase identifiers), each interior token brings a space that creates visible word fragmentation.
+- The fix needs to be server-side or a post-processing step: either a word-fusion heuristic that detects and removes spaces at subword boundaries, or the `result` event's full text (which is already correctly assembled by the CLI) should be used as the final canonical text, replacing the accumulated text_delta fragments.
+- Always verify which bundle the browser is actually loading before concluding a fix is insufficient -- the first test run used a stale cached bundle.
+
+### State I'm leaving behind
+- TASK #409 FAIL with detailed bug report
+- #407 and #408 verified working
+- Residual bug needs a new task: stream-json text_delta word-fusion or result-text substitution
+- V9.2 area CANNOT be closed until the text fidelity issue is resolved
+
+### Handoff
+Debugger or backend-dev must address the stream-json token boundary whitespace. Two possible approaches:
+1. **Server-side post-processing**: When the `result` event arrives (which contains the full correctly-assembled text), use it to replace the accumulated text_delta fragments. The result event text does not have spurious spaces.
+2. **Word-fusion heuristic**: Apply a post-processing step to text_delta accumulation that detects and removes spaces at likely subword boundaries (harder, error-prone).
+Approach #1 is strongly recommended as it uses the canonical text from the CLI.
+After the fix, re-run TEST GATE #409.
+
+---
 ## 2026-04-08 — Task #360: TEST GATE — SwarmEngine._spawnAgentStreamJson()
 **Status:** COMPLETED (verdict: FAIL)
 **Called by:** orchestrator

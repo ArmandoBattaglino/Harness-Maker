@@ -1,6 +1,54 @@
 # CHANGELOG — Claude Code Visual Manager
 
 ---
+## 2026-04-08 — Task #407: BUG-DL-STALE-STATE-1 — Stale workflow state fix
+**Agent:** frontend-dev — mapped by code-mapper
+**Triggered by:** BUG-DL-02 discovered during Phase 1 E2E debugger-loop. After Prompt-to-Flow generates a new workflow, canvas briefly rendered node cards carrying stale state from the previous execution until Run was clicked.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/store/SwarmContext.jsx | MODIFIED | `setWorkflowDef` now auto-clears execution state on workflow ID change using `buildClearedExecutionState()` |
+
+### Functions Added
+- `buildClearedExecutionState()` in `client/src/store/SwarmContext.jsx` — module-private factory returning a clean execution state object (20 fields). Extracted from existing `clearExecutionState` action to share with `setWorkflowDef`.
+
+### Functions Modified
+- `setWorkflowDef(def)` in `client/src/store/SwarmContext.jsx` — now compares `prevId` vs `nextId`; when different and stale execution state exists, spreads `buildClearedExecutionState()` into the Zustand update alongside `workflowDef: def`.
+
+### Connection Changes
+- `setWorkflowDef` now calls `buildClearedExecutionState()` (new internal dependency)
+- `clearExecutionState` and `reset` also call `buildClearedExecutionState()` (refactored to share the same helper)
+
+### Impact on Other Code
+- SwarmView.jsx, PromptToFlowBar.jsx, and any caller of `setWorkflowDef` now automatically get execution state cleared when switching workflows — no code changes needed in callers.
+
+---
+## 2026-04-08 — Task #408: BUG-DL-COST-VANISH-1 — Cost footer persistence fix
+**Agent:** frontend-dev — mapped by code-mapper
+**Triggered by:** BUG-DL-03 discovered during Phase 1 E2E debugger-loop. Cost/token footer was visible during Running but disappeared once execution transitioned to Completed, because reconciliation replaced client-accumulated nested `totalCost` with server flat fields.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/canvas/nodes/AgentNode.jsx | MODIFIED | Dual-format cost read (`totalCost.costUsd ?? totalCostUsd`); removed `isStreamJson` gate from cost badge |
+| client/src/canvas/ChatMessage.jsx | MODIFIED | Removed `isStreamJson` gate from cost footer — `{cost && ...}` now renders for all runtimes |
+| client/src/hooks/useSwarm.js | MODIFIED | `applyExecutionSnapshot` normalizes server flat cost fields into nested `totalCost` objects; preserves client `totalCost` and `lastChatSnippet` when server omits them |
+
+### Functions Modified
+- `AgentNode({ id, data, selected })` in `client/src/canvas/nodes/AgentNode.jsx` — cost now read via `Number(agentState?.totalCost?.costUsd ?? agentState?.totalCostUsd ?? 0)` (dual-format); `showCostBadge` no longer requires `isStreamJson`
+- `ChatMessage({ message, agentLabel })` in `client/src/canvas/ChatMessage.jsx` — cost footer render condition changed from `{isStreamJson && cost && ...}` to `{cost && ...}`
+- `applyExecutionSnapshot(snapshot)` in `client/src/hooks/useSwarm.js` — added normalization loop that synthesizes nested `totalCost` from server flat fields (`totalCostUsd`, `totalInputTokens`, `totalOutputTokens`, `totalCachedInputTokens`), preserves client-accumulated `totalCost` and `lastChatSnippet` when server omits them
+
+### Connection Changes
+- `applyExecutionSnapshot` now reads `currentState.agentStates` to merge/preserve client cost data during reconciliation (new cross-reference to client-accumulated state)
+- AgentNode cost badge no longer depends on `isStructuredSpawnMode()` for visibility (dependency weakened — still imported for thinking/tool badges)
+
+### Impact on Other Code
+- All consumers of `agentStates[nodeId].totalCost` now get data from both WS accumulation and server reconciliation paths — no consumer changes needed.
+- ChatMessage cost footer now visible for PTY runtimes too (if cost data is present, which it currently is not — no behavioral change for PTY, but future-proofed).
+
+---
 ## 2026-04-08 — V9.1 Codex SDK structured runtime integration
 **Agent:** backend-dev + frontend-dev + qa-tester — mapped by code-mapper
 **Triggered by:** User requested a Codex-side implementation similar to the new Claude stream-json runtime, but using the official Codex SDK instead of PTY scraping.

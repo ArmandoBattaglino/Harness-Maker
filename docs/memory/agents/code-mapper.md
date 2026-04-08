@@ -1,4 +1,53 @@
 ---
+## 2026-04-08 — Tasks #407+#408: BUG-DL-STALE-STATE-1 + BUG-DL-COST-VANISH-1 mapping
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task trio, parallel with PM + documenter)
+
+### Context when I started
+Tasks #407 and #408 completed in parallel by frontend-dev. #407 fixed stale workflow state (BUG-DL-02) by making `setWorkflowDef` auto-clear execution state on workflow ID change. #408 fixed cost footer disappearing after completion (BUG-DL-03) by adding dual-format cost reads and normalizing server flat cost fields in `applyExecutionSnapshot`.
+
+### What I did
+1. Read all 4 modified source files: SwarmContext.jsx, AgentNode.jsx, ChatMessage.jsx, useSwarm.js
+2. Traced connections: `buildClearedExecutionState` callers (setWorkflowDef, clearExecutionState, reset), `totalCostUsd` dual-format chain in AgentNode, normalization loop in applyExecutionSnapshot
+3. Updated CODE_MAP.md header timestamp
+4. Added new function entry for `buildClearedExecutionState()` (module-private helper)
+5. Updated `setWorkflowDef` entry with auto-clear behavior and complexity note
+6. Updated `AgentNode` entry with dual-format cost read and removed isStreamJson gate
+7. Updated `applyExecutionSnapshot` entry with normalization loop details
+8. Updated 3 Module Index rows (SwarmContext.jsx, AgentNode.jsx, useSwarm.js)
+9. Updated useSwarmStore main entry last-modified date
+10. Appended 2 CHANGELOG entries (one per task)
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header, 3 module index rows, 1 new function entry (buildClearedExecutionState), 3 updated function entries (setWorkflowDef, AgentNode, applyExecutionSnapshot), useSwarmStore main entry last-modified |
+| docs/memory/CHANGELOG.md | MODIFIED | 2 new entries for Tasks #407 and #408 |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session log |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log |
+
+### Improvements delivered
+- CODE_MAP now documents the stale-state prevention mechanism in `setWorkflowDef`
+- CODE_MAP now documents the dual-format cost chain that keeps cost visible after completion
+- New `buildClearedExecutionState` helper is explicitly mapped with its 3 callers
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Did not add ChatMessage.jsx to MODULE INDEX — it was not previously mapped and these tasks only modified the isStreamJson gate, not the component's architecture. Can be added in a full audit pass.
+
+### What I learned
+- Server serializes cost as flat fields (totalCostUsd, totalInputTokens) while client accumulates under nested totalCost object — this format mismatch is the root cause of cost vanishing after reconciliation
+- The setWorkflowDef auto-clear approach is elegant: it checks 3 staleness indicators and only clears when switching to a DIFFERENT workflow, preserving in-flight state for same-workflow saves
+
+### State I'm leaving behind
+CODE_MAP and CHANGELOG current through Tasks #407+#408. ChatMessage.jsx still not in Module Index (low priority — only affects future mapping completeness).
+
+### Handoff
+None — mapping complete for both tasks.
+
+---
 ## 2026-04-08 — Task #354: SPIKE — stream-json multi-turn mapping
 **Status:** COMPLETED
 **Called by:** orchestrator (post-task trio)

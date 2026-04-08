@@ -1,4 +1,57 @@
 ---
+## 2026-04-08 — Tasks #407+#408: BUG-DL-STALE-STATE-1 + BUG-DL-COST-VANISH-1 documentation update
+**Status:** COMPLETED
+**Called by:** orchestrator (post-bugfix)
+
+### Context when I started
+Two frontend bug fixes just completed:
+1. Task #407 (BUG-DL-STALE-STATE-1): `setWorkflowDef` in SwarmContext.jsx now auto-clears execution state when workflow ID changes and stale state exists.
+2. Task #408 (BUG-DL-COST-VANISH-1): Cost displays in AgentNode.jsx and ChatMessage.jsx no longer gated on `isStreamJson`; `applyExecutionSnapshot` in useSwarm.js normalizes server flat cost fields to client nested `totalCost` format.
+DOC_STATUS.md listed BUG-DL-02 and BUG-DL-03 as open bugs -- both now resolved by these tasks.
+
+### What I did
+1. Read all 4 modified files (SwarmContext.jsx, AgentNode.jsx, ChatMessage.jsx, useSwarm.js) in parallel with DOC_STATUS.md, my agent log, ACTIVITY_LOG.md, PROGRESS.md, ARCHITECTURE.md, and README.md
+2. Audited all tracked docs for staleness:
+   - README.md: NOT stale (internal bug fixes, no user-facing changes)
+   - ARCHITECTURE.md: NOT stale (no new components, no changed data flow)
+   - API.md: NOT stale (no endpoint changes)
+   - CONTEXT.md: already updated by project-manager (accurate)
+   - PROGRESS.md: already updated by project-manager (accurate)
+3. Updated DOC_STATUS.md: header timestamp, task count (#406 -> #408), open bugs 2 -> 0, both BUG-DL-02 and BUG-DL-03 marked FIXED with task references and fix descriptions, added both bugs to fixed bugs table, updated inline comments status note
+4. Appended ACTIVITY_LOG.md entry
+5. Appended this agent session log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Open bugs 2->0; BUG-DL-02 and BUG-DL-03 marked FIXED; task count updated to #408; inline comments note expanded with #407/#408 annotations |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Prepended documenter entry for this audit pass |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- DOC_STATUS.md now accurately reports 0 open bugs (was 2)
+- Both BUG-DL-STALE-STATE-1 and BUG-DL-COST-VANISH-1 tracked in fixed bugs table with complete fix descriptions
+- Inline comments status reflects new annotations in SwarmContext.jsx, AgentNode.jsx, and useSwarm.js
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Did not update README.md -- both fixes are internal bug fixes with no user-facing feature changes
+- Did not update ARCHITECTURE.md -- no new components, no changed data flow, no new WS events
+- Did not update API.md -- no endpoint changes
+- Did not update CONTEXT.md -- project-manager had already updated it accurately
+
+### What I learned
+- The server-to-client cost format mismatch (flat `totalCostUsd` vs nested `totalCost.costUsd`) was a cross-layer contract issue. The documenter should track such format mismatches in inline comments so future developers understand both serialization formats.
+
+### State I'm leaving behind
+All documentation is current through Task #408. Zero open bugs in DOC_STATUS.md. TEST GATE #409 is pending -- after it passes, V9.2 area documentation can be marked CLOSED.
+
+### Handoff
+After TEST GATE #409, documenter should update DOC_STATUS.md to mark V9.2 STREAM-JSON DISPLAY FIDELITY as CLOSED.
+
+---
 ## 2026-04-08 — Task #398: BUG-AUTO-ROUTING documentation update
 **Status:** COMPLETED
 **Called by:** orchestrator (post-bugfix)

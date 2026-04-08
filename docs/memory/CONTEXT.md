@@ -1,8 +1,8 @@
 ﻿# Current Context
 **Session date:** 2026-04-08
-**Focus:** V9.2 STREAM-JSON DISPLAY FIDELITY is the active area. Debugger-loop Phase 1 found 3 bugs in multi-agent E2E testing. Task #406 (BUG-DL-TEXTDELTA-1 -- spurious spaces in stream-json text_delta) is COMPLETED by debugger (commit e496745). Tasks #407 (stale node state on workflow switch) and #408 (cost footer disappears after Completed) are IN_PROGRESS by frontend-dev. TEST GATE #409 is PENDING, blocked on #407+#408. Task numbering extends through #409; 406 tasks registered, 403 COMPLETE/PASS, 1 DEFERRED (#236), 2 IN_PROGRESS (#407, #408), 1 PENDING (#409). 488 backend tests pass, client build clean at 501 modules.
+**Focus:** V9.3 CODEX SDK DEBUGGER-LOOP HARDENING is CLOSED. Deep live testing found and fixed two codex-sdk regressions: #410 reset/abort left executions blocked, and #411 completed runs could lose `chatMessages` while final output still existed. TEST GATE #412 PASS verified both fixes live on isolated server `http://127.0.0.1:3337`. Parallel status: V9.2 STREAM-JSON DISPLAY FIDELITY remains open only because TEST GATE #409 now FAILed on residual text-fidelity spacing, which is separate from the codex-sdk work. Task numbering extends through #412; 409 tasks registered, 408 COMPLETE/PASS, 1 DEFERRED (#236), 1 IN_PROGRESS/OPEN follow-up (#409). 490 backend tests pass, client build clean at 501 modules.
 
-**IMMEDIATE NEXT STEP:** Wait for frontend-dev to complete #407 and #408, then run TEST GATE #409 (qa-tester) to verify all 3 display fidelity bugs are resolved via multi-agent Puppeteer E2E re-run. After #409 PASS, V9.2 area can be CLOSED.
+**IMMEDIATE NEXT STEP:** return to V9.2 follow-up planning for the residual stream-json text-fidelity bug behind TEST GATE #409, or do housekeeping/commit prep for the completed codex-sdk debugger-loop fixes.
 
 **V9.1 dependency wave map:**
   Wave 9.1: #400 (SDK contract spike) -> #401 (adapter foundation) -> #402 (SwarmEngine codex-sdk runtime) -> #403 (backend TEST GATE) + #404 (frontend contract) IN PARALLEL -> #405 (AREA CHECKPOINT)

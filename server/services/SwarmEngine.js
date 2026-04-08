@@ -725,6 +725,22 @@ class SwarmEngine {
       .trim();
   }
 
+  _countAssistantChatMessages(execution, nodeId) {
+    if (!execution || !nodeId) return 0;
+    return (execution.chatMessages ?? []).filter(
+      (message) => message?.nodeId === nodeId && (message.role === 'assistant' || !message.role)
+    ).length;
+  }
+
+  _buildStructuredAssistantChatFallback(text = '') {
+    return String(text ?? '')
+      .replace(/__HANDOFF__[\s\S]*/g, '')
+      .replace(/HANDOFF:[a-z0-9-]+:\s*\{[\s\S]*/gi, '')
+      .replace(/__DONE__[\s\S]*/g, '')
+      .replace(/^\s*DONE\s*$/gim, '')
+      .trim();
+  }
+
   _serializeAgentState(state = {}) {
     return {
       sessionId: state.sessionId ?? null,
@@ -946,7 +962,7 @@ class SwarmEngine {
     return this.getStatus(executionId, execution);
   }
 
-  async _forceStopCodexSdkAgent(executionId, nodeId) {
+  async _forceStopCodexSdkAgent(executionId, nodeId, stopMode = 'forced') {
     const execution = this._executions.get(executionId);
     if (!execution) return null;
 
@@ -954,17 +970,19 @@ class SwarmEngine {
     if (!this._isCodexSdkAgentState(state)) return null;
 
     state.doNotSpawnNextTurn = false;
-    state._pendingCodexSdkStopMode = 'forced';
+    state._pendingCodexSdkStopMode = stopMode;
     state.currentToolUse = null;
     state.isThinking = false;
     state.needsRepair = true;
     state.status = 'stopped';
     state._codexSdkAssistantText = '';
     state._codexSdkItemSnapshots = new Map();
+    state._codexSdkRunId = null;
 
     if (state._codexSdkAbortController && !state._codexSdkAbortController.signal.aborted) {
       state._codexSdkAbortController.abort();
     }
+    this._clearCodexSdkAbortController(state);
 
     this._broadcastAgentStatus(executionId, nodeId, state);
     this._syncExecutionStatusFromAgents(execution);
@@ -979,7 +997,7 @@ class SwarmEngine {
     if (!this._isCodexSdkAgentState(state)) return null;
 
     const previousThreadId = state.codexThreadId ?? null;
-    await this._forceStopCodexSdkAgent(executionId, nodeId);
+    await this._forceStopCodexSdkAgent(executionId, nodeId, 'reset');
 
     state._lastResetArchive = previousThreadId
       ? {
@@ -1002,6 +1020,10 @@ class SwarmEngine {
     state._pendingCodexSdkStopMode = null;
     state._codexSdkAssistantText = '';
     state._codexSdkItemSnapshots = new Map();
+    state._codexSdkAbortController = null;
+    state._codexSdkThread = null;
+    state._codexSdkRunId = null;
+    state._codexSdkTurnChatCountStart = this._countAssistantChatMessages(execution, nodeId);
     state.status = 'idle';
     if (execution.runtimeBlocker?.nodeId === nodeId) {
       execution.runtimeBlocker = null;
@@ -1049,7 +1071,7 @@ class SwarmEngine {
       }
 
       if (mode === 'forced') {
-        return this._forceStopCodexSdkAgent(executionId, nodeId);
+        return this._forceStopCodexSdkAgent(executionId, nodeId, 'forced');
       }
 
       return this._resetCodexSdkAgent(executionId, nodeId);
@@ -4365,6 +4387,7 @@ class SwarmEngine {
           signal: abortController.signal,
         },
       });
+      const runId = uuidv4();
 
       const state = {
         ...(previousState ?? {}),
@@ -4394,6 +4417,8 @@ class SwarmEngine {
         _codexSdkAbortController: abortController,
         _codexSdkItemSnapshots: new Map(),
         _codexSdkAssistantText: '',
+        _codexSdkRunId: runId,
+        _codexSdkTurnChatCountStart: this._countAssistantChatMessages(execution, nodeId),
         _structuredRuntimeKind: STRUCTURED_SPAWN_MODE.CODEX_SDK,
         _agentSystemPrompt: (node.data && node.data.systemPrompt) || '',
         _agentFullPrompt: prompt || '',
@@ -4439,7 +4464,7 @@ class SwarmEngine {
       this._broadcastAgentStatus(executionId, nodeId, state);
       this._syncExecutionStatusFromAgents(execution);
 
-      void this._consumeCodexSdkEvents(executionId, nodeId, events);
+      void this._consumeCodexSdkEvents(executionId, nodeId, events, runId);
       return;
     } catch (error) {
       console.warn(`[SwarmEngine] Codex SDK spawn/setup failed for ${nodeId}; falling back to PTY: ${error.message}`);
@@ -4450,12 +4475,13 @@ class SwarmEngine {
     }
   }
 
-  async _consumeCodexSdkEvents(executionId, nodeId, events) {
+  async _consumeCodexSdkEvents(executionId, nodeId, events, runId = null) {
     try {
       for await (const event of events) {
         const execution = this._executions.get(executionId);
         const state = execution?.agentStates.get(nodeId);
         if (!execution || !state) return;
+        if (runId && state._codexSdkRunId !== runId) return;
 
         if (event.type === 'thread.started' && event.thread_id) {
           state.codexThreadId = event.thread_id;
@@ -4478,26 +4504,31 @@ class SwarmEngine {
         }
 
         if (event.type === 'turn.completed') {
-          await this._handleCodexSdkTurnCompleted(executionId, nodeId, event.usage);
+          await this._handleCodexSdkTurnCompleted(executionId, nodeId, event.usage, runId);
           return;
         }
 
         if (event.type === 'turn.failed') {
-          await this._handleCodexSdkTurnFailure(executionId, nodeId, event.error);
+          await this._handleCodexSdkTurnFailure(executionId, nodeId, event.error, runId);
           return;
         }
 
         if (event.type === 'error') {
-          await this._handleCodexSdkTurnFailure(executionId, nodeId, event);
+          await this._handleCodexSdkTurnFailure(executionId, nodeId, event, runId);
           return;
         }
       }
     } catch (error) {
-      await this._handleCodexSdkTurnFailure(executionId, nodeId, error);
+      const execution = this._executions.get(executionId);
+      const state = execution?.agentStates.get(nodeId);
+      if (!execution || !state) return;
+      if (runId && state._codexSdkRunId !== runId) return;
+      await this._handleCodexSdkTurnFailure(executionId, nodeId, error, runId);
     } finally {
       const execution = this._executions.get(executionId);
       const state = execution?.agentStates.get(nodeId);
       if (!state) return;
+      if (runId && state._codexSdkRunId !== runId) return;
 
       this._clearCodexSdkAbortController(state);
 
@@ -4659,12 +4690,13 @@ class SwarmEngine {
     }
   }
 
-  async _handleCodexSdkTurnCompleted(executionId, nodeId, usage = null) {
+  async _handleCodexSdkTurnCompleted(executionId, nodeId, usage = null, runId = null) {
     const execution = this._executions.get(executionId);
     if (!execution) return;
 
     const state = execution.agentStates.get(nodeId);
     if (!state) return;
+    if (runId && state._codexSdkRunId !== runId) return;
 
     state.turnCount = (state.turnCount ?? 0) + 1;
 
@@ -4717,6 +4749,7 @@ class SwarmEngine {
     }
 
     const accumulatedText = state._codexSdkAssistantText || this._collectStructuredAssistantText(state._codexSdkItemSnapshots);
+    const assistantChatCountStart = state._codexSdkTurnChatCountStart ?? this._countAssistantChatMessages(execution, nodeId);
     const tokenParser = new HandoffParser();
     const tokenEvents = tokenParser.feed(accumulatedText);
     let foundHandoff = false;
@@ -4741,19 +4774,36 @@ class SwarmEngine {
       }
     }
 
+    const assistantChatCountAfterTurn = this._countAssistantChatMessages(execution, nodeId);
+    const fallbackChatText = this._buildStructuredAssistantChatFallback(accumulatedText);
+    const turnEndedTerminally = ['done', 'completed'].includes(state.status) || execution.status === 'completed';
+    if (turnEndedTerminally && fallbackChatText && assistantChatCountAfterTurn <= assistantChatCountStart) {
+      this._broadcastChatMessage({
+        executionId,
+        nodeId,
+        role: 'assistant',
+        text: fallbackChatText,
+        timestamp: Date.now(),
+      });
+    }
+
     state._codexSdkAssistantText = '';
     state._codexSdkItemSnapshots = new Map();
+    state._codexSdkRunId = null;
+    state._codexSdkTurnChatCountStart = this._countAssistantChatMessages(execution, nodeId);
   }
 
-  async _handleCodexSdkTurnFailure(executionId, nodeId, errorLike = null) {
+  async _handleCodexSdkTurnFailure(executionId, nodeId, errorLike = null, runId = null) {
     const execution = this._executions.get(executionId);
     if (!execution) return;
 
     const state = execution.agentStates.get(nodeId);
     if (!state) return;
+    if (runId && state._codexSdkRunId !== runId) return;
 
     if (state._pendingCodexSdkStopMode === 'forced' || state._pendingCodexSdkStopMode === 'reset') {
       state._pendingCodexSdkStopMode = null;
+      state._codexSdkRunId = null;
       return;
     }
 
@@ -4787,6 +4837,7 @@ class SwarmEngine {
     state.lastOutputSnippet = String(detectedBlocker.message ?? message).trim();
     state._codexSdkAssistantText = '';
     state._codexSdkItemSnapshots = new Map();
+    state._codexSdkRunId = null;
     await this._handleRuntimeBlocker(executionId, nodeId, detectedBlocker);
   }
 

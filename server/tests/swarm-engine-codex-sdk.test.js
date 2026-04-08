@@ -4,7 +4,10 @@ import CircuitBreaker from '../services/CircuitBreaker.js';
 import BudgetTracker from '../services/BudgetTracker.js';
 import { normalizeCodexSdkItem } from '../services/CodexSdkAdapter.js';
 
-function buildSingleNodeCodexWorkflow() {
+function buildSingleNodeCodexWorkflow(overrides = {}) {
+  const {
+    systemPrompt = 'Diagnose the issue and emit __DONE__ when complete.',
+  } = overrides;
   return {
     id: 'wf-codex-sdk',
     name: 'Codex SDK Workflow',
@@ -16,7 +19,7 @@ function buildSingleNodeCodexWorkflow() {
         data: {
           isTriageNode: true,
           label: 'Codex Worker',
-          systemPrompt: 'Diagnose the issue and emit __DONE__ when complete.',
+          systemPrompt,
           model: 'gpt-5.4',
         },
       },
@@ -60,12 +63,14 @@ describe('SwarmEngine Codex SDK integration', () => {
   let wsBroadcast;
   let workflowStore;
   let sessionManager;
+  let workflowDef;
 
   beforeEach(() => {
     wsBroadcast = vi.fn();
     sessionManager = buildMockSessionManager();
+    workflowDef = buildSingleNodeCodexWorkflow();
     workflowStore = {
-      get: vi.fn().mockResolvedValue(buildSingleNodeCodexWorkflow()),
+      get: vi.fn().mockResolvedValue(workflowDef),
     };
 
     engine = new SwarmEngine(
@@ -218,5 +223,102 @@ describe('SwarmEngine Codex SDK integration', () => {
     });
     expect(resetStatus.agentStates['node-a'].sessionId).toBeNull();
     expect(engine.getExecution(executionId).agentStates.get('node-a').codexThreadId).toBeNull();
+  });
+
+  it('ignores late abort failures after a codex-sdk reset and keeps execution idle', async () => {
+    let capturedSignal = null;
+
+    engine._codexSdkFactory = {
+      forceEnabled: true,
+      createClient: vi.fn(() => ({ kind: 'codex-client' })),
+      runTurnStreamed: vi.fn(async ({ turnOptions }) => {
+        capturedSignal = turnOptions.signal;
+        return {
+          thread: { id: 'thread-reset-late-abort' },
+          events: (async function* stream() {
+            yield { type: 'thread.started', thread_id: 'thread-reset-late-abort' };
+            await new Promise((resolve, reject) => {
+              if (capturedSignal.aborted) {
+                reject(new Error('The operation was aborted'));
+                return;
+              }
+              capturedSignal.addEventListener('abort', () => {
+                reject(new Error('The operation was aborted'));
+              }, { once: true });
+            });
+          }()),
+        };
+      }),
+      normalizeItem: normalizeCodexSdkItem,
+    };
+
+    const executionId = await engine.startExecution(
+      'wf-codex-sdk',
+      'proj-1',
+      'C:\\repo',
+      { runtimeProvider: 'codex' }
+    );
+
+    await flushMicrotasks(5);
+
+    const resetStatus = await engine.stopStreamJsonAgent(executionId, 'node-a', 'reset');
+    await flushMicrotasks(20);
+
+    const status = engine.getStatus(executionId);
+    expect(capturedSignal?.aborted).toBe(true);
+    expect(resetStatus.status).toBe('idle');
+    expect(status.status).toBe('idle');
+    expect(status.runtimeBlocker ?? null).toBeNull();
+    expect(status.agentStates['node-a'].status).toBe('idle');
+    expect(status.agentStates['node-a'].lastOutputSnippet).toBe('');
+    expect(status.agentStates['node-a'].runtimeBlocker ?? null).toBeNull();
+  });
+
+  it('persists a fallback assistant chat message when codex final output exists but extractor drops it as prompt echo', async () => {
+    workflowDef = buildSingleNodeCodexWorkflow({
+      systemPrompt: 'Use a shell command to read the workspace package.json name and version. Then answer exactly two lines: NAME=<name> and VERSION=<version>. Finish with __DONE__ on its own line.',
+    });
+    workflowStore.get.mockResolvedValue(workflowDef);
+
+    engine._codexSdkFactory = {
+      forceEnabled: true,
+      createClient: vi.fn(() => ({ kind: 'codex-client' })),
+      runTurnStreamed: vi.fn(async () => ({
+        thread: { id: 'thread-chat-fallback' },
+        events: makeEventStream([
+          { type: 'thread.started', thread_id: 'thread-chat-fallback' },
+          {
+            type: 'item.started',
+            item: {
+              id: 'msg-echo-like',
+              type: 'agent_message',
+              text: 'Reading the workspace package.json via shell now and extracting name and version.\n\nNAME=claude-code-visual-manager\nVERSION=9.0.0\n__DONE__',
+            },
+          },
+          { type: 'turn.completed', usage: { input_tokens: 12, cached_input_tokens: 0, output_tokens: 9 } },
+        ]),
+      })),
+      normalizeItem: normalizeCodexSdkItem,
+    };
+
+    const executionId = await engine.startExecution(
+      'wf-codex-sdk',
+      'proj-1',
+      'C:\\repo',
+      { runtimeProvider: 'codex' }
+    );
+
+    await flushMicrotasks(30);
+
+    const status = engine.getStatus(executionId);
+    expect(status.status).toBe('completed');
+    expect(status.chatMessages).toHaveLength(1);
+    expect(status.chatMessages[0]).toMatchObject({
+      nodeId: 'node-a',
+      role: 'assistant',
+    });
+    expect(status.chatMessages[0].text).toContain('NAME=claude-code-visual-manager');
+    expect(status.chatMessages[0].text).toContain('VERSION=9.0.0');
+    expect(status.chatMessages[0].text).not.toContain('__DONE__');
   });
 });

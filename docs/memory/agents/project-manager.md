@@ -1,4 +1,48 @@
 ---
+## 2026-04-08 — V9.2 status sync: #407+#408 COMPLETED, #409 IN_PROGRESS
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+Tasks #407 (BUG-DL-STALE-STATE-1) and #408 (BUG-DL-COST-VANISH-1) had just been completed by frontend-dev. TASK_PLAN.md header still showed 403 COMPLETE/PASS with #407/#408 as IN_PROGRESS and #409 as PENDING. User requested verification and status update.
+
+### What I did
+1. Verified #407 and #408 already marked COMPLETED in TASK_PLAN.md (frontend-dev self-marked)
+2. Updated TASK_PLAN.md header: 405 COMPLETE/PASS, 1 IN_PROGRESS (#409), 1 DEFERRED (#236)
+3. Changed #409 from PENDING to IN_PROGRESS (qa-tester now running)
+4. Updated Active Area description
+5. Updated CONTEXT.md focus and immediate next step
+6. Added entry to PROGRESS.md
+7. Added entry to ACTIVITY_LOG.md
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Header counts 403->405 COMPLETE, #409 PENDING->IN_PROGRESS, active area text updated |
+| docs/memory/PROGRESS.md | MODIFIED | Added PM status update entry |
+| docs/memory/CONTEXT.md | MODIFIED | Updated focus: all 3 fixes done, #409 running |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added PM entry |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log |
+
+### Improvements delivered
+- All tracking documents now accurately reflect: #406/#407/#408 COMPLETED, #409 IN_PROGRESS
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+None -- straightforward status update.
+
+### What I learned
+Nothing new -- routine status sync.
+
+### State I'm leaving behind
+406 tasks registered, 405 COMPLETE/PASS, 1 DEFERRED (#236), 1 IN_PROGRESS (#409 TEST GATE by qa-tester). V9.2 is the active area with all 3 bug fixes done. Awaiting TEST GATE #409 result.
+
+### Handoff
+Wait for TEST GATE #409 result from qa-tester. On PASS, close V9.2 area and update all docs. On FAIL, route to debugger.
+
+---
 ## 2026-04-08 — V9.2 status sync: #406 COMPLETED, #407/#408 IN_PROGRESS
 **Status:** COMPLETED
 **Called by:** user

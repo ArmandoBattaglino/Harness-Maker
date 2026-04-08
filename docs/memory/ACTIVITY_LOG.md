@@ -1,4 +1,57 @@
-﻿## 2026-04-08 — frontend-dev — Task #408: BUG-DL-COST-VANISH-1 — Cost/token footer disappears after Completed state
+﻿## 2026-04-08 — qa-tester — Task #409: TEST GATE V9.2 Stream-JSON Display Fidelity
+**Outcome:** FAIL
+**Summary:** Test 1 (text fidelity) FAIL: spurious spaces persist in stream-json Writer output even with correct bundle deployed (separator=''). Spaces originate from Claude CLI text_delta token boundaries, not client accumulation. The #406 fix was correct but insufficient. Tests 2 (stale state reset #407) PASS, 3 (cost persistence #408) PASS, 4 (build/tests 488/488) PASS. Overall FAIL due to criterion #1.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md, docs/memory/PROGRESS.md
+**Bugs fixed:** none (testing only)
+**Decisions made:** FAIL verdict; residual spaces classified as new bug distinct from #406; recommended fix: use result event canonical text to replace accumulated text_delta fragments
+**Blockers:** V9.2 cannot close until text fidelity resolved
+**Next:** New task for debugger/backend-dev to fix stream-json token boundary whitespace (server-side result-text substitution recommended). Then re-run #409.
+
+---
+## 2026-04-08 — debugger — V9.3 Codex SDK debugger-loop hardening (#410/#411/#412)
+**Outcome:** COMPLETED
+**Summary:** Ran a deep live browser test for the newly added Codex SDK swarm path and reproduced two real regressions. Fix 1: reset/abort race in `server/services/SwarmEngine.js` could let a late SDK abort reapply `blocked` state after `Reset Session`; solved with per-turn `codex-sdk` run IDs, explicit reset stop mode, and reset-safe clearing of thread/controller/run metadata. Fix 2: completed Codex SDK turns could retain final output only in node/artifact while `chatMessages` stayed empty when `ChatExtractor` dropped the raw buffer as prompt echo; solved with per-turn assistant-message baseline tracking plus a structured fallback assistant message persisted at turn completion. Added two regression tests in `server/tests/swarm-engine-codex-sdk.test.js`. Verified locally with `npm test --prefix server` (490/490 PASS), `npm run build --prefix client` (501 modules), and isolated browser smoke on `http://127.0.0.1:3337`: deep workflow now shows non-empty Chat rail, reset workflow returns to `Idle` with no blocker banner. TASK #412 PASS.
+**Files changed:** server/services/SwarmEngine.js, server/tests/swarm-engine-codex-sdk.test.js, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/CONTEXT.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** BUG-DL-CODEX-RESET-1 (#410), BUG-DL-CODEX-CHAT-1 (#411)
+**Decisions made:** Use server-side turn/run invalidation instead of UI-only reset masking; persist a final structured assistant fallback message when Codex final text exists but extractor/prompt-echo heuristics suppress chat persistence
+**Blockers:** none for V9.3; separate residual blocker remains in V9.2 TEST GATE #409 (stream-json text-fidelity spacing)
+**Next:** Return to the V9.2 stream-json text-fidelity follow-up or do housekeeping/commit prep
+
+---
+
+## 2026-04-08 — code-mapper — Tasks #407+#408: CODE_MAP + CHANGELOG update
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md and CHANGELOG.md for both Task #407 (BUG-DL-STALE-STATE-1 stale workflow state fix) and Task #408 (BUG-DL-COST-VANISH-1 cost footer persistence fix). Added new `buildClearedExecutionState()` function entry, updated `setWorkflowDef`, `AgentNode`, and `applyExecutionSnapshot` entries. 1 new function mapped, 3 functions updated, 0 removed. No breaking changes.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** none (mapping only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** Map TEST GATE #409 results when completed.
+
+---
+## 2026-04-08 — documenter — Tasks #407+#408: DOC_STATUS audit and update
+**Outcome:** COMPLETED
+**Summary:** Audited all docs after Tasks #407 (BUG-DL-STALE-STATE-1) and #408 (BUG-DL-COST-VANISH-1). Both open bugs (BUG-DL-02, BUG-DL-03) now marked FIXED in DOC_STATUS.md. Task count updated to #408. Inline comments status updated with SwarmContext.jsx, AgentNode.jsx, and useSwarm.js annotations. CONTEXT.md already current (updated by PM). README.md, ARCHITECTURE.md, API.md remain accurate -- changes are internal bug fixes with no new features/APIs/config.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none (documentation update only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** After TEST GATE #409 PASS, V9.2 area documentation can be marked CLOSED.
+
+---
+
+## 2026-04-08 — project-manager — V9.2 status sync: #407+#408 COMPLETED, #409 IN_PROGRESS
+**Outcome:** COMPLETED
+**Summary:** Verified #407 (stale node state) and #408 (cost footer vanish) both marked COMPLETED in TASK_PLAN.md. Updated header counts to 405 COMPLETE/PASS, 1 IN_PROGRESS (#409), 1 DEFERRED (#236). Updated CONTEXT.md and PROGRESS.md. TEST GATE #409 is now running.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** Wait for TEST GATE #409 result. On PASS, close V9.2 area.
+
+---
+
+## 2026-04-08 — frontend-dev — Task #408: BUG-DL-COST-VANISH-1 — Cost/token footer disappears after Completed state
 **Outcome:** COMPLETED
 **Summary:** Fixed cost/token data disappearing from agent node cards and chat message footers after execution completes. Root cause was twofold: (1) cost badge and chat footer were gated on `isStreamJson` which depends on `spawnMode`, a field that can be lost during status reconciliation; (2) the server serializes cost as flat `totalCostUsd` while the client WS handler accumulates under nested `totalCost.costUsd`, so when `applyExecutionSnapshot` replaces `agentStates` with server data, the client-format cost object vanishes. Fixed by removing the `isStreamJson` gate from cost displays, adding dual-format support in AgentNode.jsx, and normalizing server agentStates format in `applyExecutionSnapshot` to synthesize `totalCost` from flat fields and preserve client-accumulated data.
 **Files changed:** client/src/canvas/nodes/AgentNode.jsx, client/src/canvas/ChatMessage.jsx, client/src/hooks/useSwarm.js

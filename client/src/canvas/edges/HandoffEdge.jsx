@@ -102,38 +102,24 @@ function getCorridorPath({
   const sourceSlotX = sourceX + sourceOffsetX;
   const targetSlotX = targetX + targetOffsetX;
   const sourceCorridorY = sourceY + CORRIDOR_OFFSET + corridorLift + sourceLaneOffsetY;
-  const targetCorridorY = Math.max(
-    sourceCorridorY + ROUTE_RADIUS * 2,
-    targetY - CORRIDOR_OFFSET - Math.max(0, corridorLift * 0.4) + targetLaneOffsetY
+  const targetEntryY = Math.max(
+    sourceCorridorY + ROUTE_RADIUS * 1.5,
+    targetY - CORRIDOR_OFFSET - Math.max(0, corridorLift * 0.25) + targetLaneOffsetY
   );
-  const horizontalDelta = targetSlotX - sourceSlotX;
-  const horizontalDirection = horizontalDelta >= 0 ? 1 : -1;
-  const exitControlY = Math.min(
-    56,
-    Math.max(18, CORRIDOR_OFFSET + corridorLift * 0.35 + Math.abs(sourceLaneOffsetY) * 0.45)
+  const cornerRadius = Math.min(
+    28,
+    ROUTE_RADIUS + 10 + Math.min(6, corridorLift * 0.15)
   );
-  const entryControlY = Math.min(
-    56,
-    Math.max(18, CORRIDOR_OFFSET + Math.abs(targetLaneOffsetY) * 0.45)
-  );
-  const travelControlX = Math.min(
-    110,
-    Math.max(26, Math.abs(horizontalDelta) * 0.28)
-  );
-  const travelControlY = Math.min(
-    54,
-    Math.max(18, Math.abs(targetCorridorY - sourceCorridorY) * 0.4)
-  );
-
-  const edgePath = [
-    `M ${sourceSlotX} ${sourceY}`,
-    `C ${sourceSlotX} ${sourceY + exitControlY}, ${sourceSlotX} ${sourceCorridorY - travelControlY}, ${sourceSlotX} ${sourceCorridorY}`,
-    `C ${sourceSlotX + horizontalDirection * travelControlX} ${sourceCorridorY}, ${targetSlotX - horizontalDirection * travelControlX} ${targetCorridorY}, ${targetSlotX} ${targetCorridorY}`,
-    `C ${targetSlotX} ${targetCorridorY + travelControlY}, ${targetSlotX} ${targetY - entryControlY}, ${targetSlotX} ${targetY}`,
-  ].join(' ');
+  const points = [
+    { x: sourceSlotX, y: sourceY },
+    { x: sourceSlotX, y: sourceCorridorY },
+    { x: targetSlotX, y: sourceCorridorY },
+    { x: targetSlotX, y: targetEntryY },
+    { x: targetSlotX, y: targetY },
+  ];
 
   return [
-    edgePath,
+    buildRoundedPath(points, cornerRadius),
     sourceSlotX + (targetSlotX - sourceSlotX) * 0.5,
     sourceCorridorY - 18,
   ];
