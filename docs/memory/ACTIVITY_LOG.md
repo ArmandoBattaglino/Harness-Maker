@@ -4758,3 +4758,14 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Map StreamJsonSpawner (Task #358) when it wires StreamJsonParser into the spawn pipeline
 ---
+
+---
+## 2026-04-08 — documenter — Task #357: StreamJsonParser
+**Outcome:** COMPLETED
+**Summary:** Updated ARCHITECTURE.md with StreamJsonParser in V3 services diagram and new Section 13 (V9.0 Stream-JSON Architecture). Updated DOC_STATUS.md to reflect Task #357 completion. No README or API.md changes needed (internal service, no new endpoints).
+**Files changed:** docs/ARCHITECTURE.md, docs/memory/DOC_STATUS.md, docs/memory/agents/documenter.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** Section 13 created as standalone architectural section for V9.0 (parallel to Section 12 for V5)
+**Blockers:** none
+**Next:** Update Section 13 when _spawnAgentStreamJson (#359) or other V9.0 components land
+---

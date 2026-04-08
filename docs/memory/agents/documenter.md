@@ -2980,3 +2980,50 @@ All docs are UP_TO_DATE for V7.0 Tasks #254-#255. TEST GATES #256-#257 and AREA 
 ### Handoff
 None — documentation is complete for V7.0 bug fixes. Next documenter invocation will be after TEST GATES pass or V5.0 Wave 1 implementation begins.
 ---
+
+---
+## 2026-04-08 — Task #357: StreamJsonParser
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task trio)
+
+### Context when I started
+V9.0 Stream-JSON Agent Migration in progress. Task #357 (StreamJsonParser) just completed by backend-dev. Two new files created: server/services/StreamJsonParser.js and server/tests/StreamJsonParser.test.js. ARCHITECTURE.md had no Section 13 yet and the V3 services diagram did not include StreamJsonParser.
+
+### What I did
+1. Read both new files (StreamJsonParser.js, StreamJsonParser.test.js) to understand the full API surface.
+2. Audited all existing docs (README, ARCHITECTURE, API, DOC_STATUS, inline comments).
+3. Updated ARCHITECTURE.md Section 11 V3 services diagram: added StreamJsonParser box, added _spawnAgentStreamJson to SwarmEngine methods, updated per-agent process section to show dual spawn paths (PTY vs stream-json).
+4. Created ARCHITECTURE.md Section 13 (V9.0 Stream-JSON Agent Migration Architecture) with StreamJsonParser spec, event type mapping table, and remaining component status.
+5. Updated DOC_STATUS.md: release status, doc health table, stale sections, and documentation debt.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/ARCHITECTURE.md | MODIFIED | Added StreamJsonParser to V3 services diagram; added Section 13 with full StreamJsonParser spec, event mapping table, and pending component list |
+| docs/memory/DOC_STATUS.md | MODIFIED | Updated release status, ARCHITECTURE.md health entry, inline comments entry, stale sections, and doc debt |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended activity entry |
+
+### Improvements delivered
+- ARCHITECTURE.md now has Section 13 documenting the V9.0 stream-json architecture with complete StreamJsonParser event mapping
+- V3 services diagram shows both spawn paths (PTY and stream-json) clearly
+- DOC_STATUS.md accurately reflects current implementation state
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Added Section 13 rather than embedding StreamJsonParser details into Section 11 -- V9.0 is a distinct architectural layer that deserves its own section, matching the pattern of Section 12 (V5).
+- Did not update README.md -- StreamJsonParser is an internal service with no user-facing changes. README update deferred until stream-json features are visible to users.
+- Did not update API.md -- no new endpoints added by Task #357.
+
+### What I learned
+- StreamJsonParser tracks active block type internally to dispatch correct stop events (tool_stop vs text_stop vs thinking_stop). This is a key design detail to document.
+- The parser never throws -- all errors return typed error events. Important safety property.
+
+### State I'm leaving behind
+ARCHITECTURE.md Section 13 exists with StreamJsonParser fully documented. Remaining V9.0 components (#358-#393) are listed as pending in the section. Each will need its own subsection as implemented.
+
+### Handoff
+Next documenter run should occur after Task #358 (TEST GATE) or Task #359 (_spawnAgentStreamJson). Section 13 will need expansion for each new V9.0 component.
+---

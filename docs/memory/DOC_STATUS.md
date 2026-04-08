@@ -74,7 +74,7 @@ _Last updated: 2026-04-08 after Task #357 (StreamJsonParser -- NDJSON line parse
 - docs/memory/DECISIONS.md:DEC-001 -- Records "use node-pty-prebuilt-multiarch" but actual installed package is plain node-pty. Historical accuracy preserved intentionally; correction in PROJECT.md.
 - client/src/views/EntitiesView.jsx -- Still exists on disk but is no longer imported by App.jsx. Marked DEPRECATED in ARCHITECTURE.md component tree. Can be deleted in a future cleanup.
 - docs/memory/CODE_MAP.md:TriggerNode entry -- Still contains "(stub)" notation from Task #53.3; Task #76 fully implemented TriggerNode with store subscription, fired animation, and timestamp display. Code-mapper should update the map entry.
-- docs/ARCHITECTURE.md -- Will need Section 13 (V9.0 Stream-JSON Architecture) once implementation begins. DEC-027/028/029 define the architecture; component diagram needs stream-json spawn path alongside PTY spawn path.
+- docs/ARCHITECTURE.md -- Section 13 created with StreamJsonParser spec. Remaining V9.0 components (#359-#393) will need entries as they are implemented.
 - README.md -- Will need V9.0 feature entries (stream-json agent mode, per-turn cost tracking, tool visibility, graceful stop/reset) once Tasks #357-#393 land production code.
 
 ## Documentation Debt
@@ -82,7 +82,7 @@ _Last updated: 2026-04-08 after Task #357 (StreamJsonParser -- NDJSON line parse
 | Item | Priority | Reason deferred |
 |------|----------|-----------------|
 | ARCHITECTURE.md V5 component tree (12 components) | LOW | Deferred since v5.0; no active development on those components |
-| ARCHITECTURE.md Section 13 (V9.0 stream-json) | HIGH | Blocked until implementation begins (post-#355 TEST GATE) |
+| ARCHITECTURE.md Section 13 (V9.0 stream-json) | MEDIUM | Section 13 created with StreamJsonParser. Remaining components (#359-#393) need entries as implemented. |
 | README.md V9.0 features | HIGH | Blocked until stream-json features land in production code |
 | API.md V9.0 WS events | MEDIUM | Blocked until FR-SJ-19 through FR-SJ-23 are implemented |
 
