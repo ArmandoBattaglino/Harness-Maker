@@ -5311,6 +5311,29 @@ class SwarmEngine {
       return;
     }
 
+    // 4b. Replace streamed text_delta accumulation with canonical result text.
+    // Claude CLI text_delta tokens carry tokenizer whitespace (e.g. " con", " su", "ma", " t",
+    // "or", " e") that produces "con su ma t or e" instead of "consumatore" when concatenated.
+    // The result event's `result` field contains the correctly assembled text.
+    if (resultEvt.resultText) {
+      state._streamJsonAccumulatedText = resultEvt.resultText;
+      state.lastOutputSnippet = resultEvt.resultText.length > 200
+        ? resultEvt.resultText.slice(-200)
+        : resultEvt.resultText;
+      // Broadcast corrective chat_message with canonical text to replace streamed fragments
+      if (this._wsBroadcast) {
+        this._wsBroadcast(executionId, {
+          type: 'chat_message',
+          nodeId,
+          role: 'assistant',
+          text: resultEvt.resultText,
+          timestamp: Date.now(),
+          isCanonical: true,
+        });
+      }
+      this._broadcastAgentStatus(executionId, nodeId, state);
+    }
+
     const gracefulStopPending = state._pendingStreamJsonStopMode === 'graceful' || state.doNotSpawnNextTurn;
 
     // 5. Scan accumulated text for handoff/done tokens unless a graceful stop

@@ -225,6 +225,8 @@ export default class StreamJsonParser {
       errorMessage: obj.is_error || obj.subtype === 'error'
         ? (obj.error ?? obj.result ?? null)
         : null,
+      // Canonical complete text from Claude CLI result (replaces streamed text_delta accumulation)
+      resultText: typeof obj.result === 'string' ? obj.result : null,
     };
   }
 

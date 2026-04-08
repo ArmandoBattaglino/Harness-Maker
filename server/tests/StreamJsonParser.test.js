@@ -313,6 +313,7 @@ describe('StreamJsonParser', () => {
         },
         isError: false,
         errorMessage: null,
+        resultText: 'The answer is 42.',
       });
     });
 

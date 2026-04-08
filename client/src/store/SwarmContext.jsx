@@ -252,6 +252,21 @@ const useSwarmStore = create((set, get) => ({
     };
   }),
 
+  replaceAgentChatText: (nodeId, text) => set((state) => {
+    const prev = state.agentResults[nodeId] || { finalText: '', handoffPayloads: [], viewed: false, updatedAt: null };
+    return {
+      agentResults: {
+        ...state.agentResults,
+        [nodeId]: {
+          ...prev,
+          finalText: text,
+          viewed: false,
+          updatedAt: Date.now(),
+        },
+      },
+    };
+  }),
+
   setAgentHandoffPayload: (nodeId, target, payload) => set((state) => {
     const prev = state.agentResults[nodeId] || { finalText: '', handoffPayloads: [], viewed: false, updatedAt: null };
     return {

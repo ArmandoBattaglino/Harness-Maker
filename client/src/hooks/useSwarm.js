@@ -633,22 +633,33 @@ export function useSwarm(workflowId) {
           const runtimeState = useSwarmStore.getState().agentStates[msg.nodeId];
           const isStructuredAssistantMessage = (msg.role === 'assistant' || !msg.role)
             && isStructuredSpawnMode(msg.spawnMode ?? runtimeState?.spawnMode);
-          addChatMessage({
-            nodeId: msg.nodeId,
-            role: msg.role ?? 'assistant',
-            text: msg.text,
-            timestamp: msg.timestamp ?? Date.now(),
-            ...(isStructuredAssistantMessage
-              ? { spawnMode: msg.spawnMode ?? runtimeState?.spawnMode ?? 'stream-json' }
-              : {}),
-          });
-          // Feed assistant messages into agentResults store + update node snippet
-          // with clean chat text (Option B: replaces noisy raw PTY snippets)
-          if ((msg.role === 'assistant' || (!msg.role)) && msg.nodeId && msg.text) {
-            useSwarmStore.getState().appendAgentChatText(msg.nodeId, msg.text);
-            // Accumulate lastChatSnippet so node card shows full text, not just the last token fragment
-            const prevSnippet = useSwarmStore.getState().agentStates[msg.nodeId]?.lastChatSnippet || '';
-            updateAgentState(msg.nodeId, { lastChatSnippet: prevSnippet + msg.text });
+
+          if (msg.isCanonical) {
+            // Canonical result text from Claude CLI: replace all streamed text_delta
+            // fragments with the correctly assembled text (fixes token-boundary spacing)
+            useSwarmStore.getState().replaceAgentChatText(msg.nodeId, msg.text);
+            updateAgentState(msg.nodeId, { lastChatSnippet: msg.text });
+            useSwarmStore.getState().patchLatestChatMessage(
+              msg.nodeId,
+              { text: msg.text, timestamp: msg.timestamp ?? Date.now() },
+              (m) => (m.role === 'assistant' || !m.role) && isStructuredSpawnMode(m.spawnMode),
+            );
+          } else {
+            addChatMessage({
+              nodeId: msg.nodeId,
+              role: msg.role ?? 'assistant',
+              text: msg.text,
+              timestamp: msg.timestamp ?? Date.now(),
+              ...(isStructuredAssistantMessage
+                ? { spawnMode: msg.spawnMode ?? runtimeState?.spawnMode ?? 'stream-json' }
+                : {}),
+            });
+            // Feed assistant messages into agentResults store + update node snippet
+            if ((msg.role === 'assistant' || (!msg.role)) && msg.nodeId && msg.text) {
+              useSwarmStore.getState().appendAgentChatText(msg.nodeId, msg.text);
+              const prevSnippet = useSwarmStore.getState().agentStates[msg.nodeId]?.lastChatSnippet || '';
+              updateAgentState(msg.nodeId, { lastChatSnippet: prevSnippet + msg.text });
+            }
           }
           break;
         }
