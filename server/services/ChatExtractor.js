@@ -105,6 +105,8 @@ const NOISE_PATTERNS = [
   /[>\u203A]?\s*Run\s*\/review\s*on\s*my\s*current\s*changes[^\n]*/gi, // leaked Codex review prompt
   /Tip:\s*New\s*Try\s*the\s*Codex\s*App[^\n]*/gi,  // Codex app upsell banner
   /Run\s*'codex\s*app'\s*or\s*visit[^\n]*/gi,      // Codex app upsell CTA
+  /https?:\/\/chatgpt\.com\/codex\?app-landing-page=true/gi, // Codex app landing CTA URL
+  /(?:^|\s)(?:high|medium|low)\s*[·.]\s*(?:until\s+)?(?:il\s+)?April\s+\d+(?:st|nd|rd|th)\b/gi, // promo date tail
   /[>\u203A]\s*No\s*extra\s*text\s*after\s*that\s*last\s*handoff\s*line[^\n]*/gi, // swarm prompt echo
   /[>\u203A]\s*You\s*are\s*the\s*[^\n]*/gi,        // inline prompt echo in Codex fallback chat
   /[>\u203A]\s*When\s*your\s*work\s*is\s*complete[^\n]*/gi, // prompt echo follow-up
@@ -132,6 +134,22 @@ const NOISE_PATTERNS = [
   /Execute\s*the\s*workflow\s*goal\s*described\s*here/gi, // reinject prompt echo
   /❯\s*Claude\s*runtime/gi,                         // prompt-style system prompt echo
   /❯\s*\w+\s*is\s*not\s*the\s*end/gi,             // prompt-style reinject echo
+  // --- Swarm protocol / system prompt echos ---
+  /SWARM\s*PROTOCOL/gi,                            // "SWARM PROTOCOL (mandatory - never skip)"
+  /You\s*are\s*(?:a|the)\s+\w+\s*(?:agent|node)?\s*\.?\s*You\s*(?:receive|will|must|should|are)/gi,
+  /must\s*be\s*a\s*valid\s*handoff\s*token/gi,
+  /Use\s*node-\d+\s*in\s*place\s*of/gi,
+  /in\s*place\s*of\s*<?\s*target\s*I?d?\s*>?/gi,
+  /Current\s*workflow\s*context\s*:/gi,
+  /workflow\s*Name\s*:/gi,
+  /workflow\s*Description\s*:/gi,
+  /current\s*Task\s*:/gi,
+  /You\s*are\s*the\s*FINAL\s*agent/gi,
+  /no\s*downstream\s*handoffs?\s*exist/gi,
+  /MUST\s*output\s*the\s*done\s*marker/gi,
+  /Do\s*real\s*work\s*before\s*deciding/gi,
+  /You\s*have\s*an\s*active\s*task\s*right\s*now/gi,
+  /Con\s*t\s*in\s*u\s*e\s*this\s*task/gi,          // ConPTY-fragmented "Continue this task"
 ];
 
 // Only strip noise here when it is unquestionably chrome. Aggressive fragment
@@ -388,6 +406,8 @@ export class ChatExtractor {
       .replace(/[>\u203A]?\s*Run\s*\/review\s*on\s*my\s*current\s*changes[^\n]*/gi, '')
       .replace(/Tip:\s*New\s*Try\s*the\s*Codex\s*App[^\n]*/gi, '')
       .replace(/Run\s*'codex\s*app'\s*or\s*visit[^\n]*/gi, '')
+      .replace(/https?:\/\/chatgpt\.com\/codex\?app-landing-page=true/gi, '')
+      .replace(/(?:^|\s)(?:high|medium|low)\s*[Â··.]\s*(?:until\s+)?(?:il\s+)?April\s+\d+(?:st|nd|rd|th)\b/gi, ' ')
       .replace(/\b(?:Write tests for|Improve documentation in|Find and fix a bug in)\s+@[\w.-]+\b/gi, '')
       .replace(/^\s*[^\w\s]?\s*Working\s*\(\d+s[^A-Za-z\n]*/i, '')
       .replace(/[•◦●]?\s*Working\s*\(\d+s\b[^\n]*/gi, (segment) => {
@@ -443,7 +463,9 @@ export class ChatExtractor {
       if (/you(?:'ve| have)\s*hit\s*your\s*usage\s*limit|purchase more credits|codex\/settings\/usage/i.test(t)) return false;
       if (/Tip:\s*New\s*Use\s*\/fast/i.test(t)) return false;
       if (/Tip:\s*New\s*Try\s*the\s*Codex\s*App/i.test(t)) return false;
+      if (/chatgpt\.com\/codex\?app-landing-page=true/i.test(t)) return false;
       if (/run\s*\/review\s*on\s*my\s*current\s*changes/i.test(t)) return false;
+      if (/\bAgent-B in parallel for greeting generation\b/i.test(t) && !/\b(?:Routing|Both)\b/.test(t)) return false;
       if (/Working\s*\(\d+s/i.test(t) && !/[.!?].{10,}/.test(t)) return false;
       if (/@filename/i.test(t) && !/\b(?:Routing|Both|Agent-[A-Z]|Hello|Ciao|Report|Results?|Saluto|Welcome)\b/.test(t)) return false;
       if (/\[default\]/i.test(t)) return false;

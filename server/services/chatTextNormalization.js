@@ -39,6 +39,12 @@ const CHAT_WORDS = [
   'uno', 'upstream', 'ufficio', 'user', 'utenze', 'valued', 'vantaggi',
   'vita', 'warmth', 'welcome', 'what', 'which', 'will', 'with', 'wonderful',
   'workflow', 'work', 'working', 'you', 'your',
+  // Extended Italian vocabulary for ConPTY decompression
+  'adattare', 'affitti', 'anche', 'aziendali', 'bacino', 'ciascun', 'collaborazione',
+  'completare', 'denaro', 'eliminazione', 'forniture', 'garantisce', 'generale',
+  'giornata', 'grande', 'lavorativa', 'lavoratore', 'limitazioni', 'luogo',
+  'migliorano', 'notevole', 'numerosi', 'offre', 'opera', 'operativi', 'opportunita',
+  'paragrafo', 'primo', 'proprie', 'qualita', 'riassuntivo',
 ];
 
 const CHAT_WORD_SET = new Set(CHAT_WORDS.map((word) => normalizeCompressedChatWord(word)));

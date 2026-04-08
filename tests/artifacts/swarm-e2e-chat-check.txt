@@ -52,13 +52,13 @@ Codex hit its usage or credit limit before the swarm agent could continue. Provi
 Generate
 Saved workflows
 Select a saved workflow
+Remote Work Benefits Research and Summary (08/04/2026)
 Codex Temp Stop Parent (08/04/2026)
 Codex Temp Stop Child Delay (08/04/2026)
 Venice Canals Research and Summary (08/04/2026)
 Mars Facts Writer (07/04/2026)
 Cats Are Great Pets (07/04/2026)
 Pizza Napoletana Research and Summary (07/04/2026)
-Remote Work Benefits Research and Summary (07/04/2026)
 Pantheon Facts Research and Writing (07/04/2026)
 Penguin Fun Facts Pipeline (07/04/2026)
 Rome Facts Research and Writing (07/04/2026)
@@ -188,7 +188,7 @@ Nested workflow reference
 🤖
 Triage
 Blocked
-• Working (0s › Explain this codebase ◦Wo W    ng  1 Wo    g •   rk 2 W    ng ◦          3 Wo    g ■ You've hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro), visit https://chatgpt.com/codex/settings/usage to purchase more credits or tryagain at 7:13 AM. › Explain this codebase
+■ You've hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro),
 🤖
 Agent-A English Greeter
 Idle
@@ -206,12 +206,7 @@ Feed
 Chat
 x
 Chat View
-All agents
-Triage
-1
-Triage
-03:06:41
-• Working (0s › Explain this codebase ◦Wo W    ng  1 Wo    g •   rk 2 W    ng ◦          3 Wo    g ■ You've hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro), visit https://chatgpt.com/codex/settings/usage to purchase more credits or tryagain at 7:13 AM. › Explain this codebase
+No messages yet — run a workflow to see agent output here
 All Agents
 Agent
 Soft
@@ -221,7 +216,7 @@ Send
 🤖
 Triage
 Blocked
-• Working (0s › Explain this codebase ◦Wo W    ng  1 Wo    g •   rk 2 W    ng ◦          3 Wo    g ■ You've hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro), visit https://chatgpt.com/codex/settings/usage to purchase more credits or tryagain at 7:13 AM. › Explain this codebase
+■ You've hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro),
 
 ---
 
