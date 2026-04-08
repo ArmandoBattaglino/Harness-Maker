@@ -4812,3 +4812,14 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Next documenter run after Task #361 (dispatcher integration) — add Section 13.8
 ---
+
+---
+## 2026-04-08 — code-mapper — Task #359: SwarmEngine._spawnAgentStreamJson — Stream-JSON agent spawner
+**Outcome:** COMPLETED
+**Summary:** Mapped the new V9.0 stream-json spawn path in SwarmEngine.js. Added 3 new function-graph entries (_spawnAgent dispatcher, _spawnAgentStreamJson, _handleStreamJsonResult), updated 3 existing entries (_spawnAgentPty callers, _onDone stream-json reinject branch, stopExecution tree-kill cleanup), and added a new entry for _serializeAgentState. StreamJsonParser now has its first production caller.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
+**Bugs fixed:** none
+**Decisions made:** none (mapping only)
+**Blockers:** none
+**Next:** Mapping update needed after startExecution/_ensureAgentPty are migrated to _spawnAgent dispatcher (currently bypass stream-json path)
+---

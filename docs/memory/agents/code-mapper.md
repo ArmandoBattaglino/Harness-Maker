@@ -3331,3 +3331,61 @@ CODE_MAP.md and CHANGELOG.md both updated. StreamJsonParser has no production ca
 ### Handoff
 None — mapping task self-contained.
 ---
+
+---
+## 2026-04-08 — Task #359: SwarmEngine._spawnAgentStreamJson — Stream-JSON agent spawner
+**Status:** COMPLETED
+**Called by:** orchestrator (after backend-dev completed implementation)
+
+### Context when I started
+backend-dev had just landed Task #359, the V9.0 stream-json migration's core spawner logic. Files modified: server/services/SwarmEngine.js only. Previous mapping (Task #357) had introduced StreamJsonParser with a note that it had no production callers — now it does. CODE_MAP already had entries for SwarmEngine._spawnAgentPty, _onDone, stopExecution, but no entry for _serializeAgentState.
+
+### What I did
+1. Read existing CODE_MAP.md header + SwarmEngine module index row + function-graph entries for _spawnAgentPty, _onDone, stopExecution.
+2. Read the modified SwarmEngine.js regions: _spawnAgent (3821), _spawnAgentStreamJson (3865), _handleStreamJsonResult (4179), _onDone (5432), stopExecution (5525), _serializeAgentState (665), getStatus serialization call (5782).
+3. Verified new imports (spawn, createInterface, StreamJsonParser) and STREAM_JSON_POST_RESULT_TIMEOUT_MS constant.
+4. Updated CODE_MAP.md header date to 2026-04-08/Task #359.
+5. Updated SwarmEngine module index row to describe the new methods + new imports + DEC-027/028/029 references.
+6. Added 3 new function-graph entries: _spawnAgent, _spawnAgentStreamJson, _handleStreamJsonResult (inserted before _spawnAgentPty entry).
+7. Modified existing _spawnAgentPty entry — added _spawnAgent as a new caller.
+8. Modified _onDone entry — rewrote purpose + calls + complexity note to document stream-json reinject branch.
+9. Modified stopExecution entry — documented tree-kill of stream-json child processes.
+10. Added new _serializeAgentState entry (did not exist before) — documents stream-json field conditional block.
+11. Appended CHANGELOG.md entry with full Files/Functions Added/Modified/Connection Changes/Impact sections.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Updated header, SwarmEngine module row, added 3 new function entries (_spawnAgent, _spawnAgentStreamJson, _handleStreamJsonResult), modified 3 existing entries (_spawnAgentPty callers, _onDone purpose/complexity, stopExecution purpose/complexity), added new _serializeAgentState entry |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Task #359 entry at top (after title) documenting the stream-json spawner landing |
+
+### Improvements delivered
+- CODE_MAP now documents the full V9.0 stream-json spawn path — StreamJsonParser is no longer an orphan (had no production callers as of Task #357)
+- Connection graph now shows the critical edge SwarmEngine._onDone → _spawnAgentStreamJson (stream-json reinject path) which is non-obvious without this mapping
+- stopExecution complexity note now flags tree-kill + race-condition mitigation (null child ref before kill) so future debuggers don't reintroduce the race
+- Impact section warns future maintainers that startExecution/_ensureAgentPty still bypass the new _spawnAgent dispatcher — follow-up task needed
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| CODE_MAP.md too large to read in full (>256KB / >10k tokens) | Accumulated function graph | Used Grep to locate entries + targeted Read with offset/limit | FIXED (reading strategy) |
+
+### Decisions I made
+- Insert new stream-json entries BEFORE _spawnAgentPty rather than after → reason: logical flow (dispatcher first, then stream-json variant, then PTY variant, consistent with the order they appear in SwarmEngine.js)
+- Keep _onDone entry as "MODIFIED Task #359" rather than rewriting from scratch → reason: preserve history of Task #124 BUG-SESSION-1 lineage
+
+### What I learned
+- SwarmEngine.js has grown large enough (>330KB) that even targeted reads now need to be minimized — Grep-first is the only way
+- DEC-027/028/029 cluster represents the V9.0 stream-json migration contract; all three need to be cross-referenced when mapping stream-json code
+- The reinject gate condition in _onDone (`state.sessionId || state.spawnMode === 'stream-json'`) is a subtle but critical change — stream-json agents have no sessionId so the old gate would have rejected them
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md are both up to date with Task #359. StreamJsonParser now has 1 production caller (SwarmEngine). The following are flagged as follow-ups in the CODE_MAP and CHANGELOG:
+- startExecution and _ensureAgentPty still call _spawnAgentPty directly — they bypass the new _spawnAgent dispatcher
+- Next task should migrate those call sites so Claude executions actually use stream-json
+
+### Handoff
+None — mapping task self-contained. Future mapping updates will be needed when:
+1. startExecution/_ensureAgentPty are migrated to _spawnAgent dispatcher
+2. Any test suite is added for _spawnAgentStreamJson (currently untested in swarm-engine.test.js)
+---
