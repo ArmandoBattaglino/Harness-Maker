@@ -1,4 +1,37 @@
-﻿## 2026-04-08 — debugger — BUG-AUTO-ROUTING-TESTS: Fix 39 failing PTY tests after AUTO→stream-json routing
+﻿## 2026-04-08 — documenter — Task #398: BUG-AUTO-ROUTING documentation update
+**Outcome:** COMPLETED
+**Summary:** Updated DOC_STATUS.md (release status task counts, BUG-AUTO-ROUTING-1 added to fixed bugs table, inline comments note updated). Updated CONTEXT.md (focus and immediate next step reflect #398 fix). ARCHITECTURE.md docs health note updated. All docs now reflect the _spawnAgent AUTO mode provider strategy routing fix and the 39 test updates.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none (documentation update only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** nothing -- documentation is current
+
+---
+
+## 2026-04-08 — code-mapper — BUG-AUTO-ROUTING: Code map update
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md _spawnAgent entry to reflect three-tier provider resolution (explicit > model-based > strategy-based via providerStrategy.activeProvider). Appended CHANGELOG.md entry for the AUTO routing fix. 39 test updates documented.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** nothing — mapping task self-contained
+
+---
+
+## 2026-04-08 — project-manager — Task #398: BUG-AUTO-ROUTING registered and marked COMPLETED
+**Outcome:** COMPLETED
+**Summary:** Created TASK #398 in TASK_PLAN.md for the AUTO mode routing bug (BUG-AUTO-ROUTING). The `_spawnAgent` dispatcher was not consulting `providerStrategy.activeProvider` when effectiveProvider was AUTO, causing all Claude agents from Prompt-to-Flow to route to PTY instead of stream-json. Fix applied by debugger, 39 tests updated, 478/478 pass. Updated header counts to 395 tasks / 394 COMPLETED. Updated PROGRESS.md.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none (registration of already-fixed bug)
+**Decisions made:** none
+**Blockers:** none
+**Next:** nothing -- all debugger-loop follow-ups are closed, no pending tasks remain
+
+---
+
+## 2026-04-08 — debugger — BUG-AUTO-ROUTING-TESTS: Fix 39 failing PTY tests after AUTO→stream-json routing
 **Outcome:** COMPLETED
 **Summary:** Fixed 39 of 478 tests that broke when _spawnAgent dispatcher started routing AUTO+claude to stream-json. Added explicit `{ provider: 'codex' }` or `{ provider: 'gemini' }` to startExecution calls in PTY-specific tests. Used manual state override for the auto-mode fallback test and Codex-specific blocker text for the blocker classification test.
 **Files changed:** server/tests/swarm-engine.test.js

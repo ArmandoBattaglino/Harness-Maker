@@ -3439,3 +3439,44 @@ CODE_MAP.md and CHANGELOG.md fully up to date. All _spawnAgent call sites are no
 ### Handoff
 None — mapping task self-contained.
 ---
+
+---
+## 2026-04-08 — BUG-AUTO-ROUTING: _spawnAgent AUTO mode provider strategy fix
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task trio)
+
+### Context when I started
+The debugger had just fixed BUG-AUTO-ROUTING — `_spawnAgent` was not consulting `execution.providerStrategy.activeProvider` when effectiveProvider remained AUTO after model-based resolution. This meant all Claude agents from generated workflows (no explicit model on nodes) were routed to PTY instead of stream-json. The fix adds a third-tier provider resolution consulting providerStrategy.activeProvider. 39 tests were also updated.
+
+### What I did
+1. Read the modified `_spawnAgent` code (lines 4030-4101) to understand the three-tier provider resolution logic
+2. Read the existing CODE_MAP.md entry for `_spawnAgent` and confirmed it needed updating
+3. Updated the `_spawnAgent` entry in CODE_MAP.md with the new three-tier resolution description, added Complexity note, updated Last modified
+4. Updated the Module Index SwarmEngine.js entry to include BUG-AUTO-ROUTING in task list
+5. Appended a full CHANGELOG.md entry documenting the bug fix
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Updated _spawnAgent entry with third-tier providerStrategy.activeProvider resolution, added Complexity note, updated Last modified and header |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended BUG-AUTO-ROUTING entry with full details of the fix |
+
+### Improvements delivered
+- CODE_MAP.md now accurately describes the three-tier provider resolution in _spawnAgent
+
+### Bugs I encountered
+- None
+
+### Decisions I made
+- None
+
+### What I learned
+- _spawnAgent now has three tiers of provider resolution, making it the most complex routing decision in SwarmEngine
+- The providerStrategy.activeProvider defaults to 'claude' when Runtime is "Auto", which is why generated workflows now correctly route to stream-json
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md fully up to date with BUG-AUTO-ROUTING fix.
+
+### Handoff
+None — mapping task self-contained.
+---

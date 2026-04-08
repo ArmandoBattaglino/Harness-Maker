@@ -4247,6 +4247,9 @@ class SwarmEngine {
       const evt = parser.parseLine(line);
       if (!evt || evt.type === 'ignore') return;
 
+      // Event types: system, message, text_delta, tool_start/delta/stop,
+      // thinking_start/stop, api_retry, result, error, unknown
+
       const currentState = execution.agentStates.get(nodeId);
       if (!currentState || currentState.status === 'done' || currentState.status === 'stopped') return;
 
@@ -4372,6 +4375,45 @@ class SwarmEngine {
         case 'error': {
           // Non-fatal parse errors — log and continue
           console.warn(`[SwarmEngine] stream-json parse warning node=${nodeId}: ${evt.message}`);
+          break;
+        }
+
+        case 'message': {
+          // Claude CLI -p mode emits a single 'assistant' event with the
+          // complete message instead of streaming content_block_delta events.
+          // Extract all text blocks from message.content and treat as
+          // accumulated assistant text.
+          const contentBlocks = Array.isArray(evt.content) ? evt.content : [];
+          for (const block of contentBlocks) {
+            if (block.type === 'text' && block.text) {
+              currentState._streamJsonAccumulatedText += block.text;
+              currentState.lastOutputSnippet = currentState._streamJsonAccumulatedText.length > 200
+                ? currentState._streamJsonAccumulatedText.slice(-200)
+                : currentState._streamJsonAccumulatedText;
+              if (this._wsBroadcast) {
+                this._wsBroadcast(executionId, {
+                  type: 'chat_message',
+                  nodeId,
+                  role: 'assistant',
+                  text: block.text,
+                  timestamp: Date.now(),
+                  spawnMode: 'stream-json',
+                });
+              }
+              this._chatExtractor.feed(executionId, nodeId, block.text);
+            } else if ((block.type === 'tool_use' || block.type === 'server_tool_use') && block.name) {
+              // Tool use in complete message — broadcast tool start + stop
+              if (this._wsBroadcast) {
+                this._wsBroadcast(executionId, {
+                  type: 'agent_tool_use',
+                  nodeId,
+                  toolName: block.name,
+                  toolUseId: block.id ?? '',
+                });
+              }
+            }
+          }
+          this._broadcastAgentStatus(executionId, nodeId, currentState);
           break;
         }
 

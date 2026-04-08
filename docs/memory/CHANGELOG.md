@@ -1,6 +1,35 @@
 # CHANGELOG — Claude Code Visual Manager
 
 ---
+## 2026-04-08 — BUG-AUTO-ROUTING: _spawnAgent AUTO mode provider strategy fix
+**Agent:** debugger
+**Triggered by:** When Runtime was "Auto" (default), all agents were spawned via PTY because `_spawnAgent` could not resolve the provider without an explicit model on the node. Claude agents should use stream-json even in AUTO mode.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/SwarmEngine.js | MODIFIED | `_spawnAgent` (line ~4071-4086): added third-tier provider resolution — when effectiveProvider is still AUTO after model-based lookup, consults `execution.providerStrategy.activeProvider`. If activeProvider is 'claude', sets effectiveProvider to CLAUDE (routing to stream-json). If another non-AUTO provider, uses that. If null/AUTO, falls back to PTY. Also `_ensureAgentPty` now passes `providerStrategy.mode` to `_spawnAgent`. |
+| server/tests/swarm-engine.test.js | MODIFIED | 39 test cases updated to use explicit `provider: 'codex'` or `'gemini'` since AUTO now routes to stream-json for Claude instead of PTY. |
+
+### Functions Added
+- none
+
+### Functions Modified
+- `SwarmEngine._spawnAgent(executionId, nodeId, spawnOptions)` in `server/services/SwarmEngine.js` — added `execution.providerStrategy.activeProvider` consultation as third-tier fallback when effectiveProvider remains AUTO after model-based resolution. This ensures Claude agents use stream-json even in generated workflows with no explicit model on nodes.
+
+### Functions Removed
+- none
+
+### Connection Changes
+- `_spawnAgent` AUTO fallback path now reads `execution.providerStrategy.activeProvider` (new data dependency on execution state)
+- No new function call edges — same targets (_spawnAgentStreamJson, _spawnAgentPty) but routing logic now correctly reaches _spawnAgentStreamJson for Claude in AUTO mode
+
+### Impact on Other Code
+- All callers of `_spawnAgent` that previously passed AUTO (or no provider) now get Claude agents routed to stream-json instead of PTY. This affects: startExecution, _ensureAgentPty, _spawnChildExecution, _onDone reinject.
+- Tests that relied on AUTO routing to PTY had to be updated with explicit provider overrides — 39 test cases changed.
+- No BREAKING API changes — all WS event shapes remain the same. The behavioral change is internal: Claude agents now use stream-json runtime instead of PTY when provider is AUTO.
+
+---
 ## 2026-04-08 — BUG-FIX: _ensureAgentPty handoff provider routing
 **Agent:** debugger
 **Triggered by:** Mixed-provider handoff chains routing all handoff targets to PTY regardless of provider — garbled ConPTY output in Writer agents after handoff

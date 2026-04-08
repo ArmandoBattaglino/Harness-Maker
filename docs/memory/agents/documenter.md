@@ -1,4 +1,53 @@
 ---
+## 2026-04-08 — Task #398: BUG-AUTO-ROUTING documentation update
+**Status:** COMPLETED
+**Called by:** orchestrator (post-bugfix)
+
+### Context when I started
+Two critical bug fixes had just been completed for the V9.0 stream-json migration:
+1. Task #397 (BUG-DL-HANDOFF-PROVIDER-1): _ensureAgentPty now passes providerStrategy.mode to _spawnAgent for handoff targets
+2. Task #398 (BUG-AUTO-ROUTING): _spawnAgent now consults execution.providerStrategy.activeProvider when effectiveProvider remains AUTO after model-based resolution, ensuring generated workflows (no explicit model on nodes) route Claude agents to stream-json instead of PTY
+Additionally, 39 tests in swarm-engine.test.js were updated to use explicit providers (codex/gemini) for PTY-specific tests that broke when AUTO mode started routing to stream-json.
+
+### What I did
+1. Read SwarmEngine.js _spawnAgent (lines 4028-4102) to verify the new providerStrategy.activeProvider check at lines 4071-4086
+2. Read SwarmEngine.js _ensureAgentPty (lines 4595-4619) to confirm the providerStrategy.mode passthrough
+3. Read existing DOC_STATUS.md, CONTEXT.md, ACTIVITY_LOG.md for current state
+4. Updated DOC_STATUS.md: header timestamp, release status task counts (#398), added BUG-AUTO-ROUTING-1 to fixed bugs table, updated ARCHITECTURE.md and inline comments health notes
+5. Updated CONTEXT.md: focus field and immediate next step to reflect #398 completion
+6. Appended ACTIVITY_LOG.md entry
+7. Appended this session log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Task count updated to #398, BUG-AUTO-ROUTING-1 added to fixed bugs, inline comments note updated with _spawnAgent line references |
+| docs/memory/CONTEXT.md | MODIFIED | Focus and immediate next step updated to reflect #398 AUTO routing fix |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Prepended documenter entry for this documentation pass |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- DOC_STATUS.md now accurately tracks BUG-AUTO-ROUTING-1 as a fixed bug with task reference
+- CONTEXT.md reflects the complete state including both #397 and #398 fixes
+- Task count across all docs updated from #396/397 to #398
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Did not update ARCHITECTURE.md Section 13.3 further because the previous documenter pass already described the _spawnAgent dispatch logic accurately; the providerStrategy.activeProvider check is an implementation detail within the existing documented flow
+- Did not update README.md because no user-facing features changed; this is an internal routing fix
+
+### What I learned
+- The _spawnAgent dispatcher has a three-tier provider resolution: (1) explicit requestedProvider, (2) model-based detection, (3) providerStrategy.activeProvider fallback -- this third tier was the missing piece that caused AUTO mode to always fall through to PTY
+
+### State I'm leaving behind
+All documentation is current through Task #398. DOC_STATUS.md, CONTEXT.md, ACTIVITY_LOG.md all reflect the latest fixes. No stale sections introduced by this change.
+
+### Handoff
+None -- task fully self-contained.
+
+---
 ## 2026-04-08 — BUG-HANDOFF-ROUTING-1: Documentation update for _ensureAgentPty provider hint fix
 **Status:** COMPLETED
 **Called by:** orchestrator (post-bugfix)

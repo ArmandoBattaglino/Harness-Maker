@@ -1,4 +1,48 @@
 ---
+## 2026-04-08 — Task #398: BUG-AUTO-ROUTING — Registered and marked COMPLETED
+**Status:** COMPLETED
+**Called by:** user (via orchestrator)
+
+### Context when I started
+TASK #397 (BUG-DL-HANDOFF-PROVIDER-1) was the last registered task. The debugger had already fixed a new bug (BUG-AUTO-ROUTING) where `_spawnAgent` dispatcher in SwarmEngine.js was routing ALL Claude agents to PTY when effectiveProvider was AUTO, because it did not consult `providerStrategy.activeProvider`. Fix was applied, 39 tests updated, 478/478 pass. Needed to register this as a new task and update project tracking.
+
+### What I did
+1. Read TASK_PLAN.md header and tail (tasks #394-#397), PROGRESS.md, ACTIVITY_LOG.md, agent memory
+2. Created TASK #398 with full context, acceptance criteria (all checked), status COMPLETED
+3. Updated TASK_PLAN.md header: 395 tasks registered, 394 COMPLETED, 1 DEFERRED, 0 PENDING
+4. Updated Active Area text to include #398 COMPLETED
+5. Updated PROGRESS.md with PM entry
+6. Updated ACTIVITY_LOG.md with PM entry
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Added TASK #398 (COMPLETED), updated header counts 394->395 tasks, 393->394 completed |
+| docs/memory/PROGRESS.md | MODIFIED | Added PM entry for #398 COMPLETED |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added PM entry for #398 registration |
+| docs/memory/agents/project-manager.md | MODIFIED | This session log |
+
+### Improvements delivered
+- BUG-AUTO-ROUTING fix is now tracked in the task plan with full context and acceptance criteria
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| none | - | - | - |
+
+### Decisions I made
+- Placed #398 as dependency of #397 since the handoff provider bug was a precursor finding in the same debugger-loop session
+
+### What I learned
+- The AUTO mode routing bug was subtle: Prompt-to-Flow generated nodes lack explicit model/provider fields, so the dispatcher fell through to PTY for all of them. The fix uses `providerStrategy.activeProvider` as a second-level fallback.
+
+### State I'm leaving behind
+395 tasks registered, 394 COMPLETED, 1 DEFERRED (#236 ConPTY), 0 PENDING. All areas CLOSED. All debugger-loop follow-ups (#394-#398) CLOSED. 478/478 server tests pass. No remaining work.
+
+### Handoff
+None -- no pending tasks remain. Project is fully current.
+
+---
 ## 2026-04-08 — Task #359 COMPLETED status update + #360 activation
 **Status:** COMPLETED
 **Called by:** orchestrator

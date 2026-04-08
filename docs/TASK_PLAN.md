@@ -4,8 +4,8 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v9.0.0 — task numbering extends through #397; 394 tasks are currently registered in this plan, 393 are COMPLETE/PASS, 1 is DEFERRED, and 0 are PENDING. V8.2 OUTPUT FIDELITY: AREA CLOSED 2026-04-07. V9.0 STREAM-JSON AGENT MIGRATION: Phase 0 CLOSED, Phase 1 BACKEND CORE CLOSED, Phase 2 FRONTEND CLOSED, and Phase 3 INTEGRATION AND POLISH CLOSED through #393 PASS. Debugger-loop mixed-provider fallback follow-up (#394-#396) CLOSED. Debugger-loop handoff provider fix (#397) COMPLETED 2026-04-08. 478 server tests pass, client/root build clean (500 modules).
-  **Active Area:** No registered pending area remains. V9.0 STREAM-JSON AGENT MIGRATION is CLOSED and the debugger-loop follow-up is also CLOSED: #394 COMPLETED, #395 PASS, #396 PASS. #397 COMPLETED (handoff provider bug). PRD v6.0.
+**Status:** v9.0.0 — task numbering extends through #398; 395 tasks are currently registered in this plan, 394 are COMPLETE/PASS, 1 is DEFERRED, and 0 are PENDING. V8.2 OUTPUT FIDELITY: AREA CLOSED 2026-04-07. V9.0 STREAM-JSON AGENT MIGRATION: Phase 0 CLOSED, Phase 1 BACKEND CORE CLOSED, Phase 2 FRONTEND CLOSED, and Phase 3 INTEGRATION AND POLISH CLOSED through #393 PASS. Debugger-loop mixed-provider fallback follow-up (#394-#396) CLOSED. Debugger-loop handoff provider fix (#397) COMPLETED 2026-04-08. Debugger-loop AUTO routing fix (#398) COMPLETED 2026-04-08. 478 server tests pass, client/root build clean (500 modules).
+  **Active Area:** No registered pending area remains. V9.0 STREAM-JSON AGENT MIGRATION is CLOSED and all debugger-loop follow-ups are CLOSED: #394 COMPLETED, #395 PASS, #396 PASS, #397 COMPLETED (handoff provider bug), #398 COMPLETED (AUTO routing bug). PRD v6.0.
   **Completed Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 ALL COMPLETED/PASS. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#267 ALL COMPLETED. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave2 NODE CREATION & CONFIG — Tasks #268-#272 ALL COMPLETED. AREA CLOSED 2026-04-06.
@@ -16666,4 +16666,32 @@ Acceptance Criteria:
   - [x] Test mocks updated to handle stream-json child processes for handoff targets
   - [x] 478/478 server tests pass
 Dependencies: TASK #394
+---
+
+TASK #398: BUG-AUTO-ROUTING — AUTO mode routes ALL Claude agents to PTY instead of stream-json
+Area: DEBUGGER LOOP — AUTO MODE ROUTING BUG (2026-04-08)
+Agent: debugger
+Priority: CRITICAL
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Context:
+  Found during debugger-loop testing on 2026-04-08.
+  Root cause: `_spawnAgent` dispatcher in SwarmEngine.js did not consult
+  `execution.providerStrategy.activeProvider` when the effectiveProvider resolved to AUTO.
+  Since Prompt-to-Flow generated nodes do not have explicit model/provider fields, the dispatcher
+  always fell through to the PTY path, even for Claude agents that should use stream-json.
+  Fix applied: `_spawnAgent` now checks `providerStrategy.activeProvider` as a fallback when AUTO
+  mode cannot resolve from node-level fields. This ensures Claude agents route to stream-json and
+  Codex/Gemini agents continue to route to PTY.
+  39 test cases were updated to account for the corrected routing behavior.
+  Verification: 478/478 server tests pass after the fix.
+Acceptance Criteria:
+  - [x] `_spawnAgent` checks `providerStrategy.activeProvider` as fallback when effectiveProvider is AUTO
+  - [x] Claude agents in AUTO mode route to stream-json (not PTY)
+  - [x] Codex/Gemini agents in AUTO mode continue to route to PTY
+  - [x] Prompt-to-Flow generated nodes (no explicit model/provider) route correctly based on activeProvider
+  - [x] 39 test cases updated to reflect corrected routing behavior
+  - [x] 478/478 server tests pass
+Dependencies: TASK #397
 ---
