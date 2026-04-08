@@ -1,4 +1,15 @@
-﻿## 2026-04-07 - project-manager - Full Project State Audit
+﻿## 2026-04-08 - researcher - Research: Claude CLI Structured Output / Programmatic Parsing
+**Outcome:** COMPLETED
+**Summary:** Researched whether Claude CLI provides structured output to avoid PTY parsing. Found three viable approaches: (1) CLI -p with --output-format stream-json (already used by JobRunner), (2) @anthropic-ai/claude-agent-sdk TypeScript package (native async generator, no PTY), (3) CLI -p with --output-format json + --json-schema for validated structured output. The project already uses approach 1 for job mode. The Agent SDK is the recommended path for new features needing clean semantic content extraction.
+**Files changed:** docs/memory/agents/researcher.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (research only)
+**Decisions made:** Recommended Agent SDK as highest-fidelity option; confirmed PTY mode is fundamentally incompatible with structured output
+**Blockers:** none
+**Next:** Architect/backend-dev should evaluate which approach fits the Swarm agent output extraction use case
+
+---
+
+## 2026-04-07 - project-manager - Full Project State Audit
 **Outcome:** COMPLETED
 **Summary:** Comprehensive project analysis requested by user. 353 tasks total: 351 COMPLETED, 2 DEFERRED, 0 PENDING. All areas V3.1 through V8.2 CLOSED. 409/409 server tests pass, client build clean. Identified critical action item: 35 files with uncommitted changes from V8.0-V8.2 work need to be committed. Known minor issues: ChatExtractor test flakiness under parallel vitest (passes in isolation), Researcher agent occasional "Structured handoff sent." fallback.
 **Files changed:** docs/TASK_PLAN.md (header update), docs/memory/CONTEXT.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -4506,6 +4517,17 @@ full self-contained context and acceptance criteria.
 **Decisions made:** Prefer cleaner chat over preserving Codex internal runtime/status chatter; keep the fix server-side in `ChatExtractor` rather than reusing the more aggressive snippet sanitizer directly for live chat
 **Blockers:** none
 **Next:** Optional follow-up - tune Codex fallback chat filtering so real semantic progress lines remain visible while keeping runtime chrome suppressed
+
+---
+## 2026-04-08 - codex - Live Swarm final-report recovery from session-backed snippets
+**Outcome:** PARTIAL
+**Summary:** Re-ran the provider-backed Remote Work Swarm workflow as an adversarial browser regression after the ChatExtractor normalization work. Found that terminal executions were still building `agentOutputs` only from `chatMessages`, which meant persisted history could save "No agent outputs captured" and the live `Final Report` route could fall back to runtime banners or empty fragments. Fixed both `SwarmEngine` persistence and `/api/v1/swarm/executions/:id/results` live synthesis to include agent nodes with non-idle state even when `chatMessages` are empty, and to resolve `finalText` using existing semantic snippets before noisy session replay banners. Added coverage for history persistence without chat flushes and for live results reconstruction from engine-side final-text recovery.
+**Files changed:** server/services/SwarmEngine.js, server/routes/swarm.js, server/tests/swarm-engine.test.js, server/tests/execution-results-api.test.js, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** Final report modal showing startup/runtime banner text instead of actual agent output; execution history entries persisting empty agent outputs when terminal chat flushes lagged behind execution completion
+**Decisions made:** Prefer `state.lastOutputSnippet` / semantic snippet recovery over raw session replay banners when selecting final agent text; include terminal agent states in output synthesis even with zero chat messages
+**Verification:** `npm test --prefix server -- swarm-engine.test.js execution-results-api.test.js` PASS (`159/159`); live browser rerun on `Remote Work Benefits Research and Summary (08/04/2026)` confirms final report now contains the Writer paragraph instead of the startup banner
+**Remaining issues:** Live Chat panel still shows only two messages (`Researcher` summary + `Writer` placeholder "Structured handoff sent.") and does not surface the Writer's actual final paragraph; node previews and final report still carry trailing runtime-tail noise such as `Germinating…`, `⏵⏵`, and `◐ medium`
+**Next:** Trace why the Writer's terminal-state snippet is not emitted as a WS `chat_message`, and trim inline runtime-tail chrome from semantic snippet / final-text post-processing
 
 ---
 ## 2026-04-08 - codex - ChatExtractor normalization pass for compressed prose and corrupted chat prefixes

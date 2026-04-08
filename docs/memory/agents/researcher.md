@@ -244,3 +244,57 @@ docs/research_b.md is complete. Contains: full parentId/extent API, expand-colla
 ### Handoff
 frontend-dev building DepartmentNode.jsx and SwarmCanvasView should read docs/research_b.md — specifically the "Implications for this project" section — before implementing.
 ---
+
+---
+## 2026-04-08 — Research: Claude CLI Structured Output / Programmatic Parsing
+**Status:** COMPLETED
+**Called by:** user (research request for output fidelity improvement)
+
+### Context when I started
+Project is at v8.2 with 353 tasks (351 completed). The team is dealing with PTY output noise from Claude CLI (ConPTY artifacts, spinner text, ANSI sequences, space-splitting). The question: can we get clean structured output from Claude CLI instead of parsing PTY noise?
+
+### What I did
+1. Read project memory files (PROJECT.md, DECISIONS.md, CONTEXT.md, researcher.md, ACTIVITY_LOG.md)
+2. Ran 5 parallel web searches covering: --output-format json, --print flag, Claude Code SDK, CLI docs, GitHub issues
+3. Fetched 6 documentation pages: headless mode docs, CLI reference, Agent SDK overview, Agent SDK TypeScript reference, streaming output docs, structured outputs docs
+4. Fetched community guide on programmatic Claude Code usage
+5. Reviewed existing JobRunner.js to confirm current spawn pattern
+6. Synthesized findings into comprehensive research report
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/agents/researcher.md | MODIFIED | Added this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added activity entry |
+
+### Improvements delivered
+- Confirmed THREE viable approaches to avoid PTY parsing: (1) CLI -p with --output-format, (2) @anthropic-ai/claude-agent-sdk TypeScript package, (3) stream-json mode already in use by JobRunner
+- Identified that the project ALREADY uses --output-format stream-json in JobRunner.js for job mode
+- Confirmed the Claude Agent SDK (@anthropic-ai/claude-agent-sdk on npm) provides native TypeScript async generator with typed message objects — no PTY at all
+- Documented all CLI flags relevant to structured output: --output-format (text/json/stream-json), --json-schema, --bare, --verbose, --include-partial-messages
+- Identified that stream-json gives per-token events with type discrimination, eliminating all ANSI/spinner/ConPTY noise
+
+### Bugs I encountered
+None — research only.
+
+### Decisions I made
+- Recommended the TypeScript Agent SDK as the highest-fidelity option for new features
+- Noted that the existing PTY mode (interactive terminal) is fundamentally incompatible with structured output — it is interactive by design
+- Confirmed that -p mode + stream-json is the correct approach for non-interactive use (already implemented in JobRunner)
+
+### What I learned
+- Claude Code CLI has THREE output formats: text (default), json (metadata + result), stream-json (NDJSON events)
+- The @anthropic-ai/claude-agent-sdk TypeScript package wraps Claude Code as a library — async generator yields typed SDKMessage objects (SystemMessage, AssistantMessage, ResultMessage, StreamEvent)
+- --bare flag skips CLAUDE.md, hooks, MCP servers, skills — faster startup for scripted calls
+- stream-json events include: message_start, content_block_start, content_block_delta (text_delta / input_json_delta), content_block_stop, message_delta, message_stop
+- The Agent SDK supports structured output via JSON Schema (outputFormat option) — result in structured_output field
+- Streaming and structured output are mutually exclusive in the SDK — structured_output only appears in final ResultMessage
+- Session resumption works in -p mode via --resume <session-id>
+- --json-schema flag on CLI gives validated JSON output matching a schema
+
+### State I'm leaving behind
+Research report delivered as direct response. No code changes. Three clear options documented with trade-offs for the team.
+
+### Handoff
+Architect/backend-dev should evaluate which approach fits best for the Swarm agent output extraction use case: (a) keep PTY for interactive display + add parallel -p/SDK channel for semantic extraction, (b) switch Swarm agents to -p mode entirely, or (c) use the Agent SDK for maximum control.
+---

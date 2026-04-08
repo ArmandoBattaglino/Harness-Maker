@@ -36,7 +36,7 @@ function normalizeAgentStates(agentStates) {
   return new Map();
 }
 
-function buildAgentOutputsFromExecution(execution) {
+function buildAgentOutputsFromExecution(execution, swarmEngine = null) {
   const agentOutputs = {};
   const groupedMessages = {};
   const chatMessages = Array.isArray(execution?.chatMessages) ? execution.chatMessages : [];
@@ -48,20 +48,41 @@ function buildAgentOutputsFromExecution(execution) {
   }
 
   const agentStates = normalizeAgentStates(execution?.agentStates);
-  for (const [nodeId, messages] of Object.entries(groupedMessages)) {
+  const nodeIds = new Set(Object.keys(groupedMessages));
+  for (const [nodeId, state] of agentStates.entries()) {
+    if (!nodeId) continue;
+    if (state?.status && state.status !== 'idle') {
+      nodeIds.add(nodeId);
+    }
+  }
+  for (const node of execution?.workflowDef?.nodes ?? []) {
+    if (node?.type !== 'agent' || !node.id) continue;
+    const state = agentStates.get(node.id);
+    if ((groupedMessages[node.id]?.length ?? 0) > 0 || (state?.status && state.status !== 'idle')) {
+      nodeIds.add(node.id);
+    }
+  }
+
+  for (const nodeId of nodeIds) {
+    const messages = groupedMessages[nodeId] ?? [];
     const state = agentStates.get(nodeId);
     const nodeDef = execution?.workflowDef?.nodes?.find((node) => node.id === nodeId);
     const timestamps = messages
       .map((msg) => msg.timestamp)
       .filter(Boolean)
       .sort((a, b) => a - b);
+    const finalText = typeof swarmEngine?._resolveAgentFinalText === 'function'
+      ? swarmEngine._resolveAgentFinalText(execution, nodeId, messages, state)
+      : messages
+        .map((msg) => msg.text || msg.content || '')
+        .filter(Boolean)
+        .join('\n\n');
+
+    if (!finalText && messages.length === 0 && !state) continue;
 
     agentOutputs[nodeId] = {
       label: nodeDef?.data?.label || nodeId,
-      finalText: messages
-        .map((msg) => msg.text || msg.content || '')
-        .filter(Boolean)
-        .join('\n\n'),
+      finalText,
       handoffPayloads: Array.isArray(state?.handoffPayloads) ? state.handoffPayloads : [],
       status: state?.status || 'unknown',
       provider: state?.runtimeProvider || state?.provider || null,
@@ -74,8 +95,8 @@ function buildAgentOutputsFromExecution(execution) {
   return agentOutputs;
 }
 
-function buildLiveExecutionResults(execution, workflowName = '') {
-  const agentOutputs = buildAgentOutputsFromExecution(execution);
+function buildLiveExecutionResults(execution, workflowName = '', swarmEngine = null) {
+  const agentOutputs = buildAgentOutputsFromExecution(execution, swarmEngine);
   const status = execution?.status || 'unknown';
   const startedAt = execution?.startedAt ?? execution?.budget?.startedAt ?? null;
   const endedAt = TERMINAL_EXECUTION_STATUSES.has(status)
@@ -652,7 +673,7 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
       }
 
       if (result.source === 'live') {
-        return res.status(200).json(buildLiveExecutionResults(result.data, result.workflowName));
+        return res.status(200).json(buildLiveExecutionResults(result.data, result.workflowName, swarmEngine));
       }
 
       // Persisted history entry
@@ -704,7 +725,7 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
       if (result.source === 'history') {
         artifactContent = result.data.aggregatedArtifact || '';
       } else if (TERMINAL_EXECUTION_STATUSES.has(result.data?.status)) {
-        artifactContent = buildLiveExecutionResults(result.data, result.workflowName).aggregatedArtifact || '';
+        artifactContent = buildLiveExecutionResults(result.data, result.workflowName, swarmEngine).aggregatedArtifact || '';
       }
 
       // Build safe filename

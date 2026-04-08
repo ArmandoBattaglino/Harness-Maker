@@ -720,12 +720,22 @@ class SwarmEngine {
       .trim();
 
     const sessionOutput = this._readAgentSessionOutput(state);
+    const semanticSnippet = String(state?.lastOutputSnippet || '').trim()
+      || this._buildSemanticSnippet(sessionOutput)
+      || '';
     const executionContext = {
       executionId: execution?.executionId ?? execution?.id ?? null,
       nodeId,
     };
 
     const candidates = [
+      semanticSnippet
+        ? this._sanitizeChatMessage(semanticSnippet, {
+            ...executionContext,
+            rawText: semanticSnippet,
+          })
+        : '',
+      semanticSnippet,
       sessionOutput
         ? this._sanitizeChatMessage(sessionOutput, {
             ...executionContext,
@@ -756,6 +766,77 @@ class SwarmEngine {
     }
 
     return bestText;
+  }
+
+  _collectAgentOutputNodeIds(execution, groupedMessages = {}) {
+    const nodeIds = new Set(Object.keys(groupedMessages));
+
+    const agentStates = execution?.agentStates instanceof Map
+      ? execution.agentStates
+      : new Map(Object.entries(execution?.agentStates ?? {}));
+    for (const [nodeId, state] of agentStates.entries()) {
+      if (!nodeId) continue;
+      if (state?.status && state.status !== 'idle') {
+        nodeIds.add(nodeId);
+      }
+    }
+
+    const workflowNodes = Array.isArray(execution?.workflowDef?.nodes)
+      ? execution.workflowDef.nodes
+      : [];
+    for (const node of workflowNodes) {
+      if (node?.type !== 'agent' || !node.id) continue;
+      const state = agentStates.get(node.id);
+      if ((groupedMessages[node.id]?.length ?? 0) > 0 || (state?.status && state.status !== 'idle')) {
+        nodeIds.add(node.id);
+      }
+    }
+
+    return nodeIds;
+  }
+
+  _buildAgentOutputs(execution) {
+    const grouped = {};
+    for (const msg of execution?.chatMessages ?? []) {
+      if (msg?.role !== 'assistant' || !msg.nodeId) continue;
+      if (!grouped[msg.nodeId]) grouped[msg.nodeId] = [];
+      grouped[msg.nodeId].push(msg);
+    }
+
+    const agentStates = execution?.agentStates instanceof Map
+      ? execution.agentStates
+      : new Map(Object.entries(execution?.agentStates ?? {}));
+    const workflowNodes = Array.isArray(execution?.workflowDef?.nodes)
+      ? execution.workflowDef.nodes
+      : [];
+    const nodeIds = this._collectAgentOutputNodeIds(execution, grouped);
+    const agentOutputs = {};
+
+    for (const nodeId of nodeIds) {
+      const messages = grouped[nodeId] ?? [];
+      const state = agentStates.get(nodeId) ?? null;
+      const nodeDef = workflowNodes.find((node) => node.id === nodeId) ?? null;
+      const timestamps = messages
+        .map((msg) => msg?.timestamp)
+        .filter(Boolean)
+        .sort();
+      const finalText = this._resolveAgentFinalText(execution, nodeId, messages, state);
+
+      if (!finalText && messages.length === 0 && !state) continue;
+
+      agentOutputs[nodeId] = {
+        label: nodeDef?.data?.label || nodeId,
+        finalText,
+        handoffPayloads: state?.handoffPayloads || [],
+        status: state?.status || 'unknown',
+        provider: state?.runtimeProvider || state?.provider || null,
+        messageCount: messages.length,
+        firstMessageAt: timestamps[0] ? new Date(timestamps[0]).toISOString() : null,
+        lastMessageAt: timestamps[timestamps.length - 1] ? new Date(timestamps[timestamps.length - 1]).toISOString() : null,
+      };
+    }
+
+    return agentOutputs;
   }
 
   _refreshAgentSnippet(state = null, { preferSessionReplay = false } = {}) {
@@ -1323,35 +1404,7 @@ class SwarmEngine {
       }
     }
 
-    // Build agentOutputs from chatMessages
-    const agentOutputs = {};
-    if (Array.isArray(execution.chatMessages)) {
-      const grouped = {};
-      for (const msg of execution.chatMessages) {
-        if (!msg.nodeId) continue;
-        if (!grouped[msg.nodeId]) grouped[msg.nodeId] = [];
-        grouped[msg.nodeId].push(msg);
-      }
-
-      for (const [nodeId, messages] of Object.entries(grouped)) {
-        const state = execution.agentStates?.get(nodeId);
-        const nodeDef = execution.workflowDef?.nodes?.find(n => n.id === nodeId);
-        const timestamps = messages.map(m => m.timestamp).filter(Boolean).sort();
-
-        const finalText = this._resolveAgentFinalText(execution, nodeId, messages, state);
-
-        agentOutputs[nodeId] = {
-          label: nodeDef?.data?.label || nodeId,
-          finalText,
-          handoffPayloads: state?.handoffPayloads || [],
-          status: state?.status || 'unknown',
-          provider: state?.runtimeProvider || state?.provider || null,
-          messageCount: messages.length,
-          firstMessageAt: timestamps[0] ? new Date(timestamps[0]).toISOString() : null,
-          lastMessageAt: timestamps[timestamps.length - 1] ? new Date(timestamps[timestamps.length - 1]).toISOString() : null,
-        };
-      }
-    }
+    const agentOutputs = this._buildAgentOutputs(execution);
 
     // Build aggregated markdown artifact
     const aggregatedArtifact = buildWorkflowArtifact({
@@ -1752,10 +1805,12 @@ class SwarmEngine {
       if (/^if another agent is better suited to /i.test(line)) continue;
       if (/^do not emit\b/i.test(line)) continue;
       if (/^HANDOFF:[a-z0-9-]+:/i.test(line)) continue;
+      if (/tips for getting|welcome back|recent activity|no recent activity|run \/init to create/i.test(line)) continue;
       if (/^agent[-_\s]?[ab]\s*:\s*(?:greeting|translation|language)\b/i.test(line)) continue;
       if (compactLine.includes('agenta:greeting') || compactLine.includes('agentb:greeting')) continue;
       if (compactLine.includes('agenta:translation') || compactLine.includes('agentb:translation')) continue;
       if (compactLine.includes('agenta:language') || compactLine.includes('agentb:language')) continue;
+      if (compactLine.includes('tipsforgetting') || compactLine.includes('welcomeback') || compactLine.includes('recentactivity') || compactLine.includes('run/inittocreate')) continue;
       if (/^(?:workflow name|workflow description|currenttask|task|instruction|workflow|merge_with|triage_note|agent(?:_[ab])?|language|greeting|status|translation|agent_[ab]_(?:language|greeting|translation)|merge_status)\s*:/i.test(line)) continue;
       if (/^["'{[]/.test(line)) continue;
       if (/"[^"\n]{1,80}"\s*:/.test(line)) continue;
@@ -1848,6 +1903,9 @@ class SwarmEngine {
     if (/^(?:workflow name|workflow description|currenttask|task|instruction|workflow|merge_with|triage_note|agent(?:_[ab])?|language|greeting|status|translation|agent_[ab]_(?:language|greeting|translation)|merge_status)\s*:/im.test(normalized)) {
       return true;
     }
+    if (/(?:tips for getting|welcome back|recent activity|no recent activity|run \/init to create)/i.test(normalized)) {
+      return true;
+    }
     if (/(?:extra\s*usage|claude\s*max|claude codev?\d|opus\s*4(?:\.\d+)?\s*with\s*(?:medium|high|low)\s*effort)/i.test(normalized)) {
       return true;
     }
@@ -1869,6 +1927,7 @@ class SwarmEngine {
     if (/^current workflow context:?/im.test(normalized)) score -= 240;
     if (/(?:must emit a handoff token|your required downstream target|do not stop at the done marker|finish your work, then hand off to|very last line must be a valid handoff token|this agent is not terminal in the workflow|is not the end of the workflow yet|runtime is active for this swarm agent|continue the workflow using the shared task context below|use any one of these connected target ids|the runtime will duplicate that handoff across every connected downstream node)/i.test(normalized)) score -= 320;
     if (/(?:extra\s*usage|claude\s*max|claude codev?\d|opus\s*4(?:\.\d+)?\s*with\s*(?:medium|high|low)\s*effort)/i.test(normalized)) score -= 320;
+    if (/(?:tips for getting|welcome back|recent activity|no recent activity|run \/init to create)/i.test(normalized)) score -= 420;
     return score;
   }
 

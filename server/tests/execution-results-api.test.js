@@ -208,6 +208,64 @@ describe('GET /executions/:executionId/results', () => {
     expect(res.body.aggregatedArtifact).toContain('Final result');
   });
 
+  it('reconstructs live terminal outputs from the engine when chatMessages are empty', async () => {
+    const liveStatus = {
+      executionId: VALID_UUID,
+      workflowId: WORKFLOW_ID,
+      status: 'completed',
+      agentStates: {
+        'node-a': { status: 'completed' },
+      },
+      budget: { startedAt: '2026-04-07T10:00:00Z' },
+    };
+
+    const liveExecution = {
+      ...liveStatus,
+      startedAt: '2026-04-07T10:00:00Z',
+      workflowDef: {
+        id: WORKFLOW_ID,
+        name: 'Test Workflow',
+        description: 'A test workflow',
+        nodes: [{ id: 'node-a', type: 'agent', data: { label: 'Agent A' } }],
+      },
+      agentStates: new Map([
+        ['node-a', { status: 'completed', runtimeProvider: 'claude', handoffPayloads: [] }],
+      ]),
+      chatMessages: [],
+    };
+
+    const engine = {
+      ...createMockSwarmEngine(liveStatus, liveExecution),
+      _resolveAgentFinalText: vi.fn().mockReturnValue('Recovered final output'),
+    };
+    const router = swarmRoutes(engine, createMockSessionManager());
+    const handler = getRouteHandler(router, 'get', '/executions/:executionId/results');
+
+    const req = {
+      params: { executionId: VALID_UUID },
+      query: {},
+      app: {
+        locals: {
+          workflowStore: { get: vi.fn().mockResolvedValue({ name: 'Test Workflow' }) },
+          executionHistoryStore: { getEntry: vi.fn().mockResolvedValue(null) },
+        },
+      },
+    };
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(engine._resolveAgentFinalText).toHaveBeenCalledWith(
+      liveExecution,
+      'node-a',
+      [],
+      expect.objectContaining({ status: 'completed' })
+    );
+    expect(res.body.agentOutputs['node-a'].finalText).toBe('Recovered final output');
+    expect(res.body.aggregatedArtifact).toContain('Recovered final output');
+  });
+
   it('prefers persisted history artifact for a terminal live execution when available', async () => {
     const liveStatus = {
       executionId: VALID_UUID,

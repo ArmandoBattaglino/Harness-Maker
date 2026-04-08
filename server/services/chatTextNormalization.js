@@ -45,6 +45,45 @@ const CHAT_WORDS = [
   'giornata', 'grande', 'lavorativa', 'lavoratore', 'limitazioni', 'luogo',
   'migliorano', 'notevole', 'numerosi', 'offre', 'opera', 'operativi', 'opportunita',
   'paragrafo', 'primo', 'proprie', 'qualita', 'riassuntivo',
+  // History/geography/culture vocabulary
+  'acqua', 'alto', 'altezza', 'anfiteatro', 'antico', 'antichi', 'arena', 'attraverso',
+  'battaglia', 'battaglie', 'canale', 'canali', 'capacita', 'chiamato', 'circa',
+  'citta', 'costruzione', 'dopo', 'durante', 'enormi', 'erano', 'essere', 'fatto',
+  'fatti', 'famoso', 'fino', 'fondamenta', 'furono', 'gladiatori', 'guerra',
+  'imperatore', 'impero', 'imperiale', 'impressionanti', 'interessanti', 'isole',
+  'laguna', 'largo', 'larghezza', 'lungo', 'lunghezza', 'metri', 'mondo',
+  'navale', 'navali', 'nave', 'navi', 'nei', 'numero', 'oltre', 'palazzi',
+  'parte', 'ponte', 'ponti', 'porta', 'poteva', 'pratica', 'proteggeva',
+  'pubblico', 'rapido', 'rete', 'romano', 'romani', 'roma', 'secolo', 'secoli',
+  'simulare', 'sistema', 'sotto', 'spettacolo', 'spettatori', 'storia', 'storico',
+  'storica', 'storici', 'struttura', 'suo', 'suoi', 'superficie', 'telo',
+  'trasporto', 'utilizzato', 'utilizzati', 'vaporetti', 'veloce', 'venezia',
+  'veneziano', 'veniva', 'vere', 'verso', 'vita',
+  // Common Italian connectors and modifiers
+  'accurati', 'ancora', 'attraverso', 'aveva', 'avevano', 'come', 'completamente',
+  'dalla', 'dalle', 'dentro', 'dopo', 'dove', 'enorme', 'erano', 'essere',
+  'fino', 'fra', 'grazie', 'insieme', 'invece', 'loro', 'ma', 'mai', 'meno',
+  'molto', 'nella', 'nelle', 'nello', 'oggi', 'ogni', 'oppure', 'ora', 'per',
+  'permetteva', 'poi', 'prima', 'primo', 'propria', 'quale', 'quando',
+  'quasi', 'quella', 'quelle', 'quello', 'queste', 'questi', 'questo',
+  'rendeva', 'resa', 'reso', 'rispetto', 'senza', 'sopra', 'stata', 'stato',
+  'stessa', 'stesso', 'sua', 'sue', 'suoi', 'tanto', 'tra', 'tuttavia',
+  'tutto', 'tutta', 'unico', 'vero', 'vera',
+  // Food/culture vocabulary
+  'arte', 'basilico', 'bianco', 'colori', 'cottura', 'creata', 'cucina',
+  'diametro', 'disciplinare', 'forno', 'gastronomica', 'gesto', 'icona',
+  'impasto', 'ingredienti', 'italiana', 'italiano', 'legna', 'lievitare',
+  'margherita', 'metodo', 'mozzarella', 'napoletana', 'napoletano', 'napoli',
+  'patrimonio', 'piatto', 'pizza', 'pizzaiolo', 'pomodoro', 'preparazione',
+  'preparare', 'regina', 'regole', 'rappresentano', 'riconosciuto', 'rosso',
+  'sapore', 'savoia', 'scegliendo', 'solo', 'tradizionale', 'tricolore', 'verde',
+  // Common verbs/adjectives
+  'avvenire', 'chiamata', 'compreso', 'conosciuta', 'creato', 'dedicata',
+  'diventata', 'dovrebbe', 'entro', 'essendo', 'famosa', 'incluso',
+  'intorno', 'migliore', 'migliori', 'misura', 'mondiale', 'necessario',
+  'particolare', 'possibile', 'potrebbe', 'produce', 'punto', 'risulta',
+  'sempre', 'serve', 'speciale', 'superare', 'tipica', 'tipico',
+  'tradizione', 'trova', 'ultimo', 'unica',
 ];
 
 const CHAT_WORD_SET = new Set(CHAT_WORDS.map((word) => normalizeCompressedChatWord(word)));
@@ -350,7 +389,9 @@ export function normalizeChatDisplayText(text = '') {
           .replace(/([,;])([a-zA-Z\u00C0-\u00F6])/gu, '$1 $2')
           .replace(/([):])([A-Z\u00C0-\u00D6])/gu, '$1 $2')
           .replace(/([a-z\u00E0-\u00F6])([A-Z\u00C0-\u00D6])/gu, '$1 $2')
-          .replace(/\b([a-zA-Z\u00C0-\u00F6]+(?:['’](?:s|re|ve|ll|d|m)|n['’]t))(?=[a-zA-Z\u00C0-\u00F6])/gu, '$1 ')
+          .replace(/([a-zA-Z\u00C0-\u00F6])(\d)/gu, '$1 $2')
+          .replace(/(\d)([a-zA-Z\u00C0-\u00F6])/gu, '$1 $2')
+          .replace(/\b([a-zA-Z\u00C0-\u00F6]+(?:[‘’](?:s|re|ve|ll|d|m)|n[‘’]t))(?=[a-zA-Z\u00C0-\u00F6])/gu, '$1 ')
           .replace(/\b([a-zA-Z\u00C0-\u00F6]+['’])([a-zA-Z\u00C0-\u00F6]{7,})/gu, (_, prefix, suffix) => `${prefix}${restoreCompressedChatToken(suffix)}`)
           .replace(RESTORABLE_CHAT_TOKEN_MATCH_RE, (token) => restoreCompressedChatToken(token))
           .replace(/\s{2,}/g, ' ')

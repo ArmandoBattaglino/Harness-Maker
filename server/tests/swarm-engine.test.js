@@ -401,6 +401,61 @@ describe('SwarmEngine', () => {
       expect(entry.aggregatedArtifact).toContain("Negli ultimi anni, l'intelligenza artificiale");
     });
 
+    it('should persist agent outputs from session replay even when chatMessages are still empty', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const execution = engine._executions.get(executionId);
+      const state = execution.agentStates.get('node-a');
+      const store = { addEntry: vi.fn().mockResolvedValue(undefined) };
+
+      engine.setExecutionHistoryStore(store);
+      execution.status = 'completed';
+      execution.startedAt = '2026-04-08T09:00:00.000Z';
+      execution.chatMessages = [];
+
+      const session = mockSessionManager.getSession(state.sessionId);
+      session.buffer.push([
+        'Claude Code v2.1.92',
+        'Il team remoto lavora meglio con piu flessibilita e meno pendolarismo.',
+        'La sintesi finale evidenzia anche una produttivita piu alta.',
+        '__DONE__',
+      ].join('\n'));
+
+      await engine._persistExecutionHistory(execution);
+
+      expect(store.addEntry).toHaveBeenCalledTimes(1);
+      const [, entry] = store.addEntry.mock.calls[0];
+      expect(entry.agentOutputs['node-a']).toBeDefined();
+      expect(entry.agentOutputs['node-a'].finalText).toContain('Il team remoto lavora meglio');
+      expect(entry.agentOutputs['node-a'].finalText).toContain('produttivita piu alta');
+      expect(entry.aggregatedArtifact).toContain('Il team remoto lavora meglio');
+      expect(entry.aggregatedArtifact).not.toContain('No agent outputs were captured');
+    });
+
+    it('should prefer the semantic snippet over startup banners when resolving final agent text', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const execution = engine._executions.get(executionId);
+      const state = execution.agentStates.get('node-a');
+      const session = mockSessionManager.getSession(state.sessionId);
+
+      state.lastOutputSnippet = 'Ecco il paragrafo finale: il lavoro remoto migliora equilibrio, risparmio e produttivita.';
+      state._snippetSourceBuffer = state.lastOutputSnippet;
+      session.buffer.push([
+        'Tips for getting started',
+        'Welcome back nicolò!',
+        'Run /init to create a project',
+        'Recent activity',
+        'No recent activity',
+      ].join('\n'));
+
+      const resolved = engine._resolveAgentFinalText(execution, 'node-a', [
+        { nodeId: 'node-a', role: 'assistant', text: 'Structured handoff sent.' },
+      ], state);
+
+      expect(resolved).toContain('Ecco il paragrafo finale');
+      expect(resolved).not.toContain('Tips for getting');
+      expect(resolved).not.toContain('Welcome back');
+    });
+
     it('should seed workflowContext with the workflow goal before the first agent starts', async () => {
       const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
 
