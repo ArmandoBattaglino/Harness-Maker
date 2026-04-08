@@ -1338,6 +1338,7 @@ class SwarmEngine {
       runtimeProvider: state?.runtimeProvider ?? state?.provider ?? null,
       status: state?.status ?? 'idle',
       sessionId: state?.sessionId ?? null,
+      spawnMode: state?.spawnMode ?? 'pty',
       lastOutputSnippet,
       ...(state?.runtimeBlocker
         ? { runtimeBlocker: this._serializeRuntimeBlocker(state.runtimeBlocker) }
@@ -4203,6 +4204,8 @@ class SwarmEngine {
         inputTokens,
         outputTokens,
         costUsd,
+        cacheReadTokens: resultEvt.usage?.cacheRead ?? 0,
+        cacheWriteTokens: resultEvt.usage?.cacheWrite ?? 0,
         durationMs,
         totalInputTokens: state.totalInputTokens,
         totalOutputTokens: state.totalOutputTokens,
