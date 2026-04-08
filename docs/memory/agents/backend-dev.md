@@ -1825,3 +1825,61 @@ All 6 new API endpoints implemented and tested (312/312 pass). Frontend componen
 - SwarmEngine needs to call ExecutionHistoryStore.addEntry() when executions complete/stop/fail — this is a separate integration task.
 - QA test gate for Wave 4 can now proceed with all backend endpoints available.
 ---
+
+---
+## 2026-04-08 — Task #357: StreamJsonParser — NDJSON line parser for Claude CLI stream-json output
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+V9.0 Stream-JSON Agent Migration in progress. Phase 0 spike (#354) COMPLETED, TEST GATE #355 PASS. 453 tests passing across 19 test files. The parser is the first production component of the migration, needed by _spawnAgentStreamJson (#359) and all downstream tasks.
+
+### What I did
+1. Read research docs (research_d_stream_events.md, stream-json-verbose-flag.md) for exact CLI event structures.
+2. Read HandoffParser.js for the project's stateful parser pattern (rolling buffer, feed() method, ESM export).
+3. Read JobRunner.js (lines 100-220) for how stream-json lines are currently handled (readline + JSON.parse).
+4. Read PRD Section 11 component spec for the exact event mapping contract.
+5. Created StreamJsonParser.js with: parseLine(rawLine) method, 1MB cap guard, JSON.parse with error catch, dispatch on top-level type (system/stream_event/result/assistant), unwrap stream_event envelope to dispatch on inner event.type (content_block_start/delta/stop, message_start/delta/stop). Tracks _activeBlockType and _activeToolUseId for content_block_stop dispatch.
+6. Created StreamJsonParser.test.js with 37 test cases covering all event types, error cases, dispatch logic, lifecycle sequences, and edge cases.
+7. Ran `npm test --prefix server` — 453/453 tests pass, 19 test files, no regressions.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/StreamJsonParser.js | CREATED | NDJSON line parser: parseLine() dispatches on type (system, stream_event, result, assistant). Unwraps stream_event envelope. Tracks activeBlockType for stop dispatch. 1MB cap (SEC-SJ-03). Never throws. |
+| server/tests/StreamJsonParser.test.js | CREATED | 37 vitest cases: tool_start, text_start, thinking_start, text_delta, tool_delta, thinking_delta, tool_stop/text_stop/thinking_stop dispatch, message_start/delta/stop, result with all fields, api_retry, assistant->message, malformed JSON, 1MB cap, empty lines, unknown types, reset(), full lifecycle sequences. |
+| docs/TASK_PLAN.md | MODIFIED | Task #357 status PENDING -> COMPLETED, all acceptance criteria checked. |
+
+### Improvements delivered
+- Clean typed event interface for Claude CLI stream-json output, replacing the raw JSON forwarding in JobRunner
+- Stateful content_block_stop dispatch (tool_stop vs text_stop vs thinking_stop) based on tracked active block
+- server_tool_use handled identically to tool_use (web_search etc.)
+- Result event maps snake_case CLI fields to camelCase app fields (session_id -> sessionId, total_cost_usd -> costUsd, etc.)
+- Error detection via both is_error flag and subtype === 'error'
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None | N/A | N/A | N/A |
+
+### Decisions I made
+- Returned `{ type: 'ignore' }` for empty/whitespace lines rather than error — these are common in NDJSON streams and not errors
+- Used `Buffer.byteLength()` for 1MB check instead of string length — correct for UTF-8 multi-byte characters
+- Handled `server_tool_use` (Anthropic-hosted tools like web_search) the same as `tool_use` — both need tool_start/tool_delta/tool_stop lifecycle
+- Added `thinking_stop` type for thinking block completion, even though task spec only mentions tool_stop/text_stop — needed for correct dispatch symmetry
+- Error results detected via both `is_error === true` AND `subtype === 'error'` — research showed both patterns exist in CLI output
+- errorCode for api_retry prefers numeric error_status (as string) over error string — more useful for programmatic handling
+
+### What I learned
+- Claude CLI stream-json wraps raw API events in `{ type: 'stream_event', event: {...} }` envelope — the inner event has the actual content_block_start/delta/stop types
+- Result event uses `total_cost_usd` (not `cost_usd`) and `session_id` (not `sessionId`) — snake_case CLI convention
+- `signature_delta` is a real delta type emitted for thinking blocks — encrypted thinking continuation data, not useful for display
+- The research doc confirms thinking_delta events are NOT emitted in CLI stream-json mode (extended thinking disables StreamEvent emission), but the parser handles them defensively
+
+### State I'm leaving behind
+StreamJsonParser is production-ready. 37 tests pass. The parser is stateless except for _activeBlockType/_activeToolUseId tracking (needed for content_block_stop dispatch). It exports as default ESM class. Ready for consumption by _spawnAgentStreamJson (#359).
+
+### Handoff
+- TASK #358 (TEST GATE) should verify all acceptance criteria via the test file
+- TASK #359 (_spawnAgentStreamJson) will import StreamJsonParser and use parseLine() on each readline event from spawned Claude processes
+---

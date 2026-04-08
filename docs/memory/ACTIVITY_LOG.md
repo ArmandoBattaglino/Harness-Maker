@@ -1,4 +1,14 @@
-﻿## 2026-04-08 — qa-tester — Task #355: TEST GATE — Spike Validation
+﻿## 2026-04-08 — backend-dev — Task #357: StreamJsonParser — NDJSON line parser
+**Outcome:** COMPLETED
+**Summary:** Created StreamJsonParser.js (NDJSON line parser for Claude CLI stream-json output) and StreamJsonParser.test.js (37 tests). Parser dispatches on top-level type (system/stream_event/result/assistant), unwraps stream_event envelope, tracks active block type for content_block_stop dispatch. Handles 1MB cap (SEC-SJ-03), malformed JSON, server_tool_use, thinking blocks. 453/453 tests pass, no regressions.
+**Files changed:** server/services/StreamJsonParser.js (CREATED), server/tests/StreamJsonParser.test.js (CREATED), docs/TASK_PLAN.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** empty lines return { type: 'ignore' } not error; server_tool_use treated as tool_use; thinking_stop added for dispatch symmetry; error results detected via is_error OR subtype=error
+**Blockers:** none
+**Next:** TASK #358 TEST GATE (qa-tester), then #359 _spawnAgentStreamJson (backend-dev)
+---
+
+## 2026-04-08 — qa-tester — Task #355: TEST GATE — Spike Validation
 **Outcome:** COMPLETED
 **Summary:** Ran spike script (server/spike/stream-json-spike.mjs). Initial run failed because Claude CLI requires --verbose with stream-json + -p mode. Fixed spike, re-ran: 10/10 verdicts PASS. Turn 1 text+result events, Turn 2 context continuity, Turn 3 tool restriction, session JSONL found, cost data parsed. Post-result hang ~640-700ms. 414/414 server tests pass (no regressions).
 **Files changed:** server/spike/stream-json-spike.mjs (MODIFIED — added --verbose flag), docs/TASK_PLAN.md (MODIFIED)

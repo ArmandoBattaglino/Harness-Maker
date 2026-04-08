@@ -15727,7 +15727,7 @@ Agent: backend-dev
 Priority: CRITICAL
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Component Spec: PRD Section 11 — StreamJsonParser
   File: server/services/StreamJsonParser.js (CREATE)
   Test: server/tests/StreamJsonParser.test.js (CREATE)
@@ -15754,17 +15754,17 @@ Component Spec: PRD Section 11 — StreamJsonParser
   Never throws. Pattern ref: server/services/HandoffParser.js, server/services/JobRunner.js
 
 Acceptance Criteria:
-  - [ ] content_block_start tool_use -> { type: 'tool_start', toolName, toolUseId }
-  - [ ] content_block_delta text_delta -> { type: 'text_delta', text }
-  - [ ] content_block_delta input_json_delta -> { type: 'tool_delta', partialJson }
-  - [ ] result line -> all cost/usage/session fields mapped
-  - [ ] Line > 1MB -> { type: 'error' }, no throw
-  - [ ] Malformed JSON -> { type: 'error' }, no throw
-  - [ ] system api_retry -> { type: 'api_retry', attempt, delay, errorCode }
-  - [ ] assistant -> { type: 'message', content }
-  - [ ] content_block_stop dispatches tool_stop vs text_stop correctly
-  - [ ] Unit tests cover all 9 event types + 2 error cases
-  - [ ] npm test passes
+  - [x] content_block_start tool_use -> { type: 'tool_start', toolName, toolUseId }
+  - [x] content_block_delta text_delta -> { type: 'text_delta', text }
+  - [x] content_block_delta input_json_delta -> { type: 'tool_delta', partialJson }
+  - [x] result line -> all cost/usage/session fields mapped
+  - [x] Line > 1MB -> { type: 'error' }, no throw
+  - [x] Malformed JSON -> { type: 'error' }, no throw
+  - [x] system api_retry -> { type: 'api_retry', attempt, delay, errorCode }
+  - [x] assistant -> { type: 'message', content }
+  - [x] content_block_stop dispatches tool_stop vs text_stop correctly
+  - [x] Unit tests cover all 9 event types + 2 error cases
+  - [x] npm test passes
 Dependencies: TASK #356 (AREA CHECKPOINT Phase 0)
 ---
 
