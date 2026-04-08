@@ -1,4 +1,15 @@
-﻿## 2026-04-08 — architect — Stream-JSON Agent Spawning Technical Analysis
+﻿## 2026-04-08 — security — Stream-JSON Agent Spawning Early Security Assessment
+**Outcome:** COMPLETED
+**Summary:** Produced early security assessment for stream-json agent spawning migration. Identified 7 mandatory security requirements (SEC-SJ-01 through SEC-SJ-07). Highest risk: --dangerously-skip-permissions combined with allowedTools:all (HIGH). Session ID isolation rated HIGH. NDJSON parser resilience, process arg visibility, and session file cleanup rated MEDIUM. Net assessment: stream-json is a security improvement over PTY (eliminates ConPTY echo replay attacks) but requires bounded tool permissions and session ID opacity.
+**Files changed:** docs/memory/agents/security.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** SEC-SJ-01 (tool permissions bound), SEC-SJ-02 (session ID isolation), SEC-SJ-03 (parser resilience), SEC-SJ-04 (process arg docs), SEC-SJ-05 (session cleanup), SEC-SJ-06 (API opacity), SEC-SJ-07 (shell:false)
+**Blockers:** none
+**Next:** prd-writer incorporates SEC-SJ-01 through SEC-SJ-07 into stream-json PRD
+
+---
+
+## 2026-04-08 — architect — Stream-JSON Agent Spawning Technical Analysis
 **Outcome:** COMPLETED
 **Summary:** Produced complete technical analysis for replacing PTY-based Claude agent spawning with `--output-format stream-json` mode. Designed new StreamJsonParser component, dual-path architecture (stream-json for Claude, PTY for Codex/Gemini), process-per-turn model with --resume for session persistence. Mapped integration with existing _onHandoff/_onDone/HITL/budget systems. Identified 6 risks (extended thinking blocking deltas is highest). Made 3 architectural decisions (DEC-027/028/029).
 **Files changed:** docs/memory/DECISIONS.md, docs/memory/agents/architect.md, docs/memory/ACTIVITY_LOG.md

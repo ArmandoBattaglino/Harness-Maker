@@ -1,4 +1,57 @@
 ---
+## 2026-04-08 — Stream-JSON Agent Spawning Early Security Assessment
+**Status:** COMPLETED
+**Called by:** User (early analysis phase, pre-PRD)
+
+### Context when I started
+V8.2 is closed (351/353 tasks completed, 2 deferred). Architect produced DEC-027/028/029 for stream-json migration. No stream-json agent code exists yet. This is a pre-PRD security assessment to identify new attack surfaces and produce mandatory security requirements.
+
+### What I did
+1. Read all memory files in parallel (security.md, PROJECT.md, DECISIONS.md, CONTEXT.md, ACTIVITY_LOG.md).
+2. Read existing JobRunner.js (already uses --output-format stream-json) and SwarmEngine._spawnAgentPty() to understand the current spawn patterns.
+3. Analyzed 6 input surfaces introduced by stream-json migration.
+4. Assessed --dangerously-skip-permissions risk as HIGH.
+5. Evaluated session file persistence and cleanup requirements.
+6. Produced 7 mandatory security requirements (SEC-SJ-01 through SEC-SJ-07) for the PRD.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/agents/security.md | MODIFIED | Appended this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended assessment outcome |
+
+### Improvements delivered
+- 7 mandatory security requirements produced for the PRD author
+- Identified --dangerously-skip-permissions + allowedTools:all as the highest-risk combination
+- Confirmed stream-json is a net security improvement (eliminates ConPTY echo replay attack surface)
+- Session file cleanup requirement identified (new concern not present in PTY model)
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None — assessment only | — | — | — |
+
+### Decisions I made
+- Rated --dangerously-skip-permissions as HIGH (not CRITICAL) because: the app is localhost-only single-user, and the Claude CLI already constrains tool execution to the project directory. However, unrestricted tool access without permission prompts is a significant escalation from the PTY model where the user could see and reject tool calls.
+- Confirmed session ID isolation as HIGH because: if session IDs leak to the client, any local process could resume that conversation with full context, potentially including secrets discussed earlier.
+- Rated NDJSON parser resilience as MEDIUM: a malformed line should never crash the server, but the input source (Claude CLI stdout) is trusted -- the risk is from a compromised or buggy CLI binary, not an external attacker.
+
+### What I learned
+- The `-p` flag puts the full prompt in the OS process argument list, visible via `ps aux` or Task Manager. This is the same as current JobRunner behavior but worth documenting as a known limitation.
+- `~/.claude/sessions/` files are created by the CLI itself, not by this app. The app just passes `--resume <uuid>` and the CLI manages the file. Cleanup must therefore use the CLI's own mechanisms or direct file deletion.
+- JobRunner already implements the exact spawn pattern needed (child_process.spawn + stream-json + shell:false + stdin.end()). The new code can follow this template closely.
+
+### State I'm leaving behind
+- Assessment delivered. No code changes — pre-PRD read-only analysis.
+- 7 mandatory security requirements (SEC-SJ-01 through SEC-SJ-07) produced for the PRD author.
+- Highest-risk item: SEC-SJ-01 (--dangerously-skip-permissions must never combine with allowedTools:all).
+
+### Handoff
+- prd-writer: incorporate SEC-SJ-01 through SEC-SJ-07 as non-negotiable security requirements in the stream-json PRD.
+- backend-dev: when implementing StreamJsonParser, apply per-line size cap (1 MB) and never throw on malformed lines.
+- backend-dev: session IDs must be server-generated and never exposed in API responses.
+- backend-dev: implement session file cleanup when execution reaches terminal state.
+---
 ## 2026-03-28 — Task #79: V3 Pre-Release Security Audit
 **Status:** COMPLETED
 **Called by:** User (direct task assignment)
