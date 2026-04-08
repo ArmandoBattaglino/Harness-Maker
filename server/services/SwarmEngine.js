@@ -1465,39 +1465,63 @@ class SwarmEngine {
   }
 
   _normalizeParserChunk(rawChunk = '') {
+    // Phase 1: Strip non-CUF escape sequences first
     let text = rawChunk
-      // Replace ALL cursor-forward (CUF) sequences with spaces.
-      // ConPTY uses CUF both for char-by-char grid rendering AND as actual
-      // whitespace between words. We convert every CUF(n) to n spaces here
-      // and fix char-by-char artifacts in a second pass below.
-      .replace(/\x1b\[(\d*)C/g, (_, n) => ' '.repeat(Number(n) || 1))
-      // Strip remaining CSI sequences (colors, cursor moves other than CUF, etc.)
-      .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
-      .replace(/\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)/g, '')
-      .replace(/\x1b[@-_][0-?]*[ -/]*[@-~]/g, '')
+      .replace(/\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)/g, '')   // OSC sequences
+      .replace(/\x1b[@-_][0-?]*[ -/]*[@-~]/g, '');           // other 7-bit C1
+
+    // Phase 2: Smart CUF handling via segment analysis.
+    // Split by CUF sequences to examine the text segments between them.
+    // Short segments (1-2 chars) on BOTH sides of a CUF(1) indicate
+    // char-by-char ConPTY rendering — join without a space.
+    // Otherwise CUF represents a real whitespace gap — insert space(s).
+    const cufParts = text.split(/\x1b\[(\d*)C/);
+    // cufParts = [seg0, cufN0, seg1, cufN1, seg2, ...]
+
+    if (cufParts.length > 1) {
+      // Clean each text segment of remaining CSI (colors, cursor moves)
+      const segs = [];
+      const cufNs = [];
+      for (let i = 0; i < cufParts.length; i++) {
+        if (i % 2 === 0) {
+          segs.push(cufParts[i].replace(/\x1b\[[0-9;]*[a-zA-Z]/g, ''));
+        } else {
+          cufNs.push(Number(cufParts[i]) || 1);
+        }
+      }
+
+      let result = segs[0];
+      for (let i = 0; i < cufNs.length; i++) {
+        const count = cufNs[i];
+        const prevSeg = segs[i];
+        const nextSeg = segs[i + 1] ?? '';
+
+        if (count >= 2) {
+          // Large CUF gap — always whitespace
+          result += ' '.repeat(count);
+        } else {
+          // CUF(1): decide based on adjacent segment lengths.
+          // If BOTH neighbors are short (≤2 chars), it's char-by-char rendering.
+          // If either neighbor is ≥3 chars, it's a word boundary → insert space.
+          const prevTail = prevSeg.slice(-3);
+          const nextHead = nextSeg.slice(0, 3);
+          if (prevSeg.length <= 2 && nextSeg.length <= 2) {
+            // Both short — char-by-char rendering, no space
+          } else {
+            result += ' ';
+          }
+        }
+        result += nextSeg;
+      }
+      text = result;
+    } else {
+      // No CUF found — just strip remaining CSI
+      text = text.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '');
+    }
+
+    return text
       .replace(/\r\n/g, '\n')
       .replace(/\r/g, '\n');
-
-    // Collapse char-by-char ConPTY rendering artifacts.
-    // When ConPTY renders text character-by-character with CUF(1) between
-    // each glyph, the CUF→space replacement above produces patterns like
-    // "C o n t i n u e". We detect runs of 4+ single non-space characters
-    // each separated by a single space and join them back together.
-    // This preserves legitimate word spacing (multi-char tokens) while
-    // cleaning up the char-by-char noise.
-    text = text.replace(/(?:(?:^| )\S(?= \S)){3,}(?: \S)/gm, (match) => {
-      // Verify most tokens in this run are truly single characters
-      const tokens = match.trim().split(' ');
-      const singleCount = tokens.filter(t => t.length === 1).length;
-      if (singleCount >= tokens.length * 0.75) {
-        return match[0] === ' '
-          ? ' ' + tokens.join('')
-          : tokens.join('');
-      }
-      return match;
-    });
-
-    return text;
   }
 
   _stripSnippetProtocolArtifacts(rawText = '') {
@@ -2657,6 +2681,14 @@ class SwarmEngine {
         state.echoMarkerTimer = setTimeout(() => {
           if (state.ignoreParserUntil) {
             state.ignoreParserUntil = null;
+            // Find this state's nodeId and reset its ChatExtractor buffer
+            if (state.sessionId) {
+              for (const ex of this._executions.values()) {
+                for (const [nId, s] of ex.agentStates.entries()) {
+                  if (s === state) { this._chatExtractor.resetBuffer(nId); break; }
+                }
+              }
+            }
           }
           state.echoMarkerTimer = null;
         }, SWARM_ECHO_MARKER_TIMEOUT_MS);
@@ -3437,6 +3469,10 @@ class SwarmEngine {
             // "bypass permissions on") doesn't falsely trigger promptReady
             // once the echo gate opens (BUG-DONE-BARE-1 root cause fix).
             currentState._runtimeScanBuffer = '';
+            // Discard any ChatExtractor buffer accumulated during the echo
+            // gate period — it contains CLI banner noise that would pollute
+            // the first chat message with non-semantic text.
+            this._chatExtractor.resetBuffer(nodeId);
             // Cancel the fallback timer — the marker arrived in time
             if (currentState.echoMarkerTimer) {
               clearTimeout(currentState.echoMarkerTimer);
