@@ -1,4 +1,24 @@
-﻿## 2026-04-08 — security — Stream-JSON Agent Spawning Early Security Assessment
+﻿## 2026-04-08 — researcher — Research B: Claude CLI --allowedTools Syntax
+**Outcome:** COMPLETED
+**Summary:** Deep-dive research on Claude CLI --allowedTools, --disallowedTools, and --tools flags. Critical finding: --allowedTools is NOT a security boundary under --dangerously-skip-permissions (known bug #12232). The correct flags for our swarm tool whitelists are --tools (restricts available tool set) and --disallowedTools (blocks specific patterns). Complete list of 16 built-in tools documented. Glob patterns supported for Bash with * wildcards.
+**Files changed:** docs/research_b_tools.md (CREATED), docs/memory/agents/researcher.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** none (research deliverable only)
+**Blockers:** none
+**Next:** Architect/backend-dev should use --tools + --disallowedTools (not --allowedTools) for per-agent tool restriction in SwarmEngine spawn commands
+
+---
+## 2026-04-08 — researcher — Research: Resume After Process Kill
+**Outcome:** COMPLETED
+**Summary:** Deep-dive research on Claude CLI --resume behavior after process kill. Key findings: session JSONL is written incrementally (per-message append), but resume after mid-turn kill is BROKEN due to orphaned tool_use blocks without tool_result. SIGTERM offers no advantage over SIGKILL during tool execution. Safest pattern for SwarmEngine: graceful stop = wait for result event before killing; forced stop = kill + truncate JSONL to last complete turn before resuming.
+**Files changed:** docs/research_resume_after_kill.md (CREATED), docs/memory/agents/researcher.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** none (research deliverable only)
+**Blockers:** none
+**Next:** Architect/backend-dev should use these findings to design stop/reset lifecycle for stream-json agents in SwarmEngine
+
+---
+## 2026-04-08 — security — Stream-JSON Agent Spawning Early Security Assessment
 **Outcome:** COMPLETED
 **Summary:** Produced early security assessment for stream-json agent spawning migration. Identified 7 mandatory security requirements (SEC-SJ-01 through SEC-SJ-07). Highest risk: --dangerously-skip-permissions combined with allowedTools:all (HIGH). Session ID isolation rated HIGH. NDJSON parser resilience, process arg visibility, and session file cleanup rated MEDIUM. Net assessment: stream-json is a security improvement over PTY (eliminates ConPTY echo replay attacks) but requires bounded tool permissions and session ID opacity.
 **Files changed:** docs/memory/agents/security.md, docs/memory/ACTIVITY_LOG.md
@@ -4614,4 +4634,15 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Optional follow-up - re-run a real provider-backed workflow when quota/runtime conditions are favorable to add a fresh live artifact example to history
 
+---
+
+---
+## 2026-04-08 — researcher — Research D: Claude CLI Session File Management
+**Outcome:** COMPLETED
+**Summary:** Deep-dive research on Claude CLI session file structure, storage location, file format, and management commands. Sessions stored as JSONL at ~/.claude/projects/<encoded-path>/<uuid>.jsonl with companion UUID directories for tool-results and subagents. No built-in delete/list CLI commands exist (PR #34168 pending). JSONL is append-only with typed messages (user, assistant, system, permission-mode, file-history-snapshot, attachment). Active sessions tracked in ~/.claude/sessions/<PID>.json. Global prompt index at ~/.claude/history.jsonl. Cleanup via cleanupPeriodDays setting (default 30 days). Real disk usage: 725 MB for this project alone, 881 MB total.
+**Files changed:** docs/memory/agents/researcher.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** none (research deliverable only)
+**Blockers:** none
+**Next:** Architect/backend-dev design session cleanup service and history extraction for reset/save-to-memory
 ---
