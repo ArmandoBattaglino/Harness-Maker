@@ -1,4 +1,54 @@
 ---
+## 2026-04-08 — Task #408: BUG-DL-COST-VANISH-1 — Cost/token footer disappears after Completed state
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+After a swarm execution completes, the cost badge on agent node cards (e.g. "$0.22") and the cost footer in chat messages disappeared from the DOM. During Running state, cost accumulated correctly via WS `agent_cost` events and was stored in `agentStates[nodeId].totalCost.costUsd`. After Completed, the data vanished.
+
+### What I did
+1. Traced the data flow: WS `agent_cost` handler in useSwarm.js accumulates cost in nested `totalCost: { costUsd, inputTokens, outputTokens }` format. Server's `_serializeAgentState` returns flat `totalCostUsd`, `totalInputTokens`, `totalOutputTokens` fields.
+2. Identified that `reconcileClosedExecution` (triggered when WS closes after completion) calls `applyExecutionSnapshot` with server status data, which replaces the entire `agentStates` map. The server format uses flat cost fields, losing the client's nested `totalCost` object.
+3. Additionally, both AgentNode.jsx cost badge and ChatMessage.jsx cost footer were gated on `isStreamJson` (which depends on `spawnMode`), adding fragility if spawnMode was lost.
+4. Fixed AgentNode.jsx: Removed `isStreamJson` gate from `showCostBadge`. Added fallback to read both `totalCost.costUsd` (client format) and `totalCostUsd` (server format).
+5. Fixed ChatMessage.jsx: Removed `isStreamJson` gate from cost footer rendering — cost data is meaningful regardless of runtime mode.
+6. Fixed useSwarm.js `applyExecutionSnapshot`: Added normalization logic that (a) synthesizes a nested `totalCost` object from the server's flat fields, (b) preserves client-accumulated `totalCost` if server doesn't provide cost data, (c) preserves `lastChatSnippet` from client state when server doesn't include it.
+7. Verified client build clean (501 modules, 0 errors) and all 488 server tests pass.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/canvas/nodes/AgentNode.jsx | MODIFIED | Removed isStreamJson gate from showCostBadge; added dual-format totalCost read (nested + flat fallback) |
+| client/src/canvas/ChatMessage.jsx | MODIFIED | Removed isStreamJson gate from cost footer display |
+| client/src/hooks/useSwarm.js | MODIFIED | Added agentStates normalization in applyExecutionSnapshot to bridge server flat format to client nested format, preserve client cost data and lastChatSnippet |
+
+### Improvements delivered
+- Cost badge on agent node cards persists after execution completes
+- Cost footer in chat messages persists after execution completes
+- Cost data survives WS close + status reconciliation cycle
+- Both server and client cost formats are handled correctly
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| Cost badge vanishes on completion | Server uses flat `totalCostUsd`, client expects nested `totalCost.costUsd`; `applyExecutionSnapshot` replaces agentStates with server format | Normalize server format in applyExecutionSnapshot + dual-format read in AgentNode | FIXED |
+| Cost footer vanishes on completion | Display gated on `isStreamJson` which depends on `spawnMode` (fragile) | Removed isStreamJson gate from cost display | FIXED |
+
+### Decisions I made
+- Removed `isStreamJson` gate from cost display -- if cost data exists, it should be shown regardless of runtime mode. This is more resilient and conceptually correct.
+- Normalize in `applyExecutionSnapshot` rather than on the server -- the server format is an established contract used by other consumers; client should adapt.
+
+### What I learned
+- Server `_serializeAgentState` uses flat fields (`totalCostUsd`, `totalInputTokens`, `totalOutputTokens`) while client WS handler uses nested `totalCost` object. This format mismatch is a recurring source of bugs when server state replaces client-accumulated state.
+- `reconcileClosedExecution` replaces the entire `agentStates` map from the server, which can lose any client-only fields that don't exist in the server serialization.
+
+### State I'm leaving behind
+All three files modified, build clean, 488 tests pass. Cost data now persists after execution completes in both AgentNode cards and ChatMessage footers. TEST GATE #409 is unblocked (both #407 and #408 are COMPLETED).
+
+### Handoff
+TEST GATE #409 (qa-tester) should verify: cost badge visible during Running AND after Completed, cost footer in chat messages after Completed, no regressions in Running state cost updates.
+
+---
 ## 2026-04-08 — Task #407: BUG-DL-STALE-STATE-1 — Stale node state on workflow switch
 **Status:** COMPLETED
 **Called by:** user

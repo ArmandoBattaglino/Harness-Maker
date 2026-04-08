@@ -1,3 +1,5 @@
+- [FRONTEND-DEV 2026-04-08] TASK #408 (BUG-DL-COST-VANISH-1) COMPLETED. Cost badge and cost footer now persist after execution Completed state. Root cause: server uses flat `totalCostUsd` while client expects nested `totalCost.costUsd`; `applyExecutionSnapshot` replaced agentStates with server format, losing cost. Fixed in 3 files: AgentNode.jsx (dual-format read + removed isStreamJson gate), ChatMessage.jsx (removed isStreamJson gate from cost footer), useSwarm.js (normalize server agentStates to client format in applyExecutionSnapshot). 501 modules, 488/488 tests. #409 TEST GATE now unblocked (#407+#408 both COMPLETED).
+
 - [PM 2026-04-08] V9.2 status update: #406 COMPLETED (commit e496745), #407 IN_PROGRESS (frontend-dev), #408 IN_PROGRESS (frontend-dev), #409 PENDING (TEST GATE, blocked on #407+#408). Total: 406 tasks registered, 403 COMPLETE/PASS, 1 DEFERRED, 2 IN_PROGRESS, 1 PENDING.
 
 - [DEBUGGER 2026-04-08] TASK #406 (BUG-DL-TEXTDELTA-1) COMPLETED. Fixed two client-side accumulation bugs: (1) SwarmContext.jsx appendAgentChatText separator changed from "

@@ -1,4 +1,15 @@
-﻿## 2026-04-08 — frontend-dev — Task #407: BUG-DL-STALE-STATE-1 — Stale node state on workflow switch
+﻿## 2026-04-08 — frontend-dev — Task #408: BUG-DL-COST-VANISH-1 — Cost/token footer disappears after Completed state
+**Outcome:** COMPLETED
+**Summary:** Fixed cost/token data disappearing from agent node cards and chat message footers after execution completes. Root cause was twofold: (1) cost badge and chat footer were gated on `isStreamJson` which depends on `spawnMode`, a field that can be lost during status reconciliation; (2) the server serializes cost as flat `totalCostUsd` while the client WS handler accumulates under nested `totalCost.costUsd`, so when `applyExecutionSnapshot` replaces `agentStates` with server data, the client-format cost object vanishes. Fixed by removing the `isStreamJson` gate from cost displays, adding dual-format support in AgentNode.jsx, and normalizing server agentStates format in `applyExecutionSnapshot` to synthesize `totalCost` from flat fields and preserve client-accumulated data.
+**Files changed:** client/src/canvas/nodes/AgentNode.jsx, client/src/canvas/ChatMessage.jsx, client/src/hooks/useSwarm.js
+**Bugs fixed:** BUG-DL-COST-VANISH-1 — cost badge and cost footer disappeared after execution Completed
+**Decisions made:** Remove isStreamJson gate from cost displays (cost data is cost data regardless of runtime); normalize server-to-client cost format mismatch in applyExecutionSnapshot
+**Blockers:** none
+**Next:** TEST GATE #409 (qa-tester) can now proceed — blocked on #407+#408, both COMPLETED
+
+---
+
+## 2026-04-08 — frontend-dev — Task #407: BUG-DL-STALE-STATE-1 — Stale node state on workflow switch
 **Outcome:** COMPLETED
 **Summary:** Fixed stale per-node execution state (agentStates, chatMessages, agentResults, etc.) persisting when switching workflows. Modified `setWorkflowDef` in SwarmContext.jsx to automatically call `buildClearedExecutionState()` when the workflow ID changes and stale execution state exists. Covers all workflow-switch paths: Prompt-to-Flow generation, import, duplicate, template instantiate. Client build clean (501 modules).
 **Files changed:** client/src/store/SwarmContext.jsx

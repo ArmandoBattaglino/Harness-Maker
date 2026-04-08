@@ -16911,7 +16911,7 @@ Area: V9.2 STREAM-JSON DISPLAY FIDELITY (2026-04-08)
 Agent: frontend-dev
 Type: BUG_FIX
 Priority: LOW
-Status: IN_PROGRESS
+Status: COMPLETED
 Context:
   During Running state, node cards show cost badge (e.g. "$0.22"). After overall status becomes
   Completed, all cost/token info disappears from the DOM. Should remain visible so user can see
