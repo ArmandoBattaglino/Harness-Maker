@@ -2486,3 +2486,66 @@ TEST GATE #358 PASS. Task #359 is unblocked and ready for backend-dev.
 ### Handoff
 None — gate complete. Pipeline proceeds to TASK #359.
 ---
+
+---
+## 2026-04-08 — Debugger-Loop Phase 1: Multi-Agent Swarm E2E Deep Test
+**Status:** COMPLETED
+**Called by:** user (debugger-loop orchestrator)
+
+### Context when I started
+V9.0 stream-json migration closed, handoff+AUTO routing fixes (#397, #398) landed same day. 478/478 server tests pass. User requested deep E2E test of the multi-agent Claude swarm with tangible semantic output from the last agent. DO NOT FIX, only observe and report.
+
+### What I did
+1. Navigated Puppeteer to http://127.0.0.1:3000, verified server responding (200)
+2. Swarm view already open with a stale workflow; filled prompt "Two agents: a Researcher that lists exactly 3 concrete features of Node.js streams, then hands off to a Writer that writes a single paragraph summarizing those 3 features in plain Italian" and clicked Generate
+3. Prompt-to-Flow generated "Node Streams Research and Summary" — 2 nodes (Researcher, Writer), 1 handoff edge
+4. Clicked Run. Watched transitions: Running → Researcher Done (cost $0.22 visible during run) → Writer Running → Writer Done → overall Completed with Provider: Claude
+5. Opened Writer inspector: Output + Copy + ← Inspector tabs visible. Writer produced a coherent Italian paragraph summarizing the 3 features.
+6. Opened Researcher inspector: Output + Handoff tabs. Handoff tab shows the raw, uncorrupted JSON payload `{"feature1":"backpressure via highWaterMark","feature2":"pipe and pipeline chaining","feature3":"object mode for arbitrary JS objects","count":3}`
+7. Compared raw handoff data (clean) vs node Output snippet + Chat View text (character-split corruption)
+8. Checked Feed tab: 2 inter-agent events recorded (node-1→node-2 start and confirm)
+9. Cost footer after Completed: no dollar amounts currently visible in DOM (was visible during run)
+10. No error toasts, no error DOM elements
+
+### Key findings
+**PASS** — Multi-agent Claude swarm produces a tangible semantic final output. Writer's paragraph correctly summarizes the 3 features in Italian. Handoff works, WS Feed fires, execution reaches Completed.
+
+**BUG-DL-01 [HIGH] — Claude stream-json text_delta accumulation inserts spaces between tokens**
+- Location: server-side stream-json delta accumulation in SwarmEngine (`_spawnAgentStreamJson`) OR client text reassembly in useSwarm/messages store
+- Symptom: Writer chat shows `high Water Mark`, `Java Script`, `tra m it e`, `r al le nt are`, `con su ma t or e`, `r is or se`, `struttura t i`. Researcher shows same pattern: `tra s porta r e`, `struttura t i`.
+- Proof corruption is NOT display-layer: Researcher node card has `word-break: break-all` but Chat View has `word-break: normal` — SAME corrupted substrings appear in both. Text nodes literally contain the spaces.
+- Proof corruption is NOT in the underlying data: Researcher Handoff tab shows the raw emitted JSON payload with `highWaterMark`, `JS objects` — clean, no spaces. The corruption is introduced ONLY on the text_delta accumulation path, not on the result/handoff payload path.
+- Hypothesis: text_delta events arrive split on sub-word token boundaries (Claude tokenizer emits `high`+` Water`+`Mark` or similar) and the accumulator is joining fragments with an extra space OR there is a per-token wrapping in the display pipeline that inserts a zero-width/regular space
+- Severity: HIGH — every Claude swarm output is visibly broken/unprofessional even though semantic content is correct
+- User impact: Final answer to the user appears garbled with random word breaks
+
+**BUG-DL-02 [LOW] — Stale node state from previous workflow visible before Run on newly-generated workflow**
+- Symptom: After clicking Generate on the Node Streams prompt, the canvas displays the new title "Node Streams Research and Summary" and new workflow ID, but Researcher and Writer node cards initially show "Done" status plus the OLD Italian dishes chat content (carryover from the previous "Italian Dishes Research and Writing" execution). Only after clicking Run does the state reset.
+- Expected: On load of a fresh workflow, node status should be "idle" with empty chat snippets
+- Severity: LOW — cosmetic, clears on Run, but confusing to user
+- Evidence: screenshot 03-generated
+
+**BUG-DL-03 [LOW] — Cost footer disappears after Completed state**
+- Symptom: During Running phase Researcher node card showed `$0.22` cost badge. After overall Completed, no cost information is anywhere in the rendered DOM (grep for `$` and `tokens`/`cost` returns empty matches). Per V9 feature spec, token/cost footer should persist after completion
+- Severity: LOW — possible regression but may be by-design; worth confirming vs PRD V9 Section 11 cost-footer spec
+- Evidence: cost visible in screenshot 04-running-6s at $0.22; gone in 05/06/07/08/09
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/agents/qa-tester.md | MODIFIED | Session log (this entry) |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Global activity log entry |
+
+### Decisions I made
+- Verdict on core test: **PASS with 1 HIGH and 2 LOW bugs** — the tangible-output question answers YES, last agent produces a coherent Italian paragraph, but the display-layer corruption is severe enough that the delivered user experience is broken.
+
+### What I learned
+- The stream-json lifecycle cleanly exposes an output/handoff distinction: handoff payloads go through the result JSON path (clean), while visible text goes through text_delta accumulation (currently corrupted). Debugging should focus on where text_delta deltas are concatenated — likely in StreamJsonParser callback consumer (SwarmEngine agent.output buffer) or in the client message store reducer.
+- The Researcher inspector Handoff tab is an invaluable debugging vantage point because it exposes the raw parsed JSON of the handoff emission.
+
+### State I'm leaving behind
+Phase 1 E2E test complete. No code changes made. 3 bugs ready to route to debugger in Phase 2.
+
+### Handoff
+Return findings to debugger-loop orchestrator for Phase 2 (bulk bug → task plan) then Phase 3 (parallel fix wave). Primary target: BUG-DL-01 text_delta accumulation space insertion.
+---

@@ -5055,3 +5055,14 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** No registered pending tasks remain. Project is at 393 COMPLETED + 1 DEFERRED.
 ---
+
+---
+## 2026-04-08 — qa-tester — Debugger-Loop Phase 1: Multi-Agent Swarm E2E Deep Test
+**Outcome:** COMPLETED
+**Summary:** Ran E2E Puppeteer test of 2-agent Claude swarm (Researcher→Writer) with Node.js-streams-in-Italian prompt. Last agent produced a tangible coherent Italian paragraph (PASS on primary test). Found 1 HIGH display-layer corruption bug where text_delta accumulation inserts spaces between tokens (`high Water Mark`, `Java Script`) even though raw handoff JSON is clean — corruption is in the text accumulation path only, not the result path. Also 2 LOW bugs (stale node state on fresh workflow, cost footer disappears after Completed).
+**Files changed:** none (observation-only phase)
+**Bugs fixed:** none
+**Decisions made:** Verdict PASS with bugs — core goal achieved but UX is visibly broken for all Claude swarms
+**Blockers:** none
+**Next:** Route BUG-DL-01/02/03 to debugger-loop Phase 2 bulk bug → task plan
+---
