@@ -1,4 +1,15 @@
-﻿## 2026-04-08 — debugger — BUG-BACKEND-2: Move -p flag to end of spawn args
+﻿## 2026-04-08 — frontend-dev — BUG-FRONTEND-3 & BUG-FRONTEND-4: AgentNode thinking indicator and unviewed badge
+**Outcome:** COMPLETED
+**Summary:** Fixed two AgentNode.jsx bugs: (1) thinking indicator changed from animate-pulse to animate-bounce with amber color, now visually distinct from running state; (2) unviewed output badge condition expanded from status === 'done' to include 'idle', 'completed', 'stopped' for stream-json agents. Build clean.
+**Files changed:** client/src/canvas/nodes/AgentNode.jsx
+**Bugs fixed:** BUG-FRONTEND-3 (thinking indistinguishable from running), BUG-FRONTEND-4 (unviewed badge missing for non-done terminal states)
+**Decisions made:** amber-300 + animate-bounce for thinking; terminal status array for badge
+**Blockers:** none
+**Next:** nothing — task fully self-contained
+
+---
+
+## 2026-04-08 — debugger — BUG-BACKEND-2: Move -p flag to end of spawn args
 **Outcome:** COMPLETED
 **Summary:** Moved `-p prompt` to be the last arguments in the spawn args array in SwarmEngine._spawnAgentStreamJson(), after --model and --tools, per PRD FR-SJ-04. All 478 server tests pass.
 **Files changed:** server/services/SwarmEngine.js

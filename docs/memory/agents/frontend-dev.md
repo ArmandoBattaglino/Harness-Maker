@@ -2849,3 +2849,46 @@ Both bugs fixed. Build clean. WS contract for agent_cost now fully satisfied on 
 ### Handoff
 None — task fully self-contained.
 ---
+
+---
+## 2026-04-08 — BUG-FRONTEND-3 & BUG-FRONTEND-4: AgentNode thinking indicator and unviewed badge fixes
+**Status:** COMPLETED
+**Called by:** user (direct task assignment)
+
+### Context when I started
+AgentNode.jsx had two UI bugs: (1) thinking indicator used animate-pulse, same as the running border, making them visually indistinguishable; (2) unviewed output badge only showed for status === 'done', missing stream-json terminal states like 'idle', 'completed', 'stopped'.
+
+### What I did
+1. Read AgentNode.jsx to find exact lines.
+2. Changed thinking indicator from `text-gray-200 animate-pulse` to `text-amber-300 animate-bounce` — distinct color and animation from the running border.
+3. Changed unviewed output badge condition from `status === 'done'` to `['done', 'idle', 'completed', 'stopped'].includes(status)`.
+4. Ran `npm run build --prefix client` — 500 modules, 0 errors.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/canvas/nodes/AgentNode.jsx | MODIFIED | Thinking indicator: amber + bounce; unviewed badge: terminal status array |
+
+### Improvements delivered
+- Thinking state now visually distinct from running state (amber bounce vs blue pulse)
+- Unviewed output badge now appears for all terminal agent statuses, not just 'done'
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-FRONTEND-3 | animate-pulse used for both thinking and running | Changed thinking to animate-bounce + amber color | FIXED |
+| BUG-FRONTEND-4 | Badge condition only checked 'done' | Changed to array check for all terminal statuses | FIXED |
+
+### Decisions I made
+- Used amber-300 for thinking text to create a warm/cool color contrast with the blue running state
+- Used animate-bounce instead of a spinning icon — simpler, no extra SVG needed, clearly different from pulse
+
+### What I learned
+- Stream-json agents can end with 'idle' or 'completed' rather than 'done' — all terminal status checks should use an array
+
+### State I'm leaving behind
+Both bugs fixed. Build clean (500 modules, 0 errors).
+
+### Handoff
+None — task fully self-contained.
+---
