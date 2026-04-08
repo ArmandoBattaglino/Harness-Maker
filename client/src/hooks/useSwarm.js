@@ -4,6 +4,15 @@ import { useSwarmStore } from '../store/SwarmContext';
 import { apiGet, apiPost, apiDelete } from './useApi.js';
 
 const EXECUTION_STORAGE_KEY = 'swarm-active-execution';
+const STREAM_JSON_THINKING_PLACEHOLDER = 'Thinking block captured for this turn.';
+
+function createPendingStreamJsonTurn() {
+  return {
+    toolUse: [],
+    sawThinking: false,
+    cost: null,
+  };
+}
 
 function readStoredExecution() {
   if (typeof window === 'undefined') return null;
@@ -44,9 +53,47 @@ export function useSwarm(workflowId) {
   const resolveInboxItem = useSwarmStore((s) => s.resolveInboxItem);
   const addFeedEvent = useSwarmStore((s) => s.addFeedEvent);
   const addChatMessage = useSwarmStore((s) => s.addChatMessage);
+  const patchLatestChatMessage = useSwarmStore((s) => s.patchLatestChatMessage);
   const updateTriggerState = useSwarmStore((s) => s.updateTriggerState);
   const setWsConnected = useSwarmStore((s) => s.setWsConnected);
   const clearExecutionState = useSwarmStore((s) => s.clearExecutionState);
+  const pendingStreamJsonTurnsRef = useRef({});
+
+  const getPendingStreamJsonTurn = useCallback((nodeId) => {
+    if (!nodeId) return createPendingStreamJsonTurn();
+    if (!pendingStreamJsonTurnsRef.current[nodeId]) {
+      pendingStreamJsonTurnsRef.current[nodeId] = createPendingStreamJsonTurn();
+    }
+    return pendingStreamJsonTurnsRef.current[nodeId];
+  }, []);
+
+  const resetPendingStreamJsonTurn = useCallback((nodeId) => {
+    if (!nodeId) return;
+    delete pendingStreamJsonTurnsRef.current[nodeId];
+  }, []);
+
+  const flushPendingStreamJsonTurn = useCallback((nodeId) => {
+    const pendingTurn = pendingStreamJsonTurnsRef.current[nodeId];
+    if (!pendingTurn) return;
+
+    const patch = { spawnMode: 'stream-json' };
+    if (pendingTurn.toolUse.length > 0) {
+      patch.toolUse = pendingTurn.toolUse.map((tool) => ({ ...tool }));
+    }
+    if (pendingTurn.sawThinking) {
+      patch.thinking = STREAM_JSON_THINKING_PLACEHOLDER;
+    }
+    if (pendingTurn.cost) {
+      patch.cost = { ...pendingTurn.cost };
+    }
+
+    patchLatestChatMessage(
+      nodeId,
+      patch,
+      (message) => (message.role === 'assistant' || !message.role)
+    );
+    resetPendingStreamJsonTurn(nodeId);
+  }, [patchLatestChatMessage, resetPendingStreamJsonTurn]);
 
   const applyExecutionSnapshot = useCallback(async (snapshot) => {
     const currentState = useSwarmStore.getState();
@@ -270,9 +317,95 @@ export function useSwarm(workflowId) {
       try { msg = JSON.parse(e.data); } catch { return; }
 
       switch (msg.type) {
+        case 'agent_tool_use':
+          getPendingStreamJsonTurn(msg.nodeId).toolUse.push({
+            toolName: msg.toolName ?? 'unknown',
+            toolUseId: msg.toolUseId ?? '',
+            partialArgs: '',
+          });
+          updateAgentState(msg.nodeId, {
+            currentTool: {
+              toolName: msg.toolName,
+              toolUseId: msg.toolUseId,
+              partialArgs: '',
+            },
+          });
+          break;
+        case 'agent_tool_delta': {
+          const currentTool = useSwarmStore.getState().agentStates[msg.nodeId]?.currentTool;
+          const pendingTurn = getPendingStreamJsonTurn(msg.nodeId);
+          const toolUseId = msg.toolUseId ?? currentTool?.toolUseId ?? '';
+          const toolName = currentTool?.toolName ?? 'unknown';
+          let toolIndex = -1;
+          for (let i = pendingTurn.toolUse.length - 1; i >= 0; i -= 1) {
+            const tool = pendingTurn.toolUse[i];
+            if (tool.toolUseId === toolUseId || (!toolUseId && tool.toolName === toolName)) {
+              toolIndex = i;
+              break;
+            }
+          }
+          if (toolIndex >= 0) {
+            pendingTurn.toolUse[toolIndex] = {
+              ...pendingTurn.toolUse[toolIndex],
+              partialArgs: `${pendingTurn.toolUse[toolIndex].partialArgs ?? ''}${msg.partialJson ?? ''}`,
+            };
+          } else {
+            pendingTurn.toolUse.push({
+              toolName,
+              toolUseId,
+              partialArgs: msg.partialJson ?? '',
+            });
+          }
+          updateAgentState(msg.nodeId, {
+            currentTool: {
+              toolName: currentTool?.toolName ?? 'unknown',
+              toolUseId: toolUseId,
+              partialArgs: `${currentTool?.partialArgs ?? ''}${msg.partialJson ?? ''}`,
+            },
+          });
+          break;
+        }
+        case 'agent_thinking':
+          if (msg.active) {
+            getPendingStreamJsonTurn(msg.nodeId).sawThinking = true;
+          }
+          updateAgentState(msg.nodeId, { isThinking: Boolean(msg.active) });
+          break;
+        case 'agent_cost': {
+          const previousTotal = useSwarmStore.getState().agentStates[msg.nodeId]?.totalCost ?? {
+            inputTokens: 0,
+            outputTokens: 0,
+            costUsd: 0,
+          };
+
+          updateAgentState(msg.nodeId, {
+            turnCost: {
+              inputTokens: msg.inputTokens ?? 0,
+              outputTokens: msg.outputTokens ?? 0,
+              costUsd: msg.costUsd ?? 0,
+              durationMs: msg.durationMs ?? 0,
+            },
+            totalCost: {
+              inputTokens: previousTotal.inputTokens + (msg.inputTokens ?? 0),
+              outputTokens: previousTotal.outputTokens + (msg.outputTokens ?? 0),
+              costUsd: previousTotal.costUsd + (msg.costUsd ?? 0),
+            },
+          });
+          getPendingStreamJsonTurn(msg.nodeId).cost = {
+            inputTokens: msg.inputTokens ?? 0,
+            outputTokens: msg.outputTokens ?? 0,
+            costUsd: msg.costUsd ?? 0,
+            durationMs: msg.durationMs ?? 0,
+          };
+          flushPendingStreamJsonTurn(msg.nodeId);
+          break;
+        }
         case 'agent_status':
           updateAgentState(msg.nodeId, {
             status: msg.status,
+            ...(Object.prototype.hasOwnProperty.call(msg, 'spawnMode')
+              ? { spawnMode: msg.spawnMode }
+              : {}),
             ...(Object.prototype.hasOwnProperty.call(msg, 'runtimeProvider')
               ? { runtimeProvider: msg.runtimeProvider }
               : {}),
@@ -283,7 +416,16 @@ export function useSwarm(workflowId) {
             ...(Object.prototype.hasOwnProperty.call(msg, 'lastOutputSnippet')
               ? { lastOutputSnippet: msg.lastOutputSnippet }
               : {}),
+            ...(['done', 'idle'].includes(msg.status)
+              ? { currentTool: null, isThinking: false }
+              : {}),
           });
+          if (
+            (msg.spawnMode === 'stream-json' || useSwarmStore.getState().agentStates[msg.nodeId]?.spawnMode === 'stream-json')
+            && ['done', 'idle', 'error', 'failed'].includes(msg.status)
+          ) {
+            flushPendingStreamJsonTurn(msg.nodeId);
+          }
           break;
         case 'handoff_started': {
           updateEdgeCounter(msg.edgeId, msg.counter);
@@ -437,12 +579,16 @@ export function useSwarm(workflowId) {
           addFeedEvent({ ...msg, timestamp: Date.now() });
           break;
         }
-        case 'chat_message':
+        case 'chat_message': {
+          const runtimeState = useSwarmStore.getState().agentStates[msg.nodeId];
+          const isStreamJsonMessage = (msg.role === 'assistant' || !msg.role)
+            && runtimeState?.spawnMode === 'stream-json';
           addChatMessage({
             nodeId: msg.nodeId,
             role: msg.role ?? 'assistant',
             text: msg.text,
             timestamp: msg.timestamp ?? Date.now(),
+            ...(isStreamJsonMessage ? { spawnMode: 'stream-json' } : {}),
           });
           // Feed assistant messages into agentResults store + update node snippet
           // with clean chat text (Option B: replaces noisy raw PTY snippets)
@@ -451,13 +597,14 @@ export function useSwarm(workflowId) {
             updateAgentState(msg.nodeId, { lastChatSnippet: msg.text });
           }
           break;
+        }
         default:
           break;
       }
     };
 
     wsRef.current = ws;
-  }, [setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, addChatMessage, setExecution, updateBudget, addInboxItem, resolveInboxItem, updateTriggerState, applyExecutionSnapshot, reconcileClosedExecution]);
+  }, [setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, addChatMessage, setExecution, updateBudget, addInboxItem, resolveInboxItem, updateTriggerState, applyExecutionSnapshot, reconcileClosedExecution, getPendingStreamJsonTurn, flushPendingStreamJsonTurn]);
 
   // Start execution
   const startExecution = useCallback(async (projectId, projectPath, runtimeProvider = 'auto', runtimeModels = null, overrideWorkflowId = null) => {
@@ -465,6 +612,7 @@ export function useSwarm(workflowId) {
     if (!effectiveId) throw new Error('No workflow selected');
     wsRef.current?.close();
     wsRef.current = null;
+    pendingStreamJsonTurnsRef.current = {};
     clearExecutionState();
     const body = { projectId, projectPath, runtimeProvider };
     if (runtimeModels && typeof runtimeModels === 'object') {

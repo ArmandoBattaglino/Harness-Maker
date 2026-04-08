@@ -1,5 +1,6 @@
 // client/src/canvas/ChatMessage.jsx
 // Single message in the Unified Chat View.
+import { useState } from 'react';
 import { stripAnsi } from '../utils/stripAnsi';
 
 const ROLE_STYLES = {
@@ -102,10 +103,66 @@ function formatChatText(rawText = '') {
   return result;
 }
 
+function formatStreamJsonText(rawText = '') {
+  return stripAnsi(String(rawText ?? ''))
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n');
+}
+
+function formatToolArgs(partialArgs = '') {
+  const raw = String(partialArgs ?? '').trim();
+  if (!raw) return '{}';
+
+  try {
+    return JSON.stringify(JSON.parse(raw), null, 2);
+  } catch {
+    return raw;
+  }
+}
+
+function formatCostFooter(cost) {
+  if (!cost) return '';
+  const inputTokens = Number(cost.inputTokens ?? 0);
+  const outputTokens = Number(cost.outputTokens ?? 0);
+  const costUsd = Number(cost.costUsd ?? 0);
+  const durationMs = Number(cost.durationMs ?? 0);
+  return `Tokens: ${inputTokens}in / ${outputTokens}out | Cost: $${costUsd.toFixed(4)} | ${durationMs}ms`;
+}
+
+function CollapsibleMetaBlock({ title, children, tone = 'gray' }) {
+  const [open, setOpen] = useState(false);
+  const toneClass = tone === 'amber'
+    ? 'border-amber-900/60 bg-amber-950/30 text-amber-100'
+    : 'border-gray-700 bg-gray-900/70 text-gray-300';
+
+  return (
+    <div className={`mt-2 rounded border ${toneClass}`}>
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className="flex w-full items-center justify-between gap-2 px-2 py-1.5 text-left text-[10px] font-semibold uppercase tracking-[0.08em]"
+      >
+        <span>{title}</span>
+        <span className="text-[9px]">{open ? 'Hide' : 'Show'}</span>
+      </button>
+      {open && (
+        <div className="border-t border-inherit px-2 py-2 text-[11px] leading-5">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ChatMessage({ message, agentLabel }) {
-  const { role, text, timestamp, nodeId } = message;
+  const { role, text, timestamp, nodeId, spawnMode, toolUse, thinking, cost } = message;
   const style = ROLE_STYLES[role] || ROLE_STYLES.assistant;
-  const displayText = role === 'system' ? text : formatChatText(text);
+  const isStreamJson = spawnMode === 'stream-json';
+  const displayText = role === 'system'
+    ? text
+    : isStreamJson
+    ? formatStreamJsonText(text)
+    : formatChatText(text);
 
   if (role === 'system') {
     return (
@@ -132,6 +189,29 @@ export default function ChatMessage({ message, agentLabel }) {
         <div className="text-[12px] whitespace-pre-wrap break-words leading-5 text-gray-100">
           {displayText || 'Structured handoff sent.'}
         </div>
+        {isStreamJson && Array.isArray(toolUse) && toolUse.map((tool, index) => (
+          <CollapsibleMetaBlock
+            key={`${tool.toolUseId || tool.toolName || 'tool'}-${index}`}
+            title={tool.toolName || 'Tool'}
+            tone="amber"
+          >
+            <pre className="whitespace-pre-wrap break-all font-mono text-[11px] leading-5 text-amber-100">
+              {formatToolArgs(tool.partialArgs)}
+            </pre>
+          </CollapsibleMetaBlock>
+        ))}
+        {isStreamJson && thinking && (
+          <CollapsibleMetaBlock title="Thinking">
+            <div className="italic text-gray-400">
+              {typeof thinking === 'string' ? thinking : 'Thinking block captured for this turn.'}
+            </div>
+          </CollapsibleMetaBlock>
+        )}
+        {isStreamJson && cost && (
+          <div className="mt-2 text-[10px] text-gray-500">
+            {formatCostFooter(cost)}
+          </div>
+        )}
       </div>
     </div>
   );

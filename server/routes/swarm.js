@@ -374,7 +374,7 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
   // → 200 { ok: true }
   // → 404 if execution not found
   // -------------------------------------------------------------------------
-  router.post('/:executionId/resume', (req, res) => {
+  router.post('/:executionId/resume', async (req, res) => {
     try {
       const { executionId } = req.params;
       const execution = swarmEngine.getStatus(executionId);
@@ -386,7 +386,7 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
         return res.status(409).json({ error: `Execution cannot be resumed from status '${execution.status}'` });
       }
 
-      const nextStatus = swarmEngine.resumeExecution(executionId);
+      const nextStatus = await swarmEngine.resumeExecution(executionId);
 
       return res.status(200).json({ ok: true, status: nextStatus?.status ?? 'running' });
     } catch (err) {
@@ -402,10 +402,25 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
   router.delete('/:executionId', async (req, res) => {
     try {
       const { executionId } = req.params;
+      const nodeId = typeof req.query?.nodeId === 'string' ? req.query.nodeId : null;
+      const mode = typeof req.query?.mode === 'string' ? req.query.mode : 'forced';
       const execution = swarmEngine.getStatus(executionId);
       if (!execution) {
         return res.status(404).json({ error: 'Execution not found' });
       }
+
+      if (nodeId) {
+        const agentState = execution.agentStates?.[nodeId];
+        if (!agentState) {
+          return res.status(404).json({ error: 'Agent not found' });
+        }
+        if (agentState.spawnMode !== 'stream-json') {
+          return res.status(409).json({ error: 'Agent is not using stream-json mode' });
+        }
+        await swarmEngine.stopStreamJsonAgent(executionId, nodeId, mode);
+        return res.status(204).end();
+      }
+
       await swarmEngine.stopExecution(executionId);
       return res.status(204).end();
     } catch (err) {

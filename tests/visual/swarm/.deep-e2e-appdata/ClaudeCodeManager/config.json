@@ -1,0 +1,15 @@
+{
+  "version": "1",
+  "projects": [
+    {
+      "id": "5748b492-7156-4e74-ba54-95a8d354699e",
+      "name": "DebuggerLoopIsolated",
+      "path": "C:\\Users\\arman\\Downloads\\Test workflows - Copia",
+      "createdAt": "2026-04-08T14:00:09.152Z"
+    }
+  ],
+  "settings": {
+    "port": 3000,
+    "idleTimeoutMinutes": 30
+  }
+}

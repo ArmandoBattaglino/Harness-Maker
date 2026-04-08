@@ -186,6 +186,24 @@ describe('WorkflowStore validation (SEC-V3-02 + SEC-V3-06)', () => {
     const result = await store.create({ name: 'My Workflow-v1.2' });
     expect(result.name).toBe('My Workflow-v1.2');
   });
+
+  it('should persist a node tools array through create/get/update round-trips', async () => {
+    const created = await store.create({
+      name: 'tools-roundtrip',
+      nodes: [{ id: 'agent-a', data: { tools: ['Bash', 'Read'] } }],
+    });
+
+    const loaded = await store.get(created.id);
+    expect(loaded.nodes[0].data.tools).toEqual(['Bash', 'Read']);
+
+    await store.update(created.id, {
+      ...loaded,
+      nodes: [{ id: 'agent-a', data: { tools: ['Read', 'Glob', 'LS'] } }],
+    });
+
+    const updated = await store.get(created.id);
+    expect(updated.nodes[0].data.tools).toEqual(['Read', 'Glob', 'LS']);
+  });
 });
 
 // ---------------------------------------------------------------------------

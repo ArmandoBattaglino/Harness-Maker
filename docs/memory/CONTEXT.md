@@ -1,8 +1,8 @@
 ﻿# Current Context
 **Session date:** 2026-04-08
-**Focus:** V9.0 STREAM-JSON AGENT MIGRATION — Phase 0 CLOSED. Phase 1 Backend Core IN_PROGRESS. #357 COMPLETED, #358 PASS, #359 COMPLETED (all _spawnAgentStreamJson methods added), #360 IN_PROGRESS (qa-tester running TEST GATE). 393 tasks total: 356 COMPLETED, 2 DEFERRED, 35 PENDING. PRD v6.0. 453 tests, build clean.
+**Focus:** V9.0 STREAM-JSON AGENT MIGRATION CLOSED on 2026-04-08 via #393 PASS. Phase 0 CLOSED, Phase 1 Backend Core CLOSED via #367 PASS, Phase 2 FRONTEND CLOSED via #383 PASS, and Phase 3 INTEGRATION AND POLISH CLOSED via #388 PASS, #390 PASS, #392 PASS, #393 PASS. Debugger-loop follow-up area #394-#396 is also CLOSED after the mixed-provider browser repro was re-run successfully with a truthful `blocked` Claude stream-json state and no downstream Codex contamination. Task numbering extends through #396; 393 tasks are currently registered in `docs/TASK_PLAN.md`, 392 are COMPLETE/PASS, 1 is DEFERRED (#236), and 0 are PENDING. PRD v6.0. 478 backend tests pass, client/root build clean.
 
-**IMMEDIATE NEXT STEP:** Wait for TASK #360 TEST GATE result from qa-tester. If PASS, launch #361 (dispatcher wiring, backend-dev) + #363 (session lifecycle, backend-dev) IN PARALLEL. If FAIL, return to #359 for fixes.
+**IMMEDIATE NEXT STEP:** No registered pending task remains in `docs/TASK_PLAN.md`. The next work should be either a new planned area or non-plan housekeeping such as commit/release prep. The mixed Claude stream-json + Codex PTY path now has deterministic E2E coverage in `server/tests/e2e/stream-json-e2e.test.js`, and the truthful-blocked fallback behavior remains the live-browser baseline for Claude rate-limit/error results.
 
 **Dependency wave map:**
   Wave 0: #354 (spike) -> #355 (gate) -> #356 (checkpoint)
@@ -10,9 +10,11 @@
   Wave 2: #359 (_spawnAgentStreamJson) -> #360 (gate)
   Wave 3: #361 (dispatcher) + #363 (lifecycle) IN PARALLEL -> #362 + #364 (gates)
   Wave 4: #365 (tool config) -> #366 (gate) -> #367 (area checkpoint)
-  Wave 5: #368 (store) -> #369 (gate) -> #370 (useSwarm) -> #371 (gate) -> #372+#374+#376+#378+#382 IN PARALLEL -> gates -> #383 (checkpoint)
-  Wave 6: #380 (spawnMode) -> #381 (gate) — can run in parallel with Wave 5
-  Wave 7: #384+#385+#386 IN PARALLEL -> #387 -> #388 (gate) -> #389 (E2E) -> #390 (gate) -> #391 (docs) -> #392 (gate) -> #393 (final)
+  Wave 5: #368 (store) -> #369 (gate) -> #370 (useSwarm) -> #371 (gate) -> #372+#374+#376+#378+#382 IN PARALLEL -> gates -> #383 (checkpoint) - completed
+  Wave 6: #380 (spawnMode) -> #381 (gate) - completed in parallel with Wave 5
+  Wave 7: #384+#385+#386 IN PARALLEL -> #387 -> #388 (gate) - completed
+  Wave 8: #389 (E2E) -> #390 (gate) -> #391 (docs) -> #392 (gate) -> #393 (final) - completed/closed
+  Debugger-loop follow-up: #394 (fallback coherence bug) -> #395 (gate) -> #396 (checkpoint)
 
 _Project initialized via /create pipeline on 2026-03-18_
 
@@ -181,4 +183,3 @@ NEXT AFTER CURRENT WAVE:
 **Blocking V3 start:** TASK #41 is COMPLETED. All V2 tasks done. V3 can begin immediately.
 
 **First wave (Phase 1):** #43, #45 can run in parallel (WorkflowStore + HandoffParser have no deps on each other). #46 waits for #43+#45. #47 waits for #46. #48 waits for #46. #49 waits for #46.
-

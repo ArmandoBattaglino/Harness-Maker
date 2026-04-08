@@ -108,7 +108,7 @@ export class JobRunner {
       '-p', prompt,
       '--output-format', 'stream-json',
       '--verbose',
-      '--allowedTools', allowedTools ?? 'all',
+      '--tools', allowedTools ?? 'all',
       '--max-turns', String(maxTurns ?? 10),
       '--no-session-persistence',
     ];

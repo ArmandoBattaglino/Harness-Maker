@@ -1,0 +1,33 @@
+{
+  "version": "1",
+  "projects": [
+    {
+      "id": "3314abc4-8921-4d25-952a-b2e9186bffa7",
+      "name": "Beta RepoBeta Repo",
+      "path": "C:\\Users\\arman\\Downloads\\Test workflows - Copia",
+      "createdAt": "2026-04-08T15:33:21.118Z"
+    },
+    {
+      "id": "b1a87ad8-1d35-4df3-a796-fe54bceb64fb",
+      "name": "Beta TestsBeta Tests",
+      "path": "C:\\Users\\arman\\Downloads\\Test workflows - Copia\\tests",
+      "createdAt": "2026-04-08T15:40:41.953Z"
+    },
+    {
+      "id": "c1826cd3-d7d8-4362-9bd4-cffba3d044f7",
+      "name": "API Clean",
+      "path": "C:\\Users\\arman\\Downloads\\Test workflows - Copia\\docs",
+      "createdAt": "2026-04-08T15:41:58.367Z"
+    },
+    {
+      "id": "55058160-eee4-4eb4-8b12-eb543f68925b",
+      "name": "Native Check",
+      "path": "C:\\Users\\arman\\Downloads\\Test workflows - Copia\\server",
+      "createdAt": "2026-04-08T15:42:14.241Z"
+    }
+  ],
+  "settings": {
+    "port": 3000,
+    "idleTimeoutMinutes": 30
+  }
+}

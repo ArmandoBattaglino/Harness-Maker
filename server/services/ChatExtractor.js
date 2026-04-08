@@ -1,5 +1,7 @@
 // server/services/ChatExtractor.js
 // Extracts clean chat messages from agent PTY streams for the Unified Chat View.
+// [STREAM-JSON-MIGRATION] This module is bypassed for Claude stream-json agents
+// and remains in use only for PTY agents such as Codex/Gemini.
 
 import { normalizeChatDisplayText } from './chatTextNormalization.js';
 

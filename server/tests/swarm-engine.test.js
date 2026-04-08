@@ -5,6 +5,10 @@
 //
 // SessionManager is FULLY MOCKED — no real PTY processes are spawned.
 
+import { EventEmitter } from 'node:events';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import SwarmEngine, {
   getDefaultRuntimeModel,
@@ -14,6 +18,20 @@ import SwarmEngine, {
 } from '../services/SwarmEngine.js';
 import CircuitBreaker from '../services/CircuitBreaker.js';
 import BudgetTracker from '../services/BudgetTracker.js';
+
+const mockSpawn = vi.hoisted(() => vi.fn());
+const mockCreateInterface = vi.hoisted(() => vi.fn());
+const mockTreeKill = vi.hoisted(() => vi.fn((pid, signal, cb) => cb?.(null)));
+
+vi.mock('child_process', () => ({
+  spawn: mockSpawn,
+}));
+
+vi.mock('readline', () => ({
+  createInterface: mockCreateInterface,
+}));
+
+vi.mock('tree-kill', () => mockTreeKill);
 
 // ---------------------------------------------------------------------------
 // Helpers — build fake workflow definitions
@@ -124,6 +142,60 @@ function buildRootDelayWorkflow({ budgetTokens = 0, circuitBreakerThreshold = 10
     ],
     edges: [
       { id: 'edge-delay-report', source: 'node-delay', target: 'node-report' },
+    ],
+    settings: { budgetTokens, circuitBreakerThreshold },
+    initialContext: {},
+  };
+}
+
+function buildStreamJsonSoloWorkflow({ budgetTokens = 0, circuitBreakerThreshold = 10 } = {}) {
+  return {
+    id: 'wf-stream-json',
+    name: 'Stream JSON Solo Workflow',
+    description: 'Single-node workflow used to verify stream-json agent spawning.',
+    nodes: [
+      { id: 'node-a', data: { isTriageNode: true, systemPrompt: 'You are the stream-json agent.' } },
+    ],
+    edges: [],
+    settings: { budgetTokens, circuitBreakerThreshold },
+    initialContext: {},
+  };
+}
+
+function buildMixedProviderChainWorkflow({ budgetTokens = 0, circuitBreakerThreshold = 10 } = {}) {
+  return {
+    id: 'wf-mixed-providers',
+    name: 'Mixed Provider Chain Workflow',
+    description: 'Claude triage hands off to Claude writer, then Codex completes the final report.',
+    nodes: [
+      {
+        id: 'node-a',
+        data: {
+          isTriageNode: true,
+          systemPrompt: 'You are the Claude triage agent.',
+          model: 'opus',
+          tools: ['Read', 'Grep'],
+        },
+      },
+      {
+        id: 'node-b',
+        data: {
+          systemPrompt: 'You are the Claude writer agent.',
+          model: 'sonnet',
+          tools: ['Write', 'Edit'],
+        },
+      },
+      {
+        id: 'node-c',
+        data: {
+          systemPrompt: 'You are the Codex finisher.',
+          model: 'gpt-5.4',
+        },
+      },
+    ],
+    edges: [
+      { id: 'edge-ab', source: 'node-a', target: 'node-b' },
+      { id: 'edge-bc', source: 'node-b', target: 'node-c' },
     ],
     settings: { budgetTokens, circuitBreakerThreshold },
     initialContext: {},
@@ -265,6 +337,9 @@ describe('SwarmEngine', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     wsBroadcast = vi.fn();
+    mockSpawn.mockReset();
+    mockCreateInterface.mockReset();
+    mockTreeKill.mockClear();
     ({ mockSession, mockSessionManager } = buildMocks());
 
     wf = buildTwoNodeWorkflow({ budgetTokens: 0, circuitBreakerThreshold: 10 });
@@ -2701,7 +2776,7 @@ describe('SwarmEngine', () => {
       expect(paused.status).toBe('paused');
       expect(paused.agentStates['node-a'].status).toBe('paused');
 
-      const resumed = engine.resumeExecution(executionId);
+      const resumed = await engine.resumeExecution(executionId);
       expect(resumed.status).toBe('running');
       expect(resumed.agentStates['node-a'].status).toBe('running');
     });
@@ -3457,6 +3532,1084 @@ describe('SwarmEngine', () => {
         nodeId: 'node-a',
       });
       expect(status.runtimeBlocker.message).toContain('usage or rate limit');
+    });
+  });
+
+  describe('Test 8: Stream-json spawning contract', () => {
+    function buildMockStreamJsonChild() {
+      const child = new EventEmitter();
+      child.stdout = new EventEmitter();
+      child.stderr = new EventEmitter();
+      child.stdin = { end: vi.fn() };
+      child.pid = 4242;
+      child.killed = false;
+      return child;
+    }
+
+    function buildMockReadline() {
+      const rl = new EventEmitter();
+      rl.close = vi.fn();
+      return rl;
+    }
+
+    it('should broadcast spawnMode=stream-json on agent_status and preserve it in status snapshots', async () => {
+      const streamWorkflow = buildStreamJsonSoloWorkflow();
+      workflowStoreMock.get.mockResolvedValueOnce(streamWorkflow);
+
+      const executionId = await engine.startExecution(streamWorkflow.id, 'proj-1', '/projects/proj-1');
+      const child = buildMockStreamJsonChild();
+      const rl = buildMockReadline();
+
+      mockSpawn.mockReturnValueOnce(child);
+      mockCreateInterface.mockReturnValueOnce(rl);
+      wsBroadcast.mockClear();
+
+      await engine._spawnAgentStreamJson(executionId, 'node-a');
+
+      const status = engine.getStatus(executionId);
+      const execution = engine._executions.get(executionId);
+      const streamJsonState = execution.agentStates.get('node-a');
+      const statusEvents = wsBroadcast.mock.calls.map(([, ev]) => ev).filter((ev) => ev.type === 'agent_status');
+      const streamJsonStatusEvent = statusEvents.find((ev) => ev.nodeId === 'node-a' && ev.spawnMode === 'stream-json');
+
+      expect(streamJsonStatusEvent).toBeDefined();
+      expect(streamJsonStatusEvent).toMatchObject({
+        nodeId: 'node-a',
+        status: 'running',
+        spawnMode: 'stream-json',
+        provider: 'claude',
+        runtimeProvider: 'claude',
+      });
+      expect(status.agentStates['node-a']).toMatchObject({
+        status: 'running',
+        spawnMode: 'stream-json',
+        sessionId: null,
+      });
+      expect(streamJsonState.streamJsonSessionId).toMatch(/^[0-9a-f-]{36}$/i);
+      expect(child.stdin.end).toHaveBeenCalledTimes(1);
+
+      const spawnArgs = mockSpawn.mock.calls[0][1];
+      const sessionFlagIndex = spawnArgs.indexOf('--session-id');
+      const promptFlagIndex = spawnArgs.indexOf('-p');
+      const modelFlagIndex = spawnArgs.indexOf('--model');
+      const toolsFlagIndex = spawnArgs.indexOf('--tools');
+      const legacyToolsFlag = ['--allowed', 'Tools'].join('');
+
+      expect(spawnArgs).toEqual(expect.arrayContaining([
+        '--output-format',
+        'stream-json',
+        '--verbose',
+        '--dangerously-skip-permissions',
+      ]));
+      expect(sessionFlagIndex).toBeGreaterThan(-1);
+      expect(spawnArgs[sessionFlagIndex + 1]).toMatch(/^[0-9a-f-]{36}$/i);
+      expect(promptFlagIndex).toBeGreaterThan(-1);
+      expect(spawnArgs[promptFlagIndex + 1]).toContain('Stream JSON Solo Workflow');
+      expect(spawnArgs[promptFlagIndex + 1]).toContain('__DONE__');
+      expect(modelFlagIndex).toBeGreaterThan(-1);
+      expect(spawnArgs[modelFlagIndex + 1]).toBe('opus');
+      expect(toolsFlagIndex).toBeGreaterThan(-1);
+      expect(spawnArgs[toolsFlagIndex + 1]).toBe('Bash,Read,Edit,Write,Grep,Glob,LS');
+      expect(spawnArgs.includes(legacyToolsFlag)).toBe(false);
+    });
+
+    it('should broadcast agent_cost with cacheReadTokens and cacheWriteTokens from stream-json results', async () => {
+      const streamWorkflow = buildStreamJsonSoloWorkflow();
+      workflowStoreMock.get.mockResolvedValueOnce(streamWorkflow);
+
+      const executionId = await engine.startExecution(streamWorkflow.id, 'proj-1', '/projects/proj-1');
+      const child = buildMockStreamJsonChild();
+      const rl = buildMockReadline();
+
+      mockSpawn.mockReturnValueOnce(child);
+      mockCreateInterface.mockReturnValueOnce(rl);
+      wsBroadcast.mockClear();
+
+      await engine._spawnAgentStreamJson(executionId, 'node-a');
+
+      rl.emit('line', JSON.stringify({
+        type: 'result',
+        subtype: 'success',
+        session_id: 'sess-stream-json',
+        total_cost_usd: 0.125,
+        duration_ms: 2200,
+        usage: {
+          input_tokens: 11,
+          output_tokens: 7,
+          cache_read_input_tokens: 3,
+          cache_creation_input_tokens: 4,
+        },
+      }));
+
+      const costEvent = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .find((ev) => ev.type === 'agent_cost' && ev.nodeId === 'node-a');
+
+      expect(costEvent).toEqual(expect.objectContaining({
+        nodeId: 'node-a',
+        inputTokens: 11,
+        outputTokens: 7,
+        costUsd: 0.125,
+        cacheReadTokens: 3,
+        cacheWriteTokens: 4,
+        durationMs: 2200,
+        totalInputTokens: 11,
+        totalOutputTokens: 7,
+        totalCostUsd: 0.125,
+      }));
+    });
+
+    it('should reuse the same streamJsonSessionId on subsequent turns and switch to --resume', async () => {
+      const streamWorkflow = buildStreamJsonSoloWorkflow();
+      const executionId = 'exec-stream-json-reuse';
+      engine._executions.set(executionId, {
+        executionId,
+        workflowId: streamWorkflow.id,
+        workflowDef: streamWorkflow,
+        projectId: 'proj-1',
+        projectPath: '/projects/proj-1',
+        status: 'running',
+        startedAt: '2026-04-08T14:00:00.000Z',
+        agentStates: new Map([['node-a', {
+          status: 'idle',
+          provider: 'claude',
+          runtimeProvider: 'claude',
+          handoffCount: 0,
+          lastOutputSnippet: '',
+          totalCostUsd: 0,
+          totalInputTokens: 0,
+          totalOutputTokens: 0,
+          turnCount: 0,
+          streamJsonSessionId: null,
+        }]]),
+        edgeCounters: new Map(),
+        agentInputBarriers: new Map(),
+        inboundHandoffs: new Map(),
+        workflowContext: {},
+        heartbeatTimer: null,
+        inboxItems: [],
+        chatMessages: [],
+        runtimeBlocker: null,
+        providerStrategy: {
+          mode: 'claude',
+          activeProvider: 'claude',
+          fallbackProvider: null,
+          allowFallback: false,
+        },
+        runtimeProvider: 'claude',
+        activeProvider: 'claude',
+        codexPromptRetryCounts: new Map(),
+        lastFallback: null,
+      });
+
+      const firstChild = buildMockStreamJsonChild();
+      const firstRl = buildMockReadline();
+      const secondChild = buildMockStreamJsonChild();
+      const secondRl = buildMockReadline();
+
+      mockSpawn.mockReturnValueOnce(firstChild).mockReturnValueOnce(secondChild);
+      mockCreateInterface.mockReturnValueOnce(firstRl).mockReturnValueOnce(secondRl);
+
+      await engine._spawnAgentStreamJson(executionId, 'node-a');
+
+      const firstSpawnArgs = mockSpawn.mock.calls[0][1];
+      const sessionFlagIndex = firstSpawnArgs.indexOf('--session-id');
+      const firstSessionId = firstSpawnArgs[sessionFlagIndex + 1];
+
+      expect(firstSessionId).toMatch(/^[0-9a-f-]{36}$/i);
+      expect(engine._executions.get(executionId).agentStates.get('node-a').streamJsonSessionId)
+        .toBe(firstSessionId);
+
+      await engine._spawnAgentStreamJson(executionId, 'node-a');
+
+      const secondSpawnArgs = mockSpawn.mock.calls[1][1];
+      const resumeFlagIndex = secondSpawnArgs.indexOf('--resume');
+
+      expect(resumeFlagIndex).toBeGreaterThan(-1);
+      expect(secondSpawnArgs[resumeFlagIndex + 1]).toBe(firstSessionId);
+      expect(engine._executions.get(executionId).agentStates.get('node-a').streamJsonSessionId)
+        .toBe(firstSessionId);
+    });
+
+    it('should treat stream-json error results as runtime blockers instead of implicit done', async () => {
+      const streamWorkflow = buildStreamJsonSoloWorkflow();
+      const executionId = 'exec-stream-json-error-blocker';
+      const state = {
+        status: 'running',
+        provider: 'claude',
+        runtimeProvider: 'claude',
+        spawnMode: 'stream-json',
+        handoffCount: 0,
+        lastOutputSnippet: '',
+        totalCostUsd: 0,
+        totalInputTokens: 0,
+        totalOutputTokens: 0,
+        turnCount: 0,
+        streamJsonSessionId: '11111111-1111-1111-1111-111111111111',
+        currentToolUse: { toolName: 'Read', toolUseId: 'tool-1' },
+        isThinking: true,
+        needsRepair: false,
+        _streamJsonAccumulatedText: '',
+      };
+      engine._executions.set(executionId, {
+        executionId,
+        workflowId: streamWorkflow.id,
+        workflowDef: streamWorkflow,
+        projectId: 'proj-1',
+        projectPath: '/projects/proj-1',
+        status: 'running',
+        startedAt: '2026-04-08T14:00:00.000Z',
+        agentStates: new Map([['node-a', state]]),
+        edgeCounters: new Map(),
+        agentInputBarriers: new Map(),
+        inboundHandoffs: new Map(),
+        workflowContext: {},
+        heartbeatTimer: null,
+        inboxItems: [],
+        chatMessages: [],
+        runtimeBlocker: null,
+        providerStrategy: {
+          mode: 'auto',
+          activeProvider: 'claude',
+          fallbackProvider: 'codex',
+          allowFallback: true,
+        },
+        runtimeProvider: 'claude',
+        activeProvider: 'claude',
+        codexPromptRetryCounts: new Map(),
+        lastFallback: null,
+      });
+
+      const blockerSpy = vi.spyOn(engine, '_handleRuntimeBlocker').mockResolvedValue(true);
+      const doneSpy = vi.spyOn(engine, '_onDone');
+
+      engine._handleStreamJsonResult(executionId, 'node-a', {
+        sessionId: '11111111-1111-1111-1111-111111111111',
+        costUsd: 0,
+        durationMs: 50,
+        usage: {},
+        isError: true,
+        errorMessage: "You've hit your limit · resets 7pm (Europe/Rome)",
+      }, []);
+
+      expect(blockerSpy).toHaveBeenCalledWith(
+        executionId,
+        'node-a',
+        expect.objectContaining({
+          type: 'rate_limited',
+          provider: 'claude',
+        })
+      );
+      expect(doneSpy).not.toHaveBeenCalled();
+      expect(state.needsRepair).toBe(true);
+      expect(state.currentToolUse).toBeNull();
+      expect(state.isThinking).toBe(false);
+      expect(state.lastOutputSnippet).toContain('Claude hit its usage limit before the swarm agent could continue.');
+      expect(state._streamJsonAccumulatedText).toBe('');
+
+      blockerSpy.mockRestore();
+      doneSpy.mockRestore();
+    });
+  });
+
+  describe('Test 9: _spawnAgent dispatcher', () => {
+    function buildDispatcherExecution(executionId, provider = 'claude') {
+      const workflow = buildStreamJsonSoloWorkflow();
+      const execution = {
+        executionId,
+        workflowId: workflow.id,
+        workflowDef: workflow,
+        projectId: 'proj-1',
+        projectPath: '/projects/proj-1',
+        status: 'running',
+        startedAt: '2026-04-08T14:00:00.000Z',
+        agentStates: new Map([['node-a', {
+          status: 'idle',
+          provider,
+          runtimeProvider: provider,
+          handoffCount: 0,
+          lastOutputSnippet: '',
+          totalCostUsd: 0,
+          totalInputTokens: 0,
+          totalOutputTokens: 0,
+          turnCount: 0,
+        }]]),
+        edgeCounters: new Map(),
+        agentInputBarriers: new Map(),
+        inboundHandoffs: new Map(),
+        workflowContext: {},
+        heartbeatTimer: null,
+        inboxItems: [],
+        chatMessages: [],
+        runtimeBlocker: null,
+        providerStrategy: {
+          mode: provider,
+          activeProvider: provider,
+          fallbackProvider: null,
+          allowFallback: false,
+        },
+        runtimeProvider: provider,
+        activeProvider: provider,
+        codexPromptRetryCounts: new Map(),
+        lastFallback: null,
+      };
+
+      engine._executions.set(executionId, execution);
+      return execution;
+    }
+
+    it.each(['claude', 'opus', 'claude-opus-4-6', 'sonnet', 'haiku'])(
+      'should route Claude provider %s through _spawnAgentStreamJson',
+      async (requestedProvider) => {
+        const executionId = `exec-claude-${requestedProvider}`;
+        buildDispatcherExecution(executionId, 'claude');
+
+        const streamSpy = vi.spyOn(engine, '_spawnAgentStreamJson').mockResolvedValue(undefined);
+        const ptySpy = vi.spyOn(engine, '_spawnAgentPty').mockResolvedValue(undefined);
+
+        await engine._spawnAgent(executionId, 'node-a', { requestedProvider });
+
+        expect(streamSpy).toHaveBeenCalledTimes(1);
+        if (requestedProvider === 'claude') {
+          expect(streamSpy).toHaveBeenCalledWith(
+            executionId,
+            'node-a',
+            expect.objectContaining({ requestedProvider: 'claude' })
+          );
+        } else {
+          expect(streamSpy).toHaveBeenCalledWith(
+            executionId,
+            'node-a',
+            expect.objectContaining({
+              requestedProvider: 'claude',
+              requestedModel: requestedProvider,
+            })
+          );
+        }
+        expect(ptySpy).not.toHaveBeenCalled();
+
+        streamSpy.mockRestore();
+        ptySpy.mockRestore();
+      }
+    );
+
+    it.each(['codex', 'gemini'])(
+      'should route %s provider through _spawnAgentPty',
+      async (requestedProvider) => {
+        const executionId = `exec-${requestedProvider}`;
+        buildDispatcherExecution(executionId, requestedProvider);
+
+        const streamSpy = vi.spyOn(engine, '_spawnAgentStreamJson').mockResolvedValue(undefined);
+        const ptySpy = vi.spyOn(engine, '_spawnAgentPty').mockResolvedValue(undefined);
+
+        await engine._spawnAgent(executionId, 'node-a', { requestedProvider });
+
+        expect(ptySpy).toHaveBeenCalledTimes(1);
+        expect(ptySpy).toHaveBeenCalledWith(
+          executionId,
+          'node-a',
+          expect.objectContaining({ requestedProvider })
+        );
+        expect(streamSpy).not.toHaveBeenCalled();
+
+        streamSpy.mockRestore();
+        ptySpy.mockRestore();
+      }
+    );
+  });
+
+  describe('Test 10: Stream-json session lifecycle', () => {
+    function buildLifecycleExecution(executionId, overrides = {}) {
+      const workflow = buildStreamJsonSoloWorkflow();
+      const state = {
+        status: 'running',
+        provider: 'claude',
+        runtimeProvider: 'claude',
+        spawnMode: 'stream-json',
+        handoffCount: 0,
+        lastOutputSnippet: 'Working...',
+        totalCostUsd: 0,
+        totalInputTokens: 0,
+        totalOutputTokens: 0,
+        turnCount: 1,
+        streamJsonSessionId: '11111111-1111-1111-1111-111111111111',
+        doNotSpawnNextTurn: false,
+        needsRepair: false,
+        currentToolUse: null,
+        isThinking: false,
+        _streamJsonAccumulatedText: 'Finished work.\n__DONE__',
+        ...overrides,
+      };
+      const execution = {
+        executionId,
+        workflowId: workflow.id,
+        workflowDef: workflow,
+        projectId: 'proj-1',
+        projectPath: '/projects/proj-1',
+        status: 'running',
+        startedAt: '2026-04-08T14:00:00.000Z',
+        agentStates: new Map([['node-a', state]]),
+        edgeCounters: new Map(),
+        agentInputBarriers: new Map(),
+        inboundHandoffs: new Map(),
+        workflowContext: {},
+        heartbeatTimer: null,
+        inboxItems: [],
+        chatMessages: [],
+        runtimeBlocker: null,
+        providerStrategy: {
+          mode: 'claude',
+          activeProvider: 'claude',
+          fallbackProvider: null,
+          allowFallback: false,
+        },
+        runtimeProvider: 'claude',
+        activeProvider: 'claude',
+        codexPromptRetryCounts: new Map(),
+        lastFallback: null,
+      };
+      engine._executions.set(executionId, execution);
+      return { execution, state };
+    }
+
+    function buildRunningChild(pid = 4242) {
+      const child = new EventEmitter();
+      child.pid = pid;
+      child.killed = false;
+      child.stderr = new EventEmitter();
+      child.stdout = new EventEmitter();
+      child.stdin = { end: vi.fn() };
+      return child;
+    }
+
+    function buildLifecycleReadline() {
+      const rl = new EventEmitter();
+      rl.close = vi.fn();
+      return rl;
+    }
+
+    it('should gracefully stop after the current result, transition to paused, and resume with stream-json spawn', async () => {
+      const executionId = 'exec-stream-stop-graceful';
+      const child = buildRunningChild(5001);
+      const rl = buildLifecycleReadline();
+      buildLifecycleExecution(executionId, { status: 'idle', _streamJsonChild: null });
+
+      mockSpawn.mockReturnValueOnce(child);
+      mockCreateInterface.mockReturnValueOnce(rl);
+
+      await engine._spawnAgentStreamJson(executionId, 'node-a');
+      const state = engine._executions.get(executionId).agentStates.get('node-a');
+
+      const graceful = await engine.stopStreamJsonAgent(executionId, 'node-a', 'graceful');
+      expect(graceful.agentStates['node-a'].status).toBe('running');
+      expect(state.doNotSpawnNextTurn).toBe(true);
+
+      rl.emit('line', JSON.stringify({
+        type: 'result',
+        subtype: 'success',
+        session_id: state.streamJsonSessionId,
+        total_cost_usd: 0.01,
+        duration_ms: 50,
+        usage: {
+          input_tokens: 2,
+          output_tokens: 3,
+        },
+      }));
+
+      child.emit('close', 0);
+
+      const paused = engine.getStatus(executionId);
+      expect(paused.status).toBe('paused');
+      expect(paused.agentStates['node-a'].status).toBe('paused');
+
+      const spawnSpy = vi.spyOn(engine, '_spawnAgent').mockImplementation(async () => {
+        const liveExecution = engine._executions.get(executionId);
+        liveExecution.agentStates.get('node-a').status = 'running';
+        liveExecution.status = 'running';
+      });
+      const resumed = await engine.resumeExecution(executionId);
+
+      expect(spawnSpy).toHaveBeenCalledWith(
+        executionId,
+        'node-a',
+        expect.objectContaining({ requestedProvider: 'claude' })
+      );
+      expect(resumed.status).toBe('running');
+      spawnSpy.mockRestore();
+    });
+
+    it('should force-stop a running stream-json agent and mark the session for repair', async () => {
+      const executionId = 'exec-stream-stop-forced';
+      const child = buildRunningChild(5002);
+      buildLifecycleExecution(executionId, { _streamJsonChild: child });
+
+      const stopped = await engine.stopStreamJsonAgent(executionId, 'node-a', 'forced');
+
+      expect(stopped.agentStates['node-a'].status).toBe('stopped');
+      expect(stopped.agentStates['node-a'].spawnMode).toBe('stream-json');
+      expect(engine._executions.get(executionId).agentStates.get('node-a').needsRepair).toBe(true);
+    });
+
+    it('should reset a stream-json session by deleting the JSONL and issuing a fresh session UUID', async () => {
+      const tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'swarm-stream-reset-'));
+      const homedirSpy = vi.spyOn(os, 'homedir').mockReturnValue(tmpHome);
+      const executionId = 'exec-stream-reset';
+      const oldSessionId = '22222222-2222-2222-2222-222222222222';
+      const sessionDir = path.join(tmpHome, '.claude', 'projects', 'proj-hash');
+      const jsonlPath = path.join(sessionDir, `${oldSessionId}.jsonl`);
+      const companionDir = path.join(sessionDir, oldSessionId);
+      fs.mkdirSync(companionDir, { recursive: true });
+      fs.writeFileSync(jsonlPath, '{"type":"assistant","text":"hello"}\n', 'utf8');
+
+      buildLifecycleExecution(executionId, {
+        streamJsonSessionId: oldSessionId,
+        _streamJsonChild: buildRunningChild(5003),
+      });
+
+      const reset = await engine.stopStreamJsonAgent(executionId, 'node-a', 'reset');
+      const liveState = engine._executions.get(executionId).agentStates.get('node-a');
+
+      expect(fs.existsSync(jsonlPath)).toBe(false);
+      expect(fs.existsSync(companionDir)).toBe(false);
+      expect(reset.agentStates['node-a'].status).toBe('idle');
+      expect(reset.agentStates['node-a'].turnCount).toBe(0);
+      expect(liveState.streamJsonSessionId).toMatch(/^[0-9a-f-]{36}$/i);
+      expect(liveState.streamJsonSessionId).not.toBe(oldSessionId);
+      expect(liveState._lastResetArchive?.archivedJsonl).toContain('"assistant"');
+
+      homedirSpy.mockRestore();
+      fs.rmSync(tmpHome, { recursive: true, force: true });
+    });
+
+    it('should escalate a hung post-result process to forced stop after 30 seconds', async () => {
+      const executionId = 'exec-stream-timeout';
+      const child = buildRunningChild(5004);
+      const rl = buildLifecycleReadline();
+      buildLifecycleExecution(executionId, { status: 'idle', _streamJsonChild: null });
+
+      mockSpawn.mockReturnValueOnce(child);
+      mockCreateInterface.mockReturnValueOnce(rl);
+
+      await engine._spawnAgentStreamJson(executionId, 'node-a');
+      const state = engine._executions.get(executionId).agentStates.get('node-a');
+
+      await engine.stopStreamJsonAgent(executionId, 'node-a', 'graceful');
+      rl.emit('line', JSON.stringify({
+        type: 'result',
+        subtype: 'success',
+        session_id: state.streamJsonSessionId,
+        total_cost_usd: 0.001,
+        duration_ms: 25,
+        usage: {
+          input_tokens: 1,
+          output_tokens: 1,
+        },
+      }));
+
+      await vi.advanceTimersByTimeAsync(30000);
+
+      const stopped = engine.getStatus(executionId);
+      expect(stopped.agentStates['node-a'].status).toBe('stopped');
+      expect(engine._executions.get(executionId).agentStates.get('node-a').needsRepair).toBe(true);
+    });
+
+    it('should block a stream-json Claude node on terminal error results instead of forcing a downstream handoff', async () => {
+      const workflow = buildMixedProviderChainWorkflow();
+      workflowStoreMock.get.mockResolvedValueOnce(workflow);
+
+      const childA = buildRunningChild(5005);
+      const rlA = buildLifecycleReadline();
+      mockSpawn.mockReturnValueOnce(childA);
+      mockCreateInterface.mockReturnValueOnce(rlA);
+      wsBroadcast.mockClear();
+
+      const executionId = await engine.startExecution(workflow.id, 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'auto',
+      });
+
+      rlA.emit('line', JSON.stringify({
+        type: 'result',
+        subtype: 'error',
+        session_id: 'sess-claude-error',
+        error: "You've hit your limit · resets 7pm (Europe/Rome)",
+        total_cost_usd: 0.002,
+        duration_ms: 40,
+        usage: {
+          input_tokens: 2,
+          output_tokens: 1,
+        },
+      }));
+      childA.emit('close', 1);
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const status = engine.getStatus(executionId);
+      expect(status.status).toBe('blocked');
+      expect(status.runtimeProvider).toBe('claude');
+      expect(status.activeProvider).toBe('claude');
+      expect(status.lastFallback).toBeNull();
+      expect(status.agentStates['node-a']).toMatchObject({
+        status: 'blocked',
+        spawnMode: 'stream-json',
+        runtimeProvider: 'claude',
+        runtimeBlocker: {
+          type: 'rate_limited',
+          provider: 'claude',
+        },
+      });
+      expect(status.agentStates['node-a'].lastOutputSnippet)
+        .toMatch(/Claude hit its usage limit before the swarm agent could continue\./);
+      expect(status.agentStates['node-b']).toBeUndefined();
+      expect(mockSessionManager.createSession).not.toHaveBeenCalled();
+
+      const events = wsBroadcast.mock.calls.map(([, ev]) => ev);
+      expect(events.some((ev) => ev.type === 'runtime_provider_switch')).toBe(false);
+      expect(events).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          type: 'execution_status',
+          status: 'blocked',
+          runtimeProvider: 'claude',
+          activeProvider: 'claude',
+          runtimeBlocker: expect.objectContaining({
+            type: 'rate_limited',
+            provider: 'claude',
+            nodeId: 'node-a',
+          }),
+        }),
+        expect.objectContaining({
+          type: 'agent_status',
+          nodeId: 'node-a',
+          status: 'blocked',
+          spawnMode: 'stream-json',
+          runtimeProvider: 'claude',
+          runtimeBlocker: expect.objectContaining({
+            type: 'rate_limited',
+            provider: 'claude',
+          }),
+        }),
+      ]));
+    });
+  });
+
+  describe('Test 11: V9.0 Phase1 backend area checkpoint', () => {
+    function buildMockStreamJsonChild(pid) {
+      const child = new EventEmitter();
+      child.stdout = new EventEmitter();
+      child.stderr = new EventEmitter();
+      child.stdin = { end: vi.fn() };
+      child.pid = pid;
+      child.killed = false;
+      return child;
+    }
+
+    function buildMockReadline() {
+      const rl = new EventEmitter();
+      rl.close = vi.fn();
+      return rl;
+    }
+
+    async function flushAsync(ticks = 12) {
+      for (let i = 0; i < ticks; i += 1) {
+        await Promise.resolve();
+      }
+    }
+
+    it('should complete a Claude-Claude-Codex workflow with mixed runtime contracts intact', async () => {
+      const workflow = buildMixedProviderChainWorkflow();
+      workflowStoreMock.get.mockResolvedValueOnce(workflow);
+
+      const childA = buildMockStreamJsonChild(6101);
+      const childB = buildMockStreamJsonChild(6102);
+      const rlA = buildMockReadline();
+      const rlB = buildMockReadline();
+
+      mockSpawn.mockReturnValueOnce(childA).mockReturnValueOnce(childB);
+      mockCreateInterface.mockReturnValueOnce(rlA).mockReturnValueOnce(rlB);
+
+      const executionId = await engine.startExecution(workflow.id, 'proj-1', '/projects/proj-1');
+      const execution = engine._executions.get(executionId);
+      const initialState = execution.agentStates.get('node-a');
+
+      expect(initialState.spawnMode).toBe('stream-json');
+      expect(initialState.runtimeProvider).toBe('claude');
+
+      const nodeASpawnArgs = mockSpawn.mock.calls[0][1];
+      expect(nodeASpawnArgs[nodeASpawnArgs.indexOf('--model') + 1]).toBe('opus');
+      expect(nodeASpawnArgs[nodeASpawnArgs.indexOf('--tools') + 1]).toBe('Read,Grep');
+
+      rlA.emit('line', JSON.stringify({
+        type: 'content_block_start',
+        index: 1,
+        content_block: {
+          type: 'tool_use',
+          id: 'toolu_node_a',
+          name: 'Read',
+          input: {},
+        },
+      }));
+      rlA.emit('line', JSON.stringify({
+        type: 'content_block_delta',
+        index: 1,
+        delta: {
+          type: 'input_json_delta',
+          partial_json: '{"file":"README.md"}',
+        },
+      }));
+      rlA.emit('line', JSON.stringify({ type: 'content_block_stop', index: 1 }));
+      rlA.emit('line', JSON.stringify({
+        type: 'content_block_start',
+        index: 0,
+        content_block: {
+          type: 'text',
+          text: '',
+        },
+      }));
+      rlA.emit('line', JSON.stringify({
+        type: 'content_block_delta',
+        index: 0,
+        delta: {
+          type: 'text_delta',
+          text: 'Claude triage complete.\n__HANDOFF__:node-b:{"summary":"triage complete","result":"facts collected"}',
+        },
+      }));
+      rlA.emit('line', JSON.stringify({ type: 'content_block_stop', index: 0 }));
+      await engine._onHandoff(executionId, 'node-a', {
+        type: 'handoff',
+        targetId: 'node-b',
+        contextUpdate: {
+          summary: 'triage complete',
+          result: 'facts collected',
+        },
+      });
+      rlA.emit('line', JSON.stringify({
+        type: 'result',
+        subtype: 'success',
+        session_id: 'sess-claude-a',
+        total_cost_usd: 0.01,
+        duration_ms: 120,
+        usage: {
+          input_tokens: 5,
+          output_tokens: 7,
+          cache_read_input_tokens: 2,
+          cache_creation_input_tokens: 1,
+        },
+      }));
+      childA.emit('close', 0);
+      await flushAsync();
+
+      const nodeBState = execution.agentStates.get('node-b');
+      expect(nodeBState).toBeDefined();
+      expect(nodeBState.spawnMode).toBe('stream-json');
+      expect(nodeBState.runtimeProvider).toBe('claude');
+
+      const nodeBSpawnArgs = mockSpawn.mock.calls[1][1];
+      expect(nodeBSpawnArgs[nodeBSpawnArgs.indexOf('--model') + 1]).toBe('sonnet');
+      expect(nodeBSpawnArgs[nodeBSpawnArgs.indexOf('--tools') + 1]).toBe('Write,Edit');
+
+      rlB.emit('line', JSON.stringify({
+        type: 'content_block_start',
+        index: 0,
+        content_block: {
+          type: 'thinking',
+          thinking: '',
+        },
+      }));
+      rlB.emit('line', JSON.stringify({
+        type: 'content_block_delta',
+        index: 0,
+        delta: {
+          type: 'thinking_delta',
+          thinking: 'Need a Codex finisher for the final draft.',
+        },
+      }));
+      rlB.emit('line', JSON.stringify({ type: 'content_block_stop', index: 0 }));
+      rlB.emit('line', JSON.stringify({
+        type: 'content_block_start',
+        index: 1,
+        content_block: {
+          type: 'text',
+          text: '',
+        },
+      }));
+      rlB.emit('line', JSON.stringify({
+        type: 'content_block_delta',
+        index: 1,
+        delta: {
+          type: 'text_delta',
+          text: 'Claude writer complete.\n__HANDOFF__:node-c:{"summary":"writer complete","result":"draft ready"}',
+        },
+      }));
+      rlB.emit('line', JSON.stringify({ type: 'content_block_stop', index: 1 }));
+      await engine._onHandoff(executionId, 'node-b', {
+        type: 'handoff',
+        targetId: 'node-c',
+        contextUpdate: {
+          summary: 'writer complete',
+          result: 'draft ready',
+        },
+      });
+      rlB.emit('line', JSON.stringify({
+        type: 'result',
+        subtype: 'success',
+        session_id: 'sess-claude-b',
+        total_cost_usd: 0.02,
+        duration_ms: 140,
+        usage: {
+          input_tokens: 4,
+          output_tokens: 9,
+        },
+      }));
+      childB.emit('close', 0);
+      await flushAsync();
+
+      const nodeCState = execution.agentStates.get('node-c');
+      expect(nodeCState).toBeDefined();
+      expect(nodeCState.sessionId).toBeTruthy();
+      expect(nodeCState.provider).toBe('codex');
+      expect(nodeCState.runtimeProvider).toBe('codex');
+
+      const codexSpawnCall = mockSessionManager.createSession.mock.calls.at(-1);
+      expect(codexSpawnCall[3]).toEqual(expect.objectContaining({
+        provider: 'codex',
+      }));
+
+      const codexSession = mockSessionManager.getSession(nodeCState.sessionId);
+      const codexTap = [...codexSession.swarmListeners].find((listener) => listener === nodeCState.tapFn);
+
+      expect(codexTap).toBeDefined();
+      expect(codexSession.onData).toHaveBeenCalledTimes(0);
+
+      nodeCState.ignoreParserUntil = null;
+      nodeCState.ignoreParserBuffer = '';
+      codexTap('Codex final synthesis complete.\n__DONE__');
+      await flushAsync();
+
+      const status = engine.getStatus(executionId);
+      expect(status.status).toBe('completed');
+      expect(status.agentStates['node-a'].status).toBe('done');
+      expect(status.agentStates['node-b'].status).toBe('done');
+      expect(status.agentStates['node-c'].status).toBe('done');
+      expect(status.agentStates['node-a'].spawnMode).toBe('stream-json');
+      expect(status.agentStates['node-b'].spawnMode).toBe('stream-json');
+
+      const events = wsBroadcast.mock.calls.map(([, ev]) => ev);
+
+      expect(events).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          type: 'handoff_started',
+          sourceNodeId: 'node-a',
+          targetNodeId: 'node-b',
+        }),
+        expect.objectContaining({
+          type: 'handoff_completed',
+          sourceNodeId: 'node-a',
+          targetNodeId: 'node-b',
+        }),
+        expect.objectContaining({
+          type: 'handoff_started',
+          sourceNodeId: 'node-b',
+          targetNodeId: 'node-c',
+        }),
+        expect.objectContaining({
+          type: 'handoff_completed',
+          sourceNodeId: 'node-b',
+          targetNodeId: 'node-c',
+        }),
+        expect.objectContaining({
+          type: 'agent_status',
+          nodeId: 'node-c',
+          status: 'running',
+          spawnMode: 'pty',
+          provider: 'codex',
+          runtimeProvider: 'codex',
+        }),
+        expect.objectContaining({
+          type: 'agent_status',
+          nodeId: 'node-c',
+          status: 'done',
+          spawnMode: 'pty',
+          provider: 'codex',
+          runtimeProvider: 'codex',
+        }),
+        expect.objectContaining({
+          type: 'execution_status',
+          status: 'completed',
+          activeProvider: 'codex',
+          runtimeProvider: 'codex',
+        }),
+      ]));
+    });
+
+    it('should gracefully pause the downstream Claude agent without regressing the mixed-provider routing', async () => {
+      const workflow = buildMixedProviderChainWorkflow();
+      workflowStoreMock.get.mockResolvedValueOnce(workflow);
+
+      const childA = buildMockStreamJsonChild(6201);
+      const childB = buildMockStreamJsonChild(6202);
+      const rlA = buildMockReadline();
+      const rlB = buildMockReadline();
+
+      mockSpawn.mockReturnValueOnce(childA).mockReturnValueOnce(childB);
+      mockCreateInterface.mockReturnValueOnce(rlA).mockReturnValueOnce(rlB);
+
+      const executionId = await engine.startExecution(workflow.id, 'proj-1', '/projects/proj-1');
+      const execution = engine._executions.get(executionId);
+
+      rlA.emit('line', JSON.stringify({
+        type: 'content_block_start',
+        index: 0,
+        content_block: { type: 'text', text: '' },
+      }));
+      rlA.emit('line', JSON.stringify({
+        type: 'content_block_delta',
+        index: 0,
+        delta: {
+          type: 'text_delta',
+          text: '__HANDOFF__:node-b:{"summary":"handoff before graceful stop","result":"writer should pause"}',
+        },
+      }));
+      rlA.emit('line', JSON.stringify({ type: 'content_block_stop', index: 0 }));
+      await engine._onHandoff(executionId, 'node-a', {
+        type: 'handoff',
+        targetId: 'node-b',
+        contextUpdate: {
+          summary: 'handoff before graceful stop',
+          result: 'writer should pause',
+        },
+      });
+      rlA.emit('line', JSON.stringify({
+        type: 'result',
+        subtype: 'success',
+        session_id: 'sess-claude-a-graceful',
+        total_cost_usd: 0.01,
+        duration_ms: 90,
+        usage: {
+          input_tokens: 2,
+          output_tokens: 4,
+        },
+      }));
+      childA.emit('close', 0);
+      await flushAsync();
+
+      const nodeBState = execution.agentStates.get('node-b');
+      expect(nodeBState).toBeDefined();
+      expect(nodeBState.status).toBe('running');
+      expect(nodeBState.spawnMode).toBe('stream-json');
+
+      const graceful = await engine.stopStreamJsonAgent(executionId, 'node-b', 'graceful');
+      expect(graceful.agentStates['node-b'].status).toBe('running');
+      expect(nodeBState.doNotSpawnNextTurn).toBe(true);
+
+      rlB.emit('line', JSON.stringify({
+        type: 'content_block_start',
+        index: 0,
+        content_block: { type: 'text', text: '' },
+      }));
+      rlB.emit('line', JSON.stringify({
+        type: 'content_block_delta',
+        index: 0,
+        delta: {
+          type: 'text_delta',
+          text: 'Claude writer stopping cleanly after this turn.',
+        },
+      }));
+      rlB.emit('line', JSON.stringify({ type: 'content_block_stop', index: 0 }));
+      rlB.emit('line', JSON.stringify({
+        type: 'result',
+        subtype: 'success',
+        session_id: 'sess-claude-b-graceful',
+        total_cost_usd: 0.005,
+        duration_ms: 75,
+        usage: {
+          input_tokens: 1,
+          output_tokens: 2,
+        },
+      }));
+      childB.emit('close', 0);
+      await flushAsync();
+
+      const status = engine.getStatus(executionId);
+      expect(status.status).toBe('paused');
+      expect(status.agentStates['node-a'].status).toBe('done');
+      expect(status.agentStates['node-b'].status).toBe('paused');
+      expect(status.agentStates['node-c']).toBeUndefined();
+
+      const pausedEvent = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .find((ev) => ev.type === 'agent_status' && ev.nodeId === 'node-b' && ev.status === 'paused');
+      expect(pausedEvent).toMatchObject({
+        nodeId: 'node-b',
+        status: 'paused',
+        spawnMode: 'stream-json',
+      });
+    });
+
+    it('should build a provider-aware compact prompt for Codex downstream handoffs', async () => {
+      const workflow = buildMixedProviderChainWorkflow();
+      const executionId = 'exec-codex-downstream-prompt';
+      const execution = {
+        executionId,
+        workflowId: workflow.id,
+        workflowDef: workflow,
+        projectId: 'proj-1',
+        projectPath: '/projects/proj-1',
+        status: 'running',
+        startedAt: '2026-04-08T14:00:00.000Z',
+        agentStates: new Map([
+          ['node-b', {
+            status: 'running',
+            provider: 'claude',
+            runtimeProvider: 'claude',
+            spawnMode: 'stream-json',
+            sessionId: null,
+            handoffCount: 0,
+            lastOutputSnippet: 'Writer ready.',
+            handoffPayloads: [],
+          }],
+        ]),
+        edgeCounters: new Map(),
+        agentInputBarriers: new Map(),
+        inboundHandoffs: new Map(),
+        workflowContext: {
+          currentTask: 'Prepare the final Codex report.',
+          expectedReport: 'Two concise sentences.',
+        },
+        heartbeatTimer: null,
+        inboxItems: [],
+        chatMessages: [],
+        runtimeBlocker: null,
+        providerStrategy: {
+          mode: 'auto',
+          activeProvider: 'claude',
+          fallbackProvider: 'codex',
+          allowFallback: true,
+        },
+        runtimeProvider: 'claude',
+        activeProvider: 'claude',
+        codexPromptRetryCounts: new Map(),
+        lastFallback: null,
+      };
+      engine._executions.set(executionId, execution);
+
+      const promptSpy = vi.spyOn(engine, '_writeSwarmPrompt');
+
+      await engine._onHandoff(executionId, 'node-b', {
+        type: 'handoff',
+        targetId: 'node-c',
+        contextUpdate: {
+          summary: 'writer complete',
+          result: 'draft ready',
+        },
+      });
+
+      const [, prompt] = promptSpy.mock.calls.at(-1);
+      expect(prompt).toContain('Upstream handoffs:');
+      expect(prompt).toContain('Required final report: Two concise sentences.');
+      expect(prompt).not.toContain('--- SWARM PROTOCOL');
+      expect(prompt).not.toContain('Current workflow context:');
+
+      promptSpy.mockRestore();
     });
   });
 });

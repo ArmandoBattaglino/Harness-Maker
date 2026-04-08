@@ -1,0 +1,63 @@
+{
+    "executionId":  "c6fa0f09-4eaa-4a1c-942a-477d9034d31f",
+    "workflowId":  "67ec1884-fe23-46ba-a157-05840973ba62",
+    "status":  "blocked",
+    "runtimeProvider":  "claude",
+    "activeProvider":  "claude",
+    "providerStrategy":  {
+                             "mode":  "auto",
+                             "activeProvider":  "claude",
+                             "fallbackProvider":  "codex",
+                             "tertiaryProvider":  "gemini",
+                             "allowFallback":  true
+                         },
+    "lastFallback":  null,
+    "agentStates":  {
+                        "node-a":  {
+                                       "sessionId":  null,
+                                       "provider":  "claude",
+                                       "runtimeProvider":  "claude",
+                                       "status":  "blocked",
+                                       "handoffCount":  0,
+                                       "lastOutputSnippet":  "Claude hit its usage limit before the swarm agent could continue.",
+                                       "lastModelFallback":  null,
+                                       "runtimeBlocker":  {
+                                                              "type":  "rate_limited",
+                                                              "provider":  "claude",
+                                                              "message":  "Claude hit its usage limit before the swarm agent could continue.",
+                                                              "detectedAt":  "2026-04-08T14:40:45.667Z",
+                                                              "nodeId":  "node-a"
+                                                          },
+                                       "spawnMode":  "stream-json",
+                                       "turnCount":  1,
+                                       "totalCostUsd":  0,
+                                       "totalInputTokens":  0,
+                                       "totalOutputTokens":  0
+                                   }
+                    },
+    "edgeCounters":  {
+
+                     },
+    "budget":  {
+                   "estimatedTokensUsed":  0,
+                   "limitTokens":  0
+               },
+    "inboxItems":  [
+
+                   ],
+    "chatMessages":  [
+
+                     ],
+    "runtimeBlocker":  {
+                           "type":  "rate_limited",
+                           "provider":  "claude",
+                           "message":  "Claude hit its usage limit before the swarm agent could continue.",
+                           "nodeId":  "node-a",
+                           "childExecutionId":  null,
+                           "childNodeId":  null,
+                           "detectedAt":  "2026-04-08T14:40:45.667Z",
+                           "progressReason":  null,
+                           "elapsedMs":  null,
+                           "tokenDelta":  null
+                       }
+}

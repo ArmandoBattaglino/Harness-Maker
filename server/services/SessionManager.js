@@ -1,6 +1,7 @@
 // server/services/SessionManager.js
 // Sole owner of all PTY operations — runs on the main Node.js thread only.
 // DEC-009: pty.onData handler is permanent, wired once at spawn, never removed.
+// [STREAM-JSON-MIGRATION] Claude stream-json agents bypass SessionManager entirely; only PTY agents use this path.
 // PTY lifetime is decoupled from WebSocket lifetime — PTY survives tab close.
 
 import { createRequire } from 'module';

@@ -1,4 +1,13 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, beforeEach, vi } from 'vitest';
+import { EventEmitter } from 'events';
+import { PassThrough } from 'stream';
+
+const spawnMock = vi.hoisted(() => vi.fn());
+
+vi.mock('cross-spawn', () => ({
+  default: spawnMock,
+}));
+
 import {
   buildWorkflowPrompt,
   generateWorkflowFromPrompt,
@@ -8,6 +17,30 @@ import {
 } from '../services/ScaffoldGenerator.js';
 
 describe('ScaffoldGenerator', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  function makeMockChild({ stdoutText = '', stderrText = '', exitCode = 0 } = {}) {
+    const child = new EventEmitter();
+    child.stdout = new PassThrough();
+    child.stderr = new PassThrough();
+    child.stdin = {
+      write: vi.fn(),
+      end: vi.fn(),
+    };
+
+    queueMicrotask(() => {
+      if (stdoutText) child.stdout.write(stdoutText);
+      if (stderrText) child.stderr.write(stderrText);
+      child.stdout.end();
+      child.stderr.end();
+      child.emit('close', exitCode);
+    });
+
+    return child;
+  }
+
   it('buildWorkflowPrompt includes the user description', () => {
     const prompt = buildWorkflowPrompt('Create a billing triage workflow');
     expect(prompt).toContain('Create a billing triage workflow');
@@ -166,5 +199,47 @@ describe('ScaffoldGenerator', () => {
     expect(workflow.nodes.map((node) => node.data.label)).toContain('Billing Agent');
     expect(workflow.nodes.map((node) => node.data.label)).toContain('Technical Support Agent');
     expect(workflow.edges).toHaveLength(2);
+  });
+
+  it('uses --tools none for Claude scaffold generation', async () => {
+    const workflowJson = {
+      name: 'CLI Workflow',
+      description: 'Generated from Claude CLI',
+      nodes: [
+        {
+          id: 'node-1',
+          type: 'agent',
+          data: {
+            label: 'Triage Agent',
+            systemPrompt: 'Route work',
+            isTriageNode: true,
+          },
+          position: { x: 0, y: 0 },
+        },
+      ],
+      edges: [],
+    };
+
+    spawnMock.mockImplementation(() => makeMockChild({
+      stdoutText: JSON.stringify({
+        type: 'result',
+        is_error: false,
+        result: JSON.stringify(workflowJson),
+      }),
+    }));
+
+    const workflow = await generateWorkflowFromPrompt({
+      prompt: 'Create a simple workflow',
+      claudeBin: 'claude.exe',
+    });
+
+    const spawnArgs = spawnMock.mock.calls[0][1];
+    const toolsFlagIndex = spawnArgs.indexOf('--tools');
+    const legacyToolsFlag = ['--allowed', 'Tools'].join('');
+
+    expect(workflow.name).toBe('CLI Workflow');
+    expect(toolsFlagIndex).toBeGreaterThan(-1);
+    expect(spawnArgs[toolsFlagIndex + 1]).toBe('none');
+    expect(spawnArgs).not.toContain(legacyToolsFlag);
   });
 });

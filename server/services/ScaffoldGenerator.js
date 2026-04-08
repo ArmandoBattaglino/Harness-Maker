@@ -323,7 +323,7 @@ async function runClaudeScaffold(claudeBin, prompt) {
     '--output-format', 'json',
     '--max-turns', '1',
     '--no-session-persistence',
-    '--allowedTools', 'none',
+    '--tools', 'none',
   ];
 
   const { code, stdout, stderr } = await runSpawn(claudeBin, args, { cwd: os.tmpdir() });

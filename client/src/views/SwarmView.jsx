@@ -16,7 +16,7 @@ import { useSwarm } from '../hooks/useSwarm';
 import { useInbox } from '../hooks/useInbox.js';
 import { useWorkflowList } from '../hooks/useWorkflow.js';
 import { useAppState } from '../store/AppContext';
-import { apiGet, apiPost, apiPut } from '../hooks/useApi.js';
+import { apiDelete, apiGet, apiPost, apiPut } from '../hooks/useApi.js';
 import { sanitizeWorkflow } from '../utils/sanitizeWorkflow.js';
 import { useCanvasValidation } from '../hooks/useCanvasValidation.js';
 import WorkflowArtifactPanel from '../panels/WorkflowArtifactPanel';
@@ -39,6 +39,9 @@ function resolveRuntimeModelSelection(currentModel, availableModels = [], detect
   return availableModels[0] ?? '';
 }
 
+const ACTIVE_AGENT_STATUSES = ['running', 'paused', 'blocked'];
+const LIVE_AGENT_STATUSES = ['running', 'blocked'];
+
 export default function SwarmView() {
   const executionStatus = useSwarmStore((s) => s.executionStatus);
   const activeExecutionId = useSwarmStore((s) => s.activeExecutionId);
@@ -47,6 +50,7 @@ export default function SwarmView() {
   const providerStrategy = useSwarmStore((s) => s.providerStrategy);
   const lastFallback = useSwarmStore((s) => s.lastFallback);
   const inboxItems = useSwarmStore((s) => s.inboxItems);
+  const agentStates = useSwarmStore((s) => s.agentStates);
   const setPaused = useSwarmStore((s) => s.setPaused);
   const setResumed = useSwarmStore((s) => s.setResumed);
   const reset = useSwarmStore((s) => s.reset);
@@ -96,6 +100,11 @@ export default function SwarmView() {
     gemini: [],
   });
   const [runtimeCapabilityError, setRuntimeCapabilityError] = useState('');
+  const [streamJsonForceEnabled, setStreamJsonForceEnabled] = useState(false);
+  const [streamJsonFeedback, setStreamJsonFeedback] = useState('');
+  const [streamJsonFeedbackTone, setStreamJsonFeedbackTone] = useState('text-gray-400');
+  const streamJsonForceTimerRef = useRef(null);
+  const streamJsonFeedbackTimerRef = useRef(null);
 
   const { activeProjectId, projects, projectsHydrated } = useAppState();
   const activeProject = useMemo(
@@ -117,6 +126,35 @@ export default function SwarmView() {
 
   const pendingCount = getPendingCount(inboxItems);
   const isExecutionActive = ['running', 'paused', 'blocked'].includes(executionStatus);
+  const activeAgentEntries = useMemo(
+    () => Object.entries(agentStates ?? {}).filter(([, state]) => state?.status),
+    [agentStates]
+  );
+  const activeStreamJsonAgentIds = useMemo(
+    () => activeAgentEntries
+      .filter(([, state]) => state?.spawnMode === 'stream-json' && ACTIVE_AGENT_STATUSES.includes(state.status))
+      .map(([nodeId]) => nodeId),
+    [activeAgentEntries]
+  );
+  const liveStreamJsonAgentIds = useMemo(
+    () => activeAgentEntries
+      .filter(([, state]) => state?.spawnMode === 'stream-json' && LIVE_AGENT_STATUSES.includes(state.status))
+      .map(([nodeId]) => nodeId),
+    [activeAgentEntries]
+  );
+  const activePtyAgentIds = useMemo(
+    () => activeAgentEntries
+      .filter(([, state]) => state?.spawnMode !== 'stream-json' && ACTIVE_AGENT_STATUSES.includes(state.status))
+      .map(([nodeId]) => nodeId),
+    [activeAgentEntries]
+  );
+  const allStreamJsonAgentIds = useMemo(
+    () => activeAgentEntries
+      .filter(([, state]) => state?.spawnMode === 'stream-json')
+      .map(([nodeId]) => nodeId),
+    [activeAgentEntries]
+  );
+  const showStreamJsonToolbar = Boolean(activeExecutionId && activeStreamJsonAgentIds.length > 0 && activePtyAgentIds.length === 0);
   const showMissingProjectMessage = Boolean(workflowDef && projectsHydrated && !activeProjectId);
   const savedWorkflows = useMemo(() => {
     const filtered = workflows
@@ -190,6 +228,24 @@ export default function SwarmView() {
       setSelectedWorkflowId(workflowDef.id);
     }
   }, [workflowDef?.id]);
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(streamJsonForceTimerRef.current);
+      clearTimeout(streamJsonFeedbackTimerRef.current);
+    };
+  }, []);
+
+  const setTimedStreamJsonFeedback = useCallback((message, tone = 'text-gray-400', durationMs = 3200) => {
+    setStreamJsonFeedback(message);
+    setStreamJsonFeedbackTone(tone);
+    clearTimeout(streamJsonFeedbackTimerRef.current);
+    if (durationMs > 0) {
+      streamJsonFeedbackTimerRef.current = setTimeout(() => {
+        setStreamJsonFeedback('');
+      }, durationMs);
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -313,10 +369,79 @@ export default function SwarmView() {
     try {
       await apiPost(`/api/v1/swarm/${activeExecutionId}/resume`, {});
       setResumed();
+      setStreamJsonForceEnabled(false);
+      setStreamJsonFeedback('');
     } finally {
       setPausing(false);
     }
   };
+
+  const handleStreamJsonAction = useCallback(async (mode) => {
+    if (!activeExecutionId) return;
+
+    const targetNodeIds = mode === 'reset'
+      ? (activeStreamJsonAgentIds.length > 0 ? activeStreamJsonAgentIds : allStreamJsonAgentIds)
+      : (liveStreamJsonAgentIds.length > 0 ? liveStreamJsonAgentIds : activeStreamJsonAgentIds);
+
+    if (targetNodeIds.length === 0) return;
+
+    if (mode === 'graceful') {
+      clearTimeout(streamJsonForceTimerRef.current);
+      setStreamJsonForceEnabled(false);
+      streamJsonForceTimerRef.current = setTimeout(() => {
+        setStreamJsonForceEnabled(true);
+      }, 5000);
+      setTimedStreamJsonFeedback('Stopping...', 'text-amber-300', 0);
+    }
+
+    setExecuting(true);
+    try {
+      await Promise.all(targetNodeIds.map((nodeId) => (
+        apiDelete(`/api/v1/swarm/${activeExecutionId}?nodeId=${encodeURIComponent(nodeId)}&mode=${mode}`)
+      )));
+
+      if (mode === 'forced') {
+        setTimedStreamJsonFeedback('Stopped', 'text-red-300');
+      } else if (mode === 'reset') {
+        setTimedStreamJsonFeedback('Reset', 'text-emerald-300');
+        setStreamJsonForceEnabled(false);
+      }
+    } catch (error) {
+      clearTimeout(streamJsonForceTimerRef.current);
+      setStreamJsonForceEnabled(false);
+      setTimedStreamJsonFeedback(`Error: ${error.message}`, 'text-red-300', 5000);
+    } finally {
+      setExecuting(false);
+    }
+  }, [
+    activeExecutionId,
+    activeStreamJsonAgentIds,
+    allStreamJsonAgentIds,
+    liveStreamJsonAgentIds,
+    setTimedStreamJsonFeedback,
+  ]);
+
+  useEffect(() => {
+    if (!showStreamJsonToolbar) {
+      clearTimeout(streamJsonForceTimerRef.current);
+      setStreamJsonForceEnabled(false);
+      return;
+    }
+
+    if (executionStatus === 'paused') {
+      clearTimeout(streamJsonForceTimerRef.current);
+      setStreamJsonForceEnabled(false);
+      if (streamJsonFeedback === 'Stopping...') {
+        setTimedStreamJsonFeedback('Stopped', 'text-emerald-300');
+      }
+      return;
+    }
+
+    if (executionStatus === 'completed' || executionStatus === 'stopped') {
+      clearTimeout(streamJsonForceTimerRef.current);
+      setStreamJsonForceEnabled(false);
+    }
+  }, [executionStatus, showStreamJsonToolbar, streamJsonFeedback, setTimedStreamJsonFeedback]);
 
   const handleLoadWorkflow = () => {
     const selected = savedWorkflows.find((workflow) => workflow.id === selectedWorkflowId);
@@ -753,7 +878,7 @@ export default function SwarmView() {
           </button>
         )}
 
-        {executionStatus === 'running' && (
+        {executionStatus === 'running' && !showStreamJsonToolbar && (
           <button
             onClick={handlePause}
             disabled={pausing}
@@ -773,7 +898,37 @@ export default function SwarmView() {
           </button>
         )}
 
-        {(executionStatus === 'running' || executionStatus === 'paused' || executionStatus === 'blocked') && (
+        {showStreamJsonToolbar && (executionStatus === 'running' || executionStatus === 'blocked') && (
+          <button
+            onClick={() => handleStreamJsonAction('graceful')}
+            disabled={executing}
+            className="bg-red-600 hover:bg-red-500 text-white text-xs px-3 py-1 rounded transition-colors disabled:opacity-40"
+          >
+            {executing ? '...' : 'Stop'}
+          </button>
+        )}
+
+        {showStreamJsonToolbar && streamJsonForceEnabled && liveStreamJsonAgentIds.length > 0 && (
+          <button
+            onClick={() => handleStreamJsonAction('forced')}
+            disabled={executing}
+            className="bg-red-800 hover:bg-red-700 text-white text-xs px-3 py-1 rounded transition-colors disabled:opacity-40"
+          >
+            {executing ? '...' : 'Force Stop'}
+          </button>
+        )}
+
+        {showStreamJsonToolbar && activeStreamJsonAgentIds.length > 0 && (
+          <button
+            onClick={() => handleStreamJsonAction('reset')}
+            disabled={executing}
+            className="bg-gray-700 hover:bg-gray-600 text-white text-xs px-3 py-1 rounded transition-colors disabled:opacity-40"
+          >
+            {executing ? '...' : 'Reset Session'}
+          </button>
+        )}
+
+        {!showStreamJsonToolbar && (executionStatus === 'running' || executionStatus === 'paused' || executionStatus === 'blocked') && (
           <button
             onClick={handleStop}
             disabled={executing}
@@ -786,6 +941,12 @@ export default function SwarmView() {
         <span className={`text-xs capitalize ${statusColors[executionStatus] || 'text-gray-400'}`}>
           ● {executionStatus}
         </span>
+
+        {showStreamJsonToolbar && streamJsonFeedback && (
+          <span className={`text-[11px] ${streamJsonFeedbackTone}`}>
+            {streamJsonFeedback}
+          </span>
+        )}
 
         <span className="text-[11px] px-2 py-1 rounded bg-gray-800 text-gray-300 border border-gray-700">
           Provider: {providerLabel}

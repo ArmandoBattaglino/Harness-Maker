@@ -3,6 +3,7 @@
 import { Handle, Position } from '@xyflow/react';
 import { useSwarmStore } from '../../store/SwarmContext';
 import { stripAnsi } from '../../utils/stripAnsi';
+
 // type: "agent"
 export default function AgentNode({ id, data, selected }) {
   const agentState = useSwarmStore((s) => s.agentStates[id]);
@@ -11,8 +12,13 @@ export default function AgentNode({ id, data, selected }) {
   );
   const isDropPreview = Boolean(data?.isDropPreview);
   const status = isDropPreview ? 'preview' : agentState?.status ?? 'idle';
+  const isStreamJson = agentState?.spawnMode === 'stream-json';
+  const showThinking = isStreamJson && status === 'running' && agentState?.isThinking;
+  const currentToolName = isStreamJson ? agentState?.currentTool?.toolName : null;
+  const totalCostUsd = Number(agentState?.totalCost?.costUsd ?? 0);
+  const showCostBadge = isStreamJson && Number.isFinite(totalCostUsd) && totalCostUsd > 0;
 
-  // Status → color mapping
+  // Status -> color mapping
   const statusColors = {
     idle: 'border-gray-400 bg-gray-800',
     running: 'border-blue-400 bg-blue-950 animate-pulse',
@@ -35,7 +41,7 @@ export default function AgentNode({ id, data, selected }) {
         <Handle type="target" position={Position.Top} className="!bg-gray-400 !border-gray-600" />
       )}
 
-      {/* Validation warning badge — empty system prompt (FR-V5-45) */}
+      {/* Validation warning badge - empty system prompt (FR-V5-45) */}
       {!isDropPreview && !data?.systemPrompt?.trim() && (
         <div
           className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center text-[10px] text-black font-bold z-10"
@@ -45,11 +51,11 @@ export default function AgentNode({ id, data, selected }) {
         </div>
       )}
 
-      {/* Unviewed output badge — pulsing blue dot (top-left) */}
+      {/* Unviewed output badge - pulsing blue dot (top-left) */}
       {!isDropPreview && hasUnviewedOutput && status === 'done' && (
         <div
           className="absolute -top-1 -left-1 w-3.5 h-3.5 bg-blue-500 rounded-full animate-pulse border border-blue-300 shadow-[0_0_6px_rgba(59,130,246,0.6)] z-10"
-          title="Output ready — click to view"
+          title="Output ready - click to view"
         />
       )}
 
@@ -64,7 +70,19 @@ export default function AgentNode({ id, data, selected }) {
         {isDropPreview ? 'Drop preview' : status}
       </div>
 
-      {/* Node snippet — prefer clean chat message (Option B) over raw PTY */}
+      {showThinking && !isDropPreview && (
+        <div className="mt-2 text-[11px] italic text-gray-200 animate-pulse">
+          Thinking...
+        </div>
+      )}
+
+      {currentToolName && !isDropPreview && (
+        <div className="mt-1 text-[11px] text-amber-200">
+          Using: {currentToolName}
+        </div>
+      )}
+
+      {/* Node snippet - prefer clean chat message (Option B) over raw PTY */}
       {(agentState?.lastChatSnippet || agentState?.lastOutputSnippet) && !isDropPreview && (
         <div className="mt-2 bg-black/40 rounded p-1.5 max-h-16 overflow-y-auto">
           <pre className="text-xs text-green-300 font-mono whitespace-pre-wrap break-all leading-tight">
@@ -81,7 +99,13 @@ export default function AgentNode({ id, data, selected }) {
         </div>
       )}
 
-      {/* Bottom handle — sends handoffs to other agents */}
+      {showCostBadge && !isDropPreview && (
+        <div className="absolute bottom-2 right-2 rounded-full border border-emerald-400/50 bg-emerald-950/80 px-2 py-0.5 text-[10px] font-semibold text-emerald-200">
+          ${totalCostUsd.toFixed(2)}
+        </div>
+      )}
+
+      {/* Bottom handle - sends handoffs to other agents */}
       {!isDropPreview && (
         <Handle type="source" position={Position.Bottom} className="!bg-blue-400 !border-blue-600" />
       )}

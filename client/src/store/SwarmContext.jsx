@@ -1,5 +1,74 @@
 import { create } from 'zustand';
 
+/**
+ * @typedef {Object} AgentTurnCost
+ * @property {number} inputTokens
+ * @property {number} outputTokens
+ * @property {number} costUsd
+ * @property {number} durationMs
+ */
+
+/**
+ * @typedef {Object} AgentTotalCost
+ * @property {number} inputTokens
+ * @property {number} outputTokens
+ * @property {number} costUsd
+ */
+
+/**
+ * @typedef {Object} AgentCurrentTool
+ * @property {string} toolName
+ * @property {string} toolUseId
+ * @property {string} partialArgs
+ */
+
+/**
+ * Dynamic per-node runtime state stored in `agentStates[nodeId]`.
+ *
+ * Stream-json specific fields are added lazily through `updateAgentState`
+ * when the corresponding WS events arrive; they are never pre-seeded in the
+ * initial store state.
+ *
+ * @typedef {Object} SwarmAgentState
+ * @property {string} [status]
+ * @property {string} [lastOutputSnippet]
+ * @property {number} [handoffCount]
+ * @property {{ started?: string, done?: string, error?: string }} [timestamps]
+ * @property {'stream-json' | 'pty'} [spawnMode]
+ * @property {boolean} [isThinking]
+ * @property {AgentCurrentTool | null} [currentTool]
+ * @property {AgentTurnCost | null} [turnCost]
+ * @property {AgentTotalCost | null} [totalCost]
+ */
+
+const buildClearedExecutionState = () => ({
+  activeExecutionId: null,
+  executionStatus: 'idle',
+  runtimeBlocker: null,
+  runtimeProvider: null,
+  providerStrategy: null,
+  lastFallback: null,
+  // Replacing the entire map clears all dynamic per-agent fields, including
+  // spawnMode/isThinking/currentTool/turnCost/totalCost.
+  agentStates: {},
+  agentResults: {},
+  triggerStates: {},
+  edgeCounters: {},
+  budget: { estimatedTokensUsed: 0, limitTokens: 0 },
+  inboxItems: [],
+  resolvedHitlIds: [],
+  interAgentFeed: [],
+  chatMessages: [],
+  chatFilter: 'all',
+  sidePanelMode: 'chat',
+  sidePanelOpen: true,
+  focusedDepartmentId: null,
+  departmentStack: [],
+  selectedNodeId: null,
+  ptyExplosionNodeId: null,
+  wsConnected: false,
+});
+
 const useSwarmStore = create((set, get) => ({
   // Execution state
   activeExecutionId: null,
@@ -8,7 +77,8 @@ const useSwarmStore = create((set, get) => ({
   runtimeProvider: null,
   providerStrategy: null,
   lastFallback: null,
-  agentStates: {},         // { [nodeId]: { status, lastOutputSnippet, handoffCount } }
+  /** @type {Record<string, SwarmAgentState>} */
+  agentStates: {},
   agentResults: {},        // { [nodeId]: { finalText, handoffPayloads, viewed, updatedAt } }
   triggerStates: {},       // { [triggerId]: { fired, lastFiredAt, status } }
   edgeCounters: {},        // { [edgeId]: number }
@@ -101,6 +171,18 @@ const useSwarmStore = create((set, get) => ({
   addChatMessage: (msg) => set((state) => ({
     chatMessages: [...state.chatMessages, msg].slice(-500)  // keep last 500
   })),
+
+  patchLatestChatMessage: (nodeId, patch, predicate = null) => set((state) => {
+    const nextMessages = [...state.chatMessages];
+    for (let i = nextMessages.length - 1; i >= 0; i -= 1) {
+      const message = nextMessages[i];
+      if (message?.nodeId !== nodeId) continue;
+      if (typeof predicate === 'function' && !predicate(message)) continue;
+      nextMessages[i] = { ...message, ...patch };
+      return { chatMessages: nextMessages };
+    }
+    return state;
+  }),
 
   setChatFilter: (filter) => set({ chatFilter: filter }),
   setSidePanelMode: (mode) => set({ sidePanelMode: mode }),
@@ -198,60 +280,12 @@ const useSwarmStore = create((set, get) => ({
 
   clearAgentResults: () => set({ agentResults: {} }),
 
-  clearExecutionState: () => set({
-    activeExecutionId: null,
-    executionStatus: 'idle',
-    runtimeBlocker: null,
-    runtimeProvider: null,
-    providerStrategy: null,
-    lastFallback: null,
-    agentStates: {},
-    agentResults: {},
-    triggerStates: {},
-    edgeCounters: {},
-    budget: { estimatedTokensUsed: 0, limitTokens: 0 },
-    inboxItems: [],
-    resolvedHitlIds: [],
-    interAgentFeed: [],
-    chatMessages: [],
-    chatFilter: 'all',
-    sidePanelMode: 'chat',
-    sidePanelOpen: true,
-    focusedDepartmentId: null,
-    departmentStack: [],
-    selectedNodeId: null,
-    ptyExplosionNodeId: null,
-    wsConnected: false,
-  }),
+  clearExecutionState: () => set(buildClearedExecutionState()),
 
   reset: () => {
     // Clear persisted execution ID so navigation doesn't rehydrate stale results
     try { window.localStorage.removeItem('swarm-active-execution'); } catch { /* ignore */ }
-    return set({
-      activeExecutionId: null,
-      executionStatus: 'idle',
-      runtimeBlocker: null,
-      runtimeProvider: null,
-      providerStrategy: null,
-      lastFallback: null,
-      agentStates: {},
-      agentResults: {},
-      triggerStates: {},
-      edgeCounters: {},
-      budget: { estimatedTokensUsed: 0, limitTokens: 0 },
-      inboxItems: [],
-      resolvedHitlIds: [],
-      interAgentFeed: [],
-      chatMessages: [],
-      chatFilter: 'all',
-      sidePanelMode: 'chat',
-      sidePanelOpen: true,
-      focusedDepartmentId: null,
-      departmentStack: [],
-      selectedNodeId: null,
-      ptyExplosionNodeId: null,
-      wsConnected: false,
-    });
+    return set(buildClearedExecutionState());
   },
 }));
 

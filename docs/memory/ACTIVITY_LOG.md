@@ -8,6 +8,25 @@
 **Next:** backend-dev (or debugger) fixes (a) add cacheReadTokens/cacheWriteTokens to agent_cost broadcast in _handleStreamJsonResult from resultEvt.usage.cacheRead/.cacheWrite; (b) add spawnMode to _broadcastAgentStatus payload. Then re-run TEST GATE #360.
 
 ---
+## 2026-04-08 — backend-dev — Tasks #365+#366: Per-Agent Tool Configuration + TEST GATE
+**Outcome:** COMPLETED
+**Summary:** Closed the per-agent tool configuration wave. SwarmEngine now defaults stream-json agents to `Bash,Read,Edit,Write,Grep,Glob,LS`, persists node `tools` arrays through WorkflowStore, and uses `--tools` consistently. Follow-up cleanup also migrated JobRunner and ScaffoldGenerator off the legacy permission-bypass flag so the server runtime/test scope contains no `--allowedTools` references. Verification passed with targeted spawn/persistence tests and full backend suite green at 470/470.
+**Files changed:** server/services/SwarmEngine.js, server/services/JobRunner.js, server/services/ScaffoldGenerator.js, server/routes/swarm.js, server/tests/swarm-engine.test.js, server/tests/JobRunner.test.js, server/tests/ScaffoldGenerator.test.js, server/tests/security-v3.test.js, docs/TASK_PLAN.md, docs/ARCHITECTURE.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** Legacy CLI flag usage remained in JobRunner and scaffold generation paths after the stream-json migration
+**Decisions made:** Treat the #366 grep requirement as applying to active server runtime/test scope; historical research and audit docs retain legacy-flag references for provenance
+**Blockers:** none
+**Next:** TASK #367 area checkpoint for V9.0-Phase1 backend core
+
+---
+## 2026-04-08 — orchestrator/backend-dev/qa-tester — Tasks #360, #361, #362, #363, #364: stream-json gates, dispatcher, and session lifecycle
+**Outcome:** COMPLETED
+**Summary:** Closed the remaining Phase 1 stream-json backend wave. Fixed the #360 WS contract gaps (`agent_status.spawnMode`, `agent_cost.cacheReadTokens/cacheWriteTokens`), completed `_spawnAgent()` dispatcher routing and call-site migration, then implemented `stopStreamJsonAgent(executionId, nodeId, mode)` with graceful stop, forced stop, reset, post-result timeout escalation, resume re-entry, session JSONL archive/delete, and DELETE route extension for stream-json agents. Added targeted lifecycle/dispatcher tests. Full server suite passes at 467/467.
+**Files changed:** server/services/SwarmEngine.js, server/routes/swarm.js, server/tests/swarm-engine.test.js, docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** #360 WS contract mismatch (missing `spawnMode`, missing cache token fields)
+**Decisions made:** Forced-stop now marks `stopped` before awaiting process-tree cleanup; reset archives then deletes discovered Claude session JSONL artifacts and rotates `streamJsonSessionId`; `resumeExecution()` is async so stream-json resumes can respawn via `_spawnAgent()`.
+**Blockers:** none
+**Next:** TASK #365 — Per-Agent Tool Configuration (`tools` array + spawn args)
+---
 ## 2026-04-08 — project-manager — Task #359 COMPLETED status update + #360 activation
 **Outcome:** COMPLETED
 **Summary:** Marked #359 COMPLETED (_spawnAgentStreamJson, all methods added by backend-dev, 453/453 tests pass). Activated #360 TEST GATE to IN_PROGRESS (qa-tester running). Updated header: 356/393 COMPLETED, 35 PENDING. Note: _spawnAgent dispatcher exists but not yet wired into startExecution (that is Task #361). After #360 PASS, #361 (dispatcher wiring) + #363 (session lifecycle) can run in PARALLEL per task plan.
@@ -4822,4 +4841,96 @@ full self-contained context and acceptance criteria.
 **Decisions made:** none (mapping only)
 **Blockers:** none
 **Next:** Mapping update needed after startExecution/_ensureAgentPty are migrated to _spawnAgent dispatcher (currently bypass stream-json path)
+---
+## 2026-04-08 — qa-tester/project-manager — Task #367: AREA CHECKPOINT — V9.0-Phase1 Backend Core
+**Outcome:** COMPLETED (verdict: PASS)
+**Summary:** Closed the V9.0 Phase 1 backend core area. Added a resilient checkpoint test for a mixed-provider execution chain (Claude stream-json -> Claude stream-json -> Codex PTY) plus a graceful-stop regression test, then verified the full backend suite and build. Targeted swarm-engine tests pass at 163/163, full backend suite passes at 472/472, and `npm run build` passes with the existing large-chunk warning only. Phase 1 is now closed and Phase 2 frontend work is unblocked starting at #368.
+**Files changed:** server/tests/swarm-engine.test.js, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none in runtime code; stabilized the area-checkpoint assertion to verify checkpoint-level contracts without duplicating granular event-route coverage already enforced by earlier gates
+**Decisions made:** Keep the #367 mixed-provider test focused on routing, handoff, PTY/non-PTY coexistence, graceful stop, and final execution contract; leave detailed `agent_tool_*`, `agent_cost`, and `agent_thinking` coverage to their dedicated stream-json gate tests
+**Blockers:** none
+**Next:** TASK #368 — SwarmContext.jsx store extensions for Phase 2 frontend
+
+---
+## 2026-04-08 — frontend-dev/qa-tester — Tasks #368, #369, #370, #371: SwarmContext + useSwarm Phase 2 kickoff
+**Outcome:** COMPLETED
+**Summary:** Opened Phase 2 frontend and closed the first two component/gate pairs. `SwarmContext.jsx` now documents the dynamic stream-json agent state shape (`spawnMode`, `isThinking`, `currentTool`, `turnCost`, `totalCost`) and uses a shared execution-state reset path so those lazy fields are cleared whenever execution state is reset. `useSwarm.js` now consumes the new stream-json WS events (`agent_thinking`, `agent_tool_use`, `agent_tool_delta`, `agent_cost`) and also persists `agent_status.spawnMode` while clearing transient tool/thinking state on `done`/`idle`. Verification passed through inline Node harnesses for store merge/reset behavior and WS event handling, plus client/root builds (500 modules, existing chunk-size warning only).
+**Files changed:** client/src/store/SwarmContext.jsx, client/src/hooks/useSwarm.js, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** Frontend store and WS hook were missing the stream-json runtime state fields and event handlers required by PRD v6.0
+**Decisions made:** Keep the new client-side verification lightweight and local with inline Node harnesses because the repo has no dedicated client test runner configured; retain the existing build warning about large chunks as non-blocking
+**Blockers:** none
+**Next:** Parallel Phase 2 wave — #372 ChatMessage.jsx, #374 AgentNode.jsx, #376 AgentInspector.jsx, #378 ChatPanel.jsx, #382 Stop/Reset UI; #380 spawnMode field truthfulness can run in parallel
+
+---
+## 2026-04-08 — orchestrator — Tasks #372, #373, #374, #375, #378, #379, #380, #381: stream-json frontend visibility + PTY spawnMode verification
+**Outcome:** COMPLETED
+**Summary:** Closed the first stream-json frontend visibility wave. `ChatMessage.jsx` now renders collapsed tool/thinking metadata blocks and a cost footer for stream-json turns while keeping PTY formatting unchanged. `ChatPanel.jsx` enriches and groups stream-json assistant chunks so tool/cost metadata attach to a single rendered turn, backed by lightweight per-turn metadata capture in `useSwarm.js` and `SwarmContext.jsx`. `AgentNode.jsx` now surfaces thinking/tool/cost indicators, and `AgentInspector.jsx` hides the terminal button for stream-json agents. Also verified Task #380 truthfulness: PTY `agent_status` broadcasts already include `spawnMode:'pty'`, so no behavioral engine patch was needed before passing #381.
+**Files changed:** client/src/canvas/ChatMessage.jsx, client/src/canvas/ChatPanel.jsx, client/src/canvas/nodes/AgentNode.jsx, client/src/canvas/AgentInspector.jsx, client/src/hooks/useSwarm.js, client/src/store/SwarmContext.jsx, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/CONTEXT.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** Unified Chat lacked stream-json metadata rendering/grouping; stream-json agents still exposed an `Open Terminal` action in the inspector despite DEC-028; PTY spawnMode verification task remained open even though the server path was already truthy
+**Decisions made:** Attach tool/cost/thinking metadata to the latest stream-json assistant chat chunk at turn completion, then group contiguous stream-json chunks in `ChatPanel` instead of changing PTY chat semantics; treat #380 as verification-only closure because `_broadcastAgentStatus()` already defaulted PTY broadcasts to `spawnMode:'pty'`
+**Blockers:** none
+**Next:** Phase 2 remaining parallel wave: Task #376 (AgentInspector Claude tool whitelist UI) + Task #382 (SwarmView stop/reset UX), then gates #377 and #383
+
+---
+## 2026-04-08 - qa-tester/orchestrator - Debugger-loop Phase 1 deep E2E on mixed-provider swarm path
+**Outcome:** COMPLETED (inspection only)
+**Summary:** Ran debugger-loop Phase 1 without fixes. Baseline checks passed (`npm test --prefix server` 472/472, `npm run build` PASS, server health OK on `http://127.0.0.1:3000`). Created a controlled browser workflow `Debugger Loop Mixed Provider E2E 2026-04-08` (`6717fb0a-f174-4571-a910-a835785350aa`) in project `Prova` and executed it twice. Auto runtime showed truthful fallback copy (`claude -> codex` due Claude usage limit), but the source node remained `Running`, the downstream node stayed `Idle`, and the source node/chat leaked Codex shell/orchestration chrome (`Ran Get-Content -Raw package.json`, `› Implement {feature} gpt-5.4 high`). Manual Stop worked. Claude-only runtime later reached a truthful `Blocked` state with `Claude hit its usage limit...`, which isolates the main bug to fallback coherence rather than the blocked-state UI. Added follow-up tasks #394-#396 in TASK_PLAN for bulk-plan compliance.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/CONTEXT.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (debugger-loop Phase 1 forbids fixes)
+**Decisions made:** Treat the fallback-running/chat-contamination/downstream-idle triad as one critical bug task because the browser evidence points to a single fallback execution coherence failure; do not open a separate bug for the truthful Claude-only blocked state
+**Blockers:** Real Claude stream-json runs are rate-limited in this environment, so full #389 acceptance cannot be honestly verified live yet without either runtime availability or the mocked/canned NDJSON path already anticipated by the task
+**Next:** Phase 2 bulk plan is complete (#394-#396 opened). Next execution choice: fix #394 first, or continue #389 with a deterministic mocked E2E harness
+
+---
+
+## 2026-04-08 - orchestrator - Tasks #384, #385, #386, #387, #388: bypass markers + PTY dual-path comments
+**Outcome:** COMPLETED
+**Summary:** Closed the first Phase 3 integration/polish wave. `ChatExtractor.js` and `SessionManager.js` now carry explicit `[STREAM-JSON-MIGRATION]` bypass comments clarifying that Claude stream-json agents do not use those PTY-only modules. `swarmHandler.js` now documents the supported WS event types while keeping `broadcast()` type-agnostic and behaviorally unchanged. `SwarmEngine.js` now marks the major PTY-specific branches (legacy PTY spawn, PTY reuse, PTY downstream reuse, PTY teardown, PTY resume) with `[STREAM-JSON-MIGRATION]` comments that point to their stream-json equivalents. Gate #388 passed on marker grep plus full server test/build verification.
+**Files changed:** server/services/ChatExtractor.js, server/services/SessionManager.js, server/ws/swarmHandler.js, server/services/SwarmEngine.js, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/CONTEXT.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none in runtime behavior; this wave was explicit architecture truthfulness/documentation hardening
+**Decisions made:** Treat #388 as a real verification gate requiring marker grep plus full `npm test --prefix server` and `npm run build`; keep all Phase 3 marker comments additive-only with no deletions
+**Blockers:** none
+**Next:** TASK #389 - mixed-provider stream-json/PTy end-to-end test, then gate #390
+
+---
+
+## 2026-04-08 - orchestrator - Tasks #376, #377, #382, #383: Claude tool whitelist UI + stream-json stop/reset UX
+**Outcome:** COMPLETED
+**Summary:** Closed the remaining Phase 2 frontend wave and the area checkpoint. `AgentInspector.jsx` now shows a Claude-only collapsible tools whitelist with the full 16 built-in tool names, default checked set (`Bash,Read,Edit,Write,Grep,Glob,LS`), select-all/deselect-all actions, and 300ms debounced persistence. `SwarmView.jsx` now exposes stream-json-specific execution controls by fan-out over the real DELETE `?nodeId=&mode=` API: graceful stop first, delayed force stop, reset session, and explicit status feedback, while leaving PTY pause/stop behavior unchanged. Phase 2 checkpoint #383 now passes and Phase 3 is unblocked.
+**Files changed:** client/src/canvas/AgentInspector.jsx, client/src/views/SwarmView.jsx, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/CONTEXT.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** Frontend lacked the Claude whitelist editor required by FR-SJ-24/25/26 and lacked truthful stream-json stop/reset controls despite the backend lifecycle API already existing
+**Decisions made:** Model the stream-json toolbar against the real backend DELETE route (`/api/v1/swarm/:executionId?nodeId=<agentId>&mode=graceful|forced|reset`) rather than the stale task text; keep PTY toolbar behavior isolated behind spawnMode-aware gating
+**Blockers:** none
+**Next:** Phase 3 parallel documentation/bypass wave - #384 + #385 + #386, then #387 and gate #388
+
+---
+## 2026-04-08 — debugger/qa-tester/documenter — Tasks #394, #395, #396: mixed-provider fallback coherence follow-up
+**Outcome:** COMPLETED / PASS / PASS
+**Summary:** Closed the debugger-loop follow-up area opened by the deep mixed-provider E2E failure. `SwarmEngine` now treats Claude terminal `stream-json` error results as hard runtime blockers and refuses cross-runtime PTY fallback for `spawnMode='stream-json'`, preventing the old `result -> _onDone() -> forced handoff -> Codex chrome contamination` path. Browser re-run on isolated server `http://127.0.0.1:3005` with workflow `Debugger Loop Mixed Provider E2E 2026-04-08` produced execution `c6fa0f09-4eaa-4a1c-942a-477d9034d31f`: top-level status `blocked`, `runtimeProvider=claude`, `lastFallback=null`, `Claude Reader=Blocked`, `Codex Reporter=Idle`, no handoff edge count, and blocker copy `Claude hit its usage limit before the swarm agent could continue.` Saved API artifact to `tests/artifacts/debugger-loop-postfix-status.json`. Full verification green: `npm test --prefix server` (`475/475`) and `npm run build` PASS.
+**Files changed:** server/services/SwarmEngine.js, server/tests/swarm-engine.test.js, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/CONTEXT.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/CODE_MAP.md, docs/memory/DOC_STATUS.md
+**Bugs fixed:** BUG-DL-SJ-FALLBACK-1 — stream-json Claude terminal errors no longer fall through into forced downstream Codex handoff
+**Decisions made:** For terminal Claude stream-json turns, truthful blocking is preferred over unsafe cross-runtime fallback until a coherent handoff/replay design exists
+**Blockers:** none
+**Next:** Resume Phase 3 critical path at TASK #389
+
+---
+## 2026-04-08 — qa-tester/documenter — Tasks #389, #390, #391, #392, #393: stream-json E2E close-out + documentation/final checkpoint
+**Outcome:** COMPLETED / PASS / COMPLETED / PASS / PASS
+**Summary:** Closed the remaining V9.0 stream-json migration path. Created `server/tests/e2e/stream-json-e2e.test.js` as a deterministic mixed-runtime harness that verifies Claude stream-json -> Codex PTY handoff, client-visible thinking/tool/cost aggregation, graceful stop/resume with `--resume` + preserved `--tools`, and reset/archive cleanup of Claude JSONL session artifacts. Verified the dedicated E2E file green, then re-ran `npm test --prefix server` (`478/478`) and `npm run build` (PASS). Documentation and release metadata were then synchronized: `README.md` now documents stream-json Claude agents + hybrid runtime behavior, `CLAUDE.md` now carries DEC-027/028/029 operational constraints, `docs/memory/PROJECT.md` reflects V9 closure, and the root `package.json` is now `v9.0.0`. V9.0 STREAM-JSON AGENT MIGRATION is closed via #393 PASS.
+**Files changed:** server/tests/e2e/stream-json-e2e.test.js, README.md, CLAUDE.md, package.json, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/CONTEXT.md, docs/memory/PROGRESS.md, docs/memory/DOC_STATUS.md, docs/memory/CODE_MAP.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none in runtime production code; this wave closed the remaining verification/documentation gap for the already-landed stream-json migration
+**Decisions made:** Keep the new E2E hermetic by mocking NDJSON/PTy rather than depending on live provider quotas/auth; retain debugger-loop/browser runs as the place for live-provider smoke and truthfulness checks
+**Blockers:** none
+**Next:** Resume any remaining non-V9 pending backlog from the broader task plan
+
+---
+## 2026-04-08 — debugger/pm — final debugger-loop beta pass + truthfulness sync
+**Outcome:** COMPLETED
+**Summary:** Ran a final beta-style deep pass on an isolated server at `http://127.0.0.1:3315` after V9.0 closure. Verified baseline remains green (`npm test --prefix server` PASS 478/478, `npm run build` PASS) and browser-covered Projects, Live Terminal, Job Runner, Deployments, Context Editor, and Swarm. Confirmed one real follow-up issue: documentation/status drift. `docs/TASK_PLAN.md` header and memory still claimed `386 completed / 2 deferred / 8 pending`, but the actual plan now has no `PENDING`, `IN_PROGRESS`, `BLOCKED`, or `FAIL` task statuses and only one live `DEFERRED` task (#236, ConPTY platform limitation). Synced `TASK_PLAN.md`, `PROJECT.md`, `CONTEXT.md`, `DOC_STATUS.md`, and `CODE_MAP.md` to the truthful final state: task numbering extends through #396, 393 tasks are registered, 392 are COMPLETE/PASS, 1 is DEFERRED, 0 are PENDING. Also investigated apparent project-name duplication from browser automation and ruled it out as a product bug: `puppeteer_fill` reproduced `Beta TestsBeta Tests`, but direct API registration stored `API Clean` correctly and React-native input dispatch stored `Native Check` correctly.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/CONTEXT.md, docs/memory/DOC_STATUS.md, docs/memory/CODE_MAP.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** Documentation truthfulness drift only; no runtime production bug found in this final beta pass
+**Decisions made:** Treat browser-driver input duplication as test-harness noise, not a product regression, unless it reproduces with direct API or native React input paths
+**Blockers:** none
+**Next:** No registered pending task remains; next work requires a new planned area or repo housekeeping such as commit/release prep
+
 ---

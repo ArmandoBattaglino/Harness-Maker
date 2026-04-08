@@ -1,14 +1,14 @@
 # Documentation Status
-_Last updated: 2026-04-08 after Task #359 (SwarmEngine._spawnAgentStreamJson -- stream-json spawner, provider router, result handler)._
+_Last updated: 2026-04-08 after Tasks #389-#393 (stream-json E2E + documentation/final checkpoint close-out)._
 
 ## Release Status
-**v5.0.0 stable -- V9.0 Stream-JSON Agent Migration IN PROGRESS (planning phase)**
-- QA inspection: CLEAN on v5.0 codebase
-- Test suite: 312/312 passing (414 with spike-added count per backend-dev log)
-- Build: 498 modules, 0 errors
-- Tasks: 393 total -- 352 completed, 2 deferred, 39 pending (#358-#393 V9.0)
+**v9.0.0 stable -- V9.0 Stream-JSON Agent Migration CLOSED**
+- QA inspection: CLEAN on v9.0 codebase
+- Test suite: 478/478 passing
+- Build: 500 modules, 0 errors
+- Tasks: numbering extends through #396; 393 tasks are registered, 392 are complete/pass, 1 is deferred (#236), 0 are pending
 - Open bugs: 0
-- V9.0 status: PRD v6.0 written, research complete, architect analysis done (DEC-027/028/029), spike #354 COMPLETED, #357 StreamJsonParser COMPLETED, #359 _spawnAgentStreamJson COMPLETED. Awaiting TEST GATE #360.
+- V9.0 status: PRD v6.0 written, research complete, architect analysis done (DEC-027/028/029), stream-json migration CLOSED through #393 PASS, debugger-loop follow-up #394 COMPLETED / #395 PASS / #396 PASS. Deterministic stream-json/PTy E2E coverage now lives in `server/tests/e2e/stream-json-e2e.test.js`.
 
 ## Fixed Bugs (v3.0.0 post-release patches)
 
@@ -49,17 +49,18 @@ _Last updated: 2026-04-08 after Task #359 (SwarmEngine._spawnAgentStreamJson -- 
 
 | Document | Status | Last Updated | Notes |
 |----------|--------|--------------|-------|
-| README.md | UP_TO_DATE | 2026-04-07 | Accurately describes v5.0.0 stable. V9.0 stream-json features not yet implemented so no README update needed yet. Will need update when stream-json code lands in production. |
+| README.md | UP_TO_DATE | 2026-04-08 | Updated to v9.0.0 release metadata and documents stream-json Claude agents, hybrid provider runtime behavior, and graceful stop/resume/reset controls. |
+| CLAUDE.md | UP_TO_DATE | 2026-04-08 | Updated with DEC-027/028/029 runtime constraints, `--tools` guidance, truthful blocker rule for Claude stream-json failures, and `write-file-atomic` correction. |
 | docs/ARCHITECTURE.md | PARTIAL | 2026-04-08 | V5 component tree still deferred (12 components). Section 13 updated with _spawnAgent (13.3), _spawnAgentStreamJson (13.4), _handleStreamJsonResult (13.5), _onDone/_stopExecution modifications (13.6) for Task #359. Remaining V9.0 components (#361-#393) listed as pending in 13.7. |
 | docs/PRD.md | UP_TO_DATE | 2026-04-08 | Rewritten to v6.0: Stream-JSON Agent Migration. 12 component specs, 27 FRs, 7 SEC-SJ-* requirements. |
 | docs/API.md | UP_TO_DATE | 2026-04-06 | No new endpoints from V9.0 planning. Will need update when WS events (FR-SJ-19 through FR-SJ-23) are implemented. |
-| docs/memory/PROJECT.md | UP_TO_DATE | 2026-04-08 | Implementation status reflects V9.0 planning phase, 393 tasks, spike completed. |
+| docs/memory/PROJECT.md | UP_TO_DATE | 2026-04-08 | Implementation status reflects V9.0 closure, release metadata sync, 396 total tasks, and 478/478 server-test verification. |
 | docs/memory/DECISIONS.md | UP_TO_DATE | 2026-04-08 | DEC-001 through DEC-029. DEC-027/028/029 added by architect for stream-json migration. |
 | docs/memory/PROGRESS.md | UP_TO_DATE | 2026-04-08 | Updated by project-manager with V9.0 area entry. |
 | docs/memory/CONTEXT.md | UP_TO_DATE | 2026-04-08 | Focus reflects V9.0 stream-json migration, dependency wave map, immediate next step. |
-| docs/memory/CODE_MAP.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No production code changed in V9.0 planning. |
+| docs/memory/CODE_MAP.md | UP_TO_DATE | 2026-04-08 | Updated with the dedicated `server/tests/e2e/stream-json-e2e.test.js` harness entry for the V9.0 close-out wave. |
 | docs/memory/CHANGELOG.md | UP_TO_DATE | 2026-03-27 | Maintained by code-mapper. No production code changed yet. |
-| docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-08 | V9.0 planning entries (prd-writer, researcher x2, project-manager, backend-dev spike). |
+| docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-08 | Includes debugger-loop fallback closure plus the V9.0 close-out entries for #389-#393. |
 | docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-04-06 | V1 audit. V9.0 adds SEC-SJ-01 through SEC-SJ-07 in PRD -- no code changes yet. |
 | docs/security-v3-audit.md | UP_TO_DATE | 2026-04-06 | MEDIUM-V3-01 marked FIXED (Task #234). No changes from V9.0 planning. |
 | Inline comments | UP_TO_DATE | 2026-04-08 | StreamJsonParser.js has comprehensive JSDoc. SwarmEngine.js new methods (_spawnAgent, _spawnAgentStreamJson, _handleStreamJsonResult) have full JSDoc with param/return annotations. Inline comments reference DEC-027/028/029, SEC-02, SEC-SJ-01, DEC-005. |
@@ -75,7 +76,7 @@ _Last updated: 2026-04-08 after Task #359 (SwarmEngine._spawnAgentStreamJson -- 
 - client/src/views/EntitiesView.jsx -- Still exists on disk but is no longer imported by App.jsx. Marked DEPRECATED in ARCHITECTURE.md component tree. Can be deleted in a future cleanup.
 - docs/memory/CODE_MAP.md:TriggerNode entry -- Still contains "(stub)" notation from Task #53.3; Task #76 fully implemented TriggerNode with store subscription, fired animation, and timestamp display. Code-mapper should update the map entry.
 - docs/ARCHITECTURE.md -- Section 13 updated through Task #359 (subsections 13.3-13.6). Remaining V9.0 components (#361-#393) will need entries as they are implemented.
-- README.md -- Will need V9.0 feature entries (stream-json agent mode, per-turn cost tracking, tool visibility, graceful stop/reset) once Tasks #357-#393 land production code.
+- docs/ARCHITECTURE.md -- Section 13 still needs a final narrative sweep to replace the now-stale “remaining V9.0 components (#361-#393)” note after area closure.
 
 ## Documentation Debt
 
@@ -83,7 +84,7 @@ _Last updated: 2026-04-08 after Task #359 (SwarmEngine._spawnAgentStreamJson -- 
 |------|----------|-----------------|
 | ARCHITECTURE.md V5 component tree (12 components) | LOW | Deferred since v5.0; no active development on those components |
 | ARCHITECTURE.md Section 13 (V9.0 stream-json) | MEDIUM | Section 13.2-13.6 done (StreamJsonParser + spawner + result handler). Remaining components (#361-#393) need entries as implemented. |
-| README.md V9.0 features | HIGH | Blocked until stream-json features land in production code |
+| docs/ARCHITECTURE.md Section 13 closure sweep | MEDIUM | Runtime landed and V9.0 is closed, but the narrative note still describes #361-#393 as pending work |
 | API.md V9.0 WS events | MEDIUM | Blocked until FR-SJ-19 through FR-SJ-23 are implemented |
 
 ## V3.1 Bug Fix Wave — ALL FIXED (2026-04-02)

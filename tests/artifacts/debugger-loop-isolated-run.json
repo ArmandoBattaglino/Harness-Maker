@@ -1,0 +1,369 @@
+{
+  "baseUrl": "http://127.0.0.1:3005",
+  "projectId": "5748b492-7156-4e74-ba54-95a8d354699e",
+  "workflowNeedle": "Debugger Loop Mixed Provider E2E 2026-04-08",
+  "runtimeValue": "auto",
+  "startedAt": "2026-04-08T14:04:14.867Z",
+  "executionId": "35dc54e5-702d-4ba1-b4f7-cc91df2a545c",
+  "startResponse": {
+    "url": "http://127.0.0.1:3005/api/v1/swarm/67ec1884-fe23-46ba-a157-05840973ba62/start",
+    "status": 201,
+    "body": {
+      "executionId": "35dc54e5-702d-4ba1-b4f7-cc91df2a545c",
+      "status": "running",
+      "runtimeProvider": "claude",
+      "activeProvider": "claude",
+      "providerStrategy": {
+        "mode": "auto",
+        "activeProvider": "claude",
+        "fallbackProvider": "codex",
+        "tertiaryProvider": "gemini",
+        "allowFallback": true
+      },
+      "lastFallback": null
+    }
+  },
+  "statusTimeline": [
+    {
+      "t": 0,
+      "at": "2026-04-08T14:04:26.351Z",
+      "ui": {
+        "bodyText": "terminal\nClaude Code\n\nVISUAL MANAGER\n\ndashboard\nProjects\nterminal\nLive Terminal\nplay_arrow\nJob Runner\nmemory\nDeployments\ndescription\nContext Editor\nhub\nSwarm\nACTIVE PTY SESSIONS\n0 Total\nCURRENT PROJECT\nDebuggerLoopIsolated\nSelected context\nNo active PTY sessions.\nadd\nNew Local Session\nACTIVE\nsettings\nv5.0.0\nDebugger Loop Mixed Provider E2E 2026-04-08\nProject: DebuggerLoopIsolated\n📥 HITL\nRuntime\nAuto\nClaude\nCodex\nGemini (Unavailable)\nModels *\nHistory\nTemplates\nVersions\n⚙ Settings\nFocus\nTidy\nSave\nStop\nReset Session\n● Running\nProvider: Claude\nAuto fallback\nFinal Report\n✨\nGenerate\nSaved workflows\nSelect a saved workflow\nDebugger Loop Mixed Provider E2E 2026-04-08 (08/04/2026)\nLoad workflow\nRefresh\nDuplicate\nExport\nImport\nShows workflows for DebuggerLoopIsolated plus unscoped ones\nAll Agents\nNODES\n🤖\nAgent Node\n\nAI agent with system prompt\n\n🏢\nDepartment\n\nGroup of agents\n\n🔗\nWebhook Trigger\n\nHTTP webhook trigger\n\n📡\nRSS Trigger\n\nRSS feed trigger\n\n◆\nConditional Router\n\nIF/THEN branching logic\n\n⬡\nMerge / Join\n\nWait for multiple inputs\n\n⏱\nDelay Timer\n\nPause flow for N seconds\n\n🔄\nLoop\n\nIterate with exit condition\n\n⚡\nError Handler\n\nCatch errors from nodes\n\n📦\nSub-Workflow\n\nNested workflow reference\n\n‹ hide\n🤖\nClaude Reader\nRunning\n🤖\nCodex Reporter\nIdle\nReact Flow\nFeed\nChat\nx\nChat View\nNo messages yet — run a workflow to see agent output here\nAll Agents\nAgent\nSoft\nSend",
+        "nodeTexts": [
+          "🤖\nClaude Reader\nRunning",
+          "🤖\nCodex Reporter\nIdle"
+        ],
+        "buttons": [
+          "dashboard\nProjects",
+          "terminal\nLive Terminal",
+          "play_arrow\nJob Runner",
+          "memory\nDeployments",
+          "description\nContext Editor",
+          "hub\nSwarm",
+          "DebuggerLoopIsolated\nSelected context",
+          "add\nNew Local Session",
+          "settings",
+          "📥 HITL",
+          "Models *",
+          "History",
+          "Templates",
+          "Versions",
+          "⚙ Settings",
+          "Focus",
+          "Tidy",
+          "Save",
+          "Stop",
+          "Reset Session",
+          "Final Report",
+          "Generate",
+          "Load workflow",
+          "Refresh",
+          "Duplicate",
+          "Export",
+          "Import",
+          "All Agents",
+          "‹ hide",
+          "Feed",
+          "Chat",
+          "x",
+          "Soft",
+          "Send"
+        ],
+        "hasFallbackBanner": false,
+        "hasThinkingLabel": false,
+        "hasToolLabel": false,
+        "hasCostLabel": false
+      },
+      "apiStatus": {
+        "httpStatus": 200,
+        "body": {
+          "executionId": "35dc54e5-702d-4ba1-b4f7-cc91df2a545c",
+          "workflowId": "67ec1884-fe23-46ba-a157-05840973ba62",
+          "status": "running",
+          "runtimeProvider": "claude",
+          "activeProvider": "claude",
+          "providerStrategy": {
+            "mode": "auto",
+            "activeProvider": "claude",
+            "fallbackProvider": "codex",
+            "tertiaryProvider": "gemini",
+            "allowFallback": true
+          },
+          "lastFallback": null,
+          "agentStates": {
+            "node-a": {
+              "sessionId": null,
+              "provider": "claude",
+              "runtimeProvider": "claude",
+              "status": "running",
+              "handoffCount": 0,
+              "lastOutputSnippet": "",
+              "lastModelFallback": null,
+              "spawnMode": "stream-json",
+              "turnCount": 2,
+              "totalCostUsd": 0,
+              "totalInputTokens": 0,
+              "totalOutputTokens": 0
+            }
+          },
+          "edgeCounters": {},
+          "budget": {
+            "estimatedTokensUsed": 0,
+            "limitTokens": 0
+          },
+          "inboxItems": [],
+          "chatMessages": []
+        }
+      }
+    },
+    {
+      "t": 1,
+      "at": "2026-04-08T14:04:33.862Z",
+      "ui": {
+        "bodyText": "terminal\nClaude Code\n\nVISUAL MANAGER\n\ndashboard\nProjects\nterminal\nLive Terminal\nplay_arrow\nJob Runner\nmemory\nDeployments\ndescription\nContext Editor\nhub\nSwarm\nACTIVE PTY SESSIONS\n0 Total\nCURRENT PROJECT\nDebuggerLoopIsolated\nSelected context\nNo active PTY sessions.\nadd\nNew Local Session\nACTIVE\nsettings\nv5.0.0\nDebugger Loop Mixed Provider E2E 2026-04-08\nProject: DebuggerLoopIsolated\n📥 HITL\nRuntime\nAuto\nClaude\nCodex\nGemini (Unavailable)\nModels *\nHistory\nTemplates\nVersions\n⚙ Settings\nFocus\nTidy\nSave\nPause\nStop\n● Running\nProvider: Claude\nAuto fallback\nFinal Report\n✨\nGenerate\nSaved workflows\nSelect a saved workflow\nDebugger Loop Mixed Provider E2E 2026-04-08 (08/04/2026)\nLoad workflow\nRefresh\nDuplicate\nExport\nImport\nShows workflows for DebuggerLoopIsolated plus unscoped ones\nAll Agents\nNODES\n🤖\nAgent Node\n\nAI agent with system prompt\n\n🏢\nDepartment\n\nGroup of agents\n\n🔗\nWebhook Trigger\n\nHTTP webhook trigger\n\n📡\nRSS Trigger\n\nRSS feed trigger\n\n◆\nConditional Router\n\nIF/THEN branching logic\n\n⬡\nMerge / Join\n\nWait for multiple inputs\n\n⏱\nDelay Timer\n\nPause flow for N seconds\n\n🔄\nLoop\n\nIterate with exit condition\n\n⚡\nError Handler\n\nCatch errors from nodes\n\n📦\nSub-Workflow\n\nNested workflow reference\n\n‹ hide\n1 ->\n🤖\nClaude Reader\nDone\n1 handoff\n🤖\nCodex Reporter\nRunning\n▋\nReact Flow\nFeed\nChat\nx\nChat View\nNo messages yet — run a workflow to see agent output here\nAll Agents\nAgent\nSoft\nSend",
+        "nodeTexts": [
+          "🤖\nClaude Reader\nDone\n1 handoff",
+          "🤖\nCodex Reporter\nRunning\n▋"
+        ],
+        "buttons": [
+          "dashboard\nProjects",
+          "terminal\nLive Terminal",
+          "play_arrow\nJob Runner",
+          "memory\nDeployments",
+          "description\nContext Editor",
+          "hub\nSwarm",
+          "DebuggerLoopIsolated\nSelected context",
+          "add\nNew Local Session",
+          "settings",
+          "📥 HITL",
+          "Models *",
+          "History",
+          "Templates",
+          "Versions",
+          "⚙ Settings",
+          "Focus",
+          "Tidy",
+          "Save",
+          "Pause",
+          "Stop",
+          "Final Report",
+          "Generate",
+          "Load workflow",
+          "Refresh",
+          "Duplicate",
+          "Export",
+          "Import",
+          "All Agents",
+          "‹ hide",
+          "Feed",
+          "Chat",
+          "x",
+          "Soft",
+          "Send"
+        ],
+        "hasFallbackBanner": false,
+        "hasThinkingLabel": false,
+        "hasToolLabel": false,
+        "hasCostLabel": false
+      },
+      "apiStatus": {
+        "httpStatus": 200,
+        "body": {
+          "executionId": "35dc54e5-702d-4ba1-b4f7-cc91df2a545c",
+          "workflowId": "67ec1884-fe23-46ba-a157-05840973ba62",
+          "status": "running",
+          "runtimeProvider": "codex",
+          "activeProvider": "codex",
+          "providerStrategy": {
+            "mode": "auto",
+            "activeProvider": "codex",
+            "fallbackProvider": "codex",
+            "tertiaryProvider": "gemini",
+            "allowFallback": true
+          },
+          "lastFallback": null,
+          "agentStates": {
+            "node-a": {
+              "sessionId": null,
+              "provider": "claude",
+              "runtimeProvider": "claude",
+              "status": "done",
+              "handoffCount": 1,
+              "lastOutputSnippet": "",
+              "lastModelFallback": null,
+              "spawnMode": "stream-json",
+              "turnCount": 4,
+              "totalCostUsd": 0,
+              "totalInputTokens": 0,
+              "totalOutputTokens": 0
+            },
+            "node-b": {
+              "sessionId": "791341a2-7bb1-41a1-8d1f-39441c83270d",
+              "provider": "codex",
+              "runtimeProvider": "codex",
+              "status": "running",
+              "handoffCount": 0,
+              "lastOutputSnippet": "\u001b[?25h\u001b[?2026h\u001b[?25l",
+              "lastModelFallback": null
+            }
+          },
+          "edgeCounters": {
+            "edge-ab": 1
+          },
+          "budget": {
+            "estimatedTokensUsed": 6250,
+            "limitTokens": 0
+          },
+          "inboxItems": [],
+          "chatMessages": []
+        }
+      }
+    },
+    {
+      "t": 2,
+      "at": "2026-04-08T14:04:41.368Z",
+      "ui": {
+        "bodyText": "terminal\nClaude Code\n\nVISUAL MANAGER\n\ndashboard\nProjects\nterminal\nLive Terminal\nplay_arrow\nJob Runner\nmemory\nDeployments\ndescription\nContext Editor\nhub\nSwarm\nACTIVE PTY SESSIONS\n0 Total\nCURRENT PROJECT\nDebuggerLoopIsolated\nSelected context\nNo active PTY sessions.\nadd\nNew Local Session\nACTIVE\nsettings\nv5.0.0\nDebugger Loop Mixed Provider E2E 2026-04-08\nProject: DebuggerLoopIsolated\n📥 HITL\nRuntime\nAuto\nClaude\nCodex\nGemini (Unavailable)\nModels *\nHistory\nTemplates\nVersions\n⚙ Settings\nFocus\nTidy\nSave\nRun\n● Completed\nProvider: Codex\nAuto fallback\nReset\nFinal Report\n✨\nGenerate\nSaved workflows\nSelect a saved workflow\nDebugger Loop Mixed Provider E2E 2026-04-08 (08/04/2026)\nLoad workflow\nRefresh\nDuplicate\nExport\nImport\nShows workflows for DebuggerLoopIsolated plus unscoped ones\nAll Agents\nNODES\n🤖\nAgent Node\n\nAI agent with system prompt\n\n🏢\nDepartment\n\nGroup of agents\n\n🔗\nWebhook Trigger\n\nHTTP webhook trigger\n\n📡\nRSS Trigger\n\nRSS feed trigger\n\n◆\nConditional Router\n\nIF/THEN branching logic\n\n⬡\nMerge / Join\n\nWait for multiple inputs\n\n⏱\nDelay Timer\n\nPause flow for N seconds\n\n🔄\nLoop\n\nIterate with exit condition\n\n⚡\nError Handler\n\nCatch errors from nodes\n\n📦\nSub-Workflow\n\nNested workflow reference\n\n‹ hide\n1 ->\n🤖\nClaude Reader\nDone\n1 handoff\n🤖\nCodex Reporter\nDone\n\n\nReact Flow\nFeed\nChat\nx\nChat View\nNo messages yet — run a workflow to see agent output here\nAll Agents\nAgent\nSoft\nSend",
+        "nodeTexts": [
+          "🤖\nClaude Reader\nDone\n1 handoff",
+          "🤖\nCodex Reporter\nDone"
+        ],
+        "buttons": [
+          "dashboard\nProjects",
+          "terminal\nLive Terminal",
+          "play_arrow\nJob Runner",
+          "memory\nDeployments",
+          "description\nContext Editor",
+          "hub\nSwarm",
+          "DebuggerLoopIsolated\nSelected context",
+          "add\nNew Local Session",
+          "settings",
+          "📥 HITL",
+          "Models *",
+          "History",
+          "Templates",
+          "Versions",
+          "⚙ Settings",
+          "Focus",
+          "Tidy",
+          "Save",
+          "Run",
+          "Reset",
+          "Final Report",
+          "Generate",
+          "Load workflow",
+          "Refresh",
+          "Duplicate",
+          "Export",
+          "Import",
+          "All Agents",
+          "‹ hide",
+          "Feed",
+          "Chat",
+          "x",
+          "Soft",
+          "Send"
+        ],
+        "hasFallbackBanner": false,
+        "hasThinkingLabel": false,
+        "hasToolLabel": false,
+        "hasCostLabel": false
+      },
+      "apiStatus": {
+        "httpStatus": 200,
+        "body": {
+          "executionId": "35dc54e5-702d-4ba1-b4f7-cc91df2a545c",
+          "workflowId": "67ec1884-fe23-46ba-a157-05840973ba62",
+          "status": "completed",
+          "runtimeProvider": "codex",
+          "activeProvider": "codex",
+          "providerStrategy": {
+            "mode": "auto",
+            "activeProvider": "codex",
+            "fallbackProvider": "codex",
+            "tertiaryProvider": "gemini",
+            "allowFallback": true
+          },
+          "lastFallback": null,
+          "agentStates": {
+            "node-a": {
+              "sessionId": null,
+              "provider": "claude",
+              "runtimeProvider": "claude",
+              "status": "done",
+              "handoffCount": 1,
+              "lastOutputSnippet": "",
+              "lastModelFallback": null,
+              "spawnMode": "stream-json",
+              "turnCount": 4,
+              "totalCostUsd": 0,
+              "totalInputTokens": 0,
+              "totalOutputTokens": 0
+            },
+            "node-b": {
+              "sessionId": "806b99d6-390c-40e6-8567-82ffc6c7fff1",
+              "provider": "codex",
+              "runtimeProvider": "codex",
+              "status": "done",
+              "handoffCount": 0,
+              "lastOutputSnippet": "\u001b[?25h\u001b[?2026h\u001b[?2026l\u001b[?25l\n\u001b[?25h\u001b[?2026h\u001b[?25l",
+              "lastModelFallback": null
+            }
+          },
+          "edgeCounters": {
+            "edge-ab": 1
+          },
+          "budget": {
+            "estimatedTokensUsed": 9859,
+            "limitTokens": 0
+          },
+          "inboxItems": [],
+          "chatMessages": []
+        }
+      }
+    }
+  ],
+  "finalUi": {
+    "bodyText": "terminal\nClaude Code\n\nVISUAL MANAGER\n\ndashboard\nProjects\nterminal\nLive Terminal\nplay_arrow\nJob Runner\nmemory\nDeployments\ndescription\nContext Editor\nhub\nSwarm\nACTIVE PTY SESSIONS\n0 Total\nCURRENT PROJECT\nDebuggerLoopIsolated\nSelected context\nNo active PTY sessions.\nadd\nNew Local Session\nACTIVE\nsettings\nv5.0.0\nDebugger Loop Mixed Provider E2E 2026-04-08\nProject: DebuggerLoopIsolated\n📥 HITL\nRuntime\nAuto\nClaude\nCodex\nGemini (Unavailable)\nModels *\nHistory\nTemplates\nVersions\n⚙ Settings\nFocus\nTidy\nSave\nRun\n● Completed\nProvider: Codex\nAuto fallback\nReset\nFinal Report\n✨\nGenerate\nSaved workflows\nSelect a saved workflow\nDebugger Loop Mixed Provider E2E 2026-04-08 (08/04/2026)\nLoad workflow\nRefresh\nDuplicate\nExport\nImport\nShows workflows for DebuggerLoopIsolated plus unscoped ones\nAll Agents\nNODES\n🤖\nAgent Node\n\nAI agent with system prompt\n\n🏢\nDepartment\n\nGroup of agents\n\n🔗\nWebhook Trigger\n\nHTTP webhook trigger\n\n📡\nRSS Trigger\n\nRSS feed trigger\n\n◆\nConditional Router\n\nIF/THEN branching logic\n\n⬡\nMerge / Join\n\nWait for multiple inputs\n\n⏱\nDelay Timer\n\nPause flow for N seconds\n\n🔄\nLoop\n\nIterate with exit condition\n\n⚡\nError Handler\n\nCatch errors from nodes\n\n📦\nSub-Workflow\n\nNested workflow reference\n\n‹ hide\n1 ->\n🤖\nClaude Reader\nDone\n1 handoff\n🤖\nCodex Reporter\nDone\n\n\nReact Flow\nFeed\nChat\nx\nChat View\nNo messages yet — run a workflow to see agent output here\nAll Agents\nAgent\nSoft\nSend",
+    "nodeTexts": [
+      "🤖\nClaude Reader\nDone\n1 handoff",
+      "🤖\nCodex Reporter\nDone"
+    ],
+    "buttons": [
+      "dashboard\nProjects",
+      "terminal\nLive Terminal",
+      "play_arrow\nJob Runner",
+      "memory\nDeployments",
+      "description\nContext Editor",
+      "hub\nSwarm",
+      "DebuggerLoopIsolated\nSelected context",
+      "add\nNew Local Session",
+      "settings",
+      "📥 HITL",
+      "Models *",
+      "History",
+      "Templates",
+      "Versions",
+      "⚙ Settings",
+      "Focus",
+      "Tidy",
+      "Save",
+      "Run",
+      "Reset",
+      "Final Report",
+      "Generate",
+      "Load workflow",
+      "Refresh",
+      "Duplicate",
+      "Export",
+      "Import",
+      "All Agents",
+      "‹ hide",
+      "Feed",
+      "Chat",
+      "x",
+      "Soft",
+      "Send"
+    ]
+  }
+}

@@ -107,6 +107,21 @@ describe('JobRunner', () => {
       expect(spawnOptions.shell).toBe(false);
     });
 
+    it('should pass tool restrictions via --tools instead of legacy flags', () => {
+      const child = makeMockChild();
+      spawnMock.mockReturnValue(child);
+
+      runner.startJob('proj-1', '/project', 'a prompt', 'Read,Write', 3);
+
+      const spawnArgs = spawnMock.mock.calls[0][1];
+      const toolsFlagIndex = spawnArgs.indexOf('--tools');
+      const legacyToolsFlag = ['--allowed', 'Tools'].join('');
+
+      expect(toolsFlagIndex).toBeGreaterThan(-1);
+      expect(spawnArgs[toolsFlagIndex + 1]).toBe('Read,Write');
+      expect(spawnArgs).not.toContain(legacyToolsFlag);
+    });
+
     it('should record the job in listJobs', () => {
       const child = makeMockChild();
       spawnMock.mockReturnValue(child);

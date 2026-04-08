@@ -1,0 +1,52 @@
+{
+  "id": "67ec1884-fe23-46ba-a157-05840973ba62",
+  "name": "Debugger Loop Mixed Provider E2E 2026-04-08",
+  "projectId": "5748b492-7156-4e74-ba54-95a8d354699e",
+  "description": "Temporary isolated debugger-loop workflow for deep browser E2E verification.",
+  "nodes": [
+    {
+      "id": "node-a",
+      "type": "agent",
+      "position": {
+        "x": 120,
+        "y": 140
+      },
+      "data": {
+        "label": "Claude Reader",
+        "isTriageNode": true,
+        "model": "sonnet",
+        "tools": [
+          "Read"
+        ],
+        "systemPrompt": "You are a Claude stream-json test agent. You must use the Read tool to inspect package.json, server/package.json, and client/package.json from the current project. Extract the package names and versions, think briefly about the differences, then hand off the key facts to node-b. Do not ask questions. Do not skip tool usage."
+      }
+    },
+    {
+      "id": "node-b",
+      "type": "agent",
+      "position": {
+        "x": 520,
+        "y": 140
+      },
+      "data": {
+        "label": "Codex Reporter",
+        "model": "gpt-5.4",
+        "systemPrompt": "You are the Codex reporter. Receive the upstream facts, write a short 2-sentence report listing the package names and versions, then finish cleanly."
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-ab",
+      "source": "node-a",
+      "target": "node-b",
+      "type": "handoff"
+    }
+  ],
+  "settings": {},
+  "initialContext": {
+    "goal": "Debugger loop deep E2E verification for the mixed Claude stream-json plus Codex PTY path."
+  },
+  "createdAt": "2026-04-08T14:00:23.180Z",
+  "updatedAt": "2026-04-08T14:00:23.180Z"
+}

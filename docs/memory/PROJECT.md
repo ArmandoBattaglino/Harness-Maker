@@ -1,7 +1,7 @@
 ﻿# Project: Claude Code Visual Manager
 **Created:** 2026-03-18
 **Last updated:** 2026-04-08
-**Implementation status:** v5.0 codebase stable. V9.0 Stream-JSON Agent Migration IN PROGRESS (planning phase complete, spike validated). 393 tasks total: 351 completed, 2 deferred, 40 pending (#354-#393). PRD v6.0 written. Research complete. Architect analysis done (DEC-027/028/029). Task #354 spike COMPLETED. 312/312 tests pass, 498 modules build clean.
+**Implementation status:** v9.0.0 release metadata synced. V9.0 Stream-JSON Agent Migration CLOSED on 2026-04-08 via TASK #393 PASS. Phase 0 CLOSED, Phase 1 Backend Core CLOSED, Phase 2 FRONTEND CLOSED, and Phase 3 INTEGRATION AND POLISH CLOSED. The debugger-loop mixed-provider fallback follow-up area (#394-#396) was also closed on 2026-04-08 after a truthful browser re-run showed `Claude Reader=Blocked` and `Codex Reporter=Idle` with no fallback contamination. Task numbering extends through #396; 393 tasks are currently registered in `docs/TASK_PLAN.md`, 392 are COMPLETE/PASS, 1 is DEFERRED (#236, ConPTY platform limitation), and 0 are PENDING. PRD v6.0 written. Research complete. Architect analysis done (DEC-027/028/029). Backend verification at 478/478 tests pass; client/root build clean at 500 modules.
 
 ## What it is
 A locally-hosted web application that provides a graphical user interface for the Claude Code CLI. It spawns Claude Code processes directly using the user's installed binary and delivers two interaction modes: a live PTY terminal (xterm.js over WebSocket) and a job mode (prompt â†’ formatted Markdown result). It also provides visual editors for agents, skills, and CLAUDE.md files, with multi-project support and session persistence across browser tab closures.
@@ -12,9 +12,9 @@ A locally-hosted web application that provides a graphical user interface for th
 | Runtime | Node.js | 20 LTS | Required for node-pty compatibility |
 | HTTP server | Express | 4.x | REST API + static SPA serving |
 | WebSocket | ws | 8.x | PTY streaming; no transport fallbacks |
-| PTY | node-pty-prebuilt-multiarch | latest | Prebuilt binaries â€” avoids MSVC Build Tools on Windows |
+| PTY | node-pty | 1.1.x | Native PTY bridge used by Codex/Gemini/live terminal paths |
 | Process kill | tree-kill | latest | Kills full process tree including Claude sub-processes |
-| Atomic writes | write-atomic | latest | Prevents config/agent/skill file corruption on crash |
+| Atomic writes | write-file-atomic | 5.x | Prevents config/agent/skill file corruption on crash |
 | YAML | js-yaml | 4.x | Agent and skill YAML frontmatter parse/serialize |
 | UUID | uuid | 9.x | Session and job ID generation (v4) |
 | Security headers | helmet | latest | CSP, X-Content-Type-Options, X-Frame-Options |
@@ -79,4 +79,3 @@ A locally-hosted web application that provides a graphical user interface for th
 - SEC-V3-01: Webhook body cap 32 KB | SEC-V3-03: SSRF guard on RSS URLs | SEC-V3-04: Webhook rate limit 10 req/min/IP
 - SEC-V3-05: HITL resumeText cap 8 KB | SEC-V3-06: HandoffParser payload cap 64 KB
 - SEC-V3-07: Webhook receiver always returns 200 to external callers (information leakage prevention)
-

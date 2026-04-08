@@ -1,0 +1,234 @@
+terminal
+Claude Code
+
+VISUAL MANAGER
+
+dashboard
+Projects
+terminal
+Live Terminal
+play_arrow
+Job Runner
+memory
+Deployments
+description
+Context Editor
+hub
+Swarm
+ACTIVE PTY SESSIONS
+0 Total
+CURRENT PROJECT
+Prova
+Selected context
+No active PTY sessions.
+add
+New Local Session
+ACTIVE
+settings
+v5.0.0
+ZZ Debugger Loop Stream-JSON Mixed E2E
+Project: Prova
+📥 HITL
+Runtime
+Auto
+Claude
+Codex
+Gemini
+Models
+History
+Templates
+Versions
+⚙ Settings
+Focus
+Tidy
+Save
+Pause
+Stop
+● Running
+Provider: Codex
+Auto fallback
+Final Report
+Runtime fallback: claude to codex because Claude hit its usage limit before the swarm agent could continue..
+✨
+Generate
+Saved workflows
+Select a saved workflow
+ZZ Debugger Loop Stream-JSON Mixed E2E (08/04/2026)
+Debugger Loop Mixed Provider E2E 2026-04-08 (08/04/2026)
+Greeter and Poet (08/04/2026)
+Dolphin Facts Research Chain (08/04/2026)
+Roman Colosseum Research and Writing (08/04/2026)
+Dolphin Fun Facts (08/04/2026)
+Whale Fun Facts Pipeline (08/04/2026)
+Panda Fun Facts Pipeline (08/04/2026)
+Elephant Fun Facts (08/04/2026)
+Koala Fun Facts Pipeline (08/04/2026)
+Cat Facts Research and Summary (08/04/2026)
+Penguin Facts Pipeline (08/04/2026)
+Dolphin Fun Facts Pipeline (08/04/2026)
+Octopus Facts Pipeline (08/04/2026)
+Great Wall Facts Pipeline (08/04/2026)
+Cat Article Workflow (08/04/2026)
+Dolphin Fun Facts Workflow (08/04/2026)
+Water Benefits Research and Writing (08/04/2026)
+Pisa Facts Research and Writing (08/04/2026)
+Italian Coffee Culture Writer (08/04/2026)
+Italian Pizza Facts Writer (08/04/2026)
+Remote Work Benefits Research and Summary (08/04/2026)
+Codex Temp Stop Parent (08/04/2026)
+Codex Temp Stop Child Delay (08/04/2026)
+Venice Canals Research and Summary (08/04/2026)
+Mars Facts Writer (07/04/2026)
+Cats Are Great Pets (07/04/2026)
+Pizza Napoletana Research and Summary (07/04/2026)
+Pantheon Facts Research and Writing (07/04/2026)
+Penguin Fun Facts Pipeline (07/04/2026)
+Rome Facts Research and Writing (07/04/2026)
+Rome Facts Pipeline (07/04/2026)
+Roman Colosseum Facts Pipeline (07/04/2026)
+Personality Profile Interview (07/04/2026)
+Node.js Interview Workflow (07/04/2026)
+Cat Writer Workflow (07/04/2026)
+Cat Writer (07/04/2026)
+Node-js Features Research and Summary (07/04/2026)
+Researcher and Writer (07/04/2026)
+Colosseum Research and Formal Writing (07/04/2026)
+Two Agent Hello Workflow (07/04/2026)
+Content Agency (07/04/2026)
+Webhook Conditional Router Workflow (07/04/2026)
+Parallel Greetings Workflow (07/04/2026)
+Data Pipeline (07/04/2026)
+Customer Support Triage (07/04/2026)
+Moon Facts Research and Writing (07/04/2026)
+Node.js Feature Research and Summary (07/04/2026)
+Mars Poetry Pipeline (07/04/2026)
+Research Loop (07/04/2026)
+Delay Test Workflow (06/04/2026)
+Flow Control Test Workflow (06/04/2026)
+TypeScript Advantages Pipeline - Copy (06/04/2026)
+TypeScript Advantages Pipeline (06/04/2026)
+TypeScript Feature Research and Summary (06/04/2026)
+TypeScript Features Research and Summary (06/04/2026)
+Test - Copy (06/04/2026)
+Test (06/04/2026)
+Node.js Feature Research and Report (06/04/2026)
+Node-js Feature Research and Summary (06/04/2026)
+Project Research and Summary (06/04/2026)
+Customer Request Router (06/04/2026)
+Analyst-Reporter Pipeline (05/04/2026)
+Roman Aqueducts Research Team (05/04/2026)
+Prompt Reliability Control Workflow (05/04/2026)
+Prompt Stress Audit Workflow (05/04/2026)
+Workflow di 3 Agenti (05/04/2026)
+Node.js Best Practices Research and Summary (05/04/2026)
+Billing Support Triage (05/04/2026)
+Marketing Team - Report to Posts (05/04/2026)
+Billing Triage Workflow (05/04/2026)
+Triage to Billing Workflow (05/04/2026)
+Text Document Review Pipeline (04/04/2026)
+Marketing Agency Workflow (04/04/2026)
+Research and Summarize (04/04/2026)
+Write A Greeting Workflow (04/04/2026)
+A Code Reviewer Analyzes Code Quality Workflow (04/04/2026)
+Code Review and Documentation (04/04/2026)
+Frontend UI Audit and CSS Optimization (04/04/2026)
+A Researcher To Analyze A Writer Workflow (03/04/2026)
+A Two Agents Explorer Reporter Explorer Workflow (03/04/2026)
+2 Agents Researcher Analyzes Writer Summarizes Workflow (03/04/2026)
+A 2 Agent A Researcher Analyzes The Workflow (03/04/2026)
+Research and Report Team (03/04/2026)
+Data Collection and Summarization Pipeline (02/04/2026)
+Research-Write-Review Team (02/04/2026)
+A Customer Support Triage Routes Requests Workflow (02/04/2026)
+Test Workflow (02/04/2026)
+Customer Support Triage Workflow (01/04/2026)
+Customer Triage Workflow (01/04/2026)
+Customer Support Ticket Router (01/04/2026)
+Button State Verification Workflow (01/04/2026)
+Workflow di Marketing (31/03/2026)
+Prova Workflow (31/03/2026)
+Customer Request Triage Workflow (31/03/2026)
+Load workflow
+Refresh
+Duplicate
+Export
+Import
+Shows workflows for Prova plus unscoped ones
+All Agents
+NODES
+🤖
+Agent Node
+
+AI agent with system prompt
+
+🏢
+Department
+
+Group of agents
+
+🔗
+Webhook Trigger
+
+HTTP webhook trigger
+
+📡
+RSS Trigger
+
+RSS feed trigger
+
+◆
+Conditional Router
+
+IF/THEN branching logic
+
+⬡
+Merge / Join
+
+Wait for multiple inputs
+
+⏱
+Delay Timer
+
+Pause flow for N seconds
+
+🔄
+Loop
+
+Iterate with exit condition
+
+⚡
+Error Handler
+
+Catch errors from nodes
+
+📦
+Sub-Workflow
+
+Nested workflow reference
+
+‹ hide
+🤖
+Claude Reader
+Running
+• 8 ◦ ◦ gpt-5.4 high · •▋
+🤖
+Codex Reporter
+Idle
+React Flow
+Feed
+Chat
+x
+Chat View
+All agents
+Claude Reader
+2
+Claude Reader
+15:55:50
+Running Get-Content -Raw client/package.json • Running Get-Content -Raw server/package.json • gpt-5.4 high · • Running Get-Content -Raw server/package.json • gpt-5.4 high · • Running Get-Content -Raw server/package.json • Running Get-Content -Raw server/package.json • gpt-5.4 high · • Running Get-Content -Raw server/package.json • gpt-5.4 high · • Ran Get-Content -Raw server/package.json • Running Get-Content -Raw server/package.json • gpt-5.4 high · └ { • Running Get-Content -Raw server/package.json • gpt-5.4 high · "name": "claude-code-visual-manager-server", • Running Get-Content -Raw server/package.json • gpt-5.4 high · … +25 lines • Running Get-Content -Raw server/package.json • gpt-5.4 high · } • Running Get-Content -Raw server/package.json • gpt-5.4 high · • Running Get-Content -Raw package.json • gpt-5.4 high · • Running Get-Content -Raw package.json • gpt-5.4 high · • Ran Get-Content -Raw client/package.json • Running Get-Content -Raw package.json • gpt-5.4 high · └ { • Running Get-Content -Raw package.json • gpt-5.4 high · "name": "claude-code-visual-manager-client", • Running Get-Content -Raw package.json • gpt-5.4 high · … +26 lines • Running Get-Content -Raw package.json • gpt-5.4 high · } • Running Get-Content -Raw package.json • gpt-5.4 high · • Running Get-Content -Raw package.json • gpt-5.4 high · ◦ ng • Ran Get-Content -Raw package.json ◦ gpt-5.4 high · └ { ◦ gpt-5.4 high · "name": "claude-code-visual-manager", ◦ gpt-5.4 high · … +28 lines ◦ gpt-5.4 high · } ◦ gpt-5.4 high · ◦ gpt-5.4 high · • 8 ◦ Wo W ng Wo g 9 • rk ◦ 20 • W ng ◦ 1 Wo g • 2 ◦ • ki W ng 3 Wo g ◦ ng • 4 ◦ Wo ◦ gpt-5.4 high · ◦ gpt-5.4 high · 5 Wo g • rk ◦ 6 • W ng ◦ 7 Wo g
+Claude Reader
+15:55:51
+• 8 ◦ ◦ gpt-5.4 high · •
+All Agents
+Agent
+Soft
+Send

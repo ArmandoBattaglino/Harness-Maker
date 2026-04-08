@@ -11,8 +11,43 @@ const MODEL_OPTIONS = [
   { group: 'Gemini', models: ['gemini-2.5-pro', 'gemini-2.5-flash'] },
 ];
 
+const CLAUDE_TOOL_OPTIONS = [
+  'Bash',
+  'Read',
+  'Edit',
+  'MultiEdit',
+  'Write',
+  'Glob',
+  'Grep',
+  'LS',
+  'WebFetch',
+  'WebSearch',
+  'NotebookRead',
+  'NotebookEdit',
+  'TodoRead',
+  'TodoWrite',
+  'Agent',
+  'exit_plan_mode',
+];
+
+const DEFAULT_CLAUDE_TOOLS = ['Bash', 'Read', 'Edit', 'Write', 'Grep', 'Glob', 'LS'];
+
 const INPUT_CLS =
   'w-full bg-gray-700 text-white text-xs rounded px-2 py-1 border border-gray-600 focus:border-blue-500 focus:outline-none';
+
+function isClaudeModel(model = '') {
+  const normalized = String(model ?? '').trim().toLowerCase();
+  return normalized === 'opus'
+    || normalized === 'sonnet'
+    || normalized === 'haiku'
+    || normalized.startsWith('claude-');
+}
+
+function normalizeClaudeToolSelection(tools) {
+  if (!Array.isArray(tools)) return [...DEFAULT_CLAUDE_TOOLS];
+  const selected = new Set(tools.filter((tool) => CLAUDE_TOOL_OPTIONS.includes(tool)));
+  return CLAUDE_TOOL_OPTIONS.filter((tool) => selected.has(tool));
+}
 
 /**
  * Debounced field updater — returns a [localValue, setLocalValue] pair
@@ -73,6 +108,7 @@ function FieldLabel({ children }) {
 function AgentFields({ node, nodes, onUpdateNode }) {
   const nodeId = node.id;
   const data = node.data || {};
+  const isClaude = isClaudeModel(data.model);
 
   const commit = useCallback(
     (field) => (val) => onUpdateNode(nodeId, { [field]: val }),
@@ -83,20 +119,34 @@ function AgentFields({ node, nodes, onUpdateNode }) {
     data.systemPrompt,
     commit('systemPrompt')
   );
+  const [selectedTools, setSelectedTools] = useState(() => normalizeClaudeToolSelection(data.tools));
+  const toolsTimerRef = useRef(null);
 
-  const [toolsLocal, setToolsLocal] = useDebouncedField(
-    data.tools?.join(', ') ?? '',
-    useCallback(
-      (val) => {
-        const arr = val
-          .split(',')
-          .map((t) => t.trim())
-          .filter(Boolean);
-        onUpdateNode(nodeId, { tools: arr });
-      },
-      [nodeId, onUpdateNode]
-    )
-  );
+  useEffect(() => {
+    setSelectedTools(normalizeClaudeToolSelection(data.tools));
+  }, [data.tools, data.model]);
+
+  useEffect(() => () => clearTimeout(toolsTimerRef.current), []);
+
+  const commitTools = useCallback((tools) => {
+    clearTimeout(toolsTimerRef.current);
+    toolsTimerRef.current = setTimeout(() => {
+      onUpdateNode(nodeId, { tools });
+    }, 300);
+  }, [nodeId, onUpdateNode]);
+
+  const updateSelectedTools = useCallback((tools) => {
+    const normalizedTools = normalizeClaudeToolSelection(tools);
+    setSelectedTools(normalizedTools);
+    commitTools(normalizedTools);
+  }, [commitTools]);
+
+  const toggleTool = useCallback((toolName) => {
+    const nextTools = selectedTools.includes(toolName)
+      ? selectedTools.filter((tool) => tool !== toolName)
+      : [...selectedTools, toolName];
+    updateSelectedTools(nextTools);
+  }, [selectedTools, updateSelectedTools]);
 
   const departmentNodes = nodes.filter((n) => n.type === 'department');
 
@@ -135,17 +185,48 @@ function AgentFields({ node, nodes, onUpdateNode }) {
         />
       </div>
 
-      {/* Tools */}
-      <div className="flex flex-col gap-0.5">
-        <FieldLabel>Tools (comma-separated)</FieldLabel>
-        <input
-          type="text"
-          className={INPUT_CLS}
-          value={toolsLocal}
-          onChange={(e) => setToolsLocal(e.target.value)}
-          placeholder="tool1, tool2"
-        />
-      </div>
+      {isClaude && (
+        <CollapsibleSection title="Tools" defaultOpen={false}>
+          <div className="flex items-center justify-between gap-2">
+            <FieldLabel>Allowed Tools</FieldLabel>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => updateSelectedTools([...CLAUDE_TOOL_OPTIONS])}
+                className="text-[10px] px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"
+              >
+                Select All
+              </button>
+              <button
+                type="button"
+                onClick={() => updateSelectedTools([])}
+                className="text-[10px] px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"
+              >
+                Deselect All
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {CLAUDE_TOOL_OPTIONS.map((toolName) => (
+              <label
+                key={toolName}
+                className="flex items-center gap-2 rounded bg-gray-800/80 px-2 py-1 text-xs text-gray-200 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedTools.includes(toolName)}
+                  onChange={() => toggleTool(toolName)}
+                  className="accent-blue-500"
+                />
+                <span className="break-all">{toolName}</span>
+              </label>
+            ))}
+          </div>
+          <div className="text-[10px] text-gray-500">
+            Debounced 300ms. Default Claude selection: {DEFAULT_CLAUDE_TOOLS.join(', ')}.
+          </div>
+        </CollapsibleSection>
+      )}
 
       {/* Max Turns */}
       <div className="flex flex-col gap-0.5">
@@ -713,7 +794,7 @@ export default function AgentInspector({ nodes, onUpdateNode }) {
       )}
 
       {/* Open Terminal button — only when agent has an active session */}
-      {selectedNode?.id && (agentState?.sessionId || activeExecutionId) && (
+      {selectedNode?.id && agentState?.spawnMode !== 'stream-json' && (agentState?.sessionId || activeExecutionId) && (
         <button
           onClick={() => setPtyExplosionNodeId(selectedNode.id)}
           className="w-full text-xs px-2 py-1.5 rounded bg-indigo-700 hover:bg-indigo-600 text-white transition-colors flex items-center gap-1.5"

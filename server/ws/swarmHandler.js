@@ -1,8 +1,16 @@
 // server/ws/swarmHandler.js
 // WebSocket handler for swarm execution updates.
 // Clients connect with ?executionId=<uuid> to subscribe to live execution events.
-// Task #48.1 — channel routing + connection management.
-// Task #48.2 — broadcast() export + wired to SwarmEngine.
+// Task #48.1 - channel routing + connection management.
+// Task #48.2 - broadcast() export + wired to SwarmEngine.
+// [STREAM-JSON-MIGRATION] Supported WS event types are broadcast type-agnostically:
+// execution_status, agent_status, chat_message, agent_tool_use, agent_tool_delta,
+// agent_thinking, agent_cost, handoff, handoff_started, handoff_completed,
+// circuit_breaker, budget_update, runtime_provider_switch, no_progress_timeout,
+// spawn_error, unexpected_exit, fallback_failed, subworkflow_blocked,
+// hitl_required, model_selection_menu, rate_limit_menu_keep_current_model,
+// gemini_usage_limit_menu, gemini_trust_menu, permission_menu_allow_once,
+// rate_limited, provider_unavailable, trust_required, prompt_rejected.
 
 // ---------------------------------------------------------------------------
 // Module-level subscriber registry
@@ -26,7 +34,7 @@ export function getSubscribers(executionId) {
  * Connections whose readyState is not OPEN (1) are skipped silently.
  *
  * @param {string} executionId
- * @param {object} event  — must be JSON-serialisable
+ * @param {object} event - must be JSON-serialisable
  */
 export function broadcast(executionId, event) {
   const subs = getSubscribers(executionId);
@@ -81,7 +89,7 @@ export default function handleSwarmConnection(ws, req, swarmEngine) {
   }
   _subscribers.get(executionId).add(ws);
 
-  // 5. Handle connection close — remove ws from subscriber set
+  // 5. Handle connection close - remove ws from subscriber set
   ws.on('close', () => {
     const set = _subscribers.get(executionId);
     if (set) {
@@ -92,10 +100,10 @@ export default function handleSwarmConnection(ws, req, swarmEngine) {
     }
   });
 
-  // 6. Handle connection error — remove ws from subscriber set, log error
+  // 6. Handle connection error - remove ws from subscriber set, log error
   ws.on('error', (err) => {
     console.error(
-      `[SwarmWS] WebSocket error — executionId=${executionId} message=${err.message}`
+      `[SwarmWS] WebSocket error - executionId=${executionId} message=${err.message}`
     );
     const set = _subscribers.get(executionId);
     if (set) {

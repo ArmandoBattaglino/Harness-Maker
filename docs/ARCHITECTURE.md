@@ -419,7 +419,7 @@ Spawn a new job.
 **Server actions (in order):**
 1. Validate projectId exists; resolve `project.path`
 2. Discover claude binary
-3. Build argv: `["-p", prompt, "--output-format", "stream-json", "--allowedTools", allowedTools, "--max-turns", String(maxTurns), "--no-session-persistence"]`
+3. Build argv: `["-p", prompt, "--output-format", "stream-json", "--tools", allowedTools, "--max-turns", String(maxTurns), "--no-session-persistence"]`
 4. `child_process.spawn(claudeBin, argv, { cwd: project.path, stdio: ["pipe", "pipe", "pipe"] })` — NO `shell: true`
 5. `child.stdin.end()` — IMMEDIATELY after spawn (DEC-005)
 6. Construct `JobRecord` (see Data Models)
@@ -1890,7 +1890,7 @@ inbox.js handler:
 | DEC-013 | WorkflowStore writes one JSON file per workflow to `%APPDATA%\ClaudeCodeManager\workflows\`. Follows ConfigStore pattern exactly. |
 | DEC-014 | SwarmEngine attaches a secondary `swarmListeners` Set to each session record. Primary `pty.onData` handler (DEC-009) is never replaced. |
 | DEC-015 | Circuit breaker is per-edge (not per-node) to avoid false positives on legitimate hub nodes. |
-| DEC-016 | Prompt-to-Flow spawns the `claude` binary with `-p <prompt> --output-format json --max-turns 1 --no-session-persistence --allowedTools none` — same pattern as JobRunner. No Anthropic SDK or API key required. `swarmRoutes` accepts `claudeBin` as its third parameter (passed from server/index.js). The scaffold endpoint validates the JSON output and saves via WorkflowStore. (Updated 2026-03-31: was Anthropic SDK + claude-haiku-4-5-20251001.) |
+| DEC-016 | Prompt-to-Flow spawns the `claude` binary with `-p <prompt> --output-format json --max-turns 1 --no-session-persistence --tools none` — same pattern as JobRunner. No Anthropic SDK or API key required. `swarmRoutes` accepts `claudeBin` as its third parameter (passed from server/index.js). The scaffold endpoint validates the JSON output and saves via WorkflowStore. (Updated 2026-03-31: was Anthropic SDK + claude-haiku-4-5-20251001.; updated 2026-04-08 to use the modern tools flag.) |
 
 ### 11.7 V3 Security Requirements
 
@@ -2277,7 +2277,7 @@ Added a cleanup block that iterates `execution.agentStates` and, for any agent w
 |-----------|------|--------|
 | Stream-json event dispatcher | #361 | PENDING |
 | Agent lifecycle (stop/reset) | #363 | PENDING |
-| Tool config (`--tools` flag) | #365 | PENDING |
+| Tool config (`--tools` flag) | #365 | COMPLETED |
 | Zustand store (spawnMode, cost) | #368 | PENDING |
 | `useSwarm` WS hook updates | #370 | PENDING |
 | UI components (chat, cost, tool) | #372-#382 | PENDING |

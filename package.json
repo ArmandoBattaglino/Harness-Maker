@@ -1,6 +1,6 @@
 {
   "name": "claude-code-visual-manager",
-  "version": "5.0.0",
+  "version": "9.0.0",
   "private": true,
   "scripts": {
     "start": "npm run build --prefix client && node server/index.js",
@@ -20,7 +20,7 @@
     "@google/stitch-sdk": "^0.0.3",
     "playwright-core": "^1.59.1"
   },
-  "description": "Claude Code Visual Manager v5.0.0 — graphical UI for Claude Code CLI with live terminal, job runner, swarm orchestrator, and N8N-style workflow editor.",
+  "description": "Claude Code Visual Manager v9.0.0 - graphical UI for Claude Code CLI with live terminal, job runner, hybrid stream-json/PTy swarm runtime, and N8N-style workflow editor.",
   "main": "index.js",
   "directories": {
     "doc": "docs"

@@ -9,6 +9,7 @@ import HitlChatCard from './HitlChatCard';
 
 export default function ChatPanel() {
   const chatMessages = useSwarmStore((s) => s.chatMessages);
+  const agentStates = useSwarmStore((s) => s.agentStates);
   const chatFilter = useSwarmStore((s) => s.chatFilter);
   const setChatFilter = useSwarmStore((s) => s.setChatFilter);
   const workflowDef = useSwarmStore((s) => s.workflowDef);
@@ -60,10 +61,50 @@ export default function ChatPanel() {
     );
   }, [chatMessages, chatFilter]);
 
+  const enrichedMessages = useMemo(() => {
+    const grouped = [];
+
+    for (const rawMessage of filteredMessages) {
+      const runtimeState = rawMessage?.nodeId ? agentStates[rawMessage.nodeId] : null;
+      const isStreamJsonAssistant = (rawMessage.role === 'assistant' || !rawMessage.role)
+        && (rawMessage.spawnMode === 'stream-json' || runtimeState?.spawnMode === 'stream-json');
+      const nextMessage = isStreamJsonAssistant
+        ? {
+            ...rawMessage,
+            spawnMode: 'stream-json',
+            toolUse: rawMessage.toolUse ?? [],
+            cost: rawMessage.cost ?? null,
+            thinking: rawMessage.thinking ?? null,
+          }
+        : rawMessage;
+
+      if (isStreamJsonAssistant) {
+        const previous = grouped[grouped.length - 1];
+        if (
+          previous
+          && previous.spawnMode === 'stream-json'
+          && previous.nodeId === nextMessage.nodeId
+          && (previous.role === 'assistant' || !previous.role)
+        ) {
+          previous.text = `${previous.text ?? ''}${nextMessage.text ?? ''}`;
+          previous.timestamp = nextMessage.timestamp ?? previous.timestamp;
+          if ((nextMessage.toolUse ?? []).length > 0) previous.toolUse = nextMessage.toolUse;
+          if (nextMessage.cost) previous.cost = nextMessage.cost;
+          if (nextMessage.thinking) previous.thinking = nextMessage.thinking;
+          continue;
+        }
+      }
+
+      grouped.push({ ...nextMessage });
+    }
+
+    return grouped;
+  }, [filteredMessages, agentStates]);
+
   // Auto-scroll to bottom on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [filteredMessages.length]);
+  }, [enrichedMessages.length]);
 
   // Sync scope with chatFilter — if filtering by agent, default scope to that agent
   useEffect(() => {
@@ -165,10 +206,10 @@ export default function ChatPanel() {
             </option>
           ))}
         </select>
-        <span className="text-gray-600">{filteredMessages.length}</span>
+        <span className="text-gray-600">{enrichedMessages.length}</span>
       </div>
       <div className="flex-1 overflow-y-auto py-1 custom-scrollbar min-h-0">
-        {filteredMessages.map((msg, i) =>
+        {enrichedMessages.map((msg, i) =>
           msg.role === 'hitl' ? (
             <HitlChatCard
               key={`hitl-${msg.hitlItemId}-${i}`}

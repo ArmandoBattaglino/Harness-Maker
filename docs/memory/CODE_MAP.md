@@ -141,6 +141,7 @@ _Last updated: 2026-04-08 — after Task #359 (SwarmEngine._spawnAgentStreamJson
 | server/tests/JobRunner.test.js | Vitest | server/services/JobRunner.js | 18 |
 | server/tests/HandoffParser.test.js | Vitest | server/services/HandoffParser.js | 22+ |
 | server/tests/swarm-engine.test.js | Vitest | server/services/SwarmEngine.js | 61+ (was ~45; added: templated prompt examples, Codex menu auto-dismiss, hard-blocker precedence over soft menu, echo marker suppression, replayed template rejection, _onDone recovery prompt). 8 tests updated in Task #255 to clear ignoreParserUntil before testing snippet content. |
+| server/tests/e2e/stream-json-e2e.test.js | Vitest | server/services/SwarmEngine.js, client-side stream-json chat/state contract (mocked harness) | 3 deterministic V9.0 contract tests: Claude stream-json -> Codex PTY handoff without regression, graceful stop/resume with `--resume` + preserved `--tools`, and reset/archive cleanup of Claude JSONL session artifacts. Uses mocked NDJSON/PTy paths intentionally so CI stays hermetic. |
 | server/tests/security-v3.test.js | Vitest | server/utils/ssrfGuard.js, server/services/WorkflowStore.js, server/services/HandoffParser.js, server/middleware/hitlValidation.js | 36 |
 | server/tests/StreamJsonParser.test.js | Vitest | server/services/StreamJsonParser.js | 30+ (content_block_start tool_use/text/thinking, content_block_delta text/json/thinking, content_block_stop dispatch, message lifecycle, result event with cost/usage/error, system api_retry, assistant message, error handling: malformed JSON + 1MB cap + empty lines, unknown types, reset(), full tool use lifecycle, mixed block sequence) |
 
@@ -2533,6 +2534,7 @@ _Last updated: 2026-04-08 — after Task #359 (SwarmEngine._spawnAgentStreamJson
 ## POST /scaffold Full Implementation (Task #59)
 
 ### `server/routes/swarm.js` :: `generateWorkflowFromPrompt(claudeBin, prompt)`
+- **Current behavior (2026-04-08):** The scaffold helper now uses `--tools none` for the Claude CLI invocation; the purpose line below is stale historical wording pending a broader CODE_MAP refresh.
 - **Purpose:** Module-private async helper. Spawns the local claude binary (`claudeBin -p <fullPrompt> --output-format json --max-turns 1 --no-session-persistence --allowedTools none`) in os.tmpdir(). Closes stdin immediately (DEC-005). Collects stdout/stderr, exits non-zero → reject. Parses `stdout` as JSON, extracts `parsed.result ?? parsed.content` to get the model's text response, strips markdown fences, re-parses as workflow JSON, validates `name` + `nodes[]` present. Returns the parsed workflow object.
 - **Called by:** `swarmRoutes` → POST /scaffold handler (same file)
 - **Calls:** `spawn(claudeBin, args, { shell: false })` (child_process), `child.stdin.end()`, `JSON.parse()`
@@ -3734,3 +3736,7 @@ _All bugs identified in QA Swarm Inspection (2026-03-31) and Swarm Code Audit (2
 | DEC-029 | Loop node + circuit breaker interaction | Wave 5 (LoopNode) |
 | Auto-layout library | dagre (simpler) vs elkjs (hierarchical) | Wave 3 (FR-V5-42) |
 | Template source | Bundled static JSON vs remote repo | Wave 4 (FR-V5-51) |
+# UPDATE 2026-04-08
+> Current status override: 396 tasks total, 381 completed, 2 deferred, 13 pending. Debugger-loop follow-up #394-#396 is CLOSED after mixed-provider browser re-verification.
+> SwarmEngine follow-up note: Claude terminal `stream-json` error `result` events now hard-exit into `_handleRuntimeBlocker()` and `_shouldFallback()` refuses PTY fallback for `spawnMode='stream-json'`, preserving truthful `blocked` state and preventing contaminated downstream Codex handoff.
+> STATUS OVERRIDE 2026-04-08: task numbering extends through #396; 393 tasks are registered in `docs/TASK_PLAN.md`, 392 are COMPLETE/PASS, 1 is DEFERRED (#236, ConPTY platform limitation), and 0 are PENDING. V9.0 plus debugger-loop follow-up #394-#396 are CLOSED.

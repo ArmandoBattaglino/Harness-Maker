@@ -1,16 +1,16 @@
 # Claude Code Visual Manager
 
-**Current Version: v5.0.0** — QA CLEAN, 312/312 tests passing, 330 tasks total (328 completed, 2 deferred). Build: 498 modules, 0 errors.
+**Current Version: v9.0.0** - V9.0 Stream-JSON migration closed, 478/478 server tests passing. Root/client build clean at 500 modules.
 
-A locally-hosted web application that provides a graphical interface for the Claude Code CLI. Run Claude Code sessions in a live browser terminal, submit background jobs, and manage your agents, skills, and CLAUDE.md files — all from a single-command launch.
+A locally-hosted web application that provides a graphical interface for the Claude Code CLI. Run Claude Code sessions in a live browser terminal, submit background jobs, design multi-agent workflows, and manage agents, skills, and `CLAUDE.md` files from one app.
 
 ---
 
 ## Prerequisites
 
-- **Node.js 20 LTS** or later — required for `node-pty` prebuilt binary compatibility
-- **Claude Code CLI** installed and accessible on your system PATH (or configured via `CLAUDE_BINARY_PATH`)
-- **Windows 11** (primary supported platform, 23H2 or later recommended); macOS and Linux are functionally supported but not the primary test target
+- **Node.js 20 LTS** or later - required for `node-pty` compatibility
+- **Claude Code CLI** installed and available on PATH, or configured via `CLAUDE_BINARY_PATH`
+- **Windows 11** is the primary tested platform; macOS and Linux are functionally supported but not the main target
 
 ---
 
@@ -22,7 +22,7 @@ cd claude-code-visual-manager
 npm run install:all
 ```
 
-The `install:all` script installs dependencies for the root, server, and client packages in one step.
+The `install:all` script installs dependencies for the root, server, and client packages.
 
 ---
 
@@ -33,11 +33,11 @@ npm start
 ```
 
 This command:
-1. Builds the React client via Vite (output lands in `server/public/`)
+1. Builds the React client with Vite into `server/public/`
 2. Starts the Express server
-3. Automatically opens `http://127.0.0.1:3000` in your default browser
+3. Opens `http://127.0.0.1:3000` in your default browser unless `NO_OPEN=1` is set
 
-The server binds exclusively to `127.0.0.1` — it is never accessible from the network.
+The server binds exclusively to `127.0.0.1`.
 
 ---
 
@@ -45,151 +45,104 @@ The server binds exclusively to `127.0.0.1` — it is never accessible from the 
 
 | Feature | Description |
 |---------|-------------|
-| **Project Dashboard** | Card-based overview of all registered projects with status indicators, quick actions (open terminal, delete), and project registration. Default landing view. |
-| **Live Terminal Hub** | Full xterm.js terminal connected to a real Claude Code process over WebSocket. Resizes with the browser window. |
-| **Session Persistence** | PTY sessions survive browser tab closures. A 100 KB ring buffer replays recent output on reconnect. |
-| **Multi-Project Support** | Register multiple projects and run simultaneous Claude Code sessions — at least 5 concurrent without instability. |
-| **Job Runner** | Submit a prompt as a background job. Streaming progress arrives via SSE; finished output renders as formatted Markdown. |
-| **Deployment Manager** | Unified management for agents and skills. Profiles tab for CRUD on `.claude/agents/` YAML files, Active Processes tab for running sessions, and Environment tab for skills across all four scan locations. |
-| **Context Editor** | Rule-based editor for CLAUDE.md files with syntax-highlighted preview, section management, and line count warnings. Supports both user-scope and project-scope files. |
-| **Project Registration** | Register existing directories or scaffold a new `.claude/` structure (agents, commands, CLAUDE.md) from the UI. |
-| **Auto-Open Browser** | Server opens the app URL in the default browser on every `npm start`. Set `NO_OPEN=1` to suppress. |
-| **Redesigned UI** | Phase 9 design system with Inter/JetBrains Mono fonts, Material Symbols icons, purple (#933df5) accent on dark background, and 6-view sidebar navigation. |
-| **Swarm Orchestrator (V3)** | Visual multi-agent canvas: design, generate, and run agent networks. Drag-and-drop node/edge graph backed by @xyflow/react. |
-| **Prompt-to-Flow (V3)** | Describe a workflow in plain language — Claude generates the agent graph automatically. |
-| **Live Execution (V3)** | Run a workflow: each agent node spawns its own PTY session. Handoffs flow between agents in real time over WebSocket. |
-| **Human-in-the-Loop (V3)** | Agents can pause and request human approval. The HITL inbox lets you approve or reject decisions with optional resume text. |
-| **Broadcast (V3)** | Send a text message to all running agents simultaneously (soft or hard interrupt mode). |
-| **Trigger Nodes (V3)** | Webhooks and RSS pollers can fire a workflow automatically. Rate-limited webhook receiver with SSRF-safe RSS polling. |
-| **Execution History (V5)** | Browse past workflow executions with status, duration, nodes run, and per-node snapshots. Up to 100 entries persisted per workflow. History survives server restarts. |
-| **Workflow Templates (V5)** | Start from 5 built-in templates (Content Agency, Code Review Chain, Research Loop, Customer Support Triage, Data Pipeline). One click creates a new workflow from a template. |
-| **Version History (V5)** | Every workflow save creates a version snapshot. Browse, preview, and restore any previous version. Up to 50 versions retained per workflow. |
-| **Unified Chat View (V5)** | Conversation-style display of agent outputs. Server-side ChatExtractor filters PTY noise (spinners, ANSI, CLI chrome) and flushes clean messages via `chat_message` WebSocket events. Feed/Chat tab toggle in the side panel lets you switch between the inter-agent event feed and the chat conversation. Per-agent filtering via dropdown. |
-| **Advanced Flow Control Nodes (V5)** | Six new node types for complex workflows: Conditional (if/else branching), Merge (fan-in synchronization), Delay (timed pause), Loop (repeat N times), Error Handler (catch + retry/fallback), and Sub-Workflow (nested execution). All configurable via AgentInspector. |
-| **N8N-Style Editor (V5)** | Drag-and-drop node palette, snap-to-grid canvas, right-click context menus, undo/redo history, keyboard shortcuts (Ctrl+S save, Ctrl+Enter run), pre-run validation with warning badges, export/import workflow JSON, and duplicate workflow. |
+| **Project Dashboard** | Register projects, inspect status, and launch terminal sessions from a single landing view. |
+| **Live Terminal Hub** | Full xterm.js terminal connected to a real CLI PTY over WebSocket. |
+| **Session Persistence** | PTY sessions survive browser tab closures through ring-buffer replay. |
+| **Job Runner** | Submit one-shot prompts and stream structured progress/results. |
+| **Deployment Manager** | CRUD for agents and skills plus runtime/environment inspection. |
+| **Context Editor** | Edit and preview `CLAUDE.md` content for user and project scopes. |
+| **Swarm Orchestrator** | Visual multi-agent canvas backed by `@xyflow/react`. |
+| **Prompt-to-Flow** | Generate workflow graphs from natural-language prompts. |
+| **Hybrid Provider Runtime (V9)** | Claude swarm nodes run with `--output-format stream-json --verbose`; Codex and Gemini nodes remain PTY-based. |
+| **Stream-JSON Claude Telemetry (V9)** | Claude turns surface thinking, tool-use, per-turn cost, and structured result events in the UI. |
+| **Graceful Stream-JSON Controls (V9)** | Claude stream-json sessions support truthful graceful stop, force stop, resume, and reset without regressing PTY behavior. |
+| **Unified Chat View** | Conversation-style agent output with grouped stream-json metadata and PTY-safe chat rendering. |
+| **Execution History / Templates / Versions** | Persist workflow runs, restore old versions, and start from built-in templates. |
+| **Advanced Flow Control Nodes** | Conditional, merge, delay, loop, error-handler, and sub-workflow nodes for more complex orchestration. |
 
 ---
 
-## V3 Swarm Orchestrator
+## Swarm Runtime Notes
 
-Version 3 adds a visual multi-agent canvas where you can design, generate, and run networks of Claude Code agents that hand off work to each other autonomously.
+### Provider split
 
-### Swarm Quick Start
+- Claude swarm agents use the stream-json runtime
+- Codex and Gemini swarm agents keep the PTY runtime
+- Mixed-provider workflows are supported
 
-1. **Open the Swarm view.** Click the "hub" icon in the left sidebar (sixth item).
-2. **Generate a workflow.** Type a plain-language description into the prompt bar at the top and press Enter. Claude generates an agent graph automatically using the installed `claude` binary — no API key required.
-3. **Start execution.** Click **Start** in the toolbar. Each agent node spawns a live PTY session. Handoffs between nodes animate in real time on the canvas.
-4. **Monitor agents.** Click any node to open the Agent Inspector panel on the right — see live status, system prompt, handoff count, and the last 4 lines of PTY output.
-5. **Handle HITL requests.** When an agent pauses for approval, a notification appears. Open the inbox, review the agent's request, and click **Approve** (optionally typing resume text) or **Reject** to continue.
+### Stream-json behavior
 
-### Swarm Constraints
+- Claude tool allowlists use `--tools`
+- Thinking/tool/cost metadata is surfaced in the Swarm UI
+- Terminal `stream-json` error results are truthful blockers; failed Claude turns do not force a misleading downstream PTY handoff
 
-- Maximum 10 agent nodes and 15 edges per workflow (enforced by scaffold prompt design).
-- Circuit breaker fires at 10 edge crossings by default (configurable via `workflowDef.settings.circuitBreakerThreshold`). Fires an advisory WS event — does not stop execution.
-- Budget tracking is advisory: the server estimates token usage from PTY output byte counts and broadcasts `budget_update` events. No hard cutoff is enforced server-side.
-- HITL resume text is capped at 8 KB per approval.
-- Webhook receivers are rate-limited to 10 requests per minute per IP. Webhook body size is capped at 32 KB.
+### Current constraints
+
+- Maximum 10 agent nodes and 15 edges per workflow
+- Circuit breaker is advisory by default
+- HITL resume text is capped at 8 KB
+- Webhook receivers are rate-limited to 10 requests/minute/IP and capped at 32 KB bodies
 
 ---
 
 ## Configuration
 
-All configuration is via environment variables set before running `npm start`.
-
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `PORT` | `3000` | HTTP server port. Server always binds to `127.0.0.1`. |
-| `IDLE_TIMEOUT_MINUTES` | `30` | Minutes of inactivity before an idle PTY session is automatically killed. |
-| `CLAUDE_BINARY_PATH` | auto-detected | Override path to the `claude` binary. If unset, the server checks PATH then `%LOCALAPPDATA%\AnthropicClaude\claude.exe`. |
-| `NO_OPEN` | unset | Set to any non-empty value to prevent the browser from opening automatically on startup. Useful for CI or headless environments. |
+| `IDLE_TIMEOUT_MINUTES` | `30` | Minutes of inactivity before an idle PTY session is auto-killed. |
+| `CLAUDE_BINARY_PATH` | auto-detected | Override path to the `claude` binary. |
+| `NO_OPEN` | unset | Prevent the browser from auto-opening on startup. |
 
-**Example — custom port and binary path:**
-
-```bash
-PORT=8080 CLAUDE_BINARY_PATH="C:\tools\claude.exe" npm start
-```
-
-Application config (project registry) is stored at `%APPDATA%\ClaudeCodeManager\config.json` on Windows, or `~/.claudecodemanager/config.json` as a fallback.
+Project configuration is stored under `%APPDATA%\ClaudeCodeManager\config.json` on Windows, with a `~/.claudecodemanager/config.json` fallback.
 
 ---
 
 ## Troubleshooting
 
-### 1. App won't start
+### App does not start
 
-**Symptoms:** `npm start` exits immediately or throws a module error.
+1. Verify `node --version` is 20 LTS or later.
+2. Re-run `npm run install:all`.
+3. If `node-pty` fails to load, reinstall dependencies so the native module matches your Node.js ABI version.
 
-**Steps:**
-1. Confirm Node.js version is 20 LTS or later: `node --version`
-2. Re-run the full install: `npm run install:all`
-3. If `node-pty` fails to load, ensure you are on a supported Node.js version — the prebuilt binary must match your Node.js ABI version.
+### Claude binary not found
 
----
+1. Run `claude --version`.
+2. If needed, set `CLAUDE_BINARY_PATH`.
+3. On Windows, also check `%LOCALAPPDATA%\AnthropicClaude\claude.exe`.
 
-### 2. "claude binary not found" at startup
+### Terminal will not connect
 
-**Symptoms:** Server logs `[FATAL] Claude binary not found` and exits.
+1. Confirm the server is still running.
+2. Check that nothing is blocking WebSocket traffic to `127.0.0.1`.
+3. Reload the page; the ring buffer should replay recent output.
 
-**Steps:**
-1. Confirm the Claude Code CLI is installed: run `claude --version` in a terminal.
-2. If the binary exists but is not on PATH, set the environment variable:
-   ```bash
-   CLAUDE_BINARY_PATH="C:\path\to\claude.exe" npm start
-   ```
-3. On Windows, the default install location is `%LOCALAPPDATA%\AnthropicClaude\claude.exe`. Verify it exists there.
+### Session disappears after tab switch
 
----
+PTY sessions are meant to survive browser tab closes and reconnect automatically. If one is gone, it likely hit idle timeout or the server restarted.
 
-### 3. Terminal not connecting
+### Jobs never complete
 
-**Symptoms:** The terminal panel shows "Connecting..." indefinitely or displays a WebSocket error.
-
-**Steps:**
-1. The terminal uses a WebSocket connection to the same host and port as the app. Check that nothing is blocking WebSocket traffic to `127.0.0.1`.
-2. Some security software or browser extensions intercept WebSocket upgrade requests. Try disabling extensions or using a private browsing window.
-3. Confirm the server is still running — check the terminal where you ran `npm start`.
-4. Reload the page. On reconnect, the ring buffer replays the last 100 KB of terminal output.
-
----
-
-### 4. Session lost after tab switch or browser close
-
-**Symptoms:** Switching back to a previously open project tab shows a blank or disconnected terminal.
-
-**Expected behavior:** The PTY session continues running in the background while the browser is closed or on a different tab. When you switch back, the app reconnects automatically and replays buffered output. The session is only destroyed if it has been idle for longer than `IDLE_TIMEOUT_MINUTES` (default: 30 minutes), or if the server was restarted.
-
-If the session is gone, start a new terminal from the project view.
-
----
-
-### 5. Jobs hanging or never completing
-
-**Symptoms:** A submitted job stays in "running" state indefinitely.
-
-**Steps:**
-1. Jobs have a maximum runtime enforced by the Claude Code CLI's own timeout. If a job runs longer than expected, use the "Cancel" button in the Job Mode UI to terminate it.
-2. The server will cancel all running jobs automatically on shutdown (SIGTERM / SIGINT).
-3. If the Cancel button does not respond, restart the server (`Ctrl+C` in the terminal, then `npm start`). The server kills all child processes on shutdown, including orphaned Claude sub-processes.
+Cancel them from the UI or restart the server. The server kills child processes on shutdown.
 
 ---
 
 ## Visual Regression
 
-The Swarm canvas now has a dedicated screenshot-based visual regression suite for arrow routing, focus mode, merge fan-in, and loop/feedback readability.
-
-Run the suite with:
+The Swarm canvas has a screenshot-based visual regression suite for routing, focus mode, merge fan-in, and loop/feedback readability.
 
 ```bash
 npm run test:visual:swarm
 ```
 
-Refresh the committed baselines after an intentional visual change with:
+Refresh baselines after intentional visual changes:
 
 ```bash
 npm run test:visual:swarm:update
 ```
 
-If your environment blocks the harness from spawning its own server process, use the fallback:
+If your environment cannot let the harness spawn its own server:
 
 ```powershell
 npm run test:visual:swarm:prepare
@@ -199,50 +152,41 @@ $env:NO_OPEN='1'
 npm run start
 ```
 
-Then, from a second terminal:
+Then from a second terminal:
 
 ```powershell
 npm run test:visual:swarm:reuse
 ```
 
-The harness:
-1. Starts an isolated local server on port `3310`
-2. Loads repo-owned workflow fixtures instead of your personal saved workflows
-3. Captures canonical screenshots for 6 Swarm cases
-4. Compares them to the baselines in `tests/visual/swarm/baselines/`
-
-If browser auto-detection fails, set `SWARM_VISREG_BROWSER` to a local Chrome or Edge executable path.
-
-More details live in [tests/visual/swarm/README.md](/C:/Users/arman/Downloads/Test workflows - Copia/tests/visual/swarm/README.md).
+More details live in [tests/visual/swarm/README.md](/C:/Users/arman/Downloads/Test%20workflows%20-%20Copia/tests/visual/swarm/README.md).
 
 ---
 
 ## Security
 
-- **Localhost only.** The server binds to `127.0.0.1` and is never accessible from the local network or internet.
-- **CSRF protection.** All mutating API requests require the `X-Requested-With: ClaudeCodeManager` header. The React client sends this automatically; cross-origin pages cannot set it.
-- **No shell injection.** All process spawns use `shell: false` with argument arrays — user input is never interpolated into a shell command string.
-- **Atomic file writes.** All config, agent, skill, and CLAUDE.md writes use `write-file-atomic` to prevent file corruption on crash.
-- **Path traversal protection.** All file write paths are resolved and validated against their expected base directory before any write is performed.
-- **Security headers.** Helmet provides CSP, `X-Content-Type-Options`, `X-Frame-Options`, and related headers on every response.
-- **Rate limiting.** API routes are limited to 300 requests per minute per IP to guard against runaway client loops.
+- **Localhost only** - server binds to `127.0.0.1`
+- **CSRF protection** - mutating API requests require `X-Requested-With: ClaudeCodeManager`
+- **No shell injection** - process spawns use argument arrays with `shell: false`
+- **Atomic file writes** - config and editor writes use `write-file-atomic`
+- **Path validation** - write targets are resolved and prefix-checked before writes
+- **Security headers** - Helmet sets CSP and related protections
+- **Rate limiting** - API rate limiting protects against runaway loops
 
 ---
 
-## Known Limitations (v5)
+## Known Limitations
 
-- **No authentication.** The app relies on network isolation (localhost-only binding) rather than user authentication. Do not change the bind address.
-- **Windows primary.** The PTY layer targets Windows 11 with ConPTY. macOS and Linux work but are not the primary test target.
-- **No job history persistence.** Completed job results are held in memory and lost on server restart. (Workflow execution history is persisted; job-mode results are not.)
-- **No settings.json editor.** The Claude Code `settings.json` file is readable but not editable via the UI.
-- **No git integration.** No commit, diff, or branch management UI. Out of scope.
-- **No MCP server editor.** MCP server configuration is display-only. Out of scope.
-- **Swarm execution state is in-memory.** A server restart clears all running executions. Workflow definitions persist to disk; execution state does not.
-- **Prompt-to-Flow requires the `claude` binary.** The scaffold endpoint spawns `claude -p ... --output-format json`. If the binary is not found, it returns 500. The rest of the app (terminal, jobs, entity management) is unaffected.
-- **Trigger RSS poller is in-memory.** RSS poll registrations are lost on server restart. Re-register via the Triggers view after restart.
+- No authentication; locality is the main security boundary
+- Windows is the primary PTY target
+- Job history is not persisted across restarts
+- No Git UI
+- No MCP editor UI
+- Swarm execution state is still in-memory across server restarts
+- Prompt-to-Flow depends on an installed `claude` binary
+- RSS trigger registrations are in-memory
 
 ---
 
 ## License
 
-Private — see `package.json`.
+Private - see `package.json`.

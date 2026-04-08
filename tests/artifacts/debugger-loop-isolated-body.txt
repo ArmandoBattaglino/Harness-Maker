@@ -1,0 +1,134 @@
+terminal
+Claude Code
+
+VISUAL MANAGER
+
+dashboard
+Projects
+terminal
+Live Terminal
+play_arrow
+Job Runner
+memory
+Deployments
+description
+Context Editor
+hub
+Swarm
+ACTIVE PTY SESSIONS
+0 Total
+CURRENT PROJECT
+DebuggerLoopIsolated
+Selected context
+No active PTY sessions.
+add
+New Local Session
+ACTIVE
+settings
+v5.0.0
+Debugger Loop Mixed Provider E2E 2026-04-08
+Project: DebuggerLoopIsolated
+📥 HITL
+Runtime
+Auto
+Claude
+Codex
+Gemini (Unavailable)
+Models *
+History
+Templates
+Versions
+⚙ Settings
+Focus
+Tidy
+Save
+Run
+● Completed
+Provider: Codex
+Auto fallback
+Reset
+Final Report
+✨
+Generate
+Saved workflows
+Select a saved workflow
+Debugger Loop Mixed Provider E2E 2026-04-08 (08/04/2026)
+Load workflow
+Refresh
+Duplicate
+Export
+Import
+Shows workflows for DebuggerLoopIsolated plus unscoped ones
+All Agents
+NODES
+🤖
+Agent Node
+
+AI agent with system prompt
+
+🏢
+Department
+
+Group of agents
+
+🔗
+Webhook Trigger
+
+HTTP webhook trigger
+
+📡
+RSS Trigger
+
+RSS feed trigger
+
+◆
+Conditional Router
+
+IF/THEN branching logic
+
+⬡
+Merge / Join
+
+Wait for multiple inputs
+
+⏱
+Delay Timer
+
+Pause flow for N seconds
+
+🔄
+Loop
+
+Iterate with exit condition
+
+⚡
+Error Handler
+
+Catch errors from nodes
+
+📦
+Sub-Workflow
+
+Nested workflow reference
+
+‹ hide
+1 ->
+🤖
+Claude Reader
+Done
+1 handoff
+🤖
+Codex Reporter
+Done
+
+
+React Flow
+Feed
+Chat
+x
+Chat View
+No messages yet — run a workflow to see agent output here
+All Agents
+Agent
+Soft
+Send

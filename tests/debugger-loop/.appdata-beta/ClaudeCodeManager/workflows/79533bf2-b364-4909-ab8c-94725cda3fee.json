@@ -1,0 +1,70 @@
+{
+  "id": "79533bf2-b364-4909-ab8c-94725cda3fee",
+  "name": "Untitled Workflow",
+  "projectId": "3314abc4-8921-4d25-952a-b2e9186bffa7",
+  "description": "",
+  "nodes": [
+    {
+      "id": "agent-6180933d",
+      "type": "agent",
+      "position": {
+        "x": 420,
+        "y": 0
+      },
+      "data": {
+        "label": "New Agent",
+        "systemPrompt": "yo ask things to the user",
+        "model": "",
+        "tools": [],
+        "isTriageNode": false,
+        "maxTurns": 0
+      },
+      "measured": {
+        "width": 160,
+        "height": 76
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "agent-3e112efb",
+      "type": "agent",
+      "position": {
+        "x": 420,
+        "y": 140
+      },
+      "data": {
+        "label": "New Agent",
+        "systemPrompt": "analyze the responses",
+        "model": "",
+        "tools": [],
+        "isTriageNode": true,
+        "maxTurns": 0
+      },
+      "measured": {
+        "width": 160,
+        "height": 76
+      },
+      "selected": false,
+      "dragging": false
+    }
+  ],
+  "edges": [
+    {
+      "type": "handoff",
+      "markerEnd": {
+        "type": "arrow",
+        "width": 14,
+        "height": 14,
+        "color": "#64748b"
+      },
+      "source": "agent-6180933d",
+      "target": "agent-3e112efb",
+      "id": "xy-edge__agent-6180933d-agent-3e112efb"
+    }
+  ],
+  "settings": {},
+  "initialContext": {},
+  "createdAt": "2026-04-08T15:48:17.642Z",
+  "updatedAt": "2026-04-08T15:48:17.642Z"
+}
