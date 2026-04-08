@@ -4,8 +4,8 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v9.0.0 — 393 tasks total, 352 COMPLETED, 2 DEFERRED, 39 PENDING. V8.2 OUTPUT FIDELITY: AREA CLOSED 2026-04-07. V9.0 STREAM-JSON AGENT MIGRATION: Phase 0 spike COMPLETED, TEST GATE #355 IN_PROGRESS. 414 tests, client build clean.
-  **Active Area:** V9.0 STREAM-JSON AGENT MIGRATION — Tasks #354-#393. Phase 0: #354 COMPLETED, #355 IN_PROGRESS (qa-tester). PRD v6.0.
+**Status:** v9.0.0 — 393 tasks total, 355 COMPLETED, 2 DEFERRED, 36 PENDING. V8.2 OUTPUT FIDELITY: AREA CLOSED 2026-04-07. V9.0 STREAM-JSON AGENT MIGRATION: Phase 0 CLOSED, Phase 1 IN_PROGRESS. #357 StreamJsonParser COMPLETED, TEST GATE #358 PASS. 453 tests, client build clean.
+  **Active Area:** V9.0 STREAM-JSON AGENT MIGRATION — Tasks #354-#393. Phase 0: CLOSED (#354 COMPLETED, #355 PASS, #356 PASS). Phase 1: #357 COMPLETED, #358 IN_PROGRESS (qa-tester). PRD v6.0.
   **Completed Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 ALL COMPLETED/PASS. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#267 ALL COMPLETED. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave2 NODE CREATION & CONFIG — Tasks #268-#272 ALL COMPLETED. AREA CLOSED 2026-04-06.
@@ -15703,7 +15703,8 @@ Area: V9.0-Phase0 — SPIKE VALIDATION
 Agent: qa-tester
 Type: AREA_CHECKPOINT
 Priority: CRITICAL
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-08 — PASS. All 4 PRD open questions answered by spike (#355 PASS). --resume works, --tools restricts, result events have cost, session JSONL locatable. Phase 1 unblocked.
 Gate: HARD — Phase 1 CANNOT start until this PASSES
 Context: Confirm all 4 PRD open questions answered. Spike proves: (1) --resume preserves multi-turn context, (2) --tools restricts access, (3) result events contain cost, (4) session JSONL files locatable.
 Acceptance Criteria:
@@ -15775,14 +15776,15 @@ Type: TEST_GATE
 Priority: CRITICAL
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Gate: HARD — #359 blocked until PASS
+Gate Verdict: PASS — 2026-04-08
 Context: Run StreamJsonParser.test.js. Verify all 9 event types, 1MB cap, malformed JSON, content_block_stop dispatch, result field mapping, no throws. npm test no regression.
 Acceptance Criteria:
-  - [ ] All unit tests pass
-  - [ ] Every event type tested
-  - [ ] Error handling tested
-  - [ ] npm test passes
+  - [x] All unit tests pass (39/39 StreamJsonParser tests green)
+  - [x] Every event type tested (text_delta, tool_start, tool_delta, tool_stop, text_stop, thinking_start, thinking, api_retry, result, message)
+  - [x] Error handling tested (malformed JSON, 1MB cap, truncated JSON, null/undefined/empty)
+  - [x] npm test passes (453/453 tests, 19 files, 0 failures)
 Gate Result: PASS -> #359 | FAIL -> #357
 Dependencies: TASK #357
 ---

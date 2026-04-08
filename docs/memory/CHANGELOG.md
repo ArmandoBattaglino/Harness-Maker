@@ -3462,3 +3462,46 @@ No new connections introduced in this checkpoint task. All connection changes we
 - Full regression gate is green again: `ChatExtractor.test.js` PASS (`11/11`), full server suite PASS (`409/409`), client build PASS.
 
 ---
+
+---
+## 2026-04-08 — Task #357: StreamJsonParser — NDJSON line parser
+**Agent:** backend-dev
+**Triggered by:** V9.0 stream-json migration Phase 1 — build the core NDJSON line parser that transforms Claude CLI `--output-format stream-json` output into typed application events
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/StreamJsonParser.js | ADDED | New class: stateless NDJSON line parser with parseLine() dispatching on top-level type (system, stream_event, result, assistant). Tracks active content block type for stop dispatch. 1 MB line cap (SEC-SJ-03). Never throws. |
+| server/tests/StreamJsonParser.test.js | ADDED | 30+ Vitest tests covering all event types: content_block_start (tool_use, server_tool_use, text, thinking), content_block_delta (text_delta, input_json_delta, thinking_delta), content_block_stop dispatch, message lifecycle, result event with full usage/cost/error, system api_retry, assistant message, error handling (malformed JSON, 1MB cap, empty/whitespace/null), unknown types, reset(), full tool use lifecycle, mixed block sequences. |
+
+### Functions Added
+- `StreamJsonParser` (class) in `server/services/StreamJsonParser.js` — core NDJSON parser class
+- `StreamJsonParser.parseLine(rawLine)` — main entry: parses one NDJSON line into typed event object
+- `StreamJsonParser._parseSystem(obj)` — handles system events (api_retry special-cased)
+- `StreamJsonParser._parseStreamEvent(obj)` — unwraps stream_event envelope, dispatches to sub-parsers
+- `StreamJsonParser._parseContentBlockStart(event)` — handles tool_use/text/thinking block starts, sets active block tracking
+- `StreamJsonParser._parseContentBlockDelta(event)` — handles text_delta/input_json_delta/thinking_delta
+- `StreamJsonParser._parseContentBlockStop(_event)` — dispatches tool_stop/thinking_stop/text_stop based on tracked active block
+- `StreamJsonParser._parseMessageDelta(event)` — extracts stopReason + output token usage
+- `StreamJsonParser._parseResult(obj)` — parses final result line (sessionId, cost, duration, usage, error detection)
+- `StreamJsonParser._parseAssistant(obj)` — parses complete assistant message content
+- `StreamJsonParser.reset()` — clears active block tracking state
+
+### Functions Modified
+- None
+
+### Functions Removed
+- None
+
+### Connection Changes
+- NEW module: `server/services/StreamJsonParser.js` — currently standalone (no production callers)
+- FUTURE: SwarmEngine (V9.0) will consume StreamJsonParser.parseLine() to replace HandoffParser PTY token extraction with structured JSON parsing
+- FUTURE: StreamJsonSpawner (Task #358) will feed NDJSON lines from spawned claude processes into StreamJsonParser
+- SIBLING PATTERN: HandoffParser (stateful PTY buffer extraction) vs StreamJsonParser (stateless JSON line parsing) — both normalize raw CLI output into typed events but for different output formats
+
+### Impact on Other Code
+- No existing code affected — StreamJsonParser is a new standalone module with no production callers yet
+- JobRunner (server/services/JobRunner.js) currently does its own inline JSON parsing of claude job output; V9.0 migration may refactor it to use StreamJsonParser
+- SwarmEngine (server/services/SwarmEngine.js) will be the primary consumer once V9.0 stream-json migration completes
+
+---

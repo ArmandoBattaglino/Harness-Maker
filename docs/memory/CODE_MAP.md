@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-08 — after Task #354 (SPIKE — Validate --resume -p stream-json multi-turn) by backend-dev — mapped by code-mapper_
+_Last updated: 2026-04-08 — after Task #357 (StreamJsonParser — NDJSON line parser) by backend-dev — mapped by code-mapper_
 
 > **PROJECT STATUS: V9.0 STREAM-JSON MIGRATION IN PROGRESS — 393 TASKS (351 COMPLETED, 2 DEFERRED, 40 PENDING)**
 > TASK #145 (BUG-UX-HANDOFF-1) partially addressed: prompt examples templated with `<targetId>` to prevent fake handoffs from PTY redraw (DEC-023); Codex model-selection and rate-limit menus auto-dismissed; hard usage-limit now takes precedence over soft `Approaching rate limits` chooser (DEC-024). 83/83 server tests pass. Build: 479 modules. Live handoff proof still pending — no provider has completed a real multi-agent chain yet.
@@ -41,6 +41,7 @@ _Last updated: 2026-04-08 — after Task #354 (SPIKE — Validate --resume -p st
 | server/services/WorkflowStore.js | WorkflowStore (class) | CRUD + schema validation + version history for workflow definitions; persists to %APPDATA%\ClaudeCodeManager\workflows\<id>.json via write-file-atomic; server-generated UUIDs; path-traversal guard on all reads/writes. V5 Wave 4: added _saveVersion() on update, listVersions, getVersion, restoreVersion; versions stored in workflows/versions/<id>/<timestamp>.json, max 50 per workflow. (Tasks #43, V5-W4) |
 | server/stores/ExecutionHistoryStore.js | ExecutionHistoryStore (class) | Per-workflow execution history persistence to CONFIG_DIR/execution-history/<workflowId>.json. Methods: init, addEntry, getHistory, getEntry. Max 100 entries per workflow, trims oldest on overflow. Uses write-file-atomic + path-traversal guard. (V5 Wave 4) |
 | server/stores/TemplateStore.js | TemplateStore (class) | Read-only in-memory provider of 5 hardcoded workflow templates (Content Agency, Code Review Chain, Research Loop, Customer Support Triage, Data Pipeline). Methods: listTemplates, getTemplate. No file storage. (V5 Wave 4) |
+| server/services/StreamJsonParser.js | StreamJsonParser (class), default StreamJsonParser | Stateless NDJSON line parser for Claude CLI `--output-format stream-json` output. Transforms raw JSON lines into typed application events (text_delta, tool_start/delta/stop, thinking, message_start/delta/stop, result, api_retry, etc.). Tracks active content block type for content_block_stop dispatch. Never throws — all errors return error-type events. 1 MB line cap (SEC-SJ-03). Sibling pattern to HandoffParser (PTY token extraction vs. structured JSON parsing). Future consumer: SwarmEngine (V9.0 stream-json migration). Reference: JobRunner (current JSON-line consumer for job mode). (Task #357, DEC-027, DEC-029) |
 | server/services/HandoffParser.js | HandoffParser (class), default HandoffParser | Stateful rolling 4KB buffer extractor for ConPTY __HANDOFF__ and __DONE__ tokens; handles chunk-split across multiple PTY onData callbacks; ANSI escape stripping; JSON payload validation. DONE_RE now also accepts bare `DONE` on its own line (Task #254 BUG-DONE-BARE-1). (Task #45, DEC-012) |
 | server/services/SwarmEngine.js | SwarmEngine (class), default SwarmEngine | V3 swarm orchestrator — spawns agent PTY sessions, registers HandoffParser swarmListeners taps, routes handoff/done events, tracks per-node agent state and budget; now persists terminal execution states via ExecutionHistoryStore (Task #327). Constructor accepts circuitBreaker + budgetTracker optional params. **Tertiary Provider update:** handles Gemini CLI runtime with pattern-matched blocker definitions (`resource exhausted`, `not authenticated`) identical to Claude/Codex limits (DEC-026). **2026-04-03 updates (Task #145 follow-up):** added `_detectRuntimePromptIntervention()` to detect Codex model-selection and rate-limit menus; added `_applyRuntimePromptIntervention()` to auto-dismiss menus via cursor-down + Enter keystrokes (DEC-024); `_buildSystemPrompt()` and `_buildContinueAfterDonePrompt()` now use templated `<targetId>` in handoff examples instead of real node IDs to prevent fake handoffs from PTY echo replay (DEC-023); hard Codex usage-limit blocker takes precedence over soft `Approaching rate limits` chooser; `SWARM_RUNTIME_MENU_SUBMIT_DELAY_MS` constant added. **2026-04-06 updates (Task #231 BUG-WF-1):** SNIPPET_NOISE_LINE_PATTERNS extended with 13 new swarm protocol preamble regexes (agent role declarations, task descriptions, workflow goals); `_stripSnippetProtocolArtifacts()` now also strips `--- SWARM INPUT ---` blocks. **Task #255 (BUG-SNIPPET-INIT-1):** tapFn snippet update gated by `ignoreParserUntil` check — system prompt echo no longer flashes in agent card during echo gate. **Task #327:** added `_executionHistoryStore` field, `_persistedHistoryIds` Set, `setExecutionHistoryStore()` setter, `_persistExecutionHistory()` method hooked into `_setExecutionStatus` for terminal states (completed/stopped/failed). (Tasks #46, #46.3, #62.1, #145, #154, #231, #255, #327, DEC-014, DEC-023, DEC-024, DEC-026) |
 | server/services/CircuitBreaker.js | CircuitBreaker (class), default CircuitBreaker | Advisory circuit breaker for handoff loops — check(edgeId, counter, threshold) returns boolean; never stops execution, caller emits WS advisory (FR-V3-17, Task #49) |
@@ -141,6 +142,7 @@ _Last updated: 2026-04-08 — after Task #354 (SPIKE — Validate --resume -p st
 | server/tests/HandoffParser.test.js | Vitest | server/services/HandoffParser.js | 22+ |
 | server/tests/swarm-engine.test.js | Vitest | server/services/SwarmEngine.js | 61+ (was ~45; added: templated prompt examples, Codex menu auto-dismiss, hard-blocker precedence over soft menu, echo marker suppression, replayed template rejection, _onDone recovery prompt). 8 tests updated in Task #255 to clear ignoreParserUntil before testing snippet content. |
 | server/tests/security-v3.test.js | Vitest | server/utils/ssrfGuard.js, server/services/WorkflowStore.js, server/services/HandoffParser.js, server/middleware/hitlValidation.js | 36 |
+| server/tests/StreamJsonParser.test.js | Vitest | server/services/StreamJsonParser.js | 30+ (content_block_start tool_use/text/thinking, content_block_delta text/json/thinking, content_block_stop dispatch, message lifecycle, result event with cost/usage/error, system api_retry, assistant message, error handling: malformed JSON + 1MB cap + empty lines, unknown types, reset(), full tool use lifecycle, mixed block sequence) |
 
 ## Build Artifacts
 - `server/public/` — Vite build output (served as static files by Express)
@@ -3581,6 +3583,108 @@ _All bugs identified in QA Swarm Inspection (2026-03-31) and Swarm Code Audit (2
 - **Output:** void (prints to stdout, exits with code 0 on all pass, 1 on any fail)
 - **Side effects:** spawns 3 claude CLI processes sequentially, reads filesystem for session JSONL
 - **Last modified:** 2026-04-08 in Task #354 by backend-dev
+
+## StreamJsonParser (Task #357)
+
+### `server/services/StreamJsonParser.js` :: `StreamJsonParser` (class)
+- **Purpose:** Stateless NDJSON line parser for Claude CLI `--output-format stream-json`. Transforms raw JSON lines into normalized typed application events. Tracks minimal state: active content block type (`_activeBlockType`) and tool use ID (`_activeToolUseId`) for content_block_stop dispatch.
+- **Called by:** (no callers yet — future consumer: SwarmEngine V9.0 stream-json migration, StreamJsonSpawner Task #358)
+- **Calls:** Buffer.byteLength, JSON.parse
+- **Inputs:** constructor takes no params
+- **Output:** instance with `parseLine()` and `reset()` methods
+- **Side effects:** none (pure parser, no I/O)
+- **Last modified:** 2026-04-08 in Task #357 by backend-dev
+
+### `server/services/StreamJsonParser.js` :: `StreamJsonParser.parseLine(rawLine)`
+- **Purpose:** Parse a single NDJSON line into a typed event object. Handles: empty/whitespace (ignore), oversized >1MB (error), malformed JSON (error), then dispatches on `obj.type`: system, stream_event, result, assistant. Never throws.
+- **Called by:** (no production callers yet — test suite only)
+- **Calls:** _parseSystem, _parseStreamEvent, _parseResult, _parseAssistant, Buffer.byteLength, JSON.parse
+- **Inputs:** rawLine (string) — one line of NDJSON
+- **Output:** `{ type: string, ...fields }` — normalized event. Types: ignore, error, api_retry, system, text_start, text_delta, text_stop, tool_start, tool_delta, tool_stop, thinking_start, thinking, thinking_stop, message_start, message_delta, message_stop, result, message, unknown
+- **Side effects:** mutates `this._activeBlockType` and `this._activeToolUseId` (via _parseContentBlockStart and _parseContentBlockStop)
+- **Last modified:** 2026-04-08 in Task #357 by backend-dev
+
+### `server/services/StreamJsonParser.js` :: `StreamJsonParser._parseSystem(obj)` (internal)
+- **Purpose:** Handle top-level `type: "system"` events. Special-cases `subtype: "api_retry"` into structured api_retry event with attempt, delay, errorCode. Other subtypes passed through.
+- **Called by:** StreamJsonParser.parseLine
+- **Calls:** none
+- **Inputs:** obj (parsed JSON with type "system")
+- **Output:** `{ type: 'api_retry', attempt, delay, errorCode }` or `{ type: 'system', subtype }`
+- **Side effects:** none
+- **Last modified:** 2026-04-08 in Task #357 by backend-dev
+
+### `server/services/StreamJsonParser.js` :: `StreamJsonParser._parseStreamEvent(obj)` (internal)
+- **Purpose:** Handle `type: "stream_event"` wrapper. Unwraps `obj.event` and dispatches on `event.type`: content_block_start, content_block_delta, content_block_stop, message_start, message_delta, message_stop.
+- **Called by:** StreamJsonParser.parseLine
+- **Calls:** _parseContentBlockStart, _parseContentBlockDelta, _parseContentBlockStop, _parseMessageDelta
+- **Inputs:** obj (parsed JSON with type "stream_event", contains nested event object)
+- **Output:** delegated event object from sub-parsers
+- **Side effects:** none directly (sub-parsers may mutate active block state)
+- **Last modified:** 2026-04-08 in Task #357 by backend-dev
+
+### `server/services/StreamJsonParser.js` :: `StreamJsonParser._parseContentBlockStart(event)` (internal)
+- **Purpose:** Handle `content_block_start` events. Sets `_activeBlockType` and `_activeToolUseId` based on block type (tool_use/server_tool_use, thinking, text).
+- **Called by:** _parseStreamEvent
+- **Calls:** none
+- **Inputs:** event (stream event with content_block field)
+- **Output:** `{ type: 'tool_start', toolName, toolUseId }` | `{ type: 'thinking_start' }` | `{ type: 'text_start' }` | `{ type: 'unknown', rawType }`
+- **Side effects:** mutates `this._activeBlockType`, `this._activeToolUseId`
+- **Last modified:** 2026-04-08 in Task #357 by backend-dev
+
+### `server/services/StreamJsonParser.js` :: `StreamJsonParser._parseContentBlockDelta(event)` (internal)
+- **Purpose:** Handle `content_block_delta` events. Dispatches on `delta.type`: text_delta, input_json_delta, thinking_delta, signature_delta.
+- **Called by:** _parseStreamEvent
+- **Calls:** none
+- **Inputs:** event (stream event with delta field)
+- **Output:** `{ type: 'text_delta', text }` | `{ type: 'tool_delta', partialJson }` | `{ type: 'thinking', text }` | `{ type: 'unknown', rawType }`
+- **Side effects:** none
+- **Last modified:** 2026-04-08 in Task #357 by backend-dev
+
+### `server/services/StreamJsonParser.js` :: `StreamJsonParser._parseContentBlockStop(_event)` (internal)
+- **Purpose:** Handle `content_block_stop` events. Uses tracked `_activeBlockType` to dispatch correct stop event type (tool_stop with toolUseId, thinking_stop, or text_stop). Resets active tracking.
+- **Called by:** _parseStreamEvent
+- **Calls:** none
+- **Inputs:** _event (stream event — content not used, dispatch based on internal state)
+- **Output:** `{ type: 'tool_stop', toolUseId }` | `{ type: 'thinking_stop' }` | `{ type: 'text_stop' }`
+- **Side effects:** resets `this._activeBlockType` and `this._activeToolUseId` to null
+- **Complexity note:** Relies on _parseContentBlockStart having been called first for the same block. If no block was started (e.g. after reset()), defaults to text_stop.
+- **Last modified:** 2026-04-08 in Task #357 by backend-dev
+
+### `server/services/StreamJsonParser.js` :: `StreamJsonParser._parseMessageDelta(event)` (internal)
+- **Purpose:** Extract stop_reason and output token usage from message_delta events.
+- **Called by:** _parseStreamEvent
+- **Calls:** none
+- **Inputs:** event (stream event with delta.stop_reason and usage.output_tokens)
+- **Output:** `{ type: 'message_delta', stopReason, usage: { output } }`
+- **Side effects:** none
+- **Last modified:** 2026-04-08 in Task #357 by backend-dev
+
+### `server/services/StreamJsonParser.js` :: `StreamJsonParser._parseResult(obj)` (internal)
+- **Purpose:** Parse the final `type: "result"` NDJSON line (DEC-029). Extracts session ID, cost, duration, full token usage breakdown (input/output/cacheRead/cacheWrite), error detection via is_error flag or subtype "error".
+- **Called by:** StreamJsonParser.parseLine
+- **Calls:** none
+- **Inputs:** obj (parsed JSON with type "result")
+- **Output:** `{ type: 'result', sessionId, costUsd, durationMs, usage: { input, output, cacheRead, cacheWrite }, isError, errorMessage }`
+- **Side effects:** none
+- **Last modified:** 2026-04-08 in Task #357 by backend-dev
+
+### `server/services/StreamJsonParser.js` :: `StreamJsonParser._parseAssistant(obj)` (internal)
+- **Purpose:** Parse complete (non-streaming) assistant message events. Extracts message.content array.
+- **Called by:** StreamJsonParser.parseLine
+- **Calls:** none
+- **Inputs:** obj (parsed JSON with type "assistant")
+- **Output:** `{ type: 'message', content }` (content is array or null)
+- **Side effects:** none
+- **Last modified:** 2026-04-08 in Task #357 by backend-dev
+
+### `server/services/StreamJsonParser.js` :: `StreamJsonParser.reset()`
+- **Purpose:** Clear internal active block tracking state. Call between turns when reusing the same parser instance.
+- **Called by:** (no production callers yet — test suite only)
+- **Calls:** none
+- **Inputs:** none
+- **Output:** void
+- **Side effects:** resets `_activeBlockType` and `_activeToolUseId` to null
+- **Last modified:** 2026-04-08 in Task #357 by backend-dev
 
 ### Open Decisions Needed Before Implementation
 

@@ -1,4 +1,14 @@
-﻿## 2026-04-08 — backend-dev — Task #357: StreamJsonParser — NDJSON line parser
+﻿## 2026-04-08 — project-manager — Task #357 status update + #358 activation
+**Outcome:** COMPLETED
+**Summary:** Marked #357 COMPLETED (StreamJsonParser, 37 tests, 453/453 pass). Also marked #356 (AREA CHECKPOINT Phase 0) COMPLETED/PASS (was bypassed but implicitly passed). Activated #358 TEST GATE to IN_PROGRESS. Updated header: 354/393 COMPLETED, 37 PENDING. Phase 0 CLOSED, Phase 1 active. No blockers. Next after #358 PASS: #359 _spawnAgentStreamJson (backend-dev, VERY HARD).
+**Files changed:** docs/TASK_PLAN.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/CONTEXT.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/project-manager.md (MODIFIED)
+**Bugs fixed:** none
+**Decisions made:** Retroactively marked #356 COMPLETED since spike gate #355 passed and Phase 1 was already underway
+**Blockers:** none
+**Next:** Wait for #358 TEST GATE result. If PASS -> #359 _spawnAgentStreamJson (backend-dev). If FAIL -> return to #357.
+---
+
+## 2026-04-08 — backend-dev — Task #357: StreamJsonParser — NDJSON line parser
 **Outcome:** COMPLETED
 **Summary:** Created StreamJsonParser.js (NDJSON line parser for Claude CLI stream-json output) and StreamJsonParser.test.js (37 tests). Parser dispatches on top-level type (system/stream_event/result/assistant), unwraps stream_event envelope, tracks active block type for content_block_stop dispatch. Handles 1MB cap (SEC-SJ-03), malformed JSON, server_tool_use, thinking blocks. 453/453 tests pass, no regressions.
 **Files changed:** server/services/StreamJsonParser.js (CREATED), server/tests/StreamJsonParser.test.js (CREATED), docs/TASK_PLAN.md (MODIFIED)

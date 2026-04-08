@@ -20,6 +20,7 @@
 10. [Startup Sequence](#10-startup-sequence)
 11. [V3 Swarm Orchestrator Architecture](#11-v3-swarm-orchestrator-architecture)
 12. [V5 N8N-Style Visual Workflow Editor Architecture](#12-v5-n8n-style-visual-workflow-editor-architecture)
+13. [V9.0 Stream-JSON Agent Migration Architecture](#13-v90-stream-json-agent-migration-architecture)
 
 ---
 
@@ -1747,28 +1748,34 @@ Node.js Server Process
 │  │  │ _onHandoff   │  └───────────────┘                          │    │
 │  │  │ _onDone      │                                             │    │
 │  │  │ _spawnAgentPty│  ┌───────────────┐  ┌────────────────────┐   │    │
-│  │  │ _persistHist │  │ HandoffParser │  │  CircuitBreaker    │   │    │
-│  │  │ _buildSysPromt│  │               │  │                    │   │    │
-│  │  │ _startHrtbeat │  │ Stateful accum│  │ Per-edge counter   │   │    │
-│  │  └──────┬───────┘  │ HANDOFF/DONE  │  │ Advisory (no stop) │   │    │
-│  │         │          │ token extract  │  └────────────────────┘   │    │
-│  │         │          └───────────────┘                            │    │
-│  │         │                                ┌────────────────────┐   │    │
-│  │         │                                │  BudgetTracker     │   │    │
-│  │         │                                │                    │   │    │
-│  │         │                                │ Char-count estimate│   │    │
-│  │         │                                │ Advisory (no stop) │   │    │
-│  │         │                                └────────────────────┘   │    │
+│  │  │ _spawnAgent  │  │ HandoffParser │  │  CircuitBreaker    │   │    │
+│  │  │  StreamJson  │  │               │  │                    │   │    │
+│  │  │ _persistHist │  │ Stateful accum│  │ Per-edge counter   │   │    │
+│  │  │ _buildSysPromt│  │ HANDOFF/DONE  │  │ Advisory (no stop) │   │    │
+│  │  │ _startHrtbeat │  │ token extract  │  └────────────────────┘   │    │
+│  │  └──────┬───────┘  └───────────────┘                            │    │
+│  │         │                                                        │    │
+│  │         │          ┌─────────────────┐  ┌────────────────────┐   │    │
+│  │         │          │StreamJsonParser │  │  BudgetTracker     │   │    │
+│  │         │          │                 │  │                    │   │    │
+│  │         │          │ NDJSON line →   │  │ Char-count estimate│   │    │
+│  │         │          │ typed event     │  │ Advisory (no stop) │   │    │
+│  │         │          │ (DEC-027/029)   │  └────────────────────┘   │    │
+│  │         │          └─────────────────┘                           │    │
 │  │         ▼                                                         │    │
 │  │  SessionManager (shared with V1 PTY terminal)                    │    │
 │  │  swarmListeners Set on session record (DEC-014)                  │    │
 │  └─────────────────────────────────────────────────────────────────┘    │
 │                                                                         │
-│  Per-agent Claude processes (one PTY per active swarm agent node)       │
+│  Per-agent Claude processes                                             │
+│  PTY path (Codex/Gemini):            stream-json path (Claude, DEC-027):│
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                  │
-│  │ claude.exe   │  │ claude.exe   │  │ claude.exe   │  ...             │
+│  │ claude.exe   │  │ codex/gemini │  │ claude.exe   │  ...             │
 │  │ (agent A)    │  │ (agent B)    │  │ (agent C)    │                  │
-│  │ node-pty/ConPTY              handoff HANDOFF:B:ctx token             │
+│  │ node-pty/    │  │ node-pty/    │  │ child_process│                  │
+│  │ ConPTY       │  │ ConPTY       │  │ .spawn       │                  │
+│  │ → HandoffParser  → HandoffParser  │ → StreamJson- │                  │
+│  │                                   │   Parser      │                  │
 │  └──────────────┘  └──────────────┘  └──────────────┘                  │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
@@ -2097,3 +2104,69 @@ V5 Wave 5 palette entries:
 | SEC-V5-03 | Template content is read-only | TemplateStore serves hardcoded templates, no write API |
 | SEC-V5-04 | Sub-workflow recursion guard | SwarmEngine checks nesting depth before launching child execution |
 | SEC-V5-05 | Delay timer ceiling: 3600 seconds | DelayFields enforces max=3600; engine enforces on activation |
+
+---
+
+## 13. V9.0 Stream-JSON Agent Migration Architecture
+
+**Status:** IN PROGRESS (Task #357 StreamJsonParser COMPLETED; remaining tasks #358-#393 pending)
+**Decisions:** DEC-027, DEC-028, DEC-029
+
+### 13.1 Overview
+
+V9.0 migrates Claude provider agents from PTY-based spawning (node-pty/ConPTY) to structured `child_process.spawn` with `--output-format stream-json`. Codex and Gemini agents continue using PTY. This eliminates ConPTY artifact handling (120+ noise regexes, echo gates, ANSI stripping, HandoffParser accumulator) for Claude agents and provides structured cost/usage data.
+
+### 13.2 StreamJsonParser (Task #357)
+
+**File:** `server/services/StreamJsonParser.js`
+**Test:** `server/tests/StreamJsonParser.test.js`
+
+Stateless NDJSON line parser that transforms raw Claude CLI `--output-format stream-json` lines into typed application events.
+
+**Interface:**
+```javascript
+const parser = new StreamJsonParser();
+const event = parser.parseLine(rawLine);
+// event: { type: string, ...fields }
+parser.reset(); // call between turns if reusing instance
+```
+
+**Event type mapping (CLI stream-json to application events):**
+
+| CLI event | Application event type | Key fields |
+|-----------|----------------------|------------|
+| `stream_event` > `content_block_start` (text) | `text_start` | -- |
+| `stream_event` > `content_block_start` (tool_use/server_tool_use) | `tool_start` | `toolName`, `toolUseId` |
+| `stream_event` > `content_block_start` (thinking) | `thinking_start` | -- |
+| `stream_event` > `content_block_delta` (text_delta) | `text_delta` | `text` |
+| `stream_event` > `content_block_delta` (input_json_delta) | `tool_delta` | `partialJson` |
+| `stream_event` > `content_block_delta` (thinking_delta) | `thinking` | `text` |
+| `stream_event` > `content_block_stop` | `text_stop` / `tool_stop` / `thinking_stop` | Dispatched by tracked active block type |
+| `stream_event` > `message_start` | `message_start` | -- |
+| `stream_event` > `message_delta` | `message_delta` | `stopReason`, `usage.output` |
+| `stream_event` > `message_stop` | `message_stop` | -- |
+| `system` (subtype: api_retry) | `api_retry` | `attempt`, `delay`, `errorCode` |
+| `system` (other) | `system` | `subtype` |
+| `result` (DEC-029) | `result` | `sessionId`, `costUsd`, `durationMs`, `usage`, `isError`, `errorMessage` |
+| `assistant` | `message` | `content` (array) |
+| (unknown) | `unknown` | `rawType` |
+| (empty/whitespace) | `ignore` | -- |
+| (malformed/oversized) | `error` | `message` |
+
+**Internal state:** Tracks `_activeBlockType` (`text` / `tool_use` / `thinking` / `null`) and `_activeToolUseId` to dispatch correct stop event types when `content_block_stop` arrives.
+
+**Security:** 1 MB per-line cap (SEC-SJ-03). Never throws -- all errors return error-type events.
+
+### 13.3 Remaining V9.0 Components (pending)
+
+| Component | Task | Status |
+|-----------|------|--------|
+| `_spawnAgentStreamJson()` | #359 | PENDING |
+| Stream-json event dispatcher | #361 | PENDING |
+| Agent lifecycle (stop/reset) | #363 | PENDING |
+| Tool config (`--tools` flag) | #365 | PENDING |
+| Zustand store (spawnMode, cost) | #368 | PENDING |
+| `useSwarm` WS hook updates | #370 | PENDING |
+| UI components (chat, cost, tool) | #372-#382 | PENDING |
+| `agent_status.spawnMode` field | #380 | PENDING |
+| Cleanup + E2E + docs | #384-#393 | PENDING |
