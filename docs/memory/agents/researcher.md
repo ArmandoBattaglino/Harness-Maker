@@ -246,6 +246,58 @@ frontend-dev building DepartmentNode.jsx and SwarmCanvasView should read docs/re
 ---
 
 ---
+## 2026-04-08 — Quick Research Snapshot: Stream-JSON Agent Migration (Session Management + Event Types)
+**Status:** COMPLETED
+**Called by:** orchestrator (orientation scan for stream-json migration planning)
+
+### Context when I started
+Team is evaluating replacing PTY-based agent spawning in SwarmEngine with Claude CLI stream-json mode. Tech-lead flagged UNCERTAIN feasibility. Need concrete answers on: --resume + -p combination, --session-id custom IDs, stream-json event types, auto-accept flags, and session persistence behavior.
+
+### What I did
+1. Read project memory (researcher.md, PROJECT.md, ACTIVITY_LOG.md)
+2. Read existing JobRunner.js to confirm current stream-json spawn pattern (uses --no-session-persistence)
+3. Fetched official CLI reference at code.claude.com/docs/en/cli-reference — extracted all relevant flags
+4. Fetched headless mode docs at code.claude.com/docs/en/headless — confirmed --resume + -p combination works
+5. Fetched Agent SDK streaming docs at platform.claude.com/docs/en/agent-sdk/streaming-output — got complete event type reference
+6. Fetched GitHub issue #24596 for community-reported event type gaps
+7. Ran web searches for --dangerously-skip-permissions and auto-accept modes
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/agents/researcher.md | MODIFIED | Added this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added activity entry |
+
+### Improvements delivered
+- Confirmed --resume + -p works: `claude -p "query" --resume <session-id>` is documented and supported
+- Confirmed --session-id accepts custom UUIDs: `claude --session-id "550e8400-..."` 
+- Complete stream-json event type reference assembled from 3 sources
+- Identified critical limitation: extended thinking disables StreamEvent emission
+- Confirmed --dangerously-skip-permissions is the auto-accept mechanism for -p mode
+
+### Bugs I encountered
+None — research only.
+
+### Decisions I made
+- None — research deliverable only
+
+### What I learned
+- --session-id flag exists and accepts custom UUIDs — this means we CAN pre-generate session IDs for agents
+- --resume accepts session ID OR name — named sessions via --name flag are also an option
+- --fork-session creates a new session ID from an existing conversation — useful for branching
+- --input-format stream-json exists for multi-turn input piping (undocumented beyond flag table per issue #24594)
+- Extended thinking (max_thinking_tokens) DISABLES StreamEvent emission — only complete messages are returned
+- system/api_retry event type exists for rate limit retry visibility
+- --no-session-persistence is print-mode-only — removing it enables resume capability (currently used in JobRunner)
+- --bare skips CLAUDE.md, hooks, MCP, skills — faster but loses project context; NOT recommended for swarm agents that need project awareness
+
+### State I'm leaving behind
+Quick Research Snapshot delivered as direct response. All findings are from official docs (code.claude.com, platform.claude.com). No code changes.
+
+### Handoff
+Architect/backend-dev should use these findings to design the stream-json spawn pattern for SwarmEngine. Key decision: whether to use --session-id (pre-generated UUID) or capture session_id from first --output-format json response.
+
+---
 ## 2026-04-08 — Research: Claude CLI Structured Output / Programmatic Parsing
 **Status:** COMPLETED
 **Called by:** user (research request for output fidelity improvement)

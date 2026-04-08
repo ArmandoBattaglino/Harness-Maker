@@ -1,4 +1,14 @@
-﻿## 2026-04-08 — tech-lead — Stage 0: Replace PTY with stream-json for Swarm Claude agents
+﻿## 2026-04-08 — researcher — Quick Research Snapshot: Stream-JSON Agent Migration
+**Outcome:** COMPLETED
+**Summary:** Confirmed --resume + -p combination works per official docs. --session-id accepts custom UUIDs. Assembled complete stream-json event type reference. Identified critical pitfall: extended thinking disables streaming events. --dangerously-skip-permissions is the auto-accept mechanism.
+**Files changed:** docs/memory/agents/researcher.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** none — research deliverable only
+**Blockers:** none
+**Next:** Architect designs stream-json spawn pattern for SwarmEngine using these findings
+
+---
+## 2026-04-08 — tech-lead — Stage 0: Replace PTY with stream-json for Swarm Claude agents
 **Outcome:** COMPLETED
 **Summary:** Assessed feasibility of replacing PTY-based agent spawning with stream-json mode for Claude provider. Rated UNCERTAIN: core stream-json parsing is proven (JobRunner), but multi-turn continuation (done-reinject, HITL), terminal display, rate-limit handling, and dual-path maintenance complexity are unresolved. Produced 4 targeted technical questions.
 **Files changed:** docs/memory/agents/tech-lead.md, docs/memory/ACTIVITY_LOG.md
