@@ -33,7 +33,11 @@ function formatChatText(rawText = '') {
     .filter(Boolean)
     .filter((line) => !/^(?:\w{2,20}ing(?:\.{2,}|…)\s*){2,}$/i.test(line))
     .filter((line) => !/(?:bypass ?permissions ?on|shift\+tab ?to ?cycle|\/buddy)/i.test(line))
-    .filter((line) => !/(?:ctrl\+[a-z]|to (?:edit|cycle)|now using extra usage|╭|╰|─{3,}|▸▸|❯❯)/i.test(line));
+    .filter((line) => !/(?:ctrl\+[a-z]|to (?:edit|cycle)|now using extra usage|╭|╰|─{3,}|▸▸|❯❯)/i.test(line))
+    .filter((line) => !/(?:fluttering|running stop hook|◐|◑|◒|◓|⠋|⠙|⠹|⠸|⠼|⠴|⠦|⠧|⠇|⠏)/i.test(line))
+    .filter((line) => !/^[….\s\w]{0,10}cycle\)?[\s◐◑◒◓]*\w*$/i.test(line))
+    .filter((line) => !/^❯\s/.test(line))
+    .filter((line) => !/(?:claude runtime is active|continue the workflow using the shared task context|is not the end of the workflow yet|do not stop at the done marker|you are a [a-z]+ agent\b|execute the workflow goal described|MUST emit a handoff token|downstream target is:|hand off with the most useful)/i.test(line));
 
   return cleanedLines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
 }
