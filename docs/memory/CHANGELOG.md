@@ -3813,3 +3813,37 @@ No new connections introduced in this checkpoint task. All connection changes we
 - Test file `StreamJsonParser.test.js` updated to assert `resultText` in result event output
 
 ---
+## 2026-04-09 — Commit 5d359b4: Fix Codex SDK canonical chat message + eliminate duplicate WS broadcasts
+**Agent:** backend-dev + frontend-dev — mapped by code-mapper
+**Triggered by:** Codex SDK agent_message deltas were producing duplicate WS broadcasts (once via ChatExtractor.feed and once via direct WS emit), and the canonical result text was not collapsing all text_delta fragments into a single clean message on the client side.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/SwarmEngine.js | MODIFIED | `_handleCodexSdkTurnCompleted` now emits canonical `chat_message` with `isCanonical:true` and `spawnMode:'codex-sdk'` when turn ends terminally; `execution.chatMessages` now REPLACES prior assistant entries for the nodeId (filter+push instead of append); removed ChatExtractor.feed() call in `_applyCodexSdkItemEvent` for agent_message deltas; added fallback path for non-terminal turns that sends regular chat_message if no chat was emitted during the turn |
+| client/src/store/SwarmContext.jsx | MODIFIED | Added `replaceNodeChatMessages(nodeId, canonicalMsg, predicate)` action that removes all matching messages and inserts a single canonical message at the first fragment's position |
+| client/src/hooks/useSwarm.js | MODIFIED | `isCanonical` handler in `chat_message` case now calls `replaceNodeChatMessages` instead of `patchLatestChatMessage`, collapsing all text_delta fragments into one clean message (fixes BUG-CHAT-3) |
+
+### Functions Added
+- `replaceNodeChatMessages(nodeId, canonicalMsg, predicate)` in `client/src/store/SwarmContext.jsx` — Zustand action that filters out all matching chat messages for a nodeId and inserts a single canonical replacement at the correct chronological position
+
+### Functions Modified
+- `_handleCodexSdkTurnCompleted(executionId, nodeId, usage, runId)` in `server/services/SwarmEngine.js` — now broadcasts canonical `chat_message` with `isCanonical:true` on terminal turn completion; replaces prior assistant entries in `execution.chatMessages` instead of appending; added fallback path for non-terminal turns
+- `_applyCodexSdkItemEvent(executionId, nodeId, rawItem, phase)` in `server/services/SwarmEngine.js` — removed ChatExtractor.feed() call for agent_message items to eliminate duplicate WS broadcasts; comment explains rationale
+- `connectWs(executionId)` chat_message handler in `client/src/hooks/useSwarm.js` — isCanonical branch now uses `replaceNodeChatMessages` instead of `patchLatestChatMessage`
+
+### Functions Removed
+- (none)
+
+### Connection Changes
+- `_handleCodexSdkTurnCompleted` now emits `{ type: 'chat_message', isCanonical: true, spawnMode: 'codex-sdk' }` WS events — consumed by `useSwarm.js::connectWs`
+- `_applyCodexSdkItemEvent` NO LONGER calls `ChatExtractor.feed()` for Codex SDK agent_message deltas (dependency removed)
+- `useSwarm.js::connectWs` isCanonical handler now calls `replaceNodeChatMessages` instead of `patchLatestChatMessage` (dependency changed)
+- Server-side `execution.chatMessages` now uses filter+push replacement pattern for canonical messages instead of simple append
+
+### Impact on Other Code
+- ChatPanel grouping no longer sees stale text_delta fragments alongside canonical text — eliminates duplicated/truncated output (BUG-CHAT-3)
+- REST hydration via `/api/v1/swarm/executions/:id/results` now gets clean chatMessages without Codex SDK fragment duplication
+- `patchLatestChatMessage` is still used by `flushPendingStreamJsonTurn` — not removed from store, just no longer used in the isCanonical path
+
+---

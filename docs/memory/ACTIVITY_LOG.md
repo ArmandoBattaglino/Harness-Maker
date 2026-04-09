@@ -1,4 +1,26 @@
-﻿## 2026-04-08 — qa-tester — Task #409: TEST GATE V9.2 Stream-JSON Display Fidelity (attempt 3)
+﻿## 2026-04-09 — project-manager — Post-commit 5d359b4 task plan update
+**Outcome:** COMPLETED
+**Summary:** Updated TASK_PLAN.md after commit 5d359b4 (BUG-CHAT-3 fix). Marked TEST GATE #409 as PASS (attempt 4). Registered V9.4 area with tasks #413 (BUG-CHAT-3 fix, COMPLETED) and #414 (TEST GATE, PASS). V9.2 and V9.4 both CLOSED. Total: 414 tasks, 412 COMPLETED/PASS, 1 DEFERRED (#236). Documented remaining known bugs: BUG-CHAT-1 (token boundary spacing, LOW, platform limitation) and BUG-CHAT-2 (Codex PTY thinking noise, MEDIUM). Updated PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none (task plan maintenance)
+**Decisions made:** none
+**Blockers:** none
+**Next:** No blocking work remains. BUG-CHAT-2 (MEDIUM) is the highest-priority known issue for future polish.
+
+---
+
+## 2026-04-09 — documenter — Commit 5d359b4: Codex SDK canonical chat_message + eliminate duplicate WS broadcasts
+**Outcome:** COMPLETED
+**Summary:** Documentation audit after Codex SDK canonical chat_message fix. Three files changed in code (SwarmEngine.js, SwarmContext.jsx, useSwarm.js): Codex SDK now emits isCanonical:true at turn completion, ChatExtractor.feed() removed for Codex SDK structured agents, client replaceNodeChatMessages replaces all prior fragments on canonical. Updated ARCHITECTURE.md Section 13.1 (Codex SDK canonical + ChatExtractor exclusion), API.md WS event table (isCanonical now documents both runtimes), DOC_STATUS.md (4 sections), inline comments audit (all accurate).
+**Files changed:** docs/ARCHITECTURE.md, docs/API.md, docs/memory/DOC_STATUS.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none (documentation only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** nothing -- task fully self-contained
+
+---
+
+## 2026-04-08 — qa-tester — Task #409: TEST GATE V9.2 Stream-JSON Display Fidelity (attempt 3)
 **Outcome:** FAIL
 **Summary:** repairTokenSpacing.js (commit c4f78f1) has critical regex bugs. repairTokenSplitting merges across real word boundaries in Italian (short words like "di", "un", "e", "il" are indistinguishable from sub-word fragments), producing "tramiteunconsumatoreeun" from "tramite un consumatore e un". repairCamelCaseSplitting fails on "Java Script" (needs lowercase first word) and merges unrelated words ("using Java Script" -> "usingJavaScript"). The fix makes display WORSE for realistic Italian text. Tests 2-4 PASS. Needs fundamentally different approach (stopword dictionary, known-term list, or server-side fix).
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/qa-tester.md
@@ -5255,6 +5277,16 @@ full self-contained context and acceptance criteria.
 **Summary:** Updated CODE_MAP.md and CHANGELOG.md for the canonical result text fix (commit 9029762). Mapped new `replaceAgentChatText` store action, updated `_parseResult` (resultText field), `_handleStreamJsonResult` (step 4b canonical replacement + isCanonical broadcast), and `connectWs` (isCanonical handler branch). 5 files analyzed, 1 function added, 4 updated, 0 removed.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** nothing — task fully self-contained
+---
+
+## 2026-04-09 — code-mapper — Commit 5d359b4: Codex SDK canonical chat_message + duplicate WS broadcast fix
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md and CHANGELOG.md for commit 5d359b4. Mapped new `replaceNodeChatMessages` store action, updated `_handleCodexSdkTurnCompleted` (canonical isCanonical:true emission + chatMessages replacement), `_applyCodexSdkItemEvent` (ChatExtractor.feed removed), and `connectWs` isCanonical handler (now uses replaceNodeChatMessages instead of patchLatestChatMessage). 3 files analyzed, 1 function added, 3 updated, 0 removed. No breaking changes.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (mapping only)
 **Decisions made:** none
 **Blockers:** none
 **Next:** nothing — task fully self-contained

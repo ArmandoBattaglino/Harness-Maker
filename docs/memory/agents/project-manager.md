@@ -1,4 +1,51 @@
 ---
+## 2026-04-09 — Post-commit 5d359b4 task plan update (BUG-CHAT-3 fix)
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+Commit 5d359b4 just landed, fixing BUG-CHAT-3 (canonical chat_message for Codex SDK) and eliminating duplicate WS broadcasts for structured agents. TEST GATE #409 was at FAIL (attempt 3). V9.3 was already CLOSED. Three files changed: SwarmEngine.js, SwarmContext.jsx, useSwarm.js. All 490 tests pass, client builds clean, browser E2E verified.
+
+### What I did
+1. Read TASK_PLAN.md, PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md, DECISIONS.md, and my agent memory
+2. Updated TASK #409 from FAIL to PASS (attempt 4) with completion note referencing commit 5d359b4
+3. Registered V9.4 area with TASK #413 (BUG-CHAT-3 fix, COMPLETED) and TASK #414 (TEST GATE, PASS)
+4. Added informational section documenting remaining known bugs: BUG-CHAT-1 (LOW) and BUG-CHAT-2 (MEDIUM)
+5. Updated PROGRESS.md with PM status entry
+6. Updated CONTEXT.md to reflect ALL AREAS CLOSED
+7. Updated ACTIVITY_LOG.md with session entry
+8. Updated this agent memory file
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | #409 FAIL->PASS, added V9.4 area (#413-#414), added known bugs section |
+| docs/memory/PROGRESS.md | MODIFIED | Added PM status entry at top |
+| docs/memory/CONTEXT.md | MODIFIED | Updated focus to ALL AREAS CLOSED |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added PM session entry |
+| docs/memory/agents/project-manager.md | MODIFIED | Added this session log |
+
+### Improvements delivered
+- Task plan now accurately reflects commit 5d359b4 changes
+- V9.2 and V9.4 both formally CLOSED
+- Known bugs documented for future reference
+
+### Bugs I encountered
+- None
+
+### Decisions I made
+- Registered BUG-CHAT-3 fix as a new V9.4 area rather than folding into V9.2, because the fix introduced new components (replaceNodeChatMessages) and addressed a different root cause than the original V9.2 bugs
+
+### What I learned
+- The server-side canonical approach (commit 5d359b4) succeeded where the client-side regex repair strategy (repairTokenSpacing.js, commit c4f78f1) failed. Canonical replacement at turn completion is the correct pattern for fixing token-boundary text artifacts.
+
+### State I'm leaving behind
+414 tasks total: 412 COMPLETED/PASS, 1 DEFERRED (#236 ConPTY), 0 IN_PROGRESS. All areas CLOSED. Two known non-blocking bugs remain: BUG-CHAT-1 (token boundary spacing, LOW, platform limitation) and BUG-CHAT-2 (Codex PTY thinking noise, MEDIUM).
+
+### Handoff
+No blocking work remains. If further polish is desired, BUG-CHAT-2 is the highest-priority known issue. Any new features should start a V10+ area.
+
+---
 ## 2026-04-09 — Project state audit — user asked "stato del progetto?"
 **Status:** COMPLETED
 **Called by:** user

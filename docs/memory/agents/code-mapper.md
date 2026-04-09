@@ -3618,3 +3618,48 @@ CODE_MAP.md and CHANGELOG.md are up to date through Task #406 phase 2. All 5 mod
 ### Handoff
 None — task fully self-contained.
 ---
+
+---
+## 2026-04-09 — Commit 5d359b4: Codex SDK canonical chat_message + eliminate duplicate WS broadcasts
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+Commit 5d359b4 had been applied with 3 file changes: SwarmEngine.js (Codex SDK canonical chat_message + ChatExtractor removal), SwarmContext.jsx (new replaceNodeChatMessages action), and useSwarm.js (isCanonical handler updated to use replaceNodeChatMessages). CODE_MAP.md and CHANGELOG.md were current through Task #406 phase 2.
+
+### What I did
+1. Read all 3 modified source files: SwarmEngine.js (focused on _handleCodexSdkTurnCompleted at line 4697 and _applyCodexSdkItemEvent at line 4551), SwarmContext.jsx (full file — found new replaceNodeChatMessages at line 189), useSwarm.js (full file — found isCanonical handler at line 637 now using replaceNodeChatMessages)
+2. Grepped for callers of replaceNodeChatMessages — confirmed only useSwarm.js calls it
+3. Updated CODE_MAP.md: header date, SwarmEngine module index, SwarmContext module index, connectWs complexity note (line 2736), connectWs Last modified line, added new replaceNodeChatMessages function entry
+4. Appended CHANGELOG.md entry documenting all 3 modified files, 1 function added, 3 functions modified, connection changes
+5. Appended to ACTIVITY_LOG.md and this agent log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Updated header, module index entries, connectWs complexity/last-modified, added replaceNodeChatMessages entry |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended entry for commit 5d359b4 |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended activity entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- CODE_MAP.md now accurately reflects the Codex SDK canonical chat_message flow and the elimination of duplicate WS broadcasts
+- CHANGELOG.md documents the connection change from patchLatestChatMessage to replaceNodeChatMessages
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| (none) | — | — | — |
+
+### Decisions I made
+- Documented replaceNodeChatMessages as a standalone function entry (not just inline in connectWs notes) because it has distinct semantics (replace-all vs patch-latest) that future developers need to understand
+
+### What I learned
+- The Codex SDK canonical path now mirrors the Claude stream-json canonical path: both emit isCanonical:true at turn completion, and the client uses replaceNodeChatMessages to collapse fragments. The key difference is Codex SDK also needed ChatExtractor.feed() removal to avoid duplicate broadcasts.
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md are up to date through commit 5d359b4. All 3 modified files are mapped.
+
+### Handoff
+None — task fully self-contained.
+---

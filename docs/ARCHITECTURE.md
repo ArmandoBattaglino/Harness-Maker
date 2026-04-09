@@ -2114,7 +2114,7 @@ V5 Wave 5 palette entries:
 
 ### 13.1 Overview
 
-V9.0 migrates Claude provider agents from PTY-based spawning (node-pty/ConPTY) to structured `child_process.spawn` with `--output-format stream-json`. Codex and Gemini agents continue using PTY. This eliminates ConPTY artifact handling (120+ noise regexes, echo gates, ANSI stripping, HandoffParser accumulator) for Claude agents and provides structured cost/usage data.
+V9.0 migrates Claude provider agents from PTY-based spawning (node-pty/ConPTY) to structured `child_process.spawn` with `--output-format stream-json`. Codex SDK agents use the `@openai/codex-sdk` structured runtime. Gemini agents continue using PTY. Both Claude stream-json and Codex SDK runtimes emit canonical `chat_message` events with `isCanonical: true` at turn completion, which the client uses to replace all prior text_delta fragments with the authoritative assembled text. ChatExtractor is NOT used for Codex SDK agents (structured agents broadcast chat_message directly via WS). This eliminates ConPTY artifact handling (120+ noise regexes, echo gates, ANSI stripping, HandoffParser accumulator) for Claude agents and provides structured cost/usage data.
 
 ### 13.2 StreamJsonParser (Task #357)
 

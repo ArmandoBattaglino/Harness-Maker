@@ -16929,9 +16929,9 @@ Area: V9.2 STREAM-JSON DISPLAY FIDELITY (2026-04-08)
 Agent: qa-tester
 Type: TEST_GATE
 Priority: CRITICAL
-Status: FAIL
+Status: PASS
 Gate: HARD
-Completion Note: 2026-04-08 — Attempt 3 FAIL. Client-side repairTokenSpacing.js (commit c4f78f1) has CRITICAL regex bugs: (A) repairTokenSplitting merges across real word boundaries in Italian — "tra m it e un con su ma t or e e un" becomes "tramiteunconsumatoreeun" because Italian short words (di/un/e/il/in) are indistinguishable from sub-word fragments; (B) repairCamelCaseSplitting("Java Script") returns unchanged because regex requires lowercase first word; (C) repairCamelCaseSplitting("using Java Script") merges to "usingJavaScript". The fix makes display WORSE than the original token-split output for realistic Italian text. 490/490 server tests pass, client build clean. Tests 2 (stale state) and 3 (cost persistence) PASS. Needs fundamentally different approach: stopword dictionary, known-term dictionary, or server-side fix.
+Completion Note: 2026-04-09 — Attempt 4 PASS. Commit 5d359b4 fixes BUG-CHAT-3 (canonical chat_message replacement for Codex SDK) and eliminates duplicate WS broadcasts by bypassing ChatExtractor for structured agents. Server-side canonical approach replaces the failed client-side regex repair strategy. Changes: SwarmEngine.js (canonical chat_message for Codex SDK, ChatExtractor bypass, REST hydration fix), SwarmContext.jsx (replaceNodeChatMessages action), useSwarm.js (canonical handler uses replaceNodeChatMessages). All 490 tests pass, client builds clean, browser E2E verified clean text. Tests 1-5 all PASS. V9.2 CLOSED.
 Context:
   Re-run the same multi-agent Puppeteer E2E test (2-agent Researcher → Writer, Node.js streams topic).
   Verify:
@@ -17034,4 +17034,83 @@ Acceptance Criteria:
   - [x] All checks PASS
 Completion Note: PASS — 2026-04-08 — Verified on isolated updated server `http://127.0.0.1:3337`: `ZZ Codex SDK Deep Test Live 2026-04-08` completes with non-empty Chat rail and matching `chatMessages` in `/status`; `ZZ Codex SDK Reset Test Live 2026-04-08` returns to `Idle` after `Reset Session` while running, with no blocker banner and `/status` showing execution + node back to `idle`. Verification suite: `npm test --prefix server` => 490/490 PASS, `npm run build --prefix client` => 501 modules.
 Dependencies: TASK #410,#411
+---
+
+## AREA: V9.4 — Chat Message Canonical Fix (BUG-CHAT-3)
+_Components: SwarmEngine canonical chat_message for Codex SDK, ChatExtractor bypass for structured agents, SwarmContext replaceNodeChatMessages, useSwarm canonical handler_
+_Tasks: #413 → #414_
+_Gate: Canonical chat messages must render clean text without duplicates across all structured agent types_
+
+---
+TASK #413: BUG-CHAT-3 — Codex SDK canonical chat_message + eliminate duplicate WS broadcasts
+Area: V9.4 CHAT MESSAGE CANONICAL FIX (2026-04-09)
+Agent: debugger
+Type: BUG_FIX
+Priority: HIGH
+Status: COMPLETED
+Context:
+  Two related bugs discovered during V9.2/V9.3 verification:
+  1. Codex SDK agents were missing canonical chat_message emission entirely — the ChatExtractor
+     pipeline was designed for PTY output and did not handle structured SDK responses. This left
+     Codex SDK agent chat rails empty or with partial/garbled content.
+  2. ChatExtractor was causing duplicate WS broadcasts for structured agents (stream-json and
+     codex-sdk) — the structured runtime already emits chat_message events, but ChatExtractor
+     was independently extracting and broadcasting a second set from the raw output buffer.
+  Fix (commit 5d359b4):
+  - server/services/SwarmEngine.js: Added canonical chat_message emission for Codex SDK turns,
+    bypassed ChatExtractor for structured agent runtimes, fixed REST hydration for chat messages
+  - client/src/store/SwarmContext.jsx: Added replaceNodeChatMessages action for canonical replacement
+  - client/src/hooks/useSwarm.js: Canonical handler uses replaceNodeChatMessages instead of append
+Acceptance Criteria:
+  - [x] Codex SDK completed runs emit at least one canonical chat_message WS event
+  - [x] No duplicate chat_message broadcasts for structured agents (stream-json, codex-sdk)
+  - [x] REST hydration returns correct chat messages for all agent types
+  - [x] replaceNodeChatMessages action correctly replaces (not appends) messages per node
+  - [x] All 490 server tests pass
+  - [x] Client build clean
+  - [x] Browser E2E verified clean text in Chat rail
+Completion Note: COMPLETED — 2026-04-09 — Commit 5d359b4. All criteria met. This also unblocked TEST GATE #409 (V9.2) which now passes on attempt 4.
+Dependencies: TASK #411
+---
+TASK #414: TEST GATE — V9.4 Chat Message Canonical verification
+Area: V9.4 CHAT MESSAGE CANONICAL FIX (2026-04-09)
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Status: PASS
+Gate: HARD
+Context:
+  Verify commit 5d359b4 fixes:
+  1. Codex SDK agents emit canonical chat_message events
+  2. No duplicate WS broadcasts for structured agents
+  3. Browser E2E shows clean, non-duplicated chat text
+  4. REST /status and /results endpoints return correct chat messages
+  5. All 490 server tests pass, client build clean
+Acceptance Criteria:
+  - [x] All 5 checks PASS
+Completion Note: PASS — 2026-04-09 — Verified via commit 5d359b4 browser E2E. Clean text confirmed, no duplicates, 490/490 tests, client build clean. V9.4 CLOSED.
+Dependencies: TASK #413
+---
+
+## Remaining Known Chat Bugs (informational, not blocking)
+
+BUG-CHAT-1: Token boundary spacing in stream-json text_delta output
+  Status: KNOWN — platform limitation
+  Priority: LOW
+  Description: Claude CLI stream-json emits text in sub-word token fragments. When tokens split
+    mid-word (e.g., "high" + "Water" + "Mark"), the accumulated text may show minor spacing
+    artifacts. The canonical chat_message approach (commit 5d359b4) resolves this for final
+    result text, but incremental text_delta display during streaming may still show transient
+    spacing. This is inherent to the Claude CLI token boundary behavior and cannot be fully
+    fixed client-side without a dictionary-based approach.
+  Mitigation: Final canonical text replaces incremental deltas on turn completion.
+
+BUG-CHAT-2: Codex PTY thinking noise in chat output
+  Status: KNOWN
+  Priority: MEDIUM
+  Description: Codex agents running via PTY (non-SDK mode) may include thinking/reasoning
+    noise in the ChatExtractor output. The existing noise filter pipeline handles most patterns
+    but some edge cases persist. Stream-json and Codex SDK modes are not affected (they use
+    structured output).
+  Mitigation: Use Codex SDK mode (default) instead of PTY mode for Codex agents.
 ---

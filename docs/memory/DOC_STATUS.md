@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-08 after Task #406 phase 2 (canonical result text replaces streamed text_delta fragments)._
+_Last updated: 2026-04-09 after commit 5d359b4 (Codex SDK canonical chat_message + eliminate duplicate WS broadcasts)._
 
 ## Release Status
 **v9.0.0 — V9.0 Stream-JSON Agent Migration CLOSED for core semantics, display fidelity FIXED**
@@ -60,9 +60,9 @@ _Last updated: 2026-04-08 after Task #406 phase 2 (canonical result text replace
 |----------|--------|--------------|-------|
 | README.md | UP_TO_DATE | 2026-04-08 | Updated to v9.0.0 release metadata and documents stream-json Claude agents, hybrid provider runtime behavior, and graceful stop/resume/reset controls. |
 | CLAUDE.md | UP_TO_DATE | 2026-04-08 | Updated with DEC-027/028/029 runtime constraints, `--tools` guidance, truthful blocker rule for Claude stream-json failures, and `write-file-atomic` correction. |
-| docs/ARCHITECTURE.md | PARTIAL | 2026-04-08 | V5 component tree still deferred (12 components). Section 13.5 updated with canonical resultText replacement step (4b) and isCanonical chat_message WS event. WS event table updated: chat_message row now describes canonical corrective message. Remaining V9.0 components (#361-#393) listed as pending in 13.7. |
+| docs/ARCHITECTURE.md | PARTIAL | 2026-04-09 | V5 component tree still deferred (12 components). Section 13.1 updated: Codex SDK now emits isCanonical chat_message at turn completion; ChatExtractor not used for Codex SDK agents. Remaining V9.0 components (#361-#393) listed as pending in 13.7. |
 | docs/PRD.md | UP_TO_DATE | 2026-04-08 | Rewritten to v6.0: Stream-JSON Agent Migration. 12 component specs, 27 FRs, 7 SEC-SJ-* requirements. |
-| docs/API.md | UP_TO_DATE | 2026-04-08 | WS event table updated with V9.0 stream-json events: chat_message (including isCanonical), agent_tool_use, agent_tool_delta, agent_thinking, agent_cost, handoff_completed, runtime_provider_switch, trigger_fired, trigger_status. |
+| docs/API.md | UP_TO_DATE | 2026-04-09 | WS event table updated: chat_message isCanonical now documents both Claude stream-json and Codex SDK as emitters; client replaceNodeChatMessages action documented. |
 | docs/memory/PROJECT.md | UP_TO_DATE | 2026-04-08 | Implementation status reflects V9.0 closure, release metadata sync, 396 total tasks, and 478/478 server-test verification. |
 | docs/memory/DECISIONS.md | UP_TO_DATE | 2026-04-08 | DEC-001 through DEC-029. DEC-027/028/029 added by architect for stream-json migration. |
 | docs/memory/PROGRESS.md | UP_TO_DATE | 2026-04-08 | Updated by project-manager with V9.0 area entry. |
@@ -72,7 +72,7 @@ _Last updated: 2026-04-08 after Task #406 phase 2 (canonical result text replace
 | docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-08 | Includes debugger-loop fallback closure plus the V9.0 close-out entries for #389-#393. |
 | docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-04-06 | V1 audit. V9.0 adds SEC-SJ-01 through SEC-SJ-07 in PRD -- no code changes yet. |
 | docs/security-v3-audit.md | UP_TO_DATE | 2026-04-06 | MEDIUM-V3-01 marked FIXED (Task #234). No changes from V9.0 planning. |
-| Inline comments | UP_TO_DATE | 2026-04-08 | StreamJsonParser.js `_parseResult` has inline comment documenting `resultText` field purpose (canonical complete text replacing streamed fragments). SwarmEngine.js `_handleStreamJsonResult` step 4b has inline comment explaining token-boundary spacing fix and canonical text replacement. useSwarm.js `chat_message` handler has inline comment explaining `isCanonical` flow: `replaceAgentChatText` + `patchLatestChatMessage` replace all streamed text_delta fragments. SwarmContext.jsx `replaceAgentChatText` action is self-documenting. All prior inline comment coverage (DEC-027/028/029, cost normalization, stale-state clearing, etc.) remains accurate. |
+| Inline comments | UP_TO_DATE | 2026-04-09 | SwarmEngine.js `_handleCodexSdkTurnCompleted` has inline comment documenting canonical chat_message emission and execution.chatMessages replacement. SwarmEngine.js `_applyCodexSdkItemEvent` has NOTE comment explaining why ChatExtractor.feed() is NOT called for Codex SDK agents. useSwarm.js `chat_message` handler has inline comment explaining `isCanonical` flow: `replaceAgentChatText` + `replaceNodeChatMessages` replace all streamed fragments (previously used `patchLatestChatMessage`, now uses full replacement). SwarmContext.jsx `replaceNodeChatMessages` action has JSDoc explaining collapse of text_delta fragments into canonical message. All prior inline comment coverage remains accurate. |
 | docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. Deferred indefinitely. |
 | docs/research_resume_after_kill.md | UP_TO_DATE | 2026-04-08 | NEW: Research on --resume behavior after process kill. Findings feed into FR-SJ-17/18. |
 | docs/research_b_tools.md | UP_TO_DATE | 2026-04-08 | NEW: Research on --allowedTools vs --tools vs --disallowedTools. Critical finding: --allowedTools is NOT a security boundary (bug #12232). |

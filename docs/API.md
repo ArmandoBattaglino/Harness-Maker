@@ -520,7 +520,7 @@ Server-push only — no client-to-server messages. Control commands use the REST
 |--------|--------------------|-----------|
 | `execution_status` | `executionId`, `status`, `agentStates` | On connect (initial snapshot) + on status change |
 | `agent_status` | `executionId`, `nodeId`, `status`, `sessionId`, `lastOutputSnippet`, `spawnMode` | When a single agent's status changes or live PTY output updates its snippet |
-| `chat_message` | `nodeId`, `role`, `text`, `timestamp`, `isCanonical` (optional), `spawnMode` (optional) | Each `text_delta` during a stream-json turn (incremental text). When `isCanonical: true`, the `text` field contains the authoritative result text from the Claude CLI `result` event, replacing all previously streamed fragments (fixes token-boundary spacing). |
+| `chat_message` | `nodeId`, `role`, `text`, `timestamp`, `isCanonical` (optional), `spawnMode` (optional) | Each `text_delta` during a structured turn (incremental text). When `isCanonical: true`, the `text` field contains the authoritative result text that replaces all previously streamed fragments. Emitted by both Claude stream-json (`result` event) and Codex SDK (`turn.completed` event) runtimes. The client uses `replaceNodeChatMessages` to collapse all prior assistant fragments into one clean message. |
 | `agent_tool_use` | `nodeId`, `toolName`, `toolUseId` | When a stream-json agent starts a tool call |
 | `agent_tool_delta` | `nodeId`, `toolUseId`, `partialJson` | Partial tool input JSON during a stream-json tool call |
 | `agent_thinking` | `nodeId`, `active` | When a stream-json agent enters (`active: true`) or exits (`active: false`) a thinking block |

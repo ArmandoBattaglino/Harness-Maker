@@ -1,4 +1,55 @@
 ---
+## 2026-04-09 — Commit 5d359b4: Codex SDK canonical chat_message + eliminate duplicate WS broadcasts
+**Status:** COMPLETED
+**Called by:** orchestrator (post-commit documentation update)
+
+### Context when I started
+Commit 5d359b4 fixed Codex SDK canonical chat message handling and eliminated duplicate WS broadcasts. Three files were modified: SwarmEngine.js (Codex SDK emits canonical chat_message with isCanonical:true at turn completion; ChatExtractor.feed() removed for Codex SDK structured agents; execution.chatMessages replaces prior entries on canonical), SwarmContext.jsx (new replaceNodeChatMessages action), useSwarm.js (isCanonical handler uses replaceNodeChatMessages instead of patchLatestChatMessage).
+
+### What I did
+1. Read all 3 modified files (SwarmEngine.js via grep, SwarmContext.jsx, useSwarm.js) plus DOC_STATUS.md, PROGRESS.md, ACTIVITY_LOG.md, documenter.md, PROJECT.md, DECISIONS.md, CONTEXT.md
+2. Audited all tracked docs for staleness:
+   - README.md: NOT stale (internal bug fix, no user-facing feature changes)
+   - ARCHITECTURE.md: STALE -- Section 13.1 described Codex agents as using PTY only; now Codex SDK is a separate structured runtime
+   - API.md: STALE -- chat_message isCanonical description only mentioned Claude CLI result event; now also emitted by Codex SDK
+   - DOC_STATUS.md: STALE -- needed timestamp + section updates
+   - Inline comments: Verified accurate (SwarmEngine.js has NOTE about ChatExtractor exclusion, canonical replacement comment; SwarmContext.jsx has JSDoc on replaceNodeChatMessages; useSwarm.js has inline comment on isCanonical flow)
+3. Updated ARCHITECTURE.md Section 13.1: added Codex SDK structured runtime description, ChatExtractor exclusion note, canonical chat_message emission from both runtimes
+4. Updated API.md: chat_message WS event now documents both Claude stream-json and Codex SDK as isCanonical emitters; mentions replaceNodeChatMessages client action
+5. Updated DOC_STATUS.md: 4 sections (header, ARCHITECTURE.md, API.md, inline comments)
+6. Updated PROGRESS.md and ACTIVITY_LOG.md
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/ARCHITECTURE.md | MODIFIED | Section 13.1 updated: Codex SDK structured runtime, ChatExtractor exclusion, canonical chat_message from both runtimes |
+| docs/API.md | MODIFIED | chat_message WS event description updated to document both Claude and Codex SDK as isCanonical emitters |
+| docs/memory/DOC_STATUS.md | MODIFIED | Timestamp, ARCHITECTURE.md status, API.md status, inline comments status |
+| docs/memory/PROGRESS.md | MODIFIED | Entry prepended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Entry prepended |
+| docs/memory/agents/documenter.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- ARCHITECTURE.md Section 13.1 now accurately describes the Codex SDK structured runtime alongside Claude stream-json
+- API.md WS event table now correctly documents isCanonical as a cross-runtime feature (not Claude-only)
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Did not update README.md because the change is an internal bug fix (duplicate WS broadcast elimination) with no user-facing feature impact
+
+### What I learned
+- The isCanonical pattern is now a cross-runtime architectural pattern used by both Claude stream-json and Codex SDK, making it a first-class concept rather than a Claude-specific fix
+- ChatExtractor is intentionally excluded from Codex SDK agents to prevent duplicate WS broadcasts; this is enforced by a NOTE comment in SwarmEngine.js
+
+### State I'm leaving behind
+All docs are up to date for commit 5d359b4. The replaceNodeChatMessages Zustand action in SwarmContext.jsx has adequate JSDoc. No remaining staleness from this change.
+
+### Handoff
+None -- task fully self-contained.
+
+---
 ## 2026-04-08 — Task #406 phase 2: Canonical result text documentation update
 **Status:** COMPLETED
 **Called by:** orchestrator (post-task #406 phase 2)

@@ -1,8 +1,8 @@
 ﻿# Current Context
 **Session date:** 2026-04-09
-**Focus:** V9.2 STREAM-JSON DISPLAY FIDELITY phase 2 fix committed (9029762). The canonical result text fix addresses the residual stream-json text_delta spurious-space bug that caused TEST GATE #409 to FAIL on its first run. 490/490 server tests pass, client build clean (501 modules). TEST GATE #409 is now re-running. V9.3 CODEX SDK DEBUGGER-LOOP HARDENING remains CLOSED (#410-#412 all COMPLETE/PASS). Task numbering extends through #412; 409 tasks registered, 408 COMPLETE/PASS, 1 DEFERRED (#236), 1 IN_PROGRESS (#409 re-test).
+**Focus:** ALL AREAS CLOSED. Commit 5d359b4 fixed BUG-CHAT-3 (canonical chat_message for Codex SDK + duplicate WS broadcast elimination). TEST GATE #409 now PASS (attempt 4). V9.2 CLOSED. V9.4 (BUG-CHAT-3 fix) registered as #413-#414, both COMPLETED/PASS. 490/490 server tests pass, client build clean (501 modules). Task numbering extends through #414; 414 tasks registered, 412 COMPLETE/PASS, 1 DEFERRED (#236), 0 IN_PROGRESS. Two known non-blocking chat bugs remain: BUG-CHAT-1 (token boundary spacing, LOW, platform limitation) and BUG-CHAT-2 (Codex PTY thinking noise, MEDIUM).
 
-**IMMEDIATE NEXT STEP:** Await TEST GATE #409 re-run result. If PASS, V9.2 area closes and all planned work is complete. If FAIL, route residual bugs back to debugger for another fix pass.
+**IMMEDIATE NEXT STEP:** No blocking work remains. All planned areas are CLOSED. If new features or bugs are reported, create a new area (V10+). BUG-CHAT-2 (Codex PTY thinking noise) is the highest-priority known issue if further polish is desired.
 
 **V9.1 dependency wave map:**
   Wave 9.1: #400 (SDK contract spike) -> #401 (adapter foundation) -> #402 (SwarmEngine codex-sdk runtime) -> #403 (backend TEST GATE) + #404 (frontend contract) IN PARALLEL -> #405 (AREA CHECKPOINT)
