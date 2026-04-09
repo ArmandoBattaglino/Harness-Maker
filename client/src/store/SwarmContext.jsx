@@ -187,6 +187,8 @@ const useSwarmStore = create((set, get) => ({
   /** Replace ALL matching assistant chat messages for a nodeId with a single canonical message.
    *  Used when a canonical result arrives to collapse all text_delta fragments into one clean message. */
   replaceNodeChatMessages: (nodeId, canonicalMsg, predicate = null) => set((state) => {
+    // Guard: empty canonical text must not destroy existing messages (BUG-CHAT-CLIENT-15)
+    if (!canonicalMsg?.text) return state;
     let firstMatchTimestamp = null;
     const filtered = state.chatMessages.filter((m) => {
       if (m.nodeId !== nodeId) return true;

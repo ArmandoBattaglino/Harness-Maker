@@ -635,6 +635,14 @@ export function useSwarm(workflowId) {
             && isStructuredSpawnMode(msg.spawnMode ?? runtimeState?.spawnMode);
 
           if (msg.isCanonical) {
+            // Guard: empty canonical text must not destroy existing messages (BUG-CHAT-CLIENT-15)
+            if (!msg.text) {
+              updateAgentState(msg.nodeId, { canonicalReceived: true });
+              break;
+            }
+            // Mark canonical received BEFORE processing to block any trailing fragments
+            // that arrive during the WS close delay (BUG-CHAT-CLIENT-1/3)
+            updateAgentState(msg.nodeId, { canonicalReceived: true });
             // Canonical result text from Claude CLI: replace ALL streamed text_delta
             // fragment messages with a single message containing the correctly assembled
             // text.  Previously we only patched the last fragment, leaving earlier
@@ -656,6 +664,12 @@ export function useSwarm(workflowId) {
               (m) => (m.role === 'assistant' || !m.role) && isStructuredSpawnMode(m.spawnMode),
             );
           } else {
+            // Drop trailing text_delta fragments that arrive after canonical for structured
+            // assistant messages — prevents duplicate/corrupted output (BUG-CHAT-CLIENT-1/3)
+            const nodeState = useSwarmStore.getState().agentStates[msg.nodeId];
+            if (nodeState?.canonicalReceived && (msg.role === 'assistant' || !msg.role)) {
+              break;
+            }
             addChatMessage({
               nodeId: msg.nodeId,
               role: msg.role ?? 'assistant',

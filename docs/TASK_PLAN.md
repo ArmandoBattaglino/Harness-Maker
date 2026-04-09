@@ -17168,7 +17168,7 @@ Type: BUG_FIX
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   File: server/services/SwarmEngine.js, lines ~5354-5371
   Bug: _handleStreamJsonResult broadcasts a corrective chat_message with isCanonical:true via
@@ -17224,9 +17224,9 @@ Type: BUG_FIX
 Priority: HIGH
 Difficulty: HARD
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
-  Files: client/src/hooks/useSwarm.js, client/src/canvas/SwarmContext.jsx
+  Files: client/src/hooks/useSwarm.js, client/src/store/SwarmContext.jsx
   Three related client-side canonical bugs that share the same root fix (a per-node canonicalReceived flag):
 
   BUG-CHAT-CLIENT-1 (HIGH): replaceNodeChatMessages canonical-before-fragments race.

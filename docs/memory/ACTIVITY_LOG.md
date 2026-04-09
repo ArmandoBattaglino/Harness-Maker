@@ -5376,3 +5376,14 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Phase 2 will convert the 31 bugs into task plan entries; Phase 3 will fix them in parallel waves
 ---
+
+---
+## 2026-04-09 — backend-dev — Task #417: BUG-CHAT-SERVER-01
+**Outcome:** COMPLETED
+**Summary:** Fixed stream-json canonical emission in SwarmEngine.js to update execution.chatMessages (filter+push+slice pattern ported from Codex SDK path). REST hydration and _buildAgentOutputs now see canonical text instead of garbled fragments. 490/490 tests pass.
+**Files changed:** server/services/SwarmEngine.js
+**Bugs fixed:** BUG-CHAT-SERVER-01 (stream-json canonical emission not updating execution.chatMessages)
+**Decisions made:** Used identical pattern to Codex SDK path for consistency
+**Blockers:** none
+**Next:** TEST GATE #418 to verify fix; TASK #419 (frontend) runs in parallel
+---

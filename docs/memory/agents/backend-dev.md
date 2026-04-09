@@ -1939,3 +1939,44 @@ _spawnAgentStreamJson is fully implemented but NOT yet wired into the main start
 ### Handoff
 Task #360 (TEST GATE) should test this via mock spawn. Then #361 will wire _spawnAgent into startExecution and other call sites. The _spawnAgent dispatcher method is already implemented here and ready for integration.
 ---
+
+---
+## 2026-04-09 — Task #417: BUG-CHAT-SERVER-01 — Stream-json canonical emission does not update execution.chatMessages
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+V10.0 Wave 1 task. The stream-json canonical emission path in `_handleStreamJsonResult` (SwarmEngine.js ~line 5360) broadcasts a corrective `chat_message` with `isCanonical: true` via WS but does NOT update `execution.chatMessages`. The Codex SDK path (~line 4798) correctly does filter+push+slice. This causes REST hydration, `_buildAgentOutputs`, and late-joining clients to see garbled fragments instead of canonical text.
+
+### What I did
+1. Read both paths: Codex SDK canonical emission (line 4786-4807) and stream-json canonical emission (line 5354-5371).
+2. Added the same filter+push+slice pattern used by Codex SDK path immediately after the existing `_wsBroadcast` call in the stream-json path.
+3. Ran `npm test --prefix server` — 490/490 tests pass, no regressions.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SwarmEngine.js | MODIFIED | Added execution.chatMessages filter+push+slice after stream-json canonical WS broadcast (~line 5370) |
+
+### Improvements delivered
+- REST hydration now returns canonical text for stream-json completed turns (not garbled fragments)
+- `_buildAgentOutputs` sees canonical text
+- Late-joining clients that hydrate via REST get correct text
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-CHAT-SERVER-01 | Stream-json canonical emission only broadcast via WS, never updated server-side chatMessages | Ported Codex SDK filter+push+slice pattern | FIXED |
+
+### Decisions I made
+- Used identical pattern to Codex SDK path (filter by nodeId + assistant role, push canonical, slice to 500) for consistency
+
+### What I learned
+- The stream-json and Codex SDK paths have parallel canonical emission logic that must stay in sync
+
+### State I'm leaving behind
+Stream-json canonical emission now correctly updates execution.chatMessages. TEST GATE #418 is the next task to verify this fix.
+
+### Handoff
+TEST GATE #418 should verify the fix. Wave 1 also has TASK #419 (frontend, parallel).
+---

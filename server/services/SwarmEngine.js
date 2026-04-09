@@ -5367,6 +5367,18 @@ class SwarmEngine {
           isCanonical: true,
         });
       }
+      // Replace all prior assistant chat entries for this nodeId with the
+      // single canonical message so REST hydration doesn't re-inject fragments.
+      const prevMessages = (execution.chatMessages ?? []).filter(
+        (m) => !(m.nodeId === nodeId && (m.role === 'assistant' || !m.role))
+      );
+      prevMessages.push({
+        nodeId,
+        role: 'assistant',
+        text: resultEvt.resultText,
+        timestamp: Date.now(),
+      });
+      execution.chatMessages = prevMessages.slice(-500);
       this._broadcastAgentStatus(executionId, nodeId, state);
     }
 
