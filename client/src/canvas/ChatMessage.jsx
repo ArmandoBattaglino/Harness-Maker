@@ -108,11 +108,9 @@ function formatChatText(rawText = '') {
 }
 
 function formatStreamJsonText(rawText = '') {
-  let text = stripAnsi(String(rawText ?? ''))
+  return stripAnsi(String(rawText ?? ''))
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n');
-  text = repairAllTokenSpacing(text);
-  return text;
 }
 
 function formatToolArgs(partialArgs = '') {

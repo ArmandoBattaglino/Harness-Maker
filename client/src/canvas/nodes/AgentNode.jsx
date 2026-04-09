@@ -92,7 +92,7 @@ export default function AgentNode({ id, data, selected }) {
       {(agentState?.lastChatSnippet || agentState?.lastOutputSnippet) && !isDropPreview && (
         <div className="mt-2 bg-black/40 rounded p-1.5 max-h-16 overflow-y-auto">
           <pre className="text-xs text-green-300 font-mono whitespace-pre-wrap break-all leading-tight">
-            {repairAllTokenSpacing(agentState.lastChatSnippet || stripAnsi(agentState.lastOutputSnippet)).split('\n').slice(-4).join('\n')}
+            {(agentState.lastChatSnippet || stripAnsi(agentState.lastOutputSnippet)).split('\n').slice(-4).join('\n')}
             {status === 'running' && <span className="animate-pulse">▋</span>}
           </pre>
         </div>

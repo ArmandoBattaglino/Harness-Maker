@@ -4995,6 +4995,10 @@ class SwarmEngine {
 
       switch (evt.type) {
         case 'text_delta': {
+          // DEBUG: log raw token to diagnose spacing
+          if (process.env.DEBUG_TEXT_DELTA) {
+            console.log(`[TEXT_DELTA] node=${nodeId} |${JSON.stringify(evt.text)}|`);
+          }
           // Accumulate assistant text
           currentState._streamJsonAccumulatedText += (evt.text ?? '');
           // Update snippet with latest text

@@ -1,4 +1,41 @@
 ---
+## 2026-04-09 — Project state audit — user asked "stato del progetto?"
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+Last recorded session: 2026-04-08. Task numbering extended through #412. V9.3 Codex SDK Debugger-Loop Hardening CLOSED (TASK #412 PASS). V9.2 Stream-JSON Display Fidelity area has 1 open task: TASK #409 TEST GATE in FAIL status (attempt 3). Three uncommitted files detected in git working tree.
+
+### What I did
+1. Read all memory files in parallel (PROJECT.md, DECISIONS.md, PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md)
+2. Read TASK_PLAN.md tail (lines 16900–17038) to inspect open tasks
+3. Read git log and git diff to check uncommitted changes
+4. Produced a comprehensive project state report for the user
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/agents/project-manager.md | MODIFIED | Added this session log |
+
+### Improvements delivered
+- Delivered full project status report with next action identified
+
+### Bugs I encountered
+- Three files have uncommitted local changes (ChatMessage.jsx, AgentNode.jsx, SwarmEngine.js) — likely from the phase 3 repairTokenSpacing.js attempt (commit c4f78f1) that was deemed flawed by attempt 3 TEST GATE FAIL
+
+### Decisions I made
+- No new decisions; reporting status only
+
+### What I learned
+- TASK #409 is at FAIL attempt 3. The client-side regex approach (repairTokenSpacing.js) is confirmed fundamentally broken for Italian text. The debugger needs a completely different strategy for BUG-DL-TEXTDELTA-1.
+
+### State I'm leaving behind
+412 tasks registered. 410 COMPLETE/PASS, 1 DEFERRED (#236), 1 FAIL (#409). The only open work item is TASK #409 (TEST GATE — V9.2 Stream-JSON Display Fidelity) which is blocking V9.2 area closure. Root bug BUG-DL-TEXTDELTA-1 needs a new fix approach (debugger required).
+
+### Handoff
+Route TASK #409 to debugger with explicit instruction: the repairTokenSpacing.js approach is REJECTED. Debugger must find a completely different fix strategy for spurious spaces in stream-json text_delta output.
+
+---
 ## 2026-04-08 — V9.2 status sync: #407+#408 COMPLETED, #409 IN_PROGRESS
 **Status:** COMPLETED
 **Called by:** user
