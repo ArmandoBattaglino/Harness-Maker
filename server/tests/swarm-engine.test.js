@@ -1851,7 +1851,7 @@ describe('SwarmEngine', () => {
       expect(snippet).toBe('');
     });
 
-    it('should fall back to the blocker message when prompt rejection leaves only Codex chrome in the tail', async () => {
+    it('should fall back to the clean blocker message when prompt rejection leaves only Codex chrome in the tail', async () => {
       const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'codex' });
       const tapFn = [...mockSession.swarmListeners][0];
       engine._executions.get(executionId).agentStates.get('node-a').ignoreParserUntil = null;
@@ -1869,7 +1869,7 @@ describe('SwarmEngine', () => {
         .map(([, ev]) => ev)
         .filter((ev) => ev.type === 'agent_status' && ev.nodeId === 'node-a');
 
-      expect(statusEvents.at(-1)?.lastOutputSnippet).toContain('Conversation interrupted');
+      expect(statusEvents.at(-1)?.lastOutputSnippet).toContain('Codex rejected the injected swarm steering prompt');
       expect(statusEvents.at(-1)?.lastOutputSnippet).not.toContain('[Pasted Content');
       expect(statusEvents.at(-1)?.lastOutputSnippet).not.toContain('gpt-5.1-codex');
     });
@@ -2806,7 +2806,9 @@ describe('SwarmEngine', () => {
     });
 
     it('should resume a completed PTY agent with an operator follow-up prompt', async () => {
-      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        provider: 'codex',
+      });
       const execution = engine._executions.get(executionId);
       const nodeAState = execution.agentStates.get('node-a');
       nodeAState.status = 'done';
