@@ -660,11 +660,18 @@ Dependencies: none
 
 TASK #493: BUG-TEST-CLIENT-03 - Guard full client verification against stale local server drift
 Area: V10.8 - CLIENT FULL DEEP TEST FOLLOW-UP
-Agent: debugger
+Agent: devops
 Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-09 — devops. Created scripts/check-server-freshness.mjs (standalone guard utility).
+  Checks /health uptime vs configurable threshold AND scans server/ source mtimes to detect code drift
+  after server start. Exit 0=fresh, 1=stale (strict mode), 2=unreachable. Added checkServerFreshness()
+  inline to swarm-e2e-chat-check.mjs (always hits :3000, highest stale-drift risk). Added
+  warnIfServerStale() to swarm-visual-regression.mjs acquireServer() reused-server path — warns but
+  does not abort the visual run. Added npm scripts: check:server-freshness, check:server-freshness:warn.
+  Server 501/501, client build 507 modules clean.
 Context:
   User-facing problem:
     A full client test against the long-running default server on `http://127.0.0.1:3000` still showed stale Gemini blocker chat pollution (`Structured handoff sent.`) even though the same workflow was clean on a fresh server from the current working tree.
@@ -675,9 +682,9 @@ Context:
     2. Make the verification scripts report when a stale process is being reused.
     3. Prevent stale-server drift from looking like a current-code regression.
 Acceptance Criteria:
-  - [ ] Full client verification has an explicit freshness policy for the target server
-  - [ ] Reused-server runs surface stale-process risk clearly
-  - [ ] Current-code verification is not confounded by an older live process
+  - [x] Full client verification has an explicit freshness policy for the target server
+  - [x] Reused-server runs surface stale-process risk clearly
+  - [x] Current-code verification is not confounded by an older live process
 Dependencies: none
 ---
 

@@ -14,7 +14,9 @@
     "test:visual:swarm": "node scripts/swarm-visual-regression.mjs",
     "test:visual:swarm:update": "node scripts/swarm-visual-regression.mjs --update",
     "test:visual:swarm:prepare": "node scripts/swarm-visual-regression.mjs --prepare-only",
-    "test:visual:swarm:reuse": "node scripts/swarm-visual-regression.mjs --reuse-server"
+    "test:visual:swarm:reuse": "node scripts/swarm-visual-regression.mjs --reuse-server",
+    "check:server-freshness": "node scripts/check-server-freshness.mjs",
+    "check:server-freshness:warn": "node scripts/check-server-freshness.mjs --warn-only"
   },
   "devDependencies": {
     "concurrently": "^8.0.0"

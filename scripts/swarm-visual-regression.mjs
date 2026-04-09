@@ -169,6 +169,107 @@ async function startIsolatedServer() {
   return child;
 }
 
+/**
+ * Warn if the server at baseUrl has been running long enough that it may be
+ * serving stale code from an earlier build.  This is a warn-only check —
+ * it never aborts the visual regression run, but it marks the output clearly
+ * so results are not misread as current-code regressions.
+ *
+ * Uses the /health uptime field (seconds) and the mtime of the newest
+ * server source file to detect drift between the running process and the
+ * working tree.
+ */
+async function warnIfServerStale(healthUptime, healthVersion) {
+  const thresholdMinutes = Number.parseFloat(
+    process.env.SWARM_VISREG_FRESHNESS_THRESHOLD_MINUTES || '30'
+  );
+  const uptimeSeconds = typeof healthUptime === 'number' ? healthUptime : 0;
+  const uptimeMinutes = uptimeSeconds / 60;
+
+  function fmt(sec) {
+    if (sec < 60) return `${Math.round(sec)}s`;
+    if (sec < 3600) return `${Math.round(sec / 60)}m`;
+    return `${Math.floor(sec / 3600)}h ${Math.round((sec % 3600) / 60)}m`;
+  }
+
+  const staleReasons = [];
+
+  if (uptimeMinutes > thresholdMinutes) {
+    staleReasons.push(
+      `Uptime ${fmt(uptimeSeconds)} exceeds ${thresholdMinutes}min threshold — ` +
+      `server may be serving code from an earlier build.`
+    );
+  }
+
+  // Source mtime check
+  const serverDir = path.join(repoRoot, 'server');
+  const excludes = new Set([
+    path.join(serverDir, 'public'),
+    path.join(serverDir, 'node_modules'),
+    path.join(serverDir, 'tests'),
+  ]);
+  const exts = new Set(['.js', '.mjs', '.json']);
+  const nowMs = Date.now();
+  const serverStartMs = nowMs - uptimeSeconds * 1000;
+
+  let newestMs = 0;
+  let newestFile = '';
+
+  async function walkMtimes(dir) {
+    let entries;
+    try { entries = await fs.readdir(dir, { withFileTypes: true }); } catch { return; }
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name);
+      if (excludes.has(full)) continue;
+      if (entry.isDirectory()) { await walkMtimes(full); }
+      else if (entry.isFile() && exts.has(path.extname(entry.name))) {
+        try {
+          const stat = await fs.stat(full);
+          if (stat.mtimeMs > newestMs) {
+            newestMs = stat.mtimeMs;
+            newestFile = path.relative(repoRoot, full);
+          }
+        } catch { /* ignore */ }
+      }
+    }
+  }
+
+  await walkMtimes(serverDir);
+
+  if (newestMs > serverStartMs) {
+    const driftSec = Math.round((newestMs - serverStartMs) / 1000);
+    const changedAgo = Math.round((nowMs - newestMs) / 1000);
+    staleReasons.push(
+      `"${newestFile}" was modified ${fmt(changedAgo)} ago but server started ` +
+      `${fmt(uptimeSeconds)} ago — server is ~${fmt(driftSec)} behind the working tree.`
+    );
+  }
+
+  if (staleReasons.length === 0) {
+    console.log(`[freshness-check] Server appears fresh (version=${healthVersion ?? 'unknown'}, uptime=${fmt(uptimeSeconds)}).`);
+    return;
+  }
+
+  console.warn('');
+  console.warn('[freshness-check] *** STALE SERVER WARNING — visual regression results may not reflect current code ***');
+  for (const reason of staleReasons) {
+    console.warn(`[freshness-check]   - ${reason}`);
+  }
+  console.warn('[freshness-check] Restart: npm start  OR  use the default isolated mode (omit --reuse-server).');
+  console.warn('');
+}
+
+async function fetchHealthData() {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(`${baseUrl}/health`, { signal: controller.signal });
+    clearTimeout(timer);
+    if (res.ok) return res.json();
+  } catch { /* ignore */ }
+  return null;
+}
+
 async function acquireServer() {
   if (prepareOnly) {
     await resetHarnessAppData();
@@ -178,6 +279,9 @@ async function acquireServer() {
 
   if (await isServerHealthy()) {
     console.log(`Reusing running Swarm server at ${baseUrl}`);
+    // Check freshness of the reused server so results are not misread.
+    const healthData = await fetchHealthData();
+    await warnIfServerStale(healthData?.uptime, healthData?.version);
     return null;
   }
 

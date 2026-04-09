@@ -1,3 +1,13 @@
+## 2026-04-09 — devops — Task #493: BUG-TEST-CLIENT-03 — Guard against stale local server drift
+**Outcome:** COMPLETED
+**Summary:** Created scripts/check-server-freshness.mjs — a standalone guard utility that fetches /health uptime and scans server/ source mtimes to detect when a running server is behind the working tree. Integrated inline freshness check into swarm-e2e-chat-check.mjs (the highest-risk script — always targets port 3000). Added warnIfServerStale() to swarm-visual-regression.mjs reused-server path. Added two npm scripts: check:server-freshness and check:server-freshness:warn.
+**Files changed:** scripts/check-server-freshness.mjs (CREATED), scripts/swarm-e2e-chat-check.mjs (MODIFIED), scripts/swarm-visual-regression.mjs (MODIFIED), package.json (MODIFIED)
+**Bugs fixed:** none (preventive guard)
+**Decisions made:** warn-only in visual-regression (never aborts the run); strict by default in check-server-freshness.mjs (exit 1 to block pipelines); exit 2 for unreachable server
+**Blockers:** none
+**Next:** TASK #494 (TEST GATE — V10.8 full client verification pack)
+
+---
 ## 2026-04-09 — qa-tester — Task #492: BUG-TEST-CLIENT-02 — Stabilize Codex handoff E2E harness
 **Outcome:** COMPLETED
 **Summary:** Fixed 3 harness bugs in scripts/swarm-codex-handoff-e2e.mjs: (1) reuse-server mode now does a preflight workflow check via API before opening browser and auto-injects the fixture if absent; (2) isolated mode spawns node server/index.js directly instead of npm run start, eliminating 60-120s Vite rebuild overhead that caused the openSwarm() timeout; (3) isolated mode no longer silently reuses a stale server on port 3314 -- always resets app-data and spawns fresh. Script remains manual-only (live Codex API dependency); CI gate is server unit tests (501/501).

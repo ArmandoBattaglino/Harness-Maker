@@ -1,8 +1,10 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { chromium } from 'playwright-core';
 
-const repoRoot = process.cwd();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(__dirname, '..');
 const artifactsDir = path.join(repoRoot, 'tests', 'artifacts');
 const screenshotPath = path.join(artifactsDir, 'swarm-e2e-chat-check.png');
 const bodyDumpPath = path.join(artifactsDir, 'swarm-e2e-chat-check.txt');
@@ -31,6 +33,125 @@ const badPatterns = [
   /Hello t here/i,
   /\bbr i ght\b/i,
 ];
+
+// ---------------------------------------------------------------------------
+// Freshness guard — warn if the target server may be serving stale code.
+//
+// This script always targets a shared/long-running server (default: :3000).
+// If the server has been up longer than SWARM_E2E_FRESHNESS_THRESHOLD_MINUTES
+// (default 30), or if source files were modified after the server started,
+// we emit a clear warning so results are not misread as current-code regressions.
+//
+// Environment variables:
+//   SWARM_E2E_SKIP_FRESHNESS_CHECK=1          — bypass entirely (known-fresh CI env)
+//   SWARM_E2E_FRESHNESS_THRESHOLD_MINUTES=N   — uptime threshold in minutes (default 30)
+// ---------------------------------------------------------------------------
+async function checkServerFreshness() {
+  if (process.env.SWARM_E2E_SKIP_FRESHNESS_CHECK === '1') {
+    console.log('[freshness-check] Skipped (SWARM_E2E_SKIP_FRESHNESS_CHECK=1).');
+    return;
+  }
+
+  const thresholdMinutes = Number.parseFloat(
+    process.env.SWARM_E2E_FRESHNESS_THRESHOLD_MINUTES || '30'
+  );
+
+  // Fetch /health
+  let health = null;
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(`${baseUrl}/health`, { signal: controller.signal });
+    clearTimeout(timer);
+    if (res.ok) health = await res.json();
+  } catch {
+    // Server not reachable — main() will surface this more clearly
+    console.warn('[freshness-check] Could not reach /health — skipping freshness check.');
+    return;
+  }
+
+  const uptimeSeconds = typeof health?.uptime === 'number' ? health.uptime : 0;
+  const serverVersion = health?.version ?? 'unknown';
+  const uptimeMinutes = uptimeSeconds / 60;
+
+  function fmt(sec) {
+    if (sec < 60) return `${Math.round(sec)}s`;
+    if (sec < 3600) return `${Math.round(sec / 60)}m`;
+    return `${Math.floor(sec / 3600)}h ${Math.round((sec % 3600) / 60)}m`;
+  }
+
+  console.log(`[freshness-check] Server at ${baseUrl}: version=${serverVersion}, uptime=${fmt(uptimeSeconds)}`);
+
+  const staleReasons = [];
+
+  // Threshold check
+  if (uptimeMinutes > thresholdMinutes) {
+    staleReasons.push(
+      `Uptime ${fmt(uptimeSeconds)} exceeds ${thresholdMinutes}min threshold — ` +
+      `server may be serving code from an earlier build.`
+    );
+  }
+
+  // Source-file mtime check: scan server/ (excluding public/, node_modules/, tests/)
+  const serverDir = path.join(repoRoot, 'server');
+  const excludes = new Set([
+    path.join(serverDir, 'public'),
+    path.join(serverDir, 'node_modules'),
+    path.join(serverDir, 'tests'),
+  ]);
+  const exts = new Set(['.js', '.mjs', '.json']);
+  const nowMs = Date.now();
+  const serverStartMs = nowMs - uptimeSeconds * 1000;
+
+  let newestMs = 0;
+  let newestFile = '';
+
+  async function walkMtimes(dir) {
+    let entries;
+    try { entries = await fs.readdir(dir, { withFileTypes: true }); } catch { return; }
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name);
+      if (excludes.has(full)) continue;
+      if (entry.isDirectory()) { await walkMtimes(full); }
+      else if (entry.isFile() && exts.has(path.extname(entry.name))) {
+        try {
+          const stat = await fs.stat(full);
+          if (stat.mtimeMs > newestMs) {
+            newestMs = stat.mtimeMs;
+            newestFile = path.relative(repoRoot, full);
+          }
+        } catch { /* ignore */ }
+      }
+    }
+  }
+
+  await walkMtimes(serverDir);
+
+  if (newestMs > serverStartMs) {
+    const driftSec = Math.round((newestMs - serverStartMs) / 1000);
+    const changedAgo = Math.round((nowMs - newestMs) / 1000);
+    staleReasons.push(
+      `"${newestFile}" was modified ${fmt(changedAgo)} ago but server started ` +
+      `${fmt(uptimeSeconds)} ago — server is ~${fmt(driftSec)} behind the working tree.`
+    );
+  }
+
+  if (staleReasons.length === 0) {
+    console.log('[freshness-check] PASS — server appears fresh.');
+    return;
+  }
+
+  console.warn('');
+  console.warn('[freshness-check] *** STALE SERVER WARNING ***');
+  console.warn('[freshness-check] Results from this run may NOT reflect the current working tree.');
+  for (const reason of staleReasons) {
+    console.warn(`[freshness-check]   - ${reason}`);
+  }
+  console.warn('[freshness-check] Restart the server before trusting these results:');
+  console.warn('[freshness-check]   npm start');
+  console.warn('[freshness-check] Or target a fresh isolated server via SWARM_E2E_URL.');
+  console.warn('');
+}
 
 async function ensureArtifactsDir() {
   await fs.mkdir(artifactsDir, { recursive: true });
@@ -100,6 +221,7 @@ async function dumpDebugSnapshot(page, label) {
 
 async function main() {
   await ensureArtifactsDir();
+  await checkServerFreshness();
 
   const projectsResponse = await fetch(`${baseUrl}/api/v1/projects`);
   if (!projectsResponse.ok) {
