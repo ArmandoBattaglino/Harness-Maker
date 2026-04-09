@@ -630,6 +630,7 @@ export function useSwarm(workflowId) {
           break;
         }
         case 'chat_message': {
+          if (!msg.nodeId) break;
           const runtimeState = useSwarmStore.getState().agentStates[msg.nodeId];
           const isStructuredAssistantMessage = (msg.role === 'assistant' || !msg.role)
             && isStructuredSpawnMode(msg.spawnMode ?? runtimeState?.spawnMode);
