@@ -743,7 +743,9 @@ export default function SwarmView() {
             Models {hasCustomRuntimeSelections ? '*' : ''}
           </button>
           {showModelSettings && (
-            <div className="absolute right-0 top-full mt-1 z-50 bg-gray-800 border border-gray-600 rounded-lg shadow-xl p-3 min-w-[220px]">
+            <>
+            <div className="fixed inset-0 z-40" onClick={() => setShowModelSettings(false)} />
+            <div ref={modelSettingsRef} className="absolute right-0 top-full mt-1 z-50 bg-gray-800 border border-gray-600 rounded-lg shadow-xl p-3 min-w-[220px]">
               <div className="text-[11px] text-gray-300 font-semibold mb-2">Model per Provider</div>
               <label className="flex items-center gap-2 text-[11px] text-gray-400 mb-1.5">
                 <span className="w-14">Claude</span>
@@ -805,6 +807,7 @@ export default function SwarmView() {
                 </div>
               )}
             </div>
+            </>
           )}
         </div>
 
