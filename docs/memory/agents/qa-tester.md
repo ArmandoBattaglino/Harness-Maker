@@ -1,4 +1,37 @@
 ---
+## 2026-04-09 — Debugger Loop Phase 1: Micro-Area C — Browser E2E Chat Stress Test
+**Status:** COMPLETED
+**Called by:** user (debugger-loop)
+
+### Context when I started
+All areas closed (V9.5). 416 tasks, 414 COMPLETED/PASS. Two known non-blocking chat bugs: BUG-CHAT-1 (token boundary spacing, LOW) and BUG-CHAT-2 (Codex PTY thinking noise, MEDIUM). Server running at localhost:3000.
+
+### What I did
+Executed 10-test E2E browser stress test via Puppeteer MCP against the Chat system:
+1. Generated workflow "Roman Colosseum Facts" (2 agents: Researcher -> Writer) - SUCCESS
+2. Ran workflow, verified Chat panel appeared with real-time messages - SUCCESS
+3. Verified content fidelity: 2 messages, Colosseum content, no ANSI codes, no system prompts - PASS with known BUG-CHAT-1
+4. Tested chat filtering: All agents / Researcher / Writer filter works correctly - PASS
+5. Verified agent node snippets show real content with done status - PASS
+6. Verified chat auto-scroll to bottom (scrollTop=1253, scrollHeight=1438, distance=0) - PASS
+7. Navigation away and back: chat messages persisted after Projects->Swarm roundtrip - PASS
+8. Reset button: chat panel hidden, nodes back to Idle, state cleared - PASS
+9. Second workflow Remote Work Benefits Analyst (Italian): no state mixing with old workflow - PASS
+10. Cost info: $0.06 badge on node card, not in chat panel - PASS
+
+### Bugs found
+| Bug ID | Severity | Description | Status |
+|--------|----------|-------------|--------|
+| BUG-CHAT-1 | LOW | Token-boundary spacing in stream-json text | KNOWN pre-existing |
+| BUG-CHAT-E2E-1 | LOW | Chat panel scroll position resets to top after nav away and back | NEW |
+
+### State I'm leaving behind
+All 10 E2E chat stress tests executed. 1 new LOW-severity bug. No CRITICAL or HIGH bugs. Chat system is stable.
+
+### Handoff
+Report BUG-CHAT-E2E-1 to project-manager for optional tracking. No blocking issues.
+
+---
 ## 2026-04-08 — Task #409: TEST GATE — V9.2 Stream-JSON Display Fidelity verification (attempt 3)
 **Status:** COMPLETED (verdict: FAIL)
 **Called by:** user (direct)
