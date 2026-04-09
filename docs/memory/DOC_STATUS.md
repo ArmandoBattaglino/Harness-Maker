@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-09 after Tasks #417 + #419 (V10.0 Wave 1 — canonical chat_message server storage + client canonicalReceived guard)._
+_Last updated: 2026-04-09 after Tasks #421, #423, #425 (V10.0 Wave 2 — ChatExtractor compound buffer keys, useSwarm nodeId guard, rehype-sanitize XSS prevention)._
 
 ## Release Status
 **v9.0.0 — V9.0 Stream-JSON Agent Migration CLOSED for core semantics, display fidelity FIXED**
@@ -59,12 +59,12 @@ _Last updated: 2026-04-09 after Tasks #417 + #419 (V10.0 Wave 1 — canonical ch
 
 | Document | Status | Last Updated | Notes |
 |----------|--------|--------------|-------|
-| README.md | UP_TO_DATE | 2026-04-08 | Updated to v9.0.0 release metadata and documents stream-json Claude agents, hybrid provider runtime behavior, and graceful stop/resume/reset controls. |
+| README.md | UP_TO_DATE | 2026-04-09 | Security section updated: rehype-sanitize XSS prevention for Markdown rendering. |
 | CLAUDE.md | UP_TO_DATE | 2026-04-08 | Updated with DEC-027/028/029 runtime constraints, `--tools` guidance, truthful blocker rule for Claude stream-json failures, and `write-file-atomic` correction. |
 | docs/ARCHITECTURE.md | PARTIAL | 2026-04-09 | V5 component tree still deferred (12 components). Section 13.5 step 4b updated: canonical result now also replaces execution.chatMessages for REST hydration. Section 13.1 updated: Codex SDK now emits isCanonical chat_message at turn completion; ChatExtractor not used for Codex SDK agents. Remaining V9.0 components (#361-#393) listed as pending in 13.7. |
 | docs/PRD.md | UP_TO_DATE | 2026-04-08 | Rewritten to v6.0: Stream-JSON Agent Migration. 12 component specs, 27 FRs, 7 SEC-SJ-* requirements. |
 | docs/API.md | UP_TO_DATE | 2026-04-09 | WS event table updated: chat_message isCanonical documents server-side execution.chatMessages replacement and client-side canonicalReceived guard. GET /status response now includes chatMessages field with description. |
-| docs/memory/PROJECT.md | UP_TO_DATE | 2026-04-08 | Implementation status reflects V9.0 closure, release metadata sync, 396 total tasks, and 478/478 server-test verification. |
+| docs/memory/PROJECT.md | UP_TO_DATE | 2026-04-09 | Tech stack table updated: rehype-sanitize 6.x added for Markdown XSS prevention. |
 | docs/memory/DECISIONS.md | UP_TO_DATE | 2026-04-08 | DEC-001 through DEC-029. DEC-027/028/029 added by architect for stream-json migration. |
 | docs/memory/PROGRESS.md | UP_TO_DATE | 2026-04-08 | Updated by project-manager with V9.0 area entry. |
 | docs/memory/CONTEXT.md | UP_TO_DATE | 2026-04-08 | Focus reflects V9.0 stream-json migration, dependency wave map, immediate next step. |
@@ -73,7 +73,7 @@ _Last updated: 2026-04-09 after Tasks #417 + #419 (V10.0 Wave 1 — canonical ch
 | docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-08 | Includes debugger-loop fallback closure plus the V9.0 close-out entries for #389-#393. |
 | docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-04-06 | V1 audit. V9.0 adds SEC-SJ-01 through SEC-SJ-07 in PRD -- no code changes yet. |
 | docs/security-v3-audit.md | UP_TO_DATE | 2026-04-06 | MEDIUM-V3-01 marked FIXED (Task #234). No changes from V9.0 planning. |
-| Inline comments | UP_TO_DATE | 2026-04-09 | SwarmEngine.js `_handleStreamJsonResult` has inline comments documenting canonical chat_message broadcast and execution.chatMessages replacement (Task #417). useSwarm.js `chat_message` handler has inline comments for isCanonical flow (replaceAgentChatText + replaceNodeChatMessages), canonicalReceived guard for trailing fragments (Task #419), and empty canonical text guard (BUG-CHAT-CLIENT-15). SwarmContext.jsx SwarmAgentState typedef includes canonicalReceived field. replaceNodeChatMessages has JSDoc + empty-text guard. All prior inline comment coverage remains accurate. |
+| Inline comments | UP_TO_DATE | 2026-04-09 | ChatExtractor.js buffer map uses compound `executionId:nodeId` keys (Task #421). useSwarm.js getPendingStreamJsonTurn guards against undefined nodeId (Task #423). ChatMessage.jsx rehype-sanitize plugin added to ReactMarkdown (Task #425). All prior inline comment coverage remains accurate. |
 | docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. Deferred indefinitely. |
 | docs/research_resume_after_kill.md | UP_TO_DATE | 2026-04-08 | NEW: Research on --resume behavior after process kill. Findings feed into FR-SJ-17/18. |
 | docs/research_b_tools.md | UP_TO_DATE | 2026-04-08 | NEW: Research on --allowedTools vs --tools vs --disallowedTools. Critical finding: --allowedTools is NOT a security boundary (bug #12232). |

@@ -5048,8 +5048,9 @@ class SwarmEngine {
               timestamp: Date.now(),
             });
           }
-          // Feed to ChatExtractor for artifact extraction
-          this._chatExtractor.feed(executionId, nodeId, evt.text ?? '');
+          // Stream-json agents broadcast chat_message directly above —
+          // do NOT feed ChatExtractor (that path is for PTY agents only).
+          // Feeding both caused duplicate WS events (BUG-CHAT-SERVER-02).
           this._broadcastAgentStatus(executionId, nodeId, currentState);
           break;
         }
@@ -5176,7 +5177,8 @@ class SwarmEngine {
                   spawnMode: 'stream-json',
                 });
               }
-              this._chatExtractor.feed(executionId, nodeId, block.text);
+              // Stream-json agents broadcast chat_message directly above —
+              // do NOT feed ChatExtractor (PTY-only). See BUG-CHAT-SERVER-02.
             } else if ((block.type === 'tool_use' || block.type === 'server_tool_use') && block.name) {
               // Tool use in complete message — broadcast tool start + stop
               if (this._wsBroadcast) {

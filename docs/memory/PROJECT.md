@@ -27,6 +27,7 @@ A locally-hosted web application that provides a graphical user interface for th
 | Icons | Material Symbols Outlined | via Google Fonts CDN | Variable weight+fill; used for sidebar navigation and status indicators |
 | Markdown render | react-markdown | 9.x | Safe Markdown for job results |
 | Markdown tables | remark-gfm | latest | GFM plugin (tables, code fences) for react-markdown |
+| Markdown sanitization | rehype-sanitize | 6.x | XSS prevention for Markdown rendering in ChatMessage.jsx and job results |
 | Canvas / flow | @xyflow/react | 12.x | V3 swarm canvas â€” node/edge graph rendering. ReactFlow + custom node/edge types. |
 | Client state | zustand | 4.x | V3 execution store â€” fine-grained subscription for live swarm state (DEC-011). useSwarmStore in SwarmContext.jsx. |
 | Claude API | @anthropic-ai/sdk | latest | V3 Prompt-to-Flow scaffold endpoint â€” calls claude-haiku-4-5-20251001 to generate workflow JSON. |

@@ -1,3 +1,7 @@
+- [BACKEND-DEV 2026-04-09] TASK #427 (BUG-CHAT-SERVER-02) COMPLETED. Removed ChatExtractor.feed() from stream-json text_delta and message handlers. 490/490 tests pass.
+
+- [PM 2026-04-09] Wave 2 COMPLETED. #421 (BUG-CHAT-SERVER-04/03, ChatExtractor compound keys), #423 (BUG-CHAT-CLIENT-4, undefined nodeId guard), #425 (BUG-CHAT-CLIENT-8, XSS rehype-sanitize) ALL COMPLETED. 419 COMPLETED/PASS, 27 PENDING. Wave 3 launching: #427 + #429 + #431 PARALLEL.
+
 - [BACKEND-DEV 2026-04-09] TASK #421 (BUG-CHAT-SERVER-04/03) COMPLETED. ChatExtractor buffers keyed by `${executionId}:${nodeId}`, cleanup scoped per-execution. 490/490 tests pass.
 
 - [FRONTEND-DEV 2026-04-09] TASK #423 (BUG-CHAT-CLIENT-4) COMPLETED. Added nodeId guard in useSwarm.js chat_message handler. TASK #425 (BUG-CHAT-CLIENT-8) COMPLETED. Installed rehype-sanitize, added to ChatMessage.jsx ReactMarkdown. Client build clean.

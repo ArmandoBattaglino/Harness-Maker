@@ -167,6 +167,7 @@ More details live in [tests/visual/swarm/README.md](/C:/Users/arman/Downloads/Te
 - **Localhost only** - server binds to `127.0.0.1`
 - **CSRF protection** - mutating API requests require `X-Requested-With: ClaudeCodeManager`
 - **No shell injection** - process spawns use argument arrays with `shell: false`
+- **Markdown XSS prevention** - rendered Markdown is sanitized via `rehype-sanitize`
 - **Atomic file writes** - config and editor writes use `write-file-atomic`
 - **Path validation** - write targets are resolved and prefix-checked before writes
 - **Security headers** - Helmet sets CSP and related protections

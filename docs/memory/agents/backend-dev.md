@@ -1,4 +1,41 @@
 ---
+## 2026-04-09 — Task #427: BUG-CHAT-SERVER-02 — Stream-json text_delta double emission via ChatExtractor
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+Stream-json text_delta handler in SwarmEngine.js was both broadcasting chat_message WS events directly AND feeding the same text to ChatExtractor.feed(), which would also emit chat_message events via its silence timer. This caused duplicate WS events and duplicate entries in execution.chatMessages.
+
+### What I did
+1. Removed `this._chatExtractor.feed()` call at line 5052 (text_delta handler)
+2. Removed `this._chatExtractor.feed()` call at line 5179 (message handler content blocks)
+3. Verified PTY-path ChatExtractor.feed() calls (lines 3201, 3866) remain untouched
+4. Ran full test suite: 490/490 pass
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SwarmEngine.js | MODIFIED | Removed two _chatExtractor.feed() calls in stream-json event handlers (text_delta at ~L5052, message at ~L5179). Stream-json agents already broadcast chat_message directly via WS, so ChatExtractor was creating duplicates. |
+
+### Improvements delivered
+- Stream-json agents now emit exactly one chat_message WS event per text_delta (no duplicates)
+- execution.chatMessages no longer accumulates duplicate entries from stream-json agents
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Followed same pattern as Codex SDK fix (commit 5d359b4): structured agents that directly broadcast chat_message should not also feed ChatExtractor
+
+### What I learned
+- Stream-json has two places that feed ChatExtractor: text_delta (per-token) and message (per-complete-message content blocks). Both needed removal.
+
+### State I'm leaving behind
+Fix is complete. 490/490 tests pass. TEST GATE #428 should verify no double emission.
+
+### Handoff
+TEST GATE #428 (qa-tester) should verify the fix.
+---
 ## 2026-04-09 — Task #421: BUG-CHAT-SERVER-04/03 — ChatExtractor buffer key collision + cleanup scope
 **Status:** COMPLETED
 **Called by:** orchestrator

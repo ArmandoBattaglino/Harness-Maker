@@ -1,7 +1,7 @@
 // client/src/canvas/HitlChatCard.jsx
 // Inline HITL approval card rendered inside the ChatPanel.
 // Shows agent request, approve/reject actions, and optional resume text.
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useSwarmStore } from '../store/SwarmContext';
 import { apiPost } from '../hooks/useApi.js';
 
@@ -27,6 +27,7 @@ export default function HitlChatCard({ message, agentLabel, executionId }) {
   const [rejecting, setRejecting] = useState(false);
   const [resolvedAction, setResolvedAction] = useState(null);
   const [error, setError] = useState(null);
+  const sendingRef = useRef(false); // sync guard against rapid double-clicks
 
   // Check if item is still pending in the inbox
   const stillPending = inboxItems.some((entry) => {
@@ -45,7 +46,8 @@ export default function HitlChatCard({ message, agentLabel, executionId }) {
   };
 
   const handleApproveConfirm = async () => {
-    if (!executionId || !hitlItemId) return;
+    if (!executionId || !hitlItemId || sendingRef.current) return;
+    sendingRef.current = true;
     setApproving(true);
     setError(null);
     try {
@@ -67,7 +69,8 @@ export default function HitlChatCard({ message, agentLabel, executionId }) {
   };
 
   const handleReject = async () => {
-    if (!executionId || !hitlItemId) return;
+    if (!executionId || !hitlItemId || sendingRef.current) return;
+    sendingRef.current = true;
     setRejecting(true);
     setError(null);
     try {

@@ -1,4 +1,23 @@
-﻿## 2026-04-09 — backend-dev — Task #421: BUG-CHAT-SERVER-04/03 — ChatExtractor buffer keying + cleanup scope
+﻿## 2026-04-09 — backend-dev — Task #427: BUG-CHAT-SERVER-02
+**Outcome:** COMPLETED
+**Summary:** Removed duplicate ChatExtractor.feed() calls for stream-json agents in SwarmEngine.js. Stream-json text_delta and message handlers were both broadcasting chat_message directly AND feeding ChatExtractor, causing double WS events. Now only the direct broadcast path is used (same pattern as Codex SDK fix). 490/490 tests pass.
+**Files changed:** server/services/SwarmEngine.js
+**Bugs fixed:** BUG-CHAT-SERVER-02 (stream-json text_delta double emission)
+**Decisions made:** none (followed existing Codex SDK pattern)
+**Blockers:** none
+**Next:** TEST GATE #428 (qa-tester verification)
+---
+## 2026-04-09 — project-manager — Wave 2 completion + Wave 3 launch
+**Outcome:** COMPLETED
+**Summary:** Marked TASK #421 (BUG-CHAT-SERVER-04/03, ChatExtractor compound keys), #423 (BUG-CHAT-CLIENT-4, undefined nodeId guard), and #425 (BUG-CHAT-CLIENT-8, XSS rehype-sanitize) as COMPLETED in TASK_PLAN.md header. Updated counters to 419 COMPLETED/PASS, 27 PENDING. Wave 3 now launching: #427 (stream-json text_delta double emission) + #429 (frontend chat accumulation) + #431 (frontend scroll-lock) in PARALLEL.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none (status tracking only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** Wave 3: TASK #427 (backend-dev) + TASK #429 (frontend-dev) + TASK #431 (frontend-dev) PARALLEL
+
+---
+## 2026-04-09 — backend-dev — Task #421: BUG-CHAT-SERVER-04/03 — ChatExtractor buffer keying + cleanup scope
 **Outcome:** COMPLETED
 **Summary:** Changed ChatExtractor._buffers key from nodeId to `${executionId}:${nodeId}` compound key. Updated cleanup() to only remove buffers matching the given executionId prefix instead of clearing all. Updated resetBuffer() to require executionId. Updated two SwarmEngine.js call sites. 490/490 tests pass.
 **Files changed:** server/services/ChatExtractor.js, server/services/SwarmEngine.js
