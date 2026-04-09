@@ -4164,3 +4164,35 @@ No new connections introduced in this checkpoint task. All connection changes we
 - Nodes that received canonical text via WS will have clean output preserved through page refresh cycles
 
 ---
+## 2026-04-09 — Tasks #467/#468/#469: Structured chat turn history
+**Agent:** debugger / frontend-dev / qa-tester — mapped by code-mapper
+**Triggered by:** Repeated structured handoffs between the same agents stopped populating Chat View because canonical replacement and fragment-dropping were keyed to `nodeId` instead of the active turn.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/SwarmEngine.js | MODIFIED | Added structured `turnId` generation/propagation, scoped canonical chat replacement to `nodeId + turnId`, and persisted one canonical assistant message per completed structured turn |
+| client/src/hooks/useSwarm.js | MODIFIED | Made canonical guards/hydration turn-aware via `turnId` and `canonicalTurnId`; preserved earlier same-node structured turns instead of replacing all node messages |
+| client/src/canvas/ChatPanel.jsx | MODIFIED | Same-node structured messages now group only when they belong to the same `turnId`, keeping consecutive turns as separate bubbles |
+| client/src/store/SwarmContext.jsx | MODIFIED | Documented `canonicalTurnId` on `SwarmAgentState` |
+| client/src/hooks/useSwarm.test.jsx | MODIFIED | Added regression proving a later same-node structured turn does not erase the earlier turn |
+| client/src/canvas/ChatPanel.test.jsx | MODIFIED | Added regression proving consecutive same-node structured turns render as separate bubbles |
+| server/tests/swarm-engine-codex-sdk.test.js | MODIFIED | Added regression proving persisted/live canonical chat keeps one message per completed structured turn |
+
+### Functions Modified
+- `_buildStructuredTurnId(nodeId, state, { completedTurn })` in `server/services/SwarmEngine.js` — new helper for stable structured chat turn identity
+- `_flushStreamJsonChatBuffer(...)` in `server/services/SwarmEngine.js` — now carries `turnId` on structured live chat flushes
+- `_handleCodexSdkTurnCompleted(...)` and `_handleStreamJsonResult(...)` in `server/services/SwarmEngine.js` — canonical replacement/persistence now targets only the matching turn
+- `sameStructuredTurnId(...)` and `shouldDropStructuredFragmentAfterCanonical(...)` in `client/src/hooks/useSwarm.js` — new helpers for turn-aware canonical gating
+- `applyExecutionSnapshot(...)` / `connectWs(...)` in `client/src/hooks/useSwarm.js` — preserve active-turn guard and hydrate structured chat history per turn
+- `ChatPanel()` in `client/src/canvas/ChatPanel.jsx` — structured grouping now keys by node + turn instead of node alone
+
+### Connection Changes
+- Structured `chat_message` WS events and persisted `execution.chatMessages` now carry `turnId` for repeated same-node turns
+- Client canonical guard now uses `canonicalTurnId` so only fragments from the same completed turn are dropped
+
+### Impact on Other Code
+- Repeated same-agent handoffs now visibly append in Chat View and survive hydration instead of collapsing to one message per node
+- Existing same-turn canonical replacement behavior is preserved; only the scope changed from node-wide to turn-wide
+
+---

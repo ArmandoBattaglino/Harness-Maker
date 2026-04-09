@@ -1,8 +1,8 @@
 ﻿# Current Context
 **Session date:** 2026-04-09
-**Focus:** ALL AREAS CLOSED. Commit 5d359b4 fixed BUG-CHAT-3 (canonical chat_message for Codex SDK + duplicate WS broadcast elimination). TEST GATE #409 now PASS (attempt 4). V9.2 CLOSED. V9.4 (BUG-CHAT-3 fix) registered as #413-#414, both COMPLETED/PASS. 490/490 server tests pass, client build clean (501 modules). Task numbering extends through #414; 414 tasks registered, 412 COMPLETE/PASS, 1 DEFERRED (#236), 0 IN_PROGRESS. Two known non-blocking chat bugs remain: BUG-CHAT-1 (token boundary spacing, LOW, platform limitation) and BUG-CHAT-2 (Codex PTY thinking noise, MEDIUM).
+**Focus:** V10.5 PERSISTENT AGENT SESSIONS + OPERATOR MESSAGING CLOSED on 2026-04-09. Operator chat no longer depends on `running + sessionId`; the backend now exposes a canonical `acceptsMessages` / `messageTransport` contract, swarm PTY sessions are pinned persistent, structured `stream-json` and `codex-sdk` agents can continue on the same conversation for operator follow-up, and completed-but-messageable executions remain live in the client.
 
-**IMMEDIATE NEXT STEP:** No blocking work remains. All planned areas are CLOSED. If new features or bugs are reported, create a new area (V10+). BUG-CHAT-2 (Codex PTY thinking noise) is the highest-priority known issue if further polish is desired.
+**IMMEDIATE NEXT STEP:** V10.6 CLIENT CHAT + FLOW BUG FIXES and V10.7 CLIENT RESILIENCE TEST COVERAGE are the next planned areas. Treat the V10.5 messageable-session contract as the source of truth for any future operator messaging, reconnect, toolbar visibility, or broadcast-delivery work; do not reintroduce client or route heuristics based only on `executionStatus` or PTY `sessionId`.
 
 **V9.1 dependency wave map:**
   Wave 9.1: #400 (SDK contract spike) -> #401 (adapter foundation) -> #402 (SwarmEngine codex-sdk runtime) -> #403 (backend TEST GATE) + #404 (frontend contract) IN PARALLEL -> #405 (AREA CHECKPOINT)

@@ -268,3 +268,13 @@
 **Alternatives rejected:** Relying solely on process exit code -- doesn't distinguish clean completion from crash. Requiring explicit __DONE__ always -- agents may complete without emitting the token, and forced reinject wastes tokens.
 **Revisit if:** Claude CLI changes the result event semantics.
 ---
+
+## DEC-030: Operator messaging targets backend-authoritative "messageable" sessions, not only `running + sessionId`
+**Date:** 2026-04-09
+**Agent:** debugger / backend-dev / frontend-dev
+**Task:** V10.5 persistent agent sessions + operator messaging
+**Decision:** Swarm operator messaging now keys off a canonical per-agent capability contract exposed by SwarmEngine (`acceptsMessages` plus non-secret `messageTransport` metadata). PTY agents remain messageable when their swarm-owned session is persistent and reusable; structured agents remain messageable when their existing `streamJsonSessionId` or `codexThreadId` can continue the same conversation. Broadcast routing scopes workflow nodes first and defers final delivery eligibility to SwarmEngine rather than duplicating transport heuristics in routes or UI.
+**Reasoning:** The previous `running + sessionId` gate falsely treated completed PTY agents and all structured runtimes as unreachable even when their conversation state was still resumable. That blocked the user from messaging reusable agents after completion, closed the client websocket too aggressively, and coupled route/UI behavior to PTY-specific implementation details. A backend-authoritative messageability contract keeps delivery truth in one place, preserves structured-runtime session reuse, and lets the client keep terminal-but-live executions interactive without exposing raw thread identifiers.
+**Alternatives rejected:** Keep route/UI checks on `running + sessionId` -- breaks completed PTY reuse and all structured runtimes. Expose raw thread/session identifiers to the client -- unnecessary and leaks internal transport details. Treat all terminal executions as non-messageable -- conflicts with the persistent-session requirement and loses operator continuity.
+**Revisit if:** Additional runtime providers need richer operator-delivery semantics than the current PTY vs structured split, or if session persistence becomes user-configurable per workflow/agent.
+---

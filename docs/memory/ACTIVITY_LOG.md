@@ -5700,3 +5700,24 @@ full self-contained context and acceptance criteria.
 **Next:** Optional live browser rerun of the Researcher -> Writer handoff flow to confirm the Writer no longer reports a truncated handoff in the UI
 
 ---
+## 2026-04-09 — debugger — V10.4 structured chat turn history
+**Outcome:** COMPLETED
+**Summary:** Fixed the repeated-handoff regression the user reported. Root cause was a cross-layer contract mismatch: structured canonical chat replacement and the `canonicalReceived` guard were keyed too broadly by `nodeId`, so a later same-node turn overwrote earlier canonical chat history and future fragments could be discarded as if they still belonged to the old turn. Added stable per-turn `turnId` propagation for structured runtime chat on the server, scoped canonical replacement/persistence to `nodeId + turnId`, preserved the active-turn guard across same-execution hydration on the client, and updated ChatPanel grouping so same-node consecutive structured turns stay as separate bubbles. Added deterministic regressions on both the client and Codex SDK server paths. Verification: `npm test --prefix client -- src/hooks/useSwarm.test.jsx src/canvas/ChatPanel.test.jsx` PASS (13/13), `npm test --prefix server -- tests/swarm-engine-codex-sdk.test.js` PASS (6/6), `npm run build --prefix client` PASS (507 modules, chunk warning only).
+**Files changed:** server/services/SwarmEngine.js, client/src/hooks/useSwarm.js, client/src/canvas/ChatPanel.jsx, client/src/store/SwarmContext.jsx, client/src/hooks/useSwarm.test.jsx, client/src/canvas/ChatPanel.test.jsx, server/tests/swarm-engine-codex-sdk.test.js, docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** BUG-CHAT-TURN-01, BUG-CHAT-TURN-02
+**Decisions made:** Use structured `turnId = ${nodeId}:${turnNumber}` as the chat-turn identity; canonical replacement and fragment dropping must be scoped to the active turn, not the whole node
+**Blockers:** none
+**Next:** V10.5 persistent agent sessions/operator messaging, V10.6 client chat/flow bug fixes, and V10.7 client resilience coverage remain the planned follow-ups
+
+---
+
+---
+## 2026-04-09 — project-manager — Project Status Analysis
+**Outcome:** COMPLETED
+**Summary:** Full project state read and synthesized for user status query. 490 tasks total, ~455 COMPLETED/PASS, 1 DEFERRED (#236 ConPTY), 15 PENDING across V10.6 and V10.7. Two active planned areas await implementation.
+**Files changed:** docs/memory/agents/project-manager.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** V10.6 CLIENT CHAT + FLOW BUG FIXES — TASK #476 (frontend-dev) + TASK #479 (debugger) + TASK #480 (debugger) PARALLEL as first wave
+---
