@@ -3071,3 +3071,77 @@ Both bugs fixed. Build clean (500 modules, 0 errors).
 ### Handoff
 None — task fully self-contained.
 ---
+
+---
+## 2026-04-09 — Task #423: BUG-CHAT-CLIENT-4 — Phantom store entries from undefined nodeId
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+useSwarm.js chat_message WS handler did not guard against undefined msg.nodeId, creating phantom "undefined" keyed entries in agentStates and agentResults.
+
+### What I did
+Added `if (!msg.nodeId) break;` guard at the top of the `case 'chat_message':` block in useSwarm.js.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/hooks/useSwarm.js | MODIFIED | Added nodeId guard at line 633 to prevent phantom store entries |
+
+### Improvements delivered
+- Undefined nodeId messages are now silently dropped before any store mutation
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+None — straightforward guard addition per task spec.
+
+### What I learned
+- The chat_message handler is a complex block with canonical/non-canonical paths; the guard must be at the very top before any getState() call.
+
+### State I'm leaving behind
+Guard is in place. Client builds clean. TEST GATE #424 should verify.
+
+### Handoff
+qa-tester should run TEST GATE #424.
+---
+
+---
+## 2026-04-09 — Task #425: BUG-CHAT-CLIENT-8 — XSS via unsanitized markdown links in ChatMessage
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+ChatMessage.jsx used ReactMarkdown with remarkGfm but no URL sanitization, allowing javascript: protocol links from agent output to execute as XSS.
+
+### What I did
+1. Installed rehype-sanitize (`npm install --prefix client rehype-sanitize`) — added 2 packages
+2. Imported rehypeSanitize in ChatMessage.jsx
+3. Added `rehypePlugins={[rehypeSanitize]}` to the ReactMarkdown component
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/canvas/ChatMessage.jsx | MODIFIED | Added rehype-sanitize import and plugin to ReactMarkdown |
+| client/package.json | MODIFIED (auto) | rehype-sanitize added as dependency |
+
+### Improvements delivered
+- javascript: and other dangerous URL schemes are now stripped from rendered markdown links
+- Normal https:// links still render correctly
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Used default rehype-sanitize schema (GitHub-flavored) which strips javascript: URLs while allowing standard HTML elements used by remarkGfm.
+
+### What I learned
+- rehype-sanitize's default schema is based on GitHub's sanitization rules, which is appropriate for this use case.
+
+### State I'm leaving behind
+XSS vector is closed. Client builds clean. TEST GATE #426 should verify.
+
+### Handoff
+qa-tester should run TEST GATE #426.
+---

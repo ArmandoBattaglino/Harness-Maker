@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeSanitize from 'rehype-sanitize';
 import { stripAnsi } from '../utils/stripAnsi';
 import { repairAllTokenSpacing } from '../utils/repairTokenSpacing';
 import { isStructuredSpawnMode } from '../utils/runtimeModes.js';
@@ -197,7 +198,7 @@ export default function ChatMessage({ message, agentLabel }) {
         </div>
         <div className="prose prose-invert prose-sm max-w-none text-[12px] break-words leading-5 text-gray-100 prose-strong:text-white prose-strong:font-semibold prose-em:text-gray-300 prose-li:my-0 prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-headings:text-gray-100 prose-headings:mt-2 prose-headings:mb-1 prose-code:text-amber-300 prose-code:text-[11px]">
           {displayText ? (
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
               {displayText}
             </ReactMarkdown>
           ) : (

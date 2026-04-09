@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-09 after Debugger Loop Phase 1 — Chat Stress Test (code audit only, no code modified)._
+_Last updated: 2026-04-09 after Tasks #417 + #419 (V10.0 Wave 1 — canonical chat_message server storage + client canonicalReceived guard)._
 
 ## Release Status
 **v9.0.0 — V9.0 Stream-JSON Agent Migration CLOSED for core semantics, display fidelity FIXED**
@@ -61,9 +61,9 @@ _Last updated: 2026-04-09 after Debugger Loop Phase 1 — Chat Stress Test (code
 |----------|--------|--------------|-------|
 | README.md | UP_TO_DATE | 2026-04-08 | Updated to v9.0.0 release metadata and documents stream-json Claude agents, hybrid provider runtime behavior, and graceful stop/resume/reset controls. |
 | CLAUDE.md | UP_TO_DATE | 2026-04-08 | Updated with DEC-027/028/029 runtime constraints, `--tools` guidance, truthful blocker rule for Claude stream-json failures, and `write-file-atomic` correction. |
-| docs/ARCHITECTURE.md | PARTIAL | 2026-04-09 | V5 component tree still deferred (12 components). Section 13.1 updated: Codex SDK now emits isCanonical chat_message at turn completion; ChatExtractor not used for Codex SDK agents. Remaining V9.0 components (#361-#393) listed as pending in 13.7. |
+| docs/ARCHITECTURE.md | PARTIAL | 2026-04-09 | V5 component tree still deferred (12 components). Section 13.5 step 4b updated: canonical result now also replaces execution.chatMessages for REST hydration. Section 13.1 updated: Codex SDK now emits isCanonical chat_message at turn completion; ChatExtractor not used for Codex SDK agents. Remaining V9.0 components (#361-#393) listed as pending in 13.7. |
 | docs/PRD.md | UP_TO_DATE | 2026-04-08 | Rewritten to v6.0: Stream-JSON Agent Migration. 12 component specs, 27 FRs, 7 SEC-SJ-* requirements. |
-| docs/API.md | UP_TO_DATE | 2026-04-09 | WS event table updated: chat_message isCanonical now documents both Claude stream-json and Codex SDK as emitters; client replaceNodeChatMessages action documented. |
+| docs/API.md | UP_TO_DATE | 2026-04-09 | WS event table updated: chat_message isCanonical documents server-side execution.chatMessages replacement and client-side canonicalReceived guard. GET /status response now includes chatMessages field with description. |
 | docs/memory/PROJECT.md | UP_TO_DATE | 2026-04-08 | Implementation status reflects V9.0 closure, release metadata sync, 396 total tasks, and 478/478 server-test verification. |
 | docs/memory/DECISIONS.md | UP_TO_DATE | 2026-04-08 | DEC-001 through DEC-029. DEC-027/028/029 added by architect for stream-json migration. |
 | docs/memory/PROGRESS.md | UP_TO_DATE | 2026-04-08 | Updated by project-manager with V9.0 area entry. |
@@ -358,4 +358,4 @@ Task #330 (documentation and status truthfulness sync) completed. All stale clai
 **Unified Chat View** documented for the first time in README features table:
 - Server: `ChatExtractor.js` — noise-filters PTY output (40+ regex patterns for spinners, ANSI, CLI chrome, box drawing) and emits clean `chat_message` WS events with periodic 500ms flush
 - Client: `ChatPanel.jsx` — conversation panel with per-agent filter dropdown; `ChatMessage.jsx` — role-styled message bubbles (assistant/system/user)
-- Integration: `SwarmCanvas.jsx` Feed/Chat tab toggle in side panel; `SwarmContext.jsx` chatMessages/chatFilter/sidePanelMode state; `useSwarm.js` chat_message WS handler
+- Integration: `SwarmCanvas.jsx` Feed/Chat tab toggle in side panel; `SwarmContext.jsx` chatMessages/chatFilter/sideP

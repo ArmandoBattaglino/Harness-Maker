@@ -178,11 +178,21 @@ Get full execution status snapshot.
   "budget": {
     "estimatedTokensUsed": 1500,
     "limitTokens": 0
-  }
+  },
+  "chatMessages": [
+    {
+      "nodeId": "node-1",
+      "role": "assistant",
+      "text": "Task complete. All files updated.",
+      "timestamp": 1712678400000
+    }
+  ]
 }
 ```
 
 `budget.estimatedTokensUsed` is derived from `BudgetTracker.getTotal(executionId)` — the sum of all output characters across all agent sessions for this execution (characters used as a proxy for tokens). `limitTokens` is drawn from the workflow definition's `settings.budgetTokens` field; `0` means no limit configured.
+
+`chatMessages` contains the server-persisted chat history for the execution (capped at 500 entries per node). For stream-json Claude agents, canonical result text replaces all prior text_delta fragment entries for the same nodeId, so REST hydration returns clean assembled text rather than raw token fragments.
 
 **Errors:** `404`
 
@@ -520,7 +530,7 @@ Server-push only — no client-to-server messages. Control commands use the REST
 |--------|--------------------|-----------|
 | `execution_status` | `executionId`, `status`, `agentStates` | On connect (initial snapshot) + on status change |
 | `agent_status` | `executionId`, `nodeId`, `status`, `sessionId`, `lastOutputSnippet`, `spawnMode` | When a single agent's status changes or live PTY output updates its snippet |
-| `chat_message` | `nodeId`, `role`, `text`, `timestamp`, `isCanonical` (optional), `spawnMode` (optional) | Each `text_delta` during a structured turn (incremental text). When `isCanonical: true`, the `text` field contains the authoritative result text that replaces all previously streamed fragments. Emitted by both Claude stream-json (`result` event) and Codex SDK (`turn.completed` event) runtimes. The client uses `replaceNodeChatMessages` to collapse all prior assistant fragments into one clean message. |
+| `chat_message` | `nodeId`, `role`, `text`, `timestamp`, `isCanonical` (optional), `spawnMode` (optional) | Each `text_delta` during a structured turn (incremental text). When `isCanonical: true`, the `text` field contains the authoritative result text that replaces all previously streamed fragments. Emitted by both Claude stream-json (`result` event) and Codex SDK (`turn.completed` event) runtimes. Server-side: the canonical message also replaces all prior assistant entries in `execution.chatMessages` (capped at 500) so REST hydration returns clean text. Client-side: `replaceNodeChatMessages` collapses all prior assistant fragments into one clean message; a per-node `canonicalReceived` flag is set in `agentStates` to silently drop any trailing `text_delta` fragments that arrive after the canonical (e.g., during WS close delay). Empty canonical text (`!msg.text`) is guarded to prevent destroying existing messages. |
 | `agent_tool_use` | `nodeId`, `toolName`, `toolUseId` | When a stream-json agent starts a tool call |
 | `agent_tool_delta` | `nodeId`, `toolUseId`, `partialJson` | Partial tool input JSON during a stream-json tool call |
 | `agent_thinking` | `nodeId`, `active` | When a stream-json agent enters (`active: true`) or exits (`active: false`) a thinking block |

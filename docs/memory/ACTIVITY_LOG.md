@@ -1,4 +1,25 @@
-﻿## 2026-04-09 — frontend-dev — Task #419: BUG-CHAT-CLIENT-1/3/15 — Canonical race condition fixes
+﻿## 2026-04-09 — frontend-dev — Task #423 + #425: nodeId guard + XSS sanitize
+**Outcome:** COMPLETED
+**Summary:** Added `if (!msg.nodeId) break;` guard in useSwarm.js chat_message handler to prevent phantom "undefined" store entries. Installed rehype-sanitize and added it to ChatMessage.jsx ReactMarkdown to close XSS vector from javascript: URLs in agent markdown output. Client build clean.
+**Files changed:** client/src/hooks/useSwarm.js, client/src/canvas/ChatMessage.jsx, client/package.json
+**Bugs fixed:** BUG-CHAT-CLIENT-4 (phantom store entries), BUG-CHAT-CLIENT-8 (XSS via unsanitized markdown)
+**Decisions made:** Used default rehype-sanitize schema (GitHub-flavored)
+**Blockers:** none
+**Next:** TEST GATE #424 and #426 (qa-tester)
+---
+
+## 2026-04-09 — project-manager — Wave 1 completion + Wave 2 launch
+**Outcome:** COMPLETED
+**Summary:** Marked TASK #417 (BUG-CHAT-SERVER-01, stream-json canonical updates execution.chatMessages, commits 664c2e9/a8fda84) and TASK #419 (BUG-CHAT-CLIENT-1/3/15, canonicalReceived flag) as COMPLETED in TASK_PLAN.md header. Updated counters to 416 COMPLETED/PASS, 30 PENDING. Wave 2 now launching: #421 (ChatExtractor buffer keying), #423 (phantom store entries), #425 (XSS sanitization) in PARALLEL.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none (status tracking only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** Wave 2: TASK #421 (backend-dev) + TASK #423 (frontend-dev) + TASK #425 (frontend-dev) PARALLEL
+
+---
+
+## 2026-04-09 — frontend-dev — Task #419: BUG-CHAT-CLIENT-1/3/15 — Canonical race condition fixes
 **Outcome:** COMPLETED
 **Summary:** Added per-node `canonicalReceived` flag in agentStates to prevent post-canonical corruption. Empty canonical text is now guarded at both useSwarm.js handler level and replaceNodeChatMessages store level. Trailing text_delta fragments arriving after canonical are silently dropped.
 **Files changed:** client/src/hooks/useSwarm.js, client/src/store/SwarmContext.jsx

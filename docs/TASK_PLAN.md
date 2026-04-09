@@ -4,8 +4,8 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v10.0 — task numbering extends through #448; 448 tasks registered, 414 COMPLETED/PASS, 1 DEFERRED (#236), 32 PENDING, 0 IN_PROGRESS. 490 server tests pass, client build clean (501 modules). Chat stress test (debugger-loop Phase 1) found 31 bugs; V10.0 area created with 32 tasks (#417-#448) across 8 waves.
-  **Active Area:** V10.0 CHAT STRESS TEST BUG FIXES — 32 tasks (#417-#448), 0 COMPLETED, 32 PENDING. Wave 1 ready to start (TASK #417 backend + TASK #419 frontend, PARALLEL).
+**Status:** v10.0 — task numbering extends through #448; 448 tasks registered, 416 COMPLETED/PASS, 1 DEFERRED (#236), 30 PENDING, 0 IN_PROGRESS. 490 server tests pass, client build clean (501 modules). Chat stress test (debugger-loop Phase 1) found 31 bugs; V10.0 area created with 32 tasks (#417-#448) across 8 waves. Wave 1 COMPLETED, Wave 2 launching.
+  **Active Area:** V10.0 CHAT STRESS TEST BUG FIXES — 32 tasks (#417-#448), 2 COMPLETED (#417, #419), 30 PENDING. Wave 1 done. Wave 2 launching: TASK #421 (backend) + TASK #423 (frontend) + TASK #425 (frontend) PARALLEL.
   **Completed Area:** V9.5 FULL DEEP E2E TEST BUG FIXES — #415 COMPLETED (BUG-DT-1 Models popup click-outside fix, commit ed6877a), #416 PASS. AREA CLOSED 2026-04-09.
   **Completed Area:** V9.4 CHAT MESSAGE CANONICAL FIX — #413 COMPLETED, #414 PASS. V9.4 CLOSED 2026-04-09.
   **Completed Area:** V9.3 CODEX SDK DEBUGGER-LOOP HARDENING — #410 COMPLETED, #411 COMPLETED, TEST GATE #412 PASS. AREA CLOSED 2026-04-08.
@@ -17370,7 +17370,7 @@ Type: BUG_FIX
 Priority: MEDIUM
 Difficulty: TRIVIAL
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   File: client/src/hooks/useSwarm.js
   Bug: In the chat_message WS handler, if msg.nodeId is undefined (malformed server event or
@@ -17416,7 +17416,7 @@ Type: BUG_FIX
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   File: client/src/canvas/ChatMessage.jsx
   Bug: ReactMarkdown with remarkGfm renders markdown links without URL sanitization.

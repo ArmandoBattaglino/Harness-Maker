@@ -1,3 +1,7 @@
+- [FRONTEND-DEV 2026-04-09] TASK #423 (BUG-CHAT-CLIENT-4) COMPLETED. Added nodeId guard in useSwarm.js chat_message handler. TASK #425 (BUG-CHAT-CLIENT-8) COMPLETED. Installed rehype-sanitize, added to ChatMessage.jsx ReactMarkdown. Client build clean.
+
+- [PM 2026-04-09] Wave 1 COMPLETED. #417 (BUG-CHAT-SERVER-01, commits 664c2e9/a8fda84) and #419 (BUG-CHAT-CLIENT-1/3/15) both COMPLETED. 416 COMPLETED/PASS, 30 PENDING. Wave 2 launching: #421 (ChatExtractor buffer keying) + #423 (phantom store entries) + #425 (XSS sanitization) PARALLEL.
+
 - [BACKEND-DEV 2026-04-09] TASK #417 (BUG-CHAT-SERVER-01) COMPLETED. Stream-json canonical emission in SwarmEngine.js now updates execution.chatMessages with filter+push+slice pattern (ported from Codex SDK path). REST hydration and _buildAgentOutputs see canonical text. 490/490 tests pass.
 
 - [PM 2026-04-09] V10.0 CHAT STRESS TEST BUG FIXES area created. Debugger-loop Phase 1 deep chat stress test found 31 bugs (8 HIGH, 10 MEDIUM, 13 LOW). 32 tasks registered (#417-#448) across 8 waves. Wave 1 ready: TASK #417 (backend-dev: stream-json canonical emission fix in SwarmEngine.js) + TASK #419 (frontend-dev: canonicalReceived flag in useSwarm.js+SwarmContext.jsx) run PARALLEL. Key fixes: canonical race conditions, ChatExtractor buffer collision, XSS sanitization, double emission, DP memory cap, scroll-lock, HITL double-click guard.

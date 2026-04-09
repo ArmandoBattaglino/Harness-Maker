@@ -308,7 +308,7 @@ export class ChatExtractor {
     this._nodePrompts = new Map();   // nodeId -> normalized prompt text for echo detection
     this._sanitizeMessage = sanitizeMessage;
     this._periodicFlushMs = Number(periodicFlushMs) > 0 ? Number(periodicFlushMs) : 0;
-    this._buffers = new Map();          // nodeId -> { text, timer, periodicTimer, lastChunkAt, executionId }
+    this._buffers = new Map();          // `${executionId}:${nodeId}` -> { text, timer, periodicTimer, lastChunkAt, executionId }
   }
 
   /**
@@ -373,14 +373,15 @@ export class ChatExtractor {
   feed(executionId, nodeId, cleanChunk) {
     if (!cleanChunk || !nodeId) return;
 
-    let buf = this._buffers.get(nodeId);
+    const bufKey = `${executionId}:${nodeId}`;
+    let buf = this._buffers.get(bufKey);
     if (!buf) {
       buf = { text: '', timer: null, periodicTimer: null, lastChunkAt: 0, firstChunkAt: 0, lastEmittedText: '', executionId };
-      this._buffers.set(nodeId, buf);
+      this._buffers.set(bufKey, buf);
       if (this._periodicFlushMs > 0) {
         // Optional progressive flushes for long-running agents.
         buf.periodicTimer = setInterval(() => {
-          this._periodicFlush(nodeId);
+          this._periodicFlush(bufKey, nodeId);
         }, this._periodicFlushMs);
       }
     }
@@ -420,8 +421,8 @@ export class ChatExtractor {
    * Periodic flush — called every PERIODIC_FLUSH_MS for each active node.
    * Emits accumulated text as a chat message even during continuous streaming.
    */
-  _periodicFlush(nodeId) {
-    const buf = this._buffers.get(nodeId);
+  _periodicFlush(bufKey, nodeId) {
+    const buf = this._buffers.get(bufKey);
     if (!buf || !buf.text.trim() || buf.text.trim().length < MIN_MESSAGE_LENGTH) return;
 
     // Buffer age guard — don't flush if buffer is too young
@@ -439,7 +440,7 @@ export class ChatExtractor {
    * Force-flush the buffer for a node (e.g., when agent status changes to 'done').
    */
   flush(executionId, nodeId) {
-    this._flush(executionId, nodeId);
+    this._flush(executionId, nodeId, `${executionId}:${nodeId}`);
   }
 
   /**
@@ -448,8 +449,9 @@ export class ChatExtractor {
    * echo fragments) has leaked into the buffer and must be discarded so that
    * only post-gate agent content accumulates for the next flush.
    */
-  resetBuffer(nodeId) {
-    const buf = this._buffers.get(nodeId);
+  resetBuffer(executionId, nodeId) {
+    const bufKey = `${executionId}:${nodeId}`;
+    const buf = this._buffers.get(bufKey);
     if (buf) {
       buf.text = '';
       buf.firstChunkAt = 0;
@@ -472,8 +474,9 @@ export class ChatExtractor {
     }
   }
 
-  _flush(executionId, nodeId) {
-    const buf = this._buffers.get(nodeId);
+  _flush(executionId, nodeId, bufKey) {
+    if (!bufKey) bufKey = `${executionId}:${nodeId}`;
+    const buf = this._buffers.get(bufKey);
     if (!buf || !buf.text.trim()) return;
 
     if (buf.timer) {
@@ -829,30 +832,34 @@ export class ChatExtractor {
    * Clean up all buffers and timers for an execution.
    */
   cleanup(executionId) {
-    // Flush any remaining buffered text before clearing — otherwise agent
-    // output accumulated since the last silence-timeout flush is silently lost.
-    for (const [nodeId, buf] of this._buffers.entries()) {
+    // Flush any remaining buffered text before clearing — only buffers
+    // belonging to this execution, so concurrent executions are not affected.
+    const prefix = `${executionId}:`;
+    for (const [bufKey, buf] of this._buffers.entries()) {
+      if (!bufKey.startsWith(prefix)) continue;
       if (buf.timer) clearTimeout(buf.timer);
       if (buf.periodicTimer) clearInterval(buf.periodicTimer);
+      // Extract nodeId from compound key for the flush callback
+      const nodeId = bufKey.slice(prefix.length);
       // Force a final flush so the text makes it into chatMessages
       if (buf.text && buf.text.trim()) {
-        this._flush(buf.executionId || executionId, nodeId);
-      } else {
+        this._flush(buf.executionId || executionId, nodeId, bufKey);
       }
+      this._buffers.delete(bufKey);
     }
-    this._buffers.clear();
   }
 
   /**
    * Flush and clean a specific node.
    */
   cleanupNode(executionId, nodeId) {
-    const buf = this._buffers.get(nodeId);
+    const bufKey = `${executionId}:${nodeId}`;
+    const buf = this._buffers.get(bufKey);
     if (buf) {
-      this._flush(executionId, nodeId);
+      this._flush(executionId, nodeId, bufKey);
       if (buf.timer) clearTimeout(buf.timer);
       if (buf.periodicTimer) clearInterval(buf.periodicTimer);
-      this._buffers.delete(nodeId);
+      this._buffers.delete(bufKey);
     }
   }
 }

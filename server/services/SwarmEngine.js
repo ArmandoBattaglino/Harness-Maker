@@ -3192,7 +3192,7 @@ class SwarmEngine {
                     // before feeding to ChatExtractor. This prevents a single
                     // protocol line from causing the ENTIRE message to be discarded.
                     const preFiltered = this._stripSnippetProtocolArtifacts(contentToFeed);
-                    this._chatExtractor.resetBuffer(nId);
+                    this._chatExtractor.resetBuffer(ex.id, nId);
                     // Split into paragraphs so prompt echo sections get filtered
                     // independently from real output sections.
                     const paragraphs = preFiltered.split(/\n{2,}/);
@@ -4030,7 +4030,7 @@ class SwarmEngine {
             // Discard any ChatExtractor buffer accumulated during the echo
             // gate period — it contains CLI banner noise that would pollute
             // the first chat message with non-semantic text.
-            this._chatExtractor.resetBuffer(nodeId);
+            this._chatExtractor.resetBuffer(executionId, nodeId);
             // Cancel the fallback timer — the marker arrived in time
             if (currentState.echoMarkerTimer) {
               clearTimeout(currentState.echoMarkerTimer);

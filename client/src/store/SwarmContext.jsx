@@ -39,6 +39,7 @@ import { create } from 'zustand';
  * @property {AgentCurrentTool | null} [currentTool]
  * @property {AgentTurnCost | null} [turnCost]
  * @property {AgentTotalCost | null} [totalCost]
+ * @property {boolean} [canonicalReceived] - Set to true when a canonical chat_message arrives for this node; blocks trailing text_delta fragments from corrupting the final output
  */
 
 const buildClearedExecutionState = () => ({
