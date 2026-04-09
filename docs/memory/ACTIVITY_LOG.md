@@ -1,4 +1,15 @@
-﻿## 2026-04-09 — code-mapper — Codex handoff regression coverage mapped
+﻿## 2026-04-09 — project-manager — Tasks #476 + #479: V10.6 post-session sync
+**Outcome:** COMPLETED
+**Summary:** Verified and confirmed COMPLETED status for TASK #476 (BUG-CHAT-CLIENT-12 — Chat View empty state, no code changes needed, already locked by 52/52 client tests) and TASK #479 (BUG-BLOCKER-UI-02 — Gemini blocked node card raw CLI text, 3 root causes fixed in SwarmEngine.js, commit 02958da, 501/501 server tests). TASK_PLAN.md entries were already correct; PROGRESS.md and ACTIVITY_LOG.md updated to reflect this sync session.
+**Files changed:** docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** BUG-CHAT-CLIENT-12 (verified pre-fixed), BUG-BLOCKER-UI-02 (3 SwarmEngine.js root causes: _normalizeSnippetLine Gemini checkmark regex, _handleRuntimeBlocker provider_unavailable clean message, stopExecution pinnedDisplaySnippet cleanup)
+**Decisions made:** none
+**Blockers:** none
+**Next:** V10.8 active — #491 (visual regression determinism, qa-tester) + #492 (Codex handoff browser harness, debugger) are the next parallel priorities
+
+---
+
+## 2026-04-09 — code-mapper — Codex handoff regression coverage mapped
 **Outcome:** COMPLETED
 **Summary:** Mapped 5 new/modified files. Updated CODE_MAP.md Test Infrastructure table with full 7-test description for swarm-engine-codex-sdk.test.js, added new E2E/Debug Scripts section for swarm-codex-handoff-e2e.mjs and codex-handoff-long.json, updated package.json entry with 3 new debug scripts. Appended CHANGELOG entry documenting 24 new functions and the `_onHandoff` → Codex SDK spawn connection now covered by deterministic regression.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
