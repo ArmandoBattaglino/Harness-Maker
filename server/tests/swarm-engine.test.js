@@ -2534,6 +2534,14 @@ describe('SwarmEngine', () => {
 
       execution.agentStates.get('node-a').ignoreParserUntil = null;
       execution.agentStates.get('node-a').ignoreParserBuffer = '';
+      execution.chatMessages = [
+        { nodeId: 'node-a', role: 'assistant', text: 'Structured handoff sent.' },
+        {
+          nodeId: 'node-a',
+          role: 'assistant',
+          text: 'Signed in with Google\n/auth\nType your message or @path/to/file\nThinking...',
+        },
+      ];
 
       wsBroadcast.mockClear();
       tapFn("Error: not authenticated. please sign in.");
@@ -2548,6 +2556,13 @@ describe('SwarmEngine', () => {
         provider: 'gemini',
         nodeId: 'node-a',
       });
+      expect(status.agentStates['node-a'].lastOutputSnippet).toContain('Gemini requires authentication');
+      expect(status.chatMessages).toEqual([]);
+
+      const blockedAgentSnapshot = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .find((ev) => ev.type === 'agent_status' && ev.nodeId === 'node-a' && ev.status === 'blocked');
+      expect(blockedAgentSnapshot?.lastOutputSnippet).toContain('Gemini requires authentication');
     });
 
     it('should classify Gemini waiting-for-authentication output as a blocked runtime state', async () => {
@@ -2573,6 +2588,33 @@ describe('SwarmEngine', () => {
         provider: 'gemini',
         nodeId: 'node-a',
       });
+    });
+
+    it('should keep a clean Gemini blocker snippet after stopExecution instead of replaying auth chrome', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', {
+        runtimeProvider: 'gemini',
+      });
+      const tapFn = [...mockSession.swarmListeners][0];
+      const execution = engine._executions.get(executionId);
+
+      execution.agentStates.get('node-a').ignoreParserUntil = null;
+      execution.agentStates.get('node-a').ignoreParserBuffer = '';
+      execution.chatMessages = [
+        {
+          nodeId: 'node-a',
+          role: 'assistant',
+          text: 'Signed in with Google\n/auth\nType your message or @path/to/file\nThinking...',
+        },
+      ];
+
+      tapFn("Error: not authenticated. please sign in.");
+
+      const stoppedStatus = await engine.stopExecution(executionId);
+      expect(stoppedStatus.status).toBe('stopped');
+      expect(stoppedStatus.agentStates['node-a'].status).toBe('stopped');
+      expect(stoppedStatus.agentStates['node-a'].lastOutputSnippet).toContain('Gemini requires authentication');
+      expect(stoppedStatus.agentStates['node-a'].lastOutputSnippet).not.toContain('Signed in with Google');
+      expect(stoppedStatus.chatMessages).toEqual([]);
     });
 
     it('should ignore transient Gemini thinking-phase request failures instead of flipping to blocked', async () => {
@@ -2732,7 +2774,7 @@ describe('SwarmEngine', () => {
       tapFn('Type your message or @path/to/file');
       mockSessionManager.writeInput.mockClear();
 
-      const result = engine.sendBroadcast(executionId, 'node-a', 'High-priority operator update', { mode: 'hard' });
+      const result = await engine.sendBroadcast(executionId, 'node-a', 'High-priority operator update', { mode: 'hard' });
 
       expect(result).toEqual({ sent: true, delivery: 'queued' });
       expect(nodeAState.pendingOperatorPrompt).toBe('High-priority operator update');
@@ -2752,7 +2794,7 @@ describe('SwarmEngine', () => {
       nodeAState.ignoreParserUntil = null;
       tapFn('Type your message or @path/to/file');
       mockSessionManager.writeInput.mockClear();
-      engine.sendBroadcast(executionId, 'node-a', 'High-priority operator update', { mode: 'hard' });
+      await engine.sendBroadcast(executionId, 'node-a', 'High-priority operator update', { mode: 'hard' });
 
       // Clear echo gate again (sendBroadcast → _writeSwarmPrompt → _flushSwarmPrompt sets new gate)
       nodeAState.ignoreParserUntil = null;
@@ -2761,6 +2803,27 @@ describe('SwarmEngine', () => {
       expect(nodeAState.pendingOperatorPrompt).toBeNull();
       expect(mockSessionManager.writeInput).toHaveBeenCalledWith('sess-node-a', 'High-priority operator update');
       expect(mockSessionManager.writeInput).not.toHaveBeenCalledWith('sess-node-a', '\x03');
+    });
+
+    it('should resume a completed PTY agent with an operator follow-up prompt', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const execution = engine._executions.get(executionId);
+      const nodeAState = execution.agentStates.get('node-a');
+      nodeAState.status = 'done';
+      nodeAState.promptReady = true;
+      mockSessionManager.writeInput.mockClear();
+
+      const result = await engine.sendBroadcast(executionId, 'node-a', 'Please revise the previous answer', { mode: 'soft' });
+      await vi.advanceTimersByTimeAsync(1500);
+      const writtenPayload = mockSessionManager.writeInput.mock.calls
+        .filter(([sessionId]) => sessionId === 'sess-node-a')
+        .map(([, input]) => String(input))
+        .join('\n');
+
+      expect(result).toEqual({ sent: true, delivery: 'resumed' });
+      expect(nodeAState.status).toBe('running');
+      expect(engine.getStatus(executionId).status).toBe('running');
+      expect(writtenPayload).toContain('Please revise the previous answer');
     });
 
   });
@@ -3588,6 +3651,10 @@ describe('SwarmEngine', () => {
       return rl;
     }
 
+    function streamEvent(event) {
+      return JSON.stringify({ type: 'stream_event', event });
+    }
+
     it('should broadcast spawnMode=stream-json on agent_status and preserve it in status snapshots', async () => {
       const streamWorkflow = buildStreamJsonSoloWorkflow();
       workflowStoreMock.get.mockResolvedValueOnce(streamWorkflow);
@@ -3647,6 +3714,124 @@ describe('SwarmEngine', () => {
       expect(toolsFlagIndex).toBeGreaterThan(-1);
       expect(spawnArgs[toolsFlagIndex + 1]).toBe('Bash,Read,Edit,Write,Grep,Glob,LS');
       expect(spawnArgs.includes(legacyToolsFlag)).toBe(false);
+    });
+
+    it('should coalesce sequential text_delta fragments into a single live chat_message after the buffer window', async () => {
+      const streamWorkflow = buildStreamJsonSoloWorkflow();
+      workflowStoreMock.get.mockResolvedValueOnce(streamWorkflow);
+
+      const executionId = await engine.startExecution(streamWorkflow.id, 'proj-1', '/projects/proj-1');
+      const child = buildMockStreamJsonChild();
+      const rl = buildMockReadline();
+
+      mockSpawn.mockReturnValueOnce(child);
+      mockCreateInterface.mockReturnValueOnce(rl);
+      wsBroadcast.mockClear();
+
+      await engine._spawnAgentStreamJson(executionId, 'node-a');
+
+      rl.emit('line', streamEvent({
+        type: 'content_block_start',
+        index: 0,
+        content_block: { type: 'text', text: '' },
+      }));
+      rl.emit('line', streamEvent({
+        type: 'content_block_delta',
+        index: 0,
+        delta: { type: 'text_delta', text: 'G' },
+      }));
+      rl.emit('line', streamEvent({
+        type: 'content_block_delta',
+        index: 0,
+        delta: { type: 'text_delta', text: 'io' },
+      }));
+      rl.emit('line', streamEvent({
+        type: 'content_block_delta',
+        index: 0,
+        delta: { type: 'text_delta', text: 'conda' },
+      }));
+
+      expect(wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .filter((ev) => ev.type === 'chat_message' && ev.nodeId === 'node-a')).toHaveLength(0);
+
+      await vi.advanceTimersByTimeAsync(160);
+
+      const chatEvents = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .filter((ev) => ev.type === 'chat_message' && ev.nodeId === 'node-a');
+
+      expect(chatEvents).toHaveLength(1);
+      expect(chatEvents[0]).toMatchObject({
+        nodeId: 'node-a',
+        role: 'assistant',
+        text: 'Gioconda',
+        spawnMode: 'stream-json',
+      });
+    });
+
+    it('should flush buffered text before a tool event so live chat ordering stays truthful', async () => {
+      const streamWorkflow = buildStreamJsonSoloWorkflow();
+      workflowStoreMock.get.mockResolvedValueOnce(streamWorkflow);
+
+      const executionId = await engine.startExecution(streamWorkflow.id, 'proj-1', '/projects/proj-1');
+      const child = buildMockStreamJsonChild();
+      const rl = buildMockReadline();
+
+      mockSpawn.mockReturnValueOnce(child);
+      mockCreateInterface.mockReturnValueOnce(rl);
+      wsBroadcast.mockClear();
+
+      await engine._spawnAgentStreamJson(executionId, 'node-a');
+
+      rl.emit('line', streamEvent({
+        type: 'content_block_start',
+        index: 0,
+        content_block: { type: 'text', text: '' },
+      }));
+      rl.emit('line', streamEvent({
+        type: 'content_block_delta',
+        index: 0,
+        delta: { type: 'text_delta', text: 'Aug' },
+      }));
+      rl.emit('line', streamEvent({
+        type: 'content_block_delta',
+        index: 0,
+        delta: { type: 'text_delta', text: 'ust' },
+      }));
+      rl.emit('line', streamEvent({
+        type: 'content_block_delta',
+        index: 0,
+        delta: { type: 'text_delta', text: 'us' },
+      }));
+
+      rl.emit('line', streamEvent({
+        type: 'content_block_start',
+        index: 1,
+        content_block: {
+          type: 'tool_use',
+          id: 'toolu_read_augustus',
+          name: 'Read',
+          input: {},
+        },
+      }));
+
+      const relevantEvents = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .filter((ev) => ev.nodeId === 'node-a' && (ev.type === 'chat_message' || ev.type === 'agent_tool_use'));
+
+      expect(relevantEvents).toHaveLength(2);
+      expect(relevantEvents[0]).toMatchObject({
+        type: 'chat_message',
+        nodeId: 'node-a',
+        text: 'Augustus',
+        spawnMode: 'stream-json',
+      });
+      expect(relevantEvents[1]).toMatchObject({
+        type: 'agent_tool_use',
+        nodeId: 'node-a',
+        toolName: 'Read',
+      });
     });
 
     it('should broadcast agent_cost with cacheReadTokens and cacheWriteTokens from stream-json results', async () => {
@@ -4071,6 +4256,84 @@ describe('SwarmEngine', () => {
         expect.objectContaining({ requestedProvider: 'claude' })
       );
       expect(resumed.status).toBe('running');
+      spawnSpy.mockRestore();
+    });
+
+    it('should resume a completed stream-json agent with an operator follow-up on the same session', async () => {
+      const executionId = 'exec-stream-operator-resume';
+      buildLifecycleExecution(executionId, {
+        status: 'done',
+        _streamJsonChild: null,
+        _streamJsonRunId: null,
+      });
+      const spawnSpy = vi.spyOn(engine, '_spawnAgent').mockResolvedValue(undefined);
+
+      const result = await engine.sendBroadcast(
+        executionId,
+        'node-a',
+        'Need one more revision before you finish',
+        { mode: 'soft' }
+      );
+
+      expect(result).toEqual({ sent: true, delivery: 'resumed' });
+      expect(engine._executions.get(executionId).agentStates.get('node-a').status).toBe('running');
+      expect(spawnSpy).toHaveBeenCalledWith(
+        executionId,
+        'node-a',
+        expect.objectContaining({
+          requestedProvider: 'claude',
+          reinjectPrompt: expect.stringContaining('Need one more revision before you finish'),
+        })
+      );
+      spawnSpy.mockRestore();
+    });
+
+    it('should queue and resume a running stream-json agent after a soft operator interrupt', async () => {
+      const executionId = 'exec-stream-operator-soft';
+      const child = buildRunningChild(5006);
+      const rl = buildLifecycleReadline();
+      buildLifecycleExecution(executionId, { status: 'idle', _streamJsonChild: null });
+
+      mockSpawn.mockReturnValueOnce(child);
+      mockCreateInterface.mockReturnValueOnce(rl);
+
+      await engine._spawnAgentStreamJson(executionId, 'node-a');
+      const state = engine._executions.get(executionId).agentStates.get('node-a');
+      const spawnSpy = vi.spyOn(engine, '_spawnAgent').mockResolvedValue(undefined);
+
+      const result = await engine.sendBroadcast(
+        executionId,
+        'node-a',
+        'Please adjust course before handing off',
+        { mode: 'soft' }
+      );
+
+      expect(result).toEqual({ sent: true, delivery: 'queued' });
+      expect(state.pendingOperatorPrompt).toContain('Please adjust course before handing off');
+
+      rl.emit('line', JSON.stringify({
+        type: 'result',
+        subtype: 'success',
+        session_id: state.streamJsonSessionId,
+        total_cost_usd: 0.01,
+        duration_ms: 50,
+        usage: {
+          input_tokens: 2,
+          output_tokens: 3,
+        },
+      }));
+      child.emit('close', 0);
+      await Promise.resolve();
+
+      expect(spawnSpy).toHaveBeenCalledWith(
+        executionId,
+        'node-a',
+        expect.objectContaining({
+          requestedProvider: 'claude',
+          reinjectPrompt: expect.stringContaining('Please adjust course before handing off'),
+        })
+      );
+      expect(state.pendingOperatorPrompt).toBeNull();
       spawnSpy.mockRestore();
     });
 
@@ -4601,6 +4864,7 @@ describe('SwarmEngine', () => {
     it('should build a provider-aware compact prompt for Codex downstream handoffs', async () => {
       const workflow = buildMixedProviderChainWorkflow();
       const executionId = 'exec-codex-downstream-prompt';
+      const longResearchHandoff = `${'roman-colosseum-detail '.repeat(24)}END_MARKER`;
       const execution = {
         executionId,
         workflowId: workflow.id,
@@ -4652,17 +4916,68 @@ describe('SwarmEngine', () => {
         targetId: 'node-c',
         contextUpdate: {
           summary: 'writer complete',
-          result: 'draft ready',
+          result: longResearchHandoff,
         },
       });
 
       const [, prompt] = promptSpy.mock.calls.at(-1);
+      const inboundHandoffLine = prompt.split('\n').find((line) => line.startsWith('node-b: '));
+
       expect(prompt).toContain('Upstream handoffs:');
       expect(prompt).toContain('Required final report: Two concise sentences.');
       expect(prompt).not.toContain('--- SWARM PROTOCOL');
       expect(prompt).not.toContain('Current workflow context:');
+      expect(inboundHandoffLine).toBeTruthy();
+      expect(inboundHandoffLine).toContain('END_MARKER');
+      expect(() => JSON.parse(inboundHandoffLine.slice('node-b: '.length))).not.toThrow();
 
       promptSpy.mockRestore();
+    });
+
+    it('should keep multiple upstream handoffs as separate parseable JSON lines in compact Codex prompts', () => {
+      const prompt = engine._buildSystemPrompt(
+        { id: 'node-merge', data: { systemPrompt: 'You are the Codex merge finisher.' } },
+        {
+          currentTask: 'Combine the upstream facts into one final report.',
+          expectedReport: 'One concise paragraph.',
+        },
+        ['node-final'],
+        'codex',
+        {
+          compactCodexPrompt: true,
+          inboundHandoffs: [
+            {
+              sourceNodeId: 'node-b',
+              sourceLabel: 'Researcher',
+              payload: {
+                summary: `${'alpha '.repeat(60)}END_A`,
+                result: `${'beta '.repeat(60)}TAIL_A`,
+                confidence: 0.91,
+              },
+            },
+            {
+              sourceNodeId: 'node-c',
+              sourceLabel: 'Fact Checker',
+              payload: {
+                summary: `${'gamma '.repeat(60)}END_B`,
+                result: `${'delta '.repeat(60)}TAIL_B`,
+                verified: true,
+              },
+            },
+          ],
+        }
+      );
+
+      const researcherLine = prompt.split('\n').find((line) => line.startsWith('Researcher: '));
+      const factCheckerLine = prompt.split('\n').find((line) => line.startsWith('Fact Checker: '));
+
+      expect(prompt).toContain('Upstream handoffs:');
+      expect(researcherLine).toBeTruthy();
+      expect(factCheckerLine).toBeTruthy();
+      expect(researcherLine).toContain('END_A');
+      expect(factCheckerLine).toContain('END_B');
+      expect(() => JSON.parse(researcherLine.slice('Researcher: '.length))).not.toThrow();
+      expect(() => JSON.parse(factCheckerLine.slice('Fact Checker: '.length))).not.toThrow();
     });
   });
 });

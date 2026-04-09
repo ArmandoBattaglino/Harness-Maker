@@ -7,7 +7,11 @@
       "mcp__puppeteer__puppeteer_evaluate",
       "Bash(npm run:*)",
       "Bash(npm test:*)",
-      "Bash(sort -t'#' -k2 -n)"
+      "Bash(sort -t'#' -k2 -n)",
+      "Bash(cp \"C:/Users/arman/.claude/CLAUDE.md\" \"C:/Users/arman/Desktop/claude-setup-backup/config/CLAUDE.md\")",
+      "Bash(cp \"C:/Users/arman/.claude/settings.json\" \"C:/Users/arman/Desktop/claude-setup-backup/config/settings.json\")",
+      "Bash(cp \"C:/Users/arman/.claude/settings.local.json\" \"C:/Users/arman/Desktop/claude-setup-backup/config/settings.local.json\")",
+      "Bash(cp \"C:/Users/arman/.claude/keybindings.json\" \"C:/Users/arman/Desktop/claude-setup-backup/config/keybindings.json\")"
     ]
   }
 }

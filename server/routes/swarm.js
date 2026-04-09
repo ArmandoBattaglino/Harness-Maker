@@ -140,8 +140,6 @@ export function resolveBroadcastNodeTargets(execution, scope, targetId) {
   const targets = [];
 
   for (const [nodeId, state] of Object.entries(execution.agentStates ?? {})) {
-    if (state.status !== 'running' || !state.sessionId) continue;
-
     const agentNode = getAgentNodeById(execution.workflowDef, nodeId);
     if (!agentNode) continue;
 
@@ -154,7 +152,7 @@ export function resolveBroadcastNodeTargets(execution, scope, targetId) {
 
     targets.push({
       nodeId,
-      sessionId: state.sessionId,
+      sessionId: state?.sessionId ?? null,
       label: agentNode.data?.label || nodeId,
     });
   }
@@ -519,13 +517,13 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
   // -------------------------------------------------------------------------
   // POST /api/v1/swarm/:executionId/broadcast
   // Body: { text, scope: 'all' | departmentId | agentNodeId, mode: 'soft' | 'hard' }
-  // Sends text to running agents filtered by scope.
+  // Sends text to messageable agents filtered by scope.
   // Soft: text + ESC + newline. Hard: Ctrl-C → wait 300ms → text + ESC → wait 100ms → newline.
   // Fire-and-forget for hard mode delays (setTimeout, no await).
   // → 200 { sent: number }
   // → 404 if execution not found
   // -------------------------------------------------------------------------
-  router.post('/:executionId/broadcast', (req, res) => {
+  router.post('/:executionId/broadcast', async (req, res) => {
     try {
       const { executionId } = req.params;
       const { text, scope, targetId, mode } = req.body ?? {};
@@ -560,7 +558,7 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
       const deliveries = [];
       for (const target of targets) {
         const result = typeof swarmEngine.sendBroadcast === 'function'
-          ? swarmEngine.sendBroadcast(executionId, target.nodeId, text.trim(), { mode: broadcastMode })
+          ? await swarmEngine.sendBroadcast(executionId, target.nodeId, text.trim(), { mode: broadcastMode })
           : null;
 
         if (!result?.sent) continue;

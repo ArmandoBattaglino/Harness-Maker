@@ -478,22 +478,16 @@ export default function SwarmCanvas({
   const { fitView, screenToFlowPosition } = useReactFlow();
   const focusedDepartmentId = useSwarmStore((s) => s.focusedDepartmentId);
   const setSelectedNode = useSwarmStore((s) => s.setSelectedNode);
-  const executionStatus = useSwarmStore((s) => s.executionStatus);
   const sidePanelMode = useSwarmStore((s) => s.sidePanelMode);
   const setSidePanelMode = useSwarmStore((s) => s.setSidePanelMode);
   const sidePanelOpen = useSwarmStore((s) => s.sidePanelOpen);
   const setSidePanelOpen = useSwarmStore((s) => s.setSidePanelOpen);
-  const interAgentFeed = useSwarmStore((s) => s.interAgentFeed);
   const selectedNodeId = useSwarmStore((s) => s.selectedNodeId);
   const agentResults = useSwarmStore((s) => s.agentResults);
   const [outputPanelNodeId, setOutputPanelNodeId] = useState(null);
-  // Keep the activity rail visible for every non-idle execution state, and
-  // also after the run if chat/feed history already exists.
-  const chatMessages = useSwarmStore((s) => s.chatMessages);
-  const hasSidePanelActivity = executionStatus !== 'idle'
-    || chatMessages.length > 0
-    || interAgentFeed.length > 0;
-  const showSidePanels = hasSidePanelActivity && sidePanelOpen;
+  // Keep the activity rail available even before the first message so the
+  // chat/feed empty states remain visible across idle, reload, and reset.
+  const showSidePanels = sidePanelOpen;
   const showInspector = Boolean(selectedNodeId);
 
   // Initial nodes/edges from workflowDef (or empty)
@@ -1058,7 +1052,7 @@ export default function SwarmCanvas({
             onClose={closeContextMenu}
           />
         )}
-        {hasSidePanelActivity && !sidePanelOpen && (
+        {!sidePanelOpen && (
           <div className="shrink-0 border-l border-gray-700 bg-gray-900/95 p-2">
             <button
               onClick={() => setSidePanelOpen(true)}

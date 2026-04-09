@@ -5659,3 +5659,44 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Wave 6 TEST GATE #445
 ---
+
+## 2026-04-09 — debugger — V10.1 stream-json live chat buffering
+**Outcome:** COMPLETED
+**Summary:** Researched Anthropic streaming docs and confirmed tiny `text_delta` chunks are expected upstream. The local bug was our server rebroadcasting every fragment 1:1 into live chat. Added a short server-side buffer in `SwarmEngine` for structured Claude chat, flushing before non-text boundaries and preserving the canonical end-of-turn replacement path. Added two regressions that prove delta coalescing and boundary flush ordering, then reran the full server suite successfully.
+**Files changed:** server/services/SwarmEngine.js, server/tests/swarm-engine.test.js, docs/TASK_PLAN.md, C:\Users\arman\.codex\skills\claude-cmd-debugger-loop\SKILL.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** BUG-CHAT-SERVER-13 — live stream-json chat flooded the client with micro-delta messages, amplifying token-spacing artifacts during active turns
+**Decisions made:** Buffer live structured assistant text for 150ms / 120 chars and flush before tool/result boundaries instead of trying to normalize each partial token; add a research-first check to `/debugger-loop` for non-trivial upstream/runtime bugs
+**Blockers:** none
+**Next:** Optional live provider-backed browser rerun to measure the improved chat cadence visually end-to-end
+---
+## 2026-04-09 — frontend-dev — V10.2 client test harness + targeted contract coverage
+**Outcome:** COMPLETED
+**Summary:** Closed V10.2 by adding a real client test harness and targeted coverage across the highest-risk frontend contracts. New suites now cover `SwarmContext`, `useSwarm`, `useInbox`, `ChatPanel`, `ChatMessage`, `AgentNode`, and `SwarmView` (`24` tests total). The work also exposed and fixed two product-side client bugs: runtime snapshot hydration could clear the freshly applied execution state when loading a workflow definition, and `ChatPanel` auto-scroll missed grouped-message updates / near-bottom cases because it relied on post-update height and `enrichedMessages.length` only. Verification: `npm test --prefix client` PASS (`24/24`), `npm run build --prefix client` PASS (`507` modules, chunk-size warning only).
+**Files changed:** client/package.json, client/vitest.config.js, client/src/test/setup.js, client/src/test/resetSwarmStore.js, client/src/store/SwarmContext.jsx, client/src/store/SwarmContext.test.jsx, client/src/hooks/useSwarm.js, client/src/hooks/useSwarm.test.jsx, client/src/hooks/useInbox.test.jsx, client/src/canvas/ChatPanel.jsx, client/src/canvas/ChatPanel.test.jsx, client/src/canvas/ChatMessage.test.jsx, client/src/canvas/nodes/AgentNode.test.jsx, client/src/views/SwarmView.test.jsx, docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** runtime snapshot hydration state loss during workflowDef load; ChatPanel auto-scroll truthfulness for grouped structured messages
+**Decisions made:** keep client coverage targeted and behavior-first rather than broad snapshot tests; preserve execution state explicitly when `useSwarm` hydrates workflow defs from runtime snapshots
+**Blockers:** none
+**Next:** V10.3 browser debugger-loop discovery or V10.4 structured chat turn-history work, depending on which user-facing risk should be reduced first
+
+---
+
+## 2026-04-09 — debugger — V10.3 client chat + flow debugger-loop deep test
+**Outcome:** COMPLETED
+**Summary:** Ran a browser-driven deep test focused on the Swarm operator chat surface and end-to-end workflow lifecycle using Puppeteer against the live app on `http://127.0.0.1:3000`. Confirmed two successful Codex multi-agent paths (`Venice Canals Research and Summary`, `Greeter and Poet`) with truthful Idle -> Running -> Completed progression, clean canonical chat bubbles, working agent filter behavior, and clean reset isolation. Confirmed several operator bugs: (1) idle/pre-run `All Agents` does not show `Chat View` / `No messages yet`; (2) completed reload keeps `Provider: Codex` but the runtime dropdown reverts to `Auto`; (3) reloaded completed node DOM text leaks structured residue such as handoff JSON fragments and `__DONE__`; (4) Gemini blocked/stopped paths leak raw CLI/auth/thinking output into node cards; (5) Gemini blocker paths also pollute Chat View with repeated terminal spam and misleading assistant-looking content such as `Structured handoff sent.`. Converted the discovery surface into V10.6 tasks #476-#482. No product code was changed in this pass.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (discovery + bulk planning only)
+**Decisions made:** use the successful Codex flows as the clean regression baseline and treat Gemini blocker hygiene as a separate bug family from the generic chat UI bugs
+**Blockers:** none
+**Next:** implement V10.6 bug-fix tasks sequentially, then rerun the same Codex success path + Gemini blocked/stopped browser scenarios as the verification gate
+
+---
+## 2026-04-09 — debugger — Codex downstream handoff prompt preservation
+**Outcome:** COMPLETED
+**Summary:** Fixed a Swarm handoff regression where compact Codex prompts were truncating inbound handoff payloads to 180 characters, which caused downstream Codex agents to complain that the upstream handoff in their prompt was incomplete. `SwarmEngine` now formats compact inbound handoffs as dedicated lines with a larger shared budget and valid JSON preservation instead of slicing the serialized payload mid-object. Added a regression in `swarm-engine.test.js` proving a long downstream handoff keeps its tail marker and remains parseable JSON. Verification: `npm test --prefix server -- swarm-engine.test.js` PASS (`168/168`), `npm test --prefix server` PASS (`492/492`).
+**Files changed:** server/services/SwarmEngine.js, server/tests/swarm-engine.test.js, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** Codex downstream prompt could receive a visibly truncated upstream handoff payload, leading the next agent to recover context from the workspace instead of trusting the handoff
+**Decisions made:** keep Codex prompts compact overall, but allocate a larger shared budget to inbound handoffs and preserve syntactically valid JSON whenever compaction is needed
+**Blockers:** none
+**Next:** Optional live browser rerun of the Researcher -> Writer handoff flow to confirm the Writer no longer reports a truncated handoff in the UI
+
+---

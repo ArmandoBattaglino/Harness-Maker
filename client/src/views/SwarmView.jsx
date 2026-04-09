@@ -154,6 +154,12 @@ export default function SwarmView() {
       .map(([nodeId]) => nodeId),
     [activeAgentEntries]
   );
+  const messageableStreamJsonAgentIds = useMemo(
+    () => activeAgentEntries
+      .filter(([, state]) => isStructuredSpawnMode(state?.spawnMode) && state?.acceptsMessages)
+      .map(([nodeId]) => nodeId),
+    [activeAgentEntries]
+  );
   const activePtyAgentIds = useMemo(
     () => activeAgentEntries
       .filter(([, state]) => !isStructuredSpawnMode(state?.spawnMode) && ACTIVE_AGENT_STATUSES.includes(state.status))
@@ -166,7 +172,7 @@ export default function SwarmView() {
       .map(([nodeId]) => nodeId),
     [activeAgentEntries]
   );
-  const showStreamJsonToolbar = Boolean(activeExecutionId && activeStreamJsonAgentIds.length > 0 && activePtyAgentIds.length === 0);
+  const showStreamJsonToolbar = Boolean(activeExecutionId && messageableStreamJsonAgentIds.length > 0 && activePtyAgentIds.length === 0);
   const showMissingProjectMessage = Boolean(workflowDef && projectsHydrated && !activeProjectId);
   const savedWorkflows = useMemo(() => {
     const filtered = workflows
@@ -930,7 +936,7 @@ export default function SwarmView() {
           </button>
         )}
 
-        {showStreamJsonToolbar && activeStreamJsonAgentIds.length > 0 && (
+        {showStreamJsonToolbar && messageableStreamJsonAgentIds.length > 0 && (
           <button
             onClick={() => handleStreamJsonAction('reset')}
             disabled={executing}

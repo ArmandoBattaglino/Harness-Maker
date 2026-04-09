@@ -228,6 +228,25 @@ describe('SessionManager', () => {
     });
   });
 
+  describe('persistent sessions', () => {
+    it('should skip idle timeout for persistent swarm sessions', async () => {
+      vi.useFakeTimers();
+      const session = await manager.createSession(
+        FAKE_PROJECT_ID,
+        FAKE_PROJECT_PATH,
+        FAKE_CLAUDE_BIN,
+        { persistent: true, persistentReason: 'swarm-agent' }
+      );
+
+      session.lastActivityAt = new Date(Date.now() - (31 * 60 * 1000));
+      await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
+
+      expect(manager.getSession(session.sessionId)).toBe(session);
+      expect(session.status).toBe('active');
+      vi.useRealTimers();
+    });
+  });
+
   // -------------------------------------------------------------------------
   // writeInput
   // -------------------------------------------------------------------------

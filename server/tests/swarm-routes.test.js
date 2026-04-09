@@ -47,26 +47,30 @@ describe('resolveBroadcastNodeTargets', () => {
           parentId: 'dept-billing',
           data: { label: 'Billing Agent' },
         },
+        { id: 'agent-structured', type: 'agent', data: { label: 'Structured Agent' } },
         { id: 'agent-idle', type: 'agent', data: { label: 'Idle Agent' } },
       ],
     },
     agentStates: {
       'agent-triage': { status: 'running', sessionId: 'sess-triage' },
       'agent-billing': { status: 'running', sessionId: 'sess-billing' },
+      'agent-structured': { status: 'done', sessionId: null },
       'agent-idle': { status: 'paused', sessionId: 'sess-idle' },
     },
   };
 
-  it('returns all running agent recipients for all scope', () => {
+  it('returns all scoped agent recipients for all scope', () => {
     const targets = resolveBroadcastNodeTargets(execution, 'all', null);
 
     expect(targets).toEqual([
       { nodeId: 'agent-triage', sessionId: 'sess-triage', label: 'Triage Agent' },
       { nodeId: 'agent-billing', sessionId: 'sess-billing', label: 'Billing Agent' },
+      { nodeId: 'agent-structured', sessionId: null, label: 'Structured Agent' },
+      { nodeId: 'agent-idle', sessionId: 'sess-idle', label: 'Idle Agent' },
     ]);
   });
 
-  it('filters running agent recipients by department scope', () => {
+  it('filters scoped agent recipients by department scope', () => {
     const targets = resolveBroadcastNodeTargets(execution, 'department', 'dept-billing');
 
     expect(targets).toEqual([
@@ -273,7 +277,7 @@ describe('swarmRoutes runtime model contract', () => {
 });
 
 describe('swarmRoutes broadcast delivery', () => {
-  it('uses SwarmEngine.sendBroadcast so Gemini sessions can queue safe injections', () => {
+  it('uses SwarmEngine.sendBroadcast so Gemini sessions can queue safe injections', async () => {
     const swarmEngine = {
       getStatus: vi.fn().mockReturnValue({
         status: 'running',
@@ -288,7 +292,7 @@ describe('swarmRoutes broadcast delivery', () => {
           ],
         },
       }),
-      sendBroadcast: vi.fn().mockReturnValue({ sent: true, delivery: 'queued' }),
+      sendBroadcast: vi.fn().mockResolvedValue({ sent: true, delivery: 'queued' }),
     };
     const sessionManager = { writeInput: vi.fn(), getSession: vi.fn() };
     const router = swarmRoutes(swarmEngine, sessionManager);
@@ -300,7 +304,7 @@ describe('swarmRoutes broadcast delivery', () => {
     };
     const res = createMockRes();
 
-    handler(req, res);
+    await handler(req, res);
 
     expect(swarmEngine.sendBroadcast).toHaveBeenCalledWith('exec-1', 'agent-a', 'Redirect the task', { mode: 'hard' });
     expect(sessionManager.writeInput).not.toHaveBeenCalled();

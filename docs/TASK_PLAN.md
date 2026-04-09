@@ -4,7 +4,14 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v10.0 — task numbering extends through #448; 448 tasks registered, 448 COMPLETED/PASS, 1 DEFERRED (#236), 0 PENDING, 0 IN_PROGRESS. 490 server tests pass, client build clean (507 modules). ALL AREAS CLOSED. V10.0 Chat Stress Test Bug Fixes fully verified: 15 fix tasks COMPLETED, TEST GATE #446 PASS, AREA CHECKPOINT #447 PASS, #448 PASS (BUG-CHAT-SERVER-09 resolved by #417+#427). Browser E2E 8/8. 0 regressions. 0 open bugs.
+**Status:** v10.7 — task numbering extends through #490. V10.2 CLIENT TEST HARNESS + TARGETED CONTRACT COVERAGE is now CLOSED after dedicated client harness + targeted store/hook/UI coverage landed and passed verification. Latest frontend verification: `npm test --prefix client` 24/24 PASS and `npm run build --prefix client` clean (507 modules, chunk-size warning only). V10.3 CLIENT CHAT + FLOW DEBUGGER LOOP (DEEP TEST) is now CLOSED after browser-driven Codex/Gemini operator-path discovery. Active planned areas: V10.4 STRUCTURED CHAT TURN HISTORY, V10.5 PERSISTENT AGENT SESSIONS + OPERATOR MESSAGING, V10.6 CLIENT CHAT + FLOW BUG FIXES, and V10.7 CLIENT RESILIENCE TEST COVERAGE.
+  **Planned Area:** V10.7 CLIENT RESILIENCE TEST COVERAGE — REGISTERED 2026-04-09. 8 tasks (#483-#490), all PENDING. Focus: deepen automated client coverage on recovery paths, error handling, advanced operator messaging states, and runtime-shell truthfulness before the next bug-fix wave lands.
+  **Planned Area:** V10.6 CLIENT CHAT + FLOW BUG FIXES — REGISTERED 2026-04-09. 7 tasks (#476-#482), all PENDING. Focus: fix the concrete operator chat/lifecycle bugs discovered in the V10.3 browser debugger-loop before the next implementation wave.
+  **Planned Area:** V10.5 PERSISTENT AGENT SESSIONS + OPERATOR MESSAGING — REGISTERED 2026-04-09. 6 tasks (#470-#475), all PENDING. Focus: canonical messageable-agent contract, persistent PTY session pinning, structured runtime operator follow-up on existing threads/sessions, completed-execution WS persistence, and targeted backend/client regression coverage.
+  **Planned Area:** V10.4 STRUCTURED CHAT TURN HISTORY — REGISTERED 2026-04-09. 3 tasks (#467-#469), all PENDING. Focus: preserve per-turn chat history for repeated structured-agent runs, scope canonical replacement to the active turn only, and gate the repeated-handoff regression on both live WS and hydrated chat state.
+  **Completed Area:** V10.3 CLIENT CHAT + FLOW DEBUGGER LOOP (DEEP TEST) — AREA CLOSED 2026-04-09. #462 COMPLETED, #463 COMPLETED, #464 COMPLETED, #465 COMPLETED, AREA CHECKPOINT #466 PASS. Browser evidence recorded for Codex success paths and Gemini blocker/stopped paths.
+  **Completed Area:** V10.2 CLIENT TEST HARNESS + TARGETED CONTRACT COVERAGE — AREA CLOSED 2026-04-09. 9 tasks (#453-#461), #453-#459 COMPLETED, TEST GATE #460 PASS, AREA CHECKPOINT #461 PASS. Verified by dedicated Vitest coverage across store/hooks/UI/runtime shell plus a clean client build.
+  **Completed Area:** V10.1 STREAM-JSON LIVE CHAT BUFFERING — AREA CLOSED 2026-04-09. 4 tasks (#449-#452), #449 COMPLETED, TEST GATE #450 PASS, #451 COMPLETED, AREA CHECKPOINT #452 PASS. Verified by targeted stream-json regressions plus full server suite (492/492).
   **Completed Area:** V10.0 CHAT STRESS TEST BUG FIXES — AREA CLOSED 2026-04-09. 32 tasks (#417-#448), 15 fix tasks COMPLETED, TEST GATE #446 PASS, AREA CHECKPOINT #447 PASS, #448 PASS. All 8 waves COMPLETED. 490/490 tests, build clean (507 modules), browser E2E 8/8 PASS, 0 regressions.
   **Completed Area:** V9.5 FULL DEEP E2E TEST BUG FIXES — #415 COMPLETED (BUG-DT-1 Models popup click-outside fix, commit ed6877a), #416 PASS. AREA CLOSED 2026-04-09.
   **Completed Area:** V9.4 CHAT MESSAGE CANONICAL FIX — #413 COMPLETED, #414 PASS. V9.4 CLOSED 2026-04-09.
@@ -46,6 +53,308 @@
   DEFERRED (1 task, MVP-acceptable, no fix possible):
     - #236: BUG-UI-1 — ConPTY terminal prompt garble after navigation (Windows platform limitation, DEC-009)
 
+---
+
+## AREA: V10.5 - Persistent Agent Sessions + Operator Messaging
+_Components: SessionManager idle policy, SwarmEngine agent session lifecycle, swarm broadcast routing, useSwarm reconnect policy, ChatPanel/SwarmView messaging UX_
+_Tasks: #470 -> #475_
+_Gate: Operator follow-up must work for persistent PTY sessions and structured thread-backed agents before the area can close_
+_Source: User debugger-loop investigation 2026-04-09 + Codex runtime contract analysis_
+
+---
+
+TASK #470: BUG-SWARM-PERSIST-1 - Define canonical "messageable agent session" contract (SwarmEngine serialization + swarm route targeting)
+Area: V10.5 - Persistent Agent Sessions + Operator Messaging
+Agent: debugger
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  User-facing problem:
+    Operator chat currently targets only `running` PTY-backed agents with a live `sessionId`, so completed PTY agents and all structured-runtime agents are treated as unreachable even when their conversation state is still reusable.
+  Required fix scope:
+    1. Define a backend-authoritative `acceptsMessages` / transport-style contract per agent state without leaking internal thread identifiers to the client.
+    2. Remove duplicate "messageability" heuristics from route code so broadcast targeting scopes nodes first and relies on SwarmEngine for final delivery eligibility.
+    3. Keep the serialized agent-state shape stable enough for `useSwarm`, `ChatPanel`, and reconnect hydration.
+Acceptance Criteria:
+  - [ ] `GET /api/v1/swarm/:executionId/status` exposes a canonical per-agent messaging capability flag
+  - [ ] Broadcast scope filtering no longer hardcodes `running + sessionId`
+  - [ ] Chat UI can determine whether operator messaging is available from backend-authoritative state
+Dependencies: none
+---
+
+TASK #471: BUG-SWARM-PERSIST-2 - Keep swarm PTY sessions persistent until explicit stop/reset (SessionManager + SwarmEngine PTY spawn path)
+Area: V10.5 - Persistent Agent Sessions + Operator Messaging
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  User-facing problem:
+    Even when a PTY-backed agent is still logically reusable after completion, the SessionManager idle sweeper can kill it after 30 minutes, which breaks "message anytime" continuity.
+  Required fix scope:
+    1. Add an explicit persistent/pinned session concept for swarm-owned PTY sessions.
+    2. Ensure swarm PTY sessions are pinned on spawn and only torn down by explicit stop/reset/kill paths.
+    3. Preserve the existing idle sweeper behavior for non-swarm sessions.
+Acceptance Criteria:
+  - [ ] Completed swarm PTY sessions survive idle sweeps while marked persistent
+  - [ ] Explicit stop/reset still tears down the PTY cleanly
+  - [ ] SessionManager tests cover the new idle policy
+Dependencies: TASK #470
+---
+
+TASK #472: BUG-SWARM-PERSIST-3 - Deliver operator follow-up into structured-runtime threads (SwarmEngine stream-json + codex-sdk paths)
+Area: V10.5 - Persistent Agent Sessions + Operator Messaging
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Context:
+  User-facing problem:
+    Claude `stream-json` and Codex SDK agents already keep resumable conversation state, but operator chat cannot reach them because they do not expose a PTY `sessionId`.
+  Required fix scope:
+    1. Reuse `streamJsonSessionId` / `codexThreadId` as persistent conversation state for operator follow-up.
+    2. Support sending an operator message to paused/done structured agents by spawning a new turn on the same thread/session.
+    3. Support sending an operator message to currently running structured agents by using graceful-stop or interrupt semantics and then continuing with the operator follow-up prompt.
+Acceptance Criteria:
+  - [ ] Structured agents can receive operator follow-up after completion without starting a brand-new conversation
+  - [ ] Structured agents can be steered while running with defined `soft` / `hard` delivery semantics
+  - [ ] Canonical agent status stays aligned while the follow-up turn is queued or resumed
+Dependencies: TASK #470
+---
+
+TASK #473: BUG-SWARM-PERSIST-4 - Keep completed-but-messageable executions live in the client (useSwarm + ChatPanel + SwarmView)
+Area: V10.5 - Persistent Agent Sessions + Operator Messaging
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  User-facing problem:
+    The client closes the Swarm websocket shortly after terminal execution states and hides the chat input based on `executionStatus !== idle`, so a completed execution with reusable agent sessions still behaves like a dead transcript.
+  Required fix scope:
+    1. Keep or restore the websocket connection when any hydrated agent remains messageable.
+    2. Drive chat input availability from canonical per-agent messaging capability rather than only execution status.
+    3. Keep structured-runtime toolbar/session controls visible when the execution is terminal but the session is still reusable.
+Acceptance Criteria:
+  - [ ] Completed executions with reusable agents still show chat input
+  - [ ] Restored executions reconnect WS when agent sessions are still messageable
+  - [ ] Client tests cover the terminal-but-live reconnect contract
+Dependencies: TASK #470, TASK #472
+---
+
+TASK #474: TEST GATE - Persistent session messaging backend/client regression
+Area: V10.5 - Persistent Agent Sessions + Operator Messaging
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD - TASK #475 cannot close until this gate returns PASS
+Context:
+  Components being tested:
+    1. PTY session persistence across completed/idle states
+    2. Structured-runtime operator follow-up delivery
+    3. Broadcast route scope + recipient reporting
+    4. Client reconnect and terminal-but-messageable chat availability
+Acceptance Criteria:
+  - [ ] Server targeted tests cover PTY + structured messaging delivery
+  - [ ] Client targeted tests cover ChatPanel/useSwarm/SwarmView persistent-session UX
+  - [ ] No regression to existing stop/reset or reconnect behavior
+Dependencies: TASK #471, TASK #472, TASK #473
+---
+
+TASK #475: AREA CHECKPOINT - Persistent agent sessions + operator messaging closeout
+Area: V10.5 - Persistent Agent Sessions + Operator Messaging
+Agent: project-manager
+Type: CHECKPOINT
+Priority: MEDIUM
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Closure requirement:
+    Confirm that a user can message a reusable agent session after completion and that structured agents continue on the same persisted conversation rather than silently creating a new disconnected session.
+Acceptance Criteria:
+  - [ ] Task #474 PASS
+  - [ ] Memory/docs reflect the persistent-session contract
+  - [ ] Area can be marked CLOSED with explicit evidence
+Dependencies: TASK #474
+---
+
+## V10.6 - CLIENT CHAT + FLOW BUG FIXES
+Status: REGISTERED
+Goal: Fix the concrete operator-facing chat and workflow truthfulness bugs found by the V10.3 browser debugger-loop before the next verification pass.
+Scope:
+  1. Idle/pre-run chat visibility and empty-state truthfulness
+  2. Reload/reset hydration truthfulness for runtime selection and node snippets
+  3. Gemini blocked/stopped sanitation for node snippets and Chat View
+  4. Final browser regression on Codex success path and Gemini blocker path
+Exit Criteria:
+  - [ ] Idle and post-reset states show a truthful Chat View empty state
+  - [ ] Reloaded completed executions keep a truthful runtime selection and clean node snippets
+  - [ ] Gemini blocked/stopped states no longer leak raw CLI/auth/thinking text into node cards or chat
+  - [ ] Browser verification passes on at least one successful Codex path and one blocked Gemini path
+---
+
+TASK #476: BUG-CHAT-CLIENT-12 - Restore Chat View empty state before first run and after reset
+Area: V10.6 - CLIENT CHAT + FLOW BUG FIXES
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  User-facing problem:
+    On a freshly loaded workflow, clicking `All Agents` in the side rail does not reveal `Chat View` or the expected `No messages yet` empty state. The same regression reappears immediately after `Reset`.
+  Browser evidence:
+    Reproduced on `Venice Canals Research and Summary` and `Greeter Workflow` in idle state on 2026-04-09.
+  Required fix scope:
+    1. Ensure the chat rail can open before any execution starts.
+    2. Render a truthful empty state when there are zero messages.
+    3. Preserve the same behavior after `Reset`.
+Acceptance Criteria:
+  - [ ] Clicking `All Agents` in idle state shows `Chat View`
+  - [ ] Zero-message runs show `No messages yet` instead of a blank/missing panel
+  - [ ] Reset returns to the same truthful empty-state behavior
+Dependencies: none
+---
+
+TASK #477: BUG-FLOW-CLIENT-03 - Keep runtime selector truthful across reload and reset
+Area: V10.6 - CLIENT CHAT + FLOW BUG FIXES
+Agent: debugger
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  User-facing problem:
+    After a completed Codex execution is reloaded, the status shell still says `Provider: Codex` but the runtime dropdown falls back to `Auto`. Reset also clears the explicit runtime choice back to `Auto`, making the selector untrustworthy about what will happen on the next run.
+  Browser evidence:
+    Reproduced on `Venice Canals Research and Summary` and `Greeter and Poet` on 2026-04-09.
+  Required fix scope:
+    1. Reconcile runtime dropdown hydration with persisted execution/provider state.
+    2. Decide whether `Reset` should preserve the chosen runtime or explicitly clear it, then make UI/state match that decision.
+    3. Prevent post-reload mismatches between runtime selector and provider/status labels.
+Acceptance Criteria:
+  - [ ] Reloaded completed executions do not show `Runtime: Auto` while `Provider: Codex`
+  - [ ] Reset behavior is explicit and consistent across selector, labels, and the next run
+  - [ ] Runtime choice shown in the toolbar is truthful at all times
+Dependencies: none
+---
+
+TASK #478: BUG-FLOW-CLIENT-04 - Sanitize hydrated completed node snippets for structured runs
+Area: V10.6 - CLIENT CHAT + FLOW BUG FIXES
+Agent: debugger
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Context:
+  User-facing problem:
+    Reloaded completed Codex workflows keep clean chat bubbles, but node card text is polluted by structured protocol residue such as handoff JSON fragments and `__DONE__`.
+  Browser evidence:
+    Reproduced after reload on `Venice Canals Research and Summary` and `Greeter and Poet` on 2026-04-09. Example DOM residue included raw `node-2:{...}` handoff payload fragments and trailing `__DONE__` in the Writer/Poet node innerText.
+  Required fix scope:
+    1. Audit how hydrated execution state rebuilds `lastOutputSnippet` / node snippet text.
+    2. Ensure structured canonical text, not raw protocol residue, is used for hydrated completed nodes.
+    3. Remove hidden/DOM-only control-token leakage, not just visible text leakage.
+Acceptance Criteria:
+  - [ ] Reloaded completed node cards show the same clean semantic snippets seen before refresh
+  - [ ] No handoff JSON or `__DONE__` tokens remain in node DOM text
+  - [ ] Chat bubbles and node snippets stay consistent after hydration
+Dependencies: TASK #477
+---
+
+TASK #479: BUG-BLOCKER-UI-02 - Suppress raw Gemini CLI/auth banner text in blocked and stopped node cards
+Area: V10.6 - CLIENT CHAT + FLOW BUG FIXES
+Agent: debugger
+Priority: CRITICAL
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Context:
+  User-facing problem:
+    Gemini blocker flows expose raw provider/auth/banner text directly inside agent nodes (`Signed in with Google /auth ... > Type your message or @path/to/file`). After `Stop`, the node remains polluted with repeated thinking/terminal noise.
+  Browser evidence:
+    Reproduced on `Greeter Workflow` with runtime `Gemini` on 2026-04-09.
+  Required fix scope:
+    1. Detect Gemini blocked/stopped states before snippet extraction falls back to raw terminal text.
+    2. Replace raw banner/auth/thinking output with a concise blocker-safe node summary.
+    3. Ensure `Stop` does not leave stale blocker junk behind in the node card.
+Acceptance Criteria:
+  - [ ] Blocked Gemini node cards show a concise blocker summary instead of raw CLI/auth text
+  - [ ] Stopped Gemini nodes do not retain raw terminal/thinking spam
+  - [ ] Node cards remain readable and truthful throughout blocker recovery actions
+Dependencies: none
+---
+
+TASK #480: BUG-BLOCKER-CHAT-03 - Prevent blocker paths from polluting Chat View with raw terminal spam or false-positive assistant content
+Area: V10.6 - CLIENT CHAT + FLOW BUG FIXES
+Agent: debugger
+Priority: CRITICAL
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Context:
+  User-facing problem:
+    In Gemini blocker flows, Chat View can contain both misleading assistant-looking messages (`Structured handoff sent.`) and huge repeated raw terminal dumps (`Type your message... Thinking...`). This makes the operator chat rail actively untruthful during blocked runs.
+  Browser evidence:
+    Reproduced on `Greeter Workflow` with runtime `Gemini` on 2026-04-09. Chat accumulated multiple raw terminal transcripts while the execution banner clearly reported a Gemini auth blocker.
+  Required fix scope:
+    1. Stop blocker/auth/banner/thinking terminal output from entering assistant chat messages.
+    2. Prevent false-positive success/handoff assistant content from surviving when the execution is actually blocked.
+    3. Ensure blocked runs show either no assistant content or one explicit blocker/system message.
+Acceptance Criteria:
+  - [ ] Gemini blocker runs no longer add repeated raw terminal dumps to Chat View
+  - [ ] Blocked executions do not show misleading successful assistant/handoff text
+  - [ ] Chat View stays concise and truthful during blocked/stopped provider flows
+Dependencies: TASK #479
+---
+
+TASK #481: TEST GATE - Client chat + flow regression pack
+Area: V10.6 - CLIENT CHAT + FLOW BUG FIXES
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD
+Context:
+  Verify the exact discovery scenarios from V10.3 after the fixes land: idle chat access, reload/reset truthfulness, Codex success paths, and Gemini blocked/stopped hygiene.
+Acceptance Criteria:
+  - [ ] Idle `All Agents` shows a truthful empty chat state
+  - [ ] Completed Codex reload keeps clean node snippets and truthful runtime selection
+  - [ ] Codex success path still shows correct grouping/filtering and reset isolation
+  - [ ] Gemini blocked/stopped paths no longer leak raw terminal spam into node/chat surfaces
+Dependencies: TASK #476, TASK #477, TASK #478, TASK #479, TASK #480
+---
+
+TASK #482: AREA CHECKPOINT - V10.6 client chat + flow bug-fix wave complete
+Area: V10.6 - CLIENT CHAT + FLOW BUG FIXES
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD
+Context:
+  Close this bug-fix wave only after the V10.3 operator-path regressions are fixed and re-verified in the browser.
+Acceptance Criteria:
+  - [ ] TASK #476 completed
+  - [ ] TASK #477 completed
+  - [ ] TASK #478 completed
+  - [ ] TASK #479 completed
+  - [ ] TASK #480 completed
+  - [ ] TASK #481 PASS
+Dependencies: TASK #481
 ---
 
 ## AREA: V3.2 â€” Swarm Runtime Integrity
@@ -18019,18 +18328,377 @@ Dependencies: TASK #417, TASK #427
 
 ---
 
+## AREA: V10.1 — STREAM-JSON LIVE CHAT BUFFERING
+_Components: `server/services/SwarmEngine.js`, structured chat WS path, `/debugger-loop` skill guidance_
+_Tasks: #449 → #452_
+_Gate: Area stays open until buffered live chat emission is verified and the research-first workflow note is recorded in the skill_
+_Source: 2026-04-09 live Playwright stress test of Augustus/Leonardo workflows + targeted web research on Anthropic streaming token deltas_
+
+---
+
+TASK #449: BUG-CHAT-SERVER-13 — Buffer live `text_delta` chat emission before WS rebroadcast
+Area: V10.1 — STREAM-JSON LIVE CHAT BUFFERING
+Agent: debugger
+Type: BUG_FIX
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-09 — `SwarmEngine` now buffers structured Claude `text_delta` chunks for 150ms / 120 chars and flushes them before tool/result boundaries, reducing micro-fragment spam in live chat while preserving canonical end-of-turn replacement.
+Context:
+  Files: `server/services/SwarmEngine.js`
+  Bug:
+    Claude structured streaming emits many small `text_delta` fragments by design. Our server currently rebroadcasts each fragment immediately as a `chat_message`, so the client assembles visibly broken live words like `G i o con da` and `se con do`.
+  Research summary:
+    1. Anthropic streaming docs show `content_block_delta` / `text_delta` chunks arriving as small token pieces.
+    2. The bug is therefore not "Anthropic SDK assembling text wrong"; it is our choice to surface each micro-delta 1:1 in the live chat feed.
+  Required fix scope:
+    1. Buffer structured Claude `text_delta` chunks server-side for a short window before emitting a `chat_message`.
+    2. Flush the buffer on turn boundaries and before non-text structured events so ordering remains truthful.
+    3. Preserve the existing canonical end-of-turn replacement path and do not reintroduce fragment duplication into REST hydration.
+Acceptance Criteria:
+  - [x] Live structured chat sends fewer, larger assistant chunks instead of one WS message per tiny token
+  - [x] Canonical end-of-turn replacement still works
+  - [x] Tool/thinking ordering remains coherent
+  - [x] No regression to mixed-provider handoff flow
+  - [x] Relevant server tests pass
+Dependencies: none
+---
+
+TASK #450: TEST GATE — V10.1 buffered stream-json live chat
+Area: V10.1 — STREAM-JSON LIVE CHAT BUFFERING
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-5
+Status: COMPLETED (PASS)
+Gate: HARD
+Verdict: PASS — 2026-04-09. Added focused regressions for buffer-window coalescing and pre-tool flush ordering, reran targeted structured-runtime tests, then reran the full server suite successfully (492/492).
+Context:
+  Component being tested: buffered live `chat_message` emission for structured Claude turns
+  Implementation task: TASK #449
+  What to test:
+    1. Multiple `text_delta` events within the buffer window emit as one larger WS `chat_message`
+    2. Buffered text flushes before tool/result boundaries
+    3. Canonical result still replaces streamed text cleanly
+    4. Mixed-provider Claude→Claude→Codex routing remains intact
+Acceptance Criteria:
+  - [x] Buffered emission behavior covered by regression tests
+  - [x] Canonical replacement still passes
+  - [x] Relevant server tests pass
+Gate Result: PASS → proceed to TASK #451/#452 | FAIL → return to TASK #449 with bug report
+Dependencies: TASK #449
+---
+
+TASK #451: WORKFLOW-SKILL-01 — Add research-first guidance to `/debugger-loop`
+Area: V10.1 — STREAM-JSON LIVE CHAT BUFFERING
+Agent: documenter
+Type: DOCS
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: COMPLETED
+Completion Note: 2026-04-09 — Updated `C:\Users\arman\.codex\skills\claude-cmd-debugger-loop\SKILL.md` with an explicit research-first check requiring targeted official-doc / primary-source research before non-trivial fixes.
+Context:
+  File: `C:\Users\arman\.codex\skills\claude-cmd-debugger-loop\SKILL.md`
+  User direction:
+    Before operating on non-trivial bugs, do targeted internet / official-doc research first to check whether the issue is already known and to avoid solving the wrong layer.
+  Required update:
+    Record this as an explicit workflow step in the debugger-loop skill so future runs start with external research before planning or code changes when the problem is ambiguous, provider-related, or likely already documented.
+Acceptance Criteria:
+  - [x] `/debugger-loop` skill explicitly calls for pre-fix research on non-trivial bugs
+  - [x] The guidance distinguishes official docs / primary sources from speculation
+Dependencies: TASK #450
+---
+
+TASK #452: AREA CHECKPOINT — V10.1 stream-json live chat buffering
+Area: V10.1 — STREAM-JSON LIVE CHAT BUFFERING
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED (PASS)
+Gate: HARD
+Verdict: PASS — 2026-04-09. V10.1 closed after the server-side buffer landed, regression coverage passed, `/debugger-loop` was updated with research-first guidance, and task plan + activity log were synchronized.
+Context:
+  Close the area only after:
+    1. The buffered live chat fix is implemented
+    2. Regression coverage passes
+    3. `/debugger-loop` contains the new research-first guidance
+Acceptance Criteria:
+  - [x] TASK #449 completed
+  - [x] TASK #450 PASS
+  - [x] TASK #451 completed
+  - [x] Task plan + memory updated truthfully
+Dependencies: TASK #450, TASK #451
+
+---
+
+## AREA: V10.2 — CLIENT TEST HARNESS + TARGETED CONTRACT COVERAGE
+_Components: `client/package.json`, `client/src/store/SwarmContext.jsx`, `client/src/hooks/useSwarm.js`, `client/src/hooks/useInbox.js`, `client/src/canvas/ChatPanel.jsx`, `client/src/canvas/ChatMessage.jsx`, `client/src/canvas/nodes/AgentNode.jsx`, `client/src/views/SwarmView.jsx`_
+_Tasks: #453 → #461_
+_Gate: Area stays open until the frontend has a real automated test harness and the highest-risk client contracts from PRD/API/actual runtime behavior are covered by targeted tests_
+_Source: 2026-04-09 repo audit requested by the user — server suite is strong, but client behavior still depends mostly on build + browser verification despite user-facing bugs clustering in store/hook/rendering layers_
+
+---
+
+TASK #453: TEST-INFRA-CLIENT-01 — Add a first-class client test harness
+Area: V10.2 — CLIENT TEST HARNESS + TARGETED CONTRACT COVERAGE
+Agent: frontend-dev
+Type: TEST_INFRA
+Priority: CRITICAL
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: COMPLETED — 2026-04-09. Added a first-class Vitest/jsdom harness for the client, shared browser shims in `client/src/test/setup.js`, a store reset helper, and a dedicated `npm test --prefix client` command in `client/package.json`.
+Context:
+  Files:
+    - `client/package.json`
+    - `client/vitest.config.*` or equivalent
+    - `client/src/test/*` or equivalent setup location
+  Problem:
+    The project currently has strong backend coverage but no dedicated frontend unit/integration harness. `client/package.json` exposes build-only scripts, so regressions in hooks/store/components are caught late by browser testing or by users.
+  Required implementation scope:
+    1. Add a client-side test runner compatible with the Vite app (`vitest` + `jsdom` preferred).
+    2. Add the minimum React testing stack needed for component and hook tests.
+    3. Provide one shared setup file for common browser shims/mocks used by the Swarm UI (e.g. `ResizeObserver`, `matchMedia`, scroll helpers, `localStorage` safety).
+    4. Add a `test` script in `client/package.json` so targeted client suites can run independently from the server suite.
+Acceptance Criteria:
+  - [ ] Client test command exists and runs in the repo without piggybacking on server tests
+  - [ ] React component tests can run under jsdom
+  - [ ] Shared setup file exists for common UI/browser shims
+  - [ ] Harness is lightweight enough to support targeted regression tests, not only broad snapshots
+Dependencies: none
+---
+
+TASK #454: TEST-STORE-CLIENT-01 — Cover SwarmContext state contracts
+Area: V10.2 — CLIENT TEST HARNESS + TARGETED CONTRACT COVERAGE
+Agent: frontend-dev
+Type: TEST_COVERAGE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: COMPLETED — 2026-04-09. Added deterministic `SwarmContext` coverage for shallow agent-state merges, canonical chat replacement ordering, empty canonical guards, HITL resolution shape handling, and workflow-switch cleanup.
+Context:
+  Files:
+    - `client/src/store/SwarmContext.jsx`
+  Why this matters:
+    `SwarmContext` is the canonical client runtime store. Many user-visible regressions are really state-contract bugs: stale workflow bleed-through, canonical chat replacement ordering, HITL resolution shape handling, and shallow-merge correctness.
+  Required test scope:
+    1. `updateAgentState()` shallow-merges patches without dropping prior fields/timestamps.
+    2. `replaceNodeChatMessages()` collapses matching assistant fragments into one canonical message, preserves order, and ignores empty canonical text.
+    3. `resolveInboxItem()` handles both wrapped WS items and normalized items.
+    4. `setWorkflowDef()` clears stale execution state when switching to a different workflow ID.
+    5. `clearExecutionState()`/reset paths wipe dynamic runtime fields truthfully.
+Acceptance Criteria:
+  - [ ] Store tests cover canonical chat replacement behavior directly
+  - [ ] Workflow switching clears stale execution/chat state
+  - [ ] HITL resolution behavior is covered for wrapped and unwrapped inbox shapes
+  - [ ] Tests are deterministic and do not require browser E2E
+Dependencies: TASK #453
+---
+
+TASK #455: TEST-HOOK-CLIENT-01 — Cover `useSwarm` WS + hydration contracts
+Area: V10.2 — CLIENT TEST HARNESS + TARGETED CONTRACT COVERAGE
+Agent: frontend-dev
+Type: TEST_COVERAGE
+Priority: CRITICAL
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Completion Note: COMPLETED — 2026-04-09. Added real `useSwarm` event-sequence tests for execution snapshot hydration, cost accumulation, canonical chat replacement, and REST hydration stale-fragment protection. Also fixed a hydration bug by allowing `setWorkflowDef(..., { preserveExecutionState: true })` during snapshot application.
+Context:
+  Files:
+    - `client/src/hooks/useSwarm.js`
+  Why this matters:
+    `useSwarm` is the main client-side reducer for runtime truth. It receives execution snapshots plus WS events (`agent_status`, `agent_cost`, `chat_message`, handoff/HITL events) and is where several historical user-facing bugs were fixed.
+  Required test scope:
+    1. Initial `execution_status` snapshot applies agent states, budget, workflowDef, chatMessages, and execution metadata coherently.
+    2. `agent_status` updates `status`, `spawnMode`, `sessionId`, snippet fields, and clears thinking/tool state on terminal statuses.
+    3. `agent_cost` accumulates total cost correctly, including cache token fields.
+    4. Canonical `chat_message` sets `canonicalReceived`, replaces structured assistant fragments, and blocks trailing fragments after canonical arrival.
+    5. REST hydration/reconcile paths do not re-inject stale fragments when canonical text already exists.
+Acceptance Criteria:
+  - [ ] `useSwarm` tests exercise real event sequences, not isolated one-line helpers only
+  - [ ] Canonical/trailing-fragment race is covered
+  - [ ] Cost accumulation covers cacheRead/cacheWrite tokens
+  - [ ] Snapshot + later WS updates remain coherent in one test flow
+Dependencies: TASK #453, TASK #454
+---
+
+TASK #456: TEST-HOOK-CLIENT-02 — Cover `useInbox` normalization and resolution flow
+Area: V10.2 — CLIENT TEST HARNESS + TARGETED CONTRACT COVERAGE
+Agent: frontend-dev
+Type: TEST_COVERAGE
+Priority: MEDIUM
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: COMPLETED — 2026-04-09. Added `useInbox` tests covering REST/WS normalization parity, disconnected polling cadence, and approve/reject resolution with the required mutation headers.
+Context:
+  Files:
+    - `client/src/hooks/useInbox.js`
+    - `client/src/panels/HitlInbox.jsx` (for helper expectations only if needed)
+  Why this matters:
+    HITL has both REST and WS shapes, and this hook normalizes them. User-facing "approve/reject looked accepted but UI stayed wrong" bugs often live here rather than in the backend route.
+  Required test scope:
+    1. REST and WS inbox item shapes normalize to the same pending item shape.
+    2. Polling starts only when WS is disconnected.
+    3. Approve/reject calls resolve the correct item and update store state.
+    4. Failures do not silently mutate inbox state.
+Acceptance Criteria:
+  - [ ] Wrapped and unwrapped inbox payloads normalize identically
+  - [ ] Polling behavior is covered with fake timers
+  - [ ] Approve/reject success and failure paths are both tested
+Dependencies: TASK #453, TASK #454
+---
+
+TASK #457: TEST-UI-CLIENT-01 — Cover `ChatPanel` message grouping, filtering, broadcast controls, and scroll-lock
+Area: V10.2 — CLIENT TEST HARNESS + TARGETED CONTRACT COVERAGE
+Agent: frontend-dev
+Type: TEST_COVERAGE
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: COMPLETED — 2026-04-09. Added `ChatPanel` tests for structured-fragment grouping, filter behavior, broadcast payloads, and scroll-lock/auto-scroll behavior. Tightened the component so near-bottom auto-scroll uses pre-update height and still reacts when grouped message content changes.
+Context:
+  Files:
+    - `client/src/canvas/ChatPanel.jsx`
+  Why this matters:
+    `ChatPanel` is the main user-facing output surface. It groups structured assistant fragments, filters per agent, integrates broadcast controls, and implements scroll behavior. Several recent bugs landed exactly here.
+  Required test scope:
+    1. Consecutive structured assistant fragments from the same node are grouped correctly.
+    2. Filter dropdown narrows the message list without hiding system/HITL messages incorrectly.
+    3. Integrated broadcast controls call the correct API payload for all/department/agent scopes.
+    4. Scroll logic scrolls to bottom on first mount but does not yank the viewport when the user is reading older messages.
+Acceptance Criteria:
+  - [ ] Structured assistant grouping is covered by component tests
+  - [ ] Broadcast payloads are asserted, not only clicked
+  - [ ] Scroll-lock behavior is covered with DOM property stubs/mocks
+  - [ ] Tests remain stable without relying on pixel screenshots
+Dependencies: TASK #453, TASK #454, TASK #455
+---
+
+TASK #458: TEST-UI-CLIENT-02 — Cover `ChatMessage` rendering, sanitization, and structured metadata blocks
+Area: V10.2 — CLIENT TEST HARNESS + TARGETED CONTRACT COVERAGE
+Agent: frontend-dev
+Type: TEST_COVERAGE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: COMPLETED — 2026-04-09. Added `ChatMessage` rendering tests for structured metadata blocks, malicious markdown sanitization, and empty structured-text fallback copy.
+Context:
+  Files:
+    - `client/src/canvas/ChatMessage.jsx`
+  Why this matters:
+    `ChatMessage` is where agent output becomes visible content. The component is responsible for markdown safety, tool/thinking block rendering, and cost footer formatting.
+  Required test scope:
+    1. Structured messages render tool-use blocks, thinking blocks, and cost footer correctly.
+    2. Non-structured messages continue to render with the legacy formatting path.
+    3. Markdown sanitization blocks unsafe content such as `javascript:` links.
+    4. Empty structured text shows the fallback copy without crashing.
+Acceptance Criteria:
+  - [ ] Sanitization behavior is asserted with a malicious markdown sample
+  - [ ] Tool/thinking/cost sub-blocks are covered
+  - [ ] Structured vs PTY rendering split is covered explicitly
+Dependencies: TASK #453
+---
+
+TASK #459: TEST-UI-CLIENT-03 — Cover structured-runtime shell behavior in `AgentNode` and `SwarmView`
+Area: V10.2 — CLIENT TEST HARNESS + TARGETED CONTRACT COVERAGE
+Agent: frontend-dev
+Type: TEST_COVERAGE
+Priority: MEDIUM
+Difficulty: HARD
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: COMPLETED — 2026-04-09. Added targeted runtime-shell coverage for `AgentNode` structured-vs-PTY rendering and for a critical `SwarmView` structured-runtime toolbar path (`Stop` + `Reset Session` + provider labels).
+Context:
+  Files:
+    - `client/src/canvas/nodes/AgentNode.jsx`
+    - `client/src/views/SwarmView.jsx`
+  Why this matters:
+    These components translate runtime truth into the operator shell: thinking badge, tool label, cost badge, runtime-mode-specific controls, and the overall execution toolbar. When these drift, the app "looks wrong" even if the backend contract is fine.
+  Required test scope:
+    1. `AgentNode` shows thinking/tool/cost state for structured runtimes without regressing baseline idle/PTy behavior.
+    2. `SwarmView` exposes the right runtime controls for active structured runs vs idle state.
+    3. The Swarm shell continues to mount `useInbox`/`useSwarm` without breaking empty-state and active-state transitions.
+Acceptance Criteria:
+  - [ ] Structured-runtime visual state in `AgentNode` is covered
+  - [ ] At least one critical toolbar/runtime-state path in `SwarmView` is covered
+  - [ ] Tests focus on behavior, not brittle layout snapshots
+Dependencies: TASK #453, TASK #454, TASK #455
+---
+
+TASK #460: TEST GATE — V10.2 targeted client contract suite
+Area: V10.2 — CLIENT TEST HARNESS + TARGETED CONTRACT COVERAGE
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED (PASS)
+Gate: HARD
+Context:
+  Components being tested:
+    1. Client test harness viability
+    2. SwarmContext state contracts
+    3. `useSwarm` WS/hydration contract handling
+    4. `useInbox` normalization/resolution behavior
+    5. `ChatPanel`, `ChatMessage`, and targeted runtime shell rendering
+  What to verify:
+    1. The client test suite runs green from a dedicated command.
+    2. The new tests cover the known high-risk frontend contracts instead of only shallow render smoke tests.
+    3. Client build still passes after introducing the harness and tests.
+Acceptance Criteria:
+  - [ ] Dedicated client test command passes
+  - [ ] Targeted contract tests exist for store, hook, and UI layers
+  - [ ] `npm run build --prefix client` still passes
+Gate Result: PASS — 2026-04-09. Dedicated client suite now passes via `npm test --prefix client` (24/24), and `npm run build --prefix client` remains clean after introducing the harness and targeted tests.
+Dependencies: TASK #454, TASK #455, TASK #456, TASK #457, TASK #458, TASK #459
+---
+
+TASK #461: AREA CHECKPOINT — V10.2 client test harness + targeted coverage
+Area: V10.2 — CLIENT TEST HARNESS + TARGETED CONTRACT COVERAGE
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED (PASS)
+Gate: HARD
+Context:
+  Close the area only after:
+    1. The client test harness is in place
+    2. The targeted store/hook/UI suites are implemented
+    3. The dedicated client test gate passes
+    4. Task plan + memory are updated truthfully
+Acceptance Criteria:
+  - [ ] TASK #453 completed
+  - [ ] TASK #460 PASS
+  - [ ] The new coverage targets the user-facing frontend risk areas called out in this area
+  - [ ] Task plan + memory updated truthfully
+Dependencies: TASK #460
+Verdict: PASS — 2026-04-09. V10.2 closed after the client harness landed, targeted coverage spans store/hooks/UI/runtime shell behavior, verification passed, and task plan + memory were synchronized.
+
+---
+
 ## Remaining Known Chat Bugs (informational, not blocking)
 
 BUG-CHAT-1: Token boundary spacing in stream-json text_delta output
-  Status: KNOWN — platform limitation
+  Status: MITIGATED — upstream token behavior remains, but live chat buffering now reduces visible fragmentation during active turns
   Priority: LOW
   Description: Claude CLI stream-json emits text in sub-word token fragments. When tokens split
-    mid-word (e.g., "high" + "Water" + "Mark"), the accumulated text may show minor spacing
-    artifacts. The canonical chat_message approach (commit 5d359b4) resolves this for final
-    result text, but incremental text_delta display during streaming may still show transient
-    spacing. This is inherent to the Claude CLI token boundary behavior and cannot be fully
-    fixed client-side without a dictionary-based approach.
-  Mitigation: Final canonical text replaces incremental deltas on turn completion.
+    mid-word (e.g., "high" + "Water" + "Mark"), the accumulated text may show spacing
+    artifacts. This is inherent to upstream token boundaries, but the app now buffers
+    live `text_delta` rebroadcasts server-side so the user sees fewer, larger chunks during
+    streaming, and the canonical chat_message path still replaces the final turn text cleanly.
+  Mitigation: Server-side live buffering + end-of-turn canonical replacement.
 
 BUG-CHAT-2: Codex PTY thinking noise in chat output
   Status: KNOWN
@@ -18041,3 +18709,200 @@ BUG-CHAT-2: Codex PTY thinking noise in chat output
     structured output).
   Mitigation: Use Codex SDK mode (default) instead of PTY mode for Codex agents.
 ---
+
+## V10.3 - CLIENT CHAT + FLOW DEBUGGER LOOP (DEEP TEST)
+Status: COMPLETED
+Goal: Run a debugger-loop Phase 0/1 sweep focused on the client chat surface and end-to-end workflow operator flow, using browser-driven evidence before any fixes are planned.
+Scope:
+  1. Baseline health checks for the current server/client build
+  2. Chat panel behavior under real browser interaction
+  3. Workflow lifecycle behavior (load, run, reset, navigation, reload)
+  4. Provider/runtime blocker handling as it affects user-visible chat and flow truthfulness
+Exit Criteria:
+  - [x] Browser deep test completed for the main chat and flow journeys
+  - [x] All discovered bugs recorded with severity, evidence, and root-cause hints when possible
+  - [x] Bug tasks added in bulk before any implementation begins
+  - [x] Memory updated with truthful discovery notes
+---
+
+TASK #462: DEEP-CHECK-CLIENT-01 - Baseline health and environment readiness
+Area: V10.3 - CLIENT CHAT + FLOW DEBUGGER LOOP (DEEP TEST)
+Agent: debugger
+Type: DEEP_CHECK
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Context:
+  Verify the current app can be tested meaningfully before browser deep test begins.
+Required test scope:
+  1. Confirm the server is reachable on `http://127.0.0.1:3000`.
+  2. Run the current client build.
+  3. Run the current backend test suite or the most relevant gate for chat/runtime paths.
+Acceptance Criteria:
+  - [ ] Health endpoint or root page responds
+  - [ ] Client build result recorded
+  - [ ] Backend verification result recorded
+Dependencies: none
+Verdict: COMPLETED — 2026-04-09. Root page responded on `http://127.0.0.1:3000`, `npm run build --prefix client` passed (507 modules, chunk-size warning only), and `npm test --prefix server` passed (492/492).
+---
+
+TASK #463: DEEP-CHECK-CLIENT-02 - Browser deep test the Unified Chat surface
+Area: V10.3 - CLIENT CHAT + FLOW DEBUGGER LOOP (DEEP TEST)
+Agent: debugger
+Type: DEEP_CHECK
+Priority: CRITICAL
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Context:
+  Validate the operator-facing chat experience in the browser using browser automation (Puppeteer in this deep-test pass).
+Required test scope:
+  1. Empty-state truthfulness before a run.
+  2. Message rendering, grouping, filtering, and count behavior when chat content exists.
+  3. Absence of leaked control tokens (`__DONE__`, `__HANDOFF__`) and obvious rendering corruption.
+  4. Scroll behavior, agent filter behavior, and side-panel visibility.
+Acceptance Criteria:
+  - [ ] Chat surface inspected with browser evidence
+  - [ ] Any user-visible bugs captured with exact observed behavior
+  - [ ] Provider/runtime blockers clearly separated from chat-specific bugs
+Dependencies: TASK #462
+Verdict: COMPLETED — 2026-04-09. Successful Codex runs (`Venice Canals Research and Summary`, `Greeter and Poet`) confirmed clean canonical chat messages, correct agent filtering, and no cross-run contamination after reset. Discovery bugs captured: idle/pre-run `All Agents` shows no `Chat View` / `No messages yet`, Gemini blocked/stopped chat ingests raw terminal spam, and blocker paths can emit misleading assistant content (`Structured handoff sent.`) despite execution being blocked.
+---
+
+TASK #464: DEEP-CHECK-CLIENT-03 - Browser deep test workflow flow lifecycle
+Area: V10.3 - CLIENT CHAT + FLOW DEBUGGER LOOP (DEEP TEST)
+Agent: debugger
+Type: DEEP_CHECK
+Priority: CRITICAL
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Context:
+  Verify that the main workflow flow behaves truthfully from the operator point of view.
+Required test scope:
+  1. Load a saved workflow and confirm node/status shell is coherent.
+  2. Run at least one realistic workflow and observe node progression.
+  3. Check reset/navigation/reload behavior for stale state or cross-run contamination.
+  4. Record where the flow stops when the provider/runtime cannot complete.
+Acceptance Criteria:
+  - [ ] Workflow shell and lifecycle tested in browser
+  - [ ] Any flow regressions or stale-state bugs logged with evidence
+  - [ ] Runtime/provider blockers recorded separately from client-shell bugs
+Dependencies: TASK #462
+Verdict: COMPLETED — 2026-04-09. Successful Codex flows progressed truthfully from Idle -> Running -> Completed with expected node handoff order, and reset cleared prior messages cleanly. Discovery bugs captured: reload restores completed chat but the runtime selector falls back to `Auto` while the execution still shows `Provider: Codex`, and hydrated completed node snippets contain raw structured residue (`__DONE__`, handoff JSON fragments) even though chat bubbles remain clean. Gemini Greeter blocker path reproduced immediately and exposed raw auth/banner/thinking CLI text in node/card/chat surfaces.
+---
+
+TASK #465: PM-BULK-PLAN-CLIENT-01 - Convert deep-test findings into bug tasks
+Area: V10.3 - CLIENT CHAT + FLOW DEBUGGER LOOP (DEEP TEST)
+Agent: project-manager
+Type: BULK_PLAN
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Context:
+  After discovery completes, convert every bug into a concrete task before implementation begins.
+Acceptance Criteria:
+  - [ ] Bugs grouped by severity and dependency
+  - [ ] Each bug has a self-contained task with evidence and acceptance criteria
+  - [ ] No fixes started before the bulk plan exists
+Dependencies: TASK #463, TASK #464
+Verdict: COMPLETED — 2026-04-09. Discovery findings were converted into V10.6 tasks #476-#482, grouped by operator impact and hydration/blocker dependency.
+---
+
+TASK #466: AREA CHECKPOINT - V10.3 deep-test discovery complete
+Area: V10.3 - CLIENT CHAT + FLOW DEBUGGER LOOP (DEEP TEST)
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PASS
+Gate: HARD
+Context:
+  Close the discovery phase only after baseline checks, browser evidence, and bulk bug planning are complete.
+Acceptance Criteria:
+  - [x] TASK #462 completed
+  - [x] TASK #463 completed
+  - [x] TASK #464 completed
+  - [x] TASK #465 completed
+  - [x] Memory updated truthfully
+Dependencies: TASK #465
+Verdict: PASS — 2026-04-09. Baseline verification, browser evidence, bulk planning, and memory sync completed without starting fixes.
+
+---
+
+## V10.4 - STRUCTURED CHAT TURN HISTORY
+Status: REGISTERED
+Goal: Fix the structured chat contract so repeated handoffs between the same agents append as distinct chat turns instead of collapsing to one message per node.
+Scope:
+  1. Server-side turn identity for structured chat events and stored execution chat history
+  2. Client-side canonical gating scoped to the current turn instead of the whole node
+  3. Chat panel grouping rules so same-agent consecutive turns remain distinct bubbles
+Exit Criteria:
+  - [ ] Repeated turns from the same structured agent remain visible in live Chat View
+  - [ ] Canonical replacement only rewrites the fragments of the matching turn
+  - [ ] Hydrated/persisted chat history keeps one canonical message per completed turn
+  - [ ] Targeted server/client regressions pass
+---
+
+TASK #467: BUG-CHAT-TURN-01 - Preserve structured chat history per turn instead of per node
+Area: V10.4 - STRUCTURED CHAT TURN HISTORY
+Agent: debugger
+Priority: CRITICAL
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Context:
+  User-facing problem:
+    When the same two structured agents keep handing work back and forth, the Chat View stops "populating" and often stabilizes around one message per agent because canonical chat replacement currently collapses all assistant messages by `nodeId`.
+  Required fix scope:
+    1. Introduce a stable per-turn chat identity for structured runtime messages.
+    2. Preserve one canonical chat message per completed turn in live WS state and stored execution chat history.
+    3. Avoid regressing node snippets or final-output selection while restoring chat chronology.
+Acceptance Criteria:
+  - [ ] A second completed turn from the same node does not erase the first turn from Chat View/history
+  - [ ] Stored/live chat history retains one canonical assistant message per structured turn
+  - [ ] Repeated handoffs between the same two nodes visibly increase chat history length
+Dependencies: none
+---
+
+TASK #468: BUG-CHAT-TURN-02 - Scope canonical fragment dropping to the active structured turn
+Area: V10.4 - STRUCTURED CHAT TURN HISTORY
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  User-facing problem:
+    Once a node receives one canonical message, later live fragments from future turns can be discarded as if they still belonged to the old turn, leaving the chat panel visually stale during ongoing multi-turn workflows.
+  Required fix scope:
+    1. Reset or re-scope the canonical guard when a new structured turn starts.
+    2. Ensure grouping/merging only happens inside the same turn boundary.
+    3. Keep legacy single-turn protection against trailing fragments after canonical.
+Acceptance Criteria:
+  - [ ] Trailing fragments after canonical are still dropped for the same turn
+  - [ ] New live fragments from the next turn are accepted and rendered
+  - [ ] Consecutive same-node turns render as separate chat bubbles
+Dependencies: TASK #467
+---
+
+TASK #469: TEST GATE - Repeated structured handoff chat regression
+Area: V10.4 - STRUCTURED CHAT TURN HISTORY
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD
+Context:
+  Verify the exact user-reported scenario: two structured agents repeatedly handing work to each other while Chat View remains truthful live and after hydration.
+Acceptance Criteria:
+  - [ ] Multi-turn same-node chat history stays visible live
+  - [ ] Canonical replacement preserves earlier turns
+  - [ ] Hydrated chat state keeps the same per-turn history
+  - [ ] Targeted client/server tests pass
+Dependencies: TASK #467, TASK #468

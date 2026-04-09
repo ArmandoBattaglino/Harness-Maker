@@ -40,6 +40,7 @@ import { create } from 'zustand';
  * @property {AgentTurnCost | null} [turnCost]
  * @property {AgentTotalCost | null} [totalCost]
  * @property {boolean} [canonicalReceived] - Set to true when a canonical chat_message arrives for this node; blocks trailing text_delta fragments from corrupting the final output
+ * @property {string | null} [canonicalTurnId] - Structured turn identifier for the canonical message currently guarding trailing fragments
  */
 
 const buildClearedExecutionState = () => ({
@@ -244,7 +245,8 @@ const useSwarmStore = create((set, get) => ({
       ? providerOrFn(state.selectedRuntimeProvider)
       : providerOrFn,
   })),
-  setWorkflowDef: (def) => set((state) => {
+  setWorkflowDef: (def, options = {}) => set((state) => {
+    const preserveExecutionState = Boolean(options?.preserveExecutionState);
     const prevId = state.workflowDef?.id;
     const nextId = def?.id;
     const isSameWorkflow = prevId && nextId && prevId === nextId;
@@ -254,7 +256,7 @@ const useSwarmStore = create((set, get) => ({
     const hasStaleState = state.activeExecutionId !== null
       || state.executionStatus !== 'idle'
       || Object.keys(state.agentStates).length > 0;
-    if (!isSameWorkflow && hasStaleState) {
+    if (!preserveExecutionState && !isSameWorkflow && hasStaleState) {
       return { ...buildClearedExecutionState(), workflowDef: def };
     }
     return { workflowDef: def };

@@ -33,7 +33,14 @@ describe('swarmHandler', () => {
       executionId: 'exec-1',
       workflowId: 'wf-1',
       status: 'running',
-      agentStates: { 'node-a': { status: 'running', sessionId: 'sess-1' } },
+      agentStates: {
+        'node-a': {
+          status: 'running',
+          sessionId: 'sess-1',
+          acceptsMessages: true,
+          messageTransport: 'pty',
+        },
+      },
       edgeCounters: { 'edge-ab': 2 },
       budget: { estimatedTokensUsed: 5, limitTokens: 100 },
       inboxItems: [],
@@ -48,7 +55,14 @@ describe('swarmHandler', () => {
       executionId: 'exec-1',
       workflowId: 'wf-1',
       status: 'running',
-      agentStates: { 'node-a': { status: 'running', sessionId: 'sess-1' } },
+      agentStates: {
+        'node-a': {
+          status: 'running',
+          sessionId: 'sess-1',
+          acceptsMessages: true,
+          messageTransport: 'pty',
+        },
+      },
       edgeCounters: { 'edge-ab': 2 },
       budget: { estimatedTokensUsed: 5, limitTokens: 100 },
       inboxItems: [],

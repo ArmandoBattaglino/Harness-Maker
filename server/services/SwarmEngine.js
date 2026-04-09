@@ -37,6 +37,8 @@ const SWARM_RUNTIME_MENU_SUBMIT_DELAY_MS = 75;
 const SWARM_ECHO_MARKER_TIMEOUT_MS = 7000;
 const MAX_DONE_REINJECT_ATTEMPTS = 3;
 const STREAM_JSON_POST_RESULT_TIMEOUT_MS = 30000;
+const STREAM_JSON_CHAT_BUFFER_WINDOW_MS = 150;
+const STREAM_JSON_CHAT_BUFFER_MAX_CHARS = 120;
 const SWARM_CODEX_MISSING_HANDOFF_IDLE_MS = 180000;
 const SWARM_MISSING_HANDOFF_REMINDER_DELAY_MS = 3000;
 const RUNTIME_SCAN_BUFFER_CHARS = 4000;
@@ -44,6 +46,10 @@ const SNIPPET_SCAN_BUFFER_CHARS = 120000;
 const COMPACT_CODEX_AGENT_PROMPT_CHARS = 480;
 const COMPACT_CODEX_TASK_CHARS = 320;
 const COMPACT_CODEX_PROGRESS_CHARS = 220;
+const COMPACT_CODEX_HANDOFF_TOTAL_CHARS = 2600;
+const COMPACT_CODEX_HANDOFF_MAX_ITEM_CHARS = 2200;
+const COMPACT_CODEX_HANDOFF_MIN_ITEM_CHARS = 320;
+const COMPACT_CODEX_HANDOFF_MAX_KEYS = 12;
 const DEFAULT_SWARM_CLAUDE_TOOLS = ['Bash', 'Read', 'Edit', 'Write', 'Grep', 'Glob', 'LS'];
 const DEFAULT_SWARM_CLAUDE_MODEL = 'opus';
 const DEFAULT_SWARM_CODEX_MODEL = 'gpt-5.4';
@@ -742,7 +748,63 @@ class SwarmEngine {
       .trim();
   }
 
+  _hasStructuredConversationState(state = null) {
+    if (!this._isStructuredAgentState(state)) return false;
+    if (state?.spawnMode === STRUCTURED_SPAWN_MODE.CODEX_SDK) {
+      return Boolean(state?.codexThreadId);
+    }
+    if (state?.spawnMode === STRUCTURED_SPAWN_MODE.STREAM_JSON) {
+      return Boolean(state?.streamJsonSessionId);
+    }
+    return false;
+  }
+
+  _getAgentMessageTransport(state = null) {
+    const status = String(state?.status ?? '').trim().toLowerCase();
+    if (['blocked', 'error', 'failed', 'stopped'].includes(status)) {
+      return null;
+    }
+
+    if (state?.sessionId) {
+      return 'pty';
+    }
+
+    if (this._hasStructuredConversationState(state)) {
+      return 'structured';
+    }
+
+    return null;
+  }
+
+  _canAgentReceiveMessages(state = null) {
+    return Boolean(this._getAgentMessageTransport(state));
+  }
+
+  _queueOperatorPrompt(state, prompt, mode = 'soft') {
+    if (!state) return;
+    state.pendingOperatorPrompt = prompt;
+    state.pendingOperatorPromptMode = mode === 'hard' ? 'hard' : 'soft';
+    state.pendingOperatorPromptQueuedAt = Date.now();
+  }
+
+  _consumePendingOperatorPrompt(state = null) {
+    const prompt = String(state?.pendingOperatorPrompt ?? '').trim();
+    if (!state) return prompt || null;
+    state.pendingOperatorPrompt = null;
+    state.pendingOperatorPromptMode = null;
+    state.pendingOperatorPromptQueuedAt = 0;
+    return prompt || null;
+  }
+
+  _buildStructuredTurnId(nodeId, state = null, { completedTurn = false } = {}) {
+    if (!nodeId || !this._isStructuredAgentState(state)) return null;
+    const completedTurns = Number(state?.turnCount ?? 0);
+    const turnNumber = Math.max(1, completedTurns + (completedTurn ? 0 : 1));
+    return `${nodeId}:${turnNumber}`;
+  }
+
   _serializeAgentState(state = {}) {
+    const messageTransport = this._getAgentMessageTransport(state);
     return {
       sessionId: state.sessionId ?? null,
       provider: state.provider ?? null,
@@ -751,6 +813,8 @@ class SwarmEngine {
       handoffCount: state.handoffCount ?? 0,
       lastOutputSnippet: state.lastOutputSnippet ?? '',
       lastModelFallback: state.lastModelFallback ?? null,
+      acceptsMessages: Boolean(messageTransport),
+      messageTransport,
       ...(state.runtimeBlocker ? { runtimeBlocker: { ...state.runtimeBlocker } } : {}),
       // Stream-json specific fields (DEC-027)
       ...(this._isStructuredAgentState(state) ? {
@@ -797,6 +861,79 @@ class SwarmEngine {
     if (!state?._streamJsonPostResultTimer) return;
     clearTimeout(state._streamJsonPostResultTimer);
     state._streamJsonPostResultTimer = null;
+  }
+
+  _clearStreamJsonChatBufferTimer(state = null) {
+    if (!state?._streamJsonChatBufferTimer) return;
+    clearTimeout(state._streamJsonChatBufferTimer);
+    state._streamJsonChatBufferTimer = null;
+  }
+
+  _flushStreamJsonChatBuffer(executionId, nodeId, state = null, { spawnMode = null, turnId = null } = {}) {
+    const execution = this._executions.get(executionId);
+    const liveState = state ?? execution?.agentStates?.get(nodeId);
+    if (!liveState) return '';
+
+    this._clearStreamJsonChatBufferTimer(liveState);
+    const text = String(liveState._streamJsonChatBuffer ?? '');
+    liveState._streamJsonChatBuffer = '';
+
+    if (!text || !this._wsBroadcast) return text;
+
+    const effectiveTurnId = turnId ?? this._buildStructuredTurnId(
+      nodeId,
+      liveState,
+      { completedTurn: false }
+    );
+
+    this._wsBroadcast(executionId, {
+      type: 'chat_message',
+      nodeId,
+      role: 'assistant',
+      text,
+      timestamp: Date.now(),
+      spawnMode: spawnMode ?? liveState.spawnMode ?? STRUCTURED_SPAWN_MODE.STREAM_JSON,
+      ...(effectiveTurnId ? { turnId: effectiveTurnId } : {}),
+    });
+    return text;
+  }
+
+  _queueStreamJsonChatText(executionId, nodeId, state, text = '', { flush = false, spawnMode = null } = {}) {
+    if (!state) return;
+    const chunk = String(text ?? '');
+    if (!chunk) return;
+
+    state._streamJsonChatBuffer = `${state._streamJsonChatBuffer ?? ''}${chunk}`;
+
+    if (
+      flush
+      || state._streamJsonChatBuffer.length >= STREAM_JSON_CHAT_BUFFER_MAX_CHARS
+      || /\n\s*\n/.test(state._streamJsonChatBuffer)
+    ) {
+      this._flushStreamJsonChatBuffer(executionId, nodeId, state, { spawnMode });
+      return;
+    }
+
+    if (state._streamJsonChatBufferTimer) return;
+
+    state._streamJsonChatBufferTimer = setTimeout(() => {
+      const execution = this._executions.get(executionId);
+      const currentState = execution?.agentStates?.get(nodeId);
+      if (!currentState) return;
+      this._flushStreamJsonChatBuffer(executionId, nodeId, currentState, {
+        spawnMode: spawnMode ?? currentState.spawnMode ?? STRUCTURED_SPAWN_MODE.STREAM_JSON,
+      });
+    }, STREAM_JSON_CHAT_BUFFER_WINDOW_MS);
+
+    if (state._streamJsonChatBufferTimer?.unref) {
+      state._streamJsonChatBufferTimer.unref();
+    }
+  }
+
+  _resetStreamJsonChatBuffer(state = null) {
+    if (!state) return;
+    this._clearStreamJsonChatBufferTimer(state);
+    state._streamJsonChatBuffer = '';
   }
 
   _killProcessTree(pid, nodeId, reason = 'stream-json') {
@@ -900,10 +1037,12 @@ class SwarmEngine {
     state.doNotSpawnNextTurn = false;
     state._pendingStreamJsonStopMode = null;
     state._awaitingStreamJsonClose = false;
+    this._resetStreamJsonChatBuffer(state);
     state.currentToolUse = null;
     state.isThinking = false;
     state.needsRepair = true;
     state.status = 'stopped';
+    state._streamJsonRunId = null;
 
     if (child?.pid && !child.killed) {
       await this._killProcessTree(child.pid, nodeId, 'stream-json');
@@ -941,8 +1080,10 @@ class SwarmEngine {
     state.doNotSpawnNextTurn = false;
     state._pendingStreamJsonStopMode = null;
     state._awaitingStreamJsonClose = false;
+    this._resetStreamJsonChatBuffer(state);
     state._streamJsonAccumulatedText = '';
     state.status = 'idle';
+    state._streamJsonRunId = null;
     if (execution.runtimeBlocker?.nodeId === nodeId) {
       execution.runtimeBlocker = null;
     }
@@ -1252,6 +1393,13 @@ class SwarmEngine {
 
   _refreshAgentSnippet(state = null, { preferSessionReplay = false } = {}) {
     if (!state) return '';
+    if (state.status === 'running' && state.pinnedDisplaySnippet) {
+      state.pinnedDisplaySnippet = null;
+    }
+    if (state.pinnedDisplaySnippet && state.status !== 'running') {
+      state.lastOutputSnippet = state.pinnedDisplaySnippet;
+      return state.lastOutputSnippet;
+    }
 
     const sessionReplay = preferSessionReplay ? this._readAgentSessionReplay(state) : '';
     const snippetSource = sessionReplay || state._snippetSourceBuffer || state._runtimeScanBuffer || '';
@@ -1284,6 +1432,58 @@ class SwarmEngine {
     }
 
     return state.lastOutputSnippet ?? '';
+  }
+
+  _buildRuntimeBlockerDisplaySnippet(blocker = null) {
+    const rawMessage = String(blocker?.message ?? '').trim();
+    if (!rawMessage) {
+      const providerLabel = blocker?.provider === RUNTIME_PROVIDER.CODEX
+        ? 'Codex'
+        : blocker?.provider === RUNTIME_PROVIDER.GEMINI
+        ? 'Gemini'
+        : 'Claude';
+      return `${providerLabel} blocked the workflow before the agent could continue.`;
+    }
+
+    return this._sanitizeDisplaySnippetText(rawMessage) || rawMessage;
+  }
+
+  _pruneBlockedChatMessages(execution, nodeId, blocker = null) {
+    if (!execution || !nodeId || !Array.isArray(execution.chatMessages) || execution.chatMessages.length === 0) {
+      return;
+    }
+
+    execution.chatMessages = execution.chatMessages.filter((message) => {
+      if (message?.nodeId !== nodeId) return true;
+      if (!(message.role === 'assistant' || !message.role)) return true;
+
+      const rawText = String(message.text ?? '').trim();
+      if (!rawText) return false;
+
+      const sanitizedText = this._sanitizeChatMessage(rawText, {
+        executionId: execution.executionId ?? execution.id ?? null,
+        nodeId,
+        rawText,
+      }).trim();
+      if (!sanitizedText) return false;
+
+      const compactText = sanitizedText.toLowerCase().replace(/[^a-z0-9]+/g, '');
+      if (
+        compactText.includes('structuredhandoffsent')
+        || compactText.includes('signedinwithgoogle')
+        || compactText.includes('typeyourmessageorpathtofile')
+        || compactText.includes('presstabtwiceformore')
+      ) {
+        return false;
+      }
+
+      const blockerMatch = this._detectPatternBlocker(
+        [rawText, sanitizedText].filter(Boolean).join('\n'),
+        blocker?.provider ?? execution.agentStates.get(nodeId)?.provider ?? null
+      );
+
+      return !blockerMatch;
+    });
   }
 
   _serializeRuntimeBlocker(blocker = null) {
@@ -1722,6 +1922,10 @@ class SwarmEngine {
 
   _broadcastAgentStatus(executionId, nodeId, state) {
     if (!this._wsBroadcast) return;
+    if (state?.status === 'running' && state?.pinnedDisplaySnippet) {
+      state.pinnedDisplaySnippet = null;
+      state.lastOutputSnippet = '';
+    }
     const lastOutputSnippet = state?.status && state.status !== 'running'
       ? this._refreshAgentSnippet(state, { preferSessionReplay: true })
       : (state?.lastOutputSnippet ?? '');
@@ -1754,6 +1958,8 @@ class SwarmEngine {
         role: msg.role ?? 'assistant',
         text: msg.text ?? '',
         timestamp: msg.timestamp ?? Date.now(),
+        ...(msg.turnId ? { turnId: msg.turnId } : {}),
+        ...(msg.spawnMode ? { spawnMode: msg.spawnMode } : {}),
       }].slice(-500);
     }
     if (!this._wsBroadcast) return;
@@ -1763,6 +1969,8 @@ class SwarmEngine {
       role: msg.role,
       text: msg.text,
       timestamp: msg.timestamp,
+      ...(msg.turnId ? { turnId: msg.turnId } : {}),
+      ...(msg.spawnMode ? { spawnMode: msg.spawnMode } : {}),
     });
   }
 
@@ -3333,21 +3541,65 @@ class SwarmEngine {
     }
   }
 
-  sendBroadcast(executionId, nodeId, text, { mode = 'soft' } = {}) {
+  _buildOperatorFollowUpContext(execution, nodeId, operatorMessage = '') {
+    const node = execution?.workflowDef?.nodes?.find((candidate) => candidate.id === nodeId) ?? null;
+    const handoffTargets = execution?.workflowDef?.edges
+      ?.filter((edge) => edge.source === nodeId)
+      .map((edge) => edge.target) ?? [];
+
+    return {
+      node,
+      handoffTargets,
+      prompt: this._buildOperatorFollowUpPrompt(
+        node,
+        execution?.workflowContext ?? {},
+        handoffTargets,
+        operatorMessage
+      ),
+    };
+  }
+
+  async _resumeStructuredAgentWithOperatorPrompt(executionId, nodeId, state, prompt) {
+    const execution = this._executions.get(executionId);
+    const nextPrompt = String(prompt ?? '').trim();
+    if (!execution || !state || !nextPrompt) return { sent: false, delivery: 'skipped' };
+
+    state.status = 'running';
+    state.runtimeBlocker = null;
+    state.doNotSpawnNextTurn = false;
+    state._pendingStreamJsonStopMode = null;
+    state._awaitingStreamJsonClose = false;
+    state._pendingCodexSdkStopMode = null;
+    this._broadcastAgentStatus(executionId, nodeId, state);
+    this._syncExecutionStatusFromAgents(execution);
+
+    await this._spawnAgent(executionId, nodeId, {
+      requestedProvider: state.provider ?? state.runtimeProvider ?? execution.activeProvider,
+      reinjectPrompt: nextPrompt,
+    });
+
+    return { sent: true, delivery: 'resumed' };
+  }
+
+  async _resumePendingStructuredOperatorPrompt(executionId, nodeId, state) {
+    const prompt = this._consumePendingOperatorPrompt(state);
+    if (!prompt) return { sent: false, delivery: 'skipped' };
+    return this._resumeStructuredAgentWithOperatorPrompt(executionId, nodeId, state, prompt);
+  }
+
+  async sendBroadcast(executionId, nodeId, text, { mode = 'soft' } = {}) {
     const execution = this._executions.get(executionId);
     const state = execution?.agentStates.get(nodeId);
     const sessionId = state?.sessionId ?? null;
     const prompt = String(text ?? '').trim();
 
-    if (!execution || !state || state.status !== 'running' || !sessionId || !prompt) {
+    if (!execution || !state || !prompt || !this._canAgentReceiveMessages(state)) {
       return { sent: false, delivery: 'skipped' };
     }
 
-    if (state.provider === RUNTIME_PROVIDER.GEMINI) {
+    if (sessionId && state.status === 'running' && state.provider === RUNTIME_PROVIDER.GEMINI) {
       if (state.runtimeSession && !state.promptReady) {
-        state.pendingOperatorPrompt = prompt;
-        state.pendingOperatorPromptMode = mode;
-        state.pendingOperatorPromptQueuedAt = Date.now();
+        this._queueOperatorPrompt(state, prompt, mode);
         return { sent: true, delivery: 'queued' };
       }
 
@@ -3355,7 +3607,7 @@ class SwarmEngine {
       return { sent: true, delivery: 'injected' };
     }
 
-    if (mode === 'hard') {
+    if (sessionId && state.status === 'running' && mode === 'hard') {
       this._sessionManager.writeInput(sessionId, '\x03');
       setTimeout(() => {
         this._sessionManager.writeInput(sessionId, `${prompt}\x1b`);
@@ -3366,8 +3618,44 @@ class SwarmEngine {
       return { sent: true, delivery: 'interrupted' };
     }
 
-    this._sessionManager.writeInput(sessionId, `${prompt}\x1b\n`);
-    return { sent: true, delivery: 'injected' };
+    if (sessionId && state.status === 'running') {
+      this._sessionManager.writeInput(sessionId, `${prompt}\x1b\n`);
+      return { sent: true, delivery: 'injected' };
+    }
+
+    const { prompt: followUpPrompt } = this._buildOperatorFollowUpContext(execution, nodeId, prompt);
+
+    if (sessionId) {
+      if (state._parser && typeof state._parser.reset === 'function') {
+        state._parser.reset();
+      }
+      state.status = 'running';
+      state.runtimeBlocker = null;
+      this._writeSwarmPrompt(sessionId, followUpPrompt, state, {
+        interruptActiveCodex: mode === 'hard',
+      });
+      this._broadcastAgentStatus(executionId, nodeId, state);
+      this._syncExecutionStatusFromAgents(execution);
+      return { sent: true, delivery: 'resumed' };
+    }
+
+    if (!this._isStructuredAgentState(state)) {
+      return { sent: false, delivery: 'skipped' };
+    }
+
+    this._queueOperatorPrompt(state, followUpPrompt, mode);
+
+    if (state.status === 'running') {
+      if (mode === 'hard') {
+        await this.stopStreamJsonAgent(executionId, nodeId, 'forced');
+        return this._resumePendingStructuredOperatorPrompt(executionId, nodeId, state);
+      }
+
+      await this.stopStreamJsonAgent(executionId, nodeId, 'graceful');
+      return { sent: true, delivery: 'queued' };
+    }
+
+    return this._resumePendingStructuredOperatorPrompt(executionId, nodeId, state);
   }
 
   /**
@@ -3529,8 +3817,17 @@ class SwarmEngine {
       nodeId,
     };
 
+    const blockerSnippet = String(state.lastOutputSnippet ?? '').trim()
+      || this._buildRuntimeBlockerDisplaySnippet(nextBlocker);
     state.runtimeBlocker = nextBlocker;
     state.status = 'blocked';
+    state.lastOutputSnippet = blockerSnippet;
+    state.pinnedDisplaySnippet = blockerSnippet;
+    state._snippetSourceBuffer = '';
+    state._runtimeScanBuffer = '';
+    state.interventionBuffer = '';
+    this._chatExtractor.resetBuffer(executionId, nodeId);
+    this._pruneBlockedChatMessages(execution, nodeId, nextBlocker);
     execution.runtimeBlocker = nextBlocker;
     this._broadcastAgentStatus(executionId, nodeId, state);
     this._setExecutionStatus(execution, 'blocked');
@@ -3766,6 +4063,8 @@ class SwarmEngine {
             args: launchArgs,
             bootstrapPrompt,
             initialPrompt: codexInitialPrompt,
+            persistent: true,
+            persistentReason: 'swarm-agent',
           }
         );
         const sessionId = session.sessionId;
@@ -3841,6 +4140,7 @@ class SwarmEngine {
           const currentState = execution.agentStates.get(nodeId);
           let processingChunk = chunk;
           let gateBufferFlushed = false;
+          let liveUserChunk = '';
           if (currentState && !currentState.ignoreParserUntil && currentState.ignoreParserBuffer) {
             // The echo gate timed out — the ignoreParserBuffer contains system
             // prompt echo text from the gate period.  Prepend it for marker
@@ -3854,10 +4154,21 @@ class SwarmEngine {
             // Accumulate ANSI-stripped output into lastOutputSnippet first,
             // so prompt-ready detection can scan the full rolling buffer.
             const cleanChunk = this._normalizeParserChunk(processingChunk);
+            liveUserChunk = gateBufferFlushed
+              ? this._normalizeParserChunk(chunk)
+              : cleanChunk;
             // Keep the raw tail for runtime detection, but derive the
             // user-facing snippet from a semantic sanitization pass.
             currentState._runtimeScanBuffer = ((currentState._runtimeScanBuffer ?? '') + cleanChunk).slice(-RUNTIME_SCAN_BUFFER_CHARS);
-            if (!currentState.ignoreParserUntil) {
+            const earlyPatternBlocker = this._detectPatternBlocker(
+              currentState._runtimeScanBuffer,
+              currentState.provider
+            );
+            if (earlyPatternBlocker && ['provider_unavailable', 'prompt_rejected'].includes(earlyPatternBlocker.type)) {
+              void this._handleRuntimeBlocker(executionId, nodeId, earlyPatternBlocker);
+              return;
+            }
+            if (!currentState.ignoreParserUntil && currentState.status === 'running') {
               // When flushing the gate buffer, only feed the NEW chunk to
               // ChatExtractor — the prepended buffer contains system prompt
               // echo noise that would pollute the chat with protocol text.
@@ -4421,6 +4732,9 @@ class SwarmEngine {
         _codexSdkRunId: runId,
         _codexSdkTurnChatCountStart: this._countAssistantChatMessages(execution, nodeId),
         _structuredRuntimeKind: STRUCTURED_SPAWN_MODE.CODEX_SDK,
+        pendingOperatorPrompt: previousState?.pendingOperatorPrompt ?? null,
+        pendingOperatorPromptMode: previousState?.pendingOperatorPromptMode ?? null,
+        pendingOperatorPromptQueuedAt: previousState?.pendingOperatorPromptQueuedAt ?? 0,
         _agentSystemPrompt: (node.data && node.data.systemPrompt) || '',
         _agentFullPrompt: prompt || '',
         spawnedAt: previousState?.spawnedAt ?? Date.now(),
@@ -4569,6 +4883,7 @@ class SwarmEngine {
       const delta = getTextDelta(previousItem?.text, item.text);
       if (delta) {
         this._markAgentProgress(execution, nodeId, state, 'meaningful_output');
+        const turnId = this._buildStructuredTurnId(nodeId, state);
         if (this._wsBroadcast) {
           this._wsBroadcast(executionId, {
             type: 'chat_message',
@@ -4577,6 +4892,7 @@ class SwarmEngine {
             text: delta,
             timestamp: Date.now(),
             spawnMode: STRUCTURED_SPAWN_MODE.CODEX_SDK,
+            ...(turnId ? { turnId } : {}),
           });
         }
         // NOTE: Do NOT feed ChatExtractor for Codex SDK — structured agents
@@ -4750,10 +5066,12 @@ class SwarmEngine {
       state._codexSdkItemSnapshots = new Map();
       this._broadcastAgentStatus(executionId, nodeId, state);
       this._syncExecutionStatusFromAgents(execution);
+      await this._resumePendingStructuredOperatorPrompt(executionId, nodeId, state);
       return;
     }
 
     const accumulatedText = state._codexSdkAssistantText || this._collectStructuredAssistantText(state._codexSdkItemSnapshots);
+    const completedTurnId = this._buildStructuredTurnId(nodeId, state, { completedTurn: true });
     const assistantChatCountStart = state._codexSdkTurnChatCountStart ?? this._countAssistantChatMessages(execution, nodeId);
     const tokenParser = new HandoffParser();
     const tokenEvents = tokenParser.feed(accumulatedText);
@@ -4793,17 +5111,24 @@ class SwarmEngine {
         timestamp: Date.now(),
         isCanonical: true,
         spawnMode: STRUCTURED_SPAWN_MODE.CODEX_SDK,
+        ...(completedTurnId ? { turnId: completedTurnId } : {}),
       });
       // Replace all prior assistant chat entries for this nodeId with the
-      // single canonical message so REST hydration doesn't re-inject fragments.
+      // single canonical message for THIS turn so older turns remain visible.
       const prevMessages = (execution.chatMessages ?? []).filter(
-        (m) => !(m.nodeId === nodeId && (m.role === 'assistant' || !m.role))
+        (m) => !(
+          m.nodeId === nodeId
+          && (m.role === 'assistant' || !m.role)
+          && (m.turnId ?? null) === (completedTurnId ?? null)
+        )
       );
       prevMessages.push({
         nodeId,
         role: 'assistant',
         text: canonicalText,
         timestamp: Date.now(),
+        ...(completedTurnId ? { turnId: completedTurnId } : {}),
+        spawnMode: STRUCTURED_SPAWN_MODE.CODEX_SDK,
       });
       execution.chatMessages = prevMessages.slice(-500);
     } else {
@@ -4816,6 +5141,8 @@ class SwarmEngine {
           role: 'assistant',
           text: canonicalText,
           timestamp: Date.now(),
+          ...(completedTurnId ? { turnId: completedTurnId } : {}),
+          spawnMode: STRUCTURED_SPAWN_MODE.CODEX_SDK,
         });
       }
     }
@@ -4967,6 +5294,7 @@ class SwarmEngine {
       stdio: ['pipe', 'pipe', 'pipe'],
       shell: false,
     });
+    const runId = uuidv4();
 
     // DEC-005: close stdin immediately to prevent hang
     try { child.stdin.end(); } catch { /* already destroyed */ }
@@ -4994,8 +5322,14 @@ class SwarmEngine {
       doneReinjectCount: previousState?.doneReinjectCount ?? 0,
       _streamJsonChild: child,
       _streamJsonAccumulatedText: '',
+      _streamJsonChatBuffer: '',
+      _streamJsonChatBufferTimer: null,
       _agentSystemPrompt: (node.data && node.data.systemPrompt) || '',
       _agentFullPrompt: prompt || '',
+      pendingOperatorPrompt: previousState?.pendingOperatorPrompt ?? null,
+      pendingOperatorPromptMode: previousState?.pendingOperatorPromptMode ?? null,
+      pendingOperatorPromptQueuedAt: previousState?.pendingOperatorPromptQueuedAt ?? 0,
+      _streamJsonRunId: runId,
       spawnedAt: previousState?.spawnedAt ?? Date.now(),
       lastForwardProgressAt: Date.now(),
       lastForwardProgressReason: 'spawn',
@@ -5024,7 +5358,20 @@ class SwarmEngine {
       // thinking_start/stop, api_retry, result, error, unknown
 
       const currentState = execution.agentStates.get(nodeId);
-      if (!currentState || currentState.status === 'done' || currentState.status === 'stopped') return;
+      if (
+        !currentState
+        || currentState._streamJsonRunId !== runId
+        || currentState.status === 'done'
+        || currentState.status === 'stopped'
+      ) {
+        return;
+      }
+
+      if (evt.type !== 'text_delta' && evt.type !== 'message') {
+        this._flushStreamJsonChatBuffer(executionId, nodeId, currentState, {
+          spawnMode: STRUCTURED_SPAWN_MODE.STREAM_JSON,
+        });
+      }
 
       switch (evt.type) {
         case 'text_delta': {
@@ -5039,16 +5386,9 @@ class SwarmEngine {
           currentState.lastOutputSnippet = accText.length > 200
             ? accText.slice(-200)
             : accText;
-          // Broadcast chat message
-          if (this._wsBroadcast) {
-            this._wsBroadcast(executionId, {
-              type: 'chat_message',
-              nodeId,
-              role: 'assistant',
-              text: evt.text ?? '',
-              timestamp: Date.now(),
-            });
-          }
+          this._queueStreamJsonChatText(executionId, nodeId, currentState, evt.text ?? '', {
+            spawnMode: STRUCTURED_SPAWN_MODE.STREAM_JSON,
+          });
           // Stream-json agents broadcast chat_message directly above —
           // do NOT feed ChatExtractor (that path is for PTY agents only).
           // Feeding both caused duplicate WS events (BUG-CHAT-SERVER-02).
@@ -5168,19 +5508,15 @@ class SwarmEngine {
               currentState.lastOutputSnippet = currentState._streamJsonAccumulatedText.length > 200
                 ? currentState._streamJsonAccumulatedText.slice(-200)
                 : currentState._streamJsonAccumulatedText;
-              if (this._wsBroadcast) {
-                this._wsBroadcast(executionId, {
-                  type: 'chat_message',
-                  nodeId,
-                  role: 'assistant',
-                  text: block.text,
-                  timestamp: Date.now(),
-                  spawnMode: 'stream-json',
-                });
-              }
+              this._queueStreamJsonChatText(executionId, nodeId, currentState, block.text, {
+                spawnMode: STRUCTURED_SPAWN_MODE.STREAM_JSON,
+              });
               // Stream-json agents broadcast chat_message directly above —
               // do NOT feed ChatExtractor (PTY-only). See BUG-CHAT-SERVER-02.
             } else if ((block.type === 'tool_use' || block.type === 'server_tool_use') && block.name) {
+              this._flushStreamJsonChatBuffer(executionId, nodeId, currentState, {
+                spawnMode: STRUCTURED_SPAWN_MODE.STREAM_JSON,
+              });
               // Tool use in complete message — broadcast tool start + stop
               if (this._wsBroadcast) {
                 this._wsBroadcast(executionId, {
@@ -5192,6 +5528,9 @@ class SwarmEngine {
               }
             }
           }
+          this._flushStreamJsonChatBuffer(executionId, nodeId, currentState, {
+            spawnMode: STRUCTURED_SPAWN_MODE.STREAM_JSON,
+          });
           this._broadcastAgentStatus(executionId, nodeId, currentState);
           break;
         }
@@ -5212,7 +5551,8 @@ class SwarmEngine {
     child.on('error', (err) => {
       console.error(`[SwarmEngine] stream-json spawn error node=${nodeId}: ${err.message}`);
       const currentState = execution.agentStates.get(nodeId);
-      if (currentState && currentState.status === 'running') {
+      if (currentState && currentState._streamJsonRunId === runId && currentState.status === 'running') {
+        this._resetStreamJsonChatBuffer(currentState);
         currentState.status = 'error';
         currentState.runtimeBlocker = {
           type: 'spawn_error',
@@ -5226,11 +5566,14 @@ class SwarmEngine {
     // 12. Handle process exit
     child.on('close', (code) => {
       const currentState = execution.agentStates.get(nodeId);
-      if (!currentState) return;
+      if (!currentState || currentState._streamJsonRunId !== runId) return;
 
       // Clean up child reference
       this._clearStreamJsonPostResultTimer(currentState);
       currentState._streamJsonChild = null;
+      this._flushStreamJsonChatBuffer(executionId, nodeId, currentState, {
+        spawnMode: STRUCTURED_SPAWN_MODE.STREAM_JSON,
+      });
 
       if (gotResultEvent && currentState._pendingStreamJsonStopMode === 'graceful') {
         currentState.doNotSpawnNextTurn = false;
@@ -5241,6 +5584,7 @@ class SwarmEngine {
         currentState.status = 'paused';
         this._broadcastAgentStatus(executionId, nodeId, currentState);
         this._syncExecutionStatusFromAgents(execution);
+        void this._resumePendingStructuredOperatorPrompt(executionId, nodeId, currentState);
         return;
       }
 
@@ -5313,6 +5657,12 @@ class SwarmEngine {
       state.streamJsonSessionId = resultEvt.sessionId;
     }
 
+    const completedTurnId = this._buildStructuredTurnId(nodeId, state, { completedTurn: true });
+    this._flushStreamJsonChatBuffer(executionId, nodeId, state, {
+      spawnMode: STRUCTURED_SPAWN_MODE.STREAM_JSON,
+      turnId: completedTurnId,
+    });
+
     // 4. Handle error results
     if (resultEvt.isError) {
       console.warn(`[SwarmEngine] stream-json result error node=${nodeId}: ${resultEvt.errorMessage}`);
@@ -5346,6 +5696,7 @@ class SwarmEngine {
       state._runtimeScanBuffer = '';
 
       void this._handleRuntimeBlocker(executionId, nodeId, detectedBlocker);
+      this._resetStreamJsonChatBuffer(state);
       state._streamJsonAccumulatedText = '';
       return;
     }
@@ -5379,18 +5730,26 @@ class SwarmEngine {
           text: canonicalText,
           timestamp: Date.now(),
           isCanonical: true,
+          spawnMode: STRUCTURED_SPAWN_MODE.STREAM_JSON,
+          ...(completedTurnId ? { turnId: completedTurnId } : {}),
         });
       }
       // Replace all prior assistant chat entries for this nodeId with the
-      // single canonical message so REST hydration doesn't re-inject fragments.
+      // single canonical message for THIS turn so older turns remain visible.
       const prevMessages = (execution.chatMessages ?? []).filter(
-        (m) => !(m.nodeId === nodeId && (m.role === 'assistant' || !m.role))
+        (m) => !(
+          m.nodeId === nodeId
+          && (m.role === 'assistant' || !m.role)
+          && (m.turnId ?? null) === (completedTurnId ?? null)
+        )
       );
       prevMessages.push({
         nodeId,
         role: 'assistant',
         text: canonicalText,
         timestamp: Date.now(),
+        ...(completedTurnId ? { turnId: completedTurnId } : {}),
+        spawnMode: STRUCTURED_SPAWN_MODE.STREAM_JSON,
       });
       execution.chatMessages = prevMessages.slice(-500);
       this._broadcastAgentStatus(executionId, nodeId, state);
@@ -5449,7 +5808,8 @@ class SwarmEngine {
       }
     }
 
-    // Reset accumulated text for the next turn
+    // Reset buffered live chat and accumulated text for the next turn.
+    this._resetStreamJsonChatBuffer(state);
     state._streamJsonAccumulatedText = '';
   }
 
@@ -5519,17 +5879,7 @@ class SwarmEngine {
         COMPACT_CODEX_TASK_CHARS
       );
       const recoverySnippet = this._compactCodexInstructionText(options.recoverySnippet, COMPACT_CODEX_PROGRESS_CHARS);
-      const compactInboundHandoffs = inboundHandoffs
-        .map((handoff) => {
-          const payloadText = this._compactCodexInstructionText(
-            JSON.stringify(handoff.payload ?? {}).replace(/[\r\n`]+/g, ' | '),
-            180
-          );
-          return payloadText
-            ? `${handoff.sourceLabel || handoff.sourceNodeId}: ${payloadText}`
-            : `${handoff.sourceLabel || handoff.sourceNodeId}: {}`;
-        })
-        .join(' | ');
+      const compactInboundHandoffLines = this._formatCompactCodexInboundHandoffs(inboundHandoffs);
 
       if (resumeCodexPrompt) {
         lines.push('Resume the same swarm task from your current progress.');
@@ -5545,8 +5895,8 @@ class SwarmEngine {
         if (!agentPrompt && currentTask) {
           lines.push(`Current task: ${currentTask}`);
         }
-        if (compactInboundHandoffs) {
-          lines.push(`Upstream handoffs: ${compactInboundHandoffs}`);
+        if (compactInboundHandoffLines.length > 0) {
+          lines.push(...compactInboundHandoffLines);
         }
         if (handoffTargets.length === 0) {
           if (expectedReport) {
@@ -5667,6 +6017,100 @@ class SwarmEngine {
     return `${normalized.slice(0, maxChars - 3).trimEnd()}...`;
   }
 
+  _compactCodexHandoffPayload(payload = {}, maxChars = COMPACT_CODEX_HANDOFF_MAX_ITEM_CHARS) {
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      return '{}';
+    }
+
+    const sanitizedEntries = Object.entries(payload)
+      .filter(([key]) => typeof key === 'string' && key.trim())
+      .slice(0, COMPACT_CODEX_HANDOFF_MAX_KEYS)
+      .map(([key, value]) => {
+        if (typeof value === 'string') {
+          return [
+            key,
+            String(value)
+              .replace(/[\r\n`]+/g, ' | ')
+              .replace(/\s+/g, ' ')
+              .trim(),
+          ];
+        }
+        return [key, value];
+      });
+
+    if (sanitizedEntries.length === 0) {
+      return '{}';
+    }
+
+    const buildJson = (entries, stringCap = null) => JSON.stringify(
+      Object.fromEntries(entries.map(([key, value]) => [
+        key,
+        typeof value === 'string' && Number.isFinite(stringCap)
+          ? this._compactCodexInstructionText(value, stringCap)
+          : value,
+      ]))
+    );
+
+    let json = buildJson(sanitizedEntries);
+    if (json.length <= maxChars) {
+      return json;
+    }
+
+    const hasStringValues = sanitizedEntries.some(([, value]) => typeof value === 'string');
+    if (hasStringValues) {
+      let stringCap = Math.min(900, maxChars);
+      while (json.length > maxChars && stringCap > 96) {
+        json = buildJson(sanitizedEntries, stringCap);
+        stringCap = Math.floor(stringCap * 0.75);
+      }
+      if (json.length <= maxChars) {
+        return json;
+      }
+    }
+
+    for (let keepCount = sanitizedEntries.length - 1; keepCount >= 1; keepCount -= 1) {
+      json = buildJson(sanitizedEntries.slice(0, keepCount), 160);
+      if (json.length <= maxChars) {
+        return json;
+      }
+    }
+
+    const [firstKey, firstValue] = sanitizedEntries[0];
+    if (typeof firstValue === 'string') {
+      return JSON.stringify({
+        [firstKey]: this._compactCodexInstructionText(
+          firstValue,
+          Math.max(48, maxChars - firstKey.length - 8)
+        ),
+      });
+    }
+
+    return JSON.stringify({ [firstKey]: firstValue });
+  }
+
+  _formatCompactCodexInboundHandoffs(inboundHandoffs = []) {
+    if (!Array.isArray(inboundHandoffs) || inboundHandoffs.length === 0) {
+      return [];
+    }
+
+    const perHandoffBudget = Math.min(
+      COMPACT_CODEX_HANDOFF_MAX_ITEM_CHARS,
+      Math.max(
+        COMPACT_CODEX_HANDOFF_MIN_ITEM_CHARS,
+        Math.floor(COMPACT_CODEX_HANDOFF_TOTAL_CHARS / inboundHandoffs.length)
+      )
+    );
+
+    return [
+      'Upstream handoffs:',
+      ...inboundHandoffs.map((handoff) => {
+        const sourceName = handoff.sourceLabel || handoff.sourceNodeId || 'Upstream';
+        const payloadText = this._compactCodexHandoffPayload(handoff.payload ?? {}, perHandoffBudget);
+        return `${sourceName}: ${payloadText}`;
+      }),
+    ];
+  }
+
   _buildCodexRecoverySnippet(state = null) {
     if (!state) return '';
     const snippet = this._compactCodexInstructionText(
@@ -5704,6 +6148,38 @@ class SwarmEngine {
     lines.push('Use only flat JSON with primitive values (string, number, or boolean). Keep the handoff line compact.');
     lines.push('Output that final handoff token as plain text on a single line with no bullets, quotes, code fences, or indentation.');
     lines.push('Replace the summary value with an actual description of what you accomplished.');
+
+    return lines.join('\n');
+  }
+
+  _buildOperatorFollowUpPrompt(node, workflowContext, handoffTargets, operatorMessage = '') {
+    const agentLabel = node?.data?.label || node?.id || 'This agent';
+    const message = String(operatorMessage ?? '').trim();
+    const lines = [
+      `${agentLabel} has received a new operator message.`,
+      'Continue the same swarm conversation from the latest shared context.',
+    ];
+
+    if (workflowContext?.currentTask) {
+      lines.push(`Current task: ${workflowContext.currentTask}`);
+    }
+
+    lines.push('Operator message:');
+    lines.push(message || '(no operator message provided)');
+    lines.push('Apply that guidance in your very next turn and continue the workflow without restarting from scratch.');
+
+    if (handoffTargets.length === 1) {
+      lines.push(`When your work is ready, finish by handing off to ${handoffTargets[0]}.`);
+      lines.push(`Use ${handoffTargets[0]} in place of <targetId> for this workflow.`);
+      lines.push('__HANDOFF__:<targetId>:{"summary": "your work summary here"}');
+    } else if (handoffTargets.length > 1) {
+      lines.push(`When your work is ready, finish by emitting one valid handoff token using a connected target ID: ${handoffTargets.join(', ')}.`);
+      lines.push(`Use any connected target ID in place of <targetId> for this workflow: ${handoffTargets.join(', ')}.`);
+      lines.push('__HANDOFF__:<targetId>:{"summary": "your work summary here"}');
+      lines.push('The runtime will fan out that handoff to every connected downstream node.');
+    } else {
+      lines.push('If this follow-up completes the workflow, output __DONE__ on its own line as the final marker.');
+    }
 
     return lines.join('\n');
   }

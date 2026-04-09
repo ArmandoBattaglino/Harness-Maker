@@ -1,0 +1,84 @@
+import { render, screen } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import SwarmCanvas from './SwarmCanvas.jsx';
+import { useSwarmStore } from '../store/SwarmContext.jsx';
+import { resetSwarmStore } from '../test/resetSwarmStore.js';
+
+vi.mock('@xyflow/react', () => ({
+  ReactFlow: ({ children }) => <div data-testid="react-flow">{children}</div>,
+  Background: () => null,
+  Controls: () => null,
+  MiniMap: () => null,
+  ConnectionLineType: { SmoothStep: 'smoothstep' },
+  MarkerType: { Arrow: 'arrow' },
+  useNodesState: (initial) => [initial, vi.fn(), vi.fn()],
+  useEdgesState: (initial) => [initial, vi.fn(), vi.fn()],
+  addEdge: vi.fn((edge, edges) => [...edges, edge]),
+  useReactFlow: () => ({
+    fitView: vi.fn(),
+    screenToFlowPosition: (position) => position,
+  }),
+}));
+
+vi.mock('./AgentInspector', () => ({
+  default: () => null,
+}));
+
+vi.mock('../panels/AgentOutputPanel', () => ({
+  default: () => null,
+}));
+
+vi.mock('./BreadcrumbBar', () => ({
+  default: () => null,
+}));
+
+vi.mock('./ContextMenu', () => ({
+  default: () => null,
+}));
+
+vi.mock('./NodePalette', () => ({
+  default: () => null,
+}));
+
+vi.mock('../hooks/useCanvasHistory', () => ({
+  useCanvasHistory: () => ({
+    pushHistory: vi.fn(),
+    undo: vi.fn(),
+    redo: vi.fn(),
+    canUndo: false,
+    canRedo: false,
+  }),
+}));
+
+describe('SwarmCanvas activity rail', () => {
+  beforeEach(() => {
+    resetSwarmStore();
+  });
+
+  it('keeps the chat empty state visible while idle when the side panel is open', () => {
+    useSwarmStore.setState({
+      workflowDef: {
+        id: 'workflow-1',
+        name: 'Workflow 1',
+        nodes: [],
+        edges: [],
+      },
+      executionStatus: 'idle',
+      sidePanelOpen: true,
+      sidePanelMode: 'chat',
+      chatMessages: [],
+      interAgentFeed: [],
+    });
+
+    render(
+      <SwarmCanvas
+        workflowDef={{ id: 'workflow-1', name: 'Workflow 1', nodes: [], edges: [] }}
+        markDirty={vi.fn()}
+        onCanvasChange={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('Chat View')).toBeInTheDocument();
+    expect(screen.getByText(/No messages yet/i)).toBeInTheDocument();
+  });
+});

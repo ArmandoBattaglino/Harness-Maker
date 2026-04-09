@@ -8,6 +8,15 @@ import { isStructuredSpawnMode } from '../utils/runtimeModes.js';
 import ChatMessage from './ChatMessage';
 import HitlChatCard from './HitlChatCard';
 
+function isSameStructuredTurn(leftTurnId, rightTurnId) {
+  const normalizedLeft = leftTurnId ?? null;
+  const normalizedRight = rightTurnId ?? null;
+  if (normalizedLeft || normalizedRight) {
+    return normalizedLeft === normalizedRight;
+  }
+  return true;
+}
+
 export default function ChatPanel() {
   const chatMessages = useSwarmStore((s) => s.chatMessages);
   const agentStates = useSwarmStore((s) => s.agentStates);
@@ -15,10 +24,10 @@ export default function ChatPanel() {
   const setChatFilter = useSwarmStore((s) => s.setChatFilter);
   const workflowDef = useSwarmStore((s) => s.workflowDef);
   const activeExecutionId = useSwarmStore((s) => s.activeExecutionId);
-  const executionStatus = useSwarmStore((s) => s.executionStatus);
   const scrollContainerRef = useRef(null);
   const bottomRef = useRef(null);
   const hasMountedRef = useRef(false);
+  const previousScrollHeightRef = useRef(0);
   const [inputText, setInputText] = useState('');
   const [scope, setScope] = useState('all');
   const [mode, setMode] = useState('soft');
@@ -50,11 +59,25 @@ export default function ChatPanel() {
     () => (workflowDef?.nodes ?? []).filter((n) => n.type === 'agent'),
     [workflowDef]
   );
-  const departments = useMemo(
-    () => (workflowDef?.nodes ?? []).filter((n) => n.type === 'department'),
-    [workflowDef]
+  const messageableAgentIds = useMemo(
+    () => Object.entries(agentStates ?? {})
+      .filter(([, state]) => state?.acceptsMessages)
+      .map(([nodeId]) => nodeId),
+    [agentStates]
   );
-  const targetOptions = scope === 'department' ? departments : agents;
+  const messageableAgentIdSet = useMemo(() => new Set(messageableAgentIds), [messageableAgentIds]);
+  const departments = useMemo(
+    () => (workflowDef?.nodes ?? []).filter((n) => n.type === 'department').filter((department) => (
+      agents.some((agent) => {
+        const parentDepartmentId = agent.data?.parentDepartmentId ?? agent.parentId ?? null;
+        return parentDepartmentId === department.id && messageableAgentIdSet.has(agent.id);
+      })
+    )),
+    [workflowDef, agents, messageableAgentIdSet]
+  );
+  const targetOptions = scope === 'department'
+    ? departments
+    : agents.filter((agent) => messageableAgentIdSet.has(agent.id));
 
   // Filter messages
   const filteredMessages = useMemo(() => {
@@ -88,6 +111,7 @@ export default function ChatPanel() {
           previous
           && isStructuredSpawnMode(previous.spawnMode)
           && previous.nodeId === nextMessage.nodeId
+          && isSameStructuredTurn(previous.turnId, nextMessage.turnId)
           && (previous.role === 'assistant' || !previous.role)
         ) {
           previous.text = `${previous.text ?? ''}${nextMessage.text ?? ''}`;
@@ -113,14 +137,17 @@ export default function ChatPanel() {
       // First mount — always scroll to bottom
       el.scrollTop = el.scrollHeight;
       hasMountedRef.current = true;
+      previousScrollHeightRef.current = el.scrollHeight;
     } else {
       // Subsequent messages — only auto-scroll if user is near the bottom
-      const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+      const previousScrollHeight = previousScrollHeightRef.current || el.scrollHeight;
+      const isNearBottom = previousScrollHeight - el.scrollTop - el.clientHeight < 100;
       if (isNearBottom) {
         el.scrollTop = el.scrollHeight;
       }
+      previousScrollHeightRef.current = el.scrollHeight;
     }
-  }, [enrichedMessages.length]);
+  }, [enrichedMessages]);
 
   // Sync scope with chatFilter — if filtering by agent, default scope to that agent
   useEffect(() => {
@@ -150,7 +177,7 @@ export default function ChatPanel() {
       });
       const { sent, recipientNodeIds = [] } = res;
       if (sent === 0) {
-        setSendResult('No active agents to receive the message');
+        setSendResult('No reusable agent sessions available for this target');
         setTimeout(() => setSendResult(null), 4000);
         return;
       }
@@ -172,7 +199,7 @@ export default function ChatPanel() {
     }
   }, [inputText, activeExecutionId, scope, targetId, mode, agentLabels]);
 
-  const canSend = activeExecutionId && executionStatus !== 'idle';
+  const canSend = Boolean(activeExecutionId && messageableAgentIds.length > 0);
 
   if (chatMessages.length === 0) {
     return (
@@ -235,7 +262,7 @@ export default function ChatPanel() {
             />
           ) : (
             <ChatMessage
-              key={`${msg.nodeId}-${msg.timestamp}-${i}`}
+              key={`${msg.nodeId}-${msg.turnId ?? 'turnless'}-${msg.timestamp}-${i}`}
               message={msg}
               agentLabel={agentLabels[msg.nodeId]}
             />

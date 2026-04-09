@@ -180,6 +180,166 @@ describe('SwarmEngine Codex SDK integration', () => {
     ]));
   });
 
+  it('preserves one canonical chat message per completed structured turn for the same node', async () => {
+    engine._codexSdkFactory = {
+      forceEnabled: true,
+      createClient: vi.fn(() => ({ kind: 'codex-client' })),
+      runTurnStreamed: vi.fn(async () => ({
+        thread: { id: 'thread-history' },
+        events: makeEventStream([
+          { type: 'thread.started', thread_id: 'thread-history' },
+          { type: 'item.started', item: { id: 'msg-1', type: 'agent_message', text: 'First turn summary.\n__DONE__' } },
+          { type: 'turn.completed', usage: { input_tokens: 6, cached_input_tokens: 1, output_tokens: 3 } },
+        ]),
+      })),
+      normalizeItem: normalizeCodexSdkItem,
+    };
+
+    const executionId = await engine.startExecution(
+      'wf-codex-sdk',
+      'proj-1',
+      'C:\\repo',
+      { runtimeProvider: 'codex' }
+    );
+
+    await flushMicrotasks(30);
+
+    const execution = engine.getExecution(executionId);
+    expect(execution.chatMessages).toEqual([
+      expect.objectContaining({
+        nodeId: 'node-a',
+        role: 'assistant',
+        text: 'First turn summary.',
+        turnId: 'node-a:1',
+        spawnMode: 'codex-sdk',
+      }),
+    ]);
+
+    const state = execution.agentStates.get('node-a');
+    execution.status = 'running';
+    state.status = 'running';
+    state._codexSdkRunId = 'run-2';
+    state._codexSdkAssistantText = '';
+    state._codexSdkItemSnapshots = new Map();
+    state._codexSdkTurnChatCountStart = execution.chatMessages.length;
+
+    engine._applyCodexSdkItemEvent(
+      executionId,
+      'node-a',
+      { id: 'msg-2', type: 'agent_message', text: 'Second turn summary.\n__DONE__' },
+      'started'
+    );
+    await engine._handleCodexSdkTurnCompleted(
+      executionId,
+      'node-a',
+      { input_tokens: 4, cached_input_tokens: 0, output_tokens: 2 },
+      'run-2'
+    );
+
+    expect(execution.chatMessages).toEqual([
+      expect.objectContaining({
+        nodeId: 'node-a',
+        role: 'assistant',
+        text: 'First turn summary.',
+        turnId: 'node-a:1',
+        spawnMode: 'codex-sdk',
+      }),
+      expect.objectContaining({
+        nodeId: 'node-a',
+        role: 'assistant',
+        text: 'Second turn summary.',
+        turnId: 'node-a:2',
+        spawnMode: 'codex-sdk',
+      }),
+    ]);
+
+    const canonicalEvents = wsBroadcast.mock.calls
+      .map(([, event]) => event)
+      .filter((event) => event.type === 'chat_message' && event.isCanonical);
+
+    expect(canonicalEvents).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        nodeId: 'node-a',
+        text: 'First turn summary.',
+        turnId: 'node-a:1',
+      }),
+      expect.objectContaining({
+        nodeId: 'node-a',
+        text: 'Second turn summary.',
+        turnId: 'node-a:2',
+      }),
+    ]));
+  });
+
+  it('reuses the existing codex thread for operator follow-up after completion', async () => {
+    const executionId = 'exec-codex-operator-followup';
+    const execution = {
+      executionId,
+      workflowId: workflowDef.id,
+      workflowDef,
+      projectId: 'proj-1',
+      projectPath: 'C:\\repo',
+      status: 'completed',
+      startedAt: '2026-04-09T10:00:00.000Z',
+      agentStates: new Map([['node-a', {
+        status: 'done',
+        provider: 'codex',
+        runtimeProvider: 'codex',
+        spawnMode: 'codex-sdk',
+        handoffCount: 0,
+        lastOutputSnippet: 'Completed summary',
+        turnCount: 1,
+        totalCostUsd: 0,
+        totalInputTokens: 8,
+        totalOutputTokens: 4,
+        totalCachedInputTokens: 2,
+        codexThreadId: 'thread-operator-followup',
+        currentToolUse: null,
+        isThinking: false,
+        needsRepair: false,
+      }]]),
+      edgeCounters: new Map(),
+      agentInputBarriers: new Map(),
+      inboundHandoffs: new Map(),
+      workflowContext: {},
+      heartbeatTimer: null,
+      inboxItems: [],
+      chatMessages: [],
+      runtimeBlocker: null,
+      providerStrategy: {
+        mode: 'codex',
+        activeProvider: 'codex',
+        fallbackProvider: null,
+        allowFallback: false,
+      },
+      runtimeProvider: 'codex',
+      activeProvider: 'codex',
+      codexPromptRetryCounts: new Map(),
+      lastFallback: null,
+    };
+    engine._executions.set(executionId, execution);
+    const spawnSpy = vi.spyOn(engine, '_spawnAgent').mockResolvedValue(undefined);
+
+    const result = await engine.sendBroadcast(
+      executionId,
+      'node-a',
+      'Need one more pass on the final answer',
+      { mode: 'soft' }
+    );
+
+    expect(result).toEqual({ sent: true, delivery: 'resumed' });
+    expect(execution.agentStates.get('node-a').status).toBe('running');
+    expect(spawnSpy).toHaveBeenCalledWith(
+      executionId,
+      'node-a',
+      expect.objectContaining({
+        requestedProvider: 'codex',
+        reinjectPrompt: expect.stringContaining('Need one more pass on the final answer'),
+      })
+    );
+    spawnSpy.mockRestore();
+  });
+
   it('supports structured reset for Codex SDK agents by aborting the active turn and clearing thread state', async () => {
     let capturedSignal = null;
     const blockedTurn = new Promise(() => {});

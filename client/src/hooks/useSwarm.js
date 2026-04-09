@@ -15,6 +15,25 @@ function createPendingStreamJsonTurn() {
   };
 }
 
+function sameStructuredTurnId(leftTurnId, rightTurnId) {
+  const normalizedLeft = leftTurnId ?? null;
+  const normalizedRight = rightTurnId ?? null;
+  if (normalizedLeft || normalizedRight) {
+    return normalizedLeft === normalizedRight;
+  }
+  return true;
+}
+
+function shouldDropStructuredFragmentAfterCanonical(nodeState, msg) {
+  if (!nodeState?.canonicalReceived) return false;
+  const canonicalTurnId = nodeState.canonicalTurnId ?? null;
+  const incomingTurnId = msg?.turnId ?? null;
+  if (canonicalTurnId || incomingTurnId) {
+    return canonicalTurnId === incomingTurnId;
+  }
+  return true;
+}
+
 function readStoredExecution() {
   if (typeof window === 'undefined') return null;
   try {
@@ -41,6 +60,41 @@ function clearStoredExecution() {
   } catch {
     // Ignore storage failures.
   }
+}
+
+function hasMessageableAgents(agentStates = {}) {
+  return Object.values(agentStates ?? {}).some((state) => state?.acceptsMessages);
+}
+
+function getSnapshotSelectedRuntimeProvider(snapshot, fallbackProvider = 'auto') {
+  const strategyMode = snapshot?.providerStrategy?.mode ?? null;
+  if (['auto', 'claude', 'codex', 'gemini'].includes(strategyMode)) {
+    return strategyMode;
+  }
+
+  const runtimeProvider = snapshot?.runtimeProvider ?? snapshot?.activeProvider ?? null;
+  if (['claude', 'codex', 'gemini'].includes(runtimeProvider)) {
+    return runtimeProvider;
+  }
+
+  return fallbackProvider;
+}
+
+function buildLatestAssistantSnippetByNode(chatMessages = []) {
+  if (!Array.isArray(chatMessages) || chatMessages.length === 0) {
+    return {};
+  }
+
+  const latestSnippets = {};
+  for (const message of chatMessages) {
+    if (!message?.nodeId) continue;
+    if (!(message.role === 'assistant' || !message.role)) continue;
+    const text = String(message.text ?? '').trim();
+    if (!text) continue;
+    latestSnippets[message.nodeId] = text;
+  }
+
+  return latestSnippets;
 }
 
 export function useSwarm(workflowId) {
@@ -103,6 +157,9 @@ export function useSwarm(workflowId) {
     const currentState = useSwarmStore.getState();
     const nextExecutionId = snapshot.executionId ?? currentState.activeExecutionId;
     const nextStatus = snapshot.status ?? currentState.executionStatus ?? 'running';
+    const sameExecution = Boolean(nextExecutionId) && nextExecutionId === currentState.activeExecutionId;
+    const snapshotChatMessages = Array.isArray(snapshot.chatMessages) ? snapshot.chatMessages : null;
+    const latestAssistantSnippets = buildLatestAssistantSnippetByNode(snapshotChatMessages);
 
     // Normalize server-serialized agentStates to match client format.
     // Server uses flat fields (totalCostUsd, totalInputTokens, totalOutputTokens)
@@ -141,6 +198,24 @@ export function useSwarm(workflowId) {
             lastChatSnippet: clientState.lastChatSnippet,
           };
         }
+        if (latestAssistantSnippets[nodeId]) {
+          normalizedAgentStates[nodeId] = {
+            ...normalizedAgentStates[nodeId],
+            lastChatSnippet: latestAssistantSnippets[nodeId],
+          };
+        }
+        if (sameExecution && clientState?.canonicalReceived && !normalizedAgentStates[nodeId].canonicalReceived) {
+          normalizedAgentStates[nodeId] = {
+            ...normalizedAgentStates[nodeId],
+            canonicalReceived: clientState.canonicalReceived,
+          };
+        }
+        if (sameExecution && clientState?.canonicalTurnId && !normalizedAgentStates[nodeId].canonicalTurnId) {
+          normalizedAgentStates[nodeId] = {
+            ...normalizedAgentStates[nodeId],
+            canonicalTurnId: clientState.canonicalTurnId,
+          };
+        }
       }
     }
 
@@ -163,13 +238,17 @@ export function useSwarm(workflowId) {
       lastFallback: Object.prototype.hasOwnProperty.call(snapshot, 'lastFallback')
         ? snapshot.lastFallback
         : currentState.lastFallback,
+      selectedRuntimeProvider: getSnapshotSelectedRuntimeProvider(
+        snapshot,
+        currentState.selectedRuntimeProvider ?? 'auto'
+      ),
       ...(normalizedAgentStates ? { agentStates: normalizedAgentStates } : {}),
       ...(snapshot.triggerStates ? { triggerStates: snapshot.triggerStates } : {}),
       ...(snapshot.edgeCounters ? { edgeCounters: snapshot.edgeCounters } : {}),
       ...(snapshot.budget ? { budget: snapshot.budget } : {}),
       ...(snapshot.inboxItems ? { inboxItems: snapshot.inboxItems } : {}),
       ...(snapshot.interAgentFeed ? { interAgentFeed: snapshot.interAgentFeed } : {}),
-      ...(snapshot.chatMessages ? { chatMessages: snapshot.chatMessages } : {}),
+      ...(snapshotChatMessages ? { chatMessages: snapshotChatMessages } : {}),
     });
 
     const workflowIdToPersist = snapshot.workflowId ?? snapshot.workflowDef?.id ?? currentState.workflowDef?.id ?? null;
@@ -182,7 +261,7 @@ export function useSwarm(workflowId) {
     }
 
     if (snapshot.workflowDef) {
-      setWorkflowDef(snapshot.workflowDef);
+      setWorkflowDef(snapshot.workflowDef, { preserveExecutionState: true });
       return { executionId: nextExecutionId, status: nextStatus };
     }
 
@@ -198,7 +277,7 @@ export function useSwarm(workflowId) {
 
     try {
       const workflowResponse = await apiGet(`/api/v1/workflows/${workflowIdToLoad}`);
-      setWorkflowDef(workflowResponse?.workflow ?? workflowResponse);
+      setWorkflowDef(workflowResponse?.workflow ?? workflowResponse, { preserveExecutionState: true });
     } catch {
       // Leave the current canvas state intact; runtime snapshot is still applied above.
     }
@@ -322,6 +401,9 @@ export function useSwarm(workflowId) {
         }
       } catch {
         // Silent — output panel just won't have data
+      }
+      if (hasMessageableAgents(status?.agentStates)) {
+        connectWs(stored.executionId);
       }
       return;
     }
@@ -450,7 +532,11 @@ export function useSwarm(workflowId) {
           flushPendingStreamJsonTurn(msg.nodeId);
           break;
         }
-        case 'agent_status':
+        case 'agent_status': {
+          const effectiveSpawnMode = msg.spawnMode ?? useSwarmStore.getState().agentStates[msg.nodeId]?.spawnMode;
+          const shouldResetCanonicalGuard =
+            isStructuredSpawnMode(effectiveSpawnMode)
+            && ['running', 'idle'].includes(msg.status);
           updateAgentState(msg.nodeId, {
             status: msg.status,
             ...(Object.prototype.hasOwnProperty.call(msg, 'spawnMode')
@@ -466,6 +552,9 @@ export function useSwarm(workflowId) {
             ...(Object.prototype.hasOwnProperty.call(msg, 'lastOutputSnippet')
               ? { lastOutputSnippet: msg.lastOutputSnippet }
               : {}),
+            ...(shouldResetCanonicalGuard
+              ? { canonicalReceived: false, canonicalTurnId: null }
+              : {}),
             ...(['done', 'idle'].includes(msg.status)
               ? { currentTool: null, isThinking: false }
               : {}),
@@ -477,6 +566,7 @@ export function useSwarm(workflowId) {
             flushPendingStreamJsonTurn(msg.nodeId);
           }
           break;
+        }
         case 'handoff_started': {
           updateEdgeCounter(msg.edgeId, msg.counter);
           addFeedEvent({ ...msg, timestamp: Date.now() });
@@ -502,7 +592,9 @@ export function useSwarm(workflowId) {
             }
           }
           void applyExecutionSnapshot(msg).then(({ status }) => {
-            if (['stopped', 'completed', 'failed'].includes(status) && wsRef.current === ws) {
+            const liveState = useSwarmStore.getState();
+            const keepWsForMessaging = hasMessageableAgents(liveState.agentStates);
+            if (['stopped', 'completed', 'failed'].includes(status) && wsRef.current === ws && !keepWsForMessaging) {
               // Delay WS close to allow trailing chat_message events to arrive.
               // The ChatExtractor may flush final messages after execution_status
               // is broadcast, and closing immediately loses them.
@@ -532,18 +624,33 @@ export function useSwarm(workflowId) {
                         const store = useSwarmStore.getState();
                         const agentStates = store.agentStates;
                         const existing = new Set(
-                          store.chatMessages.map(m => `${m.nodeId}:${m.timestamp}`)
+                          store.chatMessages.map((m) => `${m.nodeId}:${m.turnId ?? ''}:${m.timestamp}`)
                         );
                         // Track latest assistant message per nodeId for snippet update
                         const latestAssistantByNode = new Map();
                         for (const cm of data.chatMessages) {
-                          // Skip assistant messages for nodes where canonical has already
-                          // been received via WS — REST data may contain stale text_delta
-                          // fragments that would corrupt the canonical text (BUG-CHAT-CLIENT-10)
-                          if ((cm.role === 'assistant' || !cm.role) && cm.nodeId && agentStates[cm.nodeId]?.canonicalReceived) {
+                          // Skip assistant messages only when the same canonical turn is
+                          // already present live. Earlier turns from the same node must
+                          // remain visible after hydration.
+                          const liveState = cm.nodeId ? agentStates[cm.nodeId] : null;
+                          const alreadyHaveCanonicalTurn =
+                            (cm.role === 'assistant' || !cm.role)
+                            && cm.nodeId
+                            && liveState?.canonicalReceived
+                            && (
+                              (cm.turnId && sameStructuredTurnId(liveState.canonicalTurnId, cm.turnId))
+                              || (!cm.turnId && !liveState.canonicalTurnId)
+                            )
+                            && store.chatMessages.some(
+                              (message) =>
+                                message?.nodeId === cm.nodeId
+                                && (message.role === 'assistant' || !message.role)
+                                && sameStructuredTurnId(message.turnId, cm.turnId)
+                            );
+                          if (alreadyHaveCanonicalTurn) {
                             continue;
                           }
-                          const key = `${cm.nodeId}:${cm.timestamp}`;
+                          const key = `${cm.nodeId}:${cm.turnId ?? ''}:${cm.timestamp}`;
                           if (!existing.has(key)) {
                             store.addChatMessage(cm);
                             existing.add(key);
@@ -641,16 +748,17 @@ export function useSwarm(workflowId) {
           const runtimeState = useSwarmStore.getState().agentStates[msg.nodeId];
           const isStructuredAssistantMessage = (msg.role === 'assistant' || !msg.role)
             && isStructuredSpawnMode(msg.spawnMode ?? runtimeState?.spawnMode);
+          const messageTurnId = msg.turnId ?? null;
 
           if (msg.isCanonical) {
             // Guard: empty canonical text must not destroy existing messages (BUG-CHAT-CLIENT-15)
             if (!msg.text) {
-              updateAgentState(msg.nodeId, { canonicalReceived: true });
+              updateAgentState(msg.nodeId, { canonicalReceived: true, canonicalTurnId: messageTurnId });
               break;
             }
             // Mark canonical received BEFORE processing to block any trailing fragments
             // that arrive during the WS close delay (BUG-CHAT-CLIENT-1/3)
-            updateAgentState(msg.nodeId, { canonicalReceived: true });
+            updateAgentState(msg.nodeId, { canonicalReceived: true, canonicalTurnId: messageTurnId });
             // Canonical result text from Claude CLI: replace ALL streamed text_delta
             // fragment messages with a single message containing the correctly assembled
             // text.  Previously we only patched the last fragment, leaving earlier
@@ -668,14 +776,21 @@ export function useSwarm(workflowId) {
                 text: msg.text,
                 timestamp: msg.timestamp ?? Date.now(),
                 spawnMode: currentSpawnMode ?? 'stream-json',
+                ...(messageTurnId ? { turnId: messageTurnId } : {}),
               },
-              (m) => (m.role === 'assistant' || !m.role) && isStructuredSpawnMode(m.spawnMode),
+              (m) =>
+                (m.role === 'assistant' || !m.role)
+                && isStructuredSpawnMode(m.spawnMode)
+                && sameStructuredTurnId(m.turnId, messageTurnId),
             );
           } else {
             // Drop trailing text_delta fragments that arrive after canonical for structured
             // assistant messages — prevents duplicate/corrupted output (BUG-CHAT-CLIENT-1/3)
             const nodeState = useSwarmStore.getState().agentStates[msg.nodeId];
-            if (nodeState?.canonicalReceived && (msg.role === 'assistant' || !msg.role)) {
+            if (
+              (msg.role === 'assistant' || !msg.role)
+              && shouldDropStructuredFragmentAfterCanonical(nodeState, msg)
+            ) {
               break;
             }
             addChatMessage({
@@ -683,6 +798,7 @@ export function useSwarm(workflowId) {
               role: msg.role ?? 'assistant',
               text: msg.text,
               timestamp: msg.timestamp ?? Date.now(),
+              ...(messageTurnId ? { turnId: messageTurnId } : {}),
               ...(isStructuredAssistantMessage
                 ? { spawnMode: msg.spawnMode ?? runtimeState?.spawnMode ?? 'stream-json' }
                 : {}),

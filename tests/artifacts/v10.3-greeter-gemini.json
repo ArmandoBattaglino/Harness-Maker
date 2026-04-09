@@ -1,0 +1,58 @@
+{
+  "scenario": "Greeter Workflow on Gemini",
+  "events": [
+    {
+      "type": "run_clicked",
+      "at": "2026-04-09T16:35:18.656Z"
+    }
+  ],
+  "beforeRun": {
+    "status": "Idle",
+    "emptyStateVisible": false,
+    "msgCount": 0,
+    "nodeTexts": [
+      "🤖\nGreeter\nIdle"
+    ]
+  },
+  "result": {
+    "sawRunning": true,
+    "sawMessages": false,
+    "samples": [
+      {
+        "tSec": 5,
+        "status": "Running",
+        "providerText": "Gemini",
+        "msgCount": 0,
+        "hasDoneToken": false,
+        "hasHandoffToken": false,
+        "nodeTexts": [
+          "🤖\nGreeter\nRunning\n▋"
+        ],
+        "lastMessages": []
+      },
+      {
+        "tSec": 10,
+        "status": "Blocked",
+        "providerText": "Gemini",
+        "msgCount": 0,
+        "hasDoneToken": false,
+        "hasHandoffToken": false,
+        "nodeTexts": [
+          "🤖\nGreeter\nBlocked\n⠋ Waiting for authentication... (Press Esc or Ctrl+C to cancel) │"
+        ],
+        "lastMessages": []
+      }
+    ],
+    "filterCheck": {
+      "found": false
+    },
+    "afterReload": {
+      "status": "Blocked",
+      "msgCount": 0,
+      "messages": [],
+      "runVisible": true,
+      "resetVisible": true
+    },
+    "afterReset": null
+  }
+}

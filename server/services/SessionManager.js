@@ -142,6 +142,8 @@ function sanitizeReplayOutput(replayBuffer) {
 //   status: 'active' | 'killed',
 //   createdAt: Date,
 //   lastActivityAt: Date,
+//   persistent: boolean,
+//   persistentReason: string | null,
 // }
 // -------------------------------------------------------------------------
 
@@ -169,6 +171,10 @@ export class SessionManager {
     const initialPrompt = typeof launchProfile.initialPrompt === 'string'
       ? launchProfile.initialPrompt.trim()
       : '';
+    const persistent = launchProfile.persistent === true;
+    const persistentReason = persistent
+      ? String(launchProfile.persistentReason ?? 'swarm-runtime').trim() || 'swarm-runtime'
+      : null;
 
     if (runtimeProvider === 'codex' && initialPrompt) {
       launchArgs.push(initialPrompt);
@@ -194,6 +200,8 @@ export class SessionManager {
       status: 'active',
       createdAt: new Date(),
       lastActivityAt: new Date(),
+      persistent,
+      persistentReason,
       binaryPath,
       runtimeProvider,
       launchArgs,
@@ -410,6 +418,7 @@ export class SessionManager {
 
       for (const [sessionId, session] of this.#sessions) {
         if (session.status !== 'active') continue;
+        if (session.persistent) continue;
 
         const idleMs = now - session.lastActivityAt.getTime();
         if (idleMs > IDLE_TIMEOUT_MS) {
