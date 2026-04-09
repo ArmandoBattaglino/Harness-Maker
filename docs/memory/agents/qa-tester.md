@@ -1,4 +1,54 @@
 ---
+## 2026-04-09 — Task #492: BUG-TEST-CLIENT-02 — Stabilize Codex handoff E2E harness
+**Status:** COMPLETED
+**Called by:** user (direct)
+
+### Context when I started
+TASK #491 (visual regression determinism) was already COMPLETED. TASK #496 (deterministic server-side unit tests) was COMPLETED out-of-session — +11 new tests, 501/501. The browser E2E probe (`scripts/swarm-codex-handoff-e2e.mjs`) had two known failure modes: reuse mode fails late with "Workflow not found in Swarm UI", and isolated mode times out in `openSwarm()` during startup. The script was classified as "debug/manual only" and needed harness-level fixes so it is at least reliable for manual runs.
+
+### What I did
+1. Read TASK_PLAN.md task #492 acceptance criteria.
+2. Read `scripts/swarm-codex-handoff-e2e.mjs` in full — identified 3 bugs.
+3. Confirmed server/public exists (pre-built client), so `npm run start`'s client rebuild step is unnecessary overhead.
+4. Confirmed `GET /api/v1/workflows/:id` and `POST /api/v1/workflows` endpoints exist in `server/routes/workflows.js`.
+5. Fixed Bug 1 (reuse mode silent workflow absence): added `preflightWorkflowCheck()` function that calls `GET /api/v1/workflows/:id` before opening browser; injects via `POST /api/v1/workflows` if absent; exits with clear error if injection fails.
+6. Fixed Bug 2 (isolated mode timeout): changed `startIsolatedServer()` spawn from `cmd /c 'npm run start'` to `node server/index.js` directly — eliminates 60-120s Vite rebuild overhead.
+7. Fixed Bug 3 (stale server reuse in isolated mode): `acquireServer()` previously short-circuited to reuse any healthy server on port 3314; now only does that for `--reuse-server` mode, always resets + respawns in default isolated mode.
+8. Verified harness syntax: `node --input-type=module --check < scripts/swarm-codex-handoff-e2e.mjs` PASS.
+9. Updated README: `tests/visual/swarm/README.md` now documents all three modes with a table, preflight check behavior, isolated mode change, and the sandbox fallback commands.
+10. Confirmed 501/501 server tests + 52/52 client tests still green after changes.
+11. Marked TASK #492 COMPLETED in docs/TASK_PLAN.md with full completion note.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| `scripts/swarm-codex-handoff-e2e.mjs` | MODIFIED | 3 bug fixes: preflight workflow check, node spawn instead of npm start, no stale-server reuse in isolated mode |
+| `tests/visual/swarm/README.md` | MODIFIED | Full documentation update: three modes table, preflight check docs, sandbox fallback update |
+| `docs/TASK_PLAN.md` | MODIFIED | #492 Status PENDING -> COMPLETED with completion note; header status line updated |
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| Reuse mode: "Workflow not found in Swarm UI" | `acquireServer()` reused healthy server at baseUrl without calling `resetHarnessAppData()` — fixture not present in user's own app-data | Added `preflightWorkflowCheck()` in `--reuse-server` branch; checks GET then injects via POST | FIXED |
+| Isolated mode: openSwarm() timeout | `npm run start` ran full Vite client rebuild (60-120s) eating into health-check budget, leaving <30s for waitForFunction | Changed spawn to `node server/index.js` directly | FIXED |
+| Isolated mode: silent stale-server reuse | `isServerHealthy()` short-circuit at top of `acquireServer()` reused any process on port 3314 without resetting app-data | Moved `isServerHealthy()` check inside `--reuse-server` branch only; isolated mode always resets+respawns | FIXED |
+
+### Decisions I made
+- Keep script as "manual debug probe" (not CI gate): live Codex/GPT API calls are inherently nondeterministic. The CI gate stays `server/tests/swarm-engine-codex-sdk.test.js`. Documented clearly in README.
+- Use `process.execPath` for isolated server spawn (same Node.js binary that runs the script) — avoids PATH resolution issues for the node binary.
+- `preflightWorkflowCheck()` tries injection before failing — self-healing is better than a hard failure when the server just lacks the fixture.
+
+### What I learned
+- The old `acquireServer()` logic had a hidden short-circuit: `if (await isServerHealthy()) { reusing... }` ran BEFORE the `reuseServer` flag check, so any stale process on the harness port would be silently reused with wrong app-data.
+- `npm run start` = `npm run build --prefix client && node server/index.js`. When `server/public` is already built, the client rebuild is pure overhead — always skip it in harness spawns.
+- The `POST /api/v1/workflows` endpoint requires `X-Requested-With: ClaudeCodeManager` header (SEC-06).
+
+### State I'm leaving behind
+TASK #492 COMPLETED. Harness bugs fixed. Script is reliable for manual use. CI gate remains server unit tests (501/501). Remaining V10.8 PENDING: #493 (stale-server guard), #494 (TEST GATE), #495 (AREA CHECKPOINT).
+
+### Handoff
+TASK #493 (stale-server guard for full client verification) is next in V10.8.
+---
 ## 2026-04-09 — Task #446: TEST GATE — V10.0 Full Chat Integration (Browser E2E)
 **Status:** COMPLETED (PASS)
 **Called by:** user (direct)

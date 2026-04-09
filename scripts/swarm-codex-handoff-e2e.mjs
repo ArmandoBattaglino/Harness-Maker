@@ -120,12 +120,12 @@ async function startIsolatedServer() {
   const stdoutStream = createWriteStream(stdoutPath, { flags: 'w' });
   const stderrStream = createWriteStream(stderrPath, { flags: 'w' });
 
-  const command = process.platform === 'win32'
-    ? (process.env.ComSpec ?? 'C:\\Windows\\System32\\cmd.exe')
-    : 'npm';
-  const args = process.platform === 'win32'
-    ? ['/d', '/s', '/c', 'npm run start']
-    : ['run', 'start'];
+  // Use 'node server/index.js' directly instead of 'npm run start' to skip the
+  // client Vite rebuild step.  server/public already contains the compiled client,
+  // so the rebuild is pure waste and can consume 60-120 s on a cold machine,
+  // leaving insufficient time for the health-check + openSwarm waitForFunction.
+  const command = process.execPath; // node binary used to launch this script
+  const args = [path.join(repoRoot, 'server', 'index.js')];
 
   let child;
   try {
@@ -148,7 +148,7 @@ async function startIsolatedServer() {
           `Unable to launch the isolated Codex handoff E2E server (${error.code}).`,
           'Prepare the fixture appdata and reuse an already running server instead:',
           '1. node scripts/swarm-codex-handoff-e2e.mjs --prepare-only',
-          `2. In PowerShell: $env:APPDATA='${appDataRoot}'; $env:PORT='${port}'; $env:NO_OPEN='1'; npm run start`,
+          `2. In PowerShell: $env:APPDATA='${appDataRoot}'; $env:PORT='${port}'; $env:NO_OPEN='1'; node server/index.js`,
           '3. node scripts/swarm-codex-handoff-e2e.mjs --reuse-server',
         ].join('\n')
       );
@@ -169,6 +169,63 @@ async function startIsolatedServer() {
   return child;
 }
 
+/**
+ * Verify that the fixture workflow is present in the server and inject it if absent.
+ *
+ * This is required when --reuse-server is used because the target server may have
+ * been started with different app-data that does not contain the fixture workflow.
+ * Failing late with "Workflow X could not be selected in the Swarm UI" is opaque;
+ * a preflight check surfaces the issue before the browser is opened.
+ */
+async function preflightWorkflowCheck(fixture) {
+  // Try GET /api/v1/workflows/:id
+  let workflowPresent = false;
+  try {
+    const response = await fetch(`${baseUrl}/api/v1/workflows/${fixture.id}`, {
+      headers: { 'X-Requested-With': 'ClaudeCodeManager' },
+    });
+    workflowPresent = response.ok;
+  } catch (_) {
+    // Network error — server may still be starting; treat as absent.
+  }
+
+  if (workflowPresent) {
+    console.log(`Preflight: fixture workflow ${fixture.id} already present in server.`);
+    return;
+  }
+
+  console.log(
+    `Preflight: fixture workflow ${fixture.id} not found in server at ${baseUrl}. ` +
+    'Attempting to inject via POST /api/v1/workflows...'
+  );
+
+  // Inject the fixture workflow so the browser can select it.
+  const injectResponse = await fetch(`${baseUrl}/api/v1/workflows`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'ClaudeCodeManager',
+    },
+    body: JSON.stringify({ ...fixture }),
+  });
+
+  if (!injectResponse.ok) {
+    const body = await injectResponse.text().catch(() => '(unreadable)');
+    throw new Error(
+      [
+        `Preflight FAILED: could not inject fixture workflow into ${baseUrl} (HTTP ${injectResponse.status}).`,
+        `Response: ${body}`,
+        'Start the server with the correct APPDATA pointing to the harness directory instead:',
+        '1. node scripts/swarm-codex-handoff-e2e.mjs --prepare-only',
+        `2. In PowerShell: $env:APPDATA='${appDataRoot}'; $env:PORT='${port}'; $env:NO_OPEN='1'; node server/index.js`,
+        '3. node scripts/swarm-codex-handoff-e2e.mjs --reuse-server',
+      ].join('\n')
+    );
+  }
+
+  console.log(`Preflight: fixture workflow injected successfully.`);
+}
+
 async function acquireServer(fixture) {
   if (prepareOnly) {
     await resetHarnessAppData(fixture);
@@ -176,17 +233,22 @@ async function acquireServer(fixture) {
     return null;
   }
 
-  if (await isServerHealthy()) {
+  if (reuseServer) {
+    // In --reuse-server mode the user controls the server process.
+    // Verify it is healthy first, then ensure the fixture workflow is present.
+    if (!(await isServerHealthy())) {
+      throw new Error(
+        `No running Swarm server found at ${baseUrl}. Start one first, then rerun with --reuse-server.`
+      );
+    }
     console.log(`Reusing running Swarm server at ${baseUrl}`);
+    await preflightWorkflowCheck(fixture);
     return null;
   }
 
-  if (reuseServer) {
-    throw new Error(
-      `No running Swarm server found at ${baseUrl}. Start one first, then rerun with --reuse-server.`
-    );
-  }
-
+  // Isolated mode: always reset app-data and spawn a fresh server.
+  // Do NOT reuse a server that happens to be alive on the port — it may have been
+  // started with different app-data and would silently lack the fixture workflow.
   await resetHarnessAppData(fixture);
   return startIsolatedServer();
 }

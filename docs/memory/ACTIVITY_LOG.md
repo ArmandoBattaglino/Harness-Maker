@@ -1,4 +1,14 @@
-﻿## 2026-04-09 — documenter — Task #479: BUG-BLOCKER-UI-02 documentation audit
+## 2026-04-09 — qa-tester — Task #492: BUG-TEST-CLIENT-02 — Stabilize Codex handoff E2E harness
+**Outcome:** COMPLETED
+**Summary:** Fixed 3 harness bugs in scripts/swarm-codex-handoff-e2e.mjs: (1) reuse-server mode now does a preflight workflow check via API before opening browser and auto-injects the fixture if absent; (2) isolated mode spawns node server/index.js directly instead of npm run start, eliminating 60-120s Vite rebuild overhead that caused the openSwarm() timeout; (3) isolated mode no longer silently reuses a stale server on port 3314 -- always resets app-data and spawns fresh. Script remains manual-only (live Codex API dependency); CI gate is server unit tests (501/501).
+**Files changed:** scripts/swarm-codex-handoff-e2e.mjs, tests/visual/swarm/README.md, docs/TASK_PLAN.md
+**Bugs fixed:** 3 harness bugs (workflow not found, openSwarm timeout, stale server reuse)
+**Decisions made:** Keep probe as manual-only; CI gate = swarm-engine-codex-sdk.test.js
+**Blockers:** none
+**Next:** TASK #493 (stale-server guard for full client verification)
+
+---
+## 2026-04-09 — documenter — Task #479: BUG-BLOCKER-UI-02 documentation audit
 **Outcome:** COMPLETED
 **Summary:** Audited all docs after 3 surgical fixes in SwarmEngine.js for BUG-BLOCKER-UI-02. No README, ARCHITECTURE.md, API.md, or inline comment updates were needed — all three changes are internal private methods. DOC_STATUS.md updated with new Fixed Bugs row and wave summary section for Task #479.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
