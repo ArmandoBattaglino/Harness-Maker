@@ -1,4 +1,25 @@
-﻿## 2026-04-09 — project-manager — V10.0 TEST GATE backfill: 14 PENDING gates marked COMPLETED (PASS)
+﻿## 2026-04-09 — documenter — V10.0 TEST GATE backfill: documentation audit complete
+**Outcome:** COMPLETED
+**Summary:** Administrative cleanup — project-manager marked 14 V10.0 TEST GATE tasks COMPLETED (PASS) in TASK_PLAN.md. No code changed. Audited README.md, ARCHITECTURE.md, API.md, CLAUDE.md, and inline comments; none contain task-count or V10.0 pending state references requiring update. DOC_STATUS.md timestamp updated.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** No planned work remains. Project is fully CLOSED.
+
+---
+
+## 2026-04-09 — code-mapper — V10.0 TEST GATE backfill: CHANGELOG entry recorded, CODE_MAP unchanged
+**Outcome:** COMPLETED
+**Summary:** No source files were modified. Appended CHANGELOG entry documenting the project-manager's backfill of 14 V10.0 TEST GATE tasks from PENDING to COMPLETED (PASS). CODE_MAP.md requires no update — no functions added, modified, or removed.
+**Files changed:** docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** No planned work remains. Project is fully CLOSED.
+
+---
+## 2026-04-09 — project-manager — V10.0 TEST GATE backfill: 14 PENDING gates marked COMPLETED (PASS)
 **Outcome:** COMPLETED
 **Summary:** Backfilled all 14 V10.0 TEST GATE tasks (#418, #420, #422, #424, #426, #428, #430, #432, #434, #436, #438, #440, #442, #445) from PENDING to COMPLETED (PASS). Evidence basis: AREA CHECKPOINT #447 PASS, TEST GATE #446 PASS (browser E2E 8/8), 490/490 server tests green, build clean (507 modules). Zero PENDING entries now remain in TASK_PLAN.md. All plan areas were already CLOSED per the file header.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -5762,6 +5783,16 @@ full self-contained context and acceptance criteria.
 **Decisions made:** Keep Chat View mounted with a truthful empty state even before any run exists; preserve the explicit runtime choice across reload/reset instead of silently drifting back to `Auto`; sanitize blocker snippets/chat server-side before hydration/rendering rather than trying to patch only the visible UI; verify provider-blocker fixes on a fresh app instance when an older local server may still be serving stale code on the default port
 **Blockers:** none
 **Next:** V10.7 client resilience test coverage or another full browser regression sweep if the user wants a broader operator-path pass
+---
+
+## 2026-04-09 — qa-tester — Full client deep test + V10.8 planning
+**Outcome:** COMPLETED
+**Summary:** Ran a full client deep-test pass using the `$claude-cmd-debugger-loop` inspect-first workflow. Automated client checks remained green: `npm test --prefix client` PASS (`49/49`) and `npm run build --prefix client` PASS. Browser/manual verification on the live default server at `http://127.0.0.1:3000` confirmed the dashboard -> project -> Swarm path, idle Chat View empty state, and a clean Codex `Greeter and Poet` run with truthful reload/reset behavior; however, the same long-running server still showed stale Gemini blocker chat pollution (`Structured handoff sent.`) in the blocked path. A fresh server from the current working tree on `http://127.0.0.1:3316` removed that discrepancy: the Codex success path remained clean, Gemini `Blocked` showed a concise blocker summary, and Gemini `Stopped` kept Chat View empty without auth/banner spam. The pass also exposed two verification/harness problems: `npm run test:visual:swarm:reuse` failed all six cases with `Infinity pixels changed` because current `.react-flow` captures are `682px` wide where baselines are `1018px`, and the Codex handoff E2E harness was unreliable in both modes (`reuse-server` failed late because the fixture workflow was missing from shared app-data; isolated mode timed out in `openSwarm`). These findings were bulk-planned into new V10.8 tasks #491-#495.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (deep test + planning only)
+**Decisions made:** Treat the fresh-server `3316` result as the current-code truth for client behavior; classify the `3000` Gemini blocker pollution as stale-server verification drift until proven otherwise; treat the visual regression width mismatch and Codex handoff harness failures as first-class follow-up work rather than silently ignoring them as test noise
+**Blockers:** none
+**Next:** Execute V10.8 starting from visual-regression determinism (#491), handoff E2E reliability (#492), and stale-server freshness policy (#493), then rerun the full client verification gate (#494)
 ---
 
 ## 2026-04-09 — debugger — Codex downstream handoff regression hardening

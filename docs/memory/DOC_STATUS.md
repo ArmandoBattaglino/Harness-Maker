@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-09 after Tasks #437, #439, #441, #443, #444 (V10.0 Wave 6 LOW batch — ChatPanel scroll-lock pattern + mount reset, ChatMessage unused import removal, ChatExtractor registerNodePrompt type guard, chatTextNormalization CHAT_WORDS dedup)._
+_Last updated: 2026-04-09 after V10.0 TEST GATE backfill cleanup (project-manager marked 14 previously-passing TEST GATE tasks #418/#420/#422/#424/#426/#428/#430/#432/#434/#436/#438/#440/#442/#445 as COMPLETED in TASK_PLAN.md — administrative only, no code changed)._
 
 ## Release Status
 **v9.0.0 — V9.0 Stream-JSON Agent Migration CLOSED for core semantics, display fidelity FIXED**

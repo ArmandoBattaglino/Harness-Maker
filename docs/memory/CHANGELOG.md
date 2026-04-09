@@ -1,6 +1,34 @@
 # CHANGELOG — Claude Code Visual Manager
 
 ---
+## 2026-04-09 — V10.0 TEST GATE backfill (Tasks #418/#420/#422/#424/#426/#428/#430/#432/#434/#436/#438/#440/#442/#445)
+**Agent:** project-manager — recorded by code-mapper
+**Triggered by:** Post-wave cleanup: 14 V10.0 TEST GATE tasks had remained PENDING in docs/TASK_PLAN.md even though all corresponding fixes were implemented and the full test suite was green (490+ pass, browser E2E 8/8 PASS, AREA CHECKPOINT #447 PASS).
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| docs/TASK_PLAN.md | MODIFIED | 14 TEST GATE tasks (#418, #420, #422, #424, #426, #428, #430, #432, #434, #436, #438, #440, #442, #445) status changed from PENDING to COMPLETED (PASS) |
+| docs/memory/PROGRESS.md | MODIFIED | Moved backfilled TEST GATEs to Completed section |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended project-manager session entry |
+| docs/memory/agents/project-manager.md | MODIFIED | Appended session log |
+
+### Functions Added
+- None
+
+### Functions Modified
+- None
+
+### Functions Removed
+- None
+
+### Connection Changes
+- None — no source code was modified in this session.
+
+### Impact on Other Code
+- None. All changes are documentation/memory only. The project is now in a fully CLOSED state with 0 PENDING tasks across all V10.0 areas.
+
+---
 ## 2026-04-09 — Task #437: ChatPanel scroll-lock
 **Agent:** frontend-dev — mapped by code-mapper
 **Triggered by:** Wave 6 V10.0 LOW batch. ChatPanel always auto-scrolled to bottom on every new message, making it impossible to read earlier messages during active execution.
