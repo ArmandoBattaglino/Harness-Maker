@@ -1,4 +1,91 @@
 ---
+## 2026-04-09 — Task #493: BUG-TEST-CLIENT-03 — Guard against stale local server drift
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+V10.8 was opened after a full client deep test (2026-04-09) found that the long-running server on :3000 showed stale Gemini blocker chat pollution (`Structured handoff sent.`) while a fresh server at :3316 was clean. Tasks #491 and #492 were already COMPLETED. Task #493 required creating an explicit freshness policy for the client verification scripts so stale-server drift cannot look like a current-code regression.
+
+Server was at 501/501 tests (including the +11 Codex SDK handoff coverage from Task #496). Client build at 507 modules, clean. Three scripts existed in scripts/: swarm-visual-regression.mjs, swarm-codex-handoff-e2e.mjs, swarm-e2e-chat-check.mjs. The first two used isolated or explicit --reuse-server modes. The third (swarm-e2e-chat-check.mjs) always targeted :3000 with no freshness guard.
+
+### What I did
+1. Read all three existing scripts to understand their reuse-server patterns.
+2. Read /health endpoint in server/index.js — confirmed it exposes `uptime` (process.uptime() in seconds) and `version`.
+3. Created scripts/check-server-freshness.mjs — standalone guard utility:
+   - Fetches /health with 5s timeout; exits 2 if unreachable
+   - Compares uptime against configurable threshold (default 30 min)
+   - Walks server/ source files (excl. public/, node_modules/, tests/) to find newest mtime
+   - If newest mtime > server start time, flags the specific file and drift duration
+   - Exit 0=fresh, 1=stale (strict, blocks pipelines), 2=unreachable
+   - --warn-only flag (or SERVER_FRESHNESS_WARN_ONLY=1) to downgrade to warning
+   - --url, --threshold flags for override
+4. Updated swarm-e2e-chat-check.mjs:
+   - Added fileURLToPath import to fix repoRoot calculation (was using process.cwd() — incorrect)
+   - Added checkServerFreshness() async function inline (same mtime logic, same threshold approach)
+   - Called at start of main() before any browser work
+   - Controlled by SWARM_E2E_SKIP_FRESHNESS_CHECK=1 and SWARM_E2E_FRESHNESS_THRESHOLD_MINUTES env vars
+   - Warning-only (never aborts the chat check run — results annotated, not blocked)
+5. Updated swarm-visual-regression.mjs:
+   - Added fetchHealthData() helper
+   - Added warnIfServerStale() function in acquireServer() context
+   - Called from acquireServer() when a running server is detected (reuse path)
+   - Warning-only (visual regression continues but output is annotated)
+   - Controlled by SWARM_VISREG_FRESHNESS_THRESHOLD_MINUTES env var
+6. Updated package.json: added check:server-freshness and check:server-freshness:warn npm scripts
+7. Verified all three scripts pass `node --check` (syntax)
+8. Ran `npm test --prefix server` — 501/501 PASS
+9. Ran `npm run build --prefix client` — 507 modules, clean
+10. Smoke-tested check-server-freshness.mjs against unreachable port — exits 2 with clear message
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| scripts/check-server-freshness.mjs | CREATED | Standalone stale-server guard utility with uptime threshold + source mtime drift detection |
+| scripts/swarm-e2e-chat-check.mjs | MODIFIED | Added fileURLToPath-based repoRoot, inline checkServerFreshness() function, called at main() start |
+| scripts/swarm-visual-regression.mjs | MODIFIED | Added fetchHealthData(), warnIfServerStale(), called from acquireServer() on reuse path |
+| package.json | MODIFIED | Added check:server-freshness and check:server-freshness:warn scripts |
+| docs/TASK_PLAN.md | MODIFIED | Task #493 PENDING → COMPLETED with completion note, acceptance criteria checked |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Task #493 entry prepended |
+| docs/memory/PROGRESS.md | MODIFIED | Task #493 completion note prepended |
+
+### Improvements delivered
+- Full client verification now has an explicit freshness policy: any script targeting a shared/long-running server will warn when stale
+- Stale-process risk surfaces as clearly-labeled WARNING output (not silent)
+- check-server-freshness.mjs can be used as a pipeline gate (exit 1 if stale, strict mode)
+- swarm-e2e-chat-check.mjs and swarm-visual-regression.mjs annotate their output when running against a stale server — results cannot be silently misread
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| swarm-e2e-chat-check.mjs syntax error after initial Edit | Edit tool inserted function body without closing brace, merging module-level const declarations inside the function | Rewrote the file in full with Write tool | FIXED |
+
+### Decisions I made
+- warn-only inside the browser E2E scripts (swarm-e2e-chat-check, swarm-visual-regression) — these scripts have valuable results even when the server is stale; blocking them would hide information. The warning is sufficient to flag the result quality.
+- strict-by-default in check-server-freshness.mjs — when called as a pipeline gate, a stale server should block. Use --warn-only to soften.
+- Exit code 2 for unreachable server — distinct from 0 (fresh) and 1 (stale) so callers can distinguish "can't check" from "checked and stale"
+- Excluded server/public/ and server/node_modules/ from mtime scan — build artefacts and deps change independently of source code and would produce false positives
+
+### What I learned
+- `process.cwd()` in scripts/ gives the working directory at invocation time, not the script location. Using `fileURLToPath(import.meta.url)` + `path.resolve(__dirname, '..')` is the correct pattern for ESM scripts that need repoRoot.
+- /health endpoint already exposes `uptime` (seconds since process start) — no server changes needed, the existing endpoint is sufficient.
+- Edit tool can fail to close function braces when inserting large blocks at a pattern boundary. For large rewrites, Write tool is safer.
+
+### State I'm leaving behind
+- scripts/check-server-freshness.mjs: fully functional, syntax clean, exit 0/1/2
+- swarm-e2e-chat-check.mjs: freshness check runs at main() start; always warn-only, controlled by env var
+- swarm-visual-regression.mjs: freshness check in acquireServer() reused-server path; always warn-only
+- package.json: two new npm scripts (check:server-freshness, check:server-freshness:warn)
+- Server 501/501, client build 507 modules clean
+- TASK #493 COMPLETED in TASK_PLAN.md
+
+### Handoff
+TASK #494 (TEST GATE — V10.8 full client verification pack) is now unblocked. It requires:
+- npm test --prefix client passes
+- npm run build --prefix client passes
+- npm run test:visual:swarm passes in its intended mode
+- npm run test:e2e:swarm:codex-handoff passes in its intended mode
+- Manual browser sanity confirms Codex success path and Gemini blocker path on current target
+---
 ## 2026-03-28 — Task #81: Build Verification + v3.0.0 Tag
 **Status:** COMPLETED
 **Called by:** orchestrator
