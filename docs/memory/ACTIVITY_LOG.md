@@ -5837,3 +5837,25 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** If desired, rerun the browser probe when investigating a live provider-specific handoff issue; otherwise rely on the new Codex SDK regression plus the existing `swarm-engine` compact-prompt tests for routine verification
 ---
+
+---
+## 2026-04-09 — frontend-dev — Task #476: BUG-CHAT-CLIENT-12 — Restore Chat View empty state before first run and after reset
+**Outcome:** COMPLETED (already implemented by prior session — verification only)
+**Summary:** Investigated TASK #476 to implement the Chat View empty-state fix. Found that the fix was already fully implemented and verified by a prior agent session on 2026-04-09. All three acceptance criteria are met: `sidePanelOpen: true` in initial Zustand state, truthful "No messages yet" empty state in ChatPanel, and `reset()` restoring both flags via `buildClearedExecutionState()`. Both test suites pass (52/52 client, 501/501 server) and the build is clean (507 modules).
+**Files changed:** none (task already complete)
+**Bugs fixed:** none (already fixed)
+**Decisions made:** No code changes — implementation was already correct and verified
+**Blockers:** none
+**Next:** V10.7/V10.8 follow-up work per PROGRESS.md
+---
+
+---
+## 2026-04-09 — debugger — Task #479: BUG-BLOCKER-UI-02 — Gemini blocked/stopped node card raw text
+**Outcome:** COMPLETED
+**Summary:** Fixed three root causes causing raw Gemini CLI/auth/banner text to appear in blocked and stopped agent node cards. (1) `_normalizeSnippetLine` now strips Dingbat Unicode checkmarks (✓) from line beginnings so `/^signed in with google/i` correctly matches `✓ Signed in with Google`. (2) `_handleRuntimeBlocker` now uses the clean blocker message for `provider_unavailable` blockers instead of sanitized PTY banner noise. (3) `stopExecution` now clears `pinnedDisplaySnippet` alongside `runtimeBlocker` to prevent stale blocked-state text persisting in stopped nodes.
+**Files changed:** server/services/SwarmEngine.js (3 targeted changes)
+**Bugs fixed:** BUG-BLOCKER-UI-02 (3 root causes fixed)
+**Decisions made:** For `provider_unavailable` blockers prefer clean message over sanitized snippet; for `rate_limited`/`prompt_rejected` preserve existing sanitize-first logic.
+**Blockers:** none
+**Next:** V10.8 tasks #491-#495 remain pending (visual regression, E2E harness, stale-server guard)
+---

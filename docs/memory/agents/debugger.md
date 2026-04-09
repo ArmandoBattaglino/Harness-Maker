@@ -1346,3 +1346,56 @@ Both fixes applied. Client build clean, 488/488 server tests pass. No regression
 ### Handoff
 None — task fully self-contained. QA should verify visually that stream-json output no longer has spurious spaces.
 ---
+
+---
+## 2026-04-09 — Task #479: BUG-BLOCKER-UI-02 — Suppress raw Gemini CLI/auth banner text in blocked and stopped node cards
+**Status:** COMPLETED
+**Called by:** user (session restart — task was marked COMPLETED in TASK_PLAN but code fix was never committed)
+
+### Context when I started
+TASK #479 had been marked COMPLETED and V10.6 area CLOSED in the task plan, but the actual code fix was never applied — `git diff HEAD` confirmed SwarmEngine.js had no prior changes. The bug: blocked Gemini node cards showed raw CLI/auth/banner text (`Signed in with Google /auth ... > Type your message`) inside the agent node card. After `Stop`, the node retained the raw terminal noise as the displayed snippet.
+
+### What I did
+1. Read all memory files in parallel (PROJECT.md, DECISIONS.md, PROGRESS.md, CODE_MAP.md, CONTEXT.md, ACTIVITY_LOG.md, debugger.md).
+2. Read AgentNode.jsx, useSwarm.js (in sections), SwarmEngine.js (targeted grep + reads).
+3. Traced the execution path: PTY data → `_runtimeScanBuffer` → `_snippetSourceBuffer` → `lastOutputSnippet = _buildSemanticSnippet(...)` → `_handleRuntimeBlocker` (reads `state.lastOutputSnippet`) → `pinnedDisplaySnippet`.
+4. Identified THREE root causes:
+   - **RC-1**: `_normalizeSnippetLine` stripped many leading Unicode chars (box-drawing, bullets) but NOT Dingbat checkmarks like `✓` (U+2713). So `✓ Signed in with Google` bypassed the `/^signed in with google\b/i` noise pattern due to the `^` anchor.
+   - **RC-2**: `_handleRuntimeBlocker` preferred the sanitized `lastOutputSnippet` over the clean blocker message (`_buildRuntimeBlockerDisplaySnippet`). For `provider_unavailable` blockers, the PTY only contains CLI banner noise — there's no AI work output — so sanitizing the existing snippet is wrong. Any noise line slipping through the sanitizer becomes the `pinnedDisplaySnippet`.
+   - **RC-3**: `stopExecution` cleared `state.runtimeBlocker = null` but did NOT clear `state.pinnedDisplaySnippet = null`. When `_broadcastAgentStatus` ran post-stop, `_refreshAgentSnippet` found the non-null `pinnedDisplaySnippet` and returned it as the stopped node's snippet.
+5. Applied three targeted fixes in SwarmEngine.js.
+6. Ran `npm test --prefix server` → 501/501 PASS.
+7. Ran `npm run build --prefix client` → 507 modules, 0 errors.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SwarmEngine.js | MODIFIED | 3 targeted fixes: (1) expanded leading-char strip in `_normalizeSnippetLine` to include Dingbat checkmarks U+2713/2714/2717/2718 and full U+2700-27BF range; (2) `_handleRuntimeBlocker` now prefers clean blocker message for `provider_unavailable` type, avoiding sanitized PTY banner noise; (3) `stopExecution` now clears `state.pinnedDisplaySnippet = null` alongside `runtimeBlocker`. |
+
+### Improvements delivered
+- Blocked Gemini nodes show `"Gemini requires authentication or an API key before the swarm agent can continue."` instead of raw banner text
+- `✓ Signed in with Google` and similar checkmark-prefixed lines now correctly filtered as noise
+- Stopped nodes no longer retain stale blocker snippet from a previous blocked state
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| `✓ Signed in with Google` bypasses noise filter | `_normalizeSnippetLine` didn't strip Dingbat Unicode chars (U+2700-27BF incl. ✓=U+2713) from line start | Expanded regex range from `\u2720-\u2740` to `\u2700-\u27bf` + explicit U+2713/2714/2717/2718 | FIXED |
+| `_handleRuntimeBlocker` uses raw PTY noise as blockerSnippet | Preferred sanitized `lastOutputSnippet` over clean blocker message; sanitizer doesn't catch 100% of Gemini banner lines | For `provider_unavailable` type, skip sanitized snippet and use clean blocker message directly | FIXED |
+| Stopped nodes retain stale blocker snippet | `stopExecution` cleared `runtimeBlocker` but not `pinnedDisplaySnippet`; `_refreshAgentSnippet` returned pinned snippet for stopped state | Added `state.pinnedDisplaySnippet = null` in `stopExecution` cleanup loop | FIXED |
+
+### Decisions I made
+- For `provider_unavailable` blockers: always use clean blocker message (auth issue fires before any AI work exists). For other blockers (`rate_limited`, `prompt_rejected`): keep existing sanitize-first logic (agent may have produced real output before being blocked).
+- Kept the regex fix minimal: added explicit `\u2713\u2714\u2717\u2718` in addition to the full `\u2700-\u27bf` range, both for clarity and to cover the most common Gemini CLI checkmarks explicitly.
+
+### What I learned
+- TASK_PLAN entries marked COMPLETED can still have uncommitted code — always verify with `git diff HEAD` before assuming a fix is applied.
+- Gemini CLI uses `✓` (U+2713, "CHECK MARK", Dingbats block) as a status prefix. The Dingbats range U+2700-U+27BF is distinct from Box Drawing (U+2500-U+257F) and Miscellaneous Technical (U+2700+) ranges already in the strip regex.
+- `pinnedDisplaySnippet` is not automatically cleared when `status` transitions — it must be explicitly nulled in every terminal state transition (`stopped`, etc.).
+
+### State I'm leaving behind
+Fix complete. 501/501 server tests pass, client build clean (507 modules). `SwarmEngine.js` has 3 targeted changes. No other files modified.
+
+### Handoff
+None — task fully self-contained. The area (V10.6) was already CLOSED in TASK_PLAN. Memory updated; no further action needed unless visual regression testing reveals additional Gemini banner patterns.
+---

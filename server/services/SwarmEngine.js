@@ -2253,7 +2253,7 @@ class SwarmEngine {
 
   _normalizeSnippetLine(rawLine = '') {
     return String(rawLine ?? '')
-      .replace(/^[\s\u2022\u00b7\u203a\u25e6\u25cf\u2500-\u257f\u2580-\u259f\u2720-\u2740*+|>]+/, '')
+      .replace(/^[\s\u2022\u00b7\u203a\u25e6\u25cf\u2500-\u257f\u2580-\u259f\u2700-\u27bf\u2713\u2714\u2717\u2718*+|>]+/, '')
       .replace(/\t/g, ' ')
       .replace(/[ ]{2,}/g, ' ')
       .replace(/^\s*exactly these lines and then __done__:\s*/i, '')
@@ -3826,8 +3826,18 @@ class SwarmEngine {
       nodeId,
     };
 
-    const blockerSnippet = this._sanitizeDisplaySnippetText(String(state.lastOutputSnippet ?? '').trim())
-      || this._buildRuntimeBlockerDisplaySnippet(nextBlocker);
+    // For provider_unavailable blockers (auth/API key issues), the CLI fires the
+    // blocker before any AI work output exists — the PTY contains only CLI banner
+    // noise (Gemini sign-in lines, prompts, etc.). Always use the clean blocker
+    // message for these so no raw terminal banner text leaks into the node card.
+    // For other blocker types (rate_limited, prompt_rejected), the agent may have
+    // produced real output before blocking, so try the sanitized snippet first and
+    // fall back to the clean message only if sanitization yields nothing.
+    const cleanBlockerMessage = this._buildRuntimeBlockerDisplaySnippet(nextBlocker);
+    const sanitizedExistingSnippet = nextBlocker.type !== 'provider_unavailable'
+      ? this._sanitizeDisplaySnippetText(String(state.lastOutputSnippet ?? '').trim())
+      : '';
+    const blockerSnippet = sanitizedExistingSnippet || cleanBlockerMessage;
     state.runtimeBlocker = nextBlocker;
     state.status = 'blocked';
     state.lastOutputSnippet = blockerSnippet;
@@ -7317,6 +7327,7 @@ class SwarmEngine {
       state.sessionId = null;
       state.tapFn = null;
       state.runtimeBlocker = null;
+      state.pinnedDisplaySnippet = null;
       state._pendingCodexSdkStopMode = null;
       this._clearCodexSdkAbortController(state);
     }
