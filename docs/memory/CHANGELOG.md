@@ -4028,3 +4028,50 @@ No new connections introduced in this checkpoint task. All connection changes we
 - All markdown rendering in the Unified Chat View is now HTML-sanitized. Any agent output containing raw HTML tags (script, iframe, etc.) will be stripped before rendering. Legitimate markdown formatting (bold, italic, links, code blocks, tables) is preserved by rehype-sanitize's default schema.
 
 ---
+
+---
+## 2026-04-09 — Task #433: chatTextNormalization 200-char length cap (Wave 4, V10.0)
+**Agent:** backend-dev — mapped by code-mapper
+**Triggered by:** Performance hardening. The 4 DP functions in chatTextNormalization.js had no upper bound on input token length, allowing pathological inputs to cause excessive memory allocation and CPU time.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/chatTextNormalization.js | MODIFIED | Added `if (token.length > 200) return ...;` early-exit guard to splitKnownWordSequence, restoreCompressedChatToken, aggressivelyRestoreLongChatToken, and restoreCompressedChatTokenGreedy |
+
+### Functions Modified
+- `splitKnownWordSequence(token)` in `server/services/chatTextNormalization.js` — added `if (token.length > 200) return null;` guard
+- `restoreCompressedChatToken(token)` in `server/services/chatTextNormalization.js` — added `if (token.length > 200) return token;` guard
+- `aggressivelyRestoreLongChatToken(token)` in `server/services/chatTextNormalization.js` — added `if (token.length > 200) return token;` guard
+- `restoreCompressedChatTokenGreedy(token, normalizedToken)` in `server/services/chatTextNormalization.js` — added `if (token.length > 200) return null;` guard
+
+### Connection Changes
+- No connection changes — all 4 functions retain same signatures and callers; guards are pure early-returns
+
+### Impact on Other Code
+- `normalizeChatDisplayText` (sole public export) is unaffected at the API level — tokens > 200 chars are returned unmodified instead of being processed through DP
+- ChatExtractor.js callers of normalizeChatDisplayText are unaffected
+
+---
+
+---
+## 2026-04-09 — Task #435: REST hydration canonicalReceived skip (Wave 5, V10.0)
+**Agent:** frontend-dev — mapped by code-mapper
+**Triggered by:** BUG-CHAT-CLIENT-10. REST hydration was re-injecting stale text_delta fragments for assistant messages even when canonical text had already been received via WS.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/hooks/useSwarm.js | MODIFIED | REST hydration loop inside execution_status handler now checks `agentStates[cm.nodeId]?.canonicalReceived` and skips assistant messages for nodes where canonical was already received |
+
+### Functions Modified
+- `connectWs(executionId)` execution_status handler's REST hydration loop in `client/src/hooks/useSwarm.js` — added canonicalReceived check: skips assistant messages for nodes with flag set
+
+### Connection Changes
+- REST hydration path now reads `agentStates` from store inside chatMessages loop (new consumer of agentStates[nodeId].canonicalReceived)
+
+### Impact on Other Code
+- No breaking changes — canonicalReceived flag was already set by chat_message handler (Task #419); this adds a new consumer
+- Nodes that received canonical text via WS will have clean output preserved through page refresh cycles
+
+---

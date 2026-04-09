@@ -1,4 +1,46 @@
 ---
+## 2026-04-09 — Tasks #433+#435: Waves 4+5 V10.0 code mapping
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task trio, parallel with PM + documenter)
+
+### Context when I started
+Tasks #433 and #435 just completed. #433 added 200-char length caps to 4 DP functions in chatTextNormalization.js. #435 added canonicalReceived skip to REST hydration in useSwarm.js.
+
+### What I did
+1. Read both modified files in full
+2. Grepped for callers/connections of the modified functions
+3. Added 4 new detailed function entries to CODE_MAP.md for the capped DP functions
+4. Updated connectWs complexity notes for the REST hydration canonicalReceived change
+5. Appended 2 CHANGELOG entries (one per task)
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Added 4 DP function entries, updated connectWs notes |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended entries for Tasks #433 and #435 |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- CODE_MAP now has individual entries for all 4 DP normalization functions with full call graphs
+- REST hydration canonicalReceived interaction documented in connectWs complexity notes
+
+### Bugs I encountered
+None
+
+### Decisions I made
+- Added individual entries for each DP function rather than updating the umbrella entry alone, because each has distinct callers and return semantics
+
+### What I learned
+- The chatTextNormalization.js DP functions form a call hierarchy: normalizeChatDisplayText -> aggressivelyRestoreLongChatToken -> splitKnownWordSequence / restoreCompressedChatTokenGreedy, and restoreCompressedChatToken -> splitKnownWordSequence / restoreCompressedChatTokenGreedy
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md fully up to date through Tasks #433 and #435.
+
+### Handoff
+None -- task fully self-contained.
+
+---
 ## 2026-04-08 — Tasks #407+#408: BUG-DL-STALE-STATE-1 + BUG-DL-COST-VANISH-1 mapping
 **Status:** COMPLETED
 **Called by:** orchestrator (post-task trio, parallel with PM + documenter)

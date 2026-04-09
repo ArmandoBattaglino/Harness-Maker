@@ -1,4 +1,15 @@
-﻿## 2026-04-09 — documenter — Tasks #433, #435: V10.0 Waves 4+5 documentation audit
+﻿## 2026-04-09 — code-mapper — Tasks #433, #435: Code map update for Waves 4+5 (V10.0)
+**Outcome:** COMPLETED
+**Summary:** Mapped Task #433 (200-char length cap on 4 DP functions in chatTextNormalization.js) and Task #435 (REST hydration canonicalReceived skip in useSwarm.js). Added detailed function entries for all 4 capped DP functions. Updated connectWs complexity notes for REST hydration change. No breaking changes.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** Next wave code mapping when tasks complete
+
+---
+
+## 2026-04-09 — documenter — Tasks #433, #435: V10.0 Waves 4+5 documentation audit
 **Outcome:** COMPLETED
 **Summary:** Audited all docs after Tasks #433 (chatTextNormalization.js 200-char DP cap) and #435 (useSwarm.js REST hydration canonicalReceived guard). Both changes are internal performance/correctness fixes with no API, architecture, or config impact. Updated DOC_STATUS.md timestamp and inline comments status. All other docs remain accurate.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
