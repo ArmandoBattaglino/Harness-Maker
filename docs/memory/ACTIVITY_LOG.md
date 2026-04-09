@@ -5470,3 +5470,35 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** none — mapping task complete
 ---
+
+---
+## 2026-04-09 — frontend-dev — Task #429: BUG-CHAT-CLIENT-6 — ChatPanel toolUse accumulation fix
+**Outcome:** COMPLETED
+**Summary:** Fixed ChatPanel.jsx line 93 to accumulate toolUse arrays across grouped messages using spread instead of replacing. All tool calls from grouped messages are now visible.
+**Files changed:** client/src/canvas/ChatPanel.jsx
+**Bugs fixed:** BUG-CHAT-CLIENT-6 — toolUse overwritten in message grouping
+**Decisions made:** none
+**Blockers:** none
+**Next:** TEST GATE #430
+
+---
+## 2026-04-09 — frontend-dev — Task #431: BUG-CHAT-CLIENT-11 — HitlChatCard double-click guard
+**Outcome:** COMPLETED
+**Summary:** Added useRef-based synchronous guard (sendingRef) to HitlChatCard handleApproveConfirm and handleReject to prevent duplicate API calls from rapid double-clicks.
+**Files changed:** client/src/canvas/HitlChatCard.jsx
+**Bugs fixed:** BUG-CHAT-CLIENT-11 — double-click on Approve/Reject sent duplicate API calls
+**Decisions made:** none
+**Blockers:** none
+**Next:** TEST GATE #432
+---
+
+---
+## 2026-04-09 — documenter — Tasks #421, #423, #425: V10.0 Wave 2 documentation audit
+**Outcome:** COMPLETED
+**Summary:** Audited all docs after Wave 2. Updated README.md (security: rehype-sanitize), PROJECT.md (tech stack: rehype-sanitize 6.x), DOC_STATUS.md (refreshed 4 rows). ARCHITECTURE.md and API.md still accurate -- no structural or contract changes in Wave 2.
+**Files changed:** README.md, docs/memory/PROJECT.md, docs/memory/DOC_STATUS.md
+**Bugs fixed:** none
+**Decisions made:** ARCHITECTURE.md and API.md do not need updates for internal ChatExtractor buffer key change or defensive nodeId guard
+**Blockers:** none
+**Next:** nothing -- documentation current through V10.0 Wave 2
+---

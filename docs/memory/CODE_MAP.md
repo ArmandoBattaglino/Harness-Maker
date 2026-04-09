@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-09 — after Tasks #417+#419: Stream-json canonical chatMessages + client canonicalReceived flag — mapped by code-mapper_
+_Last updated: 2026-04-09 — after Tasks #421+#423+#425 (Wave 2, V10.0): ChatExtractor compound keys, useSwarm nodeId guard, ChatMessage XSS sanitize — mapped by code-mapper_
 
 > **PROJECT STATUS: V9.0 STREAM-JSON MIGRATION CLOSED + V9.1 CODEX SDK SWARM INTEGRATION CLOSED — 402 TASKS (401 COMPLETE/PASS, 1 DEFERRED, 0 PENDING)**
 > Claude now uses the structured `stream-json` path and Codex now has a parallel `codex-sdk` structured path, with PTY retained for Gemini/live terminal work and truthful Codex fallback scenarios. Verification: 488/488 backend tests pass, client build 501 modules.

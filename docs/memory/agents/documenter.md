@@ -3496,3 +3496,48 @@ DOC_STATUS.md is updated. All docs are accurate for the #406 fix. Two LOW bugs r
 ### Handoff
 None -- documentation audit complete for this task.
 ---
+
+---
+## 2026-04-09 — Tasks #421, #423, #425: V10.0 Wave 2 documentation audit
+**Status:** COMPLETED
+**Called by:** orchestrator (post-Wave-2 documentation update)
+
+### Context when I started
+V10.0 Wave 2 completed three tasks: ChatExtractor compound buffer keys (#421), useSwarm undefined nodeId guard (#423), and ChatMessage rehype-sanitize XSS prevention (#425). Existing docs were current through Wave 1 (#417/#419).
+
+### What I did
+1. Read all modified files: ChatExtractor.js, SwarmEngine.js, useSwarm.js, ChatMessage.jsx, AgentNode.jsx, package.json
+2. Audited README.md, ARCHITECTURE.md, API.md, PROJECT.md, DOC_STATUS.md for staleness
+3. Updated README.md Security section: added rehype-sanitize Markdown XSS prevention bullet
+4. Updated PROJECT.md tech stack table: added rehype-sanitize 6.x entry
+5. Updated DOC_STATUS.md: refreshed header, README, PROJECT.md, and inline comments rows
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| README.md | MODIFIED | Security section: added rehype-sanitize XSS bullet |
+| docs/memory/PROJECT.md | MODIFIED | Tech stack table: added rehype-sanitize 6.x row |
+| docs/memory/DOC_STATUS.md | MODIFIED | Refreshed header and 4 rows for Wave 2 changes |
+| docs/memory/agents/documenter.md | MODIFIED | This session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Wave 2 doc audit entry |
+
+### Improvements delivered
+- rehype-sanitize dependency is now documented in tech stack and security sections
+- DOC_STATUS.md reflects current documentation health after Wave 2
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- ARCHITECTURE.md does not need updates: ChatExtractor compound buffer key is an internal implementation detail not documented at the architecture level. useSwarm nodeId guard is a defensive fix. rehype-sanitize is a dependency addition, not a structural change.
+- API.md does not need updates: no endpoint or WS event contract changes in Wave 2.
+
+### What I learned
+- ChatExtractor buffer keys were previously just nodeId, which could collide across executions. The compound key executionId:nodeId prevents cross-execution buffer pollution.
+
+### State I'm leaving behind
+All documentation is current through V10.0 Wave 2. No stale sections.
+
+### Handoff
+None -- task fully self-contained.
+---

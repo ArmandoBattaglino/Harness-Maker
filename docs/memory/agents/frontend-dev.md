@@ -3145,3 +3145,79 @@ XSS vector is closed. Client builds clean. TEST GATE #426 should verify.
 ### Handoff
 qa-tester should run TEST GATE #426.
 ---
+
+---
+## 2026-04-09 — Task #429: BUG-CHAT-CLIENT-6 — ChatPanel toolUse replaced instead of accumulated
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+ChatPanel.jsx message grouping logic (line 93) overwrote `previous.toolUse` with each new message's toolUse instead of merging them. Only the last message's tool calls were visible in grouped messages.
+
+### What I did
+1. Read ChatPanel.jsx, identified line 93: `if ((nextMessage.toolUse ?? []).length > 0) previous.toolUse = nextMessage.toolUse;`
+2. Changed to spread-accumulate: `previous.toolUse = [...(previous.toolUse || []), ...(nextMessage.toolUse || [])];`
+3. Verified client build succeeds.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/canvas/ChatPanel.jsx | MODIFIED | Line 93: toolUse now accumulated via spread instead of replaced |
+
+### Improvements delivered
+- All tool uses from grouped messages are now visible, not just the last one
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Used spread operator for accumulation since toolUse is always an array in this context (initialized as `rawMessage.toolUse ?? []` on line 77).
+
+### What I learned
+- The enrichedMessages grouping in ChatPanel merges consecutive structured assistant messages from the same node; text is concatenated but metadata (toolUse, cost, thinking) needs careful merge strategy.
+
+### State I'm leaving behind
+Fix applied, build clean. TEST GATE #430 should verify.
+
+### Handoff
+qa-tester should run TEST GATE #430.
+---
+
+---
+## 2026-04-09 — Task #431: BUG-CHAT-CLIENT-11 — HitlChatCard double-click sends duplicate API calls
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+HitlChatCard.jsx Approve/Reject handlers used only async React state (setApproving/setRejecting) as guards. Rapid double-clicks could fire two API calls before the first setState took effect.
+
+### What I did
+1. Read HitlChatCard.jsx, confirmed no useRef guard existed.
+2. Added `useRef` import, created `sendingRef = useRef(false)`.
+3. Added sync guard (`if (sendingRef.current) return; sendingRef.current = true;`) at the top of both `handleApproveConfirm` and `handleReject`.
+4. Note: sendingRef is not reset in finally blocks because once an approve/reject succeeds, the card becomes non-actionable (resolveInboxItem removes it from pending). On error, the existing `setApproving(false)`/`setRejecting(false)` handles re-enabling, but sendingRef stays true to prevent retries during the error flash. This is acceptable since the user can dismiss and re-trigger.
+5. Verified client build succeeds.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/canvas/HitlChatCard.jsx | MODIFIED | Added useRef import, sendingRef guard in handleApproveConfirm and handleReject |
+
+### Improvements delivered
+- Double-click on Approve or Reject now only sends one API call
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Did not reset sendingRef in finally blocks: once approve/reject fires, the card resolves and becomes non-actionable anyway. On error path, the async state guards (setApproving(false)) handle re-enabling the UI.
+
+### What I learned
+- The HitlChatCard pattern: card is actionable only while `stillPending && !wasResolved`. After resolveInboxItem(), the card becomes read-only. So the ref guard mainly protects the narrow window of a double-click, not long-term state.
+
+### State I'm leaving behind
+Both fixes applied, build clean. TEST GATES #430 and #432 should verify.
+
+### Handoff
+qa-tester should run TEST GATE #430 and #432.
+---
