@@ -90,7 +90,7 @@ export default function ChatPanel() {
         ) {
           previous.text = `${previous.text ?? ''}${nextMessage.text ?? ''}`;
           previous.timestamp = nextMessage.timestamp ?? previous.timestamp;
-          if ((nextMessage.toolUse ?? []).length > 0) previous.toolUse = nextMessage.toolUse;
+          if ((nextMessage.toolUse ?? []).length > 0) previous.toolUse = [...(previous.toolUse || []), ...(nextMessage.toolUse || [])];
           if (nextMessage.cost) previous.cost = nextMessage.cost;
           if (nextMessage.thinking) previous.thinking = nextMessage.thinking;
           continue;
