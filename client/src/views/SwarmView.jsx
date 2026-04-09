@@ -88,6 +88,17 @@ export default function SwarmView() {
   const [runtimeAvailability, setRuntimeAvailability] = useState({ claude: false, codex: false, gemini: false });
   const [showSettings, setShowSettings] = useState(false);
   const [showModelSettings, setShowModelSettings] = useState(false);
+  const modelSettingsRef = useRef(null);
+  useEffect(() => {
+    if (!showModelSettings) return;
+    const handler = (e) => {
+      if (modelSettingsRef.current && !modelSettingsRef.current.contains(e.target)) {
+        setShowModelSettings(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showModelSettings]);
   const [showHistory, setShowHistory] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showVersions, setShowVersions] = useState(false);
@@ -716,7 +727,7 @@ export default function SwarmView() {
           </select>
         </label>
 
-        <div className="relative">
+        <div className="relative" ref={modelSettingsRef}>
           <button
             onClick={() => setShowModelSettings((v) => !v)}
             disabled={isExecutionActive || executing}
