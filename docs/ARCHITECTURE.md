@@ -2114,7 +2114,7 @@ V5 Wave 5 palette entries:
 
 ### 13.1 Overview
 
-V9.0 migrates Claude provider agents from PTY-based spawning (node-pty/ConPTY) to structured `child_process.spawn` with `--output-format stream-json`. Codex SDK agents use the `@openai/codex-sdk` structured runtime. Gemini agents continue using PTY. Both Claude stream-json and Codex SDK runtimes emit canonical `chat_message` events with `isCanonical: true` at turn completion, which the client uses to replace all prior text_delta fragments with the authoritative assembled text. ChatExtractor is NOT used for Codex SDK agents (structured agents broadcast chat_message directly via WS). This eliminates ConPTY artifact handling (120+ noise regexes, echo gates, ANSI stripping, HandoffParser accumulator) for Claude agents and provides structured cost/usage data.
+V9.0 migrates Claude provider agents from PTY-based spawning (node-pty/ConPTY) to structured `child_process.spawn` with `--output-format stream-json`. Codex SDK agents use the `@openai/codex-sdk` structured runtime. Gemini agents continue using PTY. Both Claude stream-json and Codex SDK runtimes emit canonical `chat_message` events with `isCanonical: true` at turn completion, which the client uses to replace all prior text_delta fragments with the authoritative assembled text. ChatExtractor is NOT used for Claude stream-json agents or Codex SDK agents — both structured runtimes broadcast `chat_message` directly via WS without ChatExtractor intermediation (BUG-CHAT-SERVER-02: feeding ChatExtractor for stream-json caused duplicate WS events). ChatExtractor remains active only for PTY-based agents (Gemini, legacy). This eliminates ConPTY artifact handling (120+ noise regexes, echo gates, ANSI stripping, HandoffParser accumulator) for Claude agents and provides structured cost/usage data.
 
 ### 13.2 StreamJsonParser (Task #357)
 
@@ -2193,7 +2193,7 @@ Spawns a Claude agent using `child_process.spawn` with `--output-format stream-j
 7. Initialize/update agent state object with `spawnMode: 'stream-json'`, cost accumulators, turn count, child ref
 8. Broadcast `agent_status` WS event with `spawnMode: 'stream-json'`
 9. Attach `readline` on `child.stdout`, pipe each line through `StreamJsonParser.parseLine()`
-10. Dispatch parsed events: `text_delta` → accumulate + broadcast `chat_message`; `tool_start/delta/stop` → broadcast tool events; `thinking_start/stop` → broadcast thinking state; `api_retry` → broadcast retry status; `result` → call `_handleStreamJsonResult()`
+10. Dispatch parsed events: `text_delta` → accumulate + broadcast `chat_message` directly via WS (ChatExtractor is NOT used — PTY-only; see BUG-CHAT-SERVER-02); `tool_start/delta/stop` → broadcast tool events; `thinking_start/stop` → broadcast thinking state; `api_retry` → broadcast retry status; `result` → call `_handleStreamJsonResult()`
 11. Collect stderr (capped, never full-logged — SEC-08)
 12. Handle `child.on('close')`: if no result event arrived, mark agent as error with `unexpected_exit` blocker
 13. Post-result 30s safety timeout managed inside `_handleStreamJsonResult()`

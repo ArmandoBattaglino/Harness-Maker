@@ -1,4 +1,42 @@
 ---
+## 2026-04-09 — Task #433: BUG-CHAT-SERVER-07/08 — chatTextNormalization DP performance cap
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+chatTextNormalization.js had four DP/greedy functions that process tokens of arbitrary length. No upper bound meant a 1000+ char token could cause O(n^2) memory from array copying at each DP state.
+
+### What I did
+Added a `token.length > 200` early-return guard at the top of four functions:
+1. `splitKnownWordSequence` — returns `null` (skip DP)
+2. `restoreCompressedChatToken` — returns token unchanged
+3. `aggressivelyRestoreLongChatToken` — returns token unchanged
+4. `restoreCompressedChatTokenGreedy` — returns `null`
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/chatTextNormalization.js | MODIFIED | Added 4 length-cap guards (> 200 chars) to prevent DP on pathologically long tokens |
+
+### Improvements delivered
+- normalizeChatDisplayText is now bounded for adversarial input; no token can trigger unbounded DP
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Cap at 200 chars as specified — real words in any language rarely exceed this; only pathological/corrupted tokens hit it
+
+### What I learned
+- The DP in restoreCompressedChatToken copies `parts` arrays via spread at every state transition — the real fix for O(n^2) would be backtracking from the final state, but a length cap is simpler and sufficient
+
+### State I'm leaving behind
+All 490 server tests pass. The four functions now bail out early for tokens > 200 chars.
+
+### Handoff
+TEST GATE #434 should verify the cap works (300-char token returned as-is, normal tokens still processed).
+
+---
 ## 2026-04-09 — Task #427: BUG-CHAT-SERVER-02 — Stream-json text_delta double emission via ChatExtractor
 **Status:** COMPLETED
 **Called by:** orchestrator

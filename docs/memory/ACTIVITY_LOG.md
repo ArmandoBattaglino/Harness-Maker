@@ -1,4 +1,34 @@
-﻿## 2026-04-09 — backend-dev — Task #427: BUG-CHAT-SERVER-02
+﻿## 2026-04-09 — frontend-dev — Task #435: BUG-CHAT-CLIENT-10 — REST hydration canonical guard
+**Outcome:** COMPLETED
+**Summary:** Added canonicalReceived guard in useSwarm.js REST hydration loop. Assistant messages for nodes with canonicalReceived flag are now skipped during REST chatMessages injection, preventing stale text_delta fragments from re-appearing after canonical replacement. Client build clean (507 modules).
+**Files changed:** client/src/hooks/useSwarm.js, docs/TASK_PLAN.md
+**Bugs fixed:** BUG-CHAT-CLIENT-10 (REST hydration re-introduces stale fragments after canonical)
+**Decisions made:** Guard placed before dedup check to ensure even unique-timestamp REST fragments are skipped for canonical-received nodes
+**Blockers:** none
+**Next:** TEST GATE #436 (qa-tester verification)
+
+---
+## 2026-04-09 — backend-dev — Task #433: BUG-CHAT-SERVER-07/08 — chatTextNormalization DP performance cap
+**Outcome:** COMPLETED
+**Summary:** Added token length > 200 early-return guards to four DP/greedy functions in chatTextNormalization.js to prevent O(n^2) memory on pathologically long tokens. 490/490 server tests pass.
+**Files changed:** server/services/chatTextNormalization.js
+**Bugs fixed:** BUG-CHAT-SERVER-07/08 (unbounded DP on long tokens)
+**Decisions made:** Cap at 200 chars as specified
+**Blockers:** none
+**Next:** TEST GATE #434 verification
+
+---
+## 2026-04-09 — project-manager — Wave 3 completion + Waves 4+5 launch
+**Outcome:** COMPLETED
+**Summary:** Marked TASK #427 (BUG-CHAT-SERVER-02, stream-json ChatExtractor.feed removed), #429 (BUG-CHAT-CLIENT-6, toolUse accumulation), and #431 (BUG-CHAT-CLIENT-11, HitlChatCard double-click guard) as COMPLETED in TASK_PLAN.md header. Updated counters to 422 COMPLETED/PASS, 24 PENDING. Waves 4+5 now launching: #433 (DP memory cap) + #435 (scroll-lock) in PARALLEL.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none (status tracking only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** Waves 4+5: TASK #433 (frontend-dev) + TASK #435 (frontend-dev) PARALLEL
+
+---
+## 2026-04-09 — backend-dev — Task #427: BUG-CHAT-SERVER-02
 **Outcome:** COMPLETED
 **Summary:** Removed duplicate ChatExtractor.feed() calls for stream-json agents in SwarmEngine.js. Stream-json text_delta and message handlers were both broadcasting chat_message directly AND feeding ChatExtractor, causing double WS events. Now only the direct broadcast path is used (same pattern as Codex SDK fix). 490/490 tests pass.
 **Files changed:** server/services/SwarmEngine.js

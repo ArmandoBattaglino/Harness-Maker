@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-09 after Tasks #421, #423, #425 (V10.0 Wave 2 — ChatExtractor compound buffer keys, useSwarm nodeId guard, rehype-sanitize XSS prevention)._
+_Last updated: 2026-04-09 after Tasks #427, #429, #431 (V10.0 Wave 3 — ChatExtractor.feed removed for stream-json double emission fix, ChatPanel toolUse accumulation, HitlChatCard double-click guard)._
 
 ## Release Status
 **v9.0.0 — V9.0 Stream-JSON Agent Migration CLOSED for core semantics, display fidelity FIXED**

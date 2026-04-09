@@ -530,12 +530,19 @@ export function useSwarm(workflowId) {
                       // Hydrate chat messages from server-stored data (dedup by timestamp+nodeId)
                       if (data?.chatMessages && Array.isArray(data.chatMessages)) {
                         const store = useSwarmStore.getState();
+                        const agentStates = store.agentStates;
                         const existing = new Set(
                           store.chatMessages.map(m => `${m.nodeId}:${m.timestamp}`)
                         );
                         // Track latest assistant message per nodeId for snippet update
                         const latestAssistantByNode = new Map();
                         for (const cm of data.chatMessages) {
+                          // Skip assistant messages for nodes where canonical has already
+                          // been received via WS — REST data may contain stale text_delta
+                          // fragments that would corrupt the canonical text (BUG-CHAT-CLIENT-10)
+                          if ((cm.role === 'assistant' || !cm.role) && cm.nodeId && agentStates[cm.nodeId]?.canonicalReceived) {
+                            continue;
+                          }
                           const key = `${cm.nodeId}:${cm.timestamp}`;
                           if (!existing.has(key)) {
                             store.addChatMessage(cm);

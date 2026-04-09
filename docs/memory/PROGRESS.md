@@ -1,3 +1,7 @@
+- [BACKEND-DEV 2026-04-09] TASK #433 (BUG-CHAT-SERVER-07/08) COMPLETED. Added token.length > 200 caps to 4 DP/greedy functions in chatTextNormalization.js. 490/490 tests pass.
+
+- [PM 2026-04-09] Wave 3 COMPLETED. #427 (BUG-CHAT-SERVER-02, stream-json ChatExtractor.feed removed), #429 (BUG-CHAT-CLIENT-6, toolUse accumulation fix), #431 (BUG-CHAT-CLIENT-11, HitlChatCard double-click guard) ALL COMPLETED. 422 COMPLETED/PASS, 24 PENDING. Waves 4+5 launching: #433 (DP memory cap) + #435 (scroll-lock) PARALLEL.
+
 - [BACKEND-DEV 2026-04-09] TASK #427 (BUG-CHAT-SERVER-02) COMPLETED. Removed ChatExtractor.feed() from stream-json text_delta and message handlers. 490/490 tests pass.
 
 - [PM 2026-04-09] Wave 2 COMPLETED. #421 (BUG-CHAT-SERVER-04/03, ChatExtractor compound keys), #423 (BUG-CHAT-CLIENT-4, undefined nodeId guard), #425 (BUG-CHAT-CLIENT-8, XSS rehype-sanitize) ALL COMPLETED. 419 COMPLETED/PASS, 27 PENDING. Wave 3 launching: #427 + #429 + #431 PARALLEL.

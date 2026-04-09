@@ -171,6 +171,7 @@ function splitKnownWordSequence(token = '') {
 
 function aggressivelyRestoreLongChatToken(token = '') {
   if (!token || token.length < 18 || !isRestorableChatToken(token)) return token;
+  if (token.length > 200) return token;
   const connectorSplit = restoreLeadingConnectorCompressedToken(token);
   if (connectorSplit !== token) return connectorSplit;
   const exactSplit = splitKnownWordSequence(token);
@@ -187,6 +188,7 @@ function aggressivelyRestoreLongChatToken(token = '') {
 
 function restoreCompressedChatTokenGreedy(token = '', normalizedToken = normalizeCompressedChatWord(token)) {
   if (!token || !isRestorableChatToken(token)) return null;
+  if (token.length > 200) return null;
 
   const parts = [];
   let index = 0;
@@ -216,6 +218,7 @@ function restoreCompressedChatTokenGreedy(token = '', normalizedToken = normaliz
 
 function restoreCompressedChatToken(token = '') {
   if (!token || !isRestorableChatToken(token)) return token;
+  if (token.length > 200) return token;
   const connectorSplit = restoreLeadingConnectorCompressedToken(token);
   if (connectorSplit !== token) return connectorSplit;
 

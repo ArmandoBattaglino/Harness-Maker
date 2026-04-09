@@ -4,8 +4,8 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v10.0 — task numbering extends through #448; 448 tasks registered, 419 COMPLETED/PASS, 1 DEFERRED (#236), 27 PENDING, 0 IN_PROGRESS. 490 server tests pass, client build clean (501 modules). Chat stress test (debugger-loop Phase 1) found 31 bugs; V10.0 area created with 32 tasks (#417-#448) across 8 waves. Wave 1 COMPLETED, Wave 2 COMPLETED, Wave 3 launching.
-  **Active Area:** V10.0 CHAT STRESS TEST BUG FIXES — 32 tasks (#417-#448), 5 COMPLETED (#417, #419, #421, #423, #425), 27 PENDING. Wave 2 done. Wave 3 launching: TASK #427 (backend) + TASK #429 (frontend) + TASK #431 (frontend) PARALLEL.
+**Status:** v10.0 — task numbering extends through #448; 448 tasks registered, 422 COMPLETED/PASS, 1 DEFERRED (#236), 24 PENDING, 1 IN_PROGRESS. 490 server tests pass, client build clean (501 modules). Chat stress test (debugger-loop Phase 1) found 31 bugs; V10.0 area created with 32 tasks (#417-#448) across 8 waves. Wave 1 COMPLETED, Wave 2 COMPLETED, Wave 3 COMPLETED, Waves 4+5 launching.
+  **Active Area:** V10.0 CHAT STRESS TEST BUG FIXES — 32 tasks (#417-#448), 8 COMPLETED (#417, #419, #421, #423, #425, #427, #429, #431), 24 PENDING. Wave 3 done. Waves 4+5 launching: TASK #433 (frontend, DP memory cap) + TASK #435 (frontend, scroll-lock) PARALLEL.
   **Completed Area:** V9.5 FULL DEEP E2E TEST BUG FIXES — #415 COMPLETED (BUG-DT-1 Models popup click-outside fix, commit ed6877a), #416 PASS. AREA CLOSED 2026-04-09.
   **Completed Area:** V9.4 CHAT MESSAGE CANONICAL FIX — #413 COMPLETED, #414 PASS. V9.4 CLOSED 2026-04-09.
   **Completed Area:** V9.3 CODEX SDK DEBUGGER-LOOP HARDENING — #410 COMPLETED, #411 COMPLETED, TEST GATE #412 PASS. AREA CLOSED 2026-04-08.
@@ -17620,7 +17620,7 @@ Type: BUG_FIX
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   File: server/services/chatTextNormalization.js
   Bug: The DP algorithms in chatTextNormalization (restoreCompressedChatToken and similar) have
@@ -17672,7 +17672,7 @@ Type: BUG_FIX
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   File: client/src/hooks/useSwarm.js
   Bug: REST hydration triple-fetch (on reconnect, page load, or visibility change) can

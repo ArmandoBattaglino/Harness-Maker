@@ -1,4 +1,43 @@
 ---
+## 2026-04-09 — Task #435: BUG-CHAT-CLIENT-10 — REST hydration re-introduces stale fragments after canonical
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+Wave 1 (Task #419) added `canonicalReceived` flag to agentStates, set when a canonical message arrives via WS. However, the REST hydration path in the `execution_status` handler's `fetchResults` callback still injected all chatMessages from the REST response, including stale text_delta fragments for nodes that had already received their canonical text. The dedup used `nodeId:timestamp` exact match, but canonical messages have different timestamps than fragments, so the check didn't filter them.
+
+### What I did
+1. Read `useSwarm.js` to locate the REST hydration loop inside the `execution_status` case (lines 530-560).
+2. Added a guard at the top of the `for (const cm of data.chatMessages)` loop: if the message is an assistant role (or no role) AND the node has `canonicalReceived: true` in agentStates, skip the message with `continue`.
+3. This also skips the `latestAssistantByNode` snippet tracking for those messages, preventing stale snippet overwrites.
+4. Verified client build succeeds (507 modules, 0 errors).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/hooks/useSwarm.js | MODIFIED | Added canonicalReceived guard in REST hydration loop to skip assistant fragments for nodes that already received canonical text |
+| docs/TASK_PLAN.md | MODIFIED | Marked task #435 COMPLETED |
+
+### Improvements delivered
+- REST hydration no longer re-introduces stale text_delta fragments after canonical replacement
+- Node snippets are not overwritten by stale REST data when canonical is already present
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Placed the guard before the dedup check so that even if a REST message has a unique timestamp, it still gets skipped for canonical-received nodes. This is correct because the canonical already replaced all fragments.
+
+### What I learned
+- The REST hydration triple-fetch pattern (immediate + 5s + 12s) means the guard must be evaluated at fetch-time, not at mount-time, since `canonicalReceived` may be set between fetches.
+
+### State I'm leaving behind
+The fix is complete and self-contained. The `canonicalReceived` flag (set by Wave 1 Task #419) is now checked in both the WS path (trailing fragment drop) and the REST hydration path (stale fragment skip). Non-assistant messages (user, system, HITL) are unaffected.
+
+### Handoff
+TEST GATE #436 (qa-tester) should verify: (1) no fragment re-introduction after canonical via REST, (2) fresh page load shows canonical text, (3) reconnection scenario has no duplicates.
+
+---
 ## 2026-04-09 — Task #419: BUG-CHAT-CLIENT-1/3/15 — Canonical race condition + trailing text_delta + empty canonical guard
 **Status:** COMPLETED
 **Called by:** orchestrator
