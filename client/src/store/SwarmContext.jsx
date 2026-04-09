@@ -184,6 +184,29 @@ const useSwarmStore = create((set, get) => ({
     return state;
   }),
 
+  /** Replace ALL matching assistant chat messages for a nodeId with a single canonical message.
+   *  Used when a canonical result arrives to collapse all text_delta fragments into one clean message. */
+  replaceNodeChatMessages: (nodeId, canonicalMsg, predicate = null) => set((state) => {
+    let firstMatchTimestamp = null;
+    const filtered = state.chatMessages.filter((m) => {
+      if (m.nodeId !== nodeId) return true;
+      if (typeof predicate === 'function' && !predicate(m)) return true;
+      // Remember the timestamp of the first matching message for ordering
+      if (firstMatchTimestamp === null) firstMatchTimestamp = m.timestamp;
+      return false; // remove this message
+    });
+    // Insert the canonical message where the first fragment was
+    const insertIdx = filtered.findIndex(
+      (m) => m.timestamp && firstMatchTimestamp && m.timestamp > firstMatchTimestamp
+    );
+    if (insertIdx >= 0) {
+      filtered.splice(insertIdx, 0, canonicalMsg);
+    } else {
+      filtered.push(canonicalMsg);
+    }
+    return { chatMessages: filtered };
+  }),
+
   setChatFilter: (filter) => set({ chatFilter: filter }),
   setSidePanelMode: (mode) => set({ sidePanelMode: mode }),
   setSidePanelOpen: (open) => set({ sidePanelOpen: open }),

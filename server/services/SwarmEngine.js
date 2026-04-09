@@ -4578,7 +4578,11 @@ class SwarmEngine {
             spawnMode: STRUCTURED_SPAWN_MODE.CODEX_SDK,
           });
         }
-        this._chatExtractor.feed(executionId, nodeId, delta);
+        // NOTE: Do NOT feed ChatExtractor for Codex SDK — structured agents
+        // already broadcast chat_message via WS directly above, and a canonical
+        // replacement is emitted in _handleCodexSdkTurnCompleted.  Feeding the
+        // ChatExtractor would cause duplicate WS messages and stale fragments
+        // in execution.chatMessages that break REST hydration.
       }
 
       state._codexSdkAssistantText = this._collectStructuredAssistantText(itemSnapshots);
@@ -4774,17 +4778,45 @@ class SwarmEngine {
       }
     }
 
-    const assistantChatCountAfterTurn = this._countAssistantChatMessages(execution, nodeId);
-    const fallbackChatText = this._buildStructuredAssistantChatFallback(accumulatedText);
+    // Broadcast canonical chat_message with the full accumulated text so the
+    // client can collapse all text_delta fragments into one clean message —
+    // mirrors the Claude stream-json canonical path (see _handleStreamJsonResult).
+    const canonicalText = this._buildStructuredAssistantChatFallback(accumulatedText);
     const turnEndedTerminally = ['done', 'completed'].includes(state.status) || execution.status === 'completed';
-    if (turnEndedTerminally && fallbackChatText && assistantChatCountAfterTurn <= assistantChatCountStart) {
-      this._broadcastChatMessage({
-        executionId,
+    if (turnEndedTerminally && canonicalText && this._wsBroadcast) {
+      this._wsBroadcast(executionId, {
+        type: 'chat_message',
         nodeId,
         role: 'assistant',
-        text: fallbackChatText,
+        text: canonicalText,
+        timestamp: Date.now(),
+        isCanonical: true,
+        spawnMode: STRUCTURED_SPAWN_MODE.CODEX_SDK,
+      });
+      // Replace all prior assistant chat entries for this nodeId with the
+      // single canonical message so REST hydration doesn't re-inject fragments.
+      const prevMessages = (execution.chatMessages ?? []).filter(
+        (m) => !(m.nodeId === nodeId && (m.role === 'assistant' || !m.role))
+      );
+      prevMessages.push({
+        nodeId,
+        role: 'assistant',
+        text: canonicalText,
         timestamp: Date.now(),
       });
+      execution.chatMessages = prevMessages.slice(-500);
+    } else {
+      // Fallback: if turn didn't end terminally but no chat was emitted, send a regular message
+      const assistantChatCountAfterTurn = this._countAssistantChatMessages(execution, nodeId);
+      if (canonicalText && assistantChatCountAfterTurn <= assistantChatCountStart) {
+        this._broadcastChatMessage({
+          executionId,
+          nodeId,
+          role: 'assistant',
+          text: canonicalText,
+          timestamp: Date.now(),
+        });
+      }
     }
 
     state._codexSdkAssistantText = '';

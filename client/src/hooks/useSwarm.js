@@ -635,13 +635,24 @@ export function useSwarm(workflowId) {
             && isStructuredSpawnMode(msg.spawnMode ?? runtimeState?.spawnMode);
 
           if (msg.isCanonical) {
-            // Canonical result text from Claude CLI: replace all streamed text_delta
-            // fragments with the correctly assembled text (fixes token-boundary spacing)
+            // Canonical result text from Claude CLI: replace ALL streamed text_delta
+            // fragment messages with a single message containing the correctly assembled
+            // text.  Previously we only patched the last fragment, leaving earlier
+            // fragments in the chatMessages array — the ChatPanel grouping then
+            // concatenated stale fragments + canonical text, producing duplicated or
+            // truncated output (BUG-CHAT-3).
+            const currentSpawnMode = useSwarmStore.getState().agentStates[msg.nodeId]?.spawnMode;
             useSwarmStore.getState().replaceAgentChatText(msg.nodeId, msg.text);
             updateAgentState(msg.nodeId, { lastChatSnippet: msg.text });
-            useSwarmStore.getState().patchLatestChatMessage(
+            useSwarmStore.getState().replaceNodeChatMessages(
               msg.nodeId,
-              { text: msg.text, timestamp: msg.timestamp ?? Date.now() },
+              {
+                nodeId: msg.nodeId,
+                role: 'assistant',
+                text: msg.text,
+                timestamp: msg.timestamp ?? Date.now(),
+                spawnMode: currentSpawnMode ?? 'stream-json',
+              },
               (m) => (m.role === 'assistant' || !m.role) && isStructuredSpawnMode(m.spawnMode),
             );
           } else {
