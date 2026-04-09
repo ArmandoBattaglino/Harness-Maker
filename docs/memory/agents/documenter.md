@@ -133,6 +133,47 @@ All documentation is UP_TO_DATE. No stale sections introduced by Wave 6 tasks.
 None -- task fully self-contained.
 
 ---
+## 2026-04-09 — Task #479: BUG-BLOCKER-UI-02 — Gemini node card snippet fix
+**Status:** COMPLETED
+**Called by:** user (post-task documentation update)
+
+### Context when I started
+3 surgical fixes had just landed in server/services/SwarmEngine.js for BUG-BLOCKER-UI-02: (1) `_normalizeSnippetLine` regex extended to U+2700–U+27BF Dingbat block, (2) `_handleRuntimeBlocker` forces clean message for `provider_unavailable` blockers instead of sanitize-first, (3) `stopExecution` cleanup loop clears `state.pinnedDisplaySnippet`. Server test suite: 501/501. Build: 507 modules clean.
+
+### What I did
+1. Read DOC_STATUS.md header and Fixed Bugs table, SwarmEngine.js at all three modified functions.
+2. Searched README.md, API.md, and ARCHITECTURE.md for any existing sections describing snippet normalization, blocker display logic, or pinnedDisplaySnippet — none found.
+3. Confirmed all three changes are internal private methods with no public API, WS event, config, or component surface change.
+4. Confirmed inline comments in `_handleRuntimeBlocker` (lines 3829–3835) already explain the `provider_unavailable` reasoning fully — no new comments needed.
+5. Updated DOC_STATUS.md: (a) header timestamp/summary, (b) new Fixed Bugs row for BUG-BLOCKER-UI-02, (c) new "Task #479" wave summary section before Documentation Debt.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Header timestamp, new Fixed Bugs row, new wave summary section for Task #479 |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended this session entry |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- DOC_STATUS.md accurately reflects BUG-BLOCKER-UI-02 as FIXED with full 3-fix detail
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- No README/ARCHITECTURE/API updates needed: all three SwarmEngine.js changes are private methods with no externally visible contract change. The existing inline comment block in `_handleRuntimeBlocker` (lines 3829–3835) already documents the `provider_unavailable` rationale.
+
+### What I learned
+- BUG-BLOCKER-UI-02 was a display-fidelity fix: Dingbat characters (U+2700–U+27BF) from Gemini CLI output escaped the leading-char strip because the original regex only covered U+2500–U+259F (box drawing + block elements) but not the Dingbat block.
+- The snippet pinning mechanism (`pinnedDisplaySnippet`) was not cleared in `stopExecution`, which meant a stale blocker snippet could reappear if the same node was reused after stop.
+
+### State I'm leaving behind
+DOC_STATUS.md fully up to date. All public docs (README.md, ARCHITECTURE.md, API.md, PRD.md) remain accurate — no changes needed.
+
+### Handoff
+None — task fully self-contained.
+
+---
 ## 2026-04-09 — Tasks #433, #435: V10.0 Waves 4+5 documentation audit
 **Status:** COMPLETED
 **Called by:** orchestrator (post-Waves-4+5 documentation update)
@@ -3714,4 +3755,45 @@ All documentation is current through V10.0 Wave 2. No stale sections.
 
 ### Handoff
 None -- task fully self-contained.
+---
+
+---
+## 2026-04-09 — Task #479: BUG-BLOCKER-UI-02 — Gemini node card snippet fix
+**Status:** COMPLETED
+**Called by:** user (post-task documentation update)
+
+### Context when I started
+3 surgical fixes had just landed in server/services/SwarmEngine.js for BUG-BLOCKER-UI-02: (1) _normalizeSnippetLine regex extended to U+2700-U+27BF Dingbat block, (2) _handleRuntimeBlocker forces clean message for provider_unavailable blockers, (3) stopExecution cleanup loop clears pinnedDisplaySnippet. Server test suite: 501/501. Build: 507 modules clean.
+
+### What I did
+1. Read DOC_STATUS.md header and Fixed Bugs table, SwarmEngine.js at the three modified functions.
+2. Searched README.md, API.md, and ARCHITECTURE.md for any existing sections describing snippet normalization, blocker display logic, or pinnedDisplaySnippet — none found.
+3. Confirmed all three changes are internal private methods with no public API, WS event, config, or component surface change.
+4. Confirmed inline comments in _handleRuntimeBlocker (lines 3829-3835) already explain the provider_unavailable reasoning fully — no new comments needed.
+5. Updated DOC_STATUS.md: (a) header timestamp/summary, (b) new Fixed Bugs row for BUG-BLOCKER-UI-02, (c) new "Task #479" wave summary section before Documentation Debt.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Header, Fixed Bugs table new row, new wave summary section |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended this session entry |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- DOC_STATUS.md accurately reflects BUG-BLOCKER-UI-02 as fixed with full 3-fix detail
+
+### Bugs I encountered
+- None
+
+### Decisions I made
+- No README/ARCHITECTURE/API updates needed — all three SwarmEngine.js changes are private methods with no externally visible contract change. The existing inline comment block in _handleRuntimeBlocker (lines 3829-3835) already documents the provider_unavailable rationale.
+
+### What I learned
+- BUG-BLOCKER-UI-02 is a pure display-fidelity fix: Dingbat characters from Gemini CLI output were escaping the leading-char strip because the original regex only covered U+2500-U+259F (box drawing + block elements) but not U+2700-U+27BF (Dingbats).
+
+### State I leaving behind
+DOC_STATUS.md fully up to date. All public docs remain accurate.
+
+### Handoff
+None — task fully self-contained.
 ---

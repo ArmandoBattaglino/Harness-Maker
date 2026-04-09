@@ -1,4 +1,52 @@
 ---
+## 2026-04-09 — Task #479: BUG-BLOCKER-UI-02 — SwarmEngine snippet/blocker fixes
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task trio, parallel with PM + documenter)
+
+### Context when I started
+BUG-BLOCKER-UI-02: Gemini `provider_unavailable` blocked nodes were showing raw CLI banner noise (sign-in prompts, checkmark-prefixed lines) in the node card snippet instead of clean blocker text. Also, stale `pinnedDisplaySnippet` from a previous blocked run persisted into the next execution run after stop. 3 surgical fixes applied to SwarmEngine.js. Server suite: 501/501. Build: 507 modules clean.
+
+### What I did
+1. Read CODE_MAP.md (header, stopExecution entry, snippet pipeline entries) + CHANGELOG.md top entries + agent memory in parallel
+2. Read SwarmEngine.js at lines 2248-2267 (_normalizeSnippetLine), 3820-3849 (_handleRuntimeBlocker), 7310-7333 (stopExecution cleanup loop) to confirm exact change shapes
+3. Searched CODE_MAP.md for existing entries on _normalizeSnippetLine and _handleRuntimeBlocker — neither had Function Graph entries
+4. Updated CODE_MAP.md header timestamp
+5. Updated stopExecution Function Graph entry (Task #479 addendum — pinnedDisplaySnippet null)
+6. Added new _normalizeSnippetLine Function Graph entry with BUG-BLOCKER-UI-02 complexity note
+7. Added new _handleRuntimeBlocker Function Graph entry with BUG-BLOCKER-UI-02 complexity note
+8. Appended full CHANGELOG entry with file, function, and connection changes
+9. Appended ACTIVITY_LOG entry
+10. Appended this session log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Updated header; updated stopExecution entry; added _normalizeSnippetLine entry; added _handleRuntimeBlocker entry |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended Task #479 BUG-BLOCKER-UI-02 entry (1 file, 3 functions modified) |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended code-mapper session entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log |
+
+### Improvements delivered
+- CODE_MAP.md now has dedicated entries for `_normalizeSnippetLine` and `_handleRuntimeBlocker` (previously only referenced in callers, never directly documented)
+- stopExecution entry updated to reflect the pinnedDisplaySnippet null fix
+- CHANGELOG has traceable record of all 3 fixes
+
+### Bugs I encountered
+- None — straightforward entry additions
+
+### Decisions I made
+- Placed `_normalizeSnippetLine` and `_handleRuntimeBlocker` entries adjacent to the existing snippet pipeline entries (after `_snippetOverlapsPrompt`) — logical grouping by function domain rather than file line order
+
+### What I learned
+- `_handleRuntimeBlocker` had no prior Function Graph entry despite being referenced in a follow-up note at line 3849 of CODE_MAP.md. Pattern: blocker-path functions often added late in bug fix waves and not retroactively mapped.
+
+### State I'm leaving behind
+CODE_MAP.md fully up to date through Task #479 (2026-04-09). All 3 modified SwarmEngine.js functions are now mapped. CHANGELOG and ACTIVITY_LOG entries appended. Test count remains 501/501.
+
+### Handoff
+V10.8 tasks #491-#495 remain pending. Next code-mapper session triggered after one of those completes.
+
+---
 ## 2026-04-09 — Codex handoff regression coverage mapping
 **Status:** COMPLETED
 **Called by:** orchestrator (post-task trio, parallel with PM + documenter)

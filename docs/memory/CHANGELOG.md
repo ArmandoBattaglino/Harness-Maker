@@ -1,6 +1,37 @@
 # CHANGELOG — Claude Code Visual Manager
 
 ---
+## 2026-04-09 — Task #479: BUG-BLOCKER-UI-02 — SwarmEngine snippet/blocker surgical fixes
+**Agent:** debugger — mapped by code-mapper
+**Triggered by:** BUG-BLOCKER-UI-02: Gemini `provider_unavailable` blockers were leaking raw CLI banner noise (sign-in prompts, checkmark-prefixed lines) into the node card snippet; stale `pinnedDisplaySnippet` survived stop/restart, showing ghost blocker text on fresh runs.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/SwarmEngine.js | MODIFIED | 3 surgical fixes: `_normalizeSnippetLine` regex expansion, `_handleRuntimeBlocker` provider_unavailable snippet logic, `stopExecution` pinnedDisplaySnippet cleanup |
+
+### Functions Added
+- None
+
+### Functions Modified
+- `_normalizeSnippetLine(rawLine)` in `server/services/SwarmEngine.js` — extended leading-char strip regex from `\u2720–\u2740` to full Dingbats block `\u2700–\u27BF` plus explicit checkmarks `\u2713/\u2714/\u2717/\u2718`; fixes Gemini CLI checkmark-prefixed noise lines surviving normalization
+- `_handleRuntimeBlocker(executionId, nodeId, blocker)` in `server/services/SwarmEngine.js` — for `provider_unavailable` type, now calls `_buildRuntimeBlockerDisplaySnippet()` directly instead of sanitize-first on `lastOutputSnippet`; eliminates Gemini banner noise leaking into node card
+- `stopExecution(executionId)` in `server/services/SwarmEngine.js` — added `state.pinnedDisplaySnippet = null` in the per-state cleanup loop; prevents stale blocker snippets from persisting into the next execution run
+
+### Functions Removed
+- None
+
+### Connection Changes
+- `_handleRuntimeBlocker` → `_buildRuntimeBlockerDisplaySnippet()` is now the UNCONDITIONAL snippet source for `provider_unavailable` (previously only a fallback after `_sanitizeDisplaySnippetText()` yielded nothing)
+- `_handleRuntimeBlocker` → `_sanitizeDisplaySnippetText()` is now SKIPPED entirely for `provider_unavailable` (was always called first before this fix)
+
+### Impact on Other Code
+- `AgentNode.jsx` (client) reads `lastOutputSnippet` / `pinnedDisplaySnippet` from the WS snapshot — now receives a clean synthetic message for `provider_unavailable` instead of raw Gemini banner noise; no client code change required
+- `_isSnippetNoiseLine()` calls `_normalizeSnippetLine()` — Gemini checkmark lines that previously survived noise filtering will now be stripped at normalization stage
+- `_buildSemanticSnippet()` calls `_normalizeSnippetLine()` per-line — same coverage improvement applies to the full snippet pipeline
+- Test suite: 501/501 server tests pass; client build clean (507 modules); no new tests added for this fix wave
+
+---
 ## 2026-04-09 — Codex handoff regression coverage: swarm-engine-codex-sdk.test.js + E2E probe
 **Agent:** qa-tester / backend-dev — mapped by code-mapper
 **Triggered by:** Post-V10.4 regression coverage addition for the `_onHandoff` -> Codex SDK spawn path. Specifically: a long inbound payload must arrive at the downstream node with TAIL-MARKER-OMEGA-9271 intact (no truncation).

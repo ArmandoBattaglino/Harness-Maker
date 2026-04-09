@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-09 after Codex handoff test files added: server/tests/swarm-engine-codex-sdk.test.js (6 deterministic unit tests for _onHandoff -> Codex SDK spawn path), scripts/swarm-codex-handoff-e2e.mjs (browser debug probe, debug-only), tests/visual/swarm/fixtures/codex-handoff-long.json (fixture), tests/visual/swarm/README.md (updated by user), package.json (3 debug scripts added). Server test suite: 501/501 passing._
+_Last updated: 2026-04-09 after Task #479: BUG-BLOCKER-UI-02 — 3 surgical fixes in server/services/SwarmEngine.js: (1) `_normalizeSnippetLine` regex extended to cover Dingbat block U+2700–U+27BF; (2) `_handleRuntimeBlocker` uses clean blocker message for `provider_unavailable` instead of sanitize-first; (3) `stopExecution` cleanup loop now clears `state.pinnedDisplaySnippet`. Server test suite: 501/501 passing, client build: 507 modules, 0 errors._
 
 ## Release Status
 **v9.0.0 — V9.0 Stream-JSON Agent Migration CLOSED for core semantics, display fidelity FIXED**
@@ -48,6 +48,7 @@ _Last updated: 2026-04-09 after Codex handoff test files added: server/tests/swa
 | BUG-WF-1 | LOW | Context menu on node/edge right-click showed wrong menu type (canvas menu instead of node/edge menu) — `event.stopPropagation()` missing in `handleNodeContextMenu` and `handleEdgeContextMenu` in SwarmCanvas.jsx | V5-bugfix | FIXED 2026-04-06 |
 | BUG-WF-2 | LOW | Ctrl+S keyboard shortcut in SwarmView.jsx captured stale closure of `handleSave`/`handleRun` — added `handleSaveFnRef` and `handleRunFnRef` refs so `useEffect` keydown handler always calls the latest function | V5-bugfix | FIXED 2026-04-06 |
 | BUG-DT-1 | LOW | Models settings popup in SwarmView.jsx toolbar did not close on click-outside — added `modelSettingsRef` (useRef) + `useEffect` mousedown listener that dismisses popup when clicking outside the ref container | ed6877a | FIXED 2026-04-09 |
+| BUG-BLOCKER-UI-02 | LOW | Raw Gemini CLI Dingbat characters (U+2700–U+27BF) leaked into node card snippets; `provider_unavailable` blocker showed CLI banner noise instead of clean message; `pinnedDisplaySnippet` not cleared in `stopExecution` cleanup loop | #479 | FIXED 2026-04-09 |
 
 ## Status Legend
 - UP_TO_DATE -- matches current code
@@ -324,6 +325,18 @@ Frontend-only bugfixes. No new API endpoints, no env var changes, no backend cha
 | client/src/views/SwarmView.jsx | MODIFIED | Added `handleSaveFnRef` and `handleRunFnRef` refs. The `useEffect` keydown handler for Ctrl+S and Ctrl+Enter now calls `handleSaveFnRef.current?.()` and `handleRunFnRef.current?.()` instead of capturing `handleSave`/`handleRun` directly, preventing stale closure bugs where the shortcut used outdated state (BUG-WF-2) | None |
 
 **Documentation impact:** None. Both fixes are internal event handling corrections with no new APIs, components, config, or env vars. Existing inline comments in SwarmView.jsx (FR-V5-43 refs at lines 117-124, 329-330) and SwarmCanvas.jsx (FR-V5-21 through FR-V5-24 refs at line 234) are accurate.
+
+## Task #479 — BUG-BLOCKER-UI-02: Gemini Node Card Snippet Fix (2026-04-09)
+
+Three surgical fixes in `server/services/SwarmEngine.js`. No new endpoints, components, config, or env vars.
+
+| Fix | Location | Change | Doc Impact |
+|-----|----------|--------|------------|
+| Dingbat regex extension | `_normalizeSnippetLine()` | Leading-char strip regex now covers U+2700–U+27BF (Dingbat block) in addition to existing box-drawing and geometric shape ranges | None — internal snippet normalization |
+| `provider_unavailable` clean message | `_handleRuntimeBlocker()` | When `blocker.type === 'provider_unavailable'`, `sanitizedExistingSnippet` is forced to `''` so the clean blocker message always wins; CLI banner noise (Gemini sign-in prompts, auth lines) can no longer bleed into the node card | None — internal blocker display logic |
+| `pinnedDisplaySnippet` cleanup | `stopExecution()` | `state.pinnedDisplaySnippet = null` added to the agent-state cleanup loop, preventing a stale pinned snippet from appearing if the same node is reused after stop | None — internal state reset |
+
+**Documentation impact:** No README, ARCHITECTURE, API, or PRD changes needed. All three changes are internal to private methods of `SwarmEngine.js`. Inline comments in `_handleRuntimeBlocker()` (lines 3829–3835) already explain the reasoning. Test suite: 501/501 passing, build: 507 modules clean.
 
 ## Documentation Debt
 

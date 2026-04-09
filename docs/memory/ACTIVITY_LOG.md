@@ -1,4 +1,25 @@
-﻿## 2026-04-09 — project-manager — Tasks #476 + #479: V10.6 post-session sync
+﻿## 2026-04-09 — documenter — Task #479: BUG-BLOCKER-UI-02 documentation audit
+**Outcome:** COMPLETED
+**Summary:** Audited all docs after 3 surgical fixes in SwarmEngine.js for BUG-BLOCKER-UI-02. No README, ARCHITECTURE.md, API.md, or inline comment updates were needed — all three changes are internal private methods. DOC_STATUS.md updated with new Fixed Bugs row and wave summary section for Task #479.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none (documenter role)
+**Decisions made:** No public-facing docs need updating; _handleRuntimeBlocker inline comments already document provider_unavailable reasoning
+**Blockers:** none
+**Next:** V10.8 next priorities: #492 (browser E2E harness) and #491 (visual regression determinism)
+
+---
+
+## 2026-04-09 — code-mapper — Task #479: BUG-BLOCKER-UI-02 — SwarmEngine snippet/blocker fixes mapped
+**Outcome:** COMPLETED
+**Summary:** Mapped 3 surgical fixes in SwarmEngine.js: `_normalizeSnippetLine` Dingbats+checkmark regex expansion, `_handleRuntimeBlocker` provider_unavailable clean-snippet bypass, `stopExecution` pinnedDisplaySnippet null on stop. Added 2 new Function Graph entries (_normalizeSnippetLine, _handleRuntimeBlocker) and updated stopExecution entry. Appended CHANGELOG entry.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** BUG-BLOCKER-UI-02 (documented)
+**Decisions made:** none
+**Blockers:** none
+**Next:** V10.8 tasks #491-#495 remain pending
+
+---
+## 2026-04-09 — project-manager — Tasks #476 + #479: V10.6 post-session sync
 **Outcome:** COMPLETED
 **Summary:** Verified and confirmed COMPLETED status for TASK #476 (BUG-CHAT-CLIENT-12 — Chat View empty state, no code changes needed, already locked by 52/52 client tests) and TASK #479 (BUG-BLOCKER-UI-02 — Gemini blocked node card raw CLI text, 3 root causes fixed in SwarmEngine.js, commit 02958da, 501/501 server tests). TASK_PLAN.md entries were already correct; PROGRESS.md and ACTIVITY_LOG.md updated to reflect this sync session.
 **Files changed:** docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -5870,3 +5891,25 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** V10.8 tasks #491-#495 remain pending (visual regression, E2E harness, stale-server guard)
 ---
+
+---
+
+## 2026-04-09 — documenter — Task #479: BUG-BLOCKER-UI-02 documentation audit
+**Outcome:** COMPLETED
+**Summary:** Audited all docs after 3 surgical fixes in SwarmEngine.js (BUG-BLOCKER-UI-02). No README, ARCHITECTURE.md, API.md, or inline comment updates were needed — all three changes are internal to private methods. DOC_STATUS.md updated: header timestamp, new Fixed Bugs row for BUG-BLOCKER-UI-02, and new wave summary section for Task #479.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none (documenter role)
+**Decisions made:** No public-facing docs need updating — _normalizeSnippetLine, _handleRuntimeBlocker snippet logic, and stopExecution cleanup are all private SwarmEngine internals; inline comments already self-documenting
+**Blockers:** none
+**Next:** V10.8 next priorities: #492 (browser E2E harness) and #491 (visual regression determinism)
+
+---
+
+## 2026-04-09 — documenter — Task #479: BUG-BLOCKER-UI-02 documentation audit
+**Outcome:** COMPLETED
+**Summary:** Audited all docs after 3 surgical fixes in SwarmEngine.js (BUG-BLOCKER-UI-02). No README, ARCHITECTURE.md, API.md, or inline comment updates were needed — all three changes are internal to private methods. DOC_STATUS.md updated: header timestamp, new Fixed Bugs row for BUG-BLOCKER-UI-02, and new wave summary section for Task #479.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none (documenter role)
+**Decisions made:** No public-facing docs need updating — _normalizeSnippetLine, _handleRuntimeBlocker snippet logic, and stopExecution cleanup are all private SwarmEngine internals; inline comments in _handleRuntimeBlocker already explain the provider_unavailable reasoning (lines 3829-3835)
+**Blockers:** none
+**Next:** V10.8 next priorities: #492 (browser E2E harness) and #491 (visual regression determinism)
