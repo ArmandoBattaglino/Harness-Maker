@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-09 after commit 5d359b4 (Codex SDK canonical chat_message + eliminate duplicate WS broadcasts)._
+_Last updated: 2026-04-09 after commit ed6877a (BUG-DT-1: Models popup click-outside fix)._
 
 ## Release Status
 **v9.0.0 — V9.0 Stream-JSON Agent Migration CLOSED for core semantics, display fidelity FIXED**
@@ -47,6 +47,7 @@ _Last updated: 2026-04-09 after commit 5d359b4 (Codex SDK canonical chat_message
 | BUG-SNIPPET-INIT-1 | LOW | Agent card showed system prompt text for ~3s during startup — snippet update now gated by echo gate (`ignoreParserUntil`) in SwarmEngine.js tapFn | #255 | FIXED 2026-04-06 |
 | BUG-WF-1 | LOW | Context menu on node/edge right-click showed wrong menu type (canvas menu instead of node/edge menu) — `event.stopPropagation()` missing in `handleNodeContextMenu` and `handleEdgeContextMenu` in SwarmCanvas.jsx | V5-bugfix | FIXED 2026-04-06 |
 | BUG-WF-2 | LOW | Ctrl+S keyboard shortcut in SwarmView.jsx captured stale closure of `handleSave`/`handleRun` — added `handleSaveFnRef` and `handleRunFnRef` refs so `useEffect` keydown handler always calls the latest function | V5-bugfix | FIXED 2026-04-06 |
+| BUG-DT-1 | LOW | Models settings popup in SwarmView.jsx toolbar did not close on click-outside — added `modelSettingsRef` (useRef) + `useEffect` mousedown listener that dismisses popup when clicking outside the ref container | ed6877a | FIXED 2026-04-09 |
 
 ## Status Legend
 - UP_TO_DATE -- matches current code

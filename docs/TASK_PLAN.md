@@ -4,9 +4,11 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v9.3.1 — task numbering extends through #412; 409 tasks are currently registered in this plan, 408 are COMPLETE/PASS, 1 is DEFERRED, 0 are PENDING, and 1 is IN_PROGRESS. V9.1 CODEX SDK SWARM INTEGRATION CLOSED through #405 PASS. 490 server tests pass, client build clean (501 modules).
-  **Active Area:** V9.2 STREAM-JSON DISPLAY FIDELITY — #406 COMPLETED, #407 COMPLETED, #408 COMPLETED. TEST GATE #409 FAIL attempt 3 — repairTokenSpacing.js regex approach is fundamentally broken for Italian (merges real word boundaries, fails on "Java Script", merges unrelated words). Stale-state and cost-persistence PASS. Needs stopword-aware or dictionary-based approach, or server-side fix.
-  **Completed Area:** V9.3 CODEX SDK DEBUGGER-LOOP HARDENING — #410 COMPLETED, #411 COMPLETED, TEST GATE #412 PASS. Live Codex SDK smoke on isolated updated server verified non-empty Chat rail output and clean Reset Session -> Idle behavior.
+**Status:** v9.5 — task numbering extends through #416; 416 tasks registered, 414 COMPLETED/PASS, 1 DEFERRED (#236), 0 PENDING, 0 IN_PROGRESS. 490 server tests pass, client build clean (501 modules). Full deep E2E test of entire application passed with only 1 bug found (BUG-DT-1, fixed).
+  **Completed Area:** V9.5 FULL DEEP E2E TEST BUG FIXES — #415 COMPLETED (BUG-DT-1 Models popup click-outside fix, commit ed6877a), #416 PASS. AREA CLOSED 2026-04-09.
+  **Completed Area:** V9.4 CHAT MESSAGE CANONICAL FIX — #413 COMPLETED, #414 PASS. V9.4 CLOSED 2026-04-09.
+  **Completed Area:** V9.3 CODEX SDK DEBUGGER-LOOP HARDENING — #410 COMPLETED, #411 COMPLETED, TEST GATE #412 PASS. AREA CLOSED 2026-04-08.
+  **Completed Area:** V9.2 STREAM-JSON DISPLAY FIDELITY — #406-#408 COMPLETED, TEST GATE #409 PASS (attempt 4). AREA CLOSED 2026-04-09.
   **Completed Area:** V7.0 SWARM TERMINAL DEEP TEST BUG FIXES — Tasks #254-#258 ALL COMPLETED/PASS. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave1 SWARM EDITOR TRANSITION (N8N-STYLE) — Tasks #259-#267 ALL COMPLETED. AREA CLOSED 2026-04-06.
   **Completed Area:** V5.0-Wave2 NODE CREATION & CONFIG — Tasks #268-#272 ALL COMPLETED. AREA CLOSED 2026-04-06.
@@ -17090,6 +17092,61 @@ Acceptance Criteria:
   - [x] All 5 checks PASS
 Completion Note: PASS — 2026-04-09 — Verified via commit 5d359b4 browser E2E. Clean text confirmed, no duplicates, 490/490 tests, client build clean. V9.4 CLOSED.
 Dependencies: TASK #413
+---
+
+## AREA: V9.5 — Full Deep E2E Test Bug Fixes (2026-04-09)
+_Components: SwarmView Models popup click-outside handler_
+_Tasks: #415 → #416_
+_Gate: All bugs found during full deep E2E test must be fixed and verified_
+_Source: Full deep E2E Puppeteer test of entire application (2026-04-09). Only 1 bug found._
+
+---
+TASK #415: BUG-DT-1 — Models popup click-outside does not dismiss the popup
+Area: V9.5 FULL DEEP E2E TEST BUG FIXES (2026-04-09)
+Agent: frontend-dev
+Type: BUG_FIX
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Context:
+  During a full deep E2E test of the entire application, the Models popup in SwarmView.jsx
+  was found to lack a click-outside-to-dismiss handler. When the user opened the Models
+  dropdown and then clicked outside of it, the popup remained open instead of closing.
+  Fix (commit ed6877a):
+  - client/src/views/SwarmView.jsx: Added a click-outside handler for the Models popup
+    that listens for mousedown events outside the popup element and closes it.
+Acceptance Criteria:
+  - [x] Models popup in SwarmView closes when user clicks outside of it
+  - [x] Models popup still opens correctly when the trigger button is clicked
+  - [x] All 490 server tests pass
+  - [x] Client build clean
+  - [x] Browser E2E verified
+Completion Note: COMPLETED — 2026-04-09 — Commit ed6877a. Click-outside handler added to SwarmView.jsx. 490/490 tests pass, client builds, browser verified.
+Dependencies: none
+---
+TASK #416: TEST GATE — V9.5 Full Deep E2E Bug Fix verification
+Area: V9.5 FULL DEEP E2E TEST BUG FIXES (2026-04-09)
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Status: PASS
+Gate: HARD
+Context:
+  Verify commit ed6877a fixes BUG-DT-1:
+  1. Open SwarmView, click Models button — popup opens
+  2. Click outside the popup — popup closes
+  3. Models selection still works correctly
+  4. All 490 server tests pass, client build clean
+  This was the ONLY bug found during a full deep E2E test of the entire application.
+Acceptance Criteria:
+  - [x] Models popup closes on click-outside
+  - [x] Models popup opens and functions correctly
+  - [x] 490/490 tests pass
+  - [x] Client build clean
+  - [x] Browser E2E verified
+Completion Note: PASS — 2026-04-09 — Verified via browser E2E after commit ed6877a. V9.5 CLOSED.
+Dependencies: TASK #415
 ---
 
 ## Remaining Known Chat Bugs (informational, not blocking)

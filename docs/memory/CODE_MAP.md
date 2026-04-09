@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-09 — after commit 5d359b4: Codex SDK canonical chat_message + eliminate duplicate WS broadcasts — mapped by code-mapper_
+_Last updated: 2026-04-09 — after commit ed6877a: Fix Models popup not closing on click-outside (BUG-DT-1) — mapped by code-mapper_
 
 > **PROJECT STATUS: V9.0 STREAM-JSON MIGRATION CLOSED + V9.1 CODEX SDK SWARM INTEGRATION CLOSED — 402 TASKS (401 COMPLETE/PASS, 1 DEFERRED, 0 PENDING)**
 > Claude now uses the structured `stream-json` path and Codex now has a parallel `codex-sdk` structured path, with PTY retained for Gemini/live terminal work and truthful Codex fallback scenarios. Verification: 488/488 backend tests pass, client build 501 modules.
@@ -2531,7 +2531,8 @@ _Last updated: 2026-04-09 — after commit 5d359b4: Codex SDK canonical chat_mes
 - **Complexity note (V5 Wave 2 — Settings modal):** Settings button disabled when !workflowDef. onApply receives (updatedSettings, updatedContext), spreads updatedSettings onto workflowDef.settings, replaces workflowDef.initialContext with updatedContext dict, calls markDirty + setShowSettings(false). Changes are local until Save is clicked.
 - **Complexity note (V5 Wave 1 — Save):** handleSave reads canvasStateRef.current (nodes/edges set by onCanvasChange callback), calls sanitizeWorkflow to strip React Flow internals, apiPut to /api/v1/workflows/:id, unwraps result?.workflow ?? result, calls setWorkflowDef + setIsDirty(false) + refreshWorkflows. Save button disabled when !isDirty or !workflowDef or saving.
 - **Complexity note (V5 Wave 1 — Name editing):** Click on name span opens inline input. Enter confirms, Escape cancels, blur confirms. Validation: non-empty, <= 128 chars, matches NAME_PATTERN. On confirm, updates workflowDef in store + calls markDirty.
-- **Last modified:** 2026-04-06 in V5 bugfix 41b9a0e (handleSaveFnRef/handleRunFnRef added to fix stale closure in Ctrl+S/Ctrl+Enter keydown handler)
+- **Complexity note (BUG-DT-1 — click-outside dismiss):** `modelSettingsRef` (useRef) attached to the wrapper div containing the Models button + popup. A `useEffect` keyed on `showModelSettings` registers a `mousedown` document listener that calls `setShowModelSettings(false)` when the click target is outside `modelSettingsRef.current`. Cleanup removes the listener. Only active when `showModelSettings` is true.
+- **Last modified:** 2026-04-09 in commit ed6877a (BUG-DT-1 — added modelSettingsRef + mousedown click-outside useEffect for Models popup dismissal)
 
 ---
 

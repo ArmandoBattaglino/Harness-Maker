@@ -3663,3 +3663,44 @@ CODE_MAP.md and CHANGELOG.md are up to date through commit 5d359b4. All 3 modifi
 ### Handoff
 None — task fully self-contained.
 ---
+
+---
+## 2026-04-09 — Commit ed6877a: BUG-DT-1 Models popup click-outside fix
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+SwarmView had a Models settings popup that could only be closed by clicking the Models button again. Commit ed6877a added click-outside dismissal.
+
+### What I did
+1. Read the git diff for commit ed6877a
+2. Identified changes: modelSettingsRef (useRef) + mousedown useEffect in SwarmView
+3. Updated CODE_MAP.md SwarmView entry with new complexity note for the click-outside pattern
+4. Appended CHANGELOG.md entry documenting the change
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Added complexity note for BUG-DT-1 click-outside pattern, updated last-modified date |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended entry for commit ed6877a |
+
+### Improvements delivered
+- CODE_MAP.md now documents the modelSettingsRef click-outside pattern for future reference
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| (none) | — | — | — |
+
+### Decisions I made
+- Added as complexity note rather than separate function entry since it's hooks/refs inside the existing SwarmView component
+
+### What I learned
+- Click-outside pattern uses mousedown (not click) to catch dismissal before the popup's own click handlers fire
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md are up to date through commit ed6877a.
+
+### Handoff
+None — task fully self-contained.
+---

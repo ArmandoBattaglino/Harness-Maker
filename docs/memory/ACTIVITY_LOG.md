@@ -1,4 +1,26 @@
-﻿## 2026-04-09 — project-manager — Post-commit 5d359b4 task plan update
+﻿## 2026-04-09 — project-manager — V9.5 Full Deep E2E Test Bug Fix registration
+**Outcome:** COMPLETED
+**Summary:** Registered V9.5 area in TASK_PLAN.md with 2 tasks: #415 (BUG-DT-1 Models popup click-outside fix, commit ed6877a, COMPLETED) and #416 (TEST GATE, PASS). This was the only bug found during a full deep E2E test of the entire application. Total: 416 tasks, 414 COMPLETED/PASS, 1 DEFERRED (#236). ALL AREAS CLOSED. V9.5 CLOSED.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none (task plan maintenance only; the actual fix was commit ed6877a by frontend-dev)
+**Decisions made:** none
+**Blockers:** none
+**Next:** No blocking work remains. Application passed full deep E2E test with only 1 minor bug. BUG-CHAT-2 (MEDIUM) remains the highest-priority known issue for future polish.
+
+---
+
+## 2026-04-09 — documenter — Commit ed6877a: BUG-DT-1 Models popup click-outside fix
+**Outcome:** COMPLETED
+**Summary:** Documentation audit after BUG-DT-1 fix (Models settings popup click-outside dismissal in SwarmView.jsx). UI-only change adding modelSettingsRef + useEffect mousedown handler. No docs stale (README, ARCHITECTURE, API, inline comments all unaffected). DOC_STATUS.md updated with new fixed-bug entry.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none (documentation only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** nothing -- task fully self-contained
+
+---
+
+## 2026-04-09 — project-manager — Post-commit 5d359b4 task plan update
 **Outcome:** COMPLETED
 **Summary:** Updated TASK_PLAN.md after commit 5d359b4 (BUG-CHAT-3 fix). Marked TEST GATE #409 as PASS (attempt 4). Registered V9.4 area with tasks #413 (BUG-CHAT-3 fix, COMPLETED) and #414 (TEST GATE, PASS). V9.2 and V9.4 both CLOSED. Total: 414 tasks, 412 COMPLETED/PASS, 1 DEFERRED (#236). Documented remaining known bugs: BUG-CHAT-1 (token boundary spacing, LOW, platform limitation) and BUG-CHAT-2 (Codex PTY thinking noise, MEDIUM). Updated PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -5290,4 +5312,15 @@ full self-contained context and acceptance criteria.
 **Decisions made:** none
 **Blockers:** none
 **Next:** nothing — task fully self-contained
+---
+
+---
+## 2026-04-09 — code-mapper — Commit ed6877a: BUG-DT-1 Models popup click-outside fix
+**Outcome:** COMPLETED
+**Summary:** Mapped the click-outside dismiss fix for the Models settings popup in SwarmView. Added complexity note for modelSettingsRef + mousedown useEffect pattern. Updated CODE_MAP.md and CHANGELOG.md.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
+**Bugs fixed:** none (documenting a fix made by another agent)
+**Decisions made:** none
+**Blockers:** none
+**Next:** nothing — mapping task complete
 ---

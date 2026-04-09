@@ -1,4 +1,49 @@
 ---
+## 2026-04-09 — Commit ed6877a: BUG-DT-1 Models popup click-outside fix
+**Status:** COMPLETED
+**Called by:** orchestrator (post-commit documentation update)
+
+### Context when I started
+Commit ed6877a fixed BUG-DT-1: the Models settings popup in SwarmView.jsx toolbar did not close when clicking outside of it. The fix added a `modelSettingsRef` (useRef) attached to the popup wrapper div and a `useEffect` that registers a `mousedown` document listener (only when popup is open) to dismiss it on outside clicks.
+
+### What I did
+1. Read the modified file (SwarmView.jsx lines 1-80 and grep for relevant patterns) plus DOC_STATUS.md, PROGRESS.md, ACTIVITY_LOG.md, documenter.md, CONTEXT.md
+2. Audited all tracked docs for staleness:
+   - README.md: NOT stale (UI bug fix, no user-facing feature/config changes)
+   - ARCHITECTURE.md: NOT stale (no new components or data flow changes)
+   - API.md: NOT stale (no endpoint changes)
+   - Inline comments: NOT stale (new useEffect is standard click-outside pattern, self-explanatory, no "why" comment needed)
+   - DOC_STATUS.md: STALE (needed new bug entry in fixed bugs table + timestamp update)
+3. Updated DOC_STATUS.md: added BUG-DT-1 to fixed bugs table, updated header timestamp
+4. Updated PROGRESS.md, ACTIVITY_LOG.md, and this agent log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Added BUG-DT-1 to fixed bugs table; updated header timestamp to ed6877a |
+| docs/memory/PROGRESS.md | MODIFIED | Entry prepended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Entry prepended |
+| docs/memory/agents/documenter.md | MODIFIED | This session log appended |
+
+### Improvements delivered
+- DOC_STATUS.md now tracks BUG-DT-1 as a fixed bug for historical completeness
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- No inline comment added to the new useEffect -- the click-outside pattern is standard React boilerplate and self-documenting
+
+### What I learned
+- Nothing new; standard UI fix documentation pass
+
+### State I'm leaving behind
+All documentation is up to date. No stale sections.
+
+### Handoff
+None -- task fully self-contained.
+
+---
 ## 2026-04-09 — Commit 5d359b4: Codex SDK canonical chat_message + eliminate duplicate WS broadcasts
 **Status:** COMPLETED
 **Called by:** orchestrator (post-commit documentation update)

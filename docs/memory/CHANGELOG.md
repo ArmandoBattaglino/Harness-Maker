@@ -3847,3 +3847,31 @@ No new connections introduced in this checkpoint task. All connection changes we
 - `patchLatestChatMessage` is still used by `flushPendingStreamJsonTurn` — not removed from store, just no longer used in the isCanonical path
 
 ---
+
+---
+## 2026-04-09 — Commit ed6877a: Fix Models popup not closing on click-outside (BUG-DT-1)
+**Agent:** code-mapper
+**Triggered by:** Bug fix — Models settings popup in SwarmView did not close when clicking outside its boundary
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/views/SwarmView.jsx | MODIFIED | Added modelSettingsRef (useRef) and mousedown click-outside useEffect to dismiss Models popup on outside click |
+
+### Functions Added
+- (none — changes are hooks/refs inside existing `SwarmView()` component)
+
+### Functions Modified
+- `SwarmView()` in `client/src/views/SwarmView.jsx` — Added `modelSettingsRef` (useRef, attached to Models button+popup wrapper div) and a `useEffect` keyed on `showModelSettings` that registers a document `mousedown` listener. The listener calls `setShowModelSettings(false)` when click target is outside the ref. Cleanup removes the listener.
+
+### Functions Removed
+- (none)
+
+### Connection Changes
+- New document-level `mousedown` event listener (added/removed dynamically based on `showModelSettings` state)
+- `modelSettingsRef` attached to the `<div className="relative">` wrapper around Models button + popup (line ~730)
+
+### Impact on Other Code
+- No impact on other files — change is self-contained within SwarmView's Models popup UI section
+
+---

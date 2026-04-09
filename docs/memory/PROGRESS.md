@@ -1,3 +1,7 @@
+- [PM 2026-04-09] V9.5 FULL DEEP E2E TEST BUG FIXES CLOSED. Full deep E2E test of entire application found only 1 bug: BUG-DT-1 (Models popup click-outside). Fixed in commit ed6877a (SwarmView.jsx). #415 COMPLETED, #416 PASS. Total: 416 tasks, 414 COMPLETED/PASS, 1 DEFERRED (#236), 0 IN_PROGRESS. ALL AREAS CLOSED. Known non-blocking: BUG-CHAT-1 (LOW), BUG-CHAT-2 (MEDIUM).
+
+- [DOCUMENTER 2026-04-09] Commit ed6877a (BUG-DT-1) documentation audit COMPLETED. Models popup click-outside fix in SwarmView.jsx. UI-only change; no docs stale. DOC_STATUS.md updated with new bug entry.
+
 - [PM 2026-04-09] ALL AREAS CLOSED. Commit 5d359b4 fixed BUG-CHAT-3 (Codex SDK canonical chat_message + duplicate WS broadcast elimination). TEST GATE #409 PASS (attempt 4). V9.2 CLOSED. V9.4 (#413-#414) registered and COMPLETED/PASS. Total: 414 tasks, 412 COMPLETED/PASS, 1 DEFERRED (#236), 0 IN_PROGRESS. Known non-blocking: BUG-CHAT-1 (token boundary spacing, LOW, platform limitation), BUG-CHAT-2 (Codex PTY thinking noise, MEDIUM).
 
 - [DOCUMENTER 2026-04-09] Commit 5d359b4 documentation audit COMPLETED. Codex SDK now emits canonical chat_message with isCanonical:true at turn completion; ChatExtractor.feed() removed for Codex SDK; client uses new replaceNodeChatMessages action. Updated: ARCHITECTURE.md Section 13.1, API.md WS event table, DOC_STATUS.md, inline comments audit. No new bugs.

@@ -1,4 +1,47 @@
 ---
+## 2026-04-09 — V9.5 Full Deep E2E Test Bug Fix registration (BUG-DT-1)
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+Commit ed6877a just landed, fixing BUG-DT-1 (Models popup click-outside handler in SwarmView.jsx). This was the only bug found during a full deep E2E test of the entire application. 490/490 tests pass, client builds, browser verified. Previous state: 414 tasks, 412 COMPLETED/PASS, 1 DEFERRED (#236). V9.4 was the latest area, CLOSED.
+
+### What I did
+1. Read TASK_PLAN.md (header + tail), PROGRESS.md, ACTIVITY_LOG.md, and my agent memory
+2. Updated TASK_PLAN.md header status line: bumped to v9.5, 416 tasks, 414 COMPLETED/PASS
+3. Added V9.5 area with TASK #415 (BUG-DT-1, COMPLETED) and TASK #416 (TEST GATE, PASS)
+4. Updated PROGRESS.md with PM status entry at top
+5. Updated ACTIVITY_LOG.md with session entry
+6. Updated this agent memory file
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Header status bumped to v9.5/416 tasks; added V9.5 area (#415-#416) |
+| docs/memory/PROGRESS.md | MODIFIED | Added PM status entry for V9.5 closure |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added PM session entry for V9.5 registration |
+| docs/memory/agents/project-manager.md | MODIFIED | Added this session log |
+
+### Improvements delivered
+- Task plan accurately reflects the full deep E2E test result and BUG-DT-1 fix
+- V9.5 formally registered and CLOSED
+
+### Bugs I encountered
+- None
+
+### Decisions I made
+- Registered BUG-DT-1 as V9.5 area (separate from V9.4) because it came from a distinct full deep E2E test pass, not from the V9.4 chat canonical work
+
+### What I learned
+- The full deep E2E test found only 1 bug across the entire application, which is a strong signal that the codebase is in good shape
+
+### State I'm leaving behind
+416 tasks total: 414 COMPLETED/PASS, 1 DEFERRED (#236 ConPTY), 0 IN_PROGRESS. All areas CLOSED through V9.5. Two known non-blocking bugs remain: BUG-CHAT-1 (LOW) and BUG-CHAT-2 (MEDIUM).
+
+### Handoff
+No blocking work remains. Application passed full deep E2E test. BUG-CHAT-2 is the highest-priority known issue for future polish. Any new features should start a V10+ area.
+
+---
 ## 2026-04-09 — Post-commit 5d359b4 task plan update (BUG-CHAT-3 fix)
 **Status:** COMPLETED
 **Called by:** user
