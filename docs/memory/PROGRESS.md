@@ -1,3 +1,5 @@
+- [BACKEND-DEV 2026-04-09] TASK #421 (BUG-CHAT-SERVER-04/03) COMPLETED. ChatExtractor buffers keyed by `${executionId}:${nodeId}`, cleanup scoped per-execution. 490/490 tests pass.
+
 - [FRONTEND-DEV 2026-04-09] TASK #423 (BUG-CHAT-CLIENT-4) COMPLETED. Added nodeId guard in useSwarm.js chat_message handler. TASK #425 (BUG-CHAT-CLIENT-8) COMPLETED. Installed rehype-sanitize, added to ChatMessage.jsx ReactMarkdown. Client build clean.
 
 - [PM 2026-04-09] Wave 1 COMPLETED. #417 (BUG-CHAT-SERVER-01, commits 664c2e9/a8fda84) and #419 (BUG-CHAT-CLIENT-1/3/15) both COMPLETED. 416 COMPLETED/PASS, 30 PENDING. Wave 2 launching: #421 (ChatExtractor buffer keying) + #423 (phantom store entries) + #425 (XSS sanitization) PARALLEL.

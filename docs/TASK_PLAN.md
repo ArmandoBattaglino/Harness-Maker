@@ -17304,7 +17304,7 @@ Type: BUG_FIX
 Priority: HIGH (SERVER-04) + MEDIUM (SERVER-03)
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   File: server/services/ChatExtractor.js
   Two related ChatExtractor bugs:

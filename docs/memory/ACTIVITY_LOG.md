@@ -1,4 +1,25 @@
-﻿## 2026-04-09 — frontend-dev — Task #423 + #425: nodeId guard + XSS sanitize
+﻿## 2026-04-09 — backend-dev — Task #421: BUG-CHAT-SERVER-04/03 — ChatExtractor buffer keying + cleanup scope
+**Outcome:** COMPLETED
+**Summary:** Changed ChatExtractor._buffers key from nodeId to `${executionId}:${nodeId}` compound key. Updated cleanup() to only remove buffers matching the given executionId prefix instead of clearing all. Updated resetBuffer() to require executionId. Updated two SwarmEngine.js call sites. 490/490 tests pass.
+**Files changed:** server/services/ChatExtractor.js, server/services/SwarmEngine.js
+**Bugs fixed:** BUG-CHAT-SERVER-04 (buffer key collision), BUG-CHAT-SERVER-03 (cleanup scope)
+**Decisions made:** Kept registerNodePrompt keyed by nodeId only (prompts don't vary per execution)
+**Blockers:** none
+**Next:** TEST GATE #422
+
+---
+## 2026-04-09 — documenter — Tasks #417 + #419: V10.0 Wave 1 documentation update
+**Outcome:** COMPLETED
+**Summary:** Updated ARCHITECTURE.md Section 13.5 (execution.chatMessages canonical replacement), API.md (chatMessages in GET /status response + expanded chat_message WS event description with canonicalReceived guard), SwarmContext.jsx (SwarmAgentState typedef with canonicalReceived), and DOC_STATUS.md.
+**Files changed:** docs/ARCHITECTURE.md, docs/API.md, client/src/store/SwarmContext.jsx, docs/memory/DOC_STATUS.md
+**Bugs fixed:** none
+**Decisions made:** Added chatMessages to GET /status example as Task #417 made it load-bearing
+**Blockers:** none
+**Next:** TEST GATE #420; future V10.0 waves will need doc updates
+
+---
+
+## 2026-04-09 — frontend-dev — Task #423 + #425: nodeId guard + XSS sanitize
 **Outcome:** COMPLETED
 **Summary:** Added `if (!msg.nodeId) break;` guard in useSwarm.js chat_message handler to prevent phantom "undefined" store entries. Installed rehype-sanitize and added it to ChatMessage.jsx ReactMarkdown to close XSS vector from javascript: URLs in agent markdown output. Client build clean.
 **Files changed:** client/src/hooks/useSwarm.js, client/src/canvas/ChatMessage.jsx, client/package.json
@@ -5418,4 +5439,15 @@ full self-contained context and acceptance criteria.
 **Decisions made:** Used identical pattern to Codex SDK path for consistency
 **Blockers:** none
 **Next:** TEST GATE #418 to verify fix; TASK #419 (frontend) runs in parallel
+---
+
+---
+## 2026-04-09 — code-mapper — Tasks #417+#419: Code Map update
+**Outcome:** COMPLETED
+**Summary:** Updated CODE_MAP.md and CHANGELOG.md for Tasks #417 (stream-json canonical chatMessages in SwarmEngine) and #419 (client canonicalReceived flag + empty canonical guard in useSwarm.js/SwarmContext.jsx). 3 files analyzed, 3 function entries updated, 0 added, 0 removed.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
+**Bugs fixed:** none (mapping only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** none — mapping task complete
 ---

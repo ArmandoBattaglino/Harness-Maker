@@ -3914,3 +3914,50 @@ No new connections introduced in this checkpoint task. All connection changes we
 - 31 bugs identified will drive Phase 2 (bulk bug-to-task plan) and Phase 3 (parallel fix wave). No code impact yet.
 
 ---
+
+---
+## 2026-04-09 — Task #417: Stream-json canonical emission updates execution.chatMessages
+**Agent:** backend-dev — mapped by code-mapper
+**Triggered by:** BUG-DL-TEXTDELTA-1 follow-up. REST hydration (GET /status) was returning stale text_delta fragments in chatMessages because the canonical result text was only broadcast via WS but never written to the execution's chatMessages array. Page refresh re-injected garbled fragments.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/SwarmEngine.js | MODIFIED | Lines ~5370-5381: `_handleStreamJsonResult` now updates `execution.chatMessages` with filter+push+slice pattern — filters out prior assistant entries for the nodeId, pushes canonical message, caps at 500 |
+
+### Functions Modified
+- `SwarmEngine._handleStreamJsonResult(executionId, nodeId, resultEvt, handoffTargets)` in `server/services/SwarmEngine.js` — added execution.chatMessages canonical replacement (filter out prior assistant messages for nodeId, push single canonical, slice to 500). Pattern ported from Codex SDK path.
+
+### Connection Changes
+- `_handleStreamJsonResult` now writes to `execution.chatMessages` (new data mutation — previously only broadcast via WS)
+
+### Impact on Other Code
+- `server/routes/swarm.js` GET /status endpoint returns execution.chatMessages — now serves clean canonical text instead of stale fragments after page refresh
+- `client/src/hooks/useSwarm.js` REST hydration in `execution_status` handler now receives canonical messages from server, preventing duplicate/garbled text on late hydration
+
+---
+
+---
+## 2026-04-09 — Task #419: Client canonicalReceived flag + empty canonical guard
+**Agent:** frontend-dev — mapped by code-mapper
+**Triggered by:** BUG-CHAT-CLIENT-1/3/15. Trailing text_delta WS fragments arriving after canonical (during 3s WS close delay) were re-appended to chatMessages, corrupting the clean canonical output. Also, empty canonical text could destroy existing messages.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/hooks/useSwarm.js | MODIFIED | `chat_message` handler: isCanonical branch now sets `canonicalReceived: true` on agentState before processing; guards against empty canonical text (breaks without destroying messages); non-canonical else branch checks `canonicalReceived` flag and drops post-canonical assistant fragments |
+| client/src/store/SwarmContext.jsx | MODIFIED | `replaceNodeChatMessages` now returns state unchanged if `canonicalMsg?.text` is falsy (BUG-CHAT-CLIENT-15 guard) |
+
+### Functions Modified
+- `connectWs(executionId)` chat_message handler in `client/src/hooks/useSwarm.js` — isCanonical branch: (1) empty text guard → sets flag + breaks, (2) sets canonicalReceived before processing, (3) non-canonical else branch drops messages when canonicalReceived is true
+- `replaceNodeChatMessages(nodeId, canonicalMsg, predicate)` in `client/src/store/SwarmContext.jsx` — added early return when `canonicalMsg?.text` is falsy
+
+### Connection Changes
+- `updateAgentState` now receives `canonicalReceived: true` field from the chat_message handler (new agentState field)
+- Non-canonical chat_message path now reads `agentStates[nodeId].canonicalReceived` before processing (new dependency on agentState)
+
+### Impact on Other Code
+- Any consumer of `agentStates[nodeId]` may now see the `canonicalReceived` boolean field — no consumer changes needed (field is purely internal to the chat_message handler logic)
+- AgentNode.jsx, ChatPanel.jsx, ChatMessage.jsx are unaffected — they do not read `canonicalReceived`
+
+---

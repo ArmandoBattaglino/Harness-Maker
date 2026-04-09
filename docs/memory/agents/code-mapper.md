@@ -3749,3 +3749,46 @@ CODE_MAP.md and CHANGELOG.md are up to date through the Phase 1 chat stress test
 ### Handoff
 Phase 2 (bulk bug-to-task plan) will create new tasks. Phase 3 (parallel fix wave) will modify code. Both will need code-mapper runs afterward.
 ---
+
+---
+## 2026-04-09 — Tasks #417+#419: Stream-json canonical chatMessages + client canonicalReceived flag
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+Tasks #417 and #419 just completed (commits 664c2e9 and a8fda84). Three files modified across server and client for the canonical chat message pipeline.
+
+### What I did
+1. Read all three modified files: SwarmEngine.js (lines 5350-5410), useSwarm.js (full), SwarmContext.jsx (full)
+2. Read existing CODE_MAP.md entries for _handleStreamJsonResult, connectWs, replaceNodeChatMessages
+3. Updated _handleStreamJsonResult entry: added execution.chatMessages filter+push+slice side effect (Task #417)
+4. Updated connectWs entry: documented canonicalReceived flag, empty canonical guard, post-canonical fragment blocking (Task #419)
+5. Updated replaceNodeChatMessages entry: documented empty-text guard (BUG-CHAT-CLIENT-15)
+6. Appended two CHANGELOG entries (one per task)
+7. Updated ACTIVITY_LOG
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Updated 3 function entries for Tasks #417/#419 |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended 2 new entries |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended mapping session entry |
+
+### Improvements delivered
+- CODE_MAP now accurately reflects the canonical chatMessages pipeline end-to-end (server write + client guard)
+
+### Bugs I encountered
+(none)
+
+### Decisions I made
+(none)
+
+### What I learned
+- The canonicalReceived pattern is a client-side guard against WS race conditions during the 3s close delay — worth noting for any future WS handler additions
+
+### State I'm leaving behind
+CODE_MAP and CHANGELOG are current through Tasks #417/#419. All function entries for the canonical chat pipeline are accurate.
+
+### Handoff
+none — mapping task complete
+---

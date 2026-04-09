@@ -1,4 +1,53 @@
 ---
+## 2026-04-09 — Task #421: BUG-CHAT-SERVER-04/03 — ChatExtractor buffer key collision + cleanup scope
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+ChatExtractor.js used `nodeId` alone as the key for `_buffers` Map. Since SwarmEngine shares a single ChatExtractor instance across all concurrent executions, two executions using the same nodeId (e.g., both have "researcher") would share a buffer, causing garbled chat output. Additionally, `cleanup(executionId)` called `_buffers.clear()`, destroying ALL buffers regardless of execution, affecting concurrent runs.
+
+### What I did
+1. Changed all buffer keys from `nodeId` to `${executionId}:${nodeId}` compound key in ChatExtractor.js
+2. Updated `feed()` to compute `bufKey` and use it for Map get/set
+3. Updated `_periodicFlush()` to accept and use `bufKey` parameter
+4. Updated `flush()` to pass compound key to `_flush()`
+5. Updated `_flush()` to accept optional `bufKey` parameter (falls back to computing it)
+6. Updated `resetBuffer()` to require `executionId` parameter and use compound key
+7. Updated `cleanup()` to iterate buffers and only flush/delete those with matching `${executionId}:` prefix (no more `_buffers.clear()`)
+8. Updated `cleanupNode()` to use compound key
+9. Updated two `resetBuffer()` call sites in SwarmEngine.js (lines ~3195 and ~4033) to pass `executionId`
+10. Verified all 490 server tests pass
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/ChatExtractor.js | MODIFIED | Buffer keys changed to `${executionId}:${nodeId}`, cleanup scoped per-execution, resetBuffer now requires executionId |
+| server/services/SwarmEngine.js | MODIFIED | Two resetBuffer() call sites updated to pass executionId (ex.id at echo gate fallback, executionId at marker detection) |
+| docs/TASK_PLAN.md | MODIFIED | Task #421 status → COMPLETED |
+
+### Improvements delivered
+- Concurrent executions with same nodeId no longer mix buffer contents
+- cleanup() for one execution no longer destroys buffers of other running executions
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None | — | — | — |
+
+### Decisions I made
+- Kept `registerNodePrompt` and `_isPromptEcho` keyed by nodeId only (as specified in task) since prompts don't vary per execution
+- Added optional `bufKey` third parameter to `_flush()` rather than always recomputing, for efficiency when caller already has it
+
+### What I learned
+- ChatExtractor methods `feed`, `flush`, `cleanup` already received `executionId` — only `resetBuffer` needed the parameter added
+- `cleanupNode` also needed the compound key fix (not mentioned in task but logically required)
+
+### State I'm leaving behind
+Both bugs (SERVER-04 and SERVER-03) are fixed. All 490 tests pass. Ready for TEST GATE #422.
+
+### Handoff
+TEST GATE #422 should verify concurrent execution buffer isolation and selective cleanup.
+---
 ## 2026-04-08 — Task #354: SPIKE — Validate --resume -p --output-format stream-json multi-turn
 **Status:** COMPLETED
 **Called by:** orchestrator

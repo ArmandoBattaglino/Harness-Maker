@@ -1,4 +1,48 @@
 ---
+## 2026-04-09 — Tasks #417 + #419: V10.0 Wave 1 canonical chat_message documentation
+**Status:** COMPLETED
+**Called by:** orchestrator (post-Wave-1 documentation update)
+
+### Context when I started
+Tasks #417 and #419 (V10.0 Wave 1) just completed. #417 added 7 lines to SwarmEngine.js so canonical result text is stored to execution.chatMessages (replacing prior assistant fragments), ensuring REST hydration returns clean text. #419 added a canonicalReceived flag to useSwarm.js chat_message handler that blocks trailing text_delta fragments after canonical arrives, plus an empty-canonical guard.
+
+### What I did
+1. Read all three modified files (SwarmEngine.js ~line 5370, useSwarm.js full, SwarmContext.jsx full)
+2. Audited ARCHITECTURE.md Section 13.5, API.md WS events + status endpoint, DOC_STATUS.md, inline comments
+3. Updated ARCHITECTURE.md 13.5 step 4b to document execution.chatMessages replacement
+4. Updated SwarmContext.jsx SwarmAgentState typedef to include canonicalReceived field
+5. Updated API.md: added chatMessages to GET /status response example + description; expanded chat_message WS event description with server-side storage and client-side canonicalReceived guard
+6. Updated DOC_STATUS.md with current status for all affected documents
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/ARCHITECTURE.md | MODIFIED | Section 13.5 step 4b: added execution.chatMessages storage description |
+| docs/API.md | MODIFIED | GET /status response: added chatMessages field + description; chat_message WS event: expanded with server-side storage + client canonicalReceived guard |
+| client/src/store/SwarmContext.jsx | MODIFIED | SwarmAgentState typedef: added canonicalReceived field |
+| docs/memory/DOC_STATUS.md | MODIFIED | Updated timestamps and notes for ARCHITECTURE.md, API.md, inline comments |
+
+### Improvements delivered
+- ARCHITECTURE.md now documents the full server-side canonical flow including REST hydration
+- API.md status endpoint response example includes chatMessages for the first time
+- SwarmAgentState typedef is complete with the new canonicalReceived field
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Added chatMessages to the GET /status example even though it was technically a pre-existing omission, because Task #417 made it load-bearing for correctness (canonical replacement means the field now matters for hydration fidelity)
+
+### What I learned
+- The canonical chat_message flow has both a server-side persistence path (execution.chatMessages replacement) and a client-side guard path (canonicalReceived flag) -- both must be documented together to explain the full anti-corruption mechanism
+
+### State I'm leaving behind
+All docs accurate for V10.0 Wave 1. DOC_STATUS.md updated.
+
+### Handoff
+TEST GATE #420 should verify the three bug scenarios. Future waves will need doc updates as they land.
+
+---
 ## 2026-04-09 — Debugger Loop Phase 1: Chat Stress Test (documentation audit)
 **Status:** COMPLETED
 **Called by:** orchestrator (post-audit documentation update)
