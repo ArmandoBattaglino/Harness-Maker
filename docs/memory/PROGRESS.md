@@ -1,3 +1,5 @@
+- [PM 2026-04-09] V10.0 CHAT STRESS TEST BUG FIXES area created. Debugger-loop Phase 1 deep chat stress test found 31 bugs (8 HIGH, 10 MEDIUM, 13 LOW). 32 tasks registered (#417-#448) across 8 waves. Wave 1 ready: TASK #417 (backend-dev: stream-json canonical emission fix in SwarmEngine.js) + TASK #419 (frontend-dev: canonicalReceived flag in useSwarm.js+SwarmContext.jsx) run PARALLEL. Key fixes: canonical race conditions, ChatExtractor buffer collision, XSS sanitization, double emission, DP memory cap, scroll-lock, HITL double-click guard.
+
 - [PM 2026-04-09] V9.5 FULL DEEP E2E TEST BUG FIXES CLOSED. Full deep E2E test of entire application found only 1 bug: BUG-DT-1 (Models popup click-outside). Fixed in commit ed6877a (SwarmView.jsx). #415 COMPLETED, #416 PASS. Total: 416 tasks, 414 COMPLETED/PASS, 1 DEFERRED (#236), 0 IN_PROGRESS. ALL AREAS CLOSED. Known non-blocking: BUG-CHAT-1 (LOW), BUG-CHAT-2 (MEDIUM).
 
 - [DOCUMENTER 2026-04-09] Commit ed6877a (BUG-DT-1) documentation audit COMPLETED. Models popup click-outside fix in SwarmView.jsx. UI-only change; no docs stale. DOC_STATUS.md updated with new bug entry.

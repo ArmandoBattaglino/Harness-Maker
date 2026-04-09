@@ -3789,3 +3789,9 @@ _All bugs identified in QA Swarm Inspection (2026-03-31) and Swarm Code Audit (2
 > Current status override: 396 tasks total, 381 completed, 2 deferred, 13 pending. Debugger-loop follow-up #394-#396 is CLOSED after mixed-provider browser re-verification.
 > SwarmEngine follow-up note: Claude terminal `stream-json` error `result` events now hard-exit into `_handleRuntimeBlocker()` and `_shouldFallback()` refuses PTY fallback for `spawnMode='stream-json'`, preserving truthful `blocked` state and preventing contaminated downstream Codex handoff.
 > STATUS OVERRIDE 2026-04-08: task numbering extends through #396; 393 tasks are registered in `docs/TASK_PLAN.md`, 392 are COMPLETE/PASS, 1 is DEFERRED (#236, ConPTY platform limitation), and 0 are PENDING. V9.0 plus debugger-loop follow-up #394-#396 are CLOSED.
+
+# AUDIT NOTE — 2026-04-09: Debugger Loop Phase 1 (Chat Stress Test)
+> **No structural changes.** 31 bugs found (6 HIGH, 9 MEDIUM, 16 LOW) across the chat pipeline.
+> Files deeply audited: ChatExtractor.js (buffer mgmt, flush, cleanup, feed), chatTextNormalization.js (ConPTY decompression, DP algorithms), SwarmEngine.js (_broadcastChatMessage, canonical emission paths for stream-json + Codex SDK, text_delta handlers), swarm.js (REST hydration of chatMessages), SwarmContext.jsx (Zustand chat actions: addChatMessage, replaceNodeChatMessages), useSwarm.js (WS chat_message handler, isCanonical branch, REST hydration), ChatPanel.jsx (message grouping, filtering, scrolling), ChatMessage.jsx (markdown rendering, cost footer), HitlChatCard.jsx (approve/reject flow).
+> Bugs span: race conditions in ChatExtractor cleanup, DP normalization edge cases, missing boundary checks in REST hydration, ChatPanel grouping inconsistencies, ChatMessage rendering issues, HitlChatCard state management gaps.
+> **No code was changed. Bug fixes will be tracked in subsequent Phase 2/3 tasks.**

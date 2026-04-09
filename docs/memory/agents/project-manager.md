@@ -1,4 +1,52 @@
 ---
+## 2026-04-09 — Debugger Loop Phase 2: V10.0 Chat Stress Test Bug Plan
+**Status:** COMPLETED
+**Called by:** user (debugger-loop Phase 2)
+
+### Context when I started
+Debugger-loop Phase 1 deep chat stress test completed, finding 31 bugs across server and client. Previous state: 416 tasks, 414 COMPLETED/PASS, 1 DEFERRED (#236). All areas through V9.5 CLOSED. The 31 bugs needed to be organized into actionable tasks in TASK_PLAN.md.
+
+### What I did
+1. Read TASK_PLAN.md tail (last task #416), PROGRESS.md, ACTIVITY_LOG.md, my agent memory
+2. Created V10.0 CHAT STRESS TEST BUG FIXES area with 32 tasks (#417-#448)
+3. Organized bugs into 8 dependency waves for maximum parallelism
+4. Each bug fix task paired with a TEST GATE task
+5. Added integration TEST GATE (#446) and AREA CHECKPOINT (#447)
+6. Added meta-verification task (#448) for BUG-CHAT-SERVER-09 (expected auto-resolved by #417+#427)
+7. Updated header status: v10.0, 448 tasks, 414 COMPLETED/PASS, 32 PENDING
+8. Updated PROGRESS.md and ACTIVITY_LOG.md
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Added V10.0 area (#417-#448), updated header status |
+| docs/memory/PROGRESS.md | MODIFIED | Added V10.0 creation entry |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added Phase 2 session entry |
+| docs/memory/agents/project-manager.md | MODIFIED | Added this session log |
+
+### Improvements delivered
+- All 31 bugs from Phase 1 now have actionable tasks with full context
+- 8-wave dependency structure maximizes parallelism (backend + frontend in parallel within each wave)
+- Each task has acceptance criteria derived directly from bug report
+
+### Bugs I encountered
+- None
+
+### Decisions I made
+- 8-wave structure: Waves 1-3 are parallel backend+frontend pairs, Wave 4 is backend-only, Wave 5 depends on Wave 1 client fix (canonicalReceived flag), Wave 6 batches LOW-priority, Waves 7-8 are integration gates
+- Combined related bugs into single tasks where they share a root fix (e.g., CLIENT-1/3/15 share canonicalReceived flag; SERVER-04/03 both in ChatExtractor; SERVER-11/12 both about word lists)
+- BUG-CHAT-SERVER-09 as verification-only task since it should auto-resolve from #417+#427
+
+### What I learned
+- The canonicalReceived flag is the most important shared dependency — it blocks Wave 5 (hydration dedup) and guards multiple race conditions
+
+### State I'm leaving behind
+448 tasks total: 414 COMPLETED/PASS, 1 DEFERRED (#236), 32 PENDING, 0 IN_PROGRESS. V10.0 area ready for Wave 1 execution. Wave 1: TASK #417 (backend-dev, SwarmEngine.js canonical emission) + TASK #419 (frontend-dev, canonicalReceived flag) run PARALLEL.
+
+### Handoff
+Orchestrator should launch Wave 1: TASK #417 (backend-dev) + TASK #419 (frontend-dev) in parallel. After both complete, run TEST GATEs #418 + #420. Then proceed wave by wave.
+
+---
 ## 2026-04-09 — V9.5 Full Deep E2E Test Bug Fix registration (BUG-DT-1)
 **Status:** COMPLETED
 **Called by:** user

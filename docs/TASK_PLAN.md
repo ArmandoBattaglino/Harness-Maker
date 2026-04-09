@@ -4,7 +4,8 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v9.5 — task numbering extends through #416; 416 tasks registered, 414 COMPLETED/PASS, 1 DEFERRED (#236), 0 PENDING, 0 IN_PROGRESS. 490 server tests pass, client build clean (501 modules). Full deep E2E test of entire application passed with only 1 bug found (BUG-DT-1, fixed).
+**Status:** v10.0 — task numbering extends through #448; 448 tasks registered, 414 COMPLETED/PASS, 1 DEFERRED (#236), 32 PENDING, 0 IN_PROGRESS. 490 server tests pass, client build clean (501 modules). Chat stress test (debugger-loop Phase 1) found 31 bugs; V10.0 area created with 32 tasks (#417-#448) across 8 waves.
+  **Active Area:** V10.0 CHAT STRESS TEST BUG FIXES — 32 tasks (#417-#448), 0 COMPLETED, 32 PENDING. Wave 1 ready to start (TASK #417 backend + TASK #419 frontend, PARALLEL).
   **Completed Area:** V9.5 FULL DEEP E2E TEST BUG FIXES — #415 COMPLETED (BUG-DT-1 Models popup click-outside fix, commit ed6877a), #416 PASS. AREA CLOSED 2026-04-09.
   **Completed Area:** V9.4 CHAT MESSAGE CANONICAL FIX — #413 COMPLETED, #414 PASS. V9.4 CLOSED 2026-04-09.
   **Completed Area:** V9.3 CODEX SDK DEBUGGER-LOOP HARDENING — #410 COMPLETED, #411 COMPLETED, TEST GATE #412 PASS. AREA CLOSED 2026-04-08.
@@ -17147,6 +17148,871 @@ Acceptance Criteria:
   - [x] Browser E2E verified
 Completion Note: PASS — 2026-04-09 — Verified via browser E2E after commit ed6877a. V9.5 CLOSED.
 Dependencies: TASK #415
+---
+
+---
+
+## AREA: V10.0 — Chat Stress Test Bug Fixes
+_Components: SwarmEngine.js (canonical emission, double emission), ChatExtractor.js (buffer keying, cleanup scoping), chatTextNormalization.js (DP memory cap), useSwarm.js (canonical race, append guard, hydration dedup), SwarmContext.jsx (canonicalReceived flag), ChatMessage.jsx (XSS sanitization, unused import), ChatPanel.jsx (toolUse accumulation, scroll-lock), HitlChatCard.jsx (double-click guard)_
+_Tasks: #417 → #448_
+_Gate: ALL components in this area must pass their TEST GATE before the next AREA starts_
+_Source: Debugger Loop Phase 1 deep chat stress test (2026-04-09). 31 bugs found across server and client._
+
+### Wave 1 — Critical canonical + race condition fixes (PARALLEL: backend + frontend touch different files)
+
+---
+TASK #417: BUG-CHAT-SERVER-01 — Stream-json canonical emission does not update execution.chatMessages
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: backend-dev
+Type: BUG_FIX
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  File: server/services/SwarmEngine.js, lines ~5354-5371
+  Bug: _handleStreamJsonResult broadcasts a corrective chat_message with isCanonical:true via
+  WebSocket but does NOT update execution.chatMessages in the server-side data model. The Codex
+  SDK path (lines ~4798-4807) correctly does filter + push + slice to replace prior fragments
+  with the canonical message. This causes three downstream failures:
+    1. REST hydration (GET /api/v1/executions/:id) returns garbled fragments instead of canonical text
+    2. _buildAgentOutputs sees fragments instead of canonical, producing wrong agentResults
+    3. Late-joining clients that hydrate via REST get garbled text while WS-connected clients see correct text
+  Fix pattern: Port the Codex SDK pattern to stream-json canonical path:
+    - Filter execution.chatMessages to remove prior assistant messages for same nodeId+turnIndex
+    - Push the canonical message
+    - Slice to 500-message cap
+  Reference: Codex SDK implementation at lines ~4798-4807 in SwarmEngine.js (commit 5d359b4).
+Acceptance Criteria:
+  - [ ] After stream-json agent completes a turn, execution.chatMessages contains the canonical message (not fragments)
+  - [ ] REST GET /api/v1/executions/:id returns canonical text for completed turns
+  - [ ] _buildAgentOutputs produces correct agentResults from canonical messages
+  - [ ] Late-joining clients see same text as WS-connected clients
+  - [ ] All server tests pass
+  - [ ] Client build clean
+Dependencies: none
+---
+TASK #418: TEST GATE — BUG-CHAT-SERVER-01
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — TASK #419 CANNOT start until this gate returns PASS
+Context:
+  Component being tested: SwarmEngine.js stream-json canonical emission
+  Implementation task: TASK #417
+  What to test:
+    1. After a stream-json turn completes, verify execution.chatMessages has canonical message (not fragments)
+    2. Verify REST hydration returns canonical text
+    3. Verify _buildAgentOutputs uses canonical text
+    4. Run all server tests
+Acceptance Criteria:
+  - [ ] execution.chatMessages updated with canonical message after stream-json turn
+  - [ ] REST hydration returns canonical text
+  - [ ] All server tests pass
+  - [ ] Client build clean
+Gate Result: PASS → proceed | FAIL → return to TASK #417 with bug report
+Dependencies: TASK #417
+---
+TASK #419: BUG-CHAT-CLIENT-1/3/15 — Canonical race condition + trailing text_delta + empty canonical guard
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: frontend-dev
+Type: BUG_FIX
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Files: client/src/hooks/useSwarm.js, client/src/canvas/SwarmContext.jsx
+  Three related client-side canonical bugs that share the same root fix (a per-node canonicalReceived flag):
+
+  BUG-CHAT-CLIENT-1 (HIGH): replaceNodeChatMessages canonical-before-fragments race.
+    In useSwarm.js, replaceNodeChatMessages filters out messages matching the firstMatchTimestamp
+    of fragments. If the canonical message arrives before any text_delta fragments (e.g., fast
+    completion or WS reordering), firstMatchTimestamp is null, nothing gets filtered, the canonical
+    is appended, and then late-arriving fragments pile on top.
+    Fix: Add a per-node "canonicalReceived" flag in agentStates (SwarmContext.jsx). When the
+    canonical message arrives (isCanonical:true), set this flag. In the chat_message handler,
+    when canonicalReceived is set for a nodeId, suppress non-canonical assistant chat_message
+    additions for that nodeId.
+
+  BUG-CHAT-CLIENT-3 (HIGH): After canonical replaces agentResults.finalText via replaceAgentChatText,
+    trailing text_delta events (within ~3s WS delay window) call appendAgentChatText, corrupting
+    the canonical text.
+    Fix: Same canonicalReceived flag — guard appendAgentChatText to skip when canonicalReceived
+    is set for that nodeId.
+
+  BUG-CHAT-CLIENT-15 (HIGH): Second canonical for same nodeId destroys the first. If the second
+    canonical has empty text, all output is lost.
+    Fix: In replaceNodeChatMessages, guard against empty canonical text — if canonical text is
+    empty or whitespace-only, ignore it (keep the existing messages).
+
+  Implementation steps:
+    1. In SwarmContext.jsx: Add canonicalReceived:{} to initial agentStates shape. Add a
+       SET_CANONICAL_RECEIVED action that sets agentStates[nodeId].canonicalReceived = true.
+       Add a CLEAR_CANONICAL_RECEIVED action (for new execution starts).
+    2. In useSwarm.js chat_message handler: When isCanonical:true arrives, dispatch
+       SET_CANONICAL_RECEIVED for that nodeId. When adding non-canonical assistant messages,
+       check if canonicalReceived is set — if so, skip.
+    3. In useSwarm.js appendAgentChatText: Check canonicalReceived flag — if set, skip the append.
+    4. In useSwarm.js replaceNodeChatMessages: Guard against empty canonical text.
+    5. On execution start (startExecution or new run): Clear all canonicalReceived flags.
+Acceptance Criteria:
+  - [ ] Canonical message arriving before fragments: only canonical text shown, no fragment pile-up
+  - [ ] Canonical message arriving after fragments: fragments replaced by canonical, no trailing deltas corrupt it
+  - [ ] Empty canonical message: ignored, existing messages preserved
+  - [ ] Second non-empty canonical for same node: replaces first canonical correctly
+  - [ ] New execution clears all canonicalReceived flags
+  - [ ] All server tests pass
+  - [ ] Client build clean (0 errors, 0 warnings)
+Dependencies: none (runs parallel with TASK #417)
+---
+TASK #420: TEST GATE — BUG-CHAT-CLIENT-1/3/15
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — Wave 2 tasks CANNOT start until this gate returns PASS
+Context:
+  Component being tested: useSwarm.js + SwarmContext.jsx canonical race handling
+  Implementation task: TASK #419
+  What to test:
+    1. Canonical-before-fragments: send isCanonical:true then text_delta — verify only canonical shown
+    2. Canonical-after-fragments: send text_delta then isCanonical:true — verify fragments replaced, no trailing corruption
+    3. Empty canonical: send isCanonical:true with empty text — verify existing messages preserved
+    4. New execution start: verify canonicalReceived flags cleared
+Acceptance Criteria:
+  - [ ] All 4 scenarios above produce correct behavior
+  - [ ] All server tests pass
+  - [ ] Client build clean
+Gate Result: PASS → proceed to Wave 2 | FAIL → return to TASK #419 with bug report
+Dependencies: TASK #419
+
+### Wave 2 — Buffer keying + client guards (PARALLEL: backend ChatExtractor + frontend guards)
+
+---
+TASK #421: BUG-CHAT-SERVER-04/03 — ChatExtractor buffer key collision + cleanup scope
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: backend-dev
+Type: BUG_FIX
+Priority: HIGH (SERVER-04) + MEDIUM (SERVER-03)
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  File: server/services/ChatExtractor.js
+  Two related ChatExtractor bugs:
+
+  BUG-CHAT-SERVER-04 (HIGH): ChatExtractor._buffers is keyed by nodeId only, not
+  executionId:nodeId. A single ChatExtractor instance is shared across concurrent executions.
+  If two executions use the same nodeId (common — e.g., both have a node called "researcher"),
+  buffer contents mix, producing garbled chat output for both executions.
+  Fix: Change buffer key to `${executionId}:${nodeId}` compound key pattern. This pattern is
+  already used elsewhere in SwarmEngine for scoping per-execution data. All call sites that
+  call ChatExtractor methods (feed, flush, getBuffer, cleanup) must pass executionId.
+
+  BUG-CHAT-SERVER-03 (MEDIUM): ChatExtractor.cleanup() calls _buffers.clear(), which destroys
+  ALL buffers regardless of executionId. If execution A finishes while execution B is still
+  running, cleanup(A) destroys B's buffers.
+  Fix: Only flush/remove buffers whose key starts with `${executionId}:`. Iterate _buffers
+  entries, filter by prefix, delete matching entries only.
+
+  Implementation steps:
+    1. Change _buffers key from nodeId to `${executionId}:${nodeId}` in all methods
+    2. Update feed(), flush(), getBuffer() signatures to accept executionId parameter
+    3. Update cleanup() to only remove entries matching the given executionId prefix
+    4. Update all call sites in SwarmEngine.js that call ChatExtractor methods to pass executionId
+    5. Update any existing tests for ChatExtractor
+Acceptance Criteria:
+  - [ ] ChatExtractor buffers are scoped per executionId:nodeId
+  - [ ] Concurrent executions with same nodeId do not mix buffers
+  - [ ] cleanup(executionId) only removes that execution's buffers
+  - [ ] All SwarmEngine call sites updated to pass executionId
+  - [ ] All server tests pass
+  - [ ] Client build clean
+Dependencies: TASK #418 (Wave 1 server gate)
+---
+TASK #422: TEST GATE — BUG-CHAT-SERVER-04/03
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD
+Context:
+  Component being tested: ChatExtractor.js buffer keying and cleanup scoping
+  Implementation task: TASK #421
+  What to test:
+    1. Feed data for two different executionIds with same nodeId — verify buffers are separate
+    2. Cleanup executionId A — verify executionId B buffers are intact
+    3. All SwarmEngine call sites pass executionId correctly
+    4. All server tests pass
+Acceptance Criteria:
+  - [ ] Concurrent execution buffer isolation verified
+  - [ ] Selective cleanup verified
+  - [ ] All server tests pass
+  - [ ] Client build clean
+Gate Result: PASS → proceed | FAIL → return to TASK #421 with bug report
+Dependencies: TASK #421
+---
+TASK #423: BUG-CHAT-CLIENT-4 — Phantom store entries from undefined nodeId
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: frontend-dev
+Type: BUG_FIX
+Priority: MEDIUM
+Difficulty: TRIVIAL
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  File: client/src/hooks/useSwarm.js
+  Bug: In the chat_message WS handler, if msg.nodeId is undefined (malformed server event or
+  edge case), the reducer creates store entries keyed "undefined" in agentStates. This phantom
+  entry accumulates messages and never gets cleaned up, wasting memory and potentially causing
+  rendering issues if components iterate over agentStates.
+  Fix: Add a guard at the top of the chat_message case in the WS handler:
+    if (!msg.nodeId) break;
+  This prevents any processing of chat messages that lack a nodeId.
+Acceptance Criteria:
+  - [ ] chat_message events with undefined/null/empty nodeId are silently ignored
+  - [ ] No "undefined" key appears in agentStates
+  - [ ] All server tests pass
+  - [ ] Client build clean
+Dependencies: TASK #420 (Wave 1 client gate)
+---
+TASK #424: TEST GATE — BUG-CHAT-CLIENT-4
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: qa-tester
+Type: TEST_GATE
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Gate: HARD
+Context:
+  Component being tested: useSwarm.js chat_message nodeId guard
+  Implementation task: TASK #423
+  What to test:
+    1. Verify chat_message with missing nodeId does not create agentStates entry
+    2. Verify normal chat_message with valid nodeId still works correctly
+Acceptance Criteria:
+  - [ ] No phantom "undefined" entries in agentStates
+  - [ ] Normal messages processed correctly
+  - [ ] Client build clean
+Gate Result: PASS → proceed | FAIL → return to TASK #423 with bug report
+Dependencies: TASK #423
+---
+TASK #425: BUG-CHAT-CLIENT-8 — XSS via unsanitized markdown links in ChatMessage
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: frontend-dev
+Type: BUG_FIX
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  File: client/src/canvas/ChatMessage.jsx
+  Bug: ReactMarkdown with remarkGfm renders markdown links without URL sanitization.
+  A malicious agent output containing `[click](javascript:alert(1))` would execute JavaScript
+  in the browser context. This is an XSS vulnerability.
+  Fix: Add the rehype-sanitize plugin to the ReactMarkdown component. Install rehype-sanitize
+  as a dependency if not already present.
+  Steps:
+    1. Run: npm install --save rehype-sanitize (in client/ directory)
+    2. Import rehypeSanitize from 'rehype-sanitize' in ChatMessage.jsx
+    3. Add rehypePlugins={[rehypeSanitize]} to the ReactMarkdown component
+    4. Verify that javascript: URLs are stripped from rendered output
+Acceptance Criteria:
+  - [ ] `[click](javascript:alert(1))` renders as plain text or link with href stripped
+  - [ ] Normal markdown links (https://) still render correctly
+  - [ ] rehype-sanitize added to client/package.json dependencies
+  - [ ] All server tests pass
+  - [ ] Client build clean
+Dependencies: TASK #420 (Wave 1 client gate)
+---
+TASK #426: TEST GATE — BUG-CHAT-CLIENT-8
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: qa-tester
+Type: TEST_GATE
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Gate: HARD
+Context:
+  Component being tested: ChatMessage.jsx XSS sanitization
+  Implementation task: TASK #425
+  What to test:
+    1. Render ChatMessage with `[click](javascript:alert(1))` — verify no javascript: href
+    2. Render ChatMessage with `[link](https://example.com)` — verify link works
+    3. Client build clean
+Acceptance Criteria:
+  - [ ] XSS vector neutralized
+  - [ ] Normal links functional
+  - [ ] Client build clean
+Gate Result: PASS → proceed | FAIL → return to TASK #425 with bug report
+Dependencies: TASK #425
+
+### Wave 3 — Double emission + UI accumulation fixes (PARALLEL: backend + frontend)
+
+---
+TASK #427: BUG-CHAT-SERVER-02 — Stream-json text_delta double emission via ChatExtractor
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: backend-dev
+Type: BUG_FIX
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  File: server/services/SwarmEngine.js
+  Bug: The stream-json text_delta handler both broadcasts raw tokens as chat_message WS events
+  AND feeds them to ChatExtractor, causing double emission. The client receives both the direct
+  WS broadcast and the ChatExtractor-accumulated message, resulting in duplicate or garbled text.
+  Fix: Remove ChatExtractor.feed() calls for stream-json agents. This is the same pattern as
+  the Codex SDK fix in commit 5d359b4 — stream-json agents handle their own chat via direct
+  WS broadcasts and canonical emission, so ChatExtractor should not be involved.
+  Note: After TASK #421 (ChatExtractor buffer keying fix), the feed() call signature may have
+  changed to include executionId. The fix here is simply to remove the feed() call entirely
+  for stream-json agents, so the signature change doesn't matter.
+Acceptance Criteria:
+  - [ ] Stream-json agents do not feed text_delta to ChatExtractor
+  - [ ] Only one chat_message WS event per text_delta (not two)
+  - [ ] ChatExtractor still used for PTY agents (unchanged)
+  - [ ] All server tests pass
+  - [ ] Client build clean
+Dependencies: TASK #422 (Wave 2 server gate)
+---
+TASK #428: TEST GATE — BUG-CHAT-SERVER-02
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: qa-tester
+Type: TEST_GATE
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Gate: HARD
+Context:
+  Component being tested: SwarmEngine.js stream-json text_delta emission path
+  Implementation task: TASK #427
+  What to test:
+    1. Verify stream-json text_delta produces exactly one chat_message WS event (not two)
+    2. Verify PTY agents still use ChatExtractor correctly
+    3. All server tests pass
+Acceptance Criteria:
+  - [ ] No double emission for stream-json agents
+  - [ ] PTY path unchanged
+  - [ ] All server tests pass
+Gate Result: PASS → proceed | FAIL → return to TASK #427 with bug report
+Dependencies: TASK #427
+---
+TASK #429: BUG-CHAT-CLIENT-6 — ChatPanel toolUse replaced instead of accumulated
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: frontend-dev
+Type: BUG_FIX
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  File: client/src/canvas/ChatPanel.jsx (or wherever grouped message rendering occurs)
+  Bug: When ChatPanel renders grouped messages from the same agent turn, toolUse from earlier
+  messages in the group is REPLACED by toolUse from the last message. Only the last message's
+  tool uses are displayed, losing visibility into earlier tool calls.
+  Fix: When grouping messages for display, accumulate toolUse arrays across all messages in
+  the group instead of taking only the last message's toolUse. Use Array.concat or spread
+  to merge tool use entries from all messages in the group.
+Acceptance Criteria:
+  - [ ] Grouped messages show ALL tool uses from all messages in the group
+  - [ ] Tool uses displayed in chronological order
+  - [ ] Single-message groups still show their toolUse correctly
+  - [ ] Client build clean
+Dependencies: TASK #424 (Wave 2 client gate for nodeId fix)
+---
+TASK #430: TEST GATE — BUG-CHAT-CLIENT-6
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: qa-tester
+Type: TEST_GATE
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Gate: HARD
+Context:
+  Component being tested: ChatPanel.jsx toolUse accumulation in grouped messages
+  Implementation task: TASK #429
+  What to test:
+    1. Render grouped messages with multiple toolUse entries — verify all shown
+    2. Single message with toolUse — verify still renders correctly
+    3. Client build clean
+Acceptance Criteria:
+  - [ ] All tool uses visible in grouped messages
+  - [ ] Client build clean
+Gate Result: PASS → proceed | FAIL → return to TASK #429 with bug report
+Dependencies: TASK #429
+---
+TASK #431: BUG-CHAT-CLIENT-11 — HitlChatCard double-click sends duplicate API calls
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: frontend-dev
+Type: BUG_FIX
+Priority: MEDIUM
+Difficulty: TRIVIAL
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  File: client/src/canvas/HitlChatCard.jsx (or wherever HITL Approve/Reject buttons live)
+  Bug: The Approve and Reject buttons in HitlChatCard have no synchronous guard against rapid
+  double-clicking. A fast double-click sends 2 API calls, which can cause duplicate HITL
+  responses and confuse the swarm execution engine.
+  Fix: Add a useRef-based sending guard (sendingRef pattern):
+    const sendingRef = useRef(false);
+    const handleApprove = async () => {
+      if (sendingRef.current) return;
+      sendingRef.current = true;
+      try { await approveApi(); } finally { sendingRef.current = false; }
+    };
+  Apply to both Approve and Reject handlers.
+Acceptance Criteria:
+  - [ ] Rapid double-click on Approve sends only 1 API call
+  - [ ] Rapid double-click on Reject sends only 1 API call
+  - [ ] Normal single-click still works correctly
+  - [ ] Button shows disabled/loading state during API call (nice-to-have)
+  - [ ] Client build clean
+Dependencies: TASK #424 (Wave 2 client gate)
+---
+TASK #432: TEST GATE — BUG-CHAT-CLIENT-11
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: qa-tester
+Type: TEST_GATE
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Gate: HARD
+Context:
+  Component being tested: HitlChatCard.jsx double-click guard
+  Implementation task: TASK #431
+  What to test:
+    1. Verify rapid double-click on Approve button only triggers one API call
+    2. Verify normal click-wait-click works for sequential approvals
+    3. Client build clean
+Acceptance Criteria:
+  - [ ] Double-click guard works
+  - [ ] Normal usage unaffected
+  - [ ] Client build clean
+Gate Result: PASS → proceed | FAIL → return to TASK #431 with bug report
+Dependencies: TASK #431
+
+### Wave 4 — DP memory optimization
+
+---
+TASK #433: BUG-CHAT-SERVER-07/08 — chatTextNormalization DP O(n^2) memory for long tokens
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: backend-dev
+Type: BUG_FIX
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  File: server/services/chatTextNormalization.js
+  Bug: The DP algorithms in chatTextNormalization (restoreCompressedChatToken and similar) have
+  O(n^2) memory usage for long tokens. There is no length cap, so an unusually long token
+  (e.g., a base64 blob or a very long URL accidentally included in chat) triggers massive
+  memory allocation and potentially causes Node.js to run out of heap.
+  Fix: Add a max token length cap (200 characters) in restoreCompressedChatToken. If a token
+  exceeds this length, return it as-is without running the DP algorithm. 200 chars is far
+  beyond any normal word but well below the threshold for memory problems.
+  Also check if there are similar uncapped DP paths in the same file and apply the same guard.
+Acceptance Criteria:
+  - [ ] Tokens longer than 200 chars returned as-is (no DP processing)
+  - [ ] Normal-length tokens still processed correctly by DP
+  - [ ] No O(n^2) memory allocation for long tokens
+  - [ ] All server tests pass
+  - [ ] Client build clean
+Dependencies: TASK #428 (Wave 3 server gate)
+---
+TASK #434: TEST GATE — BUG-CHAT-SERVER-07/08
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: qa-tester
+Type: TEST_GATE
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Gate: HARD
+Context:
+  Component being tested: chatTextNormalization.js DP memory cap
+  Implementation task: TASK #433
+  What to test:
+    1. Pass a 300-char token to restoreCompressedChatToken — verify returned as-is
+    2. Pass a normal token (< 200 chars) — verify DP still works correctly
+    3. All server tests pass
+Acceptance Criteria:
+  - [ ] Long token bypass works
+  - [ ] Normal tokens unaffected
+  - [ ] All server tests pass
+Gate Result: PASS → proceed | FAIL → return to TASK #433 with bug report
+Dependencies: TASK #433
+
+### Wave 5 — REST hydration dedup (depends on Wave 1 canonicalReceived flag)
+
+---
+TASK #435: BUG-CHAT-CLIENT-10 — REST hydration re-introduces stale fragments after canonical
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: frontend-dev
+Type: BUG_FIX
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  File: client/src/hooks/useSwarm.js
+  Bug: REST hydration triple-fetch (on reconnect, page load, or visibility change) can
+  re-introduce stale fragments after canonical replacement. The dedup logic uses
+  nodeId:timestamp as a key, but the canonical message has a different timestamp than the
+  fragments it replaced. So hydrated data includes both the canonical AND the old fragments,
+  producing duplicate/garbled text.
+  Fix: When hydrating chat messages from REST, check the canonicalReceived flag (added in
+  TASK #419). For nodes that have canonicalReceived set, skip assistant messages from REST
+  that are NOT marked isCanonical:true. This ensures hydration only adds the canonical
+  message and not the fragments it replaced.
+  Alternative: If canonicalReceived is not available during hydration (e.g., fresh page load),
+  use a server-side approach: since TASK #417 ensures execution.chatMessages has canonical
+  text, REST hydration should already return correct data. The client-side guard is a
+  defense-in-depth measure for the race window between WS canonical and REST fetch.
+Acceptance Criteria:
+  - [ ] REST hydration does not re-introduce stale fragments for nodes with canonicalReceived
+  - [ ] Fresh page load shows correct canonical text (from server-side fix in TASK #417)
+  - [ ] Reconnection hydration does not produce duplicate messages
+  - [ ] All server tests pass
+  - [ ] Client build clean
+Dependencies: TASK #420 (canonicalReceived flag must exist)
+---
+TASK #436: TEST GATE — BUG-CHAT-CLIENT-10
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD
+Context:
+  Component being tested: useSwarm.js REST hydration dedup with canonical awareness
+  Implementation task: TASK #435
+  What to test:
+    1. After canonical received via WS, trigger REST hydration — verify no fragment re-introduction
+    2. Fresh page load after completed execution — verify canonical text displayed
+    3. Reconnection scenario — verify no duplicates
+Acceptance Criteria:
+  - [ ] No stale fragment re-introduction
+  - [ ] Canonical text displayed correctly after hydration
+  - [ ] All tests pass, build clean
+Gate Result: PASS → proceed | FAIL → return to TASK #435 with bug report
+Dependencies: TASK #435
+
+### Wave 6 — LOW priority bug batch
+
+---
+TASK #437: BUG-CHAT-CLIENT-7 — Chat panel scroll-lock for reading history
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: frontend-dev
+Type: BUG_FIX
+Priority: LOW
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  File: client/src/canvas/ChatPanel.jsx (or ChatMessage.jsx container)
+  Bug: No scroll-lock mechanism — when user scrolls up to read chat history, every new incoming
+  message forces the scroll position back to the bottom. This makes it impossible to read
+  history during an active execution.
+  Fix: Implement scroll-lock pattern:
+    1. Track whether user is "at bottom" (within ~50px of scroll bottom)
+    2. On new message: only auto-scroll to bottom if user was already at bottom
+    3. Show a "New messages" indicator/button when user is scrolled up and new messages arrive
+    4. Clicking the indicator scrolls to bottom and dismisses it
+Acceptance Criteria:
+  - [ ] User scrolled up: new messages do NOT force scroll to bottom
+  - [ ] User at bottom: new messages auto-scroll to stay at bottom
+  - [ ] "New messages" indicator shown when scrolled up and new messages arrive (nice-to-have)
+  - [ ] Client build clean
+Dependencies: TASK #430 (Wave 3 client gate)
+---
+TASK #438: TEST GATE — BUG-CHAT-CLIENT-7
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: qa-tester
+Type: TEST_GATE
+Priority: LOW
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Gate: HARD
+Context:
+  Component being tested: ChatPanel scroll-lock
+  Implementation task: TASK #437
+  What to test:
+    1. Scroll up, add new message — verify position preserved
+    2. Stay at bottom, add new message — verify auto-scroll
+    3. Client build clean
+Acceptance Criteria:
+  - [ ] Scroll-lock works
+  - [ ] Auto-scroll at bottom works
+  - [ ] Client build clean
+Gate Result: PASS → proceed | FAIL → return to TASK #437 with bug report
+Dependencies: TASK #437
+---
+TASK #439: BUG-CHAT-CLIENT-9 — repairAllTokenSpacing imported but never called
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: frontend-dev
+Type: BUG_FIX
+Priority: LOW
+Difficulty: TRIVIAL
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  File: client/src/canvas/ChatMessage.jsx
+  Bug: repairAllTokenSpacing is imported from repairTokenSpacing.js but never called anywhere
+  in ChatMessage.jsx. This is dead code that adds to bundle size and confuses maintainers.
+  Fix: Remove the unused import. If repairAllTokenSpacing is not used anywhere else in the
+  codebase, consider whether the entire repairTokenSpacing.js file should be removed (check
+  with grep first).
+Acceptance Criteria:
+  - [ ] Unused import removed from ChatMessage.jsx
+  - [ ] If repairAllTokenSpacing is unused everywhere, file flagged for removal
+  - [ ] Client build clean (no warnings about unused imports)
+Dependencies: TASK #426 (Wave 2 client gate for ChatMessage)
+---
+TASK #440: TEST GATE — BUG-CHAT-CLIENT-9
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: qa-tester
+Type: TEST_GATE
+Priority: LOW
+Difficulty: TRIVIAL
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Gate: HARD
+Context:
+  Component being tested: ChatMessage.jsx unused import cleanup
+  Implementation task: TASK #439
+  What to test:
+    1. Client build clean — no unused import warnings
+    2. ChatMessage still renders correctly
+Acceptance Criteria:
+  - [ ] No unused imports in ChatMessage.jsx
+  - [ ] Client build clean
+Gate Result: PASS → proceed | FAIL → return to TASK #439 with bug report
+Dependencies: TASK #439
+---
+TASK #441: BUG-CHAT-E2E-1 — Chat panel scroll resets after navigation roundtrip
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: frontend-dev
+Type: BUG_FIX
+Priority: LOW
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Bug: When user navigates away from SwarmView and returns, the chat panel scroll position
+  resets to the top instead of staying at the bottom (most recent messages). This forces
+  the user to manually scroll down every time they switch views.
+  Fix: Save scroll position or always scroll to bottom on mount. The simplest fix is to add
+  a useEffect that scrolls the chat container to the bottom when the component mounts or
+  when the execution ID changes.
+Acceptance Criteria:
+  - [ ] After navigation roundtrip, chat panel shows most recent messages (scrolled to bottom)
+  - [ ] Client build clean
+Dependencies: TASK #438 (scroll-lock gate, since both touch scroll behavior)
+---
+TASK #442: TEST GATE — BUG-CHAT-E2E-1
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: qa-tester
+Type: TEST_GATE
+Priority: LOW
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Gate: HARD
+Context:
+  Component being tested: Chat panel scroll-to-bottom on mount
+  Implementation task: TASK #441
+  What to test:
+    1. Navigate away from SwarmView, return — chat panel scrolled to bottom
+    2. Client build clean
+Acceptance Criteria:
+  - [ ] Scroll-to-bottom on mount works
+  - [ ] Client build clean
+Gate Result: PASS → proceed | FAIL → return to TASK #441 with bug report
+Dependencies: TASK #441
+---
+TASK #443: BUG-CHAT-SERVER-06 — registerNodePrompt no type guard for non-string
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: backend-dev
+Type: BUG_FIX
+Priority: LOW
+Difficulty: TRIVIAL
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  File: server/services/SwarmEngine.js (registerNodePrompt method)
+  Bug: registerNodePrompt does not type-guard its prompt parameter. If a non-string value
+  (e.g., undefined, null, object) is passed, it may produce unexpected behavior or store
+  invalid data.
+  Fix: Add type guard: if (typeof prompt !== 'string') return; or coerce to String(prompt).
+Acceptance Criteria:
+  - [ ] Non-string prompt values handled gracefully (ignored or coerced)
+  - [ ] Normal string prompts still registered correctly
+  - [ ] All server tests pass
+Dependencies: TASK #434 (Wave 4 server gate)
+---
+TASK #444: BUG-CHAT-SERVER-11/12 — Duplicate words in CHAT_WORDS + separate word list copies
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: backend-dev
+Type: BUG_FIX
+Priority: LOW
+Difficulty: TRIVIAL
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  Files: server/services/chatTextNormalization.js, server/services/SwarmEngine.js
+  Two related cleanup issues:
+  BUG-CHAT-SERVER-11: The CHAT_WORDS array in chatTextNormalization.js contains duplicate
+  entries. These waste memory and slow lookup (if linear search is used).
+  Fix: Deduplicate the array. Use Set or manual review.
+  BUG-CHAT-SERVER-12: SwarmEngine.js has its own separate copy of word lists instead of
+  importing from chatTextNormalization.js. This creates a maintenance burden — when words
+  are added/removed, both files must be updated.
+  Fix: Have SwarmEngine.js import word lists from chatTextNormalization.js instead of
+  maintaining its own copy. Export the arrays from chatTextNormalization.js.
+Acceptance Criteria:
+  - [ ] No duplicate words in CHAT_WORDS array
+  - [ ] SwarmEngine.js imports word lists from chatTextNormalization.js (single source of truth)
+  - [ ] All server tests pass
+  - [ ] Client build clean
+Dependencies: TASK #434 (Wave 4 server gate)
+---
+TASK #445: TEST GATE — Wave 6 LOW priority batch
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: qa-tester
+Type: TEST_GATE
+Priority: LOW
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD
+Context:
+  Component being tested: All Wave 6 LOW priority fixes
+  Implementation tasks: TASK #437, #439, #441, #443, #444
+  What to test:
+    1. Chat panel scroll-lock behavior (TASK #437)
+    2. No unused imports in ChatMessage.jsx (TASK #439)
+    3. Chat panel scroll-to-bottom after navigation (TASK #441)
+    4. registerNodePrompt handles non-string (TASK #443)
+    5. No duplicate words, single word list source (TASK #444)
+    6. All server tests pass, client build clean
+Acceptance Criteria:
+  - [ ] All 5 LOW fixes verified
+  - [ ] All server tests pass
+  - [ ] Client build clean
+Gate Result: PASS → proceed to AREA CHECKPOINT | FAIL → return to failing task with bug report
+Dependencies: TASK #437, #439, #441, #443, #444
+
+### Wave 7 — Integration Test Gate
+
+---
+TASK #446: TEST GATE — V10.0 Full Chat Integration
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD
+Context:
+  Full integration test of all V10.0 chat fixes together:
+  1. Stream-json canonical flow: agent completes → canonical emitted → execution.chatMessages updated → REST hydration returns canonical → client shows canonical text only
+  2. Concurrent executions: two executions with same nodeId → separate ChatExtractor buffers → separate chat output
+  3. Race conditions: canonical before fragments, canonical after fragments, trailing text_delta after canonical — all handled correctly
+  4. XSS: javascript: links sanitized in ChatMessage
+  5. UI: scroll-lock works, toolUse accumulated in groups, HITL double-click guarded
+  6. Memory: long tokens don't trigger O(n^2) DP
+  7. Cleanup: no unused imports, no duplicate word lists
+Acceptance Criteria:
+  - [ ] End-to-end canonical flow verified (server + client)
+  - [ ] Concurrent execution isolation verified
+  - [ ] All race condition scenarios pass
+  - [ ] XSS sanitization verified
+  - [ ] All server tests pass
+  - [ ] Client build clean
+  - [ ] No regression in previously passing areas
+Dependencies: TASK #445 (all Wave 6 fixes done)
+
+### Wave 8 — Area Checkpoint
+
+---
+TASK #447: AREA CHECKPOINT — V10.0 Chat Stress Test Bug Fixes
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD — Next area CANNOT start until ALL component test gates in this area have PASSED
+Context:
+  Run a full integration smoke test for all V10.0 components. Verify that ALL 31 bug fixes
+  work together, not just in isolation. This is a Puppeteer E2E test that exercises the
+  complete chat pipeline under stress conditions.
+  Scenarios to test:
+    1. Start a multi-agent swarm workflow → verify chat messages accumulate correctly
+    2. Wait for completion → verify canonical messages replace fragments
+    3. Navigate away and back → verify chat panel shows correct state
+    4. Open a second execution while first is still displayed → verify no cross-contamination
+    5. Verify REST hydration returns canonical text
+    6. Verify no XSS in rendered markdown
+    7. Verify scroll-lock behavior during message flow
+    8. All server tests pass
+    9. Client build clean with 0 errors
+Acceptance Criteria:
+  - [ ] All TEST GATE tasks in V10.0 area are COMPLETED with PASS result
+  - [ ] E2E smoke test: multi-agent workflow chat is correct end-to-end
+  - [ ] E2E smoke test: canonical replacement works
+  - [ ] E2E smoke test: navigation roundtrip preserves state
+  - [ ] No regression in previously passing areas (V9.x and earlier)
+  - [ ] All server tests pass
+  - [ ] Client build clean
+Dependencies: TASK #446 (full integration test gate)
+---
+TASK #448: BUG-CHAT-SERVER-09 — 500-message slice fills with text_delta fragments (META — verify resolved)
+Area: V10.0 CHAT STRESS TEST BUG FIXES
+Agent: qa-tester
+Type: VERIFICATION
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-haiku-4-5
+Status: PENDING
+Context:
+  BUG-CHAT-SERVER-09: The 500-message slice in _broadcastChatMessage fills with tiny text_delta
+  fragments, pushing out meaningful messages. This bug should be LARGELY RESOLVED by fixing
+  BUG-CHAT-SERVER-01 (canonical replaces fragments in execution.chatMessages) and
+  BUG-CHAT-SERVER-02 (no double emission).
+  This task is a verification check — confirm that after TASK #417 and #427 are applied, the
+  500-message slice no longer fills with fragments. If it still does, file a follow-up bug.
+Acceptance Criteria:
+  - [ ] After fixes #417 and #427, execution.chatMessages does not accumulate >50 fragment messages per agent turn
+  - [ ] 500-message slice has room for meaningful messages across multiple turns
+  - [ ] If still problematic, follow-up bug filed
+Dependencies: TASK #417, TASK #427
+
 ---
 
 ## Remaining Known Chat Bugs (informational, not blocking)

@@ -3875,3 +3875,42 @@ No new connections introduced in this checkpoint task. All connection changes we
 - No impact on other files — change is self-contained within SwarmView's Models popup UI section
 
 ---
+
+---
+## 2026-04-09 — Debugger Loop Phase 1: Chat Stress Test (Code Audit + E2E)
+**Agent:** code-mapper (recording audit by debugger)
+**Triggered by:** Debugger Loop Phase 1 — deep code audit and browser E2E test of the entire chat pipeline
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| (none) | — | No code was modified — this was a read-only audit |
+
+### Functions Added
+- (none)
+
+### Functions Modified
+- (none)
+
+### Functions Removed
+- (none)
+
+### Audit Coverage
+**31 bugs found (6 HIGH, 9 MEDIUM, 16 LOW)** across 9 files in the chat pipeline:
+- `server/services/ChatExtractor.js` — buffer management, flush, cleanup, feed
+- `server/services/chatTextNormalization.js` — ConPTY decompression, DP algorithms
+- `server/services/SwarmEngine.js` — _broadcastChatMessage, canonical emission paths (stream-json + Codex SDK), text_delta handlers
+- `server/routes/swarm.js` — REST hydration of chatMessages
+- `client/src/store/SwarmContext.jsx` — Zustand chat actions (addChatMessage, replaceNodeChatMessages, etc.)
+- `client/src/hooks/useSwarm.js` — WS chat_message handler, isCanonical branch, REST hydration
+- `client/src/canvas/ChatPanel.jsx` — message grouping, filtering, scrolling
+- `client/src/canvas/ChatMessage.jsx` — markdown rendering, cost footer
+- `client/src/canvas/HitlChatCard.jsx` — approve/reject flow
+
+### Connection Changes
+- No connection changes — audit only
+
+### Impact on Other Code
+- 31 bugs identified will drive Phase 2 (bulk bug-to-task plan) and Phase 3 (parallel fix wave). No code impact yet.
+
+---

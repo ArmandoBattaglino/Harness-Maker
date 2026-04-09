@@ -1,4 +1,24 @@
-﻿## 2026-04-09 — qa-tester — Debugger Loop Phase 1: Micro-Area C — Browser E2E Chat Stress Test
+﻿## 2026-04-09 — project-manager — Debugger Loop Phase 2: V10.0 Chat Stress Test Bug Plan
+**Outcome:** COMPLETED
+**Summary:** Created V10.0 CHAT STRESS TEST BUG FIXES area in TASK_PLAN.md with 32 tasks (#417-#448) across 8 waves from 31 bugs found during debugger-loop Phase 1. 8 HIGH, 10 MEDIUM, 13 LOW. Each bug task has a TEST GATE. Area ends with integration gate + checkpoint. Wave 1 ready: #417 (backend) + #419 (frontend) PARALLEL.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none (task plan creation only)
+**Decisions made:** 8-wave structure maximizing parallelism; canonicalReceived flag is the critical shared dependency between Wave 1 and Wave 5
+**Blockers:** none
+**Next:** Wave 1: TASK #417 (backend-dev) + TASK #419 (frontend-dev) in PARALLEL
+
+---
+## 2026-04-09 — documenter — Debugger Loop Phase 1 Chat Stress Test documentation audit
+**Outcome:** COMPLETED
+**Summary:** Documentation audit after Debugger Loop Phase 1 (deep code audit + browser E2E of chat system). No code was modified -- 31 bugs found but none fixed yet. All existing documentation remains accurate. DOC_STATUS.md updated with audit summary section noting the 31 bugs (6 HIGH, 9 MEDIUM, 16 LOW) and flagging that Phase 2 fixes will trigger doc updates.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none (documentation only; audit was read-only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** When Phase 2 bug fixes land, docs will need updating (inline comments, API.md WS events, ARCHITECTURE.md, fixed-bugs table)
+
+---
+## 2026-04-09 — qa-tester — Debugger Loop Phase 1: Micro-Area C — Browser E2E Chat Stress Test
 **Outcome:** COMPLETED
 **Summary:** Executed 10-test E2E browser stress test of the Chat system via Puppeteer MCP. All 10 tests PASS. 1 new LOW-severity bug found (BUG-CHAT-E2E-1: chat scroll position resets after navigation). 1 pre-existing known bug confirmed (BUG-CHAT-1: token-boundary spacing). No CRITICAL or HIGH bugs found. Chat system is stable under two sequential workflow runs with different languages.
 **Files changed:** docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
@@ -5344,4 +5364,15 @@ full self-contained context and acceptance criteria.
 **Decisions made:** none
 **Blockers:** none
 **Next:** Route bug report to debugger-loop orchestrator for Phase 2 bulk-fix planning
+---
+
+---
+## 2026-04-09 — code-mapper — Debugger Loop Phase 1: Chat Stress Test (Audit Recording)
+**Outcome:** COMPLETED
+**Summary:** Recorded the completion of Debugger Loop Phase 1 (chat stress test) which found 31 bugs (6 HIGH, 9 MEDIUM, 16 LOW) across 9 chat pipeline files. No code was modified — this was a read-only audit. Appended audit coverage note to CODE_MAP.md and entry to CHANGELOG.md.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md (append-only)
+**Bugs fixed:** none (recording audit results only)
+**Decisions made:** Audit note added as footer section in CODE_MAP.md
+**Blockers:** none
+**Next:** Phase 2 will convert the 31 bugs into task plan entries; Phase 3 will fix them in parallel waves
 ---

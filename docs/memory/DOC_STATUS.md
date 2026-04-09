@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-09 after commit ed6877a (BUG-DT-1: Models popup click-outside fix)._
+_Last updated: 2026-04-09 after Debugger Loop Phase 1 — Chat Stress Test (code audit only, no code modified)._
 
 ## Release Status
 **v9.0.0 — V9.0 Stream-JSON Agent Migration CLOSED for core semantics, display fidelity FIXED**
@@ -136,6 +136,21 @@ Phase 1 (deep E2E test) found 5 bugs. Phase 2 (bulk plan) created tasks #238-#24
 **Overall assessment:** AREA CLOSED. All 5 bugs fixed. TEST GATE #243 PASS confirmed fixes #238-#241. Task #242 fixed the deferred cosmetic bug (BUG-SWARM-UI-1). Zero remaining bugs.
 
 **Documentation impact:** README.md rate limit updated 200->300. docs/TEST_RESULTS.md and docs/research_complete.md rate limit references updated. No API endpoint signature changes.
+
+## Debugger Loop Phase 1 — Chat Stress Test (2026-04-09)
+
+Deep code audit and browser E2E test of the entire chat system. **No code was modified.** 31 bugs catalogued (6 HIGH, 9 MEDIUM, 16 LOW) across server and client chat components. All documentation remains current since no source files changed.
+
+**Files audited (read-only):**
+- server/services/ChatExtractor.js, chatTextNormalization.js, SwarmEngine.js
+- client/src/store/SwarmContext.jsx, hooks/useSwarm.js, canvas/ChatPanel.jsx, ChatMessage.jsx, HitlChatCard.jsx
+
+**Key HIGH findings (not yet fixed):**
+- Stream-json canonical result not stored in `execution.chatMessages`
+- ChatExtractor buffer key collision across concurrent executions
+- Client canonical-before-fragments race condition
+
+**Documentation impact:** None. No code changed, so no docs are stale. When the Phase 2 bug-fix wave lands, all affected docs (ARCHITECTURE.md inline comments, API.md WS events, DOC_STATUS.md fixed-bugs table) will need updating at that time.
 
 ## Wave 1 Verification Sweep — 8 Gates PASS (2026-04-06)
 
