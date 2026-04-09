@@ -133,6 +133,7 @@ function pickBetterSplit(candidate, current) {
 
 function splitKnownWordSequence(token = '') {
   if (!token || !isRestorableChatToken(token)) return null;
+  if (token.length > 200) return null;
 
   const normalizedToken = normalizeCompressedChatWord(token);
   const memo = new Map();
