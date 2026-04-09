@@ -1,4 +1,41 @@
 ---
+## 2026-04-09 — Task #496: Out-of-session Codex handoff server regression coverage sync
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+V10.7 was CLOSED. V10.8 had 5 PENDING tasks (#491-#495). User performed out-of-session work adding server-side unit test coverage for the Codex handoff path. The ACTIVITY_LOG had been updated by the user but TASK_PLAN.md and PROGRESS.md had not yet been updated to reflect the new work.
+
+### What I did
+1. Read TASK_PLAN.md V10.8 area (#491-#495), PROGRESS.md, and ACTIVITY_LOG.md to understand context.
+2. Read the new test file `server/tests/swarm-engine-codex-sdk.test.js` and `scripts/swarm-codex-handoff-e2e.mjs` to understand scope.
+3. Determined this work is NOT a completion of #492 (which targets browser E2E harness flakiness) — it is complementary server-unit coverage at a different layer.
+4. Registered new task #496 in TASK_PLAN.md as COMPLETED with full context.
+5. Updated TASK_PLAN.md header to reflect V10.8 now has 6 tasks with #496 COMPLETED.
+6. Prepended entry to PROGRESS.md.
+7. Prepended entry to ACTIVITY_LOG.md.
+8. Appended this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | Added task #496 COMPLETED; updated V10.8 header to 6 tasks |
+| docs/memory/PROGRESS.md | MODIFIED | Added #496 completion entry at top |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added PM session entry at top |
+| docs/memory/agents/project-manager.md | MODIFIED | Added this session log |
+
+### Decisions I made
+- Register as new task #496 rather than closing #492. Reasoning: #492 is specifically about browser E2E harness reliability (reuse-mode workflow-not-found, isolated-mode openSwarm timeout). The user's work adds server-unit determinism — it proves the handoff payload assembly is correct, but does NOT fix the browser harness setup/reuse flakiness that #492 targets.
+
+### State I'm leaving behind
+TASK_PLAN.md: V10.8 has 6 tasks. #496 COMPLETED. #491/#492/#493/#494/#495 still PENDING.
+Server suite: 501/501 (was 490 before recent session work).
+Next in V10.8: #492 (debugger) + #491 (qa-tester) can run in parallel.
+
+### Handoff
+Next session: V10.8 work continues. Priority pair: #491 (visual regression determinism, qa-tester) + #492 (Codex handoff browser harness, debugger) — both PENDING, no dependencies between them, run in parallel.
+
+---
 ## 2026-04-09 — V10.0 TEST GATE backfill: 14 PENDING gates marked COMPLETED (PASS)
 **Status:** COMPLETED
 **Called by:** user

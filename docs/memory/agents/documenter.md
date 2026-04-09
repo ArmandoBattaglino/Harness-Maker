@@ -1,4 +1,56 @@
 ---
+## 2026-04-09 — Codex handoff test files: documentation audit
+**Status:** COMPLETED
+**Called by:** user (post-task documentation update)
+
+### Context when I started
+User added 4 new test-related files and 3 npm scripts for the Codex SDK handoff path:
+- `server/tests/swarm-engine-codex-sdk.test.js` — 6 deterministic unit tests covering the full `_onHandoff -> Codex SDK spawn` path, long-payload tail-marker regression, canonical chat history, operator follow-up thread reuse, structured reset/abort, and chat fallback when ChatExtractor drops echo-like output.
+- `scripts/swarm-codex-handoff-e2e.mjs` — browser/manual debug probe on port 3314 (debug only, not part of CI).
+- `tests/visual/swarm/fixtures/codex-handoff-long.json` — fixture for the probe.
+- `tests/visual/swarm/README.md` — already updated by user with new commands and probe description.
+- `package.json` — 3 new scripts: `debug:swarm:codex-handoff`, `debug:swarm:codex-handoff:prepare`, `debug:swarm:codex-handoff:reuse`.
+Server test suite now at 501/501 pass.
+
+### What I did
+1. Read DOC_STATUS.md (last 150 lines), the new test file in full, tests/visual/swarm/README.md, README.md relevant sections, and package.json debug scripts.
+2. Checked README.md: test count header was stale (478/478) and Visual Regression section lacked the debug probe commands.
+3. Updated README.md: corrected test count to 501/501 and added "Codex Handoff Debug Probe" subsection under Visual Regression with all 3 debug npm commands and a clear note that `swarm-engine-codex-sdk.test.js` is the authoritative automated regression.
+4. Verified ARCHITECTURE.md — no new components introduced; test files do not affect architecture documentation.
+5. Verified API.md — no new endpoints, WS events, or contract changes. No update needed.
+6. Updated DOC_STATUS.md: timestamp/header updated, README.md health row updated, Inline comments row updated to reflect test-only additions, release test-count line updated to 501/501.
+7. Appended ACTIVITY_LOG.md and this agent log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| README.md | MODIFIED | Test count 478 -> 501; added Codex Handoff Debug Probe subsection under Visual Regression |
+| docs/memory/DOC_STATUS.md | MODIFIED | Header timestamp, README health row, Inline comments row, release test-count |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended this session entry |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- README.md test count matches current CI reality (501/501)
+- The three new debug npm scripts are discoverable via README without having to open package.json
+- Authoritative vs debug distinction is clear: unit tests are the regression, the browser probe is manual-only
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Did not update ARCHITECTURE.md or API.md — test files and debug scripts do not change the production architecture or any API contract.
+- Did not add inline comments to test files — the test file is self-documenting via describe/it block names.
+
+### What I learned
+- The README.md test count in the header needs to be updated every time the suite size changes, even when the change is test-only. It drifts quickly.
+
+### State I'm leaving behind
+All documentation is accurate and up to date. 501/501 server tests passing. README reflects the debug probe workflow. DOC_STATUS is current.
+
+### Handoff
+None — task fully self-contained.
+
+---
 ## 2026-04-09 — V10.0 TEST GATE backfill cleanup: documentation audit
 **Status:** COMPLETED
 **Called by:** user (post-cleanup documentation update)

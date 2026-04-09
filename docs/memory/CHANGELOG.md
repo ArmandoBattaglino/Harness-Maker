@@ -1,6 +1,61 @@
 # CHANGELOG — Claude Code Visual Manager
 
 ---
+## 2026-04-09 — Codex handoff regression coverage: swarm-engine-codex-sdk.test.js + E2E probe
+**Agent:** qa-tester / backend-dev — mapped by code-mapper
+**Triggered by:** Post-V10.4 regression coverage addition for the `_onHandoff` -> Codex SDK spawn path. Specifically: a long inbound payload must arrive at the downstream node with TAIL-MARKER-OMEGA-9271 intact (no truncation).
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/tests/swarm-engine-codex-sdk.test.js | ADDED | 7 deterministic Vitest tests for SwarmEngine Codex SDK structured-runtime path |
+| scripts/swarm-codex-handoff-e2e.mjs | ADDED | Browser/manual E2E probe for Codex handoff — not CI, declassified to debug |
+| tests/visual/swarm/fixtures/codex-handoff-long.json | ADDED | Two-node workflow fixture for long-payload Codex handoff regression |
+| package.json | MODIFIED | 3 new debug npm scripts for the E2E probe |
+| tests/visual/swarm/README.md | MODIFIED | Documents the 3 new debug commands |
+
+### Functions Added
+- `buildSingleNodeCodexWorkflow(overrides)` in `server/tests/swarm-engine-codex-sdk.test.js` — test-local factory for a single-node `gpt-5.4` workflow definition
+- `buildTwoNodeCodexWorkflow(overrides)` in `server/tests/swarm-engine-codex-sdk.test.js` — test-local factory for a two-node Researcher→Writer workflow with a handoff edge
+- `buildMockSessionManager()` in `server/tests/swarm-engine-codex-sdk.test.js` — returns a vi.fn()-based mock with claudeBin/codexBin/geminiBin, used to verify PTY is bypassed on the SDK path
+- `buildLongInboundPayload()` in `server/tests/swarm-engine-codex-sdk.test.js` — 5-field JSON object whose `fact_5` value ends with `TAIL-MARKER-OMEGA-9271`; used to assert no truncation
+- `makeEventStream(events)` in `server/tests/swarm-engine-codex-sdk.test.js` — async generator factory that yields SDK event objects one at a time with a microtask gap
+- `flushMicrotasks(rounds)` in `server/tests/swarm-engine-codex-sdk.test.js` — utility: awaits Promise.resolve() N times (default 20) to drain async queues after synchronous test setup
+- `sleep(ms)` in `scripts/swarm-codex-handoff-e2e.mjs` — standard setTimeout promise wrapper
+- `ensureDir(targetPath)` in `scripts/swarm-codex-handoff-e2e.mjs` — fs.mkdir recursive
+- `loadFixture()` in `scripts/swarm-codex-handoff-e2e.mjs` — reads codex-handoff-long.json from fixtures dir
+- `resetHarnessAppData(fixture)` in `scripts/swarm-codex-handoff-e2e.mjs` — wipes and re-seeds isolated APPDATA for the probe run
+- `waitForHealth(timeoutMs)` in `scripts/swarm-codex-handoff-e2e.mjs` — polls `GET /health` until OK or timeout
+- `isServerHealthy(timeoutMs)` in `scripts/swarm-codex-handoff-e2e.mjs` — wraps waitForHealth returning boolean
+- `startIsolatedServer()` in `scripts/swarm-codex-handoff-e2e.mjs` — spawns `npm run start` with isolated APPDATA + PORT; pipes stdout/stderr to artifact log files
+- `acquireServer(fixture)` in `scripts/swarm-codex-handoff-e2e.mjs` — orchestrates prepare-only / reuse / fresh-start modes
+- `stopServer(child)` in `scripts/swarm-codex-handoff-e2e.mjs` — terminates isolated server (taskkill on win32, SIGTERM elsewhere)
+- `getBrowserPath()` in `scripts/swarm-codex-handoff-e2e.mjs` — resolves first existing Chrome/Edge executable from candidate list
+- `setRuntimeProvider(page, runtimeValue)` in `scripts/swarm-codex-handoff-e2e.mjs` — selects a runtime provider via the Swarm UI <select> through page.evaluate
+- `selectWorkflow(page, workflowId)` in `scripts/swarm-codex-handoff-e2e.mjs` — selects a workflow by id in the Swarm UI <select>
+- `dumpDebugSnapshot(page, label)` in `scripts/swarm-codex-handoff-e2e.mjs` — dumps page title/body/buttons/selects to stderr for debugging failures
+- `openSwarm(page)` in `scripts/swarm-codex-handoff-e2e.mjs` — navigates to baseUrl, sets localStorage for active project + swarm view, waits for "Saved workflows" text, injects CSS to disable animations
+- `waitForExecutionCompletion(executionId)` in `scripts/swarm-codex-handoff-e2e.mjs` — polls `GET /api/v1/swarm/:executionId/status` until terminal status or timeout
+- `getExecutionResults(executionId, workflowId)` in `scripts/swarm-codex-handoff-e2e.mjs` — fetches execution results from REST API
+- `collectPageSnapshot(page)` in `scripts/swarm-codex-handoff-e2e.mjs` — extracts bodyText, node texts, panel texts from the live page
+- `run()` in `scripts/swarm-codex-handoff-e2e.mjs` — main entry: orchestrates full probe flow, asserts TAIL-MARKER-OMEGA-9271 presence in Writer output, writes summary JSON + screenshot + body dump artifacts
+
+### Functions Modified
+- None
+
+### Functions Removed
+- None
+
+### Connection Changes
+- `server/tests/swarm-engine-codex-sdk.test.js` directly calls `engine._onHandoff(executionId, 'node-a', {...})` to inject a handoff without going through `startExecution` — this is the primary regression path for the long-payload test
+- `server/tests/swarm-engine-codex-sdk.test.js` directly calls `engine._applyCodexSdkItemEvent` and `engine._handleCodexSdkTurnCompleted` to simulate a second structured turn in the multi-turn canonical chat test
+- `scripts/swarm-codex-handoff-e2e.mjs` calls `GET /api/v1/swarm/:executionId/status` and `GET /api/v1/swarm/executions/:executionId/results?workflowId=...` as live REST consumers
+
+### Impact on Other Code
+- No production code changed. Test count increases from 494 to 501 (7 new tests in swarm-engine-codex-sdk.test.js). All 501 tests pass.
+- The `_onHandoff` → downstream Codex SDK spawn path is now fully covered by deterministic regression; future changes to `_onHandoff`, `_spawnAgentCodexSdk`, or `_buildCodexSdkInput` will be caught by this suite.
+
+---
 ## 2026-04-09 — V10.0 TEST GATE backfill (Tasks #418/#420/#422/#424/#426/#428/#430/#432/#434/#436/#438/#440/#442/#445)
 **Agent:** project-manager — recorded by code-mapper
 **Triggered by:** Post-wave cleanup: 14 V10.0 TEST GATE tasks had remained PENDING in docs/TASK_PLAN.md even though all corresponding fixes were implemented and the full test suite was green (490+ pass, browser E2E 8/8 PASS, AREA CHECKPOINT #447 PASS).

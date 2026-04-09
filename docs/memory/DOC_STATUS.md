@@ -1,11 +1,11 @@
 # Documentation Status
-_Last updated: 2026-04-09 after V10.0 TEST GATE backfill cleanup (project-manager marked 14 previously-passing TEST GATE tasks #418/#420/#422/#424/#426/#428/#430/#432/#434/#436/#438/#440/#442/#445 as COMPLETED in TASK_PLAN.md — administrative only, no code changed)._
+_Last updated: 2026-04-09 after Codex handoff test files added: server/tests/swarm-engine-codex-sdk.test.js (6 deterministic unit tests for _onHandoff -> Codex SDK spawn path), scripts/swarm-codex-handoff-e2e.mjs (browser debug probe, debug-only), tests/visual/swarm/fixtures/codex-handoff-long.json (fixture), tests/visual/swarm/README.md (updated by user), package.json (3 debug scripts added). Server test suite: 501/501 passing._
 
 ## Release Status
 **v9.0.0 — V9.0 Stream-JSON Agent Migration CLOSED for core semantics, display fidelity FIXED**
 - QA inspection: FUNCTIONAL PASS on v9.0 core (tangible multi-agent output achieved — Writer produced correct Italian paragraph end-to-end)
 - Display fidelity: FIXED — BUG-DL-TEXTDELTA-1 (#406) resolved text_delta concatenation corruption via two-layer fix: (1) separator changed from `'\n\n'` to `''`, (2) phase 2 adds canonical `resultText` from result event that replaces all streamed fragments; BUG-DL-01 is now closed
-- Test suite: 488/488 passing (unit/integration)
+- Test suite: 501/501 passing (unit/integration; includes 6 new Codex SDK handoff tests)
 - Build: 501 modules, 0 errors
 - Tasks: numbering extends through #408.
 - Open bugs: 0 (was 2)
@@ -59,7 +59,7 @@ _Last updated: 2026-04-09 after V10.0 TEST GATE backfill cleanup (project-manage
 
 | Document | Status | Last Updated | Notes |
 |----------|--------|--------------|-------|
-| README.md | UP_TO_DATE | 2026-04-09 | Security section updated: rehype-sanitize XSS prevention for Markdown rendering. |
+| README.md | UP_TO_DATE | 2026-04-09 | Test count updated to 501/501; Codex Handoff Debug Probe subsection added under Visual Regression. |
 | CLAUDE.md | UP_TO_DATE | 2026-04-08 | Updated with DEC-027/028/029 runtime constraints, `--tools` guidance, truthful blocker rule for Claude stream-json failures, and `write-file-atomic` correction. |
 | docs/ARCHITECTURE.md | PARTIAL | 2026-04-09 | V5 component tree still deferred (12 components). Section 13.1 updated: ChatExtractor NOT used for Claude stream-json OR Codex SDK agents (BUG-CHAT-SERVER-02 double emission fix, Task #427). Section 13.4 step 10 updated: stream-json text_delta broadcasts chat_message directly, not via ChatExtractor. Remaining V9.0 components (#361-#393) listed as pending in 13.7. |
 | docs/PRD.md | UP_TO_DATE | 2026-04-08 | Rewritten to v6.0: Stream-JSON Agent Migration. 12 component specs, 27 FRs, 7 SEC-SJ-* requirements. |
@@ -73,7 +73,7 @@ _Last updated: 2026-04-09 after V10.0 TEST GATE backfill cleanup (project-manage
 | docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-08 | Includes debugger-loop fallback closure plus the V9.0 close-out entries for #389-#393. |
 | docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-04-06 | V1 audit. V9.0 adds SEC-SJ-01 through SEC-SJ-07 in PRD -- no code changes yet. |
 | docs/security-v3-audit.md | UP_TO_DATE | 2026-04-06 | MEDIUM-V3-01 marked FIXED (Task #234). No changes from V9.0 planning. |
-| Inline comments | UP_TO_DATE | 2026-04-09 | Wave 6 LOW batch: ChatPanel.jsx scroll-lock useEffect has self-documenting comments (#437/#441). ChatExtractor.js registerNodePrompt JSDoc and type guard unchanged (#443). chatTextNormalization.js CHAT_WORDS dedup is data-only (#444). ChatMessage.jsx unused import removed (#439). All prior inline comment coverage remains accurate. |
+| Inline comments | UP_TO_DATE | 2026-04-09 | Wave 6 LOW batch comments remain accurate. New test file server/tests/swarm-engine-codex-sdk.test.js uses describe/it blocks — no production function docstrings require changes. scripts/swarm-codex-handoff-e2e.mjs is debug-only with self-documenting intent. |
 | docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. Deferred indefinitely. |
 | docs/research_resume_after_kill.md | UP_TO_DATE | 2026-04-08 | NEW: Research on --resume behavior after process kill. Findings feed into FR-SJ-17/18. |
 | docs/research_b_tools.md | UP_TO_DATE | 2026-04-08 | NEW: Research on --allowedTools vs --tools vs --disallowedTools. Critical finding: --allowedTools is NOT a security boundary (bug #12232). |

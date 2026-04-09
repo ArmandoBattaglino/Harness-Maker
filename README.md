@@ -1,6 +1,6 @@
 # Claude Code Visual Manager
 
-**Current Version: v9.0.0** - V9.0 Stream-JSON migration closed, 478/478 server tests passing. Root/client build clean at 500 modules.
+**Current Version: v9.0.0** - V9.0 Stream-JSON migration closed, 501/501 server tests passing. Root/client build clean at 501 modules.
 
 A locally-hosted web application that provides a graphical interface for the Claude Code CLI. Run Claude Code sessions in a live browser terminal, submit background jobs, design multi-agent workflows, and manage agents, skills, and `CLAUDE.md` files from one app.
 
@@ -159,6 +159,23 @@ npm run test:visual:swarm:reuse
 ```
 
 More details live in [tests/visual/swarm/README.md](/C:/Users/arman/Downloads/Test%20workflows%20-%20Copia/tests/visual/swarm/README.md).
+
+### Codex Handoff Debug Probe
+
+A manual/browser probe is available for live reproduction of long Codex-to-Codex handoff payloads. It starts an isolated server on port `3314`, loads a `Researcher -> Writer` fixture workflow, and records whether the downstream node still has a truncated handoff payload:
+
+```bash
+npm run debug:swarm:codex-handoff
+```
+
+Use `--prepare-only` to pre-stage the isolated app data without launching the browser, and `--reuse-server` to attach to an already-running server:
+
+```bash
+npm run debug:swarm:codex-handoff:prepare
+npm run debug:swarm:codex-handoff:reuse
+```
+
+This probe is for manual reproduction and artifact capture only. The authoritative automated regression for long inbound Codex handoffs is the deterministic unit test in `server/tests/swarm-engine-codex-sdk.test.js`, which verifies the full `_onHandoff -> Codex SDK spawn` path with a fixed long payload containing `TAIL-MARKER-OMEGA-9271`.
 
 ---
 

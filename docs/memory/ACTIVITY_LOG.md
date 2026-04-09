@@ -1,4 +1,37 @@
-﻿## 2026-04-09 — documenter — V10.0 TEST GATE backfill: documentation audit complete
+﻿## 2026-04-09 — code-mapper — Codex handoff regression coverage mapped
+**Outcome:** COMPLETED
+**Summary:** Mapped 5 new/modified files. Updated CODE_MAP.md Test Infrastructure table with full 7-test description for swarm-engine-codex-sdk.test.js, added new E2E/Debug Scripts section for swarm-codex-handoff-e2e.mjs and codex-handoff-long.json, updated package.json entry with 3 new debug scripts. Appended CHANGELOG entry documenting 24 new functions and the `_onHandoff` → Codex SDK spawn connection now covered by deterministic regression.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** none
+**Decisions made:** Removed stale duplicate row for swarm-engine-codex-sdk.test.js (old V9.1 description superseded by new 7-test row)
+**Blockers:** none
+**Next:** V10.8 tasks #491-#495 remain pending
+
+---
+
+## 2026-04-09 — project-manager — Task #496: Codex handoff deterministic server regression coverage (out-of-session)
+**Outcome:** COMPLETED
+**Summary:** User added +11 deterministic server-unit tests for `_onHandoff -> Codex SDK spawn` in `server/tests/swarm-engine-codex-sdk.test.js`, covering long-payload truncation verified by TAIL-MARKER-OMEGA-9271 sentinel. Full server suite now 501/501. Manual browser probe `scripts/swarm-codex-handoff-e2e.mjs` added as non-CI debug tool. Registered as task #496 COMPLETED in TASK_PLAN.md. Browser E2E harness flakiness (#492) remains PENDING.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** Registered as new task #496 (not as completion of #492) — unit-layer coverage and browser-harness reliability are separate concerns
+**Blockers:** none
+**Next:** V10.8 next priorities: #492 (debugger — browser E2E harness) and #491 (qa-tester — visual regression determinism), can run in parallel
+
+---
+
+## 2026-04-09 — documenter — Codex handoff test files added: doc audit
+**Outcome:** COMPLETED
+**Summary:** Audited README.md, docs/ARCHITECTURE.md, docs/API.md, and inline comments for staleness after addition of swarm-engine-codex-sdk.test.js (6 Codex SDK unit tests), swarm-codex-handoff-e2e.mjs (browser debug probe), codex-handoff-long.json fixture, and 3 debug npm scripts. README.md updated: test count corrected to 501/501 and a new "Codex Handoff Debug Probe" subsection added under Visual Regression. ARCHITECTURE.md and API.md required no changes. DOC_STATUS.md updated.
+**Files changed:** README.md, docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** No planned documentation work remains.
+
+---
+
+## 2026-04-09 — documenter — V10.0 TEST GATE backfill: documentation audit complete
 **Outcome:** COMPLETED
 **Summary:** Administrative cleanup — project-manager marked 14 V10.0 TEST GATE tasks COMPLETED (PASS) in TASK_PLAN.md. No code changed. Audited README.md, ARCHITECTURE.md, API.md, CLAUDE.md, and inline comments; none contain task-count or V10.0 pending state references requiring update. DOC_STATUS.md timestamp updated.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md

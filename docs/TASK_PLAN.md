@@ -5,7 +5,7 @@
 **Created:** 2026-03-18
 **PRD Version:** 1.0
 **Status:** v10.8 — task numbering extends through #495. V10.2 CLIENT TEST HARNESS + TARGETED CONTRACT COVERAGE is now CLOSED after dedicated client harness + targeted store/hook/UI coverage landed and passed verification. V10.3 CLIENT CHAT + FLOW DEBUGGER LOOP (DEEP TEST) is now CLOSED after browser-driven Codex/Gemini operator-path discovery. V10.4 STRUCTURED CHAT TURN HISTORY is now CLOSED after restoring per-turn structured chat history for repeated same-agent handoffs with targeted client/server regressions green. V10.5 PERSISTENT AGENT SESSIONS + OPERATOR MESSAGING is now CLOSED after the canonical `acceptsMessages` / `messageTransport` contract, persistent swarm PTY pinning, structured operator follow-up reuse on existing threads/sessions, and terminal-but-live client messaging all landed. V10.6 CLIENT CHAT + FLOW BUG FIXES is now CLOSED after restoring truthful idle/reset chat empty states, truthful runtime hydration on reload, clean structured node snippets after hydration, and blocker-safe Gemini node/chat sanitation. V10.7 CLIENT RESILIENCE TEST COVERAGE is now CLOSED after extending deterministic client coverage over recovery/reconcile paths, secondary WS events, HITL failure handling, advanced chat operator states, node badges, and top-level shell truth. Latest full client deep test on 2026-04-09 reconfirmed the current client/build baseline, but opened follow-up work around visual-regression determinism, Codex handoff E2E harness reliability, and stale-server verification drift. Verification: `npm test --prefix client` PASS (52/52) and `npm run build --prefix client` PASS (507 modules, chunk-size warning only). Active planned areas: V10.8 CLIENT FULL DEEP TEST FOLLOW-UP.
-**Planned Area:** V10.8 CLIENT FULL DEEP TEST FOLLOW-UP — REGISTERED 2026-04-09. 5 tasks (#491-#495), all PENDING. Focus: resolve the issues surfaced by the full client deep test around visual regression fidelity, Codex handoff E2E determinism, and stale-server verification drift.
+**Planned Area:** V10.8 CLIENT FULL DEEP TEST FOLLOW-UP — REGISTERED 2026-04-09. 6 tasks (#491-#496). #496 COMPLETED (out-of-session: +11 deterministic server tests for _onHandoff -> Codex SDK spawn, 501/501 server suite green). Remaining PENDING: #491 (visual regression determinism), #492 (browser E2E harness reliability), #493 (stale-server guard), #494 (TEST GATE), #495 (AREA CHECKPOINT).
 **Completed Area:** V10.7 CLIENT RESILIENCE TEST COVERAGE — AREA CLOSED 2026-04-09. #483 COMPLETED, #484 COMPLETED, #485 COMPLETED, #486 COMPLETED, #487 COMPLETED, #488 COMPLETED, TEST GATE #489 PASS, AREA CHECKPOINT #490 PASS. Verified by dedicated client coverage over restore/reconcile, secondary WS events, HITL failure paths, advanced ChatPanel states, AgentNode badges, and SwarmView operator-shell branches.
   **Completed Area:** V10.6 CLIENT CHAT + FLOW BUG FIXES — AREA CLOSED 2026-04-09. #476 COMPLETED, #477 COMPLETED, #478 COMPLETED, #479 COMPLETED, #480 COMPLETED, TEST GATE #481 PASS, AREA CHECKPOINT #482 PASS. Verified by live Puppeteer reruns of idle/reset + Codex success/reload on `http://127.0.0.1:3000`, clean Gemini blocked/stopped node/chat hygiene on fresh `http://127.0.0.1:3312`, and targeted server regressions (185/185 PASS).
   **Completed Area:** V10.5 PERSISTENT AGENT SESSIONS + OPERATOR MESSAGING — AREA CLOSED 2026-04-09. #470 COMPLETED, #471 COMPLETED, #472 COMPLETED, #473 COMPLETED, TEST GATE #474 PASS, AREA CHECKPOINT #475 PASS. Verified by targeted server/client regressions for PTY persistence, structured follow-up reuse, scoped broadcast routing, and terminal-but-messageable chat UX.
@@ -706,6 +706,40 @@ Acceptance Criteria:
   - [ ] TASK #493 completed
   - [ ] TASK #494 PASS
 Dependencies: TASK #494
+---
+
+TASK #496: CODEX HANDOFF DETERMINISTIC SERVER REGRESSION — _onHandoff -> Codex SDK spawn coverage
+Area: V10.8 - CLIENT FULL DEEP TEST FOLLOW-UP
+Agent: backend-dev (user, out-of-session)
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Context:
+  Out-of-session work completed by user after V10.7 closed. Added deterministic server-side unit
+  test coverage for the `_onHandoff -> Codex SDK spawn` path to establish a trustworthy regression
+  gate at the unit level, independent of browser E2E harness reliability (task #492 remains open).
+  The key scenario tested: long inbound handoff payloads must not be truncated — verified via
+  TAIL-MARKER-OMEGA-9271 sentinel at the tail of a multi-fact payload injected through
+  `engine._onHandoff()`. The test captures the input passed to `_spawnAgentCodexSdk()` and asserts
+  the full payload including the tail marker is present. A manual browser probe script was also
+  added (`scripts/swarm-codex-handoff-e2e.mjs`) for debug/manual use only (not CI).
+Files added:
+  - server/tests/swarm-engine-codex-sdk.test.js — extended with handoff truncation regressions
+  - scripts/swarm-codex-handoff-e2e.mjs — manual browser probe (non-CI, debug only)
+  - tests/visual/swarm/fixtures/codex-handoff-long.json — fixture for e2e probe
+  - tests/visual/swarm/README.md — documentation for the probe
+  - package.json — debug script added
+Verification: npm test --prefix server -- swarm-engine-codex-sdk.test.js swarm-engine.test.js PASS
+  (180/180). Full server suite: npm test --prefix server PASS (501/501, +11 vs prior 490).
+Acceptance Criteria:
+  - [x] _onHandoff with long payload does not truncate TAIL-MARKER-OMEGA-9271
+  - [x] Captured _spawnAgentCodexSdk input contains full handoff payload including tail marker
+  - [x] Full server suite remains green at 501/501 after additions
+  - [x] New tests are deterministic (no live process spawns, all mocked)
+Completion Note: COMPLETED — 2026-04-09 — user. +11 deterministic server tests covering
+  _onHandoff -> Codex SDK downstream prompt assembly. Browser E2E harness (#492) remains PENDING.
+Dependencies: none
 ---
 
 ## AREA: V3.2 â€” Swarm Runtime Integrity

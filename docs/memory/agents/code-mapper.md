@@ -1,4 +1,55 @@
 ---
+## 2026-04-09 — Codex handoff regression coverage mapping
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task trio, parallel with PM + documenter)
+
+### Context when I started
+User added 5 files providing deterministic regression coverage for the `_onHandoff` → Codex SDK spawn path: server/tests/swarm-engine-codex-sdk.test.js (7 new unit tests), scripts/swarm-codex-handoff-e2e.mjs (browser debug probe, not CI), tests/visual/swarm/fixtures/codex-handoff-long.json (two-node fixture), package.json (3 new debug scripts), tests/visual/swarm/README.md (updated commands). Server test suite: 501/501. CODE_MAP.md had an existing stale one-line description for swarm-engine-codex-sdk.test.js from V9.1 that needed replacement.
+
+### What I did
+1. Read CODE_MAP.md (header, Module Index, Test Infrastructure section, Function Graph start) and recent CHANGELOG entries in parallel
+2. Read swarm-engine-codex-sdk.test.js in full — identified 7 test cases, 6 helper functions, and the key direct call to `engine._onHandoff()` as the primary regression path
+3. Read swarm-codex-handoff-e2e.mjs in full — identified 17 functions and the Playwright-based browser automation flow
+4. Read codex-handoff-long.json — confirmed TAIL-MARKER-OMEGA-9271 in initialContext.currentTask
+5. Confirmed 3 new debug scripts in package.json
+6. Updated CODE_MAP.md header timestamp
+7. Replaced old stale swarm-engine-codex-sdk.test.js row with full 7-test description
+8. Added new "E2E / Debug Scripts" section in CODE_MAP.md with entries for the e2e probe and fixture
+9. Updated package.json row to include the 3 new debug scripts
+10. Appended full CHANGELOG entry with 24 new functions listed, connection changes, and impact note
+11. Appended ACTIVITY_LOG.md entry
+12. Appended this session log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Updated header timestamp; replaced stale swarm-engine-codex-sdk.test.js row; added E2E/Debug Scripts section; updated package.json row |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended entry for Codex handoff regression coverage (5 files, 24 new functions, connection changes) |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended code-mapper session entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log |
+
+### Improvements delivered
+- CODE_MAP.md now accurately reflects the full 7-test swarm-engine-codex-sdk.test.js suite
+- CODE_MAP.md now has a dedicated E2E/Debug Scripts section covering non-CI scripts
+- CHANGELOG has a traceable record of the _onHandoff → Codex SDK spawn regression coverage addition
+
+### Bugs I encountered
+- Old duplicate row for swarm-engine-codex-sdk.test.js was present (stale V9.1 description). Removed it and kept the new comprehensive row.
+- Edit tool failed on the removal attempt with a "string not found" error because the lines were too long for exact matching. Resolved by reading the exact line offsets first and then making the edit.
+
+### Decisions I made
+- Created a new "E2E / Debug Scripts" subsection within the Test Infrastructure area rather than adding to the Module Index — these scripts are not importable modules, they are standalone probes
+
+### What I learned
+- Very long single-line table rows in CODE_MAP.md cannot be matched as old_string by the Edit tool when combined with adjacent lines. Must read exact line content with offset first.
+
+### State I'm leaving behind
+CODE_MAP.md fully up to date through Codex handoff regression coverage (2026-04-09). CHANGELOG has entry. ACTIVITY_LOG has entry. Test count is 501/501.
+
+### Handoff
+V10.8 tasks #491-#495 remain pending. No code-mapper work needed until the next task completes.
+
+---
 ## 2026-04-09 — V10.0 TEST GATE backfill (14 gates): code-mapper pass
 **Status:** COMPLETED
 **Called by:** orchestrator (post-task trio, parallel with PM + documenter)

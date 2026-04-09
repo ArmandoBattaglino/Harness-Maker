@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-09 — after Tasks #467/#468/#469 (V10.4): structured chat turn history restored via server/client turn IDs, turn-scoped canonical gating, and separate same-node chat bubbles per turn — mapped by code-mapper_
+_Last updated: 2026-04-09 — after Codex handoff regression coverage: swarm-engine-codex-sdk.test.js + swarm-codex-handoff-e2e.mjs + codex-handoff-long.json fixture — mapped by code-mapper_
 
 > **PROJECT STATUS: V9.0 STREAM-JSON MIGRATION CLOSED + V9.1 CODEX SDK SWARM INTEGRATION CLOSED — 402 TASKS (401 COMPLETE/PASS, 1 DEFERRED, 0 PENDING)**
 > Claude now uses the structured `stream-json` path and Codex now has a parallel `codex-sdk` structured path, with PTY retained for Gemini/live terminal work and truthful Codex fallback scenarios. Verification: 488/488 backend tests pass, client build 501 modules.
@@ -132,7 +132,7 @@ _Last updated: 2026-04-09 — after Tasks #467/#468/#469 (V10.4): structured cha
 ### Root Config
 | File | Key Exports | Purpose |
 |------|-------------|---------|
-| package.json | (config) | Root package.json: version bumped to **5.0.0** (was 3.0.0) in Task #330. npm scripts: start, dev, build, install:all, test. devDependencies: concurrently. dependencies: @google/stitch-sdk. Last modified Task #330 (2026-04-07). |
+| package.json | (config) | Root package.json: version bumped to **5.0.0** (was 3.0.0) in Task #330. npm scripts: start, dev, build, install:all, test, debug:swarm:codex-handoff, debug:swarm:codex-handoff:prepare, debug:swarm:codex-handoff:reuse (3 new debug scripts added 2026-04-09 for the Codex handoff E2E probe). devDependencies: concurrently. dependencies: @google/stitch-sdk. Last modified 2026-04-09. |
 
 ### Client Config & Styles
 | File | Key Exports | Purpose |
@@ -155,11 +155,17 @@ _Last updated: 2026-04-09 — after Tasks #467/#468/#469 (V10.4): structured cha
 | server/tests/JobRunner.test.js | Vitest | server/services/JobRunner.js | 18 |
 | server/tests/HandoffParser.test.js | Vitest | server/services/HandoffParser.js | 22+ |
 | server/tests/swarm-engine.test.js | Vitest | server/services/SwarmEngine.js | 61+ core SwarmEngine regression tests plus later V9.0/V9.1 additions for structured runtimes, AUTO routing, blocker/reset truthfulness, and PTY fallback safety |
-| server/tests/swarm-engine-codex-sdk.test.js | Vitest | server/services/SwarmEngine.js, server/services/CodexSdkAdapter.js | Focused V9.1 Codex SDK structured-runtime tests: SDK spawn path emits structured WS events, PTY is bypassed on the SDK path, structured reset aborts the active turn cleanly, and V10.4 repeated same-node turns retain one canonical chat message per completed turn instead of collapsing prior history |
 | server/tests/e2e/stream-json-e2e.test.js | Vitest | server/services/SwarmEngine.js, client-side stream-json chat/state contract (mocked harness) | 3 deterministic V9.0 contract tests: Claude stream-json -> Codex PTY handoff without regression, graceful stop/resume with `--resume` + preserved `--tools`, and reset/archive cleanup of Claude JSONL session artifacts. Uses mocked NDJSON/PTy paths intentionally so CI stays hermetic. |
 | server/tests/security-v3.test.js | Vitest | server/utils/ssrfGuard.js, server/services/WorkflowStore.js, server/services/HandoffParser.js, server/middleware/hitlValidation.js | 36 |
 | server/tests/StreamJsonParser.test.js | Vitest | server/services/StreamJsonParser.js | 30+ (content_block_start tool_use/text/thinking, content_block_delta text/json/thinking, content_block_stop dispatch, message lifecycle, result event with cost/usage/error, system api_retry, assistant message, error handling: malformed JSON + 1MB cap + empty lines, unknown types, reset(), full tool use lifecycle, mixed block sequence) |
 | server/tests/CodexSdkAdapter.test.js | Vitest | server/services/CodexSdkAdapter.js | Focused adapter tests for option mapping, thread start/resume, streamed run startup, and item normalization into SwarmEngine-facing kinds |
+| server/tests/swarm-engine-codex-sdk.test.js | Vitest | server/services/SwarmEngine.js, server/services/CodexSdkAdapter.js | 7 deterministic Codex SDK structured-runtime regression tests (added 2026-04-09): (1) SDK spawn route emits structured WS events and bypasses PTY; (2) long inbound handoff into downstream Codex node preserves TAIL-MARKER-OMEGA-9271 without truncation — directly calls `_onHandoff`; (3) one canonical chat message per completed turn per node (no overwrite of prior turns); (4) operator follow-up reuses existing codex thread via `sendBroadcast`; (5) structured reset aborts active turn via AbortSignal and clears thread state; (6) late abort failure after reset leaves execution idle without runtimeBlocker; (7) fallback assistant chat message persists when final output matches prompt-echo pattern. Helper functions: `buildSingleNodeCodexWorkflow`, `buildTwoNodeCodexWorkflow`, `buildMockSessionManager`, `buildLongInboundPayload`, `makeEventStream`, `flushMicrotasks`. |
+
+### E2E / Debug Scripts
+| File | Type | Purpose |
+|------|------|---------|
+| scripts/swarm-codex-handoff-e2e.mjs | Browser E2E probe (debug, not CI) | Manual/debug live regression for Codex handoff end-to-end path. Spawns an isolated server instance on port 3314 (env: SWARM_CODEX_HANDOFF_E2E_PORT), seeds appdata from `tests/visual/swarm/fixtures/codex-handoff-long.json`, drives a Playwright Chromium session, starts the workflow, waits for completion, verifies the downstream Writer node output contains `HANDOFF_OK TAIL-MARKER-OMEGA-9271 FORCED_CONTEXT`, and writes artifacts (screenshot, body dump, summary JSON) to `tests/visual/swarm/artifacts/`. Three npm scripts: `debug:swarm:codex-handoff`, `debug:swarm:codex-handoff:prepare`, `debug:swarm:codex-handoff:reuse`. Added 2026-04-09. |
+| tests/visual/swarm/fixtures/codex-handoff-long.json | Fixture | Two-node workflow fixture (Researcher → Writer, model: gpt-5.4). `initialContext.currentTask` is a deliberately long paragraph ending with `TAIL-MARKER-OMEGA-9271`. Used by both the e2e probe and the unit test suite to provide a realistic long-payload handoff scenario. |
 
 ## Build Artifacts
 - `server/public/` — Vite build output (served as static files by Express)
