@@ -1961,6 +1961,20 @@ class SwarmEngine {
   _broadcastChatMessage(msg) {
     if (!msg?.executionId) return;
     const execution = this._executions.get(msg.executionId);
+
+    // BUG-BLOCKER-CHAT-03: suppress assistant chat messages for agents that are
+    // already blocked.  ChatExtractor flushes asynchronously (silence timer /
+    // periodic timer), so a flush can fire after _handleRuntimeBlocker has
+    // already set the agent to 'blocked' and pruned chat messages.  Without this
+    // guard the late flush re-adds banner/terminal noise and overwrites the
+    // pruned snapshot the client just received.
+    if (execution && msg.nodeId && (msg.role === 'assistant' || !msg.role)) {
+      const agentState = execution.agentStates.get(msg.nodeId);
+      if (agentState && (agentState.status === 'blocked' || agentState.runtimeBlocker)) {
+        return;
+      }
+    }
+
     if (execution) {
       execution.chatMessages = [...(execution.chatMessages ?? []), {
         nodeId: msg.nodeId ?? null,
@@ -3378,6 +3392,17 @@ class SwarmEngine {
       state.ignoreParserUntil = skipParserEchoGate ? null : SWARM_PROMPT_ECHO_MARKER;
       state.ignoreParserBuffer = '';
 
+      // Discard any pre-gate PTY output that accumulated in ChatExtractor before
+      // the swarm prompt was sent (BUG-BLOCKER-CHAT-03 fix). PTY agents (Gemini,
+      // Codex) emit banner/prompt lines ("Type your message...", "Thinking...",
+      // CLI version strings) before the echo gate opens. These are fed to
+      // ChatExtractor during the pre-gate period. Without this reset the
+      // ChatExtractor silence timer (5 s) fires during the gate window and
+      // emits that banner noise as spurious assistant chat messages.
+      if (!skipParserEchoGate && state._executionId && state._nodeId) {
+        this._chatExtractor.resetBuffer(state._executionId, state._nodeId);
+      }
+
       if (!skipParserEchoGate) {
         // Fallback: if the echo marker is never observed (e.g. Claude's
         // interactive CLI does not echo pasted text), clear the gate after
@@ -4135,6 +4160,10 @@ class SwarmEngine {
           noProgressTimer: null,
           _agentSystemPrompt: (node.data && node.data.systemPrompt) || '',
           _agentFullPrompt: combinedPrompt || '',
+          // Back-references for use inside _flushSwarmPrompt and other helpers
+          // that receive only the state object without executionId/nodeId context.
+          _executionId: executionId,
+          _nodeId: nodeId,
         };
 
         if (codexInitialPrompt) {

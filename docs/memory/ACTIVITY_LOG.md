@@ -5913,3 +5913,24 @@ full self-contained context and acceptance criteria.
 **Decisions made:** No public-facing docs need updating — _normalizeSnippetLine, _handleRuntimeBlocker snippet logic, and stopExecution cleanup are all private SwarmEngine internals; inline comments in _handleRuntimeBlocker already explain the provider_unavailable reasoning (lines 3829-3835)
 **Blockers:** none
 **Next:** V10.8 next priorities: #492 (browser E2E harness) and #491 (visual regression determinism)
+
+---
+## 2026-04-09 — debugger — Task #477: BUG-FLOW-CLIENT-03 — Runtime selector truthful across reload and reset
+**Outcome:** COMPLETED
+**Summary:** Added `import React from 'react'` to `useSwarm.test.jsx` and `SwarmView.test.jsx`. The logic fix (getSnapshotSelectedRuntimeProvider + reset preserving selectedRuntimeProvider) was already in the codebase. The test files were failing because JSX render calls need explicit React import when vitest is not run from the client directory. All 19 target tests now pass when run from `client/`. Server 501/501, build 507 modules clean.
+**Files changed:** client/src/hooks/useSwarm.test.jsx, client/src/views/SwarmView.test.jsx
+**Bugs fixed:** React is not defined in JSX test files (added explicit React import)
+**Decisions made:** Explicit React import preferred over vitest config changes — minimal, reliable
+**Blockers:** none
+**Next:** V10.7 CLIENT RESILIENCE TEST COVERAGE (#483-#490) or next pending task
+---
+---
+## 2026-04-09 — debugger — Task #480: BUG-BLOCKER-CHAT-03 — Chat View raw terminal pollution
+**Outcome:** COMPLETED
+**Summary:** Fixed 4 root causes preventing Gemini blocked flows from polluting Chat View with raw terminal dumps and false-positive assistant messages. Pre-gate banner accumulation race condition closed by resetting ChatExtractor buffer in _flushSwarmPrompt; Gemini "Type your message" noise pattern gap fixed; _broadcastChatMessage now suppresses messages for blocked agents.
+**Files changed:** server/services/SwarmEngine.js, server/services/ChatExtractor.js
+**Bugs fixed:** BUG-BLOCKER-CHAT-03 (pre-gate ChatExtractor accumulation), noise pattern gap for Gemini prompt line, late post-blocker ChatExtractor flush race
+**Decisions made:** Added _executionId/_nodeId back-references to PTY agent state object for use by _flushSwarmPrompt
+**Blockers:** none
+**Next:** TASK #481 TEST GATE (already PASS in plan) — qa-tester should re-verify if needed; then TASK #482 AREA CHECKPOINT V10.6
+---

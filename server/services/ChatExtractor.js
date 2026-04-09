@@ -21,6 +21,7 @@ const NOISE_PATTERNS = [
   /^\s*\d+\s*│/gm,                      // line number prefixes
   /^Press Enter to continue/gm,
   /^Type a message/gm,
+  /^Type your message/gm,               // Gemini CLI input prompt "Type your message or path to file..."
   /^\s*claude[\s>]+$/gmi,               // bare "claude>" prompt
   /ClaudeCodev[\d.]+/g,                 // Claude Code version string
   /Tips for getting started/g,
@@ -200,6 +201,7 @@ const CHUNK_NOISE_PATTERNS = [
   /^\s*\d+\s*│/gm,
   /^Press Enter to continue/gm,
   /^Type a message/gm,
+  /^Type your message/gm,               // Gemini CLI input prompt
   /^\s*claude[\s>]+$/gmi,
   /ClaudeCodev[\d.]+/g,
   /Tips for getting started/g,
@@ -595,6 +597,9 @@ export class ChatExtractor {
       // Lines containing status bar patterns
       if (/esc to int/.test(t) && /medium|high|low/.test(t)) return false;
       if (/\/eff/.test(t) && /medium|high|low/.test(t)) return false;
+      // Gemini CLI input prompt and auth-banner lines (BUG-BLOCKER-CHAT-03)
+      if (/^Type your message\b/i.test(t)) return false;
+      if (/(?:^|\s)Type your message or path to file/i.test(t)) return false;
       // Codex garbled lines — ConPTY strips spaces, producing CamelCase word soup
       // e.g. "WelcometoCodex,OpenAI'scommand-linecodingagentSigninwithChatGPT..."
       if (/(?:WelcometoCodex|SigninwithChatGPT|SigninwithDeviceCode|ProvideyourownAPIkey|Stopandwaitforlimit)/i.test(t)) return false;

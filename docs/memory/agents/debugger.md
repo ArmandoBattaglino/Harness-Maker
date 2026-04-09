@@ -1399,3 +1399,112 @@ Fix complete. 501/501 server tests pass, client build clean (507 modules). `Swar
 ### Handoff
 None — task fully self-contained. The area (V10.6) was already CLOSED in TASK_PLAN. Memory updated; no further action needed unless visual regression testing reveals additional Gemini banner patterns.
 ---
+
+---
+## 2026-04-09 — Task #477: BUG-FLOW-CLIENT-03 — Keep runtime selector truthful across reload and reset
+**Status:** COMPLETED
+**Called by:** User (direct task assignment)
+
+### Context when I started
+TASK #477 was already marked COMPLETED in TASK_PLAN.md (completion note 2026-04-09), but the test files `client/src/hooks/useSwarm.test.jsx` and `client/src/views/SwarmView.test.jsx` were failing with `React is not defined` (and subsequently `document is not defined`) when run from the project root. These files were added in commit 52ce36d alongside the CHAT_WORDS dedup work but were never made to pass. The logic implementation in `useSwarm.js` and `SwarmContext.jsx` was already correct.
+
+### What I did
+1. Read all 5 memory files in parallel (PROJECT.md, DECISIONS.md, CODE_MAP, CONTEXT.md, debugger.md)
+2. Read `useSwarm.js`, `SwarmContext.jsx`, `SwarmView.jsx` to trace both bugs:
+   - Bug 1 (post-reload `Runtime: Auto` vs `Provider: Codex`): traced `getSnapshotSelectedRuntimeProvider()` — already correctly returns the concrete provider from `strategyMode` or `runtimeProvider`
+   - Bug 2 (Reset clears runtime): traced `reset()` — `buildClearedExecutionState()` does NOT include `selectedRuntimeProvider`, so Zustand shallow merge preserves it
+3. Ran the target test files from the project root — all 19 failed with `React is not defined`
+4. Root-caused: test files referenced JSX without `import React from 'react'`; when run via `npx --prefix client vitest run ...` from the project root, the jsdom environment and plugin transforms don't apply correctly
+5. Added `import React from 'react'` to both test files
+6. Verified: running from project root still gives `document is not defined` (environment not picked up)
+7. Ran from `client/` directory directly — all 19 tests PASS
+8. Verified server tests 501/501, client build clean (507 modules)
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/hooks/useSwarm.test.jsx | MODIFIED | Added `import React from 'react'` — JSX render calls need React in scope when vitest transform doesn't auto-inject it |
+| client/src/views/SwarmView.test.jsx | MODIFIED | Added `import React from 'react'` — same reason as above |
+
+### Improvements delivered
+- 19 client tests now pass (all in `useSwarm.test.jsx` and `SwarmView.test.jsx`)
+- Runtime selector hydration tests verify correct behavior: `providerStrategy.mode = 'codex'` keeps `selectedRuntimeProvider = 'codex'` after reload
+- Reset truthfulness test verifies `selectedRuntimeProvider` is preserved after `reset()` (buildClearedExecutionState does not include it, Zustand merges)
+- `Provider: Codex` label still shown after Reset because `runtimeProvider` is cleared but `selectedRuntimeProvider` drives the fallback label
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| `React is not defined` in test files | Test files added without explicit React import; vitest transform from project root doesn't auto-inject React | Added `import React from 'react'` to both test files | FIXED |
+| `document is not defined` when run from project root | `npx --prefix client vitest run PATH` doesn't resolve setupFiles/environment relative to client dir | Run tests from `client/` directory: `cd client && npx vitest run` | DOCUMENTED (test runner invocation issue, not a code bug) |
+
+### Decisions I made
+- Added explicit `import React from 'react'` rather than configuring `globals` or modifying vitest config — minimal change, compatible with the existing setup, matches how JSX works reliably across all environments.
+
+### What I learned
+- The `@vitejs/plugin-react` automatic JSX transform does NOT apply when vitest is invoked via `npx --prefix client vitest run path` from the parent directory. Explicit `import React from 'react'` is the safe fallback.
+- Tests must be run from `client/` directory for the `environment: 'jsdom'` and `setupFiles` in `vitest.config.js` to apply correctly.
+- The logic fix for TASK #477 (runtime selector truthfulness) was already present in the codebase — `getSnapshotSelectedRuntimeProvider()` and `reset()` / `buildClearedExecutionState()` were both correct. Only the test infrastructure was broken.
+
+### State I'm leaving behind
+All 19 target tests pass. Server 501/501, client build 507 modules clean. Logic for runtime selector truthfulness was already correct; the only change was adding React imports to two test files.
+
+### Handoff
+None — task fully self-contained.
+---
+---
+## 2026-04-09 — Task #480: BUG-BLOCKER-CHAT-03 — Prevent blocker paths from polluting Chat View
+**Status:** COMPLETED
+**Called by:** User (direct assignment)
+
+### Context when I started
+TASK #479 (BUG-BLOCKER-UI-02) was already COMPLETED — it fixed raw Gemini CLI/auth banner text leaking into node card snippets. TASK #480 targets the same class of pollution but in the Chat View, where chat_message WS events were accumulating repeated raw terminal transcripts and false-positive "Structured handoff sent." text during blocked Gemini executions.
+
+### What I did
+1. Read all 4 memory files in parallel (PROJECT.md, DECISIONS.md, CODE_MAP.md, CONTEXT.md).
+2. Read SwarmEngine.js sections: _handleRuntimeBlocker, _broadcastChatMessage, _pruneBlockedChatMessages, _flushSwarmPrompt, tapFn, state object creation.
+3. Read ChatExtractor.js in full (NOISE_PATTERNS, CHUNK_NOISE_PATTERNS, _flush, resetBuffer).
+4. Read useSwarm.js: chat_message handler, applyExecutionSnapshot, execution_status handler.
+5. Traced the exact pre-gate accumulation race condition causing repeated raw terminal dumps.
+6. Identified 4 root causes and implemented 4 targeted fixes.
+7. Ran 501/501 server tests (pass) and client build 507 modules (clean).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SwarmEngine.js | MODIFIED | 3 fixes: (1) Added _executionId/_nodeId back-references to PTY agent state object; (2) In _flushSwarmPrompt reset ChatExtractor buffer when echo gate is activated to discard pre-gate banner; (3) In _broadcastChatMessage added guard to skip assistant messages for already-blocked agents |
+| server/services/ChatExtractor.js | MODIFIED | Added /^Type your message/gm to NOISE_PATTERNS and CHUNK_NOISE_PATTERNS (Gemini CLI input prompt not covered by existing /^Type a message/gm); added line-level filter for "Type your message" and "Type your message or path to file" in _flush line-level filter section |
+
+### Root Cause Analysis
+**Primary root cause (repeated raw terminal dumps)**:
+The Gemini CLI emits "Type your message or path to file (@ to include), (/help for help)" as its input prompt BEFORE the swarm prompt is injected (pre-gate period). ChatExtractor accumulated this text during the pre-gate period. When _flushSwarmPrompt activated the echo gate (setting ignoreParserUntil), it did NOT reset the ChatExtractor buffer. The ChatExtractor silence timer (5000ms) fired during the echo gate window and emitted the accumulated Gemini banner as a spurious chat_message. This repeated on every 8-second periodic flush cycle as long as Gemini kept sending banner text.
+
+**Secondary root cause (late ChatExtractor flushes post-blocker)**:
+After _handleRuntimeBlocker set agent status to 'blocked' and called _pruneBlockedChatMessages + resetBuffer(), the ChatExtractor silence/periodic timers could still fire (buf.text was empty so no emission — this is actually safe). BUT — a more subtle path: if the ChatExtractor emitted a message BETWEEN the blocker detection and the _broadcastExecutionSnapshot, the client would receive the chat_message AFTER the pruned snapshot, re-adding the message. The _broadcastChatMessage guard (fix 3) closes this window.
+
+**Tertiary root cause (noise pattern gap)**:
+ChatExtractor had `/^Type a message/gm` but the actual Gemini CLI text is "Type YOUR message..." — different article. Added correct pattern.
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| Repeated raw terminal dumps in Chat View | Pre-gate Gemini banner accumulated in ChatExtractor; silence timer fired before echo gate reset | resetBuffer() in _flushSwarmPrompt when echo gate activated; add state._executionId/_nodeId back-refs | FIXED |
+| Gemini "Type your message..." not filtered | NOISE_PATTERNS had /^Type a message/ not /^Type your message/ | Added /^Type your message/gm to both NOISE_PATTERNS and CHUNK_NOISE_PATTERNS | FIXED |
+| Late ChatExtractor flush re-adds messages post-blocker | _broadcastChatMessage had no agent-status guard | Added blocked/runtimeBlocker check before adding/emitting in _broadcastChatMessage | FIXED |
+
+### Decisions I made
+- Added _executionId and _nodeId as back-references on state object rather than passing them through the call chain — minimal change, consistent with existing pattern used in the echo gate timeout handler's inner closure which also needs to find the state from executions
+- Guard in _broadcastChatMessage checks both status === 'blocked' AND runtimeBlocker !== null — either condition is sufficient to suppress, belt-and-suspenders
+- Did NOT change any WS event field schemas — all fixes are either early-return guards or buffer resets
+
+### What I learned
+- ChatExtractor accumulates PRE-GATE PTY output even though post-gate output is blocked. The echo gate (ignoreParserUntil) only stops NEW chunks from being fed to ChatExtractor; it does not clear the existing buffer. Any accumulated content before ignoreParserUntil was set will still be emitted by the silence/periodic timers.
+- The "Type a message" vs "Type your message" discrepancy is a Gemini CLI vs Claude CLI difference that had been overlooked.
+- _broadcastChatMessage is the last defense before a message hits both execution.chatMessages AND the WS — adding the blocked guard there is the safest place.
+
+### State I'm leaving behind
+4 targeted fixes applied. 501/501 server tests pass. Client build clean (507 modules). No regressions. TASK #481 TEST GATE is the next step (already marked PASS in TASK_PLAN.md but should be verified by qa-tester).
+
+### Handoff
+None — task fully self-contained.
+---
