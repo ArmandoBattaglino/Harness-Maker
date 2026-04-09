@@ -1,4 +1,15 @@
-﻿## 2026-04-09 — project-manager — Debugger Loop Phase 2: V10.0 Chat Stress Test Bug Plan
+﻿## 2026-04-09 — frontend-dev — Task #419: BUG-CHAT-CLIENT-1/3/15 — Canonical race condition fixes
+**Outcome:** COMPLETED
+**Summary:** Added per-node `canonicalReceived` flag in agentStates to prevent post-canonical corruption. Empty canonical text is now guarded at both useSwarm.js handler level and replaceNodeChatMessages store level. Trailing text_delta fragments arriving after canonical are silently dropped.
+**Files changed:** client/src/hooks/useSwarm.js, client/src/store/SwarmContext.jsx
+**Bugs fixed:** BUG-CHAT-CLIENT-1 (canonical-before-fragments race), BUG-CHAT-CLIENT-3 (trailing text_delta after canonical), BUG-CHAT-CLIENT-15 (empty canonical destroys output)
+**Decisions made:** Used agentStates per-node object for flag storage (no new state shape needed); flag set before processing to close the race window
+**Blockers:** none
+**Next:** TEST GATE #420 should verify all three bug scenarios
+
+---
+
+## 2026-04-09 — project-manager — Debugger Loop Phase 2: V10.0 Chat Stress Test Bug Plan
 **Outcome:** COMPLETED
 **Summary:** Created V10.0 CHAT STRESS TEST BUG FIXES area in TASK_PLAN.md with 32 tasks (#417-#448) across 8 waves from 31 bugs found during debugger-loop Phase 1. 8 HIGH, 10 MEDIUM, 13 LOW. Each bug task has a TEST GATE. Area ends with integration gate + checkpoint. Wave 1 ready: #417 (backend) + #419 (frontend) PARALLEL.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md

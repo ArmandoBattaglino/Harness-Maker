@@ -1,4 +1,50 @@
 ---
+## 2026-04-09 — Task #419: BUG-CHAT-CLIENT-1/3/15 — Canonical race condition + trailing text_delta + empty canonical guard
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+Three HIGH bugs in the client chat system all shared the same root cause: no per-node flag tracking whether a canonical message had been received. This allowed fragment-after-canonical corruption (BUG-CHAT-CLIENT-3), canonical-before-fragments duplication (BUG-CHAT-CLIENT-1), and empty canonical destroying output (BUG-CHAT-CLIENT-15).
+
+### What I did
+1. Read the `chat_message` handler in useSwarm.js (lines 632-676) and `replaceNodeChatMessages` in SwarmContext.jsx (lines 189-208).
+2. In useSwarm.js isCanonical branch: added empty-text guard that sets flag and breaks early. Added `canonicalReceived: true` via `updateAgentState` BEFORE any processing to close the race window.
+3. In useSwarm.js else (non-canonical) branch: added check for `nodeState?.canonicalReceived` — if true and message is assistant role, silently drops the fragment.
+4. In SwarmContext.jsx `replaceNodeChatMessages`: added `if (!canonicalMsg?.text) return state;` guard at the top.
+5. Verified client build succeeds (502 modules, 0 errors).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/hooks/useSwarm.js | MODIFIED | Added canonicalReceived flag setting in isCanonical branch, empty-text guard, and post-canonical fragment drop in else branch |
+| client/src/store/SwarmContext.jsx | MODIFIED | Added empty canonical text guard in replaceNodeChatMessages |
+| docs/TASK_PLAN.md | MODIFIED | Marked task #419 COMPLETED |
+
+### Improvements delivered
+- Canonical-before-fragments race no longer causes duplicate content
+- Trailing text_delta after canonical no longer corrupts output
+- Empty canonical no longer destroys existing messages
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None encountered during implementation | — | — | — |
+
+### Decisions I made
+- Used existing `agentStates[nodeId]` object for the `canonicalReceived` flag rather than a separate state map — simpler, auto-cleared on execution reset
+- Set the flag BEFORE processing the canonical message to close the race window as tightly as possible
+
+### What I learned
+- The `updateAgentState` function merges into `agentStates[nodeId]` — no new state shape needed for per-node flags
+- The canonicalReceived flag is automatically cleared when agentStates resets on new execution
+
+### State I'm leaving behind
+Both files are modified, build-clean. The canonicalReceived flag is functional. TEST GATE #420 should verify all three scenarios.
+
+### Handoff
+TEST GATE #420 (qa-tester) should verify: (1) canonical before fragments, (2) canonical after fragments with trailing deltas, (3) empty canonical preservation.
+
+---
 ## 2026-04-08 — Task #408: BUG-DL-COST-VANISH-1 — Cost/token footer disappears after Completed state
 **Status:** COMPLETED
 **Called by:** user
