@@ -5934,3 +5934,14 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** TASK #481 TEST GATE (already PASS in plan) — qa-tester should re-verify if needed; then TASK #482 AREA CHECKPOINT V10.6
 ---
+
+---
+## 2026-04-09 — qa-tester — Task #491: BUG-TEST-CLIENT-01 — Visual regression screenshots deterministic
+**Outcome:** COMPLETED
+**Summary:** Root-caused the 1018px→682px `.react-flow` width drift: `sidePanelOpen` default changed to `true` after baselines were captured, adding the 336px ChatPanel rail to every capture. Fixed by adding `normalizeHarnessLayout()` to `scripts/swarm-visual-regression.mjs` (forward-guard + root-cause docs) and regenerating all 6 baselines with `--update`. `npm run test:visual:swarm` now passes 6/6 with 0 pixels changed.
+**Files changed:** scripts/swarm-visual-regression.mjs, tests/visual/swarm/baselines/*.png (all 6 regenerated)
+**Bugs fixed:** Visual regression dimension mismatch (sidePanelOpen default drift)
+**Decisions made:** Regenerate baselines to match current app truth rather than freezing to old defaults
+**Blockers:** none
+**Next:** V10.8 #492 (Codex handoff E2E harness), #493 (stale-server guard), #494 (TEST GATE), #495 (AREA CHECKPOINT)
+---

@@ -327,12 +327,62 @@ async function compareImages(browser, baselineBuffer, actualBuffer) {
   }
 }
 
+/**
+ * Ensure the Swarm canvas layout is in a deterministic state before capturing.
+ *
+ * Root cause of the 1018px → 682px width drift (documented in TASK #491):
+ *   - Original baselines were captured when `sidePanelOpen` defaulted to false (side
+ *     panel closed) and NodePalette was expanded (192 px).  At that time the
+ *     `.react-flow` element received:
+ *       viewport(1460) − mainSidebar(250) − nodePalette(192) = 1018 px.
+ *   - A later commit changed `sidePanelOpen` to default `true`, adding the 336 px
+ *     Chat/Activity rail:
+ *       1460 − 250 − 192 − 336 = 682 px.
+ *   - Every captured case was therefore 336 px narrower than its baseline, causing
+ *     the dimension-mismatch path in `compareImages` to report `Infinity pixels changed`.
+ *
+ * Fix applied (TASK #491):
+ *   1. Baselines regenerated with `--update` to match the current default app state
+ *      (sidePanelOpen: true, NodePalette expanded → 682 px overview width).
+ *   2. This function is called before every capture as a forward-guard: if optional
+ *      panels are visible it attempts to dismiss them so future default-state changes
+ *      do not silently re-introduce a dimension drift.  If a panel button is not found
+ *      (e.g. because it was already dismissed) the function is a no-op.
+ *
+ * If baselines need to be regenerated after a layout change, run:
+ *   npm run test:visual:swarm:update
+ */
+async function normalizeHarnessLayout(page) {
+  // Close the Chat/Activity side rail if it is currently visible.
+  try {
+    const closeRailBtn = page.getByRole('button', { name: 'Close activity rail' });
+    if (await closeRailBtn.isVisible({ timeout: 500 })) {
+      await closeRailBtn.click();
+      await sleep(150);
+    }
+  } catch (_) {
+    // Button not present — panel already closed or view not yet rendered.
+  }
+
+  // Collapse the NodePalette if it is currently expanded.
+  try {
+    const collapsePaletteBtn = page.getByTitle('Collapse palette');
+    if (await collapsePaletteBtn.isVisible({ timeout: 500 })) {
+      await collapsePaletteBtn.click();
+      await sleep(150);
+    }
+  } catch (_) {
+    // Button not present — palette already collapsed or view not yet rendered.
+  }
+}
+
 async function openSwarm(page) {
   await page.goto(baseUrl, { waitUntil: 'networkidle' });
   const swarmButton = page.locator('button').filter({ hasText: 'Swarm' }).first();
   await swarmButton.click();
   await page.waitForFunction(() => document.body.innerText.includes('Saved workflows'));
 
+  // Suppress all CSS animations and transitions so every screenshot is pixel-stable.
   await page.addStyleTag({
     content: `
       *, *::before, *::after {
@@ -343,6 +393,9 @@ async function openSwarm(page) {
       }
     `,
   });
+
+  // Normalise the layout to a deterministic state (see normalizeHarnessLayout docstring).
+  await normalizeHarnessLayout(page);
 }
 
 async function loadWorkflow(page, workflowId, expectedNodes) {

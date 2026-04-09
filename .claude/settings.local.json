@@ -11,7 +11,9 @@
       "Bash(cp \"C:/Users/arman/.claude/CLAUDE.md\" \"C:/Users/arman/Desktop/claude-setup-backup/config/CLAUDE.md\")",
       "Bash(cp \"C:/Users/arman/.claude/settings.json\" \"C:/Users/arman/Desktop/claude-setup-backup/config/settings.json\")",
       "Bash(cp \"C:/Users/arman/.claude/settings.local.json\" \"C:/Users/arman/Desktop/claude-setup-backup/config/settings.local.json\")",
-      "Bash(cp \"C:/Users/arman/.claude/keybindings.json\" \"C:/Users/arman/Desktop/claude-setup-backup/config/keybindings.json\")"
+      "Bash(cp \"C:/Users/arman/.claude/keybindings.json\" \"C:/Users/arman/Desktop/claude-setup-backup/config/keybindings.json\")",
+      "Bash(mkdir -p \"C:/Users/arman/.claude/tools\")",
+      "Bash(cp \"C:/Users/arman/Desktop/audit.js\" \"C:/Users/arman/.claude/tools/audit.js\")"
     ]
   }
 }
