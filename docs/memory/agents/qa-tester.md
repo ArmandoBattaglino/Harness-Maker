@@ -1,4 +1,50 @@
 ---
+## 2026-04-09 — Task #446: TEST GATE — V10.0 Full Chat Integration (Browser E2E)
+**Status:** COMPLETED (PASS)
+**Called by:** user (direct)
+
+### Context when I started
+All V10.0 chat fixes applied (Waves 1-6, 15 fix tasks). 490/490 server tests pass, client build clean (507 modules). Server running at localhost:3000. Task: verify ALL fixes work in the browser via Puppeteer MCP.
+
+### What I did
+Ran 8 E2E browser tests via Puppeteer MCP:
+1. **Generate+Run** (Test 1): Generated "Venice Canals Research and Summary" workflow (Researcher->Writer). Both nodes appeared, execution completed successfully with "done" status. PASS.
+2. **Chat content** (Test 2): 2 messages in chat panel. Researcher wrote 3 facts about Venice canals, Writer summarized. No duplicates, no garbled concatenation. Token-boundary spacing present (known BUG-CHAT-1 LOW). PASS.
+3. **Chat filtering** (Test 3): Select filter correctly filters by agent. "Researcher" shows 1 msg, "Writer" shows 1 msg, "All agents" shows 2. Initial confusion: `whitespace-pre-wrap` selector was matching node card snippets, not chat panel messages. Actual chat panel is `.custom-scrollbar` index 2. PASS.
+4. **Scroll behavior** (Test 4): After execution, scroll position nearBottom=true (scrollHeight=clientHeight for single-agent, scrollTop=481 at bottom for multi-agent after remount). PASS.
+5. **Node snippets** (Test 5): Both nodes show actual Venice canal content, "done" status, cost badges ($0.11, $0.06). No system prompt text. PASS.
+6. **Navigation persistence** (Test 6): Navigated to Projects, back to Swarm. Chat messages persisted (Researcher+Writer). Scroll at bottom after remount (BUG-CHAT-E2E-1 fix confirmed). PASS.
+7. **State isolation** (Test 7): Reset cleared chat. Generated+ran second workflow ("Remote Work Benefits Analyst" in Italian). Only Analyst sender, Italian remote work content, NO Venice canal cross-contamination. PASS.
+8. **XSS safety** (Test 8): No `javascript:` URLs in rendered HTML, no inline event handlers. `rehype-sanitize` imported and used in ChatMessage.jsx line 200. PASS.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | #446 status COMPLETED (PASS), header updated to 430 COMPLETED/PASS |
+| docs/memory/PROGRESS.md | MODIFIED | Added #446 PASS entry |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added #446 activity entry |
+| docs/memory/agents/qa-tester.md | MODIFIED | Appended this session log |
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-CHAT-1 token-boundary spacing | Claude CLI stream-json token boundaries | None (platform limitation) | KNOWN, LOW |
+
+### Decisions I made
+- Verdict PASS: all 8 tests passed, all V10.0 fixes verified working in browser
+
+### What I learned
+- The `[class*="whitespace-pre-wrap"]` selector matches BOTH node card snippets on the canvas AND chat messages -- must use `.custom-scrollbar` index 2 to target the actual chat panel
+- Puppeteer's native `select` tool properly triggers React synthetic events, while manual `dispatchEvent(new Event('change'))` may not reliably update Zustand stores
+- Token-boundary spacing (BUG-CHAT-1) is a known platform limitation from Claude CLI stream-json, not a bug in the chat system
+
+### State I'm leaving behind
+TEST GATE #446 PASS. All V10.0 chat fixes verified working in browser. 430 COMPLETED/PASS. Wave 8 AREA CHECKPOINT #447 ready.
+
+### Handoff
+Wave 8 AREA CHECKPOINT #447 ready for execution. Then #448 (meta verification of 500-message slice).
+
+---
 ## 2026-04-09 — Debugger Loop Phase 1: Micro-Area C — Browser E2E Chat Stress Test
 **Status:** COMPLETED
 **Called by:** user (debugger-loop)

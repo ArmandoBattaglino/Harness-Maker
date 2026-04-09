@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-09 — after Tasks #427+#429+#431 (Wave 3, V10.0): SwarmEngine ChatExtractor.feed removal for stream-json, ChatPanel toolUse accumulation, HitlChatCard sendingRef guard — mapped by code-mapper_
+_Last updated: 2026-04-09 — after Tasks #437+#439+#441+#443+#444 (Wave 6, V10.0 LOW batch): ChatPanel scroll-lock, ChatMessage unused import removal, ChatExtractor registerNodePrompt type guard, chatTextNormalization CHAT_WORDS dedup — mapped by code-mapper_
 
 > **PROJECT STATUS: V9.0 STREAM-JSON MIGRATION CLOSED + V9.1 CODEX SDK SWARM INTEGRATION CLOSED — 402 TASKS (401 COMPLETE/PASS, 1 DEFERRED, 0 PENDING)**
 > Claude now uses the structured `stream-json` path and Codex now has a parallel `codex-sdk` structured path, with PTY retained for Gemini/live terminal work and truthful Codex fallback scenarios. Verification: 488/488 backend tests pass, client build 501 modules.
@@ -114,9 +114,9 @@ _Last updated: 2026-04-09 — after Tasks #427+#429+#431 (Wave 3, V10.0): SwarmE
 | client/src/hooks/useSwarm.js | useSwarm (named), readStoredExecution, writeStoredExecution, clearStoredExecution (module-private) | WebSocket hook for swarm execution lifecycle: connectWs(executionId) -> /ws/swarm?executionId=X; startExecution() POSTs + connects WS; stopExecution() DELETEs + closes WS. Dispatches the Swarm WS message set into Zustand, now including provider-agnostic structured-runtime handling for both `stream-json` and `codex-sdk`. Task #408: `applyExecutionSnapshot` normalizes server flat cost fields (`totalCostUsd` etc.) into nested `totalCost` objects so cost data persists through reconciliation. Task #423: `chat_message` handler now has `if (!msg.nodeId) break;` guard to silently drop nodeId-less messages. (Tasks #63, #109, #114, #128, #238-#241, POST-V5 FOLLOW-UP 2, #404, #408, #423) |
 | client/src/views/SwarmView.jsx | default SwarmView | Layout shell for the Swarm Orchestrator page. V5 Wave 3: export/import/duplicate workflow buttons, Ctrl+S (save) + Ctrl+Enter (run) keyboard shortcuts, useCanvasValidation integration (validation banner + Run button gating), fileInputRef for JSON import. V5 bugfix 41b9a0e: handleSaveFnRef/handleRunFnRef fix stale closure in keyboard shortcuts. V5 Wave 2: Settings button + WorkflowSettingsModal. V5 Wave 1: Save button, workflow name editing, markDirty/onCanvasChange. Toolbar: title (editable), Settings/Save/Run/Stop/Pause/Resume/Reset buttons, runtime provider selector, model settings, HITL inbox toggle. (Tasks #57.2, ..., #242, V5 Wave 1, V5 Wave 2, V5 Wave 3) |
 | client/src/hooks/useCanvasValidation.js | useCanvasValidation (named) | Pre-run validation hook for canvas nodes/edges. Checks: at least one agent, triage node exists, empty systemPrompt (warning), trigger config (webhook path / RSS URL), disconnected non-triage agents (warning). Returns { isValid, errors[] }. (FR-V5-44 through FR-V5-46, V5 Wave 3) |
-| client/src/canvas/ChatPanel.jsx | default ChatPanel, ChatInputArea (internal) | Unified Chat View — shows agent outputs as a conversation with per-agent filtering, message grouping for structured runtimes (stream-json, codex-sdk), broadcast input with scope/mode/target controls. Task #429: toolUse accumulation (spread) instead of replacement in enrichedMessages grouping. (Tasks #63, #429) |
+| client/src/canvas/ChatPanel.jsx | default ChatPanel, ChatInputArea (internal) | Unified Chat View — shows agent outputs as a conversation with per-agent filtering, message grouping for structured runtimes (stream-json, codex-sdk), broadcast input with scope/mode/target controls. Task #437: scroll-lock (only auto-scroll if near bottom, scroll to bottom on mount via hasMountedRef). Task #429: toolUse accumulation (spread) instead of replacement in enrichedMessages grouping. (Tasks #63, #429, #437) |
 | client/src/canvas/HitlChatCard.jsx | default HitlChatCard, formatTime (module-private) | Inline HITL approval card rendered inside ChatPanel. Shows agent request, approve/reject actions, optional resume text. Task #431: added useRef sendingRef guard against double-click on Approve/Reject. (Tasks #69, #431) |
-| client/src/canvas/ChatMessage.jsx | default ChatMessage, CollapsibleMetaBlock (internal), formatChatText (module-private), formatStreamJsonText (module-private), repairWordFusion (module-private), formatToolArgs (module-private), formatCostFooter (module-private), formatTime (module-private) | Single chat message bubble in Unified Chat View. Renders ReactMarkdown with remarkGfm + rehype-sanitize (XSS prevention — Task #425). Supports assistant/system/user roles, stream-json tool use collapsibles, thinking collapsibles, cost footer. (Tasks #408, #425) |
+| client/src/canvas/ChatMessage.jsx | default ChatMessage, CollapsibleMetaBlock (internal), formatChatText (module-private), formatStreamJsonText (module-private), repairWordFusion (module-private), formatToolArgs (module-private), formatCostFooter (module-private), formatTime (module-private) | Single chat message bubble in Unified Chat View. Renders ReactMarkdown with remarkGfm + rehype-sanitize (XSS prevention — Task #425). Supports assistant/system/user roles, stream-json tool use collapsibles, thinking collapsibles, cost footer. Task #439: removed unused `repairAllTokenSpacing` import. (Tasks #408, #425, #439) |
 | client/src/canvas/InterAgentFeed.jsx | default InterAgentFeed | Real-time sidebar log of agent handoff events. Empty-state container now has w-56 shrink-0 (Task #104 — prevents canvas collapse when feed is empty). Auto-scrolls to bottom. Renders event icon + timestamp + details for handoff_started/agent_status/circuit_breaker/execution_status types. (Tasks #72, #104) |
 | client/src/panels/HitlInbox.jsx | default HitlInbox, getPendingCount (named) | HITL approval panel. InboxItem.handleApproveConfirm and handleReject now call setError() instead of silently returning when executionId/itemId is null (Task #108). (Tasks #69, #108) |
 | client/src/hooks/useInbox.js | useInbox (named), default useInbox | HITL inbox polling + approve/reject hook. Normalizes REST vs WS inbox item shapes. Polls /api/v1/swarm/:executionId/inbox every 10s when WS disconnected. Calls resolveInboxItem(itemId) on success. Imported and called in SwarmView.jsx (line 53) as polling fallback — BUG-AUDIT-4 fix (Task #122). (Tasks #73, #84, #85, #92, #122) |
@@ -3907,11 +3907,38 @@ _All bugs identified in QA Swarm Inspection (2026-03-31) and Swarm Code Audit (2
 - **Side effects:** none
 - **Last modified:** 2026-04-09 in Task #423 by frontend-dev
 
-### `client/src/canvas/ChatMessage.jsx` :: `ChatMessage({ message, agentLabel })` — rehype-sanitize (Task #425)
+### `client/src/canvas/ChatMessage.jsx` :: `ChatMessage({ message, agentLabel })` — rehype-sanitize (Task #425), unused import cleanup (Task #439)
 - **Purpose:** Renders a single chat message bubble with role-based styling, ReactMarkdown with remarkGfm + rehype-sanitize, optional tool use collapsibles, thinking collapsibles, and cost footer.
 - **Called by:** ChatPanel.jsx (renders list of ChatMessage components)
-- **Calls:** ReactMarkdown, remarkGfm, rehypeSanitize, stripAnsi, repairAllTokenSpacing, isStructuredSpawnMode, formatChatText, formatStreamJsonText, formatToolArgs, formatCostFooter, formatTime, CollapsibleMetaBlock
+- **Calls:** ReactMarkdown, remarkGfm, rehypeSanitize, stripAnsi, isStructuredSpawnMode, formatChatText, formatStreamJsonText, formatToolArgs, formatCostFooter, formatTime, CollapsibleMetaBlock
 - **Inputs:** message (object — { role, text, timestamp, nodeId, spawnMode, toolUse, thinking, cost }), agentLabel (string)
 - **Output:** JSX — styled chat bubble with markdown content
 - **Side effects:** none (pure render)
-- **Last modified:** 2026-04-09 in Task #425 by frontend-dev (added rehype-sanitize to ReactMarkdown rehypePlugins for XSS prevention)
+- **Last modified:** 2026-04-09 in Task #439 by frontend-dev (removed unused `repairAllTokenSpacing` import from `../../utils/repairTokenSpacing`); previously Task #425 by frontend-dev (added rehype-sanitize)
+
+# UPDATE 2026-04-09 — Tasks #437, #439, #441, #443, #444 (Wave 6, V10.0 LOW batch)
+
+### `client/src/canvas/ChatPanel.jsx` :: `ChatPanel()` — scroll-lock (Task #437)
+- **Purpose:** Unified Chat View component. Now implements scroll-lock: auto-scrolls to bottom on mount (via `hasMountedRef`), and on subsequent message arrivals only auto-scrolls if the user is near the bottom (`scrollHeight - scrollTop - clientHeight < 100`). This prevents the scroll position from jumping when the user is reading earlier messages.
+- **Called by:** SwarmView.jsx (rendered in the chat panel area)
+- **Calls:** useSwarmStore (chatMessages, agentStates, chatFilter, setChatFilter, workflowDef, activeExecutionId, executionStatus), apiPost, isStructuredSpawnMode, ChatMessage, HitlChatCard, ChatInputArea
+- **Inputs:** none (reads all state from Zustand store)
+- **Output:** JSX — full chat view with filter dropdown, scrollable message list, broadcast input area
+- **Side effects:** DOM scroll manipulation via scrollContainerRef; POST /api/v1/swarm/:executionId/broadcast on send
+- **Complexity note:** The `hasMountedRef` pattern ensures first render always scrolls to bottom (catching up on history), while subsequent renders respect user scroll position. The `enrichedMessages.length` dependency on the useEffect means it only fires when message count changes, not on every re-render.
+- **Last modified:** 2026-04-09 in Task #437 by frontend-dev (scroll-lock: hasMountedRef + near-bottom check); Task #441 addressed by same mount logic
+
+### `server/services/ChatExtractor.js` :: `ChatExtractor.registerNodePrompt(nodeId, promptText)` — type guard (Task #443)
+- **Purpose:** Register the system prompt text for a node so flush logic can detect and discard echo/summary messages. Task #443 added `typeof promptText !== 'string'` type guard as the first check, ensuring non-string values (undefined, null, objects) are silently rejected without throwing.
+- **Called by:** SwarmEngine._handleDoneTrigger (reinject path), SwarmEngine._spawnAgentPty (initial prompt registration), SwarmEngine._spawnAgentStreamJson (initial prompt registration)
+- **Calls:** String(), this._nodePrompts.get/set
+- **Inputs:** nodeId (string), promptText (string — now validated with typeof check)
+- **Output:** void
+- **Side effects:** mutates this._nodePrompts Map (Set of significant words per node)
+- **Last modified:** 2026-04-09 in Task #443 by backend-dev (added `typeof promptText !== 'string'` guard before `!promptText` check)
+
+### `server/services/chatTextNormalization.js` :: `CHAT_WORDS` array — dedup (Task #444)
+- **Purpose:** Master word list for ConPTY compressed-token DP restoration. Task #444 removed 25 duplicate words that were present multiple times in the array (e.g. words added in multiple passes that already existed). The `CHAT_WORD_SET` derived Set was already deduping at runtime, so this is a code-quality cleanup with no behavioral change.
+- **Derived constants:** `CHAT_WORD_SET = new Set(CHAT_WORDS.map(...))`, `CHAT_WORD_MAX_LEN = CHAT_WORDS.reduce(...)`
+- **Consumed by:** splitKnownWordSequence, restoreCompressedChatToken, restoreCompressedChatTokenGreedy, aggressivelyRestoreLongChatToken (all via CHAT_WORD_SET.has())
+- **Last modified:** 2026-04-09 in Task #444 by backend-dev (removed 25 duplicate entries — no behavioral change since Set already deduped)

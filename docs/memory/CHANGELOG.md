@@ -1,6 +1,95 @@
 # CHANGELOG — Claude Code Visual Manager
 
 ---
+## 2026-04-09 — Task #437: ChatPanel scroll-lock
+**Agent:** frontend-dev — mapped by code-mapper
+**Triggered by:** Wave 6 V10.0 LOW batch. ChatPanel always auto-scrolled to bottom on every new message, making it impossible to read earlier messages during active execution.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/canvas/ChatPanel.jsx | MODIFIED | Added hasMountedRef + near-bottom check (< 100px threshold). On mount: always scroll to bottom. On subsequent messages: only auto-scroll if user is near bottom. |
+
+### Functions Modified
+- `ChatPanel()` in `client/src/canvas/ChatPanel.jsx` — replaced unconditional `bottomRef.scrollIntoView` with scroll-lock pattern using `hasMountedRef` and `scrollHeight - scrollTop - clientHeight < 100` threshold
+
+### Connection Changes
+- No new dependencies. Removed `bottomRef.scrollIntoView` pattern; now uses direct `scrollContainerRef.current.scrollTop` manipulation.
+
+### Impact on Other Code
+- None — internal scroll behavior only. Task #441 (scroll reset fix) was addressed by the same mount logic.
+
+---
+## 2026-04-09 — Task #439: ChatMessage unused import removal
+**Agent:** frontend-dev — mapped by code-mapper
+**Triggered by:** Wave 6 V10.0 LOW batch. `repairAllTokenSpacing` was imported but never called in ChatMessage.jsx.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/canvas/ChatMessage.jsx | MODIFIED | Removed unused `import { repairAllTokenSpacing } from '../../utils/repairTokenSpacing'` |
+
+### Functions Modified
+- `ChatMessage({ message, agentLabel })` in `client/src/canvas/ChatMessage.jsx` — removed unused import (no behavioral change)
+
+### Connection Changes
+- ChatMessage.jsx no longer depends on `client/src/utils/repairTokenSpacing.js` (dependency removed)
+
+### Impact on Other Code
+- None — import was unused. AgentNode.jsx still imports `repairAllTokenSpacing` from the same module.
+
+---
+## 2026-04-09 — Task #441: ChatPanel scroll reset fix
+**Agent:** frontend-dev — mapped by code-mapper
+**Triggered by:** Wave 6 V10.0 LOW batch. Addressed by Task #437 mount logic (hasMountedRef ensures scroll-to-bottom on mount).
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/canvas/ChatPanel.jsx | (same as #437) | Scroll reset on mount handled by hasMountedRef pattern added in Task #437 |
+
+### Connection Changes
+- None — no additional code changes beyond Task #437.
+
+---
+## 2026-04-09 — Task #443: ChatExtractor registerNodePrompt type guard
+**Agent:** backend-dev — mapped by code-mapper
+**Triggered by:** Wave 6 V10.0 LOW batch. registerNodePrompt could receive non-string promptText (e.g. undefined, object) from callers, which would pass the `!promptText` check but fail on subsequent string operations.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/ChatExtractor.js | MODIFIED | Added `typeof promptText !== 'string'` as first guard in registerNodePrompt, before the `!promptText` check |
+
+### Functions Modified
+- `registerNodePrompt(nodeId, promptText)` in `server/services/ChatExtractor.js` — added typeof string check as first line of guard clause
+
+### Connection Changes
+- None — same callers (SwarmEngine), same interface.
+
+### Impact on Other Code
+- All SwarmEngine callers of registerNodePrompt now have safer behavior when passing potentially non-string values (no throw on undefined/null/object).
+
+---
+## 2026-04-09 — Task #444: chatTextNormalization CHAT_WORDS dedup
+**Agent:** backend-dev — mapped by code-mapper
+**Triggered by:** Wave 6 V10.0 LOW batch. CHAT_WORDS array contained 25 duplicate entries accumulated across multiple development passes.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/chatTextNormalization.js | MODIFIED | Removed 25 duplicate words from CHAT_WORDS array. No behavioral change (CHAT_WORD_SET already deduped via Set constructor). |
+
+### Functions Modified
+- None (CHAT_WORDS is a const array, not a function)
+
+### Connection Changes
+- None — CHAT_WORD_SET derived from CHAT_WORDS still contains identical entries.
+
+### Impact on Other Code
+- No behavioral change. Array is ~25 entries shorter, reducing memory footprint marginally. All DP functions (splitKnownWordSequence, restoreCompressedChatToken, etc.) consume via CHAT_WORD_SET which was already deduped.
+
+---
 ## 2026-04-08 — Task #407: BUG-DL-STALE-STATE-1 — Stale workflow state fix
 **Agent:** frontend-dev — mapped by code-mapper
 **Triggered by:** BUG-DL-02 discovered during Phase 1 E2E debugger-loop. After Prompt-to-Flow generates a new workflow, canvas briefly rendered node cards carrying stale state from the previous execution until Run was clicked.

@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-09 after Tasks #433, #435 (V10.0 Waves 4+5 — chatTextNormalization.js 200-char DP performance cap, useSwarm.js REST hydration canonicalReceived guard)._
+_Last updated: 2026-04-09 after Tasks #437, #439, #441, #443, #444 (V10.0 Wave 6 LOW batch — ChatPanel scroll-lock pattern + mount reset, ChatMessage unused import removal, ChatExtractor registerNodePrompt type guard, chatTextNormalization CHAT_WORDS dedup)._
 
 ## Release Status
 **v9.0.0 — V9.0 Stream-JSON Agent Migration CLOSED for core semantics, display fidelity FIXED**
@@ -73,7 +73,7 @@ _Last updated: 2026-04-09 after Tasks #433, #435 (V10.0 Waves 4+5 — chatTextNo
 | docs/memory/ACTIVITY_LOG.md | UP_TO_DATE | 2026-04-08 | Includes debugger-loop fallback closure plus the V9.0 close-out entries for #389-#393. |
 | docs/SECURITY_AUDIT.md | UP_TO_DATE | 2026-04-06 | V1 audit. V9.0 adds SEC-SJ-01 through SEC-SJ-07 in PRD -- no code changes yet. |
 | docs/security-v3-audit.md | UP_TO_DATE | 2026-04-06 | MEDIUM-V3-01 marked FIXED (Task #234). No changes from V9.0 planning. |
-| Inline comments | UP_TO_DATE | 2026-04-09 | chatTextNormalization.js 200-char DP cap guards are self-documenting early returns (Task #433). useSwarm.js REST hydration canonicalReceived guard has accurate BUG-CHAT-CLIENT-10 comment (Task #435). All prior inline comment coverage remains accurate. |
+| Inline comments | UP_TO_DATE | 2026-04-09 | Wave 6 LOW batch: ChatPanel.jsx scroll-lock useEffect has self-documenting comments (#437/#441). ChatExtractor.js registerNodePrompt JSDoc and type guard unchanged (#443). chatTextNormalization.js CHAT_WORDS dedup is data-only (#444). ChatMessage.jsx unused import removed (#439). All prior inline comment coverage remains accurate. |
 | docs/CONTRIBUTING.md | MISSING | -- | Private tool; no external contributors. Deferred indefinitely. |
 | docs/research_resume_after_kill.md | UP_TO_DATE | 2026-04-08 | NEW: Research on --resume behavior after process kill. Findings feed into FR-SJ-17/18. |
 | docs/research_b_tools.md | UP_TO_DATE | 2026-04-08 | NEW: Research on --allowedTools vs --tools vs --disallowedTools. Critical finding: --allowedTools is NOT a security boundary (bug #12232). |

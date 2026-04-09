@@ -1,3 +1,7 @@
+- [QA-TESTER 2026-04-09] TEST GATE #446 PASS. Full browser E2E verification via Puppeteer MCP: 8/8 tests passed. Generate+Run workflow (Venice canals Researcher->Writer), chat content clean (no duplicates, no garbled text), filtering works correctly, scroll at bottom, node snippets show real content, navigation persistence works (BUG-CHAT-E2E-1 fix confirmed), reset+second workflow isolated (no cross-contamination), XSS sanitization active (rehype-sanitize). Wave 7 COMPLETED. 430 COMPLETED/PASS.
+
+- [PM 2026-04-09] Wave 6 COMPLETED. #437 (BUG-CHAT-CLIENT-7, scroll-lock), #439 (BUG-CHAT-CLIENT-9, unused import removed), #441 (BUG-CHAT-E2E-1, scroll reset fix), #443 (BUG-CHAT-SERVER-06, registerNodePrompt type guard), #444 (BUG-CHAT-SERVER-11, CHAT_WORDS dedup — SERVER-12 deferred) ALL COMPLETED. 429 COMPLETED/PASS, 17 PENDING. All 6 fix waves COMPLETE. TEST GATE #446 now running browser verification (Wave 7 full chat integration).
+
 - [PM 2026-04-09] Waves 4+5 COMPLETED. #433 (BUG-CHAT-SERVER-07/08, DP performance cap 200 chars), #435 (BUG-CHAT-CLIENT-10, REST hydration canonicalReceived guard) ALL COMPLETED. 424 COMPLETED/PASS, 22 PENDING. Wave 6 launching: #437 + #439 + #441 + #443 + #444 PARALLEL (LOW batch).
 
 - [FRONTEND-DEV 2026-04-09] TASK #435 (BUG-CHAT-CLIENT-10) COMPLETED. Added canonicalReceived guard in useSwarm.js REST hydration loop — skips assistant fragments for nodes with canonical already received. Build clean (507 modules).

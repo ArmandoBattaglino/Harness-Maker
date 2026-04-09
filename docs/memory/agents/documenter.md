@@ -1,4 +1,45 @@
 ---
+## 2026-04-09 — Tasks #437, #439, #441, #443, #444: V10.0 Wave 6 LOW batch documentation audit
+**Status:** COMPLETED
+**Called by:** orchestrator (post-Wave-6 documentation update)
+
+### Context when I started
+Wave 6 LOW batch completed five tasks: #437 (ChatPanel scroll-lock pattern), #439 (ChatMessage unused import removal), #441 (ChatPanel scroll reset on mount), #443 (ChatExtractor registerNodePrompt type guard), #444 (chatTextNormalization CHAT_WORDS dedup removing 25 entries).
+
+### What I did
+1. Read all four modified files: ChatPanel.jsx, ChatMessage.jsx, ChatExtractor.js (registerNodePrompt grep), chatTextNormalization.js
+2. Audited README.md, ARCHITECTURE.md, API.md, CLAUDE.md, PRD.md, inline comments
+3. Determined all five tasks are internal implementation improvements with zero external-facing impact
+4. Updated DOC_STATUS.md: timestamp and inline comments row
+5. Wrote activity log and agent memory
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Updated timestamp and inline comments row for Wave 6 |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended Wave 6 documentation audit entry |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- DOC_STATUS.md accurately reflects current documentation state after Wave 6
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- No doc updates needed beyond DOC_STATUS.md: scroll-lock is UI behavior (no architecture impact), unused import removal is cleanup, type guard is defensive coding, CHAT_WORDS dedup is data optimization
+
+### What I learned
+- ChatPanel now uses a hasMountedRef + near-bottom check pattern for scroll behavior (first mount always scrolls, subsequent only if within 100px of bottom)
+- chatTextNormalization CHAT_WORDS had 25 duplicate entries that were silently deduplicated by the Set constructor anyway
+
+### State I'm leaving behind
+All documentation is UP_TO_DATE. No stale sections introduced by Wave 6 tasks.
+
+### Handoff
+None -- task fully self-contained.
+
+---
 ## 2026-04-09 — Tasks #433, #435: V10.0 Waves 4+5 documentation audit
 **Status:** COMPLETED
 **Called by:** orchestrator (post-Waves-4+5 documentation update)

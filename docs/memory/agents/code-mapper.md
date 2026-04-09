@@ -1,4 +1,48 @@
 ---
+## 2026-04-09 — Tasks #437+#439+#441+#443+#444: Wave 6 V10.0 LOW batch code mapping
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task trio, parallel with PM + documenter)
+
+### Context when I started
+Wave 6 LOW batch completed: 5 tasks covering ChatPanel scroll-lock, ChatMessage unused import, ChatPanel scroll reset (addressed by #437), ChatExtractor type guard, and chatTextNormalization dedup.
+
+### What I did
+1. Read all 4 modified source files: ChatPanel.jsx, ChatMessage.jsx, ChatExtractor.js (registerNodePrompt section), chatTextNormalization.js (CHAT_WORDS section)
+2. Verified repairAllTokenSpacing was fully removed from ChatMessage.jsx (confirmed via grep)
+3. Confirmed AgentNode.jsx still uses repairAllTokenSpacing (not affected)
+4. Updated CODE_MAP.md header, 2 Module Index rows (ChatPanel, ChatMessage), 1 function entry (ChatMessage), added 3 new function entries (ChatPanel scroll-lock, registerNodePrompt type guard, CHAT_WORDS dedup)
+5. Appended 5 CHANGELOG entries (one per task)
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Header, 2 module index rows, 1 updated function entry, 3 new entries |
+| docs/memory/CHANGELOG.md | MODIFIED | 5 new entries for Tasks #437, #439, #441, #443, #444 |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended session entry |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log |
+
+### Improvements delivered
+- CODE_MAP now documents ChatPanel scroll-lock pattern with hasMountedRef + near-bottom threshold
+- ChatMessage dependency on repairTokenSpacing module explicitly noted as removed
+- registerNodePrompt type guard documented with caller impact
+- CHAT_WORDS dedup documented as no-behavioral-change cleanup
+
+### Bugs I encountered
+None
+
+### Decisions I made
+- Task #441 gets its own CHANGELOG entry but references #437 as the implementing task, since both are in ChatPanel.jsx and #441 was addressed by #437's mount logic
+
+### What I learned
+- ChatPanel scroll logic moved from bottomRef.scrollIntoView to direct scrollTop manipulation, which is a pattern shift worth noting for future scroll-related bugs
+
+### State I'm leaving behind
+CODE_MAP.md and CHANGELOG.md fully up to date through Wave 6 V10.0 LOW batch (Tasks #437-#444).
+
+### Handoff
+None -- task fully self-contained.
+
+---
 ## 2026-04-09 — Tasks #433+#435: Waves 4+5 V10.0 code mapping
 **Status:** COMPLETED
 **Called by:** orchestrator (post-task trio, parallel with PM + documenter)

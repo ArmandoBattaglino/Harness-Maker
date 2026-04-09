@@ -1,4 +1,45 @@
-﻿## 2026-04-09 — code-mapper — Tasks #433, #435: Code map update for Waves 4+5 (V10.0)
+﻿## 2026-04-09 — qa-tester — Task #446: TEST GATE — V10.0 Full Chat Integration
+**Outcome:** COMPLETED (PASS)
+**Summary:** Full browser E2E verification via Puppeteer MCP against localhost:3000. 8/8 tests passed: (1) Generate+Run multi-agent workflow, (2) chat content clean with no duplicates, (3) chat filtering works correctly, (4) scroll at bottom after execution, (5) node snippets show real content, (6) navigation persistence works (BUG-CHAT-E2E-1 fix), (7) reset+second workflow state isolation, (8) XSS sanitization active. Known: token-boundary spacing (BUG-CHAT-1, LOW, platform limitation) still present in Italian text.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/qa-tester.md
+**Bugs fixed:** none (all V10.0 fixes verified working)
+**Decisions made:** none
+**Blockers:** none
+**Next:** Wave 8 AREA CHECKPOINT #447 ready. Then #448 (meta verification).
+
+---
+## 2026-04-09 — code-mapper — Tasks #437, #439, #441, #443, #444: Wave 6 V10.0 LOW batch code mapping
+**Outcome:** COMPLETED
+**Summary:** Mapped all 5 Wave 6 LOW batch tasks. Updated CODE_MAP.md with ChatPanel scroll-lock pattern (hasMountedRef + near-bottom check), ChatMessage unused import removal (repairAllTokenSpacing dropped), ChatExtractor registerNodePrompt typeof guard, and chatTextNormalization CHAT_WORDS dedup. Appended 5 CHANGELOG entries.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** nothing -- task chain complete
+
+---
+## 2026-04-09 — documenter — Tasks #437, #439, #441, #443, #444: V10.0 Wave 6 LOW batch documentation audit
+**Outcome:** COMPLETED
+**Summary:** Audited all docs after Wave 6 LOW batch (ChatPanel scroll-lock + mount reset, ChatMessage unused import removal, ChatExtractor registerNodePrompt type guard, chatTextNormalization CHAT_WORDS dedup). All changes are internal implementation improvements with no API, architecture, config, or endpoint impact. Updated DOC_STATUS.md timestamp and inline comments row.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none
+**Decisions made:** No doc updates needed beyond DOC_STATUS.md -- all five tasks are internal fixes/cleanups
+**Blockers:** none
+**Next:** Next wave documentation audit when triggered
+
+---
+## 2026-04-09 — project-manager — Wave 6 completion + Wave 7 TEST GATE #446 in progress
+**Outcome:** COMPLETED
+**Summary:** Marked all Wave 6 tasks COMPLETED: #437 (scroll-lock), #439 (unused import), #441 (scroll reset), #443 (registerNodePrompt guard), #444 (CHAT_WORDS dedup, SERVER-12 deferred). Updated counters to 429 COMPLETED/PASS, 17 PENDING. All 6 fix waves now COMPLETE. TEST GATE #446 (full chat integration browser verification) is IN_PROGRESS (Wave 7).
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none (status tracking only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** TEST GATE #446 (qa-tester, browser verification of full V10.0 chat integration). On PASS: AREA CHECKPOINT #447, then #448 (area close).
+
+---
+
+## 2026-04-09 — code-mapper — Tasks #433, #435: Code map update for Waves 4+5 (V10.0)
 **Outcome:** COMPLETED
 **Summary:** Mapped Task #433 (200-char length cap on 4 DP functions in chatTextNormalization.js) and Task #435 (REST hydration canonicalReceived skip in useSwarm.js). Added detailed function entries for all 4 capped DP functions. Updated connectWs complexity notes for REST hydration change. No breaking changes.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
