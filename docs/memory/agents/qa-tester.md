@@ -2724,3 +2724,52 @@ Phase 1 E2E test complete. No code changes made. 3 bugs ready to route to debugg
 ### Handoff
 Return findings to debugger-loop orchestrator for Phase 2 (bulk bug → task plan) then Phase 3 (parallel fix wave). Primary target: BUG-DL-01 text_delta accumulation space insertion.
 ---
+
+---
+## 2026-04-09 — Debugger Loop Phase 1: Micro-Area B — Client-side Chat Store & WS Handler Deep Code Audit
+**Status:** COMPLETED
+**Called by:** debugger-loop orchestrator
+
+### Context when I started
+Debugger loop Phase 1 deep code audit of client-side chat system. All five core files: SwarmContext.jsx (Zustand store), useSwarm.js (WS handler), ChatPanel.jsx, ChatMessage.jsx, HitlChatCard.jsx. No code changes — audit only.
+
+### What I did
+1. Read all 5 target files + 3 utility files (runtimeModes.js, stripAnsi.js, repairTokenSpacing.js) in parallel
+2. Traced data flow for: addChatMessage, patchLatestChatMessage, replaceNodeChatMessages, appendAgentChatText, replaceAgentChatText
+3. Analyzed WS chat_message handler canonical vs non-canonical paths
+4. Analyzed REST hydration triple-fetch dedup logic
+5. Reviewed ChatPanel grouping/filtering/scroll, ChatMessage rendering/XSS, HitlChatCard double-click protection
+6. Found 16 bugs total: 4 HIGH, 5 MEDIUM, 7 LOW
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/agents/qa-tester.md | MODIFIED | This session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Global activity entry |
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-CHAT-CLIENT-1 (HIGH) | replaceNodeChatMessages: no post-canonical delta suppression | none (audit only) | REPORTED |
+| BUG-CHAT-CLIENT-3 (HIGH) | No guard against post-canonical appendAgentChatText | none | REPORTED |
+| BUG-CHAT-CLIENT-6 (MEDIUM) | ChatPanel grouping replaces toolUse instead of accumulating | none | REPORTED |
+| BUG-CHAT-CLIENT-10 (HIGH) | REST triple-fetch re-adds stale fragments after canonical | none | REPORTED |
+| BUG-CHAT-CLIENT-11 (MEDIUM) | HitlChatCard no sync ref guard for double-click | none | REPORTED |
+| BUG-CHAT-CLIENT-15 (HIGH) | Second canonical with empty text destroys first | none | REPORTED |
+| + 10 more MEDIUM/LOW bugs | see full report | none | REPORTED |
+
+### Decisions I made
+- Reported all 16 bugs without fixing — this is Phase 1 audit only
+
+### What I learned
+- The canonical/non-canonical message architecture has no "canonical received" flag per node, creating multiple race condition vectors
+- REST hydration triple-fetch (0s, 5s, 12s) can re-introduce stale fragment messages after canonical replacement
+- ChatPanel grouping mutates accumulated objects and replaces toolUse arrays instead of merging them
+- HitlChatCard lacks the sync ref guard pattern used in ChatPanel's sendingRef
+
+### State I'm leaving behind
+16 bugs documented. No code modified. Ready for Phase 2 (bulk bug -> task plan) and Phase 3 (parallel fix wave).
+
+### Handoff
+Return full bug report to debugger-loop orchestrator. Priority fixes: BUG-CHAT-CLIENT-1/3/10/15 (all HIGH, all related to canonical message race conditions).
+---
