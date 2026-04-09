@@ -3012,3 +3012,58 @@ TASK #491 COMPLETED. `npm run test:visual:swarm` passes 6/6 with 0 pixels change
 ### Handoff
 V10.8 still has #492 (Codex handoff E2E harness), #493 (stale-server guard), #494 (TEST GATE), #495 (AREA CHECKPOINT) pending.
 ---
+
+---
+## 2026-04-09 — Task #495: AREA CHECKPOINT - V10.8 full client deep-test follow-up complete
+**Status:** COMPLETED
+**Called by:** user/orchestrator
+
+### Context when I started
+V10.8 CLIENT FULL DEEP TEST FOLLOW-UP area had 6 tasks. #491, #492, #493, #496 were already COMPLETED. #494 TEST GATE was COMPLETED (PASS). #495 (this AREA CHECKPOINT) was PENDING.
+
+### What I did
+1. Read TASK_PLAN.md section V10.8 (lines 588-763) to verify all task statuses
+2. Confirmed all 6 tasks COMPLETED:
+   - #491 COMPLETED: visual regression determinism (normalizeHarnessLayout + 6 baselines at 682px, 6/6 PASS)
+   - #492 COMPLETED: Codex handoff E2E harness (preflight check, direct node spawn, stale-server isolation)
+   - #493 COMPLETED: stale-server guard (check-server-freshness.mjs, inline checks in 2 consuming scripts)
+   - #494 TEST GATE COMPLETED (PASS): 501/501 server, 52/52 client, build 507 modules, all integration points confirmed
+   - #496 COMPLETED: +11 deterministic server tests for _onHandoff -> Codex SDK spawn, 501/501
+3. Marked #495 Status: COMPLETED in TASK_PLAN.md with Completion Note
+4. Updated V10.8 area Status from PENDING to CLOSED in TASK_PLAN.md
+5. Updated acceptance criteria checkboxes from [ ] to [x] for all 4 items
+6. Updated global Status line to reflect V10.8 CLOSED and "No active planned areas"
+7. Updated Planned Area header line to Completed Area
+8. Appended to ACTIVITY_LOG.md, PROGRESS.md, qa-tester.md
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | #495 Status PENDING -> COMPLETED, V10.8 Status PENDING -> CLOSED, acceptance criteria [x], global status line updated |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended AREA CHECKPOINT PASS entry |
+| docs/memory/PROGRESS.md | MODIFIED | Prepended V10.8 CLOSED note |
+| docs/memory/agents/qa-tester.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- V10.8 area formally closed in the task plan
+- All 4 acceptance criteria checkboxes ticked
+- Global Status header now reflects V10.8 CLOSED and no active planned areas
+- Memory files updated for cross-agent visibility
+
+### Bugs I encountered
+None — all tasks were already in COMPLETED state.
+
+### Decisions I made
+- AREA CHECKPOINT PASS — no gaps found, all 6 tasks definitively COMPLETED with evidence in Completion Notes
+- #492 acceptance note: "the handoff E2E result is trustworthy enough to use as a regression gate" was satisfied by the manual-only design decision (CI gate = 501/501 server tests) — this is intentional and documented
+
+### What I learned
+- The TASK_PLAN.md global Status line and Planned/Completed Area header must both be updated when closing an area — they are independent fields
+- PROGRESS.md prepend (vs append) ensures the freshest entry is visible at the top
+
+### State I'm leaving behind
+V10.8 CLOSED. No active planned areas. Codebase baseline: 501/501 server tests, 52/52 client tests, build 507 modules (0 errors).
+
+### Handoff
+Call project-manager to determine next work area or close the session.
+---

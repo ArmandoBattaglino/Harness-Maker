@@ -6006,3 +6006,14 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Task #494 TEST GATE (qa-tester)
 ---
+
+---
+## 2026-04-09 — qa-tester — Task #495: AREA CHECKPOINT - V10.8 full client deep-test follow-up complete
+**Outcome:** COMPLETED
+**Summary:** Area checkpoint for V10.8 CLIENT FULL DEEP TEST FOLLOW-UP passed. All 6 tasks (#491-#496) verified COMPLETED: visual regression determinism fix (#491), Codex handoff E2E harness fix (#492), stale-server freshness guard (#493), full verification pack TEST GATE PASS (#494), Codex SDK server unit regressions (#496), and this checkpoint (#495). V10.8 area marked CLOSED.
+**Files changed:** docs/TASK_PLAN.md (status updates), docs/memory/ACTIVITY_LOG.md, docs/memory/PROGRESS.md, docs/memory/agents/qa-tester.md
+**Bugs fixed:** none
+**Decisions made:** V10.8 CLOSED — all acceptance criteria met
+**Blockers:** none
+**Next:** No active planned areas. Next session should call project-manager to determine next work area.
+---
