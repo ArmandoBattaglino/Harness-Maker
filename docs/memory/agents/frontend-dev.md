@@ -3305,3 +3305,49 @@ All three bugs fixed. Build passes. TEST GATE tasks #438, #440, #442 are next fo
 ### Handoff
 qa-tester should run TEST GATE #438 (scroll-lock), #440 (unused import), #442 (scroll reset).
 ---
+
+---
+## 2026-04-09 — Task #476: BUG-CHAT-CLIENT-12 — Restore Chat View empty state before first run and after reset
+**Status:** COMPLETED (already implemented by prior session)
+**Called by:** user / orchestrator
+
+### Context when I started
+Task was assigned to investigate and fix: freshly loaded workflow + "All Agents" in side rail not showing Chat View or empty state; same regression after Reset.
+
+### What I did
+1. Read all memory files (PROJECT.md, DECISIONS.md, CONTEXT.md, PROGRESS.md, CODE_MAP.md, ACTIVITY_LOG.md, agents/frontend-dev.md) in parallel to understand current state.
+2. Read SwarmView.jsx, ChatPanel.jsx, useSwarm.js, SwarmContext.jsx, SwarmCanvas.jsx to understand the full rendering path.
+3. Read SwarmCanvas.test.jsx and found two tests already covering the acceptance criteria:
+   - "keeps the chat empty state visible while idle when the side panel is open" — PASS
+   - "restores the chat empty state after reset reopens the activity rail" — PASS
+4. Ran `npm test --prefix client` → 52/52 PASS. Ran `npm test --prefix server` → 501/501 PASS. Ran `npm run build --prefix client` → 507 modules, 0 errors.
+5. Read docs/TASK_PLAN.md and confirmed TASK #476 is already marked `Status: COMPLETED — 2026-04-09` with all acceptance criteria checked.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| None | — | Task was already implemented and verified by a prior session on 2026-04-09 |
+
+### Improvements delivered
+- Verified the fix is in place and working: `SwarmCanvas.jsx` line 490 sets `showSidePanels = sidePanelOpen` (no execution-state gate), `SwarmContext.jsx` initializes `sidePanelOpen: true` and `sidePanelMode: 'chat'`, and `buildClearedExecutionState()` restores both to the same defaults after Reset. `ChatPanel.jsx` renders a truthful "No messages yet" empty state when `chatMessages.length === 0`.
+
+### Bugs I encountered
+None. Task was already done.
+
+### Decisions I made
+- No code changes needed — the implementation already satisfies all three acceptance criteria.
+
+### What I learned
+- Always check TASK_PLAN.md status FIRST before investigating further — the task may already be completed.
+- The "All Agents" referred to in the task is the BreadcrumbBar root button and/or the ChatPanel's "All agents" filter; both work correctly after the previous fix because `sidePanelOpen` defaults to `true` and `buildClearedExecutionState()` always resets it to `true` with `sidePanelMode: 'chat'`.
+
+### State I'm leaving behind
+All three acceptance criteria are met:
+- `sidePanelOpen: true` in initial Zustand state → Chat View visible on fresh load
+- `ChatPanel` shows "No messages yet" when `chatMessages.length === 0` → empty state is truthful
+- `reset()` calls `buildClearedExecutionState()` which includes `sidePanelOpen: true, sidePanelMode: 'chat'` → same behavior after Reset
+- 52/52 client tests PASS, 501/501 server tests PASS, build clean (507 modules)
+
+### Handoff
+None — task fully self-contained and already complete.
+---
