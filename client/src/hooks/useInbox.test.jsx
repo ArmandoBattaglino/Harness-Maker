@@ -31,6 +31,34 @@ describe('useInbox client contracts', () => {
     delete globalThis.fetch;
   });
 
+  it('does not mutate inbox state when inbox loading fails', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    useSwarmStore.setState({
+      inboxItems: [
+        { id: 'existing-1', status: 'pending', agentId: 'node-a' },
+      ],
+      wsConnected: true,
+    });
+    fetchMock.mockRejectedValue(new Error('network down'));
+
+    render(<UseInboxHarness onUpdate={(api) => { inboxApi = api; }} />);
+
+    await waitFor(() => {
+      expect(inboxApi?.inboxItems).toEqual([
+        {
+          id: 'existing-1',
+          type: 'user_requested',
+          agentId: 'node-a',
+          status: 'pending',
+          payload: '',
+        },
+      ]);
+      expect(consoleErrorSpy).toHaveBeenCalled();
+    });
+
+    consoleErrorSpy.mockRestore();
+  });
+
   it('normalizes REST inbox items and exposes only pending entries', async () => {
     useSwarmStore.setState({ wsConnected: true });
     fetchMock.mockResolvedValue({
@@ -163,6 +191,50 @@ describe('useInbox client contracts', () => {
     expect(useSwarmStore.getState().inboxItems).toEqual([]);
   });
 
+  it('does not resolve inbox items when approve returns a non-ok response', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    fetchMock.mockImplementation((url) => {
+      if (String(url).endsWith('/inbox')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            items: [
+              { id: 'item-approve-fail', status: 'pending', agentId: 'node-a' },
+            ],
+          }),
+        });
+      }
+      if (String(url).endsWith('/inbox/item-approve-fail/approve')) {
+        return Promise.resolve({ ok: false, status: 500, statusText: 'Server Error' });
+      }
+      return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+    });
+
+    render(<UseInboxHarness executionId="exec-approve-fail" onUpdate={(api) => { inboxApi = api; }} />);
+
+    await waitFor(() => {
+      expect(inboxApi?.inboxItems).toHaveLength(1);
+    });
+
+    await act(async () => {
+      await inboxApi.approve('item-approve-fail', 'resume');
+    });
+
+    expect(useSwarmStore.getState().resolvedHitlIds).not.toContain('item-approve-fail');
+    expect(useSwarmStore.getState().inboxItems).toEqual([
+      {
+        id: 'item-approve-fail',
+        type: 'user_requested',
+        agentId: 'node-a',
+        status: 'pending',
+        payload: '',
+      },
+    ]);
+    expect(consoleErrorSpy).toHaveBeenCalledWith('[useInbox] approve failed:', 500, 'Server Error');
+
+    consoleErrorSpy.mockRestore();
+  });
+
   it('rejects inbox items with the mutation header and resolves them locally', async () => {
     fetchMock.mockImplementation((url) => {
       if (String(url).endsWith('/inbox')) {
@@ -199,5 +271,49 @@ describe('useInbox client contracts', () => {
     });
     expect(useSwarmStore.getState().resolvedHitlIds).toContain('item-2');
     expect(useSwarmStore.getState().inboxItems).toEqual([]);
+  });
+
+  it('does not resolve inbox items when reject returns a non-ok response', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    fetchMock.mockImplementation((url) => {
+      if (String(url).endsWith('/inbox')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            items: [
+              { id: 'item-reject-fail', status: 'pending', agentId: 'node-b' },
+            ],
+          }),
+        });
+      }
+      if (String(url).endsWith('/inbox/item-reject-fail/reject')) {
+        return Promise.resolve({ ok: false, status: 409, statusText: 'Conflict' });
+      }
+      return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+    });
+
+    render(<UseInboxHarness executionId="exec-reject-fail" onUpdate={(api) => { inboxApi = api; }} />);
+
+    await waitFor(() => {
+      expect(inboxApi?.inboxItems).toHaveLength(1);
+    });
+
+    await act(async () => {
+      await inboxApi.reject('item-reject-fail');
+    });
+
+    expect(useSwarmStore.getState().resolvedHitlIds).not.toContain('item-reject-fail');
+    expect(useSwarmStore.getState().inboxItems).toEqual([
+      {
+        id: 'item-reject-fail',
+        type: 'user_requested',
+        agentId: 'node-b',
+        status: 'pending',
+        payload: '',
+      },
+    ]);
+    expect(consoleErrorSpy).toHaveBeenCalledWith('[useInbox] reject failed:', 409, 'Conflict');
+
+    consoleErrorSpy.mockRestore();
   });
 });

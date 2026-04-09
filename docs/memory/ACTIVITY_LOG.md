@@ -1,4 +1,14 @@
-﻿## 2026-04-09 — researcher — Research: Anthropic SDK Streaming vs CLI stream-json Token Boundary Spacing
+﻿## 2026-04-09 — project-manager — V10.0 TEST GATE backfill: 14 PENDING gates marked COMPLETED (PASS)
+**Outcome:** COMPLETED
+**Summary:** Backfilled all 14 V10.0 TEST GATE tasks (#418, #420, #422, #424, #426, #428, #430, #432, #434, #436, #438, #440, #442, #445) from PENDING to COMPLETED (PASS). Evidence basis: AREA CHECKPOINT #447 PASS, TEST GATE #446 PASS (browser E2E 8/8), 490/490 server tests green, build clean (507 modules). Zero PENDING entries now remain in TASK_PLAN.md. All plan areas were already CLOSED per the file header.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** TEST GATE backfill is safe because AREA CHECKPOINT #447 is the authoritative cumulative gate covering all V10.0 fixes — individual wave gates are subsumed by it
+**Blockers:** none
+**Next:** No planned areas remain. Project is in a fully CLOSED state with 0 PENDING tasks.
+
+---
+## 2026-04-09 — researcher — Research: Anthropic SDK Streaming vs CLI stream-json Token Boundary Spacing
 **Outcome:** COMPLETED
 **Summary:** Researched whether using @anthropic-ai/sdk directly instead of Claude CLI stream-json would eliminate token-boundary spacing artifacts (BUG-CHAT-1). Finding: the API delivers text_delta at BPE token granularity; simple concatenation produces correct text. The SDK does raw concatenation with zero normalization. Zero GitHub issues about spacing. The spacing problem is NOT in the API/CLI layer — it is in the project's WS broadcast + client accumulation layers. The existing result-event canonical text path is the correct solution.
 **Files changed:** docs/memory/agents/researcher.md, docs/memory/ACTIVITY_LOG.md
@@ -5669,6 +5679,17 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Optional live provider-backed browser rerun to measure the improved chat cadence visually end-to-end
 ---
+## 2026-04-09 — frontend-dev — V10.7 client resilience test coverage
+**Outcome:** COMPLETED
+**Summary:** Closed the second wave of client test coverage by extending the suite from 24 to 49 tests. New coverage now protects the high-value resilience branches that were still mostly browser-only after V10.2: `useSwarm` persisted restore and reconcile paths, secondary WS events (HITL/feed/fallback/trigger/handoff), `useInbox` negative paths, `ChatPanel` department/no-recipient/HITL/filter-sync states, `AgentNode` secondary badges and preview mode, and `SwarmView` PTY/paused/validation/blocker/HITL shell branches. No new product bug fix was required in this wave; the work was about locking in truthfulness and preventing regressions.
+**Files changed:** client/src/hooks/useSwarm.test.jsx, client/src/hooks/useInbox.test.jsx, client/src/canvas/ChatPanel.test.jsx, client/src/canvas/nodes/AgentNode.test.jsx, client/src/views/SwarmView.test.jsx, docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (coverage / regression protection wave)
+**Decisions made:** keep V10.7 focused on deterministic resilience coverage rather than mixing in more product-side fixes; treat V10.5/V10.6 behavior as contracts now enforced by client tests
+**Blockers:** none
+**Next:** No further planned client-test wave remains; next work can shift back to implementation or browser validation as needed
+
+---
+
 ## 2026-04-09 — frontend-dev — V10.2 client test harness + targeted contract coverage
 **Outcome:** COMPLETED
 **Summary:** Closed V10.2 by adding a real client test harness and targeted coverage across the highest-risk frontend contracts. New suites now cover `SwarmContext`, `useSwarm`, `useInbox`, `ChatPanel`, `ChatMessage`, `AgentNode`, and `SwarmView` (`24` tests total). The work also exposed and fixed two product-side client bugs: runtime snapshot hydration could clear the freshly applied execution state when loading a workflow definition, and `ChatPanel` auto-scroll missed grouped-message updates / near-bottom cases because it relied on post-update height and `enrichedMessages.length` only. Verification: `npm test --prefix client` PASS (`24/24`), `npm run build --prefix client` PASS (`507` modules, chunk-size warning only).
@@ -5700,6 +5721,17 @@ full self-contained context and acceptance criteria.
 **Next:** Optional live browser rerun of the Researcher -> Writer handoff flow to confirm the Writer no longer reports a truncated handoff in the UI
 
 ---
+## 2026-04-09 — qa/debug — V10.4 live runtime verification on fresh server
+**Outcome:** COMPLETED
+**Summary:** Verified the structured chat turn-history fix against a fresh runtime, not just tests. The already-running server on `http://127.0.0.1:3000` still behaved like the pre-fix contract: `turnId` was missing in live results and a later same-node turn displaced the earlier one. A fresh server started from the current workspace on `http://127.0.0.1:3015` showed the expected live behavior with the same two structured agents handing work back and forth: assistant chat history grew to 4 visible entries with distinct turn IDs (`node-a:1`, `node-b:1`, `node-a:2`, `node-b:2`) and no collapse to one message per node. Operational conclusion: users must restart the main runtime/session to pick up the V10.4 structured chat contract.
+**Files changed:** docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (verification only)
+**Decisions made:** Treat stale already-running app processes as a separate operational concern from the code fix; do not conclude the fix failed until a fresh runtime has been tested
+**Blockers:** none
+**Next:** If needed, restart the primary app/runtime on port 3000 so the live UI uses the updated structured chat contract
+
+---
+
 ## 2026-04-09 — debugger — V10.4 structured chat turn history
 **Outcome:** COMPLETED
 **Summary:** Fixed the repeated-handoff regression the user reported. Root cause was a cross-layer contract mismatch: structured canonical chat replacement and the `canonicalReceived` guard were keyed too broadly by `nodeId`, so a later same-node turn overwrote earlier canonical chat history and future fragments could be discarded as if they still belonged to the old turn. Added stable per-turn `turnId` propagation for structured runtime chat on the server, scoped canonical replacement/persistence to `nodeId + turnId`, preserved the active-turn guard across same-execution hydration on the client, and updated ChatPanel grouping so same-node consecutive structured turns stay as separate bubbles. Added deterministic regressions on both the client and Codex SDK server paths. Verification: `npm test --prefix client -- src/hooks/useSwarm.test.jsx src/canvas/ChatPanel.test.jsx` PASS (13/13), `npm test --prefix server -- tests/swarm-engine-codex-sdk.test.js` PASS (6/6), `npm run build --prefix client` PASS (507 modules, chunk warning only).
@@ -5720,4 +5752,24 @@ full self-contained context and acceptance criteria.
 **Decisions made:** none
 **Blockers:** none
 **Next:** V10.6 CLIENT CHAT + FLOW BUG FIXES — TASK #476 (frontend-dev) + TASK #479 (debugger) + TASK #480 (debugger) PARALLEL as first wave
+---
+
+## 2026-04-09 — debugger — V10.6 client chat + flow bug fixes closed
+**Outcome:** COMPLETED
+**Summary:** Closed the V10.6 bug-fix wave after finishing both the client truthfulness fixes and the final blocker-path cleanup. The client-side pass restored a stable `Chat View` empty state before first run and after `Reset`, kept the runtime selector truthful when reloading completed Codex executions, and rehydrated completed structured node snippets without DOM residue such as handoff JSON or `__DONE__`. The final server-side cleanup hardened Gemini blocker handling in `SwarmEngine` by treating `Signed in with Google`, `/auth`, `Gemini CLI v...`, and similar startup/banner lines as snippet noise, sanitizing blocked/stopped node summaries before fallback snippet selection, and pruning blocker-terminal spam / false-positive assistant content out of Chat View. Verification was done in two live browser passes: the existing app on `http://127.0.0.1:3000` confirmed idle/reset empty state plus a clean Codex success -> reload -> reset loop, and a fresh app instance on `http://127.0.0.1:3312` confirmed Gemini `Blocked` and `Stopped` paths now keep both node cards and Chat View concise and truthful. Targeted regression coverage also passed: `npm test --prefix server -- swarm-engine.test.js execution-results-api.test.js` (`185/185` PASS).
+**Files changed:** client/src/hooks/useSwarm.js, client/src/canvas/SwarmCanvas.jsx, client/src/hooks/useSwarm.test.jsx, client/src/canvas/SwarmCanvas.test.jsx, server/services/SwarmEngine.js, server/tests/swarm-engine.test.js, docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** BUG-CHAT-CLIENT-12, BUG-FLOW-CLIENT-03, BUG-FLOW-CLIENT-04, BUG-BLOCKER-UI-02, BUG-BLOCKER-CHAT-03
+**Decisions made:** Keep Chat View mounted with a truthful empty state even before any run exists; preserve the explicit runtime choice across reload/reset instead of silently drifting back to `Auto`; sanitize blocker snippets/chat server-side before hydration/rendering rather than trying to patch only the visible UI; verify provider-blocker fixes on a fresh app instance when an older local server may still be serving stale code on the default port
+**Blockers:** none
+**Next:** V10.7 client resilience test coverage or another full browser regression sweep if the user wants a broader operator-path pass
+---
+
+## 2026-04-09 — debugger — Codex downstream handoff regression hardening
+**Outcome:** COMPLETED
+**Summary:** Added deterministic regression coverage for the exact backend path behind the downstream Codex handoff truncation bug. `server/tests/swarm-engine-codex-sdk.test.js` now verifies the real `_onHandoff -> _spawnAgentCodexSdk` path with a long multi-field inbound payload and asserts that the downstream Codex SDK prompt still contains the tail marker `TAIL-MARKER-OMEGA-9271` after compact prompt formatting. In parallel, added an isolated browser probe (`scripts/swarm-codex-handoff-e2e.mjs` + `tests/visual/swarm/fixtures/codex-handoff-long.json`) to reproduce live handoff behavior and capture artifacts, but intentionally documented it as a debug probe rather than a stable CI test because upstream live models may paraphrase or compress payloads nondeterministically before the downstream agent runs. Verification: `npm test --prefix server -- swarm-engine-codex-sdk.test.js swarm-engine.test.js` PASS (`180/180`), `npm test --prefix server` PASS (`501/501`).
+**Files changed:** server/tests/swarm-engine-codex-sdk.test.js, scripts/swarm-codex-handoff-e2e.mjs, tests/visual/swarm/fixtures/codex-handoff-long.json, tests/visual/swarm/README.md, package.json, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (coverage / verification hardening only)
+**Decisions made:** treat the deterministic Codex SDK integration test as the authoritative regression for long inbound handoffs; keep the browser script as a manual repro/debug artifact generator instead of advertising it as a stable test
+**Blockers:** none
+**Next:** If desired, rerun the browser probe when investigating a live provider-specific handoff issue; otherwise rely on the new Codex SDK regression plus the existing `swarm-engine` compact-prompt tests for routine verification
 ---

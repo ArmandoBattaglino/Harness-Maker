@@ -1,0 +1,51 @@
+{
+  "id": "91f8b91e-52c8-4dd4-a7d1-302f23d73e8b",
+  "name": "Codex Long Handoff Regression",
+  "description": "Live E2E regression for long upstream handoffs into a downstream Codex node.",
+  "nodes": [
+    {
+      "id": "node-a",
+      "type": "agent",
+      "position": {
+        "x": 140,
+        "y": 180
+      },
+      "data": {
+        "label": "Researcher",
+        "model": "gpt-5.4",
+        "systemPrompt": "You are the upstream node for a regression test. Do not emit a handoff token. Do not summarize. Output exactly __DONE__ on its own final line and nothing after it.",
+        "isTriageNode": true
+      }
+    },
+    {
+      "id": "node-b",
+      "type": "agent",
+      "position": {
+        "x": 580,
+        "y": 180
+      },
+      "data": {
+        "label": "Writer",
+        "model": "gpt-5.4",
+        "systemPrompt": "You are the downstream writer for a regression test. Inspect the upstream handoff very carefully. If the upstream handoff payload contains forcedHandoff set to true and its currentTask field still contains the exact suffix TAIL-MARKER-OMEGA-9271, your first output line must start exactly with HANDOFF_OK TAIL-MARKER-OMEGA-9271 FORCED_CONTEXT. After that, write exactly two short sentences summarizing what the long currentTask says. If the marker is absent, the JSON is malformed, or the long currentTask was truncated before the suffix, output exactly handoff truncated. Finish by outputting __DONE__ on its own final line."
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-ab",
+      "source": "node-a",
+      "target": "node-b",
+      "type": "handoff"
+    }
+  ],
+  "settings": {
+    "runtimeProvider": "auto"
+  },
+  "initialContext": {
+    "goal": "Verify that a downstream Codex node receives a long upstream handoff without truncation.",
+    "currentTask": "Regression objective: verify that a downstream Codex node can still read the full upstream forced handoff payload after the runtime compacts the prompt for terminal execution. The test harness starts an isolated local server, copies fixture workflows into a dedicated APPDATA workspace, and runs the browser flow against that sandbox so the result does not depend on whatever workflows or execution history happen to exist in the user's normal profile. The downstream node must still see that this workflow is about preserving inbound handoff fidelity, not about improvising a new plan from repository state. The text intentionally stays long because older compact prompts could clip inbound handoffs so aggressively that downstream Codex nodes lost the tail of the JSON and complained that the handoff in the prompt was truncated. This sentence exists to push the payload length beyond a tiny summary. This sentence exists to keep the payload realistic instead of synthetic gibberish. This sentence exists to make the downstream parser rely on the actual end of the string. This sentence exists to ensure the final marker lands near the tail of the payload where truncation used to happen most visibly. Final verification marker: TAIL-MARKER-OMEGA-9271"
+  },
+  "createdAt": "2026-04-09T20:00:00.000Z",
+  "updatedAt": "2026-04-09T20:00:00.000Z"
+}

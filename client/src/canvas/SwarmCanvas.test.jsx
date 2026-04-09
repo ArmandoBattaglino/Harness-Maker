@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import SwarmCanvas from './SwarmCanvas.jsx';
 import { useSwarmStore } from '../store/SwarmContext.jsx';
@@ -80,5 +80,45 @@ describe('SwarmCanvas activity rail', () => {
 
     expect(screen.getByText('Chat View')).toBeInTheDocument();
     expect(screen.getByText(/No messages yet/i)).toBeInTheDocument();
+  });
+
+  it('restores the chat empty state after reset reopens the activity rail', () => {
+    const workflowDef = {
+      id: 'workflow-1',
+      name: 'Workflow 1',
+      nodes: [],
+      edges: [],
+    };
+
+    useSwarmStore.setState({
+      workflowDef,
+      executionStatus: 'completed',
+      sidePanelOpen: false,
+      sidePanelMode: 'feed',
+      chatMessages: [
+        { role: 'assistant', text: 'Finished run', timestamp: 100, nodeId: 'node-a' },
+      ],
+      interAgentFeed: [
+        { type: 'handoff_started', timestamp: 100 },
+      ],
+    });
+
+    render(
+      <SwarmCanvas
+        workflowDef={workflowDef}
+        markDirty={vi.fn()}
+        onCanvasChange={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Open Activity' })).toBeInTheDocument();
+
+    act(() => {
+      useSwarmStore.getState().reset();
+    });
+
+    expect(screen.getByText('Chat View')).toBeInTheDocument();
+    expect(screen.getByText(/No messages yet/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Open Activity' })).not.toBeInTheDocument();
   });
 });

@@ -68,11 +68,21 @@ function hasMessageableAgents(agentStates = {}) {
 
 function getSnapshotSelectedRuntimeProvider(snapshot, fallbackProvider = 'auto') {
   const strategyMode = snapshot?.providerStrategy?.mode ?? null;
+  const status = String(snapshot?.status ?? '').trim().toLowerCase();
+  const isTerminalStatus = ['completed', 'stopped', 'failed'].includes(status);
+  const runtimeProvider = snapshot?.runtimeProvider ?? snapshot?.activeProvider ?? null;
+
   if (['auto', 'claude', 'codex', 'gemini'].includes(strategyMode)) {
+    if (
+      strategyMode === 'auto'
+      && isTerminalStatus
+      && ['claude', 'codex', 'gemini'].includes(runtimeProvider)
+    ) {
+      return runtimeProvider;
+    }
     return strategyMode;
   }
 
-  const runtimeProvider = snapshot?.runtimeProvider ?? snapshot?.activeProvider ?? null;
   if (['claude', 'codex', 'gemini'].includes(runtimeProvider)) {
     return runtimeProvider;
   }
@@ -95,6 +105,19 @@ function buildLatestAssistantSnippetByNode(chatMessages = []) {
   }
 
   return latestSnippets;
+}
+
+function buildHydratedSnippetPatch(agentState, snippetText) {
+  if (!snippetText) return {};
+  if (isStructuredSpawnMode(agentState?.spawnMode)) {
+    return {
+      lastChatSnippet: snippetText,
+      lastOutputSnippet: snippetText,
+    };
+  }
+  return {
+    lastChatSnippet: snippetText,
+  };
 }
 
 export function useSwarm(workflowId) {
@@ -198,10 +221,19 @@ export function useSwarm(workflowId) {
             lastChatSnippet: clientState.lastChatSnippet,
           };
         }
+        if (clientState?.lastOutputSnippet && !normalizedAgentStates[nodeId].lastOutputSnippet) {
+          normalizedAgentStates[nodeId] = {
+            ...normalizedAgentStates[nodeId],
+            lastOutputSnippet: clientState.lastOutputSnippet,
+          };
+        }
         if (latestAssistantSnippets[nodeId]) {
           normalizedAgentStates[nodeId] = {
             ...normalizedAgentStates[nodeId],
-            lastChatSnippet: latestAssistantSnippets[nodeId],
+            ...buildHydratedSnippetPatch(
+              normalizedAgentStates[nodeId],
+              latestAssistantSnippets[nodeId]
+            ),
           };
         }
         if (sameExecution && clientState?.canonicalReceived && !normalizedAgentStates[nodeId].canonicalReceived) {
@@ -663,7 +695,10 @@ export function useSwarm(workflowId) {
                         // Update node snippets with clean chat text from REST data
                         // (fixes garbled snippets when WS chat_message arrived after close)
                         for (const [nodeId, text] of latestAssistantByNode) {
-                          updateAgentState(nodeId, { lastChatSnippet: text });
+                          updateAgentState(
+                            nodeId,
+                            buildHydratedSnippetPatch(agentStates[nodeId], text)
+                          );
                         }
                       }
                     })
@@ -767,7 +802,13 @@ export function useSwarm(workflowId) {
             // truncated output (BUG-CHAT-3).
             const currentSpawnMode = useSwarmStore.getState().agentStates[msg.nodeId]?.spawnMode;
             useSwarmStore.getState().replaceAgentChatText(msg.nodeId, msg.text);
-            updateAgentState(msg.nodeId, { lastChatSnippet: msg.text });
+            updateAgentState(
+              msg.nodeId,
+              buildHydratedSnippetPatch(
+                { spawnMode: currentSpawnMode ?? msg.spawnMode ?? 'stream-json' },
+                msg.text
+              )
+            );
             useSwarmStore.getState().replaceNodeChatMessages(
               msg.nodeId,
               {

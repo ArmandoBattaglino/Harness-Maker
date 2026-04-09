@@ -30,6 +30,50 @@ function buildSingleNodeCodexWorkflow(overrides = {}) {
   };
 }
 
+function buildTwoNodeCodexWorkflow(overrides = {}) {
+  const {
+    upstreamPrompt = 'Collect the context and hand off to the writer.',
+    downstreamPrompt = 'Read the inbound handoff and produce the final answer.',
+  } = overrides;
+
+  return {
+    id: 'wf-codex-sdk-handoff',
+    name: 'Codex SDK Handoff Workflow',
+    description: 'Two-node workflow used to verify downstream Codex SDK handoff prompts.',
+    nodes: [
+      {
+        id: 'node-a',
+        type: 'agent',
+        data: {
+          isTriageNode: true,
+          label: 'Researcher',
+          systemPrompt: upstreamPrompt,
+          model: 'gpt-5.4',
+        },
+      },
+      {
+        id: 'node-b',
+        type: 'agent',
+        data: {
+          label: 'Writer',
+          systemPrompt: downstreamPrompt,
+          model: 'gpt-5.4',
+        },
+      },
+    ],
+    edges: [
+      {
+        id: 'edge-ab',
+        source: 'node-a',
+        target: 'node-b',
+        type: 'handoff',
+      },
+    ],
+    settings: {},
+    initialContext: {},
+  };
+}
+
 function buildMockSessionManager() {
   return {
     claudeBin: '/usr/local/bin/claude',
@@ -47,6 +91,16 @@ async function flushMicrotasks(rounds = 20) {
   for (let index = 0; index < rounds; index += 1) {
     await Promise.resolve();
   }
+}
+
+function buildLongInboundPayload() {
+  return {
+    fact_1: 'The visual regression harness starts an isolated local server and copies fixture workflows into a dedicated APPDATA workspace so the test does not depend on whatever happens to be saved in a user profile.',
+    fact_2: 'Execution history stores agent outputs and aggregated artifacts so the same run can be verified from both the browser surface and the backend persistence layer after completion.',
+    fact_3: 'Compact Codex prompts still need enough room for inbound handoffs because downstream agents should continue from the supplied JSON rather than improvising missing context from the repository or terminal state.',
+    fact_4: 'A strong regression should prove that the downstream prompt keeps the end of the payload intact instead of slicing the JSON object in the middle of a long string value.',
+    fact_5: 'The final fact deliberately keeps a unique suffix near the tail so the test can prove the compact prompt still preserves the end of the inbound handoff. TAIL-MARKER-OMEGA-9271',
+  };
 }
 
 function makeEventStream(events) {
@@ -178,6 +232,140 @@ describe('SwarmEngine Codex SDK integration', () => {
         outputTokens: 4,
       }),
     ]));
+  });
+
+  it('passes long inbound handoffs into downstream Codex SDK prompts without truncating the tail marker', async () => {
+    workflowDef = buildTwoNodeCodexWorkflow();
+    workflowStore.get.mockResolvedValue(workflowDef);
+
+    const capturedInputs = [];
+    const createClient = vi.fn(() => ({ kind: 'codex-client' }));
+    const runTurnStreamed = vi.fn(async ({ input }) => {
+      capturedInputs.push(input);
+      return {
+        thread: { id: `thread-${capturedInputs.length}` },
+        events: makeEventStream([
+          { type: 'thread.started', thread_id: `thread-${capturedInputs.length}` },
+        ]),
+      };
+    });
+
+    engine._codexSdkFactory = {
+      forceEnabled: true,
+      createClient,
+      runTurnStreamed,
+      normalizeItem: normalizeCodexSdkItem,
+    };
+
+    const executionId = 'exec-codex-sdk-long-handoff';
+    const execution = {
+      executionId,
+      workflowId: workflowDef.id,
+      workflowDef,
+      projectId: 'proj-1',
+      projectPath: 'C:\\repo',
+      status: 'running',
+      startedAt: '2026-04-09T10:00:00.000Z',
+      agentStates: new Map([
+        ['node-a', {
+          status: 'running',
+          provider: 'codex',
+          runtimeProvider: 'codex',
+          spawnMode: 'codex-sdk',
+          handoffCount: 0,
+          lastOutputSnippet: '',
+          turnCount: 1,
+          totalCostUsd: 0,
+          totalInputTokens: 0,
+          totalOutputTokens: 0,
+          totalCachedInputTokens: 0,
+          codexThreadId: 'thread-upstream',
+          currentToolUse: null,
+          isThinking: false,
+          needsRepair: false,
+        }],
+        ['node-b', {
+          status: 'idle',
+          provider: 'codex',
+          runtimeProvider: 'codex',
+          spawnMode: 'codex-sdk',
+          handoffCount: 0,
+          lastOutputSnippet: '',
+          turnCount: 0,
+          totalCostUsd: 0,
+          totalInputTokens: 0,
+          totalOutputTokens: 0,
+          totalCachedInputTokens: 0,
+          currentToolUse: null,
+          isThinking: false,
+          needsRepair: false,
+        }],
+      ]),
+      edgeCounters: new Map(),
+      agentInputBarriers: new Map(),
+      inboundHandoffs: new Map(),
+      workflowContext: engine._buildInitialWorkflowContext(workflowDef),
+      heartbeatTimer: null,
+      inboxItems: [],
+      chatMessages: [],
+      runtimeBlocker: null,
+      providerStrategy: {
+        mode: 'codex',
+        activeProvider: 'codex',
+        fallbackProvider: null,
+        allowFallback: false,
+      },
+      runtimeProvider: 'codex',
+      activeProvider: 'codex',
+      codexPromptRetryCounts: new Map(),
+      lastFallback: null,
+    };
+    engine._executions.set(executionId, execution);
+
+    const contextUpdate = buildLongInboundPayload();
+    await engine._onHandoff(executionId, 'node-a', {
+      type: 'handoff',
+      targetId: 'node-b',
+      contextUpdate,
+    });
+    await flushMicrotasks(10);
+
+    expect(capturedInputs).toHaveLength(1);
+    expect(capturedInputs[0]).toContain('Upstream handoffs:');
+    expect(capturedInputs[0]).toContain('"fact_1"');
+    expect(capturedInputs[0]).toContain('"fact_5"');
+    expect(capturedInputs[0]).toContain('TAIL-MARKER-OMEGA-9271');
+
+    expect(execution.inboundHandoffs.get('node-b')).toEqual([
+      expect.objectContaining({
+        sourceNodeId: 'node-a',
+        payload: expect.objectContaining({
+          fact_5: expect.stringContaining('TAIL-MARKER-OMEGA-9271'),
+        }),
+      }),
+    ]);
+
+    expect(execution.agentStates.get('node-a')).toMatchObject({
+      status: 'done',
+      handoffCount: 1,
+      handoffPayloads: [
+        expect.objectContaining({
+          target: 'node-b',
+          payload: expect.objectContaining({
+            fact_5: expect.stringContaining('TAIL-MARKER-OMEGA-9271'),
+          }),
+        }),
+      ],
+    });
+    expect(createClient).toHaveBeenCalledWith({
+      codexPath: '/usr/local/bin/codex',
+    });
+    expect(runTurnStreamed).toHaveBeenCalledWith(expect.objectContaining({
+      threadOptions: expect.objectContaining({
+        model: 'gpt-5.4',
+        workingDirectory: 'C:\\repo',
+      }),
+    }));
   });
 
   it('preserves one canonical chat message per completed structured turn for the same node', async () => {

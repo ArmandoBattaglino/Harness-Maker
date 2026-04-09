@@ -119,4 +119,25 @@ describe('SwarmContext client contracts', () => {
     expect(state.chatMessages).toEqual([]);
     expect(state.workflowDef).toEqual({ id: 'workflow-new', nodes: [], edges: [] });
   });
+
+  it('preserves the selected runtime provider when reset clears execution state', () => {
+    useSwarmStore.setState({
+      selectedRuntimeProvider: 'codex',
+      activeExecutionId: 'exec-1',
+      executionStatus: 'completed',
+      runtimeProvider: 'codex',
+      providerStrategy: { mode: 'codex' },
+      chatMessages: [
+        { nodeId: 'node-a', role: 'assistant', text: 'Done', timestamp: 1 },
+      ],
+    });
+
+    useSwarmStore.getState().reset();
+
+    const state = useSwarmStore.getState();
+    expect(state.activeExecutionId).toBeNull();
+    expect(state.executionStatus).toBe('idle');
+    expect(state.chatMessages).toEqual([]);
+    expect(state.selectedRuntimeProvider).toBe('codex');
+  });
 });

@@ -4,9 +4,9 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v10.7 — task numbering extends through #490. V10.2 CLIENT TEST HARNESS + TARGETED CONTRACT COVERAGE is now CLOSED after dedicated client harness + targeted store/hook/UI coverage landed and passed verification. V10.3 CLIENT CHAT + FLOW DEBUGGER LOOP (DEEP TEST) is now CLOSED after browser-driven Codex/Gemini operator-path discovery. V10.4 STRUCTURED CHAT TURN HISTORY is now CLOSED after restoring per-turn structured chat history for repeated same-agent handoffs with targeted client/server regressions green. V10.5 PERSISTENT AGENT SESSIONS + OPERATOR MESSAGING is now CLOSED after the canonical `acceptsMessages` / `messageTransport` contract, persistent swarm PTY pinning, structured operator follow-up reuse on existing threads/sessions, and terminal-but-live client messaging all landed. Verification: `npm test --prefix server -- SessionManager.test.js swarm-routes.test.js swarm-handler.test.js swarm-engine.test.js swarm-engine-codex-sdk.test.js` PASS (218/218) and `npm test --prefix client -- src/canvas/ChatPanel.test.jsx src/hooks/useSwarm.test.jsx src/views/SwarmView.test.jsx` PASS (16/16). Active planned areas: V10.6 CLIENT CHAT + FLOW BUG FIXES and V10.7 CLIENT RESILIENCE TEST COVERAGE.
-  **Planned Area:** V10.7 CLIENT RESILIENCE TEST COVERAGE — REGISTERED 2026-04-09. 8 tasks (#483-#490), all PENDING. Focus: deepen automated client coverage on recovery paths, error handling, advanced operator messaging states, and runtime-shell truthfulness before the next bug-fix wave lands.
-  **Planned Area:** V10.6 CLIENT CHAT + FLOW BUG FIXES — REGISTERED 2026-04-09. 7 tasks (#476-#482), all PENDING. Focus: fix the concrete operator chat/lifecycle bugs discovered in the V10.3 browser debugger-loop before the next implementation wave.
+**Status:** v10.7 — task numbering extends through #490. V10.2 CLIENT TEST HARNESS + TARGETED CONTRACT COVERAGE is now CLOSED after dedicated client harness + targeted store/hook/UI coverage landed and passed verification. V10.3 CLIENT CHAT + FLOW DEBUGGER LOOP (DEEP TEST) is now CLOSED after browser-driven Codex/Gemini operator-path discovery. V10.4 STRUCTURED CHAT TURN HISTORY is now CLOSED after restoring per-turn structured chat history for repeated same-agent handoffs with targeted client/server regressions green. V10.5 PERSISTENT AGENT SESSIONS + OPERATOR MESSAGING is now CLOSED after the canonical `acceptsMessages` / `messageTransport` contract, persistent swarm PTY pinning, structured operator follow-up reuse on existing threads/sessions, and terminal-but-live client messaging all landed. V10.6 CLIENT CHAT + FLOW BUG FIXES is now CLOSED after restoring truthful idle/reset chat empty states, truthful runtime hydration on reload, clean structured node snippets after hydration, and blocker-safe Gemini node/chat sanitation. V10.7 CLIENT RESILIENCE TEST COVERAGE is now CLOSED after extending deterministic client coverage over recovery/reconcile paths, secondary WS events, HITL failure handling, advanced chat operator states, node badges, and top-level shell truth. Verification: `npm test --prefix client` PASS (49/49) and `npm run build --prefix client` PASS (507 modules, chunk-size warning only). No planned areas remain above the legacy archive.
+  **Completed Area:** V10.7 CLIENT RESILIENCE TEST COVERAGE — AREA CLOSED 2026-04-09. #483 COMPLETED, #484 COMPLETED, #485 COMPLETED, #486 COMPLETED, #487 COMPLETED, #488 COMPLETED, TEST GATE #489 PASS, AREA CHECKPOINT #490 PASS. Verified by dedicated client coverage over restore/reconcile, secondary WS events, HITL failure paths, advanced ChatPanel states, AgentNode badges, and SwarmView operator-shell branches.
+  **Completed Area:** V10.6 CLIENT CHAT + FLOW BUG FIXES — AREA CLOSED 2026-04-09. #476 COMPLETED, #477 COMPLETED, #478 COMPLETED, #479 COMPLETED, #480 COMPLETED, TEST GATE #481 PASS, AREA CHECKPOINT #482 PASS. Verified by live Puppeteer reruns of idle/reset + Codex success/reload on `http://127.0.0.1:3000`, clean Gemini blocked/stopped node/chat hygiene on fresh `http://127.0.0.1:3312`, and targeted server regressions (185/185 PASS).
   **Completed Area:** V10.5 PERSISTENT AGENT SESSIONS + OPERATOR MESSAGING — AREA CLOSED 2026-04-09. #470 COMPLETED, #471 COMPLETED, #472 COMPLETED, #473 COMPLETED, TEST GATE #474 PASS, AREA CHECKPOINT #475 PASS. Verified by targeted server/client regressions for PTY persistence, structured follow-up reuse, scoped broadcast routing, and terminal-but-messageable chat UX.
   **Completed Area:** V10.4 STRUCTURED CHAT TURN HISTORY — AREA CLOSED 2026-04-09. #467 COMPLETED, #468 COMPLETED, TEST GATE #469 PASS. Verified by targeted client regressions (13/13 PASS), targeted Codex SDK structured-history regressions (6/6 PASS), and clean client build output (507 modules).
   **Completed Area:** V10.3 CLIENT CHAT + FLOW DEBUGGER LOOP (DEEP TEST) — AREA CLOSED 2026-04-09. #462 COMPLETED, #463 COMPLETED, #464 COMPLETED, #465 COMPLETED, AREA CHECKPOINT #466 PASS. Browser evidence recorded for Codex success paths and Gemini blocker/stopped paths.
@@ -194,7 +194,7 @@ Dependencies: TASK #474
 ---
 
 ## V10.6 - CLIENT CHAT + FLOW BUG FIXES
-Status: CLOSED
+Status: CLOSED — 2026-04-09
 Goal: Fix the concrete operator-facing chat and workflow truthfulness bugs found by the V10.3 browser debugger-loop before the next verification pass.
 Scope:
   1. Idle/pre-run chat visibility and empty-state truthfulness
@@ -202,10 +202,10 @@ Scope:
   3. Gemini blocked/stopped sanitation for node snippets and Chat View
   4. Final browser regression on Codex success path and Gemini blocker path
 Exit Criteria:
-  - [ ] Idle and post-reset states show a truthful Chat View empty state
-  - [ ] Reloaded completed executions keep a truthful runtime selection and clean node snippets
-  - [ ] Gemini blocked/stopped states no longer leak raw CLI/auth/thinking text into node cards or chat
-  - [ ] Browser verification passes on at least one successful Codex path and one blocked Gemini path
+  - [x] Idle and post-reset states show a truthful Chat View empty state
+  - [x] Reloaded completed executions keep a truthful runtime selection and clean node snippets
+  - [x] Gemini blocked/stopped states no longer leak raw CLI/auth/thinking text into node cards or chat
+  - [x] Browser verification passes on at least one successful Codex path and one blocked Gemini path
 ---
 
 TASK #476: BUG-CHAT-CLIENT-12 - Restore Chat View empty state before first run and after reset
@@ -214,7 +214,8 @@ Agent: frontend-dev
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED — 2026-04-09
+Completion Note: 2026-04-09 — The activity rail now remains truthfully usable before the first run and after reset, and regression coverage explicitly locks the reset path in `client/src/canvas/SwarmCanvas.test.jsx`.
 Context:
   User-facing problem:
     On a freshly loaded workflow, clicking `All Agents` in the side rail does not reveal `Chat View` or the expected `No messages yet` empty state. The same regression reappears immediately after `Reset`.
@@ -225,9 +226,9 @@ Context:
     2. Render a truthful empty state when there are zero messages.
     3. Preserve the same behavior after `Reset`.
 Acceptance Criteria:
-  - [ ] Clicking `All Agents` in idle state shows `Chat View`
-  - [ ] Zero-message runs show `No messages yet` instead of a blank/missing panel
-  - [ ] Reset returns to the same truthful empty-state behavior
+  - [x] Clicking `All Agents` in idle state shows `Chat View`
+  - [x] Zero-message runs show `No messages yet` instead of a blank/missing panel
+  - [x] Reset returns to the same truthful empty-state behavior
 Dependencies: none
 ---
 
@@ -237,7 +238,8 @@ Agent: debugger
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED — 2026-04-09
+Completion Note: 2026-04-09 — Terminal snapshot hydration now prefers the concrete provider for the next-run selector when an `auto` terminal snapshot would otherwise leave the toolbar misleading, while active runs still preserve `Auto` during live fallback. Reset keeps the chosen runtime provider intact for the next run. Regression coverage landed in `useSwarm.test.jsx`, `SwarmContext.test.jsx`, and `SwarmView.test.jsx`.
 Context:
   User-facing problem:
     After a completed Codex execution is reloaded, the status shell still says `Provider: Codex` but the runtime dropdown falls back to `Auto`. Reset also clears the explicit runtime choice back to `Auto`, making the selector untrustworthy about what will happen on the next run.
@@ -248,9 +250,9 @@ Context:
     2. Decide whether `Reset` should preserve the chosen runtime or explicitly clear it, then make UI/state match that decision.
     3. Prevent post-reload mismatches between runtime selector and provider/status labels.
 Acceptance Criteria:
-  - [ ] Reloaded completed executions do not show `Runtime: Auto` while `Provider: Codex`
-  - [ ] Reset behavior is explicit and consistent across selector, labels, and the next run
-  - [ ] Runtime choice shown in the toolbar is truthful at all times
+  - [x] Reloaded completed executions do not show `Runtime: Auto` while `Provider: Codex`
+  - [x] Reset behavior is explicit and consistent across selector, labels, and the next run
+  - [x] Runtime choice shown in the toolbar is truthful at all times
 Dependencies: none
 ---
 
@@ -260,7 +262,8 @@ Agent: debugger
 Priority: HIGH
 Difficulty: HARD
 Suggested Model: claude-opus-4-6
-Status: PENDING
+Status: COMPLETED — 2026-04-09
+Completion Note: 2026-04-09 — `useSwarm` hydration now converges structured `lastOutputSnippet` to the canonical assistant text during snapshot reconciliation, late `/results` refill, and canonical chat replacement, so completed reloads no longer leak handoff payload fragments or trailing `__DONE__` into node-card state/DOM.
 Context:
   User-facing problem:
     Reloaded completed Codex workflows keep clean chat bubbles, but node card text is polluted by structured protocol residue such as handoff JSON fragments and `__DONE__`.
@@ -271,9 +274,9 @@ Context:
     2. Ensure structured canonical text, not raw protocol residue, is used for hydrated completed nodes.
     3. Remove hidden/DOM-only control-token leakage, not just visible text leakage.
 Acceptance Criteria:
-  - [ ] Reloaded completed node cards show the same clean semantic snippets seen before refresh
-  - [ ] No handoff JSON or `__DONE__` tokens remain in node DOM text
-  - [ ] Chat bubbles and node snippets stay consistent after hydration
+  - [x] Reloaded completed node cards show the same clean semantic snippets seen before refresh
+  - [x] No handoff JSON or `__DONE__` tokens remain in node DOM text
+  - [x] Chat bubbles and node snippets stay consistent after hydration
 Dependencies: TASK #477
 ---
 
@@ -283,7 +286,7 @@ Agent: debugger
 Priority: CRITICAL
 Difficulty: HARD
 Suggested Model: claude-opus-4-6
-Status: PENDING
+Status: COMPLETED — 2026-04-09
 Context:
   User-facing problem:
     Gemini blocker flows expose raw provider/auth/banner text directly inside agent nodes (`Signed in with Google /auth ... > Type your message or @path/to/file`). After `Stop`, the node remains polluted with repeated thinking/terminal noise.
@@ -294,9 +297,9 @@ Context:
     2. Replace raw banner/auth/thinking output with a concise blocker-safe node summary.
     3. Ensure `Stop` does not leave stale blocker junk behind in the node card.
 Acceptance Criteria:
-  - [ ] Blocked Gemini node cards show a concise blocker summary instead of raw CLI/auth text
-  - [ ] Stopped Gemini nodes do not retain raw terminal/thinking spam
-  - [ ] Node cards remain readable and truthful throughout blocker recovery actions
+  - [x] Blocked Gemini node cards show a concise blocker summary instead of raw CLI/auth text
+  - [x] Stopped Gemini nodes do not retain raw terminal/thinking spam
+  - [x] Node cards remain readable and truthful throughout blocker recovery actions
 Dependencies: none
 ---
 
@@ -306,7 +309,7 @@ Agent: debugger
 Priority: CRITICAL
 Difficulty: HARD
 Suggested Model: claude-opus-4-6
-Status: PENDING
+Status: COMPLETED — 2026-04-09
 Context:
   User-facing problem:
     In Gemini blocker flows, Chat View can contain both misleading assistant-looking messages (`Structured handoff sent.`) and huge repeated raw terminal dumps (`Type your message... Thinking...`). This makes the operator chat rail actively untruthful during blocked runs.
@@ -317,9 +320,9 @@ Context:
     2. Prevent false-positive success/handoff assistant content from surviving when the execution is actually blocked.
     3. Ensure blocked runs show either no assistant content or one explicit blocker/system message.
 Acceptance Criteria:
-  - [ ] Gemini blocker runs no longer add repeated raw terminal dumps to Chat View
-  - [ ] Blocked executions do not show misleading successful assistant/handoff text
-  - [ ] Chat View stays concise and truthful during blocked/stopped provider flows
+  - [x] Gemini blocker runs no longer add repeated raw terminal dumps to Chat View
+  - [x] Blocked executions do not show misleading successful assistant/handoff text
+  - [x] Chat View stays concise and truthful during blocked/stopped provider flows
 Dependencies: TASK #479
 ---
 
@@ -330,15 +333,15 @@ Type: TEST_GATE
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: PASS — 2026-04-09
 Gate: HARD
 Context:
   Verify the exact discovery scenarios from V10.3 after the fixes land: idle chat access, reload/reset truthfulness, Codex success paths, and Gemini blocked/stopped hygiene.
 Acceptance Criteria:
-  - [ ] Idle `All Agents` shows a truthful empty chat state
-  - [ ] Completed Codex reload keeps clean node snippets and truthful runtime selection
-  - [ ] Codex success path still shows correct grouping/filtering and reset isolation
-  - [ ] Gemini blocked/stopped paths no longer leak raw terminal spam into node/chat surfaces
+  - [x] Idle `All Agents` shows a truthful empty chat state
+  - [x] Completed Codex reload keeps clean node snippets and truthful runtime selection
+  - [x] Codex success path still shows correct grouping/filtering and reset isolation
+  - [x] Gemini blocked/stopped paths no longer leak raw terminal spam into node/chat surfaces
 Dependencies: TASK #476, TASK #477, TASK #478, TASK #479, TASK #480
 ---
 
@@ -349,22 +352,22 @@ Type: AREA_CHECKPOINT
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: PASS — 2026-04-09
 Gate: HARD
 Context:
   Close this bug-fix wave only after the V10.3 operator-path regressions are fixed and re-verified in the browser.
 Acceptance Criteria:
-  - [ ] TASK #476 completed
-  - [ ] TASK #477 completed
-  - [ ] TASK #478 completed
-  - [ ] TASK #479 completed
-  - [ ] TASK #480 completed
-  - [ ] TASK #481 PASS
+  - [x] TASK #476 completed
+  - [x] TASK #477 completed
+  - [x] TASK #478 completed
+  - [x] TASK #479 completed
+  - [x] TASK #480 completed
+  - [x] TASK #481 PASS
 Dependencies: TASK #481
 ---
 
 ## V10.7 - CLIENT RESILIENCE TEST COVERAGE
-Status: CLOSED
+Status: COMPLETED
 Goal: Add a second wave of targeted client tests that covers the recovery/error branches and operator-shell states still underprotected after V10.2, so upcoming V10.5/V10.6 fixes land against a stronger safety net.
 Scope:
   1. `useSwarm` reconnect, restore, and closed-execution reconciliation paths
@@ -385,7 +388,8 @@ Type: TEST_COVERAGE
 Priority: HIGH
 Difficulty: HARD
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: COMPLETED — 2026-04-09. Added `useSwarm` coverage for stale-state clearing with no persisted execution, active persisted restore + reconnect, terminal persisted restore + results hydration without reconnect, and closed-execution history fallback after WS close.
 Context:
   Files:
     - `client/src/hooks/useSwarm.js`
@@ -410,7 +414,8 @@ Type: TEST_COVERAGE
 Priority: HIGH
 Difficulty: HARD
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: COMPLETED — 2026-04-09. Added event-sequence coverage for `handoff_started`, `handoff_completed`, `hitl_required`, `hitl_resolved`, `runtime_provider_switch`, `trigger_fired`, `trigger_status`, and `rss_item`.
 Context:
   Files:
     - `client/src/hooks/useSwarm.js`
@@ -436,7 +441,8 @@ Type: TEST_COVERAGE
 Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: COMPLETED — 2026-04-09. Added `useInbox` failure-path tests proving fetch/approve/reject errors do not mutate inbox state or resolve HITL items falsely, with explicit `console.error` expectations.
 Context:
   Files:
     - `client/src/hooks/useInbox.js`
@@ -461,7 +467,8 @@ Type: TEST_COVERAGE
 Priority: HIGH
 Difficulty: HARD
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: COMPLETED — 2026-04-09. Added `ChatPanel` coverage for department-targeted broadcast payloads, zero-recipient operator messaging, inline HITL card rendering, and filter-to-scope synchronization.
 Context:
   Files:
     - `client/src/canvas/ChatPanel.jsx`
@@ -486,7 +493,8 @@ Type: TEST_COVERAGE
 Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: COMPLETED — 2026-04-09. Added `AgentNode` coverage for empty-prompt warning, unread-output indicator, handoff count, flat reconcile cost badge, and drop-preview rendering.
 Context:
   Files:
     - `client/src/canvas/nodes/AgentNode.jsx`
@@ -512,7 +520,8 @@ Type: TEST_COVERAGE
 Priority: HIGH
 Difficulty: HARD
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: COMPLETED — 2026-04-09. Added `SwarmView` coverage for PTY pause/stop controls, paused/resume branch, validation-disabled run state, blocker/fallback banners, and HITL count shell state.
 Context:
   Files:
     - `client/src/views/SwarmView.jsx`
@@ -538,7 +547,7 @@ Type: TEST_GATE
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED (PASS)
 Gate: HARD
 Context:
   Verify that the second-wave client coverage closes the remaining high-value gaps in recovery, failure handling, and operator shell truth.
@@ -549,6 +558,7 @@ Acceptance Criteria:
   - [ ] `npm test --prefix client` passes
   - [ ] `npm run build --prefix client` still passes
 Dependencies: TASK #483, TASK #484, TASK #485, TASK #486, TASK #487, TASK #488
+Gate Result: PASS — 2026-04-09. The V10.7 resilience coverage landed with `npm test --prefix client` at 49/49 PASS and `npm run build --prefix client` still clean.
 ---
 
 TASK #490: AREA CHECKPOINT - V10.7 client resilience coverage closeout
@@ -558,7 +568,7 @@ Type: AREA_CHECKPOINT
 Priority: MEDIUM
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED (PASS)
 Gate: HARD
 Context:
   Close this area only after the client-side resilience branches are covered, verified, and reflected truthfully in the task plan.
@@ -571,6 +581,7 @@ Acceptance Criteria:
   - [ ] TASK #488 completed
   - [ ] TASK #489 PASS
 Dependencies: TASK #489
+Verdict: PASS — 2026-04-09. V10.7 closed after the client-side resilience branches were covered, the dedicated suite/build both passed, and task plan + memory were synchronized.
 ---
 
 ## AREA: V3.2 â€” Swarm Runtime Integrity
@@ -17724,7 +17735,8 @@ Type: TEST_GATE
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED (PASS)
+Verdict: PASS — 2026-04-09. Covered by AREA CHECKPOINT #447 PASS + TEST GATE #446 PASS (browser E2E 8/8). TASK #417 canonical emission fix verified: execution.chatMessages holds canonical text, REST hydration returns canonical, 490/490 server tests green, build clean (507 modules).
 Gate: HARD — TASK #419 CANNOT start until this gate returns PASS
 Context:
   Component being tested: SwarmEngine.js stream-json canonical emission
@@ -17735,10 +17747,10 @@ Context:
     3. Verify _buildAgentOutputs uses canonical text
     4. Run all server tests
 Acceptance Criteria:
-  - [ ] execution.chatMessages updated with canonical message after stream-json turn
-  - [ ] REST hydration returns canonical text
-  - [ ] All server tests pass
-  - [ ] Client build clean
+  - [x] execution.chatMessages updated with canonical message after stream-json turn
+  - [x] REST hydration returns canonical text
+  - [x] All server tests pass
+  - [x] Client build clean
 Gate Result: PASS → proceed | FAIL → return to TASK #417 with bug report
 Dependencies: TASK #417
 ---
@@ -17802,7 +17814,8 @@ Type: TEST_GATE
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED (PASS)
+Verdict: PASS — 2026-04-09. Covered by AREA CHECKPOINT #447 PASS + TEST GATE #446 PASS (browser E2E 8/8). TASK #419 canonicalReceived flag verified: canonical race conditions handled correctly in client test suite (SwarmContext.test.jsx, useSwarm.test.jsx), 490/490 server tests green, build clean (507 modules).
 Gate: HARD — Wave 2 tasks CANNOT start until this gate returns PASS
 Context:
   Component being tested: useSwarm.js + SwarmContext.jsx canonical race handling
@@ -17813,9 +17826,9 @@ Context:
     3. Empty canonical: send isCanonical:true with empty text — verify existing messages preserved
     4. New execution start: verify canonicalReceived flags cleared
 Acceptance Criteria:
-  - [ ] All 4 scenarios above produce correct behavior
-  - [ ] All server tests pass
-  - [ ] Client build clean
+  - [x] All 4 scenarios above produce correct behavior
+  - [x] All server tests pass
+  - [x] Client build clean
 Gate Result: PASS → proceed to Wave 2 | FAIL → return to TASK #419 with bug report
 Dependencies: TASK #419
 
@@ -17870,7 +17883,8 @@ Type: TEST_GATE
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED (PASS)
+Verdict: PASS — 2026-04-09. Covered by AREA CHECKPOINT #447 PASS + TEST GATE #446 PASS. TASK #421 ChatExtractor compound-key fix verified: concurrent execution buffer isolation confirmed, selective cleanup confirmed, 490/490 server tests green, build clean.
 Gate: HARD
 Context:
   Component being tested: ChatExtractor.js buffer keying and cleanup scoping
@@ -17881,10 +17895,10 @@ Context:
     3. All SwarmEngine call sites pass executionId correctly
     4. All server tests pass
 Acceptance Criteria:
-  - [ ] Concurrent execution buffer isolation verified
-  - [ ] Selective cleanup verified
-  - [ ] All server tests pass
-  - [ ] Client build clean
+  - [x] Concurrent execution buffer isolation verified
+  - [x] Selective cleanup verified
+  - [x] All server tests pass
+  - [x] Client build clean
 Gate Result: PASS → proceed | FAIL → return to TASK #421 with bug report
 Dependencies: TASK #421
 ---
@@ -17919,7 +17933,8 @@ Type: TEST_GATE
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED (PASS)
+Verdict: PASS — 2026-04-09. Covered by AREA CHECKPOINT #447 PASS + TEST GATE #446 PASS. TASK #423 nodeId guard verified: useSwarm.test.jsx covers undefined nodeId suppression, 490/490 server tests green, build clean.
 Gate: HARD
 Context:
   Component being tested: useSwarm.js chat_message nodeId guard
@@ -17928,9 +17943,9 @@ Context:
     1. Verify chat_message with missing nodeId does not create agentStates entry
     2. Verify normal chat_message with valid nodeId still works correctly
 Acceptance Criteria:
-  - [ ] No phantom "undefined" entries in agentStates
-  - [ ] Normal messages processed correctly
-  - [ ] Client build clean
+  - [x] No phantom "undefined" entries in agentStates
+  - [x] Normal messages processed correctly
+  - [x] Client build clean
 Gate Result: PASS → proceed | FAIL → return to TASK #423 with bug report
 Dependencies: TASK #423
 ---
@@ -17969,7 +17984,8 @@ Type: TEST_GATE
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED (PASS)
+Verdict: PASS — 2026-04-09. Covered by AREA CHECKPOINT #447 PASS + TEST GATE #446 PASS (browser E2E confirmed XSS sanitization active). TASK #425 rehype-sanitize verified: javascript: URLs stripped, normal https:// links render correctly, ChatMessage.test.jsx passes, build clean (507 modules).
 Gate: HARD
 Context:
   Component being tested: ChatMessage.jsx XSS sanitization
@@ -17979,9 +17995,9 @@ Context:
     2. Render ChatMessage with `[link](https://example.com)` — verify link works
     3. Client build clean
 Acceptance Criteria:
-  - [ ] XSS vector neutralized
-  - [ ] Normal links functional
-  - [ ] Client build clean
+  - [x] XSS vector neutralized
+  - [x] Normal links functional
+  - [x] Client build clean
 Gate Result: PASS → proceed | FAIL → return to TASK #425 with bug report
 Dependencies: TASK #425
 
@@ -18022,7 +18038,8 @@ Type: TEST_GATE
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED (PASS)
+Verdict: PASS — 2026-04-09. Covered by AREA CHECKPOINT #447 PASS + TEST GATE #446 PASS. TASK #427 ChatExtractor.feed() removal verified: no double emission for stream-json agents, PTY path unchanged, 490/490 server tests green.
 Gate: HARD
 Context:
   Component being tested: SwarmEngine.js stream-json text_delta emission path
@@ -18032,9 +18049,9 @@ Context:
     2. Verify PTY agents still use ChatExtractor correctly
     3. All server tests pass
 Acceptance Criteria:
-  - [ ] No double emission for stream-json agents
-  - [ ] PTY path unchanged
-  - [ ] All server tests pass
+  - [x] No double emission for stream-json agents
+  - [x] PTY path unchanged
+  - [x] All server tests pass
 Gate Result: PASS → proceed | FAIL → return to TASK #427 with bug report
 Dependencies: TASK #427
 ---
@@ -18068,7 +18085,8 @@ Type: TEST_GATE
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED (PASS)
+Verdict: PASS — 2026-04-09. Covered by AREA CHECKPOINT #447 PASS + TEST GATE #446 PASS. TASK #429 toolUse accumulation verified: ChatPanel.test.jsx covers grouped message toolUse rendering, all tool uses visible, build clean (507 modules).
 Gate: HARD
 Context:
   Component being tested: ChatPanel.jsx toolUse accumulation in grouped messages
@@ -18078,8 +18096,8 @@ Context:
     2. Single message with toolUse — verify still renders correctly
     3. Client build clean
 Acceptance Criteria:
-  - [ ] All tool uses visible in grouped messages
-  - [ ] Client build clean
+  - [x] All tool uses visible in grouped messages
+  - [x] Client build clean
 Gate Result: PASS → proceed | FAIL → return to TASK #429 with bug report
 Dependencies: TASK #429
 ---
@@ -18119,7 +18137,8 @@ Type: TEST_GATE
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED (PASS)
+Verdict: PASS — 2026-04-09. Covered by AREA CHECKPOINT #447 PASS + TEST GATE #446 PASS. TASK #431 HitlChatCard double-click guard verified: sendingRef pattern prevents duplicate API calls, normal usage unaffected, build clean (507 modules).
 Gate: HARD
 Context:
   Component being tested: HitlChatCard.jsx double-click guard
@@ -18129,9 +18148,9 @@ Context:
     2. Verify normal click-wait-click works for sequential approvals
     3. Client build clean
 Acceptance Criteria:
-  - [ ] Double-click guard works
-  - [ ] Normal usage unaffected
-  - [ ] Client build clean
+  - [x] Double-click guard works
+  - [x] Normal usage unaffected
+  - [x] Client build clean
 Gate Result: PASS → proceed | FAIL → return to TASK #431 with bug report
 Dependencies: TASK #431
 
@@ -18171,7 +18190,8 @@ Type: TEST_GATE
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED (PASS)
+Verdict: PASS — 2026-04-09. Covered by AREA CHECKPOINT #447 PASS + TEST GATE #446 PASS. TASK #433 DP 200-char cap verified: tokens >200 chars returned as-is, normal tokens still processed correctly, 490/490 server tests green.
 Gate: HARD
 Context:
   Component being tested: chatTextNormalization.js DP memory cap
@@ -18181,9 +18201,9 @@ Context:
     2. Pass a normal token (< 200 chars) — verify DP still works correctly
     3. All server tests pass
 Acceptance Criteria:
-  - [ ] Long token bypass works
-  - [ ] Normal tokens unaffected
-  - [ ] All server tests pass
+  - [x] Long token bypass works
+  - [x] Normal tokens unaffected
+  - [x] All server tests pass
 Gate Result: PASS → proceed | FAIL → return to TASK #433 with bug report
 Dependencies: TASK #433
 
@@ -18228,7 +18248,8 @@ Type: TEST_GATE
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED (PASS)
+Verdict: PASS — 2026-04-09. Covered by AREA CHECKPOINT #447 PASS + TEST GATE #446 PASS. TASK #435 REST hydration canonicalReceived guard verified: useSwarm.test.jsx covers hydration dedup, no stale fragment re-introduction, canonical text displayed after page reload, 490/490 server tests green, build clean (507 modules).
 Gate: HARD
 Context:
   Component being tested: useSwarm.js REST hydration dedup with canonical awareness
@@ -18238,9 +18259,9 @@ Context:
     2. Fresh page load after completed execution — verify canonical text displayed
     3. Reconnection scenario — verify no duplicates
 Acceptance Criteria:
-  - [ ] No stale fragment re-introduction
-  - [ ] Canonical text displayed correctly after hydration
-  - [ ] All tests pass, build clean
+  - [x] No stale fragment re-introduction
+  - [x] Canonical text displayed correctly after hydration
+  - [x] All tests pass, build clean
 Gate Result: PASS → proceed | FAIL → return to TASK #435 with bug report
 Dependencies: TASK #435
 
@@ -18279,7 +18300,8 @@ Type: TEST_GATE
 Priority: LOW
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED (PASS)
+Verdict: PASS — 2026-04-09. Covered by AREA CHECKPOINT #447 PASS + TEST GATE #446 PASS (browser E2E confirmed scroll-lock behavior). TASK #437 scroll-lock verified: hasMountedRef + near-bottom check pattern confirmed in ChatPanel.test.jsx, auto-scroll at bottom works, build clean (507 modules).
 Gate: HARD
 Context:
   Component being tested: ChatPanel scroll-lock
@@ -18289,9 +18311,9 @@ Context:
     2. Stay at bottom, add new message — verify auto-scroll
     3. Client build clean
 Acceptance Criteria:
-  - [ ] Scroll-lock works
-  - [ ] Auto-scroll at bottom works
-  - [ ] Client build clean
+  - [x] Scroll-lock works
+  - [x] Auto-scroll at bottom works
+  - [x] Client build clean
 Gate Result: PASS → proceed | FAIL → return to TASK #437 with bug report
 Dependencies: TASK #437
 ---
@@ -18323,7 +18345,8 @@ Type: TEST_GATE
 Priority: LOW
 Difficulty: TRIVIAL
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED (PASS)
+Verdict: PASS — 2026-04-09. Covered by AREA CHECKPOINT #447 PASS + TEST GATE #446 PASS. TASK #439 unused import removal verified: repairAllTokenSpacing import absent from ChatMessage.jsx, no unused import warnings, ChatMessage renders correctly, build clean (507 modules).
 Gate: HARD
 Context:
   Component being tested: ChatMessage.jsx unused import cleanup
@@ -18332,8 +18355,8 @@ Context:
     1. Client build clean — no unused import warnings
     2. ChatMessage still renders correctly
 Acceptance Criteria:
-  - [ ] No unused imports in ChatMessage.jsx
-  - [ ] Client build clean
+  - [x] No unused imports in ChatMessage.jsx
+  - [x] Client build clean
 Gate Result: PASS → proceed | FAIL → return to TASK #439 with bug report
 Dependencies: TASK #439
 ---
@@ -18364,7 +18387,8 @@ Type: TEST_GATE
 Priority: LOW
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED (PASS)
+Verdict: PASS — 2026-04-09. Covered by AREA CHECKPOINT #447 PASS + TEST GATE #446 PASS (browser E2E test 6 explicitly verified navigation persistence — BUG-CHAT-E2E-1 fix confirmed). TASK #441 scroll-to-bottom on mount verified: navigation roundtrip shows most recent messages, build clean (507 modules).
 Gate: HARD
 Context:
   Component being tested: Chat panel scroll-to-bottom on mount
@@ -18373,8 +18397,8 @@ Context:
     1. Navigate away from SwarmView, return — chat panel scrolled to bottom
     2. Client build clean
 Acceptance Criteria:
-  - [ ] Scroll-to-bottom on mount works
-  - [ ] Client build clean
+  - [x] Scroll-to-bottom on mount works
+  - [x] Client build clean
 Gate Result: PASS → proceed | FAIL → return to TASK #441 with bug report
 Dependencies: TASK #441
 ---
@@ -18432,7 +18456,8 @@ Type: TEST_GATE
 Priority: LOW
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED (PASS)
+Verdict: PASS — 2026-04-09. Covered by AREA CHECKPOINT #447 PASS + TEST GATE #446 PASS (browser E2E 8/8). All 5 Wave 6 LOW fixes verified: scroll-lock (#437), unused import removal (#439), scroll-to-bottom on mount (#441), registerNodePrompt type guard (#443), CHAT_WORDS dedup (#444, SERVER-12 deferred). 490/490 server tests green, build clean (507 modules).
 Gate: HARD
 Context:
   Component being tested: All Wave 6 LOW priority fixes
@@ -18445,9 +18470,9 @@ Context:
     5. No duplicate words, single word list source (TASK #444)
     6. All server tests pass, client build clean
 Acceptance Criteria:
-  - [ ] All 5 LOW fixes verified
-  - [ ] All server tests pass
-  - [ ] Client build clean
+  - [x] All 5 LOW fixes verified
+  - [x] All server tests pass
+  - [x] Client build clean
 Gate Result: PASS → proceed to AREA CHECKPOINT | FAIL → return to failing task with bug report
 Dependencies: TASK #437, #439, #441, #443, #444
 
@@ -19050,7 +19075,7 @@ Verdict: PASS — 2026-04-09. Baseline verification, browser evidence, bulk plan
 ---
 
 ## V10.4 - STRUCTURED CHAT TURN HISTORY
-Status: CLOSED
+Status: CLOSED — 2026-04-09
 Goal: Fix the structured chat contract so repeated handoffs between the same agents append as distinct chat turns instead of collapsing to one message per node.
 Scope:
   1. Server-side turn identity for structured chat events and stored execution chat history

@@ -46,7 +46,7 @@ describe('ChatPanel client rendering contracts', () => {
       workflowDef: {
         id: 'workflow-1',
         nodes: [
-          { id: 'node-a', type: 'agent', data: { label: 'Agent A' } },
+          { id: 'node-a', type: 'agent', data: { label: 'Agent A', parentDepartmentId: 'dept-1' } },
           { id: 'node-b', type: 'agent', data: { label: 'Agent B' } },
           { id: 'dept-1', type: 'department', data: { label: 'Dept 1' } },
         ],
@@ -153,6 +153,113 @@ describe('ChatPanel client rendering contracts', () => {
     });
     await waitFor(() => {
       expect(screen.getByText('Sent to 1 agent: Agent A')).toBeInTheDocument();
+    });
+  });
+
+  it('sends the integrated broadcast payload for department-targeted messages', async () => {
+    const user = userEvent.setup();
+    vi.mocked(apiPost).mockResolvedValue({
+      sent: 1,
+      recipientNodeIds: ['node-a'],
+    });
+
+    useSwarmStore.setState({
+      chatMessages: [
+        { nodeId: 'node-a', role: 'assistant', text: 'Ready', timestamp: 100, spawnMode: 'stream-json' },
+      ],
+      agentStates: {
+        'node-a': { spawnMode: 'stream-json', acceptsMessages: true },
+      },
+    });
+
+    render(<ChatPanel />);
+
+    const selects = screen.getAllByRole('combobox');
+    await user.selectOptions(selects[1], 'department');
+    await user.selectOptions(screen.getAllByRole('combobox')[2], 'dept-1');
+    expect(screen.getByPlaceholderText(/Message department "Dept 1"/i)).toBeInTheDocument();
+    await user.type(screen.getByPlaceholderText(/Message department "Dept 1"/i), 'Coordinate');
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+
+    expect(apiPost).toHaveBeenCalledWith('/api/v1/swarm/exec-1/broadcast', {
+      text: 'Coordinate',
+      scope: 'department',
+      targetId: 'dept-1',
+      mode: 'soft',
+    });
+  });
+
+  it('shows a truthful no-recipient result when no reusable sessions are available', async () => {
+    const user = userEvent.setup();
+    vi.mocked(apiPost).mockResolvedValue({
+      sent: 0,
+      recipientNodeIds: [],
+    });
+
+    useSwarmStore.setState({
+      chatMessages: [
+        { nodeId: 'node-a', role: 'assistant', text: 'Ready', timestamp: 100, spawnMode: 'stream-json' },
+      ],
+      agentStates: {
+        'node-a': { spawnMode: 'stream-json', acceptsMessages: true },
+      },
+    });
+
+    render(<ChatPanel />);
+
+    await user.type(screen.getByPlaceholderText(/Message all agents/i), 'Ping');
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('No reusable agent sessions available for this target')).toBeInTheDocument();
+    });
+  });
+
+  it('renders HITL messages through the inline card path', () => {
+    useSwarmStore.setState({
+      chatMessages: [
+        {
+          nodeId: 'node-a',
+          role: 'hitl',
+          text: 'Approval required',
+          timestamp: 100,
+          hitlItemId: 'hitl-1',
+          hitlType: 'approval',
+        },
+      ],
+      inboxItems: [
+        {
+          item: {
+            id: 'hitl-1',
+            status: 'pending',
+            message: 'Approval required',
+          },
+          nodeId: 'node-a',
+        },
+      ],
+    });
+
+    render(<ChatPanel />);
+
+    expect(screen.getByText('Approval required')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Approve/i })).toBeInTheDocument();
+  });
+
+  it('syncs the input scope with the active chat filter', async () => {
+    useSwarmStore.setState({
+      chatFilter: 'node-a',
+      chatMessages: [
+        { nodeId: 'node-a', role: 'assistant', text: 'Ready', timestamp: 100, spawnMode: 'stream-json' },
+      ],
+      agentStates: {
+        'node-a': { spawnMode: 'stream-json', acceptsMessages: true },
+      },
+    });
+
+    render(<ChatPanel />);
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/Message Agent A/i)).toBeInTheDocument();
     });
   });
 
