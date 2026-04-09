@@ -1,5 +1,5 @@
 # CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-09 — after Codex handoff regression coverage: swarm-engine-codex-sdk.test.js + swarm-codex-handoff-e2e.mjs + codex-handoff-long.json fixture — mapped by code-mapper_
+_Last updated: 2026-04-09 — after Task #479: BUG-BLOCKER-UI-02 — _normalizeSnippetLine / _handleRuntimeBlocker / stopExecution surgical fixes — mapped by code-mapper_
 
 > **PROJECT STATUS: V9.0 STREAM-JSON MIGRATION CLOSED + V9.1 CODEX SDK SWARM INTEGRATION CLOSED — 402 TASKS (401 COMPLETE/PASS, 1 DEFERRED, 0 PENDING)**
 > Claude now uses the structured `stream-json` path and Codex now has a parallel `codex-sdk` structured path, with PTY retained for Gemini/live terminal work and truthful Codex fallback scenarios. Verification: 488/488 backend tests pass, client build 501 modules.

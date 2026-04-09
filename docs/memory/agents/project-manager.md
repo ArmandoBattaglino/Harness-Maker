@@ -1,4 +1,52 @@
 ---
+## 2026-04-09 — Tasks #476 + #479: V10.6 post-session sync
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+V10.6 CLIENT CHAT + FLOW BUG FIXES was already CLOSED per TASK_PLAN.md header. User reported that TASK #476 (BUG-CHAT-CLIENT-12) had been verified as pre-existing COMPLETED (no code change needed, 52/52 client tests confirm it) and TASK #479 (BUG-BLOCKER-UI-02) had been fixed in server/services/SwarmEngine.js (commit 02958da) with 501/501 server tests passing. Both task entries in TASK_PLAN.md already showed `Status: COMPLETED — 2026-04-09`. PROGRESS.md line 1 already had the #479 debugger entry.
+
+### What I did
+1. Read TASK_PLAN.md header, PROGRESS.md, ACTIVITY_LOG.md, and agent memory in parallel to confirm state.
+2. Located TASK #476 and #479 entries via grep — both already COMPLETED with correct dates and notes.
+3. Confirmed PROGRESS.md had the #479 entry already prepended by the debugger agent.
+4. Appended ACTIVITY_LOG.md entry for this sync session.
+5. Appended this session log.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added PM sync entry for this V10.6 post-session verification |
+| docs/memory/agents/project-manager.md | MODIFIED | Added this session log |
+
+### Improvements delivered
+- ACTIVITY_LOG now records the specific 3 root causes of BUG-BLOCKER-UI-02 for future reference.
+- Memory is consistent: all three docs reflect V10.6 CLOSED with #476 + #479 COMPLETED.
+
+### Bugs fixed
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| BUG-CHAT-CLIENT-12 | Chat View empty state pre-existing fix | Already covered by SwarmCanvas.test.jsx reset-path lock | VERIFIED FIXED |
+| BUG-BLOCKER-UI-02 (1/3) | `_normalizeSnippetLine` regex missed Dingbat checkmark U+2713 used by Gemini CLI | Extended regex to also strip checkmark before line text is compared to filter rules | FIXED commit 02958da |
+| BUG-BLOCKER-UI-02 (2/3) | `_handleRuntimeBlocker` for `provider_unavailable` used sanitized PTY noise as display snippet | Changed to call `_buildRuntimeBlockerDisplaySnippet()` directly for clean blocker message | FIXED commit 02958da |
+| BUG-BLOCKER-UI-02 (3/3) | `stopExecution` did not clear `pinnedDisplaySnippet`, so stopped nodes retained stale blocker text | Added `state.pinnedDisplaySnippet = null` in the cleanup loop | FIXED commit 02958da |
+
+### Decisions I made
+- No re-edits to TASK_PLAN.md task entries — they were already correct from prior sessions.
+
+### What I learned
+- When a session is fully handled by a specialized agent (debugger for #479, frontend-dev for #476), the task entries in TASK_PLAN.md may be updated directly by those agents before PM runs the sync. Always read first before modifying.
+
+### State I'm leaving behind
+V10.6: AREA CLOSED. All 7 tasks (#476–#482) COMPLETED/PASS.
+V10.7: AREA CLOSED. All 8 tasks (#483–#490) COMPLETED/PASS.
+V10.8: ACTIVE. 6 tasks total. #496 COMPLETED. #491/#492/#493/#494/#495 PENDING.
+Server tests: 501/501. Client tests: 52/52. Build: 507 modules, 0 errors.
+
+### Handoff
+V10.8 next priorities: #492 (debugger — Codex handoff browser E2E harness reliability) + #491 (qa-tester — visual regression determinism baseline fix) — run in parallel, no dependencies between them.
+
+---
 ## 2026-04-09 — Task #496: Out-of-session Codex handoff server regression coverage sync
 **Status:** COMPLETED
 **Called by:** user
