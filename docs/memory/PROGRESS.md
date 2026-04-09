@@ -1,3 +1,5 @@
+- [FRONTEND-DEV 2026-04-09] TASK #435 (BUG-CHAT-CLIENT-10) COMPLETED. Added canonicalReceived guard in useSwarm.js REST hydration loop — skips assistant fragments for nodes with canonical already received. Build clean (507 modules).
+
 - [BACKEND-DEV 2026-04-09] TASK #433 (BUG-CHAT-SERVER-07/08) COMPLETED. Added token.length > 200 caps to 4 DP/greedy functions in chatTextNormalization.js. 490/490 tests pass.
 
 - [PM 2026-04-09] Wave 3 COMPLETED. #427 (BUG-CHAT-SERVER-02, stream-json ChatExtractor.feed removed), #429 (BUG-CHAT-CLIENT-6, toolUse accumulation fix), #431 (BUG-CHAT-CLIENT-11, HitlChatCard double-click guard) ALL COMPLETED. 422 COMPLETED/PASS, 24 PENDING. Waves 4+5 launching: #433 (DP memory cap) + #435 (scroll-lock) PARALLEL.
