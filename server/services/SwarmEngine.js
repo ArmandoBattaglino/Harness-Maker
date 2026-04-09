@@ -169,10 +169,13 @@ const SNIPPET_NOISE_LINE_PATTERNS = [
   /^esc to interrupt/i,
   /^press esc or ctrl\+c to cancel/i,
   /^waiting for authentication/i,
+  /^signed in with google\b/i,
   /^usage limit reached/i,
   /^you have exhausted your capacity on this model/i,
   /^keep trying$/i,
   /^ready \(/i,
+  /^\/auth\b/i,
+  /^gemini cli v\d/i,
   /^(gpt|claude|gemini)-[a-z0-9.\-]+.*[·•]/i,
   /^tokens?( used)?[:\s]/i,
   /^context window[:\s]/i,
@@ -1467,12 +1470,18 @@ class SwarmEngine {
       }).trim();
       if (!sanitizedText) return false;
 
+      const rawCompactText = rawText.toLowerCase().replace(/[^a-z0-9]+/g, '');
       const compactText = sanitizedText.toLowerCase().replace(/[^a-z0-9]+/g, '');
       if (
         compactText.includes('structuredhandoffsent')
         || compactText.includes('signedinwithgoogle')
         || compactText.includes('typeyourmessageorpathtofile')
         || compactText.includes('presstabtwiceformore')
+        || rawCompactText.includes('structuredhandoffsent')
+        || rawCompactText.includes('signedinwithgoogle')
+        || rawCompactText.includes('typeyourmessageorpathtofile')
+        || rawCompactText.includes('presstabtwiceformore')
+        || rawCompactText.includes('geminicliv')
       ) {
         return false;
       }
@@ -3817,7 +3826,7 @@ class SwarmEngine {
       nodeId,
     };
 
-    const blockerSnippet = String(state.lastOutputSnippet ?? '').trim()
+    const blockerSnippet = this._sanitizeDisplaySnippetText(String(state.lastOutputSnippet ?? '').trim())
       || this._buildRuntimeBlockerDisplaySnippet(nextBlocker);
     state.runtimeBlocker = nextBlocker;
     state.status = 'blocked';

@@ -2531,9 +2531,11 @@ describe('SwarmEngine', () => {
       });
       const tapFn = [...mockSession.swarmListeners][0];
       const execution = engine._executions.get(executionId);
+      const nodeAState = execution.agentStates.get('node-a');
 
-      execution.agentStates.get('node-a').ignoreParserUntil = null;
-      execution.agentStates.get('node-a').ignoreParserBuffer = '';
+      nodeAState.ignoreParserUntil = null;
+      nodeAState.ignoreParserBuffer = '';
+      nodeAState.lastOutputSnippet = 'Signed in with Google\n/auth\nGemini CLI v0.37.0\nType your message or @path/to/file';
       execution.chatMessages = [
         { nodeId: 'node-a', role: 'assistant', text: 'Structured handoff sent.' },
         {
@@ -2557,12 +2559,16 @@ describe('SwarmEngine', () => {
         nodeId: 'node-a',
       });
       expect(status.agentStates['node-a'].lastOutputSnippet).toContain('Gemini requires authentication');
+      expect(status.agentStates['node-a'].lastOutputSnippet).not.toContain('Signed in with Google');
+      expect(status.agentStates['node-a'].lastOutputSnippet).not.toContain('Gemini CLI v0.37.0');
       expect(status.chatMessages).toEqual([]);
 
       const blockedAgentSnapshot = wsBroadcast.mock.calls
         .map(([, ev]) => ev)
         .find((ev) => ev.type === 'agent_status' && ev.nodeId === 'node-a' && ev.status === 'blocked');
       expect(blockedAgentSnapshot?.lastOutputSnippet).toContain('Gemini requires authentication');
+      expect(blockedAgentSnapshot?.lastOutputSnippet).not.toContain('Signed in with Google');
+      expect(blockedAgentSnapshot?.lastOutputSnippet).not.toContain('Gemini CLI v0.37.0');
     });
 
     it('should classify Gemini waiting-for-authentication output as a blocked runtime state', async () => {
@@ -2596,9 +2602,11 @@ describe('SwarmEngine', () => {
       });
       const tapFn = [...mockSession.swarmListeners][0];
       const execution = engine._executions.get(executionId);
+      const nodeAState = execution.agentStates.get('node-a');
 
-      execution.agentStates.get('node-a').ignoreParserUntil = null;
-      execution.agentStates.get('node-a').ignoreParserBuffer = '';
+      nodeAState.ignoreParserUntil = null;
+      nodeAState.ignoreParserBuffer = '';
+      nodeAState.lastOutputSnippet = 'Signed in with Google\n/auth\nGemini CLI v0.37.0\nType your message or @path/to/file';
       execution.chatMessages = [
         {
           nodeId: 'node-a',
@@ -2614,6 +2622,7 @@ describe('SwarmEngine', () => {
       expect(stoppedStatus.agentStates['node-a'].status).toBe('stopped');
       expect(stoppedStatus.agentStates['node-a'].lastOutputSnippet).toContain('Gemini requires authentication');
       expect(stoppedStatus.agentStates['node-a'].lastOutputSnippet).not.toContain('Signed in with Google');
+      expect(stoppedStatus.agentStates['node-a'].lastOutputSnippet).not.toContain('Gemini CLI v0.37.0');
       expect(stoppedStatus.chatMessages).toEqual([]);
     });
 
@@ -4477,7 +4486,7 @@ describe('SwarmEngine', () => {
         },
       });
       expect(status.agentStates['node-a'].lastOutputSnippet)
-        .toMatch(/Claude hit its usage limit before the swarm agent could continue\./);
+        .toMatch(/Claude hit its usage limit before the swarm agent could (?:continue|con\s*t\s*i\s*n\s*u\s*e)\./);
       expect(status.agentStates['node-b']).toBeUndefined();
       expect(mockSessionManager.createSession).not.toHaveBeenCalled();
 
