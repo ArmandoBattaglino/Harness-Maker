@@ -1,4 +1,44 @@
 ---
+## 2026-04-09 — Tasks #433, #435: V10.0 Waves 4+5 documentation audit
+**Status:** COMPLETED
+**Called by:** orchestrator (post-Waves-4+5 documentation update)
+
+### Context when I started
+Tasks #433 and #435 (V10.0 Waves 4+5) just completed. #433 added 200-char early-return guards to four DP/greedy functions in chatTextNormalization.js to prevent O(n^2) memory on long tokens. #435 added a canonicalReceived guard in the useSwarm.js REST hydration loop so stale text_delta fragments from GET /status do not overwrite canonical text.
+
+### What I did
+1. Read both modified files (chatTextNormalization.js full, useSwarm.js lines 1-50 + grep for canonicalReceived)
+2. Audited all docs: README.md, ARCHITECTURE.md, API.md, PRD.md, CLAUDE.md, inline comments
+3. Found no staleness: both changes are internal implementation fixes (performance cap, guard condition) with no API surface, architecture, config, or endpoint changes
+4. Updated DOC_STATUS.md: timestamp and inline comments row
+5. Wrote activity log and agent memory
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Updated timestamp to reflect Waves 4+5 completion; updated inline comments status row |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended entry for this documentation audit |
+| docs/memory/agents/documenter.md | MODIFIED | Appended this session log |
+
+### Improvements delivered
+- DOC_STATUS.md accurately reflects current documentation state after Waves 4+5
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- No doc updates needed beyond DOC_STATUS.md because both changes are internal implementation fixes with no external-facing impact
+
+### What I learned
+- chatTextNormalization.js DP functions now have a hard 200-char token length cap, which is worth knowing for future performance analysis
+
+### State I'm leaving behind
+All documentation is UP_TO_DATE. No stale sections introduced by Tasks #433 or #435.
+
+### Handoff
+None -- task fully self-contained.
+
+---
 ## 2026-04-09 — Tasks #417 + #419: V10.0 Wave 1 canonical chat_message documentation
 **Status:** COMPLETED
 **Called by:** orchestrator (post-Wave-1 documentation update)

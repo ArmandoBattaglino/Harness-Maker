@@ -3961,3 +3961,70 @@ No new connections introduced in this checkpoint task. All connection changes we
 - AgentNode.jsx, ChatPanel.jsx, ChatMessage.jsx are unaffected — they do not read `canonicalReceived`
 
 ---
+## 2026-04-09 — Task #421: ChatExtractor compound key refactor (Wave 2, V10.0)
+**Agent:** backend-dev — mapped by code-mapper
+**Triggered by:** BUG-CHAT-SERVER-RACE-1 from Debugger Loop Phase 1. ChatExtractor buffers were keyed by bare nodeId, so concurrent executions sharing a nodeId could cross-contaminate or lose buffered text on cleanup.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| server/services/ChatExtractor.js | MODIFIED | `_buffers` Map now uses compound key `${executionId}:${nodeId}`. `resetBuffer()` signature changed from `(nodeId)` to `(executionId, nodeId)`. `cleanup(executionId)` now only removes buffers matching the `${executionId}:` prefix. New `cleanupNode(executionId, nodeId)` method added. |
+| server/services/SwarmEngine.js | MODIFIED | All ChatExtractor call sites updated to pass executionId as first argument to `resetBuffer()`, `flush()`, and `feed()`. |
+
+### Functions Modified
+- `ChatExtractor.constructor()` in `server/services/ChatExtractor.js` — `_buffers` Map comment updated to document compound key format
+- `ChatExtractor.feed(executionId, nodeId, cleanChunk)` in `server/services/ChatExtractor.js` — buffer lookup now uses compound key `${executionId}:${nodeId}`
+- `ChatExtractor.resetBuffer(executionId, nodeId)` in `server/services/ChatExtractor.js` — **BREAKING**: signature changed from `(nodeId)` to `(executionId, nodeId)`, uses compound key
+- `ChatExtractor.cleanup(executionId)` in `server/services/ChatExtractor.js` — now iterates only buffers with matching `${executionId}:` prefix instead of clearing all
+- `ChatExtractor.flush(executionId, nodeId)` in `server/services/ChatExtractor.js` — passes compound key to internal `_flush`
+
+### Functions Added
+- `ChatExtractor.cleanupNode(executionId, nodeId)` in `server/services/ChatExtractor.js` — targeted single-node buffer flush + cleanup
+
+### Connection Changes
+- SwarmEngine callers of `resetBuffer` now pass `(executionId, nodeId)` instead of `(nodeId)` (lines ~3195, ~4033)
+- `cleanup(executionId)` no longer destroys buffers belonging to other concurrent executions
+
+### Impact on Other Code
+- No external callers outside SwarmEngine — all updated in same task. No consumer changes needed.
+
+---
+## 2026-04-09 — Task #423: useSwarm nodeId guard in chat_message handler (Wave 2, V10.0)
+**Agent:** frontend-dev — mapped by code-mapper
+**Triggered by:** BUG-CHAT-CLIENT-UNDEF-1 from Debugger Loop Phase 1. A chat_message WS event without a nodeId field caused undefined key errors in Zustand store operations.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/hooks/useSwarm.js | MODIFIED | Added `if (!msg.nodeId) break;` guard at top of `chat_message` switch case |
+
+### Functions Modified
+- `connectWs(executionId)` chat_message handler in `client/src/hooks/useSwarm.js` — added early-exit guard for missing nodeId
+
+### Connection Changes
+- None — defensive guard only, no new dependencies
+
+### Impact on Other Code
+- All downstream store operations (addChatMessage, updateAgentState, replaceAgentChatText, replaceNodeChatMessages, appendAgentChatText) are now protected from undefined nodeId keys
+
+---
+## 2026-04-09 — Task #425: ChatMessage XSS prevention via rehype-sanitize (Wave 2, V10.0)
+**Agent:** frontend-dev — mapped by code-mapper
+**Triggered by:** BUG-CHAT-XSS-1 from Debugger Loop Phase 1. ReactMarkdown rendered unsanitized HTML from agent output, creating XSS risk if agent text contained malicious markup.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| client/src/canvas/ChatMessage.jsx | MODIFIED | Added `import rehypeSanitize from 'rehype-sanitize'`; added `rehypeSanitize` to `rehypePlugins` array on ReactMarkdown |
+| client/package.json | MODIFIED | Added `rehype-sanitize@^6.0.0` dependency |
+
+### Functions Modified
+- `ChatMessage({ message, agentLabel })` in `client/src/canvas/ChatMessage.jsx` — ReactMarkdown now receives `rehypePlugins={[rehypeSanitize]}` in addition to existing `remarkPlugins={[remarkGfm]}`
+
+### Connection Changes
+- ChatMessage.jsx now imports `rehype-sanitize` (new external dependency)
+
+### Impact on Other Code
+- All markdown rendering in the Unified Chat View is now HTML-sanitized. Any agent output containing raw HTML tags (script, iframe, etc.) will be stripped before rendering. Legitimate markdown formatting (bold, italic, links, code blocks, tables) is preserved by rehype-sanitize's default schema.
+
+---

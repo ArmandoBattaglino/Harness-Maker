@@ -317,7 +317,8 @@ export class ChatExtractor {
    * of that prompt rather than actual agent work product.
    */
   registerNodePrompt(nodeId, promptText) {
-    if (!nodeId || !promptText) return;
+    if (typeof promptText !== 'string' || !promptText) return;
+    if (!nodeId) return;
     // Normalize: lowercase, collapse whitespace, strip punctuation
     const normalized = String(promptText).toLowerCase().replace(/[^a-z0-9\s]/gi, '').replace(/\s+/g, ' ').trim();
     // Extract significant words (4+ chars) for matching

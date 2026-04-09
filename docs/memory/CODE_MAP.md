@@ -2749,6 +2749,8 @@ _Last updated: 2026-04-09 — after Tasks #427+#429+#431 (Wave 3, V10.0): SwarmE
 - **Last modified:** 2026-04-09 in Task #423 by frontend-dev (added `if (!msg.nodeId) break;` guard at top of chat_message handler — silently drops nodeId-less messages to prevent undefined key errors in store operations)
 - **Complexity note (Task #406 — BUG-DL-TEXTDELTA-1):** The `chat_message` case (line ~607-612) now reads `useSwarmStore.getState().agentStates[msg.nodeId]?.lastChatSnippet || ''` and concatenates `prevSnippet + msg.text` before calling `updateAgentState`. Previously the handler passed `msg.text` alone, overwriting any prior snippet. This caused node cards (AgentNode.jsx) to show only the last text_delta fragment instead of the full accumulated assistant response. The accumulation pattern mirrors `appendAgentChatText` which concatenates into `agentResults[nodeId].finalText`.
 - **Complexity note (Task #406p2 — canonical result text, updated 5d359b4, updated Task #419):** The `chat_message` case has an `if (msg.isCanonical)` branch at the top. When the server sends `isCanonical: true`, the handler: (0) guards against empty canonical text — if `!msg.text`, sets `canonicalReceived: true` on agentState and breaks without destroying existing messages (BUG-CHAT-CLIENT-15), (1) sets `canonicalReceived: true` on agentState BEFORE processing to block trailing fragments (BUG-CHAT-CLIENT-1/3), (2) calls `replaceAgentChatText(msg.nodeId, msg.text)` to overwrite the streamed text_delta accumulation in agentResults, (3) calls `updateAgentState` to set `lastChatSnippet` to the canonical text, (4) calls `replaceNodeChatMessages` to REPLACE ALL matching structured assistant chat messages with a single canonical message. The non-canonical (else) branch now checks `nodeState?.canonicalReceived` and drops any assistant message that arrives after canonical was received — prevents duplicate/corrupted output from trailing text_delta fragments that arrive during the 3s WS close delay (BUG-CHAT-CLIENT-1/3). This two-path design means the client first accumulates streamed fragments for live display, then collapses them with one canonical message once the result event arrives, and rejects any late arrivals.
+- **Complexity note (Task #435 — REST hydration canonicalReceived skip):** The `execution_status` terminal-state handler fetches `/api/v1/swarm/executions/:id/results` and hydrates chatMessages from the response. The hydration loop now checks `agentStates[cm.nodeId]?.canonicalReceived` for each assistant message — if the flag is set, the message is skipped entirely (BUG-CHAT-CLIENT-10). This prevents REST-returned stale text_delta fragments from overwriting the clean canonical text that was already received via WS during the live execution.
+- **Last modified:** 2026-04-09 in Task #435 by frontend-dev (REST hydration canonicalReceived skip)
 
 ### `client/src/hooks/useSwarm.js` :: `startExecution(projectId, projectPath)` (returned callback)
 - **Purpose:** POST to /api/v1/swarm/:workflowId/start with {projectId, projectPath}, then call connectWs(executionId) to open the WS stream. Sets store state to running. Returns the executionId. Guards against missing workflowId with explicit throw (BUG-SWARM-4 FIXED — Task #118).
@@ -3611,6 +3613,45 @@ _All bugs identified in QA Swarm Inspection (2026-03-31) and Swarm Code Audit (2
 - **Purpose:** Keep Unified Chat readable when terminal output arrives with ConPTY-compressed words, corrupted short-token leaders, or inline fallback prompt/status chrome.
 - **Flow:** `normalizeChatDisplayText(...)` now restores leading connector splits like `Ibenefici... -> I benefici...` and strips noisy short-token prefixes without removing the first readable words. `ChatExtractor._flush(...)` trims mojibake leaders, avoids over-greedy `Working (% left)` stripping on mixed lines, and suppresses lone routing/handoff-intent sentences that are still mostly orchestration chrome.
 - **Impact:** chat updates remain readable while avoiding false-positive assistant messages from fallback runtime noise; this also stabilizes the regression gate around archival finalText quality because live chat normalization no longer fails on those edge cases.
+- **Last modified:** 2026-04-09 in Task #433 by backend-dev (200-char length cap added to 4 DP functions)
+
+### `server/services/chatTextNormalization.js` :: `splitKnownWordSequence(token)` — 200-char length cap (Task #433)
+- **Purpose:** DP-based word sequence splitter. Given a compressed token (e.g. "illavororemoto"), finds the optimal split into known CHAT_WORDS using memoized recursion scored by word-length squared. Returns space-joined string or null.
+- **Called by:** restoreLeadingConnectorCompressedToken, aggressivelyRestoreLongChatToken, normalizeChatDisplayText (via RESTORABLE_CHAT_TOKEN_MATCH_RE callback chain)
+- **Calls:** normalizeCompressedChatWord, isRestorableChatToken, CHAT_WORD_SET.has
+- **Inputs:** token (string, default '')
+- **Output:** string (space-separated words) or null (no valid split found)
+- **Side effects:** none
+- **Complexity note:** Uses memoized DP recursion. The `token.length > 200` early-return (Task #433) prevents pathological O(n * CHAT_WORD_MAX_LEN) memo explosion on extremely long tokens that would never be real compressed words.
+- **Last modified:** 2026-04-09 in Task #433 by backend-dev (added `if (token.length > 200) return null;` guard)
+
+### `server/services/chatTextNormalization.js` :: `restoreCompressedChatToken(token)` — 200-char length cap (Task #433)
+- **Purpose:** Primary DP token restorer. Uses forward-scan DP with scored states (matched chars, matched words, score) to find the best split of a compressed token into known words + unmatched residuals. Falls back to greedy splitter on low-quality results.
+- **Called by:** restoreLeadingConnectorCompressedToken, restoreFragmentedChatSequence, normalizeChatDisplayText (RESTORABLE_CHAT_TOKEN_MATCH_RE callback, apostrophe-suffix callback)
+- **Calls:** isRestorableChatToken, restoreLeadingConnectorCompressedToken, splitKnownWordSequence, normalizeCompressedChatWord, restoreCompressedChatTokenGreedy, CHAT_WORD_SET.has
+- **Inputs:** token (string, default '')
+- **Output:** string (space-separated restoration or original token)
+- **Side effects:** none
+- **Complexity note:** Forward-scan DP with O(n * CHAT_WORD_MAX_LEN) states array. The `token.length > 200` guard (Task #433) caps the states array allocation and prevents runaway on pathological inputs.
+- **Last modified:** 2026-04-09 in Task #433 by backend-dev (added `if (token.length > 200) return token;` guard)
+
+### `server/services/chatTextNormalization.js` :: `aggressivelyRestoreLongChatToken(token)` — 200-char length cap (Task #433)
+- **Purpose:** Wrapper for tokens >= 18 chars. Tries connector split first, then exact DP split, then greedy. Validates greedy results have >= 3 pieces and total length matches original.
+- **Called by:** normalizeChatDisplayText (inline regex callback for tokens >= 18 chars)
+- **Calls:** isRestorableChatToken, restoreLeadingConnectorCompressedToken, splitKnownWordSequence, restoreCompressedChatTokenGreedy
+- **Inputs:** token (string, default '')
+- **Output:** string (restored or original)
+- **Side effects:** none
+- **Last modified:** 2026-04-09 in Task #433 by backend-dev (added `if (token.length > 200) return token;` guard)
+
+### `server/services/chatTextNormalization.js` :: `restoreCompressedChatTokenGreedy(token, normalizedToken)` — 200-char length cap (Task #433)
+- **Purpose:** Greedy longest-match-first word splitter. Scans left-to-right, always picks the longest matching word at each position. Returns null if any position has no match.
+- **Called by:** restoreLeadingConnectorCompressedToken, aggressivelyRestoreLongChatToken, restoreCompressedChatToken (fallback paths)
+- **Calls:** isRestorableChatToken, normalizeCompressedChatWord, CHAT_WORD_SET.has
+- **Inputs:** token (string), normalizedToken (string, default = normalizeCompressedChatWord(token))
+- **Output:** string (space-separated) or null (incomplete coverage)
+- **Side effects:** none
+- **Last modified:** 2026-04-09 in Task #433 by backend-dev (added `if (token.length > 200) return null;` guard)
 
 ### `server/spike/stream-json-spike.mjs` :: Spike Validation Script (Task #354)
 
@@ -3799,3 +3840,78 @@ _All bugs identified in QA Swarm Inspection (2026-03-31) and Swarm Code Audit (2
 > Files deeply audited: ChatExtractor.js (buffer mgmt, flush, cleanup, feed), chatTextNormalization.js (ConPTY decompression, DP algorithms), SwarmEngine.js (_broadcastChatMessage, canonical emission paths for stream-json + Codex SDK, text_delta handlers), swarm.js (REST hydration of chatMessages), SwarmContext.jsx (Zustand chat actions: addChatMessage, replaceNodeChatMessages), useSwarm.js (WS chat_message handler, isCanonical branch, REST hydration), ChatPanel.jsx (message grouping, filtering, scrolling), ChatMessage.jsx (markdown rendering, cost footer), HitlChatCard.jsx (approve/reject flow).
 > Bugs span: race conditions in ChatExtractor cleanup, DP normalization edge cases, missing boundary checks in REST hydration, ChatPanel grouping inconsistencies, ChatMessage rendering issues, HitlChatCard state management gaps.
 > **No code was changed. Bug fixes will be tracked in subsequent Phase 2/3 tasks.**
+
+# UPDATE 2026-04-09 — Tasks #421, #423, #425 (Wave 2, V10.0)
+
+### `server/services/ChatExtractor.js` :: `ChatExtractor({ onMessage, silenceTimeoutMs, sanitizeMessage, periodicFlushMs })`
+- **Purpose:** Constructor. Stores callback, timeout config, prompt registry, and initializes `_buffers` Map with compound keys `${executionId}:${nodeId}`.
+- **Called by:** SwarmEngine constructor (line ~660)
+- **Calls:** none
+- **Inputs:** onMessage (callback), silenceTimeoutMs (number, default 5000), sanitizeMessage (function|null), periodicFlushMs (number, default 0)
+- **Output:** ChatExtractor instance
+- **Side effects:** none
+- **Last modified:** 2026-04-09 in Task #421 by backend-dev (refactored _buffers to use compound key `${executionId}:${nodeId}` instead of bare nodeId)
+
+### `server/services/ChatExtractor.js` :: `ChatExtractor.feed(executionId, nodeId, cleanChunk)`
+- **Purpose:** Feed a clean (ANSI-stripped) PTY chunk into the buffer for a specific node. Applies chunk-level noise filtering, checks for boundary patterns (HANDOFF/DONE), manages silence timer.
+- **Called by:** SwarmEngine._spawnAgentStreamJson (text_delta path), SwarmEngine._spawnAgentPty (onData tap)
+- **Calls:** ChatExtractor._flush (on boundary or silence timeout)
+- **Inputs:** executionId (string), nodeId (string), cleanChunk (string)
+- **Output:** void
+- **Side effects:** mutates internal _buffers Map entry; sets/clears timers; may trigger _flush which calls onMessage callback
+- **Last modified:** 2026-04-09 in Task #421 by backend-dev (now uses compound key `${executionId}:${nodeId}` for buffer lookup)
+
+### `server/services/ChatExtractor.js` :: `ChatExtractor.resetBuffer(executionId, nodeId)`
+- **Purpose:** Discard accumulated buffer for a node without emitting. Used when the echo gate clears to discard pre-gate noise.
+- **Called by:** SwarmEngine (echo gate clear path at line ~3195, ~4033)
+- **Calls:** none
+- **Inputs:** executionId (string), nodeId (string)
+- **Output:** void
+- **Side effects:** clears text, firstChunkAt, lastEmittedText on the buffer entry
+- **BREAKING CHANGE (Task #421):** Previously `resetBuffer(nodeId)` took only nodeId. Now requires `resetBuffer(executionId, nodeId)`. All SwarmEngine callers updated in same task.
+- **Last modified:** 2026-04-09 in Task #421 by backend-dev (signature changed from `(nodeId)` to `(executionId, nodeId)`)
+
+### `server/services/ChatExtractor.js` :: `ChatExtractor.cleanup(executionId)`
+- **Purpose:** Flush and remove all buffers belonging to a specific execution. Iterates `_buffers` entries matching the `${executionId}:` prefix, flushes remaining text, clears timers, deletes entries.
+- **Called by:** SwarmEngine.stopExecution (line ~3560, ~3578), SwarmEngine._cleanupExecution (line ~6841)
+- **Calls:** ChatExtractor._flush (for each buffer with remaining text)
+- **Inputs:** executionId (string)
+- **Output:** void
+- **Side effects:** clears timers; calls _flush (which may call onMessage); deletes buffer Map entries
+- **Last modified:** 2026-04-09 in Task #421 by backend-dev (refactored from clearing ALL buffers to prefix-scoped cleanup — concurrent executions no longer affected)
+
+### `server/services/ChatExtractor.js` :: `ChatExtractor.cleanupNode(executionId, nodeId)`
+- **Purpose:** Flush and remove the buffer for a single specific node within an execution.
+- **Called by:** (currently no direct callers — available for targeted cleanup)
+- **Calls:** ChatExtractor._flush
+- **Inputs:** executionId (string), nodeId (string)
+- **Output:** void
+- **Side effects:** clears timers; calls _flush; deletes single buffer Map entry
+- **Last modified:** 2026-04-09 in Task #421 by backend-dev (uses compound key)
+
+### `server/services/ChatExtractor.js` :: `ChatExtractor.flush(executionId, nodeId)`
+- **Purpose:** Force-flush the buffer for a node (e.g., when agent status changes to 'done').
+- **Called by:** SwarmEngine (agent done path at line ~1743)
+- **Calls:** ChatExtractor._flush
+- **Inputs:** executionId (string), nodeId (string)
+- **Output:** void
+- **Side effects:** delegates to _flush which may call onMessage
+- **Last modified:** 2026-04-09 in Task #421 by backend-dev (passes compound key to _flush)
+
+### `client/src/hooks/useSwarm.js` :: `connectWs.onmessage` chat_message case — nodeId guard (Task #423)
+- **Purpose:** Early-exit guard `if (!msg.nodeId) break;` at the top of the chat_message switch case. Prevents undefined-key errors in store operations (addChatMessage, updateAgentState, replaceAgentChatText, etc.) when a malformed or incomplete chat_message arrives without a nodeId field.
+- **Called by:** WebSocket onmessage handler (internal to connectWs)
+- **Calls:** none (breaks out of switch)
+- **Inputs:** msg (parsed WS JSON with type='chat_message')
+- **Output:** void (silently drops the message)
+- **Side effects:** none
+- **Last modified:** 2026-04-09 in Task #423 by frontend-dev
+
+### `client/src/canvas/ChatMessage.jsx` :: `ChatMessage({ message, agentLabel })` — rehype-sanitize (Task #425)
+- **Purpose:** Renders a single chat message bubble with role-based styling, ReactMarkdown with remarkGfm + rehype-sanitize, optional tool use collapsibles, thinking collapsibles, and cost footer.
+- **Called by:** ChatPanel.jsx (renders list of ChatMessage components)
+- **Calls:** ReactMarkdown, remarkGfm, rehypeSanitize, stripAnsi, repairAllTokenSpacing, isStructuredSpawnMode, formatChatText, formatStreamJsonText, formatToolArgs, formatCostFooter, formatTime, CollapsibleMetaBlock
+- **Inputs:** message (object — { role, text, timestamp, nodeId, spawnMode, toolUse, thinking, cost }), agentLabel (string)
+- **Output:** JSX — styled chat bubble with markdown content
+- **Side effects:** none (pure render)
+- **Last modified:** 2026-04-09 in Task #425 by frontend-dev (added rehype-sanitize to ReactMarkdown rehypePlugins for XSS prevention)

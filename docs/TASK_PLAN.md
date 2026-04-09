@@ -4,8 +4,8 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v10.0 — task numbering extends through #448; 448 tasks registered, 422 COMPLETED/PASS, 1 DEFERRED (#236), 24 PENDING, 1 IN_PROGRESS. 490 server tests pass, client build clean (501 modules). Chat stress test (debugger-loop Phase 1) found 31 bugs; V10.0 area created with 32 tasks (#417-#448) across 8 waves. Wave 1 COMPLETED, Wave 2 COMPLETED, Wave 3 COMPLETED, Waves 4+5 launching.
-  **Active Area:** V10.0 CHAT STRESS TEST BUG FIXES — 32 tasks (#417-#448), 8 COMPLETED (#417, #419, #421, #423, #425, #427, #429, #431), 24 PENDING. Wave 3 done. Waves 4+5 launching: TASK #433 (frontend, DP memory cap) + TASK #435 (frontend, scroll-lock) PARALLEL.
+**Status:** v10.0 — task numbering extends through #448; 448 tasks registered, 424 COMPLETED/PASS, 1 DEFERRED (#236), 22 PENDING, 1 IN_PROGRESS. 490 server tests pass, client build clean (507 modules). Chat stress test (debugger-loop Phase 1) found 31 bugs; V10.0 area created with 32 tasks (#417-#448) across 8 waves. Waves 1-5 COMPLETED. Wave 6 launching.
+  **Active Area:** V10.0 CHAT STRESS TEST BUG FIXES — 32 tasks (#417-#448), 10 COMPLETED (#417, #419, #421, #423, #425, #427, #429, #431, #433, #435), 22 PENDING. Waves 4+5 done. Wave 6 launching: #437 (scroll-lock) + #439 (unused import) + #441 (scroll reset) + #443 (registerNodePrompt guard) + #444 (CHAT_WORDS dedup) PARALLEL.
   **Completed Area:** V9.5 FULL DEEP E2E TEST BUG FIXES — #415 COMPLETED (BUG-DT-1 Models popup click-outside fix, commit ed6877a), #416 PASS. AREA CLOSED 2026-04-09.
   **Completed Area:** V9.4 CHAT MESSAGE CANONICAL FIX — #413 COMPLETED, #414 PASS. V9.4 CLOSED 2026-04-09.
   **Completed Area:** V9.3 CODEX SDK DEBUGGER-LOOP HARDENING — #410 COMPLETED, #411 COMPLETED, TEST GATE #412 PASS. AREA CLOSED 2026-04-08.
@@ -17729,7 +17729,7 @@ Type: BUG_FIX
 Priority: LOW
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   File: client/src/canvas/ChatPanel.jsx (or ChatMessage.jsx container)
   Bug: No scroll-lock mechanism — when user scrolls up to read chat history, every new incoming
@@ -17777,7 +17777,7 @@ Type: BUG_FIX
 Priority: LOW
 Difficulty: TRIVIAL
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   File: client/src/canvas/ChatMessage.jsx
   Bug: repairAllTokenSpacing is imported from repairTokenSpacing.js but never called anywhere
@@ -17819,7 +17819,7 @@ Type: BUG_FIX
 Priority: LOW
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   Bug: When user navigates away from SwarmView and returns, the chat panel scroll position
   resets to the top instead of staying at the bottom (most recent messages). This forces
@@ -17860,7 +17860,7 @@ Type: BUG_FIX
 Priority: LOW
 Difficulty: TRIVIAL
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED
 Context:
   File: server/services/SwarmEngine.js (registerNodePrompt method)
   Bug: registerNodePrompt does not type-guard its prompt parameter. If a non-string value
@@ -17880,7 +17880,7 @@ Type: BUG_FIX
 Priority: LOW
 Difficulty: TRIVIAL
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: PARTIAL
 Context:
   Files: server/services/chatTextNormalization.js, server/services/SwarmEngine.js
   Two related cleanup issues:

@@ -2104,3 +2104,74 @@ Stream-json canonical emission now correctly updates execution.chatMessages. TES
 ### Handoff
 TEST GATE #418 should verify the fix. Wave 1 also has TASK #419 (frontend, parallel).
 ---
+
+---
+## 2026-04-09 — Task #443: BUG-CHAT-SERVER-06 — registerNodePrompt type guard
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+ChatExtractor.js registerNodePrompt(nodeId, promptText) accepted any truthy value for promptText — objects, arrays, numbers would be coerced via String() producing nonsensical prompt words for echo detection.
+
+### What I did
+Added a type guard at the top of registerNodePrompt: `if (typeof promptText !== 'string' || !promptText) return;` followed by the existing nodeId check on a separate line.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/ChatExtractor.js | MODIFIED | Added string type guard to registerNodePrompt — rejects non-string and empty-string promptText before any processing |
+
+### Improvements delivered
+- Non-string truthy values (objects, arrays, numbers) no longer pollute the prompt word set with nonsensical entries
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Split the guard into two lines (typeof check first, then nodeId check) for clarity and to match the task spec exactly
+
+### What I learned
+- registerNodePrompt stores words for echo detection; garbage words reduce the accuracy of _isPromptEcho
+
+### State I'm leaving behind
+Fix is in place, all 490 server tests pass.
+
+### Handoff
+None — task fully self-contained.
+
+---
+## 2026-04-09 — Task #444: BUG-CHAT-SERVER-11/12 — CHAT_WORDS dedup
+**Status:** PARTIAL (BUG-CHAT-SERVER-11 done, BUG-CHAT-SERVER-12 deferred per instructions)
+**Called by:** orchestrator
+
+### Context when I started
+CHAT_WORDS array in chatTextNormalization.js had 549 entries with 25 duplicates across sections. Duplicates: durante, essere, suo, vita, attraverso, come, dopo, dove, erano, essere, fino, loro, meno, molto, nella, ogni, per, primo, quando, questo, senza, sua, suoi, tra, migliore.
+
+### What I did
+Wrote a Node script to process the array line by line, preserving comments and section structure, removing duplicate words (keeping first occurrence). Reduced from 549 to 524 unique entries.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/chatTextNormalization.js | MODIFIED | Removed 25 duplicate entries from CHAT_WORDS array, keeping first occurrence and preserving section comments |
+
+### Improvements delivered
+- CHAT_WORDS has zero duplicates (verified programmatically)
+- CHAT_WORD_SET construction is cleaner (no wasted Set insertions)
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Did NOT merge SwarmEngine.js word lists (BUG-CHAT-SERVER-12) — per task instructions, that's a bigger refactor not worth doing for LOW priority
+- Marked task as PARTIAL to reflect that only BUG-CHAT-SERVER-11 was addressed
+
+### What I learned
+- Duplicates were spread across 4 section blocks (history/geography, connectors, food/culture, common verbs) that reused words from earlier sections
+
+### State I'm leaving behind
+chatTextNormalization.js has 524 unique words, all tests pass. SwarmEngine.js still has its own copy (deferred).
+
+### Handoff
+BUG-CHAT-SERVER-12 (SwarmEngine word list merge) is deferred — a future task could import from chatTextNormalization.js if needed.
+---

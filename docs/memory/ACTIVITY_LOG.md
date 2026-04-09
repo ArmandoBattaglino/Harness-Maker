@@ -1,4 +1,25 @@
-﻿## 2026-04-09 — frontend-dev — Task #435: BUG-CHAT-CLIENT-10 — REST hydration canonical guard
+﻿## 2026-04-09 — documenter — Tasks #433, #435: V10.0 Waves 4+5 documentation audit
+**Outcome:** COMPLETED
+**Summary:** Audited all docs after Tasks #433 (chatTextNormalization.js 200-char DP cap) and #435 (useSwarm.js REST hydration canonicalReceived guard). Both changes are internal performance/correctness fixes with no API, architecture, or config impact. Updated DOC_STATUS.md timestamp and inline comments status. All other docs remain accurate.
+**Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** Wave 6 documentation audit when those tasks complete
+
+---
+
+## 2026-04-09 — project-manager — Waves 4+5 completion + Wave 6 launch
+**Outcome:** COMPLETED
+**Summary:** Marked #433 (BUG-CHAT-SERVER-07/08, DP performance cap 200 chars) and #435 (BUG-CHAT-CLIENT-10, REST hydration canonicalReceived guard) as COMPLETED. Updated counters to 424 COMPLETED/PASS, 22 PENDING. Wave 6 launching: #437 (scroll-lock) + #439 (unused import) + #441 (scroll reset) + #443 (registerNodePrompt guard) + #444 (CHAT_WORDS dedup) ALL PARALLEL.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none (status tracking only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** Wave 6: TASK #437 (frontend-dev) + TASK #439 (frontend-dev) + TASK #441 (frontend-dev) + TASK #443 (backend-dev) + TASK #444 (backend-dev) ALL PARALLEL
+
+---
+## 2026-04-09 — frontend-dev — Task #435: BUG-CHAT-CLIENT-10 — REST hydration canonical guard
 **Outcome:** COMPLETED
 **Summary:** Added canonicalReceived guard in useSwarm.js REST hydration loop. Assistant messages for nodes with canonicalReceived flag are now skipped during REST chatMessages injection, preventing stale text_delta fragments from re-appearing after canonical replacement. Client build clean (507 modules).
 **Files changed:** client/src/hooks/useSwarm.js, docs/TASK_PLAN.md
@@ -5531,4 +5552,15 @@ full self-contained context and acceptance criteria.
 **Decisions made:** ARCHITECTURE.md and API.md do not need updates for internal ChatExtractor buffer key change or defensive nodeId guard
 **Blockers:** none
 **Next:** nothing -- documentation current through V10.0 Wave 2
+---
+
+---
+## 2026-04-09 — frontend-dev — Task #437 + #439 + #441: LOW priority client chat bugs
+**Outcome:** COMPLETED
+**Summary:** Fixed three chat panel bugs: added scroll-lock to prevent auto-scroll when reading history (#437), removed unused repairAllTokenSpacing import (#439), and ensured scroll-to-bottom on mount after navigation (#441). Client build passes clean.
+**Files changed:** client/src/canvas/ChatPanel.jsx, client/src/canvas/ChatMessage.jsx, docs/TASK_PLAN.md
+**Bugs fixed:** BUG-CHAT-CLIENT-7, BUG-CHAT-CLIENT-9, BUG-CHAT-E2E-1
+**Decisions made:** 100px threshold for near-bottom detection; scrollTop assignment over scrollIntoView
+**Blockers:** none
+**Next:** TEST GATE tasks #438, #440, #442 for qa-tester
 ---

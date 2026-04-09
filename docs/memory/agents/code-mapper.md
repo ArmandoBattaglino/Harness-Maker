@@ -3792,3 +3792,49 @@ CODE_MAP and CHANGELOG are current through Tasks #417/#419. All function entries
 ### Handoff
 none — mapping task complete
 ---
+
+---
+## 2026-04-09 — Tasks #421+#423+#425: Wave 2, V10.0 code mapping
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task trio, parallel with PM + documenter)
+
+### Context when I started
+Wave 2 (V10.0) completed 3 tasks: #421 (ChatExtractor compound key refactor), #423 (useSwarm nodeId guard), #425 (ChatMessage rehype-sanitize). CODE_MAP and CHANGELOG were current through Tasks #417/#419.
+
+### What I did
+1. Read all 5 modified files: ChatExtractor.js, SwarmEngine.js (grep for ChatExtractor calls), useSwarm.js, ChatMessage.jsx, client/package.json
+2. Traced ChatExtractor caller chain in SwarmEngine.js (~20 call sites for feed/flush/resetBuffer/cleanup/registerNodePrompt/systemMessage)
+3. Updated CODE_MAP.md: header timestamp, module index (added ChatExtractor.js entry, added ChatMessage.jsx entry, updated useSwarm.js, updated SwarmEngine.js, updated client/package.json), added 8 new function graph entries covering all ChatExtractor methods + nodeId guard + ChatMessage
+4. Appended 3 CHANGELOG entries (one per task)
+5. Identified BREAKING CHANGE: resetBuffer signature changed from (nodeId) to (executionId, nodeId)
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Updated header, 5 module index entries, added 8 function graph entries |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended 3 task entries (#421, #423, #425) |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Global log entry |
+
+### Improvements delivered
+- ChatExtractor now fully mapped with individual function entries (was only mentioned in joint narrative section before)
+- ChatMessage.jsx now has a module index entry (was missing entirely)
+- BREAKING CHANGE on resetBuffer signature documented
+
+### Bugs I encountered
+None
+
+### Decisions I made
+- Added ChatExtractor as its own module index row rather than just updating the SwarmEngine description (it's a significant standalone class)
+- Added ChatMessage.jsx module index entry since it was missing
+
+### What I learned
+- ChatExtractor has ~20 call sites in SwarmEngine.js — the compound key refactor touched all of them
+- cleanupNode is a new method with no current callers (preemptive API)
+
+### State I'm leaving behind
+CODE_MAP and CHANGELOG are current through Tasks #421/#423/#425 (Wave 2, V10.0). All ChatExtractor methods have individual function graph entries.
+
+### Handoff
+none — mapping task complete
+---

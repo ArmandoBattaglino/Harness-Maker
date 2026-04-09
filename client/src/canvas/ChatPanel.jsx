@@ -16,7 +16,9 @@ export default function ChatPanel() {
   const workflowDef = useSwarmStore((s) => s.workflowDef);
   const activeExecutionId = useSwarmStore((s) => s.activeExecutionId);
   const executionStatus = useSwarmStore((s) => s.executionStatus);
+  const scrollContainerRef = useRef(null);
   const bottomRef = useRef(null);
+  const hasMountedRef = useRef(false);
   const [inputText, setInputText] = useState('');
   const [scope, setScope] = useState('all');
   const [mode, setMode] = useState('soft');
@@ -103,9 +105,21 @@ export default function ChatPanel() {
     return grouped;
   }, [filteredMessages, agentStates]);
 
-  // Auto-scroll to bottom on new messages
+  // On mount, scroll to bottom; on new messages, only scroll if user is near bottom
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    if (!hasMountedRef.current) {
+      // First mount — always scroll to bottom
+      el.scrollTop = el.scrollHeight;
+      hasMountedRef.current = true;
+    } else {
+      // Subsequent messages — only auto-scroll if user is near the bottom
+      const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+      if (isNearBottom) {
+        el.scrollTop = el.scrollHeight;
+      }
+    }
   }, [enrichedMessages.length]);
 
   // Sync scope with chatFilter — if filtering by agent, default scope to that agent
@@ -210,7 +224,7 @@ export default function ChatPanel() {
         </select>
         <span className="text-gray-600">{enrichedMessages.length}</span>
       </div>
-      <div className="flex-1 overflow-y-auto py-1 custom-scrollbar min-h-0">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto py-1 custom-scrollbar min-h-0">
         {enrichedMessages.map((msg, i) =>
           msg.role === 'hitl' ? (
             <HitlChatCard

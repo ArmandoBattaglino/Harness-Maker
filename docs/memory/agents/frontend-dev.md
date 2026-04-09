@@ -3260,3 +3260,48 @@ Both fixes applied, build clean. TEST GATES #430 and #432 should verify.
 ### Handoff
 qa-tester should run TEST GATE #430 and #432.
 ---
+
+---
+## 2026-04-09 — Task #437 + #439 + #441: LOW priority client chat bugs batch
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+ChatPanel.jsx had unconditional auto-scroll via `bottomRef.current?.scrollIntoView()` on every message count change. ChatMessage.jsx imported `repairAllTokenSpacing` but never called it.
+
+### What I did
+1. Task #437: Replaced the auto-scroll useEffect with scroll-lock logic — only auto-scrolls when user is within 100px of the bottom. Added `scrollContainerRef` on the scrollable container and `hasMountedRef` to track first mount.
+2. Task #439: Removed the unused `import { repairAllTokenSpacing }` line from ChatMessage.jsx.
+3. Task #441: Combined with #437 — on first mount, always scrolls to bottom; on subsequent messages, respects scroll-lock.
+4. Verified clean client build (`npm run build --prefix client`).
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/canvas/ChatPanel.jsx | MODIFIED | Added scrollContainerRef + hasMountedRef; replaced auto-scroll effect with scroll-lock pattern; attached ref to scroll container |
+| client/src/canvas/ChatMessage.jsx | MODIFIED | Removed unused repairAllTokenSpacing import |
+| docs/TASK_PLAN.md | MODIFIED | Marked #437, #439, #441 as COMPLETED |
+
+### Improvements delivered
+- Users can now read chat history without being forced to the bottom on every new message
+- Removed dead import reducing bundle warnings
+- Component remount scrolls to bottom correctly on initial load
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| None | — | — | — |
+
+### Decisions I made
+- Used 100px threshold for "near bottom" detection (matches task spec)
+- Used `scrollTop` assignment instead of `scrollIntoView` for more precise control
+
+### What I learned
+- The scroll container in ChatPanel is the `flex-1 overflow-y-auto` div, not the outer wrapper
+
+### State I'm leaving behind
+All three bugs fixed. Build passes. TEST GATE tasks #438, #440, #442 are next for qa-tester.
+
+### Handoff
+qa-tester should run TEST GATE #438 (scroll-lock), #440 (unused import), #442 (scroll reset).
+---
