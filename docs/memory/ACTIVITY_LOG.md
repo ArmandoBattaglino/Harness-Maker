@@ -5555,6 +5555,17 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
+## 2026-04-09 — code-mapper — Tasks #421+#423+#425 (Wave 2, V10.0)
+**Outcome:** COMPLETED
+**Summary:** Mapped Wave 2 V10.0 changes: ChatExtractor compound key refactor (#421), useSwarm nodeId guard (#423), ChatMessage rehype-sanitize (#425). Added ChatExtractor.js and ChatMessage.jsx to module index, created 8 new function graph entries. Documented BREAKING CHANGE on resetBuffer signature.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** Added ChatExtractor and ChatMessage as separate module index entries
+**Blockers:** none
+**Next:** nothing — mapping current through V10.0 Wave 2
+---
+
+---
 ## 2026-04-09 — frontend-dev — Task #437 + #439 + #441: LOW priority client chat bugs
 **Outcome:** COMPLETED
 **Summary:** Fixed three chat panel bugs: added scroll-lock to prevent auto-scroll when reading history (#437), removed unused repairAllTokenSpacing import (#439), and ensured scroll-to-bottom on mount after navigation (#441). Client build passes clean.
@@ -5563,4 +5574,25 @@ full self-contained context and acceptance criteria.
 **Decisions made:** 100px threshold for near-bottom detection; scrollTop assignment over scrollIntoView
 **Blockers:** none
 **Next:** TEST GATE tasks #438, #440, #442 for qa-tester
+---
+
+---
+## 2026-04-09 — backend-dev — Task #443: BUG-CHAT-SERVER-06 — registerNodePrompt type guard
+**Outcome:** COMPLETED
+**Summary:** Added string type guard to registerNodePrompt in ChatExtractor.js. Non-string truthy values no longer pollute prompt echo detection. All 490 server tests pass.
+**Files changed:** server/services/ChatExtractor.js
+**Bugs fixed:** BUG-CHAT-SERVER-06
+**Decisions made:** none
+**Blockers:** none
+**Next:** Wave 6 TEST GATE #445
+
+---
+## 2026-04-09 — backend-dev — Task #444: BUG-CHAT-SERVER-11/12 — CHAT_WORDS dedup
+**Outcome:** PARTIAL
+**Summary:** Removed 25 duplicate entries from CHAT_WORDS array in chatTextNormalization.js (549 -> 524 unique). BUG-CHAT-SERVER-12 (SwarmEngine word list merge) intentionally deferred per task scope.
+**Files changed:** server/services/chatTextNormalization.js
+**Bugs fixed:** BUG-CHAT-SERVER-11
+**Decisions made:** Deferred BUG-CHAT-SERVER-12 (SwarmEngine separate word list) — bigger refactor not justified for LOW priority
+**Blockers:** none
+**Next:** Wave 6 TEST GATE #445
 ---
