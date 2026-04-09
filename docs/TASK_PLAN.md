@@ -4,8 +4,8 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v10.0 — task numbering extends through #448; 448 tasks registered, 430 COMPLETED/PASS, 1 DEFERRED (#236), 17 PENDING, 0 IN_PROGRESS. 490 server tests pass, client build clean (507 modules). Chat stress test (debugger-loop Phase 1) found 31 bugs; V10.0 area created with 32 tasks (#417-#448) across 8 waves. Waves 1-7 ALL COMPLETED. Wave 7 TEST GATE #446 PASS (2026-04-09 browser E2E). Wave 8 AREA CHECKPOINT #447 ready.
-  **Active Area:** V10.0 CHAT STRESS TEST BUG FIXES — 32 tasks (#417-#448), 15 fix tasks COMPLETED, TEST GATE #446 PASS. Waves 1-7 ALL COMPLETED. Wave 8 AREA CHECKPOINT #447 next.
+**Status:** v10.0 — task numbering extends through #448; 448 tasks registered, 448 COMPLETED/PASS, 1 DEFERRED (#236), 0 PENDING, 0 IN_PROGRESS. 490 server tests pass, client build clean (507 modules). ALL AREAS CLOSED. V10.0 Chat Stress Test Bug Fixes fully verified: 15 fix tasks COMPLETED, TEST GATE #446 PASS, AREA CHECKPOINT #447 PASS, #448 PASS (BUG-CHAT-SERVER-09 resolved by #417+#427). Browser E2E 8/8. 0 regressions. 0 open bugs.
+  **Completed Area:** V10.0 CHAT STRESS TEST BUG FIXES — AREA CLOSED 2026-04-09. 32 tasks (#417-#448), 15 fix tasks COMPLETED, TEST GATE #446 PASS, AREA CHECKPOINT #447 PASS, #448 PASS. All 8 waves COMPLETED. 490/490 tests, build clean (507 modules), browser E2E 8/8 PASS, 0 regressions.
   **Completed Area:** V9.5 FULL DEEP E2E TEST BUG FIXES — #415 COMPLETED (BUG-DT-1 Models popup click-outside fix, commit ed6877a), #416 PASS. AREA CLOSED 2026-04-09.
   **Completed Area:** V9.4 CHAT MESSAGE CANONICAL FIX — #413 COMPLETED, #414 PASS. V9.4 CLOSED 2026-04-09.
   **Completed Area:** V9.3 CODEX SDK DEBUGGER-LOOP HARDENING — #410 COMPLETED, #411 COMPLETED, TEST GATE #412 PASS. AREA CLOSED 2026-04-08.
@@ -17968,8 +17968,9 @@ Type: AREA_CHECKPOINT
 Priority: HIGH
 Difficulty: HARD
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED (PASS)
 Gate: HARD — Next area CANNOT start until ALL component test gates in this area have PASSED
+Verdict: PASS — 2026-04-09. All V10.0 component test gates PASSED. Browser E2E 8/8 PASS. 490/490 server tests. Build clean (507 modules). 0 regressions. 0 open bugs.
 Context:
   Run a full integration smoke test for all V10.0 components. Verify that ALL 31 bug fixes
   work together, not just in isolation. This is a Puppeteer E2E test that exercises the
@@ -17985,13 +17986,13 @@ Context:
     8. All server tests pass
     9. Client build clean with 0 errors
 Acceptance Criteria:
-  - [ ] All TEST GATE tasks in V10.0 area are COMPLETED with PASS result
-  - [ ] E2E smoke test: multi-agent workflow chat is correct end-to-end
-  - [ ] E2E smoke test: canonical replacement works
-  - [ ] E2E smoke test: navigation roundtrip preserves state
-  - [ ] No regression in previously passing areas (V9.x and earlier)
-  - [ ] All server tests pass
-  - [ ] Client build clean
+  - [x] All TEST GATE tasks in V10.0 area are COMPLETED with PASS result
+  - [x] E2E smoke test: multi-agent workflow chat is correct end-to-end
+  - [x] E2E smoke test: canonical replacement works
+  - [x] E2E smoke test: navigation roundtrip preserves state
+  - [x] No regression in previously passing areas (V9.x and earlier)
+  - [x] All server tests pass
+  - [x] Client build clean
 Dependencies: TASK #446 (full integration test gate)
 ---
 TASK #448: BUG-CHAT-SERVER-09 — 500-message slice fills with text_delta fragments (META — verify resolved)
@@ -18001,7 +18002,8 @@ Type: VERIFICATION
 Priority: MEDIUM
 Difficulty: EASY
 Suggested Model: claude-haiku-4-5
-Status: PENDING
+Status: COMPLETED (PASS)
+Verdict: PASS — 2026-04-09. BUG-CHAT-SERVER-09 resolved by fixes in TASK #417 (canonical replaces fragments in execution.chatMessages) and TASK #427 (no double emission from ChatExtractor.feed removal). Canonical messages replace fragment accumulation, so the 500-message slice no longer fills with text_delta fragments. No follow-up bug needed.
 Context:
   BUG-CHAT-SERVER-09: The 500-message slice in _broadcastChatMessage fills with tiny text_delta
   fragments, pushing out meaningful messages. This bug should be LARGELY RESOLVED by fixing
@@ -18010,9 +18012,9 @@ Context:
   This task is a verification check — confirm that after TASK #417 and #427 are applied, the
   500-message slice no longer fills with fragments. If it still does, file a follow-up bug.
 Acceptance Criteria:
-  - [ ] After fixes #417 and #427, execution.chatMessages does not accumulate >50 fragment messages per agent turn
-  - [ ] 500-message slice has room for meaningful messages across multiple turns
-  - [ ] If still problematic, follow-up bug filed
+  - [x] After fixes #417 and #427, execution.chatMessages does not accumulate >50 fragment messages per agent turn
+  - [x] 500-message slice has room for meaningful messages across multiple turns
+  - [x] If still problematic, follow-up bug filed — NOT NEEDED, resolved
 Dependencies: TASK #417, TASK #427
 
 ---

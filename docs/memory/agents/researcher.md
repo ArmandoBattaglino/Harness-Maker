@@ -446,6 +446,59 @@ Architect/backend-dev should evaluate which approach fits best for the Swarm age
 ---
 
 ---
+## 2026-04-09 — Research: Anthropic SDK Streaming vs Claude CLI stream-json — Token Boundary Spacing
+**Status:** COMPLETED
+**Called by:** user (research request for BUG-CHAT-1 root cause analysis)
+
+### Context when I started
+Project has a known LOW-priority bug (BUG-CHAT-1): token-boundary spacing artifacts in stream-json output, e.g. "E m per or" instead of "Emperor", "con su ma t or e" instead of "consumatore". The project has built extensive normalization infrastructure (chatTextNormalization.js with 400+ dictionary words, repairTokenSpacing.js, repairWordFusion in ChatMessage.jsx) to work around this. The question: would using the Anthropic SDK (`@anthropic-ai/sdk`) directly instead of spawning Claude CLI produce clean text without these artifacts?
+
+### What I did
+1. Read project memory files (researcher.md, CONTEXT.md, DECISIONS.md)
+2. Fetched Anthropic Messages API streaming docs (platform.claude.com) — got complete event flow, text_delta format, and example SSE responses
+3. Fetched TypeScript SDK source (MessageStream.ts) — confirmed accumulation logic is raw concatenation with no normalization
+4. Fetched Agent SDK streaming docs (code.claude.com) — confirmed stream events are raw API events passed through
+5. Searched GitHub issues in anthropic-sdk-typescript for "text_delta spacing" — zero results found
+6. Fetched token counting docs — no details on BPE token boundary behavior
+7. Read project files: StreamJsonParser.js, SwarmEngine.js (result event handler), chatTextNormalization.js, repairTokenSpacing.js, ChatMessage.jsx, debugger.md (BUG-DL-TEXTDELTA-1 notes)
+8. Synthesized findings into research report
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/agents/researcher.md | MODIFIED | Added this session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Added activity entry |
+
+### Improvements delivered
+- Confirmed that the Anthropic Messages API delivers text_delta events at BPE token granularity — each delta is one or more tokens, and tokens routinely include leading/trailing whitespace as part of the token itself
+- Confirmed SDK does zero normalization — raw concatenation only
+- Confirmed Claude CLI stream-json is a thin wrapper around the same API events — no additional processing layer that could introduce artifacts
+- Identified the actual root cause chain: API text_delta -> CLI stream-json -> SwarmEngine chat_message WS broadcast -> client accumulator
+- Confirmed the `result` event in CLI stream-json contains the complete assembled text (properly formatted) — this is already used by the project as the canonical source (DEC-029, SwarmEngine line 5358)
+
+### Bugs I encountered
+None — research only.
+
+### Decisions I made
+None — research deliverable only.
+
+### What I learned
+- The Anthropic API text_delta events deliver text at BPE token granularity. Each delta.text string is one or more complete tokens. Tokens in BPE tokenizers frequently include leading spaces as part of the token (e.g., " Emperor" is one token, not "Emperor" with a separate space)
+- Simple concatenation of all delta.text values produces the complete, properly-formatted text — no normalization needed
+- The SDK (both TypeScript and Python) does exactly this: raw concatenation via `(snapshotContent.text || '') + event.delta.text`
+- No spacing issues have been reported in the SDK repos — zero GitHub issues about text_delta spacing
+- The token-boundary spacing problem in this project is NOT caused by the API or CLI — it is caused by intermediate layers: (a) each text_delta was broadcast as a separate WS chat_message event, (b) the client-side accumulator previously inserted '\n\n' between fragments (BUG-DL-TEXTDELTA-1, FIXED), (c) the remaining issue (BUG-CHAT-1) is likely residual from how small token fragments are displayed/re-rendered in the React chat view before the canonical result text arrives
+- The CLI's `result` event contains complete assembled text — this is the definitive source and is already used by SwarmEngine
+- Using the Anthropic SDK directly would produce the SAME text_delta events — the SDK is just an HTTP client to the same API. No quality difference.
+
+### State I'm leaving behind
+Research report delivered. Key finding: the Anthropic SDK would NOT solve the token-boundary spacing issue because the issue is not in the API or CLI — it is in the project's intermediate WS broadcast and client-side accumulation layers. The `result` event canonical text path (already implemented) is the correct solution.
+
+### Handoff
+None — research task fully self-contained. The team should focus optimization efforts on the client-side streaming accumulation path rather than considering an SDK migration.
+---
+
+---
 ## 2026-04-08 — Research D: Claude CLI Session File Management
 **Status:** COMPLETED
 **Called by:** orchestrator (session cleanup and version tracking research)

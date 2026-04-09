@@ -1,4 +1,15 @@
-﻿## 2026-04-09 — qa-tester — Task #446: TEST GATE — V10.0 Full Chat Integration
+﻿## 2026-04-09 — researcher — Research: Anthropic SDK Streaming vs CLI stream-json Token Boundary Spacing
+**Outcome:** COMPLETED
+**Summary:** Researched whether using @anthropic-ai/sdk directly instead of Claude CLI stream-json would eliminate token-boundary spacing artifacts (BUG-CHAT-1). Finding: the API delivers text_delta at BPE token granularity; simple concatenation produces correct text. The SDK does raw concatenation with zero normalization. Zero GitHub issues about spacing. The spacing problem is NOT in the API/CLI layer — it is in the project's WS broadcast + client accumulation layers. The existing result-event canonical text path is the correct solution.
+**Files changed:** docs/memory/agents/researcher.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (research only)
+**Decisions made:** none
+**Blockers:** none
+**Next:** If further optimization is desired, focus on the client-side streaming accumulation path (how text_delta fragments are displayed before the canonical result arrives), not SDK migration.
+
+---
+
+## 2026-04-09 — qa-tester — Task #446: TEST GATE — V10.0 Full Chat Integration
 **Outcome:** COMPLETED (PASS)
 **Summary:** Full browser E2E verification via Puppeteer MCP against localhost:3000. 8/8 tests passed: (1) Generate+Run multi-agent workflow, (2) chat content clean with no duplicates, (3) chat filtering works correctly, (4) scroll at bottom after execution, (5) node snippets show real content, (6) navigation persistence works (BUG-CHAT-E2E-1 fix), (7) reset+second workflow state isolation, (8) XSS sanitization active. Known: token-boundary spacing (BUG-CHAT-1, LOW, platform limitation) still present in Italian text.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/qa-tester.md

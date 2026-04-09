@@ -1,7 +1,7 @@
 // client/src/panels/AgentOutputPanel.jsx
 // Side panel showing clean semantic output of a specific agent node,
 // its handoff data, and copy-to-clipboard functionality.
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useSwarmStore } from '../store/SwarmContext';
 import { stripAnsi } from '../utils/stripAnsi';
 import ReactMarkdown from 'react-markdown';
@@ -142,9 +142,12 @@ export default function AgentOutputPanel({ nodeId, nodeLabel, onClose, onSwitchT
   const [activeTab, setActiveTab] = useState('output');
   const [copyLabel, setCopyLabel] = useState('Copy');
 
-  // Mark viewed on mount
+  const contentRef = useRef(null);
+
+  // Mark viewed on mount and scroll to top
   useEffect(() => {
     if (nodeId) markViewed(nodeId);
+    if (contentRef.current) contentRef.current.scrollTop = 0;
   }, [nodeId, markViewed]);
 
   // Reset tab if handoffs disappear
@@ -202,7 +205,7 @@ export default function AgentOutputPanel({ nodeId, nodeLabel, onClose, onSwitchT
       </div>
 
       {/* Content area */}
-      <div className="flex-1 overflow-y-auto min-h-0">
+      <div ref={contentRef} className="flex-1 overflow-y-auto min-h-0">
         {activeTab === 'output' && (
           <div className="prose prose-invert prose-sm max-w-none text-xs">
             {finalText ? (

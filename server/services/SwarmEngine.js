@@ -19,6 +19,7 @@ import {
 } from './CodexSdkAdapter.js';
 import { discoverCodexBinary, discoverGeminiBinary } from './BinaryDiscovery.js';
 import { ChatExtractor } from './ChatExtractor.js';
+import { normalizeChatDisplayText } from './chatTextNormalization.js';
 import { buildWorkflowArtifact } from './WorkflowArtifactBuilder.js';
 
 // tree-kill is CommonJS only — use createRequire to import it (DEC-006)
@@ -5349,22 +5350,33 @@ class SwarmEngine {
       return;
     }
 
-    // 4b. Replace streamed text_delta accumulation with canonical result text.
-    // Claude CLI text_delta tokens carry tokenizer whitespace (e.g. " con", " su", "ma", " t",
-    // "or", " e") that produces "con su ma t or e" instead of "consumatore" when concatenated.
-    // The result event's `result` field contains the correctly assembled text.
+    // 4b. Build canonical chat text from the best available source.
+    // The CLI result field often strips markdown formatting (newlines, **bold**);
+    // the accumulated text_delta text preserves it but has token-boundary spacing
+    // artifacts (e.g. "E m per or" instead of "Emperor"). We pick whichever source
+    // has richer formatting, strip __HANDOFF__ tokens, and normalize spacing.
     if (resultEvt.resultText) {
-      state._streamJsonAccumulatedText = resultEvt.resultText;
-      state.lastOutputSnippet = resultEvt.resultText.length > 200
-        ? resultEvt.resultText.slice(-200)
-        : resultEvt.resultText;
+      const rawAccumulated = (state._streamJsonAccumulatedText ?? '').replace(/__HANDOFF__[\s\S]*/g, '').replace(/__DONE__/g, '').trimEnd();
+      const rawResult = (resultEvt.resultText ?? '').replace(/__HANDOFF__[\s\S]*/g, '').replace(/__DONE__/g, '').trimEnd();
+      // Prefer accumulated text if it has significantly more newlines (markdown formatting)
+      const accNewlines = (rawAccumulated.match(/\n/g) || []).length;
+      const resNewlines = (rawResult.match(/\n/g) || []).length;
+      const rawCanonical = rawAccumulated && accNewlines > resNewlines + 2
+        ? rawAccumulated
+        : rawResult;
+      const canonicalText = normalizeChatDisplayText(rawCanonical);
+
+      state._streamJsonAccumulatedText = canonicalText;
+      state.lastOutputSnippet = canonicalText.length > 200
+        ? canonicalText.slice(-200)
+        : canonicalText;
       // Broadcast corrective chat_message with canonical text to replace streamed fragments
       if (this._wsBroadcast) {
         this._wsBroadcast(executionId, {
           type: 'chat_message',
           nodeId,
           role: 'assistant',
-          text: resultEvt.resultText,
+          text: canonicalText,
           timestamp: Date.now(),
           isCanonical: true,
         });
@@ -5377,7 +5389,7 @@ class SwarmEngine {
       prevMessages.push({
         nodeId,
         role: 'assistant',
-        text: resultEvt.resultText,
+        text: canonicalText,
         timestamp: Date.now(),
       });
       execution.chatMessages = prevMessages.slice(-500);

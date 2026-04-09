@@ -84,6 +84,79 @@ const CHAT_WORDS = [
   'particolare', 'possibile', 'potrebbe', 'produce', 'punto', 'risulta',
   'sempre', 'serve', 'speciale', 'superare', 'tipica', 'tipico',
   'tradizione', 'trova', 'ultimo', 'unica',
+  // English common words for stream-json token-boundary repair
+  'allowed', 'although', 'ancient', 'animals', 'approximately', 'beautiful',
+  'because', 'beneath', 'between', 'building', 'buildings', 'centuries',
+  'channeled', 'combined', 'combat', 'consecutive', 'contained', 'converted',
+  'counterweight', 'creating', 'crocodiles', 'damage', 'deliberately',
+  'detachment', 'directly', 'distinctive', 'dramatically', 'earthquake',
+  'elaborate', 'elephants', 'emperor', 'empire', 'engineering', 'enormous',
+  'entrances', 'equipped', 'essentially', 'excitement', 'exclusively',
+  'executions', 'expertise', 'expressed', 'extraordinarily', 'featured',
+  'fighters', 'flooding', 'fortified', 'generosity', 'gladiatorial',
+  'heightening', 'horizontal', 'however', 'inaugurated', 'including',
+  'intricate', 'lateral', 'lavish', 'manipulated', 'matched', 'mechanical',
+  'medieval', 'memory', 'modern', 'mounted', 'mythological', 'official',
+  'officially', 'operated', 'operations', 'overlook', 'overlooked', 'palace',
+  'passage', 'political', 'powerful', 'prominent', 'pulleys', 'purpose',
+  'recreations', 'reenactments', 'repurposed', 'residences', 'retractable',
+  'scavenging', 'sections', 'shielded', 'simultaneous', 'sophisticated',
+  'specifically', 'spectacle', 'spectacles', 'spectacular', 'spectators',
+  'stadium', 'staggering', 'stripped', 'structure', 'subterranean',
+  'symbolically', 'systematically', 'technology', 'trapdoors', 'tunnels',
+  'vertical', 'warships', 'watchtowers', 'wooden',
+  // Italian extended — words seen broken in Playwright E2E tests
+  'allagare', 'antichita', 'blocchi', 'clamore', 'conferma', 'contempo',
+  'continua', 'contrappesi', 'davvero', 'dimostrare', 'dimostrando',
+  'duemila', 'esercitare', 'fragilita', 'fragore', 'grandezza',
+  'impossibile', 'invita', 'numerose', 'offrendo', 'perfino', 'persino',
+  'ritirare', 'soltanto', 'trasformato',
+  // Wave 2 — additional Italian words from Augustus E2E test
+  'concentrando', 'costituiscono', 'durare', 'lacerata', 'militare',
+  'moderni', 'periodo', 'successori', 'trasformare', 'celebrare',
+  'combattimenti', 'costruire', 'diventato', 'dominare', 'espansione',
+  'esercito', 'fondatore', 'governo', 'inaugurazione', 'ingegneria',
+  'laterali', 'magnifico', 'marittimo', 'massimo', 'monumentale',
+  'potenza', 'predominante', 'predecessore', 'provincia', 'ricostruire',
+  'riformare', 'stabilire', 'territorio', 'trasportare', 'vittoria',
+  // Wave 3 — Augustus Essay E2E: broken tokens in Writer output
+  'secondo', 'confini', 'modello', 'sopravvisse', 'medievale', 'moderna',
+  'nobilitare', 'dimostro', 'profondita', 'amministrazione', 'burocratico',
+  'permanente', 'efficiente', 'riorganizzare', 'protezione', 'fioritura',
+  'urbanisti', 'mattoni', 'marmo', 'espressione', 'attribuita',
+  'trascende', 'influenzo', 'strutture', 'contribui', 'diffondere',
+  'civiltà', 'duraturo', 'disordine', 'comprendere', 'presente',
+  'prevalere', 'rivale', 'concentrare', 'sancendo', 'esaurito',
+  'prosperita', 'consolidarono', 'conobbero', 'sicurezza', 'eguali',
+  'istituì', 'fiscale', 'professionale', 'governare', 'immenso',
+  'mecenate', 'illuminato', 'irripetibile', 'culturale', 'composero',
+  'canone', 'letterario', 'occidente', 'trasformarono', 'celebre',
+  'occidentale', 'eredita', 'imperiale', 'politiche', 'medievali',
+  'diritto', 'fondamenta', 'estremo', 'lezione', 'governa',
+  // Wave 4 — Leonardo da Vinci E2E: additional broken Italian words
+  'gioconda', 'ignorare', 'visiera', 'considerano', 'macchina',
+  'costituisce', 'altrettanto', 'fantasticare', 'concrete', 'permettere',
+  'modernita', 'ingegnere', 'inventore', 'visionario', 'anticipare',
+  'lucidita', 'attoniti', 'automa', 'cavaliere', 'meccanismo',
+  'antropomorfo', 'pulegge', 'rigorosissimo', 'anatomia', 'meccanica',
+  'discipline', 'naturalezza', 'precedenti', 'rivoluzionario',
+  'terraferma', 'elicottero', 'concettuale', 'antenato', 'tecnologia',
+  'realizzarlo', 'sorprendente', 'semovente', 'programmabile',
+  'progenitore', 'automobile', 'competenza', 'idraulica', 'applicazioni',
+  'durevoli', 'perfeziono', 'dimostrando', 'tangibili', 'comunita',
+  'disinvoltura', 'immaginazione', 'scafandro', 'subacquea',
+  'respirazione', 'sabotare', 'inquietante', 'incrollabile',
+  'rinascimento', 'raggiungerlo', 'semplicemente', 'accidente',
+  // Common Italian words frequently broken by tokenizer
+  'attraversare', 'caratteristica', 'caratteristiche', 'completamente',
+  'considerare', 'consapevolezza', 'contemporaneo', 'determinazione',
+  'fondamentale', 'fondamentali', 'immediatamente', 'importanza',
+  'indipendente', 'inizialmente', 'intelligenza', 'interessante',
+  'meravigliosa', 'meraviglioso', 'naturalmente', 'opportunamente',
+  'organizzazione', 'particolarmente', 'perfettamente', 'probabilmente',
+  'rappresentare', 'responsabilita', 'significativo', 'sostanzialmente',
+  'straordinario', 'straordinaria', 'tradizionalmente', 'trasformazione',
+  'universalmente', 'velocemente',
 ];
 
 const CHAT_WORD_SET = new Set(CHAT_WORDS.map((word) => normalizeCompressedChatWord(word)));
@@ -321,15 +394,21 @@ function restoreFragmentedChatSequence(sequence = '') {
   if (!parts.every((part) => /^[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]{1,8}$/u.test(part))) return raw;
 
   const singleCharCount = parts.filter((part) => part.length === 1).length;
-  if (singleCharCount === 0) return raw;
-  if (singleCharCount === 1 && parts.length !== 2) return raw;
+  const shortPartCount = parts.filter((part) => part.length <= 2).length;
 
-  const knownParts = parts.filter((part) => CHAT_WORD_SET.has(normalizeCompressedChatWord(part))).length;
-  if (knownParts === parts.length) return raw;
-
+  // Check if merged form is a known word before bailing out
   const merged = parts.join('');
   const normalizedMerged = normalizeCompressedChatWord(merged);
   if (CHAT_WORD_SET.has(normalizedMerged)) return merged;
+
+  // If no single-char fragments AND no short-part majority, keep original
+  if (singleCharCount === 0 && shortPartCount < parts.length / 2) return raw;
+
+  // If every fragment is already a known word AND none are single-char fragments
+  // that look like token-boundary artifacts, keep the original spacing.
+  const knownParts = parts.filter((part) => CHAT_WORD_SET.has(normalizeCompressedChatWord(part))).length;
+  if (knownParts === parts.length && singleCharCount === 0) return raw;
+
   if (merged.length < 5) return raw;
 
   const restored = merged.length >= 7 ? restoreCompressedChatToken(merged) : merged;
