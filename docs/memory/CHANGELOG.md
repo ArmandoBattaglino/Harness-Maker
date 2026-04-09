@@ -4310,3 +4310,42 @@ No new connections introduced in this checkpoint task. All connection changes we
 - Existing same-turn canonical replacement behavior is preserved; only the scope changed from node-wide to turn-wide
 
 ---
+---
+## 2026-04-09 — Tasks #491, #492, #493: V10.8 Visual/E2E stability
+**Agent:** qa-tester / backend-dev — mapped by code-mapper
+**Triggered by:** Three V10.8 tasks addressing screenshot determinism, Codex handoff E2E harness reliability, and a cross-harness stale-server guard.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| scripts/swarm-visual-regression.mjs | MODIFIED | Added normalizeHarnessLayout(), warnIfServerStale(), fetchHealthData(); 6 PNG baselines regenerated at 682 px |
+| scripts/swarm-codex-handoff-e2e.mjs | MODIFIED | 3 bug fixes: added preflightWorkflowCheck(); changed startIsolatedServer() to spawn node server/index.js directly; acquireServer() isolated mode always resets appdata |
+| tests/visual/swarm/README.md | MODIFIED | Documentation updated for Task #492 changes |
+| tests/visual/swarm/baselines/*.png | MODIFIED | 6 PNG baseline files regenerated (682 px width, sidePanelOpen=true default) |
+| scripts/check-server-freshness.mjs | ADDED | New standalone CLI guard utility — exit codes 0/1/2, --warn-only flag |
+| scripts/swarm-e2e-chat-check.mjs | MODIFIED | Added inline checkServerFreshness() function called at start of main() |
+| package.json | MODIFIED | Added check:server-freshness and check:server-freshness:warn npm scripts |
+
+### Functions Added
+- `normalizeHarnessLayout(page)` in `scripts/swarm-visual-regression.mjs` — forward-guard that closes the Chat/Activity rail and collapses NodePalette before every screenshot, preventing future layout-default changes from silently re-introducing dimension drift
+- `warnIfServerStale(healthUptime, healthVersion)` in `scripts/swarm-visual-regression.mjs` — warn-only freshness check for reused-server mode in visual regression harness
+- `fetchHealthData()` in `scripts/swarm-visual-regression.mjs` — /health fetcher with 5 s timeout for the visual regression harness
+- `preflightWorkflowCheck(fixture)` in `scripts/swarm-codex-handoff-e2e.mjs` — validates fixture workflow is present in server before browser opens; injects via POST if absent
+- `main()`, `collectMtimes(dir)`, `fetchHealth(url)`, `formatDuration(seconds)`, `argValue(flag)` in `scripts/check-server-freshness.mjs` — new standalone stale-server guard CLI (all functions are new)
+- `checkServerFreshness()` in `scripts/swarm-e2e-chat-check.mjs` — inline freshness guard at start of E2E chat check run
+
+### Functions Modified
+- `startIsolatedServer()` in `scripts/swarm-codex-handoff-e2e.mjs` — spawn target changed from npm run start to node server/index.js (eliminates 60-120 s Vite rebuild)
+- `acquireServer(fixture)` in `scripts/swarm-codex-handoff-e2e.mjs` — isolated mode now always resets appdata instead of reusing a running server; removed early isServerHealthy() reuse path
+
+### Connection Changes
+- acquireServer() in swarm-visual-regression.mjs now calls fetchHealthData() and warnIfServerStale() on the reused-server path
+- acquireServer(fixture) in swarm-codex-handoff-e2e.mjs now calls preflightWorkflowCheck(fixture) on the reuse-server path
+- checkServerFreshness() in swarm-e2e-chat-check.mjs is called as the first step in main()
+
+### Impact on Other Code
+- No breaking changes to any server or client code
+- Baseline PNGs changed: any external tool expecting the old 1018 px baselines will see mismatches until updated
+- package.json gained 2 new scripts; existing scripts unchanged
+
+---

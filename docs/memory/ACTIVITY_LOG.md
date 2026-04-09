@@ -1,3 +1,34 @@
+## 2026-04-09 — qa-tester — Task #494: TEST GATE V10.8 full client verification pack
+**Outcome:** COMPLETED (PASS)
+**Summary:** Full verification pack passed. npm test --prefix server 501/501, npm test --prefix client 52/52, npm run build --prefix client 507 modules 0 errors, check-server-freshness exit-2 on unreachable port confirmed, all 4 harness scripts syntax-valid, 6 visual regression baselines present, all integration points (normalizeHarnessLayout, preflightWorkflowCheck, warnIfServerStale, checkServerFreshness) confirmed in code. Minor: npm script name in criterion ('test:e2e:swarm:codex-handoff') doesn't match registered name ('debug:swarm:codex-handoff') — by design per #492, CI gate is server suite.
+**Files changed:** docs/TASK_PLAN.md (status update), docs/memory/agents/qa-tester.md
+**Bugs fixed:** none
+**Decisions made:** Accept criterion as PASS because functional CI gate (501/501) covers Codex handoff contract; script name mismatch is documentation gap not a functional failure
+**Blockers:** none
+**Next:** Task #495 (AREA CHECKPOINT V10.8) — now unblocked
+
+---
+## 2026-04-09 — documenter — V10.8 set #491+#492+#493 documentation update
+**Outcome:** COMPLETED
+**Summary:** Updated README.md with corrected test counts (501/501 server, 52/52 client, 507 modules) and new "Stale Server Guard" subsection documenting check:server-freshness npm scripts, env vars, and exit codes. Updated DOC_STATUS.md header, README health row, and added V10.8 wave entry to the history table. No ARCHITECTURE.md or API.md changes needed — all V10.8 changes were test infrastructure only.
+**Files changed:** README.md, docs/memory/DOC_STATUS.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** Task #494 (TEST GATE — V10.8 full client verification pack)
+
+---
+
+## 2026-04-09 — project-manager — V10.8 set #491+#492+#493 post-completion sync
+**Outcome:** COMPLETED
+**Summary:** Confirmed and documented completion of the V10.8 implementation trio. #491 fixed visual regression determinism (normalizeHarnessLayout, 682px baselines), #492 stabilized Codex handoff E2E harness (preflight check, direct node spawn, stale isolation), #493 added stale-server guard (check-server-freshness.mjs integrated into two scripts). TASK_PLAN.md V10.8 header updated to reflect all three as COMPLETED. PROGRESS.md prepended with summary entry.
+**Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none (housekeeping)
+**Decisions made:** none
+**Blockers:** none
+**Next:** TASK #494 (TEST GATE — V10.8 full client verification pack) — qa-tester. All three dependencies (#491, #492, #493) now COMPLETED, gate is unblocked.
+
+---
 ## 2026-04-09 — devops — Task #493: BUG-TEST-CLIENT-03 — Guard against stale local server drift
 **Outcome:** COMPLETED
 **Summary:** Created scripts/check-server-freshness.mjs — a standalone guard utility that fetches /health uptime and scans server/ source mtimes to detect when a running server is behind the working tree. Integrated inline freshness check into swarm-e2e-chat-check.mjs (the highest-risk script — always targets port 3000). Added warnIfServerStale() to swarm-visual-regression.mjs reused-server path. Added two npm scripts: check:server-freshness and check:server-freshness:warn.
@@ -5964,4 +5995,14 @@ full self-contained context and acceptance criteria.
 **Decisions made:** Regenerate baselines to match current app truth rather than freezing to old defaults
 **Blockers:** none
 **Next:** V10.8 #492 (Codex handoff E2E harness), #493 (stale-server guard), #494 (TEST GATE), #495 (AREA CHECKPOINT)
+---
+---
+## 2026-04-09 — code-mapper — Tasks #491, #492, #493: V10.8 Visual/E2E stability mapping
+**Outcome:** COMPLETED
+**Summary:** Mapped 12 new/modified functions across 5 files introduced by the V10.8 trio. New file check-server-freshness.mjs added 5 functions. swarm-visual-regression.mjs gained normalizeHarnessLayout, warnIfServerStale, fetchHealthData. swarm-codex-handoff-e2e.mjs gained preflightWorkflowCheck and had startIsolatedServer + acquireServer modified. swarm-e2e-chat-check.mjs gained checkServerFreshness inline.
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** Task #494 TEST GATE (qa-tester)
 ---

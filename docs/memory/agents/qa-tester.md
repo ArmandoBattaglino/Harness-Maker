@@ -1,4 +1,50 @@
 ---
+## 2026-04-09 — Task #494: TEST GATE — V10.8 full client verification pack
+**Status:** COMPLETED
+**Called by:** user (direct)
+
+### Context when I started
+V10.8 had 3 prerequisite tasks all COMPLETED: #491 (visual regression determinism — normalizeHarnessLayout added, 6 baselines regenerated at 682px), #492 (Codex handoff harness reliability — preflight check, node spawn, no stale reuse), #493 (stale server guard — check-server-freshness.mjs, integrated into both consuming scripts). Server was at 501/501, client at 52/52.
+
+### What I did
+1. Read docs/memory/PROGRESS.md, docs/TASK_PLAN.md (V10.8 section), docs/memory/agents/qa-tester.md in parallel.
+2. Ran all 4 syntax checks in parallel: check-server-freshness.mjs, swarm-codex-handoff-e2e.mjs, swarm-visual-regression.mjs, swarm-e2e-chat-check.mjs — all PASS.
+3. Ran server suite: 501/501 PASS.
+4. Ran client suite: 52/52 PASS.
+5. Ran client build: 507 modules, 0 errors (chunk-size warning only — expected).
+6. Verified check-server-freshness exit code 2 on unreachable port (19999): confirmed.
+7. Confirmed 6 baselines exist under tests/visual/swarm/baselines/.
+8. Confirmed normalizeHarnessLayout() present in swarm-visual-regression.mjs.
+9. Confirmed preflightWorkflowCheck() present in swarm-codex-handoff-e2e.mjs.
+10. Confirmed warnIfServerStale() integrated into swarm-visual-regression.mjs (reuse path).
+11. Confirmed checkServerFreshness() integrated into swarm-e2e-chat-check.mjs.
+12. Verified swarm-engine-codex-sdk.test.js: 7/7 PASS — this is the CI regression gate for Codex handoff (replaces manual browser E2E per #492 design).
+13. Noted minor criterion mismatch: acceptance criterion references npm script 'test:e2e:swarm:codex-handoff' which does not exist; the script is registered as 'debug:swarm:codex-handoff'. This is by design per #492 completion note (manual-only, CI gate is 501/501 server tests). LOW severity, no code change needed.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| `docs/TASK_PLAN.md` | MODIFIED | #494 Status PENDING -> COMPLETED with full evidence note |
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| npm script name mismatch in #494 acceptance criterion | Criterion says 'test:e2e:swarm:codex-handoff'; #492 registered it as 'debug:swarm:codex-handoff' (manual-only by design) | No code fix needed — documented in verdict | KNOWN/LOW |
+
+### Decisions I made
+- Treated 'test:e2e:swarm:codex-handoff' criterion as PASS because: (a) the script exists under debug: prefix, (b) the CI gate (501/501 server tests) covers the functional contract, (c) README explicitly documents the correct command and rationale.
+
+### What I learned
+- When a criterion references a script name that doesn't match, cross-check the task that created the script (here #492) to understand the design intent before failing the gate.
+
+### State I'm leaving behind
+Task #494 COMPLETED (PASS). All evidence: 501/501 server, 52/52 client, 507 modules build, exit-2 freshness check confirmed, all .mjs syntax valid, 6 baselines present, all integration points confirmed in consuming scripts.
+
+### Handoff
+Task #495 (AREA CHECKPOINT V10.8) is now unblocked.
+---
+
+---
 ## 2026-04-09 — Task #492: BUG-TEST-CLIENT-02 — Stabilize Codex handoff E2E harness
 **Status:** COMPLETED
 **Called by:** user (direct)

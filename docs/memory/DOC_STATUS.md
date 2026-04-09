@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-09 after Task #479: BUG-BLOCKER-UI-02 — 3 surgical fixes in server/services/SwarmEngine.js: (1) `_normalizeSnippetLine` regex extended to cover Dingbat block U+2700–U+27BF; (2) `_handleRuntimeBlocker` uses clean blocker message for `provider_unavailable` instead of sanitize-first; (3) `stopExecution` cleanup loop now clears `state.pinnedDisplaySnippet`. Server test suite: 501/501 passing, client build: 507 modules, 0 errors._
+_Last updated: 2026-04-09 after V10.8 set (#491+#492+#493): visual regression baselines regenerated at 682px, normalizeHarnessLayout() added, Codex handoff harness stabilized (3 bug fixes), stale server guard added (scripts/check-server-freshness.mjs + check:server-freshness npm scripts). Server: 501/501 passing, client: 52/52, build: 507 modules._
 
 ## Release Status
 **v9.0.0 — V9.0 Stream-JSON Agent Migration CLOSED for core semantics, display fidelity FIXED**
@@ -60,7 +60,7 @@ _Last updated: 2026-04-09 after Task #479: BUG-BLOCKER-UI-02 — 3 surgical fixe
 
 | Document | Status | Last Updated | Notes |
 |----------|--------|--------------|-------|
-| README.md | UP_TO_DATE | 2026-04-09 | Test count updated to 501/501; Codex Handoff Debug Probe subsection added under Visual Regression. |
+| README.md | UP_TO_DATE | 2026-04-09 | Test counts updated to 501/501 server + 52/52 client, 507 modules. Stale Server Guard subsection added (check:server-freshness scripts + env var table). |
 | CLAUDE.md | UP_TO_DATE | 2026-04-08 | Updated with DEC-027/028/029 runtime constraints, `--tools` guidance, truthful blocker rule for Claude stream-json failures, and `write-file-atomic` correction. |
 | docs/ARCHITECTURE.md | PARTIAL | 2026-04-09 | V5 component tree still deferred (12 components). Section 13.1 updated: ChatExtractor NOT used for Claude stream-json OR Codex SDK agents (BUG-CHAT-SERVER-02 double emission fix, Task #427). Section 13.4 step 10 updated: stream-json text_delta broadcasts chat_message directly, not via ChatExtractor. Remaining V9.0 components (#361-#393) listed as pending in 13.7. |
 | docs/PRD.md | UP_TO_DATE | 2026-04-08 | Rewritten to v6.0: Stream-JSON Agent Migration. 12 component specs, 27 FRs, 7 SEC-SJ-* requirements. |
@@ -97,6 +97,20 @@ _Last updated: 2026-04-09 after Task #479: BUG-BLOCKER-UI-02 — 3 surgical fixe
 | ARCHITECTURE.md Section 13 (V9.0 stream-json) | MEDIUM | Section 13.2-13.6 done (StreamJsonParser + spawner + result handler). Remaining components (#361-#393) need entries as implemented. |
 | docs/ARCHITECTURE.md Section 13 closure sweep | MEDIUM | Runtime landed and V9.0 is closed, but the narrative note still describes #361-#393 as pending work |
 | API.md V9.0 WS events | DONE | Resolved 2026-04-08: all V9.0 WS events documented including isCanonical chat_message |
+
+## V10.8 Test Infrastructure Set — Tasks #491+#492+#493 (2026-04-09)
+
+Three tasks completed. All changes are test infrastructure and tooling — no production server or client source modified.
+
+| Task | Type | File(s) | Change Summary | Doc Impact |
+|------|------|---------|----------------|------------|
+| #491 | IMPROVEMENT | tests/visual/swarm/swarm-visual-regression.mjs, tests/visual/swarm/baselines/ | `normalizeHarnessLayout()` added; baselines regenerated at correct 682px viewport (replacing stale 1018px baselines) | None — internal harness helper |
+| #492 | BUG FIX (×3) | tests/visual/swarm/swarm-codex-handoff-e2e.mjs, tests/visual/swarm/README.md | Codex handoff harness stabilized: 3 bug fixes; README updated with harness modes, preflight check notes, and sandbox fallback | tests/visual/swarm/README.md already up to date |
+| #493 | NEW FEATURE | scripts/check-server-freshness.mjs (NEW), scripts/swarm-e2e-chat-check.mjs, scripts/swarm-visual-regression.mjs, package.json | Stale server guard added: new script + `check:server-freshness` / `check:server-freshness:warn` npm scripts; warnings integrated into swarm E2E harnesses | README.md updated — new "Stale Server Guard" subsection + env var table |
+
+**Documentation impact:** README.md updated with test counts (501/501 server, 52/52 client, 507 modules), new Stale Server Guard subsection, and `check:server-freshness` / `check:server-freshness:warn` command reference. tests/visual/swarm/README.md was updated by the implementing agent in Task #492 — verified accurate.
+
+---
 
 ## V3.1 Bug Fix Wave — ALL FIXED (2026-04-02)
 

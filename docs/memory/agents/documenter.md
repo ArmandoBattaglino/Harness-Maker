@@ -3797,3 +3797,121 @@ DOC_STATUS.md fully up to date. All public docs remain accurate.
 ### Handoff
 None — task fully self-contained.
 ---
+
+---
+## 2026-04-09 — Task #491+#492+#493: V10.8 Test Infrastructure Set Documentation
+**Status:** COMPLETED
+**Called by:** user (orchestrator)
+
+### Context when I started
+V10.8 three-task set had just completed: visual regression baselines regenerated (#491), Codex handoff harness stabilized (#492), stale server guard added (#493). README.md had stale test counts and was missing the new `check:server-freshness` scripts. DOC_STATUS.md header referenced Task #479.
+
+### What I did
+1. Read README.md, DOC_STATUS.md (partial), scripts/check-server-freshness.mjs, tests/visual/swarm/README.md, package.json scripts section in parallel.
+2. Confirmed no changes to production server/client source — all V10.8 changes were test harness and tooling files.
+3. Updated README.md: corrected version header test counts (501/501 server, 52/52 client, 507 modules) and added "Stale Server Guard" subsection under Visual Regression with npm command examples, env var table, and exit code reference.
+4. Updated DOC_STATUS.md: updated header timestamp, updated README.md health row, appended V10.8 wave history table entry.
+5. Appended ACTIVITY_LOG.md entry.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| README.md | MODIFIED | Test counts corrected; Stale Server Guard subsection added |
+| docs/memory/DOC_STATUS.md | MODIFIED | Header updated, README row updated, V10.8 history entry appended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Documenter session entry prepended |
+
+### Improvements delivered
+- README now documents check:server-freshness commands so developers know to validate server freshness before trusting test results against a long-running local instance.
+- DOC_STATUS.md history table records all three V10.8 tasks with doc impact notes.
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- No ARCHITECTURE.md or API.md update needed — V10.8 touched only test harness files and a new script under scripts/; no production endpoints, components, or env vars changed.
+- tests/visual/swarm/README.md was already updated by the implementing agent in Task #492; confirmed accurate, no change needed from documenter.
+
+### What I learned
+- V10.8 is entirely test infrastructure — the only user-visible surface is the two new npm scripts in package.json.
+- The stale server guard script has its own env var set (SERVER_FRESHNESS_*) that are distinct from the main PORT/IDLE_TIMEOUT vars; these belong in the README under a separate sub-table rather than the main Configuration table.
+
+### State I'm leaving behind
+README.md and DOC_STATUS.md are fully current for V10.8. Next pending task is #494 (TEST GATE for V10.8 full client verification pack) assigned to qa-tester.
+
+### Handoff
+None — task fully self-contained.
+---
+
+---
+## 2026-04-09 — Task #491+#492+#493: V10.8 Test Infrastructure Set Documentation
+**Status:** COMPLETED
+**Called by:** user (orchestrator)
+
+### Context when I started
+V10.8 three-task set had just completed: visual regression baselines regenerated (#491), Codex handoff harness stabilized (#492), stale server guard added (#493). README.md had stale test counts and was missing the new check:server-freshness scripts. DOC_STATUS.md header referenced Task #479.
+
+### What I did
+1. Read README.md, DOC_STATUS.md (partial), scripts/check-server-freshness.mjs, tests/visual/swarm/README.md, package.json scripts section in parallel.
+2. Confirmed no changes to production server/client source — all V10.8 changes were test harness and tooling files.
+3. Updated README.md: corrected version header test counts (501/501 server, 52/52 client, 507 modules) and added "Stale Server Guard" subsection under Visual Regression with npm command examples, env var table, and exit code reference.
+4. Updated DOC_STATUS.md: updated header timestamp, updated README.md health row, appended V10.8 wave history table entry.
+5. Appended ACTIVITY_LOG.md entry.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| README.md | MODIFIED | Test counts corrected; Stale Server Guard subsection added |
+| docs/memory/DOC_STATUS.md | MODIFIED | Header updated, README row updated, V10.8 history entry appended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Documenter session entry prepended |
+
+### Improvements delivered
+- README now documents check:server-freshness commands so developers know to validate server freshness before trusting test results.
+- DOC_STATUS.md history table records all three V10.8 tasks with doc impact notes.
+
+### Decisions I made
+- No ARCHITECTURE.md or API.md update needed — V10.8 touched only test harness files and a new script under scripts/; no production endpoints, components, or env vars changed.
+- tests/visual/swarm/README.md was already updated by the implementing agent in Task #492; confirmed accurate.
+
+### State I'm leaving behind
+README.md and DOC_STATUS.md are fully current for V10.8. Next pending task is #494 (TEST GATE for V10.8 full client verification pack).
+
+### Handoff
+None — task fully self-contained.
+---
+
+---
+## 2026-04-09 — Task #491+#492+#493: V10.8 Test Infrastructure Set Documentation
+**Status:** COMPLETED
+**Called by:** user (orchestrator)
+
+### Context when I started
+V10.8 three-task set had just completed: visual regression baselines regenerated (#491), Codex handoff harness stabilized (#492), stale server guard added (#493). README.md had stale test counts and was missing the new check:server-freshness scripts. DOC_STATUS.md header referenced Task #479.
+
+### What I did
+1. Read README.md, DOC_STATUS.md (partial), scripts/check-server-freshness.mjs, tests/visual/swarm/README.md, and package.json scripts section in parallel.
+2. Confirmed no production server/client source changed — all V10.8 changes were test harness and tooling files.
+3. Updated README.md: corrected version header test counts (501/501 server, 52/52 client, 507 modules) and added Stale Server Guard subsection under Visual Regression with npm command examples, env var table, and exit codes.
+4. Updated DOC_STATUS.md: updated header timestamp, updated README.md health row, appended V10.8 wave history table entry.
+5. Appended ACTIVITY_LOG.md entry.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| README.md | MODIFIED | Test counts corrected; Stale Server Guard subsection added |
+| docs/memory/DOC_STATUS.md | MODIFIED | Header updated, README row updated, V10.8 history entry appended |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Documenter session entry prepended |
+
+### Improvements delivered
+- README now documents check:server-freshness commands.
+- DOC_STATUS.md history table records all three V10.8 tasks with accurate doc impact notes.
+
+### Decisions I made
+- No ARCHITECTURE.md or API.md update needed: V10.8 touched only test harness files and scripts/; no production endpoints, components, or env vars changed.
+- tests/visual/swarm/README.md was already updated by the implementing agent in Task #492; confirmed accurate.
+
+### State I'm leaving behind
+README.md and DOC_STATUS.md are fully current for V10.8. Next pending task is #494 (TEST GATE) assigned to qa-tester.
+
+### Handoff
+None — task fully self-contained.
+---

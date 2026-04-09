@@ -1,6 +1,6 @@
 # Claude Code Visual Manager
 
-**Current Version: v9.0.0** - V9.0 Stream-JSON migration closed, 501/501 server tests passing. Root/client build clean at 501 modules.
+**Current Version: v9.0.0** - V9.0 Stream-JSON migration closed, 501/501 server tests passing, 52/52 client tests passing. Root/client build clean at 507 modules.
 
 A locally-hosted web application that provides a graphical interface for the Claude Code CLI. Run Claude Code sessions in a live browser terminal, submit background jobs, design multi-agent workflows, and manage agents, skills, and `CLAUDE.md` files from one app.
 
@@ -159,6 +159,30 @@ npm run test:visual:swarm:reuse
 ```
 
 More details live in [tests/visual/swarm/README.md](/C:/Users/arman/Downloads/Test%20workflows%20-%20Copia/tests/visual/swarm/README.md).
+
+### Stale Server Guard
+
+Before running any browser-based verification against a pre-existing local server, check whether that server is serving current code:
+
+```bash
+npm run check:server-freshness
+```
+
+The script fetches `/health`, reads process uptime, and scans `server/` source file mtimes. It exits `1` (blocking) if the server started before the most-recent source change or if uptime exceeds 30 minutes. To warn without blocking:
+
+```bash
+npm run check:server-freshness:warn
+```
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SERVER_FRESHNESS_URL` | `http://127.0.0.1:3000` | Target server base URL |
+| `SERVER_FRESHNESS_THRESHOLD_MINUTES` | `30` | Uptime threshold for unconditional stale warning |
+| `SERVER_FRESHNESS_WARN_ONLY` | unset | Set to `1` to warn but not exit 1 |
+
+Exit codes: `0` fresh, `1` stale (strict mode), `2` server unreachable.
+
+---
 
 ### Codex Handoff Debug Probe
 

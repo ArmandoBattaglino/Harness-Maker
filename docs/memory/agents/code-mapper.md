@@ -4065,3 +4065,51 @@ CODE_MAP and CHANGELOG are current through Tasks #421/#423/#425 (Wave 2, V10.0).
 ### Handoff
 none — mapping task complete
 ---
+---
+## 2026-04-09 — Tasks #491, #492, #493: V10.8 Visual/E2E stability mapping
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task trio, parallel with PM + documenter)
+
+### Context when I started
+V10.8 area landed 3 tasks: #491 (screenshot determinism), #492 (Codex handoff E2E harness stabilization), #493 (stale-server guard). CODE_MAP and CHANGELOG were current through Task #444. Tasks #491-#493 added a new script file and modified 3 existing ones plus package.json.
+
+### What I did
+1. Read check-server-freshness.mjs in full (new file, 269 lines)
+2. Read swarm-visual-regression.mjs in full (650 lines) — identified normalizeHarnessLayout, warnIfServerStale, fetchHealthData as new functions; acquireServer modified to call them
+3. Read swarm-codex-handoff-e2e.mjs in full (530 lines) — identified preflightWorkflowCheck as new; startIsolatedServer and acquireServer modified
+4. Read swarm-e2e-chat-check.mjs lines 1-220 — identified checkServerFreshness as new inline function
+5. Confirmed package.json gained 2 scripts (check:server-freshness, check:server-freshness:warn)
+6. Checked TASK_PLAN.md tail — already updated by project-manager
+7. Appended 12 function entries to CODE_MAP.md under UPDATE 2026-04-09 header
+8. Appended single consolidated CHANGELOG entry covering all 3 tasks
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CODE_MAP.md | MODIFIED | Appended 12 function graph entries for Tasks #491-#493 |
+| docs/memory/CHANGELOG.md | MODIFIED | Appended consolidated entry for Tasks #491, #492, #493 |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Global log entry |
+
+### Improvements delivered
+- All 12 new/modified functions from the V10.8 set are now mapped with callers, callees, inputs, outputs, side effects
+- check-server-freshness.mjs is fully documented (new file — 5 functions)
+- normalizeHarnessLayout root-cause note captured (1018 px vs 682 px drift explanation)
+
+### Bugs I encountered
+None
+
+### Decisions I made
+- Used Node.js script to append content (bash heredoc failed due to single-quote conflicts in content)
+- Consolidated the 3 tasks into a single CHANGELOG entry (all tasks share a common theme and were delivered together)
+
+### What I learned
+- warnIfServerStale in swarm-visual-regression.mjs and checkServerFreshness in swarm-e2e-chat-check.mjs duplicate almost identical logic from check-server-freshness.mjs — they were implemented inline for zero-dependency reasons; the standalone CLI is for CI pipelines
+- swarm-codex-handoff-e2e.mjs acquireServer now never reuses a running server in isolated mode; this is intentional to prevent silent fixture-mismatch failures
+
+### State I'm leaving behind
+CODE_MAP and CHANGELOG are current through Tasks #491/#492/#493 (V10.8). Pending tasks: #494 (TEST GATE), #495 (AREA CHECKPOINT).
+
+### Handoff
+none — mapping task complete
+---

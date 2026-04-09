@@ -3976,3 +3976,113 @@ _All bugs identified in QA Swarm Inspection (2026-03-31) and Swarm Code Audit (2
 - **Derived constants:** `CHAT_WORD_SET = new Set(CHAT_WORDS.map(...))`, `CHAT_WORD_MAX_LEN = CHAT_WORDS.reduce(...)`
 - **Consumed by:** splitKnownWordSequence, restoreCompressedChatToken, restoreCompressedChatTokenGreedy, aggressivelyRestoreLongChatToken (all via CHAT_WORD_SET.has())
 - **Last modified:** 2026-04-09 in Task #444 by backend-dev (removed 25 duplicate entries — no behavioral change since Set already deduped)
+
+# UPDATE 2026-04-09 — Tasks #491, #492, #493 (V10.8 Visual/E2E stability)
+
+### `scripts/swarm-visual-regression.mjs` :: `normalizeHarnessLayout(page)`
+- **Purpose:** Ensures the Swarm canvas is in a deterministic layout state before every screenshot capture. Closes the Chat/Activity side rail if visible and collapses the NodePalette if expanded. Resolves the 1018 px to 682 px width drift caused by sidePanelOpen defaulting to true in a later commit, which added the 336 px Chat/Activity rail.
+- **Called by:** `openSwarm(page)` (in the same file, called before every test-case capture)
+- **Calls:** Playwright page.getByRole, page.getByTitle, isVisible, click, sleep
+- **Inputs:** page (Playwright Page instance)
+- **Output:** Promise<void>
+- **Side effects:** May click UI buttons to dismiss panels; silently no-ops if buttons are absent
+- **Last modified:** 2026-04-09 in Task #491 by qa-tester/backend-dev
+
+### `scripts/swarm-visual-regression.mjs` :: `warnIfServerStale(healthUptime, healthVersion)`
+- **Purpose:** Inline freshness check for the visual-regression harness. Called from acquireServer() when a reused server is detected. Compares server uptime against a configurable threshold and the mtime of the newest source file under server/. Emits console warnings only — never aborts the regression run.
+- **Called by:** `acquireServer()` (in the same file, when isServerHealthy() returns true on the reused path)
+- **Calls:** fs.readdir, fs.stat, internal walkMtimes(dir) closure
+- **Inputs:** healthUptime (number — uptime in seconds from /health), healthVersion (string or undefined — server version from /health)
+- **Output:** Promise<void>
+- **Side effects:** console.warn output if server is stale; no process.exit
+- **Last modified:** 2026-04-09 in Task #493 by backend-dev
+
+### `scripts/swarm-visual-regression.mjs` :: `fetchHealthData()`
+- **Purpose:** Fetches /health from baseUrl with a 5 s abort timeout. Returns parsed JSON or null on error.
+- **Called by:** `acquireServer()` (reused-server branch, to pass uptime/version to warnIfServerStale)
+- **Calls:** fetch, AbortController
+- **Inputs:** none (reads module-level baseUrl)
+- **Output:** Promise<{status,version,uptime}|null>
+- **Side effects:** none
+- **Last modified:** 2026-04-09 in Task #493 by backend-dev
+
+### `scripts/swarm-codex-handoff-e2e.mjs` :: `preflightWorkflowCheck(fixture)`
+- **Purpose:** Verifies that the target server already has the fixture workflow loaded before the browser opens. If absent, injects it via POST /api/v1/workflows. Surfaces the misconfiguration early with a clear error message instead of failing later with an opaque Swarm UI error.
+- **Called by:** `acquireServer(fixture)` (reuse-server branch only)
+- **Calls:** fetch GET /api/v1/workflows/:id, fetch POST /api/v1/workflows
+- **Inputs:** fixture (object — parsed codex-handoff-long.json fixture)
+- **Output:** Promise<void>
+- **Side effects:** May POST a new workflow record to the running server
+- **Last modified:** 2026-04-09 in Task #492 by backend-dev (new function — preflight check)
+
+### `scripts/swarm-codex-handoff-e2e.mjs` :: `startIsolatedServer()` — direct node spawn (Task #492)
+- **Purpose:** Spawns an isolated server instance for the Codex handoff E2E harness. Task #492 changed the spawn command from npm run start (which triggered a full Vite rebuild taking 60-120 s) to node server/index.js directly, skipping the rebuild since server/public already contains a compiled client.
+- **Called by:** `acquireServer(fixture)`
+- **Calls:** spawn, waitForHealth, ensureDir
+- **Inputs:** none (reads module-level port, repoRoot, appDataRoot)
+- **Output:** Promise<ChildProcess>
+- **Side effects:** spawns child process, pipes stdout/stderr to log files under tests/visual/swarm/artifacts/
+- **Last modified:** 2026-04-09 in Task #492 by backend-dev (changed spawn target from npm run start to node server/index.js)
+
+### `scripts/swarm-codex-handoff-e2e.mjs` :: `acquireServer(fixture)` — isolated mode always resets (Task #492)
+- **Purpose:** Controls server lifecycle for the Codex handoff E2E harness. Task #492 changed isolated mode so it always resets app-data and spawns a fresh server, even if a server already happens to be alive on the port. This prevents silent test failures when a pre-existing server was started with different app-data lacking the fixture workflow.
+- **Called by:** `run()`
+- **Calls:** resetHarnessAppData, isServerHealthy, preflightWorkflowCheck, startIsolatedServer
+- **Inputs:** fixture (object)
+- **Output:** Promise<ChildProcess|null>
+- **Side effects:** may wipe and recreate appDataRoot; may spawn child process
+- **Last modified:** 2026-04-09 in Task #492 by backend-dev (removed early-reuse path from isolated mode)
+
+### `scripts/check-server-freshness.mjs` :: `main()`
+- **Purpose:** Entry point for the standalone stale-server guard CLI. Probes /health, scans server/ source file mtimes, compares against server start time (now minus uptime). Exits 0 (fresh), 1 (stale and strict mode), or 2 (server unreachable). Respects --warn-only flag and SERVER_FRESHNESS_WARN_ONLY env var.
+- **Called by:** entry point (top-level main().catch(...)); invoked via npm run check:server-freshness or npm run check:server-freshness:warn
+- **Calls:** fetchHealth, collectMtimes, formatDuration, process.exit
+- **Inputs:** none (reads CLI args and env vars at module scope)
+- **Output:** void (terminates process with exit code 0/1/2)
+- **Side effects:** console.log/warn/error output; process.exit
+- **Last modified:** 2026-04-09 in Task #493 by backend-dev (new file)
+
+### `scripts/check-server-freshness.mjs` :: `collectMtimes(dir)`
+- **Purpose:** Recursively walks a directory tree, skipping entries in SOURCE_SCAN_EXCLUDES and files without SOURCE_EXTENSIONS. Returns an array of mtime timestamps (ms since epoch) for all matching files.
+- **Called by:** `main()` (once per dir in SOURCE_SCAN_DIRS)
+- **Calls:** fs.readdir, fs.stat, recursive self-call
+- **Inputs:** dir (string — absolute directory path)
+- **Output:** Promise<number[]>
+- **Side effects:** none (read-only fs access)
+- **Last modified:** 2026-04-09 in Task #493 by backend-dev (new file)
+
+### `scripts/check-server-freshness.mjs` :: `fetchHealth(url)`
+- **Purpose:** Fetches <url>/health with a 5 s timeout. Returns parsed JSON {status, version, uptime} or null if unreachable or non-OK.
+- **Called by:** `main()`
+- **Calls:** fetch, AbortController, clearTimeout
+- **Inputs:** url (string — base URL)
+- **Output:** Promise<{status:string, version:string, uptime:number}|null>
+- **Side effects:** none
+- **Last modified:** 2026-04-09 in Task #493 by backend-dev (new file)
+
+### `scripts/check-server-freshness.mjs` :: `formatDuration(seconds)`
+- **Purpose:** Converts a duration in seconds to a human-readable string (Ns, Nm, or Nh Nm).
+- **Called by:** `main()`
+- **Calls:** none
+- **Inputs:** seconds (number)
+- **Output:** string
+- **Side effects:** none
+- **Last modified:** 2026-04-09 in Task #493 by backend-dev (new file)
+
+### `scripts/check-server-freshness.mjs` :: `argValue(flag)`
+- **Purpose:** Minimal CLI arg parser — returns the value immediately following flag in process.argv, or null if absent.
+- **Called by:** module-level initialization (reads --url, --threshold)
+- **Calls:** none
+- **Inputs:** flag (string — e.g. --url)
+- **Output:** string|null
+- **Side effects:** none
+- **Last modified:** 2026-04-09 in Task #493 by backend-dev (new file)
+
+### `scripts/swarm-e2e-chat-check.mjs` :: `checkServerFreshness()` (Task #493)
+- **Purpose:** Inline freshness guard for the swarm E2E chat check harness. Fetches /health, checks uptime threshold and source mtime, emits warnings to console but never aborts the run. Skippable via SWARM_E2E_SKIP_FRESHNESS_CHECK=1.
+- **Called by:** `main()` at the start of the run (first call after ensureArtifactsDir())
+- **Calls:** fetch, AbortController, fs.readdir, fs.stat, internal walkMtimes(dir) closure
+- **Inputs:** none (reads baseUrl, env vars SWARM_E2E_SKIP_FRESHNESS_CHECK and SWARM_E2E_FRESHNESS_THRESHOLD_MINUTES)
+- **Output:** Promise<void>
+- **Side effects:** console.warn output if server is stale; no process.exit
+- **Last modified:** 2026-04-09 in Task #493 by backend-dev (new function added to existing file)

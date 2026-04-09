@@ -1,4 +1,47 @@
 ---
+## 2026-04-09 — V10.8 set #491+#492+#493 post-completion sync
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+V10.8 CLIENT FULL DEEP TEST FOLLOW-UP was in progress. The user confirmed all three implementation tasks completed: #491 (visual regression determinism), #492 (Codex handoff E2E harness), #493 (stale-server guard). Tests at 501/501 server, 52/52 client, build 507 modules clean. TASK_PLAN.md V10.8 header still showed #493 as PENDING (stale). PROGRESS.md and ACTIVITY_LOG.md needed a sync entry for the trio.
+
+### What I did
+1. Read TASK_PLAN.md (V10.8 section), PROGRESS.md, ACTIVITY_LOG.md in parallel.
+2. Confirmed TASK #491, #492, #493 entries already show `Status: COMPLETED` in the task body — only the V10.8 header line was stale.
+3. Updated V10.8 header in TASK_PLAN.md: added #493 to COMPLETED list, removed it from Remaining PENDING.
+4. Prepended PROGRESS.md with a PM sync summary entry covering the full #491+#492+#493 trio.
+5. Prepended ACTIVITY_LOG.md with a PM sync entry.
+6. Updated this agent memory file.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/TASK_PLAN.md | MODIFIED | V10.8 header: #493 moved to COMPLETED, Remaining PENDING now shows only #494+#495 |
+| docs/memory/PROGRESS.md | MODIFIED | Prepended PM sync summary for #491+#492+#493 trio |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Prepended PM sync entry |
+| docs/memory/agents/project-manager.md | MODIFIED | This session appended |
+
+### Improvements delivered
+- TASK_PLAN.md V10.8 header now accurately reflects that 4 of 6 tasks (#491, #492, #493, #496) are COMPLETED.
+- PROGRESS.md has a single summary line for the full #491+#492+#493 set, making V10.8 status readable at a glance.
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Updated the V10.8 header line rather than adding a new status block — the header is the canonical one-line summary of area progress per project convention.
+
+### What I learned
+- When multiple tasks complete in a batch, the TASK_PLAN.md header line is the most commonly stale artifact — individual task entries (Status: field) are updated by the executing agent, but the header summary is only updated by the PM.
+
+### State I'm leaving behind
+V10.8 V10.8 state: #491 COMPLETED, #492 COMPLETED, #493 COMPLETED, #496 COMPLETED. Remaining: TASK #494 (TEST GATE, qa-tester) + TASK #495 (AREA CHECKPOINT, qa-tester). All three dependencies of #494 are now COMPLETED — gate is fully unblocked.
+
+### Handoff
+Assign TASK #494 (TEST GATE — V10.8 full client verification pack) to qa-tester. Dependencies #491, #492, #493 are all COMPLETED.
+
+---
 ## 2026-04-09 — Tasks #476 + #479: V10.6 post-session sync
 **Status:** COMPLETED
 **Called by:** user
