@@ -4250,7 +4250,37 @@ class SwarmEngine {
       throw new Error(`Workflow ${workflowId} has no startable nodes`);
     }
 
-    // 5. Start each entry node. This supports parallel fan-out workflows where
+    // 5. Pre-register fan-in barriers for all convergence targets so
+    // _syncExecutionStatusFromAgents knows the workflow is not yet complete
+    // even before any handoff fires.
+    const edges = wf.edges ?? [];
+    const allNodes = wf.nodes ?? [];
+    for (const node of allNodes) {
+      if (this._isFlowControlNode(node)) continue;
+      const incomingSources = new Set(
+        edges.filter((e) => e.target === node.id).map((e) => e.source).filter(Boolean)
+      );
+      if (incomingSources.size > 1) {
+        execution.agentInputBarriers.set(node.id, {
+          required: incomingSources.size,
+          received: new Set(),
+        });
+        if (!execution.agentStates.has(node.id)) {
+          const label = node.data?.label || node.id;
+          execution.agentStates.set(node.id, {
+            status: 'waiting',
+            lastOutputSnippet: `Waiting for upstream inputs 0/${incomingSources.size}`,
+            label,
+            nodeId: node.id,
+            sessionId: null,
+            provider: null,
+            runtimeProvider: null,
+          });
+        }
+      }
+    }
+
+    // 6. Start each entry node. This supports parallel fan-out workflows where
     // multiple branches intentionally begin at the same time and converge later.
     for (const startNode of startNodes) {
       if (this._isFlowControlNode(startNode)) {
@@ -4262,7 +4292,7 @@ class SwarmEngine {
       }
     }
 
-    // 6. Start heartbeat to keep agent PTYs alive
+    // 7. Start heartbeat to keep agent PTYs alive
     this._startHeartbeat(executionId);
 
     this._broadcastExecutionSnapshot(execution);
