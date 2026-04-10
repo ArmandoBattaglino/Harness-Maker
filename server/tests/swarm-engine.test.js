@@ -5325,4 +5325,212 @@ describe('SwarmEngine', () => {
       expect(result2.pairCount).toBe(10);
     });
   });
+
+  // -------------------------------------------------------------------------
+  // Test 14: V11.3 HITL Runtime Trigger
+  // __HITL__ token detection, system prompt injection, freezeAgent via token,
+  // resumeAfterHitl, and canonical text stripping.
+  // -------------------------------------------------------------------------
+  describe('Test 14: V11.3 HITL Runtime Trigger', () => {
+    it('should include __HITL__ token in system prompt when mode is hitl', async () => {
+      const wf = buildTwoNodeWorkflow();
+      wf.settings = { ...wf.settings, mode: 'hitl' };
+      workflowStoreMock.get.mockResolvedValue(wf);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const execution = engine._executions.get(executionId);
+      const node = wf.nodes[0];
+      const handoffTargets = ['node-b'];
+
+      const prompt = engine._buildSystemPrompt(node, execution.workflowContext, handoffTargets, null, {
+        execution,
+      });
+
+      expect(prompt).toContain('__HITL__');
+      expect(prompt).toContain('HITL');
+      expect(prompt).toContain('human');
+    });
+
+    it('should NOT include __HITL__ token in system prompt when mode is autonomous', async () => {
+      const wf = buildTwoNodeWorkflow();
+      wf.settings = { ...wf.settings, mode: 'autonomous' };
+      workflowStoreMock.get.mockResolvedValue(wf);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const execution = engine._executions.get(executionId);
+      const node = wf.nodes[0];
+      const handoffTargets = ['node-b'];
+
+      const prompt = engine._buildSystemPrompt(node, execution.workflowContext, handoffTargets, null, {
+        execution,
+      });
+
+      expect(prompt).not.toContain('__HITL__');
+    });
+
+    it('should NOT include __HITL__ token when mode is not set (defaults to autonomous)', async () => {
+      const wf = buildTwoNodeWorkflow();
+      workflowStoreMock.get.mockResolvedValue(wf);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const execution = engine._executions.get(executionId);
+      const node = wf.nodes[0];
+
+      const prompt = engine._buildSystemPrompt(node, execution.workflowContext, ['node-b'], null, {
+        execution,
+      });
+
+      expect(prompt).not.toContain('__HITL__');
+    });
+
+    it('should call freezeAgent when _handleStreamJsonResult detects __HITL__ token in hitl mode', async () => {
+      const wf = buildTwoNodeWorkflow();
+      wf.settings = { ...wf.settings, mode: 'hitl' };
+      workflowStoreMock.get.mockResolvedValue(wf);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const execution = engine._executions.get(executionId);
+
+      // Simulate an agent state with stream-json accumulated text containing __HITL__
+      execution.agentStates.set('node-a', {
+        status: 'running',
+        spawnMode: 'stream-json',
+        turnCount: 0,
+        _streamJsonAccumulatedText: 'I need your help with something.\n__HITL__:{"question":"What color should the logo be?"}',
+        _streamJsonChild: null,
+        _streamJsonPostResultTimer: null,
+        _stderrChunks: [],
+        _pendingStreamJsonStopMode: null,
+        doNotSpawnNextTurn: false,
+        streamJsonSessionId: 'test-session',
+        runtimeProvider: 'claude',
+        provider: 'claude',
+      });
+
+      wsBroadcast.mockClear();
+
+      engine._handleStreamJsonResult(executionId, 'node-a', {
+        type: 'result',
+        resultText: 'I need your help with something.\n__HITL__:{"question":"What color should the logo be?"}',
+        isError: false,
+        costUsd: 0.01,
+        inputTokens: 100,
+        outputTokens: 50,
+        durationMs: 1000,
+      }, ['node-b']);
+
+      // Agent should be paused
+      expect(execution.agentStates.get('node-a').status).toBe('paused');
+
+      // Inbox item should be created
+      expect(execution.inboxItems.length).toBeGreaterThan(0);
+      const hitlItem = execution.inboxItems.find(i => i.type === 'user_requested');
+      expect(hitlItem).toBeDefined();
+      expect(hitlItem.reason).toBe('What color should the logo be?');
+
+      // hitl_required WS event should be broadcast
+      const events = wsBroadcast.mock.calls.map(([, ev]) => ev);
+      const hitlEvent = events.find(e => e.type === 'hitl_required');
+      expect(hitlEvent).toBeDefined();
+      expect(hitlEvent.nodeId).toBe('node-a');
+    });
+
+    it('should NOT freeze when __HITL__ token is present but mode is NOT hitl', async () => {
+      const wf = buildTwoNodeWorkflow();
+      wf.settings = { ...wf.settings, mode: 'autonomous' };
+      workflowStoreMock.get.mockResolvedValue(wf);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const execution = engine._executions.get(executionId);
+
+      execution.agentStates.set('node-a', {
+        status: 'running',
+        spawnMode: 'stream-json',
+        turnCount: 0,
+        _streamJsonAccumulatedText: 'Some text\n__HITL__:{"question":"ignored"}',
+        _streamJsonChild: null,
+        _streamJsonPostResultTimer: null,
+        _stderrChunks: [],
+        _pendingStreamJsonStopMode: null,
+        doNotSpawnNextTurn: false,
+        streamJsonSessionId: 'test-session',
+        runtimeProvider: 'claude',
+        provider: 'claude',
+      });
+
+      wsBroadcast.mockClear();
+
+      engine._handleStreamJsonResult(executionId, 'node-a', {
+        type: 'result',
+        resultText: 'Some text\n__HITL__:{"question":"ignored"}',
+        isError: false,
+        costUsd: 0,
+        inputTokens: 0,
+        outputTokens: 0,
+        durationMs: 0,
+      }, []);
+
+      // Agent should NOT be paused — it should go to done (no handoff targets, no handoff token)
+      expect(execution.agentStates.get('node-a').status).not.toBe('paused');
+    });
+
+    it('should strip __HITL__ tokens from canonical chat text', () => {
+      const text = 'Here is my analysis.\n__HITL__:{"question":"Do you approve?"}\nMore text';
+      const result = engine._buildStructuredAssistantChatFallback(text);
+      expect(result).not.toContain('__HITL__');
+      expect(result).toContain('Here is my analysis');
+    });
+
+    it('resumeAfterHitl should set agent status to running for stream-json agents', async () => {
+      const wf = buildTwoNodeWorkflow();
+      wf.settings = { ...wf.settings, mode: 'hitl' };
+      workflowStoreMock.get.mockResolvedValue(wf);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const execution = engine._executions.get(executionId);
+
+      // Set up a paused stream-json agent state
+      execution.agentStates.set('node-a', {
+        status: 'paused',
+        spawnMode: 'stream-json',
+        turnCount: 1,
+        streamJsonSessionId: 'test-session',
+        sessionId: null,
+        runtimeProvider: 'claude',
+        provider: 'claude',
+      });
+
+      wsBroadcast.mockClear();
+
+      await engine.resumeAfterHitl(executionId, 'node-a', 'Use blue for the logo');
+
+      // Agent status should be set to running (before spawn)
+      // Note: spawn is mocked so it won't change status further
+      const state = execution.agentStates.get('node-a');
+      expect(state.status).toBe('running');
+    });
+
+    it('unfreezeAgent should set status back to running and broadcast agent_status', async () => {
+      const wf = buildTwoNodeWorkflow();
+      workflowStoreMock.get.mockResolvedValue(wf);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const execution = engine._executions.get(executionId);
+
+      // Freeze first
+      engine.freezeAgent(executionId, 'node-a', { id: 'hitl-test', reason: 'test' });
+      expect(execution.agentStates.get('node-a').status).toBe('paused');
+
+      wsBroadcast.mockClear();
+
+      // Unfreeze
+      engine.unfreezeAgent(executionId, 'node-a');
+      expect(execution.agentStates.get('node-a').status).toBe('running');
+
+      const events = wsBroadcast.mock.calls.map(([, ev]) => ev);
+      const statusEvent = events.find(e => e.type === 'agent_status' && e.nodeId === 'node-a');
+      expect(statusEvent).toBeDefined();
+      expect(statusEvent.status).toBe('running');
+    });
+  });
 });

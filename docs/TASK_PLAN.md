@@ -4,7 +4,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v11.2 — task numbering extends through #520. V11.2 COST & TOKEN DETAIL VISIBILITY is IN PROGRESS (#517-#520). V11.1 REPETITIVE HANDOFF LOOP DETECTION is CLOSED (improvement linked to V11.0). All tasks #511-#516 COMPLETED/PASS. 521/521 server tests, client build clean. V11.0 AGENT INTELLIGENCE REENGINEERING is CLOSED. All prior areas (V10.2 through V10.8, V11.0) remain CLOSED.
+**Status:** v12.0 — task numbering extends through #535. V12.0 FAN-IN WORKFLOW FIX is IN PROGRESS (#528-#535). V11.3 HITL RUNTIME TRIGGER is IN PROGRESS (#521-#527). V11.2 COST & TOKEN DETAIL VISIBILITY is PENDING (#517-#520). V11.1 REPETITIVE HANDOFF LOOP DETECTION is CLOSED (improvement linked to V11.0). All tasks #511-#516 COMPLETED/PASS. V11.0 AGENT INTELLIGENCE REENGINEERING is CLOSED. All prior areas (V10.2 through V10.8, V11.0) remain CLOSED.
 **Completed Area:** V10.8 CLIENT FULL DEEP TEST FOLLOW-UP — AREA CLOSED 2026-04-09. 6 tasks (#491-#496), all COMPLETED. #491 COMPLETED (visual regression determinism fixed — normalizeHarnessLayout() added, 6 baselines regenerated at 682px), #492 COMPLETED (browser E2E harness reliability fixed — preflight check, direct node spawn, stale-server isolation), #493 COMPLETED (stale-server guard — check-server-freshness.mjs created, integrated into swarm-e2e-chat-check.mjs + swarm-visual-regression.mjs), #494 TEST GATE PASS, #495 AREA CHECKPOINT PASS, #496 COMPLETED (out-of-session: +11 deterministic server tests for _onHandoff -> Codex SDK spawn, 501/501 server suite green). No active planned areas.
 **Completed Area:** V10.7 CLIENT RESILIENCE TEST COVERAGE — AREA CLOSED 2026-04-09. #483 COMPLETED, #484 COMPLETED, #485 COMPLETED, #486 COMPLETED, #487 COMPLETED, #488 COMPLETED, TEST GATE #489 PASS, AREA CHECKPOINT #490 PASS. Verified by dedicated client coverage over restore/reconcile, secondary WS events, HITL failure paths, advanced ChatPanel states, AgentNode badges, and SwarmView operator-shell branches.
   **Completed Area:** V10.6 CLIENT CHAT + FLOW BUG FIXES — AREA CLOSED 2026-04-09. #476 COMPLETED, #477 COMPLETED, #478 COMPLETED, #479 COMPLETED, #480 COMPLETED, TEST GATE #481 PASS, AREA CHECKPOINT #482 PASS. Verified by live Puppeteer reruns of idle/reset + Codex success/reload on `http://127.0.0.1:3000`, clean Gemini blocked/stopped node/chat hygiene on fresh `http://127.0.0.1:3312`, and targeted server regressions (185/185 PASS).
@@ -591,6 +591,443 @@ Acceptance Criteria:
   - [ ] Client tests pass
   - [ ] Client build clean
 Dependencies: TASK #519
+---
+
+## AREA: V11.3 - HITL (Human-in-the-Loop) Runtime Trigger
+_Components: SwarmEngine._buildSystemPrompt, SwarmEngine._handleStreamJsonResult, SwarmEngine PTY tap handler, SwarmEngine.resumeAfterHitl, server/routes/inbox.js, server/tests/swarm-engine.test.js_
+_Tasks: #521 -> #527_
+_Gate: When workflow settings mode is 'hitl', agents must be able to signal the need for human input via a __HITL__ control token; the engine must detect the token, call freezeAgent(), and the existing HITL pipeline (WS hitl_required, orange HitlChatCard, REST approve/reject) must produce the visible pause-and-resume cycle_
+_Source: User testing 2026-04-10 — HITL mode toggle exists in WorkflowSettingsModal but freezeAgent() is never called from production code; the agent talks about HITL but no orange card ever appears_
+_Root Cause: freezeAgent() is only called from tests. settings.mode is never read in SwarmEngine. No mechanism exists for the agent to signal "I need human input" to the engine._
+
+---
+
+TASK #521: HITL-TRIGGER-01 - Add __HITL__ control token to _buildSystemPrompt protocol section
+Area: V11.3 - HITL Runtime Trigger
+Agent: backend-dev
+Type: FEATURE
+Priority: CRITICAL
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  The system prompt protocol section (=== PROTOCOL ===) already instructs agents about __HANDOFF__ and __DONE__ tokens.
+  When execution.workflowDef.settings?.mode === 'hitl', add HITL token instructions to both the non-Codex branch
+  (~line 6332 in _buildSystemPrompt) and the Codex compact branch (~line 6220).
+  The token format is: __HITL__:{"question":"your question or request for the human"}
+  The agent should emit this token when it genuinely needs human input, feedback, a decision, or approval.
+  The instruction must be clear that the workflow will pause until the human responds.
+Acceptance Criteria:
+  - [ ] _buildSystemPrompt includes __HITL__ instructions when mode === 'hitl'
+  - [ ] Both non-Codex and Codex compact branches include the instruction
+  - [ ] No __HITL__ instructions appear when mode !== 'hitl'
+  - [ ] Token format is consistent with __HANDOFF__/__DONE__ pattern
+Dependencies: none
+---
+
+TASK #522: HITL-TRIGGER-02 - Detect __HITL__ token in _handleStreamJsonResult and call freezeAgent
+Area: V11.3 - HITL Runtime Trigger
+Agent: backend-dev
+Type: FEATURE
+Priority: CRITICAL
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  In _handleStreamJsonResult (~line 5950), after accumulated text is collected (step 5, ~line 6097)
+  and before scanning for __HANDOFF__/__DONE__, check for the __HITL__ token.
+  When detected AND settings.mode === 'hitl':
+  1. Parse the JSON payload to extract the question
+  2. Call freezeAgent(executionId, nodeId, inboxItem) with the question as message/reason
+  3. Return early — the agent is now paused, will resume on approve
+  The regex should match __HITL__:{...} allowing for any valid JSON in the payload.
+  If JSON parsing fails, use a default message like "Human input required".
+Acceptance Criteria:
+  - [ ] __HITL__ token detected in stream-json accumulated text
+  - [ ] freezeAgent called with correct executionId, nodeId, and inbox item
+  - [ ] Inbox item contains the parsed question from the token payload
+  - [ ] Agent status becomes 'paused' after detection
+  - [ ] hitl_required WS event is broadcast
+Dependencies: TASK #521
+---
+
+TASK #523: HITL-TRIGGER-03 - Detect __HITL__ token in PTY parser tap handler
+Area: V11.3 - HITL Runtime Trigger
+Agent: backend-dev
+Type: FEATURE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  The PTY tap handler (in _spawnAgentPty) processes chunks looking for __HANDOFF__ and __DONE__ tokens.
+  Add detection for __HITL__ in the same parsing path.
+  When __HITL__:{...} is found in a PTY chunk AND settings.mode === 'hitl':
+  1. Parse the JSON payload
+  2. Call freezeAgent() with the question
+  3. The PTY session stays alive but the agent is paused
+  This ensures HITL works for Codex and Gemini agents (PTY-based), not just Claude (stream-json).
+Acceptance Criteria:
+  - [ ] __HITL__ token detected in PTY output chunks
+  - [ ] freezeAgent called correctly for PTY agents
+  - [ ] PTY session remains alive while agent is paused
+  - [ ] Works for both Codex and Gemini runtime providers
+Dependencies: TASK #521
+---
+
+TASK #524: HITL-TRIGGER-04 - Add resumeAfterHitl method for stream-json agent resume
+Area: V11.3 - HITL Runtime Trigger
+Agent: backend-dev
+Type: FEATURE
+Priority: CRITICAL
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Stream-json agents have sessionId=null and stdin closed immediately.
+  After HITL approve, we cannot write to stdin. Instead, add a resumeAfterHitl(executionId, nodeId, humanResponse)
+  method that:
+  1. Builds a prompt incorporating the human's response text
+  2. Re-spawns the agent via _spawnAgentStreamJson with --resume and the human answer as reinjectPrompt
+  3. Updates agent status to 'running'
+  For PTY agents, the existing writeInput path in inbox.js already works (sessionId is set).
+Acceptance Criteria:
+  - [ ] resumeAfterHitl method added to SwarmEngine
+  - [ ] Method re-spawns stream-json agent with human response as reinjectPrompt
+  - [ ] Agent status transitions from 'paused' to 'running'
+  - [ ] --resume flag used to continue the same session
+Dependencies: TASK #522
+---
+
+TASK #525: HITL-TRIGGER-05 - Update inbox.js approve handler to route stream-json agents through resumeAfterHitl
+Area: V11.3 - HITL Runtime Trigger
+Agent: backend-dev
+Type: FEATURE
+Priority: CRITICAL
+Difficulty: LOW
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  The approve handler in server/routes/inbox.js (~line 73) currently does:
+    if (agentState?.sessionId && resumeText) writeInput(...)
+    unfreezeAgent(...)
+  For stream-json agents (spawnMode === 'stream-json'), sessionId is null,
+  so resumeText is silently dropped. Update the handler to:
+  1. Check agentState.spawnMode
+  2. If 'stream-json', call swarmEngine.resumeAfterHitl(executionId, nodeId, resumeText)
+  3. If PTY (sessionId set), use existing writeInput path
+  4. Always call unfreezeAgent after
+  Similarly update the reject handler to mark the agent as done and complete the execution.
+Acceptance Criteria:
+  - [ ] Stream-json agents resume via resumeAfterHitl on approve
+  - [ ] PTY agents resume via writeInput on approve (unchanged)
+  - [ ] Reject stops the agent and marks it done
+  - [ ] hitl_resolved WS event still broadcast
+Dependencies: TASK #524
+---
+
+TASK #526: TEST GATE - V11.3 HITL Runtime Trigger regression
+Area: V11.3 - HITL Runtime Trigger
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD
+Context:
+  Verify:
+  1. __HITL__ token appears in system prompt only when mode === 'hitl'
+  2. _handleStreamJsonResult detects __HITL__ and calls freezeAgent
+  3. freezeAgent emits hitl_required WS event
+  4. resumeAfterHitl re-spawns agent with human response
+  5. inbox approve routes correctly for stream-json vs PTY
+  6. All existing server tests still pass
+  7. Client build still clean
+Acceptance Criteria:
+  - [ ] New HITL tests pass
+  - [ ] npm test --prefix server passes (all existing + new)
+  - [ ] npm run build --prefix client passes
+Dependencies: TASK #521, TASK #522, TASK #523, TASK #524, TASK #525
+---
+
+TASK #527: AREA CHECKPOINT - V11.3 HITL Runtime Trigger closeout
+Area: V11.3 - HITL Runtime Trigger
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: HIGH
+Difficulty: LOW
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Close V11.3 only after all HITL trigger tasks pass, tests green, build clean,
+  and a live workflow with mode=hitl produces a visible orange HitlChatCard
+  when the agent emits __HITL__.
+Acceptance Criteria:
+  - [ ] All tasks #521-#526 COMPLETED or PASS
+  - [ ] Server tests pass
+  - [ ] Client build clean
+  - [ ] Live verification: mode=hitl workflow triggers visible HITL card
+Dependencies: TASK #526
+---
+
+## AREA: V12.0 - Fan-In Workflow Fix (Multi-Agent Convergence)
+_Components: SwarmEngine._shouldWaitForAllAgentInputs, SwarmEngine._syncExecutionStatusFromAgents, SwarmEngine.startExecution fan-in barrier pre-registration_
+_Tasks: #528 -> #535_
+_Gate: A fan-in workflow (3 parallel researchers -> 1 writer) must execute all 4 agents and produce merged output before the area can close_
+_Source: Deep debugger-loop E2E test 2026-04-10 — fan-in workflow only ran 1 of 3 entry agents and completed prematurely_
+
+---
+
+TASK #528: BUG-FANIN-01 — Replace heuristic keyword regex in _shouldWaitForAllAgentInputs with structural topology detection
+Area: V12.0 - Fan-In Workflow Fix
+Agent: debugger
+Priority: CRITICAL
+Difficulty: MEDIUM
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Context:
+  User-facing problem:
+    When a fan-in workflow has multiple agents (e.g. 3 researchers) handing off to a single
+    downstream agent (e.g. "Writer: Comparative Summary"), the system uses a regex heuristic
+    to decide whether the target node should wait for all inputs. The regex at line ~2388
+    checks for keywords like "wait for|collect|both|merge|combine|summariz(e|es|ed|ing)..."
+    but misses common labels like "summary", "report", "final", etc. This means most fan-in
+    targets are NOT recognized and only receive input from the first completing agent.
+  Root cause:
+    `_shouldWaitForAllAgentInputs` (line 2388-2403 in server/services/SwarmEngine.js) uses
+    a keyword regex on the node label+systemPrompt to decide if a node with >1 incoming edge
+    should wait. This is fragile — the topology already tells us: if a node has N>1 incoming
+    edges from distinct sources, it IS a fan-in node by definition.
+  Required fix:
+    1. Remove the regex heuristic entirely from `_shouldWaitForAllAgentInputs`.
+    2. Make the method purely structural: return true when `incomingSourceCount > 1`
+       (already computed at line 2393-2398), regardless of label/systemPrompt keywords.
+    3. Keep the flow-control-node exclusion guard (line 2391) — Merge/Join nodes have their
+       own dedicated `_handleMergeNode` logic and should NOT double-trigger.
+    4. Keep the null/missing-execution guard (line 2389).
+  File: server/services/SwarmEngine.js, method `_shouldWaitForAllAgentInputs` (lines 2388-2403)
+Acceptance Criteria:
+  - [ ] `_shouldWaitForAllAgentInputs` returns true for ANY agent node with >1 distinct incoming source edges
+  - [ ] Flow-control nodes (Merge, Join, Delay, Loop, Conditional) are still excluded
+  - [ ] The keyword regex is removed — detection is purely graph-structural
+  - [ ] Existing tests pass (`npm test --prefix server`)
+Dependencies: none
+---
+
+TASK #529: BUG-FANIN-03 — Add agentInputBarriers check to _syncExecutionStatusFromAgents before marking 'completed'
+Area: V12.0 - Fan-In Workflow Fix
+Agent: debugger
+Priority: CRITICAL
+Difficulty: MEDIUM
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Context:
+  User-facing problem:
+    Even if a fan-in target IS correctly detected (after fixing BUG-FANIN-01), the execution
+    status sync method marks the entire workflow "completed" prematurely. When Agent-A finishes
+    and Agents B/C are still running, the sync sees "no running agents in agentStates" (because
+    B and C may have completed too, or the writer hasn't spawned yet) and declares the workflow
+    done — even though `execution.agentInputBarriers` still has unsatisfied entries.
+  Root cause:
+    `_syncExecutionStatusFromAgents` (line 4138-4179 in server/services/SwarmEngine.js) checks
+    for pending `_delayTimers`, `_mergeStates`, and `_loopStates` before marking completed
+    (lines 4164-4168), but does NOT check `execution.agentInputBarriers`. When all currently-
+    spawned agents finish but a fan-in target is still waiting for more inputs, the method
+    incorrectly marks the execution as 'completed'.
+  Required fix:
+    1. In the `else if (agentStates.length > 0)` branch (line 4161), BEFORE the final
+       `!hasPendingFlowControl` check, also inspect `execution.agentInputBarriers`.
+    2. If any barrier entry has `received < required`, treat it as pending flow control
+       (i.e., `hasPendingFlowControl = true`).
+    3. This ensures the workflow stays 'running' while fan-in targets are still waiting for
+       their remaining inputs.
+  File: server/services/SwarmEngine.js, method `_syncExecutionStatusFromAgents` (lines 4138-4179)
+Acceptance Criteria:
+  - [ ] When `agentInputBarriers` has unsatisfied entries, `_syncExecutionStatusFromAgents` does NOT mark 'completed'
+  - [ ] When all barriers are satisfied (or none exist), completion logic works as before
+  - [ ] Linear and fan-out workflows still complete normally (no regression)
+  - [ ] Existing tests pass (`npm test --prefix server`)
+Dependencies: none
+---
+
+TASK #530: BUG-FANIN-02 — Pre-register fan-in barriers in startExecution for all convergence targets
+Area: V12.0 - Fan-In Workflow Fix
+Agent: debugger
+Priority: CRITICAL
+Difficulty: MEDIUM
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Context:
+  User-facing problem:
+    Fan-in barriers are only created lazily during `_onHandoff` when the first completing
+    agent triggers a handoff. If `_syncExecutionStatusFromAgents` runs before any handoff
+    (e.g., all entry agents complete nearly simultaneously), the barriers map is empty and
+    the workflow is marked completed.
+  Root cause:
+    `startExecution` (lines 4242-4267) spawns entry agents but does not pre-register the
+    `agentInputBarriers` for downstream fan-in targets. The `_registerPendingAgentInput`
+    method (line 2405) initializes the barrier on first call, but this happens too late —
+    the status sync can fire before any handoff occurs.
+  Required fix:
+    1. After spawning all entry agents in `startExecution` (after the for-loop at line 4259),
+       scan the workflow graph for all nodes with >1 distinct incoming source edges that are
+       NOT flow-control nodes.
+    2. For each such fan-in target, pre-create the barrier in `execution.agentInputBarriers`
+       with `required` = number of distinct source nodes and `received` = 0.
+    3. This ensures `_syncExecutionStatusFromAgents` sees unsatisfied barriers from the start
+       and will NOT prematurely mark the workflow completed.
+    4. Reuse the same topology logic from the updated `_shouldWaitForAllAgentInputs` method.
+  File: server/services/SwarmEngine.js, method `startExecution` (after line 4259)
+Acceptance Criteria:
+  - [ ] `execution.agentInputBarriers` is pre-populated for all fan-in targets at execution start
+  - [ ] Each barrier has the correct `required` count matching the number of distinct incoming source nodes
+  - [ ] Pre-registration does not interfere with later `_registerPendingAgentInput` calls during handoff
+  - [ ] Existing tests pass (`npm test --prefix server`)
+Dependencies: TASK #528
+---
+
+TASK #531: BUG-FANIN-04 — Ensure _onHandoff merges all source contexts into the fan-in target prompt
+Area: V12.0 - Fan-In Workflow Fix
+Agent: debugger
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-opus-4-6
+Status: PENDING
+Context:
+  User-facing problem:
+    When a fan-in target receives inputs from multiple sources, the combined context may be
+    lossy. The current `_onHandoff` method stores `combinedContext` in the barrier, but
+    the merging strategy (simple string concatenation) may lose source attribution, leading
+    to confusion in the downstream agent's prompt about which content came from which source.
+  Root cause:
+    `_registerPendingAgentInput` (line 2405-2424) appends source output to `combinedContext`
+    as a plain string. When the barrier threshold is met and the target agent spawns, this
+    blob of text has no clear source boundaries.
+  Required fix:
+    1. In `_registerPendingAgentInput`, wrap each source's contribution with a clear header
+       like `--- Output from [source node label] ---` before appending.
+    2. Ensure the combined context is passed through to the fan-in target's prompt injection
+       when the target agent is finally spawned.
+    3. Do not break the existing single-source handoff flow (when only 1 incoming edge exists).
+  File: server/services/SwarmEngine.js, method `_registerPendingAgentInput` (lines 2405-2424)
+        and `_onHandoff` where the target is spawned after barrier threshold is met.
+Acceptance Criteria:
+  - [ ] Each source's output in the fan-in combined context has a clear labeled separator
+  - [ ] The downstream agent receives all source outputs with attribution
+  - [ ] Single-source handoffs are unaffected
+  - [ ] Existing tests pass (`npm test --prefix server`)
+Dependencies: TASK #528, TASK #530
+---
+
+TASK #532: BUG-FANIN-05 — Ensure fan-in target 'waiting' status is visible in agentStates and broadcast
+Area: V12.0 - Fan-In Workflow Fix
+Agent: debugger
+Priority: HIGH
+Difficulty: LOW
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  User-facing problem:
+    When a fan-in target enters 'waiting' state (via `_onHandoff` setting status to 'waiting'),
+    this may not be properly reflected in the UI because `agentStates` may not have an entry
+    for unspawned nodes. The frontend cannot show a "Waiting for inputs" badge unless the
+    node's agent state exists.
+  Root cause:
+    `_onHandoff` sets the target node status to 'waiting' only if certain conditions are met,
+    and the agentState for the target may not exist yet if it hasn't been spawned. The
+    `_syncExecutionStatusFromAgents` must also treat 'waiting' as a non-terminal state.
+  Required fix:
+    1. When pre-registering fan-in barriers (TASK #530), also initialize an `agentState` entry
+       for each fan-in target with status 'waiting' so the frontend sees it immediately.
+    2. In `_syncExecutionStatusFromAgents`, treat 'waiting' as equivalent to 'running' for
+       the purpose of keeping the execution alive (i.e., `hasRunning` should include 'waiting').
+    3. Broadcast the execution snapshot after pre-registration so the UI updates immediately.
+  File: server/services/SwarmEngine.js
+Acceptance Criteria:
+  - [ ] Fan-in target nodes appear with 'waiting' status in the execution snapshot from the start
+  - [ ] `_syncExecutionStatusFromAgents` does not treat 'waiting' agents as idle/completed
+  - [ ] Frontend receives the 'waiting' state via WebSocket broadcast
+  - [ ] Existing tests pass (`npm test --prefix server`)
+Dependencies: TASK #530
+---
+
+TASK #533: TEST GATE — Fan-in workflow regression suite
+Area: V12.0 - Fan-In Workflow Fix
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD
+Context:
+  Write and run targeted tests for fan-in convergence in server/tests/:
+  1. Structural fan-in detection test: verify `_shouldWaitForAllAgentInputs` returns true for
+     any node with >1 incoming source edges (regardless of label), and false for flow-control
+     nodes and single-source nodes.
+  2. Barrier pre-registration test: verify `startExecution` pre-creates `agentInputBarriers`
+     for fan-in targets with correct `required` counts.
+  3. Premature completion guard test: verify `_syncExecutionStatusFromAgents` does NOT mark
+     'completed' when `agentInputBarriers` has unsatisfied entries.
+  4. Context merging test: verify that combined context from multiple sources includes labeled
+     separators and is passed to the downstream agent prompt.
+  5. Regression: verify linear workflow (A -> B -> C) and fan-out workflow (A -> B, A -> C)
+     still complete normally without false barriers.
+  Also run full existing test suite to confirm zero regressions.
+Acceptance Criteria:
+  - [ ] All new fan-in tests pass
+  - [ ] Full existing server test suite passes
+  - [ ] Client build passes
+Dependencies: TASK #528, TASK #529, TASK #530, TASK #531, TASK #532
+---
+
+TASK #534: BROWSER VERIFICATION — Live fan-in workflow E2E check
+Area: V12.0 - Fan-In Workflow Fix
+Agent: qa-tester
+Type: BROWSER_VERIFICATION
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Re-run the original failing fan-in scenario in the browser via Playwright MCP:
+  1. Navigate to http://127.0.0.1:3000, open the Swarm view.
+  2. Generate a fan-in workflow via Prompt-to-Flow: "Three parallel researchers (Agent-A on
+     Node.js, Agent-B on Python, Agent-C on Rust), each researching 3 features, then all
+     hand off to a Writer agent that produces a comparative summary".
+  3. Run the workflow and verify:
+     - All 3 researcher agents transition from idle -> running -> completed
+     - The Writer agent transitions from waiting -> running -> completed
+     - The execution status goes from running -> completed (NOT prematurely)
+     - The Writer's output/snippet references content from all 3 researchers
+  4. Take screenshots at key stages as evidence.
+Acceptance Criteria:
+  - [ ] All 4 agents execute successfully
+  - [ ] Writer output references content from all 3 sources
+  - [ ] Execution status transitions are correct
+  - [ ] No premature completion
+Dependencies: TASK #533
+---
+
+TASK #535: AREA CHECKPOINT — V12.0 Fan-In Workflow Fix closeout
+Area: V12.0 - Fan-In Workflow Fix
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: HIGH
+Difficulty: LOW
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Close V12.0 only after all fan-in fix tasks pass, test gate green, browser verification
+  confirms all 4 agents execute in a fan-in workflow, and no regressions in linear/fan-out
+  workflows.
+Acceptance Criteria:
+  - [ ] All tasks #528-#534 COMPLETED or PASS
+  - [ ] Server tests pass
+  - [ ] Client build clean
+  - [ ] Live browser verification confirms fan-in workflow works end-to-end
+Dependencies: TASK #533, TASK #534
 ---
 
 ## AREA: V10.5 - Persistent Agent Sessions + Operator Messaging

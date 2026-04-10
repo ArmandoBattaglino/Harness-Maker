@@ -748,6 +748,7 @@ class SwarmEngine {
       .replace(/HANDOFF:[a-z0-9-]+:\s*\{[\s\S]*/gi, '')
       .replace(/__DONE__[\s\S]*/g, '')
       .replace(/^\s*DONE\s*$/gim, '')
+      .replace(/__HITL__:\{[^}]*\}/g, '')
       .trim();
   }
 
@@ -2395,10 +2396,8 @@ class SwarmEngine {
         .map((edge) => edge.source)
         .filter(Boolean)
     ).size;
-    if (incomingSourceCount <= 1) return false;
 
-    const descriptor = `${targetNode.data?.label || ''} ${targetNode.data?.systemPrompt || ''}`;
-    return /\b(wait for|collect|both|merge|combine|combined|summariz(?:e|es|ed|ing)?|aggregate|all inputs|all results|together)\b/i.test(descriptor);
+    return incomingSourceCount > 1;
   }
 
   _registerPendingAgentInput(execution, targetNodeId, sourceNodeId) {
@@ -4143,7 +4142,7 @@ class SwarmEngine {
     const hasRuntimeBlocker =
       Boolean(execution.runtimeBlocker)
       || agentStates.some((state) => Boolean(state.runtimeBlocker));
-    const hasRunning = agentStates.some((state) => state.status === 'running');
+    const hasRunning = agentStates.some((state) => state.status === 'running' || state.status === 'waiting');
     const hasPaused = agentStates.some((state) => state.status === 'paused');
     const hasBlocked = agentStates.some((state) => state.status === 'blocked');
     const hasFailed = agentStates.some((state) => state.status === 'failed');
@@ -4159,12 +4158,18 @@ class SwarmEngine {
       this._setExecutionStatus(execution, 'paused');
     } else if (agentStates.length > 0) {
       // Check for pending flow-control nodes before declaring completed:
-      // active delay timers, pending merge convergences, or active loops
+      // active delay timers, pending merge convergences, active loops, or
+      // unsatisfied fan-in agent input barriers
       const execId = execution.executionId ?? execution.id;
       const delayKeys = [...this._delayTimers.keys()].filter((k) => k.startsWith(execId + ':'));
       const mergeKeys = [...this._mergeStates.keys()].filter((k) => k.startsWith(execId + ':'));
       const loopKeys = [...this._loopStates.keys()].filter((k) => k.startsWith(execId + ':'));
-      const hasPendingFlowControl = delayKeys.length > 0 || mergeKeys.length > 0 || loopKeys.length > 0;
+      const hasPendingBarriers = execution.agentInputBarriers instanceof Map
+        && [...execution.agentInputBarriers.values()].some(
+          (b) => (b.received instanceof Set ? b.received.size : 0) < (b.required ?? 0)
+        );
+      const hasPendingFlowControl = delayKeys.length > 0 || mergeKeys.length > 0
+        || loopKeys.length > 0 || hasPendingBarriers;
 
       if (!hasPendingFlowControl) {
         this._chatExtractor.cleanup(execution.executionId ?? execution.id);
@@ -4684,6 +4689,33 @@ class SwarmEngine {
                 this._markAgentProgress(execution, nodeId, currentState, 'parser_token');
                 this._onHandoff(executionId, nodeId, { type: 'handoff', targetId, contextUpdate: {} });
               }
+            }
+          }
+
+          // HITL token detection in PTY output (mirrors stream-json detection)
+          if (execution.workflowDef.settings?.mode === 'hitl' && currentState.status === 'running') {
+            const cleanChunkForHitl = chunkForParser.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '');
+            const hitlMatch = cleanChunkForHitl.match(/__HITL__:(\{[^}]*\})/);
+            if (hitlMatch) {
+              let question = 'Human input required';
+              try {
+                const parsed = JSON.parse(hitlMatch[1]);
+                if (parsed.question) question = parsed.question;
+              } catch { /* use default */ }
+
+              const nodeLabel = execution.workflowDef.nodes.find(n => n.id === nodeId)?.data?.label || nodeId;
+              this.freezeAgent(executionId, nodeId, {
+                id: `hitl-${Date.now()}-${nodeId}`,
+                type: 'user_requested',
+                reason: question,
+                message: `[${nodeLabel}] ${question}`,
+                sourceNodeId: nodeId,
+                timestamp: Date.now(),
+              });
+              if (this._chatExtractor) {
+                this._chatExtractor.systemMessage(executionId, nodeId, `HITL: Agent paused — "${question}"`);
+              }
+              return;
             }
           }
 
@@ -6044,8 +6076,8 @@ class SwarmEngine {
     let rawTextBeforeCanonical = state._streamJsonAccumulatedText ?? '';
     if (resultEvt.resultText) {
       rawTextBeforeCanonical = (state._streamJsonAccumulatedText || resultEvt.resultText) ?? '';
-      const rawAccumulated = (state._streamJsonAccumulatedText ?? '').replace(/__HANDOFF__[\s\S]*/g, '').replace(/__DONE__/g, '').trimEnd();
-      const rawResult = (resultEvt.resultText ?? '').replace(/__HANDOFF__[\s\S]*/g, '').replace(/__DONE__/g, '').trimEnd();
+      const rawAccumulated = (state._streamJsonAccumulatedText ?? '').replace(/__HANDOFF__[\s\S]*/g, '').replace(/__DONE__/g, '').replace(/__HITL__:\{[^}]*\}/g, '').trimEnd();
+      const rawResult = (resultEvt.resultText ?? '').replace(/__HANDOFF__[\s\S]*/g, '').replace(/__DONE__/g, '').replace(/__HITL__:\{[^}]*\}/g, '').trimEnd();
       // Prefer accumulated text if it has significantly more newlines (markdown formatting)
       const accNewlines = (rawAccumulated.match(/\n/g) || []).length;
       const resNewlines = (rawResult.match(/\n/g) || []).length;
@@ -6094,7 +6126,7 @@ class SwarmEngine {
 
     const gracefulStopPending = state._pendingStreamJsonStopMode === 'graceful' || state.doNotSpawnNextTurn;
 
-    // 5. Scan accumulated text for handoff/done tokens unless a graceful stop
+    // 5. Scan accumulated text for handoff/done/hitl tokens unless a graceful stop
     // was already requested for the current turn.
     // CRITICAL: use the RAW accumulated text (before canonical stripping) so
     // that __HANDOFF__ tokens are still present for HandoffParser to detect.
@@ -6102,6 +6134,34 @@ class SwarmEngine {
     // for display purposes — we must not feed that stripped text to the parser.
     if (!gracefulStopPending) {
       const accumulatedText = rawTextBeforeCanonical || (state._streamJsonAccumulatedText ?? '');
+
+      // HITL token detection: __HITL__:{"question":"..."} — must check before handoff/done
+      if (execution.workflowDef.settings?.mode === 'hitl') {
+        const hitlMatch = accumulatedText.match(/__HITL__:(\{[^}]*\})/);
+        if (hitlMatch) {
+          let question = 'Human input required';
+          try {
+            const parsed = JSON.parse(hitlMatch[1]);
+            if (parsed.question) question = parsed.question;
+          } catch { /* use default question */ }
+
+          const nodeLabel = execution.workflowDef.nodes.find(n => n.id === nodeId)?.data?.label || nodeId;
+          this.freezeAgent(executionId, nodeId, {
+            id: `hitl-${Date.now()}-${nodeId}`,
+            type: 'user_requested',
+            reason: question,
+            message: `[${nodeLabel}] ${question}`,
+            sourceNodeId: nodeId,
+            timestamp: Date.now(),
+          });
+
+          if (this._chatExtractor) {
+            this._chatExtractor.systemMessage(executionId, nodeId, `HITL: Agent paused — "${question}"`);
+          }
+          return;
+        }
+      }
+
       let foundHandoff = false;
       let foundDone = false;
 
@@ -6269,6 +6329,11 @@ class SwarmEngine {
         lines.push('You are the final agent. After completing your work, output __DONE__ on its own last line.');
       }
 
+      if (options.execution?.workflowDef?.settings?.mode === 'hitl') {
+        lines.push('HITL MODE: When you need human input or approval, emit on its own line: __HITL__:{"question":"your request"}');
+        lines.push('The workflow pauses until the human responds.');
+      }
+
       return lines.join('\n');
     }
 
@@ -6342,6 +6407,17 @@ class SwarmEngine {
       lines.push('You are the final agent. When done, last line: __DONE__');
     }
     lines.push('Token must be plain text on its own last line, no fences or formatting.');
+
+    // HITL mode: tell the agent it can request human input via __HITL__ token
+    if (options.execution?.workflowDef?.settings?.mode === 'hitl') {
+      lines.push('');
+      lines.push('=== HITL (Human-in-the-Loop) ===');
+      lines.push('You are running in HITL mode. When you need human input, feedback, a decision, or approval, emit on its own line:');
+      lines.push('__HITL__:{"question":"your question or request for the human"}');
+      lines.push('The workflow will pause and present your question to the human operator.');
+      lines.push('After the human responds, you will receive their answer and can continue your work.');
+      lines.push('Only use __HITL__ when you genuinely need human input — not for status updates.');
+    }
 
     return lines.join('\n');
   }
@@ -7847,6 +7923,39 @@ class SwarmEngine {
 
     this._broadcastAgentStatus(executionId, nodeId, state);
     this._syncExecutionStatusFromAgents(execution);
+  }
+
+  /**
+   * Resume a stream-json agent after HITL approval.
+   * Stream-json agents have no live PTY session (sessionId is null), so we cannot
+   * write to stdin. Instead, re-spawn the agent with --resume and the human's
+   * response as the new prompt.
+   * Added in Task #524 (V11.3 HITL Runtime Trigger).
+   * @param {string} executionId
+   * @param {string} nodeId
+   * @param {string} [humanResponse] - the text the human provided on approve
+   */
+  async resumeAfterHitl(executionId, nodeId, humanResponse) {
+    const execution = this._executions.get(executionId);
+    if (!execution) return;
+    const state = execution.agentStates.get(nodeId);
+    if (!state) return;
+
+    const humanPrompt = humanResponse?.trim()
+      ? `The human operator responded to your question:\n"${humanResponse.trim()}"\n\nContinue your work based on this input.`
+      : 'The human operator approved your request. Continue your work.';
+
+    state.status = 'running';
+    this._broadcastAgentStatus(executionId, nodeId, state);
+    this._syncExecutionStatusFromAgents(execution);
+
+    if (state.spawnMode === 'stream-json') {
+      await this._spawnAgentStreamJson(executionId, nodeId, {
+        reinjectPrompt: humanPrompt,
+      });
+    } else if (state.sessionId) {
+      this._sessionManager.writeInput(state.sessionId, humanPrompt + '\n');
+    }
   }
 
   /**

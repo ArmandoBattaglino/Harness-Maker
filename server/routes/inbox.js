@@ -71,10 +71,17 @@ export default function inboxRoutes(swarmEngine) {
       execution.inboxItems.splice(itemIndex, 1);
 
       const agentState = execution.agentStates.get(item.nodeId);
-      if (agentState?.sessionId && resumeText) {
+
+      // Route resume based on agent spawn mode (V11.3 HITL Runtime Trigger)
+      if (agentState?.spawnMode === 'stream-json') {
+        swarmEngine.unfreezeAgent(executionId, item.nodeId);
+        await swarmEngine.resumeAfterHitl(executionId, item.nodeId, resumeText);
+      } else if (agentState?.sessionId && resumeText) {
         swarmEngine._sessionManager.writeInput(agentState.sessionId, resumeText + '\n');
+        swarmEngine.unfreezeAgent(executionId, item.nodeId);
+      } else {
+        swarmEngine.unfreezeAgent(executionId, item.nodeId);
       }
-      swarmEngine.unfreezeAgent(executionId, item.nodeId);
 
       // Broadcast resolution to WS subscribers
       if (swarmEngine._wsBroadcast) {
@@ -114,10 +121,17 @@ export default function inboxRoutes(swarmEngine) {
       execution.inboxItems.splice(itemIndex, 1);
 
       const agentState = execution.agentStates.get(item.nodeId);
-      if (agentState?.sessionId) {
+
+      // Route rejection based on agent spawn mode (V11.3 HITL Runtime Trigger)
+      if (agentState?.spawnMode === 'stream-json') {
+        swarmEngine.unfreezeAgent(executionId, item.nodeId);
+        await swarmEngine.resumeAfterHitl(executionId, item.nodeId, buildRejectResumeText(item));
+      } else if (agentState?.sessionId) {
         swarmEngine._sessionManager.writeInput(agentState.sessionId, buildRejectResumeText(item) + '\n');
+        swarmEngine.unfreezeAgent(executionId, item.nodeId);
+      } else {
+        swarmEngine.unfreezeAgent(executionId, item.nodeId);
       }
-      swarmEngine.unfreezeAgent(executionId, item.nodeId);
 
       // Broadcast resolution to WS subscribers
       if (swarmEngine._wsBroadcast) {
