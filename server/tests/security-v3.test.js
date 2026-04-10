@@ -228,8 +228,8 @@ describe('HandoffParser oversized payload (SEC-V3-07)', () => {
     }).not.toThrow();
   });
 
-  it('should drop a contextUpdate with a string value > 1024 chars without crashing', () => {
-    const obj = { key: 'x'.repeat(1025) };
+  it('should drop a contextUpdate with a string value > 4096 chars without crashing', () => {
+    const obj = { key: 'x'.repeat(4097) };
     const payload = Buffer.from(JSON.stringify(obj)).toString('base64');
     const chunk = `__HANDOFF__:agent-b:${payload}`;
 

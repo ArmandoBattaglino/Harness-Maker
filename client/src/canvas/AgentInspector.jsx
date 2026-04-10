@@ -5,6 +5,7 @@ import { useSwarmStore } from '../store/SwarmContext';
 import { stripAnsi } from '../utils/stripAnsi';
 import { inspectControlTokens } from '../utils/controlTokens';
 import { isStructuredSpawnMode } from '../utils/runtimeModes.js';
+import { repairTokenSplitting } from '../utils/repairTokenSpacing';
 
 const MODEL_OPTIONS = [
   { group: 'Claude', models: ['opus', 'sonnet', 'haiku'] },
@@ -228,6 +229,23 @@ function AgentFields({ node, nodes, onUpdateNode }) {
           </div>
         </CollapsibleSection>
       )}
+
+      {/* Context Visibility */}
+      <div className="flex flex-col gap-0.5">
+        <FieldLabel>Context Visibility</FieldLabel>
+        <select
+          className={INPUT_CLS}
+          value={data.contextVisibility || 'full'}
+          onChange={(e) => onUpdateNode(nodeId, { contextVisibility: e.target.value })}
+        >
+          <option value="full">Full (awareness + transcript + protocol)</option>
+          <option value="minimal">Minimal (last handoff + protocol)</option>
+          <option value="roleOnly">Role Only (system prompt + protocol)</option>
+        </select>
+        <span className="text-[10px] text-gray-500">
+          Controls how much workflow context this agent receives
+        </span>
+      </div>
 
       {/* Max Turns */}
       <div className="flex flex-col gap-0.5">
@@ -826,9 +844,9 @@ export default function AgentInspector({ nodes, onUpdateNode }) {
 
       {/* Last output snippet */}
       {agentState?.lastOutputSnippet && (
-        <CollapsibleSection title="Output" defaultOpen={false}>
-          <div className="bg-gray-800 rounded p-2 text-xs font-mono whitespace-pre-wrap max-h-32 overflow-y-auto text-green-300">
-            {stripAnsi(agentState.lastOutputSnippet)}
+        <CollapsibleSection title="Output" defaultOpen={true}>
+          <div className="bg-gray-800 rounded p-2 text-xs font-mono whitespace-pre-wrap max-h-48 overflow-y-auto text-green-300 leading-relaxed">
+            {isStructuredSpawnMode(agentState?.spawnMode) ? stripAnsi(agentState.lastOutputSnippet) : repairTokenSplitting(stripAnsi(agentState.lastOutputSnippet))}
           </div>
           {tokenSemantics.notes.length > 0 && (
             <div className="bg-gray-800/80 border border-gray-700 rounded p-2 text-[11px] text-amber-200 flex flex-col gap-1">
@@ -837,6 +855,20 @@ export default function AgentInspector({ nodes, onUpdateNode }) {
               ))}
             </div>
           )}
+        </CollapsibleSection>
+      )}
+
+      {/* Agent Memory — full assembled prompt debug view */}
+      {agentState?.lastAssembledPrompt && (
+        <CollapsibleSection title="Agent Memory" defaultOpen={false}>
+          {agentState.lastPromptTimestamp && (
+            <div className="text-[10px] text-gray-500 mb-1">
+              Last assembled: {new Date(agentState.lastPromptTimestamp).toLocaleTimeString()}
+            </div>
+          )}
+          <div className="bg-gray-800 rounded p-2 text-[11px] font-mono whitespace-pre-wrap max-h-64 overflow-y-auto text-blue-200 leading-relaxed border border-gray-700">
+            {agentState.lastAssembledPrompt}
+          </div>
         </CollapsibleSection>
       )}
     </div>

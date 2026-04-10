@@ -838,17 +838,16 @@ describe('SwarmEngine', () => {
       await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
 
       const initialPrompt = mockSessionManager.writeInput.mock.calls[0]?.[1] ?? '';
-      expect(initialPrompt).toContain('Current task: Execute the workflow goal described here: Analyze the request, hand off the useful context, and complete the workflow.');
-      expect(initialPrompt).toContain('Workflow goal: Analyze the request, hand off the useful context, and complete the workflow.');
-      expect(initialPrompt).toContain('Valid target IDs: node-b');
-      expect(initialPrompt).toContain('This agent is not terminal in the workflow.');
-      expect(initialPrompt).toContain('Your required downstream target is: node-b');
-      expect(initialPrompt).toContain('primitive values only (string, number, or boolean)');
-      expect(initialPrompt).toContain('Keep it compact.');
-      expect(initialPrompt).toContain('Do NOT output __DONE__ from this agent while downstream handoff targets still exist.');
-      expect(initialPrompt).toContain('Do not emit __DONE__ immediately just because you understand the instructions.');
+      // Agent has a custom systemPrompt ("You are agent A."), so the prompt
+      // should prioritise the agent's own instructions and present the workflow
+      // description as reference context rather than as a competing directive.
+      expect(initialPrompt).toContain('=== YOUR ROLE ===');
+      expect(initialPrompt).toContain('You are agent A.');
+      expect(initialPrompt).toContain('=== AGENT AWARENESS ===');
+      expect(initialPrompt).toContain('=== PROTOCOL ===');
+      expect(initialPrompt).toContain('Valid targets: node-b');
       expect(initialPrompt).toContain('For this workflow, <targetId> must be node-b.');
-      expect(initialPrompt).toContain('__HANDOFF__:<targetId>:{"summary": "your real work summary", "result": "your real findings"}');
+      expect(initialPrompt).toContain('__HANDOFF__:<targetId>:{"summary":"...","result":"..."}');
       expect(initialPrompt).not.toContain('__HANDOFF__:node-b:{"summary": "Completed my stage of the task", "result": "key findings here"}');
     });
 
@@ -1485,7 +1484,7 @@ describe('SwarmEngine', () => {
 
       const promptWrites = mockSessionManager.writeInput.mock.calls
         .map(([, input]) => String(input))
-        .filter((input) => input.includes('Recent upstream handoffs for this agent:'));
+        .filter((input) => input.includes('Received handoffs:'));
 
       expect(promptWrites.length).toBeGreaterThan(0);
       expect(promptWrites.at(-1)).toContain('From node-b (node-b): {"agent":"Agent-A","language":"English","greeting":"Hello there!"}');
@@ -3718,7 +3717,7 @@ describe('SwarmEngine', () => {
       expect(sessionFlagIndex).toBeGreaterThan(-1);
       expect(spawnArgs[sessionFlagIndex + 1]).toMatch(/^[0-9a-f-]{36}$/i);
       expect(promptFlagIndex).toBeGreaterThan(-1);
-      expect(spawnArgs[promptFlagIndex + 1]).toContain('Stream JSON Solo Workflow');
+      expect(spawnArgs[promptFlagIndex + 1]).toContain('Single-node workflow used to verify stream-json agent spawning.');
       expect(spawnArgs[promptFlagIndex + 1]).toContain('__DONE__');
       expect(modelFlagIndex).toBeGreaterThan(-1);
       expect(spawnArgs[modelFlagIndex + 1]).toBe('opus');
@@ -4989,6 +4988,214 @@ describe('SwarmEngine', () => {
       expect(factCheckerLine).toContain('END_B');
       expect(() => JSON.parse(researcherLine.slice('Researcher: '.length))).not.toThrow();
       expect(() => JSON.parse(factCheckerLine.slice('Fact Checker: '.length))).not.toThrow();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Test 12: V11.0 Agent Intelligence Reengineering
+  // -------------------------------------------------------------------------
+  describe('Test 12: V11.0 Agent Intelligence', () => {
+    it('should produce awareness section with agent identity, peers, and connections', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
+      const execution = engine._executions.get(executionId);
+
+      const awareness = engine._buildAgentAwareness(execution, 'node-a');
+      expect(awareness).toContain('You are "node-a"');
+      expect(awareness).toContain('2-agent workflow');
+      expect(awareness).toContain('"node-b"');
+      expect(awareness).toContain('You send output to:');
+    });
+
+    it('should include workflow goal in awareness from workflowDef.description', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
+      const execution = engine._executions.get(executionId);
+
+      const awareness = engine._buildAgentAwareness(execution, 'node-a');
+      expect(awareness).toContain('Workflow goal:');
+    });
+
+    it('should return empty awareness for unknown nodeId', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
+      const execution = engine._executions.get(executionId);
+
+      const awareness = engine._buildAgentAwareness(execution, 'nonexistent');
+      expect(awareness).toBe('');
+    });
+
+    it('should produce interaction transcript from chatMessages', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
+      const execution = engine._executions.get(executionId);
+
+      execution.chatMessages.push(
+        { nodeId: 'node-a', role: 'assistant', text: 'Hello from A', timestamp: 1000 },
+        { nodeId: 'node-b', role: 'assistant', text: 'Hello from B', timestamp: 2000 },
+      );
+
+      const transcript = engine._buildInteractionTranscript(execution);
+      expect(transcript).toContain('Interaction history (chronological):');
+      expect(transcript).toContain('[node-a]:');
+      expect(transcript).toContain('Hello from A');
+      expect(transcript).toContain('[node-b]:');
+      expect(transcript).toContain('Hello from B');
+    });
+
+    it('should return empty transcript when no chatMessages exist', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
+      const execution = engine._executions.get(executionId);
+
+      const transcript = engine._buildInteractionTranscript(execution);
+      expect(transcript).toBe('');
+    });
+
+    it('should cap transcript at charLimit', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
+      const execution = engine._executions.get(executionId);
+
+      for (let i = 0; i < 50; i++) {
+        execution.chatMessages.push({
+          nodeId: i % 2 === 0 ? 'node-a' : 'node-b',
+          role: 'assistant',
+          text: 'X'.repeat(500),
+          timestamp: i * 1000,
+        });
+      }
+
+      const transcript = engine._buildInteractionTranscript(execution, 2000);
+      expect(transcript.length).toBeLessThanOrEqual(2500);
+    });
+
+    it('should enforce maxTurns in _onHandoff', async () => {
+      const wf = buildTwoNodeWorkflow({ circuitBreakerThreshold: 100 });
+      wf.edges.push({ id: 'edge-ba', source: 'node-b', target: 'node-a' });
+      wf.settings.maxConversationTurns = 3;
+      workflowStoreMock = { get: vi.fn().mockResolvedValue(wf) };
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
+      const execution = engine._executions.get(executionId);
+
+      const agents = ['node-a', 'node-b'];
+      const targets = ['node-b', 'node-a'];
+      for (let i = 0; i < 4; i++) {
+        const src = agents[i % 2];
+        const tgt = targets[i % 2];
+        const srcState = execution.agentStates.get(src);
+        if (srcState) srcState.status = 'running';
+        await engine._onHandoff(executionId, src, {
+          type: 'handoff',
+          targetId: tgt,
+          contextUpdate: { turn: i },
+        });
+      }
+
+      expect(execution.totalTurns).toBe(4);
+      const maxTurnsEvents = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .filter((ev) => ev.type === 'maxTurns_reached');
+      expect(maxTurnsEvents.length).toBe(1);
+      expect(maxTurnsEvents[0].maxTurns).toBe(3);
+    });
+
+    it('should respect contextVisibility=minimal in prompt', async () => {
+      const wf = buildTwoNodeWorkflow();
+      wf.nodes[0].data.contextVisibility = 'minimal';
+      workflowStoreMock = { get: vi.fn().mockResolvedValue(wf) };
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
+      const execution = engine._executions.get(executionId);
+
+      const prompt = engine._buildSystemPrompt(
+        wf.nodes[0],
+        execution.workflowContext,
+        ['node-b'],
+        'gemini',
+        { inboundHandoffs: [], execution }
+      );
+
+      expect(prompt).not.toContain('=== AGENT AWARENESS ===');
+      expect(prompt).not.toContain('=== INTERACTION HISTORY ===');
+      expect(prompt).toContain('=== YOUR ROLE ===');
+      expect(prompt).toContain('=== PROTOCOL ===');
+    });
+
+    it('should respect contextVisibility=roleOnly in prompt', async () => {
+      const wf = buildTwoNodeWorkflow();
+      wf.nodes[0].data.contextVisibility = 'roleOnly';
+      workflowStoreMock = { get: vi.fn().mockResolvedValue(wf) };
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
+      const execution = engine._executions.get(executionId);
+
+      const prompt = engine._buildSystemPrompt(
+        wf.nodes[0],
+        execution.workflowContext,
+        ['node-b'],
+        'gemini',
+        { inboundHandoffs: [{ sourceNodeId: 'node-x', payload: { key: 'val' } }], execution }
+      );
+
+      expect(prompt).not.toContain('=== AGENT AWARENESS ===');
+      expect(prompt).not.toContain('=== INTERACTION HISTORY ===');
+      expect(prompt).not.toContain('Received handoffs:');
+      expect(prompt).toContain('=== YOUR ROLE ===');
+      expect(prompt).toContain('=== PROTOCOL ===');
+    });
+
+    it('should include lastAssembledPrompt in serialized agent state', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
+      const status = engine.getStatus(executionId);
+
+      expect(status.agentStates['node-a'].lastAssembledPrompt).toBeTruthy();
+      expect(typeof status.agentStates['node-a'].lastAssembledPrompt).toBe('string');
+      expect(status.agentStates['node-a'].lastPromptTimestamp).toBeTruthy();
+    });
+
+    it('should expose workflowContext and totalTurns in getStatus', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
+      const status = engine.getStatus(executionId);
+
+      expect(status.workflowContext).toBeDefined();
+      expect(typeof status.workflowContext).toBe('object');
+      expect(status.totalTurns).toBe(0);
+    });
+
+    it('should use awareness section with 5 agents', () => {
+      const fiveNodeWf = {
+        nodes: [
+          { id: 'a', data: { label: 'Alpha', systemPrompt: 'Research and analyze market trends' } },
+          { id: 'b', data: { label: 'Beta', systemPrompt: 'Write creative content based on research' } },
+          { id: 'c', data: { label: 'Gamma', systemPrompt: 'Review and fact-check all content' } },
+          { id: 'd', data: { label: 'Delta', systemPrompt: 'Format and polish the final document' } },
+          { id: 'e', data: { label: 'Epsilon', systemPrompt: 'Deliver final report to stakeholders' } },
+        ],
+        edges: [
+          { source: 'a', target: 'b' },
+          { source: 'b', target: 'c' },
+          { source: 'c', target: 'd' },
+          { source: 'd', target: 'e' },
+        ],
+        description: 'Full pipeline from research to delivery',
+      };
+
+      const execution = {
+        workflowDef: fiveNodeWf,
+        workflowContext: {},
+      };
+
+      const awareness = engine._buildAgentAwareness(execution, 'c');
+      expect(awareness).toContain('5-agent workflow');
+      expect(awareness).toContain('"Alpha"');
+      expect(awareness).toContain('"Beta"');
+      expect(awareness).toContain('"Delta"');
+      expect(awareness).toContain('"Epsilon"');
+      expect(awareness).toContain('Workflow goal: Full pipeline from research to delivery');
+      expect(awareness).toContain('You receive input from: "Beta"');
+      expect(awareness).toContain('You send output to: "Delta"');
     });
   });
 });

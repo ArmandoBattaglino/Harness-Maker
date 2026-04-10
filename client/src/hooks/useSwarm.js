@@ -122,6 +122,8 @@ function buildHydratedSnippetPatch(agentState, snippetText) {
 
 export function useSwarm(workflowId) {
   const wsRef = useRef(null);
+  const wsReconnectCountRef = useRef(0);
+  const wsReconnectTimerRef = useRef(null);
   const setExecution = useSwarmStore((s) => s.setExecution);
   const setWorkflowDef = useSwarmStore((s) => s.setWorkflowDef);
   const updateAgentState = useSwarmStore((s) => s.updateAgentState);
@@ -251,6 +253,9 @@ export function useSwarm(workflowId) {
       }
     }
 
+    const _clientChatLen = currentState.chatMessages?.length ?? 0;
+    const _snapChatLen = snapshotChatMessages?.length ?? -1;
+    const _willReplace = snapshotChatMessages && (!sameExecution || _snapChatLen >= _clientChatLen);
     useSwarmStore.setState({
       activeExecutionId: nextExecutionId,
       executionStatus: nextStatus,
@@ -280,7 +285,13 @@ export function useSwarm(workflowId) {
       ...(snapshot.budget ? { budget: snapshot.budget } : {}),
       ...(snapshot.inboxItems ? { inboxItems: snapshot.inboxItems } : {}),
       ...(snapshot.interAgentFeed ? { interAgentFeed: snapshot.interAgentFeed } : {}),
-      ...(snapshotChatMessages ? { chatMessages: snapshotChatMessages } : {}),
+      // Only accept server chatMessages when they are at least as rich as
+      // what the client accumulated via WS.  During reconciliation the server
+      // snapshot may arrive before the ChatExtractor has flushed final
+      // messages, so a blind replace would drop chat history.
+      ...(snapshotChatMessages && (!sameExecution || snapshotChatMessages.length >= (currentState.chatMessages?.length ?? 0))
+        ? { chatMessages: snapshotChatMessages }
+        : {}),
     });
 
     const workflowIdToPersist = snapshot.workflowId ?? snapshot.workflowDef?.id ?? currentState.workflowDef?.id ?? null;
@@ -323,12 +334,17 @@ export function useSwarm(workflowId) {
     try {
       const status = await apiGet(`/api/v1/swarm/${executionId}/status`);
       await applyExecutionSnapshot(status);
-      // Keep stored execution for terminal states so agentResults can be
-      // rehydrated after navigating away and back (BUG-V8-2 fix).
       return;
     } catch {
       const currentState = useSwarmStore.getState();
       if (currentState.activeExecutionId !== executionId) return;
+
+      // Preserve activeExecutionId for terminal states so the chat panel,
+      // agent results, and messaging controls remain accessible even when
+      // the server WS drops or becomes temporarily unreachable.
+      const isAlreadyTerminal = ['completed', 'stopped', 'failed'].includes(currentState.executionStatus);
+      const hasExistingChatData = (currentState.chatMessages?.length ?? 0) > 0
+        || Object.keys(currentState.agentStates ?? {}).length > 0;
 
       const workflowId = currentState.workflowDef?.id ?? readStoredExecution()?.workflowId ?? null;
       if (workflowId) {
@@ -337,16 +353,13 @@ export function useSwarm(workflowId) {
           const terminalExecution = historyResponse?.execution ?? historyResponse;
           if (terminalExecution?.status) {
             useSwarmStore.setState((state) => ({
-              activeExecutionId: null,
+              activeExecutionId: isAlreadyTerminal || hasExistingChatData ? executionId : null,
               executionStatus: terminalExecution.status,
               wsConnected: false,
               runtimeBlocker: null,
-              runtimeProvider: null,
-              providerStrategy: null,
-              lastFallback: null,
-              agentStates: Object.keys(state.agentStates ?? {}).length > 0
-                ? state.agentStates
-                : state.agentStates,
+              runtimeProvider: state.runtimeProvider,
+              providerStrategy: state.providerStrategy,
+              lastFallback: state.lastFallback,
             }));
             return;
           }
@@ -366,16 +379,24 @@ export function useSwarm(workflowId) {
           ? 'completed'
           : 'stopped';
 
-      useSwarmStore.setState({
-        activeExecutionId: null,
-        executionStatus: fallbackStatus,
-        wsConnected: false,
-        runtimeBlocker: null,
-        runtimeProvider: null,
-        providerStrategy: null,
-        lastFallback: null,
-      });
-      clearStoredExecution();
+      if (isAlreadyTerminal || hasExistingChatData) {
+        useSwarmStore.setState({
+          executionStatus: fallbackStatus,
+          wsConnected: false,
+          runtimeBlocker: null,
+        });
+      } else {
+        useSwarmStore.setState({
+          activeExecutionId: null,
+          executionStatus: fallbackStatus,
+          wsConnected: false,
+          runtimeBlocker: null,
+          runtimeProvider: null,
+          providerStrategy: null,
+          lastFallback: null,
+        });
+        clearStoredExecution();
+      }
     }
   }, [applyExecutionSnapshot]);
 
@@ -444,7 +465,8 @@ export function useSwarm(workflowId) {
   }, [applyExecutionSnapshot, clearExecutionState]);
 
   // Connect WS for a running execution
-  const connectWs = useCallback((executionId) => {
+  const connectWs = useCallback((executionId, { isReconnect = false } = {}) => {
+    clearTimeout(wsReconnectTimerRef.current);
     if (wsRef.current) {
       wsRef.current.close();
     }
@@ -454,6 +476,7 @@ export function useSwarm(workflowId) {
 
     ws.onopen = () => {
       if (wsRef.current === ws) {
+        wsReconnectCountRef.current = 0;
         setWsConnected(true);
       }
     };
@@ -461,7 +484,24 @@ export function useSwarm(workflowId) {
       if (wsRef.current === ws) {
         wsRef.current = null;
         setWsConnected(false);
-        void reconcileClosedExecution(executionId);
+        void reconcileClosedExecution(executionId).then(() => {
+          const liveState = useSwarmStore.getState();
+          if (
+            !wsRef.current
+            && liveState.activeExecutionId === executionId
+            && ['completed', 'stopped'].includes(liveState.executionStatus)
+            && hasMessageableAgents(liveState.agentStates)
+          ) {
+            const attempt = wsReconnectCountRef.current;
+            const MAX_WS_RECONNECTS = 5;
+            if (attempt >= MAX_WS_RECONNECTS) return;
+            wsReconnectCountRef.current = attempt + 1;
+            const delay = Math.min(1000 * Math.pow(2, attempt), 30000);
+            wsReconnectTimerRef.current = setTimeout(() => {
+              connectWs(executionId, { isReconnect: true });
+            }, delay);
+          }
+        });
       }
     };
     ws.onerror = () => {
@@ -865,8 +905,10 @@ export function useSwarm(workflowId) {
   const startExecution = useCallback(async (projectId, projectPath, runtimeProvider = 'auto', runtimeModels = null, overrideWorkflowId = null) => {
     const effectiveId = overrideWorkflowId || workflowId;
     if (!effectiveId) throw new Error('No workflow selected');
+    clearTimeout(wsReconnectTimerRef.current);
     wsRef.current?.close();
     wsRef.current = null;
+    wsReconnectCountRef.current = 0;
     pendingStreamJsonTurnsRef.current = {};
     clearExecutionState();
     const body = { projectId, projectPath, runtimeProvider };
@@ -903,6 +945,7 @@ export function useSwarm(workflowId) {
 
   useEffect(() => {
     return () => {
+      clearTimeout(wsReconnectTimerRef.current);
       wsRef.current?.close();
       wsRef.current = null;
     };

@@ -1,6 +1,25 @@
 # CHANGELOG — Claude Code Visual Manager
 
 ---
+## 2026-04-10 — V11.0 CLOSED — Agent Intelligence Reengineering (#497–#510)
+
+**Status:** Area closed; all **14** tasks **COMPLETED** / TEST GATE **PASS**.
+
+**Deliverables:**
+- `SwarmEngine`: `_buildAgentAwareness()` — agent identity, peers, and connections from the workflow graph.
+- `SwarmEngine`: `_buildInteractionTranscript()` — chronological interleaved transcript from `chatMessages`.
+- `SwarmEngine`: non-Codex `_buildSystemPrompt` restructured into **AGENT AWARENESS**, **YOUR ROLE**, **INBOUND HANDOFFS**, **INTERACTION HISTORY**, and compact **PROTOCOL** sections.
+- `SwarmEngine`: `maxTurns` enforcement — `totalTurns` counter in `_onHandoff`, `maxTurns_reached` WebSocket event when the cap is hit.
+- `WorkflowSettingsModal`: Workflow Goal textarea → `workflowDef.description`; Max Conversation Turns → `settings.maxConversationTurns`.
+- `SwarmEngine`: `lastAssembledPrompt` + `lastPromptTimestamp` on agent state; exposed through `_serializeAgentState`.
+- `SwarmEngine` `getStatus()`: includes `workflowContext` and `totalTurns` in the status payload.
+- `AgentInspector`: Agent Memory debug section showing the **full** assembled system prompt.
+- `AgentInspector`: Context Visibility select (`full` / `minimal` / `roleOnly`); `_buildSystemPrompt` applies matching **`contextVisibility`** logic.
+- Tests: **+12** server tests for the above; full server suite **513/513** PASS.
+
+**Verification:** 513/513 server tests; client production build **507** modules, 0 errors.
+
+---
 ## 2026-04-09 — Task #479: BUG-BLOCKER-UI-02 — SwarmEngine snippet/blocker surgical fixes
 **Agent:** debugger — mapped by code-mapper
 **Triggered by:** BUG-BLOCKER-UI-02: Gemini `provider_unavailable` blockers were leaking raw CLI banner noise (sign-in prompts, checkmark-prefixed lines) into the node card snippet; stale `pinnedDisplaySnippet` survived stop/restart, showing ghost blocker text on fresh runs.
@@ -183,6 +202,41 @@
 
 ### Impact on Other Code
 - All SwarmEngine callers of registerNodePrompt now have safer behavior when passing potentially non-string values (no throw on undefined/null/object).
+
+---
+## 2026-04-09 — V10.8 AREA CLOSED — Tasks #491–#495
+**Agent:** qa-tester (TEST GATE #494 + AREA CHECKPOINT #495) — recorded by code-mapper
+**Triggered by:** V10.8 implementation wave complete (#491 visual-regression determinism, #492 Codex handoff E2E harness, #493 stale-server guard); TEST GATE #494 and AREA CHECKPOINT #495 both returned PASS, closing the area.
+
+### Files Modified
+| File | Change Type | Description |
+|------|-------------|-------------|
+| docs/TASK_PLAN.md | MODIFIED | Tasks #494 and #495 status set to COMPLETED (PASS) |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended qa-tester session entries for #494 and #495 |
+| docs/memory/agents/qa-tester.md | MODIFIED | Appended session logs for #494 and #495 |
+
+### Functions Added
+- None
+
+### Functions Modified
+- None
+
+### Functions Removed
+- None
+
+### Connection Changes
+- None — no source code was modified in Tasks #494 or #495 (verification-only).
+
+### Impact on Other Code
+- None. All V10.8 integration points confirmed in code: `normalizeHarnessLayout`, `preflightWorkflowCheck`, `warnIfServerStale`, `checkServerFreshness`. Test counts locked at 501/501 server, 52/52 client, 507 modules build-clean.
+
+### Area Summary
+V10.8 scope: 3 implementation tasks + 1 TEST GATE + 1 AREA CHECKPOINT.
+- Task #491 (visual-regression determinism): `normalizeHarnessLayout` + 682px baselines — PASS
+- Task #492 (Codex handoff E2E harness): `preflightWorkflowCheck` + direct node spawn + stale-isolation — PASS
+- Task #493 (stale-server guard): `check-server-freshness.mjs` + `warnIfServerStale` integration — PASS
+- Task #494 (TEST GATE): 501/501 server, 52/52 client, build clean — PASS
+- Task #495 (AREA CHECKPOINT): all V10.8 integration points verified, full deep-test follow-up closed — PASS
 
 ---
 ## 2026-04-09 — Task #444: chatTextNormalization CHAT_WORDS dedup

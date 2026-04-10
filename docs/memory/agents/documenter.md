@@ -3915,3 +3915,43 @@ README.md and DOC_STATUS.md are fully current for V10.8. Next pending task is #4
 ### Handoff
 None — task fully self-contained.
 ---
+
+---
+## 2026-04-09 — Task #494+#495 closure: V10.8 AREA CLOSED
+**Status:** COMPLETED
+**Called by:** orchestrator (post-task trio after V10.8 full closure)
+
+### Context when I started
+V10.8 CLIENT FULL DEEP TEST FOLLOW-UP was fully closed. Tasks #491 (visual regression baselines), #492 (Codex handoff E2E harness), #493 (stale server guard) had already been implemented and documented in a prior session. Tasks #494 (TEST GATE PASS) and #495 (AREA CHECKPOINT PASS) just completed — both verification-only, no source code modified.
+
+### What I did
+1. Read README.md — confirmed check:server-freshness section (lines 163-183) and Codex handoff probe section (lines 188-203) already accurate from the prior session.
+2. Read DOC_STATUS.md — confirmed it had a V10.8 table for #491+#492+#493 but no closure record for #494+#495.
+3. Updated DOC_STATUS.md header to reflect "V10.8 AREA CLOSED, PROJECT COMPLETE".
+4. Added a new area-closure block documenting #494 TEST GATE PASS and #495 AREA CHECKPOINT PASS with a clear statement that both tasks were verification-only.
+5. Appended activity log entry.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/DOC_STATUS.md | MODIFIED | Header updated to reflect full V10.8 closure; new V10.8 AREA CLOSED section added for #494+#495 |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Appended closure entry |
+
+### Improvements delivered
+- DOC_STATUS.md now accurately reflects that the entire project is complete, not just the implementation wave
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- No README, ARCHITECTURE.md, or API.md changes needed — #494 and #495 introduced no new code, APIs, or config
+
+### What I learned
+- When the prior documenter session already handled the implementation wave, the closure session only needs to update the DOC_STATUS header and add a closure record — all other docs are already current
+
+### State I'm leaving behind
+All documentation is current. DOC_STATUS.md reflects PROJECT COMPLETE. README.md is accurate. No stale sections.
+
+### Handoff
+None — project complete.
+---

@@ -216,9 +216,10 @@ async function startup() {
     });
   });
 
-  // Rate limiting on all /api/v1/* routes (300 req/min — guards against runaway loops)
-  // Generous limit: localhost single-user app where rapid view switches are normal (BUG-SWARM-UI-3)
-  app.use('/api/v1', rateLimit(300, 60000));
+  // Rate limiting on all /api/v1/* routes (guards against runaway loops)
+  // Generous limit: localhost single-user app where rapid view switches and
+  // multiple browser tabs reconnecting after server restart are normal (BUG-SWARM-UI-3)
+  app.use('/api/v1', rateLimit(1000, 60000));
 
   // Version endpoint
   app.get('/api/v1/version', (req, res) => {

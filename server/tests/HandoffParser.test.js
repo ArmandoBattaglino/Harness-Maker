@@ -132,8 +132,8 @@ describe('HandoffParser', () => {
       expect(results).toEqual([]);
     });
 
-    it('should reject contextUpdate with a string value longer than 1024 chars', () => {
-      const obj = { longkey: 'x'.repeat(1025) };
+    it('should reject contextUpdate with a string value longer than 4096 chars', () => {
+      const obj = { longkey: 'x'.repeat(4097) };
       const payload = b64(obj);
       const chunk = `__HANDOFF__:agent-b:${payload}`;
 

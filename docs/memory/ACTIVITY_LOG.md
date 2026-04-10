@@ -1,3 +1,53 @@
+## 2026-04-10 — project-manager + documenter — V11.0 AREA CLOSED (#497–#510)
+**Outcome:** COMPLETED
+**Summary:** Closed **V11.0 Agent Intelligence Reengineering** in memory: all **14** tasks reported **COMPLETED/PASS** (awareness + transcript + system prompt layout, `maxTurns`/`maxTurns_reached`, workflow settings bindings, prompt/timestamp serialization, `getStatus()` context, AgentInspector Agent Memory + context visibility, **+12** server tests, **513/513** server suite, **507**-module client build). Updated `PROGRESS.md`, `CONTEXT.md`, and `CHANGELOG.md` headers only.
+**Files changed:** docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** No V11 follow-ups. Scope the next area in `docs/TASK_PLAN.md` or run optional hardening.
+
+---
+## 2026-04-10 — project-manager — V11.0 progress memory sync (#497–#504)
+**Outcome:** COMPLETED
+**Summary:** Recorded V11.0 Agent Intelligence Reengineering progress: tasks #497–#504 completed (SwarmEngine awareness/transcript/prompt rewrite, maxTurns, WorkflowSettingsModal goal + max turns, lastAssembledPrompt, getStatus fields). Verification noted: 501/501 server tests, 507-module client build. Remaining #505–#508 documented in CONTEXT/PROGRESS/CHANGELOG.
+**Files changed:** docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/CHANGELOG.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** #505 → #506 → #507 → #508 TEST GATE (qa-tester)
+
+---
+## 2026-04-09 — documenter — V10.8 AREA CLOSED documentation update (#494+#495)
+**Outcome:** COMPLETED
+**Summary:** Updated DOC_STATUS.md header and added V10.8 AREA CLOSED closure record documenting TEST GATE #494 PASS and AREA CHECKPOINT #495 PASS. README.md and all other docs were already accurate — no code was modified in #494 or #495 (verification-only tasks).
+**Files changed:** docs/memory/DOC_STATUS.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** nothing — project complete, all areas closed
+
+---
+## 2026-04-09 — project-manager — PROJECT COMPLETE — ALL AREAS CLOSED
+**Outcome:** COMPLETED
+**Summary:** V10.8 CLIENT FULL DEEP TEST FOLLOW-UP is confirmed fully closed. All 6 tasks (#491 visual regression determinism, #492 Codex handoff E2E harness, #493 stale-server guard, #494 TEST GATE PASS, #495 AREA CHECKPOINT PASS, #496 Codex SDK server regressions) are COMPLETED. Zero PENDING/BLOCKED/IN_PROGRESS tasks remain across the entire project (496 tasks total, 1 DEFERRED #236). Final baselines: 501/501 server, 52/52 client, 507 modules build clean.
+**Files changed:** docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
+**Bugs fixed:** none
+**Decisions made:** none
+**Blockers:** none
+**Next:** No planned work. Next session should start with a new feature request or a debugger-loop sweep if desired.
+
+---
+## 2026-04-09 — code-mapper — V10.8 AREA CLOSED (Tasks #494 + #495)
+**Outcome:** COMPLETED
+**Summary:** Appended V10.8 area-closure entry to CHANGELOG.md documenting TEST GATE #494 (PASS) and AREA CHECKPOINT #495 (PASS). No source files were modified in either task — verification only. All 5 V10.8 tasks (#491–#495) are now COMPLETED/PASS.
+**Files changed:** docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
+**Bugs fixed:** none
+**Decisions made:** CODE_MAP.md not updated — no source code changed in #494 or #495
+**Blockers:** none
+**Next:** next task wave, or session close
+
+---
 ## 2026-04-09 — qa-tester — Task #494: TEST GATE V10.8 full client verification pack
 **Outcome:** COMPLETED (PASS)
 **Summary:** Full verification pack passed. npm test --prefix server 501/501, npm test --prefix client 52/52, npm run build --prefix client 507 modules 0 errors, check-server-freshness exit-2 on unreachable port confirmed, all 4 harness scripts syntax-valid, 6 visual regression baselines present, all integration points (normalizeHarnessLayout, preflightWorkflowCheck, warnIfServerStale, checkServerFreshness) confirmed in code. Minor: npm script name in criterion ('test:e2e:swarm:codex-handoff') doesn't match registered name ('debug:swarm:codex-handoff') — by design per #492, CI gate is server suite.

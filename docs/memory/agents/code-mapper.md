@@ -98,6 +98,50 @@ CODE_MAP.md fully up to date through Codex handoff regression coverage (2026-04-
 V10.8 tasks #491-#495 remain pending. No code-mapper work needed until the next task completes.
 
 ---
+## 2026-04-09 — V10.8 AREA CLOSED — Tasks #494 + #495
+**Status:** COMPLETED
+**Called by:** user (direct request to append V10.8 closure to CHANGELOG.md)
+
+### Context when I started
+TEST GATE #494 (PASS: 501/501 server, 52/52 client, 507 modules build-clean, all integration points confirmed) and AREA CHECKPOINT #495 (PASS: full deep-test follow-up closed) had both been completed by qa-tester. No source files were modified in either task — pure verification. User requested the CHANGELOG.md closure entry be appended.
+
+### What I did
+1. Read CHANGELOG.md top entries + tail (last entries before the V10.8 section) in parallel
+2. Read ACTIVITY_LOG.md top entries to confirm qa-tester and documenter outcomes for #494 and #495
+3. Read agent memory (this file) to understand prior session state
+4. Read CODE_MAP.md header — confirmed no source changes, so CODE_MAP.md update was not needed
+5. Appended V10.8 AREA CLOSED entry to CHANGELOG.md (between the prior Task #444 entry and its predecessor, i.e. prepended at top after the header)
+6. Appended ACTIVITY_LOG.md entry
+7. Appended this session log
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/CHANGELOG.md | MODIFIED | Prepended V10.8 AREA CLOSED entry covering Tasks #491–#495 (3 impl + 1 TEST GATE + 1 AREA CHECKPOINT) |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Prepended code-mapper session entry for V10.8 area closure |
+| docs/memory/agents/code-mapper.md | MODIFIED | This session log |
+
+### Improvements delivered
+- CHANGELOG.md now has a complete, traceable V10.8 area-closure record with area summary and pass verdict for all 5 tasks
+
+### Bugs I encountered
+- None
+
+### Decisions I made
+- Did not update CODE_MAP.md — no source files were modified in #494 or #495; the existing map remains accurate
+
+### What I learned
+- For verification-only tasks (TEST GATE / AREA CHECKPOINT), CHANGELOG entry is the primary deliverable. CODE_MAP.md is unchanged.
+
+### State I'm leaving behind
+CHANGELOG.md fully up to date through V10.8 closure (2026-04-09). CODE_MAP.md accurate for all prior tasks. Test counts: 501/501 server, 52/52 client, 507 modules.
+
+### Handoff
+V10.8 area fully closed. Next task wave TBD by project-manager.
+
+---
+
+---
 ## 2026-04-09 — V10.0 TEST GATE backfill (14 gates): code-mapper pass
 **Status:** COMPLETED
 **Called by:** orchestrator (post-task trio, parallel with PM + documenter)

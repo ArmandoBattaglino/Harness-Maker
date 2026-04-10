@@ -440,15 +440,18 @@ function tidyWorkflowLayout(nodes, edges) {
   const horizontalGap = Math.max(260, maxWidth + 90);
   const verticalGap = Math.max(170, maxHeight + 70);
   const nextPositions = new Map();
+  const globalCenterY = medianValue(
+    layoutableNodes.map((node) => node.position.y),
+    minY
+  );
 
   [...columns.entries()]
     .sort((a, b) => a[0] - b[0])
     .forEach(([rank, columnNodes]) => {
       const columnHeight = Math.max(0, (columnNodes.length - 1) * verticalGap);
-      const anchorY = medianValue(
-        columnNodes.map((node) => node.position.y),
-        minY
-      );
+      const anchorY = columnNodes.length === 1
+        ? globalCenterY
+        : medianValue(columnNodes.map((node) => node.position.y), minY);
       const baseY = anchorY - columnHeight / 2;
       columnNodes.forEach((node, index) => {
         nextPositions.set(node.id, {
@@ -541,8 +544,10 @@ export default function SwarmCanvas({
     }
   }, [nodes, edges]);
 
+  const processedLayoutNonceRef = useRef(0);
   useEffect(() => {
-    if (!layoutNonce) return;
+    if (!layoutNonce || layoutNonce === processedLayoutNonceRef.current) return;
+    processedLayoutNonceRef.current = layoutNonce;
     setDropPreviewNode(null);
     setNodes((currentNodes) => tidyWorkflowLayout(currentNodes, edges));
     if (markDirtyRef.current) markDirtyRef.current();

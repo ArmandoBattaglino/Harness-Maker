@@ -231,7 +231,7 @@ export class HandoffParser {
       if (typeof k !== 'string') return false;
       const v = obj[k];
       if (typeof v !== 'string' && typeof v !== 'number' && typeof v !== 'boolean') return false;
-      if (typeof v === 'string' && v.length > 1024) return false;
+      if (typeof v === 'string' && v.length > 4096) return false;
     }
     return true;
   }

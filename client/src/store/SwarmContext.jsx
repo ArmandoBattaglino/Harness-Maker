@@ -342,7 +342,17 @@ const useSwarmStore = create((set, get) => ({
   reset: () => {
     // Clear persisted execution ID so navigation doesn't rehydrate stale results
     try { window.localStorage.removeItem('swarm-active-execution'); } catch { /* ignore */ }
-    return set(buildClearedExecutionState());
+    // Preserve chat history and feed so the user can review the conversation
+    // after the execution ends.  Only clearExecutionState (called when a NEW
+    // execution starts) should wipe chatMessages.
+    const prev = get();
+    return set({
+      ...buildClearedExecutionState(),
+      chatMessages: prev.chatMessages,
+      interAgentFeed: prev.interAgentFeed,
+      chatFilter: prev.chatFilter,
+      sidePanelMode: prev.chatMessages.length > 0 ? 'chat' : prev.sidePanelMode,
+    });
   },
 }));
 

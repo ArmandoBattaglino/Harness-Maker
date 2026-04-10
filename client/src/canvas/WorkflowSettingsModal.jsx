@@ -27,14 +27,31 @@ const DEFAULTS = {
 const INPUT_CLS =
   'w-full bg-gray-700 text-white text-sm rounded px-3 py-1.5 border border-gray-600 focus:border-purple-500 focus:outline-none';
 
-function SettingsTab({ settings, onChange }) {
+function SettingsTab({ settings, onChange, description, onDescriptionChange }) {
   const mode = settings.mode || DEFAULTS.mode;
   const budgetTokens = settings.budgetTokens ?? DEFAULTS.budgetTokens;
   const cbThreshold = settings.circuitBreakerThreshold ?? DEFAULTS.circuitBreakerThreshold;
   const defaultModel = settings.defaultModel || DEFAULTS.defaultModel;
+  const maxTurns = settings.maxConversationTurns ?? 30;
 
   return (
     <div className="flex flex-col gap-4 p-4">
+      {/* Workflow Goal */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold text-gray-300">Workflow Goal</label>
+        <textarea
+          className={`${INPUT_CLS} resize-y font-mono`}
+          rows={3}
+          style={{ minHeight: '3rem', maxHeight: '12rem' }}
+          value={description}
+          onChange={(e) => onDescriptionChange(e.target.value)}
+          placeholder="Describe the overall purpose of this workflow..."
+        />
+        <span className="text-[10px] text-gray-500">
+          All agents see this goal in their awareness context
+        </span>
+      </div>
+
       {/* Mode */}
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-semibold text-gray-300">Execution Mode</label>
@@ -116,6 +133,28 @@ function SettingsTab({ settings, onChange }) {
         />
         <span className="text-[10px] text-gray-500">
           Max consecutive failures before halting execution
+        </span>
+      </div>
+
+      {/* Max Conversation Turns */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold text-gray-300">Max Conversation Turns</label>
+        <input
+          type="number"
+          className={INPUT_CLS}
+          min={1}
+          max={200}
+          value={maxTurns}
+          onChange={(e) =>
+            onChange({
+              ...settings,
+              maxConversationTurns:
+                e.target.value === '' ? 30 : Math.max(1, Math.min(200, Number(e.target.value))),
+            })
+          }
+        />
+        <span className="text-[10px] text-gray-500">
+          Workflow stops after this many agent handoffs (default: 30)
         </span>
       </div>
 
@@ -238,6 +277,7 @@ export default function WorkflowSettingsModal({ workflowDef, onApply, onClose })
   const [tab, setTab] = useState('settings');
   const [settings, setSettings] = useState({ ...DEFAULTS });
   const [contextVars, setContextVars] = useState([]);
+  const [description, setDescription] = useState('');
 
   // Initialize from workflowDef
   useEffect(() => {
@@ -247,7 +287,9 @@ export default function WorkflowSettingsModal({ workflowDef, onApply, onClose })
       budgetTokens: wfSettings.budgetTokens ?? DEFAULTS.budgetTokens,
       circuitBreakerThreshold: wfSettings.circuitBreakerThreshold ?? DEFAULTS.circuitBreakerThreshold,
       defaultModel: wfSettings.defaultModel || DEFAULTS.defaultModel,
+      maxConversationTurns: wfSettings.maxConversationTurns ?? 30,
     });
+    setDescription(workflowDef?.description || '');
 
     const ctx = workflowDef?.initialContext || {};
     const entries = Object.entries(ctx).map(([key, value]) => ({ key, value: String(value) }));
@@ -268,14 +310,13 @@ export default function WorkflowSettingsModal({ workflowDef, onApply, onClose })
   }, [onClose]);
 
   const handleApply = useCallback(() => {
-    // Convert contextVars array back to flat dict
     const contextDict = {};
     for (const row of contextVars) {
       const k = row.key.trim();
       if (k) contextDict[k] = row.value;
     }
-    onApply(settings, contextDict);
-  }, [settings, contextVars, onApply]);
+    onApply(settings, contextDict, description);
+  }, [settings, contextVars, description, onApply]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -320,7 +361,7 @@ export default function WorkflowSettingsModal({ workflowDef, onApply, onClose })
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
-          {tab === 'settings' && <SettingsTab settings={settings} onChange={setSettings} />}
+          {tab === 'settings' && <SettingsTab settings={settings} onChange={setSettings} description={description} onDescriptionChange={setDescription} />}
           {tab === 'context' && <ContextTab contextVars={contextVars} onChange={setContextVars} />}
         </div>
 

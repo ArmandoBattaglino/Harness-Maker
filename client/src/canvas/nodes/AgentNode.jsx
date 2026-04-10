@@ -4,7 +4,7 @@ import { Handle, Position } from '@xyflow/react';
 import { useSwarmStore } from '../../store/SwarmContext';
 import { stripAnsi } from '../../utils/stripAnsi';
 import { isStructuredSpawnMode } from '../../utils/runtimeModes';
-import { repairAllTokenSpacing } from '../../utils/repairTokenSpacing';
+import { repairTokenSplitting } from '../../utils/repairTokenSpacing';
 
 // type: "agent"
 export default function AgentNode({ id, data, selected }) {
@@ -89,14 +89,19 @@ export default function AgentNode({ id, data, selected }) {
       )}
 
       {/* Node snippet - prefer clean chat message (Option B) over raw PTY */}
-      {(agentState?.lastChatSnippet || agentState?.lastOutputSnippet) && !isDropPreview && (
-        <div className="mt-2 bg-black/40 rounded p-1.5 max-h-16 overflow-y-auto">
-          <pre className="text-xs text-green-300 font-mono whitespace-pre-wrap break-all leading-tight">
-            {(agentState.lastChatSnippet || stripAnsi(agentState.lastOutputSnippet)).split('\n').slice(-4).join('\n')}
-            {status === 'running' && <span className="animate-pulse">▋</span>}
-          </pre>
-        </div>
-      )}
+      {(agentState?.lastChatSnippet || agentState?.lastOutputSnippet) && !isDropPreview && (() => {
+        const rawSnippet = agentState.lastChatSnippet || stripAnsi(agentState.lastOutputSnippet);
+        const truncated = rawSnippet.split('\n').slice(-8).join('\n');
+        const displayText = isStructuredSpawnMode(agentState?.spawnMode) ? truncated : repairTokenSplitting(truncated);
+        return (
+          <div className="mt-2 bg-black/40 rounded p-1.5 max-h-36 overflow-y-auto">
+            <pre className="text-[11px] text-green-300 font-mono whitespace-pre-wrap break-words leading-normal">
+              {displayText}
+              {status === 'running' && <span className="animate-pulse">▋</span>}
+            </pre>
+          </div>
+        );
+      })()}
 
       {/* handoffCount badge */}
       {agentState?.handoffCount > 0 && !isDropPreview && (

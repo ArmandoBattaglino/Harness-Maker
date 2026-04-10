@@ -82,7 +82,7 @@ describe('SwarmCanvas activity rail', () => {
     expect(screen.getByText(/No messages yet/i)).toBeInTheDocument();
   });
 
-  it('restores the chat empty state after reset reopens the activity rail', () => {
+  it('preserves chat messages after reset and reopens the activity rail', () => {
     const workflowDef = {
       id: 'workflow-1',
       name: 'Workflow 1',
@@ -118,7 +118,7 @@ describe('SwarmCanvas activity rail', () => {
     });
 
     expect(screen.getByText('Chat View')).toBeInTheDocument();
-    expect(screen.getByText(/No messages yet/i)).toBeInTheDocument();
+    expect(screen.getByText('Finished run')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Open Activity' })).not.toBeInTheDocument();
   });
 });

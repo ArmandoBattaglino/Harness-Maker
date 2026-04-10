@@ -1,16 +1,17 @@
 // client/src/canvas/ChatMessage.jsx
-// Single message in the Unified Chat View.
-import { useState } from 'react';
+// Single message in the Unified Chat View — with full markdown rendering.
+import { useState, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import rehypeSanitize from 'rehype-sanitize';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import { stripAnsi } from '../utils/stripAnsi';
 import { isStructuredSpawnMode } from '../utils/runtimeModes.js';
+import { repairTokenSplitting } from '../utils/repairTokenSpacing';
 
 const ROLE_STYLES = {
-  assistant: 'bg-gray-800 border-gray-700 text-gray-200',
+  assistant: 'bg-gray-800/80 border-gray-700/60',
   system: 'bg-gray-900/50 border-gray-800 text-gray-500 italic text-[10px]',
-  user: 'bg-blue-900/40 border-blue-800 text-blue-200',
+  user: 'bg-blue-900/30 border-blue-800/50',
 };
 
 function formatTime(ts) {
@@ -18,41 +19,49 @@ function formatTime(ts) {
   return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
-/**
- * Repair ConPTY word fusion: when the terminal drops spaces between words,
- * producing long runs of letters like "nonesistonocusciniéserrature".
- * Insert spaces at camelCase boundaries and before/after common Italian
- * function words embedded in long fused tokens.
- */
-function repairWordFusion(text) {
-  // 1. Insert space at digit-letter boundaries (ConPTY fuses numbers and words)
-  //    "156metrieaIto48" → "156 metrieaIto 48"
-  //    Require 3+ letters to avoid breaking "v5", "m2", etc.
-  text = text.replace(/(\d)([a-zA-Z\u00C0-\u00FF]{3,})/g, '$1 $2');
-  text = text.replace(/([a-zA-Z\u00C0-\u00FF]{3,})(\d)/g, '$1 $2');
+const NOISE_LINE_PATTERNS = [
+  /^(?:\w{2,20}ing(?:\.{2,}|…)\s*){2,}$/i,
+  /(?:bypass ?permissions ?on|shift\+tab ?to ?cycle|\/buddy)/i,
+  /(?:ctrl\+[a-z]|to (?:edit|cycle)|now using extra usage|╭|╰|─{3,}|▸▸|❯❯)/i,
+  /(?:fluttering|running stop hook|◐|◑|◒|◓|⠋|⠙|⠹|⠸|⠼|⠴|⠦|⠧|⠇|⠏)/i,
+  /^[….\s\w]{0,10}cycle\)?[\s◐◑◒◓]*\w*$/i,
+  /^❯\s/,
+  /(?:claude runtime is active|continue the workflow using the shared task context|is not the end of the workflow yet|do not stop at the done marker|you are a [a-z]+ agent\b|execute the workflow goal described|MUST emit a handoff token|downstream target is:|hand off with the most useful)/i,
+];
 
-  // 2. Process long letter-only tokens (18+ chars) for word fusion repair
-  text = text.replace(/[\p{L}\p{M}]{18,}/gu, (token) => {
-    // 2a. Insert space before uppercase after lowercase (camelCase fusion)
-    let fixed = token.replace(/([a-z\u00E0-\u00FF])([A-Z\u00C0-\u00D6])/g, '$1 $2');
-    if (fixed.includes(' ')) return fixed;
-    // 2b. All-lowercase fusion: insert spaces around common Italian function
-    //     words (articles, prepositions, conjunctions) flanked by 3+ letters.
-    const ITA_LONG = 'della|delle|degli|dello|nella|nelle|negli|nello|sulla|sulle|sugli|sullo|dalla|dalle|dagli|dallo|alla|alle|agli|allo|quando|anche|ancora|sempre|prima|dopo|senza|dentro|fuori|oltre|sotto|sopra|circa|insieme|durante|mentre|come|sono|tutto|questo|quella|quello|questi|quelle|immaginate|esistono|dormire|sveglia|potere|poter|occhio|aperto|capace|accogliere|marinai|flotta|imperiale|attraverso|spettatori|costruzione|sotterranei|destinati|gladiatori|macchinari|stupefacente|inaugurazione|interamente|autentiche|battaglie|prodigio|soltanto';
-    const reIta = new RegExp(`(?<=[a-z\\u00E0-\\u00FF]{3})(${ITA_LONG})(?=[a-z\\u00E0-\\u00FF]{2})`, 'gi');
-    fixed = token.replace(reIta, ' $1 ');
-    if (fixed !== token) return fixed.replace(/\s{2,}/g, ' ').trim();
-    // 2c. Shorter function words — require 4+ chars flanking to reduce false positives
-    const SHORT = 'non|del|dei|con|per|che|nel|sul|fra|tra|una|uno|gli';
-    const reShort = new RegExp(`(?<=[a-z\\u00E0-\\u00FF]{4})(${SHORT})(?=[a-z\\u00E0-\\u00FF]{3})`, 'gi');
-    fixed = token.replace(reShort, ' $1 ');
-    if (fixed !== token) return fixed.replace(/\s{2,}/g, ' ').trim();
-    return token;
-  });
-
-  return text;
+function isMarkdownStructuralLine(line) {
+  const trimmed = line.trimStart();
+  if (/^#{1,6}\s/.test(trimmed)) return true;
+  if (/^```/.test(trimmed)) return true;
+  if (/^\|.+\|/.test(trimmed)) return true;
+  if (/^[-*+]\s/.test(trimmed)) return true;
+  if (/^\d+\.\s/.test(trimmed)) return true;
+  if (/^>\s/.test(trimmed)) return true;
+  if (/^---+$/.test(trimmed)) return true;
+  if (/^[\s\t]+/.test(line) && line.trim().length > 0) return true;
+  return false;
 }
 
+function isNoiseLine(line) {
+  return NOISE_LINE_PATTERNS.some((re) => re.test(line));
+}
+
+function isGarbledLine(line) {
+  const dotRuns = line.match(/[.…]{2,}/g) || [];
+  const dotLen = dotRuns.reduce((s, r) => s + r.length, 0);
+  if (dotLen > 0 && dotLen / line.length > 0.12) {
+    const validWords = (line.match(/[A-Za-z\u00C0-\u00FF]{4,}/g) || [])
+      .filter((w) => !/^(.)\1{2,}$/i.test(w));
+    if (validWords.length < 2) return true;
+  }
+  return false;
+}
+
+/**
+ * Clean PTY terminal output for markdown rendering.
+ * Preserves markdown structural elements (headings, code fences, tables,
+ * lists, blockquotes) while filtering ConPTY noise and garbled lines.
+ */
 function formatChatText(rawText = '') {
   let text = stripAnsi(String(rawText ?? ''))
     .replace(/\r\n/g, '\n')
@@ -67,42 +76,45 @@ function formatChatText(rawText = '') {
     }
   }
 
-  const cleanedLines = text
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .filter((line) => !/^(?:\w{2,20}ing(?:\.{2,}|…)\s*){2,}$/i.test(line))
-    .filter((line) => !/(?:bypass ?permissions ?on|shift\+tab ?to ?cycle|\/buddy)/i.test(line))
-    .filter((line) => !/(?:ctrl\+[a-z]|to (?:edit|cycle)|now using extra usage|╭|╰|─{3,}|▸▸|❯❯)/i.test(line))
-    .filter((line) => !/(?:fluttering|running stop hook|◐|◑|◒|◓|⠋|⠙|⠹|⠸|⠼|⠴|⠦|⠧|⠇|⠏)/i.test(line))
-    .filter((line) => !/^[….\s\w]{0,10}cycle\)?[\s◐◑◒◓]*\w*$/i.test(line))
-    .filter((line) => !/^❯\s/.test(line))
-    .filter((line) => !/(?:claude runtime is active|continue the workflow using the shared task context|is not the end of the workflow yet|do not stop at the done marker|you are a [a-z]+ agent\b|execute the workflow goal described|MUST emit a handoff token|downstream target is:|hand off with the most useful)/i.test(line))
-    // Reject garbled ConPTY lines: dots/ellipsis scattered among fragments
-    .filter((line) => {
-      const dotRuns = line.match(/[.…]{2,}/g) || [];
-      const dotLen = dotRuns.reduce((s, r) => s + r.length, 0);
-      if (dotLen > 0 && dotLen / line.length > 0.12) {
-        const validWords = (line.match(/[A-Za-z\u00C0-\u00FF]{4,}/g) || [])
-          .filter(w => !/^(.)\1{2,}$/i.test(w));
-        if (validWords.length < 2) return false;
-      }
-      return true;
-    });
+  let insideCodeFence = false;
+  const cleanedLines = [];
+
+  for (const rawLine of text.split('\n')) {
+    if (/^```/.test(rawLine.trimStart())) {
+      insideCodeFence = !insideCodeFence;
+      cleanedLines.push(rawLine);
+      continue;
+    }
+    if (insideCodeFence) {
+      cleanedLines.push(rawLine);
+      continue;
+    }
+    if (isMarkdownStructuralLine(rawLine)) {
+      cleanedLines.push(rawLine);
+      continue;
+    }
+    const trimmed = rawLine.trim();
+    if (!trimmed) {
+      cleanedLines.push('');
+      continue;
+    }
+    if (isNoiseLine(trimmed)) continue;
+    if (isGarbledLine(trimmed)) continue;
+    cleanedLines.push(trimmed);
+  }
 
   let result = cleanedLines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
 
-  // Strip leading garbled ConPTY prefix before a real sentence start.
-  // Matches runs of short fragments (1-4 chars) with dots/ellipsis, followed by
-  // a proper word (uppercase + 3+ lowercase = real sentence start).
-  // e.g. "gi...ng Ecco il paragrafo" → "Ecco il paragrafo"
-  // e.g. "Booo st pap ini …ng… tra o B Sembra che" → "Sembra che"
-  result = result.replace(/^(?:[a-zA-Z\u00C0-\u00FF.…]{1,4}\s+){3,}(?:[a-zA-Z\u00C0-\u00FF.…]{1,4}\s+)*(?=[A-Z\u00C0-\u00D6][a-z\u00E0-\u00FF]{3,})/u, '');
-  // Also strip lowercase-only prefix (original pattern)
-  result = result.replace(/^(?:[a-z\u00E0-\u00FF.…]{1,15}\s+)+(?=[A-Z\u00C0-\u00D6])/u, '');
+  result = result.replace(
+    /^(?:[a-zA-Z\u00C0-\u00FF.…]{1,4}\s+){3,}(?=[A-Z\u00C0-\u00D6][a-z\u00E0-\u00FF]{3,})/u,
+    '',
+  );
+  result = result.replace(
+    /^(?:[a-z\u00E0-\u00FF.…]{1,15}\s+)+(?=[A-Z\u00C0-\u00D6])/u,
+    '',
+  );
 
-  // Repair word fusion from ConPTY space-stripping
-  result = repairWordFusion(result);
+  result = repairTokenSplitting(result);
 
   return result;
 }
@@ -116,7 +128,6 @@ function formatStreamJsonText(rawText = '') {
 function formatToolArgs(partialArgs = '') {
   const raw = String(partialArgs ?? '').trim();
   if (!raw) return '{}';
-
   try {
     return JSON.stringify(JSON.parse(raw), null, 2);
   } catch {
@@ -137,6 +148,119 @@ function formatCostFooter(cost) {
     : '';
   return `Tokens: ${inputTokens}in / ${outputTokens}out${cachePart} | Cost: $${costUsd.toFixed(4)} | ${durationMs}ms`;
 }
+
+const sanitizeSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    code: [...(defaultSchema.attributes?.code || []), 'className'],
+  },
+};
+
+// ─── Custom ReactMarkdown component overrides ──────────────────────────────
+
+function CodeBlock({ className, children, ...props }) {
+  const [copied, setCopied] = useState(false);
+  const match = /language-(\w+)/.exec(className || '');
+  const code = String(children).replace(/\n$/, '');
+  const isInline = !match && !code.includes('\n');
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }, [code]);
+
+  if (isInline) {
+    return (
+      <code
+        className="bg-gray-900/80 text-code-purple px-1.5 py-0.5 rounded text-[0.8em] font-mono"
+        {...props}
+      >
+        {children}
+      </code>
+    );
+  }
+
+  return (
+    <div className="group relative my-2">
+      <div className="flex items-center justify-between bg-gray-900 border border-gray-700/60 rounded-t px-3 py-1">
+        <span className="text-[10px] text-gray-500 font-mono">{match?.[1] || 'text'}</span>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="text-[10px] text-gray-500 hover:text-gray-300 transition-colors"
+        >
+          {copied ? 'Copied!' : 'Copy'}
+        </button>
+      </div>
+      <pre className="bg-gray-950 border border-t-0 border-gray-700/60 rounded-b p-3 overflow-x-auto !my-0">
+        <code className="text-[11px] leading-[1.6] text-code-text font-mono" {...props}>
+          {children}
+        </code>
+      </pre>
+    </div>
+  );
+}
+
+const mdComponents = {
+  code: CodeBlock,
+  table: ({ children }) => (
+    <div className="my-2 overflow-x-auto rounded border border-gray-700/60">
+      <table className="w-full text-[12px] border-collapse">{children}</table>
+    </div>
+  ),
+  thead: ({ children }) => <thead className="bg-gray-900/80">{children}</thead>,
+  th: ({ children }) => (
+    <th className="px-3 py-1.5 text-left text-[11px] font-semibold text-primary-light border-b border-gray-700/60">
+      {children}
+    </th>
+  ),
+  td: ({ children }) => (
+    <td className="px-3 py-1.5 text-[12px] text-gray-300 border-b border-gray-800/60">{children}</td>
+  ),
+  tr: ({ children, ...props }) => (
+    <tr className="even:bg-gray-900/40" {...props}>{children}</tr>
+  ),
+  a: ({ href, children }) => (
+    <a href={href} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
+      {children}
+    </a>
+  ),
+  blockquote: ({ children }) => (
+    <blockquote className="border-l-2 border-primary/50 pl-3 my-2 text-gray-400 italic">
+      {children}
+    </blockquote>
+  ),
+  hr: () => <hr className="border-gray-700/60 my-3" />,
+  h1: ({ children }) => (
+    <h1 className="text-[15px] font-bold text-primary-light mt-3 mb-1.5">{children}</h1>
+  ),
+  h2: ({ children }) => (
+    <h2 className="text-[14px] font-bold text-primary-light mt-2.5 mb-1">{children}</h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="text-[13px] font-semibold text-gray-100 mt-2 mb-1">{children}</h3>
+  ),
+  h4: ({ children }) => (
+    <h4 className="text-[12px] font-semibold text-gray-200 mt-1.5 mb-0.5">{children}</h4>
+  ),
+  p: ({ children }) => (
+    <p className="text-[12.5px] leading-[1.7] text-gray-200 my-1.5">{children}</p>
+  ),
+  ul: ({ children }) => (
+    <ul className="list-disc pl-4 my-1.5 space-y-0.5 text-[12.5px] text-gray-200">{children}</ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="list-decimal pl-4 my-1.5 space-y-0.5 text-[12.5px] text-gray-200">{children}</ol>
+  ),
+  li: ({ children }) => <li className="leading-[1.6]">{children}</li>,
+  strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
+  em: ({ children }) => <em className="text-gray-300">{children}</em>,
+};
+
+// ─── Collapsible meta block (tool use, thinking) ───────────────────────────
 
 function CollapsibleMetaBlock({ title, children, tone = 'gray' }) {
   const [open, setOpen] = useState(false);
@@ -163,6 +287,8 @@ function CollapsibleMetaBlock({ title, children, tone = 'gray' }) {
   );
 }
 
+// ─── Main component ────────────────────────────────────────────────────────
+
 export default function ChatMessage({ message, agentLabel }) {
   const { role, text, timestamp, nodeId, spawnMode, toolUse, thinking, cost } = message;
   const style = ROLE_STYLES[role] || ROLE_STYLES.assistant;
@@ -177,7 +303,7 @@ export default function ChatMessage({ message, agentLabel }) {
     return (
       <div className="flex items-center gap-2 px-2 py-1">
         <div className="flex-1 h-px bg-gray-800" />
-        <span className={`text-[10px] text-gray-600 shrink-0`}>{text}</span>
+        <span className="text-[10px] text-gray-600 shrink-0">{text}</span>
         <div className="flex-1 h-px bg-gray-800" />
       </div>
     );
@@ -185,9 +311,9 @@ export default function ChatMessage({ message, agentLabel }) {
 
   return (
     <div className="px-2 py-1">
-      <div className={`rounded-lg border px-3 py-2 ${style}`}>
-        <div className="flex items-center gap-2 mb-1">
-          <span className={`text-[10px] font-semibold ${role === 'user' ? 'text-green-400' : 'text-blue-400'}`}>
+      <div className={`rounded-lg border px-3.5 py-2.5 ${style}`}>
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className={`text-[11px] font-semibold ${role === 'user' ? 'text-green-400' : 'text-blue-400'}`}>
             {role === 'user' ? 'You' : (agentLabel || nodeId?.slice(0, 12) || 'Agent')}
           </span>
           {role === 'user' && agentLabel && (
@@ -195,13 +321,13 @@ export default function ChatMessage({ message, agentLabel }) {
           )}
           <span className="text-[10px] text-gray-600">{formatTime(timestamp)}</span>
         </div>
-        <div className="prose prose-invert prose-sm max-w-none text-[12px] break-words leading-5 text-gray-100 prose-strong:text-white prose-strong:font-semibold prose-em:text-gray-300 prose-li:my-0 prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-headings:text-gray-100 prose-headings:mt-2 prose-headings:mb-1 prose-code:text-amber-300 prose-code:text-[11px]">
+        <div className="max-w-none break-words">
           {displayText ? (
-            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[[rehypeSanitize, sanitizeSchema]]} components={mdComponents}>
               {displayText}
             </ReactMarkdown>
           ) : (
-            <p>Structured handoff sent.</p>
+            <p className="text-[12px] text-gray-400 italic">Structured handoff sent.</p>
           )}
         </div>
         {isStreamJson && Array.isArray(toolUse) && toolUse.map((tool, index) => (

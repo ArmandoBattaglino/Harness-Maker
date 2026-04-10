@@ -1,3 +1,15 @@
+## V11.0 — Agent Intelligence Reengineering (2026-04-10)
+
+**Status:** CLOSED — tasks **#497–#510** all **COMPLETED** / TEST GATE **PASS** (14 tasks).
+
+**Deliverables:** `_buildAgentAwareness()` (identity/peers/connections from graph); `_buildInteractionTranscript()` (chronological interleaved `chatMessages`); non-Codex `_buildSystemPrompt` (AGENT AWARENESS + YOUR ROLE + INBOUND HANDOFFS + INTERACTION HISTORY + compact PROTOCOL); `maxTurns` via `totalTurns` in `_onHandoff` + `maxTurns_reached` WS; Workflow Goal + Max Conversation Turns in `WorkflowSettingsModal` (`workflowDef.description`, `settings.maxConversationTurns`); `lastAssembledPrompt` + `lastPromptTimestamp` on agent state → `_serializeAgentState`; `workflowContext` + `totalTurns` in `getStatus()`; Agent Memory debug in `AgentInspector`; Context Visibility select + `_buildSystemPrompt` modes (`full` / `minimal` / `roleOnly`); **+12** focused server tests (**513/513** suite).
+
+**Verification:** 513/513 server tests; client production build clean (**507** modules).
+
+---
+
+- [PM 2026-04-09] PROJECT COMPLETE — ALL AREAS CLOSED. V10.8 CLIENT FULL DEEP TEST FOLLOW-UP is the final closed area. Total task count: 496 numbered tasks + #496 (out-of-session). All areas from V3.1 through V10.8 are CLOSED. Zero PENDING, BLOCKED, or IN_PROGRESS tasks remain. Final baselines: 501/501 server tests, 52/52 client tests, build 507 modules (0 errors). 1 deferred task (#236 ConPTY Windows platform limitation — unfixable). No active planned areas.
+
 - [QA-TESTER 2026-04-09] TASK #495 AREA CHECKPOINT V10.8 PASS. All 6 V10.8 tasks confirmed COMPLETED: #491 (visual regression determinism), #492 (Codex handoff E2E harness), #493 (stale-server freshness guard), #494 TEST GATE PASS, #496 (Codex SDK server unit regressions), #495 (this checkpoint). V10.8 CLOSED. No active planned areas.
 
 - [QA-TESTER 2026-04-09] TASK #494 TEST GATE V10.8 PASS. Full verification pack green: 501/501 server, 52/52 client, 507 modules build (0 errors), exit-2 freshness check confirmed, all 4 harness scripts syntax-valid, 6 baselines present, all integration points confirmed in code. Minor: npm script name in criterion differs from registered name (by design, per #492). Task #495 (AREA CHECKPOINT) now unblocked.

@@ -138,7 +138,6 @@ export default function AgentOutputPanel({ nodeId, nodeLabel, onClose, onSwitchT
   const handoffs = agentResult?.handoffPayloads || [];
   const hasHandoffs = handoffs.length > 0;
   const finalText = useMemo(() => cleanOutputText(rawFinalText), [rawFinalText]);
-
   const [activeTab, setActiveTab] = useState('output');
   const [copyLabel, setCopyLabel] = useState('Copy');
 
@@ -207,7 +206,7 @@ export default function AgentOutputPanel({ nodeId, nodeLabel, onClose, onSwitchT
       {/* Content area */}
       <div ref={contentRef} className="flex-1 overflow-y-auto min-h-0">
         {activeTab === 'output' && (
-          <div className="prose prose-invert prose-sm max-w-none text-xs">
+          <div className="prose prose-invert prose-sm max-w-none text-[12px] leading-relaxed prose-p:my-2 prose-headings:mt-3 prose-headings:mb-1 prose-li:my-0.5 prose-ul:my-1 prose-ol:my-1">
             {finalText ? (
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {finalText}

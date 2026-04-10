@@ -147,6 +147,38 @@ const CHAT_WORDS = [
   'disinvoltura', 'immaginazione', 'scafandro', 'subacquea',
   'respirazione', 'sabotare', 'inquietante', 'incrollabile',
   'rinascimento', 'raggiungerlo', 'semplicemente', 'accidente',
+  // BPE token-boundary words: fragments individually valid but merged form is the real word
+  'chilometri', 'chilometro', 'assenza', 'piastre', 'canyon', 'antiche',
+  'anno', 'anni', 'pari', 'kilometri', 'hanno', 'sulla', 'sulle', 'sullo',
+  'delle', 'dello', 'nella', 'nelle', 'nello', 'dalle', 'dallo',
+  'altitudine', 'diametro', 'perimetro', 'parametro', 'centimetri',
+  'millimetri', 'atmosfera', 'temperatura', 'pressione', 'composizione',
+  'formazione', 'superficie', 'distanza', 'dimensioni', 'dimensione',
+  'esplorazione', 'osservazione', 'rivoluzione', 'rotazione', 'inclinazione',
+  'ghiaccio', 'ossigeno', 'idrogeno', 'carbonio', 'azoto', 'minerali',
+  'vulcanica', 'vulcanico', 'geologica', 'geologico', 'marziano', 'marziana',
+  'pianeta', 'satellite', 'asteroide', 'cometa', 'orbita', 'gravita',
+  'terrestre', 'solare', 'cosmico', 'cosmica', 'galattico', 'spaziale',
+  'dura', 'duro', 'duri', 'pure', 'pare', 'pari', 'meno', 'seno',
+  'tetto', 'notte', 'lotte', 'rotte', 'cotte', 'passo', 'basso',
+  'cura', 'sera', 'nera', 'vera', 'pura', 'duro', 'muro', 'faro',
+  'anno', 'hanno', 'fanno', 'sanno', 'vanno', 'danno', 'stanno',
+  'canne', 'panne', 'latte', 'gatte', 'notte', 'rotte',
+  'tettoniche', 'tettonico', 'tettonica', 'tettonici',
+  'atmosferica', 'atmosferico', 'atmosferiche', 'atmosferici',
+  'sorprendentemente', 'impressionante', 'impressionanti',
+  'grandissimo', 'grandissima', 'bellissimo', 'bellissima',
+  'interessante', 'interessanti', 'incredibile', 'incredibili',
+  'notevolmente', 'relativamente', 'approssimativamente',
+  'contro', 'circa', 'dentro', 'dietro', 'senza', 'lungo', 'sotto',
+  'sopra', 'oltre', 'verso', 'presso', 'durante', 'mediante', 'tramite',
+  'portata', 'portato', 'portati', 'portate',
+  'localizzare', 'immaginare', 'superando', 'superare',
+  'comunicare', 'comunicazione', 'comunicazioni',
+  'orchestrare', 'orchestrator', 'intermediario',
+  'predatore', 'predatori', 'cacciatore', 'cacciatori',
+  'sonnolenta', 'sonnolento', 'eccezionale', 'eccezionali',
+  'formidabile', 'formidabili', 'straordinario', 'straordinaria',
   // Common Italian words frequently broken by tokenizer
   'attraversare', 'caratteristica', 'caratteristiche', 'completamente',
   'considerare', 'consapevolezza', 'contemporaneo', 'determinazione',
@@ -157,6 +189,87 @@ const CHAT_WORDS = [
   'rappresentare', 'responsabilita', 'significativo', 'sostanzialmente',
   'straordinario', 'straordinaria', 'tradizionalmente', 'trasformazione',
   'universalmente', 'velocemente',
+  // Wave 5 — Concatenation repair: common Italian words needed for DP word splitting
+  'eppure', 'oppure', 'vicino', 'vicina', 'vicini', 'vicine',
+  'durata', 'estati', 'estate', 'inverni', 'inverno', 'primavera', 'autunno',
+  'stagione', 'stagioni', 'vulcano', 'vulcani', 'calendario',
+  'affascinante', 'peculiare', 'pieno', 'piena', 'pieni', 'piene',
+  'estremi', 'estremo', 'continuamente', 'custodendo',
+  'regalando', 'significa', 'protrae', 'protrarre',
+  'nostre', 'nostri', 'nostra', 'giorni', 'doppia', 'doppio',
+  'già', 'perché', 'così', 'però', 'né', 'più',
+  'ai', 'agli', 'dai', 'dagli', 'sui', 'sugli',
+  'anno', 'anni', 'mese', 'mesi', 'settimana', 'settimane',
+  'straordinari', 'record', 'intero', 'intera', 'interi', 'intere',
+  'stupire', 'smette', 'smettere', 'piuttosto', 'dunque', 'ebbene',
+  'soltanto', 'ciascuno', 'ciascuna', 'qualsiasi', 'comunque',
+  'nemmeno', 'neppure', 'tuttavia', 'sebbene', 'affinché',
+  'nonostante', 'malgrado', 'benché', 'purché', 'cosicché',
+  'altrimenti', 'pertanto', 'laddove', 'dovunque', 'ovunque',
+  'qualunque', 'chiunque', 'attraverso', 'momento', 'passando',
+  'inizio', 'iniziale', 'precedente', 'successivo', 'successiva',
+  'turno', 'invio', 'messaggio', 'messaggi', 'scrittore', 'ricercatore',
+  'completata', 'completato', 'chiedendo', 'chiedendogli',
+  'rispondere', 'rispondermi', 'scrivere', 'descrivere',
+  'riassunto', 'riassuntivo', 'riassuntiva', 'paragrafo',
+  'pianeta', 'marziane', 'terrestre', 'terrestri', 'solare', 'solari',
+  'profondo', 'profondi', 'profonda', 'profonde',
+  'lunghissimi', 'lunghissimo', 'lunghissima',
+  'conferma', 'confermare', 'sfidare', 'immaginazione',
+  // Common Italian preposition+article contractions (prevent a+i → ai splitting)
+  'ai', 'al', 'allo', 'alla', 'alle', 'agli',
+  'dai', 'dal', 'dallo', 'dalla', 'dalle', 'dagli',
+  'sui', 'sul', 'sullo', 'sulla', 'sulle', 'sugli',
+  'nei', 'nel', 'nello', 'nella', 'nelle', 'negli',
+  // Unit abbreviations (normalized to lowercase for matching)
+  'khz', 'mhz', 'ghz', 'thz',
+  // Wave 6 — Proper nouns and words needed for [A-Z]+[a-z] merge
+  'marte', 'giove', 'saturno', 'venere', 'mercurio', 'nettuno', 'urano',
+  'terra', 'luna', 'sole', 'olimpo', 'roma', 'napoli', 'venezia',
+  'europa', 'italia', 'francia', 'germania', 'spagna',
+  // Common words seen concatenated in E2E
+  'sistema', 'solare', 'intero', 'intera', 'intere', 'interi',
+  'grande', 'grandi', 'colossale', 'enorme', 'enormi',
+  'esistenza', 'assenza', 'tettonica', 'placche', 'magma',
+  'permesso', 'accumularsi', 'punto', 'milioni', 'milione',
+  'impressionante', 'impressionanti', 'estende', 'estendere',
+  'lunghezza', 'larghezza', 'profondita', 'dimensioni', 'dimensione',
+  'rendono', 'rendere', 'confronto', 'modesta', 'modesto',
+  'scalanatura', 'struttura', 'strutture', 'propria', 'proprio',
+  'propri', 'proprie',   'redazione', 'risultati', 'passo',
+  // Wave 7 — Words incorrectly split by DP (7+ chars that need protection)
+  'secondi', 'secondo', 'lontano', 'lontana', 'lontani', 'lontane',
+  'minuti', 'minuto', 'terrestre', 'terrestri', 'soltanto',
+  'tuttavia', 'sebbene', 'durante', 'mediante', 'ciascuno', 'ciascuna',
+  'qualsiasi', 'comunque', 'nonostante', 'altrimenti', 'pertanto',
+  'poiché', 'perché', 'finché', 'affinché', 'benché', 'giacché',
+  'siccome', 'cosicché', 'sebbene', 'purché', 'quantunque',
+  'avrebbe', 'sarebbe', 'potrebbe', 'dovrebbe', 'vorrebbe',
+  'farebbe', 'direbbe', 'starebbe', 'saprebbe', 'parrebbe',
+  'assenza', 'presenza', 'essenza', 'potenza', 'scienza',
+  'distanza', 'costanza', 'sostanza', 'speranza', 'conoscenza',
+  'colossale', 'possibile', 'impossibile', 'terribile', 'incredibile',
+  'notevole', 'generale', 'speciale', 'naturale', 'centrale',
+  'modesta', 'modesto', 'diverso', 'diversa', 'diversi', 'diverse',
+  'terrestre', 'celeste', 'campestre', 'silvestre', 'rupestre',
+  'lontano', 'vicino', 'esterno', 'interno', 'supremo',
+  // Wave 8 — Missing Italian adjective plurals and Mars/space vocabulary
+  'vertiginoso', 'vertiginosa', 'vertiginosi', 'vertiginose',
+  'peculiari', 'peculiare', 'misterioso', 'misteriosa', 'misteriosi', 'misteriose',
+  'affascinanti', 'affascinato', 'affascinata',
+  'calendesimale', 'abituale', 'abituali', 'abitudini',
+  'portata', 'irripetibile', 'irripetibili',
+  'approssimativo', 'approssimativa', 'approssimativi', 'approssimative',
+  'climatico', 'climatica', 'climatici', 'climatiche',
+  'geologiche', 'geologici', 'vulcaniche', 'vulcanici',
+  'esplorativo', 'esplorativa', 'esplorativi', 'esplorative',
+  'rappresentare', 'rappresentano', 'rappresenta',
+  'continua', 'continuare', 'continuano', 'continuamente',
+  'raggiungerlo', 'raggiungere', 'raggiungono', 'raggiunto',
+  'complessivamente', 'approssimativamente', 'particolarmente',
+  'notevolmente', 'significativamente', 'relativamente',
+  'prevalentemente', 'sostanzialmente', 'fondamentalmente',
+  'recentemente', 'attualmente', 'principalmente', 'inizialmente',
 ];
 
 const CHAT_WORD_SET = new Set(CHAT_WORDS.map((word) => normalizeCompressedChatWord(word)));
@@ -346,8 +459,9 @@ function restoreCompressedChatToken(token = '') {
   if (!result) return restoreCompressedChatTokenGreedy(token, normalizedToken) ?? token;
 
   const coverage = result.matchedChars / token.length;
-  const minimumScore = token.length * 0.35;
-  if (result.matchedWords < 2 || coverage < 0.6 || result.score <= minimumScore) {
+  const minimumCoverage = token.length < 12 ? 0.85 : 0.6;
+  const minimumScore = token.length * (token.length < 12 ? 0.7 : 0.35);
+  if (result.matchedWords < 2 || coverage < minimumCoverage || result.score <= minimumScore) {
     return restoreCompressedChatTokenGreedy(token, normalizedToken) ?? token;
   }
 
@@ -395,6 +509,7 @@ function restoreFragmentedChatSequence(sequence = '') {
 
   const singleCharCount = parts.filter((part) => part.length === 1).length;
   const shortPartCount = parts.filter((part) => part.length <= 2).length;
+  const maxPartLen = Math.max(...parts.map((p) => p.length));
 
   // Check if merged form is a known word before bailing out
   const merged = parts.join('');
@@ -407,11 +522,32 @@ function restoreFragmentedChatSequence(sequence = '') {
   // If every fragment is already a known word AND none are single-char fragments
   // that look like token-boundary artifacts, keep the original spacing.
   const knownParts = parts.filter((part) => CHAT_WORD_SET.has(normalizeCompressedChatWord(part))).length;
-  if (knownParts === parts.length && singleCharCount === 0) return raw;
+  if (knownParts === parts.length) return raw;
 
-  if (merged.length < 5) return raw;
+  // Long words (>5 chars) next to single-char connectors are real sentence tokens,
+  // not BPE fragments. Return original when the long parts dominate.
+  const singleCharConnectors = new Set(['a', 'e', 'i', 'o', 'è']);
+  const longParts = parts.filter((p) => p.length > 5);
+  const connectorSingles = parts.filter((p) => p.length === 1 && singleCharConnectors.has(p.toLowerCase()));
+  if (longParts.length >= 1 && connectorSingles.length === singleCharCount && maxPartLen >= 5) return raw;
 
-  const restored = merged.length >= 7 ? restoreCompressedChatToken(merged) : merged;
+  if (merged.length < 4) return raw;
+
+  // For short merged forms (< 7 chars) that restoreCompressedChatToken would skip,
+  // do a direct dictionary prefix scan to find known word boundaries.
+  if (merged.length < 7) {
+    const normalizedMergedFull = normalizeCompressedChatWord(merged);
+    for (let prefixLen = 2; prefixLen < normalizedMergedFull.length; prefixLen += 1) {
+      const prefix = normalizedMergedFull.slice(0, prefixLen);
+      const suffix = normalizedMergedFull.slice(prefixLen);
+      if (CHAT_WORD_SET.has(prefix) && (CHAT_WORD_SET.has(suffix) || suffix.length <= 1)) {
+        return merged.slice(0, prefixLen) + (suffix.length > 0 ? ' ' + merged.slice(prefixLen) : '');
+      }
+    }
+    return raw;
+  }
+
+  const restored = restoreCompressedChatToken(merged);
   if (restored !== merged) return restored;
   return raw;
 }
@@ -455,30 +591,82 @@ function stripLeadingCorruption(line = '') {
   return raw;
 }
 
-export function normalizeChatDisplayText(text = '') {
+function mergeBpeFragmentsIfKnown(sequence = '') {
+  const parts = sequence.trim().split(/\s+/).filter(Boolean);
+  if (parts.length < 2 || parts.length > 5) return sequence;
+
+  const merged = parts.join('');
+  const normalizedMerged = normalizeCompressedChatWord(merged);
+  if (CHAT_WORD_SET.has(normalizedMerged)) return merged;
+
+  if (parts.length >= 3) {
+    for (let windowSize = parts.length; windowSize >= 2; windowSize -= 1) {
+      for (let start = 0; start <= parts.length - windowSize; start += 1) {
+        const window = parts.slice(start, start + windowSize);
+        const windowMerged = window.join('');
+        if (CHAT_WORD_SET.has(normalizeCompressedChatWord(windowMerged))) {
+          const result = [
+            ...parts.slice(0, start),
+            windowMerged,
+            ...parts.slice(start + windowSize),
+          ];
+          return result.join(' ');
+        }
+      }
+    }
+  }
+
+  return sequence;
+}
+
+export function normalizeChatDisplayText(text = '', { streamJson = false } = {}) {
   if (!text) return text;
 
-  return String(text)
+  const _result = String(text)
     .split('\n')
     .map((line) => {
-      if (shouldSkipConPTYDecompression(line)) return stripLeadingCorruption(line).trimEnd();
+      if (shouldSkipConPTYDecompression(line)) return (streamJson ? line : stripLeadingCorruption(line)).trimEnd();
 
-      return stripLeadingCorruption(
-        line
-          .replace(/\b[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]{1}\s+(?:[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]{1,8}\s+){1,4}[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]{1,8}\b/gu, (sequence) => restoreFragmentedChatSequence(sequence))
+      // Stream-json text is already clean from the Claude API — skip all ConPTY
+      // decompression which corrupts accented characters and valid words (DEC-030).
+      if (streamJson) {
+        return line
+          .replace(/([.!?])([A-Z\u00C0-\u00D6])/gu, '$1 $2')
+          .replace(/([,;])([a-zA-Z\u00C0-\u00F6])/gu, '$1 $2')
+          .replace(/([a-z\u00E0-\u00F6])(?=[A-Z\u00C0-\u00D6][a-z\u00E0-\u00F6]{2,})/gu, '$1 ')
+          .replace(/\s{2,}/g, ' ')
+          .trimEnd();
+      }
+
+      let processed = line
+        .replace(/\b[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]{1}\s+(?:[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]{1,8}\s+){1,4}[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]{1,8}\b/gu, (sequence) => restoreFragmentedChatSequence(sequence))
           .replace(/\b[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]{1,8}\s+[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]{1}(?:\s+[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]{1,8}){0,2}\b/gu, (sequence) => restoreFragmentedChatSequence(sequence))
-          .replace(/\b[A-Za-z\u00C0-\u00FF]{18,}\b/gu, (token) => aggressivelyRestoreLongChatToken(token))
+          .replace(/\b[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]{2,6}(?:\s+[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]{2,6}){1,4}\b/gu, (sequence) => mergeBpeFragmentsIfKnown(sequence));
+      processed = processed.replace(/\b[A-Za-z\u00C0-\u00FF]{18,}\b/gu, (token) => aggressivelyRestoreLongChatToken(token))
+          .replace(/\b([A-Z\u00C0-\u00D6])\s+([a-z\u00E0-\u00F6]{2,})\b/gu, (m, cap, rest) => {
+            const merged = cap + rest;
+            return CHAT_WORD_SET.has(normalizeCompressedChatWord(merged)) ? merged : m;
+          })
+          .replace(/\b(del|nel|al|sul|dal)\s+l([''])/gu, (_, base, apo) => {
+            const doubled = base === 'al' ? 'all' : base.slice(0, -1) + 'll';
+            return doubled + apo;
+          })
           .replace(/([.!?])([A-Z\u00C0-\u00D6])/gu, '$1 $2')
           .replace(/([,;])([a-zA-Z\u00C0-\u00F6])/gu, '$1 $2')
           .replace(/([):])([A-Z\u00C0-\u00D6])/gu, '$1 $2')
-          .replace(/([a-z\u00E0-\u00F6])([A-Z\u00C0-\u00D6])/gu, '$1 $2')
-          .replace(/([a-zA-Z\u00C0-\u00F6])(\d)/gu, '$1 $2')
+          .replace(/([a-z\u00E0-\u00F6])(?=[A-Z\u00C0-\u00D6][a-z\u00E0-\u00F6]{2,})/gu, '$1 ');
+      processed = processed.replace(/\b([A-Za-z\u00C0-\u00F6]{2,})(è)(?=\s|[,;:.!?]|$)/gu, (m, prefix, e) => {
+            return CHAT_WORD_SET.has(normalizeCompressedChatWord(m)) ? m : prefix + ' ' + e;
+          });
+      processed = processed.replace(/([a-zA-Z\u00C0-\u00F6])(\d)/gu, '$1 $2')
           .replace(/(\d)([a-zA-Z\u00C0-\u00F6])/gu, '$1 $2')
           .replace(/\b([a-zA-Z\u00C0-\u00F6]+(?:[‘’](?:s|re|ve|ll|d|m)|n[‘’]t))(?=[a-zA-Z\u00C0-\u00F6])/gu, '$1 ')
           .replace(/\b([a-zA-Z\u00C0-\u00F6]+['’])([a-zA-Z\u00C0-\u00F6]{7,})/gu, (_, prefix, suffix) => `${prefix}${restoreCompressedChatToken(suffix)}`)
-          .replace(RESTORABLE_CHAT_TOKEN_MATCH_RE, (token) => restoreCompressedChatToken(token))
-          .replace(/\s{2,}/g, ' ')
-      ).trimEnd();
+          .replace(RESTORABLE_CHAT_TOKEN_MATCH_RE, (token) => restoreCompressedChatToken(token));
+      processed = processed.replace(/\s{2,}/g, ' ');
+      return stripLeadingCorruption(processed).trimEnd();
     })
     .join('\n');
+
+  return _result;
 }

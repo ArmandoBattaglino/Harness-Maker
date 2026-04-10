@@ -1,5 +1,5 @@
 # Documentation Status
-_Last updated: 2026-04-09 after V10.8 set (#491+#492+#493): visual regression baselines regenerated at 682px, normalizeHarnessLayout() added, Codex handoff harness stabilized (3 bug fixes), stale server guard added (scripts/check-server-freshness.mjs + check:server-freshness npm scripts). Server: 501/501 passing, client: 52/52, build: 507 modules._
+_Last updated: 2026-04-09 after V10.8 AREA CLOSED (#491–#495): visual regression baselines at 682px (normalizeHarnessLayout), Codex handoff harness stabilized (3 bug fixes), stale server guard (scripts/check-server-freshness.mjs + check:server-freshness npm scripts), TEST GATE #494 PASS, AREA CHECKPOINT #495 PASS. All areas V3.1–V10.8 CLOSED. Server: 501/501, client: 52/52, build: 507 modules. PROJECT COMPLETE._
 
 ## Release Status
 **v9.0.0 — V9.0 Stream-JSON Agent Migration CLOSED for core semantics, display fidelity FIXED**
@@ -109,6 +109,19 @@ Three tasks completed. All changes are test infrastructure and tooling — no pr
 | #493 | NEW FEATURE | scripts/check-server-freshness.mjs (NEW), scripts/swarm-e2e-chat-check.mjs, scripts/swarm-visual-regression.mjs, package.json | Stale server guard added: new script + `check:server-freshness` / `check:server-freshness:warn` npm scripts; warnings integrated into swarm E2E harnesses | README.md updated — new "Stale Server Guard" subsection + env var table |
 
 **Documentation impact:** README.md updated with test counts (501/501 server, 52/52 client, 507 modules), new Stale Server Guard subsection, and `check:server-freshness` / `check:server-freshness:warn` command reference. tests/visual/swarm/README.md was updated by the implementing agent in Task #492 — verified accurate.
+
+## V10.8 AREA CLOSED — TEST GATE #494 PASS + AREA CHECKPOINT #495 PASS (2026-04-09)
+
+Two verification tasks completed. No source code modified in either task.
+
+| Task | Type | Verdict | Doc Impact |
+|------|------|---------|------------|
+| #494 | TEST GATE | PASS — 501/501 server, 52/52 client, 507 modules, freshness exit-2 confirmed, all 4 harness scripts syntax-valid, 6 baselines present | None — verification only |
+| #495 | AREA CHECKPOINT | PASS — all 6 V10.8 tasks (#491–#496) confirmed COMPLETED | None — verification only |
+
+**V10.8 is fully closed. All areas V3.1 through V10.8 are CLOSED. No active planned areas. PROJECT COMPLETE.**
+
+**Documentation status:** README.md was already updated in the #491+#492+#493 wave. No further doc changes required for #494 or #495 — both are verification-only tasks with no new APIs, endpoints, components, or configuration.
 
 ---
 

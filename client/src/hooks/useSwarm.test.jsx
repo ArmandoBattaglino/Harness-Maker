@@ -43,12 +43,12 @@ describe('useSwarm client contracts', () => {
   let fetchMock;
 
   beforeEach(() => {
+    fetchMock = vi.fn(() => Promise.reject(new Error('Unexpected fetch')));
+    globalThis.fetch = fetchMock;
+    globalThis.WebSocket = MockWebSocket;
     resetSwarmStore();
     MockWebSocket.instances = [];
     swarmApi = null;
-    globalThis.WebSocket = MockWebSocket;
-    fetchMock = vi.fn(() => Promise.reject(new Error('Unexpected fetch')));
-    globalThis.fetch = fetchMock;
   });
 
   afterEach(() => {
@@ -690,7 +690,7 @@ describe('useSwarm client contracts', () => {
 
     await waitFor(() => {
       const state = useSwarmStore.getState();
-      expect(state.activeExecutionId).toBeNull();
+      expect(state.activeExecutionId).toBe('exec-history');
       expect(state.executionStatus).toBe('completed');
       expect(state.wsConnected).toBe(false);
     });

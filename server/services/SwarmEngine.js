@@ -819,6 +819,10 @@ class SwarmEngine {
       acceptsMessages: Boolean(messageTransport),
       messageTransport,
       ...(state.runtimeBlocker ? { runtimeBlocker: { ...state.runtimeBlocker } } : {}),
+      ...(state.lastAssembledPrompt ? {
+        lastAssembledPrompt: state.lastAssembledPrompt,
+        lastPromptTimestamp: state.lastPromptTimestamp ?? null,
+      } : {}),
       // Stream-json specific fields (DEC-027)
       ...(this._isStructuredAgentState(state) ? {
         spawnMode: state.spawnMode,
@@ -2140,6 +2144,240 @@ class SwarmEngine {
   _getInboundHandoffsForTarget(execution, targetNodeId) {
     if (!execution?.inboundHandoffs || !targetNodeId) return [];
     return execution.inboundHandoffs.get(targetNodeId) ?? [];
+  }
+
+  /**
+   * Gather recent assistant messages from upstream agents for context injection.
+   * Returns an array of { nodeId, label, text } objects, capped at charLimit total chars.
+   */
+  _getUpstreamAgentMessages(execution, targetNodeId, charLimit = 6000) {
+    if (!execution || !targetNodeId) return [];
+    const messages = execution.chatMessages ?? [];
+    if (messages.length === 0) return [];
+
+    const inboundSources = (execution.inboundHandoffs?.get(targetNodeId) ?? [])
+      .map((h) => h.sourceNodeId)
+      .filter(Boolean);
+    if (inboundSources.length === 0) return [];
+
+    const sourceSet = new Set(inboundSources);
+    const perSourceLimit = Math.floor(charLimit / Math.max(sourceSet.size, 1));
+
+    const result = [];
+    for (const sourceId of sourceSet) {
+      const sourceNode = execution.workflowDef?.nodes?.find((n) => n.id === sourceId);
+      const label = sourceNode?.data?.label || sourceId;
+      const sourceMessages = messages
+        .filter((m) => m.nodeId === sourceId && (m.role === 'assistant' || !m.role) && m.text)
+        .slice(-5);
+
+      let combined = sourceMessages.map((m) => m.text).join('\n\n');
+      if (combined.length > perSourceLimit) {
+        combined = combined.slice(-perSourceLimit);
+      }
+      if (combined.trim()) {
+        result.push({ nodeId: sourceId, label, text: combined.trim() });
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Build an awareness section that tells the agent who it is, who the other
+   * agents are, and how they are connected. Pure graph read — no AI involved.
+   * @param {object} execution
+   * @param {string} nodeId
+   * @returns {string}
+   */
+  _buildAgentAwareness(execution, nodeId) {
+    if (!execution?.workflowDef) return '';
+    const allNodes = (execution.workflowDef.nodes ?? []).filter(
+      (n) => n.type === 'agent' || !n.type
+    );
+    const currentNode = allNodes.find((n) => n.id === nodeId);
+    if (!currentNode) return '';
+
+    const edges = execution.workflowDef.edges ?? [];
+    const incoming = edges
+      .filter((e) => e.target === nodeId)
+      .map((e) => e.source);
+    const outgoing = this._getOutgoingTargets(execution.workflowDef, nodeId);
+
+    const lines = [];
+    const agentName = currentNode.data?.label || nodeId;
+    lines.push(`You are "${agentName}" in a ${allNodes.length}-agent workflow.`);
+
+    const goal =
+      execution.workflowContext?.workflowDescription ||
+      execution.workflowDef.description ||
+      '';
+    if (goal) {
+      lines.push(`Workflow goal: ${goal}`);
+    }
+
+    const peers = allNodes.filter((n) => n.id !== nodeId);
+    if (peers.length > 0) {
+      lines.push('');
+      lines.push('Other agents:');
+      for (const peer of peers) {
+        const role = peer.data?.systemPrompt
+          ? peer.data.systemPrompt.slice(0, 120).replace(/\n/g, ' ').trim()
+          : 'no specific role';
+        lines.push(`- "${peer.data?.label || peer.id}": ${role}`);
+      }
+    }
+
+    if (incoming.length > 0) {
+      const labels = incoming.map((id) => {
+        const n = allNodes.find((x) => x.id === id);
+        return `"${n?.data?.label || id}"`;
+      });
+      lines.push('');
+      lines.push(`You receive input from: ${labels.join(', ')}`);
+    }
+    if (outgoing.length > 0) {
+      const labels = outgoing.map((id) => {
+        const n = allNodes.find((x) => x.id === id);
+        return `"${n?.data?.label || id}"`;
+      });
+      lines.push(`You send output to: ${labels.join(', ')}`);
+    }
+
+    return lines.join('\n');
+  }
+
+  /**
+   * Build a chronological, interleaved transcript from execution.chatMessages.
+   * Newest messages are kept when the character budget is exceeded.
+   * @param {object} execution
+   * @param {number} charLimit
+   * @returns {string}
+   */
+  _buildInteractionTranscript(execution, charLimit = 10000) {
+    const messages = execution?.chatMessages ?? [];
+    if (messages.length === 0) return '';
+
+    const nodeLabels = new Map();
+    for (const node of (execution.workflowDef?.nodes ?? [])) {
+      nodeLabels.set(node.id, node.data?.label || node.id);
+    }
+
+    const relevant = messages
+      .filter((m) => (m.role === 'assistant' || !m.role) && m.text?.trim())
+      .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+    if (relevant.length === 0) return '';
+
+    const selected = [];
+    let totalChars = 0;
+
+    for (let i = relevant.length - 1; i >= 0; i--) {
+      const msg = relevant[i];
+      const label = nodeLabels.get(msg.nodeId) || msg.nodeId || 'Unknown';
+      const text = msg.text.trim();
+      const entry = `[${label}]: ${text}`;
+      if (totalChars + entry.length > charLimit) break;
+      selected.unshift({ label, text, entry });
+      totalChars += entry.length;
+    }
+
+    if (selected.length === 0) return '';
+
+    const lines = ['Interaction history (chronological):'];
+    for (const s of selected) {
+      lines.push('');
+      lines.push(`[${s.label}]:`);
+      lines.push(s.text);
+    }
+    return lines.join('\n');
+  }
+
+  /**
+   * Compute word-bigram Jaccard similarity between the last two assistant
+   * messages from the same agent node.  Returns 0-1 (1 = identical).
+   * If fewer than 2 messages exist, returns 0.
+   */
+  _computeMessageSimilarity(execution, nodeId) {
+    const messages = (execution?.chatMessages ?? [])
+      .filter((m) => m.nodeId === nodeId && (m.role === 'assistant' || !m.role) && m.text?.trim())
+      .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+    if (messages.length < 2) return 0;
+
+    const last = messages[messages.length - 1].text.trim().toLowerCase();
+    const prev = messages[messages.length - 2].text.trim().toLowerCase();
+
+    const bigrams = (str) => {
+      const words = str.split(/\s+/).filter(Boolean);
+      const set = new Set();
+      for (let i = 0; i < words.length - 1; i++) {
+        set.add(`${words[i]} ${words[i + 1]}`);
+      }
+      return set;
+    };
+
+    const setA = bigrams(prev);
+    const setB = bigrams(last);
+    if (setA.size === 0 && setB.size === 0) return 1;
+    if (setA.size === 0 || setB.size === 0) return 0;
+
+    let intersection = 0;
+    for (const bg of setA) {
+      if (setB.has(bg)) intersection++;
+    }
+    return intersection / (setA.size + setB.size - intersection);
+  }
+
+  /**
+   * Detect repetitive bidirectional handoff loops between two agents.
+   * Returns { detected, reason, pairCount, similarity } or null.
+   *
+   * Detection fires when:
+   *   (a) bidirectional edge-pair count >= loopDetectionThreshold (default 6), OR
+   *   (b) pair count >= 4 AND content similarity > 0.7
+   *
+   * Skips detection for loop-type nodes (legitimate flow control).
+   */
+  _detectRepetitiveLoop(execution, sourceNodeId, targetId) {
+    if (!execution || !sourceNodeId || !targetId) return null;
+
+    const sourceNode = execution.workflowDef?.nodes?.find((n) => n.id === sourceNodeId);
+    const targetNode = execution.workflowDef?.nodes?.find((n) => n.id === targetId);
+    if (sourceNode?.type === 'loop' || targetNode?.type === 'loop') return null;
+
+    const edges = execution.workflowDef?.edges ?? [];
+    const fwdEdgeId = edges.find((e) => e.source === sourceNodeId && e.target === targetId)?.id
+      ?? `${sourceNodeId}->${targetId}`;
+    const revEdgeId = edges.find((e) => e.source === targetId && e.target === sourceNodeId)?.id
+      ?? `${targetId}->${sourceNodeId}`;
+
+    const fwdCount = execution.edgeCounters.get(fwdEdgeId) ?? 0;
+    const revCount = execution.edgeCounters.get(revEdgeId) ?? 0;
+    const pairCount = fwdCount + revCount;
+
+    const threshold = execution.workflowDef?.settings?.loopDetectionThreshold ?? 6;
+
+    const similarity = this._computeMessageSimilarity(execution, targetId);
+
+    if (pairCount >= threshold) {
+      return {
+        detected: true,
+        reason: `Bidirectional handoff loop: agents exchanged ${pairCount} handoffs (threshold: ${threshold})`,
+        pairCount,
+        similarity,
+      };
+    }
+
+    if (pairCount >= 4 && similarity > 0.7) {
+      return {
+        detected: true,
+        reason: `Repetitive content detected: ${pairCount} handoffs with ${Math.round(similarity * 100)}% content similarity`,
+        pairCount,
+        similarity,
+      };
+    }
+
+    return null;
   }
 
   _shouldWaitForAllAgentInputs(execution, targetNodeId) {
@@ -3605,12 +3843,20 @@ class SwarmEngine {
     state._awaitingStreamJsonClose = false;
     state._pendingCodexSdkStopMode = null;
     this._broadcastAgentStatus(executionId, nodeId, state);
-    this._syncExecutionStatusFromAgents(execution);
+    const syncResult = this._syncExecutionStatusFromAgents(execution);
 
-    await this._spawnAgent(executionId, nodeId, {
-      requestedProvider: state.provider ?? state.runtimeProvider ?? execution.activeProvider,
-      reinjectPrompt: nextPrompt,
-    });
+    try {
+      await this._spawnAgent(executionId, nodeId, {
+        requestedProvider: state.provider ?? state.runtimeProvider ?? execution.activeProvider,
+        reinjectPrompt: nextPrompt,
+      });
+    } catch (spawnErr) {
+      state.status = 'error';
+      state.runtimeBlocker = { type: 'spawn_error', message: spawnErr.message };
+      this._broadcastAgentStatus(executionId, nodeId, state);
+      this._syncExecutionStatusFromAgents(execution);
+      throw spawnErr;
+    }
 
     return { sent: true, delivery: 'resumed' };
   }
@@ -3979,6 +4225,7 @@ class SwarmEngine {
       activeProvider: providerStrategy.activeProvider,
       codexPromptRetryCounts: new Map(),
       lastFallback: null,
+      totalTurns: 0,
     };
 
     // 3. Store BEFORE spawning (so _spawnAgentPty can look it up)
@@ -4086,11 +4333,10 @@ class SwarmEngine {
           {
             ...spawnOptions,
             compactCodexPrompt: shouldCompactCodexPrompt,
+            execution,
           }
         );
         const combinedPrompt = [bootstrapPrompt, systemPrompt].filter(Boolean).join('\n\n');
-        // Register the full prompt text with ChatExtractor so it can detect
-        // and discard messages that are echo/summary of the system prompt.
         this._chatExtractor.registerNodePrompt(nodeId, combinedPrompt);
         const deferCodexInitialPrompt = provider === RUNTIME_PROVIDER.CODEX
           && spawnOptions.deferCodexInitialPrompt !== false;
@@ -4160,6 +4406,8 @@ class SwarmEngine {
           noProgressTimer: null,
           _agentSystemPrompt: (node.data && node.data.systemPrompt) || '',
           _agentFullPrompt: combinedPrompt || '',
+          lastAssembledPrompt: combinedPrompt || '',
+          lastPromptTimestamp: Date.now(),
           // Back-references for use inside _flushSwarmPrompt and other helpers
           // that receive only the state object without executionId/nodeId context.
           _executionId: executionId,
@@ -4435,14 +4683,22 @@ class SwarmEngine {
             }
           }
 
+          let ptyHandoffDetected = false;
           for (const evt of events) {
             if (evt.type === 'handoff') {
+              ptyHandoffDetected = true;
               this._markAgentProgress(execution, nodeId, currentState, 'parser_token');
               this._onHandoff(executionId, nodeId, evt);
+              break;
             }
-            if (evt.type === 'done') {
-              this._markAgentProgress(execution, nodeId, currentState, 'parser_token');
-              this._onDone(executionId, nodeId);
+          }
+          if (!ptyHandoffDetected) {
+            for (const evt of events) {
+              if (evt.type === 'done') {
+                this._markAgentProgress(execution, nodeId, currentState, 'parser_token');
+                this._onDone(executionId, nodeId);
+                break;
+              }
             }
           }
 
@@ -4710,6 +4966,8 @@ class SwarmEngine {
         inboundHandoffs: this._getInboundHandoffsForTarget
           ? this._getInboundHandoffsForTarget(execution, nodeId)
           : [],
+        upstreamMessages: this._getUpstreamAgentMessages(execution, nodeId),
+        execution,
       }
     );
 
@@ -4785,6 +5043,8 @@ class SwarmEngine {
         pendingOperatorPromptQueuedAt: previousState?.pendingOperatorPromptQueuedAt ?? 0,
         _agentSystemPrompt: (node.data && node.data.systemPrompt) || '',
         _agentFullPrompt: prompt || '',
+        lastAssembledPrompt: prompt || '',
+        lastPromptTimestamp: Date.now(),
         spawnedAt: previousState?.spawnedAt ?? Date.now(),
         lastForwardProgressAt: Date.now(),
         lastForwardProgressReason: 'spawn',
@@ -5306,6 +5566,8 @@ class SwarmEngine {
         inboundHandoffs: this._getInboundHandoffsForTarget
           ? this._getInboundHandoffsForTarget(execution, nodeId)
           : [],
+        upstreamMessages: this._getUpstreamAgentMessages(execution, nodeId),
+        execution,
       }
     );
 
@@ -5374,6 +5636,8 @@ class SwarmEngine {
       _streamJsonChatBufferTimer: null,
       _agentSystemPrompt: (node.data && node.data.systemPrompt) || '',
       _agentFullPrompt: prompt || '',
+      lastAssembledPrompt: prompt || '',
+      lastPromptTimestamp: Date.now(),
       pendingOperatorPrompt: previousState?.pendingOperatorPrompt ?? null,
       pendingOperatorPromptMode: previousState?.pendingOperatorPromptMode ?? null,
       pendingOperatorPromptQueuedAt: previousState?.pendingOperatorPromptQueuedAt ?? 0,
@@ -5411,6 +5675,7 @@ class SwarmEngine {
         || currentState._streamJsonRunId !== runId
         || currentState.status === 'done'
         || currentState.status === 'stopped'
+        || currentState.status === 'handoffing'
       ) {
         return;
       }
@@ -5754,7 +6019,10 @@ class SwarmEngine {
     // the accumulated text_delta text preserves it but has token-boundary spacing
     // artifacts (e.g. "E m per or" instead of "Emperor"). We pick whichever source
     // has richer formatting, strip __HANDOFF__ tokens, and normalize spacing.
+    // Preserve raw text BEFORE stripping so HandoffParser can still detect tokens.
+    let rawTextBeforeCanonical = state._streamJsonAccumulatedText ?? '';
     if (resultEvt.resultText) {
+      rawTextBeforeCanonical = (state._streamJsonAccumulatedText || resultEvt.resultText) ?? '';
       const rawAccumulated = (state._streamJsonAccumulatedText ?? '').replace(/__HANDOFF__[\s\S]*/g, '').replace(/__DONE__/g, '').trimEnd();
       const rawResult = (resultEvt.resultText ?? '').replace(/__HANDOFF__[\s\S]*/g, '').replace(/__DONE__/g, '').trimEnd();
       // Prefer accumulated text if it has significantly more newlines (markdown formatting)
@@ -5763,7 +6031,7 @@ class SwarmEngine {
       const rawCanonical = rawAccumulated && accNewlines > resNewlines + 2
         ? rawAccumulated
         : rawResult;
-      const canonicalText = normalizeChatDisplayText(rawCanonical);
+      const canonicalText = normalizeChatDisplayText(rawCanonical, { streamJson: true });
 
       state._streamJsonAccumulatedText = canonicalText;
       state.lastOutputSnippet = canonicalText.length > 200
@@ -5807,31 +6075,40 @@ class SwarmEngine {
 
     // 5. Scan accumulated text for handoff/done tokens unless a graceful stop
     // was already requested for the current turn.
+    // CRITICAL: use the RAW accumulated text (before canonical stripping) so
+    // that __HANDOFF__ tokens are still present for HandoffParser to detect.
+    // The canonicalization step above (step 4b) strips __HANDOFF__/__DONE__
+    // for display purposes — we must not feed that stripped text to the parser.
     if (!gracefulStopPending) {
-      const accumulatedText = state._streamJsonAccumulatedText ?? '';
+      const accumulatedText = rawTextBeforeCanonical || (state._streamJsonAccumulatedText ?? '');
       let foundHandoff = false;
       let foundDone = false;
 
-      // Use HandoffParser for reliable token detection (same patterns as PTY path)
       const tokenParser = new HandoffParser();
       const tokenEvents = tokenParser.feed(accumulatedText);
       for (const evt of tokenEvents) {
         if (evt.type === 'handoff') {
           foundHandoff = true;
           this._onHandoff(executionId, nodeId, evt);
-          break; // Only process first handoff
+          break;
         }
         if (evt.type === 'done') {
           foundDone = true;
         }
       }
 
-      // 6. Route to done/handoff or implicit done
       if (!foundHandoff) {
         if (foundDone) {
           this._onDone(executionId, nodeId);
         } else {
-          // No explicit token → implicit __DONE__ (DEC-029)
+          const nodeHandoffTargets = execution.workflowDef.edges
+            .filter((e) => e.source === nodeId)
+            .map((e) => e.target);
+          if (nodeHandoffTargets.length > 0) {
+            console.warn(
+              `[SwarmEngine] stream-json result for node=${nodeId} contained neither __HANDOFF__ nor __DONE__ — treating as implicit done for reinject`
+            );
+          }
           this._onDone(executionId, nodeId);
         }
       }
@@ -5974,82 +6251,76 @@ class SwarmEngine {
       return lines.join('\n');
     }
 
-    // Agent's own system prompt / role instructions
+    // Non-Codex branch: structured awareness + role + transcript + compact protocol
+    const execution = options.execution ?? null;
     const agentPrompt = (node.data && node.data.systemPrompt) || '';
-    lines.push(agentPrompt);
-    lines.push('');
-    lines.push('--- SWARM PROTOCOL (mandatory - never skip) ---');
+    const hasCustomPrompt = agentPrompt.trim().length > 0;
+    const visibility = node.data?.contextVisibility || 'full';
 
-    // Workflow context section - omit entirely if empty
-    const contextKeys = Object.keys(workflowContext);
-    if (contextKeys.length > 0) {
-      lines.push('Current workflow context:');
-      for (const key of contextKeys) {
-        lines.push(`${key}: ${workflowContext[key]}`);
+    // --- AGENT AWARENESS ---
+    if (visibility === 'full' && execution) {
+      const awareness = this._buildAgentAwareness(execution, node.id);
+      if (awareness) {
+        lines.push('=== AGENT AWARENESS ===');
+        lines.push(awareness);
+        lines.push('');
       }
-      lines.push('');
     }
 
-    if (inboundHandoffs.length > 0) {
-      lines.push('Recent upstream handoffs for this agent:');
-      inboundHandoffs.forEach((handoff) => {
-        lines.push(
-          `From ${handoff.sourceLabel || handoff.sourceNodeId} (${handoff.sourceNodeId}): ${JSON.stringify(handoff.payload ?? {})}`
-        );
-      });
+    // --- YOUR ROLE ---
+    if (hasCustomPrompt) {
+      lines.push('=== YOUR ROLE ===');
+      lines.push(agentPrompt);
       lines.push('');
-    }
-
-    lines.push('You have an active task right now. Do real work before deciding you are done.');
-    if (workflowContext.currentTask) {
-      lines.push(`Current task: ${workflowContext.currentTask}`);
-    }
-    if (workflowContext.workflowDescription) {
-      lines.push(`Workflow goal: ${workflowContext.workflowDescription}`);
-    }
-    lines.push('');
-
-    // Handoff instructions - vary based on whether targets exist
-    if (handoffTargets.length > 0) {
-      lines.push('This agent is not terminal in the workflow.');
-      lines.push('When your stage is complete, you MUST emit a handoff token so the workflow can continue.');
-      if (handoffTargets.length === 1) {
-        lines.push(`Your required downstream target is: ${handoffTargets[0]}`);
-      } else {
-        lines.push(`Use any one of these connected target IDs in your final handoff token: ${handoffTargets.join(', ')}`);
-        lines.push('The runtime will duplicate that handoff across every connected downstream node.');
-      }
-      lines.push('If another agent is better suited to continue, hand off with the most useful context you can provide.');
-      lines.push('Do not emit __DONE__ immediately just because you understand the instructions.');
-      lines.push('When your task is complete and must pass to another agent, output EXACTLY as the last line:');
-      lines.push('__HANDOFF__:<targetId>:{"key": "value"}');
-      lines.push('The final handoff token must be plain text on a single line with no bullets, quotes, code fences, or indentation.');
-      lines.push('');
-      lines.push(`Valid target IDs: ${handoffTargets.join(', ')}`);
-      lines.push('Context update: a flat JSON object with primitive values only (string, number, or boolean). Max 50 keys, strings max 1024 chars. Keep it compact.');
-      lines.push('');
-      if (handoffTargets.length === 1) {
-        lines.push('CONCRETE EXAMPLE (replace the placeholders with your real work):');
-        lines.push(`For this workflow, <targetId> must be ${handoffTargets[0]}.`);
-        lines.push('__HANDOFF__:<targetId>:{"summary": "your real work summary", "result": "your real findings"}');
-      } else {
-        lines.push('CONCRETE EXAMPLE (replace the placeholders with the chosen target and your real work):');
-        lines.push(`Choose one target from: ${handoffTargets.join(', ')}`);
-        lines.push('__HANDOFF__:<targetId>:{"summary": "your real work summary", "result": "your real findings"}');
-      }
-      lines.push('');
-      lines.push('Do NOT output __DONE__ from this agent while downstream handoff targets still exist.');
     } else {
-      lines.push('You are the FINAL agent in this workflow — no downstream handoffs exist.');
-      lines.push('After completing your work, you MUST output the done marker on its own line:');
-      lines.push('__DONE__');
-      lines.push('This is MANDATORY. The workflow cannot complete without this exact token.');
-      lines.push('Output __DONE__ as the very last line of your response, after all your content.');
+      if (workflowContext.currentTask) {
+        lines.push(`Current task: ${workflowContext.currentTask}`);
+      }
+      if (workflowContext.workflowDescription) {
+        lines.push(`Workflow goal: ${workflowContext.workflowDescription}`);
+      }
+      lines.push('');
     }
 
-    lines.push('');
-    lines.push('Do NOT output the handoff or done token mid-response. Only as the very LAST line.');
-    lines.push('--- END PROTOCOL ---');
+    // --- INBOUND HANDOFFS (structured payloads from upstream) ---
+    if ((visibility === 'full' || visibility === 'minimal') && inboundHandoffs.length > 0) {
+      lines.push('Received handoffs:');
+      for (const handoff of inboundHandoffs) {
+        lines.push(`From ${handoff.sourceLabel || handoff.sourceNodeId} (${handoff.sourceNodeId}): ${JSON.stringify(handoff.payload ?? {})}`);
+      }
+      lines.push('');
+    }
+
+    // --- INTERACTION HISTORY ---
+    if (visibility === 'full' && execution) {
+      const transcript = this._buildInteractionTranscript(execution);
+      if (transcript) {
+        lines.push('=== INTERACTION HISTORY ===');
+        lines.push(transcript);
+        lines.push('');
+      }
+    } else if (visibility === 'minimal') {
+      if (inboundHandoffs.length > 0) {
+        lines.push('Latest handoff received:');
+        const last = inboundHandoffs[inboundHandoffs.length - 1];
+        lines.push(`From ${last.sourceLabel || last.sourceNodeId}: ${JSON.stringify(last.payload ?? {})}`);
+        lines.push('');
+      }
+    }
+
+    // --- COMPACT PROTOCOL ---
+    lines.push('=== PROTOCOL ===');
+    lines.push('Do real work before emitting any control token.');
+    if (handoffTargets.length > 0) {
+      lines.push(`When done, last line: __HANDOFF__:<targetId>:{"summary":"...","result":"..."}`);
+      lines.push(`Valid targets: ${handoffTargets.join(', ')}`);
+      if (handoffTargets.length === 1) {
+        lines.push(`For this workflow, <targetId> must be ${handoffTargets[0]}.`);
+      }
+    } else {
+      lines.push('You are the final agent. When done, last line: __DONE__');
+    }
+    lines.push('Token must be plain text on its own last line, no fences or formatting.');
 
     return lines.join('\n');
   }
@@ -7028,6 +7299,27 @@ class SwarmEngine {
       this._markAgentProgress(execution, sourceNodeId, sourceState, 'parser_token');
     }
 
+    // 0. Increment global turn counter and enforce maxTurns
+    execution.totalTurns = (execution.totalTurns ?? 0) + 1;
+    const maxTurns = execution.workflowDef.settings?.maxConversationTurns ?? 30;
+    if (execution.totalTurns > maxTurns) {
+      if (this._wsBroadcast) {
+        this._wsBroadcast(executionId, {
+          type: 'maxTurns_reached',
+          totalTurns: execution.totalTurns,
+          maxTurns,
+        });
+      }
+      if (sourceState) {
+        sourceState.status = 'done';
+        sourceState.runtimeBlocker = null;
+        this._broadcastAgentStatus(executionId, sourceNodeId, sourceState);
+      }
+      execution.status = 'completed';
+      this._syncExecutionStatusFromAgents(execution);
+      return;
+    }
+
     // 1. Shallow merge context update (DEC-V3-05: OpenAI Swarm pattern)
     if (contextUpdate && typeof contextUpdate === 'object') {
       Object.assign(execution.workflowContext, contextUpdate);
@@ -7116,10 +7408,14 @@ class SwarmEngine {
             {
               inboundHandoffs: this._getInboundHandoffsForTarget(execution, nextTargetId),
               compactCodexPrompt: targetProvider === RUNTIME_PROVIDER.CODEX,
+              upstreamMessages: this._getUpstreamAgentMessages(execution, nextTargetId),
+              execution,
             }
           );
           if (contextPrompt) {
             this._writeSwarmPrompt(activeTargetState.sessionId, contextPrompt, activeTargetState);
+            activeTargetState.lastAssembledPrompt = contextPrompt;
+            activeTargetState.lastPromptTimestamp = Date.now();
           }
         }
       }
@@ -7161,6 +7457,11 @@ class SwarmEngine {
 
     const node = execution.workflowDef.nodes.find((candidate) => candidate.id === nodeId);
     const state = execution.agentStates.get(nodeId);
+
+    if (state && (state.status === 'handoffing' || state.status === 'done')) {
+      return;
+    }
+
     const handoffTargets = execution.workflowDef.edges
       .filter((edge) => edge.source === nodeId)
       .map((edge) => edge.target);
@@ -7536,6 +7837,8 @@ class SwarmEngine {
       budget: this._getBudgetSnapshot(e),
       inboxItems: e.inboxItems.map((item) => ({ ...item })),
       chatMessages: (e.chatMessages ?? []).map((msg) => ({ ...msg })),
+      workflowContext: e.workflowContext ? { ...e.workflowContext } : {},
+      totalTurns: e.totalTurns ?? 0,
       ...(e.runtimeBlocker ? { runtimeBlocker: this._serializeRuntimeBlocker(e.runtimeBlocker) } : {}),
     };
   }

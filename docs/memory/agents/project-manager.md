@@ -1,4 +1,98 @@
 ---
+## 2026-04-10 — V11.0 AREA CLOSED — memory sync (#497–#510)
+**Status:** COMPLETED
+**Called by:** user (project-manager + documenter)
+
+### Context when I started
+V11.0 Agent Intelligence Reengineering reported fully done: **#497–#510** all **COMPLETED/PASS**; user asked to close the area in **PROGRESS**, **CONTEXT**, **CHANGELOG** only (no full-file rewrites).
+
+### What I did
+1. Replaced the **V11.0** block at the top of `docs/memory/PROGRESS.md` with a **CLOSED** summary, deliverable bullets, and **513/513** + **507** module verification.
+2. Updated the **CONTEXT.md** header (**Focus**, **IMMEDIATE NEXT STEP**) for **V11.0 CLOSED** and new baselines.
+3. Replaced the partial **2026-04-10** `CHANGELOG.md` V11 stub with one **V11.0 CLOSED** entry listing all named deliverables.
+4. Prepended `docs/memory/ACTIVITY_LOG.md` with closure entry (earlier same-day V11 partial sync remains below it for audit).
+5. Prepended this block to `docs/memory/agents/project-manager.md`.
+
+### Files I touched
+| File | Action |
+|------|--------|
+| docs/memory/PROGRESS.md | MODIFIED — V11.0 section → CLOSED |
+| docs/memory/CONTEXT.md | MODIFIED — header |
+| docs/memory/CHANGELOG.md | MODIFIED — single V11.0 closure entry |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED — closure entry prepended |
+| docs/memory/agents/project-manager.md | MODIFIED — this block |
+
+### State I'm leaving behind
+**V11.0 CLOSED.** No remaining V11 tasks in memory narrative. Next session owns next area / TASK_PLAN refresh.
+
+---
+## 2026-04-10 — V11.0 progress memory sync (#497–#504)
+**Status:** COMPLETED (mid-wave snapshot; full closure recorded in **V11.0 AREA CLOSED** same date)
+**Called by:** user (orchestrated subagent)
+
+### Context when I started
+V11.0 Agent Intelligence Reengineering had landed eight implementation tasks; user requested PROGRESS/CONTEXT/CHANGELOG updates only.
+
+### What I did
+1. Prepended `docs/memory/PROGRESS.md` with a **V11.0** section listing #497–#504, verification baselines, and remaining #505–#508.
+2. Updated top-of-file **Session date**, **Focus**, and **IMMEDIATE NEXT STEP** in `docs/memory/CONTEXT.md` for V11.0.
+3. Prepended `docs/memory/CHANGELOG.md` with dated one-line entries for each of #497–#504.
+4. Prepended `docs/memory/ACTIVITY_LOG.md` with this PM session.
+
+### Files I touched
+| File | Action |
+|------|--------|
+| docs/memory/PROGRESS.md | MODIFIED — V11.0 section |
+| docs/memory/CONTEXT.md | MODIFIED — header focus |
+| docs/memory/CHANGELOG.md | MODIFIED — V11.0 #497–#504 |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED — session entry |
+| docs/memory/agents/project-manager.md | MODIFIED — this block |
+
+### State I'm leaving behind
+Mid-wave snapshot only; see **V11.0 AREA CLOSED (#497–#510)** for terminal state.
+
+---
+## 2026-04-09 — PROJECT COMPLETE: V10.8 full closure memory sync
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+V10.8 CLIENT FULL DEEP TEST FOLLOW-UP was fully closed per qa-tester's #495 AREA CHECKPOINT PASS. User confirmed: #491 COMPLETED (visual regression baselines), #492 COMPLETED (Codex handoff harness), #493 COMPLETED (stale server guard), #494 TEST GATE PASS, #495 AREA CHECKPOINT PASS, #496 COMPLETED (out-of-session). Suite: 501/501 server, 52/52 client, 507 modules clean. TASK_PLAN.md header and task entries already reflected all six as COMPLETED from the qa-tester and previous PM sync session.
+
+### What I did
+1. Read TASK_PLAN.md V10.8 section, PROGRESS.md header, ACTIVITY_LOG.md, and agent memory in parallel.
+2. Confirmed via grep that TASK_PLAN.md has 0 PENDING, 0 BLOCKED, 0 IN_PROGRESS entries — project is fully complete.
+3. Counted open areas: zero. All areas from V3.1 through V10.8 are listed as CLOSED in the header block.
+4. Prepended PROGRESS.md with final project-complete summary line.
+5. Prepended ACTIVITY_LOG.md with project-complete closure entry.
+6. Appended this session to agent memory.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| docs/memory/PROGRESS.md | MODIFIED | Prepended "PROJECT COMPLETE — ALL AREAS CLOSED" summary line |
+| docs/memory/ACTIVITY_LOG.md | MODIFIED | Prepended project-complete closure entry |
+| docs/memory/agents/project-manager.md | MODIFIED | This session appended |
+
+### Improvements delivered
+- Memory system now reflects the true terminal state of the project: all areas closed, all tasks completed.
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- No TASK_PLAN.md changes needed — the V10.8 header and all individual task Status fields were already accurate from prior agents.
+
+### What I learned
+- When the final TEST GATE and AREA CHECKPOINT of the last planned area both pass, the project enters a clean "no active work" state. The only correct memory action is to write a closure summary — no task plan edits required if the executing agents have already updated their own task Status fields.
+
+### State I'm leaving behind
+Project is fully complete. 496 tasks (plus #496 out-of-session) all COMPLETED or PASS. 1 DEFERRED (#236 — ConPTY Windows platform limitation, unfixable). Zero open tasks. Final baselines: 501/501 server, 52/52 client, 507 modules build clean.
+
+### Handoff
+No handoff needed. Next session should begin with a new feature request, /create pipeline for the next version, or a voluntary /debugger-loop sweep if the user wants to probe for regressions.
+
+---
 ## 2026-04-09 — V10.8 set #491+#492+#493 post-completion sync
 **Status:** COMPLETED
 **Called by:** user

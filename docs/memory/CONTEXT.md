@@ -1,8 +1,8 @@
 ﻿# Current Context
-**Session date:** 2026-04-09
-**Focus:** V10.5 PERSISTENT AGENT SESSIONS + OPERATOR MESSAGING CLOSED on 2026-04-09. Operator chat no longer depends on `running + sessionId`; the backend now exposes a canonical `acceptsMessages` / `messageTransport` contract, swarm PTY sessions are pinned persistent, structured `stream-json` and `codex-sdk` agents can continue on the same conversation for operator follow-up, and completed-but-messageable executions remain live in the client.
+**Session date:** 2026-04-10
+**Focus:** **V11.0 AGENT INTELLIGENCE REENGINEERING — CLOSED.** SwarmEngine graph-aware prompts, interaction transcript, structured non-Codex system prompt, `maxTurns` / `maxTurns_reached`, workflow settings (goal + max turns), serialized/debug prompt metadata, `getStatus()` context, AgentInspector Agent Memory + context visibility modes, and expanded server coverage are all shipped. Baseline: **513/513** server tests; client build **507** modules.
 
-**IMMEDIATE NEXT STEP:** V10.6 CLIENT CHAT + FLOW BUG FIXES and V10.7 CLIENT RESILIENCE TEST COVERAGE are the next planned areas. Treat the V10.5 messageable-session contract as the source of truth for any future operator messaging, reconnect, toolbar visibility, or broadcast-delivery work; do not reintroduce client or route heuristics based only on `executionStatus` or PTY `sessionId`.
+**IMMEDIATE NEXT STEP:** None for V11. Open the next numbered area in `docs/TASK_PLAN.md` when new work is scoped, or run optional regression / `debugger-loop` hardening if you want a no-feature session.
 
 **V9.1 dependency wave map:**
   Wave 9.1: #400 (SDK contract spike) -> #401 (adapter foundation) -> #402 (SwarmEngine codex-sdk runtime) -> #403 (backend TEST GATE) + #404 (frontend contract) IN PARALLEL -> #405 (AREA CHECKPOINT)

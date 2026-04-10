@@ -421,6 +421,7 @@ export default function SwarmView() {
       if (mode === 'forced') {
         setTimedStreamJsonFeedback('Stopped', 'text-red-300');
       } else if (mode === 'reset') {
+        reset();
         setTimedStreamJsonFeedback('Reset', 'text-emerald-300');
         setStreamJsonForceEnabled(false);
       }
@@ -437,6 +438,7 @@ export default function SwarmView() {
     allStreamJsonAgentIds,
     liveStreamJsonAgentIds,
     setTimedStreamJsonFeedback,
+    reset,
   ]);
 
   useEffect(() => {
@@ -1177,11 +1179,12 @@ export default function SwarmView() {
       {showSettings && workflowDef && (
         <WorkflowSettingsModal
           workflowDef={workflowDef}
-          onApply={(updatedSettings, updatedContext) => {
+          onApply={(updatedSettings, updatedContext, updatedDescription) => {
             setWorkflowDef({
               ...workflowDef,
               settings: { ...(workflowDef.settings || {}), ...updatedSettings },
               initialContext: updatedContext,
+              ...(updatedDescription !== undefined ? { description: updatedDescription } : {}),
             });
             markDirty();
             setShowSettings(false);

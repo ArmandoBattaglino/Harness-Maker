@@ -199,7 +199,9 @@ export default function ChatPanel() {
     }
   }, [inputText, activeExecutionId, scope, targetId, mode, agentLabels]);
 
+  const executionStatus = useSwarmStore((s) => s.executionStatus);
   const canSend = Boolean(activeExecutionId && messageableAgentIds.length > 0);
+  const showInputArea = canSend || chatMessages.length > 0;
 
   if (chatMessages.length === 0) {
     return (
@@ -210,7 +212,7 @@ export default function ChatPanel() {
         <div className="flex-1 flex items-center justify-center text-gray-600 text-xs">
           No messages yet — run a workflow to see agent output here
         </div>
-        {canSend && (
+        {showInputArea && (
           <ChatInputArea
             inputText={inputText}
             setInputText={setInputText}
@@ -227,6 +229,7 @@ export default function ChatPanel() {
             sendResult={sendResult}
             onSend={handleChatSend}
             departments={departments}
+            canSend={canSend}
           />
         )}
       </div>
@@ -270,7 +273,7 @@ export default function ChatPanel() {
         )}
         <div ref={bottomRef} />
       </div>
-      {canSend && (
+      {showInputArea && (
         <ChatInputArea
           inputText={inputText}
           setInputText={setInputText}
@@ -287,6 +290,7 @@ export default function ChatPanel() {
           sendResult={sendResult}
           onSend={handleChatSend}
           departments={departments}
+          canSend={canSend}
         />
       )}
     </div>
@@ -297,7 +301,7 @@ export default function ChatPanel() {
 function ChatInputArea({
   inputText, setInputText, scope, setScope, mode, setMode,
   targetId, setTargetId, targetOptions, agentLabels, chatFilter,
-  sending, sendResult, onSend, departments,
+  sending, sendResult, onSend, departments, canSend = true,
 }) {
   const hasTarget = scope === 'all' || targetId;
   const placeholder = scope === 'department'
@@ -370,7 +374,8 @@ function ChatInputArea({
         />
         <button
           onClick={onSend}
-          disabled={!inputText.trim() || sending || !hasTarget}
+          disabled={!inputText.trim() || sending || !hasTarget || !canSend}
+          title={!canSend ? 'No messageable agents — run or resume the workflow' : ''}
           className="text-xs px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white shrink-0 transition-colors"
         >
           {sending ? '...' : 'Send'}

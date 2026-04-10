@@ -4,7 +4,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v10.8 — task numbering extends through #495. V10.2 CLIENT TEST HARNESS + TARGETED CONTRACT COVERAGE is now CLOSED after dedicated client harness + targeted store/hook/UI coverage landed and passed verification. V10.3 CLIENT CHAT + FLOW DEBUGGER LOOP (DEEP TEST) is now CLOSED after browser-driven Codex/Gemini operator-path discovery. V10.4 STRUCTURED CHAT TURN HISTORY is now CLOSED after restoring per-turn structured chat history for repeated same-agent handoffs with targeted client/server regressions green. V10.5 PERSISTENT AGENT SESSIONS + OPERATOR MESSAGING is now CLOSED after the canonical `acceptsMessages` / `messageTransport` contract, persistent swarm PTY pinning, structured operator follow-up reuse on existing threads/sessions, and terminal-but-live client messaging all landed. V10.6 CLIENT CHAT + FLOW BUG FIXES is now CLOSED after restoring truthful idle/reset chat empty states, truthful runtime hydration on reload, clean structured node snippets after hydration, and blocker-safe Gemini node/chat sanitation. V10.7 CLIENT RESILIENCE TEST COVERAGE is now CLOSED after extending deterministic client coverage over recovery/reconcile paths, secondary WS events, HITL failure handling, advanced chat operator states, node badges, and top-level shell truth. Latest full client deep test on 2026-04-09 reconfirmed the current client/build baseline, but opened follow-up work around visual-regression determinism, Codex handoff E2E harness reliability, and stale-server verification drift. Verification: `npm test --prefix client` PASS (52/52) and `npm run build --prefix client` PASS (507 modules, chunk-size warning only). V10.8 CLIENT FULL DEEP TEST FOLLOW-UP is now CLOSED after all three determinism/harness/stale-server bugs were fixed, the full verification pack passed (TEST GATE #494 PASS), and server-side Codex handoff regression coverage was added (+11 tests, 501/501). No active planned areas.
+**Status:** v11.1 — task numbering extends through #516. V11.0 AGENT INTELLIGENCE REENGINEERING is CLOSED. V11.1 REPETITIVE HANDOFF LOOP DETECTION is now ACTIVE (improvement linked to V11.0). Adds auto-detection and enforcing halt for bidirectional agent ping-pong loops using edge-pair counting and content similarity analysis. Tasks #511-#516. All prior areas (V10.2 through V10.8, V11.0) remain CLOSED.
 **Completed Area:** V10.8 CLIENT FULL DEEP TEST FOLLOW-UP — AREA CLOSED 2026-04-09. 6 tasks (#491-#496), all COMPLETED. #491 COMPLETED (visual regression determinism fixed — normalizeHarnessLayout() added, 6 baselines regenerated at 682px), #492 COMPLETED (browser E2E harness reliability fixed — preflight check, direct node spawn, stale-server isolation), #493 COMPLETED (stale-server guard — check-server-freshness.mjs created, integrated into swarm-e2e-chat-check.mjs + swarm-visual-regression.mjs), #494 TEST GATE PASS, #495 AREA CHECKPOINT PASS, #496 COMPLETED (out-of-session: +11 deterministic server tests for _onHandoff -> Codex SDK spawn, 501/501 server suite green). No active planned areas.
 **Completed Area:** V10.7 CLIENT RESILIENCE TEST COVERAGE — AREA CLOSED 2026-04-09. #483 COMPLETED, #484 COMPLETED, #485 COMPLETED, #486 COMPLETED, #487 COMPLETED, #488 COMPLETED, TEST GATE #489 PASS, AREA CHECKPOINT #490 PASS. Verified by dedicated client coverage over restore/reconcile, secondary WS events, HITL failure paths, advanced ChatPanel states, AgentNode badges, and SwarmView operator-shell branches.
   **Completed Area:** V10.6 CLIENT CHAT + FLOW BUG FIXES — AREA CLOSED 2026-04-09. #476 COMPLETED, #477 COMPLETED, #478 COMPLETED, #479 COMPLETED, #480 COMPLETED, TEST GATE #481 PASS, AREA CHECKPOINT #482 PASS. Verified by live Puppeteer reruns of idle/reset + Codex success/reload on `http://127.0.0.1:3000`, clean Gemini blocked/stopped node/chat hygiene on fresh `http://127.0.0.1:3312`, and targeted server regressions (185/185 PASS).
@@ -54,6 +54,438 @@
   DEFERRED (1 task, MVP-acceptable, no fix possible):
     - #236: BUG-UI-1 — ConPTY terminal prompt garble after navigation (Windows platform limitation, DEC-009)
 
+---
+
+## AREA: V11.0 - Agent Intelligence Reengineering
+_Components: SwarmEngine prompt construction, WorkflowSettingsModal, AgentInspector, swarm routes_
+_Tasks: #497 -> #510_
+_Gate: Restructured prompts must produce awareness + transcript + compact protocol for all non-Codex agents; Workflow Goal, maxTurns, Prompt Inspector, and contextVisibility must be functional end-to-end_
+_Source: User analysis of agent interaction quality, fragmented context propagation, and lack of observability (2026-04-10)_
+
+---
+
+TASK #497: SWARM-INTEL-01 - Implement _buildAgentAwareness method
+Area: V11.0 - Agent Intelligence Reengineering
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Completion Note: 2026-04-10 — _buildAgentAwareness(execution, nodeId) generates identity/peers/connections section from workflow graph.
+Context:
+  New method on SwarmEngine that generates a text section describing the agent's identity, role, peers, and connections within the workflow graph.
+  Reads execution.workflowDef.nodes and .edges to produce:
+    - Agent name and position in the workflow
+    - Workflow goal (from workflowDef.description or workflowContext.workflowDescription)
+    - List of other agents with their roles (first 120 chars of systemPrompt)
+    - Incoming and outgoing connections with agent labels
+Acceptance Criteria:
+  - [ ] Method _buildAgentAwareness(execution, nodeId) returns a string
+  - [ ] Includes agent name, workflow size, and goal
+  - [ ] Lists other agents with role summaries
+  - [ ] Shows incoming/outgoing connections with labels
+Dependencies: none
+---
+
+TASK #498: SWARM-INTEL-02 - Implement _buildInteractionTranscript method
+Area: V11.0 - Agent Intelligence Reengineering
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Completion Note: 2026-04-10 — _buildInteractionTranscript(execution, charLimit) builds chronological transcript from chatMessages.
+Context:
+  New method on SwarmEngine that builds a chronological, interleaved transcript from execution.chatMessages.
+  Filters assistant messages, sorts by timestamp, formats as [AgentLabel]: text, caps at charLimit (default 10000).
+  Fills from most recent backwards to stay within the limit.
+Acceptance Criteria:
+  - [ ] Method _buildInteractionTranscript(execution, charLimit) returns a string
+  - [ ] Messages are chronological and interleaved across all agents
+  - [ ] Character limit is respected, newest messages prioritized
+  - [ ] Empty transcript returns empty string
+Dependencies: none
+---
+
+TASK #499: SWARM-INTEL-03 - Rewrite _buildSystemPrompt non-Codex branch
+Area: V11.0 - Agent Intelligence Reengineering
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Completion Note: 2026-04-10 — Non-Codex prompt restructured with AGENT AWARENESS + YOUR ROLE + INBOUND HANDOFFS + INTERACTION HISTORY + compact PROTOCOL. All 4 call sites pass execution object. Codex branch unchanged.
+Context:
+  Replace the verbose non-Codex branch of _buildSystemPrompt (lines ~6044-6136) with the new structure:
+    1. AGENT AWARENESS section (from _buildAgentAwareness)
+    2. YOUR ROLE section (node.data.systemPrompt)
+    3. INTERACTION HISTORY section (from _buildInteractionTranscript)
+    4. Compact PROTOCOL section (~6 lines instead of 25)
+  Remove: verbose handoff instructions, flat workflowContext dump, separate inboundHandoffs section, separate upstreamMessages section.
+  Preserve: Codex compact branch unchanged.
+  Requires passing execution object to _buildSystemPrompt (new parameter).
+Acceptance Criteria:
+  - [ ] Non-Codex prompt uses awareness + role + transcript + compact protocol
+  - [ ] Codex compact branch is unchanged
+  - [ ] All _buildSystemPrompt call sites pass the execution object
+  - [ ] Protocol section is 6 lines or fewer
+Dependencies: TASK #497, TASK #498
+---
+
+TASK #500: SWARM-INTEL-04 - Add maxTurns enforcement in _onHandoff
+Area: V11.0 - Agent Intelligence Reengineering
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-10 — totalTurns counter in execution, enforced in _onHandoff with maxTurns_reached WS event and execution completion.
+Context:
+  Add execution.totalTurns counter incremented on every handoff. When it exceeds settings.maxConversationTurns (default 30), force the last active agent to __DONE__ instead of continuing.
+  Broadcast a maxTurns_reached WS event when triggered.
+Acceptance Criteria:
+  - [ ] execution.totalTurns initialized to 0 in startExecution
+  - [ ] Incremented on each _onHandoff call
+  - [ ] When exceeded, execution transitions to completed with maxTurns reason
+  - [ ] WS event maxTurns_reached is broadcast
+Dependencies: none
+---
+
+TASK #501: SWARM-INTEL-05 - Add Workflow Goal textarea in WorkflowSettingsModal
+Area: V11.0 - Agent Intelligence Reengineering
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-10 — Workflow Goal textarea at top of Settings tab, binds to workflowDef.description, persists through save/reload.
+Context:
+  Add a textarea field labeled "Workflow Goal" at the top of the Settings tab in WorkflowSettingsModal.
+  Binds to workflowDef.description. Placeholder: "Describe the overall purpose of this workflow..."
+  On Apply, the description field is included in the updated workflowDef.
+Acceptance Criteria:
+  - [ ] Textarea appears at top of Settings tab
+  - [ ] Reads from and writes to workflowDef.description
+  - [ ] Persists through save/reload cycle
+Dependencies: none
+---
+
+TASK #502: SWARM-INTEL-06 - Add Max Conversation Turns input in WorkflowSettingsModal
+Area: V11.0 - Agent Intelligence Reengineering
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-10 — Max Conversation Turns input (1-200, default 30) in Settings tab, writes to settings.maxConversationTurns.
+Context:
+  Add a numeric input "Max Conversation Turns" in the Settings tab of WorkflowSettingsModal.
+  Writes to settings.maxConversationTurns. Default: 30. Min: 1, Max: 200.
+Acceptance Criteria:
+  - [ ] Number input appears in Settings tab
+  - [ ] Reads from and writes to settings.maxConversationTurns
+  - [ ] Default value is 30
+Dependencies: none
+---
+
+TASK #503: SWARM-INTEL-07 - Save lastAssembledPrompt in agentState and broadcast via WS
+Area: V11.0 - Agent Intelligence Reengineering
+Agent: backend-dev
+Priority: MEDIUM
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-10 — lastAssembledPrompt + lastPromptTimestamp stored at all 4 spawn/handoff sites, exposed via _serializeAgentState.
+Context:
+  At every _buildSystemPrompt call site, save the result in state.lastAssembledPrompt and state.lastPromptTimestamp.
+  Include these fields in _serializeAgentState so the client receives them via WS.
+Acceptance Criteria:
+  - [ ] state.lastAssembledPrompt set at all 4 call sites
+  - [ ] _serializeAgentState includes lastAssembledPrompt and lastPromptTimestamp
+  - [ ] Data flows through to client via existing WS broadcast
+Dependencies: TASK #499
+---
+
+TASK #504: SWARM-INTEL-08 - Expose workflowContext in GET status endpoint
+Area: V11.0 - Agent Intelligence Reengineering
+Agent: backend-dev
+Priority: LOW
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-10 — workflowContext (shallow copy) and totalTurns added to getStatus() response.
+Context:
+  Add workflowContext to the getStatus() return object in SwarmEngine.
+  This allows the client to display the current shared context state.
+Acceptance Criteria:
+  - [ ] getStatus() includes workflowContext in response
+  - [ ] Context is a shallow copy (not reference)
+Dependencies: none
+---
+
+TASK #505: SWARM-INTEL-09 - Create Agent Memory tab in AgentInspector
+Area: V11.0 - Agent Intelligence Reengineering
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-10 — Collapsible "Agent Memory" section in inspector shows full assembled prompt + timestamp when available.
+Context:
+  Add a new collapsible section "Agent Memory" in AgentInspector that displays:
+    1. Full Prompt: lastAssembledPrompt from agentState, in a scrollable pre-formatted block
+    2. Workflow Context: JSON-formatted workflowContext from execution status
+    3. Timestamp: when the prompt was last assembled
+  Data comes from agentStates[nodeId].lastAssembledPrompt via the Zustand store.
+Acceptance Criteria:
+  - [ ] New collapsible "Agent Memory" section appears in inspector for agent nodes
+  - [ ] Shows the full assembled prompt with monospace formatting
+  - [ ] Shows formatted workflow context JSON
+  - [ ] Only appears when lastAssembledPrompt is available
+Dependencies: TASK #503
+---
+
+TASK #506: SWARM-INTEL-10 - Add contextVisibility select in AgentInspector
+Area: V11.0 - Agent Intelligence Reengineering
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-10 — Context Visibility select in agent Configuration: full/minimal/roleOnly, saves to node.data.contextVisibility.
+Context:
+  Add a select dropdown "Context Visibility" in the AgentFields Configuration section.
+  Options: Full (default), Minimal, Role Only.
+  Writes to node.data.contextVisibility.
+Acceptance Criteria:
+  - [ ] Select dropdown appears in agent Configuration section
+  - [ ] Three options: full, minimal, roleOnly
+  - [ ] Saves to node.data.contextVisibility
+  - [ ] Default is "full" when not set
+Dependencies: none
+---
+
+TASK #507: SWARM-INTEL-11 - Implement contextVisibility logic in _buildSystemPrompt
+Area: V11.0 - Agent Intelligence Reengineering
+Agent: backend-dev
+Priority: MEDIUM
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-10 — Three visibility modes in non-Codex _buildSystemPrompt: full (awareness+transcript), minimal (last handoff), roleOnly (prompt only).
+Context:
+  In the non-Codex branch of _buildSystemPrompt, respect node.data.contextVisibility:
+    - "full" (default): awareness + transcript + protocol (new default)
+    - "minimal": only latest inbound handoff + protocol (similar to old behavior)
+    - "roleOnly": only systemPrompt + protocol (no external context)
+Acceptance Criteria:
+  - [ ] "full" mode uses awareness + transcript + compact protocol
+  - [ ] "minimal" mode uses only last handoff + compact protocol
+  - [ ] "roleOnly" mode uses only systemPrompt + compact protocol
+  - [ ] Default behavior is "full" when contextVisibility is unset
+Dependencies: TASK #499
+---
+
+TASK #508: TEST GATE - Agent Intelligence server regression
+Area: V11.0 - Agent Intelligence Reengineering
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-sonnet-4-6
+Status: PASS
+Completion Note: 2026-04-10 — 12 new V11.0 tests added (awareness, transcript, maxTurns, contextVisibility, prompt serialization, getStatus). 513/513 server tests PASS. Client build clean (507 modules).
+Gate: HARD
+Context:
+  Verify all new methods and modifications work correctly.
+Required test scope:
+  1. _buildAgentAwareness with 1, 2, and 5 agent workflows
+  2. _buildInteractionTranscript with 0, 5, and 20 messages
+  3. _buildSystemPrompt non-Codex with new structure
+  4. maxTurns enforcement triggers at threshold
+  5. contextVisibility three modes produce correct prompts
+  6. lastAssembledPrompt appears in serialized agent state
+  7. workflowContext appears in getStatus response
+  8. Existing tests still pass
+Acceptance Criteria:
+  - [ ] New tests for awareness, transcript, maxTurns, contextVisibility
+  - [ ] All existing server tests still pass
+  - [ ] Client build clean
+Dependencies: TASK #497-#507
+---
+
+TASK #509: PM-SYNC - V11.0 progress and memory sync
+Area: V11.0 - Agent Intelligence Reengineering
+Agent: project-manager
+Type: CHECKPOINT
+Priority: MEDIUM
+Difficulty: EASY
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-10 — PROGRESS.md, CONTEXT.md, CHANGELOG.md updated by PM agent; TASK_PLAN statuses synced.
+Context:
+  Update PROGRESS.md, CONTEXT.md, and CHANGELOG.md to reflect V11.0 implementation.
+Acceptance Criteria:
+  - [ ] Memory files reflect completed work
+  - [ ] TASK_PLAN status fields updated
+Dependencies: TASK #508
+---
+
+TASK #510: AREA CHECKPOINT - V11.0 Agent Intelligence Reengineering closeout
+Area: V11.0 - Agent Intelligence Reengineering
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PASS
+Completion Note: 2026-04-10 — All tasks #497-#509 COMPLETED or PASS. 513/513 server tests. Client build clean (507 modules). Memory synced.
+Gate: HARD
+Context:
+  Close V11.0 only after all tasks pass, tests are green, and memory is synced.
+Acceptance Criteria:
+  - [ ] All tasks #497-#509 COMPLETED or PASS
+  - [ ] Server tests pass
+  - [ ] Client build clean
+  - [ ] Memory updated
+Dependencies: TASK #508, TASK #509
+---
+
+## AREA: V11.1 - Repetitive Handoff Loop Detection (V11.0 Improvement)
+_Components: SwarmEngine._onHandoff, SwarmEngine loop detection helpers, WorkflowSettingsModal, swarm-engine.test.js_
+_Tasks: #511 -> #516_
+_Gate: Bidirectional agent ping-pong loops must be auto-detected and halted before burning tokens; detection must not interfere with legitimate loop nodes or one-directional chains_
+_Source: E2E deep test of V11.0 features revealed unconfigured agents entering repetitive handoff loops with empty content (2026-04-10)_
+_Parent: V11.0 - Agent Intelligence Reengineering_
+
+---
+
+TASK #511: LOOP-DETECT-01 - Implement _detectRepetitiveLoop and _computeMessageSimilarity helpers
+Area: V11.1 - Repetitive Handoff Loop Detection
+Agent: backend-dev
+Type: FEATURE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Add two new methods to SwarmEngine:
+  1. _computeMessageSimilarity(execution, nodeId) — gets last 2 assistant messages from nodeId in execution.chatMessages,
+     computes Jaccard similarity of word-level bigrams. Returns 0-1.
+  2. _detectRepetitiveLoop(execution, sourceNodeId, targetId) — checks bidirectional edge-pair count
+     (edgeA->B + edgeB->A) from execution.edgeCounters. If pair count >= loopDetectionThreshold (default 6)
+     OR if pair count >= 4 AND content similarity > 0.7, returns { detected: true, reason, pairCount, similarity }.
+     Must skip detection when source node type is 'loop' (legitimate loop nodes).
+Acceptance Criteria:
+  - [ ] _computeMessageSimilarity returns 0-1 float based on word bigram Jaccard
+  - [ ] _detectRepetitiveLoop checks bidirectional edge-pair counter
+  - [ ] _detectRepetitiveLoop checks content similarity when pair count >= 4
+  - [ ] Loop nodes (type === 'loop') are excluded from detection
+Dependencies: none
+---
+
+TASK #512: LOOP-DETECT-02 - Wire detection into _onHandoff with enforcing halt
+Area: V11.1 - Repetitive Handoff Loop Detection
+Agent: backend-dev
+Type: FEATURE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  In _onHandoff (line ~7252 in SwarmEngine.js), after the existing circuit breaker check
+  and before spawning the target agent, call _detectRepetitiveLoop. If detected:
+  1. Broadcast a 'repetitive_loop_detected' WS event with { sourceNodeId, targetNodeId, pairCount, similarity, reason }
+  2. Add a system chat message via _chatExtractor explaining the halt
+  3. Mark source agent as 'done'
+  4. Set execution status to 'completed'
+  5. Return early (same pattern as maxTurns enforcement on lines 7217-7233)
+  Read the loopDetectionThreshold from workflowDef.settings.loopDetectionThreshold (default 6).
+Acceptance Criteria:
+  - [ ] _onHandoff calls _detectRepetitiveLoop before spawning target
+  - [ ] When detected: WS event broadcast, system message added, execution halted
+  - [ ] Follows same early-return pattern as maxTurns enforcement
+  - [ ] Reads loopDetectionThreshold from settings with fallback to 6
+Dependencies: TASK #511
+---
+
+TASK #513: LOOP-DETECT-03 - Add Loop Detection Threshold to WorkflowSettingsModal UI
+Area: V11.1 - Repetitive Handoff Loop Detection
+Agent: frontend-dev
+Type: FEATURE
+Priority: MEDIUM
+Difficulty: LOW
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  In WorkflowSettingsModal.jsx Settings tab, add a "Loop Detection Threshold" number input
+  after the existing "Max Conversation Turns" input. Min 2, max 50, default 6.
+  Helper text: "Stops execution when the same agent pair exchanges this many handoffs"
+  Save to settings.loopDetectionThreshold in the onApply handler.
+Acceptance Criteria:
+  - [ ] Number input visible in Settings tab with label, min/max, helper text
+  - [ ] Value persists through onApply -> workflowDef.settings.loopDetectionThreshold
+  - [ ] Default is 6 when not set
+Dependencies: none
+---
+
+TASK #514: LOOP-DETECT-04 - Add tests for loop detection
+Area: V11.1 - Repetitive Handoff Loop Detection
+Agent: qa-tester
+Type: TEST
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Add tests to server/tests/swarm-engine.test.js:
+  1. _computeMessageSimilarity returns ~1.0 for identical messages, ~0.0 for very different messages
+  2. _detectRepetitiveLoop detects bidirectional loop after threshold edge-pair count
+  3. _detectRepetitiveLoop does NOT fire for legitimate one-directional chains
+  4. _detectRepetitiveLoop does NOT fire for loop-type nodes
+  5. _onHandoff halts execution when repetitive loop is detected
+  6. loopDetectionThreshold setting overrides default
+Acceptance Criteria:
+  - [ ] 6 new test cases added and passing
+  - [ ] Tests cover both structural and content similarity detection
+  - [ ] Tests verify no false positives on legitimate flows
+Dependencies: TASK #511, TASK #512
+---
+
+TASK #515: TEST GATE - V11.1 Loop Detection server regression
+Area: V11.1 - Repetitive Handoff Loop Detection
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: LOW
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Run full server test suite (npm test --prefix server) and client build (npm run build --prefix client).
+  All tests must pass. No regressions in existing V11.0 tests.
+Acceptance Criteria:
+  - [ ] All server tests pass (including new V11.1 tests)
+  - [ ] Client build clean
+  - [ ] No regressions in existing tests
+Dependencies: TASK #511, TASK #512, TASK #513, TASK #514
+---
+
+TASK #516: AREA CHECKPOINT - V11.1 Repetitive Handoff Loop Detection closeout
+Area: V11.1 - Repetitive Handoff Loop Detection
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: HIGH
+Difficulty: LOW
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Close V11.1 only after all tasks pass, tests are green, and the loop detection
+  prevents the ping-pong scenario observed in E2E testing.
+Acceptance Criteria:
+  - [ ] All tasks #511-#515 COMPLETED or PASS
+  - [ ] Server tests pass
+  - [ ] Client build clean
+Dependencies: TASK #515
 ---
 
 ## AREA: V10.5 - Persistent Agent Sessions + Operator Messaging
