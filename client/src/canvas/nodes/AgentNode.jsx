@@ -6,6 +6,12 @@ import { stripAnsi } from '../../utils/stripAnsi';
 import { isStructuredSpawnMode } from '../../utils/runtimeModes';
 import { repairTokenSplitting } from '../../utils/repairTokenSpacing';
 
+function formatTokenCount(n) {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+  return String(n);
+}
+
 // type: "agent"
 export default function AgentNode({ id, data, selected }) {
   const agentState = useSwarmStore((s) => s.agentStates[id]);
@@ -19,10 +25,14 @@ export default function AgentNode({ id, data, selected }) {
   const currentToolName = isStreamJson ? agentState?.currentTool?.toolName : null;
   // Support both client-accumulated format (totalCost.costUsd from WS agent_cost events)
   // and server-serialized format (flat totalCostUsd from getStatus/reconciliation).
-  // After execution completes, reconcileClosedExecution may replace agentStates with
-  // the server's format, which uses totalCostUsd instead of totalCost.costUsd.
   const totalCostUsd = Number(agentState?.totalCost?.costUsd ?? agentState?.totalCostUsd ?? 0);
   const showCostBadge = Number.isFinite(totalCostUsd) && totalCostUsd > 0;
+
+  const inputTokens = Number(agentState?.totalCost?.inputTokens ?? agentState?.totalInputTokens ?? 0);
+  const outputTokens = Number(agentState?.totalCost?.outputTokens ?? agentState?.totalOutputTokens ?? 0);
+  const cacheRead = Number(agentState?.totalCost?.cacheReadTokens ?? 0);
+  const cacheWrite = Number(agentState?.totalCost?.cacheWriteTokens ?? 0);
+  const totalTokens = inputTokens + outputTokens;
 
   // Status -> color mapping
   const statusColors = {
@@ -111,8 +121,30 @@ export default function AgentNode({ id, data, selected }) {
       )}
 
       {showCostBadge && !isDropPreview && (
-        <div className="absolute bottom-2 right-2 rounded-full border border-emerald-400/50 bg-emerald-950/80 px-2 py-0.5 text-[10px] font-semibold text-emerald-200">
-          ${totalCostUsd.toFixed(2)}
+        <div className="group/cost absolute bottom-2 right-2">
+          <div className="rounded-full border border-emerald-400/50 bg-emerald-950/80 px-2 py-0.5 text-[10px] font-semibold text-emerald-200 cursor-default">
+            ${totalCostUsd.toFixed(2)}
+          </div>
+          <div className="pointer-events-none absolute bottom-full right-0 mb-1.5 hidden w-max max-w-[200px] rounded-md border border-emerald-400/40 bg-gray-900/95 px-2.5 py-1.5 text-[10px] leading-[1.6] text-gray-200 shadow-lg backdrop-blur-sm group-hover/cost:block z-50">
+            <div className="flex justify-between gap-3">
+              <span className="text-gray-400">Input</span>
+              <span className="font-medium text-emerald-300">{formatTokenCount(inputTokens)}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-gray-400">Output</span>
+              <span className="font-medium text-emerald-300">{formatTokenCount(outputTokens)}</span>
+            </div>
+            <div className="mt-0.5 border-t border-gray-700/60 pt-0.5 flex justify-between gap-3">
+              <span className="text-gray-400 font-semibold">Total</span>
+              <span className="font-semibold text-white">{formatTokenCount(totalTokens)}</span>
+            </div>
+            {(cacheRead > 0 || cacheWrite > 0) && (
+              <div className="mt-0.5 border-t border-gray-700/60 pt-0.5 text-gray-500">
+                {cacheRead > 0 && <div>Cache read: {formatTokenCount(cacheRead)}</div>}
+                {cacheWrite > 0 && <div>Cache write: {formatTokenCount(cacheWrite)}</div>}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

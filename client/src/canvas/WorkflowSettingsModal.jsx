@@ -33,6 +33,7 @@ function SettingsTab({ settings, onChange, description, onDescriptionChange }) {
   const cbThreshold = settings.circuitBreakerThreshold ?? DEFAULTS.circuitBreakerThreshold;
   const defaultModel = settings.defaultModel || DEFAULTS.defaultModel;
   const maxTurns = settings.maxConversationTurns ?? 30;
+  const loopThreshold = settings.loopDetectionThreshold ?? 6;
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -155,6 +156,28 @@ function SettingsTab({ settings, onChange, description, onDescriptionChange }) {
         />
         <span className="text-[10px] text-gray-500">
           Workflow stops after this many agent handoffs (default: 30)
+        </span>
+      </div>
+
+      {/* Loop Detection Threshold */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold text-gray-300">Loop Detection Threshold</label>
+        <input
+          type="number"
+          className={INPUT_CLS}
+          min={2}
+          max={50}
+          value={loopThreshold}
+          onChange={(e) =>
+            onChange({
+              ...settings,
+              loopDetectionThreshold:
+                e.target.value === '' ? 6 : Math.max(2, Math.min(50, Number(e.target.value))),
+            })
+          }
+        />
+        <span className="text-[10px] text-gray-500">
+          Stops execution when the same agent pair exchanges this many handoffs (default: 6)
         </span>
       </div>
 
@@ -288,6 +311,7 @@ export default function WorkflowSettingsModal({ workflowDef, onApply, onClose })
       circuitBreakerThreshold: wfSettings.circuitBreakerThreshold ?? DEFAULTS.circuitBreakerThreshold,
       defaultModel: wfSettings.defaultModel || DEFAULTS.defaultModel,
       maxConversationTurns: wfSettings.maxConversationTurns ?? 30,
+      loopDetectionThreshold: wfSettings.loopDetectionThreshold ?? 6,
     });
     setDescription(workflowDef?.description || '');
 

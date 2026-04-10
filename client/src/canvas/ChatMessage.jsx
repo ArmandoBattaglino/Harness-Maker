@@ -135,18 +135,52 @@ function formatToolArgs(partialArgs = '') {
   }
 }
 
-function formatCostFooter(cost) {
-  if (!cost) return '';
+function formatTokenCount(n) {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+  return String(n);
+}
+
+function CostFooter({ cost }) {
+  if (!cost) return null;
   const inputTokens = Number(cost.inputTokens ?? 0);
   const outputTokens = Number(cost.outputTokens ?? 0);
   const cacheReadTokens = Number(cost.cacheReadTokens ?? 0);
   const cacheWriteTokens = Number(cost.cacheWriteTokens ?? 0);
+  const totalTokens = inputTokens + outputTokens;
   const costUsd = Number(cost.costUsd ?? 0);
   const durationMs = Number(cost.durationMs ?? 0);
-  const cachePart = (cacheReadTokens > 0 || cacheWriteTokens > 0)
-    ? ` (cache: ${cacheReadTokens}read / ${cacheWriteTokens}write)`
-    : '';
-  return `Tokens: ${inputTokens}in / ${outputTokens}out${cachePart} | Cost: $${costUsd.toFixed(4)} | ${durationMs}ms`;
+  const hasCache = cacheReadTokens > 0 || cacheWriteTokens > 0;
+
+  return (
+    <div className="mt-2 rounded border border-gray-700/50 bg-gray-900/50 px-2.5 py-1.5 text-[10px] leading-[1.7]">
+      <div className="flex items-center gap-3 text-gray-400">
+        <span>
+          <span className="text-gray-500">In:</span>{' '}
+          <span className="font-medium text-gray-300">{formatTokenCount(inputTokens)}</span>
+        </span>
+        <span>
+          <span className="text-gray-500">Out:</span>{' '}
+          <span className="font-medium text-gray-300">{formatTokenCount(outputTokens)}</span>
+        </span>
+        <span>
+          <span className="text-gray-500">Total:</span>{' '}
+          <span className="font-semibold text-white">{formatTokenCount(totalTokens)}</span>
+        </span>
+      </div>
+      <div className="flex items-center gap-3 text-gray-500">
+        <span>
+          <span className="text-emerald-400 font-semibold">${costUsd.toFixed(4)}</span>
+        </span>
+        {durationMs > 0 && <span>{(durationMs / 1000).toFixed(1)}s</span>}
+        {hasCache && (
+          <span className="text-gray-600">
+            cache {cacheReadTokens > 0 ? `${formatTokenCount(cacheReadTokens)}r` : ''}{cacheReadTokens > 0 && cacheWriteTokens > 0 ? '/' : ''}{cacheWriteTokens > 0 ? `${formatTokenCount(cacheWriteTokens)}w` : ''}
+          </span>
+        )}
+      </div>
+    </div>
+  );
 }
 
 const sanitizeSchema = {
@@ -348,11 +382,7 @@ export default function ChatMessage({ message, agentLabel }) {
             </div>
           </CollapsibleMetaBlock>
         )}
-        {cost && (
-          <div className="mt-2 text-[10px] text-gray-500">
-            {formatCostFooter(cost)}
-          </div>
-        )}
+        {cost && <CostFooter cost={cost} />}
       </div>
     </div>
   );

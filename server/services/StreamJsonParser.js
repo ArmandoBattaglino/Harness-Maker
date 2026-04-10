@@ -223,7 +223,8 @@ export default class StreamJsonParser {
       },
       isError: obj.is_error === true || obj.subtype === 'error',
       errorMessage: obj.is_error || obj.subtype === 'error'
-        ? (obj.error ?? obj.result ?? null)
+        ? (obj.error ?? (typeof obj.result === 'string' ? obj.result : null)
+            ?? obj.error_message ?? obj.reason ?? obj.message ?? null)
         : null,
       // Canonical complete text from Claude CLI result (replaces streamed text_delta accumulation)
       resultText: typeof obj.result === 'string' ? obj.result : null,

@@ -8,3 +8,13 @@ dist/
 .playwright-mcp/
 tests/visual/swarm/.appdata/
 tests/visual/swarm/artifacts/
+
+# Debug/test screenshots
+deep-*.png
+deep-*.jpeg
+debug-*.png
+phase1-*.png
+v11-*.png
+
+# IDE
+.vscode/

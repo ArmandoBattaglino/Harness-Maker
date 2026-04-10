@@ -5198,4 +5198,131 @@ describe('SwarmEngine', () => {
       expect(awareness).toContain('You send output to: "Delta"');
     });
   });
+
+  // -------------------------------------------------------------------------
+  // Test 13: V11.1 Repetitive Handoff Loop Detection
+  // -------------------------------------------------------------------------
+  describe('Test 13: V11.1 Loop Detection', () => {
+    it('_computeMessageSimilarity returns ~1.0 for identical messages', () => {
+      const execution = {
+        chatMessages: [
+          { nodeId: 'a', role: 'assistant', text: 'There is nothing to do here.', timestamp: 1 },
+          { nodeId: 'a', role: 'assistant', text: 'There is nothing to do here.', timestamp: 2 },
+        ],
+      };
+      const sim = engine._computeMessageSimilarity(execution, 'a');
+      expect(sim).toBeCloseTo(1.0, 1);
+    });
+
+    it('_computeMessageSimilarity returns low value for very different messages', () => {
+      const execution = {
+        chatMessages: [
+          { nodeId: 'a', role: 'assistant', text: 'Node.js uses an event-driven non-blocking I/O model', timestamp: 1 },
+          { nodeId: 'a', role: 'assistant', text: 'The capital of France is Paris and it has many museums', timestamp: 2 },
+        ],
+      };
+      const sim = engine._computeMessageSimilarity(execution, 'a');
+      expect(sim).toBeLessThan(0.3);
+    });
+
+    it('_computeMessageSimilarity returns 0 with fewer than 2 messages', () => {
+      const execution = {
+        chatMessages: [
+          { nodeId: 'a', role: 'assistant', text: 'Hello world', timestamp: 1 },
+        ],
+      };
+      expect(engine._computeMessageSimilarity(execution, 'a')).toBe(0);
+    });
+
+    it('_detectRepetitiveLoop detects bidirectional loop after threshold', () => {
+      const wf = buildTwoNodeWorkflow();
+      wf.edges.push({ id: 'edge-ba', source: 'node-b', target: 'node-a' });
+      const execution = {
+        workflowDef: wf,
+        edgeCounters: new Map(),
+        chatMessages: [],
+      };
+      execution.edgeCounters.set('edge-ab', 3);
+      execution.edgeCounters.set('edge-ba', 3);
+
+      const result = engine._detectRepetitiveLoop(execution, 'node-a', 'node-b');
+      expect(result).not.toBeNull();
+      expect(result.detected).toBe(true);
+      expect(result.pairCount).toBe(6);
+      expect(result.reason).toContain('Bidirectional handoff loop');
+    });
+
+    it('_detectRepetitiveLoop does NOT fire for one-directional chains', () => {
+      const wf = buildTwoNodeWorkflow();
+      const execution = {
+        workflowDef: wf,
+        edgeCounters: new Map(),
+        chatMessages: [],
+      };
+      execution.edgeCounters.set('node-a->node-b', 5);
+
+      const result = engine._detectRepetitiveLoop(execution, 'node-a', 'node-b');
+      expect(result).toBeNull();
+    });
+
+    it('_detectRepetitiveLoop does NOT fire for loop-type nodes', () => {
+      const wf = buildTwoNodeWorkflow();
+      wf.nodes[0].type = 'loop';
+      wf.edges.push({ id: 'edge-ba', source: 'node-b', target: 'node-a' });
+      const execution = {
+        workflowDef: wf,
+        edgeCounters: new Map(),
+        chatMessages: [],
+      };
+      execution.edgeCounters.set('edge-ab', 10);
+      execution.edgeCounters.set('edge-ba', 10);
+
+      const result = engine._detectRepetitiveLoop(execution, 'node-a', 'node-b');
+      expect(result).toBeNull();
+    });
+
+    it('_detectRepetitiveLoop detects early via content similarity', () => {
+      const wf = buildTwoNodeWorkflow();
+      wf.edges.push({ id: 'edge-ba', source: 'node-b', target: 'node-a' });
+      const execution = {
+        workflowDef: wf,
+        edgeCounters: new Map(),
+        chatMessages: [
+          { nodeId: 'node-b', role: 'assistant', text: 'La conversazione tra i due agenti e completata. Non ce nuovo lavoro da svolgere.', timestamp: 1 },
+          { nodeId: 'node-b', role: 'assistant', text: 'La conversazione tra i due agenti e gia stata completata. Non ce nuovo lavoro da svolgere.', timestamp: 2 },
+        ],
+      };
+      execution.edgeCounters.set('edge-ab', 2);
+      execution.edgeCounters.set('edge-ba', 2);
+
+      const result = engine._detectRepetitiveLoop(execution, 'node-a', 'node-b');
+      expect(result).not.toBeNull();
+      expect(result.detected).toBe(true);
+      expect(result.reason).toContain('Repetitive content');
+      expect(result.similarity).toBeGreaterThan(0.7);
+    });
+
+    it('loopDetectionThreshold setting overrides default', () => {
+      const wf = buildTwoNodeWorkflow();
+      wf.settings = { ...wf.settings, loopDetectionThreshold: 10 };
+      wf.edges.push({ id: 'edge-ba', source: 'node-b', target: 'node-a' });
+      const execution = {
+        workflowDef: wf,
+        edgeCounters: new Map(),
+        chatMessages: [],
+      };
+      execution.edgeCounters.set('edge-ab', 3);
+      execution.edgeCounters.set('edge-ba', 3);
+
+      const result = engine._detectRepetitiveLoop(execution, 'node-a', 'node-b');
+      expect(result).toBeNull();
+
+      execution.edgeCounters.set('edge-ab', 5);
+      execution.edgeCounters.set('edge-ba', 5);
+      const result2 = engine._detectRepetitiveLoop(execution, 'node-a', 'node-b');
+      expect(result2).not.toBeNull();
+      expect(result2.detected).toBe(true);
+      expect(result2.pairCount).toBe(10);
+    });
+  });
 });

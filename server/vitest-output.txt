@@ -1,0 +1,852 @@
+﻿
+ RUN  v4.1.0 C:/Users/arman/Downloads/Test workflows - Copia/server
+
+ Ô£ô tests/swarm-handler.test.js > swarmHandler > sends the initial execution snapshot with workflowDef on connect 3ms
+ Ô£ô tests/swarm-handler.test.js > swarmHandler > rejects the socket when the execution snapshot is unavailable 1ms
+ Ô£ô tests/workflow-artifact-builder.test.js > WorkflowArtifactBuilder > basic 2-agent workflow with handoff > should produce correct markdown with both agent sections 2ms
+ Ô£ô tests/workflow-artifact-builder.test.js > WorkflowArtifactBuilder > empty agentOutputs > should produce fallback message when agentOutputs is empty 0ms
+ Ô£ô tests/workflow-artifact-builder.test.js > WorkflowArtifactBuilder > empty agentOutputs > should produce fallback message when agentOutputs is undefined 0ms
+ Ô£ô tests/workflow-artifact-builder.test.js > WorkflowArtifactBuilder > agent without handoff > should omit handoff section when handoffPayloads is empty 0ms
+ Ô£ô tests/workflow-artifact-builder.test.js > WorkflowArtifactBuilder > duration formatting > should format seconds only for < 60s 0ms
+ Ô£ô tests/workflow-artifact-builder.test.js > WorkflowArtifactBuilder > duration formatting > should format minutes and seconds for < 1h 0ms
+ Ô£ô tests/workflow-artifact-builder.test.js > WorkflowArtifactBuilder > duration formatting > should format hours, minutes, seconds for >= 1h 0ms
+ Ô£ô tests/workflow-artifact-builder.test.js > WorkflowArtifactBuilder > duration formatting > should show N/A for null durationMs 0ms
+ Ô£ô tests/workflow-artifact-builder.test.js > WorkflowArtifactBuilder > duration formatting > should format 0ms as 0s 0ms
+ Ô£ô tests/workflow-artifact-builder.test.js > WorkflowArtifactBuilder > null/missing fields > should not crash with entirely missing fields 1ms
+ Ô£ô tests/workflow-artifact-builder.test.js > WorkflowArtifactBuilder > null/missing fields > should show "(No output captured)" when finalText is empty 0ms
+ Ô£ô tests/workflow-artifact-builder.test.js > WorkflowArtifactBuilder > null/missing fields > should use nodeId as label when label is missing 0ms
+ Ô£ô tests/workflow-artifact-builder.test.js > WorkflowArtifactBuilder > null/missing fields > should show defaults for missing startedAt and endedAt 0ms
+ Ô£ô tests/workflow-artifact-builder.test.js > WorkflowArtifactBuilder > sort order > should sort agents by firstMessageAt, nulls last 0ms
+ Ô£ô tests/workflow-artifact-builder.test.js > WorkflowArtifactBuilder > footer > should include generated-by footer 0ms
+ Ô£ô tests/RingBuffer.test.js > RingBuffer > constructor > should create a buffer with the specified capacity 2ms
+ Ô£ô tests/RingBuffer.test.js > RingBuffer > constructor > should default to 100 KB capacity 0ms
+ Ô£ô tests/RingBuffer.test.js > RingBuffer > constructor > should throw on non-integer capacity 0ms
+ Ô£ô tests/RingBuffer.test.js > RingBuffer > constructor > should throw on zero capacity 0ms
+ Ô£ô tests/RingBuffer.test.js > RingBuffer > constructor > should throw on negative capacity 0ms
+ Ô£ô tests/RingBuffer.test.js > RingBuffer > happy path ÔÇö basic push and retrieve > should push a string and retrieve it 0ms
+ Ô£ô tests/RingBuffer.test.js > RingBuffer > happy path ÔÇö basic push and retrieve > should push a Buffer and retrieve it 0ms
+ Ô£ô tests/RingBuffer.test.js > RingBuffer > happy path ÔÇö basic push and retrieve > should push multiple times and retrieve all data in order 0ms
+ Ô£ô tests/RingBuffer.test.js > RingBuffer > happy path ÔÇö basic push and retrieve > should return empty buffer when nothing pushed 1ms
+ Ô£ô tests/RingBuffer.test.js > RingBuffer > happy path ÔÇö basic push and retrieve > should ignore empty push 0ms
+ Ô£ô tests/RingBuffer.test.js > RingBuffer > wrap-around (overflow behaviour) > should not exceed capacity when data overflows 0ms
+ Ô£ô tests/RingBuffer.test.js > RingBuffer > wrap-around (overflow behaviour) > should discard oldest bytes when capacity is exceeded 0ms
+ Ô£ô tests/RingBuffer.test.js > RingBuffer > wrap-around (overflow behaviour) > should handle data larger than capacity ÔÇö keeps only last N bytes 0ms
+ Ô£ô tests/RingBuffer.test.js > RingBuffer > wrap-around (overflow behaviour) > should produce correct content after wrap-around with multiple pushes 0ms
+ Ô£ô tests/RingBuffer.test.js > RingBuffer > wrap-around (overflow behaviour) > should produce correct content after multiple wrap-arounds 0ms
+ Ô£ô tests/RingBuffer.test.js > RingBuffer > clear() > should reset size to 0 after clear 0ms
+ Ô£ô tests/RingBuffer.test.js > RingBuffer > clear() > should allow fresh data after clear 0ms
+ Ô£ô tests/RingBuffer.test.js > RingBuffer > getAll / toBuffer consistency > should return identical result on two consecutive toBuffer() calls 0ms
+ Ô£ô tests/RingBuffer.test.js > RingBuffer > getAll / toBuffer consistency > should not modify internal state when toBuffer is called 0ms
+ Ô£ô tests/csrf.test.js > csrfMiddleware > safe methods ÔÇö should always pass through > should call next() for GET without the header 3ms
+ Ô£ô tests/csrf.test.js > csrfMiddleware > safe methods ÔÇö should always pass through > should call next() for HEAD without the header 0ms
+ Ô£ô tests/csrf.test.js > csrfMiddleware > safe methods ÔÇö should always pass through > should call next() for OPTIONS without the header 0ms
+ Ô£ô tests/csrf.test.js > csrfMiddleware > mutating methods ÔÇö should require the CSRF header > should return 403 for POST with no CSRF header 1ms
+ Ô£ô tests/csrf.test.js > csrfMiddleware > mutating methods ÔÇö should require the CSRF header > should return 403 for POST with wrong header value 0ms
+ Ô£ô tests/csrf.test.js > csrfMiddleware > mutating methods ÔÇö should require the CSRF header > should call next() for POST with correct CSRF header 0ms
+ Ô£ô tests/csrf.test.js > csrfMiddleware > mutating methods ÔÇö should require the CSRF header > should return 403 for PUT with no CSRF header 0ms
+ Ô£ô tests/csrf.test.js > csrfMiddleware > mutating methods ÔÇö should require the CSRF header > should return 403 for PUT with wrong header value 0ms
+ Ô£ô tests/csrf.test.js > csrfMiddleware > mutating methods ÔÇö should require the CSRF header > should call next() for PUT with correct CSRF header 1ms
+ Ô£ô tests/csrf.test.js > csrfMiddleware > mutating methods ÔÇö should require the CSRF header > should return 403 for PATCH with no CSRF header 0ms
+ Ô£ô tests/csrf.test.js > csrfMiddleware > mutating methods ÔÇö should require the CSRF header > should return 403 for PATCH with wrong header value 0ms
+ Ô£ô tests/csrf.test.js > csrfMiddleware > mutating methods ÔÇö should require the CSRF header > should call next() for PATCH with correct CSRF header 0ms
+ Ô£ô tests/csrf.test.js > csrfMiddleware > mutating methods ÔÇö should require the CSRF header > should return 403 for DELETE with no CSRF header 0ms
+ Ô£ô tests/csrf.test.js > csrfMiddleware > mutating methods ÔÇö should require the CSRF header > should return 403 for DELETE with wrong header value 0ms
+ Ô£ô tests/csrf.test.js > csrfMiddleware > mutating methods ÔÇö should require the CSRF header > should call next() for DELETE with correct CSRF header 0ms
+ Ô£ô tests/csrf.test.js > csrfMiddleware > error cases > should return 403 when header value is empty string 0ms
+ Ô£ô tests/csrf.test.js > csrfMiddleware > error cases > should return 403 when header value is case-variant (ClaudeCodemanager) 0ms
+ Ô£ô tests/csrf.test.js > csrfMiddleware > error cases > should exempt WebSocket upgrade requests 0ms
+ Ô£ô tests/csrf.test.js > csrfMiddleware > response body > should return { error: "CSRF validation failed" } on rejection 1ms
+stdout | tests/SessionManager.test.js > SessionManager > createSession > should create a session and return it with correct shape
+[SessionManager] Session created ÔÇö sessionId=f7ea2cbf-d0cf-482d-add0-f1eb9714b6d5 pid=50622 project=proj-123
+
+ Ô£ô tests/pathValidation.test.js > validateProjectPath > happy path > should return the resolved absolute path for a valid path 1ms
+ Ô£ô tests/pathValidation.test.js > validateProjectPath > happy path > should resolve a relative path to an absolute path 0ms
+ Ô£ô tests/pathValidation.test.js > validateProjectPath > error cases > should throw ApiError(400) for empty string 0ms
+ Ô£ô tests/pathValidation.test.js > validateProjectPath > error cases > should throw ApiError(400) for whitespace-only string 0ms
+ Ô£ô tests/pathValidation.test.js > validateProjectPath > error cases > should throw ApiError(400) for non-string input 0ms
+ Ô£ô tests/pathValidation.test.js > validateClaudePath > happy path > should accept a path inside one of the allowed base directories 0ms
+ Ô£ô tests/pathValidation.test.js > validateClaudePath > happy path > should accept a deeply nested path inside an allowed base 0ms
+ Ô£ô tests/pathValidation.test.js > validateClaudePath > happy path > should accept the base directory path itself 0ms
+ Ô£ô tests/pathValidation.test.js > validateClaudePath > happy path > should match against multiple allowed bases 1ms
+ Ô£ô tests/pathValidation.test.js > validateClaudePath > path traversal rejection > should reject ../../../etc/passwd style traversal 0ms
+ Ô£ô tests/pathValidation.test.js > validateClaudePath > path traversal rejection > should reject a path that shares a name prefix with the base (suffix attack) 0ms
+ Ô£ô tests/pathValidation.test.js > validateClaudePath > path traversal rejection > should reject a path outside all allowed directories 0ms
+ Ô£ô tests/pathValidation.test.js > validateClaudePath > path traversal rejection > should reject when allowedBaseDirs is empty 0ms
+ Ô£ô tests/pathValidation.test.js > ApiError > should carry the correct statusCode 0ms
+ Ô£ô tests/pathValidation.test.js > ApiError > should be an instance of Error 0ms
+ Ô£ô tests/CodexSdkAdapter.test.js > CodexSdkAdapter > buildCodexSdkClientOptions maps supported client fields 2ms
+ Ô£ô tests/CodexSdkAdapter.test.js > CodexSdkAdapter > buildCodexSdkThreadOptions drops null and empty values 0ms
+ Ô£ô tests/CodexSdkAdapter.test.js > CodexSdkAdapter > createCodexSdkClient instantiates the provided constructor 1ms
+ Ô£ô tests/CodexSdkAdapter.test.js > CodexSdkAdapter > getCodexSdkThread starts a new thread when no threadId is present 1ms
+ Ô£ô tests/CodexSdkAdapter.test.js > CodexSdkAdapter > getCodexSdkThread resumes an existing thread when threadId is present 0ms
+ Ô£ô tests/CodexSdkAdapter.test.js > CodexSdkAdapter > runCodexSdkTurnStreamed returns the thread and streamed events generator 1ms
+ Ô£ô tests/CodexSdkAdapter.test.js > CodexSdkAdapter > normalizeCodexSdkItem maps command execution items 1ms
+ Ô£ô tests/CodexSdkAdapter.test.js > CodexSdkAdapter > normalizeCodexSdkItem maps MCP tool calls with a composed tool name 0ms
+stdout | tests/SessionManager.test.js > SessionManager > createSession > should create a session and return it with correct shape
+[SessionManager] killAll ÔÇö 1 session(s)
+[SessionManager] Killing session ÔÇö sessionId=f7ea2cbf-d0cf-482d-add0-f1eb9714b6d5 pid=50622
+
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > content_block_start ÔÇö tool_use > should return tool_start with toolName and toolUseId 3ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > content_block_start ÔÇö tool_use > should handle server_tool_use the same as tool_use 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > content_block_start ÔÇö text > should return text_start 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > content_block_start ÔÇö thinking > should return thinking_start 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > content_block_delta ÔÇö text_delta > should return text_delta with text 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > content_block_delta ÔÇö text_delta > should handle empty text 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > content_block_delta ÔÇö input_json_delta > should return tool_delta with partialJson 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > content_block_delta ÔÇö input_json_delta > should handle empty partial_json (first delta) 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > content_block_delta ÔÇö thinking_delta > should return thinking with text 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > content_block_stop dispatch > should return tool_stop after a tool_use block 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > content_block_stop dispatch > should return text_stop after a text block 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > content_block_stop dispatch > should return thinking_stop after a thinking block 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > content_block_stop dispatch > should return text_stop when no active block is tracked 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > message_start > should return message_start 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > message_delta > should return message_delta with stopReason and usage 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > message_delta > should handle tool_use stop_reason 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > message_stop > should return message_stop 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > result event > should map all cost/usage/session fields 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > result event > should detect error results via is_error 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > result event > should detect error results via subtype "error" 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > result event > should handle missing usage fields gracefully 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > system ÔÇö api_retry > should return api_retry with attempt, delay, errorCode 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > system ÔÇö api_retry > should fall back to error string when error_status is absent 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > system ÔÇö other subtypes > should pass through non-api_retry system events 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > assistant -> message > should return message with content array 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > assistant -> message > should handle missing message.content gracefully 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > error: malformed JSON line > should return error event for invalid JSON 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > error: malformed JSON line > should NOT throw 1ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > error: malformed JSON line > should return error for truncated JSON 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > error: line exceeds 1MB cap (SEC-SJ-03) > should return error event for oversized line 1ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > error: line exceeds 1MB cap (SEC-SJ-03) > should NOT throw for oversized line 1ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > empty and whitespace lines > should return ignore for empty string 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > empty and whitespace lines > should return ignore for whitespace-only string 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > empty and whitespace lines > should return ignore for null/undefined 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > unknown top-level types > should return unknown for unrecognized types 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > unknown top-level types > should return unknown for user type 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > reset() > should clear active block tracking 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > full tool use lifecycle > should track start -> deltas -> stop for a tool call 0ms
+ Ô£ô tests/StreamJsonParser.test.js > StreamJsonParser > text block followed by tool block > should dispatch stop events correctly for mixed blocks 0ms
+stdout | tests/JobRunner.test.js > JobRunner > startJob > should return a jobId and createdAt immediately
+[JobRunner] Job started ÔÇö jobId=35ee3001-974a-446f-9751-688bb97f99e2 projectId=proj-1
+
+stdout | tests/JobRunner.test.js > JobRunner > startJob > should call child.stdin.end() immediately ÔÇö hang prevention (DEC-005)
+[JobRunner] Job started ÔÇö jobId=b667e087-3b93-43a0-9e5b-bb03fe646015 projectId=proj-1
+
+stdout | tests/JobRunner.test.js > JobRunner > startJob > should spawn with shell: false (SEC-02)
+[JobRunner] Job started ÔÇö jobId=c22e8899-43c7-4876-8254-8961af7c2361 projectId=proj-1
+
+ Ô£ô tests/process-registry.test.js > ProcessRegistry PID validation > accepts valid positive integer PIDs beyond 65535 2ms
+ Ô£ô tests/process-registry.test.js > ProcessRegistry PID validation > rejects invalid PID values 1ms
+stdout | tests/JobRunner.test.js > JobRunner > startJob > should pass tool restrictions via --tools instead of legacy flags
+[JobRunner] Job started ÔÇö jobId=5da9129e-98b4-4a4a-b1bb-d26473c809b0 projectId=proj-1
+
+stdout | tests/JobRunner.test.js > JobRunner > startJob > should record the job in listJobs
+[JobRunner] Job started ÔÇö jobId=77e9502b-d13b-4905-acbc-6d4ef45dfd34 projectId=proj-1
+
+stdout | tests/JobRunner.test.js > JobRunner > startJob > should set job status to done when process exits with code 0
+[JobRunner] Job started ÔÇö jobId=179e5798-e658-4547-923e-4cf32c31e9f4 projectId=proj-1
+[JobRunner] Job finished ÔÇö jobId=179e5798-e658-4547-923e-4cf32c31e9f4 status=done exitCode=0
+
+ Ô£ô tests/ScaffoldGenerator.test.js > ScaffoldGenerator > buildWorkflowPrompt includes the user description 2ms
+ Ô£ô tests/ScaffoldGenerator.test.js > ScaffoldGenerator > parseClaudeCliEnvelope surfaces structured Claude CLI errors from stdout 1ms
+ Ô£ô tests/ScaffoldGenerator.test.js > ScaffoldGenerator > parseGeminiCliEnvelope surfaces structured Gemini CLI errors and responses 0ms
+ Ô£ô tests/ScaffoldGenerator.test.js > ScaffoldGenerator > parseWorkflowDefinition strips markdown fences 1ms
+ Ô£ô tests/ScaffoldGenerator.test.js > ScaffoldGenerator > prefers Claude when Claude scaffold succeeds 1ms
+ Ô£ô tests/ScaffoldGenerator.test.js > ScaffoldGenerator > falls back to Codex when Claude fails 0ms
+ Ô£ô tests/ScaffoldGenerator.test.js > ScaffoldGenerator > falls back to Gemini when Claude and Codex fail 0ms
+ Ô£ô tests/ScaffoldGenerator.test.js > ScaffoldGenerator > returns a combined provider error when both providers fail 1ms
+ Ô£ô tests/ScaffoldGenerator.test.js > ScaffoldGenerator > falls back to a local deterministic workflow when all providers are unavailable 1ms
+ Ô£ô tests/ScaffoldGenerator.test.js > ScaffoldGenerator > uses --tools none for Claude scaffold generation 2ms
+stdout | tests/JobRunner.test.js > JobRunner > startJob > should set job status to error when process exits with non-zero code
+[JobRunner] Job started ÔÇö jobId=7f95ddc2-f7cd-4cee-9cd7-e0a2e6bf5852 projectId=proj-1
+[JobRunner] Job finished ÔÇö jobId=7f95ddc2-f7cd-4cee-9cd7-e0a2e6bf5852 status=error exitCode=1
+
+stdout | tests/JobRunner.test.js > JobRunner > cancelJob > should return false if job is already done
+[JobRunner] Job started ÔÇö jobId=688c2219-4702-40c9-abd8-6cfd1992134e projectId=proj-1
+[JobRunner] Job finished ÔÇö jobId=688c2219-4702-40c9-abd8-6cfd1992134e status=done exitCode=0
+
+ Ô£ô tests/execution-history-outputs.test.js > agentOutputs and aggregatedArtifact round-trip > should persist and retrieve agentOutputs and aggregatedArtifact 13ms
+ Ô£ô tests/execution-history-outputs.test.js > agentOutputs and aggregatedArtifact round-trip > should default agentOutputs to {} and aggregatedArtifact to "" when not provided 7ms
+ Ô£ô tests/execution-history-outputs.test.js > backward compatibility ÔÇö older entries without new fields > should fill defaults when reading an older entry that lacks agentOutputs and aggregatedArtifact 4ms
+ Ô£ô tests/execution-history-outputs.test.js > getEntry ÔÇö not found > should return null for a non-existent executionId 6ms
+ Ô£ô tests/execution-history-outputs.test.js > getEntry ÔÇö not found > should return null for a non-existent workflowId 2ms
+ Ô£ô tests/execution-history-outputs.test.js > getEntry ÔÇö not found > should return null for null/undefined params 2ms
+ Ô£ô tests/execution-history-outputs.test.js > getEntry ÔÇö path traversal prevention > should return null for workflowId with traversal characters 2ms
+ Ô£ô tests/execution-history-outputs.test.js > getEntry ÔÇö path traversal prevention > should return null for executionId with traversal characters 2ms
+ Ô£ô tests/execution-history-outputs.test.js > getEntry ÔÇö path traversal prevention > should return null for executionId containing null bytes 2ms
+ Ô£ô tests/execution-history-outputs.test.js > getEntry ÔÇö path traversal prevention > should return null for non-string params 1ms
+stdout | tests/JobRunner.test.js > JobRunner > cancelJob > should cancel a running job and return true
+[JobRunner] Job started ÔÇö jobId=97345942-7a6b-44ea-b621-f6335cbb1e2d projectId=proj-1
+[JobRunner] Job cancelled ÔÇö jobId=97345942-7a6b-44ea-b621-f6335cbb1e2d
+
+stdout | tests/JobRunner.test.js > JobRunner > cancelJob > should prevent close handler from overwriting status to error after cancel
+[JobRunner] Job started ÔÇö jobId=c20992c1-eada-4aae-ad32-9838178d477e projectId=proj-1
+[JobRunner] Job cancelled ÔÇö jobId=c20992c1-eada-4aae-ad32-9838178d477e
+[JobRunner] Job finished ÔÇö jobId=c20992c1-eada-4aae-ad32-9838178d477e status=cancelled exitCode=143
+
+ Ô£ô tests/FileManager.test.js > FileManager > validatePath ÔÇö path traversal rejection > should accept a path directly inside allowedBase 5ms
+ Ô£ô tests/FileManager.test.js > FileManager > validatePath ÔÇö path traversal rejection > should accept a deeply nested path inside allowedBase 2ms
+ Ô£ô tests/FileManager.test.js > FileManager > validatePath ÔÇö path traversal rejection > should accept allowedBase itself as the path 2ms
+ Ô£ô tests/FileManager.test.js > FileManager > validatePath ÔÇö path traversal rejection > should reject a path using ../../../etc/passwd traversal 2ms
+ Ô£ô tests/FileManager.test.js > FileManager > validatePath ÔÇö path traversal rejection > should reject a path that shares a prefix but escapes the base directory 2ms
+ Ô£ô tests/FileManager.test.js > FileManager > validatePath ÔÇö path traversal rejection > should reject an absolute path outside allowedBase 1ms
+ Ô£ô tests/FileManager.test.js > FileManager > validatePath ÔÇö path traversal rejection > should return the resolved absolute path on success 2ms
+ Ô£ô tests/FileManager.test.js > FileManager > readFile > should read an existing file 4ms
+ Ô£ô tests/FileManager.test.js > FileManager > readFile > should throw ENOENT for a non-existent file 2ms
+ Ô£ô tests/FileManager.test.js > FileManager > readFile > should reject path traversal on read 1ms
+ Ô£ô tests/FileManager.test.js > FileManager > writeFile > should write content to a new file atomically 7ms
+ Ô£ô tests/FileManager.test.js > FileManager > writeFile > should create parent directories if they do not exist 8ms
+ Ô£ô tests/FileManager.test.js > FileManager > writeFile > should overwrite an existing file 10ms
+ Ô£ô tests/FileManager.test.js > FileManager > writeFile > should reject path traversal on write 1ms
+ Ô£ô tests/FileManager.test.js > FileManager > listDirectory > should list files in a directory 4ms
+ Ô£ô tests/FileManager.test.js > FileManager > listDirectory > should return empty array for non-existent directory 2ms
+ Ô£ô tests/ChatExtractor.test.js > ChatExtractor > preserves real whitespace between chunks instead of injecting artificial line breaks 20ms
+ Ô£ô tests/ChatExtractor.test.js > ChatExtractor > keeps mid-word chunk splits contiguous instead of inserting spaces 6ms
+ Ô£ô tests/ChatExtractor.test.js > ChatExtractor > can reuse an external sanitizer for the final emitted chat text 4ms
+ Ô£ô tests/ChatExtractor.test.js > ChatExtractor > drops the message when the sanitizer suppresses pure runtime chrome 1ms
+ Ô£ô tests/ChatExtractor.test.js > ChatExtractor > does not emit intermediate periodic messages when periodic flushing is disabled 1ms
+ Ô£ô tests/ChatExtractor.test.js > ChatExtractor > keeps short but meaningful greetings instead of dropping them as noise 1ms
+ Ô£ô tests/ChatExtractor.test.js > ChatExtractor > salvages the remaining semantic sentence from a noisy Codex fallback payload 2ms
+ Ô£ô tests/ChatExtractor.test.js > ChatExtractor > drops garbled Codex working-meter fragments that survive chunk-level filtering 1ms
+ Ô£ô tests/ChatExtractor.test.js > ChatExtractor > drops inline prompt-echo payloads when the remaining text is still mostly orchestration chrome 1ms
+ Ô£ô tests/ChatExtractor.test.js > ChatExtractor > drops usage-limit blocker chrome when the remaining payload is only prompt echo and runtime banners 3ms
+ Ô£ô tests/ChatExtractor.test.js > ChatExtractor > normalizes compressed chat prose before emitting the message 1ms
+ Ô£ô tests/ChatExtractor.test.js > ChatExtractor > strips corrupted short-token leaders when readable prose follows 1ms
+ Ô£ô tests/chat-snippet-option-b.test.js > Option B ÔÇö chat messages as node snippets > should emit a clean chat message that can replace the raw PTY snippet 22ms
+ Ô£ô tests/chat-snippet-option-b.test.js > Option B ÔÇö chat messages as node snippets > should produce clean snippet even with ConPTY column-wrap noise 9ms
+ Ô£ô tests/chat-snippet-option-b.test.js > Option B ÔÇö chat messages as node snippets > should filter out CLI chrome lines that pollute raw PTY snippets 6ms
+ Ô£ô tests/chat-snippet-option-b.test.js > Option B ÔÇö chat messages as node snippets > should simulate full Option B flow: chat_message ÔåÆ lastChatSnippet update 0ms
+ Ô£ô tests/chat-snippet-option-b.test.js > Option B ÔÇö chat messages as node snippets > should filter rate-limit messages (BUG-CE-1) 1ms
+ Ô£ô tests/chat-snippet-option-b.test.js > Option B ÔÇö chat messages as node snippets > should filter ConPTY spaceless patterns (BUG-CE-2) 1ms
+ Ô£ô tests/chat-snippet-option-b.test.js > Option B ÔÇö chat messages as node snippets > should filter Codex CLI garbled text (BUG-CE-3) 1ms
+ Ô£ô tests/chat-snippet-option-b.test.js > Option B ÔÇö chat messages as node snippets > should filter "Structured handoff sent" protocol echo 0ms
+ Ô£ô tests/chat-snippet-option-b.test.js > Option B ÔÇö chat messages as node snippets > should NOT set lastChatSnippet for non-assistant messages (hitl, system) 1ms
+ Ô£ô tests/swarm-engine-codex-sdk.test.js > SwarmEngine Codex SDK integration > routes Codex executions through the SDK path and emits structured runtime events 11ms
+ Ô£ô tests/swarm-engine-codex-sdk.test.js > SwarmEngine Codex SDK integration > passes long inbound handoffs into downstream Codex SDK prompts without truncating the tail marker 3ms
+ Ô£ô tests/swarm-engine-codex-sdk.test.js > SwarmEngine Codex SDK integration > preserves one canonical chat message per completed structured turn for the same node 1ms
+ Ô£ô tests/swarm-engine-codex-sdk.test.js > SwarmEngine Codex SDK integration > reuses the existing codex thread for operator follow-up after completion 1ms
+ Ô£ô tests/swarm-engine-codex-sdk.test.js > SwarmEngine Codex SDK integration > supports structured reset for Codex SDK agents by aborting the active turn and clearing thread state 1ms
+ Ô£ô tests/swarm-engine-codex-sdk.test.js > SwarmEngine Codex SDK integration > ignores late abort failures after a codex-sdk reset and keeps execution idle 1ms
+ Ô£ô tests/swarm-engine-codex-sdk.test.js > SwarmEngine Codex SDK integration > persists a fallback assistant chat message when codex final output exists but extractor drops it as prompt echo 1ms
+stdout | tests/JobRunner.test.js > JobRunner > cancelJob > should send cancelled SSE event to connected clients
+[JobRunner] Job started ÔÇö jobId=f56b9291-b06b-4ad6-8d86-8470f5beb8ae projectId=proj-1
+[JobRunner] Job cancelled ÔÇö jobId=f56b9291-b06b-4ad6-8d86-8470f5beb8ae
+
+stdout | tests/JobRunner.test.js > JobRunner > cancelAll > should cancel all running jobs
+[JobRunner] Job started ÔÇö jobId=2505a8cc-532e-44c8-ba68-143f52f59e33 projectId=p1
+[JobRunner] Job started ÔÇö jobId=49149d3d-753f-42f0-a0f8-24f62ce686d9 projectId=p2
+[JobRunner] Job cancelled ÔÇö jobId=2505a8cc-532e-44c8-ba68-143f52f59e33
+[JobRunner] Job cancelled ÔÇö jobId=49149d3d-753f-42f0-a0f8-24f62ce686d9
+
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 1: Token split across 2 chunks > should detect a handoff token split across two feed() calls 3ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 2: Token split across 3 chunks > should detect a handoff token split across three feed() calls 1ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 3: ANSI-polluted chunk > should strip ANSI escape codes and detect the handoff token 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 3: ANSI-polluted chunk > should strip OSC sequences 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 3: ANSI-polluted chunk > should detect a handoff token when terminal wrapping inserts newlines and indentation 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 3: ANSI-polluted chunk > should normalize lightweight emphasis around a direct JSON handoff target 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 4: Oversized contextUpdate (>50 keys) > should reject contextUpdate with more than 50 keys and return 0 events 7ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 4: Oversized contextUpdate (>50 keys) > should reject contextUpdate with a string value longer than 4096 chars 131ms
+stdout | tests/JobRunner.test.js > JobRunner > cancelAll > should not affect already-finished jobs
+[JobRunner] Job started ÔÇö jobId=8f3a9640-a492-467e-8a2b-5ad57bc49a78 projectId=p1
+[JobRunner] Job started ÔÇö jobId=db99cb46-94c2-4447-9102-9dd65ac9f838 projectId=p2
+[JobRunner] Job finished ÔÇö jobId=8f3a9640-a492-467e-8a2b-5ad57bc49a78 status=done exitCode=0
+[JobRunner] Job cancelled ÔÇö jobId=db99cb46-94c2-4447-9102-9dd65ac9f838
+
+stdout | tests/JobRunner.test.js > JobRunner > addSseClient > should return true and set SSE headers for a running job
+[JobRunner] Job started ÔÇö jobId=b2f0ed67-729c-48ae-9a20-d2cd5855cc80 projectId=p1
+
+stdout | tests/JobRunner.test.js > JobRunner > addSseClient > should immediately send done event if job already completed
+[JobRunner] Job started ÔÇö jobId=c48ee25d-b79d-4a57-8eff-f8e7e61cb168 projectId=p1
+[JobRunner] Job finished ÔÇö jobId=c48ee25d-b79d-4a57-8eff-f8e7e61cb168 status=done exitCode=0
+
+stdout | tests/JobRunner.test.js > JobRunner > listJobs > should not include prompt content in listJobs output
+[JobRunner] Job started ÔÇö jobId=4fbb64bf-e124-460a-997a-1d3fa21a342a projectId=proj-1
+
+stdout | tests/JobRunner.test.js > JobRunner > listJobs > should not include child process in listJobs output
+[JobRunner] Job started ÔÇö jobId=1a7ff4ab-ed0b-4cf7-a2ed-92ddda0d4706 projectId=proj-1
+
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 4: Oversized contextUpdate (>50 keys) > should reject non-primitive values in contextUpdate 1ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 4: Oversized contextUpdate (>50 keys) > should reject array contextUpdate 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 5: Malformed base64 > should return 0 events and not throw on invalid base64 1ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 5: Malformed base64 > should handle payload that decodes but is not valid JSON 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 6: __DONE__ detection > should detect __DONE__ token and return a done event 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 6: __DONE__ detection > should detect __DONE__ even when surrounded by other text 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 7: 4KB buffer overflow > should enforce 4KB cap and still detect token at end 1ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 7: 4KB buffer overflow > should drop oldest bytes when buffer exceeds 8192 chars 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 8: Multiple tokens in one chunk > should detect two handoff tokens in a single feed() call 1ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 9: __DONE__ after __HANDOFF__ in same chunk > should return both handoff and done events from one feed() call 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > reset() > should clear the internal buffer 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > reset() > should not produce tokens from pre-reset data after reset 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > contextUpdate validation > should accept valid flat object with string, number, and boolean values 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > contextUpdate validation > should accept an empty object 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > contextUpdate validation > should accept exactly 50 keys 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > contextUpdate validation > should accept string value of exactly 1024 chars 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 10: Plain JSON payload (LLM-friendly format) > should detect a handoff with plain JSON context (no base64) 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 10: Plain JSON payload (LLM-friendly format) > should detect a plain JSON handoff with surrounding text 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 10: Plain JSON payload (LLM-friendly format) > should detect a plain JSON handoff with empty object 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 10: Plain JSON payload (LLM-friendly format) > should prefer plain JSON over base64 when both could match 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 10: Plain JSON payload (LLM-friendly format) > should reject plain JSON handoff with nested objects 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 10: Plain JSON payload (LLM-friendly format) > should still detect base64 handoffs after plain JSON path fails 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 10: Plain JSON payload (LLM-friendly format) > should detect plain JSON handoff split across two chunks 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 10: Plain JSON payload (LLM-friendly format) > should detect a plain JSON handoff when PTY wrapping moves the payload onto the next line 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 10: Plain JSON payload (LLM-friendly format) > should detect a plain JSON handoff split across chunks when the payload starts on a wrapped line 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 10: Plain JSON payload (LLM-friendly format) > should detect a plain JSON handoff when terminal rendering strips underscore formatting from the token 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 10: Plain JSON payload (LLM-friendly format) > should detect a plain JSON handoff when ConPTY wrapping inserts newlines and padding inside the payload 0ms
+ Ô£ô tests/HandoffParser.test.js > HandoffParser > Scenario 10: Plain JSON payload (LLM-friendly format) > should detect a multi-line wrapped HANDOFF alias (no underscores) with ConPTY padding 0ms
+ Ô£ô tests/JobRunner.test.js > JobRunner > startJob > should throw if claudeBin is not set 3ms
+ Ô£ô tests/JobRunner.test.js > JobRunner > startJob > should return a jobId and createdAt immediately 2ms
+ Ô£ô tests/JobRunner.test.js > JobRunner > startJob > should call child.stdin.end() immediately ÔÇö hang prevention (DEC-005) 1ms
+ Ô£ô tests/JobRunner.test.js > JobRunner > startJob > should spawn with shell: false (SEC-02) 1ms
+ Ô£ô tests/JobRunner.test.js > JobRunner > startJob > should pass tool restrictions via --tools instead of legacy flags 1ms
+ Ô£ô tests/JobRunner.test.js > JobRunner > startJob > should record the job in listJobs 0ms
+ Ô£ô tests/JobRunner.test.js > JobRunner > startJob > should set job status to done when process exits with code 0 1ms
+ Ô£ô tests/JobRunner.test.js > JobRunner > startJob > should set job status to error when process exits with non-zero code 1ms
+ Ô£ô tests/JobRunner.test.js > JobRunner > cancelJob > should return false for unknown jobId 0ms
+ Ô£ô tests/JobRunner.test.js > JobRunner > cancelJob > should return false if job is already done 1ms
+ Ô£ô tests/JobRunner.test.js > JobRunner > cancelJob > should cancel a running job and return true 13ms
+ Ô£ô tests/JobRunner.test.js > JobRunner > cancelJob > should prevent close handler from overwriting status to error after cancel 5ms
+ Ô£ô tests/JobRunner.test.js > JobRunner > cancelJob > should send cancelled SSE event to connected clients 34ms
+ Ô£ô tests/JobRunner.test.js > JobRunner > cancelAll > should cancel all running jobs 20ms
+ Ô£ô tests/JobRunner.test.js > JobRunner > cancelAll > should not affect already-finished jobs 9ms
+ Ô£ô tests/JobRunner.test.js > JobRunner > addSseClient > should return false for unknown jobId 0ms
+ Ô£ô tests/JobRunner.test.js > JobRunner > addSseClient > should return true and set SSE headers for a running job 1ms
+ Ô£ô tests/JobRunner.test.js > JobRunner > addSseClient > should immediately send done event if job already completed 1ms
+ Ô£ô tests/JobRunner.test.js > JobRunner > listJobs > should not include prompt content in listJobs output 1ms
+ Ô£ô tests/JobRunner.test.js > JobRunner > listJobs > should not include child process in listJobs output 1ms
+ Ô£ô tests/e2e/stream-json-e2e.test.js > stream-json E2E contract > assembles a client-ready stream-json turn and hands off to Codex PTY without regression 36ms
+ Ô£ô tests/e2e/stream-json-e2e.test.js > stream-json E2E contract > gracefully pauses and resumes a Claude stream-json turn with --resume and preserved tool whitelist 3ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should retain a stopped execution snapshot after stopExecution 24ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should retain chat messages in the execution snapshot for reconnect hydration 2ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should not split already-correct Italian words while sanitizing chat text 8ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should keep whole dictionary words intact when restoring compressed chat tokens 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should still restore long compressed chat tokens into readable Italian text 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should keep already-correct English words intact while restoring nearby compressed tokens 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should prefer sanitized session replay over truncated chat fragments when persisting execution history 13ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should persist agent outputs from session replay even when chatMessages are still empty 4ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should prefer the semantic snippet over startup banners when resolving final agent text 5ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should seed workflowContext with the workflow goal before the first agent starts 2ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should start every explicit Start Node immediately so parallel entry agents run together 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should auto-start all root agents when no explicit Start Node is marked 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should auto-start a root flow-control node when the workflow begins with delay/sub-workflow style nodes 4ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should not wait forever on merge waitFor=all when duplicate edges share the same source node 2ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should keep the execution running while flow-control state is still pending 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should stop nested sub-workflow executions when the parent execution is stopped 2ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should propagate blocked child sub-workflow state back to the parent node and execution 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should start an explicit Codex execution with provider metadata in the snapshot contract 2ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should honor SWARM_CODEX_MODEL when building the Codex runtime launch args 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should reject unsupported Gemini runtime models before spawning a PTY session 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should remove swarm tap listener from session on stopExecution 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should broadcast stopping and stopped execution_status events on stopExecution 10ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should inject an explicit current task and valid handoff targets into the first agent prompt 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should keep recovery handoff instructions templated so echoed follow-up prompts cannot become a fake handoff 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should build a short Codex resume prompt after prompt rejection instead of replaying the full agent instructions 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should keep non-terminal compact Codex prompts focused on the node task instead of replaying the full workflow task block 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should submit the pasted swarm prompt with a follow-up enter key 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should interrupt an active Codex runtime before sending a follow-up swarm prompt 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should treat the initial Codex swarm prompt injection as an already-submitted prompt 0ms
+ Ô£ô tests/security-v3.test.js > isSafeUrl (SEC-V3-03) > blocked: private IPv4 ranges > should return false for 192.168.x.x 2ms
+ Ô£ô tests/security-v3.test.js > isSafeUrl (SEC-V3-03) > blocked: private IPv4 ranges > should return false for 10.x.x.x 0ms
+ Ô£ô tests/security-v3.test.js > isSafeUrl (SEC-V3-03) > blocked: private IPv4 ranges > should return false for 172.16.x - 172.31.x 0ms
+ Ô£ô tests/security-v3.test.js > isSafeUrl (SEC-V3-03) > blocked: private IPv4 ranges > should return true for 172.15.x (just outside the block) 0ms
+ Ô£ô tests/security-v3.test.js > isSafeUrl (SEC-V3-03) > blocked: private IPv4 ranges > should return true for 172.32.x (just outside the block) 0ms
+ Ô£ô tests/security-v3.test.js > isSafeUrl (SEC-V3-03) > blocked: loopback > should return false for 127.0.0.1 0ms
+ Ô£ô tests/security-v3.test.js > isSafeUrl (SEC-V3-03) > blocked: loopback > should return false for 127.x.x.x 0ms
+ Ô£ô tests/security-v3.test.js > isSafeUrl (SEC-V3-03) > blocked: loopback > should return false for localhost 0ms
+ Ô£ô tests/security-v3.test.js > isSafeUrl (SEC-V3-03) > blocked: loopback > should return false for IPv6 loopback ::1 0ms
+ Ô£ô tests/security-v3.test.js > isSafeUrl (SEC-V3-03) > blocked: unspecified and link-local > should return false for 0.0.0.0 0ms
+ Ô£ô tests/security-v3.test.js > isSafeUrl (SEC-V3-03) > blocked: unspecified and link-local > should return false for link-local 169.254.x.x 0ms
+ Ô£ô tests/security-v3.test.js > isSafeUrl (SEC-V3-03) > blocked: IPv4-mapped IPv6 > should return false for ::ffff:127.0.0.1 0ms
+ Ô£ô tests/security-v3.test.js > isSafeUrl (SEC-V3-03) > blocked: IPv4-mapped IPv6 > should return false for ::ffff:192.168.1.1 0ms
+ Ô£ô tests/security-v3.test.js > isSafeUrl (SEC-V3-03) > allowed: public addresses > should return true for http://example.com 0ms
+ Ô£ô tests/security-v3.test.js > isSafeUrl (SEC-V3-03) > allowed: public addresses > should return true for https://feeds.example.com/rss 0ms
+ Ô£ô tests/security-v3.test.js > isSafeUrl (SEC-V3-03) > allowed: public addresses > should return true for a public IP (8.8.8.8) 0ms
+ Ô£ô tests/security-v3.test.js > isSafeUrl (SEC-V3-03) > edge cases > should return false for an empty string 0ms
+ Ô£ô tests/security-v3.test.js > isSafeUrl (SEC-V3-03) > edge cases > should return false for a non-URL string 0ms
+ Ô£ô tests/security-v3.test.js > isSafeUrl (SEC-V3-03) > edge cases > should return false for a URL with no host 0ms
+ Ô£ô tests/security-v3.test.js > WorkflowStore validation (SEC-V3-02 + SEC-V3-06) > should reject a workflow with systemPrompt > 16 KB 2ms
+ Ô£ô tests/security-v3.test.js > WorkflowStore validation (SEC-V3-02 + SEC-V3-06) > should accept a workflow with systemPrompt exactly at 16 KB 6ms
+ Ô£ô tests/security-v3.test.js > WorkflowStore validation (SEC-V3-02 + SEC-V3-06) > should reject a workflow with more than 50 nodes 1ms
+ Ô£ô tests/security-v3.test.js > WorkflowStore validation (SEC-V3-02 + SEC-V3-06) > should accept a workflow with exactly 50 nodes 4ms
+ Ô£ô tests/security-v3.test.js > WorkflowStore validation (SEC-V3-02 + SEC-V3-06) > should reject a workflow name with script injection characters 1ms
+ Ô£ô tests/security-v3.test.js > WorkflowStore validation (SEC-V3-02 + SEC-V3-06) > should reject a workflow name with semicolons 1ms
+ Ô£ô tests/security-v3.test.js > WorkflowStore validation (SEC-V3-02 + SEC-V3-06) > should reject a workflow name exceeding 100 characters 1ms
+ Ô£ô tests/security-v3.test.js > WorkflowStore validation (SEC-V3-02 + SEC-V3-06) > should reject a workflow description exceeding 500 characters 1ms
+ Ô£ô tests/security-v3.test.js > WorkflowStore validation (SEC-V3-02 + SEC-V3-06) > should accept a valid workflow name with allowed characters 5ms
+ Ô£ô tests/security-v3.test.js > WorkflowStore validation (SEC-V3-02 + SEC-V3-06) > should persist a node tools array through create/get/update round-trips 15ms
+ Ô£ô tests/security-v3.test.js > HandoffParser oversized payload (SEC-V3-07) > should drop a contextUpdate with > 50 keys without crashing 8ms
+ Ô£ô tests/security-v3.test.js > HandoffParser oversized payload (SEC-V3-07) > should drop a contextUpdate with a string value > 4096 chars without crashing 111ms
+ Ô£ô tests/security-v3.test.js > HandoffParser oversized payload (SEC-V3-07) > should enforce 8KB buffer cap and not crash on oversized accumulation 0ms
+ Ô£ô tests/security-v3.test.js > validateResumeText (SEC-V3-05) > should return 400 when resumeText exceeds 8192 characters 0ms
+ Ô£ô tests/security-v3.test.js > validateResumeText (SEC-V3-05) > should call next() when resumeText is exactly 8192 characters 0ms
+ Ô£ô tests/security-v3.test.js > validateResumeText (SEC-V3-05) > should call next() when resumeText is absent 0ms
+ Ô£ô tests/security-v3.test.js > validateResumeText (SEC-V3-05) > should call next() when body is absent 0ms
+ Ô£ô tests/security-v3.test.js > validateResumeText (SEC-V3-05) > should call next() when resumeText is within limit 0ms
+ Ô£ô tests/execution-results-api.test.js > GET /executions/:executionId/results > returns 400 for invalid executionId format 3ms
+ Ô£ô tests/execution-results-api.test.js > GET /executions/:executionId/results > returns 404 for unknown execution 1ms
+ Ô£ô tests/execution-results-api.test.js > GET /executions/:executionId/results > returns 200 with correct shape for a live execution 2ms
+ Ô£ô tests/execution-results-api.test.js > GET /executions/:executionId/results > returns synthesized aggregated artifact for a terminal live execution when history is not available yet 1ms
+ Ô£ô tests/execution-results-api.test.js > GET /executions/:executionId/results > reconstructs live terminal outputs from the engine when chatMessages are empty 2ms
+ Ô£ô tests/execution-results-api.test.js > GET /executions/:executionId/results > prefers persisted history artifact for a terminal live execution when available 0ms
+ Ô£ô tests/execution-results-api.test.js > GET /executions/:executionId/results > returns 200 with correct shape for a persisted history entry via workflowId hint 1ms
+ Ô£ô tests/execution-results-api.test.js > GET /executions/:executionId/artifact.md > returns 400 for invalid executionId format 0ms
+ Ô£ô tests/execution-results-api.test.js > GET /executions/:executionId/artifact.md > returns 404 for unknown execution 1ms
+ Ô£ô tests/execution-results-api.test.js > GET /executions/:executionId/artifact.md > returns text/markdown content type for a live execution 0ms
+ Ô£ô tests/execution-results-api.test.js > GET /executions/:executionId/artifact.md > sanitizes workflow name in Content-Disposition filename 1ms
+ Ô£ô tests/execution-results-api.test.js > GET /executions/:executionId/artifact.md > returns synthesized markdown for a terminal live execution 0ms
+ Ô£ô tests/swarm-routes.test.js > resolveBroadcastNodeTargets > returns all scoped agent recipients for all scope 1ms
+ Ô£ô tests/swarm-routes.test.js > resolveBroadcastNodeTargets > filters scoped agent recipients by department scope 0ms
+ Ô£ô tests/swarm-routes.test.js > resolveBroadcastNodeTargets > filters running agent recipients by specific agent scope 0ms
+ Ô£ô tests/swarm-routes.test.js > serializeSessionOutput > serializes RingBuffer-backed session output to utf8 text 0ms
+ Ô£ô tests/swarm-routes.test.js > serializeSessionOutput > falls back to String(buffer) for non-RingBuffer sessions 0ms
+ Ô£ô tests/swarm-routes.test.js > swarmRoutes agent output fallback > returns persisted live output when the agent PTY session is already gone 3ms
+ Ô£ô tests/swarm-routes.test.js > swarmRoutes pause/resume contract > returns 409 and skips pauseExecution when the execution is already blocked 1ms
+ Ô£ô tests/swarm-routes.test.js > swarmRoutes pause/resume contract > returns 409 and skips resumeExecution when the execution is blocked instead of paused 0ms
+ Ô£ô tests/swarm-routes.test.js > swarmRoutes runtime model contract > returns backend-authoritative runtime capabilities 1ms
+ Ô£ô tests/swarm-routes.test.js > swarmRoutes runtime model contract > returns a precise 400 when startExecution rejects an unsupported runtime model 1ms
+ Ô£ô tests/swarm-routes.test.js > swarmRoutes broadcast delivery > uses SwarmEngine.sendBroadcast so Gemini sessions can queue safe injections 1ms
+stdout | tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should auto-handle the Gemini usage-limit menu without marking the execution blocked
+[SwarmEngine] Gemini usage limit (attempt 1) ÔÇö dismissing menu for session sess-node-a
+[SwarmEngine] Queued Gemini model fallback to gemini-2.5-flash once prompt is ready
+[SwarmEngine] Gemini prompt ready again - switching to gemini-2.5-flash via /model set
+
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should remind an idle Codex agent to emit the required handoff when work is finished but no token was produced 16ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should auto-dismiss the Codex model-selection menu by choosing the existing model 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should auto-dismiss the rendered Codex model-selection menu even when cursor-control ANSI strips spacing 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should auto-dismiss the Codex approaching-rate-limits menu by keeping the current model 2ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should auto-dismiss the rendered Codex approaching-rate-limits menu even when ANSI strips spacing 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should prefer a hard Codex usage-limit blocker over auto-dismissing the approaching-rate-limits menu 2ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should ignore the rendered Codex initial prompt until the swarm echo marker so prompt examples do not count as handoffs 5ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should ignore replayed prompt templates after the echo marker because <targetId> is not a real downstream node id 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should recover a valid buffered Codex handoff alias after ignoreParserUntil temporarily suppressed live parsing 5ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should keep a non-terminal agent running and send a recovery prompt when it emits __DONE__ 2ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should register the PTY tap before writing the initial swarm prompt so echo suppression can recover 3ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should auto-clear ignoreParserUntil after the echo marker timeout if the marker never arrives (Claude provider) 2ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should feed gate-period buffer through chat filtering pipeline when echo marker times out 3ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 1: Execution lifecycle > should cancel the echo marker timeout when the marker arrives before the timeout fires 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 2: Handoff processing > should merge contextUpdate into workflowContext when handoff event fires 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 2: Handoff processing > should call createSession for target node after handoff 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 2: Handoff processing > should broadcast handoff_started event when handoff fires 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 2: Handoff processing > should set source node status to done after handoff 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 2: Handoff processing > should ignore repeated Gemini handoff chunks once the source agent is already handoffing 4ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 2: Handoff processing > should fan out a single agent handoff across every connected downstream target 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 2: Handoff processing > should include recent upstream handoffs in a downstream agent prompt so parallel generic payloads do not overwrite each other silently 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 3: Circuit breaker > should emit circuit_breaker WS event when edge counter reaches threshold 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 3: Circuit breaker > should NOT stop execution when circuit breaker fires 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should emit budget_update WS event when output exceeds budget limit 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should NOT emit budget_update when output is within budget limit 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should emit agent_status updates with lastOutputSnippet as PTY output arrives 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should strip echoed swarm protocol text from lastOutputSnippet while keeping meaningful agent output 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should keep finder-style snippets focused on workflow-local facts even when stale repo-inspection noise arrives later 2ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should keep route-checker-style snippets centered on semantic route facts instead of footer noise 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should keep formatter-style snippets on the final report block instead of stale foreign prompt text 2ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should refresh terminal-state snippets from the full session replay so older semantic blocks survive a noisy tail 11ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should prefer reconstructed structured fact lines over replayed command errors in terminal-state snippets 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should reconstruct a final report block from scattered fact lines instead of prompt instructions in terminal-state snippets 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should return an empty snippet when the Codex tail only contains working chrome and redraw fragments 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should return an empty snippet when a live Claude provider menu leaks into the node card tail 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should fall back to the clean blocker message when prompt rejection leaves only Codex chrome in the tail 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should strip CLI chrome and JSON payload lines from chat-oriented sanitization 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should strip direct HANDOFF alias lines from chat-oriented sanitization 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should drop extra-usage and compact provider chrome from chat-oriented sanitization 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should suppress swarm runtime prompt echo even when ConPTY inserts spaces inside the wrapper text 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should restore spaces inside long compressed natural-language chat tokens 2ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should keep labeled agent lines readable instead of skipping ConPTY restoration 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should restore accented Italian merged text by matching normalized dictionary words 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should drop hybrid merge fact lines that leak agent greeting metadata into chat 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should restore compact English contractions and short merged words in final chat snippets 2ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should keep live compact merge phrases readable without splitting valid words or agent labels 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should restore glued Italian apostrophe phrases captured from live handoff chatter 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should strip inline HANDOFF payloads from semantic display snippets 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should restore fragmented short-word chat sequences captured in the live merge output 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should prefer real merge content over echoed handoff protocol in semantic display snippets 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should strip echoed workflow instructions from chat-oriented merge output 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should prefer a semantic fallback when prompt echo survives the chat sanitizer 2ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should reuse the node semantic snippet when a chat flush would otherwise emit provider chrome 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should prefer the longer semantic fallback buffer over a shorter trailing snippet tail 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should prefer the provider blocker line over echoed prompt instructions when a run is usage-limited 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should strip the echoed swarm-input wrapper while preserving the semantic payload line 2ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should classify provider blocker output and move the execution into blocked state 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should fallback from Claude to Codex when a pre-work blocker is detected in auto mode 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should classify Codex usage-limit output as a blocked runtime state 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should classify Codex trust/bootstrap output as a blocked runtime state 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should classify Codex CLI usage errors as provider_unavailable instead of leaving the execution running 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should classify Codex unsupported reasoning-effort errors as provider_unavailable 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should classify Codex conversation-interrupted output as a blocked runtime state 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should retry Codex once with a compact prompt before falling back to Gemini on prompt_rejected in auto mode 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should keep the execution blocked when a done event arrives after a runtime blocker 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should classify Gemini rate limit output as a blocked runtime state 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should classify Gemini authentication required output as a blocked runtime state 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should classify Gemini waiting-for-authentication output as a blocked runtime state 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should keep a clean Gemini blocker snippet after stopExecution instead of replaying auth chrome 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should ignore transient Gemini thinking-phase request failures instead of flipping to blocked 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should block Gemini when INVALID_ARGUMENT indicates a broken function-call turn without auto-retry 1ms
+stdout | tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should not misclassify Gemini usage-limit recovery output as an auth blocker
+[SwarmEngine] Gemini usage limit (attempt 1) ÔÇö dismissing menu for session sess-node-a
+[SwarmEngine] Queued Gemini model fallback to gemini-2.5-flash once prompt is ready
+[SwarmEngine] Gemini prompt ready again - switching to gemini-2.5-flash via /model set
+
+stdout | tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should switch Gemini models when usage-limit recovery only exposes request-cancelled readiness
+[SwarmEngine] Gemini usage limit (attempt 1) ÔÇö dismissing menu for session sess-node-a
+[SwarmEngine] Queued Gemini model fallback to gemini-2.5-flash once prompt is ready
+[SwarmEngine] Gemini prompt ready again - switching to gemini-2.5-flash via /model set
+
+node.exe : stderr | tests/swarm-engine.test.js > SwarmEngine > Test 8: Stream-json spawning contract > should treat 
+stream-json error results as runtime blockers instead of implicit done
+In C:\Program Files\nodejs\npx.ps1:29 car:3
++   & $NODE_EXE $NPX_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (stderr | tests/...f implicit done:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[SwarmEngine] stream-json result error node=node-a: You've hit your limit ┬À resets 7pm (Europe/Rome)
+
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should auto-handle the Gemini usage-limit menu without marking the execution blocked 2ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should not misclassify Gemini usage-limit recovery output as an auth blocker 3ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should detect Gemini quota blocker when banner is too long for menu detection buffer 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should switch Gemini models when usage-limit recovery only exposes request-cancelled readiness 2ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should queue Gemini broadcasts while the runtime is busy instead of interrupting the tool turn 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should flush a queued Gemini broadcast when the prompt becomes writable again 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 4: Budget tracking > should resume a completed PTY agent with an operator follow-up prompt 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 5: Heartbeat > should call writeInput with empty string for running agents every 5 minutes 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 5: Heartbeat > should NOT call writeInput for paused agents during heartbeat 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 5: Heartbeat > should set the execution status to paused and then back to running on pause/resume 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 6: HITL mode (freezeAgent) > should create an inbox item and set agent status to paused when freezeAgent is called 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 6: HITL mode (freezeAgent) > should broadcast hitl_required and agent_status events when freezeAgent is called 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 6: HITL mode (freezeAgent) > should NOT auto-spawn target when freezeAgent is used (target must not have sessionId until unfreezeAgent) 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 6: HITL mode (freezeAgent) > should mark the execution completed when the final active agent reports done 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 7: DEC-009 ÔÇö swarmListeners tap must not remove existing onData handler > should NOT remove or replace the pre-existing onData mock when registering tap 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 7: DEC-009 ÔÇö swarmListeners tap must not remove existing onData handler > should register tap via swarmListeners.add() ÔÇö not by replacing onData 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 7: DEC-009 ÔÇö swarmListeners tap must not remove existing onData handler > should not clear swarmListeners Set on startExecution (only adds) 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 7: DEC-009 ÔÇö swarmListeners tap must not remove existing onData handler > should remove ONLY the swarm tap on stopExecution ÔÇö not the sentinel listener 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > _onDone max reinject limit > should force a handoff to first downstream target after MAX_DONE_REINJECT_ATTEMPTS 3ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > _onDone max reinject limit > should broadcast handoff_started when forcing handoff after max reinjects 2ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > _onDone max reinject limit > should stop after exactly three reinject prompts before forcing the downstream handoff 2ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 8: Full E2E handoff lifecycle with echo marker timeout (deterministic) > should complete a full 2-agent workflow when the echo marker is never observed 3ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 8: Full E2E handoff lifecycle with echo marker timeout (deterministic) > should complete the workflow directly when the echo marker DOES arrive (no timeout needed) 3ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > _isRuntimePromptReady ÔÇö Gemini patterns (BUG-GEMINI-2) > should detect Gemini prompt-ready on "type your message" 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > _isRuntimePromptReady ÔÇö Gemini patterns (BUG-GEMINI-2) > should detect Gemini prompt-ready on "? for shortcuts" 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > _isRuntimePromptReady ÔÇö Gemini patterns (BUG-GEMINI-2) > should NOT detect Gemini prompt-ready on random output 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > _isRuntimePromptReady ÔÇö Gemini patterns (BUG-GEMINI-2) > should NOT detect Gemini prompt-ready on old false pattern "esc to interrupt" 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > _isRuntimePromptReady ÔÇö Gemini patterns (BUG-GEMINI-2) > should still detect Codex prompt-ready on "esc to interrupt" (no regression) 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > _isRuntimePromptReady ÔÇö Gemini patterns (BUG-GEMINI-2) > should still detect Codex prompt-ready on "workspace-write" (no regression) 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > _isRuntimePromptReady ÔÇö Gemini patterns (BUG-GEMINI-2) > should still detect Claude prompt-ready patterns (no regression) 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > _isRuntimePromptReady ÔÇö Gemini patterns (BUG-GEMINI-2) > should NOT detect Gemini prompt-ready during auth phase 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > _isRuntimePromptReady ÔÇö Gemini patterns (BUG-GEMINI-2) > should NOT detect Gemini prompt-ready on geminicli-updates banner 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > _buildRuntimeProviderArgs ÔÇö per-workflow model override (V4.1) > should use default model when no runtimeModels provided 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > _buildRuntimeProviderArgs ÔÇö per-workflow model override (V4.1) > should use the detected default Claude model when no runtimeModels provided 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > _buildRuntimeProviderArgs ÔÇö per-workflow model override (V4.1) > should override Codex model from runtimeModels 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > _buildRuntimeProviderArgs ÔÇö per-workflow model override (V4.1) > should override Gemini model from runtimeModels 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > _buildRuntimeProviderArgs ÔÇö per-workflow model override (V4.1) > should override Claude model from runtimeModels via --model 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > _buildRuntimeProviderArgs ÔÇö per-workflow model override (V4.1) > should ignore empty string model override 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > _buildRuntimeProviderArgs ÔÇö per-workflow model override (V4.1) > should ignore unsupported Gemini overrides and keep the validated default model 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > runtime model registry (V4.0.3) > should expose the highest supported model as the default for each selectable runtime 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > runtime model registry (V4.0.3) > should derive capability defaults only for providers detected on the server 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > runtime model registry (V4.0.3) > should expose curated Claude aliases and full model ids for explicit selection 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > runtime model registry (V4.0.3) > should expose only curated Gemini models and exclude invalid CLI targets 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > runtime model registry (V4.0.3) > should throw a precise validation error for unsupported Gemini models 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Gemini no-progress guard (V4.0.3) > should block Gemini when budget grows without forward progress before the first handoff 2ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Gemini no-progress guard (V4.0.3) > should not trigger the no-progress blocker once Gemini produces a valid handoff in time 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Gemini no-progress guard (V4.0.3) > should accept a Gemini handoff whose target id is wrapped with a leading underscore from TUI emphasis 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Gemini no-progress guard (V4.0.3) > should block a silent Gemini pre-handoff stall when no new chunks arrive after the first progress marker 2ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Gemini no-progress guard (V4.0.3) > should prefer a real Gemini quota blocker over no-progress timeout when recent output shows exhausted capacity 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 8: Stream-json spawning contract > should broadcast spawnMode=stream-json on agent_status and preserve it in status snapshots 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 8: Stream-json spawning contract > should coalesce sequential text_delta fragments into a single live chat_message after the buffer window 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 8: Stream-json spawning contract > should flush buffered text before a tool event so live chat ordering stays truthful 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 8: Stream-json spawning contract > should broadcast agent_cost with cacheReadTokens and cacheWriteTokens from stream-json results 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 8: Stream-json spawning contract > should reuse the same streamJsonSessionId on subsequent turns and switch to --resume 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 8: Stream-json spawning contract > should treat stream-json error results as runtime blockers instead of implicit done 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 9: _spawnAgent dispatcher > should route Claude provider claude through _spawnAgentStreamJson 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 9: _spawnAgent dispatcher > should route Claude provider opus through _spawnAgentStreamJson 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 9: _spawnAgent dispatcher > should route Claude provider claude-opus-4-6 through _spawnAgentStreamJson 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 9: _spawnAgent dispatcher > should route Claude provider sonnet through _spawnAgentStreamJson 0ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 9: _spawnAgent dispatcher > should route Claude provider haiku through _spawnAgentStreamJson 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 9: _spawnAgent dispatcher > should route codex provider through _spawnAgentPty 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 9: _spawnAgent dispatcher > should route gemini provider through _spawnAgentPty 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 10: Stream-json session lifecycle > should gracefully stop after the current result, transition to paused, and resume with stream-json spawn 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 10: Stream-json session lifecycle > should resume a completed stream-json agent with an operator follow-up on the same session 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 10: Stream-json session lifecycle > should queue and resume a running stream-json agent after a soft operator interrupt 1ms
+stdout | tests/SessionManager.test.js > SessionManager > createSession > should store the session in the internal map
+[SessionManager] Session created ÔÇö sessionId=6e8d801e-5f0d-4a06-a5be-ab61aa77b56a pid=77776 project=proj-123
+
+stdout | tests/SessionManager.test.js > SessionManager > createSession > should store the session in the internal map
+[SessionManager] killAll ÔÇö 1 session(s)
+[SessionManager] Killing session ÔÇö sessionId=6e8d801e-5f0d-4a06-a5be-ab61aa77b56a pid=77776
+
+ Ô£ô tests/SessionManager.test.js > SessionManager > createSession > should create a session and return it with correct shape 407ms
+stderr | tests/swarm-engine.test.js > SwarmEngine > Test 10: Stream-json session lifecycle > should force-stop a 
+running stream-json agent and mark the session for repair
+[SwarmEngine] tree-kill stream-json warning: Command failed: taskkill /pid 9969 /T /F
+ERRORE: processo "9969" non trovato.
+
+
+stderr | tests/e2e/stream-json-e2e.test.js > stream-json E2E contract > resets a Claude stream-json session by 
+archiving and deleting its JSONL artifacts
+[SwarmEngine] tree-kill stream-json warning node=node-a: Command failed: taskkill /pid 7301 /T /F
+ERRORE: processo "7301" non trovato.
+
+
+ Ô£ô tests/e2e/stream-json-e2e.test.js > stream-json E2E contract > resets a Claude stream-json session by archiving and deleting its JSONL artifacts 476ms
+stderr | tests/swarm-engine.test.js > SwarmEngine > Test 10: Stream-json session lifecycle > should force-stop a 
+running stream-json agent and mark the session for repair
+[SwarmEngine] tree-kill stream-json warning: Command failed: taskkill /pid 9937 /T /F
+ERRORE: processo "9937" non trovato.
+
+
+stderr | tests/swarm-engine.test.js > SwarmEngine > Test 10: Stream-json session lifecycle > should force-stop a 
+running stream-json agent and mark the session for repair
+[SwarmEngine] tree-kill stream-json warning node=node-a: Command failed: taskkill /pid 5002 /T /F
+ERRORE: processo "5002" non trovato.
+
+
+stdout | tests/SessionManager.test.js > SessionManager > createSession > should give each session a unique sessionId
+[SessionManager] Session created ÔÇö sessionId=a6e367f4-9d87-4cfe-bd43-e18ec21956dc pid=49294 project=proj-123
+
+stdout | tests/SessionManager.test.js > SessionManager > createSession > should give each session a unique sessionId
+[SessionManager] Session created ÔÇö sessionId=c4a3ab72-ca63-4528-80a2-f94f2a578d5c pid=90314 project=proj-123
+
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 10: Stream-json session lifecycle > should force-stop a running stream-json agent and mark the session for repair 344ms
+stdout | tests/SessionManager.test.js > SessionManager > createSession > should give each session a unique sessionId
+[SessionManager] killAll ÔÇö 2 session(s)
+[SessionManager] Killing session ÔÇö sessionId=a6e367f4-9d87-4cfe-bd43-e18ec21956dc pid=49294
+[SessionManager] Killing session ÔÇö sessionId=c4a3ab72-ca63-4528-80a2-f94f2a578d5c pid=90314
+
+ Ô£ô tests/SessionManager.test.js > SessionManager > createSession > should store the session in the internal map 365ms
+stderr | tests/swarm-engine.test.js > SwarmEngine > Test 10: Stream-json session lifecycle > should reset a 
+stream-json session by deleting the JSONL and issuing a fresh session UUID
+[SwarmEngine] tree-kill stream-json warning node=node-a: Command failed: taskkill /pid 5003 /T /F
+ERRORE: processo "5003" non trovato.
+
+
+stderr | tests/swarm-engine.test.js > SwarmEngine > Test 10: Stream-json session lifecycle > should escalate a hung 
+post-result process to forced stop after 30 seconds
+[SwarmEngine] stream-json post-result timeout node=node-a ÔÇö tree-killing pid=5004
+
+stderr | tests/swarm-engine.test.js > SwarmEngine > Test 10: Stream-json session lifecycle > should block a 
+stream-json Claude node on terminal error results instead of forcing a downstream handoff
+[SwarmEngine] stream-json result error node=node-a: You've hit your limit ┬À resets 7pm (Europe/Rome)
+
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 10: Stream-json session lifecycle > should reset a stream-json session by deleting the JSONL and issuing a fresh session UUID 323ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 10: Stream-json session lifecycle > should escalate a hung post-result process to forced stop after 30 seconds 8ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 10: Stream-json session lifecycle > should block a stream-json Claude node on terminal error results instead of forcing a downstream handoff 2ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 11: V9.0 Phase1 backend area checkpoint > should complete a Claude-Claude-Codex workflow with mixed runtime contracts intact 3ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 11: V9.0 Phase1 backend area checkpoint > should gracefully pause the downstream Claude agent without regressing the mixed-provider routing 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 11: V9.0 Phase1 backend area checkpoint > should build a provider-aware compact prompt for Codex downstream handoffs 1ms
+ Ô£ô tests/swarm-engine.test.js > SwarmEngine > Test 11: V9.0 Phase1 backend area checkpoint > should keep multiple upstream handoffs as separate parseable JSON lines in compact Codex prompts 1ms
+stdout | tests/SessionManager.test.js > SessionManager > createSession > should include the session in listSessions
+[SessionManager] Session created ÔÇö sessionId=3e078c2e-c426-4898-b143-1996c981c0cc pid=77543 project=proj-123
+
+stdout | tests/SessionManager.test.js > SessionManager > createSession > should include the session in listSessions
+[SessionManager] killAll ÔÇö 1 session(s)
+[SessionManager] Killing session ÔÇö sessionId=3e078c2e-c426-4898-b143-1996c981c0cc pid=77543
+
+ Ô£ô tests/SessionManager.test.js > SessionManager > createSession > should give each session a unique sessionId 392ms
+stdout | tests/SessionManager.test.js > SessionManager > getSession > should return undefined for an unknown sessionId
+[SessionManager] killAll ÔÇö 0 session(s)
+
+stdout | tests/SessionManager.test.js > SessionManager > getSession > should return the correct session for a known sessionId
+[SessionManager] Session created ÔÇö sessionId=fccf1f26-2218-4340-a0a5-37b60075bdbb pid=58550 project=proj-123
+
+stdout | tests/SessionManager.test.js > SessionManager > getSession > should return the correct session for a known sessionId
+[SessionManager] killAll ÔÇö 1 session(s)
+[SessionManager] Killing session ÔÇö sessionId=fccf1f26-2218-4340-a0a5-37b60075bdbb pid=58550
+
+ Ô£ô tests/SessionManager.test.js > SessionManager > createSession > should include the session in listSessions 327ms
+ Ô£ô tests/SessionManager.test.js > SessionManager > getSession > should return undefined for an unknown sessionId 0ms
+stdout | tests/SessionManager.test.js > SessionManager > listSessions > should return empty array when no sessions exist
+[SessionManager] killAll ÔÇö 0 session(s)
+
+stdout | tests/SessionManager.test.js > SessionManager > listSessions > should return all active sessions
+[SessionManager] Session created ÔÇö sessionId=dc4730da-a9f5-4a1a-bad9-041960ddeb6c pid=60886 project=proj-123
+
+stdout | tests/SessionManager.test.js > SessionManager > listSessions > should return all active sessions
+[SessionManager] Session created ÔÇö sessionId=eec713e9-e83d-463f-af20-5817879a09ce pid=36417 project=proj-123
+
+stdout | tests/SessionManager.test.js > SessionManager > listSessions > should return all active sessions
+[SessionManager] killAll ÔÇö 2 session(s)
+[SessionManager] Killing session ÔÇö sessionId=dc4730da-a9f5-4a1a-bad9-041960ddeb6c pid=60886
+[SessionManager] Killing session ÔÇö sessionId=eec713e9-e83d-463f-af20-5817879a09ce pid=36417
+
+ Ô£ô tests/SessionManager.test.js > SessionManager > getSession > should return the correct session for a known sessionId 325ms
+ Ô£ô tests/SessionManager.test.js > SessionManager > listSessions > should return empty array when no sessions exist 0ms
+stdout | tests/SessionManager.test.js > SessionManager > attachClient > should add a ws client to the session
+[SessionManager] Session created ÔÇö sessionId=6297ebcc-b71b-4ee0-9c9e-89889d87d0a3 pid=38777 project=proj-123
+
+stdout | tests/SessionManager.test.js > SessionManager > attachClient > should add a ws client to the session
+[SessionManager] Client attached ÔÇö sessionId=6297ebcc-b71b-4ee0-9c9e-89889d87d0a3 clients=1
+
+stdout | tests/SessionManager.test.js > SessionManager > attachClient > should add a ws client to the session
+[SessionManager] killAll ÔÇö 1 session(s)
+[SessionManager] Killing session ÔÇö sessionId=6297ebcc-b71b-4ee0-9c9e-89889d87d0a3 pid=38777
+
+ Ô£ô tests/SessionManager.test.js > SessionManager > listSessions > should return all active sessions 390ms
+stdout | tests/SessionManager.test.js > SessionManager > attachClient > should replay ring buffer content to newly attached client
+[SessionManager] Session created ÔÇö sessionId=bc994623-1550-4d9c-b2fd-67ac704f532f pid=69304 project=proj-123
+
+stdout | tests/SessionManager.test.js > SessionManager > attachClient > should replay ring buffer content to newly attached client
+[SessionManager] Client attached ÔÇö sessionId=bc994623-1550-4d9c-b2fd-67ac704f532f clients=1
+
+stdout | tests/SessionManager.test.js > SessionManager > attachClient > should replay ring buffer content to newly attached client
+[SessionManager] killAll ÔÇö 1 session(s)
+[SessionManager] Killing session ÔÇö sessionId=bc994623-1550-4d9c-b2fd-67ac704f532f pid=69304
+
+ Ô£ô tests/SessionManager.test.js > SessionManager > attachClient > should add a ws client to the session 342ms
+stdout | tests/SessionManager.test.js > SessionManager > attachClient > should sanitize replay-only TUI cursor controls while preserving readable content
+[SessionManager] Session created ÔÇö sessionId=90db1d34-cf50-401a-bdf3-eb79e3a1467e pid=30348 project=proj-123
+
+stdout | tests/SessionManager.test.js > SessionManager > attachClient > should sanitize replay-only TUI cursor controls while preserving readable content
+[SessionManager] Client attached ÔÇö sessionId=90db1d34-cf50-401a-bdf3-eb79e3a1467e clients=1
+
+stdout | tests/SessionManager.test.js > SessionManager > attachClient > should sanitize replay-only TUI cursor controls while preserving readable content
+[SessionManager] killAll ÔÇö 1 session(s)
+[SessionManager] Killing session ÔÇö sessionId=90db1d34-cf50-401a-bdf3-eb79e3a1467e pid=30348
+
+ Ô£ô tests/SessionManager.test.js > SessionManager > attachClient > should replay ring buffer content to newly attached client 328ms
+stdout | tests/SessionManager.test.js > SessionManager > attachClient > should continue streaming live PTY output after the replay is sent
+[SessionManager] Session created ÔÇö sessionId=737a1816-9089-4d15-a727-bb86d461a74b pid=78987 project=proj-123
+
+stdout | tests/SessionManager.test.js > SessionManager > attachClient > should continue streaming live PTY output after the replay is sent
+[SessionManager] Client attached ÔÇö sessionId=737a1816-9089-4d15-a727-bb86d461a74b clients=1
+
+stdout | tests/SessionManager.test.js > SessionManager > attachClient > should continue streaming live PTY output after the replay is sent
+[SessionManager] killAll ÔÇö 1 session(s)
+[SessionManager] Killing session ÔÇö sessionId=737a1816-9089-4d15-a727-bb86d461a74b pid=78987
+
+ Ô£ô tests/SessionManager.test.js > SessionManager > attachClient > should sanitize replay-only TUI cursor controls while preserving readable content 373ms
+stdout | tests/SessionManager.test.js > SessionManager > attachClient > should do nothing for unknown sessionId
+[SessionManager] killAll ÔÇö 0 session(s)
+
+stdout | tests/SessionManager.test.js > SessionManager > detachClient > should remove the ws client from the session
+[SessionManager] Session created ÔÇö sessionId=412789b7-d78c-48a2-af61-faf05408e94d pid=78945 project=proj-123
+
+stdout | tests/SessionManager.test.js > SessionManager > detachClient > should remove the ws client from the session
+[SessionManager] Client attached ÔÇö sessionId=412789b7-d78c-48a2-af61-faf05408e94d clients=1
+[SessionManager] Client detached ÔÇö sessionId=412789b7-d78c-48a2-af61-faf05408e94d clients=0
+
+stdout | tests/SessionManager.test.js > SessionManager > detachClient > should remove the ws client from the session
+[SessionManager] killAll ÔÇö 1 session(s)
+[SessionManager] Killing session ÔÇö sessionId=412789b7-d78c-48a2-af61-faf05408e94d pid=78945
+
+ Ô£ô tests/SessionManager.test.js > SessionManager > attachClient > should continue streaming live PTY output after the replay is sent 491ms
+ Ô£ô tests/SessionManager.test.js > SessionManager > attachClient > should do nothing for unknown sessionId 1ms
+stdout | tests/SessionManager.test.js > SessionManager > detachClient > should keep the session alive after all clients detach (PTY persistence)
+[SessionManager] Session created ÔÇö sessionId=f8dc4718-081c-4068-89ac-c50d60661c31 pid=21900 project=proj-123
+
+stdout | tests/SessionManager.test.js > SessionManager > detachClient > should keep the session alive after all clients detach (PTY persistence)
+[SessionManager] Client attached ÔÇö sessionId=f8dc4718-081c-4068-89ac-c50d60661c31 clients=1
+[SessionManager] Client detached ÔÇö sessionId=f8dc4718-081c-4068-89ac-c50d60661c31 clients=0
+
+stdout | tests/SessionManager.test.js > SessionManager > detachClient > should keep the session alive after all clients detach (PTY persistence)
+[SessionManager] killAll ÔÇö 1 session(s)
+[SessionManager] Killing session ÔÇö sessionId=f8dc4718-081c-4068-89ac-c50d60661c31 pid=21900
+
+ Ô£ô tests/SessionManager.test.js > SessionManager > detachClient > should remove the ws client from the session 386ms
+stdout | tests/SessionManager.test.js > SessionManager > persistent sessions > should skip idle timeout for persistent swarm sessions
+[SessionManager] Session created ÔÇö sessionId=448be843-96de-4a66-ace6-86a3176fb2bc pid=41058 project=proj-123
+
+stdout | tests/SessionManager.test.js > SessionManager > persistent sessions > should skip idle timeout for persistent swarm sessions
+[SessionManager] killAll ÔÇö 1 session(s)
+[SessionManager] Killing session ÔÇö sessionId=448be843-96de-4a66-ace6-86a3176fb2bc pid=41058
+
+ Ô£ô tests/SessionManager.test.js > SessionManager > detachClient > should keep the session alive after all clients detach (PTY persistence) 368ms
+stdout | tests/SessionManager.test.js > SessionManager > writeInput > should write to the PTY and update lastActivityAt
+[SessionManager] Session created ÔÇö sessionId=8a3d33a0-aa50-416e-bcaf-37c6ffa8dcb8 pid=45475 project=proj-123
+
+stdout | tests/SessionManager.test.js > SessionManager > writeInput > should write to the PTY and update lastActivityAt
+[SessionManager] killAll ÔÇö 1 session(s)
+[SessionManager] Killing session ÔÇö sessionId=8a3d33a0-aa50-416e-bcaf-37c6ffa8dcb8 pid=45475
+
+ Ô£ô tests/SessionManager.test.js > SessionManager > persistent sessions > should skip idle timeout for persistent swarm sessions 355ms
+stdout | tests/SessionManager.test.js > SessionManager > writeInput > should do nothing for an unknown session
+[SessionManager] killAll ÔÇö 0 session(s)
+
+stdout | tests/SessionManager.test.js > SessionManager > writeInput > should do nothing for a killed session
+[SessionManager] Session created ÔÇö sessionId=3c09dcbd-ff93-4cff-bc71-1b97c7af226b pid=68702 project=proj-123
+
+stdout | tests/SessionManager.test.js > SessionManager > writeInput > should do nothing for a killed session
+[SessionManager] killAll ÔÇö 1 session(s)
+[SessionManager] Killing session ÔÇö sessionId=3c09dcbd-ff93-4cff-bc71-1b97c7af226b pid=68702
+
+ Ô£ô tests/SessionManager.test.js > SessionManager > writeInput > should write to the PTY and update lastActivityAt 357ms
+ Ô£ô tests/SessionManager.test.js > SessionManager > writeInput > should do nothing for an unknown session 0ms
+stdout | tests/SessionManager.test.js > SessionManager > killSession > should remove the session from the map after killing
+[SessionManager] Session created ÔÇö sessionId=f16d83d9-73cc-4a55-9d6a-14b25da64d5a pid=19675 project=proj-123
+
+stdout | tests/SessionManager.test.js > SessionManager > killSession > should remove the session from the map after killing
+[SessionManager] Killing session ÔÇö sessionId=f16d83d9-73cc-4a55-9d6a-14b25da64d5a pid=19675
+
+ Ô£ô tests/SessionManager.test.js > SessionManager > writeInput > should do nothing for a killed session 335ms
+stdout | tests/SessionManager.test.js > SessionManager > killSession > should remove the session from the map after killing
+[SessionManager] killAll ÔÇö 0 session(s)
+
+stdout | tests/SessionManager.test.js > SessionManager > killSession > should mark session as killed
+[SessionManager] Session created ÔÇö sessionId=3ac4b3b9-bc05-4530-8bdc-f0b8dac1a18b pid=55347 project=proj-123
+
+stdout | tests/SessionManager.test.js > SessionManager > killSession > should mark session as killed
+[SessionManager] Killing session ÔÇö sessionId=3ac4b3b9-bc05-4530-8bdc-f0b8dac1a18b pid=55347
+
+ Ô£ô tests/SessionManager.test.js > SessionManager > killSession > should remove the session from the map after killing 374ms
+stdout | tests/SessionManager.test.js > SessionManager > killSession > should mark session as killed
+[SessionManager] killAll ÔÇö 0 session(s)
+
+stdout | tests/SessionManager.test.js > SessionManager > killSession > should close all attached WebSocket clients when session is killed
+[SessionManager] Session created ÔÇö sessionId=b2302c48-fb95-4910-b785-70f3d89acca9 pid=27909 project=proj-123
+
+stdout | tests/SessionManager.test.js > SessionManager > killSession > should close all attached WebSocket clients when session is killed
+[SessionManager] Client attached ÔÇö sessionId=b2302c48-fb95-4910-b785-70f3d89acca9 clients=1
+[SessionManager] Killing session ÔÇö sessionId=b2302c48-fb95-4910-b785-70f3d89acca9 pid=27909
+
+ Ô£ô tests/SessionManager.test.js > SessionManager > killSession > should mark session as killed 319ms
+stdout | tests/SessionManager.test.js > SessionManager > killSession > should close all attached WebSocket clients when session is killed
+[SessionManager] killAll ÔÇö 0 session(s)
+
+stdout | tests/SessionManager.test.js > SessionManager > killSession > should do nothing when sessionId does not exist
+[SessionManager] killAll ÔÇö 0 session(s)
+
+stdout | tests/SessionManager.test.js > SessionManager > PTY session persistence (tab switch simulation) > should retain ring buffer data when client disconnects and reconnects
+[SessionManager] Session created ÔÇö sessionId=782d1d15-4d02-4033-8a18-55dc782d7666 pid=76898 project=proj-123
+
+stdout | tests/SessionManager.test.js > SessionManager > PTY session persistence (tab switch simulation) > should retain ring buffer data when client disconnects and reconnects
+[SessionManager] Client attached ÔÇö sessionId=782d1d15-4d02-4033-8a18-55dc782d7666 clients=1
+[SessionManager] Client detached ÔÇö sessionId=782d1d15-4d02-4033-8a18-55dc782d7666 clients=0
+[SessionManager] Client attached ÔÇö sessionId=782d1d15-4d02-4033-8a18-55dc782d7666 clients=1
+
+stdout | tests/SessionManager.test.js > SessionManager > PTY session persistence (tab switch simulation) > should retain ring buffer data when client disconnects and reconnects
+[SessionManager] killAll ÔÇö 1 session(s)
+[SessionManager] Killing session ÔÇö sessionId=782d1d15-4d02-4033-8a18-55dc782d7666 pid=76898
+
+ Ô£ô tests/SessionManager.test.js > SessionManager > killSession > should close all attached WebSocket clients when session is killed 331ms
+ Ô£ô tests/SessionManager.test.js > SessionManager > killSession > should do nothing when sessionId does not exist 1ms
+stdout | tests/SessionManager.test.js > SessionManager > session switching > should support independent sessions for different projects
+[SessionManager] Session created ÔÇö sessionId=52ba28b4-8917-463a-88a5-92bdd241c12b pid=86381 project=proj-A
+
+stdout | tests/SessionManager.test.js > SessionManager > session switching > should support independent sessions for different projects
+[SessionManager] Session created ÔÇö sessionId=7bc1dcfd-4ebd-426d-b066-37e35a81b95c pid=93934 project=proj-B
+
+stdout | tests/SessionManager.test.js > SessionManager > session switching > should support independent sessions for different projects
+[SessionManager] killAll ÔÇö 2 session(s)
+[SessionManager] Killing session ÔÇö sessionId=52ba28b4-8917-463a-88a5-92bdd241c12b pid=86381
+[SessionManager] Killing session ÔÇö sessionId=7bc1dcfd-4ebd-426d-b066-37e35a81b95c pid=93934
+
+ Ô£ô tests/SessionManager.test.js > SessionManager > PTY session persistence (tab switch simulation) > should retain ring buffer data when client disconnects and reconnects 322ms
+stdout | tests/SessionManager.test.js > SessionManager > session switching > should keep live PTY streams isolated per session when multiple clients are attached
+[SessionManager] Session created ÔÇö sessionId=fe85a5c4-fba1-49ec-9384-399c492a0c3d pid=11034 project=proj-A
+
+stdout | tests/SessionManager.test.js > SessionManager > session switching > should keep live PTY streams isolated per session when multiple clients are attached
+[SessionManager] Session created ÔÇö sessionId=571b7490-826b-44bf-9749-9f075cd9a728 pid=33518 project=proj-B
+
+stdout | tests/SessionManager.test.js > SessionManager > session switching > should keep live PTY streams isolated per session when multiple clients are attached
+[SessionManager] Client attached ÔÇö sessionId=fe85a5c4-fba1-49ec-9384-399c492a0c3d clients=1
+[SessionManager] Client attached ÔÇö sessionId=571b7490-826b-44bf-9749-9f075cd9a728 clients=1
+
+stdout | tests/SessionManager.test.js > SessionManager > session switching > should keep live PTY streams isolated per session when multiple clients are attached
+[SessionManager] killAll ÔÇö 2 session(s)
+[SessionManager] Killing session ÔÇö sessionId=fe85a5c4-fba1-49ec-9384-399c492a0c3d pid=11034
+[SessionManager] Killing session ÔÇö sessionId=571b7490-826b-44bf-9749-9f075cd9a728 pid=33518
+
+ Ô£ô tests/SessionManager.test.js > SessionManager > session switching > should support independent sessions for different projects 369ms
+ Ô£ô tests/SessionManager.test.js > SessionManager > session switching > should keep live PTY streams isolated per session when multiple clients are attached 369ms
+
+ Test Files  22 passed (22)
+      Tests  501 passed (501)
+   Start at  01:48:57
+   Duration  8.19s (transform 4.09s, setup 0ms, import 7.11s, tests 9.81s, environment 2ms)
+

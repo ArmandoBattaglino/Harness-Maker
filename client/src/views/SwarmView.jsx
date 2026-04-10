@@ -1005,9 +1005,19 @@ export default function SwarmView() {
       )}
 
       {executionStatus === 'blocked' && runtimeBlocker && (
-        <div className="px-4 py-2 text-xs text-orange-200 bg-orange-950/40 border-b border-orange-900/60">
-          {runtimeBlocker.message}
-          {runtimeBlocker.provider ? ` Provider: ${runtimeBlocker.provider}.` : ''}
+        <div className="px-4 py-2 text-xs text-red-200 bg-red-950/50 border-b border-red-900/60 flex items-start gap-2">
+          <span className="text-red-400 shrink-0 mt-px">&#9888;</span>
+          <div className="min-w-0">
+            <span className="font-semibold text-red-300">
+              {runtimeBlocker.provider ? `${runtimeBlocker.provider[0].toUpperCase() + runtimeBlocker.provider.slice(1)} error` : 'Runtime error'}
+              {runtimeBlocker.type ? ` (${runtimeBlocker.type.replace(/_/g, ' ')})` : ''}
+            </span>
+            {runtimeBlocker.message ? (
+              <span className="ml-1.5 text-red-200/80">&mdash; {runtimeBlocker.message}</span>
+            ) : (
+              <span className="ml-1.5 text-red-200/60 italic">No details available from the provider.</span>
+            )}
+          </div>
         </div>
       )}
 

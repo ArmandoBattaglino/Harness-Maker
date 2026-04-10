@@ -2355,6 +2355,10 @@ class SwarmEngine {
     const revCount = execution.edgeCounters.get(revEdgeId) ?? 0;
     const pairCount = fwdCount + revCount;
 
+    // Only detect loops when BOTH directions have been traversed (true ping-pong).
+    // One-directional chains (only A->B, never B->A) are legitimate retries/reinjects.
+    if (fwdCount === 0 || revCount === 0) return null;
+
     const threshold = execution.workflowDef?.settings?.loopDetectionThreshold ?? 6;
 
     const similarity = this._computeMessageSimilarity(execution, targetId);
@@ -5856,6 +5860,7 @@ class SwarmEngine {
 
     // 10. Collect stderr for diagnostics (never log full content — SEC-08)
     const stderrChunks = [];
+    state._stderrChunks = stderrChunks;
     child.stderr.on('data', (chunk) => {
       stderrChunks.push(chunk.toString());
     });
@@ -5869,7 +5874,8 @@ class SwarmEngine {
         currentState.status = 'error';
         currentState.runtimeBlocker = {
           type: 'spawn_error',
-          message: 'Stream-json process failed to start',
+          provider: currentState.provider ?? RUNTIME_PROVIDER.CLAUDE,
+          message: `Failed to start Claude process: ${err.message}`,
         };
         this._broadcastAgentStatus(executionId, nodeId, currentState);
         this._syncExecutionStatusFromAgents(execution);
@@ -5902,16 +5908,28 @@ class SwarmEngine {
       }
 
       if (!gotResultEvent && currentState.status === 'running') {
-        // Process exited without a result event — mark as error
-        const stderrText = stderrChunks.join('').slice(0, 500);
+        const stderrText = stderrChunks.join('').trim().slice(0, 500);
         console.warn(`[SwarmEngine] stream-json exited without result node=${nodeId} code=${code} stderr=${stderrText}`);
-        currentState.status = 'error';
-        currentState.runtimeBlocker = {
-          type: 'unexpected_exit',
-          message: `Stream-json process exited with code ${code} without result event`,
-        };
-        this._broadcastAgentStatus(executionId, nodeId, currentState);
-        this._syncExecutionStatusFromAgents(execution);
+
+        const blockerSource = [stderrText, currentState._streamJsonAccumulatedText ?? ''].filter(Boolean).join('\n');
+        const detectedBlocker = this._detectPatternBlocker(
+          blockerSource,
+          currentState.provider ?? RUNTIME_PROVIDER.CLAUDE
+        );
+
+        if (detectedBlocker) {
+          void this._handleRuntimeBlocker(executionId, nodeId, detectedBlocker);
+        } else {
+          currentState.status = 'error';
+          const reason = stderrText || `exit code ${code}`;
+          currentState.runtimeBlocker = {
+            type: 'unexpected_exit',
+            provider: currentState.provider ?? RUNTIME_PROVIDER.CLAUDE,
+            message: `Claude process exited unexpectedly (${reason})`,
+          };
+          this._broadcastAgentStatus(executionId, nodeId, currentState);
+          this._syncExecutionStatusFromAgents(execution);
+        }
       }
     });
 
@@ -5978,13 +5996,15 @@ class SwarmEngine {
 
     // 4. Handle error results
     if (resultEvt.isError) {
-      console.warn(`[SwarmEngine] stream-json result error node=${nodeId}: ${resultEvt.errorMessage}`);
+      const stderrText = (Array.isArray(state._stderrChunks) ? state._stderrChunks.join('') : '').trim().slice(0, 500);
+      console.warn(`[SwarmEngine] stream-json result error node=${nodeId}: ${resultEvt.errorMessage ?? '(no error message)'}${stderrText ? ` stderr: ${stderrText}` : ''}`);
       state.needsRepair = true;
       state.currentToolUse = null;
       state.isThinking = false;
 
       const blockerSource = [
         resultEvt.errorMessage ?? '',
+        stderrText,
         state._streamJsonAccumulatedText ?? '',
       ].filter(Boolean).join('\n');
       const detectedBlocker = this._detectPatternBlocker(
@@ -5995,6 +6015,7 @@ class SwarmEngine {
         provider: state.provider ?? RUNTIME_PROVIDER.CLAUDE,
         message: String(
           resultEvt.errorMessage
+          || stderrText
           || 'Claude returned an error result before the swarm agent could continue.'
         ).trim(),
         detectedAt: new Date().toISOString(),
@@ -7340,6 +7361,37 @@ class SwarmEngine {
       if (!isLoopEdge && this._circuitBreaker && this._circuitBreaker.check(edgeId, counter, threshold)) {
         if (this._wsBroadcast) {
           this._wsBroadcast(executionId, { type: 'circuit_breaker', edgeId, counter, threshold });
+        }
+      }
+
+      // V11.1: Repetitive handoff loop detection — halt execution early
+      if (!isLoopEdge) {
+        const loopResult = this._detectRepetitiveLoop(execution, sourceNodeId, nextTargetId);
+        if (loopResult?.detected) {
+          if (this._wsBroadcast) {
+            this._wsBroadcast(executionId, {
+              type: 'repetitive_loop_detected',
+              sourceNodeId,
+              targetNodeId: nextTargetId,
+              pairCount: loopResult.pairCount,
+              similarity: loopResult.similarity,
+              reason: loopResult.reason,
+            });
+          }
+          if (this._chatExtractor) {
+            this._chatExtractor.systemMessage(
+              executionId, sourceNodeId,
+              `Workflow halted: ${loopResult.reason}. Consider adding clearer system prompts or removing bidirectional edges.`
+            );
+          }
+          if (sourceState) {
+            sourceState.status = 'done';
+            sourceState.runtimeBlocker = null;
+            this._broadcastAgentStatus(executionId, sourceNodeId, sourceState);
+          }
+          execution.status = 'completed';
+          this._syncExecutionStatusFromAgents(execution);
+          return;
         }
       }
 

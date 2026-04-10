@@ -4,7 +4,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v11.1 — task numbering extends through #516. V11.0 AGENT INTELLIGENCE REENGINEERING is CLOSED. V11.1 REPETITIVE HANDOFF LOOP DETECTION is now ACTIVE (improvement linked to V11.0). Adds auto-detection and enforcing halt for bidirectional agent ping-pong loops using edge-pair counting and content similarity analysis. Tasks #511-#516. All prior areas (V10.2 through V10.8, V11.0) remain CLOSED.
+**Status:** v11.2 — task numbering extends through #520. V11.2 COST & TOKEN DETAIL VISIBILITY is IN PROGRESS (#517-#520). V11.1 REPETITIVE HANDOFF LOOP DETECTION is CLOSED (improvement linked to V11.0). All tasks #511-#516 COMPLETED/PASS. 521/521 server tests, client build clean. V11.0 AGENT INTELLIGENCE REENGINEERING is CLOSED. All prior areas (V10.2 through V10.8, V11.0) remain CLOSED.
 **Completed Area:** V10.8 CLIENT FULL DEEP TEST FOLLOW-UP — AREA CLOSED 2026-04-09. 6 tasks (#491-#496), all COMPLETED. #491 COMPLETED (visual regression determinism fixed — normalizeHarnessLayout() added, 6 baselines regenerated at 682px), #492 COMPLETED (browser E2E harness reliability fixed — preflight check, direct node spawn, stale-server isolation), #493 COMPLETED (stale-server guard — check-server-freshness.mjs created, integrated into swarm-e2e-chat-check.mjs + swarm-visual-regression.mjs), #494 TEST GATE PASS, #495 AREA CHECKPOINT PASS, #496 COMPLETED (out-of-session: +11 deterministic server tests for _onHandoff -> Codex SDK spawn, 501/501 server suite green). No active planned areas.
 **Completed Area:** V10.7 CLIENT RESILIENCE TEST COVERAGE — AREA CLOSED 2026-04-09. #483 COMPLETED, #484 COMPLETED, #485 COMPLETED, #486 COMPLETED, #487 COMPLETED, #488 COMPLETED, TEST GATE #489 PASS, AREA CHECKPOINT #490 PASS. Verified by dedicated client coverage over restore/reconcile, secondary WS events, HITL failure paths, advanced ChatPanel states, AgentNode badges, and SwarmView operator-shell branches.
   **Completed Area:** V10.6 CLIENT CHAT + FLOW BUG FIXES — AREA CLOSED 2026-04-09. #476 COMPLETED, #477 COMPLETED, #478 COMPLETED, #479 COMPLETED, #480 COMPLETED, TEST GATE #481 PASS, AREA CHECKPOINT #482 PASS. Verified by live Puppeteer reruns of idle/reset + Codex success/reload on `http://127.0.0.1:3000`, clean Gemini blocked/stopped node/chat hygiene on fresh `http://127.0.0.1:3312`, and targeted server regressions (185/185 PASS).
@@ -367,7 +367,8 @@ Type: FEATURE
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-10 — Added _computeMessageSimilarity (word-bigram Jaccard) and _detectRepetitiveLoop (bidirectional edge-pair + content similarity) to SwarmEngine.js. Requires both fwd and rev edge counts > 0 to avoid false positives on one-directional chains.
 Context:
   Add two new methods to SwarmEngine:
   1. _computeMessageSimilarity(execution, nodeId) — gets last 2 assistant messages from nodeId in execution.chatMessages,
@@ -391,7 +392,8 @@ Type: FEATURE
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-10 — Integrated into _onHandoff after circuit breaker check. Broadcasts 'repetitive_loop_detected' WS event, adds system chat message, marks source done, completes execution. Skips loop-type nodes.
 Context:
   In _onHandoff (line ~7252 in SwarmEngine.js), after the existing circuit breaker check
   and before spawning the target agent, call _detectRepetitiveLoop. If detected:
@@ -416,7 +418,8 @@ Type: FEATURE
 Priority: MEDIUM
 Difficulty: LOW
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-10 — Added number input (min 2, max 50, default 6) in Settings tab after Max Conversation Turns. Persists to settings.loopDetectionThreshold. Client build clean (507 modules).
 Context:
   In WorkflowSettingsModal.jsx Settings tab, add a "Loop Detection Threshold" number input
   after the existing "Max Conversation Turns" input. Min 2, max 50, default 6.
@@ -436,7 +439,8 @@ Type: TEST
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
+Completion Note: 2026-04-10 — 8 new test cases in Test 13 suite: similarity identity/divergence/empty, bidirectional detection, one-directional exclusion, loop-node exclusion, content similarity early detection, threshold override. All passing.
 Context:
   Add tests to server/tests/swarm-engine.test.js:
   1. _computeMessageSimilarity returns ~1.0 for identical messages, ~0.0 for very different messages
@@ -459,7 +463,8 @@ Type: TEST_GATE
 Priority: HIGH
 Difficulty: LOW
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: PASS
+Completion Note: 2026-04-10 — 521/521 server tests pass. Client build clean (507 modules). 0 regressions in V11.0 or earlier test suites.
 Context:
   Run full server test suite (npm test --prefix server) and client build (npm run build --prefix client).
   All tests must pass. No regressions in existing V11.0 tests.
@@ -477,7 +482,8 @@ Type: AREA_CHECKPOINT
 Priority: HIGH
 Difficulty: LOW
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: PASS
+Completion Note: 2026-04-10 — All tasks #511-#515 COMPLETED or PASS. 521/521 server tests. Client build clean (507 modules). Loop detection prevents ping-pong scenario.
 Context:
   Close V11.1 only after all tasks pass, tests are green, and the loop detection
   prevents the ping-pong scenario observed in E2E testing.
@@ -486,6 +492,105 @@ Acceptance Criteria:
   - [ ] Server tests pass
   - [ ] Client build clean
 Dependencies: TASK #515
+---
+
+## AREA: V11.2 - Cost & Token Detail Visibility
+_Components: AgentNode canvas badge, ChatMessage cost footer, useSwarm agent_cost state_
+_Tasks: #517 -> #521_
+_Gate: Hovering the cost badge on a canvas node must show input/output/total token breakdown; each chat message with cost data must display the same token detail inline_
+_Source: User request 2026-04-10 — cost badge shows only USD, no token visibility_
+
+---
+
+TASK #517: COST-VIS-01 - Add hover tooltip to AgentNode cost badge showing token breakdown
+Area: V11.2 - Cost & Token Detail Visibility
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: LOW
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  The emerald cost badge in AgentNode.jsx currently only shows `$X.XX`.
+  On hover, it should display a tooltip with:
+    - Input tokens (totalCost.inputTokens or totalInputTokens)
+    - Output tokens (totalCost.outputTokens or totalOutputTokens)
+    - Total tokens (input + output)
+    - Cache read/write tokens if > 0
+    - Cost in USD (already shown)
+  Use a CSS-only tooltip or lightweight React tooltip to avoid new dependencies.
+  Data is already available in agentState.totalCost (from WS agent_cost events)
+  or flat agentState.totalInputTokens / totalOutputTokens (from server snapshots).
+Acceptance Criteria:
+  - [ ] Hovering the cost badge shows a tooltip with input/output/total tokens
+  - [ ] Cache tokens appear only when > 0
+  - [ ] Tooltip disappears on mouse leave
+  - [ ] No new npm dependencies added
+Dependencies: none
+---
+
+TASK #518: COST-VIS-02 - Enhance ChatMessage cost footer with visible token detail
+Area: V11.2 - Cost & Token Detail Visibility
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: LOW
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  ChatMessage.jsx already has a `formatCostFooter(cost)` function that renders
+  a single-line footer: "Tokens: Xin / Yout (cache: ...) | Cost: $Z | Nms".
+  This is already functional but could be more visible and structured.
+  Enhance it so that:
+    - Token counts are more prominent (not buried in a single gray line)
+    - Total tokens (input + output) are shown explicitly
+    - The layout is slightly more structured while staying compact
+  The `cost` object on each message already carries inputTokens, outputTokens,
+  cacheReadTokens, cacheWriteTokens, costUsd, and durationMs from the
+  pendingStreamJsonTurn flow in useSwarm.js.
+Acceptance Criteria:
+  - [ ] Each chat message with cost data shows input/output/total tokens clearly
+  - [ ] Cache tokens shown only when > 0
+  - [ ] Cost and duration still visible
+  - [ ] Compact enough not to overwhelm the chat bubble
+Dependencies: none
+---
+
+TASK #519: TEST GATE - V11.2 Cost & Token Detail Visibility regression
+Area: V11.2 - Cost & Token Detail Visibility
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: LOW
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: SOFT
+Context:
+  Verify that token detail tooltip renders on AgentNode hover,
+  ChatMessage cost footer shows token breakdown, and existing
+  client tests still pass.
+Acceptance Criteria:
+  - [ ] AgentNode cost badge tooltip renders with correct token data
+  - [ ] ChatMessage cost footer renders token breakdown
+  - [ ] Existing client tests pass (npm test --prefix client)
+  - [ ] Client build clean (npm run build --prefix client)
+Dependencies: TASK #517, TASK #518
+---
+
+TASK #520: AREA CHECKPOINT - V11.2 Cost & Token Detail Visibility closeout
+Area: V11.2 - Cost & Token Detail Visibility
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: HIGH
+Difficulty: LOW
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Close V11.2 only after all tasks pass, tests are green, and both
+  the canvas badge tooltip and chat message footer show token detail.
+Acceptance Criteria:
+  - [ ] All tasks #517-#519 COMPLETED or PASS
+  - [ ] Client tests pass
+  - [ ] Client build clean
+Dependencies: TASK #519
 ---
 
 ## AREA: V10.5 - Persistent Agent Sessions + Operator Messaging

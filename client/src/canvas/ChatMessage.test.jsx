@@ -37,7 +37,11 @@ describe('ChatMessage client rendering contracts', () => {
 
     expect(screen.getByText('Structured')).toBeInTheDocument();
     expect(screen.getByText('answer')).toBeInTheDocument();
-    expect(screen.getByText('Tokens: 12in / 3out (cache: 4read / 1write) | Cost: $0.0100 | 2500ms')).toBeInTheDocument();
+    expect(screen.getByText('12')).toBeInTheDocument();
+    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(screen.getByText('15')).toBeInTheDocument();
+    expect(screen.getByText('$0.0100')).toBeInTheDocument();
+    expect(screen.getByText('2.5s')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /Read/i }));
     expect(screen.getByText(/"file": "notes.md"/)).toBeInTheDocument();
