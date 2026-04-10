@@ -46,7 +46,7 @@ export default function InterAgentFeed() {
         <span>Inter-Agent Feed</span>
         <span className="text-gray-600">{feed.length}</span>
       </div>
-      <div className="flex-1 overflow-y-auto px-2 py-1 space-y-1 custom-scrollbar min-h-0">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-1 space-y-1 custom-scrollbar min-h-0">
         {feed.map((event, i) => (
           <div key={i} className="text-xs text-gray-300 flex gap-1.5 items-start">
             <span className="text-gray-500 shrink-0 mt-0.5">

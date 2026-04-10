@@ -6263,12 +6263,18 @@ class SwarmEngine {
     if (execution) {
       const existing = execution.agentStates.get(nodeId);
       if (existing && existing.status !== 'done') {
-        if (this._isStructuredAgentState(existing) && ['idle', 'paused', 'waiting'].includes(existing.status)) {
+        // Fan-in pre-registered states have status='waiting' and no session —
+        // fall through to the fresh spawn path so a real agent is created.
+        if (existing.status === 'waiting' && !existing.sessionId && !this._isStructuredAgentState(existing)) {
+          // fall through to fresh spawn below
+        } else if (this._isStructuredAgentState(existing) && ['idle', 'paused', 'waiting'].includes(existing.status)) {
           await this._spawnAgent(executionId, nodeId, {
             requestedProvider: existing.provider ?? existing.runtimeProvider ?? execution?.providerStrategy?.mode,
           });
+          return existing.sessionId;
+        } else {
+          return existing.sessionId;
         }
-        return existing.sessionId;
       }
     }
     // Pass the execution's provider strategy mode so _spawnAgent can route

@@ -40,6 +40,12 @@ body {
   background: #444444;
 }
 
+/* ── Overflow-wrap utility ────────────────────────────── */
+
+.overflow-wrap-anywhere {
+  overflow-wrap: anywhere;
+}
+
 /* ── Glass Effect ─────────────────────────────────────── */
 
 .glass-effect {

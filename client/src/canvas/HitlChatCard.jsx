@@ -85,7 +85,7 @@ export default function HitlChatCard({ message, agentLabel, executionId }) {
 
   return (
     <div className="px-2 py-1">
-      <div className="rounded-lg border-2 border-orange-500/60 bg-orange-950/30 px-3 py-2">
+      <div className="rounded-lg border-2 border-orange-500/60 bg-orange-950/30 px-3 py-2 overflow-hidden min-w-0">
         {/* Header */}
         <div className="flex items-center gap-2 mb-1">
           <span className="text-[10px] font-semibold text-orange-400">

@@ -153,8 +153,8 @@ function CostFooter({ cost }) {
   const hasCache = cacheReadTokens > 0 || cacheWriteTokens > 0;
 
   return (
-    <div className="mt-2 rounded border border-gray-700/50 bg-gray-900/50 px-2.5 py-1.5 text-[10px] leading-[1.7]">
-      <div className="flex items-center gap-3 text-gray-400">
+    <div className="mt-2 rounded border border-gray-700/50 bg-gray-900/50 px-2.5 py-1.5 text-[10px] leading-[1.7] overflow-hidden">
+      <div className="flex items-center gap-3 text-gray-400 flex-wrap">
         <span>
           <span className="text-gray-500">In:</span>{' '}
           <span className="font-medium text-gray-300">{formatTokenCount(inputTokens)}</span>
@@ -168,7 +168,7 @@ function CostFooter({ cost }) {
           <span className="font-semibold text-white">{formatTokenCount(totalTokens)}</span>
         </span>
       </div>
-      <div className="flex items-center gap-3 text-gray-500">
+      <div className="flex items-center gap-3 text-gray-500 flex-wrap">
         <span>
           <span className="text-emerald-400 font-semibold">${costUsd.toFixed(4)}</span>
         </span>
@@ -303,17 +303,17 @@ function CollapsibleMetaBlock({ title, children, tone = 'gray' }) {
     : 'border-gray-700 bg-gray-900/70 text-gray-300';
 
   return (
-    <div className={`mt-2 rounded border ${toneClass}`}>
+    <div className={`mt-2 rounded border overflow-hidden ${toneClass}`}>
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
         className="flex w-full items-center justify-between gap-2 px-2 py-1.5 text-left text-[10px] font-semibold uppercase tracking-[0.08em]"
       >
-        <span>{title}</span>
-        <span className="text-[9px]">{open ? 'Hide' : 'Show'}</span>
+        <span className="truncate">{title}</span>
+        <span className="text-[9px] shrink-0">{open ? 'Hide' : 'Show'}</span>
       </button>
       {open && (
-        <div className="border-t border-inherit px-2 py-2 text-[11px] leading-5">
+        <div className="border-t border-inherit px-2 py-2 text-[11px] leading-5 overflow-x-auto">
           {children}
         </div>
       )}
@@ -345,7 +345,7 @@ export default function ChatMessage({ message, agentLabel }) {
 
   return (
     <div className="px-2 py-1">
-      <div className={`rounded-lg border px-3.5 py-2.5 ${style}`}>
+      <div className={`rounded-lg border px-3.5 py-2.5 overflow-hidden min-w-0 ${style}`}>
         <div className="flex items-center gap-2 mb-1.5">
           <span className={`text-[11px] font-semibold ${role === 'user' ? 'text-green-400' : 'text-blue-400'}`}>
             {role === 'user' ? 'You' : (agentLabel || nodeId?.slice(0, 12) || 'Agent')}
@@ -355,7 +355,7 @@ export default function ChatMessage({ message, agentLabel }) {
           )}
           <span className="text-[10px] text-gray-600">{formatTime(timestamp)}</span>
         </div>
-        <div className="max-w-none break-words">
+        <div className="min-w-0 break-words overflow-wrap-anywhere">
           {displayText ? (
             <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[[rehypeSanitize, sanitizeSchema]]} components={mdComponents}>
               {displayText}

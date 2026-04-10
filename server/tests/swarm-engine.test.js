@@ -1493,6 +1493,111 @@ describe('SwarmEngine', () => {
   });
 
   // -------------------------------------------------------------------------
+  // Test 2b: Fan-in structural detection and barrier pre-registration
+  // -------------------------------------------------------------------------
+  describe('Test 2b: Fan-in structural detection and barrier pre-registration', () => {
+    it('should detect fan-in targets structurally regardless of node label', async () => {
+      const wf = {
+        id: 'wf-fanin-nolabel',
+        name: 'Fan-in no keywords',
+        nodes: [
+          { id: 'src-1', data: { isTriageNode: true, systemPrompt: 'Research A' } },
+          { id: 'src-2', data: { isTriageNode: true, systemPrompt: 'Research B' } },
+          { id: 'target', data: { label: 'Plain Target', systemPrompt: 'Just a target.' } },
+        ],
+        edges: [
+          { id: 'e1', source: 'src-1', target: 'target' },
+          { id: 'e2', source: 'src-2', target: 'target' },
+        ],
+        settings: {},
+        initialContext: {},
+      };
+      workflowStoreMock = { get: vi.fn().mockResolvedValue(wf) };
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const result = engine._shouldWaitForAllAgentInputs(
+        { workflowDef: wf },
+        'target'
+      );
+      expect(result).toBe(true);
+    });
+
+    it('should NOT detect fan-in for single-source nodes', async () => {
+      const wf = {
+        id: 'wf-linear',
+        name: 'Linear',
+        nodes: [
+          { id: 'a', data: { systemPrompt: 'A' } },
+          { id: 'b', data: { systemPrompt: 'B' } },
+        ],
+        edges: [{ id: 'e1', source: 'a', target: 'b' }],
+        settings: {},
+        initialContext: {},
+      };
+      const result = engine._shouldWaitForAllAgentInputs(
+        { workflowDef: wf },
+        'b'
+      );
+      expect(result).toBe(false);
+    });
+
+    it('should pre-register agentInputBarriers for fan-in targets at execution start', async () => {
+      const parallelWorkflow = buildParallelAgentMergeWorkflow();
+      workflowStoreMock = { get: vi.fn().mockResolvedValue(parallelWorkflow) };
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-agent-merge', 'proj-1', '/projects/proj-1');
+      const exec = engine._executions.get(executionId);
+
+      const barrier = exec.agentInputBarriers.get('node-merge');
+      expect(barrier).toBeTruthy();
+      expect(barrier.required).toBe(2);
+      expect(barrier.received.size).toBe(0);
+    });
+
+    it('should pre-create waiting agentState for fan-in targets', async () => {
+      const parallelWorkflow = buildParallelAgentMergeWorkflow();
+      workflowStoreMock = { get: vi.fn().mockResolvedValue(parallelWorkflow) };
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-agent-merge', 'proj-1', '/projects/proj-1');
+      const exec = engine._executions.get(executionId);
+
+      const mergeState = exec.agentStates.get('node-merge');
+      expect(mergeState).toBeTruthy();
+      expect(mergeState.status).toBe('waiting');
+      expect(mergeState.sessionId).toBeNull();
+    });
+
+    it('should NOT mark execution completed while fan-in barriers are unsatisfied', async () => {
+      const parallelWorkflow = buildParallelAgentMergeWorkflow();
+      workflowStoreMock = { get: vi.fn().mockResolvedValue(parallelWorkflow) };
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-agent-merge', 'proj-1', '/projects/proj-1');
+      const exec = engine._executions.get(executionId);
+
+      for (const [, state] of exec.agentStates) {
+        if (state.status === 'running') state.status = 'done';
+      }
+
+      engine._syncExecutionStatusFromAgents(exec);
+
+      expect(exec.status).toBe('running');
+    });
+
+    it('should NOT have pre-registered barriers for linear workflows', async () => {
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const exec = engine._executions.get(executionId);
+      expect(exec.agentInputBarriers.size).toBe(0);
+    });
+  });
+
+  // -------------------------------------------------------------------------
   // Test 3: Circuit breaker
   // Simulate 10 handoffs on same edge → circuit_breaker WS event emitted → execution NOT stopped
   // -------------------------------------------------------------------------
