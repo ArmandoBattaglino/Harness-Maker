@@ -1,3 +1,23 @@
+## V12.0 — Fan-In Workflow Fix (2026-04-10)
+
+**Status:** CLOSED — tasks **#528–#535** all **COMPLETED** / **PASS** (8 tasks).
+
+**Deliverables:** `_shouldWaitForAllAgentInputs()` (structural fan-in detection from workflow edges); `agentInputBarriers` pre-registration in `startExecution`; `_syncExecutionStatusFromAgents` barrier-aware premature completion guard; `_registerPendingAgentInput` + `_recordInboundHandoff` pipeline; labeled multi-source inbound handoff rendering in `_buildSystemPrompt`; **+6** focused server tests (**535/535** suite at closure).
+
+**Verification:** 535/535 server tests; client build clean (**507** modules). E2E evidence: `fanin-01-generated.png`, `fanin-02-running-5s.png`, `fanin-03-30s.png`.
+
+---
+
+## V11.1 — Repetitive Handoff Loop Detection (2026-04-10)
+
+**Status:** CLOSED — tasks **#511–#516** all **COMPLETED** / **PASS** (6 tasks).
+
+**Deliverables:** `_computeMessageSimilarity()` (cosine-like text similarity); `_detectRepetitiveLoop()` (bidirectional edge pattern + content similarity); `loopDetectionThreshold` in `WorkflowSettingsModal`; `repetitive_loop_detected` WS event + execution halt in `_onHandoff`; **+8** focused server tests.
+
+**Verification:** 513/513 server tests (post V11.0 additions); client build clean (**507** modules).
+
+---
+
 ## V11.0 — Agent Intelligence Reengineering (2026-04-10)
 
 **Status:** CLOSED — tasks **#497–#510** all **COMPLETED** / TEST GATE **PASS** (14 tasks).
@@ -616,7 +636,7 @@ _None._
 - [TASK-70] COMPLETED 2026-03-27 â€” SwarmEngine freezeAgent/unfreezeAgent HITL methods added; 168/168 tests pass
 - [TASK-71.1] COMPLETED 2026-03-27 â€” PTY Explosion overlay component (frontend-dev, sonnet; dep: #58 âœ“)
 - [TASK-71.2] COMPLETED 2026-03-28 â€” PTY Explosion Escape key handler (frontend-dev, haiku; 473 modules, 0 errors)
-- [TASK-72] IN_PROGRESS â€” InterAgentFeed.jsx real-time handoff log (frontend-dev, haiku; dep: #52 âœ“)
+- [TASK-72] COMPLETED 2026-03-28 â€” InterAgentFeed.jsx real-time handoff log (frontend-dev, haiku; dep: #52 âœ“)
 - [TASK-73] COMPLETED 2026-03-28 â€” useInbox.js HITL polling hook (client/src/hooks/useInbox.js; polling + approve/reject actions; 473 modules, 0 errors)
 
 ### V3 Phase 6 â€” Trigger Nodes
@@ -625,12 +645,12 @@ _None._
 - [TASK-76] COMPLETED 2026-03-28 â€” TriggerNode.jsx full visual implementation
 
 ### V3 Phase 7 â€” QA + Security + Release
-- [TASK-77] PENDING â€” HandoffParser unit tests (qa-tester)
-- [TASK-78] PENDING â€” SwarmEngine integration tests (qa-tester)
-- [TASK-79] PENDING â€” V3 Pre-Release Security Audit (security)
-- [TASK-80] PENDING â€” V3 End-to-End Test (qa-tester, Puppeteer)
-- [TASK-81] PENDING â€” Build verification + v3.0.0 git tag (devops)
-- [TASK-82] PENDING â€” V3 Documentation update (documenter)
+- [TASK-77] COMPLETED 2026-03-28 â€” HandoffParser unit tests (qa-tester)
+- [TASK-78] COMPLETED 2026-03-28 â€” SwarmEngine integration tests (qa-tester)
+- [TASK-79] COMPLETED 2026-03-28 â€” V3 Pre-Release Security Audit (security)
+- [TASK-80] COMPLETED 2026-03-28 â€” V3 End-to-End Test (qa-tester, Puppeteer)
+- [TASK-81] COMPLETED 2026-03-28 â€” Build verification + v3.0.0 git tag (devops)
+- [TASK-82] COMPLETED 2026-03-28 â€” V3 Documentation update (documenter)
 
 - [TASK-65] AgentNode Live Updates â€” frontend-dev â€” COMPLETED 2026-03-27
   Enhanced micro PTY log in AgentNode.jsx: scrollable dark code block, green monospace, last 4 lines, blinking cursor when running. animate-pulse border and handoffCount badge already existed. Build clean at 472 modules.

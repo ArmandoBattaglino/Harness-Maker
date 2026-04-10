@@ -1,8 +1,8 @@
 ﻿# Current Context
 **Session date:** 2026-04-10
-**Focus:** **V11.0 AGENT INTELLIGENCE REENGINEERING — CLOSED.** SwarmEngine graph-aware prompts, interaction transcript, structured non-Codex system prompt, `maxTurns` / `maxTurns_reached`, workflow settings (goal + max turns), serialized/debug prompt metadata, `getStatus()` context, AgentInspector Agent Memory + context visibility modes, and expanded server coverage are all shipped. Baseline: **513/513** server tests; client build **507** modules.
+**Focus:** **V12.0 FAN-IN WORKFLOW FIX — CLOSED.** V11.0 AGENT INTELLIGENCE REENGINEERING — CLOSED. V11.1 REPETITIVE HANDOFF LOOP DETECTION — CLOSED. All implementation committed to git on 2026-04-10. Baseline: **513/513** server tests; client build **507** modules.
 
-**IMMEDIATE NEXT STEP:** None for V11. Open the next numbered area in `docs/TASK_PLAN.md` when new work is scoped, or run optional regression / `debugger-loop` hardening if you want a no-feature session.
+**IMMEDIATE NEXT STEP:** Three active areas remain in `docs/TASK_PLAN.md`: V12.1 Canvas Node Overlap Fix (#536-#539, only checkpoint #539 PENDING), V11.4 Output Panel Rendering Parity (#540-#544, IN PROGRESS), V11.3 HITL Runtime Trigger (#521-#527, all PENDING), and V11.2 Cost & Token Detail Visibility (#517-#520, all PENDING). Close V12.1 first (run checkpoint), then pick from V11.2/V11.3/V11.4.
 
 **V9.1 dependency wave map:**
   Wave 9.1: #400 (SDK contract spike) -> #401 (adapter foundation) -> #402 (SwarmEngine codex-sdk runtime) -> #403 (backend TEST GATE) + #404 (frontend contract) IN PARALLEL -> #405 (AREA CHECKPOINT)
@@ -22,9 +22,11 @@
 _Project initialized via /create pipeline on 2026-03-18_
 
 ## Active Threads
-- V3 PRD COMPLETE (docs/PRD.md, version 3.0, 2026-03-27). Ready for V3 task planning.
-- V2 is RELEASE READY (31 tasks, all COMPLETED). TASK #41 (regression QA) still pending for Phase 10.
-- Build status: 299 modules, 0 errors.
+- V12.1 Canvas Node Overlap Fix — #536-#538 COMPLETED, #539 (area checkpoint) PENDING.
+- V11.4 Output Panel Rendering Parity — IN PROGRESS (#540-#544).
+- V11.3 HITL Runtime Trigger — PENDING (#521-#527, 7 tasks, none started).
+- V11.2 Cost & Token Detail Visibility — PENDING (#517-#520, 4 tasks).
+- Build status: 507 modules, 0 errors. Server: 513/513 tests.
 
 ## Open Questions (V3 â€” for Architect)
 1. Scaffold AI model: which model for POST /api/v1/swarm/scaffold?

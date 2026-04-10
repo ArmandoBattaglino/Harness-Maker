@@ -4,7 +4,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v12.0 — task numbering extends through #535. V12.0 FAN-IN WORKFLOW FIX is IN PROGRESS (#528-#535). V11.3 HITL RUNTIME TRIGGER is IN PROGRESS (#521-#527). V11.2 COST & TOKEN DETAIL VISIBILITY is PENDING (#517-#520). V11.1 REPETITIVE HANDOFF LOOP DETECTION is CLOSED (improvement linked to V11.0). All tasks #511-#516 COMPLETED/PASS. V11.0 AGENT INTELLIGENCE REENGINEERING is CLOSED. All prior areas (V10.2 through V10.8, V11.0) remain CLOSED.
+**Status:** v12.1 — task numbering extends through #544. V11.4 OUTPUT PANEL RENDERING PARITY is IN PROGRESS (#540-#544). V12.1 CANVAS NODE OVERLAP FIX is IN PROGRESS (#536-#539). V12.0 FAN-IN WORKFLOW FIX is CLOSED (#528-#535, all COMPLETED/PASS). V11.3 HITL RUNTIME TRIGGER is PENDING (#521-#527, not started). V11.2 COST & TOKEN DETAIL VISIBILITY is PENDING (#517-#520). V11.1 REPETITIVE HANDOFF LOOP DETECTION is CLOSED (improvement linked to V11.0). All tasks #511-#516 COMPLETED/PASS. V11.0 AGENT INTELLIGENCE REENGINEERING is CLOSED. All prior areas (V10.2 through V10.8, V11.0) remain CLOSED.
 **Completed Area:** V10.8 CLIENT FULL DEEP TEST FOLLOW-UP — AREA CLOSED 2026-04-09. 6 tasks (#491-#496), all COMPLETED. #491 COMPLETED (visual regression determinism fixed — normalizeHarnessLayout() added, 6 baselines regenerated at 682px), #492 COMPLETED (browser E2E harness reliability fixed — preflight check, direct node spawn, stale-server isolation), #493 COMPLETED (stale-server guard — check-server-freshness.mjs created, integrated into swarm-e2e-chat-check.mjs + swarm-visual-regression.mjs), #494 TEST GATE PASS, #495 AREA CHECKPOINT PASS, #496 COMPLETED (out-of-session: +11 deterministic server tests for _onHandoff -> Codex SDK spawn, 501/501 server suite green). No active planned areas.
 **Completed Area:** V10.7 CLIENT RESILIENCE TEST COVERAGE — AREA CLOSED 2026-04-09. #483 COMPLETED, #484 COMPLETED, #485 COMPLETED, #486 COMPLETED, #487 COMPLETED, #488 COMPLETED, TEST GATE #489 PASS, AREA CHECKPOINT #490 PASS. Verified by dedicated client coverage over restore/reconcile, secondary WS events, HITL failure paths, advanced ChatPanel states, AgentNode badges, and SwarmView operator-shell branches.
   **Completed Area:** V10.6 CLIENT CHAT + FLOW BUG FIXES — AREA CLOSED 2026-04-09. #476 COMPLETED, #477 COMPLETED, #478 COMPLETED, #479 COMPLETED, #480 COMPLETED, TEST GATE #481 PASS, AREA CHECKPOINT #482 PASS. Verified by live Puppeteer reruns of idle/reset + Codex success/reload on `http://127.0.0.1:3000`, clean Gemini blocked/stopped node/chat hygiene on fresh `http://127.0.0.1:3312`, and targeted server regressions (185/185 PASS).
@@ -496,7 +496,7 @@ Dependencies: TASK #515
 
 ## AREA: V11.2 - Cost & Token Detail Visibility
 _Components: AgentNode canvas badge, ChatMessage cost footer, useSwarm agent_cost state_
-_Tasks: #517 -> #521_
+_Tasks: #517 -> #520_
 _Gate: Hovering the cost badge on a canvas node must show input/output/total token breakdown; each chat message with cost data must display the same token detail inline_
 _Source: User request 2026-04-10 — cost badge shows only USD, no token visibility_
 
@@ -785,7 +785,7 @@ Agent: debugger
 Priority: CRITICAL
 Difficulty: MEDIUM
 Suggested Model: claude-opus-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   User-facing problem:
     When a fan-in workflow has multiple agents (e.g. 3 researchers) handing off to a single
@@ -808,11 +808,12 @@ Context:
     4. Keep the null/missing-execution guard (line 2389).
   File: server/services/SwarmEngine.js, method `_shouldWaitForAllAgentInputs` (lines 2388-2403)
 Acceptance Criteria:
-  - [ ] `_shouldWaitForAllAgentInputs` returns true for ANY agent node with >1 distinct incoming source edges
-  - [ ] Flow-control nodes (Merge, Join, Delay, Loop, Conditional) are still excluded
-  - [ ] The keyword regex is removed — detection is purely graph-structural
-  - [ ] Existing tests pass (`npm test --prefix server`)
+  - [x] `_shouldWaitForAllAgentInputs` returns true for ANY agent node with >1 distinct incoming source edges
+  - [x] Flow-control nodes (Merge, Join, Delay, Loop, Conditional) are still excluded
+  - [x] The keyword regex is removed — detection is purely graph-structural
+  - [x] Existing tests pass (`npm test --prefix server`) — 529/529 PASS
 Dependencies: none
+Verdict: COMPLETED — 2026-04-10. Removed keyword regex from `_shouldWaitForAllAgentInputs`, replaced with purely structural `incomingSourceCount > 1` check. Flow-control node exclusion preserved.
 ---
 
 TASK #529: BUG-FANIN-03 — Add agentInputBarriers check to _syncExecutionStatusFromAgents before marking 'completed'
@@ -821,7 +822,7 @@ Agent: debugger
 Priority: CRITICAL
 Difficulty: MEDIUM
 Suggested Model: claude-opus-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   User-facing problem:
     Even if a fan-in target IS correctly detected (after fixing BUG-FANIN-01), the execution
@@ -844,11 +845,12 @@ Context:
        their remaining inputs.
   File: server/services/SwarmEngine.js, method `_syncExecutionStatusFromAgents` (lines 4138-4179)
 Acceptance Criteria:
-  - [ ] When `agentInputBarriers` has unsatisfied entries, `_syncExecutionStatusFromAgents` does NOT mark 'completed'
-  - [ ] When all barriers are satisfied (or none exist), completion logic works as before
-  - [ ] Linear and fan-out workflows still complete normally (no regression)
-  - [ ] Existing tests pass (`npm test --prefix server`)
+  - [x] When `agentInputBarriers` has unsatisfied entries, `_syncExecutionStatusFromAgents` does NOT mark 'completed'
+  - [x] When all barriers are satisfied (or none exist), completion logic works as before
+  - [x] Linear and fan-out workflows still complete normally (no regression)
+  - [x] Existing tests pass (`npm test --prefix server`) — 529/529 PASS
 Dependencies: none
+Verdict: COMPLETED — 2026-04-10. Added `hasPendingBarriers` check to `_syncExecutionStatusFromAgents` that inspects `execution.agentInputBarriers` for unsatisfied entries. Also treats 'waiting' agent status as equivalent to 'running' to prevent premature completion.
 ---
 
 TASK #530: BUG-FANIN-02 — Pre-register fan-in barriers in startExecution for all convergence targets
@@ -857,7 +859,7 @@ Agent: debugger
 Priority: CRITICAL
 Difficulty: MEDIUM
 Suggested Model: claude-opus-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   User-facing problem:
     Fan-in barriers are only created lazily during `_onHandoff` when the first completing
@@ -880,11 +882,12 @@ Context:
     4. Reuse the same topology logic from the updated `_shouldWaitForAllAgentInputs` method.
   File: server/services/SwarmEngine.js, method `startExecution` (after line 4259)
 Acceptance Criteria:
-  - [ ] `execution.agentInputBarriers` is pre-populated for all fan-in targets at execution start
-  - [ ] Each barrier has the correct `required` count matching the number of distinct incoming source nodes
-  - [ ] Pre-registration does not interfere with later `_registerPendingAgentInput` calls during handoff
-  - [ ] Existing tests pass (`npm test --prefix server`)
+  - [x] `execution.agentInputBarriers` is pre-populated for all fan-in targets at execution start
+  - [x] Each barrier has the correct `required` count matching the number of distinct incoming source nodes
+  - [x] Pre-registration does not interfere with later `_registerPendingAgentInput` calls during handoff
+  - [x] Existing tests pass (`npm test --prefix server`) — 529/529 PASS
 Dependencies: TASK #528
+Verdict: COMPLETED — 2026-04-10. Added fan-in barrier pre-registration loop in `startExecution` that scans all workflow nodes for >1 incoming source edges, creates barrier entries with correct `required` count, and pre-creates 'waiting' agentState entries so the UI shows waiting status from the start. Also fixed `_ensureAgentPty` to allow fresh spawn for pre-registered waiting states.
 ---
 
 TASK #531: BUG-FANIN-04 — Ensure _onHandoff merges all source contexts into the fan-in target prompt
@@ -893,7 +896,7 @@ Agent: debugger
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-opus-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   User-facing problem:
     When a fan-in target receives inputs from multiple sources, the combined context may be
@@ -913,11 +916,12 @@ Context:
   File: server/services/SwarmEngine.js, method `_registerPendingAgentInput` (lines 2405-2424)
         and `_onHandoff` where the target is spawned after barrier threshold is met.
 Acceptance Criteria:
-  - [ ] Each source's output in the fan-in combined context has a clear labeled separator
-  - [ ] The downstream agent receives all source outputs with attribution
-  - [ ] Single-source handoffs are unaffected
-  - [ ] Existing tests pass (`npm test --prefix server`)
+  - [x] Each source's output in the fan-in combined context has a clear labeled separator
+  - [x] The downstream agent receives all source outputs with attribution
+  - [x] Single-source handoffs are unaffected
+  - [x] Existing tests pass (`npm test --prefix server`) — 529/529 PASS
 Dependencies: TASK #528, TASK #530
+Verdict: COMPLETED — 2026-04-10. No code change needed — the existing `_recordInboundHandoff` + `_getInboundHandoffsForTarget` + `_getUpstreamAgentMessages` + `_buildSystemPrompt` pipeline already provides labeled per-source context merging. Each source's handoff is recorded with sourceLabel and payload, and `_buildSystemPrompt` renders "From [sourceLabel] ([sourceNodeId]): [payload]" headers. The fix to #528 (structural detection) was the only blocker preventing this pipeline from executing.
 ---
 
 TASK #532: BUG-FANIN-05 — Ensure fan-in target 'waiting' status is visible in agentStates and broadcast
@@ -926,7 +930,7 @@ Agent: debugger
 Priority: HIGH
 Difficulty: LOW
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: COMPLETED
 Context:
   User-facing problem:
     When a fan-in target enters 'waiting' state (via `_onHandoff` setting status to 'waiting'),
@@ -945,11 +949,12 @@ Context:
     3. Broadcast the execution snapshot after pre-registration so the UI updates immediately.
   File: server/services/SwarmEngine.js
 Acceptance Criteria:
-  - [ ] Fan-in target nodes appear with 'waiting' status in the execution snapshot from the start
-  - [ ] `_syncExecutionStatusFromAgents` does not treat 'waiting' agents as idle/completed
-  - [ ] Frontend receives the 'waiting' state via WebSocket broadcast
-  - [ ] Existing tests pass (`npm test --prefix server`)
+  - [x] Fan-in target nodes appear with 'waiting' status in the execution snapshot from the start
+  - [x] `_syncExecutionStatusFromAgents` does not treat 'waiting' agents as idle/completed
+  - [x] Frontend receives the 'waiting' state via WebSocket broadcast
+  - [x] Existing tests pass (`npm test --prefix server`) — 529/529 PASS
 Dependencies: TASK #530
+Verdict: COMPLETED — 2026-04-10. Fan-in targets get 'waiting' agentState entries during pre-registration in `startExecution`. `_syncExecutionStatusFromAgents` treats 'waiting' as equivalent to 'running' via the `hasRunning` check. `_ensureAgentPty` updated to allow fresh spawn for pre-registered waiting states (non-structured agents fall through to fresh spawn path).
 ---
 
 TASK #533: TEST GATE — Fan-in workflow regression suite
@@ -959,7 +964,7 @@ Type: TEST_GATE
 Priority: CRITICAL
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: PASS
 Gate: HARD
 Context:
   Write and run targeted tests for fan-in convergence in server/tests/:
@@ -976,10 +981,11 @@ Context:
      still complete normally without false barriers.
   Also run full existing test suite to confirm zero regressions.
 Acceptance Criteria:
-  - [ ] All new fan-in tests pass
-  - [ ] Full existing server test suite passes
-  - [ ] Client build passes
+  - [x] All new fan-in tests pass — 6 new tests in Test 2b suite
+  - [x] Full existing server test suite passes — 535/535 PASS (529 existing + 6 new)
+  - [x] Client build passes — 507 modules, chunk-size warning only
 Dependencies: TASK #528, TASK #529, TASK #530, TASK #531, TASK #532
+Verdict: PASS — 2026-04-10. Added 6 targeted fan-in tests: structural detection (with/without keywords), single-source exclusion, barrier pre-registration, waiting agentState pre-creation, premature completion guard, and linear workflow no-barrier regression. Full suite 535/535 PASS, client build PASS.
 ---
 
 TASK #534: BROWSER VERIFICATION — Live fan-in workflow E2E check
@@ -989,7 +995,7 @@ Type: BROWSER_VERIFICATION
 Priority: HIGH
 Difficulty: MEDIUM
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: PASS
 Context:
   Re-run the original failing fan-in scenario in the browser via Playwright MCP:
   1. Navigate to http://127.0.0.1:3000, open the Swarm view.
@@ -1003,11 +1009,13 @@ Context:
      - The Writer's output/snippet references content from all 3 researchers
   4. Take screenshots at key stages as evidence.
 Acceptance Criteria:
-  - [ ] All 4 agents execute successfully
-  - [ ] Writer output references content from all 3 sources
-  - [ ] Execution status transitions are correct
-  - [ ] No premature completion
+  - [x] All 5 agents execute successfully (Triage + 3 researchers + Writer)
+  - [x] Writer output references content from all 3 sources (Node.js, Python, Rust comparative essay)
+  - [x] Execution status transitions: idle -> running -> completed (no premature completion)
+  - [x] Writer showed "Waiting for upstream inputs 0/3" during execution, then activated after all 3 researchers completed
+  - [x] All edge counters show "1 ->" confirming all handoffs fired
 Dependencies: TASK #533
+Verdict: PASS — 2026-04-10. Live E2E verified via Playwright MCP. Generated "Language Features Research Workflow" with 3 parallel researchers + 1 Writer fan-in. All 5 agents completed. Writer produced comparative summary referencing all 3 languages. Screenshots: fanin-01-generated.png, fanin-02-running-5s.png, fanin-03-30s.png.
 ---
 
 TASK #535: AREA CHECKPOINT — V12.0 Fan-In Workflow Fix closeout
@@ -1017,17 +1025,113 @@ Type: AREA_CHECKPOINT
 Priority: HIGH
 Difficulty: LOW
 Suggested Model: claude-sonnet-4-6
-Status: PENDING
+Status: PASS
 Context:
   Close V12.0 only after all fan-in fix tasks pass, test gate green, browser verification
   confirms all 4 agents execute in a fan-in workflow, and no regressions in linear/fan-out
   workflows.
 Acceptance Criteria:
-  - [ ] All tasks #528-#534 COMPLETED or PASS
-  - [ ] Server tests pass
-  - [ ] Client build clean
-  - [ ] Live browser verification confirms fan-in workflow works end-to-end
+  - [x] All tasks #528-#534 COMPLETED or PASS
+  - [x] Server tests pass — 535/535 PASS
+  - [x] Client build clean — 507 modules
+  - [x] Live browser verification confirms fan-in workflow works end-to-end
 Dependencies: TASK #533, TASK #534
+Verdict: PASS — 2026-04-10. V12.0 AREA CLOSED. All 8 tasks (#528-#535) completed/passed. Fan-in workflow pattern is now fully functional — structural topology detection, barrier pre-registration, premature completion guard, waiting status visibility, and context merging all verified via 535 automated tests and live Playwright E2E browser verification.
+---
+
+## AREA: V12.1 - Canvas Node Overlap Fix
+_Components: SwarmCanvas.jsx (tidyWorkflowLayout, DEFAULT_NODE_DIMENSIONS, getNodeDimensions)_
+_Tasks: #536 -> #539_
+_Gate: Tidy layout must produce zero node overlaps for workflows with 2-10 agent nodes, including nodes showing live output snippets_
+_Source: User visual report 2026-04-10 — two agent nodes overlap during execution when output snippets expand node height beyond layout-time defaults_
+
+---
+
+TASK #536: BUG-CANVAS-OVERLAP-01 — Increase DEFAULT_NODE_DIMENSIONS agent height to account for dynamic content
+Area: V12.1 - Canvas Node Overlap Fix
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: LOW
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-10 — DEFAULT_NODE_DIMENSIONS.agent.height changed from 96 to 180 in SwarmCanvas.jsx.
+Context:
+  Root cause: DEFAULT_NODE_DIMENSIONS.agent.height is 96px, but AgentNode renders up to
+  ~280px when showing output snippets (max-h-36 = 144px for pre block alone, plus header,
+  status, thinking indicator, tool name, handoff count, cost badge).
+  The tidyWorkflowLayout algorithm uses getNodeDimensions() which falls back to this default
+  when node.measured is not yet populated (first render, workflow load before paint).
+  Fix: increase agent default height from 96 to 180 so the layout reserves realistic space.
+Acceptance Criteria:
+  - [ ] DEFAULT_NODE_DIMENSIONS.agent.height changed from 96 to 180 in SwarmCanvas.jsx
+  - [ ] No other node type dimensions changed
+Dependencies: none
+---
+
+TASK #537: BUG-CANVAS-OVERLAP-02 — Raise minimum verticalGap floor in tidyWorkflowLayout
+Area: V12.1 - Canvas Node Overlap Fix
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: LOW
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-10 — verticalGap floor raised from Math.max(170, ...) to Math.max(220, ...) in tidyWorkflowLayout.
+Context:
+  The verticalGap calculation is Math.max(170, maxHeight + 70). With the old default height
+  of 96, this produces verticalGap = 170px — far less than the actual rendered height of
+  agent nodes with output. Even with the new default of 180, the gap (180 + 70 = 250) is
+  only barely sufficient.
+  Fix: raise the floor from 170 to 220 so that even when measured heights are unavailable,
+  the minimum inter-node spacing prevents visual overlap for most content scenarios.
+Acceptance Criteria:
+  - [ ] verticalGap minimum changed from 170 to 220 in tidyWorkflowLayout
+  - [ ] horizontalGap unchanged
+Dependencies: TASK #536
+---
+
+TASK #538: BUG-CANVAS-OVERLAP-03 — Add post-tidy overlap resolution pass
+Area: V12.1 - Canvas Node Overlap Fix
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: COMPLETED
+Completion Note: 2026-04-10 — Post-placement overlap resolution loop added to tidyWorkflowLayout. Iterates per-column, checks consecutive pairs using getNodeDimensions() heights, pushes overlapping nodes down with 40px minimum gap, snaps to grid.
+Context:
+  Even with better defaults and gap floors, edge cases remain where measured node heights
+  exceed expectations (long output, multiple badges). A deterministic overlap resolution
+  pass after position assignment guarantees no two nodes in the same column overlap.
+  Algorithm: for each column, sort nodes by Y position, then for each consecutive pair
+  check if the lower node's Y is less than the upper node's Y + height + minimum gap (40px).
+  If so, push the lower node down and snap to grid.
+  Insert this pass in tidyWorkflowLayout after the position assignment loop and before the
+  final return statement.
+Acceptance Criteria:
+  - [ ] Post-placement overlap resolution loop added to tidyWorkflowLayout
+  - [ ] Loop iterates per-column, checks consecutive node pairs for vertical overlap
+  - [ ] Uses getNodeDimensions() for actual/measured heights
+  - [ ] Minimum gap between nodes is 40px
+  - [ ] Pushed positions are snapped to GRID_SIZE via snapGridValue
+Dependencies: TASK #536, TASK #537
+---
+
+TASK #539: AREA CHECKPOINT — V12.1 Canvas Node Overlap Fix closeout
+Area: V12.1 - Canvas Node Overlap Fix
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: HIGH
+Difficulty: LOW
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Context:
+  Close V12.1 only after all overlap fix tasks pass, client build is clean, and visual
+  inspection confirms no node overlap after Tidy on a workflow with 4+ agent nodes.
+Acceptance Criteria:
+  - [ ] All tasks #536-#538 COMPLETED
+  - [ ] Client build clean (no errors)
+  - [ ] Tidy produces non-overlapping layout for workflows with varying node counts
+  - [ ] Edge routing visually clean after overlap resolution
+Dependencies: TASK #536, TASK #537, TASK #538
 ---
 
 ## AREA: V10.5 - Persistent Agent Sessions + Operator Messaging
@@ -20303,3 +20407,101 @@ Acceptance Criteria:
   - [x] Targeted client/server tests pass
 Dependencies: TASK #467, TASK #468
 Verdict: PASS — 2026-04-09. Added deterministic regressions for repeated same-node structured turns on both server and client. Verification: `npm test --prefix client -- src/hooks/useSwarm.test.jsx src/canvas/ChatPanel.test.jsx` => 13/13 PASS, `npm test --prefix server -- tests/swarm-engine-codex-sdk.test.js` => 6/6 PASS, `npm run build --prefix client` => PASS (507 modules, chunk-size warning only).
+---
+
+## V11.4 - OUTPUT PANEL RENDERING PARITY
+Status: IN PROGRESS — 2026-04-10
+Goal: Align the AgentOutputPanel markdown rendering pipeline with ChatMessage so the Output tab displays content with the same quality as the Chat View.
+Scope:
+  1. Extract shared markdown components (mdComponents, sanitizeSchema, CodeBlock) into a reusable module
+  2. Extract shared text formatting (formatChatText, formatStreamJsonText) into a reusable module
+  3. Refactor ChatMessage to import from shared modules
+  4. Upgrade AgentOutputPanel to use the same rendering pipeline as ChatMessage
+Exit Criteria:
+  - [ ] Output tab renders code blocks with language labels, copy buttons, and horizontal scroll
+  - [ ] Output tab renders tables with overflow-x-auto wrappers
+  - [ ] Output tab uses rehypeSanitize for safe HTML
+  - [ ] Output tab applies repairTokenSplitting for cleaner text
+  - [ ] ChatMessage continues to work identically (no regression)
+  - [ ] Client build passes clean
+---
+
+TASK #540: OUTPUT-RENDER-01 — Extract shared markdown components into reusable module
+Area: V11.4 - OUTPUT PANEL RENDERING PARITY
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  The ChatMessage component defines mdComponents (custom CodeBlock, tables, headings, lists, links, blockquotes), sanitizeSchema, and CodeBlock inline. These must be extracted to `client/src/utils/markdownComponents.jsx` so both ChatMessage and AgentOutputPanel can reuse them.
+Acceptance Criteria:
+  - [ ] `client/src/utils/markdownComponents.jsx` exports mdComponents, sanitizeSchema, CodeBlock
+  - [ ] No duplication of component definitions across files
+Dependencies: none
+---
+
+TASK #541: OUTPUT-RENDER-02 — Extract shared text formatting into reusable module
+Area: V11.4 - OUTPUT PANEL RENDERING PARITY
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  ChatMessage defines formatChatText (line-by-line markdown-aware cleaning with noise filtering, garble detection, JSON tail removal, token repair) and formatStreamJsonText inline. These must be extracted to `client/src/utils/formatChatText.js` for shared use.
+Acceptance Criteria:
+  - [ ] `client/src/utils/formatChatText.js` exports formatChatText, formatStreamJsonText
+  - [ ] All helper functions (isMarkdownStructuralLine, isNoiseLine, isGarbledLine, NOISE_LINE_PATTERNS) move with them
+Dependencies: none
+---
+
+TASK #542: OUTPUT-RENDER-03 — Refactor ChatMessage to import from shared modules
+Area: V11.4 - OUTPUT PANEL RENDERING PARITY
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: EASY
+Status: PENDING
+Context:
+  After extraction, ChatMessage.jsx must import mdComponents, sanitizeSchema, formatChatText, and formatStreamJsonText from the new shared modules instead of defining them inline. No behavioral change.
+Acceptance Criteria:
+  - [ ] ChatMessage imports from shared modules
+  - [ ] No behavioral regression in Chat View rendering
+Dependencies: TASK #540, TASK #541
+---
+
+TASK #543: OUTPUT-RENDER-04 — Upgrade AgentOutputPanel to use shared rendering pipeline
+Area: V11.4 - OUTPUT PANEL RENDERING PARITY
+Agent: frontend-dev
+Priority: CRITICAL
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  AgentOutputPanel currently uses bare ReactMarkdown with remarkGfm only, default prose styling, no custom components, no rehypeSanitize, and no repairTokenSplitting. This causes visually degraded output compared to Chat View.
+  Required changes:
+    1. Import mdComponents, sanitizeSchema from shared module
+    2. Import rehypeSanitize from rehype-sanitize
+    3. Add repairTokenSplitting to finalText processing
+    4. Replace bare ReactMarkdown with full pipeline (rehypePlugins + components)
+    5. Replace prose classes with explicit overflow-safe wrapper
+Acceptance Criteria:
+  - [ ] Output tab uses mdComponents with custom CodeBlock, tables, etc.
+  - [ ] Output tab uses rehypeSanitize with sanitizeSchema
+  - [ ] Output tab applies repairTokenSplitting after cleanOutputText
+  - [ ] Content wrapper has min-w-0 break-words overflow-wrap-anywhere
+  - [ ] Tables and code blocks are horizontally scrollable in the narrow panel
+Dependencies: TASK #540, TASK #541
+---
+
+TASK #544: BUILD GATE — V11.4 Output Panel Rendering Parity verification
+Area: V11.4 - OUTPUT PANEL RENDERING PARITY
+Agent: qa-tester
+Type: BUILD_GATE
+Priority: HIGH
+Difficulty: EASY
+Status: PENDING
+Gate: HARD
+Context:
+  Verify that the client builds clean and that no linter errors were introduced.
+Acceptance Criteria:
+  - [ ] `npm run build --prefix client` passes
+  - [ ] No new linter errors in modified files
+Dependencies: TASK #540, TASK #541, TASK #542, TASK #543
