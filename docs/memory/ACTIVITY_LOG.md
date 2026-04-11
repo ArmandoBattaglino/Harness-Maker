@@ -1,4 +1,14 @@
-﻿## 2026-04-11 — project-manager / architect / writer — V17.0 area closed with authority/precedence reframe
+﻿## 2026-04-11 - backend-dev / frontend-dev / qa-tester - V17.1 pack domain foundation
+**Outcome:** COMPLETED / PASS
+**Summary:** Closed V17.1 by introducing the first persisted pack domain layer: `PackStore`, pack contracts, pack CRUD/version restore routes, startup wiring, and a minimal client `usePack` hook. Also added reserved pack metadata plumbing to the existing swarm runtime/history/results path so later V17 runtime/operator work can stay additive instead of forking the workflow substrate.
+**Files changed:** server/index.js, server/routes/swarm.js, server/services/SwarmEngine.js, server/stores/ExecutionHistoryStore.js, server/routes/packs.js, server/services/PackResolver.js, server/services/PackResultBuilder.js, server/services/packContracts.js, server/stores/PackStore.js, server/tests/PackStore.test.js, server/tests/pack-routes.test.js, server/tests/pack-resolver.test.js, server/tests/pack-result-builder.test.js, client/src/hooks/usePack.js, client/src/hooks/usePack.test.jsx, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** missing first-class pack persistence/bootstrap surface; missing pack CRUD/version route layer; missing minimal client pack API layer; missing additive pack metadata in runtime/history/results.
+**Decisions made:** Pack persistence stays additive to the workflow substrate; `usePack` remains separate from `useWorkflow`; pack metadata rides through the existing swarm execution envelope instead of creating a second engine lifecycle.
+**Blockers:** none
+**Next:** Implement V17.2 Pack Contract Layer on top of the persisted pack shape and explicit four-surface contract nouns.
+
+---
+## 2026-04-11 — project-manager / architect / writer — V17.0 area closed with authority/precedence reframe
 **Outcome:** COMPLETED / PASS
 **Summary:** Closed V17.0 by updating the design/program contract before code implementation starts. Reframed the pack platform as the architectural bridge toward a vertical harness builder; promoted knowledge/context injection and prompt/behavior rules into first-class contract surfaces; added an explicit pack/workflow authority model; added a runtime precedence matrix; and updated the V17 task graph so V17.2-V17.5 carry the missing contract/runtime/UI obligations identified during architect review.
 **Files changed:** docs/PACK_PLATFORM_DESIGN.md, docs/TASK_PLAN.md, .omx/plans/prd-v17-pack-platform.md, .omx/plans/test-spec-v17-pack-platform.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md

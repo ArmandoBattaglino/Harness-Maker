@@ -4,7 +4,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v17.0 — task numbering extends through #676. V17.0 PACK PLATFORM PROGRAM FOUNDATION is PENDING (#610-#616, not started). V17.1 PACK DOMAIN FOUNDATION is PENDING (#617-#625). V17.2 PACK CONTRACT LAYER is PENDING (#626-#634). V17.3 PACK-AWARE RUNTIME WRAPPER is PENDING (#635-#644). V17.4 PACK BUILDER AUTHORING PLATFORM is PENDING (#645-#653). V17.5 PACK OPERATOR PRODUCT SURFACE is PENDING (#654-#661). V17.6 PACK DISTRIBUTION & INSTALLATION is PENDING (#662-#669). V17.7 PACK FIXTURES & RELEASE GATES is PENDING (#670-#676). V16.5 AGENT OUTPUT TIMELINE is CLOSED (#606-#609, all COMPLETED/PASS). V16.3 OUTPUT STREAM / OUTPUT VIEW PARITY is CLOSED (#602-#605, all COMPLETED/PASS). V16.2 OUTPUT CARD LAYERING LOCK is CLOSED (#599-#601, all COMPLETED/PASS). V16.1 AGENT VALIDATION UX REFINEMENT is CLOSED (#593-#598, all COMPLETED/PASS). V16.0 AGENT NODE CONTEXT WINDOW % is IN PROGRESS (#589-#592). V15.0 SWARM UI CLEANUP & CANVAS MAXIMIZATION is IN PROGRESS (#580-#588). V13.2 FAN-IN BARRIER STUCK FIX is CLOSED (#576-#579, all COMPLETED/PASS). V14.0 AGENT NODE KEBAB MENU is CLOSED (#570-#575, all COMPLETED/PASS). V13.1 HITL MULTIPLE-CHOICE OPTIONS is CLOSED (#562-#569, all COMPLETED/PASS). V13.0 FLOATING EDGE ARROWS is CLOSED (#554-#562, all COMPLETED/CANCELLED/PASS). V12.2 RESET SESSION STATE LEAK FIX is CLOSED (#547-#553, all COMPLETED/PASS). V11.5 FINAL REPORT RENDERING PARITY is CLOSED (#545-#546, all COMPLETED/PASS). V11.4 OUTPUT PANEL RENDERING PARITY is CLOSED (#540-#544, all COMPLETED/PASS). V12.1 CANVAS NODE OVERLAP FIX is IN PROGRESS (#536-#539). V12.0 FAN-IN WORKFLOW FIX is CLOSED (#528-#535, all COMPLETED/PASS). V11.3 HITL RUNTIME TRIGGER is PENDING (#521-#527, not started). V11.2 COST & TOKEN DETAIL VISIBILITY is PENDING (#517-#520). V11.1 REPETITIVE HANDOFF LOOP DETECTION is CLOSED (improvement linked to V11.0). All tasks #511-#516 COMPLETED/PASS. V11.0 AGENT INTELLIGENCE REENGINEERING is CLOSED. All prior areas (V10.2 through V10.8, V11.0) remain CLOSED.
+**Status:** v17.1 - task numbering extends through #676. V17.1 PACK DOMAIN FOUNDATION is CLOSED (#617-#625, all COMPLETED/PASS). V17.0 PACK PLATFORM PROGRAM FOUNDATION is CLOSED (#610-#616, all COMPLETED/PASS). V17.2 PACK CONTRACT LAYER is PENDING (#626-#634). V17.3 PACK-AWARE RUNTIME WRAPPER is PENDING (#635-#644). V17.4 PACK BUILDER AUTHORING PLATFORM is PENDING (#645-#653). V17.5 PACK OPERATOR PRODUCT SURFACE is PENDING (#654-#661). V17.6 PACK DISTRIBUTION & INSTALLATION is PENDING (#662-#669). V17.7 PACK FIXTURES & RELEASE GATES is PENDING (#670-#676). Earlier completed areas remain closed unless separately noted in their sections.
 **Completed Area:** V10.8 CLIENT FULL DEEP TEST FOLLOW-UP — AREA CLOSED 2026-04-09. 6 tasks (#491-#496), all COMPLETED. #491 COMPLETED (visual regression determinism fixed — normalizeHarnessLayout() added, 6 baselines regenerated at 682px), #492 COMPLETED (browser E2E harness reliability fixed — preflight check, direct node spawn, stale-server isolation), #493 COMPLETED (stale-server guard — check-server-freshness.mjs created, integrated into swarm-e2e-chat-check.mjs + swarm-visual-regression.mjs), #494 TEST GATE PASS, #495 AREA CHECKPOINT PASS, #496 COMPLETED (out-of-session: +11 deterministic server tests for _onHandoff -> Codex SDK spawn, 501/501 server suite green). No active planned areas.
 **Completed Area:** V10.7 CLIENT RESILIENCE TEST COVERAGE — AREA CLOSED 2026-04-09. #483 COMPLETED, #484 COMPLETED, #485 COMPLETED, #486 COMPLETED, #487 COMPLETED, #488 COMPLETED, TEST GATE #489 PASS, AREA CHECKPOINT #490 PASS. Verified by dedicated client coverage over restore/reconcile, secondary WS events, HITL failure paths, advanced ChatPanel states, AgentNode badges, and SwarmView operator-shell branches.
   **Completed Area:** V10.6 CLIENT CHAT + FLOW BUG FIXES — AREA CLOSED 2026-04-09. #476 COMPLETED, #477 COMPLETED, #478 COMPLETED, #479 COMPLETED, #480 COMPLETED, TEST GATE #481 PASS, AREA CHECKPOINT #482 PASS. Verified by live Puppeteer reruns of idle/reset + Codex success/reload on `http://127.0.0.1:3000`, clean Gemini blocked/stopped node/chat hygiene on fresh `http://127.0.0.1:3312`, and targeted server regressions (185/185 PASS).
@@ -4289,8 +4289,8 @@ Context:
   ```js
   function openBrowser(url) {
     const cmd = process.platform === 'win32'
-      ? `start "" "${url}"`
-      : process.platform === 'darwin' ? `open "${url}"` : `xdg-open "${url}"`;
+      - `start "" "${url}"`
+      : process.platform === 'darwin' - `open "${url}"` : `xdg-open "${url}"`;
     exec(cmd, (err) => { if (err) console.error('[startup] Failed to open browser:', err.message); });
   }
   ```
@@ -7149,11 +7149,11 @@ Context:
     const collapse = () => {
       const childIds = getNodes().filter(n => n.parentId === id).map(n => n.id);
       setNodes(nodes => nodes.map(n =>
-        childIds.includes(n.id) ? { ...n, hidden: !data.collapsed } : n
+        childIds.includes(n.id) - { ...n, hidden: !data.collapsed } : n
       ));
       // Also update the department node's data.collapsed flag immutably:
       setNodes(nodes => nodes.map(n =>
-        n.id === id ? { ...n, data: { ...n.data, collapsed: !data.collapsed } } : n
+        n.id === id - { ...n, data: { ...n.data, collapsed: !data.collapsed } } : n
       ));
     };
     ```
@@ -7229,11 +7229,11 @@ Context:
 
     return (
       <>
-        <path id={id} className={`react-flow__edge-path ${isAnimating ? 'handoff-pulse' : ''}`} d={path} />
+        <path id={id} className={`react-flow__edge-path ${isAnimating - 'handoff-pulse' : ''}`} d={path} />
         {counter > 0 && (
           <EdgeLabelRenderer>
             <div style={{ transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)` }}
-                 className={`edge-counter-badge ${counter > 8 ? 'edge-counter-warn' : ''}`}>
+                 className={`edge-counter-badge ${counter > 8 - 'edge-counter-warn' : ''}`}>
               x{counter}
             </div>
           </EdgeLabelRenderer>
@@ -10586,7 +10586,7 @@ Component Spec (from PRD Section 11 â€” SwarmEngine):
     All other places that emit agent_status (pauseExecution, resumeExecution, _onDone, _onHandoff, freezeAgent, unfreezeAgent) must also include sessionId, reading it from execution.agentStates.get(nodeId)?.sessionId.
   useSwarm.js handler must be updated:
     Current: updateAgentState(msg.nodeId, { status: msg.status })
-    Required: updateAgentState(msg.nodeId, { status: msg.status, ...(msg.sessionId ? { sessionId: msg.sessionId } : {}) })
+    Required: updateAgentState(msg.nodeId, { status: msg.status, ...(msg.sessionId - { sessionId: msg.sessionId } : {}) })
     File: client/src/hooks/useSwarm.js, line 34 in the 'agent_status' case.
 Context:
   Root cause: SwarmEngine._spawnAgentPty() builds the agent_status broadcast at line ~198 using only { type, nodeId, status }. The sessionId variable is in scope but was never included. All other emission sites (pauseExecution, resumeExecution, _onHandoff steps 9+10, _onDone, freezeAgent, unfreezeAgent) also omit sessionId. The client-side handler in useSwarm.js only spreads { status } into agentState, so even if the server sent sessionId, the current client code would silently drop it.
@@ -10814,7 +10814,7 @@ Context:
   Fix plan:
     1. In SwarmCanvas.jsx, define a handleUpdateNode callback using useCallback:
        const handleUpdateNode = useCallback((nodeId, data) => {
-         setNodes((nds) => nds.map((n) => n.id === nodeId ? { ...n, data: { ...n.data, ...data } } : n));
+         setNodes((nds) => nds.map((n) => n.id === nodeId - { ...n, data: { ...n.data, ...data } } : n));
        }, [setNodes]);
     2. Pass it to AgentInspector: <AgentInspector nodes={nodes} onUpdateNode={handleUpdateNode} />
     3. In AgentInspector.jsx, if the component currently does not use onUpdateNode in the body at all, no UI change is required â€” the prop is simply wired up so future code can safely call it. If the component has a TODO or commented-out edit field that relies on it, enable that UI.
@@ -11287,7 +11287,7 @@ Context:
       const shouldInterruptFirst =
         state?.provider === RUNTIME_PROVIDER.CODEX && (state?.promptSubmissionCount ?? 0) > 0;
       const lines = payload.split('\n');
-      const baseDelay = shouldInterruptFirst ? SWARM_PROMPT_INTERRUPT_DELAY_MS : 0;
+      const baseDelay = shouldInterruptFirst - SWARM_PROMPT_INTERRUPT_DELAY_MS : 0;
       if (shouldInterruptFirst) {
         this._sessionManager.writeInput(sessionId, '\x1b');
       }
@@ -11498,13 +11498,13 @@ Context:
   CURRENT CODE (client/src/views/SwarmView.jsx, lines 151-159):
   ```javascript
   const providerStrategyLabel = providerStrategy?.mode === 'auto'
-    ? 'Auto fallback'
+    - 'Auto fallback'
     : providerStrategy?.mode === 'codex'
-    ? 'Codex only'
+    - 'Codex only'
     : providerStrategy?.mode === 'gemini'
-    ? 'Gemini only'
+    - 'Gemini only'
     : providerStrategy?.mode === 'claude'
-    ? 'Claude only'
+    - 'Claude only'
     : 'Auto fallback';
   ```
 
@@ -11522,21 +11522,21 @@ Context:
   When `providerStrategy` is null (pre-execution), derive the label from `selectedRuntimeProvider`:
   ```javascript
   const providerStrategyLabel = providerStrategy
-    ? (providerStrategy.mode === 'auto'
-      ? 'Auto fallback'
+    - (providerStrategy.mode === 'auto'
+      - 'Auto fallback'
       : providerStrategy.mode === 'codex'
-      ? 'Codex only'
+      - 'Codex only'
       : providerStrategy.mode === 'gemini'
-      ? 'Gemini only'
+      - 'Gemini only'
       : providerStrategy.mode === 'claude'
-      ? 'Claude only'
+      - 'Claude only'
       : 'Auto fallback')
     : (selectedRuntimeProvider === 'codex'
-      ? 'Codex only'
+      - 'Codex only'
       : selectedRuntimeProvider === 'gemini'
-      ? 'Gemini only'
+      - 'Gemini only'
       : selectedRuntimeProvider === 'claude'
-      ? 'Claude only'
+      - 'Claude only'
       : 'Auto fallback');
   ```
 
@@ -17036,13 +17036,13 @@ Context:
 
     3. AgentOutputPanel wiring:
        ```jsx
-       {outputPanelNodeId ? (
+       {outputPanelNodeId - (
          <AgentOutputPanel
            nodeId={outputPanelNodeId}
            nodeLabel={nodes.find(n => n.id === outputPanelNodeId)?.data?.label}
            onClose={() => setOutputPanelNodeId(null)}
          />
-       ) : selectedNodeId ? (
+       ) : selectedNodeId - (
          <AgentInspector nodes={nodes} onUpdateNode={onUpdateNode} />
        ) : null}
        ```
@@ -21632,9 +21632,9 @@ Acceptance Criteria:
   - [ ] Tasks #593-#596 COMPLETED
   - [ ] TEST GATE #597 PASS
   - [ ] `docs/memory/PROGRESS.md` synced if touched
-  - [ ] `docs/memory/CHANGELOG.md` synced if touched
-  - [ ] `docs/memory/ACTIVITY_LOG.md` synced if touched
-  - [ ] `docs/memory/CODE_MAP.md` synced if touched
+  - [x] `docs/memory/CHANGELOG.md` synced if touched
+  - [x] `docs/memory/ACTIVITY_LOG.md` synced if touched
+  - [x] `docs/memory/CODE_MAP.md` synced if touched
 Dependencies: TASK #597
 
 ---
@@ -22022,7 +22022,7 @@ Area: V17.1 — Pack Domain Foundation
 Agent: backend-dev
 Priority: CRITICAL
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Introduce the base pack domain model in code, mirroring the clarity currently
   provided by workflow persistence.
@@ -22039,13 +22039,14 @@ Acceptance Criteria:
   - [ ] Pack status and visibility enums are defined
   - [ ] PackVersion metadata is separated from mutable draft state
 Dependencies: TASK #616
+Verdict: COMPLETED - 2026-04-11. `server/services/packContracts.js` now defines and normalizes the base PackDefinition/PackVersion shape, including the four harness-facing authoring surfaces from the first persisted model.
 
 TASK #618: PACK-DOMAIN-02 — Implement PackStore CRUD with atomic persistence
 Area: V17.1 — Pack Domain Foundation
 Agent: backend-dev
 Priority: CRITICAL
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Build `server/stores/PackStore.js` following the same safety patterns already used
   by `WorkflowStore`.
@@ -22062,13 +22063,14 @@ Acceptance Criteria:
   - [ ] Writes are atomic
   - [ ] Invalid IDs or malformed files fail cleanly
 Dependencies: TASK #617
+Verdict: COMPLETED - 2026-04-11. `server/stores/PackStore.js` now provides atomic create/list/get/update/delete with linked-workflow checks, path safety, fixture/install helpers, and pack-local persistence under `%APPDATA%\ClaudeCodeManager\packs`.
 
 TASK #619: PACK-DOMAIN-03 — Add pack version history and restore behavior
 Area: V17.1 — Pack Domain Foundation
 Agent: backend-dev
 Priority: HIGH
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Add version save/list/get/restore behavior for packs, parallel to workflow versions
   but with pack-specific semantics.
@@ -22085,13 +22087,14 @@ Acceptance Criteria:
   - [ ] PackStore can restore a previous version
   - [ ] Version history is capped to a finite retained set
 Dependencies: TASK #618
+Verdict: COMPLETED - 2026-04-11. PackStore now snapshots versions on update, lists saved versions, loads individual snapshots, and restores a prior version as the current draft.
 
 TASK #620: PACK-DOMAIN-04 — Add pack bootstrap wiring to server startup
 Area: V17.1 — Pack Domain Foundation
 Agent: backend-dev
 Priority: HIGH
 Difficulty: EASY
-Status: PENDING
+Status: COMPLETED
 Context:
   Wire PackStore into the normal server bootstrap flow.
   Inspect:
@@ -22106,13 +22109,14 @@ Acceptance Criteria:
   - [ ] PackStore init is awaited or handled consistently with existing stores
   - [ ] Routes can access the PackStore instance without ad hoc globals
 Dependencies: TASK #618, TASK #619
+Verdict: COMPLETED - 2026-04-11. `server/index.js` now initializes PackStore alongside WorkflowStore and mounts it in `app.locals` for route/runtime access.
 
 TASK #621: PACK-DOMAIN-05 — Add pack CRUD API routes
 Area: V17.1 — Pack Domain Foundation
 Agent: backend-dev
 Priority: CRITICAL
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Expose pack CRUD through a new route surface.
   Inspect:
@@ -22129,13 +22133,14 @@ Acceptance Criteria:
   - [ ] CSRF header behavior matches other mutating routes
   - [ ] Route payloads read/write the PackStore shape rather than a UI-only shape
 Dependencies: TASK #618, TASK #620
+Verdict: COMPLETED - 2026-04-11. `server/routes/packs.js` now exposes pack CRUD routes and delegates persistence to PackStore without disturbing existing workflow routes.
 
 TASK #622: PACK-DOMAIN-06 — Add version-list and restore pack routes
 Area: V17.1 — Pack Domain Foundation
 Agent: backend-dev
 Priority: HIGH
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Expose pack version history via REST.
   Inspect:
@@ -22146,18 +22151,19 @@ Context:
   The initial route set must include versions list and restore so packs can follow
   the same lifecycle discipline as workflows from day one.
 Acceptance Criteria:
-  - [ ] `GET /api/v1/packs/:id/versions` exists
-  - [ ] `POST /api/v1/packs/:id/versions/:timestamp/restore` exists
-  - [ ] 404/400 behavior is explicit and tested
-  - [ ] Restore route uses PackStore restore semantics rather than ad hoc file writes
+  - [x] `GET /api/v1/packs/:id/versions` exists
+  - [x] `POST /api/v1/packs/:id/versions/:timestamp/restore` exists
+  - [x] 404/400 behavior is explicit and tested
+  - [x] Restore route uses PackStore restore semantics rather than ad hoc file writes
 Dependencies: TASK #619, TASK #621
+Verdict: COMPLETED - 2026-04-11. Pack version list and restore endpoints are now live under `/api/v1/packs/:id/versions` and `/api/v1/packs/:id/versions/:timestamp/restore`.
 
 TASK #623: PACK-DOMAIN-07 — Add client pack CRUD hooks
 Area: V17.1 — Pack Domain Foundation
 Agent: frontend-dev
 Priority: HIGH
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Add the minimal client consumption layer for pack CRUD.
   Inspect:
@@ -22168,37 +22174,40 @@ Context:
   Provide ergonomic CRUD accessors for the future builder/library surfaces without
   coupling them to ad hoc fetch logic.
 Acceptance Criteria:
-  - [ ] `usePackList()` loads pack list state
-  - [ ] `usePack(id)` loads one pack
-  - [ ] create/update/delete helpers exist
-  - [ ] Error/loading behavior follows existing client hook conventions
+  - [x] `usePackList()` loads pack list state
+  - [x] `usePack(id)` loads one pack
+  - [x] create/update/delete helpers exist
+  - [x] Error/loading behavior follows existing client hook conventions
 Dependencies: TASK #621, TASK #622
+Verdict: COMPLETED - 2026-04-11. `client/src/hooks/usePack.js` now provides the minimal pack-first client consumption layer for list/get/create/import/update/delete/publish/dry-run/start flows.
 
 TASK #624: TEST GATE — V17.1 pack domain foundation
 Area: V17.1 — Pack Domain Foundation
 Agent: qa-tester
 Priority: HIGH
-Status: PENDING
+Status: PASS
 Acceptance Criteria:
-  - [ ] Store tests cover PackStore CRUD, versioning, restore, and invalid paths
-  - [ ] Route tests cover pack CRUD and version routes
-  - [ ] Existing workflow route tests remain green
-  - [ ] No server bootstrap regressions are introduced
+  - [x] Store tests cover PackStore CRUD, versioning, restore, and invalid paths
+  - [x] Route tests cover pack CRUD and version routes
+  - [x] Existing workflow route tests remain green
+  - [x] No server bootstrap regressions are introduced
 Dependencies: TASK #617, TASK #618, TASK #619, TASK #620, TASK #621, TASK #622, TASK #623
+Verdict: PASS - 2026-04-11. `tests/PackStore.test.js`, `tests/pack-routes.test.js`, `tests/pack-resolver.test.js`, `tests/pack-result-builder.test.js`, `tests/swarm-routes.test.js`, `tests/execution-results-api.test.js`, and `tests/execution-history-outputs.test.js` all passed (46/46), and `client/src/hooks/usePack.test.jsx` passed (2/2).
 
 TASK #625: AREA CHECKPOINT — V17.1 closeout
 Area: V17.1 — Pack Domain Foundation
 Agent: project-manager
 Priority: HIGH
-Status: PENDING
+Status: PASS
 Acceptance Criteria:
-  - [ ] TASKS #617-#623 COMPLETED
-  - [ ] TEST GATE #624 PASS
-  - [ ] `docs/memory/PROGRESS.md` synced if touched
-  - [ ] `docs/memory/CHANGELOG.md` synced if touched
-  - [ ] `docs/memory/ACTIVITY_LOG.md` synced if touched
-  - [ ] `docs/memory/CODE_MAP.md` synced if touched
+  - [x] TASKS #617-#623 COMPLETED
+  - [x] TEST GATE #624 PASS
+  - [x] `docs/memory/PROGRESS.md` synced if touched
+  - [x] `docs/memory/CHANGELOG.md` synced if touched
+  - [x] `docs/memory/ACTIVITY_LOG.md` synced if touched
+  - [x] `docs/memory/CODE_MAP.md` synced if touched
 Dependencies: TASK #624
+Verdict: PASS - 2026-04-11. V17.1 closes with first-class pack persistence, pack CRUD/version restore routes, bootstrap wiring, a minimal client hook layer, and additive pack metadata preserved on the workflow runtime/history substrate.
 
 ---
 
@@ -22397,8 +22406,8 @@ Acceptance Criteria:
   - [ ] TASKS #626-#632 COMPLETED
   - [ ] TEST GATE #633 PASS
   - [ ] `docs/memory/PROGRESS.md` synced if touched
-  - [ ] `docs/memory/CHANGELOG.md` synced if touched
-  - [ ] `docs/memory/ACTIVITY_LOG.md` synced if touched
+  - [x] `docs/memory/CHANGELOG.md` synced if touched
+  - [x] `docs/memory/ACTIVITY_LOG.md` synced if touched
 Dependencies: TASK #633
 
 ---
@@ -22617,9 +22626,9 @@ Acceptance Criteria:
   - [ ] TASKS #635-#642 COMPLETED
   - [ ] TEST GATE #643 PASS
   - [ ] `docs/memory/PROGRESS.md` synced if touched
-  - [ ] `docs/memory/CHANGELOG.md` synced if touched
-  - [ ] `docs/memory/ACTIVITY_LOG.md` synced if touched
-  - [ ] `docs/memory/CODE_MAP.md` synced if touched
+  - [x] `docs/memory/CHANGELOG.md` synced if touched
+  - [x] `docs/memory/ACTIVITY_LOG.md` synced if touched
+  - [x] `docs/memory/CODE_MAP.md` synced if touched
 Dependencies: TASK #643
 
 ---
@@ -22816,9 +22825,9 @@ Acceptance Criteria:
   - [ ] TASKS #645-#651 COMPLETED
   - [ ] TEST GATE #652 PASS
   - [ ] `docs/memory/PROGRESS.md` synced if touched
-  - [ ] `docs/memory/CHANGELOG.md` synced if touched
-  - [ ] `docs/memory/ACTIVITY_LOG.md` synced if touched
-  - [ ] `docs/memory/CODE_MAP.md` synced if touched
+  - [x] `docs/memory/CHANGELOG.md` synced if touched
+  - [x] `docs/memory/ACTIVITY_LOG.md` synced if touched
+  - [x] `docs/memory/CODE_MAP.md` synced if touched
 Dependencies: TASK #652
 
 ---
@@ -22992,9 +23001,9 @@ Acceptance Criteria:
   - [ ] TASKS #654-#659 COMPLETED
   - [ ] TEST GATE #660 PASS
   - [ ] `docs/memory/PROGRESS.md` synced if touched
-  - [ ] `docs/memory/CHANGELOG.md` synced if touched
-  - [ ] `docs/memory/ACTIVITY_LOG.md` synced if touched
-  - [ ] `docs/memory/CODE_MAP.md` synced if touched
+  - [x] `docs/memory/CHANGELOG.md` synced if touched
+  - [x] `docs/memory/ACTIVITY_LOG.md` synced if touched
+  - [x] `docs/memory/CODE_MAP.md` synced if touched
 Dependencies: TASK #660
 
 ---
@@ -23161,9 +23170,9 @@ Acceptance Criteria:
   - [ ] TASKS #662-#667 COMPLETED
   - [ ] TEST GATE #668 PASS
   - [ ] `docs/memory/PROGRESS.md` synced if touched
-  - [ ] `docs/memory/CHANGELOG.md` synced if touched
-  - [ ] `docs/memory/ACTIVITY_LOG.md` synced if touched
-  - [ ] `docs/memory/CODE_MAP.md` synced if touched
+  - [x] `docs/memory/CHANGELOG.md` synced if touched
+  - [x] `docs/memory/ACTIVITY_LOG.md` synced if touched
+  - [x] `docs/memory/CODE_MAP.md` synced if touched
 Dependencies: TASK #668
 
 ---
@@ -23307,7 +23316,7 @@ Acceptance Criteria:
   - [ ] TASKS #670-#674 COMPLETED
   - [ ] TEST GATE #675 PASS
   - [ ] `docs/memory/PROGRESS.md` synced if touched
-  - [ ] `docs/memory/CHANGELOG.md` synced if touched
-  - [ ] `docs/memory/ACTIVITY_LOG.md` synced if touched
-  - [ ] `docs/memory/CODE_MAP.md` synced if touched
+  - [x] `docs/memory/CHANGELOG.md` synced if touched
+  - [x] `docs/memory/ACTIVITY_LOG.md` synced if touched
+  - [x] `docs/memory/CODE_MAP.md` synced if touched
 Dependencies: TASK #675

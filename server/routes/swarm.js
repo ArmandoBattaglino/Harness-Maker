@@ -14,6 +14,7 @@ import { Router } from 'express';
 import { generateWorkflowFromPrompt } from '../services/ScaffoldGenerator.js';
 import { getRuntimeCapabilitySnapshot } from '../services/SwarmEngine.js';
 import { buildWorkflowArtifact } from '../services/WorkflowArtifactBuilder.js';
+import buildPackResult from '../services/PackResultBuilder.js';
 import { ExecutionHistoryStore } from '../stores/ExecutionHistoryStore.js';
 import { ConfigStore } from '../services/ConfigStore.js';
 
@@ -108,30 +109,47 @@ function buildLiveExecutionResults(execution, workflowName = '', swarmEngine = n
     : null;
   const normalizedWorkflowName = workflowName || execution?.workflowDef?.name || 'Workflow';
 
+  const packRun = execution?.packMetadata ?? null;
+  const packLike = buildPackLike(packRun);
+  const aggregatedArtifact = TERMINAL_EXECUTION_STATUSES.has(status)
+    ? buildWorkflowArtifact({
+        workflowName: normalizedWorkflowName,
+        workflowDescription: execution?.workflowDef?.description || '',
+        executionId: execution?.executionId,
+        status,
+        startedAt,
+        endedAt,
+        durationMs,
+        agentOutputs,
+      })
+    : '';
+
   return {
     executionId: execution?.executionId,
     workflowName: normalizedWorkflowName,
     status,
     agentOutputs,
     chatMessages: Array.isArray(execution?.chatMessages) ? execution.chatMessages : [],
-    aggregatedArtifact: TERMINAL_EXECUTION_STATUSES.has(status)
-      ? buildWorkflowArtifact({
-          workflowName: normalizedWorkflowName,
-          workflowDescription: execution?.workflowDef?.description || '',
-          executionId: execution?.executionId,
-          status,
-          startedAt,
-          endedAt,
-          durationMs,
-          agentOutputs,
-        })
-      : '',
+    aggregatedArtifact,
+    ...(packRun ? { packRun } : {}),
+    ...(packLike ? { packResult: buildPackResult(packLike, execution, agentOutputs, aggregatedArtifact) } : {}),
     meta: {
       startedAt,
       endedAt,
       durationMs,
       nodesRun: normalizeAgentStates(execution?.agentStates).size,
     },
+  };
+}
+
+function buildPackLike(packRun) {
+  if (!packRun) return null;
+  return {
+    id: packRun.packId,
+    packVersion: packRun.packVersion,
+    visibleSteps: packRun.visibleSteps ?? [],
+    outputSchema: packRun.outputSchema ?? {},
+    artifactDefinitions: packRun.artifactDefinitions ?? [],
   };
 }
 
@@ -725,12 +743,15 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
 
       // Persisted history entry
       const entry = result.data;
+      const packLike = buildPackLike(entry.packRun);
       return res.status(200).json({
         executionId: entry.executionId,
         workflowName: result.workflowName,
         status: entry.status,
         agentOutputs: entry.agentOutputs || {},
         aggregatedArtifact: entry.aggregatedArtifact || '',
+        ...(entry.packRun ? { packRun: entry.packRun } : {}),
+        ...(packLike ? { packResult: buildPackResult(packLike, entry, entry.agentOutputs || {}, entry.aggregatedArtifact || '') } : {}),
         meta: {
           startedAt: entry.startedAt ?? null,
           endedAt: entry.endedAt ?? null,

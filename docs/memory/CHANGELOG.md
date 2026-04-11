@@ -1,6 +1,20 @@
 ﻿# CHANGELOG — Claude Code Visual Manager
 
 ---
+## 2026-04-11 - V17.1 CLOSED - Pack Domain Foundation (#617-#625)
+
+**Status:** Area closed; implementation tasks **#617-#625** are now **COMPLETED/PASS**.
+
+**Deliverables:**
+- Added `server/stores/PackStore.js` with atomic persistence, version history, restore behavior, fixture storage, install records, and local bundle import/export helpers.
+- Added `server/services/packContracts.js`, `server/services/PackResolver.js`, and `server/services/PackResultBuilder.js`.
+- Added `server/routes/packs.js` and mounted `/api/v1/packs` in server bootstrap.
+- Added `client/src/hooks/usePack.js` plus hook tests.
+- Extended `SwarmEngine`, `ExecutionHistoryStore`, and `server/routes/swarm.js` additively so pack metadata can flow through status/results/history without breaking workflow-only consumers.
+
+**Verification:** `npm test -- tests/PackStore.test.js tests/pack-routes.test.js tests/pack-resolver.test.js tests/pack-result-builder.test.js tests/swarm-routes.test.js tests/execution-results-api.test.js tests/execution-history-outputs.test.js` (**46/46 PASS**); `npm test -- src/hooks/usePack.test.jsx` (**2/2 PASS**).
+
+---
 ## 2026-04-11 — V17.0 CLOSED — Pack Platform Program Foundation (#610-#616)
 
 **Status:** Area closed; planning contract tasks **#610-#616** are now **COMPLETED/PASS**.
@@ -17,7 +31,6 @@
 
 ---
 
----
 ## 2026-04-10 â€” V11.0 CLOSED â€” Agent Intelligence Reengineering (#497â€“#510)
 
 **Status:** Area closed; all **14** tasks **COMPLETED** / TEST GATE **PASS**.

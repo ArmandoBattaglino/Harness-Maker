@@ -2087,6 +2087,9 @@ class SwarmEngine {
       nodeSnapshots,
       agentOutputs,
       aggregatedArtifact,
+      packId: execution.packMetadata?.packId ?? null,
+      packVersion: execution.packMetadata?.packVersion ?? null,
+      packRun: execution.packMetadata ? JSON.parse(JSON.stringify(execution.packMetadata)) : null,
     };
 
     try {
@@ -2098,7 +2101,7 @@ class SwarmEngine {
     }
   }
 
-  _buildInitialWorkflowContext(workflowDef) {
+  _buildInitialWorkflowContext(workflowDef, patch = null) {
     const initialContext =
       workflowDef?.initialContext && typeof workflowDef.initialContext === 'object'
         ? { ...workflowDef.initialContext }
@@ -2110,11 +2113,28 @@ class SwarmEngine {
       ? `Execute the workflow goal described here: ${workflowDescription}`
       : `Execute the workflow "${workflowName}" and advance it through the agent graph.`;
 
-    return {
+    const baseContext = {
       workflowName,
       workflowDescription,
       currentTask: initialContext.currentTask || defaultCurrentTask,
       ...initialContext,
+    };
+
+    if (!patch || typeof patch !== 'object' || Array.isArray(patch)) {
+      return baseContext;
+    }
+
+    return {
+      ...baseContext,
+      ...patch,
+      ...(baseContext.pack && patch.pack
+        ? {
+            pack: {
+              ...baseContext.pack,
+              ...patch.pack,
+            },
+          }
+        : {}),
     };
   }
 
@@ -4224,7 +4244,7 @@ class SwarmEngine {
       edgeCounters: new Map(),
       agentInputBarriers: new Map(),
       inboundHandoffs: new Map(),
-      workflowContext: this._buildInitialWorkflowContext(wf),
+      workflowContext: this._buildInitialWorkflowContext(wf, runtimeOptions.workflowContextPatch),
       heartbeatTimer: null,
       inboxItems: [],
       chatMessages: [],
@@ -4235,6 +4255,7 @@ class SwarmEngine {
       codexPromptRetryCounts: new Map(),
       lastFallback: null,
       totalTurns: 0,
+      packMetadata: runtimeOptions.packMetadata ? JSON.parse(JSON.stringify(runtimeOptions.packMetadata)) : null,
     };
 
     // 3. Store BEFORE spawning (so _spawnAgentPty can look it up)
@@ -6404,6 +6425,26 @@ class SwarmEngine {
       lines.push('');
     }
 
+    const packKnowledge = workflowContext.packKnowledge && typeof workflowContext.packKnowledge === 'object'
+      ? workflowContext.packKnowledge
+      : null;
+    if ((visibility === 'full' || visibility === 'minimal') && packKnowledge && Object.keys(packKnowledge).length > 0) {
+      lines.push('=== PACK KNOWLEDGE / CONTEXT ===');
+      lines.push(JSON.stringify(packKnowledge, null, 2));
+      lines.push('');
+    }
+
+    const packBehaviorDirectives = Array.isArray(workflowContext.packBehaviorDirectives)
+      ? workflowContext.packBehaviorDirectives
+      : [];
+    if (packBehaviorDirectives.length > 0) {
+      lines.push('=== PACK BEHAVIOR RULES ===');
+      for (const rule of packBehaviorDirectives) {
+        lines.push(`- ${rule.name || rule.id}: ${rule.instruction}`);
+      }
+      lines.push('');
+    }
+
     // --- INBOUND HANDOFFS (structured payloads from upstream) ---
     if ((visibility === 'full' || visibility === 'minimal') && inboundHandoffs.length > 0) {
       lines.push('Received handoffs:');
@@ -8036,6 +8077,7 @@ class SwarmEngine {
       chatMessages: (e.chatMessages ?? []).map((msg) => ({ ...msg })),
       workflowContext: e.workflowContext ? { ...e.workflowContext } : {},
       totalTurns: e.totalTurns ?? 0,
+      ...(e.packMetadata ? { packRun: JSON.parse(JSON.stringify(e.packMetadata)) } : {}),
       ...(e.runtimeBlocker ? { runtimeBlocker: this._serializeRuntimeBlocker(e.runtimeBlocker) } : {}),
     };
   }

@@ -1,12 +1,11 @@
 ﻿# Current Context
 **Session date:** 2026-04-11
-**Focus:** **V17.0 PACK PLATFORM PROGRAM FOUNDATION — CLOSED.** The design/program contract now explicitly frames V17 as the bridge from workflow-first authoring toward a vertical harness builder. Authority/precedence gaps called out during Architect review are now documented before backend implementation starts.
+**Focus:** **V17.1 PACK DOMAIN FOUNDATION - CLOSED.** The repo now has first-class pack persistence, pack CRUD/versioning routes, server bootstrap wiring, a minimal client pack hook layer, and additive pack metadata carried through the existing workflow runtime/results/history path. Workflow-only behavior remains intact.
 
-**IMMEDIATE NEXT STEP:** Start **V17.1 Pack Domain Foundation** from the updated contract. Preserve one-workflow-per-harness, additive workflow compatibility, explicit project binding, and the pack/workflow authority split.
+**IMMEDIATE NEXT STEP:** Start **V17.2 Pack Contract Layer** from the new persisted pack shape. Make validation explicit for `inputSchema`, `knowledgeSources`, `behaviorRules`, `outputSchema`, `artifactDefinitions`, `visibleSteps`, and precedence/merge rules while preserving one-workflow-per-harness, additive workflow compatibility, explicit project binding, and the pack/workflow authority split.
 
 ## Active Threads
-- V17.1 Pack Domain Foundation — PENDING (#617-#625)
-- V17.2 Pack Contract Layer — PENDING (#626-#634), now explicitly includes knowledgeSources + ehaviorRules
+- V17.2 Pack Contract Layer — PENDING (#626-#634), now explicitly includes knowledgeSources + behaviorRules
 - V17.3 Pack-Aware Runtime Wrapper — PENDING (#635-#644), now explicitly includes pack-aware history/restoration
 - V17.4 Pack Builder Authoring Platform — PENDING (#645-#653), now explicitly includes workflow drill-down and harness-facing editors
 - V17.5 Pack Operator Product Surface — PENDING (#654-#661), now explicitly includes project-binding UX

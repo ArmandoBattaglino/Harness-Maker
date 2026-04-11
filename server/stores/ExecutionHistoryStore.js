@@ -56,6 +56,9 @@ export class ExecutionHistoryStore {
       nodeSnapshots: entry.nodeSnapshots ?? {},
       agentOutputs: entry.agentOutputs ?? {},
       aggregatedArtifact: entry.aggregatedArtifact ?? '',
+      packId: entry.packId ?? null,
+      packVersion: entry.packVersion ?? null,
+      packRun: entry.packRun ?? null,
     };
 
     entries.push(normalized);
@@ -134,6 +137,9 @@ export class ExecutionHistoryStore {
         ...entry,
         agentOutputs: entry.agentOutputs ?? {},
         aggregatedArtifact: entry.aggregatedArtifact ?? '',
+        packId: entry.packId ?? null,
+        packVersion: entry.packVersion ?? null,
+        packRun: entry.packRun ?? null,
       }));
     } catch {
       return [];

@@ -1,4 +1,19 @@
-﻿## V17.0 — Pack Platform Program Foundation (2026-04-11)
+﻿## V17.1 - Pack Domain Foundation (2026-04-11)
+
+**Status:** CLOSED - tasks **#617-#625** are now **COMPLETED/PASS** in the implementation baseline.
+
+**Deliverables:**
+- Added `server/stores/PackStore.js` with atomic JSON persistence, validation-backed CRUD, version history, restore behavior, fixture persistence, install records, and bundle import/export helpers.
+- Added `server/services/packContracts.js` to normalize and validate `PackDefinition`, `PackVersion`, and fixture/install records with the four harness-authoring surfaces present from the first persisted shape.
+- Added `server/routes/packs.js` with pack CRUD, versions, restore, start, export/import, install, fork, fixture, dry-run, and publish endpoints.
+- Wired PackStore into `server/index.js` bootstrap alongside the existing WorkflowStore.
+- Added `client/src/hooks/usePack.js` as the minimal client CRUD/start layer for pack-first surfaces.
+- Extended `SwarmEngine`, `ExecutionHistoryStore`, and `server/routes/swarm.js` additively so pack metadata can ride on the existing runtime/results/history surfaces without breaking workflow-only calls.
+
+**Verification:** `npm test -- tests/PackStore.test.js tests/pack-routes.test.js tests/pack-resolver.test.js tests/pack-result-builder.test.js tests/swarm-routes.test.js tests/execution-results-api.test.js tests/execution-history-outputs.test.js` (**46/46 PASS**) and `npm test -- src/hooks/usePack.test.jsx` (**2/2 PASS**).
+
+---
+## V17.0 — Pack Platform Program Foundation (2026-04-11)
 
 **Status:** CLOSED — tasks **#610-#616** are now **COMPLETED/PASS** in the planning contract.
 
