@@ -52,6 +52,15 @@ describe('PackLibraryView', () => {
           }),
         });
       }
+      if (url === '/api/v1/packs/pack-1/export' && method === 'POST') {
+        return Promise.resolve({ ok: true, json: async () => ({ bundle: { manifest: { packId: 'pack-1', packVersion: '1.0.0' } } }) });
+      }
+      if (url === '/api/v1/packs/pack-1/install' && method === 'POST') {
+        return Promise.resolve({ ok: true, json: async () => ({ install: { packId: 'pack-1' } }) });
+      }
+      if (url === '/api/v1/packs/pack-1/fork' && method === 'POST') {
+        return Promise.resolve({ ok: true, json: async () => ({ pack: { ...pack, id: 'pack-fork', name: 'Marketing Harness (Fork)' } }) });
+      }
       return Promise.reject(new Error(`Unexpected fetch ${method} ${url}`));
     });
     globalThis.fetch = fetchMock;
@@ -82,5 +91,12 @@ describe('PackLibraryView', () => {
 
     fireEvent.click(screen.getByText('Advanced debug'));
     expect(await screen.findByText(/\"executionId\": null/)).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Export bundle'));
+    expect(await screen.findByText('Exported pack-1@1.0.0')).toBeTruthy();
+    fireEvent.click(screen.getByText('Install locally'));
+    expect(await screen.findByText('Installed pack-1')).toBeTruthy();
+    fireEvent.click(screen.getByText('Fork draft'));
+    expect(await screen.findByText('Forked Marketing Harness (Fork)')).toBeTruthy();
   });
 });

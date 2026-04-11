@@ -77,7 +77,20 @@ export function usePack(packId) {
     apiPost(`${API_BASE}/${packId}/start`, { projectId, projectPath, input, runtimeProvider, runtimeModels })
   ), [packId]);
 
-  return { pack, loading, error, refresh, update, remove, publish, dryRun, start };
+  const exportBundle = useCallback(async () => (
+    apiPost(`${API_BASE}/${packId}/export`, {})
+  ), [packId]);
+
+  const install = useCallback(async (payload = {}) => (
+    apiPost(`${API_BASE}/${packId}/install`, payload)
+  ), [packId]);
+
+  const fork = useCallback(async () => {
+    const data = await apiPost(`${API_BASE}/${packId}/fork`, {});
+    return unwrapPack(data);
+  }, [packId]);
+
+  return { pack, loading, error, refresh, update, remove, publish, dryRun, start, exportBundle, install, fork };
 }
 
 export function usePackList() {

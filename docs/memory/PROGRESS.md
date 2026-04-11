@@ -1,4 +1,18 @@
-﻿## V17.5 - Pack Operator Product Surface (2026-04-11)
+﻿## V17.6 - Pack Distribution & Installation (2026-04-11)
+
+**Status:** CLOSED - tasks **#662-#669** are now **COMPLETED/PASS**.
+
+**Deliverables:**
+- PackStore local bundles include manifest, pack definition, workflow snapshot, version, compatibility, and provenance fields.
+- Import creates a new workflow/pack pair and rebinds workflow dependencies to the imported workflow id.
+- Install records capture local provenance/version pinning metadata.
+- Fork creates editable draft copies with source pack metadata.
+- Operator detail exposes Export bundle, Install locally, and Fork draft controls.
+
+**Verification:** server distribution/store/routes suites **15/15 PASS**; client PackLibrary/PackBuilder/usePack suites **4/4 PASS**; client build **510 modules**.
+
+---
+## V17.5 - Pack Operator Product Surface (2026-04-11)
 
 **Status:** CLOSED - tasks **#654-#661** are now **COMPLETED/PASS**.
 

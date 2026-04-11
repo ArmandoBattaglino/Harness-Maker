@@ -1,4 +1,14 @@
-﻿## 2026-04-11 - frontend-dev / qa-tester - V17.5 pack operator product surface
+﻿## 2026-04-11 - backend-dev / frontend-dev / qa-tester - V17.6 local distribution
+**Outcome:** COMPLETED / PASS
+**Summary:** Closed V17.6 by validating local pack export/import/install/fork flows and adding operator distribution controls. Import rebinds linked workflow dependencies to the imported workflow, install records provenance, and fork creates an editable draft without marketplace scope.
+**Files changed:** server/stores/PackStore.js, server/tests/pack-distribution.test.js, client/src/hooks/usePack.js, client/src/views/PackLibraryView.jsx, client/src/views/PackLibraryView.test.jsx, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** forked pack names now stay within existing pack name validation.
+**Decisions made:** Keep V17.6 local JSON bundle semantics; no marketplace or multi-workflow distribution added.
+**Blockers:** none
+**Next:** Implement V17.7 Pack Fixtures & Release Gates.
+
+---
+## 2026-04-11 - frontend-dev / qa-tester - V17.5 pack operator product surface
 **Outcome:** COMPLETED / PASS
 **Summary:** Closed V17.5 by adding a pack-first operator surface with library, detail, generated run form, project binding, run monitor, artifacts, and debug drawer. Operators can launch and observe a harness without opening Swarm by default, while Builder/Swarm remain reachable for advanced workflows.
 **Files changed:** client/src/views/PackLibraryView.jsx, client/src/views/PackLibraryView.test.jsx, client/src/App.jsx, client/src/store/AppContext.jsx, client/src/lib/constants.js, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md

@@ -1,6 +1,15 @@
 ﻿# CHANGELOG — Claude Code Visual Manager
 
 ---
+## 2026-04-11 - V17.6 CLOSED - Pack Distribution & Installation (#662-#669)
+
+**Status:** Area closed; distribution tasks **#662-#669** are now **COMPLETED/PASS**.
+
+**Deliverables:** Local bundle export/import, install provenance records, fork-to-draft, workflow dependency rebinding, and operator distribution controls.
+
+**Verification:** server distribution/store/routes **15/15 PASS**; client distribution/operator **4/4 PASS**; build **510 modules**.
+
+---
 ## 2026-04-11 - V17.5 CLOSED - Pack Operator Product Surface (#654-#661)
 
 **Status:** Area closed; operator tasks **#654-#661** are now **COMPLETED/PASS**.

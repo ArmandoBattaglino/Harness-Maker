@@ -1,11 +1,10 @@
 ﻿# Current Context
 **Session date:** 2026-04-11
-**Focus:** **V17.5 PACK OPERATOR PRODUCT SURFACE - CLOSED.** Operators can now browse packs, view detail, fill generated input forms, bind an explicit project, launch a pack, monitor visible steps/artifacts, and open an advanced debug drawer without opening the graph by default.
+**Focus:** **V17.6 PACK DISTRIBUTION & INSTALLATION - CLOSED.** Packs can now be exported as local bundles, imported with workflow dependency rebinding, installed with provenance, and forked into editable drafts. Operator detail exposes local export/install/fork controls without marketplace assumptions.
 
-**IMMEDIATE NEXT STEP:** Start **V17.6 Pack Distribution & Installation**. Implement local export/import/install/fork/version-pinning/provenance and distribution UI without marketplace assumptions.
+**IMMEDIATE NEXT STEP:** Start **V17.7 Pack Fixtures & Release Gates**. Finish PackFixture persistence/runner/assertions/publish gate and builder dry-run/pre-publish UX.
 
 ## Active Threads
-- V17.6 Pack Distribution & Installation — PENDING (#662-#669)
 - V17.7 Pack Fixtures & Release Gates — PENDING (#670-#676)
 
 ## V17 Contract Notes

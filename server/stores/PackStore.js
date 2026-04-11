@@ -327,7 +327,7 @@ export class PackStore {
     return this.create({
       ...pack,
       id: undefined,
-      name: `${pack.name} (Fork)`,
+      name: `${pack.name} Fork`,
       status: 'draft',
       installMetadata: {
         sourcePackId: pack.id,

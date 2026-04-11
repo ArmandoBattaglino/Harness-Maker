@@ -9,13 +9,14 @@ export default function PackLibraryView() {
   const { projects, activeProjectId } = useAppState();
   const { packs, loading, error } = usePackList();
   const [selectedPackId, setSelectedPackId] = useState('');
-  const { pack, start } = usePack(selectedPackId);
+  const { pack, start, exportBundle, install, fork } = usePack(selectedPackId);
   const hydratePackRuntime = useSwarmStore((state) => state.hydratePackRuntime);
   const livePackRun = useSwarmStore((state) => state.packRun);
   const livePackResult = useSwarmStore((state) => state.packResult);
   const [runInput, setRunInput] = useState({});
   const [projectId, setProjectId] = useState(activeProjectId ?? '');
   const [runState, setRunState] = useState(null);
+  const [distributionState, setDistributionState] = useState('');
   const [debugOpen, setDebugOpen] = useState(false);
 
   useEffect(() => {
@@ -54,6 +55,21 @@ export default function PackLibraryView() {
       packRun: response.packRun,
       packResult: response.packResult,
     });
+  }
+
+  async function exportPack() {
+    const response = await exportBundle();
+    setDistributionState(`Exported ${response.bundle?.manifest?.packId ?? pack.id}@${response.bundle?.manifest?.packVersion ?? pack.packVersion}`);
+  }
+
+  async function installPack() {
+    const response = await install({ installType: 'local', provenance: { source: 'local-library' } });
+    setDistributionState(`Installed ${response.install?.packId ?? pack.id}`);
+  }
+
+  async function forkPack() {
+    const forked = await fork();
+    setDistributionState(`Forked ${forked?.name ?? pack.name}`);
   }
 
   return (
@@ -104,6 +120,12 @@ export default function PackLibraryView() {
                 <Fact label="Status" value={pack.status} />
                 <Fact label="Inputs" value={String(inputFields.length)} />
                 <Fact label="Artifacts" value={String((pack.artifactDefinitions ?? []).length)} />
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button className="rounded border border-border-color px-3 py-2 text-sm" onClick={exportPack}>Export bundle</button>
+                <button className="rounded border border-border-color px-3 py-2 text-sm" onClick={installPack}>Install locally</button>
+                <button className="rounded border border-border-color px-3 py-2 text-sm" onClick={forkPack}>Fork draft</button>
+                {distributionState && <span className="self-center text-xs text-text-muted">{distributionState}</span>}
               </div>
             </header>
 
