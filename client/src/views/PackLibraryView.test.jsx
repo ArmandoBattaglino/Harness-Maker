@@ -47,8 +47,32 @@ describe('PackLibraryView', () => {
           ok: true,
           json: async () => ({
             executionId: 'exec-pack-1',
+            workflowId: 'wf-1',
+            status: 'running',
             packRun: { packId: 'pack-1', packVersion: '1.0.0', visibleSteps: [{ id: 'step-1', label: 'Draft', status: 'running' }] },
             packResult: { packId: 'pack-1', outputs: {}, artifacts: [{ id: 'artifact-1', name: 'Report', status: 'pending' }] },
+          }),
+        });
+      }
+      if (url === '/api/v1/swarm/exec-pack-1/status' && method === 'GET') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            executionId: 'exec-pack-1',
+            workflowId: 'wf-1',
+            status: 'completed',
+            packRun: { packId: 'pack-1', packVersion: '1.0.0', visibleSteps: [{ id: 'step-1', label: 'Draft', status: 'completed' }] },
+          }),
+        });
+      }
+      if (String(url).startsWith('/api/v1/swarm/executions/exec-pack-1/results') && method === 'GET') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            executionId: 'exec-pack-1',
+            status: 'completed',
+            packRun: { packId: 'pack-1', packVersion: '1.0.0', visibleSteps: [{ id: 'step-1', label: 'Draft', status: 'completed' }] },
+            packResult: { packId: 'pack-1', outputs: { result: 'done' }, artifacts: [{ id: 'artifact-1', name: 'Report', status: 'ready' }] },
           }),
         });
       }
@@ -122,6 +146,7 @@ describe('PackLibraryView', () => {
         }),
       }));
       expect(useSwarmStore.getState().packRun.packId).toBe('pack-1');
+      expect(useSwarmStore.getState().packResult.outputs.result).toBe('done');
       expect(screen.getByText('Started execution exec-pack-1')).toBeTruthy();
     });
   });

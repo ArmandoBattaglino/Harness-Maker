@@ -1,13 +1,23 @@
+import { lazy, Suspense } from 'react';
 import { AppProvider, useAppState } from './store/AppContext.jsx';
 import Sidebar from './components/Sidebar.jsx';
-import TerminalView from './views/TerminalView.jsx';
-import JobView from './views/JobView.jsx';
-import ProjectsView from './views/ProjectsView.jsx';
-import ContextEditorView from './views/ContextEditorView.jsx';
-import DeploymentManagerView from './views/DeploymentManagerView.jsx';
-import SwarmView from './views/SwarmView.jsx';
-import PackBuilderView from './views/PackBuilderView.jsx';
-import PackLibraryView from './views/PackLibraryView.jsx';
+
+const TerminalView = lazy(() => import('./views/TerminalView.jsx'));
+const JobView = lazy(() => import('./views/JobView.jsx'));
+const ProjectsView = lazy(() => import('./views/ProjectsView.jsx'));
+const ContextEditorView = lazy(() => import('./views/ContextEditorView.jsx'));
+const DeploymentManagerView = lazy(() => import('./views/DeploymentManagerView.jsx'));
+const SwarmView = lazy(() => import('./views/SwarmView.jsx'));
+const PackBuilderView = lazy(() => import('./views/PackBuilderView.jsx'));
+const PackLibraryView = lazy(() => import('./views/PackLibraryView.jsx'));
+
+function ViewFallback() {
+  return (
+    <div className="flex h-full w-full items-center justify-center text-sm text-text-muted">
+      Loading view…
+    </div>
+  );
+}
 
 function MainContent() {
   const { view } = useAppState();
@@ -39,7 +49,9 @@ function AppLayout() {
     <div className="flex h-screen w-screen overflow-hidden bg-background-dark text-text-main">
       <Sidebar />
       <main className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
-        <MainContent />
+        <Suspense fallback={<ViewFallback />}>
+          <MainContent />
+        </Suspense>
       </main>
     </div>
   );

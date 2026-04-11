@@ -1,4 +1,14 @@
-﻿## 2026-04-11 - test-engineer / verifier - V17 test hardening
+﻿## 2026-04-11 - qa / frontend-dev - V17 live smoke and chunk warning follow-up
+**Outcome:** COMPLETED / PASS
+**Summary:** Ran the previously optional live provider-backed smoke. The Pack Library launched `V17 Smoke Harness` with explicit project binding on port 3327; Claude completed the run with `V17_SMOKE_OK`, and status/results contained completed packRun, packResult output, and artifact data. The smoke revealed stale operator monitor hydration, fixed by polling status/results after start. The Vite chunk-size warning was removed by lazy route loading and build config adjustment.
+**Files changed:** client/src/App.jsx, client/src/views/PackLibraryView.jsx, client/src/views/PackLibraryView.test.jsx, client/vite.config.js, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** PackLibrary monitor did not refresh from the initial running packResult to terminal pack results after a live start.
+**Decisions made:** Use lazy route-level view loading to reduce initial bundle pressure; keep existing app behavior with a simple Suspense fallback.
+**Blockers:** none
+**Next:** Review/merge.
+
+---
+## 2026-04-11 - test-engineer / verifier - V17 test hardening
 **Outcome:** COMPLETED / PASS
 **Summary:** Added the V17 coverage matrix and targeted hardening tests requested after ralplan/architect review. Coverage now explicitly tests server contract boundaries, app-level pack route CSRF/mount behavior, PackStore path/corrupt data safety, client pack operator project binding/start payload, and pack navigation state. Full verification remains green after the additions.
 **Files changed:** docs/memory/V17_TEST_COVERAGE.md, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, server/tests/PackStore.test.js, server/tests/pack-contracts.test.js, server/tests/pack-routes.test.js, client/src/views/PackLibraryView.test.jsx, client/src/store/AppContext.test.jsx

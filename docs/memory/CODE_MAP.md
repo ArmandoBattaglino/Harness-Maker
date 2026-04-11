@@ -1,8 +1,8 @@
 ﻿# CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-11 - after V17 Test Hardening - mapped by code-mapper_
+_Last updated: 2026-04-11 - after V17 Live Smoke + Chunk Warning Follow-up - mapped by code-mapper_
 
-> **PROJECT STATUS: V17 TEST HARDENING CLOSED**
-> V17.0-V17.7 implementation plus follow-up test-hardening are verified. Server full suite 565/565 PASS, client full suite 59/59 PASS, client build 510 modules PASS.
+> **PROJECT STATUS: V17 LIVE SMOKE + CHUNK WARNING FOLLOW-UP CLOSED**
+> Live Claude-backed Pack Library smoke completed with `V17_SMOKE_OK`; PackLibrary now polls terminal pack results; route views are lazy-loaded and build has no Vite chunk-size warning. Full server/client suites remain green.
 
 ## V10.5 Addendum
 - `server/services/SessionManager.js` — V10.5 adds persistent swarm-owned PTY sessions; the idle sweeper skips pinned reusable sessions until explicit stop/reset/kill.
@@ -77,7 +77,7 @@ _Last updated: 2026-04-11 - after V17 Test Hardening - mapped by code-mapper_
 ### Client Modules
 | File | Key Exports | Purpose |
 |------|-------------|---------|
-| client/src/App.jsx | default App, MainContent, AppLayout | Root React component. V17.4 adds `pack-builder` view routing for the guided Pack Builder alongside existing Swarm workflow drill-down. |
+| client/src/App.jsx | default App, MainContent, AppLayout | Root React component. V17 follow-up lazy-loads route views with Suspense to reduce initial bundle pressure while keeping Projects/Terminal/Jobs/Context/Deployments/Swarm/Packs/Pack Builder routing. |
 | client/src/main.jsx | (entry) | ReactDOM.createRoot bootstrap |
 | client/src/store/AppContext.jsx | AppContext, useAppState | Global React context. V17.4 adds persisted `pack-builder` view support. |
 | client/src/hooks/useApi.js | apiGet, apiPost, apiPut, apiDelete, apiDeleteWithBody | Fetch wrappers with CSRF header injection and error normalization |
@@ -128,7 +128,7 @@ _Last updated: 2026-04-11 - after V17 Test Hardening - mapped by code-mapper_
 | client/src/hooks/useSwarm.js | useSwarm (named) | WebSocket/REST hook for swarm execution. V17.3 hydrates additive `packRun` and `packResult` metadata from status/results payloads while preserving workflow-only execution restore and chat/result behavior. |
 | client/src/views/SwarmView.jsx | default SwarmView | Layout shell for the Swarm Orchestrator page. V5 Wave 3: export/import/duplicate workflow buttons, Ctrl+S (save) + Ctrl+Enter (run) keyboard shortcuts, useCanvasValidation integration (validation banner + Run button gating), fileInputRef for JSON import. V5 bugfix 41b9a0e: handleSaveFnRef/handleRunFnRef fix stale closure in keyboard shortcuts. V5 Wave 2: Settings button + WorkflowSettingsModal. V5 Wave 1: Save button, workflow name editing, markDirty/onCanvasChange. Toolbar: title (editable), Settings/Save/Run/Stop/Pause/Resume/Reset buttons, runtime provider selector, model settings, HITL inbox toggle. (Tasks #57.2, ..., #242, V5 Wave 1, V5 Wave 2, V5 Wave 3) |
 | client/src/views/PackBuilderView.jsx | default PackBuilderView | V17.4 guided authoring shell for packs. Loads/creates draft packs, edits overview/workflow binding, input schema fields, knowledgeSources, behaviorRules, outputs/artifacts, runtime policy, dependencies, visible steps, and operator preview. Includes workflow drill-down affordance. |
-| client/src/views/PackLibraryView.jsx | default PackLibraryView | V17.5/V17.6 operator-first pack surface. Lists packs, shows detail/run form/monitor/debug drawer, and exposes local Export bundle, Install locally, and Fork draft distribution actions. |
+| client/src/views/PackLibraryView.jsx | default PackLibraryView | Operator-first pack surface. Lists packs, shows detail/run form/monitor/debug drawer/distribution actions. Follow-up: after pack launch it polls status/results so live runs hydrate terminal `packRun`/`packResult` output instead of staying on initial running metadata. |
 | client/src/hooks/useCanvasValidation.js | useCanvasValidation (named) | Pre-run validation hook for canvas nodes/edges. Checks: at least one agent, triage node exists, empty systemPrompt (warning), trigger config (webhook path / RSS URL), disconnected non-triage agents (warning). Returns { isValid, errors[] }. (FR-V5-44 through FR-V5-46, V5 Wave 3) |
 | client/src/canvas/ChatPanel.jsx | default ChatPanel, ChatInputArea (internal) | Unified Chat View — shows agent outputs as a conversation with per-agent filtering, message grouping for structured runtimes (stream-json, codex-sdk), broadcast input with scope/mode/target controls. Task #437: scroll-lock (only auto-scroll if near bottom, scroll to bottom on mount via hasMountedRef). Task #429: toolUse accumulation (spread) instead of replacement in enrichedMessages grouping. V10.4: structured assistant messages now group only when `nodeId`, `spawnMode`, and `turnId` all match, preserving separate bubbles for consecutive same-node turns. (Tasks #63, #429, #437, #468) |
 | client/src/canvas/HitlChatCard.jsx | default HitlChatCard, formatTime (module-private) | Inline HITL approval card rendered inside ChatPanel. Shows agent request, approve/reject actions, optional resume text. Task #431: added useRef sendingRef guard against double-click on Approve/Reject. (Tasks #69, #431) |

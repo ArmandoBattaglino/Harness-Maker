@@ -1,6 +1,15 @@
 ﻿# CHANGELOG — Claude Code Visual Manager
 
 ---
+## 2026-04-11 - V17 LIVE SMOKE + CHUNK WARNING FOLLOW-UP CLOSED
+
+**Status:** Follow-up closed.
+
+**Deliverables:** Live provider-backed Pack Library smoke completed with Claude output `V17_SMOKE_OK`; PackLibrary now polls pack execution to terminal results; route views are lazy-loaded and the Vite chunk-size warning is removed from build output.
+
+**Verification:** server **565/565 PASS**, client **59/59 PASS**, client build **511 modules PASS** with no chunk-size warning, browser Pack Library lazy-route smoke PASS.
+
+---
 ## 2026-04-11 - V17 TEST HARDENING CLOSED
 
 **Status:** Follow-up verification wave closed.

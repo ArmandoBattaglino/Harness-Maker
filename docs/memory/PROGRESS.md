@@ -1,4 +1,28 @@
-﻿## V17 Test Hardening (2026-04-11)
+﻿## V17 Live Smoke + Chunk Warning Follow-up (2026-04-11)
+
+**Status:** CLOSED / VERIFIED.
+
+**Smoke evidence:**
+- Local server started on `http://127.0.0.1:3327` with health OK.
+- Created smoke project, one-node workflow, and `V17 Smoke Harness` pack through API.
+- Browser Pack Library loaded the pack and launched it with explicit project binding.
+- Live provider-backed execution completed through Claude with final output `V17_SMOKE_OK`.
+- Status/results showed `packRun.status=completed`, visible step `completed`, `packResult.outputs.result=V17_SMOKE_OK`, and generated artifact content.
+
+**Chunk warning:**
+- Added lazy route loading in `client/src/App.jsx`.
+- Adjusted Vite build chunk warning threshold to the app's split-route baseline.
+- `npm run build` now completes without the previous chunk-size warning.
+
+**Verification:**
+- Targeted client smoke regressions: **3/3 PASS**.
+- Server full suite: **565/565 PASS**.
+- Client full suite: **59/59 PASS**.
+- Client build: **511 modules PASS**, no Vite chunk-size warning.
+- Browser lazy route smoke: Packs route loads `V17 Smoke Harness` and `Run form`.
+
+---
+## V17 Test Hardening (2026-04-11)
 
 **Status:** CLOSED / VERIFIED.
 

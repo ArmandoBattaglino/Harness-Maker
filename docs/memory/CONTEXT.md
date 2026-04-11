@@ -1,8 +1,8 @@
 ﻿# Current Context
 **Session date:** 2026-04-11
-**Focus:** **V17 TEST HARDENING - CLOSED.** Added targeted contract-boundary tests and `docs/memory/V17_TEST_COVERAGE.md` for V17.0-V17.7. Full suites remain green: server 565/565, client 59/59, build 510 modules.
+**Focus:** **V17 LIVE SMOKE + CHUNK WARNING FOLLOW-UP - CLOSED.** A browser Pack Library smoke launched a V17 pack against the live Claude provider, completed with `V17_SMOKE_OK`, and returned packRun/packResult artifacts. The Vite chunk-size warning was removed via lazy route loading and build configuration; build now passes without that warning.
 
-**IMMEDIATE NEXT STEP:** No V17 or V17 hardening implementation work remains. Final report/commit/push evidence only.
+**IMMEDIATE NEXT STEP:** No V17, hardening, smoke, or chunk-warning work remains. Branch is ready for review/merge.
 
 ## Active Threads
 

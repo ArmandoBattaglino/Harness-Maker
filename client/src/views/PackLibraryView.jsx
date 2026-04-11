@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useAppState, useAppDispatch } from '../store/AppContext.jsx';
 import { usePack, usePackList } from '../hooks/usePack.js';
+import { apiGet } from '../hooks/useApi.js';
 import { useSwarmStore } from '../store/SwarmContext.jsx';
 
 export default function PackLibraryView() {
@@ -55,6 +56,32 @@ export default function PackLibraryView() {
       packRun: response.packRun,
       packResult: response.packResult,
     });
+    void pollPackRun(response.executionId, response.workflowId ?? pack.workflowId);
+  }
+
+  async function pollPackRun(executionId, workflowId) {
+    if (!executionId) return;
+    const terminalStatuses = new Set(['completed', 'failed', 'stopped', 'blocked']);
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, attempt === 0 ? 500 : 1500));
+      try {
+        const status = await apiGet(`/api/v1/swarm/${executionId}/status`);
+        if (status?.packRun) {
+          hydratePackRuntime({ packRun: status.packRun });
+        }
+        setRunState((current) => ({ ...(current ?? {}), executionId, status: status?.status ?? current?.status }));
+        if (terminalStatuses.has(status?.status)) {
+          const results = await apiGet(`/api/v1/swarm/executions/${executionId}/results${workflowId ? `?workflowId=${workflowId}` : ''}`);
+          hydratePackRuntime({
+            packRun: results?.packRun ?? status?.packRun,
+            packResult: results?.packResult,
+          });
+          return;
+        }
+      } catch {
+        return;
+      }
+    }
   }
 
   async function exportPack() {
