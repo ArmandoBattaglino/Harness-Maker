@@ -83,7 +83,7 @@ describe('PackLibraryView', () => {
     );
 
     expect(await screen.findByText('Marketing Harness')).toBeTruthy();
-    expect(screen.getByText('Pack Detail')).toBeTruthy();
+    expect(await screen.findByText('Pack Detail')).toBeTruthy();
     expect(screen.getByText('Run form')).toBeTruthy();
     expect(screen.getByText('Run monitor')).toBeTruthy();
     expect(screen.getByLabelText(/Brief/i)).toBeTruthy();

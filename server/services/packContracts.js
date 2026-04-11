@@ -237,6 +237,7 @@ export function normalizePackFixture(data = {}) {
     packVersion: data.packVersion ?? '',
     input: data.input && typeof data.input === 'object' ? structuredCloneSafe(data.input) : {},
     assertions: Array.isArray(data.assertions) ? data.assertions.map((item) => ({ ...item })) : [],
+    lastResult: data.lastResult && typeof data.lastResult === 'object' ? { ...data.lastResult } : null,
     createdAt: data.createdAt ?? new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };

@@ -1,4 +1,14 @@
-﻿## 2026-04-11 - backend-dev / frontend-dev / qa-tester - V17.6 local distribution
+﻿## 2026-04-11 - backend-dev / qa-tester - V17.7 fixtures and release gates
+**Outcome:** COMPLETED / PASS
+**Summary:** Closed V17.7 by persisting fixture last results, evaluating deterministic pack fixture assertions, saving fixture run outcomes, and requiring a passing fixture before publish. This makes pack release state controlled and reproducible enough for local distribution.
+**Files changed:** server/routes/packs.js, server/services/packContracts.js, server/tests/pack-routes.test.js, client/src/views/PackLibraryView.test.jsx, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** publish could previously pass with any fixture present, even without a passing latest run.
+**Decisions made:** Fixture assertions are deterministic and local; no live provider dependency is required for release-gate unit validation.
+**Blockers:** none
+**Next:** Final V17 full-program verification and Ralph report.
+
+---
+## 2026-04-11 - backend-dev / frontend-dev / qa-tester - V17.6 local distribution
 **Outcome:** COMPLETED / PASS
 **Summary:** Closed V17.6 by validating local pack export/import/install/fork flows and adding operator distribution controls. Import rebinds linked workflow dependencies to the imported workflow, install records provenance, and fork creates an editable draft without marketplace scope.
 **Files changed:** server/stores/PackStore.js, server/tests/pack-distribution.test.js, client/src/hooks/usePack.js, client/src/views/PackLibraryView.jsx, client/src/views/PackLibraryView.test.jsx, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md

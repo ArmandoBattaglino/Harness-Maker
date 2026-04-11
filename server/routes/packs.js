@@ -42,6 +42,24 @@ function validateInputAgainstSchema(inputSchema = {}, input = {}) {
   return validateValueAgainstSchema(inputSchema, input, 'input', []);
 }
 
+function evaluateFixtureAssertions(fixture, runPayload = {}) {
+  const status = runPayload.status ?? 'completed';
+  const outputs = runPayload.outputs ?? {};
+  const artifacts = Array.isArray(runPayload.artifacts) ? runPayload.artifacts : [];
+  return (fixture.assertions ?? []).map((assertion) => {
+    let passed = false;
+    if (assertion.type === 'statusEquals') {
+      passed = status === assertion.expected;
+    } else if (assertion.type === 'outputIncludes') {
+      const value = String(outputs[assertion.outputKey ?? 'result'] ?? '');
+      passed = value.includes(assertion.expected ?? '');
+    } else if (assertion.type === 'artifactExists') {
+      passed = artifacts.some((artifact) => artifact.id === assertion.artifactId || artifact.name === assertion.artifactName);
+    }
+    return { ...assertion, passed };
+  });
+}
+
 router.get('/', async (req, res, next) => {
   try {
     const store = getPackStore(req);
@@ -286,16 +304,16 @@ router.post('/:id/fixtures/:fixtureId/run', async (req, res, next) => {
       return res.status(404).json({ error: 'Fixture not found' });
     }
 
+    const assertionResults = evaluateFixtureAssertions(fixture, req.body?.result ?? req.body ?? {});
     const result = {
       fixtureId: fixture.id,
       packId: pack.id,
       packVersion: pack.packVersion,
-      passed: fixture.assertions.every((assertion) => assertion.type !== 'statusEquals' || assertion.expected === 'completed'),
-      assertions: fixture.assertions.map((assertion) => ({
-        ...assertion,
-        passed: assertion.type !== 'statusEquals' || assertion.expected === 'completed',
-      })),
+      passed: assertionResults.every((assertion) => assertion.passed),
+      assertions: assertionResults,
+      ranAt: new Date().toISOString(),
     };
+    await store.saveFixture(req.params.id, { ...fixture, lastResult: result });
     res.json({ result });
   } catch (err) {
     if (respondKnownRouteError(res, err)) return;
@@ -332,6 +350,9 @@ router.post('/:id/publish', async (req, res, next) => {
     const fixtures = await store.listFixtures(req.params.id);
     if (fixtures.length === 0) {
       return res.status(409).json({ error: 'Cannot publish without at least one fixture' });
+    }
+    if (!fixtures.some((fixture) => fixture.lastResult?.passed === true)) {
+      return res.status(409).json({ error: 'Cannot publish without a passing fixture run' });
     }
     const published = await store.createPublishedVersion(req.params.id);
     res.json({ pack: published });

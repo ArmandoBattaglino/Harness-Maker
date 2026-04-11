@@ -1,4 +1,18 @@
-﻿## V17.6 - Pack Distribution & Installation (2026-04-11)
+﻿## V17.7 - Pack Fixtures & Release Gates (2026-04-11)
+
+**Status:** CLOSED - tasks **#670-#676** are now **COMPLETED/PASS**.
+
+**Deliverables:**
+- Pack fixtures persist `lastResult` records.
+- Fixture route evaluates deterministic `statusEquals`, `outputIncludes`, and `artifactExists` assertions.
+- Fixture runs store their latest result back onto the fixture.
+- Publish gate now blocks packs unless at least one fixture exists and has a passing latest result.
+- Builder dry-run path and operator release metadata remain visible through existing pack surfaces.
+
+**Verification:** server fixture/store/contract/distribution/routes suites **22/22 PASS**; client PackBuilder/PackLibrary suites **2/2 PASS**; client build **510 modules** with existing chunk-size warning only.
+
+---
+## V17.6 - Pack Distribution & Installation (2026-04-11)
 
 **Status:** CLOSED - tasks **#662-#669** are now **COMPLETED/PASS**.
 

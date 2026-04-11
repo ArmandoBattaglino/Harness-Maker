@@ -1,8 +1,8 @@
 ﻿# CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-11 - after V17.6 Pack Distribution & Installation - mapped by code-mapper_
+_Last updated: 2026-04-11 - after V17.7 Pack Fixtures & Release Gates - mapped by code-mapper_
 
-> **PROJECT STATUS: V17.6 PACK DISTRIBUTION & INSTALLATION CLOSED**
-> Packs support local export/import/install/fork and operator distribution controls without marketplace scope. Verification: server distribution/store/routes 15/15 PASS; client distribution/operator 4/4 PASS; build 510 modules.
+> **PROJECT STATUS: V17.7 PACK FIXTURES & RELEASE GATES CLOSED**
+> Full V17.0-V17.7 implementation is code-complete pending final full-suite verification. Fixtures persist last results, deterministic assertions gate publish, and local pack distribution remains one-workflow-per-pack.
 
 ## V10.5 Addendum
 - `server/services/SessionManager.js` — V10.5 adds persistent swarm-owned PTY sessions; the idle sweeper skips pinned reusable sessions until explicit stop/reset/kill.

@@ -183,4 +183,63 @@ describe('packs routes', () => {
     expect(res.statusCode).toBe(503);
     expect(res.body).toEqual({ error: 'Pack service unavailable' });
   });
+
+  it('runs fixture assertions deterministically and stores the last result', async () => {
+    const fixture = {
+      id: 'fixture-1',
+      packVersion: '1.0.0',
+      input: {},
+      assertions: [
+        { type: 'statusEquals', expected: 'completed' },
+        { type: 'outputIncludes', outputKey: 'result', expected: 'ok' },
+        { type: 'artifactExists', artifactId: 'artifact-1' },
+      ],
+    };
+    const packStore = {
+      getFixture: vi.fn().mockResolvedValue(fixture),
+      get: vi.fn().mockResolvedValue(createPack()),
+      saveFixture: vi.fn().mockResolvedValue(fixture),
+    };
+    const handler = getRouteHandler(packsRouter, 'post', '/:id/fixtures/:fixtureId/run');
+    const req = {
+      params: { id: 'pack-1', fixtureId: 'fixture-1' },
+      body: {
+        status: 'completed',
+        outputs: { result: 'ok final' },
+        artifacts: [{ id: 'artifact-1' }],
+      },
+      app: { locals: { packStore } },
+    };
+    const res = createMockRes();
+
+    await handler(req, res, vi.fn());
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.result.passed).toBe(true);
+    expect(packStore.saveFixture).toHaveBeenCalledWith('pack-1', expect.objectContaining({
+      lastResult: expect.objectContaining({ passed: true }),
+    }));
+  });
+
+  it('blocks publish until at least one fixture has a passing last result', async () => {
+    const packStore = {
+      get: vi.fn().mockResolvedValue(createPack()),
+      listFixtures: vi.fn()
+        .mockResolvedValueOnce([{ id: 'fixture-1', lastResult: { passed: false } }])
+        .mockResolvedValueOnce([{ id: 'fixture-1', lastResult: { passed: true } }]),
+      createPublishedVersion: vi.fn().mockResolvedValue({ ...createPack(), status: 'published' }),
+    };
+    const handler = getRouteHandler(packsRouter, 'post', '/:id/publish');
+    const req = { params: { id: 'pack-1' }, body: {}, app: { locals: { packStore } } };
+    const blocked = createMockRes();
+    const allowed = createMockRes();
+
+    await handler(req, blocked, vi.fn());
+    await handler(req, allowed, vi.fn());
+
+    expect(blocked.statusCode).toBe(409);
+    expect(blocked.body.error).toBe('Cannot publish without a passing fixture run');
+    expect(allowed.statusCode).toBe(200);
+    expect(allowed.body.pack.status).toBe('published');
+  });
 });

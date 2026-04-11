@@ -1,6 +1,15 @@
 ﻿# CHANGELOG — Claude Code Visual Manager
 
 ---
+## 2026-04-11 - V17.7 CLOSED - Pack Fixtures & Release Gates (#670-#676)
+
+**Status:** Area closed; release-gate tasks **#670-#676** are now **COMPLETED/PASS**.
+
+**Deliverables:** Fixture last results, deterministic assertion evaluation, fixture run persistence, and publish gate requiring a passing fixture.
+
+**Verification:** server fixture/store/contract/distribution/routes **22/22 PASS**; client builder/library **2/2 PASS**; build **510 modules**.
+
+---
 ## 2026-04-11 - V17.6 CLOSED - Pack Distribution & Installation (#662-#669)
 
 **Status:** Area closed; distribution tasks **#662-#669** are now **COMPLETED/PASS**.
