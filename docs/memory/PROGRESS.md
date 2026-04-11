@@ -14,6 +14,7 @@
 - Full server suite: **647/647 PASS**.
 - Full client suite: **77/77 PASS**.
 - Client build: **520 modules PASS**, no Vite chunk-size warning.
+- Targeted Playwright smoke: **PASS** (`npm run test:playwright:v17-review-followup`).
 - `git diff --check`: **PASS**.
 - Runtime diagnostics: **0 errors** on changed runtime files (`tsc skipped: no tsconfig found` caveat). Architect verification: **APPROVED**. Code review verification: **APPROVE**.
 
@@ -37,6 +38,7 @@
 - Full server suite: **641/641 PASS**.
 - Full client suite: **76/76 PASS**.
 - Client build: **520 modules PASS**, no Vite chunk-size warning.
+- Targeted Playwright smoke: **PASS** (`npm run test:playwright:v17-review-followup`).
 - `git diff --check`: **PASS**.
 
 ---
@@ -56,6 +58,7 @@
 - Full server suite: **629/629 PASS**.
 - Full client suite: **75/75 PASS**.
 - Client build: **520 modules PASS**, no Vite chunk-size warning.
+- Targeted Playwright smoke: **PASS** (`npm run test:playwright:v17-review-followup`).
 
 ---
 ## Dirty Worktree Recovery - UI/Runtime Fixes (2026-04-11)
@@ -78,6 +81,7 @@
 - Full client suite: **74/74 PASS**.
 - Full server suite: **625/625 PASS**.
 - Client build: **520 modules PASS**, no Vite chunk-size warning.
+- Targeted Playwright smoke: **PASS** (`npm run test:playwright:v17-review-followup`).
 
 ---
 ## V17 Live Smoke + Chunk Warning Follow-up (2026-04-11)

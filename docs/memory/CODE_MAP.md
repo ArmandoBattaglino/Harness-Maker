@@ -4118,3 +4118,4 @@ _All bugs identified in QA Swarm Inspection (2026-03-31) and Swarm Code Audit (2
 - `server/routes/packs.js`: publish gate now evaluates fixture results against the current pack and requires matching `packId`, `packVersion`, valid `ranAt >= pack.updatedAt`, runner source, and passed assertions.
 - `client/src/views/PackLibraryView.jsx`: selected pack changes clear stale launch errors.
 ---
+- `scripts/v17-review-followup-playwright-smoke.mjs`: targeted Playwright smoke for V17.8.1 follow-up; exercises API publish freshness/provenance and browser PackLibrary error clearing.
