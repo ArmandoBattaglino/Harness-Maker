@@ -12,6 +12,7 @@ export const BEHAVIOR_RULE_MODES = ['append', 'override', 'guardrail'];
 export const ARTIFACT_SOURCE_TYPES = ['aggregatedArtifact', 'agentOutput', 'workflowContext'];
 export const ARTIFACT_FORMATS = ['markdown', 'json', 'text'];
 export const INPUT_FIELD_TYPES = ['text', 'textarea', 'enum', 'boolean', 'json', 'fileRef'];
+export const FIXTURE_ASSERTION_TYPES = ['outputIncludes', 'artifactExists', 'statusEquals'];
 export const JSON_SCHEMA_DRAFT = 'https://json-schema.org/draft/2020-12/schema';
 
 const MAX_TEXT = 2000;
@@ -145,12 +146,25 @@ export function validatePackFixture(data) {
         errors.push(`assertions[${index}] must be an object`);
         return;
       }
-      if (!['outputIncludes', 'artifactExists', 'statusEquals'].includes(assertion.type)) {
-        errors.push(`assertions[${index}].type is invalid`);
-      }
+      const validation = validatePackFixtureAssertion(assertion, `assertions[${index}]`);
+      errors.push(...validation.errors);
     });
   }
 
+  return { valid: errors.length === 0, errors };
+}
+
+export function validatePackFixtureAssertion(assertion, field = 'assertion') {
+  const errors = [];
+  if (!assertion || typeof assertion !== 'object' || Array.isArray(assertion)) {
+    errors.push(`${field} must be an object`);
+    return { valid: false, errors };
+  }
+  if (!FIXTURE_ASSERTION_TYPES.includes(assertion.type)) {
+    errors.push(`${field}.type is invalid`);
+    return { valid: false, errors };
+  }
+  validateFixtureAssertionFields(assertion, errors, field);
   return { valid: errors.length === 0, errors };
 }
 
@@ -565,6 +579,35 @@ function validateInputFieldMetadata(schemaNode, errors, field) {
   }
   if (metadata.help != null && typeof metadata.help !== 'string') {
     errors.push(`${field}.x-packField.help must be a string`);
+  }
+}
+
+function validateFixtureAssertionFields(assertion, errors, field) {
+  if (assertion.type === 'statusEquals') {
+    validateTextField(assertion.expected, errors, `${field}.expected`, { required: true, maxLength: 100 });
+    return;
+  }
+
+  if (assertion.type === 'outputIncludes') {
+    validateTextField(assertion.expected, errors, `${field}.expected`, { required: true, maxLength: MAX_LONG_TEXT });
+    if (assertion.outputKey != null) {
+      validateTextField(assertion.outputKey, errors, `${field}.outputKey`, { required: true, maxLength: 120 });
+    }
+    return;
+  }
+
+  if (assertion.type === 'artifactExists') {
+    const hasArtifactId = typeof assertion.artifactId === 'string' && assertion.artifactId.trim();
+    const hasArtifactName = typeof assertion.artifactName === 'string' && assertion.artifactName.trim();
+    if (!hasArtifactId && !hasArtifactName) {
+      errors.push(`${field}.artifactId or ${field}.artifactName is required`);
+    }
+    if (assertion.artifactId != null) {
+      validateTextField(assertion.artifactId, errors, `${field}.artifactId`, { required: true, maxLength: 120 });
+    }
+    if (assertion.artifactName != null) {
+      validateTextField(assertion.artifactName, errors, `${field}.artifactName`, { required: true, maxLength: 120 });
+    }
   }
 }
 

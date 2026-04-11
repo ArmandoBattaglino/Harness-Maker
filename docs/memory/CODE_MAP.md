@@ -4103,3 +4103,11 @@ _All bugs identified in QA Swarm Inspection (2026-03-31) and Swarm Code Audit (2
 - **Output:** Promise<void>
 - **Side effects:** console.warn output if server is stale; no process.exit
 - **Last modified:** 2026-04-09 in Task #493 by backend-dev (new function added to existing file)
+
+---
+## V17.8 Code Review Fixes Map Note ? 2026-04-11
+- `server/stores/PackStore.js`: `importBundle()` now compensates failed pack creation by deleting the just-imported workflow; `saveFixture()` strips client-supplied `lastResult`, `saveFixtureResult()` preserves runner-owned results; `delete()` cascades local pack versions/fixtures but preserves install provenance; `saveInstall()` rejects invalid IDs before writes; `_removePackOwnedDirectory()` enforces safe directory cleanup.
+- `server/services/packContracts.js`: `validatePackFixtureAssertion()` centralizes type-specific fixture assertion validation for `statusEquals`, `outputIncludes`, and `artifactExists`.
+- `server/routes/packs.js`: fixture runner uses assertion validation fail-closed and writes runner-owned `source: fixture-runner` results through `saveFixtureResult()`; publish gate requires a valid fixture with meaningful passing assertion results; versions/publish routes preserve `statusCode` errors.
+- `client/src/views/PackLibraryView.jsx`: launch errors render inline and clear stale pack runtime state on failed start.
+---

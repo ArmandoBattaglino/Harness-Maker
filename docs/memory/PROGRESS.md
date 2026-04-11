@@ -1,3 +1,25 @@
+## V17.8 Code Review Fixes (2026-04-11)
+
+**Status:** CLOSED / VERIFIED.
+
+**Deliverables:**
+- Pack import now rolls back a newly-created workflow if pack creation/validation fails after workflow import.
+- Fixture assertions are type-specific and fail closed (`statusEquals`, `outputIncludes`, `artifactExists`), including persisted malformed assertions during runner/publish flows, missing artifact selector wildcard regressions, and forged/stale `lastResult` publish bypasses.
+- PackLibrary launch failures show inline operator errors, prevent duplicate start clicks while launching, and clear stale pack runtime hydration on failed start.
+- `PackStore.saveInstall()` rejects invalid/traversal install IDs with structured `400` before writing.
+- Pack delete semantics are explicit: hard delete local pack definition, version snapshots, and fixtures while preserving install provenance records.
+- Pack versions/publish routes now preserve known `statusCode` errors.
+- Removed the temporary Vite `chunkSizeWarningLimit`; build remains warning-free.
+
+**Verification:**
+- Targeted server pack suites: **38/38 PASS**.
+- Targeted PackLibrary suite: **3/3 PASS**.
+- Full server suite: **641/641 PASS**.
+- Full client suite: **76/76 PASS**.
+- Client build: **520 modules PASS**, no Vite chunk-size warning.
+- `git diff --check`: **PASS**.
+
+---
 ﻿## Marketing Video Harness Deep/Stress Test (2026-04-11)
 
 **Status:** CLOSED / VERIFIED.

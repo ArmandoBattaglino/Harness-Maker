@@ -169,6 +169,15 @@ describe('PackStore', () => {
     expect(await packStore.getInstall('../escape')).toBeNull();
   });
 
+  it('rejects invalid install ids before attempting persistence', async () => {
+    await expect(packStore.saveInstall({
+      id: '../escape',
+      packId: 'pack-1',
+      sourcePackId: 'pack-1',
+      packVersion: '1.0.0',
+    })).rejects.toMatchObject({ statusCode: 400 });
+  });
+
   it('skips corrupt fixture and install files without breaking list operations', async () => {
     const created = await packStore.create(buildPackPayload(workflow.id));
     const fixturesDir = path.join(tempDir, 'packs', 'fixtures', created.id);
@@ -198,6 +207,62 @@ describe('PackStore', () => {
     const fixtures = await packStore.listFixtures(created.id);
     expect(fixtures).toHaveLength(1);
     expect(fixtures[0].name).toBe('Happy path');
+  });
+
+  it('treats fixture lastResult as server-owned state', async () => {
+    const created = await packStore.create(buildPackPayload(workflow.id));
+    const forged = await packStore.saveFixture(created.id, {
+      name: 'Forged result',
+      packVersion: created.packVersion,
+      input: { brief: 'Create a teaser' },
+      assertions: [{ type: 'statusEquals', expected: 'completed' }],
+      lastResult: {
+        source: 'fixture-runner',
+        passed: true,
+        assertions: [{ type: 'statusEquals', expected: 'completed', passed: true }],
+      },
+    });
+
+    expect(forged.lastResult).toBeNull();
+    expect((await packStore.getFixture(created.id, forged.id)).lastResult).toBeNull();
+
+    const runnerOwned = await packStore.saveFixtureResult(created.id, {
+      ...forged,
+      lastResult: {
+        source: 'fixture-runner',
+        passed: true,
+        assertions: [{ type: 'statusEquals', expected: 'completed', passed: true }],
+      },
+    });
+
+    expect(runnerOwned.lastResult).toMatchObject({ source: 'fixture-runner', passed: true });
+  });
+
+  it('hard deletes local pack definitions, version snapshots, and fixtures while preserving install provenance', async () => {
+    const created = await packStore.create(buildPackPayload(workflow.id));
+    await packStore.update(created.id, { ...created, name: 'Marketing Harness v2' });
+    await packStore.saveFixture(created.id, {
+      name: 'Happy path',
+      packVersion: created.packVersion,
+      input: { brief: 'Create a teaser' },
+      assertions: [{ type: 'statusEquals', expected: 'completed' }],
+    });
+    await packStore.saveInstall({
+      id: 'install-1',
+      packId: created.id,
+      sourcePackId: created.id,
+      packVersion: created.packVersion,
+    });
+
+    expect(await packStore.listVersions(created.id)).toHaveLength(1);
+    expect(await packStore.listFixtures(created.id)).toHaveLength(1);
+
+    await expect(packStore.delete(created.id)).resolves.toBe(true);
+
+    expect(await packStore.get(created.id)).toBeNull();
+    expect(await packStore.listVersions(created.id)).toEqual([]);
+    expect(await packStore.listFixtures(created.id)).toEqual([]);
+    expect(await packStore.getInstall('install-1')).toMatchObject({ packId: created.id });
   });
 
   it('preserves the pre-publish draft snapshot when publishing a pack', async () => {

@@ -81,6 +81,38 @@ describe('pack distribution', () => {
     ]));
   });
 
+  it('rolls back an imported workflow when pack validation fails after workflow creation', async () => {
+    const pack = await packStore.create(packPayload(workflow.id));
+    const bundle = await packStore.exportBundle(pack.id);
+    const beforeWorkflows = await workflowStore.list();
+
+    await expect(packStore.importBundle({
+      ...bundle,
+      pack: {
+        ...bundle.pack,
+        name: '',
+      },
+    })).rejects.toMatchObject({ statusCode: 400 });
+
+    expect(await workflowStore.list()).toHaveLength(beforeWorkflows.length);
+    expect(await packStore.list()).toHaveLength(1);
+  });
+
+  it('does not write a pack when workflow import validation fails first', async () => {
+    const pack = await packStore.create(packPayload(workflow.id));
+    const bundle = await packStore.exportBundle(pack.id);
+
+    await expect(packStore.importBundle({
+      ...bundle,
+      workflow: {
+        ...bundle.workflow,
+        nodes: [{ id: '../bad', type: 'agent' }],
+      },
+    })).rejects.toMatchObject({ statusCode: 400 });
+
+    expect(await packStore.list()).toHaveLength(1);
+  });
+
   it('records installs and forks installed/authored packs into editable drafts', async () => {
     const pack = await packStore.create(packPayload(workflow.id));
     const install = await packStore.saveInstall({

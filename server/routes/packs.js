@@ -2,7 +2,7 @@ import { Router } from 'express';
 
 import PackResolver from '../services/PackResolver.js';
 import buildPackResult from '../services/PackResultBuilder.js';
-import { validateValueAgainstSchema } from '../services/packContracts.js';
+import { validatePackFixture, validatePackFixtureAssertion, validateValueAgainstSchema } from '../services/packContracts.js';
 
 const router = Router();
 const packResolver = new PackResolver();
@@ -47,6 +47,10 @@ function evaluateFixtureAssertions(fixture, runPayload = {}) {
   const outputs = runPayload.outputs ?? {};
   const artifacts = Array.isArray(runPayload.artifacts) ? runPayload.artifacts : [];
   return (fixture.assertions ?? []).map((assertion) => {
+    const validation = validatePackFixtureAssertion(assertion);
+    if (!validation.valid) {
+      return { ...assertion, passed: false, error: validation.errors.join('; ') };
+    }
     let passed = false;
     if (assertion.type === 'statusEquals') {
       passed = status === assertion.expected;
@@ -54,10 +58,25 @@ function evaluateFixtureAssertions(fixture, runPayload = {}) {
       const value = String(outputs[assertion.outputKey ?? 'result'] ?? '');
       passed = value.includes(assertion.expected ?? '');
     } else if (assertion.type === 'artifactExists') {
-      passed = artifacts.some((artifact) => artifact.id === assertion.artifactId || artifact.name === assertion.artifactName);
+      passed = artifacts.some((artifact) => (
+        (assertion.artifactId ? artifact.id === assertion.artifactId : false)
+        || (assertion.artifactName ? artifact.name === assertion.artifactName : false)
+      ));
     }
     return { ...assertion, passed };
   });
+}
+
+function hasMeaningfulPassingFixture(fixture) {
+  const validation = validatePackFixture(fixture);
+  if (!validation.valid) return false;
+  const lastAssertions = Array.isArray(fixture.lastResult?.assertions)
+    ? fixture.lastResult.assertions
+    : [];
+  return fixture.lastResult?.passed === true
+    && fixture.lastResult?.source === 'fixture-runner'
+    && lastAssertions.length > 0
+    && lastAssertions.every((assertion) => assertion?.passed === true);
 }
 
 router.get('/', async (req, res, next) => {
@@ -149,6 +168,7 @@ router.get('/:id/versions', async (req, res, next) => {
     const versions = await store.listVersions(req.params.id);
     res.json({ versions });
   } catch (err) {
+    if (respondKnownRouteError(res, err)) return;
     next(err);
   }
 });
@@ -309,11 +329,12 @@ router.post('/:id/fixtures/:fixtureId/run', async (req, res, next) => {
       fixtureId: fixture.id,
       packId: pack.id,
       packVersion: pack.packVersion,
+      source: 'fixture-runner',
       passed: assertionResults.every((assertion) => assertion.passed),
       assertions: assertionResults,
       ranAt: new Date().toISOString(),
     };
-    await store.saveFixture(req.params.id, { ...fixture, lastResult: result });
+    await store.saveFixtureResult(req.params.id, { ...fixture, lastResult: result });
     res.json({ result });
   } catch (err) {
     if (respondKnownRouteError(res, err)) return;
@@ -351,12 +372,13 @@ router.post('/:id/publish', async (req, res, next) => {
     if (fixtures.length === 0) {
       return res.status(409).json({ error: 'Cannot publish without at least one fixture' });
     }
-    if (!fixtures.some((fixture) => fixture.lastResult?.passed === true)) {
+    if (!fixtures.some((fixture) => hasMeaningfulPassingFixture(fixture))) {
       return res.status(409).json({ error: 'Cannot publish without a passing fixture run' });
     }
     const published = await store.createPublishedVersion(req.params.id);
     res.json({ pack: published });
   } catch (err) {
+    if (respondKnownRouteError(res, err)) return;
     next(err);
   }
 });

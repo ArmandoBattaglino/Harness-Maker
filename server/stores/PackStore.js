@@ -114,7 +114,12 @@ export class PackStore {
   async delete(id) {
     const filePath = this._resolvePackPath(id);
     if (!filePath || !fs.existsSync(filePath)) return false;
+    // Pack delete is intentionally local-definition scoped: remove the current
+    // pack plus its version snapshots and fixtures, while retaining install
+    // provenance records so imported/forked lineage remains auditable.
     fs.unlinkSync(filePath);
+    this._removePackOwnedDirectory(this._resolveVersionsDir(id), this._versionsDir);
+    this._removePackOwnedDirectory(this._resolveFixturesDir(id), this._fixturesDir);
     return true;
   }
 
@@ -191,6 +196,14 @@ export class PackStore {
   }
 
   async saveFixture(packId, fixtureData) {
+    return this._saveFixture(packId, fixtureData, { preserveLastResult: false });
+  }
+
+  async saveFixtureResult(packId, fixtureData) {
+    return this._saveFixture(packId, fixtureData, { preserveLastResult: true });
+  }
+
+  async _saveFixture(packId, fixtureData, options = {}) {
     const pack = await this.get(packId);
     if (!pack) {
       const err = new Error(`Pack not found: ${packId}`);
@@ -198,7 +211,10 @@ export class PackStore {
       throw err;
     }
 
-    const fixture = normalizePackFixture(fixtureData);
+    const fixture = normalizePackFixture({
+      ...fixtureData,
+      lastResult: options.preserveLastResult ? fixtureData?.lastResult : null,
+    });
     const validation = validatePackFixture(fixture);
     if (!validation.valid) {
       const err = new Error(`Validation failed: ${validation.errors.join('; ')}`);
@@ -234,6 +250,11 @@ export class PackStore {
   async saveInstall(installData) {
     const install = normalizePackInstall(installData);
     const filePath = this._resolveInstallPath(install.id);
+    if (!filePath) {
+      const err = new Error(`Invalid install id: ${install.id}`);
+      err.statusCode = 400;
+      throw err;
+    }
     await writeFileAtomic(filePath, JSON.stringify(install, null, 2));
     return install;
   }
@@ -302,14 +323,20 @@ export class PackStore {
       initialContext: bundle.workflow.initialContext,
     });
 
-    const importedPack = await this.create({
-      ...bundle.pack,
-      id: undefined,
-      workflowId: importedWorkflow.id,
-      dependencies: this._rebindWorkflowDependency(bundle.pack.dependencies, importedWorkflow.id),
-      status: 'draft',
-      installMetadata: bundle.manifest?.provenance ?? null,
-    });
+    let importedPack;
+    try {
+      importedPack = await this.create({
+        ...bundle.pack,
+        id: undefined,
+        workflowId: importedWorkflow.id,
+        dependencies: this._rebindWorkflowDependency(bundle.pack.dependencies, importedWorkflow.id),
+        status: 'draft',
+        installMetadata: bundle.manifest?.provenance ?? null,
+      });
+    } catch (err) {
+      await this._workflowStore.delete(importedWorkflow.id);
+      throw err;
+    }
 
     return {
       pack: importedPack,
@@ -406,6 +433,14 @@ export class PackStore {
       return null;
     }
     return resolved;
+  }
+
+  _removePackOwnedDirectory(dirPath, baseDir) {
+    if (!dirPath || !fs.existsSync(dirPath)) return;
+    const resolvedBase = path.resolve(baseDir);
+    const resolvedTarget = path.resolve(dirPath);
+    if (!resolvedTarget.startsWith(resolvedBase + path.sep)) return;
+    fs.rmSync(resolvedTarget, { recursive: true, force: true });
   }
 
   async _writePack(pack) {

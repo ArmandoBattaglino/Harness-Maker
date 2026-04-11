@@ -4,7 +4,7 @@ import path from 'path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { WorkflowStore } from '../services/WorkflowStore.js';
-import { validatePackDefinition, validateValueAgainstSchema, JSON_SCHEMA_DRAFT } from '../services/packContracts.js';
+import { validatePackDefinition, validatePackFixture, validateValueAgainstSchema, JSON_SCHEMA_DRAFT } from '../services/packContracts.js';
 import PackStore from '../stores/PackStore.js';
 
 function validPack(workflowId, overrides = {}) {
@@ -154,5 +154,39 @@ describe('pack contract validation', () => {
       'input.details must NOT have additional properties',
       'input must NOT have additional properties',
     ]));
+  });
+
+  it('rejects malformed fixture assertions instead of letting publish gates pass trivially', () => {
+    const invalidFixtures = [
+      {
+        name: 'Missing expected status',
+        packVersion: '1.0.0',
+        input: {},
+        assertions: [{ type: 'statusEquals' }],
+      },
+      {
+        name: 'Empty output expected',
+        packVersion: '1.0.0',
+        input: {},
+        assertions: [{ type: 'outputIncludes', outputKey: 'result', expected: '' }],
+      },
+      {
+        name: 'Missing artifact selector',
+        packVersion: '1.0.0',
+        input: {},
+        assertions: [{ type: 'artifactExists' }],
+      },
+    ];
+
+    for (const fixture of invalidFixtures) {
+      expect(validatePackFixture(fixture).valid).toBe(false);
+    }
+
+    expect(validatePackFixture({
+      name: 'Default result output',
+      packVersion: '1.0.0',
+      input: {},
+      assertions: [{ type: 'outputIncludes', expected: 'ok' }],
+    })).toMatchObject({ valid: true });
   });
 });

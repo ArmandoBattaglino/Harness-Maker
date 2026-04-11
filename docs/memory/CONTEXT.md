@@ -1,8 +1,31 @@
 ﻿# Current Context
 **Session date:** 2026-04-11
-**Focus:** **MARKETING VIDEO HARNESS DEEP/STRESS TEST - CLOSED.** Added hermetic server/client tests and ran a live browser/provider smoke for a complete Marketing Video Campaign Harness pack. Pack operator form now coerces numeric/JSON/enum/boolean inputs according to schema before start.
+**Focus:** **V17.8 CODE REVIEW FIXES - CLOSED/PASS.** Stabilized the already-implemented V17 pack platform with rollback-safe import, fail-closed fixture assertions, PackLibrary start error UX, install ID guards, explicit delete semantics, route statusCode handling, and default Vite chunk warning policy.
 
-**IMMEDIATE NEXT STEP:** No Marketing Video Harness verification work remains. Branch is ready for review/merge after final commit/push.
+**IMMEDIATE NEXT STEP:** V17.8 implementation, architect verification, deslop, and post-deslop regression are complete. Branch is ready for Lore commit and review/merge.
+
+## V17.8 Code Review Fixes (2026-04-11)
+
+**Status:** CLOSED / VERIFIED.
+
+**Deliverables:**
+- Pack import now rolls back a newly-created workflow if pack creation/validation fails after workflow import.
+- Fixture assertions are type-specific and fail closed (`statusEquals`, `outputIncludes`, `artifactExists`), including persisted malformed assertions during runner/publish flows, missing artifact selector wildcard regressions, and forged/stale `lastResult` publish bypasses.
+- PackLibrary launch failures show inline operator errors, prevent duplicate start clicks while launching, and clear stale pack runtime hydration on failed start.
+- `PackStore.saveInstall()` rejects invalid/traversal install IDs with structured `400` before writing.
+- Pack delete semantics are explicit: hard delete local pack definition, version snapshots, and fixtures while preserving install provenance records.
+- Pack versions/publish routes now preserve known `statusCode` errors.
+- Removed the temporary Vite `chunkSizeWarningLimit`; build remains warning-free.
+
+**Verification:**
+- Targeted server pack suites: **38/38 PASS**.
+- Targeted PackLibrary suite: **3/3 PASS**.
+- Full server suite: **641/641 PASS**.
+- Full client suite: **76/76 PASS**.
+- Client build: **520 modules PASS**, no Vite chunk-size warning.
+- `git diff --check`: **PASS**.
+
+---
 
 ## Active Threads
 

@@ -17,6 +17,8 @@ export default function PackLibraryView() {
   const [runInput, setRunInput] = useState({});
   const [projectId, setProjectId] = useState(activeProjectId ?? '');
   const [runState, setRunState] = useState(null);
+  const [runError, setRunError] = useState('');
+  const [runStarting, setRunStarting] = useState(false);
   const [distributionState, setDistributionState] = useState('');
   const [debugOpen, setDebugOpen] = useState(false);
 
@@ -66,17 +68,27 @@ export default function PackLibraryView() {
 
   async function startPackRun() {
     if (!pack || !selectedProject) return;
-    const response = await start({
-      projectId: selectedProject.id,
-      projectPath: selectedProject.path,
-      input: runInput,
-    });
-    setRunState(response);
-    hydratePackRuntime({
-      packRun: response.packRun,
-      packResult: response.packResult,
-    });
-    void pollPackRun(response.executionId, response.workflowId ?? pack.workflowId);
+    setRunStarting(true);
+    setRunError('');
+    try {
+      const response = await start({
+        projectId: selectedProject.id,
+        projectPath: selectedProject.path,
+        input: runInput,
+      });
+      setRunState(response);
+      hydratePackRuntime({
+        packRun: response.packRun,
+        packResult: response.packResult,
+      });
+      void pollPackRun(response.executionId, response.workflowId ?? pack.workflowId);
+    } catch (err) {
+      setRunState(null);
+      hydratePackRuntime({ packRun: null, packResult: null });
+      setRunError(err instanceof Error ? err.message : 'Failed to launch pack');
+    } finally {
+      setRunStarting(false);
+    }
   }
 
   async function pollPackRun(executionId, workflowId) {
@@ -196,7 +208,14 @@ export default function PackLibraryView() {
                     onChange={(rawValue) => setInputValue(key, coerceInputValue(schema, rawValue))}
                   />
                 ))}
-                <button className="rounded bg-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-40" disabled={!selectedProject} onClick={startPackRun}>Launch pack</button>
+                {runError && (
+                  <p role="alert" className="mb-3 rounded border border-error/40 bg-error/10 px-3 py-2 text-xs text-error">
+                    {runError}
+                  </p>
+                )}
+                <button className="rounded bg-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-40" disabled={!selectedProject || runStarting} onClick={startPackRun}>
+                  {runStarting ? 'Launching…' : 'Launch pack'}
+                </button>
               </div>
 
               <div className="rounded-xl border border-border-color bg-surface p-5">

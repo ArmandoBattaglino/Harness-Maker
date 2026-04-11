@@ -150,6 +150,45 @@ describe('PackLibraryView', () => {
       expect(screen.getByText('Started execution exec-pack-1')).toBeTruthy();
     });
   });
+
+  it('shows launch errors and clears stale pack runtime state on failed start', async () => {
+    useSwarmStore.setState({
+      packRun: { packId: 'pack-1', visibleSteps: [{ id: 'stale-step', label: 'Stale', status: 'completed' }] },
+      packResult: { packId: 'pack-1', outputs: { result: 'stale' }, artifacts: [{ id: 'stale-artifact', name: 'Stale', status: 'ready' }] },
+    });
+    fetchMock.mockImplementation((url, options = {}) => {
+      const method = options.method ?? 'GET';
+      if (url === '/api/v1/packs' && method === 'GET') {
+        return Promise.resolve({ ok: true, json: async () => ({ packs: [pack] }) });
+      }
+      if (url === '/api/v1/packs/pack-1' && method === 'GET') {
+        return Promise.resolve({ ok: true, json: async () => ({ pack }) });
+      }
+      if (url === '/api/v1/projects' && method === 'GET') {
+        return Promise.resolve({ ok: true, json: async () => ({ projects: [] }) });
+      }
+      if (url === '/api/v1/packs/pack-1/start' && method === 'POST') {
+        return Promise.resolve({ ok: false, status: 400, json: async () => ({ error: 'Input validation failed' }) });
+      }
+      return Promise.reject(new Error(`Unexpected fetch ${method} ${url}`));
+    });
+
+    render(
+      <AppProvider>
+        <SeedProjects />
+        <PackLibraryView />
+      </AppProvider>
+    );
+
+    expect(await screen.findByText('Pack Detail')).toBeTruthy();
+    fireEvent.change(screen.getByLabelText(/Brief/i), { target: { value: 'Launch the spring campaign' } });
+    fireEvent.click(screen.getByText('Launch pack'));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Input validation failed');
+    expect(useSwarmStore.getState().packRun).toBeNull();
+    expect(useSwarmStore.getState().packResult).toBeNull();
+    expect(screen.queryByText(/Started execution/)).toBeNull();
+  });
 });
 
 function SeedProjects() {

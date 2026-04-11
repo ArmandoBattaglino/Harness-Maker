@@ -6198,3 +6198,14 @@ full self-contained context and acceptance criteria.
 **Next:** No active planned areas. Next session should call project-manager to determine next work area.
 ---
 
+---
+## 2026-04-11 ? Ralph ? V17.8 Code Review Fixes
+**Outcome:** COMPLETED / VERIFIED
+**Summary:** Completed V17.8 stabilization on `feature/v17-pack-platform` from a separate worktree, preserving the dirty planning checkout. Fixed import rollback, fixture assertion validation/publish fail-closed behavior, runner-owned fixture results, PackLibrary start errors, install ID guards, delete semantics, pack route statusCode handling, and Vite chunk warning policy.
+**Files changed:** server/stores/PackStore.js, server/services/packContracts.js, server/routes/packs.js, server/tests/PackStore.test.js, server/tests/pack-contracts.test.js, server/tests/pack-distribution.test.js, server/tests/pack-routes.test.js, client/src/views/PackLibraryView.jsx, client/src/views/PackLibraryView.test.jsx, client/vite.config.js, docs/TASK_PLAN.md, docs/memory/*.
+**Bugs fixed:** V17.8 code review findings #677-#683.
+**Decisions made:** Use compensating rollback for file-store import atomicity; hard delete local pack definitions/versions/fixtures while preserving install provenance; restore default Vite chunk warning behavior because route splitting keeps build warning-free.
+**Verification:** Targeted server pack 38/38 PASS; targeted PackLibrary 3/3 PASS; full server 641/641 PASS; full client 76/76 PASS; client build 520 modules PASS/no chunk warning; git diff --check PASS.
+**Blockers:** none.
+**Next:** Lore commit, then branch is ready for review/merge.
+---

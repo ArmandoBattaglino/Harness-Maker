@@ -101,6 +101,25 @@ describe('packs routes', () => {
     expect(res.body.versions).toHaveLength(1);
   });
 
+  it('preserves known statusCode errors from version listing', async () => {
+    const err = new Error('Version metadata unavailable');
+    err.statusCode = 418;
+    const packStore = {
+      get: vi.fn().mockResolvedValue(createPack()),
+      listVersions: vi.fn().mockRejectedValue(err),
+    };
+    const handler = getRouteHandler(packsRouter, 'get', '/:id/versions');
+    const req = { params: { id: 'pack-1' }, app: { locals: { packStore } } };
+    const res = createMockRes();
+    const next = vi.fn();
+
+    await handler(req, res, next);
+
+    expect(res.statusCode).toBe(418);
+    expect(res.body).toEqual({ error: 'Version metadata unavailable' });
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('starts a pack through the existing swarm engine with reserved pack metadata', async () => {
     const pack = createPack();
     const packStore = {
@@ -207,7 +226,7 @@ describe('packs routes', () => {
     const packStore = {
       getFixture: vi.fn().mockResolvedValue(fixture),
       get: vi.fn().mockResolvedValue(createPack()),
-      saveFixture: vi.fn().mockResolvedValue(fixture),
+      saveFixtureResult: vi.fn().mockResolvedValue(fixture),
     };
     const handler = getRouteHandler(packsRouter, 'post', '/:id/fixtures/:fixtureId/run');
     const req = {
@@ -225,17 +244,96 @@ describe('packs routes', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.body.result.passed).toBe(true);
-    expect(packStore.saveFixture).toHaveBeenCalledWith('pack-1', expect.objectContaining({
+    expect(packStore.saveFixtureResult).toHaveBeenCalledWith('pack-1', expect.objectContaining({
       lastResult: expect.objectContaining({ passed: true }),
     }));
   });
 
+  it('fails closed when a persisted fixture contains malformed assertions', async () => {
+    const fixture = {
+      id: 'fixture-1',
+      name: 'Malformed legacy fixture',
+      packVersion: '1.0.0',
+      input: {},
+      assertions: [
+        { type: 'outputIncludes' },
+      ],
+    };
+    const packStore = {
+      getFixture: vi.fn().mockResolvedValue(fixture),
+      get: vi.fn().mockResolvedValue(createPack()),
+      saveFixtureResult: vi.fn().mockResolvedValue(fixture),
+    };
+    const handler = getRouteHandler(packsRouter, 'post', '/:id/fixtures/:fixtureId/run');
+    const req = {
+      params: { id: 'pack-1', fixtureId: 'fixture-1' },
+      body: { status: 'completed', outputs: { result: 'anything' }, artifacts: [] },
+      app: { locals: { packStore } },
+    };
+    const res = createMockRes();
+
+    await handler(req, res, vi.fn());
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.result.passed).toBe(false);
+    expect(res.body.result.assertions[0].error).toContain('expected is required');
+  });
+
+  it('does not treat missing artifact selector fields as wildcard matches during fixture runs', async () => {
+    const fixture = {
+      id: 'fixture-1',
+      name: 'Artifact id check',
+      packVersion: '1.0.0',
+      input: {},
+      assertions: [
+        { type: 'artifactExists', artifactId: 'expected-artifact' },
+      ],
+    };
+    const packStore = {
+      getFixture: vi.fn().mockResolvedValue(fixture),
+      get: vi.fn().mockResolvedValue(createPack()),
+      saveFixtureResult: vi.fn().mockResolvedValue(fixture),
+    };
+    const handler = getRouteHandler(packsRouter, 'post', '/:id/fixtures/:fixtureId/run');
+    const req = {
+      params: { id: 'pack-1', fixtureId: 'fixture-1' },
+      body: {
+        status: 'completed',
+        outputs: {},
+        artifacts: [{ id: 'other-artifact' }],
+      },
+      app: { locals: { packStore } },
+    };
+    const res = createMockRes();
+
+    await handler(req, res, vi.fn());
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.result.passed).toBe(false);
+  });
+
   it('blocks publish until at least one fixture has a passing last result', async () => {
+    const failingFixture = {
+      id: 'fixture-1',
+      name: 'Failing',
+      packVersion: '1.0.0',
+      input: {},
+      assertions: [{ type: 'statusEquals', expected: 'completed' }],
+      lastResult: { source: 'fixture-runner', passed: false, assertions: [{ type: 'statusEquals', expected: 'completed', passed: false }] },
+    };
+    const passingFixture = {
+      id: 'fixture-1',
+      name: 'Passing',
+      packVersion: '1.0.0',
+      input: {},
+      assertions: [{ type: 'statusEquals', expected: 'completed' }],
+      lastResult: { source: 'fixture-runner', passed: true, assertions: [{ type: 'statusEquals', expected: 'completed', passed: true }] },
+    };
     const packStore = {
       get: vi.fn().mockResolvedValue(createPack()),
       listFixtures: vi.fn()
-        .mockResolvedValueOnce([{ id: 'fixture-1', lastResult: { passed: false } }])
-        .mockResolvedValueOnce([{ id: 'fixture-1', lastResult: { passed: true } }]),
+        .mockResolvedValueOnce([failingFixture])
+        .mockResolvedValueOnce([passingFixture]),
       createPublishedVersion: vi.fn().mockResolvedValue({ ...createPack(), status: 'published' }),
     };
     const handler = getRouteHandler(packsRouter, 'post', '/:id/publish');
@@ -250,6 +348,85 @@ describe('packs routes', () => {
     expect(blocked.body.error).toBe('Cannot publish without a passing fixture run');
     expect(allowed.statusCode).toBe(200);
     expect(allowed.body.pack.status).toBe('published');
+  });
+
+  it('does not publish when a malformed fixture claims a passing last result', async () => {
+    const packStore = {
+      get: vi.fn().mockResolvedValue(createPack()),
+      listFixtures: vi.fn().mockResolvedValue([
+        {
+          id: 'fixture-1',
+          name: 'Malformed',
+          packVersion: '1.0.0',
+          input: {},
+          assertions: [{ type: 'outputIncludes', expected: '' }],
+          lastResult: { source: 'fixture-runner', passed: true, assertions: [{ type: 'outputIncludes', expected: '', passed: true }] },
+        },
+      ]),
+      createPublishedVersion: vi.fn(),
+    };
+    const handler = getRouteHandler(packsRouter, 'post', '/:id/publish');
+    const req = { params: { id: 'pack-1' }, body: {}, app: { locals: { packStore } } };
+    const res = createMockRes();
+
+    await handler(req, res, vi.fn());
+
+    expect(res.statusCode).toBe(409);
+    expect(packStore.createPublishedVersion).not.toHaveBeenCalled();
+  });
+
+  it('does not publish a fixture with a forged passing lastResult not produced by the runner', async () => {
+    const packStore = {
+      get: vi.fn().mockResolvedValue(createPack()),
+      listFixtures: vi.fn().mockResolvedValue([
+        {
+          id: 'fixture-1',
+          name: 'Forged',
+          packVersion: '1.0.0',
+          input: {},
+          assertions: [{ type: 'statusEquals', expected: 'completed' }],
+          lastResult: { passed: true, assertions: [{ type: 'statusEquals', expected: 'completed', passed: true }] },
+        },
+      ]),
+      createPublishedVersion: vi.fn(),
+    };
+    const handler = getRouteHandler(packsRouter, 'post', '/:id/publish');
+    const req = { params: { id: 'pack-1' }, body: {}, app: { locals: { packStore } } };
+    const res = createMockRes();
+
+    await handler(req, res, vi.fn());
+
+    expect(res.statusCode).toBe(409);
+    expect(packStore.createPublishedVersion).not.toHaveBeenCalled();
+  });
+
+  it('preserves known statusCode errors from publish state transition', async () => {
+    const err = new Error('Pack is archived');
+    err.statusCode = 409;
+    const packStore = {
+      get: vi.fn().mockResolvedValue(createPack()),
+      listFixtures: vi.fn().mockResolvedValue([
+        {
+          id: 'fixture-1',
+          name: 'Passing',
+          packVersion: '1.0.0',
+          input: {},
+          assertions: [{ type: 'statusEquals', expected: 'completed' }],
+          lastResult: { source: 'fixture-runner', passed: true, assertions: [{ type: 'statusEquals', expected: 'completed', passed: true }] },
+        },
+      ]),
+      createPublishedVersion: vi.fn().mockRejectedValue(err),
+    };
+    const handler = getRouteHandler(packsRouter, 'post', '/:id/publish');
+    const req = { params: { id: 'pack-1' }, body: {}, app: { locals: { packStore } } };
+    const res = createMockRes();
+    const next = vi.fn();
+
+    await handler(req, res, next);
+
+    expect(res.statusCode).toBe(409);
+    expect(res.body).toEqual({ error: 'Pack is archived' });
+    expect(next).not.toHaveBeenCalled();
   });
 
   it('enforces JSON parsing, mount path, and CSRF at the Express app boundary', async () => {
