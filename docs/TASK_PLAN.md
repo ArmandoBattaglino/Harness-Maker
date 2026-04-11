@@ -4,7 +4,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v12.1 — task numbering extends through #544. V11.4 OUTPUT PANEL RENDERING PARITY is IN PROGRESS (#540-#544). V12.1 CANVAS NODE OVERLAP FIX is IN PROGRESS (#536-#539). V12.0 FAN-IN WORKFLOW FIX is CLOSED (#528-#535, all COMPLETED/PASS). V11.3 HITL RUNTIME TRIGGER is PENDING (#521-#527, not started). V11.2 COST & TOKEN DETAIL VISIBILITY is PENDING (#517-#520). V11.1 REPETITIVE HANDOFF LOOP DETECTION is CLOSED (improvement linked to V11.0). All tasks #511-#516 COMPLETED/PASS. V11.0 AGENT INTELLIGENCE REENGINEERING is CLOSED. All prior areas (V10.2 through V10.8, V11.0) remain CLOSED.
+**Status:** v17.0 — task numbering extends through #676. V17.0 PACK PLATFORM PROGRAM FOUNDATION is PENDING (#610-#616, not started). V17.1 PACK DOMAIN FOUNDATION is PENDING (#617-#625). V17.2 PACK CONTRACT LAYER is PENDING (#626-#634). V17.3 PACK-AWARE RUNTIME WRAPPER is PENDING (#635-#644). V17.4 PACK BUILDER AUTHORING PLATFORM is PENDING (#645-#653). V17.5 PACK OPERATOR PRODUCT SURFACE is PENDING (#654-#661). V17.6 PACK DISTRIBUTION & INSTALLATION is PENDING (#662-#669). V17.7 PACK FIXTURES & RELEASE GATES is PENDING (#670-#676). V16.5 AGENT OUTPUT TIMELINE is CLOSED (#606-#609, all COMPLETED/PASS). V16.3 OUTPUT STREAM / OUTPUT VIEW PARITY is CLOSED (#602-#605, all COMPLETED/PASS). V16.2 OUTPUT CARD LAYERING LOCK is CLOSED (#599-#601, all COMPLETED/PASS). V16.1 AGENT VALIDATION UX REFINEMENT is CLOSED (#593-#598, all COMPLETED/PASS). V16.0 AGENT NODE CONTEXT WINDOW % is IN PROGRESS (#589-#592). V15.0 SWARM UI CLEANUP & CANVAS MAXIMIZATION is IN PROGRESS (#580-#588). V13.2 FAN-IN BARRIER STUCK FIX is CLOSED (#576-#579, all COMPLETED/PASS). V14.0 AGENT NODE KEBAB MENU is CLOSED (#570-#575, all COMPLETED/PASS). V13.1 HITL MULTIPLE-CHOICE OPTIONS is CLOSED (#562-#569, all COMPLETED/PASS). V13.0 FLOATING EDGE ARROWS is CLOSED (#554-#562, all COMPLETED/CANCELLED/PASS). V12.2 RESET SESSION STATE LEAK FIX is CLOSED (#547-#553, all COMPLETED/PASS). V11.5 FINAL REPORT RENDERING PARITY is CLOSED (#545-#546, all COMPLETED/PASS). V11.4 OUTPUT PANEL RENDERING PARITY is CLOSED (#540-#544, all COMPLETED/PASS). V12.1 CANVAS NODE OVERLAP FIX is IN PROGRESS (#536-#539). V12.0 FAN-IN WORKFLOW FIX is CLOSED (#528-#535, all COMPLETED/PASS). V11.3 HITL RUNTIME TRIGGER is PENDING (#521-#527, not started). V11.2 COST & TOKEN DETAIL VISIBILITY is PENDING (#517-#520). V11.1 REPETITIVE HANDOFF LOOP DETECTION is CLOSED (improvement linked to V11.0). All tasks #511-#516 COMPLETED/PASS. V11.0 AGENT INTELLIGENCE REENGINEERING is CLOSED. All prior areas (V10.2 through V10.8, V11.0) remain CLOSED.
 **Completed Area:** V10.8 CLIENT FULL DEEP TEST FOLLOW-UP — AREA CLOSED 2026-04-09. 6 tasks (#491-#496), all COMPLETED. #491 COMPLETED (visual regression determinism fixed — normalizeHarnessLayout() added, 6 baselines regenerated at 682px), #492 COMPLETED (browser E2E harness reliability fixed — preflight check, direct node spawn, stale-server isolation), #493 COMPLETED (stale-server guard — check-server-freshness.mjs created, integrated into swarm-e2e-chat-check.mjs + swarm-visual-regression.mjs), #494 TEST GATE PASS, #495 AREA CHECKPOINT PASS, #496 COMPLETED (out-of-session: +11 deterministic server tests for _onHandoff -> Codex SDK spawn, 501/501 server suite green). No active planned areas.
 **Completed Area:** V10.7 CLIENT RESILIENCE TEST COVERAGE — AREA CLOSED 2026-04-09. #483 COMPLETED, #484 COMPLETED, #485 COMPLETED, #486 COMPLETED, #487 COMPLETED, #488 COMPLETED, TEST GATE #489 PASS, AREA CHECKPOINT #490 PASS. Verified by dedicated client coverage over restore/reconcile, secondary WS events, HITL failure paths, advanced ChatPanel states, AgentNode badges, and SwarmView operator-shell branches.
   **Completed Area:** V10.6 CLIENT CHAT + FLOW BUG FIXES — AREA CLOSED 2026-04-09. #476 COMPLETED, #477 COMPLETED, #478 COMPLETED, #479 COMPLETED, #480 COMPLETED, TEST GATE #481 PASS, AREA CHECKPOINT #482 PASS. Verified by live Puppeteer reruns of idle/reset + Codex success/reload on `http://127.0.0.1:3000`, clean Gemini blocked/stopped node/chat hygiene on fresh `http://127.0.0.1:3312`, and targeted server regressions (185/185 PASS).
@@ -20410,7 +20410,7 @@ Verdict: PASS — 2026-04-09. Added deterministic regressions for repeated same-
 ---
 
 ## V11.4 - OUTPUT PANEL RENDERING PARITY
-Status: IN PROGRESS — 2026-04-10
+Status: CLOSED — 2026-04-10
 Goal: Align the AgentOutputPanel markdown rendering pipeline with ChatMessage so the Output tab displays content with the same quality as the Chat View.
 Scope:
   1. Extract shared markdown components (mdComponents, sanitizeSchema, CodeBlock) into a reusable module
@@ -20418,12 +20418,12 @@ Scope:
   3. Refactor ChatMessage to import from shared modules
   4. Upgrade AgentOutputPanel to use the same rendering pipeline as ChatMessage
 Exit Criteria:
-  - [ ] Output tab renders code blocks with language labels, copy buttons, and horizontal scroll
-  - [ ] Output tab renders tables with overflow-x-auto wrappers
-  - [ ] Output tab uses rehypeSanitize for safe HTML
-  - [ ] Output tab applies repairTokenSplitting for cleaner text
-  - [ ] ChatMessage continues to work identically (no regression)
-  - [ ] Client build passes clean
+  - [x] Output tab renders code blocks with language labels, copy buttons, and horizontal scroll
+  - [x] Output tab renders tables with overflow-x-auto wrappers
+  - [x] Output tab uses rehypeSanitize for safe HTML
+  - [x] Output tab applies repairTokenSplitting for cleaner text
+  - [x] ChatMessage continues to work identically (no regression)
+  - [x] Client build passes clean
 ---
 
 TASK #540: OUTPUT-RENDER-01 — Extract shared markdown components into reusable module
@@ -20431,13 +20431,14 @@ Area: V11.4 - OUTPUT PANEL RENDERING PARITY
 Agent: frontend-dev
 Priority: HIGH
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   The ChatMessage component defines mdComponents (custom CodeBlock, tables, headings, lists, links, blockquotes), sanitizeSchema, and CodeBlock inline. These must be extracted to `client/src/utils/markdownComponents.jsx` so both ChatMessage and AgentOutputPanel can reuse them.
 Acceptance Criteria:
-  - [ ] `client/src/utils/markdownComponents.jsx` exports mdComponents, sanitizeSchema, CodeBlock
-  - [ ] No duplication of component definitions across files
+  - [x] `client/src/utils/markdownComponents.jsx` exports mdComponents, sanitizeSchema, CodeBlock
+  - [x] No duplication of component definitions across files
 Dependencies: none
+Verdict: COMPLETED — 2026-04-10. Created `client/src/utils/markdownComponents.jsx` exporting CodeBlock, mdComponents, and sanitizeSchema. All custom ReactMarkdown component overrides (code blocks with copy button, tables with overflow-x-auto, headings, lists, links, blockquotes, etc.) are now in a single shared module.
 ---
 
 TASK #541: OUTPUT-RENDER-02 — Extract shared text formatting into reusable module
@@ -20445,13 +20446,14 @@ Area: V11.4 - OUTPUT PANEL RENDERING PARITY
 Agent: frontend-dev
 Priority: HIGH
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   ChatMessage defines formatChatText (line-by-line markdown-aware cleaning with noise filtering, garble detection, JSON tail removal, token repair) and formatStreamJsonText inline. These must be extracted to `client/src/utils/formatChatText.js` for shared use.
 Acceptance Criteria:
-  - [ ] `client/src/utils/formatChatText.js` exports formatChatText, formatStreamJsonText
-  - [ ] All helper functions (isMarkdownStructuralLine, isNoiseLine, isGarbledLine, NOISE_LINE_PATTERNS) move with them
+  - [x] `client/src/utils/formatChatText.js` exports formatChatText, formatStreamJsonText
+  - [x] All helper functions (isMarkdownStructuralLine, isNoiseLine, isGarbledLine, NOISE_LINE_PATTERNS) move with them
 Dependencies: none
+Verdict: COMPLETED — 2026-04-10. Created `client/src/utils/formatChatText.js` exporting formatChatText and formatStreamJsonText with all supporting helpers (NOISE_LINE_PATTERNS, isMarkdownStructuralLine, isNoiseLine, isGarbledLine).
 ---
 
 TASK #542: OUTPUT-RENDER-03 — Refactor ChatMessage to import from shared modules
@@ -20459,13 +20461,14 @@ Area: V11.4 - OUTPUT PANEL RENDERING PARITY
 Agent: frontend-dev
 Priority: HIGH
 Difficulty: EASY
-Status: PENDING
+Status: COMPLETED
 Context:
   After extraction, ChatMessage.jsx must import mdComponents, sanitizeSchema, formatChatText, and formatStreamJsonText from the new shared modules instead of defining them inline. No behavioral change.
 Acceptance Criteria:
-  - [ ] ChatMessage imports from shared modules
-  - [ ] No behavioral regression in Chat View rendering
+  - [x] ChatMessage imports from shared modules
+  - [x] No behavioral regression in Chat View rendering
 Dependencies: TASK #540, TASK #541
+Verdict: COMPLETED — 2026-04-10. Refactored ChatMessage.jsx to import mdComponents, sanitizeSchema from `../utils/markdownComponents` and formatChatText, formatStreamJsonText from `../utils/formatChatText`. Removed ~180 lines of inline definitions. Build passes clean.
 ---
 
 TASK #543: OUTPUT-RENDER-04 — Upgrade AgentOutputPanel to use shared rendering pipeline
@@ -20473,7 +20476,7 @@ Area: V11.4 - OUTPUT PANEL RENDERING PARITY
 Agent: frontend-dev
 Priority: CRITICAL
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   AgentOutputPanel currently uses bare ReactMarkdown with remarkGfm only, default prose styling, no custom components, no rehypeSanitize, and no repairTokenSplitting. This causes visually degraded output compared to Chat View.
   Required changes:
@@ -20483,12 +20486,13 @@ Context:
     4. Replace bare ReactMarkdown with full pipeline (rehypePlugins + components)
     5. Replace prose classes with explicit overflow-safe wrapper
 Acceptance Criteria:
-  - [ ] Output tab uses mdComponents with custom CodeBlock, tables, etc.
-  - [ ] Output tab uses rehypeSanitize with sanitizeSchema
-  - [ ] Output tab applies repairTokenSplitting after cleanOutputText
-  - [ ] Content wrapper has min-w-0 break-words overflow-wrap-anywhere
-  - [ ] Tables and code blocks are horizontally scrollable in the narrow panel
+  - [x] Output tab uses mdComponents with custom CodeBlock, tables, etc.
+  - [x] Output tab uses rehypeSanitize with sanitizeSchema
+  - [x] Output tab applies repairTokenSplitting after cleanOutputText
+  - [x] Content wrapper has min-w-0 break-words overflow-wrap-anywhere
+  - [x] Tables and code blocks are horizontally scrollable in the narrow panel
 Dependencies: TASK #540, TASK #541
+Verdict: COMPLETED — 2026-04-10. Updated AgentOutputPanel.jsx: added imports for rehypeSanitize, mdComponents, sanitizeSchema, repairTokenSplitting; replaced `prose prose-invert prose-sm` wrapper with `min-w-0 break-words overflow-wrap-anywhere`; ReactMarkdown now uses rehypePlugins + components={mdComponents}; cleanOutputText now calls repairTokenSplitting.
 ---
 
 TASK #544: BUILD GATE — V11.4 Output Panel Rendering Parity verification
@@ -20497,11 +20501,2788 @@ Agent: qa-tester
 Type: BUILD_GATE
 Priority: HIGH
 Difficulty: EASY
-Status: PENDING
+Status: PASS
 Gate: HARD
 Context:
   Verify that the client builds clean and that no linter errors were introduced.
 Acceptance Criteria:
-  - [ ] `npm run build --prefix client` passes
-  - [ ] No new linter errors in modified files
+  - [x] `npm run build --prefix client` passes
+  - [x] No new linter errors in modified files
 Dependencies: TASK #540, TASK #541, TASK #542, TASK #543
+Verdict: PASS — 2026-04-10. `npm run build --prefix client` => PASS (509 modules, chunk-size warning only). No linter errors in any of the 4 modified/created files.
+
+---
+
+## AREA: V11.5 — FINAL REPORT RENDERING PARITY
+
+**Goal:** Upgrade `WorkflowArtifactPanel.jsx` (Final Report modal) to use the same shared `mdComponents`, `rehypeSanitize`, and `sanitizeSchema` rendering pipeline as ChatMessage and AgentOutputPanel.
+
+TASK #545: REPORT-RENDER-01 — Upgrade WorkflowArtifactPanel to shared rendering pipeline
+**Status:** COMPLETED
+**Assigned:** frontend-dev
+**Priority:** P2
+**Description:**
+Replace bare `ReactMarkdown` + `prose prose-invert` approach in WorkflowArtifactPanel with shared `mdComponents`, `rehypeSanitize`, and `sanitizeSchema`. Removes 10+ `prose-*:` class overrides in favor of consistent custom component rendering.
+**Files Modified:**
+  - `client/src/panels/WorkflowArtifactPanel.jsx`
+**Acceptance Criteria:**
+  - [x] Uses `mdComponents` from `../utils/markdownComponents`
+  - [x] Uses `rehypeSanitize` with `sanitizeSchema`
+  - [x] Code blocks have Copy button and language label
+  - [x] Headings, tables, links use shared styled components
+  - [x] Overflow-safe wrapper (`min-w-0 break-words`) present
+  - [x] No `prose`-class rendering (fully custom components)
+Dependencies: TASK #540 (shared module must exist)
+Verdict: COMPLETED — 2026-04-10. DOM verification confirms: 1 custom CodeBlock with Copy button, "json" language label, H1/H2/H3 all using shared classes (`text-primary-light`), overflow wrapper present. Visual regression: none.
+
+TASK #546: BUILD GATE — V11.5 Final Report Rendering Parity verification
+**Status:** PASS
+**Assigned:** qa-tester
+**Priority:** P1
+**Acceptance Criteria:**
+  - [x] `npm run build --prefix client` passes
+  - [x] No new linter errors in modified files
+  - [x] Browser visual verification of Final Report modal
+Dependencies: TASK #545
+Verdict: PASS — 2026-04-10. Build passed (509 modules). No linter errors. Browser screenshots confirm correct rendering of headings, code blocks with Copy, lists, blockquotes, and handoff JSON in Final Report modal.
+
+---
+
+## AREA: V12.2 — Reset Session State Leak Fix
+_Components: SwarmContext.jsx, SwarmView.jsx, SwarmEngine.js, useSwarm.js_
+_Tasks: #547 -> #553_
+_Gate: "Reset Session" must fully clear chatMessages, interAgentFeed, agentResults, and agent terminal contents on both client and server; no stale data re-appears via WS snapshot race_
+_Source: User report — "Reset Session" button does not truly clear chat history and agent terminal contents (2026-04-10)_
+
+---
+
+### Root Cause Analysis
+
+Three interacting defects combine to keep stale data visible after "Reset Session":
+
+1. **Client `reset()` deliberately preserves chat** — `SwarmContext.jsx` lines 342-356: `reset()` spreads `buildClearedExecutionState()` but overrides `chatMessages` and `interAgentFeed` with the previous values to let users "review after execution ends." Both the "Reset Session" toolbar button and the soft "Reset" status button call this same function.
+
+2. **Server agent-reset does not clear `execution.chatMessages`** — `SwarmEngine.js` `_resetStreamJsonAgent` (line 1064) and `_resetCodexSdkAgent` (line 1142) reset per-agent state (turn counts, costs, buffers) but never touch the `execution.chatMessages` array, so it keeps accumulating across resets.
+
+3. **WS snapshot race re-populates cleared state** — After reset, the server broadcasts `execution_status` via `_broadcastExecutionSnapshot` which includes the full `chatMessages` array (via `getStatus` line 8036). The client's `applyExecutionSnapshot` (useSwarm.js lines 288-294) re-merges server messages if the snapshot is at least as long as the client copy, so even if the client cleared them, the server would put them right back.
+
+---
+
+TASK #547: BUG-RESET-01 — Add hardReset() store action to SwarmContext.jsx
+Area: V12.2 — Reset Session State Leak Fix
+Agent: frontend-dev
+Priority: CRITICAL
+Difficulty: LOW
+Status: COMPLETED
+Completion Note: 2026-04-10 — Added hardReset() to SwarmContext.jsx that calls buildClearedExecutionState() without preserving chatMessages/interAgentFeed. Clears localStorage key.
+Context:
+  The existing `reset()` method in `client/src/store/SwarmContext.jsx` (lines 342-356)
+  deliberately preserves `chatMessages` and `interAgentFeed` by reading previous state
+  and overriding the `buildClearedExecutionState()` defaults. This is appropriate for
+  the soft "Reset" button (shown when execution is stopped/completed) but wrong for
+  "Reset Session" which the user expects to fully clear everything.
+
+  Fix: Add a new `hardReset()` action to the Zustand store that:
+  1. Removes `swarm-active-execution` from localStorage (same as `reset()`)
+  2. Calls `set(buildClearedExecutionState())` WITHOUT preserving chatMessages/interAgentFeed
+  3. `buildClearedExecutionState()` already sets `chatMessages: []`, `interAgentFeed: []`,
+     `agentResults: {}`, etc. — so no new clearing logic is needed, just don't override them
+
+  Location: `client/src/store/SwarmContext.jsx`, add after the existing `reset:` method (line 356)
+
+  Acceptance Criteria:
+  - [ ] `hardReset()` exists on useSwarmStore
+  - [ ] Calling `hardReset()` sets chatMessages to [], interAgentFeed to [], agentResults to {}
+  - [ ] Calling `hardReset()` removes localStorage key `swarm-active-execution`
+  - [ ] Existing `reset()` is unchanged (still preserves chat for soft reset)
+Dependencies: none
+
+TASK #548: BUG-RESET-02 — Wire "Reset Session" button to hardReset()
+Area: V12.2 — Reset Session State Leak Fix
+Agent: frontend-dev
+Priority: CRITICAL
+Difficulty: LOW
+Status: COMPLETED
+Completion Note: 2026-04-10 — handleStreamJsonAction mode='reset' now calls hardReset() instead of reset(). Soft "Reset" button (stopped/completed) still uses reset() to preserve chat for review.
+Context:
+  In `client/src/views/SwarmView.jsx`, the `handleStreamJsonAction` callback (lines 397-441)
+  handles mode='reset' by calling `reset()` on success (line 424). This needs to call
+  `hardReset()` instead so that "Reset Session" truly clears all state.
+
+  Fix:
+  1. Import/destructure `hardReset` from `useSwarmStore` (alongside existing `reset`)
+  2. In `handleStreamJsonAction`, line 424: change `reset()` to `hardReset()`
+  3. Update the dependency array of useCallback (line 441) to include `hardReset` instead of `reset`
+  4. Leave the soft "Reset" button (line 984) still calling `reset()` — that one should preserve chat
+
+  Acceptance Criteria:
+  - [ ] "Reset Session" toolbar button calls hardReset() (full clear)
+  - [ ] "Reset" status button (stopped/completed) still calls reset() (preserves chat)
+  - [ ] No lint errors
+Dependencies: TASK #547
+
+TASK #549: BUG-RESET-03 — Server: clear execution.chatMessages on agent reset
+Area: V12.2 — Reset Session State Leak Fix
+Agent: backend-dev
+Priority: HIGH
+Difficulty: LOW
+Status: COMPLETED
+Completion Note: 2026-04-10 — Both _resetStreamJsonAgent and _resetCodexSdkAgent now filter execution.chatMessages to remove messages for the reset nodeId before broadcasting. For Codex SDK, the chatMessages filter is done before _codexSdkTurnChatCountStart recalculation.
+Context:
+  In `server/services/SwarmEngine.js`, `_resetStreamJsonAgent` (line 1064) and
+  `_resetCodexSdkAgent` (line 1142) reset per-agent runtime state but leave
+  `execution.chatMessages` untouched. After reset, `getStatus()` (line 8036) includes
+  these stale messages in the `execution_status` snapshot, which re-populates the client.
+
+  Fix: In both `_resetStreamJsonAgent` and `_resetCodexSdkAgent`, after resetting
+  per-agent state, filter `execution.chatMessages` to remove messages belonging to
+  the reset nodeId:
+
+  ```javascript
+  execution.chatMessages = (execution.chatMessages ?? []).filter(
+    (msg) => msg.nodeId !== nodeId
+  );
+  ```
+
+  This should be added after the agent state reset and before `_broadcastAgentStatus`.
+  If ALL agents are being reset (which is what "Reset Session" does — it sends one
+  DELETE per agent), this will progressively clear all messages.
+
+  Acceptance Criteria:
+  - [ ] After _resetStreamJsonAgent, execution.chatMessages no longer contains messages for that nodeId
+  - [ ] After _resetCodexSdkAgent, same behavior
+  - [ ] getStatus() snapshot after reset returns empty or reduced chatMessages
+  - [ ] Existing server tests still pass
+Dependencies: none (server-side, independent of client tasks)
+
+TASK #550: BUG-RESET-04 — Guard applyExecutionSnapshot against post-reset WS race
+Area: V12.2 — Reset Session State Leak Fix
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: LOW
+Status: COMPLETED
+Completion Note: 2026-04-10 — Two-layer guard: (1) chatMessages merge changed from `!sameExecution` to `sameExecution` condition. (2) Added `_hardResetExecutionId` field to store; `hardReset()` saves the cleared execution ID; `applyExecutionSnapshot` early-returns for any snapshot matching the hard-reset execution, preventing WS broadcasts from re-establishing activeExecutionId. Field is cleared by `buildClearedExecutionState()` when a new execution starts.
+Context:
+  In `client/src/hooks/useSwarm.js`, `applyExecutionSnapshot` (lines 256-305) updates
+  the Zustand store with server snapshot data including `chatMessages`. After
+  `hardReset()` clears `activeExecutionId` to null, a stale `execution_status` WS
+  message from the server (sent before the DELETE response arrived) could re-populate
+  the state.
+
+  The existing code at line 258 computes:
+  ```
+  const _willReplace = snapshotChatMessages && (!sameExecution || _snapChatLen >= _clientChatLen);
+  ```
+  When `activeExecutionId` is null (after hardReset), `sameExecution` will be false
+  (since the snapshot has an executionId but client has null), so `_willReplace` will
+  be true and the stale messages will be merged back.
+
+  Fix: Add an early guard in `applyExecutionSnapshot` — if `activeExecutionId` is null
+  and the snapshot represents a known-cleared execution, skip the merge or at minimum
+  skip re-setting chatMessages. The cleanest approach:
+  - Add a `_lastHardResetTimestamp` field to the store (set by hardReset)
+  - In applyExecutionSnapshot, if the snapshot's executionId was the one that was
+    hard-reset, and the snapshot timestamp predates the hard reset, skip chatMessages merge
+  
+  Alternative simpler approach: when `activeExecutionId` is null, do not accept
+  chatMessages from the snapshot (only accept them when there IS an active execution
+  and it matches). This is the recommended approach since after hardReset we want a
+  clean slate:
+
+  Change line 292 from:
+  ```
+  ...(snapshotChatMessages && (!sameExecution || snapshotChatMessages.length >= ...)
+  ```
+  To:
+  ```
+  ...(snapshotChatMessages && sameExecution && snapshotChatMessages.length >= ...)
+  ```
+
+  This way, chatMessages from a DIFFERENT execution (or when activeExecutionId is null)
+  will never overwrite the client state.
+
+  Acceptance Criteria:
+  - [ ] After hardReset(), incoming execution_status WS snapshots do not re-populate chatMessages
+  - [ ] Normal execution_status snapshots for the SAME active execution still merge correctly
+  - [ ] No regressions in restore/reconnect flows
+Dependencies: TASK #547 (hardReset must exist)
+
+TASK #551: TEST GATE — V12.2 Reset Session State Leak verification
+Area: V12.2 — Reset Session State Leak Fix
+Agent: qa-tester
+Priority: HIGH
+Status: PASS
+Verdict: PASS — 2026-04-10. Client build passed (509 modules, 0 errors). Server test suite 535/535 PASS. No linter errors in modified files.
+Acceptance Criteria:
+  - [ ] `npm run build --prefix client` passes with no errors
+  - [ ] Server test suite passes (npm test --prefix server)
+  - [ ] No new linter errors in modified files
+Dependencies: TASK #547, #548, #549, #550
+
+TASK #552: BROWSER VERIFICATION — Reset Session clears all state E2E
+Area: V12.2 — Reset Session State Leak Fix
+Agent: qa-tester
+Priority: HIGH
+Status: PASS
+Verdict: PASS — 2026-04-10. Live Playwright browser test on http://127.0.0.1:3000: Generated "Mars Facts Workflow" (Researcher+Writer), ran to completion (both Done), verified chat filled with Mars/Italian text, clicked "Reset Session", verified: chat panel empty ("No messages yet"), agent nodes show "Idle" with no stale snippets, localStorage cleared (null), no Mars/Marte body text. Re-ran same workflow after reset — fresh execution completed with new content, no stale data. Screenshots: deep-test-05 through deep-test-08.
+Acceptance Criteria:
+  - [ ] Generate and run a workflow with 2+ agents
+  - [ ] Verify chat messages appear in Chat panel during execution
+  - [ ] Click "Reset Session" after workflow completes or while running
+  - [ ] Verify Chat panel is empty (no stale messages)
+  - [ ] Verify inter-agent feed is empty
+  - [ ] Verify clicking agent nodes does NOT show stale output panels
+  - [ ] Verify agent node cards show no stale snippets
+  - [ ] Run a NEW workflow after reset — verify fresh chat starts clean
+Dependencies: TASK #551
+
+TASK #553: AREA CHECKPOINT — V12.2 Reset Session State Leak Fix closeout
+Area: V12.2 — Reset Session State Leak Fix
+Agent: project-manager
+Priority: HIGH
+Status: PASS
+Verdict: PASS — 2026-04-10. All 4 fix tasks (#547-#550) COMPLETED. TEST GATE #551 PASS (535/535 server tests, 509 module build). BROWSER VERIFICATION #552 PASS (live E2E confirms full state clear + clean re-run). V12.2 AREA CLOSED.
+Acceptance Criteria:
+  - [ ] All tasks #547-#550 COMPLETED
+  - [ ] TEST GATE #551 PASS
+  - [ ] BROWSER VERIFICATION #552 PASS
+  - [ ] docs/memory/PROGRESS.md updated
+Dependencies: TASK #551, #552
+
+---
+
+## AREA: V13.0 — Floating Edge Arrows (Canvas Edge UX Overhaul)
+_Components: HandoffEdge.jsx, SwarmCanvas.jsx, AgentNode.jsx, floatingEdgeUtils.js (NEW), FloatingConnectionLine.jsx (NEW)_
+_Tasks: #554 -> #562_
+_Gate: Edge connection points must slide dynamically along node borders based on direction to connected node; edges must not overlap in diamond patterns (1→2→1); Bezier curves must render smoothly; existing feedback/corridor edge logic preserved_
+_Source: User report — arrows in canvas are confusing and overlapping, especially in fan-out/fan-in patterns (2026-04-10). Deep research on React Flow floating edges, Figma/Miro connector APIs, developer community solutions._
+
+---
+
+TASK #554: FLOAT-EDGE-01 — Create floatingEdgeUtils.js utility module
+Area: V13.0 — Floating Edge Arrows
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: COMPLETED
+Verdict: COMPLETED — 2026-04-10. Created client/src/canvas/edges/floatingEdgeUtils.js with getNodeIntersection (Chebyshev-norm ray-rectangle intersection), getEdgePosition (determines Top/Right/Bottom/Left), getFloatingEdgeParams (returns {sx,sy,tx,ty,sourcePos,targetPos}). Uses @xyflow/react v12 InternalNode API.
+Context:
+  New utility module implementing ray-rectangle intersection math for floating edge connection points.
+  Based on React Flow official "Floating Edges" example (https://reactflow.dev/examples/edges/floating-edges)
+  and Structurely project's calculateLineEndpointOnCardBoundary approach.
+  Functions:
+    - getNodeIntersection(node, targetNode): calculates where the center-to-center line intersects the node border
+    - getEdgePosition(node, intersectionPoint): determines Position (Top/Right/Bottom/Left) from intersection point
+    - getFloatingEdgeParams(sourceNode, targetNode): returns {sx, sy, tx, ty, sourcePos, targetPos} for edge rendering
+  Must use @xyflow/react v12 InternalNode API (node.measured.width/height, node.internals.positionAbsolute).
+Acceptance Criteria:
+  - [ ] File created at client/src/canvas/edges/floatingEdgeUtils.js
+  - [ ] getNodeIntersection correctly calculates border intersection for rectangular nodes
+  - [ ] getEdgePosition correctly determines side (Top/Right/Bottom/Left)
+  - [ ] getFloatingEdgeParams returns all parameters needed by getBezierPath
+Dependencies: none
+
+TASK #555: FLOAT-EDGE-02 — Update AgentNode and other node types with central floating handles
+Area: V13.0 — Floating Edge Arrows
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: LOW
+Status: CANCELLED
+Verdict: CANCELLED — 2026-04-10. Not needed: floating edge calculation uses useInternalNode() for geometric intersection independent of handle positions. Existing Top/Bottom handles serve connection interaction; ConnectionMode.Loose enables flexible connections.
+Context:
+  Add invisible central handles to AgentNode.jsx and all other node types (ConditionalNode, MergeNode, DelayNode,
+  LoopNode, ErrorHandlerNode, SubWorkflowNode, TriggerNode) to enable floating edge connections.
+  Each node needs a source handle and target handle positioned centrally, with opacity: 0.
+  Use connectionMode={ConnectionMode.Loose} to allow connections from any point on the node.
+Acceptance Criteria:
+  - [ ] AgentNode has invisible central source+target handles
+  - [ ] All other node types updated similarly
+  - [ ] Existing fixed handles preserved as fallback if needed
+  - [ ] Nodes still connectable via drag
+Dependencies: none
+
+TASK #556: FLOAT-EDGE-03 — Refactor HandoffEdge.jsx to use floating intersection + Bezier curves
+Area: V13.0 — Floating Edge Arrows
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: HIGH
+Status: COMPLETED
+Verdict: COMPLETED — 2026-04-10. HandoffEdge now uses useInternalNode(source)/useInternalNode(target) + getFloatingEdgeParams() + getBezierPath() for all forward edges. Feedback edges preserved with getFeedbackPath. SmoothStepPath kept as fallback. All styling layers preserved (halo, rail, animation, counter).
+Context:
+  Core refactor of HandoffEdge.jsx to:
+  1. Use useInternalNode(source) and useInternalNode(target) to access node dimensions/positions
+  2. Call getFloatingEdgeParams() from floatingEdgeUtils.js to calculate dynamic connection points
+  3. Replace getSmoothStepPath with getBezierPath for direct/primary edges (smoother curves)
+  4. PRESERVE existing getFeedbackPath logic for feedback edges (loops)
+  5. PRESERVE existing corridor routing for complex bundled edges
+  6. PRESERVE all styling (rail, glow, animation, counter label, selection states)
+  Performance: use useInternalNode(id) per-node, NOT useStore(state => state.nodes).
+  Based on React Flow v12 performance guide warnings about edge re-render optimization.
+Acceptance Criteria:
+  - [ ] Direct edges use floating intersection points instead of fixed handles
+  - [ ] Direct edges render with getBezierPath (smooth curves)
+  - [ ] Feedback edges still use getFeedbackPath (orthogonal routing preserved)
+  - [ ] All existing styling layers preserved (selection halo, rail, active animation, counter)
+  - [ ] No performance regression (useInternalNode per-node, not full store access)
+Dependencies: TASK #554
+
+TASK #557: FLOAT-EDGE-04 — Simplify buildEdgeLayoutData for floating edge compatibility
+Area: V13.0 — Floating Edge Arrows
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: MEDIUM
+Status: COMPLETED
+Verdict: COMPLETED — 2026-04-10. No code changes needed: floating edge params override handle-based positions automatically for forward edges. Slot/lane data still flows to feedback edges. Edge role detection (direct/primary/feedback) preserved for styling decisions.
+Context:
+  Adapt buildEdgeLayoutData() in SwarmCanvas.jsx for floating edges:
+  - Slot offset calculation (sourceSlotIndex/targetSlotIndex) can be simplified since floating edges
+    naturally separate based on direction to different targets
+  - Keep edgeRole detection (primary/feedback/direct) for styling decisions
+  - Keep corridorLift for complex bundled edges
+  - Remove or reduce slot-based horizontal offset when edges use floating intersection
+  - renderedEdges useMemo must pass updated data to HandoffEdge
+Acceptance Criteria:
+  - [ ] buildEdgeLayoutData still correctly identifies edgeRole (primary/feedback/direct)
+  - [ ] Slot offsets simplified or zeroed for floating edges
+  - [ ] renderedEdges passes necessary data for HandoffEdge floating calculation
+  - [ ] No regression in edge selection/dimming behavior
+Dependencies: TASK #556
+
+TASK #558: FLOAT-EDGE-05 — Create FloatingConnectionLine component
+Area: V13.0 — Floating Edge Arrows
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: LOW
+Status: COMPLETED
+Verdict: COMPLETED — 2026-04-10. Created client/src/canvas/edges/FloatingConnectionLine.jsx. Source point slides along node border following mouse direction using ray-rectangle intersection. Renders Bezier curve with dashed blue stroke and target circle indicator.
+Context:
+  Create FloatingConnectionLine.jsx for the preview line shown while dragging a new connection.
+  Based on React Flow official FloatingConnectionLine example.
+  Uses getFloatingEdgeParams to calculate source intersection point from the dragging node to the mouse position.
+  Renders a Bezier curve with dashed blue stroke (matching current connectionLineStyle).
+Acceptance Criteria:
+  - [ ] FloatingConnectionLine renders during edge creation drag
+  - [ ] Source point slides along node border following mouse direction
+  - [ ] Visual style matches current connection preview (dashed blue)
+  - [ ] Registered as connectionLineComponent in ReactFlow props
+Dependencies: TASK #554
+
+TASK #559: FLOAT-EDGE-06 — Update SwarmCanvas.jsx ReactFlow props for floating mode
+Area: V13.0 — Floating Edge Arrows
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: LOW
+Status: COMPLETED
+Verdict: COMPLETED — 2026-04-10. SwarmCanvas.jsx updated: added ConnectionMode import, connectionMode={ConnectionMode.Loose}, connectionLineComponent={FloatingConnectionLine}. Replaced connectionLineType+connectionLineStyle with floating component.
+Context:
+  Update ReactFlow component props in SwarmCanvas.jsx:
+  - Set connectionMode={ConnectionMode.Loose} for flexible floating connections
+  - Register FloatingConnectionLine as connectionLineComponent
+  - Keep existing edgeTypes, defaultEdgeOptions, connectionLineStyle
+  - Ensure defaultEdgeOptions markerEnd still works with floating edges
+Acceptance Criteria:
+  - [ ] connectionMode set to Loose
+  - [ ] FloatingConnectionLine registered
+  - [ ] Existing edge creation workflow still functional
+  - [ ] Arrow markers render correctly on floating edges
+Dependencies: TASK #558
+
+TASK #560: TEST GATE — V13.0 Floating Edge Arrows build + lint verification
+Area: V13.0 — Floating Edge Arrows
+Agent: qa-tester
+Priority: HIGH
+Status: PASS
+Verdict: PASS — 2026-04-10. `npm run build --prefix client` clean (511 modules, 0 errors). No linter errors in any modified/created file. 535/535 server tests pass. Edge rendering verified with 2-node, 3-node, and 5-node diamond workflows — no crashes.
+Dependencies: TASK #554, #555, #556, #557, #558, #559
+
+TASK #561: BROWSER VERIFICATION — Floating edges visual E2E
+Area: V13.0 — Floating Edge Arrows
+Agent: qa-tester
+Priority: HIGH
+Status: PASS
+Verdict: PASS — 2026-04-10. Full Playwright MCP E2E verification:
+  - Diamond pattern (Coordinator → Researcher/Fact-Checker/Translator → Editor): fan-out edges exit at y=350/424/497 (~73px separation), fan-in edges enter at y=293/420/547 (~127px separation). No overlapping.
+  - Dynamic recalculation confirmed: intersection points update as node heights change during execution.
+  - All 6 edges render Bezier curves (C commands in SVG), no SmoothStep paths detected.
+  - Edge selection works (1 selected, 5 dimmed). Arrow markers present on all edges.
+  - Edge animations (dashdraw) work on Bezier paths during live workflow execution.
+  - 2-node linear and 3-node chain workflows also render correctly with floating Bezier.
+  - Navigation round-trip (Projects → Swarm) preserves all 5 nodes + 6 edges with Bezier rendering intact.
+Dependencies: TASK #560
+
+TASK #562: AREA CHECKPOINT — V13.0 Floating Edge Arrows closeout
+Area: V13.0 — Floating Edge Arrows
+Agent: project-manager
+Priority: HIGH
+Status: PASS
+Verdict: PASS — 2026-04-10. All implementation tasks COMPLETED (#554, #556, #557, #558, #559). #555 CANCELLED (not needed). TEST GATE #560 PASS (535/535 server, 511 modules build clean). BROWSER VERIFICATION #561 PASS (full E2E with diamond pattern, animations, navigation persistence). V13.0 AREA CLOSED.
+Dependencies: TASK #560, #561
+
+================================================================================
+AREA: V13.1 — HITL Multiple-Choice Options
+================================================================================
+Summary: Extend the HITL protocol to support agent-proposed multiple-choice
+questions with checkbox selection. The agent can include an "options" array in
+the __HITL__ token. The UI renders checkboxes for each option plus a free-text
+textarea. The user selects one or more options, optionally adds text, and
+approves. Selected options are sent back to the agent as structured text.
+Backward compatible: when options is absent the existing approve/reject flow
+is unchanged.
+
+TASK #562: Update HITL system prompt instructions for options support
+Area: V13.1 — HITL Multiple-Choice Options
+Agent: backend-dev
+Priority: HIGH
+Difficulty: LOW
+Status: COMPLETED
+Completion Note: 2026-04-10 — Both system prompt branches (Codex ~6376 and Claude/stream-json ~6456) updated with options format documentation, examples, and multi-select behavior note. Backward compatible: "options" is documented as optional.
+Context:
+  In server/services/SwarmEngine.js, the _buildSystemPrompt method injects HITL
+  instructions into the agent's system prompt in two branches:
+  - Codex branch (~line 6368): single-line instruction
+  - Claude/stream-json branch (~line 6447): multi-line === HITL === block
+
+  Both updated to document the extended token format:
+    __HITL__:{"question":"...","options":["A","B","C"]}
+
+Acceptance Criteria:
+  - [x] Codex branch system prompt includes options format documentation
+  - [x] Claude/stream-json branch system prompt includes options format documentation
+  - [x] Instructions clarify options is optional (backward compatible)
+  - [x] Instructions mention multi-select behavior
+Dependencies: none
+
+TASK #563: Extend __HITL__ token parsing to extract options array
+Area: V13.1 — HITL Multiple-Choice Options
+Agent: backend-dev
+Priority: HIGH
+Difficulty: LOW
+Status: COMPLETED
+Completion Note: 2026-04-10 — Both PTY and stream-json detection regex updated from /__HITL__:(\{[^}]*\})/ to /__HITL__:(\{.*\})\s*$/m to handle JSON with nested arrays. Options extracted via parsed.options and spread into freezeAgent inboxItem. Display-stripping regexes on lines 751, 6122, 6123 also updated.
+Context:
+  In server/services/SwarmEngine.js, the __HITL__ token is detected in two places:
+  - PTY output handler (~line 4728)
+  - Stream-json result handler (~line 6170)
+
+Acceptance Criteria:
+  - [x] PTY __HITL__ detection extracts options array when present
+  - [x] Stream-json __HITL__ detection extracts options array when present
+  - [x] Options array is included in freezeAgent inboxItem payload
+  - [x] When options is absent, behavior is unchanged (backward compatible)
+  - [x] Regex handles JSON with nested array brackets correctly
+Dependencies: none
+
+TASK #564: Add selectedOptions validation middleware
+Area: V13.1 — HITL Multiple-Choice Options
+Agent: backend-dev
+Priority: HIGH
+Difficulty: LOW
+Status: COMPLETED
+Completion Note: 2026-04-10 — validateResumeText middleware in server/middleware/hitlValidation.js extended to validate selectedOptions: must be array of strings, max 50 items, each max 500 chars. 7 new tests added in security-v3.test.js.
+Context:
+  In server/middleware/hitlValidation.js, the existing validateResumeText
+  middleware extended with selectedOptions validation.
+
+Acceptance Criteria:
+  - [x] selectedOptions validated as array of strings
+  - [x] Max 50 elements enforced
+  - [x] Each element max 500 chars enforced
+  - [x] Missing or empty selectedOptions passes validation (optional field)
+  - [x] Non-array selectedOptions returns 400
+Dependencies: none
+
+TASK #565: Update inbox approve endpoint for selectedOptions
+Area: V13.1 — HITL Multiple-Choice Options
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: COMPLETED
+Completion Note: 2026-04-10 — Approve endpoint in server/routes/inbox.js now extracts selectedOptions from body and uses new formatHitlResponse() helper to combine selected options and resumeText into a single structured string for the agent. 6 new tests for formatHitlResponse in security-v3.test.js.
+Context:
+  In server/routes/inbox.js, the approve endpoint now extracts
+  { selectedOptions } and formats the combined response via formatHitlResponse().
+
+Acceptance Criteria:
+  - [x] Approve endpoint extracts selectedOptions from body
+  - [x] Response text includes selected options when present
+  - [x] Response text includes resumeText when present
+  - [x] Both can coexist in the same response
+  - [x] resumeAfterHitl formats combined response clearly for the agent
+  - [x] Backward compatible: no selectedOptions = same behavior as before
+Dependencies: TASK #564
+
+TASK #566: Pass hitlOptions through WebSocket to client chat message
+Area: V13.1 — HITL Multiple-Choice Options
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: LOW
+Status: COMPLETED
+Completion Note: 2026-04-10 — hitl_required case in client/src/hooks/useSwarm.js now passes hitlOptions: msg.item?.options || null in addChatMessage. Polling fallback in client/src/hooks/useInbox.js normalizeInboxItem also updated to propagate options.
+
+Acceptance Criteria:
+  - [x] hitlOptions is included in chat message when present in WS payload
+  - [x] hitlOptions is null/undefined when not present (backward compatible)
+Dependencies: TASK #563
+
+TASK #567: Implement multiple-choice checkbox UI in HitlChatCard
+Area: V13.1 — HITL Multiple-Choice Options
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: COMPLETED
+Completion Note: 2026-04-10 — HitlChatCard.jsx rewritten with conditional checkbox UI. When hitlOptions present: renders styled checkboxes (multi-select), always-visible textarea, Approve sends both selectedOptions[] and resumeText. Approve disabled when nothing selected and no text. When hitlOptions absent: identical to previous behavior.
+
+Acceptance Criteria:
+  - [x] Checkboxes rendered for each option in hitlOptions
+  - [x] Multiple checkboxes can be selected simultaneously
+  - [x] Textarea always visible below checkboxes
+  - [x] Approve sends selectedOptions array + resumeText to API
+  - [x] Approve disabled when nothing selected and no text
+  - [x] Without hitlOptions, card behaves identically to before
+  - [x] Styling matches existing dark theme
+Dependencies: TASK #566
+
+TASK #568: TEST GATE — V13.1 HITL Multiple-Choice build verification
+Area: V13.1 — HITL Multiple-Choice Options
+Agent: qa-tester
+Priority: HIGH
+Status: PASS
+Verdict: PASS — 2026-04-10. Client build passed (509 modules, 0 errors). Server test suite 552/552 PASS (17 new tests: 7 selectedOptions validation, 6 formatHitlResponse, 4 SwarmEngine options detection/stripping). No linter errors in modified files.
+Acceptance Criteria:
+  - [x] npm run build --prefix client passes with no errors
+  - [x] Server test suite passes (npm test --prefix server)
+  - [x] No new linter errors in modified files
+Dependencies: TASK #562, #563, #564, #565, #566, #567
+
+TASK #569: AREA CHECKPOINT — V13.1 HITL Multiple-Choice Options closeout
+Area: V13.1 — HITL Multiple-Choice Options
+Agent: project-manager
+Priority: HIGH
+Status: PASS
+Verdict: PASS — 2026-04-10. All 6 implementation tasks (#562-#567) COMPLETED. TEST GATE #568 PASS (552/552 server tests, 509 module build). V13.1 AREA CLOSED.
+Acceptance Criteria:
+  - [x] All tasks #562-#567 COMPLETED
+  - [x] TEST GATE #568 PASS
+  - [x] docs/memory/PROGRESS.md updated
+Dependencies: TASK #568
+
+---
+
+## V13.2 — FAN-IN BARRIER STUCK FIX (Editor "Waiting for upstream inputs 2/3")
+
+Area: V13.2 — Fan-In Barrier Stuck Fix
+Root Cause: When an upstream agent emits `__HANDOFF__` with a wrong/hallucinated target ID
+(e.g. "coordinator" instead of "editor"), `_resolveHandoffFanOutTargets` trusts the LLM output
+and routes the handoff to the wrong node. The Editor's `agentInputBarriers` barrier is never
+incremented for that source, leaving the fan-in permanently stuck at N-1/N while the source
+agent transitions to "Done". The forced-handoff fallback in `_onDone` never fires because a
+handoff WAS found — just to the wrong target.
+
+TASK #576: Fix _resolveHandoffFanOutTargets to correct wrong LLM target IDs
+Area: V13.2 — Fan-In Barrier Stuck Fix
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: LOW
+Status: COMPLETED
+Completion Note: 2026-04-10 — When requestedTargetId is not in outgoingTargets, falls back to graph edges. Logs warning when correcting a hallucinated target.
+Context:
+  In server/services/SwarmEngine.js, method _resolveHandoffFanOutTargets (~line 1634).
+  When requestedTargetId is NOT in outgoingTargets:
+    - outgoingTargets.length === 1 → return the single outgoing target (ignore LLM)
+    - outgoingTargets.length > 1 → return all outgoingTargets (fan-out, since intent unclear)
+    - outgoingTargets.length === 0 → return [requestedTargetId] as fallback
+
+Acceptance Criteria:
+  - [ ] When requestedTargetId not in outgoingTargets and 1 outgoing edge exists, use graph target
+  - [ ] When requestedTargetId not in outgoingTargets and multiple outgoing edges, fan-out to all
+  - [ ] When no outgoing edges, fall back to requestedTargetId
+  - [ ] Existing behavior preserved when requestedTargetId IS in outgoingTargets
+Dependencies: none
+
+TASK #577: Add safety net in _onHandoff for missed fan-in barriers
+Area: V13.2 — Fan-In Barrier Stuck Fix
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: COMPLETED
+Completion Note: 2026-04-10 — After the _onHandoff target loop, iterates source node's graph outgoing edges and registers any missed fan-in barrier inputs. If a barrier becomes satisfied, activates the downstream node.
+Context:
+  In server/services/SwarmEngine.js, method _onHandoff (~line 7434), after the target loop
+  (after line ~7627). If the source node has outgoing edges to fan-in targets whose barriers
+  were not incremented during this handoff round, register the barrier input for those missed
+  targets. This is a defense-in-depth measure that catches edge cases not handled by Fix #576.
+
+Acceptance Criteria:
+  - [ ] After the target loop, iterate source node's outgoing edges
+  - [ ] For each outgoing target that has an agentInputBarrier, register the source if missing
+  - [ ] If any barrier becomes satisfied, delete it and activate the downstream node
+  - [ ] No double-counting: only register if source was not already in the barrier's received Set
+Dependencies: TASK #576
+
+TASK #578: Add stale barrier watchdog in _syncExecutionStatusFromAgents
+Area: V13.2 — Fan-In Barrier Stuck Fix
+Agent: backend-dev
+Priority: MEDIUM
+Difficulty: MEDIUM
+Status: COMPLETED
+Completion Note: 2026-04-10 — Detects stale barriers where all expected upstream sources are in terminal state (done/error/stopped/blocked/idle/handoffing). Auto-resolves barrier and spawns downstream agent with warning log.
+Context:
+  In server/services/SwarmEngine.js, method _syncExecutionStatusFromAgents (~line 4144).
+  Add a final-resort watchdog: if an agentInputBarrier has received < required but ALL expected
+  upstream agents (the source node IDs in the barrier's required set) are in a terminal state
+  (done/error/stopped/blocked), auto-resolve the barrier and start the downstream agent.
+
+Acceptance Criteria:
+  - [ ] Detect stale barriers where all upstream sources are in terminal state
+  - [ ] Auto-resolve by deleting the barrier and spawning the downstream agent
+  - [ ] Log a warning when auto-resolving a stale barrier
+  - [ ] No interference with barriers that still have running/waiting upstream agents
+Dependencies: TASK #576, #577
+
+TASK #579: TEST GATE — V13.2 Fan-In Barrier Stuck Fix
+Area: V13.2 — Fan-In Barrier Stuck Fix
+Agent: qa-tester
+Priority: HIGH
+Status: PASS
+Verdict: PASS — 2026-04-10. Server test suite 595/595 PASS. Client build passed (511 modules, 0 errors). No linter errors in modified files.
+Acceptance Criteria:
+  - [ ] npm run build --prefix client passes with no errors
+  - [ ] Server test suite passes (npm test --prefix server)
+  - [ ] No new linter errors in modified files
+Dependencies: TASK #576, #577, #578
+
+================================================================================
+AREA: V14.0 — Agent Node Kebab Menu
+================================================================================
+Summary: Add a three-dot (kebab) action menu to the top-right corner of each
+agent node on the SwarmCanvas. The menu provides quick actions: "Chat with this
+Agent" (opens the side chat panel filtered to that agent), "View Output" (opens
+AgentOutputPanel), "Edit" (selects node for AgentInspector), "Duplicate", and
+"Delete". The kebab icon must stop event propagation to avoid triggering React
+Flow's onNodeClick. The dropdown follows the existing ContextMenu visual pattern.
+
+TASK #570: KEBAB-01 — Create NodeActionMenu.jsx component
+Area: V14.0 — Agent Node Kebab Menu
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: COMPLETED
+Completion Note: 2026-04-10 — NodeActionMenu.jsx created at client/src/canvas/nodes/NodeActionMenu.jsx. Renders kebab (3-dot SVG) button with absolute-positioned dropdown. Stops propagation on both onClick and onMouseDown. Click-away and Escape listeners close the menu. CanvasActionsContext.jsx also created at client/src/canvas/CanvasActionsContext.jsx for cross-component callback sharing.
+Context:
+  New component at client/src/canvas/nodes/NodeActionMenu.jsx.
+  Renders a small kebab icon (three vertical dots) as a button.
+  On click, toggles a floating dropdown menu with action items.
+  Uses click-away and Escape key listeners to close (same pattern as
+  client/src/canvas/ContextMenu.jsx). The kebab button calls
+  e.stopPropagation() on both onClick and onMouseDown to prevent
+  React Flow's onNodeClick from firing.
+  Each action item receives: { label, icon, onClick, disabled? }.
+  The dropdown is positioned absolute relative to the node, with z-50.
+  Styled to match the existing dark theme (bg-gray-800, border-gray-600,
+  text-gray-200, hover:bg-gray-700).
+Acceptance Criteria:
+  - [ ] Component renders a kebab (three-dot) icon button
+  - [ ] Click toggles a dropdown menu with action items
+  - [ ] e.stopPropagation() on onClick and onMouseDown of the kebab button
+  - [ ] Dropdown closes on click-away and on Escape key
+  - [ ] Actions receive { label, icon, onClick, disabled } props
+  - [ ] Styling matches existing ContextMenu dark theme
+Dependencies: none
+
+TASK #571: KEBAB-02 — Integrate NodeActionMenu into AgentNode.jsx
+Area: V14.0 — Agent Node Kebab Menu
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: COMPLETED
+Completion Note: 2026-04-10 — NodeActionMenu integrated into AgentNode.jsx with 5 actions: Chat with this Agent (setChatFilter + setSidePanelMode + setSidePanelOpen from Zustand), View Output (disabled when no output), Edit, Duplicate, Delete. Uses useCanvasActions() context for canvas-level callbacks.
+Context:
+  In client/src/canvas/nodes/AgentNode.jsx, import NodeActionMenu and
+  render it in the top-right area of the node (absolute positioned).
+  The menu is only shown when !isDropPreview.
+  Actions provided:
+    1. "Chat with this Agent" — calls useSwarmStore setChatFilter(id),
+       setSidePanelMode('chat'), setSidePanelOpen(true) directly from
+       the store (AgentNode already imports useSwarmStore).
+    2. "View Output" — calls data.onViewOutput(id). Disabled when
+       agentResults[id]?.finalText is falsy.
+    3. "Edit" — calls data.onEdit(id). Opens the AgentInspector panel.
+    4. "Duplicate" — calls data.onDuplicate(id).
+    5. "Delete" — calls data.onDelete(id).
+  The data.onViewOutput / onEdit / onDuplicate / onDelete callbacks are
+  injected into node data by SwarmCanvas.jsx (see TASK #572).
+Acceptance Criteria:
+  - [ ] NodeActionMenu renders in top-right of AgentNode
+  - [ ] Not rendered for drop preview nodes
+  - [ ] "Chat with this Agent" sets chatFilter, sidePanelMode, sidePanelOpen
+  - [ ] "View Output" opens AgentOutputPanel via data callback
+  - [ ] "View Output" disabled when no output exists
+  - [ ] "Edit" selects node for inspector via data callback
+  - [ ] "Duplicate" and "Delete" work via data callbacks
+Dependencies: TASK #570
+
+TASK #572: KEBAB-03 — Wire node action callbacks from SwarmCanvas.jsx
+Area: V14.0 — Agent Node Kebab Menu
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: LOW
+Status: COMPLETED
+Completion Note: 2026-04-10 — CanvasActionsContext.Provider wraps SwarmCanvas return JSX. canvasActions useMemo provides onViewOutput (setOutputPanelNodeId), onEdit (setSelectedNode), onDuplicate (duplicateNode), onDelete (deleteNode). Same callbacks as right-click context menu.
+Context:
+  In client/src/canvas/SwarmCanvas.jsx, the buildNodeData function (or the
+  node construction in buildCanvasNodes) must inject action callbacks into
+  agent node data objects:
+    - onViewOutput: (nodeId) => setOutputPanelNodeId(nodeId)
+    - onEdit: (nodeId) => { setOutputPanelNodeId(null); setSelectedNode(nodeId); }
+    - onDuplicate: (nodeId) => duplicateNode(nodeId)
+    - onDelete: (nodeId) => deleteNode(nodeId)
+  These callbacks use the same functions already defined in SwarmCanvas for
+  the right-click context menu (duplicateNode, deleteNode, setSelectedNode,
+  setOutputPanelNodeId). They must be stable references (useCallback or
+  defined within the existing useMemo/useCallback scope).
+Acceptance Criteria:
+  - [ ] Agent node data includes onViewOutput, onEdit, onDuplicate, onDelete
+  - [ ] Callbacks invoke the same logic as the right-click context menu
+  - [ ] Callback references are stable (no unnecessary re-renders)
+Dependencies: TASK #571
+
+TASK #573: TEST GATE — V14.0 Agent Node Kebab Menu build verification
+Area: V14.0 — Agent Node Kebab Menu
+Agent: qa-tester
+Priority: HIGH
+Status: PASS
+Verdict: PASS — 2026-04-10. Client build passed (513 modules, 0 errors). Server test suite 595/595 PASS. No linter errors in modified files.
+Acceptance Criteria:
+  - [ ] npm run build --prefix client passes with no errors
+  - [ ] Server test suite passes (npm test --prefix server)
+  - [ ] No new linter errors in modified files
+Dependencies: TASK #570, #571, #572
+
+TASK #574: BROWSER VERIFICATION — Kebab menu visual E2E
+Area: V14.0 — Agent Node Kebab Menu
+Agent: qa-tester
+Priority: HIGH
+Status: PASS
+Verdict: PASS — 2026-04-10. Loaded "Research Fact-Check Translate Editorial Workflow" (5 agents). All 5 agent nodes show kebab icon in top-right. Researcher kebab opens dropdown with 5 actions (Chat/ViewOutput[disabled]/Edit/Duplicate/Delete). "Chat with this Agent" opens chat panel filtered to that agent. "Edit" opens AgentInspector for the selected node. Kebab click does NOT trigger onNodeClick. Dropdown closes after action.
+Context:
+  Manual or Playwright-assisted verification:
+    1. Generate a workflow with 2+ agent nodes
+    2. Verify kebab icon is visible in top-right of each agent node
+    3. Click kebab — verify dropdown appears with 5 actions
+    4. Click "Chat with this Agent" — verify chat panel opens filtered to that agent
+    5. Click "View Output" (after a run) — verify AgentOutputPanel opens for that agent
+    6. Click "Edit" — verify AgentInspector opens for that node
+    7. Click "Duplicate" — verify node is duplicated
+    8. Click "Delete" — verify node is removed
+    9. Verify clicking the kebab does NOT open AgentOutputPanel or inspector
+   10. Verify dropdown closes on click-away and Escape
+Acceptance Criteria:
+  - [ ] Kebab icon visible on all agent nodes
+  - [ ] Dropdown renders correctly with all 5 actions
+  - [ ] "Chat with this Agent" opens filtered chat panel
+  - [ ] "View Output" opens AgentOutputPanel (disabled when no output)
+  - [ ] "Edit" opens AgentInspector
+  - [ ] "Duplicate" and "Delete" work correctly
+  - [ ] Kebab click does not trigger onNodeClick
+  - [ ] Dropdown closes on click-away and Escape
+Dependencies: TASK #573
+
+TASK #575: AREA CHECKPOINT — V14.0 Agent Node Kebab Menu closeout
+Area: V14.0 — Agent Node Kebab Menu
+Agent: project-manager
+Priority: HIGH
+Status: PASS
+Verdict: PASS — 2026-04-10. All 3 implementation tasks (#570-#572) COMPLETED. TEST GATE #573 PASS (513 modules, 595/595 server tests). BROWSER VERIFICATION #574 PASS (full E2E with 5-agent workflow). V14.0 AREA CLOSED.
+Acceptance Criteria:
+  - [ ] All tasks #570-#572 COMPLETED
+  - [ ] TEST GATE #573 PASS
+  - [ ] BROWSER VERIFICATION #574 PASS
+  - [ ] docs/memory/PROGRESS.md updated
+Dependencies: TASK #574
+
+---
+
+## AREA: V15.0 — Swarm UI Cleanup & Canvas Maximization
+_Components: SwarmView.jsx, SwarmCanvas.jsx, NodePalette.jsx_
+_Tasks: #580 -> #588_
+_Gate: Toolbar decluttered (Templates/Focus/HITL removed), node palette trimmed to 3 core types, saved workflows as toggleable canvas overlay, clean build with 0 errors_
+_Source: User request to simplify Swarm UI, maximize canvas space, remove unused sections (2026-04-10)_
+
+---
+
+TASK #580: SWARM-UI-01 — Remove Templates button and TemplateGallery modal from SwarmView
+Area: V15.0 — Swarm UI Cleanup & Canvas Maximization
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: LOW
+Status: PENDING
+Context:
+  Remove the Templates toolbar button, the showTemplates state, the TemplateGallery import, and the conditional
+  TemplateGallery render block from SwarmView.jsx. The TemplateGallery component file itself remains for potential
+  future use but is no longer mounted.
+Acceptance Criteria:
+  - [ ] Templates button removed from toolbar
+  - [ ] showTemplates state removed
+  - [ ] TemplateGallery import removed
+  - [ ] TemplateGallery conditional render block removed
+  - [ ] No build errors
+Dependencies: none
+
+TASK #581: SWARM-UI-02 — Remove Focus button from SwarmView toolbar
+Area: V15.0 — Swarm UI Cleanup & Canvas Maximization
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: LOW
+Status: PENDING
+Context:
+  Remove the Focus toggle button from the toolbar and the focusConnections state from SwarmView.
+  Hardcode focusConnections=true in SwarmCanvas.jsx so edge focus behavior is always active.
+  Remove the focusConnections prop from SwarmCanvas component signature.
+Acceptance Criteria:
+  - [ ] Focus button removed from toolbar
+  - [ ] focusConnections state removed from SwarmView
+  - [ ] SwarmCanvas internally hardcodes focusConnections = true
+  - [ ] focusConnections prop removed from SwarmCanvas signature
+  - [ ] Edge focus behavior still works when selecting nodes
+Dependencies: none
+
+TASK #582: SWARM-UI-03 — Remove HITL button from SwarmView toolbar
+Area: V15.0 — Swarm UI Cleanup & Canvas Maximization
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: LOW
+Status: PENDING
+Context:
+  Remove the HITL button from the primary toolbar. Remove getPendingCount import and pendingCount
+  derived value. HITL inline approvals in ChatPanel remain fully functional — only the toolbar
+  shortcut button is removed. Users can still access HITL via the Chat tab in the side panel.
+Acceptance Criteria:
+  - [ ] HITL button removed from toolbar
+  - [ ] getPendingCount import removed
+  - [ ] pendingCount variable removed
+  - [ ] useInbox hook call can remain if used elsewhere; remove if unused
+  - [ ] HITL inline approvals in ChatPanel still work
+Dependencies: none
+
+TASK #583: SWARM-UI-04 — Trim NodePalette to 3 core node types
+Area: V15.0 — Swarm UI Cleanup & Canvas Maximization
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: LOW
+Status: PENDING
+Context:
+  Reduce NODE_CARDS in NodePalette.jsx to only: Agent Node, Department, Webhook Trigger.
+  Remove: RSS Trigger, Conditional Router, Merge/Join, Delay Timer, Loop, Error Handler, Sub-Workflow.
+  Polish the palette UI: consistent spacing, clean typography, proper drag affordances.
+Acceptance Criteria:
+  - [ ] NODE_CARDS contains exactly 3 entries (agent, department, webhook trigger)
+  - [ ] Removed node types no longer appear in the palette
+  - [ ] Palette still collapses/expands correctly
+  - [ ] Drag-and-drop from palette to canvas still works for the 3 remaining types
+Dependencies: none
+
+TASK #584: SWARM-UI-05 — Convert Saved Workflows bar to toggleable canvas overlay
+Area: V15.0 — Swarm UI Cleanup & Canvas Maximization
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Remove the persistent Saved Workflows bar from SwarmView layout (between PromptToFlowBar and canvas).
+  Add a showSavedWorkflows state (default false).
+  Add a toggle button on the canvas (top-left area, folder icon) that opens/closes a floating overlay panel.
+  The overlay contains the same workflow select, Load, Refresh, Duplicate, Export, Import controls
+  in a compact layout. Uses absolute positioning with z-index, rounded corners, shadow, backdrop.
+  Clicking outside or pressing Escape closes the panel.
+  This reclaims vertical space for the canvas.
+Acceptance Criteria:
+  - [ ] Saved Workflows bar removed from fixed layout position
+  - [ ] Toggle button visible on canvas (folder icon, top-left or near controls)
+  - [ ] Floating overlay opens/closes on button click
+  - [ ] Overlay contains: workflow select, Load, Refresh, Duplicate, Export, Import
+  - [ ] Click-outside and Escape close the overlay
+  - [ ] All workflow operations (load, export, import, duplicate, refresh) still work
+  - [ ] Canvas gains the vertical space previously used by the bar
+Dependencies: none
+
+TASK #585: SWARM-UI-06 — Toolbar reorder and UI quality pass
+Area: V15.0 — Swarm UI Cleanup & Canvas Maximization
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: LOW
+Status: PENDING
+Context:
+  After removing Templates, Focus, and HITL, clean up the toolbar:
+  - Verify remaining items are logically grouped and spaced
+  - Order: Name + Project | Runtime + Models | History + Versions + Settings | Tidy + Save | Run controls + Status
+  - Ensure consistent button sizing, hover states, and disabled states
+  - Apply UI/UX best practices: proper gap spacing, consistent border-radius, readable labels
+Acceptance Criteria:
+  - [ ] Toolbar items are logically grouped with visual separators or spacing
+  - [ ] Consistent button styles across all toolbar items
+  - [ ] No orphaned gaps or misaligned items
+  - [ ] Toolbar remains responsive and usable
+Dependencies: TASK #580, #581, #582
+
+TASK #586: SWARM-UI-07 — Overall Swarm area UI polish
+Area: V15.0 — Swarm UI Cleanup & Canvas Maximization
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Apply UI/UX Pro Max guidelines to the Swarm area:
+  - Replace any emoji icons with SVG/text alternatives where applicable
+  - Ensure consistent elevation/shadow scale
+  - Verify dark mode contrast ratios meet 4.5:1 for text
+  - Check touch targets >= 44px for interactive elements
+  - Apply consistent border-radius and spacing scale (4/8px system)
+  - Ensure focus states are visible on keyboard navigation
+Acceptance Criteria:
+  - [ ] No emoji used as structural UI icons in modified components
+  - [ ] Consistent styling across NodePalette, toolbar, saved workflows overlay
+  - [ ] Accessible contrast ratios maintained
+  - [ ] Clean, professional appearance
+Dependencies: TASK #583, #584, #585
+
+TASK #587: TEST GATE — V15.0 Swarm UI Cleanup build verification
+Area: V15.0 — Swarm UI Cleanup & Canvas Maximization
+Agent: qa-tester
+Priority: HIGH
+Status: PENDING
+Acceptance Criteria:
+  - [ ] npm run build --prefix client passes with no errors
+  - [ ] Server test suite passes (npm test --prefix server)
+  - [ ] No new linter errors in modified files
+Dependencies: TASK #580, #581, #582, #583, #584, #585, #586
+
+TASK #588: AREA CHECKPOINT — V15.0 Swarm UI Cleanup closeout
+Area: V15.0 — Swarm UI Cleanup & Canvas Maximization
+Agent: project-manager
+Priority: HIGH
+Status: PENDING
+Acceptance Criteria:
+  - [ ] All tasks #580-#586 COMPLETED
+  - [ ] TEST GATE #587 PASS
+  - [ ] docs/memory/PROGRESS.md updated
+  - [ ] docs/memory/CHANGELOG.md updated
+Dependencies: TASK #587
+
+---
+
+## V16.0 — Agent Node Context Window % Indicator
+
+TASK #589: CONTEXT-PCT-01 — Model context limits utility
+Area: V16.0 — Agent Node Context Window % Indicator
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: LOW
+Status: COMPLETED
+Completion Note: 2026-04-10 — Added shared `formatAgentOutputText` helper and migrated `NodeOutputCard` plus legacy `AgentOutputPanel` to the chat-safe runtime-aware output formatter.
+Context:
+  Create client/src/utils/modelContextLimits.js with a mapping of model short-names
+  to their maximum context window token counts, and an exported helper function
+  getModelContextLimit(model) returning the max tokens or null if unknown.
+  Models: opus/sonnet/haiku → 200k, gpt-5.4/gpt-5.1-codex/gpt-4.1-codex → 200k,
+  gemini-2.5-pro/gemini-2.5-flash → 1M. Also handle claude-* prefixed names.
+Acceptance Criteria:
+  - [ ] getModelContextLimit returns correct values for all known models
+  - [ ] Returns null for empty or unknown model strings
+  - [ ] Handles claude-* prefixed model names via startsWith
+Dependencies: none
+
+TASK #590: CONTEXT-PCT-02 — Context % progress bar in AgentNode
+Area: V16.0 — Agent Node Context Window % Indicator
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Update client/src/canvas/nodes/AgentNode.jsx to display a context window usage
+  progress bar. Uses turnCost from agentState (inputTokens + cacheReadTokens +
+  cacheWriteTokens) as the numerator and getModelContextLimit(data.model) as the
+  denominator. Renders a thin color-coded bar (green 0-60%, yellow 60-85%, red 85-100%)
+  with percentage text label. Shows only when turnCost data exists and model is known.
+  Includes hover tooltip with exact token count (e.g. "85,200 / 200,000 tokens").
+Acceptance Criteria:
+  - [ ] Progress bar visible on agent node after first turn completes
+  - [ ] Correct percentage computation from turnCost + model limit
+  - [ ] Color transitions: green → yellow → red as context fills
+  - [ ] Hover tooltip shows exact token/limit values
+  - [ ] Bar hidden when model is unknown or no turnCost data
+  - [ ] Bar persists after agent finishes (done/completed state)
+Dependencies: TASK #589
+
+TASK #591: TEST GATE — V16.0 Context % build verification
+Area: V16.0 — Agent Node Context Window % Indicator
+Agent: qa-tester
+Priority: HIGH
+Status: PENDING
+Acceptance Criteria:
+  - [ ] npm run build --prefix client passes with no errors
+  - [ ] No new linter errors in modified files
+Dependencies: TASK #589, #590
+
+TASK #592: AREA CHECKPOINT — V16.0 Context % closeout
+Area: V16.0 — Agent Node Context Window % Indicator
+Agent: project-manager
+Priority: HIGH
+Status: PENDING
+Acceptance Criteria:
+  - [ ] Tasks #589-#590 COMPLETED
+  - [ ] TEST GATE #591 PASS
+  - [ ] docs/memory/PROGRESS.md updated
+  - [ ] docs/memory/CHANGELOG.md updated
+Dependencies: TASK #591
+
+---
+
+## V16.1 — Agent Validation UX Refinement
+
+TASK #593: VALIDATION-UX-01 — Restructure canvas validation output
+Area: V16.1 — Agent Validation UX Refinement
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: COMPLETED
+Completion Note: 2026-04-10 — `useCanvasValidation` now returns structured issue objects with `scope`, `summary`, `detail`, `globalIssues`, `agentIssuesByNodeId`, and `blockingIssues`, while keeping `errors` as a compatibility alias.
+Context:
+  Portare `useCanvasValidation` da lista piatta di stringhe a issue object strutturati
+  con almeno: `id`, `severity`, `scope`, `nodeId`, `summary`, `detail`.
+  Separare esplicitamente issue `global` vs issue `agent`.
+Acceptance Criteria:
+  - [ ] `useCanvasValidation` restituisce issue object strutturati
+  - [ ] Le issue globali sono separate da quelle agente
+  - [ ] `No agent nodes` e `No start node` restano globali
+  - [ ] `Multiple root agents auto-start` resta warning globale
+  - [ ] `empty system prompt` e `disconnected (no edges)` restano issue agente
+Dependencies: none
+
+TASK #594: VALIDATION-UX-02 — Redesign SwarmView validation summary
+Area: V16.1 — Agent Validation UX Refinement
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: COMPLETED
+Completion Note: 2026-04-10 — Removed the old `Validation (N): ...` dump bar. SwarmView now shows a softer summary banner only for global workflow issues and keeps Run blocked only by global blockers.
+Context:
+  Sostituire la barra alta attuale con un summary compatto e più curato.
+  Mostrare lì solo issue globali o blocker non riferiti a un agente.
+Acceptance Criteria:
+  - [ ] La vecchia riga `Validation (N): ...` è rimossa
+  - [ ] La top summary mostra solo issue globali
+  - [ ] Il bottone Run continua a bloccarsi sui blocker
+  - [ ] Se esistono solo warning agente, nessuna barra alta viene mostrata
+Dependencies: TASK #593
+
+TASK #595: VALIDATION-UX-03 — Agent warning badge opens floating issues card
+Area: V16.1 — Agent Validation UX Refinement
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: COMPLETED
+Completion Note: 2026-04-10 — AgentNode warning badge now aggregates per-node validation issues and opens the new floating `NodeValidationCard` with severity pills and readable details.
+Context:
+  Rendere il badge giallo del nodo agente aggregato e cliccabile.
+  Aprire un nuovo card flottante tipo output con il dettaglio delle issue dell’agente.
+Acceptance Criteria:
+  - [ ] Il badge warning aggrega le issue agente per nodo
+  - [ ] Il badge è cliccabile e apre una card flottante
+  - [ ] La card mostra header, count, severity pill e dettaglio leggibile
+  - [ ] Nessuna tab `Errors` viene aggiunta all’Inspector
+Dependencies: TASK #593
+
+TASK #596: VALIDATION-UX-04 — Canvas/store coordination for output vs validation cards
+Area: V16.1 — Agent Validation UX Refinement
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: COMPLETED
+Completion Note: 2026-04-10 — SwarmContext now tracks `agentValidationIssuesByNodeId` and `expandedValidationNodeId`; canvas + inspector flows now close output and validation cards coherently on node/pane/edge/edit/close interactions.
+Context:
+  Aggiungere stato UI dedicato nello store e chiusure coerenti su click nodo, pane,
+  edge, edit, close.
+Acceptance Criteria:
+  - [ ] Lo store espone `agentValidationIssuesByNodeId`
+  - [ ] Lo store espone `expandedValidationNodeId`
+  - [ ] Aprire errori chiude output dello stesso nodo
+  - [ ] Aprire output chiude errori dello stesso nodo
+  - [ ] Click pane/edge chiude entrambi
+Dependencies: TASK #593, TASK #595
+
+TASK #597: TEST GATE — V16.1 validation UX
+Area: V16.1 — Agent Validation UX Refinement
+Agent: qa-tester
+Priority: HIGH
+Status: PASS
+Verdict: PASS — 2026-04-10. Updated validation UX tests plus client-wide regressions passed: `npm test --prefix client` = 59/59, `npm run build --prefix client` passed (513 modules).
+Acceptance Criteria:
+  - [ ] Test client mirati aggiornati per summary globale e validation card
+  - [ ] `npm test --prefix client` passa
+  - [ ] `npm run build --prefix client` passa
+Dependencies: TASK #593, TASK #594, TASK #595, TASK #596
+
+TASK #598: AREA CHECKPOINT — V16.1 closeout
+Area: V16.1 — Agent Validation UX Refinement
+Agent: project-manager
+Priority: HIGH
+Status: PASS
+Verdict: PASS — 2026-04-10. Tasks #593-#596 completed, TEST GATE #597 pass, and `PROGRESS.md`, `CHANGELOG.md`, `ACTIVITY_LOG.md`, and `CODE_MAP.md` synced for the V16.1 validation UX wave.
+Acceptance Criteria:
+  - [ ] Tasks #593-#596 COMPLETED
+  - [ ] TEST GATE #597 PASS
+  - [ ] `docs/memory/PROGRESS.md` synced if touched
+  - [ ] `docs/memory/CHANGELOG.md` synced if touched
+  - [ ] `docs/memory/ACTIVITY_LOG.md` synced if touched
+  - [ ] `docs/memory/CODE_MAP.md` synced if touched
+Dependencies: TASK #597
+
+---
+
+## V16.2 — Output Card Layering Lock
+
+TASK #599: OUTPUT-LAYER-01 — Keep open output card and owning agent node above canvas
+Area: V16.2 — Output Card Layering Lock
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: COMPLETED
+Completion Note: 2026-04-10 — `SwarmCanvas` now applies transient runtime `zIndex` layering via `applyExpandedOutputLayering()`, keeping the open output card's owning agent node above other canvas nodes without changing persisted workflow schema.
+Context:
+  When an agent output card is open on the swarm canvas, keep that output visually
+  above all other canvas nodes and edges. The owning agent node must also stay above
+  the rest of the canvas while the output is open, so dragging that node keeps both
+  the node and the output card in front until the card is closed.
+  Implement this as transient runtime layering in the canvas render path only.
+Acceptance Criteria:
+  - [ ] Opening agent output elevates the owning agent node above all other canvas nodes
+  - [ ] The open output card stays above other nodes and edges while visible
+  - [ ] Dragging the owning agent node preserves the elevated layering until output closes
+  - [ ] Closing the output restores normal canvas layering
+  - [ ] No workflow persistence schema changes are introduced for this behavior
+Dependencies: none
+
+TASK #600: TEST GATE — V16.2 output layering verification
+Area: V16.2 — Output Card Layering Lock
+Agent: qa-tester
+Priority: HIGH
+Status: PASS
+Verdict: PASS — 2026-04-10. Targeted client checks passed: `npm test --prefix client -- src/canvas/outputLayering.test.js src/canvas/nodes/NodeOutputCard.test.jsx src/canvas/AgentNode.test.jsx src/canvas/SwarmCanvas.test.jsx` = 7/7 and `npm run build --prefix client` passed (515 modules).
+Acceptance Criteria:
+  - [ ] Client tests covering output layering behavior pass
+  - [ ] npm run build --prefix client passes with no errors
+  - [ ] No regressions in existing output card behavior
+Dependencies: TASK #599
+
+TASK #601: AREA CHECKPOINT — V16.2 closeout
+Area: V16.2 — Output Card Layering Lock
+Agent: project-manager
+Priority: HIGH
+Status: PASS
+Verdict: PASS — 2026-04-10. TASK #599 completed, TEST GATE #600 passed, and `PROGRESS.md`, `CHANGELOG.md`, `ACTIVITY_LOG.md`, and `CODE_MAP.md` were synced for the V16.2 output-layering fix.
+Acceptance Criteria:
+  - [ ] TASK #599 COMPLETED
+  - [ ] TEST GATE #600 PASS
+  - [ ] docs/memory/PROGRESS.md synced if touched
+  - [ ] docs/memory/CHANGELOG.md synced if touched
+  - [ ] docs/memory/ACTIVITY_LOG.md synced if touched
+Dependencies: TASK #600
+
+---
+
+## V16.3 — Output Stream / Output View Parity
+
+TASK #602: OUTPUT-PARITY-01 — Shared output formatter + canvas output card migration
+Area: V16.3 — Output Stream / Output View Parity
+Agent: frontend-dev
+Priority: CRITICAL
+Difficulty: MEDIUM
+Status: COMPLETED
+Completion Note: 2026-04-10 — Added shared `formatAgentOutputText` helper and migrated `NodeOutputCard` plus legacy `AgentOutputPanel` to the chat-safe runtime-aware output formatter.
+Context:
+  The Swarm Chat view renders structured/canonical text cleanly, but the canvas
+  output surfaces still diverge. The currently used floating canvas component is
+  `NodeOutputCard`, not the legacy `AgentOutputPanel`, and it still runs its own
+  cleanup path. This can leave output text with fused words or degraded spacing
+  even when `ChatMessage` already shows the same turn correctly.
+  Create a shared formatter for output-facing surfaces that follows the same
+  runtime split as chat (`stream-json`/`codex-sdk` vs `pty`) and migrate
+  `NodeOutputCard` to it. Keep the legacy `AgentOutputPanel` aligned or clearly
+  treated as legacy-only.
+Acceptance Criteria:
+  - [x] Shared output formatter exists in `client/src/utils/` and reuses the chat-safe pipeline
+  - [x] `NodeOutputCard` uses the shared formatter instead of its private cleanup path
+  - [x] Structured output in the floating card no longer shows fused-word artifacts when chat is clean
+  - [x] Legacy `AgentOutputPanel` does not drift from the same formatter contract
+Dependencies: none
+
+TASK #603: OUTPUT-PARITY-02 — AgentInspector output/live snippet source alignment
+Area: V16.3 — Output Stream / Output View Parity
+Agent: frontend-dev
+Priority: CRITICAL
+Difficulty: MEDIUM
+Status: COMPLETED
+Completion Note: 2026-04-10 — AgentInspector output tab now uses the same runtime-aware formatter, and the live output snippet prefers `lastChatSnippet` for structured runtimes before falling back to `lastOutputSnippet`.
+Context:
+  `AgentInspector` mixes two output paths: the Output tab renders `agentResults.finalText`,
+  while the config/live section prints `lastOutputSnippet` almost raw for structured runtimes.
+  This can make the inspector output look worse than chat during execution and after
+  rehydration. Align both paths to the shared formatter and prefer the canonical/live chat
+  snippet source when available for structured runtimes.
+Acceptance Criteria:
+  - [x] Output tab uses the same output formatter contract as Chat View / floating output
+  - [x] Live output snippet is cleaned for structured runtimes instead of showing raw chunk noise
+  - [x] Structured inspectors prefer canonical/live chat snippet text when available
+  - [x] Rehydrated output does not regress to a dirtier client-local string when canonical text exists
+  - [x] Targeted client regressions cover output card + inspector parity cases
+Dependencies: TASK #602
+
+TASK #604: TEST GATE — V16.3 output parity verification
+Area: V16.3 — Output Stream / Output View Parity
+Agent: qa-tester
+Priority: HIGH
+Status: PASS
+Verdict: PASS — 2026-04-10. `npm test --prefix client -- --run src/canvas/ChatMessage.test.jsx src/canvas/nodes/NodeOutputCard.test.jsx src/canvas/AgentInspector.test.jsx` PASS (6/6). `npm run build --prefix client` PASS (515 modules, chunk-size warning only).
+Acceptance Criteria:
+  - [x] Targeted client tests for output parity pass
+  - [x] `npm run build --prefix client` passes with no errors
+  - [x] No regressions in existing chat canonicalization behavior
+Dependencies: TASK #602, TASK #603
+
+TASK #605: AREA CHECKPOINT — V16.3 closeout
+Area: V16.3 — Output Stream / Output View Parity
+Agent: project-manager
+Priority: HIGH
+Status: PASS
+Verdict: PASS — 2026-04-10. Tasks #602-#603 completed, TEST GATE #604 passed, and memory/changelog/code-map sync completed for V16.3.
+Acceptance Criteria:
+  - [x] Tasks #602-#603 COMPLETED
+  - [x] TEST GATE #604 PASS
+  - [x] docs/memory/PROGRESS.md synced if touched
+  - [x] docs/memory/CHANGELOG.md synced if touched
+  - [x] docs/memory/ACTIVITY_LOG.md synced if touched
+Dependencies: TASK #604
+
+---
+
+## V16.5 — Agent Output Timeline
+
+TASK #606: OUTPUT-TIMELINE-01 — Server/client output entries contract
+Area: V16.5 — Agent Output Timeline
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: MEDIUM
+Status: COMPLETED
+Context:
+  The current output surfaces collapse an agent's replies into one long `finalText`
+  string. That makes multiple agent replies hard to read and always leaves the oldest
+  content at the top. Introduce a backward-compatible `outputEntries` contract under
+  `agentOutputs[nodeId]` / hydrated `agentResults[nodeId]` so output surfaces can
+  render distinct reply blocks without breaking older persisted executions that only
+  have `finalText`.
+Acceptance Criteria:
+  - [x] Live execution results expose `outputEntries` per agent alongside legacy `finalText`
+  - [x] Structured outputs are grouped by `turnId` so each completed turn becomes one entry
+  - [x] PTY outputs fall back to distinct assistant messages when no `turnId` exists
+  - [x] Persisted history remains readable when `outputEntries` is missing
+  - [x] Client hydration preserves `outputEntries` without breaking existing `finalText` consumers
+Dependencies: none
+
+TASK #607: OUTPUT-TIMELINE-02 — Newest-first separated output rendering
+Area: V16.5 — Agent Output Timeline
+Agent: frontend-dev
+Priority: CRITICAL
+Difficulty: MEDIUM
+Status: COMPLETED
+Context:
+  Update the real output surfaces (`NodeOutputCard` and `AgentInspector`) to render
+  distinct output blocks instead of one concatenated markdown region. Newest outputs
+  must appear first. Each block should remain markdown-safe and clearly separated with
+  lightweight metadata (at minimum a stable order label; timestamp when available).
+  Keep Chat View chronological and unchanged.
+Acceptance Criteria:
+  - [x] `NodeOutputCard` renders separate output sections instead of one merged blob
+  - [x] `AgentInspector` Output tab renders the same newest-first sections
+  - [x] Newest output appears at the top in both surfaces
+  - [x] Copy action follows the same visible newest-first separated ordering
+  - [x] Legacy single-blob executions still render as one section
+Dependencies: TASK #606
+
+TASK #608: TEST GATE — V16.5 output timeline verification
+Area: V16.5 — Agent Output Timeline
+Agent: qa-tester
+Priority: HIGH
+Status: PASS
+Acceptance Criteria:
+  - [x] Targeted client tests for separated newest-first output rendering pass
+  - [x] Targeted server tests for `outputEntries` generation/hydration pass
+  - [x] `npm run build --prefix client` passes with no errors
+  - [x] Existing chat chronology behavior remains unchanged
+Dependencies: TASK #606, TASK #607
+
+TASK #609: AREA CHECKPOINT — V16.5 closeout
+Area: V16.5 — Agent Output Timeline
+Agent: project-manager
+Priority: HIGH
+Status: PASS
+Acceptance Criteria:
+  - [x] TASKS #606-#607 COMPLETED
+  - [x] TEST GATE #608 PASS
+  - [x] docs/memory/PROGRESS.md synced if touched
+  - [x] docs/memory/CHANGELOG.md synced if touched
+  - [x] docs/memory/ACTIVITY_LOG.md synced if touched
+  - [x] docs/memory/CODE_MAP.md synced if touched
+Dependencies: TASK #608
+
+---
+
+## AREA: V17.0 — Pack Platform Program Foundation
+_Components: design docs, compatibility rules, checkpoint model, V17 dependency map_
+_Tasks: #610 -> #616_
+_Gate: The pack program must be described in repo-native artifacts before implementation starts; names, checkpoints, and compatibility rules must be explicit and stable enough that later areas do not invent them ad hoc._
+_Source: User-approved pack platform roadmap based on harness/pack strategy discussion (2026-04-11)._
+
+---
+
+TASK #610: PACK-PROGRAM-01 — Create pack platform design doc and canonical glossary
+Area: V17.0 — Pack Platform Program Foundation
+Agent: architect
+Priority: CRITICAL
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Create `docs/PACK_PLATFORM_DESIGN.md` as the technical source of truth for the V17.x
+  program.
+  Inspect:
+    - `docs/ARCHITECTURE.md`
+    - `docs/API.md`
+    - `docs/TASK_PLAN.md`
+    - `docs/memory/CODE_MAP.md`
+  Modify:
+    - `docs/PACK_PLATFORM_DESIGN.md`
+  The document must freeze the canonical nouns used throughout the program:
+  `PackDefinition`, `PackVersion`, `PackRun`, `PackInstall`, `PackFixture`,
+  `PackDependency`, `PackRuntimePolicy`.
+Acceptance Criteria:
+  - [ ] `docs/PACK_PLATFORM_DESIGN.md` exists
+  - [ ] The document defines the workflow-vs-pack model explicitly
+  - [ ] Canonical nouns and their purpose are listed in one place
+  - [ ] The document is written for implementation handoff, not as marketing copy
+Dependencies: none
+
+TASK #611: PACK-PROGRAM-02 — Lock backward-compatibility and migration guardrails
+Area: V17.0 — Pack Platform Program Foundation
+Agent: architect
+Priority: CRITICAL
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Define the non-negotiable compatibility rules before any server or client work starts.
+  Inspect:
+    - `server/routes/workflows.js`
+    - `server/routes/swarm.js`
+    - `server/services/WorkflowStore.js`
+    - `client/src/views/SwarmView.jsx`
+  Modify:
+    - `docs/PACK_PLATFORM_DESIGN.md`
+  The rules must protect existing workflow CRUD, existing workflow execution entrypoints,
+  and the current Swarm canvas as the builder/debug surface while packs are added.
+Acceptance Criteria:
+  - [ ] Existing workflow CRUD is declared additive-only and preserved
+  - [ ] Existing workflow start/status/results routes are listed as unchanged in v1
+  - [ ] The document states that packs wrap workflow execution rather than replace it
+  - [ ] The document states v1 uses exactly one workflow per pack
+Dependencies: TASK #610
+
+TASK #612: PACK-PROGRAM-03 — Produce V17 component ownership and touchpoint inventory
+Area: V17.0 — Pack Platform Program Foundation
+Agent: architect
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Map where each V17 concern lives so later tasks know which layer owns what.
+  Inspect:
+    - `server/index.js`
+    - `server/services/SwarmEngine.js`
+    - `server/routes/swarm.js`
+    - `server/services/WorkflowStore.js`
+    - `client/src/store/SwarmContext.jsx`
+    - `client/src/hooks/useSwarm.js`
+    - `client/src/canvas/WorkflowSettingsModal.jsx`
+  Modify:
+    - `docs/PACK_PLATFORM_DESIGN.md`
+  The inventory must separate domain/persistence, API, runtime, client state,
+  builder surfaces, and operator surfaces.
+Acceptance Criteria:
+  - [ ] The design doc names the primary server touchpoints
+  - [ ] The design doc names the primary client touchpoints
+  - [ ] New planned modules are listed separately from existing touched files
+  - [ ] Each major subsystem has a clear owner layer
+Dependencies: TASK #610
+
+TASK #613: PACK-PROGRAM-04 — Define checkpoint framework and task packet template
+Area: V17.0 — Pack Platform Program Foundation
+Agent: project-manager
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Standardize how every V17 task will be written and verified.
+  Inspect:
+    - `docs/TASK_PLAN.md`
+    - `docs/PACK_PLATFORM_DESIGN.md`
+  Modify:
+    - `docs/PACK_PLATFORM_DESIGN.md`
+    - `docs/TASK_PLAN.md`
+  Add the checkpoint classes `CK-A` through `CK-G` and define a reusable task packet
+  structure: goal, files to inspect, expected modifications, checkpoints, tests,
+  manual smoke, dependencies.
+Acceptance Criteria:
+  - [ ] Checkpoints CK-A through CK-G are defined in the design doc
+  - [ ] Task packet structure is documented
+  - [ ] The V17 tasks in TASK_PLAN follow the new packet style
+  - [ ] No later area is allowed to omit tests or manual smoke intent
+Dependencies: TASK #610, TASK #611, TASK #612
+
+TASK #614: PACK-PROGRAM-05 — Register V17.x area map and dependency waves
+Area: V17.0 — Pack Platform Program Foundation
+Agent: project-manager
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Add the V17.x program to `docs/TASK_PLAN.md` in the same style as the rest of the repo.
+  Inspect:
+    - `docs/TASK_PLAN.md`
+    - `docs/PACK_PLATFORM_DESIGN.md`
+  Modify:
+    - `docs/TASK_PLAN.md`
+  Register the area headers, task numbering, gates, and the dependency ordering:
+  V17.0 -> V17.1 -> V17.2 -> V17.3 -> V17.4 -> V17.5 -> V17.6 -> V17.7.
+Acceptance Criteria:
+  - [ ] V17 area headers exist in TASK_PLAN
+  - [ ] Task numbering is contiguous after #609
+  - [ ] Each area has a gate statement and source/context line
+  - [ ] Dependency order is explicit in the tasks themselves
+Dependencies: TASK #613
+
+TASK #615: REVIEW GATE — V17.0 planning consistency review
+Area: V17.0 — Pack Platform Program Foundation
+Agent: documenter
+Priority: HIGH
+Status: PENDING
+Context:
+  Review the newly added V17 planning artifacts for internal consistency.
+  Inspect:
+    - `docs/PACK_PLATFORM_DESIGN.md`
+    - `docs/TASK_PLAN.md`
+    - `docs/ARCHITECTURE.md`
+    - `docs/API.md`
+  Verify that the new program language does not contradict current repo terminology
+  and that future implementation tasks have one canonical reference.
+Acceptance Criteria:
+  - [ ] Design doc and TASK_PLAN use the same noun set
+  - [ ] Existing workflow terminology is preserved where still true
+  - [ ] No contradictory route/module names remain in the new V17 sections
+  - [ ] Documentation drift risks are identified before coding starts
+Dependencies: TASK #610, TASK #611, TASK #612, TASK #613, TASK #614
+
+TASK #616: AREA CHECKPOINT — V17.0 closeout
+Area: V17.0 — Pack Platform Program Foundation
+Agent: project-manager
+Priority: HIGH
+Status: PENDING
+Acceptance Criteria:
+  - [ ] TASKS #610-#614 COMPLETED
+  - [ ] REVIEW GATE #615 PASS
+  - [ ] `docs/memory/PROGRESS.md` synced if touched
+  - [ ] `docs/memory/CONTEXT.md` synced if touched
+  - [ ] `docs/memory/ACTIVITY_LOG.md` synced if touched
+Dependencies: TASK #615
+
+---
+
+## AREA: V17.1 — Pack Domain Foundation
+_Components: PackDefinition, PackVersion, PackStore, pack CRUD routes, bootstrap wiring, pack hooks_
+_Tasks: #617 -> #625_
+_Gate: A pack must exist as a first-class persisted object before runtime or UX work begins. CRUD, versioning, restore behavior, and bootstrap wiring must be real and test-backed._
+
+---
+
+TASK #617: PACK-DOMAIN-01 — Define PackDefinition and PackVersion data model
+Area: V17.1 — Pack Domain Foundation
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Introduce the base pack domain model in code, mirroring the clarity currently
+  provided by workflow persistence.
+  Inspect:
+    - `server/services/WorkflowStore.js`
+    - `docs/PACK_PLATFORM_DESIGN.md`
+  Modify:
+    - new pack schema/type helper module near the store layer
+  The v1 model must include metadata, workflow linkage, versioning fields, visibility,
+  status, runtime policy placeholder, dependency placeholder, and contract-bearing fields.
+Acceptance Criteria:
+  - [ ] A canonical PackDefinition shape exists in code
+  - [ ] `workflowId` is required in v1
+  - [ ] Pack status and visibility enums are defined
+  - [ ] PackVersion metadata is separated from mutable draft state
+Dependencies: TASK #616
+
+TASK #618: PACK-DOMAIN-02 — Implement PackStore CRUD with atomic persistence
+Area: V17.1 — Pack Domain Foundation
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Build `server/stores/PackStore.js` following the same safety patterns already used
+  by `WorkflowStore`.
+  Inspect:
+    - `server/services/WorkflowStore.js`
+    - `server/stores/ExecutionHistoryStore.js`
+  Modify:
+    - `server/stores/PackStore.js`
+  The store must support init, list, get, create, update, and delete, with path safety,
+  cache behavior, and atomic writes.
+Acceptance Criteria:
+  - [ ] PackStore supports init/list/get/create/update/delete
+  - [ ] Resolved paths stay inside the pack storage directory
+  - [ ] Writes are atomic
+  - [ ] Invalid IDs or malformed files fail cleanly
+Dependencies: TASK #617
+
+TASK #619: PACK-DOMAIN-03 — Add pack version history and restore behavior
+Area: V17.1 — Pack Domain Foundation
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Add version save/list/get/restore behavior for packs, parallel to workflow versions
+  but with pack-specific semantics.
+  Inspect:
+    - `server/services/WorkflowStore.js`
+    - `docs/PACK_PLATFORM_DESIGN.md`
+  Modify:
+    - `server/stores/PackStore.js`
+  Preserve a bounded version history and make restore save the prior current version
+  before rolling back.
+Acceptance Criteria:
+  - [ ] PackStore can list versions
+  - [ ] PackStore can read a specific version
+  - [ ] PackStore can restore a previous version
+  - [ ] Version history is capped to a finite retained set
+Dependencies: TASK #618
+
+TASK #620: PACK-DOMAIN-04 — Add pack bootstrap wiring to server startup
+Area: V17.1 — Pack Domain Foundation
+Agent: backend-dev
+Priority: HIGH
+Difficulty: EASY
+Status: PENDING
+Context:
+  Wire PackStore into the normal server bootstrap flow.
+  Inspect:
+    - `server/index.js`
+    - current store initializers in server startup
+  Modify:
+    - `server/index.js`
+  PackStore must initialize alongside the existing stores and be available to routes
+  through the same application bootstrap pattern used elsewhere in the repo.
+Acceptance Criteria:
+  - [ ] PackStore is instantiated during server bootstrap
+  - [ ] PackStore init is awaited or handled consistently with existing stores
+  - [ ] Routes can access the PackStore instance without ad hoc globals
+Dependencies: TASK #618, TASK #619
+
+TASK #621: PACK-DOMAIN-05 — Add pack CRUD API routes
+Area: V17.1 — Pack Domain Foundation
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Expose pack CRUD through a new route surface.
+  Inspect:
+    - `server/routes/workflows.js`
+    - `server/index.js`
+  Modify:
+    - `server/routes/packs.js`
+    - `server/index.js`
+  Use the same `/api/v1/` and `X-Requested-With: ClaudeCodeManager` constraints as
+  other mutating endpoints.
+Acceptance Criteria:
+  - [ ] `GET/POST/GET by id/PUT/DELETE /api/v1/packs` exist
+  - [ ] Route validation and status codes match existing repo conventions
+  - [ ] CSRF header behavior matches other mutating routes
+  - [ ] Route payloads read/write the PackStore shape rather than a UI-only shape
+Dependencies: TASK #618, TASK #620
+
+TASK #622: PACK-DOMAIN-06 — Add version-list and restore pack routes
+Area: V17.1 — Pack Domain Foundation
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Expose pack version history via REST.
+  Inspect:
+    - `server/routes/workflows.js`
+    - `server/stores/PackStore.js`
+  Modify:
+    - `server/routes/packs.js`
+  The initial route set must include versions list and restore so packs can follow
+  the same lifecycle discipline as workflows from day one.
+Acceptance Criteria:
+  - [ ] `GET /api/v1/packs/:id/versions` exists
+  - [ ] `POST /api/v1/packs/:id/versions/:timestamp/restore` exists
+  - [ ] 404/400 behavior is explicit and tested
+  - [ ] Restore route uses PackStore restore semantics rather than ad hoc file writes
+Dependencies: TASK #619, TASK #621
+
+TASK #623: PACK-DOMAIN-07 — Add client pack CRUD hooks
+Area: V17.1 — Pack Domain Foundation
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Add the minimal client consumption layer for pack CRUD.
+  Inspect:
+    - `client/src/hooks/useWorkflow.js`
+    - existing fetch helpers in client hooks
+  Modify:
+    - `client/src/hooks/usePack.js`
+  Provide ergonomic CRUD accessors for the future builder/library surfaces without
+  coupling them to ad hoc fetch logic.
+Acceptance Criteria:
+  - [ ] `usePackList()` loads pack list state
+  - [ ] `usePack(id)` loads one pack
+  - [ ] create/update/delete helpers exist
+  - [ ] Error/loading behavior follows existing client hook conventions
+Dependencies: TASK #621, TASK #622
+
+TASK #624: TEST GATE — V17.1 pack domain foundation
+Area: V17.1 — Pack Domain Foundation
+Agent: qa-tester
+Priority: HIGH
+Status: PENDING
+Acceptance Criteria:
+  - [ ] Store tests cover PackStore CRUD, versioning, restore, and invalid paths
+  - [ ] Route tests cover pack CRUD and version routes
+  - [ ] Existing workflow route tests remain green
+  - [ ] No server bootstrap regressions are introduced
+Dependencies: TASK #617, TASK #618, TASK #619, TASK #620, TASK #621, TASK #622, TASK #623
+
+TASK #625: AREA CHECKPOINT — V17.1 closeout
+Area: V17.1 — Pack Domain Foundation
+Agent: project-manager
+Priority: HIGH
+Status: PENDING
+Acceptance Criteria:
+  - [ ] TASKS #617-#623 COMPLETED
+  - [ ] TEST GATE #624 PASS
+  - [ ] `docs/memory/PROGRESS.md` synced if touched
+  - [ ] `docs/memory/CHANGELOG.md` synced if touched
+  - [ ] `docs/memory/ACTIVITY_LOG.md` synced if touched
+  - [ ] `docs/memory/CODE_MAP.md` synced if touched
+Dependencies: TASK #624
+
+---
+
+## AREA: V17.2 — Pack Contract Layer
+_Components: JSON Schema contracts, Ajv validation, runtimePolicy, dependencies, visibleSteps, completionCriteria_
+_Tasks: #626 -> #634_
+_Gate: Packs must declare and validate their product contract before runtime or UI assumes anything about inputs, outputs, artifacts, or visibility._
+
+---
+
+TASK #626: PACK-CONTRACT-01 — Add schema infrastructure and validator wiring
+Area: V17.2 — Pack Contract Layer
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Introduce the schema validation foundation for pack contracts.
+  Inspect:
+    - server validation patterns already used in workflow routes/store
+    - `package.json` dependencies
+    - `docs/PACK_PLATFORM_DESIGN.md`
+  Modify:
+    - package dependencies if needed
+    - server-side validation helper module for pack schemas
+  Use JSON Schema Draft 2020-12 with Ajv so the same declarative contract can later
+  back both runtime validation and UI generation.
+Acceptance Criteria:
+  - [ ] Ajv-based validation infrastructure exists on the server
+  - [ ] Pack schema validation is isolated from route handlers
+  - [ ] The chosen schema draft/version is explicit in code or comments
+  - [ ] Validation helpers are reusable by store and route layers
+Dependencies: TASK #625
+
+TASK #627: PACK-CONTRACT-02 — Define inputSchema field model
+Area: V17.2 — Pack Contract Layer
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Implement the canonical input field contract for packs.
+  Inspect:
+    - `docs/PACK_PLATFORM_DESIGN.md`
+    - `server/stores/PackStore.js`
+  Modify:
+    - pack schema/type helper
+    - validation helper
+  V1 supported field types: `text`, `textarea`, `enum`, `boolean`, `json`, `fileRef`.
+Acceptance Criteria:
+  - [ ] Input field shape is defined in code
+  - [ ] Required/default/help/validation metadata are supported
+  - [ ] Unsupported field types fail validation
+  - [ ] Input schema can be stored on PackDefinition
+Dependencies: TASK #626
+
+TASK #628: PACK-CONTRACT-03 — Define outputSchema and artifactDefinitions
+Area: V17.2 — Pack Contract Layer
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Separate operator-visible outputs from generated artifacts.
+  Inspect:
+    - `server/services/WorkflowArtifactBuilder.js`
+    - execution result shape in `server/routes/swarm.js`
+  Modify:
+    - pack schema/type helper
+    - validation helper
+  V1 artifact formats: `markdown`, `json`, `text`.
+Acceptance Criteria:
+  - [ ] Output field model exists and is distinct from input fields
+  - [ ] Artifact definition model exists and is distinct from outputs
+  - [ ] Required outputs/artifacts can be declared
+  - [ ] Invalid artifact formats fail validation
+Dependencies: TASK #626
+
+TASK #629: PACK-CONTRACT-04 — Define runtimePolicy and dependency manifest
+Area: V17.2 — Pack Contract Layer
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Give the pack a declarative runtime and dependency contract.
+  Inspect:
+    - `server/services/SwarmEngine.js`
+    - runtime-provider metadata currently exposed by swarm execution
+    - `docs/PACK_PLATFORM_DESIGN.md`
+  Modify:
+    - pack schema/type helper
+    - validation helper
+  Runtime policy must stay declarative. Dependency manifest must support at least:
+  `workflow`, `agent`, `skill`, `contextOverlay`. Only workflow is mandatory in v1.
+Acceptance Criteria:
+  - [ ] runtimePolicy shape is defined in code
+  - [ ] dependency manifest shape is defined in code
+  - [ ] `engineCompatibility` is validated with semver semantics
+  - [ ] Missing required workflow dependency fails validation
+Dependencies: TASK #626
+
+TASK #630: PACK-CONTRACT-05 — Define visibleSteps and completionCriteria
+Area: V17.2 — Pack Contract Layer
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Add the operator-facing abstraction layer above raw graph nodes.
+  Inspect:
+    - `server/services/SwarmEngine.js`
+    - workflow node/edge shape from `WorkflowStore`
+  Modify:
+    - pack schema/type helper
+    - validation helper
+  visibleSteps must be able to map multiple workflow nodes into one operator-facing
+  phase. completionCriteria must define what "good enough to finish/publish" means.
+Acceptance Criteria:
+  - [ ] visibleSteps shape is defined in code
+  - [ ] visibleSteps can reference one or more workflow nodes
+  - [ ] completionCriteria exists on the pack contract
+  - [ ] Invalid visible step node references fail validation
+Dependencies: TASK #627, TASK #628, TASK #629
+
+TASK #631: PACK-CONTRACT-06 — Enforce contract validation in PackStore and routes
+Area: V17.2 — Pack Contract Layer
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Make the contract layer real by rejecting invalid packs before runtime.
+  Inspect:
+    - `server/stores/PackStore.js`
+    - `server/routes/packs.js`
+  Modify:
+    - `server/stores/PackStore.js`
+    - `server/routes/packs.js`
+  Validation errors must be pack-specific and readable enough for later builder UI.
+Acceptance Criteria:
+  - [ ] PackStore rejects invalid contract-bearing fields
+  - [ ] Pack routes reject invalid contract payloads
+  - [ ] Validation errors are structured and consistent
+  - [ ] Valid existing V17.1 packs still load after contract expansion
+Dependencies: TASK #627, TASK #628, TASK #629, TASK #630
+
+TASK #632: PACK-CONTRACT-07 — Expose pack contract shape through client hook layer
+Area: V17.2 — Pack Contract Layer
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Ensure the client has a stable normalized shape for pack contracts before the builder UI
+  is built.
+  Inspect:
+    - `client/src/hooks/usePack.js`
+    - response payloads from `server/routes/packs.js`
+  Modify:
+    - `client/src/hooks/usePack.js`
+  The hook should normalize missing optional contract fields into predictable defaults
+  without hiding actual server validation failures.
+Acceptance Criteria:
+  - [ ] Client hooks expose pack contract fields in a stable shape
+  - [ ] Missing optional arrays/objects are normalized safely
+  - [ ] Server validation failures are surfaced instead of swallowed
+  - [ ] No builder-only assumptions leak into the hook API yet
+Dependencies: TASK #631
+
+TASK #633: TEST GATE — V17.2 pack contract validation
+Area: V17.2 — Pack Contract Layer
+Agent: qa-tester
+Priority: HIGH
+Status: PENDING
+Acceptance Criteria:
+  - [ ] Validation tests cover input, output, artifact, dependency, and visible-step rules
+  - [ ] Invalid pack payloads fail before runtime starts
+  - [ ] Existing V17.1 CRUD tests remain green
+  - [ ] Client hook normalization does not hide server-side contract errors
+Dependencies: TASK #626, TASK #627, TASK #628, TASK #629, TASK #630, TASK #631, TASK #632
+
+TASK #634: AREA CHECKPOINT — V17.2 closeout
+Area: V17.2 — Pack Contract Layer
+Agent: project-manager
+Priority: HIGH
+Status: PENDING
+Acceptance Criteria:
+  - [ ] TASKS #626-#632 COMPLETED
+  - [ ] TEST GATE #633 PASS
+  - [ ] `docs/memory/PROGRESS.md` synced if touched
+  - [ ] `docs/memory/CHANGELOG.md` synced if touched
+  - [ ] `docs/memory/ACTIVITY_LOG.md` synced if touched
+Dependencies: TASK #633
+
+---
+
+## AREA: V17.3 — Pack-Aware Runtime Wrapper
+_Components: PackResolver, pack start route, SwarmEngine pack context, visible-step tracking, pack result assembly, client hydration_
+_Tasks: #635 -> #644_
+_Gate: Pack runs must execute through the existing Swarm engine with additive metadata and zero regression to workflow-only execution._
+
+---
+
+TASK #635: PACK-RUNTIME-01 — Implement PackResolver service
+Area: V17.3 — Pack-Aware Runtime Wrapper
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: HARD
+Status: PENDING
+Context:
+  Add the server-side service that resolves a pack into runtime-ready components.
+  Inspect:
+    - `server/services/SwarmEngine.js`
+    - `server/stores/PackStore.js`
+    - `server/services/WorkflowStore.js`
+  Modify:
+    - `server/services/PackResolver.js`
+  Resolution must fail fast for missing workflow, incompatible engine version,
+  and unsatisfied required dependencies.
+Acceptance Criteria:
+  - [ ] PackResolver loads PackDefinition and linked workflow together
+  - [ ] PackResolver validates engine compatibility before execution starts
+  - [ ] PackResolver validates required dependencies before execution starts
+  - [ ] Resolver output is stable enough for route and engine use
+Dependencies: TASK #634
+
+TASK #636: PACK-RUNTIME-02 — Add pack execution start route
+Area: V17.3 — Pack-Aware Runtime Wrapper
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Expose `POST /api/v1/packs/:id/start`.
+  Inspect:
+    - `server/routes/swarm.js`
+    - `server/routes/packs.js`
+    - `server/services/PackResolver.js`
+  Modify:
+    - `server/routes/packs.js`
+  The route must validate pack input payload against pack inputSchema, resolve the pack,
+  and then delegate to the current runtime start path rather than reimplement execution.
+Acceptance Criteria:
+  - [ ] `POST /api/v1/packs/:id/start` exists
+  - [ ] Invalid input payload fails before runtime spawn
+  - [ ] Pack start delegates into existing swarm execution logic
+  - [ ] Response includes execution identity sufficient for pack run hydration
+Dependencies: TASK #635
+
+TASK #637: PACK-RUNTIME-03 — Extend SwarmEngine execution context with pack metadata
+Area: V17.3 — Pack-Aware Runtime Wrapper
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: HARD
+Status: PENDING
+Context:
+  Teach the engine about pack execution without forking the engine model.
+  Inspect:
+    - `server/services/SwarmEngine.js`
+    - current execution snapshot serialization in the engine
+  Modify:
+    - `server/services/SwarmEngine.js`
+  Additive fields must include pack identity, version, pack input, visible steps,
+  artifact status, declared outputs, and pack run status.
+Acceptance Criteria:
+  - [ ] Engine execution records can hold pack metadata
+  - [ ] Status snapshots serialize pack metadata additively
+  - [ ] Workflow-only runs remain valid without pack metadata present
+  - [ ] Pack execution does not duplicate a second engine lifecycle
+Dependencies: TASK #635, TASK #636
+
+TASK #638: PACK-RUNTIME-04 — Bind pack inputs into workflow context safely
+Area: V17.3 — Pack-Aware Runtime Wrapper
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Define how validated pack inputs enter runtime state.
+  Inspect:
+    - `server/services/SwarmEngine.js`
+    - current `workflowContext` handling
+  Modify:
+    - `server/services/SwarmEngine.js`
+  Pack inputs must be available to prompts/tools without polluting or colliding with
+  existing workflow context keys.
+Acceptance Criteria:
+  - [ ] Pack inputs are injected into runtime context in a reserved namespace
+  - [ ] Existing workflowContext keys are not overwritten silently
+  - [ ] Input values survive status hydration/results access where needed
+  - [ ] Missing required pack inputs cannot reach execution start
+Dependencies: TASK #636, TASK #637
+
+TASK #639: PACK-RUNTIME-05 — Implement visible-step runtime tracking
+Area: V17.3 — Pack-Aware Runtime Wrapper
+Agent: backend-dev
+Priority: HIGH
+Difficulty: HARD
+Status: PENDING
+Context:
+  Roll up raw node execution state into operator-facing phases.
+  Inspect:
+    - `server/services/SwarmEngine.js`
+    - pack `visibleSteps` contract
+  Modify:
+    - `server/services/SwarmEngine.js`
+    - optional helper module if needed
+  Multiple nodes may map to the same visible step. The runtime must expose step
+  status like waiting/running/blocked/completed without relying on UI-only heuristics.
+Acceptance Criteria:
+  - [ ] visible step status can be derived from runtime state
+  - [ ] Multiple nodes can contribute to one visible step
+  - [ ] Blocked and waiting states are represented explicitly
+  - [ ] Visible-step data is serialized in pack execution snapshots
+Dependencies: TASK #637, TASK #638
+
+TASK #640: PACK-RUNTIME-06 — Build pack-scoped result and artifact assembly
+Area: V17.3 — Pack-Aware Runtime Wrapper
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: HARD
+Status: PENDING
+Context:
+  Convert raw runtime data into operator-safe declared outputs and artifacts.
+  Inspect:
+    - `server/routes/swarm.js`
+    - `server/services/WorkflowArtifactBuilder.js`
+    - execution results payload shape
+  Modify:
+    - new `server/services/PackResultBuilder.js` or equivalent helper
+    - `server/routes/swarm.js`
+  Preserve raw debug output for builder mode, but add a pack-shaped result payload
+  for operator surfaces.
+Acceptance Criteria:
+  - [ ] Pack results expose declared outputs separately from raw debug output
+  - [ ] Pack artifacts expose contract-declared artifact records
+  - [ ] Existing workflow result payloads remain backward-compatible
+  - [ ] Pack result assembly is reusable across live and persisted execution views
+Dependencies: TASK #637, TASK #639
+
+TASK #641: PACK-RUNTIME-07 — Map runtime blockers and failures into pack-level run states
+Area: V17.3 — Pack-Aware Runtime Wrapper
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Translate engine/runtime problems into pack-facing states without losing technical detail.
+  Inspect:
+    - runtime blocker handling in `server/services/SwarmEngine.js`
+    - current status/result payloads in `server/routes/swarm.js`
+  Modify:
+    - `server/services/SwarmEngine.js`
+    - pack result/status serializers
+  Pack runs need truthful operator states plus deeper debug detail for builder/admin users.
+Acceptance Criteria:
+  - [ ] Pack run states include blocked/failure semantics
+  - [ ] Operator-facing blocker summaries are readable
+  - [ ] Technical blocker detail remains accessible for debug surfaces
+  - [ ] No existing workflow blocker semantics are regressed
+Dependencies: TASK #637, TASK #640
+
+TASK #642: PACK-RUNTIME-08 — Add pack-aware client hydration/selectors
+Area: V17.3 — Pack-Aware Runtime Wrapper
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Extend current Swarm client state rather than inventing a second runtime store.
+  Inspect:
+    - `client/src/store/SwarmContext.jsx`
+    - `client/src/hooks/useSwarm.js`
+  Modify:
+    - `client/src/store/SwarmContext.jsx`
+    - `client/src/hooks/useSwarm.js`
+  Hydration must preserve pack metadata, visible steps, artifact status, and pack-facing
+  result data while remaining safe for old workflow executions.
+Acceptance Criteria:
+  - [ ] Pack-aware snapshots hydrate into the existing store cleanly
+  - [ ] Old workflow-only snapshots still hydrate correctly
+  - [ ] Client selectors can read pack run state without duplicating raw engine state
+  - [ ] Pack status/result fields survive reconnect and REST refill paths
+Dependencies: TASK #637, TASK #639, TASK #640
+
+TASK #643: TEST GATE — V17.3 pack runtime wrapper
+Area: V17.3 — Pack-Aware Runtime Wrapper
+Agent: qa-tester
+Priority: HIGH
+Status: PENDING
+Acceptance Criteria:
+  - [ ] Resolver, start route, runtime snapshot, and result assembly tests pass
+  - [ ] Pack runs can start, stop, and hydrate without breaking workflow-only runs
+  - [ ] Existing swarm runtime regression suites remain green
+  - [ ] Client hydration tests cover both pack and workflow snapshots
+Dependencies: TASK #635, TASK #636, TASK #637, TASK #638, TASK #639, TASK #640, TASK #641, TASK #642
+
+TASK #644: AREA CHECKPOINT — V17.3 closeout
+Area: V17.3 — Pack-Aware Runtime Wrapper
+Agent: project-manager
+Priority: HIGH
+Status: PENDING
+Acceptance Criteria:
+  - [ ] TASKS #635-#642 COMPLETED
+  - [ ] TEST GATE #643 PASS
+  - [ ] `docs/memory/PROGRESS.md` synced if touched
+  - [ ] `docs/memory/CHANGELOG.md` synced if touched
+  - [ ] `docs/memory/ACTIVITY_LOG.md` synced if touched
+  - [ ] `docs/memory/CODE_MAP.md` synced if touched
+Dependencies: TASK #643
+
+---
+
+## AREA: V17.4 — Pack Builder Authoring Platform
+_Components: builder shell, pack metadata editor, schema editors, dependency editor, visible-step mapper, publish lifecycle, preview_
+_Tasks: #645 -> #653_
+_Gate: Technical users must be able to author a full pack from an existing workflow without using ad hoc JSON editing or inventing hidden runtime assumptions._
+
+---
+
+TASK #645: PACK-BUILDER-01 — Create PackBuilder shell and routing entrypoint
+Area: V17.4 — Pack Builder Authoring Platform
+Agent: frontend-dev
+Priority: CRITICAL
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Create the top-level builder surface rather than overloading the current workflow modal.
+  Inspect:
+    - `client/src/views/SwarmView.jsx`
+    - `client/src/App.jsx`
+    - current navigation constants
+  Modify:
+    - new `client/src/views/PackBuilderView.jsx`
+    - routing/nav integration
+  The shell should provide section-level structure for overview, inputs, outputs,
+  artifacts, runtime policy, dependencies, visible steps, and publish settings.
+Acceptance Criteria:
+  - [ ] PackBuilderView exists and is routable
+  - [ ] Builder sections are represented in the shell
+  - [ ] The shell can load an existing pack via the pack hook layer
+  - [ ] No workflow modal is repurposed as the full pack builder
+Dependencies: TASK #644
+
+TASK #646: PACK-BUILDER-02 — Implement overview editor and workflow link selector
+Area: V17.4 — Pack Builder Authoring Platform
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Build the first builder section: overview + workflow binding.
+  Inspect:
+    - `client/src/hooks/usePack.js`
+    - workflow list access patterns already used in Swarm views
+  Modify:
+    - `client/src/views/PackBuilderView.jsx`
+    - dedicated editor components if needed
+  The editor must cover name, description, category, visibility, status, compatibility,
+  and workflow selection.
+Acceptance Criteria:
+  - [ ] Builder can edit pack overview metadata
+  - [ ] Builder can bind a pack to an existing workflow
+  - [ ] Current workflow linkage is visible and editable
+  - [ ] Unsaved changes are tracked in the builder shell
+Dependencies: TASK #645
+
+TASK #647: PACK-BUILDER-03 — Implement input schema editor
+Area: V17.4 — Pack Builder Authoring Platform
+Agent: frontend-dev
+Priority: CRITICAL
+Difficulty: HARD
+Status: PENDING
+Context:
+  Add the technical UI for creating and ordering pack input fields.
+  Inspect:
+    - pack contract shape from V17.2
+    - builder shell state in PackBuilderView
+  Modify:
+    - builder editor components
+    - pack save flow if needed
+  The UI should support add/remove/reorder plus type-specific config for v1 field types.
+Acceptance Criteria:
+  - [ ] Builder can add, remove, and reorder input fields
+  - [ ] Type-specific settings exist for all v1 input types
+  - [ ] Required/default/help metadata are editable
+  - [ ] Invalid field configuration surfaces validation errors
+Dependencies: TASK #646
+
+TASK #648: PACK-BUILDER-04 — Implement output and artifact editor
+Area: V17.4 — Pack Builder Authoring Platform
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: HARD
+Status: PENDING
+Context:
+  Add the authoring surface for outputs and artifacts.
+  Inspect:
+    - pack contract shape from V17.2
+    - any existing artifact/result display assumptions in client code
+  Modify:
+    - builder editor components
+  Outputs and artifacts must stay distinct in the UI because they serve different
+  operator needs later.
+Acceptance Criteria:
+  - [ ] Builder can create/edit/remove output declarations
+  - [ ] Builder can create/edit/remove artifact declarations
+  - [ ] Output vs artifact roles are visually distinct
+  - [ ] Contract validation errors are visible in the editor
+Dependencies: TASK #646
+
+TASK #649: PACK-BUILDER-05 — Implement runtime policy and dependency editors
+Area: V17.4 — Pack Builder Authoring Platform
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: HARD
+Status: PENDING
+Context:
+  Add the authoring controls for runtime policy and dependency manifest.
+  Inspect:
+    - runtime policy/dependency contracts from V17.2
+    - existing runtime selector and provider concepts in Swarm UI
+  Modify:
+    - builder editor components
+  The UI must remain builder-grade: explicit provider rules, dependency list, and
+  warnings when required references are missing.
+Acceptance Criteria:
+  - [ ] Builder can edit runtime policy fields
+  - [ ] Builder can add/remove dependency entries
+  - [ ] Missing required dependencies are surfaced in the UI
+  - [ ] Policy editing does not mutate unrelated overview/contract fields
+Dependencies: TASK #646
+
+TASK #650: PACK-BUILDER-06 — Implement visible-step mapper and operator preview
+Area: V17.4 — Pack Builder Authoring Platform
+Agent: frontend-dev
+Priority: CRITICAL
+Difficulty: HARD
+Status: PENDING
+Context:
+  Add the abstraction layer that lets technical users decide what operators see.
+  Inspect:
+    - workflow node definitions in the current canvas
+    - pack visibleSteps contract
+  Modify:
+    - builder editor components
+    - preview components
+  Builder must be able to map workflow nodes to visible phases and preview the resulting
+  operator timeline before publishing.
+Acceptance Criteria:
+  - [ ] Builder can map one or more workflow nodes into a visible step
+  - [ ] Builder can reorder visible steps
+  - [ ] Preview shows the operator-facing phases derived from current config
+  - [ ] Invalid node references are surfaced inline
+Dependencies: TASK #646, TASK #647, TASK #648, TASK #649
+
+TASK #651: PACK-BUILDER-07 — Enforce draft/tested/published/deprecated lifecycle
+Area: V17.4 — Pack Builder Authoring Platform
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Make the pack lifecycle real in persistence and API behavior before the UI depends on it.
+  Inspect:
+    - `server/stores/PackStore.js`
+    - `server/routes/packs.js`
+  Modify:
+    - `server/stores/PackStore.js`
+    - `server/routes/packs.js`
+    - builder save/publish calls as needed
+  Published packs must become version-locked; edits after publish should create a new
+  version instead of mutating the published record.
+Acceptance Criteria:
+  - [ ] Pack lifecycle states exist server-side
+  - [ ] Direct edits to published versions are blocked or versioned
+  - [ ] Builder can still edit draft packs normally
+  - [ ] Lifecycle transition rules are enforced by the server, not just the UI
+Dependencies: TASK #619, TASK #631, TASK #645
+
+TASK #652: TEST GATE — V17.4 pack builder authoring
+Area: V17.4 — Pack Builder Authoring Platform
+Agent: qa-tester
+Priority: HIGH
+Status: PENDING
+Acceptance Criteria:
+  - [ ] Builder shell and editors render and persist correctly
+  - [ ] Lifecycle rules are enforced in both UI and server tests
+  - [ ] A technical user can create a contract-valid draft pack from a workflow
+  - [ ] Build/tests stay green after builder route integration
+Dependencies: TASK #645, TASK #646, TASK #647, TASK #648, TASK #649, TASK #650, TASK #651
+
+TASK #653: AREA CHECKPOINT — V17.4 closeout
+Area: V17.4 — Pack Builder Authoring Platform
+Agent: project-manager
+Priority: HIGH
+Status: PENDING
+Acceptance Criteria:
+  - [ ] TASKS #645-#651 COMPLETED
+  - [ ] TEST GATE #652 PASS
+  - [ ] `docs/memory/PROGRESS.md` synced if touched
+  - [ ] `docs/memory/CHANGELOG.md` synced if touched
+  - [ ] `docs/memory/ACTIVITY_LOG.md` synced if touched
+  - [ ] `docs/memory/CODE_MAP.md` synced if touched
+Dependencies: TASK #652
+
+---
+
+## AREA: V17.5 — Pack Operator Product Surface
+_Components: pack-first navigation, pack library, pack detail, generated run form, run monitor, advanced debug drawer_
+_Tasks: #654 -> #661_
+_Gate: Operators must be able to discover, start, and observe a pack without needing the workflow graph, while builders still retain access to debug internals._
+
+---
+
+TASK #654: PACK-OPERATOR-01 — Split navigation into pack-first and builder-first surfaces
+Area: V17.5 — Pack Operator Product Surface
+Agent: frontend-dev
+Priority: CRITICAL
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Introduce a dual-surface navigation model without removing current builder routes.
+  Inspect:
+    - `client/src/App.jsx`
+    - `client/src/components/Sidebar.jsx`
+    - `client/src/lib/constants.js`
+  Modify:
+    - navigation constants and route selection
+    - App/Sidebar integration
+  Pack surfaces should be primary for operator flows; Swarm/workflow views stay accessible
+  as builder/debug surfaces.
+Acceptance Criteria:
+  - [ ] Navigation contains explicit pack-first entrypoints
+  - [ ] Existing workflow/Swarm routes remain accessible
+  - [ ] Navigation labels distinguish builder vs operator intent
+  - [ ] No current route becomes unreachable without replacement
+Dependencies: TASK #653
+
+TASK #655: PACK-OPERATOR-02 — Implement Pack Library and Pack Detail pages
+Area: V17.5 — Pack Operator Product Surface
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Build the discovery surfaces for packs.
+  Inspect:
+    - new pack hooks
+    - existing list/detail page patterns in the app
+  Modify:
+    - `client/src/views/PackLibraryView.jsx`
+    - `client/src/views/PackDetailView.jsx`
+  Pack detail must communicate what the pack does, what it requires, what it returns,
+  and what phases the operator will see.
+Acceptance Criteria:
+  - [ ] Pack library lists packs with meaningful metadata
+  - [ ] Pack detail page shows description, inputs, outputs, artifacts, version, and phases
+  - [ ] Pack detail page can launch the run flow
+  - [ ] Default operator copy does not expose raw workflow terminology
+Dependencies: TASK #654
+
+TASK #656: PACK-OPERATOR-03 — Generate pack run form from inputSchema
+Area: V17.5 — Pack Operator Product Surface
+Agent: frontend-dev
+Priority: CRITICAL
+Difficulty: HARD
+Status: PENDING
+Context:
+  Render operator inputs from the pack contract instead of from custom per-pack code.
+  Inspect:
+    - pack input schema contract
+    - pack start route payload expectations
+  Modify:
+    - `client/src/views/PackRunView.jsx`
+    - any shared form/render helpers needed
+  The form must support all v1 field types and mirror server validation closely.
+Acceptance Criteria:
+  - [ ] Run form renders from inputSchema
+  - [ ] Required field validation exists client-side
+  - [ ] Payload shape matches the pack start route
+  - [ ] Sensitive or structured fields are not rendered as raw uncontrolled text dumps
+Dependencies: TASK #655
+
+TASK #657: PACK-OPERATOR-04 — Build pack run monitor with phase timeline and artifacts
+Area: V17.5 — Pack Operator Product Surface
+Agent: frontend-dev
+Priority: CRITICAL
+Difficulty: HARD
+Status: PENDING
+Context:
+  Add the operator-facing runtime control room.
+  Inspect:
+    - `client/src/store/SwarmContext.jsx`
+    - `client/src/hooks/useSwarm.js`
+    - pack-aware runtime snapshot/result fields
+  Modify:
+    - `client/src/views/PackRunView.jsx`
+  The run monitor must show visible steps, blockers, approvals, declared outputs,
+  and generated artifacts without exposing the graph by default.
+Acceptance Criteria:
+  - [ ] Run monitor shows visible phase progression
+  - [ ] Run monitor shows blockers and action-required states
+  - [ ] Run monitor shows artifacts and declared outputs as they become available
+  - [ ] Operator can complete a run without opening the Swarm canvas
+Dependencies: TASK #656, TASK #642
+
+TASK #658: PACK-OPERATOR-05 — Add advanced debug drawer for builder/admin users
+Area: V17.5 — Pack Operator Product Surface
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Preserve runtime inspectability without making the operator surface technical by default.
+  Inspect:
+    - pack run monitor UI
+    - existing Swarm inspector/debug affordances
+  Modify:
+    - `client/src/views/PackRunView.jsx`
+    - any shared debug components/selectors
+  The advanced drawer should expose provider fallback, node-level output, handoffs,
+  and other raw runtime details on demand.
+Acceptance Criteria:
+  - [ ] Advanced debug view is hidden by default on operator surface
+  - [ ] Advanced debug view can show raw runtime detail when enabled
+  - [ ] Debug view does not replace the operator-friendly default presentation
+  - [ ] Pack/operator surface remains usable without touching the drawer
+Dependencies: TASK #657
+
+TASK #659: PACK-OPERATOR-06 — Add pack-specific client selectors and run restoration
+Area: V17.5 — Pack Operator Product Surface
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Create pack-first selectors and restoration flows on top of the existing store.
+  Inspect:
+    - `client/src/store/SwarmContext.jsx`
+    - `client/src/hooks/useSwarm.js`
+  Modify:
+    - store selectors/helpers
+    - pack run view hydration logic
+  Pack runs must restore correctly after reload/reconnect and continue presenting
+  pack-level state rather than falling back to raw workflow-only assumptions.
+Acceptance Criteria:
+  - [ ] Pack run restoration works after reload/reconnect
+  - [ ] Pack-first selectors exist for current step, outputs, artifacts, and blockers
+  - [ ] Workflow-only runs are not regressed by the new selectors
+  - [ ] Pack UI does not require duplicating store state in a second client cache
+Dependencies: TASK #657, TASK #658
+
+TASK #660: TEST GATE — V17.5 operator surface verification
+Area: V17.5 — Pack Operator Product Surface
+Agent: qa-tester
+Priority: HIGH
+Status: PENDING
+Acceptance Criteria:
+  - [ ] Pack library/detail/run views render and hydrate correctly
+  - [ ] Operator can launch and monitor a pack without opening Swarm
+  - [ ] Advanced debug drawer exposes raw runtime info without breaking default UX
+  - [ ] Existing workflow/builder navigation remains usable
+Dependencies: TASK #654, TASK #655, TASK #656, TASK #657, TASK #658, TASK #659
+
+TASK #661: AREA CHECKPOINT — V17.5 closeout
+Area: V17.5 — Pack Operator Product Surface
+Agent: project-manager
+Priority: HIGH
+Status: PENDING
+Acceptance Criteria:
+  - [ ] TASKS #654-#659 COMPLETED
+  - [ ] TEST GATE #660 PASS
+  - [ ] `docs/memory/PROGRESS.md` synced if touched
+  - [ ] `docs/memory/CHANGELOG.md` synced if touched
+  - [ ] `docs/memory/ACTIVITY_LOG.md` synced if touched
+  - [ ] `docs/memory/CODE_MAP.md` synced if touched
+Dependencies: TASK #660
+
+---
+
+## AREA: V17.6 — Pack Distribution & Installation
+_Components: pack bundle manifest, export/import, install model, fork/version pinning, provenance, distribution management UI_
+_Tasks: #662 -> #669_
+_Gate: Packs must be portable and installable locally without hidden workspace assumptions or manual file surgery._
+
+---
+
+TASK #662: PACK-DIST-01 — Define pack bundle manifest and archive format
+Area: V17.6 — Pack Distribution & Installation
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Define the installable/exportable unit for v1 distribution.
+  Inspect:
+    - `docs/PACK_PLATFORM_DESIGN.md`
+    - current workflow export/import behavior in Swarm UI and routes
+  Modify:
+    - pack distribution helper/module
+    - design doc section if implementation reveals needed clarifications
+  The bundle must include pack definition, linked workflow snapshot, dependency manifest,
+  compatibility metadata, and provenance metadata.
+Acceptance Criteria:
+  - [ ] Bundle manifest format is implemented in code
+  - [ ] Manifest includes pack, workflow, compatibility, and provenance data
+  - [ ] Manifest is self-describing enough for import validation
+  - [ ] Bundle format is local-file friendly for v1
+Dependencies: TASK #661
+
+TASK #663: PACK-DIST-02 — Implement export service using JSZip
+Area: V17.6 — Pack Distribution & Installation
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Turn the bundle format into an actual archive export path.
+  Inspect:
+    - package dependencies
+    - bundle manifest helper from TASK #662
+  Modify:
+    - server export helper/service
+    - pack routes if needed
+  Keep export deterministic and local-first.
+Acceptance Criteria:
+  - [ ] Export route/service produces a valid archive
+  - [ ] Archive contains manifest and linked workflow snapshot
+  - [ ] Exported pack reflects the selected installed/authored version
+  - [ ] Export behavior fails cleanly when required bundle inputs are missing
+Dependencies: TASK #662
+
+TASK #664: PACK-DIST-03 — Implement import service with compatibility validation
+Area: V17.6 — Pack Distribution & Installation
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: HARD
+Status: PENDING
+Context:
+  Allow local bundle import into the workspace.
+  Inspect:
+    - PackStore
+    - WorkflowStore
+    - bundle manifest/export helper
+  Modify:
+    - import helper/service
+    - pack routes
+  Import must validate compatibility and required bundle contents before writing any store.
+Acceptance Criteria:
+  - [ ] Import validates archive structure before persistence
+  - [ ] Incompatible engine version or malformed manifest is rejected cleanly
+  - [ ] Pack and linked workflow import together atomically or not at all
+  - [ ] Imported pack can be loaded via normal pack APIs afterwards
+Dependencies: TASK #662, TASK #663
+
+TASK #665: PACK-DIST-04 — Add PackInstall model and provenance tracking
+Area: V17.6 — Pack Distribution & Installation
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Separate authored packs from installed/forked packs.
+  Inspect:
+    - `server/stores/PackStore.js`
+    - pack import/export helpers
+  Modify:
+    - new install model/store support
+    - pack routes where installation is surfaced
+  Track source pack, installed version, installed time, and fork ancestry.
+Acceptance Criteria:
+  - [ ] PackInstall model exists
+  - [ ] Installed pack provenance is stored explicitly
+  - [ ] Authored and installed pack records are distinguishable
+  - [ ] Install metadata survives export/import roundtrips where appropriate
+Dependencies: TASK #664
+
+TASK #666: PACK-DIST-05 — Implement forking, version pinning, and compatibility checks
+Area: V17.6 — Pack Distribution & Installation
+Agent: backend-dev
+Priority: HIGH
+Difficulty: HARD
+Status: PENDING
+Context:
+  Add the lifecycle mechanics needed for safe reuse.
+  Inspect:
+    - PackInstall model
+    - pack lifecycle/versioning behavior from prior areas
+  Modify:
+    - install/fork/version helpers
+    - pack routes
+  Forking must create a new editable draft while preserving provenance. Version pinning
+  must avoid silent drift.
+Acceptance Criteria:
+  - [ ] Installed packs can be forked into editable drafts
+  - [ ] Installed version is pinned explicitly
+  - [ ] Compatibility is checked before install/update actions
+  - [ ] Provenance remains inspectable after fork
+Dependencies: TASK #665
+
+TASK #667: PACK-DIST-06 — Add distribution management UI for import/export/install/fork
+Area: V17.6 — Pack Distribution & Installation
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Surface distribution actions in the UI.
+  Inspect:
+    - pack library/detail views
+    - existing workflow import/export UX
+  Modify:
+    - pack library/detail/builder surfaces as needed
+  Keep v1 local-first: file export/import plus install/fork actions, not a marketplace.
+Acceptance Criteria:
+  - [ ] UI exposes export/import/install/fork actions
+  - [ ] Install/provenance metadata is visible enough for users to understand what they imported
+  - [ ] Version-pinned installed packs are distinguishable from authored drafts
+  - [ ] The UI does not imply a cloud marketplace exists in v1
+Dependencies: TASK #663, TASK #664, TASK #666
+
+TASK #668: TEST GATE — V17.6 distribution roundtrip verification
+Area: V17.6 — Pack Distribution & Installation
+Agent: qa-tester
+Priority: HIGH
+Status: PENDING
+Acceptance Criteria:
+  - [ ] Export/import/install/fork server tests pass
+  - [ ] Local bundle roundtrip works end-to-end
+  - [ ] Compatibility rejection cases are covered
+  - [ ] Client distribution actions do not break existing workflow import/export UX
+Dependencies: TASK #662, TASK #663, TASK #664, TASK #665, TASK #666, TASK #667
+
+TASK #669: AREA CHECKPOINT — V17.6 closeout
+Area: V17.6 — Pack Distribution & Installation
+Agent: project-manager
+Priority: HIGH
+Status: PENDING
+Acceptance Criteria:
+  - [ ] TASKS #662-#667 COMPLETED
+  - [ ] TEST GATE #668 PASS
+  - [ ] `docs/memory/PROGRESS.md` synced if touched
+  - [ ] `docs/memory/CHANGELOG.md` synced if touched
+  - [ ] `docs/memory/ACTIVITY_LOG.md` synced if touched
+  - [ ] `docs/memory/CODE_MAP.md` synced if touched
+Dependencies: TASK #668
+
+---
+
+## AREA: V17.7 — Pack Fixtures & Release Gates
+_Components: PackFixture model, fixture runner, assertions, publish gate, dry-run builder flow_
+_Tasks: #670 -> #676_
+_Gate: A pack cannot be treated as distributable product output until it has reproducible validation and a controlled publish state._
+
+---
+
+TASK #670: PACK-RELEASE-01 — Add PackFixture model and persistence
+Area: V17.7 — Pack Fixtures & Release Gates
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Introduce the stored validation artifact for packs.
+  Inspect:
+    - pack versioning/lifecycle code
+    - execution history patterns if helpful
+  Modify:
+    - fixture model/store layer
+    - relevant pack routes
+  Fixtures must bind to a specific pack version, not to mutable in-progress state.
+Acceptance Criteria:
+  - [ ] PackFixture model exists
+  - [ ] Fixtures can be stored and loaded per pack version
+  - [ ] Fixture payload includes input data plus expected checks
+  - [ ] Fixture persistence follows the same safety rules as other stores
+Dependencies: TASK #669
+
+TASK #671: PACK-RELEASE-02 — Implement fixture runner against pack runs
+Area: V17.7 — Pack Fixtures & Release Gates
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: HARD
+Status: PENDING
+Context:
+  Add the engine-side capability to run fixtures against pack versions.
+  Inspect:
+    - pack start route/runtime wrapper
+    - pack result assembly
+  Modify:
+    - fixture runner service
+    - pack routes if needed
+  The runner must launch a pack with fixture input, collect outputs/artifacts, and return
+  structured pass/fail evidence.
+Acceptance Criteria:
+  - [ ] Fixture runner can execute a specific pack version
+  - [ ] Runner captures declared outputs and artifacts
+  - [ ] Runner returns structured pass/fail result data
+  - [ ] Runner failures do not mutate published state automatically
+Dependencies: TASK #670, TASK #643
+
+TASK #672: PACK-RELEASE-03 — Implement assertion primitives for fixture evaluation
+Area: V17.7 — Pack Fixtures & Release Gates
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Add a small deterministic assertion system for v1 fixture checks.
+  Inspect:
+    - PackFixture model
+    - pack result/artifact payload shape
+  Modify:
+    - assertion helper/evaluator module
+  V1 assertions: required artifact exists, required output exists, output contains text,
+  output matches JSON-path presence.
+Acceptance Criteria:
+  - [ ] Assertion evaluator supports the agreed v1 assertion types
+  - [ ] Assertion failures are structured and human-readable
+  - [ ] Unsupported assertion types fail clearly
+  - [ ] Assertion logic is reusable by dry-run and publish gating
+Dependencies: TASK #671
+
+TASK #673: PACK-RELEASE-04 — Enforce publish gate and release-state transitions
+Area: V17.7 — Pack Fixtures & Release Gates
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: HARD
+Status: PENDING
+Context:
+  Make fixture success a true release gate.
+  Inspect:
+    - pack lifecycle handling from V17.4
+    - fixture runner/assertion results
+  Modify:
+    - pack lifecycle routes/store logic
+  `published` should require a green fixture set and valid pack contract/dependencies.
+Acceptance Criteria:
+  - [ ] Publish action fails when required fixtures are red or missing
+  - [ ] Publish action fails when pack contract/dependencies are invalid
+  - [ ] Draft/tested/published/deprecated transitions are enforced server-side
+  - [ ] Published version identity is preserved when later drafts change
+Dependencies: TASK #651, TASK #671, TASK #672
+
+TASK #674: PACK-RELEASE-05 — Add builder dry-run and pre-publish verification UX
+Area: V17.7 — Pack Fixtures & Release Gates
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Give builders a way to validate packs before publishing.
+  Inspect:
+    - PackBuilderView
+    - fixture/publish routes and responses
+  Modify:
+    - builder surfaces
+    - fixture management UI as needed
+  The builder should be able to run a fixture or dry-run from the current pack context,
+  inspect the result, and understand why publish is blocked.
+Acceptance Criteria:
+  - [ ] Builder can trigger dry-run/fixture execution from the pack UI
+  - [ ] Builder can see pass/fail output in a usable format
+  - [ ] Publish blockers are explained in the UI
+  - [ ] Dry-run does not pretend to publish or install anything
+Dependencies: TASK #652, TASK #670, TASK #671, TASK #673
+
+TASK #675: TEST GATE — V17.7 fixture and publish gate verification
+Area: V17.7 — Pack Fixtures & Release Gates
+Agent: qa-tester
+Priority: HIGH
+Status: PENDING
+Acceptance Criteria:
+  - [ ] Fixture store/runner/assertion tests pass
+  - [ ] Publish gate blocks invalid or untested packs
+  - [ ] Builder dry-run/publish UX works end-to-end
+  - [ ] Existing pack CRUD/runtime/distribution behavior remains green
+Dependencies: TASK #670, TASK #671, TASK #672, TASK #673, TASK #674
+
+TASK #676: AREA CHECKPOINT — V17.7 closeout
+Area: V17.7 — Pack Fixtures & Release Gates
+Agent: project-manager
+Priority: HIGH
+Status: PENDING
+Acceptance Criteria:
+  - [ ] TASKS #670-#674 COMPLETED
+  - [ ] TEST GATE #675 PASS
+  - [ ] `docs/memory/PROGRESS.md` synced if touched
+  - [ ] `docs/memory/CHANGELOG.md` synced if touched
+  - [ ] `docs/memory/ACTIVITY_LOG.md` synced if touched
+  - [ ] `docs/memory/CODE_MAP.md` synced if touched
+Dependencies: TASK #675
