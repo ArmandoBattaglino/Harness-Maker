@@ -62,6 +62,44 @@ export function buildPackArtifacts(pack, executionLike, agentOutputs = {}, aggre
   });
 }
 
+export function buildVisibleStepStatuses(pack, executionLike = {}) {
+  const agentStates = executionLike.agentStates instanceof Map
+    ? Object.fromEntries(executionLike.agentStates)
+    : (executionLike.agentStates ?? executionLike.nodeSnapshots ?? {});
+  const executionStatus = executionLike.status ?? 'unknown';
+  const runtimeBlocker = executionLike.runtimeBlocker ?? null;
+
+  return (pack?.visibleSteps ?? []).map((step) => {
+    const nodeIds = Array.isArray(step.nodeIds) ? step.nodeIds : [];
+    const nodeStatuses = nodeIds
+      .map((nodeId) => agentStates[nodeId]?.status)
+      .filter(Boolean);
+    let status = 'pending';
+
+    if (runtimeBlocker || nodeStatuses.includes('blocked') || executionStatus === 'blocked') {
+      status = 'blocked';
+    } else if (nodeStatuses.some((item) => ['running', 'handoffing'].includes(item))) {
+      status = 'running';
+    } else if (nodeStatuses.includes('waiting')) {
+      status = 'waiting';
+    } else if (nodeIds.length > 0 && nodeStatuses.length === nodeIds.length && nodeStatuses.every((item) => ['done', 'completed', 'stopped'].includes(item))) {
+      status = 'completed';
+    } else if (['completed', 'stopped'].includes(executionStatus) && nodeIds.length === 0) {
+      status = 'completed';
+    } else if (executionStatus === 'failed') {
+      status = 'failed';
+    }
+
+    return {
+      id: step.id,
+      label: step.label,
+      description: step.description ?? '',
+      nodeIds,
+      status,
+    };
+  });
+}
+
 export function buildPackResult(pack, executionLike, agentOutputs = {}, aggregatedArtifact = '') {
   if (!pack) return null;
 
@@ -92,13 +130,7 @@ export function buildPackResult(pack, executionLike, agentOutputs = {}, aggregat
     status: executionLike?.status ?? 'unknown',
     outputs,
     artifacts: buildPackArtifacts(pack, executionLike, agentOutputs, aggregatedArtifact),
-    visibleSteps: (pack.visibleSteps ?? []).map((step) => ({
-      id: step.id,
-      label: step.label,
-      description: step.description ?? '',
-      nodeIds: Array.isArray(step.nodeIds) ? [...step.nodeIds] : [],
-      status: executionLike?.status === 'completed' ? 'completed' : executionLike?.status ?? 'pending',
-    })),
+    visibleSteps: buildVisibleStepStatuses(pack, executionLike),
   };
 }
 

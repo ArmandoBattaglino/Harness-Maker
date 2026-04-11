@@ -38,6 +38,8 @@ function createPack() {
     name: 'Marketing Harness',
     workflowId: 'wf-1',
     packVersion: '1.0.0',
+    engineCompatibility: '^1.0.0',
+    dependencies: [{ id: 'dep-workflow', type: 'workflow', targetId: 'wf-1', required: true }],
     inputSchema: {
       type: 'object',
       properties: {
@@ -99,6 +101,9 @@ describe('packs routes', () => {
       startExecution: vi.fn().mockResolvedValue('exec-1'),
       getStatus: vi.fn().mockReturnValue({ status: 'running', workflowId: 'wf-1' }),
     };
+    const workflowStore = {
+      get: vi.fn().mockResolvedValue({ id: 'wf-1', nodes: [{ id: 'agent-a' }] }),
+    };
     const handler = getRouteHandler(packsRouter, 'post', '/:id/start');
     const req = {
       params: { id: 'pack-1' },
@@ -107,7 +112,7 @@ describe('packs routes', () => {
         projectPath: 'C:/projects/demo',
         input: { brief: 'Launch a campaign', rounds: 3, tags: ['b2b'] },
       },
-      app: { locals: { packStore, swarmEngine } },
+      app: { locals: { packStore, swarmEngine, workflowStore } },
     };
     const res = createMockRes();
 
@@ -141,6 +146,9 @@ describe('packs routes', () => {
       startExecution: vi.fn(),
       getStatus: vi.fn(),
     };
+    const workflowStore = {
+      get: vi.fn().mockResolvedValue({ id: 'wf-1', nodes: [{ id: 'agent-a' }] }),
+    };
     const handler = getRouteHandler(packsRouter, 'post', '/:id/start');
     const req = {
       params: { id: 'pack-1' },
@@ -149,7 +157,7 @@ describe('packs routes', () => {
         projectPath: 'C:/projects/demo',
         input: { brief: 42, rounds: 'three', extra: true },
       },
-      app: { locals: { packStore, swarmEngine } },
+      app: { locals: { packStore, swarmEngine, workflowStore } },
     };
     const res = createMockRes();
 

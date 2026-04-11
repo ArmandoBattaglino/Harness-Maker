@@ -1,6 +1,20 @@
 ﻿# CHANGELOG — Claude Code Visual Manager
 
 ---
+## 2026-04-11 - V17.3 CLOSED - Pack-Aware Runtime Wrapper (#635-#644)
+
+**Status:** Area closed; runtime-wrapper tasks **#635-#644** are now **COMPLETED/PASS**.
+
+**Deliverables:**
+- PackResolver now resolves packs with linked workflow, engine compatibility, and required dependency checks.
+- Pack start remains an additive wrapper over SwarmEngine execution.
+- Status/results/history now expose packRun/packResult metadata while preserving workflow-only payloads.
+- Visible steps roll up node states into operator-facing phase statuses.
+- Client runtime hydration preserves pack metadata in the existing Zustand store.
+
+**Verification:** server targeted suites **53/53 PASS**; client runtime/hook suites **22/22 PASS**; client build **507 modules**.
+
+---
 ## 2026-04-11 - V17.2 CLOSED - Pack Contract Layer (#626-#634)
 
 **Status:** Area closed; contract-layer tasks **#626-#634** are now **COMPLETED/PASS**.

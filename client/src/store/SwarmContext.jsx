@@ -61,6 +61,8 @@ const buildClearedExecutionState = () => ({
   resolvedHitlIds: [],
   interAgentFeed: [],
   chatMessages: [],
+  packRun: null,
+  packResult: null,
   chatFilter: 'all',
   sidePanelMode: 'chat',
   sidePanelOpen: true,
@@ -89,6 +91,8 @@ const useSwarmStore = create((set, get) => ({
   resolvedHitlIds: [],     // IDs of resolved HITL items (survives component remount)
   interAgentFeed: [],      // last 100 handoff events
   chatMessages: [],          // Unified chat view messages
+  packRun: null,             // additive pack runtime metadata for pack-launched executions
+  packResult: null,          // pack-shaped outputs/artifacts from status/results hydration
   chatFilter: 'all',         // 'all' or specific nodeId
   sidePanelMode: 'chat',     // 'feed' | 'chat' — which panel is shown
 
@@ -334,6 +338,11 @@ const useSwarmStore = create((set, get) => ({
     }
     return { agentResults };
   }),
+
+  hydratePackRuntime: ({ packRun, packResult }) => set((state) => ({
+    packRun: packRun === undefined ? state.packRun : packRun,
+    packResult: packResult === undefined ? state.packResult : packResult,
+  })),
 
   clearAgentResults: () => set({ agentResults: {} }),
 

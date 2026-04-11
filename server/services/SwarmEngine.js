@@ -21,6 +21,7 @@ import { discoverCodexBinary, discoverGeminiBinary } from './BinaryDiscovery.js'
 import { ChatExtractor } from './ChatExtractor.js';
 import { normalizeChatDisplayText } from './chatTextNormalization.js';
 import { buildWorkflowArtifact } from './WorkflowArtifactBuilder.js';
+import { buildVisibleStepStatuses } from './PackResultBuilder.js';
 
 // tree-kill is CommonJS only — use createRequire to import it (DEC-006)
 const requireCjs = createRequire(import.meta.url);
@@ -8060,6 +8061,19 @@ class SwarmEngine {
       this._refreshAgentSnippet(state, { preferSessionReplay: state.status !== 'running' });
     }
 
+    const packRun = e.packMetadata
+      ? {
+          ...JSON.parse(JSON.stringify(e.packMetadata)),
+          status: e.status,
+          visibleSteps: buildVisibleStepStatuses({
+            id: e.packMetadata.packId,
+            packVersion: e.packMetadata.packVersion,
+            visibleSteps: e.packMetadata.visibleSteps ?? [],
+          }, e),
+          blocker: e.runtimeBlocker ? this._serializeRuntimeBlocker(e.runtimeBlocker) : null,
+        }
+      : null;
+
     return {
       executionId: e.executionId,
       workflowId: e.workflowId,
@@ -8077,7 +8091,7 @@ class SwarmEngine {
       chatMessages: (e.chatMessages ?? []).map((msg) => ({ ...msg })),
       workflowContext: e.workflowContext ? { ...e.workflowContext } : {},
       totalTurns: e.totalTurns ?? 0,
-      ...(e.packMetadata ? { packRun: JSON.parse(JSON.stringify(e.packMetadata)) } : {}),
+      ...(packRun ? { packRun } : {}),
       ...(e.runtimeBlocker ? { runtimeBlocker: this._serializeRuntimeBlocker(e.runtimeBlocker) } : {}),
     };
   }

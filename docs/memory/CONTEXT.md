@@ -1,11 +1,10 @@
 ﻿# Current Context
 **Session date:** 2026-04-11
-**Focus:** **V17.2 PACK CONTRACT LAYER - CLOSED.** Packs now validate explicit JSON Schema Draft 2020-12 input/output contracts with Ajv, artifact formats, workflow dependencies, engine semver compatibility, knowledgeSources, behaviorRules, visibleSteps, completionCriteria, and workflow-node references before runtime.
+**Focus:** **V17.3 PACK-AWARE RUNTIME WRAPPER - CLOSED.** Pack runs now resolve through PackResolver, start through the existing SwarmEngine, carry pack metadata in status/results/history, expose visible-step status, and hydrate `packRun`/`packResult` through the existing client swarm store without a second runtime state model.
 
-**IMMEDIATE NEXT STEP:** Start **V17.3 Pack-Aware Runtime Wrapper**. Use the validated contract layer to harden pack start/status/results/history, pack-aware restoration, visible-step hydration, blocker mapping, and project binding while preserving workflow-only runtime behavior.
+**IMMEDIATE NEXT STEP:** Start **V17.4 Pack Builder Authoring Platform**. Build the guided authoring shell and editors on top of the validated pack contract while preserving SwarmView as the advanced workflow drill-down surface.
 
 ## Active Threads
-- V17.3 Pack-Aware Runtime Wrapper — PENDING (#635-#644), now explicitly includes pack-aware history/restoration
 - V17.4 Pack Builder Authoring Platform — PENDING (#645-#653), now explicitly includes workflow drill-down and harness-facing editors
 - V17.5 Pack Operator Product Surface — PENDING (#654-#661), now explicitly includes project-binding UX
 - V17.6 Pack Distribution & Installation — PENDING (#662-#669)

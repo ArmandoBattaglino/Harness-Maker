@@ -4,7 +4,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v17.2 - task numbering extends through #676. V17.2 PACK CONTRACT LAYER is CLOSED (#626-#634, all COMPLETED/PASS). V17.1 PACK DOMAIN FOUNDATION is CLOSED (#617-#625, all COMPLETED/PASS). V17.0 PACK PLATFORM PROGRAM FOUNDATION is CLOSED (#610-#616, all COMPLETED/PASS). V17.3 PACK-AWARE RUNTIME WRAPPER is PENDING (#635-#644). V17.4 PACK BUILDER AUTHORING PLATFORM is PENDING (#645-#653). V17.5 PACK OPERATOR PRODUCT SURFACE is PENDING (#654-#661). V17.6 PACK DISTRIBUTION & INSTALLATION is PENDING (#662-#669). V17.7 PACK FIXTURES & RELEASE GATES is PENDING (#670-#676). Earlier completed areas remain closed unless separately noted in their sections.
+**Status:** v17.3 - task numbering extends through #676. V17.3 PACK-AWARE RUNTIME WRAPPER is CLOSED (#635-#644, all COMPLETED/PASS). V17.2 PACK CONTRACT LAYER is CLOSED (#626-#634, all COMPLETED/PASS). V17.1 PACK DOMAIN FOUNDATION is CLOSED (#617-#625, all COMPLETED/PASS). V17.0 PACK PLATFORM PROGRAM FOUNDATION is CLOSED (#610-#616, all COMPLETED/PASS). V17.4 PACK BUILDER AUTHORING PLATFORM is PENDING (#645-#653). V17.5 PACK OPERATOR PRODUCT SURFACE is PENDING (#654-#661). V17.6 PACK DISTRIBUTION & INSTALLATION is PENDING (#662-#669). V17.7 PACK FIXTURES & RELEASE GATES is PENDING (#670-#676). Earlier completed areas remain closed unless separately noted in their sections.
 **Completed Area:** V10.8 CLIENT FULL DEEP TEST FOLLOW-UP — AREA CLOSED 2026-04-09. 6 tasks (#491-#496), all COMPLETED. #491 COMPLETED (visual regression determinism fixed — normalizeHarnessLayout() added, 6 baselines regenerated at 682px), #492 COMPLETED (browser E2E harness reliability fixed — preflight check, direct node spawn, stale-server isolation), #493 COMPLETED (stale-server guard — check-server-freshness.mjs created, integrated into swarm-e2e-chat-check.mjs + swarm-visual-regression.mjs), #494 TEST GATE PASS, #495 AREA CHECKPOINT PASS, #496 COMPLETED (out-of-session: +11 deterministic server tests for _onHandoff -> Codex SDK spawn, 501/501 server suite green). No active planned areas.
 **Completed Area:** V10.7 CLIENT RESILIENCE TEST COVERAGE — AREA CLOSED 2026-04-09. #483 COMPLETED, #484 COMPLETED, #485 COMPLETED, #486 COMPLETED, #487 COMPLETED, #488 COMPLETED, TEST GATE #489 PASS, AREA CHECKPOINT #490 PASS. Verified by dedicated client coverage over restore/reconcile, secondary WS events, HITL failure paths, advanced ChatPanel states, AgentNode badges, and SwarmView operator-shell branches.
   **Completed Area:** V10.6 CLIENT CHAT + FLOW BUG FIXES — AREA CLOSED 2026-04-09. #476 COMPLETED, #477 COMPLETED, #478 COMPLETED, #479 COMPLETED, #480 COMPLETED, TEST GATE #481 PASS, AREA CHECKPOINT #482 PASS. Verified by live Puppeteer reruns of idle/reset + Codex success/reload on `http://127.0.0.1:3000`, clean Gemini blocked/stopped node/chat hygiene on fresh `http://127.0.0.1:3312`, and targeted server regressions (185/185 PASS).
@@ -22433,7 +22433,7 @@ Area: V17.3 — Pack-Aware Runtime Wrapper
 Agent: backend-dev
 Priority: CRITICAL
 Difficulty: HARD
-Status: PENDING
+Status: COMPLETED
 Context:
   Add the server-side service that resolves a pack into runtime-ready components.
   Inspect:
@@ -22445,18 +22445,19 @@ Context:
   Resolution must fail fast for missing workflow, incompatible engine version,
   and unsatisfied required dependencies.
 Acceptance Criteria:
-  - [ ] PackResolver loads PackDefinition and linked workflow together
-  - [ ] PackResolver validates engine compatibility before execution starts
-  - [ ] PackResolver validates required dependencies before execution starts
-  - [ ] Resolver output is stable enough for route and engine use
+  - [x] PackResolver loads PackDefinition and linked workflow together
+  - [x] PackResolver validates engine compatibility before execution starts
+  - [x] PackResolver validates required dependencies before execution starts
+  - [x] Resolver output is stable enough for route and engine use
 Dependencies: TASK #634
+Verdict: COMPLETED - 2026-04-11. PackResolver now loads pack/workflow together and validates engine compatibility plus required dependencies.
 
 TASK #636: PACK-RUNTIME-02 — Add pack execution start route
 Area: V17.3 — Pack-Aware Runtime Wrapper
 Agent: backend-dev
 Priority: CRITICAL
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Expose `POST /api/v1/packs/:id/start`.
   Inspect:
@@ -22468,18 +22469,19 @@ Context:
   The route must validate pack input payload against pack inputSchema, resolve the pack,
   and then delegate to the current runtime start path rather than reimplement execution.
 Acceptance Criteria:
-  - [ ] `POST /api/v1/packs/:id/start` exists
-  - [ ] Invalid input payload fails before runtime spawn
-  - [ ] Pack start delegates into existing swarm execution logic
-  - [ ] Response includes execution identity sufficient for pack run hydration
+  - [x] `POST /api/v1/packs/:id/start` exists
+  - [x] Invalid input payload fails before runtime spawn
+  - [x] Pack start delegates into existing swarm execution logic
+  - [x] Response includes execution identity sufficient for pack run hydration
 Dependencies: TASK #635
+Verdict: COMPLETED - 2026-04-11. Pack start route validates input and delegates into SwarmEngine with execution identity and packRun payload.
 
 TASK #637: PACK-RUNTIME-03 — Extend SwarmEngine execution context with pack metadata
 Area: V17.3 — Pack-Aware Runtime Wrapper
 Agent: backend-dev
 Priority: CRITICAL
 Difficulty: HARD
-Status: PENDING
+Status: COMPLETED
 Context:
   Teach the engine about pack execution without forking the engine model.
   Inspect:
@@ -22493,18 +22495,19 @@ Context:
   enough metadata for later pack-first restoration and operator monitoring without breaking
   workflow-only history semantics.
 Acceptance Criteria:
-  - [ ] Engine execution records can hold pack metadata
-  - [ ] Status snapshots serialize pack metadata additively
-  - [ ] Workflow-only runs remain valid without pack metadata present
-  - [ ] Pack execution does not duplicate a second engine lifecycle
+  - [x] Engine execution records can hold pack metadata
+  - [x] Status snapshots serialize pack metadata additively
+  - [x] Workflow-only runs remain valid without pack metadata present
+  - [x] Pack execution does not duplicate a second engine lifecycle
 Dependencies: TASK #635, TASK #636
+Verdict: COMPLETED - 2026-04-11. SwarmEngine records and serializes additive pack metadata while workflow-only runs remain unchanged.
 
 TASK #638: PACK-RUNTIME-04 — Bind pack inputs into workflow context safely
 Area: V17.3 — Pack-Aware Runtime Wrapper
 Agent: backend-dev
 Priority: HIGH
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Define how validated pack inputs enter runtime state.
   Inspect:
@@ -22515,18 +22518,19 @@ Context:
   Pack inputs must be available to prompts/tools without polluting or colliding with
   existing workflow context keys.
 Acceptance Criteria:
-  - [ ] Pack inputs are injected into runtime context in a reserved namespace
-  - [ ] Existing workflowContext keys are not overwritten silently
-  - [ ] Input values survive status hydration/results access where needed
-  - [ ] Missing required pack inputs cannot reach execution start
+  - [x] Pack inputs are injected into runtime context in a reserved namespace
+  - [x] Existing workflowContext keys are not overwritten silently
+  - [x] Input values survive status hydration/results access where needed
+  - [x] Missing required pack inputs cannot reach execution start
 Dependencies: TASK #636, TASK #637
+Verdict: COMPLETED - 2026-04-11. Pack inputs enter workflowContext under reserved `pack.input` without overwriting existing workflow keys.
 
 TASK #639: PACK-RUNTIME-05 — Implement visible-step runtime tracking
 Area: V17.3 — Pack-Aware Runtime Wrapper
 Agent: backend-dev
 Priority: HIGH
 Difficulty: HARD
-Status: PENDING
+Status: COMPLETED
 Context:
   Roll up raw node execution state into operator-facing phases.
   Inspect:
@@ -22538,18 +22542,19 @@ Context:
   Multiple nodes may map to the same visible step. The runtime must expose step
   status like waiting/running/blocked/completed without relying on UI-only heuristics.
 Acceptance Criteria:
-  - [ ] visible step status can be derived from runtime state
-  - [ ] Multiple nodes can contribute to one visible step
-  - [ ] Blocked and waiting states are represented explicitly
-  - [ ] Visible-step data is serialized in pack execution snapshots
+  - [x] visible step status can be derived from runtime state
+  - [x] Multiple nodes can contribute to one visible step
+  - [x] Blocked and waiting states are represented explicitly
+  - [x] Visible-step data is serialized in pack execution snapshots
 Dependencies: TASK #637, TASK #638
+Verdict: COMPLETED - 2026-04-11. Visible step status is derived from runtime agent states/nodeSnapshots and serialized in packRun snapshots.
 
 TASK #640: PACK-RUNTIME-06 — Build pack-scoped result and artifact assembly
 Area: V17.3 — Pack-Aware Runtime Wrapper
 Agent: backend-dev
 Priority: CRITICAL
 Difficulty: HARD
-Status: PENDING
+Status: COMPLETED
 Context:
   Convert raw runtime data into operator-safe declared outputs and artifacts.
   Inspect:
@@ -22562,18 +22567,19 @@ Context:
   Preserve raw debug output for builder mode, but add a pack-shaped result payload
   for operator surfaces.
 Acceptance Criteria:
-  - [ ] Pack results expose declared outputs separately from raw debug output
-  - [ ] Pack artifacts expose contract-declared artifact records
-  - [ ] Existing workflow result payloads remain backward-compatible
-  - [ ] Pack result assembly is reusable across live and persisted execution views
+  - [x] Pack results expose declared outputs separately from raw debug output
+  - [x] Pack artifacts expose contract-declared artifact records
+  - [x] Existing workflow result payloads remain backward-compatible
+  - [x] Pack result assembly is reusable across live and persisted execution views
 Dependencies: TASK #637, TASK #639
+Verdict: COMPLETED - 2026-04-11. PackResultBuilder exposes declared outputs/artifacts and is reused for live and persisted result views.
 
 TASK #641: PACK-RUNTIME-07 — Map runtime blockers and failures into pack-level run states
 Area: V17.3 — Pack-Aware Runtime Wrapper
 Agent: backend-dev
 Priority: HIGH
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Translate engine/runtime problems into pack-facing states without losing technical detail.
   Inspect:
@@ -22584,18 +22590,19 @@ Context:
     - pack result/status serializers
   Pack runs need truthful operator states plus deeper debug detail for builder/admin users.
 Acceptance Criteria:
-  - [ ] Pack run states include blocked/failure semantics
-  - [ ] Operator-facing blocker summaries are readable
-  - [ ] Technical blocker detail remains accessible for debug surfaces
-  - [ ] No existing workflow blocker semantics are regressed
+  - [x] Pack run states include blocked/failure semantics
+  - [x] Operator-facing blocker summaries are readable
+  - [x] Technical blocker detail remains accessible for debug surfaces
+  - [x] No existing workflow blocker semantics are regressed
 Dependencies: TASK #637, TASK #640
+Verdict: COMPLETED - 2026-04-11. Pack run status and blocker summaries are included while technical blocker detail remains available.
 
 TASK #642: PACK-RUNTIME-08 — Add pack-aware client hydration/selectors
 Area: V17.3 — Pack-Aware Runtime Wrapper
 Agent: frontend-dev
 Priority: HIGH
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Extend current Swarm client state rather than inventing a second runtime store.
   Inspect:
@@ -22608,37 +22615,40 @@ Context:
   pack-facing result data, and project-binding context while remaining safe for old
   workflow executions.
 Acceptance Criteria:
-  - [ ] Pack-aware snapshots hydrate into the existing store cleanly
-  - [ ] Old workflow-only snapshots still hydrate correctly
-  - [ ] Client selectors can read pack run state without duplicating raw engine state
-  - [ ] Pack status/result plus pack identity/version fields survive reconnect and REST refill paths
+  - [x] Pack-aware snapshots hydrate into the existing store cleanly
+  - [x] Old workflow-only snapshots still hydrate correctly
+  - [x] Client selectors can read pack run state without duplicating raw engine state
+  - [x] Pack status/result plus pack identity/version fields survive reconnect and REST refill paths
 Dependencies: TASK #637, TASK #639, TASK #640
+Verdict: COMPLETED - 2026-04-11. Client store/useSwarm hydrate packRun and packResult metadata in the existing runtime store.
 
 TASK #643: TEST GATE — V17.3 pack runtime wrapper
 Area: V17.3 — Pack-Aware Runtime Wrapper
 Agent: qa-tester
 Priority: HIGH
-Status: PENDING
+Status: PASS
 Acceptance Criteria:
-  - [ ] Resolver, start route, runtime snapshot, and result assembly tests pass
-  - [ ] Pack runs can start, stop, and hydrate without breaking workflow-only runs
-  - [ ] Existing swarm runtime regression suites remain green
-  - [ ] Client hydration tests cover both pack and workflow snapshots
+  - [x] Resolver, start route, runtime snapshot, and result assembly tests pass
+  - [x] Pack runs can start, stop, and hydrate without breaking workflow-only runs
+  - [x] Existing swarm runtime regression suites remain green
+  - [x] Client hydration tests cover both pack and workflow snapshots
 Dependencies: TASK #635, TASK #636, TASK #637, TASK #638, TASK #639, TASK #640, TASK #641, TASK #642
+Verdict: PASS - 2026-04-11. V17.3 test gate passed: server runtime/regression suites 53/53, client runtime/hook suites 22/22, build 507 modules.
 
 TASK #644: AREA CHECKPOINT — V17.3 closeout
 Area: V17.3 — Pack-Aware Runtime Wrapper
 Agent: project-manager
 Priority: HIGH
-Status: PENDING
+Status: PASS
 Acceptance Criteria:
-  - [ ] TASKS #635-#642 COMPLETED
-  - [ ] TEST GATE #643 PASS
-  - [ ] `docs/memory/PROGRESS.md` synced if touched
+  - [x] TASKS #635-#642 COMPLETED
+  - [x] TEST GATE #643 PASS
+  - [x] `docs/memory/PROGRESS.md` synced if touched
   - [x] `docs/memory/CHANGELOG.md` synced if touched
   - [x] `docs/memory/ACTIVITY_LOG.md` synced if touched
   - [x] `docs/memory/CODE_MAP.md` synced if touched
 Dependencies: TASK #643
+Verdict: PASS - 2026-04-11. V17.3 closes with memory synchronized and runtime wrapper ready for builder/operator UI work.
 
 ---
 

@@ -169,7 +169,14 @@ router.post('/:id/start', async (req, res, next) => {
       return res.status(400).json({ error: 'Input validation failed', details: inputErrors });
     }
 
-    const resolved = packResolver.resolveForRun(pack, { input, projectId, projectPath });
+    const resolved = await packResolver.resolveFromStores({
+      packId: req.params.id,
+      packStore: store,
+      workflowStore: req.app.locals.workflowStore,
+      input,
+      projectId,
+      projectPath,
+    });
     const executionId = await engine.startExecution(
       resolved.workflowId,
       projectId,

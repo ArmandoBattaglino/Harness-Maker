@@ -1,4 +1,14 @@
-﻿## 2026-04-11 - backend-dev / frontend-dev / qa-tester - V17.2 pack contract validation
+﻿## 2026-04-11 - backend-dev / frontend-dev / qa-tester - V17.3 pack-aware runtime wrapper
+**Outcome:** COMPLETED / PASS
+**Summary:** Closed V17.3 by routing pack launches through the existing workflow engine with additive pack metadata. Runtime snapshots, result payloads, persisted history, visible steps, blockers, and client hydration now understand packRun/packResult without forking the SwarmEngine lifecycle.
+**Files changed:** server/services/PackResolver.js, server/services/PackResultBuilder.js, server/services/SwarmEngine.js, server/routes/packs.js, server/routes/swarm.js, server/stores/ExecutionHistoryStore.js, client/src/store/SwarmContext.jsx, client/src/hooks/useSwarm.js, server/tests/pack-resolver.test.js, server/tests/pack-result-builder.test.js, server/tests/pack-routes.test.js, client/src/hooks/useSwarm.test.jsx, client/src/store/SwarmContext.test.jsx, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** pack-aware visible steps were previously static metadata; pack runtime payloads now carry derived statuses and pack-shaped results.
+**Decisions made:** Keep `packRun`/`packResult` as additive fields in the existing runtime store and REST payloads instead of introducing a second execution store.
+**Blockers:** none
+**Next:** Implement V17.4 Pack Builder Authoring Platform.
+
+---
+## 2026-04-11 - backend-dev / frontend-dev / qa-tester - V17.2 pack contract validation
 **Outcome:** COMPLETED / PASS
 **Summary:** Closed V17.2 by making the four harness-authoring surfaces explicit and enforceable. Server-side validation now uses Ajv Draft 2020-12 plus semver; PackStore validates contracts against linked workflow nodes; pack start/dry-run reject invalid runtime inputs; and client pack hooks normalize optional contract fields without hiding server validation errors.
 **Files changed:** server/package.json, server/package-lock.json, server/services/packContracts.js, server/stores/PackStore.js, server/tests/pack-contracts.test.js, server/tests/pack-routes.test.js, client/src/hooks/usePack.js, client/src/hooks/usePack.test.jsx, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md

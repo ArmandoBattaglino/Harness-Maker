@@ -137,6 +137,7 @@ export function useSwarm(workflowId) {
   const updateTriggerState = useSwarmStore((s) => s.updateTriggerState);
   const setWsConnected = useSwarmStore((s) => s.setWsConnected);
   const clearExecutionState = useSwarmStore((s) => s.clearExecutionState);
+  const hydratePackRuntime = useSwarmStore((s) => s.hydratePackRuntime);
   const pendingStreamJsonTurnsRef = useRef({});
 
   const getPendingStreamJsonTurn = useCallback((nodeId) => {
@@ -285,6 +286,8 @@ export function useSwarm(workflowId) {
       ...(snapshot.budget ? { budget: snapshot.budget } : {}),
       ...(snapshot.inboxItems ? { inboxItems: snapshot.inboxItems } : {}),
       ...(snapshot.interAgentFeed ? { interAgentFeed: snapshot.interAgentFeed } : {}),
+      ...(Object.prototype.hasOwnProperty.call(snapshot, 'packRun') ? { packRun: snapshot.packRun } : {}),
+      ...(Object.prototype.hasOwnProperty.call(snapshot, 'packResult') ? { packResult: snapshot.packResult } : {}),
       // Only accept server chatMessages when they are at least as rich as
       // what the client accumulated via WS.  During reconciliation the server
       // snapshot may arrive before the ChatExtractor has flushed final
@@ -451,6 +454,12 @@ export function useSwarm(workflowId) {
           if (resultsData?.agentOutputs) {
             useSwarmStore.getState().hydrateAgentResults(resultsData.agentOutputs);
           }
+          if (resultsData?.packRun || resultsData?.packResult) {
+            hydratePackRuntime({
+              packRun: resultsData.packRun,
+              packResult: resultsData.packResult,
+            });
+          }
         }
       } catch {
         // Silent — output panel just won't have data
@@ -462,7 +471,7 @@ export function useSwarm(workflowId) {
     }
 
     connectWs(stored.executionId);
-  }, [applyExecutionSnapshot, clearExecutionState]);
+  }, [applyExecutionSnapshot, clearExecutionState, hydratePackRuntime]);
 
   // Connect WS for a running execution
   const connectWs = useCallback((executionId, { isReconnect = false } = {}) => {
@@ -691,6 +700,12 @@ export function useSwarm(workflowId) {
                       if (data?.agentOutputs) {
                         useSwarmStore.getState().hydrateAgentResults(data.agentOutputs);
                       }
+                      if (data?.packRun || data?.packResult) {
+                        hydratePackRuntime({
+                          packRun: data.packRun,
+                          packResult: data.packResult,
+                        });
+                      }
                       // Hydrate chat messages from server-stored data (dedup by timestamp+nodeId)
                       if (data?.chatMessages && Array.isArray(data.chatMessages)) {
                         const store = useSwarmStore.getState();
@@ -862,7 +877,10 @@ export function useSwarm(workflowId) {
               (m) =>
                 (m.role === 'assistant' || !m.role)
                 && isStructuredSpawnMode(m.spawnMode)
-                && sameStructuredTurnId(m.turnId, messageTurnId),
+                && (
+                  sameStructuredTurnId(m.turnId, messageTurnId)
+                  || (messageTurnId && !m.turnId && m.timestamp === msg.timestamp)
+                ),
             );
           } else {
             // Drop trailing text_delta fragments that arrive after canonical for structured
@@ -899,7 +917,7 @@ export function useSwarm(workflowId) {
     };
 
     wsRef.current = ws;
-  }, [setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, addChatMessage, setExecution, updateBudget, addInboxItem, resolveInboxItem, updateTriggerState, applyExecutionSnapshot, reconcileClosedExecution, getPendingStreamJsonTurn, flushPendingStreamJsonTurn]);
+  }, [setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, addChatMessage, setExecution, updateBudget, addInboxItem, resolveInboxItem, updateTriggerState, applyExecutionSnapshot, reconcileClosedExecution, getPendingStreamJsonTurn, flushPendingStreamJsonTurn, hydratePackRuntime]);
 
   // Start execution
   const startExecution = useCallback(async (projectId, projectPath, runtimeProvider = 'auto', runtimeModels = null, overrideWorkflowId = null) => {

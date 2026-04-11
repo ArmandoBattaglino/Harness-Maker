@@ -1,4 +1,18 @@
-﻿## V17.2 - Pack Contract Layer (2026-04-11)
+﻿## V17.3 - Pack-Aware Runtime Wrapper (2026-04-11)
+
+**Status:** CLOSED - tasks **#635-#644** are now **COMPLETED/PASS**.
+
+**Deliverables:**
+- PackResolver now loads pack + linked workflow together and rejects incompatible pack engine ranges or missing required dependencies.
+- `POST /api/v1/packs/:id/start` validates pack inputs and delegates to existing SwarmEngine execution instead of creating a second runtime.
+- SwarmEngine status/history records carry additive `packRun` metadata, reserved pack context input, visible steps, blocker detail, and pack run status.
+- PackResultBuilder now assembles declared outputs/artifacts and derives visible-step states from live agent states or persisted node snapshots.
+- Client `SwarmContext` and `useSwarm` hydrate `packRun` and `packResult` through the existing execution store while workflow-only snapshots remain valid.
+
+**Verification:** server pack/runtime/regression suites **53/53 PASS**; client `useSwarm`/`SwarmContext`/`usePack` suites **22/22 PASS**; client build **507 modules** with existing chunk-size warning only.
+
+---
+## V17.2 - Pack Contract Layer (2026-04-11)
 
 **Status:** CLOSED - tasks **#626-#634** are now **COMPLETED/PASS**.
 

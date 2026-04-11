@@ -11,6 +11,8 @@ describe('PackResolver', () => {
       name: 'Harness',
       packVersion: '1.0.0',
       workflowId: 'wf-1',
+      engineCompatibility: '^1.0.0',
+      dependencies: [{ id: 'dep-workflow', type: 'workflow', targetId: 'wf-1', required: true }],
       knowledgeSources: [
         {
           id: 'source-1',
@@ -42,5 +44,68 @@ describe('PackResolver', () => {
 
     expect(resolved.workflowContextPatch.packKnowledge).toEqual({ audience: 'Enterprise' });
     expect(resolved.workflowContextPatch.packBehaviorDirectives.map((rule) => rule.id)).toEqual(['early', 'late']);
+  });
+
+  it('fails fast when engine compatibility or required dependencies are unsatisfied', () => {
+    expect(() => resolver.resolveForRun({
+      id: 'pack-1',
+      name: 'Harness',
+      packVersion: '1.0.0',
+      workflowId: 'wf-1',
+      engineCompatibility: '^99.0.0',
+      dependencies: [{ id: 'dep-workflow', type: 'workflow', targetId: 'wf-1', required: true }],
+      knowledgeSources: [],
+      behaviorRules: [],
+      visibleSteps: [],
+      completionCriteria: [],
+    }, {
+      input: {},
+      projectId: 'proj-1',
+      projectPath: 'C:/projects/demo',
+    })).toThrow(/engineCompatibility/);
+
+    expect(() => resolver.resolveForRun({
+      id: 'pack-1',
+      name: 'Harness',
+      packVersion: '1.0.0',
+      workflowId: 'wf-1',
+      engineCompatibility: '^1.0.0',
+      dependencies: [],
+      knowledgeSources: [],
+      behaviorRules: [],
+      visibleSteps: [],
+      completionCriteria: [],
+    }, {
+      input: {},
+      projectId: 'proj-1',
+      projectPath: 'C:/projects/demo',
+    })).toThrow(/workflow dependency/);
+  });
+
+  it('loads pack and workflow together through resolveFromStores', async () => {
+    const pack = {
+      id: 'pack-1',
+      name: 'Harness',
+      packVersion: '1.0.0',
+      workflowId: 'wf-1',
+      engineCompatibility: '^1.0.0',
+      dependencies: [{ id: 'dep-workflow', type: 'workflow', targetId: 'wf-1', required: true }],
+      knowledgeSources: [],
+      behaviorRules: [],
+      visibleSteps: [],
+      completionCriteria: [],
+    };
+    const resolved = await resolver.resolveFromStores({
+      packId: 'pack-1',
+      packStore: { get: async () => pack },
+      workflowStore: { get: async () => ({ id: 'wf-1', nodes: [] }) },
+      input: {},
+      projectId: 'proj-1',
+      projectPath: 'C:/projects/demo',
+    });
+
+    expect(resolved.pack).toBe(pack);
+    expect(resolved.workflow.id).toBe('wf-1');
+    expect(resolved.workflowId).toBe('wf-1');
   });
 });
