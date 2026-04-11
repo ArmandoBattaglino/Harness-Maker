@@ -4,7 +4,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v17.7 - FULL V17.0-V17.7 PROGRAM CLOSED / VERIFIED on 2026-04-11. Tasks #610-#676 are COMPLETED/PASS. Final verification: server 561/561 PASS, client 57/57 PASS, client build 510 modules PASS (chunk-size warning only). Branch `feature/v17-pack-platform` pushed to origin through commit `84e959f`.
+**Status:** v17.8 - V17 CODE REVIEW FIXES PLANNED on 2026-04-11. V17.0-V17.7 implementation is CLOSED/PASS; new stabilization area V17.8 (#677-#686) is PENDING from code review findings. Branch `feature/v17-pack-platform` is the execution target.
 **Completed Area:** V10.8 CLIENT FULL DEEP TEST FOLLOW-UP — AREA CLOSED 2026-04-09. 6 tasks (#491-#496), all COMPLETED. #491 COMPLETED (visual regression determinism fixed — normalizeHarnessLayout() added, 6 baselines regenerated at 682px), #492 COMPLETED (browser E2E harness reliability fixed — preflight check, direct node spawn, stale-server isolation), #493 COMPLETED (stale-server guard — check-server-freshness.mjs created, integrated into swarm-e2e-chat-check.mjs + swarm-visual-regression.mjs), #494 TEST GATE PASS, #495 AREA CHECKPOINT PASS, #496 COMPLETED (out-of-session: +11 deterministic server tests for _onHandoff -> Codex SDK spawn, 501/501 server suite green). No active planned areas.
 **Completed Area:** V10.7 CLIENT RESILIENCE TEST COVERAGE — AREA CLOSED 2026-04-09. #483 COMPLETED, #484 COMPLETED, #485 COMPLETED, #486 COMPLETED, #487 COMPLETED, #488 COMPLETED, TEST GATE #489 PASS, AREA CHECKPOINT #490 PASS. Verified by dedicated client coverage over restore/reconcile, secondary WS events, HITL failure paths, advanced ChatPanel states, AgentNode badges, and SwarmView operator-shell branches.
   **Completed Area:** V10.6 CLIENT CHAT + FLOW BUG FIXES — AREA CLOSED 2026-04-09. #476 COMPLETED, #477 COMPLETED, #478 COMPLETED, #479 COMPLETED, #480 COMPLETED, TEST GATE #481 PASS, AREA CHECKPOINT #482 PASS. Verified by live Puppeteer reruns of idle/reset + Codex success/reload on `http://127.0.0.1:3000`, clean Gemini blocked/stopped node/chat hygiene on fresh `http://127.0.0.1:3312`, and targeted server regressions (185/185 PASS).
@@ -23370,3 +23370,153 @@ Acceptance Criteria:
   - [x] `docs/memory/CODE_MAP.md` synced if touched
 Dependencies: TASK #675
 Verdict: PASS - 2026-04-11. V17.7 closes the full V17 implementation program pending final full-suite verification.
+
+---
+
+## AREA: V17.8 - Code Review Fixes
+_Components: PackStore import/distribution semantics, fixture assertion validation, pack route error handling, PackLibrary operator error UX, Vite build warning policy_
+_Tasks: #677 -> #686_
+_Gate: No CRITICAL/HIGH code-review findings remain; pack import and publish gates are trustable; operator start failures are visible; full suites/build remain green._
+_Source: post-V17 code review report on 2026-04-11; PRD `.omx/plans/prd-v17-code-review-fixes.md`; test spec `.omx/plans/test-spec-v17-code-review-fixes.md`._
+
+---
+
+TASK #677: PACK-REVIEW-01 - Make pack import rollback workflow creation on pack failure
+Area: V17.8 - Code Review Fixes
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  `PackStore.importBundle()` currently creates the workflow before validating/writing the pack. If pack creation fails, the imported workflow can remain orphaned.
+Acceptance Criteria:
+  - [ ] Workflow created during import is deleted/rolled back when pack creation fails
+  - [ ] Workflow-create failure leaves no pack record
+  - [ ] Successful import still creates pack + workflow and rebinds workflow dependency
+  - [ ] Regression tests cover failure and success paths
+Dependencies: TASK #669, TASK #676
+
+TASK #678: PACK-REVIEW-02 - Strengthen fixture assertion validation and fail-closed evaluation
+Area: V17.8 - Code Review Fixes
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  `outputIncludes` currently defaults missing `expected` to an empty string, which can pass trivially. Assertion validation must be type-specific.
+Acceptance Criteria:
+  - [ ] `statusEquals` requires non-empty `expected`
+  - [ ] `outputIncludes` requires non-empty `expected` and explicit/defaulted output key semantics are tested
+  - [ ] `artifactExists` requires `artifactId` or `artifactName`
+  - [ ] Malformed persisted assertions fail closed in runner
+  - [ ] Publish cannot pass with empty/malformed assertions
+Dependencies: TASK #677
+
+TASK #679: PACK-REVIEW-03 - Surface PackLibrary launch/start errors in operator UI
+Area: V17.8 - Code Review Fixes
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: EASY
+Status: PENDING
+Context:
+  PackLibrary start errors currently surface primarily through console/unhandled promise behavior. Operators need an inline actionable error.
+Acceptance Criteria:
+  - [ ] Start failure displays user-visible error text
+  - [ ] Failed start does not hydrate stale `packRun`/`packResult`
+  - [ ] Successful start behavior remains unchanged
+  - [ ] Client test covers 400 validation failure path
+Dependencies: TASK #678
+
+TASK #680: PACK-REVIEW-04 - Guard invalid install IDs in PackStore.saveInstall
+Area: V17.8 - Code Review Fixes
+Agent: backend-dev
+Priority: HIGH
+Difficulty: EASY
+Status: PENDING
+Context:
+  `saveInstall()` should reject traversal/invalid IDs with a structured 400 instead of passing null path to write-file-atomic.
+Acceptance Criteria:
+  - [ ] Invalid install IDs throw statusCode 400
+  - [ ] Valid install records still persist
+  - [ ] Test covers traversal-style install id
+Dependencies: TASK #677
+
+TASK #681: PACK-REVIEW-05 - Decide and test PackStore.delete artifact semantics
+Area: V17.8 - Code Review Fixes
+Agent: backend-dev
+Priority: MEDIUM
+Difficulty: MEDIUM
+Status: PENDING
+Context:
+  Pack delete currently removes only the current pack file. Version/fixture/install behavior must be explicit and tested.
+Acceptance Criteria:
+  - [ ] Delete semantics are documented in code/test names
+  - [ ] Versions and fixtures are either cascaded or proven inaccessible after delete
+  - [ ] Install provenance behavior is explicit
+  - [ ] Tests cover chosen behavior
+Dependencies: TASK #680
+
+TASK #682: PACK-REVIEW-06 - Normalize pack route statusCode error handling
+Area: V17.8 - Code Review Fixes
+Agent: backend-dev
+Priority: MEDIUM
+Difficulty: EASY
+Status: PENDING
+Context:
+  Most pack routes call `respondKnownRouteError`, but some routes still call `next(err)` directly.
+Acceptance Criteria:
+  - [ ] Publish route preserves thrown `statusCode` errors
+  - [ ] Versions route preserves thrown `statusCode` errors where applicable
+  - [ ] Existing successful route tests remain green
+Dependencies: TASK #681
+
+TASK #683: PACK-REVIEW-07 - Reassess Vite chunk warning policy
+Area: V17.8 - Code Review Fixes
+Agent: frontend-dev
+Priority: LOW
+Difficulty: EASY
+Status: PENDING
+Context:
+  Route lazy-loading removed the chunk warning, but `chunkSizeWarningLimit: 1200` may mask future regressions.
+Acceptance Criteria:
+  - [ ] Remove or lower threshold if build remains warning-free
+  - [ ] If threshold remains, justify it with a comment
+  - [ ] Client build remains green and warning behavior is intentional
+Dependencies: TASK #679
+
+TASK #684: TEST GATE - V17.8 code review fixes
+Area: V17.8 - Code Review Fixes
+Agent: qa-tester
+Priority: HIGH
+Status: PENDING
+Acceptance Criteria:
+  - [ ] Targeted PackStore/pack-routes/pack-contracts/pack-distribution tests pass
+  - [ ] Targeted PackLibrary tests pass
+  - [ ] No CRITICAL/HIGH review findings remain
+  - [ ] `git diff --check` passes
+Dependencies: TASK #677, TASK #678, TASK #679, TASK #680, TASK #681, TASK #682, TASK #683
+
+TASK #685: FULL REGRESSION GATE - V17.8
+Area: V17.8 - Code Review Fixes
+Agent: verifier
+Priority: HIGH
+Status: PENDING
+Acceptance Criteria:
+  - [ ] `npm test` in `server/` passes
+  - [ ] `npm test` in `client/` passes
+  - [ ] `npm run build` in `client/` passes
+  - [ ] No Vite chunk-size warning unless explicitly accepted
+Dependencies: TASK #684
+
+TASK #686: AREA CHECKPOINT - V17.8 closeout
+Area: V17.8 - Code Review Fixes
+Agent: project-manager
+Priority: HIGH
+Status: PENDING
+Acceptance Criteria:
+  - [ ] TASKS #677-#683 COMPLETED
+  - [ ] TEST GATE #684 PASS
+  - [ ] FULL REGRESSION GATE #685 PASS
+  - [ ] docs/memory updated if touched
+  - [ ] Lore-style commit pushed to `origin/feature/v17-pack-platform`
+Dependencies: TASK #685
