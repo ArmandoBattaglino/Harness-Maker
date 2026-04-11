@@ -10,7 +10,10 @@ vi.mock('@xyflow/react', () => ({
   Controls: () => null,
   MiniMap: () => null,
   ConnectionLineType: { SmoothStep: 'smoothstep' },
+  ConnectionMode: { Loose: 'loose' },
   MarkerType: { Arrow: 'arrow' },
+  Position: { Top: 'top', Bottom: 'bottom', Left: 'left', Right: 'right' },
+  Handle: () => null,
   useNodesState: (initial) => [initial, vi.fn(), vi.fn()],
   useEdgesState: (initial) => [initial, vi.fn(), vi.fn()],
   addEdge: vi.fn((edge, edges) => [...edges, edge]),
@@ -21,10 +24,6 @@ vi.mock('@xyflow/react', () => ({
 }));
 
 vi.mock('./AgentInspector', () => ({
-  default: () => null,
-}));
-
-vi.mock('../panels/AgentOutputPanel', () => ({
   default: () => null,
 }));
 

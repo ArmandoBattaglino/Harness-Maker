@@ -1,7 +1,7 @@
 ﻿# Project: Claude Code Visual Manager
 **Created:** 2026-03-18
 **Last updated:** 2026-04-11
-**Implementation status:** v17.7 + V17 TEST HARDENING + SMOKE CLOSED on 2026-04-11. Full V17.0-V17.7 program remains implemented on `feature/v17-pack-platform`; follow-up hardening and live smoke are complete. Final evidence: live provider-backed pack smoke completed via Claude with `V17_SMOKE_OK`; server full suite **565/565 PASS**; client full suite **59/59 PASS**; client build **511 modules PASS** with no Vite chunk-size warning after lazy route splitting/chunk limit adjustment; `git diff --check` PASS.
+**Implementation status:** v17.7 + V17 TEST HARDENING + RECOVERED UI/RUNTIME FIXES CLOSED on 2026-04-11. Integrated previously uncommitted dirty-worktree fixes into `feature/v17-pack-platform`: floating edges, node action/output/validation cards, markdown/output formatting utilities, HITL multi-choice/options handling, context/window model display support, output layering, validation UX, and swarm reset/hydration fixes. Verification after recovery: server full suite **625/625 PASS**, client full suite **74/74 PASS**, client build **520 modules PASS** with no Vite chunk-size warning.
 
 ## What it is
 A locally-hosted web application that provides a graphical user interface for the Claude Code CLI. It spawns Claude Code processes directly using the user's installed binary and delivers two interaction modes: a live PTY terminal (xterm.js over WebSocket) and a job mode (prompt â†’ formatted Markdown result). It also provides visual editors for agents, skills, and CLAUDE.md files, with multi-project support and session persistence across browser tab closures.

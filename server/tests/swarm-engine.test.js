@@ -5586,6 +5586,103 @@ describe('SwarmEngine', () => {
       expect(result).toContain('Here is my analysis');
     });
 
+    it('should strip __HITL__ tokens with options array from canonical chat text', () => {
+      const text = 'Pick one.\n__HITL__:{"question":"DB?","options":["PG","MySQL","SQLite"]}\nDone';
+      const result = engine._buildStructuredAssistantChatFallback(text);
+      expect(result).not.toContain('__HITL__');
+      expect(result).not.toContain('options');
+      expect(result).toContain('Pick one');
+    });
+
+    it('should include options format in system prompt when mode is hitl', async () => {
+      const wf = buildTwoNodeWorkflow();
+      wf.settings = { ...wf.settings, mode: 'hitl' };
+      workflowStoreMock.get.mockResolvedValue(wf);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const execution = engine._executions.get(executionId);
+      const node = wf.nodes[0];
+
+      const prompt = engine._buildSystemPrompt(node, execution.workflowContext, ['node-b'], null, {
+        execution,
+      });
+      expect(prompt).toContain('options');
+      expect(prompt).toContain('multiple-choice');
+    });
+
+    it('should extract options array from __HITL__ token in stream-json and pass to freezeAgent', async () => {
+      const wf = buildTwoNodeWorkflow();
+      wf.settings = { ...wf.settings, mode: 'hitl' };
+      workflowStoreMock.get.mockResolvedValue(wf);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const execution = engine._executions.get(executionId);
+
+      execution.agentStates.set('node-a', {
+        status: 'running',
+        spawnMode: 'stream-json',
+        turnCount: 0,
+        _streamJsonAccumulatedText: 'Choose:\n__HITL__:{"question":"Which DB?","options":["PG","MySQL","SQLite"]}',
+        _streamJsonChild: null,
+        _streamJsonPostResultTimer: null,
+        _stderrChunks: [],
+        _streamJsonCostAccumulator: { totalCostUsd: 0, totalInputTokens: 0, totalOutputTokens: 0 },
+      });
+
+      engine._handleStreamJsonResult(executionId, 'node-a', {
+        type: 'result',
+        resultText: 'Choose:\n__HITL__:{"question":"Which DB?","options":["PG","MySQL","SQLite"]}',
+        isError: false,
+        costUsd: 0.01,
+        inputTokens: 100,
+        outputTokens: 50,
+      });
+
+      expect(execution.inboxItems.length).toBeGreaterThan(0);
+      const hitlItem = execution.inboxItems.find(i => i.type === 'user_requested');
+      expect(hitlItem).toBeDefined();
+      expect(hitlItem.reason).toBe('Which DB?');
+      expect(hitlItem.options).toEqual(['PG', 'MySQL', 'SQLite']);
+
+      const events = wsBroadcast.mock.calls.map(([, ev]) => ev);
+      const hitlEvent = events.find(e => e.type === 'hitl_required');
+      expect(hitlEvent).toBeDefined();
+      expect(hitlEvent.item.options).toEqual(['PG', 'MySQL', 'SQLite']);
+    });
+
+    it('should NOT include options when __HITL__ token has no options field', async () => {
+      const wf = buildTwoNodeWorkflow();
+      wf.settings = { ...wf.settings, mode: 'hitl' };
+      workflowStoreMock.get.mockResolvedValue(wf);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1');
+      const execution = engine._executions.get(executionId);
+
+      execution.agentStates.set('node-a', {
+        status: 'running',
+        spawnMode: 'stream-json',
+        turnCount: 0,
+        _streamJsonAccumulatedText: 'Help:\n__HITL__:{"question":"Approve this?"}',
+        _streamJsonChild: null,
+        _streamJsonPostResultTimer: null,
+        _stderrChunks: [],
+        _streamJsonCostAccumulator: { totalCostUsd: 0, totalInputTokens: 0, totalOutputTokens: 0 },
+      });
+
+      engine._handleStreamJsonResult(executionId, 'node-a', {
+        type: 'result',
+        resultText: 'Help:\n__HITL__:{"question":"Approve this?"}',
+        isError: false,
+        costUsd: 0,
+        inputTokens: 0,
+        outputTokens: 0,
+      });
+
+      const hitlItem = execution.inboxItems.find(i => i.type === 'user_requested');
+      expect(hitlItem).toBeDefined();
+      expect(hitlItem.options).toBeUndefined();
+    });
+
     it('resumeAfterHitl should set agent status to running for stream-json agents', async () => {
       const wf = buildTwoNodeWorkflow();
       wf.settings = { ...wf.settings, mode: 'hitl' };

@@ -157,4 +157,40 @@ describe('SwarmContext client contracts', () => {
     expect(state.chatMessages).toEqual(chatMessages);
     expect(state.selectedRuntimeProvider).toBe('codex');
   });
+
+  it('hydrates persisted outputEntries alongside legacy finalText', () => {
+    useSwarmStore.setState({
+      agentResults: {
+        'node-a': {
+          finalText: 'Client text',
+          outputEntries: [{ id: 'client-entry', text: 'Client entry', timestamp: 1 }],
+          handoffPayloads: [],
+          viewed: true,
+          updatedAt: 1,
+        },
+      },
+    });
+
+    useSwarmStore.getState().hydrateAgentResults({
+      'node-a': {
+        finalText: 'Server text',
+        outputEntries: [
+          { id: 'entry-1', text: 'First output', timestamp: 100, turnId: 'node-a:1', spawnMode: 'stream-json' },
+          { id: 'entry-2', text: 'Second output', timestamp: 200, turnId: 'node-a:2', spawnMode: 'stream-json' },
+        ],
+        handoffPayloads: [],
+      },
+    });
+
+    expect(useSwarmStore.getState().agentResults['node-a']).toEqual(
+      expect.objectContaining({
+        finalText: 'Server text',
+        outputEntries: [
+          { id: 'entry-1', text: 'First output', timestamp: 100, turnId: 'node-a:1', spawnMode: 'stream-json' },
+          { id: 'entry-2', text: 'Second output', timestamp: 200, turnId: 'node-a:2', spawnMode: 'stream-json' },
+        ],
+        viewed: true,
+      })
+    );
+  });
 });

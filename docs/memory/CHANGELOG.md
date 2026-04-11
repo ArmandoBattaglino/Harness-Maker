@@ -1,6 +1,15 @@
 ﻿# CHANGELOG — Claude Code Visual Manager
 
 ---
+## 2026-04-11 - DIRTY WORKTREE RECOVERY CLOSED
+
+**Status:** Recovery wave closed and verified.
+
+**Deliverables:** Integrated previously uncommitted UI/runtime fixes covering floating edges, node action/output/validation cards, output formatting, HITL option handling, validation UX, output layering, and swarm reset/hydration stability.
+
+**Verification:** server **625/625 PASS**, client **74/74 PASS**, client build **520 modules PASS** with no Vite chunk-size warning.
+
+---
 ## 2026-04-11 - V17 LIVE SMOKE + CHUNK WARNING FOLLOW-UP CLOSED
 
 **Status:** Follow-up closed.

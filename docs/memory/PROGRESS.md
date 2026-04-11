@@ -1,4 +1,26 @@
-﻿## V17 Live Smoke + Chunk Warning Follow-up (2026-04-11)
+﻿## Dirty Worktree Recovery - UI/Runtime Fixes (2026-04-11)
+
+**Status:** CLOSED / VERIFIED.
+
+**Summary:** Recovered and integrated the important uncommitted work from `C:\Users\arman\Downloads\Test workflows - Copia` into `feature/v17-pack-platform`, excluding screenshots, logs, `.omx`, and temporary artifacts.
+
+**Recovered areas:**
+- Floating edge utilities/connection line and HandoffEdge updates.
+- Agent node action menu, output card, validation card, output layering, and related tests.
+- AgentInspector/SwarmCanvas/SwarmView validation/output UX refinements.
+- Chat/output formatting utilities and markdown component helpers.
+- HITL options/multi-choice validation, inbox formatting, and stress tests.
+- Swarm reset/hydration fixes preserving turn cost and preventing stale snapshots after hard reset.
+
+**Verification:**
+- Targeted client recovered suites: **37/37 PASS**.
+- Targeted server recovered suites: **326/326 PASS**.
+- Full client suite: **74/74 PASS**.
+- Full server suite: **625/625 PASS**.
+- Client build: **520 modules PASS**, no Vite chunk-size warning.
+
+---
+## V17 Live Smoke + Chunk Warning Follow-up (2026-04-11)
 
 **Status:** CLOSED / VERIFIED.
 

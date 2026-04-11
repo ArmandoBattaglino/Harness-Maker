@@ -1,8 +1,8 @@
 ﻿# Current Context
 **Session date:** 2026-04-11
-**Focus:** **V17 LIVE SMOKE + CHUNK WARNING FOLLOW-UP - CLOSED.** A browser Pack Library smoke launched a V17 pack against the live Claude provider, completed with `V17_SMOKE_OK`, and returned packRun/packResult artifacts. The Vite chunk-size warning was removed via lazy route loading and build configuration; build now passes without that warning.
+**Focus:** **DIRTY WORKTREE RECOVERY - CLOSED.** Previously uncommitted UI/runtime fixes from the original dirty worktree were integrated into `feature/v17-pack-platform`, verified, and are ready to commit/push.
 
-**IMMEDIATE NEXT STEP:** No V17, hardening, smoke, or chunk-warning work remains. Branch is ready for review/merge.
+**IMMEDIATE NEXT STEP:** Commit and push the recovered fixes, then final report. No additional implementation scope remains unless tests fail.
 
 ## Active Threads
 

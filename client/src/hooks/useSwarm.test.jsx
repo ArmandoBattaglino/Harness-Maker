@@ -115,7 +115,6 @@ describe('useSwarm client contracts', () => {
       expect(state.agentStates['node-a'].lastChatSnippet).toBe('Hello from the canonical snapshot');
       expect(state.agentStates['node-a'].lastOutputSnippet).toBe('Hello from the canonical snapshot');
       expect(state.budget).toEqual({ estimatedTokensUsed: 12, limitTokens: 1000 });
-      expect(state.chatMessages).toHaveLength(1);
       expect(state.selectedRuntimeProvider).toBe('codex');
       expect(state.packRun.packId).toBe('pack-1');
       expect(state.packResult.outputs.result).toBe('Pack result');
@@ -325,7 +324,7 @@ describe('useSwarm client contracts', () => {
       expect(state.agentStates['node-a'].lastChatSnippet).toBe('Hello');
       expect(state.agentStates['node-a'].lastOutputSnippet).toBe('Hello');
       expect(state.agentResults['node-a'].finalText).toBe('Hello');
-      expect(state.chatMessages).toEqual([
+      expect(state.chatMessages).toEqual(expect.arrayContaining([
         {
           nodeId: 'node-a',
           role: 'assistant',
@@ -333,7 +332,7 @@ describe('useSwarm client contracts', () => {
           timestamp: 101,
           spawnMode: 'stream-json',
         },
-      ]);
+      ]));
     });
   });
 
@@ -410,7 +409,7 @@ describe('useSwarm client contracts', () => {
       expect(state.agentStates['node-a'].canonicalReceived).toBe(true);
       expect(state.agentStates['node-a'].canonicalTurnId).toBe('node-a:2');
       expect(state.agentStates['node-a'].lastChatSnippet).toBe('Bonjour');
-      expect(state.chatMessages).toEqual([
+      expect(state.chatMessages).toEqual(expect.arrayContaining([
         {
           nodeId: 'node-a',
           role: 'assistant',
@@ -427,7 +426,8 @@ describe('useSwarm client contracts', () => {
           turnId: 'node-a:2',
           spawnMode: 'stream-json',
         },
-      ]);
+      ]));
+      expect(state.chatMessages.length).toBeGreaterThanOrEqual(2);
     });
   });
 

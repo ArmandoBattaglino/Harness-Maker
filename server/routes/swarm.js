@@ -38,6 +38,52 @@ function normalizeAgentStates(agentStates) {
   return new Map();
 }
 
+function buildOutputEntriesFromMessages(nodeId, messages = [], state = null) {
+  const entries = [];
+  const groupedByTurn = new Map();
+
+  for (let index = 0; index < messages.length; index += 1) {
+    const message = messages[index];
+    const rawText = String(message?.text ?? message?.content ?? '');
+    if (!rawText.trim()) continue;
+
+    const spawnMode = message?.spawnMode ?? state?.spawnMode ?? null;
+    const turnId = message?.turnId ?? null;
+    const shouldGroupByTurn = Boolean(turnId) && STRUCTURED_AGENT_SPAWN_MODES.has(spawnMode);
+
+    if (!shouldGroupByTurn) {
+      entries.push({
+        id: `chat-${nodeId}-${index}-${message?.timestamp ?? 'na'}`,
+        text: rawText,
+        timestamp: message?.timestamp ?? null,
+        turnId,
+        spawnMode,
+      });
+      continue;
+    }
+
+    const existing = groupedByTurn.get(turnId);
+    if (!existing) {
+      const nextEntry = {
+        id: `turn-${nodeId}-${turnId}`,
+        text: rawText,
+        timestamp: message?.timestamp ?? null,
+        turnId,
+        spawnMode,
+      };
+      groupedByTurn.set(turnId, nextEntry);
+      entries.push(nextEntry);
+      continue;
+    }
+
+    existing.text += rawText;
+    existing.timestamp = message?.timestamp ?? existing.timestamp;
+    existing.spawnMode = spawnMode ?? existing.spawnMode;
+  }
+
+  return entries;
+}
+
 function buildAgentOutputsFromExecution(execution, swarmEngine = null) {
   const agentOutputs = {};
   const groupedMessages = {};
@@ -85,6 +131,9 @@ function buildAgentOutputsFromExecution(execution, swarmEngine = null) {
     agentOutputs[nodeId] = {
       label: nodeDef?.data?.label || nodeId,
       finalText,
+      outputEntries: typeof swarmEngine?._buildAgentOutputEntries === 'function'
+        ? swarmEngine._buildAgentOutputEntries(execution, nodeId, messages, state)
+        : buildOutputEntriesFromMessages(nodeId, messages, state),
       handoffPayloads: Array.isArray(state?.handoffPayloads) ? state.handoffPayloads : [],
       status: state?.status || 'unknown',
       provider: state?.runtimeProvider || state?.provider || null,

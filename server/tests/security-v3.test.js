@@ -8,6 +8,7 @@ import { isSafeUrl } from '../utils/ssrfGuard.js';
 import { WorkflowStore } from '../services/WorkflowStore.js';
 import { HandoffParser } from '../services/HandoffParser.js';
 import { validateResumeText } from '../middleware/hitlValidation.js';
+import { formatHitlResponse } from '../routes/inbox.js';
 import os from 'os';
 import path from 'path';
 import { randomUUID } from 'crypto';
@@ -319,5 +320,113 @@ describe('validateResumeText (SEC-V3-05)', () => {
     validateResumeText(req, res, () => { nextCalled = true; });
 
     expect(nextCalled).toBe(true);
+  });
+
+  // V13.1: selectedOptions validation
+  it('should return 400 when selectedOptions is not an array', () => {
+    const req = { body: { selectedOptions: 'not-an-array' } };
+    const res = makeRes();
+    let nextCalled = false;
+    validateResumeText(req, res, () => { nextCalled = true; });
+
+    expect(res._statusCode()).toBe(400);
+    expect(res._body().error).toContain('must be an array');
+    expect(nextCalled).toBe(false);
+  });
+
+  it('should return 400 when selectedOptions exceeds 50 items', () => {
+    const req = { body: { selectedOptions: Array.from({ length: 51 }, (_, i) => `opt-${i}`) } };
+    const res = makeRes();
+    let nextCalled = false;
+    validateResumeText(req, res, () => { nextCalled = true; });
+
+    expect(res._statusCode()).toBe(400);
+    expect(res._body().error).toContain('exceeds 50 items');
+    expect(nextCalled).toBe(false);
+  });
+
+  it('should return 400 when a selectedOptions element is not a string', () => {
+    const req = { body: { selectedOptions: ['valid', 42] } };
+    const res = makeRes();
+    let nextCalled = false;
+    validateResumeText(req, res, () => { nextCalled = true; });
+
+    expect(res._statusCode()).toBe(400);
+    expect(res._body().error).toContain('must be a string');
+    expect(nextCalled).toBe(false);
+  });
+
+  it('should return 400 when a selectedOptions element exceeds 500 chars', () => {
+    const req = { body: { selectedOptions: ['x'.repeat(501)] } };
+    const res = makeRes();
+    let nextCalled = false;
+    validateResumeText(req, res, () => { nextCalled = true; });
+
+    expect(res._statusCode()).toBe(400);
+    expect(res._body().error).toContain('exceeds 500 chars');
+    expect(nextCalled).toBe(false);
+  });
+
+  it('should call next() when selectedOptions is a valid array of strings', () => {
+    const req = { body: { selectedOptions: ['PostgreSQL', 'SQLite'], resumeText: 'go ahead' } };
+    const res = makeRes();
+    let nextCalled = false;
+    validateResumeText(req, res, () => { nextCalled = true; });
+
+    expect(nextCalled).toBe(true);
+  });
+
+  it('should call next() when selectedOptions is null or undefined', () => {
+    const req = { body: { selectedOptions: null } };
+    const res = makeRes();
+    let nextCalled = false;
+    validateResumeText(req, res, () => { nextCalled = true; });
+
+    expect(nextCalled).toBe(true);
+  });
+
+  it('should call next() when selectedOptions is an empty array', () => {
+    const req = { body: { selectedOptions: [] } };
+    const res = makeRes();
+    let nextCalled = false;
+    validateResumeText(req, res, () => { nextCalled = true; });
+
+    expect(nextCalled).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// V13.1: formatHitlResponse — combines selectedOptions + resumeText
+// ---------------------------------------------------------------------------
+describe('formatHitlResponse (V13.1)', () => {
+  it('should return combined text when both selectedOptions and resumeText are present', () => {
+    const result = formatHitlResponse(['PostgreSQL', 'SQLite'], 'Use PostgreSQL as primary');
+    expect(result).toBe('Selected: PostgreSQL, SQLite\nUse PostgreSQL as primary');
+  });
+
+  it('should return only selected options when resumeText is empty', () => {
+    const result = formatHitlResponse(['MySQL'], '');
+    expect(result).toBe('Selected: MySQL');
+  });
+
+  it('should return only selected options when resumeText is undefined', () => {
+    const result = formatHitlResponse(['A', 'B', 'C'], undefined);
+    expect(result).toBe('Selected: A, B, C');
+  });
+
+  it('should return only resumeText when selectedOptions is empty', () => {
+    const result = formatHitlResponse([], 'just a note');
+    expect(result).toBe('just a note');
+  });
+
+  it('should return only resumeText when selectedOptions is undefined', () => {
+    const result = formatHitlResponse(undefined, 'free text');
+    expect(result).toBe('free text');
+  });
+
+  it('should return undefined when both are empty/absent', () => {
+    expect(formatHitlResponse(undefined, undefined)).toBeUndefined();
+    expect(formatHitlResponse([], '')).toBeUndefined();
+    expect(formatHitlResponse(null, '   ')).toBeUndefined();
   });
 });

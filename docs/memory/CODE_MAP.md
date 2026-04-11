@@ -1,8 +1,15 @@
 ﻿# CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-11 - after V17 Live Smoke + Chunk Warning Follow-up - mapped by code-mapper_
+_Last updated: 2026-04-11 - after dirty worktree recovery - mapped by code-mapper_
 
-> **PROJECT STATUS: V17 LIVE SMOKE + CHUNK WARNING FOLLOW-UP CLOSED**
-> Live Claude-backed Pack Library smoke completed with `V17_SMOKE_OK`; PackLibrary now polls terminal pack results; route views are lazy-loaded and build has no Vite chunk-size warning. Full server/client suites remain green.
+> **PROJECT STATUS: DIRTY WORKTREE RECOVERY CLOSED**
+> Previously uncommitted UI/runtime fixes are integrated into `feature/v17-pack-platform`: floating edges, node output/validation/action cards, HITL options, output formatting, validation UX, and swarm reset/hydration stability. Server 625/625 PASS; client 74/74 PASS; build 520 modules.
+
+## Dirty Worktree Recovery Addendum
+- `client/src/canvas/edges/floatingEdgeUtils.js` + `FloatingConnectionLine.jsx` - floating edge intersection/preview utilities.
+- `client/src/canvas/nodes/NodeActionMenu.jsx`, `NodeOutputCard.jsx`, `NodeValidationCard.jsx` - recovered node action/output/validation surfaces.
+- `client/src/canvas/outputLayering.js` - transient output-card z-index layering.
+- `client/src/utils/formatAgentOutput.js`, `formatChatText.js`, `markdownComponents.jsx`, `agentOutputEntries.js`, `modelContextLimits.js` - recovered output/markdown/context-window helpers.
+- `server/middleware/hitlValidation.js`, `server/routes/inbox.js`, `server/services/SwarmEngine.js` - recovered HITL options and runtime reset/hydration fixes.
 
 ## V10.5 Addendum
 - `server/services/SessionManager.js` — V10.5 adds persistent swarm-owned PTY sessions; the idle sweeper skips pinned reusable sessions until explicit stop/reset/kill.

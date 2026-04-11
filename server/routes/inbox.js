@@ -8,6 +8,23 @@
 import { Router } from 'express';
 import { validateResumeText } from '../middleware/hitlValidation.js';
 
+/**
+ * Combine selectedOptions and resumeText into a single human response string.
+ * @param {string[]|undefined} selectedOptions
+ * @param {string|undefined} resumeText
+ * @returns {string|undefined}
+ */
+export function formatHitlResponse(selectedOptions, resumeText) {
+  const parts = [];
+  if (Array.isArray(selectedOptions) && selectedOptions.length > 0) {
+    parts.push(`Selected: ${selectedOptions.join(', ')}`);
+  }
+  if (resumeText?.trim()) {
+    parts.push(resumeText.trim());
+  }
+  return parts.length > 0 ? parts.join('\n') : undefined;
+}
+
 function buildRejectResumeText(item) {
   const reason = item?.message || item?.reason || 'The human reviewer rejected the previous step.';
   return [
@@ -59,7 +76,7 @@ export default function inboxRoutes(swarmEngine) {
   router.post('/:executionId/inbox/:itemId/approve', validateResumeText, async (req, res) => {
     try {
       const { executionId, itemId } = req.params;
-      const { resumeText } = req.body || {};
+      const { resumeText, selectedOptions } = req.body || {};
 
       const execution = swarmEngine.getExecution(executionId);
       if (!execution) return res.status(404).json({ error: 'Execution not found' });
@@ -70,14 +87,15 @@ export default function inboxRoutes(swarmEngine) {
       const item = execution.inboxItems[itemIndex];
       execution.inboxItems.splice(itemIndex, 1);
 
+      const combinedText = formatHitlResponse(selectedOptions, resumeText);
       const agentState = execution.agentStates.get(item.nodeId);
 
       // Route resume based on agent spawn mode (V11.3 HITL Runtime Trigger)
       if (agentState?.spawnMode === 'stream-json') {
         swarmEngine.unfreezeAgent(executionId, item.nodeId);
-        await swarmEngine.resumeAfterHitl(executionId, item.nodeId, resumeText);
-      } else if (agentState?.sessionId && resumeText) {
-        swarmEngine._sessionManager.writeInput(agentState.sessionId, resumeText + '\n');
+        await swarmEngine.resumeAfterHitl(executionId, item.nodeId, combinedText);
+      } else if (agentState?.sessionId && combinedText) {
+        swarmEngine._sessionManager.writeInput(agentState.sessionId, combinedText + '\n');
         swarmEngine.unfreezeAgent(executionId, item.nodeId);
       } else {
         swarmEngine.unfreezeAgent(executionId, item.nodeId);

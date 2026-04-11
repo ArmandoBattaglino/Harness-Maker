@@ -1,4 +1,14 @@
-﻿## 2026-04-11 - qa / frontend-dev - V17 live smoke and chunk warning follow-up
+﻿## 2026-04-11 - recovery / verifier - dirty worktree fixes integrated
+**Outcome:** COMPLETED / PASS
+**Summary:** Integrated the uncommitted dirty-worktree source/test changes from the original `Test workflows - Copia` worktree into `feature/v17-pack-platform`, excluding screenshots/logs/tmp artifacts and dropping the unnecessary root `puppeteer` dependency. Fixed useSwarm merge conflicts manually so V17 pack hydration and the recovered hard-reset/multi-turn fixes coexist.
+**Files changed:** client canvas/node/output/validation/runtime files, server HITL/swarm runtime files, related tests, memory docs.
+**Bugs fixed:** recovered hard-reset stale snapshot guard, multi-turn agent result preservation, HITL options propagation, provider blocker/detail/output card/validation UX fixes.
+**Decisions made:** Do not add root `puppeteer` dependency because no committed source uses it and repo policy avoids unnecessary dependencies.
+**Blockers:** none
+**Next:** Commit and push recovery wave.
+
+---
+## 2026-04-11 - qa / frontend-dev - V17 live smoke and chunk warning follow-up
 **Outcome:** COMPLETED / PASS
 **Summary:** Ran the previously optional live provider-backed smoke. The Pack Library launched `V17 Smoke Harness` with explicit project binding on port 3327; Claude completed the run with `V17_SMOKE_OK`, and status/results contained completed packRun, packResult output, and artifact data. The smoke revealed stale operator monitor hydration, fixed by polling status/results after start. The Vite chunk-size warning was removed by lazy route loading and build config adjustment.
 **Files changed:** client/src/App.jsx, client/src/views/PackLibraryView.jsx, client/src/views/PackLibraryView.test.jsx, client/vite.config.js, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md

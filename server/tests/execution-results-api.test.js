@@ -104,12 +104,13 @@ describe('GET /executions/:executionId/results', () => {
       workflowId: WORKFLOW_ID,
       status: 'running',
       agentStates: {
-        'node-a': { status: 'running', sessionId: 'sess-a' },
+        'node-a': { status: 'running', sessionId: 'sess-a', spawnMode: 'stream-json' },
       },
       chatMessages: [
-        { role: 'assistant', nodeId: 'node-a', text: 'Hello from agent A', timestamp: Date.now() - 1000 },
+        { role: 'assistant', nodeId: 'node-a', text: 'Hello ', timestamp: Date.now() - 1000, turnId: 'node-a:1', spawnMode: 'stream-json' },
         { role: 'user', nodeId: 'node-a', text: 'User message' },
-        { role: 'assistant', nodeId: 'node-a', text: 'More output', timestamp: Date.now() },
+        { role: 'assistant', nodeId: 'node-a', text: 'from agent A', timestamp: Date.now() - 900, turnId: 'node-a:1', spawnMode: 'stream-json' },
+        { role: 'assistant', nodeId: 'node-a', text: 'More output', timestamp: Date.now(), turnId: 'node-a:2', spawnMode: 'stream-json' },
       ],
       budget: { startedAt: '2026-04-07T10:00:00Z' },
     };
@@ -124,7 +125,7 @@ describe('GET /executions/:executionId/results', () => {
         nodes: [{ id: 'node-a', type: 'agent', data: { label: 'Agent A' } }],
       },
       agentStates: new Map([
-        ['node-a', { status: 'running', sessionId: 'sess-a', runtimeProvider: 'claude', handoffPayloads: [] }],
+        ['node-a', { status: 'running', sessionId: 'sess-a', runtimeProvider: 'claude', spawnMode: 'stream-json', handoffPayloads: [] }],
       ]),
     };
 
@@ -146,8 +147,13 @@ describe('GET /executions/:executionId/results', () => {
     expect(res.body.workflowName).toBe('Test Workflow');
     expect(res.body.status).toBe('running');
     expect(res.body.agentOutputs).toBeDefined();
-    expect(res.body.agentOutputs['node-a'].finalText).toContain('Hello from agent A');
+    expect(res.body.agentOutputs['node-a'].finalText).toContain('Hello');
+    expect(res.body.agentOutputs['node-a'].finalText).toContain('from agent A');
     expect(res.body.agentOutputs['node-a'].finalText).toContain('More output');
+    expect(res.body.agentOutputs['node-a'].outputEntries).toEqual([
+      expect.objectContaining({ text: 'Hello from agent A', turnId: 'node-a:1', spawnMode: 'stream-json' }),
+      expect.objectContaining({ text: 'More output', turnId: 'node-a:2', spawnMode: 'stream-json' }),
+    ]);
     expect(res.body.agentOutputs['node-a'].label).toBe('Agent A');
     expect(res.body.aggregatedArtifact).toBe('');
     expect(res.body.meta).toBeDefined();

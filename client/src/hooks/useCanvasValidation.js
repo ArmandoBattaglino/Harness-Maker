@@ -2,85 +2,151 @@
 // FR-V5-44 through FR-V5-46: validates workflow nodes/edges before execution.
 import { useMemo } from 'react';
 
+function createIssue({
+  id,
+  severity,
+  scope,
+  nodeId = null,
+  summary,
+  detail,
+}) {
+  return {
+    id,
+    severity,
+    scope,
+    nodeId,
+    summary,
+    detail,
+    // Backward-compatible alias for older callers/tests that still expect message.
+    message: detail,
+  };
+}
+
+function getNodeLabel(node) {
+  return node?.data?.label || node?.id || 'Node';
+}
+
 /**
  * Custom hook that validates canvas nodes and edges.
  *
- * @param {Array} nodes — React Flow nodes array
- * @param {Array} edges — React Flow edges array
- * @returns {{ isValid: boolean, errors: Array<{ nodeId?: string, message: string, severity: 'error'|'warning' }> }}
+ * @param {Array} nodes - React Flow nodes array
+ * @param {Array} edges - React Flow edges array
+ * @returns {{
+ *   isValid: boolean,
+ *   errors: Array,
+ *   issues: Array,
+ *   globalIssues: Array,
+ *   agentIssues: Array,
+ *   agentIssuesByNodeId: Record<string, Array>,
+ *   blockingIssues: Array,
+ * }}
  */
 export function useCanvasValidation(nodes, edges) {
   return useMemo(() => {
-    const errors = [];
-    const agentNodes = nodes.filter((n) => n.type === 'agent');
+    const issues = [];
+    const agentNodes = nodes.filter((node) => node.type === 'agent');
     const incomingTargets = new Set(edges.map((edge) => edge.target).filter(Boolean));
-    const explicitStartNodes = agentNodes.filter((n) => n.data?.isTriageNode);
-    const rootAgentNodes = agentNodes.filter((n) => !incomingTargets.has(n.id));
+    const explicitStartNodes = agentNodes.filter((node) => node.data?.isTriageNode);
+    const rootAgentNodes = agentNodes.filter((node) => !incomingTargets.has(node.id));
 
-    // Rule 1: At least one agent node exists
     if (agentNodes.length === 0) {
-      errors.push({ message: 'No agent nodes — add at least one agent', severity: 'error' });
+      issues.push(createIssue({
+        id: 'workflow:no-agent-nodes',
+        severity: 'error',
+        scope: 'global',
+        summary: 'No agent nodes',
+        detail: 'No agent nodes — add at least one agent.',
+      }));
     }
 
-    // Rule 2: Start resolution must be possible.
-    // Explicit start/triage nodes win; otherwise root agents auto-start together.
     if (explicitStartNodes.length === 0 && rootAgentNodes.length === 0 && agentNodes.length > 0) {
-      errors.push({
-        message: 'No start node — mark one or more agents as Start Node, or keep at least one root agent with no incoming edges',
+      issues.push(createIssue({
+        id: 'workflow:no-start-node',
         severity: 'error',
-      });
+        scope: 'global',
+        summary: 'No start node',
+        detail: 'No start node — mark one or more agents as Start Node, or keep at least one root agent with no incoming edges.',
+      }));
     }
 
     if (explicitStartNodes.length === 0 && rootAgentNodes.length > 1) {
-      errors.push({
-        message: 'Multiple root agents will auto-start together — mark them as Start Node if you want this to stay explicit',
+      issues.push(createIssue({
+        id: 'workflow:multiple-root-agents',
         severity: 'warning',
-      });
+        scope: 'global',
+        summary: 'Multiple root agents auto-start',
+        detail: 'Multiple root agents will auto-start together — mark them as Start Node if you want this to stay explicit.',
+      }));
     }
 
-    // Check each node
     for (const node of nodes) {
-      const connectedEdges = edges.filter(
-        (e) => e.source === node.id || e.target === node.id
-      );
+      const connectedEdges = edges.filter((edge) => edge.source === node.id || edge.target === node.id);
+      const nodeLabel = getNodeLabel(node);
 
-      // Rule 3: Agent nodes have non-empty systemPrompt (warning)
       if (node.type === 'agent' && !node.data?.systemPrompt?.trim()) {
-        errors.push({
-          nodeId: node.id,
-          message: `${node.data?.label || node.id}: empty system prompt`,
+        issues.push(createIssue({
+          id: `agent:${node.id}:empty-system-prompt`,
           severity: 'warning',
-        });
+          scope: 'agent',
+          nodeId: node.id,
+          summary: 'Empty system prompt',
+          detail: `${nodeLabel} has an empty system prompt. Add guidance so the agent knows what to do.`,
+        }));
       }
 
-      // Rule 4: Trigger nodes have valid config
       if (node.type === 'trigger') {
         if (node.data?.triggerType === 'webhook' && !node.data?.webhookPath?.trim()) {
-          errors.push({
-            nodeId: node.id,
-            message: `${node.data?.label || node.id}: no webhook path`,
+          issues.push(createIssue({
+            id: `trigger:${node.id}:missing-webhook-path`,
             severity: 'error',
-          });
+            scope: 'global',
+            nodeId: node.id,
+            summary: `${nodeLabel} is missing a webhook path`,
+            detail: `${nodeLabel} has no webhook path. Add one before running the workflow.`,
+          }));
         }
+
         if (node.data?.triggerType === 'rss' && !node.data?.rssUrl?.trim()) {
-          errors.push({
-            nodeId: node.id,
-            message: `${node.data?.label || node.id}: no RSS URL`,
+          issues.push(createIssue({
+            id: `trigger:${node.id}:missing-rss-url`,
             severity: 'error',
-          });
+            scope: 'global',
+            nodeId: node.id,
+            summary: `${nodeLabel} is missing an RSS URL`,
+            detail: `${nodeLabel} has no RSS URL. Add one before running the workflow.`,
+          }));
         }
       }
 
-      // Rule 5: No completely disconnected agent nodes (warning)
       if (node.type === 'agent' && connectedEdges.length === 0 && !node.data?.isTriageNode) {
-        errors.push({
-          nodeId: node.id,
-          message: `${node.data?.label || node.id}: disconnected (no edges)`,
+        issues.push(createIssue({
+          id: `agent:${node.id}:disconnected`,
           severity: 'warning',
-        });
+          scope: 'agent',
+          nodeId: node.id,
+          summary: 'Disconnected agent',
+          detail: `${nodeLabel} is disconnected (no edges). Connect it or mark it as a Start Node if it should run alone.`,
+        }));
       }
     }
 
-    return { isValid: errors.filter((e) => e.severity === 'error').length === 0, errors };
+    const globalIssues = issues.filter((issue) => issue.scope === 'global');
+    const agentIssues = issues.filter((issue) => issue.scope === 'agent');
+    const agentIssuesByNodeId = agentIssues.reduce((acc, issue) => {
+      if (!issue.nodeId) return acc;
+      acc[issue.nodeId] = [...(acc[issue.nodeId] || []), issue];
+      return acc;
+    }, {});
+    const blockingIssues = globalIssues.filter((issue) => issue.severity === 'error');
+
+    return {
+      isValid: blockingIssues.length === 0,
+      errors: issues,
+      issues,
+      globalIssues,
+      agentIssues,
+      agentIssuesByNodeId,
+      blockingIssues,
+    };
   }, [nodes, edges]);
 }
