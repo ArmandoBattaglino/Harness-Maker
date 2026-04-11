@@ -1,7 +1,7 @@
 ﻿# Project: Claude Code Visual Manager
 **Created:** 2026-03-18
 **Last updated:** 2026-04-11
-**Implementation status:** v17.7 - task numbering extends through #676. V17.7 PACK FIXTURES & RELEASE GATES CLOSED on 2026-04-11 (#670-#676 all COMPLETED/PASS). Full V17.0-V17.7 program is implemented on feature/v17-pack-platform. Current V17 baseline includes docs contract, pack domain/store/routes, contract validation, runtime wrapper, builder, operator surface, local distribution, fixtures, deterministic assertion runner, and publish gate. Final verification pending full-suite pass after closeout commit.
+**Implementation status:** v17.7 - task numbering extends through #676. FULL V17.0-V17.7 PROGRAM CLOSED and VERIFIED on 2026-04-11 (#610-#676 all COMPLETED/PASS). Branch `feature/v17-pack-platform` contains the complete pack/harness platform bridge: docs contract, pack domain/store/routes, contract validation, runtime wrapper, builder, operator surface, local distribution, fixtures, deterministic release gates, and final full verification. Final evidence: server full suite 561/561 PASS, client full suite 57/57 PASS, client build 510 modules PASS (chunk-size warning only).
 
 ## What it is
 A locally-hosted web application that provides a graphical user interface for the Claude Code CLI. It spawns Claude Code processes directly using the user's installed binary and delivers two interaction modes: a live PTY terminal (xterm.js over WebSocket) and a job mode (prompt â†’ formatted Markdown result). It also provides visual editors for agents, skills, and CLAUDE.md files, with multi-project support and session persistence across browser tab closures.
