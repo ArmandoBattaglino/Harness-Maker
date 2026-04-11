@@ -1,6 +1,15 @@
 ﻿# CHANGELOG — Claude Code Visual Manager
 
 ---
+## 2026-04-11 - MARKETING VIDEO HARNESS DEEP/STRESS CLOSED
+
+**Status:** Follow-up deep/stress verification closed.
+
+**Deliverables:** Added marketing-video harness server/client stress tests and fixed PackLibrary generated form coercion for typed schema values. Live browser/provider smoke completed through Claude with `V17_MARKETING_VIDEO_OK`.
+
+**Verification:** marketing server **21/21 PASS**, marketing client **4/4 PASS**, full server **629/629 PASS**, full client **75/75 PASS**, build **520 modules PASS**.
+
+---
 ## 2026-04-11 - DIRTY WORKTREE RECOVERY CLOSED
 
 **Status:** Recovery wave closed and verified.

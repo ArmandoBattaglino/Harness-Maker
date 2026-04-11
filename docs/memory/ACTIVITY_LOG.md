@@ -1,4 +1,14 @@
-﻿## 2026-04-11 - recovery / verifier - dirty worktree fixes integrated
+﻿## 2026-04-11 - qa / test-engineer - marketing video harness deep stress
+**Outcome:** COMPLETED / PASS
+**Summary:** Executed the planned Marketing Video Campaign Harness deep/stress test. Hermetic server tests now create a complete marketing-video pack contract, stress repeated long/unicode starts, reject invalid inputs before runtime, roundtrip distribution, run fixtures, and gate publish. Client tests cover generated operator form launch with explicit project binding and completed packResult hydration. Live browser smoke launched a generated marketing-video pack through Claude and completed with `V17_MARKETING_VIDEO_OK`.
+**Files changed:** client/src/views/PackLibraryView.jsx, client/src/views/MarketingVideoHarness.e2e.test.jsx, server/tests/marketing-video-harness-stress.test.js, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/CODE_MAP.md
+**Bugs fixed:** PackLibrary generated run form previously sent all schema values as strings; integer/number/object/array/boolean/enum fields are now coerced before pack start.
+**Decisions made:** Marketing-video harness outputs structured campaign/video-production artifacts, not rendered video files.
+**Blockers:** none
+**Next:** commit and push.
+
+---
+## 2026-04-11 - recovery / verifier - dirty worktree fixes integrated
 **Outcome:** COMPLETED / PASS
 **Summary:** Integrated the uncommitted dirty-worktree source/test changes from the original `Test workflows - Copia` worktree into `feature/v17-pack-platform`, excluding screenshots/logs/tmp artifacts and dropping the unnecessary root `puppeteer` dependency. Fixed useSwarm merge conflicts manually so V17 pack hydration and the recovered hard-reset/multi-turn fixes coexist.
 **Files changed:** client canvas/node/output/validation/runtime files, server HITL/swarm runtime files, related tests, memory docs.

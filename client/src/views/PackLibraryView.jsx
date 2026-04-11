@@ -44,6 +44,26 @@ export default function PackLibraryView() {
     setRunInput((current) => ({ ...current, [key]: value }));
   }
 
+  function coerceInputValue(schema, rawValue) {
+    if (rawValue === '') return '';
+    if (schema.type === 'integer') {
+      const parsed = Number.parseInt(rawValue, 10);
+      return Number.isFinite(parsed) ? parsed : rawValue;
+    }
+    if (schema.type === 'number') {
+      const parsed = Number(rawValue);
+      return Number.isFinite(parsed) ? parsed : rawValue;
+    }
+    if (schema.type === 'object' || schema.type === 'array') {
+      try {
+        return JSON.parse(rawValue);
+      } catch {
+        return rawValue;
+      }
+    }
+    return rawValue;
+  }
+
   async function startPackRun() {
     if (!pack || !selectedProject) return;
     const response = await start({
@@ -168,10 +188,13 @@ export default function PackLibraryView() {
                 </label>
                 {!selectedProject && <p className="mb-3 text-xs text-amber-300">Choose a project before launching this pack.</p>}
                 {inputFields.map(([key, schema]) => (
-                  <label key={key} className="mb-3 block text-xs font-semibold text-text-muted">
-                    {schema.title ?? key}
-                    <input className="mt-1 w-full rounded bg-background-dark px-3 py-2 text-sm text-text-main" value={runInput[key] ?? ''} onChange={(event) => setInputValue(key, event.target.value)} placeholder={schema['x-packField']?.help ?? key} />
-                  </label>
+                  <RunInputField
+                    key={key}
+                    fieldKey={key}
+                    schema={schema}
+                    value={runInput[key] ?? ''}
+                    onChange={(rawValue) => setInputValue(key, coerceInputValue(schema, rawValue))}
+                  />
                 ))}
                 <button className="rounded bg-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-40" disabled={!selectedProject} onClick={startPackRun}>Launch pack</button>
               </div>
@@ -223,5 +246,48 @@ function Timeline({ steps }) {
         </li>
       ))}
     </ol>
+  );
+}
+
+function RunInputField({ fieldKey, schema, value, onChange }) {
+  const label = schema.title ?? fieldKey;
+  const help = schema['x-packField']?.help ?? fieldKey;
+
+  if (Array.isArray(schema.enum) && schema.enum.length > 0) {
+    return (
+      <label className="mb-3 block text-xs font-semibold text-text-muted">
+        {label}
+        <select className="mt-1 w-full rounded bg-background-dark px-3 py-2 text-sm text-text-main" value={value ?? ''} onChange={(event) => onChange(event.target.value)}>
+          <option value="">Select…</option>
+          {schema.enum.map((option) => <option key={option} value={option}>{option}</option>)}
+        </select>
+      </label>
+    );
+  }
+
+  if (schema.type === 'boolean') {
+    return (
+      <label className="mb-3 flex items-center gap-2 text-xs font-semibold text-text-muted">
+        <input type="checkbox" checked={Boolean(value)} onChange={(event) => onChange(event.target.checked)} />
+        {label}
+      </label>
+    );
+  }
+
+  if (schema['x-packField']?.fieldType === 'textarea' || schema.type === 'object' || schema.type === 'array') {
+    return (
+      <label className="mb-3 block text-xs font-semibold text-text-muted">
+        {label}
+        <textarea className="mt-1 min-h-24 w-full rounded bg-background-dark px-3 py-2 text-sm text-text-main" value={typeof value === 'string' ? value : JSON.stringify(value, null, 2)} onChange={(event) => onChange(event.target.value)} placeholder={help} />
+      </label>
+    );
+  }
+
+  const inputType = schema.type === 'integer' || schema.type === 'number' ? 'number' : 'text';
+  return (
+    <label className="mb-3 block text-xs font-semibold text-text-muted">
+      {label}
+      <input className="mt-1 w-full rounded bg-background-dark px-3 py-2 text-sm text-text-main" type={inputType} value={value ?? ''} onChange={(event) => onChange(event.target.value)} placeholder={help} />
+    </label>
   );
 }

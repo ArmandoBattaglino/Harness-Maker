@@ -1,8 +1,8 @@
 ﻿# Current Context
 **Session date:** 2026-04-11
-**Focus:** **DIRTY WORKTREE RECOVERY - CLOSED.** Previously uncommitted UI/runtime fixes from the original dirty worktree were integrated into `feature/v17-pack-platform`, verified, and are ready to commit/push.
+**Focus:** **MARKETING VIDEO HARNESS DEEP/STRESS TEST - CLOSED.** Added hermetic server/client tests and ran a live browser/provider smoke for a complete Marketing Video Campaign Harness pack. Pack operator form now coerces numeric/JSON/enum/boolean inputs according to schema before start.
 
-**IMMEDIATE NEXT STEP:** Commit and push the recovered fixes, then final report. No additional implementation scope remains unless tests fail.
+**IMMEDIATE NEXT STEP:** No Marketing Video Harness verification work remains. Branch is ready for review/merge after final commit/push.
 
 ## Active Threads
 

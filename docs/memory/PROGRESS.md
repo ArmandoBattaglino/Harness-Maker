@@ -1,4 +1,22 @@
-﻿## Dirty Worktree Recovery - UI/Runtime Fixes (2026-04-11)
+﻿## Marketing Video Harness Deep/Stress Test (2026-04-11)
+
+**Status:** CLOSED / VERIFIED.
+
+**Deliverables:**
+- Added `server/tests/marketing-video-harness-stress.test.js` covering a complete marketing-video pack contract, repeated long/unicode starts, invalid input rejection, distribution roundtrip, fixtures, and publish gate.
+- Added `client/src/views/MarketingVideoHarness.e2e.test.jsx` covering generated operator form fill, explicit project binding, launch payload, monitor hydration, and final `packResult`.
+- Fixed `PackLibraryView` generated run form coercion so integer/number/object/array/boolean/enum schema fields send correctly typed values instead of only strings.
+- Ran live browser smoke against local app on port 3330: created workflow + pack, launched through Pack Library, Claude completed with `V17_MARKETING_VIDEO_OK`, `packRun` completed, and `packResult.outputs.result` contained the marketing-video output.
+
+**Verification:**
+- Marketing targeted server suites: **21/21 PASS**.
+- Marketing targeted client suites: **4/4 PASS**.
+- Full server suite: **629/629 PASS**.
+- Full client suite: **75/75 PASS**.
+- Client build: **520 modules PASS**, no Vite chunk-size warning.
+
+---
+## Dirty Worktree Recovery - UI/Runtime Fixes (2026-04-11)
 
 **Status:** CLOSED / VERIFIED.
 
