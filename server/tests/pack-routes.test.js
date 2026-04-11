@@ -1,6 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
+import { createServer } from 'http';
+import express from 'express';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import packsRouter from '../routes/packs.js';
+import { csrfMiddleware } from '../middleware/csrf.js';
 
 function getRouteHandler(router, method, path) {
   const layer = router.stack.find(
@@ -61,6 +64,12 @@ function createPack() {
 }
 
 describe('packs routes', () => {
+  const servers = [];
+
+  afterEach(async () => {
+    await Promise.all(servers.splice(0).map((server) => new Promise((resolve) => server.close(resolve))));
+  });
+
   it('creates a pack and unwraps validation success', async () => {
     const packStore = {
       create: vi.fn().mockResolvedValue(createPack()),
@@ -241,5 +250,42 @@ describe('packs routes', () => {
     expect(blocked.body.error).toBe('Cannot publish without a passing fixture run');
     expect(allowed.statusCode).toBe(200);
     expect(allowed.body.pack.status).toBe('published');
+  });
+
+  it('enforces JSON parsing, mount path, and CSRF at the Express app boundary', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use(csrfMiddleware);
+    app.locals.packStore = {
+      create: vi.fn().mockResolvedValue(createPack()),
+    };
+    app.use('/api/v1/packs', packsRouter);
+    app.use((err, _req, res, _next) => {
+      res.status(err.statusCode ?? 500).json({ error: err.message });
+    });
+    const server = createServer(app);
+    servers.push(server);
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const { port } = server.address();
+    const url = `http://127.0.0.1:${port}/api/v1/packs`;
+
+    const blocked = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(createPack()),
+    });
+    expect(blocked.status).toBe(403);
+
+    const allowed = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'ClaudeCodeManager',
+      },
+      body: JSON.stringify(createPack()),
+    });
+
+    expect(allowed.status).toBe(201);
+    expect(await allowed.json()).toMatchObject({ pack: { id: 'pack-1' } });
   });
 });

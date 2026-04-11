@@ -1,8 +1,8 @@
 ﻿# CODE_MAP — Claude Code Visual Manager
-_Last updated: 2026-04-11 - after V17.7 Pack Fixtures & Release Gates - mapped by code-mapper_
+_Last updated: 2026-04-11 - after V17 Test Hardening - mapped by code-mapper_
 
-> **PROJECT STATUS: V17.7 PACK FIXTURES & RELEASE GATES CLOSED**
-> Full V17.0-V17.7 implementation is code-complete pending final full-suite verification. Fixtures persist last results, deterministic assertions gate publish, and local pack distribution remains one-workflow-per-pack.
+> **PROJECT STATUS: V17 TEST HARDENING CLOSED**
+> V17.0-V17.7 implementation plus follow-up test-hardening are verified. Server full suite 565/565 PASS, client full suite 59/59 PASS, client build 510 modules PASS.
 
 ## V10.5 Addendum
 - `server/services/SessionManager.js` — V10.5 adds persistent swarm-owned PTY sessions; the idle sweeper skips pinned reusable sessions until explicit stop/reset/kill.
@@ -22,6 +22,7 @@ _Last updated: 2026-04-11 - after V17.7 Pack Fixtures & Release Gates - mapped b
 | File | Key Exports | Purpose |
 |------|-------------|---------|
 | docs/PRD.md | Sections 1–11.1 + V5 Addendum | Product Requirements Document for Claude Code Visual Manager V3/V5. V3 Sections 1-11.1 unchanged (authoritative for Swarm component contracts). **V5 Addendum added 2026-04-06:** "N8N-Style Visual Workflow Editor" — 81 FRs (FR-V5-01 through FR-V5-81), 5 implementation waves, 7 new data models, 5 new API endpoint groups, 5 security requirements (SEC-V5-01 through SEC-V5-05), ~67 implementation tasks across ~15 new files + 4 modified files. Depends on V3+V4. |
+| docs/memory/V17_TEST_COVERAGE.md | V17 coverage matrix | Traceability matrix mapping V17 areas to automated tests, legacy compatibility invariants, required verification commands, and optional manual smoke scope. |
 
 ### Server Modules
 | File | Key Exports | Purpose |

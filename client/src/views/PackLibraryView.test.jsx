@@ -2,7 +2,7 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AppProvider } from '../store/AppContext.jsx';
+import { AppProvider, useAppDispatch } from '../store/AppContext.jsx';
 import { useSwarmStore } from '../store/SwarmContext.jsx';
 import { resetSwarmStore } from '../test/resetSwarmStore.js';
 import PackLibraryView from './PackLibraryView.jsx';
@@ -99,4 +99,42 @@ describe('PackLibraryView', () => {
     fireEvent.click(screen.getByText('Fork draft'));
     expect(await screen.findByText('Forked Marketing Harness (Fork)')).toBeTruthy();
   });
+
+  it('launches with explicit projectId, projectPath, and generated input payload', async () => {
+    render(
+      <AppProvider>
+        <SeedProjects />
+        <PackLibraryView />
+      </AppProvider>
+    );
+
+    expect(await screen.findByText('Pack Detail')).toBeTruthy();
+    fireEvent.change(screen.getByLabelText(/Brief/i), { target: { value: 'Launch the spring campaign' } });
+    fireEvent.click(screen.getByText('Launch pack'));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith('/api/v1/packs/pack-1/start', expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          projectId: 'proj-1',
+          projectPath: 'C:/projects/one',
+          input: { brief: 'Launch the spring campaign' },
+        }),
+      }));
+      expect(useSwarmStore.getState().packRun.packId).toBe('pack-1');
+      expect(screen.getByText('Started execution exec-pack-1')).toBeTruthy();
+    });
+  });
 });
+
+function SeedProjects() {
+  const dispatch = useAppDispatch();
+  React.useEffect(() => {
+    dispatch({
+      type: 'SET_PROJECTS',
+      payload: [{ id: 'proj-1', name: 'Project One', path: 'C:/projects/one' }],
+    });
+    dispatch({ type: 'SET_ACTIVE_PROJECT', payload: 'proj-1' });
+  }, [dispatch]);
+  return null;
+}

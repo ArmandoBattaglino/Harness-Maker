@@ -1,4 +1,21 @@
-﻿## V17.x Final Verification (2026-04-11)
+﻿## V17 Test Hardening (2026-04-11)
+
+**Status:** CLOSED / VERIFIED.
+
+**Deliverables:**
+- Added `docs/memory/V17_TEST_COVERAGE.md` traceability matrix for V17.0-V17.7.
+- Hardened server coverage for PackStore path safety/corrupt fixture-install files, pack contract field metadata/default semantics, app-level `/api/v1/packs` mount + CSRF behavior, fixture/publish gates, and distribution/fork invariants.
+- Hardened client coverage for pack operator project binding/start payload, pack runtime hydration, and pack navigation view validation.
+- Explicitly preserved architect constraints: test-only unless a test reveals a real defect, no runtime auto-fill of defaults, no `fileRef` upload feature, no marketplace/multi-workflow scope.
+
+**Final verification:**
+- `npm test` in `server/`: **565/565 PASS**.
+- `npm test` in `client/`: **59/59 PASS**.
+- `npm run build` in `client/`: **510 modules PASS**; chunk-size warning only.
+- `git diff --check`: **PASS**.
+
+---
+## V17.x Final Verification (2026-04-11)
 
 **Status:** FULL PROGRAM CLOSED / VERIFIED - all V17.0-V17.7 phases are implemented and pushed on `feature/v17-pack-platform`.
 

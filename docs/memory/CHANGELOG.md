@@ -1,6 +1,15 @@
 ﻿# CHANGELOG — Claude Code Visual Manager
 
 ---
+## 2026-04-11 - V17 TEST HARDENING CLOSED
+
+**Status:** Follow-up verification wave closed.
+
+**Deliverables:** Added V17 coverage matrix plus server/client tests for contract boundaries, store path-safety/corrupt data handling, app-level pack route CSRF/mount behavior, operator launch project binding, and navigation view validation.
+
+**Verification:** server **565/565 PASS**, client **59/59 PASS**, client build **510 modules PASS**, `git diff --check` PASS.
+
+---
 ## 2026-04-11 - V17.7 CLOSED - Pack Fixtures & Release Gates (#670-#676)
 
 **Status:** Area closed; release-gate tasks **#670-#676** are now **COMPLETED/PASS**.

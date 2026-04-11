@@ -1,4 +1,14 @@
-﻿## 2026-04-11 - verifier / ralph - V17.x final verification
+﻿## 2026-04-11 - test-engineer / verifier - V17 test hardening
+**Outcome:** COMPLETED / PASS
+**Summary:** Added the V17 coverage matrix and targeted hardening tests requested after ralplan/architect review. Coverage now explicitly tests server contract boundaries, app-level pack route CSRF/mount behavior, PackStore path/corrupt data safety, client pack operator project binding/start payload, and pack navigation state. Full verification remains green after the additions.
+**Files changed:** docs/memory/V17_TEST_COVERAGE.md, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, server/tests/PackStore.test.js, server/tests/pack-contracts.test.js, server/tests/pack-routes.test.js, client/src/views/PackLibraryView.test.jsx, client/src/store/AppContext.test.jsx
+**Bugs fixed:** none beyond test-discovered coverage hardening; no runtime/product scope expansion.
+**Decisions made:** Defaults/fileRef are preserved as schema metadata only; no runtime default auto-fill or file upload behavior was added.
+**Blockers:** none
+**Next:** Commit and push hardening wave, then close Ralph.
+
+---
+## 2026-04-11 - verifier / ralph - V17.x final verification
 **Outcome:** COMPLETED / PASS
 **Summary:** Full V17.0-V17.7 program verified after final release-gate implementation. Server full suite passed 561/561, client full suite passed 57/57, and client production build passed with 510 modules and only the pre-existing chunk-size warning. Branch `feature/v17-pack-platform` is pushed to origin through commit `84e959f`.
 **Files changed:** docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/TASK_PLAN.md

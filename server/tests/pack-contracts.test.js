@@ -90,6 +90,34 @@ describe('pack contract validation', () => {
     ]));
   });
 
+  it('accepts all V17 input field metadata types and preserves defaults without auto-filling runtime input', async () => {
+    const fields = {
+      headline: { type: 'string', default: 'Launch', 'x-packField': { fieldType: 'text', help: 'Short headline' } },
+      brief: { type: 'string', 'x-packField': { fieldType: 'textarea', help: 'Long brief' } },
+      channel: { type: 'string', enum: ['email', 'social'], default: 'email', 'x-packField': { fieldType: 'enum' } },
+      approved: { type: 'boolean', default: false, 'x-packField': { fieldType: 'boolean' } },
+      config: { type: 'object', default: {}, 'x-packField': { fieldType: 'json' } },
+      sourceFile: { type: 'string', 'x-packField': { fieldType: 'fileRef', help: 'Local file reference only' } },
+    };
+
+    const pack = await packStore.create(validPack(workflow.id, {
+      inputSchema: {
+        $schema: JSON_SCHEMA_DRAFT,
+        type: 'object',
+        properties: fields,
+        required: ['headline'],
+        additionalProperties: false,
+      },
+    }));
+
+    expect(Object.keys(pack.inputSchema.properties)).toEqual(Object.keys(fields));
+    expect(pack.inputSchema.properties.headline.default).toBe('Launch');
+    expect(validateValueAgainstSchema(pack.inputSchema, { headline: 'Manual value' }, 'input', [])).toEqual([]);
+    expect(validateValueAgainstSchema(pack.inputSchema, {}, 'input', [])).toEqual(expect.arrayContaining([
+      "input must have required property 'headline'",
+    ]));
+  });
+
   it('rejects packs without the required workflow dependency', () => {
     const invalid = validatePackDefinition(validPack(workflow.id, { dependencies: [] }), { workflowDef: workflow });
     expect(invalid.valid).toBe(false);

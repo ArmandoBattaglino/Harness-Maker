@@ -159,6 +159,30 @@ describe('PackStore', () => {
     expect(await packStore.list()).toEqual([]);
   });
 
+  it('rejects traversal-style ids across pack, version, fixture, and install lookups', async () => {
+    expect(await packStore.get('../escape')).toBeNull();
+    expect(await packStore.delete('../escape')).toBe(false);
+    expect(await packStore.getVersion('../escape', '2026-04-11T00-00-00-000Z')).toBeNull();
+    expect(await packStore.getVersion('pack-1', '../escape')).toBeNull();
+    expect(await packStore.getFixture('../escape', 'fixture-1')).toBeNull();
+    expect(await packStore.getFixture('pack-1', '../escape')).toBeNull();
+    expect(await packStore.getInstall('../escape')).toBeNull();
+  });
+
+  it('skips corrupt fixture and install files without breaking list operations', async () => {
+    const created = await packStore.create(buildPackPayload(workflow.id));
+    const fixturesDir = path.join(tempDir, 'packs', 'fixtures', created.id);
+    fs.mkdirSync(fixturesDir, { recursive: true });
+    fs.writeFileSync(path.join(fixturesDir, 'broken.json'), '{not-json');
+
+    const installsDir = path.join(tempDir, 'packs', 'installs');
+    fs.mkdirSync(installsDir, { recursive: true });
+    fs.writeFileSync(path.join(installsDir, 'broken.json'), '{not-json');
+
+    expect(await packStore.listFixtures(created.id)).toEqual([]);
+    expect(await packStore.listInstalls()).toEqual([]);
+  });
+
   it('stores and retrieves fixtures for a specific pack', async () => {
     const created = await packStore.create(buildPackPayload(workflow.id));
     const fixture = await packStore.saveFixture(created.id, {
