@@ -1,11 +1,10 @@
 ﻿# Current Context
 **Session date:** 2026-04-11
-**Focus:** **V17.4 PACK BUILDER AUTHORING PLATFORM - CLOSED.** The app now has a routable guided Pack Builder that authors the pack-owned contract surfaces while keeping SwarmView as workflow drill-down. Server lifecycle rules block direct edits to published/deprecated/archived packs.
+**Focus:** **V17.5 PACK OPERATOR PRODUCT SURFACE - CLOSED.** Operators can now browse packs, view detail, fill generated input forms, bind an explicit project, launch a pack, monitor visible steps/artifacts, and open an advanced debug drawer without opening the graph by default.
 
-**IMMEDIATE NEXT STEP:** Start **V17.5 Pack Operator Product Surface**. Add pack library/detail/run views, generated run form, monitoring, debug drawer, restoration selectors, and explicit project-binding UX.
+**IMMEDIATE NEXT STEP:** Start **V17.6 Pack Distribution & Installation**. Implement local export/import/install/fork/version-pinning/provenance and distribution UI without marketplace assumptions.
 
 ## Active Threads
-- V17.5 Pack Operator Product Surface — PENDING (#654-#661), now explicitly includes project-binding UX
 - V17.6 Pack Distribution & Installation — PENDING (#662-#669)
 - V17.7 Pack Fixtures & Release Gates — PENDING (#670-#676)
 

@@ -1,6 +1,18 @@
 ﻿# CHANGELOG — Claude Code Visual Manager
 
 ---
+## 2026-04-11 - V17.5 CLOSED - Pack Operator Product Surface (#654-#661)
+
+**Status:** Area closed; operator tasks **#654-#661** are now **COMPLETED/PASS**.
+
+**Deliverables:**
+- Added PackLibraryView for pack library/detail/run flows.
+- Added pack-first navigation entry.
+- Added generated input form, explicit project binding, run monitor, artifacts, and debug drawer.
+
+**Verification:** client operator/builder/runtime suites **28/28 PASS**; server pack runtime/history suites **27/27 PASS**; client build **510 modules**.
+
+---
 ## 2026-04-11 - V17.4 CLOSED - Pack Builder Authoring Platform (#645-#653)
 
 **Status:** Area closed; builder tasks **#645-#653** are now **COMPLETED/PASS**.

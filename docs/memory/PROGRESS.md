@@ -1,4 +1,18 @@
-﻿## V17.4 - Pack Builder Authoring Platform (2026-04-11)
+﻿## V17.5 - Pack Operator Product Surface (2026-04-11)
+
+**Status:** CLOSED - tasks **#654-#661** are now **COMPLETED/PASS**.
+
+**Deliverables:**
+- Added `client/src/views/PackLibraryView.jsx` with pack library/detail/run monitor in an operator-first surface.
+- Added `packs` navigation and view routing.
+- Generated run form renders from pack input schema and requires explicit project binding.
+- Run monitor shows visible steps, artifacts, launch identity, and advanced debug drawer data.
+- Operator flow remains pack-first, with Builder/Swarm drill-down available but not default.
+
+**Verification:** client PackLibrary/PackBuilder/useSwarm/SwarmContext/SwarmView suites **28/28 PASS**; server pack runtime/history suites **27/27 PASS**; client build **510 modules** with existing chunk-size warning only.
+
+---
+## V17.4 - Pack Builder Authoring Platform (2026-04-11)
 
 **Status:** CLOSED - tasks **#645-#653** are now **COMPLETED/PASS**.
 

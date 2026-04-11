@@ -1,4 +1,14 @@
-﻿## 2026-04-11 - frontend-dev / backend-dev / qa-tester - V17.4 pack builder authoring platform
+﻿## 2026-04-11 - frontend-dev / qa-tester - V17.5 pack operator product surface
+**Outcome:** COMPLETED / PASS
+**Summary:** Closed V17.5 by adding a pack-first operator surface with library, detail, generated run form, project binding, run monitor, artifacts, and debug drawer. Operators can launch and observe a harness without opening Swarm by default, while Builder/Swarm remain reachable for advanced workflows.
+**Files changed:** client/src/views/PackLibraryView.jsx, client/src/views/PackLibraryView.test.jsx, client/src/App.jsx, client/src/store/AppContext.jsx, client/src/lib/constants.js, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** none
+**Decisions made:** Keep operator monitoring pack-first and expose raw runtime details only behind an advanced debug drawer.
+**Blockers:** none
+**Next:** Implement V17.6 Pack Distribution & Installation.
+
+---
+## 2026-04-11 - frontend-dev / backend-dev / qa-tester - V17.4 pack builder authoring platform
 **Outcome:** COMPLETED / PASS
 **Summary:** Closed V17.4 by adding the Pack Builder route and guided authoring shell over the validated pack contract. The builder covers all four authoring surfaces plus runtime/dependencies/visible steps/operator preview, and server lifecycle rules now block direct edits to published/deprecated/archived packs.
 **Files changed:** client/src/views/PackBuilderView.jsx, client/src/views/PackBuilderView.test.jsx, client/src/App.jsx, client/src/store/AppContext.jsx, client/src/lib/constants.js, client/src/views/SwarmView.jsx, server/services/packContracts.js, server/stores/PackStore.js, server/tests/PackStore.test.js, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md

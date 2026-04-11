@@ -7,6 +7,7 @@ import ContextEditorView from './views/ContextEditorView.jsx';
 import DeploymentManagerView from './views/DeploymentManagerView.jsx';
 import SwarmView from './views/SwarmView.jsx';
 import PackBuilderView from './views/PackBuilderView.jsx';
+import PackLibraryView from './views/PackLibraryView.jsx';
 
 function MainContent() {
   const { view } = useAppState();
@@ -26,6 +27,8 @@ function MainContent() {
       return <SwarmView />;
     case 'pack-builder':
       return <PackBuilderView />;
+    case 'packs':
+      return <PackLibraryView />;
     default:
       return <ProjectsView />;
   }

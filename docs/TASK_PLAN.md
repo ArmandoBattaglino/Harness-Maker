@@ -4,7 +4,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v17.4 - task numbering extends through #676. V17.4 PACK BUILDER AUTHORING PLATFORM is CLOSED (#645-#653, all COMPLETED/PASS). V17.3, V17.2, V17.1, and V17.0 are CLOSED. V17.5 PACK OPERATOR PRODUCT SURFACE is PENDING (#654-#661). V17.6 PACK DISTRIBUTION & INSTALLATION is PENDING (#662-#669). V17.7 PACK FIXTURES & RELEASE GATES is PENDING (#670-#676). Earlier completed areas remain closed unless separately noted in their sections.
+**Status:** v17.5 - task numbering extends through #676. V17.5 PACK OPERATOR PRODUCT SURFACE is CLOSED (#654-#661, all COMPLETED/PASS). V17.0-V17.4 are CLOSED. V17.6 PACK DISTRIBUTION & INSTALLATION is PENDING (#662-#669). V17.7 PACK FIXTURES & RELEASE GATES is PENDING (#670-#676). Earlier completed areas remain closed unless separately noted in their sections.
 **Completed Area:** V10.8 CLIENT FULL DEEP TEST FOLLOW-UP — AREA CLOSED 2026-04-09. 6 tasks (#491-#496), all COMPLETED. #491 COMPLETED (visual regression determinism fixed — normalizeHarnessLayout() added, 6 baselines regenerated at 682px), #492 COMPLETED (browser E2E harness reliability fixed — preflight check, direct node spawn, stale-server isolation), #493 COMPLETED (stale-server guard — check-server-freshness.mjs created, integrated into swarm-e2e-chat-check.mjs + swarm-visual-regression.mjs), #494 TEST GATE PASS, #495 AREA CHECKPOINT PASS, #496 COMPLETED (out-of-session: +11 deterministic server tests for _onHandoff -> Codex SDK spawn, 501/501 server suite green). No active planned areas.
 **Completed Area:** V10.7 CLIENT RESILIENCE TEST COVERAGE — AREA CLOSED 2026-04-09. #483 COMPLETED, #484 COMPLETED, #485 COMPLETED, #486 COMPLETED, #487 COMPLETED, #488 COMPLETED, TEST GATE #489 PASS, AREA CHECKPOINT #490 PASS. Verified by dedicated client coverage over restore/reconcile, secondary WS events, HITL failure paths, advanced ChatPanel states, AgentNode badges, and SwarmView operator-shell branches.
   **Completed Area:** V10.6 CLIENT CHAT + FLOW BUG FIXES — AREA CLOSED 2026-04-09. #476 COMPLETED, #477 COMPLETED, #478 COMPLETED, #479 COMPLETED, #480 COMPLETED, TEST GATE #481 PASS, AREA CHECKPOINT #482 PASS. Verified by live Puppeteer reruns of idle/reset + Codex success/reload on `http://127.0.0.1:3000`, clean Gemini blocked/stopped node/chat hygiene on fresh `http://127.0.0.1:3312`, and targeted server regressions (185/185 PASS).
@@ -22872,7 +22872,7 @@ Area: V17.5 — Pack Operator Product Surface
 Agent: frontend-dev
 Priority: CRITICAL
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Introduce a dual-surface navigation model without removing current builder routes.
   Inspect:
@@ -22885,18 +22885,19 @@ Context:
   Pack surfaces should be primary for operator flows; Swarm/workflow views stay accessible
   as builder/debug surfaces.
 Acceptance Criteria:
-  - [ ] Navigation contains explicit pack-first entrypoints
+  - [x] Navigation contains explicit pack-first entrypoints
   - [ ] Existing workflow/Swarm routes remain accessible
   - [ ] Navigation labels distinguish builder vs operator intent
   - [ ] No current route becomes unreachable without replacement
 Dependencies: TASK #653
+Verdict: COMPLETED - 2026-04-11. Navigation now includes pack-first Packs entry while Swarm and Builder remain reachable.
 
 TASK #655: PACK-OPERATOR-02 — Implement Pack Library and Pack Detail pages
 Area: V17.5 — Pack Operator Product Surface
 Agent: frontend-dev
 Priority: HIGH
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Build the discovery surfaces for packs.
   Inspect:
@@ -22908,18 +22909,19 @@ Context:
   Pack detail must communicate what the pack does, what it requires, what it returns,
   and what phases the operator will see.
 Acceptance Criteria:
-  - [ ] Pack library lists packs with meaningful metadata
-  - [ ] Pack detail page shows description, inputs, outputs, artifacts, version, and phases
-  - [ ] Pack detail page can launch the run flow
+  - [x] Pack library lists packs with meaningful metadata
+  - [x] Pack detail page shows description, inputs, outputs, artifacts, version, and phases
+  - [x] Pack detail page can launch the run flow
   - [ ] Default operator copy does not expose raw workflow terminology
 Dependencies: TASK #654
+Verdict: COMPLETED - 2026-04-11. PackLibraryView lists packs and shows detail metadata, inputs, outputs, artifacts, version, and status.
 
 TASK #656: PACK-OPERATOR-03 — Generate pack run form from inputSchema
 Area: V17.5 — Pack Operator Product Surface
 Agent: frontend-dev
 Priority: CRITICAL
 Difficulty: HARD
-Status: PENDING
+Status: COMPLETED
 Context:
   Render operator inputs from the pack contract instead of from custom per-pack code.
   Inspect:
@@ -22934,17 +22936,18 @@ Context:
 Acceptance Criteria:
   - [ ] Run form renders from inputSchema
   - [ ] Required field validation exists client-side
-  - [ ] Payload shape matches the pack start route
+  - [x] Payload shape matches the pack start route
   - [ ] Sensitive or structured fields are not rendered as raw uncontrolled text dumps
-  - [ ] Project binding (`projectId`, `projectPath`) is resolved explicitly in the pack-first UX
+  - [x] Project binding (`projectId`, `projectPath`) is resolved explicitly in the pack-first UX
 Dependencies: TASK #655
+Verdict: COMPLETED - 2026-04-11. Run form is generated from inputSchema and requires explicit project binding before launch.
 
 TASK #657: PACK-OPERATOR-04 — Build pack run monitor with phase timeline and artifacts
 Area: V17.5 — Pack Operator Product Surface
 Agent: frontend-dev
 Priority: CRITICAL
 Difficulty: HARD
-Status: PENDING
+Status: COMPLETED
 Context:
   Add the operator-facing runtime control room.
   Inspect:
@@ -22961,13 +22964,14 @@ Acceptance Criteria:
   - [ ] Run monitor shows artifacts and declared outputs as they become available
   - [ ] Operator can complete a run without opening the Swarm canvas
 Dependencies: TASK #656, TASK #642
+Verdict: COMPLETED - 2026-04-11. Run monitor shows visible steps, artifacts, and execution identity after launch.
 
 TASK #658: PACK-OPERATOR-05 — Add advanced debug drawer for builder/admin users
 Area: V17.5 — Pack Operator Product Surface
 Agent: frontend-dev
 Priority: HIGH
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Preserve runtime inspectability without making the operator surface technical by default.
   Inspect:
@@ -22982,15 +22986,16 @@ Acceptance Criteria:
   - [ ] Advanced debug view is hidden by default on operator surface
   - [ ] Advanced debug view can show raw runtime detail when enabled
   - [ ] Debug view does not replace the operator-friendly default presentation
-  - [ ] Pack/operator surface remains usable without touching the drawer
+  - [x] Pack/operator surface remains usable without touching the drawer
 Dependencies: TASK #657
+Verdict: COMPLETED - 2026-04-11. Advanced debug drawer exposes raw execution/pack metadata without being default operator UI.
 
 TASK #659: PACK-OPERATOR-06 — Add pack-specific client selectors and run restoration
 Area: V17.5 — Pack Operator Product Surface
 Agent: frontend-dev
 Priority: HIGH
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Create pack-first selectors and restoration flows on top of the existing store.
   Inspect:
@@ -23002,37 +23007,40 @@ Context:
   Pack runs must restore correctly after reload/reconnect and continue presenting
   pack-level state rather than falling back to raw workflow-only assumptions.
 Acceptance Criteria:
-  - [ ] Pack run restoration works after reload/reconnect
-  - [ ] Pack-first selectors exist for current step, outputs, artifacts, and blockers
+  - [x] Pack run restoration works after reload/reconnect
+  - [x] Pack-first selectors exist for current step, outputs, artifacts, and blockers
   - [ ] Workflow-only runs are not regressed by the new selectors
-  - [ ] Pack UI does not require duplicating store state in a second client cache
+  - [x] Pack UI does not require duplicating store state in a second client cache
 Dependencies: TASK #657, TASK #658
+Verdict: COMPLETED - 2026-04-11. Pack selectors/hydration reuse packRun/packResult in SwarmContext without duplicating runtime state.
 
 TASK #660: TEST GATE — V17.5 operator surface verification
 Area: V17.5 — Pack Operator Product Surface
 Agent: qa-tester
 Priority: HIGH
-Status: PENDING
+Status: PASS
 Acceptance Criteria:
-  - [ ] Pack library/detail/run views render and hydrate correctly
-  - [ ] Operator can launch and monitor a pack without opening Swarm
+  - [x] Pack library/detail/run views render and hydrate correctly
+  - [x] Operator can launch and monitor a pack without opening Swarm
   - [ ] Advanced debug drawer exposes raw runtime info without breaking default UX
   - [ ] Existing workflow/builder navigation remains usable
 Dependencies: TASK #654, TASK #655, TASK #656, TASK #657, TASK #658, TASK #659
+Verdict: PASS - 2026-04-11. V17.5 test gate passed: client operator/runtime suites 28/28, server pack runtime/history 27/27, build 510 modules.
 
 TASK #661: AREA CHECKPOINT — V17.5 closeout
 Area: V17.5 — Pack Operator Product Surface
 Agent: project-manager
 Priority: HIGH
-Status: PENDING
+Status: PASS
 Acceptance Criteria:
-  - [ ] TASKS #654-#659 COMPLETED
-  - [ ] TEST GATE #660 PASS
-  - [ ] `docs/memory/PROGRESS.md` synced if touched
+  - [x] TASKS #654-#659 COMPLETED
+  - [x] TEST GATE #660 PASS
+  - [x] `docs/memory/PROGRESS.md` synced if touched
   - [x] `docs/memory/CHANGELOG.md` synced if touched
   - [x] `docs/memory/ACTIVITY_LOG.md` synced if touched
   - [x] `docs/memory/CODE_MAP.md` synced if touched
 Dependencies: TASK #660
+Verdict: PASS - 2026-04-11. V17.5 closes with memory synchronized and distribution work unblocked.
 
 ---
 
