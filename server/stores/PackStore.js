@@ -63,9 +63,9 @@ export class PackStore {
 
   async create(data) {
     const pack = normalizePackDefinition(data);
-    await this._assertWorkflowExists(pack.workflowId);
+    const workflow = await this._getLinkedWorkflowOrThrow(pack.workflowId);
 
-    const validation = validatePackDefinition(pack);
+    const validation = validatePackDefinition(pack, { workflowDef: workflow });
     if (!validation.valid) {
       const err = new Error(`Validation failed: ${validation.errors.join('; ')}`);
       err.statusCode = 400;
@@ -92,9 +92,9 @@ export class PackStore {
       updatedAt: new Date().toISOString(),
     });
 
-    await this._assertWorkflowExists(next.workflowId);
+    const workflow = await this._getLinkedWorkflowOrThrow(next.workflowId);
 
-    const validation = validatePackDefinition(next);
+    const validation = validatePackDefinition(next, { workflowDef: workflow });
     if (!validation.valid) {
       const err = new Error(`Validation failed: ${validation.errors.join('; ')}`);
       err.statusCode = 400;
@@ -301,6 +301,7 @@ export class PackStore {
       ...bundle.pack,
       id: undefined,
       workflowId: importedWorkflow.id,
+      dependencies: this._rebindWorkflowDependency(bundle.pack.dependencies, importedWorkflow.id),
       status: 'draft',
       installMetadata: bundle.manifest?.provenance ?? null,
     });
@@ -329,6 +330,26 @@ export class PackStore {
         forkedAt: new Date().toISOString(),
       },
     });
+  }
+
+  _rebindWorkflowDependency(dependencies, workflowId) {
+    const nextDependencies = Array.isArray(dependencies)
+      ? dependencies.map((dependency) => (
+          dependency?.type === 'workflow'
+            ? { ...dependency, targetId: workflowId }
+            : { ...dependency }
+        ))
+      : [];
+    if (!nextDependencies.some((dependency) => dependency?.type === 'workflow' && dependency?.targetId === workflowId)) {
+      nextDependencies.push({
+        id: 'linked-workflow',
+        type: 'workflow',
+        targetId: workflowId,
+        version: 'current',
+        required: true,
+      });
+    }
+    return nextDependencies;
   }
 
   _listJsonEntries(dir) {
@@ -411,14 +432,15 @@ export class PackStore {
     }
   }
 
-  async _assertWorkflowExists(workflowId) {
-    if (!this._workflowStore) return;
+  async _getLinkedWorkflowOrThrow(workflowId) {
+    if (!this._workflowStore) return null;
     const workflow = await this._workflowStore.get(workflowId);
     if (!workflow) {
       const err = new Error(`Linked workflow not found: ${workflowId}`);
       err.statusCode = 400;
       throw err;
     }
+    return workflow;
   }
 }
 

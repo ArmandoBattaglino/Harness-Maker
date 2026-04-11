@@ -1,4 +1,14 @@
-﻿## 2026-04-11 - backend-dev / frontend-dev / qa-tester - V17.1 pack domain foundation
+﻿## 2026-04-11 - backend-dev / frontend-dev / qa-tester - V17.2 pack contract validation
+**Outcome:** COMPLETED / PASS
+**Summary:** Closed V17.2 by making the four harness-authoring surfaces explicit and enforceable. Server-side validation now uses Ajv Draft 2020-12 plus semver; PackStore validates contracts against linked workflow nodes; pack start/dry-run reject invalid runtime inputs; and client pack hooks normalize optional contract fields without hiding server validation errors.
+**Files changed:** server/package.json, server/package-lock.json, server/services/packContracts.js, server/stores/PackStore.js, server/tests/pack-contracts.test.js, server/tests/pack-routes.test.js, client/src/hooks/usePack.js, client/src/hooks/usePack.test.jsx, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** pack runtime inputs could previously accept fields forbidden by the declared schema; behavior rule priority and knowledge merge semantics are now covered by targeted regression tests.
+**Decisions made:** Use Ajv Draft 2020-12 as the server schema engine; keep pack UI metadata in `x-packField` so the schema remains declarative and builder-friendly.
+**Blockers:** none
+**Next:** Implement V17.3 Pack-Aware Runtime Wrapper.
+
+---
+## 2026-04-11 - backend-dev / frontend-dev / qa-tester - V17.1 pack domain foundation
 **Outcome:** COMPLETED / PASS
 **Summary:** Closed V17.1 by introducing the first persisted pack domain layer: `PackStore`, pack contracts, pack CRUD/version restore routes, startup wiring, and a minimal client `usePack` hook. Also added reserved pack metadata plumbing to the existing swarm runtime/history/results path so later V17 runtime/operator work can stay additive instead of forking the workflow substrate.
 **Files changed:** server/index.js, server/routes/swarm.js, server/services/SwarmEngine.js, server/stores/ExecutionHistoryStore.js, server/routes/packs.js, server/services/PackResolver.js, server/services/PackResultBuilder.js, server/services/packContracts.js, server/stores/PackStore.js, server/tests/PackStore.test.js, server/tests/pack-routes.test.js, server/tests/pack-resolver.test.js, server/tests/pack-result-builder.test.js, client/src/hooks/usePack.js, client/src/hooks/usePack.test.jsx, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md

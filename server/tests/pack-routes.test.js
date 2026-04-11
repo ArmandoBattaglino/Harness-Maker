@@ -159,9 +159,9 @@ describe('packs routes', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toBe('Input validation failed');
     expect(res.body.details).toEqual(expect.arrayContaining([
-      'input.brief must be a string',
-      'input.rounds must be an integer',
-      'input.extra is not allowed',
+      'input must NOT have additional properties',
+      'input.brief must be string',
+      'input.rounds must be integer',
     ]));
   });
 

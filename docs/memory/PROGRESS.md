@@ -1,4 +1,18 @@
-﻿## V17.1 - Pack Domain Foundation (2026-04-11)
+﻿## V17.2 - Pack Contract Layer (2026-04-11)
+
+**Status:** CLOSED - tasks **#626-#634** are now **COMPLETED/PASS**.
+
+**Deliverables:**
+- Added direct server dependencies `ajv`, `ajv-formats`, and `semver` for PRD-required contract validation.
+- Upgraded `server/services/packContracts.js` with JSON Schema Draft 2020-12 validation, Ajv runtime input validation, semver engine compatibility checks, input field metadata validation, artifact format validation, dependency manifest enforcement, and visible-step workflow-node reference validation.
+- Extended PackStore validation so contract checks can inspect the linked workflow graph before accepting visible-step node references.
+- Hardened pack input validation in routes to reject forbidden properties and nested schema violations before runtime starts.
+- Normalized pack contract defaults in `client/src/hooks/usePack.js` without swallowing server-side validation errors.
+
+**Verification:** `npm test -- tests/pack-contracts.test.js tests/PackStore.test.js tests/pack-routes.test.js tests/pack-resolver.test.js tests/pack-result-builder.test.js tests/swarm-routes.test.js tests/execution-results-api.test.js tests/execution-history-outputs.test.js` (**51/51 PASS**); `npm test -- src/hooks/usePack.test.jsx` (**2/2 PASS**); `npm run build` in `client/` (**507 modules**, chunk-size warning only).
+
+---
+## V17.1 - Pack Domain Foundation (2026-04-11)
 
 **Status:** CLOSED - tasks **#617-#625** are now **COMPLETED/PASS** in the implementation baseline.
 

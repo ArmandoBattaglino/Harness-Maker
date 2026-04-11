@@ -4,7 +4,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v17.1 - task numbering extends through #676. V17.1 PACK DOMAIN FOUNDATION is CLOSED (#617-#625, all COMPLETED/PASS). V17.0 PACK PLATFORM PROGRAM FOUNDATION is CLOSED (#610-#616, all COMPLETED/PASS). V17.2 PACK CONTRACT LAYER is PENDING (#626-#634). V17.3 PACK-AWARE RUNTIME WRAPPER is PENDING (#635-#644). V17.4 PACK BUILDER AUTHORING PLATFORM is PENDING (#645-#653). V17.5 PACK OPERATOR PRODUCT SURFACE is PENDING (#654-#661). V17.6 PACK DISTRIBUTION & INSTALLATION is PENDING (#662-#669). V17.7 PACK FIXTURES & RELEASE GATES is PENDING (#670-#676). Earlier completed areas remain closed unless separately noted in their sections.
+**Status:** v17.2 - task numbering extends through #676. V17.2 PACK CONTRACT LAYER is CLOSED (#626-#634, all COMPLETED/PASS). V17.1 PACK DOMAIN FOUNDATION is CLOSED (#617-#625, all COMPLETED/PASS). V17.0 PACK PLATFORM PROGRAM FOUNDATION is CLOSED (#610-#616, all COMPLETED/PASS). V17.3 PACK-AWARE RUNTIME WRAPPER is PENDING (#635-#644). V17.4 PACK BUILDER AUTHORING PLATFORM is PENDING (#645-#653). V17.5 PACK OPERATOR PRODUCT SURFACE is PENDING (#654-#661). V17.6 PACK DISTRIBUTION & INSTALLATION is PENDING (#662-#669). V17.7 PACK FIXTURES & RELEASE GATES is PENDING (#670-#676). Earlier completed areas remain closed unless separately noted in their sections.
 **Completed Area:** V10.8 CLIENT FULL DEEP TEST FOLLOW-UP — AREA CLOSED 2026-04-09. 6 tasks (#491-#496), all COMPLETED. #491 COMPLETED (visual regression determinism fixed — normalizeHarnessLayout() added, 6 baselines regenerated at 682px), #492 COMPLETED (browser E2E harness reliability fixed — preflight check, direct node spawn, stale-server isolation), #493 COMPLETED (stale-server guard — check-server-freshness.mjs created, integrated into swarm-e2e-chat-check.mjs + swarm-visual-regression.mjs), #494 TEST GATE PASS, #495 AREA CHECKPOINT PASS, #496 COMPLETED (out-of-session: +11 deterministic server tests for _onHandoff -> Codex SDK spawn, 501/501 server suite green). No active planned areas.
 **Completed Area:** V10.7 CLIENT RESILIENCE TEST COVERAGE — AREA CLOSED 2026-04-09. #483 COMPLETED, #484 COMPLETED, #485 COMPLETED, #486 COMPLETED, #487 COMPLETED, #488 COMPLETED, TEST GATE #489 PASS, AREA CHECKPOINT #490 PASS. Verified by dedicated client coverage over restore/reconcile, secondary WS events, HITL failure paths, advanced ChatPanel states, AgentNode badges, and SwarmView operator-shell branches.
   **Completed Area:** V10.6 CLIENT CHAT + FLOW BUG FIXES — AREA CLOSED 2026-04-09. #476 COMPLETED, #477 COMPLETED, #478 COMPLETED, #479 COMPLETED, #480 COMPLETED, TEST GATE #481 PASS, AREA CHECKPOINT #482 PASS. Verified by live Puppeteer reruns of idle/reset + Codex success/reload on `http://127.0.0.1:3000`, clean Gemini blocked/stopped node/chat hygiene on fresh `http://127.0.0.1:3312`, and targeted server regressions (185/185 PASS).
@@ -22223,7 +22223,7 @@ Area: V17.2 — Pack Contract Layer
 Agent: backend-dev
 Priority: CRITICAL
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Introduce the schema validation foundation for pack contracts.
   Inspect:
@@ -22236,18 +22236,19 @@ Context:
   Use JSON Schema Draft 2020-12 with Ajv so the same declarative contract can later
   back both runtime validation and UI generation.
 Acceptance Criteria:
-  - [ ] Ajv-based validation infrastructure exists on the server
-  - [ ] Pack schema validation is isolated from route handlers
-  - [ ] The chosen schema draft/version is explicit in code or comments
-  - [ ] Validation helpers are reusable by store and route layers
+  - [x] Ajv-based validation infrastructure exists on the server
+  - [x] Pack schema validation is isolated from route handlers
+  - [x] The chosen schema draft/version is explicit in code or comments
+  - [x] Validation helpers are reusable by store and route layers
 Dependencies: TASK #625
+Verdict: COMPLETED - 2026-04-11. Ajv Draft 2020-12 + ajv-formats are direct server dependencies and `packContracts.js` exposes reusable schema/runtime validators.
 
 TASK #627: PACK-CONTRACT-02 — Define inputSchema field model
 Area: V17.2 — Pack Contract Layer
 Agent: backend-dev
 Priority: CRITICAL
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Implement the canonical input field contract for packs.
   Inspect:
@@ -22258,18 +22259,19 @@ Context:
     - validation helper
   V1 supported field types: `text`, `textarea`, `enum`, `boolean`, `json`, `fileRef`.
 Acceptance Criteria:
-  - [ ] Input field shape is defined in code
-  - [ ] Required/default/help/validation metadata are supported
-  - [ ] Unsupported field types fail validation
-  - [ ] Input schema can be stored on PackDefinition
+  - [x] Input field shape is defined in code
+  - [x] Required/default/help/validation metadata are supported
+  - [x] Unsupported field types fail validation
+  - [x] Input schema can be stored on PackDefinition
 Dependencies: TASK #626
+Verdict: COMPLETED - 2026-04-11. Input schemas now support `x-packField` metadata for V1 field types (`text`, `textarea`, `enum`, `boolean`, `json`, `fileRef`) plus help/default-compatible schema fields.
 
 TASK #628: PACK-CONTRACT-03 — Define outputSchema and artifactDefinitions
 Area: V17.2 — Pack Contract Layer
 Agent: backend-dev
 Priority: HIGH
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Separate operator-visible outputs from generated artifacts.
   Inspect:
@@ -22280,18 +22282,19 @@ Context:
     - validation helper
   V1 artifact formats: `markdown`, `json`, `text`.
 Acceptance Criteria:
-  - [ ] Output field model exists and is distinct from input fields
-  - [ ] Artifact definition model exists and is distinct from outputs
-  - [ ] Required outputs/artifacts can be declared
-  - [ ] Invalid artifact formats fail validation
+  - [x] Output field model exists and is distinct from input fields
+  - [x] Artifact definition model exists and is distinct from outputs
+  - [x] Required outputs/artifacts can be declared
+  - [x] Invalid artifact formats fail validation
 Dependencies: TASK #626
+Verdict: COMPLETED - 2026-04-11. Output schemas remain distinct from artifactDefinitions, and artifacts now validate supported formats (`markdown`, `json`, `text`).
 
 TASK #629: PACK-CONTRACT-04 — Define runtimePolicy, knowledgeSources, behaviorRules, and dependency manifest
 Area: V17.2 — Pack Contract Layer
 Agent: backend-dev
 Priority: HIGH
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Give the pack a declarative runtime and dependency contract.
   Inspect:
@@ -22306,20 +22309,21 @@ Context:
   Dependency manifest must support at least:
   `workflow`, `agent`, `skill`, `contextOverlay`. Only workflow is mandatory in v1.
 Acceptance Criteria:
-  - [ ] runtimePolicy shape is defined in code
-  - [ ] `knowledgeSources` shape is defined in code
-  - [ ] `behaviorRules` shape is defined in code
-  - [ ] dependency manifest shape is defined in code
-  - [ ] `engineCompatibility` is validated with semver semantics
-  - [ ] Missing required workflow dependency fails validation
+  - [x] runtimePolicy shape is defined in code
+  - [x] `knowledgeSources` shape is defined in code
+  - [x] `behaviorRules` shape is defined in code
+  - [x] dependency manifest shape is defined in code
+  - [x] `engineCompatibility` is validated with semver semantics
+  - [x] Missing required workflow dependency fails validation
 Dependencies: TASK #626
+Verdict: COMPLETED - 2026-04-11. runtimePolicy, knowledgeSources, behaviorRules, dependency manifest, semver engineCompatibility, and required workflow dependency checks are enforced.
 
 TASK #630: PACK-CONTRACT-05 — Define visibleSteps, completionCriteria, and precedence rules
 Area: V17.2 — Pack Contract Layer
 Agent: backend-dev
 Priority: HIGH
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Add the operator-facing abstraction layer above raw graph nodes.
   Inspect:
@@ -22333,19 +22337,20 @@ Context:
   This task must also lock the precedence rules between workflow base context,
   pack knowledge/context overlays, and pack behavior rules before runtime work starts.
 Acceptance Criteria:
-  - [ ] visibleSteps shape is defined in code
-  - [ ] visibleSteps can reference one or more workflow nodes
-  - [ ] completionCriteria exists on the pack contract
-  - [ ] Invalid visible step node references fail validation
-  - [ ] Precedence/merge rules are documented in code or validation comments
+  - [x] visibleSteps shape is defined in code
+  - [x] visibleSteps can reference one or more workflow nodes
+  - [x] completionCriteria exists on the pack contract
+  - [x] Invalid visible step node references fail validation
+  - [x] Precedence/merge rules are documented in code or validation comments
 Dependencies: TASK #627, TASK #628, TASK #629
+Verdict: COMPLETED - 2026-04-11. visibleSteps and completionCriteria are validated, visibleSteps can map one or more workflow nodes, and unknown workflow node references fail validation.
 
 TASK #631: PACK-CONTRACT-06 — Enforce contract validation in PackStore and routes
 Area: V17.2 — Pack Contract Layer
 Agent: backend-dev
 Priority: CRITICAL
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Make the contract layer real by rejecting invalid packs before runtime.
   Inspect:
@@ -22356,18 +22361,19 @@ Context:
     - `server/routes/packs.js`
   Validation errors must be pack-specific and readable enough for later builder UI.
 Acceptance Criteria:
-  - [ ] PackStore rejects invalid contract-bearing fields
-  - [ ] Pack routes reject invalid contract payloads
-  - [ ] Validation errors are structured and consistent
-  - [ ] Valid existing V17.1 packs still load after contract expansion
+  - [x] PackStore rejects invalid contract-bearing fields
+  - [x] Pack routes reject invalid contract payloads
+  - [x] Validation errors are structured and consistent
+  - [x] Valid existing V17.1 packs still load after contract expansion
 Dependencies: TASK #627, TASK #628, TASK #629, TASK #630
+Verdict: COMPLETED - 2026-04-11. PackStore and routes now share contract validation and reject invalid persisted/runtime payloads with structured details.
 
 TASK #632: PACK-CONTRACT-07 — Expose pack contract shape through client hook layer
 Area: V17.2 — Pack Contract Layer
 Agent: frontend-dev
 Priority: MEDIUM
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Ensure the client has a stable normalized shape for pack contracts before the builder UI
   is built.
@@ -22379,36 +22385,39 @@ Context:
   The hook should normalize missing optional contract fields into predictable defaults
   without hiding actual server validation failures.
 Acceptance Criteria:
-  - [ ] Client hooks expose pack contract fields in a stable shape
-  - [ ] Missing optional arrays/objects are normalized safely
-  - [ ] Server validation failures are surfaced instead of swallowed
-  - [ ] No builder-only assumptions leak into the hook API yet
+  - [x] Client hooks expose pack contract fields in a stable shape
+  - [x] Missing optional arrays/objects are normalized safely
+  - [x] Server validation failures are surfaced instead of swallowed
+  - [x] No builder-only assumptions leak into the hook API yet
 Dependencies: TASK #631
+Verdict: COMPLETED - 2026-04-11. `usePack` normalizes optional contract arrays/objects into stable defaults while preserving server errors.
 
 TASK #633: TEST GATE — V17.2 pack contract validation
 Area: V17.2 — Pack Contract Layer
 Agent: qa-tester
 Priority: HIGH
-Status: PENDING
+Status: PASS
 Acceptance Criteria:
-  - [ ] Validation tests cover input, output, artifact, dependency, and visible-step rules
-  - [ ] Invalid pack payloads fail before runtime starts
-  - [ ] Existing V17.1 CRUD tests remain green
-  - [ ] Client hook normalization does not hide server-side contract errors
+  - [x] Validation tests cover input, output, artifact, dependency, and visible-step rules
+  - [x] Invalid pack payloads fail before runtime starts
+  - [x] Existing V17.1 CRUD tests remain green
+  - [x] Client hook normalization does not hide server-side contract errors
 Dependencies: TASK #626, TASK #627, TASK #628, TASK #629, TASK #630, TASK #631, TASK #632
+Verdict: PASS - 2026-04-11. V17.2 test gate passed: server contract/regression suites 51/51, client hook suite 2/2, client build 507 modules.
 
 TASK #634: AREA CHECKPOINT — V17.2 closeout
 Area: V17.2 — Pack Contract Layer
 Agent: project-manager
 Priority: HIGH
-Status: PENDING
+Status: PASS
 Acceptance Criteria:
-  - [ ] TASKS #626-#632 COMPLETED
-  - [ ] TEST GATE #633 PASS
-  - [ ] `docs/memory/PROGRESS.md` synced if touched
+  - [x] TASKS #626-#632 COMPLETED
+  - [x] TEST GATE #633 PASS
+  - [x] `docs/memory/PROGRESS.md` synced if touched
   - [x] `docs/memory/CHANGELOG.md` synced if touched
   - [x] `docs/memory/ACTIVITY_LOG.md` synced if touched
 Dependencies: TASK #633
+Verdict: PASS - 2026-04-11. V17.2 closes with docs/memory synchronized and the contract layer ready for V17.3 runtime wrapper work.
 
 ---
 

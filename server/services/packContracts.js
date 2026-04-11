@@ -1,19 +1,26 @@
 import { randomUUID } from 'crypto';
+import Ajv2020 from 'ajv/dist/2020.js';
+import addFormats from 'ajv-formats';
+import semver from 'semver';
 
 export const PACK_STATUSES = ['draft', 'published', 'archived'];
 export const PACK_VISIBILITIES = ['private', 'workspace'];
-export const PACK_DEPENDENCY_TYPES = ['workflow', 'agent', 'skill', 'context'];
+export const PACK_DEPENDENCY_TYPES = ['workflow', 'agent', 'skill', 'context', 'contextOverlay'];
 export const KNOWLEDGE_SOURCE_TYPES = ['inline', 'overlay', 'reference'];
 export const KNOWLEDGE_MERGE_STRATEGIES = ['merge', 'replace', 'append'];
 export const BEHAVIOR_RULE_MODES = ['append', 'override', 'guardrail'];
 export const ARTIFACT_SOURCE_TYPES = ['aggregatedArtifact', 'agentOutput', 'workflowContext'];
+export const ARTIFACT_FORMATS = ['markdown', 'json', 'text'];
+export const INPUT_FIELD_TYPES = ['text', 'textarea', 'enum', 'boolean', 'json', 'fileRef'];
+export const JSON_SCHEMA_DRAFT = 'https://json-schema.org/draft/2020-12/schema';
 
 const MAX_TEXT = 2000;
 const MAX_LONG_TEXT = 16000;
 const MAX_ITEMS = 50;
 const ID_REGEX = /^[a-z][a-z0-9-]*$/;
 const PACK_NAME_REGEX = /^[\w\s\-.]+$/;
-const ENGINE_COMPATIBILITY_REGEX = /^(latest|[\^~<>]=?\s*\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?(?:\s+\|\|\s+[\^~<>]=?\s*\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?)*)$/;
+const ajv = new Ajv2020({ allErrors: true, strict: false });
+addFormats(ajv);
 
 export function createDefaultSchema() {
   return {
@@ -83,18 +90,21 @@ export function validatePackDefinition(data, options = {}) {
     errors.push(`visibility must be one of: ${PACK_VISIBILITIES.join(', ')}`);
   }
 
-  if (typeof data.engineCompatibility !== 'string' || !ENGINE_COMPATIBILITY_REGEX.test(data.engineCompatibility.trim())) {
-    errors.push('engineCompatibility must use semver-like syntax or "latest"');
+  if (
+    typeof data.engineCompatibility !== 'string'
+    || !(data.engineCompatibility.trim() === 'latest' || semver.validRange(data.engineCompatibility.trim()))
+  ) {
+    errors.push('engineCompatibility must be a valid semver range or "latest"');
   }
 
   validateRuntimePolicy(data.runtimePolicy, errors);
-  validateDependencyList(data.dependencies, errors);
+  validateDependencyList(data.dependencies, errors, data.workflowId);
   validateSchema(data.inputSchema, errors, 'inputSchema');
   validateSchema(data.outputSchema, errors, 'outputSchema');
   validateKnowledgeSources(data.knowledgeSources, errors);
   validateBehaviorRules(data.behaviorRules, errors);
   validateArtifactDefinitions(data.artifactDefinitions, errors);
-  validateVisibleSteps(data.visibleSteps, errors);
+  validateVisibleSteps(data.visibleSteps, errors, options.workflowDef);
 
   if (!Array.isArray(data.completionCriteria)) {
     errors.push('completionCriteria must be an array');
@@ -147,6 +157,21 @@ export function validatePackFixture(data) {
 export function validateValueAgainstSchema(schema, value, path = 'value', errors = []) {
   if (!schema || typeof schema !== 'object' || Array.isArray(schema)) {
     return errors;
+  }
+  try {
+    const schemaToValidate = withDraft(schema);
+    const validate = ajv.compile(schemaToValidate);
+    if (!validate(value)) {
+      for (const err of validate.errors ?? []) {
+        const instancePath = err.instancePath ? err.instancePath.replace(/\//g, '.') : '';
+        errors.push(`${path}${instancePath} ${err.message}`);
+      }
+    }
+    return errors;
+  } catch {
+    // Fall back to the small local validator below when Ajv cannot compile a
+    // partial in-progress schema. Pack definitions are separately validated so
+    // accepted persisted schemas should normally use the Ajv path.
   }
 
   const expectedType = schema.type;
@@ -293,9 +318,10 @@ function normalizeArtifactDefinitions(value) {
   return value.map((item) => ({
     id: item?.id ?? randomUUID(),
     name: item?.name ?? '',
-    sourceType: item?.sourceType ?? 'aggregatedArtifact',
-    sourceNodeId: item?.sourceNodeId ?? null,
-    required: item?.required !== false,
+      sourceType: item?.sourceType ?? 'aggregatedArtifact',
+      format: item?.format ?? 'markdown',
+      sourceNodeId: item?.sourceNodeId ?? null,
+      required: item?.required !== false,
   }));
 }
 
@@ -347,7 +373,7 @@ function validateRuntimePolicy(value, errors) {
   }
 }
 
-function validateDependencyList(value, errors) {
+function validateDependencyList(value, errors, workflowId) {
   if (!Array.isArray(value)) {
     errors.push('dependencies must be an array');
     return;
@@ -366,6 +392,9 @@ function validateDependencyList(value, errors) {
     }
     validateTextField(item.targetId, errors, `dependencies[${index}].targetId`, { required: true, maxLength: 200 });
   });
+  if (!value.some((item) => item?.type === 'workflow' && item?.targetId === workflowId)) {
+    errors.push('dependencies must include the linked workflow dependency');
+  }
 }
 
 function validateSchema(value, errors, field) {
@@ -374,6 +403,11 @@ function validateSchema(value, errors, field) {
     return;
   }
   validateJsonSchemaNode(value, errors, field, 0);
+  try {
+    ajv.compile(withDraft(value));
+  } catch (err) {
+    errors.push(`${field} must be valid JSON Schema Draft 2020-12: ${err.message}`);
+  }
 }
 
 function validateJsonSchemaNode(node, errors, field, depth) {
@@ -397,6 +431,7 @@ function validateJsonSchemaNode(node, errors, field, depth) {
           errors.push(`${field}.properties keys must be non-empty`);
           return;
         }
+        validateInputFieldMetadata(child, errors, `${field}.properties.${key}`);
         validateJsonSchemaNode(child, errors, `${field}.properties.${key}`, depth + 1);
       });
     }
@@ -486,10 +521,14 @@ function validateArtifactDefinitions(value, errors) {
     if (!ARTIFACT_SOURCE_TYPES.includes(item.sourceType)) {
       errors.push(`artifactDefinitions[${index}].sourceType is invalid`);
     }
+    if (item.format != null && !ARTIFACT_FORMATS.includes(item.format)) {
+      errors.push(`artifactDefinitions[${index}].format is invalid`);
+    }
   });
 }
 
-function validateVisibleSteps(value, errors) {
+function validateVisibleSteps(value, errors, workflowDef = null) {
+  const workflowNodeIds = new Set((workflowDef?.nodes ?? []).map((node) => node?.id).filter(Boolean));
   if (!Array.isArray(value)) {
     errors.push('visibleSteps must be an array');
     return;
@@ -503,8 +542,29 @@ function validateVisibleSteps(value, errors) {
     validateTextField(item.label, errors, `visibleSteps[${index}].label`, { required: true, maxLength: 120 });
     if (item.nodeIds != null && !Array.isArray(item.nodeIds)) {
       errors.push(`visibleSteps[${index}].nodeIds must be an array`);
+    } else if (workflowNodeIds.size > 0) {
+      for (const nodeId of item.nodeIds ?? []) {
+        if (!workflowNodeIds.has(nodeId)) {
+          errors.push(`visibleSteps[${index}].nodeIds contains unknown workflow node '${nodeId}'`);
+        }
+      }
     }
   });
+}
+
+function validateInputFieldMetadata(schemaNode, errors, field) {
+  const metadata = schemaNode?.['x-packField'];
+  if (metadata == null) return;
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    errors.push(`${field}.x-packField must be an object`);
+    return;
+  }
+  if (!INPUT_FIELD_TYPES.includes(metadata.fieldType)) {
+    errors.push(`${field}.x-packField.fieldType is invalid`);
+  }
+  if (metadata.help != null && typeof metadata.help !== 'string') {
+    errors.push(`${field}.x-packField.help must be a string`);
+  }
 }
 
 function validateIdLike(value, errors, field) {
@@ -515,4 +575,8 @@ function validateIdLike(value, errors, field) {
 
 function structuredCloneSafe(value) {
   return JSON.parse(JSON.stringify(value));
+}
+
+function withDraft(schema) {
+  return schema.$schema ? schema : { $schema: JSON_SCHEMA_DRAFT, ...schema };
 }

@@ -71,11 +71,13 @@ describe('usePack hooks', () => {
     render(<UsePackHarness onUpdate={(api) => { packApi = api; }} />);
 
     await waitFor(() => {
-      expect(packApi?.pack).toEqual({
+      expect(packApi?.pack).toMatchObject({
         id: 'pack-1',
         name: 'Marketing Harness',
         workflowId: 'wf-1',
       });
+      expect(packApi?.pack.inputSchema).toEqual({ type: 'object', properties: {}, required: [] });
+      expect(packApi?.pack.knowledgeSources).toEqual([]);
     });
 
     await act(async () => {

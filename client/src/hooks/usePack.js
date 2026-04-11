@@ -5,7 +5,23 @@ import { apiDelete, apiGet, apiPost, apiPut } from './useApi.js';
 const API_BASE = '/api/v1/packs';
 
 function unwrapPack(payload) {
-  return payload?.pack ?? payload ?? null;
+  return normalizePack(payload?.pack ?? payload ?? null);
+}
+
+function normalizePack(pack) {
+  if (!pack || typeof pack !== 'object') return null;
+  return {
+    ...pack,
+    runtimePolicy: pack.runtimePolicy && typeof pack.runtimePolicy === 'object' ? pack.runtimePolicy : {},
+    dependencies: Array.isArray(pack.dependencies) ? pack.dependencies : [],
+    inputSchema: pack.inputSchema && typeof pack.inputSchema === 'object' ? pack.inputSchema : { type: 'object', properties: {}, required: [] },
+    knowledgeSources: Array.isArray(pack.knowledgeSources) ? pack.knowledgeSources : [],
+    behaviorRules: Array.isArray(pack.behaviorRules) ? pack.behaviorRules : [],
+    outputSchema: pack.outputSchema && typeof pack.outputSchema === 'object' ? pack.outputSchema : { type: 'object', properties: {}, required: [] },
+    artifactDefinitions: Array.isArray(pack.artifactDefinitions) ? pack.artifactDefinitions : [],
+    visibleSteps: Array.isArray(pack.visibleSteps) ? pack.visibleSteps : [],
+    completionCriteria: Array.isArray(pack.completionCriteria) ? pack.completionCriteria : [],
+  };
 }
 
 export function usePack(packId) {
@@ -74,7 +90,9 @@ export function usePackList() {
     setError(null);
     try {
       const data = await apiGet(API_BASE);
-      const nextPacks = Array.isArray(data) ? data : (data?.packs ?? []);
+      const nextPacks = (Array.isArray(data) ? data : (data?.packs ?? []))
+        .map(normalizePack)
+        .filter(Boolean);
       setPacks(nextPacks);
       return nextPacks;
     } catch (err) {

@@ -1,6 +1,19 @@
 ﻿# CHANGELOG — Claude Code Visual Manager
 
 ---
+## 2026-04-11 - V17.2 CLOSED - Pack Contract Layer (#626-#634)
+
+**Status:** Area closed; contract-layer tasks **#626-#634** are now **COMPLETED/PASS**.
+
+**Deliverables:**
+- Added Ajv Draft 2020-12, ajv-formats, and semver as direct server dependencies.
+- Contract validation now covers input/output schemas, input field UI metadata, artifact formats, runtime policy, dependencies, knowledgeSources, behaviorRules, visibleSteps, completionCriteria, engineCompatibility, and workflow-node references.
+- Pack routes now use shared schema validation for runtime inputs and reject malformed payloads before execution.
+- Client `usePack` normalizes optional contract fields into stable defaults while preserving validation failures.
+
+**Verification:** server targeted V17.2/regression suites **51/51 PASS**; client `usePack` **2/2 PASS**; client build **507 modules** with existing chunk-size warning only.
+
+---
 ## 2026-04-11 - V17.1 CLOSED - Pack Domain Foundation (#617-#625)
 
 **Status:** Area closed; implementation tasks **#617-#625** are now **COMPLETED/PASS**.

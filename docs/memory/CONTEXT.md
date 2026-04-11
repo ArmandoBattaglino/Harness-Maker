@@ -1,11 +1,10 @@
 ﻿# Current Context
 **Session date:** 2026-04-11
-**Focus:** **V17.1 PACK DOMAIN FOUNDATION - CLOSED.** The repo now has first-class pack persistence, pack CRUD/versioning routes, server bootstrap wiring, a minimal client pack hook layer, and additive pack metadata carried through the existing workflow runtime/results/history path. Workflow-only behavior remains intact.
+**Focus:** **V17.2 PACK CONTRACT LAYER - CLOSED.** Packs now validate explicit JSON Schema Draft 2020-12 input/output contracts with Ajv, artifact formats, workflow dependencies, engine semver compatibility, knowledgeSources, behaviorRules, visibleSteps, completionCriteria, and workflow-node references before runtime.
 
-**IMMEDIATE NEXT STEP:** Start **V17.2 Pack Contract Layer** from the new persisted pack shape. Make validation explicit for `inputSchema`, `knowledgeSources`, `behaviorRules`, `outputSchema`, `artifactDefinitions`, `visibleSteps`, and precedence/merge rules while preserving one-workflow-per-harness, additive workflow compatibility, explicit project binding, and the pack/workflow authority split.
+**IMMEDIATE NEXT STEP:** Start **V17.3 Pack-Aware Runtime Wrapper**. Use the validated contract layer to harden pack start/status/results/history, pack-aware restoration, visible-step hydration, blocker mapping, and project binding while preserving workflow-only runtime behavior.
 
 ## Active Threads
-- V17.2 Pack Contract Layer — PENDING (#626-#634), now explicitly includes knowledgeSources + behaviorRules
 - V17.3 Pack-Aware Runtime Wrapper — PENDING (#635-#644), now explicitly includes pack-aware history/restoration
 - V17.4 Pack Builder Authoring Platform — PENDING (#645-#653), now explicitly includes workflow drill-down and harness-facing editors
 - V17.5 Pack Operator Product Surface — PENDING (#654-#661), now explicitly includes project-binding UX
