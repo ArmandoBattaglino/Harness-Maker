@@ -3,7 +3,7 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import semver from 'semver';
 
-export const PACK_STATUSES = ['draft', 'published', 'archived'];
+export const PACK_STATUSES = ['draft', 'tested', 'published', 'deprecated', 'archived'];
 export const PACK_VISIBILITIES = ['private', 'workspace'];
 export const PACK_DEPENDENCY_TYPES = ['workflow', 'agent', 'skill', 'context', 'contextOverlay'];
 export const KNOWLEDGE_SOURCE_TYPES = ['inline', 'overlay', 'reference'];

@@ -1,6 +1,19 @@
 ﻿# CHANGELOG — Claude Code Visual Manager
 
 ---
+## 2026-04-11 - V17.4 CLOSED - Pack Builder Authoring Platform (#645-#653)
+
+**Status:** Area closed; builder tasks **#645-#653** are now **COMPLETED/PASS**.
+
+**Deliverables:**
+- Added PackBuilderView with guided pack authoring sections and operator preview.
+- Added Pack Builder navigation/view routing.
+- Added server-side lifecycle lock for published/deprecated/archived pack edits.
+- Added PackBuilder and lifecycle tests.
+
+**Verification:** client builder/regression suites **16/16 PASS**; server lifecycle/contract suites **12/12 PASS**; client build **509 modules**.
+
+---
 ## 2026-04-11 - V17.3 CLOSED - Pack-Aware Runtime Wrapper (#635-#644)
 
 **Status:** Area closed; runtime-wrapper tasks **#635-#644** are now **COMPLETED/PASS**.

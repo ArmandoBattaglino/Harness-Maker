@@ -16,6 +16,7 @@ export const NAV_ITEMS = [
   { icon: 'memory',      label: 'Deployments',      view: 'deployments' },
   { icon: 'description', label: 'Context Editor',   view: 'context' },
   { icon: 'hub',         label: 'Swarm',            view: 'swarm' },
+  { icon: 'deployed_code', label: 'Pack Builder',   view: 'pack-builder' },
 ];
 
 /**

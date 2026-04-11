@@ -1,11 +1,10 @@
 ﻿# Current Context
 **Session date:** 2026-04-11
-**Focus:** **V17.3 PACK-AWARE RUNTIME WRAPPER - CLOSED.** Pack runs now resolve through PackResolver, start through the existing SwarmEngine, carry pack metadata in status/results/history, expose visible-step status, and hydrate `packRun`/`packResult` through the existing client swarm store without a second runtime state model.
+**Focus:** **V17.4 PACK BUILDER AUTHORING PLATFORM - CLOSED.** The app now has a routable guided Pack Builder that authors the pack-owned contract surfaces while keeping SwarmView as workflow drill-down. Server lifecycle rules block direct edits to published/deprecated/archived packs.
 
-**IMMEDIATE NEXT STEP:** Start **V17.4 Pack Builder Authoring Platform**. Build the guided authoring shell and editors on top of the validated pack contract while preserving SwarmView as the advanced workflow drill-down surface.
+**IMMEDIATE NEXT STEP:** Start **V17.5 Pack Operator Product Surface**. Add pack library/detail/run views, generated run form, monitoring, debug drawer, restoration selectors, and explicit project-binding UX.
 
 ## Active Threads
-- V17.4 Pack Builder Authoring Platform — PENDING (#645-#653), now explicitly includes workflow drill-down and harness-facing editors
 - V17.5 Pack Operator Product Surface — PENDING (#654-#661), now explicitly includes project-binding UX
 - V17.6 Pack Distribution & Installation — PENDING (#662-#669)
 - V17.7 Pack Fixtures & Release Gates — PENDING (#670-#676)

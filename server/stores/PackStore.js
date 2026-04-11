@@ -83,6 +83,11 @@ export class PackStore {
       err.statusCode = 404;
       throw err;
     }
+    if (['published', 'deprecated', 'archived'].includes(existing.status)) {
+      const err = new Error(`Pack ${id} is ${existing.status} and cannot be edited directly`);
+      err.statusCode = 409;
+      throw err;
+    }
 
     const next = normalizePackDefinition({
       ...existing,

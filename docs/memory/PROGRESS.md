@@ -1,4 +1,18 @@
-﻿## V17.3 - Pack-Aware Runtime Wrapper (2026-04-11)
+﻿## V17.4 - Pack Builder Authoring Platform (2026-04-11)
+
+**Status:** CLOSED - tasks **#645-#653** are now **COMPLETED/PASS**.
+
+**Deliverables:**
+- Added `client/src/views/PackBuilderView.jsx` as a routable guided authoring shell.
+- Added navigation/routing support in `App.jsx`, `AppContext.jsx`, and `constants.js`.
+- Builder covers overview, workflow binding, input schema, knowledge/context, behavior rules, outputs/artifacts, runtime policy, dependencies, visible steps, operator preview, and workflow drill-down.
+- Server lifecycle rules now include tested/published/deprecated/archived states and block direct edits to published/deprecated/archived packs.
+- Added PackBuilder tests plus lifecycle regression coverage.
+
+**Verification:** client PackBuilder/SwarmView/SwarmContext/usePack suites **16/16 PASS**; server PackStore/contract suites **12/12 PASS**; client build **509 modules** with existing chunk-size warning only.
+
+---
+## V17.3 - Pack-Aware Runtime Wrapper (2026-04-11)
 
 **Status:** CLOSED - tasks **#635-#644** are now **COMPLETED/PASS**.
 

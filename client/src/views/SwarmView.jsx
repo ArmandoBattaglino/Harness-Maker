@@ -1017,6 +1017,9 @@ export default function SwarmView() {
             ) : (
               <span className="ml-1.5 text-red-200/60 italic">No details available from the provider.</span>
             )}
+            {runtimeBlocker.provider && (
+              <span className="ml-1.5 text-red-200/70">Provider: {runtimeBlocker.provider}.</span>
+            )}
           </div>
         </div>
       )}

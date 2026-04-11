@@ -188,4 +188,14 @@ describe('PackStore', () => {
     const restored = await packStore.restoreVersion(created.id, versions[0].timestamp);
     expect(restored.status).toBe('draft');
   });
+
+  it('blocks direct edits to published pack records', async () => {
+    const created = await packStore.create(buildPackPayload(workflow.id));
+    const published = await packStore.createPublishedVersion(created.id);
+
+    await expect(packStore.update(published.id, {
+      ...published,
+      name: 'Edited Published Pack',
+    })).rejects.toMatchObject({ statusCode: 409 });
+  });
 });

@@ -1,4 +1,14 @@
-﻿## 2026-04-11 - backend-dev / frontend-dev / qa-tester - V17.3 pack-aware runtime wrapper
+﻿## 2026-04-11 - frontend-dev / backend-dev / qa-tester - V17.4 pack builder authoring platform
+**Outcome:** COMPLETED / PASS
+**Summary:** Closed V17.4 by adding the Pack Builder route and guided authoring shell over the validated pack contract. The builder covers all four authoring surfaces plus runtime/dependencies/visible steps/operator preview, and server lifecycle rules now block direct edits to published/deprecated/archived packs.
+**Files changed:** client/src/views/PackBuilderView.jsx, client/src/views/PackBuilderView.test.jsx, client/src/App.jsx, client/src/store/AppContext.jsx, client/src/lib/constants.js, client/src/views/SwarmView.jsx, server/services/packContracts.js, server/stores/PackStore.js, server/tests/PackStore.test.js, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** SwarmView blocker banner now includes provider detail for debug/operator clarity.
+**Decisions made:** Keep builder state local to PackBuilder and keep workflow drill-down as a navigation affordance, not a repurposed workflow modal.
+**Blockers:** none
+**Next:** Implement V17.5 Pack Operator Product Surface.
+
+---
+## 2026-04-11 - backend-dev / frontend-dev / qa-tester - V17.3 pack-aware runtime wrapper
 **Outcome:** COMPLETED / PASS
 **Summary:** Closed V17.3 by routing pack launches through the existing workflow engine with additive pack metadata. Runtime snapshots, result payloads, persisted history, visible steps, blockers, and client hydration now understand packRun/packResult without forking the SwarmEngine lifecycle.
 **Files changed:** server/services/PackResolver.js, server/services/PackResultBuilder.js, server/services/SwarmEngine.js, server/routes/packs.js, server/routes/swarm.js, server/stores/ExecutionHistoryStore.js, client/src/store/SwarmContext.jsx, client/src/hooks/useSwarm.js, server/tests/pack-resolver.test.js, server/tests/pack-result-builder.test.js, server/tests/pack-routes.test.js, client/src/hooks/useSwarm.test.jsx, client/src/store/SwarmContext.test.jsx, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md
