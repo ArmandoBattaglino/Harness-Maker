@@ -2,10 +2,17 @@ import { Router } from 'express';
 
 import PackResolver from '../services/PackResolver.js';
 import buildPackResult from '../services/PackResultBuilder.js';
+import { ConfigStore } from '../services/ConfigStore.js';
+import {
+  TERMINAL_EXECUTION_STATUSES,
+  buildExecutionResultsPayload,
+  lookupExecution,
+} from '../services/ExecutionResultsService.js';
 import { validatePackFixture, validatePackFixtureAssertion, validateValueAgainstSchema } from '../services/packContracts.js';
 
 const router = Router();
 const packResolver = new PackResolver();
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function respondKnownRouteError(res, err) {
   if (!err || !Number.isInteger(err.statusCode)) return false;
@@ -36,6 +43,11 @@ function readPack(req) {
   return req.body?.pack && typeof req.body.pack === 'object'
     ? req.body.pack
     : (req.body ?? {});
+}
+
+function resolveRegisteredProject(projectId) {
+  const projects = ConfigStore.getProjects();
+  return projects.find((project) => project.id === projectId) ?? null;
 }
 
 function validateInputAgainstSchema(inputSchema = {}, input = {}) {
@@ -204,9 +216,24 @@ router.post('/:id/start', async (req, res, next) => {
     }
 
     const projectId = req.body?.projectId;
-    const projectPath = req.body?.projectPath;
-    if (!projectId || !projectPath) {
-      return res.status(400).json({ error: 'projectId and projectPath are required' });
+    if (!projectId || typeof projectId !== 'string' || !projectId.trim()) {
+      return res.status(400).json({ error: 'projectId is required' });
+    }
+    const normalizedProjectId = projectId.trim();
+    const requestedProjectPath = typeof req.body?.projectPath === 'string'
+      ? req.body.projectPath.trim()
+      : '';
+
+    const project = resolveRegisteredProject(normalizedProjectId);
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found', projectId: normalizedProjectId });
+    }
+
+    if (
+      requestedProjectPath
+      && requestedProjectPath !== project.path
+    ) {
+      return res.status(400).json({ error: 'projectPath does not match the registered project', projectId: normalizedProjectId });
     }
 
     const input = req.body?.input ?? {};
@@ -220,13 +247,13 @@ router.post('/:id/start', async (req, res, next) => {
       packStore: store,
       workflowStore: req.app.locals.workflowStore,
       input,
-      projectId,
-      projectPath,
+      projectId: normalizedProjectId,
+      projectPath: project.path,
     });
     const executionId = await engine.startExecution(
       resolved.workflowId,
-      projectId,
-      projectPath,
+      normalizedProjectId,
+      project.path,
       {
         runtimeProvider: req.body?.runtimeProvider ?? pack.runtimePolicy?.provider ?? 'auto',
         runtimeModels: req.body?.runtimeModels,
@@ -332,12 +359,40 @@ router.post('/:id/fixtures/:fixtureId/run', async (req, res, next) => {
       return res.status(404).json({ error: 'Fixture not found' });
     }
 
-    const assertionResults = evaluateFixtureAssertions(fixture, req.body?.result ?? req.body ?? {});
+    const executionId = req.body?.executionId;
+    if (typeof executionId !== 'string' || !UUID_RE.test(executionId)) {
+      return res.status(400).json({ error: 'executionId is required and must be a valid UUID' });
+    }
+
+    const executionLookup = await lookupExecution(
+      executionId,
+      pack.workflowId,
+      req.app.locals,
+      req.app.locals.swarmEngine
+    );
+    if (!executionLookup) {
+      return res.status(404).json({ error: 'Execution not found', executionId });
+    }
+
+    const executionResults = buildExecutionResultsPayload(executionLookup, req.app.locals.swarmEngine);
+    if (!executionResults || !TERMINAL_EXECUTION_STATUSES.has(executionResults.status)) {
+      return res.status(409).json({ error: 'Execution results are not ready for fixture evaluation', executionId });
+    }
+    if (!executionResults.packRun || executionResults.packRun.packId !== pack.id || executionResults.packRun.packVersion !== pack.packVersion) {
+      return res.status(409).json({ error: 'Execution does not belong to the requested pack version', executionId });
+    }
+
+    const assertionResults = evaluateFixtureAssertions(fixture, {
+      status: executionResults.packResult?.status ?? executionResults.status,
+      outputs: executionResults.packResult?.outputs ?? {},
+      artifacts: executionResults.packResult?.artifacts ?? [],
+    });
     const result = {
       fixtureId: fixture.id,
       packId: pack.id,
       packVersion: pack.packVersion,
       source: 'fixture-runner',
+      executionId,
       passed: assertionResults.every((assertion) => assertion.passed),
       assertions: assertionResults,
       ranAt: new Date().toISOString(),

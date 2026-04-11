@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import packsRouter from '../routes/packs.js';
 import { csrfMiddleware } from '../middleware/csrf.js';
+import { ConfigStore } from '../services/ConfigStore.js';
 
 function getRouteHandler(router, method, path) {
   const layer = router.stack.find(
@@ -66,11 +67,38 @@ function createPack(overrides = {}) {
   };
 }
 
+function createExecutionHistoryEntry(overrides = {}) {
+  return {
+    executionId: '11111111-1111-4111-8111-111111111111',
+    status: 'completed',
+    workflowContext: {},
+    agentOutputs: {
+      'agent-a': {
+        label: 'Agent A',
+        finalText: 'ok final',
+      },
+    },
+    aggregatedArtifact: '# final artifact',
+    packRun: {
+      packId: 'pack-1',
+      packVersion: '1.0.0',
+      visibleSteps: [{ id: 'draft', label: 'Draft', nodeIds: ['agent-a'] }],
+      artifactDefinitions: [{ id: 'report', name: 'report', sourceType: 'aggregatedArtifact' }],
+      outputSchema: { type: 'object', properties: { result: { type: 'string' } } },
+      runtimePolicy: { provider: 'codex' },
+      projectBinding: { projectId: 'proj-1', projectPath: 'C:/projects/canonical' },
+      conflicts: [],
+    },
+    ...overrides,
+  };
+}
+
 describe('packs routes', () => {
   const servers = [];
 
   afterEach(async () => {
     await Promise.all(servers.splice(0).map((server) => new Promise((resolve) => server.close(resolve))));
+    vi.restoreAllMocks();
   });
 
   it('creates a pack and unwraps validation success', async () => {
@@ -123,8 +151,11 @@ describe('packs routes', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('starts a pack through the existing swarm engine with reserved pack metadata', async () => {
+  it('starts a pack using the server-registered project path for projectId', async () => {
     const pack = createPack();
+    vi.spyOn(ConfigStore, 'getProjects').mockReturnValue([
+      { id: 'proj-1', path: 'C:/projects/canonical', name: 'Canonical project' },
+    ]);
     const packStore = {
       get: vi.fn().mockResolvedValue(pack),
     };
@@ -140,7 +171,7 @@ describe('packs routes', () => {
       params: { id: 'pack-1' },
       body: {
         projectId: 'proj-1',
-        projectPath: 'C:/projects/demo',
+        projectPath: 'C:/projects/canonical',
         input: { brief: 'Launch a campaign', rounds: 3, tags: ['b2b'] },
       },
       app: { locals: { packStore, swarmEngine, workflowStore } },
@@ -152,7 +183,7 @@ describe('packs routes', () => {
     expect(swarmEngine.startExecution).toHaveBeenCalledWith(
       'wf-1',
       'proj-1',
-      'C:/projects/demo',
+      'C:/projects/canonical',
       expect.objectContaining({
         packMetadata: expect.objectContaining({
           packId: 'pack-1',
@@ -169,7 +200,71 @@ describe('packs routes', () => {
     expect(res.body.packRun.packId).toBe('pack-1');
   });
 
+  it('rejects pack start when projectId is not registered', async () => {
+    vi.spyOn(ConfigStore, 'getProjects').mockReturnValue([]);
+    const packStore = {
+      get: vi.fn().mockResolvedValue(createPack()),
+    };
+    const swarmEngine = {
+      startExecution: vi.fn(),
+    };
+    const workflowStore = {
+      get: vi.fn().mockResolvedValue({ id: 'wf-1', nodes: [{ id: 'agent-a' }] }),
+    };
+    const handler = getRouteHandler(packsRouter, 'post', '/:id/start');
+    const req = {
+      params: { id: 'pack-1' },
+      body: {
+        projectId: 'missing-project',
+        input: { brief: 'Launch a campaign', rounds: 3 },
+      },
+      app: { locals: { packStore, swarmEngine, workflowStore } },
+    };
+    const res = createMockRes();
+
+    await handler(req, res, vi.fn());
+
+    expect(res.statusCode).toBe(404);
+    expect(res.body.error).toBe('Project not found');
+    expect(swarmEngine.startExecution).not.toHaveBeenCalled();
+  });
+
+  it('rejects pack start when client projectPath mismatches the registered project', async () => {
+    vi.spyOn(ConfigStore, 'getProjects').mockReturnValue([
+      { id: 'proj-1', path: 'C:/projects/canonical', name: 'Canonical project' },
+    ]);
+    const packStore = {
+      get: vi.fn().mockResolvedValue(createPack()),
+    };
+    const swarmEngine = {
+      startExecution: vi.fn(),
+    };
+    const workflowStore = {
+      get: vi.fn().mockResolvedValue({ id: 'wf-1', nodes: [{ id: 'agent-a' }] }),
+    };
+    const handler = getRouteHandler(packsRouter, 'post', '/:id/start');
+    const req = {
+      params: { id: 'pack-1' },
+      body: {
+        projectId: 'proj-1',
+        projectPath: 'C:/projects/other',
+        input: { brief: 'Launch a campaign', rounds: 3 },
+      },
+      app: { locals: { packStore, swarmEngine, workflowStore } },
+    };
+    const res = createMockRes();
+
+    await handler(req, res, vi.fn());
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toBe('projectPath does not match the registered project');
+    expect(swarmEngine.startExecution).not.toHaveBeenCalled();
+  });
+
   it('rejects malformed pack input payloads before execution starts', async () => {
+    vi.spyOn(ConfigStore, 'getProjects').mockReturnValue([
+      { id: 'proj-1', path: 'C:/projects/canonical', name: 'Canonical project' },
+    ]);
     const packStore = {
       get: vi.fn().mockResolvedValue(createPack()),
     };
@@ -185,7 +280,7 @@ describe('packs routes', () => {
       params: { id: 'pack-1' },
       body: {
         projectId: 'proj-1',
-        projectPath: 'C:/projects/demo',
+        projectPath: 'C:/projects/canonical',
         input: { brief: 42, rounds: 'three', extra: true },
       },
       app: { locals: { packStore, swarmEngine, workflowStore } },
@@ -215,15 +310,16 @@ describe('packs routes', () => {
     expect(res.body).toEqual({ error: 'Pack service unavailable' });
   });
 
-  it('runs fixture assertions deterministically and stores the last result', async () => {
+  it('evaluates fixture assertions from execution-backed results and stores the last result', async () => {
     const fixture = {
       id: 'fixture-1',
+      name: 'Execution-backed fixture',
       packVersion: '1.0.0',
       input: {},
       assertions: [
         { type: 'statusEquals', expected: 'completed' },
         { type: 'outputIncludes', outputKey: 'result', expected: 'ok' },
-        { type: 'artifactExists', artifactId: 'artifact-1' },
+        { type: 'artifactExists', artifactId: 'report' },
       ],
     };
     const packStore = {
@@ -231,15 +327,16 @@ describe('packs routes', () => {
       get: vi.fn().mockResolvedValue(createPack()),
       saveFixtureResult: vi.fn().mockResolvedValue(fixture),
     };
+    const executionHistoryStore = {
+      getEntry: vi.fn().mockResolvedValue(createExecutionHistoryEntry()),
+    };
     const handler = getRouteHandler(packsRouter, 'post', '/:id/fixtures/:fixtureId/run');
     const req = {
       params: { id: 'pack-1', fixtureId: 'fixture-1' },
       body: {
-        status: 'completed',
-        outputs: { result: 'ok final' },
-        artifacts: [{ id: 'artifact-1' }],
+        executionId: '11111111-1111-4111-8111-111111111111',
       },
-      app: { locals: { packStore } },
+      app: { locals: { packStore, executionHistoryStore } },
     };
     const res = createMockRes();
 
@@ -248,8 +345,42 @@ describe('packs routes', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.result.passed).toBe(true);
     expect(packStore.saveFixtureResult).toHaveBeenCalledWith('pack-1', expect.objectContaining({
-      lastResult: expect.objectContaining({ passed: true }),
+      lastResult: expect.objectContaining({
+        passed: true,
+        source: 'fixture-runner',
+        executionId: '11111111-1111-4111-8111-111111111111',
+      }),
     }));
+  });
+
+  it('rejects fixture runs that submit synthetic result payloads without executionId', async () => {
+    const fixture = {
+      id: 'fixture-1',
+      name: 'Malformed legacy fixture',
+      packVersion: '1.0.0',
+      input: {},
+      assertions: [
+        { type: 'outputIncludes' },
+      ],
+    };
+    const packStore = {
+      getFixture: vi.fn().mockResolvedValue(fixture),
+      get: vi.fn().mockResolvedValue(createPack()),
+      saveFixtureResult: vi.fn(),
+    };
+    const handler = getRouteHandler(packsRouter, 'post', '/:id/fixtures/:fixtureId/run');
+    const req = {
+      params: { id: 'pack-1', fixtureId: 'fixture-1' },
+      body: { status: 'completed', outputs: { result: 'anything' }, artifacts: [] },
+      app: { locals: { packStore } },
+    };
+    const res = createMockRes();
+
+    await handler(req, res, vi.fn());
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toBe('executionId is required and must be a valid UUID');
+    expect(packStore.saveFixtureResult).not.toHaveBeenCalled();
   });
 
   it('fails closed when a persisted fixture contains malformed assertions', async () => {
@@ -267,11 +398,14 @@ describe('packs routes', () => {
       get: vi.fn().mockResolvedValue(createPack()),
       saveFixtureResult: vi.fn().mockResolvedValue(fixture),
     };
+    const executionHistoryStore = {
+      getEntry: vi.fn().mockResolvedValue(createExecutionHistoryEntry()),
+    };
     const handler = getRouteHandler(packsRouter, 'post', '/:id/fixtures/:fixtureId/run');
     const req = {
       params: { id: 'pack-1', fixtureId: 'fixture-1' },
-      body: { status: 'completed', outputs: { result: 'anything' }, artifacts: [] },
-      app: { locals: { packStore } },
+      body: { executionId: '11111111-1111-4111-8111-111111111111' },
+      app: { locals: { packStore, executionHistoryStore } },
     };
     const res = createMockRes();
 
@@ -297,15 +431,21 @@ describe('packs routes', () => {
       get: vi.fn().mockResolvedValue(createPack()),
       saveFixtureResult: vi.fn().mockResolvedValue(fixture),
     };
+    const executionHistoryStore = {
+      getEntry: vi.fn().mockResolvedValue(createExecutionHistoryEntry({
+        packRun: {
+          ...createExecutionHistoryEntry().packRun,
+          artifactDefinitions: [{ id: 'artifact-1', name: 'report', sourceType: 'aggregatedArtifact' }],
+        },
+      })),
+    };
     const handler = getRouteHandler(packsRouter, 'post', '/:id/fixtures/:fixtureId/run');
     const req = {
       params: { id: 'pack-1', fixtureId: 'fixture-1' },
       body: {
-        status: 'completed',
-        outputs: {},
-        artifacts: [{ id: 'other-artifact' }],
+        executionId: '11111111-1111-4111-8111-111111111111',
       },
-      app: { locals: { packStore } },
+      app: { locals: { packStore, executionHistoryStore } },
     };
     const res = createMockRes();
 
@@ -313,6 +453,37 @@ describe('packs routes', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.body.result.passed).toBe(false);
+  });
+
+  it('rejects fixture runs when execution-backed result cannot be found', async () => {
+    const fixture = {
+      id: 'fixture-1',
+      name: 'Missing execution fixture',
+      packVersion: '1.0.0',
+      input: {},
+      assertions: [{ type: 'statusEquals', expected: 'completed' }],
+    };
+    const packStore = {
+      getFixture: vi.fn().mockResolvedValue(fixture),
+      get: vi.fn().mockResolvedValue(createPack()),
+      saveFixtureResult: vi.fn(),
+    };
+    const executionHistoryStore = {
+      getEntry: vi.fn().mockResolvedValue(null),
+    };
+    const handler = getRouteHandler(packsRouter, 'post', '/:id/fixtures/:fixtureId/run');
+    const req = {
+      params: { id: 'pack-1', fixtureId: 'fixture-1' },
+      body: { executionId: '11111111-1111-4111-8111-111111111111' },
+      app: { locals: { packStore, executionHistoryStore } },
+    };
+    const res = createMockRes();
+
+    await handler(req, res, vi.fn());
+
+    expect(res.statusCode).toBe(404);
+    expect(res.body.error).toBe('Execution not found');
+    expect(packStore.saveFixtureResult).not.toHaveBeenCalled();
   });
 
   it('blocks publish until at least one fixture has a passing last result', async () => {
@@ -472,6 +643,42 @@ describe('packs routes', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.body.pack.status).toBe('published');
+  });
+
+  it('does not allow a rejected synthetic fixture run to unlock publish', async () => {
+    const fixture = {
+      id: 'fixture-1',
+      name: 'Synthetic rejected',
+      packVersion: '1.0.0',
+      input: {},
+      assertions: [{ type: 'statusEquals', expected: 'completed' }],
+      lastResult: null,
+    };
+    const packStore = {
+      get: vi.fn().mockResolvedValue(createPack()),
+      getFixture: vi.fn().mockResolvedValue(fixture),
+      listFixtures: vi.fn().mockResolvedValue([fixture]),
+      saveFixtureResult: vi.fn(),
+      createPublishedVersion: vi.fn(),
+    };
+    const handlerRun = getRouteHandler(packsRouter, 'post', '/:id/fixtures/:fixtureId/run');
+    const handlerPublish = getRouteHandler(packsRouter, 'post', '/:id/publish');
+    const runReq = {
+      params: { id: 'pack-1', fixtureId: 'fixture-1' },
+      body: { status: 'completed', outputs: { result: 'forged' }, artifacts: [] },
+      app: { locals: { packStore } },
+    };
+    const runRes = createMockRes();
+
+    await handlerRun(runReq, runRes, vi.fn());
+
+    const publishReq = { params: { id: 'pack-1' }, body: {}, app: { locals: { packStore } } };
+    const publishRes = createMockRes();
+    await handlerPublish(publishReq, publishRes, vi.fn());
+
+    expect(runRes.statusCode).toBe(400);
+    expect(publishRes.statusCode).toBe(409);
+    expect(packStore.createPublishedVersion).not.toHaveBeenCalled();
   });
 
   it('preserves known statusCode errors from publish state transition', async () => {
