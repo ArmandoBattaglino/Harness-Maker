@@ -1,3 +1,23 @@
+## V17.8.1 Code Review Follow-up (2026-04-11)
+
+**Status:** CLOSED / VERIFIED.
+
+**Deliverables:**
+- Closed the post-`fd40908` HIGH finding by invalidating fixture `lastResult` on `PackStore.update()` and requiring publish-time freshness/provenance against the current pack (`source`, `packId`, `packVersion`, valid `ranAt >= pack.updatedAt`, non-empty passed assertions).
+- Hardened `saveFixtureResult()` so runner results require a result object, force `source: fixture-runner`, and receive server-side `ranAt` when missing.
+- `importBundle()` now records rollback failure metadata when compensating workflow deletion returns `false` or throws, while preserving the original import error.
+- PackLibrary clears stale launch errors when the selected pack changes.
+
+**Verification:**
+- Targeted server pack suites: **44/44 PASS**.
+- Targeted PackLibrary suite: **4/4 PASS**.
+- Full server suite: **647/647 PASS**.
+- Full client suite: **77/77 PASS**.
+- Client build: **520 modules PASS**, no Vite chunk-size warning.
+- `git diff --check`: **PASS**.
+- Runtime diagnostics: **0 errors** on changed runtime files (`tsc skipped: no tsconfig found` caveat). Architect verification: **APPROVED**. Code review verification: **APPROVE**.
+
+---
 ## V17.8 Code Review Fixes (2026-04-11)
 
 **Status:** CLOSED / VERIFIED.

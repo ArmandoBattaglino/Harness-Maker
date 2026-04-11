@@ -113,6 +113,47 @@ describe('pack distribution', () => {
     expect(await packStore.list()).toHaveLength(1);
   });
 
+  it('marks the import error when rollback delete returns false', async () => {
+    const importedWorkflow = { id: 'imported-wf-1', nodes: [{ id: 'agent-a' }] };
+    const store = new PackStore(tempDir, {
+      create: async () => importedWorkflow,
+      get: async () => importedWorkflow,
+      delete: async () => false,
+    });
+    await store.init();
+
+    await expect(store.importBundle({
+      workflow: workflowPayload(),
+      pack: { ...packPayload(workflow.id), name: '' },
+    })).rejects.toMatchObject({
+      statusCode: 400,
+      rollbackFailed: true,
+      rollbackWorkflowId: importedWorkflow.id,
+    });
+  });
+
+  it('marks the import error when rollback delete throws', async () => {
+    const importedWorkflow = { id: 'imported-wf-1', nodes: [{ id: 'agent-a' }] };
+    const store = new PackStore(tempDir, {
+      create: async () => importedWorkflow,
+      get: async () => importedWorkflow,
+      delete: async () => {
+        throw new Error('delete failed');
+      },
+    });
+    await store.init();
+
+    await expect(store.importBundle({
+      workflow: workflowPayload(),
+      pack: { ...packPayload(workflow.id), name: '' },
+    })).rejects.toMatchObject({
+      statusCode: 400,
+      rollbackFailed: true,
+      rollbackWorkflowId: importedWorkflow.id,
+      rollbackError: 'delete failed',
+    });
+  });
+
   it('records installs and forks installed/authored packs into editable drafts', async () => {
     const pack = await packStore.create(packPayload(workflow.id));
     const install = await packStore.saveInstall({

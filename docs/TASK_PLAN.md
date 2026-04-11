@@ -4,7 +4,7 @@
 **Project Manager:** claude-sonnet-4-6
 **Created:** 2026-03-18
 **PRD Version:** 1.0
-**Status:** v17.8 - V17 CODE REVIEW FIXES CLOSED/PASS on 2026-04-11. V17.0-V17.7 implementation remains CLOSED/PASS; stabilization area V17.8 (#677-#686) is COMPLETED/PASS from code review findings on `feature/v17-pack-platform`. Latest evidence: targeted server pack tests 38/38 PASS, targeted PackLibrary test 3/3 PASS, full server 641/641 PASS, full client 76/76 PASS, client build 520 modules PASS with no Vite chunk-size warning.
+**Status:** v17.8.1 - V17 CODE REVIEW FOLLOW-UP CLOSED/PASS on 2026-04-11. V17.0-V17.8 implementation remains CLOSED/PASS; follow-up tasks #687-#692 are COMPLETED/PASS from code review findings on `fd40908`. Latest evidence: targeted server pack tests 44/44 PASS, targeted PackLibrary test 4/4 PASS, full server 647/647 PASS, full client 77/77 PASS, client build 520 modules PASS with no Vite chunk-size warning, git diff --check PASS.
 **Completed Area:** V10.8 CLIENT FULL DEEP TEST FOLLOW-UP — AREA CLOSED 2026-04-09. 6 tasks (#491-#496), all COMPLETED. #491 COMPLETED (visual regression determinism fixed — normalizeHarnessLayout() added, 6 baselines regenerated at 682px), #492 COMPLETED (browser E2E harness reliability fixed — preflight check, direct node spawn, stale-server isolation), #493 COMPLETED (stale-server guard — check-server-freshness.mjs created, integrated into swarm-e2e-chat-check.mjs + swarm-visual-regression.mjs), #494 TEST GATE PASS, #495 AREA CHECKPOINT PASS, #496 COMPLETED (out-of-session: +11 deterministic server tests for _onHandoff -> Codex SDK spawn, 501/501 server suite green). No active planned areas.
 **Completed Area:** V10.7 CLIENT RESILIENCE TEST COVERAGE — AREA CLOSED 2026-04-09. #483 COMPLETED, #484 COMPLETED, #485 COMPLETED, #486 COMPLETED, #487 COMPLETED, #488 COMPLETED, TEST GATE #489 PASS, AREA CHECKPOINT #490 PASS. Verified by dedicated client coverage over restore/reconcile, secondary WS events, HITL failure paths, advanced ChatPanel states, AgentNode badges, and SwarmView operator-shell branches.
   **Completed Area:** V10.6 CLIENT CHAT + FLOW BUG FIXES — AREA CLOSED 2026-04-09. #476 COMPLETED, #477 COMPLETED, #478 COMPLETED, #479 COMPLETED, #480 COMPLETED, TEST GATE #481 PASS, AREA CHECKPOINT #482 PASS. Verified by live Puppeteer reruns of idle/reset + Codex success/reload on `http://127.0.0.1:3000`, clean Gemini blocked/stopped node/chat hygiene on fresh `http://127.0.0.1:3312`, and targeted server regressions (185/185 PASS).
@@ -23540,3 +23540,36 @@ Dependencies: TASK #685
 - #682 pack route statusCode errors are normalized for versions and publish state transitions.
 - #683 removed the temporary Vite chunk threshold; build remains green with no chunk-size warning.
 - Verification: targeted server pack tests 38/38 PASS; targeted PackLibrary test 3/3 PASS; full server 641/641 PASS; full client 76/76 PASS; client build 520 modules PASS with no Vite chunk-size warning; git diff --check PASS.
+## AREA: V17.8.1 - Code Review Follow-up
+
+_Source: Code review of commit `fd40908`, 2026-04-11._
+
+TASK #687: PACK-REVIEW-FOLLOWUP-01 - Close fixture publish freshness gap
+Area: V17.8.1 - Code Review Follow-up
+Status: COMPLETED
+Completion Note: 2026-04-11 ? Ralph. `PackStore.update()` invalidates fixture `lastResult`; publish gate checks runner source, packId, packVersion, valid `ranAt >= pack.updatedAt`, non-empty passed assertions. Regression tests cover update-flow invalidation, persisted stale result rejection, and fresh rerun publish eligibility.
+
+TASK #688: PACK-REVIEW-FOLLOWUP-02 - Report import rollback cleanup failures
+Area: V17.8.1 - Code Review Follow-up
+Status: COMPLETED
+Completion Note: 2026-04-11 ? Ralph. `importBundle()` preserves the original import failure while annotating `rollbackFailed` / `rollbackWorkflowId` and safe rollback error metadata when compensating workflow deletion returns false or throws.
+
+TASK #689: PACK-REVIEW-FOLLOWUP-03 - Clear stale PackLibrary launch errors
+Area: V17.8.1 - Code Review Follow-up
+Status: COMPLETED
+Completion Note: 2026-04-11 ? Ralph. `PackLibraryView` clears `runError` when `selectedPackId` changes; regression test covers Pack A failure followed by Pack B selection.
+
+TASK #690: PACK-REVIEW-FOLLOWUP-04 - Harden saveFixtureResult source ownership
+Area: V17.8.1 - Code Review Follow-up
+Status: COMPLETED
+Completion Note: 2026-04-11 ? Ralph. `saveFixtureResult()` requires result data, forces `source: fixture-runner`, ensures `ranAt`, and keeps malformed result data non-publishable.
+
+TASK #691: TEST GATE - V17.8.1 review follow-up
+Area: V17.8.1 - Code Review Follow-up
+Status: PASS
+Completion Note: 2026-04-11 ? Ralph. Targeted server pack tests 44/44 PASS; targeted PackLibrary test 4/4 PASS; git diff --check PASS.
+
+TASK #692: FULL REGRESSION / AREA CHECKPOINT - V17.8.1
+Area: V17.8.1 - Code Review Follow-up
+Status: PASS
+Completion Note: 2026-04-11 ? Ralph. Full server suite 647/647 PASS; full client suite 77/77 PASS; client build 520 modules PASS with no Vite chunk-size warning. Architect verification APPROVED; code-review verification APPROVE; docs/memory synchronized with exact evidence.

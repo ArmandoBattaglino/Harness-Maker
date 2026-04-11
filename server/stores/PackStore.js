@@ -108,6 +108,7 @@ export class PackStore {
 
     await this._saveVersion(id, existing);
     await this._writePack(next);
+    await this._clearFixtureResults(id);
     return next;
   }
 
@@ -200,7 +201,25 @@ export class PackStore {
   }
 
   async saveFixtureResult(packId, fixtureData) {
-    return this._saveFixture(packId, fixtureData, { preserveLastResult: true });
+    if (!fixtureData?.lastResult || typeof fixtureData.lastResult !== 'object' || Array.isArray(fixtureData.lastResult)) {
+      const err = new Error('Fixture result is required');
+      err.statusCode = 400;
+      throw err;
+    }
+    if (typeof fixtureData.lastResult.passed !== 'boolean' || !Array.isArray(fixtureData.lastResult.assertions)) {
+      const err = new Error('Fixture result must include passed and assertions');
+      err.statusCode = 400;
+      throw err;
+    }
+    const ranAt = Date.parse(fixtureData.lastResult.ranAt ?? '');
+    return this._saveFixture(packId, {
+      ...fixtureData,
+      lastResult: {
+        ...fixtureData.lastResult,
+        source: 'fixture-runner',
+        ranAt: Number.isFinite(ranAt) ? fixtureData.lastResult.ranAt : new Date().toISOString(),
+      },
+    }, { preserveLastResult: true });
   }
 
   async _saveFixture(packId, fixtureData, options = {}) {
@@ -334,7 +353,17 @@ export class PackStore {
         installMetadata: bundle.manifest?.provenance ?? null,
       });
     } catch (err) {
-      await this._workflowStore.delete(importedWorkflow.id);
+      try {
+        const rolledBack = await this._workflowStore.delete(importedWorkflow.id);
+        if (!rolledBack) {
+          err.rollbackFailed = true;
+          err.rollbackWorkflowId = importedWorkflow.id;
+        }
+      } catch (rollbackErr) {
+        err.rollbackFailed = true;
+        err.rollbackWorkflowId = importedWorkflow.id;
+        err.rollbackError = rollbackErr instanceof Error ? rollbackErr.message : String(rollbackErr);
+      }
       throw err;
     }
 
@@ -441,6 +470,21 @@ export class PackStore {
     const resolvedTarget = path.resolve(dirPath);
     if (!resolvedTarget.startsWith(resolvedBase + path.sep)) return;
     fs.rmSync(resolvedTarget, { recursive: true, force: true });
+  }
+
+  async _clearFixtureResults(packId) {
+    const fixturesDir = this._resolveFixturesDir(packId);
+    if (!fixturesDir || !fs.existsSync(fixturesDir)) return;
+    for (const entry of this._listJsonEntries(fixturesDir)) {
+      const filePath = this._resolveFixturePath(fixturesDir, entry.slice(0, -5));
+      if (!filePath) continue;
+      const fixture = this._readJsonFile(filePath);
+      if (!fixture?.lastResult) continue;
+      await writeFileAtomic(filePath, JSON.stringify(normalizePackFixture({
+        ...fixture,
+        lastResult: null,
+      }), null, 2));
+    }
   }
 
   async _writePack(pack) {

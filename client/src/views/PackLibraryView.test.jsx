@@ -26,6 +26,13 @@ const pack = {
   visibleSteps: [{ id: 'step-1', label: 'Draft', status: 'configured' }],
 };
 
+const secondPack = {
+  ...pack,
+  id: 'pack-2',
+  name: 'Sales Harness',
+  description: 'Run sales workflow',
+};
+
 describe('PackLibraryView', () => {
   let fetchMock;
 
@@ -188,6 +195,45 @@ describe('PackLibraryView', () => {
     expect(useSwarmStore.getState().packRun).toBeNull();
     expect(useSwarmStore.getState().packResult).toBeNull();
     expect(screen.queryByText(/Started execution/)).toBeNull();
+  });
+
+  it('clears launch errors when the selected pack changes', async () => {
+    fetchMock.mockImplementation((url, options = {}) => {
+      const method = options.method ?? 'GET';
+      if (url === '/api/v1/packs' && method === 'GET') {
+        return Promise.resolve({ ok: true, json: async () => ({ packs: [pack, secondPack] }) });
+      }
+      if (url === '/api/v1/packs/pack-1' && method === 'GET') {
+        return Promise.resolve({ ok: true, json: async () => ({ pack }) });
+      }
+      if (url === '/api/v1/packs/pack-2' && method === 'GET') {
+        return Promise.resolve({ ok: true, json: async () => ({ pack: secondPack }) });
+      }
+      if (url === '/api/v1/projects' && method === 'GET') {
+        return Promise.resolve({ ok: true, json: async () => ({ projects: [] }) });
+      }
+      if (url === '/api/v1/packs/pack-1/start' && method === 'POST') {
+        return Promise.resolve({ ok: false, status: 400, json: async () => ({ error: 'Input validation failed' }) });
+      }
+      return Promise.reject(new Error(`Unexpected fetch ${method} ${url}`));
+    });
+
+    render(
+      <AppProvider>
+        <SeedProjects />
+        <PackLibraryView />
+      </AppProvider>
+    );
+
+    expect(await screen.findByText('Pack Detail')).toBeTruthy();
+    fireEvent.click(screen.getByText('Launch pack'));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Input validation failed');
+
+    fireEvent.click(screen.getByText('Sales Harness'));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('alert')).toBeNull();
+    });
   });
 });
 

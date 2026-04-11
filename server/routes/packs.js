@@ -67,14 +67,22 @@ function evaluateFixtureAssertions(fixture, runPayload = {}) {
   });
 }
 
-function hasMeaningfulPassingFixture(fixture) {
+function hasMeaningfulPassingFixture(fixture, pack) {
   const validation = validatePackFixture(fixture);
   if (!validation.valid) return false;
-  const lastAssertions = Array.isArray(fixture.lastResult?.assertions)
-    ? fixture.lastResult.assertions
+  const lastResult = fixture.lastResult;
+  const lastAssertions = Array.isArray(lastResult?.assertions)
+    ? lastResult.assertions
     : [];
-  return fixture.lastResult?.passed === true
-    && fixture.lastResult?.source === 'fixture-runner'
+  const ranAt = Date.parse(lastResult?.ranAt ?? '');
+  const updatedAt = Date.parse(pack?.updatedAt ?? '');
+  return lastResult?.passed === true
+    && lastResult?.source === 'fixture-runner'
+    && lastResult?.packId === pack?.id
+    && lastResult?.packVersion === pack?.packVersion
+    && Number.isFinite(ranAt)
+    && Number.isFinite(updatedAt)
+    && ranAt >= updatedAt
     && lastAssertions.length > 0
     && lastAssertions.every((assertion) => assertion?.passed === true);
 }
@@ -372,7 +380,7 @@ router.post('/:id/publish', async (req, res, next) => {
     if (fixtures.length === 0) {
       return res.status(409).json({ error: 'Cannot publish without at least one fixture' });
     }
-    if (!fixtures.some((fixture) => hasMeaningfulPassingFixture(fixture))) {
+    if (!fixtures.some((fixture) => hasMeaningfulPassingFixture(fixture, pack))) {
       return res.status(409).json({ error: 'Cannot publish without a passing fixture run' });
     }
     const published = await store.createPublishedVersion(req.params.id);

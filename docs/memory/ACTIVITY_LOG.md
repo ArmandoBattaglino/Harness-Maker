@@ -6209,3 +6209,13 @@ full self-contained context and acceptance criteria.
 **Blockers:** none.
 **Next:** Lore commit, then branch is ready for review/merge.
 ---
+---
+## 2026-04-11 ? Ralph ? V17.8.1 Code Review Follow-up
+**Outcome:** COMPLETED / VERIFIED
+**Summary:** Fixed follow-up findings from code review of `fd40908`: fixture results are invalidated after pack updates and publish also verifies result freshness/provenance against the current pack; import rollback now marks cleanup failures; PackLibrary clears stale run errors on pack changes; `saveFixtureResult()` forces runner-owned result metadata.
+**Files changed:** server/stores/PackStore.js, server/routes/packs.js, server/tests/PackStore.test.js, server/tests/pack-distribution.test.js, server/tests/pack-routes.test.js, client/src/views/PackLibraryView.jsx, client/src/views/PackLibraryView.test.jsx, `.omx/plans/prd-v17-review-followup.md`, `.omx/plans/test-spec-v17-review-followup.md`, docs/memory/*.
+**Bugs fixed:** Stale fixture publish evidence after pack update; unreported rollback delete false/throw; stale PackLibrary launch errors; permissive `saveFixtureResult()` source handling.
+**Verification:** Targeted server pack 44/44 PASS; targeted PackLibrary 4/4 PASS; full server 647/647 PASS; full client 77/77 PASS; client build 520 modules PASS/no chunk warning; git diff --check PASS; runtime diagnostics 0 errors with no-tsconfig caveat; architect verification APPROVED; code-review verification APPROVE.
+**Blockers:** none.
+**Next:** Review/merge `feature/v17-pack-platform`.
+---

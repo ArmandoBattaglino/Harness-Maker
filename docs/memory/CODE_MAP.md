@@ -4111,3 +4111,10 @@ _All bugs identified in QA Swarm Inspection (2026-03-31) and Swarm Code Audit (2
 - `server/routes/packs.js`: fixture runner uses assertion validation fail-closed and writes runner-owned `source: fixture-runner` results through `saveFixtureResult()`; publish gate requires a valid fixture with meaningful passing assertion results; versions/publish routes preserve `statusCode` errors.
 - `client/src/views/PackLibraryView.jsx`: launch errors render inline and clear stale pack runtime state on failed start.
 ---
+
+---
+## V17.8.1 Code Review Follow-up Map Note ? 2026-04-11
+- `server/stores/PackStore.js`: `update()` now clears fixture results for edited packs; `saveFixtureResult()` requires result data, forces `source: fixture-runner`, and fills `ranAt`; `importBundle()` annotates rollback cleanup failures without replacing the original import error.
+- `server/routes/packs.js`: publish gate now evaluates fixture results against the current pack and requires matching `packId`, `packVersion`, valid `ranAt >= pack.updatedAt`, runner source, and passed assertions.
+- `client/src/views/PackLibraryView.jsx`: selected pack changes clear stale launch errors.
+---

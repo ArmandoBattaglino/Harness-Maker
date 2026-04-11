@@ -29,6 +29,10 @@ export default function PackLibraryView() {
   }, [packs, selectedPackId]);
 
   useEffect(() => {
+    setRunError('');
+  }, [selectedPackId]);
+
+  useEffect(() => {
     setProjectId((current) => current || activeProjectId || projects[0]?.id || '');
   }, [activeProjectId, projects]);
 

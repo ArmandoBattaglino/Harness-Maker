@@ -35,7 +35,7 @@ function createMockRes() {
   };
 }
 
-function createPack() {
+function createPack(overrides = {}) {
   return {
     id: 'pack-1',
     name: 'Marketing Harness',
@@ -60,6 +60,9 @@ function createPack() {
     visibleSteps: [{ id: 'draft', label: 'Draft', nodeIds: ['agent-a'] }],
     artifactDefinitions: [{ id: 'report', name: 'report', sourceType: 'aggregatedArtifact' }],
     outputSchema: { type: 'object', properties: { result: { type: 'string' } } },
+    createdAt: '2026-04-11T10:00:00.000Z',
+    updatedAt: '2026-04-11T10:00:00.000Z',
+    ...overrides,
   };
 }
 
@@ -327,7 +330,14 @@ describe('packs routes', () => {
       packVersion: '1.0.0',
       input: {},
       assertions: [{ type: 'statusEquals', expected: 'completed' }],
-      lastResult: { source: 'fixture-runner', passed: true, assertions: [{ type: 'statusEquals', expected: 'completed', passed: true }] },
+      lastResult: {
+        source: 'fixture-runner',
+        packId: 'pack-1',
+        packVersion: '1.0.0',
+        ranAt: '2026-04-11T10:00:01.000Z',
+        passed: true,
+        assertions: [{ type: 'statusEquals', expected: 'completed', passed: true }],
+      },
     };
     const packStore = {
       get: vi.fn().mockResolvedValue(createPack()),
@@ -400,6 +410,70 @@ describe('packs routes', () => {
     expect(packStore.createPublishedVersion).not.toHaveBeenCalled();
   });
 
+  it('does not publish a runner-owned fixture result that predates the current pack update', async () => {
+    const packStore = {
+      get: vi.fn().mockResolvedValue(createPack({ updatedAt: '2026-04-11T10:00:00.000Z' })),
+      listFixtures: vi.fn().mockResolvedValue([
+        {
+          id: 'fixture-1',
+          name: 'Stale',
+          packVersion: '1.0.0',
+          input: {},
+          assertions: [{ type: 'statusEquals', expected: 'completed' }],
+          lastResult: {
+            source: 'fixture-runner',
+            packId: 'pack-1',
+            packVersion: '1.0.0',
+            ranAt: '2026-04-11T09:59:59.000Z',
+            passed: true,
+            assertions: [{ type: 'statusEquals', expected: 'completed', passed: true }],
+          },
+        },
+      ]),
+      createPublishedVersion: vi.fn(),
+    };
+    const handler = getRouteHandler(packsRouter, 'post', '/:id/publish');
+    const req = { params: { id: 'pack-1' }, body: {}, app: { locals: { packStore } } };
+    const res = createMockRes();
+
+    await handler(req, res, vi.fn());
+
+    expect(res.statusCode).toBe(409);
+    expect(packStore.createPublishedVersion).not.toHaveBeenCalled();
+  });
+
+  it('publishes after a fresh runner-owned fixture rerun for the current pack', async () => {
+    const packStore = {
+      get: vi.fn().mockResolvedValue(createPack({ updatedAt: '2026-04-11T10:00:00.000Z' })),
+      listFixtures: vi.fn().mockResolvedValue([
+        {
+          id: 'fixture-1',
+          name: 'Fresh',
+          packVersion: '1.0.0',
+          input: {},
+          assertions: [{ type: 'statusEquals', expected: 'completed' }],
+          lastResult: {
+            source: 'fixture-runner',
+            packId: 'pack-1',
+            packVersion: '1.0.0',
+            ranAt: '2026-04-11T10:00:01.000Z',
+            passed: true,
+            assertions: [{ type: 'statusEquals', expected: 'completed', passed: true }],
+          },
+        },
+      ]),
+      createPublishedVersion: vi.fn().mockResolvedValue({ ...createPack(), status: 'published' }),
+    };
+    const handler = getRouteHandler(packsRouter, 'post', '/:id/publish');
+    const req = { params: { id: 'pack-1' }, body: {}, app: { locals: { packStore } } };
+    const res = createMockRes();
+
+    await handler(req, res, vi.fn());
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.pack.status).toBe('published');
+  });
+
   it('preserves known statusCode errors from publish state transition', async () => {
     const err = new Error('Pack is archived');
     err.statusCode = 409;
@@ -412,7 +486,14 @@ describe('packs routes', () => {
           packVersion: '1.0.0',
           input: {},
           assertions: [{ type: 'statusEquals', expected: 'completed' }],
-          lastResult: { source: 'fixture-runner', passed: true, assertions: [{ type: 'statusEquals', expected: 'completed', passed: true }] },
+          lastResult: {
+            source: 'fixture-runner',
+            packId: 'pack-1',
+            packVersion: '1.0.0',
+            ranAt: '2026-04-11T10:00:01.000Z',
+            passed: true,
+            assertions: [{ type: 'statusEquals', expected: 'completed', passed: true }],
+          },
         },
       ]),
       createPublishedVersion: vi.fn().mockRejectedValue(err),
