@@ -4,6 +4,8 @@
 import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeSanitize from 'rehype-sanitize';
+import { mdComponents, sanitizeSchema } from '../utils/markdownComponents';
 import { apiGet } from '../hooks/useApi.js';
 
 /**
@@ -119,16 +121,12 @@ export default function WorkflowArtifactPanel({ executionId, workflowName, onClo
           )}
 
           {!loading && !error && markdown && (
-            <div className="prose prose-invert prose-sm max-w-none
-                            prose-headings:text-white prose-headings:font-bold
-                            prose-p:text-gray-300 prose-li:text-gray-300
-                            prose-a:text-blue-400 prose-strong:text-white
-                            prose-code:text-green-300 prose-code:bg-gray-800 prose-code:px-1 prose-code:rounded
-                            prose-pre:bg-gray-800 prose-pre:rounded prose-pre:p-3 prose-pre:overflow-x-auto
-                            prose-table:text-gray-300
-                            prose-th:text-gray-200 prose-th:border-gray-600
-                            prose-td:border-gray-700">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            <div className="min-w-0 break-words overflow-wrap-anywhere">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[[rehypeSanitize, sanitizeSchema]]}
+                components={mdComponents}
+              >
                 {markdown}
               </ReactMarkdown>
             </div>

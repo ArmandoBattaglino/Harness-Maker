@@ -8,9 +8,7 @@ import PromptToFlowBar from '../canvas/PromptToFlowBar';
 import PtyExplosion from '../canvas/PtyExplosion';
 import WorkflowSettingsModal from '../canvas/WorkflowSettingsModal';
 import ExecutionHistory from '../canvas/ExecutionHistory';
-import TemplateGallery from '../canvas/TemplateGallery';
 import VersionHistory from '../canvas/VersionHistory';
-import { getPendingCount } from '../panels/HitlInbox';
 import { useSwarmStore } from '../store/SwarmContext';
 import { useSwarm } from '../hooks/useSwarm';
 import { useInbox } from '../hooks/useInbox.js';
@@ -50,11 +48,11 @@ export default function SwarmView() {
   const runtimeProvider = useSwarmStore((s) => s.runtimeProvider);
   const providerStrategy = useSwarmStore((s) => s.providerStrategy);
   const lastFallback = useSwarmStore((s) => s.lastFallback);
-  const inboxItems = useSwarmStore((s) => s.inboxItems);
   const agentStates = useSwarmStore((s) => s.agentStates);
   const setPaused = useSwarmStore((s) => s.setPaused);
   const setResumed = useSwarmStore((s) => s.setResumed);
   const reset = useSwarmStore((s) => s.reset);
+  const hardReset = useSwarmStore((s) => s.hardReset);
   const ptyExplosionNodeId = useSwarmStore((s) => s.ptyExplosionNodeId);
   const ptyExplosionSessionId = useSwarmStore((s) => (
     s.ptyExplosionNodeId ? (s.agentStates[s.ptyExplosionNodeId]?.sessionId ?? null) : null
@@ -69,6 +67,7 @@ export default function SwarmView() {
   const [selectedWorkflowId, setSelectedWorkflowId] = useState('');
   const setSidePanelOpen = useSwarmStore((s) => s.setSidePanelOpen);
   const setSidePanelMode = useSwarmStore((s) => s.setSidePanelMode);
+  const setAgentValidationIssuesByNodeId = useSwarmStore((s) => s.setAgentValidationIssuesByNodeId);
   const [executing, setExecuting] = useState(false);
   const [pausing, setPausing] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
@@ -80,7 +79,7 @@ export default function SwarmView() {
   const [importError, setImportError] = useState(null);
   const canvasStateRef = useRef({ nodes: [], edges: [] });
   const [validationErrors, setValidationErrors] = useState([]);
-  const fileInputRef = useRef(null);
+  // fileInputRef removed — file input now lives inside NodePalette
   const selectedRuntimeProvider = useSwarmStore((s) => s.selectedRuntimeProvider);
   const setSelectedRuntimeProvider = useSwarmStore((s) => s.setSelectedRuntimeProvider);
   const [runtimeModels, setRuntimeModels] = useState({ claude: '', codex: '', gemini: '' });
@@ -100,12 +99,11 @@ export default function SwarmView() {
     return () => document.removeEventListener('mousedown', handler);
   }, [showModelSettings]);
   const [showHistory, setShowHistory] = useState(false);
-  const [showTemplates, setShowTemplates] = useState(false);
   const [showVersions, setShowVersions] = useState(false);
   const [showArtifactPanel, setShowArtifactPanel] = useState(false);
   const [promptToFlowResetKey, setPromptToFlowResetKey] = useState(0);
   const [layoutNonce, setLayoutNonce] = useState(0);
-  const [focusConnections, setFocusConnections] = useState(true);
+  // showSavedWorkflows state removed — workflows section now lives in NodePalette
   const [runtimeCapabilities, setRuntimeCapabilities] = useState({
     claude: [],
     codex: [],
@@ -136,7 +134,6 @@ export default function SwarmView() {
   const { startExecution, stopExecution } = useSwarm(workflowDef?.id);
   useInbox(activeExecutionId);
 
-  const pendingCount = getPendingCount(inboxItems);
   const isExecutionActive = ['running', 'paused', 'blocked'].includes(executionStatus);
   const activeAgentEntries = useMemo(
     () => Object.entries(agentStates ?? {}).filter(([, state]) => state?.status),
@@ -230,7 +227,7 @@ export default function SwarmView() {
         const r = handleRunRef.current;
         const canRun = r.activeProjectReady && !r.executing
           && (r.executionStatus === 'idle' || r.executionStatus === 'completed')
-          && !(r.validationErrors?.filter(ve => ve.severity === 'error').length > 0);
+          && !(r.validationErrors?.filter((issue) => issue.scope === 'global' && issue.severity === 'error').length > 0);
         if (canRun) {
           handleRunFnRef.current?.();
         }
@@ -421,7 +418,7 @@ export default function SwarmView() {
       if (mode === 'forced') {
         setTimedStreamJsonFeedback('Stopped', 'text-red-300');
       } else if (mode === 'reset') {
-        reset();
+        hardReset();
         setTimedStreamJsonFeedback('Reset', 'text-emerald-300');
         setStreamJsonForceEnabled(false);
       }
@@ -438,7 +435,7 @@ export default function SwarmView() {
     allStreamJsonAgentIds,
     liveStreamJsonAgentIds,
     setTimedStreamJsonFeedback,
-    reset,
+    hardReset,
   ]);
 
   useEffect(() => {
@@ -501,8 +498,15 @@ export default function SwarmView() {
     setValidationErrors(canvasValidation.errors);
   }, [canvasValidation.errors]);
 
-  const validationErrorCount = validationErrors.filter((e) => e.severity === 'error').length;
-  const hasValidationErrors = validationErrorCount > 0;
+  useEffect(() => {
+    setAgentValidationIssuesByNodeId(canvasValidation.agentIssuesByNodeId);
+    return () => setAgentValidationIssuesByNodeId({});
+  }, [canvasValidation.agentIssuesByNodeId, setAgentValidationIssuesByNodeId]);
+
+  const globalValidationIssues = canvasValidation.globalIssues ?? [];
+  const blockingIssues = canvasValidation.blockingIssues ?? [];
+  const blockingIssueCount = blockingIssues.length;
+  const hasValidationErrors = blockingIssueCount > 0;
 
   // FR-V5-01: save handler — persist canvas state to server
   const handleSave = async () => {
@@ -607,7 +611,7 @@ export default function SwarmView() {
       setImportError(e.message);
     }
     // Reset file input so the same file can be re-imported
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (event.target) event.target.value = '';
   };
 
   // FR-V5-37: Duplicate workflow
@@ -681,7 +685,7 @@ export default function SwarmView() {
 
   return (
     <div className="flex h-full min-h-0 min-w-0 w-full flex-col overflow-hidden bg-gray-950 text-white">
-      <div className="flex items-center gap-3 px-4 py-2 bg-gray-900 border-b border-gray-700 shrink-0">
+      <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-900 border-b border-gray-800 shrink-0">
         {workflowDef && editingName ? (
           <input
             autoFocus
@@ -689,49 +693,43 @@ export default function SwarmView() {
             onChange={(e) => setNameInput(e.target.value.slice(0, 128))}
             onKeyDown={handleNameKeyDown}
             onBlur={handleNameEditConfirm}
-            className="text-sm font-semibold text-white bg-gray-800 border border-gray-600 rounded px-2 py-0.5 outline-none focus:border-blue-500 max-w-[240px]"
+            className="text-sm font-semibold text-white bg-gray-800 border border-gray-600 rounded-md px-2 py-0.5 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 max-w-[240px]"
             maxLength={128}
           />
         ) : (
           <span
-            className="text-sm font-semibold text-white cursor-pointer hover:text-blue-300 transition-colors"
+            className="text-sm font-semibold text-white cursor-pointer hover:text-blue-300 transition-colors truncate max-w-[200px]"
             onClick={handleNameEditStart}
             title={workflowDef ? 'Click to rename workflow' : ''}
           >
             {workflowDef?.name || 'Swarm Orchestrator'}{isDirty ? ' *' : ''}
           </span>
         )}
-        <span className="text-[11px] px-2 py-1 rounded bg-gray-800 text-gray-300 border border-gray-700">
+        <span className="text-[10px] px-2 py-0.5 rounded-md bg-gray-800/60 text-gray-400 border border-gray-700/50">
           {isResolvingActiveProject
-            ? 'Project: loading...'
+            ? 'loading...'
             : activeProject
-            ? `Project: ${activeProject.name}`
-            : 'Project: none selected'}
+            ? activeProject.name
+            : 'No project'}
         </span>
+
         <div className="flex-1" />
 
-        <button
-          onClick={(e) => { e.stopPropagation(); setSidePanelOpen(true); setSidePanelMode('chat'); }}
-          className={`text-xs px-2 py-1 rounded transition-colors ${
-            pendingCount > 0 ? 'bg-orange-600 hover:bg-orange-500 text-white animate-pulse' : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-          }`}
-        >
-          {'\uD83D\uDCE5'} HITL{pendingCount > 0 ? ` (${pendingCount})` : ''}
-        </button>
+        <div className="h-4 w-px bg-gray-700/60 mx-0.5" />
 
-        <label className="flex items-center gap-2 text-[11px] text-gray-400">
+        <label className="flex items-center gap-1.5 text-[11px] text-gray-400">
           <span>Runtime</span>
           <select
             value={selectedRuntimeProvider}
             onChange={(e) => setSelectedRuntimeProvider(e.target.value)}
             disabled={isExecutionActive || executing}
-            className="bg-gray-800 text-white text-xs rounded px-2 py-1 border border-gray-600 disabled:opacity-50"
+            className="bg-gray-800 text-white text-xs rounded-md px-2 py-1 border border-gray-600/80 disabled:opacity-50 focus:border-blue-500 outline-none"
             title="Choose the provider strategy for the next run"
           >
             <option value="auto">Auto</option>
-            <option value="claude" disabled={!runtimeAvailability.claude}>Claude{runtimeAvailability.claude ? '' : ' (Unavailable)'}</option>
-            <option value="codex" disabled={!runtimeAvailability.codex}>Codex{runtimeAvailability.codex ? '' : ' (Unavailable)'}</option>
-            <option value="gemini" disabled={!runtimeAvailability.gemini}>Gemini{runtimeAvailability.gemini ? '' : ' (Unavailable)'}</option>
+            <option value="claude" disabled={!runtimeAvailability.claude}>Claude{runtimeAvailability.claude ? '' : ' (N/A)'}</option>
+            <option value="codex" disabled={!runtimeAvailability.codex}>Codex{runtimeAvailability.codex ? '' : ' (N/A)'}</option>
+            <option value="gemini" disabled={!runtimeAvailability.gemini}>Gemini{runtimeAvailability.gemini ? '' : ' (N/A)'}</option>
           </select>
         </label>
 
@@ -739,7 +737,7 @@ export default function SwarmView() {
           <button
             onClick={() => setShowModelSettings((v) => !v)}
             disabled={isExecutionActive || executing}
-            className="text-[11px] px-2 py-1 rounded bg-gray-800 text-gray-400 border border-gray-600 hover:border-gray-500 disabled:opacity-50 transition-colors"
+            className="text-[11px] px-2 py-1 rounded-md bg-gray-800 text-gray-400 border border-gray-600/80 hover:border-gray-500 disabled:opacity-50 transition-colors"
             title="Configure model per provider"
           >
             Models {hasCustomRuntimeSelections ? '*' : ''}
@@ -747,7 +745,7 @@ export default function SwarmView() {
           {showModelSettings && (
             <>
             <div className="fixed inset-0 z-40" onClick={() => setShowModelSettings(false)} />
-            <div ref={modelSettingsRef} className="absolute right-0 top-full mt-1 z-50 bg-gray-800 border border-gray-600 rounded-lg shadow-xl p-3 min-w-[220px]">
+            <div ref={modelSettingsRef} className="absolute right-0 top-full mt-1 z-50 bg-gray-800/95 backdrop-blur-md border border-gray-600 rounded-xl shadow-2xl p-3 min-w-[220px]">
               <div className="text-[11px] text-gray-300 font-semibold mb-2">Model per Provider</div>
               <label className="flex items-center gap-2 text-[11px] text-gray-400 mb-1.5">
                 <span className="w-14">Claude</span>
@@ -813,62 +811,49 @@ export default function SwarmView() {
           )}
         </div>
 
-        <button
-          onClick={() => setShowHistory((v) => !v)}
-          disabled={!workflowDef}
-          title={!workflowDef ? 'No workflow loaded' : 'Execution history'}
-          className={`text-xs px-2 py-1 rounded border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-            showHistory ? 'bg-gray-600 border-gray-500 text-white' : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
-          }`}
-        >
-          History
-        </button>
+        <div className="h-4 w-px bg-gray-700/60 mx-0.5" />
 
-        <button
-          onClick={() => setShowTemplates(true)}
-          className="text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 border border-gray-600 transition-colors"
-        >
-          Templates
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setShowHistory((v) => !v)}
+            disabled={!workflowDef}
+            title={!workflowDef ? 'No workflow loaded' : 'Execution history'}
+            className={`text-xs px-2 py-1 rounded-md border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+              showHistory ? 'bg-gray-600 border-gray-500 text-white' : 'bg-gray-800 border-gray-600/80 text-gray-300 hover:bg-gray-700 hover:text-white'
+            }`}
+          >
+            History
+          </button>
+          <button
+            onClick={() => setShowVersions((v) => !v)}
+            disabled={!workflowDef}
+            title={!workflowDef ? 'No workflow loaded' : 'Version history'}
+            className={`text-xs px-2 py-1 rounded-md border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+              showVersions ? 'bg-gray-600 border-gray-500 text-white' : 'bg-gray-800 border-gray-600/80 text-gray-300 hover:bg-gray-700 hover:text-white'
+            }`}
+          >
+            Versions
+          </button>
+          <button
+            onClick={() => setShowSettings(true)}
+            disabled={!workflowDef}
+            title={!workflowDef ? 'No workflow loaded' : 'Workflow settings'}
+            className="text-xs px-2 py-1 rounded-md bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border border-gray-600/80 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 inline -mt-px mr-0.5">
+              <path fillRule="evenodd" d="M7.84 1.804A1 1 0 018.82 1h2.36a1 1 0 01.98.804l.331 1.652a6.993 6.993 0 011.929 1.115l1.598-.54a1 1 0 011.186.447l1.18 2.044a1 1 0 01-.205 1.251l-1.267 1.113a7.047 7.047 0 010 2.228l1.267 1.113a1 1 0 01.206 1.25l-1.18 2.045a1 1 0 01-1.187.447l-1.598-.54a6.993 6.993 0 01-1.929 1.115l-.33 1.652a1 1 0 01-.98.804H8.82a1 1 0 01-.98-.804l-.331-1.652a6.993 6.993 0 01-1.929-1.115l-1.598.54a1 1 0 01-1.186-.447l-1.18-2.044a1 1 0 01.205-1.251l1.267-1.114a7.05 7.05 0 010-2.227L1.821 7.773a1 1 0 01-.206-1.25l1.18-2.045a1 1 0 011.187-.447l1.598.54A6.993 6.993 0 017.51 3.456l.33-1.652zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+            </svg>
+            Settings
+          </button>
+        </div>
 
-        <button
-          onClick={() => setShowVersions((v) => !v)}
-          disabled={!workflowDef}
-          title={!workflowDef ? 'No workflow loaded' : 'Version history'}
-          className={`text-xs px-2 py-1 rounded border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-            showVersions ? 'bg-gray-600 border-gray-500 text-white' : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
-          }`}
-        >
-          Versions
-        </button>
-
-        <button
-          onClick={() => setShowSettings(true)}
-          disabled={!workflowDef}
-          title={!workflowDef ? 'No workflow loaded' : 'Workflow settings'}
-          className="text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 border border-gray-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          {'\u2699'} Settings
-        </button>
-
-        <button
-          onClick={() => setFocusConnections((value) => !value)}
-          disabled={!workflowDef}
-          title={!workflowDef ? 'No workflow loaded' : 'Fade unrelated connections when selecting a node'}
-          className={`text-xs px-3 py-1 rounded border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-            focusConnections
-              ? 'bg-sky-700 border-sky-500 text-white hover:bg-sky-600'
-              : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
-          }`}
-        >
-          Focus
-        </button>
+        <div className="h-4 w-px bg-gray-700/60 mx-0.5" />
 
         <button
           onClick={handleTidyLayout}
           disabled={!workflowDef}
           title={!workflowDef ? 'No workflow loaded' : 'Reorder the workflow layout'}
-          className="bg-gray-700 hover:bg-gray-600 text-white text-xs px-3 py-1 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-xs px-2.5 py-1 rounded-md border border-gray-600/80 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Tidy
         </button>
@@ -877,10 +862,12 @@ export default function SwarmView() {
           onClick={handleSave}
           disabled={!isDirty || !workflowDef || saving}
           title={!workflowDef ? 'No workflow loaded' : !isDirty ? 'No unsaved changes' : 'Save workflow (Ctrl+S)'}
-          className="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-medium"
         >
           {saving ? '...' : 'Save'}
         </button>
+
+        <div className="h-4 w-px bg-gray-700/60 mx-0.5" />
 
         {(executionStatus === 'idle' || executionStatus === 'completed') && (
           <button
@@ -892,10 +879,10 @@ export default function SwarmView() {
                 : !activeProjectId
                 ? 'Select a project first'
                 : hasValidationErrors
-                ? `${validationErrorCount} validation error${validationErrorCount !== 1 ? 's' : ''} — fix before running`
+                ? `${blockingIssueCount} workflow blocker${blockingIssueCount !== 1 ? 's' : ''} — fix before running`
                 : 'Run workflow (Ctrl+Enter)'
             }
-            className="bg-green-600 hover:bg-green-500 text-white text-xs px-3 py-1 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="bg-green-600 hover:bg-green-500 text-white text-xs px-3 py-1 rounded-md font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {executing ? '...' : 'Run'}
           </button>
@@ -905,7 +892,7 @@ export default function SwarmView() {
           <button
             onClick={handlePause}
             disabled={pausing}
-            className="bg-yellow-600 hover:bg-yellow-500 text-white text-xs px-3 py-1 rounded transition-colors disabled:opacity-40"
+            className="bg-amber-600 hover:bg-amber-500 text-white text-xs px-3 py-1 rounded-md font-medium transition-colors disabled:opacity-40"
           >
             {pausing ? '...' : 'Pause'}
           </button>
@@ -915,7 +902,7 @@ export default function SwarmView() {
           <button
             onClick={handleResume}
             disabled={pausing}
-            className="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1 rounded transition-colors disabled:opacity-40"
+            className="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1 rounded-md font-medium transition-colors disabled:opacity-40"
           >
             {pausing ? '...' : 'Resume'}
           </button>
@@ -925,7 +912,7 @@ export default function SwarmView() {
           <button
             onClick={() => handleStreamJsonAction('graceful')}
             disabled={executing}
-            className="bg-red-600 hover:bg-red-500 text-white text-xs px-3 py-1 rounded transition-colors disabled:opacity-40"
+            className="bg-red-600 hover:bg-red-500 text-white text-xs px-3 py-1 rounded-md font-medium transition-colors disabled:opacity-40"
           >
             {executing ? '...' : 'Stop'}
           </button>
@@ -935,7 +922,7 @@ export default function SwarmView() {
           <button
             onClick={() => handleStreamJsonAction('forced')}
             disabled={executing}
-            className="bg-red-800 hover:bg-red-700 text-white text-xs px-3 py-1 rounded transition-colors disabled:opacity-40"
+            className="bg-red-800 hover:bg-red-700 text-white text-xs px-3 py-1 rounded-md font-medium transition-colors disabled:opacity-40"
           >
             {executing ? '...' : 'Force Stop'}
           </button>
@@ -945,7 +932,7 @@ export default function SwarmView() {
           <button
             onClick={() => handleStreamJsonAction('reset')}
             disabled={executing}
-            className="bg-gray-700 hover:bg-gray-600 text-white text-xs px-3 py-1 rounded transition-colors disabled:opacity-40"
+            className="bg-gray-700 hover:bg-gray-600 text-white text-xs px-3 py-1 rounded-md transition-colors disabled:opacity-40"
           >
             {executing ? '...' : 'Reset Session'}
           </button>
@@ -955,14 +942,14 @@ export default function SwarmView() {
           <button
             onClick={handleStop}
             disabled={executing}
-            className="bg-red-600 hover:bg-red-500 text-white text-xs px-3 py-1 rounded transition-colors disabled:opacity-40"
+            className="bg-red-600 hover:bg-red-500 text-white text-xs px-3 py-1 rounded-md font-medium transition-colors disabled:opacity-40"
           >
             {executing ? '...' : 'Stop'}
           </button>
         )}
 
-        <span className={`text-xs capitalize ${statusColors[executionStatus] || 'text-gray-400'}`}>
-          ● {executionStatus}
+        <span className={`text-[11px] capitalize ${statusColors[executionStatus] || 'text-gray-400'}`}>
+          {executionStatus}
         </span>
 
         {showStreamJsonToolbar && streamJsonFeedback && (
@@ -971,18 +958,14 @@ export default function SwarmView() {
           </span>
         )}
 
-        <span className="text-[11px] px-2 py-1 rounded bg-gray-800 text-gray-300 border border-gray-700">
-          Provider: {providerLabel}
-        </span>
-
-        <span className="text-[11px] text-gray-500">
-          {providerStrategyLabel}
+        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-gray-800/60 text-gray-400 border border-gray-700/50">
+          {providerLabel}
         </span>
 
         {(executionStatus === 'stopped' || executionStatus === 'completed') && (
           <button
             onClick={reset}
-            className="text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors"
+            className="text-xs px-2 py-1 rounded-md bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border border-gray-600/80 transition-colors"
           >
             Reset
           </button>
@@ -991,10 +974,10 @@ export default function SwarmView() {
         <button
           onClick={() => setShowArtifactPanel(true)}
           disabled={!['completed', 'stopped', 'failed'].includes(executionStatus)}
-          className="px-3 py-1.5 rounded text-xs font-medium bg-emerald-700 hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-colors flex items-center gap-1.5"
+          className="px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-700 hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-colors"
           title={!['completed', 'stopped', 'failed'].includes(executionStatus) ? 'Run the workflow first' : 'View workflow deliverable'}
         >
-          Final Report
+          Report
         </button>
       </div>
 
@@ -1016,6 +999,9 @@ export default function SwarmView() {
               <span className="ml-1.5 text-red-200/80">&mdash; {runtimeBlocker.message}</span>
             ) : (
               <span className="ml-1.5 text-red-200/60 italic">No details available from the provider.</span>
+            )}
+            {runtimeBlocker.provider && (
+              <span className="ml-1.5 text-red-200/70">Provider: {runtimeBlocker.provider}.</span>
             )}
           </div>
         </div>
@@ -1040,14 +1026,29 @@ export default function SwarmView() {
         </div>
       )}
 
-      {validationErrors.length > 0 && (executionStatus === 'idle' || executionStatus === 'completed') && (
-        <div className="px-4 py-2 text-xs border-b border-amber-900/60 bg-amber-950/30">
-          <span className="text-amber-300 font-semibold">Validation ({validationErrors.length}):</span>
-          {validationErrors.map((err, i) => (
-            <span key={i} className={err.severity === 'error' ? 'text-red-300 ml-2' : 'text-amber-200 ml-2'}>
-              {err.severity === 'error' ? '[ERR]' : '[WARN]'} {err.message}{i < validationErrors.length - 1 ? ';' : ''}
+      {globalValidationIssues.length > 0 && (executionStatus === 'idle' || executionStatus === 'completed') && (
+        <div className="border-b border-amber-900/40 bg-gradient-to-r from-amber-950/25 via-amber-950/10 to-transparent px-4 py-2.5">
+          <div className="flex flex-wrap items-start gap-2 text-xs">
+            <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-semibold text-amber-200">
+              Validation
             </span>
-          ))}
+            <span className="pt-0.5 text-gray-200">
+              {globalValidationIssues.length} workflow issue{globalValidationIssues.length !== 1 ? 's' : ''} {globalValidationIssues.length === 1 ? 'needs' : 'need'} attention.
+            </span>
+            {globalValidationIssues.map((issue) => (
+              <span
+                key={issue.id}
+                className={`rounded-full border px-2 py-0.5 ${
+                  issue.severity === 'error'
+                    ? 'border-red-500/30 bg-red-500/10 text-red-200'
+                    : 'border-amber-500/30 bg-amber-500/10 text-amber-200'
+                }`}
+                title={issue.detail}
+              >
+                {issue.summary}
+              </span>
+            ))}
+          </div>
         </div>
       )}
 
@@ -1063,101 +1064,6 @@ export default function SwarmView() {
         }}
       />
 
-      <div className="flex items-center gap-2 px-4 py-2 bg-gray-900 border-b border-gray-700 shrink-0">
-        <span className="text-xs font-semibold text-gray-300">Saved workflows</span>
-        <select
-          value={selectedWorkflowId}
-          onChange={(e) => setSelectedWorkflowId(e.target.value)}
-          disabled={workflowsLoading || savedWorkflows.length === 0 || isExecutionActive}
-          className="min-w-72 max-w-[28rem] bg-gray-800 text-white text-xs rounded px-2 py-1.5 border border-gray-600 disabled:opacity-50"
-        >
-          <option value="">
-            {workflowsLoading
-              ? 'Loading workflows...'
-              : savedWorkflows.length === 0
-              ? 'No saved workflows available'
-              : 'Select a saved workflow'}
-          </option>
-          {savedWorkflows.map((workflow) => {
-            const dateStr = workflow.updatedAt ?? workflow.createdAt;
-            const suffix = dateStr
-              ? ` (${new Date(dateStr).toLocaleDateString()})`
-              : '';
-            return (
-              <option key={workflow.id} value={workflow.id}>
-                {workflow.name}{suffix}
-              </option>
-            );
-          })}
-        </select>
-        <button
-          onClick={handleLoadWorkflow}
-          disabled={!selectedWorkflowId || isExecutionActive}
-          className="text-xs px-3 py-1.5 rounded bg-gray-700 hover:bg-gray-600 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          Load workflow
-        </button>
-        <button
-          onClick={refreshWorkflows}
-          disabled={workflowsLoading}
-          className="text-xs px-2 py-1.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 transition-colors disabled:opacity-40"
-        >
-          Refresh
-        </button>
-        <button
-          onClick={handleDuplicate}
-          disabled={!workflowDef || isExecutionActive}
-          title={!workflowDef ? 'No workflow loaded' : 'Duplicate workflow'}
-          className="text-xs px-2 py-1.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          Duplicate
-        </button>
-        <button
-          onClick={handleExport}
-          disabled={!workflowDef || isExecutionActive}
-          title={!workflowDef ? 'No workflow loaded' : 'Export workflow as JSON'}
-          className="text-xs px-2 py-1.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          Export
-        </button>
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isExecutionActive}
-          title="Import workflow from JSON file"
-          className="text-xs px-2 py-1.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          Import
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".json"
-          className="hidden"
-          onChange={handleImport}
-        />
-        <div className="flex-1" />
-        <span className="text-xs text-gray-500">
-          {isResolvingActiveProject
-            ? 'Resolving the active project...'
-            : activeProject
-            ? `Shows workflows for ${activeProject.name} plus unscoped ones`
-            : 'Shows all saved workflows'}
-        </span>
-      </div>
-
-      {workflowsError && (
-        <div className="px-4 py-2 text-xs text-red-400 bg-gray-900 border-b border-gray-800">
-          Failed to load saved workflows: {workflowsError}
-        </div>
-      )}
-
-      {importError && (
-        <div className="px-4 py-2 text-xs text-red-300 bg-red-950/40 border-b border-red-900/60 flex items-center gap-2">
-          <span>Import failed: {importError}</span>
-          <button onClick={() => setImportError(null)} className="text-red-400 hover:text-white text-xs ml-auto">Dismiss</button>
-        </div>
-      )}
-
       <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
         <ReactFlowProvider>
           <SwarmCanvas
@@ -1166,10 +1072,32 @@ export default function SwarmView() {
             markDirty={markDirty}
             onCanvasChange={onCanvasChange}
             layoutNonce={layoutNonce}
-            focusConnections={focusConnections}
+            workflowProps={{
+              workflows: savedWorkflows,
+              selectedWorkflowId,
+              onSelectWorkflow: setSelectedWorkflowId,
+              onLoad: handleLoadWorkflow,
+              onRefresh: refreshWorkflows,
+              onDuplicate: handleDuplicate,
+              onExport: handleExport,
+              onImport: handleImport,
+              loading: workflowsLoading,
+              disabled: isExecutionActive,
+              hasWorkflowDef: Boolean(workflowDef),
+              error: workflowsError,
+              importError,
+              onDismissImportError: () => setImportError(null),
+              projectLabel: isResolvingActiveProject
+                ? 'Resolving project...'
+                : activeProject
+                ? `Workflows for ${activeProject.name}`
+                : 'All saved workflows',
+            }}
           />
         </ReactFlowProvider>
       </div>
+
+      {/* Saved Workflows section moved into NodePalette sidebar */}
 
       {/* HITL inbox drawer removed — approvals now appear inline in ChatPanel */}
 
@@ -1207,21 +1135,6 @@ export default function SwarmView() {
         <ExecutionHistory
           workflowId={workflowDef.id}
           onClose={() => setShowHistory(false)}
-        />
-      )}
-
-      {showTemplates && (
-        <TemplateGallery
-          onInstantiate={(workflow) => {
-            setWorkflowDef(workflow);
-            setSelectedWorkflowId(workflow.id);
-            setIsDirty(false);
-            setSaveError(null);
-            setPromptToFlowResetKey((value) => value + 1);
-            refreshWorkflows();
-            setShowTemplates(false);
-          }}
-          onClose={() => setShowTemplates(false)}
         />
       )}
 

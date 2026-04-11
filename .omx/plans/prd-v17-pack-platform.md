@@ -61,6 +61,40 @@ V17 should make it possible for a domain expert to build a specialized harness w
 - Keep builder and operator surfaces separate but connected to the same runtime state (`docs/PACK_PLATFORM_DESIGN.md:288-291`).
 - Keep **one workflow per harness** in V17 (`docs/PACK_PLATFORM_DESIGN.md:288`).
 
+## Authoring Authority Model
+V17 must avoid creating two silent sources of truth between the harness shell and the underlying workflow.
+
+### Pack / harness is authoritative for
+- input schema
+- knowledge/context injection
+- prompt / behavior rules
+- output schema / artifacts
+- pack lifecycle, visibility, distribution, and release gates
+
+### Workflow remains authoritative for
+- graph topology and node orchestration
+- low-level handoff structure
+- advanced technical execution details edited directly in the workflow builder
+
+### Drill-down contract
+- PackBuilder is the guided authoring surface for the four harness-facing contract surfaces.
+- Advanced users may open the linked workflow in drill-down mode to edit graph/node orchestration details.
+- Workflow edits round-trip back to the linked harness preview, but they must **not silently mutate** pack-facing contract fields.
+- Pack-facing contract edits remain authoritative at the pack layer; workflow-facing graph edits remain authoritative at the workflow layer.
+
+## Runtime Precedence Matrix
+Before V17.3 implementation starts, the runtime contract is:
+
+1. Resolve `projectId` and `projectPath` explicitly.
+2. Validate operator-provided input against the pack input schema.
+3. Load workflow base context and workflow-level defaults.
+4. Apply pack knowledge/context overlays above the workflow base context.
+5. Apply pack behavior rules above the workflow defaults.
+6. Execute through the existing Swarm engine with additive pack metadata.
+7. Validate and assemble outputs/artifacts against the pack contract.
+
+Conflicts between pack-level overlays/rules and workflow-level defaults must be surfaced explicitly rather than resolved silently.
+
 ## Out of Scope / Non-goals
 - No public marketplace in V17.
 - No multi-workflow harness composition in V17.
@@ -104,13 +138,15 @@ Reference: `docs/TASK_PLAN.md:22198-22390`, `docs/PACK_PLATFORM_DESIGN.md:112-14
   - input schema (#627)
   - output schema + artifacts (#628)
   - runtime policy + dependencies (#629)
-  - knowledge/context injection (must be made explicit in this area)
-  - prompt/behavior rules (must be made explicit in this area)
+  - knowledge/context injection (must be made explicit in this area as a first-class contract surface)
+  - prompt/behavior rules (must be made explicit in this area as a first-class contract surface)
 - Enforce validation in store/routes and normalize the shape through the client hook layer (#631–#632).
+- Lock the precedence/merge rules between workflow base context, pack knowledge/context overlays, and pack behavior rules before runtime work starts.
 
 ### Phase D — Prove the harness runs through the existing engine (V17.3, tasks #635–#644)
 Reference: `docs/TASK_PLAN.md:22392-22607`, `docs/PACK_PLATFORM_DESIGN.md:172-191`, `server/routes/swarm.js`, `client/src/hooks/useSwarm.js`
 - Build pack resolution, start route, execution context extension, safe input binding, visible-step tracking, result/artifact assembly, blocker mapping, and pack-aware hydration.
+- Make execution history and restoration pack-aware by persisting additive metadata such as `packId`, `packVersion`, and pack-facing result descriptors alongside the existing workflow execution substrate.
 - Explicitly prove that execution truthfully reflects the four authoring surfaces:
   - inputs validated and injected
   - knowledge/context overlays resolved
@@ -122,18 +158,22 @@ Reference: `docs/TASK_PLAN.md:22609-22802`, `client/src/views/SwarmView.jsx:134-
 - Add the PackBuilder shell and lifecycle over current workflow-first tooling.
 - Provide guided editors for the four surfaces.
 - Keep a visible drill-down path to the underlying workflow and technical details.
+- Make knowledge/context injection and prompt/behavior rules dedicated editor concerns, not implicit settings hidden under runtime policy.
+- Define the builder↔workflow authority contract explicitly in product terms.
 - Treat this as the first visible product transition toward harness-builder UX, not just a generic pack editor.
 
 ### Phase F — Create the operator-facing product surface (V17.5, tasks #654–#661)
 Reference: `docs/TASK_PLAN.md:22804-22975`, `docs/PACK_PLATFORM_DESIGN.md:186-191`
 - Split navigation into pack-first vs builder-first surfaces.
 - Add Pack Library, Pack Detail, run form generation, run monitor, debug drawer, and pack-specific selectors/restoration.
+- Define a pack-first project-binding model so operators can launch without opening Swarm while still satisfying the current runtime contract (`projectId`, `projectPath`) explicitly.
 - Keep operator copy pack/harness-first and keep raw workflow detail behind explicit debug affordances.
 
 ### Phase G — Local portability without marketplace scope (V17.6, tasks #662–#669)
 Reference: `docs/TASK_PLAN.md:22977-23144`, `docs/PACK_PLATFORM_DESIGN.md:129-143`
 - Define manifest/archive format.
 - Implement export/import/install/fork/version pinning locally.
+- Treat distribution as gated on stabilized knowledge/context and behavior-rule semantics; do not freeze unstable semantics into archives.
 - Keep scope strictly local and controlled; do not introduce marketplace framing.
 
 ### Phase H — Product-quality release gates (V17.7, tasks #670–#676)
@@ -148,18 +188,27 @@ Reference: `docs/TASK_PLAN.md:23146-23280`
    **Mitigation:** promote both into explicit contract-bearing fields in V17.2 and explicit runtime inputs in V17.3.
 3. **Risk:** operator UX leaks raw workflow complexity.  
    **Mitigation:** keep pack-first/operator-first views as the default, with advanced debug behind opt-in affordances.
-4. **Risk:** compatibility regressions hit existing workflow flows.  
+4. **Risk:** pack and workflow layers become competing sources of truth.  
+   **Mitigation:** lock the pack/workflow authority model and runtime precedence matrix before V17.3 work begins.
+5. **Risk:** pack-aware history/restoration is assumed but not actually modeled in the workflow-centric execution-history substrate.  
+   **Mitigation:** make additive history metadata and restoration semantics an explicit V17.3 requirement.
+6. **Risk:** pack-first operator launch cannot satisfy current runtime prerequisites (`projectId`, `projectPath`).  
+   **Mitigation:** define explicit project-binding UX and failure behavior as part of V17.5.
+7. **Risk:** compatibility regressions hit existing workflow flows.  
    **Mitigation:** preserve workflow routes/runtime as additive contracts and run regression gates against `workflows.js`, `WorkflowStore`, `swarm.js`, `useSwarm`, and `SwarmView`.
-5. **Risk:** V17 accidentally overreaches into multi-workflow orchestration.  
+8. **Risk:** V17 accidentally overreaches into multi-workflow orchestration.  
    **Mitigation:** keep one-workflow-per-harness locked in docs, routes, validation, and acceptance criteria.
 
 ## Verification Steps
 - Verify terminology consistency across `docs/TASK_PLAN.md`, `docs/PACK_PLATFORM_DESIGN.md`, and `.omx/specs/deep-interview-v17-pack-platform.md`.
 - Add mapping evidence showing where each V17 area advances the four authoring surfaces.
+- Verify the pack/workflow authority contract and runtime precedence matrix are documented and test-covered before V17.3 is considered complete.
 - Run store tests for CRUD/version/restore/path safety.
 - Run route tests for pack CRUD, versions, start, distribution, publish, and fixtures.
 - Keep existing workflow route and swarm execution regression suites green.
 - Add contract validation tests for all declared authoring surfaces and negative cases.
+- Add pack-aware execution-history and restoration tests that prove `packId` / `packVersion` metadata survives status/history/results flows without breaking workflow-only restoration.
+- Add operator launch tests that prove project binding is explicit and no hidden workspace assumptions exist.
 - Add builder/operator client tests and a client build pass for V17.4/V17.5.
 - Run manual smokes for create/edit/run/debug/export/import/publish flows.
 
@@ -186,12 +235,16 @@ Adopt the existing V17 pack-platform architecture as the implementation path, bu
 ### Consequences
 - V17.0, V17.2, V17.4, and V17.5 need wording/emphasis updates.
 - Contract modeling must explicitly include knowledge/context and behavior-rule surfaces.
+- The plan must define a pack/workflow authority split plus a runtime precedence matrix before execution work starts.
+- Pack-aware history/restoration and operator project binding become explicit planning obligations, not implicit assumptions.
 - Pack/harness terminology must be handled carefully across docs and UI.
 
 ### Follow-ups
 - Update V17 task wording so the four authoring surfaces are explicitly traceable.
 - Ensure V17.2 contains explicit fields for knowledge/context injection and prompt/behavior rules.
 - Ensure V17.4/V17.5 acceptance criteria measure guided harness authoring and pack-first operation, not only technical CRUD/rendering.
+- Ensure V17.3 explicitly covers pack-aware history/restoration metadata and pack-facing status hydration.
+- Ensure V17.5 explicitly defines project-binding UX for pack launches.
 
 ## Available-Agent-Types Roster
 - `planner` — planning synthesis / task reframing
@@ -230,3 +283,10 @@ Adopt the existing V17 pack-platform architecture as the implementation path, bu
 
 ## Plan Changelog
 - Initial consensus draft created from V17 task-plan/design-doc grounding plus the completed deep interview.
+- Architect review incorporated:
+  - promoted knowledge/context injection and prompt/behavior rules into explicit planning requirements
+  - added a pack/workflow authority model
+  - added a runtime precedence matrix
+  - added pack-aware history/restoration requirements
+  - added operator project-binding requirements
+  - tightened builder↔workflow drill-down rules

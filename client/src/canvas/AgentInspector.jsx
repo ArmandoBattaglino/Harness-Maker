@@ -1,11 +1,14 @@
 // client/src/canvas/AgentInspector.jsx
 // Side panel for inspecting and editing agent node configuration.
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeSanitize from 'rehype-sanitize';
 import { useSwarmStore } from '../store/SwarmContext';
-import { stripAnsi } from '../utils/stripAnsi';
 import { inspectControlTokens } from '../utils/controlTokens';
-import { isStructuredSpawnMode } from '../utils/runtimeModes.js';
-import { repairTokenSplitting } from '../utils/repairTokenSpacing';
+import { mdComponents, sanitizeSchema } from '../utils/markdownComponents.jsx';
+import { formatAgentLiveSnippet, getPreferredAgentLiveSnippet } from '../utils/formatAgentOutput.js';
+import { getAgentOutputEntries, serializeAgentOutputEntries } from '../utils/agentOutputEntries.js';
 
 const MODEL_OPTIONS = [
   { group: 'Claude', models: ['opus', 'sonnet', 'haiku'] },
@@ -101,6 +104,44 @@ function CollapsibleSection({ title, defaultOpen = true, children }) {
 
 function FieldLabel({ children }) {
   return <label className="text-[11px] text-gray-400">{children}</label>;
+}
+
+function InspectorTabButton({ active, children, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors ${
+        active
+          ? 'bg-blue-600 text-white'
+          : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function HandoffEntry({ handoff }) {
+  const timestamp = handoff?.timestamp
+    ? new Date(handoff.timestamp).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      })
+    : '';
+
+  return (
+    <div className="rounded-lg border border-gray-700 bg-gray-800/90 p-2.5">
+      <div className="mb-1.5 flex items-center justify-between gap-2 text-[11px]">
+        <span className="font-medium text-cyan-300">&rarr; {handoff?.target || 'unknown'}</span>
+        {timestamp && <span className="text-gray-500">{timestamp}</span>}
+      </div>
+      <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded bg-gray-950 p-2 text-[10px] leading-relaxed text-gray-300">
+        {JSON.stringify(handoff?.payload ?? handoff, null, 2)}
+      </pre>
+    </div>
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -748,18 +789,66 @@ function ExecutionInfo({ timestamps, status }) {
 export default function AgentInspector({ nodes, onUpdateNode }) {
   const selectedNodeId = useSwarmStore((s) => s.selectedNodeId);
   const agentState = useSwarmStore((s) => s.agentStates[selectedNodeId]);
-  const activeExecutionId = useSwarmStore((s) => s.activeExecutionId);
+  const agentResult = useSwarmStore((s) => s.agentResults[selectedNodeId]);
+  const chatMessages = useSwarmStore((s) => s.chatMessages);
   const setSelectedNode = useSwarmStore((s) => s.setSelectedNode);
-  const setPtyExplosionNodeId = useSwarmStore((s) => s.setPtyExplosionNodeId);
+  const expandedOutputNodeId = useSwarmStore((s) => s.expandedOutputNodeId);
+  const setExpandedOutputNodeId = useSwarmStore((s) => s.setExpandedOutputNodeId);
+  const setExpandedValidationNodeId = useSwarmStore((s) => s.setExpandedValidationNodeId);
+  const markViewed = useSwarmStore((s) => s.markAgentResultViewed);
+  const [activeTab, setActiveTab] = useState('config');
 
   const selectedNode = nodes?.find((n) => n.id === selectedNodeId);
-  const tokenSemantics = inspectControlTokens(agentState?.lastOutputSnippet);
+  const preferredLiveSnippet = useMemo(
+    () => getPreferredAgentLiveSnippet(agentState),
+    [agentState?.lastChatSnippet, agentState?.lastOutputSnippet, agentState?.spawnMode]
+  );
+  const tokenSemantics = inspectControlTokens(preferredLiveSnippet || agentState?.lastOutputSnippet);
+  const hasSelectedNode = Boolean(selectedNodeId && selectedNode);
+  const nodeType = selectedNode?.type || 'agent';
+  const outputEntries = useMemo(
+    () => getAgentOutputEntries({
+      nodeId: selectedNodeId,
+      chatMessages,
+      agentResult,
+      spawnMode: agentState?.spawnMode,
+    }),
+    [agentResult, agentState?.spawnMode, chatMessages, selectedNodeId]
+  );
+  const liveOutputText = useMemo(
+    () => formatAgentLiveSnippet(agentState),
+    [agentState?.lastChatSnippet, agentState?.lastOutputSnippet, agentState?.spawnMode]
+  );
+  const handoffs = agentResult?.handoffPayloads || [];
+  const hasInspectorOutput = hasSelectedNode && nodeType === 'agent' && (outputEntries.length > 0 || handoffs.length > 0);
 
-  if (!selectedNodeId || !selectedNode) {
+  useEffect(() => {
+    if (!selectedNodeId) {
+      setActiveTab('config');
+    }
+  }, [selectedNodeId]);
+
+  const handleCloseInspector = useCallback(() => {
+    setSelectedNode(null);
+    setExpandedOutputNodeId(null);
+    setExpandedValidationNodeId(null);
+  }, [setExpandedOutputNodeId, setExpandedValidationNodeId, setSelectedNode]);
+
+  const handleCopyPanelContent = useCallback(async () => {
+    const text = activeTab === 'handoff'
+      ? JSON.stringify(handoffs, null, 2)
+      : serializeAgentOutputEntries(outputEntries);
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // Clipboard is best-effort only in the inspector.
+    }
+  }, [activeTab, handoffs, outputEntries]);
+
+  if (!hasSelectedNode) {
     return null;
   }
-
-  const nodeType = selectedNode.type || 'agent';
 
   return (
     <div className="w-[19rem] min-w-[19rem] shrink-0 bg-gray-900 border-l border-gray-700 p-4 text-white text-sm flex flex-col gap-3 overflow-y-auto">
@@ -772,7 +861,7 @@ export default function AgentInspector({ nodes, onUpdateNode }) {
           onChange={(e) => onUpdateNode(selectedNodeId, { label: e.target.value })}
         />
         <button
-          onClick={() => setSelectedNode(null)}
+          onClick={handleCloseInspector}
           className="text-gray-400 hover:text-white text-lg leading-none flex-shrink-0"
           aria-label="Close inspector"
         >
@@ -783,52 +872,147 @@ export default function AgentInspector({ nodes, onUpdateNode }) {
       {/* Node type badge */}
       <div className="text-xs text-gray-400 capitalize">Type: {nodeType}</div>
 
+      {hasInspectorOutput && (
+        <div className="flex flex-wrap gap-2">
+          <InspectorTabButton
+            active={activeTab === 'config'}
+            onClick={() => {
+              setExpandedOutputNodeId(null);
+              setExpandedValidationNodeId(null);
+              setActiveTab('config');
+            }}
+          >
+            Inspector
+          </InspectorTabButton>
+          <InspectorTabButton
+            active={activeTab === 'output'}
+            onClick={() => {
+              setExpandedOutputNodeId(selectedNodeId);
+              setActiveTab('output');
+              markViewed(selectedNodeId);
+            }}
+          >
+            Output
+          </InspectorTabButton>
+          {handoffs.length > 0 && (
+            <InspectorTabButton
+              active={activeTab === 'handoff'}
+              onClick={() => {
+                setExpandedOutputNodeId(selectedNodeId);
+                setActiveTab('handoff');
+                markViewed(selectedNodeId);
+              }}
+            >
+              Handoff
+            </InspectorTabButton>
+          )}
+        </div>
+      )}
+
+      {(activeTab === 'output' || activeTab === 'handoff') && hasInspectorOutput && (
+        <>
+          <div className="rounded-lg border border-gray-700 bg-gray-800/70 px-3 py-2 text-[11px] text-gray-400">
+            {activeTab === 'output'
+              ? 'Final output for this agent'
+              : 'Handoff payloads emitted by this agent'}
+          </div>
+          <div className="rounded-lg border border-gray-700 bg-gray-900/80 p-3">
+            {activeTab === 'output' ? (
+              outputEntries.length > 0 ? (
+                <div className="flex flex-col gap-3">
+                  {outputEntries.map((entry, index) => {
+                    const outputNumber = outputEntries.length - index;
+                    const formattedTimestamp = entry.timestamp
+                      ? new Date(entry.timestamp).toLocaleString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          second: '2-digit',
+                          month: 'short',
+                          day: 'numeric',
+                        })
+                      : null;
+
+                    return (
+                      <section
+                        key={entry.id}
+                        className={`min-w-0 break-words overflow-wrap-anywhere ${
+                          index > 0 ? 'border-t border-gray-800 pt-3' : ''
+                        }`}
+                      >
+                        <div className="mb-2 flex items-center justify-between gap-2 text-[10px] uppercase tracking-[0.08em] text-gray-500">
+                          <span>{`Output ${outputNumber}`}</span>
+                          {formattedTimestamp && (
+                            <span className="text-[10px] normal-case tracking-normal">{formattedTimestamp}</span>
+                          )}
+                        </div>
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          rehypePlugins={[[rehypeSanitize, sanitizeSchema]]}
+                          components={mdComponents}
+                        >
+                          {entry.text}
+                        </ReactMarkdown>
+                      </section>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-[12px] italic text-gray-500">No output captured for this agent.</p>
+              )
+            ) : (
+              <div className="flex flex-col gap-2">
+                {handoffs.map((handoff, index) => (
+                  <HandoffEntry key={`${handoff?.timestamp ?? index}-${index}`} handoff={handoff} />
+                ))}
+              </div>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={handleCopyPanelContent}
+            className="rounded-md border border-gray-700 bg-gray-800 px-2.5 py-1.5 text-[11px] font-medium text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
+          >
+            Copy
+          </button>
+        </>
+      )}
+
       {/* Type-specific editable fields */}
-      {nodeType === 'agent' && (
+      {activeTab === 'config' && nodeType === 'agent' && (
         <AgentFields node={selectedNode} nodes={nodes} onUpdateNode={onUpdateNode} />
       )}
-      {nodeType === 'department' && (
+      {activeTab === 'config' && nodeType === 'department' && (
         <DepartmentFields node={selectedNode} onUpdateNode={onUpdateNode} />
       )}
-      {nodeType === 'trigger' && (
+      {activeTab === 'config' && nodeType === 'trigger' && (
         <TriggerFields node={selectedNode} onUpdateNode={onUpdateNode} />
       )}
-      {nodeType === 'conditional' && (
+      {activeTab === 'config' && nodeType === 'conditional' && (
         <ConditionalFields node={selectedNode} nodes={nodes} onUpdateNode={onUpdateNode} />
       )}
-      {nodeType === 'merge' && (
+      {activeTab === 'config' && nodeType === 'merge' && (
         <MergeFields node={selectedNode} onUpdateNode={onUpdateNode} />
       )}
-      {nodeType === 'delay' && (
+      {activeTab === 'config' && nodeType === 'delay' && (
         <DelayFields node={selectedNode} onUpdateNode={onUpdateNode} />
       )}
-      {nodeType === 'loop' && (
+      {activeTab === 'config' && nodeType === 'loop' && (
         <LoopFields node={selectedNode} nodes={nodes} onUpdateNode={onUpdateNode} />
       )}
-      {nodeType === 'errorHandler' && (
+      {activeTab === 'config' && nodeType === 'errorHandler' && (
         <ErrorHandlerFields node={selectedNode} nodes={nodes} onUpdateNode={onUpdateNode} />
       )}
-      {nodeType === 'subWorkflow' && (
+      {activeTab === 'config' && nodeType === 'subWorkflow' && (
         <SubWorkflowFields node={selectedNode} onUpdateNode={onUpdateNode} />
       )}
 
-      {/* Open Terminal button — only when agent has an active session */}
-      {selectedNode?.id && !isStructuredSpawnMode(agentState?.spawnMode) && (agentState?.sessionId || activeExecutionId) && (
-        <button
-          onClick={() => setPtyExplosionNodeId(selectedNode.id)}
-          className="w-full text-xs px-2 py-1.5 rounded bg-indigo-700 hover:bg-indigo-600 text-white transition-colors flex items-center gap-1.5"
-        >
-          <span>⌨</span> Open Terminal
-        </button>
-      )}
-
       {/* Execution Info — timing data (FR-V5-49/50) */}
-      {agentState?.timestamps?.started && (
+      {activeTab === 'config' && agentState?.timestamps?.started && (
         <ExecutionInfo timestamps={agentState.timestamps} status={agentState.status} />
       )}
 
       {/* Live status (from Zustand) */}
-      {agentState && (
+      {activeTab === 'config' && agentState && (
         <CollapsibleSection title="Live Status">
           <div className="bg-gray-800 rounded p-2 text-xs">
             <div className="text-gray-400 mb-1">Status</div>
@@ -843,10 +1027,10 @@ export default function AgentInspector({ nodes, onUpdateNode }) {
       )}
 
       {/* Last output snippet */}
-      {agentState?.lastOutputSnippet && (
+      {activeTab === 'config' && preferredLiveSnippet && (
         <CollapsibleSection title="Output" defaultOpen={true}>
           <div className="bg-gray-800 rounded p-2 text-xs font-mono whitespace-pre-wrap max-h-48 overflow-y-auto text-green-300 leading-relaxed">
-            {isStructuredSpawnMode(agentState?.spawnMode) ? stripAnsi(agentState.lastOutputSnippet) : repairTokenSplitting(stripAnsi(agentState.lastOutputSnippet))}
+            {liveOutputText}
           </div>
           {tokenSemantics.notes.length > 0 && (
             <div className="bg-gray-800/80 border border-gray-700 rounded p-2 text-[11px] text-amber-200 flex flex-col gap-1">
@@ -859,7 +1043,7 @@ export default function AgentInspector({ nodes, onUpdateNode }) {
       )}
 
       {/* Agent Memory — full assembled prompt debug view */}
-      {agentState?.lastAssembledPrompt && (
+      {activeTab === 'config' && agentState?.lastAssembledPrompt && (
         <CollapsibleSection title="Agent Memory" defaultOpen={false}>
           {agentState.lastPromptTimestamp && (
             <div className="text-[10px] text-gray-500 mb-1">

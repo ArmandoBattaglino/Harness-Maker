@@ -137,6 +137,7 @@ export function useSwarm(workflowId) {
   const updateTriggerState = useSwarmStore((s) => s.updateTriggerState);
   const setWsConnected = useSwarmStore((s) => s.setWsConnected);
   const clearExecutionState = useSwarmStore((s) => s.clearExecutionState);
+  const hydratePackRuntime = useSwarmStore((s) => s.hydratePackRuntime);
   const pendingStreamJsonTurnsRef = useRef({});
 
   const getPendingStreamJsonTurn = useCallback((nodeId) => {
@@ -181,6 +182,15 @@ export function useSwarm(workflowId) {
   const applyExecutionSnapshot = useCallback(async (snapshot) => {
     const currentState = useSwarmStore.getState();
     const nextExecutionId = snapshot.executionId ?? currentState.activeExecutionId;
+
+    // After hardReset(), ignore all snapshots for the execution that was
+    // explicitly cleared.  Without this guard, WS broadcasts arriving after
+    // the DELETE responses would re-establish activeExecutionId and repopulate
+    // chatMessages/agentStates.
+    if (nextExecutionId && nextExecutionId === currentState._hardResetExecutionId) {
+      return { executionId: null, status: 'idle' };
+    }
+
     const nextStatus = snapshot.status ?? currentState.executionStatus ?? 'running';
     const sameExecution = Boolean(nextExecutionId) && nextExecutionId === currentState.activeExecutionId;
     const snapshotChatMessages = Array.isArray(snapshot.chatMessages) ? snapshot.chatMessages : null;
@@ -214,6 +224,13 @@ export function useSwarm(workflowId) {
           normalizedAgentStates[nodeId] = {
             ...normalizedAgentStates[nodeId],
             totalCost: clientState.totalCost,
+          };
+        }
+        // Preserve client turnCost (latest turn token counts for context % bar)
+        if (clientState?.turnCost && !normalizedAgentStates[nodeId].turnCost) {
+          normalizedAgentStates[nodeId] = {
+            ...normalizedAgentStates[nodeId],
+            turnCost: clientState.turnCost,
           };
         }
         // Preserve client lastChatSnippet if server doesn't provide it
@@ -285,11 +302,13 @@ export function useSwarm(workflowId) {
       ...(snapshot.budget ? { budget: snapshot.budget } : {}),
       ...(snapshot.inboxItems ? { inboxItems: snapshot.inboxItems } : {}),
       ...(snapshot.interAgentFeed ? { interAgentFeed: snapshot.interAgentFeed } : {}),
-      // Only accept server chatMessages when they are at least as rich as
-      // what the client accumulated via WS.  During reconciliation the server
-      // snapshot may arrive before the ChatExtractor has flushed final
-      // messages, so a blind replace would drop chat history.
-      ...(snapshotChatMessages && (!sameExecution || snapshotChatMessages.length >= (currentState.chatMessages?.length ?? 0))
+      ...(Object.prototype.hasOwnProperty.call(snapshot, 'packRun') ? { packRun: snapshot.packRun } : {}),
+      ...(Object.prototype.hasOwnProperty.call(snapshot, 'packResult') ? { packResult: snapshot.packResult } : {}),
+      // Only accept server chatMessages when they belong to the same active
+      // execution and are at least as rich as what the client accumulated via
+      // WS.  After a hardReset (activeExecutionId === null) a stale snapshot
+      // must not re-populate cleared chat state.
+      ...(snapshotChatMessages && sameExecution && snapshotChatMessages.length >= (currentState.chatMessages?.length ?? 0)
         ? { chatMessages: snapshotChatMessages }
         : {}),
     });
@@ -451,6 +470,12 @@ export function useSwarm(workflowId) {
           if (resultsData?.agentOutputs) {
             useSwarmStore.getState().hydrateAgentResults(resultsData.agentOutputs);
           }
+          if (resultsData?.packRun || resultsData?.packResult) {
+            hydratePackRuntime({
+              packRun: resultsData.packRun,
+              packResult: resultsData.packResult,
+            });
+          }
         }
       } catch {
         // Silent — output panel just won't have data
@@ -462,7 +487,7 @@ export function useSwarm(workflowId) {
     }
 
     connectWs(stored.executionId);
-  }, [applyExecutionSnapshot, clearExecutionState]);
+  }, [applyExecutionSnapshot, clearExecutionState, hydratePackRuntime]);
 
   // Connect WS for a running execution
   const connectWs = useCallback((executionId, { isReconnect = false } = {}) => {
@@ -691,6 +716,12 @@ export function useSwarm(workflowId) {
                       if (data?.agentOutputs) {
                         useSwarmStore.getState().hydrateAgentResults(data.agentOutputs);
                       }
+                      if (data?.packRun || data?.packResult) {
+                        hydratePackRuntime({
+                          packRun: data.packRun,
+                          packResult: data.packResult,
+                        });
+                      }
                       // Hydrate chat messages from server-stored data (dedup by timestamp+nodeId)
                       if (data?.chatMessages && Array.isArray(data.chatMessages)) {
                         const store = useSwarmStore.getState();
@@ -766,7 +797,6 @@ export function useSwarm(workflowId) {
           break;
         case 'hitl_required':
           addInboxItem(msg);
-          // Inject HITL request as a special chat message so it appears inline
           addChatMessage({
             nodeId: msg.nodeId,
             role: 'hitl',
@@ -774,6 +804,7 @@ export function useSwarm(workflowId) {
             timestamp: msg.item?.timestamp || Date.now(),
             hitlItemId: msg.item?.id,
             hitlType: msg.item?.type || 'user_requested',
+            hitlOptions: msg.item?.options || null,
           });
           break;
         case 'hitl_resolved':
@@ -841,7 +872,6 @@ export function useSwarm(workflowId) {
             // concatenated stale fragments + canonical text, producing duplicated or
             // truncated output (BUG-CHAT-3).
             const currentSpawnMode = useSwarmStore.getState().agentStates[msg.nodeId]?.spawnMode;
-            useSwarmStore.getState().replaceAgentChatText(msg.nodeId, msg.text);
             updateAgentState(
               msg.nodeId,
               buildHydratedSnippetPatch(
@@ -862,8 +892,21 @@ export function useSwarm(workflowId) {
               (m) =>
                 (m.role === 'assistant' || !m.role)
                 && isStructuredSpawnMode(m.spawnMode)
-                && sameStructuredTurnId(m.turnId, messageTurnId),
+                && (
+                  sameStructuredTurnId(m.turnId, messageTurnId)
+                  || (messageTurnId && !m.turnId && m.timestamp === msg.timestamp)
+                ),
             );
+            // Rebuild agentResults.finalText from ALL assistant chatMessages
+            // for this node (not just the current turn's canonical text).
+            // replaceAgentChatText previously replaced the entire finalText,
+            // discarding prior turns in multi-turn agents.
+            const updatedMessages = useSwarmStore.getState().chatMessages;
+            const nodeAssistantTexts = updatedMessages
+              .filter((m) => m.nodeId === msg.nodeId && (m.role === 'assistant' || !m.role) && m.text)
+              .map((m) => m.text);
+            const rebuiltText = nodeAssistantTexts.join('\n\n').trim();
+            useSwarmStore.getState().replaceAgentChatText(msg.nodeId, rebuiltText || msg.text);
           } else {
             // Drop trailing text_delta fragments that arrive after canonical for structured
             // assistant messages — prevents duplicate/corrupted output (BUG-CHAT-CLIENT-1/3)
@@ -899,7 +942,7 @@ export function useSwarm(workflowId) {
     };
 
     wsRef.current = ws;
-  }, [setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, addChatMessage, setExecution, updateBudget, addInboxItem, resolveInboxItem, updateTriggerState, applyExecutionSnapshot, reconcileClosedExecution, getPendingStreamJsonTurn, flushPendingStreamJsonTurn]);
+  }, [setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, addChatMessage, setExecution, updateBudget, addInboxItem, resolveInboxItem, updateTriggerState, applyExecutionSnapshot, reconcileClosedExecution, getPendingStreamJsonTurn, flushPendingStreamJsonTurn, hydratePackRuntime]);
 
   // Start execution
   const startExecution = useCallback(async (projectId, projectPath, runtimeProvider = 'auto', runtimeModels = null, overrideWorkflowId = null) => {

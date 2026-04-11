@@ -1,6 +1,6 @@
 // client/src/canvas/HitlChatCard.jsx
 // Inline HITL approval card rendered inside the ChatPanel.
-// Shows agent request, approve/reject actions, and optional resume text.
+// Supports plain approve/reject and multiple-choice options (V13.1).
 import { useState, useRef } from 'react';
 import { useSwarmStore } from '../store/SwarmContext';
 import { apiPost } from '../hooks/useApi.js';
@@ -16,33 +16,70 @@ function formatTime(ts) {
 }
 
 export default function HitlChatCard({ message, agentLabel, executionId }) {
-  const { nodeId, text, timestamp, hitlItemId, hitlType } = message;
+  const { nodeId, text, timestamp, hitlItemId, hitlType, hitlOptions } = message;
   const resolveInboxItem = useSwarmStore((s) => s.resolveInboxItem);
   const inboxItems = useSwarmStore((s) => s.inboxItems);
   const resolvedHitlIds = useSwarmStore((s) => s.resolvedHitlIds || []);
 
+  const hasOptions = Array.isArray(hitlOptions) && hitlOptions.length > 0;
+
   const [showTextarea, setShowTextarea] = useState(false);
   const [resumeText, setResumeText] = useState('');
+  const [selectedOptions, setSelectedOptions] = useState(new Set());
   const [approving, setApproving] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const [resolvedAction, setResolvedAction] = useState(null);
   const [error, setError] = useState(null);
-  const sendingRef = useRef(false); // sync guard against rapid double-clicks
+  const sendingRef = useRef(false);
 
-  // Check if item is still pending in the inbox
   const stillPending = inboxItems.some((entry) => {
     const item = entry.item ?? entry;
     return item.id === hitlItemId;
   });
 
-  // Derive resolved state from store (survives remount) OR local action
   const wasResolved = resolvedHitlIds.includes(hitlItemId);
   const isActionable = stillPending && !wasResolved;
   const badgeClass = TYPE_BADGE[hitlType] || 'bg-gray-500/20 text-gray-300 border-gray-500/40';
 
+  const toggleOption = (opt) => {
+    setSelectedOptions((prev) => {
+      const next = new Set(prev);
+      if (next.has(opt)) next.delete(opt);
+      else next.add(opt);
+      return next;
+    });
+  };
+
+  const canApprove = hasOptions
+    ? selectedOptions.size > 0 || resumeText.trim().length > 0
+    : true;
+
   const handleApproveClick = () => {
+    if (hasOptions) {
+      handleSend();
+    } else {
+      setError(null);
+      setShowTextarea(true);
+    }
+  };
+
+  const handleSend = async () => {
+    if (!executionId || !hitlItemId || sendingRef.current) return;
+    sendingRef.current = true;
+    setApproving(true);
     setError(null);
-    setShowTextarea(true);
+    try {
+      const body = {};
+      if (resumeText.trim()) body.resumeText = resumeText.trim();
+      if (selectedOptions.size > 0) body.selectedOptions = [...selectedOptions];
+      await apiPost(`/api/v1/swarm/${executionId}/inbox/${hitlItemId}/approve`, body);
+      resolveInboxItem(hitlItemId);
+      setResolvedAction('approved');
+    } catch (e) {
+      setError(e.message);
+      setApproving(false);
+      sendingRef.current = false;
+    }
   };
 
   const handleApproveConfirm = async () => {
@@ -59,6 +96,7 @@ export default function HitlChatCard({ message, agentLabel, executionId }) {
     } catch (e) {
       setError(e.message);
       setApproving(false);
+      sendingRef.current = false;
     }
   };
 
@@ -80,6 +118,7 @@ export default function HitlChatCard({ message, agentLabel, executionId }) {
     } catch (e) {
       setError(e.message);
       setRejecting(false);
+      sendingRef.current = false;
     }
   };
 
@@ -119,11 +158,36 @@ export default function HitlChatCard({ message, agentLabel, executionId }) {
         {/* Actions — only if still actionable */}
         {isActionable && (
           <>
-            {showTextarea && (
+            {/* Multiple-choice options */}
+            {hasOptions && (
+              <div className="flex flex-col gap-1.5 mb-2">
+                {hitlOptions.map((opt) => (
+                  <label
+                    key={opt}
+                    className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded border cursor-pointer
+                      transition-colors select-none
+                      ${selectedOptions.has(opt)
+                        ? 'bg-orange-500/20 border-orange-500/60 text-orange-100'
+                        : 'bg-gray-800/60 border-gray-600 text-gray-300 hover:border-gray-500'}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedOptions.has(opt)}
+                      onChange={() => toggleOption(opt)}
+                      className="accent-orange-500 w-3.5 h-3.5 shrink-0"
+                    />
+                    <span className="break-words">{opt}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+
+            {/* Textarea: always visible when options present, toggled otherwise */}
+            {(hasOptions || showTextarea) && (
               <textarea
                 value={resumeText}
                 onChange={(e) => setResumeText(e.target.value)}
-                placeholder="Optional instructions for the agent..."
+                placeholder={hasOptions ? 'Additional notes (optional)...' : 'Optional instructions for the agent...'}
                 rows={2}
                 maxLength={8192}
                 className="w-full text-xs bg-gray-800 text-white rounded px-2 py-1.5
@@ -137,7 +201,28 @@ export default function HitlChatCard({ message, agentLabel, executionId }) {
             )}
 
             <div className="flex items-center gap-2">
-              {!showTextarea ? (
+              {hasOptions ? (
+                <>
+                  <button
+                    onClick={handleSend}
+                    disabled={approving || !canApprove}
+                    className="flex items-center gap-1 text-xs px-2.5 py-1 rounded
+                               bg-green-700 hover:bg-green-600 text-white transition-colors
+                               disabled:opacity-40 shrink-0"
+                  >
+                    {approving ? '...' : 'Approve'}
+                  </button>
+                  <button
+                    onClick={handleReject}
+                    disabled={rejecting || approving}
+                    className="flex items-center gap-1 text-xs px-2.5 py-1 rounded
+                               bg-red-700 hover:bg-red-600 text-white transition-colors
+                               disabled:opacity-40 shrink-0"
+                  >
+                    {rejecting ? '...' : 'Reject'}
+                  </button>
+                </>
+              ) : !showTextarea ? (
                 <>
                   <button
                     onClick={handleApproveClick}

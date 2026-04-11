@@ -18,6 +18,7 @@ function normalizeInboxItem(entry) {
     agentId: item?.nodeId || item?.agentId || item?.agent_id || entry?.nodeId || '',
     status: item?.status || 'pending',
     payload: item?.payload || item?.resume_text || item?.resumeText || '',
+    options: Array.isArray(item?.options) ? item.options : null,
   };
 }
 

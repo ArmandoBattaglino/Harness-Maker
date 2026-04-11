@@ -107,6 +107,8 @@ describe('SwarmContext client contracts', () => {
       chatMessages: [
         { nodeId: 'node-a', role: 'assistant', text: 'stale', timestamp: 1 },
       ],
+      packRun: { packId: 'pack-1' },
+      packResult: { outputs: { result: 'stale' } },
       workflowDef: { id: 'workflow-old', nodes: [], edges: [] },
     });
 
@@ -117,7 +119,21 @@ describe('SwarmContext client contracts', () => {
     expect(state.executionStatus).toBe('idle');
     expect(state.agentStates).toEqual({});
     expect(state.chatMessages).toEqual([]);
+    expect(state.packRun).toBeNull();
+    expect(state.packResult).toBeNull();
     expect(state.workflowDef).toEqual({ id: 'workflow-new', nodes: [], edges: [] });
+  });
+
+  it('hydrates additive pack runtime metadata without touching workflow execution state', () => {
+    useSwarmStore.getState().hydratePackRuntime({
+      packRun: { packId: 'pack-1', packVersion: '1.0.0' },
+      packResult: { outputs: { result: 'Done' }, artifacts: [] },
+    });
+
+    const state = useSwarmStore.getState();
+    expect(state.packRun).toEqual({ packId: 'pack-1', packVersion: '1.0.0' });
+    expect(state.packResult.outputs.result).toBe('Done');
+    expect(state.activeExecutionId).toBeNull();
   });
 
   it('preserves the selected runtime provider and chat history when reset clears execution state', () => {
@@ -140,5 +156,41 @@ describe('SwarmContext client contracts', () => {
     expect(state.executionStatus).toBe('idle');
     expect(state.chatMessages).toEqual(chatMessages);
     expect(state.selectedRuntimeProvider).toBe('codex');
+  });
+
+  it('hydrates persisted outputEntries alongside legacy finalText', () => {
+    useSwarmStore.setState({
+      agentResults: {
+        'node-a': {
+          finalText: 'Client text',
+          outputEntries: [{ id: 'client-entry', text: 'Client entry', timestamp: 1 }],
+          handoffPayloads: [],
+          viewed: true,
+          updatedAt: 1,
+        },
+      },
+    });
+
+    useSwarmStore.getState().hydrateAgentResults({
+      'node-a': {
+        finalText: 'Server text',
+        outputEntries: [
+          { id: 'entry-1', text: 'First output', timestamp: 100, turnId: 'node-a:1', spawnMode: 'stream-json' },
+          { id: 'entry-2', text: 'Second output', timestamp: 200, turnId: 'node-a:2', spawnMode: 'stream-json' },
+        ],
+        handoffPayloads: [],
+      },
+    });
+
+    expect(useSwarmStore.getState().agentResults['node-a']).toEqual(
+      expect.objectContaining({
+        finalText: 'Server text',
+        outputEntries: [
+          { id: 'entry-1', text: 'First output', timestamp: 100, turnId: 'node-a:1', spawnMode: 'stream-json' },
+          { id: 'entry-2', text: 'Second output', timestamp: 200, turnId: 'node-a:2', spawnMode: 'stream-json' },
+        ],
+        viewed: true,
+      })
+    );
   });
 });

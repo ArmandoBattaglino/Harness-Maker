@@ -26,6 +26,15 @@ describe('agentOutputs and aggregatedArtifact round-trip', () => {
       'node-1': {
         label: 'Research Agent',
         finalText: 'Some research results',
+        outputEntries: [
+          {
+            id: 'turn-node-1-1',
+            text: 'Some research results',
+            timestamp: 1712484000000,
+            turnId: 'node-1:1',
+            spawnMode: 'stream-json',
+          },
+        ],
         handoffPayloads: [{ target: 'node-2', data: 'payload' }],
         status: 'completed',
         provider: 'anthropic',

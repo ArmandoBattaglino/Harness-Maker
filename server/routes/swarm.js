@@ -14,6 +14,7 @@ import { Router } from 'express';
 import { generateWorkflowFromPrompt } from '../services/ScaffoldGenerator.js';
 import { getRuntimeCapabilitySnapshot } from '../services/SwarmEngine.js';
 import { buildWorkflowArtifact } from '../services/WorkflowArtifactBuilder.js';
+import buildPackResult from '../services/PackResultBuilder.js';
 import { ExecutionHistoryStore } from '../stores/ExecutionHistoryStore.js';
 import { ConfigStore } from '../services/ConfigStore.js';
 
@@ -35,6 +36,52 @@ function normalizeAgentStates(agentStates) {
     return new Map(Object.entries(agentStates));
   }
   return new Map();
+}
+
+function buildOutputEntriesFromMessages(nodeId, messages = [], state = null) {
+  const entries = [];
+  const groupedByTurn = new Map();
+
+  for (let index = 0; index < messages.length; index += 1) {
+    const message = messages[index];
+    const rawText = String(message?.text ?? message?.content ?? '');
+    if (!rawText.trim()) continue;
+
+    const spawnMode = message?.spawnMode ?? state?.spawnMode ?? null;
+    const turnId = message?.turnId ?? null;
+    const shouldGroupByTurn = Boolean(turnId) && STRUCTURED_AGENT_SPAWN_MODES.has(spawnMode);
+
+    if (!shouldGroupByTurn) {
+      entries.push({
+        id: `chat-${nodeId}-${index}-${message?.timestamp ?? 'na'}`,
+        text: rawText,
+        timestamp: message?.timestamp ?? null,
+        turnId,
+        spawnMode,
+      });
+      continue;
+    }
+
+    const existing = groupedByTurn.get(turnId);
+    if (!existing) {
+      const nextEntry = {
+        id: `turn-${nodeId}-${turnId}`,
+        text: rawText,
+        timestamp: message?.timestamp ?? null,
+        turnId,
+        spawnMode,
+      };
+      groupedByTurn.set(turnId, nextEntry);
+      entries.push(nextEntry);
+      continue;
+    }
+
+    existing.text += rawText;
+    existing.timestamp = message?.timestamp ?? existing.timestamp;
+    existing.spawnMode = spawnMode ?? existing.spawnMode;
+  }
+
+  return entries;
 }
 
 function buildAgentOutputsFromExecution(execution, swarmEngine = null) {
@@ -84,6 +131,9 @@ function buildAgentOutputsFromExecution(execution, swarmEngine = null) {
     agentOutputs[nodeId] = {
       label: nodeDef?.data?.label || nodeId,
       finalText,
+      outputEntries: typeof swarmEngine?._buildAgentOutputEntries === 'function'
+        ? swarmEngine._buildAgentOutputEntries(execution, nodeId, messages, state)
+        : buildOutputEntriesFromMessages(nodeId, messages, state),
       handoffPayloads: Array.isArray(state?.handoffPayloads) ? state.handoffPayloads : [],
       status: state?.status || 'unknown',
       provider: state?.runtimeProvider || state?.provider || null,
@@ -108,30 +158,47 @@ function buildLiveExecutionResults(execution, workflowName = '', swarmEngine = n
     : null;
   const normalizedWorkflowName = workflowName || execution?.workflowDef?.name || 'Workflow';
 
+  const packRun = execution?.packMetadata ?? null;
+  const packLike = buildPackLike(packRun);
+  const aggregatedArtifact = TERMINAL_EXECUTION_STATUSES.has(status)
+    ? buildWorkflowArtifact({
+        workflowName: normalizedWorkflowName,
+        workflowDescription: execution?.workflowDef?.description || '',
+        executionId: execution?.executionId,
+        status,
+        startedAt,
+        endedAt,
+        durationMs,
+        agentOutputs,
+      })
+    : '';
+
   return {
     executionId: execution?.executionId,
     workflowName: normalizedWorkflowName,
     status,
     agentOutputs,
     chatMessages: Array.isArray(execution?.chatMessages) ? execution.chatMessages : [],
-    aggregatedArtifact: TERMINAL_EXECUTION_STATUSES.has(status)
-      ? buildWorkflowArtifact({
-          workflowName: normalizedWorkflowName,
-          workflowDescription: execution?.workflowDef?.description || '',
-          executionId: execution?.executionId,
-          status,
-          startedAt,
-          endedAt,
-          durationMs,
-          agentOutputs,
-        })
-      : '',
+    aggregatedArtifact,
+    ...(packRun ? { packRun } : {}),
+    ...(packLike ? { packResult: buildPackResult(packLike, execution, agentOutputs, aggregatedArtifact) } : {}),
     meta: {
       startedAt,
       endedAt,
       durationMs,
       nodesRun: normalizeAgentStates(execution?.agentStates).size,
     },
+  };
+}
+
+function buildPackLike(packRun) {
+  if (!packRun) return null;
+  return {
+    id: packRun.packId,
+    packVersion: packRun.packVersion,
+    visibleSteps: packRun.visibleSteps ?? [],
+    outputSchema: packRun.outputSchema ?? {},
+    artifactDefinitions: packRun.artifactDefinitions ?? [],
   };
 }
 
@@ -725,12 +792,15 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
 
       // Persisted history entry
       const entry = result.data;
+      const packLike = buildPackLike(entry.packRun);
       return res.status(200).json({
         executionId: entry.executionId,
         workflowName: result.workflowName,
         status: entry.status,
         agentOutputs: entry.agentOutputs || {},
         aggregatedArtifact: entry.aggregatedArtifact || '',
+        ...(entry.packRun ? { packRun: entry.packRun } : {}),
+        ...(packLike ? { packResult: buildPackResult(packLike, entry, entry.agentOutputs || {}, entry.aggregatedArtifact || '') } : {}),
         meta: {
           startedAt: entry.startedAt ?? null,
           endedAt: entry.endedAt ?? null,

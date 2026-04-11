@@ -21,6 +21,7 @@ import { discoverCodexBinary, discoverGeminiBinary } from './BinaryDiscovery.js'
 import { ChatExtractor } from './ChatExtractor.js';
 import { normalizeChatDisplayText } from './chatTextNormalization.js';
 import { buildWorkflowArtifact } from './WorkflowArtifactBuilder.js';
+import { buildVisibleStepStatuses } from './PackResultBuilder.js';
 
 // tree-kill is CommonJS only — use createRequire to import it (DEC-006)
 const requireCjs = createRequire(import.meta.url);
@@ -748,7 +749,7 @@ class SwarmEngine {
       .replace(/HANDOFF:[a-z0-9-]+:\s*\{[\s\S]*/gi, '')
       .replace(/__DONE__[\s\S]*/g, '')
       .replace(/^\s*DONE\s*$/gim, '')
-      .replace(/__HITL__:\{[^}]*\}/g, '')
+      .replace(/__HITL__:\{.*\}$/gm, '')
       .trim();
   }
 
@@ -1096,6 +1097,10 @@ class SwarmEngine {
       execution.runtimeBlocker = null;
     }
 
+    execution.chatMessages = (execution.chatMessages ?? []).filter(
+      (msg) => msg.nodeId !== nodeId
+    );
+
     this._broadcastAgentStatus(executionId, nodeId, state);
     const hasActiveAgents = [...execution.agentStates.values()].some(
       (agentState) => ['running', 'paused', 'blocked'].includes(agentState?.status)
@@ -1173,11 +1178,15 @@ class SwarmEngine {
     state._codexSdkAbortController = null;
     state._codexSdkThread = null;
     state._codexSdkRunId = null;
-    state._codexSdkTurnChatCountStart = this._countAssistantChatMessages(execution, nodeId);
     state.status = 'idle';
     if (execution.runtimeBlocker?.nodeId === nodeId) {
       execution.runtimeBlocker = null;
     }
+
+    execution.chatMessages = (execution.chatMessages ?? []).filter(
+      (msg) => msg.nodeId !== nodeId
+    );
+    state._codexSdkTurnChatCountStart = this._countAssistantChatMessages(execution, nodeId);
 
     this._broadcastAgentStatus(executionId, nodeId, state);
     const hasActiveAgents = [...execution.agentStates.values()].some(
@@ -1272,12 +1281,80 @@ class SwarmEngine {
     return score;
   }
 
+  _buildAgentOutputEntries(execution, nodeId, messages = [], state = null) {
+    const entries = [];
+    const groupedByTurn = new Map();
+
+    for (let index = 0; index < messages.length; index += 1) {
+      const message = messages[index];
+      const rawText = String(message?.text ?? message?.content ?? '');
+      if (!rawText.trim()) continue;
+
+      const spawnMode = message?.spawnMode ?? state?.spawnMode ?? null;
+      const turnId = message?.turnId ?? null;
+      const shouldGroupByTurn = Boolean(turnId) && STRUCTURED_SPAWN_MODES.has(spawnMode);
+
+      if (!shouldGroupByTurn) {
+        entries.push({
+          id: `chat-${nodeId}-${index}-${message?.timestamp ?? 'na'}`,
+          text: rawText,
+          timestamp: message?.timestamp ?? null,
+          turnId,
+          spawnMode,
+        });
+        continue;
+      }
+
+      const existing = groupedByTurn.get(turnId);
+      if (!existing) {
+        const nextEntry = {
+          id: `turn-${nodeId}-${turnId}`,
+          text: rawText,
+          timestamp: message?.timestamp ?? null,
+          turnId,
+          spawnMode,
+        };
+        groupedByTurn.set(turnId, nextEntry);
+        entries.push(nextEntry);
+        continue;
+      }
+
+      existing.text += rawText;
+      existing.timestamp = message?.timestamp ?? existing.timestamp;
+      existing.spawnMode = spawnMode ?? existing.spawnMode;
+    }
+
+    return entries;
+  }
+
   _resolveAgentFinalText(execution, nodeId, messages = [], state = null) {
     const messageText = messages
       .map((msg) => msg?.text || msg?.content || '')
       .filter(Boolean)
       .join('\n\n')
       .trim();
+
+    // Prefer messageText (from execution.chatMessages) when it looks like
+    // genuine canonical output.  chatMessages from structured (stream-json /
+    // codex-sdk) agents contain canonical text already cleaned by
+    // normalizeChatDisplayText — they are the authoritative source.
+    //
+    // Skip the fast-path when messageText is:
+    //  - a system-prompt / protocol echo
+    //  - a known placeholder ("Structured handoff sent.")
+    //  - a truncated leading fragment (starts mid-sentence)
+    // In those cases, fall through to the scoring system which can pick
+    // the session replay or semantic snippet instead.
+    if (messageText) {
+      const trimmedMsg = messageText.trim();
+      const isPromptEcho = this._messageTextIsPromptEcho(trimmedMsg);
+      const isPlaceholder = /^structured handoff sent\.?$/i.test(trimmedMsg);
+      const startsMidSentence = /^[,.;:)\]}]/.test(trimmedMsg)
+        || /^[a-z\u00E0-\u00FF]{1,3}[,.;:]/u.test(trimmedMsg);
+      if (!isPromptEcho && !isPlaceholder && !startsMidSentence) {
+        return messageText;
+      }
+    }
 
     const sessionOutput = this._readAgentSessionOutput(state);
     const semanticSnippet = String(state?.lastOutputSnippet || '').trim()
@@ -1300,12 +1377,6 @@ class SwarmEngine {
         ? this._sanitizeChatMessage(sessionOutput, {
             ...executionContext,
             rawText: sessionOutput,
-          })
-        : '',
-      messageText
-        ? this._sanitizeChatMessage(messageText, {
-            ...executionContext,
-            rawText: messageText,
           })
         : '',
       messageText,
@@ -1387,6 +1458,7 @@ class SwarmEngine {
       agentOutputs[nodeId] = {
         label: nodeDef?.data?.label || nodeId,
         finalText,
+        outputEntries: this._buildAgentOutputEntries(execution, nodeId, messages, state),
         handoffPayloads: state?.handoffPayloads || [],
         status: state?.status || 'unknown',
         provider: state?.runtimeProvider || state?.provider || null,
@@ -1630,6 +1702,7 @@ class SwarmEngine {
     const outgoingTargets = this._getOutgoingTargets(execution.workflowDef, sourceNodeId);
     const sourceNodeType = sourceNode?.type ?? 'agent';
 
+    // Fan-out: agent with multiple outgoing edges and the requested target is valid
     if (
       sourceNodeType === 'agent'
       && outgoingTargets.length > 1
@@ -1638,7 +1711,19 @@ class SwarmEngine {
       return outgoingTargets;
     }
 
-    return [requestedTargetId];
+    // V13.2 FIX: When the LLM-requested target is NOT in the graph's outgoing
+    // edges, fall back to the actual graph topology instead of trusting a
+    // potentially hallucinated target ID. This prevents fan-in barriers from
+    // staying permanently stuck when one upstream agent handoffs to a wrong node.
+    if (outgoingTargets.length > 0 && !outgoingTargets.includes(requestedTargetId)) {
+      console.warn(
+        `[SwarmEngine] _resolveHandoffFanOutTargets: requested target "${requestedTargetId}" `
+        + `not in outgoing edges of "${sourceNodeId}" — correcting to graph targets: [${outgoingTargets.join(', ')}]`
+      );
+      return outgoingTargets;
+    }
+
+    return outgoingTargets.length > 0 ? outgoingTargets : [requestedTargetId];
   }
 
   _buildRuntimeProviderStrategy(workflowDef, requestedProvider = null) {
@@ -2087,6 +2172,9 @@ class SwarmEngine {
       nodeSnapshots,
       agentOutputs,
       aggregatedArtifact,
+      packId: execution.packMetadata?.packId ?? null,
+      packVersion: execution.packMetadata?.packVersion ?? null,
+      packRun: execution.packMetadata ? JSON.parse(JSON.stringify(execution.packMetadata)) : null,
     };
 
     try {
@@ -2098,7 +2186,7 @@ class SwarmEngine {
     }
   }
 
-  _buildInitialWorkflowContext(workflowDef) {
+  _buildInitialWorkflowContext(workflowDef, patch = null) {
     const initialContext =
       workflowDef?.initialContext && typeof workflowDef.initialContext === 'object'
         ? { ...workflowDef.initialContext }
@@ -2110,11 +2198,28 @@ class SwarmEngine {
       ? `Execute the workflow goal described here: ${workflowDescription}`
       : `Execute the workflow "${workflowName}" and advance it through the agent graph.`;
 
-    return {
+    const baseContext = {
       workflowName,
       workflowDescription,
       currentTask: initialContext.currentTask || defaultCurrentTask,
       ...initialContext,
+    };
+
+    if (!patch || typeof patch !== 'object' || Array.isArray(patch)) {
+      return baseContext;
+    }
+
+    return {
+      ...baseContext,
+      ...patch,
+      ...(baseContext.pack && patch.pack
+        ? {
+            pack: {
+              ...baseContext.pack,
+              ...patch.pack,
+            },
+          }
+        : {}),
     };
   }
 
@@ -2774,6 +2879,20 @@ class SwarmEngine {
     return this._chatTextQualityScore(snippetFallback) >= this._chatTextQualityScore(lastSnippet)
       ? snippetFallback
       : lastSnippet;
+  }
+
+  _messageTextIsPromptEcho(text = '') {
+    const normalized = String(text ?? '').trim();
+    if (!normalized) return false;
+    if (/^you are the /im.test(normalized)) return true;
+    if (/^current workflow context:?/im.test(normalized)) return true;
+    if (/(?:must emit a handoff token|your required downstream target|do not stop at the done marker|finish your work, then hand off to|is not the end of the workflow yet|runtime is active for this swarm agent|continue the workflow using the shared task context below)/i.test(normalized)) {
+      return true;
+    }
+    if (/^(?:workflow name|workflow description|currenttask|instruction|workflow)\s*:/im.test(normalized)) {
+      return true;
+    }
+    return false;
   }
 
   _chatTextLooksCorrupted(text = '') {
@@ -4164,10 +4283,59 @@ class SwarmEngine {
       const delayKeys = [...this._delayTimers.keys()].filter((k) => k.startsWith(execId + ':'));
       const mergeKeys = [...this._mergeStates.keys()].filter((k) => k.startsWith(execId + ':'));
       const loopKeys = [...this._loopStates.keys()].filter((k) => k.startsWith(execId + ':'));
-      const hasPendingBarriers = execution.agentInputBarriers instanceof Map
+      let hasPendingBarriers = execution.agentInputBarriers instanceof Map
         && [...execution.agentInputBarriers.values()].some(
           (b) => (b.received instanceof Set ? b.received.size : 0) < (b.required ?? 0)
         );
+
+      // V13.2 STALE BARRIER WATCHDOG: If barriers are pending but ALL expected
+      // upstream source agents are in a terminal state (done/error/stopped/blocked),
+      // auto-resolve each stale barrier and activate the downstream agent.
+      // This is the final safety net for fan-in workflows.
+      if (hasPendingBarriers && execution.agentInputBarriers instanceof Map) {
+        const terminalStatuses = new Set(['done', 'error', 'stopped', 'blocked', 'idle', 'handoffing']);
+        const edges = execution.workflowDef?.edges ?? [];
+        const staleBarrierIds = [];
+
+        for (const [targetNodeId, barrier] of execution.agentInputBarriers) {
+          if ((barrier.received instanceof Set ? barrier.received.size : 0) >= (barrier.required ?? 0)) continue;
+          const expectedSources = new Set(
+            edges.filter((e) => e.target === targetNodeId).map((e) => e.source).filter(Boolean)
+          );
+          const allSourcesTerminal = [...expectedSources].every((srcId) => {
+            const srcState = execution.agentStates.get(srcId);
+            return srcState && terminalStatuses.has(srcState.status);
+          });
+          if (allSourcesTerminal && expectedSources.size > 0) {
+            staleBarrierIds.push(targetNodeId);
+          }
+        }
+
+        const execId = execution.executionId ?? execution.id;
+        for (const targetNodeId of staleBarrierIds) {
+          console.warn(
+            `[SwarmEngine] V13.2 stale-barrier watchdog: all upstream sources for "${targetNodeId}" `
+            + `are terminal — auto-resolving barrier and activating downstream`
+          );
+          execution.agentInputBarriers.delete(targetNodeId);
+          const targetState = execution.agentStates.get(targetNodeId);
+          if (targetState && (targetState.status === 'waiting' || targetState.status === 'idle')) {
+            targetState.status = 'running';
+            this._broadcastAgentStatus(execId, targetNodeId, targetState);
+            this._ensureAgentPty(execId, targetNodeId).catch((err) => {
+              console.error(`[SwarmEngine] stale-barrier watchdog _ensureAgentPty error for ${targetNodeId}:`, err);
+            });
+          }
+        }
+
+        if (staleBarrierIds.length > 0) {
+          hasPendingBarriers = execution.agentInputBarriers instanceof Map
+            && [...execution.agentInputBarriers.values()].some(
+              (b) => (b.received instanceof Set ? b.received.size : 0) < (b.required ?? 0)
+            );
+        }
+      }
+
       const hasPendingFlowControl = delayKeys.length > 0 || mergeKeys.length > 0
         || loopKeys.length > 0 || hasPendingBarriers;
 
@@ -4224,7 +4392,7 @@ class SwarmEngine {
       edgeCounters: new Map(),
       agentInputBarriers: new Map(),
       inboundHandoffs: new Map(),
-      workflowContext: this._buildInitialWorkflowContext(wf),
+      workflowContext: this._buildInitialWorkflowContext(wf, runtimeOptions.workflowContextPatch),
       heartbeatTimer: null,
       inboxItems: [],
       chatMessages: [],
@@ -4235,6 +4403,7 @@ class SwarmEngine {
       codexPromptRetryCounts: new Map(),
       lastFallback: null,
       totalTurns: 0,
+      packMetadata: runtimeOptions.packMetadata ? JSON.parse(JSON.stringify(runtimeOptions.packMetadata)) : null,
     };
 
     // 3. Store BEFORE spawning (so _spawnAgentPty can look it up)
@@ -4725,12 +4894,16 @@ class SwarmEngine {
           // HITL token detection in PTY output (mirrors stream-json detection)
           if (execution.workflowDef.settings?.mode === 'hitl' && currentState.status === 'running') {
             const cleanChunkForHitl = chunkForParser.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '');
-            const hitlMatch = cleanChunkForHitl.match(/__HITL__:(\{[^}]*\})/);
+            const hitlMatch = cleanChunkForHitl.match(/__HITL__:(\{.*\})\s*$/m);
             if (hitlMatch) {
               let question = 'Human input required';
+              let options = null;
               try {
                 const parsed = JSON.parse(hitlMatch[1]);
                 if (parsed.question) question = parsed.question;
+                if (Array.isArray(parsed.options) && parsed.options.length > 0) {
+                  options = parsed.options.map(String);
+                }
               } catch { /* use default */ }
 
               const nodeLabel = execution.workflowDef.nodes.find(n => n.id === nodeId)?.data?.label || nodeId;
@@ -4741,6 +4914,7 @@ class SwarmEngine {
                 message: `[${nodeLabel}] ${question}`,
                 sourceNodeId: nodeId,
                 timestamp: Date.now(),
+                ...(options ? { options } : {}),
               });
               if (this._chatExtractor) {
                 this._chatExtractor.systemMessage(executionId, nodeId, `HITL: Agent paused — "${question}"`);
@@ -6106,8 +6280,8 @@ class SwarmEngine {
     let rawTextBeforeCanonical = state._streamJsonAccumulatedText ?? '';
     if (resultEvt.resultText) {
       rawTextBeforeCanonical = (state._streamJsonAccumulatedText || resultEvt.resultText) ?? '';
-      const rawAccumulated = (state._streamJsonAccumulatedText ?? '').replace(/__HANDOFF__[\s\S]*/g, '').replace(/__DONE__/g, '').replace(/__HITL__:\{[^}]*\}/g, '').trimEnd();
-      const rawResult = (resultEvt.resultText ?? '').replace(/__HANDOFF__[\s\S]*/g, '').replace(/__DONE__/g, '').replace(/__HITL__:\{[^}]*\}/g, '').trimEnd();
+      const rawAccumulated = (state._streamJsonAccumulatedText ?? '').replace(/__HANDOFF__[\s\S]*/g, '').replace(/__DONE__/g, '').replace(/__HITL__:\{.*\}$/gm, '').trimEnd();
+      const rawResult = (resultEvt.resultText ?? '').replace(/__HANDOFF__[\s\S]*/g, '').replace(/__DONE__/g, '').replace(/__HITL__:\{.*\}$/gm, '').trimEnd();
       // Prefer accumulated text if it has significantly more newlines (markdown formatting)
       const accNewlines = (rawAccumulated.match(/\n/g) || []).length;
       const resNewlines = (rawResult.match(/\n/g) || []).length;
@@ -6165,14 +6339,18 @@ class SwarmEngine {
     if (!gracefulStopPending) {
       const accumulatedText = rawTextBeforeCanonical || (state._streamJsonAccumulatedText ?? '');
 
-      // HITL token detection: __HITL__:{"question":"..."} — must check before handoff/done
+      // HITL token detection: __HITL__:{"question":"...","options":[...]} — must check before handoff/done
       if (execution.workflowDef.settings?.mode === 'hitl') {
-        const hitlMatch = accumulatedText.match(/__HITL__:(\{[^}]*\})/);
+        const hitlMatch = accumulatedText.match(/__HITL__:(\{.*\})\s*$/m);
         if (hitlMatch) {
           let question = 'Human input required';
+          let options = null;
           try {
             const parsed = JSON.parse(hitlMatch[1]);
             if (parsed.question) question = parsed.question;
+            if (Array.isArray(parsed.options) && parsed.options.length > 0) {
+              options = parsed.options.map(String);
+            }
           } catch { /* use default question */ }
 
           const nodeLabel = execution.workflowDef.nodes.find(n => n.id === nodeId)?.data?.label || nodeId;
@@ -6183,6 +6361,7 @@ class SwarmEngine {
             message: `[${nodeLabel}] ${question}`,
             sourceNodeId: nodeId,
             timestamp: Date.now(),
+            ...(options ? { options } : {}),
           });
 
           if (this._chatExtractor) {
@@ -6366,7 +6545,11 @@ class SwarmEngine {
       }
 
       if (options.execution?.workflowDef?.settings?.mode === 'hitl') {
-        lines.push('HITL MODE: When you need human input or approval, emit on its own line: __HITL__:{"question":"your request"}');
+        lines.push('HITL MODE: When you need human input or approval, emit on its own line:');
+        lines.push('__HITL__:{"question":"your request"}');
+        lines.push('To offer multiple-choice options the human can pick from, add an "options" array:');
+        lines.push('__HITL__:{"question":"Which database?","options":["PostgreSQL","MySQL","SQLite"]}');
+        lines.push('The human can select one or more options and add free-text notes. "options" is optional — omit it for open-ended questions.');
         lines.push('The workflow pauses until the human responds.');
       }
 
@@ -6400,6 +6583,26 @@ class SwarmEngine {
       }
       if (workflowContext.workflowDescription) {
         lines.push(`Workflow goal: ${workflowContext.workflowDescription}`);
+      }
+      lines.push('');
+    }
+
+    const packKnowledge = workflowContext.packKnowledge && typeof workflowContext.packKnowledge === 'object'
+      ? workflowContext.packKnowledge
+      : null;
+    if ((visibility === 'full' || visibility === 'minimal') && packKnowledge && Object.keys(packKnowledge).length > 0) {
+      lines.push('=== PACK KNOWLEDGE / CONTEXT ===');
+      lines.push(JSON.stringify(packKnowledge, null, 2));
+      lines.push('');
+    }
+
+    const packBehaviorDirectives = Array.isArray(workflowContext.packBehaviorDirectives)
+      ? workflowContext.packBehaviorDirectives
+      : [];
+    if (packBehaviorDirectives.length > 0) {
+      lines.push('=== PACK BEHAVIOR RULES ===');
+      for (const rule of packBehaviorDirectives) {
+        lines.push(`- ${rule.name || rule.id}: ${rule.instruction}`);
       }
       lines.push('');
     }
@@ -6450,6 +6653,10 @@ class SwarmEngine {
       lines.push('=== HITL (Human-in-the-Loop) ===');
       lines.push('You are running in HITL mode. When you need human input, feedback, a decision, or approval, emit on its own line:');
       lines.push('__HITL__:{"question":"your question or request for the human"}');
+      lines.push('To offer multiple-choice options the human can pick from, add an "options" array:');
+      lines.push('__HITL__:{"question":"Which approach?","options":["Option A","Option B","Option C"]}');
+      lines.push('The human can select one or more options and optionally add free-text notes.');
+      lines.push('"options" is optional — omit it for open-ended questions. Keep options concise (3-6 recommended).');
       lines.push('The workflow will pause and present your question to the human operator.');
       lines.push('After the human responds, you will receive their answer and can continue your work.');
       lines.push('Only use __HITL__ when you genuinely need human input — not for status updates.');
@@ -7600,6 +7807,37 @@ class SwarmEngine {
       }
     }
 
+    // V13.2 SAFETY NET: After the target loop, check if this source node has
+    // outgoing edges to fan-in targets whose barriers were NOT incremented during
+    // this handoff round. This catches cases where _resolveHandoffFanOutTargets
+    // corrected the target but the barrier was still missed (e.g. flow-control
+    // nodes in between, or async interleaving edge cases).
+    const graphOutgoingTargets = this._getOutgoingTargets(execution.workflowDef, sourceNodeId);
+    for (const graphTargetId of graphOutgoingTargets) {
+      if (targetIds.includes(graphTargetId)) continue; // already processed in the loop above
+      const barrier = execution.agentInputBarriers?.get(graphTargetId);
+      if (!barrier || barrier.received.has(sourceNodeId)) continue;
+      barrier.received.add(sourceNodeId);
+      const targetState = execution.agentStates.get(graphTargetId);
+      if (barrier.received.size >= barrier.required) {
+        execution.agentInputBarriers.delete(graphTargetId);
+        if (targetState && targetState.status === 'waiting') {
+          console.warn(
+            `[SwarmEngine] V13.2 safety-net: barrier for "${graphTargetId}" satisfied via `
+            + `missed source "${sourceNodeId}" — activating downstream`
+          );
+          targetState.status = 'running';
+          this._broadcastAgentStatus(executionId, graphTargetId, targetState);
+          this._ensureAgentPty(executionId, graphTargetId).catch((err) => {
+            console.error(`[SwarmEngine] safety-net _ensureAgentPty error for ${graphTargetId}:`, err);
+          });
+        }
+      } else if (targetState) {
+        targetState.lastOutputSnippet = `Waiting for upstream inputs ${barrier.received.size}/${barrier.required}`;
+        this._broadcastAgentStatus(executionId, graphTargetId, targetState);
+      }
+    }
+
     if (sourceState) {
       sourceState.status = 'done';
       sourceState.runtimeBlocker = null;
@@ -7743,7 +7981,8 @@ class SwarmEngine {
 
     // [STREAM-JSON-MIGRATION] PTY listener teardown stays here; stream-json
     // child cleanup is handled separately in the spawn-mode-specific branch.
-    for (const [, state] of execution.agentStates) {
+    const streamJsonKillPromises = [];
+    for (const [nodeId, state] of execution.agentStates) {
       if (state.sessionId && state.tapFn) {
         const session = this._sessionManager.getSession(state.sessionId);
         if (session) {
@@ -7775,15 +8014,18 @@ class SwarmEngine {
         const child = state._streamJsonChild;
         state._streamJsonChild = null;
         if (child.pid && !child.killed) {
-          treeKill(child.pid, 'SIGTERM', (err) => {
-            if (err) console.warn(`[SwarmEngine] tree-kill stream-json warning: ${err.message}`);
-          });
+          streamJsonKillPromises.push(this._killProcessTree(child.pid, nodeId, 'stream-json'));
         }
       }
       if (this._isCodexSdkAgentState(state) && state._codexSdkAbortController && !state._codexSdkAbortController.signal.aborted) {
         state._pendingCodexSdkStopMode = 'forced';
         state._codexSdkAbortController.abort();
       }
+    }
+
+    // Await all stream-json process kills in parallel before proceeding
+    if (streamJsonKillPromises.length > 0) {
+      await Promise.allSettled(streamJsonKillPromises);
     }
 
     for (const childExecutionId of childExecutionIds) {
@@ -8019,6 +8261,19 @@ class SwarmEngine {
       this._refreshAgentSnippet(state, { preferSessionReplay: state.status !== 'running' });
     }
 
+    const packRun = e.packMetadata
+      ? {
+          ...JSON.parse(JSON.stringify(e.packMetadata)),
+          status: e.status,
+          visibleSteps: buildVisibleStepStatuses({
+            id: e.packMetadata.packId,
+            packVersion: e.packMetadata.packVersion,
+            visibleSteps: e.packMetadata.visibleSteps ?? [],
+          }, e),
+          blocker: e.runtimeBlocker ? this._serializeRuntimeBlocker(e.runtimeBlocker) : null,
+        }
+      : null;
+
     return {
       executionId: e.executionId,
       workflowId: e.workflowId,
@@ -8036,6 +8291,7 @@ class SwarmEngine {
       chatMessages: (e.chatMessages ?? []).map((msg) => ({ ...msg })),
       workflowContext: e.workflowContext ? { ...e.workflowContext } : {},
       totalTurns: e.totalTurns ?? 0,
+      ...(packRun ? { packRun } : {}),
       ...(e.runtimeBlocker ? { runtimeBlocker: this._serializeRuntimeBlocker(e.runtimeBlocker) } : {}),
     };
   }

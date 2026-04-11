@@ -3,12 +3,13 @@ import {
   EdgeLabelRenderer,
   MarkerType,
   Position,
-  getSmoothStepPath,
+  getBezierPath,
+  useInternalNode,
 } from '@xyflow/react';
 import { useSwarmStore } from '../../store/SwarmContext';
+import { getFloatingEdgeParams } from './floatingEdgeUtils';
 
 const ROUTE_RADIUS = 16;
-const ROUTE_OFFSET = 30;
 const SLOT_SIDE_PADDING = 34;
 const SLOT_MAX_SPAN = 124;
 const CORRIDOR_OFFSET = 22;
@@ -163,11 +164,15 @@ function getFeedbackPath({
 // type: "handoff"
 export default function HandoffEdge({
   id,
+  source,
+  target,
   sourceX, sourceY, targetX, targetY,
   sourcePosition, targetPosition,
   markerEnd,
   data,
 }) {
+  const sourceNode = useInternalNode(source);
+  const targetNode = useInternalNode(target);
   const counter = useSwarmStore((s) => s.edgeCounters[id] ?? 0);
   const isActive = counter > 0;
   const isSelected = Boolean(data?.selected);
@@ -207,26 +212,26 @@ export default function HandoffEdge({
     && Boolean(data?.preferCorridorRouting);
 
   const strokeColor = isFeedbackEdge
-    ? (isSelected ? '#cbd5e1' : isActive ? '#93c5fd' : '#475569')
+    ? (isSelected ? '#cbd5e1' : isActive ? '#93c5fd' : '#64748b')
     : isSelected
       ? '#f8fafc'
       : isActive
         ? '#60a5fa'
-        : '#64748b';
-  const passiveOpacity = isFeedbackEdge ? 0.18 : 0.88;
+        : '#93c5fd';
+  const passiveOpacity = isFeedbackEdge ? 0.35 : 1;
   const contextOpacity = isFeedbackEdge
-    ? (isContextHighlighted ? 0.78 : nodeSelectionActive ? 0.1 : passiveOpacity)
-    : (isContextHighlighted ? 0.96 : nodeSelectionActive ? 0.16 : passiveOpacity);
+    ? (isContextHighlighted ? 0.85 : nodeSelectionActive ? 0.18 : passiveOpacity)
+    : (isContextHighlighted ? 1 : nodeSelectionActive ? 0.3 : passiveOpacity);
   const dimmedOpacity = selectionActive && !isSelected
-    ? 0.16
+    ? 0.25
     : hasFocusedSelection
       ? contextOpacity
       : passiveOpacity;
   const showFeedbackRail = !isFeedbackEdge || isContextHighlighted || isActive;
   const resolvedMarkerEnd = markerEnd ?? {
     type: MarkerType.Arrow,
-    width: isSelected ? 15 : isFeedbackEdge ? 11 : 14,
-    height: isSelected ? 15 : isFeedbackEdge ? 11 : 14,
+    width: isSelected ? 16 : isFeedbackEdge ? 12 : 15,
+    height: isSelected ? 16 : isFeedbackEdge ? 12 : 15,
     color: strokeColor,
   };
 
@@ -245,29 +250,24 @@ export default function HandoffEdge({
       sourceLaneIndex: data?.sourceLaneIndex ?? 0,
       sourceLaneCount: data?.sourceLaneCount ?? 1,
     });
-  } else if (usesCorridorRouting) {
-    [edgePath, labelX, labelY] = getCorridorPath({
-      sourceX,
-      sourceY,
-      targetX,
-      targetY,
-      sourceOffsetX,
-      targetOffsetX,
-      corridorLift,
-      sourceLaneOffsetY,
-      targetLaneOffsetY,
+  } else if (sourceNode && targetNode) {
+    const fp = getFloatingEdgeParams(sourceNode, targetNode);
+    [edgePath, labelX, labelY] = getBezierPath({
+      sourceX: fp.sx,
+      sourceY: fp.sy,
+      sourcePosition: fp.sourcePos,
+      targetX: fp.tx,
+      targetY: fp.ty,
+      targetPosition: fp.targetPos,
     });
   } else {
-    [edgePath, labelX, labelY] = getSmoothStepPath({
+    [edgePath, labelX, labelY] = getBezierPath({
       sourceX: sourceX + sourceOffsetX,
       sourceY,
       sourcePosition,
       targetX: targetX + targetOffsetX,
       targetY,
       targetPosition,
-      borderRadius: ROUTE_RADIUS,
-      offset: ROUTE_OFFSET,
-      stepPosition: 0.2,
     });
   }
 
@@ -289,25 +289,25 @@ export default function HandoffEdge({
           path={edgePath}
           style={{
             stroke: selectionActive && !isSelected
-              ? 'rgba(15, 23, 42, 0.22)'
+              ? 'rgba(15, 23, 42, 0.35)'
               : isFeedbackEdge
-                ? 'rgba(15, 23, 42, 0.32)'
-                : 'rgba(15, 23, 42, 0.92)',
-            strokeWidth: isFeedbackEdge ? (isSelected ? 4.5 : 3) : isSelected ? 9 : isActive ? 8 : 6,
+                ? 'rgba(30, 41, 59, 0.5)'
+                : 'rgba(30, 41, 59, 0.95)',
+            strokeWidth: isFeedbackEdge ? (isSelected ? 5 : 3.5) : isSelected ? 10 : isActive ? 9 : 7,
             strokeLinecap: 'round',
             strokeLinejoin: 'round',
             opacity: hasFocusedSelection
-              ? (isContextHighlighted ? 0.72 : 0.12)
-              : isFeedbackEdge ? 0.22 : 1,
+              ? (isContextHighlighted ? 0.8 : 0.2)
+              : isFeedbackEdge ? 0.35 : 1,
           }}
         />
       )}
       <BaseEdge
         path={edgePath}
-        markerEnd={isFeedbackEdge && !isContextHighlighted && !isActive ? undefined : resolvedMarkerEnd}
+        markerEnd={resolvedMarkerEnd}
         style={{
           stroke: strokeColor,
-          strokeWidth: isFeedbackEdge ? (isSelected ? 2.2 : 1.4) : isSelected ? 3.8 : isActive ? 3 : 2.1,
+          strokeWidth: isFeedbackEdge ? (isSelected ? 2.4 : 1.6) : isSelected ? 4 : isActive ? 3.2 : 2.5,
           opacity: isSelected ? 1 : dimmedOpacity,
           strokeDasharray: isFeedbackEdge && !isActive ? '6 8' : undefined,
           strokeLinecap: 'round',

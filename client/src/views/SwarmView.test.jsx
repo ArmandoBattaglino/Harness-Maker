@@ -7,7 +7,6 @@ import { resetSwarmStore } from '../test/resetSwarmStore.js';
 import { useInbox } from '../hooks/useInbox.js';
 import { useSwarm } from '../hooks/useSwarm.js';
 import { apiGet } from '../hooks/useApi.js';
-import { getPendingCount } from '../panels/HitlInbox';
 import { useCanvasValidation } from '../hooks/useCanvasValidation.js';
 
 const workflowListMock = {
@@ -19,6 +18,9 @@ const workflowListMock = {
 
 const emptyValidation = {
   errors: [],
+  globalIssues: [],
+  agentIssuesByNodeId: {},
+  blockingIssues: [],
 };
 
 const useSwarmMockValue = {
@@ -62,10 +64,6 @@ vi.mock('../panels/WorkflowArtifactPanel', () => ({
   default: () => null,
 }));
 
-vi.mock('../panels/HitlInbox', () => ({
-  getPendingCount: vi.fn(() => 0),
-}));
-
 vi.mock('../hooks/useSwarm.js', () => ({
   useSwarm: vi.fn(),
 }));
@@ -103,7 +101,6 @@ describe('SwarmView runtime shell contracts', () => {
   beforeEach(() => {
     resetSwarmStore();
     vi.mocked(useInbox).mockReset();
-    vi.mocked(getPendingCount).mockReturnValue(0);
     vi.mocked(useCanvasValidation).mockReturnValue(emptyValidation);
     workflowListMock.refresh.mockReset();
     useSwarmMockValue.startExecution.mockReset();
@@ -166,8 +163,8 @@ describe('SwarmView runtime shell contracts', () => {
     expect(screen.getByRole('button', { name: 'Stop' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Reset Session' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Pause' })).not.toBeInTheDocument();
-    expect(screen.getByText('Provider: Claude')).toBeInTheDocument();
-    expect(screen.getByText('Auto fallback')).toBeInTheDocument();
+    expect(screen.getByTitle('Choose the provider strategy for the next run')).toHaveValue('auto');
+    expect(screen.getAllByText('Claude').length).toBeGreaterThan(0);
   });
 
   it('keeps structured session controls visible for completed executions with reusable sessions', async () => {
@@ -233,7 +230,7 @@ describe('SwarmView runtime shell contracts', () => {
 
     expect(useSwarmStore.getState().selectedRuntimeProvider).toBe('codex');
     expect(screen.getByTitle('Choose the provider strategy for the next run')).toHaveValue('codex');
-    expect(screen.getByText('Provider: Codex')).toBeInTheDocument();
+    expect(screen.getAllByText('Codex').length).toBeGreaterThan(0);
   });
 
   it('shows PTY pause/stop controls during an active PTY run', async () => {
@@ -301,17 +298,61 @@ describe('SwarmView runtime shell contracts', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Provider requires authentication/i)).toBeInTheDocument();
-      expect(screen.getByText(/Provider: gemini\./i)).toBeInTheDocument();
+      expect(screen.getByText(/Gemini error/i)).toBeInTheDocument();
       expect(screen.getByText(/Runtime fallback: claude to codex because quota\./i)).toBeInTheDocument();
     });
   });
 
-  it('disables Run and shows validation plus HITL state when operator blockers exist', async () => {
-    vi.mocked(getPendingCount).mockReturnValue(2);
+  it('disables Run for global blockers and keeps agent warnings out of the top summary', async () => {
     vi.mocked(useCanvasValidation).mockReturnValue({
       errors: [
-        { severity: 'error', message: 'Triage node missing' },
-        { severity: 'warning', message: 'One node has no label' },
+        {
+          id: 'workflow:no-start-node',
+          scope: 'global',
+          severity: 'error',
+          summary: 'No start node',
+          detail: 'No start node — mark one or more agents as Start Node, or keep at least one root agent with no incoming edges.',
+          message: 'No start node — mark one or more agents as Start Node, or keep at least one root agent with no incoming edges.',
+        },
+        {
+          id: 'agent:node-a:empty-system-prompt',
+          scope: 'agent',
+          nodeId: 'node-a',
+          severity: 'warning',
+          summary: 'Empty system prompt',
+          detail: 'Agent A has an empty system prompt. Add guidance so the agent knows what to do.',
+          message: 'Agent A has an empty system prompt. Add guidance so the agent knows what to do.',
+        },
+      ],
+      globalIssues: [
+        {
+          id: 'workflow:no-start-node',
+          scope: 'global',
+          severity: 'error',
+          summary: 'No start node',
+          detail: 'No start node — mark one or more agents as Start Node, or keep at least one root agent with no incoming edges.',
+        },
+      ],
+      agentIssuesByNodeId: {
+        'node-a': [
+          {
+            id: 'agent:node-a:empty-system-prompt',
+            scope: 'agent',
+            nodeId: 'node-a',
+            severity: 'warning',
+            summary: 'Empty system prompt',
+            detail: 'Agent A has an empty system prompt. Add guidance so the agent knows what to do.',
+          },
+        ],
+      },
+      blockingIssues: [
+        {
+          id: 'workflow:no-start-node',
+          scope: 'global',
+          severity: 'error',
+          summary: 'No start node',
+          detail: 'No start node — mark one or more agents as Start Node, or keep at least one root agent with no incoming edges.',
+        },
       ],
     });
 
@@ -319,23 +360,21 @@ describe('SwarmView runtime shell contracts', () => {
       workflowDef: {
         id: 'workflow-validation',
         name: 'Workflow Validation',
-        nodes: [],
+        nodes: [{ id: 'node-a', type: 'agent', data: { label: 'Agent A' } }],
         edges: [],
       },
       executionStatus: 'idle',
-      inboxItems: [{ id: 'hitl-1' }, { id: 'hitl-2' }],
     });
 
     render(<SwarmView />);
 
     await waitFor(() => {
-      expect(screen.getByText(/Validation \(2\):/i)).toBeInTheDocument();
+      expect(screen.getByText(/workflow issue needs attention\./i)).toBeInTheDocument();
     });
 
     const runButton = screen.getByRole('button', { name: 'Run' });
     expect(runButton).toBeDisabled();
-    expect(screen.getByRole('button', { name: /HITL \(2\)/i })).toBeInTheDocument();
-    expect(screen.getByText(/Triage node missing/i)).toBeInTheDocument();
-    expect(screen.getByText(/One node has no label/i)).toBeInTheDocument();
+    expect(screen.getByText('No start node')).toBeInTheDocument();
+    expect(screen.queryByText(/empty system prompt/i)).not.toBeInTheDocument();
   });
 });

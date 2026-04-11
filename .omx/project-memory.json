@@ -1,0 +1,9 @@
+{
+  "directives": [
+    {
+      "directive": "For future Ralph implementation tasks, always run a targeted Playwright test/smoke that exercises the user-visible behavior affected by the changes, in addition to unit/integration tests, before declaring completion.",
+      "priority": "high",
+      "timestamp": "2026-04-11T14:57:22.835Z"
+    }
+  ]
+}

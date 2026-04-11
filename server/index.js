@@ -17,6 +17,7 @@ import { WebSocketServer } from 'ws';
 import { discoverClaudeBinary, discoverCodexBinary, discoverGeminiBinary } from './services/BinaryDiscovery.js';
 import { ConfigStore } from './services/ConfigStore.js';
 import { WorkflowStore } from './services/WorkflowStore.js';
+import PackStore from './stores/PackStore.js';
 import { ProcessRegistry } from './services/ProcessRegistry.js';
 import SwarmEngine from './services/SwarmEngine.js';
 import CircuitBreaker from './services/CircuitBreaker.js';
@@ -33,6 +34,7 @@ import skillsRouter from './routes/skills.js';
 import claudemdRouter from './routes/claudemd.js';
 import jobsRouter from './routes/jobs.js';
 import workflowsRouter from './routes/workflows.js';
+import packsRouter from './routes/packs.js';
 import swarmRoutes from './routes/swarm.js';
 import inboxRoutes from './routes/inbox.js';
 import triggersRouter from './routes/triggers.js';
@@ -187,9 +189,14 @@ async function startup() {
     await workflowStore.init();
     app.locals.workflowStore = workflowStore;
     console.log(`[startup] Workflow store: ${ConfigStore.CONFIG_DIR}/workflows`);
+
+    const packStore = new PackStore(ConfigStore.CONFIG_DIR, workflowStore);
+    await packStore.init();
+    app.locals.packStore = packStore;
+    console.log(`[startup] Pack store: ${ConfigStore.CONFIG_DIR}/packs`);
   } catch (err) {
     // Non-fatal — log and continue; workflows feature degrades gracefully
-    console.error(`[WARN] WorkflowStore init error: ${err.message}`);
+    console.error(`[WARN] WorkflowStore/PackStore init error: ${err.message}`);
   }
 
   // Security (Helmet + CSP)
@@ -246,6 +253,7 @@ async function startup() {
 
   // Workflow routes
   app.use('/api/v1/workflows', workflowsRouter);
+  app.use('/api/v1/packs', packsRouter);
 
   // -------------------------------------------------------------------------
   // 7. Instantiate SwarmEngine + mount swarm/inbox/trigger routes
@@ -264,6 +272,7 @@ async function startup() {
     console.error(`[swarm] ExecutionHistoryStore init error: ${err.message}`);
   });
   swarmEngine.setExecutionHistoryStore(executionHistoryStore);
+  app.locals.executionHistoryStore = executionHistoryStore;
   app.locals.sessionManager = sessionManager;
   app.locals.codexBin = codexBin;
   app.locals.geminiBin = geminiBin;

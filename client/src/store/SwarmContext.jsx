@@ -45,6 +45,7 @@ import { create } from 'zustand';
 
 const buildClearedExecutionState = () => ({
   activeExecutionId: null,
+  _hardResetExecutionId: null,
   executionStatus: 'idle',
   runtimeBlocker: null,
   runtimeProvider: null,
@@ -61,12 +62,17 @@ const buildClearedExecutionState = () => ({
   resolvedHitlIds: [],
   interAgentFeed: [],
   chatMessages: [],
+  packRun: null,
+  packResult: null,
   chatFilter: 'all',
   sidePanelMode: 'chat',
   sidePanelOpen: true,
   focusedDepartmentId: null,
   departmentStack: [],
   selectedNodeId: null,
+  expandedOutputNodeId: null,
+  expandedValidationNodeId: null,
+  agentValidationIssuesByNodeId: {},
   ptyExplosionNodeId: null,
   wsConnected: false,
 });
@@ -81,7 +87,7 @@ const useSwarmStore = create((set, get) => ({
   lastFallback: null,
   /** @type {Record<string, SwarmAgentState>} */
   agentStates: {},
-  agentResults: {},        // { [nodeId]: { finalText, handoffPayloads, viewed, updatedAt } }
+  agentResults: {},        // { [nodeId]: { finalText, outputEntries?, handoffPayloads, viewed, updatedAt } }
   triggerStates: {},       // { [triggerId]: { fired, lastFiredAt, status } }
   edgeCounters: {},        // { [edgeId]: number }
   budget: { estimatedTokensUsed: 0, limitTokens: 0 },
@@ -89,6 +95,8 @@ const useSwarmStore = create((set, get) => ({
   resolvedHitlIds: [],     // IDs of resolved HITL items (survives component remount)
   interAgentFeed: [],      // last 100 handoff events
   chatMessages: [],          // Unified chat view messages
+  packRun: null,             // additive pack runtime metadata for pack-launched executions
+  packResult: null,          // pack-shaped outputs/artifacts from status/results hydration
   chatFilter: 'all',         // 'all' or specific nodeId
   sidePanelMode: 'chat',     // 'feed' | 'chat' — which panel is shown
 
@@ -99,6 +107,15 @@ const useSwarmStore = create((set, get) => ({
   // Selected node (for AgentInspector panel)
   selectedNodeId: null,
   sidePanelOpen: true,
+
+  // Expanded output card — which agent's floating output card is open on canvas
+  expandedOutputNodeId: null,
+
+  // Expanded validation card — which agent's floating validation card is open on canvas
+  expandedValidationNodeId: null,
+
+  // Agent-scoped validation issues keyed by nodeId for local node UI
+  agentValidationIssuesByNodeId: {},
 
   // PTY Explosion — node whose terminal is shown full-screen
   ptyExplosionNodeId: null,
@@ -237,6 +254,17 @@ const useSwarmStore = create((set, get) => ({
   setResumed: () => set({ executionStatus: 'running' }),
 
   setSelectedNode: (id) => set({ selectedNodeId: id }),
+  setExpandedOutputNodeId: (id) => set((state) => ({
+    expandedOutputNodeId: state.expandedOutputNodeId === id ? null : id,
+    expandedValidationNodeId: state.expandedOutputNodeId === id ? state.expandedValidationNodeId : null,
+  })),
+  setExpandedValidationNodeId: (id) => set((state) => ({
+    expandedValidationNodeId: state.expandedValidationNodeId === id ? null : id,
+    expandedOutputNodeId: state.expandedValidationNodeId === id ? state.expandedOutputNodeId : null,
+  })),
+  setAgentValidationIssuesByNodeId: (issuesByNodeId) => set({
+    agentValidationIssuesByNodeId: issuesByNodeId || {},
+  }),
   setPtyExplosionNodeId: (id) => set({ ptyExplosionNodeId: id }),
   setWsConnected: (b) => set({ wsConnected: b }),
 
@@ -265,7 +293,7 @@ const useSwarmStore = create((set, get) => ({
   // --- agentResults actions ---
 
   appendAgentChatText: (nodeId, text) => set((state) => {
-    const prev = state.agentResults[nodeId] || { finalText: '', handoffPayloads: [], viewed: false, updatedAt: null };
+    const prev = state.agentResults[nodeId] || { finalText: '', outputEntries: [], handoffPayloads: [], viewed: false, updatedAt: null };
     const separator = '';
     return {
       agentResults: {
@@ -281,7 +309,7 @@ const useSwarmStore = create((set, get) => ({
   }),
 
   replaceAgentChatText: (nodeId, text) => set((state) => {
-    const prev = state.agentResults[nodeId] || { finalText: '', handoffPayloads: [], viewed: false, updatedAt: null };
+    const prev = state.agentResults[nodeId] || { finalText: '', outputEntries: [], handoffPayloads: [], viewed: false, updatedAt: null };
     return {
       agentResults: {
         ...state.agentResults,
@@ -296,7 +324,7 @@ const useSwarmStore = create((set, get) => ({
   }),
 
   setAgentHandoffPayload: (nodeId, target, payload) => set((state) => {
-    const prev = state.agentResults[nodeId] || { finalText: '', handoffPayloads: [], viewed: false, updatedAt: null };
+    const prev = state.agentResults[nodeId] || { finalText: '', outputEntries: [], handoffPayloads: [], viewed: false, updatedAt: null };
     return {
       agentResults: {
         ...state.agentResults,
@@ -325,8 +353,19 @@ const useSwarmStore = create((set, get) => ({
     for (const nodeId of Object.keys(agentOutputs)) {
       const ao = agentOutputs[nodeId];
       const existing = state.agentResults[nodeId];
+      const serverText = String(ao.finalText ?? '').trim();
+      const clientText = String(existing?.finalText ?? '').trim();
+      // Keep the client-accumulated finalText when it is substantially longer
+      // than the server's version. The server's _resolveAgentFinalText scoring
+      // can pick a truncated snippet; the WS canonical handler has the full text.
+      const keepClientText = clientText.length > 0
+        && serverText.length > 0
+        && clientText.length > serverText.length * 2;
       agentResults[nodeId] = {
-        finalText: ao.finalText,
+        finalText: keepClientText ? clientText : (serverText || clientText),
+        outputEntries: Array.isArray(ao.outputEntries)
+          ? ao.outputEntries.map((entry) => ({ ...entry }))
+          : (existing?.outputEntries ?? []),
         handoffPayloads: ao.handoffPayloads || [],
         viewed: existing?.viewed ?? false,
         updatedAt: Date.now(),
@@ -334,6 +373,11 @@ const useSwarmStore = create((set, get) => ({
     }
     return { agentResults };
   }),
+
+  hydratePackRuntime: ({ packRun, packResult }) => set((state) => ({
+    packRun: packRun === undefined ? state.packRun : packRun,
+    packResult: packResult === undefined ? state.packResult : packResult,
+  })),
 
   clearAgentResults: () => set({ agentResults: {} }),
 
@@ -352,6 +396,15 @@ const useSwarmStore = create((set, get) => ({
       interAgentFeed: prev.interAgentFeed,
       chatFilter: prev.chatFilter,
       sidePanelMode: prev.chatMessages.length > 0 ? 'chat' : prev.sidePanelMode,
+    });
+  },
+
+  hardReset: () => {
+    const prevExecId = get().activeExecutionId;
+    try { window.localStorage.removeItem('swarm-active-execution'); } catch { /* ignore */ }
+    return set({
+      ...buildClearedExecutionState(),
+      _hardResetExecutionId: prevExecId,
     });
   },
 }));

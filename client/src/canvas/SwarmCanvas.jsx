@@ -7,6 +7,7 @@ import {
   Controls,
   MiniMap,
   ConnectionLineType,
+  ConnectionMode,
   MarkerType,
   useNodesState,
   useEdgesState,
@@ -25,13 +26,16 @@ import LoopNode from './nodes/LoopNode';
 import ErrorHandlerNode from './nodes/ErrorHandlerNode';
 import SubWorkflowNode from './nodes/SubWorkflowNode';
 import HandoffEdge from './edges/HandoffEdge';
+import FloatingConnectionLine from './edges/FloatingConnectionLine';
 import AgentInspector from './AgentInspector';
-import AgentOutputPanel from '../panels/AgentOutputPanel';
+// AgentOutputPanel moved inline to NodeOutputCard (floating card on agent node)
 import BreadcrumbBar from './BreadcrumbBar';
 import InterAgentFeed from './InterAgentFeed';
 import ChatPanel from './ChatPanel';
 import ContextMenu from './ContextMenu';
+import CanvasActionsContext from './CanvasActionsContext';
 import NodePalette from './NodePalette';
+import { applyExpandedOutputLayering } from './outputLayering';
 import { useSwarmStore } from '../store/SwarmContext';
 import { useCanvasHistory } from '../hooks/useCanvasHistory';
 import { generateNodeId } from '../utils/nodeIdGenerator';
@@ -67,7 +71,7 @@ const GRID_SIZE = 20;
 const DROP_PREVIEW_ID = '__palette-drop-preview__';
 const DROP_PREVIEW_CLEAR_MS = 120;
 const DEFAULT_NODE_DIMENSIONS = {
-  agent: { width: 190, height: 96 },
+  agent: { width: 190, height: 180 },
   trigger: { width: 170, height: 88 },
   conditional: { width: 140, height: 140 },
   merge: { width: 150, height: 90 },
@@ -438,7 +442,7 @@ function tidyWorkflowLayout(nodes, edges) {
   const maxWidth = Math.max(...layoutableNodes.map((node) => getNodeDimensions(node).width));
   const maxHeight = Math.max(...layoutableNodes.map((node) => getNodeDimensions(node).height));
   const horizontalGap = Math.max(260, maxWidth + 90);
-  const verticalGap = Math.max(170, maxHeight + 70);
+  const verticalGap = Math.max(220, maxHeight + 70);
   const nextPositions = new Map();
   const globalCenterY = medianValue(
     layoutableNodes.map((node) => node.position.y),
@@ -461,6 +465,23 @@ function tidyWorkflowLayout(nodes, edges) {
       });
     });
 
+  const MIN_NODE_GAP = 40;
+  for (const [, columnNodes] of columns.entries()) {
+    const sorted = [...columnNodes].sort(
+      (a, b) => (nextPositions.get(a.id)?.y ?? 0) - (nextPositions.get(b.id)?.y ?? 0)
+    );
+    for (let i = 1; i < sorted.length; i += 1) {
+      const prevPos = nextPositions.get(sorted[i - 1].id);
+      const currPos = nextPositions.get(sorted[i].id);
+      if (!prevPos || !currPos) continue;
+      const prevHeight = getNodeDimensions(sorted[i - 1]).height;
+      const minY = prevPos.y + prevHeight + MIN_NODE_GAP;
+      if (currPos.y < minY) {
+        currPos.y = snapGridValue(minY);
+      }
+    }
+  }
+
   return nodes.map((node) => {
     const nextPosition = nextPositions.get(node.id);
     if (!nextPosition) return node;
@@ -476,8 +497,9 @@ export default function SwarmCanvas({
   markDirty,
   onCanvasChange,
   layoutNonce = 0,
-  focusConnections = true,
+  workflowProps,
 }) {
+  const focusConnections = true;
   const { fitView, screenToFlowPosition } = useReactFlow();
   const focusedDepartmentId = useSwarmStore((s) => s.focusedDepartmentId);
   const setSelectedNode = useSwarmStore((s) => s.setSelectedNode);
@@ -486,8 +508,7 @@ export default function SwarmCanvas({
   const sidePanelOpen = useSwarmStore((s) => s.sidePanelOpen);
   const setSidePanelOpen = useSwarmStore((s) => s.setSidePanelOpen);
   const selectedNodeId = useSwarmStore((s) => s.selectedNodeId);
-  const agentResults = useSwarmStore((s) => s.agentResults);
-  const [outputPanelNodeId, setOutputPanelNodeId] = useState(null);
+  const expandedOutputNodeId = useSwarmStore((s) => s.expandedOutputNodeId);
   // Keep the activity rail available even before the first message so the
   // chat/feed empty states remain visible across idle, reload, and reset.
   const showSidePanels = sidePanelOpen;
@@ -590,12 +611,14 @@ export default function SwarmCanvas({
   );
 
   const renderedNodes = useMemo(() => {
+    const layeredNodes = applyExpandedOutputLayering(visibleNodes, expandedOutputNodeId);
+
     if (!dropPreviewNode) {
-      return visibleNodes;
+      return layeredNodes;
     }
 
-    return [...visibleNodes, dropPreviewNode];
-  }, [visibleNodes, dropPreviewNode]);
+    return [...layeredNodes, dropPreviewNode];
+  }, [visibleNodes, expandedOutputNodeId, dropPreviewNode]);
 
   const visibleEdges = useMemo(
     () => edges.filter((e) => visibleNodeIds.has(e.source) && visibleNodeIds.has(e.target)),
@@ -686,16 +709,10 @@ export default function SwarmCanvas({
   const onNodeClick = useCallback(
     (event, node) => {
       setSelectedEdgeId(null);
-      const hasOutput = agentResults[node.id]?.finalText;
-      if (node.type === 'agent' && hasOutput) {
-        setOutputPanelNodeId(node.id);
-        setSelectedNode(null);
-      } else {
-        setOutputPanelNodeId(null);
-        setSelectedNode(node.id);
-      }
+      useSwarmStore.setState({ expandedOutputNodeId: null, expandedValidationNodeId: null });
+      setSelectedNode(node.id);
     },
-    [setSelectedNode, agentResults]
+    [setSelectedNode]
   );
 
   const onPaneClick = useCallback(
@@ -703,7 +720,7 @@ export default function SwarmCanvas({
       clearDropPreview();
       setSelectedEdgeId(null);
       setSelectedNode(null);
-      setOutputPanelNodeId(null);
+      useSwarmStore.setState({ expandedOutputNodeId: null, expandedValidationNodeId: null });
     },
     [clearDropPreview, setSelectedNode]
   );
@@ -711,6 +728,7 @@ export default function SwarmCanvas({
   const onEdgeClick = useCallback(
     (event, edge) => {
       event?.stopPropagation?.();
+      useSwarmStore.setState({ expandedOutputNodeId: null, expandedValidationNodeId: null });
       setSelectedNode(null);
       setSelectedEdgeId(edge.id);
     },
@@ -909,6 +927,21 @@ export default function SwarmCanvas({
     [screenToFlowPosition, nodes, edges, pushHistory, setNodes]
   );
 
+  const setExpandedOutputNodeId = useSwarmStore((s) => s.setExpandedOutputNodeId);
+  const setExpandedValidationNodeId = useSwarmStore((s) => s.setExpandedValidationNodeId);
+  const canvasActions = useMemo(() => ({
+    onViewOutput: (nodeId) => {
+      setExpandedOutputNodeId(nodeId);
+    },
+    onEdit: (nodeId) => {
+      setExpandedOutputNodeId(null);
+      setExpandedValidationNodeId(null);
+      setSelectedNode(nodeId);
+    },
+    onDuplicate: (nodeId) => duplicateNode(nodeId),
+    onDelete: (nodeId) => deleteNode(nodeId),
+  }), [setSelectedNode, setExpandedOutputNodeId, setExpandedValidationNodeId, duplicateNode, deleteNode]);
+
   // Build context menu actions based on type
   const contextMenuActions = useMemo(() => {
     if (!contextMenu) return [];
@@ -923,7 +956,15 @@ export default function SwarmCanvas({
     }
     if (contextMenu.type === 'node') {
       return [
-        { label: 'Edit', icon: '\u270F\uFE0F', onClick: () => setSelectedNode(contextMenu.nodeId) },
+        {
+          label: 'Edit',
+          icon: '\u270F\uFE0F',
+          onClick: () => {
+            setExpandedOutputNodeId(null);
+            setExpandedValidationNodeId(null);
+            setSelectedNode(contextMenu.nodeId);
+          },
+        },
         { label: 'Duplicate', icon: '\uD83D\uDCC4', onClick: () => duplicateNode(contextMenu.nodeId) },
         { label: 'Copy', icon: '\uD83D\uDCCB', onClick: () => copyNode(contextMenu.nodeId) },
         { label: 'Delete', icon: '\uD83D\uDDD1\uFE0F', onClick: () => deleteNode(contextMenu.nodeId) },
@@ -935,7 +976,7 @@ export default function SwarmCanvas({
       ];
     }
     return [];
-  }, [contextMenu, addNodeAtPosition, pasteNode, setSelectedNode, duplicateNode, copyNode, deleteNode, deleteEdge, setNodes]);
+  }, [contextMenu, addNodeAtPosition, pasteNode, setSelectedNode, setExpandedOutputNodeId, setExpandedValidationNodeId, duplicateNode, copyNode, deleteNode, deleteEdge, setNodes]);
 
   const handleUpdateNode = useCallback(
     (nodeId, patch) => {
@@ -998,10 +1039,11 @@ export default function SwarmCanvas({
   }, [clearDropPreview]);
 
   return (
+    <CanvasActionsContext.Provider value={canvasActions}>
     <div className="flex h-full min-h-0 min-w-0 w-full flex-col overflow-hidden">
       <BreadcrumbBar nodes={nodes} />
       <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
-        <NodePalette />
+        <NodePalette workflowProps={workflowProps} />
         <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
           <ReactFlow
             nodes={renderedNodes}
@@ -1027,13 +1069,10 @@ export default function SwarmCanvas({
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             defaultEdgeOptions={defaultEdgeOptions}
-            connectionLineType={ConnectionLineType.SmoothStep}
-            connectionLineStyle={{
-              stroke: '#93c5fd',
-              strokeWidth: 2.5,
-              strokeDasharray: '8 6',
-            }}
+            connectionMode={ConnectionMode.Loose}
+            connectionLineComponent={FloatingConnectionLine}
             defaultMarkerColor="#64748b"
+            minZoom={0.1}
             fitView
             className="h-full w-full"
           >
@@ -1104,21 +1143,11 @@ export default function SwarmCanvas({
             </div>
           </div>
         )}
-        {outputPanelNodeId ? (
-          <AgentOutputPanel
-            nodeId={outputPanelNodeId}
-            nodeLabel={nodes.find((n) => n.id === outputPanelNodeId)?.data?.label || 'Agent'}
-            onClose={() => setOutputPanelNodeId(null)}
-            onSwitchToInspector={() => {
-              const nid = outputPanelNodeId;
-              setOutputPanelNodeId(null);
-              setSelectedNode(nid);
-            }}
-          />
-        ) : showInspector ? (
+        {showInspector && (
           <AgentInspector nodes={nodes} onUpdateNode={handleUpdateNode} />
-        ) : null}
+        )}
       </div>
     </div>
+    </CanvasActionsContext.Provider>
   );
 }

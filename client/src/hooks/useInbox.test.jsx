@@ -51,6 +51,7 @@ describe('useInbox client contracts', () => {
           agentId: 'node-a',
           status: 'pending',
           payload: '',
+          options: null,
         },
       ]);
       expect(consoleErrorSpy).toHaveBeenCalled();
@@ -101,6 +102,7 @@ describe('useInbox client contracts', () => {
           agentId: 'node-a',
           status: 'pending',
           payload: 'continue',
+          options: null,
         },
         {
           id: 'flat-2',
@@ -108,6 +110,7 @@ describe('useInbox client contracts', () => {
           agentId: 'node-b',
           status: 'pending',
           payload: 'resume me',
+          options: null,
         },
       ]);
     });
@@ -228,6 +231,7 @@ describe('useInbox client contracts', () => {
         agentId: 'node-a',
         status: 'pending',
         payload: '',
+        options: null,
       },
     ]);
     expect(consoleErrorSpy).toHaveBeenCalledWith('[useInbox] approve failed:', 500, 'Server Error');
@@ -310,6 +314,7 @@ describe('useInbox client contracts', () => {
         agentId: 'node-b',
         status: 'pending',
         payload: '',
+        options: null,
       },
     ]);
     expect(consoleErrorSpy).toHaveBeenCalledWith('[useInbox] reject failed:', 409, 'Conflict');

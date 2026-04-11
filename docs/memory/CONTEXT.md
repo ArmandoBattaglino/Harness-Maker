@@ -1,8 +1,73 @@
 ﻿# Current Context
-**Session date:** 2026-04-10
-**Focus:** **V12.0 FAN-IN WORKFLOW FIX — CLOSED.** V11.0 AGENT INTELLIGENCE REENGINEERING — CLOSED. V11.1 REPETITIVE HANDOFF LOOP DETECTION — CLOSED. All implementation committed to git on 2026-04-10. Baseline: **513/513** server tests; client build **507** modules.
+**Session date:** 2026-04-11
+**Focus:** **V17.8.1 CODE REVIEW FOLLOW-UP - CLOSED/PASS.** Closed the post-`fd40908` review findings: stale fixture publish evidence after pack updates, import rollback delete failure visibility, PackLibrary selected-pack error reset, and `saveFixtureResult()` source hardening.
 
-**IMMEDIATE NEXT STEP:** Three active areas remain in `docs/TASK_PLAN.md`: V12.1 Canvas Node Overlap Fix (#536-#539, only checkpoint #539 PENDING), V11.4 Output Panel Rendering Parity (#540-#544, IN PROGRESS), V11.3 HITL Runtime Trigger (#521-#527, all PENDING), and V11.2 Cost & Token Detail Visibility (#517-#520, all PENDING). Close V12.1 first (run checkpoint), then pick from V11.2/V11.3/V11.4.
+**IMMEDIATE NEXT STEP:** No V17.8.1 code follow-up remains after Lore commit/push; branch is ready for review/merge.
+
+## V17.8.1 Code Review Follow-up (2026-04-11)
+
+**Status:** CLOSED / VERIFIED.
+
+**Deliverables:**
+- Closed the post-`fd40908` HIGH finding by invalidating fixture `lastResult` on `PackStore.update()` and requiring publish-time freshness/provenance against the current pack (`source`, `packId`, `packVersion`, valid `ranAt >= pack.updatedAt`, non-empty passed assertions).
+- Hardened `saveFixtureResult()` so runner results require a result object, force `source: fixture-runner`, and receive server-side `ranAt` when missing.
+- `importBundle()` now records rollback failure metadata when compensating workflow deletion returns `false` or throws, while preserving the original import error.
+- PackLibrary clears stale launch errors when the selected pack changes.
+
+**Verification:**
+- Targeted server pack suites: **44/44 PASS**.
+- Targeted PackLibrary suite: **4/4 PASS**.
+- Full server suite: **647/647 PASS**.
+- Full client suite: **77/77 PASS**.
+- Client build: **520 modules PASS**, no Vite chunk-size warning.
+- Targeted Playwright smoke: **PASS** (`npm run test:playwright:v17-review-followup`).
+- `git diff --check`: **PASS**.
+- Runtime diagnostics: **0 errors** on changed runtime files (`tsc skipped: no tsconfig found` caveat). Architect verification: **APPROVED**. Code review verification: **APPROVE**.
+
+---
+
+## V17.8 Code Review Fixes (2026-04-11)
+
+**Status:** CLOSED / VERIFIED.
+
+**Deliverables:**
+- Pack import now rolls back a newly-created workflow if pack creation/validation fails after workflow import.
+- Fixture assertions are type-specific and fail closed (`statusEquals`, `outputIncludes`, `artifactExists`), including persisted malformed assertions during runner/publish flows, missing artifact selector wildcard regressions, and forged/stale `lastResult` publish bypasses.
+- PackLibrary launch failures show inline operator errors, prevent duplicate start clicks while launching, and clear stale pack runtime hydration on failed start.
+- `PackStore.saveInstall()` rejects invalid/traversal install IDs with structured `400` before writing.
+- Pack delete semantics are explicit: hard delete local pack definition, version snapshots, and fixtures while preserving install provenance records.
+- Pack versions/publish routes now preserve known `statusCode` errors.
+- Removed the temporary Vite `chunkSizeWarningLimit`; build remains warning-free.
+
+**Verification:**
+- Targeted server pack suites: **38/38 PASS**.
+- Targeted PackLibrary suite: **3/3 PASS**.
+- Full server suite: **641/641 PASS**.
+- Full client suite: **76/76 PASS**.
+- Client build: **520 modules PASS**, no Vite chunk-size warning.
+- Targeted Playwright smoke: **PASS** (`npm run test:playwright:v17-review-followup`).
+- `git diff --check`: **PASS**.
+
+---
+
+## Active Threads
+
+## V17 Contract Notes
+- The four product-critical authoring surfaces are:
+  1. input schema
+  2. knowledge/context injection
+  3. prompt/behavior rules
+  4. output schema + artifacts
+- Pack/harness is authoritative for those four surfaces plus lifecycle/distribution.
+- Workflow remains authoritative for graph topology/orchestration and advanced technical drill-down.
+- Runtime precedence is explicit: project binding -> input validation -> workflow base context -> pack knowledge overlays -> pack behavior rules -> swarm execution -> output/artifact validation.
+
+---
+# Current Context
+**Session date:** 2026-04-10
+**Focus:** **V17.8.1 CODE REVIEW FOLLOW-UP - CLOSED/PASS.** Closed the post-`fd40908` review findings: stale fixture publish evidence after pack updates, import rollback delete failure visibility, PackLibrary selected-pack error reset, and `saveFixtureResult()` source hardening.
+
+**IMMEDIATE NEXT STEP:** No V17.8.1 code follow-up remains after Lore commit/push; branch is ready for review/merge.
 
 **V9.1 dependency wave map:**
   Wave 9.1: #400 (SDK contract spike) -> #401 (adapter foundation) -> #402 (SwarmEngine codex-sdk runtime) -> #403 (backend TEST GATE) + #404 (frontend contract) IN PARALLEL -> #405 (AREA CHECKPOINT)
@@ -72,7 +137,7 @@ Security assessment completed 2026-03-27. Seven mandatory requirements must appe
 ---
 ## Update 2026-03-27 â€” V3 Phase 1 Backend Foundation COMPLETE
 
-**Focus:** V3 Swarm Orchestrator â€” Phase 1 Backend Foundation ALL DONE (11/57 tasks).
+**Focus:** **V17.8.1 CODE REVIEW FOLLOW-UP - CLOSED/PASS.** Closed the post-`fd40908` review findings: stale fixture publish evidence after pack updates, import rollback delete failure visibility, PackLibrary selected-pack error reset, and `saveFixtureResult()` source hardening.
 
 **Completed (Phase 1 â€” all 11 tasks):**
 #43, #44, #45, #46.1, #46.2, #46.3, #47.1, #47.2, #48.1, #48.2, #49 â€” 132/132 tests pass throughout.
@@ -188,3 +253,4 @@ NEXT AFTER CURRENT WAVE:
 **Blocking V3 start:** TASK #41 is COMPLETED. All V2 tasks done. V3 can begin immediately.
 
 **First wave (Phase 1):** #43, #45 can run in parallel (WorkflowStore + HandoffParser have no deps on each other). #46 waits for #43+#45. #47 waits for #46. #48 waits for #46. #49 waits for #46.
+

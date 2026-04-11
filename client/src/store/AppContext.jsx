@@ -9,6 +9,8 @@ const VALID_VIEWS = new Set([
   'deployments',
   'context',
   'swarm',
+  'pack-builder',
+  'packs',
 ]);
 
 function readPersistedActiveProjectId() {
@@ -36,7 +38,7 @@ const initialState = {
   sessions: {}, // { [projectId]: { sessionId, status, pid } }
   activeProjectId: null,
   projectsHydrated: false,
-  view: 'projects', // 'projects' | 'terminal' | 'jobs' | 'deployments' | 'context' | 'swarm'
+  view: 'projects', // 'projects' | 'terminal' | 'jobs' | 'deployments' | 'context' | 'swarm' | 'pack-builder' | 'packs'
 };
 
 // --- Reducer ---
