@@ -21837,9 +21837,9 @@ Dependencies: TASK #608
 ---
 
 ## AREA: V17.0 — Pack Platform Program Foundation
-_Components: design docs, compatibility rules, checkpoint model, V17 dependency map_
+_Components: design docs, compatibility rules, authority model, precedence matrix, checkpoint model, V17 dependency map_
 _Tasks: #610 -> #616_
-_Gate: The pack program must be described in repo-native artifacts before implementation starts; names, checkpoints, and compatibility rules must be explicit and stable enough that later areas do not invent them ad hoc._
+_Gate: The pack program must be described in repo-native artifacts before implementation starts; names, checkpoints, compatibility rules, pack/workflow authority, and runtime precedence must be explicit and stable enough that later areas do not invent them ad hoc._
 _Source: User-approved pack platform roadmap based on harness/pack strategy discussion (2026-04-11)._
 
 ---
@@ -21849,7 +21849,7 @@ Area: V17.0 — Pack Platform Program Foundation
 Agent: architect
 Priority: CRITICAL
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Create `docs/PACK_PLATFORM_DESIGN.md` as the technical source of truth for the V17.x
   program.
@@ -21864,18 +21864,19 @@ Context:
   `PackDefinition`, `PackVersion`, `PackRun`, `PackInstall`, `PackFixture`,
   `PackDependency`, `PackRuntimePolicy`.
 Acceptance Criteria:
-  - [ ] `docs/PACK_PLATFORM_DESIGN.md` exists
-  - [ ] The document defines the workflow-vs-pack model explicitly
-  - [ ] Canonical nouns and their purpose are listed in one place
-  - [ ] The document is written for implementation handoff, not as marketing copy
+  - [x] `docs/PACK_PLATFORM_DESIGN.md` exists
+  - [x] The document defines the workflow-vs-pack model explicitly
+  - [x] Canonical nouns and their purpose are listed in one place
+  - [x] The document is written for implementation handoff, not as marketing copy
 Dependencies: none
+Verdict: COMPLETED — 2026-04-11. The design doc now reframes the pack platform as the implementation bridge toward a vertical harness builder, expands canonical nouns with `KnowledgeSource` and `BehaviorRule`, and ties the glossary back to the four harness-authoring surfaces from the approved PRD/deep-interview artifacts.
 
 TASK #611: PACK-PROGRAM-02 — Lock backward-compatibility and migration guardrails
 Area: V17.0 — Pack Platform Program Foundation
 Agent: architect
 Priority: CRITICAL
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Define the non-negotiable compatibility rules before any server or client work starts.
   Inspect:
@@ -21888,18 +21889,19 @@ Context:
   The rules must protect existing workflow CRUD, existing workflow execution entrypoints,
   and the current Swarm canvas as the builder/debug surface while packs are added.
 Acceptance Criteria:
-  - [ ] Existing workflow CRUD is declared additive-only and preserved
-  - [ ] Existing workflow start/status/results routes are listed as unchanged in v1
-  - [ ] The document states that packs wrap workflow execution rather than replace it
-  - [ ] The document states v1 uses exactly one workflow per pack
+  - [x] Existing workflow CRUD is declared additive-only and preserved
+  - [x] Existing workflow start/status/results routes are listed as unchanged in v1
+  - [x] The document states that packs wrap workflow execution rather than replace it
+  - [x] The document states v1 uses exactly one workflow per pack
 Dependencies: TASK #610
+Verdict: COMPLETED — 2026-04-11. `docs/PACK_PLATFORM_DESIGN.md` now locks additive compatibility, preserves workflow CRUD/runtime entrypoints, retains the Swarm canvas as the advanced builder/debug surface, and keeps the one-workflow-per-pack V17 constraint explicit.
 
 TASK #612: PACK-PROGRAM-03 — Produce V17 component ownership and touchpoint inventory
 Area: V17.0 — Pack Platform Program Foundation
 Agent: architect
 Priority: HIGH
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Map where each V17 concern lives so later tasks know which layer owns what.
   Inspect:
@@ -21915,18 +21917,19 @@ Context:
   The inventory must separate domain/persistence, API, runtime, client state,
   builder surfaces, and operator surfaces.
 Acceptance Criteria:
-  - [ ] The design doc names the primary server touchpoints
-  - [ ] The design doc names the primary client touchpoints
-  - [ ] New planned modules are listed separately from existing touched files
-  - [ ] Each major subsystem has a clear owner layer
+  - [x] The design doc names the primary server touchpoints
+  - [x] The design doc names the primary client touchpoints
+  - [x] New planned modules are listed separately from existing touched files
+  - [x] Each major subsystem has a clear owner layer
 Dependencies: TASK #610
+Verdict: COMPLETED — 2026-04-11. The design doc now inventories runtime/store/client touchpoints plus explicit pack-aware execution-history and builder↔workflow drill-down seams so later phases know where ownership changes land.
 
 TASK #613: PACK-PROGRAM-04 — Define checkpoint framework and task packet template
 Area: V17.0 — Pack Platform Program Foundation
 Agent: project-manager
 Priority: HIGH
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Standardize how every V17 task will be written and verified.
   Inspect:
@@ -21939,18 +21942,19 @@ Context:
   structure: goal, files to inspect, expected modifications, checkpoints, tests,
   manual smoke, dependencies.
 Acceptance Criteria:
-  - [ ] Checkpoints CK-A through CK-G are defined in the design doc
-  - [ ] Task packet structure is documented
-  - [ ] The V17 tasks in TASK_PLAN follow the new packet style
-  - [ ] No later area is allowed to omit tests or manual smoke intent
+  - [x] Checkpoints CK-A through CK-G are defined in the design doc
+  - [x] Task packet structure is documented
+  - [x] The V17 tasks in TASK_PLAN follow the new packet style
+  - [x] No later area is allowed to omit tests or manual smoke intent
 Dependencies: TASK #610, TASK #611, TASK #612
+Verdict: COMPLETED — 2026-04-11. The design doc now requires each V17 task packet to name the harness-authoring surface(s) it advances, and the task plan remains on the packet-style structure with checkpoints, tests, and manual smoke intent.
 
 TASK #614: PACK-PROGRAM-05 — Register V17.x area map and dependency waves
 Area: V17.0 — Pack Platform Program Foundation
 Agent: project-manager
 Priority: HIGH
 Difficulty: MEDIUM
-Status: PENDING
+Status: COMPLETED
 Context:
   Add the V17.x program to `docs/TASK_PLAN.md` in the same style as the rest of the repo.
   Inspect:
@@ -21961,17 +21965,18 @@ Context:
   Register the area headers, task numbering, gates, and the dependency ordering:
   V17.0 -> V17.1 -> V17.2 -> V17.3 -> V17.4 -> V17.5 -> V17.6 -> V17.7.
 Acceptance Criteria:
-  - [ ] V17 area headers exist in TASK_PLAN
-  - [ ] Task numbering is contiguous after #609
-  - [ ] Each area has a gate statement and source/context line
-  - [ ] Dependency order is explicit in the tasks themselves
+  - [x] V17 area headers exist in TASK_PLAN
+  - [x] Task numbering is contiguous after #609
+  - [x] Each area has a gate statement and source/context line
+  - [x] Dependency order is explicit in the tasks themselves
 Dependencies: TASK #613
+Verdict: COMPLETED — 2026-04-11. The V17.0–V17.7 program remains contiguous after #609 and is now additionally aligned with the harness-builder reframing and the explicit authority/precedence contract in the design doc.
 
 TASK #615: REVIEW GATE — V17.0 planning consistency review
 Area: V17.0 — Pack Platform Program Foundation
 Agent: documenter
 Priority: HIGH
-Status: PENDING
+Status: PASS
 Context:
   Review the newly added V17 planning artifacts for internal consistency.
   Inspect:
@@ -21982,24 +21987,26 @@ Context:
   Verify that the new program language does not contradict current repo terminology
   and that future implementation tasks have one canonical reference.
 Acceptance Criteria:
-  - [ ] Design doc and TASK_PLAN use the same noun set
-  - [ ] Existing workflow terminology is preserved where still true
-  - [ ] No contradictory route/module names remain in the new V17 sections
-  - [ ] Documentation drift risks are identified before coding starts
+  - [x] Design doc and TASK_PLAN use the same noun set
+  - [x] Existing workflow terminology is preserved where still true
+  - [x] No contradictory route/module names remain in the new V17 sections
+  - [x] Documentation drift risks are identified before coding starts
 Dependencies: TASK #610, TASK #611, TASK #612, TASK #613, TASK #614
+Verdict: PASS — 2026-04-11. Review confirms pack/harness terminology is now aligned around the harness-builder bridge, the workflow substrate remains preserved, and the design doc explicitly covers authority/precedence gaps before code implementation starts.
 
 TASK #616: AREA CHECKPOINT — V17.0 closeout
 Area: V17.0 — Pack Platform Program Foundation
 Agent: project-manager
 Priority: HIGH
-Status: PENDING
+Status: PASS
 Acceptance Criteria:
-  - [ ] TASKS #610-#614 COMPLETED
-  - [ ] REVIEW GATE #615 PASS
-  - [ ] `docs/memory/PROGRESS.md` synced if touched
-  - [ ] `docs/memory/CONTEXT.md` synced if touched
-  - [ ] `docs/memory/ACTIVITY_LOG.md` synced if touched
+  - [x] TASKS #610-#614 COMPLETED
+  - [x] REVIEW GATE #615 PASS
+  - [x] `docs/memory/PROGRESS.md` synced if touched
+  - [x] `docs/memory/CONTEXT.md` synced if touched
+  - [x] `docs/memory/ACTIVITY_LOG.md` synced if touched
 Dependencies: TASK #615
+Verdict: PASS — 2026-04-11. V17.0 is closed with the design/program contract updated to include the harness-builder framing, explicit authority model, runtime precedence matrix, and the identified documentation drift risks.
 
 ---
 
@@ -22196,9 +22203,9 @@ Dependencies: TASK #624
 ---
 
 ## AREA: V17.2 — Pack Contract Layer
-_Components: JSON Schema contracts, Ajv validation, runtimePolicy, dependencies, visibleSteps, completionCriteria_
+_Components: JSON Schema contracts, Ajv validation, runtimePolicy, dependencies, knowledgeSources, behaviorRules, visibleSteps, completionCriteria_
 _Tasks: #626 -> #634_
-_Gate: Packs must declare and validate their product contract before runtime or UI assumes anything about inputs, outputs, artifacts, or visibility._
+_Gate: Packs must declare and validate their product contract before runtime or UI assumes anything about inputs, knowledge/context injection, behavior rules, outputs, artifacts, or visibility._
 
 ---
 
@@ -22270,7 +22277,7 @@ Acceptance Criteria:
   - [ ] Invalid artifact formats fail validation
 Dependencies: TASK #626
 
-TASK #629: PACK-CONTRACT-04 — Define runtimePolicy and dependency manifest
+TASK #629: PACK-CONTRACT-04 — Define runtimePolicy, knowledgeSources, behaviorRules, and dependency manifest
 Area: V17.2 — Pack Contract Layer
 Agent: backend-dev
 Priority: HIGH
@@ -22285,16 +22292,20 @@ Context:
   Modify:
     - pack schema/type helper
     - validation helper
-  Runtime policy must stay declarative. Dependency manifest must support at least:
+  Runtime policy must stay declarative. Knowledge/context injection and prompt/behavior rules
+  must become explicit contract-bearing fields rather than hidden workflow-only state.
+  Dependency manifest must support at least:
   `workflow`, `agent`, `skill`, `contextOverlay`. Only workflow is mandatory in v1.
 Acceptance Criteria:
   - [ ] runtimePolicy shape is defined in code
+  - [ ] `knowledgeSources` shape is defined in code
+  - [ ] `behaviorRules` shape is defined in code
   - [ ] dependency manifest shape is defined in code
   - [ ] `engineCompatibility` is validated with semver semantics
   - [ ] Missing required workflow dependency fails validation
 Dependencies: TASK #626
 
-TASK #630: PACK-CONTRACT-05 — Define visibleSteps and completionCriteria
+TASK #630: PACK-CONTRACT-05 — Define visibleSteps, completionCriteria, and precedence rules
 Area: V17.2 — Pack Contract Layer
 Agent: backend-dev
 Priority: HIGH
@@ -22310,11 +22321,14 @@ Context:
     - validation helper
   visibleSteps must be able to map multiple workflow nodes into one operator-facing
   phase. completionCriteria must define what "good enough to finish/publish" means.
+  This task must also lock the precedence rules between workflow base context,
+  pack knowledge/context overlays, and pack behavior rules before runtime work starts.
 Acceptance Criteria:
   - [ ] visibleSteps shape is defined in code
   - [ ] visibleSteps can reference one or more workflow nodes
   - [ ] completionCriteria exists on the pack contract
   - [ ] Invalid visible step node references fail validation
+  - [ ] Precedence/merge rules are documented in code or validation comments
 Dependencies: TASK #627, TASK #628, TASK #629
 
 TASK #631: PACK-CONTRACT-06 — Enforce contract validation in PackStore and routes
@@ -22390,9 +22404,9 @@ Dependencies: TASK #633
 ---
 
 ## AREA: V17.3 — Pack-Aware Runtime Wrapper
-_Components: PackResolver, pack start route, SwarmEngine pack context, visible-step tracking, pack result assembly, client hydration_
+_Components: PackResolver, pack start route, SwarmEngine pack context, visible-step tracking, pack result assembly, pack-aware history/restoration, client hydration_
 _Tasks: #635 -> #644_
-_Gate: Pack runs must execute through the existing Swarm engine with additive metadata and zero regression to workflow-only execution._
+_Gate: Pack runs must execute through the existing Swarm engine with additive metadata and zero regression to workflow-only execution, history/restoration, and project binding._
 
 ---
 
@@ -22455,8 +22469,11 @@ Context:
     - current execution snapshot serialization in the engine
   Modify:
     - `server/services/SwarmEngine.js`
+    - `server/stores/ExecutionHistoryStore.js` if additive history metadata is needed
   Additive fields must include pack identity, version, pack input, visible steps,
-  artifact status, declared outputs, and pack run status.
+  artifact status, declared outputs, and pack run status. Pack-aware execution must persist
+  enough metadata for later pack-first restoration and operator monitoring without breaking
+  workflow-only history semantics.
 Acceptance Criteria:
   - [ ] Engine execution records can hold pack metadata
   - [ ] Status snapshots serialize pack metadata additively
@@ -22569,13 +22586,14 @@ Context:
   Modify:
     - `client/src/store/SwarmContext.jsx`
     - `client/src/hooks/useSwarm.js`
-  Hydration must preserve pack metadata, visible steps, artifact status, and pack-facing
-  result data while remaining safe for old workflow executions.
+  Hydration must preserve pack metadata, pack version, visible steps, artifact status,
+  pack-facing result data, and project-binding context while remaining safe for old
+  workflow executions.
 Acceptance Criteria:
   - [ ] Pack-aware snapshots hydrate into the existing store cleanly
   - [ ] Old workflow-only snapshots still hydrate correctly
   - [ ] Client selectors can read pack run state without duplicating raw engine state
-  - [ ] Pack status/result fields survive reconnect and REST refill paths
+  - [ ] Pack status/result plus pack identity/version fields survive reconnect and REST refill paths
 Dependencies: TASK #637, TASK #639, TASK #640
 
 TASK #643: TEST GATE — V17.3 pack runtime wrapper
@@ -22607,9 +22625,9 @@ Dependencies: TASK #643
 ---
 
 ## AREA: V17.4 — Pack Builder Authoring Platform
-_Components: builder shell, pack metadata editor, schema editors, dependency editor, visible-step mapper, publish lifecycle, preview_
+_Components: builder shell, pack metadata editor, schema editors, knowledge/context editor, behavior-rule editor, dependency editor, visible-step mapper, publish lifecycle, preview, workflow drill-down_
 _Tasks: #645 -> #653_
-_Gate: Technical users must be able to author a full pack from an existing workflow without using ad hoc JSON editing or inventing hidden runtime assumptions._
+_Gate: Technical users must be able to author a full pack from an existing workflow without using ad hoc JSON editing or inventing hidden runtime assumptions, while retaining explicit drill-down access to workflow internals._
 
 ---
 
@@ -22718,9 +22736,13 @@ Context:
   Modify:
     - builder editor components
   The UI must remain builder-grade: explicit provider rules, dependency list, and
-  warnings when required references are missing.
+  warnings when required references are missing. This editor surface must also expose
+  explicit knowledge/context injection and behavior-rule editing instead of hiding them
+  inside generic runtime-policy controls.
 Acceptance Criteria:
   - [ ] Builder can edit runtime policy fields
+  - [ ] Builder can edit knowledge/context injection fields
+  - [ ] Builder can edit behavior-rule fields
   - [ ] Builder can add/remove dependency entries
   - [ ] Missing required dependencies are surfaced in the UI
   - [ ] Policy editing does not mutate unrelated overview/contract fields
@@ -22802,9 +22824,9 @@ Dependencies: TASK #652
 ---
 
 ## AREA: V17.5 — Pack Operator Product Surface
-_Components: pack-first navigation, pack library, pack detail, generated run form, run monitor, advanced debug drawer_
+_Components: pack-first navigation, pack library, pack detail, generated run form, run monitor, advanced debug drawer, explicit project binding_
 _Tasks: #654 -> #661_
-_Gate: Operators must be able to discover, start, and observe a pack without needing the workflow graph, while builders still retain access to debug internals._
+_Gate: Operators must be able to discover, start, and observe a pack without needing the workflow graph, while builders still retain access to debug internals and pack launches still resolve `projectId` / `projectPath` explicitly._
 
 ---
 
@@ -22869,12 +22891,15 @@ Context:
   Modify:
     - `client/src/views/PackRunView.jsx`
     - any shared form/render helpers needed
-  The form must support all v1 field types and mirror server validation closely.
+  The form must support all v1 field types, mirror server validation closely, and make
+  the required project binding explicit so operators do not need to open the Swarm graph
+  just to satisfy the runtime contract.
 Acceptance Criteria:
   - [ ] Run form renders from inputSchema
   - [ ] Required field validation exists client-side
   - [ ] Payload shape matches the pack start route
   - [ ] Sensitive or structured fields are not rendered as raw uncontrolled text dumps
+  - [ ] Project binding (`projectId`, `projectPath`) is resolved explicitly in the pack-first UX
 Dependencies: TASK #655
 
 TASK #657: PACK-OPERATOR-04 — Build pack run monitor with phase timeline and artifacts

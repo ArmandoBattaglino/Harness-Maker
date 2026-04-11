@@ -6,12 +6,12 @@
 
 ## 1. Purpose
 
-This document defines the target architecture for evolving the current workflow-first Swarm system into a pack-aware platform.
+This document defines the target architecture for evolving the current workflow-first Swarm system into a pack-aware platform that acts as the implementation bridge toward a **vertical harness builder**.
 
-The goal is not to replace workflows. The goal is to introduce a second product-level object that can be authored, validated, executed, and distributed on top of the existing runtime:
+The goal is not to replace workflows. The goal is to introduce a second product-level object that can be authored, validated, executed, and distributed on top of the existing runtime while shifting the product from a generic flow builder toward guided harness authoring:
 
 - `Workflow` = internal orchestration asset
-- `Pack` = distributable product asset
+- `Pack` = product-level harness wrapper and distributable product asset
 - `PackRun` = execution instance of a pack
 
 ## 2. Current State
@@ -47,6 +47,12 @@ The V17.x program must make the following true:
 4. Operator-facing surfaces can run and observe packs without requiring the Swarm canvas.
 5. Packs can be exported, imported, installed, forked, and version-pinned locally.
 6. Published packs have reproducible fixture-based quality gates.
+7. The product must move toward a **guided harness-authoring toolkit** where domain experts get explicit control over:
+   - input schema
+   - knowledge/context injection
+   - prompt/behavior rules
+   - output schema and final artifacts
+8. The current workflow editor remains reachable as the advanced technical drill-down surface instead of being hidden completely.
 
 ## 4. Non-Goals For V1
 
@@ -78,6 +84,8 @@ Required v1 fields:
 - `runtimePolicy`
 - `dependencies`
 - `inputSchema`
+- `knowledgeSources`
+- `behaviorRules`
 - `outputSchema`
 - `artifactDefinitions`
 - `visibleSteps`
@@ -108,6 +116,14 @@ Declarative runtime configuration for a pack. This is not UI-only metadata.
 ### PackDependency
 
 Manifest entry for workflow, agent, skill, or context overlay used by a pack.
+
+### KnowledgeSource
+
+Declarative description of how domain knowledge or contextual overlays enter a pack run. Examples include structured overlays, reusable context bundles, and runtime-selected context references. This is a first-class harness-authoring surface, not an implicit workflow-only concern.
+
+### BehaviorRule
+
+Declarative rule that shapes how the harness should behave at runtime above the underlying workflow defaults. Examples include prompt directives, tone/format constraints, escalation rules, or guardrail instructions. This is a first-class harness-authoring surface, not a hidden node-only setting.
 
 ## 6. Required Public Contracts
 
@@ -142,6 +158,15 @@ Chosen defaults:
 - semver for `engineCompatibility`
 - JSZip for local bundle export/import
 
+### Pack Authoring Surfaces
+
+The following four surfaces are the product-critical harness-authoring surfaces for V17 and must be explicitly traceable through domain, contract, runtime, builder, and operator layers:
+
+1. `inputSchema`
+2. `knowledgeSources` / knowledge-context injection
+3. `behaviorRules` / prompt-behavior directives
+4. `outputSchema` + `artifactDefinitions`
+
 ## 7. Compatibility Rules
 
 These rules are binding for the V17.x program:
@@ -152,8 +177,49 @@ These rules are binding for the V17.x program:
 4. Pack execution wraps existing Swarm execution instead of replacing it.
 5. V1 pack wraps exactly one primary workflow.
 6. Builder and operator are separate surfaces over the same engine state.
+7. Pack-facing authoring surfaces must not silently compete with workflow internals.
+8. Advanced users must retain drill-down access to the underlying workflow.
 
-## 8. Component Touchpoints
+## 8. Authoring Authority Model
+
+V17 must avoid two silent sources of truth.
+
+### Pack / harness is authoritative for
+
+- input schema
+- knowledge/context injection (`knowledgeSources`)
+- prompt / behavior rules (`behaviorRules`)
+- output schema and artifact definitions
+- pack lifecycle, visibility, distribution, and release gates
+
+### Workflow remains authoritative for
+
+- graph topology and node orchestration
+- low-level handoff structure
+- advanced technical execution details edited directly in the workflow builder
+
+### Drill-down contract
+
+- The pack builder is the guided authoring surface for the harness-facing contract.
+- The workflow editor remains the advanced technical drill-down surface.
+- Workflow edits can affect orchestration and execution details, but they must not silently rewrite pack-facing contract fields.
+- Pack contract edits remain authoritative at the pack layer; workflow graph edits remain authoritative at the workflow layer.
+
+## 9. Runtime Precedence Matrix
+
+The merge/apply order for a pack run is locked before runtime implementation begins:
+
+1. Resolve `projectId` and `projectPath` explicitly.
+2. Validate operator-provided input against `inputSchema`.
+3. Load workflow base context and workflow-level defaults.
+4. Apply `knowledgeSources` / pack context overlays above the workflow base context.
+5. Apply `behaviorRules` as pack-scoped runtime behavior directives above workflow defaults.
+6. Execute through the existing Swarm engine with additive pack metadata.
+7. Validate/assemble outputs and artifacts against the pack contract.
+
+Conflicts between pack-level overlays/rules and workflow-level defaults must be surfaced explicitly; they must not be resolved silently.
+
+## 10. Component Touchpoints
 
 ### Domain and persistence
 
@@ -174,6 +240,7 @@ These rules are binding for the V17.x program:
 - [server/services/SwarmEngine.js](/C:/Users/arman/Downloads/Test%20workflows%20-%20Copia/server/services/SwarmEngine.js)
 - `server/services/PackResolver.js` (new)
 - `server/services/PackResultBuilder.js` (new)
+- [server/stores/ExecutionHistoryStore.js](/C:/Users/arman/Downloads/Test%20workflows%20-%20Copia/server/stores/ExecutionHistoryStore.js) with additive pack-aware history metadata
 
 ### Client state and hooks
 
@@ -189,8 +256,9 @@ These rules are binding for the V17.x program:
 - `client/src/views/PackBuilderView.jsx` (new)
 - `client/src/views/PackDetailView.jsx` (new)
 - `client/src/views/PackRunView.jsx` (new)
+- explicit builder↔workflow drill-down affordances and preview/sync rules
 
-## 9. Checkpoint Framework
+## 11. Checkpoint Framework
 
 Every V17 task that changes behavior must explicitly name the checkpoints it is expected to satisfy.
 
@@ -222,7 +290,7 @@ Builder/operator flow is complete and coherent for the intended user.
 
 Touched neighboring contracts continue to pass their existing suites.
 
-## 10. Task Packet Template
+## 12. Task Packet Template
 
 Every V17 task should be written with the following internal structure:
 
@@ -235,7 +303,9 @@ Every V17 task should be written with the following internal structure:
 - Tests to add/update
 - Manual smoke
 
-## 11. V17.x Program Map
+Additionally, every V17 task packet should declare which of the four harness-authoring surfaces it advances or protects.
+
+## 13. V17.x Program Map
 
 ### V17.0
 
@@ -247,19 +317,19 @@ Pack domain foundation: PackDefinition, PackStore, CRUD, versioning, bootstrap, 
 
 ### V17.2
 
-Pack contract layer: schemas, runtime policy, dependencies, visible steps, completion criteria.
+Pack contract layer: schemas, runtime policy, dependencies, visible steps, completion criteria, `knowledgeSources`, `behaviorRules`, and precedence/merge rules.
 
 ### V17.3
 
-Pack-aware runtime: PackResolver, start route, snapshot extension, result assembly, blocker mapping.
+Pack-aware runtime: PackResolver, start route, snapshot extension, result assembly, blocker mapping, pack-aware history/restoration, and explicit operator project binding.
 
 ### V17.4
 
-Builder authoring platform: pack editor shell, overview, schema editors, lifecycle, preview.
+Builder authoring platform: pack editor shell, overview, schema editors, knowledge/context editor, behavior-rule editor, lifecycle, preview, and workflow drill-down.
 
 ### V17.5
 
-Operator surface: library, detail, generated run form, run monitor, debug drawer, pack-first navigation.
+Operator surface: library, detail, generated run form, run monitor, debug drawer, pack-first navigation, and explicit project binding.
 
 ### V17.6
 
@@ -269,7 +339,7 @@ Distribution: bundle format, export/import, install, fork, version pinning, prov
 
 Fixtures and release gates: PackFixture, runner, assertions, publish gate, dry-run.
 
-## 12. Validation And Verification Discipline
+## 14. Validation And Verification Discipline
 
 No area advances unless its own gate is green.
 
@@ -279,13 +349,16 @@ Minimum verification expected per area:
 - store tests where persistence changed
 - route tests where API changed
 - runtime integration tests where execution changed
+- execution-history / restoration tests where pack-aware persistence changed
 - client tests where hydration or rendering changed
 - build pass when client code changed
 - one manual smoke scenario per area
 
-## 13. Defaults Locked For Implementation
+## 15. Defaults Locked For Implementation
 
 - v1 uses one workflow per pack
 - pack builder and operator are separate surfaces
 - legacy workflow routes remain intact
 - design doc + task plan are the authoritative planning artifacts for this program
+- `knowledgeSources` and `behaviorRules` are first-class pack contract surfaces
+- pack and workflow layers must follow the explicit authority model and precedence matrix above

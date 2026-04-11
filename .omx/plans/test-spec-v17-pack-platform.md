@@ -20,6 +20,7 @@ Verification contract for the V17.x program described in `.omx/plans/prd-v17-pac
 - **Checks**
   - `docs/TASK_PLAN.md` V17 sections use terminology consistent with harness-builder intent.
   - `docs/PACK_PLATFORM_DESIGN.md` defines the four authoring surfaces explicitly enough for later areas.
+  - `docs/PACK_PLATFORM_DESIGN.md` defines the pack/workflow authority model and runtime precedence matrix explicitly.
   - The PRD/test-spec/deep-interview artifacts agree on non-goals and decision boundaries.
 - **Evidence**
   - doc diff / review notes
@@ -45,6 +46,7 @@ Verification contract for the V17.x program described in `.omx/plans/prd-v17-pac
   - valid/invalid prompt/behavior rule definitions
   - valid/invalid output schema and artifact definitions
   - engineCompatibility and dependency validation
+  - precedence/merge rule coverage for workflow base context + pack overlays + behavior rules
 - **Integration tests**
   - PackStore rejects invalid contracts
   - pack routes reject malformed payloads with explicit errors
@@ -54,9 +56,12 @@ Verification contract for the V17.x program described in `.omx/plans/prd-v17-pac
 - **Integration tests**
   - pack start route resolves pack → workflow and launches via existing swarm engine
   - pack inputs bind safely into workflow context
+  - pack knowledge/context overlays merge according to the documented precedence rules
+  - pack behavior rules apply according to the documented precedence rules
   - runtime metadata appears in execution snapshot/status/hydration
   - result assembly reflects declared outputs/artifacts
   - blockers/failures map to pack-level states without breaking workflow-only execution
+  - execution history/results persistence carries additive `packId` / `packVersion` metadata without breaking workflow-only history lookups
 - **Regression**
   - existing workflow-only start/status/results tests remain green
   - existing `useSwarm` hydration behavior remains green for non-pack flows
@@ -66,6 +71,8 @@ Verification contract for the V17.x program described in `.omx/plans/prd-v17-pac
   - PackBuilder shell routing and load states
   - overview/workflow-link editor
   - input schema editor
+  - knowledge/context injection editor
+  - behavior-rule editor
   - output/artifact editor
   - runtime/dependency editor
   - visible-step mapper + operator preview
@@ -73,6 +80,7 @@ Verification contract for the V17.x program described in `.omx/plans/prd-v17-pac
 - **Behavior checks**
   - guided editors work without requiring raw JSON editing
   - author can still open/reach underlying workflow details
+  - pack-facing edits and workflow drill-down edits respect the authority model
 - **Regression**
   - existing Swarm builder/editor views still work
   - client build passes
@@ -84,6 +92,7 @@ Verification contract for the V17.x program described in `.omx/plans/prd-v17-pac
   - run monitor timeline / artifact display
   - debug drawer isolation for builder/admin users
   - pack-specific selectors and restoration
+  - explicit project-binding flow in pack-first launch UX
 - **Behavior checks**
   - operator can launch and observe a harness without opening the graph
   - advanced workflow/debug detail remains reachable but not default
@@ -120,11 +129,13 @@ Verification contract for the V17.x program described in `.omx/plans/prd-v17-pac
 - Client test suites covering new builder/operator surfaces
 - Client build pass when V17.4/V17.5 change client code
 - Document review evidence for V17.0 terminology alignment
+- Evidence that the precedence matrix and authority model are enforced rather than only described
 - Final verifier/architect sign-off that legacy workflow behavior remains intact and the harness-first product framing is preserved
 
 ## Failure Conditions
 - Any V17 area advances without explicit coverage of the four authoring surfaces where applicable.
 - Existing workflow routes/runtime regress.
+- Authority/precedence between pack and workflow layers is left implicit.
 - Pack/harness authoring hides workflow internals completely.
 - V17 scope drifts into marketplace or multi-workflow orchestration.
 
