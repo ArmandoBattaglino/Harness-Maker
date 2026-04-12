@@ -112,9 +112,42 @@ describe('WorkflowRunModal direct workflow user flow', () => {
         assetId: expect.stringContaining('pending-run-reference.png'),
         name: 'reference.png',
         mimeType: 'image/png',
+        type: 'image/png',
         size: 11,
         previewUrl: '',
       }),
     });
+  });
+
+  it('rejects oversized image references before submit', () => {
+    const onSubmit = vi.fn();
+    const oversizedPayload = new Uint8Array((5 * 1024 * 1024) + 1);
+    render(
+      <WorkflowRunModal
+        workflowName="Visual Workflow"
+        inputContract={[
+          {
+            key: 'reference_image',
+            label: 'Reference image',
+            type: 'image',
+            required: true,
+          },
+        ]}
+        onSubmit={onSubmit}
+        onClose={vi.fn()}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText(/Reference image/), {
+      target: {
+        files: [
+          new File([oversizedPayload], 'reference.png', { type: 'image/png' }),
+        ],
+      },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Start workflow' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Reference image must be 5 MB or smaller.');
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });

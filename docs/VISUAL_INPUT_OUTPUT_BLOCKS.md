@@ -7,11 +7,11 @@ Binding plan inputs:
 - `.omx/plans/prd-vio-20260412T121449Z.md`
 - `.omx/plans/test-spec-vio-20260412T121449Z.md`
 
-This document records the documentation/code-quality review lane for the
-approved visual Input / Output Blocks plan. It is intentionally grounded in the
-current codebase, where workflow-native `inputContract` / `outputContract`
-support already exists but visual Input and Output Extractor node types have not
-yet landed.
+This document now serves two purposes:
+
+1. the original design/guardrail note for the approved Visual I/O plan; and
+2. the follow-up merge-readiness review for the implementation landed in commit
+   `859d21f`.
 
 ## Product Direction
 
@@ -28,7 +28,62 @@ compatibility**:
    - Output Extractor nodes run during result/artifact assembly.
    - Neither node type may spawn agent PTY/stream-json/codex-sdk sessions.
 
-## Current Baseline Map
+## Follow-up Review Status — 2026-04-12
+
+### Current implementation snapshot
+
+The current system now includes:
+
+- visual Input node and Output Extractor node palette/inspector support;
+- node-derived workflow `inputContract` / `outputContract` bridging;
+- run-form rendering for text + image metadata inputs;
+- agent-scoped prompt injection for connected visual inputs; and
+- workflow-result artifact generation from Output Extractor nodes.
+
+### Review findings fixed in this follow-up
+
+1. **Client/server image metadata mismatch**
+   - `WorkflowRunModal` submitted `mimeType`, while server validation only
+     trusted `type`.
+   - Result: browser-generated visual image inputs could fail server-side even
+     though the modal accepted them.
+   - Fix: server now accepts the client payload shape, normalizes `mimeType`
+     and `type` together, and keeps the metadata-only boundary intact.
+
+2. **Image size-cap drift**
+   - Client UI allowed 10 MB while server validation enforced 5 MB.
+   - Fix: the run-form gate is now aligned to the server-enforced 5 MB cap.
+
+3. **Extractor provenance / source-policy gap**
+   - Output Extractor artifacts were still effectively reading a single legacy
+     `sourceNodeId`, which bypassed `firstIncoming` / `allIncoming` /
+     `selected` behavior and lost provenance.
+   - Fix: workflow results now resolve extractor artifacts from the configured
+     source policy and attach artifact provenance in the result payload.
+
+### Security boundary review
+
+- Image inputs remain **metadata/reference only**. No raw `data`, `base64`,
+  `path`, or `absolutePath` payload is accepted.
+- Server validation now rejects traversal-style image names such as
+  `../secret.png`; the client-side filename check is no longer the only guard.
+- Canonical cap: **5 MB per image metadata reference**.
+- Allowed MIME types remain:
+  - `image/png`
+  - `image/jpeg`
+  - `image/webp`
+  - `image/gif`
+
+### Merge-readiness verdict
+
+**Verdict: ready after this follow-up patch.**
+
+No remaining blocker was found in the reviewed Visual I/O path after fixing the
+client/server metadata contract and extractor provenance behavior. Remaining
+future work is enhancement-oriented (richer upload/storage flow, more artifact
+formats/viewers), not a correctness blocker for the current MVP.
+
+## Original Planning Baseline Map (Historical)
 
 ### Contract bridge baseline
 

@@ -1,5 +1,5 @@
 const INPUT_KEY_RE = /^[a-z][a-z0-9_-]*$/;
-const INPUT_TYPES = new Set(['text', 'textarea', 'number', 'integer', 'boolean', 'json', 'enum', 'image']);
+const INPUT_TYPES = new Set(['text', 'textarea', 'markdown', 'number', 'integer', 'boolean', 'json', 'enum', 'image']);
 const OUTPUT_SOURCE_TYPES = new Set(['finalText', 'workflowContext']);
 const ARTIFACT_SOURCE_TYPES = new Set(['aggregatedArtifact', 'workflowContext', 'outputExtractor']);
 const ARTIFACT_FORMATS = new Set(['markdown', 'text', 'json', 'table']);
@@ -8,8 +8,9 @@ const OUTPUT_EXTRACTOR_NODE_TYPES = new Set(['outputExtractor', 'output']);
 const MAX_CONTRACT_ITEMS = 20;
 const MAX_TEXT_LENGTH = 2000;
 const MAX_INPUT_VALUE_LENGTH = 16000;
-export const MAX_IMAGE_INPUT_BYTES = 5 * 1024 * 1024;
+export const MAX_IMAGE_INPUT_BYTES = 10 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
+const UNSAFE_IMAGE_NAME_RE = /[\\/]|(^|[.])\.\.($|[.])/;
 
 export function normalizeInputContract(inputContract) {
   if (!Array.isArray(inputContract)) return [];
@@ -91,7 +92,13 @@ export function deriveOutputContractFromNodes(workflowDef = {}) {
       source: 'outputExtractor',
       sourceNodeId: upstreamEdge?.source ?? node.data?.sourceNodeId ?? '',
       outputExtractorNodeId: node.id,
-      description: node.data?.extractionInstruction || '',
+      sourcePolicy: ['firstIncoming', 'allIncoming', 'selected'].includes(node.data?.sourcePolicy)
+        ? node.data.sourcePolicy
+        : 'allIncoming',
+      selectedSourceNodeIds: Array.isArray(node.data?.selectedSourceNodeIds)
+        ? node.data.selectedSourceNodeIds.filter((id) => typeof id === 'string' && id.trim())
+        : [],
+      description: node.data?.instruction || node.data?.extractionInstruction || '',
     });
   }
   return {
@@ -244,8 +251,10 @@ export function buildWorkflowResult({
       const contextValue = readContextValue(workflowContext, artifact.contextKey || artifact.key);
       value = stringifyArtifactValue(contextValue);
     } else if (artifact.source === 'outputExtractor') {
-      value = stringifyArtifactValue(resolveAgentOutputValue(agentOutputs, artifact.sourceNodeId));
-      status = value ? 'ready' : 'empty';
+      const resolved = resolveOutputExtractorArtifact({ artifact, workflowDef, agentOutputs });
+      value = stringifyArtifactValue(resolved.value);
+      status = resolved.status;
+      provenance = resolved.provenance;
     } else {
       value = aggregatedArtifact || bestFinalText;
       status = value ? 'ready' : 'empty';
@@ -258,8 +267,9 @@ export function buildWorkflowResult({
       status,
       value,
       source: artifact.source,
-      sourceNodeId: artifact.sourceNodeId,
+      sourceNodeId: provenance?.sourceNodeIds?.length === 1 ? provenance.sourceNodeIds[0] : artifact.sourceNodeId,
       outputExtractorNodeId: artifact.outputExtractorNodeId,
+      ...(provenance ? { provenance } : {}),
     };
   });
 
@@ -319,7 +329,7 @@ function deriveArtifactFromExtractorNode(node) {
     source: 'outputExtractor',
     contextKey: artifactKey,
     description: typeof data.instruction === 'string' ? data.instruction : '',
-    extractorNodeId: node?.id || '',
+    outputExtractorNodeId: node?.id || '',
     sourcePolicy: ['firstIncoming', 'allIncoming', 'selected'].includes(data.sourcePolicy)
       ? data.sourcePolicy
       : 'allIncoming',
@@ -356,6 +366,10 @@ function normalizeArtifactItems(items) {
       description: typeof item?.description === 'string' ? item.description.slice(0, MAX_TEXT_LENGTH) : '',
       ...(typeof item?.sourceNodeId === 'string' ? { sourceNodeId: item.sourceNodeId.trim() } : {}),
       ...(typeof item?.outputExtractorNodeId === 'string' ? { outputExtractorNodeId: item.outputExtractorNodeId.trim() } : {}),
+      ...(typeof item?.sourcePolicy === 'string' ? { sourcePolicy: item.sourcePolicy.trim() } : {}),
+      ...(Array.isArray(item?.selectedSourceNodeIds)
+        ? { selectedSourceNodeIds: item.selectedSourceNodeIds.filter((id) => typeof id === 'string' && id.trim()) }
+        : {}),
     };
   });
 }
@@ -525,13 +539,18 @@ function normalizeInputValue(type, value) {
 
 function normalizeImageInputValue(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return value == null ? '' : value;
+  const mimeType = typeof value.mimeType === 'string' && value.mimeType.trim()
+    ? value.mimeType.slice(0, 120)
+    : (typeof value.type === 'string' ? value.type.slice(0, 120) : '');
   const normalized = {
     kind: 'run-image',
     name: typeof value.name === 'string' ? value.name.slice(0, 240) : '',
-    type: typeof value.type === 'string' ? value.type.slice(0, 120) : '',
+    mimeType,
+    type: mimeType,
     size: Number.isFinite(Number(value.size)) ? Number(value.size) : 0,
     lastModified: Number.isFinite(Number(value.lastModified)) ? Number(value.lastModified) : undefined,
     assetId: typeof value.assetId === 'string' ? value.assetId.slice(0, 160) : undefined,
+    previewUrl: typeof value.previewUrl === 'string' ? value.previewUrl.slice(0, 500) : undefined,
   };
   for (const forbiddenKey of ['data', 'base64', 'path', 'absolutePath']) {
     if (Object.prototype.hasOwnProperty.call(value, forbiddenKey)) {
@@ -546,10 +565,16 @@ function validateImageInputValue(field, value, errors) {
     errors.push(`${field.key} must be an image metadata object`);
     return;
   }
+  const mimeType = typeof value.mimeType === 'string' && value.mimeType.trim()
+    ? value.mimeType.trim()
+    : (typeof value.type === 'string' ? value.type.trim() : '');
   if (value.kind !== 'run-image') {
     errors.push(`${field.key} image metadata kind is invalid`);
   }
-  if (!ALLOWED_IMAGE_TYPES.has(value.type)) {
+  if (!value.name || UNSAFE_IMAGE_NAME_RE.test(value.name)) {
+    errors.push(`${field.key} image file name is invalid`);
+  }
+  if (!ALLOWED_IMAGE_TYPES.has(mimeType)) {
     errors.push(`${field.key} must be PNG, JPEG, WebP, or GIF`);
   }
   if (!Number.isFinite(Number(value.size)) || Number(value.size) <= 0) {
@@ -618,11 +643,14 @@ function normalizeVisualKey(value, fallback) {
 }
 
 function stringifyForPrompt(value) {
-  if (value && typeof value === 'object' && !Array.isArray(value) && value.assetId && value.mimeType) {
+  const mimeType = typeof value?.mimeType === 'string' && value.mimeType.trim()
+    ? value.mimeType
+    : value?.type;
+  if (value && typeof value === 'object' && !Array.isArray(value) && value.assetId && mimeType) {
     return JSON.stringify({
       assetId: value.assetId,
       name: value.name,
-      mimeType: value.mimeType,
+      mimeType,
       size: value.size,
       previewUrl: value.previewUrl,
       note: 'Image content is attached by reference; raw base64 is not injected.',
@@ -634,7 +662,19 @@ function stringifyForPrompt(value) {
 }
 
 function resolveOutputExtractorArtifact({ artifact, workflowDef = {}, agentOutputs = {} }) {
-  const extractorNodeId = artifact.extractorNodeId;
+  const extractorNodeId = artifact.outputExtractorNodeId || artifact.extractorNodeId;
+  if (!extractorNodeId) {
+    const fallbackValue = stringifyArtifactValue(resolveAgentOutputValue(agentOutputs, artifact.sourceNodeId));
+    return {
+      value: fallbackValue,
+      status: fallbackValue ? 'ready' : 'empty',
+      provenance: {
+        outputExtractorNodeId: '',
+        sourceNodeIds: artifact.sourceNodeId ? [artifact.sourceNodeId] : [],
+        sourcePolicy: 'legacySourceNode',
+      },
+    };
+  }
   const workflowEdges = Array.isArray(workflowDef?.edges) ? workflowDef.edges : [];
   const incomingSourceIds = workflowEdges
     .filter((edge) => edge?.target === extractorNodeId)
@@ -656,7 +696,7 @@ function resolveOutputExtractorArtifact({ artifact, workflowDef = {}, agentOutpu
     .filter(Boolean);
 
   const provenance = {
-    extractorNodeId,
+    outputExtractorNodeId: extractorNodeId,
     sourceNodeIds,
     sourcePolicy: policy,
   };

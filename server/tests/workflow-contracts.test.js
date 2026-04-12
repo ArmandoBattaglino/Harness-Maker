@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+﻿import { describe, expect, it } from 'vitest';
 import {
   buildWorkflowResult,
   buildWorkflowRunContextPatch,
@@ -114,6 +114,7 @@ describe('workflowContracts workflow-native inputs and outputs', () => {
       nodes: [
         { id: 'input-a', type: 'input', data: { label: 'Creative intake', fields: [
           { key: 'brief', label: 'Brief', type: 'textarea', required: true },
+          { key: 'notes', label: 'Notes', type: 'markdown', required: false },
           { key: 'reference_image', label: 'Reference image', type: 'image', required: true },
         ] } },
         { id: 'agent-a', type: 'agent', data: { label: 'Writer' } },
@@ -126,8 +127,9 @@ describe('workflowContracts workflow-native inputs and outputs', () => {
     };
 
     const effective = resolveEffectiveWorkflowContracts(visualWorkflow);
-    expect(effective.inputContract.map((field) => field.key)).toEqual(['brief', 'reference_image']);
+    expect(effective.inputContract.map((field) => field.key)).toEqual(['brief', 'notes', 'reference_image']);
     expect(effective.inputContract[0]).toMatchObject({ inputNodeId: 'input-a', inputNodeLabel: 'Creative intake' });
+    expect(effective.inputContract[1]).toMatchObject({ key: 'notes', type: 'markdown' });
     expect(effective.outputContract.outputs[0].key).toBe('legacy_result');
     expect(effective.outputContract.artifacts[0]).toMatchObject({
       key: 'report',
@@ -162,13 +164,25 @@ describe('workflowContracts workflow-native inputs and outputs', () => {
       brief: 'Launch X',
       reference_image: { kind: 'run-image', name: 'bad.png', type: 'image/png', size: 12, data: 'raw-base64' },
     })).toThrow(/must not include data/);
+    expect(() => prepareWorkflowRun(visualWorkflow, {
+      brief: 'Launch X',
+      reference_image: { kind: 'run-image', name: '../evil.png', type: 'image/png', size: 12 },
+    })).toThrow(/image file name is invalid/);
+    expect(() => prepareWorkflowRun(visualWorkflow, {
+      brief: 'Launch X',
+      reference_image: { kind: 'run-image', name: 'big.png', mimeType: 'image/png', size: (10 * 1024 * 1024) + 1 },
+    })).toThrow(/exceeds 10485760 bytes/);
 
     const run = prepareWorkflowRun(visualWorkflow, {
       brief: 'Launch X',
-      reference_image: { kind: 'run-image', name: 'ref.png', type: 'image/png', size: 2048 },
+      reference_image: { kind: 'run-image', name: 'ref.png', mimeType: 'image/png', size: 2048, previewUrl: '' },
     });
     const patch = buildWorkflowRunContextPatch(visualWorkflow, run);
     expect(run.visualInputMode).toBe(true);
+    expect(run.inputs.reference_image).toMatchObject({
+      mimeType: 'image/png',
+      type: 'image/png',
+    });
     expect(patch.currentTask).not.toContain('Launch X');
     expect(getConnectedWorkflowInputContract(visualWorkflow, 'agent-a').map((field) => field.key)).toEqual(['brief', 'reference_image']);
     expect(getConnectedWorkflowInputContract(visualWorkflow, 'agent-b')).toEqual([]);
@@ -193,4 +207,74 @@ describe('workflowContracts workflow-native inputs and outputs', () => {
       }),
     ]);
   });
+
+  it('rejects unsafe image file names even when only metadata is submitted', () => {
+    const visualWorkflow = {
+      name: 'Visual workflow',
+      nodes: [
+        { id: 'input-a', type: 'input', data: { label: 'Creative intake', fields: [
+          { key: 'reference_image', label: 'Reference image', type: 'image', required: true },
+        ] } },
+      ],
+      edges: [],
+    };
+
+    expect(() => prepareWorkflowRun(visualWorkflow, {
+      reference_image: { kind: 'run-image', name: '../secret.png', mimeType: 'image/png', size: 2048 },
+    })).toThrow(/image file name is invalid/);
+  });
+
+  it('builds extractor artifacts from the configured source policy and records provenance', () => {
+    const visualWorkflow = {
+      name: 'Visual workflow',
+      nodes: [
+        { id: 'agent-a', type: 'agent', data: { label: 'Writer' } },
+        { id: 'agent-b', type: 'agent', data: { label: 'Reviewer' } },
+        {
+          id: 'extract-a',
+          type: 'outputExtractor',
+          data: {
+            artifactKey: 'report',
+            artifactName: 'Report',
+            format: 'markdown',
+            sourcePolicy: 'selected',
+            selectedSourceNodeIds: ['agent-b'],
+          },
+        },
+      ],
+      edges: [
+        { id: 'e1', source: 'agent-a', target: 'extract-a' },
+        { id: 'e2', source: 'agent-b', target: 'extract-a' },
+      ],
+    };
+
+    const run = prepareWorkflowRun(visualWorkflow, {});
+    const result = buildWorkflowResult({
+      workflowDef: visualWorkflow,
+      workflowRun: run,
+      status: 'completed',
+      agentOutputs: {
+        'agent-a': { finalText: 'Writer draft', lastMessageAt: '2026-04-12T03:00:00.000Z' },
+        'agent-b': { finalText: 'Reviewer report', lastMessageAt: '2026-04-12T03:05:00.000Z' },
+      },
+    });
+
+    expect(result.artifacts).toEqual([
+      expect.objectContaining({
+        id: 'report',
+        name: 'Report',
+        status: 'ready',
+        value: 'Reviewer report',
+        source: 'outputExtractor',
+        sourceNodeId: 'agent-b',
+        outputExtractorNodeId: 'extract-a',
+        provenance: {
+          outputExtractorNodeId: 'extract-a',
+          sourceNodeIds: ['agent-b'],
+          sourcePolicy: 'selected',
+        },
+      }),
+    ]);
+  });
 });
+

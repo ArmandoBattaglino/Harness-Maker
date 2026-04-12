@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 
 const INPUT_CLS =
   'mt-1 w-full rounded bg-gray-950 px-3 py-2 text-sm text-white border border-gray-700 focus:border-green-500 focus:outline-none';
-const MAX_IMAGE_INPUT_BYTES = 10 * 1024 * 1024;
+const MAX_IMAGE_INPUT_BYTES = 5 * 1024 * 1024;
 const IMAGE_INPUT_MIME_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
 
 function coerceInputValue(type, rawValue) {
@@ -71,7 +71,7 @@ function validateValues(inputContract, values) {
       } else if (/[\\/]|(^|[.])\.\.($|[.])/.test(value.name || '')) {
         errors.push(`${field.label || field.key} must use a safe file name.`);
       } else if (value.size > MAX_IMAGE_INPUT_BYTES) {
-        errors.push(`${field.label || field.key} must be 10 MB or smaller.`);
+        errors.push(`${field.label || field.key} must be 5 MB or smaller.`);
       }
     }
   }
@@ -147,6 +147,7 @@ function WorkflowInputField({ field, value, onChange }) {
               assetId: `pending-run-${file.name}-${file.size}-${file.lastModified}`,
               name: file.name,
               mimeType: file.type,
+              type: file.type,
               size: file.size,
               previewUrl: '',
             });
