@@ -72,7 +72,9 @@ export function deriveOutputContractFromNodes(workflowDef = {}) {
       sourceNodeId: upstreamEdge?.source ?? node.data?.sourceNodeId ?? '',
       outputExtractorNodeId: node.id,
       extractorNodeId: node.id,
-      description: typeof node.data?.extractionInstruction === 'string' ? node.data.extractionInstruction : '',
+      description: typeof node.data?.instruction === 'string'
+        ? node.data.instruction
+        : (typeof node.data?.extractionInstruction === 'string' ? node.data.extractionInstruction : ''),
     });
   }
   return { outputs: legacyOutputs, artifacts };

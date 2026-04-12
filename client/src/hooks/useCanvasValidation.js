@@ -124,67 +124,6 @@ export function useCanvasValidation(nodes, edges) {
         }
       }
 
-      if (node.type === 'input') {
-        const fields = Array.isArray(node.data?.fields) ? node.data.fields : [];
-        if (fields.length === 0) {
-          issues.push(createIssue({
-            id: `input:${node.id}:no-fields`,
-            severity: 'error',
-            scope: 'global',
-            nodeId: node.id,
-            summary: `${nodeLabel} has no input fields`,
-            detail: `${nodeLabel} must define at least one field before the workflow can run.`,
-          }));
-        }
-        fields.forEach((field, index) => {
-          if (!field?.key?.trim()) {
-            issues.push(createIssue({
-              id: `input:${node.id}:field-${index}:missing-key`,
-              severity: 'error',
-              scope: 'global',
-              nodeId: node.id,
-              summary: `${nodeLabel} has an input field without a key`,
-              detail: `${nodeLabel} field ${index + 1} must have a stable key.`,
-            }));
-          }
-        });
-        const hasAgentTarget = edges.some((edge) => edge.source === node.id && nodeById.get(edge.target)?.type === 'agent');
-        if (!hasAgentTarget) {
-          issues.push(createIssue({
-            id: `input:${node.id}:not-connected`,
-            severity: 'warning',
-            scope: 'global',
-            nodeId: node.id,
-            summary: `${nodeLabel} is not connected to an agent`,
-            detail: `${nodeLabel} will collect input but no agent is connected to receive it.`,
-          }));
-        }
-      }
-
-      if (node.type === 'outputExtractor') {
-        const hasAgentSource = edges.some((edge) => edge.target === node.id && nodeById.get(edge.source)?.type === 'agent');
-        if (!node.data?.artifactKey?.trim()) {
-          issues.push(createIssue({
-            id: `output-extractor:${node.id}:missing-artifact-key`,
-            severity: 'error',
-            scope: 'global',
-            nodeId: node.id,
-            summary: `${nodeLabel} is missing an artifact key`,
-            detail: `${nodeLabel} must define an artifact key.`,
-          }));
-        }
-        if (!hasAgentSource) {
-          issues.push(createIssue({
-            id: `output-extractor:${node.id}:missing-source`,
-            severity: 'error',
-            scope: 'global',
-            nodeId: node.id,
-            summary: `${nodeLabel} has no upstream agent`,
-            detail: `${nodeLabel} must be connected from an agent output before the workflow can run.`,
-          }));
-        }
-      }
-
       if (node.type === 'agent' && connectedEdges.length === 0 && !node.data?.isTriageNode) {
         issues.push(createIssue({
           id: `agent:${node.id}:disconnected`,
@@ -209,7 +148,16 @@ export function useCanvasValidation(nodes, edges) {
           }));
         }
         fields.forEach((field, index) => {
-          if (!/^[a-z][a-z0-9_-]*$/.test(field?.key || '')) {
+          if (!field?.key?.trim()) {
+            issues.push(createIssue({
+              id: `input:${node.id}:field-${index}:missing-key`,
+              severity: 'error',
+              scope: 'global',
+              nodeId: node.id,
+              summary: `${nodeLabel} has an input field without a key`,
+              detail: `${nodeLabel} field ${index + 1} must have a stable key.`,
+            }));
+          } else if (!/^[a-z][a-z0-9_-]*$/.test(field.key || '')) {
             issues.push(createIssue({
               id: `input:${node.id}:field-${index}:invalid-key`,
               severity: 'error',
@@ -220,6 +168,17 @@ export function useCanvasValidation(nodes, edges) {
             }));
           }
         });
+        const hasAgentTarget = edges.some((edge) => edge.source === node.id && nodeById.get(edge.target)?.type === 'agent');
+        if (!hasAgentTarget) {
+          issues.push(createIssue({
+            id: `input:${node.id}:not-connected`,
+            severity: 'warning',
+            scope: 'global',
+            nodeId: node.id,
+            summary: `${nodeLabel} is not connected to an agent`,
+            detail: `${nodeLabel} will collect input but no agent is connected to receive it.`,
+          }));
+        }
       }
 
       if (node.type === 'outputExtractor') {

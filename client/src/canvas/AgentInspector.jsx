@@ -583,8 +583,10 @@ function OutputExtractorFields({ node, onUpdateNode }) {
         >
           <option value="allIncoming">All incoming</option>
           <option value="firstIncoming">First incoming</option>
-          <option value="selected">Selected</option>
         </select>
+        <span className="text-[10px] text-gray-500">
+          Selected-source extraction is deferred in this MVP.
+        </span>
       </div>
       <div className="flex flex-col gap-0.5">
         <FieldLabel>Extraction instruction</FieldLabel>

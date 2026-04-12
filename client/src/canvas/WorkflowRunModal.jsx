@@ -155,7 +155,7 @@ function WorkflowInputField({ field, value, onChange }) {
         />
         {value?.name ? (
           <span className="mt-1 block text-[11px] text-gray-400">
-            Selected {value.name} ({Math.ceil((value.size || 0) / 1024)} KB). Image content is referenced by metadata; raw base64 is not submitted.
+            Selected {value.name} ({Math.ceil((value.size || 0) / 1024)} KB). The current MVP submits validated image metadata only; raw base64 is not submitted.
           </span>
         ) : helpText ? (
           <span className="mt-1 block text-[11px] text-gray-500">{helpText}</span>

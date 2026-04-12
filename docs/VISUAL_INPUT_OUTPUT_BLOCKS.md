@@ -65,6 +65,10 @@ The current system now includes:
 
 - Image inputs remain **metadata/reference only**. No raw `data`, `base64`,
   `path`, or `absolutePath` payload is accepted.
+- The current run form captures a selected image file and normalizes it into
+  safe metadata for workflow execution, but the MVP still does **not** expose a
+  durable run-asset retrieval path that would let agents open uploaded image
+  bytes directly.
 - Server validation now rejects traversal-style image names such as
   `../secret.png`; the client-side filename check is no longer the only guard.
 - Canonical cap: **5 MB per image metadata reference**.
@@ -76,12 +80,13 @@ The current system now includes:
 
 ### Merge-readiness verdict
 
-**Verdict: ready after this follow-up patch.**
+**Verdict: ready after this follow-up patch, with a deliberate MVP boundary.**
 
 No remaining blocker was found in the reviewed Visual I/O path after fixing the
 client/server metadata contract and extractor provenance behavior. Remaining
-future work is enhancement-oriented (richer upload/storage flow, more artifact
-formats/viewers), not a correctness blocker for the current MVP.
+future work is enhancement-oriented (true run-asset image access, richer
+upload/storage flow, more artifact formats/viewers), not a correctness blocker
+for the current MVP.
 
 ## Original Planning Baseline Map (Historical)
 
