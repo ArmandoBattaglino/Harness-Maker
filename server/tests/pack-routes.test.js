@@ -486,6 +486,43 @@ describe('packs routes', () => {
     expect(packStore.saveFixtureResult).not.toHaveBeenCalled();
   });
 
+  it('rejects fixture runs when execution-backed results belong to a different pack version', async () => {
+    const fixture = {
+      id: 'fixture-1',
+      name: 'Wrong pack version',
+      packVersion: '1.0.0',
+      input: {},
+      assertions: [{ type: 'statusEquals', expected: 'completed' }],
+    };
+    const packStore = {
+      getFixture: vi.fn().mockResolvedValue(fixture),
+      get: vi.fn().mockResolvedValue(createPack()),
+      saveFixtureResult: vi.fn(),
+    };
+    const executionHistoryStore = {
+      getEntry: vi.fn().mockResolvedValue(createExecutionHistoryEntry({
+        packRun: {
+          ...createExecutionHistoryEntry().packRun,
+          packId: 'other-pack',
+          packVersion: '9.9.9',
+        },
+      })),
+    };
+    const handler = getRouteHandler(packsRouter, 'post', '/:id/fixtures/:fixtureId/run');
+    const req = {
+      params: { id: 'pack-1', fixtureId: 'fixture-1' },
+      body: { executionId: '11111111-1111-4111-8111-111111111111' },
+      app: { locals: { packStore, executionHistoryStore } },
+    };
+    const res = createMockRes();
+
+    await handler(req, res, vi.fn());
+
+    expect(res.statusCode).toBe(409);
+    expect(res.body.error).toBe('Execution does not belong to the requested pack version');
+    expect(packStore.saveFixtureResult).not.toHaveBeenCalled();
+  });
+
   it('blocks publish until at least one fixture has a passing last result', async () => {
     const failingFixture = {
       id: 'fixture-1',

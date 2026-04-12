@@ -4,6 +4,7 @@ import path from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { WorkflowStore } from '../services/WorkflowStore.js';
+import { ConfigStore } from '../services/ConfigStore.js';
 import PackStore from '../stores/PackStore.js';
 import packsRouter from '../routes/packs.js';
 
@@ -140,6 +141,39 @@ function validMarketingInput(overrides = {}) {
   };
 }
 
+function buildExecutionHistoryEntry(pack, projectPath, overrides = {}) {
+  return {
+    executionId: '11111111-1111-4111-8111-111111111111',
+    status: 'completed',
+    workflowContext: {
+      creativeBrief: 'creative brief',
+      videoScript: 'creative brief + script + storyboard + shot list + CTA',
+      storyboard: 'storyboard',
+      shotList: 'shot list',
+      complianceNotes: 'compliance notes',
+      finalRecommendation: 'CTA',
+    },
+    agentOutputs: {
+      strategist: {
+        label: 'Marketing Strategist',
+        finalText: 'creative brief + script + storyboard + shot list + CTA',
+      },
+    },
+    aggregatedArtifact: '# marketing video plan',
+    packRun: {
+      packId: pack.id,
+      packVersion: pack.packVersion,
+      visibleSteps: pack.visibleSteps,
+      artifactDefinitions: pack.artifactDefinitions,
+      outputSchema: pack.outputSchema,
+      runtimePolicy: pack.runtimePolicy,
+      projectBinding: { projectId: 'project-marketing', projectPath },
+      conflicts: [],
+    },
+    ...overrides,
+  };
+}
+
 describe('marketing video harness deep/stress contract', () => {
   let tempDir;
   let workflowStore;
@@ -158,6 +192,7 @@ describe('marketing video harness deep/stress contract', () => {
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
@@ -171,6 +206,9 @@ describe('marketing video harness deep/stress contract', () => {
   });
 
   it('starts repeated marketing-video pack runs with long unicode input and isolated execution identities', async () => {
+    vi.spyOn(ConfigStore, 'getProjects').mockReturnValue([
+      { id: 'project-marketing', name: 'Marketing Project', path: tempDir },
+    ]);
     let counter = 0;
     const swarmEngine = {
       startExecution: vi.fn().mockImplementation(async () => `exec-marketing-${++counter}`),
@@ -201,6 +239,9 @@ describe('marketing video harness deep/stress contract', () => {
   });
 
   it('rejects invalid marketing input before runtime starts', async () => {
+    vi.spyOn(ConfigStore, 'getProjects').mockReturnValue([
+      { id: 'project-marketing', name: 'Marketing Project', path: tempDir },
+    ]);
     const swarmEngine = { startExecution: vi.fn(), getStatus: vi.fn() };
     const handler = getRouteHandler(packsRouter, 'post', '/:id/start');
     const req = {
@@ -250,7 +291,7 @@ describe('marketing video harness deep/stress contract', () => {
       input: validMarketingInput(),
       assertions: [
         { type: 'statusEquals', expected: 'completed' },
-        { type: 'outputIncludes', outputKey: 'result', expected: 'script' },
+        { type: 'outputIncludes', outputKey: 'videoScript', expected: 'script' },
         { type: 'artifactExists', artifactId: 'marketing-video-plan' },
       ],
     });
@@ -265,11 +306,16 @@ describe('marketing video harness deep/stress contract', () => {
     await runHandler({
       params: { id: pack.id, fixtureId: fixture.id },
       body: {
-        status: 'completed',
-        outputs: { result: 'creative brief + script + storyboard + shot list + CTA' },
-        artifacts: [{ id: 'marketing-video-plan' }],
+        executionId: '11111111-1111-4111-8111-111111111111',
       },
-      app: { locals: { packStore } },
+      app: {
+        locals: {
+          packStore,
+          executionHistoryStore: {
+            getEntry: vi.fn().mockResolvedValue(buildExecutionHistoryEntry(pack, tempDir)),
+          },
+        },
+      },
     }, runRes, vi.fn());
     expect(runRes.body.result.passed).toBe(true);
 

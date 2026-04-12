@@ -1,4 +1,14 @@
-﻿## 2026-04-11 - qa / test-engineer - marketing video harness deep stress
+## 2026-04-11 - debugger / frontend-dev / qa-tester - pack verification drift and pack-local state boundary
+**Outcome:** COMPLETED / PASS
+**Summary:** Repaired the stale marketing-video verification against the current pack route contracts, added a pack/version mismatch contract-edge regression, fixed PackLibrary pack switching so only pack-local launch state resets, and extended the targeted Playwright smoke to cover Builder -> Library -> Launch -> Output with deterministic fake swarm results.
+**Files changed:** client/src/views/PackLibraryView.jsx, client/src/views/PackLibraryView.test.jsx, server/tests/marketing-video-harness-stress.test.js, server/tests/pack-routes.test.js, scripts/v17-review-followup-playwright-smoke.mjs, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** cross-pack launch input/state leakage in PackLibrary; stale deep/stress fixture verification that no longer matched registered-project and execution-backed fixture contracts.
+**Decisions made:** keep `packRun` / `packResult` global store ownership intact and scope the UI/debug drawer by selected pack instead of clearing global runtime state.
+**Blockers:** none
+**Next:** Lore commit and review on `fixbug/check-and-fix-bugs`.
+
+---
+## 2026-04-11 - qa / test-engineer - marketing video harness deep stress
 **Outcome:** COMPLETED / PASS
 **Summary:** Executed the planned Marketing Video Campaign Harness deep/stress test. Hermetic server tests now create a complete marketing-video pack contract, stress repeated long/unicode starts, reject invalid inputs before runtime, roundtrip distribution, run fixtures, and gate publish. Client tests cover generated operator form launch with explicit project binding and completed packResult hydration. Live browser smoke launched a generated marketing-video pack through Claude and completed with `V17_MARKETING_VIDEO_OK`.
 **Files changed:** client/src/views/PackLibraryView.jsx, client/src/views/MarketingVideoHarness.e2e.test.jsx, server/tests/marketing-video-harness-stress.test.js, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/CODE_MAP.md

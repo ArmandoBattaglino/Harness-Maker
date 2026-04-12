@@ -1,3 +1,23 @@
+## Pack Verification Drift + PackLibrary State Boundary (2026-04-11)
+
+**Status:** CLOSED / VERIFIED.
+
+**Deliverables:**
+- Re-grounded the stale marketing-video deep/stress verification against the current pack route contracts by registering projects in test scope and switching fixture evaluation to execution-backed results.
+- Added a focused contract-edge regression for fixture runs whose execution result belongs to the wrong pack/version.
+- Fixed `PackLibraryView` pack switching so pack-local launch state resets (`runInput`, `runState`, `runError`, `distributionState`) without clearing global runtime state, and scoped the debug/monitor rendering to the selected pack.
+- Extended `scripts/v17-review-followup-playwright-smoke.mjs` with a deterministic Builder -> Library -> Launch -> Output browser smoke using real workflow/pack stores plus fake deterministic swarm handlers.
+- Deslopped the touched surface by removing needless memoization in `PackLibraryView` and a redundant smoke assertion after verification passed.
+
+**Verification:**
+- Targeted server pack suites: **58/58 PASS**.
+- Targeted client pack suites: **30/30 PASS**.
+- Client build: **520 modules PASS**.
+- Targeted Playwright smoke: **PASS** (`npm run test:playwright:v17-review-followup`), including Builder -> Library -> Launch -> Output.
+- Runtime diagnostics: **0 errors** on touched files (`tsc skipped: no tsconfig found` caveat).
+- `git diff --check`: no whitespace errors; only LF->CRLF working-tree warnings on touched files.
+
+---
 ## V17.8.1 Code Review Follow-up (2026-04-11)
 
 **Status:** CLOSED / VERIFIED.

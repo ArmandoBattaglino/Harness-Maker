@@ -29,7 +29,10 @@ export default function PackLibraryView() {
   }, [packs, selectedPackId]);
 
   useEffect(() => {
+    setRunInput({});
+    setRunState(null);
     setRunError('');
+    setDistributionState('');
   }, [selectedPackId]);
 
   useEffect(() => {
@@ -40,6 +43,8 @@ export default function PackLibraryView() {
     () => projects.find((project) => project.id === projectId) ?? null,
     [projects, projectId]
   );
+  const scopedPackRun = livePackRun?.packId === pack?.id ? livePackRun : null;
+  const scopedPackResult = livePackResult?.packId === pack?.id ? livePackResult : null;
 
   const inputFields = useMemo(
     () => Object.entries(pack?.inputSchema?.properties ?? {}),
@@ -227,17 +232,17 @@ export default function PackLibraryView() {
                   <h3 className="font-bold">Run monitor</h3>
                   <button className="text-xs text-text-muted underline" onClick={() => setDebugOpen((value) => !value)}>Advanced debug</button>
                 </div>
-                <Timeline steps={(livePackRun?.packId === pack.id ? livePackRun.visibleSteps : pack.visibleSteps) ?? []} />
+                <Timeline steps={scopedPackRun?.visibleSteps ?? pack.visibleSteps ?? []} />
                 <h4 className="mt-4 text-sm font-semibold">Artifacts</h4>
                 <ul className="mt-2 space-y-2 text-xs text-text-muted">
-                  {(livePackResult?.packId === pack.id ? livePackResult.artifacts : pack.artifactDefinitions ?? []).map((artifact) => (
+                  {(scopedPackResult?.artifacts ?? pack.artifactDefinitions ?? []).map((artifact) => (
                     <li key={artifact.id} className="rounded bg-background-dark px-3 py-2">{artifact.name} {artifact.status ? `- ${artifact.status}` : ''}</li>
                   ))}
                 </ul>
                 {runState && <p className="mt-3 text-xs text-success">Started execution {runState.executionId}</p>}
                 {debugOpen && (
                   <pre className="mt-4 max-h-64 overflow-auto rounded bg-background-dark p-3 text-xs text-text-muted">
-                    {JSON.stringify({ executionId: runState?.executionId ?? null, packRun: livePackRun, packResult: livePackResult }, null, 2)}
+                    {JSON.stringify({ executionId: runState?.executionId ?? null, packRun: scopedPackRun, packResult: scopedPackResult }, null, 2)}
                   </pre>
                 )}
               </div>
