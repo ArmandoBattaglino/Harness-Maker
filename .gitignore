@@ -16,5 +16,28 @@ debug-*.png
 phase1-*.png
 v11-*.png
 
+# Root-level generated debug/test artifacts
+/*.pid
+/*.err
+/diff.txt
+/Test.json
+/test_*.txt
+/test_output*.txt
+/test_results*
+/tmp_*
+/tmp-*.mjs
+/console.log*
+/ex.feed*
+/msgs.push*
+/silenceTimeoutMs
+/x.includes*
+/chat-*.png
+/e2e-*.png
+/fanin-*.png
+/stress-test-*.png
+/swarm-*.png
+/test-*.png
+/v1.1-*.png
+
 # IDE
 .vscode/

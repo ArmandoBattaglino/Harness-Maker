@@ -1,1 +1,0 @@
-console.log('start'); const {ChatExtractor}=await import('./server/services/ChatExtractor.js'); console.log('loaded'); const msgs=[]; const ex=new ChatExtractor({onMessage:(m)=,silenceTimeoutMs:999999}); ex.feed('e1','n1','Questo messaggio e abbastanza lungo.'); ex.flush('e1','n1'); console.log(JSON.stringify(msgs));
