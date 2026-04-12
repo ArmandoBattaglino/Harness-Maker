@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeSanitize from 'rehype-sanitize';
 
 import { useAppState, useAppDispatch } from '../store/AppContext.jsx';
 import { usePack, usePackList } from '../hooks/usePack.js';
 import { apiGet } from '../hooks/useApi.js';
 import { useSwarmStore } from '../store/SwarmContext.jsx';
+import { mdComponents, sanitizeSchema } from '../utils/markdownComponents.jsx';
 
 export default function PackLibraryView() {
   const dispatch = useAppDispatch();
@@ -45,11 +49,29 @@ export default function PackLibraryView() {
   );
   const scopedPackRun = livePackRun?.packId === pack?.id ? livePackRun : null;
   const scopedPackResult = livePackResult?.packId === pack?.id ? livePackResult : null;
+  const canonicalExecutionId = scopedPackRun?.executionId ?? runState?.executionId ?? null;
 
   const inputFields = useMemo(
     () => Object.entries(pack?.inputSchema?.properties ?? {}),
     [pack]
   );
+  const scopedArtifactDefinitions = useMemo(
+    () => Object.fromEntries((pack?.artifactDefinitions ?? []).map((artifact) => [artifact.id, artifact])),
+    [pack?.artifactDefinitions]
+  );
+  const visibleArtifacts = useMemo(() => {
+    const runtimeArtifacts = scopedPackResult?.artifacts;
+    if (Array.isArray(runtimeArtifacts) && runtimeArtifacts.length > 0) {
+      return runtimeArtifacts.map((artifact) => ({
+        ...scopedArtifactDefinitions[artifact.id],
+        ...artifact,
+      }));
+    }
+    return (pack?.artifactDefinitions ?? []).map((artifact) => ({
+      ...artifact,
+      value: null,
+    }));
+  }, [pack?.artifactDefinitions, scopedArtifactDefinitions, scopedPackResult?.artifacts]);
 
   function setInputValue(key, value) {
     setRunInput((current) => ({ ...current, [key]: value }));
@@ -87,7 +109,7 @@ export default function PackLibraryView() {
       });
       setRunState(response);
       hydratePackRuntime({
-        packRun: response.packRun,
+        packRun: response.packRun ? { ...response.packRun, executionId: response.executionId } : null,
         packResult: response.packResult,
       });
       void pollPackRun(response.executionId, response.workflowId ?? pack.workflowId);
@@ -108,13 +130,17 @@ export default function PackLibraryView() {
       try {
         const status = await apiGet(`/api/v1/swarm/${executionId}/status`);
         if (status?.packRun) {
-          hydratePackRuntime({ packRun: status.packRun });
+          hydratePackRuntime({ packRun: { ...status.packRun, executionId } });
         }
         setRunState((current) => ({ ...(current ?? {}), executionId, status: status?.status ?? current?.status }));
         if (terminalStatuses.has(status?.status)) {
           const results = await apiGet(`/api/v1/swarm/executions/${executionId}/results${workflowId ? `?workflowId=${workflowId}` : ''}`);
           hydratePackRuntime({
-            packRun: results?.packRun ?? status?.packRun,
+            packRun: results?.packRun
+              ? { ...results.packRun, executionId }
+              : status?.packRun
+              ? { ...status.packRun, executionId }
+              : null,
             packResult: results?.packResult,
           });
           return;
@@ -138,6 +164,20 @@ export default function PackLibraryView() {
   async function forkPack() {
     const forked = await fork();
     setDistributionState(`Forked ${forked?.name ?? pack.name}`);
+  }
+
+  function openBuilder() {
+    dispatch({
+      type: 'SET_NAVIGATION_INTENT',
+      payload: {
+        source: 'pack-library',
+        focus: 'builder',
+        packId: pack?.id ?? null,
+        workflowId: pack?.workflowId ?? null,
+        executionId: canonicalExecutionId,
+      },
+    });
+    dispatch({ type: 'SET_VIEW', payload: 'pack-builder' });
   }
 
   return (
@@ -179,7 +219,7 @@ export default function PackLibraryView() {
                   <h2 className="text-2xl font-bold">{pack.name}</h2>
                   <p className="mt-1 text-sm text-text-muted">{pack.description || 'No description provided.'}</p>
                 </div>
-                <button className="rounded border border-border-color px-3 py-2 text-sm" onClick={() => dispatch({ type: 'SET_VIEW', payload: 'pack-builder' })}>
+                <button className="rounded border border-border-color px-3 py-2 text-sm" onClick={openBuilder}>
                   Open in Builder
                 </button>
               </div>
@@ -234,11 +274,7 @@ export default function PackLibraryView() {
                 </div>
                 <Timeline steps={scopedPackRun?.visibleSteps ?? pack.visibleSteps ?? []} />
                 <h4 className="mt-4 text-sm font-semibold">Artifacts</h4>
-                <ul className="mt-2 space-y-2 text-xs text-text-muted">
-                  {(scopedPackResult?.artifacts ?? pack.artifactDefinitions ?? []).map((artifact) => (
-                    <li key={artifact.id} className="rounded bg-background-dark px-3 py-2">{artifact.name} {artifact.status ? `- ${artifact.status}` : ''}</li>
-                  ))}
-                </ul>
+                <ArtifactList artifacts={visibleArtifacts} />
                 {runState && <p className="mt-3 text-xs text-success">Started execution {runState.executionId}</p>}
                 {debugOpen && (
                   <pre className="mt-4 max-h-64 overflow-auto rounded bg-background-dark p-3 text-xs text-text-muted">
@@ -274,6 +310,66 @@ function Timeline({ steps }) {
         </li>
       ))}
     </ol>
+  );
+}
+
+function ArtifactList({ artifacts }) {
+  if (!artifacts.length) {
+    return <p className="mt-2 text-xs text-text-muted">No artifacts declared yet.</p>;
+  }
+
+  return (
+    <ul className="mt-2 space-y-3 text-xs text-text-muted">
+      {artifacts.map((artifact) => (
+        <li key={artifact.id} className="rounded bg-background-dark px-3 py-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-semibold text-text-main">{artifact.name}</span>
+            {artifact.status ? <span>{artifact.status}</span> : null}
+            {artifact.format ? <span className="rounded border border-border-color px-2 py-0.5 text-[10px] uppercase tracking-wide">{artifact.format}</span> : null}
+          </div>
+          <ArtifactPreview artifact={artifact} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function ArtifactPreview({ artifact }) {
+  const rawValue = typeof artifact?.value === 'string' ? artifact.value : '';
+
+  if (!rawValue.trim()) {
+    return <p className="mt-2 text-xs text-text-muted">No artifact content available yet.</p>;
+  }
+
+  const truncatedValue = rawValue.length > 4000 ? `${rawValue.slice(0, 4000)}\n\n…truncated…` : rawValue;
+  const format = String(artifact?.format ?? '').toLowerCase();
+
+  if (format === 'markdown') {
+    return (
+      <div className="mt-3 rounded border border-border-color/50 bg-surface/40 p-3 text-sm text-text-main">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[[rehypeSanitize, sanitizeSchema]]}
+          components={mdComponents}
+        >
+          {truncatedValue}
+        </ReactMarkdown>
+      </div>
+    );
+  }
+
+  if (['text', 'txt', 'json', 'yaml', 'yml'].includes(format) || !format) {
+    return (
+      <pre className="mt-3 max-h-56 overflow-auto whitespace-pre-wrap break-words rounded border border-border-color/50 bg-surface/40 p-3 text-xs text-text-main">
+        {truncatedValue}
+      </pre>
+    );
+  }
+
+  return (
+    <p className="mt-2 text-xs text-text-muted">
+      Artifact produced, but inline preview is not available for format <span className="font-semibold">{artifact.format}</span>.
+    </p>
   );
 }
 

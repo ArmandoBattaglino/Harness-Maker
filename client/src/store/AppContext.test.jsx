@@ -15,6 +15,27 @@ function ViewHarness({ view }) {
   return <div data-testid="current-view">{state.view}</div>;
 }
 
+function NavigationIntentHarness() {
+  const state = useAppState();
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    dispatch({
+      type: 'SET_NAVIGATION_INTENT',
+      payload: { source: 'pack-library', focus: 'builder', packId: 'pack-1', workflowId: 'wf-1' },
+    });
+  }, [dispatch]);
+
+  return (
+    <>
+      <div data-testid="nav-pack">{state.navigationIntent?.packId ?? 'none'}</div>
+      <button type="button" onClick={() => dispatch({ type: 'CLEAR_NAVIGATION_INTENT' })}>
+        Clear intent
+      </button>
+    </>
+  );
+}
+
 describe('AppContext pack navigation views', () => {
   it('accepts pack library and builder views while rejecting unknown persisted routes', async () => {
     const { rerender } = render(
@@ -38,5 +59,17 @@ describe('AppContext pack navigation views', () => {
       </AppProvider>
     );
     await waitFor(() => expect(screen.getByTestId('current-view').textContent).toBe('projects'));
+  });
+
+  it('stores and clears explicit pack/workflow navigation intent', async () => {
+    render(
+      <AppProvider>
+        <NavigationIntentHarness />
+      </AppProvider>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('nav-pack').textContent).toBe('pack-1'));
+    screen.getByRole('button', { name: 'Clear intent' }).click();
+    await waitFor(() => expect(screen.getByTestId('nav-pack').textContent).toBe('none'));
   });
 });

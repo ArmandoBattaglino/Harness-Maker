@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { useAppDispatch } from '../store/AppContext.jsx';
+import { useAppDispatch, useAppState } from '../store/AppContext.jsx';
 import { usePack, usePackList } from '../hooks/usePack.js';
 import { useWorkflowList } from '../hooks/useWorkflow.js';
+import { clearStoredExecution, writeStoredExecution } from '../utils/swarmExecutionStorage.js';
 
 function buildDraftPack(workflow) {
   return {
@@ -34,12 +35,14 @@ function clonePack(pack) {
 
 export default function PackBuilderView() {
   const dispatch = useAppDispatch();
+  const { navigationIntent } = useAppState();
   const { workflows } = useWorkflowList();
   const { packs, loading, error, refresh, create } = usePackList();
   const [selectedPackId, setSelectedPackId] = useState('');
   const { pack, update, dryRun } = usePack(selectedPackId);
   const [draft, setDraft] = useState(null);
   const [saveState, setSaveState] = useState('');
+  const [entryContext, setEntryContext] = useState(null);
 
   useEffect(() => {
     if (!selectedPackId && packs.length > 0) {
@@ -50,6 +53,27 @@ export default function PackBuilderView() {
   useEffect(() => {
     setDraft(pack ? clonePack(pack) : null);
   }, [pack]);
+
+  useEffect(() => {
+    if (navigationIntent?.focus !== 'builder') return;
+
+    if (navigationIntent.packId) {
+      setSelectedPackId(navigationIntent.packId);
+    }
+    setEntryContext({
+      source: navigationIntent.source ?? 'unknown',
+      packId: navigationIntent.packId ?? null,
+      workflowId: navigationIntent.workflowId ?? null,
+      executionId: navigationIntent.executionId ?? null,
+    });
+    dispatch({ type: 'CLEAR_NAVIGATION_INTENT' });
+  }, [dispatch, navigationIntent]);
+
+  useEffect(() => {
+    if (entryContext?.packId && selectedPackId && entryContext.packId !== selectedPackId) {
+      setEntryContext(null);
+    }
+  }, [entryContext?.packId, selectedPackId]);
 
   const linkedWorkflow = useMemo(
     () => workflows.find((workflow) => workflow.id === draft?.workflowId) ?? workflows[0] ?? null,
@@ -266,6 +290,32 @@ export default function PackBuilderView() {
     }
   }
 
+  function openWorkflowDrilldown() {
+    if (!draft?.workflowId) return;
+
+    if (entryContext?.executionId) {
+      writeStoredExecution({
+        executionId: entryContext.executionId,
+        workflowId: draft.workflowId,
+        status: 'running',
+      });
+    } else {
+      clearStoredExecution();
+    }
+
+    dispatch({
+      type: 'SET_NAVIGATION_INTENT',
+      payload: {
+        source: 'pack-builder',
+        focus: 'workflow-runtime',
+        packId: draft.id ?? entryContext?.packId ?? null,
+        workflowId: draft.workflowId,
+        executionId: entryContext?.executionId ?? null,
+      },
+    });
+    dispatch({ type: 'SET_VIEW', payload: 'swarm' });
+  }
+
   if (loading && !draft) {
     return <div className="p-8 text-text-muted">Loading packs…</div>;
   }
@@ -283,12 +333,25 @@ export default function PackBuilderView() {
               advanced drill-down.
             </p>
           </div>
-          <button className="rounded border border-border-color px-3 py-2 text-sm text-text-muted hover:text-text-main" onClick={() => dispatch({ type: 'SET_VIEW', payload: 'swarm' })}>
+          <button
+            className="rounded border border-border-color px-3 py-2 text-sm text-text-muted hover:text-text-main disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={openWorkflowDrilldown}
+            disabled={!draft?.workflowId}
+          >
             Open workflow drill-down
           </button>
         </header>
 
         {error && <div className="rounded border border-error/40 bg-error/10 p-3 text-sm text-error">{error}</div>}
+        {entryContext && (
+          <div className="rounded border border-primary/30 bg-primary/10 p-3 text-xs text-text-main">
+            Builder opened from <span className="font-semibold">{entryContext.source}</span>. Linked workflow drill-down will target{' '}
+            <span className="font-semibold">{draft?.workflowId ?? entryContext.workflowId ?? 'no workflow selected'}</span>.
+            {entryContext.executionId
+              ? ` Existing pack execution context: ${entryContext.executionId}.`
+              : ' No active pack execution context is attached yet.'}
+          </div>
+        )}
 
         <div className="rounded-xl border border-border-color bg-surface p-4">
           <div className="flex flex-wrap items-center gap-3">

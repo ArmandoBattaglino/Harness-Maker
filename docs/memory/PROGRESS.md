@@ -1,3 +1,20 @@
+## Pack Builder / Runtime Identity + Artifact Visibility (2026-04-12)
+
+**Status:** CLOSED / VERIFIED.
+
+**Deliverables:**
+- Added explicit pack/workflow/execution navigation intent between Pack Library, Pack Builder, and Swarm.
+- Pack Builder now opens the intended pack from pack-origin navigation and carries execution context into workflow drill-down.
+- Swarm now consumes pack-origin drill-down context and surfaces the selected workflow/runtime context instead of silently defaulting.
+- Pack Library artifact rows now render meaningful markdown/text content with explicit empty/fallback handling.
+
+**Verification:**
+- Targeted client suites (`AppContext`, `PackLibraryView`, `PackBuilderView`, `SwarmView`, `MarketingVideoHarness`) **20/20 PASS**.
+- Targeted Playwright smoke (`npm run test:playwright:v17-review-followup`) **PASS**.
+- Client build **PASS** (**521 modules**).
+- Diagnostics on touched files **0 errors** (`tsc skipped: no tsconfig found` caveat).
+
+---
 ## Pack Verification Drift + PackLibrary State Boundary (2026-04-11)
 
 **Status:** CLOSED / VERIFIED.

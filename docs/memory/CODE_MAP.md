@@ -1,6 +1,15 @@
 ﻿# CODE_MAP — Claude Code Visual Manager
 _Last updated: 2026-04-11 - after Marketing Video Harness Deep/Stress Test - mapped by code-mapper_
 
+## Pack Builder / Runtime Identity Addendum (2026-04-12)
+- `client/src/store/AppContext.jsx` - now carries explicit `navigationIntent` state for pack/workflow drill-down handoff.
+- `client/src/utils/swarmExecutionStorage.js` - shared storage helpers for persisted swarm execution identity.
+- `client/src/hooks/useSwarm.js` - now imports shared execution storage helpers instead of owning the storage key privately.
+- `client/src/views/PackLibraryView.jsx` - `Open in Builder` now passes explicit pack/workflow/execution navigation intent; artifacts render content-aware previews instead of metadata-only rows.
+- `client/src/views/PackBuilderView.jsx` - consumes pack-origin navigation intent, preserves pack execution context, and passes linked workflow drill-down context into Swarm.
+- `client/src/views/SwarmView.jsx` - consumes workflow drill-down navigation intent and surfaces pack-origin context while selecting the intended workflow.
+- `scripts/v17-review-followup-playwright-smoke.mjs` - `openPacksView(page)` retries the sidebar Packs navigation after Builder save so the deterministic browser smoke remains stable while lazy-loaded pack view settles.
+
 > **PROJECT STATUS: MARKETING VIDEO HARNESS DEEP/STRESS CLOSED**
 > V17 plus recovered UI/runtime fixes now include a dedicated marketing-video harness stress suite and live Claude-backed browser smoke. Full server 629/629 PASS; full client 75/75 PASS; build 520 modules.
 

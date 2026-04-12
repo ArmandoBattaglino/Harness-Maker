@@ -2,7 +2,7 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AppProvider, useAppDispatch } from '../store/AppContext.jsx';
+import { AppProvider, useAppDispatch, useAppState } from '../store/AppContext.jsx';
 import { useSwarmStore } from '../store/SwarmContext.jsx';
 import { resetSwarmStore } from '../test/resetSwarmStore.js';
 import PackLibraryView from './PackLibraryView.jsx';
@@ -336,6 +336,89 @@ describe('PackLibraryView', () => {
       expect(screen.getByText('Started execution exec-pack-2')).toBeTruthy();
     });
   });
+
+  it('passes explicit pack/workflow/execution intent when opening the builder from Packs', async () => {
+    render(
+      <AppProvider>
+        <SeedProjects />
+        <NavigationProbe />
+        <PackLibraryView />
+      </AppProvider>
+    );
+
+    expect(await screen.findByText('Pack Detail')).toBeTruthy();
+    fireEvent.change(screen.getByLabelText(/Brief/i), { target: { value: 'Launch the spring campaign' } });
+    fireEvent.click(screen.getByText('Launch pack'));
+    expect(await screen.findByText('Started execution exec-pack-1')).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Open in Builder'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('current-view').textContent).toBe('pack-builder');
+      expect(screen.getByTestId('nav-pack-id').textContent).toBe('pack-1');
+      expect(screen.getByTestId('nav-workflow-id').textContent).toBe('wf-1');
+      expect(screen.getByTestId('nav-execution-id').textContent).toBe('exec-pack-1');
+    });
+  });
+
+  it('uses the hydrated pack runtime execution id when opening the builder after local run state is gone', async () => {
+    useSwarmStore.setState({
+      packRun: {
+        packId: 'pack-1',
+        packVersion: '1.0.0',
+        executionId: 'exec-pack-hydrated',
+        visibleSteps: [{ id: 'step-1', label: 'Draft', status: 'completed' }],
+      },
+      packResult: {
+        packId: 'pack-1',
+        outputs: { result: 'done' },
+        artifacts: [],
+      },
+    });
+
+    render(
+      <AppProvider>
+        <SeedProjects />
+        <NavigationProbe />
+        <PackLibraryView />
+      </AppProvider>
+    );
+
+    expect(await screen.findByText('Pack Detail')).toBeTruthy();
+    fireEvent.click(screen.getByText('Open in Builder'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('nav-execution-id').textContent).toBe('exec-pack-hydrated');
+    });
+  });
+
+  it('renders produced artifact content instead of only metadata rows', async () => {
+    useSwarmStore.setState({
+      packRun: { packId: 'pack-1', visibleSteps: [{ id: 'step-1', label: 'Draft', status: 'completed' }] },
+      packResult: {
+        packId: 'pack-1',
+        outputs: { result: 'done' },
+        artifacts: [
+          {
+            id: 'artifact-1',
+            name: 'Report',
+            format: 'markdown',
+            value: '# Final report\n\nArtifact body here.',
+          },
+        ],
+      },
+    });
+
+    render(
+      <AppProvider>
+        <PackLibraryView />
+      </AppProvider>
+    );
+
+    expect(await screen.findByText('Pack Detail')).toBeTruthy();
+    expect(screen.getByText('Final report')).toBeTruthy();
+    expect(screen.getByText('Artifact body here.')).toBeTruthy();
+  });
 });
 
 function SeedProjects() {
@@ -348,4 +431,16 @@ function SeedProjects() {
     dispatch({ type: 'SET_ACTIVE_PROJECT', payload: 'proj-1' });
   }, [dispatch]);
   return null;
+}
+
+function NavigationProbe() {
+  const { view, navigationIntent } = useAppState();
+  return (
+    <>
+      <div data-testid="current-view">{view}</div>
+      <div data-testid="nav-pack-id">{navigationIntent?.packId ?? 'none'}</div>
+      <div data-testid="nav-workflow-id">{navigationIntent?.workflowId ?? 'none'}</div>
+      <div data-testid="nav-execution-id">{navigationIntent?.executionId ?? 'none'}</div>
+    </>
+  );
 }

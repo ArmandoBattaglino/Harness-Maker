@@ -39,6 +39,7 @@ const initialState = {
   activeProjectId: null,
   projectsHydrated: false,
   view: 'projects', // 'projects' | 'terminal' | 'jobs' | 'deployments' | 'context' | 'swarm' | 'pack-builder' | 'packs'
+  navigationIntent: null,
 };
 
 // --- Reducer ---
@@ -83,6 +84,12 @@ function appReducer(state, action) {
 
     case 'SET_VIEW':
       return { ...state, view: VALID_VIEWS.has(action.payload) ? action.payload : 'projects' };
+
+    case 'SET_NAVIGATION_INTENT':
+      return { ...state, navigationIntent: action.payload ?? null };
+
+    case 'CLEAR_NAVIGATION_INTENT':
+      return { ...state, navigationIntent: null };
 
     default:
       return state;
