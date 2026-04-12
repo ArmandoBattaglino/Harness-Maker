@@ -13,12 +13,14 @@
 import { Router } from 'express';
 import { generateWorkflowFromPrompt } from '../services/ScaffoldGenerator.js';
 import { getRuntimeCapabilitySnapshot } from '../services/SwarmEngine.js';
-import { buildWorkflowArtifact } from '../services/WorkflowArtifactBuilder.js';
-import buildPackResult from '../services/PackResultBuilder.js';
-import { ExecutionHistoryStore } from '../stores/ExecutionHistoryStore.js';
-import { ConfigStore } from '../services/ConfigStore.js';
+import {
+  TERMINAL_EXECUTION_STATUSES,
+  buildExecutionResultsPayload,
+  buildLiveExecutionResults,
+  getExecutionHistoryStore,
+  lookupExecution,
+} from '../services/ExecutionResultsService.js';
 
-const TERMINAL_EXECUTION_STATUSES = new Set(['completed', 'stopped', 'failed']);
 const STRUCTURED_AGENT_SPAWN_MODES = new Set(['stream-json', 'codex-sdk']);
 
 function getAgentNodeById(workflowDef, nodeId) {
@@ -28,178 +30,6 @@ function getAgentNodeById(workflowDef, nodeId) {
 function isAgentInDepartment(agentNode, departmentId) {
   if (!agentNode || !departmentId) return false;
   return agentNode.parentId === departmentId || agentNode.data?.parentDepartmentId === departmentId;
-}
-
-function normalizeAgentStates(agentStates) {
-  if (agentStates instanceof Map) return agentStates;
-  if (agentStates && typeof agentStates === 'object') {
-    return new Map(Object.entries(agentStates));
-  }
-  return new Map();
-}
-
-function buildOutputEntriesFromMessages(nodeId, messages = [], state = null) {
-  const entries = [];
-  const groupedByTurn = new Map();
-
-  for (let index = 0; index < messages.length; index += 1) {
-    const message = messages[index];
-    const rawText = String(message?.text ?? message?.content ?? '');
-    if (!rawText.trim()) continue;
-
-    const spawnMode = message?.spawnMode ?? state?.spawnMode ?? null;
-    const turnId = message?.turnId ?? null;
-    const shouldGroupByTurn = Boolean(turnId) && STRUCTURED_AGENT_SPAWN_MODES.has(spawnMode);
-
-    if (!shouldGroupByTurn) {
-      entries.push({
-        id: `chat-${nodeId}-${index}-${message?.timestamp ?? 'na'}`,
-        text: rawText,
-        timestamp: message?.timestamp ?? null,
-        turnId,
-        spawnMode,
-      });
-      continue;
-    }
-
-    const existing = groupedByTurn.get(turnId);
-    if (!existing) {
-      const nextEntry = {
-        id: `turn-${nodeId}-${turnId}`,
-        text: rawText,
-        timestamp: message?.timestamp ?? null,
-        turnId,
-        spawnMode,
-      };
-      groupedByTurn.set(turnId, nextEntry);
-      entries.push(nextEntry);
-      continue;
-    }
-
-    existing.text += rawText;
-    existing.timestamp = message?.timestamp ?? existing.timestamp;
-    existing.spawnMode = spawnMode ?? existing.spawnMode;
-  }
-
-  return entries;
-}
-
-function buildAgentOutputsFromExecution(execution, swarmEngine = null) {
-  const agentOutputs = {};
-  const groupedMessages = {};
-  const chatMessages = Array.isArray(execution?.chatMessages) ? execution.chatMessages : [];
-
-  for (const msg of chatMessages) {
-    if (msg.role !== 'assistant' || !msg.nodeId) continue;
-    if (!groupedMessages[msg.nodeId]) groupedMessages[msg.nodeId] = [];
-    groupedMessages[msg.nodeId].push(msg);
-  }
-
-  const agentStates = normalizeAgentStates(execution?.agentStates);
-  const nodeIds = new Set(Object.keys(groupedMessages));
-  for (const [nodeId, state] of agentStates.entries()) {
-    if (!nodeId) continue;
-    if (state?.status && state.status !== 'idle') {
-      nodeIds.add(nodeId);
-    }
-  }
-  for (const node of execution?.workflowDef?.nodes ?? []) {
-    if (node?.type !== 'agent' || !node.id) continue;
-    const state = agentStates.get(node.id);
-    if ((groupedMessages[node.id]?.length ?? 0) > 0 || (state?.status && state.status !== 'idle')) {
-      nodeIds.add(node.id);
-    }
-  }
-
-  for (const nodeId of nodeIds) {
-    const messages = groupedMessages[nodeId] ?? [];
-    const state = agentStates.get(nodeId);
-    const nodeDef = execution?.workflowDef?.nodes?.find((node) => node.id === nodeId);
-    const timestamps = messages
-      .map((msg) => msg.timestamp)
-      .filter(Boolean)
-      .sort((a, b) => a - b);
-    const finalText = typeof swarmEngine?._resolveAgentFinalText === 'function'
-      ? swarmEngine._resolveAgentFinalText(execution, nodeId, messages, state)
-      : messages
-        .map((msg) => msg.text || msg.content || '')
-        .filter(Boolean)
-        .join('\n\n');
-
-    if (!finalText && messages.length === 0 && !state) continue;
-
-    agentOutputs[nodeId] = {
-      label: nodeDef?.data?.label || nodeId,
-      finalText,
-      outputEntries: typeof swarmEngine?._buildAgentOutputEntries === 'function'
-        ? swarmEngine._buildAgentOutputEntries(execution, nodeId, messages, state)
-        : buildOutputEntriesFromMessages(nodeId, messages, state),
-      handoffPayloads: Array.isArray(state?.handoffPayloads) ? state.handoffPayloads : [],
-      status: state?.status || 'unknown',
-      provider: state?.runtimeProvider || state?.provider || null,
-      messageCount: messages.length,
-      firstMessageAt: timestamps[0] ? new Date(timestamps[0]).toISOString() : null,
-      lastMessageAt: timestamps[timestamps.length - 1] ? new Date(timestamps[timestamps.length - 1]).toISOString() : null,
-    };
-  }
-
-  return agentOutputs;
-}
-
-function buildLiveExecutionResults(execution, workflowName = '', swarmEngine = null) {
-  const agentOutputs = buildAgentOutputsFromExecution(execution, swarmEngine);
-  const status = execution?.status || 'unknown';
-  const startedAt = execution?.startedAt ?? execution?.budget?.startedAt ?? null;
-  const endedAt = TERMINAL_EXECUTION_STATUSES.has(status)
-    ? (execution?.endedAt ?? new Date().toISOString())
-    : null;
-  const durationMs = startedAt && endedAt
-    ? Math.max(0, new Date(endedAt).getTime() - new Date(startedAt).getTime())
-    : null;
-  const normalizedWorkflowName = workflowName || execution?.workflowDef?.name || 'Workflow';
-
-  const packRun = execution?.packMetadata ?? null;
-  const packLike = buildPackLike(packRun);
-  const aggregatedArtifact = TERMINAL_EXECUTION_STATUSES.has(status)
-    ? buildWorkflowArtifact({
-        workflowName: normalizedWorkflowName,
-        workflowDescription: execution?.workflowDef?.description || '',
-        executionId: execution?.executionId,
-        status,
-        startedAt,
-        endedAt,
-        durationMs,
-        agentOutputs,
-      })
-    : '';
-
-  return {
-    executionId: execution?.executionId,
-    workflowName: normalizedWorkflowName,
-    status,
-    agentOutputs,
-    chatMessages: Array.isArray(execution?.chatMessages) ? execution.chatMessages : [],
-    aggregatedArtifact,
-    ...(packRun ? { packRun } : {}),
-    ...(packLike ? { packResult: buildPackResult(packLike, execution, agentOutputs, aggregatedArtifact) } : {}),
-    meta: {
-      startedAt,
-      endedAt,
-      durationMs,
-      nodesRun: normalizeAgentStates(execution?.agentStates).size,
-    },
-  };
-}
-
-function buildPackLike(packRun) {
-  if (!packRun) return null;
-  return {
-    id: packRun.packId,
-    packVersion: packRun.packVersion,
-    visibleSteps: packRun.visibleSteps ?? [],
-    outputSchema: packRun.outputSchema ?? {},
-    artifactDefinitions: packRun.artifactDefinitions ?? [],
-  };
 }
 
 export function resolveBroadcastNodeTargets(execution, scope, targetId) {
@@ -253,19 +83,8 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
   // -------------------------------------------------------------------------
   // Execution History Store — initialized lazily on first use
   // -------------------------------------------------------------------------
-  let _historyStore = null;
   function getHistoryStore(appLocals = null) {
-    if (appLocals?.executionHistoryStore) {
-      return appLocals.executionHistoryStore;
-    }
-    if (!_historyStore) {
-      _historyStore = new ExecutionHistoryStore(ConfigStore.CONFIG_DIR);
-      // Fire-and-forget init (creates directory if needed)
-      _historyStore.init().catch((err) => {
-        console.error(`[swarm] ExecutionHistoryStore init error: ${err.message}`);
-      });
-    }
-    return _historyStore;
+    return getExecutionHistoryStore(appLocals);
   }
 
   // -------------------------------------------------------------------------
@@ -531,12 +350,12 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
       let execution = swarmEngine.getStatus(executionId);
 
       if (!execution) {
-        const result = await lookupExecution(executionId, workflowIdHint, req.app.locals);
+        const result = await lookupExecution(executionId, workflowIdHint, req.app.locals, swarmEngine);
         if (!result) {
           return res.status(404).json({ error: 'Execution not found' });
         }
 
-        if (result.source === 'persisted') {
+        if (result.source === 'history') {
           const persistedOutput = result.data?.agentOutputs?.[nodeId]?.finalText || '';
           if (!persistedOutput) {
             return res.status(404).json({ error: 'Agent output not found' });
@@ -559,11 +378,7 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
         }
       }
 
-      const liveResults = buildLiveExecutionResults(
-        execution,
-        execution?.workflowDef?.name || '',
-        swarmEngine
-      );
+      const liveResults = buildLiveExecutionResults(execution, execution?.workflowDef?.name || '', swarmEngine);
       const fallbackOutput =
         liveResults.agentOutputs?.[nodeId]?.finalText
         || agentState.lastChatSnippet
@@ -662,107 +477,6 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
   // -------------------------------------------------------------------------
-  // Internal helper: look up an execution by ID, first in live SwarmEngine,
-  // then in persisted ExecutionHistoryStore.
-  // Returns { source: 'live'|'history', data: {...}, workflowName?: string } or null.
-  // -------------------------------------------------------------------------
-  async function lookupHistoryExecution(executionId, workflowIdHint, appLocals) {
-    const store = getHistoryStore(appLocals);
-    let entry = null;
-    let workflowName = '';
-
-    if (workflowIdHint) {
-      entry = await store.getEntry(workflowIdHint, executionId);
-      if (entry) {
-        try {
-          const wfStore = appLocals.workflowStore;
-          if (wfStore) {
-            const wf = await wfStore.get(workflowIdHint);
-            workflowName = wf?.name || '';
-          }
-        } catch {
-          // Ignore
-        }
-      }
-    } else {
-      const wfStore = appLocals.workflowStore;
-      if (wfStore) {
-        try {
-          const workflows = await wfStore.list();
-          for (const wf of workflows) {
-            entry = await store.getEntry(wf.id, executionId);
-            if (entry) {
-              workflowName = wf.name || '';
-              break;
-            }
-          }
-        } catch {
-          // Ignore scan errors
-        }
-      }
-    }
-
-    if (!entry) return null;
-    return { data: entry, workflowName };
-  }
-
-  async function lookupExecution(executionId, workflowIdHint, appLocals) {
-    // 1. Try live execution from SwarmEngine
-    const liveStatus = swarmEngine.getStatus(executionId);
-    if (liveStatus) {
-      const liveExecution = typeof swarmEngine.getExecution === 'function'
-        ? swarmEngine.getExecution(executionId)
-        : null;
-      const liveWorkflowId = workflowIdHint || liveStatus.workflowId || liveExecution?.workflowId || null;
-
-      if (TERMINAL_EXECUTION_STATUSES.has(liveStatus.status)) {
-        // Prefer live data when the execution object has chatMessages —
-        // the persisted history may have been written before late
-        // ChatExtractor flushes delivered final chat messages.
-        const liveChatCount = Array.isArray(liveExecution?.chatMessages) ? liveExecution.chatMessages.length : 0;
-        if (liveChatCount === 0) {
-          const persisted = await lookupHistoryExecution(executionId, liveWorkflowId, appLocals);
-          if (persisted) {
-            return {
-              source: 'history',
-              data: persisted.data,
-              workflowName: persisted.workflowName,
-            };
-          }
-        }
-      }
-
-      // Resolve workflow name from workflowStore if possible
-      let workflowName = liveExecution?.workflowDef?.name || '';
-      try {
-        const store = appLocals.workflowStore;
-        if (store && liveWorkflowId) {
-          const wf = await store.get(liveWorkflowId);
-          workflowName = wf?.name || '';
-        }
-      } catch {
-        // Ignore — name is best-effort
-      }
-
-      return {
-        source: 'live',
-        data: liveExecution ?? liveStatus,
-        workflowName,
-      };
-    }
-
-    // 2. Try persisted history
-    const persisted = await lookupHistoryExecution(executionId, workflowIdHint, appLocals);
-    if (!persisted) return null;
-
-    return {
-      source: 'history',
-      data: persisted.data,
-      workflowName: persisted.workflowName,
-    };
-  }
-
-  // -------------------------------------------------------------------------
   // GET /api/v1/swarm/executions/:executionId/results
   // Returns execution results — agent outputs, aggregated artifact, and meta.
   // Looks up in live SwarmEngine first, then in persisted history.
@@ -780,34 +494,13 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
       }
 
       const workflowIdHint = req.query.workflowId || null;
-      const result = await lookupExecution(executionId, workflowIdHint, req.app.locals);
+      const result = await lookupExecution(executionId, workflowIdHint, req.app.locals, swarmEngine);
 
       if (!result) {
         return res.status(404).json({ error: 'Execution not found' });
       }
 
-      if (result.source === 'live') {
-        return res.status(200).json(buildLiveExecutionResults(result.data, result.workflowName, swarmEngine));
-      }
-
-      // Persisted history entry
-      const entry = result.data;
-      const packLike = buildPackLike(entry.packRun);
-      return res.status(200).json({
-        executionId: entry.executionId,
-        workflowName: result.workflowName,
-        status: entry.status,
-        agentOutputs: entry.agentOutputs || {},
-        aggregatedArtifact: entry.aggregatedArtifact || '',
-        ...(entry.packRun ? { packRun: entry.packRun } : {}),
-        ...(packLike ? { packResult: buildPackResult(packLike, entry, entry.agentOutputs || {}, entry.aggregatedArtifact || '') } : {}),
-        meta: {
-          startedAt: entry.startedAt ?? null,
-          endedAt: entry.endedAt ?? null,
-          durationMs: entry.durationMs ?? null,
-          nodesRun: entry.nodesRun ?? 0,
-        },
-      });
+      return res.status(200).json(buildExecutionResultsPayload(result, swarmEngine));
     } catch (err) {
       console.error(`[swarm] GET /executions/:executionId/results error: ${err.message}`);
       return res.status(500).json({ error: 'Internal server error' });
@@ -831,7 +524,7 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
       }
 
       const workflowIdHint = req.query.workflowId || null;
-      const result = await lookupExecution(executionId, workflowIdHint, req.app.locals);
+      const result = await lookupExecution(executionId, workflowIdHint, req.app.locals, swarmEngine);
 
       if (!result) {
         return res.status(404).json({ error: 'Execution not found' });
@@ -842,7 +535,7 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
       if (result.source === 'history') {
         artifactContent = result.data.aggregatedArtifact || '';
       } else if (TERMINAL_EXECUTION_STATUSES.has(result.data?.status)) {
-        artifactContent = buildLiveExecutionResults(result.data, result.workflowName, swarmEngine).aggregatedArtifact || '';
+        artifactContent = buildExecutionResultsPayload(result, swarmEngine)?.aggregatedArtifact || '';
       }
 
       // Build safe filename

@@ -5,17 +5,9 @@ import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import { useSwarmStore } from '../store/SwarmContext';
 import { apiPost } from '../hooks/useApi.js';
 import { isStructuredSpawnMode } from '../utils/runtimeModes.js';
+import { sameStructuredTurnId } from '../utils/structuredTurns.js';
 import ChatMessage from './ChatMessage';
 import HitlChatCard from './HitlChatCard';
-
-function isSameStructuredTurn(leftTurnId, rightTurnId) {
-  const normalizedLeft = leftTurnId ?? null;
-  const normalizedRight = rightTurnId ?? null;
-  if (normalizedLeft || normalizedRight) {
-    return normalizedLeft === normalizedRight;
-  }
-  return true;
-}
 
 export default function ChatPanel() {
   const chatMessages = useSwarmStore((s) => s.chatMessages);
@@ -111,7 +103,7 @@ export default function ChatPanel() {
           previous
           && isStructuredSpawnMode(previous.spawnMode)
           && previous.nodeId === nextMessage.nodeId
-          && isSameStructuredTurn(previous.turnId, nextMessage.turnId)
+          && sameStructuredTurnId(previous.turnId, nextMessage.turnId)
           && (previous.role === 'assistant' || !previous.role)
         ) {
           previous.text = `${previous.text ?? ''}${nextMessage.text ?? ''}`;

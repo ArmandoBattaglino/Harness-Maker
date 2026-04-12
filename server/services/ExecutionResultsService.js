@@ -8,7 +8,7 @@ const STRUCTURED_AGENT_SPAWN_MODES = new Set(['stream-json', 'codex-sdk']);
 
 let _historyStore = null;
 
-function getHistoryStore(appLocals = null) {
+export function getExecutionHistoryStore(appLocals = null) {
   if (appLocals?.executionHistoryStore) {
     return appLocals.executionHistoryStore;
   }
@@ -186,7 +186,7 @@ export function buildLiveExecutionResults(execution, workflowName = '', swarmEng
 }
 
 async function lookupHistoryExecution(executionId, workflowIdHint, appLocals) {
-  const store = getHistoryStore(appLocals);
+  const store = getExecutionHistoryStore(appLocals);
   let entry = null;
   let workflowName = '';
 

@@ -4,6 +4,7 @@ import { useSwarmStore } from '../store/SwarmContext';
 import { apiGet, apiPost, apiDelete } from './useApi.js';
 import { isStructuredSpawnMode } from '../utils/runtimeModes.js';
 import { readStoredExecution, writeStoredExecution, clearStoredExecution } from '../utils/swarmExecutionStorage.js';
+import { sameStructuredTurnId } from '../utils/structuredTurns.js';
 const STREAM_JSON_THINKING_PLACEHOLDER = 'Thinking block captured for this turn.';
 
 function createPendingStreamJsonTurn() {
@@ -12,15 +13,6 @@ function createPendingStreamJsonTurn() {
     sawThinking: false,
     cost: null,
   };
-}
-
-function sameStructuredTurnId(leftTurnId, rightTurnId) {
-  const normalizedLeft = leftTurnId ?? null;
-  const normalizedRight = rightTurnId ?? null;
-  if (normalizedLeft || normalizedRight) {
-    return normalizedLeft === normalizedRight;
-  }
-  return true;
 }
 
 function shouldDropStructuredFragmentAfterCanonical(nodeState, msg) {
