@@ -63,4 +63,58 @@ describe('WorkflowRunModal direct workflow user flow', () => {
 
     expect(onSubmit).toHaveBeenCalledWith({ payload: { ok: true } });
   });
+
+  it('groups visual Input node fields and submits safe image metadata references', () => {
+    const onSubmit = vi.fn();
+    render(
+      <WorkflowRunModal
+        workflowName="Visual Workflow"
+        inputContract={[
+          {
+            key: 'brief',
+            label: 'Brief',
+            type: 'textarea',
+            required: true,
+            inputNodeId: 'input-1',
+            groupLabel: 'Client Brief',
+            groupPrompt: 'Provide a brief and a reference image.',
+          },
+          {
+            key: 'reference_image',
+            label: 'Reference image',
+            type: 'image',
+            required: true,
+            inputNodeId: 'input-1',
+            groupLabel: 'Client Brief',
+          },
+        ]}
+        onSubmit={onSubmit}
+        onClose={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('Client Brief')).toBeInTheDocument();
+    expect(screen.getByText('Provide a brief and a reference image.')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/^Brief/), { target: { value: 'Launch X' } });
+    fireEvent.change(screen.getByLabelText(/Reference image/), {
+      target: {
+        files: [
+          new File(['image-bytes'], 'reference.png', { type: 'image/png' }),
+        ],
+      },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Start workflow' }));
+
+    expect(onSubmit).toHaveBeenCalledWith({
+      brief: 'Launch X',
+      reference_image: expect.objectContaining({
+        assetId: expect.stringContaining('pending-run-reference.png'),
+        name: 'reference.png',
+        mimeType: 'image/png',
+        size: 11,
+        previewUrl: '',
+      }),
+    });
+  });
 });

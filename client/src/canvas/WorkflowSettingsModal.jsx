@@ -2,6 +2,7 @@
 // Modal for editing workflow settings (mode, budget, circuit breaker, model)
 // and initial context variables (key-value pairs).
 import { useState, useEffect, useCallback } from 'react';
+import { hasVisualIONodes } from '../utils/visualWorkflowContracts.js';
 
 const MODEL_OPTIONS = [
   { group: 'Claude', models: ['opus', 'sonnet', 'haiku'] },
@@ -296,10 +297,10 @@ function ContextTab({ contextVars, onChange }) {
   );
 }
 
-const INPUT_TYPES = ['text', 'textarea', 'number', 'integer', 'boolean', 'json', 'enum'];
+const INPUT_TYPES = ['text', 'textarea', 'number', 'integer', 'boolean', 'json', 'enum', 'image'];
 const OUTPUT_SOURCES = ['finalText', 'workflowContext'];
-const ARTIFACT_SOURCES = ['aggregatedArtifact', 'workflowContext'];
-const ARTIFACT_FORMATS = ['markdown', 'text', 'json'];
+const ARTIFACT_SOURCES = ['aggregatedArtifact', 'workflowContext', 'outputExtractor'];
+const ARTIFACT_FORMATS = ['markdown', 'text', 'json', 'table'];
 
 function newInputField() {
   return { key: '', label: '', type: 'text', required: false, defaultValue: '', helpText: '', options: [] };
@@ -377,7 +378,7 @@ function ContractRows({ title, rows, columns, onAdd, onUpdate, onDelete, emptyLa
   );
 }
 
-function InterfaceTab({ inputContract, outputContract, onInputsChange, onOutputContractChange }) {
+function InterfaceTab({ inputContract, outputContract, onInputsChange, onOutputContractChange, visualIONodeMode = false }) {
   const outputs = outputContract?.outputs ?? [];
   const artifacts = outputContract?.artifacts ?? [];
 
@@ -400,8 +401,17 @@ function InterfaceTab({ inputContract, outputContract, onInputsChange, onOutputC
   return (
     <div className="flex flex-col gap-5 p-4">
       <p className="rounded border border-purple-900/50 bg-purple-950/20 px-3 py-2 text-xs text-purple-100">
-        Workflow direct runs use these workflow-native contracts. Pack runs remain pack-authoritative in this wave.
+        {visualIONodeMode
+          ? 'Visual Input and Output Extractor nodes are the source of truth for this workflow. These generated contracts are read-only here; edit the canvas nodes instead.'
+          : 'Workflow direct runs use these workflow-native contracts. Pack runs remain pack-authoritative in this wave.'}
       </p>
+      {visualIONodeMode && (
+        <pre className="max-h-48 overflow-auto rounded border border-gray-700 bg-gray-950 p-3 text-[11px] text-gray-300">
+          {JSON.stringify({ inputContract, outputContract }, null, 2)}
+        </pre>
+      )}
+      {!visualIONodeMode && (
+        <>
       <ContractRows
         title="Workflow Inputs"
         rows={inputContract}
@@ -450,6 +460,8 @@ function InterfaceTab({ inputContract, outputContract, onInputsChange, onOutputC
         onDelete={(index) => onOutputContractChange({ outputs, artifacts: artifacts.filter((_, i) => i !== index) })}
         emptyLabel="No workflow artifacts yet."
       />
+        </>
+      )}
     </div>
   );
 }
@@ -461,6 +473,7 @@ export default function WorkflowSettingsModal({ workflowDef, onApply, onClose })
   const [description, setDescription] = useState('');
   const [inputContract, setInputContract] = useState([]);
   const [outputContract, setOutputContract] = useState({ outputs: [], artifacts: [] });
+  const visualIONodeMode = hasVisualIONodes(workflowDef);
 
   // Initialize from workflowDef
   useEffect(() => {
@@ -569,6 +582,7 @@ export default function WorkflowSettingsModal({ workflowDef, onApply, onClose })
               outputContract={outputContract}
               onInputsChange={setInputContract}
               onOutputContractChange={setOutputContract}
+              visualIONodeMode={visualIONodeMode}
             />
           )}
         </div>

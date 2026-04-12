@@ -25,6 +25,8 @@ import DelayNode from './nodes/DelayNode';
 import LoopNode from './nodes/LoopNode';
 import ErrorHandlerNode from './nodes/ErrorHandlerNode';
 import SubWorkflowNode from './nodes/SubWorkflowNode';
+import InputNode from './nodes/InputNode';
+import OutputExtractorNode from './nodes/OutputExtractorNode';
 import HandoffEdge from './edges/HandoffEdge';
 import FloatingConnectionLine from './edges/FloatingConnectionLine';
 import AgentInspector from './AgentInspector';
@@ -39,6 +41,10 @@ import { applyExpandedOutputLayering } from './outputLayering';
 import { useSwarmStore } from '../store/SwarmContext';
 import { useCanvasHistory } from '../hooks/useCanvasHistory';
 import { generateNodeId } from '../utils/nodeIdGenerator';
+import {
+  buildDefaultInputNodeData,
+  buildDefaultOutputExtractorNodeData,
+} from '../utils/visualIoContracts';
 
 // Register custom node and edge types — defined OUTSIDE component to prevent re-registration
 const nodeTypes = {
@@ -51,6 +57,8 @@ const nodeTypes = {
   loop: LoopNode,
   errorHandler: ErrorHandlerNode,
   subWorkflow: SubWorkflowNode,
+  input: InputNode,
+  outputExtractor: OutputExtractorNode,
 };
 
 const edgeTypes = {
@@ -79,6 +87,8 @@ const DEFAULT_NODE_DIMENSIONS = {
   loop: { width: 180, height: 92 },
   errorHandler: { width: 180, height: 84 },
   subWorkflow: { width: 180, height: 88 },
+  input: { width: 190, height: 116 },
+  outputExtractor: { width: 200, height: 110 },
   department: { width: 280, height: 180 },
 };
 function snapGridValue(value) {
@@ -95,6 +105,33 @@ function snapPosition(position) {
 function buildNodeData(type, subType = '') {
   if (type === 'agent') {
     return { label: 'New Agent', systemPrompt: '', model: '', tools: [], isTriageNode: false, maxTurns: 0 };
+  }
+
+  if (type === 'input') {
+    return {
+      label: 'Input Block',
+      fields: [
+        {
+          key: 'brief',
+          label: 'Brief',
+          type: 'textarea',
+          required: true,
+          helpText: 'Describe what this workflow should do.',
+          defaultValue: '',
+          options: [],
+        },
+      ],
+    };
+  }
+
+  if (type === 'outputExtractor') {
+    return {
+      label: 'Output Extractor',
+      artifactKey: 'report',
+      artifactName: 'Report',
+      format: 'markdown',
+      extractionInstruction: 'Extract the final deliverable from the upstream agent output.',
+    };
   }
 
   if (type === 'department') {
@@ -131,6 +168,14 @@ function buildNodeData(type, subType = '') {
 
   if (type === 'subWorkflow') {
     return { label: 'Sub-Workflow', workflowId: '' };
+  }
+
+  if (type === 'input') {
+    return buildDefaultInputNodeData();
+  }
+
+  if (type === 'outputExtractor') {
+    return buildDefaultOutputExtractorNodeData();
   }
 
   return { label: `New ${type}` };
@@ -948,6 +993,8 @@ export default function SwarmCanvas({
     if (contextMenu.type === 'canvas') {
       return [
         { label: 'Add Agent Node', icon: '\uD83E\uDD16', onClick: () => addNodeAtPosition('agent', contextMenu.screenX ?? contextMenu.x, contextMenu.screenY ?? contextMenu.y) },
+        { label: 'Add Input Block', icon: '\uD83D\uDCDD', onClick: () => addNodeAtPosition('input', contextMenu.screenX ?? contextMenu.x, contextMenu.screenY ?? contextMenu.y) },
+        { label: 'Add Output Extractor', icon: '\uD83D\uDCE6', onClick: () => addNodeAtPosition('outputExtractor', contextMenu.screenX ?? contextMenu.x, contextMenu.screenY ?? contextMenu.y) },
         { label: 'Add Department', icon: '\uD83C\uDFE2', onClick: () => addNodeAtPosition('department', contextMenu.screenX ?? contextMenu.x, contextMenu.screenY ?? contextMenu.y) },
         { label: 'Add Trigger', icon: '\u26A1', onClick: () => addNodeAtPosition('trigger', contextMenu.screenX ?? contextMenu.x, contextMenu.screenY ?? contextMenu.y) },
         { label: 'Select All', icon: '\u2610', onClick: () => setNodes((nds) => nds.map((n) => ({ ...n, selected: true }))) },

@@ -17,6 +17,7 @@ import { useWorkflowList } from '../hooks/useWorkflow.js';
 import { useAppDispatch, useAppState } from '../store/AppContext';
 import { apiDelete, apiGet, apiPost, apiPut } from '../hooks/useApi.js';
 import { sanitizeWorkflow } from '../utils/sanitizeWorkflow.js';
+import { deriveEffectiveWorkflowContracts, resolveEffectiveWorkflowContracts } from '../utils/visualIoContracts.js';
 import { useCanvasValidation } from '../hooks/useCanvasValidation.js';
 import { isStructuredSpawnMode } from '../utils/runtimeModes.js';
 import WorkflowArtifactPanel from '../panels/WorkflowArtifactPanel';
@@ -452,8 +453,6 @@ export default function SwarmView() {
     };
   }, []);
 
-  const hasWorkflowInputContract = Array.isArray(workflowDef?.inputContract) && workflowDef.inputContract.length > 0;
-
   const buildCurrentWorkflowPayload = () => {
     const current = workflowDef ?? {};
     const nodes = canvasStateRef.current.nodes.length > 0
@@ -463,6 +462,7 @@ export default function SwarmView() {
       ? canvasStateRef.current.edges
       : (current.edges ?? []);
 
+    const effectiveContracts = resolveEffectiveWorkflowContracts({ ...current, nodes, edges });
     return sanitizeWorkflow({
       ...current,
       name: current.name || 'Untitled Workflow',
@@ -471,8 +471,8 @@ export default function SwarmView() {
       edges,
       settings: current.settings || {},
       initialContext: current.initialContext || {},
-      inputContract: current.inputContract || [],
-      outputContract: current.outputContract || { outputs: [], artifacts: [] },
+      inputContract: effectiveContracts.inputContract || [],
+      outputContract: effectiveContracts.outputContract || { outputs: [], artifacts: [] },
       projectId: current.projectId ?? activeProjectId,
     });
   };
@@ -672,6 +672,13 @@ export default function SwarmView() {
     setCanvasNodesForValidation(nodes);
     setCanvasEdgesForValidation(edges);
   }, []);
+
+  const effectiveWorkflowContracts = useMemo(() => deriveEffectiveWorkflowContracts({
+    ...(workflowDef ?? {}),
+    nodes: canvasNodesForValidation.length > 0 ? canvasNodesForValidation : (workflowDef?.nodes ?? []),
+    edges: canvasEdgesForValidation.length > 0 ? canvasEdgesForValidation : (workflowDef?.edges ?? []),
+  }), [workflowDef, canvasNodesForValidation, canvasEdgesForValidation]);
+  const hasWorkflowInputContract = effectiveWorkflowContracts.inputContract.length > 0;
 
   // FR-V5-44: canvas validation — computed from latest canvas state
   const canvasValidation = useCanvasValidation(
@@ -1332,8 +1339,8 @@ export default function SwarmView() {
       {showRunForm && workflowDef && (
         <WorkflowRunModal
           workflowName={workflowDef.name}
-          inputContract={workflowDef.inputContract ?? []}
-          outputContract={workflowDef.outputContract ?? { outputs: [], artifacts: [] }}
+          inputContract={effectiveWorkflowContracts.inputContract}
+          outputContract={effectiveWorkflowContracts.outputContract}
           onSubmit={(workflowInput) => {
             setShowRunForm(false);
             void handleRunWithInput(workflowInput);

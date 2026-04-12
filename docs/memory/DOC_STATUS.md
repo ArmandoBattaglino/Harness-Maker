@@ -1,3 +1,9 @@
+## Visual Input / Output Blocks Docs Review (2026-04-12)
+
+`docs/VISUAL_INPUT_OUTPUT_BLOCKS.md` is now the feature-facing implementation note for the approved visual Input/Output Blocks plan. It documents the current code baseline, source-of-truth guardrails, non-executable Input/Output Extractor semantics, run-scoped image asset boundary, extractor artifact rule, and required microwave test evidence format. Public API docs do not change yet because no run-asset endpoint has landed in this docs/review lane.
+
+---
+
 # Documentation Status
 _Last updated: 2026-04-09 after V10.8 AREA CLOSED (#491–#495): visual regression baselines at 682px (normalizeHarnessLayout), Codex handoff harness stabilized (3 bug fixes), stale server guard (scripts/check-server-freshness.mjs + check:server-freshness npm scripts), TEST GATE #494 PASS, AREA CHECKPOINT #495 PASS. All areas V3.1–V10.8 CLOSED. Server: 501/501, client: 52/52, build: 507 modules. PROJECT COMPLETE._
 

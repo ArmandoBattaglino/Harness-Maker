@@ -1,3 +1,9 @@
+## Visual Input / Output Blocks Addendum (2026-04-12)
+- `docs/VISUAL_INPUT_OUTPUT_BLOCKS.md` - implementation notes for the approved visual Input/Output Blocks plan, including current baseline map, source-of-truth guardrails, non-executable node semantics, image run-asset boundary, extractor artifact rule, and microwave evidence format.
+- `server/services/workflowContracts.js` - current contract bridge baseline; normalizes root `inputContract` / `outputContract`, but still needs graph-derived effective contracts, `image` input type, `table` artifact format, and extractor-specific no-silent-fallback behavior.
+- `client/src/canvas/SwarmCanvas.jsx` + `client/src/canvas/NodePalette.jsx` - current canvas creation surface; planned visual I/O work should add `input` and `outputExtractor` registration/cards/default data while preserving existing Agent/Department/Trigger behavior.
+- `client/src/hooks/useCanvasValidation.js` + `server/services/SwarmEngine.js` - start-node/runtime semantics currently count all incoming targets; planned visual Input nodes must be excluded from executable start-agent/fan-in scheduling.
+
 ## Workflow as Heart / Pack as Wrapper Addendum (2026-04-12)
 - `server/services/workflowContracts.js` - workflow-native input/output contract normalization, direct-run input validation, workflow run context injection, and canonical workflow result mapping.
 - `server/services/WorkflowStore.js` - now preserves `inputContract` / `outputContract` and loads legacy workflows with safe empty defaults.
@@ -4139,3 +4145,10 @@ _All bugs identified in QA Swarm Inspection (2026-03-31) and Swarm Code Audit (2
 - `client/src/views/PackLibraryView.jsx`: selected pack changes clear stale launch errors.
 ---
 - `scripts/v17-review-followup-playwright-smoke.mjs`: targeted Playwright smoke for V17.8.1 follow-up; exercises API publish freshness/provenance and browser PackLibrary error clearing.
+
+---
+## 2026-04-12T13:00:04Z - Visual I/O Wave 1 Code Map
+- server/services/workflowContracts.js: resolves node-backed effective input/output contracts, validates image metadata without accepting raw bytes/paths, preserves legacy contract fallback, and maps extractor artifacts to upstream agent output.
+- server/services/SwarmEngine.js: excludes Input nodes from start/fan-in scheduling, treats Output Extractor as non-spawn flow-control, and provides scoped connected-input prompt helper support.
+- client/src/utils/visualWorkflowContracts.js: client-side mirror for deriving visual-node contracts in later UI lanes.
+- client/src/hooks/useCanvasValidation.js: current-system relationship guard so Input -> Agent edges do not hide start agents and extractor nodes can be validated without becoming executable agents.

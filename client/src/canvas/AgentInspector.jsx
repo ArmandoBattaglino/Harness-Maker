@@ -358,6 +358,41 @@ function AgentFields({ node, nodes, onUpdateNode }) {
             placeholder="Define the measurable output this agent should produce."
           />
         </div>
+        <div className="flex flex-col gap-0.5">
+          <FieldLabel>Expected output format</FieldLabel>
+          <select
+            className={INPUT_CLS}
+            aria-label="Expected output format"
+            value={data.expectedOutputContract?.format || 'markdown'}
+            onChange={(e) => onUpdateNode(nodeId, {
+              expectedOutputContract: {
+                ...(data.expectedOutputContract || {}),
+                format: e.target.value,
+              },
+            })}
+          >
+            <option value="text">Text</option>
+            <option value="markdown">Markdown</option>
+            <option value="json">JSON</option>
+          </select>
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <FieldLabel>Expected output instructions</FieldLabel>
+          <textarea
+            className={`${INPUT_CLS} font-mono resize-y`}
+            aria-label="Expected output instructions"
+            rows={3}
+            value={data.expectedOutputContract?.instructions || ''}
+            onChange={(e) => onUpdateNode(nodeId, {
+              expectedOutputContract: {
+                ...(data.expectedOutputContract || {}),
+                format: data.expectedOutputContract?.format || 'markdown',
+                instructions: e.target.value,
+              },
+            })}
+            placeholder="Describe the structured output this agent should pass downstream."
+          />
+        </div>
       </CollapsibleSection>
 
       {/* Parent Department */}
@@ -379,6 +414,186 @@ function AgentFields({ node, nodes, onUpdateNode }) {
             </option>
           ))}
         </select>
+      </div>
+    </CollapsibleSection>
+  );
+}
+
+function InputBlockFields({ node, onUpdateNode }) {
+  const nodeId = node.id;
+  const data = node.data || {};
+  const fields = Array.isArray(data.fields) ? data.fields : [];
+
+  const updateField = (index, patch) => {
+    onUpdateNode(nodeId, {
+      fields: fields.map((field, fieldIndex) => (
+        fieldIndex === index ? { ...field, ...patch } : field
+      )),
+    });
+  };
+
+  const addField = () => {
+    const nextIndex = fields.length + 1;
+    onUpdateNode(nodeId, {
+      fields: [
+        ...fields,
+        {
+          id: `field-${nextIndex}`,
+          key: `input_${nextIndex}`,
+          label: `Input ${nextIndex}`,
+          type: 'text',
+          required: false,
+          defaultValue: '',
+          helpText: '',
+          options: [],
+        },
+      ],
+    });
+  };
+
+  const removeField = (index) => {
+    onUpdateNode(nodeId, {
+      fields: fields.filter((_, fieldIndex) => fieldIndex !== index),
+    });
+  };
+
+  return (
+    <CollapsibleSection title="Input Block">
+      <div className="flex flex-col gap-0.5">
+        <FieldLabel>Prompt</FieldLabel>
+        <textarea
+          className={`${INPUT_CLS} resize-y`}
+          rows={2}
+          value={data.prompt || ''}
+          onChange={(e) => onUpdateNode(nodeId, { prompt: e.target.value })}
+          placeholder="Question shown at workflow start"
+        />
+      </div>
+      {fields.map((field, index) => (
+        <div key={field.id || index} className="rounded border border-gray-700 bg-gray-800/60 p-2">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <span className="text-[11px] font-semibold text-gray-300">Field {index + 1}</span>
+            <button
+              type="button"
+              onClick={() => removeField(index)}
+              className="rounded bg-gray-700 px-2 py-0.5 text-[10px] text-gray-300 hover:bg-gray-600"
+            >
+              Remove
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="text-[11px] text-gray-400">
+              Key
+              <input
+                className={INPUT_CLS}
+                value={field.key || ''}
+                onChange={(e) => updateField(index, { key: e.target.value })}
+              />
+            </label>
+            <label className="text-[11px] text-gray-400">
+              Type
+              <select
+                className={INPUT_CLS}
+                value={field.type || 'text'}
+                onChange={(e) => updateField(index, { type: e.target.value })}
+              >
+                <option value="text">Text</option>
+                <option value="textarea">Textarea</option>
+                <option value="markdown">Markdown</option>
+                <option value="json">JSON</option>
+                <option value="enum">Enum</option>
+                <option value="number">Number</option>
+                <option value="integer">Integer</option>
+                <option value="boolean">Boolean</option>
+                <option value="image">Image</option>
+              </select>
+            </label>
+          </div>
+          <label className="mt-2 block text-[11px] text-gray-400">
+            Label
+            <input
+              className={INPUT_CLS}
+              value={field.label || ''}
+              onChange={(e) => updateField(index, { label: e.target.value })}
+            />
+          </label>
+          <label className="mt-2 flex items-center gap-2 text-xs text-gray-300">
+            <input
+              type="checkbox"
+              checked={Boolean(field.required)}
+              onChange={(e) => updateField(index, { required: e.target.checked })}
+              className="accent-blue-500"
+            />
+            Required
+          </label>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={addField}
+        className="rounded-md border border-gray-700 bg-gray-800 px-2.5 py-1.5 text-[11px] font-medium text-gray-300 hover:bg-gray-700"
+      >
+        Add field
+      </button>
+    </CollapsibleSection>
+  );
+}
+
+function OutputExtractorFields({ node, onUpdateNode }) {
+  const nodeId = node.id;
+  const data = node.data || {};
+
+  return (
+    <CollapsibleSection title="Output Extractor">
+      <div className="flex flex-col gap-0.5">
+        <FieldLabel>Artifact key</FieldLabel>
+        <input
+          className={INPUT_CLS}
+          value={data.artifactKey || ''}
+          onChange={(e) => onUpdateNode(nodeId, { artifactKey: e.target.value })}
+        />
+      </div>
+      <div className="flex flex-col gap-0.5">
+        <FieldLabel>Artifact name</FieldLabel>
+        <input
+          className={INPUT_CLS}
+          value={data.artifactName || ''}
+          onChange={(e) => onUpdateNode(nodeId, { artifactName: e.target.value })}
+        />
+      </div>
+      <div className="flex flex-col gap-0.5">
+        <FieldLabel>Format</FieldLabel>
+        <select
+          className={INPUT_CLS}
+          value={data.format || 'markdown'}
+          onChange={(e) => onUpdateNode(nodeId, { format: e.target.value })}
+        >
+          <option value="markdown">Markdown</option>
+          <option value="text">Text</option>
+          <option value="json">JSON</option>
+          <option value="table">Table</option>
+        </select>
+      </div>
+      <div className="flex flex-col gap-0.5">
+        <FieldLabel>Source policy</FieldLabel>
+        <select
+          className={INPUT_CLS}
+          value={data.sourcePolicy || 'allIncoming'}
+          onChange={(e) => onUpdateNode(nodeId, { sourcePolicy: e.target.value })}
+        >
+          <option value="allIncoming">All incoming</option>
+          <option value="firstIncoming">First incoming</option>
+          <option value="selected">Selected</option>
+        </select>
+      </div>
+      <div className="flex flex-col gap-0.5">
+        <FieldLabel>Extraction instruction</FieldLabel>
+        <textarea
+          className={`${INPUT_CLS} resize-y`}
+          rows={3}
+          value={data.instruction || ''}
+          onChange={(e) => onUpdateNode(nodeId, { instruction: e.target.value })}
+        />
       </div>
     </CollapsibleSection>
   );
@@ -422,6 +637,7 @@ function DepartmentFields({ node, onUpdateNode }) {
     </CollapsibleSection>
   );
 }
+
 
 function ConditionalFields({ node, nodes, onUpdateNode }) {
   const nodeId = node.id;
@@ -1045,6 +1261,12 @@ export default function AgentInspector({ nodes, onUpdateNode }) {
       )}
       {activeTab === 'config' && nodeType === 'subWorkflow' && (
         <SubWorkflowFields node={selectedNode} onUpdateNode={onUpdateNode} />
+      )}
+      {activeTab === 'config' && nodeType === 'input' && (
+        <InputBlockFields node={selectedNode} onUpdateNode={onUpdateNode} />
+      )}
+      {activeTab === 'config' && nodeType === 'outputExtractor' && (
+        <OutputExtractorFields node={selectedNode} onUpdateNode={onUpdateNode} />
       )}
 
       {/* Execution Info — timing data (FR-V5-49/50) */}

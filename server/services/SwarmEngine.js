@@ -25,6 +25,7 @@ import { buildVisibleStepStatuses } from './PackResultBuilder.js';
 import {
   buildWorkflowResult,
   buildWorkflowRunContextPatch,
+  getConnectedWorkflowInputContract,
   prepareWorkflowRun,
 } from './workflowContracts.js';
 
@@ -583,6 +584,7 @@ const FLOW_CONTROL_NODE_TYPES = new Set([
   'loop',
   'errorHandler',
   'subWorkflow',
+  'outputExtractor',
 ]);
 
 /**
@@ -1634,24 +1636,30 @@ class SwarmEngine {
       return [];
     }
 
-    const explicitStartNodes = workflowDef.nodes.filter((node) => node?.data?.isTriageNode === true);
+    const agentNodes = workflowDef.nodes.filter((node) => (node?.type ?? 'agent') === 'agent');
+    const explicitStartNodes = agentNodes.filter((node) => node?.data?.isTriageNode === true);
     if (explicitStartNodes.length > 0) {
       return explicitStartNodes;
     }
 
-    const incomingTargets = new Set((workflowDef.edges ?? []).map((edge) => edge.target).filter(Boolean));
-    const rootNodes = workflowDef.nodes.filter((node) => !incomingTargets.has(node.id));
+    const nodeById = new Map(workflowDef.nodes.map((node) => [node.id, node]));
+    const incomingTargets = new Set(
+      (workflowDef.edges ?? [])
+        .filter((edge) => nodeById.get(edge.source)?.type !== 'input' && nodeById.get(edge.target)?.type === 'agent')
+        .map((edge) => edge.target)
+        .filter(Boolean)
+    );
+    const rootNodes = agentNodes.filter((node) => !incomingTargets.has(node.id));
     if (rootNodes.length > 0) {
       return rootNodes;
     }
 
-    const agentNodes = workflowDef.nodes.filter((node) => (node?.type ?? 'agent') === 'agent');
     const firstAgentNode = agentNodes[0];
     if (firstAgentNode) {
       return [firstAgentNode];
     }
 
-    return [workflowDef.nodes[0]].filter(Boolean);
+    return [executableNodes[0]].filter(Boolean);
   }
 
   _clearSubWorkflowPollHandle(state) {
@@ -2511,10 +2519,11 @@ class SwarmEngine {
     if (!execution || !targetNodeId) return false;
     const targetNode = execution.workflowDef?.nodes?.find((node) => node.id === targetNodeId) ?? null;
     if (!targetNode || this._isFlowControlNode(targetNode)) return false;
+    const nodeById = new Map((execution.workflowDef?.nodes ?? []).map((node) => [node.id, node]));
 
     const incomingSourceCount = new Set(
       (execution.workflowDef?.edges ?? [])
-        .filter((edge) => edge.target === targetNodeId)
+        .filter((edge) => edge.target === targetNodeId && nodeById.get(edge.source)?.type !== 'input')
         .map((edge) => edge.source)
         .filter(Boolean)
     ).size;
@@ -2528,9 +2537,10 @@ class SwarmEngine {
       execution.agentInputBarriers = new Map();
     }
 
+    const nodeById = new Map((execution.workflowDef?.nodes ?? []).map((node) => [node.id, node]));
     const required = new Set(
       (execution.workflowDef?.edges ?? [])
-        .filter((edge) => edge.target === targetNodeId)
+        .filter((edge) => edge.target === targetNodeId && nodeById.get(edge.source)?.type !== 'input')
         .map((edge) => edge.source)
         .filter(Boolean)
     ).size;
@@ -4451,8 +4461,12 @@ class SwarmEngine {
     const allNodes = wf.nodes ?? [];
     for (const node of allNodes) {
       if (this._isFlowControlNode(node)) continue;
+      const nodeById = new Map(allNodes.map((candidate) => [candidate.id, candidate]));
       const incomingSources = new Set(
-        edges.filter((e) => e.target === node.id).map((e) => e.source).filter(Boolean)
+        edges
+          .filter((e) => e.target === node.id && nodeById.get(e.source)?.type !== 'input')
+          .map((e) => e.source)
+          .filter(Boolean)
       );
       if (incomingSources.size > 1) {
         execution.agentInputBarriers.set(node.id, {
@@ -6509,6 +6523,11 @@ class SwarmEngine {
     const compactCodexPrompt = options.compactCodexPrompt === true;
     const resumeCodexPrompt = options.resumeCodexPrompt === true;
     const inboundHandoffs = Array.isArray(options.inboundHandoffs) ? options.inboundHandoffs : [];
+    const scopedWorkflowInputLines = this._buildScopedWorkflowInputLines(
+      options.execution,
+      node?.id,
+      provider === RUNTIME_PROVIDER.CODEX && compactCodexPrompt
+    );
     const lines = [];
 
     if (provider === RUNTIME_PROVIDER.CODEX && !compactCodexPrompt) {
@@ -6543,6 +6562,9 @@ class SwarmEngine {
         }
         if (compactInboundHandoffLines.length > 0) {
           lines.push(...compactInboundHandoffLines);
+        }
+        if (scopedWorkflowInputLines.length > 0) {
+          lines.push(...scopedWorkflowInputLines);
         }
         if (handoffTargets.length === 0) {
           if (expectedReport) {
@@ -6616,8 +6638,18 @@ class SwarmEngine {
       ? workflowContext.packKnowledge
       : null;
     if ((visibility === 'full' || visibility === 'minimal') && workflowContext.workflowRun?.inputs) {
+      const scopedInputKeys = workflowContext.workflowRun?.visualInputConnections?.[node.id];
+      const visualInputFields = (workflowContext.workflowRun?.inputContract ?? []).filter((field) => field?.inputNodeId);
+      const shouldScopeVisualInputs = visualInputFields.length > 0;
+      const scopedInputs = shouldScopeVisualInputs
+        ? Object.fromEntries((scopedInputKeys ?? []).map((key) => [key, workflowContext.workflowRun.inputs[key]]))
+        : workflowContext.workflowRun.inputs;
       lines.push('=== WORKFLOW RUN INPUTS ===');
-      lines.push(JSON.stringify(workflowContext.workflowRun.inputs, null, 2));
+      if (scopedWorkflowInputLines.length > 0) {
+        lines.push(...scopedWorkflowInputLines);
+      } else {
+        lines.push(JSON.stringify(workflowContext.workflowRun.inputs, null, 2));
+      }
       const declaredOutputs = workflowContext.workflowRun.outputContract;
       if (
         declaredOutputs
@@ -6929,10 +6961,54 @@ class SwarmEngine {
     if (Array.isArray(data.contextSources) && data.contextSources.length > 0) {
       lines.push(`Context/source focus: ${data.contextSources.join(', ')}`);
     }
+    if (data.expectedOutputContract && typeof data.expectedOutputContract === 'object') {
+      const format = typeof data.expectedOutputContract.format === 'string'
+        ? data.expectedOutputContract.format
+        : 'markdown';
+      const instructions = typeof data.expectedOutputContract.instructions === 'string'
+        ? data.expectedOutputContract.instructions.trim()
+        : '';
+      lines.push(`Expected output contract format: ${format}`);
+      if (instructions) {
+        lines.push(`Expected output contract instructions: ${instructions}`);
+      }
+    }
     if (typeof data.expectedOutput === 'string' && data.expectedOutput.trim()) {
-      lines.push(`Expected output: ${data.expectedOutput.trim()}`);
+      const format = typeof data.expectedOutputFormat === 'string' && data.expectedOutputFormat.trim()
+        ? ` (${data.expectedOutputFormat.trim()})`
+        : '';
+      lines.push(`Expected output${format}: ${data.expectedOutput.trim()}`);
     }
     return lines;
+  }
+
+  _buildScopedWorkflowInputLines(execution, nodeId, compact = false) {
+    if (!execution?.workflowRun?.inputs || !nodeId) return [];
+    const workflowRun = execution.workflowRun;
+    if (!workflowRun.visualInputMode) {
+      return compact
+        ? [`Workflow inputs: ${safeJsonStringify(workflowRun.inputs)}`]
+        : [JSON.stringify(workflowRun.inputs, null, 2)];
+    }
+
+    const connectedFields = getConnectedWorkflowInputContract(execution.workflowDef, nodeId);
+    if (connectedFields.length === 0) {
+      return ['No visual Input blocks are connected to this agent.'];
+    }
+
+    const scopedInputs = {};
+    for (const field of connectedFields) {
+      scopedInputs[field.key] = workflowRun.inputs[field.key];
+    }
+
+    if (compact) {
+      return [`Connected workflow inputs only: ${safeJsonStringify(scopedInputs)}`];
+    }
+
+    return [
+      'Connected visual Input block fields only:',
+      JSON.stringify(scopedInputs, null, 2),
+    ];
   }
 
   _shouldSendMissingHandoffReminder(execution, nodeId, state) {
@@ -7016,9 +7092,29 @@ class SwarmEngine {
       case 'subWorkflow':
         await this._handleSubWorkflowNode(executionId, nodeId, node, execution);
         break;
+      case 'outputExtractor':
+        this._handleOutputExtractorNode(executionId, nodeId, node, execution, sourceNodeId);
+        break;
       default:
         break;
     }
+  }
+
+  _handleOutputExtractorNode(executionId, nodeId, node, execution, sourceNodeId = null) {
+    const state = execution.agentStates.get(nodeId);
+    if (state) {
+      state.status = 'done';
+      state.lastOutputSnippet = sourceNodeId
+        ? `Prepared artifact "${node.data?.artifactName || node.data?.artifactKey || nodeId}" from ${sourceNodeId}`
+        : `Prepared artifact "${node.data?.artifactName || node.data?.artifactKey || nodeId}"`;
+      this._broadcastAgentStatus(executionId, nodeId, state);
+    }
+    this._chatExtractor.systemMessage(
+      executionId,
+      nodeId,
+      `Output extractor prepared artifact: ${node.data?.artifactName || node.data?.artifactKey || nodeId}`
+    );
+    this._syncExecutionStatusFromAgents(execution);
   }
 
   // ---------------------------------------------------------------------------

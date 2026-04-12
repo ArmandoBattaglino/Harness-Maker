@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   buildWorkflowResult,
   buildWorkflowRunContextPatch,
+  getConnectedWorkflowInputContract,
   prepareWorkflowRun,
+  resolveEffectiveWorkflowContracts,
   validateWorkflowContractFields,
 } from '../services/workflowContracts.js';
 
@@ -102,5 +104,93 @@ describe('workflowContracts workflow-native inputs and outputs', () => {
       expect.stringContaining('inputContract[0].type'),
       expect.stringContaining('outputContract.outputs[0].source'),
     ]));
+  });
+
+  it('derives effective contracts from visual input and output extractor nodes while legacy workflows still fallback', () => {
+    const visualWorkflow = {
+      name: 'Visual workflow',
+      inputContract: [{ key: 'legacy', label: 'Legacy', type: 'text', required: true }],
+      outputContract: { outputs: [{ key: 'legacy_result', label: 'Legacy result', source: 'finalText' }], artifacts: [] },
+      nodes: [
+        { id: 'input-a', type: 'input', data: { label: 'Creative intake', fields: [
+          { key: 'brief', label: 'Brief', type: 'textarea', required: true },
+          { key: 'reference_image', label: 'Reference image', type: 'image', required: true },
+        ] } },
+        { id: 'agent-a', type: 'agent', data: { label: 'Writer' } },
+        { id: 'extract-a', type: 'outputExtractor', data: { artifactKey: 'report', artifactName: 'Report', format: 'table' } },
+      ],
+      edges: [
+        { id: 'e1', source: 'input-a', target: 'agent-a' },
+        { id: 'e2', source: 'agent-a', target: 'extract-a' },
+      ],
+    };
+
+    const effective = resolveEffectiveWorkflowContracts(visualWorkflow);
+    expect(effective.inputContract.map((field) => field.key)).toEqual(['brief', 'reference_image']);
+    expect(effective.inputContract[0]).toMatchObject({ inputNodeId: 'input-a', inputNodeLabel: 'Creative intake' });
+    expect(effective.outputContract.outputs[0].key).toBe('legacy_result');
+    expect(effective.outputContract.artifacts[0]).toMatchObject({
+      key: 'report',
+      format: 'table',
+      source: 'outputExtractor',
+      sourceNodeId: 'agent-a',
+      outputExtractorNodeId: 'extract-a',
+    });
+
+    expect(resolveEffectiveWorkflowContracts(workflowDef).inputContract.map((field) => field.key)).toEqual(['brief', 'channels', 'budget']);
+  });
+
+  it('prepares visual text and image metadata without raw bytes and maps extractor artifacts from upstream output', () => {
+    const visualWorkflow = {
+      name: 'Visual workflow',
+      nodes: [
+        { id: 'input-a', type: 'input', data: { label: 'Creative intake', fields: [
+          { key: 'brief', label: 'Brief', type: 'textarea', required: true },
+          { key: 'reference_image', label: 'Reference image', type: 'image', required: true },
+        ] } },
+        { id: 'agent-a', type: 'agent', data: { label: 'Writer' } },
+        { id: 'agent-b', type: 'agent', data: { label: 'Unconnected' } },
+        { id: 'extract-a', type: 'outputExtractor', data: { artifactKey: 'report', artifactName: 'Report', format: 'markdown' } },
+      ],
+      edges: [
+        { id: 'e1', source: 'input-a', target: 'agent-a' },
+        { id: 'e2', source: 'agent-a', target: 'extract-a' },
+      ],
+    };
+
+    expect(() => prepareWorkflowRun(visualWorkflow, {
+      brief: 'Launch X',
+      reference_image: { kind: 'run-image', name: 'bad.png', type: 'image/png', size: 12, data: 'raw-base64' },
+    })).toThrow(/must not include data/);
+
+    const run = prepareWorkflowRun(visualWorkflow, {
+      brief: 'Launch X',
+      reference_image: { kind: 'run-image', name: 'ref.png', type: 'image/png', size: 2048 },
+    });
+    const patch = buildWorkflowRunContextPatch(visualWorkflow, run);
+    expect(run.visualInputMode).toBe(true);
+    expect(patch.currentTask).not.toContain('Launch X');
+    expect(getConnectedWorkflowInputContract(visualWorkflow, 'agent-a').map((field) => field.key)).toEqual(['brief', 'reference_image']);
+    expect(getConnectedWorkflowInputContract(visualWorkflow, 'agent-b')).toEqual([]);
+
+    const result = buildWorkflowResult({
+      workflowDef: visualWorkflow,
+      workflowRun: run,
+      status: 'completed',
+      agentOutputs: {
+        'agent-a': { finalText: '# Report\n\nDone', lastMessageAt: '2026-04-12T03:00:00.000Z' },
+      },
+    });
+
+    expect(result.artifacts).toEqual([
+      expect.objectContaining({
+        id: 'report',
+        name: 'Report',
+        status: 'ready',
+        value: expect.stringContaining('Done'),
+        source: 'outputExtractor',
+        sourceNodeId: 'agent-a',
+      }),
+    ]);
   });
 });

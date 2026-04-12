@@ -6250,3 +6250,11 @@ full self-contained context and acceptance criteria.
 **Blockers:** none.
 **Next:** Ralph architect verification, deslop pass on changed files, and post-deslop re-verification.
 ---
+
+---
+## 2026-04-12T13:00:04Z - worker-1 - Visual I/O Wave 0-1 contract bridge
+**Outcome:** Completed Lane 1 baseline plus Wave 1 contract bridge foundations.
+**Summary:** Baseline affected tests were established; server effective-contract helpers now derive Input Block fields and Output Extractor artifacts from graph nodes with legacy fallback; schema constants accept image inputs and table artifacts; image values are validated as safe run metadata only; SwarmEngine treats Input nodes as non-start inputs and Output Extractors as non-spawn flow-control nodes; connected-input helper scopes visual input fields per target agent for downstream prompt integration.
+**Files changed:** server/services/workflowContracts.js; server/services/SwarmEngine.js; server/tests/workflow-contracts.test.js; server/tests/visual-io-swarm-engine.test.js; client/src/utils/visualWorkflowContracts.js; client/src/hooks/useCanvasValidation.js; client/src/utils/visualWorkflowContracts.test.js; docs/memory/*.
+**Verification:** Baseline client 14/14 PASS; baseline server 23/23 PASS; client Wave1/helper tests PASS; server Wave1 tests PASS; affected client/server suites PASS before scope trim; LSP diagnostics 0 errors on touched code files.
+**Notes:** Later visual palette/node/inspector/run-form UI work was intentionally left for downstream lanes after task refinement.

@@ -1,5 +1,25 @@
 # Current Context
 **Session date:** 2026-04-12
+**Focus:** **VISUAL INPUT / OUTPUT BLOCKS - APPROVED PLAN DOCUMENTATION/REVIEW LANE.** The binding plan is `.omx/plans/prd-vio-20260412T121449Z.md` plus `.omx/plans/test-spec-vio-20260412T121449Z.md`. Worker-3 documented the current baseline and implementation guardrails in `docs/VISUAL_INPUT_OUTPUT_BLOCKS.md`.
+
+**IMMEDIATE NEXT STEP:** Implementation lanes should add graph-derived effective contracts, Input/Output Extractor nodes, settings source-of-truth guards, run-scoped image assets, scoped prompt injection, extractor artifacts, and per-microwave gate evidence.
+
+## Visual Input / Output Blocks Current Baseline (2026-04-12)
+
+**Status:** APPROVED PLAN / DOCS REVIEW COMPLETE.
+
+**Current baseline:** Root `inputContract` / `outputContract` workflow support exists and is verified from the previous workflow-as-heart wave. Visual `input` and `outputExtractor` node types are not yet implemented in this worktree.
+
+**Key guardrails now documented:**
+- Visual I/O nodes are the UX source of truth when present; root contracts are bridge/fallback.
+- Input and Output Extractor nodes are non-executable graph nodes.
+- `input -> agent` must not make the agent non-startable.
+- Image fields require run-scoped asset metadata/reference, not raw base64 prompt injection.
+- Extractor artifacts must use deterministic source policy and never silently fall back to unrelated aggregate final text.
+
+---
+# Current Context
+**Session date:** 2026-04-12
 **Focus:** **WORKFLOW AS HEART / PACK AS WRAPPER WAVE 1 - IMPLEMENTED/PASS.** Workflow now owns direct-run inputs, canonical outputs/artifacts, visible run I/O, and lightweight per-agent guidance while pack UI remains pack-authoritative for pack runs.
 
 **IMMEDIATE NEXT STEP:** Ralph architect/deslop/final verification loop; no known failing automated test after server/client/build/Playwright verification.

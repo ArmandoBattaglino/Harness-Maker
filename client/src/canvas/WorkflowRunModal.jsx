@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 
 const INPUT_CLS =
   'mt-1 w-full rounded bg-gray-950 px-3 py-2 text-sm text-white border border-gray-700 focus:border-green-500 focus:outline-none';
+const MAX_IMAGE_INPUT_BYTES = 10 * 1024 * 1024;
+const IMAGE_INPUT_MIME_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
 
 function coerceInputValue(type, rawValue) {
   if (rawValue === '') return '';
@@ -34,6 +36,7 @@ function buildInitialValues(inputContract) {
       return [field.key, field.defaultValue];
     }
     if (field.type === 'boolean') return [field.key, false];
+    if (field.type === 'image') return [field.key, null];
     return [field.key, ''];
   }));
 }
@@ -59,6 +62,17 @@ function validateValues(inputContract, values) {
     }
     if (field.type === 'enum' && Array.isArray(field.options) && !field.options.includes(value)) {
       errors.push(`${field.label || field.key} must be one of: ${field.options.join(', ')}.`);
+    }
+    if (field.type === 'image') {
+      if (!value || typeof value !== 'object') {
+        errors.push(`${field.label || field.key} must be an image reference.`);
+      } else if (!IMAGE_INPUT_MIME_TYPES.has(value.mimeType)) {
+        errors.push(`${field.label || field.key} must be PNG, JPEG, WebP, or GIF.`);
+      } else if (/[\\/]|(^|[.])\.\.($|[.])/.test(value.name || '')) {
+        errors.push(`${field.label || field.key} must use a safe file name.`);
+      } else if (value.size > MAX_IMAGE_INPUT_BYTES) {
+        errors.push(`${field.label || field.key} must be 10 MB or smaller.`);
+      }
     }
   }
   return errors;
@@ -101,7 +115,7 @@ function WorkflowInputField({ field, value, onChange }) {
     );
   }
 
-  if (field.type === 'textarea' || field.type === 'json') {
+  if (field.type === 'textarea' || field.type === 'json' || field.type === 'markdown') {
     return (
       <label className="block text-xs font-semibold text-gray-300">
         {label}{field.required ? <span className="ml-1 text-red-300">*</span> : null}
@@ -111,6 +125,40 @@ function WorkflowInputField({ field, value, onChange }) {
           onChange={(event) => onChange(coerceInputValue(field.type, event.target.value))}
           placeholder={helpText}
         />
+      </label>
+    );
+  }
+
+  if (field.type === 'image') {
+    return (
+      <label className="block text-xs font-semibold text-gray-300">
+        {label}{field.required ? <span className="ml-1 text-red-300">*</span> : null}
+        <input
+          className={INPUT_CLS}
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (!file) {
+              onChange(null);
+              return;
+            }
+            onChange({
+              assetId: `pending-run-${file.name}-${file.size}-${file.lastModified}`,
+              name: file.name,
+              mimeType: file.type,
+              size: file.size,
+              previewUrl: '',
+            });
+          }}
+        />
+        {value?.name ? (
+          <span className="mt-1 block text-[11px] text-gray-400">
+            Selected {value.name} ({Math.ceil((value.size || 0) / 1024)} KB). Image content is referenced by metadata; raw base64 is not submitted.
+          </span>
+        ) : helpText ? (
+          <span className="mt-1 block text-[11px] text-gray-500">{helpText}</span>
+        ) : null}
       </label>
     );
   }
@@ -154,6 +202,25 @@ export default function WorkflowRunModal({ workflowName, inputContract = [], out
     onSubmit(values);
   }
 
+  const inputGroups = useMemo(() => {
+    const groups = [];
+    const groupIndex = new Map();
+    normalizedInputs.forEach((field) => {
+      const groupKey = field.inputNodeId || '__legacy__';
+      if (!groupIndex.has(groupKey)) {
+        groupIndex.set(groupKey, groups.length);
+        groups.push({
+          key: groupKey,
+          label: field.groupLabel || field.inputNodeLabel || (groupKey === '__legacy__' ? 'Workflow inputs' : groupKey),
+          prompt: field.groupPrompt || '',
+          fields: [],
+        });
+      }
+      groups[groupIndex.get(groupKey)].fields.push(field);
+    });
+    return groups;
+  }, [normalizedInputs]);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="flex max-h-[86vh] w-[540px] flex-col rounded-xl border border-gray-600 bg-gray-800 shadow-2xl">
@@ -166,13 +233,23 @@ export default function WorkflowRunModal({ workflowName, inputContract = [], out
             <p className="rounded border border-gray-700 bg-gray-900/70 p-3 text-xs text-gray-400">
               This workflow has no declared inputs. Launching still records an empty workflow run.
             </p>
-          ) : normalizedInputs.map((field) => (
-            <WorkflowInputField
-              key={field.key}
-              field={field}
-              value={values[field.key]}
-              onChange={(value) => updateValue(field.key, value)}
-            />
+          ) : inputGroups.map((group) => (
+            <section key={group.key} className="rounded border border-gray-700 bg-gray-900/40 p-3">
+              <div className="mb-3">
+                <h3 className="text-xs font-semibold text-green-200">{group.label}</h3>
+                {group.prompt ? <p className="mt-1 text-[11px] text-gray-500">{group.prompt}</p> : null}
+              </div>
+              <div className="space-y-3">
+                {group.fields.map((field) => (
+                  <WorkflowInputField
+                    key={field.key}
+                    field={field}
+                    value={values[field.key]}
+                    onChange={(value) => updateValue(field.key, value)}
+                  />
+                ))}
+              </div>
+            </section>
           ))}
 
           {(outputSummary.outputs.length > 0 || outputSummary.artifacts.length > 0) && (

@@ -1,3 +1,15 @@
+## Visual Input / Output Blocks Documentation/Review Lane (2026-04-12)
+
+**Status:** COMPLETED / READY FOR IMPLEMENTATION LANES.
+
+**Deliverables:**
+- Added `docs/VISUAL_INPUT_OUTPUT_BLOCKS.md` with current baseline map, source-of-truth policy, non-executable graph semantics, run-asset image boundary, Output Extractor artifact rule, and canonical microwave evidence format.
+- Updated memory docs so future implementers can find the visual I/O guardrails without reopening the `.omx/plans` artifacts.
+- Documented code-quality risks in the existing baseline: duplicated schema constants, implicit executable-agent assumptions, Settings Interface source-of-truth drift, aggregate artifact fallback, and image-upload scope creep.
+
+**Verification:** Documentation readback, targeted baseline tests, root build, and `git diff --check` are recorded in the task completion evidence.
+
+---
 ## Workflow as Heart / Pack as Wrapper Wave 1 (2026-04-12)
 
 **Status:** IMPLEMENTED / VERIFIED.
@@ -1038,3 +1050,11 @@ _None._
 - [PM 2026-04-08] V9.1 CODEX SDK SWARM INTEGRATION CLOSED. Tasks #400-#405 registered and closed after adding `@openai/codex-sdk`, `server/services/CodexSdkAdapter.js`, the SwarmEngine `codex-sdk` structured runtime path, and client-side `codex-sdk` structured-mode support. Verification: `npm test --prefix server` PASS (488/488) and `npm run build --prefix client` PASS (501 modules). Total: 402 tasks registered, 401 COMPLETE/PASS, 1 DEFERRED, 0 PENDING.
 - [PM 2026-04-08] TASK #406 phase 2 canonical result text fix committed as 9029762. Addresses the residual stream-json text_delta spurious-space bug that caused TEST GATE #409 FAIL on first run. 490/490 server tests pass, client build clean (501 modules). #406 remains COMPLETED (phase 2 is a continuation fix, not a new task). TEST GATE #409 re-running. Total: 409 registered, 408 COMPLETE/PASS, 1 DEFERRED (#236), 1 IN_PROGRESS (#409 re-test).
 - [PM 2026-04-09] V10.5 PERSISTENT AGENT SESSIONS + OPERATOR MESSAGING CLOSED. #470-#473 COMPLETED, TEST GATE #474 PASS, AREA CHECKPOINT #475 PASS. The canonical backend contract now exposes `acceptsMessages` + `messageTransport`; swarm PTY sessions are pinned persistent; structured `stream-json` + `codex-sdk` agents can receive operator follow-up on the same session/thread (including queued resume after soft/hard interrupt while running); and the client keeps/restores WS + chat controls for terminal-but-messageable executions. Verification: `npm test --prefix server -- SessionManager.test.js swarm-routes.test.js swarm-handler.test.js swarm-engine.test.js swarm-engine-codex-sdk.test.js` PASS (218/218) and `npm test --prefix client -- src/canvas/ChatPanel.test.jsx src/hooks/useSwarm.test.jsx src/views/SwarmView.test.jsx` PASS (16/16).
+
+---
+## 2026-04-12T13:00:04Z - worker-1 - Visual I/O Wave 0-1 contract bridge
+**Outcome:** Completed Lane 1 baseline plus Wave 1 contract bridge foundations.
+**Summary:** Baseline affected tests were established; server effective-contract helpers now derive Input Block fields and Output Extractor artifacts from graph nodes with legacy fallback; schema constants accept image inputs and table artifacts; image values are validated as safe run metadata only; SwarmEngine treats Input nodes as non-start inputs and Output Extractors as non-spawn flow-control nodes; connected-input helper scopes visual input fields per target agent for downstream prompt integration.
+**Files changed:** server/services/workflowContracts.js; server/services/SwarmEngine.js; server/tests/workflow-contracts.test.js; server/tests/visual-io-swarm-engine.test.js; client/src/utils/visualWorkflowContracts.js; client/src/hooks/useCanvasValidation.js; client/src/utils/visualWorkflowContracts.test.js; docs/memory/*.
+**Verification:** Baseline client 14/14 PASS; baseline server 23/23 PASS; client Wave1/helper tests PASS; server Wave1 tests PASS; affected client/server suites PASS before scope trim; LSP diagnostics 0 errors on touched code files.
+**Notes:** Later visual palette/node/inspector/run-form UI work was intentionally left for downstream lanes after task refinement.

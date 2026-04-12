@@ -557,6 +557,80 @@ describe('SwarmView runtime shell contracts', () => {
     });
   });
 
+  it('derives visual input and extractor contracts from canvas nodes before direct run', async () => {
+    vi.mocked(apiPost).mockResolvedValue({
+      workflow: {
+        id: 'workflow-visual',
+        name: 'Visual Workflow',
+        inputContract: [
+          { key: 'brief', label: 'Brief', type: 'text', required: true, inputNodeId: 'input-a' },
+          { key: 'reference_image', label: 'Reference image', type: 'image', required: true, inputNodeId: 'input-a' },
+        ],
+        outputContract: {
+          outputs: [],
+          artifacts: [{ key: 'report', label: 'Report', format: 'markdown', source: 'outputExtractor', sourceNodeId: 'node-a' }],
+        },
+        nodes: [],
+        edges: [],
+      },
+    });
+    useSwarmStore.setState({
+      workflowDef: {
+        name: 'Visual Workflow',
+        inputContract: [{ key: 'legacy', label: 'Legacy', type: 'text', required: true }],
+        outputContract: { outputs: [], artifacts: [] },
+        nodes: [
+          { id: 'input-a', type: 'input', position: { x: 0, y: 0 }, data: { label: 'Creative intake', fields: [
+            { key: 'brief', label: 'Brief', type: 'text', required: true },
+            { key: 'reference_image', label: 'Reference image', type: 'image', required: true },
+          ] } },
+          { id: 'node-a', type: 'agent', position: { x: 200, y: 0 }, data: { label: 'Agent A' } },
+          { id: 'extract-a', type: 'outputExtractor', position: { x: 400, y: 0 }, data: { artifactKey: 'report', artifactName: 'Report', format: 'markdown' } },
+        ],
+        edges: [
+          { id: 'e1', source: 'input-a', target: 'node-a' },
+          { id: 'e2', source: 'node-a', target: 'extract-a' },
+        ],
+      },
+      executionStatus: 'idle',
+    });
+
+    render(<SwarmView />);
+
+    await waitFor(() => {
+      expect(apiGet).toHaveBeenCalledWith('/api/v1/swarm/runtime-capabilities');
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Run' }));
+    expect(screen.getByText('Creative intake')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/Brief/i), { target: { value: 'Launch visual blocks' } });
+    const file = new File(['fake'], 'ref.png', { type: 'image/png' });
+    fireEvent.change(screen.getByLabelText(/Reference image/i), { target: { files: [file] } });
+    fireEvent.click(screen.getByRole('button', { name: 'Start workflow' }));
+
+    await waitFor(() => {
+      expect(apiPost).toHaveBeenCalledWith('/api/v1/workflows', expect.objectContaining({
+        inputContract: [
+          expect.objectContaining({ key: 'brief', inputNodeId: 'input-a' }),
+          expect.objectContaining({ key: 'reference_image', type: 'image', inputNodeId: 'input-a' }),
+        ],
+        outputContract: expect.objectContaining({
+          artifacts: [expect.objectContaining({ key: 'report', source: 'outputExtractor', sourceNodeId: 'node-a' })],
+        }),
+      }));
+      expect(useSwarmMockValue.startExecution).toHaveBeenCalledWith(
+        'project-1',
+        'C:\\Projects\\One',
+        'auto',
+        expect.any(Object),
+        'workflow-visual',
+        expect.objectContaining({
+          brief: 'Launch visual blocks',
+          reference_image: expect.objectContaining({ name: 'ref.png', mimeType: 'image/png' }),
+        })
+      );
+    });
+  });
+
   it('consumes workflow drill-down navigation intent and shows pack drill-down context', async () => {
     workflowListMock.workflows = [
       {
