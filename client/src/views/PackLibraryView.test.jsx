@@ -31,6 +31,15 @@ const secondPack = {
   id: 'pack-2',
   name: 'Sales Harness',
   description: 'Run sales workflow',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      headline: { type: 'string', title: 'Headline', 'x-packField': { help: 'Sales headline' } },
+    },
+    required: ['headline'],
+  },
+  artifactDefinitions: [{ id: 'artifact-2', name: 'Sales report', format: 'markdown' }],
+  visibleSteps: [{ id: 'step-2', label: 'Pitch', status: 'configured' }],
 };
 
 describe('PackLibraryView', () => {
@@ -58,6 +67,18 @@ describe('PackLibraryView', () => {
             status: 'running',
             packRun: { packId: 'pack-1', packVersion: '1.0.0', visibleSteps: [{ id: 'step-1', label: 'Draft', status: 'running' }] },
             packResult: { packId: 'pack-1', outputs: {}, artifacts: [{ id: 'artifact-1', name: 'Report', status: 'pending' }] },
+          }),
+        });
+      }
+      if (url === '/api/v1/packs/pack-2/start' && method === 'POST') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            executionId: 'exec-pack-2',
+            workflowId: 'wf-1',
+            status: 'running',
+            packRun: { packId: 'pack-2', packVersion: '1.0.0', visibleSteps: [{ id: 'step-2', label: 'Pitch', status: 'running' }] },
+            packResult: { packId: 'pack-2', outputs: {}, artifacts: [{ id: 'artifact-2', name: 'Sales report', status: 'pending' }] },
           }),
         });
       }
@@ -233,6 +254,86 @@ describe('PackLibraryView', () => {
 
     await waitFor(() => {
       expect(screen.queryByRole('alert')).toBeNull();
+    });
+  });
+
+  it('clears pack-local input and local execution state when switching packs', async () => {
+    fetchMock.mockImplementation((url, options = {}) => {
+      const method = options.method ?? 'GET';
+      if (url === '/api/v1/packs' && method === 'GET') {
+        return Promise.resolve({ ok: true, json: async () => ({ packs: [pack, secondPack] }) });
+      }
+      if (url === '/api/v1/packs/pack-1' && method === 'GET') {
+        return Promise.resolve({ ok: true, json: async () => ({ pack }) });
+      }
+      if (url === '/api/v1/packs/pack-2' && method === 'GET') {
+        return Promise.resolve({ ok: true, json: async () => ({ pack: secondPack }) });
+      }
+      if (url === '/api/v1/projects' && method === 'GET') {
+        return Promise.resolve({ ok: true, json: async () => ({ projects: [] }) });
+      }
+      if (url === '/api/v1/packs/pack-1/start' && method === 'POST') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            executionId: 'exec-pack-1',
+            workflowId: 'wf-1',
+            status: 'running',
+            packRun: { packId: 'pack-1', packVersion: '1.0.0', visibleSteps: [{ id: 'step-1', label: 'Draft', status: 'running' }] },
+            packResult: { packId: 'pack-1', outputs: {}, artifacts: [{ id: 'artifact-1', name: 'Report', status: 'pending' }] },
+          }),
+        });
+      }
+      if (url === '/api/v1/packs/pack-2/start' && method === 'POST') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            executionId: 'exec-pack-2',
+            workflowId: 'wf-1',
+            status: 'running',
+            packRun: { packId: 'pack-2', packVersion: '1.0.0', visibleSteps: [{ id: 'step-2', label: 'Pitch', status: 'running' }] },
+            packResult: { packId: 'pack-2', outputs: {}, artifacts: [{ id: 'artifact-2', name: 'Sales report', status: 'pending' }] },
+          }),
+        });
+      }
+      return Promise.reject(new Error(`Unexpected fetch ${method} ${url}`));
+    });
+
+    render(
+      <AppProvider>
+        <SeedProjects />
+        <PackLibraryView />
+      </AppProvider>
+    );
+
+    expect(await screen.findByText('Pack Detail')).toBeTruthy();
+    fireEvent.change(screen.getByLabelText(/Brief/i), { target: { value: 'Marketing-only brief' } });
+    fireEvent.click(screen.getByText('Launch pack'));
+
+    expect(await screen.findByText('Started execution exec-pack-1')).toBeTruthy();
+    fireEvent.click(screen.getByText('Advanced debug'));
+    expect(await screen.findByText(/"packId": "pack-1"/)).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Sales Harness'));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Started execution exec-pack-1')).toBeNull();
+      expect(screen.queryByText(/"packId": "pack-1"/)).toBeNull();
+    });
+
+    fireEvent.change(screen.getByLabelText(/Headline/i), { target: { value: 'Close the quarter strong' } });
+    fireEvent.click(screen.getByText('Launch pack'));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith('/api/v1/packs/pack-2/start', expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          projectId: 'proj-1',
+          projectPath: 'C:/projects/one',
+          input: { headline: 'Close the quarter strong' },
+        }),
+      }));
+      expect(screen.getByText('Started execution exec-pack-2')).toBeTruthy();
     });
   });
 });

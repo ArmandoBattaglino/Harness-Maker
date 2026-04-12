@@ -1,9 +1,25 @@
-﻿# Current Context
+# Current Context
 **Session date:** 2026-04-11
-**Focus:** **V17.8.1 CODE REVIEW FOLLOW-UP - CLOSED/PASS.** Closed the post-`fd40908` review findings: stale fixture publish evidence after pack updates, import rollback delete failure visibility, PackLibrary selected-pack error reset, and `saveFixtureResult()` source hardening.
+**Focus:** **PACK VERIFICATION DRIFT + STATE-BOUNDARY FOLLOW-UP - CLOSED/PASS.** Repaired stale pack verification against the current contracts, fixed PackLibrary pack-local state leakage on selection change, and added a deterministic Builder -> Library -> Launch -> Output smoke.
 
-**IMMEDIATE NEXT STEP:** No V17.8.1 code follow-up remains after Lore commit/push; branch is ready for review/merge.
+**IMMEDIATE NEXT STEP:** Prepare Lore commit / review for `fixbug/check-and-fix-bugs`; no known pack-verification or selected-pack launch-state follow-up remains on this branch.
 
+## Pack Verification Drift + PackLibrary State Boundary (2026-04-11)
+
+**Status:** CLOSED / VERIFIED.
+
+**Deliverables:**
+- The marketing-video deep/stress suite now uses current pack-start constraints (`ConfigStore.getProjects()` registration) and execution-backed fixture evaluation instead of synthetic result payloads.
+- Added a targeted pack/version mismatch contract-edge test in `server/tests/pack-routes.test.js`.
+- `PackLibraryView` now clears only pack-local launch state on pack change and scopes monitor/debug hydration to the selected pack instead of leaking another pack's runtime details.
+- The Playwright follow-up smoke now exercises **Pack Builder -> save pack -> Pack Library -> launch -> output** with deterministic output/token verification.
+
+**Verification:**
+- Targeted server pack suites: **58/58 PASS**.
+- Targeted client pack suites: **30/30 PASS**.
+- Client build: **PASS**.
+- Targeted Playwright smoke: **PASS**.
+- Runtime diagnostics on touched files: **0 errors** (`tsc skipped: no tsconfig found` caveat).
 ## V17.8.1 Code Review Follow-up (2026-04-11)
 
 **Status:** CLOSED / VERIFIED.
@@ -253,4 +269,3 @@ NEXT AFTER CURRENT WAVE:
 **Blocking V3 start:** TASK #41 is COMPLETED. All V2 tasks done. V3 can begin immediately.
 
 **First wave (Phase 1):** #43, #45 can run in parallel (WorkflowStore + HandoffParser have no deps on each other). #46 waits for #43+#45. #47 waits for #46. #48 waits for #46. #49 waits for #46.
-

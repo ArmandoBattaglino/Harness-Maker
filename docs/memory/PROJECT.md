@@ -1,7 +1,7 @@
-﻿# Project: Claude Code Visual Manager
+# Project: Claude Code Visual Manager
 **Created:** 2026-03-18
 **Last updated:** 2026-04-11
-**Implementation status:** v17.8.1 CODE REVIEW FOLLOW-UP CLOSED/PASS on 2026-04-11. `feature/v17-pack-platform` now includes V17.8 plus follow-up fixes for fixture publish freshness after pack updates, rollback cleanup failure metadata, PackLibrary stale error reset, and `saveFixtureResult()` source hardening. Latest evidence: targeted server pack tests **44/44 PASS**, targeted PackLibrary test **4/4 PASS**, full server **647/647 PASS**, full client **77/77 PASS**, client build **520 modules PASS** with no Vite chunk-size warning, targeted Playwright smoke **PASS**, and `git diff --check` **PASS**.
+**Implementation status:** pack verification drift + PackLibrary state-boundary follow-up CLOSED/PASS on 2026-04-11. Branch `fixbug/check-and-fix-bugs` now carries the current-contract marketing-video verification repair, pack-local launch-state reset/scoped debug hydration in PackLibrary, and a deterministic Builder -> Library -> Launch -> Output smoke. Latest evidence: targeted server pack tests **58/58 PASS**, targeted client pack tests **30/30 PASS**, client build **520 modules PASS**, targeted Playwright smoke **PASS**, diagnostics **0 errors** on touched files (`tsc skipped: no tsconfig found` caveat), and `git diff --check` reports only LF->CRLF working-tree warnings.
 
 ## What it is
 A locally-hosted web application that provides a graphical user interface for the Claude Code CLI. It spawns Claude Code processes directly using the user's installed binary and delivers two interaction modes: a live PTY terminal (xterm.js over WebSocket) and a job mode (prompt â†’ formatted Markdown result). It also provides visual editors for agents, skills, and CLAUDE.md files, with multi-project support and session persistence across browser tab closures.

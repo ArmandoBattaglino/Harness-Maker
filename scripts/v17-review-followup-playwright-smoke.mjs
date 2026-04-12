@@ -8,6 +8,8 @@ import { fileURLToPath } from 'url';
 
 import { csrfMiddleware } from '../server/middleware/csrf.js';
 import packsRouter from '../server/routes/packs.js';
+import workflowsRouter from '../server/routes/workflows.js';
+import { ConfigStore } from '../server/services/ConfigStore.js';
 import { WorkflowStore } from '../server/services/WorkflowStore.js';
 import PackStore from '../server/stores/PackStore.js';
 
@@ -79,6 +81,17 @@ function workflowPayload() {
     name: 'Playwright Smoke Workflow',
     nodes: [{ id: 'agent-a', type: 'agent', data: { label: 'Agent A', systemPrompt: 'Work' } }],
     edges: [],
+  };
+}
+
+function builderWorkflowPayload(uniqueName) {
+  return {
+    name: uniqueName,
+    description: 'Workflow used by the builder-originated smoke.',
+    nodes: [{ id: 'agent-a', type: 'agent', data: { label: 'Agent A', systemPrompt: 'Produce the deterministic final answer.' } }],
+    edges: [],
+    settings: {},
+    initialContext: {},
   };
 }
 
@@ -287,6 +300,169 @@ async function runBrowserSmoke() {
   }
 }
 
+function createDeterministicSwarmEngine(outputToken) {
+  let counter = 0;
+  const executions = new Map();
+
+  function nextExecutionId() {
+    counter += 1;
+    return `33333333-3333-4333-8333-${String(counter).padStart(12, '0')}`;
+  }
+
+  return {
+    async startExecution(workflowId, projectId, projectPath, options = {}) {
+      const executionId = nextExecutionId();
+      const packRun = {
+        ...options.packMetadata,
+        runtimePolicy: {
+          ...(options.packMetadata?.runtimePolicy ?? {}),
+          provider: options.runtimeProvider ?? options.packMetadata?.runtimePolicy?.provider ?? 'auto',
+        },
+        projectBinding: {
+          projectId,
+          projectPath,
+        },
+      };
+      const packResult = {
+        packId: packRun.packId,
+        outputs: { result: outputToken },
+        artifacts: (packRun.artifactDefinitions ?? []).map((artifact) => ({
+          id: artifact.id,
+          name: artifact.name,
+          status: 'ready',
+        })),
+      };
+      executions.set(executionId, {
+        executionId,
+        workflowId,
+        status: 'completed',
+        packRun,
+        packResult,
+      });
+      return executionId;
+    },
+    getStatus(executionId) {
+      const execution = executions.get(executionId);
+      if (!execution) return null;
+      return {
+        executionId,
+        workflowId: execution.workflowId,
+        status: execution.status,
+        packRun: execution.packRun,
+        packMetadata: execution.packRun,
+      };
+    },
+    getExecutionResult(executionId) {
+      return executions.get(executionId) ?? null;
+    },
+  };
+}
+
+async function runBuilderLibraryLaunchSmoke() {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'v17-review-pw-builder-'));
+  const publicDir = path.join(repoRoot, 'server', 'public');
+  const executablePath = await findBrowserExecutable();
+  const outputToken = 'BUILDER_LIBRARY_OUTPUT_OK';
+  const project = { id: 'proj-builder', name: 'Builder Smoke Project', path: 'C:/projects/builder-smoke' };
+  const workflowName = `Builder Smoke Workflow ${Date.now()}`;
+  const uniquePackName = `${workflowName} Builder Pack`;
+  const originalGetProjects = ConfigStore.getProjects;
+  let server;
+  let browser;
+  try {
+    const workflowStore = new WorkflowStore(tempDir);
+    await workflowStore.init();
+    await workflowStore.create(builderWorkflowPayload(workflowName));
+    const packStore = new PackStore(tempDir, workflowStore);
+    await packStore.init();
+    const swarmEngine = createDeterministicSwarmEngine(outputToken);
+
+    ConfigStore.getProjects = () => [project];
+
+    const app = express();
+    app.use(express.json());
+    app.use(csrfMiddleware);
+    app.locals.workflowStore = workflowStore;
+    app.locals.packStore = packStore;
+    app.locals.swarmEngine = swarmEngine;
+    app.get('/api/v1/projects', (_req, res) => {
+      res.json({ projects: [project] });
+    });
+    app.get('/api/v1/swarm/:executionId/status', (req, res) => {
+      const execution = swarmEngine.getExecutionResult(req.params.executionId);
+      if (!execution) {
+        return res.status(404).json({ error: 'Execution not found' });
+      }
+      return res.json({
+        executionId: execution.executionId,
+        workflowId: execution.workflowId,
+        status: execution.status,
+        packRun: execution.packRun,
+      });
+    });
+    app.get('/api/v1/swarm/executions/:executionId/results', (req, res) => {
+      const execution = swarmEngine.getExecutionResult(req.params.executionId);
+      if (!execution) {
+        return res.status(404).json({ error: 'Execution not found' });
+      }
+      return res.json({
+        executionId: execution.executionId,
+        status: execution.status,
+        packRun: execution.packRun,
+        packResult: execution.packResult,
+      });
+    });
+    app.use('/api/v1/workflows', workflowsRouter);
+    app.use('/api/v1/packs', packsRouter);
+    app.use(express.static(publicDir));
+    app.get(/.*/, async (_req, res) => {
+      res.type('html').send(await fs.readFile(path.join(publicDir, 'index.html'), 'utf8'));
+    });
+    app.use((err, _req, res, _next) => {
+      res.status(err.statusCode ?? 500).json({ error: err.message });
+    });
+
+    server = http.createServer(app);
+    const address = await listen(server);
+    const baseUrl = `http://127.0.0.1:${address.port}`;
+
+    browser = await chromium.launch({ executablePath, headless: true });
+    const page = await browser.newPage({ viewport: { width: 1366, height: 900 } });
+    await page.addInitScript((view, activeProjectId) => {
+      window.localStorage.setItem('ccvm-app-view', view);
+      window.localStorage.setItem('ccvm-active-project-id', activeProjectId);
+    }, 'pack-builder', project.id);
+
+    await page.goto(baseUrl, { waitUntil: 'networkidle' });
+    await page.getByText('Vertical harness authoring').waitFor();
+    await page.getByRole('button', { name: 'Create draft from workflow' }).click();
+    await page.getByLabel('Name').waitFor();
+    await page.getByLabel('Name').fill(uniquePackName);
+    await page.getByRole('button', { name: 'Save pack' }).click();
+    await page.getByText('saved').waitFor();
+    await page.getByText('Packs').click();
+    await page.getByText('Pack Detail').waitFor();
+    await page.getByRole('heading', { name: uniquePackName }).waitFor();
+    await page.getByRole('button', { name: 'Launch pack' }).click();
+    await page.getByText(/Started execution 33333333-3333-4333-8333-/).waitFor();
+    await page.getByRole('button', { name: 'Advanced debug' }).click();
+    await page.getByText(outputToken).waitFor();
+    await page.getByText('"packId"').waitFor();
+    await page.getByText('"packVersion"').waitFor();
+    const debugText = await page.locator('pre').textContent();
+    assert(debugText.includes(outputToken), `Expected debug drawer to include output token, got ${debugText}`);
+    assert(debugText.includes('"packVersion": "0.1.0"'), `Expected debug drawer to include pack version, got ${debugText}`);
+
+    console.log('[v17-review-followup] Builder -> Library -> Launch smoke PASS');
+  } finally {
+    ConfigStore.getProjects = originalGetProjects;
+    if (browser) await browser.close();
+    if (server) await closeServer(server);
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+}
+
 await runApiSmoke();
 await runBrowserSmoke();
+await runBuilderLibraryLaunchSmoke();
 console.log('[v17-review-followup] Playwright targeted smoke PASS');
