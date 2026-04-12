@@ -132,7 +132,28 @@ describe('AgentInspector output parity', () => {
   });
 
   it('edits Input block fields and Output Extractor artifact settings', () => {
-    useSwarmStore.setState({ selectedNodeId: 'input-1' });
+    useSwarmStore.setState({
+      selectedNodeId: 'input-1',
+      workflowDef: {
+        nodes: [
+          {
+            id: 'input-1',
+            type: 'input',
+            data: {
+              label: 'Client Input',
+              prompt: 'Original prompt',
+              fields: [{ id: 'field-1', key: 'brief', label: 'Brief', type: 'textarea', required: true }],
+            },
+          },
+          { id: 'agent-a', type: 'agent', data: { label: 'Strategist' } },
+          { id: 'extractor-1', type: 'outputExtractor', data: { label: 'Extractor', artifactKey: 'final-report', artifactName: 'Final report', format: 'markdown', instruction: 'Extract the report.', sourcePolicy: 'allIncoming' } },
+        ],
+        edges: [
+          { id: 'e1', source: 'input-1', target: 'agent-a' },
+          { id: 'e2', source: 'agent-a', target: 'extractor-1' },
+        ],
+      },
+    });
     const onUpdateNode = vi.fn();
 
     const { rerender } = render(
@@ -155,6 +176,10 @@ describe('AgentInspector output parity', () => {
     fireEvent.change(screen.getByDisplayValue('Original prompt'), { target: { value: 'Updated prompt' } });
     fireEvent.change(screen.getByDisplayValue('brief'), { target: { value: 'reference_image' } });
     fireEvent.change(screen.getByDisplayValue('Textarea'), { target: { value: 'image' } });
+    expect(screen.getByText('What the agent receives')).toBeInTheDocument();
+    expect(screen.getByText(/Connected agents: Strategist/)).toBeInTheDocument();
+    expect(screen.getByText(/What the agent receives/)).toBeInTheDocument();
+    expect(screen.getByText(/<textarea>/)).toBeInTheDocument();
 
     expect(onUpdateNode).toHaveBeenCalledWith('input-1', { prompt: 'Updated prompt' });
     expect(onUpdateNode).toHaveBeenCalledWith('input-1', {
@@ -164,7 +189,30 @@ describe('AgentInspector output parity', () => {
       fields: [expect.objectContaining({ type: 'image' })],
     });
 
-    useSwarmStore.setState({ selectedNodeId: 'extractor-1' });
+    useSwarmStore.setState({
+      selectedNodeId: 'extractor-1',
+      workflowDef: {
+        nodes: [
+          { id: 'input-1', type: 'input', data: { label: 'Client Input', fields: [] } },
+          { id: 'agent-a', type: 'agent', data: { label: 'Strategist' } },
+          {
+            id: 'extractor-1',
+            type: 'outputExtractor',
+            data: {
+              label: 'Extractor',
+              artifactKey: 'final-report',
+              artifactName: 'Final report',
+              format: 'markdown',
+              instruction: 'Extract the report.',
+              sourcePolicy: 'allIncoming',
+            },
+          },
+        ],
+        edges: [
+          { id: 'e2', source: 'agent-a', target: 'extractor-1' },
+        ],
+      },
+    });
     rerender(
       <AgentInspector
         nodes={[
@@ -187,10 +235,14 @@ describe('AgentInspector output parity', () => {
 
     fireEvent.change(screen.getByDisplayValue('final-report'), { target: { value: 'qa-report' } });
     fireEvent.change(screen.getByDisplayValue('Markdown'), { target: { value: 'table' } });
+    expect(screen.getByText('What the user gets')).toBeInTheDocument();
+    expect(screen.getByText(/Upstream agents: Strategist/)).toBeInTheDocument();
+    expect(screen.getByText(/Selected-source extraction is deferred in this MVP/)).toBeInTheDocument();
 
     expect(onUpdateNode).toHaveBeenCalledWith('extractor-1', { artifactKey: 'qa-report' });
     expect(onUpdateNode).toHaveBeenCalledWith('extractor-1', { format: 'table' });
   });
 });
+
 
 

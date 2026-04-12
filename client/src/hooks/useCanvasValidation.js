@@ -135,6 +135,7 @@ export function useCanvasValidation(nodes, edges) {
         }));
       }
 
+
       if (node.type === 'input') {
         const fields = Array.isArray(node.data?.fields) ? node.data.fields : [];
         if (fields.length === 0) {
@@ -232,7 +233,7 @@ export function useCanvasValidation(nodes, edges) {
 
     const globalIssues = issues.filter((issue) => issue.scope === 'global');
     const agentIssues = issues.filter((issue) => issue.scope === 'agent');
-    const agentIssuesByNodeId = agentIssues.reduce((acc, issue) => {
+    const agentIssuesByNodeId = issues.reduce((acc, issue) => {
       if (!issue.nodeId) return acc;
       acc[issue.nodeId] = [...(acc[issue.nodeId] || []), issue];
       return acc;

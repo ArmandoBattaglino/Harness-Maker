@@ -423,6 +423,33 @@ function InputBlockFields({ node, onUpdateNode }) {
   const nodeId = node.id;
   const data = node.data || {};
   const fields = Array.isArray(data.fields) ? data.fields : [];
+  const workflowDef = useSwarmStore((s) => s.workflowDef);
+  const connectedAgents = (workflowDef?.edges ?? [])
+    .filter((edge) => edge.source === nodeId)
+    .map((edge) => (workflowDef?.nodes ?? []).find((candidate) => candidate.id === edge.target))
+    .filter((candidate) => candidate?.type === 'agent');
+  const previewPayload = fields.reduce((acc, field) => {
+    const key = field?.key || `field_${Object.keys(acc).length + 1}`;
+    const type = field?.type || 'text';
+    acc[key] = type === 'image'
+      ? {
+          kind: 'run-image',
+          name: 'reference.png',
+          mimeType: 'image/png',
+          size: 2048,
+          note: 'metadata-only in current MVP',
+        }
+      : type === 'boolean'
+        ? false
+        : type === 'number' || type === 'integer'
+          ? 0
+          : type === 'json'
+            ? { example: 'value' }
+            : type === 'enum'
+              ? (Array.isArray(field.options) && field.options[0]) || 'option'
+              : `<${type}>`;
+    return acc;
+  }, {});
 
   const updateField = (index, patch) => {
     onUpdateNode(nodeId, {
@@ -535,6 +562,16 @@ function InputBlockFields({ node, onUpdateNode }) {
       >
         Add field
       </button>
+      <div className="rounded border border-emerald-700/40 bg-emerald-950/20 p-2 text-[11px] text-emerald-100/90">
+        <div className="font-semibold">What the agent receives</div>
+        <div className="mt-1 text-[10px] text-emerald-100/70">
+          Operator prompt: {data.prompt?.trim() || 'No prompt set.'}
+        </div>
+        <div className="mt-1 text-[10px] text-emerald-100/70">
+          Connected agents: {connectedAgents.length > 0 ? connectedAgents.map((agent) => agent.data?.label || agent.id).join(', ') : 'No connected agents yet'}
+        </div>
+        <pre className="mt-2 max-h-40 overflow-auto rounded border border-emerald-900/60 bg-gray-950 p-2 text-[10px] text-emerald-100/90">{JSON.stringify(previewPayload, null, 2)}</pre>
+      </div>
     </CollapsibleSection>
   );
 }
@@ -542,6 +579,15 @@ function InputBlockFields({ node, onUpdateNode }) {
 function OutputExtractorFields({ node, onUpdateNode }) {
   const nodeId = node.id;
   const data = node.data || {};
+  const workflowDef = useSwarmStore((s) => s.workflowDef);
+  const incomingAgents = (workflowDef?.edges ?? [])
+    .filter((edge) => edge.target === nodeId)
+    .map((edge) => (workflowDef?.nodes ?? []).find((candidate) => candidate.id === edge.source))
+    .filter((candidate) => candidate?.type === 'agent');
+  const sourcePolicyLabel = {
+    allIncoming: 'Uses all connected upstream agent outputs.',
+    firstIncoming: 'Uses only the first connected upstream agent output.',
+  }[data.sourcePolicy || 'allIncoming'] || 'Uses connected upstream agent outputs.';
 
   return (
     <CollapsibleSection title="Output Extractor">
@@ -596,6 +642,13 @@ function OutputExtractorFields({ node, onUpdateNode }) {
           value={data.instruction || ''}
           onChange={(e) => onUpdateNode(nodeId, { instruction: e.target.value })}
         />
+      </div>
+      <div className="rounded border border-amber-700/40 bg-amber-950/20 p-2 text-[11px] text-amber-100/90">
+        <div className="font-semibold">What the user gets</div>
+        <div className="mt-1 text-[10px] text-amber-100/70">Deliverable: {data.artifactName?.trim() || data.label || 'Artifact'} ({data.format || 'markdown'})</div>
+        <div className="mt-1 text-[10px] text-amber-100/70">Upstream agents: {incomingAgents.length > 0 ? incomingAgents.map((agent) => agent.data?.label || agent.id).join(', ') : 'No connected upstream agent yet'}</div>
+        <div className="mt-1 text-[10px] text-amber-100/70">Source policy: {sourcePolicyLabel}</div>
+        <pre className="mt-2 max-h-32 overflow-auto rounded border border-amber-900/60 bg-gray-950 p-2 text-[10px] text-amber-100/90">{JSON.stringify({ artifactKey: data.artifactKey || 'report', artifactName: data.artifactName || data.label || 'Report', format: data.format || 'markdown', sourcePolicy: data.sourcePolicy || 'allIncoming' }, null, 2)}</pre>
       </div>
     </CollapsibleSection>
   );
