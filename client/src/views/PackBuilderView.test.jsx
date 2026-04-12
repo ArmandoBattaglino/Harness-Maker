@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AppProvider } from '../store/AppContext.jsx';
+import { AppProvider, useAppDispatch, useAppState } from '../store/AppContext.jsx';
 import PackBuilderView from './PackBuilderView.jsx';
 
 const workflow = {
@@ -33,6 +33,33 @@ const pack = {
   visibleSteps: [],
   completionCriteria: ['Pack run reaches a terminal completed state'],
 };
+
+function SeedBuilderIntent() {
+  const dispatch = useAppDispatch();
+  React.useEffect(() => {
+    dispatch({
+      type: 'SET_NAVIGATION_INTENT',
+      payload: {
+        source: 'pack-library',
+        focus: 'builder',
+        packId: 'pack-1',
+        workflowId: 'wf-1',
+        executionId: 'exec-pack-1',
+      },
+    });
+  }, [dispatch]);
+  return null;
+}
+
+function NavigationProbe() {
+  const { view, navigationIntent } = useAppState();
+  return (
+    <>
+      <div data-testid="current-view">{view}</div>
+      <div data-testid="nav-focus">{navigationIntent?.focus ?? 'none'}</div>
+    </>
+  );
+}
 
 describe('PackBuilderView', () => {
   let fetchMock;
@@ -91,6 +118,29 @@ describe('PackBuilderView', () => {
       expect(screen.getByText(/Behavior rule:/)).toBeTruthy();
       expect(screen.getByText(/Step 1:/)).toBeTruthy();
       expect(screen.getByText(/Operator preview:/)).toBeTruthy();
+    });
+  });
+
+  it('opens the intended pack from navigation intent and passes linked workflow drill-down context', async () => {
+    render(
+      <AppProvider>
+        <SeedBuilderIntent />
+        <NavigationProbe />
+        <PackBuilderView />
+      </AppProvider>
+    );
+
+    expect(await screen.findByText('Vertical harness authoring')).toBeTruthy();
+    await waitFor(() => expect(screen.getByDisplayValue('Campaign Workflow Harness')).toBeTruthy());
+    expect(screen.getByText('pack-library')).toBeTruthy();
+    expect(screen.getByText(/Existing pack execution context: exec-pack-1/i)).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Open workflow drill-down'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('current-view').textContent).toBe('swarm');
+      expect(screen.getByTestId('nav-focus').textContent).toBe('workflow-runtime');
+      expect(window.localStorage.getItem('swarm-active-execution')).toContain('exec-pack-1');
     });
   });
 });

@@ -1,3 +1,13 @@
+## 2026-04-12 - frontend-dev / debugger / qa-tester - pack builder/runtime identity and artifact visibility
+**Outcome:** COMPLETED / PASS
+**Summary:** Fixed the pack-surface navigation boundary so Pack Library -> Builder preserves pack/workflow/execution context and Builder -> Swarm drill-down selects the intended linked workflow instead of defaulting silently. Also upgraded Pack Library artifact rendering to show meaningful markdown/text artifact content with explicit empty/fallback states, and stabilized the targeted Playwright smoke navigation into Packs after Builder save.
+**Files changed:** client/src/store/AppContext.jsx, client/src/store/AppContext.test.jsx, client/src/utils/swarmExecutionStorage.js, client/src/hooks/useSwarm.js, client/src/views/PackLibraryView.jsx, client/src/views/PackLibraryView.test.jsx, client/src/views/PackBuilderView.jsx, client/src/views/PackBuilderView.test.jsx, client/src/views/SwarmView.jsx, client/src/views/SwarmView.test.jsx, scripts/v17-review-followup-playwright-smoke.mjs, docs/memory/PROJECT.md, docs/memory/CONTEXT.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** pack-origin builder/drill-down opened without the intended linked flow context; produced pack artifacts were effectively hidden because only name/status rows rendered.
+**Decisions made:** use a one-shot app-level navigation intent plus existing swarm execution storage for the smallest inspectable identity handoff; keep pack artifact rendering pack-centric and bounded instead of duplicating all Swarm debug surfaces.
+**Blockers:** none
+**Next:** final review / Lore commit if desired.
+
+---
 ## 2026-04-11 - debugger / frontend-dev / qa-tester - pack verification drift and pack-local state boundary
 **Outcome:** COMPLETED / PASS
 **Summary:** Repaired the stale marketing-video verification against the current pack route contracts, added a pack/version mismatch contract-edge regression, fixed PackLibrary pack switching so only pack-local launch state resets, and extended the targeted Playwright smoke to cover Builder -> Library -> Launch -> Output with deterministic fake swarm results.

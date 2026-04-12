@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import SwarmView from './SwarmView.jsx';
 import { useSwarmStore } from '../store/SwarmContext.jsx';
@@ -27,6 +27,15 @@ const useSwarmMockValue = {
   startExecution: vi.fn(),
   stopExecution: vi.fn(),
 };
+const appStateMock = {
+  activeProjectId: 'project-1',
+  projects: [
+    { id: 'project-1', name: 'Project One', path: 'C:\\Projects\\One' },
+  ],
+  projectsHydrated: true,
+  navigationIntent: null,
+};
+const appDispatchMock = vi.fn();
 
 vi.mock('@xyflow/react', () => ({
   ReactFlowProvider: ({ children }) => <div data-testid="react-flow-provider">{children}</div>,
@@ -77,13 +86,8 @@ vi.mock('../hooks/useWorkflow.js', () => ({
 }));
 
 vi.mock('../store/AppContext', () => ({
-  useAppState: vi.fn(() => ({
-    activeProjectId: 'project-1',
-    projects: [
-      { id: 'project-1', name: 'Project One', path: 'C:\\Projects\\One' },
-    ],
-    projectsHydrated: true,
-  })),
+  useAppState: vi.fn(() => appStateMock),
+  useAppDispatch: vi.fn(() => appDispatchMock),
 }));
 
 vi.mock('../hooks/useApi.js', () => ({
@@ -100,6 +104,9 @@ vi.mock('../hooks/useCanvasValidation.js', () => ({
 describe('SwarmView runtime shell contracts', () => {
   beforeEach(() => {
     resetSwarmStore();
+    workflowListMock.workflows = [];
+    appStateMock.navigationIntent = null;
+    appDispatchMock.mockReset();
     vi.mocked(useInbox).mockReset();
     vi.mocked(useCanvasValidation).mockReturnValue(emptyValidation);
     workflowListMock.refresh.mockReset();
@@ -376,5 +383,48 @@ describe('SwarmView runtime shell contracts', () => {
     expect(runButton).toBeDisabled();
     expect(screen.getByText('No start node')).toBeInTheDocument();
     expect(screen.queryByText(/empty system prompt/i)).not.toBeInTheDocument();
+  });
+
+  it('consumes workflow drill-down navigation intent and shows pack drill-down context', async () => {
+    workflowListMock.workflows = [
+      {
+        id: 'wf-pack',
+        name: 'Pack Workflow',
+        nodes: [{ id: 'node-a', type: 'agent', data: { label: 'Agent A' } }],
+        edges: [],
+      },
+    ];
+    appStateMock.navigationIntent = {
+      source: 'pack-builder',
+      focus: 'workflow-runtime',
+      packId: 'pack-1',
+      workflowId: 'wf-pack',
+      executionId: 'exec-pack-1',
+    };
+
+    render(<SwarmView />);
+
+    await waitFor(() => {
+      expect(useSwarmStore.getState().workflowDef?.id).toBe('wf-pack');
+      expect(screen.getByText(/Pack drill-down from pack-builder/i)).toBeInTheDocument();
+      expect(screen.getByText(/Relevant execution context: exec-pack-1/i)).toBeInTheDocument();
+      expect(appDispatchMock).toHaveBeenCalledWith({ type: 'CLEAR_NAVIGATION_INTENT' });
+    });
+
+    appStateMock.navigationIntent = null;
+    await act(async () => {
+      useSwarmStore.setState({
+        workflowDef: {
+          id: 'wf-other',
+          name: 'Other Workflow',
+          nodes: [{ id: 'node-b', type: 'agent', data: { label: 'Agent B' } }],
+          edges: [],
+        },
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Pack drill-down from pack-builder/i)).not.toBeInTheDocument();
+    });
   });
 });

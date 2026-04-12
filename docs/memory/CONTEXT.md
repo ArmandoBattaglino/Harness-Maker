@@ -1,8 +1,24 @@
 # Current Context
 **Session date:** 2026-04-11
-**Focus:** **PACK VERIFICATION DRIFT + STATE-BOUNDARY FOLLOW-UP - CLOSED/PASS.** Repaired stale pack verification against the current contracts, fixed PackLibrary pack-local state leakage on selection change, and added a deterministic Builder -> Library -> Launch -> Output smoke.
+**Focus:** **PACK BUILDER/RUNTIME IDENTITY + ARTIFACT VISIBILITY FOLLOW-UP - CLOSED/PASS.** Added explicit pack/workflow/execution handoff between Packs, Builder, and Swarm, plus readable artifact content in the pack run area.
 
-**IMMEDIATE NEXT STEP:** Prepare Lore commit / review for `fixbug/check-and-fix-bugs`; no known pack-verification or selected-pack launch-state follow-up remains on this branch.
+**IMMEDIATE NEXT STEP:** Review/finalize the current branch state; no known pack builder drill-down or pack artifact visibility follow-up remains on `fixbug/check-and-fix-bugs`.
+
+## Pack Builder / Runtime Identity + Artifact Visibility (2026-04-12)
+
+**Status:** CLOSED / VERIFIED.
+
+**Deliverables:**
+- Pack Library now hands off explicit `packId` / `workflowId` / optional `executionId` when opening Builder.
+- Pack Builder consumes one-shot navigation intent, preserves the intended pack, and writes execution context before drilling down into Swarm.
+- Swarm consumes the drill-down intent, selects the intended workflow, and shows pack-origin drill-down context instead of silently defaulting.
+- Pack Library now renders produced artifact content (markdown/text) with safe empty/fallback states instead of only `name + status`.
+
+**Verification:**
+- Targeted client navigation/artifact suites: **20/20 PASS**.
+- Targeted Playwright smoke: **PASS**, covering Builder -> Library -> Launch plus artifact visibility and pack-origin builder context.
+- Client build: **PASS**.
+- Runtime diagnostics on touched files: **0 errors** (`tsc skipped: no tsconfig found` caveat).
 
 ## Pack Verification Drift + PackLibrary State Boundary (2026-04-11)
 

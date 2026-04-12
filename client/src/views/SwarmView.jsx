@@ -13,7 +13,7 @@ import { useSwarmStore } from '../store/SwarmContext';
 import { useSwarm } from '../hooks/useSwarm';
 import { useInbox } from '../hooks/useInbox.js';
 import { useWorkflowList } from '../hooks/useWorkflow.js';
-import { useAppState } from '../store/AppContext';
+import { useAppDispatch, useAppState } from '../store/AppContext';
 import { apiDelete, apiGet, apiPost, apiPut } from '../hooks/useApi.js';
 import { sanitizeWorkflow } from '../utils/sanitizeWorkflow.js';
 import { useCanvasValidation } from '../hooks/useCanvasValidation.js';
@@ -42,6 +42,7 @@ const ACTIVE_AGENT_STATUSES = ['running', 'paused', 'blocked'];
 const LIVE_AGENT_STATUSES = ['running', 'blocked'];
 
 export default function SwarmView() {
+  const appDispatch = useAppDispatch();
   const executionStatus = useSwarmStore((s) => s.executionStatus);
   const activeExecutionId = useSwarmStore((s) => s.activeExecutionId);
   const runtimeBlocker = useSwarmStore((s) => s.runtimeBlocker);
@@ -116,11 +117,12 @@ export default function SwarmView() {
   const streamJsonForceTimerRef = useRef(null);
   const streamJsonFeedbackTimerRef = useRef(null);
 
-  const { activeProjectId, projects, projectsHydrated } = useAppState();
+  const { activeProjectId, projects, projectsHydrated, navigationIntent } = useAppState();
   const activeProject = useMemo(
     () => projects.find((p) => p.id === activeProjectId) ?? null,
     [projects, activeProjectId]
   );
+  const [drilldownContext, setDrilldownContext] = useState(null);
   const projectPath = activeProject?.path ?? '';
   const activeProjectReady = Boolean(activeProjectId && activeProject);
   const isResolvingActiveProject = Boolean(activeProjectId && !activeProject && !projectsHydrated);
@@ -243,6 +245,72 @@ export default function SwarmView() {
       setSelectedWorkflowId(workflowDef.id);
     }
   }, [workflowDef?.id]);
+
+  useEffect(() => {
+    if (navigationIntent?.focus !== 'workflow-runtime') return;
+
+    let cancelled = false;
+    const targetWorkflowId = navigationIntent.workflowId ?? null;
+    setDrilldownContext({
+      source: navigationIntent.source ?? 'unknown',
+      packId: navigationIntent.packId ?? null,
+      workflowId: targetWorkflowId,
+      executionId: navigationIntent.executionId ?? null,
+    });
+
+    async function loadWorkflowFromIntent() {
+      if (!targetWorkflowId) {
+        appDispatch({ type: 'CLEAR_NAVIGATION_INTENT' });
+        return;
+      }
+
+      setSelectedWorkflowId(targetWorkflowId);
+      if (workflowDef?.id === targetWorkflowId) {
+        appDispatch({ type: 'CLEAR_NAVIGATION_INTENT' });
+        return;
+      }
+
+      const saved = savedWorkflows.find((workflow) => workflow.id === targetWorkflowId);
+      if (saved) {
+        if (!cancelled) {
+          setWorkflowDef(saved);
+          setIsDirty(false);
+          setSaveError(null);
+        }
+        appDispatch({ type: 'CLEAR_NAVIGATION_INTENT' });
+        return;
+      }
+
+      try {
+        const response = await apiGet(`/api/v1/workflows/${targetWorkflowId}`);
+        if (!cancelled) {
+          setWorkflowDef(response?.workflow ?? response);
+          setIsDirty(false);
+          setSaveError(null);
+        }
+      } catch {
+        // Keep the context banner so the user can understand why the expected drill-down did not load.
+      } finally {
+        appDispatch({ type: 'CLEAR_NAVIGATION_INTENT' });
+      }
+    }
+
+    void loadWorkflowFromIntent();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [appDispatch, apiGet, navigationIntent, savedWorkflows, setWorkflowDef, workflowDef?.id]);
+
+  useEffect(() => {
+    if (!drilldownContext?.workflowId) return;
+    if (
+      (selectedWorkflowId && drilldownContext.workflowId !== selectedWorkflowId)
+      || (workflowDef?.id && drilldownContext.workflowId !== workflowDef.id)
+    ) {
+      setDrilldownContext(null);
+    }
+  }, [drilldownContext?.workflowId, selectedWorkflowId, workflowDef?.id]);
 
   useEffect(() => {
     return () => {
@@ -984,6 +1052,16 @@ export default function SwarmView() {
       {showMissingProjectMessage && (
         <div className="px-4 py-2 text-xs text-amber-300 bg-amber-950/40 border-b border-amber-900/60">
           Select a project in the sidebar to run this workflow.
+        </div>
+      )}
+
+      {drilldownContext && (
+        <div className="px-4 py-2 text-xs text-sky-200 bg-sky-950/30 border-b border-sky-900/60">
+          Pack drill-down from {drilldownContext.source}: showing workflow{' '}
+          <span className="font-semibold">{drilldownContext.workflowId ?? 'unavailable'}</span>.
+          {drilldownContext.executionId
+            ? ` Relevant execution context: ${drilldownContext.executionId}.`
+            : ' No pack execution context is attached to this drill-down.'}
         </div>
       )}
 

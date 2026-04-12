@@ -84,6 +84,20 @@ function workflowPayload() {
   };
 }
 
+async function openPacksView(page) {
+  const packsButton = page.getByRole('button', { name: 'Packs' });
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await packsButton.click();
+    try {
+      await page.getByText('Pack Detail').waitFor({ timeout: 5000 });
+      return;
+    } catch {
+      // Retry the navigation click if the lazy-loaded view did not settle yet.
+    }
+  }
+  await page.getByText('Pack Detail').waitFor();
+}
+
 function builderWorkflowPayload(uniqueName) {
   return {
     name: uniqueName,
@@ -330,6 +344,10 @@ function createDeterministicSwarmEngine(outputToken) {
           id: artifact.id,
           name: artifact.name,
           status: 'ready',
+          format: artifact.format ?? null,
+          value: artifact.format === 'markdown'
+            ? `# ${artifact.name}\n\n${outputToken}`
+            : outputToken,
         })),
       };
       executions.set(executionId, {
@@ -412,6 +430,25 @@ async function runBuilderLibraryLaunchSmoke() {
         packResult: execution.packResult,
       });
     });
+    app.get('/api/v1/swarm/runtime-capabilities', (_req, res) => {
+      res.json({
+        providers: {
+          claude: ['claude-sonnet'],
+          codex: ['gpt-5.4'],
+          gemini: [],
+        },
+        defaults: {
+          claude: 'claude-sonnet',
+          codex: 'gpt-5.4',
+          gemini: '',
+        },
+        availability: {
+          claude: true,
+          codex: true,
+          gemini: false,
+        },
+      });
+    });
     app.use('/api/v1/workflows', workflowsRouter);
     app.use('/api/v1/packs', packsRouter);
     app.use(express.static(publicDir));
@@ -440,18 +477,21 @@ async function runBuilderLibraryLaunchSmoke() {
     await page.getByLabel('Name').fill(uniquePackName);
     await page.getByRole('button', { name: 'Save pack' }).click();
     await page.getByText('saved').waitFor();
-    await page.getByText('Packs').click();
-    await page.getByText('Pack Detail').waitFor();
+    await openPacksView(page);
     await page.getByRole('heading', { name: uniquePackName }).waitFor();
     await page.getByRole('button', { name: 'Launch pack' }).click();
     await page.getByText(/Started execution 33333333-3333-4333-8333-/).waitFor();
+    await page.locator('p', { hasText: outputToken }).first().waitFor();
     await page.getByRole('button', { name: 'Advanced debug' }).click();
-    await page.getByText(outputToken).waitFor();
+    await page.locator('pre').waitFor();
     await page.getByText('"packId"').waitFor();
     await page.getByText('"packVersion"').waitFor();
     const debugText = await page.locator('pre').textContent();
     assert(debugText.includes(outputToken), `Expected debug drawer to include output token, got ${debugText}`);
     assert(debugText.includes('"packVersion": "0.1.0"'), `Expected debug drawer to include pack version, got ${debugText}`);
+
+    await page.getByText('Open in Builder').click();
+    await page.getByText(/Existing pack execution context: 33333333-3333-4333-8333-/).waitFor();
 
     console.log('[v17-review-followup] Builder -> Library -> Launch smoke PASS');
   } finally {
