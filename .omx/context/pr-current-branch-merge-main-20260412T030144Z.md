@@ -1,0 +1,23 @@
+# Ralph Context Snapshot
+- task statement: Create a PR from the current branch, run detailed verification against the branch/PR content, and only if green integrate to main.
+- desired outcome: Remote branch pushed, PR link ready, fresh verification evidence captured, and main updated only after successful validation.
+- known facts/evidence:
+  - Current branch: fixbug/check-and-fix-bugs
+  - Current HEAD: a96d76b75c9457e0c5adde6013282902a6faf11e
+  - Commits ahead of origin/main: 2
+  - No remote branch/upstream exists yet for fixbug/check-and-fix-bugs
+  - Working tree has only untracked .omx context/runtime files
+  - PRD/test-spec artifacts exist under .omx/plans
+  - gh CLI installed but not authenticated
+- constraints:
+  - Verify before merge to main
+  - Prefer minimal/reversible git operations
+  - Do not include .omx runtime scratch files in git changes
+- unknowns/open questions:
+  - Whether git push over origin HTTPS is already authenticated in this environment
+  - Whether PR creation must be manual because gh auth is missing
+  - Exact final merge method available (gh/web/git)
+- likely codebase touchpoints:
+  - git branch history/state
+  - package scripts for test/build/lint/playwright verification
+  - .omx/plans and docs/memory evidence

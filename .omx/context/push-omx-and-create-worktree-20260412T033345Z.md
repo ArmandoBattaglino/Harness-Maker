@@ -1,0 +1,21 @@
+# Push OMX artifacts and create dedicated worktree
+
+- Task statement: Push current OMX-related modifications first, then create a dedicated worktree on a dedicated branch and continue planning there.
+- Desired outcome: Current branch is committed and pushed with the newly created OMX artifacts/specs/plans; a new worktree exists on a dedicated branch for the next phase.
+- Known facts/evidence:
+  - Current branch is `main`.
+  - Remote `origin` is configured.
+  - Current untracked changes are OMX artifacts under `.omx/` including context snapshots, interview/spec artifacts, and plans for workflow-heart-pack-wrapper.
+- Constraints:
+  - Preserve the newly created OMX planning/interview artifacts.
+  - Use lore-style commit message.
+  - Push before creating the new worktree.
+- Unknowns/open questions:
+  - Exact dedicated branch/worktree name to use (will infer from task intent unless blocked).
+  - Whether `.omx/notepad.md` and `.omx/tmux-hook.json` should travel with the commit; inspect before commit.
+- Likely codebase touchpoints:
+  - `.omx/context/`
+  - `.omx/interviews/`
+  - `.omx/specs/`
+  - `.omx/plans/`
+  - git branch/worktree metadata
