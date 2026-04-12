@@ -1,4 +1,4 @@
-# Test Spec — Workflow as Heart, Pack as Wrapper
+# Test Spec â€” Workflow as Heart, Pack as Wrapper
 
 ## Scope Under Test
 Wave 1 workflow-first substrate maturation:
@@ -22,6 +22,7 @@ Use a layered strategy:
 - workflow accepts/persists input contract fields
 - workflow accepts/persists output contract fields
 - workflow accepts/persists minimal agent control fields
+- workflow accepts/persists any canonical result-mapping metadata required by the chosen design
 - backward compatibility for existing workflows without these fields
 
 ### 2. Workflow authoring UI
@@ -40,7 +41,14 @@ Use a layered strategy:
 ### 4. Run observability
 - run view shows submitted input values
 - run view shows canonical outputs and/or artifacts
+- canonical output mapping from raw runtime results is verified
 - visibility remains understandable without entering pack views
+
+### 5. Workflow/pack precedence
+- workflow direct run uses workflow-native input contract as authority
+- pack run continues using pack launch/input authority in wave 1
+- overlapping workflow/pack concepts follow an explicit mapping rule rather than silent merge
+- pack UI remains pack-shaped for pack runs even when workflow-native contracts exist
 
 ### 5. Pack compatibility
 - existing pack builder still loads
@@ -53,8 +61,9 @@ Use a layered strategy:
 1. Persist workflow with new `inputContract`/equivalent fields.
 2. Persist workflow with new `outputContract`/equivalent fields.
 3. Persist workflow with new agent-level lightweight control fields.
-4. Load old workflow documents without migration failure.
-5. Launch execution with workflow-native inputs and verify they reach execution context.
+4. Verify the chosen canonical output mapping path can persist/load its required contract shape.
+5. Load old workflow documents without migration failure.
+6. Launch execution with workflow-native inputs and verify they reach execution context.
 
 ### Client / component
 1. Workflow settings/editor can create two or more workflow inputs.
@@ -63,6 +72,7 @@ Use a layered strategy:
 4. Run status view displays inputs used.
 5. Run status/results view displays canonical outputs/artifacts.
 6. Agent editor exposes and saves lightweight skill/context/expected-output fields.
+7. UI copy/behavior makes clear that skill/tool constraints are guidance/injection controls, not hard enforcement.
 
 ### Integration
 1. Create workflow -> define inputs -> launch -> inspect run I/O.
