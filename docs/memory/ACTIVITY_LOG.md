@@ -138,17 +138,17 @@
 **Next:** Implement V17.2 Pack Contract Layer on top of the persisted pack shape and explicit four-surface contract nouns.
 
 ---
-## 2026-04-11 — project-manager / architect / writer — V17.0 area closed with authority/precedence reframe
+## 2026-04-11 â€” project-manager / architect / writer â€” V17.0 area closed with authority/precedence reframe
 **Outcome:** COMPLETED / PASS
 **Summary:** Closed V17.0 by updating the design/program contract before code implementation starts. Reframed the pack platform as the architectural bridge toward a vertical harness builder; promoted knowledge/context injection and prompt/behavior rules into first-class contract surfaces; added an explicit pack/workflow authority model; added a runtime precedence matrix; and updated the V17 task graph so V17.2-V17.5 carry the missing contract/runtime/UI obligations identified during architect review.
 **Files changed:** docs/PACK_PLATFORM_DESIGN.md, docs/TASK_PLAN.md, .omx/plans/prd-v17-pack-platform.md, .omx/plans/test-spec-v17-pack-platform.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md
-**Bugs fixed:** planning/architecture gap — knowledge/context injection, behavior rules, authority model, history/restoration, and project-binding expectations are no longer implicit.
+**Bugs fixed:** planning/architecture gap â€” knowledge/context injection, behavior rules, authority model, history/restoration, and project-binding expectations are no longer implicit.
 **Decisions made:** V17 keeps one workflow per harness; pack/harness owns the four harness-facing contract surfaces; workflow editor remains the advanced drill-down surface; runtime precedence order is now explicit before V17.3 implementation.
 **Blockers:** none
 **Next:** Implement V17.1 Pack Domain Foundation on top of the updated contract.
 
 ---
-## 2026-04-10 â€” project-manager + documenter â€” V11.0 AREA CLOSED (#497â€“#510)
+## 2026-04-10 Ã¢â‚¬â€ project-manager + documenter Ã¢â‚¬â€ V11.0 AREA CLOSED (#497Ã¢â‚¬â€œ#510)
 **Outcome:** COMPLETED
 **Summary:** Closed **V11.0 Agent Intelligence Reengineering** in memory: all **14** tasks reported **COMPLETED/PASS** (awareness + transcript + system prompt layout, `maxTurns`/`maxTurns_reached`, workflow settings bindings, prompt/timestamp serialization, `getStatus()` context, AgentInspector Agent Memory + context visibility, **+12** server tests, **513/513** server suite, **507**-module client build). Updated `PROGRESS.md`, `CONTEXT.md`, and `CHANGELOG.md` headers only.
 **Files changed:** docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -158,27 +158,27 @@
 **Next:** No V11 follow-ups. Scope the next area in `docs/TASK_PLAN.md` or run optional hardening.
 
 ---
-## 2026-04-10 â€” project-manager â€” V11.0 progress memory sync (#497â€“#504)
+## 2026-04-10 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V11.0 progress memory sync (#497Ã¢â‚¬â€œ#504)
 **Outcome:** COMPLETED
-**Summary:** Recorded V11.0 Agent Intelligence Reengineering progress: tasks #497â€“#504 completed (SwarmEngine awareness/transcript/prompt rewrite, maxTurns, WorkflowSettingsModal goal + max turns, lastAssembledPrompt, getStatus fields). Verification noted: 501/501 server tests, 507-module client build. Remaining #505â€“#508 documented in CONTEXT/PROGRESS/CHANGELOG.
+**Summary:** Recorded V11.0 Agent Intelligence Reengineering progress: tasks #497Ã¢â‚¬â€œ#504 completed (SwarmEngine awareness/transcript/prompt rewrite, maxTurns, WorkflowSettingsModal goal + max turns, lastAssembledPrompt, getStatus fields). Verification noted: 501/501 server tests, 507-module client build. Remaining #505Ã¢â‚¬â€œ#508 documented in CONTEXT/PROGRESS/CHANGELOG.
 **Files changed:** docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/CHANGELOG.md
 **Bugs fixed:** none
 **Decisions made:** none
 **Blockers:** none
-**Next:** #505 â†’ #506 â†’ #507 â†’ #508 TEST GATE (qa-tester)
+**Next:** #505 Ã¢â€ â€™ #506 Ã¢â€ â€™ #507 Ã¢â€ â€™ #508 TEST GATE (qa-tester)
 
 ---
-## 2026-04-09 â€” documenter â€” V10.8 AREA CLOSED documentation update (#494+#495)
+## 2026-04-09 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ V10.8 AREA CLOSED documentation update (#494+#495)
 **Outcome:** COMPLETED
-**Summary:** Updated DOC_STATUS.md header and added V10.8 AREA CLOSED closure record documenting TEST GATE #494 PASS and AREA CHECKPOINT #495 PASS. README.md and all other docs were already accurate â€” no code was modified in #494 or #495 (verification-only tasks).
+**Summary:** Updated DOC_STATUS.md header and added V10.8 AREA CLOSED closure record documenting TEST GATE #494 PASS and AREA CHECKPOINT #495 PASS. README.md and all other docs were already accurate Ã¢â‚¬â€ no code was modified in #494 or #495 (verification-only tasks).
 **Files changed:** docs/memory/DOC_STATUS.md
 **Bugs fixed:** none
 **Decisions made:** none
 **Blockers:** none
-**Next:** nothing â€” project complete, all areas closed
+**Next:** nothing Ã¢â‚¬â€ project complete, all areas closed
 
 ---
-## 2026-04-09 â€” project-manager â€” PROJECT COMPLETE â€” ALL AREAS CLOSED
+## 2026-04-09 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ PROJECT COMPLETE Ã¢â‚¬â€ ALL AREAS CLOSED
 **Outcome:** COMPLETED
 **Summary:** V10.8 CLIENT FULL DEEP TEST FOLLOW-UP is confirmed fully closed. All 6 tasks (#491 visual regression determinism, #492 Codex handoff E2E harness, #493 stale-server guard, #494 TEST GATE PASS, #495 AREA CHECKPOINT PASS, #496 Codex SDK server regressions) are COMPLETED. Zero PENDING/BLOCKED/IN_PROGRESS tasks remain across the entire project (496 tasks total, 1 DEFERRED #236). Final baselines: 501/501 server, 52/52 client, 507 modules build clean.
 **Files changed:** docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -188,58 +188,58 @@
 **Next:** No planned work. Next session should start with a new feature request or a debugger-loop sweep if desired.
 
 ---
-## 2026-04-09 â€” code-mapper â€” V10.8 AREA CLOSED (Tasks #494 + #495)
+## 2026-04-09 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ V10.8 AREA CLOSED (Tasks #494 + #495)
 **Outcome:** COMPLETED
-**Summary:** Appended V10.8 area-closure entry to CHANGELOG.md documenting TEST GATE #494 (PASS) and AREA CHECKPOINT #495 (PASS). No source files were modified in either task â€” verification only. All 5 V10.8 tasks (#491â€“#495) are now COMPLETED/PASS.
+**Summary:** Appended V10.8 area-closure entry to CHANGELOG.md documenting TEST GATE #494 (PASS) and AREA CHECKPOINT #495 (PASS). No source files were modified in either task Ã¢â‚¬â€ verification only. All 5 V10.8 tasks (#491Ã¢â‚¬â€œ#495) are now COMPLETED/PASS.
 **Files changed:** docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
 **Bugs fixed:** none
-**Decisions made:** CODE_MAP.md not updated â€” no source code changed in #494 or #495
+**Decisions made:** CODE_MAP.md not updated Ã¢â‚¬â€ no source code changed in #494 or #495
 **Blockers:** none
 **Next:** next task wave, or session close
 
 ---
-## 2026-04-09 â€” qa-tester â€” Task #494: TEST GATE V10.8 full client verification pack
+## 2026-04-09 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #494: TEST GATE V10.8 full client verification pack
 **Outcome:** COMPLETED (PASS)
-**Summary:** Full verification pack passed. npm test --prefix server 501/501, npm test --prefix client 52/52, npm run build --prefix client 507 modules 0 errors, check-server-freshness exit-2 on unreachable port confirmed, all 4 harness scripts syntax-valid, 6 visual regression baselines present, all integration points (normalizeHarnessLayout, preflightWorkflowCheck, warnIfServerStale, checkServerFreshness) confirmed in code. Minor: npm script name in criterion ('test:e2e:swarm:codex-handoff') doesn't match registered name ('debug:swarm:codex-handoff') â€” by design per #492, CI gate is server suite.
+**Summary:** Full verification pack passed. npm test --prefix server 501/501, npm test --prefix client 52/52, npm run build --prefix client 507 modules 0 errors, check-server-freshness exit-2 on unreachable port confirmed, all 4 harness scripts syntax-valid, 6 visual regression baselines present, all integration points (normalizeHarnessLayout, preflightWorkflowCheck, warnIfServerStale, checkServerFreshness) confirmed in code. Minor: npm script name in criterion ('test:e2e:swarm:codex-handoff') doesn't match registered name ('debug:swarm:codex-handoff') Ã¢â‚¬â€ by design per #492, CI gate is server suite.
 **Files changed:** docs/TASK_PLAN.md (status update), docs/memory/agents/qa-tester.md
 **Bugs fixed:** none
 **Decisions made:** Accept criterion as PASS because functional CI gate (501/501) covers Codex handoff contract; script name mismatch is documentation gap not a functional failure
 **Blockers:** none
-**Next:** Task #495 (AREA CHECKPOINT V10.8) â€” now unblocked
+**Next:** Task #495 (AREA CHECKPOINT V10.8) Ã¢â‚¬â€ now unblocked
 
 ---
-## 2026-04-09 â€” documenter â€” V10.8 set #491+#492+#493 documentation update
+## 2026-04-09 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ V10.8 set #491+#492+#493 documentation update
 **Outcome:** COMPLETED
-**Summary:** Updated README.md with corrected test counts (501/501 server, 52/52 client, 507 modules) and new "Stale Server Guard" subsection documenting check:server-freshness npm scripts, env vars, and exit codes. Updated DOC_STATUS.md header, README health row, and added V10.8 wave entry to the history table. No ARCHITECTURE.md or API.md changes needed â€” all V10.8 changes were test infrastructure only.
+**Summary:** Updated README.md with corrected test counts (501/501 server, 52/52 client, 507 modules) and new "Stale Server Guard" subsection documenting check:server-freshness npm scripts, env vars, and exit codes. Updated DOC_STATUS.md header, README health row, and added V10.8 wave entry to the history table. No ARCHITECTURE.md or API.md changes needed Ã¢â‚¬â€ all V10.8 changes were test infrastructure only.
 **Files changed:** README.md, docs/memory/DOC_STATUS.md
 **Bugs fixed:** none
 **Decisions made:** none
 **Blockers:** none
-**Next:** Task #494 (TEST GATE â€” V10.8 full client verification pack)
+**Next:** Task #494 (TEST GATE Ã¢â‚¬â€ V10.8 full client verification pack)
 
 ---
 
-## 2026-04-09 â€” project-manager â€” V10.8 set #491+#492+#493 post-completion sync
+## 2026-04-09 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V10.8 set #491+#492+#493 post-completion sync
 **Outcome:** COMPLETED
 **Summary:** Confirmed and documented completion of the V10.8 implementation trio. #491 fixed visual regression determinism (normalizeHarnessLayout, 682px baselines), #492 stabilized Codex handoff E2E harness (preflight check, direct node spawn, stale isolation), #493 added stale-server guard (check-server-freshness.mjs integrated into two scripts). TASK_PLAN.md V10.8 header updated to reflect all three as COMPLETED. PROGRESS.md prepended with summary entry.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none (housekeeping)
 **Decisions made:** none
 **Blockers:** none
-**Next:** TASK #494 (TEST GATE â€” V10.8 full client verification pack) â€” qa-tester. All three dependencies (#491, #492, #493) now COMPLETED, gate is unblocked.
+**Next:** TASK #494 (TEST GATE Ã¢â‚¬â€ V10.8 full client verification pack) Ã¢â‚¬â€ qa-tester. All three dependencies (#491, #492, #493) now COMPLETED, gate is unblocked.
 
 ---
-## 2026-04-09 â€” devops â€” Task #493: BUG-TEST-CLIENT-03 â€” Guard against stale local server drift
+## 2026-04-09 Ã¢â‚¬â€ devops Ã¢â‚¬â€ Task #493: BUG-TEST-CLIENT-03 Ã¢â‚¬â€ Guard against stale local server drift
 **Outcome:** COMPLETED
-**Summary:** Created scripts/check-server-freshness.mjs â€” a standalone guard utility that fetches /health uptime and scans server/ source mtimes to detect when a running server is behind the working tree. Integrated inline freshness check into swarm-e2e-chat-check.mjs (the highest-risk script â€” always targets port 3000). Added warnIfServerStale() to swarm-visual-regression.mjs reused-server path. Added two npm scripts: check:server-freshness and check:server-freshness:warn.
+**Summary:** Created scripts/check-server-freshness.mjs Ã¢â‚¬â€ a standalone guard utility that fetches /health uptime and scans server/ source mtimes to detect when a running server is behind the working tree. Integrated inline freshness check into swarm-e2e-chat-check.mjs (the highest-risk script Ã¢â‚¬â€ always targets port 3000). Added warnIfServerStale() to swarm-visual-regression.mjs reused-server path. Added two npm scripts: check:server-freshness and check:server-freshness:warn.
 **Files changed:** scripts/check-server-freshness.mjs (CREATED), scripts/swarm-e2e-chat-check.mjs (MODIFIED), scripts/swarm-visual-regression.mjs (MODIFIED), package.json (MODIFIED)
 **Bugs fixed:** none (preventive guard)
 **Decisions made:** warn-only in visual-regression (never aborts the run); strict by default in check-server-freshness.mjs (exit 1 to block pipelines); exit 2 for unreachable server
 **Blockers:** none
-**Next:** TASK #494 (TEST GATE â€” V10.8 full client verification pack)
+**Next:** TASK #494 (TEST GATE Ã¢â‚¬â€ V10.8 full client verification pack)
 
 ---
-## 2026-04-09 â€” qa-tester â€” Task #492: BUG-TEST-CLIENT-02 â€” Stabilize Codex handoff E2E harness
+## 2026-04-09 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #492: BUG-TEST-CLIENT-02 Ã¢â‚¬â€ Stabilize Codex handoff E2E harness
 **Outcome:** COMPLETED
 **Summary:** Fixed 3 harness bugs in scripts/swarm-codex-handoff-e2e.mjs: (1) reuse-server mode now does a preflight workflow check via API before opening browser and auto-injects the fixture if absent; (2) isolated mode spawns node server/index.js directly instead of npm run start, eliminating 60-120s Vite rebuild overhead that caused the openSwarm() timeout; (3) isolated mode no longer silently reuses a stale server on port 3314 -- always resets app-data and spawns fresh. Script remains manual-only (live Codex API dependency); CI gate is server unit tests (501/501).
 **Files changed:** scripts/swarm-codex-handoff-e2e.mjs, tests/visual/swarm/README.md, docs/TASK_PLAN.md
@@ -249,9 +249,9 @@
 **Next:** TASK #493 (stale-server guard for full client verification)
 
 ---
-## 2026-04-09 â€” documenter â€” Task #479: BUG-BLOCKER-UI-02 documentation audit
+## 2026-04-09 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Task #479: BUG-BLOCKER-UI-02 documentation audit
 **Outcome:** COMPLETED
-**Summary:** Audited all docs after 3 surgical fixes in SwarmEngine.js for BUG-BLOCKER-UI-02. No README, ARCHITECTURE.md, API.md, or inline comment updates were needed â€” all three changes are internal private methods. DOC_STATUS.md updated with new Fixed Bugs row and wave summary section for Task #479.
+**Summary:** Audited all docs after 3 surgical fixes in SwarmEngine.js for BUG-BLOCKER-UI-02. No README, ARCHITECTURE.md, API.md, or inline comment updates were needed Ã¢â‚¬â€ all three changes are internal private methods. DOC_STATUS.md updated with new Fixed Bugs row and wave summary section for Task #479.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none (documenter role)
 **Decisions made:** No public-facing docs need updating; _handleRuntimeBlocker inline comments already document provider_unavailable reasoning
@@ -260,7 +260,7 @@
 
 ---
 
-## 2026-04-09 â€” code-mapper â€” Task #479: BUG-BLOCKER-UI-02 â€” SwarmEngine snippet/blocker fixes mapped
+## 2026-04-09 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Task #479: BUG-BLOCKER-UI-02 Ã¢â‚¬â€ SwarmEngine snippet/blocker fixes mapped
 **Outcome:** COMPLETED
 **Summary:** Mapped 3 surgical fixes in SwarmEngine.js: `_normalizeSnippetLine` Dingbats+checkmark regex expansion, `_handleRuntimeBlocker` provider_unavailable clean-snippet bypass, `stopExecution` pinnedDisplaySnippet null on stop. Added 2 new Function Graph entries (_normalizeSnippetLine, _handleRuntimeBlocker) and updated stopExecution entry. Appended CHANGELOG entry.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
@@ -270,20 +270,20 @@
 **Next:** V10.8 tasks #491-#495 remain pending
 
 ---
-## 2026-04-09 â€” project-manager â€” Tasks #476 + #479: V10.6 post-session sync
+## 2026-04-09 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Tasks #476 + #479: V10.6 post-session sync
 **Outcome:** COMPLETED
-**Summary:** Verified and confirmed COMPLETED status for TASK #476 (BUG-CHAT-CLIENT-12 â€” Chat View empty state, no code changes needed, already locked by 52/52 client tests) and TASK #479 (BUG-BLOCKER-UI-02 â€” Gemini blocked node card raw CLI text, 3 root causes fixed in SwarmEngine.js, commit 02958da, 501/501 server tests). TASK_PLAN.md entries were already correct; PROGRESS.md and ACTIVITY_LOG.md updated to reflect this sync session.
+**Summary:** Verified and confirmed COMPLETED status for TASK #476 (BUG-CHAT-CLIENT-12 Ã¢â‚¬â€ Chat View empty state, no code changes needed, already locked by 52/52 client tests) and TASK #479 (BUG-BLOCKER-UI-02 Ã¢â‚¬â€ Gemini blocked node card raw CLI text, 3 root causes fixed in SwarmEngine.js, commit 02958da, 501/501 server tests). TASK_PLAN.md entries were already correct; PROGRESS.md and ACTIVITY_LOG.md updated to reflect this sync session.
 **Files changed:** docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
 **Bugs fixed:** BUG-CHAT-CLIENT-12 (verified pre-fixed), BUG-BLOCKER-UI-02 (3 SwarmEngine.js root causes: _normalizeSnippetLine Gemini checkmark regex, _handleRuntimeBlocker provider_unavailable clean message, stopExecution pinnedDisplaySnippet cleanup)
 **Decisions made:** none
 **Blockers:** none
-**Next:** V10.8 active â€” #491 (visual regression determinism, qa-tester) + #492 (Codex handoff browser harness, debugger) are the next parallel priorities
+**Next:** V10.8 active Ã¢â‚¬â€ #491 (visual regression determinism, qa-tester) + #492 (Codex handoff browser harness, debugger) are the next parallel priorities
 
 ---
 
-## 2026-04-09 â€” code-mapper â€” Codex handoff regression coverage mapped
+## 2026-04-09 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Codex handoff regression coverage mapped
 **Outcome:** COMPLETED
-**Summary:** Mapped 5 new/modified files. Updated CODE_MAP.md Test Infrastructure table with full 7-test description for swarm-engine-codex-sdk.test.js, added new E2E/Debug Scripts section for swarm-codex-handoff-e2e.mjs and codex-handoff-long.json, updated package.json entry with 3 new debug scripts. Appended CHANGELOG entry documenting 24 new functions and the `_onHandoff` â†’ Codex SDK spawn connection now covered by deterministic regression.
+**Summary:** Mapped 5 new/modified files. Updated CODE_MAP.md Test Infrastructure table with full 7-test description for swarm-engine-codex-sdk.test.js, added new E2E/Debug Scripts section for swarm-codex-handoff-e2e.mjs and codex-handoff-long.json, updated package.json entry with 3 new debug scripts. Appended CHANGELOG entry documenting 24 new functions and the `_onHandoff` Ã¢â€ â€™ Codex SDK spawn connection now covered by deterministic regression.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
 **Bugs fixed:** none
 **Decisions made:** Removed stale duplicate row for swarm-engine-codex-sdk.test.js (old V9.1 description superseded by new 7-test row)
@@ -292,18 +292,18 @@
 
 ---
 
-## 2026-04-09 â€” project-manager â€” Task #496: Codex handoff deterministic server regression coverage (out-of-session)
+## 2026-04-09 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Task #496: Codex handoff deterministic server regression coverage (out-of-session)
 **Outcome:** COMPLETED
 **Summary:** User added +11 deterministic server-unit tests for `_onHandoff -> Codex SDK spawn` in `server/tests/swarm-engine-codex-sdk.test.js`, covering long-payload truncation verified by TAIL-MARKER-OMEGA-9271 sentinel. Full server suite now 501/501. Manual browser probe `scripts/swarm-codex-handoff-e2e.mjs` added as non-CI debug tool. Registered as task #496 COMPLETED in TASK_PLAN.md. Browser E2E harness flakiness (#492) remains PENDING.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
 **Bugs fixed:** none
-**Decisions made:** Registered as new task #496 (not as completion of #492) â€” unit-layer coverage and browser-harness reliability are separate concerns
+**Decisions made:** Registered as new task #496 (not as completion of #492) Ã¢â‚¬â€ unit-layer coverage and browser-harness reliability are separate concerns
 **Blockers:** none
-**Next:** V10.8 next priorities: #492 (debugger â€” browser E2E harness) and #491 (qa-tester â€” visual regression determinism), can run in parallel
+**Next:** V10.8 next priorities: #492 (debugger Ã¢â‚¬â€ browser E2E harness) and #491 (qa-tester Ã¢â‚¬â€ visual regression determinism), can run in parallel
 
 ---
 
-## 2026-04-09 â€” documenter â€” Codex handoff test files added: doc audit
+## 2026-04-09 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Codex handoff test files added: doc audit
 **Outcome:** COMPLETED
 **Summary:** Audited README.md, docs/ARCHITECTURE.md, docs/API.md, and inline comments for staleness after addition of swarm-engine-codex-sdk.test.js (6 Codex SDK unit tests), swarm-codex-handoff-e2e.mjs (browser debug probe), codex-handoff-long.json fixture, and 3 debug npm scripts. README.md updated: test count corrected to 501/501 and a new "Codex Handoff Debug Probe" subsection added under Visual Regression. ARCHITECTURE.md and API.md required no changes. DOC_STATUS.md updated.
 **Files changed:** README.md, docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
@@ -314,9 +314,9 @@
 
 ---
 
-## 2026-04-09 â€” documenter â€” V10.0 TEST GATE backfill: documentation audit complete
+## 2026-04-09 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ V10.0 TEST GATE backfill: documentation audit complete
 **Outcome:** COMPLETED
-**Summary:** Administrative cleanup â€” project-manager marked 14 V10.0 TEST GATE tasks COMPLETED (PASS) in TASK_PLAN.md. No code changed. Audited README.md, ARCHITECTURE.md, API.md, CLAUDE.md, and inline comments; none contain task-count or V10.0 pending state references requiring update. DOC_STATUS.md timestamp updated.
+**Summary:** Administrative cleanup Ã¢â‚¬â€ project-manager marked 14 V10.0 TEST GATE tasks COMPLETED (PASS) in TASK_PLAN.md. No code changed. Audited README.md, ARCHITECTURE.md, API.md, CLAUDE.md, and inline comments; none contain task-count or V10.0 pending state references requiring update. DOC_STATUS.md timestamp updated.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none
 **Decisions made:** none
@@ -325,9 +325,9 @@
 
 ---
 
-## 2026-04-09 â€” code-mapper â€” V10.0 TEST GATE backfill: CHANGELOG entry recorded, CODE_MAP unchanged
+## 2026-04-09 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ V10.0 TEST GATE backfill: CHANGELOG entry recorded, CODE_MAP unchanged
 **Outcome:** COMPLETED
-**Summary:** No source files were modified. Appended CHANGELOG entry documenting the project-manager's backfill of 14 V10.0 TEST GATE tasks from PENDING to COMPLETED (PASS). CODE_MAP.md requires no update â€” no functions added, modified, or removed.
+**Summary:** No source files were modified. Appended CHANGELOG entry documenting the project-manager's backfill of 14 V10.0 TEST GATE tasks from PENDING to COMPLETED (PASS). CODE_MAP.md requires no update Ã¢â‚¬â€ no functions added, modified, or removed.
 **Files changed:** docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
 **Bugs fixed:** none
 **Decisions made:** none
@@ -335,19 +335,19 @@
 **Next:** No planned work remains. Project is fully CLOSED.
 
 ---
-## 2026-04-09 â€” project-manager â€” V10.0 TEST GATE backfill: 14 PENDING gates marked COMPLETED (PASS)
+## 2026-04-09 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V10.0 TEST GATE backfill: 14 PENDING gates marked COMPLETED (PASS)
 **Outcome:** COMPLETED
 **Summary:** Backfilled all 14 V10.0 TEST GATE tasks (#418, #420, #422, #424, #426, #428, #430, #432, #434, #436, #438, #440, #442, #445) from PENDING to COMPLETED (PASS). Evidence basis: AREA CHECKPOINT #447 PASS, TEST GATE #446 PASS (browser E2E 8/8), 490/490 server tests green, build clean (507 modules). Zero PENDING entries now remain in TASK_PLAN.md. All plan areas were already CLOSED per the file header.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
 **Bugs fixed:** none
-**Decisions made:** TEST GATE backfill is safe because AREA CHECKPOINT #447 is the authoritative cumulative gate covering all V10.0 fixes â€” individual wave gates are subsumed by it
+**Decisions made:** TEST GATE backfill is safe because AREA CHECKPOINT #447 is the authoritative cumulative gate covering all V10.0 fixes Ã¢â‚¬â€ individual wave gates are subsumed by it
 **Blockers:** none
 **Next:** No planned areas remain. Project is in a fully CLOSED state with 0 PENDING tasks.
 
 ---
-## 2026-04-09 â€” researcher â€” Research: Anthropic SDK Streaming vs CLI stream-json Token Boundary Spacing
+## 2026-04-09 Ã¢â‚¬â€ researcher Ã¢â‚¬â€ Research: Anthropic SDK Streaming vs CLI stream-json Token Boundary Spacing
 **Outcome:** COMPLETED
-**Summary:** Researched whether using @anthropic-ai/sdk directly instead of Claude CLI stream-json would eliminate token-boundary spacing artifacts (BUG-CHAT-1). Finding: the API delivers text_delta at BPE token granularity; simple concatenation produces correct text. The SDK does raw concatenation with zero normalization. Zero GitHub issues about spacing. The spacing problem is NOT in the API/CLI layer â€” it is in the project's WS broadcast + client accumulation layers. The existing result-event canonical text path is the correct solution.
+**Summary:** Researched whether using @anthropic-ai/sdk directly instead of Claude CLI stream-json would eliminate token-boundary spacing artifacts (BUG-CHAT-1). Finding: the API delivers text_delta at BPE token granularity; simple concatenation produces correct text. The SDK does raw concatenation with zero normalization. Zero GitHub issues about spacing. The spacing problem is NOT in the API/CLI layer Ã¢â‚¬â€ it is in the project's WS broadcast + client accumulation layers. The existing result-event canonical text path is the correct solution.
 **Files changed:** docs/memory/agents/researcher.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none (research only)
 **Decisions made:** none
@@ -356,7 +356,7 @@
 
 ---
 
-## 2026-04-09 â€” qa-tester â€” Task #446: TEST GATE â€” V10.0 Full Chat Integration
+## 2026-04-09 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #446: TEST GATE Ã¢â‚¬â€ V10.0 Full Chat Integration
 **Outcome:** COMPLETED (PASS)
 **Summary:** Full browser E2E verification via Puppeteer MCP against localhost:3000. 8/8 tests passed: (1) Generate+Run multi-agent workflow, (2) chat content clean with no duplicates, (3) chat filtering works correctly, (4) scroll at bottom after execution, (5) node snippets show real content, (6) navigation persistence works (BUG-CHAT-E2E-1 fix), (7) reset+second workflow state isolation, (8) XSS sanitization active. Known: token-boundary spacing (BUG-CHAT-1, LOW, platform limitation) still present in Italian text.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/qa-tester.md
@@ -366,7 +366,7 @@
 **Next:** Wave 8 AREA CHECKPOINT #447 ready. Then #448 (meta verification).
 
 ---
-## 2026-04-09 â€” code-mapper â€” Tasks #437, #439, #441, #443, #444: Wave 6 V10.0 LOW batch code mapping
+## 2026-04-09 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #437, #439, #441, #443, #444: Wave 6 V10.0 LOW batch code mapping
 **Outcome:** COMPLETED
 **Summary:** Mapped all 5 Wave 6 LOW batch tasks. Updated CODE_MAP.md with ChatPanel scroll-lock pattern (hasMountedRef + near-bottom check), ChatMessage unused import removal (repairAllTokenSpacing dropped), ChatExtractor registerNodePrompt typeof guard, and chatTextNormalization CHAT_WORDS dedup. Appended 5 CHANGELOG entries.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
@@ -376,7 +376,7 @@
 **Next:** nothing -- task chain complete
 
 ---
-## 2026-04-09 â€” documenter â€” Tasks #437, #439, #441, #443, #444: V10.0 Wave 6 LOW batch documentation audit
+## 2026-04-09 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Tasks #437, #439, #441, #443, #444: V10.0 Wave 6 LOW batch documentation audit
 **Outcome:** COMPLETED
 **Summary:** Audited all docs after Wave 6 LOW batch (ChatPanel scroll-lock + mount reset, ChatMessage unused import removal, ChatExtractor registerNodePrompt type guard, chatTextNormalization CHAT_WORDS dedup). All changes are internal implementation improvements with no API, architecture, config, or endpoint impact. Updated DOC_STATUS.md timestamp and inline comments row.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
@@ -386,7 +386,7 @@
 **Next:** Next wave documentation audit when triggered
 
 ---
-## 2026-04-09 â€” project-manager â€” Wave 6 completion + Wave 7 TEST GATE #446 in progress
+## 2026-04-09 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Wave 6 completion + Wave 7 TEST GATE #446 in progress
 **Outcome:** COMPLETED
 **Summary:** Marked all Wave 6 tasks COMPLETED: #437 (scroll-lock), #439 (unused import), #441 (scroll reset), #443 (registerNodePrompt guard), #444 (CHAT_WORDS dedup, SERVER-12 deferred). Updated counters to 429 COMPLETED/PASS, 17 PENDING. All 6 fix waves now COMPLETE. TEST GATE #446 (full chat integration browser verification) is IN_PROGRESS (Wave 7).
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -397,7 +397,7 @@
 
 ---
 
-## 2026-04-09 â€” code-mapper â€” Tasks #433, #435: Code map update for Waves 4+5 (V10.0)
+## 2026-04-09 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #433, #435: Code map update for Waves 4+5 (V10.0)
 **Outcome:** COMPLETED
 **Summary:** Mapped Task #433 (200-char length cap on 4 DP functions in chatTextNormalization.js) and Task #435 (REST hydration canonicalReceived skip in useSwarm.js). Added detailed function entries for all 4 capped DP functions. Updated connectWs complexity notes for REST hydration change. No breaking changes.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
@@ -408,7 +408,7 @@
 
 ---
 
-## 2026-04-09 â€” documenter â€” Tasks #433, #435: V10.0 Waves 4+5 documentation audit
+## 2026-04-09 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Tasks #433, #435: V10.0 Waves 4+5 documentation audit
 **Outcome:** COMPLETED
 **Summary:** Audited all docs after Tasks #433 (chatTextNormalization.js 200-char DP cap) and #435 (useSwarm.js REST hydration canonicalReceived guard). Both changes are internal performance/correctness fixes with no API, architecture, or config impact. Updated DOC_STATUS.md timestamp and inline comments status. All other docs remain accurate.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
@@ -419,7 +419,7 @@
 
 ---
 
-## 2026-04-09 â€” project-manager â€” Waves 4+5 completion + Wave 6 launch
+## 2026-04-09 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Waves 4+5 completion + Wave 6 launch
 **Outcome:** COMPLETED
 **Summary:** Marked #433 (BUG-CHAT-SERVER-07/08, DP performance cap 200 chars) and #435 (BUG-CHAT-CLIENT-10, REST hydration canonicalReceived guard) as COMPLETED. Updated counters to 424 COMPLETED/PASS, 22 PENDING. Wave 6 launching: #437 (scroll-lock) + #439 (unused import) + #441 (scroll reset) + #443 (registerNodePrompt guard) + #444 (CHAT_WORDS dedup) ALL PARALLEL.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -429,7 +429,7 @@
 **Next:** Wave 6: TASK #437 (frontend-dev) + TASK #439 (frontend-dev) + TASK #441 (frontend-dev) + TASK #443 (backend-dev) + TASK #444 (backend-dev) ALL PARALLEL
 
 ---
-## 2026-04-09 â€” frontend-dev â€” Task #435: BUG-CHAT-CLIENT-10 â€” REST hydration canonical guard
+## 2026-04-09 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #435: BUG-CHAT-CLIENT-10 Ã¢â‚¬â€ REST hydration canonical guard
 **Outcome:** COMPLETED
 **Summary:** Added canonicalReceived guard in useSwarm.js REST hydration loop. Assistant messages for nodes with canonicalReceived flag are now skipped during REST chatMessages injection, preventing stale text_delta fragments from re-appearing after canonical replacement. Client build clean (507 modules).
 **Files changed:** client/src/hooks/useSwarm.js, docs/TASK_PLAN.md
@@ -439,7 +439,7 @@
 **Next:** TEST GATE #436 (qa-tester verification)
 
 ---
-## 2026-04-09 â€” backend-dev â€” Task #433: BUG-CHAT-SERVER-07/08 â€” chatTextNormalization DP performance cap
+## 2026-04-09 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #433: BUG-CHAT-SERVER-07/08 Ã¢â‚¬â€ chatTextNormalization DP performance cap
 **Outcome:** COMPLETED
 **Summary:** Added token length > 200 early-return guards to four DP/greedy functions in chatTextNormalization.js to prevent O(n^2) memory on pathologically long tokens. 490/490 server tests pass.
 **Files changed:** server/services/chatTextNormalization.js
@@ -449,7 +449,7 @@
 **Next:** TEST GATE #434 verification
 
 ---
-## 2026-04-09 â€” project-manager â€” Wave 3 completion + Waves 4+5 launch
+## 2026-04-09 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Wave 3 completion + Waves 4+5 launch
 **Outcome:** COMPLETED
 **Summary:** Marked TASK #427 (BUG-CHAT-SERVER-02, stream-json ChatExtractor.feed removed), #429 (BUG-CHAT-CLIENT-6, toolUse accumulation), and #431 (BUG-CHAT-CLIENT-11, HitlChatCard double-click guard) as COMPLETED in TASK_PLAN.md header. Updated counters to 422 COMPLETED/PASS, 24 PENDING. Waves 4+5 now launching: #433 (DP memory cap) + #435 (scroll-lock) in PARALLEL.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -459,7 +459,7 @@
 **Next:** Waves 4+5: TASK #433 (frontend-dev) + TASK #435 (frontend-dev) PARALLEL
 
 ---
-## 2026-04-09 â€” backend-dev â€” Task #427: BUG-CHAT-SERVER-02
+## 2026-04-09 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #427: BUG-CHAT-SERVER-02
 **Outcome:** COMPLETED
 **Summary:** Removed duplicate ChatExtractor.feed() calls for stream-json agents in SwarmEngine.js. Stream-json text_delta and message handlers were both broadcasting chat_message directly AND feeding ChatExtractor, causing double WS events. Now only the direct broadcast path is used (same pattern as Codex SDK fix). 490/490 tests pass.
 **Files changed:** server/services/SwarmEngine.js
@@ -468,7 +468,7 @@
 **Blockers:** none
 **Next:** TEST GATE #428 (qa-tester verification)
 ---
-## 2026-04-09 â€” project-manager â€” Wave 2 completion + Wave 3 launch
+## 2026-04-09 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Wave 2 completion + Wave 3 launch
 **Outcome:** COMPLETED
 **Summary:** Marked TASK #421 (BUG-CHAT-SERVER-04/03, ChatExtractor compound keys), #423 (BUG-CHAT-CLIENT-4, undefined nodeId guard), and #425 (BUG-CHAT-CLIENT-8, XSS rehype-sanitize) as COMPLETED in TASK_PLAN.md header. Updated counters to 419 COMPLETED/PASS, 27 PENDING. Wave 3 now launching: #427 (stream-json text_delta double emission) + #429 (frontend chat accumulation) + #431 (frontend scroll-lock) in PARALLEL.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -478,7 +478,7 @@
 **Next:** Wave 3: TASK #427 (backend-dev) + TASK #429 (frontend-dev) + TASK #431 (frontend-dev) PARALLEL
 
 ---
-## 2026-04-09 â€” backend-dev â€” Task #421: BUG-CHAT-SERVER-04/03 â€” ChatExtractor buffer keying + cleanup scope
+## 2026-04-09 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #421: BUG-CHAT-SERVER-04/03 Ã¢â‚¬â€ ChatExtractor buffer keying + cleanup scope
 **Outcome:** COMPLETED
 **Summary:** Changed ChatExtractor._buffers key from nodeId to `${executionId}:${nodeId}` compound key. Updated cleanup() to only remove buffers matching the given executionId prefix instead of clearing all. Updated resetBuffer() to require executionId. Updated two SwarmEngine.js call sites. 490/490 tests pass.
 **Files changed:** server/services/ChatExtractor.js, server/services/SwarmEngine.js
@@ -488,7 +488,7 @@
 **Next:** TEST GATE #422
 
 ---
-## 2026-04-09 â€” documenter â€” Tasks #417 + #419: V10.0 Wave 1 documentation update
+## 2026-04-09 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Tasks #417 + #419: V10.0 Wave 1 documentation update
 **Outcome:** COMPLETED
 **Summary:** Updated ARCHITECTURE.md Section 13.5 (execution.chatMessages canonical replacement), API.md (chatMessages in GET /status response + expanded chat_message WS event description with canonicalReceived guard), SwarmContext.jsx (SwarmAgentState typedef with canonicalReceived), and DOC_STATUS.md.
 **Files changed:** docs/ARCHITECTURE.md, docs/API.md, client/src/store/SwarmContext.jsx, docs/memory/DOC_STATUS.md
@@ -499,7 +499,7 @@
 
 ---
 
-## 2026-04-09 â€” frontend-dev â€” Task #423 + #425: nodeId guard + XSS sanitize
+## 2026-04-09 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #423 + #425: nodeId guard + XSS sanitize
 **Outcome:** COMPLETED
 **Summary:** Added `if (!msg.nodeId) break;` guard in useSwarm.js chat_message handler to prevent phantom "undefined" store entries. Installed rehype-sanitize and added it to ChatMessage.jsx ReactMarkdown to close XSS vector from javascript: URLs in agent markdown output. Client build clean.
 **Files changed:** client/src/hooks/useSwarm.js, client/src/canvas/ChatMessage.jsx, client/package.json
@@ -509,7 +509,7 @@
 **Next:** TEST GATE #424 and #426 (qa-tester)
 ---
 
-## 2026-04-09 â€” project-manager â€” Wave 1 completion + Wave 2 launch
+## 2026-04-09 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Wave 1 completion + Wave 2 launch
 **Outcome:** COMPLETED
 **Summary:** Marked TASK #417 (BUG-CHAT-SERVER-01, stream-json canonical updates execution.chatMessages, commits 664c2e9/a8fda84) and TASK #419 (BUG-CHAT-CLIENT-1/3/15, canonicalReceived flag) as COMPLETED in TASK_PLAN.md header. Updated counters to 416 COMPLETED/PASS, 30 PENDING. Wave 2 now launching: #421 (ChatExtractor buffer keying), #423 (phantom store entries), #425 (XSS sanitization) in PARALLEL.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -520,7 +520,7 @@
 
 ---
 
-## 2026-04-09 â€” frontend-dev â€” Task #419: BUG-CHAT-CLIENT-1/3/15 â€” Canonical race condition fixes
+## 2026-04-09 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #419: BUG-CHAT-CLIENT-1/3/15 Ã¢â‚¬â€ Canonical race condition fixes
 **Outcome:** COMPLETED
 **Summary:** Added per-node `canonicalReceived` flag in agentStates to prevent post-canonical corruption. Empty canonical text is now guarded at both useSwarm.js handler level and replaceNodeChatMessages store level. Trailing text_delta fragments arriving after canonical are silently dropped.
 **Files changed:** client/src/hooks/useSwarm.js, client/src/store/SwarmContext.jsx
@@ -531,7 +531,7 @@
 
 ---
 
-## 2026-04-09 â€” project-manager â€” Debugger Loop Phase 2: V10.0 Chat Stress Test Bug Plan
+## 2026-04-09 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Debugger Loop Phase 2: V10.0 Chat Stress Test Bug Plan
 **Outcome:** COMPLETED
 **Summary:** Created V10.0 CHAT STRESS TEST BUG FIXES area in TASK_PLAN.md with 32 tasks (#417-#448) across 8 waves from 31 bugs found during debugger-loop Phase 1. 8 HIGH, 10 MEDIUM, 13 LOW. Each bug task has a TEST GATE. Area ends with integration gate + checkpoint. Wave 1 ready: #417 (backend) + #419 (frontend) PARALLEL.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -541,7 +541,7 @@
 **Next:** Wave 1: TASK #417 (backend-dev) + TASK #419 (frontend-dev) in PARALLEL
 
 ---
-## 2026-04-09 â€” documenter â€” Debugger Loop Phase 1 Chat Stress Test documentation audit
+## 2026-04-09 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Debugger Loop Phase 1 Chat Stress Test documentation audit
 **Outcome:** COMPLETED
 **Summary:** Documentation audit after Debugger Loop Phase 1 (deep code audit + browser E2E of chat system). No code was modified -- 31 bugs found but none fixed yet. All existing documentation remains accurate. DOC_STATUS.md updated with audit summary section noting the 31 bugs (6 HIGH, 9 MEDIUM, 16 LOW) and flagging that Phase 2 fixes will trigger doc updates.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
@@ -551,7 +551,7 @@
 **Next:** When Phase 2 bug fixes land, docs will need updating (inline comments, API.md WS events, ARCHITECTURE.md, fixed-bugs table)
 
 ---
-## 2026-04-09 â€” qa-tester â€” Debugger Loop Phase 1: Micro-Area C â€” Browser E2E Chat Stress Test
+## 2026-04-09 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Debugger Loop Phase 1: Micro-Area C Ã¢â‚¬â€ Browser E2E Chat Stress Test
 **Outcome:** COMPLETED
 **Summary:** Executed 10-test E2E browser stress test of the Chat system via Puppeteer MCP. All 10 tests PASS. 1 new LOW-severity bug found (BUG-CHAT-E2E-1: chat scroll position resets after navigation). 1 pre-existing known bug confirmed (BUG-CHAT-1: token-boundary spacing). No CRITICAL or HIGH bugs found. Chat system is stable under two sequential workflow runs with different languages.
 **Files changed:** docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
@@ -561,7 +561,7 @@
 **Next:** Phase 2 of debugger loop if needed, or project-manager to register BUG-CHAT-E2E-1.
 
 ---
-## 2026-04-09 â€” project-manager â€” V9.5 Full Deep E2E Test Bug Fix registration
+## 2026-04-09 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V9.5 Full Deep E2E Test Bug Fix registration
 **Outcome:** COMPLETED
 **Summary:** Registered V9.5 area in TASK_PLAN.md with 2 tasks: #415 (BUG-DT-1 Models popup click-outside fix, commit ed6877a, COMPLETED) and #416 (TEST GATE, PASS). This was the only bug found during a full deep E2E test of the entire application. Total: 416 tasks, 414 COMPLETED/PASS, 1 DEFERRED (#236). ALL AREAS CLOSED. V9.5 CLOSED.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -572,7 +572,7 @@
 
 ---
 
-## 2026-04-09 â€” documenter â€” Commit ed6877a: BUG-DT-1 Models popup click-outside fix
+## 2026-04-09 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Commit ed6877a: BUG-DT-1 Models popup click-outside fix
 **Outcome:** COMPLETED
 **Summary:** Documentation audit after BUG-DT-1 fix (Models settings popup click-outside dismissal in SwarmView.jsx). UI-only change adding modelSettingsRef + useEffect mousedown handler. No docs stale (README, ARCHITECTURE, API, inline comments all unaffected). DOC_STATUS.md updated with new fixed-bug entry.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
@@ -583,7 +583,7 @@
 
 ---
 
-## 2026-04-09 â€” project-manager â€” Post-commit 5d359b4 task plan update
+## 2026-04-09 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Post-commit 5d359b4 task plan update
 **Outcome:** COMPLETED
 **Summary:** Updated TASK_PLAN.md after commit 5d359b4 (BUG-CHAT-3 fix). Marked TEST GATE #409 as PASS (attempt 4). Registered V9.4 area with tasks #413 (BUG-CHAT-3 fix, COMPLETED) and #414 (TEST GATE, PASS). V9.2 and V9.4 both CLOSED. Total: 414 tasks, 412 COMPLETED/PASS, 1 DEFERRED (#236). Documented remaining known bugs: BUG-CHAT-1 (token boundary spacing, LOW, platform limitation) and BUG-CHAT-2 (Codex PTY thinking noise, MEDIUM). Updated PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -594,7 +594,7 @@
 
 ---
 
-## 2026-04-09 â€” documenter â€” Commit 5d359b4: Codex SDK canonical chat_message + eliminate duplicate WS broadcasts
+## 2026-04-09 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Commit 5d359b4: Codex SDK canonical chat_message + eliminate duplicate WS broadcasts
 **Outcome:** COMPLETED
 **Summary:** Documentation audit after Codex SDK canonical chat_message fix. Three files changed in code (SwarmEngine.js, SwarmContext.jsx, useSwarm.js): Codex SDK now emits isCanonical:true at turn completion, ChatExtractor.feed() removed for Codex SDK structured agents, client replaceNodeChatMessages replaces all prior fragments on canonical. Updated ARCHITECTURE.md Section 13.1 (Codex SDK canonical + ChatExtractor exclusion), API.md WS event table (isCanonical now documents both runtimes), DOC_STATUS.md (4 sections), inline comments audit (all accurate).
 **Files changed:** docs/ARCHITECTURE.md, docs/API.md, docs/memory/DOC_STATUS.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
@@ -605,7 +605,7 @@
 
 ---
 
-## 2026-04-08 â€” qa-tester â€” Task #409: TEST GATE V9.2 Stream-JSON Display Fidelity (attempt 3)
+## 2026-04-08 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #409: TEST GATE V9.2 Stream-JSON Display Fidelity (attempt 3)
 **Outcome:** FAIL
 **Summary:** repairTokenSpacing.js (commit c4f78f1) has critical regex bugs. repairTokenSplitting merges across real word boundaries in Italian (short words like "di", "un", "e", "il" are indistinguishable from sub-word fragments), producing "tramiteunconsumatoreeun" from "tramite un consumatore e un". repairCamelCaseSplitting fails on "Java Script" (needs lowercase first word) and merges unrelated words ("using Java Script" -> "usingJavaScript"). The fix makes display WORSE for realistic Italian text. Tests 2-4 PASS. Needs fundamentally different approach (stopword dictionary, known-term list, or server-side fix).
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/qa-tester.md
@@ -616,7 +616,7 @@
 
 ---
 
-## 2026-04-08 â€” qa-tester â€” Task #409: TEST GATE V9.2 Stream-JSON Display Fidelity (attempt 2)
+## 2026-04-08 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #409: TEST GATE V9.2 Stream-JSON Display Fidelity (attempt 2)
 **Outcome:** FAIL
 **Summary:** Phase 2 fix (9029762) replaced streamed text with Claude CLI result event's `result` field, but that field ALSO contains tokenizer-boundary spacing artifacts (e.g. "al le m and" not "allemand", "fra nc e se" not "francese"). The fix assumption that `obj.result` is canonical clean text is wrong. Tests 2 (stale state reset) PASS, 3 (cost persistence) PASS, 4 (build 490/490 + client) PASS. Overall FAIL due to text fidelity.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
@@ -626,7 +626,7 @@
 **Next:** Debugger/backend-dev must attempt phase 3 fix with different strategy. Re-run TEST GATE #409 after.
 
 ---
-## 2026-04-08 â€” documenter â€” Task #406 phase 2: Canonical result text documentation
+## 2026-04-08 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Task #406 phase 2: Canonical result text documentation
 **Outcome:** COMPLETED
 **Summary:** Updated ARCHITECTURE.md Section 13.5 with canonical resultText replacement step (4b) and isCanonical chat_message WS event. Expanded API.md WS Swarm Channel event table from 8 to 17 event types, resolving a long-standing V9.0 documentation debt. Updated DOC_STATUS.md across 4 sections.
 **Files changed:** docs/ARCHITECTURE.md, docs/API.md, docs/memory/DOC_STATUS.md, docs/memory/agents/documenter.md, docs/memory/ACTIVITY_LOG.md
@@ -636,7 +636,7 @@
 **Next:** nothing -- task fully self-contained
 
 ---
-## 2026-04-08 â€” qa-tester â€” Task #409: TEST GATE V9.2 Stream-JSON Display Fidelity
+## 2026-04-08 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #409: TEST GATE V9.2 Stream-JSON Display Fidelity
 **Outcome:** FAIL
 **Summary:** Test 1 (text fidelity) FAIL: spurious spaces persist in stream-json Writer output even with correct bundle deployed (separator=''). Spaces originate from Claude CLI text_delta token boundaries, not client accumulation. The #406 fix was correct but insufficient. Tests 2 (stale state reset #407) PASS, 3 (cost persistence #408) PASS, 4 (build/tests 488/488) PASS. Overall FAIL due to criterion #1.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md, docs/memory/PROGRESS.md
@@ -646,7 +646,7 @@
 **Next:** New task for debugger/backend-dev to fix stream-json token boundary whitespace (server-side result-text substitution recommended). Then re-run #409.
 
 ---
-## 2026-04-08 â€” debugger â€” V9.3 Codex SDK debugger-loop hardening (#410/#411/#412)
+## 2026-04-08 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ V9.3 Codex SDK debugger-loop hardening (#410/#411/#412)
 **Outcome:** COMPLETED
 **Summary:** Ran a deep live browser test for the newly added Codex SDK swarm path and reproduced two real regressions. Fix 1: reset/abort race in `server/services/SwarmEngine.js` could let a late SDK abort reapply `blocked` state after `Reset Session`; solved with per-turn `codex-sdk` run IDs, explicit reset stop mode, and reset-safe clearing of thread/controller/run metadata. Fix 2: completed Codex SDK turns could retain final output only in node/artifact while `chatMessages` stayed empty when `ChatExtractor` dropped the raw buffer as prompt echo; solved with per-turn assistant-message baseline tracking plus a structured fallback assistant message persisted at turn completion. Added two regression tests in `server/tests/swarm-engine-codex-sdk.test.js`. Verified locally with `npm test --prefix server` (490/490 PASS), `npm run build --prefix client` (501 modules), and isolated browser smoke on `http://127.0.0.1:3337`: deep workflow now shows non-empty Chat rail, reset workflow returns to `Idle` with no blocker banner. TASK #412 PASS.
 **Files changed:** server/services/SwarmEngine.js, server/tests/swarm-engine-codex-sdk.test.js, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/CONTEXT.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
@@ -657,7 +657,7 @@
 
 ---
 
-## 2026-04-08 â€” code-mapper â€” Tasks #407+#408: CODE_MAP + CHANGELOG update
+## 2026-04-08 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #407+#408: CODE_MAP + CHANGELOG update
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md and CHANGELOG.md for both Task #407 (BUG-DL-STALE-STATE-1 stale workflow state fix) and Task #408 (BUG-DL-COST-VANISH-1 cost footer persistence fix). Added new `buildClearedExecutionState()` function entry, updated `setWorkflowDef`, `AgentNode`, and `applyExecutionSnapshot` entries. 1 new function mapped, 3 functions updated, 0 removed. No breaking changes.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
@@ -667,7 +667,7 @@
 **Next:** Map TEST GATE #409 results when completed.
 
 ---
-## 2026-04-08 â€” documenter â€” Tasks #407+#408: DOC_STATUS audit and update
+## 2026-04-08 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Tasks #407+#408: DOC_STATUS audit and update
 **Outcome:** COMPLETED
 **Summary:** Audited all docs after Tasks #407 (BUG-DL-STALE-STATE-1) and #408 (BUG-DL-COST-VANISH-1). Both open bugs (BUG-DL-02, BUG-DL-03) now marked FIXED in DOC_STATUS.md. Task count updated to #408. Inline comments status updated with SwarmContext.jsx, AgentNode.jsx, and useSwarm.js annotations. CONTEXT.md already current (updated by PM). README.md, ARCHITECTURE.md, API.md remain accurate -- changes are internal bug fixes with no new features/APIs/config.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
@@ -678,7 +678,7 @@
 
 ---
 
-## 2026-04-08 â€” project-manager â€” V9.2 status sync: #407+#408 COMPLETED, #409 IN_PROGRESS
+## 2026-04-08 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V9.2 status sync: #407+#408 COMPLETED, #409 IN_PROGRESS
 **Outcome:** COMPLETED
 **Summary:** Verified #407 (stale node state) and #408 (cost footer vanish) both marked COMPLETED in TASK_PLAN.md. Updated header counts to 405 COMPLETE/PASS, 1 IN_PROGRESS (#409), 1 DEFERRED (#236). Updated CONTEXT.md and PROGRESS.md. TEST GATE #409 is now running.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -689,29 +689,29 @@
 
 ---
 
-## 2026-04-08 â€” frontend-dev â€” Task #408: BUG-DL-COST-VANISH-1 â€” Cost/token footer disappears after Completed state
+## 2026-04-08 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #408: BUG-DL-COST-VANISH-1 Ã¢â‚¬â€ Cost/token footer disappears after Completed state
 **Outcome:** COMPLETED
 **Summary:** Fixed cost/token data disappearing from agent node cards and chat message footers after execution completes. Root cause was twofold: (1) cost badge and chat footer were gated on `isStreamJson` which depends on `spawnMode`, a field that can be lost during status reconciliation; (2) the server serializes cost as flat `totalCostUsd` while the client WS handler accumulates under nested `totalCost.costUsd`, so when `applyExecutionSnapshot` replaces `agentStates` with server data, the client-format cost object vanishes. Fixed by removing the `isStreamJson` gate from cost displays, adding dual-format support in AgentNode.jsx, and normalizing server agentStates format in `applyExecutionSnapshot` to synthesize `totalCost` from flat fields and preserve client-accumulated data.
 **Files changed:** client/src/canvas/nodes/AgentNode.jsx, client/src/canvas/ChatMessage.jsx, client/src/hooks/useSwarm.js
-**Bugs fixed:** BUG-DL-COST-VANISH-1 â€” cost badge and cost footer disappeared after execution Completed
+**Bugs fixed:** BUG-DL-COST-VANISH-1 Ã¢â‚¬â€ cost badge and cost footer disappeared after execution Completed
 **Decisions made:** Remove isStreamJson gate from cost displays (cost data is cost data regardless of runtime); normalize server-to-client cost format mismatch in applyExecutionSnapshot
 **Blockers:** none
-**Next:** TEST GATE #409 (qa-tester) can now proceed â€” blocked on #407+#408, both COMPLETED
+**Next:** TEST GATE #409 (qa-tester) can now proceed Ã¢â‚¬â€ blocked on #407+#408, both COMPLETED
 
 ---
 
-## 2026-04-08 â€” frontend-dev â€” Task #407: BUG-DL-STALE-STATE-1 â€” Stale node state on workflow switch
+## 2026-04-08 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #407: BUG-DL-STALE-STATE-1 Ã¢â‚¬â€ Stale node state on workflow switch
 **Outcome:** COMPLETED
 **Summary:** Fixed stale per-node execution state (agentStates, chatMessages, agentResults, etc.) persisting when switching workflows. Modified `setWorkflowDef` in SwarmContext.jsx to automatically call `buildClearedExecutionState()` when the workflow ID changes and stale execution state exists. Covers all workflow-switch paths: Prompt-to-Flow generation, import, duplicate, template instantiate. Client build clean (501 modules).
 **Files changed:** client/src/store/SwarmContext.jsx
-**Bugs fixed:** BUG-DL-STALE-STATE-1 â€” stale previous-workflow node status/chat/results shown on freshly-generated workflow
-**Decisions made:** Centralized the fix in `setWorkflowDef` rather than adding `clearExecutionState()` calls at each call site â€” prevents future regressions from new call sites
+**Bugs fixed:** BUG-DL-STALE-STATE-1 Ã¢â‚¬â€ stale previous-workflow node status/chat/results shown on freshly-generated workflow
+**Decisions made:** Centralized the fix in `setWorkflowDef` rather than adding `clearExecutionState()` calls at each call site Ã¢â‚¬â€ prevents future regressions from new call sites
 **Blockers:** none
 **Next:** #408 (cost footer vanish) if assigned, then TEST GATE #409
 
 ---
 
-## 2026-04-08 â€” project-manager â€” V9.2 status sync: #406 COMPLETED, #407/#408 IN_PROGRESS
+## 2026-04-08 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V9.2 status sync: #406 COMPLETED, #407/#408 IN_PROGRESS
 **Outcome:** COMPLETED
 **Summary:** Verified #406 (BUG-DL-TEXTDELTA-1) already marked COMPLETED in TASK_PLAN.md. Updated header status counts to 403 COMPLETE/PASS, 2 IN_PROGRESS, 1 PENDING. Marked #407 and #408 as IN_PROGRESS. Updated PROGRESS.md and CONTEXT.md to reflect current V9.2 state. TEST GATE #409 remains blocked on #407+#408.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -722,7 +722,7 @@
 
 ---
 
-## 2026-04-08 â€” documenter â€” Task #398: BUG-AUTO-ROUTING documentation update
+## 2026-04-08 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Task #398: BUG-AUTO-ROUTING documentation update
 **Outcome:** COMPLETED
 **Summary:** Updated DOC_STATUS.md (release status task counts, BUG-AUTO-ROUTING-1 added to fixed bugs table, inline comments note updated). Updated CONTEXT.md (focus and immediate next step reflect #398 fix). ARCHITECTURE.md docs health note updated. All docs now reflect the _spawnAgent AUTO mode provider strategy routing fix and the 39 test updates.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
@@ -734,18 +734,18 @@
 ---
 
 
-## 2026-04-08 â€” code-mapper â€” BUG-AUTO-ROUTING: Code map update
+## 2026-04-08 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ BUG-AUTO-ROUTING: Code map update
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md _spawnAgent entry to reflect three-tier provider resolution (explicit > model-based > strategy-based via providerStrategy.activeProvider). Appended CHANGELOG.md entry for the AUTO routing fix. 39 test updates documented.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
 **Bugs fixed:** none
 **Decisions made:** none
 **Blockers:** none
-**Next:** nothing â€” mapping task self-contained
+**Next:** nothing Ã¢â‚¬â€ mapping task self-contained
 
 ---
 
-## 2026-04-08 â€” project-manager â€” Task #398: BUG-AUTO-ROUTING registered and marked COMPLETED
+## 2026-04-08 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Task #398: BUG-AUTO-ROUTING registered and marked COMPLETED
 **Outcome:** COMPLETED
 **Summary:** Created TASK #398 in TASK_PLAN.md for the AUTO mode routing bug (BUG-AUTO-ROUTING). The `_spawnAgent` dispatcher was not consulting `providerStrategy.activeProvider` when effectiveProvider was AUTO, causing all Claude agents from Prompt-to-Flow to route to PTY instead of stream-json. Fix applied by debugger, 39 tests updated, 478/478 pass. Updated header counts to 395 tasks / 394 COMPLETED. Updated PROGRESS.md.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -756,18 +756,18 @@
 
 ---
 
-## 2026-04-08 â€” debugger â€” BUG-AUTO-ROUTING-TESTS: Fix 39 failing PTY tests after AUTOâ†’stream-json routing
+## 2026-04-08 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ BUG-AUTO-ROUTING-TESTS: Fix 39 failing PTY tests after AUTOÃ¢â€ â€™stream-json routing
 **Outcome:** COMPLETED
 **Summary:** Fixed 39 of 478 tests that broke when _spawnAgent dispatcher started routing AUTO+claude to stream-json. Added explicit `{ provider: 'codex' }` or `{ provider: 'gemini' }` to startExecution calls in PTY-specific tests. Used manual state override for the auto-mode fallback test and Codex-specific blocker text for the blocker classification test.
 **Files changed:** server/tests/swarm-engine.test.js
 **Bugs fixed:** 39 test failures due to implicit AUTO mode routing to stream-json instead of PTY
 **Decisions made:** Approach B (explicit provider) over Approach A (stream-json mocks) for simplicity
 **Blockers:** none
-**Next:** nothing â€” all 478 tests pass
+**Next:** nothing Ã¢â‚¬â€ all 478 tests pass
 
 ---
 
-## 2026-04-08 â€” documenter â€” BUG-HANDOFF-ROUTING-1: Documentation update for _ensureAgentPty provider hint fix
+## 2026-04-08 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ BUG-HANDOFF-ROUTING-1: Documentation update for _ensureAgentPty provider hint fix
 **Outcome:** COMPLETED
 **Summary:** Updated docs/ARCHITECTURE.md Section 13.3 to document that _ensureAgentPty now passes execution.providerStrategy.mode as requestedProvider to _spawnAgent, ensuring handoff targets are routed to the correct spawner (stream-json for Claude, PTY for Codex/Gemini). Updated WS event table handoff_started description. Added BUG-HANDOFF-ROUTING-1 to DOC_STATUS.md fixed bugs table.
 **Files changed:** docs/ARCHITECTURE.md, docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
@@ -778,39 +778,39 @@
 
 ---
 
-## 2026-04-08 â€” frontend-dev â€” BUG-FRONTEND-3 & BUG-FRONTEND-4: AgentNode thinking indicator and unviewed badge
+## 2026-04-08 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ BUG-FRONTEND-3 & BUG-FRONTEND-4: AgentNode thinking indicator and unviewed badge
 **Outcome:** COMPLETED
 **Summary:** Fixed two AgentNode.jsx bugs: (1) thinking indicator changed from animate-pulse to animate-bounce with amber color, now visually distinct from running state; (2) unviewed output badge condition expanded from status === 'done' to include 'idle', 'completed', 'stopped' for stream-json agents. Build clean.
 **Files changed:** client/src/canvas/nodes/AgentNode.jsx
 **Bugs fixed:** BUG-FRONTEND-3 (thinking indistinguishable from running), BUG-FRONTEND-4 (unviewed badge missing for non-done terminal states)
 **Decisions made:** amber-300 + animate-bounce for thinking; terminal status array for badge
 **Blockers:** none
-**Next:** nothing â€” task fully self-contained
+**Next:** nothing Ã¢â‚¬â€ task fully self-contained
 
 ---
 
-## 2026-04-08 â€” debugger â€” BUG-BACKEND-2: Move -p flag to end of spawn args
+## 2026-04-08 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ BUG-BACKEND-2: Move -p flag to end of spawn args
 **Outcome:** COMPLETED
 **Summary:** Moved `-p prompt` to be the last arguments in the spawn args array in SwarmEngine._spawnAgentStreamJson(), after --model and --tools, per PRD FR-SJ-04. All 478 server tests pass.
 **Files changed:** server/services/SwarmEngine.js
-**Bugs fixed:** BUG-BACKEND-2 â€” -p flag positional ambiguity
+**Bugs fixed:** BUG-BACKEND-2 Ã¢â‚¬â€ -p flag positional ambiguity
 **Decisions made:** Minimal reorder of existing push calls only
 **Blockers:** none
-**Next:** none â€” fix is self-contained
+**Next:** none Ã¢â‚¬â€ fix is self-contained
 
 ---
 
-## 2026-04-08 â€” qa-tester â€” Task #360: TEST GATE â€” SwarmEngine._spawnAgentStreamJson()
+## 2026-04-08 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #360: TEST GATE Ã¢â‚¬â€ SwarmEngine._spawnAgentStreamJson()
 **Outcome:** COMPLETED (verdict: FAIL)
-**Summary:** Ran 453/453 tests (PASS). Reviewed _spawnAgent, _spawnAgentStreamJson, _handleStreamJsonResult, _onDone reinject branch, stopExecution cleanup. Most PRD criteria PASS: args (--output-format stream-json, --verbose, --dangerously-skip-permissions, --tools, --session-id/--resume, -p, --model), shell:false, child.stdin.end(), all event routes (text_deltaâ†’chat_message, tool_startâ†’agent_tool_use, etc.), __HANDOFF__ via HandoffParser, crashâ†’error status, 30s tree-kill timeout, reinject via new spawn, tree-kill cleanup in stopExecution, SEC-SJ-01/02/07. FAIL on 2 WS contract violations: (1) agent_cost missing cacheReadTokens/cacheWriteTokens (PRD line 268-269, FR-SJ-22); (2) _broadcastAgentStatus missing spawnMode field so subsequent status updates lose it (FR-SJ-23). Gate: FAIL â†’ return to #359.
+**Summary:** Ran 453/453 tests (PASS). Reviewed _spawnAgent, _spawnAgentStreamJson, _handleStreamJsonResult, _onDone reinject branch, stopExecution cleanup. Most PRD criteria PASS: args (--output-format stream-json, --verbose, --dangerously-skip-permissions, --tools, --session-id/--resume, -p, --model), shell:false, child.stdin.end(), all event routes (text_deltaÃ¢â€ â€™chat_message, tool_startÃ¢â€ â€™agent_tool_use, etc.), __HANDOFF__ via HandoffParser, crashÃ¢â€ â€™error status, 30s tree-kill timeout, reinject via new spawn, tree-kill cleanup in stopExecution, SEC-SJ-01/02/07. FAIL on 2 WS contract violations: (1) agent_cost missing cacheReadTokens/cacheWriteTokens (PRD line 268-269, FR-SJ-22); (2) _broadcastAgentStatus missing spawnMode field so subsequent status updates lose it (FR-SJ-23). Gate: FAIL Ã¢â€ â€™ return to #359.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
-**Bugs fixed:** none (TEST GATE protocol â€” report only)
+**Bugs fixed:** none (TEST GATE protocol Ã¢â‚¬â€ report only)
 **Decisions made:** FAIL despite mostly correct implementation; WS contract gaps are hard-gate failures
 **Blockers:** #361 + #363 blocked until #359 re-fixes and #360 re-runs PASS
 **Next:** backend-dev (or debugger) fixes (a) add cacheReadTokens/cacheWriteTokens to agent_cost broadcast in _handleStreamJsonResult from resultEvt.usage.cacheRead/.cacheWrite; (b) add spawnMode to _broadcastAgentStatus payload. Then re-run TEST GATE #360.
 
 ---
-## 2026-04-08 â€” backend-dev â€” Tasks #365+#366: Per-Agent Tool Configuration + TEST GATE
+## 2026-04-08 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Tasks #365+#366: Per-Agent Tool Configuration + TEST GATE
 **Outcome:** COMPLETED
 **Summary:** Closed the per-agent tool configuration wave. SwarmEngine now defaults stream-json agents to `Bash,Read,Edit,Write,Grep,Glob,LS`, persists node `tools` arrays through WorkflowStore, and uses `--tools` consistently. Follow-up cleanup also migrated JobRunner and ScaffoldGenerator off the legacy permission-bypass flag so the server runtime/test scope contains no `--allowedTools` references. Verification passed with targeted spawn/persistence tests and full backend suite green at 470/470.
 **Files changed:** server/services/SwarmEngine.js, server/services/JobRunner.js, server/services/ScaffoldGenerator.js, server/routes/swarm.js, server/tests/swarm-engine.test.js, server/tests/JobRunner.test.js, server/tests/ScaffoldGenerator.test.js, server/tests/security-v3.test.js, docs/TASK_PLAN.md, docs/ARCHITECTURE.md, docs/memory/ACTIVITY_LOG.md
@@ -820,16 +820,16 @@
 **Next:** TASK #367 area checkpoint for V9.0-Phase1 backend core
 
 ---
-## 2026-04-08 â€” orchestrator/backend-dev/qa-tester â€” Tasks #360, #361, #362, #363, #364: stream-json gates, dispatcher, and session lifecycle
+## 2026-04-08 Ã¢â‚¬â€ orchestrator/backend-dev/qa-tester Ã¢â‚¬â€ Tasks #360, #361, #362, #363, #364: stream-json gates, dispatcher, and session lifecycle
 **Outcome:** COMPLETED
 **Summary:** Closed the remaining Phase 1 stream-json backend wave. Fixed the #360 WS contract gaps (`agent_status.spawnMode`, `agent_cost.cacheReadTokens/cacheWriteTokens`), completed `_spawnAgent()` dispatcher routing and call-site migration, then implemented `stopStreamJsonAgent(executionId, nodeId, mode)` with graceful stop, forced stop, reset, post-result timeout escalation, resume re-entry, session JSONL archive/delete, and DELETE route extension for stream-json agents. Added targeted lifecycle/dispatcher tests. Full server suite passes at 467/467.
 **Files changed:** server/services/SwarmEngine.js, server/routes/swarm.js, server/tests/swarm-engine.test.js, docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** #360 WS contract mismatch (missing `spawnMode`, missing cache token fields)
 **Decisions made:** Forced-stop now marks `stopped` before awaiting process-tree cleanup; reset archives then deletes discovered Claude session JSONL artifacts and rotates `streamJsonSessionId`; `resumeExecution()` is async so stream-json resumes can respawn via `_spawnAgent()`.
 **Blockers:** none
-**Next:** TASK #365 â€” Per-Agent Tool Configuration (`tools` array + spawn args)
+**Next:** TASK #365 Ã¢â‚¬â€ Per-Agent Tool Configuration (`tools` array + spawn args)
 ---
-## 2026-04-08 â€” project-manager â€” Task #359 COMPLETED status update + #360 activation
+## 2026-04-08 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Task #359 COMPLETED status update + #360 activation
 **Outcome:** COMPLETED
 **Summary:** Marked #359 COMPLETED (_spawnAgentStreamJson, all methods added by backend-dev, 453/453 tests pass). Activated #360 TEST GATE to IN_PROGRESS (qa-tester running). Updated header: 356/393 COMPLETED, 35 PENDING. Note: _spawnAgent dispatcher exists but not yet wired into startExecution (that is Task #361). After #360 PASS, #361 (dispatcher wiring) + #363 (session lifecycle) can run in PARALLEL per task plan.
 **Files changed:** docs/TASK_PLAN.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/CONTEXT.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/project-manager.md (MODIFIED)
@@ -840,7 +840,7 @@
 
 ---
 
-## 2026-04-08 â€” project-manager â€” Task #357 status update + #358 activation
+## 2026-04-08 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Task #357 status update + #358 activation
 **Outcome:** COMPLETED
 **Summary:** Marked #357 COMPLETED (StreamJsonParser, 37 tests, 453/453 pass). Also marked #356 (AREA CHECKPOINT Phase 0) COMPLETED/PASS (was bypassed but implicitly passed). Activated #358 TEST GATE to IN_PROGRESS. Updated header: 354/393 COMPLETED, 37 PENDING. Phase 0 CLOSED, Phase 1 active. No blockers. Next after #358 PASS: #359 _spawnAgentStreamJson (backend-dev, VERY HARD).
 **Files changed:** docs/TASK_PLAN.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/CONTEXT.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/project-manager.md (MODIFIED)
@@ -850,7 +850,7 @@
 **Next:** Wait for #358 TEST GATE result. If PASS -> #359 _spawnAgentStreamJson (backend-dev). If FAIL -> return to #357.
 ---
 
-## 2026-04-08 â€” backend-dev â€” Task #357: StreamJsonParser â€” NDJSON line parser
+## 2026-04-08 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #357: StreamJsonParser Ã¢â‚¬â€ NDJSON line parser
 **Outcome:** COMPLETED
 **Summary:** Created StreamJsonParser.js (NDJSON line parser for Claude CLI stream-json output) and StreamJsonParser.test.js (37 tests). Parser dispatches on top-level type (system/stream_event/result/assistant), unwraps stream_event envelope, tracks active block type for content_block_stop dispatch. Handles 1MB cap (SEC-SJ-03), malformed JSON, server_tool_use, thinking blocks. 453/453 tests pass, no regressions.
 **Files changed:** server/services/StreamJsonParser.js (CREATED), server/tests/StreamJsonParser.test.js (CREATED), docs/TASK_PLAN.md (MODIFIED)
@@ -860,17 +860,17 @@
 **Next:** TASK #358 TEST GATE (qa-tester), then #359 _spawnAgentStreamJson (backend-dev)
 ---
 
-## 2026-04-08 â€” qa-tester â€” Task #355: TEST GATE â€” Spike Validation
+## 2026-04-08 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #355: TEST GATE Ã¢â‚¬â€ Spike Validation
 **Outcome:** COMPLETED
 **Summary:** Ran spike script (server/spike/stream-json-spike.mjs). Initial run failed because Claude CLI requires --verbose with stream-json + -p mode. Fixed spike, re-ran: 10/10 verdicts PASS. Turn 1 text+result events, Turn 2 context continuity, Turn 3 tool restriction, session JSONL found, cost data parsed. Post-result hang ~640-700ms. 414/414 server tests pass (no regressions).
-**Files changed:** server/spike/stream-json-spike.mjs (MODIFIED â€” added --verbose flag), docs/TASK_PLAN.md (MODIFIED)
+**Files changed:** server/spike/stream-json-spike.mjs (MODIFIED Ã¢â‚¬â€ added --verbose flag), docs/TASK_PLAN.md (MODIFIED)
 **Bugs fixed:** Missing --verbose flag in spike spawn args (CLI requirement discovered and fixed)
-**Decisions made:** --verbose is mandatory for stream-json + print mode â€” must be included in production _spawnAgentStreamJson
+**Decisions made:** --verbose is mandatory for stream-json + print mode Ã¢â‚¬â€ must be included in production _spawnAgentStreamJson
 **Blockers:** none
 **Next:** AREA CHECKPOINT #356, then Phase 1 tasks can begin
 
 ---
-## 2026-04-08 â€” documenter â€” Post-Task #354: V9.0 documentation audit
+## 2026-04-08 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Post-Task #354: V9.0 documentation audit
 **Outcome:** COMPLETED
 **Summary:** Audited all documentation after Task #354 spike completion and V9.0 /create pipeline (PRD v6.0, 40-task plan, 4 research files, DEC-027/028/029). Updated DOC_STATUS.md with current V9.0 state, new doc artifacts (research files, spike, PRD v6.0), documentation debt table, and forward-looking stale section notes. Updated PROJECT.md implementation status (393 tasks, V9.0 planning phase). No production code changed so README, ARCHITECTURE, and API docs remain accurate for v5.0.
 **Files changed:** docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/PROJECT.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/documenter.md (MODIFIED)
@@ -880,7 +880,7 @@
 **Next:** After Tasks #357+ land production code, README needs V9.0 features, ARCHITECTURE needs Section 13, API needs WS event docs
 
 ---
-## 2026-04-08 â€” code-mapper â€” Task #354: SPIKE stream-json multi-turn mapping
+## 2026-04-08 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Task #354: SPIKE stream-json multi-turn mapping
 **Outcome:** COMPLETED
 **Summary:** Mapped new spike script `server/spike/stream-json-spike.mjs` (7 functions) into CODE_MAP.md. Added Spike/Validation Scripts section to Module Index. Appended CHANGELOG entry for Task #354. Updated project status to V9.0 (393 tasks, 40 pending).
 **Files changed:** docs/memory/CODE_MAP.md (Module Index + Function Graph + header), docs/memory/CHANGELOG.md (new entry)
@@ -890,9 +890,9 @@
 **Next:** Task #355 TEST GATE execution by qa-tester, then Phase 1 backend core tasks (#356+)
 
 ---
-## 2026-04-08 â€” project-manager â€” Task #354 status update + #355 activation
+## 2026-04-08 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Task #354 status update + #355 activation
 **Outcome:** COMPLETED
-**Summary:** Marked TASK #354 COMPLETED in TASK_PLAN.md header (352/393). Updated #355 to IN_PROGRESS (qa-tester). Updated PROGRESS.md, CONTEXT.md. No blockers identified. V9.0 pipeline on track â€” Phase 0 spike done, TEST GATE running.
+**Summary:** Marked TASK #354 COMPLETED in TASK_PLAN.md header (352/393). Updated #355 to IN_PROGRESS (qa-tester). Updated PROGRESS.md, CONTEXT.md. No blockers identified. V9.0 pipeline on track Ã¢â‚¬â€ Phase 0 spike done, TEST GATE running.
 **Files changed:** docs/TASK_PLAN.md (header + #355 status), docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
 **Bugs fixed:** none
 **Decisions made:** none
@@ -900,17 +900,17 @@
 **Next:** Await #355 TEST GATE result. If PASS -> #356 AREA CHECKPOINT -> #357 StreamJsonParser (backend-dev). If FAIL -> architect redesign.
 
 ---
-## 2026-04-08 â€” backend-dev â€” Task #354: SPIKE â€” Validate --resume -p --output-format stream-json multi-turn
+## 2026-04-08 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #354: SPIKE Ã¢â‚¬â€ Validate --resume -p --output-format stream-json multi-turn
 **Outcome:** COMPLETED
 **Summary:** Created standalone spike script (server/spike/stream-json-spike.mjs) that validates Claude CLI stream-json mode for multi-turn agent spawning. Script tests 3 turns (basic stream-json, --resume context continuity, --tools restriction), collects timing/cost/events, searches for session JSONL files, and prints structured PASS/FAIL verdicts. Syntax verified, all 414 existing tests pass.
 **Files changed:** server/spike/stream-json-spike.mjs (CREATED), docs/TASK_PLAN.md (#354 marked COMPLETED)
 **Bugs fixed:** none
 **Decisions made:** Used crypto.randomUUID() for standalone spike (no uuid dep); searched both ~/.claude/projects/ and ~/.claude/sessions/ for JSONL discovery
 **Blockers:** none
-**Next:** TASK #355 (TEST GATE) â€” qa-tester runs the spike and verifies all verdicts PASS
+**Next:** TASK #355 (TEST GATE) Ã¢â‚¬â€ qa-tester runs the spike and verifies all verdicts PASS
 
 ---
-## 2026-04-08 â€” project-manager â€” V9.0 Stream-JSON Migration Task Plan
+## 2026-04-08 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V9.0 Stream-JSON Migration Task Plan
 **Outcome:** COMPLETED
 **Summary:** Created complete TASK_PLAN.md for V9.0 Stream-JSON Agent Migration. 40 tasks (#354-#393) across 4 phases: Phase 0 Spike (3 tasks), Phase 1 Backend Core (11 tasks, 5 components + 5 gates + 1 checkpoint), Phase 2 Frontend (16 tasks, 8 components + 7 gates + 1 checkpoint), Phase 3 Integration (10 tasks, 4 comment/doc tasks + 3 gates + 1 E2E + 1 doc + 1 final checkpoint). Every component has a TEST GATE. Every phase has an AREA CHECKPOINT. Dependency chain fully mapped with parallelizable tasks identified.
 **Files changed:** docs/TASK_PLAN.md (40 tasks appended), docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -920,7 +920,7 @@
 **Next:** Assign backend-dev to TASK #354 (spike validation). CRITICAL priority.
 ---
 
-## 2026-04-08 â€” prd-writer â€” V6 PRD: Stream-JSON Agent Migration for Swarm Engine
+## 2026-04-08 Ã¢â‚¬â€ prd-writer Ã¢â‚¬â€ V6 PRD: Stream-JSON Agent Migration for Swarm Engine
 **Outcome:** COMPLETED
 **Summary:** Wrote complete V6 PRD (docs/PRD.md) for Stream-JSON Agent Migration. 13 sections + 2 appendices covering: StreamJsonParser, _spawnAgentStreamJson, provider routing dispatcher, session lifecycle (graceful/forced/reset), 4 new WS events, useSwarm.js/AgentNode/ChatMessage/AgentInspector extensions, SwarmContext store extensions, ChatExtractor/SessionManager bypasses. 12 component specifications with full acceptance criteria. 7 SEC-SJ-* security requirements. 4 open questions.
 **Files changed:** docs/PRD.md (REWRITTEN), docs/memory/agents/prd-writer.md, docs/memory/ACTIVITY_LOG.md
@@ -930,7 +930,7 @@
 **Next:** Project Manager builds TASK_PLAN.md from PRD. Researcher resolves open questions 1,2,4.
 ---
 
-## 2026-04-08 â€” researcher â€” Research B: Claude CLI --allowedTools Syntax
+## 2026-04-08 Ã¢â‚¬â€ researcher Ã¢â‚¬â€ Research B: Claude CLI --allowedTools Syntax
 **Outcome:** COMPLETED
 **Summary:** Deep-dive research on Claude CLI --allowedTools, --disallowedTools, and --tools flags. Critical finding: --allowedTools is NOT a security boundary under --dangerously-skip-permissions (known bug #12232). The correct flags for our swarm tool whitelists are --tools (restricts available tool set) and --disallowedTools (blocks specific patterns). Complete list of 16 built-in tools documented. Glob patterns supported for Bash with * wildcards.
 **Files changed:** docs/research_b_tools.md (CREATED), docs/memory/agents/researcher.md, docs/memory/ACTIVITY_LOG.md
@@ -940,7 +940,7 @@
 **Next:** Architect/backend-dev should use --tools + --disallowedTools (not --allowedTools) for per-agent tool restriction in SwarmEngine spawn commands
 
 ---
-## 2026-04-08 â€” researcher â€” Research: Resume After Process Kill
+## 2026-04-08 Ã¢â‚¬â€ researcher Ã¢â‚¬â€ Research: Resume After Process Kill
 **Outcome:** COMPLETED
 **Summary:** Deep-dive research on Claude CLI --resume behavior after process kill. Key findings: session JSONL is written incrementally (per-message append), but resume after mid-turn kill is BROKEN due to orphaned tool_use blocks without tool_result. SIGTERM offers no advantage over SIGKILL during tool execution. Safest pattern for SwarmEngine: graceful stop = wait for result event before killing; forced stop = kill + truncate JSONL to last complete turn before resuming.
 **Files changed:** docs/research_resume_after_kill.md (CREATED), docs/memory/agents/researcher.md, docs/memory/ACTIVITY_LOG.md
@@ -950,7 +950,7 @@
 **Next:** Architect/backend-dev should use these findings to design stop/reset lifecycle for stream-json agents in SwarmEngine
 
 ---
-## 2026-04-08 â€” security â€” Stream-JSON Agent Spawning Early Security Assessment
+## 2026-04-08 Ã¢â‚¬â€ security Ã¢â‚¬â€ Stream-JSON Agent Spawning Early Security Assessment
 **Outcome:** COMPLETED
 **Summary:** Produced early security assessment for stream-json agent spawning migration. Identified 7 mandatory security requirements (SEC-SJ-01 through SEC-SJ-07). Highest risk: --dangerously-skip-permissions combined with allowedTools:all (HIGH). Session ID isolation rated HIGH. NDJSON parser resilience, process arg visibility, and session file cleanup rated MEDIUM. Net assessment: stream-json is a security improvement over PTY (eliminates ConPTY echo replay attacks) but requires bounded tool permissions and session ID opacity.
 **Files changed:** docs/memory/agents/security.md, docs/memory/ACTIVITY_LOG.md
@@ -961,7 +961,7 @@
 
 ---
 
-## 2026-04-08 â€” architect â€” Stream-JSON Agent Spawning Technical Analysis
+## 2026-04-08 Ã¢â‚¬â€ architect Ã¢â‚¬â€ Stream-JSON Agent Spawning Technical Analysis
 **Outcome:** COMPLETED
 **Summary:** Produced complete technical analysis for replacing PTY-based Claude agent spawning with `--output-format stream-json` mode. Designed new StreamJsonParser component, dual-path architecture (stream-json for Claude, PTY for Codex/Gemini), process-per-turn model with --resume for session persistence. Mapped integration with existing _onHandoff/_onDone/HITL/budget systems. Identified 6 risks (extended thinking blocking deltas is highest). Made 3 architectural decisions (DEC-027/028/029).
 **Files changed:** docs/memory/DECISIONS.md, docs/memory/agents/architect.md, docs/memory/ACTIVITY_LOG.md
@@ -972,7 +972,7 @@
 
 ---
 
-## 2026-04-08 â€” project-manager â€” Scope & Risk Analysis: PTY-to-StreamJSON Migration
+## 2026-04-08 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Scope & Risk Analysis: PTY-to-StreamJSON Migration
 **Outcome:** COMPLETED
 **Summary:** Produced full scope analysis for replacing PTY with stream-json for Claude provider agents. Defined 4-phase breakdown (Spike, Backend Lifecycle, WS Events, Frontend Chat UI, Integration). Identified 3 risks: multi-turn --resume uncertainty (HIGH), handoff token detection change (MEDIUM), dual-path maintenance burden (MEDIUM/HIGH). Overall complexity HIGH due to SwarmEngine.js being 5284 lines with 20+ subsystems. Recommended Phase 0 spike as mandatory prerequisite.
 **Files changed:** docs/memory/agents/project-manager.md, docs/memory/ACTIVITY_LOG.md
@@ -983,17 +983,17 @@
 
 ---
 
-## 2026-04-08 â€” researcher â€” Quick Research Snapshot: Stream-JSON Agent Migration
+## 2026-04-08 Ã¢â‚¬â€ researcher Ã¢â‚¬â€ Quick Research Snapshot: Stream-JSON Agent Migration
 **Outcome:** COMPLETED
 **Summary:** Confirmed --resume + -p combination works per official docs. --session-id accepts custom UUIDs. Assembled complete stream-json event type reference. Identified critical pitfall: extended thinking disables streaming events. --dangerously-skip-permissions is the auto-accept mechanism.
 **Files changed:** docs/memory/agents/researcher.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none
-**Decisions made:** none â€” research deliverable only
+**Decisions made:** none Ã¢â‚¬â€ research deliverable only
 **Blockers:** none
 **Next:** Architect designs stream-json spawn pattern for SwarmEngine using these findings
 
 ---
-## 2026-04-08 â€” tech-lead â€” Stage 0: Replace PTY with stream-json for Swarm Claude agents
+## 2026-04-08 Ã¢â‚¬â€ tech-lead Ã¢â‚¬â€ Stage 0: Replace PTY with stream-json for Swarm Claude agents
 **Outcome:** COMPLETED
 **Summary:** Assessed feasibility of replacing PTY-based agent spawning with stream-json mode for Claude provider. Rated UNCERTAIN: core stream-json parsing is proven (JobRunner), but multi-turn continuation (done-reinject, HITL), terminal display, rate-limit handling, and dual-path maintenance complexity are unresolved. Produced 4 targeted technical questions.
 **Files changed:** docs/memory/agents/tech-lead.md, docs/memory/ACTIVITY_LOG.md
@@ -1004,7 +1004,7 @@
 
 ---
 
-## 2026-04-08 â€” creative-director â€” Stage 0: PTY-to-StreamJSON Migration Creative Analysis
+## 2026-04-08 Ã¢â‚¬â€ creative-director Ã¢â‚¬â€ Stage 0: PTY-to-StreamJSON Migration Creative Analysis
 **Outcome:** COMPLETED
 **Summary:** Analyzed the idea to replace PTY-based Swarm agent output extraction with stream-json mode. All three clarity dimensions rated CLEAR -- this is a well-defined migration from a broken path to a proven one. Surfaced 2 questions: (1) what happens for non-Claude providers that lack stream-json, (2) whether switching from character-streaming PTY to chunk-based JSON changes perceived liveness.
 **Files changed:** docs/memory/agents/creative-director.md, docs/memory/ACTIVITY_LOG.md
@@ -1038,7 +1038,7 @@
 ---
 
 ## 2026-04-07 - qa-tester - V8.0 Debugger Loop: CLEAN (0 bugs)
-**Outcome:** COMPLETED â€” CLEAN
+**Outcome:** COMPLETED Ã¢â‚¬â€ CLEAN
 **Summary:** Deep E2E test on all V8.0 components. 14 tests: 12 PASS, 0 FAIL, 2 UNTESTABLE. Zero bugs found.
 **Files changed:** none
 **Next:** V8.0 feature-complete and verified.
@@ -1056,7 +1056,7 @@
 ---
 
 ## 2026-04-07 - orchestrator - V8.0 Agent Output Viewer & Workflow Deliverable (Tasks #334-#344)
-**Outcome:** COMPLETED (implementation phase â€” TEST GATEs pending)
+**Outcome:** COMPLETED (implementation phase Ã¢â‚¬â€ TEST GATEs pending)
 **Summary:** Implemented the full V8.0 feature: red dot badge on done agents with unviewed output, AgentOutputPanel (per-agent clean output + handoff JSON, tabbed side panel with copy), WorkflowArtifactPanel (aggregated markdown modal with copy/download), REST endpoints for results/artifact.md, persistence via ExecutionHistoryStore extension. 4 waves executed in parallel worktrees: Wave 1 (#334-336,339: backend persistence + frontend state), Wave 2 (#337-338,340: persist integration + REST + WS wiring), Wave 3 (#341-343: red dot + both panels), Wave 4 (#344: SwarmView/SwarmCanvas integration). All 11 implementation tasks completed. 370 tests pass (33 new), 502 modules build clean.
 **Files changed:** server/services/SwarmEngine.js, server/stores/ExecutionHistoryStore.js, server/services/WorkflowArtifactBuilder.js (NEW), server/routes/swarm.js, server/tests/execution-history-outputs.test.js (NEW), server/tests/workflow-artifact-builder.test.js (NEW), server/tests/execution-results-api.test.js (NEW), client/src/store/SwarmContext.jsx, client/src/hooks/useSwarm.js, client/src/canvas/nodes/AgentNode.jsx, client/src/panels/AgentOutputPanel.jsx (NEW), client/src/panels/WorkflowArtifactPanel.jsx (NEW), client/src/canvas/SwarmCanvas.jsx, client/src/views/SwarmView.jsx
 **Bugs fixed:** none (clean implementation)
@@ -1102,7 +1102,7 @@
 **Outcome:** COMPLETED
 **Summary:** Added an explicit `Focus` control to the Swarm toolbar so contextual edge fading is user-controlled instead of always-on. The view now owns a `focusConnections` toggle, passes it into the canvas, and the canvas only applies node-based edge focus when that mode is enabled. This keeps the simpler, guided reading mode available for dense graphs while still allowing a full always-visible graph view during editing. Client build passes.
 **Files changed:** client/src/views/SwarmView.jsx, client/src/canvas/SwarmCanvas.jsx, docs/memory/ACTIVITY_LOG.md
-**Bugs fixed:** UX issue - contextual edge fading was helpful but implicit, making it harder to switch between â€œread one local flowâ€ and â€œinspect the whole graphâ€ modes
+**Bugs fixed:** UX issue - contextual edge fading was helpful but implicit, making it harder to switch between Ã¢â‚¬Å“read one local flowÃ¢â‚¬Â and Ã¢â‚¬Å“inspect the whole graphÃ¢â‚¬Â modes
 **Decisions made:** Default the toggle to enabled because dense workflows were the active pain point; expose it in the top toolbar next to other canvas organization controls
 **Blockers:** none
 **Next:** Optional follow-up - persist the Focus preference per workflow or per user session
@@ -1127,7 +1127,7 @@
 **Bugs fixed:** Swarm canvas readability issue - returns/feedback edges looked too similar to the main flow; drag-time node auto-shifting made layouts feel unstable and harder to understand
 **Decisions made:** Prefer stable user-controlled node positions; make edge meaning visible through role-based routing/styling rather than applying the same visual treatment to every connection
 **Blockers:** Browser spot-check was limited and should be repeated on the user's denser real workflow if more refinement is needed
-**Next:** Optional follow-up - push feedback edges even farther to the canvas perimeter or add a user toggle between â€œminimalâ€ and â€œdetailedâ€ edge rendering
+**Next:** Optional follow-up - push feedback edges even farther to the canvas perimeter or add a user toggle between Ã¢â‚¬Å“minimalÃ¢â‚¬Â and Ã¢â‚¬Å“detailedÃ¢â‚¬Â edge rendering
 
 ---
 
@@ -1142,7 +1142,7 @@
 
 ---
 
-## 2026-04-07 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Task #330: Documentation and status truthfulness sync (FINAL mapping)
+## 2026-04-07 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #330: Documentation and status truthfulness sync (FINAL mapping)
 **Outcome:** COMPLETED
 **Summary:** Final code-mapper entry. Updated CODE_MAP.md header to reflect project completion (330 tasks, 328 completed, 2 deferred), changed status banner from IN PROGRESS to PROJECT COMPLETE, updated package.json version entry to v5.0.0. Appended final CHANGELOG.md entry with project closure note. No source code functions were added, modified, or removed.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
@@ -1153,7 +1153,7 @@
 
 ---
 
-## 2026-04-07 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Post-Task #330: Documentation verification audit
+## 2026-04-07 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Post-Task #330: Documentation verification audit
 **Outcome:** COMPLETED
 **Summary:** Quick verification pass after Task #330. Cross-checked all DOC_STATUS.md claims against source files (README, package.json, PROGRESS, CONTEXT). All claims accurate. No stale docs found. No corrections needed.
 **Files changed:** docs/memory/agents/documenter.md, docs/memory/ACTIVITY_LOG.md
@@ -1164,7 +1164,7 @@
 
 ---
 
-## 2026-04-07 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ PROJECT CLOSURE VERIFICATION
+## 2026-04-07 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PROJECT CLOSURE VERIFICATION
 **Outcome:** COMPLETED
 **Summary:** Final verification that all POST-V5 FOLLOW-UP tasks (#327 COMPLETED, #328 PASS, #329 PASS, #330 COMPLETED) are correctly recorded, the area is CLOSED, and the status header reads 330 tasks / 328 COMPLETED / 2 DEFERRED / 0 PENDING. All checks passed. Project is CLOSED at v5.0.0.
 **Files changed:** docs/memory/agents/project-manager.md, docs/memory/ACTIVITY_LOG.md
@@ -1175,7 +1175,7 @@
 
 ---
 
-## 2026-04-07 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Task #330: Documentation and status truthfulness sync
+## 2026-04-07 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #330: Documentation and status truthfulness sync
 **Outcome:** COMPLETED
 **Summary:** Final task in POST-V5 FOLLOW-UP area. Fixed all stale claims across README.md (312/312 tests, 330 tasks, 498 modules, v5.0.0), package.json (v5.0.0, new description), PROJECT.md (all areas closed), CONTEXT.md (no remaining work), PROGRESS.md (area closure entry). Documented Unified Chat View, Advanced Flow Control Nodes, and N8N-Style Editor as features in README. Marked #330 COMPLETED in TASK_PLAN.md. Updated DOC_STATUS.md with full audit results. POST-V5 FOLLOW-UP AREA CLOSED.
 **Files changed:** README.md, package.json, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/CONTEXT.md, docs/memory/PROGRESS.md, docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
@@ -1186,9 +1186,9 @@
 
 ---
 
-## 2026-04-07 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Task #328 PASS: Update plan, unblock #330
+## 2026-04-07 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #328 PASS: Update plan, unblock #330
 **Outcome:** COMPLETED
-**Summary:** Marked #328 TEST GATE as COMPLETED/PASS (full round-trip verified, 312/312 tests, 498 modules). Updated #330 status from PENDING to READY Ã¢â‚¬â€ both dependencies (#328 PASS, #329 PASS) are now met. #330 (documenter Ã¢â‚¬â€ docs truthfulness sync) is the last task before POST-V5 FOLLOW-UP area can be CLOSED. Updated status header: 328/330 COMPLETED, 2 DEFERRED, 1 READY.
+**Summary:** Marked #328 TEST GATE as COMPLETED/PASS (full round-trip verified, 312/312 tests, 498 modules). Updated #330 status from PENDING to READY ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â both dependencies (#328 PASS, #329 PASS) are now met. #330 (documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â docs truthfulness sync) is the last task before POST-V5 FOLLOW-UP area can be CLOSED. Updated status header: 328/330 COMPLETED, 2 DEFERRED, 1 READY.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
 **Bugs fixed:** none
 **Decisions made:** none
@@ -1196,9 +1196,9 @@
 **Next:** Assign #330 to documenter agent. After #330 completes, POST-V5 FOLLOW-UP area is CLOSED and the project is fully complete (330 tasks, 328 COMPLETED, 2 DEFERRED).
 ---
 
-## 2026-04-07 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Task #328: TEST GATE Ã¢â‚¬â€ Execution history persistence round-trip (mapping)
+## 2026-04-07 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #328: TEST GATE ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Execution history persistence round-trip (mapping)
 **Outcome:** COMPLETED
-**Summary:** No code changes Ã¢â‚¬â€ verification-only TEST GATE. Updated CODE_MAP.md header timestamp, appended CHANGELOG.md with verified paths documentation (write: SwarmEngine Ã¢â€ â€™ ExecutionHistoryStore Ã¢â€ â€™ disk; read: API Ã¢â€ â€™ store Ã¢â€ â€™ disk). No structural changes to function graph.
+**Summary:** No code changes ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â verification-only TEST GATE. Updated CODE_MAP.md header timestamp, appended CHANGELOG.md with verified paths documentation (write: SwarmEngine ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ ExecutionHistoryStore ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ disk; read: API ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ store ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ disk). No structural changes to function graph.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
 **Bugs fixed:** none
 **Decisions made:** none
@@ -1206,27 +1206,27 @@
 **Next:** Task #330 (documentation truthfulness sync) now unblocked
 
 ---
-## 2026-04-07 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #327/#329: Map ExecutionHistoryStore wiring + Unified Chat verification
+## 2026-04-07 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #327/#329: Map ExecutionHistoryStore wiring + Unified Chat verification
 **Outcome:** COMPLETED
 **Summary:** Mapped 2 new SwarmEngine functions (setExecutionHistoryStore, _persistExecutionHistory) and updated 3 existing entries (constructor, _setExecutionStatus via startup, startup). Updated CODE_MAP.md Module Index for server/index.js and SwarmEngine.js. Appended 2 CHANGELOG entries. Task #329 was verification-only (no code changes).
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
 **Bugs fixed:** none
 **Decisions made:** none
 **Blockers:** none
-**Next:** none Ã¢â‚¬â€ mapping complete
+**Next:** none ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â mapping complete
 
 ---
-## 2026-04-07 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #328: TEST GATE Ã¢â‚¬â€ Execution history persistence round-trip
+## 2026-04-07 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #328: TEST GATE ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Execution history persistence round-trip
 **Outcome:** COMPLETED
 **Summary:** TEST GATE PASS. Verified _persistExecutionHistory is called for all terminal states (completed/stopped/failed), entry shape matches addEntry contract, duplicate guard works correctly with retry support, store injection is wired in server/index.js, and API routes read from the same on-disk files. 312/312 tests pass, client build 498 modules 0 errors.
 **Files changed:** docs/TASK_PLAN.md (status updated), docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none
-**Decisions made:** PASS verdict Ã¢â‚¬â€ all code paths verified by inspection + test suite + build
+**Decisions made:** PASS verdict ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all code paths verified by inspection + test suite + build
 **Blockers:** none
 **Next:** Task #330 (documentation truthfulness sync) is now unblocked
 
 ---
-## 2026-04-07 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Tasks #327/#329: Documentation audit for ExecutionHistoryStore wiring + Unified Chat verification
+## 2026-04-07 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #327/#329: Documentation audit for ExecutionHistoryStore wiring + Unified Chat verification
 **Outcome:** COMPLETED
 **Summary:** Audited all docs after Task #327 (SwarmEngine execution history persistence wiring) and Task #329 (Unified Chat E2E verification, no code changes). Updated ARCHITECTURE.md Section 11.8 dependency graph to include ExecutionHistoryStore as SwarmEngine dependency. Verified inline JSDoc on new SwarmEngine methods is accurate. Verified README.md, API.md, and all other docs remain current. Updated DOC_STATUS.md health table.
 **Files changed:** docs/ARCHITECTURE.md, docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
@@ -1237,7 +1237,7 @@
 
 ---
 
-## 2026-04-07 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Task plan update: #327 and #329 COMPLETED, #328 unblocked
+## 2026-04-07 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task plan update: #327 and #329 COMPLETED, #328 unblocked
 **Outcome:** COMPLETED
 **Summary:** Marked Task #327 (ExecutionHistoryStore wiring, backend-dev) and Task #329 (Unified Chat E2E verification, qa-tester PASS) as COMPLETED. Updated status header to 326/330 COMPLETED, 2 DEFERRED, 2 PENDING. Task #328 (TEST GATE for execution history persistence) is now unblocked and assigned to qa-tester as the next priority. Task #330 (docs sync) remains blocked on #328.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -1248,29 +1248,29 @@
 
 ---
 
-## 2026-04-07 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #327: Wire ExecutionHistoryStore persistence into SwarmEngine terminal paths
+## 2026-04-07 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #327: Wire ExecutionHistoryStore persistence into SwarmEngine terminal paths
 **Outcome:** COMPLETED
 **Summary:** Wired ExecutionHistoryStore into SwarmEngine so terminal execution states (completed/stopped/failed) are now persisted to disk. Added setter injection, startedAt tracking, duplicate-write guard, and node snapshot collection. 312/312 tests pass.
 **Files changed:** server/services/SwarmEngine.js, server/index.js, docs/TASK_PLAN.md
 **Bugs fixed:** none
 **Decisions made:** Setter injection pattern for store; single hook point in _setExecutionStatus; startedAt field added to execution record
 **Blockers:** none
-**Next:** Task #328 (TEST GATE Ã¢â‚¬â€ execution history persistence round-trip)
+**Next:** Task #328 (TEST GATE ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â execution history persistence round-trip)
 
 ---
 
-## 2026-04-07 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #329: Unified Chat View Ã¢â‚¬â€ end-to-end verification and WS contract audit
+## 2026-04-07 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #329: Unified Chat View ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â end-to-end verification and WS contract audit
 **Outcome:** COMPLETED
-**Summary:** Full verification of the Unified Chat View feature. Read all 7 implementation files, verified WS contract field-by-field (server emits type/nodeId/role/text/timestamp, client consumes exact same fields Ã¢â‚¬â€ zero mismatches). Confirmed ChatExtractor integration in SwarmEngine (import, init, feed in tapFn behind echo gate, flush on agent done, systemMessage for 4 flow-control node types, cleanup on execution end). Confirmed client integration (useSwarm handler, SwarmContext state with 500-msg cap, ChatPanel with filter/auto-scroll, SwarmCanvas Feed/Chat toggle). 312/312 server tests pass, 498-module client build clean.
+**Summary:** Full verification of the Unified Chat View feature. Read all 7 implementation files, verified WS contract field-by-field (server emits type/nodeId/role/text/timestamp, client consumes exact same fields ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â zero mismatches). Confirmed ChatExtractor integration in SwarmEngine (import, init, feed in tapFn behind echo gate, flush on agent done, systemMessage for 4 flow-control node types, cleanup on execution end). Confirmed client integration (useSwarm handler, SwarmContext state with 500-msg cap, ChatPanel with filter/auto-scroll, SwarmCanvas Feed/Chat toggle). 312/312 server tests pass, 498-module client build clean.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none
-**Decisions made:** PASS verdict Ã¢â‚¬â€ no contract gaps or integration issues found
+**Decisions made:** PASS verdict ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no contract gaps or integration issues found
 **Blockers:** none
 **Next:** Task #330 (documentation truthfulness sync) is unblocked
 
 ---
 
-## 2026-04-07 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Repository State Audit + Follow-up Reopen
+## 2026-04-07 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Repository State Audit + Follow-up Reopen
 **Outcome:** COMPLETED
 **Summary:** Reviewed the repository state across README/CLAUDE/docs/memory/TASK_PLAN and the recent activity log. Confirmed that the project is not truthfully at "zero work" despite closed V5 areas. Opened POST-V5 follow-up tasks #327-#330 in TASK_PLAN.md for execution-history persistence wiring, execution-history QA, Unified Chat end-to-end verification, and documentation/status truthfulness sync. Updated PROJECT.md, PROGRESS.md, CONTEXT.md, and DOC_STATUS.md to reflect the reopened state.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -1281,7 +1281,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ orchestrator Ã¢â‚¬â€ Unified Chat View: Wave 1 + Wave 2 Complete
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â orchestrator ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Unified Chat View: Wave 1 + Wave 2 Complete
 **Outcome:** COMPLETED
 **Summary:** Implemented the full Unified Chat View feature in parallel (Wave 1 backend + Wave 2 frontend). Server-side ChatExtractor intercepts PTY output, strips noise, detects response boundaries, emits chat_message WS events. Flow-control nodes emit system messages. Client-side ChatPanel/ChatMessage provide conversation UI with agent filter, toggling with existing InterAgentFeed via Feed/Chat tabs. Both server and client build successfully.
 **Files changed:** server/services/ChatExtractor.js (new), server/services/SwarmEngine.js (modified), client/src/canvas/ChatMessage.jsx (new), client/src/canvas/ChatPanel.jsx (new), client/src/store/SwarmContext.jsx (modified), client/src/hooks/useSwarm.js (modified), client/src/canvas/SwarmCanvas.jsx (modified)
@@ -1292,7 +1292,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Unified Chat View Wave 1 (Server-side)
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Unified Chat View Wave 1 (Server-side)
 **Outcome:** COMPLETED
 **Summary:** Created ChatExtractor.js with noise stripping, boundary detection (handoff/done/silence), per-agent buffering. Integrated into SwarmEngine.js: import, constructor init, _broadcastChatMessage method, feed() in tapFn, flush() on agent done, systemMessage() in delay/conditional/merge/loop handlers, cleanup() on execution end.
 **Files changed:** server/services/ChatExtractor.js (new), server/services/SwarmEngine.js (modified)
@@ -1303,7 +1303,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Unified Chat View Wave 2 (Client-side)
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Unified Chat View Wave 2 (Client-side)
 **Outcome:** COMPLETED
 **Summary:** Created ChatMessage.jsx and ChatPanel.jsx components. Added chatMessages/chatFilter/sidePanelMode state to SwarmContext.jsx with actions and reset integration. Added chat_message WS handler in useSwarm.js. Replaced bare InterAgentFeed in SwarmCanvas.jsx with Feed/Chat tab toggle. Build: 498 modules, 0 errors.
 **Files changed:** ChatMessage.jsx (new), ChatPanel.jsx (new), SwarmContext.jsx (modified), useSwarm.js (modified), SwarmCanvas.jsx (modified)
@@ -1314,7 +1314,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ architect Ã¢â‚¬â€ Analysis: PTY/Terminal Output Data Flow Map
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â architect ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Analysis: PTY/Terminal Output Data Flow Map
 **Outcome:** COMPLETED
 **Summary:** Mapped the complete data flow from node-pty spawn through SessionManager, SwarmEngine tapFn, HandoffParser, _buildSemanticSnippet (120+ noise regex filters), WS broadcast, Zustand store, to AgentNode/AgentInspector/PtyExplosion rendering. Identified 10 stages, catalogued what data is available and lost at each stage, mapped all 13 WS event types, and identified 4 candidate insertion points for future chat message extraction (recommended Point A: inside tapFn after echo gate, before snippet pipeline).
 **Files changed:** docs/memory/agents/architect.md, docs/memory/ACTIVITY_LOG.md
@@ -1325,7 +1325,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V5.0-BugFix2 Task Plan Registration + Project State Analysis
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5.0-BugFix2 Task Plan Registration + Project State Analysis
 **Outcome:** COMPLETED
 **Summary:** Registered V5.0-BugFix2 area (E2E Debugger Loop Fixes) in TASK_PLAN.md. 6 tasks (#321-#326): 4 bug fixes + 1 TEST GATE + 1 AREA CHECKPOINT, all COMPLETED. Bugs fixed: BUG-SAVE-1 (node ID kebab-case), BUG-DUP-1 (duplicate name format), BUG-DUP-2/IMP-1 (API response unwrapping), BUG-VER-DATE (version timestamp parsing). Updated status header: 326 tasks total, 324 COMPLETED, 2 DEFERRED, 0 PENDING. V5.0-BugFix2 AREA CLOSED. Provided full project state analysis in Italian.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -1336,7 +1336,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V5.0-Wave5 Task Plan Registration
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5.0-Wave5 Task Plan Registration
 **Outcome:** COMPLETED
 **Summary:** Registered V5.0-Wave5 area (Advanced Flow Control Nodes) in TASK_PLAN.md. 20 tasks (#301-#320): 10 component tasks (6 new node components, SwarmCanvas registration, NodePalette cards, AgentInspector config panels, SwarmEngine flow control logic) + 9 TEST GATEs + 1 AREA CHECKPOINT, all COMPLETED. Updated status header: 320 tasks total, 318 COMPLETED, 2 DEFERRED, 0 PENDING. V5.0-Wave5 AREA CLOSED. Updated PROGRESS.md, CONTEXT.md, ACTIVITY_LOG.md.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -1347,7 +1347,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V5.0-Wave4 Task Plan Registration
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5.0-Wave4 Task Plan Registration
 **Outcome:** COMPLETED
 **Summary:** Registered V5.0-Wave4 area (Execution Visibility) in TASK_PLAN.md. 14 tasks (#287-#300): 8 component tasks (3 backend stores, 4 frontend panels, 1 toolbar integration) + 5 TEST GATEs + 1 AREA CHECKPOINT, all COMPLETED. Updated status header: 300 tasks total, 298 COMPLETED, 2 DEFERRED, 0 PENDING. V5.0-Wave4 AREA CLOSED. Updated PROGRESS.md (task numbers added), CONTEXT.md (focus updated).
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -1358,7 +1358,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Wave 5: Advanced Flow Control Node Components (FR-V5-56/59/60/64/66/68/71/73/77)
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Wave 5: Advanced Flow Control Node Components (FR-V5-56/59/60/64/66/68/71/73/77)
 **Outcome:** COMPLETED
 **Summary:** Implemented 6 new canvas node components (ConditionalNode, MergeNode, DelayNode, LoopNode, ErrorHandlerNode, SubWorkflowNode) with full inspector configuration fields for each. Registered all 6 in SwarmCanvas nodeTypes and added palette entries in NodePalette. Build: 496 modules, 0 errors.
 **Files changed:** 6 new node files in client/src/canvas/nodes/, plus SwarmCanvas.jsx, NodePalette.jsx, AgentInspector.jsx modified
@@ -1368,7 +1368,7 @@
 **Next:** qa-tester should verify all 6 new node types render and configure correctly
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ V5 Wave 4: Documentation Update for Execution History, Templates, Version History
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5 Wave 4: Documentation Update for Execution History, Templates, Version History
 **Outcome:** COMPLETED
 **Summary:** Updated all project documentation for V5 Wave 4. Added 6 new API endpoints to docs/API.md with full request/response examples (execution history 2, templates 2, versions 2). Added 3 new features to README.md. Updated PROGRESS.md, CONTEXT.md, and DOC_STATUS.md. All inline comments in new/modified files verified accurate.
 **Files changed:** docs/API.md, README.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
@@ -1379,7 +1379,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Wave 4: Per-Node Timing, Execution History, Templates, Version History
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Wave 4: Per-Node Timing, Execution History, Templates, Version History
 **Outcome:** COMPLETED
 **Summary:** Implemented 4 Wave 4 frontend features: (1) Per-node execution timestamps in SwarmContext + live timer in AgentInspector (FR-V5-49/50), (2) ExecutionHistory slide-in panel fetching from /api/v1/swarm/history/:workflowId (FR-V5-48), (3) TemplateGallery modal fetching from /api/v1/workflows/templates (FR-V5-51/52), (4) VersionHistory slide-out panel with timeline UI fetching from /api/v1/workflows/:id/versions (FR-V5-53/54/55). Added History/Templates/Versions buttons to SwarmView toolbar.
 **Files changed:** client/src/store/SwarmContext.jsx, client/src/canvas/AgentInspector.jsx, client/src/canvas/ExecutionHistory.jsx (NEW), client/src/canvas/TemplateGallery.jsx (NEW), client/src/canvas/VersionHistory.jsx (NEW), client/src/views/SwarmView.jsx
@@ -1390,18 +1390,18 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ V5 Bugfix (commit 41b9a0e)
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5 Bugfix (commit 41b9a0e)
 **Outcome:** COMPLETED
-**Summary:** Mapped V5 bugfix commit 41b9a0e: (1) SwarmCanvas.jsx Ã¢â‚¬â€ added event.stopPropagation() to handleNodeContextMenu and handleEdgeContextMenu to prevent pane context menu from overriding node/edge menus; (2) SwarmView.jsx Ã¢â‚¬â€ added handleSaveFnRef/handleRunFnRef to fix stale closure where Ctrl+S keyboard shortcut would not trigger save. Updated CODE_MAP.md (2 function entries + 2 module index entries) and prepended CHANGELOG.md entry.
+**Summary:** Mapped V5 bugfix commit 41b9a0e: (1) SwarmCanvas.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â added event.stopPropagation() to handleNodeContextMenu and handleEdgeContextMenu to prevent pane context menu from overriding node/edge menus; (2) SwarmView.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â added handleSaveFnRef/handleRunFnRef to fix stale closure where Ctrl+S keyboard shortcut would not trigger save. Updated CODE_MAP.md (2 function entries + 2 module index entries) and prepended CHANGELOG.md entry.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
 **Bugs fixed:** none (mapped two bugs fixed by others)
 **Decisions made:** none
 **Blockers:** none
-**Next:** nothing Ã¢â‚¬â€ task chain complete
+**Next:** nothing ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â task chain complete
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V5.0-BugFix1 Task Plan Registration
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5.0-BugFix1 Task Plan Registration
 **Outcome:** COMPLETED
 **Summary:** Registered V5.0-BugFix1 area (E2E Context Menu + Keyboard Shortcut Fixes) in TASK_PLAN.md. 3 bug fix tasks (#282-#284) + TEST GATE #285 + AREA CHECKPOINT #286, all COMPLETED. Bugs found during Debugger Loop Phase 1 E2E testing: BUG-CTX-1 (node context menu propagation), BUG-CTX-2 (edge context menu propagation), BUG-KEYS-1 (Ctrl+S stale closure). Updated status header: 286 tasks total, 284 COMPLETED, 2 DEFERRED, 0 PENDING. V5.0-BugFix1 AREA CLOSED.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -1412,9 +1412,9 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ V5 Bugfix Documentation Update
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5 Bugfix Documentation Update
 **Outcome:** COMPLETED
-**Summary:** Updated DOC_STATUS.md for V5 bugfix commit: SwarmCanvas.jsx context menu stopPropagation fix (BUG-WF-1) and SwarmView.jsx stale closure keyboard shortcut fix (BUG-WF-2). Both are internal event handling corrections Ã¢â‚¬â€ no README, ARCHITECTURE, API, or PRD changes needed. Added two entries to Fixed Bugs table and a new V5 Bugfix section.
+**Summary:** Updated DOC_STATUS.md for V5 bugfix commit: SwarmCanvas.jsx context menu stopPropagation fix (BUG-WF-1) and SwarmView.jsx stale closure keyboard shortcut fix (BUG-WF-2). Both are internal event handling corrections ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no README, ARCHITECTURE, API, or PRD changes needed. Added two entries to Fixed Bugs table and a new V5 Bugfix section.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none (documented two bugs fixed by others: BUG-WF-1, BUG-WF-2)
 **Decisions made:** none
@@ -1423,9 +1423,9 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ V5 Wave 3 Documentation Update
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5 Wave 3 Documentation Update
 **Outcome:** COMPLETED
-**Summary:** Updated PROGRESS.md (V5 Wave 2 + Wave 3 entries), CONTEXT.md (focus shifted to V5 Wave 3 closed), DOC_STATUS.md (V5 Wave 3 section added, ARCHITECTURE.md debt updated with useCanvasValidation.js, inline comments status updated), ACTIVITY_LOG.md (this entry). No README, API, or ARCHITECTURE changes needed Ã¢â‚¬â€ all changes are frontend-only with no new endpoints, config, or env vars.
+**Summary:** Updated PROGRESS.md (V5 Wave 2 + Wave 3 entries), CONTEXT.md (focus shifted to V5 Wave 3 closed), DOC_STATUS.md (V5 Wave 3 section added, ARCHITECTURE.md debt updated with useCanvasValidation.js, inline comments status updated), ACTIVITY_LOG.md (this entry). No README, API, or ARCHITECTURE changes needed ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all changes are frontend-only with no new endpoints, config, or env vars.
 **Files changed:** docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/DOC_STATUS.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none
 **Decisions made:** none
@@ -1434,18 +1434,18 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V5 Wave 3 Task Plan Registration
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5 Wave 3 Task Plan Registration
 **Outcome:** COMPLETED
 **Summary:** Registered all V5 Wave 3 tasks (#273-#281) in TASK_PLAN.md as COMPLETED. 7 component tasks (useCanvasValidation, snap-to-grid, keyboard shortcuts, validation badges, validation before Run, export/import JSON, duplicate workflow) + 1 test gate + 1 area checkpoint. Updated status header: 281 tasks total, 276 COMPLETED, 2 DEFERRED, 3 PENDING (V7.0 gates). V5.0-Wave3 AREA CLOSED.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md, docs/memory/CONTEXT.md, docs/memory/PROGRESS.md, docs/memory/agents/project-manager.md
 **Bugs fixed:** none
 **Decisions made:** Mapped Wave 3 features to individual tasks: FR-V5-41/43 (validation hook), FR-V5-44 (snap-to-grid), FR-V5-45 (shortcuts), FR-V5-46 (badges), FR-V5-41 (run guard), FR-V5-47/48 (export/import), FR-V5-49 (duplicate)
 **Blockers:** none
-**Next:** V7.0 test gates (#256, #257) then area checkpoint (#258) to close V7.0 Ã¢â‚¬â€ the only remaining open area
+**Next:** V7.0 test gates (#256, #257) then area checkpoint (#258) to close V7.0 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the only remaining open area
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ FR-V5-41/43/44/45/46: Canvas Validation + Keyboard Shortcuts + Snap-to-Grid
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â FR-V5-41/43/44/45/46: Canvas Validation + Keyboard Shortcuts + Snap-to-Grid
 **Outcome:** COMPLETED
 **Summary:** Implemented canvas snap-to-grid (20px), keyboard shortcuts (Ctrl+S save, Ctrl+Enter run), pre-run validation hook (5 rules), AgentNode warning badge for empty prompts, validation banner, and Run button validation guard. Build: 487 modules, 0 errors.
 **Files changed:** client/src/hooks/useCanvasValidation.js (CREATED), client/src/canvas/nodes/AgentNode.jsx, client/src/canvas/SwarmCanvas.jsx, client/src/views/SwarmView.jsx
@@ -1455,7 +1455,7 @@
 **Next:** QA test gate for validation + shortcuts + snap-to-grid
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V5 Wave 1 + Wave 2 Task Plan Registration
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5 Wave 1 + Wave 2 Task Plan Registration
 **Outcome:** COMPLETED
 **Summary:** Registered all V5 Wave 1 tasks (#259-#267) and Wave 2 tasks (#268-#272) in TASK_PLAN.md as COMPLETED. Wave 1: 8 component tasks + 1 test gate (undo/redo, save, dirty tracking, name editing, context menu, AgentInspector, node/edge delete, sanitize/ID utils). Wave 2: 2 component tasks (NodePalette, WorkflowSettingsModal) + 2 test gates + 1 area checkpoint. Updated status header: 272 tasks total, 267 COMPLETED, 2 DEFERRED, 3 PENDING (V7.0 gates). Both Wave 1 and Wave 2 areas CLOSED.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md, docs/memory/CONTEXT.md, docs/memory/agents/project-manager.md
@@ -1466,9 +1466,9 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ V5 Wave 2 Documentation Update
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5 Wave 2 Documentation Update
 **Outcome:** COMPLETED
-**Summary:** Updated PROGRESS.md (V5 Wave 2 entry), CONTEXT.md (focus shifted to V5 Wave 2), DOC_STATUS.md (V5 Wave 2 components noted in debt table), ACTIVITY_LOG.md (this entry), agents/documenter.md (session log). No README, API, or ARCHITECTURE changes needed Ã¢â‚¬â€ all changes are frontend-only with no new endpoints or config.
+**Summary:** Updated PROGRESS.md (V5 Wave 2 entry), CONTEXT.md (focus shifted to V5 Wave 2), DOC_STATUS.md (V5 Wave 2 components noted in debt table), ACTIVITY_LOG.md (this entry), agents/documenter.md (session log). No README, API, or ARCHITECTURE changes needed ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all changes are frontend-only with no new endpoints or config.
 **Files changed:** docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/DOC_STATUS.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none
 **Decisions made:** none
@@ -1477,7 +1477,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ FR-V5-34/35/36: Workflow Settings Modal + Initial Context Editor
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â FR-V5-34/35/36: Workflow Settings Modal + Initial Context Editor
 **Outcome:** COMPLETED
 **Summary:** Created WorkflowSettingsModal.jsx with two tabs: Settings (mode radio, budget presets + number input, circuit breaker threshold, default model dropdown) and Initial Context (dynamic key-value editor). Integrated into SwarmView.jsx with gear Settings button in toolbar. Apply merges into workflowDef and marks dirty. Build: 486 modules, 0 errors.
 **Files changed:** client/src/canvas/WorkflowSettingsModal.jsx (CREATED), client/src/views/SwarmView.jsx (MODIFIED)
@@ -1488,7 +1488,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ FR-V5-25/29: Node Palette Sidebar
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â FR-V5-25/29: Node Palette Sidebar
 **Outcome:** COMPLETED
 **Summary:** Created NodePalette.jsx collapsible left sidebar with 4 draggable node type cards (Agent, Department, Webhook Trigger, RSS Trigger). Integrated into SwarmCanvas.jsx with onDragOver/onDrop handlers that create nodes at drop position with proper IDs (generateNodeId) and type-specific default data. Build: 485 modules, 0 errors.
 **Files changed:** client/src/canvas/NodePalette.jsx (CREATED), client/src/canvas/SwarmCanvas.jsx (MODIFIED)
@@ -1499,9 +1499,9 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ V5 Wave 1 Documentation Update
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5 Wave 1 Documentation Update
 **Outcome:** COMPLETED
-**Summary:** Updated PROGRESS.md (V5 Wave 1 section with all new/modified files and FRs covered), CONTEXT.md (focus shifted to V5 Wave 1 implemented), DOC_STATUS.md (V5 Wave 1 components noted, ARCHITECTURE.md debt entry updated), ACTIVITY_LOG.md (this entry). No README, API, or ARCHITECTURE doc changes needed Ã¢â‚¬â€ all changes are frontend-only with no new endpoints or config.
+**Summary:** Updated PROGRESS.md (V5 Wave 1 section with all new/modified files and FRs covered), CONTEXT.md (focus shifted to V5 Wave 1 implemented), DOC_STATUS.md (V5 Wave 1 components noted, ARCHITECTURE.md debt entry updated), ACTIVITY_LOG.md (this entry). No README, API, or ARCHITECTURE doc changes needed ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all changes are frontend-only with no new endpoints or config.
 **Files changed:** docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/DOC_STATUS.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none
 **Decisions made:** none
@@ -1509,7 +1509,7 @@
 **Next:** QA test gate for V5 Wave 1 features
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ FR-V5-01/03/05/06/21-24: Save Button, Dirty Tracking, Name Edit, Context Menu
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â FR-V5-01/03/05/06/21-24: Save Button, Dirty Tracking, Name Edit, Context Menu
 **Outcome:** COMPLETED
 **Summary:** Implemented save button with dirty tracking, inline-editable workflow name, and right-click context menu for SwarmCanvas. Fixed useWorkflow.js update() response unwrapping bug. Build: 483 modules, 0 errors.
 **Files changed:** client/src/hooks/useWorkflow.js, client/src/canvas/ContextMenu.jsx (new), client/src/canvas/SwarmCanvas.jsx, client/src/views/SwarmView.jsx
@@ -1519,9 +1519,9 @@
 **Next:** QA test gate for save round-trip, name editing, context menu actions
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #254-#255: V7.0 BUG-DONE-BARE-1 + BUG-SNIPPET-INIT-1
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #254-#255: V7.0 BUG-DONE-BARE-1 + BUG-SNIPPET-INIT-1
 **Outcome:** COMPLETED
-**Summary:** Updated CODE_MAP.md (HandoffParser DONE_RE regex widened, SwarmEngine tapFn snippet guard, test entry updated) and CHANGELOG.md (detailed entry for both bug fixes). No breaking changes Ã¢â‚¬â€ both fixes are additive.
+**Summary:** Updated CODE_MAP.md (HandoffParser DONE_RE regex widened, SwarmEngine tapFn snippet guard, test entry updated) and CHANGELOG.md (detailed entry for both bug fixes). No breaking changes ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â both fixes are additive.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
 **Bugs fixed:** none (mapping only)
 **Decisions made:** none
@@ -1530,7 +1530,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V7.0 Status Sync: #254 + #255 COMPLETED
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V7.0 Status Sync: #254 + #255 COMPLETED
 **Outcome:** COMPLETED
 **Summary:** Updated TASK_PLAN.md status header to reflect 253 COMPLETED, 2 DEFERRED, 3 PENDING (V7.0 test gates + area checkpoint). V7.0 bug fixes #254 and #255 confirmed COMPLETED. Updated PROGRESS.md, CONTEXT.md.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -1541,7 +1541,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ FR-V5-11/13/14/15/02: Node Delete, Edge Delete, Sanitize Utility
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â FR-V5-11/13/14/15/02: Node Delete, Edge Delete, Sanitize Utility
 **Outcome:** COMPLETED
 **Summary:** Created sanitizeWorkflow.js and nodeIdGenerator.js utilities. Enhanced SwarmCanvas.jsx onNodesDelete with department cascade deletion (children + edges). Added deleteKeyCode prop to enable Delete/Backspace keyboard deletion. Build: 481 modules, 0 errors.
 **Files changed:** client/src/utils/sanitizeWorkflow.js (CREATED), client/src/utils/nodeIdGenerator.js (CREATED), client/src/canvas/SwarmCanvas.jsx (MODIFIED)
@@ -1550,9 +1550,9 @@
 **Blockers:** none
 **Next:** Downstream tasks import sanitizeWorkflow for save and generateNodeId for add-node flows
 ---
-## 2026-04-06 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ V5 PRD Addendum: Code Map + Changelog Update
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5 PRD Addendum: Code Map + Changelog Update
 **Outcome:** COMPLETED
-**Summary:** Updated CODE_MAP.md with full V5 Planned Architecture section (16 planned client files, 3 planned server files, 9 existing files to be modified, 8 new data models, 8 new API endpoints, 5 security requirements, 5 pending decisions). Updated CHANGELOG.md with detailed planning milestone entry. No code was written Ã¢â‚¬â€ this is a PRD/planning mapping task only.
+**Summary:** Updated CODE_MAP.md with full V5 Planned Architecture section (16 planned client files, 3 planned server files, 9 existing files to be modified, 8 new data models, 8 new API endpoints, 5 security requirements, 5 pending decisions). Updated CHANGELOG.md with detailed planning milestone entry. No code was written ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â this is a PRD/planning mapping task only.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
 **Bugs fixed:** none
 **Decisions made:** none
@@ -1561,51 +1561,51 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #255: BUG-SNIPPET-INIT-1 Ã¢â‚¬â€ Filter system prompt text from initial agent snippet display
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #255: BUG-SNIPPET-INIT-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Filter system prompt text from initial agent snippet display
 **Outcome:** COMPLETED
 **Summary:** Wrapped snippet update in SwarmEngine.js tapFn inside `if (!currentState.ignoreParserUntil)` guard so echoed system prompt text is suppressed from agent card display during echo gate period. Updated 8 tests to clear echo gate before testing snippet content. 312/312 tests pass, client build clean.
 **Files changed:** server/services/SwarmEngine.js, server/tests/swarm-engine.test.js, docs/TASK_PLAN.md
-**Bugs fixed:** BUG-SNIPPET-INIT-1 Ã¢â‚¬â€ system prompt text flashing in agent node card during first ~3s of execution
+**Bugs fixed:** BUG-SNIPPET-INIT-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â system prompt text flashing in agent node card during first ~3s of execution
 **Decisions made:** Guard only snippet update (not _runtimeScanBuffer) to preserve runtime detection during echo gate
 **Blockers:** none
 **Next:** TEST GATE #257 should verify the fix
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ V5.0 PRD Planning Milestone: Documentation update
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5.0 PRD Planning Milestone: Documentation update
 **Outcome:** COMPLETED
-**Summary:** Updated project docs to reflect V5.0 PRD addendum (N8N-Style Visual Workflow Editor). PRD bumped from v3.0 to v5.0 with 81 new FRs, 5 implementation waves, 6 new node types, 5 security requirements, and new API endpoints planned. No code changes Ã¢â‚¬â€ planning/design only. Updated PROGRESS.md, CONTEXT.md, PROJECT.md, and DOC_STATUS.md.
+**Summary:** Updated project docs to reflect V5.0 PRD addendum (N8N-Style Visual Workflow Editor). PRD bumped from v3.0 to v5.0 with 81 new FRs, 5 implementation waves, 6 new node types, 5 security requirements, and new API endpoints planned. No code changes ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â planning/design only. Updated PROGRESS.md, CONTEXT.md, PROJECT.md, and DOC_STATUS.md.
 **Files changed:** docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/PROJECT.md, docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none
-**Decisions made:** none Ã¢â‚¬â€ documentation-only update for planning milestone
+**Decisions made:** none ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documentation-only update for planning milestone
 **Blockers:** none
 **Next:** V5 Wave 1 task planning, then implementation
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #254: BUG-DONE-BARE-1 Ã¢â‚¬â€ Accept bare DONE token in HandoffParser
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #254: BUG-DONE-BARE-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Accept bare DONE token in HandoffParser
 **Outcome:** COMPLETED
 **Summary:** Widened DONE_RE regex in HandoffParser.js to accept bare `DONE` on its own line (with optional bullet prefix) in addition to `__DONE__`. Eliminates unnecessary done reminder reinject prompts for terminal nodes. All 114 HandoffParser tests pass, no regressions.
 **Files changed:** server/services/HandoffParser.js (line 25), docs/TASK_PLAN.md
-**Bugs fixed:** BUG-DONE-BARE-1 Ã¢â‚¬â€ bare DONE token not recognized by HandoffParser
+**Bugs fixed:** BUG-DONE-BARE-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â bare DONE token not recognized by HandoffParser
 **Decisions made:** Dual-alternative regex preserves original `__DONE__` matching while adding line-anchored bare DONE
 **Blockers:** none
 **Next:** TEST GATE #256 should verify the fix
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #245-#248: Thinking Token Collapse + Codex Auth Filter + Gemini Prompt Echo Filter + Empty Prompt Validation
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #245-#248: Thinking Token Collapse + Codex Auth Filter + Gemini Prompt Echo Filter + Empty Prompt Validation
 **Outcome:** COMPLETED
 **Summary:** Mapped all 4 tasks to CODE_MAP.md: updated SNIPPET_NOISE_LINE_PATTERNS (Tasks #245-#246), added _snippetOverlapsPrompt + _refreshAgentSnippet entries (Task #247), updated PromptToFlowBar + handleGenerate for promptError state (Task #248). Appended 4 CHANGELOG entries.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md
 **Bugs fixed:** none
 **Decisions made:** Mapped _refreshAgentSnippet as new CODE_MAP entry (previously unmapped orchestrator function)
 **Blockers:** none
-**Next:** nothing Ã¢â‚¬â€ task chain complete
+**Next:** nothing ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â task chain complete
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Tasks #249-#253: V6.0 TEST GATES + AREA CHECKPOINT
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #249-#253: V6.0 TEST GATES + AREA CHECKPOINT
 **Outcome:** COMPLETED
 **Summary:** Verified all 4 V6.0 bug fixes. TEST GATE #249 (thinking token collapse) PASS -- SNIPPET_NOISE_LINE_PATTERNS has /^\(thinking\)(\(thinking\))*$/i and _buildSemanticSnippet collapses repeated tokens. TEST GATE #250 (Codex auth filter) PASS -- 8 auth-related patterns present. TEST GATE #251 (Gemini prompt echo) PASS -- regex patterns + _snippetOverlapsPrompt() 60% word overlap method. TEST GATE #252 (empty prompt validation) PASS -- Puppeteer E2E confirmed red error message on empty Generate, clears on typing. AREA CHECKPOINT #253 PASS -- 312/312 tests, 480 module build, no regressions. V6.0 AREA IS CLOSED.
 **Files changed:** docs/TASK_PLAN.md (5 tasks updated to COMPLETED), docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/qa-tester.md
@@ -1616,7 +1616,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ creative-director Ã¢â‚¬â€ Phase 0: N8N-style Swarm Editor Creative/Product Analysis
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â creative-director ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Phase 0: N8N-style Swarm Editor Creative/Product Analysis
 **Outcome:** COMPLETED
 **Summary:** Analyzed all gaps between current Swarm canvas (viewer/runner) and full N8N-style editor. Produced 37-feature inventory across 8 categories (Node Creation, Node Config, Edge Config, Workflow Config, Workflow Management, Canvas UX, Advanced Flow Control, Execution Visibility). Prioritized into MUST HAVE (8), SHOULD HAVE (17), NICE TO HAVE (12). Built dependency graph and 5-wave implementation plan. Wave 1 (Save, Name Edit, Editable Prompt, Label Edit, Node Delete, Edge Delete, Undo/Redo, Context Menu) is the phase transition from viewer to editor.
 **Files changed:** docs/memory/agents/creative-director.md, docs/memory/ACTIVITY_LOG.md
@@ -1627,18 +1627,18 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Tasks #245-#248: V6.0 Runtime Deep Test Bug Fixes documentation audit
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #245-#248: V6.0 Runtime Deep Test Bug Fixes documentation audit
 **Outcome:** COMPLETED
-**Summary:** Audited all project docs after V6.0 Wave A (#245-#247 SwarmEngine.js) and Wave B (#248 PromptToFlowBar.jsx). All changes are internal snippet filtering logic and client-side validation Ã¢â‚¬â€ no external API, architecture, config, or env var changes. All docs remain UP_TO_DATE. Updated DOC_STATUS.md with V6.0 section and refreshed inline comments status.
+**Summary:** Audited all project docs after V6.0 Wave A (#245-#247 SwarmEngine.js) and Wave B (#248 PromptToFlowBar.jsx). All changes are internal snippet filtering logic and client-side validation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no external API, architecture, config, or env var changes. All docs remain UP_TO_DATE. Updated DOC_STATUS.md with V6.0 section and refreshed inline comments status.
 **Files changed:** docs/memory/DOC_STATUS.md (V6.0 section added, inline comments row refreshed), docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none
-**Decisions made:** none Ã¢â‚¬â€ no doc changes needed for internal filtering improvements
+**Decisions made:** none ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no doc changes needed for internal filtering improvements
 **Blockers:** none
 **Next:** TEST GATES #249-#252 and AREA CHECKPOINT #253 will need doc audit when completed
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ tech-lead Ã¢â‚¬â€ Phase 0: N8N-style Swarm Editor Technical Feasibility
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â tech-lead ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Phase 0: N8N-style Swarm Editor Technical Feasibility
 **Outcome:** COMPLETED
 **Summary:** Analyzed 9 feature categories (node palette, inline editing, edge config, save/update, settings panel, advanced flow control nodes, undo/redo, export/import, validation) for technical feasibility. Features A-E, G-I are FEASIBLE with S-M complexity. Features F1 (Conditional), F2 (Merge/Join), F4 (Loop) are COMPLEX and require DEC decisions. F5 (Sub-workflow) is XL complexity. Identified 5 critical risks including NODE_ID_REGEX validation, React Flow internal field persistence, useWorkflow.update() return bug, execution snapshot timing, and CircuitBreaker/loop conflict.
 **Files changed:** none (pure analysis)
@@ -1649,25 +1649,25 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #247: BUG-RUNTIME-3 Ã¢â‚¬â€ Filter Gemini system prompt echo from snippet
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #247: BUG-RUNTIME-3 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Filter Gemini system prompt echo from snippet
 **Outcome:** COMPLETED
 **Summary:** Widened "you are a" pattern, added 3 new regex patterns for Gemini prompt echo lines, and implemented a general-purpose prompt-overlap detection in _refreshAgentSnippet that catches ANY provider echoing the system prompt. Stored _agentSystemPrompt on agent state. All 312 server tests pass.
 **Files changed:** server/services/SwarmEngine.js, docs/TASK_PLAN.md
-**Bugs fixed:** BUG-RUNTIME-3 Ã¢â‚¬â€ Gemini system prompt echo no longer appears in agent node snippets
+**Bugs fixed:** BUG-RUNTIME-3 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Gemini system prompt echo no longer appears in agent node snippets
 **Decisions made:** Dual approach (regex patterns + semantic word-overlap check at 60% threshold) for maximum coverage
 **Blockers:** none
 **Next:** TEST GATES #249-#251 should verify Wave A fixes; Task #248 (SwarmView.jsx empty prompt) may already be in progress
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #246: BUG-RUNTIME-2 Ã¢â‚¬â€ Filter Codex auth prompt from snippet
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #246: BUG-RUNTIME-2 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Filter Codex auth prompt from snippet
 **Outcome:** COMPLETED
 **Summary:** Added 8 regex patterns to SNIPPET_NOISE_LINE_PATTERNS in SwarmEngine.js to filter Codex CLI auth prompt lines (api key, authentication required, sign-in, codex auth, openai api, unauthorized, invalid token). All 312 server tests pass.
 **Files changed:** server/services/SwarmEngine.js
-**Bugs fixed:** BUG-RUNTIME-2 Ã¢â‚¬â€ Codex auth prompt text no longer leaks into agent node snippets
+**Bugs fixed:** BUG-RUNTIME-2 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Codex auth prompt text no longer leaks into agent node snippets
 **Decisions made:** Used broad auth patterns rather than Codex-specific ones for wider coverage
 **Blockers:** none
-**Next:** Task #247 (BUG-RUNTIME-3 Gemini prompt echo filtering) Ã¢â‚¬â€ next in sequential wave
+**Next:** Task #247 (BUG-RUNTIME-3 Gemini prompt echo filtering) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â next in sequential wave
 
 ---
 
@@ -1682,94 +1682,94 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Debugger Loop Phase 1: Complete User Test Ã¢â‚¬â€ All Runtime Models
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Debugger Loop Phase 1: Complete User Test ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â All Runtime Models
 **Outcome:** COMPLETED
-**Summary:** Full 11-section, 72-step E2E Puppeteer test of Swarm Orchestrator with all 3 runtime providers. Claude: full end-to-end execution with handoff chain PASS. Codex: BLOCKED by CLI authentication (external dependency). Gemini: full end-to-end execution PASS. Model selection, provider strategy, scaffold generation, agent inspector, HITL toggle, persistence, saved workflows, edge cases Ã¢â‚¬â€ all PASS. 4 LOW severity cosmetic findings logged. 0 console errors. 0 CRITICAL/HIGH bugs.
+**Summary:** Full 11-section, 72-step E2E Puppeteer test of Swarm Orchestrator with all 3 runtime providers. Claude: full end-to-end execution with handoff chain PASS. Codex: BLOCKED by CLI authentication (external dependency). Gemini: full end-to-end execution PASS. Model selection, provider strategy, scaffold generation, agent inspector, HITL toggle, persistence, saved workflows, edge cases ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all PASS. 4 LOW severity cosmetic findings logged. 0 console errors. 0 CRITICAL/HIGH bugs.
 **Files changed:** docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none (observation-only phase)
-**Decisions made:** All 4 findings rated LOW severity Ã¢â‚¬â€ cosmetic snippet quality issues, not functional bugs
+**Decisions made:** All 4 findings rated LOW severity ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â cosmetic snippet quality issues, not functional bugs
 **Blockers:** none
-**Next:** Phase 2 of debugger loop Ã¢â‚¬â€ bulk bug-to-task plan if any HIGH+ bugs found (none found, so loop may close)
+**Next:** Phase 2 of debugger loop ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â bulk bug-to-task plan if any HIGH+ bugs found (none found, so loop may close)
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #233, #242, #148: Code Map + Changelog Update
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #233, #242, #148: Code Map + Changelog Update
 **Outcome:** COMPLETED
-**Summary:** Updated CODE_MAP.md for 2 modified files: SessionManager.js (3 new done-token recovery prompt regexes in REPLAY_NOISE_LINE_PATTERNS, 30+ Ã¢â€ â€™ 33+) and SwarmView.jsx (name-based workflow deduplication + date suffix in savedWorkflows dropdown). Appended CHANGELOG.md with 3-task entry. No breaking changes.
+**Summary:** Updated CODE_MAP.md for 2 modified files: SessionManager.js (3 new done-token recovery prompt regexes in REPLAY_NOISE_LINE_PATTERNS, 30+ ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ 33+) and SwarmView.jsx (name-based workflow deduplication + date suffix in savedWorkflows dropdown). Appended CHANGELOG.md with 3-task entry. No breaking changes.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none
 **Decisions made:** none
 **Blockers:** none
-**Next:** Nothing Ã¢â‚¬â€ mapping complete for these tasks.
+**Next:** Nothing ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â mapping complete for these tasks.
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Final Status Sync: ALL AREAS CLOSED, PROJECT COMPLETE
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Final Status Sync: ALL AREAS CLOSED, PROJECT COMPLETE
 **Outcome:** COMPLETED
 **Summary:** Verified all 244 tasks in TASK_PLAN.md: 242 COMPLETED, 1 DEFERRED (#236 ConPTY). Corrected 5 stale entries in status header: V3.4 now CLOSED (#148 PASS), V3.5 now CLOSED (#153 COMPLETED), V4.0.4 now CLOSED (#205 PASS), V5.0 #233 now COMPLETED (was marked DEFERRED), V5.2 #242 now COMPLETED (was marked DEFERRED). Zero PENDING/IN_PROGRESS/BLOCKED tasks remain.
 **Files changed:** docs/TASK_PLAN.md (status header rewritten), docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
 **Bugs fixed:** none
-**Decisions made:** Confirmed only 1 truly DEFERRED task remains (#236 ConPTY) Ã¢â‚¬â€ #233 and #242 were completed by their agents but header was stale
+**Decisions made:** Confirmed only 1 truly DEFERRED task remains (#236 ConPTY) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â #233 and #242 were completed by their agents but header was stale
 **Blockers:** none
 **Next:** No remaining work. Project is complete and ready for release or next feature cycle.
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #148: AREA CHECKPOINT Ã¢â‚¬â€ V3.4 Swarm UX Deep Test (full integration re-test)
-**Outcome:** COMPLETED Ã¢â‚¬â€ PASS (with expected skips)
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #148: AREA CHECKPOINT ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3.4 Swarm UX Deep Test (full integration re-test)
+**Outcome:** COMPLETED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PASS (with expected skips)
 **Summary:** Full 15-step Puppeteer E2E test of Swarm Orchestrator. All UI components verified: Swarm view loads, Prompt-to-Flow bar works, Generate scaffold succeeds (2 nodes + 1 edge), saved workflows dropdown (46 items), toolbar buttons present, AgentInspector opens with clean system prompt, HITL Approvals panel toggles, AgentNode text clean (no ANSI). 312/312 server tests, 480 module client build. Live execution steps SKIPPED (need AI provider).
 **Files changed:** docs/TASK_PLAN.md, docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md, docs/memory/PROGRESS.md
 **Bugs fixed:** none
-**Decisions made:** PASS verdict despite skipped live execution Ã¢â‚¬â€ UI layer fixes verified, external provider dependency is not a code defect
+**Decisions made:** PASS verdict despite skipped live execution ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â UI layer fixes verified, external provider dependency is not a code defect
 **Blockers:** none
 **Next:** V3.4 can be considered CLOSED for UI verification. Live handoff testing deferred to when AI provider is available.
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #242: BUG-SWARM-UI-1 Ã¢â‚¬â€ Duplicate workflow names in saved workflows dropdown
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #242: BUG-SWARM-UI-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Duplicate workflow names in saved workflows dropdown
 **Outcome:** COMPLETED
 **Summary:** Fixed duplicate workflow names in the SwarmView saved workflows dropdown. Added name-based deduplication (keeping most recent per name) in the savedWorkflows useMemo, plus a date suffix on each option for visual clarity. Client build passes with 0 errors.
 **Files changed:** client/src/views/SwarmView.jsx, docs/TASK_PLAN.md
-**Bugs fixed:** BUG-SWARM-UI-1 Ã¢â‚¬â€ duplicate workflow names in dropdown
+**Bugs fixed:** BUG-SWARM-UI-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â duplicate workflow names in dropdown
 **Decisions made:** Combined dedup-by-name (Option A) with date suffix (Option C) for maximum clarity at zero cost.
 **Blockers:** none
-**Next:** nothing Ã¢â‚¬â€ task fully self-contained
+**Next:** nothing ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â task fully self-contained
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #205: AREA CHECKPOINT V4.0.4 Agent Terminal Fidelity + Snippet Hygiene
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #205: AREA CHECKPOINT V4.0.4 Agent Terminal Fidelity + Snippet Hygiene
 **Outcome:** COMPLETED
 **Summary:** AREA CHECKPOINT PASS. V4.0.4 IS CLOSED. All 4 prerequisite TEST GATEs verified PASS (#198, #200, #202, #204). 312/312 server tests, 107/107 swarm-engine tests, client build 480 modules 0 errors. Full fidelity stack verified across SwarmEngine (97+ snippet noise patterns, recovery scoring, semantic pipeline), SessionManager (35+ replay noise patterns, sanitizeReplayOutput), and Client (stripAnsi, controlTokens annotation-only). No regressions.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/qa-tester.md
 **Bugs fixed:** none
-**Decisions made:** V4.0.4 area closed Ã¢â‚¬â€ all acceptance criteria met
+**Decisions made:** V4.0.4 area closed ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all acceptance criteria met
 **Blockers:** none
 **Next:** Project manager to identify next priority area
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #204: TEST GATE BUG-RECOVERY-LABELING-1
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #204: TEST GATE BUG-RECOVERY-LABELING-1
 **Outcome:** COMPLETED
 **Summary:** TEST GATE PASS. Verified recovery/system prompt handling across all 3 pipeline levels: SNIPPET_RECOVERY_LINE_PATTERNS (4 patterns, -260 scoring penalty), _buildRecoverySnippet (labeled "Runtime reminder" output), REPLAY_NOISE_LINE_PATTERNS (done/handoff token instructions filtered). 312/312 server tests pass, client build 480 modules 0 errors. TASK #205 AREA CHECKPOINT unblocked.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/qa-tester.md
 **Bugs fixed:** none
 **Decisions made:** none
 **Blockers:** none
-**Next:** TASK #205 AREA CHECKPOINT V4.0.4 Ã¢â‚¬â€ final gate to close the area
+**Next:** TASK #205 AREA CHECKPOINT V4.0.4 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â final gate to close the area
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Wave 4/5 Transition: #202 PASS, #203 COMPLETED, #204+#205 launched
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Wave 4/5 Transition: #202 PASS, #203 COMPLETED, #204+#205 launched
 **Outcome:** COMPLETED
-**Summary:** Updated TASK_PLAN.md status header to reflect #202 PASS and #203 COMPLETED (no code change Ã¢â‚¬â€ recovery prompt filtering already handled by existing sanitization pipeline). Launched Wave 5: #204 (TEST GATE) + #205 (AREA CHECKPOINT) now IN_PROGRESS. After #205 passes, V4.0.4 will be CLOSED and only #148 (V3.4 AREA CHECKPOINT Ã¢â‚¬â€ blocked by provider handoff verification) remains as the last open task in the entire project.
+**Summary:** Updated TASK_PLAN.md status header to reflect #202 PASS and #203 COMPLETED (no code change ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â recovery prompt filtering already handled by existing sanitization pipeline). Launched Wave 5: #204 (TEST GATE) + #205 (AREA CHECKPOINT) now IN_PROGRESS. After #205 passes, V4.0.4 will be CLOSED and only #148 (V3.4 AREA CHECKPOINT ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â blocked by provider handoff verification) remains as the last open task in the entire project.
 **Files changed:** docs/TASK_PLAN.md (status header + #204/#205 status), docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
 **Bugs fixed:** none
 **Decisions made:** none
 **Blockers:** none
-**Next:** #204 (TEST GATE for BUG-RECOVERY-LABELING-1) + #205 (V4.0.4 AREA CHECKPOINT) Ã¢â‚¬â€ both running in Wave 5. On #205 PASS, V4.0.4 closes. Then only #148 remains.
+**Next:** #204 (TEST GATE for BUG-RECOVERY-LABELING-1) + #205 (V4.0.4 AREA CHECKPOINT) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â both running in Wave 5. On #205 PASS, V4.0.4 closes. Then only #148 remains.
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Wave 4 DOC_STATUS update (#202, #203)
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Wave 4 DOC_STATUS update (#202, #203)
 **Outcome:** COMPLETED
 **Summary:** Updated DOC_STATUS.md with Wave 4 results. #202 TEST GATE PASS and #203 COMPLETED (no code change -- recovery labeling already handled by existing sanitization pipeline). No source code modified. All existing docs remain accurate. V4.0.4 nearly closed: only #204 TEST GATE and #205 AREA CHECKPOINT remain.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
@@ -1780,9 +1780,9 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Wave 4 (Tasks #202, #203)
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Wave 4 (Tasks #202, #203)
 **Outcome:** COMPLETED
-**Summary:** Appended CHANGELOG.md with Wave 4 summary. Tasks #202 (TEST GATE PASS) and #203 (COMPLETED, no code change) recorded. No code modified Ã¢â‚¬â€ V4.0.4 chain progressing. CODE_MAP.md unchanged (no new/modified functions).
+**Summary:** Appended CHANGELOG.md with Wave 4 summary. Tasks #202 (TEST GATE PASS) and #203 (COMPLETED, no code change) recorded. No code modified ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V4.0.4 chain progressing. CODE_MAP.md unchanged (no new/modified functions).
 **Files changed:** docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
 **Bugs fixed:** none
 **Decisions made:** none
@@ -1791,7 +1791,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Wave 3 (Tasks #200, #201, #223)
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Wave 3 (Tasks #200, #201, #223)
 **Outcome:** COMPLETED
 **Summary:** Mapped Wave 3 changes: Task #201 enhanced sanitizeReplayOutput in SessionManager.js with 30+ noise patterns, protocol block stripping, corruption tail detection. Added 3 new function entries to CODE_MAP.md (sanitizeReplayOutput, stripAnsiForMatching, REPLAY_NOISE_LINE_PATTERNS). Updated attachClient entry. Appended CHANGELOG.md wave summary. #200 TEST GATE PASS, #223 V4.5 AREA CLOSED.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
@@ -1802,7 +1802,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Wave 3 DOC_STATUS update (#200, #223, #201)
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Wave 3 DOC_STATUS update (#200, #223, #201)
 **Outcome:** COMPLETED
 **Summary:** Updated DOC_STATUS.md with Wave 3 results. V4.5 area confirmed CLOSED via #223 AREA CHECKPOINT PASS. Task #201 (BUG-PTY-REPLAY-CONTAMINATION-1) added to Fixed Bugs table -- only code change in this wave (SessionManager.js sanitizeReplayOutput enhanced). All existing docs (README, ARCHITECTURE, API) remain accurate -- internal function enhancement only.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
@@ -1813,7 +1813,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #202: TEST GATE PASS Ã¢â‚¬â€ BUG-PTY-REPLAY-CONTAMINATION-1
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #202: TEST GATE PASS ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â BUG-PTY-REPLAY-CONTAMINATION-1
 **Outcome:** COMPLETED
 **Summary:** TEST GATE PASS. sanitizeReplayOutput() verified with 3 filtering layers: multi-line protocol block stripping, 36 line-by-line noise regex patterns, and 2 corruption tail regexes. Live PTY data confirmed unfiltered (only replay path sanitized). 312/312 server tests pass, client build 0 errors. TASK #203 unblocked.
 **Files changed:** docs/TASK_PLAN.md (marked #202 COMPLETED PASS)
@@ -1823,30 +1823,30 @@
 **Next:** TASK #203 (BUG-RECOVERY-LABELING-1) is now unblocked
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Wave 3 Status Sync: #200 PASS, #223 PASS (V4.5 CLOSED), #201 COMPLETED
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Wave 3 Status Sync: #200 PASS, #223 PASS (V4.5 CLOSED), #201 COMPLETED
 **Outcome:** COMPLETED
 **Summary:** Updated TASK_PLAN.md status header to reflect V4.0.4 chain progress (#200 PASS, #201 COMPLETED) and confirmed V4.5 AREA CLOSED (#223 AREA CHECKPOINT PASS). Updated PROGRESS.md with Wave 3 sync summary. Remaining open: V4.0.4 (#202-#205 PENDING sequential chain). Next priority: TEST GATE #202.
 **Files changed:** docs/TASK_PLAN.md (status header), docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
 **Bugs fixed:** none
 **Decisions made:** none
 **Blockers:** none
-**Next:** TEST GATE #202 (qa-tester) Ã¢â‚¬â€ verify PTY replay fidelity for BUG-PTY-REPLAY-CONTAMINATION-1 fix. Then #203-#205 sequential chain.
+**Next:** TEST GATE #202 (qa-tester) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â verify PTY replay fidelity for BUG-PTY-REPLAY-CONTAMINATION-1 fix. Then #203-#205 sequential chain.
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #201: BUG-PTY-REPLAY-CONTAMINATION-1 Ã¢â‚¬â€ PTY replay content-level sanitization
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #201: BUG-PTY-REPLAY-CONTAMINATION-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PTY replay content-level sanitization
 **Outcome:** COMPLETED
 **Summary:** Enhanced sanitizeReplayOutput() in SessionManager.js with content-level filtering. Root cause: replay sanitization only stripped ANSI control codes but not semantic noise (swarm protocol preamble, CLI chrome, stale prompts, corruption tails). Added 30+ noise line patterns, multi-line protocol block stripping, and corruption tail detection. 312/312 server tests pass, client build clean.
 **Files changed:** server/services/SessionManager.js, docs/TASK_PLAN.md, docs/memory/agents/debugger.md
-**Bugs fixed:** BUG-PTY-REPLAY-CONTAMINATION-1 Ã¢â‚¬â€ replay-only sanitization gap
+**Bugs fixed:** BUG-PTY-REPLAY-CONTAMINATION-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â replay-only sanitization gap
 **Decisions made:** Line-by-line filtering with ANSI-stripped matching to preserve terminal colors; duplicated relevant patterns from SwarmEngine rather than creating a cross-dependency
 **Blockers:** none
 **Next:** TEST GATE #202 (qa-tester) should verify replay fidelity in a live workflow
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #223: AREA CHECKPOINT Ã¢â‚¬â€ V4.5 Snippet Fidelity MVP Blockers
-**Outcome:** COMPLETED Ã¢â‚¬â€ PASS
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #223: AREA CHECKPOINT ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V4.5 Snippet Fidelity MVP Blockers
+**Outcome:** COMPLETED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PASS
 **Summary:** V4.5 AREA CHECKPOINT passed. 312/312 server tests, 107/107 swarm-engine tests, client build 480 modules 0 errors. All 5 prerequisite tasks verified COMPLETED. Full snippet pipeline confirmed: _decompressConPTYSpaces, 97 noise patterns + inline checks, _normalizeSnippetLine thinking symbol strip, TOKEN ALIAS badge removed, path fragment filter. No regressions. V4.5 AREA IS CLOSED.
 **Files changed:** docs/TASK_PLAN.md
 **Bugs fixed:** none
@@ -1856,9 +1856,9 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Wave 2 DOC_STATUS update (#187, #199, #217, #222)
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Wave 2 DOC_STATUS update (#187, #199, #217, #222)
 **Outcome:** COMPLETED
-**Summary:** Updated DOC_STATUS.md with Wave 2 verification results. V4.0.2 and V4.4 areas confirmed CLOSED. No source code modified in this wave Ã¢â‚¬â€ all tasks were verification/gate tasks. All existing documentation (README, ARCHITECTURE, API, inline comments) remains accurate.
+**Summary:** Updated DOC_STATUS.md with Wave 2 verification results. V4.0.2 and V4.4 areas confirmed CLOSED. No source code modified in this wave ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all tasks were verification/gate tasks. All existing documentation (README, ARCHITECTURE, API, inline comments) remains accurate.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none
 **Decisions made:** none
@@ -1867,9 +1867,9 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Wave 2 Status Sync (#187, #199, #217, #222 verified)
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Wave 2 Status Sync (#187, #199, #217, #222 verified)
 **Outcome:** COMPLETED
-**Summary:** Verified Wave 2 results: #187 PASS (V4.0.2 AREA CHECKPOINT Ã¢â‚¬â€ area CLOSED), #217 PASS (V4.4 AREA CHECKPOINT Ã¢â‚¬â€ area CLOSED), #199 COMPLETED (no bug found), #222 PASS (V4.5 TEST GATE). Updated TASK_PLAN.md status header with #199 COMPLETED and V4.5 #223 annotation. Two areas confirmed CLOSED: V4.0.2, V4.4. Remaining open: V4.0.4 (#200-#205), V4.5 (#223).
+**Summary:** Verified Wave 2 results: #187 PASS (V4.0.2 AREA CHECKPOINT ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â area CLOSED), #217 PASS (V4.4 AREA CHECKPOINT ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â area CLOSED), #199 COMPLETED (no bug found), #222 PASS (V4.5 TEST GATE). Updated TASK_PLAN.md status header with #199 COMPLETED and V4.5 #223 annotation. Two areas confirmed CLOSED: V4.0.2, V4.4. Remaining open: V4.0.4 (#200-#205), V4.5 (#223).
 **Files changed:** docs/TASK_PLAN.md (status header), docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
 **Bugs fixed:** none
 **Decisions made:** none
@@ -1878,7 +1878,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Verification Wave 2 (Tasks #187, #199, #217, #222)
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Verification Wave 2 (Tasks #187, #199, #217, #222)
 **Outcome:** COMPLETED
 **Summary:** Appended CHANGELOG.md entry for Wave 2: #187 AREA CHECKPOINT V4.0.2 PASS (CLOSED), #217 AREA CHECKPOINT V4.4 PASS (CLOSED), #199 BUG-TOKEN-FIDELITY-1 no code change needed, #222 TEST GATE V4.5 PASS. No code modified. CODE_MAP.md header updated.
 **Files changed:** docs/memory/CHANGELOG.md, docs/memory/CODE_MAP.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
@@ -1889,7 +1889,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Wave 1 Status Sync (8 parallel tasks verified)
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Wave 1 Status Sync (8 parallel tasks verified)
 **Outcome:** COMPLETED
 **Summary:** Verified all 8 Wave 1 parallel tasks are correctly marked COMPLETED in TASK_PLAN.md: #178 PASS, #180 PASS, #184 PASS, #186 PASS, #198 PASS, #213 PASS (V4.3 CLOSED), #216 PASS, #218 COMPLETED. Updated status header: V4.0.2 CLOSED, V4.0.3 CLOSED, V4.0.4 visible with #198 PASS, V4.3 CLOSED, V4.4 CLOSED, V5.2 CLOSED. Remaining open areas: V4.0.4 (#199-#205 PENDING), V4.5 (#223 PENDING).
 **Files changed:** docs/TASK_PLAN.md (status header), docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -1900,18 +1900,18 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #187: AREA CHECKPOINT V4.0.2 Gemini E2E PTY / UI Bug Fixes
-**Outcome:** COMPLETED Ã¢â‚¬â€ PASS
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #187: AREA CHECKPOINT V4.0.2 Gemini E2E PTY / UI Bug Fixes
+**Outcome:** COMPLETED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PASS
 **Summary:** Area checkpoint verified: 312/312 server tests pass, client build clean (480 modules), all 5 prerequisite TEST GATEs (#178, #180, #182, #184, #186) PASS, all 6 bug fixes confirmed in code. V4.0.2 area is CLOSED.
 **Files changed:** docs/TASK_PLAN.md
 **Bugs fixed:** none
 **Decisions made:** none
 **Blockers:** none
-**Next:** V4.0.2 closed Ã¢â‚¬â€ pipeline proceeds to next area
+**Next:** V4.0.2 closed ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â pipeline proceeds to next area
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #222: TEST GATE V4.5 Snippet Fidelity MVP Blockers
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #222: TEST GATE V4.5 Snippet Fidelity MVP Blockers
 **Outcome:** COMPLETED
 **Summary:** TEST GATE PASS. 312/312 server tests, client build 480 modules 0 errors. All 5 prerequisite tasks (#218-#221, #224) verified COMPLETED. _decompressConPTYSpaces handles case transitions + punctuation, SNIPPET_NOISE_LINE_PATTERNS has 98+ patterns, _buildSemanticSnippet pipeline complete.
 **Files changed:** docs/TASK_PLAN.md (status update)
@@ -1921,9 +1921,9 @@
 **Next:** TASK #223 AREA CHECKPOINT can proceed
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Verification Wave 1 DOC_STATUS update
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Verification Wave 1 DOC_STATUS update
 **Outcome:** COMPLETED
-**Summary:** Updated DOC_STATUS.md to record 8 verification task results (TEST GATES #178, #180, #184, #186, #198, #216; AREA CHECKPOINT #213 V4.3 CLOSED; TASK #218 COMPLETED). No code modified Ã¢â‚¬â€ all docs except DOC_STATUS.md remain accurate and unchanged.
+**Summary:** Updated DOC_STATUS.md to record 8 verification task results (TEST GATES #178, #180, #184, #186, #198, #216; AREA CHECKPOINT #213 V4.3 CLOSED; TASK #218 COMPLETED). No code modified ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all docs except DOC_STATUS.md remain accurate and unchanged.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none
 **Decisions made:** none
@@ -1932,9 +1932,9 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Verification Wave 1: Tasks #178, #180, #184, #186, #198, #213, #216, #218
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Verification Wave 1: Tasks #178, #180, #184, #186, #198, #213, #216, #218
 **Outcome:** COMPLETED
-**Summary:** Appended CHANGELOG.md summary for 8 parallel verification tasks (TEST GATEs + AREA CHECKPOINTs + ConPTY fix). No code modified Ã¢â‚¬â€ all verification-only. Updated CODE_MAP.md header timestamp.
+**Summary:** Appended CHANGELOG.md summary for 8 parallel verification tasks (TEST GATEs + AREA CHECKPOINTs + ConPTY fix). No code modified ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all verification-only. Updated CODE_MAP.md header timestamp.
 **Files changed:** docs/memory/CHANGELOG.md, docs/memory/CODE_MAP.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
 **Bugs fixed:** none
 **Decisions made:** none
@@ -1943,7 +1943,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #198: TEST GATE BUG-SNIPPET-FIDELITY-1 Ã¢â‚¬â€ PASS
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #198: TEST GATE BUG-SNIPPET-FIDELITY-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PASS
 **Outcome:** COMPLETED
 **Summary:** TEST GATE PASS. All 10+ snippet quality tests pass (107/107 swarm-engine, 312/312 full suite). Finder/Route Checker/Formatter contamination verified filtered. No stale foreign text survives in any snippet. Redraw fragments produce empty snippet. Structured fact reconstruction works. Protocol echo and prompt wrappers stripped. Pipeline can proceed to TASK #199.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/qa-tester.md
@@ -1954,7 +1954,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #213: AREA CHECKPOINT V4.3 E2E Deep Test Round 2 Ã¢â‚¬â€ PASS
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #213: AREA CHECKPOINT V4.3 E2E Deep Test Round 2 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PASS
 **Outcome:** COMPLETED
 **Summary:** Verified all V4.3 acceptance criteria. 312/312 server tests pass, client build 480 modules 0 errors. SNIPPET_NOISE_LINE_PATTERNS covers all CLI chrome noise patterns (bypass permissions, ctrl+g, Herding, version banner, model effort, thinking animations). Task #212 dependency confirmed COMPLETED. V4.3 AREA CLOSED.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/qa-tester.md
@@ -1965,14 +1965,14 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #178: TEST GATE BUG-PTY-EXPLOSION-1 Ã¢â‚¬â€ PASS
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #178: TEST GATE BUG-PTY-EXPLOSION-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PASS
 **Outcome:** COMPLETED
 **Summary:** Verified PtyExplosion WS connection, ring buffer replay, multiple clients, DEC-009. 312/312 tests pass. Client build clean.
 **Next:** TASK #179 (already COMPLETED).
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #180: TEST GATE BUG-RINGBUFFER-ANSI-1 Ã¢â‚¬â€ PASS
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #180: TEST GATE BUG-RINGBUFFER-ANSI-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PASS
 **Outcome:** COMPLETED
 **Summary:** Verified sanitizeReplayOutput() strips all 6 TUI sequence classes during ring buffer replay while live stream remains unsanitized. 312/312 server tests pass. Client build clean. TEST GATE PASS.
 **Files changed:** docs/TASK_PLAN.md
@@ -1983,7 +1983,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #184: TEST GATE BUG-SNIPPET-PROTOCOL-1 Ã¢â‚¬â€ PASS
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #184: TEST GATE BUG-SNIPPET-PROTOCOL-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PASS
 **Outcome:** COMPLETED
 **Summary:** Verified snippet semantic sanitization pipeline in SwarmEngine: _stripSnippetProtocolArtifacts removes block-level protocol text, SNIPPET_NOISE_LINE_PATTERNS has 80+ regexes for CLI chrome/protocol/system prompt noise, _buildSemanticSnippet scores blocks and returns best semantic content. 107/107 swarm-engine tests pass, 312/312 total server tests pass. 12+ dedicated snippet quality tests confirm protocol text excluded.
 **Files changed:** docs/TASK_PLAN.md
@@ -1993,7 +1993,7 @@
 **Next:** TASK #185 (BUG-FEED-ICON-1) can now proceed
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #216: TEST GATE V4.4 Snippet Fidelity Ã¢â‚¬â€ PASS
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #216: TEST GATE V4.4 Snippet Fidelity ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PASS
 **Outcome:** COMPLETED
 **Summary:** Verified all 6 required noise-line patterns (thinking animations, hook output) exist in SNIPPET_NOISE_LINE_PATTERNS. 312/312 server tests pass. Client build clean (480 modules). TEST GATE PASS.
 **Files changed:** docs/TASK_PLAN.md
@@ -2004,7 +2004,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #244: AREA CHECKPOINT V5.2 Ã¢â‚¬â€ PASS
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #244: AREA CHECKPOINT V5.2 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PASS
 **Outcome:** COMPLETED
 **Summary:** Final area checkpoint for V5.2. All 6 integration checks passed: 312/312 server tests, client build clean, /health 200, malformed JSON 400, API 404 JSON, SPA root 200. V5.2 area is CLOSED.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
@@ -2015,7 +2015,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V5.2 Closing: #243 COMPLETED, #244 IN_PROGRESS
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5.2 Closing: #243 COMPLETED, #244 IN_PROGRESS
 **Outcome:** COMPLETED
 **Summary:** Confirmed TEST GATE #243 already marked COMPLETED PASS in TASK_PLAN.md. Updated #244 AREA CHECKPOINT from PENDING to IN_PROGRESS. Updated status header to reflect V5.2 CLOSING state. Updated PROGRESS.md with checkpoint-running entry.
 **Files changed:** docs/TASK_PLAN.md (status header + #244 status), docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -2026,7 +2026,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ V5.2 Swarm Deep Check Ã¢â‚¬â€ AREA CLOSED Ã¢â‚¬â€ DOC_STATUS update
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5.2 Swarm Deep Check ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â AREA CLOSED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â DOC_STATUS update
 **Outcome:** COMPLETED
 **Summary:** Updated DOC_STATUS.md to mark V5.2 area as CLOSED after TEST GATE #243 PASS. All 4 bug fixes verified, zero remaining actionable bugs.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
@@ -2037,9 +2037,9 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #237-#244: V5.2 Swarm Deep Check Ã¢â‚¬â€ AREA CLOSED
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #237-#244: V5.2 Swarm Deep Check ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â AREA CLOSED
 **Outcome:** COMPLETED
-**Summary:** Appended CHANGELOG.md entry for V5.2 area closure. TEST GATE #243 PASS (312/312 tests, all 4 bug fixes verified). AREA CHECKPOINT #244 running/closing. 4 bugs fixed (#238-#241), 0 deferred. No code changes Ã¢â‚¬â€ bookkeeping only.
+**Summary:** Appended CHANGELOG.md entry for V5.2 area closure. TEST GATE #243 PASS (312/312 tests, all 4 bug fixes verified). AREA CHECKPOINT #244 running/closing. 4 bugs fixed (#238-#241), 0 deferred. No code changes ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â bookkeeping only.
 **Files changed:** docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
 **Bugs fixed:** none (documentation only)
 **Decisions made:** none
@@ -2048,7 +2048,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #243: TEST GATE V5.2 Swarm Deep Test Bug Fixes
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #243: TEST GATE V5.2 Swarm Deep Test Bug Fixes
 **Outcome:** COMPLETED
 **Summary:** TEST GATE PASS. All 4 V5.2 bug fixes verified after server restart with fresh code: malformed JSON returns 400 on 3 endpoints (#238), useSwarm fetch-based hydration with 404 cleanup confirmed (#239), rate limit at 300 (#240), API 404 returns JSON while SPA fallback returns HTML (#241). 312/312 server tests pass. Client build OK.
 **Files changed:** docs/TASK_PLAN.md (#243 status updated to COMPLETED PASS)
@@ -2059,7 +2059,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ V5.2 Wave 1 fixes (#238-#241) Ã¢â‚¬â€ documentation update
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5.2 Wave 1 fixes (#238-#241) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documentation update
 **Outcome:** COMPLETED
 **Summary:** Updated rate limit from 200 to 300 req/min in README.md, TEST_RESULTS.md, and research_complete.md. Updated DOC_STATUS.md with V5.2 Wave 1 bug fix details (4 bugs fixed, 1 deferred). No API.md or ARCHITECTURE.md changes needed.
 **Files changed:** README.md, docs/TEST_RESULTS.md, docs/research_complete.md, docs/memory/DOC_STATUS.md, docs/memory/agents/documenter.md, docs/memory/ACTIVITY_LOG.md
@@ -2070,18 +2070,18 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V5.2 Wave 1 Complete Ã¢â‚¬â€ Status Update
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5.2 Wave 1 Complete ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Status Update
 **Outcome:** COMPLETED
 **Summary:** V5.2 Wave 1 (tasks #238, #239, #240, #241) all COMPLETED by debugger. Updated TASK_PLAN.md status header to reflect Wave 1 done. Marked TEST GATE #243 as IN_PROGRESS. Added missing PROGRESS.md entries for #238 and #239. Wave 1 summary prepended to PROGRESS.md. Next: await TEST GATE #243 result from qa-tester, then AREA CHECKPOINT #244.
 **Files changed:** docs/TASK_PLAN.md (status header + #243 status), docs/memory/PROGRESS.md (4 new entries), docs/memory/ACTIVITY_LOG.md (this entry), docs/memory/agents/project-manager.md
 **Bugs fixed:** none (bookkeeping only)
 **Decisions made:** none
 **Blockers:** none
-**Next:** TEST GATE #243 running Ã¢â‚¬â€ await PASS/FAIL verdict. If PASS -> #244 AREA CHECKPOINT. If FAIL -> route to debugger.
+**Next:** TEST GATE #243 running ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â await PASS/FAIL verdict. If PASS -> #244 AREA CHECKPOINT. If FAIL -> route to debugger.
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #238: BUG-SWARM-API-1 Ã¢â‚¬â€ Malformed JSON returns 400
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #238: BUG-SWARM-API-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Malformed JSON returns 400
 **Outcome:** COMPLETED
 **Summary:** Added malformed JSON detection to global error handler in server/index.js. Express body-parser SyntaxError now returns HTTP 400 with clear error message instead of 500. 312/312 tests pass.
 **Files changed:** server/index.js (global error handler, +3 lines)
@@ -2092,7 +2092,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V5.2 Swarm Deep Test Bug Fixes Ã¢â‚¬â€ Phase 2 Bulk Plan
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5.2 Swarm Deep Test Bug Fixes ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Phase 2 Bulk Plan
 **Outcome:** COMPLETED
 **Summary:** Created V5.2 area in TASK_PLAN.md with tasks #238-#244 from Phase 1 Swarm E2E test findings (5 bugs). 4 active fix tasks assigned to debugger, 1 deferred (cosmetic). TEST GATE #243 and AREA CHECKPOINT #244 added. Parallel wave grouping: Wave 1 = #238+#239+#240+#241 (all independent, all debugger), Wave 2 = #243 (TEST GATE), Wave 3 = #244 (AREA CHECKPOINT).
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -2103,7 +2103,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Debugger Loop Phase 1: Micro-Areas B+C+D+E Ã¢â‚¬â€ Swarm UI Comprehensive E2E Test
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Debugger Loop Phase 1: Micro-Areas B+C+D+E ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Swarm UI Comprehensive E2E Test
 **Outcome:** COMPLETED
 **Summary:** Comprehensive Playwright E2E test of the entire Swarm UI section (Canvas & Nodes, Workflow CRUD & Persistence, Execution Lifecycle & Runtime, Inspector & PTY Explosion). 47 test cases executed: 37 PASS, 7 N/A (correct conditional behavior in idle state), 3 BUG. Bugs found: BUG-SWARM-UI-1 (duplicate workflow names in dropdown, LOW), BUG-SWARM-UI-2 (stale execution ID 404 on page load, MEDIUM), BUG-SWARM-UI-3 (rate limit triggered by normal navigation, LOW). All core Swarm UI functionality works correctly.
 **Files changed:** none (test-only)
@@ -2113,7 +2113,7 @@
 **Next:** Debugger should fix BUG-SWARM-UI-2 (medium). Phase 2 bulk bug planning for all discovered bugs.
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Debugger Loop Phase 1: Micro-Area A Ã¢â‚¬â€ Swarm Server API Deep Test
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Debugger Loop Phase 1: Micro-Area A ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Swarm Server API Deep Test
 **Outcome:** COMPLETED
 **Summary:** Deep-tested all 17 Swarm/Workflow/Inbox API endpoints (~55 curl tests). Found 2 bugs: BUG-SWARM-API-1 (malformed JSON returns 500 instead of 400, MEDIUM), BUG-SWARM-API-2 (SPA catch-all serves HTML for unmatched API GET paths, LOW). All CSRF enforcement, validation, 404 handling, path traversal protection, and boundary checks are correct.
 **Files changed:** none (test-only)
@@ -2124,7 +2124,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #237: AREA CHECKPOINT Ã¢â‚¬â€ V5.1 Debugger Loop Full-App Deep Check
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #237: AREA CHECKPOINT ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5.1 Debugger Loop Full-App Deep Check
 **Outcome:** COMPLETED
 **Summary:** AREA CHECKPOINT PASS. All 5 acceptance criteria verified: npm test 312/312, client build 480 modules, health 200, webhook POST 200 without CSRF, non-webhook POST 403 without CSRF. V5.1 area is CLOSED.
 **Files changed:** docs/TASK_PLAN.md (acceptance criteria checkboxes)
@@ -2135,7 +2135,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V5.1 Area Closure
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5.1 Area Closure
 **Outcome:** COMPLETED
 **Summary:** Closed V5.1 Debugger Loop Full-App Deep Check area. Updated TASK_PLAN.md status header to reflect V5.1 CLOSED. Marked #237 (AREA CHECKPOINT) as COMPLETED. Updated PROGRESS.md with closure entry. All 4 tasks resolved: #234 COMPLETED, #235 PASS, #236 DEFERRED, #237 VERIFIED.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -2146,18 +2146,18 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ V5.1 Debugger Loop Full-App Deep Check CLOSED Ã¢â‚¬â€ DOC_STATUS update
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5.1 Debugger Loop Full-App Deep Check CLOSED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â DOC_STATUS update
 **Outcome:** COMPLETED
-**Summary:** Updated DOC_STATUS.md to reflect V5.1 area closure. BUG-API-1 FIXED with TEST GATE PASS, BUG-UI-1 DEFERRED. Section header renamed to V5.1 AREA CLOSED. No code docs needed updating Ã¢â‚¬â€ only status tracking.
+**Summary:** Updated DOC_STATUS.md to reflect V5.1 area closure. BUG-API-1 FIXED with TEST GATE PASS, BUG-UI-1 DEFERRED. Section header renamed to V5.1 AREA CLOSED. No code docs needed updating ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â only status tracking.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none (status update only)
 **Decisions made:** none
 **Blockers:** none
-**Next:** nothing Ã¢â‚¬â€ V5.1 area closed, awaiting next user direction
+**Next:** nothing ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5.1 area closed, awaiting next user direction
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ V5.1 Area Closure (Tasks #234-#236)
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5.1 Area Closure (Tasks #234-#236)
 **Outcome:** COMPLETED
 **Summary:** Appended CHANGELOG.md entry for V5.1 Debugger Loop area closure. Updated CODE_MAP.md header timestamp. Task #234 BUG-API-1 fixed, TEST GATE #235 PASS, BUG-UI-1 #236 DEFERRED. Area closed.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
@@ -2168,51 +2168,51 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #235: TEST GATE Ã¢â‚¬â€ BUG-API-1 (Webhook CSRF Exemption)
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #235: TEST GATE ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â BUG-API-1 (Webhook CSRF Exemption)
 **Outcome:** COMPLETED
 **Summary:** TEST GATE PASS. Verified webhook CSRF exemption works after server restart. POST /api/v1/triggers/webhooks/test-path returns 200 without CSRF header. Non-webhook POSTs still return 403. 312/312 server tests pass, 480-module client build clean.
 **Files changed:** docs/TASK_PLAN.md (status update)
-**Bugs fixed:** none Ã¢â‚¬â€ fix was correct, server just needed restart
+**Bugs fixed:** none ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â fix was correct, server just needed restart
 **Decisions made:** none
 **Blockers:** none
 **Next:** TASK #237 (AREA CHECKPOINT V5.1) can proceed after #236 is acknowledged as DEFERRED
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Task #234: BUG-API-1 Ã¢â‚¬â€ CSRF exemption code mapping
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #234: BUG-API-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â CSRF exemption code mapping
 **Outcome:** COMPLETED
 **Summary:** Mapped the CSRF_EXEMPT_PREFIXES addition and path-bypass logic in csrfMiddleware. Created a full Function Graph entry for csrfMiddleware (previously missing). Updated Module Index. Appended CHANGELOG entry with impact analysis noting test gap in csrf.test.js.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
 **Bugs fixed:** none (mapping only)
-**Decisions made:** Created full Function Graph entry for csrfMiddleware Ã¢â‚¬â€ it previously only had a Module Index row
+**Decisions made:** Created full Function Graph entry for csrfMiddleware ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â it previously only had a Module Index row
 **Blockers:** none
 **Next:** qa-tester runs TEST GATE #235 (should include tests for CSRF exempt paths)
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Task #234: BUG-API-1 documentation update
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #234: BUG-API-1 documentation update
 **Outcome:** COMPLETED
 **Summary:** Updated security audit docs (v1 and v3) to reflect CSRF webhook exemption fix. MEDIUM-V3-01 marked FIXED in security-v3-audit.md. SEC-06 entry in SECURITY_AUDIT.md updated with exemption note. DOC_STATUS.md BUG-API-1 moved to FIXED, debt entry resolved. API.md already accurate (no change needed). README and ARCHITECTURE not affected.
 **Files changed:** docs/security-v3-audit.md, docs/SECURITY_AUDIT.md, docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none (documentation only)
-**Decisions made:** API.md line 12 already documented the webhook CSRF exception correctly Ã¢â‚¬â€ no edit needed, just verified it now matches reality
+**Decisions made:** API.md line 12 already documented the webhook CSRF exception correctly ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no edit needed, just verified it now matches reality
 **Blockers:** none
 **Next:** qa-tester runs TEST GATE #235
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Task #234 Review + #235 Confirmation
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #234 Review + #235 Confirmation
 **Outcome:** COMPLETED
-**Summary:** Verified Task #234 (BUG-API-1 webhook CSRF exemption) is COMPLETED. Checked all 6 acceptance criteria. Confirmed Task #235 (TEST GATE) is the next action Ã¢â‚¬â€ assigned to qa-tester. Updated TASK_PLAN.md status header, V5.1 area status, and acceptance criteria checkboxes. Critical path: #235 (qa-tester) then #237 (AREA CHECKPOINT).
+**Summary:** Verified Task #234 (BUG-API-1 webhook CSRF exemption) is COMPLETED. Checked all 6 acceptance criteria. Confirmed Task #235 (TEST GATE) is the next action ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â assigned to qa-tester. Updated TASK_PLAN.md status header, V5.1 area status, and acceptance criteria checkboxes. Critical path: #235 (qa-tester) then #237 (AREA CHECKPOINT).
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
 **Bugs fixed:** none (review task)
 **Decisions made:** none
 **Blockers:** none
-**Next:** qa-tester executes TEST GATE #235 Ã¢â‚¬â€ verifies webhook CSRF exemption with HTTP tests against running server
+**Next:** qa-tester executes TEST GATE #235 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â verifies webhook CSRF exemption with HTTP tests against running server
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #234: BUG-API-1 Ã¢â‚¬â€ Webhook endpoint blocked by global CSRF middleware
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #234: BUG-API-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Webhook endpoint blocked by global CSRF middleware
 **Outcome:** COMPLETED
 **Summary:** Added path-based CSRF exemption in server/middleware/csrf.js for `/api/v1/triggers/webhooks/` prefix. External webhook callers no longer receive 403. All 312 server tests pass, client build OK.
 **Files changed:** server/middleware/csrf.js
@@ -2223,20 +2223,20 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V5.1 Debugger Loop Full-App Deep Check Phase 2 Bulk Plan
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5.1 Debugger Loop Full-App Deep Check Phase 2 Bulk Plan
 **Outcome:** COMPLETED
-**Summary:** Created V5.1 area in TASK_PLAN.md with tasks #234-#237 from Phase 1 bug report. BUG-API-1 (HIGH, webhook CSRF block) gets a fix task (#234, debugger) + TEST GATE (#235, qa-tester) + AREA CHECKPOINT (#237, qa-tester). BUG-UI-1 (LOW, ConPTY garble) is DEFERRED as #236 Ã¢â‚¬â€ known DEC-009 artifact, MVP-acceptable.
+**Summary:** Created V5.1 area in TASK_PLAN.md with tasks #234-#237 from Phase 1 bug report. BUG-API-1 (HIGH, webhook CSRF block) gets a fix task (#234, debugger) + TEST GATE (#235, qa-tester) + AREA CHECKPOINT (#237, qa-tester). BUG-UI-1 (LOW, ConPTY garble) is DEFERRED as #236 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â known DEC-009 artifact, MVP-acceptable.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
 **Bugs fixed:** none (planning only)
-**Decisions made:** BUG-UI-1 deferred per DEC-009 Ã¢â‚¬â€ ConPTY artifact, self-corrects, no functional impact
+**Decisions made:** BUG-UI-1 deferred per DEC-009 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â ConPTY artifact, self-corrects, no functional impact
 **Blockers:** none
 **Next:** Debugger executes TASK #234 (BUG-API-1 fix), then qa-tester runs TEST GATE #235, then AREA CHECKPOINT #237
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ V5.0 Debugger Loop Phase 1 Deep E2E Test documentation update
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5.0 Debugger Loop Phase 1 Deep E2E Test documentation update
 **Outcome:** COMPLETED
-**Summary:** Updated DOC_STATUS.md with Phase 1 deep test results. Added structured bug table for BUG-API-1 (HIGH, webhook CSRF Ã¢â‚¬â€ cross-referenced to existing MEDIUM-V3-01 debt) and BUG-UI-1 (LOW, ConPTY garble Ã¢â‚¬â€ deferred per DEC-009). No code was modified in Phase 1, so no README/ARCHITECTURE/API updates needed. All documentation artifacts verified UP_TO_DATE.
+**Summary:** Updated DOC_STATUS.md with Phase 1 deep test results. Added structured bug table for BUG-API-1 (HIGH, webhook CSRF ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â cross-referenced to existing MEDIUM-V3-01 debt) and BUG-UI-1 (LOW, ConPTY garble ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â deferred per DEC-009). No code was modified in Phase 1, so no README/ARCHITECTURE/API updates needed. All documentation artifacts verified UP_TO_DATE.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none (documentation only)
 **Decisions made:** Cross-referenced BUG-API-1 with MEDIUM-V3-01 instead of creating duplicate debt entry
@@ -2245,7 +2245,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Debugger Loop Phase 1 Micro-Area B: Browser E2E Deep Test
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Debugger Loop Phase 1 Micro-Area B: Browser E2E Deep Test
 **Outcome:** COMPLETED
 **Summary:** Full-UI browser E2E deep test via Puppeteer MCP covering all 6 views (Projects, Live Terminal, Job Runner, Deployments, Context Editor, Swarm) plus modals, search, navigation, canvas, and inspector panels. Zero console errors, zero ANSI leakage, zero broken layouts. 1 LOW severity bug found (BUG-UI-1: terminal prompt garble after view switch due to ConPTY buffer race).
 **Files changed:** docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
@@ -2256,7 +2256,7 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V5.0 Post-Phase-3 Task Plan Review and Update
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5.0 Post-Phase-3 Task Plan Review and Update
 **Outcome:** COMPLETED
 **Summary:** Reviewed and updated TASK_PLAN.md after V5.0 debugger loop Phase 3 fixes. Verified #231 and #232 as COMPLETED, marked #233 as DEFERRED (MVP-acceptable). Marked CHECK tasks #225 (workflow lifecycle) and #227 (agent terminals) as COMPLETED based on testing done during Phase 1. Updated #226 and #228 as PENDING/UNBLOCKED. Updated TEST GATE #229 as BLOCKED (waiting on #226 + #228). Updated AREA CHECKPOINT #230 as BLOCKED (waiting on #229). Updated V5.0 area header and main status header.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -2267,12 +2267,12 @@
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ orchestrator Ã¢â‚¬â€ Tasks #231-#232: V5.0 Debugger Loop Phase 3 Ã¢â‚¬â€ Snippet + PTY Explosion fixes
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â orchestrator ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #231-#232: V5.0 Debugger Loop Phase 3 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Snippet + PTY Explosion fixes
 **Outcome:** COMPLETED
-**Summary:** Fixed 2 HIGH-priority bugs from debugger-loop Phase 1 E2E testing. Task #231 (BUG-WF-1): added 13 swarm protocol preamble patterns to SNIPPET_NOISE_LINE_PATTERNS + SWARM INPUT block regex to _stripSnippetProtocolArtifacts Ã¢â‚¬â€ system prompt text no longer leaks into agent node snippets. Task #232 (BUG-WF-3): added key={ptyExplosionNodeId} to PtyExplosion in SwarmView.jsx Ã¢â‚¬â€ terminal now correctly switches when selecting different agent nodes. Task #233 (BUG-WF-2, LOW) deferred as acceptable for MVP. Server tests 312/312 pass, client build OK.
+**Summary:** Fixed 2 HIGH-priority bugs from debugger-loop Phase 1 E2E testing. Task #231 (BUG-WF-1): added 13 swarm protocol preamble patterns to SNIPPET_NOISE_LINE_PATTERNS + SWARM INPUT block regex to _stripSnippetProtocolArtifacts ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â system prompt text no longer leaks into agent node snippets. Task #232 (BUG-WF-3): added key={ptyExplosionNodeId} to PtyExplosion in SwarmView.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â terminal now correctly switches when selecting different agent nodes. Task #233 (BUG-WF-2, LOW) deferred as acceptable for MVP. Server tests 312/312 pass, client build OK.
 **Files changed:** server/services/SwarmEngine.js, client/src/views/SwarmView.jsx, docs/TASK_PLAN.md, docs/memory/agents/debugger.md, docs/memory/ACTIVITY_LOG.md, docs/memory/PROGRESS.md
 **Bugs fixed:** BUG-WF-1 (system prompt in snippet), BUG-WF-3 (wrong PTY terminal on node switch)
-**Decisions made:** BUG-WF-2 deferred Ã¢â‚¬â€ done-token recovery noise is acceptable for MVP
+**Decisions made:** BUG-WF-2 deferred ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â done-token recovery noise is acceptable for MVP
 **Blockers:** none
 **Next:** Phase 3.3 browser re-verification of fixes, then TEST GATE #229 and AREA CHECKPOINT #230
 
@@ -2298,7 +2298,7 @@
 **Blockers:** none for V4.0.3; Claude full-chain live verification remains quota-sensitive but is no longer a blocker for this wave because the closed gates were satisfied through Gemini live runs plus browser/backend agreement.
 **Next:** Resume from V4.1+ or any newly discovered live-provider anomalies.
 ---
-## 2026-04-06 - debugger - Task #231: BUG-WF-1 Ã¢â‚¬â€ System prompt text leaking into agent node card snippets
+## 2026-04-06 - debugger - Task #231: BUG-WF-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â System prompt text leaking into agent node card snippets
 **Outcome:** COMPLETED
 **Summary:** Added 13 swarm protocol preamble patterns to SNIPPET_NOISE_LINE_PATTERNS and a SWARM INPUT block-level regex to _stripSnippetProtocolArtifacts in SwarmEngine.js. This prevents ConPTY-echoed system prompt text from appearing in agent node card snippets. All 312 tests pass.
 **Files changed:** server/services/SwarmEngine.js, docs/TASK_PLAN.md
@@ -2370,7 +2370,7 @@
 **Blockers:** Gemini terminal behavior is still semantically unreliable under full E2E load: the Researcher can surface provider API errors while the run still completes, and the Writer can emit stale/wrong output unrelated to the requested goal.
 **Next:** Investigate why the Writer session replays stale content and why execution can complete after repeated Gemini `INVALID_ARGUMENT` failures, then rerun the same exact-user scenario until the Writer produces the requested target text.
 ---
-## 2026-04-05 Ã¯Â¿Â½ debugger Ã¯Â¿Â½ Gemini auto model-switch syntax correction + live rerun after restart
+## 2026-04-05 ÃƒÂ¯Ã‚Â¿Ã‚Â½ debugger ÃƒÂ¯Ã‚Â¿Ã‚Â½ Gemini auto model-switch syntax correction + live rerun after restart
 **Outcome:** PARTIAL
 **Summary:** Corrected the Gemini fallback command to use the actual CLI syntax `/model set <model>` after verifying the installed Gemini CLI command metadata. Re-ran the targeted backend suites (`npm test --prefix server -- SessionManager.test.js swarm-engine.test.js` = 100/100, plus `npm test --prefix server -- swarm-engine.test.js` after the final comment cleanup = 75/75), restarted the local server on `http://127.0.0.1:3000`, and launched a fresh real Gemini execution for `Research and Report Team` with runtime model `gemini-2.5-pro`. The live session stayed `running` for several minutes and consumed a large token budget without reproducing the usage-limit menu again, so the new `/model set` path is active in code and covered by tests but was not freshly observed firing in a natural quota event during this rerun.
 **Files changed:** server/services/SwarmEngine.js, server/tests/swarm-engine.test.js, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
@@ -2379,7 +2379,7 @@
 **Blockers:** The latest live Gemini rerun did not reproduce the quota/menu state needed to witness the fallback path in production, so only code/test verification was possible for the command-syntax correction.
 **Next:** Re-run the same Gemini workflow when the account/model state reproduces the usage-limit menu, then confirm `lastModelFallback` and downstream Writer progression with the corrected slash command.
 ---
-## 2026-04-05 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Real Gemini rerun for V4.0.2 QA gates (#182 partial pass, area still open)
+## 2026-04-05 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Real Gemini rerun for V4.0.2 QA gates (#182 partial pass, area still open)
 **Outcome:** PARTIAL
 **Summary:** Re-ran `Research and Report Team` in the browser with runtime provider `Gemini` and model `gemini-2.5-pro` after the follow-up SwarmEngine patch. The execution now stays `running` during Gemini Thinking/auth output, the usage-limit recovery path no longer misclassifies into a false auth blocker, and the engine records `lastModelFallback = gemini-2.5-flash`, proving the automatic fallback command is triggered in a real session. However Gemini CLI still returns `API Error: You have exhausted your capacity on this model` and redraws the same usage-limit menu instead of advancing to the Writer node, so PTY Explosion / Writer snippet / feed-icon end-to-end verification remains blocked by provider/runtime behavior.
 **Files changed:** server/services/SwarmEngine.js, server/tests/swarm-engine.test.js, docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
@@ -2389,7 +2389,7 @@
 **Next:** Either reproduce with a Gemini account/quota state that allows the flash fallback to proceed, or add another recovery strategy once the exact CLI behavior is understood.
 ---
 
-## 2026-04-05 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ V4.0.2 code-side fix completion for TASKS #177, #179, #181, #183, #185
+## 2026-04-05 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V4.0.2 code-side fix completion for TASKS #177, #179, #181, #183, #185
 **Outcome:** COMPLETED
 **Summary:** Closed the implementation side of the V4.0.2 Gemini PTY/UI bug wave. `SessionManager.attachClient()` now sanitizes replay-only TUI control sequences (DEC private modes, save/restore, cursor-home/clear-line) so fresh PTY Explosion terminals replay readable content without corrupting the live stream, and new SessionManager regressions prove replay-then-live streaming plus session isolation. `SwarmEngine` now scopes transient Gemini retry suppression to Gemini, auto-handles Gemini usage-limit menus before classifying the execution as blocked, and strips echoed `SWARM PROTOCOL` text from user-facing `lastOutputSnippet` while keeping the raw buffer for runtime detection. `InterAgentFeed` now maps `handoff_completed` and the current live feed event types used by `useSwarm`, removing the `?` fallback.
 **Files changed:** server/services/SessionManager.js, server/services/SwarmEngine.js, client/src/canvas/InterAgentFeed.jsx, server/tests/SessionManager.test.js, server/tests/swarm-engine.test.js, docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
@@ -2399,9 +2399,9 @@
 **Next:** Run the remaining V4.0.2 QA gates against a real Gemini execution before declaring the area closed.
 ---
 
-## 2026-04-05 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Tasks #177-#187: V4.0.2 Gemini E2E PTY / UI Bug Fixes (Planning)
+## 2026-04-05 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #177-#187: V4.0.2 Gemini E2E PTY / UI Bug Fixes (Planning)
 **Outcome:** COMPLETED
-**Summary:** Added 11 new tasks (#177-#187) to TASK_PLAN.md under new area V4.0.2 for 6 bugs found during E2E testing with Gemini CLI provider. Bugs: BUG-PTY-EXPLOSION-1 (CRITICAL, no live output in PtyExplosion), BUG-RINGBUFFER-ANSI-1 (HIGH, blank replay from Ink TUI ANSI codes Ã¢â‚¬â€ also covers BUG-5), BUG-BLOCKER-FALSE-POS-1 (HIGH, false rate limit detection during Thinking phase), BUG-SNIPPET-PROTOCOL-1 (LOW, protocol text in lastOutputSnippet), BUG-FEED-ICON-1 (COSMETIC, missing handoff_completed icon). Each bug has a fix task + TEST GATE, plus an AREA CHECKPOINT #187.
+**Summary:** Added 11 new tasks (#177-#187) to TASK_PLAN.md under new area V4.0.2 for 6 bugs found during E2E testing with Gemini CLI provider. Bugs: BUG-PTY-EXPLOSION-1 (CRITICAL, no live output in PtyExplosion), BUG-RINGBUFFER-ANSI-1 (HIGH, blank replay from Ink TUI ANSI codes ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â also covers BUG-5), BUG-BLOCKER-FALSE-POS-1 (HIGH, false rate limit detection during Thinking phase), BUG-SNIPPET-PROTOCOL-1 (LOW, protocol text in lastOutputSnippet), BUG-FEED-ICON-1 (COSMETIC, missing handoff_completed icon). Each bug has a fix task + TEST GATE, plus an AREA CHECKPOINT #187.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none (planning only)
 **Decisions made:** Grouped BUG-2 and BUG-5 into single task #179 (shared root cause). Ordered: #177 (CRITICAL) first, #181 parallel (independent), #179 depends on #177, cosmetic fixes (#183, #185) independent.
@@ -2409,10 +2409,10 @@
 **Next:** Assign debugger to #177 (PTY Explosion live output) and #181 (false blocker detection) in parallel as Wave 1. Then #179 (ring buffer ANSI) after #177. Then #183 + #185 in parallel.
 ---
 
-## 2026-04-04 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #160: BUG-GEMINI-1 Ã¢â‚¬â€ Fix Gemini CLI prompt injection
+## 2026-04-04 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #160: BUG-GEMINI-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Fix Gemini CLI prompt injection
 
 ---
-## 2026-04-05 Ã¢â‚¬â€ orchestrator Ã¢â‚¬â€ Tasks #169-#170: V4.1 Per-Harness Model Selection
+## 2026-04-05 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â orchestrator ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #169-#170: V4.1 Per-Harness Model Selection
 **Outcome:** COMPLETED
 **Summary:** Implemented per-harness model selection. Backend: _buildRuntimeProviderArgs() accepts runtimeModels override (replaces -m flag), startExecution merges runtimeModels into workflow settings, route accepts runtimeModels in body. Frontend: "Models" button in SwarmView toolbar with dropdowns for Codex (gpt-5.1-codex, gpt-4.1-codex) and Gemini (gemini-2.5-pro, gemini-2.5-flash, gemini-2.0-flash). Claude shown as "Account Default" (disabled). 7 new unit tests, 70/70 pass, build OK. V4.1 CLOSED.
 **Files changed:** server/services/SwarmEngine.js, server/routes/swarm.js, client/src/hooks/useSwarm.js, client/src/views/SwarmView.jsx, server/tests/swarm-engine.test.js
@@ -2422,34 +2422,34 @@
 **Next:** No pending tasks in V4.x. Ready for next feature wave or user request.
 ---
 ---
-## 2026-04-05 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Tasks #171-#176: V4.0.1 Gemini Runtime Bug Fixes
+## 2026-04-05 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #171-#176: V4.0.1 Gemini Runtime Bug Fixes
 **Outcome:** COMPLETED
 **Summary:** E2E debugging session revealed 4 critical Gemini runtime bugs in SwarmEngine.js. BUG-GEMINI-4: SWARM_PROMPT_READY_FALLBACK_MS too low (2.5s vs Gemini's 15s startup), causing prompts to be lost during auth. BUG-GEMINI-5: False positive prompt-ready from TUI box borders during auth. BUG-GEMINI-6: Ghost method _detectRuntimePromptIntervention causing TypeError. BUG-GEMINI-7: Duplicate _detectRuntimeBlocker name collision silently breaking all pattern-based blocker detection. All 4 fixed. 63/63 swarm-engine tests pass. V4.0.1 CLOSED.
 **Files changed:** server/services/SwarmEngine.js, docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** BUG-GEMINI-4, BUG-GEMINI-5, BUG-GEMINI-6, BUG-GEMINI-7
-**Decisions made:** Raised fallback timer to 20s to accommodate Gemini CLI startup time. Renamed _detectRuntimeBlocker Ã¢â€ â€™ _detectPatternBlocker for the pattern-matching variant.
+**Decisions made:** Raised fallback timer to 20s to accommodate Gemini CLI startup time. Renamed _detectRuntimeBlocker ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ _detectPatternBlocker for the pattern-matching variant.
 **Blockers:** none
 **Next:** V4.1 Per-Harness Model Selection (TASK #169-#170 PENDING)
 ---
 **Outcome:** COMPLETED
 **Summary:** Fixed _flushSwarmPrompt() in SwarmEngine.js to handle Gemini CLI's Ink TUI. Added Gemini-specific branch that writes prompt as a single line (no \n), submits with 500ms delayed \r, and writes echo marker separately. Claude/Codex behavior unchanged.
 **Files changed:** server/services/SwarmEngine.js (added 2 constants + Gemini branch in _flushSwarmPrompt)
-**Bugs fixed:** BUG-GEMINI-1 Ã¢â‚¬â€ Gemini prompt injection never submitted due to \n triggering multi-line mode
+**Bugs fixed:** BUG-GEMINI-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Gemini prompt injection never submitted due to \n triggering multi-line mode
 **Decisions made:** SWARM_GEMINI_SUBMIT_DELAY_MS=500, echo marker as separate submission
 **Blockers:** none
 **Next:** TASK #161 (TEST GATE for BUG-GEMINI-1), then TASK #162 (BUG-GEMINI-2)
 ---
 
-## 2026-04-04 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V4.0 E2E Bug Triage: 3 bugs found, tasks #160-#165 created
+## 2026-04-04 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V4.0 E2E Bug Triage: 3 bugs found, tasks #160-#165 created
 **Outcome:** COMPLETED
 **Summary:** E2E testing of V4.0 Gemini CLI integration (tasks #154-#159 all COMPLETED) revealed 3 bugs blocking V4.0 closure. BUG-GEMINI-1 (CRITICAL): prompt injection fails because Gemini Ink TUI treats `\n` as in-field newline. BUG-GEMINI-2 (MEDIUM): prompt-ready detection uses wrong pattern. BUG-GEMINI-3 (LOW): cosmetic strategy label issue. Created 6 new tasks (#160-#165: 3 bug fixes + 3 test gates). Renumbered docs/gate/checkpoint tasks to #166-#168. Renumbered V4.1 tasks to #169-#170. Updated PROGRESS.md with E2E findings.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
 **Bugs fixed:** none (triage and task creation only)
 **Decisions made:** BUG-GEMINI-1 assigned to debugger (CRITICAL, requires deep PTY knowledge). BUG-GEMINI-2 assigned to debugger (straightforward pattern fix). BUG-GEMINI-3 assigned to frontend-dev (cosmetic UI fix).
-**Blockers:** BUG-GEMINI-1 is a hard blocker for V4.0 closure Ã¢â‚¬â€ Gemini cannot function as a Swarm runtime until prompt injection works.
+**Blockers:** BUG-GEMINI-1 is a hard blocker for V4.0 closure ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Gemini cannot function as a Swarm runtime until prompt injection works.
 **Next:** debugger runs TASK #160 (BUG-GEMINI-1) immediately as highest priority.
 ---
-## 2026-04-04 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Tasks #154Ã¢â‚¬â€œ#164: V4.0 and V4.1 Planning
+## 2026-04-04 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #154ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#164: V4.0 and V4.1 Planning
 **Outcome:** COMPLETED
 **Summary:** Analyzed TASK_PLAN.md for the new V4.0 (Gemini CLI Harness Integration) and V4.1 (Per-Harness Runtime Model Selection) items. Updated docs/memory/PROJECT.md and docs/memory/PROGRESS.md to reflect this new wave formally in the system memory. 
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
@@ -2458,61 +2458,61 @@
 **Blockers:** none
 **Next:** backend-dev runs Task #154 (GEMINI-DISCOVERY-1).
 ---
-## 2026-04-03 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #145: BUG-UX-HANDOFF-1 Ã¢â‚¬â€ Fix handoff chain failure
+## 2026-04-03 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #145: BUG-UX-HANDOFF-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Fix handoff chain failure
 **Outcome:** COMPLETED
-**Summary:** Fixed three root causes preventing multi-agent handoff chains from working: (1) HandoffParser only accepted base64-encoded payloads but LLMs emit plain JSON Ã¢â‚¬â€ added _parseDirectJsonHandoff() to accept both formats; (2) No max retry limit on _onDone reinject Ã¢â‚¬â€ added MAX_DONE_REINJECT_ATTEMPTS=3 with forced synthetic handoff; (3) System prompt lacked concrete handoff token example Ã¢â‚¬â€ added __HANDOFF__:target:{"summary":"..."} examples. 227/227 tests pass (9 new).
+**Summary:** Fixed three root causes preventing multi-agent handoff chains from working: (1) HandoffParser only accepted base64-encoded payloads but LLMs emit plain JSON ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â added _parseDirectJsonHandoff() to accept both formats; (2) No max retry limit on _onDone reinject ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â added MAX_DONE_REINJECT_ATTEMPTS=3 with forced synthetic handoff; (3) System prompt lacked concrete handoff token example ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â added __HANDOFF__:target:{"summary":"..."} examples. 227/227 tests pass (9 new).
 **Files changed:** server/services/HandoffParser.js, server/services/SwarmEngine.js, server/tests/HandoffParser.test.js, server/tests/swarm-engine.test.js
 **Bugs fixed:** BUG-A (HandoffParser base64-only rejection), BUG-B (infinite _onDone reinject loop), BUG-C (missing concrete handoff example in system prompt)
 **Decisions made:** Plain JSON is now the primary handoff format (tried first); base64 kept as fallback. MAX_DONE_REINJECT_ATTEMPTS=3 with forced handoff to first downstream target.
 **Blockers:** none
-**Next:** TASK #148 (AREA CHECKPOINT V3.4) Ã¢â‚¬â€ qa-tester verifies full handoff chain end-to-end.
+**Next:** TASK #148 (AREA CHECKPOINT V3.4) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester verifies full handoff chain end-to-end.
 ---
-## 2026-04-02 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Task #132: AREA CHECKPOINT PASS Ã¢â‚¬â€ V3.1 Swarm Bug Fix Wave closed
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #132: AREA CHECKPOINT PASS ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3.1 Swarm Bug Fix Wave closed
 **Outcome:** COMPLETED
 **Summary:** Updated DOC_STATUS.md to reflect all four V3.1 bugs fixed (BUG-SESSION-1, BUG-HANDOFF-1, BUG-TRIGGER-1, BUG-INSPECTOR-1); replaced "Known Bugs" section with "ALL FIXED" summary; added 4 rows to Fixed Bugs table. Updated ARCHITECTURE.md Swarm WS event table: `agent_status` corrected (sessionId field added), `handoff_completed` row added, `trigger_fired`/`trigger_status`/`rss_item` rows added. 132/132 tasks complete, zero open bugs.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/ARCHITECTURE.md, docs/memory/agents/documenter.md, docs/memory/ACTIVITY_LOG.md
-**Bugs fixed:** none (documentation pass Ã¢â‚¬â€ bugs were already fixed by debugger in Tasks #124-#130)
+**Bugs fixed:** none (documentation pass ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â bugs were already fixed by debugger in Tasks #124-#130)
 **Decisions made:** README.md not updated (no API or setup changes in V3.1 wave)
 **Blockers:** none
 **Next:** Project stable. All tasks complete. No pending documentation debt requiring immediate action.
 ---
-## 2026-04-02 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Task #132: AREA CHECKPOINT V3.1 PASS
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #132: AREA CHECKPOINT V3.1 PASS
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md header with 132/132 task count, AREA V3.1 CLOSED 2026-04-02, and Swarm V3 completeness note. Appended V3.1 full wave summary to CHANGELOG.md: 4 bugs fixed, 8 TEST GATE passes, 1 AREA CHECKPOINT PASS, 187/187 tests, build 477 modules. All PRD Section 11 WS contracts satisfied.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
-**Bugs fixed:** none (checkpoint only Ã¢â‚¬â€ bugs fixed in Tasks #124-#130)
+**Bugs fixed:** none (checkpoint only ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â bugs fixed in Tasks #124-#130)
 **Decisions made:** none
 **Blockers:** none
 **Next:** Project is at V3.1 stable. No open bugs. Future task: server-side trigger_fired/trigger_status emission (preemptive client handlers exist).
 ---
-## 2026-04-02 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Task #132 COMPLETED Ã¢â‚¬â€ AREA V3.1 CLOSED Ã¢â‚¬â€ Full V3.1 wave recap
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #132 COMPLETED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â AREA V3.1 CLOSED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Full V3.1 wave recap
 **Outcome:** COMPLETED
-**Summary:** TASK #132 AREA CHECKPOINT V3.1 returned PASS. All 132 tasks are now COMPLETED. TASK_PLAN.md header updated to final consolidated status: AREA V3.1 CLOSED, 187/187 tests pass, build 477 modules 0 errors, no open bugs. The entire V3.1 Swarm Bug Fix wave (#124Ã¢â‚¬â€œ#132) is closed.
+**Summary:** TASK #132 AREA CHECKPOINT V3.1 returned PASS. All 132 tasks are now COMPLETED. TASK_PLAN.md header updated to final consolidated status: AREA V3.1 CLOSED, 187/187 tests pass, build 477 modules 0 errors, no open bugs. The entire V3.1 Swarm Bug Fix wave (#124ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#132) is closed.
 **Files changed:** docs/TASK_PLAN.md (header line 5), docs/memory/agents/project-manager.md, docs/memory/ACTIVITY_LOG.md
-**Bugs fixed:** none (all 4 V3.1 bugs were fixed in prior tasks #124Ã¢â‚¬â€œ#131)
-**Decisions made:** No new tasks Ã¢â‚¬â€ project stable. V3.2 scope requires user decision.
+**Bugs fixed:** none (all 4 V3.1 bugs were fixed in prior tasks #124ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#131)
+**Decisions made:** No new tasks ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project stable. V3.2 scope requires user decision.
 **Blockers:** none
 **Next:** User defines V3.2 scope or new feature request. Deferred items: InterAgentFeed handoff_completed icon (cosmetic), server-side trigger_fired/trigger_status emission (future feature), HITL UI prompt, Puppeteer E2E regression suite.
 ---
-## 2026-04-02 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Task #130: BUG-INSPECTOR-1 Ã¢â‚¬â€ handleUpdateNode wired in SwarmCanvas
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #130: BUG-INSPECTOR-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â handleUpdateNode wired in SwarmCanvas
 **Outcome:** COMPLETED
 **Summary:** Mapped `handleUpdateNode(nodeId, patch)` useCallback added to SwarmCanvas.jsx (lines 96-103); documented the fulfilled prop contract between SwarmCanvas and AgentInspector. Updated CODE_MAP.md with new Function Graph entry, updated AgentInspector and SwarmCanvas entries. Appended CHANGELOG.md entry for Task #130.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
-**Bugs fixed:** BUG-INSPECTOR-1 (documented as resolved Ã¢â‚¬â€ `onUpdateNode` prop contract now fulfilled)
+**Bugs fixed:** BUG-INSPECTOR-1 (documented as resolved ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â `onUpdateNode` prop contract now fulfilled)
 **Decisions made:** none
 **Blockers:** none
 **Next:** Task #132 (unblocked per Task #131 TEST GATE PASS)
 ---
-## 2026-04-02 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #131: TEST GATE Ã¢â‚¬â€ SwarmCanvas onUpdateNode prop wiring
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #131: TEST GATE ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â SwarmCanvas onUpdateNode prop wiring
 **Outcome:** COMPLETED
-**Summary:** Static code audit confirmed handleUpdateNode is defined as useCallback in SwarmCanvas.jsx (lines 96Ã¢â‚¬â€œ103) performing shallow merge on node.data via setNodes, and is passed as `onUpdateNode` to AgentInspector at line 134. AgentInspector.jsx declares the prop in its function signature. Component body does not call onUpdateNode directly (read-only inspector), so no TypeError risk. 187/187 server tests pass.
+**Summary:** Static code audit confirmed handleUpdateNode is defined as useCallback in SwarmCanvas.jsx (lines 96ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“103) performing shallow merge on node.data via setNodes, and is passed as `onUpdateNode` to AgentInspector at line 134. AgentInspector.jsx declares the prop in its function signature. Component body does not call onUpdateNode directly (read-only inspector), so no TypeError risk. 187/187 server tests pass.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none
-**Decisions made:** Static code audit sufficient Ã¢â‚¬â€ no client test harness exists in this project
+**Decisions made:** Static code audit sufficient ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no client test harness exists in this project
 **Blockers:** none
 **Next:** TASK #132 is unblocked (hard gate cleared)
 ---
-## 2026-04-02 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Task #130 COMPLETED + Task #131 IN_PROGRESS
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #130 COMPLETED + Task #131 IN_PROGRESS
 **Outcome:** COMPLETED
 **Summary:** Marked TASK #130 (BUG-INSPECTOR-1) COMPLETED in TASK_PLAN.md header and advanced TASK #131 (TEST GATE) to IN_PROGRESS. Task count updated to 130/132. TASK #132 (AREA CHECKPOINT) remains BLOCKED pending TASK #131 PASS.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -2521,25 +2521,25 @@
 **Blockers:** none
 **Next:** qa-tester runs TASK #131 TEST GATE for BUG-INSPECTOR-1 (onUpdateNode prop wiring)
 ---
-## 2026-04-02 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #130: BUG-INSPECTOR-1 Ã¢â‚¬â€ onUpdateNode prop wired in SwarmCanvas
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #130: BUG-INSPECTOR-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â onUpdateNode prop wired in SwarmCanvas
 **Outcome:** COMPLETED
-**Summary:** AgentInspector.jsx declared `onUpdateNode` in its props signature but SwarmCanvas.jsx never defined nor passed it, leaving the prop permanently undefined. Defined `handleUpdateNode` useCallback in SwarmCanvas using React Flow's `setNodes` and passed it as `onUpdateNode` to AgentInspector. No UI changes Ã¢â‚¬â€ AgentInspector's current body never calls the prop; the fix wires the contract for future use. 187/187 tests pass.
-**Files changed:** client/src/canvas/SwarmCanvas.jsx (lines 96Ã¢â‚¬â€œ103 added handleUpdateNode; line 134 updated AgentInspector mount)
+**Summary:** AgentInspector.jsx declared `onUpdateNode` in its props signature but SwarmCanvas.jsx never defined nor passed it, leaving the prop permanently undefined. Defined `handleUpdateNode` useCallback in SwarmCanvas using React Flow's `setNodes` and passed it as `onUpdateNode` to AgentInspector. No UI changes ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â AgentInspector's current body never calls the prop; the fix wires the contract for future use. 187/187 tests pass.
+**Files changed:** client/src/canvas/SwarmCanvas.jsx (lines 96ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“103 added handleUpdateNode; line 134 updated AgentInspector mount)
 **Bugs fixed:** BUG-INSPECTOR-1 (onUpdateNode always undefined)
 **Decisions made:** Used patch parameter name (partial merge) consistent with SwarmContext conventions
 **Blockers:** none
 **Next:** qa-tester runs TASK #131 (TEST GATE for BUG-INSPECTOR-1)
 ---
-## 2026-04-02 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Task #128: BUG-TRIGGER-1 trigger WS handlers in useSwarm.js
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #128: BUG-TRIGGER-1 trigger WS handlers in useSwarm.js
 **Outcome:** COMPLETED
-**Summary:** Mapped 3 new WS message cases (trigger_fired, trigger_status, rss_item) added to useSwarm.js connectWs onmessage switch. updateTriggerState now has live WS-path callers. rss_item chain (TriggerManager._fireTrigger Ã¢â€ â€™ WS Ã¢â€ â€™ useSwarm Ã¢â€ â€™ updateTriggerState + addFeedEvent) is now complete. trigger_fired and trigger_status cases are preemptive (client handlers exist, no server emitter yet).
+**Summary:** Mapped 3 new WS message cases (trigger_fired, trigger_status, rss_item) added to useSwarm.js connectWs onmessage switch. updateTriggerState now has live WS-path callers. rss_item chain (TriggerManager._fireTrigger ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ WS ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ useSwarm ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ updateTriggerState + addFeedEvent) is now complete. trigger_fired and trigger_status cases are preemptive (client handlers exist, no server emitter yet).
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
-**Bugs fixed:** BUG-TRIGGER-1 (rss_item silently dropped Ã¢â‚¬â€ now handled)
+**Bugs fixed:** BUG-TRIGGER-1 (rss_item silently dropped ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â now handled)
 **Decisions made:** none
-**Blockers:** trigger_fired + trigger_status server-side emission still missing Ã¢â‚¬â€ documented as open gap
+**Blockers:** trigger_fired + trigger_status server-side emission still missing ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documented as open gap
 **Next:** trigger_fired/trigger_status server-side emission tasks if priority warrants; otherwise next bug or feature task
 ---
-## 2026-04-02 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #129: TEST GATE Ã¢â‚¬â€ useSwarm trigger event handlers
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #129: TEST GATE ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â useSwarm trigger event handlers
 **Outcome:** COMPLETED
 **Summary:** Static code audit of useSwarm.js confirmed all 3 new WS cases (trigger_fired, trigger_status, rss_item) are present and correctly wired. updateTriggerState is in the useCallback deps array. TriggerNode.jsx reads triggerStates from Zustand store. Server-side rss_item emission confirmed in TriggerManager._fireTrigger(). 187/187 server tests pass. Verdict: PASS.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
@@ -2549,25 +2549,25 @@
 **Next:** TASK #130 is unblocked (HARD gate cleared)
 ---
 
-## 2026-04-02 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Task #128 verified COMPLETED + Task #129 set IN_PROGRESS
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #128 verified COMPLETED + Task #129 set IN_PROGRESS
 **Outcome:** COMPLETED
-**Summary:** Confirmed TASK #128 (BUG-TRIGGER-1) is COMPLETED Ã¢â‚¬â€ debugger added trigger_fired, trigger_status, and rss_item cases to useSwarm.js onmessage switch; updateTriggerState and addFeedEvent wired per PRD spec. Updated TASK #129 (TEST GATE) from PENDING to IN_PROGRESS; qa-tester is now running the gate. Note: only rss_item has actual server-side emission today; trigger_fired/trigger_status handlers are forward-looking.
+**Summary:** Confirmed TASK #128 (BUG-TRIGGER-1) is COMPLETED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger added trigger_fired, trigger_status, and rss_item cases to useSwarm.js onmessage switch; updateTriggerState and addFeedEvent wired per PRD spec. Updated TASK #129 (TEST GATE) from PENDING to IN_PROGRESS; qa-tester is now running the gate. Note: only rss_item has actual server-side emission today; trigger_fired/trigger_status handlers are forward-looking.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/agents/project-manager.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none (status update only)
 **Decisions made:** none
 **Blockers:** none
-**Next:** qa-tester completes TASK #129 TEST GATE. On PASS Ã¢â€ â€™ debugger runs TASK #130 (BUG-INSPECTOR-1). On FAIL Ã¢â€ â€™ debugger returns to #128.
+**Next:** qa-tester completes TASK #129 TEST GATE. On PASS ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ debugger runs TASK #130 (BUG-INSPECTOR-1). On FAIL ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ debugger returns to #128.
 ---
-## 2026-04-02 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #128: BUG-TRIGGER-1 Ã¢â‚¬â€ trigger_fired / trigger_status / rss_item handlers in useSwarm.js
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #128: BUG-TRIGGER-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â trigger_fired / trigger_status / rss_item handlers in useSwarm.js
 **Outcome:** COMPLETED
 **Summary:** Added three missing WS event cases (trigger_fired, trigger_status, rss_item) to useSwarm.js onmessage switch. Also destructured updateTriggerState from the Zustand store (was missing from the hook). The rss_item case additionally calls addFeedEvent per PRD spec. TriggerNode.jsx can now display live trigger status changes.
 **Files changed:** client/src/hooks/useSwarm.js
-**Bugs fixed:** BUG-TRIGGER-1 Ã¢â‚¬â€ trigger WS events fell through to default:break, triggerStates store never updated
+**Bugs fixed:** BUG-TRIGGER-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â trigger WS events fell through to default:break, triggerStates store never updated
 **Decisions made:** Used msg.triggerId ?? msg.nodeId as the store key for trigger_fired/trigger_status (server may use either field); used fireCount increment via getState() snapshot for atomic-safe increment; added fired:true field alongside status:'fired' to match both TriggerNode.jsx (reads status) and PRD spec (reads fired boolean)
 **Blockers:** none
 **Next:** qa-tester runs TASK #129 TEST GATE for BUG-TRIGGER-1
 ---
-## 2026-04-02 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Task #126: BUG-HANDOFF-1 documentation
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #126: BUG-HANDOFF-1 documentation
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md with _onHandoff step 11 emission (handoff_completed), connectWs new case, addFeedEvent updated caller list. Appended CHANGELOG.md entry for Task #126 including full connection chain and impact analysis.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
@@ -2576,97 +2576,97 @@
 **Blockers:** none
 **Next:** qa-tester runs Task #127 TEST GATE; on PASS Task #128 continues.
 ---
-## 2026-04-02 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Task #126 verified COMPLETED + Task #127 set IN_PROGRESS
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #126 verified COMPLETED + Task #127 set IN_PROGRESS
 **Outcome:** COMPLETED
-**Summary:** Confirmed TASK #126 (BUG-HANDOFF-1) is COMPLETED as self-marked by debugger Ã¢â‚¬â€ handoff_completed WS event added to SwarmEngine._onHandoff() and case handler added to useSwarm.js. Updated TASK #127 (TEST GATE) from PENDING to IN_PROGRESS; qa-tester is now running the gate. TASK_PLAN.md header updated to reflect current wave state. Tasks #128Ã¢â‚¬â€œ#132 remain BLOCKED on the HARD gate chain.
+**Summary:** Confirmed TASK #126 (BUG-HANDOFF-1) is COMPLETED as self-marked by debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â handoff_completed WS event added to SwarmEngine._onHandoff() and case handler added to useSwarm.js. Updated TASK #127 (TEST GATE) from PENDING to IN_PROGRESS; qa-tester is now running the gate. TASK_PLAN.md header updated to reflect current wave state. Tasks #128ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#132 remain BLOCKED on the HARD gate chain.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/agents/project-manager.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none (status update only)
-**Decisions made:** TASK #126 body already correctly self-marked COMPLETED by debugger Ã¢â‚¬â€ only header and #127 Status required editing
+**Decisions made:** TASK #126 body already correctly self-marked COMPLETED by debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â only header and #127 Status required editing
 **Blockers:** none
-**Next:** qa-tester completes TASK #127 TEST GATE. On PASS Ã¢â€ â€™ debugger runs TASK #128 (BUG-TRIGGER-1). On FAIL Ã¢â€ â€™ debugger returns to #126.
+**Next:** qa-tester completes TASK #127 TEST GATE. On PASS ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ debugger runs TASK #128 (BUG-TRIGGER-1). On FAIL ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ debugger returns to #126.
 ---
-## 2026-04-02 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Task #124: BUG-SESSION-1 Ã¢â‚¬â€ agent_status sessionId Fix
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #124: BUG-SESSION-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â agent_status sessionId Fix
 **Outcome:** COMPLETED
-**Summary:** Documented the BUG-SESSION-1 fix across CODE_MAP.md and CHANGELOG.md. All 8 agent_status WS emission sites in SwarmEngine now include sessionId; the full chain SwarmEngine Ã¢â€ â€™ WS Ã¢â€ â€™ useSwarm Ã¢â€ â€™ updateAgentState Ã¢â€ â€™ AgentInspector "Open Terminal" is now mapped. PRD Section 11 known bug #1 formally resolved.
+**Summary:** Documented the BUG-SESSION-1 fix across CODE_MAP.md and CHANGELOG.md. All 8 agent_status WS emission sites in SwarmEngine now include sessionId; the full chain SwarmEngine ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ WS ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ useSwarm ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ updateAgentState ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ AgentInspector "Open Terminal" is now mapped. PRD Section 11 known bug #1 formally resolved.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none (documentation task)
-**Decisions made:** Grouped 8 emission sites under 4 method entries; documented client-side as "no code change required Ã¢â‚¬â€ fix propagates automatically from server"
+**Decisions made:** Grouped 8 emission sites under 4 method entries; documented client-side as "no code change required ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â fix propagates automatically from server"
 **Blockers:** none
 **Next:** qa-tester runs Task #125 (TEST GATE: BUG-SESSION-1 verification)
 ---
-## 2026-04-02 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Task #124 verified COMPLETED + V3.1 area status report
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #124 verified COMPLETED + V3.1 area status report
 **Outcome:** COMPLETED
-**Summary:** Confirmed TASK #124 (BUG-SESSION-1) is COMPLETED as self-marked by debugger. TASK #125 (TEST GATE) is the immediate next action Ã¢â‚¬â€ qa-tester must run it. Tasks #126Ã¢â‚¬â€œ#132 are all PENDING/BLOCKED on the HARD gate chain. TASK_PLAN.md header updated to reflect accurate in-progress state.
+**Summary:** Confirmed TASK #124 (BUG-SESSION-1) is COMPLETED as self-marked by debugger. TASK #125 (TEST GATE) is the immediate next action ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester must run it. Tasks #126ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#132 are all PENDING/BLOCKED on the HARD gate chain. TASK_PLAN.md header updated to reflect accurate in-progress state.
 **Files changed:** docs/TASK_PLAN.md (header), docs/memory/agents/project-manager.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none
-**Decisions made:** Header-only update to TASK_PLAN.md Ã¢â‚¬â€ body statuses were already correct
+**Decisions made:** Header-only update to TASK_PLAN.md ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â body statuses were already correct
 **Blockers:** none
-**Next:** qa-tester runs TASK #125 (TEST GATE Ã¢â‚¬â€ agent_status sessionId field verification). Expected PASS. On PASS, debugger runs TASK #126 (BUG-HANDOFF-1).
+**Next:** qa-tester runs TASK #125 (TEST GATE ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â agent_status sessionId field verification). Expected PASS. On PASS, debugger runs TASK #126 (BUG-HANDOFF-1).
 ---
-## 2026-04-02 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #124: BUG-SESSION-1 Ã¢â‚¬â€ Add sessionId to agent_status WS event
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #124: BUG-SESSION-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Add sessionId to agent_status WS event
 **Outcome:** COMPLETED
 **Summary:** Fixed 8 `_wsBroadcast` call sites in SwarmEngine.js that emitted `agent_status` without `sessionId`. Also updated useSwarm.js to forward `sessionId` from the WS message into the Zustand agentState. These two omissions together caused AgentInspector's "Open Terminal" button to never appear during live execution. 187/187 tests pass.
 **Files changed:** server/services/SwarmEngine.js, client/src/hooks/useSwarm.js
-**Bugs fixed:** BUG-SESSION-1 Ã¢â‚¬â€ sessionId missing from all agent_status WS broadcasts
+**Bugs fixed:** BUG-SESSION-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â sessionId missing from all agent_status WS broadcasts
 **Decisions made:** Used optional spread pattern in useSwarm.js to avoid setting sessionId=undefined for events without it
 **Blockers:** none
 **Next:** qa-tester runs TASK #125 (TEST GATE: BUG-SESSION-1) to verify Open Terminal button end-to-end
 ---
-## 2026-04-02 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #126: BUG-HANDOFF-1 Ã¢â‚¬â€ handoff_completed event
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #126: BUG-HANDOFF-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â handoff_completed event
 **Outcome:** COMPLETED
 **Summary:** Added `handoff_completed` WS broadcast as step 11 in SwarmEngine._onHandoff() and added `case 'handoff_completed'` in useSwarm.js onmessage switch. The event was specified by FR-V3-43 but never implemented. 187/187 tests pass, 0 regressions.
-**Files changed:** server/services/SwarmEngine.js (lines 388Ã¢â‚¬â€œ395 added), client/src/hooks/useSwarm.js (lines 44Ã¢â‚¬â€œ46 added)
-**Bugs fixed:** BUG-HANDOFF-1 Ã¢â‚¬â€ handoff_completed WS event never broadcast; client had no handler for it
-**Decisions made:** Broadcast uses only { type, sourceNodeId, targetNodeId } per FR-V3-43 spec Ã¢â‚¬â€ no extra fields
+**Files changed:** server/services/SwarmEngine.js (lines 388ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“395 added), client/src/hooks/useSwarm.js (lines 44ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“46 added)
+**Bugs fixed:** BUG-HANDOFF-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â handoff_completed WS event never broadcast; client had no handler for it
+**Decisions made:** Broadcast uses only { type, sourceNodeId, targetNodeId } per FR-V3-43 spec ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no extra fields
 **Blockers:** none
 **Next:** qa-tester runs TASK #127 (TEST GATE: BUG-HANDOFF-1)
 ---
-## 2026-04-02 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Tasks #124Ã¢â‚¬â€œ#132: V3.1 Swarm Bug Fix Wave registered
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #124ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#132: V3.1 Swarm Bug Fix Wave registered
 **Outcome:** COMPLETED
-**Summary:** Read PRD Section 11 + Section 11.1 and all four affected source files to verify the 4 known bugs. Appended a new AREA V3.1 section to TASK_PLAN.md with 9 tasks: 4 debugger fix tasks (#124, #126, #128, #130) + 4 hard-gate TEST GATE tasks (#125, #127, #129, #131) + 1 AREA CHECKPOINT (#132). Header updated to reflect V3.1 wave open. Bug-to-task mapping: BUG-SESSION-1Ã¢â€ â€™#124/#125, BUG-HANDOFF-1Ã¢â€ â€™#126/#127, BUG-TRIGGER-1Ã¢â€ â€™#128/#129, BUG-INSPECTOR-1Ã¢â€ â€™#130/#131.
+**Summary:** Read PRD Section 11 + Section 11.1 and all four affected source files to verify the 4 known bugs. Appended a new AREA V3.1 section to TASK_PLAN.md with 9 tasks: 4 debugger fix tasks (#124, #126, #128, #130) + 4 hard-gate TEST GATE tasks (#125, #127, #129, #131) + 1 AREA CHECKPOINT (#132). Header updated to reflect V3.1 wave open. Bug-to-task mapping: BUG-SESSION-1ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢#124/#125, BUG-HANDOFF-1ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢#126/#127, BUG-TRIGGER-1ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢#128/#129, BUG-INSPECTOR-1ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢#130/#131.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
 **Bugs fixed:** none (task registration only)
-**Decisions made:** Numbered new tasks #124Ã¢â‚¬â€œ#132 in continuation of historical sequence; TEST GATE tasks use HARD gate type enforcing sequential unblocking; AREA CHECKPOINT #132 depends on all four TEST GATE tasks
+**Decisions made:** Numbered new tasks #124ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#132 in continuation of historical sequence; TEST GATE tasks use HARD gate type enforcing sequential unblocking; AREA CHECKPOINT #132 depends on all four TEST GATE tasks
 **Blockers:** none
-**Next:** debugger runs TASK #124 (BUG-SESSION-1 fix Ã¢â‚¬â€ highest priority, blocks "Open Terminal" button)
+**Next:** debugger runs TASK #124 (BUG-SESSION-1 fix ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â highest priority, blocks "Open Terminal" button)
 ---
-## 2026-04-02 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ PRD Section 11 documentation registered in DOC_STATUS.md
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PRD Section 11 documentation registered in DOC_STATUS.md
 **Outcome:** COMPLETED
 **Summary:** prd-writer added Section 11 (Component Specifications) and Section 11.1 (WS Event Field Reference) to docs/PRD.md, documenting 12 Swarm components and formally recording 4 known bugs (BUG-PRD-1 through BUG-PRD-4). DOC_STATUS.md updated: PRD.md row added to health table (UP_TO_DATE), new Known Bugs section created for the 4 spec'd-but-unfixed bugs, Documentation Debt extended with a fix-task placeholder.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
-**Bugs fixed:** none (documentation task Ã¢â‚¬â€ bugs are documented in PRD, not yet fixed in code)
+**Bugs fixed:** none (documentation task ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â bugs are documented in PRD, not yet fixed in code)
 **Decisions made:** PRD.md added to Documentation Health table as a tracked artifact; Known Bugs table introduced to distinguish documented-but-unfixed bugs from Fixed Bugs table
 **Blockers:** none
-**Next:** debugger should address BUG-PRD-1 (HIGH: missing sessionId in agent_status WS event) Ã¢â‚¬â€ project-manager to create fix tasks for BUG-PRD-1 through BUG-PRD-4
+**Next:** debugger should address BUG-PRD-1 (HIGH: missing sessionId in agent_status WS event) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager to create fix tasks for BUG-PRD-1 through BUG-PRD-4
 ---
-## 2026-04-02 Ã¢â‚¬â€ prd-writer Ã¢â‚¬â€ Section 11 Component Specifications added to PRD
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â prd-writer ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Section 11 Component Specifications added to PRD
 **Outcome:** COMPLETED
 **Summary:** Read all 17 Swarm source files (server + client) and appended Section 11 (Component Specifications) to docs/PRD.md. Documented 12 components in full spec format plus a WS event field reference (Section 11.1) that maps every server-emitted event to its actual fields. Four known bugs from prior analysis sessions were formally documented within the spec: missing sessionId in agent_status, unimplemented handoff_completed, unhandled trigger_fired/trigger_status on the client, and undefined onUpdateNode prop in SwarmCanvas.
 **Files changed:** docs/PRD.md (Section 11 + Section 11.1 appended)
 **Bugs fixed:** none (documentation task)
-**Decisions made:** Numbered the new section "Section 11 Ã¢â‚¬â€ Component Specifications" appended after Appendix B to avoid renumbering the existing Section 11 (Open Questions); added Section 11.1 for WS event reference as a sub-section.
+**Decisions made:** Numbered the new section "Section 11 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Component Specifications" appended after Appendix B to avoid renumbering the existing Section 11 (Open Questions); added Section 11.1 for WS event reference as a sub-section.
 **Blockers:** none
 **Next:** QA-tester can now use Section 11 specs to write TEST GATE test cases for every Swarm component; debugger can use the Known Issues entries to prioritize fixes.
 ---
-## 2026-03-31 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Tasks #116Ã¢â‚¬â€œ#123: Swarm Bug Wave + Audit Wave ALL COMPLETED
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #116ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#123: Swarm Bug Wave + Audit Wave ALL COMPLETED
 **Outcome:** COMPLETED
-**Summary:** All 8 Swarm tasks (#116Ã¢â‚¬â€œ#123) marked COMPLETED. Final verified state: 187/187 tests pass, build 477 modules 0 errors, Puppeteer confirms click-on-node opens AgentInspector with name/type/system prompt, nodes visible and centered after generation, workflowDef persists on navigation, Open Terminal button implemented in AgentInspector. TASK_PLAN.md header updated to 123/123 ALL COMPLETED.
+**Summary:** All 8 Swarm tasks (#116ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#123) marked COMPLETED. Final verified state: 187/187 tests pass, build 477 modules 0 errors, Puppeteer confirms click-on-node opens AgentInspector with name/type/system prompt, nodes visible and centered after generation, workflowDef persists on navigation, Open Terminal button implemented in AgentInspector. TASK_PLAN.md header updated to 123/123 ALL COMPLETED.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
-**Bugs fixed:** BUG-SWARM-1/2/3/4 (Tasks #116Ã¢â‚¬â€œ#118), BUG-AUDIT-1/2/3/4 (Tasks #120Ã¢â‚¬â€œ#122) Ã¢â‚¬â€ all confirmed resolved
+**Bugs fixed:** BUG-SWARM-1/2/3/4 (Tasks #116ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#118), BUG-AUDIT-1/2/3/4 (Tasks #120ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#122) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all confirmed resolved
 **Decisions made:** none
 **Blockers:** none
-**Next:** nothing Ã¢â‚¬â€ all tasks complete, project at v3.0.0 fully stable
+**Next:** nothing ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all tasks complete, project at v3.0.0 fully stable
 ---
-## 2026-03-31 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Tasks #120Ã¢â‚¬â€œ#123: Swarm Audit Bug Wave Registered
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #120ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#123: Swarm Audit Bug Wave Registered
 **Outcome:** COMPLETED
-**Summary:** Registered 4 tasks from a code audit of the Swarm section. Tasks #120 (BUG-AUDIT-1) and #121 (BUG-AUDIT-2+3) discovered already COMPLETED per ACTIVITY_LOG evidence (frontend-dev fixed them before registration). Task #122 (BUG-AUDIT-4: useInbox dead code in SwarmView) is PENDING Ã¢â‚¬â€ frontend-dev must add useInbox(activeExecutionId) call. Task #123 (QA regression) is PENDING, depends on #120Ã¢â‚¬â€œ#122.
+**Summary:** Registered 4 tasks from a code audit of the Swarm section. Tasks #120 (BUG-AUDIT-1) and #121 (BUG-AUDIT-2+3) discovered already COMPLETED per ACTIVITY_LOG evidence (frontend-dev fixed them before registration). Task #122 (BUG-AUDIT-4: useInbox dead code in SwarmView) is PENDING ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev must add useInbox(activeExecutionId) call. Task #123 (QA regression) is PENDING, depends on #120ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#122.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
-**Bugs fixed:** none directly Ã¢â‚¬â€ task registration only
+**Bugs fixed:** none directly ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â task registration only
 **Decisions made:** Tasks #120/#121 marked COMPLETED immediately based on existing ACTIVITY_LOG entry confirming frontend-dev already applied fixes
 **Blockers:** none
-**Next:** frontend-dev runs Task #122 (SwarmView.jsx Ã¢â‚¬â€ add useInbox hook call); then qa-tester runs Task #123 regression suite
+**Next:** frontend-dev runs Task #122 (SwarmView.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â add useInbox hook call); then qa-tester runs Task #123 regression suite
 ---
-## 2026-03-31 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Swarm Audit: 4 bugs found, BUG-AUDIT-1/2/3 FIXED, BUG-AUDIT-4 IN PROGRESS
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Swarm Audit: 4 bugs found, BUG-AUDIT-1/2/3 FIXED, BUG-AUDIT-4 IN PROGRESS
 **Outcome:** PARTIAL
 **Summary:** Post-release Swarm audit found 4 bugs (BUG-AUDIT-1 CRITICAL: AgentInspector hidden in idle; BUG-AUDIT-2 CRITICAL + BUG-AUDIT-3 HIGH: PtyExplosion unreachable, no Open Terminal button; BUG-AUDIT-4 MEDIUM: useInbox.js not mounted). BUG-AUDIT-1/2/3 already fixed by frontend-dev (Tasks #120-121). BUG-AUDIT-4 still in progress (Task #122). DOC_STATUS.md updated: Open Bugs table shows only BUG-AUDIT-4; Fixed Bugs table extended with BUG-AUDIT-1/2/3 entries; header counts and open-bug total corrected.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md
@@ -2675,90 +2675,90 @@
 **Blockers:** none
 **Next:** Task #122 (useInbox.js mounting fix) must complete; documenter to update DOC_STATUS.md BUG-AUDIT-4 entry to FIXED once Task #122 is merged
 ---
-## 2026-03-31 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ BUG-AUDIT-1 + BUG-AUDIT-2+3: AgentInspector always visible + Open Terminal button
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â BUG-AUDIT-1 + BUG-AUDIT-2+3: AgentInspector always visible + Open Terminal button
 **Outcome:** COMPLETED
 **Summary:** Fixed two audit bugs in the Swarm section. AgentInspector is now always rendered (was hidden in idle behind showSidePanels gate). Added "Open Terminal" button in AgentInspector that calls setPtyExplosionNodeId when agentState.sessionId is present. Build: 477 modules, 0 errors.
 **Files changed:** client/src/canvas/SwarmCanvas.jsx, client/src/canvas/AgentInspector.jsx
 **Bugs fixed:** BUG-AUDIT-1 (AgentInspector hidden in idle), BUG-AUDIT-2+3 (PtyExplosion unreachable, no Open Terminal button)
-**Decisions made:** AgentInspector always rendered (not conditionally on selectedNodeId) Ã¢â‚¬â€ the component already has its own "Select a node to inspect" empty state
+**Decisions made:** AgentInspector always rendered (not conditionally on selectedNodeId) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the component already has its own "Select a node to inspect" empty state
 **Blockers:** none
 **Next:** qa-tester verification of inspector visibility and PTY button in idle vs running states
 ---
-## 2026-03-31 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Tasks #116-118: Swarm Bug-Fix Wave documentation closure
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #116-118: Swarm Bug-Fix Wave documentation closure
 **Outcome:** COMPLETED
 **Summary:** Tasks #116-118 fixed 4 Swarm section bugs (BUG-SWARM-1 through BUG-SWARM-4). DOC_STATUS.md updated: open bugs count reset to 0, all 4 entries moved to Fixed Bugs table with FIXED status and root cause notes. Inline comments for SwarmCanvas.jsx (fitView rationale), SwarmContext.jsx (workflowDef persistence note), and useSwarm.js (startExecution null guard) reflected in health table. PROGRESS.md updated with #116-118 completion entry. ACTIVITY_LOG.md entry appended.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
 **Bugs fixed:** BUG-SWARM-1, BUG-SWARM-2, BUG-SWARM-3, BUG-SWARM-4 (documentation updated to reflect code fixes)
 **Decisions made:** none
 **Blockers:** none
-**Next:** Task #119 (QA regression check via Puppeteer) Ã¢â‚¬â€ qa-tester should verify all 4 fixes hold visually
+**Next:** Task #119 (QA regression check via Puppeteer) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester should verify all 4 fixes hold visually
 ---
-## 2026-03-31 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Tasks #116/#117/#118: Swarm Bug Wave CONFIRMED COMMITTED
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #116/#117/#118: Swarm Bug Wave CONFIRMED COMMITTED
 **Outcome:** COMPLETED
 **Summary:** User confirmed all 4 Swarm bug fixes (BUG-SWARM-1 through BUG-SWARM-4) are committed in f705c96. Tasks #116 (opacity + fitView), #117 (workflowDef persistence), #118 (null guard on workflowId) confirmed COMPLETED. TASK_PLAN.md header updated: POST-RELEASE BUG WAVE #2 closed, all 119 tasks COMPLETED, no known open bugs.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
-**Bugs fixed:** BUG-SWARM-1, BUG-SWARM-2, BUG-SWARM-3, BUG-SWARM-4 Ã¢â‚¬â€ all confirmed committed in f705c96
+**Bugs fixed:** BUG-SWARM-1, BUG-SWARM-2, BUG-SWARM-3, BUG-SWARM-4 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all confirmed committed in f705c96
 **Decisions made:** none
 **Blockers:** none
-**Next:** Task #119 (QA regression check) remains PENDING Ã¢â‚¬â€ qa-tester should verify all 4 fixes hold via Puppeteer
+**Next:** Task #119 (QA regression check) remains PENDING ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester should verify all 4 fixes hold via Puppeteer
 ---
-## 2026-03-31 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Tasks #116Ã¢â‚¬â€œ#119: QA Swarm Bug Wave registered
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #116ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#119: QA Swarm Bug Wave registered
 **Outcome:** COMPLETED
-**Summary:** QA inspection of the Swarm section found 4 bugs (BUG-SWARM-1 through BUG-SWARM-4). Tasks #116Ã¢â‚¬â€œ#118 registered as COMPLETED (fixes were already executing in parallel). Task #119 registered as PENDING Ã¢â‚¬â€ regression QA check blocking on #116Ã¢â‚¬â€œ#118. TASK_PLAN.md header updated to reflect the new wave.
+**Summary:** QA inspection of the Swarm section found 4 bugs (BUG-SWARM-1 through BUG-SWARM-4). Tasks #116ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#118 registered as COMPLETED (fixes were already executing in parallel). Task #119 registered as PENDING ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â regression QA check blocking on #116ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#118. TASK_PLAN.md header updated to reflect the new wave.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
-**Bugs fixed:** none directly Ã¢â‚¬â€ task registration only
+**Bugs fixed:** none directly ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â task registration only
 **Decisions made:** Tasks #116/#117/#118 marked COMPLETED per user report that fixes were already in flight; Task #119 added as PENDING QA regression check
 **Blockers:** none
-**Next:** qa-tester runs Task #119 to verify all 4 Swarm fixes hold Ã¢â‚¬â€ use Puppeteer for visual canvas check
+**Next:** qa-tester runs Task #119 to verify all 4 Swarm fixes hold ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â use Puppeteer for visual canvas check
 ---
-## 2026-03-31 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ QA Swarm Inspection: 4 bugs documented in CODE_MAP.md + CHANGELOG.md
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â QA Swarm Inspection: 4 bugs documented in CODE_MAP.md + CHANGELOG.md
 **Outcome:** COMPLETED
-**Summary:** Recorded QA Swarm Inspection findings. Inspected 5 files (SwarmView.jsx, SwarmCanvas.jsx, PromptToFlowBar.jsx, useSwarm.js, HitlInbox.jsx) Ã¢â‚¬â€ no code modified. Added Open Bug Registry table to CODE_MAP.md, added BUG-SWARM-2/4 notes to individual function entries (handleGenerate, startExecution), appended QA Inspection entry to CHANGELOG.md with full bug registry and impact analysis.
+**Summary:** Recorded QA Swarm Inspection findings. Inspected 5 files (SwarmView.jsx, SwarmCanvas.jsx, PromptToFlowBar.jsx, useSwarm.js, HitlInbox.jsx) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no code modified. Added Open Bug Registry table to CODE_MAP.md, added BUG-SWARM-2/4 notes to individual function entries (handleGenerate, startExecution), appended QA Inspection entry to CHANGELOG.md with full bug registry and impact analysis.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
 **Bugs fixed:** none (code-mapper documents, does not fix)
-**Decisions made:** BUG-SWARM-2 identified as root cause of BUG-SWARM-1 Ã¢â‚¬â€ documented as coupled
+**Decisions made:** BUG-SWARM-2 identified as root cause of BUG-SWARM-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documented as coupled
 **Blockers:** none
-**Next:** Bug fix wave for BUG-SWARM-1 through BUG-SWARM-4 Ã¢â‚¬â€ frontend-dev
+**Next:** Bug fix wave for BUG-SWARM-1 through BUG-SWARM-4 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev
 ---
-## 2026-03-31 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Tasks #116+#117: BUG-SWARM-2 + BUG-SWARM-1 fixed
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #116+#117: BUG-SWARM-2 + BUG-SWARM-1 fixed
 **Outcome:** COMPLETED
-**Summary:** Fixed two linked Swarm canvas bugs. BUG-SWARM-2: removed opacity:0 and staggered animation from node style prop in PromptToFlowBar.jsx Ã¢â‚¬â€ this was corrupting React Flow bounding box measurements and causing fitView to misfire. BUG-SWARM-1: added useReactFlow() imperative fitView call in SwarmCanvas.jsx useEffect (setTimeout 50ms after setNodes/setEdges) so nodes are correctly centered after workflow generation. Also removed unused @keyframes fadeIn from index.css.
+**Summary:** Fixed two linked Swarm canvas bugs. BUG-SWARM-2: removed opacity:0 and staggered animation from node style prop in PromptToFlowBar.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â this was corrupting React Flow bounding box measurements and causing fitView to misfire. BUG-SWARM-1: added useReactFlow() imperative fitView call in SwarmCanvas.jsx useEffect (setTimeout 50ms after setNodes/setEdges) so nodes are correctly centered after workflow generation. Also removed unused @keyframes fadeIn from index.css.
 **Files changed:** client/src/canvas/PromptToFlowBar.jsx, client/src/canvas/SwarmCanvas.jsx, client/src/index.css
 **Bugs fixed:** BUG-SWARM-2 (opacity:0 in node style), BUG-SWARM-1 (fitView not firing after node mount)
-**Decisions made:** Remove fadeIn keyframe from index.css Ã¢â‚¬â€ only referenced by buggy animation code, no other usages
+**Decisions made:** Remove fadeIn keyframe from index.css ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â only referenced by buggy animation code, no other usages
 **Blockers:** none
 **Next:** BUG-SWARM-3 and BUG-SWARM-4 still open (tasks #118-119).
 ---
 ---
-## 2026-03-31 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ QA Swarm Inspection: 4 open bugs found, Tasks #116-118 IN PROGRESS
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â QA Swarm Inspection: 4 open bugs found, Tasks #116-118 IN PROGRESS
 **Outcome:** PARTIAL
-**Summary:** Post-release QA inspection of the Swarm section found 4 bugs. BUG-SWARM-1 and BUG-SWARM-2 (HIGH) Ã¢â‚¬â€ nodes invisible after generation due to opacity:0 in node style. BUG-SWARM-3 (MEDIUM) Ã¢â‚¬â€ workflowDef loses persistence across navigation. BUG-SWARM-4 (LOW) Ã¢â‚¬â€ missing null guard in useSwarm.startExecution. Fixes are running in parallel as Tasks #116 (SWARM-1+2), #117 (SWARM-3), #118 (SWARM-4). DOC_STATUS.md updated to record open bug count and task status. No source code modified.
+**Summary:** Post-release QA inspection of the Swarm section found 4 bugs. BUG-SWARM-1 and BUG-SWARM-2 (HIGH) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â nodes invisible after generation due to opacity:0 in node style. BUG-SWARM-3 (MEDIUM) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â workflowDef loses persistence across navigation. BUG-SWARM-4 (LOW) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â missing null guard in useSwarm.startExecution. Fixes are running in parallel as Tasks #116 (SWARM-1+2), #117 (SWARM-3), #118 (SWARM-4). DOC_STATUS.md updated to record open bug count and task status. No source code modified.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md
-**Bugs fixed:** none (documentation update only Ã¢â‚¬â€ fixes in progress)
+**Bugs fixed:** none (documentation update only ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â fixes in progress)
 **Decisions made:** none
 **Blockers:** none
 **Next:** Await completion of Tasks #116-118 (Swarm bug fixes). Post-fix: run regression suite, update DOC_STATUS.md open bug count to 0, update PROGRESS.md.
 ---
 ---
-## 2026-03-31 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ v3.0.0 RELEASE: QA CLEAN, zero bugs, 187/187 tests pass, all 115 tasks completed.
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â v3.0.0 RELEASE: QA CLEAN, zero bugs, 187/187 tests pass, all 115 tasks completed.
 **Outcome:** COMPLETED
 **Summary:** Final QA inspection confirmed zero bugs. v3.0.0 is production-ready. DOC_STATUS.md updated with Release Status block and revised header; README.md updated with Current Version line.
 **Files changed:** docs/memory/DOC_STATUS.md, README.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none
 **Decisions made:** none
 **Blockers:** none
-**Next:** nothing Ã¢â‚¬â€ v3.0.0 release complete.
+**Next:** nothing ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â v3.0.0 release complete.
 ---
-## 2026-03-31 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ v3.0.0 FINAL RELEASE CLOSURE
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â v3.0.0 FINAL RELEASE CLOSURE
 **Outcome:** COMPLETED
-**Summary:** Final QA inspection by qa-tester returned CLEAN Ã¢â‚¬â€ 187/187 tests pass, zero bugs, all 115 tasks COMPLETED. TASK_PLAN.md header updated to reflect official v3.0.0 release. Project is closed with no open work items, no known defects, and full documentation coverage.
+**Summary:** Final QA inspection by qa-tester returned CLEAN ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â 187/187 tests pass, zero bugs, all 115 tasks COMPLETED. TASK_PLAN.md header updated to reflect official v3.0.0 release. Project is closed with no open work items, no known defects, and full documentation coverage.
 **Files changed:** docs/TASK_PLAN.md (header status line updated to v3.0.0 RELEASED), docs/memory/ACTIVITY_LOG.md (this entry), docs/memory/agents/project-manager.md (final session log)
 **Bugs fixed:** none
-**Decisions made:** v3.0.0 declared RELEASED as of 2026-03-31 Ã¢â‚¬â€ all gates passed (QA clean, 187/187 tests, 115/115 tasks, zero open bugs)
+**Decisions made:** v3.0.0 declared RELEASED as of 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all gates passed (QA clean, 187/187 tests, 115/115 tasks, zero open bugs)
 **Blockers:** none
 **Next:** Project complete. No remaining tasks. Optional follow-up: devops git tag v3.0.0, documenter release notes if desired.
 ---
-## 2026-03-31 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #114+#115: Fix BUG-TOOLBAR-2 + BUG-TOOLBAR-3
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #114+#115: Fix BUG-TOOLBAR-2 + BUG-TOOLBAR-3
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md and CHANGELOG.md to reflect the two toolbar bug fixes. BUG-TOOLBAR-2 (useSwarm.js cleanup useEffect re-keyed from [] to [workflowId]) and BUG-TOOLBAR-3 (handlePause/handleResume null-guard in SwarmView.jsx) are now fully documented with root cause, fix, and connection impact notes.
 **Files changed:** docs/memory/CODE_MAP.md (header, Module Index rows, useSwarm + SwarmView function entries), docs/memory/CHANGELOG.md (new entry appended)
@@ -2767,65 +2767,65 @@
 **Blockers:** none
 **Next:** v3.0.0 complete. All 115 tasks documented in CODE_MAP + CHANGELOG. No remaining gaps.
 ---
-## 2026-03-31 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Tasks #114-#115: Final LOW-priority toolbar bug fixes
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #114-#115: Final LOW-priority toolbar bug fixes
 **Outcome:** COMPLETED
-**Summary:** Tasks #114 (BUG-TOOLBAR-2: stale WS not closed on workflow regen) and #115 (BUG-TOOLBAR-3: Stop+Pause/Resume race producing /null/ URL) fixed. All 115 tasks now COMPLETED; 187/187 tests pass; zero open bugs. DOC_STATUS.md header and PROGRESS.md row updated to reflect 115/115. No changes required to README.md, ARCHITECTURE.md, or API.md Ã¢â‚¬â€ the fixes are internal implementation details with no user-facing API or config surface changes.
+**Summary:** Tasks #114 (BUG-TOOLBAR-2: stale WS not closed on workflow regen) and #115 (BUG-TOOLBAR-3: Stop+Pause/Resume race producing /null/ URL) fixed. All 115 tasks now COMPLETED; 187/187 tests pass; zero open bugs. DOC_STATUS.md header and PROGRESS.md row updated to reflect 115/115. No changes required to README.md, ARCHITECTURE.md, or API.md ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the fixes are internal implementation details with no user-facing API or config surface changes.
 **Files changed:** client/src/hooks/useSwarm.js (cleanup useEffect keyed on workflowId), client/src/views/SwarmView.jsx (null-guard in handlePause/handleResume), docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
 **Bugs fixed:** BUG-TOOLBAR-2 (stale WebSocket on workflow regeneration), BUG-TOOLBAR-3 (null executionId race in pause/resume)
 **Decisions made:** none
 **Blockers:** none
 **Next:** v3.0.0 is complete and clean. No remaining open tasks.
 ---
-## 2026-03-31 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ TASK_PLAN.md sync: Tasks #32-#41 + #113-#115 added
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â TASK_PLAN.md sync: Tasks #32-#41 + #113-#115 added
 **Outcome:** COMPLETED
-**Summary:** Corrected stale PENDING entries for tasks #32Ã¢â‚¬â€œ#41 (all completed in prior sessions, verified via PROGRESS.md and qa-tester code inspection). Task #41 (Post-Fix Regression QA) marked COMPLETED Ã¢â‚¬â€ 187/187 tests passed, 9 test files, all green. Task #112 confirmed COMPLETED (already set). Task #113 (BUG-TOOLBAR-1 + BUG-TOOLBAR-4) added as COMPLETED. Tasks #114 and #115 added as PENDING LOW-priority items (BUG-TOOLBAR-2: old WS not closed on regen; BUG-TOOLBAR-3: Stop/Pause race producing /null/ URL). As of 2026-03-31: tasks #1Ã¢â‚¬â€œ#113 all COMPLETED, 187/187 tests pass, only #114 and #115 remain PENDING (low priority).
+**Summary:** Corrected stale PENDING entries for tasks #32ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#41 (all completed in prior sessions, verified via PROGRESS.md and qa-tester code inspection). Task #41 (Post-Fix Regression QA) marked COMPLETED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â 187/187 tests passed, 9 test files, all green. Task #112 confirmed COMPLETED (already set). Task #113 (BUG-TOOLBAR-1 + BUG-TOOLBAR-4) added as COMPLETED. Tasks #114 and #115 added as PENDING LOW-priority items (BUG-TOOLBAR-2: old WS not closed on regen; BUG-TOOLBAR-3: Stop/Pause race producing /null/ URL). As of 2026-03-31: tasks #1ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#113 all COMPLETED, 187/187 tests pass, only #114 and #115 remain PENDING (low priority).
 **Files changed:** docs/TASK_PLAN.md
 **Bugs fixed:** none (status sync only)
-**Decisions made:** Tasks #32Ã¢â‚¬â€œ#41 retroactively marked COMPLETED per PROGRESS.md verification. Tasks #114-#115 formalized as tracked low-priority items.
+**Decisions made:** Tasks #32ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#41 retroactively marked COMPLETED per PROGRESS.md verification. Tasks #114-#115 formalized as tracked low-priority items.
 **Blockers:** none
-**Next:** Tasks #114 (BUG-TOOLBAR-2) and #115 (BUG-TOOLBAR-3) are the only remaining work Ã¢â‚¬â€ both LOW priority, deferred.
+**Next:** Tasks #114 (BUG-TOOLBAR-2) and #115 (BUG-TOOLBAR-3) are the only remaining work ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â both LOW priority, deferred.
 ---
-## 2026-03-31 Ã¢â‚¬â€ orchestrator Ã¢â‚¬â€ Tasks #41, #113: Regression QA + TASK_PLAN sync
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â orchestrator ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #41, #113: Regression QA + TASK_PLAN sync
 **Outcome:** COMPLETED
-**Summary:** Full regression test suite ran: 187/187 tests passed, 9 files, all green (v3.0.0 confirmed stable). TASK_PLAN.md had stale PENDING entries for tasks #32-40 (completed in prior session) Ã¢â‚¬â€ being corrected by project-manager. BUG-TOOLBAR-1 (dead runError state) and BUG-TOOLBAR-4 (Reset not clearing workflowDef) fixed in Task #113.
+**Summary:** Full regression test suite ran: 187/187 tests passed, 9 files, all green (v3.0.0 confirmed stable). TASK_PLAN.md had stale PENDING entries for tasks #32-40 (completed in prior session) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â being corrected by project-manager. BUG-TOOLBAR-1 (dead runError state) and BUG-TOOLBAR-4 (Reset not clearing workflowDef) fixed in Task #113.
 **Files changed:** client/src/views/SwarmView.jsx (Task #113), docs/TASK_PLAN.md (stale status fix)
 **Bugs fixed:** BUG-TOOLBAR-1, BUG-TOOLBAR-4
 **Decisions made:** runError removed in favor of disabled+tooltip pattern on Run button
 **Blockers:** none
 **Next:** Tasks #114-#115 (LOW priority WS cleanup + Stop/Pause race) remain as the only open items
 ---
-## 2026-03-31 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Task #112: Fix Swarm Workflow Generation + Run Button UX
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #112: Fix Swarm Workflow Generation + Run Button UX
 **Outcome:** COMPLETED
 **Summary:** Swarm workflow generation was broken because server/routes/swarm.js used the Anthropic SDK (requiring an API key) instead of the claude CLI binary. generateWorkflowFromPrompt was rewritten to spawn the claude binary with -p and --output-format json flags; claudeBin is now passed from server/index.js as the 3rd arg to swarmRoutes(). Run button in SwarmView.jsx changed from hidden-when-idle to always-visible-disabled-with-tooltip. PromptToFlowBar.jsx API-key error message reverted. Puppeteer verification confirmed a 3-node triage workflow generates end-to-end.
 **Files changed:** server/routes/swarm.js, server/index.js, client/src/views/SwarmView.jsx, client/src/canvas/PromptToFlowBar.jsx
 **Bugs fixed:** Swarm workflow generation broken (SDK vs CLI binary mismatch), Run button hidden instead of disabled
-**Decisions made:** Use claude CLI binary for all AI invocations Ã¢â‚¬â€ no direct Anthropic SDK usage in server routes
+**Decisions made:** Use claude CLI binary for all AI invocations ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no direct Anthropic SDK usage in server routes
 **Blockers:** none
 **Next:** v3.0.0 deployment remains unblocked. All Swarm features now functional end-to-end.
 ---
 
-## 2026-03-31 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Task #112: Fix Swarm Workflow Generation + Run Button UX
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #112: Fix Swarm Workflow Generation + Run Button UX
 **Outcome:** COMPLETED
 **Summary:** Removed ANTHROPIC_API_KEY requirement from README.md Swarm Quick Start, env var table, and Known Limitations. Updated ARCHITECTURE.md DEC-016 to document the binary-spawn approach (claude -p / --output-format json) replacing the Anthropic SDK. DOC_STATUS.md timestamp advanced.
 **Files changed:** README.md, docs/ARCHITECTURE.md (DEC-016), docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none
-**Decisions made:** DEC-016 amended Ã¢â‚¬â€ Prompt-to-Flow uses claude binary, not Anthropic SDK. No API key needed.
+**Decisions made:** DEC-016 amended ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Prompt-to-Flow uses claude binary, not Anthropic SDK. No API key needed.
 **Blockers:** none
 **Next:** v3.0.0 deployment remains unblocked. All docs accurate.
 ---
 
-## 2026-03-31 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Tasks #104Ã¢â‚¬â€œ#111: Documentation Update After QA Bug-Fix Pass
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #104ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#111: Documentation Update After QA Bug-Fix Pass
 **Outcome:** COMPLETED
-**Summary:** Audited all documentation for staleness after the QA bug-fix wave (Tasks #104-#111) and v3.0.0 version bump. README.md confirmed accurate Ã¢â‚¬â€ no version string in prose, no change needed. docs/ARCHITECTURE.md Section 11.5 (HITL flow) and Section 11.9 (React component tree + toolbar controls) updated to reflect all fixes. DOC_STATUS.md advanced to 2026-03-31.
+**Summary:** Audited all documentation for staleness after the QA bug-fix wave (Tasks #104-#111) and v3.0.0 version bump. README.md confirmed accurate ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no version string in prose, no change needed. docs/ARCHITECTURE.md Section 11.5 (HITL flow) and Section 11.9 (React component tree + toolbar controls) updated to reflect all fixes. DOC_STATUS.md advanced to 2026-03-31.
 **Files changed:** docs/ARCHITECTURE.md (Sections 11.5 and 11.9), docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none
-**Decisions made:** README.md requires no version string update Ã¢â‚¬â€ the document references "v3" headings only, not a specific semver string
+**Decisions made:** README.md requires no version string update ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the document references "v3" headings only, not a specific semver string
 **Blockers:** none
 **Next:** v3.0.0 production deployment. All docs current.
 ---
 
 ---
-## 2026-03-31 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Tasks #104Ã¢â‚¬â€œ#111: QA Bug-Fix Wave COMPLETED
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #104ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#111: QA Bug-Fix Wave COMPLETED
 **Outcome:** COMPLETED
 **Summary:** All 8 frontend bugs found during the Puppeteer visual inspection wave are now fixed and
   verified. InterAgentFeed canvas collapse (w-56 shrink-0) resolved. Stop button now visible when
@@ -2843,16 +2843,16 @@
 ---
 
 ---
-## 2026-03-31 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Tasks #114 and #115: BUG-TOOLBAR-2 + BUG-TOOLBAR-3 COMPLETED
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #114 and #115: BUG-TOOLBAR-2 + BUG-TOOLBAR-3 COMPLETED
 **Outcome:** COMPLETED
-**Summary:** BUG-TOOLBAR-2 fixed in useSwarm.js Ã¢â‚¬â€ cleanup useEffect now keyed on [workflowId] instead of [], ensuring the old WebSocket is explicitly closed when workflowId changes and preventing stale duplicate handlers. BUG-TOOLBAR-3 fixed in SwarmView.jsx Ã¢â‚¬â€ handlePause and handleResume now guard against null activeExecutionId, eliminating /null/ URLs in WS requests during rapid Stop/Pause clicks. 187/187 tests pass. Build clean. All 115 tasks are now COMPLETED.
+**Summary:** BUG-TOOLBAR-2 fixed in useSwarm.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â cleanup useEffect now keyed on [workflowId] instead of [], ensuring the old WebSocket is explicitly closed when workflowId changes and preventing stale duplicate handlers. BUG-TOOLBAR-3 fixed in SwarmView.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â handlePause and handleResume now guard against null activeExecutionId, eliminating /null/ URLs in WS requests during rapid Stop/Pause clicks. 187/187 tests pass. Build clean. All 115 tasks are now COMPLETED.
 **Files changed:** client/src/hooks/useSwarm.js (Task #114), client/src/views/SwarmView.jsx (Task #115), docs/TASK_PLAN.md (header + task statuses), docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
 **Bugs fixed:** BUG-TOOLBAR-2, BUG-TOOLBAR-3
 **Decisions made:** none
 **Blockers:** none
-**Next:** All 115 tasks complete. v3.0.0 is fully stable Ã¢â‚¬â€ no open bugs, 187/187 tests pass, build clean. Ready for production deployment.
+**Next:** All 115 tasks complete. v3.0.0 is fully stable ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no open bugs, 187/187 tests pass, build clean. Ready for production deployment.
 ---
-## 2026-03-29 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Tasks #104Ã¢â‚¬â€œ#111: QA Bug-Fix Wave
+## 2026-03-29 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #104ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#111: QA Bug-Fix Wave
 **Outcome:** COMPLETED
 **Summary:** Added 8 new PENDING tasks (#104-#111) to docs/TASK_PLAN.md based on QA visual
   inspection findings (Puppeteer audit). Tasks cover 7 confirmed bugs: 2 CRITICAL (canvas collapse,
@@ -2868,18 +2868,18 @@
 ---
 
 ---
-## 2026-03-29 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Visual Inspection: Full App Screenshot + Layout Audit
+## 2026-03-29 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Visual Inspection: Full App Screenshot + Layout Audit
 **Outcome:** COMPLETED
-**Summary:** Took Puppeteer screenshots and performed DOM measurement of all 6 views. Found 9 visual bugs (2 CRITICAL, 2 HIGH, 2 MEDIUM, 3 LOW). Root cause of all Swarm view layout failures: InterAgentFeed has no explicit width class Ã¢â‚¬â€ its 122px content width + AgentInspector w-64 (256px) leaves only 172px for the React Flow canvas. The minimap (202px) overflows 45px past the canvas left boundary into the sidebar.
+**Summary:** Took Puppeteer screenshots and performed DOM measurement of all 6 views. Found 9 visual bugs (2 CRITICAL, 2 HIGH, 2 MEDIUM, 3 LOW). Root cause of all Swarm view layout failures: InterAgentFeed has no explicit width class ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â its 122px content width + AgentInspector w-64 (256px) leaves only 172px for the React Flow canvas. The minimap (202px) overflows 45px past the canvas left boundary into the sidebar.
 **Files changed:** docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none (report only)
-**Decisions made:** Canvas sizing bug is in InterAgentFeed.jsx/SwarmView.jsx Ã¢â‚¬â€ needs explicit w-* class
+**Decisions made:** Canvas sizing bug is in InterAgentFeed.jsx/SwarmView.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â needs explicit w-* class
 **Blockers:** none
 **Next:** frontend-dev to fix BUG-VIS-1 (add w-48/w-56 to InterAgentFeed), BUG-VIS-3 (Context Editor toolbar overflow), BUG-VIS-5 (HitlInbox header+close)
 ---
 
 ---
-## 2026-03-29 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Tasks #100-#103: SwarmView Integration Wave
+## 2026-03-29 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #100-#103: SwarmView Integration Wave
 **Outcome:** COMPLETED
 **Summary:** Added 4 new PENDING tasks (#100-#103) to docs/TASK_PLAN.md. These tasks wire four
 built-but-unmounted V3 frontend components into SwarmView.jsx: HitlInbox drawer (#100), Run/Stop
@@ -2892,25 +2892,25 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Assign #100 and #101 to frontend-dev in parallel; after completion run #102 and #103; then qa-tester for final build+test verification.
 ---
-## 2026-03-28 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ V3 RELEASE-READY: Final Documentation Closure
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3 RELEASE-READY: Final Documentation Closure
 **Outcome:** COMPLETED
 **Summary:** Final closure verification pass. No code was modified in this pass. All documentation artifacts confirmed accurate: README.md, docs/ARCHITECTURE.md, docs/API.md, docs/security-v3-audit.md, and all inline comments verified clean against the post-debug-loop codebase. DOC_STATUS.md last-updated line advanced to V3 RELEASE-READY closure. All items remain UP_TO_DATE. No open documentation debt blocks release.
 **Files changed:** docs/memory/DOC_STATUS.md (last-updated line + table notes), docs/memory/ACTIVITY_LOG.md (this entry), docs/memory/agents/documenter.md (session log)
 **Bugs fixed:** none
 **Decisions made:** none
 **Blockers:** none
-**Next:** Nothing Ã¢â‚¬â€ project closure complete. All documentation is clean and synchronized with the v3.0 codebase. Next engagement would be v3.1 planning.
+**Next:** Nothing ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project closure complete. All documentation is clean and synchronized with the v3.0 codebase. Next engagement would be v3.1 planning.
 ---
-## 2026-03-28 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V3 Release-Ready Closure
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3 Release-Ready Closure
 **Outcome:** COMPLETED
-**Summary:** Formal closure of all V3 and debug loop work. TASK_PLAN.md header updated from Status: ACTIVE to Status: V3 RELEASE-READY. V3 RELEASE-READY banner block added to the top of the task plan with QA verdict, build status, and debug loop summary. All tasks #83Ã¢â‚¬â€œ#99 confirmed COMPLETED in both the inline task records and the debug loop summary table. No outstanding tasks remain. Project is ready for production deployment.
+**Summary:** Formal closure of all V3 and debug loop work. TASK_PLAN.md header updated from Status: ACTIVE to Status: V3 RELEASE-READY. V3 RELEASE-READY banner block added to the top of the task plan with QA verdict, build status, and debug loop summary. All tasks #83ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#99 confirmed COMPLETED in both the inline task records and the debug loop summary table. No outstanding tasks remain. Project is ready for production deployment.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
 **Bugs fixed:** none
-**Decisions made:** Declaring V3 RELEASE-READY Ã¢â‚¬â€ 187/187 tests pass, 473-module build clean, all 99 tasks COMPLETED (57 V3 original + 17 debug loop + prior phases).
+**Decisions made:** Declaring V3 RELEASE-READY ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â 187/187 tests pass, 473-module build clean, all 99 tasks COMPLETED (57 V3 original + 17 debug loop + prior phases).
 **Blockers:** none
-**Next:** Nothing Ã¢â‚¬â€ project closure complete. Next engagement would be a new feature request or v3.1 planning.
+**Next:** Nothing ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project closure complete. Next engagement would be a new feature request or v3.1 planning.
 ---
-## 2026-03-28 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Debug Loop Final Verification Pass
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Debug Loop Final Verification Pass
 **Outcome:** COMPLETED
 **Summary:** Final gate verification of all 16 bug fixes from V3 codebase inspection. All 16 fixes verified correct. npm test: 187/187 pass. Client build: 473 modules, 0 errors. No regressions. No new bugs introduced. CLEAN -- zero remaining bugs.
 **Files changed:** docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
@@ -2921,27 +2921,27 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-28 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Tasks #84Ã¢â‚¬â€œ#99: Debug Loop Documentation Pass
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #84ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#99: Debug Loop Documentation Pass
 **Outcome:** COMPLETED
-**Summary:** Documented all 16 bug fixes from the post-release debug loop (Tasks #84Ã¢â‚¬â€œ#99). Updated docs/API.md: pause endpoint now reflects real state-update + WS-broadcast behavior (BUG-94); resume endpoint is no longer described as a no-op (BUG-95); budget field in status response now documents BudgetTracker.getTotal() source (BUG-98). Updated docs/security-v3-audit.md: SEC-V3-01 strengthened Ã¢â‚¬â€ BUG-99 fix replaces express.json bypass with express.raw at raw-bytes level; MEDIUM-V3-01 note added to confirm CSRF mismatch is unchanged. DOC_STATUS.md regenerated: all items marked UP_TO_DATE, three previously-tracked stale gaps resolved (stopExecution wire-up done in #93/#97, CODE_MAP.md TriggerNode stub remains for code-mapper).
+**Summary:** Documented all 16 bug fixes from the post-release debug loop (Tasks #84ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#99). Updated docs/API.md: pause endpoint now reflects real state-update + WS-broadcast behavior (BUG-94); resume endpoint is no longer described as a no-op (BUG-95); budget field in status response now documents BudgetTracker.getTotal() source (BUG-98). Updated docs/security-v3-audit.md: SEC-V3-01 strengthened ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â BUG-99 fix replaces express.json bypass with express.raw at raw-bytes level; MEDIUM-V3-01 note added to confirm CSRF mismatch is unchanged. DOC_STATUS.md regenerated: all items marked UP_TO_DATE, three previously-tracked stale gaps resolved (stopExecution wire-up done in #93/#97, CODE_MAP.md TriggerNode stub remains for code-mapper).
 **Files changed:** docs/API.md, docs/security-v3-audit.md, docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none (documentation task)
-**Decisions made:** SEC-V3-01 note Ã¢â‚¬â€ the BUG-99 fix (express.raw) is a security strengthening even though the original audit marked SEC-V3-01 PASS. The bypass was a latent implementation error not caught by the audit because audit verified the presence of the middleware, not its effective execution order.
+**Decisions made:** SEC-V3-01 note ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the BUG-99 fix (express.raw) is a security strengthening even though the original audit marked SEC-V3-01 PASS. The bypass was a latent implementation error not caught by the audit because audit verified the presence of the middleware, not its effective execution order.
 **Blockers:** none
 **Next:** Project is release-ready per project-manager. No open documentation debt that blocks release.
 ---
-## 2026-03-28 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Debug Loop Closure: Tasks #83Ã¢â‚¬â€œ#99 All COMPLETED
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Debug Loop Closure: Tasks #83ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#99 All COMPLETED
 **Outcome:** COMPLETED
-**Summary:** Verified and reconciled the debug loop. All 17 post-release bug tasks (#83Ã¢â‚¬â€œ#99) confirmed COMPLETED. Seven tasks that still showed Status: PENDING in TASK_PLAN.md despite being completed by backend-dev and frontend-dev agents were corrected (#83, #84, #85, #92, #94, #95, #99). V3 summary table updated with a full debug loop table. Release status section updated: v3.0.0 + debug loop = RELEASE-READY, no known open bugs. Task #83 (TriggerManager wire-up) marked COMPLETED as superseded by #93 and #97.
+**Summary:** Verified and reconciled the debug loop. All 17 post-release bug tasks (#83ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#99) confirmed COMPLETED. Seven tasks that still showed Status: PENDING in TASK_PLAN.md despite being completed by backend-dev and frontend-dev agents were corrected (#83, #84, #85, #92, #94, #95, #99). V3 summary table updated with a full debug loop table. Release status section updated: v3.0.0 + debug loop = RELEASE-READY, no known open bugs. Task #83 (TriggerManager wire-up) marked COMPLETED as superseded by #93 and #97.
 **Files changed:** docs/TASK_PLAN.md (7 Status corrections, debug loop summary table added, V3 release status section updated)
 **Bugs fixed:** none (reconciliation task)
-**Decisions made:** Task #83 superseded by #93/#97 Ã¢â‚¬â€ both tasks together delivered the full TriggerManager.cleanupExecution() wire-up that #83 described. Marking #83 COMPLETED rather than creating a new task.
+**Decisions made:** Task #83 superseded by #93/#97 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â both tasks together delivered the full TriggerManager.cleanupExecution() wire-up that #83 described. Marking #83 COMPLETED rather than creating a new task.
 **Blockers:** none
 **Next:** Project is release-ready. No open tasks.
 ---
-## 2026-03-28 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Tasks #94 + #95 + #99: Backend route bug fixes
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #94 + #95 + #99: Backend route bug fixes
 **Outcome:** COMPLETED
-**Summary:** Fixed three backend route bugs affecting swarm execution control and webhook security. BUG-94: /pause endpoint sent Ctrl-C to running agents but never called swarmEngine.pauseExecution(), so agent states remained 'running' and no WS broadcast occurred Ã¢â‚¬â€ fix: call pauseExecution() after Ctrl-C to update state and broadcast events. BUG-95: /resume endpoint was a no-op (comment said "full HITL resume implemented in Task #70") Ã¢â‚¬â€ fix: implement the call by invoking swarmEngine.resumeExecution() to set paused agents to 'running' and broadcast. BUG-99: /webhooks route declared express.json({ limit: '32kb' }) but the global express.json() middleware (100KB default) had already consumed the request before the route-specific middleware ran, bypassing the 32KB cap entirely Ã¢â‚¬â€ fix: use express.raw({ limit: '32kb' }) on the route and manually parse JSON to enforce SEC-V3-01. All fixes verified: 187/187 tests pass.
+**Summary:** Fixed three backend route bugs affecting swarm execution control and webhook security. BUG-94: /pause endpoint sent Ctrl-C to running agents but never called swarmEngine.pauseExecution(), so agent states remained 'running' and no WS broadcast occurred ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â fix: call pauseExecution() after Ctrl-C to update state and broadcast events. BUG-95: /resume endpoint was a no-op (comment said "full HITL resume implemented in Task #70") ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â fix: implement the call by invoking swarmEngine.resumeExecution() to set paused agents to 'running' and broadcast. BUG-99: /webhooks route declared express.json({ limit: '32kb' }) but the global express.json() middleware (100KB default) had already consumed the request before the route-specific middleware ran, bypassing the 32KB cap entirely ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â fix: use express.raw({ limit: '32kb' }) on the route and manually parse JSON to enforce SEC-V3-01. All fixes verified: 187/187 tests pass.
 **Files changed:** server/routes/swarm.js (BUG-94 & BUG-95 fixes), server/routes/triggers.js (BUG-99 fix), docs/TASK_PLAN.md
 **Bugs fixed:** BUG-94 (/pause doesn't update state), BUG-95 (/resume is no-op), BUG-99 (32KB webhook limit bypassed)
 **Decisions made:** For BUG-94 & BUG-95: SwarmEngine.pauseExecution() and resumeExecution() already existed from Task #67 (Pause All / Resume All). For BUG-99: express.raw() avoids the global parser entirely, then manual JSON.parse enforces the size cap at route level. Invalid JSON is treated as empty payload per SEC-V3-07 (always return 200 to external caller).
@@ -2949,9 +2949,9 @@ full self-contained context and acceptance criteria.
 **Next:** Task #92+ or release v3.0.0
 ---
 
-## 2026-03-28 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Tasks #93 + #96 + #97 + #98: Backend service bug fixes
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #93 + #96 + #97 + #98: Backend service bug fixes
 **Outcome:** COMPLETED
-**Summary:** Fixed four backend memory leaks and API fragility bugs. BUG-93: stopExecution() was missing budgetTracker.clearExecution() call, leaking per-execution budget tracking state indefinitely on repeated start/stop cycles. BUG-96: inbox.js directly accessed private SwarmEngine._executions field (3 places) Ã¢â‚¬â€ added public getExecution() method and updated all 3 routes to use it. BUG-97: TriggerManager.cleanupExecution() only cleaned up pollers matching the execution ID but never cleaned up workflow-level pollers (executionId=null), leaking setInterval handlers. BUG-98: getStatus() returned undefined budget (e.budget field was never set) Ã¢â‚¬â€ now queries budgetTracker.getTotal(executionId) directly. All fixes minimal and surgical. 187/187 tests pass, build: 473 modules, 0 errors.
+**Summary:** Fixed four backend memory leaks and API fragility bugs. BUG-93: stopExecution() was missing budgetTracker.clearExecution() call, leaking per-execution budget tracking state indefinitely on repeated start/stop cycles. BUG-96: inbox.js directly accessed private SwarmEngine._executions field (3 places) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â added public getExecution() method and updated all 3 routes to use it. BUG-97: TriggerManager.cleanupExecution() only cleaned up pollers matching the execution ID but never cleaned up workflow-level pollers (executionId=null), leaking setInterval handlers. BUG-98: getStatus() returned undefined budget (e.budget field was never set) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â now queries budgetTracker.getTotal(executionId) directly. All fixes minimal and surgical. 187/187 tests pass, build: 473 modules, 0 errors.
 **Files changed:** server/services/SwarmEngine.js (added getExecution(), fixed stopExecution(), fixed getStatus()), server/services/TriggerManager.js (fixed cleanupExecution()), server/routes/inbox.js (replaced 3x _executions.get with getExecution()), docs/TASK_PLAN.md
 **Bugs fixed:** BUG-93 (stopExecution memory leak), BUG-96 (inbox private field access), BUG-97 (null executionId poller leak), BUG-98 (undefined budget)
 **Decisions made:** For BUG-93, add call to budgetTracker.clearExecution() after triggerManager cleanup. For BUG-96, create thin public getExecution() wrapper returning null if not found. For BUG-97, check (executionId === id || executionId === null) in cleanup loop. For BUG-98, query budgetTracker.getTotal() dynamically rather than storing budget on execution object.
@@ -2959,9 +2959,9 @@ full self-contained context and acceptance criteria.
 **Next:** Task #99+ (if any) or release v3.0.0
 
 ---
-## 2026-03-28 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Tasks #88 + #90 + #91: handoffCount, TriggerNode fireCount, granular selectors
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #88 + #90 + #91: handoffCount, TriggerNode fireCount, granular selectors
 **Outcome:** COMPLETED
-**Summary:** Fixed three frontend bugs in one commit. BUG-88: handoffCount was assigned edge counter instead of incrementing per-agent count by 1 Ã¢â‚¬â€ fixed by reading agentStates and computing `currentHandoffCount + 1` on handoff_started event. BUG-90: TriggerNode used boolean `fired` flag preventing animation re-trigger on repeated firings Ã¢â‚¬â€ fixed by replacing with `fireCount` counter and useEffect dependency on counter. BUG-91: useSwarm full-store destructuring caused cascade re-renders on any store change Ã¢â‚¬â€ fixed by replacing with 8 granular Zustand selectors (one per action/state). All fixes verified: build passes 473 modules, 0 errors.
+**Summary:** Fixed three frontend bugs in one commit. BUG-88: handoffCount was assigned edge counter instead of incrementing per-agent count by 1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â fixed by reading agentStates and computing `currentHandoffCount + 1` on handoff_started event. BUG-90: TriggerNode used boolean `fired` flag preventing animation re-trigger on repeated firings ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â fixed by replacing with `fireCount` counter and useEffect dependency on counter. BUG-91: useSwarm full-store destructuring caused cascade re-renders on any store change ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â fixed by replacing with 8 granular Zustand selectors (one per action/state). All fixes verified: build passes 473 modules, 0 errors.
 **Files changed:** client/src/hooks/useSwarm.js, client/src/canvas/nodes/TriggerNode.jsx, docs/TASK_PLAN.md
 **Bugs fixed:** BUG-88 (handoffCount logic), BUG-90 (TriggerNode animation), BUG-91 (store reactivity)
 **Decisions made:** For BUG-88, read agentStates at message time to preserve closure semantics; for BUG-90, use counter over timestamp (simpler, consistent with Redux patterns); for BUG-91, separate selector per consumed action/state (Zustand best practice)
@@ -2970,7 +2970,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-28 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Tasks #86 + #87: SwarmContext departmentStack dedup + resolveInboxItem
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #86 + #87: SwarmContext departmentStack dedup + resolveInboxItem
 **Outcome:** COMPLETED
 **Summary:** Fixed BUG-86 (setFocusedDepartment pushed duplicate department IDs on repeated clicks) by adding check: only push if the new id differs from the last item on departmentStack. Fixed BUG-87 (resolveInboxItem failed to remove items due to incorrect id accessor) by adding optional chaining `i?.id` for defensive filtering. Both fixes are minimal (4 lines + 1 character). Build passes 0 errors (473 modules transformed).
 **Files changed:** client/src/store/SwarmContext.jsx, docs/TASK_PLAN.md
@@ -2980,17 +2980,17 @@ full self-contained context and acceptance criteria.
 **Next:** Tasks #88 (handoffCount increment logic) or #90 (TriggerNode fired counter)
 ---
 
-## 2026-03-28 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #89: SwarmCanvas Ã¢â‚¬â€ react to workflowDef prop changes
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #89: SwarmCanvas ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â react to workflowDef prop changes
 **Outcome:** COMPLETED
 **Summary:** Fixed BUG-21 (SwarmCanvas.jsx not reacting to workflowDef changes after mount). Added useEffect hook that watches workflowDef prop and calls setNodes/setEdges when workflowDef is defined. This allows scaffold-generated workflows to appear on canvas after the API returns the result. The fix is minimal (8 lines of code) and follows React Flow patterns.
 **Files changed:** client/src/canvas/SwarmCanvas.jsx, docs/TASK_PLAN.md
 **Bugs fixed:** BUG-21 (SwarmCanvas blind to post-mount workflowDef changes)
 **Decisions made:** useEffect dependency array includes [workflowDef, setNodes, setEdges]; checked that nodes/edges are already in React Flow format in workflowDef, no conversion needed
 **Blockers:** none
-**Next:** Task #84 (Zustand swarmListeners reactivity) or Task #90 (TriggerNode fired counter) Ã¢â‚¬â€ both HIGH/EASY
+**Next:** Task #84 (Zustand swarmListeners reactivity) or Task #90 (TriggerNode fired counter) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â both HIGH/EASY
 ---
 
-## 2026-03-28 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Tasks #84--#99: QA Bug-Fix Wave Created
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #84--#99: QA Bug-Fix Wave Created
 **Outcome:** COMPLETED
 **Summary:** Created 16 bug tasks (#84--#99) from QA-tester findings. Tasks cover Zustand reactivity bugs, WS item shape mismatches, canvas prop-change blindness, pause/resume route no-ops, memory leaks in stopExecution, and body-limit misconfiguration. All tasks appended to docs/TASK_PLAN.md with Status: PENDING.
 **Files changed:** docs/TASK_PLAN.md
@@ -3000,70 +3000,70 @@ full self-contained context and acceptance criteria.
 **Next:** Orchestrator assigns #84 + #89 (HIGH priority) to frontend-dev; #93 + #94 + #95 (MEDIUM backend) to backend-dev; lower-priority tasks can run in parallel waves
 ---
 
-## 2026-03-28 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Tasks #35 + #36: BUG-09 + BUG-17 Frontend Bug Fixes
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #35 + #36: BUG-09 + BUG-17 Frontend Bug Fixes
 **Outcome:** COMPLETED
-**Summary:** Fixed BUG-17 (Terminal background color mismatch) by changing the wrapper div's inline backgroundColor from '#1a1a1a' to '#000000' in Terminal.jsx, making it consistent with xterm.js theme.background. Confirmed BUG-09 (ContextEditorView unsaved changes data loss) fix was already present in ContextEditorView.jsx Ã¢â‚¬â€ handleScopeSwitch with window.confirm guard was in place with correct [scope, hasChanges] dependency array.
+**Summary:** Fixed BUG-17 (Terminal background color mismatch) by changing the wrapper div's inline backgroundColor from '#1a1a1a' to '#000000' in Terminal.jsx, making it consistent with xterm.js theme.background. Confirmed BUG-09 (ContextEditorView unsaved changes data loss) fix was already present in ContextEditorView.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â handleScopeSwitch with window.confirm guard was in place with correct [scope, hasChanges] dependency array.
 **Files changed:** client/src/components/Terminal.jsx, docs/TASK_PLAN.md
-**Bugs fixed:** BUG-17 (Terminal 2-tone background mismatch Ã¢â‚¬â€ container div now #000000)
-**Decisions made:** BUG-09 fix already applied Ã¢â‚¬â€ no code change needed; BUG-17 had partial fix (TERM_OPTIONS already #000000 but inline style was still #1a1a1a)
-**Blockers:** npm run build denied by sandbox Ã¢â‚¬â€ build verification pending
-**Next:** Tasks #37Ã¢â‚¬â€œ#40 (remaining Phase 10 bug fixes); TASK #41 (regression QA for v2.1 release)
+**Bugs fixed:** BUG-17 (Terminal 2-tone background mismatch ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â container div now #000000)
+**Decisions made:** BUG-09 fix already applied ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no code change needed; BUG-17 had partial fix (TERM_OPTIONS already #000000 but inline style was still #1a1a1a)
+**Blockers:** npm run build denied by sandbox ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â build verification pending
+**Next:** Tasks #37ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#40 (remaining Phase 10 bug fixes); TASK #41 (regression QA for v2.1 release)
 ---
-## 2026-03-28 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Tasks #73Ã¢â‚¬â€œ#83: V3 Final Documentation Pass
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #73ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#83: V3 Final Documentation Pass
 **Outcome:** COMPLETED
-**Summary:** Verified README.md, docs/ARCHITECTURE.md, and docs/API.md against all V3 changes (Tasks #73Ã¢â‚¬â€œ#82). All three documents confirmed accurate for v3.0.0. Updated docs/memory/DOC_STATUS.md to: (1) correct the TriggerNode.jsx debt entry Ã¢â‚¬â€ Task #76 delivered a full implementation, not a stub; (2) add the Task #83 gap (cleanupExecution not wired to stopExecution) to both Stale Sections and Documentation Debt; (3) update the last-updated header to reflect this final pass.
+**Summary:** Verified README.md, docs/ARCHITECTURE.md, and docs/API.md against all V3 changes (Tasks #73ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#82). All three documents confirmed accurate for v3.0.0. Updated docs/memory/DOC_STATUS.md to: (1) correct the TriggerNode.jsx debt entry ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #76 delivered a full implementation, not a stub; (2) add the Task #83 gap (cleanupExecution not wired to stopExecution) to both Stale Sections and Documentation Debt; (3) update the last-updated header to reflect this final pass.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none
-**Decisions made:** No doc rewrites needed Ã¢â‚¬â€ Task #82 documenter produced accurate V3 docs. Only DOC_STATUS.md required correction.
+**Decisions made:** No doc rewrites needed ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #82 documenter produced accurate V3 docs. Only DOC_STATUS.md required correction.
 **Blockers:** none
-**Next:** Task #83 (backend-dev Ã¢â‚¬â€ wire SwarmEngine.stopExecution Ã¢â€ â€™ TriggerManager.cleanupExecution)
+**Next:** Task #83 (backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â wire SwarmEngine.stopExecution ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ TriggerManager.cleanupExecution)
 ---
-## 2026-03-28 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V3 Final Status Reconciliation + Task #83 Created
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3 Final Status Reconciliation + Task #83 Created
 **Outcome:** COMPLETED
-**Summary:** Audited all 57 V3 granular tasks (#43Ã¢â‚¬â€œ#82). Task #75 individual entry corrected from PENDING to COMPLETED (was already done per ACTIVITY_LOG). Summary table at bottom of TASK_PLAN.md corrected: all 57 tasks now show COMPLETED. V3 final status block added with git tag date. Assessed TriggerManager.cleanupExecution() gap: warrants a v3.0.1 patch (Task #83 created) rather than a known issue note, as it causes RSS poller accumulation in long-running servers.
+**Summary:** Audited all 57 V3 granular tasks (#43ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#82). Task #75 individual entry corrected from PENDING to COMPLETED (was already done per ACTIVITY_LOG). Summary table at bottom of TASK_PLAN.md corrected: all 57 tasks now show COMPLETED. V3 final status block added with git tag date. Assessed TriggerManager.cleanupExecution() gap: warrants a v3.0.1 patch (Task #83 created) rather than a known issue note, as it causes RSS poller accumulation in long-running servers.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
 **Bugs fixed:** none
-**Decisions made:** TriggerManager gap = v3.0.1 patch (Task #83), not merely a known issue Ã¢â‚¬â€ the leak is bounded but real in production
+**Decisions made:** TriggerManager gap = v3.0.1 patch (Task #83), not merely a known issue ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the leak is bounded but real in production
 **Blockers:** none
-**Next:** Task #83 (backend-dev, haiku, LOW Ã¢â‚¬â€ wire stopExecution Ã¢â€ â€™ cleanupExecution)
+**Next:** Task #83 (backend-dev, haiku, LOW ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â wire stopExecution ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ cleanupExecution)
 ---
-## 2026-03-28 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #73Ã¢â‚¬â€œ#82: V3 Trigger System, HITL Inbox, Tests, Security, Docs
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #73ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#82: V3 Trigger System, HITL Inbox, Tests, Security, Docs
 **Outcome:** COMPLETED
 **Summary:** Mapped 10 tasks from the V3 final wave. 18 new function entries added to CODE_MAP.md covering useInbox.js (HITL hook), TriggerManager.js (webhook+RSS), triggers.js routes, the fully implemented TriggerNode.jsx, SwarmEngine integration tests, and the server/index.js route-order bugfix. CHANGELOG.md received a combined wave entry. Key connection discovered: ssrfGuard.isSafeUrl now has its first production caller (TriggerManager). Known gap: TriggerManager.cleanupExecution not yet wired to SwarmEngine.stopExecution.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none
-**Decisions made:** Combined Tasks #73Ã¢â‚¬â€œ#82 into one CHANGELOG entry (same wave, same date)
+**Decisions made:** Combined Tasks #73ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#82 into one CHANGELOG entry (same wave, same date)
 **Blockers:** none
-**Next:** nothing Ã¢â‚¬â€ V3 is fully mapped and documented; next session should start with /pm to pick up any follow-on tasks
+**Next:** nothing ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3 is fully mapped and documented; next session should start with /pm to pick up any follow-on tasks
 ---
-## 2026-03-28 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Task #82: V3 Documentation Update
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #82: V3 Documentation Update
 **Outcome:** COMPLETED
 **Summary:** All project documentation updated for v3.0 release. README.md gained a full V3 Swarm Orchestrator section with quick-start guide and feature table entries. docs/ARCHITECTURE.md received a new Section 11 covering the complete V3 system architecture (diagram, WS events, schemas, handoff protocol, HITL flow, decisions, security requirements). docs/API.md was created from scratch as a standalone REST + WS API reference covering all V1 and V3 endpoints. docs/memory/PROJECT.md updated to v3.0 with V3 tech stack entries and constraint section.
 **Files changed:** README.md, docs/ARCHITECTURE.md, docs/API.md (CREATED), docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/DOC_STATUS.md
 **Bugs fixed:** none
-**Decisions made:** none (documentation task Ã¢â‚¬â€ no code decisions)
+**Decisions made:** none (documentation task ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no code decisions)
 **Blockers:** none
-**Next:** nothing Ã¢â‚¬â€ Task chain complete. V3 is fully documented and released at v3.0.0.
+**Next:** nothing ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task chain complete. V3 is fully documented and released at v3.0.0.
 ---
-## 2026-03-28 Ã¢â‚¬â€ devops Ã¢â‚¬â€ Task #81: Build Verification + v3.0.0 Tag
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â devops ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #81: Build Verification + v3.0.0 Tag
 **Outcome:** COMPLETED
 **Summary:** Final build and release verification completed. Client build: 473 modules, 866.72 kB minified (well under 3MB limit). npm audit: 1 HIGH advisory in path-to-regexp (pre-existing, noted as non-exploitable in Task #79 security audit). npm test: 187/187 tests PASS in 3.57s. Git tag v3.0.0 created successfully. V3 release-ready.
-**Files changed:** docs/TASK_PLAN.md (MODIFIED Ã¢â‚¬â€ Task #81 PENDINGÃ¢â€ â€™COMPLETED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/agents/devops.md (MODIFIED)
+**Files changed:** docs/TASK_PLAN.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #81 PENDINGÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢COMPLETED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/agents/devops.md (MODIFIED)
 **Bugs fixed:** none
 **Decisions made:** Pre-existing path-to-regexp HIGH advisory is acceptable per Task #79 security audit (transitive dep, not exploitable in routing pattern)
 **Blockers:** none
-**Next:** Task #82 (V3 Documentation Update Ã¢â‚¬â€ documenter)
+**Next:** Task #82 (V3 Documentation Update ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter)
 ---
-## 2026-03-28 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #80 BUGFIX: Swarm Route Init Order
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #80 BUGFIX: Swarm Route Init Order
 **Outcome:** COMPLETED
 **Summary:** swarmRoutes() and inboxRoutes() were factory-called with app.locals.swarmEngine before SwarmEngine was instantiated (line 231 vs 271). Fixed by hoisting SwarmEngine instantiation to before the route mounts, placed between workflow routes and static file serving so API routes precede the SPA wildcard fallback. 187/187 tests pass.
 **Files changed:** server/index.js
 **Bugs fixed:** TypeError: Cannot read properties of undefined on all /api/v1/swarm/* and /api/v1/swarm/**/inbox/* endpoints
-**Decisions made:** Instantiate SwarmEngine in section 7 (before static serving) rather than in section 10 (after error handler) Ã¢â‚¬â€ required to keep routes before SPA wildcard
+**Decisions made:** Instantiate SwarmEngine in section 7 (before static serving) rather than in section 10 (after error handler) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â required to keep routes before SPA wildcard
 **Blockers:** none
 **Next:** Task #81 (build verify + tag) and #82 (docs) can proceed
 ---
-## 2026-03-28 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #80: V3 End-to-End Test
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #80: V3 End-to-End Test
 **Outcome:** COMPLETED
 **Summary:** Full E2E test of the V3 Swarm Orchestrator using Playwright browser automation. Server started, all 6 sidebar views verified (Projects, Live Terminal, Job Runner, Deployments, Context Editor, Swarm). SwarmView loads correctly with PromptToFlowBar, React Flow canvas, BreadcrumbBar, AgentInspector. Scaffold endpoint fails gracefully when ANTHROPIC_API_KEY is missing (expected). V2 backward compatibility fully verified -- Terminal view spawns PTY with Claude Code CLI successfully. Workflow CRUD API works. 187/187 server tests pass. One HIGH bug found: SwarmEngine route initialization order bug (swarmRoutes and inboxRoutes mounted before SwarmEngine instantiation, causing 500 errors on all execution control endpoints).
 **Files changed:** docs/TASK_PLAN.md (MODIFIED -- #80 COMPLETED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/agents/qa-tester.md (MODIFIED)
@@ -3073,35 +3073,35 @@ full self-contained context and acceptance criteria.
 **Next:** Debugger agent should fix the SwarmEngine route initialization order bug in server/index.js. Then Task #81 (build verify + tag) and #82 (docs).
 
 ---
-## 2026-03-28 Ã¢â‚¬â€ security Ã¢â‚¬â€ Task #79: V3 Pre-Release Security Audit
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â security ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #79: V3 Pre-Release Security Audit
 **Outcome:** COMPLETED
-**Summary:** Full audit of all 14 V3 files. All 7 SEC-V3 requirements verified active in production code with exact file:line citations. Zero CRITICAL/HIGH findings in application code. One MEDIUM design note (webhook route blocked by global CSRF middleware Ã¢â‚¬â€ net security positive, functional impact only). Two HIGH npm advisories (path-to-regexp in transitive dep, picomatch in client devdeps Ã¢â‚¬â€ neither exploitable in current usage). 187/187 tests pass.
-**Files changed:** docs/security-v3-audit.md (CREATED Ã¢â‚¬â€ full report), docs/TASK_PLAN.md (MODIFIED Ã¢â‚¬â€ #79 PENDINGÃ¢â€ â€™COMPLETED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/agents/security.md (MODIFIED)
-**Bugs fixed:** none Ã¢â‚¬â€ audit only
+**Summary:** Full audit of all 14 V3 files. All 7 SEC-V3 requirements verified active in production code with exact file:line citations. Zero CRITICAL/HIGH findings in application code. One MEDIUM design note (webhook route blocked by global CSRF middleware ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â net security positive, functional impact only). Two HIGH npm advisories (path-to-regexp in transitive dep, picomatch in client devdeps ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â neither exploitable in current usage). 187/187 tests pass.
+**Files changed:** docs/security-v3-audit.md (CREATED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â full report), docs/TASK_PLAN.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â #79 PENDINGÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢COMPLETED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/agents/security.md (MODIFIED)
+**Bugs fixed:** none ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â audit only
 **Decisions made:** Rated webhook CSRF blocking as MEDIUM (functional, not security critical); rated path-to-regexp HIGH dep as non-exploitable in current routing pattern
 **Blockers:** none
-**Next:** Task #80 (V3 E2E Test Ã¢â‚¬â€ qa-tester, Puppeteer)
+**Next:** Task #80 (V3 E2E Test ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester, Puppeteer)
 ---
-## 2026-03-28 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #78: SwarmEngine Integration Tests
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #78: SwarmEngine Integration Tests
 **Outcome:** COMPLETED
 **Summary:** Created server/tests/swarm-engine.test.js with 19 integration tests covering 7 test areas: execution lifecycle, handoff processing, circuit breaker (advisory-only, no stop), budget tracking (budget_update WS event), heartbeat (writeInput '' every 5 min via fake timers), HITL mode (freezeAgent creates inboxItem, does not spawn target), and DEC-009 preservation (swarmListeners.add only, onData never touched). Full suite: 187/187 tests pass in 5.62s.
-**Files changed:** server/tests/swarm-engine.test.js (CREATED Ã¢â‚¬â€ 481 lines, 19 tests), docs/TASK_PLAN.md (MODIFIED Ã¢â‚¬â€ Task #78 PENDINGÃ¢â€ â€™COMPLETED)
+**Files changed:** server/tests/swarm-engine.test.js (CREATED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â 481 lines, 19 tests), docs/TASK_PLAN.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #78 PENDINGÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢COMPLETED)
 **Bugs fixed:** none
-**Decisions made:** Tested HITL via freezeAgent() directly (SwarmEngine does not auto-freeze in _onHandoff Ã¢â‚¬â€ it is a separate API). Used vi.useFakeTimers() + advanceTimersByTimeAsync for heartbeat test.
+**Decisions made:** Tested HITL via freezeAgent() directly (SwarmEngine does not auto-freeze in _onHandoff ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â it is a separate API). Used vi.useFakeTimers() + advanceTimersByTimeAsync for heartbeat test.
 **Blockers:** none
 **Next:** Task #78 is now complete. Remaining QA tasks as assigned by project-manager.
 ---
 
-## 2026-03-28 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #77: HandoffParser Unit Tests
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #77: HandoffParser Unit Tests
 **Outcome:** COMPLETED
 **Summary:** Verified server/tests/HandoffParser.test.js already contained all 8 required test scenarios. Ran full test suite confirming 168/168 tests pass across 8 test files. All acceptance criteria met: chunk-split detection (2-chunk and 3-chunk), ANSI stripping, >50-key rejection, malformed base64 handling, __DONE__ detection, 4KB buffer overflow with subsequent token detection, and multiple tokens in one chunk.
-**Files changed:** docs/TASK_PLAN.md (MODIFIED Ã¢â‚¬â€ Task #77 status PENDINGÃ¢â€ â€™COMPLETED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/qa-tester.md (MODIFIED)
+**Files changed:** docs/TASK_PLAN.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #77 status PENDINGÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢COMPLETED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/qa-tester.md (MODIFIED)
 **Bugs fixed:** none
 **Decisions made:** HandoffParser.test.js already existed with comprehensive coverage exceeding task requirements (9 scenarios + additional boundary tests). No new tests needed to be written.
 **Blockers:** none
 **Next:** Task #78 (SwarmEngine integration tests) is the next QA task.
 ---
-## 2026-03-28 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #76: TriggerNode.jsx Ã¢â‚¬â€ Full Visual Implementation
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #76: TriggerNode.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Full Visual Implementation
 **Outcome:** COMPLETED
 **Summary:** Enhanced TriggerNode.jsx with full trigger state subscription and visual feedback. Added triggerStates field to SwarmContext.jsx with updateTriggerState action. Implemented webhook label (path truncation), RSS label (URL truncation), status badge (waiting/fired), last-fired timestamp display, and 2-second green border pulse animation (@keyframes triggerFiredPulse). Build passes at 473 modules, 0 errors. All three acceptance criteria met.
 **Files changed:** client/src/canvas/nodes/TriggerNode.jsx (MODIFIED), client/src/store/SwarmContext.jsx (MODIFIED), client/src/index.css (MODIFIED), docs/TASK_PLAN.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
@@ -3110,7 +3110,7 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Phase 6 (Trigger Nodes) complete. Phase 7 QA (Task #77 HandoffParser tests, #78 SwarmEngine integration tests) ready to begin.
 ---
-## 2026-03-28 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #75: triggers.js Ã¢â‚¬â€ Trigger API Routes
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #75: triggers.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Trigger API Routes
 **Outcome:** COMPLETED
 **Summary:** Created server/routes/triggers.js with two endpoints: POST /api/v1/triggers/webhooks/:path (webhook receiver, external caller, 10 req/min rate limit, 32KB body cap, always 200) and GET /api/v1/triggers (internal UI endpoint, CSRF-protected, returns trigger list). Instantiated TriggerManager in server/index.js and mounted routes at /api/v1/triggers. 168/168 tests pass, 473 modules build clean (0 errors).
 **Files changed:** server/routes/triggers.js (CREATED), server/index.js (MODIFIED), docs/TASK_PLAN.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
@@ -3119,34 +3119,34 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Task #76 (TriggerNode.jsx full visual implementation) or Task #77+ for QA/security/release.
 ---
-## 2026-03-28 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #74: TriggerManager.js Ã¢â‚¬â€ Webhooks + RSS Polling
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #74: TriggerManager.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Webhooks + RSS Polling
 **Outcome:** COMPLETED
 **Summary:** Created server/services/TriggerManager.js with webhook registration/dispatch and RSS polling. SSRF guard (isSafeUrl from server/utils/ssrfGuard.js) enforced before any outbound fetch. On first RSS poll lastSeenGuid is seeded without firing. cleanupExecution() removes all pollers for a stopped execution. 168/168 tests pass.
 **Files changed:** server/services/TriggerManager.js (CREATED), docs/TASK_PLAN.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/agents/backend-dev.md (MODIFIED)
 **Bugs fixed:** none
-**Decisions made:** No xml2js in server/package.json Ã¢â‚¬â€ used simple regex-based XML parser for RSS. startExecution() called with workflowId as projectId and '' as projectPath for webhook-triggered flows.
+**Decisions made:** No xml2js in server/package.json ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â used simple regex-based XML parser for RSS. startExecution() called with workflowId as projectId and '' as projectPath for webhook-triggered flows.
 **Blockers:** none
-**Next:** Task #75 (triggers route) can now proceed Ã¢â‚¬â€ it imports TriggerManager.
+**Next:** Task #75 (triggers route) can now proceed ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â it imports TriggerManager.
 ---
-## 2026-03-27 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #69: HitlInbox.jsx Ã¢â‚¬â€ Approval Panel
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #69: HitlInbox.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Approval Panel
 **Outcome:** COMPLETED
-**Summary:** Created client/src/panels/HitlInbox.jsx Ã¢â‚¬â€ HITL approval panel with list view, type badges, Approve/Reject actions, inline resume text textarea, and empty state. Exports both default HitlInbox and named getPendingCount for tab badge. Build passes at 472 modules, 0 errors.
+**Summary:** Created client/src/panels/HitlInbox.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â HITL approval panel with list view, type badges, Approve/Reject actions, inline resume text textarea, and empty state. Exports both default HitlInbox and named getPendingCount for tab badge. Build passes at 472 modules, 0 errors.
 **Files changed:** client/src/panels/HitlInbox.jsx (CREATED), docs/TASK_PLAN.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/agents/frontend-dev.md (MODIFIED)
 **Bugs fixed:** none
-**Decisions made:** inbox items in store are full WS messages { type, nodeId, item: {...} } Ã¢â‚¬â€ accessed via entry.item; API path uses /api/v1/swarm/:executionId/inbox/:itemId/approve|reject with apiPost from useApi.js
+**Decisions made:** inbox items in store are full WS messages { type, nodeId, item: {...} } ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â accessed via entry.item; API path uses /api/v1/swarm/:executionId/inbox/:itemId/approve|reject with apiPost from useApi.js
 **Blockers:** none
 **Next:** Task #73 (useInbox.js polling hook) waits on #69 completion.
 ---
-## 2026-03-27 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #71.1: PTY Explosion Ã¢â‚¬â€ Full-Screen Overlay Component
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #71.1: PTY Explosion ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Full-Screen Overlay Component
 **Outcome:** COMPLETED
-**Summary:** Created client/src/canvas/PtyExplosion.jsx Ã¢â‚¬â€ a full-screen overlay component that wraps Terminal.jsx (unchanged, per DEC-009) to display an agent's live PTY session. Added ptyExplosionNodeId + setPtyExplosionNodeId to SwarmContext store. Added .pty-explosion-overlay/.pty-explosion-header/.pty-explosion-body/.pty-explosion-close CSS classes to index.css. Build passes at 472 modules, 0 errors.
+**Summary:** Created client/src/canvas/PtyExplosion.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â a full-screen overlay component that wraps Terminal.jsx (unchanged, per DEC-009) to display an agent's live PTY session. Added ptyExplosionNodeId + setPtyExplosionNodeId to SwarmContext store. Added .pty-explosion-overlay/.pty-explosion-header/.pty-explosion-body/.pty-explosion-close CSS classes to index.css. Build passes at 472 modules, 0 errors.
 **Files changed:** client/src/canvas/PtyExplosion.jsx (CREATED), client/src/store/SwarmContext.jsx (MODIFIED), client/src/index.css (MODIFIED), docs/TASK_PLAN.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED)
 **Bugs fixed:** none
-**Decisions made:** Used Terminal.jsx as inner component (not raw xterm) Ã¢â‚¬â€ DEC-009 forbids creating new xterm instances. Package is `xterm`/`xterm-addon-fit` (not `@xterm/xterm`) Ã¢â‚¬â€ verified from client/package.json. WS handled by useSession inside Terminal.jsx, not re-implemented in overlay.
+**Decisions made:** Used Terminal.jsx as inner component (not raw xterm) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â DEC-009 forbids creating new xterm instances. Package is `xterm`/`xterm-addon-fit` (not `@xterm/xterm`) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â verified from client/package.json. WS handled by useSession inside Terminal.jsx, not re-implemented in overlay.
 **Blockers:** none
 **Next:** Task #71.2 adds Escape key handler (calls setPtyExplosionNodeId(null) on Escape).
 ---
-## 2026-03-27 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Task #62.1: SwarmEngine._onHandoff full implementation
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #62.1: SwarmEngine._onHandoff full implementation
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md to replace _onHandoff stub entry with full 7-step implementation documentation; updated _ensureAgentPty and CircuitBreaker.check "Called by" annotations to reflect live wiring; updated SwarmEngine and index.js module index entries to reflect constructor params and new imports. CHANGELOG.md entry appended.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
@@ -3155,7 +3155,7 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Task #62.2 (_onDone full completion logic) or Tasks #68-#70 (HITL inbox)
 ---
-## 2026-03-27 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Wave launch: #62.1 COMPLETED; #62.2, #68, #70, #71.1, #72 Ã¢â€ â€™ IN_PROGRESS
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Wave launch: #62.1 COMPLETED; #62.2, #68, #70, #71.1, #72 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ IN_PROGRESS
 **Outcome:** COMPLETED
 **Summary:** #62.1 verified COMPLETED (168/168 tests). Launched 5 simultaneous tasks. #70 already COMPLETED by concurrent backend-dev. TASK_PLAN.md, PROGRESS.md (40/57), CONTEXT.md updated with current wave details and next-step chain.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md
@@ -3164,26 +3164,26 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** #62.3 waits on #62.2; #69 waits on #68; #71.2 waits on #71.1; #73 waits on #69+#63
 ---
-## 2026-03-27 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #72: InterAgentFeed.jsx Ã¢â‚¬â€ Real-time Handoff Log
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #72: InterAgentFeed.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Real-time Handoff Log
 **Outcome:** COMPLETED
-**Summary:** Created client/src/canvas/InterAgentFeed.jsx Ã¢â‚¬â€ a scrollable real-time panel that reads interAgentFeed from SwarmContext Zustand store, auto-scrolls to bottom on new events, shows empty state when feed is empty, and renders each event with timestamp, type icon, and a type-specific description. Build passes at 472 modules, 0 errors.
+**Summary:** Created client/src/canvas/InterAgentFeed.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â a scrollable real-time panel that reads interAgentFeed from SwarmContext Zustand store, auto-scrolls to bottom on new events, shows empty state when feed is empty, and renders each event with timestamp, type icon, and a type-specific description. Build passes at 472 modules, 0 errors.
 **Files changed:** client/src/canvas/InterAgentFeed.jsx, docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/frontend-dev.md
 **Bugs fixed:** none
-**Decisions made:** Placed file in client/src/canvas/ (consistent with AgentInspector, BroadcastBar, BreadcrumbBar) rather than client/src/panels/ as the TASK_PLAN suggested Ã¢â‚¬â€ canvas/ is where all V3 canvas-adjacent components live
+**Decisions made:** Placed file in client/src/canvas/ (consistent with AgentInspector, BroadcastBar, BreadcrumbBar) rather than client/src/panels/ as the TASK_PLAN suggested ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â canvas/ is where all V3 canvas-adjacent components live
 **Blockers:** none
 **Next:** Remaining Phase 5: #71.1 (PTY Explosion overlay), #71.2 (Escape key), #73 (useInbox.js). Also #62.2, #62.3 (_onHandoff context injection + BudgetTracker).
 ---
 
-## 2026-03-27 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Task #62.1: SwarmEngine._onHandoff full implementation
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #62.1: SwarmEngine._onHandoff full implementation
 **Outcome:** COMPLETED
-**Summary:** Audited all documentation after Task #62.1 (_onHandoff fully implemented) and the wiring of CircuitBreaker + BudgetTracker into server/index.js. DOC_STATUS.md updated: timestamp advanced; new SwarmEngine Task #62.1 row added documenting the full 7-step _onHandoff implementation; server/index.js row updated to note CircuitBreaker/BudgetTracker import and constructor wiring; ARCHITECTURE.md stale section updated to mark Task #62.1 complete and advance Phase 4 status. README.md and ARCHITECTURE.md not touched Ã¢â‚¬â€ V3 public doc deferral policy in effect until Task #82.
+**Summary:** Audited all documentation after Task #62.1 (_onHandoff fully implemented) and the wiring of CircuitBreaker + BudgetTracker into server/index.js. DOC_STATUS.md updated: timestamp advanced; new SwarmEngine Task #62.1 row added documenting the full 7-step _onHandoff implementation; server/index.js row updated to note CircuitBreaker/BudgetTracker import and constructor wiring; ARCHITECTURE.md stale section updated to mark Task #62.1 complete and advance Phase 4 status. README.md and ARCHITECTURE.md not touched ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3 public doc deferral policy in effect until Task #82.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none
 **Decisions made:** V3 public doc deferral policy maintained
 **Blockers:** none
-**Next:** Tasks #62.2Ã¢â‚¬â€œ#62.3 (_onDone full completion logic) and #68Ã¢â‚¬â€œ#70 (HITL) will need DOC_STATUS updates when done
+**Next:** Tasks #62.2ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#62.3 (_onDone full completion logic) and #68ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#70 (HITL) will need DOC_STATUS updates when done
 ---
-## 2026-03-27 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #70: SwarmEngine HITL freeze/unfreeze
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #70: SwarmEngine HITL freeze/unfreeze
 **Outcome:** COMPLETED
 **Summary:** Added freezeAgent and unfreezeAgent methods to SwarmEngine.js. freezeAgent sets agent status to 'paused', appends an inboxItem with auto-generated id, and broadcasts hitl_required + agent_status WS events. unfreezeAgent sets status back to 'running' and broadcasts agent_status. 168/168 tests pass.
 **Files changed:** server/services/SwarmEngine.js, docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/backend-dev.md
@@ -3192,45 +3192,45 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Task #71 (PTY Explosion), #68 (inbox route), #72 (InterAgentFeed) are still in progress in the phase 5 wave.
 ---
-## 2026-03-27 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #63 + #66 + #67: useSwarm.js + BroadcastBar.jsx + SwarmEngine pause/resume
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #63 + #66 + #67: useSwarm.js + BroadcastBar.jsx + SwarmEngine pause/resume
 **Outcome:** COMPLETED
-**Summary:** Mapped 3 tasks: useSwarm.js WS hook (6 event types dispatched to SwarmStore, startExecution/stopExecution actions), BroadcastBar.jsx (broadcast text input, self-hides when not running, mounted in SwarmView), SwarmEngine.pauseExecution/resumeExecution (logical state pause Ã¢â‚¬â€ no PTY interrupt, heartbeat verified correct). Updated 7 previously "not yet wired" SwarmStore action "Called by" annotations. Added 9 new function entries to CODE_MAP.md and 3 entries to CHANGELOG.md.
+**Summary:** Mapped 3 tasks: useSwarm.js WS hook (6 event types dispatched to SwarmStore, startExecution/stopExecution actions), BroadcastBar.jsx (broadcast text input, self-hides when not running, mounted in SwarmView), SwarmEngine.pauseExecution/resumeExecution (logical state pause ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no PTY interrupt, heartbeat verified correct). Updated 7 previously "not yet wired" SwarmStore action "Called by" annotations. Added 9 new function entries to CODE_MAP.md and 3 entries to CHANGELOG.md.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none
 **Decisions made:** BroadcastBar documented as always-mounted/self-hiding (matches source `if (!isActive) return null`); pauseExecution noted as logical-only (no Ctrl-C)
 **Blockers:** none
-**Next:** Tasks #62.1-#62.3 (_onHandoff full routing), #68-#70 (HITL inbox/freeze). useSwarm.js needs mounting in SwarmView Ã¢â‚¬â€ when done, code-mapper should update SwarmView() Called by for useSwarm.
+**Next:** Tasks #62.1-#62.3 (_onHandoff full routing), #68-#70 (HITL inbox/freeze). useSwarm.js needs mounting in SwarmView ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â when done, code-mapper should update SwarmView() Called by for useSwarm.
 ---
 
-## 2026-03-27 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Tasks #64, #65: useHandoff.js + AgentNode.jsx micro-PTY enhancements
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #64, #65: useHandoff.js + AgentNode.jsx micro-PTY enhancements
 **Outcome:** COMPLETED
 **Summary:** Audited all documentation after Tasks #64 and #65. DOC_STATUS.md updated: timestamp advanced; new row added for useHandoff.js (Task #64); AgentNode.jsx row updated for Task #65 changes (4-line log, scrollable, blinking cursor, selected-ring). ARCHITECTURE.md stale section updated to mark #64/#65 complete. V3 public docs deferred per policy.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none
 **Decisions made:** V3 public doc deferral maintained
 **Blockers:** none
-**Next:** Tasks #62.1Ã¢â‚¬â€œ#62.3 (_onHandoff routing) and #68Ã¢â‚¬â€œ#70 (HITL) will need DOC_STATUS updates when done
+**Next:** Tasks #62.1ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#62.3 (_onHandoff routing) and #68ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#70 (HITL) will need DOC_STATUS updates when done
 ---
 
-## 2026-03-27 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #64 + #65: useHandoff.js edge animation hook + AgentNode.jsx live updates
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #64 + #65: useHandoff.js edge animation hook + AgentNode.jsx live updates
 **Outcome:** COMPLETED
-**Summary:** Mapped 2 tasks: useHandoff.js (2 new named-export hooks Ã¢â‚¬â€ useHandoff callback pattern and useRecentHandoffs ref-Set pattern, both subscribe to SwarmStore edgeCounters), AgentNode.jsx (lastOutputSnippet enhanced to scrollable container with last 4 lines, green monospace pre, blinking cursor when running). Added 2 new function graph entries, updated 2 Module Index rows, updated AgentNode.jsx function graph entry, appended 2 CHANGELOG entries.
+**Summary:** Mapped 2 tasks: useHandoff.js (2 new named-export hooks ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â useHandoff callback pattern and useRecentHandoffs ref-Set pattern, both subscribe to SwarmStore edgeCounters), AgentNode.jsx (lastOutputSnippet enhanced to scrollable container with last 4 lines, green monospace pre, blinking cursor when running). Added 2 new function graph entries, updated 2 Module Index rows, updated AgentNode.jsx function graph entry, appended 2 CHANGELOG entries.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
 **Bugs fixed:** none
-**Decisions made:** useRecentHandoffs returns a ref Set (not state) Ã¢â‚¬â€ documented as non-reactive; callers needing re-renders must manage their own state
+**Decisions made:** useRecentHandoffs returns a ref Set (not state) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documented as non-reactive; callers needing re-renders must manage their own state
 **Blockers:** none
-**Next:** Tasks #62.1Ã¢â‚¬â€œ#62.3 (_onHandoff full routing), #68Ã¢â‚¬â€œ#70 (HITL inbox/freeze). useHandoff/useRecentHandoffs have no live callers yet.
+**Next:** Tasks #62.1ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#62.3 (_onHandoff full routing), #68ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#70 (HITL inbox/freeze). useHandoff/useRecentHandoffs have no live callers yet.
 ---
-## 2026-03-27 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Tasks #63, #66, #67: useSwarm.js + BroadcastBar.jsx + SwarmEngine pause/resume
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #63, #66, #67: useSwarm.js + BroadcastBar.jsx + SwarmEngine pause/resume
 **Outcome:** COMPLETED
-**Summary:** Audited all documentation after three Phase 4 tasks. DOC_STATUS.md updated: timestamp advanced; new rows added for useSwarm.js (Task #63) and BroadcastBar.jsx (Task #66); new SwarmEngine row added for Task #67 (pauseExecution/resumeExecution); SwarmView.jsx row updated to reflect BroadcastBar mount (Task #66); ARCHITECTURE.md stale section advanced to reflect Phase 4 progress. README.md and ARCHITECTURE.md not touched Ã¢â‚¬â€ V3 public doc deferral policy in effect until Task #82.
+**Summary:** Audited all documentation after three Phase 4 tasks. DOC_STATUS.md updated: timestamp advanced; new rows added for useSwarm.js (Task #63) and BroadcastBar.jsx (Task #66); new SwarmEngine row added for Task #67 (pauseExecution/resumeExecution); SwarmView.jsx row updated to reflect BroadcastBar mount (Task #66); ARCHITECTURE.md stale section advanced to reflect Phase 4 progress. README.md and ARCHITECTURE.md not touched ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3 public doc deferral policy in effect until Task #82.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none
 **Decisions made:** V3 public doc deferral policy maintained
 **Blockers:** none
-**Next:** Tasks #62.1Ã¢â‚¬â€œ#62.3 (_onHandoff full implementation) will require another SwarmEngine DOC_STATUS row update when complete
+**Next:** Tasks #62.1ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#62.3 (_onHandoff full implementation) will require another SwarmEngine DOC_STATUS row update when complete
 ---
-## 2026-03-27 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #64: useHandoff.js Ã¢â‚¬â€ Edge Animation Hook
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #64: useHandoff.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Edge Animation Hook
 **Outcome:** COMPLETED
 **Summary:** Created client/src/hooks/useHandoff.js with two exports: useHandoff(callback) fires a callback whenever any edgeCounter increases, and useRecentHandoffs(durationMs) returns a ref Set of recently-active edge IDs. Both use refs for previous-state comparison to avoid unnecessary re-renders. Build passes cleanly.
 **Files changed:** client/src/hooks/useHandoff.js (CREATED)
@@ -3239,43 +3239,43 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Task #65 AgentNode live-state styling
 ---
-## 2026-03-27 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #67: SwarmEngine Heartbeat Ã¢â‚¬â€ Idle Sweeper Prevention
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #67: SwarmEngine Heartbeat ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Idle Sweeper Prevention
 **Outcome:** COMPLETED
 **Summary:** Verified all heartbeat acceptance criteria already implemented in #46.3 (_startHeartbeat sets 5-min interval with .unref(), stopExecution clears it, startExecution calls it). Added pauseExecution and resumeExecution methods to SwarmEngine. All 168 tests pass.
 **Files changed:** server/services/SwarmEngine.js, docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md, docs/memory/PROGRESS.md, docs/memory/agents/backend-dev.md
 **Bugs fixed:** none
-**Decisions made:** pauseExecution only transitions 'running'Ã¢â€ â€™'paused'; resumeExecution only transitions 'paused'Ã¢â€ â€™'running'
+**Decisions made:** pauseExecution only transitions 'running'ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢'paused'; resumeExecution only transitions 'paused'ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢'running'
 **Blockers:** none
 **Next:** Task #68 (inbox.js HITL API) once Phase 4 dependencies complete
 ---
-## 2026-03-27 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Task #60: PromptToFlowBar.jsx + staggered animation
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #60: PromptToFlowBar.jsx + staggered animation
 **Outcome:** COMPLETED
 **Summary:** CODE_MAP.md updated with new PromptToFlowBar component (3 function entries: PromptToFlowBar, handleGenerate, handleKeyDown), updated SwarmView entry (PromptToFlowBar now mounted and workflowDef prop live), updated index.css entry (@keyframes fadeIn). CHANGELOG.md entry appended. Phase 3 Prompt-to-Flow data flow is now fully documented end-to-end.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
 **Bugs fixed:** none
-**Decisions made:** Documented known limitation: SwarmCanvas treats workflowDef as initialState only Ã¢â‚¬â€ re-generation via PromptToFlowBar does not live-reload the canvas after first mount.
+**Decisions made:** Documented known limitation: SwarmCanvas treats workflowDef as initialState only ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â re-generation via PromptToFlowBar does not live-reload the canvas after first mount.
 **Blockers:** none
-**Next:** Phase 4 (Live Execution) tasks #62.1, #63, #66, #67 in progress Ã¢â‚¬â€ code-mapper will be called after each completes.
+**Next:** Phase 4 (Live Execution) tasks #62.1, #63, #66, #67 in progress ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper will be called after each completes.
 ---
-## 2026-03-27 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Phase 3 complete; Phase 4 launch (#62.1, #63, #66, #67)
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Phase 3 complete; Phase 4 launch (#62.1, #63, #66, #67)
 **Outcome:** COMPLETED
-**Summary:** Marked Task #60 COMPLETED (Phase 3 fully done Ã¢â‚¬â€ all of #59, #60, #61 complete, 33/57 V3 tasks). Launched Phase 4 Live Execution wave: #62.1 (SwarmEngine _onHandoff context merge + PTY spawn), #63 (useSwarm.js WS hook), #66 (BroadcastBar.jsx + broadcast route), #67 (SwarmEngine heartbeat idle sweeper prevention) all set to IN_PROGRESS. Build at 471 modules.
+**Summary:** Marked Task #60 COMPLETED (Phase 3 fully done ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all of #59, #60, #61 complete, 33/57 V3 tasks). Launched Phase 4 Live Execution wave: #62.1 (SwarmEngine _onHandoff context merge + PTY spawn), #63 (useSwarm.js WS hook), #66 (BroadcastBar.jsx + broadcast route), #67 (SwarmEngine heartbeat idle sweeper prevention) all set to IN_PROGRESS. Build at 471 modules.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
 **Bugs fixed:** none
 **Decisions made:** #67 dependency corrected to #46.3 (was incorrectly listed as #62.3)
 **Blockers:** none
 **Next:** #62.2 launches after #62.1 completes; #62.3 after #62.2; #64/#65 pending #63; #68/#69/#70 pending Phase 4 completion
 ---
-## 2026-03-27 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Task #60: PromptToFlowBar.jsx + staggered animation
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #60: PromptToFlowBar.jsx + staggered animation
 **Outcome:** COMPLETED
-**Summary:** Audited all documentation after Task #60 (PromptToFlowBar.jsx created, @keyframes fadeIn added to index.css, SwarmView.jsx wired with onWorkflowGenerated callback). DOC_STATUS.md updated: timestamp advanced; PromptToFlowBar.jsx row added; index.css row updated to document Task #60 fadeIn keyframe addition; SwarmView.jsx row updated to reflect workflowDef is now wired (no longer a stub); ARCHITECTURE.md stale section Phase 3 status updated from "partial/pending" to "COMPLETE". README.md and ARCHITECTURE.md not touched Ã¢â‚¬â€ V3 public doc deferral policy in effect until Task #82.
+**Summary:** Audited all documentation after Task #60 (PromptToFlowBar.jsx created, @keyframes fadeIn added to index.css, SwarmView.jsx wired with onWorkflowGenerated callback). DOC_STATUS.md updated: timestamp advanced; PromptToFlowBar.jsx row added; index.css row updated to document Task #60 fadeIn keyframe addition; SwarmView.jsx row updated to reflect workflowDef is now wired (no longer a stub); ARCHITECTURE.md stale section Phase 3 status updated from "partial/pending" to "COMPLETE". README.md and ARCHITECTURE.md not touched ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3 public doc deferral policy in effect until Task #82.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none
 **Decisions made:** V3 public doc deferral policy maintained; Phase 3 complete as of Task #60
 **Blockers:** none
 **Next:** Phase 4 live execution tasks (#62.1 onward)
 ---
-## 2026-03-27 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #59 + #61: scaffold endpoint + useWorkflow.js CRUD hook
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #59 + #61: scaffold endpoint + useWorkflow.js CRUD hook
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md to document the full POST /scaffold implementation in swarm.js (generateWorkflowFromPrompt helper using @anthropic-ai/sdk + full route handler replacing 501 stub) and the new useWorkflow.js CRUD hooks (useWorkflow + useWorkflowList). Module Index rows updated/added. Two Function Graph sections appended. SwarmView workflowDef note updated. CHANGELOG.md entries appended for both tasks.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
@@ -3284,120 +3284,120 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Task #60 (PromptToFlowBar.jsx) when completed
 ---
-## 2026-03-27 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Task #59 + Task #61: scaffold endpoint + useWorkflow.js CRUD hook
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #59 + Task #61: scaffold endpoint + useWorkflow.js CRUD hook
 **Outcome:** COMPLETED
-**Summary:** Audited all documentation after Task #59 (scaffold endpoint fully implemented in server/routes/swarm.js via Anthropic SDK) and Task #61 (useWorkflow.js CRUD hook created in client/src/hooks/). DOC_STATUS.md updated: timestamp advanced, swarm.js row split into two entries (Task #47.1 stub + Task #59 full implementation), new row added for useWorkflow.js, ARCHITECTURE.md stale section note updated to reflect Phase 3 partial state. README.md and ARCHITECTURE.md not touched Ã¢â‚¬â€ V3 public doc deferral policy in effect until Task #82.
+**Summary:** Audited all documentation after Task #59 (scaffold endpoint fully implemented in server/routes/swarm.js via Anthropic SDK) and Task #61 (useWorkflow.js CRUD hook created in client/src/hooks/). DOC_STATUS.md updated: timestamp advanced, swarm.js row split into two entries (Task #47.1 stub + Task #59 full implementation), new row added for useWorkflow.js, ARCHITECTURE.md stale section note updated to reflect Phase 3 partial state. README.md and ARCHITECTURE.md not touched ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3 public doc deferral policy in effect until Task #82.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none
-**Decisions made:** V3 public doc deferral policy maintained Ã¢â‚¬â€ no changes to README.md or ARCHITECTURE.md
+**Decisions made:** V3 public doc deferral policy maintained ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no changes to README.md or ARCHITECTURE.md
 **Blockers:** none
-**Next:** Task #60 (PromptToFlowBar.jsx) Ã¢â‚¬â€ only remaining Phase 3 task now that #59 and #61 are done
+**Next:** Task #60 (PromptToFlowBar.jsx) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â only remaining Phase 3 task now that #59 and #61 are done
 ---
-## 2026-03-27 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Task #58: App.jsx + Sidebar swarm nav + ReactFlowProvider
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #58: App.jsx + Sidebar swarm nav + ReactFlowProvider
 **Outcome:** COMPLETED
-**Summary:** Updated CODE_MAP.md to reflect SwarmView wired into App.jsx view router (case 'swarm') and swarm item added to NAV_ITEMS. SwarmView "no live caller" warning resolved. App.jsx Function Graph entries (MainContent/AppLayout/App) added for the first time. CHANGELOG.md Task #58 entry appended. Build growth 299 Ã¢â€ â€™ 470 modules documented.
+**Summary:** Updated CODE_MAP.md to reflect SwarmView wired into App.jsx view router (case 'swarm') and swarm item added to NAV_ITEMS. SwarmView "no live caller" warning resolved. App.jsx Function Graph entries (MainContent/AppLayout/App) added for the first time. CHANGELOG.md Task #58 entry appended. Build growth 299 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ 470 modules documented.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none
-**Decisions made:** Added App.jsx Function Graph entries previously missing Ã¢â‚¬â€ justified by App.jsx modification in this task
+**Decisions made:** Added App.jsx Function Graph entries previously missing ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â justified by App.jsx modification in this task
 **Blockers:** none
 **Next:** Task #59 (scaffold endpoint), #60 (PromptToFlowBar.jsx), #61 (workflowDef wiring into SwarmView)
 ---
-## 2026-03-27 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Phase 2 complete; Phase 3 wave launched
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Phase 2 complete; Phase 3 wave launched
 **Outcome:** COMPLETED
-**Summary:** Marked #58 COMPLETED (confirmed self-marked by frontend-dev). #61 found already COMPLETED by concurrent frontend-dev agent. Updated TASK_PLAN.md: #59 PENDINGÃ¢â€ â€™IN_PROGRESS. Updated PROGRESS.md Phase 3 section. Updated CONTEXT.md with accurate Phase 3 wave state: #59 IN_PROGRESS, #61 COMPLETED, #60 pending #59. Phase 2 Canvas Static: 29/57 done (now 30/57 with #61). Build 470 modules, 168/168 tests.
+**Summary:** Marked #58 COMPLETED (confirmed self-marked by frontend-dev). #61 found already COMPLETED by concurrent frontend-dev agent. Updated TASK_PLAN.md: #59 PENDINGÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢IN_PROGRESS. Updated PROGRESS.md Phase 3 section. Updated CONTEXT.md with accurate Phase 3 wave state: #59 IN_PROGRESS, #61 COMPLETED, #60 pending #59. Phase 2 Canvas Static: 29/57 done (now 30/57 with #61). Build 470 modules, 168/168 tests.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
 **Bugs fixed:** none
-**Decisions made:** #60 (PromptToFlowBar) now unblocked as soon as #59 completes Ã¢â‚¬â€ only remaining dep is #59
+**Decisions made:** #60 (PromptToFlowBar) now unblocked as soon as #59 completes ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â only remaining dep is #59
 **Blockers:** none
 **Next:** #59 (backend-dev, scaffold endpoint, IN_PROGRESS); after #59 completes launch #60 (PromptToFlowBar.jsx)
 ---
-## 2026-03-27 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #61: useWorkflow.js Ã¢â‚¬â€ CRUD Hook
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #61: useWorkflow.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â CRUD Hook
 **Outcome:** COMPLETED
-**Summary:** Created client/src/hooks/useWorkflow.js with two named exports: useWorkflow(id) for single-workflow CRUD (fetch-on-mount, update, remove) and useWorkflowList() for list CRUD (fetch-on-mount, create). Used existing apiGet/apiPut/apiDelete/apiPost wrappers from useApi.js Ã¢â‚¬â€ no window.fetch calls and no new packages needed. Build: 470 modules, 0 errors.
+**Summary:** Created client/src/hooks/useWorkflow.js with two named exports: useWorkflow(id) for single-workflow CRUD (fetch-on-mount, update, remove) and useWorkflowList() for list CRUD (fetch-on-mount, create). Used existing apiGet/apiPut/apiDelete/apiPost wrappers from useApi.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no window.fetch calls and no new packages needed. Build: 470 modules, 0 errors.
 **Files changed:** client/src/hooks/useWorkflow.js (CREATED), docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/frontend-dev.md
 **Bugs fixed:** none
-**Decisions made:** Used useApi.js wrappers (apiGet/apiPut/apiDelete/apiPost) instead of window.fetch directly Ã¢â‚¬â€ matches project convention; split into two separate named exports (useWorkflow + useWorkflowList) rather than one monolithic hook Ã¢â‚¬â€ cleaner separation of concerns
+**Decisions made:** Used useApi.js wrappers (apiGet/apiPut/apiDelete/apiPost) instead of window.fetch directly ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â matches project convention; split into two separate named exports (useWorkflow + useWorkflowList) rather than one monolithic hook ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â cleaner separation of concerns
 **Blockers:** none
-**Next:** Task #59 (scaffold endpoint) and Task #60 (PromptToFlowBar.jsx) Ã¢â‚¬â€ V3 Phase 3 Prompt-to-Flow
+**Next:** Task #59 (scaffold endpoint) and Task #60 (PromptToFlowBar.jsx) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3 Phase 3 Prompt-to-Flow
 ---
-## 2026-03-27 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Task #58: App.jsx + Sidebar swarm nav
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #58: App.jsx + Sidebar swarm nav
 **Outcome:** COMPLETED
-**Summary:** Audited all documentation after Task #58. README.md and ARCHITECTURE.md had stale view-count references ("5-view sidebar" / "5-item icon nav" / missing swarm in views list) Ã¢â‚¬â€ both updated surgically. DOC_STATUS.md timestamp advanced; new rows added for constants.js and App.jsx; ARCHITECTURE.md stale section note updated to show Phase 2 complete.
+**Summary:** Audited all documentation after Task #58. README.md and ARCHITECTURE.md had stale view-count references ("5-view sidebar" / "5-item icon nav" / missing swarm in views list) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â both updated surgically. DOC_STATUS.md timestamp advanced; new rows added for constants.js and App.jsx; ARCHITECTURE.md stale section note updated to show Phase 2 complete.
 **Files changed:** README.md, docs/ARCHITECTURE.md, docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none
-**Decisions made:** V3 public doc deferral policy maintained Ã¢â‚¬â€ no V3 section added to ARCHITECTURE.md or README until Task #82
+**Decisions made:** V3 public doc deferral policy maintained ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no V3 section added to ARCHITECTURE.md or README until Task #82
 **Blockers:** none
-**Next:** Task #59 (scaffold endpoint) Ã¢â‚¬â€ V3 Phase 3
+**Next:** Task #59 (scaffold endpoint) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3 Phase 3
 ---
-## 2026-03-27 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #58: App.jsx + Sidebar swarm nav + ReactFlowProvider
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #58: App.jsx + Sidebar swarm nav + ReactFlowProvider
 **Outcome:** COMPLETED
-**Summary:** Added SwarmView to App.jsx routing (import + switch case 'swarm'). Added 'hub' icon + 'Swarm' label entry to NAV_ITEMS in constants.js Ã¢â‚¬â€ Sidebar already iterates NAV_ITEMS dynamically so no Sidebar.jsx edit was needed. No ReactFlowProvider added at App level since SwarmView already provides one. Build: 470 modules, 0 errors. 168/168 tests pass. V3 Phase 2 (Canvas Static) now fully complete (29/57).
+**Summary:** Added SwarmView to App.jsx routing (import + switch case 'swarm'). Added 'hub' icon + 'Swarm' label entry to NAV_ITEMS in constants.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Sidebar already iterates NAV_ITEMS dynamically so no Sidebar.jsx edit was needed. No ReactFlowProvider added at App level since SwarmView already provides one. Build: 470 modules, 0 errors. 168/168 tests pass. V3 Phase 2 (Canvas Static) now fully complete (29/57).
 **Files changed:** client/src/App.jsx, client/src/lib/constants.js, docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/frontend-dev.md
 **Bugs fixed:** none
 **Decisions made:** Used Material Symbols 'hub' icon for Swarm nav entry (network/graph semantics, consistent with icon set); no extra ReactFlowProvider at App level
 **Blockers:** none
-**Next:** Task #59 (scaffold endpoint) + Task #60 (PromptToFlowBar.jsx) Ã¢â‚¬â€ V3 Phase 3 Prompt-to-Flow
+**Next:** Task #59 (scaffold endpoint) + Task #60 (PromptToFlowBar.jsx) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3 Phase 3 Prompt-to-Flow
 ---
-## 2026-03-27 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Task #57.2: SwarmView.jsx Ã¢â‚¬â€ Layout Shell + Toolbar
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #57.2: SwarmView.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Layout Shell + Toolbar
 **Outcome:** COMPLETED
-**Summary:** Mapped SwarmView.jsx Ã¢â‚¬â€ new page shell wrapping SwarmCanvas in ReactFlowProvider with toolbar (executionStatus indicator, conditional Reset button). Updated SwarmCanvas "Called by" from "no callers yet" to SwarmView. workflowDef is null/local-state until Task #61.
+**Summary:** Mapped SwarmView.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â new page shell wrapping SwarmCanvas in ReactFlowProvider with toolbar (executionStatus indicator, conditional Reset button). Updated SwarmCanvas "Called by" from "no callers yet" to SwarmView. workflowDef is null/local-state until Task #61.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md
 **Bugs fixed:** none
 **Decisions made:** ReactFlowProvider boundary ownership documented as belonging to SwarmView (not SwarmCanvas)
 **Blockers:** none
-**Next:** Task #58 Ã¢â‚¬â€ App.jsx + Sidebar swarm nav registration; Task #61 Ã¢â‚¬â€ workflowDef API wiring
+**Next:** Task #58 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â App.jsx + Sidebar swarm nav registration; Task #61 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â workflowDef API wiring
 ---
 
-## 2026-03-27 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Task #57.2: SwarmView.jsx layout shell + toolbar
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #57.2: SwarmView.jsx layout shell + toolbar
 **Outcome:** COMPLETED
-**Summary:** Audited all documentation artifacts after creation of SwarmView.jsx. File has adequate inline comments Ã¢â‚¬â€ file-level comment plus inline comments on toolbar sections (status indicator, Reset button conditionality). V3 public doc deferral policy maintained. DOC_STATUS.md updated with new SwarmView.jsx row and ARCHITECTURE.md stale section note expanded with view shell layer and updated remaining tasks.
+**Summary:** Audited all documentation artifacts after creation of SwarmView.jsx. File has adequate inline comments ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â file-level comment plus inline comments on toolbar sections (status indicator, Reset button conditionality). V3 public doc deferral policy maintained. DOC_STATUS.md updated with new SwarmView.jsx row and ARCHITECTURE.md stale section note expanded with view shell layer and updated remaining tasks.
 **Files changed:** docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/documenter.md (MODIFIED)
 **Bugs fixed:** none
-**Decisions made:** V3 public doc deferral policy maintained Ã¢â‚¬â€ no README or ARCHITECTURE changes until Task #82
+**Decisions made:** V3 public doc deferral policy maintained ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no README or ARCHITECTURE changes until Task #82
 **Blockers:** none
 **Next:** Task #58 (App.jsx + ReactFlowProvider + Sidebar swarm nav integration)
 ---
-## 2026-03-27 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Task #57.1: SwarmCanvas.jsx Ã¢â‚¬â€ React Flow Canvas + Drill-Down Filtering
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #57.1: SwarmCanvas.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â React Flow Canvas + Drill-Down Filtering
 **Outcome:** COMPLETED
-**Summary:** Mapped SwarmCanvas.jsx Ã¢â‚¬â€ the root React Flow canvas container that wires all 6 previously-built canvas primitives. Updated "Called by" for AgentNode, DepartmentNode, TriggerNode, HandoffEdge, AgentInspector, BreadcrumbBar Ã¢â‚¬â€ all now resolved from "no callers" to SwarmCanvas.jsx. Documented the complete drill-down click loop and the workflowDef-as-initial-state limitation.
+**Summary:** Mapped SwarmCanvas.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the root React Flow canvas container that wires all 6 previously-built canvas primitives. Updated "Called by" for AgentNode, DepartmentNode, TriggerNode, HandoffEdge, AgentInspector, BreadcrumbBar ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all now resolved from "no callers" to SwarmCanvas.jsx. Documented the complete drill-down click loop and the workflowDef-as-initial-state limitation.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none
 **Decisions made:** none
 **Blockers:** none
-**Next:** Task #57.2 (SwarmView.jsx) IN_PROGRESS Ã¢â‚¬â€ when complete, update SwarmCanvas "Called by" to point to SwarmView.
+**Next:** Task #57.2 (SwarmView.jsx) IN_PROGRESS ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â when complete, update SwarmCanvas "Called by" to point to SwarmView.
 ---
-## 2026-03-27 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Task #57.1 COMPLETED; #57.2 launched IN_PROGRESS
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #57.1 COMPLETED; #57.2 launched IN_PROGRESS
 **Outcome:** COMPLETED
-**Summary:** Confirmed Task #57.1 (SwarmCanvas.jsx) COMPLETED per frontend-dev self-mark and ACTIVITY_LOG entry. Marked #57.2 (SwarmView.jsx Ã¢â‚¬â€ layout shell + toolbar) IN_PROGRESS in TASK_PLAN.md. Updated PROGRESS.md and CONTEXT.md to reflect current wave.
-**Files changed:** docs/TASK_PLAN.md (MODIFIED Ã¢â‚¬â€ #57.2 PENDING Ã¢â€ â€™ IN_PROGRESS), docs/memory/PROGRESS.md (MODIFIED Ã¢â‚¬â€ #57.2 entry updated), docs/memory/CONTEXT.md (MODIFIED Ã¢â‚¬â€ current wave block updated), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/project-manager.md (MODIFIED)
+**Summary:** Confirmed Task #57.1 (SwarmCanvas.jsx) COMPLETED per frontend-dev self-mark and ACTIVITY_LOG entry. Marked #57.2 (SwarmView.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â layout shell + toolbar) IN_PROGRESS in TASK_PLAN.md. Updated PROGRESS.md and CONTEXT.md to reflect current wave.
+**Files changed:** docs/TASK_PLAN.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â #57.2 PENDING ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ IN_PROGRESS), docs/memory/PROGRESS.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â #57.2 entry updated), docs/memory/CONTEXT.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â current wave block updated), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/project-manager.md (MODIFIED)
 **Bugs fixed:** none
-**Decisions made:** Launch #57.2 immediately Ã¢â‚¬â€ all deps met (#57.1 DONE, #55 DONE)
+**Decisions made:** Launch #57.2 immediately ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all deps met (#57.1 DONE, #55 DONE)
 **Blockers:** none
 **Next:** #57.2 (SwarmView.jsx) IN_PROGRESS. After completion: launch #58 (App.jsx + Sidebar swarm nav + ReactFlowProvider, frontend-dev, haiku, EASY).
 ---
-## 2026-03-27 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Task #57.1: SwarmCanvas.jsx
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #57.1: SwarmCanvas.jsx
 **Outcome:** COMPLETED
-**Summary:** Audited all documentation artifacts after creation of SwarmCanvas.jsx. File has adequate inline documentation Ã¢â‚¬â€ file-level comment and inline comments on drill-down filtering memos are present and oriented toward "why" rather than "what". V3 public doc deferral policy maintained. DOC_STATUS.md updated with new SwarmCanvas.jsx row and ARCHITECTURE.md stale section note expanded to include canvas assembly layer.
+**Summary:** Audited all documentation artifacts after creation of SwarmCanvas.jsx. File has adequate inline documentation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â file-level comment and inline comments on drill-down filtering memos are present and oriented toward "why" rather than "what". V3 public doc deferral policy maintained. DOC_STATUS.md updated with new SwarmCanvas.jsx row and ARCHITECTURE.md stale section note expanded to include canvas assembly layer.
 **Files changed:** docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/documenter.md (MODIFIED)
 **Bugs fixed:** none
-**Decisions made:** V3 public doc deferral policy maintained Ã¢â‚¬â€ no README or ARCHITECTURE changes until Task #82
+**Decisions made:** V3 public doc deferral policy maintained ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no README or ARCHITECTURE changes until Task #82
 **Blockers:** none
 **Next:** Task #57.2 (SwarmView.jsx layout shell + toolbar) and #58 (App.jsx + ReactFlowProvider + Sidebar integration)
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #54 + #55 + #56: HandoffEdge, AgentInspector, BreadcrumbBar
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #54 + #55 + #56: HandoffEdge, AgentInspector, BreadcrumbBar
 **Outcome:** COMPLETED
 **Summary:** Mapped three new canvas component files (HandoffEdge.jsx, AgentInspector.jsx, BreadcrumbBar.jsx) and the index.css @keyframes dashdraw addition. Updated CODE_MAP.md with new Module Index rows, Function Graph entries, and "Called by" updates for navigateBreadcrumb and setSelectedNode in SwarmContext. Appended CHANGELOG.md entry.
 **Files changed:** docs/memory/CODE_MAP.md (MODIFIED), docs/memory/CHANGELOG.md (MODIFIED), docs/memory/agents/code-mapper.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
 **Bugs fixed:** none
 **Decisions made:** none
 **Blockers:** none
-**Next:** WorkflowCanvas.jsx wrapper will register HandoffEdge in edgeTypes and mount AgentInspector + BreadcrumbBar Ã¢â‚¬â€ update "Called by" fields for all three when that task completes
+**Next:** WorkflowCanvas.jsx wrapper will register HandoffEdge in edgeTypes and mount AgentInspector + BreadcrumbBar ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â update "Called by" fields for all three when that task completes
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #57.1: SwarmCanvas.jsx Ã¢â‚¬â€ React Flow Canvas + Drill-Down Filtering
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #57.1: SwarmCanvas.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â React Flow Canvas + Drill-Down Filtering
 **Outcome:** COMPLETED
-**Summary:** Created client/src/canvas/SwarmCanvas.jsx. Registers all 3 custom node types (agent, department, trigger) and handoff edge type. Implements drill-down filtering via useMemo Ã¢â‚¬â€ when focusedDepartmentId is set, only nodes belonging to that department (+ the dept itself) are shown, with edges filtered to match. onNodeClick/onPaneClick wired to SwarmStore. BreadcrumbBar and AgentInspector mounted in layout. Build passes (299 modules, 0 errors).
+**Summary:** Created client/src/canvas/SwarmCanvas.jsx. Registers all 3 custom node types (agent, department, trigger) and handoff edge type. Implements drill-down filtering via useMemo ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â when focusedDepartmentId is set, only nodes belonging to that department (+ the dept itself) are shown, with edges filtered to match. onNodeClick/onPaneClick wired to SwarmStore. BreadcrumbBar and AgentInspector mounted in layout. Build passes (299 modules, 0 errors).
 **Files changed:** client/src/canvas/SwarmCanvas.jsx (CREATED), docs/TASK_PLAN.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED)
 **Bugs fixed:** none
 **Decisions made:** none
@@ -3405,142 +3405,142 @@ full self-contained context and acceptance criteria.
 **Next:** Task #57.2 (SwarmView.jsx layout shell + toolbar) and #58 (App.jsx + ReactFlowProvider) can proceed
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Tasks #54/#55/#56: HandoffEdge.jsx, AgentInspector.jsx, BreadcrumbBar.jsx
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #54/#55/#56: HandoffEdge.jsx, AgentInspector.jsx, BreadcrumbBar.jsx
 **Outcome:** COMPLETED
-**Summary:** Audited all documentation artifacts after creation of HandoffEdge.jsx (custom animated edge), AgentInspector.jsx (node inspector side panel), and BreadcrumbBar.jsx (canvas breadcrumb nav), plus index.css modification for dashdraw keyframes. All four files have adequate inline documentation. V3 public doc deferral policy maintained Ã¢â‚¬â€ README.md and ARCHITECTURE.md not updated. DOC_STATUS.md updated with 4 new rows (HandoffEdge, index.css, AgentInspector, BreadcrumbBar) and expanded ARCHITECTURE.md stale section note to include edge/panel/nav canvas layers.
+**Summary:** Audited all documentation artifacts after creation of HandoffEdge.jsx (custom animated edge), AgentInspector.jsx (node inspector side panel), and BreadcrumbBar.jsx (canvas breadcrumb nav), plus index.css modification for dashdraw keyframes. All four files have adequate inline documentation. V3 public doc deferral policy maintained ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â README.md and ARCHITECTURE.md not updated. DOC_STATUS.md updated with 4 new rows (HandoffEdge, index.css, AgentInspector, BreadcrumbBar) and expanded ARCHITECTURE.md stale section note to include edge/panel/nav canvas layers.
 **Files changed:** docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/documenter.md (MODIFIED)
 **Bugs fixed:** none
-**Decisions made:** V3 public doc deferral policy maintained Ã¢â‚¬â€ no README or ARCHITECTURE changes until Task #82
+**Decisions made:** V3 public doc deferral policy maintained ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no README or ARCHITECTURE changes until Task #82
 **Blockers:** none
-**Next:** Tasks #57.1 (SwarmCanvas.jsx) and #57.2 (SwarmView.jsx) Ã¢â‚¬â€ next parallel wave
+**Next:** Tasks #57.1 (SwarmCanvas.jsx) and #57.2 (SwarmView.jsx) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â next parallel wave
 ---
-## 2026-03-27 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #54: HandoffEdge.jsx Ã¢â‚¬â€ Animated Edge + Counter Badge
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #54: HandoffEdge.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Animated Edge + Counter Badge
 **Outcome:** COMPLETED
-**Summary:** Created client/src/canvas/edges/HandoffEdge.jsx Ã¢â‚¬â€ custom React Flow edge type "handoff" with animated dashed blue stroke and counter badge. Badge reads edgeCounters[id] from useSwarmStore; shows only when counter > 0. Added @keyframes dashdraw to client/src/index.css for stroke animation.
-**Files changed:** client/src/canvas/edges/HandoffEdge.jsx (CREATED), client/src/index.css (MODIFIED Ã¢â‚¬â€ @keyframes dashdraw added)
+**Summary:** Created client/src/canvas/edges/HandoffEdge.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â custom React Flow edge type "handoff" with animated dashed blue stroke and counter badge. Badge reads edgeCounters[id] from useSwarmStore; shows only when counter > 0. Added @keyframes dashdraw to client/src/index.css for stroke animation.
+**Files changed:** client/src/canvas/edges/HandoffEdge.jsx (CREATED), client/src/index.css (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â @keyframes dashdraw added)
 **Bugs fixed:** none
-**Decisions made:** Implemented verbatim per task spec Ã¢â‚¬â€ no deviations
+**Decisions made:** Implemented verbatim per task spec ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no deviations
 **Blockers:** none
 **Next:** Tasks #55 (AgentInspector.jsx) and #56 (BreadcrumbBar.jsx) remain IN_PROGRESS
 ---
-## 2026-03-27 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #55: AgentInspector.jsx Ã¢â‚¬â€ Node Config Panel
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #55: AgentInspector.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Node Config Panel
 **Outcome:** COMPLETED
-**Summary:** Created client/src/canvas/AgentInspector.jsx Ã¢â‚¬â€ the right-side panel that appears when a canvas node is selected. Reads selectedNodeId, agentStates, and setSelectedNode from SwarmContext Zustand store. Shows node label, type badge, live status, handoffCount, systemPrompt, and lastOutputSnippet. Returns empty state when nothing is selected. Build verified clean (299 modules, 0 errors).
-**Files changed:** client/src/canvas/AgentInspector.jsx (CREATED), docs/TASK_PLAN.md (Task #55 IN_PROGRESS Ã¢â€ â€™ COMPLETED)
+**Summary:** Created client/src/canvas/AgentInspector.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the right-side panel that appears when a canvas node is selected. Reads selectedNodeId, agentStates, and setSelectedNode from SwarmContext Zustand store. Shows node label, type badge, live status, handoffCount, systemPrompt, and lastOutputSnippet. Returns empty state when nothing is selected. Build verified clean (299 modules, 0 errors).
+**Files changed:** client/src/canvas/AgentInspector.jsx (CREATED), docs/TASK_PLAN.md (Task #55 IN_PROGRESS ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ COMPLETED)
 **Bugs fixed:** none
 **Decisions made:** File placed in client/src/canvas/ per user-provided task spec; matches import path expected by SwarmCanvas.jsx (#57.1)
 **Blockers:** none
-**Next:** Tasks #54 (HandoffEdge.jsx), #56 (BreadcrumbBar.jsx) Ã¢â‚¬â€ remaining Phase 2 canvas tasks
+**Next:** Tasks #54 (HandoffEdge.jsx), #56 (BreadcrumbBar.jsx) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â remaining Phase 2 canvas tasks
 ---
-## 2026-03-27 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Tasks #53.1/#53.2/#53.3 COMPLETED; #54+#55+#56 launched IN_PROGRESS
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #53.1/#53.2/#53.3 COMPLETED; #54+#55+#56 launched IN_PROGRESS
 **Outcome:** COMPLETED
 **Summary:** Confirmed #53.1 (AgentNode.jsx), #53.2 (DepartmentNode.jsx), #53.3 (TriggerNode.jsx) all COMPLETED with build passing. Marked #54 (HandoffEdge.jsx), #55 (AgentInspector.jsx), #56 (BreadcrumbBar.jsx) as IN_PROGRESS in TASK_PLAN.md summary table and task bodies. Updated PROGRESS.md and CONTEXT.md to reflect current parallel wave.
 **Files changed:** docs/TASK_PLAN.md (task bodies + summary table for #54/#55/#56), docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
 **Bugs fixed:** none
-**Decisions made:** Launch #54+#55+#56 in parallel Ã¢â‚¬â€ all deps met (#52 done, #53.1 done); after this wave completes, launch #57.1+#57.2 in parallel
+**Decisions made:** Launch #54+#55+#56 in parallel ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all deps met (#52 done, #53.1 done); after this wave completes, launch #57.1+#57.2 in parallel
 **Blockers:** none
 **Next:** #54 HandoffEdge, #55 AgentInspector, #56 BreadcrumbBar all running. After those complete: PM marks done and launches #57.1+#57.2 in parallel.
 ---
-## 2026-03-27 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Tasks #53.1/#53.2/#53.3: AgentNode.jsx, DepartmentNode.jsx, TriggerNode.jsx
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #53.1/#53.2/#53.3: AgentNode.jsx, DepartmentNode.jsx, TriggerNode.jsx
 **Outcome:** COMPLETED
 **Summary:** Audited all documentation artifacts after creation of three V3 canvas node components. All three files have adequate inline comments. No public docs (README.md, ARCHITECTURE.md) required updates under the V3 deferral policy. DOC_STATUS.md updated with 3 new rows for the canvas node stubs and expanded ARCHITECTURE.md stale section note.
 **Files changed:** docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/agents/documenter.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
 **Bugs fixed:** none
-**Decisions made:** V3 public doc deferral policy maintained Ã¢â‚¬â€ no README or ARCHITECTURE changes until Task #82
+**Decisions made:** V3 public doc deferral policy maintained ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no README or ARCHITECTURE changes until Task #82
 **Blockers:** none
-**Next:** Tasks #54 (HandoffEdge.jsx), #55 (AgentInspector.jsx), #56 (BreadcrumbBar.jsx) Ã¢â‚¬â€ next parallel wave
+**Next:** Tasks #54 (HandoffEdge.jsx), #55 (AgentInspector.jsx), #56 (BreadcrumbBar.jsx) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â next parallel wave
 ---
-## 2026-03-27 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Task Plan Update: #52 COMPLETED, #53.1+#53.2+#53.3 All Completed
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task Plan Update: #52 COMPLETED, #53.1+#53.2+#53.3 All Completed
 **Outcome:** COMPLETED
 **Summary:** Marked #52 (SwarmContext.jsx) as COMPLETED and launched #53.1, #53.2, #53.3 in parallel. All three completed concurrently (frontend-dev agents ran simultaneously). AgentNode.jsx, DepartmentNode.jsx, TriggerNode.jsx all done. V3 Phase 2 canvas nodes complete. Counter: 17/57 V3 tasks COMPLETED.
 **Files changed:** docs/TASK_PLAN.md (summary table + task entries for 53.x), docs/memory/PROGRESS.md, docs/memory/CONTEXT.md
 **Bugs fixed:** none
-**Decisions made:** Parallel launch of all three #53.x tasks Ã¢â‚¬â€ all depend only on #52 with no mutual dependency; maximum throughput achieved
+**Decisions made:** Parallel launch of all three #53.x tasks ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all depend only on #52 with no mutual dependency; maximum throughput achieved
 **Blockers:** none
-**Next:** Launch #54 (HandoffEdge.jsx, depends #52+#53.1 Ã¢â‚¬â€ both done), #55 (AgentInspector.jsx, depends #52+#53.1 Ã¢â‚¬â€ both done), #56 (BreadcrumbBar.jsx, depends #52 Ã¢â‚¬â€ done) in parallel
+**Next:** Launch #54 (HandoffEdge.jsx, depends #52+#53.1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â both done), #55 (AgentInspector.jsx, depends #52+#53.1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â both done), #56 (BreadcrumbBar.jsx, depends #52 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â done) in parallel
 ---
-## 2026-03-27 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #53.3: TriggerNode.jsx Ã¢â‚¬â€ Webhook/RSS Node Stub
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #53.3: TriggerNode.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Webhook/RSS Node Stub
 **Outcome:** COMPLETED
-**Summary:** Created client/src/canvas/nodes/TriggerNode.jsx Ã¢â‚¬â€ stub canvas node for webhook and RSS trigger sources. Renders purple-themed card with icon mapping (webhookÃ¢â€ â€™Ã°Å¸â€â€”, rssÃ¢â€ â€™Ã°Å¸â€œÂ¡, fallbackÃ¢â€ â€™Ã¢Å¡Â¡), trigger type badge, selected ring, and source-only Handle (triggers fire outward to agents, never receive). Build passes clean (299 modules, 0 errors). Full implementation deferred to Task #76.
+**Summary:** Created client/src/canvas/nodes/TriggerNode.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â stub canvas node for webhook and RSS trigger sources. Renders purple-themed card with icon mapping (webhookÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬â€, rssÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â¡, fallbackÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ÃƒÂ¢Ã…Â¡Ã‚Â¡), trigger type badge, selected ring, and source-only Handle (triggers fire outward to agents, never receive). Build passes clean (299 modules, 0 errors). Full implementation deferred to Task #76.
 **Files changed:** client/src/canvas/nodes/TriggerNode.jsx (CREATED), docs/TASK_PLAN.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/frontend-dev.md (MODIFIED)
 **Bugs fixed:** none
-**Decisions made:** Implemented verbatim per task spec Ã¢â‚¬â€ no deviations. No SwarmStore import needed for stub (state subscription deferred to Task #76). Source Handle only (bottom) Ã¢â‚¬â€ trigger nodes have no incoming connections.
+**Decisions made:** Implemented verbatim per task spec ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no deviations. No SwarmStore import needed for stub (state subscription deferred to Task #76). Source Handle only (bottom) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â trigger nodes have no incoming connections.
 **Blockers:** none
-**Next:** Tasks #53.1 and #53.2 were already COMPLETED. All three canvas node stubs (#53.1Ã¢â‚¬â€œ#53.3) are now done. Task #54 (HandoffEdge.jsx) is next unblocked Phase 2 task.
+**Next:** Tasks #53.1 and #53.2 were already COMPLETED. All three canvas node stubs (#53.1ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#53.3) are now done. Task #54 (HandoffEdge.jsx) is next unblocked Phase 2 task.
 ---
-## 2026-03-27 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #53.2: DepartmentNode.jsx Ã¢â‚¬â€ Group Container Node
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #53.2: DepartmentNode.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Group Container Node
 **Outcome:** COMPLETED
-**Summary:** Created client/src/canvas/nodes/DepartmentNode.jsx Ã¢â‚¬â€ React Flow group container node for departments. Renders with focused/selected visual states, clicking header calls setFocusedDepartment(id) from SwarmStore. Build passes clean (299 modules).
+**Summary:** Created client/src/canvas/nodes/DepartmentNode.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â React Flow group container node for departments. Renders with focused/selected visual states, clicking header calls setFocusedDepartment(id) from SwarmStore. Build passes clean (299 modules).
 **Files changed:** client/src/canvas/nodes/DepartmentNode.jsx (CREATED), docs/TASK_PLAN.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED)
 **Bugs fixed:** none
-**Decisions made:** Implemented per task spec exactly Ã¢â‚¬â€ isFocused driven by useSwarmStore focusedDepartmentId comparison to node id
+**Decisions made:** Implemented per task spec exactly ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â isFocused driven by useSwarmStore focusedDepartmentId comparison to node id
 **Blockers:** none
 **Next:** Task #53.3 (TriggerNode.jsx) and #54 (HandoffEdge.jsx) are next
 ---
-## 2026-03-27 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #53.1: AgentNode.jsx Ã¢â‚¬â€ Custom React Flow Agent Node
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #53.1: AgentNode.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Custom React Flow Agent Node
 **Outcome:** COMPLETED
-**Summary:** Created client/src/canvas/nodes/AgentNode.jsx Ã¢â‚¬â€ the primary agent node type for the V3 swarm canvas. Component reads execution state from useSwarmStore (agentStates[id]), renders status-colored bordered card with source/target Handles, label, status badge, lastOutputSnippet (last 3 lines), and handoffCount badge. Build passes clean (299 modules, 0 errors).
+**Summary:** Created client/src/canvas/nodes/AgentNode.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the primary agent node type for the V3 swarm canvas. Component reads execution state from useSwarmStore (agentStates[id]), renders status-colored bordered card with source/target Handles, label, status badge, lastOutputSnippet (last 3 lines), and handoffCount badge. Build passes clean (299 modules, 0 errors).
 **Files changed:** client/src/canvas/nodes/AgentNode.jsx (CREATED), docs/TASK_PLAN.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
 **Bugs fixed:** none
-**Decisions made:** Followed task spec verbatim Ã¢â‚¬â€ no deviations. Directory client/src/canvas/nodes/ created as new directory.
+**Decisions made:** Followed task spec verbatim ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no deviations. Directory client/src/canvas/nodes/ created as new directory.
 **Blockers:** none
-**Next:** Tasks #53.2 (DepartmentNode.jsx), #53.3 (TriggerNode.jsx), #54 (HandoffEdge.jsx) Ã¢â‚¬â€ all can proceed now
+**Next:** Tasks #53.2 (DepartmentNode.jsx), #53.3 (TriggerNode.jsx), #54 (HandoffEdge.jsx) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all can proceed now
 ---
-## 2026-03-27 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #50 + #51: V3 Security Layer + @xyflow/react + zustand
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #50 + #51: V3 Security Layer + @xyflow/react + zustand
 **Outcome:** COMPLETED
-**Summary:** Updated CODE_MAP.md with 6 new Module Index rows, 1 new test infrastructure row, and a full "V3 Security Layer" Function Graph section covering isSafeUrl, _isIPv4, _isPublicIPv4, webhookLimit, webhookRateLimit, validateResumeText. Test count updated 132Ã¢â€ â€™168. Appended two CHANGELOG.md entries (Task #50 and #51) with full function lists, connection graphs, and future-caller notes (Tasks #68 and #75).
+**Summary:** Updated CODE_MAP.md with 6 new Module Index rows, 1 new test infrastructure row, and a full "V3 Security Layer" Function Graph section covering isSafeUrl, _isIPv4, _isPublicIPv4, webhookLimit, webhookRateLimit, validateResumeText. Test count updated 132ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢168. Appended two CHANGELOG.md entries (Task #50 and #51) with full function lists, connection graphs, and future-caller notes (Tasks #68 and #75).
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none
 **Decisions made:** All 4 new security modules documented as pending future route wiring (not yet live callers); WorkflowStore + HandoffParser noted as "verified correct, no changes"
 **Blockers:** none
 **Next:** Tasks #52+ canvas component tasks. CODE_MAP will need updates when routes/inbox.js (Task #68) and routes/triggers.js (Task #75) are implemented.
 ---
-## 2026-03-27 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #52: SwarmContext.jsx Ã¢â‚¬â€ Zustand ExecutionStore
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #52: SwarmContext.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Zustand ExecutionStore
 **Outcome:** COMPLETED
-**Summary:** Created client/src/store/SwarmContext.jsx Ã¢â‚¬â€ the Zustand 4.5.7 execution state store for the V3 swarm orchestrator. Exports useSwarmStore (default + named). Store is fully isolated from AppContext.jsx Ã¢â‚¬â€ no cross-imports. Build passes clean (299 modules, 0 errors).
+**Summary:** Created client/src/store/SwarmContext.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the Zustand 4.5.7 execution state store for the V3 swarm orchestrator. Exports useSwarmStore (default + named). Store is fully isolated from AppContext.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no cross-imports. Build passes clean (299 modules, 0 errors).
 **Files changed:** client/src/store/SwarmContext.jsx (CREATED), docs/TASK_PLAN.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
 **Bugs fixed:** none
-**Decisions made:** Store is standalone Zustand create() Ã¢â‚¬â€ no React context wrapper needed since components use useSwarmStore() directly; thin named export provided for App.jsx compatibility if needed
+**Decisions made:** Store is standalone Zustand create() ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no React context wrapper needed since components use useSwarmStore() directly; thin named export provided for App.jsx compatibility if needed
 **Blockers:** none
-**Next:** Task #53.1 (AgentNode.jsx), #53.2 (DepartmentNode.jsx), #53.3 (TriggerNode.jsx) Ã¢â‚¬â€ all can import from SwarmContext now
+**Next:** Task #53.1 (AgentNode.jsx), #53.2 (DepartmentNode.jsx), #53.3 (TriggerNode.jsx) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all can import from SwarmContext now
 ---
-## 2026-03-27 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Tasks #50 + #51: V3 Security Layer + Client Deps docs audit
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #50 + #51: V3 Security Layer + Client Deps docs audit
 **Outcome:** COMPLETED
-**Summary:** Audited all documentation artifacts after Task #50 (V3 security layer: ssrfGuard.js, webhookLimit.js, webhookRateLimit.js, hitlValidation.js, security-v3.test.js) and Task #51 (@xyflow/react + zustand installed in client/). All 5 new server files have complete inline JSDoc Ã¢â‚¬â€ no public doc updates required. Updated docs/memory/PROJECT.md tech stack table to include @xyflow/react v12 and zustand v4. Updated DOC_STATUS.md with 7 new V3 file rows and expanded ARCHITECTURE.md stale section note. V3 public doc deferral policy maintained.
+**Summary:** Audited all documentation artifacts after Task #50 (V3 security layer: ssrfGuard.js, webhookLimit.js, webhookRateLimit.js, hitlValidation.js, security-v3.test.js) and Task #51 (@xyflow/react + zustand installed in client/). All 5 new server files have complete inline JSDoc ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no public doc updates required. Updated docs/memory/PROJECT.md tech stack table to include @xyflow/react v12 and zustand v4. Updated DOC_STATUS.md with 7 new V3 file rows and expanded ARCHITECTURE.md stale section note. V3 public doc deferral policy maintained.
 **Files changed:** docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/PROJECT.md (MODIFIED), docs/memory/agents/documenter.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
 **Bugs fixed:** none
-**Decisions made:** PROJECT.md tech stack updated for installed packages (not deferred) Ã¢â‚¬â€ installed packages are factual state, not V3 feature docs. V3 public doc deferral policy maintained for README.md and ARCHITECTURE.md.
+**Decisions made:** PROJECT.md tech stack updated for installed packages (not deferred) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â installed packages are factual state, not V3 feature docs. V3 public doc deferral policy maintained for README.md and ARCHITECTURE.md.
 **Blockers:** none
 **Next:** Task #52 (SwarmContext.jsx) already COMPLETED. Documenter should audit SwarmContext.jsx inline docs in the next pass.
 ---
-## 2026-03-27 Ã¢â‚¬â€ security Ã¢â‚¬â€ Task #50: V3 Security Layer Ã¢â‚¬â€ SEC-V3-01 through SEC-V3-07
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â security ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #50: V3 Security Layer ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â SEC-V3-01 through SEC-V3-07
 **Outcome:** COMPLETED
 **Summary:** Implemented all 7 V3 security requirements. Created ssrfGuard.js (SSRF prevention, blocks private IPs/loopback), webhookLimit.js (32KB body cap placeholder), webhookRateLimit.js (10 req/min placeholder), and hitlValidation.js (8KB HITL text cap). Verified SEC-V3-02, -06, -07 were already fully implemented in WorkflowStore.js and HandoffParser.js. Created 36-test security-v3.test.js. All 168 tests pass (132 pre-existing + 36 new).
 **Files changed:** server/utils/ssrfGuard.js (CREATED), server/middleware/webhookLimit.js (CREATED), server/middleware/webhookRateLimit.js (CREATED), server/middleware/hitlValidation.js (CREATED), server/tests/security-v3.test.js (CREATED), docs/TASK_PLAN.md (MODIFIED)
-**Bugs fixed:** IPv4-mapped IPv6 SSRF bypass Ã¢â‚¬â€ Node.js normalizes ::ffff:192.168.1.1 to hex (::ffff:c0a8:101); added hex-word branch to ssrfGuard.js
-**Decisions made:** Used URL parsing (no dns.lookup()) for SSRF Ã¢â‚¬â€ synchronous, no network I/O, blocks all IP literals; domain-to-private-IP is accepted limitation documented in ssrfGuard.js
+**Bugs fixed:** IPv4-mapped IPv6 SSRF bypass ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Node.js normalizes ::ffff:192.168.1.1 to hex (::ffff:c0a8:101); added hex-word branch to ssrfGuard.js
+**Decisions made:** Used URL parsing (no dns.lookup()) for SSRF ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â synchronous, no network I/O, blocks all IP literals; domain-to-private-IP is accepted limitation documented in ssrfGuard.js
 **Blockers:** none
 **Next:** Task #51 (devops) already COMPLETED. Next: Task #52 (frontend SwarmContext). Tasks #68, #74, #75 must import the new middleware/utils files created here.
 ---
 
-## 2026-03-27 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #47.2 + #48.2: swarm.js scaffold stub + broadcast() WS wiring
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #47.2 + #48.2: swarm.js scaffold stub + broadcast() WS wiring
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md: header timestamp, Module Index entries for swarmHandler.js (added broadcast export) and server/index.js (noted setWsBroadcast wiring); added new broadcast() Function Graph entry; updated getSubscribers "Called by" and SwarmEngine.setWsBroadcast "Called by" to reflect live connections; updated Key Behaviors note for the WS channel. Appended two CHANGELOG.md entries (Tasks #47.2 and #48.2) with full connection graphs.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none
-**Decisions made:** Task #47.2 CHANGELOG entry notes no source code changed Ã¢â‚¬â€ stub was already present from #47.1
+**Decisions made:** Task #47.2 CHANGELOG entry notes no source code changed ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â stub was already present from #47.1
 **Next:** Task #50 (security audit), #51 (devops deps install), #52 (SwarmContext frontend) are next wave
 ---
-## 2026-03-27 Ã¢â‚¬â€ devops Ã¢â‚¬â€ Task #51: Client Dependencies Ã¢â‚¬â€ @xyflow/react + Zustand
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â devops ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #51: Client Dependencies ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â @xyflow/react + Zustand
 **Outcome:** COMPLETED
-**Summary:** Installed @xyflow/react@12.10.1 and zustand@4.5.7 in client/. npm run build passes (299 modules, 0 errors). All 132 tests pass. No imports added yet Ã¢â‚¬â€ packages installed only; imports happen in tasks #52-#57.
+**Summary:** Installed @xyflow/react@12.10.1 and zustand@4.5.7 in client/. npm run build passes (299 modules, 0 errors). All 132 tests pass. No imports added yet ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â packages installed only; imports happen in tasks #52-#57.
 **Files changed:** client/package.json, client/package-lock.json
 **Bugs fixed:** none
-**Decisions made:** Used zustand@4 (not v5) per task spec Ã¢â‚¬â€ v5 has breaking API changes. @xyflow/react resolved to latest v12.10.1. picomatch audit warning pre-existed from vite/tinyglobby Ã¢â‚¬â€ not introduced by this task.
+**Decisions made:** Used zustand@4 (not v5) per task spec ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â v5 has breaking API changes. @xyflow/react resolved to latest v12.10.1. picomatch audit warning pre-existed from vite/tinyglobby ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â not introduced by this task.
 **Blockers:** none
-**Next:** Task #52 (SwarmContext.jsx Zustand ExecutionStore) Ã¢â‚¬â€ now unblocked
+**Next:** Task #52 (SwarmContext.jsx Zustand ExecutionStore) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â now unblocked
 ---
-## 2026-03-27 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #47.1 + #48.1: swarm.js REST endpoints + swarmHandler.js WS channel
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #47.1 + #48.1: swarm.js REST endpoints + swarmHandler.js WS channel
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md with 2 new Module Index entries (swarm.js, swarmHandler.js), corrected 3 SwarmEngine "Called by" fields from "(not yet wired)" to live callers, added 12 new Function Graph entries covering all 7 swarm REST endpoint handlers, the swarmRoutes factory, handleSwarmConnection, getSubscribers, and the _subscribers Map. Appended two CHANGELOG.md entries with full function lists and connection graphs. Noted an app.locals ordering risk in both documents.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
@@ -3548,7 +3548,7 @@ full self-contained context and acceptance criteria.
 **Decisions made:** Documented _subscribers as a standalone Function Graph entry; scaffold stub (501) given its own entry referencing Task #59
 **Next:** Task #48.2 (broadcast wiring via getSubscribers) will add new connections to update
 ---
-## 2026-03-27 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Tasks #47.1, #47.2, #48.1, #48.2: Phase 1 completion + plan update
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #47.1, #47.2, #48.1, #48.2: Phase 1 completion + plan update
 **Outcome:** COMPLETED
 **Summary:** Confirmed all 4 tasks COMPLETED (132/132 tests pass each). Marked #47.1 COMPLETED in summary table (was stale IN_PROGRESS). Removed duplicate #48.2 PENDING entry from PROGRESS.md. Updated V3 count from 9/57 to 11/57. CONTEXT.md updated to reflect Phase 1 done and next wave (#50, #51, #52 in parallel).
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -3557,56 +3557,56 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Launch #50 + #51 + #52 in parallel (all independent, no shared deps)
 ---
-## 2026-03-27 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #47.2: swarm.js Ã¢â‚¬â€ Scaffold Endpoint Stub (POST /api/v1/swarm/scaffold)
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #47.2: swarm.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Scaffold Endpoint Stub (POST /api/v1/swarm/scaffold)
 **Outcome:** COMPLETED
 **Summary:** Verified that the POST /api/v1/swarm/scaffold stub (returns 501 `{ error: 'Not implemented' }`) was already present in server/routes/swarm.js from Task #47.1 (lines 246-251). No code changes required. 132/132 tests pass.
 **Files changed:** none (stub already present)
 **Bugs fixed:** none
-**Decisions made:** none Ã¢â‚¬â€ stub was already in place
+**Decisions made:** none ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â stub was already in place
 **Blockers:** none
 **Next:** Task #48.2 (swarmHandler.js broadcast + WS event wiring); Task #59 will replace this stub with full implementation
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Tasks #47.1 + #48.1: Documentation audit
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #47.1 + #48.1: Documentation audit
 **Outcome:** COMPLETED
-**Summary:** Audited all documentation artifacts after Task #47.1 (server/routes/swarm.js Ã¢â‚¬â€ 7 execution control REST endpoints) and Task #48.1 (server/ws/swarmHandler.js Ã¢â‚¬â€ WebSocket channel routing + connection management). Both new files have complete inline documentation. server/index.js wiring is also self-documenting. Public docs (README.md, ARCHITECTURE.md) intentionally not updated per V3 deferral policy. DOC_STATUS.md updated with new rows for swarm.js, swarmHandler.js, and a corrected server/index.js row.
+**Summary:** Audited all documentation artifacts after Task #47.1 (server/routes/swarm.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â 7 execution control REST endpoints) and Task #48.1 (server/ws/swarmHandler.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â WebSocket channel routing + connection management). Both new files have complete inline documentation. server/index.js wiring is also self-documenting. Public docs (README.md, ARCHITECTURE.md) intentionally not updated per V3 deferral policy. DOC_STATUS.md updated with new rows for swarm.js, swarmHandler.js, and a corrected server/index.js row.
 **Files changed:** docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/agents/documenter.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
 **Bugs fixed:** none
-**Decisions made:** Maintained V3 deferral policy Ã¢â‚¬â€ no public doc updates until V3 is feature-complete (Task #82).
+**Decisions made:** Maintained V3 deferral policy ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no public doc updates until V3 is feature-complete (Task #82).
 **Blockers:** none
 **Next:** After Task #48.2 (broadcast wiring): update swarmHandler.js row. After Task #82: major ARCHITECTURE.md + README.md V3 update.
 ---
-## 2026-03-27 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Tasks #46.3 + #49 COMPLETED; #47.1 + #48.1 launched
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #46.3 + #49 COMPLETED; #47.1 + #48.1 launched
 **Outcome:** COMPLETED
-**Summary:** Marked Task #46.3 (SwarmEngine._buildSystemPrompt + _startHeartbeat) and Task #49 (CircuitBreaker.js + BudgetTracker.js) as COMPLETED in TASK_PLAN.md and PROGRESS.md (both at 132/132 tests). Launched #47.1 (swarm.js execution control endpoints, 7 routes) and #48.1 (swarmHandler.js channel routing + connection management) in parallel Ã¢â‚¬â€ both unblocked since #46.3 and #46.1 are done. Updated all status tables, CONTEXT.md, PROGRESS.md (now 8/57 V3 COMPLETED).
-**Files changed:** docs/TASK_PLAN.md (MODIFIED Ã¢â‚¬â€ statuses updated), docs/memory/PROGRESS.md (MODIFIED), docs/memory/CONTEXT.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/project-manager.md (MODIFIED)
+**Summary:** Marked Task #46.3 (SwarmEngine._buildSystemPrompt + _startHeartbeat) and Task #49 (CircuitBreaker.js + BudgetTracker.js) as COMPLETED in TASK_PLAN.md and PROGRESS.md (both at 132/132 tests). Launched #47.1 (swarm.js execution control endpoints, 7 routes) and #48.1 (swarmHandler.js channel routing + connection management) in parallel ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â both unblocked since #46.3 and #46.1 are done. Updated all status tables, CONTEXT.md, PROGRESS.md (now 8/57 V3 COMPLETED).
+**Files changed:** docs/TASK_PLAN.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â statuses updated), docs/memory/PROGRESS.md (MODIFIED), docs/memory/CONTEXT.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/project-manager.md (MODIFIED)
 **Bugs fixed:** none
-**Decisions made:** #47.1 and #48.1 launched in parallel Ã¢â‚¬â€ they have no dependency on each other (#47.1 depends #46.3, #48.1 depends #46.1 Ã¢â‚¬â€ both satisfied)
+**Decisions made:** #47.1 and #48.1 launched in parallel ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â they have no dependency on each other (#47.1 depends #46.3, #48.1 depends #46.1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â both satisfied)
 **Blockers:** none
 **Next:** #47.2 (after #47.1 done) + #48.2 (after #48.1 done). Also #50 (security), #51 (client deps) can start once #48.2 is complete.
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Tasks #46.3 + #49: Documentation audit
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #46.3 + #49: Documentation audit
 **Outcome:** COMPLETED
 **Summary:** Audited all documentation artifacts after Task #46.3 (SwarmEngine._buildSystemPrompt + _startHeartbeat implemented) and Task #49 (CircuitBreaker.js + BudgetTracker.js created). All inline JSDoc is complete and accurate in all three files. Public docs (README.md, ARCHITECTURE.md) intentionally not updated per V3 deferral policy. DOC_STATUS.md updated with three new V3 service file rows (#46.3, CircuitBreaker, BudgetTracker) and a corrected ARCHITECTURE.md stale section note.
 **Files changed:** docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/agents/documenter.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
 **Bugs fixed:** none
-**Decisions made:** Maintained V3 deferral policy Ã¢â‚¬â€ no public doc updates until V3 is feature-complete (Task #82). All three new/modified files have adequate inline documentation; no further doc work needed for these tasks.
+**Decisions made:** Maintained V3 deferral policy ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no public doc updates until V3 is feature-complete (Task #82). All three new/modified files have adequate inline documentation; no further doc work needed for these tasks.
 **Blockers:** none
 **Next:** After Task #47.1 (swarm.js routes): update DOC_STATUS.md V3 table. After Task #82: major ARCHITECTURE.md + README.md V3 update.
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #46.3: SwarmEngine.js Ã¢â‚¬â€ _buildSystemPrompt + _startHeartbeat
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #46.3: SwarmEngine.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â _buildSystemPrompt + _startHeartbeat
 **Outcome:** COMPLETED
 **Summary:** Implemented _buildSystemPrompt (assembles SWARM PROTOCOL prompt with context and handoff targets) and _startHeartbeat (5-min interval writing empty string to running agent sessions). Added _startHeartbeat call in startExecution. All 3 SwarmEngine subtasks (#46.1-46.3) now complete. 132/132 tests pass.
 **Files changed:** server/services/SwarmEngine.js (MODIFIED)
 **Bugs fixed:** none
 **Decisions made:** Used .unref() on heartbeat timer for clean shutdown; defensive node.data access in prompt builder
 **Blockers:** none
-**Next:** #47.1 (swarm.js execution control routes) can proceed Ã¢â‚¬â€ SwarmEngine is ready to be wired into routes.
+**Next:** #47.1 (swarm.js execution control routes) can proceed ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â SwarmEngine is ready to be wired into routes.
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Task #46.2: SwarmEngine startExecution + _spawnAgentPty + HandoffParser tap
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #46.2: SwarmEngine startExecution + _spawnAgentPty + HandoffParser tap
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md with full SwarmEngine Function Graph (10 entries). Updated Module Index with SwarmEngine row. Updated HandoffParser "Called by" to reflect live wiring via SwarmEngine._spawnAgentPty tapFn. Appended Task #46.2 CHANGELOG entry with full connection map.
 **Files changed:** docs/memory/CODE_MAP.md (MODIFIED), docs/memory/CHANGELOG.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/code-mapper.md (MODIFIED)
@@ -3615,18 +3615,18 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** After Task #46.3 (_buildSystemPrompt + _startHeartbeat): update stub entries to reflect full implementations.
 ---
-## 2026-03-27 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Task #46.2: SwarmEngine documentation audit
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #46.2: SwarmEngine documentation audit
 **Outcome:** COMPLETED
-**Summary:** Audited all documentation artifacts after Task #46.2 (SwarmEngine.js startExecution + _spawnAgentPty + HandoffParser tap). Inline documentation in SwarmEngine.js is adequate Ã¢â‚¬â€ all new methods have complete JSDoc. Public docs (README.md, ARCHITECTURE.md) intentionally not updated per V3 deferral policy. DOC_STATUS.md updated with two new SwarmEngine rows and a clarified ARCHITECTURE.md stale section note.
+**Summary:** Audited all documentation artifacts after Task #46.2 (SwarmEngine.js startExecution + _spawnAgentPty + HandoffParser tap). Inline documentation in SwarmEngine.js is adequate ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all new methods have complete JSDoc. Public docs (README.md, ARCHITECTURE.md) intentionally not updated per V3 deferral policy. DOC_STATUS.md updated with two new SwarmEngine rows and a clarified ARCHITECTURE.md stale section note.
 **Files changed:** docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/agents/documenter.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
 **Bugs fixed:** none
-**Decisions made:** Maintained V3 deferral policy Ã¢â‚¬â€ no public doc updates until V3 is feature-complete (Task #82). SwarmEngine rows split by subtask (#46.1, #46.2) for granular tracking.
+**Decisions made:** Maintained V3 deferral policy ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no public doc updates until V3 is feature-complete (Task #82). SwarmEngine rows split by subtask (#46.1, #46.2) for granular tracking.
 **Blockers:** none
 **Next:** After Task #46.3 (_buildSystemPrompt + _startHeartbeat): update SwarmEngine row in DOC_STATUS.md V3 table.
 ---
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #46.2: SwarmEngine Ã¢â‚¬â€ startExecution + _spawnAgentPty + HandoffParser Tap
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #46.2: SwarmEngine ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â startExecution + _spawnAgentPty + HandoffParser Tap
 **Outcome:** COMPLETED
 **Summary:** Implemented startExecution(), _spawnAgentPty(), _ensureAgentPty(), _onHandoff (stub), _onDone (stub) in SwarmEngine.js. startExecution loads workflow from store, creates execution record, finds triage node, spawns agent PTY. _spawnAgentPty creates session via SessionManager, wires HandoffParser tap on swarmListeners, tracks lastOutputSnippet (last 500 chars), stores tapFn for cleanup. Updated stopExecution to remove tapFn from swarmListeners before killing sessions. 132/132 tests pass.
 **Files changed:** server/services/SwarmEngine.js (MODIFIED)
@@ -3635,7 +3635,7 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Task #46.3 (_buildSystemPrompt + _startHeartbeat) can proceed immediately
 ---
-## 2026-03-27 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #46.1: SwarmEngine Ã¢â‚¬â€ SessionManager swarmListeners Patch + Class Skeleton
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #46.1: SwarmEngine ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â SessionManager swarmListeners Patch + Class Skeleton
 **Outcome:** COMPLETED
 **Summary:** Patched SessionManager.js to add `swarmListeners: new Set()` to session records and iterate it inside the existing pty.onData handler (after ring buffer + WS broadcast, DEC-014). Created SwarmEngine.js class skeleton with constructor, setWsBroadcast, stopExecution, getStatus (implemented) and 4 stub methods for #46.2/#46.3. 132/132 tests pass, zero regressions.
 **Files changed:** server/services/SessionManager.js (MODIFIED), server/services/SwarmEngine.js (CREATED)
@@ -3644,27 +3644,27 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Task #46.2 (startExecution + _spawnAgentPty) and #46.3 (_buildSystemPrompt + _startHeartbeat) can proceed immediately
 ---
-## 2026-03-27 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V3 Task Plan Replan: Model Assignments + Subtask Split
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3 Task Plan Replan: Model Assignments + Subtask Split
 **Outcome:** COMPLETED
-**Summary:** Added Suggested Model field to all 54 PENDING V3 tasks (#44Ã¢â‚¬â€œ#82). Split 7 complex tasks into granular subtasks: #46Ã¢â€ â€™3 subtasks, #47Ã¢â€ â€™2, #48Ã¢â€ â€™2, #53Ã¢â€ â€™3, #57Ã¢â€ â€™2, #62Ã¢â€ â€™3, #71Ã¢â€ â€™2. Total V3 granular units increased from 40 to 57. All dependencies updated to reference correct subtask IDs. PROGRESS.md updated.
-**Files changed:** docs/TASK_PLAN.md (MODIFIED Ã¢â‚¬â€ model fields + subtask blocks added), docs/memory/PROGRESS.md (MODIFIED Ã¢â‚¬â€ V3 section rewritten with subtask IDs), docs/memory/agents/project-manager.md (MODIFIED Ã¢â‚¬â€ session log appended), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Summary:** Added Suggested Model field to all 54 PENDING V3 tasks (#44ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#82). Split 7 complex tasks into granular subtasks: #46ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢3 subtasks, #47ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢2, #48ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢2, #53ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢3, #57ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢2, #62ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢3, #71ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢2. Total V3 granular units increased from 40 to 57. All dependencies updated to reference correct subtask IDs. PROGRESS.md updated.
+**Files changed:** docs/TASK_PLAN.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â model fields + subtask blocks added), docs/memory/PROGRESS.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3 section rewritten with subtask IDs), docs/memory/agents/project-manager.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â session log appended), docs/memory/ACTIVITY_LOG.md (MODIFIED)
 **Bugs fixed:** none
 **Decisions made:** claude-opus-4-6 for VERY HARD tasks (46.x, 57.x, 62.x, 78, 80); claude-haiku-4-5 for trivial/boilerplate tasks (51, 56, 58, 61, 64, 67, 71.2, 72, 73, 75, 76, 81); claude-sonnet-4-6 for standard implementation
 **Blockers:** none
-**Next:** TASK #46.1 (SwarmEngine Ã¢â‚¬â€ SessionManager patch + class skeleton, backend-dev, claude-opus-4-6) is the highest-priority unblocked task. Can run alongside #49 (CircuitBreaker + BudgetTracker, claude-sonnet-4-6) since #49 only needs #46.3 for wiring but can be written standalone.
+**Next:** TASK #46.1 (SwarmEngine ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â SessionManager patch + class skeleton, backend-dev, claude-opus-4-6) is the highest-priority unblocked task. Can run alongside #49 (CircuitBreaker + BudgetTracker, claude-sonnet-4-6) since #49 only needs #46.3 for wiring but can be written standalone.
 ---
-## 2026-03-27 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #43/#45: WorkflowStore + HandoffParser mapped
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #43/#45: WorkflowStore + HandoffParser mapped
 **Outcome:** COMPLETED
 **Summary:** Added WorkflowStore (9 methods) and HandoffParser (3 methods) to CODE_MAP.md Module Index and Function Graph. Appended two CHANGELOG.md entries (Task #43 and Task #45). Test count updated from 110 to 132. No breaking changes to existing interfaces.
 **Files changed:** docs/memory/CODE_MAP.md (MODIFIED), docs/memory/CHANGELOG.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
 **Bugs fixed:** none
-**Decisions made:** HandoffParser noted as not yet wired to PTY onData Ã¢â‚¬â€ reserved for SwarmEngine (Task #46+); WorkflowStore routes not yet implemented
+**Decisions made:** HandoffParser noted as not yet wired to PTY onData ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â reserved for SwarmEngine (Task #46+); WorkflowStore routes not yet implemented
 **Blockers:** none
-**Next:** Task #46 (SwarmEngine.js skeleton) Ã¢â‚¬â€ will wire HandoffParser into PTY onData flow
+**Next:** Task #46 (SwarmEngine.js skeleton) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â will wire HandoffParser into PTY onData flow
 ---
-## 2026-03-27 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Tasks #43/#45: WorkflowStore + HandoffParser documentation audit
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #43/#45: WorkflowStore + HandoffParser documentation audit
 **Outcome:** COMPLETED
-**Summary:** Audited all documentation for staleness after WorkflowStore.js and HandoffParser.js were created. No public docs updated Ã¢â‚¬â€ V3 is still in progress and premature documentation would be false. DOC_STATUS.md updated to track the two new V3 service files and flag high-priority debt for ARCHITECTURE.md and README.md updates that must follow V3 completion.
+**Summary:** Audited all documentation for staleness after WorkflowStore.js and HandoffParser.js were created. No public docs updated ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3 is still in progress and premature documentation would be false. DOC_STATUS.md updated to track the two new V3 service files and flag high-priority debt for ARCHITECTURE.md and README.md updates that must follow V3 completion.
 **Files changed:** docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/agents/documenter.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
 **Bugs fixed:** none
 **Decisions made:** Deferred ARCHITECTURE.md and README.md V3 updates until V3 feature-complete; confirmed README describes v1.3 only (no premature V3 content)
@@ -3673,16 +3673,16 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V3 Phase 1 Wave 1 Status Sync
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3 Phase 1 Wave 1 Status Sync
 **Outcome:** COMPLETED
-**Summary:** Verified TASK #43 (WorkflowStore.js) and TASK #45 (HandoffParser.js) are both marked COMPLETED in TASK_PLAN.md. Updated PROGRESS.md to reflect 2/40 V3 tasks completed. V3 Phase 1 Wave 1 is done Ã¢â‚¬â€ Wave 2 (#44 workflows.js CRUD routes + #46 SwarmEngine.js skeleton) is now unblocked and ready to launch in parallel.
+**Summary:** Verified TASK #43 (WorkflowStore.js) and TASK #45 (HandoffParser.js) are both marked COMPLETED in TASK_PLAN.md. Updated PROGRESS.md to reflect 2/40 V3 tasks completed. V3 Phase 1 Wave 1 is done ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Wave 2 (#44 workflows.js CRUD routes + #46 SwarmEngine.js skeleton) is now unblocked and ready to launch in parallel.
 **Files changed:** docs/memory/PROGRESS.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
 **Bugs fixed:** none
 **Decisions made:** none
 **Blockers:** none
-**Next:** TASK #44 (workflows.js CRUD routes, backend-dev) + TASK #46 (SwarmEngine.js skeleton, backend-dev) Ã¢â‚¬â€ launch in parallel
+**Next:** TASK #44 (workflows.js CRUD routes, backend-dev) + TASK #46 (SwarmEngine.js skeleton, backend-dev) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â launch in parallel
 ---
-## 2026-03-27 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #45: HandoffParser.js Ã¢â‚¬â€ Stateful Rolling Buffer Token Extractor
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #45: HandoffParser.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Stateful Rolling Buffer Token Extractor
 **Outcome:** COMPLETED
 **Summary:** Created server/services/HandoffParser.js with stateful rolling buffer for ConPTY chunk-split token extraction, and server/tests/HandoffParser.test.js with 22 unit tests covering all 9 required scenarios plus additional edge cases. All 132 tests pass (110 existing + 22 new).
 **Files changed:** server/services/HandoffParser.js (CREATED), server/tests/HandoffParser.test.js (CREATED)
@@ -3692,9 +3692,9 @@ full self-contained context and acceptance criteria.
 **Next:** Task #46 (SwarmEngine.js skeleton) or #43/#44 (WorkflowStore/routes) can proceed
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ researcher Ã¢â‚¬â€ Research B: React Flow GroupNode / DepartmentNode
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â researcher ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Research B: React Flow GroupNode / DepartmentNode
 **Outcome:** COMPLETED
-**Summary:** Deep dive into @xyflow/react v12 group node APIs, expand/collapse patterns, and matrioska drill-down navigation. Produced docs/research_b.md with actionable implementation blueprints for DepartmentNode.jsx and SwarmCanvasView Ã¢â‚¬â€ covering parentId/extent system, hidden-flag collapse, and canvas-filtering drill-down with Zustand breadcrumb stack.
+**Summary:** Deep dive into @xyflow/react v12 group node APIs, expand/collapse patterns, and matrioska drill-down navigation. Produced docs/research_b.md with actionable implementation blueprints for DepartmentNode.jsx and SwarmCanvasView ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â covering parentId/extent system, hidden-flag collapse, and canvas-filtering drill-down with Zustand breadcrumb stack.
 **Files changed:** docs/research_b.md (CREATED), docs/memory/agents/researcher.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
 **Bugs fixed:** none
 **Decisions made:** Use hidden flag for collapse (not Pro hook); use canvas filtering for drill-down (not embedded ReactFlow); use setNodes not updateNode for bulk updates (updateNode has known selection bug #5036)
@@ -3703,9 +3703,9 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ researcher Ã¢â‚¬â€ Research C: Claude CLI PTY Live Injection
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â researcher ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Research C: Claude CLI PTY Live Injection
 **Outcome:** COMPLETED
-**Summary:** Researched how Claude Code CLI handles text injected into PTY stdin during active task execution. Found that mid-execution input is queued (not dropped, not an immediate interrupt), that Ctrl+C is unreliable during tool calls, and that programmatic Enter (\r/\n) does NOT trigger Ink's submit handler. Documented the only reliable injection pattern (Ctrl+C Ã¢â€ â€™ wait Ã¢â€ â€™ text Ã¢â€ â€™ Escape Ã¢â€ â€™ wait Ã¢â€ â€™ Enter, ~500-700ms total). Recommended hybrid --print + --resume architecture as alternative for fully controllable agents.
+**Summary:** Researched how Claude Code CLI handles text injected into PTY stdin during active task execution. Found that mid-execution input is queued (not dropped, not an immediate interrupt), that Ctrl+C is unreliable during tool calls, and that programmatic Enter (\r/\n) does NOT trigger Ink's submit handler. Documented the only reliable injection pattern (Ctrl+C ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ wait ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ text ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Escape ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ wait ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Enter, ~500-700ms total). Recommended hybrid --print + --resume architecture as alternative for fully controllable agents.
 **Files changed:** docs/research_c.md (CREATED), docs/memory/agents/researcher.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
 **Bugs fixed:** none
 **Decisions made:** Soft-broadcast (queue) vs. hard-broadcast (interrupt-first) distinction documented for BroadcastService design
@@ -3713,20 +3713,20 @@ full self-contained context and acceptance criteria.
 **Next:** backend-dev reads research_c.md before implementing BroadcastService; prd-writer incorporates injection latency and reliability caveats into V3 PRD
 ---
 
-## 2026-03-27 Ã¢â‚¬â€ security Ã¢â‚¬â€ V3 Swarm Orchestrator Early Security Assessment
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â security ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3 Swarm Orchestrator Early Security Assessment
 **Outcome:** COMPLETED
-**Summary:** Delivered pre-PRD early security assessment for V3 Swarm Orchestrator. Rated 8 new attack surfaces, identified 3 new vulnerability classes (SSRF via RSS, disk-resident execution instructions, webhook external ingress), and produced 7 mandatory security requirements for the PRD. No code exists yet Ã¢â‚¬â€ this is a planning-phase read-only analysis.
+**Summary:** Delivered pre-PRD early security assessment for V3 Swarm Orchestrator. Rated 8 new attack surfaces, identified 3 new vulnerability classes (SSRF via RSS, disk-resident execution instructions, webhook external ingress), and produced 7 mandatory security requirements for the PRD. No code exists yet ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â this is a planning-phase read-only analysis.
 **Files changed:** docs/memory/agents/security.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/CONTEXT.md (MODIFIED)
 **Bugs fixed:** none
-**Decisions made:** Webhook endpoint rated HIGH (not CRITICAL) because 127.0.0.1 binding requires deliberate user action to expose. WorkflowDefinition load-and-execute rated HIGH Ã¢â‚¬â€ disk content used as execution instruction bypasses CSRF. RSS polling rated HIGH as first SSRF vector in the project.
+**Decisions made:** Webhook endpoint rated HIGH (not CRITICAL) because 127.0.0.1 binding requires deliberate user action to expose. WorkflowDefinition load-and-execute rated HIGH ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â disk content used as execution instruction bypasses CSRF. RSS polling rated HIGH as first SSRF vector in the project.
 **Blockers:** none
 **Next:** prd-writer incorporates 7 mandatory SEC requirements into V3 PRD
 ---
 
-## 2026-03-27 Ã¢â‚¬â€ architect Ã¢â‚¬â€ V3 Swarm Orchestrator Technical Analysis
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â architect ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3 Swarm Orchestrator Technical Analysis
 **Outcome:** COMPLETED
 **Summary:** Produced full technical analysis for V3 Swarm Orchestrator. Defined 10 new backend services, 7 new frontend components, complete data model schemas, dual-store architecture (Zustand execution + React Flow canvas), all integration points with existing SessionManager/JobRunner, 8 ranked risks, and recommended stack additions. Six architectural decisions recorded (DEC-011 to DEC-016).
-**Files changed:** docs/memory/agents/architect.md (CREATED), docs/memory/DECISIONS.md (MODIFIED Ã¢â‚¬â€ DEC-011 to DEC-016), docs/memory/ACTIVITY_LOG.md (MODIFIED)
+**Files changed:** docs/memory/agents/architect.md (CREATED), docs/memory/DECISIONS.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â DEC-011 to DEC-016), docs/memory/ACTIVITY_LOG.md (MODIFIED)
 **Bugs fixed:** none
 **Decisions made:** DEC-011 (separate Zustand/ReactFlow stores), DEC-012 (stateful HandoffParser accumulator), DEC-013 (WorkflowStore follows ConfigStore pattern), DEC-014 (swarmListeners Set on session record), DEC-015 (circuit breaker per-edge), DEC-016 (Prompt-to-Flow via JobRunner with one retry)
 **Blockers:** none
@@ -3734,7 +3734,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ researcher Ã¢â‚¬â€ Research A: OpenAI Swarm Framework Mechanics
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â researcher ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Research A: OpenAI Swarm Framework Mechanics
 **Outcome:** COMPLETED
 **Summary:** Deep-dive research on OpenAI Swarm framework mechanics. Produced docs/research_a.md with precise Agent class schema, handoff detection logic (type check on function return), context_variables flow (callable instructions + Result merge), triage hub-and-spoke pattern, and a full mapping table of every Swarm concept to its Claude CLI PTY equivalent. Ready for prd-writer and backend-dev to use directly.
 **Files changed:** docs/research_a.md (CREATED), docs/memory/agents/researcher.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
@@ -3744,18 +3744,18 @@ full self-contained context and acceptance criteria.
 **Next:** prd-writer writes V3 PRD referencing research_a.md; architect may refine ExecutionEngine design based on Swarm run-loop mechanics
 ---
 
-## 2026-03-27 Ã¢â‚¬â€ researcher Ã¢â‚¬â€ Quick Orientation Scan: V3 Swarm Orchestrator
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â researcher ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Quick Orientation Scan: V3 Swarm Orchestrator
 **Outcome:** COMPLETED
 **Summary:** Delivered Quick Research Snapshot for V3 Swarm Orchestrator /create pipeline. Confirmed React Flow (@xyflow/react v12) is used by all four main competitors (LangFlow, Flowise, n8n, Dify). Identified v12 breaking changes (package rename, immutable node updates, measured dimensions), practical performance ceiling (~500 unoptimized nodes), and named canvas/execution state separation as the single most critical architecture decision.
 **Files changed:** docs/memory/agents/researcher.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
 **Bugs fixed:** none
 **Decisions made:** React Flow v12 validated as correct canvas choice; execution state and canvas state must be separate stores
 **Blockers:** none
-**Next:** Architect design phase Ã¢â‚¬â€ architect should read the Key Architecture Insight in the snapshot before designing the execution state model
+**Next:** Architect design phase ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â architect should read the Key Architecture Insight in the snapshot before designing the execution state model
 ---
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ tech-lead Ã¢â‚¬â€ Stage 0: V3 Swarm Orchestrator Technical Assessment
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â tech-lead ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Stage 0: V3 Swarm Orchestrator Technical Assessment
 **Outcome:** COMPLETED
 **Summary:** Delivered Stage 0 technical feasibility analysis for V3 Swarm Orchestrator. Feasibility CLEAR, platform CLEAR, integration UNCERTAIN. Biggest risk: PTY stdout chunking on Windows ConPTY means HANDOFF pattern detection requires a stateful stream buffer, not naive line parsing. Three targeted questions produced covering handoff parser robustness, PTY concurrency cap, and stream-json event extraction for Prompt-to-Flow.
 **Files changed:** docs/memory/agents/tech-lead.md (CREATED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
@@ -3766,21 +3766,21 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ creative-director Ã¢â‚¬â€ Stage 0: V3 Swarm Orchestrator Creative Analysis
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â creative-director ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Stage 0: V3 Swarm Orchestrator Creative Analysis
 **Outcome:** COMPLETED
 **Summary:** Delivered Stage 0 creative analysis for the proposed V3 "Swarm Orchestrator" concept. Rated Vision CLEAR, User VAGUE, Value CLEAR. Surfaced 3 blocking product questions: (1) primary user identity (watcher Leo vs. builder Anna), (2) completion/failure experience and emotional arc, (3) whether the canvas is editable during live execution. These must be answered before PRD work begins.
 **Files changed:** docs/memory/agents/creative-director.md (CREATED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
 **Bugs fixed:** none
 **Decisions made:** User clarity rated VAGUE due to three incompatible primary personas; canvas editability during live runs identified as highest-risk UX decision.
-**Blockers:** none Ã¢â‚¬â€ questions surfaced for user to answer in Stage 1
-**Next:** Tech-lead Stage 0 analysis (parallel). Then user answers questions Ã¢â€ â€™ researcher Ã¢â€ â€™ prd-writer.
+**Blockers:** none ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â questions surfaced for user to answer in Stage 1
+**Next:** Tech-lead Stage 0 analysis (parallel). Then user answers questions ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ researcher ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ prd-writer.
 ---
 
 ---
-## 2026-03-26 Ã¢â‚¬â€ antigravity Ã¢â‚¬â€ Task #42: Terminal Bug Fix
+## 2026-03-26 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â antigravity ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #42: Terminal Bug Fix
 **Outcome:** COMPLETED
 **Summary:** Fixed a bug where clicking 'Open Terminal' from a project card navigated to the terminal view but failed to start a PTY session. Added the missing session creation logic (`apiPost('/api/v1/sessions')`) to `ProjectsView.handleOpenTerminal`, mirroring the existing session logic in the Sidebar. Build and tests passed.
-**Files changed:** client/src/views/ProjectsView.jsx (MODIFIED Ã¢â‚¬â€ handleOpenTerminal session creation), docs/TASK_PLAN.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (PREPENDED), docs/memory/CHANGELOG.md (APPENDED)
+**Files changed:** client/src/views/ProjectsView.jsx (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â handleOpenTerminal session creation), docs/TASK_PLAN.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (PREPENDED), docs/memory/CHANGELOG.md (APPENDED)
 **Bugs fixed:** Terminal session failing to start from dashboard
 **Decisions made:** Duplicated the session creation pattern from the Sidebar into ProjectsView instead of refactoring session logic upward to AppContext, minimizing risk and adhering to strict boundary constraints around Terminal.jsx and useSession.js.
 **Blockers:** Playwright EOF errors prevented reliable automated browser QA, but visual testing of previous fixes confirmed environment stability. Tests and identical code structure provide confidence.
@@ -3788,18 +3788,18 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-26 Ã¢â‚¬â€ antigravity Ã¢â‚¬â€ Tasks #32-#40: Phase 10 Bug Fix Execution (9/10 completed)
+## 2026-03-26 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â antigravity ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #32-#40: Phase 10 Bug Fix Execution (9/10 completed)
 **Outcome:** COMPLETED (9 of 10 tasks)
 **Summary:** Executed all Phase 10 code fix tasks from the QA bug report. Fixed 11 bugs across 7 files: CSP Google Fonts block (security.js), JobRunner missing error handler (JobRunner.js), Sidebar race condition + error feedback + footer version + logo overflow (Sidebar.jsx), terminal bg color mismatch (Terminal.jsx), Context Editor unsaved changes guard (ContextEditorView.jsx), Dashboard modal differentiation + keyboard accessibility (ProjectsView.jsx + AddProjectModal.jsx). Build verified clean (299 modules, 0 errors). Task #41 (regression QA) remains pending.
-**Files changed:** server/middleware/security.js (MODIFIED Ã¢â‚¬â€ CSP fontSrc+styleSrc), server/services/JobRunner.js (MODIFIED Ã¢â‚¬â€ child.on('error')+stdin try-catch), client/src/components/Sidebar.jsx (MODIFIED Ã¢â‚¬â€ 4 fixes), client/src/components/Terminal.jsx (MODIFIED Ã¢â‚¬â€ bg color), client/src/views/ContextEditorView.jsx (MODIFIED Ã¢â‚¬â€ scope guard), client/src/views/ProjectsView.jsx (MODIFIED Ã¢â‚¬â€ modalMode+focus), client/src/components/AddProjectModal.jsx (MODIFIED Ã¢â‚¬â€ mode prop), docs/TASK_PLAN.md (MODIFIED Ã¢â‚¬â€ statuses+footer), docs/memory/PROGRESS.md (MODIFIED Ã¢â‚¬â€ Phase 10 block), docs/memory/CONTEXT.md (MODIFIED Ã¢â‚¬â€ Phase 10 focus), docs/memory/ACTIVITY_LOG.md (PREPENDED), docs/memory/CHANGELOG.md (APPENDED)
-**Bugs fixed:** BUG-08 (spawn error handler), BUG-09 (unsaved changes), BUG-10 (race condition), BUG-11 (CSP fonts), BUG-13 (logo overflow), BUG-14 (modal differentiation), BUG-15 (search icon text Ã¢â‚¬â€ resolved by BUG-11), BUG-16 (keyboard accessibility), BUG-17 (terminal bg), BUG-18 (session error feedback), BUG-19 (settings icon), BUG-20 (hardcoded version), BUG-21 (modal scope context)
+**Files changed:** server/middleware/security.js (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â CSP fontSrc+styleSrc), server/services/JobRunner.js (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â child.on('error')+stdin try-catch), client/src/components/Sidebar.jsx (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â 4 fixes), client/src/components/Terminal.jsx (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â bg color), client/src/views/ContextEditorView.jsx (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â scope guard), client/src/views/ProjectsView.jsx (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â modalMode+focus), client/src/components/AddProjectModal.jsx (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â mode prop), docs/TASK_PLAN.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â statuses+footer), docs/memory/PROGRESS.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Phase 10 block), docs/memory/CONTEXT.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Phase 10 focus), docs/memory/ACTIVITY_LOG.md (PREPENDED), docs/memory/CHANGELOG.md (APPENDED)
+**Bugs fixed:** BUG-08 (spawn error handler), BUG-09 (unsaved changes), BUG-10 (race condition), BUG-11 (CSP fonts), BUG-13 (logo overflow), BUG-14 (modal differentiation), BUG-15 (search icon text ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â resolved by BUG-11), BUG-16 (keyboard accessibility), BUG-17 (terminal bg), BUG-18 (session error feedback), BUG-19 (settings icon), BUG-20 (hardcoded version), BUG-21 (modal scope context)
 **Decisions made:** Minimal CSP change (only fonts.googleapis.com + fonts.gstatic.com allowlisted); useRef for session lock (not useState, to avoid re-renders); window.confirm for scope switch guard (simplest UX pattern); mode prop on AddProjectModal (not separate components)
 **Blockers:** none
-**Next:** Task #41 Ã¢â‚¬â€ Post-fix regression QA (browser test + npm test + npm run build)
+**Next:** Task #41 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Post-fix regression QA (browser test + npm test + npm run build)
 ---
 
 ---
-## 2026-03-26 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #24-#31: Phase 9 Full Code Map + QA Completion
+## 2026-03-26 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #24-#31: Phase 9 Full Code Map + QA Completion
 **Outcome:** COMPLETED
 **Summary:** Mapped all Phase 9 frontend files (Tasks #24-#30) and recorded QA pass (Task #31). Updated CODE_MAP.md: Module Index for 7 rewritten/created files, Phase 9 section marked COMPLETED, 9 Key Behaviors bullets, Removed/Dead Functions table with 6 entries. Appended CHANGELOG entries for Tasks #24-#31 with 40+ functions added and dead code analysis.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
@@ -3810,7 +3810,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-26 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Task #31: Phase 9 Final Documentation Audit
+## 2026-03-26 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #31: Phase 9 Final Documentation Audit
 **Outcome:** COMPLETED
 **Summary:** Audited all documentation after Phase 9 completion (all 31 tasks done). Updated README.md features table (5 views, new design system, renamed features). Updated ARCHITECTURE.md component diagram (5 views, AppContext), React component tree (EntitiesView deprecated, new views added), and Section 8 State Management (Zustand references corrected to AppContext/useReducer, view name references updated). Refreshed DOC_STATUS.md with full Phase 9 post-completion status.
 **Files changed:** README.md, docs/ARCHITECTURE.md, docs/memory/DOC_STATUS.md, docs/memory/agents/documenter.md, docs/memory/ACTIVITY_LOG.md
@@ -3821,7 +3821,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-26 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Final Status Sync: All 31 Tasks COMPLETED
+## 2026-03-26 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Final Status Sync: All 31 Tasks COMPLETED
 **Outcome:** COMPLETED
 **Summary:** Marked Task #31 as COMPLETED in Task Status Summary table. Updated last-updated line in TASK_PLAN.md. Updated PROGRESS.md with v2.0 release readiness block. All 31 tasks across Phases 0-9 are now COMPLETED. Project is ready for v2.0 release tagging.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -3832,7 +3832,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-26 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #31: Visual QA + Functional Regression Testing
+## 2026-03-26 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #31: Visual QA + Functional Regression Testing
 **Outcome:** COMPLETED
 **Summary:** Comprehensive QA pass on all Phase 9 frontend redesign work. Code review of all 7 new/modified view files, visual comparison against 5 Stitch design exports, routing/navigation verification, API integration audit, terminal safety check, and design system consistency review. npm test: 110/110 pass. npm run build: 299 modules, 0 errors. Found 0 CRITICAL/HIGH bugs, 3 LOW advisory findings (dead EntitiesView.jsx file, minimal aria-label usage, hardcoded colors in ContextEditorView). All acceptance criteria PASS.
 **Files changed:** docs/TASK_PLAN.md (Task #31 status -> COMPLETED), docs/memory/agents/qa-tester.md (appended), docs/memory/ACTIVITY_LOG.md (appended)
@@ -3843,7 +3843,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-26 Ã¢â‚¬â€ orchestrator Ã¢â‚¬â€ Tasks #25-#30: Phase 9 Frontend Redesign Ã¢â‚¬â€ All 5 Views + App Shell
+## 2026-03-26 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â orchestrator ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #25-#30: Phase 9 Frontend Redesign ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â All 5 Views + App Shell
 **Outcome:** COMPLETED
 **Summary:** Launched 5 frontend-dev agents in parallel (worktree isolation) for Tasks #25-#29. Agents #25/#26/#27 produced complete rewrites before hitting rate limits; agent #28 produced ContextEditorView; agent #29 failed (rate limit too early). Orchestrator manually created DeploymentManagerView.jsx (#29) and updated App.jsx routing (#30). All 6 files committed, build passes (299 modules).
 **Files changed:** client/src/views/ProjectsView.jsx (REWRITTEN), client/src/views/TerminalView.jsx (REWRITTEN), client/src/views/JobView.jsx (REWRITTEN), client/src/views/ContextEditorView.jsx (CREATED), client/src/views/DeploymentManagerView.jsx (CREATED), client/src/App.jsx (MODIFIED)
@@ -3854,7 +3854,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-25 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Task #23: Design System Foundation Ã¢â‚¬â€ CODE_MAP + CHANGELOG Update
+## 2026-03-25 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #23: Design System Foundation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â CODE_MAP + CHANGELOG Update
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md for Task #23 completion: added client/src/lib/constants.js to Module Index and Function Graph (NAV_ITEMS, STATUS_COLORS), added Client Config & Styles section (tailwind.config.js, index.html, index.css, postcss.config.js), updated Phase 9 section status to 1/9 completed, added Key Behaviors bullets for design system. Appended detailed CHANGELOG entry with per-file breakdown of all 4 modified/created files.
 **Files changed:** docs/memory/CODE_MAP.md (MODIFIED), docs/memory/CHANGELOG.md (APPENDED), docs/memory/ACTIVITY_LOG.md (APPENDED), docs/memory/agents/code-mapper.md (APPENDED)
@@ -3865,7 +3865,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-25 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Task #23: Design System Foundation Documentation
+## 2026-03-25 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #23: Design System Foundation Documentation
 **Outcome:** COMPLETED
 **Summary:** Audited all docs after Task #23 (design system foundation). Updated PROJECT.md tech stack table with new fonts (Inter, JetBrains Mono) and icon library (Material Symbols Outlined). Updated DOC_STATUS.md with current status and refined Phase 9 upcoming work schedule. README.md and ARCHITECTURE.md remain accurate -- design tokens are internal and do not change user-facing docs until views are replaced (Task #24+).
 **Files changed:** docs/memory/PROJECT.md (MODIFIED -- tech stack table), docs/memory/DOC_STATUS.md (MODIFIED -- full refresh), docs/memory/agents/documenter.md (APPENDED), docs/memory/ACTIVITY_LOG.md (APPENDED)
@@ -3875,30 +3875,30 @@ full self-contained context and acceptance criteria.
 **Next:** After Task #24 (New Sidebar Navigation), ARCHITECTURE.md component diagram and view list will need updating.
 ---
 ---
-## 2026-03-25 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #23: Design System Foundation
+## 2026-03-25 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #23: Design System Foundation
 **Outcome:** COMPLETED
 **Summary:** Established the complete design system for Phase 9 frontend redesign. Updated tailwind.config.js with full color palette (20+ tokens), font families, and border radius scale extracted from all 5 Stitch design exports. Added Google Fonts (Inter, JetBrains Mono, Material Symbols Outlined) to index.html. Rewrote index.css with new base styles, utility classes (glass-effect, custom-scrollbar, active-indicator, terminal-text), and updated markdown rendering from green to purple theme. Created shared constants (NAV_ITEMS, STATUS_COLORS) in client/src/lib/constants.js.
 **Files changed:** client/tailwind.config.js (MODIFIED), client/index.html (MODIFIED), client/src/index.css (MODIFIED), client/src/lib/constants.js (CREATED)
 **Bugs fixed:** none
 **Decisions made:** #933df5 as canonical primary (not #a855f7); Geist font as fallback only (not on Google Fonts CDN); surface scale with 4 levels.
 **Blockers:** none
-**Next:** Task #24 Ã¢â‚¬â€ New Sidebar Navigation Component (depends on this task's design tokens and NAV_ITEMS constant).
+**Next:** Task #24 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â New Sidebar Navigation Component (depends on this task's design tokens and NAV_ITEMS constant).
 ---
-## 2026-03-25 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Phase 9 Planning: Documentation Audit
+## 2026-03-25 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Phase 9 Planning: Documentation Audit
 **Outcome:** COMPLETED
-**Summary:** Audited all documentation after Phase 9 planning was completed (9 new tasks #23-#31, no code changes). README.md, ARCHITECTURE.md, and all memory files remain accurate for current code. Updated DOC_STATUS.md with Phase 9 upcoming documentation work schedule Ã¢â‚¬â€ which docs will need updates and at which task triggers. No documents are stale since no code was modified.
+**Summary:** Audited all documentation after Phase 9 planning was completed (9 new tasks #23-#31, no code changes). README.md, ARCHITECTURE.md, and all memory files remain accurate for current code. Updated DOC_STATUS.md with Phase 9 upcoming documentation work schedule ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â which docs will need updates and at which task triggers. No documents are stale since no code was modified.
 **Files changed:** docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/agents/documenter.md (APPENDED), docs/memory/ACTIVITY_LOG.md (APPENDED)
 **Bugs fixed:** none
-**Decisions made:** No formal DEC entries for Phase 9 design decisions Ã¢â‚¬â€ these are UI choices recorded in CONTEXT.md, not architectural constraints.
+**Decisions made:** No formal DEC entries for Phase 9 design decisions ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â these are UI choices recorded in CONTEXT.md, not architectural constraints.
 **Blockers:** none
 **Next:** Documentation updates needed after Task #23 (design system) and Task #30 (app shell integration).
 ---
 
 ---
-## 2026-03-25 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Phase 9 Planning: CODE_MAP + CHANGELOG Update
+## 2026-03-25 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Phase 9 Planning: CODE_MAP + CHANGELOG Update
 **Outcome:** COMPLETED
-**Summary:** Updated CODE_MAP.md with a new "Phase 9 Ã¢â‚¬â€ Frontend Redesign" section documenting all 5 Stitch design exports, navigation changes (4->5 views), design system changes (purple/black/Inter), files that must NOT be modified (Terminal.jsx, useSession.js, useApi.js, useJob.js, all server/*), and impact analysis on existing code map entries. Appended CHANGELOG entry for Phase 9 planning. No code was modified Ã¢â‚¬â€ planning-only task.
-**Files changed:** docs/memory/CODE_MAP.md (MODIFIED Ã¢â‚¬â€ Phase 9 section added), docs/memory/CHANGELOG.md (APPENDED), docs/memory/ACTIVITY_LOG.md (APPENDED), docs/memory/agents/code-mapper.md (APPENDED)
+**Summary:** Updated CODE_MAP.md with a new "Phase 9 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Frontend Redesign" section documenting all 5 Stitch design exports, navigation changes (4->5 views), design system changes (purple/black/Inter), files that must NOT be modified (Terminal.jsx, useSession.js, useApi.js, useJob.js, all server/*), and impact analysis on existing code map entries. Appended CHANGELOG entry for Phase 9 planning. No code was modified ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â planning-only task.
+**Files changed:** docs/memory/CODE_MAP.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Phase 9 section added), docs/memory/CHANGELOG.md (APPENDED), docs/memory/ACTIVITY_LOG.md (APPENDED), docs/memory/agents/code-mapper.md (APPENDED)
 **Bugs fixed:** none
 **Decisions made:** Documented Phase 9 constraints (off-limits files) in CODE_MAP to prevent future agents from accidentally modifying protected hooks/components
 **Blockers:** none
@@ -3906,21 +3906,21 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-25 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Post-Phase 9 Planning Verification Sync
+## 2026-03-25 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Post-Phase 9 Planning Verification Sync
 **Outcome:** COMPLETED
 **Summary:** Verified all Phase 9 planning artifacts are correctly saved: 9 tasks (#23-#31) in TASK_PLAN.md (all PENDING), Phase 9 section in PROGRESS.md, CONTEXT.md updated for Phase 9 focus, ACTIVITY_LOG.md planning entry present. No drift or missing data. Plan is verified and ready for execution starting with TASK #23.
 **Files changed:** docs/memory/agents/project-manager.md (APPENDED), docs/memory/ACTIVITY_LOG.md (APPENDED)
 **Bugs fixed:** none
-**Decisions made:** none Ã¢â‚¬â€ all artifacts confirmed accurate
+**Decisions made:** none ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all artifacts confirmed accurate
 **Blockers:** none
 **Next:** Execute TASK #23 (Design System Foundation) via frontend-dev agent
 ---
 
 ---
-## 2026-03-25 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Phase 9: Frontend Redesign Planning
+## 2026-03-25 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Phase 9: Frontend Redesign Planning
 **Outcome:** COMPLETED
 **Summary:** Analyzed 5 Stitch design exports (Terminal Hub, Orchestration Center, Project Dashboard, Context Editor, Deployment Manager) and created 9 new tasks (#23-#31) for a complete frontend redesign. Tasks cover: design system foundation, new sidebar, 5 new views (replacing 4 old views), app shell integration, and QA. All tasks assigned to frontend-dev (except #31 to qa-tester). Dependency chain: #23 -> #24 -> #25-#29 (parallel) -> #30 -> #31.
-**Files changed:** docs/TASK_PLAN.md (MODIFIED Ã¢â‚¬â€ added Phase 9 tasks #23-#31), docs/memory/PROGRESS.md (MODIFIED Ã¢â‚¬â€ added Phase 9 pending section), docs/memory/CONTEXT.md (MODIFIED Ã¢â‚¬â€ updated focus to Phase 9), docs/memory/agents/project-manager.md (APPENDED), docs/memory/ACTIVITY_LOG.md (APPENDED)
+**Files changed:** docs/TASK_PLAN.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â added Phase 9 tasks #23-#31), docs/memory/PROGRESS.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â added Phase 9 pending section), docs/memory/CONTEXT.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â updated focus to Phase 9), docs/memory/agents/project-manager.md (APPENDED), docs/memory/ACTIVITY_LOG.md (APPENDED)
 **Bugs fixed:** none
 **Decisions made:** Primary color changes from green (#4ade80) to purple (#933df5). Navigation expands from 4 to 5 views ('entities' split into 'context' + 'deployments'). Default view changes from 'terminal' to 'projects'. Terminal.jsx and useSession.js are off-limits for modification.
 **Blockers:** none
@@ -3928,10 +3928,10 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-24 Ã¢â‚¬â€ orchestrator Ã¢â‚¬â€ Task #22: Add GET /api/v1/jobs/:id (BUG-22)
+## 2026-03-24 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â orchestrator ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #22: Add GET /api/v1/jobs/:id (BUG-22)
 **Outcome:** COMPLETED
 **Summary:** Added missing GET /api/v1/jobs/:id route in server/routes/jobs.js. Returns sanitized job status+result. Previously, requests to this URL fell through to SPA HTML fallback. 110/110 tests pass. Verified live: 404 for nonexistent, 200 with running/done status.
-**Files changed:** server/routes/jobs.js (MODIFIED Ã¢â‚¬â€ added GET /:id handler)
+**Files changed:** server/routes/jobs.js (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â added GET /:id handler)
 **Bugs fixed:** BUG-22 (GET jobs/:id returned HTML instead of JSON)
 **Decisions made:** none
 **Blockers:** none
@@ -3939,9 +3939,9 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-24 Ã¢â‚¬â€ orchestrator Ã¢â‚¬â€ v1.1 Release Pipeline Complete
+## 2026-03-24 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â orchestrator ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â v1.1 Release Pipeline Complete
 **Outcome:** COMPLETED
-**Summary:** Full v1.1 pipeline executed: pre-flight tests (110/110 pass) Ã¢â€ â€™ 3 parallel tasks (#19 JobRunner leak, #20 rate limiter leak, #21 Vite CVE) Ã¢â€ â€™ regression tests (110/110 pass) Ã¢â€ â€™ security check (npm audit 0 vulns) Ã¢â€ â€™ docs updated (CODE_MAP, CHANGELOG, PROGRESS, CONTEXT, TASK_PLAN, DECISIONS). All 21 tasks COMPLETED. DEC-001 corrected. TASK_PLAN tech stack references fixed. Project ready for v1.1.0 tag.
+**Summary:** Full v1.1 pipeline executed: pre-flight tests (110/110 pass) ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ 3 parallel tasks (#19 JobRunner leak, #20 rate limiter leak, #21 Vite CVE) ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ regression tests (110/110 pass) ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ security check (npm audit 0 vulns) ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ docs updated (CODE_MAP, CHANGELOG, PROGRESS, CONTEXT, TASK_PLAN, DECISIONS). All 21 tasks COMPLETED. DEC-001 corrected. TASK_PLAN tech stack references fixed. Project ready for v1.1.0 tag.
 **Files changed:** docs/memory/CODE_MAP.md, CHANGELOG.md, PROGRESS.md, CONTEXT.md, DECISIONS.md, ACTIVITY_LOG.md, docs/TASK_PLAN.md
 **Bugs fixed:** none (all 3 bugs fixed by individual task agents)
 **Decisions made:** DEC-001 corrected to reflect actual node-pty usage
@@ -3950,7 +3950,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-24 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #19: Fix JobRunner Memory Leak (BUG-06)
+## 2026-03-24 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #19: Fix JobRunner Memory Leak (BUG-06)
 **Outcome:** COMPLETED
 **Summary:** Added TTL-based eviction to JobRunner's jobs Map. Terminal-state jobs (done/cancelled/error) are auto-deleted after 10 minutes via setTimeout with .unref(). Safety check defers eviction if SSE clients are still connected. Timer stored on job record for clearing.
 **Files changed:** server/services/JobRunner.js (MODIFIED -- added JOB_EVICTION_TTL_MS constant, _scheduleEviction() method, eviction call in close handler)
@@ -3961,73 +3961,73 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-24 Ã¢â‚¬â€ devops Ã¢â‚¬â€ Task #21: Upgrade Vite to Patch MEDIUM-04 esbuild CVE
+## 2026-03-24 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â devops ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #21: Upgrade Vite to Patch MEDIUM-04 esbuild CVE
 **Outcome:** COMPLETED
-**Summary:** Upgraded vite from 5.4.21 to 6.4.1 in client/package.json to resolve esbuild CVE GHSA-67mh-4wv8-2f99 (2 moderate findings). npm audit now returns 0 vulnerabilities. Build passes (301 modules), all 110 tests pass. No config changes needed Ã¢â‚¬â€ vite 6 is backward compatible.
+**Summary:** Upgraded vite from 5.4.21 to 6.4.1 in client/package.json to resolve esbuild CVE GHSA-67mh-4wv8-2f99 (2 moderate findings). npm audit now returns 0 vulnerabilities. Build passes (301 modules), all 110 tests pass. No config changes needed ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â vite 6 is backward compatible.
 **Files changed:** client/package.json (vite ^5.1.0 -> ^6.4.1), client/package-lock.json (regenerated)
-**Bugs fixed:** MEDIUM-04 Ã¢â‚¬â€ esbuild CVE via transitive vite dependency
+**Bugs fixed:** MEDIUM-04 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â esbuild CVE via transitive vite dependency
 **Decisions made:** Used vite 6.4.1 (not 5.x) because the CVE affects all vite through 6.1.6; no 5.x patch could resolve it. Did not upgrade to vite 8.x to avoid plugin-react compatibility issues.
 **Blockers:** none
 **Next:** All 3 Phase 7 tasks (#19, #20, #21) are now COMPLETED. Ready for v1.1 QA regression pass and tagging.
 ---
-## 2026-03-24 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #20: Fix rate limiter memory leak
+## 2026-03-24 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #20: Fix rate limiter memory leak
 **Outcome:** COMPLETED
 **Summary:** Added a periodic setInterval sweep (every 60s, .unref()) to `_rateLimitMap` in server/index.js that deletes entries whose `resetAt` timestamp has passed. This fixes BUG-07 where stale IP entries accumulated indefinitely. No behavioral change for active rate-limited requests.
 **Files changed:** server/index.js (added 8-line sweep block after rateLimit function)
-**Bugs fixed:** BUG-07 Ã¢â‚¬â€ _rateLimitMap memory leak
+**Bugs fixed:** BUG-07 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â _rateLimitMap memory leak
 **Decisions made:** Sweep interval of 60 seconds matches the rate limit window (60s), providing timely cleanup without excessive overhead.
 **Blockers:** none
 **Next:** TASK #19 (JobRunner memory leak) and TASK #21 (vite CVE upgrade) remain in Phase 7 backlog.
 ---
-## 2026-03-24 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Pre-v1.1 Test Suite Verification
+## 2026-03-24 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Pre-v1.1 Test Suite Verification
 **Outcome:** COMPLETED
 **Summary:** Ran full test suite (`npm test`) as pre-development baseline check before v1.1. All 110 tests pass across 6 files in 3.92s. No regressions from Task #16 security hardening.
 **Files changed:** none (read-only verification)
 **Bugs fixed:** none
 **Decisions made:** none
 **Blockers:** none
-**Next:** v1.1 development can begin Ã¢â‚¬â€ test baseline is green.
+**Next:** v1.1 development can begin ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â test baseline is green.
 ---
 
 ---
-## 2026-03-24 Ã¢â‚¬â€ orchestrator Ã¢â‚¬â€ Full Project Audit: Docs vs Code
+## 2026-03-24 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â orchestrator ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Full Project Audit: Docs vs Code
 **Outcome:** COMPLETED
 **Summary:** Ran 3 parallel Explore agents to audit all documentation (DECISIONS.md, PROGRESS.md, CODE_MAP.md, ACTIVITY_LOG.md) against actual codebase. Result: 99% match. Fixed DEC-001 in DECISIONS.md (still said node-pty-prebuilt-multiarch, code uses node-pty). All 24 endpoints, 19 React components, 3 middleware, 3 security fixes, 7 bug fixes, 10 npm deps confirmed matching.
-**Files changed:** docs/memory/DECISIONS.md (MODIFIED Ã¢â‚¬â€ DEC-001 corrected)
+**Files changed:** docs/memory/DECISIONS.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â DEC-001 corrected)
 **Bugs fixed:** none
 **Decisions made:** DEC-001 text updated to match actual node-pty usage (was outdated since Task #3)
 **Blockers:** none
-**Next:** v1.1 development Ã¢â‚¬â€ Tasks #19, #20, #21
+**Next:** v1.1 development ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #19, #20, #21
 ---
 
 ---
-## 2026-03-18 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Debug & Security Re-Audit Documentation
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Debug & Security Re-Audit Documentation
 **Outcome:** COMPLETED
 **Summary:** Updated docs/SECURITY_AUDIT.md to add 3 new findings from the security re-audit (MEDIUM-04: vite/esbuild CVE dev-only; LOW-03: process.env passthrough to PTY; LOW-04: safeRead bypass in claudemd GET). Updated docs/ARCHITECTURE.md in two sections: backpressure spec corrected from browser-API ws.bufferedAmount to server-side ws._socket.bufferSize; YAML frontmatter parse algorithm updated to regex-based implementation with non-object yaml.load return guard. Updated docs/memory/DOC_STATUS.md to reflect all changes.
-**Files changed:** docs/SECURITY_AUDIT.md (MODIFIED Ã¢â‚¬â€ header, executive summary, SEC-10 row, npm audit section, new MEDIUM-04 section, new LOW-03 and LOW-04 sections, OWASP A06 row, Summary Verdict updated), docs/ARCHITECTURE.md (MODIFIED Ã¢â‚¬â€ backpressure section + frontmatter parse algorithm), docs/memory/DOC_STATUS.md (MODIFIED Ã¢â‚¬â€ full refresh for this session), docs/memory/agents/documenter.md (APPENDED), docs/memory/ACTIVITY_LOG.md (APPENDED)
-**Bugs fixed:** none Ã¢â‚¬â€ documentation-only
+**Files changed:** docs/SECURITY_AUDIT.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â header, executive summary, SEC-10 row, npm audit section, new MEDIUM-04 section, new LOW-03 and LOW-04 sections, OWASP A06 row, Summary Verdict updated), docs/ARCHITECTURE.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backpressure section + frontmatter parse algorithm), docs/memory/DOC_STATUS.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â full refresh for this session), docs/memory/agents/documenter.md (APPENDED), docs/memory/ACTIVITY_LOG.md (APPENDED)
+**Bugs fixed:** none ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documentation-only
 **Decisions made:** MEDIUM-04 placed in a new "MEDIUM Findings (from re-audit)" subsection rather than mixed with the original MEDIUM-01/02/03 to distinguish resolved vs open findings
 **Blockers:** none
-**Next:** v1.1 when TASK-19/20/21 are implemented Ã¢â‚¬â€ update SECURITY_AUDIT.md to mark MEDIUM-04 fixed and LOW-02/LOW-03 improved.
+**Next:** v1.1 when TASK-19/20/21 are implemented ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â update SECURITY_AUDIT.md to mark MEDIUM-04 fixed and LOW-02/LOW-03 improved.
 ---
-## 2026-03-18 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Debug & Security Audit: BUG-02/03/04/05/11/14/16
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Debug & Security Audit: BUG-02/03/04/05/11/14/16
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md and CHANGELOG.md following the debugger's full codebase audit session. Added Function Graph entries for 5 previously undocumented modules (AddProjectModal, Sidebar, ProjectsView internals, useSession, full SessionManager class). Updated parseFrontmatter entry with BUG-14 type guard complexity note. All 7 bug fixes documented in Key Behaviors section and CHANGELOG.
-**Files changed:** docs/memory/CODE_MAP.md (MODIFIED Ã¢â‚¬â€ header updated; 1 new Module Index row; 13 new Function Graph entries for SessionManager class methods, AddProjectModal, Sidebar, useSession; parseFrontmatter complexity note updated; 8 new Key Behaviors bullets), docs/memory/CHANGELOG.md (APPENDED Ã¢â‚¬â€ full Debug Session entry with per-file breakdown), docs/memory/ACTIVITY_LOG.md (APPENDED), docs/memory/agents/code-mapper.md (APPENDED)
+**Files changed:** docs/memory/CODE_MAP.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â header updated; 1 new Module Index row; 13 new Function Graph entries for SessionManager class methods, AddProjectModal, Sidebar, useSession; parseFrontmatter complexity note updated; 8 new Key Behaviors bullets), docs/memory/CHANGELOG.md (APPENDED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â full Debug Session entry with per-file breakdown), docs/memory/ACTIVITY_LOG.md (APPENDED), docs/memory/agents/code-mapper.md (APPENDED)
 **Bugs fixed:** none (code-mapper is documentation-only)
-**Decisions made:** Expanded SessionManager stub into full class-method entries Ã¢â‚¬â€ the bug fixes made the internal structure security-relevant enough to warrant full documentation
+**Decisions made:** Expanded SessionManager stub into full class-method entries ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the bug fixes made the internal structure security-relevant enough to warrant full documentation
 **Next:** qa-tester regression pass on the 6 changed files (BUG-02/03/04/05/11/14/16 fixes)
 ---
-## 2026-03-18 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Phase 7 v1.1 Backlog Planning (Session 7)
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Phase 7 v1.1 Backlog Planning (Session 7)
 **Outcome:** COMPLETED
 **Summary:** Received results of post-v1 Debug & Security Audit (7 bugs fixed, 12 deferred, security re-audit PASS). Created Tasks #19, #20, #21 in TASK_PLAN.md for the three deferred v1.1 items: JobRunner memory leak (BUG-06), rate limiter map leak (BUG-07), and vite CVE upgrade (MEDIUM-04). Updated Phase Map, Execution Order, Task Status Summary table, PROGRESS.md, and CONTEXT.md to reflect Phase 7 state.
-**Files changed:** docs/TASK_PLAN.md (MODIFIED Ã¢â‚¬â€ Tasks #19/#20/#21 blocks added, Phase Map/Execution Order/Summary table updated), docs/memory/PROGRESS.md (MODIFIED Ã¢â‚¬â€ Phase 7 pending section added), docs/memory/CONTEXT.md (MODIFIED Ã¢â‚¬â€ focus updated to Phase 7), docs/memory/agents/project-manager.md (APPENDED), docs/memory/ACTIVITY_LOG.md (APPENDED)
+**Files changed:** docs/TASK_PLAN.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #19/#20/#21 blocks added, Phase Map/Execution Order/Summary table updated), docs/memory/PROGRESS.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Phase 7 pending section added), docs/memory/CONTEXT.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â focus updated to Phase 7), docs/memory/agents/project-manager.md (APPENDED), docs/memory/ACTIVITY_LOG.md (APPENDED)
 **Bugs fixed:** none
-**Decisions made:** All 3 items rated MEDIUM priority (not HIGH) Ã¢â‚¬â€ none block v1 release; BUG-06/BUG-07 are memory leaks with no data loss risk on normal localhost use; MEDIUM-04 is dev-only CVE
+**Decisions made:** All 3 items rated MEDIUM priority (not HIGH) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â none block v1 release; BUG-06/BUG-07 are memory leaks with no data loss risk on normal localhost use; MEDIUM-04 is dev-only CVE
 **Blockers:** none
 **Next:** Assign Tasks #19, #20, #21 to backend-dev (x2) and devops in parallel. After all 3 complete, qa-tester regression pass, then tag v1.1.
 ---
-## 2026-03-18 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Full Codebase Code Review (user-requested)
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Full Codebase Code Review (user-requested)
 **Outcome:** COMPLETED
 **Summary:** Performed full codebase audit across all server and client files. Found 19 bugs/anomalies. Fixed 7 (2 HIGH, 4 MEDIUM, 1 HIGH-severity logic): AddProjectModal wrong endpoint (BUG-03), projects list response not destructured in Sidebar+ProjectsView (BUG-04), session object not destructured in Sidebar (BUG-05), WS_BASE hardcoded port (BUG-16), ws.bufferedAmount server-side undefined (BUG-11), yaml.load non-object return not guarded (BUG-14), double ProcessRegistry.unregister (BUG-02). 12 bugs documented and deferred to v1.1.
 **Files changed:** client/src/components/AddProjectModal.jsx, client/src/components/Sidebar.jsx, client/src/views/ProjectsView.jsx, client/src/hooks/useSession.js, server/services/SessionManager.js, server/utils/frontmatter.js, docs/memory/agents/debugger.md (CREATED)
@@ -4035,37 +4035,37 @@ full self-contained context and acceptance criteria.
 **Decisions made:** Used ws._socket.bufferSize for server-side backpressure; _unregistered flag on session object for double-unregister guard; window.location.port for WS_BASE
 **Next:** qa-tester regression pass on the 6 changed files; BUG-06 (JobRunner memory leak) and BUG-07 (rate limiter map) deferred to v1.1
 ---
-## 2026-03-18 Ã¢â‚¬â€ security Ã¢â‚¬â€ Full Re-Audit (user-requested)
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â security ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Full Re-Audit (user-requested)
 **Outcome:** COMPLETED
-**Summary:** Conducted a full independent re-audit of the entire codebase. Confirmed all 3 prior MEDIUM findings (execÃ¢â€ â€™spawn, allowedTools whitelist, PID range guard) are correctly fixed in the live code. Discovered 1 new MEDIUM finding (esbuild/vite CVE in client devDependencies, dev-only, not production), 2 new LOW findings (process.env passthrough to PTY, safeRead path bypass in claudemd.js GET), plus the pre-existing LOW-02 (rate limiter memory leak). npm audit for server/ and root returned 0 vulnerabilities; client/ returned 2 moderate (esbuild CVE).
+**Summary:** Conducted a full independent re-audit of the entire codebase. Confirmed all 3 prior MEDIUM findings (execÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢spawn, allowedTools whitelist, PID range guard) are correctly fixed in the live code. Discovered 1 new MEDIUM finding (esbuild/vite CVE in client devDependencies, dev-only, not production), 2 new LOW findings (process.env passthrough to PTY, safeRead path bypass in claudemd.js GET), plus the pre-existing LOW-02 (rate limiter memory leak). npm audit for server/ and root returned 0 vulnerabilities; client/ returned 2 moderate (esbuild CVE).
 **Files changed:** docs/memory/agents/security.md (APPENDED), docs/memory/ACTIVITY_LOG.md (APPENDED)
 **Bugs fixed:** none
-**Decisions made:** esbuild CVE rated MEDIUM (not HIGH) Ã¢â‚¬â€ dev-only, not in production server. process.env passthrough rated LOW Ã¢â‚¬â€ single-user localhost, no untrusted users.
+**Decisions made:** esbuild CVE rated MEDIUM (not HIGH) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â dev-only, not in production server. process.env passthrough rated LOW ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â single-user localhost, no untrusted users.
 **Blockers:** none
 **Next:** Upgrade vite in client/ to fix MEDIUM-04. Consider env whitelist for PTY spawn. Refactor safeRead in claudemd.js.
 ---
-## 2026-03-18 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Tasks #16Ã¢â‚¬â€œ#18: Security Hardening Documentation
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #16ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#18: Security Hardening Documentation
 **Outcome:** COMPLETED
-**Summary:** Updated docs/SECURITY_AUDIT.md to reflect that MEDIUM-01 (execÃ¢â€ â€™spawn), MEDIUM-02 (allowedTools whitelist), and MEDIUM-03 (PID range guard) are now FIXED with applied-fix details. Changed the overall verdict from NEEDS_ATTENTION to PASS. Updated the SEC-02 per-requirement table row and the OWASP A03 row to remove the "with NOTE" qualifier. Updated docs/memory/DOC_STATUS.md to add SECURITY_AUDIT.md as an UP_TO_DATE row and advanced the last-updated timestamp to Tasks #16Ã¢â‚¬â€œ#18.
+**Summary:** Updated docs/SECURITY_AUDIT.md to reflect that MEDIUM-01 (execÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢spawn), MEDIUM-02 (allowedTools whitelist), and MEDIUM-03 (PID range guard) are now FIXED with applied-fix details. Changed the overall verdict from NEEDS_ATTENTION to PASS. Updated the SEC-02 per-requirement table row and the OWASP A03 row to remove the "with NOTE" qualifier. Updated docs/memory/DOC_STATUS.md to add SECURITY_AUDIT.md as an UP_TO_DATE row and advanced the last-updated timestamp to Tasks #16ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#18.
 **Files changed:** docs/SECURITY_AUDIT.md (MODIFIED), docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/agents/documenter.md (APPENDED), docs/memory/ACTIVITY_LOG.md (APPENDED)
 **Bugs fixed:** none
-**Decisions made:** Kept full original finding descriptions intact under each MEDIUM-0x heading Ã¢â‚¬â€ added STATUS: FIXED banner and "Fix applied" subsection rather than deleting the finding text, to preserve audit history
+**Decisions made:** Kept full original finding descriptions intact under each MEDIUM-0x heading ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â added STATUS: FIXED banner and "Fix applied" subsection rather than deleting the finding text, to preserve audit history
 **Blockers:** none
 **Next:** Project is v1 release-ready. All 18 tasks COMPLETED, all MEDIUM security findings resolved, docs current.
 ---
-## 2026-03-18 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Phase 6 close-out + v1 Release Assessment
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Phase 6 close-out + v1 Release Assessment
 **Outcome:** COMPLETED
 **Summary:** Confirmed Tasks #16, #17, #18 all COMPLETED in TASK_PLAN.md (individual blocks and Task Status Summary table were already accurate). Updated docs/memory/PROGRESS.md: moved Phase 6 tasks to Completed, upgraded v1 Release Status from NEAR-RELEASE to v1 RELEASE READY. All 3 MEDIUM security findings from the audit are now resolved. The project has 18/18 tasks COMPLETED and is ready for v1 release.
-**Files changed:** docs/memory/PROGRESS.md (MODIFIED Ã¢â‚¬â€ Phase 6 section updated, v1 status upgraded), docs/TASK_PLAN.md (MODIFIED Ã¢â‚¬â€ footer timestamp updated), docs/memory/agents/project-manager.md (APPENDED), docs/memory/ACTIVITY_LOG.md (APPENDED)
+**Files changed:** docs/memory/PROGRESS.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Phase 6 section updated, v1 status upgraded), docs/TASK_PLAN.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â footer timestamp updated), docs/memory/agents/project-manager.md (APPENDED), docs/memory/ACTIVITY_LOG.md (APPENDED)
 **Bugs fixed:** none
-**Decisions made:** v1 is RELEASE READY Ã¢â‚¬â€ all MEDIUM findings resolved, 2 LOW findings deferred to v1.1
+**Decisions made:** v1 is RELEASE READY ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all MEDIUM findings resolved, 2 LOW findings deferred to v1.1
 **Blockers:** none
 **Next:** v1 release. Optional: QA regression pass on the 3 changed files (#16/#17/#18) before tagging. v1.1 backlog: unsafe-inline CSP fix, rate limiter persistent storage.
 ---
 
-## 2026-03-18 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #18: Security Hardening Ã¢â‚¬â€ PID Range Validation in ProcessRegistry
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #18: Security Hardening ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PID Range Validation in ProcessRegistry
 **Outcome:** COMPLETED
-**Summary:** Added isValidPid() helper (range 1Ã¢â‚¬â€œ65535) to server/services/ProcessRegistry.js. cleanupStale() now skips out-of-range PIDs with a [ProcessRegistry] warning instead of passing them to treeKill. register() now returns early with a warning if the PID is out of range. Resolves security audit MEDIUM-03.
+**Summary:** Added isValidPid() helper (range 1ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“65535) to server/services/ProcessRegistry.js. cleanupStale() now skips out-of-range PIDs with a [ProcessRegistry] warning instead of passing them to treeKill. register() now returns early with a warning if the PID is out of range. Resolves security audit MEDIUM-03.
 **Files changed:** server/services/ProcessRegistry.js (MODIFIED), docs/TASK_PLAN.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED)
 **Bugs fixed:** none
 **Decisions made:** register() returns early (not throws) to match existing no-return-value contract; MAX_PID=65535 per task spec
@@ -4073,7 +4073,7 @@ full self-contained context and acceptance criteria.
 **Next:** Tasks #16 and #17 are the other 2 Phase 6 security fixes (parallel). Once all 3 complete, QA regression pass recommended before v1 release.
 ---
 
-## 2026-03-18 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #17: Security Hardening Ã¢â‚¬â€ Validate allowedTools whitelist
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #17: Security Hardening ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Validate allowedTools whitelist
 **Outcome:** COMPLETED
 **Summary:** Added character-set whitelist validation for the `allowedTools` parameter in `server/routes/jobs.js`. The existing check only verified type; it now also enforces a `/^[a-zA-Z0-9_,\-]+$/` regex and a 512-character length cap, returning HTTP 400 on violation. Addresses MEDIUM-02 from the security audit.
 **Files changed:** server/routes/jobs.js, docs/TASK_PLAN.md
@@ -4082,7 +4082,7 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Tasks #16 (replace exec() in openBrowser) and #18 (validate PID range) remain in Phase 6. After both complete, run QA regression pass to confirm no regressions.
 ---
-## 2026-03-18 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #13+#14+#15: QA Test Suite + Security Audit + Documentation
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #13+#14+#15: QA Test Suite + Security Audit + Documentation
 **Outcome:** COMPLETED
 **Summary:** Mapped 6 new test files (110 tests total) and vitest.config.js to CODE_MAP.md as first-class Function Graph entries with coverage targets, mock strategies, and edge cases noted. Appended 3 detailed CHANGELOG entries covering the full QA, security audit, and documentation work. Security audit findings (3 MEDIUM: exec() auto-open, allowedTools not whitelisted, PID file integrity) added to Key Behaviors.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md
@@ -4093,7 +4093,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-18 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Phase 5 close-out + Phase 6 task creation
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Phase 5 close-out + Phase 6 task creation
 **Outcome:** COMPLETED
 **Summary:** Marked Tasks #13, #14, #15 COMPLETED in TASK_PLAN.md and the Task Status Summary table. Assessed the 3 MEDIUM security findings from the audit (exec in openBrowser, allowedTools not whitelisted, PID range not validated) and created Tasks #16, #17, #18 as mandatory Phase 6 security hardening tasks. Updated Phase Map, Execution Order, Task Status Summary, and PROGRESS.md to reflect the new state.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/agents/project-manager.md, docs/memory/ACTIVITY_LOG.md
@@ -4102,7 +4102,7 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Assign Tasks #16, #17, #18 to backend-dev (all 3 can run in parallel). After all 3 merge, run qa-tester regression pass, then v1 is complete.
 ---
-## 2026-03-18 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #13: Full QA Test Suite
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #13: Full QA Test Suite
 **Outcome:** COMPLETED
 **Summary:** Installed vitest v4.1.0 and wrote 110 unit/integration tests across 6 test files covering all 6 PRD critical paths. All 110 tests pass with 0 failures. `npm test` works from root and server directories. Found and fixed 2 test-infrastructure bugs (vi.hoisted pattern for mocked spawn, PassThrough for readline-compatible mock stdout).
 **Files changed:** server/tests/RingBuffer.test.js, server/tests/FileManager.test.js, server/tests/csrf.test.js, server/tests/pathValidation.test.js, server/tests/SessionManager.test.js, server/tests/JobRunner.test.js, server/vitest.config.js, server/package.json, package.json, docs/TEST_RESULTS.md, docs/TASK_PLAN.md
@@ -4111,34 +4111,34 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** All Phase 5 tasks completed. Project is v1 release-ready.
 ---
-## 2026-03-18 Ã¢â‚¬â€ security Ã¢â‚¬â€ Task #14: Pre-Release Security Audit
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â security ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #14: Pre-Release Security Audit
 **Outcome:** COMPLETED
-**Summary:** Audited all 10 SEC requirements (SEC-01 through SEC-10) across the full server codebase. All 10 requirements pass. Found 3 MEDIUM and 2 LOW findings Ã¢â‚¬â€ no CRITICAL or HIGH issues. npm audit shows 0 CVEs in 185 dependencies. Overall risk rating: LOW for the intended localhost single-user deployment. docs/SECURITY_AUDIT.md written with exact file:line citations and fix recommendations for all findings.
-**Files changed:** docs/SECURITY_AUDIT.md (CREATED), docs/TASK_PLAN.md (MODIFIED Ã¢â‚¬â€ Task #14 status), docs/memory/agents/security.md (CREATED)
-**Bugs fixed:** none Ã¢â‚¬â€ audit is read-only
-**Decisions made:** MEDIUM (not HIGH) for exec() in openBrowser Ã¢â‚¬â€ not currently exploitable but policy violation; MEDIUM for allowedTools string not whitelisted
+**Summary:** Audited all 10 SEC requirements (SEC-01 through SEC-10) across the full server codebase. All 10 requirements pass. Found 3 MEDIUM and 2 LOW findings ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no CRITICAL or HIGH issues. npm audit shows 0 CVEs in 185 dependencies. Overall risk rating: LOW for the intended localhost single-user deployment. docs/SECURITY_AUDIT.md written with exact file:line citations and fix recommendations for all findings.
+**Files changed:** docs/SECURITY_AUDIT.md (CREATED), docs/TASK_PLAN.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #14 status), docs/memory/agents/security.md (CREATED)
+**Bugs fixed:** none ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â audit is read-only
+**Decisions made:** MEDIUM (not HIGH) for exec() in openBrowser ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â not currently exploitable but policy violation; MEDIUM for allowedTools string not whitelisted
 **Blockers:** none
 **Next:** Task #15 (Documenter) is the final remaining task; 3 MEDIUM findings should be addressed before v1 release
 ---
-## 2026-03-18 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Task #15: Final Documentation
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #15: Final Documentation
 **Outcome:** COMPLETED
 **Summary:** Created README.md from scratch at project root (was missing entirely). Covers prerequisites, install, run, features, configuration (4 env vars), 5-scenario troubleshooting guide, security model, and known v1 limitations. Updated docs/memory/PROJECT.md to correct package name inaccuracies left from Task #2. Updated docs/memory/PROGRESS.md to reflect v1 release-ready status. Created docs/memory/DOC_STATUS.md to track documentation health going forward.
 **Files changed:** README.md (CREATED), docs/memory/PROJECT.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED), docs/memory/DOC_STATUS.md (CREATED), docs/memory/agents/documenter.md (CREATED)
-**Bugs fixed:** PROJECT.md had stale package names (prebuilt-multiarch and write-atomic) Ã¢â‚¬â€ corrected to node-pty and write-file-atomic per Task #2 devops findings
+**Bugs fixed:** PROJECT.md had stale package names (prebuilt-multiarch and write-atomic) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â corrected to node-pty and write-file-atomic per Task #2 devops findings
 **Decisions made:** NO_OPEN env var added to README config table (exists in code, not in task spec); docs/API.md deferred (API already documented in ARCHITECTURE.md); DECISIONS.md not edited to preserve decision history
 **Blockers:** none
 **Next:** QA sign-off (Task #13) and Security audit sign-off (Task #14) are the only remaining gates before v1 release
 ---
-## 2026-03-18 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Session 4: Phase 5 Entry Ã¢â‚¬â€ Project State Analysis
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Session 4: Phase 5 Entry ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Project State Analysis
 **Outcome:** COMPLETED
 **Summary:** Confirmed Tasks #1-#12 are all COMPLETED (12 implementation tasks done). Updated CONTEXT.md from Phase 3 to Phase 5 focus. Fixed stale Task Status Summary table in TASK_PLAN.md (rows #4-#11 were still showing PENDING). Project is now ready to enter the final phase: QA, Security Audit, and Documentation in parallel.
-**Files changed:** docs/memory/CONTEXT.md (MODIFIED), docs/TASK_PLAN.md (MODIFIED Ã¢â‚¬â€ summary table), docs/memory/agents/project-manager.md (APPENDED)
-**Bugs fixed:** CONTEXT.md stale focus (Phase 3 Ã¢â€ â€™ Phase 5); TASK_PLAN.md summary table stale statuses
+**Files changed:** docs/memory/CONTEXT.md (MODIFIED), docs/TASK_PLAN.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â summary table), docs/memory/agents/project-manager.md (APPENDED)
+**Bugs fixed:** CONTEXT.md stale focus (Phase 3 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Phase 5); TASK_PLAN.md summary table stale statuses
 **Decisions made:** Tasks #13, #14, #15 run in parallel as final gate before v1 release
 **Blockers:** none
 **Next:** Assign Task #13 (qa-tester) + Task #14 (security) + Task #15 (documenter) all in parallel
 ---
-## 2026-03-18 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #12: Non-Functional Requirements Polish
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #12: Non-Functional Requirements Polish
 **Outcome:** COMPLETED
 **Summary:** Added browser auto-open (exec with NO_OPEN guard), in-memory rate limiter (200 req/min on /api/v1/*), GET /api/v1/version endpoint, improved /health (uptime/activeSessions/activeJobs), and structured [startup] logging with version/binary/config/URL. All changes are in server/index.js only. Build verified clean (304 modules).
 **Files changed:** server/index.js (MODIFIED), docs/TASK_PLAN.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED)
@@ -4147,34 +4147,34 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Tasks #13 (QA), #14 (Security), #15 (Docs) all unblocked and can run in parallel
 ---
-## 2026-03-18 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #9+#10+#11: Job Mode API + UI + Projects View
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #9+#10+#11: Job Mode API + UI + Projects View
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md with 14 new function graph entries covering JobRunner (7 functions), routes/jobs.js (4 endpoints), useJob hook (4 methods), JobPanel (4 components), JobView, and ProjectsView (4 components). Appended detailed CHANGELOG entries for all three tasks. Verified TASK_PLAN.md already shows tasks COMPLETED.
-**Files changed:** docs/memory/CODE_MAP.md (MODIFIED Ã¢â‚¬â€ new server+client sections), docs/memory/CHANGELOG.md (APPENDED Ã¢â‚¬â€ Tasks #9/#10/#11), docs/memory/agents/code-mapper.md (APPENDED Ã¢â‚¬â€ session log)
+**Files changed:** docs/memory/CODE_MAP.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â new server+client sections), docs/memory/CHANGELOG.md (APPENDED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #9/#10/#11), docs/memory/agents/code-mapper.md (APPENDED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â session log)
 **Bugs fixed:** none
 **Decisions made:** Documented SSE ownership pattern (JobRunner owns res lifetime, route does not call res.end); documented useJob ref+state duality for cancelJob closure; documented stdin.end() requirement (DEC-005)
 **Blockers:** none
-**Next:** Task #12 (NFR polish Ã¢â‚¬â€ backend-dev), then Task #13 QA, #14 Security, #15 Docs
+**Next:** Task #12 (NFR polish ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev), then Task #13 QA, #14 Security, #15 Docs
 ---
-## 2026-03-18 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #11: Projects View UI
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #11: Projects View UI
 **Outcome:** COMPLETED
 **Summary:** Replaced ProjectsView stub with full projects table UI showing Name, Path, Status (Active/No session badge), Created date, and Actions (Open Terminal, Delete). Includes AddProjectModal integration, delete confirmation dialog, load/delete error banners, and empty state. Fetches on mount and after modal close. npm run build clean (304 modules).
 **Files changed:** client/src/views/ProjectsView.jsx (MODIFIED), docs/TASK_PLAN.md (MODIFIED), docs/memory/PROGRESS.md (MODIFIED)
 **Bugs fixed:** none
 **Decisions made:** re-fetch after modal close for consistency; ConfirmDialog/StatusBadge as in-file sub-components; formatDate uses toLocaleDateString
 **Blockers:** none
-**Next:** Task #12 (NFR polish Ã¢â‚¬â€ backend-dev), Task #13+ (QA/Security/Docs)
+**Next:** Task #12 (NFR polish ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev), Task #13+ (QA/Security/Docs)
 ---
-## 2026-03-18 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #10: Job Mode UI Ã¢â‚¬â€ JobPanel + react-markdown
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #10: Job Mode UI ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â JobPanel + react-markdown
 **Outcome:** COMPLETED
 **Summary:** Implemented full Job Mode UI: useJob hook (POST /api/v1/jobs + EventSource SSE + DELETE cancel), JobPanel component with 5 render states (idle/running/done/cancelled/error), streaming event log with auto-scroll, Markdown result display via react-markdown + remark-gfm, and Markdown prose styles. JobView updated from stub to full layout. npm run build clean (304 modules).
 **Files changed:** client/src/hooks/useJob.js (CREATED), client/src/components/JobPanel.jsx (CREATED), client/src/views/JobView.jsx (MODIFIED), client/src/index.css (MODIFIED), docs/TASK_PLAN.md (MODIFIED)
 **Bugs fixed:** none
 **Decisions made:** useJob hook separates lifecycle from UI; scrollIntoView instant (no smooth); CSS class not inline styles for Markdown
 **Blockers:** none
-**Next:** Task #11 (Projects View UI Ã¢â‚¬â€ frontend-dev)
+**Next:** Task #11 (Projects View UI ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev)
 ---
-## 2026-03-18 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #9: Job Mode API Ã¢â‚¬â€ JobRunner and SSE Streaming
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #9: Job Mode API ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â JobRunner and SSE Streaming
 **Outcome:** COMPLETED
 **Summary:** Implemented full job mode backend: JobRunner service (spawn claude -p, readline stdout, SSE forwarding, tree-kill cancellation, graceful shutdown) and jobs REST/SSE routes (POST create, GET stream, DELETE cancel, GET list). All DEC-005/006, SEC-02/08, NFR-16 requirements enforced. npm run build verified clean.
 **Files changed:** server/services/JobRunner.js (CREATED), server/routes/jobs.js (CREATED), server/index.js (MODIFIED), docs/TASK_PLAN.md (MODIFIED)
@@ -4183,53 +4183,53 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Task #10 (frontend-dev, JobPanel UI) is now unblocked
 ---
-## 2026-03-18 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Status Review: Tasks #7 + #8 Complete, Next Phase Assigned
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Status Review: Tasks #7 + #8 Complete, Next Phase Assigned
 **Outcome:** COMPLETED
 **Summary:** Confirmed Tasks #7 and #8 are COMPLETED in TASK_PLAN.md and PROGRESS.md (prior agents had self-updated correctly). Updated CONTEXT.md to reflect Phase 3 (Job Mode) as the active focus. Identified Tasks #9 and #11 as unblocked and ready to assign in parallel.
 **Files changed:** docs/memory/CONTEXT.md, docs/memory/agents/project-manager.md, docs/memory/ACTIVITY_LOG.md
-**Bugs fixed:** CONTEXT.md still referenced Phase 0 as focus Ã¢â‚¬â€ corrected to Phase 3
+**Bugs fixed:** CONTEXT.md still referenced Phase 0 as focus ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â corrected to Phase 3
 **Decisions made:** Task #9 is highest priority; Task #11 runs in parallel; Task #10 blocked on #9; Task #12 also unblocked at medium priority
 **Blockers:** none
-**Next:** Assign Task #9 (Job Mode API Ã¢â‚¬â€ backend-dev) + Task #11 (Projects View UI Ã¢â‚¬â€ frontend-dev) in parallel; Task #12 (NFR Polish) optional parallel at lower priority
+**Next:** Assign Task #9 (Job Mode API ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev) + Task #11 (Projects View UI ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev) in parallel; Task #12 (NFR Polish) optional parallel at lower priority
 ---
-## 2026-03-18 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #7 + #8: Entity Management API + UI
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #7 + #8: Entity Management API + UI
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md with all new server and client modules from Tasks #7 and #8: FileManager singleton, frontmatter utils (parseFrontmatter, serializeFrontmatter, filePathToId), three new API route files (agents, skills, claudemd), and four new client components (AgentEditor, SkillEditor, ClaudeMdEditor, EntitiesView) plus useApi.js extensions (apiPut, apiDeleteWithBody). Appended Task #7 and #8 entries to CHANGELOG.md. Fixed PROGRESS.md placement of Task #8.
 **Files changed:** docs/memory/CODE_MAP.md (rewritten), docs/memory/CHANGELOG.md (appended), docs/memory/PROGRESS.md (Task #8 moved to Completed), docs/memory/agents/code-mapper.md (created)
-**Bugs fixed:** PROGRESS.md had Task #8 misplaced in Pending section Ã¢â‚¬â€ moved to Completed
-**Decisions made:** Documented resolveAllowedBase as two separate entries (agents.js scopes to USER_AGENTS_DIR; skills.js scopes to USER_CLAUDE_DIR) Ã¢â‚¬â€ different coverage is a security-relevant distinction
+**Bugs fixed:** PROGRESS.md had Task #8 misplaced in Pending section ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â moved to Completed
+**Decisions made:** Documented resolveAllowedBase as two separate entries (agents.js scopes to USER_AGENTS_DIR; skills.js scopes to USER_CLAUDE_DIR) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â different coverage is a security-relevant distinction
 **Blockers:** none
-**Next:** Tasks #9 (Job Mode API) and #10 (Job Mode UI) Ã¢â‚¬â€ code-mapper should document JobRunner, SSE route, JobPanel after completion
+**Next:** Tasks #9 (Job Mode API) and #10 (Job Mode UI) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper should document JobRunner, SSE route, JobPanel after completion
 ---
-## 2026-03-18 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #7: Entity Management API Ã¢â‚¬â€ Agents, Skills, CLAUDE.md
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #7: Entity Management API ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Agents, Skills, CLAUDE.md
 **Outcome:** COMPLETED
 **Summary:** Implemented the full entity management REST API. Created the missing FileManager.js prerequisite, a shared frontmatter utility module, and three new route files (agents, skills, claudemd). Mounted all three routers in server/index.js. npm run build and node --check on all new files passed with no errors.
 **Files changed:** server/services/FileManager.js (CREATED), server/utils/frontmatter.js (CREATED), server/routes/agents.js (CREATED), server/routes/skills.js (CREATED), server/routes/claudemd.js (CREATED), server/index.js (MODIFIED)
-**Bugs fixed:** FileManager.js was never created in Task #5 despite being in the spec Ã¢â‚¬â€ created here as first step
+**Bugs fixed:** FileManager.js was never created in Task #5 despite being in the spec ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â created here as first step
 **Decisions made:** Shared frontmatter utils in server/utils/ to avoid duplication; resolveAllowedBase() validates filePath against all registered project paths before any write
 **Blockers:** none
-**Next:** Task #8 (frontend-dev) Ã¢â‚¬â€ AgentEditor, SkillEditor, ClaudeMdEditor React components
+**Next:** Task #8 (frontend-dev) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â AgentEditor, SkillEditor, ClaudeMdEditor React components
 ---
-## 2026-03-18 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #8: Entity Management UI Ã¢â‚¬â€ AgentEditor, SkillEditor, ClaudeMdEditor
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #8: Entity Management UI ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â AgentEditor, SkillEditor, ClaudeMdEditor
 **Outcome:** COMPLETED
 **Summary:** Implemented the full entity management UI in React. Created three editor components (AgentEditor, SkillEditor, ClaudeMdEditor) and updated EntitiesView to render them via a tab bar. All components connect to the backend APIs with proper CSRF headers, display loading/error states, and handle form validation. Build verified clean (49 modules, no errors).
 **Files changed:** client/src/hooks/useApi.js (apiPut + apiDeleteWithBody added), client/src/components/AgentEditor.jsx (CREATED), client/src/components/SkillEditor.jsx (CREATED), client/src/components/ClaudeMdEditor.jsx (CREATED), client/src/views/EntitiesView.jsx (replaced stub)
 **Bugs fixed:** apiPut and apiDeleteWithBody were missing from useApi.js
 **Decisions made:** Non-auto-dismiss restart banner for agents per spec; auto-dismiss 3s toast for skills; live (not debounced) line count in ClaudeMdEditor
 **Blockers:** none
-**Next:** Task #9 (Job Mode API Ã¢â‚¬â€ backend-dev) + Task #10 (Job Mode UI Ã¢â‚¬â€ frontend-dev)
+**Next:** Task #9 (Job Mode API ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev) + Task #10 (Job Mode UI ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev)
 ---
-## 2026-03-18 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Project Analysis: Status Review + Task Plan Update
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Project Analysis: Status Review + Task Plan Update
 **Outcome:** COMPLETED
-**Summary:** Discovered that Tasks #3-#6 were all committed to git but the TASK_PLAN.md still showed them as IN_PROGRESS or PENDING. Updated all 4 task statuses to COMPLETED. Identified that FileManager.js was not created in Task #5 despite being in the spec Ã¢â‚¬â€ this is a gap that Task #7 must fill. Project is now entering Phase 2 (Entity Management) and Phase 3 (Job Mode) simultaneously.
+**Summary:** Discovered that Tasks #3-#6 were all committed to git but the TASK_PLAN.md still showed them as IN_PROGRESS or PENDING. Updated all 4 task statuses to COMPLETED. Identified that FileManager.js was not created in Task #5 despite being in the spec ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â this is a gap that Task #7 must fill. Project is now entering Phase 2 (Entity Management) and Phase 3 (Job Mode) simultaneously.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/agents/project-manager.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** Stale task statuses in TASK_PLAN.md (Tasks #3, #4, #5, #6 were not marked COMPLETED)
 **Decisions made:** Tasks #7 and #9 are parallelizable; Task #11 is also parallelizable with them
-**Blockers:** FileManager.js missing from server/services/ Ã¢â‚¬â€ Task #7 agent must create it
+**Blockers:** FileManager.js missing from server/services/ ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #7 agent must create it
 **Next:** Assign Task #7 (backend-dev) + Task #9 (backend-dev) + Task #11 (frontend-dev) in parallel
 ---
 
-## 2026-03-18 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #6: Frontend Sidebar + TerminalView
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #6: Frontend Sidebar + TerminalView
 **Outcome:** COMPLETED
 **Summary:** Built the full React SPA shell including AppContext (global state), useSession hook (WebSocket lifecycle + reconnect), xterm.js Terminal component (ResizeObserver + FitAddon), Sidebar with project management and session status indicators, AddProjectModal, and TerminalView with Start Terminal flow and ring buffer replay. Build verified.
 **Files changed:** client/src/store/AppContext.jsx, client/src/hooks/useSession.js, client/src/components/Terminal.jsx, client/src/components/Sidebar.jsx, client/src/components/AddProjectModal.jsx, client/src/views/TerminalView.jsx
@@ -4239,17 +4239,17 @@ full self-contained context and acceptance criteria.
 **Next:** Task #7 (Entity Management API) + Task #9 (Job Mode API) + Task #11 (Projects View)
 ---
 
-## 2026-03-18 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #5: SessionManager + WebSocket terminal handler
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #5: SessionManager + WebSocket terminal handler
 **Outcome:** COMPLETED
 **Summary:** Implemented RingBuffer (100KB circular buffer), SessionManager (singleton PTY owner with permanent pty.onData handler, idle sweeper, backpressure guard), session REST routes, and WebSocket terminalHandler. PTY survives browser tab close. tree-kill used for process cleanup.
 **Files changed:** server/services/RingBuffer.js, server/services/SessionManager.js, server/routes/sessions.js, server/ws/terminalHandler.js, server/index.js
 **Bugs fixed:** ConPTY deadlock mitigated via permanent pty.onData pattern
 **Decisions made:** tree-kill via createRequire (CJS module interop); sessionManager.claudeBin set by index.js at startup
-**Blockers:** none Ã¢â‚¬â€ NOTE: FileManager.js (Part E of spec) was NOT created
+**Blockers:** none ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â NOTE: FileManager.js (Part E of spec) was NOT created
 **Next:** Task #6 (frontend), Task #7 (entity API needs FileManager)
 ---
 
-## 2026-03-18 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #4: Project Management REST API
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #4: Project Management REST API
 **Outcome:** COMPLETED
 **Summary:** Implemented all project CRUD endpoints (GET/POST/DELETE /api/v1/projects and POST /api/v1/projects/scaffold). Scaffold creates .claude/CLAUDE.md, .claude/agents/, .claude/commands/. All endpoints verified.
 **Files changed:** server/routes/projects.js, server/index.js
@@ -4259,7 +4259,7 @@ full self-contained context and acceptance criteria.
 **Next:** Task #5 (SessionManager)
 ---
 
-## 2026-03-18 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #3: Server Foundation
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #3: Server Foundation
 **Outcome:** COMPLETED
 **Summary:** Bootstrapped server/index.js with helmet, CSRF middleware, ConfigStore, ProcessRegistry, BinaryDiscovery, SIGTERM/SIGINT handlers, 127.0.0.1 binding. GET /health returns 200.
 **Files changed:** server/index.js, server/services/ConfigStore.js, server/services/ProcessRegistry.js, server/services/BinaryDiscovery.js, server/services/index.js, server/middleware/security.js, server/middleware/csrf.js, server/middleware/pathValidation.js
@@ -4269,7 +4269,7 @@ full self-contained context and acceptance criteria.
 **Next:** Task #4 (Project API)
 ---
 
-## 2026-03-18 Ã¢â‚¬â€ architect + devops Ã¢â‚¬â€ Tasks #1 + #2: Architecture + Monorepo Scaffold
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â architect + devops ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #1 + #2: Architecture + Monorepo Scaffold
 **Outcome:** COMPLETED
 **Summary:** Produced docs/ARCHITECTURE.md (10 sections complete) and set up the full monorepo with npm start verified at 127.0.0.1:3000. Discovered package corrections: node-pty instead of prebuilt-multiarch, write-file-atomic instead of write-atomic.
 **Files changed:** docs/ARCHITECTURE.md, package.json, server/package.json, client/package.json, client/vite.config.js, client/src/main.jsx, client/src/App.jsx, server/index.js (stub)
@@ -4280,39 +4280,39 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-18 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Status sync: Tasks #9/#10/#11 COMPLETED
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Status sync: Tasks #9/#10/#11 COMPLETED
 **Outcome:** COMPLETED
 **Summary:** Confirmed Tasks #9 (Job Mode API), #10 (Job Mode UI), #11 (Projects View UI) are all COMPLETED in TASK_PLAN.md. Updated PROGRESS.md to mark TASK-12 as UNBLOCKED and TASK-13/14/15 as BLOCKED until TASK-12 completes.
-**Files changed:** docs/memory/PROGRESS.md (MODIFIED Ã¢â‚¬â€ unblocking notes added)
+**Files changed:** docs/memory/PROGRESS.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â unblocking notes added)
 **Bugs fixed:** none
-**Decisions made:** none Ã¢â‚¬â€ pure status sync
+**Decisions made:** none ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â pure status sync
 **Blockers:** none
 **Next:** Assign TASK-12 (NFR Polish) to backend-dev. After completion, launch TASK-13 + TASK-14 + TASK-15 in parallel.
 ---
 
 ---
-## 2026-03-18 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #16: Security Hardening Ã¢â‚¬â€ Replace exec() in openBrowser with shell:false spawn
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #16: Security Hardening ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Replace exec() in openBrowser with shell:false spawn
 **Outcome:** COMPLETED
 **Summary:** Replaced exec() in the openBrowser() helper with spawn({ shell: false, detached: true, stdio: 'ignore' }) using platform-specific bin/args arrays. On Windows, cmd.exe /c start is used since 'start' is a built-in. The exec import was removed from child_process. MEDIUM-01 from the security audit is resolved; SEC-02 (shell:false everywhere) is now fully enforced.
 **Files changed:** server/index.js, docs/TASK_PLAN.md
 **Bugs fixed:** none
-**Decisions made:** Windows uses cmd.exe /c start (not start.exe Ã¢â‚¬â€ it does not exist as a standalone binary)
+**Decisions made:** Windows uses cmd.exe /c start (not start.exe ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â it does not exist as a standalone binary)
 **Blockers:** none
 **Next:** Task #18 (PID range validation in ProcessRegistry) if not yet done; then qa-tester regression pass.
 ---
 ---
-## 2026-03-18 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #16+#17+#18: Security Hardening Code Map Update
+## 2026-03-18 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #16+#17+#18: Security Hardening Code Map Update
 **Outcome:** COMPLETED
-**Summary:** Updated CODE_MAP.md and CHANGELOG.md to reflect three security fixes: openBrowser() execÃ¢â€ â€™spawn (MEDIUM-01), allowedTools whitelist validation (MEDIUM-02), and ProcessRegistry PID range guard (MEDIUM-03). Added 7 new ProcessRegistry Function Graph entries that were previously missing, documented the openBrowser() function for the first time, and updated the startup() and POST /api/v1/jobs entries. All MEDIUM security findings now marked FIXED in Key Behaviors.
+**Summary:** Updated CODE_MAP.md and CHANGELOG.md to reflect three security fixes: openBrowser() execÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢spawn (MEDIUM-01), allowedTools whitelist validation (MEDIUM-02), and ProcessRegistry PID range guard (MEDIUM-03). Added 7 new ProcessRegistry Function Graph entries that were previously missing, documented the openBrowser() function for the first time, and updated the startup() and POST /api/v1/jobs entries. All MEDIUM security findings now marked FIXED in Key Behaviors.
 **Files changed:** docs/memory/CODE_MAP.md (MODIFIED), docs/memory/CHANGELOG.md (APPENDED), docs/memory/ACTIVITY_LOG.md (APPENDED), docs/memory/agents/code-mapper.md (APPENDED)
 **Bugs fixed:** none
-**Decisions made:** Documented ProcessRegistry internals as full Function Graph entries (was only Module Index row) Ã¢â‚¬â€ security changes made them load-bearing; flagged allowedTools validation as BREAKING CHANGE in CHANGELOG
+**Decisions made:** Documented ProcessRegistry internals as full Function Graph entries (was only Module Index row) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â security changes made them load-bearing; flagged allowedTools validation as BREAKING CHANGE in CHANGELOG
 **Blockers:** none
 **Next:** Project is v1 release-ready. No further code-mapper work pending.
 ---
 
 ---
-## 2026-03-24 Ã¢â‚¬â€ researcher Ã¢â‚¬â€ Research: Puppeteer MCP Server for Claude Code
+## 2026-03-24 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â researcher ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Research: Puppeteer MCP Server for Claude Code
 **Outcome:** COMPLETED
 **Summary:** Researched Puppeteer MCP server options for Claude Code. Original @modelcontextprotocol/server-puppeteer is deprecated. Recommended puppeteer-mcp-claude (community, Claude Code-focused, auto-installer) or @playwright/mcp (official Microsoft alternative). Delivered full comparison with install commands and config blocks.
 **Files changed:** docs/memory/agents/researcher.md (CREATED)
@@ -4322,9 +4322,9 @@ full self-contained context and acceptance criteria.
 **Next:** User decides which package to install
 ---
 ---
-## 2026-03-25 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Task #23/#24 Status Sync
+## 2026-03-25 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #23/#24 Status Sync
 **Outcome:** COMPLETED
-**Summary:** Confirmed Task #23 (Design System Foundation) completed by frontend-dev. Marked Task #24 (New Sidebar Navigation Component) as IN_PROGRESS in TASK_PLAN.md and PROGRESS.md. Task #24 is now launching Ã¢â‚¬â€ its dependency on #23 is satisfied.
+**Summary:** Confirmed Task #23 (Design System Foundation) completed by frontend-dev. Marked Task #24 (New Sidebar Navigation Component) as IN_PROGRESS in TASK_PLAN.md and PROGRESS.md. Task #24 is now launching ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â its dependency on #23 is satisfied.
 **Files changed:** docs/TASK_PLAN.md (Task #24 status PENDING->IN_PROGRESS), docs/memory/PROGRESS.md (Phase 9 section updated, In Progress section updated), docs/memory/agents/project-manager.md (appended), docs/memory/ACTIVITY_LOG.md (appended)
 **Bugs fixed:** none
 **Decisions made:** none
@@ -4332,7 +4332,7 @@ full self-contained context and acceptance criteria.
 **Next:** Task #24 execution by frontend-dev. After #24 completes, Tasks #25-#29 all unblock (they depend on #23 + #24).
 ---
 ---
-## 2026-03-27 Ã¢â‚¬â€ prd-writer Ã¢â‚¬â€ V3 PRD: Multi-Agent Swarm Orchestrator
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â prd-writer ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3 PRD: Multi-Agent Swarm Orchestrator
 **Outcome:** COMPLETED
 **Summary:** Wrote complete V3 PRD at docs/PRD.md replacing V1 document. Covers all 12 standard sections plus Appendix A (7 SEC-V3-* security requirements) and Appendix B (6 implementation phases with exact file names). All user decisions from discovery Q&A translated into unambiguous, testable functional requirements.
 **Files changed:** docs/PRD.md (full rewrite to V3.0), docs/memory/agents/prd-writer.md (CREATED), docs/memory/ACTIVITY_LOG.md (appended)
@@ -4343,52 +4343,52 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ orchestrator Ã¢â‚¬â€ /create Pipeline Stage 5+6: PRD + Task Plan V3
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â orchestrator ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â /create Pipeline Stage 5+6: PRD + Task Plan V3
 **Outcome:** COMPLETED
-**Summary:** Full /create pipeline completed for V3 Swarm Orchestrator. Stage 5 wrote docs/PRD.md (47 functional reqs, 7 security reqs, 6 impl phases). Stage 6 wrote V3 tasks #43Ã¢â‚¬â€œ#82 (40 tasks across 7 phases) in docs/TASK_PLAN.md. Also wrote docs/research_complete.md (master research brief synthesizing research_a/b/c). Pipeline ran from Stage 4.5C (research supervisor) through full completion.
-**Files changed:** docs/PRD.md (CREATED), docs/TASK_PLAN.md (APPENDED Ã¢â‚¬â€ V3 tasks #43-#82), docs/research_complete.md (CREATED)
+**Summary:** Full /create pipeline completed for V3 Swarm Orchestrator. Stage 5 wrote docs/PRD.md (47 functional reqs, 7 security reqs, 6 impl phases). Stage 6 wrote V3 tasks #43ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#82 (40 tasks across 7 phases) in docs/TASK_PLAN.md. Also wrote docs/research_complete.md (master research brief synthesizing research_a/b/c). Pipeline ran from Stage 4.5C (research supervisor) through full completion.
+**Files changed:** docs/PRD.md (CREATED), docs/TASK_PLAN.md (APPENDED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3 tasks #43-#82), docs/research_complete.md (CREATED)
 **Bugs fixed:** none
 **Decisions made:** DEC-V3-01 through DEC-V3-05 confirmed (HandoffParser rolling buffer, PTY injection modes, SwarmEngine tap pattern, React Flow v12 filtering, Zustand separate from AppContext)
-**Blockers:** none Ã¢â‚¬â€ project-manager agent hit token limit; task plan written directly by orchestrator
+**Blockers:** none ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager agent hit token limit; task plan written directly by orchestrator
 **Next:** Begin V3 Phase 1 with TASK #43 (WorkflowStore.js). All 7 phases documented with full context for backend-dev, frontend-dev, qa-tester, security, devops agents.
 ---
 ---
-## 2026-03-27 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V3 Plan Overview (read-only analysis)
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3 Plan Overview (read-only analysis)
 **Outcome:** COMPLETED
 **Summary:** Read-only analysis of the full V3 plan (docs/PRD.md, docs/TASK_PLAN.md #43-#82, PROGRESS.md, CONTEXT.md). Produced a complete Italian-language briefing of all 40 V3 tasks across 7 phases. No code or plan files modified.
 **Files changed:** docs/memory/ACTIVITY_LOG.md (this entry), docs/memory/agents/project-manager.md (session log)
 **Bugs fixed:** none
 **Decisions made:** none (read-only session)
-**Blockers:** none Ã¢â‚¬â€ V3 can begin immediately with TASK #43 (WorkflowStore.js) + TASK #45 (HandoffParser.js) in parallel
-**Next:** TASK #43 (backend-dev, WorkflowStore.js) + TASK #45 (backend-dev, HandoffParser.js) Ã¢â‚¬â€ first parallel pair of Wave 1
+**Blockers:** none ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3 can begin immediately with TASK #43 (WorkflowStore.js) + TASK #45 (HandoffParser.js) in parallel
+**Next:** TASK #43 (backend-dev, WorkflowStore.js) + TASK #45 (backend-dev, HandoffParser.js) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â first parallel pair of Wave 1
 ---
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ /pm: V3 Plan Review
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â /pm: V3 Plan Review
 **Outcome:** COMPLETED
-**Summary:** Full read-only review of V3 task plan (#43Ã¢â‚¬â€œ#82). Produced Italian-language detailed breakdown of all 7 phases, execution waves, critical path, risks, and first recommended tasks. No code or plan files modified.
+**Summary:** Full read-only review of V3 task plan (#43ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#82). Produced Italian-language detailed breakdown of all 7 phases, execution waves, critical path, risks, and first recommended tasks. No code or plan files modified.
 **Files changed:** docs/memory/agents/project-manager.md (APPENDED), docs/memory/ACTIVITY_LOG.md (APPENDED)
 **Bugs fixed:** none
-**Decisions made:** none Ã¢â‚¬â€ read-only analysis
+**Decisions made:** none ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â read-only analysis
 **Blockers:** none
-**Next:** Launch TASK #43 (WorkflowStore.js) + TASK #45 (HandoffParser.js) in parallel Ã¢â‚¬â€ first wave of V3 Phase 1
+**Next:** Launch TASK #43 (WorkflowStore.js) + TASK #45 (HandoffParser.js) in parallel ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â first wave of V3 Phase 1
 ---
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #43: WorkflowStore.js Ã¢â‚¬â€ Workflow JSON Persistence
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #43: WorkflowStore.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Workflow JSON Persistence
 **Outcome:** COMPLETED
 **Summary:** Created server/services/WorkflowStore.js implementing full CRUD persistence for workflow JSON files under %APPDATA%\ClaudeCodeManager\workflows\. Follows ConfigStore.js pattern exactly: write-file-atomic, path traversal validation, no throws from get(). Added WorkflowStore import and init block to server/index.js with instance stored in app.locals.workflowStore for route access. All 110 existing tests still pass.
 **Files changed:** server/services/WorkflowStore.js (CREATED), server/index.js (MODIFIED), docs/TASK_PLAN.md (MODIFIED)
-**Bugs fixed:** Placement bug Ã¢â‚¬â€ init block initially placed before `const app = express()`, fixed by moving it after the app declaration
+**Bugs fixed:** Placement bug ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â init block initially placed before `const app = express()`, fixed by moving it after the app declaration
 **Decisions made:** WorkflowStore is a class (not module singleton) to support constructor(configDir) API; instance stored in app.locals for Express route access pattern
 **Blockers:** none
-**Next:** Task #44 (server/routes/workflows.js CRUD API) can now be implemented Ã¢â‚¬â€ WorkflowStore is ready
+**Next:** Task #44 (server/routes/workflows.js CRUD API) can now be implemented ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â WorkflowStore is ready
 ---
 ---
-## 2026-03-27 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #44: server/routes/workflows.js Ã¢â‚¬â€ CRUD API
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #44: server/routes/workflows.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â CRUD API
 **Outcome:** COMPLETED
 **Summary:** Created server/routes/workflows.js with 5 CRUD endpoints (GET list, POST create, GET by ID, PUT update, DELETE) accessing WorkflowStore via app.locals. Mounted at /api/v1/workflows in server/index.js. All 132 existing tests pass.
-**Files changed:** server/routes/workflows.js (CREATED), server/index.js (MODIFIED Ã¢â‚¬â€ import + mount)
+**Files changed:** server/routes/workflows.js (CREATED), server/index.js (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â import + mount)
 **Bugs fixed:** none
 **Decisions made:** CSRF enforced globally (no per-route check needed); app.locals pattern for store access; 503 guard for non-fatal store init failure
 **Blockers:** none
@@ -4396,42 +4396,42 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Status Review: V3 Phase 1 Post-Completion
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Status Review: V3 Phase 1 Post-Completion
 **Outcome:** COMPLETED
-**Summary:** Reviewed full project state. Found TASK #44 status mismatch (PENDING in TASK_PLAN.md, COMPLETED in PROGRESS.md) Ã¢â‚¬â€ corrected to COMPLETED. V3 has 3/57 tasks complete (#43, #44, #45). Next priority is #46.1 (SwarmEngine skeleton, opus) + #49 (CircuitBreaker/BudgetTracker, sonnet) in parallel.
+**Summary:** Reviewed full project state. Found TASK #44 status mismatch (PENDING in TASK_PLAN.md, COMPLETED in PROGRESS.md) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â corrected to COMPLETED. V3 has 3/57 tasks complete (#43, #44, #45). Next priority is #46.1 (SwarmEngine skeleton, opus) + #49 (CircuitBreaker/BudgetTracker, sonnet) in parallel.
 **Files changed:** docs/TASK_PLAN.md (TASK #44 status corrected), docs/memory/agents/project-manager.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** TASK #44 status sync gap between TASK_PLAN.md and PROGRESS.md
 **Decisions made:** none
 **Blockers:** none
-**Next:** TASK #46.1 (backend-dev, claude-opus-4-6) + TASK #49 (backend-dev, claude-sonnet-4-6) Ã¢â‚¬â€ launch in parallel
+**Next:** TASK #46.1 (backend-dev, claude-opus-4-6) + TASK #49 (backend-dev, claude-sonnet-4-6) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â launch in parallel
 ---
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #49: CircuitBreaker.js + BudgetTracker.js
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #49: CircuitBreaker.js + BudgetTracker.js
 **Outcome:** COMPLETED
 **Summary:** Created two pure service classes with no I/O and no imports. CircuitBreaker.check() returns true when counter >= threshold (advisory only, FR-V3-17). BudgetTracker tracks char counts per session/execution, estimates tokens at 1 token per 4 chars, and exposes checkBudget() returning { exceeded, estimatedUsed } (FR-V3-18). 132/132 tests pass.
 **Files changed:** server/services/CircuitBreaker.js (CREATED), server/services/BudgetTracker.js (CREATED)
 **Bugs fixed:** none
-**Decisions made:** Implemented spec exactly as provided Ã¢â‚¬â€ no deviations.
+**Decisions made:** Implemented spec exactly as provided ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no deviations.
 **Blockers:** none
 **Next:** Task #62.3 wires BudgetTracker into SwarmEngine._onDone(). Task #47.1 unblocked (depended on #49).
 ---
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Task #46.2 mark COMPLETED + #46.3 & #49 parallel launch
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #46.2 mark COMPLETED + #46.3 & #49 parallel launch
 **Outcome:** COMPLETED
-**Summary:** Confirmed Task #46.2 (SwarmEngine startExecution + _spawnAgentPty + HandoffParser tap) COMPLETED in all tracking files Ã¢â‚¬â€ 132/132 tests pass. Launched #46.3 (_buildSystemPrompt + _startHeartbeat, backend-dev/opus) and #49 (CircuitBreaker.js + BudgetTracker.js, backend-dev/sonnet) in parallel. Cleared #49's spurious dependency on #46.3 Ã¢â‚¬â€ both are pure stateless classes with no runtime coupling to SwarmEngine.
+**Summary:** Confirmed Task #46.2 (SwarmEngine startExecution + _spawnAgentPty + HandoffParser tap) COMPLETED in all tracking files ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â 132/132 tests pass. Launched #46.3 (_buildSystemPrompt + _startHeartbeat, backend-dev/opus) and #49 (CircuitBreaker.js + BudgetTracker.js, backend-dev/sonnet) in parallel. Cleared #49's spurious dependency on #46.3 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â both are pure stateless classes with no runtime coupling to SwarmEngine.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/agents/project-manager.md, docs/memory/ACTIVITY_LOG.md
-**Bugs fixed:** #49 had incorrect dependency on #46.3 Ã¢â‚¬â€ cleared to none
+**Bugs fixed:** #49 had incorrect dependency on #46.3 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â cleared to none
 **Decisions made:** #49 runs in parallel with #46.3 (pure class interface contract fully defined in task spec, no runtime dep)
 **Blockers:** none
-**Next:** After #46.3 + #49 complete Ã¢â‚¬â€ launch #47.1 (swarm routes), #47.2 (scaffold stub), evaluate #48.1 readiness
+**Next:** After #46.3 + #49 complete ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â launch #47.1 (swarm routes), #47.2 (scaffold stub), evaluate #48.1 readiness
 ---
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #46.3 + #49: SwarmEngine stubs resolved + CircuitBreaker/BudgetTracker mapped
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #46.3 + #49: SwarmEngine stubs resolved + CircuitBreaker/BudgetTracker mapped
 **Outcome:** COMPLETED
-**Summary:** Updated CODE_MAP.md with full implementations for _buildSystemPrompt and _startHeartbeat (both were stubs in #46.2), updated startExecution entry to reflect _startHeartbeat wiring; added Module Index rows and complete Function Graph entries for CircuitBreaker (1 method) and BudgetTracker (6 methods). Appended two CHANGELOG.md entries. Neither new service is yet imported by SwarmEngine Ã¢â‚¬â€ both awaiting wiring tasks.
+**Summary:** Updated CODE_MAP.md with full implementations for _buildSystemPrompt and _startHeartbeat (both were stubs in #46.2), updated startExecution entry to reflect _startHeartbeat wiring; added Module Index rows and complete Function Graph entries for CircuitBreaker (1 method) and BudgetTracker (6 methods). Appended two CHANGELOG.md entries. Neither new service is yet imported by SwarmEngine ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â both awaiting wiring tasks.
 **Files changed:** docs/memory/CODE_MAP.md (MODIFIED), docs/memory/CHANGELOG.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED), docs/memory/agents/code-mapper.md (MODIFIED)
 **Bugs fixed:** none
 **Decisions made:** none
@@ -4440,29 +4440,29 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #48.1: swarmHandler.js Ã¢â‚¬â€ Channel Routing + Connection Management
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #48.1: swarmHandler.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Channel Routing + Connection Management
 **Outcome:** COMPLETED
 **Summary:** Created server/ws/swarmHandler.js with module-level _subscribers Map, handleSwarmConnection default export, and getSubscribers named export. Modified server/index.js to instantiate SwarmEngine, switch to two noServer WSS instances, and add server.on('upgrade') URL-path routing (/ws/swarm vs terminal). 132/132 tests pass.
 **Files changed:** server/ws/swarmHandler.js (CREATED), server/index.js (MODIFIED)
 **Bugs fixed:** none
 **Decisions made:** Two noServer WSS + upgrade router (canonical ws library pattern) rather than dual connection listeners on single WSS.
 **Blockers:** none
-**Next:** Task #48.2 Ã¢â‚¬â€ implement broadcast() in swarmHandler.js and wire swarmEngine.setWsBroadcast().
+**Next:** Task #48.2 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â implement broadcast() in swarmHandler.js and wire swarmEngine.setWsBroadcast().
 ---
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #47.1: server/routes/swarm.js Ã¢â‚¬â€ Execution Control Endpoints
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #47.1: server/routes/swarm.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Execution Control Endpoints
 **Outcome:** COMPLETED
 **Summary:** Created server/routes/swarm.js with 7 execution control endpoints (start, pause, resume, delete, status, agent output, broadcast) plus a 501 scaffold stub for #47.2. Mounted at /api/v1/swarm in server/index.js. Also added app.locals.sessionManager to make the sessionManager available via app.locals. 132/132 tests pass.
-**Files changed:** server/routes/swarm.js (CREATED), server/index.js (MODIFIED Ã¢â‚¬â€ swarmRoutes import + mount + sessionManager in app.locals)
+**Files changed:** server/routes/swarm.js (CREATED), server/index.js (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â swarmRoutes import + mount + sessionManager in app.locals)
 **Bugs fixed:** none
 **Decisions made:** No per-route CSRF (already global); hard broadcast fire-and-forget via setTimeout per spec; scaffold stub (501) included in swarm.js
 **Blockers:** none
-**Next:** Task #47.2 (scaffold stub endpoint Ã¢â‚¬â€ should replace 501 in swarm.js) can proceed now.
+**Next:** Task #47.2 (scaffold stub endpoint ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â should replace 501 in swarm.js) can proceed now.
 ---
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #48.2: swarmHandler.js Ã¢â‚¬â€ broadcast() + WS Event Wiring
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #48.2: swarmHandler.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â broadcast() + WS Event Wiring
 **Outcome:** COMPLETED
 **Summary:** Added broadcast(executionId, event) named export to server/ws/swarmHandler.js. Wired it to SwarmEngine via setWsBroadcast(broadcast) in server/index.js. Execution events from SwarmEngine now reach connected browser WebSocket subscribers. 132/132 tests pass.
 **Files changed:** server/ws/swarmHandler.js, server/index.js
@@ -4472,152 +4472,152 @@ full self-contained context and acceptance criteria.
 **Next:** Frontend WebSocket consumer tasks (#57.x useSwarm hook, #51 client deps install) can now proceed.
 ---
 ---
-## 2026-03-27 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Tasks #47.2 + #48.2: Documentation audit
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #47.2 + #48.2: Documentation audit
 **Outcome:** COMPLETED
-**Summary:** Audited all documentation artifacts after Task #47.2 (swarm.js scaffold stub Ã¢â‚¬â€ no code change, stub confirmed present from #47.1) and Task #48.2 (swarmHandler.js broadcast() named export added; swarmEngine.setWsBroadcast(broadcast) wired in server/index.js). All inline JSDoc is accurate Ã¢â‚¬â€ broadcast() has complete @param JSDoc in swarmHandler.js, wiring comment is accurate in server/index.js. Public docs (README.md, ARCHITECTURE.md) intentionally not updated per V3 deferral policy. DOC_STATUS.md updated: new row for swarmHandler.js #48.2, server/index.js row updated, ARCHITECTURE.md stale note updated to reflect full WS broadcast pipeline is wired.
+**Summary:** Audited all documentation artifacts after Task #47.2 (swarm.js scaffold stub ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no code change, stub confirmed present from #47.1) and Task #48.2 (swarmHandler.js broadcast() named export added; swarmEngine.setWsBroadcast(broadcast) wired in server/index.js). All inline JSDoc is accurate ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â broadcast() has complete @param JSDoc in swarmHandler.js, wiring comment is accurate in server/index.js. Public docs (README.md, ARCHITECTURE.md) intentionally not updated per V3 deferral policy. DOC_STATUS.md updated: new row for swarmHandler.js #48.2, server/index.js row updated, ARCHITECTURE.md stale note updated to reflect full WS broadcast pipeline is wired.
 **Files changed:** docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/agents/documenter.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
 **Bugs fixed:** none
-**Decisions made:** Maintained V3 deferral policy Ã¢â‚¬â€ no public doc updates until V3 is feature-complete (Task #82). Added separate #48.2 row in V3 service files table to preserve per-task history.
+**Decisions made:** Maintained V3 deferral policy ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no public doc updates until V3 is feature-complete (Task #82). Added separate #48.2 row in V3 service files table to preserve per-task history.
 **Blockers:** none
 **Next:** After Tasks #50/#51/#52 complete: update DOC_STATUS.md V3 table. After Task #82: major ARCHITECTURE.md + README.md V3 update.
 ---
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Tasks #47.2 + #48.2 COMPLETED; #50 + #51 Launched
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #47.2 + #48.2 COMPLETED; #50 + #51 Launched
 **Outcome:** COMPLETED
-**Summary:** Marked #47.2 (scaffold stub 501) and #48.2 (swarmHandler broadcast wired) as COMPLETED in TASK_PLAN.md summary table (already set by backend-dev in body entries). Launched #50 (V3 Security Layer, security agent) and #51 (client deps install, devops agent) in parallel. #51 was already completed by devops agent before PM session Ã¢â‚¬â€ confirmed and finalized. Summary table footer updated to 12/57 COMPLETED.
+**Summary:** Marked #47.2 (scaffold stub 501) and #48.2 (swarmHandler broadcast wired) as COMPLETED in TASK_PLAN.md summary table (already set by backend-dev in body entries). Launched #50 (V3 Security Layer, security agent) and #51 (client deps install, devops agent) in parallel. #51 was already completed by devops agent before PM session ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â confirmed and finalized. Summary table footer updated to 12/57 COMPLETED.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/agents/project-manager.md
 **Bugs fixed:** none
-**Decisions made:** #52 (SwarmContext.jsx) now unblocked since #51 COMPLETED Ã¢â‚¬â€ can launch immediately
+**Decisions made:** #52 (SwarmContext.jsx) now unblocked since #51 COMPLETED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â can launch immediately
 **Blockers:** none
 **Next:** #52 (SwarmContext.jsx, frontend-dev, claude-sonnet-4-6) ready to launch. Await #50 (security) completion.
 ---
 ---
-## 2026-03-27 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Task #50 + #51 Confirmed COMPLETED; Task #52 Launched
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #50 + #51 Confirmed COMPLETED; Task #52 Launched
 **Outcome:** COMPLETED
-**Summary:** Confirmed Tasks #50 (V3 Security Layer, 168 tests pass, 36 new security tests) and #51 (@xyflow/react + zustand client install, 132 tests pass, build clean) both already marked COMPLETED in TASK_PLAN.md. Updated PROGRESS.md count to 14/57 and marked #52 IN_PROGRESS. Task #52 (SwarmContext.jsx Zustand ExecutionStore) is now launched for frontend-dev Ã¢â‚¬â€ depends on #51 which is confirmed complete.
-**Files changed:** docs/memory/PROGRESS.md (MODIFIED Ã¢â‚¬â€ status count updated, #52 status), docs/TASK_PLAN.md (MODIFIED Ã¢â‚¬â€ #52 Status: PENDING Ã¢â€ â€™ IN_PROGRESS)
+**Summary:** Confirmed Tasks #50 (V3 Security Layer, 168 tests pass, 36 new security tests) and #51 (@xyflow/react + zustand client install, 132 tests pass, build clean) both already marked COMPLETED in TASK_PLAN.md. Updated PROGRESS.md count to 14/57 and marked #52 IN_PROGRESS. Task #52 (SwarmContext.jsx Zustand ExecutionStore) is now launched for frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â depends on #51 which is confirmed complete.
+**Files changed:** docs/memory/PROGRESS.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â status count updated, #52 status), docs/TASK_PLAN.md (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â #52 Status: PENDING ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ IN_PROGRESS)
 **Bugs fixed:** none
 **Decisions made:** #52 is next in Phase 2 canvas chain; it unblocks #53.1, #53.2, #53.3, #54, #55, #56, #57.1 which all depend on it
 **Blockers:** none
 **Next:** Task #52 frontend-dev in progress. After #52 completes, tasks #53.1, #53.2, #53.3 can run in parallel (all depend on #52 only).
 ---
 ---
-## 2026-03-27 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Task #52: SwarmContext.jsx Zustand ExecutionStore
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #52: SwarmContext.jsx Zustand ExecutionStore
 **Outcome:** COMPLETED
-**Summary:** Audited all documentation artifacts after Task #52 (client/src/store/SwarmContext.jsx created). SwarmContext.jsx inline comments are adequate Ã¢â‚¬â€ all state slices have shape annotations and the addFeedEvent 100-item cap is noted inline. No public doc updates required (V3 deferral policy). Updated DOC_STATUS.md with new SwarmContext.jsx row (16 V3 artifacts now tracked) and expanded ARCHITECTURE.md stale section note.
+**Summary:** Audited all documentation artifacts after Task #52 (client/src/store/SwarmContext.jsx created). SwarmContext.jsx inline comments are adequate ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all state slices have shape annotations and the addFeedEvent 100-item cap is noted inline. No public doc updates required (V3 deferral policy). Updated DOC_STATUS.md with new SwarmContext.jsx row (16 V3 artifacts now tracked) and expanded ARCHITECTURE.md stale section note.
 **Files changed:** docs/memory/DOC_STATUS.md (MODIFIED), docs/memory/agents/documenter.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
 **Bugs fixed:** none
-**Decisions made:** No inline comments added to SwarmContext.jsx Ã¢â‚¬â€ existing shape comments are sufficient; "why" threshold not met for conventional Zustand factory. V3 public doc deferral policy maintained.
+**Decisions made:** No inline comments added to SwarmContext.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â existing shape comments are sufficient; "why" threshold not met for conventional Zustand factory. V3 public doc deferral policy maintained.
 **Blockers:** none
-**Next:** Tasks #53.1Ã¢â‚¬â€œ#53.3 (canvas nodes) are IN_PROGRESS Ã¢â‚¬â€ they all import useSwarmStore from SwarmContext. Task #82 (documentation update) remains the endpoint for ARCHITECTURE.md + README.md V3 section.
+**Next:** Tasks #53.1ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#53.3 (canvas nodes) are IN_PROGRESS ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â they all import useSwarmStore from SwarmContext. Task #82 (documentation update) remains the endpoint for ARCHITECTURE.md + README.md V3 section.
 ---
-## 2026-03-27 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Task #52: SwarmContext.jsx Ã¢â‚¬â€ Zustand ExecutionStore
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #52: SwarmContext.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Zustand ExecutionStore
 **Outcome:** COMPLETED
-**Summary:** Mapped client/src/store/SwarmContext.jsx into CODE_MAP.md with 13 Function Graph entries (useSwarmStore + 12 action methods) and added Module Index row. Appended CHANGELOG.md entry. No callers exist yet Ã¢â‚¬â€ all "Called by" fields are "(not yet wired)" pending Task #53.x canvas nodes.
+**Summary:** Mapped client/src/store/SwarmContext.jsx into CODE_MAP.md with 13 Function Graph entries (useSwarmStore + 12 action methods) and added Module Index row. Appended CHANGELOG.md entry. No callers exist yet ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all "Called by" fields are "(not yet wired)" pending Task #53.x canvas nodes.
 **Files changed:** docs/memory/CODE_MAP.md (MODIFIED), docs/memory/CHANGELOG.md (MODIFIED), docs/memory/agents/code-mapper.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
-**Bugs fixed:** CHANGELOG.md concurrent-write conflict Ã¢â‚¬â€ re-read and used correct anchor string
+**Bugs fixed:** CHANGELOG.md concurrent-write conflict ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â re-read and used correct anchor string
 **Decisions made:** All 12 action methods as separate Function Graph entries for practical connection tracing
 **Blockers:** none
-**Next:** Task #53.x (AgentNode, DepartmentNode, TriggerNode) Ã¢â‚¬â€ update CODE_MAP.md "Called by" fields when those tasks complete
+**Next:** Task #53.x (AgentNode, DepartmentNode, TriggerNode) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â update CODE_MAP.md "Called by" fields when those tasks complete
 ---
 ---
-## 2026-03-27 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #53.1 + #53.2 + #53.3: AgentNode, DepartmentNode, TriggerNode canvas nodes
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #53.1 + #53.2 + #53.3: AgentNode, DepartmentNode, TriggerNode canvas nodes
 **Outcome:** COMPLETED
-**Summary:** Mapped three new React Flow custom node components (AgentNode, DepartmentNode, TriggerNode) into CODE_MAP.md with 3 new Module Index rows and 3 Function Graph entries. Updated SwarmContext.jsx::setFocusedDepartment "Called by" Ã¢â‚¬â€ DepartmentNode is now its first live caller. Appended CHANGELOG.md entry for all three parallel tasks. Introduces client/src/canvas/nodes/ directory.
+**Summary:** Mapped three new React Flow custom node components (AgentNode, DepartmentNode, TriggerNode) into CODE_MAP.md with 3 new Module Index rows and 3 Function Graph entries. Updated SwarmContext.jsx::setFocusedDepartment "Called by" ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â DepartmentNode is now its first live caller. Appended CHANGELOG.md entry for all three parallel tasks. Introduces client/src/canvas/nodes/ directory.
 **Files changed:** docs/memory/CODE_MAP.md (MODIFIED), docs/memory/CHANGELOG.md (MODIFIED), docs/memory/agents/code-mapper.md (MODIFIED), docs/memory/ACTIVITY_LOG.md (MODIFIED)
 **Bugs fixed:** none
 **Decisions made:** TriggerNode documented as stub with forward reference to Task #76; all three nodes marked as awaiting nodeTypes registration in future WorkflowCanvas wrapper
 **Blockers:** none
-**Next:** WorkflowCanvas.jsx (future task) must register nodeTypes Ã¢â‚¬â€ update "Called by" for all three nodes at that point
+**Next:** WorkflowCanvas.jsx (future task) must register nodeTypes ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â update "Called by" for all three nodes at that point
 ---
 ---
-## 2026-03-27 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #56: BreadcrumbBar.jsx Ã¢â‚¬â€ Drill-Down Navigation
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #56: BreadcrumbBar.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Drill-Down Navigation
 **Outcome:** COMPLETED
-**Summary:** Created client/src/canvas/BreadcrumbBar.jsx Ã¢â‚¬â€ breadcrumb navigation bar for swarm canvas drill-down. Shows "All Agents" root crumb always, resolves department names from nodes prop, last crumb bold/white (current location), each crumb calls navigateBreadcrumb(index). Build verified clean (299 modules, 0 errors).
-**Files changed:** client/src/canvas/BreadcrumbBar.jsx (CREATED), docs/TASK_PLAN.md (Task #56 IN_PROGRESS Ã¢â€ â€™ COMPLETED), docs/memory/PROGRESS.md (counter updated, #56 COMPLETED), docs/memory/ACTIVITY_LOG.md (this entry)
+**Summary:** Created client/src/canvas/BreadcrumbBar.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â breadcrumb navigation bar for swarm canvas drill-down. Shows "All Agents" root crumb always, resolves department names from nodes prop, last crumb bold/white (current location), each crumb calls navigateBreadcrumb(index). Build verified clean (299 modules, 0 errors).
+**Files changed:** client/src/canvas/BreadcrumbBar.jsx (CREATED), docs/TASK_PLAN.md (Task #56 IN_PROGRESS ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ COMPLETED), docs/memory/PROGRESS.md (counter updated, #56 COMPLETED), docs/memory/ACTIVITY_LOG.md (this entry)
 **Bugs fixed:** none
-**Decisions made:** Placed in client/src/canvas/ (not overlays/ subdirectory) Ã¢â‚¬â€ task spec explicitly says client/src/canvas/BreadcrumbBar.jsx
+**Decisions made:** Placed in client/src/canvas/ (not overlays/ subdirectory) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â task spec explicitly says client/src/canvas/BreadcrumbBar.jsx
 **Blockers:** none
 **Next:** Task #55 (AgentInspector.jsx) still IN_PROGRESS. After #54+#55+#56 all complete: launch #57.1 (SwarmCanvas.jsx) + #57.2 (SwarmView.jsx) in parallel.
 ---
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Tasks #54/#55/#56 COMPLETED; Launch #57.1
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #54/#55/#56 COMPLETED; Launch #57.1
 **Outcome:** COMPLETED
 **Summary:** Confirmed tasks #54 (HandoffEdge.jsx), #55 (AgentInspector.jsx), and #56 (BreadcrumbBar.jsx) all COMPLETED (self-marked by frontend-dev agents). Updated TASK_PLAN.md to set #57.1 (SwarmCanvas.jsx) IN_PROGRESS. Updated PROGRESS.md counter to 26/57. Updated CONTEXT.md with current wave info and full constraints for SwarmCanvas implementation.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/agents/project-manager.md
 **Bugs fixed:** none
-**Decisions made:** Launch only #57.1 now Ã¢â‚¬â€ #57.2 depends on #57.1 which is not yet done
+**Decisions made:** Launch only #57.1 now ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â #57.2 depends on #57.1 which is not yet done
 **Blockers:** none
-**Next:** After #57.1 completes Ã¢â€ â€™ mark COMPLETED Ã¢â€ â€™ launch #57.2 (SwarmView.jsx, frontend-dev, claude-opus-4-6)
+**Next:** After #57.1 completes ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ mark COMPLETED ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ launch #57.2 (SwarmView.jsx, frontend-dev, claude-opus-4-6)
 ---
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #57.2: SwarmView.jsx Ã¢â‚¬â€ Layout Shell + Toolbar
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #57.2: SwarmView.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Layout Shell + Toolbar
 **Outcome:** COMPLETED
-**Summary:** Created client/src/views/SwarmView.jsx Ã¢â‚¬â€ full-page layout shell for the Swarm Orchestrator. Toolbar renders execution status indicator (idle/running/stopped colors) and a conditional Reset button when stopped. ReactFlowProvider wraps SwarmCanvas with workflowDef prop. Build passes clean (299 modules, 0 errors).
+**Summary:** Created client/src/views/SwarmView.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â full-page layout shell for the Swarm Orchestrator. Toolbar renders execution status indicator (idle/running/stopped colors) and a conditional Reset button when stopped. ReactFlowProvider wraps SwarmCanvas with workflowDef prop. Build passes clean (299 modules, 0 errors).
 **Files changed:** client/src/views/SwarmView.jsx (CREATED), docs/TASK_PLAN.md (status updated)
 **Bugs fixed:** none
 **Decisions made:** statusColors outside component; ReactFlowProvider in view shell (self-contained); workflowDef as local useState(null) pending useWorkflow hook in #61
 **Blockers:** none
-**Next:** Task #58 Ã¢â‚¬â€ App.jsx + Sidebar swarm nav integration (import SwarmView, add route)
+**Next:** Task #58 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â App.jsx + Sidebar swarm nav integration (import SwarmView, add route)
 ---
 ---
-## 2026-03-27 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Task #57.2 COMPLETED; Launch #58 IN_PROGRESS
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #57.2 COMPLETED; Launch #58 IN_PROGRESS
 **Outcome:** COMPLETED
-**Summary:** Marked Task #57.2 (SwarmView.jsx layout shell + toolbar) as COMPLETED Ã¢â‚¬â€ build passes 299 modules. Promoted Task #58 (App.jsx + Sidebar swarm nav + ReactFlowProvider) to IN_PROGRESS. Dependency #57.2 is now satisfied.
+**Summary:** Marked Task #57.2 (SwarmView.jsx layout shell + toolbar) as COMPLETED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â build passes 299 modules. Promoted Task #58 (App.jsx + Sidebar swarm nav + ReactFlowProvider) to IN_PROGRESS. Dependency #57.2 is now satisfied.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
 **Bugs fixed:** none
 **Decisions made:** none
 **Blockers:** none
-**Next:** frontend-dev executes Task #58 Ã¢â‚¬â€ wire SwarmView into App.jsx routing, add Sidebar nav item, create useWorkflow.js hook
+**Next:** frontend-dev executes Task #58 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â wire SwarmView into App.jsx routing, add Sidebar nav item, create useWorkflow.js hook
 ---
 ---
-## 2026-03-27 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #59: POST /api/v1/swarm/scaffold Ã¢â‚¬â€ Prompt-to-Flow Endpoint
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #59: POST /api/v1/swarm/scaffold ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Prompt-to-Flow Endpoint
 **Outcome:** COMPLETED
 **Summary:** Replaced the 501 scaffold stub in server/routes/swarm.js with a full Claude API-powered implementation. Installed @anthropic-ai/sdk. generateWorkflowFromPrompt() calls claude-haiku-4-5-20251001, parses JSON response (stripping markdown fences), validates structure, saves via WorkflowStore.create(). Route declared as literal /scaffold before parameterized /:workflowId routes to ensure correct Express matching.
 **Files changed:** server/routes/swarm.js, server/package.json (npm install @anthropic-ai/sdk), docs/TASK_PLAN.md
-**Bugs fixed:** Design doc assumed store.create() returned an id Ã¢â‚¬â€ actually returns full object; fixed by extracting created.id
+**Bugs fixed:** Design doc assumed store.create() returned an id ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â actually returns full object; fixed by extracting created.id
 **Decisions made:** Global CSRF covers /scaffold (no per-route duplicate); literal /scaffold route declared before parameterized routes
 **Blockers:** none
-**Next:** #60 PromptToFlowBar.jsx Ã¢â‚¬â€ now unblocked (was waiting on #59)
+**Next:** #60 PromptToFlowBar.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â now unblocked (was waiting on #59)
 ---
 ---
-## 2026-03-27 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Tasks #59 + #61 COMPLETED; launching #60
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #59 + #61 COMPLETED; launching #60
 **Outcome:** COMPLETED
-**Summary:** Confirmed Task #59 (POST /api/v1/swarm/scaffold Ã¢â‚¬â€ generateWorkflowFromPrompt + @anthropic-ai/sdk + WorkflowStore.create, 168/168 tests pass) and Task #61 (useWorkflow.js CRUD hook Ã¢â‚¬â€ useWorkflow(id) + useWorkflowList(), build 470 modules) both COMPLETED. Both were already self-marked by their agents. Updated PROGRESS.md (29/57 Ã¢â€ â€™ 31/57). Updated CONTEXT.md with Phase 3 current state. Task #60 (PromptToFlowBar.jsx + staggered animation) now unblocked Ã¢â‚¬â€ both deps (#57.1 + #59) satisfied Ã¢â‚¬â€ launching immediately.
+**Summary:** Confirmed Task #59 (POST /api/v1/swarm/scaffold ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â generateWorkflowFromPrompt + @anthropic-ai/sdk + WorkflowStore.create, 168/168 tests pass) and Task #61 (useWorkflow.js CRUD hook ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â useWorkflow(id) + useWorkflowList(), build 470 modules) both COMPLETED. Both were already self-marked by their agents. Updated PROGRESS.md (29/57 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ 31/57). Updated CONTEXT.md with Phase 3 current state. Task #60 (PromptToFlowBar.jsx + staggered animation) now unblocked ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â both deps (#57.1 + #59) satisfied ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â launching immediately.
 **Files changed:** docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
 **Bugs fixed:** none
 **Decisions made:** none
 **Blockers:** none
-**Next:** Task #60 (PromptToFlowBar.jsx) Ã¢â‚¬â€ frontend-dev, claude-sonnet-4-6, MEDIUM; after #60 completes Ã¢â€ â€™ Phase 4 Live Execution wave (#62.1, #63, #64 in parallel)
+**Next:** Task #60 (PromptToFlowBar.jsx) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev, claude-sonnet-4-6, MEDIUM; after #60 completes ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Phase 4 Live Execution wave (#62.1, #63, #64 in parallel)
 ---
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #60: PromptToFlowBar.jsx + Staggered Animation
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #60: PromptToFlowBar.jsx + Staggered Animation
 **Outcome:** COMPLETED
-**Summary:** Created client/src/canvas/PromptToFlowBar.jsx Ã¢â‚¬â€ a prompt input bar that calls POST /api/v1/swarm/scaffold and applies staggered fadeIn animation (80ms per node) to the returned workflowDef. Mounted in SwarmView.jsx above the ReactFlowProvider/canvas. Added @keyframes fadeIn to index.css. Build: 471 modules, 0 errors.
+**Summary:** Created client/src/canvas/PromptToFlowBar.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â a prompt input bar that calls POST /api/v1/swarm/scaffold and applies staggered fadeIn animation (80ms per node) to the returned workflowDef. Mounted in SwarmView.jsx above the ReactFlowProvider/canvas. Added @keyframes fadeIn to index.css. Build: 471 modules, 0 errors.
 **Files changed:** client/src/canvas/PromptToFlowBar.jsx (CREATED), client/src/index.css (MODIFIED), client/src/views/SwarmView.jsx (MODIFIED), docs/TASK_PLAN.md (MODIFIED)
 **Bugs fixed:** none
 **Decisions made:** Used direct fetch() with manual CSRF header (matches task spec); PromptToFlowBar placed as sibling to canvas in layout flex column
 **Blockers:** none
-**Next:** Phase 3 fully complete. Phase 4 (Live Execution): #62.1Ã¢â‚¬â€œ#62.3 SwarmEngine _onHandoff, #63 useSwarm.js, #64 useHandoff.js, #65 AgentNode live, #66 BroadcastBar, #67 heartbeat
+**Next:** Phase 3 fully complete. Phase 4 (Live Execution): #62.1ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#62.3 SwarmEngine _onHandoff, #63 useSwarm.js, #64 useHandoff.js, #65 AgentNode live, #66 BroadcastBar, #67 heartbeat
 ---
 ---
-## 2026-03-27 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #63: useSwarm.js Ã¢â‚¬â€ WebSocket Hook for Execution Control
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #63: useSwarm.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â WebSocket Hook for Execution Control
 **Outcome:** COMPLETED
 **Summary:** Created client/src/hooks/useSwarm.js. The hook opens a WebSocket to /ws/swarm?executionId=X, dispatches all WS message types to SwarmStore (agent_status, handoff_started, execution_status, budget_update, circuit_breaker, hitl_required), and exposes startExecution/stopExecution/connectWs. Uses apiPost/apiDelete from useApi.js for HTTP calls (consistent with project convention). Build passes: 471 modules, 0 errors.
-**Files changed:** client/src/hooks/useSwarm.js (CREATED), docs/TASK_PLAN.md (Task #63 Ã¢â€ â€™ COMPLETED)
+**Files changed:** client/src/hooks/useSwarm.js (CREATED), docs/TASK_PLAN.md (Task #63 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ COMPLETED)
 **Bugs fixed:** none
-**Decisions made:** Used apiPost/apiDelete wrappers instead of raw fetch Ã¢â‚¬â€ consistent with useApi.js project convention; apiPost already returns parsed JSON so executionId is available directly.
+**Decisions made:** Used apiPost/apiDelete wrappers instead of raw fetch ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â consistent with useApi.js project convention; apiPost already returns parsed JSON so executionId is available directly.
 **Blockers:** none
 **Next:** Task #64 (useHandoff.js), Task #65 (AgentNode live status), Task #66 (SwarmView wiring to useSwarm)
 ---
 ---
-## 2026-03-27 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #66: BroadcastBar.jsx + Broadcast Route
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #66: BroadcastBar.jsx + Broadcast Route
 **Outcome:** COMPLETED
-**Summary:** Created client/src/canvas/BroadcastBar.jsx Ã¢â‚¬â€ a toolbar input component that POSTs to /api/v1/swarm/:executionId/broadcast with text, scope:'all', and mode (soft/hard). Component returns null when execution is not running. Mounted BroadcastBar at bottom of SwarmView.jsx after ReactFlowProvider. Build: 472 modules, 0 errors.
+**Summary:** Created client/src/canvas/BroadcastBar.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â a toolbar input component that POSTs to /api/v1/swarm/:executionId/broadcast with text, scope:'all', and mode (soft/hard). Component returns null when execution is not running. Mounted BroadcastBar at bottom of SwarmView.jsx after ReactFlowProvider. Build: 472 modules, 0 errors.
 **Files changed:** client/src/canvas/BroadcastBar.jsx (CREATED), client/src/views/SwarmView.jsx (MODIFIED)
 **Bugs fixed:** none
 **Decisions made:** Placed file at client/src/canvas/ (not canvas/overlays/) per task message spec; mounted below ReactFlowProvider div to avoid z-index complications
@@ -4626,19 +4626,19 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Phase 4 wave: #63/#66/#67 COMPLETED; #62.1 retry; #64/#65 launching
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Phase 4 wave: #63/#66/#67 COMPLETED; #62.1 retry; #64/#65 launching
 **Outcome:** COMPLETED
-**Summary:** Marked tasks #63 (useSwarm.js), #66 (BroadcastBar.jsx + broadcast route), and #67 (SwarmEngine heartbeat) as COMPLETED in TASK_PLAN.md. Reverted #62.1 to PENDING (API 500 error during agent execution Ã¢â‚¬â€ clean retry in progress). Updated PROGRESS.md to 37/57 COMPLETED. Launched #64 (useHandoff.js) and #65 (AgentNode live updates) in parallel Ã¢â‚¬â€ both are now unblocked since #63 is done.
+**Summary:** Marked tasks #63 (useSwarm.js), #66 (BroadcastBar.jsx + broadcast route), and #67 (SwarmEngine heartbeat) as COMPLETED in TASK_PLAN.md. Reverted #62.1 to PENDING (API 500 error during agent execution ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â clean retry in progress). Updated PROGRESS.md to 37/57 COMPLETED. Launched #64 (useHandoff.js) and #65 (AgentNode live updates) in parallel ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â both are now unblocked since #63 is done.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
 **Bugs fixed:** none
-**Decisions made:** #62.1 reverted to PENDING (not BLOCKED) Ã¢â‚¬â€ failure was execution-infrastructure, not spec problem; retry is correct action
+**Decisions made:** #62.1 reverted to PENDING (not BLOCKED) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â failure was execution-infrastructure, not spec problem; retry is correct action
 **Blockers:** #62.1 retry in progress; #62.2/#62.3 blocked on #62.1; #68-#73 blocked on all Phase 4 completing
-**Next:** After #62.1 succeeds Ã¢â€ â€™ launch #62.2; after #64/#65 complete Ã¢â€ â€™ they are independent; after all of Phase 4 (#62.1-#62.3, #64, #65) Ã¢â€ â€™ launch Wave 5 (HITL + PTY Explosion: #68-#73)
+**Next:** After #62.1 succeeds ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ launch #62.2; after #64/#65 complete ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ they are independent; after all of Phase 4 (#62.1-#62.3, #64, #65) ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ launch Wave 5 (HITL + PTY Explosion: #68-#73)
 ---
 ---
-## 2026-03-27 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #65: AgentNode Live Updates Ã¢â‚¬â€ Pulse + Micro PTY Log
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #65: AgentNode Live Updates ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Pulse + Micro PTY Log
 **Outcome:** COMPLETED
-**Summary:** Enhanced AgentNode.jsx micro PTY log section. Replaced flat truncated div with a scrollable bg-black/40 code block showing last 4 lines in green monospace. Added blinking cursor (Ã¢â€“â€¹ with animate-pulse) when status is running. Confirmed animate-pulse on running border and handoffCount badge were already correct. Build passes at 472 modules, 0 errors.
+**Summary:** Enhanced AgentNode.jsx micro PTY log section. Replaced flat truncated div with a scrollable bg-black/40 code block showing last 4 lines in green monospace. Added blinking cursor (ÃƒÂ¢Ã¢â‚¬â€œÃ¢â‚¬Â¹ with animate-pulse) when status is running. Confirmed animate-pulse on running border and handoffCount badge were already correct. Build passes at 472 modules, 0 errors.
 **Files changed:** client/src/canvas/nodes/AgentNode.jsx
 **Bugs fixed:** none
 **Decisions made:** Used Tailwind animate-pulse for blinking cursor to stay consistent with project-wide animation pattern; no new CSS keyframes needed
@@ -4647,60 +4647,60 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Status update: #64 COMPLETED, #65 COMPLETED, #62.1 PENDING retry
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Status update: #64 COMPLETED, #65 COMPLETED, #62.1 PENDING retry
 **Outcome:** COMPLETED
-**Summary:** Marked tasks #64 (useHandoff.js edge animation hook) and #65 (AgentNode live updates Ã¢â‚¬â€ blinking border + micro PTY log) as COMPLETED in TASK_PLAN.md, both in task bodies and the summary table. Task #62.1 (SwarmEngine _onHandoff: context merge + PTY spawn) remains PENDING Ã¢â‚¬â€ failed twice with API 500 errors and is being retried with a different model.
+**Summary:** Marked tasks #64 (useHandoff.js edge animation hook) and #65 (AgentNode live updates ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â blinking border + micro PTY log) as COMPLETED in TASK_PLAN.md, both in task bodies and the summary table. Task #62.1 (SwarmEngine _onHandoff: context merge + PTY spawn) remains PENDING ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â failed twice with API 500 errors and is being retried with a different model.
 **Files changed:** docs/TASK_PLAN.md
-**Bugs fixed:** Summary table inconsistency Ã¢â‚¬â€ #64 and #65 showed PENDING in table while task bodies showed COMPLETED
+**Bugs fixed:** Summary table inconsistency ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â #64 and #65 showed PENDING in table while task bodies showed COMPLETED
 **Decisions made:** #62.1 left as PENDING (retry active, correct state)
-**Blockers:** #62.1 retry pending Ã¢â‚¬â€ blocks #62.2 and full handoff loop
+**Blockers:** #62.1 retry pending ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â blocks #62.2 and full handoff loop
 **Next:** When #62.1 retry completes, mark COMPLETED and launch #62.2 (SwarmEngine _onHandoff: context injection + status updates)
 ---
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #62.1: SwarmEngine._onHandoff Ã¢â‚¬â€ Context Merge + Edge Counter + PTY Spawn
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #62.1: SwarmEngine._onHandoff ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Context Merge + Edge Counter + PTY Spawn
 **Outcome:** COMPLETED
 **Summary:** Verified that all Task #62.1 acceptance criteria were already implemented in SwarmEngine.js by a prior session. _onHandoff performs shallow context merge, increments edge counters, fires circuit_breaker WS advisory, increments source handoffCount, and calls _ensureAgentPty. CircuitBreaker and BudgetTracker are already instantiated and wired in server/index.js. 168/168 tests pass.
-**Files changed:** docs/TASK_PLAN.md (status update only Ã¢â‚¬â€ no code changes needed)
+**Files changed:** docs/TASK_PLAN.md (status update only ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no code changes needed)
 **Bugs fixed:** none
-**Decisions made:** No code changes made Ã¢â‚¬â€ implementation already complete
+**Decisions made:** No code changes made ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â implementation already complete
 **Blockers:** none
-**Next:** Task #62.2 Ã¢â‚¬â€ SwarmEngine _onHandoff context injection + agent status updates
+**Next:** Task #62.2 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â SwarmEngine _onHandoff context injection + agent status updates
 ---
 ---
-## 2026-03-27 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #62.2: SwarmEngine._onHandoff Ã¢â‚¬â€ Context Injection + Agent Status Updates
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #62.2: SwarmEngine._onHandoff ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Context Injection + Agent Status Updates
 **Outcome:** COMPLETED
 **Summary:** Extended _onHandoff in SwarmEngine.js with 3 new steps after _ensureAgentPty: (1) build fresh system prompt from updated workflowContext and inject into target PTY via writeInput, (2) set source agent status to 'done' + WS broadcast, (3) set target agent status to 'running' + WS broadcast. 168/168 tests pass.
 **Files changed:** server/services/SwarmEngine.js, docs/TASK_PLAN.md
 **Bugs fixed:** none
 **Decisions made:** targetState read after _ensureAgentPty call to ensure state entry exists; contextPrompt guard preserved per _spawnAgentPty pattern
 **Blockers:** none
-**Next:** Task #62.3 Ã¢â‚¬â€ complete _onDone (check all-agents-done, set execution stopped, emit execution_complete WS event)
+**Next:** Task #62.3 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â complete _onDone (check all-agents-done, set execution stopped, emit execution_complete WS event)
 ---
 
 ---
-## 2026-03-27 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #68: server/routes/inbox.js Ã¢â‚¬â€ HITL Approve/Reject API
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #68: server/routes/inbox.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â HITL Approve/Reject API
 **Outcome:** COMPLETED
 **Summary:** Created server/routes/inbox.js with GET inbox, POST approve, POST reject endpoints. Mounted at /api/v1/swarm prefix alongside existing swarmRoutes. validateResumeText middleware enforces 8KB cap on resumeText. Approve writes to PTY and sets agent status='running'. Reject removes item and broadcasts. 168/168 tests pass.
-**Files changed:** server/routes/inbox.js (CREATED), server/index.js (MODIFIED Ã¢â‚¬â€ import + mount)
+**Files changed:** server/routes/inbox.js (CREATED), server/index.js (MODIFIED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â import + mount)
 **Bugs fixed:** none
 **Decisions made:** agentStates.get() used (Map API); reject endpoint leaves agent frozen for Task #70 to handle
 **Blockers:** none
 **Next:** Task #69 (HitlInbox.jsx UI panel) and Task #70 (SwarmEngine freeze/unfreeze full implementation)
 ---
 ---
-## 2026-03-27 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #62.3: SwarmEngine._onDone + BudgetTracker Integration
+## 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #62.3: SwarmEngine._onDone + BudgetTracker Integration
 **Outcome:** COMPLETED
 **Summary:** Fixed _onDone to emit both execution_status and agent_status WS events (was missing agent_status). Added BudgetTracker.registerSession() call in _spawnAgentPty so checkBudget correctly aggregates all sessions per execution. lastOutputSnippet (.slice(-500) in tapFn) was already correct. 168/168 tests pass.
 **Files changed:** server/services/SwarmEngine.js
 **Bugs fixed:** _onDone missing agent_status broadcast; BudgetTracker.checkBudget always returning 0 (registerSession never called)
 **Decisions made:** registerSession called at PTY spawn time before HandoffParser setup
 **Blockers:** none
-**Next:** Task #78 (SwarmEngine integration tests) Ã¢â‚¬â€ now unblocked as SwarmEngine Phase 4 is feature-complete
+**Next:** Task #78 (SwarmEngine integration tests) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â now unblocked as SwarmEngine Phase 4 is feature-complete
 ---
 
 ---
-## 2026-03-28 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #71.2: PTY Explosion Ã¢â‚¬â€ Escape Key Handler
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #71.2: PTY Explosion ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Escape Key Handler
 **Outcome:** COMPLETED
 **Summary:** Added Escape key handler to SwarmView.jsx that closes the PTY explosion overlay when Escape is pressed and the overlay is open. Handler correctly checks ptyExplosionNodeId !== null before preventing default. Event listener properly cleaned up on unmount. PtyExplosion component conditionally rendered based on ptyExplosionNodeId. Build passes: 473 modules, 0 errors.
 **Files changed:** client/src/views/SwarmView.jsx (added useEffect, imported PtyExplosion, conditional render, store subscriptions), docs/TASK_PLAN.md (Status: COMPLETED)
@@ -4710,9 +4710,9 @@ full self-contained context and acceptance criteria.
 **Next:** Task #73 (useInbox.js HITL polling hook) can begin as #71.2 is now complete
 ---
 ---
-## 2026-03-28 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #73: useInbox.js Ã¢â‚¬â€ HITL Polling Hook
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #73: useInbox.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â HITL Polling Hook
 **Outcome:** COMPLETED
-**Summary:** Created client/src/hooks/useInbox.js Ã¢â‚¬â€ polling hook for HITL inbox items with WS fallback. Loads inbox on mount, polls every 10s when WS disconnected, provides approve/reject actions with proper CSRF headers. Build passes at 473 modules, 0 errors.
+**Summary:** Created client/src/hooks/useInbox.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â polling hook for HITL inbox items with WS fallback. Loads inbox on mount, polls every 10s when WS disconnected, provides approve/reject actions with proper CSRF headers. Build passes at 473 modules, 0 errors.
 **Files changed:** client/src/hooks/useInbox.js (CREATED), docs/TASK_PLAN.md (MODIFIED)
 **Bugs fixed:** none
 **Decisions made:** Use Zustand direct getState access to update inboxItems; filter to pending status in hook; approve/reject calls resolveInboxItem after successful API response
@@ -4721,7 +4721,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-28 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Debug Loop Step 1: Full V3 Codebase Inspection
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Debug Loop Step 1: Full V3 Codebase Inspection
 **Outcome:** COMPLETED
 **Summary:** Exhaustive inspection of all 24 V3 component files (10 backend, 14 frontend). Found 16 bugs (1 HIGH, 7 MEDIUM, 8 LOW). Most critical: HITL inbox data flow is broken end-to-end on the client (useInbox direct store mutation + shape mismatches), SwarmCanvas ignores workflowDef prop changes after first render, pause/resume routes are stubs that don't call SwarmEngine methods, budget status always reports 0/0.
 **Files changed:** docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
@@ -4731,7 +4731,7 @@ full self-contained context and acceptance criteria.
 **Next:** Debugger agent to fix bugs in priority order: BUG#9 (canvas), BUG#1/#2/#4 (HITL inbox), BUG#7/#8 (pause/resume), BUG#6/#14 (budget)
 ---
 ---
-## 2026-03-28 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #84/#85/#92: useInbox.js Bug Fixes
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #84/#85/#92: useInbox.js Bug Fixes
 **Outcome:** COMPLETED
 **Summary:** Fixed three interconnected bugs in useInbox.js polling fallback: (1) direct Zustand store mutation bypassed reactivity, (2) filter failed on inconsistent item shapes, (3) REST and WS items had incompatible field names. Created normalizeInboxItem() helper to unify shape. Build: 473 modules, 0 errors.
 **Files changed:** client/src/hooks/useInbox.js
@@ -4742,20 +4742,20 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-28 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #84Ã¢â‚¬â€œ#99: Debug Loop Wave Documentation
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #84ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#99: Debug Loop Wave Documentation
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md and CHANGELOG.md for the full debug loop wave (16 bug fixes, 10 files). 17 existing function entries updated with accurate callers/side-effects; 2 new entries added (SwarmEngine.getExecution, inboxRoutes update). All previously "not yet wired" gaps (cleanupExecution, clearExecution, pauseExecution, resumeExecution) now reflect live callers. 9 BUG-fix notes appended to Key Behaviors section.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none (documentation only)
 **Decisions made:** Combined all 16 fixes into one CHANGELOG entry; updated function entries in-place
 **Blockers:** none
-**Next:** nothing Ã¢â‚¬â€ task fully self-contained
+**Next:** nothing ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â task fully self-contained
 ---
 
 ---
-## 2026-03-28 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Debug Loop Closure + Final QA Gate
+## 2026-03-28 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Debug Loop Closure + Final QA Gate
 **Outcome:** COMPLETED
-**Summary:** Appended final CHANGELOG and ACTIVITY_LOG entries marking debug loop closure. qa-tester confirmed CLEAN: 187/187 tests pass, 473 modules build, zero remaining bugs. 16 bugs found and fixed across Tasks #84Ã¢â‚¬â€œ#99. v3.0.0 is release-ready.
+**Summary:** Appended final CHANGELOG and ACTIVITY_LOG entries marking debug loop closure. qa-tester confirmed CLEAN: 187/187 tests pass, 473 modules build, zero remaining bugs. 16 bugs found and fixed across Tasks #84ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#99. v3.0.0 is release-ready.
 **Files changed:** docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
 **Bugs fixed:** none (closure documentation only)
 **Decisions made:** none
@@ -4765,17 +4765,17 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-29 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Analysis: Swarm UI Integration Gap + Pipeline Hardening
+## 2026-03-29 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Analysis: Swarm UI Integration Gap + Pipeline Hardening
 **Outcome:** COMPLETED
 **Summary:** Root cause analysis identified that Swarm UI components were built without paired App.jsx routing tasks in the same planning wave. create.md and project-manager.md (global user config) were updated with mandatory INTEGRATION RULE sections to prevent this class of orphaned-component bugs in all future sessions. CODE_MAP.md updated with global config notes section and header timestamp.
-**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md (all memory-only Ã¢â‚¬â€ no project code changed)
+**Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md (all memory-only ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no project code changed)
 **Bugs fixed:** none (process/pipeline fix, not code fix)
 **Decisions made:** Document global config changes in CODE_MAP.md under a dedicated "Orchestration Pipeline" section separate from the project code graph
 **Blockers:** none
-**Next:** Nothing Ã¢â‚¬â€ process hardening is self-contained. Next code task proceeds with the updated pipeline.
+**Next:** Nothing ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â process hardening is self-contained. Next code task proceeds with the updated pipeline.
 ---
 ---
-## 2026-03-29 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Tasks #100, #101, #102, #103: SwarmView Integration Wave
+## 2026-03-29 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #100, #101, #102, #103: SwarmView Integration Wave
 **Outcome:** COMPLETED
 **Summary:** Wired four previously built-but-unmounted V3 frontend components into SwarmView.jsx in a single pass to avoid merge conflicts. Added HITL inbox badge+drawer (#100), Run/Stop execution buttons via useSwarm hook (#101), InterAgentFeed side panel inside SwarmCanvas (#102), and Pause/Resume toolbar controls with 'paused' state extended in SwarmContext (#103). Build: 476 modules, 0 errors. Tests: 187/187 passed.
 **Files changed:** client/src/views/SwarmView.jsx, client/src/canvas/SwarmCanvas.jsx, client/src/store/SwarmContext.jsx
@@ -4786,7 +4786,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-29 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Swarm Integration Bug Inspection
+## 2026-03-29 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Swarm Integration Bug Inspection
 **Outcome:** COMPLETED
 **Summary:** Inspected tasks #32-#40 (all COMPLETED per PROGRESS.md, CSP fix in security.js verified). Inspected 7 Swarm integration files (SwarmView.jsx, SwarmContext.jsx, SwarmCanvas.jsx, HitlInbox.jsx, InterAgentFeed.jsx, useSwarm.js, Sidebar.jsx). Found 2 HIGH bugs, 1 MEDIUM, 2 LOW in the new Swarm integration code.
 **Files changed:** docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
@@ -4797,9 +4797,9 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-29 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Tasks #104-#109: QA Bug-Fix Pass
+## 2026-03-29 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #104-#109: QA Bug-Fix Pass
 **Outcome:** COMPLETED
-**Summary:** Fixed 6 bugs found during QA visual inspection of the Swarm Orchestrator UI. BUG-1 (CRITICAL): InterAgentFeed empty-state was missing w-56 shrink-0 causing canvas collapse to 172px. BUG-2 (HIGH): Stop button now visible when paused. BUG-3 (HIGH): Run button gated by activeProjectId with user-visible error. BUG-4 (MEDIUM): HITL drawer header + close button added; stopPropagation on badge. BUG-5 (MEDIUM): approve/reject now surface error instead of silent return when executionId null. BUG-6 (LOW): useSwarm no longer subscribes to agentStates at top level Ã¢â‚¬â€ uses getState() inside handler instead, preventing connectWs recreation on every agent state change.
+**Summary:** Fixed 6 bugs found during QA visual inspection of the Swarm Orchestrator UI. BUG-1 (CRITICAL): InterAgentFeed empty-state was missing w-56 shrink-0 causing canvas collapse to 172px. BUG-2 (HIGH): Stop button now visible when paused. BUG-3 (HIGH): Run button gated by activeProjectId with user-visible error. BUG-4 (MEDIUM): HITL drawer header + close button added; stopPropagation on badge. BUG-5 (MEDIUM): approve/reject now surface error instead of silent return when executionId null. BUG-6 (LOW): useSwarm no longer subscribes to agentStates at top level ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â uses getState() inside handler instead, preventing connectWs recreation on every agent state change.
 **Files changed:** client/src/canvas/InterAgentFeed.jsx, client/src/views/SwarmView.jsx, client/src/panels/HitlInbox.jsx, client/src/hooks/useSwarm.js, docs/TASK_PLAN.md
 **Bugs fixed:** BUG-1, BUG-2, BUG-3, BUG-4, BUG-5, BUG-6
 **Decisions made:** Use useSwarmStore.getState() for imperative agentStates reads in WS handlers
@@ -4808,7 +4808,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-31 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #104-#110: QA Bug-Fix Pass + v3.0.0 Version Bump
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #104-#110: QA Bug-Fix Pass + v3.0.0 Version Bump
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md and CHANGELOG.md for 6 frontend bug fixes (InterAgentFeed canvas collapse, SwarmView Stop/Run/HITL/runError fixes, HitlInbox error surfacing, useSwarm agentStates subscription removal) plus package.json version bump to 3.0.0. Added InterAgentFeed.jsx and HitlInbox.jsx to Module Index (previously missing). All function entries for modified files updated with accurate descriptions.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
@@ -4819,38 +4819,38 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-31 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Toolbar Audit: SwarmView Toolbar Button Visibility
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Toolbar Audit: SwarmView Toolbar Button Visibility
 **Outcome:** COMPLETED
-**Summary:** Audited all 5 files governing SwarmView toolbar controls. Found that zero action buttons are visible on initial load due to a triple-AND guard requiring idle status + workflowDef loaded + project selected simultaneously. Found 4 bugs: runError dead code (MEDIUM), WS accumulation on workflow regeneration (LOW), Stop+Pause race Ã¢â€ â€™ /null/ URL (LOW), Reset leaves stale canvas (MEDIUM). No code changed.
+**Summary:** Audited all 5 files governing SwarmView toolbar controls. Found that zero action buttons are visible on initial load due to a triple-AND guard requiring idle status + workflowDef loaded + project selected simultaneously. Found 4 bugs: runError dead code (MEDIUM), WS accumulation on workflow regeneration (LOW), Stop+Pause race ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ /null/ URL (LOW), Reset leaves stale canvas (MEDIUM). No code changed.
 **Files changed:** docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none
 **Decisions made:** report only, escalate to debugger per protocol
 **Blockers:** none
-**Next:** debugger should address BUG-TOOLBAR-1 (runError dead code) and BUG-TOOLBAR-4 (Reset stale canvas) Ã¢â‚¬â€ both MEDIUM severity
+**Next:** debugger should address BUG-TOOLBAR-1 (runError dead code) and BUG-TOOLBAR-4 (Reset stale canvas) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â both MEDIUM severity
 ---
 
 ---
-## 2026-03-31 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Task #41: Post-Fix Regression QA
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #41: Post-Fix Regression QA
 **Outcome:** COMPLETED
 **Summary:** Regression QA confirmed 187/187 tests pass at v3.0.0. TASK_PLAN stale entries (#32-40) corrected to COMPLETED. DOC_STATUS.md advanced to reflect all 113 tasks complete and v3.0.0 stable.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none
 **Decisions made:** none
 **Blockers:** none
-**Next:** nothing Ã¢â‚¬â€ v3.0.0 is confirmed stable and fully documented
+**Next:** nothing ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â v3.0.0 is confirmed stable and fully documented
 ---
 ---
-## 2026-03-31 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Task #41: Post-Fix Regression QA
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #41: Post-Fix Regression QA
 **Outcome:** COMPLETED
-**Summary:** Test-only task. 187/187 tests passed (9 files, 5.16s) against v3.0.0 codebase after Phase 10 bug fixes (Tasks #32Ã¢â‚¬â€œ#40). No source files modified. Test coverage baseline appended to CODE_MAP.md; Task #41 status corrected in TASK_PLAN.md.
+**Summary:** Test-only task. 187/187 tests passed (9 files, 5.16s) against v3.0.0 codebase after Phase 10 bug fixes (Tasks #32ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#40). No source files modified. Test coverage baseline appended to CODE_MAP.md; Task #41 status corrected in TASK_PLAN.md.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
 **Bugs fixed:** none
 **Decisions made:** Test coverage snapshot recorded as a new top-level section in CODE_MAP.md.
 **Blockers:** none
-**Next:** v3.0.0 baseline established Ã¢â‚¬â€ all future code changes must maintain 187/187 pass rate.
+**Next:** v3.0.0 baseline established ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all future code changes must maintain 187/187 pass rate.
 ---
 ---
-## 2026-03-31 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Final v3.0.0 6-point codebase inspection
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Final v3.0.0 6-point codebase inspection
 **Outcome:** COMPLETED
 **Summary:** Read-only inspection of 6 files from the last fix wave (Tasks #112-#115). All 12 individual checkpoints passed. Zero bugs found. v3.0.0 declared CLEAN.
 **Files changed:** none (read-only inspection)
@@ -4860,20 +4860,20 @@ full self-contained context and acceptance criteria.
 **Next:** v3.0.0 production deployment. Nothing further required.
 ---
 ---
-## 2026-03-31 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ v3.0.0 RELEASE declaration
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â v3.0.0 RELEASE declaration
 **Outcome:** COMPLETED
 **Summary:** Appended v3.0.0 release entry to CHANGELOG.md and updated CODE_MAP.md header timestamp. Final QA inspection confirmed zero bugs, 187/187 tests pass, all 115 tasks completed. Swarm Orchestrator fully functional.
 **Files changed:** docs/memory/CHANGELOG.md (v3.0.0 release entry appended), docs/memory/CODE_MAP.md (header timestamp updated to v3.0.0 release)
 **Bugs fixed:** none
 **Decisions made:** none
 **Blockers:** none
-**Next:** nothing Ã¢â‚¬â€ v3.0.0 is released and complete
+**Next:** nothing ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â v3.0.0 is released and complete
 ---
 
 ---
-## 2026-03-31 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Swarm Section Deep Visual Inspection
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Swarm Section Deep Visual Inspection
 **Outcome:** COMPLETED
-**Summary:** Full Puppeteer visual inspection of Swarm section found 4 bugs (2 HIGH, 1 MEDIUM, 1 LOW). Most critical: staggered animation injects permanent opacity:0 into React Flow node style prop, corrupting dimension measurement and breaking fitView Ã¢â‚¬â€ nodes are invisible after workflow generation. workflowDef also lost on view switch (stored in local state, not Zustand). All toolbar state logic, HITL drawer, BroadcastBar, and PromptToFlowBar enable/disable logic verified correct.
+**Summary:** Full Puppeteer visual inspection of Swarm section found 4 bugs (2 HIGH, 1 MEDIUM, 1 LOW). Most critical: staggered animation injects permanent opacity:0 into React Flow node style prop, corrupting dimension measurement and breaking fitView ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â nodes are invisible after workflow generation. workflowDef also lost on view switch (stored in local state, not Zustand). All toolbar state logic, HITL drawer, BroadcastBar, and PromptToFlowBar enable/disable logic verified correct.
 **Files changed:** docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none (report only)
 **Decisions made:** none
@@ -4882,29 +4882,29 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-31 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ BUG-SWARM-4: useSwarm.startExecution null guard
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â BUG-SWARM-4: useSwarm.startExecution null guard
 **Outcome:** COMPLETED
 **Summary:** Added a one-line null guard at the top of `startExecution` in useSwarm.js. If `workflowId` is falsy the function now throws `Error('No workflow selected')` immediately, preventing the silent `/api/v1/swarm/undefined/start` 404.
 **Files changed:** client/src/hooks/useSwarm.js
 **Bugs fixed:** BUG-SWARM-4
 **Decisions made:** Guard throws (not silently returns) so callers are forced to handle the degenerate state.
 **Blockers:** none
-**Next:** nothing Ã¢â‚¬â€ bug fix is self-contained.
+**Next:** nothing ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â bug fix is self-contained.
 ---
 
 ---
-## 2026-03-31 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #117: BUG-SWARM-3 workflowDef persistence fix
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #117: BUG-SWARM-3 workflowDef persistence fix
 **Outcome:** COMPLETED
 **Summary:** Moved `workflowDef` from local `useState` in SwarmView.jsx to the Zustand SwarmStore. Added `workflowDef: null` to initial state and `reset()`, added `setWorkflowDef` action. Simplified Reset button. Build passes 0 errors.
 **Files changed:** client/src/store/SwarmContext.jsx, client/src/views/SwarmView.jsx
-**Bugs fixed:** BUG-SWARM-3 Ã¢â‚¬â€ workflowDef lost on view navigation
+**Bugs fixed:** BUG-SWARM-3 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â workflowDef lost on view navigation
 **Decisions made:** Reset button simplified to `onClick={reset}` since reset() now handles workflowDef
 **Blockers:** none
 **Next:** orchestrator to commit; QA to verify workflow persists across view navigation
 ---
 
 ---
-## 2026-03-31 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Swarm Section Full Audit
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Swarm Section Full Audit
 **Outcome:** COMPLETED
 **Summary:** Full read-audit of all 15 Swarm section files (frontend + backend). Identified 4 concrete bugs: AgentInspector hidden in idle state (BUG-AUDIT-1), PtyExplosion unreachable from any click (BUG-AUDIT-2), useInbox.js dead code not consumed by any component (BUG-AUDIT-3), AgentInspector missing "Open Terminal" button (BUG-AUDIT-4).
 **Files changed:** docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
@@ -4915,96 +4915,96 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-03-31 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ BUG-AUDIT-4: Wire useInbox into SwarmView
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â BUG-AUDIT-4: Wire useInbox into SwarmView
 **Outcome:** COMPLETED
-**Summary:** `useInbox.js` was dead code Ã¢â‚¬â€ imported nowhere. Added import and side-effect call `useInbox(activeExecutionId)` in `SwarmView.jsx` after the `useSwarm` hook. HITL fallback REST polling (every 10s when WS disconnected) now activates automatically during executions. Build: 477 modules, 0 errors.
+**Summary:** `useInbox.js` was dead code ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â imported nowhere. Added import and side-effect call `useInbox(activeExecutionId)` in `SwarmView.jsx` after the `useSwarm` hook. HITL fallback REST polling (every 10s when WS disconnected) now activates automatically during executions. Build: 477 modules, 0 errors.
 **Files changed:** client/src/views/SwarmView.jsx
-**Bugs fixed:** BUG-AUDIT-4 (useInbox dead code Ã¢â‚¬â€ polling never ran)
+**Bugs fixed:** BUG-AUDIT-4 (useInbox dead code ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â polling never ran)
 **Decisions made:** none
 **Blockers:** none
-**Next:** nothing Ã¢â‚¬â€ fix self-contained
+**Next:** nothing ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â fix self-contained
 ---
 
 ---
-## 2026-03-31 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Full Test Suite Run (user request)
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Full Test Suite Run (user request)
 **Outcome:** COMPLETED
 **Summary:** Ran `npm test` from project root. All 187 tests pass across 9 test files in 5.89s. Zero failures. Vitest v4.1.0. stderr lines are all intentional (error-path tests in HandoffParser and SessionManager lifecycle logs).
 **Files changed:** docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none
 **Decisions made:** none
 **Blockers:** none
-**Next:** nothing Ã¢â‚¬â€ test suite confirmed green at v3.0.0.
+**Next:** nothing ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â test suite confirmed green at v3.0.0.
 ---
 ---
-## 2026-03-31 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Swarm Code Audit: BUG-AUDIT-1 through BUG-AUDIT-4
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Swarm Code Audit: BUG-AUDIT-1 through BUG-AUDIT-4
 **Outcome:** COMPLETED
-**Summary:** Mapped 4 bugs found in the Swarm section audit and their concurrent fixes (Tasks #120-#122). AgentInspector now always visible (BUG-AUDIT-1). "Open Terminal" button added to AgentInspector calling setPtyExplosionNodeId (BUG-AUDIT-2+3). useInbox confirmed wired in SwarmView.jsx as HITL polling fallback Ã¢â‚¬â€ not dead code (BUG-AUDIT-4). CODE_MAP.md Module Index updated for SwarmCanvas, AgentInspector, SwarmView, and useInbox (new entry). CHANGELOG.md audit entry appended.
+**Summary:** Mapped 4 bugs found in the Swarm section audit and their concurrent fixes (Tasks #120-#122). AgentInspector now always visible (BUG-AUDIT-1). "Open Terminal" button added to AgentInspector calling setPtyExplosionNodeId (BUG-AUDIT-2+3). useInbox confirmed wired in SwarmView.jsx as HITL polling fallback ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â not dead code (BUG-AUDIT-4). CODE_MAP.md Module Index updated for SwarmCanvas, AgentInspector, SwarmView, and useInbox (new entry). CHANGELOG.md audit entry appended.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
-**Bugs fixed:** BUG-AUDIT-1, BUG-AUDIT-2, BUG-AUDIT-3, BUG-AUDIT-4 (documented Ã¢â‚¬â€ fixes by frontend-dev)
-**Decisions made:** useInbox is NOT dead code Ã¢â‚¬â€ it IS imported by SwarmView.jsx (confirmed by grep: line 12 import, line 53 call). Bug report was accurate about the pre-fix state; fix was adding the import.
+**Bugs fixed:** BUG-AUDIT-1, BUG-AUDIT-2, BUG-AUDIT-3, BUG-AUDIT-4 (documented ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â fixes by frontend-dev)
+**Decisions made:** useInbox is NOT dead code ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â it IS imported by SwarmView.jsx (confirmed by grep: line 12 import, line 53 call). Bug report was accurate about the pre-fix state; fix was adding the import.
 **Blockers:** none
 **Next:** qa-tester should verify: (1) AgentInspector visible in idle state, (2) "Open Terminal" button appears when agentState.sessionId is present, (3) HITL polling fires when WS disconnected
 ---
 ---
-## 2026-03-31 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Swarm Section COMPLETE: all bugs fixed, 0 open bugs
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Swarm Section COMPLETE: all bugs fixed, 0 open bugs
 **Outcome:** COMPLETED
 **Summary:** All 8 post-release Swarm bugs (BUG-SWARM-1 through BUG-SWARM-4, BUG-AUDIT-1 through BUG-AUDIT-4) are confirmed FIXED. Test suite 187/187 passing, build clean at 477 modules, 0 errors. DOC_STATUS.md updated: header timestamp refreshed, task count corrected to 122/115, open bug count set to 0, BUG-AUDIT-4 moved from "In Progress" table to Fixed Bugs table, Inline comments row updated to mention BUG-AUDIT-4 fix. Swarm section is fully operational: generate workflow, inspect nodes, run with live WS, live agent status, Open Terminal PTY, Inter-Agent Feed, HITL approve/reject, Broadcast, Pause/Resume/Stop, workflowDef persistence across navigation.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
-**Bugs fixed:** BUG-AUDIT-4 (documented Ã¢â‚¬â€ fix applied by frontend-dev in Task #122)
+**Bugs fixed:** BUG-AUDIT-4 (documented ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â fix applied by frontend-dev in Task #122)
 **Decisions made:** none
 **Blockers:** none
 **Next:** no open bugs; project stable at v3.0.0. Next significant change will trigger a new documentation pass.
 ---
 ---
-## 2026-03-31 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #116Ã¢â‚¬â€œ#122: Swarm Bug-Fix Wave mapped
+## 2026-03-31 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #116ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#122: Swarm Bug-Fix Wave mapped
 **Outcome:** COMPLETED
 **Summary:** Mapped all 7 Swarm bug fixes (BUG-SWARM-1 through BUG-SWARM-4, BUG-AUDIT-1 through BUG-AUDIT-4). Updated CODE_MAP.md Function Graph for SwarmCanvas, PromptToFlowBar/handleGenerate, SwarmView, useSwarm/startExecution, AgentInspector, useSwarmStore (added setWorkflowDef + reset payload), index.css (@keyframes fadeIn removal). All 8 bugs closed in the Open Bug Registry. Appended CHANGELOG entry.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
-**Bugs fixed:** BUG-SWARM-1, BUG-SWARM-2, BUG-SWARM-3, BUG-SWARM-4, BUG-AUDIT-1, BUG-AUDIT-2, BUG-AUDIT-3, BUG-AUDIT-4 Ã¢â‚¬â€ all FIXED per documentation
+**Bugs fixed:** BUG-SWARM-1, BUG-SWARM-2, BUG-SWARM-3, BUG-SWARM-4, BUG-AUDIT-1, BUG-AUDIT-2, BUG-AUDIT-3, BUG-AUDIT-4 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all FIXED per documentation
 **Decisions made:** none
 **Blockers:** none
-**Next:** Task #123 (QA regression check via Puppeteer) Ã¢â‚¬â€ qa-tester should verify all fixes hold; project-manager to confirm all tasks complete
+**Next:** Task #123 (QA regression check via Puppeteer) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester should verify all fixes hold; project-manager to confirm all tasks complete
 ---
 ---
-## 2026-04-02 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ PRD Section 11 Component Specifications mapped
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PRD Section 11 Component Specifications mapped
 **Outcome:** COMPLETED
 **Summary:** prd-writer added Section 11 (Component Specifications for 12 Swarm V3 components) and Section 11.1 (WS Event Field Reference for 8 event types) to docs/PRD.md. No source code changed. CODE_MAP.md updated: header timestamp refreshed, Design Documents section added to Module Index with authoritative PRD reference. CHANGELOG.md entry appended with full component spec table, WS event reference table, and 4 known bugs formally documented.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
 **Bugs fixed:** none (documentation pass)
-**Decisions made:** Added Design Documents section to CODE_MAP Module Index Ã¢â‚¬â€ PRD.md is now explicitly tracked as part of the code map
+**Decisions made:** Added Design Documents section to CODE_MAP Module Index ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PRD.md is now explicitly tracked as part of the code map
 **Blockers:** none
 **Next:** TEST GATE tasks (#124+) should reference PRD Section 11 for acceptance criteria. 4 open bugs (sessionId gap, handoff_completed missing, trigger_fired/trigger_status not implemented, rss_item unhandled) need task entries.
 ---
 
 ---
-## 2026-04-02 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #125: TEST GATE Ã¢â‚¬â€ SwarmEngine agent_status sessionId field
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #125: TEST GATE ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â SwarmEngine agent_status sessionId field
 **Outcome:** COMPLETED
 **Summary:** Verified BUG-SESSION-1 fix is complete across all 4 layers (SwarmEngine.js emission sites, useSwarm.js handler, SwarmContext.jsx store, AgentInspector.jsx button condition). All 8 `agent_status` emission sites include `sessionId`. Client handler correctly forwards it into Zustand. "Open Terminal" button properly conditioned on `agentState?.sessionId`. 187/187 tests pass.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none (gate verification only)
 **Decisions made:** Conditional spread in useSwarm.js is intentional defensive behavior, not a bug
 **Blockers:** none
-**Next:** debugger runs TASK #126 (BUG-HANDOFF-1 Ã¢â‚¬â€ handoff_completed event missing from SwarmEngine)
+**Next:** debugger runs TASK #126 (BUG-HANDOFF-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â handoff_completed event missing from SwarmEngine)
 ---
 ---
-## 2026-04-02 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #127: TEST GATE Ã¢â‚¬â€ handoff_completed event
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #127: TEST GATE ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â handoff_completed event
 **Outcome:** COMPLETED
 **Summary:** Verified the BUG-HANDOFF-1 fix across all 4 layers: SwarmEngine._onHandoff() emits handoff_completed at step 11 with correct fields {type, sourceNodeId, targetNodeId}; useSwarm.js case 'handoff_completed' calls addFeedEvent with timestamp; SwarmContext.jsx addFeedEvent appends to interAgentFeed; InterAgentFeed.jsx renders all feed entries. 187/187 tests pass, 0 regressions. Gate verdict: PASS.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none
-**Decisions made:** EVENT_ICONS gap in InterAgentFeed.jsx ('handoff_completed' has no icon entry, renders '?') classified as LOW cosmetic only Ã¢â‚¬â€ does not block the gate
+**Decisions made:** EVENT_ICONS gap in InterAgentFeed.jsx ('handoff_completed' has no icon entry, renders '?') classified as LOW cosmetic only ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â does not block the gate
 **Blockers:** none
 **Next:** debugger runs TASK #128 (BUG-TRIGGER-1)
 ---
 ---
-## 2026-04-02 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #132: AREA CHECKPOINT Ã¢â‚¬â€ V3.1 Swarm Bug Fixes
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #132: AREA CHECKPOINT ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3.1 Swarm Bug Fixes
 **Outcome:** COMPLETED
 **Summary:** Full area checkpoint for V3.1 Swarm Bug Fixes wave. All 4 individual TEST GATEs (#125, #127, #129, #131) confirmed PASS. Code audit verified all 4 bug fixes coexist correctly in SwarmEngine.js, useSwarm.js, SwarmCanvas.jsx, and AgentInspector.jsx. Build: 477 modules, 0 errors. Tests: 187/187. AREA V3.1 CLOSED.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none
 **Decisions made:** Static audit + build + server tests sufficient for area checkpoint (no client test harness in project)
 **Blockers:** none
-**Next:** V3.2 feature planning Ã¢â‚¬â€ project-manager should register next tasks
+**Next:** V3.2 feature planning ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â project-manager should register next tasks
 ---
 
 ## 2026-04-02 - debugger/qa-tester/documenter - Tasks #138-#142: Swarm runtime follow-up wave closed
@@ -5018,44 +5018,44 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-02 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #143: BUG-UX-COMPLETED-1 Ã¢â‚¬â€ Add Reset/Run button for completed state
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #143: BUG-UX-COMPLETED-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Add Reset/Run button for completed state
 **Outcome:** COMPLETED
 **Summary:** Extended two JSX conditionals in SwarmView.jsx toolbar so both Reset and Run buttons are visible when executionStatus is 'completed'. Users can now re-run or reset after a workflow finishes without reloading. Build passes cleanly.
 **Files changed:** client/src/views/SwarmView.jsx
-**Bugs fixed:** BUG-UX-COMPLETED-1 Ã¢â‚¬â€ dead-end completed state with no action buttons
+**Bugs fixed:** BUG-UX-COMPLETED-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â dead-end completed state with no action buttons
 **Decisions made:** Show both Reset and Run in completed state (option 3 from task spec)
 **Blockers:** none
-**Next:** Tasks #144 (ANSI stripping), #145 (handoff chain), #146 (run-disabled feedback) Ã¢â‚¬â€ then TEST GATE #147 and AREA CHECKPOINT #148
+**Next:** Tasks #144 (ANSI stripping), #145 (handoff chain), #146 (run-disabled feedback) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â then TEST GATE #147 and AREA CHECKPOINT #148
 ---
 ---
-## 2026-04-02 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #144: BUG-UX-ANSI-1 Ã¢â‚¬â€ Strip ANSI from AgentNode + AgentInspector
+## 2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #144: BUG-UX-ANSI-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Strip ANSI from AgentNode + AgentInspector
 **Outcome:** COMPLETED
 **Summary:** Created client/src/utils/stripAnsi.js (comprehensive ANSI/VT escape sequence regex + line-ending normalization). Applied stripAnsi() in AgentNode.jsx micro-log render and AgentInspector.jsx Last Output render. PTY Explosion xterm.js sessions not affected. Build: 479 modules, 0 errors.
 **Files changed:** client/src/utils/stripAnsi.js (CREATED), client/src/canvas/nodes/AgentNode.jsx, client/src/canvas/AgentInspector.jsx, docs/TASK_PLAN.md
-**Bugs fixed:** BUG-UX-ANSI-1 Ã¢â‚¬â€ raw ANSI escape sequences visible in AgentNode micro-log and AgentInspector Last Output
+**Bugs fixed:** BUG-UX-ANSI-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â raw ANSI escape sequences visible in AgentNode micro-log and AgentInspector Last Output
 **Decisions made:** Strip at render site (not at Zustand store level) to preserve raw diagnostic data in state
 **Blockers:** none
 **Next:** Tasks #145 (BUG-UX-HANDOFF-1) and #146 (BUG-UX-FEEDBACK-1) should be completed, then TEST GATE #147.
 ---
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #232: BUG-WF-3 Ã¢â‚¬â€ PTY Explosion opens wrong agent terminal after switching nodes
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #232: BUG-WF-3 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PTY Explosion opens wrong agent terminal after switching nodes
 **Outcome:** COMPLETED
 **Summary:** Added key={ptyExplosionNodeId} to PtyExplosion component in SwarmView.jsx (line 520). This forces React to fully unmount/remount the PtyExplosion+Terminal component tree when switching between agent sessions, eliminating stale xterm and WebSocket state from the previous agent's terminal. Build passes (480 modules, 0 errors).
 **Files changed:** client/src/views/SwarmView.jsx, docs/TASK_PLAN.md
-**Bugs fixed:** BUG-WF-3 Ã¢â‚¬â€ PTY Explosion displaying wrong agent terminal after node switch (missing React key prop)
-**Decisions made:** Used React key prop pattern over useEffect cleanup in Terminal.jsx Ã¢â‚¬â€ simpler, guaranteed correct, avoids touching shared component
+**Bugs fixed:** BUG-WF-3 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PTY Explosion displaying wrong agent terminal after node switch (missing React key prop)
+**Decisions made:** Used React key prop pattern over useEffect cleanup in Terminal.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â simpler, guaranteed correct, avoids touching shared component
 **Blockers:** none
 **Next:** Remaining debugger-loop tasks from V5.0 wave (TASK #233 BUG-WF-2 etc.)
 ---
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #231 + #232: V5.0 Debugger Loop Code Map Update
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #231 + #232: V5.0 Debugger Loop Code Map Update
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md and CHANGELOG.md for V5.0 debugger loop fixes. Mapped 4 snippet pipeline functions (SNIPPET_NOISE_LINE_PATTERNS, _stripSnippetProtocolArtifacts, _isSnippetNoiseLine, _buildSemanticSnippet) for the first time. Updated SwarmEngine.js and SwarmView.jsx Module Index entries. Added BUG-WF-1 and BUG-WF-3 to Bug Registry. Appended 2 CHANGELOG entries.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
 **Bugs fixed:** none (documentation only)
-**Decisions made:** Mapped full snippet pipeline (4 functions) even though only 2 were directly modified Ã¢â‚¬â€ completes the pipeline graph
+**Decisions made:** Mapped full snippet pipeline (4 functions) even though only 2 were directly modified ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â completes the pipeline graph
 **Blockers:** none
 **Next:** Next code-mapper invocation after the next completed task
 ---
@@ -5078,9 +5078,9 @@ full self-contained context and acceptance criteria.
 
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Debugger Loop Phase 1: Micro-Area A Ã¢â‚¬â€ Server API Routes Deep Test
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Debugger Loop Phase 1: Micro-Area A ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Server API Routes Deep Test
 **Outcome:** COMPLETED
-**Summary:** Deep E2E tested all 10 server route files (77 test scenarios) via curl against the running server. Found 1 HIGH-severity bug: BUG-API-1 Ã¢â‚¬â€ webhook endpoint POST /api/v1/triggers/webhooks/:path is blocked by the global CSRF middleware, returning 403 instead of 200 for external callers. All other endpoints (projects, sessions, agents, skills, claudemd, jobs, workflows, swarm, inbox) pass validation, error handling, and CSRF protection tests.
+**Summary:** Deep E2E tested all 10 server route files (77 test scenarios) via curl against the running server. Found 1 HIGH-severity bug: BUG-API-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â webhook endpoint POST /api/v1/triggers/webhooks/:path is blocked by the global CSRF middleware, returning 403 instead of 200 for external callers. All other endpoints (projects, sessions, agents, skills, claudemd, jobs, workflows, swarm, inbox) pass validation, error handling, and CSRF protection tests.
 **Files changed:** docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none (observation only)
 **Decisions made:** none
@@ -5089,7 +5089,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ V5.0 Debugger Loop Phase 1: Deep E2E Test
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5.0 Debugger Loop Phase 1: Deep E2E Test
 **Outcome:** COMPLETED
 **Summary:** Appended CHANGELOG.md entry for V5.0 Phase 1 deep E2E test covering all server routes and client views. No CODE_MAP.md structural changes needed (no code modified). Documented BUG-API-1 (CSRF blocks webhooks) and BUG-UI-1 (ConPTY garble, deferred).
 **Files changed:** docs/memory/CODE_MAP.md (header only), docs/memory/CHANGELOG.md (new entry)
@@ -5100,7 +5100,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #239: BUG-SWARM-UI-2 Ã¢â‚¬â€ Stale execution ID 404 on page load
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #239: BUG-SWARM-UI-2 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Stale execution ID 404 on page load
 **Outcome:** COMPLETED
 **Summary:** Fixed useSwarm.js hydration to use raw fetch instead of apiGet, so 404 responses for stale execution IDs are handled gracefully without console errors. localStorage is cleared and store resets to idle.
 **Files changed:** client/src/hooks/useSwarm.js (restorePersistedExecution function)
@@ -5111,7 +5111,7 @@ full self-contained context and acceptance criteria.
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #241: BUG-SWARM-API-2 Ã¢â‚¬â€ SPA catch-all serves HTML for unmatched API GET requests
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #241: BUG-SWARM-API-2 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â SPA catch-all serves HTML for unmatched API GET requests
 **Outcome:** COMPLETED
 **Summary:** Added `app.all('/api/*')` 404 catch-all before the SPA `app.get('*')` fallback in server/index.js. Unmatched API paths now return JSON 404 instead of HTML 200. 312/312 tests pass.
 **Files changed:** server/index.js, docs/TASK_PLAN.md
@@ -5122,9 +5122,9 @@ full self-contained context and acceptance criteria.
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Debugger Loop Phase 1: Swarm Deep Test
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Debugger Loop Phase 1: Swarm Deep Test
 **Outcome:** COMPLETED
-**Summary:** Appended CHANGELOG.md entry for Swarm deep test phase. No code modified Ã¢â‚¬â€ 5 bugs discovered (2 API, 3 UI). No CODE_MAP.md changes needed.
+**Summary:** Appended CHANGELOG.md entry for Swarm deep test phase. No code modified ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â 5 bugs discovered (2 API, 3 UI). No CODE_MAP.md changes needed.
 **Files changed:** docs/memory/CHANGELOG.md (new entry), docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none (testing-only)
 **Decisions made:** No CODE_MAP.md structural changes for testing-only phases
@@ -5133,9 +5133,9 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ V5.2 Debugger Loop Swarm Deep Check Phase 1 doc update
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5.2 Debugger Loop Swarm Deep Check Phase 1 doc update
 **Outcome:** COMPLETED
-**Summary:** Quick DOC_STATUS.md update to note V5.2 Swarm deep test findings (5 bugs: 2 MEDIUM, 3 LOW). No code was modified Ã¢â‚¬â€ testing only. All other docs remain accurate; no staleness introduced.
+**Summary:** Quick DOC_STATUS.md update to note V5.2 Swarm deep test findings (5 bugs: 2 MEDIUM, 3 LOW). No code was modified ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â testing only. All other docs remain accurate; no staleness introduced.
 **Files changed:** docs/memory/DOC_STATUS.md
 **Bugs fixed:** none
 **Decisions made:** none
@@ -5144,7 +5144,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #240: BUG-SWARM-UI-3 Ã¢â‚¬â€ Rate limiting triggered during normal localhost navigation
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #240: BUG-SWARM-UI-3 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Rate limiting triggered during normal localhost navigation
 **Outcome:** COMPLETED
 **Summary:** Increased global API rate limit from 200 to 300 requests per minute in server/index.js. This is a localhost single-user app where rapid view switching is normal usage. 312/312 tests pass.
 **Files changed:** server/index.js (line 219, rate limit call site)
@@ -5155,18 +5155,18 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #238-#241: V5.2 Wave 1 Code Map Update
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tasks #238-#241: V5.2 Wave 1 Code Map Update
 **Outcome:** COMPLETED
-**Summary:** Mapped all V5.2 Wave 1 changes across server/index.js (entity.parse.failed handler, API 404 catch-all, rateLimit 200Ã¢â€ â€™300) and client/src/hooks/useSwarm.js (raw fetch hydration with 404 Ã¢â€ â€™ clearStoredExecution). Added 9 new function entries to CODE_MAP.md (4 server, 5 client). Appended CHANGELOG.md with full change details.
+**Summary:** Mapped all V5.2 Wave 1 changes across server/index.js (entity.parse.failed handler, API 404 catch-all, rateLimit 200ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢300) and client/src/hooks/useSwarm.js (raw fetch hydration with 404 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ clearStoredExecution). Added 9 new function entries to CODE_MAP.md (4 server, 5 client). Appended CHANGELOG.md with full change details.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/code-mapper.md
 **Bugs fixed:** none (mapping only)
 **Decisions made:** Mapped rateLimit factory and 5 useSwarm localStorage/hydration helpers that were previously undocumented
 **Blockers:** none
-**Next:** BUG-SWARM-UI-1 (duplicate workflow names) still pending fix Ã¢â‚¬â€ will need mapping when addressed
+**Next:** BUG-SWARM-UI-1 (duplicate workflow names) still pending fix ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â will need mapping when addressed
 ---
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #186: TEST GATE BUG-FEED-ICON-1 Ã¢â‚¬â€ PASS
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #186: TEST GATE BUG-FEED-ICON-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PASS
 **Outcome:** COMPLETED
 **Summary:** Verified InterAgentFeed EVENT_ICONS map completeness. All 6 event types routed to the feed (handoff_started, handoff_completed, circuit_breaker, runtime_provider_switch, trigger_fired, rss_item) have matching icon entries. No '?' fallback possible during normal execution. Build clean, 312/312 server tests pass.
 **Files changed:** docs/TASK_PLAN.md
@@ -5178,7 +5178,7 @@ full self-contained context and acceptance criteria.
 
 ---
 
-## 2026-04-06 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #218: BUG-SNIPPET-CONPTY-SPACES Ã¢â‚¬â€ Review and close
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #218: BUG-SNIPPET-CONPTY-SPACES ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Review and close
 **Outcome:** COMPLETED
 **Summary:** Reviewed PARTIAL status of _decompressConPTYSpaces() heuristic. Confirmed the implementation handles mixed-case English text and punctuation-separated text correctly. The all-lowercase limitation (Italian prose) is a genuine platform constraint unsolvable without a dictionary. Marked COMPLETED with known-limitation note. 312/312 tests pass.
 **Files changed:** docs/TASK_PLAN.md (status PARTIAL -> COMPLETED, updated completion note)
@@ -5189,19 +5189,19 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #217: AREA CHECKPOINT Ã¢â‚¬â€ V4.4 Snippet Fidelity Final Polish
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #217: AREA CHECKPOINT ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V4.4 Snippet Fidelity Final Polish
 **Outcome:** COMPLETED
 **Summary:** AREA CHECKPOINT PASS. 312/312 server tests, client build 0 errors. SNIPPET_NOISE_LINE_PATTERNS verified for thinking animations and hook output. V4.4 area CLOSED.
 **Files changed:** docs/TASK_PLAN.md
 **Bugs fixed:** none
-**Decisions made:** PASS verdict Ã¢â‚¬â€ all acceptance criteria met
+**Decisions made:** PASS verdict ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all acceptance criteria met
 **Blockers:** none
-**Next:** nothing Ã¢â‚¬â€ V4.4 area chain complete
+**Next:** nothing ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V4.4 area chain complete
 ---
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #199: BUG-TOKEN-FIDELITY-1 Ã¢â‚¬â€ UI/debug views must preserve literal control-token semantics
-**Outcome:** COMPLETED (verified Ã¢â‚¬â€ no change needed)
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #199: BUG-TOKEN-FIDELITY-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â UI/debug views must preserve literal control-token semantics
+**Outcome:** COMPLETED (verified ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no change needed)
 **Summary:** Full code audit of the control-token pipeline (SwarmEngine snippet generation -> WS broadcast -> Zustand -> AgentNode/AgentInspector render) confirmed that __DONE__ and __HANDOFF__ tokens are already preserved literally at every stage. No normalization or underscore-stripping occurs anywhere. Bug was not real. 312/312 server tests pass, client build clean.
 **Files changed:** docs/TASK_PLAN.md (status update only)
 **Bugs fixed:** none (verified not a bug)
@@ -5211,7 +5211,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #200: TEST GATE BUG-TOKEN-FIDELITY-1
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #200: TEST GATE BUG-TOKEN-FIDELITY-1
 **Outcome:** COMPLETED
 **Summary:** TEST GATE PASS. 312/312 server tests, client build clean. Control tokens __DONE__ and __HANDOFF__ preserved literally in server snippet pipeline (score boosts +60/+80) and client controlTokens.js (annotate-only). No code change needed per Task #199. TASK #201 unblocked.
 **Files changed:** docs/TASK_PLAN.md (marked #200 COMPLETED PASS)
@@ -5222,18 +5222,18 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #203: BUG-RECOVERY-LABELING-1
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #203: BUG-RECOVERY-LABELING-1
 **Outcome:** COMPLETED (no code change)
 **Summary:** Investigated whether recovery/system prompts are visually distinguishable from agent output. Confirmed the existing sanitization pipeline already handles this: SNIPPET_NOISE_LINE_PATTERNS, SNIPPET_RECOVERY_LINE_PATTERNS, and REPLAY_NOISE_LINE_PATTERNS all filter recovery text. Recovery-only snippets produce a "Runtime reminder:" label. All three acceptance criteria met by existing code.
 **Files changed:** docs/TASK_PLAN.md (status update only)
-**Bugs fixed:** none needed Ã¢â‚¬â€ already resolved by existing pipeline
-**Decisions made:** No UI code change required Ã¢â‚¬â€ server-side filtering already resolves the issue
+**Bugs fixed:** none needed ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â already resolved by existing pipeline
+**Decisions made:** No UI code change required ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â server-side filtering already resolves the issue
 **Blockers:** none
 **Next:** TASK #204 TEST GATE for recovery labeling verification
 ---
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #233: BUG-WF-2 Ã¢â‚¬â€ Done-token recovery prompt noise pattern filtering
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #233: BUG-WF-2 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Done-token recovery prompt noise pattern filtering
 **Outcome:** COMPLETED
 **Summary:** Added 3 regex patterns to REPLAY_NOISE_LINE_PATTERNS in SessionManager.js to filter the done-token recovery prompt from PTY Explosion replay output. Live PTY stream unaffected. 312/312 tests pass.
 **Files changed:** server/services/SessionManager.js (3 patterns added), docs/TASK_PLAN.md (status DEFERRED -> COMPLETED)
@@ -5255,29 +5255,29 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #245: BUG-RUNTIME-1 Ã¢â‚¬â€ Collapse repeated "(thinking)" tokens
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #245: BUG-RUNTIME-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Collapse repeated "(thinking)" tokens
 **Outcome:** COMPLETED
 **Summary:** Added noise pattern for lines composed entirely of "(thinking)" tokens to SNIPPET_NOISE_LINE_PATTERNS, plus a post-processing step in _buildSemanticSnippet that collapses inline repetitions to "(thinking...)". 312/312 server tests pass.
 **Files changed:** server/services/SwarmEngine.js (2 insertions), docs/TASK_PLAN.md (#245 marked COMPLETED)
-**Bugs fixed:** BUG-RUNTIME-1 Ã¢â‚¬â€ repeated thinking tokens in agent node snippet
+**Bugs fixed:** BUG-RUNTIME-1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â repeated thinking tokens in agent node snippet
 **Decisions made:** Two-layer defense (noise pattern + post-processing collapse); collapsed form is "(thinking...)" not removal
 **Blockers:** none
-**Next:** Task #246 (BUG-RUNTIME-2 Codex auth prompt filtering) Ã¢â‚¬â€ next in Wave A sequence
+**Next:** Task #246 (BUG-RUNTIME-2 Codex auth prompt filtering) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â next in Wave A sequence
 ---
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #248: BUG-RUNTIME-4 Ã¢â‚¬â€ Empty prompt inline validation
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task #248: BUG-RUNTIME-4 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Empty prompt inline validation
 **Outcome:** COMPLETED
 **Summary:** Added inline validation to PromptToFlowBar.jsx so clicking Generate with an empty prompt shows a red error message below the input instead of silently doing nothing. Input border highlights red on validation failure and error auto-clears on typing. Build passes (480 modules, 0 errors).
 **Files changed:** client/src/canvas/PromptToFlowBar.jsx
 **Bugs fixed:** BUG-RUNTIME-4 (empty prompt silent failure)
 **Decisions made:** Fixed in PromptToFlowBar.jsx (not SwarmView.jsx) since that is where the prompt input lives. Changed button from disabled-when-empty to always-clickable so validation fires on click.
 **Blockers:** none
-**Next:** TEST GATE #249 Ã¢â‚¬â€ qa-tester verifies empty prompt validation behavior
+**Next:** TEST GATE #249 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester verifies empty prompt validation behavior
 ---
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task: FR-V5-07/09/10 Ã¢â‚¬â€ AgentInspector Full Edit Panel
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task: FR-V5-07/09/10 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â AgentInspector Full Edit Panel
 **Outcome:** COMPLETED
 **Summary:** Converted AgentInspector.jsx from read-only display to full edit panel with type-specific fields (agent: label/model/systemPrompt/tools/maxTurns/isTriageNode/parentDepartmentId; department: label/color/collapsed; trigger: label/triggerType/webhookPath/rssUrl/pollInterval). Debounced text fields, collapsible sections, all inputs immediately update canvas state. Build: 481 modules, 0 errors.
 **Files changed:** client/src/canvas/AgentInspector.jsx
@@ -5288,9 +5288,9 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task: FR-V5-16/17/18/19/20 Ã¢â‚¬â€ useCanvasHistory.js Undo/Redo
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Task: FR-V5-16/17/18/19/20 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â useCanvasHistory.js Undo/Redo
 **Outcome:** COMPLETED
-**Summary:** Created useCanvasHistory.js hook (ref-based undo/redo stacks, 50-entry cap, structuredClone). Integrated into SwarmCanvas.jsx with Ctrl+Z/Ctrl+Shift+Z/Ctrl+Y shortcuts, history push on connect/delete/drag-stop/data-edit (debounced). Canvas-only Ã¢â‚¬â€ no execution state affected (DEC-011). Build: 481 modules, 0 errors. Tests: 312/312 pass.
+**Summary:** Created useCanvasHistory.js hook (ref-based undo/redo stacks, 50-entry cap, structuredClone). Integrated into SwarmCanvas.jsx with Ctrl+Z/Ctrl+Shift+Z/Ctrl+Y shortcuts, history push on connect/delete/drag-stop/data-edit (debounced). Canvas-only ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no execution state affected (DEC-011). Build: 481 modules, 0 errors. Tests: 312/312 pass.
 **Files changed:** client/src/hooks/useCanvasHistory.js (CREATED), client/src/canvas/SwarmCanvas.jsx (MODIFIED)
 **Bugs fixed:** none
 **Decisions made:** useRef for stacks (no re-renders); structuredClone for deep copy; onNodeDragStart/Stop pair for correct pre-drag snapshot; 500ms debounce on data edits
@@ -5299,9 +5299,9 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ V7.0 Documentation Update (Tasks #254-#255)
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â documenter ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V7.0 Documentation Update (Tasks #254-#255)
 **Outcome:** COMPLETED
-**Summary:** Updated docs/ARCHITECTURE.md Section 11.4 to reflect that DONE token now accepts both `__DONE__` and bare `DONE`. Updated DOC_STATUS.md with V7.0 section, two new fixed bug entries, and refreshed documentation health table timestamps. No README, API, or PRD changes needed Ã¢â‚¬â€ both fixes are internal logic.
+**Summary:** Updated docs/ARCHITECTURE.md Section 11.4 to reflect that DONE token now accepts both `__DONE__` and bare `DONE`. Updated DOC_STATUS.md with V7.0 section, two new fixed bug entries, and refreshed documentation health table timestamps. No README, API, or PRD changes needed ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â both fixes are internal logic.
 **Files changed:** docs/ARCHITECTURE.md, docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none
 **Decisions made:** none
@@ -5310,27 +5310,27 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ V5 Wave 1: Swarm Editor Transition
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5 Wave 1: Swarm Editor Transition
 **Outcome:** COMPLETED
 **Summary:** Mapped all V5 Wave 1 changes: 4 new files (useCanvasHistory, sanitizeWorkflow, nodeIdGenerator, ContextMenu), 4 modified files (SwarmCanvas, AgentInspector, SwarmView, useWorkflow). 20+ new functions added, 6 existing functions updated. SwarmCanvas signature BREAKING CHANGE documented. CODE_MAP.md Module Index and Function Graph updated. CHANGELOG.md entry appended.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
 **Bugs fixed:** none (mapping only)
 **Decisions made:** none
 **Blockers:** none
-**Next:** V5 Wave 1 TEST GATE Ã¢â‚¬â€ qa-tester should verify undo/redo, context menu, save, name editing, inspector editing
+**Next:** V5 Wave 1 TEST GATE ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â qa-tester should verify undo/redo, context menu, save, name editing, inspector editing
 ---
-## 2026-04-06 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ V5 Wave 2: NodePalette + WorkflowSettingsModal
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5 Wave 2: NodePalette + WorkflowSettingsModal
 **Outcome:** COMPLETED
-**Summary:** Mapped V5 Wave 2 changes: 2 new files (NodePalette.jsx, WorkflowSettingsModal.jsx), 2 modified files (SwarmCanvas.jsx Ã¢â‚¬â€ onDragOver/onDrop + NodePalette integration, SwarmView.jsx Ã¢â‚¬â€ Settings button + WorkflowSettingsModal). 7 new functions mapped, 2 existing functions updated. New drag-and-drop data flow (PaletteCard dataTransfer -> SwarmCanvas.onDrop) and settings persistence flow (WorkflowSettingsModal.onApply -> SwarmView -> workflowDef.settings/initialContext) documented.
+**Summary:** Mapped V5 Wave 2 changes: 2 new files (NodePalette.jsx, WorkflowSettingsModal.jsx), 2 modified files (SwarmCanvas.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â onDragOver/onDrop + NodePalette integration, SwarmView.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Settings button + WorkflowSettingsModal). 7 new functions mapped, 2 existing functions updated. New drag-and-drop data flow (PaletteCard dataTransfer -> SwarmCanvas.onDrop) and settings persistence flow (WorkflowSettingsModal.onApply -> SwarmView -> workflowDef.settings/initialContext) documented.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none (mapping only)
 **Decisions made:** none
 **Blockers:** none
-**Next:** V5 Wave 2 TEST GATE Ã¢â‚¬â€ verify palette drag-and-drop creates correct node types, settings modal persists settings/context
+**Next:** V5 Wave 2 TEST GATE ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â verify palette drag-and-drop creates correct node types, settings modal persists settings/context
 ---
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ FR-V5-37/38/39: Workflow Export/Import JSON + Duplicate Workflow
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â FR-V5-37/38/39: Workflow Export/Import JSON + Duplicate Workflow
 **Outcome:** COMPLETED
 **Summary:** Added Export (download as JSON), Import (file picker + validation + POST), and Duplicate (copy with "(Copy)" suffix) buttons to SwarmView.jsx saved-workflows toolbar. Import errors shown as dismissible inline banner. Build: 487 modules, 0 errors.
 **Files changed:** client/src/views/SwarmView.jsx
@@ -5341,7 +5341,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ V5 Wave 3: Code Map Update
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5 Wave 3: Code Map Update
 **Outcome:** COMPLETED
 **Summary:** Mapped all V5 Wave 3 changes: new useCanvasValidation.js hook (5 validation rules), SwarmCanvas snapToGrid, AgentNode validation badge, SwarmView export/import/duplicate/keyboard shortcuts/validation integration. Updated CODE_MAP.md (4 Module Index entries, 3 function updates, 4 new functions, 1 planned item marked IMPLEMENTED) and appended CHANGELOG.md entry.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
@@ -5352,7 +5352,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Wave 4 Backend: Execution History, Version History, Templates
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Wave 4 Backend: Execution History, Version History, Templates
 **Outcome:** COMPLETED
 **Summary:** Implemented 3 Wave 4 backend features: (1) ExecutionHistoryStore + 2 API routes for execution history per workflow, (2) Workflow version history in WorkflowStore with auto-save on update + 2 API routes for list/restore, (3) TemplateStore with 5 hardcoded templates + 2 API routes for list/instantiate. 312/312 tests pass.
 **Files changed:** server/stores/ExecutionHistoryStore.js (NEW), server/stores/TemplateStore.js (NEW), server/services/WorkflowStore.js (MODIFIED), server/routes/swarm.js (MODIFIED), server/routes/workflows.js (MODIFIED)
@@ -5363,7 +5363,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-06 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ V5 Wave 4: Code Map + Changelog Update
+## 2026-04-06 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â code-mapper ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V5 Wave 4: Code Map + Changelog Update
 **Outcome:** COMPLETED
 **Summary:** Mapped all 11 V5 Wave 4 files (5 new, 6 modified). Added 25+ new function entries to CODE_MAP.md, updated 3 existing entries (WorkflowStore.update, _writeWorkflow, swarmRoutes factory), updated 4 Module Index rows, added 4 new Module Index rows. Appended full CHANGELOG entry.
 **Files changed:** docs/memory/CODE_MAP.md (MODIFIED), docs/memory/CHANGELOG.md (MODIFIED)
@@ -5543,7 +5543,7 @@ full self-contained context and acceptance criteria.
 **Bugs fixed:** Final report modal showing startup/runtime banner text instead of actual agent output; execution history entries persisting empty agent outputs when terminal chat flushes lagged behind execution completion
 **Decisions made:** Prefer `state.lastOutputSnippet` / semantic snippet recovery over raw session replay banners when selecting final agent text; include terminal agent states in output synthesis even with zero chat messages
 **Verification:** `npm test --prefix server -- swarm-engine.test.js execution-results-api.test.js` PASS (`159/159`); live browser rerun on `Remote Work Benefits Research and Summary (08/04/2026)` confirms final report now contains the Writer paragraph instead of the startup banner
-**Remaining issues:** Live Chat panel still shows only two messages (`Researcher` summary + `Writer` placeholder "Structured handoff sent.") and does not surface the Writer's actual final paragraph; node previews and final report still carry trailing runtime-tail noise such as `Germinatingâ€¦`, `âµâµ`, and `â— medium`
+**Remaining issues:** Live Chat panel still shows only two messages (`Researcher` summary + `Writer` placeholder "Structured handoff sent.") and does not surface the Writer's actual final paragraph; node previews and final report still carry trailing runtime-tail noise such as `GerminatingÃ¢â‚¬Â¦`, `Ã¢ÂÂµÃ¢ÂÂµ`, and `Ã¢â€”Â medium`
 **Next:** Trace why the Writer's terminal-state snippet is not emitted as a WS `chat_message`, and trim inline runtime-tail chrome from semantic snippet / final-text post-processing
 
 ---
@@ -5569,7 +5569,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-08 â€” researcher â€” Research D: Claude CLI Session File Management
+## 2026-04-08 Ã¢â‚¬â€ researcher Ã¢â‚¬â€ Research D: Claude CLI Session File Management
 **Outcome:** COMPLETED
 **Summary:** Deep-dive research on Claude CLI session file structure, storage location, file format, and management commands. Sessions stored as JSONL at ~/.claude/projects/<encoded-path>/<uuid>.jsonl with companion UUID directories for tool-results and subagents. No built-in delete/list CLI commands exist (PR #34168 pending). JSONL is append-only with typed messages (user, assistant, system, permission-mode, file-history-snapshot, attachment). Active sessions tracked in ~/.claude/sessions/<PID>.json. Global prompt index at ~/.claude/history.jsonl. Cleanup via cleanupPeriodDays setting (default 30 days). Real disk usage: 725 MB for this project alone, 881 MB total.
 **Files changed:** docs/memory/agents/researcher.md, docs/memory/ACTIVITY_LOG.md
@@ -5580,20 +5580,20 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-08 â€” qa-tester â€” Task #358: TEST GATE â€” StreamJsonParser
+## 2026-04-08 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #358: TEST GATE Ã¢â‚¬â€ StreamJsonParser
 **Outcome:** COMPLETED
 **Summary:** TEST GATE PASS. All 39 StreamJsonParser unit tests pass. All 10 event types, 2 error cases, content_block_stop dispatch, and spec compliance verified. Full server suite: 453/453 tests, 0 failures. No bugs found.
 **Files changed:** docs/TASK_PLAN.md (MODIFIED)
 **Bugs fixed:** none
-**Decisions made:** PASS verdict â€” all acceptance criteria met
+**Decisions made:** PASS verdict Ã¢â‚¬â€ all acceptance criteria met
 **Blockers:** none
 **Next:** Task #359 (SwarmEngine._spawnAgentStreamJson) is unblocked for backend-dev
 ---
 
 ---
-## 2026-04-08 â€” code-mapper â€” Task #357: StreamJsonParser â€” NDJSON line parser
+## 2026-04-08 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Task #357: StreamJsonParser Ã¢â‚¬â€ NDJSON line parser
 **Outcome:** COMPLETED
-**Summary:** Mapped StreamJsonParser class (12 function entries) into CODE_MAP.md â€” Module Index, Test Infrastructure, and full Function Graph. Appended CHANGELOG.md entry. StreamJsonParser is a new standalone NDJSON parser with no production callers yet; future consumer is SwarmEngine (V9.0).
+**Summary:** Mapped StreamJsonParser class (12 function entries) into CODE_MAP.md Ã¢â‚¬â€ Module Index, Test Infrastructure, and full Function Graph. Appended CHANGELOG.md entry. StreamJsonParser is a new standalone NDJSON parser with no production callers yet; future consumer is SwarmEngine (V9.0).
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
 **Bugs fixed:** none
 **Decisions made:** Documented as sibling pattern to HandoffParser (PTY vs stream-json), not a replacement
@@ -5602,7 +5602,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-08 â€” documenter â€” Task #357: StreamJsonParser
+## 2026-04-08 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Task #357: StreamJsonParser
 **Outcome:** COMPLETED
 **Summary:** Updated ARCHITECTURE.md with StreamJsonParser in V3 services diagram and new Section 13 (V9.0 Stream-JSON Architecture). Updated DOC_STATUS.md to reflect Task #357 completion. No README or API.md changes needed (internal service, no new endpoints).
 **Files changed:** docs/ARCHITECTURE.md, docs/memory/DOC_STATUS.md, docs/memory/agents/documenter.md, docs/memory/ACTIVITY_LOG.md
@@ -5613,10 +5613,10 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-08 â€” backend-dev â€” Task #359: SwarmEngine._spawnAgentStreamJson() â€” Stream-JSON agent spawner
+## 2026-04-08 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #359: SwarmEngine._spawnAgentStreamJson() Ã¢â‚¬â€ Stream-JSON agent spawner
 **Outcome:** COMPLETED
 **Summary:** Implemented _spawnAgentStreamJson(), _spawnAgent() dispatcher, and _handleStreamJsonResult() in SwarmEngine.js. Claude provider agents now have a stream-json spawn path alongside the existing PTY path. Modified _onDone for stream-json reinject, _serializeAgentState for new fields, stopExecution for child cleanup. 453/453 tests pass, build clean.
-**Files changed:** server/services/SwarmEngine.js (MODIFIED â€” imports, 3 new methods, 3 modified methods)
+**Files changed:** server/services/SwarmEngine.js (MODIFIED Ã¢â‚¬â€ imports, 3 new methods, 3 modified methods)
 **Bugs fixed:** none
 **Decisions made:** HandoffParser for token scanning (consistency), null sessionId for stream-json agents (DEC-028), requireCjs for tree-kill import
 **Blockers:** none
@@ -5624,18 +5624,18 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-08 â€” documenter â€” Post-Task #359: _spawnAgentStreamJson documentation
+## 2026-04-08 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Post-Task #359: _spawnAgentStreamJson documentation
 **Outcome:** COMPLETED
 **Summary:** Expanded docs/ARCHITECTURE.md Section 13 with 4 new subsections (13.3 _spawnAgent router, 13.4 _spawnAgentStreamJson 13-step lifecycle + WS events table + state shape table, 13.5 _handleStreamJsonResult + agent_cost JSON example, 13.6 _onDone/stopExecution modifications). Updated DOC_STATUS.md health row for ARCHITECTURE.md, Inline comments, stale sections, and debt entries.
 **Files changed:** docs/ARCHITECTURE.md, docs/memory/DOC_STATUS.md, docs/memory/agents/documenter.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none
 **Decisions made:** Split _spawnAgent router into its own subsection for clarity; deferred README.md/API.md updates until UI components and WS event FRs land
 **Blockers:** none
-**Next:** Next documenter run after Task #361 (dispatcher integration) â€” add Section 13.8
+**Next:** Next documenter run after Task #361 (dispatcher integration) Ã¢â‚¬â€ add Section 13.8
 ---
 
 ---
-## 2026-04-08 â€” code-mapper â€” Task #359: SwarmEngine._spawnAgentStreamJson â€” Stream-JSON agent spawner
+## 2026-04-08 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Task #359: SwarmEngine._spawnAgentStreamJson Ã¢â‚¬â€ Stream-JSON agent spawner
 **Outcome:** COMPLETED
 **Summary:** Mapped the new V9.0 stream-json spawn path in SwarmEngine.js. Added 3 new function-graph entries (_spawnAgent dispatcher, _spawnAgentStreamJson, _handleStreamJsonResult), updated 3 existing entries (_spawnAgentPty callers, _onDone stream-json reinject branch, stopExecution tree-kill cleanup), and added a new entry for _serializeAgentState. StreamJsonParser now has its first production caller.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
@@ -5644,27 +5644,27 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** Mapping update needed after startExecution/_ensureAgentPty are migrated to _spawnAgent dispatcher (currently bypass stream-json path)
 ---
-## 2026-04-08 â€” qa-tester/project-manager â€” Task #367: AREA CHECKPOINT â€” V9.0-Phase1 Backend Core
+## 2026-04-08 Ã¢â‚¬â€ qa-tester/project-manager Ã¢â‚¬â€ Task #367: AREA CHECKPOINT Ã¢â‚¬â€ V9.0-Phase1 Backend Core
 **Outcome:** COMPLETED (verdict: PASS)
 **Summary:** Closed the V9.0 Phase 1 backend core area. Added a resilient checkpoint test for a mixed-provider execution chain (Claude stream-json -> Claude stream-json -> Codex PTY) plus a graceful-stop regression test, then verified the full backend suite and build. Targeted swarm-engine tests pass at 163/163, full backend suite passes at 472/472, and `npm run build` passes with the existing large-chunk warning only. Phase 1 is now closed and Phase 2 frontend work is unblocked starting at #368.
 **Files changed:** server/tests/swarm-engine.test.js, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none in runtime code; stabilized the area-checkpoint assertion to verify checkpoint-level contracts without duplicating granular event-route coverage already enforced by earlier gates
 **Decisions made:** Keep the #367 mixed-provider test focused on routing, handoff, PTY/non-PTY coexistence, graceful stop, and final execution contract; leave detailed `agent_tool_*`, `agent_cost`, and `agent_thinking` coverage to their dedicated stream-json gate tests
 **Blockers:** none
-**Next:** TASK #368 â€” SwarmContext.jsx store extensions for Phase 2 frontend
+**Next:** TASK #368 Ã¢â‚¬â€ SwarmContext.jsx store extensions for Phase 2 frontend
 
 ---
-## 2026-04-08 â€” frontend-dev/qa-tester â€” Tasks #368, #369, #370, #371: SwarmContext + useSwarm Phase 2 kickoff
+## 2026-04-08 Ã¢â‚¬â€ frontend-dev/qa-tester Ã¢â‚¬â€ Tasks #368, #369, #370, #371: SwarmContext + useSwarm Phase 2 kickoff
 **Outcome:** COMPLETED
 **Summary:** Opened Phase 2 frontend and closed the first two component/gate pairs. `SwarmContext.jsx` now documents the dynamic stream-json agent state shape (`spawnMode`, `isThinking`, `currentTool`, `turnCost`, `totalCost`) and uses a shared execution-state reset path so those lazy fields are cleared whenever execution state is reset. `useSwarm.js` now consumes the new stream-json WS events (`agent_thinking`, `agent_tool_use`, `agent_tool_delta`, `agent_cost`) and also persists `agent_status.spawnMode` while clearing transient tool/thinking state on `done`/`idle`. Verification passed through inline Node harnesses for store merge/reset behavior and WS event handling, plus client/root builds (500 modules, existing chunk-size warning only).
 **Files changed:** client/src/store/SwarmContext.jsx, client/src/hooks/useSwarm.js, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** Frontend store and WS hook were missing the stream-json runtime state fields and event handlers required by PRD v6.0
 **Decisions made:** Keep the new client-side verification lightweight and local with inline Node harnesses because the repo has no dedicated client test runner configured; retain the existing build warning about large chunks as non-blocking
 **Blockers:** none
-**Next:** Parallel Phase 2 wave â€” #372 ChatMessage.jsx, #374 AgentNode.jsx, #376 AgentInspector.jsx, #378 ChatPanel.jsx, #382 Stop/Reset UI; #380 spawnMode field truthfulness can run in parallel
+**Next:** Parallel Phase 2 wave Ã¢â‚¬â€ #372 ChatMessage.jsx, #374 AgentNode.jsx, #376 AgentInspector.jsx, #378 ChatPanel.jsx, #382 Stop/Reset UI; #380 spawnMode field truthfulness can run in parallel
 
 ---
-## 2026-04-08 â€” orchestrator â€” Tasks #372, #373, #374, #375, #378, #379, #380, #381: stream-json frontend visibility + PTY spawnMode verification
+## 2026-04-08 Ã¢â‚¬â€ orchestrator Ã¢â‚¬â€ Tasks #372, #373, #374, #375, #378, #379, #380, #381: stream-json frontend visibility + PTY spawnMode verification
 **Outcome:** COMPLETED
 **Summary:** Closed the first stream-json frontend visibility wave. `ChatMessage.jsx` now renders collapsed tool/thinking metadata blocks and a cost footer for stream-json turns while keeping PTY formatting unchanged. `ChatPanel.jsx` enriches and groups stream-json assistant chunks so tool/cost metadata attach to a single rendered turn, backed by lightweight per-turn metadata capture in `useSwarm.js` and `SwarmContext.jsx`. `AgentNode.jsx` now surfaces thinking/tool/cost indicators, and `AgentInspector.jsx` hides the terminal button for stream-json agents. Also verified Task #380 truthfulness: PTY `agent_status` broadcasts already include `spawnMode:'pty'`, so no behavioral engine patch was needed before passing #381.
 **Files changed:** client/src/canvas/ChatMessage.jsx, client/src/canvas/ChatPanel.jsx, client/src/canvas/nodes/AgentNode.jsx, client/src/canvas/AgentInspector.jsx, client/src/hooks/useSwarm.js, client/src/store/SwarmContext.jsx, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/CONTEXT.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
@@ -5676,7 +5676,7 @@ full self-contained context and acceptance criteria.
 ---
 ## 2026-04-08 - qa-tester/orchestrator - Debugger-loop Phase 1 deep E2E on mixed-provider swarm path
 **Outcome:** COMPLETED (inspection only)
-**Summary:** Ran debugger-loop Phase 1 without fixes. Baseline checks passed (`npm test --prefix server` 472/472, `npm run build` PASS, server health OK on `http://127.0.0.1:3000`). Created a controlled browser workflow `Debugger Loop Mixed Provider E2E 2026-04-08` (`6717fb0a-f174-4571-a910-a835785350aa`) in project `Prova` and executed it twice. Auto runtime showed truthful fallback copy (`claude -> codex` due Claude usage limit), but the source node remained `Running`, the downstream node stayed `Idle`, and the source node/chat leaked Codex shell/orchestration chrome (`Ran Get-Content -Raw package.json`, `â€º Implement {feature} gpt-5.4 high`). Manual Stop worked. Claude-only runtime later reached a truthful `Blocked` state with `Claude hit its usage limit...`, which isolates the main bug to fallback coherence rather than the blocked-state UI. Added follow-up tasks #394-#396 in TASK_PLAN for bulk-plan compliance.
+**Summary:** Ran debugger-loop Phase 1 without fixes. Baseline checks passed (`npm test --prefix server` 472/472, `npm run build` PASS, server health OK on `http://127.0.0.1:3000`). Created a controlled browser workflow `Debugger Loop Mixed Provider E2E 2026-04-08` (`6717fb0a-f174-4571-a910-a835785350aa`) in project `Prova` and executed it twice. Auto runtime showed truthful fallback copy (`claude -> codex` due Claude usage limit), but the source node remained `Running`, the downstream node stayed `Idle`, and the source node/chat leaked Codex shell/orchestration chrome (`Ran Get-Content -Raw package.json`, `Ã¢â‚¬Âº Implement {feature} gpt-5.4 high`). Manual Stop worked. Claude-only runtime later reached a truthful `Blocked` state with `Claude hit its usage limit...`, which isolates the main bug to fallback coherence rather than the blocked-state UI. Added follow-up tasks #394-#396 in TASK_PLAN for bulk-plan compliance.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/CONTEXT.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none (debugger-loop Phase 1 forbids fixes)
 **Decisions made:** Treat the fallback-running/chat-contamination/downstream-idle triad as one critical bug task because the browser evidence points to a single fallback execution coherence failure; do not open a separate bug for the truthful Claude-only blocked state
@@ -5706,17 +5706,17 @@ full self-contained context and acceptance criteria.
 **Next:** Phase 3 parallel documentation/bypass wave - #384 + #385 + #386, then #387 and gate #388
 
 ---
-## 2026-04-08 â€” debugger/qa-tester/documenter â€” Tasks #394, #395, #396: mixed-provider fallback coherence follow-up
+## 2026-04-08 Ã¢â‚¬â€ debugger/qa-tester/documenter Ã¢â‚¬â€ Tasks #394, #395, #396: mixed-provider fallback coherence follow-up
 **Outcome:** COMPLETED / PASS / PASS
 **Summary:** Closed the debugger-loop follow-up area opened by the deep mixed-provider E2E failure. `SwarmEngine` now treats Claude terminal `stream-json` error results as hard runtime blockers and refuses cross-runtime PTY fallback for `spawnMode='stream-json'`, preventing the old `result -> _onDone() -> forced handoff -> Codex chrome contamination` path. Browser re-run on isolated server `http://127.0.0.1:3005` with workflow `Debugger Loop Mixed Provider E2E 2026-04-08` produced execution `c6fa0f09-4eaa-4a1c-942a-477d9034d31f`: top-level status `blocked`, `runtimeProvider=claude`, `lastFallback=null`, `Claude Reader=Blocked`, `Codex Reporter=Idle`, no handoff edge count, and blocker copy `Claude hit its usage limit before the swarm agent could continue.` Saved API artifact to `tests/artifacts/debugger-loop-postfix-status.json`. Full verification green: `npm test --prefix server` (`475/475`) and `npm run build` PASS.
 **Files changed:** server/services/SwarmEngine.js, server/tests/swarm-engine.test.js, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/CONTEXT.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/CODE_MAP.md, docs/memory/DOC_STATUS.md
-**Bugs fixed:** BUG-DL-SJ-FALLBACK-1 â€” stream-json Claude terminal errors no longer fall through into forced downstream Codex handoff
+**Bugs fixed:** BUG-DL-SJ-FALLBACK-1 Ã¢â‚¬â€ stream-json Claude terminal errors no longer fall through into forced downstream Codex handoff
 **Decisions made:** For terminal Claude stream-json turns, truthful blocking is preferred over unsafe cross-runtime fallback until a coherent handoff/replay design exists
 **Blockers:** none
 **Next:** Resume Phase 3 critical path at TASK #389
 
 ---
-## 2026-04-08 â€” qa-tester/documenter â€” Tasks #389, #390, #391, #392, #393: stream-json E2E close-out + documentation/final checkpoint
+## 2026-04-08 Ã¢â‚¬â€ qa-tester/documenter Ã¢â‚¬â€ Tasks #389, #390, #391, #392, #393: stream-json E2E close-out + documentation/final checkpoint
 **Outcome:** COMPLETED / PASS / COMPLETED / PASS / PASS
 **Summary:** Closed the remaining V9.0 stream-json migration path. Created `server/tests/e2e/stream-json-e2e.test.js` as a deterministic mixed-runtime harness that verifies Claude stream-json -> Codex PTY handoff, client-visible thinking/tool/cost aggregation, graceful stop/resume with `--resume` + preserved `--tools`, and reset/archive cleanup of Claude JSONL session artifacts. Verified the dedicated E2E file green, then re-ran `npm test --prefix server` (`478/478`) and `npm run build` (PASS). Documentation and release metadata were then synchronized: `README.md` now documents stream-json Claude agents + hybrid runtime behavior, `CLAUDE.md` now carries DEC-027/028/029 operational constraints, `docs/memory/PROJECT.md` reflects V9 closure, and the root `package.json` is now `v9.0.0`. V9.0 STREAM-JSON AGENT MIGRATION is closed via #393 PASS.
 **Files changed:** server/tests/e2e/stream-json-e2e.test.js, README.md, CLAUDE.md, package.json, docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/CONTEXT.md, docs/memory/PROGRESS.md, docs/memory/DOC_STATUS.md, docs/memory/CODE_MAP.md, docs/memory/ACTIVITY_LOG.md
@@ -5726,7 +5726,7 @@ full self-contained context and acceptance criteria.
 **Next:** Resume any remaining non-V9 pending backlog from the broader task plan
 
 ---
-## 2026-04-08 â€” debugger/pm â€” final debugger-loop beta pass + truthfulness sync
+## 2026-04-08 Ã¢â‚¬â€ debugger/pm Ã¢â‚¬â€ final debugger-loop beta pass + truthfulness sync
 **Outcome:** COMPLETED
 **Summary:** Ran a final beta-style deep pass on an isolated server at `http://127.0.0.1:3315` after V9.0 closure. Verified baseline remains green (`npm test --prefix server` PASS 478/478, `npm run build` PASS) and browser-covered Projects, Live Terminal, Job Runner, Deployments, Context Editor, and Swarm. Confirmed one real follow-up issue: documentation/status drift. `docs/TASK_PLAN.md` header and memory still claimed `386 completed / 2 deferred / 8 pending`, but the actual plan now has no `PENDING`, `IN_PROGRESS`, `BLOCKED`, or `FAIL` task statuses and only one live `DEFERRED` task (#236, ConPTY platform limitation). Synced `TASK_PLAN.md`, `PROJECT.md`, `CONTEXT.md`, `DOC_STATUS.md`, and `CODE_MAP.md` to the truthful final state: task numbering extends through #396, 393 tasks are registered, 392 are COMPLETE/PASS, 1 is DEFERRED, 0 are PENDING. Also investigated apparent project-name duplication from browser automation and ruled it out as a product bug: `puppeteer_fill` reproduced `Beta TestsBeta Tests`, but direct API registration stored `API Clean` correctly and React-native input dispatch stored `Native Check` correctly.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/CONTEXT.md, docs/memory/DOC_STATUS.md, docs/memory/CODE_MAP.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
@@ -5738,40 +5738,40 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-08 â€” debugger â€” Fix test failures after _ensureAgentPty provider routing fix
+## 2026-04-08 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Fix test failures after _ensureAgentPty provider routing fix
 **Outcome:** COMPLETED
 **Summary:** Fixed 16 test failures caused by _ensureAgentPty routing fix. Root cause was twofold: (1) tests lacked default stream-json child mocks, (2) the fix itself used execution.activeProvider (last-used) instead of providerStrategy.mode (workflow-level strategy), breaking mixed-provider chains. Changed to providerStrategy.mode and added default mockSpawn/mockCreateInterface implementations. All 478 server tests pass.
 **Files changed:** server/services/SwarmEngine.js, server/tests/swarm-engine.test.js
 **Bugs fixed:** Wrong provider hint in _ensureAgentPty (activeProvider -> providerStrategy.mode); missing stream-json test mocks
 **Decisions made:** Use providerStrategy.mode for routing consistency; default mocks via mockImplementation for lowest priority
 **Blockers:** none
-**Next:** none â€” fix is self-contained
+**Next:** none Ã¢â‚¬â€ fix is self-contained
 
 ---
 
-## 2026-04-08 â€” frontend-dev â€” BUG-FRONTEND-1 + BUG-FRONTEND-2: Cache token passthrough
+## 2026-04-08 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ BUG-FRONTEND-1 + BUG-FRONTEND-2: Cache token passthrough
 **Outcome:** COMPLETED
 **Summary:** Fixed two related bugs: useSwarm.js agent_cost handler now extracts cacheReadTokens/cacheWriteTokens from the server WS event and stores them in turnCost, totalCost, and pendingTurn.cost. ChatMessage.jsx formatCostFooter now conditionally displays cache token counts when present. Build clean (500 modules, 0 errors). WS contract fully satisfied.
 **Files changed:** client/src/hooks/useSwarm.js, client/src/canvas/ChatMessage.jsx
 **Bugs fixed:** BUG-FRONTEND-1 (cache tokens dropped in WS handler), BUG-FRONTEND-2 (cache tokens not displayed in cost footer)
 **Decisions made:** Show cache part only when cacheReadTokens > 0 or cacheWriteTokens > 0
 **Blockers:** none
-**Next:** nothing â€” bugs fully resolved
+**Next:** nothing Ã¢â‚¬â€ bugs fully resolved
 ---
 
 ---
 
-## 2026-04-08 â€” code-mapper â€” BUG-FIX: _ensureAgentPty handoff provider routing
+## 2026-04-08 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ BUG-FIX: _ensureAgentPty handoff provider routing
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md and CHANGELOG.md for the _ensureAgentPty bug fix. Key connection change: _ensureAgentPty now routes through _spawnAgent dispatcher instead of calling _spawnAgentPty directly. _spawnAgent "Called by" updated from "not yet wired" to 4 actual call sites. Test helpers buildDefaultMockStreamJsonChild and buildDefaultMockReadline mapped.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
 **Bugs fixed:** none (mapping only)
 **Decisions made:** none
 **Blockers:** none
-**Next:** nothing â€” mapping task self-contained
+**Next:** nothing Ã¢â‚¬â€ mapping task self-contained
 
 ---
-## 2026-04-08 â€” project-manager â€” Task #397: BUG-DL-HANDOFF-PROVIDER-1 registered and marked COMPLETED
+## 2026-04-08 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Task #397: BUG-DL-HANDOFF-PROVIDER-1 registered and marked COMPLETED
 **Outcome:** COMPLETED
 **Summary:** Registered new task #397 in TASK_PLAN.md for the _ensureAgentPty handoff provider bug fix. The bug caused all handoff targets to spawn via PTY instead of stream-json for Claude agents, producing garbled ConPTY output in downstream agents. Fix: pass execution.providerStrategy.mode to _spawnAgent. 478/478 tests pass. Task created as COMPLETED since the fix was already applied by the debugger.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md, docs/memory/CONTEXT.md
@@ -5782,17 +5782,17 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-08 â€” qa-tester â€” Debugger-Loop Phase 1: Multi-Agent Swarm E2E Deep Test
+## 2026-04-08 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Debugger-Loop Phase 1: Multi-Agent Swarm E2E Deep Test
 **Outcome:** COMPLETED
-**Summary:** Ran E2E Puppeteer test of 2-agent Claude swarm (Researcherâ†’Writer) with Node.js-streams-in-Italian prompt. Last agent produced a tangible coherent Italian paragraph (PASS on primary test). Found 1 HIGH display-layer corruption bug where text_delta accumulation inserts spaces between tokens (`high Water Mark`, `Java Script`) even though raw handoff JSON is clean â€” corruption is in the text accumulation path only, not the result path. Also 2 LOW bugs (stale node state on fresh workflow, cost footer disappears after Completed).
+**Summary:** Ran E2E Puppeteer test of 2-agent Claude swarm (ResearcherÃ¢â€ â€™Writer) with Node.js-streams-in-Italian prompt. Last agent produced a tangible coherent Italian paragraph (PASS on primary test). Found 1 HIGH display-layer corruption bug where text_delta accumulation inserts spaces between tokens (`high Water Mark`, `Java Script`) even though raw handoff JSON is clean Ã¢â‚¬â€ corruption is in the text accumulation path only, not the result path. Also 2 LOW bugs (stale node state on fresh workflow, cost footer disappears after Completed).
 **Files changed:** none (observation-only phase)
 **Bugs fixed:** none
-**Decisions made:** Verdict PASS with bugs â€” core goal achieved but UX is visibly broken for all Claude swarms
+**Decisions made:** Verdict PASS with bugs Ã¢â‚¬â€ core goal achieved but UX is visibly broken for all Claude swarms
 **Blockers:** none
-**Next:** Route BUG-DL-01/02/03 to debugger-loop Phase 2 bulk bug â†’ task plan
+**Next:** Route BUG-DL-01/02/03 to debugger-loop Phase 2 bulk bug Ã¢â€ â€™ task plan
 ---
 
-## 2026-04-08 â€” debugger/qa-tester â€” Task #399: stream-json reset blocker truthfulness fix
+## 2026-04-08 Ã¢â‚¬â€ debugger/qa-tester Ã¢â‚¬â€ Task #399: stream-json reset blocker truthfulness fix
 **Outcome:** COMPLETED
 **Summary:** Re-ran the latest stream-json swarm workflow on isolated server `http://127.0.0.1:3320` using `ZZ Debugger Loop Stream-JSON Mixed E2E` in project `Prova`. Reproduced a real reset bug: after Claude hit a truthful blocker, `Reset Session` returned the blocked node to `Idle` but left the execution globally `Blocked`, so the blocker banner and stop-state controls stayed visible. Root cause was stale execution-level blocker state in `_resetStreamJsonAgent`. The fix now clears `execution.runtimeBlocker` for the resetting node and restores the execution to `idle` when no active agents/blockers remain. Browser retest confirmed the full `Run -> Blocked -> Reset Session` path now returns the swarm to a truthful idle toolbar state.
 **Files changed:** server/services/SwarmEngine.js, server/tests/swarm-engine.test.js, docs/TASK_PLAN.md, docs/memory/CONTEXT.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
@@ -5801,7 +5801,7 @@ full self-contained context and acceptance criteria.
 **Blockers:** none
 **Next:** No registered pending task remains; next work is a new planned area or housekeeping/release prep
 ---
-## 2026-04-08 â€” project-manager â€” V9.1 Codex SDK structured-runtime area registered and closed
+## 2026-04-08 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ V9.1 Codex SDK structured-runtime area registered and closed
 **Outcome:** COMPLETED
 **Summary:** Registered a new `V9.1 CODEX SDK SWARM INTEGRATION` task area (#400-#405) to mirror the completed Claude stream-json migration with a Codex-native structured runtime. The area captures the contract spike, server dependency + adapter foundation, SwarmEngine `codex-sdk` runtime path, backend gate, frontend structured-runtime parity, and final checkpoint. Verification is green: `npm test --prefix server` = 488/488, `npm run build --prefix client` = 501 modules. Plan totals now stand at 402 registered tasks, 401 COMPLETE/PASS, 1 DEFERRED, 0 PENDING.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROJECT.md, docs/memory/CONTEXT.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
@@ -5813,7 +5813,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-08 â€” debugger â€” Task #406: BUG-DL-TEXTDELTA-1 â€” Stream-json text_delta spurious spaces
+## 2026-04-08 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #406: BUG-DL-TEXTDELTA-1 Ã¢â‚¬â€ Stream-json text_delta spurious spaces
 **Outcome:** COMPLETED
 **Summary:** Fixed two client-side accumulation bugs causing stream-json text_delta tokens to render with spurious `\n\n` separators between sub-word fragments. (1) SwarmContext.jsx `appendAgentChatText` separator changed from `'\n\n'` to `''`. (2) useSwarm.js `lastChatSnippet` changed from overwrite to accumulate. Build clean, 488/488 tests pass.
 **Files changed:** client/src/store/SwarmContext.jsx, client/src/hooks/useSwarm.js, docs/TASK_PLAN.md
@@ -5824,18 +5824,18 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-08 â€” code-mapper â€” Task #406: BUG-DL-TEXTDELTA-1 â€” Stream-json text_delta spurious spaces
+## 2026-04-08 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Task #406: BUG-DL-TEXTDELTA-1 Ã¢â‚¬â€ Stream-json text_delta spurious spaces
 **Outcome:** COMPLETED
 **Summary:** Mapped the debugger's fix for text_delta fragment concatenation. Added new CODE_MAP entry for `appendAgentChatText` (separator '' instead of '\n\n') and updated `connectWs` entry documenting lastChatSnippet accumulation pattern (`prevSnippet + msg.text` instead of overwrite).
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
 **Bugs fixed:** none (mapping only)
 **Decisions made:** none
 **Blockers:** none
-**Next:** nothing â€” task chain complete
+**Next:** nothing Ã¢â‚¬â€ task chain complete
 ---
 
 ---
-## 2026-04-08 â€” documenter â€” Task #406: BUG-DL-TEXTDELTA-1 documentation audit
+## 2026-04-08 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Task #406: BUG-DL-TEXTDELTA-1 documentation audit
 **Outcome:** COMPLETED
 **Summary:** Audited all docs after Task #406 fixed text_delta concatenation bug. Updated DOC_STATUS.md to mark BUG-DL-01 as FIXED, updated release status (display fidelity FIXED), added bug to fixed table, corrected open bug count. No changes needed to README, ARCHITECTURE, API, or CLAUDE.md.
 **Files changed:** docs/memory/DOC_STATUS.md
@@ -5846,7 +5846,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-08 â€” project-manager â€” Task #406 phase 2 housekeeping + TEST GATE #409 re-run tracking
+## 2026-04-08 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Task #406 phase 2 housekeeping + TEST GATE #409 re-run tracking
 **Outcome:** COMPLETED
 **Summary:** Updated TASK_PLAN.md header, PROGRESS.md, and CONTEXT.md to reflect the phase 2 canonical result text fix (commit 9029762) for BUG-DL-TEXTDELTA-1. #406 remains COMPLETED (phase 2 is a continuation). TEST GATE #409 status changed from FAIL to IN_PROGRESS as it is being re-run against the phase 2 fix. 490/490 tests pass, build clean.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/project-manager.md
@@ -5857,52 +5857,52 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-08 â€” code-mapper â€” Task #406 phase 2: Canonical result text code mapping
+## 2026-04-08 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Task #406 phase 2: Canonical result text code mapping
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md and CHANGELOG.md for the canonical result text fix (commit 9029762). Mapped new `replaceAgentChatText` store action, updated `_parseResult` (resultText field), `_handleStreamJsonResult` (step 4b canonical replacement + isCanonical broadcast), and `connectWs` (isCanonical handler branch). 5 files analyzed, 1 function added, 4 updated, 0 removed.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none
 **Decisions made:** none
 **Blockers:** none
-**Next:** nothing â€” task fully self-contained
+**Next:** nothing Ã¢â‚¬â€ task fully self-contained
 ---
 
-## 2026-04-09 â€” code-mapper â€” Commit 5d359b4: Codex SDK canonical chat_message + duplicate WS broadcast fix
+## 2026-04-09 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Commit 5d359b4: Codex SDK canonical chat_message + duplicate WS broadcast fix
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md and CHANGELOG.md for commit 5d359b4. Mapped new `replaceNodeChatMessages` store action, updated `_handleCodexSdkTurnCompleted` (canonical isCanonical:true emission + chatMessages replacement), `_applyCodexSdkItemEvent` (ChatExtractor.feed removed), and `connectWs` isCanonical handler (now uses replaceNodeChatMessages instead of patchLatestChatMessage). 3 files analyzed, 1 function added, 3 updated, 0 removed. No breaking changes.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none (mapping only)
 **Decisions made:** none
 **Blockers:** none
-**Next:** nothing â€” task fully self-contained
+**Next:** nothing Ã¢â‚¬â€ task fully self-contained
 ---
 
 ---
-## 2026-04-09 â€” code-mapper â€” Commit ed6877a: BUG-DT-1 Models popup click-outside fix
+## 2026-04-09 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Commit ed6877a: BUG-DT-1 Models popup click-outside fix
 **Outcome:** COMPLETED
 **Summary:** Mapped the click-outside dismiss fix for the Models settings popup in SwarmView. Added complexity note for modelSettingsRef + mousedown useEffect pattern. Updated CODE_MAP.md and CHANGELOG.md.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
 **Bugs fixed:** none (documenting a fix made by another agent)
 **Decisions made:** none
 **Blockers:** none
-**Next:** nothing â€” mapping task complete
+**Next:** nothing Ã¢â‚¬â€ mapping task complete
 ---
 
 ---
-## 2026-04-09 â€” qa-tester â€” Debugger Loop Phase 1: Micro-Area B Client Chat Audit
+## 2026-04-09 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Debugger Loop Phase 1: Micro-Area B Client Chat Audit
 **Outcome:** COMPLETED
 **Summary:** Deep code audit of client-side chat system (SwarmContext store, useSwarm WS handler, ChatPanel, ChatMessage, HitlChatCard). Found 16 bugs: 4 HIGH (canonical message race conditions, REST hydration stale fragment re-addition, empty canonical text destruction), 5 MEDIUM (undefined nodeId, toolUse grouping loss, XSS surface, double-click vulnerability, stale closures), 7 LOW.
 **Files changed:** docs/memory/agents/qa-tester.md, docs/memory/ACTIVITY_LOG.md
-**Bugs fixed:** none (audit only â€” 16 bugs reported)
+**Bugs fixed:** none (audit only Ã¢â‚¬â€ 16 bugs reported)
 **Decisions made:** none
 **Blockers:** none
 **Next:** Route bug report to debugger-loop orchestrator for Phase 2 bulk-fix planning
 ---
 
 ---
-## 2026-04-09 â€” code-mapper â€” Debugger Loop Phase 1: Chat Stress Test (Audit Recording)
+## 2026-04-09 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Debugger Loop Phase 1: Chat Stress Test (Audit Recording)
 **Outcome:** COMPLETED
-**Summary:** Recorded the completion of Debugger Loop Phase 1 (chat stress test) which found 31 bugs (6 HIGH, 9 MEDIUM, 16 LOW) across 9 chat pipeline files. No code was modified â€” this was a read-only audit. Appended audit coverage note to CODE_MAP.md and entry to CHANGELOG.md.
+**Summary:** Recorded the completion of Debugger Loop Phase 1 (chat stress test) which found 31 bugs (6 HIGH, 9 MEDIUM, 16 LOW) across 9 chat pipeline files. No code was modified Ã¢â‚¬â€ this was a read-only audit. Appended audit coverage note to CODE_MAP.md and entry to CHANGELOG.md.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md (append-only)
 **Bugs fixed:** none (recording audit results only)
 **Decisions made:** Audit note added as footer section in CODE_MAP.md
@@ -5911,7 +5911,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-09 â€” backend-dev â€” Task #417: BUG-CHAT-SERVER-01
+## 2026-04-09 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #417: BUG-CHAT-SERVER-01
 **Outcome:** COMPLETED
 **Summary:** Fixed stream-json canonical emission in SwarmEngine.js to update execution.chatMessages (filter+push+slice pattern ported from Codex SDK path). REST hydration and _buildAgentOutputs now see canonical text instead of garbled fragments. 490/490 tests pass.
 **Files changed:** server/services/SwarmEngine.js
@@ -5922,39 +5922,39 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-09 â€” code-mapper â€” Tasks #417+#419: Code Map update
+## 2026-04-09 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #417+#419: Code Map update
 **Outcome:** COMPLETED
 **Summary:** Updated CODE_MAP.md and CHANGELOG.md for Tasks #417 (stream-json canonical chatMessages in SwarmEngine) and #419 (client canonicalReceived flag + empty canonical guard in useSwarm.js/SwarmContext.jsx). 3 files analyzed, 3 function entries updated, 0 added, 0 removed.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
 **Bugs fixed:** none (mapping only)
 **Decisions made:** none
 **Blockers:** none
-**Next:** none â€” mapping task complete
+**Next:** none Ã¢â‚¬â€ mapping task complete
 ---
 
 ---
-## 2026-04-09 â€” frontend-dev â€” Task #429: BUG-CHAT-CLIENT-6 â€” ChatPanel toolUse accumulation fix
+## 2026-04-09 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #429: BUG-CHAT-CLIENT-6 Ã¢â‚¬â€ ChatPanel toolUse accumulation fix
 **Outcome:** COMPLETED
 **Summary:** Fixed ChatPanel.jsx line 93 to accumulate toolUse arrays across grouped messages using spread instead of replacing. All tool calls from grouped messages are now visible.
 **Files changed:** client/src/canvas/ChatPanel.jsx
-**Bugs fixed:** BUG-CHAT-CLIENT-6 â€” toolUse overwritten in message grouping
+**Bugs fixed:** BUG-CHAT-CLIENT-6 Ã¢â‚¬â€ toolUse overwritten in message grouping
 **Decisions made:** none
 **Blockers:** none
 **Next:** TEST GATE #430
 
 ---
-## 2026-04-09 â€” frontend-dev â€” Task #431: BUG-CHAT-CLIENT-11 â€” HitlChatCard double-click guard
+## 2026-04-09 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #431: BUG-CHAT-CLIENT-11 Ã¢â‚¬â€ HitlChatCard double-click guard
 **Outcome:** COMPLETED
 **Summary:** Added useRef-based synchronous guard (sendingRef) to HitlChatCard handleApproveConfirm and handleReject to prevent duplicate API calls from rapid double-clicks.
 **Files changed:** client/src/canvas/HitlChatCard.jsx
-**Bugs fixed:** BUG-CHAT-CLIENT-11 â€” double-click on Approve/Reject sent duplicate API calls
+**Bugs fixed:** BUG-CHAT-CLIENT-11 Ã¢â‚¬â€ double-click on Approve/Reject sent duplicate API calls
 **Decisions made:** none
 **Blockers:** none
 **Next:** TEST GATE #432
 ---
 
 ---
-## 2026-04-09 â€” documenter â€” Tasks #421, #423, #425: V10.0 Wave 2 documentation audit
+## 2026-04-09 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Tasks #421, #423, #425: V10.0 Wave 2 documentation audit
 **Outcome:** COMPLETED
 **Summary:** Audited all docs after Wave 2. Updated README.md (security: rehype-sanitize), PROJECT.md (tech stack: rehype-sanitize 6.x), DOC_STATUS.md (refreshed 4 rows). ARCHITECTURE.md and API.md still accurate -- no structural or contract changes in Wave 2.
 **Files changed:** README.md, docs/memory/PROJECT.md, docs/memory/DOC_STATUS.md
@@ -5965,18 +5965,18 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-09 â€” code-mapper â€” Tasks #421+#423+#425 (Wave 2, V10.0)
+## 2026-04-09 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #421+#423+#425 (Wave 2, V10.0)
 **Outcome:** COMPLETED
 **Summary:** Mapped Wave 2 V10.0 changes: ChatExtractor compound key refactor (#421), useSwarm nodeId guard (#423), ChatMessage rehype-sanitize (#425). Added ChatExtractor.js and ChatMessage.jsx to module index, created 8 new function graph entries. Documented BREAKING CHANGE on resetBuffer signature.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md, docs/memory/agents/code-mapper.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none
 **Decisions made:** Added ChatExtractor and ChatMessage as separate module index entries
 **Blockers:** none
-**Next:** nothing â€” mapping current through V10.0 Wave 2
+**Next:** nothing Ã¢â‚¬â€ mapping current through V10.0 Wave 2
 ---
 
 ---
-## 2026-04-09 â€” frontend-dev â€” Task #437 + #439 + #441: LOW priority client chat bugs
+## 2026-04-09 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #437 + #439 + #441: LOW priority client chat bugs
 **Outcome:** COMPLETED
 **Summary:** Fixed three chat panel bugs: added scroll-lock to prevent auto-scroll when reading history (#437), removed unused repairAllTokenSpacing import (#439), and ensured scroll-to-bottom on mount after navigation (#441). Client build passes clean.
 **Files changed:** client/src/canvas/ChatPanel.jsx, client/src/canvas/ChatMessage.jsx, docs/TASK_PLAN.md
@@ -5987,7 +5987,7 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-09 â€” backend-dev â€” Task #443: BUG-CHAT-SERVER-06 â€” registerNodePrompt type guard
+## 2026-04-09 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #443: BUG-CHAT-SERVER-06 Ã¢â‚¬â€ registerNodePrompt type guard
 **Outcome:** COMPLETED
 **Summary:** Added string type guard to registerNodePrompt in ChatExtractor.js. Non-string truthy values no longer pollute prompt echo detection. All 490 server tests pass.
 **Files changed:** server/services/ChatExtractor.js
@@ -5997,26 +5997,26 @@ full self-contained context and acceptance criteria.
 **Next:** Wave 6 TEST GATE #445
 
 ---
-## 2026-04-09 â€” backend-dev â€” Task #444: BUG-CHAT-SERVER-11/12 â€” CHAT_WORDS dedup
+## 2026-04-09 Ã¢â‚¬â€ backend-dev Ã¢â‚¬â€ Task #444: BUG-CHAT-SERVER-11/12 Ã¢â‚¬â€ CHAT_WORDS dedup
 **Outcome:** PARTIAL
 **Summary:** Removed 25 duplicate entries from CHAT_WORDS array in chatTextNormalization.js (549 -> 524 unique). BUG-CHAT-SERVER-12 (SwarmEngine word list merge) intentionally deferred per task scope.
 **Files changed:** server/services/chatTextNormalization.js
 **Bugs fixed:** BUG-CHAT-SERVER-11
-**Decisions made:** Deferred BUG-CHAT-SERVER-12 (SwarmEngine separate word list) â€” bigger refactor not justified for LOW priority
+**Decisions made:** Deferred BUG-CHAT-SERVER-12 (SwarmEngine separate word list) Ã¢â‚¬â€ bigger refactor not justified for LOW priority
 **Blockers:** none
 **Next:** Wave 6 TEST GATE #445
 ---
 
-## 2026-04-09 â€” debugger â€” V10.1 stream-json live chat buffering
+## 2026-04-09 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ V10.1 stream-json live chat buffering
 **Outcome:** COMPLETED
 **Summary:** Researched Anthropic streaming docs and confirmed tiny `text_delta` chunks are expected upstream. The local bug was our server rebroadcasting every fragment 1:1 into live chat. Added a short server-side buffer in `SwarmEngine` for structured Claude chat, flushing before non-text boundaries and preserving the canonical end-of-turn replacement path. Added two regressions that prove delta coalescing and boundary flush ordering, then reran the full server suite successfully.
 **Files changed:** server/services/SwarmEngine.js, server/tests/swarm-engine.test.js, docs/TASK_PLAN.md, C:\Users\arman\.codex\skills\claude-cmd-debugger-loop\SKILL.md, docs/memory/ACTIVITY_LOG.md
-**Bugs fixed:** BUG-CHAT-SERVER-13 â€” live stream-json chat flooded the client with micro-delta messages, amplifying token-spacing artifacts during active turns
+**Bugs fixed:** BUG-CHAT-SERVER-13 Ã¢â‚¬â€ live stream-json chat flooded the client with micro-delta messages, amplifying token-spacing artifacts during active turns
 **Decisions made:** Buffer live structured assistant text for 150ms / 120 chars and flush before tool/result boundaries instead of trying to normalize each partial token; add a research-first check to `/debugger-loop` for non-trivial upstream/runtime bugs
 **Blockers:** none
 **Next:** Optional live provider-backed browser rerun to measure the improved chat cadence visually end-to-end
 ---
-## 2026-04-09 â€” frontend-dev â€” V10.7 client resilience test coverage
+## 2026-04-09 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ V10.7 client resilience test coverage
 **Outcome:** COMPLETED
 **Summary:** Closed the second wave of client test coverage by extending the suite from 24 to 49 tests. New coverage now protects the high-value resilience branches that were still mostly browser-only after V10.2: `useSwarm` persisted restore and reconcile paths, secondary WS events (HITL/feed/fallback/trigger/handoff), `useInbox` negative paths, `ChatPanel` department/no-recipient/HITL/filter-sync states, `AgentNode` secondary badges and preview mode, and `SwarmView` PTY/paused/validation/blocker/HITL shell branches. No new product bug fix was required in this wave; the work was about locking in truthfulness and preventing regressions.
 **Files changed:** client/src/hooks/useSwarm.test.jsx, client/src/hooks/useInbox.test.jsx, client/src/canvas/ChatPanel.test.jsx, client/src/canvas/nodes/AgentNode.test.jsx, client/src/views/SwarmView.test.jsx, docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
@@ -6027,7 +6027,7 @@ full self-contained context and acceptance criteria.
 
 ---
 
-## 2026-04-09 â€” frontend-dev â€” V10.2 client test harness + targeted contract coverage
+## 2026-04-09 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ V10.2 client test harness + targeted contract coverage
 **Outcome:** COMPLETED
 **Summary:** Closed V10.2 by adding a real client test harness and targeted coverage across the highest-risk frontend contracts. New suites now cover `SwarmContext`, `useSwarm`, `useInbox`, `ChatPanel`, `ChatMessage`, `AgentNode`, and `SwarmView` (`24` tests total). The work also exposed and fixed two product-side client bugs: runtime snapshot hydration could clear the freshly applied execution state when loading a workflow definition, and `ChatPanel` auto-scroll missed grouped-message updates / near-bottom cases because it relied on post-update height and `enrichedMessages.length` only. Verification: `npm test --prefix client` PASS (`24/24`), `npm run build --prefix client` PASS (`507` modules, chunk-size warning only).
 **Files changed:** client/package.json, client/vitest.config.js, client/src/test/setup.js, client/src/test/resetSwarmStore.js, client/src/store/SwarmContext.jsx, client/src/store/SwarmContext.test.jsx, client/src/hooks/useSwarm.js, client/src/hooks/useSwarm.test.jsx, client/src/hooks/useInbox.test.jsx, client/src/canvas/ChatPanel.jsx, client/src/canvas/ChatPanel.test.jsx, client/src/canvas/ChatMessage.test.jsx, client/src/canvas/nodes/AgentNode.test.jsx, client/src/views/SwarmView.test.jsx, docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
@@ -6038,7 +6038,7 @@ full self-contained context and acceptance criteria.
 
 ---
 
-## 2026-04-09 â€” debugger â€” V10.3 client chat + flow debugger-loop deep test
+## 2026-04-09 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ V10.3 client chat + flow debugger-loop deep test
 **Outcome:** COMPLETED
 **Summary:** Ran a browser-driven deep test focused on the Swarm operator chat surface and end-to-end workflow lifecycle using Puppeteer against the live app on `http://127.0.0.1:3000`. Confirmed two successful Codex multi-agent paths (`Venice Canals Research and Summary`, `Greeter and Poet`) with truthful Idle -> Running -> Completed progression, clean canonical chat bubbles, working agent filter behavior, and clean reset isolation. Confirmed several operator bugs: (1) idle/pre-run `All Agents` does not show `Chat View` / `No messages yet`; (2) completed reload keeps `Provider: Codex` but the runtime dropdown reverts to `Auto`; (3) reloaded completed node DOM text leaks structured residue such as handoff JSON fragments and `__DONE__`; (4) Gemini blocked/stopped paths leak raw CLI/auth/thinking output into node cards; (5) Gemini blocker paths also pollute Chat View with repeated terminal spam and misleading assistant-looking content such as `Structured handoff sent.`. Converted the discovery surface into V10.6 tasks #476-#482. No product code was changed in this pass.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md
@@ -6048,7 +6048,7 @@ full self-contained context and acceptance criteria.
 **Next:** implement V10.6 bug-fix tasks sequentially, then rerun the same Codex success path + Gemini blocked/stopped browser scenarios as the verification gate
 
 ---
-## 2026-04-09 â€” debugger â€” Codex downstream handoff prompt preservation
+## 2026-04-09 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Codex downstream handoff prompt preservation
 **Outcome:** COMPLETED
 **Summary:** Fixed a Swarm handoff regression where compact Codex prompts were truncating inbound handoff payloads to 180 characters, which caused downstream Codex agents to complain that the upstream handoff in their prompt was incomplete. `SwarmEngine` now formats compact inbound handoffs as dedicated lines with a larger shared budget and valid JSON preservation instead of slicing the serialized payload mid-object. Added two regressions in `swarm-engine.test.js`: one proves a long downstream handoff keeps its tail marker and remains parseable JSON, and the other proves multiple upstream handoffs remain separate, parseable JSON lines under the compact Codex prompt. Verification: `npm test --prefix server -- swarm-engine.test.js` PASS (`173/173`), `npm test --prefix server` PASS (`492/492`).
 **Files changed:** server/services/SwarmEngine.js, server/tests/swarm-engine.test.js, docs/memory/ACTIVITY_LOG.md
@@ -6058,7 +6058,7 @@ full self-contained context and acceptance criteria.
 **Next:** Optional live browser rerun of the Researcher -> Writer handoff flow to confirm the Writer no longer reports a truncated handoff in the UI
 
 ---
-## 2026-04-09 â€” qa/debug â€” V10.4 live runtime verification on fresh server
+## 2026-04-09 Ã¢â‚¬â€ qa/debug Ã¢â‚¬â€ V10.4 live runtime verification on fresh server
 **Outcome:** COMPLETED
 **Summary:** Verified the structured chat turn-history fix against a fresh runtime, not just tests. The already-running server on `http://127.0.0.1:3000` still behaved like the pre-fix contract: `turnId` was missing in live results and a later same-node turn displaced the earlier one. A fresh server started from the current workspace on `http://127.0.0.1:3015` showed the expected live behavior with the same two structured agents handing work back and forth: assistant chat history grew to 4 visible entries with distinct turn IDs (`node-a:1`, `node-b:1`, `node-a:2`, `node-b:2`) and no collapse to one message per node. Operational conclusion: users must restart the main runtime/session to pick up the V10.4 structured chat contract.
 **Files changed:** docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
@@ -6069,7 +6069,7 @@ full self-contained context and acceptance criteria.
 
 ---
 
-## 2026-04-09 â€” debugger â€” V10.4 structured chat turn history
+## 2026-04-09 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ V10.4 structured chat turn history
 **Outcome:** COMPLETED
 **Summary:** Fixed the repeated-handoff regression the user reported. Root cause was a cross-layer contract mismatch: structured canonical chat replacement and the `canonicalReceived` guard were keyed too broadly by `nodeId`, so a later same-node turn overwrote earlier canonical chat history and future fragments could be discarded as if they still belonged to the old turn. Added stable per-turn `turnId` propagation for structured runtime chat on the server, scoped canonical replacement/persistence to `nodeId + turnId`, preserved the active-turn guard across same-execution hydration on the client, and updated ChatPanel grouping so same-node consecutive structured turns stay as separate bubbles. Added deterministic regressions on both the client and Codex SDK server paths. Verification: `npm test --prefix client -- src/hooks/useSwarm.test.jsx src/canvas/ChatPanel.test.jsx` PASS (13/13), `npm test --prefix server -- tests/swarm-engine-codex-sdk.test.js` PASS (6/6), `npm run build --prefix client` PASS (507 modules, chunk warning only).
 **Files changed:** server/services/SwarmEngine.js, client/src/hooks/useSwarm.js, client/src/canvas/ChatPanel.jsx, client/src/store/SwarmContext.jsx, client/src/hooks/useSwarm.test.jsx, client/src/canvas/ChatPanel.test.jsx, server/tests/swarm-engine-codex-sdk.test.js, docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
@@ -6081,17 +6081,17 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-09 â€” project-manager â€” Project Status Analysis
+## 2026-04-09 Ã¢â‚¬â€ project-manager Ã¢â‚¬â€ Project Status Analysis
 **Outcome:** COMPLETED
 **Summary:** Full project state read and synthesized for user status query. 490 tasks total, ~455 COMPLETED/PASS, 1 DEFERRED (#236 ConPTY), 15 PENDING across V10.6 and V10.7. Two active planned areas await implementation.
 **Files changed:** docs/memory/agents/project-manager.md, docs/memory/ACTIVITY_LOG.md
 **Bugs fixed:** none
 **Decisions made:** none
 **Blockers:** none
-**Next:** V10.6 CLIENT CHAT + FLOW BUG FIXES â€” TASK #476 (frontend-dev) + TASK #479 (debugger) + TASK #480 (debugger) PARALLEL as first wave
+**Next:** V10.6 CLIENT CHAT + FLOW BUG FIXES Ã¢â‚¬â€ TASK #476 (frontend-dev) + TASK #479 (debugger) + TASK #480 (debugger) PARALLEL as first wave
 ---
 
-## 2026-04-09 â€” debugger â€” V10.6 client chat + flow bug fixes closed
+## 2026-04-09 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ V10.6 client chat + flow bug fixes closed
 **Outcome:** COMPLETED
 **Summary:** Closed the V10.6 bug-fix wave after finishing both the client truthfulness fixes and the final blocker-path cleanup. The client-side pass restored a stable `Chat View` empty state before first run and after `Reset`, kept the runtime selector truthful when reloading completed Codex executions, and rehydrated completed structured node snippets without DOM residue such as handoff JSON or `__DONE__`. The final server-side cleanup hardened Gemini blocker handling in `SwarmEngine` by treating `Signed in with Google`, `/auth`, `Gemini CLI v...`, and similar startup/banner lines as snippet noise, sanitizing blocked/stopped node summaries before fallback snippet selection, and pruning blocker-terminal spam / false-positive assistant content out of Chat View. Verification was done in two live browser passes: the existing app on `http://127.0.0.1:3000` confirmed idle/reset empty state plus a clean Codex success -> reload -> reset loop, and a fresh app instance on `http://127.0.0.1:3312` confirmed Gemini `Blocked` and `Stopped` paths now keep both node cards and Chat View concise and truthful. Targeted regression coverage also passed: `npm test --prefix server -- swarm-engine.test.js execution-results-api.test.js` (`185/185` PASS).
 **Files changed:** client/src/hooks/useSwarm.js, client/src/canvas/SwarmCanvas.jsx, client/src/hooks/useSwarm.test.jsx, client/src/canvas/SwarmCanvas.test.jsx, server/services/SwarmEngine.js, server/tests/swarm-engine.test.js, docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
@@ -6101,7 +6101,7 @@ full self-contained context and acceptance criteria.
 **Next:** V10.7 client resilience test coverage or another full browser regression sweep if the user wants a broader operator-path pass
 ---
 
-## 2026-04-09 â€” qa-tester â€” Full client deep test + V10.8 planning
+## 2026-04-09 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Full client deep test + V10.8 planning
 **Outcome:** COMPLETED
 **Summary:** Ran a full client deep-test pass using the `$claude-cmd-debugger-loop` inspect-first workflow. Automated client checks remained green: `npm test --prefix client` PASS (`49/49`) and `npm run build --prefix client` PASS. Browser/manual verification on the live default server at `http://127.0.0.1:3000` confirmed the dashboard -> project -> Swarm path, idle Chat View empty state, and a clean Codex `Greeter and Poet` run with truthful reload/reset behavior; however, the same long-running server still showed stale Gemini blocker chat pollution (`Structured handoff sent.`) in the blocked path. A fresh server from the current working tree on `http://127.0.0.1:3316` removed that discrepancy: the Codex success path remained clean, Gemini `Blocked` showed a concise blocker summary, and Gemini `Stopped` kept Chat View empty without auth/banner spam. The pass also exposed two verification/harness problems: `npm run test:visual:swarm:reuse` failed all six cases with `Infinity pixels changed` because current `.react-flow` captures are `682px` wide where baselines are `1018px`, and the Codex handoff E2E harness was unreliable in both modes (`reuse-server` failed late because the fixture workflow was missing from shared app-data; isolated mode timed out in `openSwarm`). These findings were bulk-planned into new V10.8 tasks #491-#495.
 **Files changed:** docs/TASK_PLAN.md, docs/memory/PROGRESS.md, docs/memory/ACTIVITY_LOG.md
@@ -6111,7 +6111,7 @@ full self-contained context and acceptance criteria.
 **Next:** Execute V10.8 starting from visual-regression determinism (#491), handoff E2E reliability (#492), and stale-server freshness policy (#493), then rerun the full client verification gate (#494)
 ---
 
-## 2026-04-09 â€” debugger â€” Codex downstream handoff regression hardening
+## 2026-04-09 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Codex downstream handoff regression hardening
 **Outcome:** COMPLETED
 **Summary:** Added deterministic regression coverage for the exact backend path behind the downstream Codex handoff truncation bug. `server/tests/swarm-engine-codex-sdk.test.js` now verifies the real `_onHandoff -> _spawnAgentCodexSdk` path with a long multi-field inbound payload and asserts that the downstream Codex SDK prompt still contains the tail marker `TAIL-MARKER-OMEGA-9271` after compact prompt formatting. In parallel, added an isolated browser probe (`scripts/swarm-codex-handoff-e2e.mjs` + `tests/visual/swarm/fixtures/codex-handoff-long.json`) to reproduce live handoff behavior and capture artifacts, but intentionally documented it as a debug probe rather than a stable CI test because upstream live models may paraphrase or compress payloads nondeterministically before the downstream agent runs. Verification: `npm test --prefix server -- swarm-engine-codex-sdk.test.js swarm-engine.test.js` PASS (`180/180`), `npm test --prefix server` PASS (`501/501`).
 **Files changed:** server/tests/swarm-engine-codex-sdk.test.js, scripts/swarm-codex-handoff-e2e.mjs, tests/visual/swarm/fixtures/codex-handoff-long.json, tests/visual/swarm/README.md, package.json, docs/memory/ACTIVITY_LOG.md
@@ -6122,20 +6122,20 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-09 â€” frontend-dev â€” Task #476: BUG-CHAT-CLIENT-12 â€” Restore Chat View empty state before first run and after reset
-**Outcome:** COMPLETED (already implemented by prior session â€” verification only)
+## 2026-04-09 Ã¢â‚¬â€ frontend-dev Ã¢â‚¬â€ Task #476: BUG-CHAT-CLIENT-12 Ã¢â‚¬â€ Restore Chat View empty state before first run and after reset
+**Outcome:** COMPLETED (already implemented by prior session Ã¢â‚¬â€ verification only)
 **Summary:** Investigated TASK #476 to implement the Chat View empty-state fix. Found that the fix was already fully implemented and verified by a prior agent session on 2026-04-09. All three acceptance criteria are met: `sidePanelOpen: true` in initial Zustand state, truthful "No messages yet" empty state in ChatPanel, and `reset()` restoring both flags via `buildClearedExecutionState()`. Both test suites pass (52/52 client, 501/501 server) and the build is clean (507 modules).
 **Files changed:** none (task already complete)
 **Bugs fixed:** none (already fixed)
-**Decisions made:** No code changes â€” implementation was already correct and verified
+**Decisions made:** No code changes Ã¢â‚¬â€ implementation was already correct and verified
 **Blockers:** none
 **Next:** V10.7/V10.8 follow-up work per PROGRESS.md
 ---
 
 ---
-## 2026-04-09 â€” debugger â€” Task #479: BUG-BLOCKER-UI-02 â€” Gemini blocked/stopped node card raw text
+## 2026-04-09 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #479: BUG-BLOCKER-UI-02 Ã¢â‚¬â€ Gemini blocked/stopped node card raw text
 **Outcome:** COMPLETED
-**Summary:** Fixed three root causes causing raw Gemini CLI/auth/banner text to appear in blocked and stopped agent node cards. (1) `_normalizeSnippetLine` now strips Dingbat Unicode checkmarks (âœ“) from line beginnings so `/^signed in with google/i` correctly matches `âœ“ Signed in with Google`. (2) `_handleRuntimeBlocker` now uses the clean blocker message for `provider_unavailable` blockers instead of sanitized PTY banner noise. (3) `stopExecution` now clears `pinnedDisplaySnippet` alongside `runtimeBlocker` to prevent stale blocked-state text persisting in stopped nodes.
+**Summary:** Fixed three root causes causing raw Gemini CLI/auth/banner text to appear in blocked and stopped agent node cards. (1) `_normalizeSnippetLine` now strips Dingbat Unicode checkmarks (Ã¢Å“â€œ) from line beginnings so `/^signed in with google/i` correctly matches `Ã¢Å“â€œ Signed in with Google`. (2) `_handleRuntimeBlocker` now uses the clean blocker message for `provider_unavailable` blockers instead of sanitized PTY banner noise. (3) `stopExecution` now clears `pinnedDisplaySnippet` alongside `runtimeBlocker` to prevent stale blocked-state text persisting in stopped nodes.
 **Files changed:** server/services/SwarmEngine.js (3 targeted changes)
 **Bugs fixed:** BUG-BLOCKER-UI-02 (3 root causes fixed)
 **Decisions made:** For `provider_unavailable` blockers prefer clean message over sanitized snippet; for `rate_limited`/`prompt_rejected` preserve existing sanitize-first logic.
@@ -6145,51 +6145,51 @@ full self-contained context and acceptance criteria.
 
 ---
 
-## 2026-04-09 â€” documenter â€” Task #479: BUG-BLOCKER-UI-02 documentation audit
+## 2026-04-09 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Task #479: BUG-BLOCKER-UI-02 documentation audit
 **Outcome:** COMPLETED
-**Summary:** Audited all docs after 3 surgical fixes in SwarmEngine.js (BUG-BLOCKER-UI-02). No README, ARCHITECTURE.md, API.md, or inline comment updates were needed â€” all three changes are internal to private methods. DOC_STATUS.md updated: header timestamp, new Fixed Bugs row for BUG-BLOCKER-UI-02, and new wave summary section for Task #479.
+**Summary:** Audited all docs after 3 surgical fixes in SwarmEngine.js (BUG-BLOCKER-UI-02). No README, ARCHITECTURE.md, API.md, or inline comment updates were needed Ã¢â‚¬â€ all three changes are internal to private methods. DOC_STATUS.md updated: header timestamp, new Fixed Bugs row for BUG-BLOCKER-UI-02, and new wave summary section for Task #479.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none (documenter role)
-**Decisions made:** No public-facing docs need updating â€” _normalizeSnippetLine, _handleRuntimeBlocker snippet logic, and stopExecution cleanup are all private SwarmEngine internals; inline comments already self-documenting
+**Decisions made:** No public-facing docs need updating Ã¢â‚¬â€ _normalizeSnippetLine, _handleRuntimeBlocker snippet logic, and stopExecution cleanup are all private SwarmEngine internals; inline comments already self-documenting
 **Blockers:** none
 **Next:** V10.8 next priorities: #492 (browser E2E harness) and #491 (visual regression determinism)
 
 ---
 
-## 2026-04-09 â€” documenter â€” Task #479: BUG-BLOCKER-UI-02 documentation audit
+## 2026-04-09 Ã¢â‚¬â€ documenter Ã¢â‚¬â€ Task #479: BUG-BLOCKER-UI-02 documentation audit
 **Outcome:** COMPLETED
-**Summary:** Audited all docs after 3 surgical fixes in SwarmEngine.js (BUG-BLOCKER-UI-02). No README, ARCHITECTURE.md, API.md, or inline comment updates were needed â€” all three changes are internal to private methods. DOC_STATUS.md updated: header timestamp, new Fixed Bugs row for BUG-BLOCKER-UI-02, and new wave summary section for Task #479.
+**Summary:** Audited all docs after 3 surgical fixes in SwarmEngine.js (BUG-BLOCKER-UI-02). No README, ARCHITECTURE.md, API.md, or inline comment updates were needed Ã¢â‚¬â€ all three changes are internal to private methods. DOC_STATUS.md updated: header timestamp, new Fixed Bugs row for BUG-BLOCKER-UI-02, and new wave summary section for Task #479.
 **Files changed:** docs/memory/DOC_STATUS.md, docs/memory/ACTIVITY_LOG.md, docs/memory/agents/documenter.md
 **Bugs fixed:** none (documenter role)
-**Decisions made:** No public-facing docs need updating â€” _normalizeSnippetLine, _handleRuntimeBlocker snippet logic, and stopExecution cleanup are all private SwarmEngine internals; inline comments in _handleRuntimeBlocker already explain the provider_unavailable reasoning (lines 3829-3835)
+**Decisions made:** No public-facing docs need updating Ã¢â‚¬â€ _normalizeSnippetLine, _handleRuntimeBlocker snippet logic, and stopExecution cleanup are all private SwarmEngine internals; inline comments in _handleRuntimeBlocker already explain the provider_unavailable reasoning (lines 3829-3835)
 **Blockers:** none
 **Next:** V10.8 next priorities: #492 (browser E2E harness) and #491 (visual regression determinism)
 
 ---
-## 2026-04-09 â€” debugger â€” Task #477: BUG-FLOW-CLIENT-03 â€” Runtime selector truthful across reload and reset
+## 2026-04-09 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #477: BUG-FLOW-CLIENT-03 Ã¢â‚¬â€ Runtime selector truthful across reload and reset
 **Outcome:** COMPLETED
 **Summary:** Added `import React from 'react'` to `useSwarm.test.jsx` and `SwarmView.test.jsx`. The logic fix (getSnapshotSelectedRuntimeProvider + reset preserving selectedRuntimeProvider) was already in the codebase. The test files were failing because JSX render calls need explicit React import when vitest is not run from the client directory. All 19 target tests now pass when run from `client/`. Server 501/501, build 507 modules clean.
 **Files changed:** client/src/hooks/useSwarm.test.jsx, client/src/views/SwarmView.test.jsx
 **Bugs fixed:** React is not defined in JSX test files (added explicit React import)
-**Decisions made:** Explicit React import preferred over vitest config changes â€” minimal, reliable
+**Decisions made:** Explicit React import preferred over vitest config changes Ã¢â‚¬â€ minimal, reliable
 **Blockers:** none
 **Next:** V10.7 CLIENT RESILIENCE TEST COVERAGE (#483-#490) or next pending task
 ---
 ---
-## 2026-04-09 â€” debugger â€” Task #480: BUG-BLOCKER-CHAT-03 â€” Chat View raw terminal pollution
+## 2026-04-09 Ã¢â‚¬â€ debugger Ã¢â‚¬â€ Task #480: BUG-BLOCKER-CHAT-03 Ã¢â‚¬â€ Chat View raw terminal pollution
 **Outcome:** COMPLETED
 **Summary:** Fixed 4 root causes preventing Gemini blocked flows from polluting Chat View with raw terminal dumps and false-positive assistant messages. Pre-gate banner accumulation race condition closed by resetting ChatExtractor buffer in _flushSwarmPrompt; Gemini "Type your message" noise pattern gap fixed; _broadcastChatMessage now suppresses messages for blocked agents.
 **Files changed:** server/services/SwarmEngine.js, server/services/ChatExtractor.js
 **Bugs fixed:** BUG-BLOCKER-CHAT-03 (pre-gate ChatExtractor accumulation), noise pattern gap for Gemini prompt line, late post-blocker ChatExtractor flush race
 **Decisions made:** Added _executionId/_nodeId back-references to PTY agent state object for use by _flushSwarmPrompt
 **Blockers:** none
-**Next:** TASK #481 TEST GATE (already PASS in plan) â€” qa-tester should re-verify if needed; then TASK #482 AREA CHECKPOINT V10.6
+**Next:** TASK #481 TEST GATE (already PASS in plan) Ã¢â‚¬â€ qa-tester should re-verify if needed; then TASK #482 AREA CHECKPOINT V10.6
 ---
 
 ---
-## 2026-04-09 â€” qa-tester â€” Task #491: BUG-TEST-CLIENT-01 â€” Visual regression screenshots deterministic
+## 2026-04-09 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #491: BUG-TEST-CLIENT-01 Ã¢â‚¬â€ Visual regression screenshots deterministic
 **Outcome:** COMPLETED
-**Summary:** Root-caused the 1018pxâ†’682px `.react-flow` width drift: `sidePanelOpen` default changed to `true` after baselines were captured, adding the 336px ChatPanel rail to every capture. Fixed by adding `normalizeHarnessLayout()` to `scripts/swarm-visual-regression.mjs` (forward-guard + root-cause docs) and regenerating all 6 baselines with `--update`. `npm run test:visual:swarm` now passes 6/6 with 0 pixels changed.
+**Summary:** Root-caused the 1018pxÃ¢â€ â€™682px `.react-flow` width drift: `sidePanelOpen` default changed to `true` after baselines were captured, adding the 336px ChatPanel rail to every capture. Fixed by adding `normalizeHarnessLayout()` to `scripts/swarm-visual-regression.mjs` (forward-guard + root-cause docs) and regenerating all 6 baselines with `--update`. `npm run test:visual:swarm` now passes 6/6 with 0 pixels changed.
 **Files changed:** scripts/swarm-visual-regression.mjs, tests/visual/swarm/baselines/*.png (all 6 regenerated)
 **Bugs fixed:** Visual regression dimension mismatch (sidePanelOpen default drift)
 **Decisions made:** Regenerate baselines to match current app truth rather than freezing to old defaults
@@ -6197,7 +6197,7 @@ full self-contained context and acceptance criteria.
 **Next:** V10.8 #492 (Codex handoff E2E harness), #493 (stale-server guard), #494 (TEST GATE), #495 (AREA CHECKPOINT)
 ---
 ---
-## 2026-04-09 â€” code-mapper â€” Tasks #491, #492, #493: V10.8 Visual/E2E stability mapping
+## 2026-04-09 Ã¢â‚¬â€ code-mapper Ã¢â‚¬â€ Tasks #491, #492, #493: V10.8 Visual/E2E stability mapping
 **Outcome:** COMPLETED
 **Summary:** Mapped 12 new/modified functions across 5 files introduced by the V10.8 trio. New file check-server-freshness.mjs added 5 functions. swarm-visual-regression.mjs gained normalizeHarnessLayout, warnIfServerStale, fetchHealthData. swarm-codex-handoff-e2e.mjs gained preflightWorkflowCheck and had startIsolatedServer + acquireServer modified. swarm-e2e-chat-check.mjs gained checkServerFreshness inline.
 **Files changed:** docs/memory/CODE_MAP.md, docs/memory/CHANGELOG.md
@@ -6208,12 +6208,12 @@ full self-contained context and acceptance criteria.
 ---
 
 ---
-## 2026-04-09 â€” qa-tester â€” Task #495: AREA CHECKPOINT - V10.8 full client deep-test follow-up complete
+## 2026-04-09 Ã¢â‚¬â€ qa-tester Ã¢â‚¬â€ Task #495: AREA CHECKPOINT - V10.8 full client deep-test follow-up complete
 **Outcome:** COMPLETED
 **Summary:** Area checkpoint for V10.8 CLIENT FULL DEEP TEST FOLLOW-UP passed. All 6 tasks (#491-#496) verified COMPLETED: visual regression determinism fix (#491), Codex handoff E2E harness fix (#492), stale-server freshness guard (#493), full verification pack TEST GATE PASS (#494), Codex SDK server unit regressions (#496), and this checkpoint (#495). V10.8 area marked CLOSED.
 **Files changed:** docs/TASK_PLAN.md (status updates), docs/memory/ACTIVITY_LOG.md, docs/memory/PROGRESS.md, docs/memory/agents/qa-tester.md
 **Bugs fixed:** none
-**Decisions made:** V10.8 CLOSED â€” all acceptance criteria met
+**Decisions made:** V10.8 CLOSED Ã¢â‚¬â€ all acceptance criteria met
 **Blockers:** none
 **Next:** No active planned areas. Next session should call project-manager to determine next work area.
 ---
@@ -6238,4 +6238,15 @@ full self-contained context and acceptance criteria.
 **Verification:** Targeted server pack 44/44 PASS; targeted PackLibrary 4/4 PASS; full server 647/647 PASS; full client 77/77 PASS; client build 520 modules PASS/no chunk warning; targeted Playwright smoke PASS; git diff --check PASS; runtime diagnostics 0 errors with no-tsconfig caveat; architect verification APPROVED; code-review verification APPROVE.
 **Blockers:** none.
 **Next:** Review/merge `feature/v17-pack-platform`.
+---
+---
+## 2026-04-12 â€” Ralph â€” Workflow as Heart / Pack as Wrapper Wave 1
+**Outcome:** IMPLEMENTED / VERIFIED
+**Summary:** Implemented the approved workflow-first plan. Workflows now persist workflow-native input/output contracts, launch directly with validated typed inputs, expose submitted inputs and canonical outputs/artifacts through status/results/history, and show those results directly in Swarm. Added an Interface tab to workflow settings and per-agent lightweight skill/context/expected-output guidance in AgentInspector; runtime prompts now include direct-run inputs, declared expected outputs/artifacts, and agent guidance. Pack behavior remains pack-authoritative for pack starts.
+**Files changed:** server/services/workflowContracts.js, server/services/WorkflowStore.js, server/services/SwarmEngine.js, server/routes/swarm.js, server/services/ExecutionResultsService.js, server/stores/ExecutionHistoryStore.js, client/src/canvas/WorkflowSettingsModal.jsx, client/src/canvas/WorkflowRunModal.jsx, client/src/views/SwarmView.jsx, client/src/hooks/useSwarm.js, client/src/store/SwarmContext.jsx, client/src/canvas/AgentInspector.jsx, workflow/server/client tests, scripts/workflow-heart-playwright-smoke.mjs, package.json.
+**Bugs fixed:** none; feature implementation and regression hardening.
+**Decisions made:** Use additive root `inputContract` / `outputContract`; direct workflow runs auto-save dirty/unsaved contracts then use `workflowInput`; JSON inputs must be parsed JSON; pack runs remain pack-authoritative in wave 1; per-agent controls are guidance/visibility, not hard policy enforcement.
+**Verification:** Full server 667/667 PASS; full client 93/93 PASS; client build 522 modules PASS; workflow-heart Playwright PASS; existing V17 pack Playwright PASS; git diff --check PASS with CRLF warnings only; diagnostics 0 errors (no tsconfig caveat).
+**Blockers:** none.
+**Next:** Ralph architect verification, deslop pass on changed files, and post-deslop re-verification.
 ---

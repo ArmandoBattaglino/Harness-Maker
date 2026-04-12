@@ -94,6 +94,16 @@ describe('useSwarm client contracts', () => {
           outputs: { result: 'Pack result' },
           artifacts: [],
         },
+        workflowRun: {
+          kind: 'workflow-direct',
+          inputs: { brief: 'Launch X' },
+        },
+        workflowResult: {
+          status: 'completed',
+          inputs: { brief: 'Launch X' },
+          outputs: { result: 'Workflow result' },
+          artifacts: [{ id: 'report', status: 'ready' }],
+        },
         chatMessages: [
           {
             nodeId: 'node-a',
@@ -116,9 +126,53 @@ describe('useSwarm client contracts', () => {
       expect(state.agentStates['node-a'].lastOutputSnippet).toBe('Hello from the canonical snapshot');
       expect(state.budget).toEqual({ estimatedTokensUsed: 12, limitTokens: 1000 });
       expect(state.selectedRuntimeProvider).toBe('codex');
+      expect(state.workflowRun.inputs.brief).toBe('Launch X');
+      expect(state.workflowResult.outputs.result).toBe('Workflow result');
       expect(state.packRun.packId).toBe('pack-1');
       expect(state.packResult.outputs.result).toBe('Pack result');
     });
+  });
+
+  it('submits workflow-native input when starting a direct workflow run', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        executionId: 'exec-start',
+        status: 'running',
+        workflowRun: {
+          kind: 'workflow-direct',
+          inputs: { brief: 'Launch X', tone: 'formal' },
+        },
+      }),
+    });
+
+    render(<UseSwarmHarness workflowId="workflow-start" onReady={(api) => { swarmApi = api; }} />);
+    await waitFor(() => expect(swarmApi).toBeTruthy());
+
+    let executionId;
+    await act(async () => {
+      executionId = await swarmApi.startExecution(
+        'project-1',
+        'C:/projects/one',
+        'codex',
+        { codex: 'gpt-5.4' },
+        null,
+        { brief: 'Launch X', tone: 'formal' }
+      );
+    });
+
+    expect(executionId).toBe('exec-start');
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/swarm/workflow-start/start', expect.objectContaining({
+      method: 'POST',
+      body: JSON.stringify({
+        projectId: 'project-1',
+        projectPath: 'C:/projects/one',
+        runtimeProvider: 'codex',
+        workflowInput: { brief: 'Launch X', tone: 'formal' },
+        runtimeModels: { codex: 'gpt-5.4' },
+      }),
+    }));
+    expect(useSwarmStore.getState().workflowRun.inputs.brief).toBe('Launch X');
   });
 
   it('keeps the selected runtime on auto when the snapshot shows an auto strategy using a concrete provider', async () => {

@@ -7,6 +7,10 @@ import fs from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
 import writeFileAtomic from 'write-file-atomic';
+import {
+  normalizeWorkflowContractFields,
+  validateWorkflowContractFields,
+} from './workflowContracts.js';
 
 // ---------------------------------------------------------------------------
 // Validation constants (FR-V3-03, SEC-V3-02, SEC-V3-06)
@@ -79,7 +83,7 @@ export class WorkflowStore {
     }
 
     try {
-      return JSON.parse(raw);
+      return this._withContractDefaults(JSON.parse(raw));
     } catch {
       return null;
     }
@@ -100,6 +104,7 @@ export class WorkflowStore {
 
     const id = randomUUID();
     const now = new Date().toISOString();
+    const { inputContract, outputContract } = normalizeWorkflowContractFields(data);
     const workflow = {
       id,
       name: data.name,
@@ -109,6 +114,8 @@ export class WorkflowStore {
       edges: data.edges ?? [],
       settings: data.settings ?? {},
       initialContext: data.initialContext ?? {},
+      inputContract,
+      outputContract,
       createdAt: now,
       updatedAt: now,
     };
@@ -139,6 +146,10 @@ export class WorkflowStore {
     // Save version snapshot BEFORE overwriting (FR-V5-53)
     await this._saveVersion(id, existing);
 
+    const { inputContract, outputContract } = normalizeWorkflowContractFields({
+      inputContract: data.inputContract ?? existing.inputContract,
+      outputContract: data.outputContract ?? existing.outputContract,
+    });
     const updated = {
       ...existing,
       name: data.name,
@@ -148,6 +159,8 @@ export class WorkflowStore {
       edges: data.edges ?? existing.edges,
       settings: data.settings ?? existing.settings,
       initialContext: data.initialContext ?? existing.initialContext,
+      inputContract,
+      outputContract,
       updatedAt: new Date().toISOString(),
     };
 
@@ -240,6 +253,8 @@ export class WorkflowStore {
       }
     }
 
+    validateWorkflowContractFields(data, errors);
+
     return { valid: errors.length === 0, errors };
   }
 
@@ -303,7 +318,7 @@ export class WorkflowStore {
 
     try {
       const raw = fs.readFileSync(filePath, 'utf8');
-      return JSON.parse(raw);
+      return this._withContractDefaults(JSON.parse(raw));
     } catch {
       return null;
     }
@@ -443,5 +458,15 @@ export class WorkflowStore {
     }
 
     await writeFileAtomic(filePath, JSON.stringify(workflow, null, 2));
+  }
+
+  _withContractDefaults(workflow) {
+    if (!workflow || typeof workflow !== 'object') return workflow;
+    const { inputContract, outputContract } = normalizeWorkflowContractFields(workflow);
+    return {
+      ...workflow,
+      inputContract,
+      outputContract,
+    };
   }
 }

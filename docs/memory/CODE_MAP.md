@@ -1,4 +1,15 @@
-﻿# CODE_MAP — Claude Code Visual Manager
+## Workflow as Heart / Pack as Wrapper Addendum (2026-04-12)
+- `server/services/workflowContracts.js` - workflow-native input/output contract normalization, direct-run input validation, workflow run context injection, and canonical workflow result mapping.
+- `server/services/WorkflowStore.js` - now preserves `inputContract` / `outputContract` and loads legacy workflows with safe empty defaults.
+- `server/services/SwarmEngine.js` - direct workflow starts build `workflowRun`, inject workflow inputs/expected outputs into prompts, include agent guidance in prompts, and persist `workflowResult`.
+- `server/routes/swarm.js` + `server/services/ExecutionResultsService.js` - start/status/results expose additive `workflowRun` and `workflowResult` fields.
+- `server/stores/ExecutionHistoryStore.js` - persists/defaults workflow-native run/result metadata.
+- `client/src/canvas/WorkflowSettingsModal.jsx` - new Interface tab for workflow inputs, canonical outputs, and artifacts.
+- `client/src/canvas/WorkflowRunModal.jsx` - direct workflow launch form with typed validation/defaulting.
+- `client/src/views/SwarmView.jsx` - workflow-native run form entry point and visible run I/O summary.
+- `client/src/canvas/AgentInspector.jsx` - lightweight per-agent `skillHints`, `contextSources`, and `expectedOutput` guidance.
+- `scripts/workflow-heart-playwright-smoke.mjs` - deterministic browser smoke for workflow direct run plus pack surface availability.
+# CODE_MAP — Claude Code Visual Manager
 _Last updated: 2026-04-11 - after Marketing Video Harness Deep/Stress Test - mapped by code-mapper_
 
 ## Pack Builder / Runtime Identity Addendum (2026-04-12)

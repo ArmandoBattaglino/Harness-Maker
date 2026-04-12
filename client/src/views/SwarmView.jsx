@@ -7,6 +7,7 @@ import PromptToFlowBar from '../canvas/PromptToFlowBar';
 // BroadcastBar removed — broadcast controls are now integrated into ChatPanel
 import PtyExplosion from '../canvas/PtyExplosion';
 import WorkflowSettingsModal from '../canvas/WorkflowSettingsModal';
+import WorkflowRunModal from '../canvas/WorkflowRunModal';
 import ExecutionHistory from '../canvas/ExecutionHistory';
 import VersionHistory from '../canvas/VersionHistory';
 import { useSwarmStore } from '../store/SwarmContext';
@@ -41,6 +42,73 @@ function resolveRuntimeModelSelection(currentModel, availableModels = [], detect
 const ACTIVE_AGENT_STATUSES = ['running', 'paused', 'blocked'];
 const LIVE_AGENT_STATUSES = ['running', 'blocked'];
 
+function WorkflowRunSummary({ workflowRun, workflowResult }) {
+  if (!workflowRun && !workflowResult) return null;
+  const inputs = workflowResult?.inputs ?? workflowRun?.inputs ?? {};
+  const outputs = workflowResult?.outputs ?? {};
+  const artifacts = workflowResult?.artifacts ?? [];
+
+  return (
+    <div className="border-b border-green-900/40 bg-green-950/20 px-4 py-3 text-xs text-green-50">
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <span className="rounded-full border border-green-500/40 bg-green-500/10 px-2 py-0.5 font-semibold">
+          Workflow run I/O
+        </span>
+        <span className="text-green-100/80">
+          Inputs and canonical outputs are workflow-native for direct runs.
+        </span>
+      </div>
+      <div className="grid gap-3 md:grid-cols-3">
+        <div>
+          <div className="mb-1 font-semibold text-green-200">Submitted inputs</div>
+          {Object.keys(inputs).length === 0 ? (
+            <div className="text-green-100/60">No inputs submitted.</div>
+          ) : (
+            <dl className="space-y-1">
+              {Object.entries(inputs).map(([key, value]) => (
+                <div key={key}>
+                  <dt className="font-medium text-green-100">{key}</dt>
+                  <dd className="break-words text-green-100/70">{typeof value === 'string' ? value : JSON.stringify(value)}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </div>
+        <div>
+          <div className="mb-1 font-semibold text-green-200">Canonical outputs</div>
+          {Object.keys(outputs).length === 0 ? (
+            <div className="text-green-100/60">Outputs will appear after a terminal result.</div>
+          ) : (
+            <dl className="space-y-1">
+              {Object.entries(outputs).map(([key, value]) => (
+                <div key={key}>
+                  <dt className="font-medium text-green-100">{key}</dt>
+                  <dd className="break-words text-green-100/70">{String(value || '(empty)')}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </div>
+        <div>
+          <div className="mb-1 font-semibold text-green-200">Artifacts</div>
+          {artifacts.length === 0 ? (
+            <div className="text-green-100/60">Artifacts will appear after a terminal result.</div>
+          ) : (
+            <ul className="space-y-1">
+              {artifacts.map((artifact) => (
+                <li key={artifact.id} className="break-words">
+                  <span className="font-medium text-green-100">{artifact.name || artifact.id}</span>
+                  <span className="ml-1 text-green-100/60">({artifact.status}{artifact.format ? `, ${artifact.format}` : ''})</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SwarmView() {
   const appDispatch = useAppDispatch();
   const executionStatus = useSwarmStore((s) => s.executionStatus);
@@ -60,6 +128,8 @@ export default function SwarmView() {
   ));
   const setPtyExplosionNodeId = useSwarmStore((s) => s.setPtyExplosionNodeId);
   const workflowDef = useSwarmStore((s) => s.workflowDef);
+  const workflowRun = useSwarmStore((s) => s.workflowRun);
+  const workflowResult = useSwarmStore((s) => s.workflowResult);
   const setWorkflowDef = useSwarmStore((s) => s.setWorkflowDef);
   const ptyExplosionNodeLabel = useMemo(() => (
     workflowDef?.nodes?.find((node) => node.id === ptyExplosionNodeId)?.data?.label || ptyExplosionNodeId || 'Agent'
@@ -87,6 +157,7 @@ export default function SwarmView() {
   const [runtimeDefaults, setRuntimeDefaults] = useState({ claude: '', codex: '', gemini: '' });
   const [runtimeAvailability, setRuntimeAvailability] = useState({ claude: false, codex: false, gemini: false });
   const [showSettings, setShowSettings] = useState(false);
+  const [showRunForm, setShowRunForm] = useState(false);
   const [showModelSettings, setShowModelSettings] = useState(false);
   const modelSettingsRef = useRef(null);
   useEffect(() => {
@@ -381,49 +452,95 @@ export default function SwarmView() {
     };
   }, []);
 
-  const handleRun = async () => {
-    // FR-V5-46: validate before run — block if errors exist
-    if (hasValidationErrors) return;
+  const hasWorkflowInputContract = Array.isArray(workflowDef?.inputContract) && workflowDef.inputContract.length > 0;
 
-    let runWorkflowId = workflowDef?.id;
+  const buildCurrentWorkflowPayload = () => {
+    const current = workflowDef ?? {};
+    const nodes = canvasStateRef.current.nodes.length > 0
+      ? canvasStateRef.current.nodes
+      : (current.nodes ?? []);
+    const edges = canvasStateRef.current.edges.length > 0
+      ? canvasStateRef.current.edges
+      : (current.edges ?? []);
 
-    // Auto-create workflow on the server when the user built a canvas from scratch
-    if (!runWorkflowId) {
-      const { nodes, edges } = canvasStateRef.current;
-      if (!nodes.length) return;
-      try {
-        const res = await apiPost('/api/v1/workflows', {
-          name: 'Untitled Workflow',
-          description: '',
-          nodes,
-          edges,
-          settings: {},
-          initialContext: {},
-          projectId: activeProjectId,
-        });
-        const created = res?.workflow ?? res;
-        setWorkflowDef(created);
-        setSelectedWorkflowId(created.id);
-        setIsDirty(false);
-        refreshWorkflows();
-        runWorkflowId = created.id;
-      } catch (e) {
-        console.error('[SwarmView] auto-create workflow failed:', e);
-        return;
+    return sanitizeWorkflow({
+      ...current,
+      name: current.name || 'Untitled Workflow',
+      description: current.description || '',
+      nodes,
+      edges,
+      settings: current.settings || {},
+      initialContext: current.initialContext || {},
+      inputContract: current.inputContract || [],
+      outputContract: current.outputContract || { outputs: [], artifacts: [] },
+      projectId: current.projectId ?? activeProjectId,
+    });
+  };
+
+  const persistWorkflowForRun = async () => {
+    if (workflowDef?.id && !isDirty) return workflowDef.id;
+    const payload = buildCurrentWorkflowPayload();
+    if (!payload.nodes.length) return null;
+
+    if (workflowDef?.id) {
+      const result = await apiPut(`/api/v1/workflows/${workflowDef.id}`, payload);
+      const saved = result?.workflow ?? result;
+      if (saved) {
+        setWorkflowDef(saved);
+        setSelectedWorkflowId(saved.id);
       }
+      setIsDirty(false);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
+      refreshWorkflows();
+      return saved?.id ?? workflowDef.id;
     }
+
+    const res = await apiPost('/api/v1/workflows', payload);
+    const created = res?.workflow ?? res;
+    setWorkflowDef(created);
+    setSelectedWorkflowId(created.id);
+    setIsDirty(false);
+    refreshWorkflows();
+    return created.id;
+  };
+
+  const handleRunWithInput = async (workflowInput = {}) => {
+    // FR-V5-46: validate before run ? block if errors exist
+    if (hasValidationErrors) return;
 
     setPromptToFlowResetKey((value) => value + 1);
     setExecuting(true);
+    setSaveError(null);
     try {
+      const runWorkflowId = await persistWorkflowForRun();
+      if (!runWorkflowId) return;
       const models = {};
       if (runtimeModels.claude) models.claude = runtimeModels.claude;
       if (runtimeModels.codex) models.codex = runtimeModels.codex;
       if (runtimeModels.gemini) models.gemini = runtimeModels.gemini;
-      await startExecution(activeProjectId, projectPath, selectedRuntimeProvider, Object.keys(models).length > 0 ? models : null, runWorkflowId);
+      await startExecution(
+        activeProjectId,
+        projectPath,
+        selectedRuntimeProvider,
+        Object.keys(models).length > 0 ? models : null,
+        runWorkflowId,
+        workflowInput
+      );
+    } catch (e) {
+      setSaveError(e.message || 'Failed to save or run workflow');
+      console.error('[SwarmView] run workflow failed:', e);
     } finally {
       setExecuting(false);
     }
+  };
+
+  const handleRun = async () => {
+    if (hasWorkflowInputContract) {
+      setShowRunForm(true);
+      return;
+    }
+    await handleRunWithInput({});
   };
 
   const handleStop = async () => {
@@ -583,12 +700,7 @@ export default function SwarmView() {
     setSaveError(null);
     setSaveSuccess(false);
     try {
-      const { nodes, edges } = canvasStateRef.current;
-      const updated = sanitizeWorkflow({
-        ...workflowDef,
-        nodes,
-        edges,
-      });
+      const updated = buildCurrentWorkflowPayload();
       const result = await apiPut(`/api/v1/workflows/${workflowDef.id}`, updated);
       const saved = result?.workflow ?? result;
       if (saved) setWorkflowDef(saved);
@@ -668,6 +780,8 @@ export default function SwarmView() {
         edges: parsed.edges,
         settings: parsed.settings || {},
         initialContext: parsed.initialContext || {},
+        inputContract: parsed.inputContract || [],
+        outputContract: parsed.outputContract || { outputs: [], artifacts: [] },
       });
       const imported = res?.workflow ?? res;
       setWorkflowDef(imported);
@@ -697,6 +811,8 @@ export default function SwarmView() {
       edges: sanitized.edges,
       settings: sanitized.settings || {},
       initialContext: sanitized.initialContext || {},
+      inputContract: sanitized.inputContract || [],
+      outputContract: sanitized.outputContract || { outputs: [], artifacts: [] },
       projectId: sanitized.projectId,
     };
     const res = await apiPost('/api/v1/workflows', copy);
@@ -1092,6 +1208,8 @@ export default function SwarmView() {
         </div>
       )}
 
+      <WorkflowRunSummary workflowRun={workflowRun} workflowResult={workflowResult} />
+
       {saveError && (
         <div className="px-4 py-2 text-xs text-red-300 bg-red-950/40 border-b border-red-900/60">
           Save failed: {saveError}
@@ -1195,17 +1313,32 @@ export default function SwarmView() {
       {showSettings && workflowDef && (
         <WorkflowSettingsModal
           workflowDef={workflowDef}
-          onApply={(updatedSettings, updatedContext, updatedDescription) => {
+          onApply={(updatedSettings, updatedContext, updatedDescription, updatedInputContract, updatedOutputContract) => {
             setWorkflowDef({
               ...workflowDef,
               settings: { ...(workflowDef.settings || {}), ...updatedSettings },
               initialContext: updatedContext,
+              inputContract: updatedInputContract ?? workflowDef.inputContract ?? [],
+              outputContract: updatedOutputContract ?? workflowDef.outputContract ?? { outputs: [], artifacts: [] },
               ...(updatedDescription !== undefined ? { description: updatedDescription } : {}),
             });
             markDirty();
             setShowSettings(false);
           }}
           onClose={() => setShowSettings(false)}
+        />
+      )}
+
+      {showRunForm && workflowDef && (
+        <WorkflowRunModal
+          workflowName={workflowDef.name}
+          inputContract={workflowDef.inputContract ?? []}
+          outputContract={workflowDef.outputContract ?? { outputs: [], artifacts: [] }}
+          onSubmit={(workflowInput) => {
+            setShowRunForm(false);
+            void handleRunWithInput(workflowInput);
+          }}
+          onClose={() => setShowRunForm(false)}
         />
       )}
 

@@ -1,0 +1,31 @@
+﻿# Ralph Context Snapshot
+- Task statement: Implement the approved workflow-heart / pack-wrapper plan in this branch using the existing .omx/plans/prd-workflow-heart-pack-wrapper.md, .omx/plans/test-spec-workflow-heart-pack-wrapper.md, and .omx/plans/execution-workflow-heart-pack-wrapper.md artifacts.
+- Desired outcome: Workflow becomes the primary place to define, launch, and inspect reusable capability contracts (inputs, outputs, run visibility, lightweight agent controls) while pack surfaces remain intact; all introduced behavior is covered by detailed server/client tests and a targeted Playwright smoke.
+- Known facts/evidence:
+  - Branch: alph/workflow-heart-pack-wrapper.
+  - Approved PRD + test spec exist under .omx/plans/.
+  - Current docs/memory says recent pack follow-up work is closed; no active blocker remains on branch.
+  - Project directive requires targeted Playwright verification for user-visible Ralph changes.
+  - docs/shared/agent-tiers.md is missing; Ralph must proceed with repo role guidance + current model table.
+- Constraints:
+  - Do not redesign pack UI in this wave.
+  - No new dependencies.
+  - Additive schema changes must preserve backward compatibility for existing workflows.
+  - Must add detailed server/client regressions for every introduced behavior and run full verification until green.
+  - Need post-implementation ai-slop-cleaner pass on changed files unless explicitly skipped.
+- Unknowns/open questions:
+  - Exact current workflow schema + routes and which UI surfaces already partially support this plan.
+  - Best canonical shape for workflow-native input/output and agent guidance fields.
+  - Existing execution/result hydration hooks that should own workflow-direct launch observability.
+- Likely codebase touchpoints:
+  - server/services/WorkflowStore.js
+  - server/routes/workflows.js
+  - server/services/SwarmEngine.js
+  - server/routes/swarm.js
+  - server/stores/ExecutionHistoryStore.js
+  - client/src/canvas/WorkflowSettingsModal.jsx
+  - client/src/views/SwarmView.jsx
+  - client/src/hooks/useWorkflow.js
+  - client/src/hooks/useSwarm.js
+  - client/src/store/AppContext.jsx
+  - workflow/swarm-related server + client tests and a new/updated Playwright smoke script.

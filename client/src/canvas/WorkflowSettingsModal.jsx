@@ -296,11 +296,171 @@ function ContextTab({ contextVars, onChange }) {
   );
 }
 
+const INPUT_TYPES = ['text', 'textarea', 'number', 'integer', 'boolean', 'json', 'enum'];
+const OUTPUT_SOURCES = ['finalText', 'workflowContext'];
+const ARTIFACT_SOURCES = ['aggregatedArtifact', 'workflowContext'];
+const ARTIFACT_FORMATS = ['markdown', 'text', 'json'];
+
+function newInputField() {
+  return { key: '', label: '', type: 'text', required: false, defaultValue: '', helpText: '', options: [] };
+}
+
+function newOutputField() {
+  return { key: '', label: '', source: 'finalText', contextKey: '', description: '' };
+}
+
+function newArtifactField() {
+  return { key: '', label: '', format: 'markdown', source: 'aggregatedArtifact', contextKey: '', description: '' };
+}
+
+function normalizeCsv(value) {
+  return String(value ?? '').split(',').map((item) => item.trim()).filter(Boolean);
+}
+
+function ContractRows({ title, rows, columns, onAdd, onUpdate, onDelete, emptyLabel }) {
+  return (
+    <section className="flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-gray-300">{title}</span>
+        <button
+          type="button"
+          onClick={onAdd}
+          className="text-xs px-2.5 py-1 rounded bg-purple-600 hover:bg-purple-500 text-white transition-colors"
+        >
+          + Add
+        </button>
+      </div>
+      {rows.length === 0 ? (
+        <p className="rounded bg-gray-800/50 px-3 py-3 text-center text-xs text-gray-500">{emptyLabel}</p>
+      ) : (
+        <div className="space-y-3">
+          {rows.map((row, index) => (
+            <div key={index} className="rounded border border-gray-700 bg-gray-800/70 p-3">
+              <div className="mb-2 flex justify-between gap-2">
+                <span className="text-[11px] font-semibold text-gray-400">Item {index + 1}</span>
+                <button type="button" onClick={() => onDelete(index)} className="text-xs text-red-300 hover:text-red-200">
+                  Remove
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {columns.map((column) => (
+                  <label key={column.key} className={column.wide ? 'col-span-2 text-[11px] text-gray-400' : 'text-[11px] text-gray-400'}>
+                    {column.label}
+                    {column.type === 'select' ? (
+                      <select className={INPUT_CLS} value={row[column.key] ?? column.options[0]} onChange={(event) => onUpdate(index, column.key, event.target.value)}>
+                        {column.options.map((option) => <option key={option} value={option}>{option}</option>)}
+                      </select>
+                    ) : column.type === 'checkbox' ? (
+                      <input
+                        type="checkbox"
+                        className="mt-2 block accent-purple-500"
+                        checked={Boolean(row[column.key])}
+                        onChange={(event) => onUpdate(index, column.key, event.target.checked)}
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        className={INPUT_CLS}
+                        value={Array.isArray(row[column.key]) ? row[column.key].join(', ') : row[column.key] ?? ''}
+                        onChange={(event) => onUpdate(index, column.key, column.csv ? normalizeCsv(event.target.value) : event.target.value)}
+                        placeholder={column.placeholder}
+                      />
+                    )}
+                  </label>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function InterfaceTab({ inputContract, outputContract, onInputsChange, onOutputContractChange }) {
+  const outputs = outputContract?.outputs ?? [];
+  const artifacts = outputContract?.artifacts ?? [];
+
+  const updateInput = (index, key, value) => {
+    onInputsChange(inputContract.map((row, i) => (i === index ? { ...row, [key]: value } : row)));
+  };
+  const updateOutput = (index, key, value) => {
+    onOutputContractChange({
+      outputs: outputs.map((row, i) => (i === index ? { ...row, [key]: value } : row)),
+      artifacts,
+    });
+  };
+  const updateArtifact = (index, key, value) => {
+    onOutputContractChange({
+      outputs,
+      artifacts: artifacts.map((row, i) => (i === index ? { ...row, [key]: value } : row)),
+    });
+  };
+
+  return (
+    <div className="flex flex-col gap-5 p-4">
+      <p className="rounded border border-purple-900/50 bg-purple-950/20 px-3 py-2 text-xs text-purple-100">
+        Workflow direct runs use these workflow-native contracts. Pack runs remain pack-authoritative in this wave.
+      </p>
+      <ContractRows
+        title="Workflow Inputs"
+        rows={inputContract}
+        columns={[
+          { key: 'key', label: 'Key', placeholder: 'brief' },
+          { key: 'label', label: 'Label', placeholder: 'Campaign brief' },
+          { key: 'type', label: 'Type', type: 'select', options: INPUT_TYPES },
+          { key: 'required', label: 'Required', type: 'checkbox' },
+          { key: 'defaultValue', label: 'Default', placeholder: 'Optional default' },
+          { key: 'options', label: 'Enum options', placeholder: 'a, b, c', csv: true },
+          { key: 'helpText', label: 'Help text', placeholder: 'Explain what the user should enter', wide: true },
+        ]}
+        onAdd={() => onInputsChange([...inputContract, newInputField()])}
+        onUpdate={updateInput}
+        onDelete={(index) => onInputsChange(inputContract.filter((_, i) => i !== index))}
+        emptyLabel="No workflow inputs yet."
+      />
+      <ContractRows
+        title="Canonical Outputs"
+        rows={outputs}
+        columns={[
+          { key: 'key', label: 'Key', placeholder: 'result' },
+          { key: 'label', label: 'Label', placeholder: 'Primary result' },
+          { key: 'source', label: 'Source', type: 'select', options: OUTPUT_SOURCES },
+          { key: 'contextKey', label: 'Context key', placeholder: 'packOutputs.result' },
+          { key: 'description', label: 'Description', placeholder: 'What success looks like', wide: true },
+        ]}
+        onAdd={() => onOutputContractChange({ outputs: [...outputs, newOutputField()], artifacts })}
+        onUpdate={updateOutput}
+        onDelete={(index) => onOutputContractChange({ outputs: outputs.filter((_, i) => i !== index), artifacts })}
+        emptyLabel="No workflow outputs yet."
+      />
+      <ContractRows
+        title="Canonical Artifacts"
+        rows={artifacts}
+        columns={[
+          { key: 'key', label: 'Key', placeholder: 'report' },
+          { key: 'label', label: 'Label', placeholder: 'Final report' },
+          { key: 'format', label: 'Format', type: 'select', options: ARTIFACT_FORMATS },
+          { key: 'source', label: 'Source', type: 'select', options: ARTIFACT_SOURCES },
+          { key: 'contextKey', label: 'Context key', placeholder: 'reportMarkdown' },
+          { key: 'description', label: 'Description', placeholder: 'Artifact purpose', wide: true },
+        ]}
+        onAdd={() => onOutputContractChange({ outputs, artifacts: [...artifacts, newArtifactField()] })}
+        onUpdate={updateArtifact}
+        onDelete={(index) => onOutputContractChange({ outputs, artifacts: artifacts.filter((_, i) => i !== index) })}
+        emptyLabel="No workflow artifacts yet."
+      />
+    </div>
+  );
+}
+
 export default function WorkflowSettingsModal({ workflowDef, onApply, onClose }) {
   const [tab, setTab] = useState('settings');
   const [settings, setSettings] = useState({ ...DEFAULTS });
   const [contextVars, setContextVars] = useState([]);
   const [description, setDescription] = useState('');
+  const [inputContract, setInputContract] = useState([]);
+  const [outputContract, setOutputContract] = useState({ outputs: [], artifacts: [] });
 
   // Initialize from workflowDef
   useEffect(() => {
@@ -318,6 +478,11 @@ export default function WorkflowSettingsModal({ workflowDef, onApply, onClose })
     const ctx = workflowDef?.initialContext || {};
     const entries = Object.entries(ctx).map(([key, value]) => ({ key, value: String(value) }));
     setContextVars(entries);
+    setInputContract(Array.isArray(workflowDef?.inputContract) ? workflowDef.inputContract : []);
+    setOutputContract({
+      outputs: Array.isArray(workflowDef?.outputContract?.outputs) ? workflowDef.outputContract.outputs : [],
+      artifacts: Array.isArray(workflowDef?.outputContract?.artifacts) ? workflowDef.outputContract.artifacts : [],
+    });
   }, [workflowDef]);
 
   // Close on Escape
@@ -339,8 +504,8 @@ export default function WorkflowSettingsModal({ workflowDef, onApply, onClose })
       const k = row.key.trim();
       if (k) contextDict[k] = row.value;
     }
-    onApply(settings, contextDict, description);
-  }, [settings, contextVars, description, onApply]);
+    onApply(settings, contextDict, description, inputContract, outputContract);
+  }, [settings, contextVars, description, inputContract, outputContract, onApply]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -381,12 +546,31 @@ export default function WorkflowSettingsModal({ workflowDef, onApply, onClose })
           >
             Initial Context
           </button>
+          <button
+            type="button"
+            onClick={() => setTab('interface')}
+            className={`flex-1 text-xs py-2.5 transition-colors ${
+              tab === 'interface'
+                ? 'border-b-2 border-purple-500 text-white font-semibold'
+                : 'text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            Interface
+          </button>
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
           {tab === 'settings' && <SettingsTab settings={settings} onChange={setSettings} description={description} onDescriptionChange={setDescription} />}
           {tab === 'context' && <ContextTab contextVars={contextVars} onChange={setContextVars} />}
+          {tab === 'interface' && (
+            <InterfaceTab
+              inputContract={inputContract}
+              outputContract={outputContract}
+              onInputsChange={setInputContract}
+              onOutputContractChange={setOutputContract}
+            />
+          )}
         </div>
 
         {/* Footer */}

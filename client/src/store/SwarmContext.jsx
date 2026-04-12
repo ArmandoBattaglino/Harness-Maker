@@ -62,6 +62,8 @@ const buildClearedExecutionState = () => ({
   resolvedHitlIds: [],
   interAgentFeed: [],
   chatMessages: [],
+  workflowRun: null,
+  workflowResult: null,
   packRun: null,
   packResult: null,
   chatFilter: 'all',
@@ -95,6 +97,8 @@ const useSwarmStore = create((set, get) => ({
   resolvedHitlIds: [],     // IDs of resolved HITL items (survives component remount)
   interAgentFeed: [],      // last 100 handoff events
   chatMessages: [],          // Unified chat view messages
+  workflowRun: null,          // workflow-direct run inputs/contracts from status/results hydration
+  workflowResult: null,       // workflow-native canonical outputs/artifacts from status/results hydration
   packRun: null,             // additive pack runtime metadata for pack-launched executions
   packResult: null,          // pack-shaped outputs/artifacts from status/results hydration
   chatFilter: 'all',         // 'all' or specific nodeId

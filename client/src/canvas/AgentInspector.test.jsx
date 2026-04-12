@@ -72,4 +72,32 @@ describe('AgentInspector output parity', () => {
     expect(sections[1]).toHaveTextContent('Output 1');
     expect(sections[1]).toHaveTextContent('Older structured output.');
   });
+
+  it('exposes and saves lightweight workflow guidance controls for an agent', () => {
+    useSwarmStore.setState({ selectedNodeId: 'node-a' });
+    const onUpdateNode = vi.fn();
+
+    render(
+      <AgentInspector
+        nodes={[
+          {
+            id: 'node-a',
+            type: 'agent',
+            data: { label: 'Writer' },
+          },
+        ]}
+        onUpdateNode={onUpdateNode}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Workflow Guidance/i }));
+    fireEvent.change(screen.getByLabelText('Skill hints'), { target: { value: 'writer, qa-tester' } });
+    fireEvent.change(screen.getByLabelText('Context sources'), { target: { value: 'brief, docs/memory' } });
+    fireEvent.change(screen.getByLabelText('Expected output'), { target: { value: 'A measurable markdown report.' } });
+
+    expect(onUpdateNode).toHaveBeenCalledWith('node-a', { skillHints: ['writer', 'qa-tester'] });
+    expect(onUpdateNode).toHaveBeenCalledWith('node-a', { contextSources: ['brief', 'docs/memory'] });
+    expect(onUpdateNode).toHaveBeenCalledWith('node-a', { expectedOutput: 'A measurable markdown report.' });
+    expect(screen.getByText(/guidance \+ visibility/i)).toBeInTheDocument();
+  });
 });

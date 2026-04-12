@@ -54,6 +54,10 @@ function normalizeClaudeToolSelection(tools) {
   return CLAUDE_TOOL_OPTIONS.filter((tool) => selected.has(tool));
 }
 
+function normalizeCsv(value) {
+  return String(value ?? '').split(',').map((item) => item.trim()).filter(Boolean);
+}
+
 /**
  * Debounced field updater — returns a [localValue, setLocalValue] pair
  * that syncs back to the canvas after `delay` ms of inactivity.
@@ -318,6 +322,43 @@ function AgentFields({ node, nodes, onUpdateNode }) {
       <div className="text-[10px] text-gray-500 -mt-1">
         All start nodes run immediately. Mark multiple agents to launch parallel branches together.
       </div>
+
+      <CollapsibleSection title="Workflow Guidance" defaultOpen={false}>
+        <div className="rounded border border-gray-700 bg-gray-800/60 p-2 text-[10px] text-gray-500">
+          Skill/tool/context controls are guidance + visibility in this wave; Claude tool lists are still passed to supported structured Claude runs.
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <FieldLabel>Skill hints</FieldLabel>
+          <input
+            className={INPUT_CLS}
+            aria-label="Skill hints"
+            value={Array.isArray(data.skillHints) ? data.skillHints.join(', ') : ''}
+            onChange={(e) => onUpdateNode(nodeId, { skillHints: normalizeCsv(e.target.value) })}
+            placeholder="researcher, qa-tester, writer"
+          />
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <FieldLabel>Context sources</FieldLabel>
+          <input
+            className={INPUT_CLS}
+            aria-label="Context sources"
+            value={Array.isArray(data.contextSources) ? data.contextSources.join(', ') : ''}
+            onChange={(e) => onUpdateNode(nodeId, { contextSources: normalizeCsv(e.target.value) })}
+            placeholder="project-memory, customer-brief, repository"
+          />
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <FieldLabel>Expected output</FieldLabel>
+          <textarea
+            className={`${INPUT_CLS} font-mono resize-y`}
+            aria-label="Expected output"
+            rows={3}
+            value={data.expectedOutput || ''}
+            onChange={(e) => onUpdateNode(nodeId, { expectedOutput: e.target.value })}
+            placeholder="Define the measurable output this agent should produce."
+          />
+        </div>
+      </CollapsibleSection>
 
       {/* Parent Department */}
       <div className="flex flex-col gap-0.5">

@@ -91,6 +91,14 @@ function buildHydratedSnippetPatch(agentState, snippetText) {
   };
 }
 
+function hydrateWorkflowRuntime(data) {
+  if (!data?.workflowRun && !data?.workflowResult) return;
+  useSwarmStore.setState({
+    workflowRun: data.workflowRun ?? null,
+    workflowResult: data.workflowResult ?? null,
+  });
+}
+
 export function useSwarm(workflowId) {
   const wsRef = useRef(null);
   const wsReconnectCountRef = useRef(0);
@@ -273,6 +281,8 @@ export function useSwarm(workflowId) {
       ...(snapshot.budget ? { budget: snapshot.budget } : {}),
       ...(snapshot.inboxItems ? { inboxItems: snapshot.inboxItems } : {}),
       ...(snapshot.interAgentFeed ? { interAgentFeed: snapshot.interAgentFeed } : {}),
+      ...(Object.prototype.hasOwnProperty.call(snapshot, 'workflowRun') ? { workflowRun: snapshot.workflowRun } : {}),
+      ...(Object.prototype.hasOwnProperty.call(snapshot, 'workflowResult') ? { workflowResult: snapshot.workflowResult } : {}),
       ...(Object.prototype.hasOwnProperty.call(snapshot, 'packRun') ? { packRun: snapshot.packRun } : {}),
       ...(Object.prototype.hasOwnProperty.call(snapshot, 'packResult') ? { packResult: snapshot.packResult } : {}),
       // Only accept server chatMessages when they belong to the same active
@@ -447,6 +457,7 @@ export function useSwarm(workflowId) {
               packResult: resultsData.packResult,
             });
           }
+          hydrateWorkflowRuntime(resultsData);
         }
       } catch {
         // Silent — output panel just won't have data
@@ -693,6 +704,7 @@ export function useSwarm(workflowId) {
                           packResult: data.packResult,
                         });
                       }
+                      hydrateWorkflowRuntime(data);
                       // Hydrate chat messages from server-stored data (dedup by timestamp+nodeId)
                       if (data?.chatMessages && Array.isArray(data.chatMessages)) {
                         const store = useSwarmStore.getState();
@@ -916,7 +928,7 @@ export function useSwarm(workflowId) {
   }, [setWsConnected, updateAgentState, updateEdgeCounter, addFeedEvent, addChatMessage, setExecution, updateBudget, addInboxItem, resolveInboxItem, updateTriggerState, applyExecutionSnapshot, reconcileClosedExecution, getPendingStreamJsonTurn, flushPendingStreamJsonTurn, hydratePackRuntime]);
 
   // Start execution
-  const startExecution = useCallback(async (projectId, projectPath, runtimeProvider = 'auto', runtimeModels = null, overrideWorkflowId = null) => {
+  const startExecution = useCallback(async (projectId, projectPath, runtimeProvider = 'auto', runtimeModels = null, overrideWorkflowId = null, workflowInput = {}) => {
     const effectiveId = overrideWorkflowId || workflowId;
     if (!effectiveId) throw new Error('No workflow selected');
     clearTimeout(wsReconnectTimerRef.current);
@@ -925,7 +937,7 @@ export function useSwarm(workflowId) {
     wsReconnectCountRef.current = 0;
     pendingStreamJsonTurnsRef.current = {};
     clearExecutionState();
-    const body = { projectId, projectPath, runtimeProvider };
+    const body = { projectId, projectPath, runtimeProvider, workflowInput: workflowInput ?? {} };
     if (runtimeModels && typeof runtimeModels === 'object') {
       body.runtimeModels = runtimeModels;
     }

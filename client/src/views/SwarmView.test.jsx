@@ -6,7 +6,7 @@ import { useSwarmStore } from '../store/SwarmContext.jsx';
 import { resetSwarmStore } from '../test/resetSwarmStore.js';
 import { useInbox } from '../hooks/useInbox.js';
 import { useSwarm } from '../hooks/useSwarm.js';
-import { apiGet } from '../hooks/useApi.js';
+import { apiGet, apiPost, apiPut } from '../hooks/useApi.js';
 import { useCanvasValidation } from '../hooks/useCanvasValidation.js';
 
 const workflowListMock = {
@@ -54,7 +54,23 @@ vi.mock('../canvas/PtyExplosion', () => ({
 }));
 
 vi.mock('../canvas/WorkflowSettingsModal', () => ({
-  default: () => null,
+  default: ({ onApply }) => (
+    <button
+      type="button"
+      onClick={() => onApply(
+        {},
+        {},
+        'Dirty workflow goal',
+        [{ key: 'brief', label: 'Brief', type: 'textarea', required: true, helpText: 'Campaign brief' }],
+        {
+          outputs: [{ key: 'result', label: 'Result', source: 'finalText' }],
+          artifacts: [{ key: 'report', label: 'Report', format: 'markdown', source: 'aggregatedArtifact' }],
+        }
+      )}
+    >
+      Apply mocked workflow interface
+    </button>
+  ),
 }));
 
 vi.mock('../canvas/ExecutionHistory', () => ({
@@ -135,6 +151,8 @@ describe('SwarmView runtime shell contracts', () => {
       }
       throw new Error(`Unexpected apiGet path: ${path}`);
     });
+    vi.mocked(apiPost).mockReset();
+    vi.mocked(apiPut).mockReset();
   });
 
   it('shows structured-runtime controls for active stream-json executions', async () => {
@@ -383,6 +401,160 @@ describe('SwarmView runtime shell contracts', () => {
     expect(runButton).toBeDisabled();
     expect(screen.getByText('No start node')).toBeInTheDocument();
     expect(screen.queryByText(/empty system prompt/i)).not.toBeInTheDocument();
+  });
+
+  it('opens a workflow-native run form, blocks missing required input, and starts with submitted values', async () => {
+    useSwarmStore.setState({
+      workflowDef: {
+        id: 'workflow-inputs',
+        name: 'Workflow Inputs',
+        inputContract: [
+          { key: 'brief', label: 'Brief', type: 'textarea', required: true, helpText: 'Campaign brief' },
+          { key: 'tone', label: 'Tone', type: 'enum', required: false, options: ['formal', 'friendly'], defaultValue: 'friendly' },
+        ],
+        outputContract: {
+          outputs: [{ key: 'result', label: 'Result', source: 'finalText' }],
+          artifacts: [{ key: 'report', label: 'Report', format: 'markdown', source: 'aggregatedArtifact' }],
+        },
+        nodes: [{ id: 'node-a', type: 'agent', data: { label: 'Agent A' } }],
+        edges: [],
+      },
+      executionStatus: 'idle',
+    });
+
+    render(<SwarmView />);
+
+    await waitFor(() => {
+      expect(apiGet).toHaveBeenCalledWith('/api/v1/swarm/runtime-capabilities');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Run' }));
+    expect(screen.getByText('Run workflow')).toBeInTheDocument();
+    expect(screen.getByText(/Expected run result/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start workflow' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Brief is required.');
+
+    fireEvent.change(screen.getByLabelText(/Brief/i), { target: { value: 'Launch campaign X' } });
+    fireEvent.change(screen.getByLabelText(/Tone/i), { target: { value: 'formal' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Start workflow' }));
+
+    await waitFor(() => {
+      expect(useSwarmMockValue.startExecution).toHaveBeenCalledWith(
+        'project-1',
+        'C:\\Projects\\One',
+        'auto',
+        expect.objectContaining({ claude: 'claude-sonnet', codex: 'gpt-5.4' }),
+        'workflow-inputs',
+        { brief: 'Launch campaign X', tone: 'formal' }
+      );
+    });
+  });
+
+  it('saves dirty workflow interface contracts before starting a direct run', async () => {
+    vi.mocked(apiPut).mockResolvedValue({
+      workflow: {
+        id: 'workflow-dirty',
+        name: 'Workflow Dirty',
+        description: 'Dirty workflow goal',
+        inputContract: [{ key: 'brief', label: 'Brief', type: 'textarea', required: true, helpText: 'Campaign brief' }],
+        outputContract: {
+          outputs: [{ key: 'result', label: 'Result', source: 'finalText' }],
+          artifacts: [{ key: 'report', label: 'Report', format: 'markdown', source: 'aggregatedArtifact' }],
+        },
+        nodes: [{ id: 'node-a', type: 'agent', position: { x: 0, y: 0 }, data: { label: 'Agent A' } }],
+        edges: [],
+      },
+    });
+    useSwarmStore.setState({
+      workflowDef: {
+        id: 'workflow-dirty',
+        name: 'Workflow Dirty',
+        description: 'Old goal',
+        nodes: [{ id: 'node-a', type: 'agent', position: { x: 0, y: 0 }, data: { label: 'Agent A' } }],
+        edges: [],
+      },
+      executionStatus: 'idle',
+    });
+
+    render(<SwarmView />);
+
+    await waitFor(() => {
+      expect(apiGet).toHaveBeenCalledWith('/api/v1/swarm/runtime-capabilities');
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Settings/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Apply mocked workflow interface' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Run' }));
+    fireEvent.change(screen.getByLabelText(/Brief/i), { target: { value: 'Fresh brief' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Start workflow' }));
+
+    await waitFor(() => {
+      expect(apiPut).toHaveBeenCalledWith('/api/v1/workflows/workflow-dirty', expect.objectContaining({
+        inputContract: [expect.objectContaining({ key: 'brief', required: true })],
+        outputContract: expect.objectContaining({
+          outputs: [expect.objectContaining({ key: 'result' })],
+          artifacts: [expect.objectContaining({ key: 'report' })],
+        }),
+      }));
+      expect(useSwarmMockValue.startExecution).toHaveBeenCalledWith(
+        'project-1',
+        'C:\\Projects\\One',
+        'auto',
+        expect.any(Object),
+        'workflow-dirty',
+        { brief: 'Fresh brief' }
+      );
+    });
+  });
+
+  it('creates an unsaved workflow with its workflow-native contracts before direct run', async () => {
+    vi.mocked(apiPost).mockResolvedValue({
+      workflow: {
+        id: 'workflow-created',
+        name: 'Unsaved Workflow',
+        inputContract: [{ key: 'brief', label: 'Brief', type: 'textarea', required: true }],
+        outputContract: { outputs: [{ key: 'result', label: 'Result', source: 'finalText' }], artifacts: [] },
+        nodes: [{ id: 'node-a', type: 'agent', position: { x: 0, y: 0 }, data: { label: 'Agent A' } }],
+        edges: [],
+      },
+    });
+    useSwarmStore.setState({
+      workflowDef: {
+        name: 'Unsaved Workflow',
+        inputContract: [{ key: 'brief', label: 'Brief', type: 'textarea', required: true }],
+        outputContract: { outputs: [{ key: 'result', label: 'Result', source: 'finalText' }], artifacts: [] },
+        nodes: [{ id: 'node-a', type: 'agent', position: { x: 0, y: 0 }, data: { label: 'Agent A' } }],
+        edges: [],
+      },
+      executionStatus: 'idle',
+    });
+
+    render(<SwarmView />);
+
+    await waitFor(() => {
+      expect(apiGet).toHaveBeenCalledWith('/api/v1/swarm/runtime-capabilities');
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Run' }));
+    fireEvent.change(screen.getByLabelText(/Brief/i), { target: { value: 'Unsaved brief' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Start workflow' }));
+
+    await waitFor(() => {
+      expect(apiPost).toHaveBeenCalledWith('/api/v1/workflows', expect.objectContaining({
+        name: 'Unsaved Workflow',
+        inputContract: [expect.objectContaining({ key: 'brief' })],
+        outputContract: expect.objectContaining({
+          outputs: [expect.objectContaining({ key: 'result' })],
+        }),
+      }));
+      expect(useSwarmMockValue.startExecution).toHaveBeenCalledWith(
+        'project-1',
+        'C:\\Projects\\One',
+        'auto',
+        expect.any(Object),
+        'workflow-created',
+        { brief: 'Unsaved brief' }
+      );
+    });
   });
 
   it('consumes workflow drill-down navigation intent and shows pack drill-down context', async () => {

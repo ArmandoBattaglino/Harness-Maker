@@ -274,6 +274,82 @@ describe('swarmRoutes runtime model contract', () => {
       code: 'UNSUPPORTED_RUNTIME_MODEL',
     });
   });
+
+  it('passes workflow-native direct-run input into SwarmEngine start options', async () => {
+    const swarmEngine = {
+      startExecution: vi.fn().mockResolvedValue('exec-workflow-input'),
+      getStatus: vi.fn().mockReturnValue({
+        status: 'running',
+        workflowRun: {
+          kind: 'workflow-direct',
+          inputs: { brief: 'Launch X', tone: 'formal' },
+        },
+      }),
+      pauseExecution: vi.fn(),
+      resumeExecution: vi.fn(),
+      stopExecution: vi.fn(),
+      getExecution: vi.fn(),
+    };
+    const router = swarmRoutes(swarmEngine, { getSession: vi.fn() });
+    const handler = getRouteHandler(router, 'post', '/:workflowId/start');
+    const req = {
+      params: { workflowId: 'wf-input' },
+      body: {
+        projectId: 'proj-1',
+        projectPath: '/projects/proj-1',
+        runtimeProvider: 'codex',
+        workflowInput: { brief: 'Launch X', tone: 'formal' },
+      },
+      app: { locals: {} },
+    };
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(swarmEngine.startExecution).toHaveBeenCalledWith('wf-input', 'proj-1', '/projects/proj-1', {
+      runtimeProvider: 'codex',
+      runtimeModels: undefined,
+      workflowInput: { brief: 'Launch X', tone: 'formal' },
+    });
+    expect(res.statusCode).toBe(201);
+    expect(res.body.workflowRun.inputs.brief).toBe('Launch X');
+  });
+
+  it('returns workflow input validation details from SwarmEngine start failures', async () => {
+    const error = new Error('Workflow input validation failed: payload must be valid parsed JSON, not a raw string');
+    error.statusCode = 400;
+    error.code = 'WORKFLOW_INPUT_VALIDATION_FAILED';
+    error.details = ['payload must be valid parsed JSON, not a raw string'];
+    const swarmEngine = {
+      startExecution: vi.fn().mockRejectedValue(error),
+      getStatus: vi.fn(),
+      pauseExecution: vi.fn(),
+      resumeExecution: vi.fn(),
+      stopExecution: vi.fn(),
+      getExecution: vi.fn(),
+    };
+    const router = swarmRoutes(swarmEngine, { getSession: vi.fn() });
+    const handler = getRouteHandler(router, 'post', '/:workflowId/start');
+    const req = {
+      params: { workflowId: 'wf-input' },
+      body: {
+        projectId: 'proj-1',
+        projectPath: '/projects/proj-1',
+        workflowInput: { payload: '{bad json' },
+      },
+      app: { locals: {} },
+    };
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toEqual({
+      error: 'Workflow input validation failed: payload must be valid parsed JSON, not a raw string',
+      code: 'WORKFLOW_INPUT_VALIDATION_FAILED',
+      details: ['payload must be valid parsed JSON, not a raw string'],
+    });
+  });
 });
 
 describe('swarmRoutes broadcast delivery', () => {

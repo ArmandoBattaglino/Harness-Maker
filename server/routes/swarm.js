@@ -17,6 +17,7 @@ import { buildWorkflowArtifact } from '../services/WorkflowArtifactBuilder.js';
 import buildPackResult from '../services/PackResultBuilder.js';
 import { ExecutionHistoryStore } from '../stores/ExecutionHistoryStore.js';
 import { ConfigStore } from '../services/ConfigStore.js';
+import { buildWorkflowResult } from '../services/workflowContracts.js';
 
 const TERMINAL_EXECUTION_STATUSES = new Set(['completed', 'stopped', 'failed']);
 const STRUCTURED_AGENT_SPAWN_MODES = new Set(['stream-json', 'codex-sdk']);
@@ -180,6 +181,19 @@ function buildLiveExecutionResults(execution, workflowName = '', swarmEngine = n
     agentOutputs,
     chatMessages: Array.isArray(execution?.chatMessages) ? execution.chatMessages : [],
     aggregatedArtifact,
+    ...(execution?.workflowRun ? { workflowRun: execution.workflowRun } : {}),
+    ...(execution?.workflowRun
+      ? {
+          workflowResult: buildWorkflowResult({
+            workflowDef: execution?.workflowDef,
+            workflowRun: execution.workflowRun,
+            workflowContext: execution?.workflowContext,
+            agentOutputs,
+            aggregatedArtifact,
+            status,
+          }),
+        }
+      : {}),
     ...(packRun ? { packRun } : {}),
     ...(packLike ? { packResult: buildPackResult(packLike, execution, agentOutputs, aggregatedArtifact) } : {}),
     meta: {
@@ -367,7 +381,7 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
   router.post('/:workflowId/start', async (req, res) => {
     try {
       const { workflowId } = req.params;
-      const { projectId, projectPath, runtimeProvider, provider, runtimeModels } = req.body ?? {};
+      const { projectId, projectPath, runtimeProvider, provider, runtimeModels, workflowInput, input } = req.body ?? {};
 
       if (!projectId || typeof projectId !== 'string' || projectId.trim() === '') {
         return res.status(400).json({ error: 'projectId is required' });
@@ -381,13 +395,21 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
         executionId = await swarmEngine.startExecution(workflowId, projectId.trim(), projectPath.trim(), {
           runtimeProvider: runtimeProvider ?? provider,
           runtimeModels: runtimeModels && typeof runtimeModels === 'object' ? runtimeModels : undefined,
+          ...(Object.prototype.hasOwnProperty.call(req.body ?? {}, 'workflowInput')
+            || Object.prototype.hasOwnProperty.call(req.body ?? {}, 'input')
+            ? { workflowInput: workflowInput ?? input ?? {} }
+            : {}),
         });
       } catch (err) {
         if (err.message === 'Workflow not found') {
           return res.status(404).json({ error: 'Workflow not found' });
         }
         if (err.statusCode) {
-          return res.status(err.statusCode).json({ error: err.message, code: err.code ?? null });
+          return res.status(err.statusCode).json({
+            error: err.message,
+            code: err.code ?? null,
+            ...(Array.isArray(err.details) ? { details: err.details } : {}),
+          });
         }
         throw err;
       }
@@ -400,6 +422,7 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
         activeProvider: status?.activeProvider ?? null,
         providerStrategy: status?.providerStrategy ?? null,
         lastFallback: status?.lastFallback ?? null,
+        ...(status?.workflowRun ? { workflowRun: status.workflowRun } : {}),
       });
     } catch (err) {
       console.error(`[swarm] POST /:workflowId/start error: ${err.message}`);
@@ -799,6 +822,8 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
         status: entry.status,
         agentOutputs: entry.agentOutputs || {},
         aggregatedArtifact: entry.aggregatedArtifact || '',
+        ...(entry.workflowRun ? { workflowRun: entry.workflowRun } : {}),
+        ...(entry.workflowResult ? { workflowResult: entry.workflowResult } : {}),
         ...(entry.packRun ? { packRun: entry.packRun } : {}),
         ...(packLike ? { packResult: buildPackResult(packLike, entry, entry.agentOutputs || {}, entry.aggregatedArtifact || '') } : {}),
         meta: {

@@ -22,6 +22,11 @@ import { ChatExtractor } from './ChatExtractor.js';
 import { normalizeChatDisplayText } from './chatTextNormalization.js';
 import { buildWorkflowArtifact } from './WorkflowArtifactBuilder.js';
 import { buildVisibleStepStatuses } from './PackResultBuilder.js';
+import {
+  buildWorkflowResult,
+  buildWorkflowRunContextPatch,
+  prepareWorkflowRun,
+} from './workflowContracts.js';
 
 // tree-kill is CommonJS only — use createRequire to import it (DEC-006)
 const requireCjs = createRequire(import.meta.url);
@@ -2150,6 +2155,16 @@ class SwarmEngine {
       durationMs,
       agentOutputs,
     });
+    const workflowResult = execution.workflowRun
+      ? buildWorkflowResult({
+          workflowDef: execution.workflowDef,
+          workflowRun: execution.workflowRun,
+          workflowContext: execution.workflowContext,
+          agentOutputs,
+          aggregatedArtifact,
+          status: execution.status,
+        })
+      : null;
 
     // Build a human-readable outcome summary
     let outcome = '';
@@ -2172,6 +2187,8 @@ class SwarmEngine {
       nodeSnapshots,
       agentOutputs,
       aggregatedArtifact,
+      workflowRun: execution.workflowRun ? JSON.parse(JSON.stringify(execution.workflowRun)) : null,
+      workflowResult,
       packId: execution.packMetadata?.packId ?? null,
       packVersion: execution.packMetadata?.packVersion ?? null,
       packRun: execution.packMetadata ? JSON.parse(JSON.stringify(execution.packMetadata)) : null,
@@ -4377,6 +4394,13 @@ class SwarmEngine {
       wf,
       runtimeOptions.provider ?? runtimeOptions.runtimeProvider
     );
+    const workflowRun = Object.prototype.hasOwnProperty.call(runtimeOptions, 'workflowInput')
+      ? prepareWorkflowRun(wf, runtimeOptions.workflowInput)
+      : null;
+    const workflowContextPatch = {
+      ...(runtimeOptions.workflowContextPatch ?? {}),
+      ...buildWorkflowRunContextPatch(wf, workflowRun),
+    };
 
     // 2. Build execution record
     const executionId = uuidv4();
@@ -4392,7 +4416,8 @@ class SwarmEngine {
       edgeCounters: new Map(),
       agentInputBarriers: new Map(),
       inboundHandoffs: new Map(),
-      workflowContext: this._buildInitialWorkflowContext(wf, runtimeOptions.workflowContextPatch),
+      workflowContext: this._buildInitialWorkflowContext(wf, workflowContextPatch),
+      workflowRun,
       heartbeatTimer: null,
       inboxItems: [],
       chatMessages: [],
@@ -6590,6 +6615,31 @@ class SwarmEngine {
     const packKnowledge = workflowContext.packKnowledge && typeof workflowContext.packKnowledge === 'object'
       ? workflowContext.packKnowledge
       : null;
+    if ((visibility === 'full' || visibility === 'minimal') && workflowContext.workflowRun?.inputs) {
+      lines.push('=== WORKFLOW RUN INPUTS ===');
+      lines.push(JSON.stringify(workflowContext.workflowRun.inputs, null, 2));
+      const declaredOutputs = workflowContext.workflowRun.outputContract;
+      if (
+        declaredOutputs
+        && (
+          (Array.isArray(declaredOutputs.outputs) && declaredOutputs.outputs.length > 0)
+          || (Array.isArray(declaredOutputs.artifacts) && declaredOutputs.artifacts.length > 0)
+        )
+      ) {
+        lines.push('Declared workflow outputs/artifacts:');
+        lines.push(JSON.stringify(declaredOutputs, null, 2));
+      }
+      lines.push('');
+    }
+
+    const agentGuidanceLines = this._buildAgentGuidanceLines(node);
+    if (agentGuidanceLines.length > 0) {
+      lines.push('=== AGENT QUALITY GUIDANCE ===');
+      lines.push(...agentGuidanceLines);
+      lines.push('These controls guide and expose expected behavior in wave 1; they are not a hard policy engine.');
+      lines.push('');
+    }
+
     if ((visibility === 'full' || visibility === 'minimal') && packKnowledge && Object.keys(packKnowledge).length > 0) {
       lines.push('=== PACK KNOWLEDGE / CONTEXT ===');
       lines.push(JSON.stringify(packKnowledge, null, 2));
@@ -6865,6 +6915,24 @@ class SwarmEngine {
     lines.push('Do not emit the final-agent done marker while downstream targets still exist.');
 
     return lines.join('\n');
+  }
+
+  _buildAgentGuidanceLines(node) {
+    const data = node?.data ?? {};
+    const lines = [];
+    if (Array.isArray(data.tools) && data.tools.length > 0) {
+      lines.push(`Tool boundary: ${data.tools.join(', ')}`);
+    }
+    if (Array.isArray(data.skillHints) && data.skillHints.length > 0) {
+      lines.push(`Preferred skills/workflows: ${data.skillHints.join(', ')}`);
+    }
+    if (Array.isArray(data.contextSources) && data.contextSources.length > 0) {
+      lines.push(`Context/source focus: ${data.contextSources.join(', ')}`);
+    }
+    if (typeof data.expectedOutput === 'string' && data.expectedOutput.trim()) {
+      lines.push(`Expected output: ${data.expectedOutput.trim()}`);
+    }
+    return lines;
   }
 
   _shouldSendMissingHandoffReminder(execution, nodeId, state) {
@@ -8271,8 +8339,34 @@ class SwarmEngine {
             visibleSteps: e.packMetadata.visibleSteps ?? [],
           }, e),
           blocker: e.runtimeBlocker ? this._serializeRuntimeBlocker(e.runtimeBlocker) : null,
-        }
+      }
       : null;
+    const terminal = ['completed', 'stopped', 'failed'].includes(e.status);
+    let workflowResult = null;
+    if (terminal && e.workflowRun) {
+      const agentOutputs = this._buildAgentOutputs(e);
+      const startedAt = e.startedAt ?? e.budget?.startedAt ?? null;
+      const endedAt = e.endedAt ?? new Date().toISOString();
+      const durationMs = startedAt ? Math.max(0, new Date(endedAt).getTime() - new Date(startedAt).getTime()) : null;
+      const aggregatedArtifact = buildWorkflowArtifact({
+        workflowName: e.workflowDef?.name || 'Workflow',
+        workflowDescription: e.workflowDef?.description || '',
+        executionId: e.executionId,
+        status: e.status,
+        startedAt,
+        endedAt,
+        durationMs,
+        agentOutputs,
+      });
+      workflowResult = buildWorkflowResult({
+        workflowDef: e.workflowDef,
+        workflowRun: e.workflowRun,
+        workflowContext: e.workflowContext,
+        agentOutputs,
+        aggregatedArtifact,
+        status: e.status,
+      });
+    }
 
     return {
       executionId: e.executionId,
@@ -8291,6 +8385,8 @@ class SwarmEngine {
       chatMessages: (e.chatMessages ?? []).map((msg) => ({ ...msg })),
       workflowContext: e.workflowContext ? { ...e.workflowContext } : {},
       totalTurns: e.totalTurns ?? 0,
+      ...(e.workflowRun ? { workflowRun: JSON.parse(JSON.stringify(e.workflowRun)) } : {}),
+      ...(workflowResult ? { workflowResult } : {}),
       ...(packRun ? { packRun } : {}),
       ...(e.runtimeBlocker ? { runtimeBlocker: this._serializeRuntimeBlocker(e.runtimeBlocker) } : {}),
     };
