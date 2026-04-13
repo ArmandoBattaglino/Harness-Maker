@@ -1,3 +1,9 @@
+## Visual I/O UX Stabilization Addendum (2026-04-13)
+- `client/src/views/SwarmView.jsx` - validation rail now distinguishes workflow-wide pills from node-marked issues, aggregating node-local Input/Output problems into a single canvas summary instead of duplicating node-badge wording.
+- `client/src/canvas/SwarmCanvas.jsx` - React Flow `Controls` / `MiniMap` now carry explicit `swarm-flow-controls` and `swarm-flow-minimap` class hooks for dark-theme hardening.
+- `client/src/index.css` - hardened React Flow controls/minimap selectors now use the dedicated class hooks so stylesheet load order cannot regress the lower-left controls into detached white blocks.
+- `client/src/views/SwarmView.test.jsx` + `client/src/canvas/SwarmCanvas.test.jsx` - regression coverage for validation-summary ownership and control/minimap styling hooks.
+
 ## Visual Input / Output Blocks Addendum (2026-04-12)
 - `docs/VISUAL_INPUT_OUTPUT_BLOCKS.md` - implementation notes for the approved visual Input/Output Blocks plan, including current baseline map, source-of-truth guardrails, non-executable node semantics, image run-asset boundary, extractor artifact rule, and microwave evidence format.
 - `server/services/workflowContracts.js` - current contract bridge baseline; normalizes root `inputContract` / `outputContract`, but still needs graph-derived effective contracts, `image` input type, `table` artifact format, and extractor-specific no-silent-fallback behavior.

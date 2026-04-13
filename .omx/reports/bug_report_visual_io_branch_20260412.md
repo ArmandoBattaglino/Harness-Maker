@@ -157,3 +157,32 @@ Scope reviewed:
 - **Actual behavior:** The current output model still feels too internal/configurational; it is not obvious enough that the result becomes a concrete user-usable deliverable.
 - **Risk:** Users may not trust or adopt the feature because output feels like system wiring rather than product outcome.
 - **Recommended fix:** Reframe Output/Extractor authoring around user-facing deliverables. Add a preview/summary like "What the user gets" and ensure artifact/result UI makes the final usable output prominent.
+
+### BUG-09: Stray white vertical UI artifact appears on the left side of the Swarm canvas
+- **Severity:** MEDIUM
+- **Component:** Swarm canvas / React Flow controls surface
+- **Evidence:** screenshot `c:\Users\arman\Downloads\Immagine 2026-04-13 035209.png`
+- **Steps to reproduce:**
+  1. Open Swarm with a minimal workflow.
+  2. Observe the canvas area with the current right rail open.
+  3. Look at the lower-left area inside the canvas.
+- **Expected behavior:** No unexplained floating white vertical block should appear in the canvas area.
+- **Actual behavior:** A narrow white vertical rectangle appears detached from the visible workflow, suggesting a mispositioned control/minimap/overlay element.
+- **Probable cause areas:**
+  - `client/src/canvas/SwarmCanvas.jsx`
+  - React Flow control/minimap styling or overlay layering
+  - related CSS in `client/src/index.css`
+- **Risk:** Makes the canvas look broken/unpolished and reduces trust in the editor.
+- **Recommended fix:** Identify whether it is a control panel fragment, minimap artifact, or overflow/styling bug; then anchor/hide/style it correctly and add a regression check if reproducible.
+
+## Execution Follow-up (2026-04-13)
+
+### Resolved in the current Ralph wave
+- **Validation ownership follow-up:** Swarm now keeps workflow-wide pills in the top rail, but aggregates node-marked Input/Output issues into a single canvas-summary pill instead of repeating node-local wording verbatim.
+- **BUG-09:** Confirmed to be the React Flow controls surface inheriting the wrong visual styling; fixed by adding hardened `swarm-flow-controls` / `swarm-flow-minimap` hooks plus regression coverage.
+
+### Fresh evidence
+- Targeted client suites for `SwarmView`, `SwarmCanvas`, `useCanvasValidation`, and visual I/O nodes: **19/19 PASS**
+- Root build: **PASS** (**526 modules**)
+- Existing visual I/O Playwright smoke: **PASS**
+- Focused Playwright controls-style verification: **PASS** (controls/minimap computed backgrounds now match the dark shell instead of white defaults)

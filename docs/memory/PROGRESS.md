@@ -1,3 +1,19 @@
+## Visual I/O UX Stabilization Follow-up (2026-04-13)
+
+**Status:** IMPLEMENTED / VERIFIED.
+
+**Deliverables:**
+- Swarm validation now separates workflow-wide pills from node-marked issues in the top rail, so Input/Output node problems stay anchored to the canvas badges instead of being repeated verbatim above the canvas.
+- React Flow controls/minimap styling is now hardened with dedicated `swarm-flow-controls` / `swarm-flow-minimap` hooks to prevent the lower-left detached white controls artifact from reappearing.
+- Added focused regressions in `client/src/views/SwarmView.test.jsx` and `client/src/canvas/SwarmCanvas.test.jsx`.
+
+**Verification:**
+- Targeted client suites: **19/19 PASS**
+- Root build: **PASS** (**526 modules**)
+- Diagnostics on touched client files: **0 errors** (`tsc skipped: no tsconfig found` caveat)
+- Existing visual I/O Playwright smoke: **PASS**
+- Focused Playwright computed-style check for controls/minimap: **PASS**
+
 ## Visual Input / Output Blocks Documentation/Review Lane (2026-04-12)
 
 **Status:** COMPLETED / READY FOR IMPLEMENTATION LANES.

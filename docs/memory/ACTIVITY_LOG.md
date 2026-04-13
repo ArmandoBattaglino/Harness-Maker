@@ -1,3 +1,13 @@
+## 2026-04-13 - frontend-dev / qa-tester - visual IO validation rail + canvas controls polish
+**Outcome:** COMPLETED / PASS
+**Summary:** Closed the remaining visual I/O UX regressions on `ralph/workflow-heart-pack-wrapper` by changing the Swarm validation rail to summarize node-marked Input/Output issues instead of repeating node-local wording, and by hardening React Flow controls/minimap styling so the lower-left white control artifact no longer appears.
+**Files changed:** client/src/views/SwarmView.jsx, client/src/views/SwarmView.test.jsx, client/src/canvas/SwarmCanvas.jsx, client/src/canvas/SwarmCanvas.test.jsx, client/src/index.css, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md, docs/memory/CODE_MAP.md
+**Bugs fixed:** duplicated top-rail/node-badge validation messaging for visual I/O nodes; detached white React Flow controls artifact in the lower-left canvas corner.
+**Decisions made:** keep workflow-wide issues explicit in the top rail, but aggregate node-local issues into a single canvas summary pill; use dedicated `swarm-flow-controls` / `swarm-flow-minimap` classes instead of relying on upstream selector order.
+**Blockers:** none
+**Next:** Lore commit and branch push/PR when ready.
+
+---
 ## 2026-04-12 - frontend-dev / debugger / qa-tester - pack builder/runtime identity and artifact visibility
 **Outcome:** COMPLETED / PASS
 **Summary:** Fixed the pack-surface navigation boundary so Pack Library -> Builder preserves pack/workflow/execution context and Builder -> Swarm drill-down selects the intended linked workflow instead of defaulting silently. Also upgraded Pack Library artifact rendering to show meaningful markdown/text artifact content with explicit empty/fallback states, and stabilized the targeted Playwright smoke navigation into Packs after Builder save.

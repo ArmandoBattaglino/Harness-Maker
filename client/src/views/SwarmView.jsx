@@ -30,6 +30,53 @@ const statusColors = {
   stopped: 'text-red-400',
 };
 
+function buildValidationRail(globalIssues = []) {
+  const workflowWideIssues = globalIssues.filter((issue) => !issue.nodeId);
+  const nodeMarkedIssues = globalIssues.filter((issue) => issue.nodeId);
+  const nodeErrorCount = nodeMarkedIssues.filter((issue) => issue.severity === 'error').length;
+  const nodeWarningCount = nodeMarkedIssues.length - nodeErrorCount;
+  const pills = workflowWideIssues.map((issue) => ({
+    id: issue.id,
+    severity: issue.severity,
+    summary: issue.summary,
+    detail: issue.detail,
+  }));
+
+  if (nodeMarkedIssues.length > 0) {
+    const nodeLabel = `${nodeMarkedIssues.length} node issue${nodeMarkedIssues.length !== 1 ? 's' : ''} marked on canvas`;
+    const breakdown = [
+      nodeErrorCount > 0 ? `${nodeErrorCount} blocker${nodeErrorCount !== 1 ? 's' : ''}` : null,
+      nodeWarningCount > 0 ? `${nodeWarningCount} warning${nodeWarningCount !== 1 ? 's' : ''}` : null,
+    ].filter(Boolean).join(', ');
+
+    pills.push({
+      id: 'workflow:node-marked-summary',
+      severity: nodeErrorCount > 0 ? 'error' : 'warning',
+      summary: nodeLabel,
+      detail: [
+        breakdown ? `Node-marked issues: ${breakdown}.` : null,
+        ...nodeMarkedIssues.map((issue) => `${issue.summary} — ${issue.detail}`),
+      ].filter(Boolean).join('\n'),
+    });
+  }
+
+  let summaryText = '';
+  if (workflowWideIssues.length > 0 && nodeMarkedIssues.length > 0) {
+    summaryText = `${globalIssues.length} workflow issues need attention (${workflowWideIssues.length} workflow-wide, ${nodeMarkedIssues.length} marked on nodes).`;
+  } else if (workflowWideIssues.length > 0) {
+    summaryText = `${workflowWideIssues.length} workflow issue${workflowWideIssues.length !== 1 ? 's' : ''} need${workflowWideIssues.length === 1 ? 's' : ''} attention.`;
+  } else if (nodeMarkedIssues.length > 0) {
+    summaryText = `${nodeMarkedIssues.length} issue${nodeMarkedIssues.length !== 1 ? 's' : ''} are marked directly on nodes.`;
+  }
+
+  return {
+    workflowWideIssues,
+    nodeMarkedIssues,
+    pills,
+    summaryText,
+  };
+}
+
 function resolveRuntimeModelSelection(currentModel, availableModels = [], detectedDefault = null) {
   if (currentModel && availableModels.includes(currentModel)) {
     return currentModel;
@@ -699,6 +746,10 @@ export default function SwarmView() {
   const blockingIssues = canvasValidation.blockingIssues ?? [];
   const blockingIssueCount = blockingIssues.length;
   const hasValidationErrors = blockingIssueCount > 0;
+  const validationRail = useMemo(
+    () => buildValidationRail(globalValidationIssues),
+    [globalValidationIssues]
+  );
 
   // FR-V5-01: save handler — persist canvas state to server
   const handleSave = async () => {
@@ -1229,16 +1280,18 @@ export default function SwarmView() {
         </div>
       )}
 
-      {globalValidationIssues.length > 0 && (executionStatus === 'idle' || executionStatus === 'completed') && (
+      {validationRail.pills.length > 0 && (executionStatus === 'idle' || executionStatus === 'completed') && (
         <div className="border-b border-amber-900/40 bg-gradient-to-r from-amber-950/25 via-amber-950/10 to-transparent px-4 py-2.5">
           <div className="flex flex-wrap items-start gap-2 text-xs">
             <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-semibold text-amber-200">
               Validation
             </span>
-            <span className="pt-0.5 text-gray-200">
-              {globalValidationIssues.length} workflow issue{globalValidationIssues.length !== 1 ? 's' : ''} {globalValidationIssues.length === 1 ? 'needs' : 'need'} attention.
-            </span>
-            {globalValidationIssues.map((issue) => (
+            {validationRail.summaryText && (
+              <span className="pt-0.5 text-gray-200">
+                {validationRail.summaryText}
+              </span>
+            )}
+            {validationRail.pills.map((issue) => (
               <span
                 key={issue.id}
                 className={`rounded-full border px-2 py-0.5 ${

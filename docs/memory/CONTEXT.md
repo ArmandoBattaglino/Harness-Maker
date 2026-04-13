@@ -1,3 +1,17 @@
+## Visual I/O UX Stabilization Follow-up (2026-04-13)
+
+**Session date:** 2026-04-13
+**Focus:** **VISUAL INPUT / OUTPUT BLOCKS - VALIDATION OWNERSHIP + CANVAS POLISH CLOSED/PASS.** The active plan remains `.omx/plans/prd-visual-io-ux-bugfix-20260412T170554Z.md` plus `.omx/plans/test-spec-visual-io-ux-bugfix-20260412T170554Z.md`.
+
+**Current truth:**
+- The remaining user-visible gaps on `ralph/workflow-heart-pack-wrapper` narrowed to two problems after the earlier clarity wave:
+  1. top validation pills repeated node-local Input/Output issues verbatim;
+  2. React Flow controls in the lower-left of Swarm could render as detached white blocks.
+- `client/src/views/SwarmView.jsx` now aggregates node-marked issues into a single canvas summary pill while preserving explicit workflow-wide blockers.
+- `client/src/canvas/SwarmCanvas.jsx` now applies dedicated class hooks consumed by `client/src/index.css` so Controls/MiniMap stay dark even if upstream stylesheet order changes.
+
+**Latest evidence:** targeted client tests PASS, root build PASS, visual I/O Playwright smoke PASS, focused Playwright controls-style check PASS, and `.omx/state/sessions/omx-1776002358569-k9l4yf/ralph-progress.json` records the passing visual verdict for this iteration.
+
 # Current Context
 **Session date:** 2026-04-12
 **Focus:** **VISUAL INPUT / OUTPUT BLOCKS - APPROVED PLAN DOCUMENTATION/REVIEW LANE.** The binding plan is `.omx/plans/prd-vio-20260412T121449Z.md` plus `.omx/plans/test-spec-vio-20260412T121449Z.md`. Worker-3 documented the current baseline and implementation guardrails in `docs/VISUAL_INPUT_OUTPUT_BLOCKS.md`.

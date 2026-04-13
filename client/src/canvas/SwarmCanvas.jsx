@@ -1125,10 +1125,12 @@ export default function SwarmCanvas({
           >
             <Background gap={20} size={1} color="#1f2937" />
             <Controls
+              className="swarm-flow-controls"
               style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: '6px' }}
               showInteractive={false}
             />
             <MiniMap
+              className="swarm-flow-minimap"
               style={{ background: '#111827', border: '1px solid #374151', borderRadius: '6px' }}
               maskColor="rgba(0,0,0,0.4)"
               nodeColor="#6366f1"

@@ -7,8 +7,8 @@ import { resetSwarmStore } from '../test/resetSwarmStore.js';
 vi.mock('@xyflow/react', () => ({
   ReactFlow: ({ children }) => <div data-testid="react-flow">{children}</div>,
   Background: () => null,
-  Controls: () => null,
-  MiniMap: () => null,
+  Controls: ({ className }) => <div data-testid="react-flow-controls" className={className} />,
+  MiniMap: ({ className }) => <div data-testid="react-flow-minimap" className={className} />,
   ConnectionLineType: { SmoothStep: 'smoothstep' },
   ConnectionMode: { Loose: 'loose' },
   MarkerType: { Arrow: 'arrow' },
@@ -119,5 +119,30 @@ describe('SwarmCanvas activity rail', () => {
     expect(screen.getByText('Chat View')).toBeInTheDocument();
     expect(screen.getByText('Finished run')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Open Activity' })).not.toBeInTheDocument();
+  });
+
+  it('applies hardened class names to React Flow controls and minimap', () => {
+    useSwarmStore.setState({
+      workflowDef: {
+        id: 'workflow-visual-shell',
+        name: 'Workflow Visual Shell',
+        nodes: [],
+        edges: [],
+      },
+      executionStatus: 'idle',
+      sidePanelOpen: true,
+      sidePanelMode: 'chat',
+    });
+
+    render(
+      <SwarmCanvas
+        workflowDef={{ id: 'workflow-visual-shell', name: 'Workflow Visual Shell', nodes: [], edges: [] }}
+        markDirty={vi.fn()}
+        onCanvasChange={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('react-flow-controls')).toHaveClass('swarm-flow-controls');
+    expect(screen.getByTestId('react-flow-minimap')).toHaveClass('swarm-flow-minimap');
   });
 });

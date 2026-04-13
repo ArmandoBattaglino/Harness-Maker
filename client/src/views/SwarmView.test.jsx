@@ -403,6 +403,127 @@ describe('SwarmView runtime shell contracts', () => {
     expect(screen.queryByText(/empty system prompt/i)).not.toBeInTheDocument();
   });
 
+  it('summarizes node-marked issues in the validation rail instead of duplicating node-local text', async () => {
+    vi.mocked(useCanvasValidation).mockReturnValue({
+      errors: [
+        {
+          id: 'workflow:no-agent-nodes',
+          scope: 'global',
+          severity: 'error',
+          summary: 'No agent nodes',
+          detail: 'No agent nodes — add at least one agent.',
+          message: 'No agent nodes — add at least one agent.',
+        },
+        {
+          id: 'input:input-a:not-connected',
+          scope: 'global',
+          nodeId: 'input-a',
+          severity: 'warning',
+          summary: 'Input Block is not connected to an agent',
+          detail: 'Input Block will collect input but no agent is connected to receive it.',
+          message: 'Input Block will collect input but no agent is connected to receive it.',
+        },
+        {
+          id: 'outputExtractor:extract-a:no-agent-source',
+          scope: 'global',
+          nodeId: 'extract-a',
+          severity: 'error',
+          summary: 'Output Extractor has no agent source',
+          detail: 'Output Extractor needs an incoming Agent -> Output Extractor connection.',
+          message: 'Output Extractor needs an incoming Agent -> Output Extractor connection.',
+        },
+      ],
+      globalIssues: [
+        {
+          id: 'workflow:no-agent-nodes',
+          scope: 'global',
+          severity: 'error',
+          summary: 'No agent nodes',
+          detail: 'No agent nodes — add at least one agent.',
+        },
+        {
+          id: 'input:input-a:not-connected',
+          scope: 'global',
+          nodeId: 'input-a',
+          severity: 'warning',
+          summary: 'Input Block is not connected to an agent',
+          detail: 'Input Block will collect input but no agent is connected to receive it.',
+        },
+        {
+          id: 'outputExtractor:extract-a:no-agent-source',
+          scope: 'global',
+          nodeId: 'extract-a',
+          severity: 'error',
+          summary: 'Output Extractor has no agent source',
+          detail: 'Output Extractor needs an incoming Agent -> Output Extractor connection.',
+        },
+      ],
+      agentIssuesByNodeId: {
+        'input-a': [
+          {
+            id: 'input:input-a:not-connected',
+            scope: 'global',
+            nodeId: 'input-a',
+            severity: 'warning',
+            summary: 'Input Block is not connected to an agent',
+            detail: 'Input Block will collect input but no agent is connected to receive it.',
+          },
+        ],
+        'extract-a': [
+          {
+            id: 'outputExtractor:extract-a:no-agent-source',
+            scope: 'global',
+            nodeId: 'extract-a',
+            severity: 'error',
+            summary: 'Output Extractor has no agent source',
+            detail: 'Output Extractor needs an incoming Agent -> Output Extractor connection.',
+          },
+        ],
+      },
+      blockingIssues: [
+        {
+          id: 'workflow:no-agent-nodes',
+          scope: 'global',
+          severity: 'error',
+          summary: 'No agent nodes',
+          detail: 'No agent nodes — add at least one agent.',
+        },
+        {
+          id: 'outputExtractor:extract-a:no-agent-source',
+          scope: 'global',
+          nodeId: 'extract-a',
+          severity: 'error',
+          summary: 'Output Extractor has no agent source',
+          detail: 'Output Extractor needs an incoming Agent -> Output Extractor connection.',
+        },
+      ],
+    });
+
+    useSwarmStore.setState({
+      workflowDef: {
+        id: 'workflow-node-summary',
+        name: 'Workflow Node Summary',
+        nodes: [
+          { id: 'input-a', type: 'input', data: { label: 'Input Block' } },
+          { id: 'extract-a', type: 'outputExtractor', data: { label: 'Output Extractor' } },
+        ],
+        edges: [],
+      },
+      executionStatus: 'idle',
+    });
+
+    render(<SwarmView />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/3 workflow issues need attention/i)).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('No agent nodes')).toBeInTheDocument();
+    expect(screen.getByText('2 node issues marked on canvas')).toBeInTheDocument();
+    expect(screen.queryByText('Input Block is not connected to an agent')).not.toBeInTheDocument();
+    expect(screen.queryByText('Output Extractor has no agent source')).not.toBeInTheDocument();
+  });
+
   it('opens a workflow-native run form, blocks missing required input, and starts with submitted values', async () => {
     useSwarmStore.setState({
       workflowDef: {
