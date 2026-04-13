@@ -437,6 +437,41 @@ describe('GET /executions/:executionId/results', () => {
   });
 });
 
+describe('GET /:executionId/agent/:nodeId/output', () => {
+  it('returns persisted agent output when the live execution is gone but history exists', async () => {
+    const engine = createMockSwarmEngine(null);
+    const router = swarmRoutes(engine, createMockSessionManager());
+    const handler = getRouteHandler(router, 'get', '/:executionId/agent/:nodeId/output');
+
+    const req = {
+      params: { executionId: VALID_UUID, nodeId: 'node-a' },
+      query: { workflowId: WORKFLOW_ID },
+      app: {
+        locals: {
+          workflowStore: { get: vi.fn().mockResolvedValue({ name: 'Test Workflow' }) },
+          executionHistoryStore: {
+            getEntry: vi.fn().mockResolvedValue({
+              executionId: VALID_UUID,
+              status: 'completed',
+              agentOutputs: {
+                'node-a': {
+                  finalText: 'Persisted output for node-a',
+                },
+              },
+            }),
+          },
+        },
+      },
+    };
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual({ output: 'Persisted output for node-a' });
+  });
+});
+
 describe('GET /executions/:executionId/artifact.md', () => {
   it('returns 400 for invalid executionId format', async () => {
     const engine = createMockSwarmEngine();

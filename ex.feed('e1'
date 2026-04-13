@@ -1,1 +1,0 @@
-const {ChatExtractor}=await import('./server/services/ChatExtractor.js'); const msgs=[]; const ex=new ChatExtractor({onMessage:(m)=,silenceTimeoutMs:999999}); ['Que','sto ','e un ','mess','aggio ','molto ','piu ','lungo ','di prova.'].forEach((c)=,'n1',c)); ex.flush('e1','n1'); console.log(JSON.stringify(msgs,null,2));
