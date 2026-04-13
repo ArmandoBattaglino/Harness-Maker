@@ -1,4 +1,98 @@
+## Main Merge Conflict Resolution + PR Readiness (2026-04-13)
+
+**Session date:** 2026-04-13
+**Focus:** **MERGE `origin/main` INTO THE VISUAL I/O BRANCH AND KEEP PR GREEN.**
+
+**Current truth:**
+- The only real branch-integration conflict was `server/routes/swarm.js`.
+- `origin/main` had moved execution-results assembly behind `ExecutionResultsService`; this branch had independently extended the older route layer with `workflowRun` / `workflowResult`.
+- The branch now follows the `origin/main` route/service split while retaining workflow-native result payload support.
+- The branch includes a merge commit from `origin/main` and is now positioned for a PR with OMX files intentionally kept.
+- The visual I/O Playwright smoke was updated to reflect the product decision that `WorkflowRunSummary` no longer exists.
+
+**Latest evidence:** client targeted tests PASS, server targeted tests PASS, build PASS, visual I/O smoke PASS.
+
+## Swarm Workflow I/O Banner Removal (2026-04-13)
+
+**Session date:** 2026-04-13
+**Focus:** **REMOVE WORKFLOW RUN I/O BANNER ENTIRELY.** The user clarified that the green banner is unwanted as a component, not merely something to hide during running.
+
+**Current truth:**
+- The banner lived in `client/src/views/SwarmView.jsx` as `WorkflowRunSummary`.
+- It has now been removed completely from the UI surface.
+- `workflowRun` / `workflowResult` still exist in runtime state; only the visual summary consumer is gone.
+
+**Latest evidence:** `SwarmView.test.jsx` PASS (15/15), root build PASS, diagnostics clean, architect verification APPROVE.
+
+## Visual I/O Input Wrapper Artifact Fix (2026-04-13)
+
+**Session date:** 2026-04-13
+**Focus:** **INPUT BLOCK WHITE WRAPPER ARTIFACT - ROOT CAUSE CLOSED/PASS.** Binding artifacts for this pass are `.omx/context/input-node-wrapper-artifact-20260413T022552Z.md`, `.omx/plans/prd-input-node-wrapper-artifact-20260413T022552Z.md`, and `.omx/plans/test-spec-input-node-wrapper-artifact-20260413T022552Z.md`.
+
+**Current truth:**
+- The white square behind the Input Block was not caused by the inner `InputNode` styles.
+- Focused DOM inspection proved the wrapper was React Flow built-in chrome from `.react-flow__node-input`.
+- Root cause: our custom visual input node used `type: 'input'`, colliding with the built-in React Flow node wrapper class.
+- The implemented fix now uses canonical `workflowInput` for new nodes while continuing to read legacy `input` / `inputBlock` nodes across client + server.
+- `SwarmCanvas` also normalizes legacy input nodes before rendering, so already-saved workflows stop inheriting the white wrapper when loaded.
+
+**Latest evidence:** client targeted tests PASS, server targeted tests PASS, build PASS, visual I/O smoke PASS, focused Playwright wrapper verification PASS, architect verification APPROVED.
+
+## Visual I/O UX Stabilization Follow-up (2026-04-13)
+
+**Session date:** 2026-04-13
+**Focus:** **VISUAL INPUT / OUTPUT BLOCKS - VALIDATION OWNERSHIP + CANVAS POLISH CLOSED/PASS.** The active plan remains `.omx/plans/prd-visual-io-ux-bugfix-20260412T170554Z.md` plus `.omx/plans/test-spec-visual-io-ux-bugfix-20260412T170554Z.md`.
+
+**Current truth:**
+- The remaining user-visible gaps on `ralph/workflow-heart-pack-wrapper` narrowed to two problems after the earlier clarity wave:
+  1. top validation pills repeated node-local Input/Output issues verbatim;
+  2. React Flow controls in the lower-left of Swarm could render as detached white blocks.
+- `client/src/views/SwarmView.jsx` now aggregates node-marked issues into a single canvas summary pill while preserving explicit workflow-wide blockers.
+- `client/src/canvas/SwarmCanvas.jsx` now applies dedicated class hooks consumed by `client/src/index.css` so Controls/MiniMap stay dark even if upstream stylesheet order changes.
+
+**Latest evidence:** targeted client tests PASS, root build PASS, visual I/O Playwright smoke PASS, focused Playwright controls-style check PASS, and `.omx/state/sessions/omx-1776002358569-k9l4yf/ralph-progress.json` records the passing visual verdict for this iteration.
+
 # Current Context
+**Session date:** 2026-04-12
+**Focus:** **VISUAL INPUT / OUTPUT BLOCKS - APPROVED PLAN DOCUMENTATION/REVIEW LANE.** The binding plan is `.omx/plans/prd-vio-20260412T121449Z.md` plus `.omx/plans/test-spec-vio-20260412T121449Z.md`. Worker-3 documented the current baseline and implementation guardrails in `docs/VISUAL_INPUT_OUTPUT_BLOCKS.md`.
+
+**IMMEDIATE NEXT STEP:** Implementation lanes should add graph-derived effective contracts, Input/Output Extractor nodes, settings source-of-truth guards, run-scoped image assets, scoped prompt injection, extractor artifacts, and per-microwave gate evidence.
+
+## Visual Input / Output Blocks Current Baseline (2026-04-12)
+
+**Status:** APPROVED PLAN / DOCS REVIEW COMPLETE.
+
+**Current baseline:** Root `inputContract` / `outputContract` workflow support exists and is verified from the previous workflow-as-heart wave. Visual `input` and `outputExtractor` node types are not yet implemented in this worktree.
+
+**Key guardrails now documented:**
+- Visual I/O nodes are the UX source of truth when present; root contracts are bridge/fallback.
+- Input and Output Extractor nodes are non-executable graph nodes.
+- `input -> agent` must not make the agent non-startable.
+- Image fields require run-scoped asset metadata/reference, not raw base64 prompt injection.
+- Extractor artifacts must use deterministic source policy and never silently fall back to unrelated aggregate final text.
+
+---
+# Current Context
+**Session date:** 2026-04-12
+**Focus:** **WORKFLOW AS HEART / PACK AS WRAPPER WAVE 1 - IMPLEMENTED/PASS.** Workflow now owns direct-run inputs, canonical outputs/artifacts, visible run I/O, and lightweight per-agent guidance while pack UI remains pack-authoritative for pack runs.
+
+**IMMEDIATE NEXT STEP:** Ralph architect/deslop/final verification loop; no known failing automated test after server/client/build/Playwright verification.
+
+## Workflow as Heart / Pack as Wrapper Wave 1 (2026-04-12)
+
+**Status:** IMPLEMENTED / VERIFIED.
+
+**Deliverables:**
+- Workflow definitions persist `inputContract` and `outputContract` with legacy defaults.
+- Direct workflow starts accept validated `workflowInput` and expose `workflowRun` / `workflowResult` through live status, results, and history.
+- Swarm authoring gained an Interface tab, direct workflow run form, and visible workflow run I/O summary.
+- Agent Inspector gained wave-1 guidance fields: `skillHints`, `contextSources`, `expectedOutput`.
+- Runtime prompts include submitted workflow inputs, expected workflow outputs/artifacts, and agent guidance.
+- Pack flows remain pack-authoritative; existing V17 pack smoke remains green.
+
+**Verification:** server 667/667, client 93/93, client build 522 modules, workflow-heart Playwright PASS, V17 pack Playwright PASS, diagnostics 0 errors.
+
+---# Current Context
 **Session date:** 2026-04-11
 **Focus:** **PACK BUILDER/RUNTIME IDENTITY + ARTIFACT VISIBILITY FOLLOW-UP - CLOSED/PASS.** Added explicit pack/workflow/execution handoff between Packs, Builder, and Swarm, plus readable artifact content in the pack run area.
 
@@ -119,23 +213,23 @@
 _Project initialized via /create pipeline on 2026-03-18_
 
 ## Active Threads
-- V12.1 Canvas Node Overlap Fix — #536-#538 COMPLETED, #539 (area checkpoint) PENDING.
-- V11.4 Output Panel Rendering Parity — IN PROGRESS (#540-#544).
-- V11.3 HITL Runtime Trigger — PENDING (#521-#527, 7 tasks, none started).
-- V11.2 Cost & Token Detail Visibility — PENDING (#517-#520, 4 tasks).
+- V12.1 Canvas Node Overlap Fix Ã¢â‚¬â€ #536-#538 COMPLETED, #539 (area checkpoint) PENDING.
+- V11.4 Output Panel Rendering Parity Ã¢â‚¬â€ IN PROGRESS (#540-#544).
+- V11.3 HITL Runtime Trigger Ã¢â‚¬â€ PENDING (#521-#527, 7 tasks, none started).
+- V11.2 Cost & Token Detail Visibility Ã¢â‚¬â€ PENDING (#517-#520, 4 tasks).
 - Build status: 507 modules, 0 errors. Server: 513/513 tests.
 
-## Open Questions (V3 â€” for Architect)
+## Open Questions (V3 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â for Architect)
 1. Scaffold AI model: which model for POST /api/v1/swarm/scaffold?
 2. Workflow-to-project binding: strict per-project or global?
 3. Agent PTY CWD: inherit project path or separate configurable CWD?
 4. RSS authentication: clear error or silent skip for auth-gated feeds?
 5. Zustand version: v4 or v5? (breaking API change between them)
-6. swarmListeners Set: needs non-destructive addition to SessionManager (V2 file) â€” architect must specify contract carefully to avoid breaking V2 tests.
+6. swarmListeners Set: needs non-destructive addition to SessionManager (V2 file) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â architect must specify contract carefully to avoid breaking V2 tests.
 
 ## Notes for Architect
 - Read PRD Section 11 (Open Questions) before designing SwarmEngine/SessionManager integration.
-- The swarmListeners tap point (Q6) is the most critical V2â†”V3 bridge â€” any change to SessionManager must not remove the permanent pty.onData handler (DEC-009).
+- The swarmListeners tap point (Q6) is the most critical V2ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬ÂV3 bridge ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â any change to SessionManager must not remove the permanent pty.onData handler (DEC-009).
 
 ## What Changed in Phase 10
 
@@ -145,7 +239,7 @@ _Project initialized via /create pipeline on 2026-03-18_
 
 ### Frontend (5 files modified)
 - **Sidebar.jsx**: `creatingSessionRef` race lock, `sessionError` feedback, dynamic version via API, logo `overflow-hidden`, settings icon de-interactivized
-- **Terminal.jsx**: Background color `#1a1a1a` â†’ `#000000`
+- **Terminal.jsx**: Background color `#1a1a1a` ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `#000000`
 - **ContextEditorView.jsx**: `handleScopeSwitch` with `window.confirm` guard
 - **ProjectsView.jsx**: `modalMode` state, `focus:opacity-100` on three-dot menu
 - **AddProjectModal.jsx**: `mode` prop for differentiated titles (Register/Scaffold)
@@ -154,7 +248,7 @@ _Project initialized via /create pipeline on 2026-03-18_
 Security assessment completed 2026-03-27. Seven mandatory requirements must appear in the V3 PRD as SEC-V3-01 through SEC-V3-07:
 1. Webhook body size cap (32 KB max), no raw body passthrough to PTY
 2. WorkflowDefinition schema validation + systemPrompt size cap (16 KB) before any spawn
-3. SSRF prevention on RSS/webhook URLs â€” private IP blocklist (127.x, 10.x, 172.16-31.x, 192.168.x, ::1)
+3. SSRF prevention on RSS/webhook URLs ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â private IP blocklist (127.x, 10.x, 172.16-31.x, 192.168.x, ::1)
 4. Stricter rate limiter on webhook endpoint (separate from main 200 req/min limiter)
 5. HITL resume text size cap (8 KB max)
 6. Workflow name/description length caps + character whitelist server-side
@@ -167,12 +261,12 @@ Security assessment completed 2026-03-27. Seven mandatory requirements must appe
 - Browser test: icons render as glyphs, terminal bg is black, scope switch prompts
 
 ---
-## Update 2026-03-27 â€” V3 Phase 1 Backend Foundation COMPLETE
+## Update 2026-03-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3 Phase 1 Backend Foundation COMPLETE
 
 **Focus:** **V17.8.1 CODE REVIEW FOLLOW-UP - CLOSED/PASS.** Closed the post-`fd40908` review findings: stale fixture publish evidence after pack updates, import rollback delete failure visibility, PackLibrary selected-pack error reset, and `saveFixtureResult()` source hardening.
 
-**Completed (Phase 1 â€” all 11 tasks):**
-#43, #44, #45, #46.1, #46.2, #46.3, #47.1, #47.2, #48.1, #48.2, #49 â€” 132/132 tests pass throughout.
+**Completed (Phase 1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all 11 tasks):**
+#43, #44, #45, #46.1, #46.2, #46.3, #47.1, #47.2, #48.1, #48.2, #49 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â 132/132 tests pass throughout.
 
 **Phase 1 deliverables:**
 - WorkflowStore.js (CRUD + persistence)
@@ -183,99 +277,99 @@ Security assessment completed 2026-03-27. Seven mandatory requirements must appe
 - swarmHandler.js (channel routing + connection management + broadcast() + WS event wiring)
 - CircuitBreaker.js + BudgetTracker.js
 
-**#53.1 + #53.2 + #53.3 COMPLETED â€” build passes.**
+**#53.1 + #53.2 + #53.3 COMPLETED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â build passes.**
 
 **Wave 2 COMPLETE (2026-03-27):**
-- TASK #54 â€” HandoffEdge.jsx â€” COMPLETED
-- TASK #55 â€” AgentInspector.jsx â€” COMPLETED
-- TASK #56 â€” BreadcrumbBar.jsx â€” COMPLETED
+- TASK #54 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â HandoffEdge.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â COMPLETED
+- TASK #55 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â AgentInspector.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â COMPLETED
+- TASK #56 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â BreadcrumbBar.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â COMPLETED
 
 **#57.1 COMPLETED (concurrent agent, 2026-03-27):**
-- TASK #57.1 â€” SwarmCanvas.jsx â€” COMPLETED (frontend-dev self-marked; PROGRESS.md at 27/57)
+- TASK #57.1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â SwarmCanvas.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â COMPLETED (frontend-dev self-marked; PROGRESS.md at 27/57)
 
-**Phase 2 (Canvas Static) â€” ALL COMPLETE (2026-03-27):**
-- #51â€“#58 ALL COMPLETED. Build: 470 modules, 0 errors. 168/168 tests pass.
+**Phase 2 (Canvas Static) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â ALL COMPLETE (2026-03-27):**
+- #51ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“#58 ALL COMPLETED. Build: 470 modules, 0 errors. 168/168 tests pass.
 
-**Current wave â€” V3 Phase 3 Prompt-to-Flow (2026-03-27):**
-- TASK #59 â€” POST /api/v1/swarm/scaffold â€” COMPLETED (2026-03-27)
+**Current wave ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3 Phase 3 Prompt-to-Flow (2026-03-27):**
+- TASK #59 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â POST /api/v1/swarm/scaffold ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â COMPLETED (2026-03-27)
   - generateWorkflowFromPrompt() implemented with @anthropic-ai/sdk (claude-haiku-4-5-20251001)
   - WorkflowStore.create() called on success; 168/168 tests pass
   - 201 on success, 422 on parse fail, 408 on 60s timeout; raw prompt never logged
 
-- TASK #61 â€” useWorkflow.js â€” COMPLETED (2026-03-27)
+- TASK #61 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â useWorkflow.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â COMPLETED (2026-03-27)
   - client/src/hooks/useWorkflow.js created; useWorkflow(id) + useWorkflowList() exports
   - Uses apiGet/apiPut/apiDelete/apiPost wrappers with X-Requested-With header; build: 470 modules, 0 errors
 
-**Phase 3 COMPLETE â€” Phase 4 (Live Execution) NOW ACTIVE (2026-03-27):**
-- TASK #60 â€” PromptToFlowBar.jsx + staggered animation â€” COMPLETED (build: 471 modules)
-- TASK #59 â€” scaffold endpoint â€” COMPLETED
-- TASK #61 â€” useWorkflow.js â€” COMPLETED
+**Phase 3 COMPLETE ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Phase 4 (Live Execution) NOW ACTIVE (2026-03-27):**
+- TASK #60 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PromptToFlowBar.jsx + staggered animation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â COMPLETED (build: 471 modules)
+- TASK #59 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â scaffold endpoint ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â COMPLETED
+- TASK #61 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â useWorkflow.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â COMPLETED
 - Phase 3 (Prompt-to-Flow) FULLY DONE. 33/57 V3 tasks complete.
 
-**Current wave â€” V3 Phase 4 Live Execution (updated 2026-03-27):**
+**Current wave ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â V3 Phase 4 Live Execution (updated 2026-03-27):**
 
 PHASE 4 COMPLETED (39/57 V3 tasks):
-- TASK #62.1 â€” SwarmEngine _onHandoff steps 1â€“4 â€” COMPLETED (168/168 tests pass)
-- TASK #63 â€” useSwarm.js WS hook â€” COMPLETED (build: 472 modules)
-- TASK #64 â€” useHandoff.js edge animation hook â€” COMPLETED
-- TASK #65 â€” AgentNode.jsx live updates â€” COMPLETED
-- TASK #66 â€” BroadcastBar.jsx + broadcast route â€” COMPLETED (build: 472 modules)
-- TASK #67 â€” SwarmEngine heartbeat idle sweeper prevention â€” COMPLETED (168 tests pass)
+- TASK #62.1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â SwarmEngine _onHandoff steps 1ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“4 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â COMPLETED (168/168 tests pass)
+- TASK #63 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â useSwarm.js WS hook ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â COMPLETED (build: 472 modules)
+- TASK #64 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â useHandoff.js edge animation hook ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â COMPLETED
+- TASK #65 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â AgentNode.jsx live updates ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â COMPLETED
+- TASK #66 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â BroadcastBar.jsx + broadcast route ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â COMPLETED (build: 472 modules)
+- TASK #67 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â SwarmEngine heartbeat idle sweeper prevention ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â COMPLETED (168 tests pass)
 
-CURRENT WAVE â€” Phase 4 continuation + Phase 5 (2026-03-27):
+CURRENT WAVE ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Phase 4 continuation + Phase 5 (2026-03-27):
 
 Launching simultaneously (all deps met):
-- TASK #62.2 â€” SwarmEngine _onHandoff steps 5â€“6: context injection + agent status â€” IN_PROGRESS
-  - Agent: backend-dev, Model: claude-opus-4-6, Difficulty: HARD, Deps: #62.1 âœ“
+- TASK #62.2 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â SwarmEngine _onHandoff steps 5ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“6: context injection + agent status ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â IN_PROGRESS
+  - Agent: backend-dev, Model: claude-opus-4-6, Difficulty: HARD, Deps: #62.1 ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“
   - File: server/services/SwarmEngine.js
-  - Implement: _getHandoffTargets(), _onHandoff steps 5â€“6 (_buildSystemPrompt â†’ writeInput, source 'done' + target 'running', 3 WS events)
+  - Implement: _getHandoffTargets(), _onHandoff steps 5ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“6 (_buildSystemPrompt ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ writeInput, source 'done' + target 'running', 3 WS events)
   - Also add helper _getHandoffTargets(workflowDef, nodeId): array of target node IDs from edges where source === nodeId
-- TASK #68 â€” inbox.js HITL approve/reject API â€” IN_PROGRESS
-  - Agent: backend-dev, Model: claude-sonnet-4-6, Difficulty: MEDIUM, Deps: #46.3 âœ“ (corrected from #62.3)
-  - File: server/routes/inbox.js â€” 4 endpoints: GET /inbox, GET /inbox/:executionId, POST /inbox/:itemId/approve, POST /inbox/:itemId/reject
-  - ApproveInboxItem: validate resumeText â‰¤ 8192 chars, unfreeze edge if circuit_breaker, write to PTY
-- TASK #70 â€” SwarmEngine freeze/unfreeze agent â€” IN_PROGRESS
-  - Agent: backend-dev, Model: claude-sonnet-4-6, Difficulty: MEDIUM, Deps: #62.1 âœ“
-  - File: server/services/SwarmEngine.js â€” add freezeAgent(executionId, nodeId, reason) + unfreezeAgent(executionId, nodeId, resumeText)
+- TASK #68 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â inbox.js HITL approve/reject API ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â IN_PROGRESS
+  - Agent: backend-dev, Model: claude-sonnet-4-6, Difficulty: MEDIUM, Deps: #46.3 ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ (corrected from #62.3)
+  - File: server/routes/inbox.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â 4 endpoints: GET /inbox, GET /inbox/:executionId, POST /inbox/:itemId/approve, POST /inbox/:itemId/reject
+  - ApproveInboxItem: validate resumeText ÃƒÂ¢Ã¢â‚¬Â°Ã‚Â¤ 8192 chars, unfreeze edge if circuit_breaker, write to PTY
+- TASK #70 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â SwarmEngine freeze/unfreeze agent ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â IN_PROGRESS
+  - Agent: backend-dev, Model: claude-sonnet-4-6, Difficulty: MEDIUM, Deps: #62.1 ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“
+  - File: server/services/SwarmEngine.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â add freezeAgent(executionId, nodeId, reason) + unfreezeAgent(executionId, nodeId, resumeText)
   - HITL mode: on handoff create InboxItem + freeze source, don't spawn target until approved
-- TASK #71.1 â€” PTY Explosion overlay â€” IN_PROGRESS
-  - Agent: frontend-dev, Model: claude-sonnet-4-6, Difficulty: MEDIUM, Deps: #58 âœ“ (#57.2+#63 both done)
-  - File: client/src/views/SwarmView.jsx (modify) â€” add pty-explosion-overlay using existing Terminal.jsx
+- TASK #71.1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PTY Explosion overlay ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â IN_PROGRESS
+  - Agent: frontend-dev, Model: claude-sonnet-4-6, Difficulty: MEDIUM, Deps: #58 ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ (#57.2+#63 both done)
+  - File: client/src/views/SwarmView.jsx (modify) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â add pty-explosion-overlay using existing Terminal.jsx
   - Add ptyExplosionNodeId/setPtyExplosionNodeId to SwarmStore if not present from #52
-- TASK #72 â€” InterAgentFeed.jsx â€” IN_PROGRESS
-  - Agent: frontend-dev, Model: claude-haiku-4-5, Difficulty: EASY, Deps: #52 âœ“ + #63 âœ“
-  - File: client/src/panels/InterAgentFeed.jsx â€” scrolling log of [HH:MM:SS] AgentA â†’ AgentB events
+- TASK #72 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â InterAgentFeed.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â IN_PROGRESS
+  - Agent: frontend-dev, Model: claude-haiku-4-5, Difficulty: EASY, Deps: #52 ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ + #63 ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“
+  - File: client/src/panels/InterAgentFeed.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â scrolling log of [HH:MM:SS] AgentA ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ AgentB events
   - Data from useSwarmStore(s => s.interAgentFeed), last 100 events, auto-scroll
 
 NEXT AFTER CURRENT WAVE:
-- #62.3 waits on #62.2 (SwarmEngine _onDone + BudgetTracker â€” backend-dev, sonnet)
-- #69 waits on #68 (HitlInbox.jsx â€” frontend-dev, sonnet)
-- #71.2 waits on #71.1 (PTY Explosion Escape key â€” frontend-dev, haiku)
-- #65 still PENDING if not yet done â€” AgentNode.jsx live updates (frontend-dev, sonnet)
+- #62.3 waits on #62.2 (SwarmEngine _onDone + BudgetTracker ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â backend-dev, sonnet)
+- #69 waits on #68 (HitlInbox.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev, sonnet)
+- #71.2 waits on #71.1 (PTY Explosion Escape key ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend-dev, haiku)
+- #65 still PENDING if not yet done ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â AgentNode.jsx live updates (frontend-dev, sonnet)
 
 **Key context for #53.x agents:**
-- SwarmContext.jsx is at client/src/store/SwarmContext.jsx â€” complete, exports useSwarmStore + SwarmProvider
+- SwarmContext.jsx is at client/src/store/SwarmContext.jsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â complete, exports useSwarmStore + SwarmProvider
 - Use: `useSwarmStore(s => s.agentStates[nodeId])` pattern for per-node subscriptions (DEC-V3-04)
-- ALL setNodes calls MUST use immutable spread: `{ ...node, data: { ...node.data } }` â€” React Flow v12
+- ALL setNodes calls MUST use immutable spread: `{ ...node, data: { ...node.data } }` ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â React Flow v12
 - NEVER mutate node objects in place
 - Execution state (status, counters) MUST live in Zustand, NOT in node.data
 - For DepartmentNode: parent nodes MUST appear BEFORE their children in the nodes array
-- Build command: `cd client && npm run build` â€” must stay at 299+ modules, 0 errors
+- Build command: `cd client && npm run build` ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â must stay at 299+ modules, 0 errors
 - File locations: client/src/canvas/nodes/AgentNode.jsx, DepartmentNode.jsx, TriggerNode.jsx
 
 **Key context for #47.1 and #48.1 agents:**
-- SwarmEngine.js is at server/services/SwarmEngine.js â€” complete, all methods implemented, 132 tests pass
-- SessionManager.js has swarmListeners Set wired (DEC-014) â€” never touch the onData handler
+- SwarmEngine.js is at server/services/SwarmEngine.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â complete, all methods implemented, 132 tests pass
+- SessionManager.js has swarmListeners Set wired (DEC-014) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â never touch the onData handler
 - Look at server/routes/sessions.js and server/routes/jobs.js for Express router pattern
 - server/ws/terminalHandler.js for WebSocket handler pattern (do NOT break it for #48.1)
 - All mutating endpoints require CSRF header: X-Requested-With: ClaudeCodeManager
-- CircuitBreaker.js + BudgetTracker.js exist in server/services/ â€” used by SwarmEngine internally
+- CircuitBreaker.js + BudgetTracker.js exist in server/services/ ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â used by SwarmEngine internally
 
 **V3 Key Decisions (for all agents):**
-- DEC-V3-01: HandoffParser uses rolling 4KB byte accumulator (NOT line-by-line) â€” ConPTY splits tokens
+- DEC-V3-01: HandoffParser uses rolling 4KB byte accumulator (NOT line-by-line) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â ConPTY splits tokens
 - DEC-V3-02: PTY injection: soft=queue, hard=\x03+300ms+text+Escape+100ms+Enter (unreliable during tool calls)
-- DEC-V3-03: SwarmEngine taps via session.swarmListeners Set â€” primary onData NEVER removed (DEC-009)
-- DEC-V3-04: React Flow canvas state SEPARATE from Zustand ExecutionStore â€” never mix them
+- DEC-V3-03: SwarmEngine taps via session.swarmListeners Set ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â primary onData NEVER removed (DEC-009)
+- DEC-V3-04: React Flow canvas state SEPARATE from Zustand ExecutionStore ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â never mix them
 - DEC-V3-05: WorkflowContext = flat dict, shallow merge on each handoff (OpenAI Swarm pattern)
 - Canvas always editable during execution (no lock)
 - __DONE__ = soft notify only, workflow never auto-stops

@@ -1,6 +1,7 @@
 // useCanvasValidation.js — Pre-run validation for swarm canvas.
 // FR-V5-44 through FR-V5-46: validates workflow nodes/edges before execution.
 import { useMemo } from 'react';
+import { isVisualInputNode, isVisualInputNodeType } from '../utils/visualIoContracts.js';
 
 function createIssue({
   id,
@@ -45,7 +46,13 @@ export function useCanvasValidation(nodes, edges) {
   return useMemo(() => {
     const issues = [];
     const agentNodes = nodes.filter((node) => node.type === 'agent');
-    const incomingTargets = new Set(edges.map((edge) => edge.target).filter(Boolean));
+    const nodeById = new Map(nodes.map((node) => [node.id, node]));
+    const incomingTargets = new Set(
+      edges
+        .filter((edge) => !isVisualInputNode(nodeById.get(edge.source)) && nodeById.get(edge.target)?.type === 'agent')
+        .map((edge) => edge.target)
+        .filter(Boolean)
+    );
     const explicitStartNodes = agentNodes.filter((node) => node.data?.isTriageNode);
     const rootAgentNodes = agentNodes.filter((node) => !incomingTargets.has(node.id));
 
@@ -128,11 +135,106 @@ export function useCanvasValidation(nodes, edges) {
           detail: `${nodeLabel} is disconnected (no edges). Connect it or mark it as a Start Node if it should run alone.`,
         }));
       }
+
+
+      if (isVisualInputNode(node)) {
+        const fields = Array.isArray(node.data?.fields) ? node.data.fields : [];
+        if (fields.length === 0) {
+          issues.push(createIssue({
+            id: `input:${node.id}:no-fields`,
+            severity: 'error',
+            scope: 'global',
+            nodeId: node.id,
+            summary: `${nodeLabel} has no fields`,
+            detail: `${nodeLabel} must define at least one field before it can collect workflow input.`,
+          }));
+        }
+        fields.forEach((field, index) => {
+          if (!field?.key?.trim()) {
+            issues.push(createIssue({
+              id: `input:${node.id}:field-${index}:missing-key`,
+              severity: 'error',
+              scope: 'global',
+              nodeId: node.id,
+              summary: `${nodeLabel} has an input field without a key`,
+              detail: `${nodeLabel} field ${index + 1} must have a stable key.`,
+            }));
+          } else if (!/^[a-z][a-z0-9_-]*$/.test(field.key || '')) {
+            issues.push(createIssue({
+              id: `input:${node.id}:field-${index}:invalid-key`,
+              severity: 'error',
+              scope: 'global',
+              nodeId: node.id,
+              summary: `${nodeLabel} has an invalid field key`,
+              detail: `${nodeLabel} field ${index + 1} must use a lowercase key like "client_brief".`,
+            }));
+          }
+        });
+        const hasAgentTarget = edges.some((edge) => edge.source === node.id && nodeById.get(edge.target)?.type === 'agent');
+        if (!hasAgentTarget) {
+          issues.push(createIssue({
+            id: `input:${node.id}:not-connected`,
+            severity: 'warning',
+            scope: 'global',
+            nodeId: node.id,
+            summary: `${nodeLabel} is not connected to an agent`,
+            detail: `${nodeLabel} will collect input but no agent is connected to receive it.`,
+          }));
+        }
+      }
+
+      if (node.type === 'outputExtractor') {
+        const hasIncoming = edges.some((edge) => edge.target === node.id && nodeById.get(edge.source)?.type === 'agent');
+        if (!node.data?.artifactKey?.trim() || !node.data?.artifactName?.trim()) {
+          issues.push(createIssue({
+            id: `outputExtractor:${node.id}:missing-artifact-config`,
+            severity: 'error',
+            scope: 'global',
+            nodeId: node.id,
+            summary: `${nodeLabel} artifact is incomplete`,
+            detail: `${nodeLabel} must define an artifact key and name.`,
+          }));
+        }
+        if (!hasIncoming) {
+          issues.push(createIssue({
+            id: `outputExtractor:${node.id}:no-agent-source`,
+            severity: 'error',
+            scope: 'global',
+            nodeId: node.id,
+            summary: `${nodeLabel} has no agent source`,
+            detail: `${nodeLabel} needs an incoming Agent -> Output Extractor connection.`,
+          }));
+        }
+      }
+    }
+
+    for (const edge of edges) {
+      const sourceType = nodeById.get(edge.source)?.type;
+      const targetType = nodeById.get(edge.target)?.type;
+      const isValidVisualIoEdge = (
+        (isVisualInputNodeType(sourceType) && targetType === 'agent')
+        || (sourceType === 'agent' && targetType === 'outputExtractor')
+      );
+      const isInvalidVisualIoEdge = (
+        isVisualInputNodeType(sourceType)
+        || sourceType === 'outputExtractor'
+        || isVisualInputNodeType(targetType)
+        || targetType === 'outputExtractor'
+      ) && !isValidVisualIoEdge;
+      if (isInvalidVisualIoEdge) {
+        issues.push(createIssue({
+          id: `edge:${edge.id || `${edge.source}-${edge.target}`}:invalid-visual-io`,
+          severity: 'error',
+          scope: 'global',
+          summary: 'Invalid visual I/O edge',
+          detail: 'Input blocks may connect only to agents, and Output Extractors may receive only agent outputs.',
+        }));
+      }
     }
 
     const globalIssues = issues.filter((issue) => issue.scope === 'global');
     const agentIssues = issues.filter((issue) => issue.scope === 'agent');
-    const agentIssuesByNodeId = agentIssues.reduce((acc, issue) => {
+    const agentIssuesByNodeId = issues.reduce((acc, issue) => {
       if (!issue.nodeId) return acc;
       acc[issue.nodeId] = [...(acc[issue.nodeId] || []), issue];
       return acc;

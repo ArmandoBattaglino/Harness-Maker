@@ -1,14 +1,14 @@
 // server/routes/swarm.js
-// Execution control REST API for the V3 Swarm Orchestrator — Task #47.1
+// Execution control REST API for the V3 Swarm Orchestrator â€” Task #47.1
 //
-// POST   /api/v1/swarm/scaffold                   → 201 { workflowId, workflowDef }
-// POST   /api/v1/swarm/:workflowId/start         → 201 { executionId, status }
-// POST   /api/v1/swarm/:executionId/pause        → 200 { ok: true }
-// POST   /api/v1/swarm/:executionId/resume       → 200 { ok: true }
-// DELETE /api/v1/swarm/:executionId              → 204
-// GET    /api/v1/swarm/:executionId/status       → 200 { executionId, status, agentStates, edgeCounters, budget }
-// GET    /api/v1/swarm/:executionId/agent/:nodeId/output → 200 { output: string }
-// POST   /api/v1/swarm/:executionId/broadcast    → 200 { sent: number }
+// POST   /api/v1/swarm/scaffold                   â†’ 201 { workflowId, workflowDef }
+// POST   /api/v1/swarm/:workflowId/start         â†’ 201 { executionId, status }
+// POST   /api/v1/swarm/:executionId/pause        â†’ 200 { ok: true }
+// POST   /api/v1/swarm/:executionId/resume       â†’ 200 { ok: true }
+// DELETE /api/v1/swarm/:executionId              â†’ 204
+// GET    /api/v1/swarm/:executionId/status       â†’ 200 { executionId, status, agentStates, edgeCounters, budget }
+// GET    /api/v1/swarm/:executionId/agent/:nodeId/output â†’ 200 { output: string }
+// POST   /api/v1/swarm/:executionId/broadcast    â†’ 200 { sent: number }
 
 import { Router } from 'express';
 import { generateWorkflowFromPrompt } from '../services/ScaffoldGenerator.js';
@@ -66,7 +66,7 @@ export function serializeSessionOutput(session) {
 }
 
 /**
- * Factory function — returns an Express router with all swarm execution control endpoints.
+ * Factory function â€” returns an Express router with all swarm execution control endpoints.
  *
  * @param {import('../services/SwarmEngine.js').default} swarmEngine
  * @param {import('../services/SessionManager.js').SessionManager} sessionManager
@@ -81,7 +81,7 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
   });
 
   // -------------------------------------------------------------------------
-  // Execution History Store — initialized lazily on first use
+  // Execution History Store â€” initialized lazily on first use
   // -------------------------------------------------------------------------
   function getHistoryStore(appLocals = null) {
     return getExecutionHistoryStore(appLocals);
@@ -90,7 +90,7 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
   // -------------------------------------------------------------------------
   // GET /api/v1/swarm/history/:workflowId
   // Returns all execution history entries for a workflow.
-  // → 200 { executions: [...] }
+  // â†’ 200 { executions: [...] }
   // -------------------------------------------------------------------------
   router.get('/history/:workflowId', async (req, res) => {
     try {
@@ -107,8 +107,8 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
   // -------------------------------------------------------------------------
   // GET /api/v1/swarm/history/:workflowId/:executionId
   // Returns a single execution history entry.
-  // → 200 { execution: {...} }
-  // → 404 if entry not found
+  // â†’ 200 { execution: {...} }
+  // â†’ 404 if entry not found
   // -------------------------------------------------------------------------
   router.get('/history/:workflowId/:executionId', async (req, res) => {
     try {
@@ -132,10 +132,10 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
   // Body: { prompt: string, projectId?: string }
   // Calls the configured scaffold provider(s) to generate a workflow definition,
   // then saves it to WorkflowStore.
-  // → 201 { workflowId, workflowDef }
-  // → 400 if prompt missing, empty, or > 2000 chars
-  // → 503 if WorkflowStore or scaffold providers are unavailable
-  // → 500 on provider failure or invalid response
+  // â†’ 201 { workflowId, workflowDef }
+  // â†’ 400 if prompt missing, empty, or > 2000 chars
+  // â†’ 503 if WorkflowStore or scaffold providers are unavailable
+  // â†’ 500 on provider failure or invalid response
   // IMPORTANT: This literal route must be declared BEFORE /:workflowId/* routes
   //            so Express does not treat 'scaffold' as a workflowId param.
   // -------------------------------------------------------------------------
@@ -150,7 +150,7 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
     }
 
     if (!scaffoldProviders.claudeBin && !scaffoldProviders.codexBin) {
-      return res.status(503).json({ error: 'No scaffold provider configured — restart the server' });
+      return res.status(503).json({ error: 'No scaffold provider configured â€” restart the server' });
     }
 
     try {
@@ -179,14 +179,14 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
   // -------------------------------------------------------------------------
   // POST /api/v1/swarm/:workflowId/start
   // Body: { projectId, projectPath, runtimeProvider? }
-  // → 201 { executionId, status, runtimeProvider, providerStrategy, lastFallback? }
-  // → 400 if projectId or projectPath missing
-  // → 404 if workflowId not found
+  // â†’ 201 { executionId, status, runtimeProvider, providerStrategy, lastFallback? }
+  // â†’ 400 if projectId or projectPath missing
+  // â†’ 404 if workflowId not found
   // -------------------------------------------------------------------------
   router.post('/:workflowId/start', async (req, res) => {
     try {
       const { workflowId } = req.params;
-      const { projectId, projectPath, runtimeProvider, provider, runtimeModels } = req.body ?? {};
+      const { projectId, projectPath, runtimeProvider, provider, runtimeModels, workflowInput, input } = req.body ?? {};
 
       if (!projectId || typeof projectId !== 'string' || projectId.trim() === '') {
         return res.status(400).json({ error: 'projectId is required' });
@@ -200,13 +200,21 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
         executionId = await swarmEngine.startExecution(workflowId, projectId.trim(), projectPath.trim(), {
           runtimeProvider: runtimeProvider ?? provider,
           runtimeModels: runtimeModels && typeof runtimeModels === 'object' ? runtimeModels : undefined,
+          ...(Object.prototype.hasOwnProperty.call(req.body ?? {}, 'workflowInput')
+            || Object.prototype.hasOwnProperty.call(req.body ?? {}, 'input')
+            ? { workflowInput: workflowInput ?? input ?? {} }
+            : {}),
         });
       } catch (err) {
         if (err.message === 'Workflow not found') {
           return res.status(404).json({ error: 'Workflow not found' });
         }
         if (err.statusCode) {
-          return res.status(err.statusCode).json({ error: err.message, code: err.code ?? null });
+          return res.status(err.statusCode).json({
+            error: err.message,
+            code: err.code ?? null,
+            ...(Array.isArray(err.details) ? { details: err.details } : {}),
+          });
         }
         throw err;
       }
@@ -219,6 +227,7 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
         activeProvider: status?.activeProvider ?? null,
         providerStrategy: status?.providerStrategy ?? null,
         lastFallback: status?.lastFallback ?? null,
+        ...(status?.workflowRun ? { workflowRun: status.workflowRun } : {}),
       });
     } catch (err) {
       console.error(`[swarm] POST /:workflowId/start error: ${err.message}`);
@@ -229,8 +238,8 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
   // -------------------------------------------------------------------------
   // POST /api/v1/swarm/:executionId/pause
   // Canonical pause transition. SwarmEngine owns PTY interruption + status updates.
-  // → 200 { ok: true }
-  // → 404 if execution not found
+  // â†’ 200 { ok: true }
+  // â†’ 404 if execution not found
   // -------------------------------------------------------------------------
   router.post('/:executionId/pause', async (req, res) => {
     try {
@@ -256,8 +265,8 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
   // -------------------------------------------------------------------------
   // POST /api/v1/swarm/:executionId/resume
   // Canonical resume transition. SwarmEngine owns PTY re-entry + status updates.
-  // → 200 { ok: true }
-  // → 404 if execution not found
+  // â†’ 200 { ok: true }
+  // â†’ 404 if execution not found
   // -------------------------------------------------------------------------
   router.post('/:executionId/resume', async (req, res) => {
     try {
@@ -282,7 +291,7 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
 
   // -------------------------------------------------------------------------
   // DELETE /api/v1/swarm/:executionId
-  // → 204 (no content)
+  // â†’ 204 (no content)
   // -------------------------------------------------------------------------
   router.delete('/:executionId', async (req, res) => {
     try {
@@ -316,8 +325,8 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
 
   // -------------------------------------------------------------------------
   // GET /api/v1/swarm/:executionId/status
-  // → 200 { executionId, status, agentStates, edgeCounters, budget }
-  // → 404 if execution not found
+  // â†’ 200 { executionId, status, agentStates, edgeCounters, budget }
+  // â†’ 404 if execution not found
   // -------------------------------------------------------------------------
   router.get('/:executionId/status', (req, res) => {
     try {
@@ -340,8 +349,8 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
   // Returns the ring buffer contents for the agent's PTY session.
   // Falls back to persisted/live execution output when the PTY session no
   // longer exists, so completed/stopped nodes remain inspectable.
-  // → 200 { output: string }
-  // → 404 if execution or agent not found
+  // â†’ 200 { output: string }
+  // â†’ 404 if execution or agent not found
   // -------------------------------------------------------------------------
   router.get('/:executionId/agent/:nodeId/output', async (req, res) => {
     try {
@@ -400,10 +409,10 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
   // POST /api/v1/swarm/:executionId/broadcast
   // Body: { text, scope: 'all' | departmentId | agentNodeId, mode: 'soft' | 'hard' }
   // Sends text to messageable agents filtered by scope.
-  // Soft: text + ESC + newline. Hard: Ctrl-C → wait 300ms → text + ESC → wait 100ms → newline.
+  // Soft: text + ESC + newline. Hard: Ctrl-C â†’ wait 300ms â†’ text + ESC â†’ wait 100ms â†’ newline.
   // Fire-and-forget for hard mode delays (setTimeout, no await).
-  // → 200 { sent: number }
-  // → 404 if execution not found
+  // â†’ 200 { sent: number }
+  // â†’ 404 if execution not found
   // -------------------------------------------------------------------------
   router.post('/:executionId/broadcast', async (req, res) => {
     try {
@@ -472,18 +481,18 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
   });
 
   // -------------------------------------------------------------------------
-  // UUID validation regex — shared by results and artifact endpoints
+  // UUID validation regex â€” shared by results and artifact endpoints
   // -------------------------------------------------------------------------
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
   // -------------------------------------------------------------------------
   // GET /api/v1/swarm/executions/:executionId/results
-  // Returns execution results — agent outputs, aggregated artifact, and meta.
+  // Returns execution results â€” agent outputs, aggregated artifact, and meta.
   // Looks up in live SwarmEngine first, then in persisted history.
   // Optional query param: ?workflowId= to speed up history lookup.
-  // → 200 { executionId, workflowName, status, agentOutputs, aggregatedArtifact, meta }
-  // → 400 if executionId is not a valid UUID
-  // → 404 if execution not found
+  // â†’ 200 { executionId, workflowName, status, agentOutputs, aggregatedArtifact, meta }
+  // â†’ 400 if executionId is not a valid UUID
+  // â†’ 404 if execution not found
   // -------------------------------------------------------------------------
   router.get('/executions/:executionId/results', async (req, res) => {
     try {
@@ -511,9 +520,9 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
   // GET /api/v1/swarm/executions/:executionId/artifact.md
   // Downloads the aggregated artifact as a Markdown file.
   // Optional query param: ?workflowId= to speed up history lookup.
-  // → 200 text/markdown with Content-Disposition attachment
-  // → 400 if executionId is not a valid UUID
-  // → 404 if execution not found
+  // â†’ 200 text/markdown with Content-Disposition attachment
+  // â†’ 400 if executionId is not a valid UUID
+  // â†’ 404 if execution not found
   // -------------------------------------------------------------------------
   router.get('/executions/:executionId/artifact.md', async (req, res) => {
     try {

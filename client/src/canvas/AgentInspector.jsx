@@ -9,6 +9,7 @@ import { inspectControlTokens } from '../utils/controlTokens';
 import { mdComponents, sanitizeSchema } from '../utils/markdownComponents.jsx';
 import { formatAgentLiveSnippet, getPreferredAgentLiveSnippet } from '../utils/formatAgentOutput.js';
 import { getAgentOutputEntries, serializeAgentOutputEntries } from '../utils/agentOutputEntries.js';
+import { isVisualInputNode } from '../utils/visualIoContracts.js';
 
 const MODEL_OPTIONS = [
   { group: 'Claude', models: ['opus', 'sonnet', 'haiku'] },
@@ -52,6 +53,10 @@ function normalizeClaudeToolSelection(tools) {
   if (!Array.isArray(tools)) return [...DEFAULT_CLAUDE_TOOLS];
   const selected = new Set(tools.filter((tool) => CLAUDE_TOOL_OPTIONS.includes(tool)));
   return CLAUDE_TOOL_OPTIONS.filter((tool) => selected.has(tool));
+}
+
+function normalizeCsv(value) {
+  return String(value ?? '').split(',').map((item) => item.trim()).filter(Boolean);
 }
 
 /**
@@ -319,6 +324,78 @@ function AgentFields({ node, nodes, onUpdateNode }) {
         All start nodes run immediately. Mark multiple agents to launch parallel branches together.
       </div>
 
+      <CollapsibleSection title="Workflow Guidance" defaultOpen={false}>
+        <div className="rounded border border-gray-700 bg-gray-800/60 p-2 text-[10px] text-gray-500">
+          Skill/tool/context controls are guidance + visibility in this wave; Claude tool lists are still passed to supported structured Claude runs.
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <FieldLabel>Skill hints</FieldLabel>
+          <input
+            className={INPUT_CLS}
+            aria-label="Skill hints"
+            value={Array.isArray(data.skillHints) ? data.skillHints.join(', ') : ''}
+            onChange={(e) => onUpdateNode(nodeId, { skillHints: normalizeCsv(e.target.value) })}
+            placeholder="researcher, qa-tester, writer"
+          />
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <FieldLabel>Context sources</FieldLabel>
+          <input
+            className={INPUT_CLS}
+            aria-label="Context sources"
+            value={Array.isArray(data.contextSources) ? data.contextSources.join(', ') : ''}
+            onChange={(e) => onUpdateNode(nodeId, { contextSources: normalizeCsv(e.target.value) })}
+            placeholder="project-memory, customer-brief, repository"
+          />
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <FieldLabel>Expected output</FieldLabel>
+          <textarea
+            className={`${INPUT_CLS} font-mono resize-y`}
+            aria-label="Expected output"
+            rows={3}
+            value={data.expectedOutput || ''}
+            onChange={(e) => onUpdateNode(nodeId, { expectedOutput: e.target.value })}
+            placeholder="Define the measurable output this agent should produce."
+          />
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <FieldLabel>Expected output format</FieldLabel>
+          <select
+            className={INPUT_CLS}
+            aria-label="Expected output format"
+            value={data.expectedOutputContract?.format || 'markdown'}
+            onChange={(e) => onUpdateNode(nodeId, {
+              expectedOutputContract: {
+                ...(data.expectedOutputContract || {}),
+                format: e.target.value,
+              },
+            })}
+          >
+            <option value="text">Text</option>
+            <option value="markdown">Markdown</option>
+            <option value="json">JSON</option>
+          </select>
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <FieldLabel>Expected output instructions</FieldLabel>
+          <textarea
+            className={`${INPUT_CLS} font-mono resize-y`}
+            aria-label="Expected output instructions"
+            rows={3}
+            value={data.expectedOutputContract?.instructions || ''}
+            onChange={(e) => onUpdateNode(nodeId, {
+              expectedOutputContract: {
+                ...(data.expectedOutputContract || {}),
+                format: data.expectedOutputContract?.format || 'markdown',
+                instructions: e.target.value,
+              },
+            })}
+            placeholder="Describe the structured output this agent should pass downstream."
+          />
+        </div>
+      </CollapsibleSection>
+
       {/* Parent Department */}
       <div className="flex flex-col gap-0.5">
         <FieldLabel>Department</FieldLabel>
@@ -338,6 +415,241 @@ function AgentFields({ node, nodes, onUpdateNode }) {
             </option>
           ))}
         </select>
+      </div>
+    </CollapsibleSection>
+  );
+}
+
+function InputBlockFields({ node, onUpdateNode }) {
+  const nodeId = node.id;
+  const data = node.data || {};
+  const fields = Array.isArray(data.fields) ? data.fields : [];
+  const workflowDef = useSwarmStore((s) => s.workflowDef);
+  const connectedAgents = (workflowDef?.edges ?? [])
+    .filter((edge) => edge.source === nodeId)
+    .map((edge) => (workflowDef?.nodes ?? []).find((candidate) => candidate.id === edge.target))
+    .filter((candidate) => candidate?.type === 'agent');
+  const previewPayload = fields.reduce((acc, field) => {
+    const key = field?.key || `field_${Object.keys(acc).length + 1}`;
+    const type = field?.type || 'text';
+    acc[key] = type === 'image'
+      ? {
+          kind: 'run-image',
+          name: 'reference.png',
+          mimeType: 'image/png',
+          size: 2048,
+          note: 'metadata-only in current MVP',
+        }
+      : type === 'boolean'
+        ? false
+        : type === 'number' || type === 'integer'
+          ? 0
+          : type === 'json'
+            ? { example: 'value' }
+            : type === 'enum'
+              ? (Array.isArray(field.options) && field.options[0]) || 'option'
+              : `<${type}>`;
+    return acc;
+  }, {});
+
+  const updateField = (index, patch) => {
+    onUpdateNode(nodeId, {
+      fields: fields.map((field, fieldIndex) => (
+        fieldIndex === index ? { ...field, ...patch } : field
+      )),
+    });
+  };
+
+  const addField = () => {
+    const nextIndex = fields.length + 1;
+    onUpdateNode(nodeId, {
+      fields: [
+        ...fields,
+        {
+          id: `field-${nextIndex}`,
+          key: `input_${nextIndex}`,
+          label: `Input ${nextIndex}`,
+          type: 'text',
+          required: false,
+          defaultValue: '',
+          helpText: '',
+          options: [],
+        },
+      ],
+    });
+  };
+
+  const removeField = (index) => {
+    onUpdateNode(nodeId, {
+      fields: fields.filter((_, fieldIndex) => fieldIndex !== index),
+    });
+  };
+
+  return (
+    <CollapsibleSection title="Input Block">
+      <div className="flex flex-col gap-0.5">
+        <FieldLabel>Prompt</FieldLabel>
+        <textarea
+          className={`${INPUT_CLS} resize-y`}
+          rows={2}
+          value={data.prompt || ''}
+          onChange={(e) => onUpdateNode(nodeId, { prompt: e.target.value })}
+          placeholder="Question shown at workflow start"
+        />
+      </div>
+      {fields.map((field, index) => (
+        <div key={field.id || index} className="rounded border border-gray-700 bg-gray-800/60 p-2">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <span className="text-[11px] font-semibold text-gray-300">Field {index + 1}</span>
+            <button
+              type="button"
+              onClick={() => removeField(index)}
+              className="rounded bg-gray-700 px-2 py-0.5 text-[10px] text-gray-300 hover:bg-gray-600"
+            >
+              Remove
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="text-[11px] text-gray-400">
+              Key
+              <input
+                className={INPUT_CLS}
+                value={field.key || ''}
+                onChange={(e) => updateField(index, { key: e.target.value })}
+              />
+            </label>
+            <label className="text-[11px] text-gray-400">
+              Type
+              <select
+                className={INPUT_CLS}
+                value={field.type || 'text'}
+                onChange={(e) => updateField(index, { type: e.target.value })}
+              >
+                <option value="text">Text</option>
+                <option value="textarea">Textarea</option>
+                <option value="markdown">Markdown</option>
+                <option value="json">JSON</option>
+                <option value="enum">Enum</option>
+                <option value="number">Number</option>
+                <option value="integer">Integer</option>
+                <option value="boolean">Boolean</option>
+                <option value="image">Image</option>
+              </select>
+            </label>
+          </div>
+          <label className="mt-2 block text-[11px] text-gray-400">
+            Label
+            <input
+              className={INPUT_CLS}
+              value={field.label || ''}
+              onChange={(e) => updateField(index, { label: e.target.value })}
+            />
+          </label>
+          <label className="mt-2 flex items-center gap-2 text-xs text-gray-300">
+            <input
+              type="checkbox"
+              checked={Boolean(field.required)}
+              onChange={(e) => updateField(index, { required: e.target.checked })}
+              className="accent-blue-500"
+            />
+            Required
+          </label>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={addField}
+        className="rounded-md border border-gray-700 bg-gray-800 px-2.5 py-1.5 text-[11px] font-medium text-gray-300 hover:bg-gray-700"
+      >
+        Add field
+      </button>
+      <div className="rounded border border-emerald-700/40 bg-emerald-950/20 p-2 text-[11px] text-emerald-100/90">
+        <div className="font-semibold">What the agent receives</div>
+        <div className="mt-1 text-[10px] text-emerald-100/70">
+          Operator prompt: {data.prompt?.trim() || 'No prompt set.'}
+        </div>
+        <div className="mt-1 text-[10px] text-emerald-100/70">
+          Connected agents: {connectedAgents.length > 0 ? connectedAgents.map((agent) => agent.data?.label || agent.id).join(', ') : 'No connected agents yet'}
+        </div>
+        <pre className="mt-2 max-h-40 overflow-auto rounded border border-emerald-900/60 bg-gray-950 p-2 text-[10px] text-emerald-100/90">{JSON.stringify(previewPayload, null, 2)}</pre>
+      </div>
+    </CollapsibleSection>
+  );
+}
+
+function OutputExtractorFields({ node, onUpdateNode }) {
+  const nodeId = node.id;
+  const data = node.data || {};
+  const workflowDef = useSwarmStore((s) => s.workflowDef);
+  const incomingAgents = (workflowDef?.edges ?? [])
+    .filter((edge) => edge.target === nodeId)
+    .map((edge) => (workflowDef?.nodes ?? []).find((candidate) => candidate.id === edge.source))
+    .filter((candidate) => candidate?.type === 'agent');
+  const sourcePolicyLabel = {
+    allIncoming: 'Uses all connected upstream agent outputs.',
+    firstIncoming: 'Uses only the first connected upstream agent output.',
+  }[data.sourcePolicy || 'allIncoming'] || 'Uses connected upstream agent outputs.';
+
+  return (
+    <CollapsibleSection title="Output Extractor">
+      <div className="flex flex-col gap-0.5">
+        <FieldLabel>Artifact key</FieldLabel>
+        <input
+          className={INPUT_CLS}
+          value={data.artifactKey || ''}
+          onChange={(e) => onUpdateNode(nodeId, { artifactKey: e.target.value })}
+        />
+      </div>
+      <div className="flex flex-col gap-0.5">
+        <FieldLabel>Artifact name</FieldLabel>
+        <input
+          className={INPUT_CLS}
+          value={data.artifactName || ''}
+          onChange={(e) => onUpdateNode(nodeId, { artifactName: e.target.value })}
+        />
+      </div>
+      <div className="flex flex-col gap-0.5">
+        <FieldLabel>Format</FieldLabel>
+        <select
+          className={INPUT_CLS}
+          value={data.format || 'markdown'}
+          onChange={(e) => onUpdateNode(nodeId, { format: e.target.value })}
+        >
+          <option value="markdown">Markdown</option>
+          <option value="text">Text</option>
+          <option value="json">JSON</option>
+          <option value="table">Table</option>
+        </select>
+      </div>
+      <div className="flex flex-col gap-0.5">
+        <FieldLabel>Source policy</FieldLabel>
+        <select
+          className={INPUT_CLS}
+          value={data.sourcePolicy || 'allIncoming'}
+          onChange={(e) => onUpdateNode(nodeId, { sourcePolicy: e.target.value })}
+        >
+          <option value="allIncoming">All incoming</option>
+          <option value="firstIncoming">First incoming</option>
+        </select>
+        <span className="text-[10px] text-gray-500">
+          Selected-source extraction is deferred in this MVP.
+        </span>
+      </div>
+      <div className="flex flex-col gap-0.5">
+        <FieldLabel>Extraction instruction</FieldLabel>
+        <textarea
+          className={`${INPUT_CLS} resize-y`}
+          rows={3}
+          value={data.instruction || ''}
+          onChange={(e) => onUpdateNode(nodeId, { instruction: e.target.value })}
+        />
+      </div>
+      <div className="rounded border border-amber-700/40 bg-amber-950/20 p-2 text-[11px] text-amber-100/90">
+        <div className="font-semibold">What the user gets</div>
+        <div className="mt-1 text-[10px] text-amber-100/70">Deliverable: {data.artifactName?.trim() || data.label || 'Artifact'} ({data.format || 'markdown'})</div>
+        <div className="mt-1 text-[10px] text-amber-100/70">Upstream agents: {incomingAgents.length > 0 ? incomingAgents.map((agent) => agent.data?.label || agent.id).join(', ') : 'No connected upstream agent yet'}</div>
+        <div className="mt-1 text-[10px] text-amber-100/70">Source policy: {sourcePolicyLabel}</div>
+        <pre className="mt-2 max-h-32 overflow-auto rounded border border-amber-900/60 bg-gray-950 p-2 text-[10px] text-amber-100/90">{JSON.stringify({ artifactKey: data.artifactKey || 'report', artifactName: data.artifactName || data.label || 'Report', format: data.format || 'markdown', sourcePolicy: data.sourcePolicy || 'allIncoming' }, null, 2)}</pre>
       </div>
     </CollapsibleSection>
   );
@@ -381,6 +693,7 @@ function DepartmentFields({ node, onUpdateNode }) {
     </CollapsibleSection>
   );
 }
+
 
 function ConditionalFields({ node, nodes, onUpdateNode }) {
   const nodeId = node.id;
@@ -1004,6 +1317,12 @@ export default function AgentInspector({ nodes, onUpdateNode }) {
       )}
       {activeTab === 'config' && nodeType === 'subWorkflow' && (
         <SubWorkflowFields node={selectedNode} onUpdateNode={onUpdateNode} />
+      )}
+      {activeTab === 'config' && isVisualInputNode(selectedNode) && (
+        <InputBlockFields node={selectedNode} onUpdateNode={onUpdateNode} />
+      )}
+      {activeTab === 'config' && nodeType === 'outputExtractor' && (
+        <OutputExtractorFields node={selectedNode} onUpdateNode={onUpdateNode} />
       )}
 
       {/* Execution Info — timing data (FR-V5-49/50) */}

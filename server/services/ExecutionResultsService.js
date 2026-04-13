@@ -2,6 +2,7 @@ import { ExecutionHistoryStore } from '../stores/ExecutionHistoryStore.js';
 import { ConfigStore } from './ConfigStore.js';
 import { buildWorkflowArtifact } from './WorkflowArtifactBuilder.js';
 import buildPackResult from './PackResultBuilder.js';
+import { buildWorkflowResult } from './workflowContracts.js';
 
 export const TERMINAL_EXECUTION_STATUSES = new Set(['completed', 'stopped', 'failed']);
 const STRUCTURED_AGENT_SPAWN_MODES = new Set(['stream-json', 'codex-sdk']);
@@ -174,6 +175,19 @@ export function buildLiveExecutionResults(execution, workflowName = '', swarmEng
     agentOutputs,
     chatMessages: Array.isArray(execution?.chatMessages) ? execution.chatMessages : [],
     aggregatedArtifact,
+    ...(execution?.workflowRun ? { workflowRun: execution.workflowRun } : {}),
+    ...(execution?.workflowRun
+      ? {
+          workflowResult: buildWorkflowResult({
+            workflowDef: execution?.workflowDef,
+            workflowRun: execution.workflowRun,
+            workflowContext: execution?.workflowContext,
+            agentOutputs,
+            aggregatedArtifact,
+            status,
+          }),
+        }
+      : {}),
     ...(packRun ? { packRun } : {}),
     ...(packLike ? { packResult: buildPackResult(packLike, execution, agentOutputs, aggregatedArtifact) } : {}),
     meta: {
@@ -270,6 +284,8 @@ export function buildExecutionResultsPayload(result, swarmEngine) {
     status: entry.status,
     agentOutputs: entry.agentOutputs || {},
     aggregatedArtifact: entry.aggregatedArtifact || '',
+    ...(entry.workflowRun ? { workflowRun: entry.workflowRun } : {}),
+    ...(entry.workflowResult ? { workflowResult: entry.workflowResult } : {}),
     ...(entry.packRun ? { packRun: entry.packRun } : {}),
     ...(packLike ? { packResult: buildPackResult(packLike, entry, entry.agentOutputs || {}, entry.aggregatedArtifact || '') } : {}),
     meta: {

@@ -7,6 +7,7 @@ import PromptToFlowBar from '../canvas/PromptToFlowBar';
 // BroadcastBar removed — broadcast controls are now integrated into ChatPanel
 import PtyExplosion from '../canvas/PtyExplosion';
 import WorkflowSettingsModal from '../canvas/WorkflowSettingsModal';
+import WorkflowRunModal from '../canvas/WorkflowRunModal';
 import ExecutionHistory from '../canvas/ExecutionHistory';
 import VersionHistory from '../canvas/VersionHistory';
 import { useSwarmStore } from '../store/SwarmContext';
@@ -16,6 +17,7 @@ import { useWorkflowList } from '../hooks/useWorkflow.js';
 import { useAppDispatch, useAppState } from '../store/AppContext';
 import { apiDelete, apiGet, apiPost, apiPut } from '../hooks/useApi.js';
 import { sanitizeWorkflow } from '../utils/sanitizeWorkflow.js';
+import { deriveEffectiveWorkflowContracts, resolveEffectiveWorkflowContracts } from '../utils/visualIoContracts.js';
 import { useCanvasValidation } from '../hooks/useCanvasValidation.js';
 import { isStructuredSpawnMode } from '../utils/runtimeModes.js';
 import WorkflowArtifactPanel from '../panels/WorkflowArtifactPanel';
@@ -27,6 +29,53 @@ const statusColors = {
   blocked: 'text-orange-400',
   stopped: 'text-red-400',
 };
+
+function buildValidationRail(globalIssues = []) {
+  const workflowWideIssues = globalIssues.filter((issue) => !issue.nodeId);
+  const nodeMarkedIssues = globalIssues.filter((issue) => issue.nodeId);
+  const nodeErrorCount = nodeMarkedIssues.filter((issue) => issue.severity === 'error').length;
+  const nodeWarningCount = nodeMarkedIssues.length - nodeErrorCount;
+  const pills = workflowWideIssues.map((issue) => ({
+    id: issue.id,
+    severity: issue.severity,
+    summary: issue.summary,
+    detail: issue.detail,
+  }));
+
+  if (nodeMarkedIssues.length > 0) {
+    const nodeLabel = `${nodeMarkedIssues.length} node issue${nodeMarkedIssues.length !== 1 ? 's' : ''} marked on canvas`;
+    const breakdown = [
+      nodeErrorCount > 0 ? `${nodeErrorCount} blocker${nodeErrorCount !== 1 ? 's' : ''}` : null,
+      nodeWarningCount > 0 ? `${nodeWarningCount} warning${nodeWarningCount !== 1 ? 's' : ''}` : null,
+    ].filter(Boolean).join(', ');
+
+    pills.push({
+      id: 'workflow:node-marked-summary',
+      severity: nodeErrorCount > 0 ? 'error' : 'warning',
+      summary: nodeLabel,
+      detail: [
+        breakdown ? `Node-marked issues: ${breakdown}.` : null,
+        ...nodeMarkedIssues.map((issue) => `${issue.summary} — ${issue.detail}`),
+      ].filter(Boolean).join('\n'),
+    });
+  }
+
+  let summaryText = '';
+  if (workflowWideIssues.length > 0 && nodeMarkedIssues.length > 0) {
+    summaryText = `${globalIssues.length} workflow issues need attention (${workflowWideIssues.length} workflow-wide, ${nodeMarkedIssues.length} marked on nodes).`;
+  } else if (workflowWideIssues.length > 0) {
+    summaryText = `${workflowWideIssues.length} workflow issue${workflowWideIssues.length !== 1 ? 's' : ''} need${workflowWideIssues.length === 1 ? 's' : ''} attention.`;
+  } else if (nodeMarkedIssues.length > 0) {
+    summaryText = `${nodeMarkedIssues.length} issue${nodeMarkedIssues.length !== 1 ? 's' : ''} are marked directly on nodes.`;
+  }
+
+  return {
+    workflowWideIssues,
+    nodeMarkedIssues,
+    pills,
+    summaryText,
+  };
+}
 
 function resolveRuntimeModelSelection(currentModel, availableModels = [], detectedDefault = null) {
   if (currentModel && availableModels.includes(currentModel)) {
@@ -87,6 +136,7 @@ export default function SwarmView() {
   const [runtimeDefaults, setRuntimeDefaults] = useState({ claude: '', codex: '', gemini: '' });
   const [runtimeAvailability, setRuntimeAvailability] = useState({ claude: false, codex: false, gemini: false });
   const [showSettings, setShowSettings] = useState(false);
+  const [showRunForm, setShowRunForm] = useState(false);
   const [showModelSettings, setShowModelSettings] = useState(false);
   const modelSettingsRef = useRef(null);
   useEffect(() => {
@@ -381,49 +431,94 @@ export default function SwarmView() {
     };
   }, []);
 
-  const handleRun = async () => {
-    // FR-V5-46: validate before run — block if errors exist
-    if (hasValidationErrors) return;
+  const buildCurrentWorkflowPayload = () => {
+    const current = workflowDef ?? {};
+    const nodes = canvasStateRef.current.nodes.length > 0
+      ? canvasStateRef.current.nodes
+      : (current.nodes ?? []);
+    const edges = canvasStateRef.current.edges.length > 0
+      ? canvasStateRef.current.edges
+      : (current.edges ?? []);
 
-    let runWorkflowId = workflowDef?.id;
+    const effectiveContracts = resolveEffectiveWorkflowContracts({ ...current, nodes, edges });
+    return sanitizeWorkflow({
+      ...current,
+      name: current.name || 'Untitled Workflow',
+      description: current.description || '',
+      nodes,
+      edges,
+      settings: current.settings || {},
+      initialContext: current.initialContext || {},
+      inputContract: effectiveContracts.inputContract || [],
+      outputContract: effectiveContracts.outputContract || { outputs: [], artifacts: [] },
+      projectId: current.projectId ?? activeProjectId,
+    });
+  };
 
-    // Auto-create workflow on the server when the user built a canvas from scratch
-    if (!runWorkflowId) {
-      const { nodes, edges } = canvasStateRef.current;
-      if (!nodes.length) return;
-      try {
-        const res = await apiPost('/api/v1/workflows', {
-          name: 'Untitled Workflow',
-          description: '',
-          nodes,
-          edges,
-          settings: {},
-          initialContext: {},
-          projectId: activeProjectId,
-        });
-        const created = res?.workflow ?? res;
-        setWorkflowDef(created);
-        setSelectedWorkflowId(created.id);
-        setIsDirty(false);
-        refreshWorkflows();
-        runWorkflowId = created.id;
-      } catch (e) {
-        console.error('[SwarmView] auto-create workflow failed:', e);
-        return;
+  const persistWorkflowForRun = async () => {
+    if (workflowDef?.id && !isDirty) return workflowDef.id;
+    const payload = buildCurrentWorkflowPayload();
+    if (!payload.nodes.length) return null;
+
+    if (workflowDef?.id) {
+      const result = await apiPut(`/api/v1/workflows/${workflowDef.id}`, payload);
+      const saved = result?.workflow ?? result;
+      if (saved) {
+        setWorkflowDef(saved);
+        setSelectedWorkflowId(saved.id);
       }
+      setIsDirty(false);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
+      refreshWorkflows();
+      return saved?.id ?? workflowDef.id;
     }
+
+    const res = await apiPost('/api/v1/workflows', payload);
+    const created = res?.workflow ?? res;
+    setWorkflowDef(created);
+    setSelectedWorkflowId(created.id);
+    setIsDirty(false);
+    refreshWorkflows();
+    return created.id;
+  };
+
+  const handleRunWithInput = async (workflowInput = {}) => {
+    // FR-V5-46: validate before run ? block if errors exist
+    if (hasValidationErrors) return;
 
     setPromptToFlowResetKey((value) => value + 1);
     setExecuting(true);
+    setSaveError(null);
     try {
+      const runWorkflowId = await persistWorkflowForRun();
+      if (!runWorkflowId) return;
       const models = {};
       if (runtimeModels.claude) models.claude = runtimeModels.claude;
       if (runtimeModels.codex) models.codex = runtimeModels.codex;
       if (runtimeModels.gemini) models.gemini = runtimeModels.gemini;
-      await startExecution(activeProjectId, projectPath, selectedRuntimeProvider, Object.keys(models).length > 0 ? models : null, runWorkflowId);
+      await startExecution(
+        activeProjectId,
+        projectPath,
+        selectedRuntimeProvider,
+        Object.keys(models).length > 0 ? models : null,
+        runWorkflowId,
+        workflowInput
+      );
+    } catch (e) {
+      setSaveError(e.message || 'Failed to save or run workflow');
+      console.error('[SwarmView] run workflow failed:', e);
     } finally {
       setExecuting(false);
     }
+  };
+
+  const handleRun = async () => {
+    if (hasWorkflowInputContract) {
+      setShowRunForm(true);
+      return;
+    }
+    await handleRunWithInput({});
   };
 
   const handleStop = async () => {
@@ -556,6 +651,13 @@ export default function SwarmView() {
     setCanvasEdgesForValidation(edges);
   }, []);
 
+  const effectiveWorkflowContracts = useMemo(() => deriveEffectiveWorkflowContracts({
+    ...(workflowDef ?? {}),
+    nodes: canvasNodesForValidation.length > 0 ? canvasNodesForValidation : (workflowDef?.nodes ?? []),
+    edges: canvasEdgesForValidation.length > 0 ? canvasEdgesForValidation : (workflowDef?.edges ?? []),
+  }), [workflowDef, canvasNodesForValidation, canvasEdgesForValidation]);
+  const hasWorkflowInputContract = effectiveWorkflowContracts.inputContract.length > 0;
+
   // FR-V5-44: canvas validation — computed from latest canvas state
   const canvasValidation = useCanvasValidation(
     canvasNodesForValidation,
@@ -575,6 +677,10 @@ export default function SwarmView() {
   const blockingIssues = canvasValidation.blockingIssues ?? [];
   const blockingIssueCount = blockingIssues.length;
   const hasValidationErrors = blockingIssueCount > 0;
+  const validationRail = useMemo(
+    () => buildValidationRail(globalValidationIssues),
+    [globalValidationIssues]
+  );
 
   // FR-V5-01: save handler — persist canvas state to server
   const handleSave = async () => {
@@ -583,12 +689,7 @@ export default function SwarmView() {
     setSaveError(null);
     setSaveSuccess(false);
     try {
-      const { nodes, edges } = canvasStateRef.current;
-      const updated = sanitizeWorkflow({
-        ...workflowDef,
-        nodes,
-        edges,
-      });
+      const updated = buildCurrentWorkflowPayload();
       const result = await apiPut(`/api/v1/workflows/${workflowDef.id}`, updated);
       const saved = result?.workflow ?? result;
       if (saved) setWorkflowDef(saved);
@@ -668,6 +769,8 @@ export default function SwarmView() {
         edges: parsed.edges,
         settings: parsed.settings || {},
         initialContext: parsed.initialContext || {},
+        inputContract: parsed.inputContract || [],
+        outputContract: parsed.outputContract || { outputs: [], artifacts: [] },
       });
       const imported = res?.workflow ?? res;
       setWorkflowDef(imported);
@@ -697,6 +800,8 @@ export default function SwarmView() {
       edges: sanitized.edges,
       settings: sanitized.settings || {},
       initialContext: sanitized.initialContext || {},
+      inputContract: sanitized.inputContract || [],
+      outputContract: sanitized.outputContract || { outputs: [], artifacts: [] },
       projectId: sanitized.projectId,
     };
     const res = await apiPost('/api/v1/workflows', copy);
@@ -1104,16 +1209,18 @@ export default function SwarmView() {
         </div>
       )}
 
-      {globalValidationIssues.length > 0 && (executionStatus === 'idle' || executionStatus === 'completed') && (
+      {validationRail.pills.length > 0 && (executionStatus === 'idle' || executionStatus === 'completed') && (
         <div className="border-b border-amber-900/40 bg-gradient-to-r from-amber-950/25 via-amber-950/10 to-transparent px-4 py-2.5">
           <div className="flex flex-wrap items-start gap-2 text-xs">
             <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-semibold text-amber-200">
               Validation
             </span>
-            <span className="pt-0.5 text-gray-200">
-              {globalValidationIssues.length} workflow issue{globalValidationIssues.length !== 1 ? 's' : ''} {globalValidationIssues.length === 1 ? 'needs' : 'need'} attention.
-            </span>
-            {globalValidationIssues.map((issue) => (
+            {validationRail.summaryText && (
+              <span className="pt-0.5 text-gray-200">
+                {validationRail.summaryText}
+              </span>
+            )}
+            {validationRail.pills.map((issue) => (
               <span
                 key={issue.id}
                 className={`rounded-full border px-2 py-0.5 ${
@@ -1195,17 +1302,32 @@ export default function SwarmView() {
       {showSettings && workflowDef && (
         <WorkflowSettingsModal
           workflowDef={workflowDef}
-          onApply={(updatedSettings, updatedContext, updatedDescription) => {
+          onApply={(updatedSettings, updatedContext, updatedDescription, updatedInputContract, updatedOutputContract) => {
             setWorkflowDef({
               ...workflowDef,
               settings: { ...(workflowDef.settings || {}), ...updatedSettings },
               initialContext: updatedContext,
+              inputContract: updatedInputContract ?? workflowDef.inputContract ?? [],
+              outputContract: updatedOutputContract ?? workflowDef.outputContract ?? { outputs: [], artifacts: [] },
               ...(updatedDescription !== undefined ? { description: updatedDescription } : {}),
             });
             markDirty();
             setShowSettings(false);
           }}
           onClose={() => setShowSettings(false)}
+        />
+      )}
+
+      {showRunForm && workflowDef && (
+        <WorkflowRunModal
+          workflowName={workflowDef.name}
+          inputContract={effectiveWorkflowContracts.inputContract}
+          outputContract={effectiveWorkflowContracts.outputContract}
+          onSubmit={(workflowInput) => {
+            setShowRunForm(false);
+            void handleRunWithInput(workflowInput);
+          }}
+          onClose={() => setShowRunForm(false)}
         />
       )}
 

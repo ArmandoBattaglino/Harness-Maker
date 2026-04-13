@@ -214,6 +214,68 @@ describe('GET /executions/:executionId/results', () => {
     expect(res.body.aggregatedArtifact).toContain('Final result');
   });
 
+  it('returns workflow-native run inputs and canonical outputs for a terminal live execution', async () => {
+    const liveStatus = {
+      executionId: VALID_UUID,
+      workflowId: WORKFLOW_ID,
+      status: 'completed',
+      workflowRun: {
+        kind: 'workflow-direct',
+        inputs: { brief: 'Launch X' },
+        outputContract: {
+          outputs: [{ key: 'result', label: 'Result', source: 'finalText' }],
+          artifacts: [{ key: 'report', label: 'Report', format: 'markdown', source: 'aggregatedArtifact' }],
+        },
+      },
+      agentStates: { 'node-a': { status: 'completed' } },
+      budget: { startedAt: '2026-04-07T10:00:00Z' },
+    };
+    const liveExecution = {
+      ...liveStatus,
+      startedAt: '2026-04-07T10:00:00Z',
+      workflowContext: { workflowRun: liveStatus.workflowRun },
+      workflowDef: {
+        id: WORKFLOW_ID,
+        name: 'Workflow Native Run',
+        description: 'A direct workflow run',
+        outputContract: liveStatus.workflowRun.outputContract,
+        nodes: [{ id: 'node-a', type: 'agent', data: { label: 'Agent A' } }],
+      },
+      agentStates: new Map([
+        ['node-a', { status: 'completed', runtimeProvider: 'codex', handoffPayloads: [] }],
+      ]),
+      chatMessages: [
+        { role: 'assistant', nodeId: 'node-a', text: 'Launch X final output', timestamp: Date.now() },
+      ],
+    };
+    const engine = createMockSwarmEngine(liveStatus, liveExecution);
+    const router = swarmRoutes(engine, createMockSessionManager());
+    const handler = getRouteHandler(router, 'get', '/executions/:executionId/results');
+    const req = {
+      params: { executionId: VALID_UUID },
+      query: {},
+      app: {
+        locals: {
+          workflowStore: { get: vi.fn().mockResolvedValue({ name: 'Workflow Native Run' }) },
+          executionHistoryStore: { getEntry: vi.fn().mockResolvedValue(null) },
+        },
+      },
+    };
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.workflowRun.inputs).toEqual({ brief: 'Launch X' });
+    expect(res.body.workflowResult.inputs.brief).toBe('Launch X');
+    expect(res.body.workflowResult.outputs.result).toContain('Launch X final output');
+    expect(res.body.workflowResult.artifacts[0]).toEqual(expect.objectContaining({
+      id: 'report',
+      status: 'ready',
+      value: expect.stringContaining('# Workflow: Workflow Native Run'),
+    }));
+  });
+
   it('reconstructs live terminal outputs from the engine when chatMessages are empty', async () => {
     const liveStatus = {
       executionId: VALID_UUID,

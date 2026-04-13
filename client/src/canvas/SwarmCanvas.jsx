@@ -25,6 +25,8 @@ import DelayNode from './nodes/DelayNode';
 import LoopNode from './nodes/LoopNode';
 import ErrorHandlerNode from './nodes/ErrorHandlerNode';
 import SubWorkflowNode from './nodes/SubWorkflowNode';
+import InputNode from './nodes/InputNode';
+import OutputExtractorNode from './nodes/OutputExtractorNode';
 import HandoffEdge from './edges/HandoffEdge';
 import FloatingConnectionLine from './edges/FloatingConnectionLine';
 import AgentInspector from './AgentInspector';
@@ -39,6 +41,15 @@ import { applyExpandedOutputLayering } from './outputLayering';
 import { useSwarmStore } from '../store/SwarmContext';
 import { useCanvasHistory } from '../hooks/useCanvasHistory';
 import { generateNodeId } from '../utils/nodeIdGenerator';
+import {
+  buildDefaultInputNodeData,
+  buildDefaultOutputExtractorNodeData,
+  CANONICAL_VISUAL_INPUT_NODE_TYPE,
+  isVisualInputNode,
+  isVisualInputNodeType,
+  normalizeVisualInputNodeType,
+  normalizeVisualWorkflowNode,
+} from '../utils/visualIoContracts';
 
 // Register custom node and edge types — defined OUTSIDE component to prevent re-registration
 const nodeTypes = {
@@ -51,6 +62,8 @@ const nodeTypes = {
   loop: LoopNode,
   errorHandler: ErrorHandlerNode,
   subWorkflow: SubWorkflowNode,
+  [CANONICAL_VISUAL_INPUT_NODE_TYPE]: InputNode,
+  outputExtractor: OutputExtractorNode,
 };
 
 const edgeTypes = {
@@ -79,6 +92,8 @@ const DEFAULT_NODE_DIMENSIONS = {
   loop: { width: 180, height: 92 },
   errorHandler: { width: 180, height: 84 },
   subWorkflow: { width: 180, height: 88 },
+  [CANONICAL_VISUAL_INPUT_NODE_TYPE]: { width: 190, height: 116 },
+  outputExtractor: { width: 200, height: 110 },
   department: { width: 280, height: 180 },
 };
 function snapGridValue(value) {
@@ -95,6 +110,33 @@ function snapPosition(position) {
 function buildNodeData(type, subType = '') {
   if (type === 'agent') {
     return { label: 'New Agent', systemPrompt: '', model: '', tools: [], isTriageNode: false, maxTurns: 0 };
+  }
+
+  if (isVisualInputNodeType(type)) {
+    return {
+      label: 'Input Block',
+      fields: [
+        {
+          key: 'brief',
+          label: 'Brief',
+          type: 'textarea',
+          required: true,
+          helpText: 'Describe what this workflow should do.',
+          defaultValue: '',
+          options: [],
+        },
+      ],
+    };
+  }
+
+  if (type === 'outputExtractor') {
+    return {
+      label: 'Output Extractor',
+      artifactKey: 'report',
+      artifactName: 'Report',
+      format: 'markdown',
+      extractionInstruction: 'Extract the final deliverable from the upstream agent output.',
+    };
   }
 
   if (type === 'department') {
@@ -133,15 +175,24 @@ function buildNodeData(type, subType = '') {
     return { label: 'Sub-Workflow', workflowId: '' };
   }
 
+  if (isVisualInputNodeType(type)) {
+    return buildDefaultInputNodeData();
+  }
+
+  if (type === 'outputExtractor') {
+    return buildDefaultOutputExtractorNodeData();
+  }
+
   return { label: `New ${type}` };
 }
 
 function buildCanvasNode({ id, type, position, subType = '', isDropPreview = false }) {
+  const normalizedType = normalizeVisualInputNodeType(type);
   const node = {
     id,
-    type,
+    type: normalizedType,
     position: snapPosition(position),
-    data: buildNodeData(type, subType),
+    data: buildNodeData(normalizedType, subType),
   };
 
   if (!isDropPreview) {
@@ -516,9 +567,13 @@ export default function SwarmCanvas({
 
   // Initial nodes/edges from workflowDef (or empty)
   const initialNodes = workflowDef?.nodes ?? [];
+  const normalizedInitialNodes = useMemo(
+    () => initialNodes.map((node) => normalizeVisualWorkflowNode(node)),
+    [initialNodes]
+  );
   const initialEdges = workflowDef?.edges ?? [];
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState(normalizedInitialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedEdgeId, setSelectedEdgeId] = useState(null);
   const [dropPreviewNode, setDropPreviewNode] = useState(null);
@@ -546,7 +601,7 @@ export default function SwarmCanvas({
         clearTimeout(dropPreviewTimeoutRef.current);
         dropPreviewTimeoutRef.current = null;
       }
-      setNodes(workflowDef.nodes ?? []);
+      setNodes((workflowDef.nodes ?? []).map((node) => normalizeVisualWorkflowNode(node)));
       setEdges(workflowDef.edges ?? []);
       // Give React Flow a tick to measure nodes before calling fitView
       setTimeout(() => fitView({ padding: 0.2, duration: 400 }), 50);
@@ -948,6 +1003,8 @@ export default function SwarmCanvas({
     if (contextMenu.type === 'canvas') {
       return [
         { label: 'Add Agent Node', icon: '\uD83E\uDD16', onClick: () => addNodeAtPosition('agent', contextMenu.screenX ?? contextMenu.x, contextMenu.screenY ?? contextMenu.y) },
+        { label: 'Add Input Block', icon: '\uD83D\uDCDD', onClick: () => addNodeAtPosition(CANONICAL_VISUAL_INPUT_NODE_TYPE, contextMenu.screenX ?? contextMenu.x, contextMenu.screenY ?? contextMenu.y) },
+        { label: 'Add Output Extractor', icon: '\uD83D\uDCE6', onClick: () => addNodeAtPosition('outputExtractor', contextMenu.screenX ?? contextMenu.x, contextMenu.screenY ?? contextMenu.y) },
         { label: 'Add Department', icon: '\uD83C\uDFE2', onClick: () => addNodeAtPosition('department', contextMenu.screenX ?? contextMenu.x, contextMenu.screenY ?? contextMenu.y) },
         { label: 'Add Trigger', icon: '\u26A1', onClick: () => addNodeAtPosition('trigger', contextMenu.screenX ?? contextMenu.x, contextMenu.screenY ?? contextMenu.y) },
         { label: 'Select All', icon: '\u2610', onClick: () => setNodes((nds) => nds.map((n) => ({ ...n, selected: true }))) },
@@ -1078,10 +1135,12 @@ export default function SwarmCanvas({
           >
             <Background gap={20} size={1} color="#1f2937" />
             <Controls
+              className="swarm-flow-controls"
               style={{ background: '#1f2937', border: '1px solid #374151', borderRadius: '6px' }}
               showInteractive={false}
             />
             <MiniMap
+              className="swarm-flow-minimap"
               style={{ background: '#111827', border: '1px solid #374151', borderRadius: '6px' }}
               maskColor="rgba(0,0,0,0.4)"
               nodeColor="#6366f1"

@@ -68,6 +68,36 @@ describe('agentOutputs and aggregatedArtifact round-trip', () => {
     expect(history[0].aggregatedArtifact).toBe(aggregatedArtifact);
   });
 
+  it('persists workflow-native run and result metadata beside legacy output fields', async () => {
+    const workflowRun = {
+      kind: 'workflow-direct',
+      inputs: { brief: 'Launch X' },
+      inputContract: [{ key: 'brief', label: 'Brief', type: 'textarea', required: true }],
+      outputContract: { outputs: [{ key: 'result', label: 'Result', source: 'finalText' }], artifacts: [] },
+      startedAt: '2026-04-12T03:00:00.000Z',
+    };
+    const workflowResult = {
+      status: 'completed',
+      inputs: { brief: 'Launch X' },
+      outputs: { result: 'Launch X output' },
+      artifacts: [],
+    };
+
+    const saved = await store.addEntry('wf-run', {
+      executionId: 'exec-run',
+      status: 'completed',
+      workflowRun,
+      workflowResult,
+    });
+
+    expect(saved.workflowRun.inputs.brief).toBe('Launch X');
+    expect(saved.workflowResult.outputs.result).toBe('Launch X output');
+
+    const loaded = await store.getEntry('wf-run', 'exec-run');
+    expect(loaded.workflowRun).toEqual(workflowRun);
+    expect(loaded.workflowResult).toEqual(workflowResult);
+  });
+
   it('should default agentOutputs to {} and aggregatedArtifact to "" when not provided', async () => {
     const saved = await store.addEntry('wf-2', {
       executionId: 'exec-2',
@@ -80,6 +110,8 @@ describe('agentOutputs and aggregatedArtifact round-trip', () => {
     const loaded = await store.getEntry('wf-2', 'exec-2');
     expect(loaded.agentOutputs).toEqual({});
     expect(loaded.aggregatedArtifact).toBe('');
+    expect(loaded.workflowRun).toBeNull();
+    expect(loaded.workflowResult).toBeNull();
   });
 });
 

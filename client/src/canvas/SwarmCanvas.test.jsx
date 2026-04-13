@@ -4,11 +4,16 @@ import SwarmCanvas from './SwarmCanvas.jsx';
 import { useSwarmStore } from '../store/SwarmContext.jsx';
 import { resetSwarmStore } from '../test/resetSwarmStore.js';
 
+let lastReactFlowProps = null;
+
 vi.mock('@xyflow/react', () => ({
-  ReactFlow: ({ children }) => <div data-testid="react-flow">{children}</div>,
+  ReactFlow: (props) => {
+    lastReactFlowProps = props;
+    return <div data-testid="react-flow">{props.children}</div>;
+  },
   Background: () => null,
-  Controls: () => null,
-  MiniMap: () => null,
+  Controls: ({ className }) => <div data-testid="react-flow-controls" className={className} />,
+  MiniMap: ({ className }) => <div data-testid="react-flow-minimap" className={className} />,
   ConnectionLineType: { SmoothStep: 'smoothstep' },
   ConnectionMode: { Loose: 'loose' },
   MarkerType: { Arrow: 'arrow' },
@@ -52,6 +57,7 @@ vi.mock('../hooks/useCanvasHistory', () => ({
 describe('SwarmCanvas activity rail', () => {
   beforeEach(() => {
     resetSwarmStore();
+    lastReactFlowProps = null;
   });
 
   it('keeps the chat empty state visible while idle when the side panel is open', () => {
@@ -119,5 +125,56 @@ describe('SwarmCanvas activity rail', () => {
     expect(screen.getByText('Chat View')).toBeInTheDocument();
     expect(screen.getByText('Finished run')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Open Activity' })).not.toBeInTheDocument();
+  });
+
+  it('applies hardened class names to React Flow controls and minimap', () => {
+    useSwarmStore.setState({
+      workflowDef: {
+        id: 'workflow-visual-shell',
+        name: 'Workflow Visual Shell',
+        nodes: [],
+        edges: [],
+      },
+      executionStatus: 'idle',
+      sidePanelOpen: true,
+      sidePanelMode: 'chat',
+    });
+
+    render(
+      <SwarmCanvas
+        workflowDef={{ id: 'workflow-visual-shell', name: 'Workflow Visual Shell', nodes: [], edges: [] }}
+        markDirty={vi.fn()}
+        onCanvasChange={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('react-flow-controls')).toHaveClass('swarm-flow-controls');
+    expect(screen.getByTestId('react-flow-minimap')).toHaveClass('swarm-flow-minimap');
+  });
+
+  it('normalizes legacy input nodes to the canonical workflowInput type before rendering', () => {
+    const workflowDef = {
+      id: 'workflow-legacy-input',
+      name: 'Workflow Legacy Input',
+      nodes: [
+        {
+          id: 'input-a',
+          type: 'input',
+          position: { x: 10, y: 20 },
+          data: { label: 'Legacy Input', fields: [{ key: 'brief', label: 'Brief', type: 'text' }] },
+        },
+      ],
+      edges: [],
+    };
+
+    render(
+      <SwarmCanvas
+        workflowDef={workflowDef}
+        markDirty={vi.fn()}
+        onCanvasChange={vi.fn()}
+      />
+    );
+
+    expect(lastReactFlowProps.nodes[0].type).toBe('workflowInput');
   });
 });

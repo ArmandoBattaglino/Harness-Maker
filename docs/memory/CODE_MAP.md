@@ -1,4 +1,36 @@
-﻿# CODE_MAP — Claude Code Visual Manager
+## Visual I/O Input Wrapper Artifact Addendum (2026-04-13)
+- `client/src/utils/visualWorkflowContracts.js` - now defines the canonical visual input type (`workflowInput`), legacy aliases (`input`, `inputBlock`), and shared normalization helpers.
+- `client/src/utils/sanitizeWorkflow.js` - now writes canonical `workflowInput` when workflows are persisted/exported/duplicated.
+- `client/src/canvas/SwarmCanvas.jsx` - now registers/render-normalizes `workflowInput` nodes and converts legacy input aliases before React Flow receives them.
+- `client/src/canvas/NodePalette.jsx` - new Input Block drags now emit canonical `workflowInput`.
+- `server/services/workflowContracts.js` - visual input contract derivation/validation accepts both canonical and legacy input aliases.
+- `server/services/SwarmEngine.js` - non-startable visual-input semantics now check shared input aliases instead of raw `type === 'input'`.
+- `scripts/visual-io-nodes-playwright-smoke.mjs` - smoke fixture now exercises the canonical `workflowInput` path.
+
+## Visual I/O UX Stabilization Addendum (2026-04-13)
+- `client/src/views/SwarmView.jsx` - validation rail now distinguishes workflow-wide pills from node-marked issues, aggregating node-local Input/Output problems into a single canvas summary instead of duplicating node-badge wording.
+- `client/src/canvas/SwarmCanvas.jsx` - React Flow `Controls` / `MiniMap` now carry explicit `swarm-flow-controls` and `swarm-flow-minimap` class hooks for dark-theme hardening.
+- `client/src/index.css` - hardened React Flow controls/minimap selectors now use the dedicated class hooks so stylesheet load order cannot regress the lower-left controls into detached white blocks.
+- `client/src/views/SwarmView.test.jsx` + `client/src/canvas/SwarmCanvas.test.jsx` - regression coverage for validation-summary ownership and control/minimap styling hooks.
+
+## Visual Input / Output Blocks Addendum (2026-04-12)
+- `docs/VISUAL_INPUT_OUTPUT_BLOCKS.md` - implementation notes for the approved visual Input/Output Blocks plan, including current baseline map, source-of-truth guardrails, non-executable node semantics, image run-asset boundary, extractor artifact rule, and microwave evidence format.
+- `server/services/workflowContracts.js` - current contract bridge baseline; normalizes root `inputContract` / `outputContract`, but still needs graph-derived effective contracts, `image` input type, `table` artifact format, and extractor-specific no-silent-fallback behavior.
+- `client/src/canvas/SwarmCanvas.jsx` + `client/src/canvas/NodePalette.jsx` - current canvas creation surface; planned visual I/O work should add `input` and `outputExtractor` registration/cards/default data while preserving existing Agent/Department/Trigger behavior.
+- `client/src/hooks/useCanvasValidation.js` + `server/services/SwarmEngine.js` - start-node/runtime semantics currently count all incoming targets; planned visual Input nodes must be excluded from executable start-agent/fan-in scheduling.
+
+## Workflow as Heart / Pack as Wrapper Addendum (2026-04-12)
+- `server/services/workflowContracts.js` - workflow-native input/output contract normalization, direct-run input validation, workflow run context injection, and canonical workflow result mapping.
+- `server/services/WorkflowStore.js` - now preserves `inputContract` / `outputContract` and loads legacy workflows with safe empty defaults.
+- `server/services/SwarmEngine.js` - direct workflow starts build `workflowRun`, inject workflow inputs/expected outputs into prompts, include agent guidance in prompts, and persist `workflowResult`.
+- `server/routes/swarm.js` + `server/services/ExecutionResultsService.js` - start/status/results expose additive `workflowRun` and `workflowResult` fields.
+- `server/stores/ExecutionHistoryStore.js` - persists/defaults workflow-native run/result metadata.
+- `client/src/canvas/WorkflowSettingsModal.jsx` - new Interface tab for workflow inputs, canonical outputs, and artifacts.
+- `client/src/canvas/WorkflowRunModal.jsx` - direct workflow launch form with typed validation/defaulting.
+- `client/src/views/SwarmView.jsx` - workflow-native run form entry point and visible run I/O summary.
+- `client/src/canvas/AgentInspector.jsx` - lightweight per-agent `skillHints`, `contextSources`, and `expectedOutput` guidance.
+- `scripts/workflow-heart-playwright-smoke.mjs` - deterministic browser smoke for workflow direct run plus pack surface availability.
+# CODE_MAP — Claude Code Visual Manager
 _Last updated: 2026-04-11 - after Marketing Video Harness Deep/Stress Test - mapped by code-mapper_
 
 ## Pack Builder / Runtime Identity Addendum (2026-04-12)
@@ -4128,3 +4160,10 @@ _All bugs identified in QA Swarm Inspection (2026-03-31) and Swarm Code Audit (2
 - `client/src/views/PackLibraryView.jsx`: selected pack changes clear stale launch errors.
 ---
 - `scripts/v17-review-followup-playwright-smoke.mjs`: targeted Playwright smoke for V17.8.1 follow-up; exercises API publish freshness/provenance and browser PackLibrary error clearing.
+
+---
+## 2026-04-12T13:00:04Z - Visual I/O Wave 1 Code Map
+- server/services/workflowContracts.js: resolves node-backed effective input/output contracts, validates image metadata without accepting raw bytes/paths, preserves legacy contract fallback, and maps extractor artifacts to upstream agent output.
+- server/services/SwarmEngine.js: excludes Input nodes from start/fan-in scheduling, treats Output Extractor as non-spawn flow-control, and provides scoped connected-input prompt helper support.
+- client/src/utils/visualWorkflowContracts.js: client-side mirror for deriving visual-node contracts in later UI lanes.
+- client/src/hooks/useCanvasValidation.js: current-system relationship guard so Input -> Agent edges do not hide start agents and extractor nodes can be validated without becoming executable agents.

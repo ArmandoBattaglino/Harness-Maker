@@ -6,7 +6,7 @@ import { useSwarmStore } from '../store/SwarmContext.jsx';
 import { resetSwarmStore } from '../test/resetSwarmStore.js';
 import { useInbox } from '../hooks/useInbox.js';
 import { useSwarm } from '../hooks/useSwarm.js';
-import { apiGet } from '../hooks/useApi.js';
+import { apiGet, apiPost, apiPut } from '../hooks/useApi.js';
 import { useCanvasValidation } from '../hooks/useCanvasValidation.js';
 
 const workflowListMock = {
@@ -54,7 +54,23 @@ vi.mock('../canvas/PtyExplosion', () => ({
 }));
 
 vi.mock('../canvas/WorkflowSettingsModal', () => ({
-  default: () => null,
+  default: ({ onApply }) => (
+    <button
+      type="button"
+      onClick={() => onApply(
+        {},
+        {},
+        'Dirty workflow goal',
+        [{ key: 'brief', label: 'Brief', type: 'textarea', required: true, helpText: 'Campaign brief' }],
+        {
+          outputs: [{ key: 'result', label: 'Result', source: 'finalText' }],
+          artifacts: [{ key: 'report', label: 'Report', format: 'markdown', source: 'aggregatedArtifact' }],
+        }
+      )}
+    >
+      Apply mocked workflow interface
+    </button>
+  ),
 }));
 
 vi.mock('../canvas/ExecutionHistory', () => ({
@@ -135,6 +151,8 @@ describe('SwarmView runtime shell contracts', () => {
       }
       throw new Error(`Unexpected apiGet path: ${path}`);
     });
+    vi.mocked(apiPost).mockReset();
+    vi.mocked(apiPut).mockReset();
   });
 
   it('shows structured-runtime controls for active stream-json executions', async () => {
@@ -383,6 +401,439 @@ describe('SwarmView runtime shell contracts', () => {
     expect(runButton).toBeDisabled();
     expect(screen.getByText('No start node')).toBeInTheDocument();
     expect(screen.queryByText(/empty system prompt/i)).not.toBeInTheDocument();
+  });
+
+  it('summarizes node-marked issues in the validation rail instead of duplicating node-local text', async () => {
+    vi.mocked(useCanvasValidation).mockReturnValue({
+      errors: [
+        {
+          id: 'workflow:no-agent-nodes',
+          scope: 'global',
+          severity: 'error',
+          summary: 'No agent nodes',
+          detail: 'No agent nodes — add at least one agent.',
+          message: 'No agent nodes — add at least one agent.',
+        },
+        {
+          id: 'input:input-a:not-connected',
+          scope: 'global',
+          nodeId: 'input-a',
+          severity: 'warning',
+          summary: 'Input Block is not connected to an agent',
+          detail: 'Input Block will collect input but no agent is connected to receive it.',
+          message: 'Input Block will collect input but no agent is connected to receive it.',
+        },
+        {
+          id: 'outputExtractor:extract-a:no-agent-source',
+          scope: 'global',
+          nodeId: 'extract-a',
+          severity: 'error',
+          summary: 'Output Extractor has no agent source',
+          detail: 'Output Extractor needs an incoming Agent -> Output Extractor connection.',
+          message: 'Output Extractor needs an incoming Agent -> Output Extractor connection.',
+        },
+      ],
+      globalIssues: [
+        {
+          id: 'workflow:no-agent-nodes',
+          scope: 'global',
+          severity: 'error',
+          summary: 'No agent nodes',
+          detail: 'No agent nodes — add at least one agent.',
+        },
+        {
+          id: 'input:input-a:not-connected',
+          scope: 'global',
+          nodeId: 'input-a',
+          severity: 'warning',
+          summary: 'Input Block is not connected to an agent',
+          detail: 'Input Block will collect input but no agent is connected to receive it.',
+        },
+        {
+          id: 'outputExtractor:extract-a:no-agent-source',
+          scope: 'global',
+          nodeId: 'extract-a',
+          severity: 'error',
+          summary: 'Output Extractor has no agent source',
+          detail: 'Output Extractor needs an incoming Agent -> Output Extractor connection.',
+        },
+      ],
+      agentIssuesByNodeId: {
+        'input-a': [
+          {
+            id: 'input:input-a:not-connected',
+            scope: 'global',
+            nodeId: 'input-a',
+            severity: 'warning',
+            summary: 'Input Block is not connected to an agent',
+            detail: 'Input Block will collect input but no agent is connected to receive it.',
+          },
+        ],
+        'extract-a': [
+          {
+            id: 'outputExtractor:extract-a:no-agent-source',
+            scope: 'global',
+            nodeId: 'extract-a',
+            severity: 'error',
+            summary: 'Output Extractor has no agent source',
+            detail: 'Output Extractor needs an incoming Agent -> Output Extractor connection.',
+          },
+        ],
+      },
+      blockingIssues: [
+        {
+          id: 'workflow:no-agent-nodes',
+          scope: 'global',
+          severity: 'error',
+          summary: 'No agent nodes',
+          detail: 'No agent nodes — add at least one agent.',
+        },
+        {
+          id: 'outputExtractor:extract-a:no-agent-source',
+          scope: 'global',
+          nodeId: 'extract-a',
+          severity: 'error',
+          summary: 'Output Extractor has no agent source',
+          detail: 'Output Extractor needs an incoming Agent -> Output Extractor connection.',
+        },
+      ],
+    });
+
+    useSwarmStore.setState({
+      workflowDef: {
+        id: 'workflow-node-summary',
+        name: 'Workflow Node Summary',
+        nodes: [
+          { id: 'input-a', type: 'input', data: { label: 'Input Block' } },
+          { id: 'extract-a', type: 'outputExtractor', data: { label: 'Output Extractor' } },
+        ],
+        edges: [],
+      },
+      executionStatus: 'idle',
+    });
+
+    render(<SwarmView />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/3 workflow issues need attention/i)).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('No agent nodes')).toBeInTheDocument();
+    expect(screen.getByText('2 node issues marked on canvas')).toBeInTheDocument();
+    expect(screen.queryByText('Input Block is not connected to an agent')).not.toBeInTheDocument();
+    expect(screen.queryByText('Output Extractor has no agent source')).not.toBeInTheDocument();
+  });
+
+  it('opens a workflow-native run form, blocks missing required input, and starts with submitted values', async () => {
+    useSwarmStore.setState({
+      workflowDef: {
+        id: 'workflow-inputs',
+        name: 'Workflow Inputs',
+        inputContract: [
+          { key: 'brief', label: 'Brief', type: 'textarea', required: true, helpText: 'Campaign brief' },
+          { key: 'tone', label: 'Tone', type: 'enum', required: false, options: ['formal', 'friendly'], defaultValue: 'friendly' },
+        ],
+        outputContract: {
+          outputs: [{ key: 'result', label: 'Result', source: 'finalText' }],
+          artifacts: [{ key: 'report', label: 'Report', format: 'markdown', source: 'aggregatedArtifact' }],
+        },
+        nodes: [{ id: 'node-a', type: 'agent', data: { label: 'Agent A' } }],
+        edges: [],
+      },
+      executionStatus: 'idle',
+    });
+
+    render(<SwarmView />);
+
+    await waitFor(() => {
+      expect(apiGet).toHaveBeenCalledWith('/api/v1/swarm/runtime-capabilities');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Run' }));
+    expect(screen.getByText('Run workflow')).toBeInTheDocument();
+    expect(screen.getByText(/Expected run result/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start workflow' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Brief is required.');
+
+    fireEvent.change(screen.getByLabelText(/Brief/i), { target: { value: 'Launch campaign X' } });
+    fireEvent.change(screen.getByLabelText(/Tone/i), { target: { value: 'formal' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Start workflow' }));
+
+    await waitFor(() => {
+      expect(useSwarmMockValue.startExecution).toHaveBeenCalledWith(
+        'project-1',
+        'C:\\Projects\\One',
+        'auto',
+        expect.objectContaining({ claude: 'claude-sonnet', codex: 'gpt-5.4' }),
+        'workflow-inputs',
+        { brief: 'Launch campaign X', tone: 'formal' }
+      );
+    });
+  });
+
+  it('never renders the workflow run I/O banner during an active run', async () => {
+    useSwarmStore.setState({
+      workflowDef: {
+        id: 'workflow-running-banner',
+        name: 'Workflow Running Banner',
+        nodes: [{ id: 'node-a', type: 'agent', data: { label: 'Agent A' } }],
+        edges: [],
+      },
+      executionStatus: 'running',
+      workflowRun: {
+        kind: 'workflow-direct',
+        inputs: { brief: 'Launch campaign' },
+        inputContract: [{ key: 'brief', label: 'Brief', type: 'textarea', required: true }],
+        outputContract: { outputs: [], artifacts: [] },
+      },
+    });
+
+    render(<SwarmView />);
+
+    await waitFor(() => {
+      expect(apiGet).toHaveBeenCalledWith('/api/v1/swarm/runtime-capabilities');
+    });
+
+    expect(screen.queryByText('Workflow run I/O')).not.toBeInTheDocument();
+    expect(screen.queryByText('Launch campaign')).not.toBeInTheDocument();
+  });
+
+  it('does not render the workflow run I/O banner even after execution completes', async () => {
+    useSwarmStore.setState({
+      workflowDef: {
+        id: 'workflow-complete-banner',
+        name: 'Workflow Complete Banner',
+        nodes: [{ id: 'node-a', type: 'agent', data: { label: 'Agent A' } }],
+        edges: [],
+      },
+      executionStatus: 'completed',
+      workflowRun: {
+        kind: 'workflow-direct',
+        inputs: { brief: 'Launch campaign' },
+        inputContract: [{ key: 'brief', label: 'Brief', type: 'textarea', required: true }],
+        outputContract: { outputs: [], artifacts: [] },
+      },
+    });
+
+    render(<SwarmView />);
+
+    await waitFor(() => {
+      expect(apiGet).toHaveBeenCalledWith('/api/v1/swarm/runtime-capabilities');
+    });
+
+    expect(screen.queryByText('Workflow run I/O')).not.toBeInTheDocument();
+    expect(screen.queryByText('Launch campaign')).not.toBeInTheDocument();
+  });
+
+  it('does not render the workflow run I/O banner for failed executions either', async () => {
+    useSwarmStore.setState({
+      workflowDef: {
+        id: 'workflow-failed-banner',
+        name: 'Workflow Failed Banner',
+        nodes: [{ id: 'node-a', type: 'agent', data: { label: 'Agent A' } }],
+        edges: [],
+      },
+      executionStatus: 'failed',
+      workflowRun: {
+        kind: 'workflow-direct',
+        inputs: { brief: 'Launch campaign' },
+        inputContract: [{ key: 'brief', label: 'Brief', type: 'textarea', required: true }],
+        outputContract: { outputs: [], artifacts: [] },
+      },
+    });
+
+    render(<SwarmView />);
+
+    await waitFor(() => {
+      expect(apiGet).toHaveBeenCalledWith('/api/v1/swarm/runtime-capabilities');
+    });
+
+    expect(screen.queryByText('Workflow run I/O')).not.toBeInTheDocument();
+    expect(screen.queryByText('Launch campaign')).not.toBeInTheDocument();
+  });
+
+  it('saves dirty workflow interface contracts before starting a direct run', async () => {
+    vi.mocked(apiPut).mockResolvedValue({
+      workflow: {
+        id: 'workflow-dirty',
+        name: 'Workflow Dirty',
+        description: 'Dirty workflow goal',
+        inputContract: [{ key: 'brief', label: 'Brief', type: 'textarea', required: true, helpText: 'Campaign brief' }],
+        outputContract: {
+          outputs: [{ key: 'result', label: 'Result', source: 'finalText' }],
+          artifacts: [{ key: 'report', label: 'Report', format: 'markdown', source: 'aggregatedArtifact' }],
+        },
+        nodes: [{ id: 'node-a', type: 'agent', position: { x: 0, y: 0 }, data: { label: 'Agent A' } }],
+        edges: [],
+      },
+    });
+    useSwarmStore.setState({
+      workflowDef: {
+        id: 'workflow-dirty',
+        name: 'Workflow Dirty',
+        description: 'Old goal',
+        nodes: [{ id: 'node-a', type: 'agent', position: { x: 0, y: 0 }, data: { label: 'Agent A' } }],
+        edges: [],
+      },
+      executionStatus: 'idle',
+    });
+
+    render(<SwarmView />);
+
+    await waitFor(() => {
+      expect(apiGet).toHaveBeenCalledWith('/api/v1/swarm/runtime-capabilities');
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Settings/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Apply mocked workflow interface' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Run' }));
+    fireEvent.change(screen.getByLabelText(/Brief/i), { target: { value: 'Fresh brief' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Start workflow' }));
+
+    await waitFor(() => {
+      expect(apiPut).toHaveBeenCalledWith('/api/v1/workflows/workflow-dirty', expect.objectContaining({
+        inputContract: [expect.objectContaining({ key: 'brief', required: true })],
+        outputContract: expect.objectContaining({
+          outputs: [expect.objectContaining({ key: 'result' })],
+          artifacts: [expect.objectContaining({ key: 'report' })],
+        }),
+      }));
+      expect(useSwarmMockValue.startExecution).toHaveBeenCalledWith(
+        'project-1',
+        'C:\\Projects\\One',
+        'auto',
+        expect.any(Object),
+        'workflow-dirty',
+        { brief: 'Fresh brief' }
+      );
+    });
+  });
+
+  it('creates an unsaved workflow with its workflow-native contracts before direct run', async () => {
+    vi.mocked(apiPost).mockResolvedValue({
+      workflow: {
+        id: 'workflow-created',
+        name: 'Unsaved Workflow',
+        inputContract: [{ key: 'brief', label: 'Brief', type: 'textarea', required: true }],
+        outputContract: { outputs: [{ key: 'result', label: 'Result', source: 'finalText' }], artifacts: [] },
+        nodes: [{ id: 'node-a', type: 'agent', position: { x: 0, y: 0 }, data: { label: 'Agent A' } }],
+        edges: [],
+      },
+    });
+    useSwarmStore.setState({
+      workflowDef: {
+        name: 'Unsaved Workflow',
+        inputContract: [{ key: 'brief', label: 'Brief', type: 'textarea', required: true }],
+        outputContract: { outputs: [{ key: 'result', label: 'Result', source: 'finalText' }], artifacts: [] },
+        nodes: [{ id: 'node-a', type: 'agent', position: { x: 0, y: 0 }, data: { label: 'Agent A' } }],
+        edges: [],
+      },
+      executionStatus: 'idle',
+    });
+
+    render(<SwarmView />);
+
+    await waitFor(() => {
+      expect(apiGet).toHaveBeenCalledWith('/api/v1/swarm/runtime-capabilities');
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Run' }));
+    fireEvent.change(screen.getByLabelText(/Brief/i), { target: { value: 'Unsaved brief' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Start workflow' }));
+
+    await waitFor(() => {
+      expect(apiPost).toHaveBeenCalledWith('/api/v1/workflows', expect.objectContaining({
+        name: 'Unsaved Workflow',
+        inputContract: [expect.objectContaining({ key: 'brief' })],
+        outputContract: expect.objectContaining({
+          outputs: [expect.objectContaining({ key: 'result' })],
+        }),
+      }));
+      expect(useSwarmMockValue.startExecution).toHaveBeenCalledWith(
+        'project-1',
+        'C:\\Projects\\One',
+        'auto',
+        expect.any(Object),
+        'workflow-created',
+        { brief: 'Unsaved brief' }
+      );
+    });
+  });
+
+  it('derives visual input and extractor contracts from canvas nodes before direct run', async () => {
+    vi.mocked(apiPost).mockResolvedValue({
+      workflow: {
+        id: 'workflow-visual',
+        name: 'Visual Workflow',
+        inputContract: [
+          { key: 'brief', label: 'Brief', type: 'text', required: true, inputNodeId: 'input-a' },
+          { key: 'reference_image', label: 'Reference image', type: 'image', required: true, inputNodeId: 'input-a' },
+        ],
+        outputContract: {
+          outputs: [],
+          artifacts: [{ key: 'report', label: 'Report', format: 'markdown', source: 'outputExtractor', sourceNodeId: 'node-a' }],
+        },
+        nodes: [],
+        edges: [],
+      },
+    });
+    useSwarmStore.setState({
+      workflowDef: {
+        name: 'Visual Workflow',
+        inputContract: [{ key: 'legacy', label: 'Legacy', type: 'text', required: true }],
+        outputContract: { outputs: [], artifacts: [] },
+        nodes: [
+          { id: 'input-a', type: 'workflowInput', position: { x: 0, y: 0 }, data: { label: 'Creative intake', fields: [
+            { key: 'brief', label: 'Brief', type: 'text', required: true },
+            { key: 'reference_image', label: 'Reference image', type: 'image', required: true },
+          ] } },
+          { id: 'node-a', type: 'agent', position: { x: 200, y: 0 }, data: { label: 'Agent A' } },
+          { id: 'extract-a', type: 'outputExtractor', position: { x: 400, y: 0 }, data: { artifactKey: 'report', artifactName: 'Report', format: 'markdown' } },
+        ],
+        edges: [
+          { id: 'e1', source: 'input-a', target: 'node-a' },
+          { id: 'e2', source: 'node-a', target: 'extract-a' },
+        ],
+      },
+      executionStatus: 'idle',
+    });
+
+    render(<SwarmView />);
+
+    await waitFor(() => {
+      expect(apiGet).toHaveBeenCalledWith('/api/v1/swarm/runtime-capabilities');
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Run' }));
+    expect(screen.getByText('Creative intake')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/Brief/i), { target: { value: 'Launch visual blocks' } });
+    const file = new File(['fake'], 'ref.png', { type: 'image/png' });
+    fireEvent.change(screen.getByLabelText(/Reference image/i), { target: { files: [file] } });
+    fireEvent.click(screen.getByRole('button', { name: 'Start workflow' }));
+
+    await waitFor(() => {
+      expect(apiPost).toHaveBeenCalledWith('/api/v1/workflows', expect.objectContaining({
+        nodes: expect.arrayContaining([
+          expect.objectContaining({ id: 'input-a', type: 'workflowInput' }),
+        ]),
+        inputContract: [
+          expect.objectContaining({ key: 'brief', inputNodeId: 'input-a' }),
+          expect.objectContaining({ key: 'reference_image', type: 'image', inputNodeId: 'input-a' }),
+        ],
+        outputContract: expect.objectContaining({
+          artifacts: [expect.objectContaining({ key: 'report', source: 'outputExtractor', sourceNodeId: 'node-a' })],
+        }),
+      }));
+      expect(useSwarmMockValue.startExecution).toHaveBeenCalledWith(
+        'project-1',
+        'C:\\Projects\\One',
+        'auto',
+        expect.any(Object),
+        'workflow-visual',
+        expect.objectContaining({
+          brief: 'Launch visual blocks',
+          reference_image: expect.objectContaining({ name: 'ref.png', mimeType: 'image/png' }),
+        })
+      );
+    });
   });
 
   it('consumes workflow drill-down navigation intent and shows pack drill-down context', async () => {
