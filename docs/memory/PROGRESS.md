@@ -1,3 +1,17 @@
+## Swarm Workflow I/O Banner Removal (2026-04-13)
+
+**Status:** IMPLEMENTED / VERIFIED.
+
+**Deliverables:**
+- Removed the green `Workflow run I/O` summary surface from `SwarmView` entirely.
+- Added targeted regression coverage proving the banner stays absent even when `workflowRun` data exists in `running`, `completed`, and `failed` states.
+
+**Verification:**
+- Targeted client suite: **15/15 PASS**
+- Root build: **PASS**
+- Diagnostics on touched files: **0 errors** (`tsc skipped: no tsconfig found` caveat)
+- Architect verification: **APPROVE**
+
 ## Visual I/O Input Wrapper Artifact Fix (2026-04-13)
 
 **Status:** IMPLEMENTED / VERIFIED.

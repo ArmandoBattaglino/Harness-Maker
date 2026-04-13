@@ -1,3 +1,13 @@
+## 2026-04-13 - frontend-dev - remove workflow run I/O banner from Swarm
+**Outcome:** COMPLETED / PASS
+**Summary:** Removed the green `Workflow run I/O` summary component from `SwarmView` entirely after the user clarified that the surface is unwanted, not just too noisy during active runs. Updated tests to prove it stays absent even when run data exists in `running`, `completed`, and `failed` states.
+**Files changed:** client/src/views/SwarmView.jsx, client/src/views/SwarmView.test.jsx, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** unwanted workflow run summary banner appearing above the canvas when visual input/output blocks were present.
+**Decisions made:** remove the entire component instead of gating it by execution status.
+**Blockers:** none
+**Next:** commit/push when ready.
+
+---
 ## 2026-04-13 - frontend-dev / backend-dev / qa-tester - input wrapper artifact compatibility fix
 **Outcome:** COMPLETED / PASS
 **Summary:** Fixed the Input Block white backing rectangle by removing the custom-node collision with React Flow's built-in `input` wrapper styling. New visual input nodes now use canonical `workflowInput`, while legacy `input` / `inputBlock` workflows remain readable and executable through shared alias helpers and render-time normalization.

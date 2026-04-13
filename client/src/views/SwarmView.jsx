@@ -90,73 +90,6 @@ function resolveRuntimeModelSelection(currentModel, availableModels = [], detect
 const ACTIVE_AGENT_STATUSES = ['running', 'paused', 'blocked'];
 const LIVE_AGENT_STATUSES = ['running', 'blocked'];
 
-function WorkflowRunSummary({ workflowRun, workflowResult }) {
-  if (!workflowRun && !workflowResult) return null;
-  const inputs = workflowResult?.inputs ?? workflowRun?.inputs ?? {};
-  const outputs = workflowResult?.outputs ?? {};
-  const artifacts = workflowResult?.artifacts ?? [];
-
-  return (
-    <div className="border-b border-green-900/40 bg-green-950/20 px-4 py-3 text-xs text-green-50">
-      <div className="mb-2 flex flex-wrap items-center gap-2">
-        <span className="rounded-full border border-green-500/40 bg-green-500/10 px-2 py-0.5 font-semibold">
-          Workflow run I/O
-        </span>
-        <span className="text-green-100/80">
-          Inputs and canonical outputs are workflow-native for direct runs.
-        </span>
-      </div>
-      <div className="grid gap-3 md:grid-cols-3">
-        <div>
-          <div className="mb-1 font-semibold text-green-200">Submitted inputs</div>
-          {Object.keys(inputs).length === 0 ? (
-            <div className="text-green-100/60">No inputs submitted.</div>
-          ) : (
-            <dl className="space-y-1">
-              {Object.entries(inputs).map(([key, value]) => (
-                <div key={key}>
-                  <dt className="font-medium text-green-100">{key}</dt>
-                  <dd className="break-words text-green-100/70">{typeof value === 'string' ? value : JSON.stringify(value)}</dd>
-                </div>
-              ))}
-            </dl>
-          )}
-        </div>
-        <div>
-          <div className="mb-1 font-semibold text-green-200">Canonical outputs</div>
-          {Object.keys(outputs).length === 0 ? (
-            <div className="text-green-100/60">Outputs will appear after a terminal result.</div>
-          ) : (
-            <dl className="space-y-1">
-              {Object.entries(outputs).map(([key, value]) => (
-                <div key={key}>
-                  <dt className="font-medium text-green-100">{key}</dt>
-                  <dd className="break-words text-green-100/70">{String(value || '(empty)')}</dd>
-                </div>
-              ))}
-            </dl>
-          )}
-        </div>
-        <div>
-          <div className="mb-1 font-semibold text-green-200">Artifacts</div>
-          {artifacts.length === 0 ? (
-            <div className="text-green-100/60">Artifacts will appear after a terminal result.</div>
-          ) : (
-            <ul className="space-y-1">
-              {artifacts.map((artifact) => (
-                <li key={artifact.id} className="break-words">
-                  <span className="font-medium text-green-100">{artifact.name || artifact.id}</span>
-                  <span className="ml-1 text-green-100/60">({artifact.status}{artifact.format ? `, ${artifact.format}` : ''})</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function SwarmView() {
   const appDispatch = useAppDispatch();
   const executionStatus = useSwarmStore((s) => s.executionStatus);
@@ -176,8 +109,6 @@ export default function SwarmView() {
   ));
   const setPtyExplosionNodeId = useSwarmStore((s) => s.setPtyExplosionNodeId);
   const workflowDef = useSwarmStore((s) => s.workflowDef);
-  const workflowRun = useSwarmStore((s) => s.workflowRun);
-  const workflowResult = useSwarmStore((s) => s.workflowResult);
   const setWorkflowDef = useSwarmStore((s) => s.setWorkflowDef);
   const ptyExplosionNodeLabel = useMemo(() => (
     workflowDef?.nodes?.find((node) => node.id === ptyExplosionNodeId)?.data?.label || ptyExplosionNodeId || 'Agent'
@@ -1265,8 +1196,6 @@ export default function SwarmView() {
           {lastFallback.reason ? ` because ${lastFallback.reason}` : ''}.
         </div>
       )}
-
-      <WorkflowRunSummary workflowRun={workflowRun} workflowResult={workflowResult} />
 
       {saveError && (
         <div className="px-4 py-2 text-xs text-red-300 bg-red-950/40 border-b border-red-900/60">

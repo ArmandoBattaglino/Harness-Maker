@@ -572,6 +572,87 @@ describe('SwarmView runtime shell contracts', () => {
     });
   });
 
+  it('never renders the workflow run I/O banner during an active run', async () => {
+    useSwarmStore.setState({
+      workflowDef: {
+        id: 'workflow-running-banner',
+        name: 'Workflow Running Banner',
+        nodes: [{ id: 'node-a', type: 'agent', data: { label: 'Agent A' } }],
+        edges: [],
+      },
+      executionStatus: 'running',
+      workflowRun: {
+        kind: 'workflow-direct',
+        inputs: { brief: 'Launch campaign' },
+        inputContract: [{ key: 'brief', label: 'Brief', type: 'textarea', required: true }],
+        outputContract: { outputs: [], artifacts: [] },
+      },
+    });
+
+    render(<SwarmView />);
+
+    await waitFor(() => {
+      expect(apiGet).toHaveBeenCalledWith('/api/v1/swarm/runtime-capabilities');
+    });
+
+    expect(screen.queryByText('Workflow run I/O')).not.toBeInTheDocument();
+    expect(screen.queryByText('Launch campaign')).not.toBeInTheDocument();
+  });
+
+  it('does not render the workflow run I/O banner even after execution completes', async () => {
+    useSwarmStore.setState({
+      workflowDef: {
+        id: 'workflow-complete-banner',
+        name: 'Workflow Complete Banner',
+        nodes: [{ id: 'node-a', type: 'agent', data: { label: 'Agent A' } }],
+        edges: [],
+      },
+      executionStatus: 'completed',
+      workflowRun: {
+        kind: 'workflow-direct',
+        inputs: { brief: 'Launch campaign' },
+        inputContract: [{ key: 'brief', label: 'Brief', type: 'textarea', required: true }],
+        outputContract: { outputs: [], artifacts: [] },
+      },
+    });
+
+    render(<SwarmView />);
+
+    await waitFor(() => {
+      expect(apiGet).toHaveBeenCalledWith('/api/v1/swarm/runtime-capabilities');
+    });
+
+    expect(screen.queryByText('Workflow run I/O')).not.toBeInTheDocument();
+    expect(screen.queryByText('Launch campaign')).not.toBeInTheDocument();
+  });
+
+  it('does not render the workflow run I/O banner for failed executions either', async () => {
+    useSwarmStore.setState({
+      workflowDef: {
+        id: 'workflow-failed-banner',
+        name: 'Workflow Failed Banner',
+        nodes: [{ id: 'node-a', type: 'agent', data: { label: 'Agent A' } }],
+        edges: [],
+      },
+      executionStatus: 'failed',
+      workflowRun: {
+        kind: 'workflow-direct',
+        inputs: { brief: 'Launch campaign' },
+        inputContract: [{ key: 'brief', label: 'Brief', type: 'textarea', required: true }],
+        outputContract: { outputs: [], artifacts: [] },
+      },
+    });
+
+    render(<SwarmView />);
+
+    await waitFor(() => {
+      expect(apiGet).toHaveBeenCalledWith('/api/v1/swarm/runtime-capabilities');
+    });
+
+    expect(screen.queryByText('Workflow run I/O')).not.toBeInTheDocument();
+    expect(screen.queryByText('Launch campaign')).not.toBeInTheDocument();
+  });
+
   it('saves dirty workflow interface contracts before starting a direct run', async () => {
     vi.mocked(apiPut).mockResolvedValue({
       workflow: {

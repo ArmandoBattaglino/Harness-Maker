@@ -1,3 +1,15 @@
+## Swarm Workflow I/O Banner Removal (2026-04-13)
+
+**Session date:** 2026-04-13
+**Focus:** **REMOVE WORKFLOW RUN I/O BANNER ENTIRELY.** The user clarified that the green banner is unwanted as a component, not merely something to hide during running.
+
+**Current truth:**
+- The banner lived in `client/src/views/SwarmView.jsx` as `WorkflowRunSummary`.
+- It has now been removed completely from the UI surface.
+- `workflowRun` / `workflowResult` still exist in runtime state; only the visual summary consumer is gone.
+
+**Latest evidence:** `SwarmView.test.jsx` PASS (15/15), root build PASS, diagnostics clean, architect verification APPROVE.
+
 ## Visual I/O Input Wrapper Artifact Fix (2026-04-13)
 
 **Session date:** 2026-04-13
