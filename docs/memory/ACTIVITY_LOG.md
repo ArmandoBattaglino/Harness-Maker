@@ -1,3 +1,13 @@
+## 2026-04-13 - backend-dev / verifier - resolve main conflict and ready branch for PR
+**Outcome:** COMPLETED / PASS
+**Summary:** Resolved the `origin/main` merge conflict on `server/routes/swarm.js` by adopting main's `ExecutionResultsService` abstraction while preserving workflow-input start options and workflow-native result payloads from the visual I/O branch. Then merged `origin/main` into `ralph/workflow-heart-pack-wrapper` and updated the visual I/O smoke to stop expecting the intentionally removed workflow-run summary banner.
+**Files changed:** server/routes/swarm.js, server/services/ExecutionResultsService.js, scripts/visual-io-nodes-playwright-smoke.mjs, docs/memory/PROGRESS.md, docs/memory/CONTEXT.md, docs/memory/ACTIVITY_LOG.md
+**Bugs fixed:** branch could not merge cleanly into main because `server/routes/swarm.js` had diverged from main's execution-results refactor; Playwright smoke still expected a removed UI banner.
+**Decisions made:** keep OMX files in the branch as requested; preserve workflow-native result support by extending the service abstraction instead of keeping duplicate route-local result assembly.
+**Blockers:** GitHub CLI still unauthenticated locally, so PR creation must be manual or token-backed.
+**Next:** push updated branch and open PR against `main`.
+
+---
 ## 2026-04-13 - frontend-dev - remove workflow run I/O banner from Swarm
 **Outcome:** COMPLETED / PASS
 **Summary:** Removed the green `Workflow run I/O` summary component from `SwarmView` entirely after the user clarified that the surface is unwanted, not just too noisy during active runs. Updated tests to prove it stays absent even when run data exists in `running`, `completed`, and `failed` states.

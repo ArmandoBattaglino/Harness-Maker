@@ -1,3 +1,17 @@
+## Main Merge Conflict Resolution + PR Readiness (2026-04-13)
+
+**Session date:** 2026-04-13
+**Focus:** **MERGE `origin/main` INTO THE VISUAL I/O BRANCH AND KEEP PR GREEN.**
+
+**Current truth:**
+- The only real branch-integration conflict was `server/routes/swarm.js`.
+- `origin/main` had moved execution-results assembly behind `ExecutionResultsService`; this branch had independently extended the older route layer with `workflowRun` / `workflowResult`.
+- The branch now follows the `origin/main` route/service split while retaining workflow-native result payload support.
+- The branch includes a merge commit from `origin/main` and is now positioned for a PR with OMX files intentionally kept.
+- The visual I/O Playwright smoke was updated to reflect the product decision that `WorkflowRunSummary` no longer exists.
+
+**Latest evidence:** client targeted tests PASS, server targeted tests PASS, build PASS, visual I/O smoke PASS.
+
 ## Swarm Workflow I/O Banner Removal (2026-04-13)
 
 **Session date:** 2026-04-13

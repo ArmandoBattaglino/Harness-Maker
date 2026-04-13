@@ -1,3 +1,19 @@
+## Main Merge Conflict Resolution + PR Readiness (2026-04-13)
+
+**Status:** IMPLEMENTED / VERIFIED.
+
+**Deliverables:**
+- Resolved the feature-branch vs `origin/main` conflict on `server/routes/swarm.js` by aligning the route layer with main's `ExecutionResultsService` split while preserving this branch's workflow-input/workflow-result extensions.
+- Merged `origin/main` into `ralph/workflow-heart-pack-wrapper` successfully.
+- Updated `scripts/visual-io-nodes-playwright-smoke.mjs` so the smoke no longer expects the intentionally removed `Workflow run I/O` banner.
+
+**Verification:**
+- Targeted client suites: **29/29 PASS**
+- Targeted server suites: **40/40 PASS**
+- Root build: **PASS** (**527 modules**)
+- Visual I/O Playwright smoke: **PASS**
+- Diagnostics on touched merge-resolution files: **0 errors** (`tsc skipped: no tsconfig found` caveat)
+
 ## Swarm Workflow I/O Banner Removal (2026-04-13)
 
 **Status:** IMPLEMENTED / VERIFIED.

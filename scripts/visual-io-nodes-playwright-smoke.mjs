@@ -183,9 +183,8 @@ async function main() {
     await page.getByText(/raw base64 is not submitted/i).waitFor();
     await page.getByRole('button', { name: 'Start workflow' }).click();
 
-    await page.getByText('Workflow run I/O').waitFor();
-    await page.getByText('Visual launch brief', { exact: true }).waitFor();
     await page.getByRole('button', { name: 'Report' }).waitFor();
+    await page.waitForFunction(() => !document.body.textContent.includes('Workflow run I/O'));
     await page.getByRole('button', { name: 'Report' }).click();
     await page.getByText(/VISUAL_IO_OK/).waitFor();
     assert(app.locals.getCapturedInput()?.reference_image?.mimeType === 'image/png', 'captured image metadata missing');
