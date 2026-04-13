@@ -1,3 +1,23 @@
+## Visual I/O Input Wrapper Artifact Fix (2026-04-13)
+
+**Status:** IMPLEMENTED / VERIFIED.
+
+**Deliverables:**
+- Removed the white React Flow wrapper artifact behind Input Blocks by moving new custom input nodes to canonical type `workflowInput`.
+- Added backward-compatible `read-both, write-new` handling so legacy persisted `input` / `inputBlock` nodes still render, validate, derive contracts, and execute correctly.
+- Swarm canvas now normalizes legacy visual input nodes before rendering so old workflows also avoid the built-in white React Flow `input` wrapper chrome.
+- Persistence now writes canonical `workflowInput` through workflow sanitization.
+- Added focused regression coverage for canvas normalization, NodePalette drag type, legacy/canonical contract derivation, validation parity, server runtime semantics, and persistence normalization.
+- Also kept the small selection-ring offset fix for Input / Output visual nodes.
+
+**Verification:**
+- Targeted client suites: **31/31 PASS**
+- Targeted server suites: **13/13 PASS**
+- Root build: **PASS** (**526 modules**)
+- Existing visual I/O Playwright smoke: **PASS**
+- Focused Playwright wrapper verification: **PASS** (`react-flow__node-workflowInput`, non-white transparent wrapper)
+- Diagnostics on touched files: **0 errors** (`tsc skipped: no tsconfig found` caveat)
+
 ## Visual I/O UX Stabilization Follow-up (2026-04-13)
 
 **Status:** IMPLEMENTED / VERIFIED.

@@ -9,6 +9,7 @@ import { inspectControlTokens } from '../utils/controlTokens';
 import { mdComponents, sanitizeSchema } from '../utils/markdownComponents.jsx';
 import { formatAgentLiveSnippet, getPreferredAgentLiveSnippet } from '../utils/formatAgentOutput.js';
 import { getAgentOutputEntries, serializeAgentOutputEntries } from '../utils/agentOutputEntries.js';
+import { isVisualInputNode } from '../utils/visualIoContracts.js';
 
 const MODEL_OPTIONS = [
   { group: 'Claude', models: ['opus', 'sonnet', 'haiku'] },
@@ -1317,7 +1318,7 @@ export default function AgentInspector({ nodes, onUpdateNode }) {
       {activeTab === 'config' && nodeType === 'subWorkflow' && (
         <SubWorkflowFields node={selectedNode} onUpdateNode={onUpdateNode} />
       )}
-      {activeTab === 'config' && nodeType === 'input' && (
+      {activeTab === 'config' && isVisualInputNode(selectedNode) && (
         <InputBlockFields node={selectedNode} onUpdateNode={onUpdateNode} />
       )}
       {activeTab === 'config' && nodeType === 'outputExtractor' && (

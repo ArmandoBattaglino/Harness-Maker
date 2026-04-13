@@ -24,7 +24,7 @@ export default function InputNode({ id, data, selected }) {
   return (
     <div
       className={`relative min-w-[180px] max-w-[230px] rounded-lg border-2 bg-emerald-950 p-3 text-sm text-white transition-all duration-200 ${
-        selected ? 'ring-2 ring-white ring-offset-1' : 'border-emerald-400'
+        selected ? 'ring-2 ring-white ring-offset-1 ring-offset-transparent' : 'border-emerald-400'
       }`}
     >
       {validationIssueCount > 0 && (

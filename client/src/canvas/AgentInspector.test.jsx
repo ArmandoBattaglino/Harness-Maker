@@ -138,7 +138,7 @@ describe('AgentInspector output parity', () => {
         nodes: [
           {
             id: 'input-1',
-            type: 'input',
+            type: 'workflowInput',
             data: {
               label: 'Client Input',
               prompt: 'Original prompt',
@@ -161,7 +161,7 @@ describe('AgentInspector output parity', () => {
         nodes={[
           {
             id: 'input-1',
-            type: 'input',
+            type: 'workflowInput',
             data: {
               label: 'Client Input',
               prompt: 'Original prompt',
@@ -241,6 +241,30 @@ describe('AgentInspector output parity', () => {
 
     expect(onUpdateNode).toHaveBeenCalledWith('extractor-1', { artifactKey: 'qa-report' });
     expect(onUpdateNode).toHaveBeenCalledWith('extractor-1', { format: 'table' });
+  });
+
+  it('still renders Input block controls for legacy input node aliases', () => {
+    useSwarmStore.setState({ selectedNodeId: 'legacy-input' });
+
+    render(
+      <AgentInspector
+        nodes={[
+          {
+            id: 'legacy-input',
+            type: 'input',
+            data: {
+              label: 'Legacy Input',
+              prompt: 'Legacy prompt',
+              fields: [{ id: 'field-1', key: 'brief', label: 'Brief', type: 'textarea', required: true }],
+            },
+          },
+        ]}
+        onUpdateNode={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('Input Block')).toBeInTheDocument();
+    expect(screen.getByText('What the agent receives')).toBeInTheDocument();
   });
 });
 

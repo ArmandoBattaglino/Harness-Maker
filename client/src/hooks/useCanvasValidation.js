@@ -1,6 +1,7 @@
 // useCanvasValidation.js — Pre-run validation for swarm canvas.
 // FR-V5-44 through FR-V5-46: validates workflow nodes/edges before execution.
 import { useMemo } from 'react';
+import { isVisualInputNode, isVisualInputNodeType } from '../utils/visualIoContracts.js';
 
 function createIssue({
   id,
@@ -48,7 +49,7 @@ export function useCanvasValidation(nodes, edges) {
     const nodeById = new Map(nodes.map((node) => [node.id, node]));
     const incomingTargets = new Set(
       edges
-        .filter((edge) => nodeById.get(edge.source)?.type !== 'input' && nodeById.get(edge.target)?.type === 'agent')
+        .filter((edge) => !isVisualInputNode(nodeById.get(edge.source)) && nodeById.get(edge.target)?.type === 'agent')
         .map((edge) => edge.target)
         .filter(Boolean)
     );
@@ -136,7 +137,7 @@ export function useCanvasValidation(nodes, edges) {
       }
 
 
-      if (node.type === 'input') {
+      if (isVisualInputNode(node)) {
         const fields = Array.isArray(node.data?.fields) ? node.data.fields : [];
         if (fields.length === 0) {
           issues.push(createIssue({
@@ -211,13 +212,13 @@ export function useCanvasValidation(nodes, edges) {
       const sourceType = nodeById.get(edge.source)?.type;
       const targetType = nodeById.get(edge.target)?.type;
       const isValidVisualIoEdge = (
-        (sourceType === 'input' && targetType === 'agent')
+        (isVisualInputNodeType(sourceType) && targetType === 'agent')
         || (sourceType === 'agent' && targetType === 'outputExtractor')
       );
       const isInvalidVisualIoEdge = (
-        sourceType === 'input'
+        isVisualInputNodeType(sourceType)
         || sourceType === 'outputExtractor'
-        || targetType === 'input'
+        || isVisualInputNodeType(targetType)
         || targetType === 'outputExtractor'
       ) && !isValidVisualIoEdge;
       if (isInvalidVisualIoEdge) {

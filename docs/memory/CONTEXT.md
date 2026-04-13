@@ -1,3 +1,17 @@
+## Visual I/O Input Wrapper Artifact Fix (2026-04-13)
+
+**Session date:** 2026-04-13
+**Focus:** **INPUT BLOCK WHITE WRAPPER ARTIFACT - ROOT CAUSE CLOSED/PASS.** Binding artifacts for this pass are `.omx/context/input-node-wrapper-artifact-20260413T022552Z.md`, `.omx/plans/prd-input-node-wrapper-artifact-20260413T022552Z.md`, and `.omx/plans/test-spec-input-node-wrapper-artifact-20260413T022552Z.md`.
+
+**Current truth:**
+- The white square behind the Input Block was not caused by the inner `InputNode` styles.
+- Focused DOM inspection proved the wrapper was React Flow built-in chrome from `.react-flow__node-input`.
+- Root cause: our custom visual input node used `type: 'input'`, colliding with the built-in React Flow node wrapper class.
+- The implemented fix now uses canonical `workflowInput` for new nodes while continuing to read legacy `input` / `inputBlock` nodes across client + server.
+- `SwarmCanvas` also normalizes legacy input nodes before rendering, so already-saved workflows stop inheriting the white wrapper when loaded.
+
+**Latest evidence:** client targeted tests PASS, server targeted tests PASS, build PASS, visual I/O smoke PASS, focused Playwright wrapper verification PASS, architect verification APPROVED.
+
 ## Visual I/O UX Stabilization Follow-up (2026-04-13)
 
 **Session date:** 2026-04-13

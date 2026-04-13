@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  CANONICAL_VISUAL_INPUT_NODE_TYPE,
   deriveInputContractFromNodes,
+  normalizeVisualInputNodeType,
   resolveEffectiveWorkflowContracts,
 } from './visualWorkflowContracts.js';
 
@@ -20,7 +22,7 @@ describe('visualWorkflowContracts client derivation helpers', () => {
       nodes: [
         {
           id: 'input-a',
-          type: 'input',
+          type: CANONICAL_VISUAL_INPUT_NODE_TYPE,
           data: {
             label: 'Creative intake',
             fields: [
@@ -44,6 +46,34 @@ describe('visualWorkflowContracts client derivation helpers', () => {
     ]);
     expect(resolveEffectiveWorkflowContracts(visualWorkflow).outputContract.artifacts).toEqual([
       expect.objectContaining({ key: 'report', source: 'outputExtractor', sourceNodeId: 'agent-a', format: 'table' }),
+    ]);
+  });
+
+  it('keeps legacy input aliases readable while writing the canonical type', () => {
+    expect(normalizeVisualInputNodeType('input')).toBe(CANONICAL_VISUAL_INPUT_NODE_TYPE);
+    expect(normalizeVisualInputNodeType('inputBlock')).toBe(CANONICAL_VISUAL_INPUT_NODE_TYPE);
+    expect(normalizeVisualInputNodeType(CANONICAL_VISUAL_INPUT_NODE_TYPE)).toBe(CANONICAL_VISUAL_INPUT_NODE_TYPE);
+
+    const legacyWorkflow = {
+      nodes: [
+        {
+          id: 'legacy-input',
+          type: 'input',
+          data: {
+            label: 'Legacy intake',
+            fields: [{ key: 'brief', label: 'Brief', type: 'text', required: true }],
+          },
+        },
+      ],
+      edges: [],
+    };
+
+    expect(deriveInputContractFromNodes(legacyWorkflow)).toEqual([
+      expect.objectContaining({
+        key: 'brief',
+        inputNodeId: 'legacy-input',
+        inputNodeLabel: 'Legacy intake',
+      }),
     ]);
   });
 });

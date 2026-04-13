@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   buildDefaultInputNodeData,
   buildDefaultOutputExtractorNodeData,
+  CANONICAL_VISUAL_INPUT_NODE_TYPE,
   deriveEffectiveWorkflowContracts,
+  normalizeVisualInputNodeType,
 } from './visualIoContracts.js';
 
 describe('visual I/O contract derivation', () => {
@@ -16,7 +18,7 @@ describe('visual I/O contract derivation', () => {
       nodes: [
         {
           id: 'input-1',
-          type: 'input',
+          type: CANONICAL_VISUAL_INPUT_NODE_TYPE,
           data: {
             label: 'Client Brief',
             prompt: 'Provide text and image.',
@@ -66,5 +68,10 @@ describe('visual I/O contract derivation', () => {
     expect(effective.inputContract[0].key).toBe('brief');
     expect(buildDefaultInputNodeData().fields[0].type).toBe('textarea');
     expect(buildDefaultOutputExtractorNodeData().format).toBe('markdown');
+  });
+
+  it('normalizes legacy input aliases to the canonical visual input type', () => {
+    expect(normalizeVisualInputNodeType('input')).toBe(CANONICAL_VISUAL_INPUT_NODE_TYPE);
+    expect(normalizeVisualInputNodeType('inputBlock')).toBe(CANONICAL_VISUAL_INPUT_NODE_TYPE);
   });
 });

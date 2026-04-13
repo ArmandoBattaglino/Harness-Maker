@@ -112,7 +112,7 @@ describe('workflowContracts workflow-native inputs and outputs', () => {
       inputContract: [{ key: 'legacy', label: 'Legacy', type: 'text', required: true }],
       outputContract: { outputs: [{ key: 'legacy_result', label: 'Legacy result', source: 'finalText' }], artifacts: [] },
       nodes: [
-        { id: 'input-a', type: 'input', data: { label: 'Creative intake', fields: [
+        { id: 'input-a', type: 'workflowInput', data: { label: 'Creative intake', fields: [
           { key: 'brief', label: 'Brief', type: 'textarea', required: true },
           { key: 'notes', label: 'Notes', type: 'markdown', required: false },
           { key: 'reference_image', label: 'Reference image', type: 'image', required: true },
@@ -142,11 +142,31 @@ describe('workflowContracts workflow-native inputs and outputs', () => {
     expect(resolveEffectiveWorkflowContracts(workflowDef).inputContract.map((field) => field.key)).toEqual(['brief', 'channels', 'budget']);
   });
 
+  it('keeps legacy input aliases readable while deriving the same effective contract', () => {
+    const legacyVisualWorkflow = {
+      name: 'Legacy visual workflow',
+      nodes: [
+        { id: 'input-a', type: 'input', data: { label: 'Legacy intake', fields: [
+          { key: 'brief', label: 'Brief', type: 'text', required: true },
+        ] } },
+      ],
+      edges: [],
+    };
+
+    expect(resolveEffectiveWorkflowContracts(legacyVisualWorkflow).inputContract).toEqual([
+      expect.objectContaining({
+        key: 'brief',
+        inputNodeId: 'input-a',
+        inputNodeLabel: 'Legacy intake',
+      }),
+    ]);
+  });
+
   it('prepares visual text and image metadata without raw bytes and maps extractor artifacts from upstream output', () => {
     const visualWorkflow = {
       name: 'Visual workflow',
       nodes: [
-        { id: 'input-a', type: 'input', data: { label: 'Creative intake', fields: [
+        { id: 'input-a', type: 'workflowInput', data: { label: 'Creative intake', fields: [
           { key: 'brief', label: 'Brief', type: 'textarea', required: true },
           { key: 'reference_image', label: 'Reference image', type: 'image', required: true },
         ] } },

@@ -3,7 +3,8 @@ const INPUT_TYPES = new Set(['text', 'textarea', 'markdown', 'number', 'integer'
 const OUTPUT_SOURCE_TYPES = new Set(['finalText', 'workflowContext']);
 const ARTIFACT_SOURCE_TYPES = new Set(['aggregatedArtifact', 'workflowContext', 'outputExtractor']);
 const ARTIFACT_FORMATS = new Set(['markdown', 'text', 'json', 'table']);
-const VISUAL_INPUT_NODE_TYPES = new Set(['input', 'inputBlock']);
+export const CANONICAL_VISUAL_INPUT_NODE_TYPE = 'workflowInput';
+const VISUAL_INPUT_NODE_TYPES = new Set([CANONICAL_VISUAL_INPUT_NODE_TYPE, 'input', 'inputBlock']);
 const OUTPUT_EXTRACTOR_NODE_TYPES = new Set(['outputExtractor', 'output']);
 const MAX_CONTRACT_ITEMS = 20;
 const MAX_TEXT_LENGTH = 2000;
@@ -55,6 +56,14 @@ export function normalizeWorkflowContractFields(data = {}) {
 
 export function hasVisualInputNodes(workflowDef = {}) {
   return (workflowDef?.nodes ?? []).some((node) => VISUAL_INPUT_NODE_TYPES.has(node?.type));
+}
+
+export function isVisualInputNode(node) {
+  return VISUAL_INPUT_NODE_TYPES.has(node?.type);
+}
+
+export function isVisualInputNodeType(type) {
+  return VISUAL_INPUT_NODE_TYPES.has(type);
 }
 
 export function hasOutputExtractorNodes(workflowDef = {}) {
@@ -137,7 +146,8 @@ export function getConnectedWorkflowInputContract(workflowDef = {}, targetAgentI
 export function validateWorkflowContractFields(data = {}, errors = []) {
   validateInputContract(data.inputContract, errors);
   validateOutputContract(data.outputContract, errors);
-  if ((data?.nodes ?? []).some((node) => node?.type === 'input' || node?.type === 'outputExtractor')) {
+  if ((data?.nodes ?? []).some((node) => isVisualInputNode(node) || node?.type === 'outputExtractor')) {
+    // Backward-compatible visual node derivation validation.
     const effectiveContracts = deriveEffectiveWorkflowContracts(data);
     validateInputContract(effectiveContracts.inputContract, errors);
     validateOutputContract(effectiveContracts.outputContract, errors);
@@ -173,7 +183,7 @@ export function deriveEffectiveWorkflowContracts(workflowDef = {}) {
   const legacyInputContract = normalizeInputContract(workflowDef?.inputContract);
   const legacyOutputContract = normalizeOutputContract(workflowDef?.outputContract);
   const nodes = Array.isArray(workflowDef?.nodes) ? workflowDef.nodes : [];
-  const inputNodes = nodes.filter((node) => node?.type === 'input');
+  const inputNodes = nodes.filter((node) => isVisualInputNode(node));
   const extractorNodes = nodes.filter((node) => node?.type === 'outputExtractor');
 
   const inputContract = inputNodes.length > 0

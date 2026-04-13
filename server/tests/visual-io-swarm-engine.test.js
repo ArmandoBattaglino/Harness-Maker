@@ -7,7 +7,7 @@ describe('SwarmEngine visual I/O graph semantics', () => {
     id: 'wf-visual',
     name: 'Visual workflow',
     nodes: [
-      { id: 'input-a', type: 'input', data: { label: 'Creative intake', fields: [{ key: 'brief', label: 'Brief', type: 'text', required: true }] } },
+      { id: 'input-a', type: 'workflowInput', data: { label: 'Creative intake', fields: [{ key: 'brief', label: 'Brief', type: 'text', required: true }] } },
       { id: 'agent-a', type: 'agent', data: { label: 'Connected agent', systemPrompt: 'Use the connected input.' } },
       { id: 'agent-b', type: 'agent', data: { label: 'Other agent', systemPrompt: 'Do other work.' } },
       { id: 'extract-a', type: 'outputExtractor', data: { artifactKey: 'report', artifactName: 'Report', format: 'markdown' } },
@@ -46,5 +46,15 @@ describe('SwarmEngine visual I/O graph semantics', () => {
     expect(connectedPrompt).toContain('Launch scoped workflow');
     expect(unconnectedPrompt).toContain('No visual Input blocks are connected to this agent.');
     expect(unconnectedPrompt).not.toContain('Launch scoped workflow');
+  });
+
+  it('still treats legacy input aliases as non-startable visual input nodes', () => {
+    const engine = new SwarmEngine({}, {});
+    const legacyWorkflow = {
+      ...workflowDef,
+      nodes: workflowDef.nodes.map((node) => (node.id === 'input-a' ? { ...node, type: 'input' } : node)),
+    };
+
+    expect(engine._getStartNodes(legacyWorkflow).map((node) => node.id)).toEqual(['agent-a', 'agent-b']);
   });
 });

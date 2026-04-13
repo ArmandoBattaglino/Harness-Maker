@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import NodePalette from './NodePalette.jsx';
 
 describe('NodePalette visual I/O cards', () => {
@@ -11,5 +11,20 @@ describe('NodePalette visual I/O cards', () => {
     expect(screen.getByText('Webhook Trigger')).toBeInTheDocument();
     expect(screen.getByText('Input Block')).toBeInTheDocument();
     expect(screen.getByText('Output Extractor')).toBeInTheDocument();
+  });
+
+  it('emits the canonical workflowInput drag type for new Input Blocks', () => {
+    render(<NodePalette />);
+    const card = screen.getByText('Input Block').closest('[draggable="true"]');
+    const setData = vi.fn();
+
+    fireEvent.dragStart(card, {
+      dataTransfer: {
+        setData,
+        effectAllowed: 'move',
+      },
+    });
+
+    expect(setData).toHaveBeenCalledWith('application/reactflow-type', 'workflowInput');
   });
 });

@@ -23,7 +23,7 @@ export default function OutputExtractorNode({ id, data, selected }) {
   return (
     <div
       className={`relative min-w-[190px] max-w-[240px] rounded-lg border-2 bg-amber-950 p-3 text-sm text-white transition-all duration-200 ${
-        selected ? 'ring-2 ring-white ring-offset-1' : 'border-amber-400'
+        selected ? 'ring-2 ring-white ring-offset-1 ring-offset-transparent' : 'border-amber-400'
       }`}
     >
       {validationIssueCount > 0 && (

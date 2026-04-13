@@ -701,7 +701,7 @@ describe('SwarmView runtime shell contracts', () => {
         inputContract: [{ key: 'legacy', label: 'Legacy', type: 'text', required: true }],
         outputContract: { outputs: [], artifacts: [] },
         nodes: [
-          { id: 'input-a', type: 'input', position: { x: 0, y: 0 }, data: { label: 'Creative intake', fields: [
+          { id: 'input-a', type: 'workflowInput', position: { x: 0, y: 0 }, data: { label: 'Creative intake', fields: [
             { key: 'brief', label: 'Brief', type: 'text', required: true },
             { key: 'reference_image', label: 'Reference image', type: 'image', required: true },
           ] } },
@@ -730,6 +730,9 @@ describe('SwarmView runtime shell contracts', () => {
 
     await waitFor(() => {
       expect(apiPost).toHaveBeenCalledWith('/api/v1/workflows', expect.objectContaining({
+        nodes: expect.arrayContaining([
+          expect.objectContaining({ id: 'input-a', type: 'workflowInput' }),
+        ]),
         inputContract: [
           expect.objectContaining({ key: 'brief', inputNodeId: 'input-a' }),
           expect.objectContaining({ key: 'reference_image', type: 'image', inputNodeId: 'input-a' }),

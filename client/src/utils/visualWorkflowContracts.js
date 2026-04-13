@@ -1,4 +1,9 @@
-const VISUAL_INPUT_NODE_TYPES = new Set(['input', 'inputBlock']);
+export const CANONICAL_VISUAL_INPUT_NODE_TYPE = 'workflowInput';
+export const LEGACY_VISUAL_INPUT_NODE_TYPES = ['input', 'inputBlock'];
+export const VISUAL_INPUT_NODE_TYPES = new Set([
+  CANONICAL_VISUAL_INPUT_NODE_TYPE,
+  ...LEGACY_VISUAL_INPUT_NODE_TYPES,
+]);
 const OUTPUT_EXTRACTOR_NODE_TYPES = new Set(['outputExtractor', 'output']);
 const FIELD_TYPES = new Set(['text', 'textarea', 'number', 'integer', 'boolean', 'json', 'enum', 'image']);
 const ARTIFACT_FORMATS = new Set(['markdown', 'text', 'json', 'table']);
@@ -36,6 +41,20 @@ function normalizeField(field, index, inputNode) {
 
 export function isVisualInputNode(node) {
   return VISUAL_INPUT_NODE_TYPES.has(node?.type);
+}
+
+export function isVisualInputNodeType(type) {
+  return VISUAL_INPUT_NODE_TYPES.has(type);
+}
+
+export function normalizeVisualInputNodeType(type) {
+  return isVisualInputNodeType(type) ? CANONICAL_VISUAL_INPUT_NODE_TYPE : type;
+}
+
+export function normalizeVisualWorkflowNode(node) {
+  if (!node || typeof node !== 'object') return node;
+  const normalizedType = normalizeVisualInputNodeType(node.type);
+  return normalizedType === node.type ? node : { ...node, type: normalizedType };
 }
 
 export function isOutputExtractorNode(node) {

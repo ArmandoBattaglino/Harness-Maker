@@ -33,6 +33,13 @@ export function buildDefaultOutputExtractorNodeData() {
 }
 
 export {
+  CANONICAL_VISUAL_INPUT_NODE_TYPE,
+  LEGACY_VISUAL_INPUT_NODE_TYPES,
+  VISUAL_INPUT_NODE_TYPES,
+  isVisualInputNode,
+  isVisualInputNodeType,
+  normalizeVisualInputNodeType,
+  normalizeVisualWorkflowNode,
   resolveEffectiveWorkflowContracts,
   resolveEffectiveWorkflowContracts as deriveEffectiveWorkflowContracts,
   deriveInputContractFromNodes,

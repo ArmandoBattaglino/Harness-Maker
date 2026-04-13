@@ -33,6 +33,11 @@ describe('Visual I/O node validation badges', () => {
     expect(screen.getByText('Need at least one field.')).toBeInTheDocument();
   });
 
+  it('uses a transparent selection ring offset for InputNode', () => {
+    const { container } = render(<InputNode id="input-a" data={{ label: 'Input A', fields: [] }} selected />);
+    expect(container.firstChild).toHaveClass('ring-offset-transparent');
+  });
+
   it('shows and opens validation badge for OutputExtractorNode', () => {
     useSwarmStore.setState({
       agentValidationIssuesByNodeId: {
@@ -44,6 +49,11 @@ describe('Visual I/O node validation badges', () => {
 
     fireEvent.click(screen.getByLabelText('1 issue — click to review'));
     expect(screen.getByText('Connect an upstream agent.')).toBeInTheDocument();
+  });
+
+  it('uses a transparent selection ring offset for OutputExtractorNode', () => {
+    const { container } = render(<OutputExtractorNode id="extract-a" data={{ label: 'Extractor', format: 'markdown' }} selected />);
+    expect(container.firstChild).toHaveClass('ring-offset-transparent');
   });
 });
 

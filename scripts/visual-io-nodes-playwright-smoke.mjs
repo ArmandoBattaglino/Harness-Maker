@@ -24,7 +24,7 @@ const workflow = {
   nodes: [
     {
       id: 'input-a',
-      type: 'input',
+      type: 'workflowInput',
       position: { x: 60, y: 120 },
       data: {
         label: 'Creative intake',

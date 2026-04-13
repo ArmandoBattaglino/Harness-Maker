@@ -26,6 +26,8 @@ import {
   buildWorkflowResult,
   buildWorkflowRunContextPatch,
   getConnectedWorkflowInputContract,
+  isVisualInputNode,
+  isVisualInputNodeType,
   prepareWorkflowRun,
 } from './workflowContracts.js';
 
@@ -1645,7 +1647,7 @@ class SwarmEngine {
     const nodeById = new Map(workflowDef.nodes.map((node) => [node.id, node]));
     const incomingTargets = new Set(
       (workflowDef.edges ?? [])
-        .filter((edge) => nodeById.get(edge.source)?.type !== 'input' && nodeById.get(edge.target)?.type === 'agent')
+        .filter((edge) => !isVisualInputNodeType(nodeById.get(edge.source)?.type) && nodeById.get(edge.target)?.type === 'agent')
         .map((edge) => edge.target)
         .filter(Boolean)
     );
@@ -2523,7 +2525,7 @@ class SwarmEngine {
 
     const incomingSourceCount = new Set(
       (execution.workflowDef?.edges ?? [])
-        .filter((edge) => edge.target === targetNodeId && nodeById.get(edge.source)?.type !== 'input')
+        .filter((edge) => edge.target === targetNodeId && !isVisualInputNodeType(nodeById.get(edge.source)?.type))
         .map((edge) => edge.source)
         .filter(Boolean)
     ).size;
@@ -2540,7 +2542,7 @@ class SwarmEngine {
     const nodeById = new Map((execution.workflowDef?.nodes ?? []).map((node) => [node.id, node]));
     const required = new Set(
       (execution.workflowDef?.edges ?? [])
-        .filter((edge) => edge.target === targetNodeId && nodeById.get(edge.source)?.type !== 'input')
+        .filter((edge) => edge.target === targetNodeId && !isVisualInputNodeType(nodeById.get(edge.source)?.type))
         .map((edge) => edge.source)
         .filter(Boolean)
     ).size;
@@ -4464,7 +4466,7 @@ class SwarmEngine {
       const nodeById = new Map(allNodes.map((candidate) => [candidate.id, candidate]));
       const incomingSources = new Set(
         edges
-          .filter((e) => e.target === node.id && nodeById.get(e.source)?.type !== 'input')
+          .filter((e) => e.target === node.id && !isVisualInputNodeType(nodeById.get(e.source)?.type))
           .map((e) => e.source)
           .filter(Boolean)
       );

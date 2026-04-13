@@ -2,6 +2,7 @@
 // Collapsible left sidebar showing draggable node types + saved workflows for the SwarmCanvas.
 // FR-V5-25 through FR-V5-29
 import { useState, useCallback, useRef } from 'react';
+import { CANONICAL_VISUAL_INPUT_NODE_TYPE } from '../utils/visualIoContracts.js';
 
 const NODE_CARDS = [
   {
@@ -11,7 +12,7 @@ const NODE_CARDS = [
     description: 'AI agent with system prompt',
   },
   {
-    type: 'input',
+    type: CANONICAL_VISUAL_INPUT_NODE_TYPE,
     subType: '',
     label: 'Input Block',
     description: 'Collect text, JSON, or image input at run start',
@@ -52,7 +53,7 @@ const NODE_ICONS = {
       <path fillRule="evenodd" d="M12.577 4.878a.75.75 0 01.919-.53l4.78 1.281a.75.75 0 01.531.919l-1.281 4.78a.75.75 0 01-1.449-.388l.81-3.022a19.407 19.407 0 00-5.594 5.203.75.75 0 01-1.139.093L7 10.06l-4.72 4.72a.75.75 0 01-1.06-1.06l5.25-5.25a.75.75 0 011.06 0l3.074 3.073a20.923 20.923 0 015.545-4.931l-3.042.815a.75.75 0 01-.53-.919z" clipRule="evenodd" />
     </svg>
   ),
-  input: (
+  [CANONICAL_VISUAL_INPUT_NODE_TYPE]: (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
       <path fillRule="evenodd" d="M3 4.75A1.75 1.75 0 014.75 3h6.5A1.75 1.75 0 0113 4.75V8h2.25c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0115.25 17h-6.5A1.75 1.75 0 017 15.25V12H4.75A1.75 1.75 0 013 10.25v-5.5zM8.5 12v3.25c0 .138.112.25.25.25h6.5a.25.25 0 00.25-.25v-5.5a.25.25 0 00-.25-.25H13v.75A1.75 1.75 0 0111.25 12H8.5z" clipRule="evenodd" />
     </svg>

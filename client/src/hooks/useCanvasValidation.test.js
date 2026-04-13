@@ -3,11 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { useCanvasValidation } from './useCanvasValidation.js';
 
 describe('useCanvasValidation visual I/O semantics', () => {
-  it('treats Input -> Agent as valid start-agent input and rejects invalid extractor edges', () => {
+  it('treats canonical workflowInput -> Agent as valid start-agent input and rejects invalid extractor edges', () => {
     const nodes = [
       {
         id: 'input-1',
-        type: 'input',
+        type: 'workflowInput',
         data: {
           label: 'Client Input',
           fields: [{ key: 'brief', label: 'Brief', type: 'textarea' }],
@@ -43,7 +43,7 @@ describe('useCanvasValidation visual I/O semantics', () => {
     ]));
   });
 
-  it('flags incomplete Input and Output Extractor configuration', () => {
+  it('still flags incomplete legacy input aliases and Output Extractor configuration', () => {
     const { result } = renderHook(() => useCanvasValidation([
       { id: 'agent-a', type: 'agent', data: { label: 'Agent A', systemPrompt: 'Work.' } },
       { id: 'input-1', type: 'input', data: { label: 'Broken Input', fields: [] } },

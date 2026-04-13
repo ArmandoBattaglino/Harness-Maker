@@ -1,3 +1,12 @@
+## Visual I/O Input Wrapper Artifact Addendum (2026-04-13)
+- `client/src/utils/visualWorkflowContracts.js` - now defines the canonical visual input type (`workflowInput`), legacy aliases (`input`, `inputBlock`), and shared normalization helpers.
+- `client/src/utils/sanitizeWorkflow.js` - now writes canonical `workflowInput` when workflows are persisted/exported/duplicated.
+- `client/src/canvas/SwarmCanvas.jsx` - now registers/render-normalizes `workflowInput` nodes and converts legacy input aliases before React Flow receives them.
+- `client/src/canvas/NodePalette.jsx` - new Input Block drags now emit canonical `workflowInput`.
+- `server/services/workflowContracts.js` - visual input contract derivation/validation accepts both canonical and legacy input aliases.
+- `server/services/SwarmEngine.js` - non-startable visual-input semantics now check shared input aliases instead of raw `type === 'input'`.
+- `scripts/visual-io-nodes-playwright-smoke.mjs` - smoke fixture now exercises the canonical `workflowInput` path.
+
 ## Visual I/O UX Stabilization Addendum (2026-04-13)
 - `client/src/views/SwarmView.jsx` - validation rail now distinguishes workflow-wide pills from node-marked issues, aggregating node-local Input/Output problems into a single canvas summary instead of duplicating node-badge wording.
 - `client/src/canvas/SwarmCanvas.jsx` - React Flow `Controls` / `MiniMap` now carry explicit `swarm-flow-controls` and `swarm-flow-minimap` class hooks for dark-theme hardening.

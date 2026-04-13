@@ -1,3 +1,13 @@
+## 2026-04-13 - frontend-dev / backend-dev / qa-tester - input wrapper artifact compatibility fix
+**Outcome:** COMPLETED / PASS
+**Summary:** Fixed the Input Block white backing rectangle by removing the custom-node collision with React Flow's built-in `input` wrapper styling. New visual input nodes now use canonical `workflowInput`, while legacy `input` / `inputBlock` workflows remain readable and executable through shared alias helpers and render-time normalization.
+**Files changed:** client/src/canvas/SwarmCanvas.jsx, client/src/canvas/NodePalette.jsx, client/src/canvas/AgentInspector.jsx, client/src/hooks/useCanvasValidation.js, client/src/utils/visualWorkflowContracts.js, client/src/utils/visualIoContracts.js, client/src/utils/sanitizeWorkflow.js, server/services/workflowContracts.js, server/services/SwarmEngine.js, targeted tests, visual I/O smoke, docs/memory/*, .omx/context/*, .omx/plans/*
+**Bugs fixed:** custom Input Block inherited React Flow built-in white wrapper chrome because it used `type: input`; selected visual I/O nodes also had white selection-offset bleed around the card.
+**Decisions made:** use **read-both, write-new** compatibility (`workflowInput` canonical; `input`/`inputBlock` legacy aliases) instead of a brittle CSS override against `.react-flow__node-input`.
+**Blockers:** none
+**Next:** push branch / PR when ready; keep future type checks routed through shared helpers.
+
+---
 ## 2026-04-13 - frontend-dev / qa-tester - visual IO validation rail + canvas controls polish
 **Outcome:** COMPLETED / PASS
 **Summary:** Closed the remaining visual I/O UX regressions on `ralph/workflow-heart-pack-wrapper` by changing the Swarm validation rail to summarize node-marked Input/Output issues instead of repeating node-local wording, and by hardening React Flow controls/minimap styling so the lower-left white control artifact no longer appears.
