@@ -1638,7 +1638,14 @@ class SwarmEngine {
       return [];
     }
 
-    const agentNodes = workflowDef.nodes.filter((node) => (node?.type ?? 'agent') === 'agent');
+    const isAgentNode = (node) => (node?.type ?? 'agent') === 'agent';
+    const isStartableFlowControlNode = (node) => (
+      this._isFlowControlNode(node) && !['merge', 'outputExtractor'].includes(node.type)
+    );
+    const agentNodes = workflowDef.nodes.filter(isAgentNode);
+    const executableNodes = workflowDef.nodes.filter((node) => (
+      isAgentNode(node) || isStartableFlowControlNode(node)
+    ));
     const explicitStartNodes = agentNodes.filter((node) => node?.data?.isTriageNode === true);
     if (explicitStartNodes.length > 0) {
       return explicitStartNodes;
@@ -1647,11 +1654,16 @@ class SwarmEngine {
     const nodeById = new Map(workflowDef.nodes.map((node) => [node.id, node]));
     const incomingTargets = new Set(
       (workflowDef.edges ?? [])
-        .filter((edge) => !isVisualInputNodeType(nodeById.get(edge.source)?.type) && nodeById.get(edge.target)?.type === 'agent')
+        .filter((edge) => {
+          const sourceNode = nodeById.get(edge.source);
+          const targetNode = nodeById.get(edge.target);
+          return !isVisualInputNodeType(sourceNode?.type)
+            && (isAgentNode(targetNode) || isStartableFlowControlNode(targetNode));
+        })
         .map((edge) => edge.target)
         .filter(Boolean)
     );
-    const rootNodes = agentNodes.filter((node) => !incomingTargets.has(node.id));
+    const rootNodes = executableNodes.filter((node) => !incomingTargets.has(node.id));
     if (rootNodes.length > 0) {
       return rootNodes;
     }

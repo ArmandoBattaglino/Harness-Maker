@@ -305,3 +305,33 @@
 **Alternatives rejected:** Keep auto-updating PROGRESS and CONTEXT alongside the canonical ledgers -- produces redundancy and stale summaries. Eliminate all human-ledger files in favor of `.omx/*` runtime memory -- loses a stable, reviewable human source of truth. Make ACTIVITY_LOG or TASK_PLAN optional -- weakens execution auditability.
 **Revisit if:** The repository later replaces PROGRESS/CONTEXT with a lean canonical dashboard, or adopts a different explicit memory architecture that changes which files are authoritative.
 ---
+
+
+## DEC-034: Progressive harness builder uses schema-first compiled contracts
+**Date:** 2026-04-14
+**Made by:** Ralph from approved Progressive Harness Builder PRD
+**Decision:** The progressive harness builder will preserve WorkflowDefinition, AgentDefinition, Harness/PackDefinition, and CompiledExecutionContract as distinct layers, with runtime execution using a derived compiled contract rather than duplicating authoring truth across UI surfaces.
+**Reasoning:** The approved PRD explicitly rejected collapsing workflow, agent, pack, and runtime state into one persistence blob. A schema-first compiled boundary prevents source-of-truth drift while supporting both guided semantic editing and technical deep editing.
+**Alternatives rejected:** Swarm UX-first consolidation without shared model/resolver ? risks hidden duplicate ownership. Pack-led long-term primary authoring ? conflicts with Swarm as the desired shell. Parallel persistence/domain ownership ? creates drift.
+**Revisit if:** A future architecture removes PackBuilder or replaces Swarm with a different primary shell after explicit parity gates pass.
+---
+
+
+## DEC-035: PackBuilder remains authoritative until explicit Swarm parity gates pass
+**Date:** 2026-04-14
+**Made by:** Ralph from approved Progressive Harness Builder PRD
+**Decision:** PackBuilder must remain the authoritative harness/pack authoring surface for pack-owned behavior until Swarm parity checkpoints prove equivalent authoring and runtime behavior and a separate retirement/deprecation gate is explicitly approved.
+**Reasoning:** The plan requires Swarm to become the primary shell without silently reassigning domain authority. Coexistence avoids breaking existing pack-authoritative flows while Swarm gains progressive harness-building capabilities.
+**Alternatives rejected:** Immediate PackBuilder retirement ? too aggressive and unverified. Silent authority transfer to Swarm UI ? confusing and unsafe for existing packs.
+**Revisit if:** Swarm passes side-by-side parity fixtures, pack/workflow equivalence tests, Playwright parity smoke, and the user explicitly approves PackBuilder retirement or reduction.
+---
+
+
+## DEC-036: Provider and predictability controls must surface structured incompatibilities
+**Date:** 2026-04-14
+**Made by:** Ralph from approved Progressive Harness Builder PRD
+**Decision:** Provider/runtime/tool capability mismatches and unsupported predictability controls must be surfaced as structured incompatibilities or degraded-support notes in compiled previews and UI, not silently accepted as if all providers enforce all controls.
+**Reasoning:** The product needs trustworthy harness configuration. Advisory-only or provider-specific controls can remain available, but users must see what is enforced, advisory, unsupported, or degraded before runtime.
+**Alternatives rejected:** Hide provider differences ? produces false predictability. Hard-fail every advisory control ? would unnecessarily break useful workflows. Provider-specific UI forks ? increases maintenance and source-of-truth drift.
+**Revisit if:** Runtime providers converge on a shared enforceable capability API or the app adopts a stricter provider support policy.
+---

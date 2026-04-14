@@ -11,7 +11,13 @@ async function handleResponse(res) {
     const body = await res.json();
     if (body && body.error) message = body.error;
     else if (body && body.message) message = body.message;
-  } catch (_) {
+    const error = new Error(message);
+    error.status = res.status;
+    error.body = body;
+    if (body?.details) error.details = body.details;
+    throw error;
+  } catch (error) {
+    if (error?.body) throw error;
     // ignore parse error, use default message
   }
   throw new Error(message);

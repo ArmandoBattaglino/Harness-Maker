@@ -1203,7 +1203,7 @@ export default function SwarmCanvas({
           </div>
         )}
         {showInspector && (
-          <AgentInspector nodes={nodes} onUpdateNode={handleUpdateNode} />
+          <AgentInspector nodes={nodes} edges={edges} onUpdateNode={handleUpdateNode} />
         )}
       </div>
     </div>

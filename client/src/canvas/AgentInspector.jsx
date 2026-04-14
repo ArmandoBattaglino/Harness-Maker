@@ -10,6 +10,7 @@ import { mdComponents, sanitizeSchema } from '../utils/markdownComponents.jsx';
 import { formatAgentLiveSnippet, getPreferredAgentLiveSnippet } from '../utils/formatAgentOutput.js';
 import { getAgentOutputEntries, serializeAgentOutputEntries } from '../utils/agentOutputEntries.js';
 import { isVisualInputNode } from '../utils/visualIoContracts.js';
+import { apiPost } from '../hooks/useApi.js';
 
 const MODEL_OPTIONS = [
   { group: 'Claude', models: ['opus', 'sonnet', 'haiku'] },
@@ -40,6 +41,10 @@ const DEFAULT_CLAUDE_TOOLS = ['Bash', 'Read', 'Edit', 'Write', 'Grep', 'Glob', '
 
 const INPUT_CLS =
   'w-full bg-gray-700 text-white text-xs rounded px-2 py-1 border border-gray-600 focus:border-blue-500 focus:outline-none';
+const SELECT_OPTIONS = {
+  handoffPolicy: ['auto', 'explicit', 'manual-review'],
+  errorRetryPolicy: ['none', 'retry-on-error', 'escalate-to-human'],
+};
 
 function isClaudeModel(model = '') {
   const normalized = String(model ?? '').trim().toLowerCase();
@@ -153,7 +158,81 @@ function HandoffEntry({ handoff }) {
 /*  Per-type edit sections                                             */
 /* ------------------------------------------------------------------ */
 
-function AgentFields({ node, nodes, onUpdateNode }) {
+function AgentDefinitionPreview({ preview, selectedNodeId, loading, error }) {
+  const agentPreview = preview?.domains?.agents?.find((agent) => agent.id === selectedNodeId);
+  const issues = [
+    ...(preview?.errors ?? []),
+    ...(preview?.warnings ?? []),
+    ...(agentPreview?.incompatibilities ?? []),
+  ];
+  const inputKeys = agentPreview?.io?.inputKeys ?? [];
+  const artifactKeys = (agentPreview?.io?.artifactExpectations ?? []).map((artifact) => artifact.key);
+
+  return (
+    <CollapsibleSection title="Compiled Preview" defaultOpen={true}>
+      <div className="rounded border border-blue-800/60 bg-blue-950/25 p-2 text-[11px] text-blue-100">
+        Effective compiled configuration from WorkflowDefinition, AgentDefinition, Harness/Pack, and runtime capability rules.
+      </div>
+      {loading && <div className="text-[11px] text-gray-400">Loading compiled preview...</div>}
+      {error && <div className="rounded border border-amber-700 bg-amber-950/40 p-2 text-[11px] text-amber-200">{error}</div>}
+      {agentPreview && (
+        <div className="flex flex-col gap-2 text-[11px]">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded bg-gray-800 p-2">
+              <div className="text-gray-500">Effective provider</div>
+              <div className="font-semibold text-white">{agentPreview.provider} / {agentPreview.model}</div>
+            </div>
+            <div className="rounded bg-gray-800 p-2">
+              <div className="text-gray-500">Spawn mode</div>
+              <div className="font-semibold text-white">{agentPreview.runtime?.spawnMode}</div>
+            </div>
+          </div>
+          <div className="rounded bg-gray-800 p-2">
+            <div className="mb-1 text-gray-500">Prompt assembly order</div>
+            <ol className="list-decimal pl-4 text-gray-200">
+              {(preview?.observability?.promptAssemblyOrder ?? []).map((layer) => (
+                <li key={layer}>{layer}</li>
+              ))}
+            </ol>
+          </div>
+          <div className="rounded bg-gray-800 p-2">
+            <div className="mb-1 text-gray-500">Memory provenance</div>
+            <div className="text-gray-200">{agentPreview.memory?.precedence?.join(' -> ') || 'No memory sources configured yet.'}</div>
+          </div>
+          <div className="rounded bg-gray-800 p-2">
+            <div className="mb-1 text-gray-500">IO contract</div>
+            <div className="text-gray-200">Inputs: {inputKeys.length ? inputKeys.join(', ') : 'none'}</div>
+            <div className="text-gray-200">Artifacts: {artifactKeys.length ? artifactKeys.join(', ') : 'none'}</div>
+          </div>
+          <div className="rounded bg-gray-800 p-2">
+            <div className="mb-1 text-gray-500">Handoff / error policy</div>
+            <div className="text-gray-200">Handoff: {agentPreview.policy?.handoff}</div>
+            <div className="text-gray-200">Error/retry: {agentPreview.policy?.errorRetry}</div>
+          </div>
+          <div className="rounded bg-gray-800 p-2">
+            <div className="mb-1 text-gray-500">Why this output happened</div>
+            <div className="text-gray-200">{agentPreview.whyThisOutput}</div>
+          </div>
+        </div>
+      )}
+      {issues.length > 0 && (
+        <div className="rounded border border-amber-700 bg-amber-950/30 p-2">
+          <div className="mb-1 font-medium text-amber-200">Structured incompatibilities / notes</div>
+          <ul className="list-disc pl-4 text-amber-100">
+            {issues.map((issue, index) => (
+              <li key={`${issue.code}-${index}`}>{issue.message}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {!loading && !error && !agentPreview && (
+        <div className="text-[11px] text-gray-500">Compiled preview will appear when a workflow with this agent is loaded.</div>
+      )}
+    </CollapsibleSection>
+  );
+}
+
+function AgentFields({ node, nodes, onUpdateNode, compiledPreview, previewLoading, previewError }) {
   const nodeId = node.id;
   const data = node.data || {};
   const isClaude = isClaudeModel(data.model);
@@ -395,6 +474,79 @@ function AgentFields({ node, nodes, onUpdateNode }) {
           />
         </div>
       </CollapsibleSection>
+
+      <CollapsibleSection title="Agent Definition Center" defaultOpen={false}>
+        <div className="rounded border border-gray-700 bg-gray-800/60 p-2 text-[10px] text-gray-500">
+          Semantic fields are saved as structured AgentDefinition data. The compiled preview below shows how they resolve for runtime.
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <FieldLabel>Agent mission</FieldLabel>
+          <textarea
+            className={`${INPUT_CLS} font-mono resize-y`}
+            aria-label="Agent mission"
+            rows={3}
+            value={data.mission || ''}
+            onChange={(e) => onUpdateNode(nodeId, { mission: e.target.value })}
+            placeholder="Describe this agent's business mission in domain language."
+          />
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <FieldLabel>Memory sources</FieldLabel>
+          <input
+            className={INPUT_CLS}
+            aria-label="Memory sources"
+            value={Array.isArray(data.memorySources) ? data.memorySources.join(', ') : ''}
+            onChange={(e) => onUpdateNode(nodeId, { memorySources: normalizeCsv(e.target.value) })}
+            placeholder="customer-brief, prior-runs, policy-docs"
+          />
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <FieldLabel>Guardrails</FieldLabel>
+          <textarea
+            className={`${INPUT_CLS} font-mono resize-y`}
+            aria-label="Guardrails"
+            rows={3}
+            value={data.guardrails || ''}
+            onChange={(e) => onUpdateNode(nodeId, { guardrails: e.target.value })}
+            placeholder="Forbidden actions, tone constraints, compliance requirements..."
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <label className="text-[11px] text-gray-400">
+            Handoff policy
+            <select
+              className={INPUT_CLS}
+              aria-label="Handoff policy"
+              value={data.handoffPolicy || 'auto'}
+              onChange={(e) => onUpdateNode(nodeId, { handoffPolicy: e.target.value })}
+            >
+              {SELECT_OPTIONS.handoffPolicy.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+          </label>
+          <label className="text-[11px] text-gray-400">
+            Error/retry policy
+            <select
+              className={INPUT_CLS}
+              aria-label="Error/retry policy"
+              value={data.errorRetryPolicy || 'none'}
+              onChange={(e) => onUpdateNode(nodeId, { errorRetryPolicy: e.target.value })}
+            >
+              {SELECT_OPTIONS.errorRetryPolicy.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </CollapsibleSection>
+
+      <AgentDefinitionPreview
+        preview={compiledPreview}
+        selectedNodeId={nodeId}
+        loading={previewLoading}
+        error={previewError}
+      />
 
       {/* Parent Department */}
       <div className="flex flex-col gap-0.5">
@@ -1099,7 +1251,7 @@ function ExecutionInfo({ timestamps, status }) {
 /*  Main Inspector                                                     */
 /* ------------------------------------------------------------------ */
 
-export default function AgentInspector({ nodes, onUpdateNode }) {
+export default function AgentInspector({ nodes, edges = null, onUpdateNode }) {
   const selectedNodeId = useSwarmStore((s) => s.selectedNodeId);
   const agentState = useSwarmStore((s) => s.agentStates[selectedNodeId]);
   const agentResult = useSwarmStore((s) => s.agentResults[selectedNodeId]);
@@ -1109,7 +1261,11 @@ export default function AgentInspector({ nodes, onUpdateNode }) {
   const setExpandedOutputNodeId = useSwarmStore((s) => s.setExpandedOutputNodeId);
   const setExpandedValidationNodeId = useSwarmStore((s) => s.setExpandedValidationNodeId);
   const markViewed = useSwarmStore((s) => s.markAgentResultViewed);
+  const workflowDef = useSwarmStore((s) => s.workflowDef);
   const [activeTab, setActiveTab] = useState('config');
+  const [compiledPreview, setCompiledPreview] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState('');
 
   const selectedNode = nodes?.find((n) => n.id === selectedNodeId);
   const preferredLiveSnippet = useMemo(
@@ -1140,6 +1296,48 @@ export default function AgentInspector({ nodes, onUpdateNode }) {
       setActiveTab('config');
     }
   }, [selectedNodeId]);
+
+  useEffect(() => {
+    if (!hasSelectedNode || nodeType !== 'agent' || !workflowDef || typeof fetch !== 'function') {
+      setCompiledPreview(null);
+      setPreviewError('');
+      setPreviewLoading(false);
+      return undefined;
+    }
+
+    const draftWorkflow = {
+      ...(workflowDef || {}),
+      id: workflowDef?.id || 'draft-workflow',
+      name: workflowDef?.name || 'Draft workflow',
+      nodes: Array.isArray(nodes) ? nodes : [],
+      edges: Array.isArray(edges) ? edges : (Array.isArray(workflowDef?.edges) ? workflowDef.edges : []),
+    };
+    if (!draftWorkflow.nodes.length) return undefined;
+
+    let cancelled = false;
+    setPreviewLoading(true);
+    setPreviewError('');
+    apiPost('/api/v1/swarm/compiled-preview', {
+      workflowDef: draftWorkflow,
+      selectedAgentId: selectedNodeId,
+    })
+      .then((response) => {
+        if (cancelled) return;
+        setCompiledPreview(response?.preview ?? null);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setCompiledPreview(error.body?.preview ?? null);
+        setPreviewError(error.message || 'Unable to build compiled preview');
+      })
+      .finally(() => {
+        if (!cancelled) setPreviewLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [edges, hasSelectedNode, nodeType, nodes, selectedNodeId, workflowDef]);
 
   const handleCloseInspector = useCallback(() => {
     setSelectedNode(null);
@@ -1292,7 +1490,14 @@ export default function AgentInspector({ nodes, onUpdateNode }) {
 
       {/* Type-specific editable fields */}
       {activeTab === 'config' && nodeType === 'agent' && (
-        <AgentFields node={selectedNode} nodes={nodes} onUpdateNode={onUpdateNode} />
+        <AgentFields
+          node={selectedNode}
+          nodes={nodes}
+          onUpdateNode={onUpdateNode}
+          compiledPreview={compiledPreview}
+          previewLoading={previewLoading}
+          previewError={previewError}
+        />
       )}
       {activeTab === 'config' && nodeType === 'department' && (
         <DepartmentFields node={selectedNode} onUpdateNode={onUpdateNode} />

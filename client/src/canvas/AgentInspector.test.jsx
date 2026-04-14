@@ -1,5 +1,5 @@
-﻿import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+﻿import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import AgentInspector from './AgentInspector.jsx';
 import { useSwarmStore } from '../store/SwarmContext.jsx';
 import { resetSwarmStore } from '../test/resetSwarmStore.js';
@@ -7,6 +7,10 @@ import { resetSwarmStore } from '../test/resetSwarmStore.js';
 describe('AgentInspector output parity', () => {
   beforeEach(() => {
     resetSwarmStore();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('prefers the canonical structured chat snippet in the live output section and keeps output text readable', () => {
@@ -130,6 +134,135 @@ describe('AgentInspector output parity', () => {
     });
     expect(screen.getByLabelText('Expected output')).toHaveValue('Legacy fallback.');
   });
+
+  it('exposes Agent Definition Center controls and compiled preview observability', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        preview: {
+          ok: true,
+          domains: {
+            agents: [
+              {
+                id: 'node-a',
+                provider: 'codex',
+                model: 'gpt-5.4',
+                runtime: { spawnMode: 'codex-sdk' },
+                io: {
+                  inputKeys: ['brief'],
+                  artifactExpectations: [{ key: 'report' }],
+                },
+                memory: { precedence: ['workflow run inputs', 'agent memory sources'] },
+                policy: { handoff: 'explicit', errorRetry: 'retry-on-error' },
+                incompatibilities: [
+                  { code: 'tools_not_supported_by_provider', message: 'Codex does not enforce Claude tool allowlists.' },
+                ],
+                whyThisOutput: 'Provider codex executes the agent with its effective model.',
+              },
+            ],
+          },
+          observability: {
+            promptAssemblyOrder: ['agent awareness', 'mission/system prompt', 'runtime protocol'],
+          },
+          errors: [],
+          warnings: [{ code: 'guardrails_advisory', message: 'Guardrails are prompt guidance.' }],
+        },
+      }),
+    }));
+    useSwarmStore.setState({
+      selectedNodeId: 'node-a',
+      workflowDef: {
+        id: 'wf-1',
+        name: 'Harness workflow',
+        nodes: [{ id: 'node-a', type: 'agent', data: { label: 'Strategist' } }],
+        edges: [],
+      },
+    });
+    const onUpdateNode = vi.fn();
+
+    render(
+      <AgentInspector
+        nodes={[
+          {
+            id: 'node-a',
+            type: 'agent',
+            data: { label: 'Strategist', model: 'gpt-5.4' },
+          },
+          { id: 'extractor-1', type: 'outputExtractor', data: { label: 'Report', artifactKey: 'report' } },
+        ]}
+        edges={[{ id: 'edge-agent-report', source: 'node-a', target: 'extractor-1' }]}
+        onUpdateNode={onUpdateNode}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Agent Definition Center/i }));
+    fireEvent.change(screen.getByLabelText('Agent mission'), { target: { value: 'Design a sector harness.' } });
+    fireEvent.change(screen.getByLabelText('Memory sources'), { target: { value: 'brief, policy-docs' } });
+    fireEvent.change(screen.getByLabelText('Guardrails'), { target: { value: 'Do not invent APIs.' } });
+    fireEvent.change(screen.getByLabelText('Handoff policy'), { target: { value: 'explicit' } });
+    fireEvent.change(screen.getByLabelText('Error/retry policy'), { target: { value: 'retry-on-error' } });
+
+    expect(onUpdateNode).toHaveBeenCalledWith('node-a', { mission: 'Design a sector harness.' });
+    expect(onUpdateNode).toHaveBeenCalledWith('node-a', { memorySources: ['brief', 'policy-docs'] });
+    expect(onUpdateNode).toHaveBeenCalledWith('node-a', { guardrails: 'Do not invent APIs.' });
+    expect(onUpdateNode).toHaveBeenCalledWith('node-a', { handoffPolicy: 'explicit' });
+    expect(onUpdateNode).toHaveBeenCalledWith('node-a', { errorRetryPolicy: 'retry-on-error' });
+
+    await waitFor(() => expect(screen.getByText('codex / gpt-5.4')).toBeInTheDocument());
+    expect(screen.getByText('Prompt assembly order')).toBeInTheDocument();
+    expect(screen.getByText(/Memory provenance/)).toBeInTheDocument();
+    expect(screen.getByText(/Inputs: brief/)).toBeInTheDocument();
+    expect(screen.getByText(/Artifacts: report/)).toBeInTheDocument();
+    expect(screen.getByText(/Structured incompatibilities/)).toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledWith('/api/v1/swarm/compiled-preview', expect.objectContaining({
+      method: 'POST',
+    }));
+    const requestBody = JSON.parse(fetch.mock.calls[0][1].body);
+    expect(requestBody.workflowDef.edges).toEqual([
+      { id: 'edge-agent-report', source: 'node-a', target: 'extractor-1' },
+    ]);
+  });
+
+
+  it('keeps structured compiled preview errors visible when the preview API returns 400', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: async () => ({
+        error: 'Compiled execution preview is invalid',
+        preview: {
+          ok: false,
+          domains: { agents: [] },
+          errors: [
+            { code: 'runtime_model_unsupported', message: 'Unsupported gemini model gemini-2.0-flash.' },
+          ],
+          warnings: [],
+        },
+        details: [{ code: 'runtime_model_unsupported' }],
+      }),
+    }));
+    useSwarmStore.setState({
+      selectedNodeId: 'node-a',
+      workflowDef: {
+        id: 'wf-1',
+        name: 'Harness workflow',
+        nodes: [{ id: 'node-a', type: 'agent', data: { label: 'Strategist' } }],
+        edges: [],
+      },
+    });
+
+    render(
+      <AgentInspector
+        nodes={[{ id: 'node-a', type: 'agent', data: { label: 'Strategist', model: 'gemini-2.0-flash' } }]}
+        onUpdateNode={vi.fn()}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText('Compiled execution preview is invalid')).toBeInTheDocument());
+    expect(screen.getByText(/Unsupported gemini model/)).toBeInTheDocument();
+    expect(screen.getByText(/Structured incompatibilities/)).toBeInTheDocument();
+  });
+
 
   it('edits Input block fields and Output Extractor artifact settings', () => {
     useSwarmStore.setState({

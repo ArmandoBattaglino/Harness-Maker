@@ -13,6 +13,7 @@
 import { Router } from 'express';
 import { generateWorkflowFromPrompt } from '../services/ScaffoldGenerator.js';
 import { getRuntimeCapabilitySnapshot } from '../services/SwarmEngine.js';
+import { compileExecutionContract } from '../services/ExecutionContractResolver.js';
 import {
   TERMINAL_EXECUTION_STATUSES,
   buildExecutionResultsPayload,
@@ -78,6 +79,46 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
 
   router.get('/runtime-capabilities', (_req, res) => {
     return res.status(200).json(getRuntimeCapabilitySnapshot(sessionManager));
+  });
+
+  router.post('/compiled-preview', (req, res) => {
+    try {
+      const {
+        workflowDef,
+        workflowInput,
+        pack,
+        packInput,
+        runtimeProvider,
+        runtimeModels,
+        selectedAgentId,
+      } = req.body ?? {};
+
+      const preview = compileExecutionContract({
+        workflowDef,
+        workflowInput,
+        pack,
+        packInput,
+        runtimeProvider,
+        runtimeModels,
+        selectedAgentId,
+        runtimeSnapshot: getRuntimeCapabilitySnapshot(sessionManager),
+      });
+
+      if (!preview.ok) {
+        return res.status(400).json({
+          error: 'Compiled execution preview is invalid',
+          preview,
+          details: preview.errors,
+        });
+      }
+
+      return res.status(200).json({ preview });
+    } catch (err) {
+      console.error(`[swarm] POST /compiled-preview error: ${err.message}`);
+      return res.status(err.statusCode ?? 500).json({
+        error: err.message ?? 'Internal server error',
+      });
+    }
   });
 
   // -------------------------------------------------------------------------
