@@ -4,6 +4,42 @@
       "directive": "For future Ralph implementation tasks, always run a targeted Playwright test/smoke that exercises the user-visible behavior affected by the changes, in addition to unit/integration tests, before declaring completion.",
       "priority": "high",
       "timestamp": "2026-04-11T14:57:22.835Z"
+    },
+    {
+      "directive": "For future Ralph completions in this repo, append a coherent entry to docs/memory/ACTIVITY_LOG.md before cleanup/cancel, covering outcome, substantive work, files changed, verification evidence, blockers, and the true next state.",
+      "priority": "high",
+      "context": "Ralph completion discipline",
+      "timestamp": "2026-04-13T13:44:25.981Z"
+    },
+    {
+      "directive": "When Ralph executes from an approved plan in this repo and docs/TASK_PLAN.md exists, sync that plan into docs/TASK_PLAN.md before implementation using the existing area/task/status style; then reconcile major completed task sets during the run by marking implementation tasks COMPLETED and verified gates/checkpoints PASS with concise evidence notes.",
+      "priority": "high",
+      "context": "Ralph task-plan discipline",
+      "timestamp": "2026-04-13T13:49:55.526Z"
+    },
+    {
+      "directive": "When Ralph appends to docs/memory/ACTIVITY_LOG.md in this repo, follow the established structured format: heading `## <date> — Ralph — <cycle title>`, then Outcome, Summary, Files changed, Bugs fixed, Decisions made, Verification, Blockers, Next, and a trailing `---`; use `none` for non-applicable fields rather than omitting them.",
+      "priority": "high",
+      "context": "Ralph activity-log format",
+      "timestamp": "2026-04-13T14:12:37.453Z"
+    },
+    {
+      "directive": "When Ralph executes from an approved plan in this repo and docs/memory/DECISIONS.md exists, sync already-settled durable decisions from the approved plan into DECISIONS before implementation, then record any newly confirmed durable architecture/contract/runtime/security/source-of-truth decisions during execution using the existing DEC-XXX format; do not log ephemeral implementation trivia as decisions.",
+      "priority": "high",
+      "context": "Ralph decision-log discipline",
+      "timestamp": "2026-04-13T15:04:52.946Z"
+    },
+    {
+      "directive": "Override earlier Ralph decision-log timing for this repo: reconcile docs/memory/DECISIONS.md only at the two cycle boundaries of a complete Ralph run — once at startup from approved-plan durable decisions, and once at final completion for durable decisions confirmed by the run. Do not treat mid-run implementation moments as mandatory DECISIONS write points unless the user explicitly asks for it.",
+      "priority": "high",
+      "context": "Ralph decision-log discipline override",
+      "timestamp": "2026-04-13T15:07:30.015Z"
+    },
+    {
+      "directive": "For Ralph runs in this repo, treat docs/TASK_PLAN.md, docs/memory/ACTIVITY_LOG.md, and docs/memory/DECISIONS.md as the canonical human ledgers. Do not auto-update docs/memory/PROGRESS.md or docs/memory/CONTEXT.md unless the user explicitly asks for it or a stricter repo rule later requires it.",
+      "priority": "high",
+      "context": "Ralph canonical memory surfaces",
+      "timestamp": "2026-04-13T16:42:23.372Z"
     }
   ]
 }

@@ -11,6 +11,7 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { spawn } from 'child_process';
+import readline from 'readline/promises';
 import express from 'express';
 import { WebSocketServer } from 'ws';
 
@@ -23,6 +24,7 @@ import SwarmEngine from './services/SwarmEngine.js';
 import CircuitBreaker from './services/CircuitBreaker.js';
 import BudgetTracker from './services/BudgetTracker.js';
 import TriggerManager from './services/TriggerManager.js';
+import UpdateChecker from './services/UpdateChecker.js';
 import { ExecutionHistoryStore } from './stores/ExecutionHistoryStore.js';
 import { securityMiddleware } from './middleware/security.js';
 import { csrfMiddleware } from './middleware/csrf.js';
@@ -50,6 +52,79 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // ---------------------------------------------------------------------------
 const _pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8'));
 const APP_VERSION = _pkg.version || '0.0.0';
+const updateChecker = new UpdateChecker({
+  repoRoot: join(__dirname, '..'),
+  appVersion: APP_VERSION,
+});
+
+function canPromptForUpdate() {
+  return (
+    process.stdin.isTTY &&
+    process.stdout.isTTY &&
+    process.env.CI !== '1' &&
+    !['0', 'false', 'no', 'off'].includes(String(process.env.APP_UPDATE_PROMPT ?? '').toLowerCase())
+  );
+}
+
+async function promptYesNo(question) {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  try {
+    const answer = await rl.question(question);
+    return String(answer || '').trim().toLowerCase() === 'y';
+  } finally {
+    rl.close();
+  }
+}
+
+function restartProcess() {
+  const child = spawn(process.execPath, process.argv.slice(1), {
+    cwd: join(__dirname, '..'),
+    env: process.env,
+    stdio: 'inherit',
+    shell: false,
+  });
+
+  child.on('error', (error) => {
+    console.error(`[FATAL] Failed to restart after update: ${error.message}`);
+    process.exit(1);
+  });
+
+  child.on('spawn', () => {
+    process.exit(0);
+  });
+}
+
+async function maybeApplyStartupUpdate() {
+  const status = await updateChecker.getStatus();
+  if (!status.updateAvailable) return { restarted: false, status };
+
+  const plan = await updateChecker.getAutoUpdatePlan(status);
+  if (!plan.eligible) {
+    console.log(`[startup] Update available, but automatic update is unavailable: ${plan.reason}`);
+    return { restarted: false, status, plan };
+  }
+
+  if (!canPromptForUpdate()) {
+    console.log(`[startup] Update available on ${status.branch}. Re-run in an interactive terminal to approve the update prompt.`);
+    return { restarted: false, status, plan };
+  }
+
+  const commitLabel = status.behindBy === 1 ? '1 commit' : `${status.behindBy} commits`;
+  const approved = await promptYesNo(`[startup] Update available (${commitLabel} behind origin/${status.branch}). Update now? [y/N] `);
+  if (!approved) {
+    console.log('[startup] Update skipped by user choice.');
+    return { restarted: false, status, plan };
+  }
+
+  console.log('[startup] Applying update...');
+  const result = await updateChecker.applyAutoUpdate(status);
+  console.log(`[startup] Update applied${result.updated ? '' : ' (already current after pull)'}; restarting...`);
+  restartProcess();
+  return { restarted: true, status, plan, result };
+}
 
 // ---------------------------------------------------------------------------
 // Auto-open browser helper
@@ -178,6 +253,15 @@ async function startup() {
     console.error(`[WARN] ProcessRegistry cleanup error: ${err.message}`);
   }
 
+  try {
+    const updateFlow = await maybeApplyStartupUpdate();
+    if (updateFlow.restarted) {
+      return;
+    }
+  } catch (err) {
+    console.error(`[WARN] Startup update check error: ${err.message}`);
+  }
+
   // -------------------------------------------------------------------------
   // 5. Build Express app and apply middleware
   // -------------------------------------------------------------------------
@@ -235,6 +319,15 @@ async function startup() {
       nodeVersion: process.version,
       platform: process.platform,
     });
+  });
+
+  app.get('/api/v1/update-status', async (req, res, next) => {
+    try {
+      const status = await updateChecker.getStatus();
+      res.json(status);
+    } catch (error) {
+      next(error);
+    }
   });
 
   // Project management routes

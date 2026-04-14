@@ -278,3 +278,30 @@
 **Alternatives rejected:** Keep route/UI checks on `running + sessionId` -- breaks completed PTY reuse and all structured runtimes. Expose raw thread/session identifiers to the client -- unnecessary and leaks internal transport details. Treat all terminal executions as non-messageable -- conflicts with the persistent-session requirement and loses operator continuity.
 **Revisit if:** Additional runtime providers need richer operator-delivery semantics than the current PTY vs structured split, or if session persistence becomes user-configurable per workflow/agent.
 ---
+## DEC-031: Ralph execution syncs durable approved-plan decisions into human ledgers before and during implementation
+**Date:** 2026-04-13
+**Agent:** user / codex
+**Task:** Ralph memory-governance hardening
+**Decision:** When Ralph executes in this repository from an approved PRD / plan / test-spec, it must promote already-settled durable decisions into `docs/memory/DECISIONS.md` before implementation starts when those decisions materially affect architecture, contracts, runtime behavior, compatibility, security, source-of-truth boundaries, storage formats, or operator workflow. Ralph must also record any newly confirmed durable decisions during execution instead of leaving them trapped only in `.omx/plans/*`, chat history, or `ACTIVITY_LOG.md`.
+**Reasoning:** Important decisions were at risk of remaining scattered across transient planning artifacts and execution notes. That makes future sessions re-litigate settled choices, weakens onboarding, and separates implementation from the rationale that should govern later modifications. Promoting durable decisions early keeps the canonical decision log aligned with the actual execution lane and reduces drift between plan, implementation, and memory.
+**Alternatives rejected:** Keep durable decisions only in `.omx/plans/*` -- too easy for later implementation sessions to miss. Rely on `ACTIVITY_LOG.md` alone -- activity notes are chronological but are not a canonical decision register. Log every implementation detail as a decision -- creates noise and dilutes the value of the decision log.
+**Revisit if:** The repository replaces `docs/memory/DECISIONS.md` with a different canonical decision system or adds robust automated extraction that can promote approved-plan decisions without manual reconciliation.
+---
+## DEC-032: Ralph reconciles DECISIONS.md only at the start and end of a complete cycle
+**Date:** 2026-04-13
+**Agent:** user / codex
+**Task:** Ralph memory-governance hardening follow-up
+**Decision:** In this repository, Ralph should reconcile `docs/memory/DECISIONS.md` only at the two boundary checkpoints of a complete Ralph cycle: (1) at startup, by promoting already-settled durable decisions from the approved plan before implementation begins; and (2) at final completion, by recording any durable decisions confirmed by the run. Mid-run implementation moments are not mandatory decision-log write points unless the user explicitly asks for immediate logging.
+**Reasoning:** The earlier continuous-update rule made DECISIONS logging too eager for the intended workflow. Decision entries should stay deliberate and low-noise, while still preventing durable choices from being lost in transient plan artifacts or execution history. Restricting decision-log reconciliation to the start and end of a full Ralph cycle preserves the decision log as a canonical, intentional record instead of a live stream of implementation thought.
+**Alternatives rejected:** Log durable decisions immediately whenever they arise mid-run -- captures decisions sooner but adds churn and encourages over-logging during execution. Keep decisions only at final completion -- risks losing already-approved plan decisions before implementation starts. Remove Ralph decision syncing entirely -- reintroduces drift between plan artifacts and the canonical decision log.
+**Revisit if:** The team later wants real-time decision journaling during execution, or if Ralph begins running in very long-lived cycles where end-of-cycle reconciliation is too delayed for safe handoff.
+---
+## DEC-033: Ralph uses only three canonical human ledgers by default in this repository
+**Date:** 2026-04-13
+**Agent:** user / codex
+**Task:** Ralph memory-governance finalization
+**Decision:** For Ralph execution in this repository, the canonical human-ledger files are `docs/TASK_PLAN.md`, `docs/memory/ACTIVITY_LOG.md`, and `docs/memory/DECISIONS.md`. `docs/memory/PROGRESS.md` and `docs/memory/CONTEXT.md` are supporting summaries only and should not be auto-updated as part of normal Ralph execution unless the user explicitly asks for it or a stricter repository rule later requires it.
+**Reasoning:** Updating too many memory surfaces creates duplication, drift, and contradictions across files that are meant to summarize the same execution. Restricting Ralph's mandatory human-ledger writes to three canonical files preserves a clear source of truth for plan, historical execution, and durable decisions while keeping optional summary files from becoming noisy mirrors of the same information.
+**Alternatives rejected:** Keep auto-updating PROGRESS and CONTEXT alongside the canonical ledgers -- produces redundancy and stale summaries. Eliminate all human-ledger files in favor of `.omx/*` runtime memory -- loses a stable, reviewable human source of truth. Make ACTIVITY_LOG or TASK_PLAN optional -- weakens execution auditability.
+**Revisit if:** The repository later replaces PROGRESS/CONTEXT with a lean canonical dashboard, or adopts a different explicit memory architecture that changes which files are authoritative.
+---

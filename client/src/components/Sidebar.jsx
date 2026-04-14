@@ -243,19 +243,52 @@ function SessionItem({
 
 function SidebarFooter() {
   const [appVersion, setAppVersion] = useState('...');
+  const [updateStatus, setUpdateStatus] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     apiGet('/api/v1/version')
       .then((data) => setAppVersion(data.appVersion ?? '0.0.0'))
       .catch(() => setAppVersion('err'));
+
+    apiGet('/api/v1/update-status')
+      .then((data) => setUpdateStatus(data))
+      .catch((error) => {
+        setUpdateStatus({
+          enabled: false,
+          updateAvailable: false,
+          reason: error.message,
+        });
+      });
   }, []);
+
+  const updateSummary = formatUpdateSummary(updateStatus);
+  const statusDotClass = updateStatus?.updateAvailable ? 'bg-amber-400' : 'bg-success';
+  const statusLabel = updateStatus?.updateAvailable ? 'Update available' : 'Active';
 
   return (
     <div className="border-t border-border-color shrink-0">
+      {updateStatus?.updateAvailable && (
+        <div className="px-3 py-2 bg-amber-500/10 border-b border-amber-400/20 text-[11px] text-amber-100 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="font-medium">Update available</div>
+            <div className="text-amber-200/80">{updateSummary}</div>
+          </div>
+          {updateStatus.actionUrl && (
+            <a
+              href={updateStatus.actionUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="shrink-0 text-amber-200 hover:text-white underline underline-offset-2"
+            >
+              {updateStatus.actionLabel ?? 'Open'}
+            </a>
+          )}
+        </div>
+      )}
       {settingsOpen && (
         <div className="px-3 py-2 bg-surface-hover text-[11px] text-text-muted border-b border-border-color flex items-center justify-between">
-          <span>Settings — coming soon</span>
+          <span>Settings - coming soon</span>
           <button
             onClick={() => setSettingsOpen(false)}
             className="text-text-dimmer hover:text-text-muted transition-colors"
@@ -267,8 +300,8 @@ function SidebarFooter() {
       )}
       <div className="p-3 flex items-center justify-between">
         <div className="flex items-center gap-2 text-text-muted">
-          <div className="w-2 h-2 rounded-full bg-success" />
-          <span className="text-xs font-mono uppercase tracking-widest">Active</span>
+          <div className={`w-2 h-2 rounded-full ${statusDotClass}`} />
+          <span className="text-xs font-mono uppercase tracking-widest">{statusLabel}</span>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -283,4 +316,29 @@ function SidebarFooter() {
       </div>
     </div>
   );
+}
+
+function formatUpdateSummary(updateStatus) {
+  if (!updateStatus) return 'Checking for updates...';
+  if (updateStatus.updateAvailable) {
+    if (updateStatus.mode === 'git-remote') {
+      const behindBy = Number.isFinite(updateStatus.behindBy) ? updateStatus.behindBy : 0;
+      const commitLabel = behindBy === 1 ? '1 commit' : `${behindBy} commits`;
+      return `${updateStatus.branch ?? 'main'} is ahead by ${commitLabel}.`;
+    }
+    if (updateStatus.mode === 'github-release' && updateStatus.latestVersion) {
+      return `Version ${updateStatus.latestVersion} is available on GitHub.`;
+    }
+    return 'A newer update is available.';
+  }
+  if (updateStatus.mode === 'git-remote' && updateStatus.relation === 'up-to-date') {
+    return 'You are running the latest main branch state.';
+  }
+  if (updateStatus.mode === 'release-unavailable') {
+    return 'Update checks need a Git checkout or published releases.';
+  }
+  if (updateStatus.reason) {
+    return updateStatus.reason;
+  }
+  return 'No updates available.';
 }

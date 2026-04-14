@@ -6298,3 +6298,81 @@ full self-contained context and acceptance criteria.
 **Files changed:** server/services/workflowContracts.js; server/services/SwarmEngine.js; server/tests/workflow-contracts.test.js; server/tests/visual-io-swarm-engine.test.js; client/src/utils/visualWorkflowContracts.js; client/src/hooks/useCanvasValidation.js; client/src/utils/visualWorkflowContracts.test.js; docs/memory/*.
 **Verification:** Baseline client 14/14 PASS; baseline server 23/23 PASS; client Wave1/helper tests PASS; server Wave1 tests PASS; affected client/server suites PASS before scope trim; LSP diagnostics 0 errors on touched code files.
 **Notes:** Later visual palette/node/inspector/run-form UI work was intentionally left for downstream lanes after task refinement.
+---
+## 2026-04-13 — codex — Ralph completion logging rule hardened
+**Outcome:** COMPLETED
+**Summary:** Strengthened Ralph completion discipline so a fully completed Ralph cycle must write a coherent completion entry before cleanup. The global Ralph skill now explicitly requires updating `docs/memory/ACTIVITY_LOG.md` when that ledger exists, and this repo now also carries a project-memory directive reinforcing the same requirement.
+**Files changed:** `C:/Users/arman/.codex/skills/ralph/SKILL.md`, `.omx/project-memory.json`
+**Verification:** Ralph skill text updated with execution-policy rule, mandatory completion-log step, and final-checklist item; project-memory directive add returned success.
+**Blockers:** none.
+**Next:** Future Ralph runs in this repo should append a structured ACTIVITY_LOG completion entry before `/cancel`/cleanup.
+---
+## 2026-04-13 — codex — Ralph TASK_PLAN synchronization rule hardened
+**Outcome:** COMPLETED
+**Summary:** Extended Ralph so approved-plan executions in repos with `docs/TASK_PLAN.md` must first sync the plan into the task ledger before implementation, using the repo's existing area/task/status format. Ralph now also requires milestone-level status reconciliation during execution and a final task-plan truthfulness pass before cleanup.
+**Files changed:** `C:/Users/arman/.codex/skills/ralph/SKILL.md`, `.omx/project-memory.json`
+**Verification:** Ralph skill text updated with plan-to-task-plan sync rule, milestone reconciliation step, final task-plan reconciliation step, and checklist coverage; project-memory directive add returned success.
+**Blockers:** none.
+**Next:** Future Ralph runs in this repo should create/update detailed `docs/TASK_PLAN.md` tasks from the approved plan before coding, then mark major completed task sets truthfully as work/gates finish.
+---
+## 2026-04-13 — codex — Ralph ACTIVITY_LOG template hardened
+**Outcome:** COMPLETED
+**Summary:** Extended Ralph with an explicit ACTIVITY_LOG entry template so future Ralph completions in this repo use the established structured log format instead of ad-hoc summaries. The rule now prefers the repo's existing heading/body style and defaults to the local field set used by prior Ralph entries.
+**Files changed:** `C:/Users/arman/.codex/skills/ralph/SKILL.md`, `.omx/project-memory.json`
+**Bugs fixed:** none.
+**Decisions made:** Ralph ACTIVITY_LOG entries for this repo should default to heading + Outcome / Summary / Files changed / Bugs fixed / Decisions made / Verification / Blockers / Next / trailing separator.
+**Verification:** Ralph skill text updated with explicit ACTIVITY_LOG template guidance; project-memory directive add returned success.
+**Blockers:** none.
+**Next:** Future Ralph completions should write ACTIVITY_LOG entries in the standardized repo format, using `none` instead of silently omitting non-applicable fields.
+---
+## 2026-04-13 — codex — Ralph DECISIONS synchronization rule hardened
+**Outcome:** COMPLETED
+**Summary:** Extended Ralph so approved-plan executions in this repo must sync already-settled durable decisions into `docs/memory/DECISIONS.md` before implementation, and must record any newly confirmed durable architecture/contract/runtime/security/source-of-truth decisions during execution instead of leaving them only in planning artifacts or chronological logs.
+**Files changed:** `C:/Users/arman/.codex/skills/ralph/SKILL.md`, `.omx/project-memory.json`, `docs/memory/DECISIONS.md`
+**Bugs fixed:** none.
+**Decisions made:** Added DEC-031 to make early/fresh decision-log reconciliation part of Ralph execution discipline for this repository.
+**Verification:** Ralph skill text updated with decision-log sync, in-run reconciliation, final reconciliation, and checklist items; project-memory directive add returned success; DEC-031 appended to `docs/memory/DECISIONS.md`.
+**Blockers:** none.
+**Next:** Future Ralph runs should promote durable approved-plan decisions into the canonical decision log before coding and keep that log current when new durable decisions emerge.
+---
+## 2026-04-13 — codex — Ralph decision-log timing narrowed to cycle boundaries
+**Outcome:** COMPLETED
+**Summary:** Tightened Ralph's DECISIONS behavior so this repo now reconciles `docs/memory/DECISIONS.md` only at the beginning and end of a complete Ralph cycle. Removed the requirement to update the decision log continuously during execution while preserving startup promotion of approved-plan decisions and final reconciliation of durable decisions confirmed by the run.
+**Files changed:** `C:/Users/arman/.codex/skills/ralph/SKILL.md`, `.omx/project-memory.json`, `docs/memory/DECISIONS.md`
+**Bugs fixed:** none.
+**Decisions made:** Added DEC-032, which supersedes the earlier continuous mid-run decision-sync preference with a start/end-only reconciliation model for Ralph cycles in this repository.
+**Verification:** Ralph skill text now states cycle-boundary reconciliation, the mid-run decision-log step is removed, the final checklist now points to end-of-cycle reconciliation, project-memory override directive add returned success, and DEC-032 was appended to `docs/memory/DECISIONS.md`.
+**Blockers:** none.
+**Next:** Future Ralph runs should touch `DECISIONS.md` only at cycle start and final completion unless the user explicitly asks for immediate mid-run decision logging.
+---
+## 2026-04-13 — codex — Ralph canonical memory-surface policy finalized
+**Outcome:** COMPLETED
+**Summary:** Finalized Ralph's memory policy for this repository. Ralph now treats `docs/TASK_PLAN.md`, `docs/memory/ACTIVITY_LOG.md`, and `docs/memory/DECISIONS.md` as the only canonical human-ledger surfaces by default, and explicitly avoids auto-updating `docs/memory/PROGRESS.md` or `docs/memory/CONTEXT.md` unless the user asks for it or repo policy later requires it.
+**Files changed:** `C:/Users/arman/.codex/skills/ralph/SKILL.md`, `.omx/project-memory.json`, `docs/memory/DECISIONS.md`
+**Bugs fixed:** none.
+**Decisions made:** Added DEC-033 to formalize the three-ledger memory model and to demote PROGRESS/CONTEXT to optional supporting summaries.
+**Verification:** Ralph skill text now defines canonical memory surfaces, adds a scope check, adds a do-not-drift rule for PROGRESS/CONTEXT, and extends the final checklist; project-memory directive add returned success; DEC-033 was appended to `docs/memory/DECISIONS.md`.
+**Blockers:** none.
+**Next:** Future Ralph runs should update only TASK_PLAN, ACTIVITY_LOG, and DECISIONS by default, leaving PROGRESS/CONTEXT untouched unless explicitly requested.
+
+---
+## 2026-04-14 - codex - startup update-check notification for GitHub-backed installs
+**Outcome:** COMPLETED / VERIFIED
+**Summary:** Added a lightweight startup update check suited to this repo's current distribution model. The server now exposes `/api/v1/update-status`, preferring Git-based remote-main comparison for local checkouts and falling back to GitHub latest-release checks when git metadata is unavailable. The Sidebar footer now surfaces an `Update available` banner instead of silently leaving locally run clones stale.
+**Files changed:** `server/services/UpdateChecker.js`, `server/index.js`, `server/tests/UpdateChecker.test.js`, `client/src/components/Sidebar.jsx`, `client/src/components/Sidebar.test.jsx`, `docs/memory/ACTIVITY_LOG.md`
+**Bugs fixed:** Users running the app from a local clone had no in-product signal that `main` or the latest GitHub release had moved ahead.
+**Decisions made:** Prefer read-only git remote checks over auto-`git pull`; fall back to GitHub releases only when the app is not running from a normal git checkout.
+**Verification:** `npm test --prefix server -- UpdateChecker.test.js` PASS (4/4); `npm test --prefix client -- src/components/Sidebar.test.jsx` PASS (1/1); `npm run build` PASS (client build, 527 modules); LSP diagnostics 0 errors on `server/services/UpdateChecker.js`, `server/index.js`, and `client/src/components/Sidebar.jsx`; `git diff --check` PASS (only pre-existing CRLF warnings on unrelated already-dirty files).
+**Blockers:** none.
+**Next:** If you later ship installable releases, point users to GitHub Releases and consider wiring the same endpoint into a future in-app updater/download flow.
+
+---
+## 2026-04-14 - codex - interactive startup update prompt for local git installs
+**Outcome:** COMPLETED / VERIFIED
+**Summary:** Extended the startup update flow so interactive terminal launches now ask the operator whether to update when the local `main` checkout is behind `origin/main`. On `y`, the app performs a fast-forward pull, reinstalls changed dependency scopes only when package manifests changed, rebuilds the client bundle, and restarts itself. On `n`, startup continues normally. Dirty worktrees, non-`main` branches, and non-interactive terminals skip the automatic update path with an explanatory message.
+**Files changed:** `server/services/UpdateChecker.js`, `server/index.js`, `server/tests/UpdateChecker.test.js`, `docs/memory/ACTIVITY_LOG.md`
+**Bugs fixed:** Startup update notices previously required manual follow-through and could not perform the requested `y/n` update decision directly from the launch terminal.
+**Decisions made:** Restrict auto-update to clean local checkouts on branch `main`; use `git pull --ff-only` only; reinstall dependencies only for changed manifest scopes; rebuild the client before restart so the relaunched server serves current assets.
+**Verification:** `npm test --prefix server -- UpdateChecker.test.js` PASS (6/6); `npm test --prefix client -- src/components/Sidebar.test.jsx` PASS (1/1); `npm run build` PASS (client build, 527 modules); LSP diagnostics 0 errors on `server/services/UpdateChecker.js` and `server/index.js`; `git diff --check` PASS (only pre-existing CRLF warnings on unrelated already-dirty files).
+**Blockers:** none.
+**Next:** If you want the same prompt for packaged/non-git installs, add a release-download updater path instead of the current git-only auto-update lane.
