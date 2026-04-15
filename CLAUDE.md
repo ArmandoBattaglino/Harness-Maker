@@ -26,6 +26,13 @@ Server binds exclusively to 127.0.0.1 and must never be exposed to the network.
 - Terminal `stream-json` error results are truthful blockers; do not force a downstream PTY handoff or cross-runtime fallback from a failed Claude stream-json turn.
 - `child.stdin.end()` must be called immediately after every non-PTY spawn that only reads stdout/stderr.
 
+## OMX Context
+Planning artifacts from Oh My Codex sono in `.omx/`:
+- `.omx/plans/` — PRD e test spec (approvati via consensus)
+- `.omx/context/` — context snapshot e sessioni ralplan
+- `.omx/artifacts/` — output di review e analisi
+Leggi i file rilevanti prima di implementare feature pianificate tramite OMX.
+
 ## Environment Variables
 | Variable | Default | Description |
 |----------|---------|-------------|
