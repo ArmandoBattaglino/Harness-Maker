@@ -169,9 +169,9 @@ function AgentDefinitionPreview({ preview, selectedNodeId, loading, error }) {
   const artifactKeys = (agentPreview?.io?.artifactExpectations ?? []).map((artifact) => artifact.key);
 
   return (
-    <CollapsibleSection title="Compiled Preview" defaultOpen={true}>
+    <CollapsibleSection title="Effective Preview (Derived)" defaultOpen={true}>
       <div className="rounded border border-blue-800/60 bg-blue-950/25 p-2 text-[11px] text-blue-100">
-        Effective compiled configuration from WorkflowDefinition, AgentDefinition, Harness/Pack, and runtime capability rules.
+        Derived runtime view from WorkflowDefinition, AgentDefinition, Harness/Pack, and runtime capability rules. This preview explains effective behavior; it is not editable authoring truth.
       </div>
       {loading && <div className="text-[11px] text-gray-400">Loading compiled preview...</div>}
       {error && <div className="rounded border border-amber-700 bg-amber-950/40 p-2 text-[11px] text-amber-200">{error}</div>}
@@ -226,7 +226,7 @@ function AgentDefinitionPreview({ preview, selectedNodeId, loading, error }) {
         </div>
       )}
       {!loading && !error && !agentPreview && (
-        <div className="text-[11px] text-gray-500">Compiled preview will appear when a workflow with this agent is loaded.</div>
+        <div className="text-[11px] text-gray-500">Effective preview needs valid workflow graph context and a selected agent.</div>
       )}
     </CollapsibleSection>
   );
@@ -278,134 +278,98 @@ function AgentFields({ node, nodes, onUpdateNode, compiledPreview, previewLoadin
   const departmentNodes = nodes.filter((n) => n.type === 'department');
 
   return (
-    <CollapsibleSection title="Configuration">
-      {/* Model */}
-      <div className="flex flex-col gap-0.5">
-        <FieldLabel>Model</FieldLabel>
-        <select
-          className={INPUT_CLS}
-          value={data.model || ''}
-          onChange={(e) => onUpdateNode(nodeId, { model: e.target.value })}
-        >
-          <option value="">— select —</option>
-          {MODEL_OPTIONS.map((g) => (
-            <optgroup key={g.group} label={g.group}>
-              {g.models.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-      </div>
-
-      {/* System Prompt */}
-      <div className="flex flex-col gap-0.5">
-        <FieldLabel>System Prompt</FieldLabel>
-        <textarea
-          className={`${INPUT_CLS} font-mono resize-y`}
-          rows={4}
-          style={{ minHeight: '4rem', maxHeight: '20rem' }}
-          value={promptLocal}
-          onChange={(e) => setPromptLocal(e.target.value)}
-        />
-      </div>
-
-      {isClaude && (
-        <CollapsibleSection title="Tools" defaultOpen={false}>
-          <div className="flex items-center justify-between gap-2">
-            <FieldLabel>Allowed Tools</FieldLabel>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => updateSelectedTools([...CLAUDE_TOOL_OPTIONS])}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"
-              >
-                Select All
-              </button>
-              <button
-                type="button"
-                onClick={() => updateSelectedTools([])}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"
-              >
-                Deselect All
-              </button>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            {CLAUDE_TOOL_OPTIONS.map((toolName) => (
-              <label
-                key={toolName}
-                className="flex items-center gap-2 rounded bg-gray-800/80 px-2 py-1 text-xs text-gray-200 cursor-pointer"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedTools.includes(toolName)}
-                  onChange={() => toggleTool(toolName)}
-                  className="accent-blue-500"
-                />
-                <span className="break-all">{toolName}</span>
-              </label>
-            ))}
-          </div>
-          <div className="text-[10px] text-gray-500">
-            Debounced 300ms. Default Claude selection: {DEFAULT_CLAUDE_TOOLS.join(', ')}.
-          </div>
-        </CollapsibleSection>
-      )}
-
-      {/* Context Visibility */}
-      <div className="flex flex-col gap-0.5">
-        <FieldLabel>Context Visibility</FieldLabel>
-        <select
-          className={INPUT_CLS}
-          value={data.contextVisibility || 'full'}
-          onChange={(e) => onUpdateNode(nodeId, { contextVisibility: e.target.value })}
-        >
-          <option value="full">Full (awareness + transcript + protocol)</option>
-          <option value="minimal">Minimal (last handoff + protocol)</option>
-          <option value="roleOnly">Role Only (system prompt + protocol)</option>
-        </select>
-        <span className="text-[10px] text-gray-500">
-          Controls how much workflow context this agent receives
-        </span>
-      </div>
-
-      {/* Max Turns */}
-      <div className="flex flex-col gap-0.5">
-        <FieldLabel>Max Turns</FieldLabel>
-        <input
-          type="number"
-          className={INPUT_CLS}
-          min={0}
-          max={100}
-          value={data.maxTurns ?? ''}
-          onChange={(e) =>
-            onUpdateNode(nodeId, {
-              maxTurns: e.target.value === '' ? undefined : Number(e.target.value),
-            })
-          }
-        />
-      </div>
-
-      {/* Start Node */}
-      <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={!!data.isTriageNode}
-          onChange={(e) => onUpdateNode(nodeId, { isTriageNode: e.target.checked })}
-          className="accent-blue-500"
-        />
-        Start Node
-      </label>
-      <div className="text-[10px] text-gray-500 -mt-1">
-        All start nodes run immediately. Mark multiple agents to launch parallel branches together.
-      </div>
-
-      <CollapsibleSection title="Workflow Guidance" defaultOpen={false}>
+    <>
+      <CollapsibleSection title="Essentials">
         <div className="rounded border border-gray-700 bg-gray-800/60 p-2 text-[10px] text-gray-500">
-          Skill/tool/context controls are guidance + visibility in this wave; Claude tool lists are still passed to supported structured Claude runs.
+          Define who this agent is and where it starts in the workflow. These fields remain structured AgentDefinition authoring data.
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <FieldLabel>Agent mission</FieldLabel>
+          <textarea
+            className={`${INPUT_CLS} font-mono resize-y`}
+            aria-label="Agent mission"
+            rows={3}
+            value={data.mission || ''}
+            onChange={(e) => onUpdateNode(nodeId, { mission: e.target.value })}
+            placeholder="Describe this agent's business mission in domain language."
+          />
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <FieldLabel>Model</FieldLabel>
+          <select
+            className={INPUT_CLS}
+            value={data.model || ''}
+            onChange={(e) => onUpdateNode(nodeId, { model: e.target.value })}
+          >
+            <option value="">Select model</option>
+            {MODEL_OPTIONS.map((g) => (
+              <optgroup key={g.group} label={g.group}>
+                {g.models.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </div>
+        <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={!!data.isTriageNode}
+            onChange={(e) => onUpdateNode(nodeId, { isTriageNode: e.target.checked })}
+            className="accent-blue-500"
+          />
+          Start Node
+        </label>
+        <div className="text-[10px] text-gray-500 -mt-1">
+          All start nodes run immediately. Mark multiple agents to launch parallel branches together.
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <FieldLabel>Department</FieldLabel>
+          <select
+            className={INPUT_CLS}
+            value={data.parentDepartmentId || ''}
+            onChange={(e) =>
+              onUpdateNode(nodeId, {
+                parentDepartmentId: e.target.value || undefined,
+              })
+            }
+          >
+            <option value="">None</option>
+            {departmentNodes.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.data?.label || d.id}
+              </option>
+            ))}
+          </select>
+        </div>
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Behavior & Output Guidance" defaultOpen={false}>
+        <div className="rounded border border-gray-700 bg-gray-800/60 p-2 text-[10px] text-gray-500">
+          Prompt, guardrail, skill, and output guidance remain authoring controls. Provider enforcement is shown separately in the derived preview.
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <FieldLabel>System Prompt</FieldLabel>
+          <textarea
+            className={`${INPUT_CLS} font-mono resize-y`}
+            rows={4}
+            style={{ minHeight: '4rem', maxHeight: '20rem' }}
+            value={promptLocal}
+            onChange={(e) => setPromptLocal(e.target.value)}
+          />
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <FieldLabel>Guardrails</FieldLabel>
+          <textarea
+            className={`${INPUT_CLS} font-mono resize-y`}
+            aria-label="Guardrails"
+            rows={3}
+            value={data.guardrails || ''}
+            onChange={(e) => onUpdateNode(nodeId, { guardrails: e.target.value })}
+            placeholder="Forbidden actions, tone constraints, compliance requirements..."
+          />
         </div>
         <div className="flex flex-col gap-0.5">
           <FieldLabel>Skill hints</FieldLabel>
@@ -415,16 +379,6 @@ function AgentFields({ node, nodes, onUpdateNode, compiledPreview, previewLoadin
             value={Array.isArray(data.skillHints) ? data.skillHints.join(', ') : ''}
             onChange={(e) => onUpdateNode(nodeId, { skillHints: normalizeCsv(e.target.value) })}
             placeholder="researcher, qa-tester, writer"
-          />
-        </div>
-        <div className="flex flex-col gap-0.5">
-          <FieldLabel>Context sources</FieldLabel>
-          <input
-            className={INPUT_CLS}
-            aria-label="Context sources"
-            value={Array.isArray(data.contextSources) ? data.contextSources.join(', ') : ''}
-            onChange={(e) => onUpdateNode(nodeId, { contextSources: normalizeCsv(e.target.value) })}
-            placeholder="project-memory, customer-brief, repository"
           />
         </div>
         <div className="flex flex-col gap-0.5">
@@ -475,19 +429,18 @@ function AgentFields({ node, nodes, onUpdateNode, compiledPreview, previewLoadin
         </div>
       </CollapsibleSection>
 
-      <CollapsibleSection title="Agent Definition Center" defaultOpen={false}>
+      <CollapsibleSection title="Context, Memory & Visibility" defaultOpen={false}>
         <div className="rounded border border-gray-700 bg-gray-800/60 p-2 text-[10px] text-gray-500">
-          Semantic fields are saved as structured AgentDefinition data. The compiled preview below shows how they resolve for runtime.
+          Context and memory controls describe what the agent can use; the preview shows the resulting precedence.
         </div>
         <div className="flex flex-col gap-0.5">
-          <FieldLabel>Agent mission</FieldLabel>
-          <textarea
-            className={`${INPUT_CLS} font-mono resize-y`}
-            aria-label="Agent mission"
-            rows={3}
-            value={data.mission || ''}
-            onChange={(e) => onUpdateNode(nodeId, { mission: e.target.value })}
-            placeholder="Describe this agent's business mission in domain language."
+          <FieldLabel>Context sources</FieldLabel>
+          <input
+            className={INPUT_CLS}
+            aria-label="Context sources"
+            value={Array.isArray(data.contextSources) ? data.contextSources.join(', ') : ''}
+            onChange={(e) => onUpdateNode(nodeId, { contextSources: normalizeCsv(e.target.value) })}
+            placeholder="project-memory, customer-brief, repository"
           />
         </div>
         <div className="flex flex-col gap-0.5">
@@ -501,14 +454,39 @@ function AgentFields({ node, nodes, onUpdateNode, compiledPreview, previewLoadin
           />
         </div>
         <div className="flex flex-col gap-0.5">
-          <FieldLabel>Guardrails</FieldLabel>
-          <textarea
-            className={`${INPUT_CLS} font-mono resize-y`}
-            aria-label="Guardrails"
-            rows={3}
-            value={data.guardrails || ''}
-            onChange={(e) => onUpdateNode(nodeId, { guardrails: e.target.value })}
-            placeholder="Forbidden actions, tone constraints, compliance requirements..."
+          <FieldLabel>Context Visibility</FieldLabel>
+          <select
+            className={INPUT_CLS}
+            value={data.contextVisibility || 'full'}
+            onChange={(e) => onUpdateNode(nodeId, { contextVisibility: e.target.value })}
+          >
+            <option value="full">Full (awareness + transcript + protocol)</option>
+            <option value="minimal">Minimal (last handoff + protocol)</option>
+            <option value="roleOnly">Role Only (system prompt + protocol)</option>
+          </select>
+          <span className="text-[10px] text-gray-500">
+            Controls how much workflow context this agent receives
+          </span>
+        </div>
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Runtime & Policies" defaultOpen={false}>
+        <div className="rounded border border-gray-700 bg-gray-800/60 p-2 text-[10px] text-gray-500">
+          Runtime and policy controls influence execution behavior. Unsupported or advisory provider behavior is called out in the derived preview.
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <FieldLabel>Max Turns</FieldLabel>
+          <input
+            type="number"
+            className={INPUT_CLS}
+            min={0}
+            max={100}
+            value={data.maxTurns ?? ''}
+            onChange={(e) =>
+              onUpdateNode(nodeId, {
+                maxTurns: e.target.value === '' ? undefined : Number(e.target.value),
+              })
+            }
           />
         </div>
         <div className="grid grid-cols-2 gap-2">
@@ -539,6 +517,48 @@ function AgentFields({ node, nodes, onUpdateNode, compiledPreview, previewLoadin
             </select>
           </label>
         </div>
+        {isClaude && (
+          <CollapsibleSection title="Tools" defaultOpen={false}>
+            <div className="flex items-center justify-between gap-2">
+              <FieldLabel>Allowed Tools</FieldLabel>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => updateSelectedTools([...CLAUDE_TOOL_OPTIONS])}
+                  className="text-[10px] px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"
+                >
+                  Select All
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateSelectedTools([])}
+                  className="text-[10px] px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"
+                >
+                  Deselect All
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {CLAUDE_TOOL_OPTIONS.map((toolName) => (
+                <label
+                  key={toolName}
+                  className="flex items-center gap-2 rounded bg-gray-800/80 px-2 py-1 text-xs text-gray-200 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedTools.includes(toolName)}
+                    onChange={() => toggleTool(toolName)}
+                    className="accent-blue-500"
+                  />
+                  <span className="break-all">{toolName}</span>
+                </label>
+              ))}
+            </div>
+            <div className="text-[10px] text-gray-500">
+              Debounced 300ms. Default Claude selection: {DEFAULT_CLAUDE_TOOLS.join(', ')}.
+            </div>
+          </CollapsibleSection>
+        )}
       </CollapsibleSection>
 
       <AgentDefinitionPreview
@@ -547,29 +567,9 @@ function AgentFields({ node, nodes, onUpdateNode, compiledPreview, previewLoadin
         loading={previewLoading}
         error={previewError}
       />
-
-      {/* Parent Department */}
-      <div className="flex flex-col gap-0.5">
-        <FieldLabel>Department</FieldLabel>
-        <select
-          className={INPUT_CLS}
-          value={data.parentDepartmentId || ''}
-          onChange={(e) =>
-            onUpdateNode(nodeId, {
-              parentDepartmentId: e.target.value || undefined,
-            })
-          }
-        >
-          <option value="">None</option>
-          {departmentNodes.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.data?.label || d.id}
-            </option>
-          ))}
-        </select>
-      </div>
-    </CollapsibleSection>
+    </>
   );
+
 }
 
 function InputBlockFields({ node, onUpdateNode }) {
@@ -1383,18 +1383,18 @@ export default function AgentInspector({ nodes, edges = null, onUpdateNode }) {
       {/* Node type badge */}
       <div className="text-xs text-gray-400 capitalize">Type: {nodeType}</div>
 
-      {hasInspectorOutput && (
-        <div className="flex flex-wrap gap-2">
-          <InspectorTabButton
-            active={activeTab === 'config'}
-            onClick={() => {
-              setExpandedOutputNodeId(null);
-              setExpandedValidationNodeId(null);
-              setActiveTab('config');
-            }}
-          >
-            Inspector
-          </InspectorTabButton>
+      <div className="flex flex-wrap gap-2">
+        <InspectorTabButton
+          active={activeTab === 'config'}
+          onClick={() => {
+            setExpandedOutputNodeId(null);
+            setExpandedValidationNodeId(null);
+            setActiveTab('config');
+          }}
+        >
+          Setup
+        </InspectorTabButton>
+        {hasInspectorOutput && (
           <InspectorTabButton
             active={activeTab === 'output'}
             onClick={() => {
@@ -1405,20 +1405,20 @@ export default function AgentInspector({ nodes, edges = null, onUpdateNode }) {
           >
             Output
           </InspectorTabButton>
-          {handoffs.length > 0 && (
-            <InspectorTabButton
-              active={activeTab === 'handoff'}
-              onClick={() => {
-                setExpandedOutputNodeId(selectedNodeId);
-                setActiveTab('handoff');
-                markViewed(selectedNodeId);
-              }}
-            >
-              Handoff
-            </InspectorTabButton>
-          )}
-        </div>
-      )}
+        )}
+        {hasInspectorOutput && handoffs.length > 0 && (
+          <InspectorTabButton
+            active={activeTab === 'handoff'}
+            onClick={() => {
+              setExpandedOutputNodeId(selectedNodeId);
+              setActiveTab('handoff');
+              markViewed(selectedNodeId);
+            }}
+          >
+            Handoff
+          </InspectorTabButton>
+        )}
+      </div>
 
       {(activeTab === 'output' || activeTab === 'handoff') && hasInspectorOutput && (
         <>

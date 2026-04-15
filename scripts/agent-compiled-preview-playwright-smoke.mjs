@@ -211,17 +211,35 @@ async function main() {
     });
     await page.goto(baseUrl, { waitUntil: 'networkidle' });
 
+    await page.getByRole('button', { name: 'Open Activity' }).waitFor();
+    assert(await page.getByText('Chat View').count() === 0, 'Expected idle activity rail to be closed');
+    await page.getByRole('button', { name: 'Build', exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Workflows' }).click();
+    await page.getByRole('button', { name: 'Load' }).waitFor();
     await page.locator('select').filter({ hasText: 'Agent Compiled Preview Smoke' }).first().selectOption('wf-agent-preview');
     await page.getByRole('button', { name: 'Load' }).click();
     await page.getByText('Harness Strategist').first().click();
-    await page.getByRole('button', { name: /Agent Definition Center/i }).click();
+    await page.getByText('Setup').waitFor();
+    const setupHeadings = [
+      'Essentials',
+      'Behavior & Output Guidance',
+      'Context, Memory & Visibility',
+      'Runtime & Policies',
+      'Effective Preview (Derived)',
+    ];
+    for (const heading of setupHeadings) {
+      await page.getByRole('button', { name: new RegExp(heading.replace(/[()]/g, '\\$&'), 'i') }).waitFor();
+    }
     await page.getByLabel('Agent mission').fill('Design a progressive sector harness.');
+    await page.getByRole('button', { name: /Context, Memory & Visibility/i }).click();
     await page.getByLabel('Memory sources').fill('domain-brief, policy-docs');
+    await page.getByRole('button', { name: /Behavior & Output Guidance/i }).click();
     await page.getByLabel('Guardrails').fill('Do not invent unavailable provider capabilities.');
+    await page.getByRole('button', { name: /Runtime & Policies/i }).click();
     await page.getByLabel('Handoff policy').selectOption('explicit');
     await page.getByLabel('Error/retry policy').selectOption('retry-on-error');
 
-    await page.getByRole('button', { name: /Compiled Preview/i }).waitFor();
+    await page.getByRole('button', { name: /Effective Preview \(Derived\)/i }).waitFor();
     await page.getByText('codex / gpt-5.4').waitFor();
     await page.getByText('Prompt assembly order').waitFor();
     await page.getByText('Memory provenance').waitFor();
@@ -238,8 +256,28 @@ async function main() {
     assert(savedAgent.data.handoffPolicy === 'explicit', 'Expected handoff policy to persist in save payload');
     assert(savedAgent.data.errorRetryPolicy === 'retry-on-error', 'Expected error/retry policy to persist in save payload');
 
+    await page.getByRole('button', { name: 'Build', exact: true }).click();
+    await page.getByText('Agent Node').waitFor();
+    await page.getByRole('button', { name: 'Workflows' }).click();
+    await page.getByRole('button', { name: 'Load' }).waitFor();
+
     await page.getByRole('button', { name: 'Packs' }).click();
     await page.getByRole('heading', { name: 'Agent Preview Pack' }).waitFor();
+
+    const noProjectPage = await browser.newPage({ viewport: { width: 1440, height: 920 } });
+    await noProjectPage.addInitScript(() => {
+      window.localStorage.setItem('ccvm-app-view', 'swarm');
+      window.localStorage.removeItem('ccvm-active-project-id');
+    });
+    await noProjectPage.goto(baseUrl, { waitUntil: 'networkidle' });
+    await noProjectPage.getByRole('button', { name: 'Workflows' }).click();
+    await noProjectPage.locator('select').filter({ hasText: 'Agent Compiled Preview Smoke' }).first().selectOption('wf-agent-preview');
+    await noProjectPage.getByRole('button', { name: 'Load' }).click();
+    await noProjectPage.getByText('Project required').first().waitFor();
+    await noProjectPage.getByText('Select a project in the sidebar to run this workflow.').waitFor();
+    const runButton = noProjectPage.getByRole('button', { name: 'Run', exact: true });
+    await runButton.waitFor();
+    assert(await runButton.isDisabled(), 'Expected Run to stay disabled without an active project');
 
     console.log('[agent-compiled-preview] Playwright smoke PASS');
   } finally {

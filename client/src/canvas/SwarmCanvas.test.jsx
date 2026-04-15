@@ -87,7 +87,7 @@ describe('SwarmCanvas activity rail', () => {
     expect(screen.getByText(/No messages yet/i)).toBeInTheDocument();
   });
 
-  it('preserves chat messages after reset and reopens the activity rail', () => {
+  it('preserves chat messages after reset without reopening an idle activity rail', () => {
     const workflowDef = {
       id: 'workflow-1',
       name: 'Workflow 1',
@@ -122,9 +122,44 @@ describe('SwarmCanvas activity rail', () => {
       useSwarmStore.getState().reset();
     });
 
-    expect(screen.getByText('Chat View')).toBeInTheDocument();
-    expect(screen.getByText('Finished run')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Open Activity' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Chat View')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open Activity' })).toBeInTheDocument();
+  });
+
+  it('shows unread activity as a badge without auto-opening the rail', () => {
+    const workflowDef = {
+      id: 'workflow-activity-badge',
+      name: 'Workflow Activity Badge',
+      nodes: [],
+      edges: [],
+    };
+
+    useSwarmStore.setState({
+      workflowDef,
+      executionStatus: 'running',
+      sidePanelOpen: false,
+      activityUnreadCount: 0,
+    });
+
+    render(
+      <SwarmCanvas
+        workflowDef={workflowDef}
+        markDirty={vi.fn()}
+        onCanvasChange={vi.fn()}
+      />
+    );
+
+    act(() => {
+      useSwarmStore.getState().addChatMessage({
+        nodeId: 'node-a',
+        role: 'assistant',
+        text: 'Routine activity',
+        timestamp: 1,
+      });
+    });
+
+    expect(screen.queryByText('Chat View')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open Activity (1 unread)' })).toBeInTheDocument();
   });
 
   it('applies hardened class names to React Flow controls and minimap', () => {

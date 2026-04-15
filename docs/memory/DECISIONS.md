@@ -335,3 +335,23 @@
 **Alternatives rejected:** Hide provider differences ? produces false predictability. Hard-fail every advisory control ? would unnecessarily break useful workflows. Provider-specific UI forks ? increases maintenance and source-of-truth drift.
 **Revisit if:** Runtime providers converge on a shared enforceable capability API or the app adopts a stricter provider support policy.
 ---
+
+
+## DEC-037: Swarm UX clarity proceeds as UI-only IA polish before shell restructuring
+**Date:** 2026-04-14
+**Made by:** Ralph from approved Swarm UX Clarity ralplan
+**Decision:** The Swarm UX clarity program will first normalize AgentInspector information architecture and activity-rail behavior as UI-only polish over existing V18 contracts, then handle broader shell restructuring in a separate follow-up wave.
+**Reasoning:** The inspector-first lane improves the highest-friction authoring surface with the smallest reversible diff while preserving WorkflowDefinition, AgentDefinition, HarnessContract, and CompiledExecutionContract boundaries.
+**Alternatives rejected:** Shell-first cleanup ? attacks global clutter first but touches more navigation/layout surface and raises regression risk. Combined sweep ? too broad to verify and rollback safely. Relabel-only pass ? too weak to solve the core IA problem.
+**Revisit if:** Wave 1 verification shows the primary confusion is still dominated by shell-level layout rather than inspector grouping.
+---
+
+
+## DEC-038: Activity rail auto-opens only for intervention-critical Swarm events
+**Date:** 2026-04-14
+**Made by:** Ralph from approved Swarm UX Clarity ralplan
+**Decision:** The Swarm activity rail should be closed by default in idle authoring and auto-open only for intervention-critical events such as HITL/inbox arrivals or blocking runtime errors. Routine unread activity during an active run should surface as a badge without forcing the rail open.
+**Reasoning:** Keeping an empty rail open reduces canvas space and increases visual noise. Auto-opening only for intervention-critical states preserves operator visibility without causing focus shifts for routine activity.
+**Alternatives rejected:** Keep rail open by default ? wastes canvas space in idle states. Auto-open on every unread event ? causes panel thrash and interrupts authoring/running flow. Never auto-open ? risks hiding HITL/blocking states that require operator action.
+**Revisit if:** Users miss important non-blocking activity despite badge indicators, or if later activity semantics add severity levels that warrant more nuanced behavior.
+---

@@ -363,6 +363,12 @@ export default function SwarmView() {
   }, [drilldownContext?.workflowId, selectedWorkflowId, workflowDef?.id]);
 
   useEffect(() => {
+    if (executionStatus === 'blocked' && runtimeBlocker) {
+      setSidePanelOpen(true);
+    }
+  }, [executionStatus, runtimeBlocker, setSidePanelOpen]);
+
+  useEffect(() => {
     return () => {
       clearTimeout(streamJsonForceTimerRef.current);
       clearTimeout(streamJsonFeedbackTimerRef.current);
@@ -878,12 +884,16 @@ export default function SwarmView() {
             {workflowDef?.name || 'Swarm Orchestrator'}{isDirty ? ' *' : ''}
           </span>
         )}
-        <span className="text-[10px] px-2 py-0.5 rounded-md bg-gray-800/60 text-gray-400 border border-gray-700/50">
+        <span className={`text-[10px] px-2 py-0.5 rounded-md border ${
+          activeProject
+            ? 'bg-gray-800/60 text-gray-400 border-gray-700/50'
+            : 'bg-amber-950/40 text-amber-200 border-amber-700/40'
+        }`}>
           {isResolvingActiveProject
             ? 'loading...'
             : activeProject
             ? activeProject.name
-            : 'No project'}
+            : 'Project required'}
         </span>
 
         <div className="flex-1" />
@@ -1050,7 +1060,7 @@ export default function SwarmView() {
               isResolvingActiveProject
                 ? 'Loading active project...'
                 : !activeProjectId
-                ? 'Select a project first'
+                ? 'Project required — Select a project in the sidebar to run this workflow.'
                 : hasValidationErrors
                 ? `${blockingIssueCount} workflow blocker${blockingIssueCount !== 1 ? 's' : ''} — fix before running`
                 : 'Run workflow (Ctrl+Enter)'
@@ -1156,7 +1166,8 @@ export default function SwarmView() {
 
       {showMissingProjectMessage && (
         <div className="px-4 py-2 text-xs text-amber-300 bg-amber-950/40 border-b border-amber-900/60">
-          Select a project in the sidebar to run this workflow.
+          <span className="font-semibold">Project required</span>
+          <span className="ml-1.5">Select a project in the sidebar to run this workflow.</span>
         </div>
       )}
 

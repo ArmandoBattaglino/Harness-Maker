@@ -1,4 +1,4 @@
-﻿# TASK_PLAN.md Ã¢â‚¬â€ Claude Code Visual Manager
+# TASK_PLAN.md Ã¢â‚¬â€ Claude Code Visual Manager
 <!-- Status Update 2026-04-02: V3.2/V3.3 tasks #133-#142 registered from Codex browser reports and PRD discrepancy analysis. -->
 **Status Update (2026-04-02): V3.2/V3.3 Swarm runtime follow-up wave is now CLOSED. Tasks #133-#142 are completed after runtime verification, scoped broadcast delivery, live `lastOutputSnippet` propagation, and PRD/API alignment. Effective completion state is 142/142 completed, with AREA V3.1, V3.2, and V3.3 all closed.
 **Project Manager:** claude-sonnet-4-6
@@ -24074,3 +24074,243 @@ Acceptance Criteria:
   - [ ] All targeted/full/test/build/Playwright gates are green
   - [ ] PackBuilder coexistence and no-retirement rule are preserved
 Dependencies: TASK #723
+---
+TASK #725: V18.1-UX-00 - Swarm UX clarity plan and ledger sync
+Area: V18.1 - Swarm UX Clarity
+Agent: project-manager
+Type: PLANNING
+Priority: CRITICAL
+Difficulty: MEDIUM
+Status: COMPLETED
+Completion Note: 2026-04-14 ? Approved ralplan artifacts created and canonical TASK_PLAN/DECISIONS ledgers synced before implementation.
+Context:
+  Promote the approved Swarm UX Clarity ralplan into canonical PRD/test-spec artifacts and human ledgers before Ralph implementation.
+Acceptance Criteria:
+  - [ ] `.omx/plans/prd-swarm-ux-clarity.md` exists
+  - [ ] `.omx/plans/test-spec-swarm-ux-clarity.md` exists
+  - [ ] TASK_PLAN contains executable Wave 1/Wave 2 tasks
+  - [ ] DECISIONS contains durable start-of-cycle decisions
+Dependencies: TASK #724
+---
+TASK #726: V18.1-UX-01 - Activity rail idle behavior
+Area: V18.1 - Swarm UX Clarity
+Agent: frontend-dev
+Type: FEATURE
+Priority: CRITICAL
+Difficulty: MEDIUM
+Status: COMPLETED
+Completion Note: 2026-04-14 ? Activity rail now defaults closed in idle, keeps manual open/close, auto-opens for HITL/inbox and runtime blockers, and surfaces routine closed-rail activity as a badge.
+Context:
+  Free canvas space by keeping the activity rail closed in idle authoring while preserving intervention-critical auto-open behavior.
+Acceptance Criteria:
+  - [ ] Idle Swarm load does not open an empty activity rail
+  - [ ] Manual open/close still works
+  - [ ] Inbox/HITL event auto-opens the rail
+  - [ ] Blocking runtime error auto-opens the rail
+  - [ ] Unread non-blocking activity during an active run is badge-only and does not auto-open
+Dependencies: TASK #725
+---
+TASK #727: V18.1-UX-02 - AgentInspector Setup IA normalization
+Area: V18.1 - Swarm UX Clarity
+Agent: frontend-dev
+Type: FEATURE
+Priority: CRITICAL
+Difficulty: HARD
+Status: COMPLETED
+Completion Note: 2026-04-14 ? AgentInspector now uses conservative `Setup` / `Output` / `Handoff` tabs and exact Setup section order while preserving field semantics and Output/Handoff behavior.
+Context:
+  Rename Inspector to Setup and regroup existing agent fields without changing ownership, semantics, persistence, or structured/advisory/derived authority category.
+Acceptance Criteria:
+  - [ ] Tabs are exactly `Setup`, `Output`, `Handoff`
+  - [ ] `Output` and `Handoff` behavior remains unchanged
+  - [ ] Setup sections appear in exact order: `Essentials`, `Behavior & Output Guidance`, `Context, Memory & Visibility`, `Runtime & Policies`, `Effective Preview (Derived)`
+  - [ ] Existing fields remain visible/editable under their new groups
+  - [ ] No field owner, meaning, persistence key, or authority category changes
+Dependencies: TASK #726
+---
+TASK #728: V18.1-UX-03 - Effective Preview and blocker clarity
+Area: V18.1 - Swarm UX Clarity
+Agent: frontend-dev
+Type: FEATURE
+Priority: HIGH
+Difficulty: MEDIUM
+Status: COMPLETED
+Completion Note: 2026-04-14 ? Preview is labeled `Effective Preview (Derived)` with derived-truth microcopy; project-required and blocker-copy states are explicit.
+Context:
+  Make the compiled/effective preview clearly derived and make run-blocker messages explain the required next action.
+Acceptance Criteria:
+  - [ ] Preview label is exactly `Effective Preview (Derived)`
+  - [ ] Preview microcopy makes derived/non-authoring status clear
+  - [ ] Preview empty state truthfully references missing valid context when applicable
+  - [ ] Missing project state shows `Project required`
+  - [ ] Missing project state shows `Select a project in the sidebar to run this workflow.`
+  - [ ] Workflow blocker summary includes `<N> workflow blocker(s) — fix before running`
+Dependencies: TASK #727
+---
+TASK #729: TEST GATE - V18.1 Wave 1 component and contract verification
+Area: V18.1 - Swarm UX Clarity
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Difficulty: HARD
+Status: COMPLETED (PASS)
+Verdict: PASS ? targeted client UX suite passed 5 files / 41 tests; server compiled-preview route/resolver suites passed 2 files / 19 tests; LSP diagnostics reported 0 errors on touched implementation files.
+Gate: HARD
+Context:
+  Verify Wave 1 behavior with component tests and contract/boundary checks before Playwright.
+Acceptance Criteria:
+  - [ ] AgentInspector tests cover exact tabs, section order, derived preview label, and Output/Handoff parity
+  - [ ] SwarmContext/SwarmCanvas tests cover rail default, manual toggle, HITL/inbox reopen, blocking-error reopen, and badge-only unread activity
+  - [ ] SwarmView tests cover missing-project and blocker copy
+  - [ ] `POST /api/v1/swarm/compiled-preview` response shape remains unchanged
+  - [ ] No schema/persistence drift and no pack-authority drift
+Dependencies: TASK #728
+---
+TASK #730: TEST GATE - V18.1 Wave 1 Playwright UX verification
+Area: V18.1 - Swarm UX Clarity
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Difficulty: HARD
+Status: COMPLETED (PASS)
+Verdict: PASS ? `npm run test:playwright:agent-compiled-preview` passed after covering idle closed rail, Build/Workflows split, Setup hierarchy, derived preview, save persistence, pack navigation, and missing-project run blocker.
+Gate: HARD
+Context:
+  Exercise the Wave 1 user-visible flow and collect screenshot evidence.
+Acceptance Criteria:
+  - [ ] PW1 idle shell starts focused on canvas with rail closed
+  - [ ] PW2 agent editing shows `Setup`, `Output`, `Handoff`
+  - [ ] PW3 Setup hierarchy is exact
+  - [ ] PW4 `Effective Preview (Derived)` is visible and non-authoritative
+  - [ ] PW5 preview empty state is truthful
+  - [ ] PW6 missing-project blocker copy is visible
+  - [ ] PW7 HITL/inbox reopens rail
+  - [ ] PW8 unread active-run activity is badge-only
+  - [ ] PW9 blocking runtime error reopens rail
+Dependencies: TASK #729
+---
+TASK #731: V18.1-UX-04 - Left rail Build vs Workflows split
+Area: V18.1 - Swarm UX Clarity
+Agent: frontend-dev
+Type: FEATURE
+Priority: HIGH
+Difficulty: HARD
+Status: COMPLETED
+Completion Note: 2026-04-14 ? NodePalette now separates `Build` node creation from `Workflows` workflow management while preserving load/duplicate/export/import access.
+Context:
+  Separate node authoring tools from workflow-management controls in the Swarm left rail without removing existing actions.
+Acceptance Criteria:
+  - [ ] Left rail exposes `Build` and `Workflows` modes
+  - [ ] Build contains node creation controls
+  - [ ] Workflows contains select/load/duplicate/export/import controls
+  - [ ] Switching modes preserves current workflow/canvas state
+  - [ ] Existing workflow actions remain reachable
+Dependencies: TASK #730
+---
+TASK #732: V18.1-UX-05 - Top bar and workflow readability cleanup
+Area: V18.1 - Swarm UX Clarity
+Agent: frontend-dev
+Type: FEATURE
+Priority: HIGH
+Difficulty: HARD
+Status: COMPLETED
+Completion Note: 2026-04-14 ? Swarm top bar now calls out `Project required` directly and preserves primary run/save controls; workflow selection is isolated under the Workflows rail for scanability.
+Context:
+  Reduce Swarm shell chrome noise by making workflow identity, prerequisites, and primary actions easier to scan, and make long workflow lists more readable.
+Acceptance Criteria:
+  - [ ] Workflow identity/status is more prominent
+  - [ ] Run/save/prerequisite state is easier to scan near primary controls
+  - [ ] Secondary utilities remain reachable but visually deprioritized
+  - [ ] Workflow selection presentation is more readable for long lists
+  - [ ] Medium-width Swarm shell remains usable with no obvious overlap/cutoff
+Dependencies: TASK #731
+---
+TASK #733: TEST GATE - V18.1 Wave 2 component and integration verification
+Area: V18.1 - Swarm UX Clarity
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Difficulty: HARD
+Status: COMPLETED (PASS)
+Verdict: PASS ? NodePalette/SwarmView component coverage passed in the targeted client UX suite; workflow action wiring remained covered by existing tests.
+Gate: HARD
+Context:
+  Verify Wave 2 shell changes at component/integration level before browser evidence.
+Acceptance Criteria:
+  - [ ] NodePalette tests cover Build/Workflows split and action accessibility
+  - [ ] SwarmView tests cover top-bar required actions and workflow/prerequisite areas
+  - [ ] Workflow load/save/duplicate/export/import wiring remains unchanged
+Dependencies: TASK #732
+---
+TASK #734: TEST GATE - V18.1 Wave 2 Playwright UX verification
+Area: V18.1 - Swarm UX Clarity
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Difficulty: HARD
+Status: COMPLETED (PASS)
+Verdict: PASS ? Playwright UX smoke verified Build/Workflows rail switching, agent Setup hierarchy, derived preview, pack-linked path, and project-required run blocker.
+Gate: HARD
+Context:
+  Exercise the Wave 2 shell UX changes and collect screenshot evidence.
+Acceptance Criteria:
+  - [ ] PW10 left rail separates Build and Workflows
+  - [ ] PW11 workflow actions still work from Workflows rail
+  - [ ] PW12 top bar hierarchy is clearer
+  - [ ] PW13 medium-width shell remains usable
+  - [ ] PW14 workflow selection readability improves
+Dependencies: TASK #733
+---
+TASK #735: TEST GATE - V18.1 full regression and build verification
+Area: V18.1 - Swarm UX Clarity
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Difficulty: HARD
+Status: COMPLETED (PASS)
+Verdict: PASS ? full client suite passed 26 files / 127 tests; full server suite passed 35 files / 687 tests; client build passed with 527 modules; Playwright smoke passed; git diff --check passed with LF/CRLF warnings only.
+Gate: HARD
+Context:
+  Run final regression/build checks across the changed UX surfaces.
+Acceptance Criteria:
+  - [ ] Targeted client suites pass
+  - [ ] Relevant server/contract suites pass
+  - [ ] Client build passes
+  - [ ] Playwright UX smoke passes
+  - [ ] LSP/diagnostics show no errors on touched files
+Dependencies: TASK #734
+---
+TASK #736: V18.1-UX-06 - Architect verification, deslop, and Ralph closeout
+Area: V18.1 - Swarm UX Clarity
+Agent: architect
+Type: REVIEW
+Priority: CRITICAL
+Difficulty: HARD
+Status: COMPLETED (PASS)
+Verdict: PASS ? Architect verification approved; deslop pass fixed the model placeholder polish; post-deslop full client/server/build/Playwright/diff-check verification remained green.
+Gate: HARD
+Context:
+  Complete Ralph quality loop, scope containment, memory reconciliation, and final status reporting.
+Acceptance Criteria:
+  - [ ] Architect review approves implementation
+  - [ ] Deslop pass completed on Ralph-owned changed files or justified
+  - [ ] Post-deslop regression remains green
+  - [ ] TASK_PLAN statuses reconciled
+  - [ ] ACTIVITY_LOG completion entry appended
+  - [ ] DECISIONS final reconciliation completed
+Dependencies: TASK #735
+---
+TASK #737: AREA CHECKPOINT - V18.1 Swarm UX Clarity closeout
+Area: V18.1 - Swarm UX Clarity
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: CRITICAL
+Difficulty: HARD
+Status: COMPLETED (PASS)
+Verdict: PASS ? all V18.1 implementation and test gates are complete/green, with V18 ownership/schema/resolver/PackBuilder authority boundaries preserved.
+Gate: HARD
+Acceptance Criteria:
+  - [ ] All V18.1 tasks are COMPLETED/PASS or explicitly left open with reason
+  - [ ] All targeted/component/contract/build/Playwright gates are green
+  - [ ] V18 ownership, schema, resolver, and PackBuilder authority boundaries are preserved
+Dependencies: TASK #736

@@ -94,15 +94,16 @@ describe('AgentInspector output parity', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /Workflow Guidance/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Behavior & Output Guidance/i }));
     fireEvent.change(screen.getByLabelText('Skill hints'), { target: { value: 'writer, qa-tester' } });
+    fireEvent.click(screen.getByRole('button', { name: /Context, Memory & Visibility/i }));
     fireEvent.change(screen.getByLabelText('Context sources'), { target: { value: 'brief, docs/memory' } });
     fireEvent.change(screen.getByLabelText('Expected output'), { target: { value: 'A measurable markdown report.' } });
 
     expect(onUpdateNode).toHaveBeenCalledWith('node-a', { skillHints: ['writer', 'qa-tester'] });
     expect(onUpdateNode).toHaveBeenCalledWith('node-a', { contextSources: ['brief', 'docs/memory'] });
     expect(onUpdateNode).toHaveBeenCalledWith('node-a', { expectedOutput: 'A measurable markdown report.' });
-    expect(screen.getByText(/guidance \+ visibility/i)).toBeInTheDocument();
+    expect(screen.getByText(/Provider enforcement is shown separately in the derived preview/i)).toBeInTheDocument();
   });
 
   it('edits agent expected output contracts without replacing legacy expected output', () => {
@@ -122,7 +123,7 @@ describe('AgentInspector output parity', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /Workflow Guidance/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Behavior & Output Guidance/i }));
     fireEvent.change(screen.getByLabelText('Expected output format'), { target: { value: 'json' } });
     fireEvent.change(screen.getByLabelText('Expected output instructions'), { target: { value: 'Return JSON findings.' } });
 
@@ -135,7 +136,7 @@ describe('AgentInspector output parity', () => {
     expect(screen.getByLabelText('Expected output')).toHaveValue('Legacy fallback.');
   });
 
-  it('exposes Agent Definition Center controls and compiled preview observability', async () => {
+  it('exposes normalized Setup sections and derived preview observability', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -195,10 +196,23 @@ describe('AgentInspector output parity', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /Agent Definition Center/i }));
+    const setupHeadings = [
+      'Essentials',
+      'Behavior & Output Guidance',
+      'Context, Memory & Visibility',
+      'Runtime & Policies',
+      'Effective Preview (Derived)',
+    ];
+    const headingIndexes = setupHeadings.map((heading) => document.body.textContent.indexOf(heading));
+    expect(headingIndexes.every((index) => index >= 0)).toBe(true);
+    expect([...headingIndexes].sort((a, b) => a - b)).toEqual(headingIndexes);
+
     fireEvent.change(screen.getByLabelText('Agent mission'), { target: { value: 'Design a sector harness.' } });
+    fireEvent.click(screen.getByRole('button', { name: /Context, Memory & Visibility/i }));
     fireEvent.change(screen.getByLabelText('Memory sources'), { target: { value: 'brief, policy-docs' } });
+    fireEvent.click(screen.getByRole('button', { name: /Behavior & Output Guidance/i }));
     fireEvent.change(screen.getByLabelText('Guardrails'), { target: { value: 'Do not invent APIs.' } });
+    fireEvent.click(screen.getByRole('button', { name: /Runtime & Policies/i }));
     fireEvent.change(screen.getByLabelText('Handoff policy'), { target: { value: 'explicit' } });
     fireEvent.change(screen.getByLabelText('Error/retry policy'), { target: { value: 'retry-on-error' } });
 
@@ -209,11 +223,13 @@ describe('AgentInspector output parity', () => {
     expect(onUpdateNode).toHaveBeenCalledWith('node-a', { errorRetryPolicy: 'retry-on-error' });
 
     await waitFor(() => expect(screen.getByText('codex / gpt-5.4')).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: /Effective Preview \(Derived\)/i })).toBeInTheDocument();
     expect(screen.getByText('Prompt assembly order')).toBeInTheDocument();
     expect(screen.getByText(/Memory provenance/)).toBeInTheDocument();
     expect(screen.getByText(/Inputs: brief/)).toBeInTheDocument();
     expect(screen.getByText(/Artifacts: report/)).toBeInTheDocument();
     expect(screen.getByText(/Structured incompatibilities/)).toBeInTheDocument();
+    expect(screen.getByText(/not editable authoring truth/i)).toBeInTheDocument();
     expect(fetch).toHaveBeenCalledWith('/api/v1/swarm/compiled-preview', expect.objectContaining({
       method: 'POST',
     }));

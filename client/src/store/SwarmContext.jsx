@@ -68,7 +68,8 @@ const buildClearedExecutionState = () => ({
   packResult: null,
   chatFilter: 'all',
   sidePanelMode: 'chat',
-  sidePanelOpen: true,
+  sidePanelOpen: false,
+  activityUnreadCount: 0,
   focusedDepartmentId: null,
   departmentStack: [],
   selectedNodeId: null,
@@ -103,6 +104,7 @@ const useSwarmStore = create((set, get) => ({
   packResult: null,          // pack-shaped outputs/artifacts from status/results hydration
   chatFilter: 'all',         // 'all' or specific nodeId
   sidePanelMode: 'chat',     // 'feed' | 'chat' — which panel is shown
+  activityUnreadCount: 0,    // badge-only activity count while the rail is closed
 
   // Canvas navigation
   focusedDepartmentId: null,
@@ -110,7 +112,7 @@ const useSwarmStore = create((set, get) => ({
 
   // Selected node (for AgentInspector panel)
   selectedNodeId: null,
-  sidePanelOpen: true,
+  sidePanelOpen: false,
 
   // Expanded output card — which agent's floating output card is open on canvas
   expandedOutputNodeId: null,
@@ -176,6 +178,7 @@ const useSwarmStore = create((set, get) => ({
     // Auto-open chat panel when HITL arrives
     sidePanelOpen: true,
     sidePanelMode: 'chat',
+    activityUnreadCount: 0,
   })),
 
   resolveInboxItem: (itemId) => set((state) => ({
@@ -188,11 +191,13 @@ const useSwarmStore = create((set, get) => ({
   })),
 
   addFeedEvent: (event) => set((state) => ({
-    interAgentFeed: [...state.interAgentFeed, event].slice(-100)  // keep last 100
+    interAgentFeed: [...state.interAgentFeed, event].slice(-100),  // keep last 100
+    activityUnreadCount: state.sidePanelOpen ? 0 : state.activityUnreadCount + 1,
   })),
 
   addChatMessage: (msg) => set((state) => ({
-    chatMessages: [...state.chatMessages, msg].slice(-500)  // keep last 500
+    chatMessages: [...state.chatMessages, msg].slice(-500),  // keep last 500
+    activityUnreadCount: state.sidePanelOpen ? 0 : state.activityUnreadCount + 1,
   })),
 
   patchLatestChatMessage: (nodeId, patch, predicate = null) => set((state) => {
@@ -234,7 +239,10 @@ const useSwarmStore = create((set, get) => ({
 
   setChatFilter: (filter) => set({ chatFilter: filter }),
   setSidePanelMode: (mode) => set({ sidePanelMode: mode }),
-  setSidePanelOpen: (open) => set({ sidePanelOpen: open }),
+  setSidePanelOpen: (open) => set({
+    sidePanelOpen: open,
+    ...(open ? { activityUnreadCount: 0 } : {}),
+  }),
 
   setFocusedDepartment: (id) => set((state) => {
     // Avoid pushing duplicate if id is already the last item on the stack
@@ -400,6 +408,8 @@ const useSwarmStore = create((set, get) => ({
       interAgentFeed: prev.interAgentFeed,
       chatFilter: prev.chatFilter,
       sidePanelMode: prev.chatMessages.length > 0 ? 'chat' : prev.sidePanelMode,
+      sidePanelOpen: false,
+      activityUnreadCount: 0,
     });
   },
 

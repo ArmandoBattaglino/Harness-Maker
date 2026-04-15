@@ -558,10 +558,9 @@ export default function SwarmCanvas({
   const setSidePanelMode = useSwarmStore((s) => s.setSidePanelMode);
   const sidePanelOpen = useSwarmStore((s) => s.sidePanelOpen);
   const setSidePanelOpen = useSwarmStore((s) => s.setSidePanelOpen);
+  const activityUnreadCount = useSwarmStore((s) => s.activityUnreadCount);
   const selectedNodeId = useSwarmStore((s) => s.selectedNodeId);
   const expandedOutputNodeId = useSwarmStore((s) => s.expandedOutputNodeId);
-  // Keep the activity rail available even before the first message so the
-  // chat/feed empty states remain visible across idle, reload, and reset.
   const showSidePanels = sidePanelOpen;
   const showInspector = Boolean(selectedNodeId);
 
@@ -1160,8 +1159,14 @@ export default function SwarmCanvas({
             <button
               onClick={() => setSidePanelOpen(true)}
               className="rounded-md border border-gray-700 bg-gray-800 px-2 py-1 text-[11px] font-medium text-gray-200 hover:bg-gray-700"
+              aria-label={activityUnreadCount > 0 ? `Open Activity (${activityUnreadCount} unread)` : 'Open Activity'}
             >
               Open Activity
+              {activityUnreadCount > 0 && (
+                <span className="ml-1 rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] text-white">
+                  {activityUnreadCount}
+                </span>
+              )}
             </button>
           </div>
         )}

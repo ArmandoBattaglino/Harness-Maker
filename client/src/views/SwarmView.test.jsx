@@ -121,6 +121,11 @@ describe('SwarmView runtime shell contracts', () => {
   beforeEach(() => {
     resetSwarmStore();
     workflowListMock.workflows = [];
+    appStateMock.activeProjectId = 'project-1';
+    appStateMock.projects = [
+      { id: 'project-1', name: 'Project One', path: 'C:\\Projects\\One' },
+    ];
+    appStateMock.projectsHydrated = true;
     appStateMock.navigationIntent = null;
     appDispatchMock.mockReset();
     vi.mocked(useInbox).mockReset();
@@ -326,6 +331,30 @@ describe('SwarmView runtime shell contracts', () => {
       expect(screen.getByText(/Gemini error/i)).toBeInTheDocument();
       expect(screen.getByText(/Runtime fallback: claude to codex because quota\./i)).toBeInTheDocument();
     });
+    expect(useSwarmStore.getState().sidePanelOpen).toBe(true);
+  });
+
+  it('shows explicit project-required copy when no project is selected', async () => {
+    appStateMock.activeProjectId = null;
+    appStateMock.projects = [];
+    appStateMock.projectsHydrated = true;
+    useSwarmStore.setState({
+      workflowDef: {
+        id: 'workflow-no-project',
+        name: 'Workflow No Project',
+        nodes: [{ id: 'node-a', type: 'agent', data: { label: 'Agent A' } }],
+        edges: [],
+      },
+      executionStatus: 'idle',
+    });
+
+    render(<SwarmView />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Project required').length).toBeGreaterThan(0);
+      expect(screen.getByText('Select a project in the sidebar to run this workflow.')).toBeInTheDocument();
+    });
+    expect(screen.getByRole('button', { name: 'Run' })).toBeDisabled();
   });
 
   it('disables Run for global blockers and keeps agent warnings out of the top summary', async () => {
@@ -399,6 +428,7 @@ describe('SwarmView runtime shell contracts', () => {
 
     const runButton = screen.getByRole('button', { name: 'Run' });
     expect(runButton).toBeDisabled();
+    expect(runButton).toHaveAttribute('title', '1 workflow blocker — fix before running');
     expect(screen.getByText('No start node')).toBeInTheDocument();
     expect(screen.queryByText(/empty system prompt/i)).not.toBeInTheDocument();
   });

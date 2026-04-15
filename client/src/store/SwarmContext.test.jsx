@@ -97,6 +97,36 @@ describe('SwarmContext client contracts', () => {
     expect(useSwarmStore.getState().resolvedHitlIds).toContain('wrapped-1');
   });
 
+  it('keeps activity rail closed by default and reopens it for HITL inbox items only', () => {
+    expect(useSwarmStore.getState().sidePanelOpen).toBe(false);
+
+    useSwarmStore.getState().addChatMessage({
+      nodeId: 'node-a',
+      role: 'assistant',
+      text: 'Routine activity',
+      timestamp: 1,
+    });
+
+    expect(useSwarmStore.getState().sidePanelOpen).toBe(false);
+    expect(useSwarmStore.getState().activityUnreadCount).toBe(1);
+
+    useSwarmStore.getState().addInboxItem({ id: 'hitl-1', status: 'pending' });
+
+    expect(useSwarmStore.getState().sidePanelOpen).toBe(true);
+    expect(useSwarmStore.getState().sidePanelMode).toBe('chat');
+    expect(useSwarmStore.getState().activityUnreadCount).toBe(0);
+  });
+
+  it('clears activity unread count when the activity rail is manually opened', () => {
+    useSwarmStore.getState().addFeedEvent({ type: 'handoff_started', timestamp: 1 });
+
+    expect(useSwarmStore.getState().activityUnreadCount).toBe(1);
+    useSwarmStore.getState().setSidePanelOpen(true);
+
+    expect(useSwarmStore.getState().sidePanelOpen).toBe(true);
+    expect(useSwarmStore.getState().activityUnreadCount).toBe(0);
+  });
+
   it('clears stale execution state when switching to a different workflow id', () => {
     useSwarmStore.setState({
       activeExecutionId: 'exec-1',
@@ -136,7 +166,7 @@ describe('SwarmContext client contracts', () => {
     expect(state.activeExecutionId).toBeNull();
   });
 
-  it('preserves the selected runtime provider and chat history when reset clears execution state', () => {
+  it('preserves the selected runtime provider and chat history when reset clears execution state without opening idle activity', () => {
     const chatMessages = [
       { nodeId: 'node-a', role: 'assistant', text: 'Done', timestamp: 1 },
     ];
@@ -156,6 +186,7 @@ describe('SwarmContext client contracts', () => {
     expect(state.executionStatus).toBe('idle');
     expect(state.chatMessages).toEqual(chatMessages);
     expect(state.selectedRuntimeProvider).toBe('codex');
+    expect(state.sidePanelOpen).toBe(false);
   });
 
   it('hydrates persisted outputEntries alongside legacy finalText', () => {

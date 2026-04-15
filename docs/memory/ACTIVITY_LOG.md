@@ -6397,3 +6397,14 @@ full self-contained context and acceptance criteria.
 **Blockers:** none.
 **Next:** If you want to continue the program, the natural V18 follow-up is widening compiled preview context for pack-linked Swarm authoring so the ADC can optionally preview pack runtime overrides and other pack-linked effective behavior, then adding a true full-stack smoke that hits the real resolver instead of a stubbed preview response.
 ---
+
+## 2026-04-14 — Ralph — Swarm UX Clarity V18.1
+**Outcome:** COMPLETED / VERIFIED
+**Summary:** Executed the approved Swarm UX Clarity plan through Wave 1 and Wave 2. Swarm now keeps the empty activity rail closed in idle, reopens it for HITL/inbox and runtime blockers, shows routine closed-rail activity as a badge, normalizes AgentInspector into `Setup` / `Output` / `Handoff`, regroups agent setup into explicit Essentials / Behavior / Context / Runtime / Effective Preview sections, marks the preview as derived, clarifies project-required run blockers, and separates NodePalette `Build` from `Workflows`.
+**Files changed:** `.omx/context/swarm-ux-clarity-ralplan-20260414T165550Z.md`, `.omx/context/swarm-ux-detailed-ralplan-20260414T171136Z.md`, `.omx/plans/prd-swarm-ux-clarity.md`, `.omx/plans/test-spec-swarm-ux-clarity.md`, `client/src/canvas/AgentInspector.jsx`, `client/src/canvas/AgentInspector.test.jsx`, `client/src/canvas/NodePalette.jsx`, `client/src/canvas/NodePalette.test.jsx`, `client/src/canvas/SwarmCanvas.jsx`, `client/src/canvas/SwarmCanvas.test.jsx`, `client/src/store/SwarmContext.jsx`, `client/src/store/SwarmContext.test.jsx`, `client/src/views/SwarmView.jsx`, `client/src/views/SwarmView.test.jsx`, `scripts/agent-compiled-preview-playwright-smoke.mjs`, `docs/TASK_PLAN.md`, `docs/memory/DECISIONS.md`, `docs/memory/ACTIVITY_LOG.md`
+**Bugs fixed:** Empty activity rail no longer steals canvas width in idle; project-required run blocker is now explicit; AgentInspector no longer presents workflow guidance and agent definition as overlapping top-level concepts.
+**Decisions made:** DEC-037 and DEC-038 were synced before implementation. No additional final decision was required beyond confirming those approved-plan decisions.
+**Verification:** targeted client UX suite PASS (5 files / 41 tests); targeted server compiled-preview suites PASS (2 files / 19 tests); full client suite PASS (26 files / 127 tests); full server suite PASS (35 files / 687 tests); client build PASS (527 modules); `npm run test:playwright:agent-compiled-preview` PASS; LSP diagnostics 0 errors on touched implementation files (`tsc skipped: no tsconfig found` caveat); `git diff --check` PASS with LF/CRLF warnings only; architect verification APPROVE; post-deslop full regression remained green.
+**Blockers:** none.
+**Next:** Commit and push the Swarm UX clarity changes, then consider a future Wave 3 for richer responsive behavior and severity-aware activity badges.
+---
