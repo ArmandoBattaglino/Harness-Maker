@@ -75,6 +75,7 @@ const buildClearedExecutionState = () => ({
   selectedNodeId: null,
   expandedOutputNodeId: null,
   expandedValidationNodeId: null,
+  expandedPromptEditorNodeId: null,
   agentValidationIssuesByNodeId: {},
   ptyExplosionNodeId: null,
   wsConnected: false,
@@ -119,6 +120,9 @@ const useSwarmStore = create((set, get) => ({
 
   // Expanded validation card — which agent's floating validation card is open on canvas
   expandedValidationNodeId: null,
+
+  // Expanded prompt block editor — which agent's prompt editor panel is open on canvas
+  expandedPromptEditorNodeId: null,
 
   // Agent-scoped validation issues keyed by nodeId for local node UI
   agentValidationIssuesByNodeId: {},
@@ -266,14 +270,30 @@ const useSwarmStore = create((set, get) => ({
   setResumed: () => set({ executionStatus: 'running' }),
 
   setSelectedNode: (id) => set({ selectedNodeId: id }),
-  setExpandedOutputNodeId: (id) => set((state) => ({
-    expandedOutputNodeId: state.expandedOutputNodeId === id ? null : id,
-    expandedValidationNodeId: state.expandedOutputNodeId === id ? state.expandedValidationNodeId : null,
-  })),
-  setExpandedValidationNodeId: (id) => set((state) => ({
-    expandedValidationNodeId: state.expandedValidationNodeId === id ? null : id,
-    expandedOutputNodeId: state.expandedValidationNodeId === id ? state.expandedOutputNodeId : null,
-  })),
+  setExpandedOutputNodeId: (id) => set((state) => {
+    const isToggleOff = state.expandedOutputNodeId === id;
+    return {
+      expandedOutputNodeId: isToggleOff ? null : id,
+      expandedValidationNodeId: isToggleOff ? state.expandedValidationNodeId : null,
+      expandedPromptEditorNodeId: isToggleOff ? state.expandedPromptEditorNodeId : null,
+    };
+  }),
+  setExpandedValidationNodeId: (id) => set((state) => {
+    const isToggleOff = state.expandedValidationNodeId === id;
+    return {
+      expandedValidationNodeId: isToggleOff ? null : id,
+      expandedOutputNodeId: isToggleOff ? state.expandedOutputNodeId : null,
+      expandedPromptEditorNodeId: isToggleOff ? state.expandedPromptEditorNodeId : null,
+    };
+  }),
+  setExpandedPromptEditorNodeId: (id) => set((state) => {
+    const isToggleOff = state.expandedPromptEditorNodeId === id;
+    return {
+      expandedPromptEditorNodeId: isToggleOff ? null : id,
+      expandedOutputNodeId: isToggleOff ? state.expandedOutputNodeId : null,
+      expandedValidationNodeId: isToggleOff ? state.expandedValidationNodeId : null,
+    };
+  }),
   setAgentValidationIssuesByNodeId: (issuesByNodeId) => set({
     agentValidationIssuesByNodeId: issuesByNodeId || {},
   }),

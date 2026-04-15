@@ -1,4 +1,84 @@
 ---
+## 2026-04-15 — V19.0 Prompt Block Editor Integration Tests (Tasks #757, #758, #759)
+**Status:** COMPLETED
+**Called by:** user (direct)
+
+### Context when I started
+V19.0 Prompt Block Editor backend refactored: `_buildSystemPrompt()` now delegates to 11 `_buildBlock_*` methods assembled in user-defined order via `node.data.promptBlockOrder`/`promptBlockDisabled`. A new `POST /api/v1/swarm/prompt-preview` endpoint returns block-level previews. Needed integration tests for these 3 tasks.
+
+### What I did
+1. Read existing test patterns from `server/tests/swarm-engine.test.js` (mock setup, SwarmEngine instantiation, `_buildSystemPrompt` calling convention).
+2. Read `server/vitest.config.js` to confirm test runner configuration.
+3. Read all 11 `_buildBlock_*` methods, `_buildSystemPrompt()` composable block assembly (lines 6789-6833), DEFAULT_PROMPT_BLOCK_ORDER, SYSTEM_BLOCKS, and the full prompt-preview route handler.
+4. Created `server/tests/prompt-block-editor.test.js` with 52 tests across 4 groups:
+   - Group 1 (26 tests): Individual `_buildBlock_*` methods — role (5 variants), guardrails (4), guidance (2), protocol (3), hitl (4), awareness (1), handoffs (3), packKnowledge (2), packRules (2).
+   - Group 2 (8 tests): Block order/assembly — default order, custom order, disabled blocks, system block immunity, missing blocks appended, unknown IDs ignored, multiple disabled, false-disabled.
+   - Group 3 (8 tests): Runtime verification — custom order via `_buildSystemPrompt`, disabled absent, default order original-style, compact Codex flat vs non-compact block assembly, solo `__DONE__`, HITL present/absent, double-newline separation.
+   - Group 4 (10 tests): Prompt-preview endpoint — full metadata, blockId filter, 400 missing fields, 404 unknown agent, disabled block flagging, system block immunity, runtime placeholders, HITL, cliInjections.
+5. First run: 51/52 PASS, 1 FAIL — Codex test expected flat format for non-compact Codex but V19.0 refactor routes non-compact Codex through composable blocks too (only `compactCodexPrompt: true` uses flat path). Fixed the test to reflect actual behavior.
+6. Second run: 52/52 PASS.
+7. Full server suite: 739/739 PASS (36 test files), zero regressions.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| `server/tests/prompt-block-editor.test.js` | NEW | 52 integration tests for V19.0 Prompt Block Editor covering tasks #757, #758, #759 |
+
+### Bugs I encountered
+None.
+
+### Decisions I made
+- Non-compact Codex path now uses block assembly (V19.0 refactor change) — the test was corrected to reflect this.
+- Used mock req/res pattern for endpoint tests (direct handler invocation via router stack inspection) instead of supertest.
+- Tests are behavioral: they verify prompt content and section ordering, not internal data structures.
+
+### What I learned
+- The V19.0 refactor changed the non-compact Codex path: it now falls through to composable blocks instead of its own flat format. Only `compactCodexPrompt: true` still uses the legacy Codex flat format.
+- Router stack inspection (`router.stack.find(...)`) works cleanly for Express route handler testing without supertest.
+
+### State I'm leaving behind
+52/52 tests PASS, 739/739 full server suite PASS. Test file at `server/tests/prompt-block-editor.test.js`.
+
+### Handoff
+Tests complete. No blockers.
+---
+
+---
+## 2026-04-15 — V19.0 Prompt Block Editor Playwright E2E smoke test (Tasks #761-#763)
+**Status:** COMPLETED
+**Called by:** user (direct)
+
+### Context when I started
+V19.0 Prompt Block Editor feature implemented: backend-dev added POST /api/v1/swarm/prompt-preview, frontend-dev added PromptBlockEditor.jsx, PromptBlockCard.jsx, gear icon on AgentNode, expandedPromptEditorNodeId in SwarmContext, slimmed AgentInspector (removed systemPrompt/mission/guardrails/tools from Setup tab).
+
+### What I did
+1. Read existing Playwright scripts (agent-compiled-preview-playwright-smoke.mjs, v17-review-followup-playwright-smoke.mjs) to understand project patterns: mock Express server, static file serving, chromium.launch with local browser, page.addInitScript for localStorage, workflow fixture + API route mocking.
+2. Read all feature components: PromptBlockEditor.jsx (floating panel, escape/click-outside close, expert mode, copy button), PromptBlockCard.jsx (color-coded source dots, expanded form fields for user blocks, preview for all blocks), AgentNode.jsx (gear icon with aria-label, expandedPromptEditorNodeId toggle), AgentInspector.jsx (slimmed Setup tab with Essentials, Context Visibility, Runtime & Policies sections only).
+3. Read server/routes/swarm.js prompt-preview endpoint (block order, metadata, runtime placeholders, CLI injections envelope shape).
+4. Wrote scripts/v19-prompt-block-editor-playwright-smoke.mjs covering 14 test steps across 3 task areas.
+
+### What I produced
+- `scripts/v19-prompt-block-editor-playwright-smoke.mjs` — standalone Playwright E2E smoke test
+  - PW-PBE-01..07 (Task #761): Canvas load, agent node visibility, gear icon on hover, panel open, block cards visible, role block expand with form fields, runtime placeholder text, Escape closes panel
+  - PW-EXP-01..06 (Task #762): Panel reopen, Expert toggle click, CLI Injections section visible, CLI block cards (Runtime Bootstrap, CLI Launch Flags, Tool Allowlist), [cli injection] source label, Expert toggle off hides CLI section
+  - PW-INS-01..03 (Task #763): Inspector opens on node click, removed fields absent (Agent mission, Guardrails labels), required fields present (Model selector, Context Visibility)
+  - Screenshots saved to screenshots/v19-pbe-*.png at each step
+  - Summary table with PASS/FAIL per test ID printed at end
+
+### Bugs found
+None (script writing only, not executed).
+
+### Decisions made
+- Used mock Express server (same pattern as agent-compiled-preview-playwright-smoke.mjs) rather than starting the real server, to keep the test self-contained and deterministic.
+- Mocked the /api/v1/swarm/prompt-preview response with realistic fixture data matching the server's response shape (blocks array with id, title, source, enabled, compiledText, tokenEstimate; cliInjections envelope).
+- Used aria-label="Open prompt block editor" to locate the gear button (matches AgentNode.jsx).
+- Used group-hover CSS class behavior — hover the agent node, then wait, then check gear visibility.
+- Checked "Agent mission" and "Guardrails" labels for inspector regression (these should be absent from the slimmed Setup tab).
+
+### Next
+Run the script manually (`node scripts/v19-prompt-block-editor-playwright-smoke.mjs`) after `npm run build` to verify all 14 steps pass.
+
+---
 ## 2026-04-09 — Task #494: TEST GATE — V10.8 full client verification pack
 **Status:** COMPLETED
 **Called by:** user (direct)

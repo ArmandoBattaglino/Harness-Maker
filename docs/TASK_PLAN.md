@@ -24314,3 +24314,707 @@ Acceptance Criteria:
   - [ ] All targeted/component/contract/build/Playwright gates are green
   - [ ] V18 ownership, schema, resolver, and PackBuilder authority boundaries are preserved
 Dependencies: TASK #736
+
+
+---
+
+## AREA: V19.0 - Prompt Block Editor
+_Components: SwarmEngine prompt construction, AgentInspector, AgentNode, SwarmContext, swarm routes_
+_Tasks: #738 -> #766_
+_Gate: Users can open a floating Prompt Block Editor panel from any agent node, see all prompt sections as visual block cards with preview/form states, reorder them, toggle them, and view CLI-level injections in expert mode. Server respects custom block order. Discrepancies (mission ignored, guardrails missing, PTY double injection) are fixed._
+_Source: PRD at .omx/plans/prd-prompt-block-editor.md (2026-04-15), user analysis of prompt injection pipeline opacity and AgentInspector clutter_
+
+---
+
+### Wave 1 -- Server: Prompt Block Refactoring (Tasks #738-#744)
+
+---
+TASK #738: PBE-SRV-01 - Extract _buildBlock_role() from _buildSystemPrompt()
+Area: V19.0 - Prompt Block Editor
+Agent: backend-dev
+Type: REFACTOR
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Context:
+  Extract the YOUR ROLE section (SwarmEngine.js lines 6637-6648) into a standalone _buildBlock_role(node, workflowContext) method.
+  FIX: merge node.data.mission as fallback/complement of node.data.systemPrompt (currently mission is ignored - DEC-039).
+  The method returns the full "=== YOUR ROLE ===" section text or empty string if no systemPrompt/mission.
+Acceptance Criteria:
+  - [ ] _buildBlock_role(node, workflowContext) exists and returns a string
+  - [ ] node.data.mission is merged into the role text (prepended before systemPrompt, separated by newline)
+  - [ ] If only mission is set (no systemPrompt), role section uses mission
+  - [ ] If only systemPrompt is set (no mission), behavior is unchanged from current
+  - [ ] If both are set, mission precedes systemPrompt in the output
+  - [ ] Empty inputs produce empty string
+Dependencies: none
+---
+TASK #739: PBE-SRV-02 - Extract _buildBlock_guardrails() - NEW prompt section
+Area: V19.0 - Prompt Block Editor
+Agent: backend-dev
+Type: FEATURE
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Context:
+  Create a new _buildBlock_guardrails(node) method that reads node.data.guardrails and produces a "=== GUARDRAILS ===" section.
+  FIX: guardrails are currently configured in AgentInspector but NEVER injected into the prompt (DEC-039).
+  Format: "=== GUARDRAILS ===\n{guardrails text}"
+Acceptance Criteria:
+  - [ ] _buildBlock_guardrails(node) exists and returns a string
+  - [ ] When node.data.guardrails is non-empty, outputs "=== GUARDRAILS ===\n{text}"
+  - [ ] When node.data.guardrails is empty/undefined, returns empty string
+  - [ ] Guardrails section appears in the assembled prompt between role and guidance
+Dependencies: none
+---
+TASK #740: PBE-SRV-03 - Extract remaining 9 block functions from _buildSystemPrompt()
+Area: V19.0 - Prompt Block Editor
+Agent: backend-dev
+Type: REFACTOR
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Context:
+  Extract the remaining sections of _buildSystemPrompt() (lines 6536-6762) into standalone methods:
+    _buildBlock_guidance(node) - from _buildAgentGuidanceLines() at lines 6681-6687
+    _buildBlock_awareness(execution, nodeId) - from lines 6627-6633
+    _buildBlock_inputs(workflowContext, nodeId, execution) - from lines 6654-6678
+    _buildBlock_packKnowledge(workflowContext) - from lines 6689-6693
+    _buildBlock_packRules(workflowContext) - from lines 6695-6704
+    _buildBlock_handoffs(inboundHandoffs) - from lines 6706-6713
+    _buildBlock_history(execution, visibility) - from lines 6715-6730
+    _buildBlock_protocol(handoffTargets) - from lines 6732-6744
+    _buildBlock_hitl(execution) - from lines 6747-6759
+  Each method returns the full section text or empty string.
+Acceptance Criteria:
+  - [ ] All 9 _buildBlock_* methods exist with correct signatures
+  - [ ] Each method returns the exact same text as the original inline section
+  - [ ] Methods are independently callable (no side effects, no shared mutable state)
+  - [ ] _buildBlock_hitl returns empty string when HITL mode is not active
+Dependencies: TASK #738, TASK #739
+---
+TASK #741: PBE-SRV-04 - Rewrite _buildSystemPrompt() as block-order loop
+Area: V19.0 - Prompt Block Editor
+Agent: backend-dev
+Type: REFACTOR
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Context:
+  Replace the monolithic _buildSystemPrompt() body with a loop that:
+  1. Reads node.data.promptBlockOrder (array of block IDs) - defaults to [role,guardrails,guidance,awareness,inputs,pack-knowledge,pack-rules,handoffs,history,protocol,hitl]
+  2. Reads node.data.promptBlockDisabled (object { blockId: true }) - defaults to {}
+  3. Iterates block order, calls the matching _buildBlock_* method, skips disabled blocks
+  4. System blocks (protocol) cannot be disabled - ignore promptBlockDisabled for them
+  5. Joins non-empty results with double newline
+  The output must be identical to the original for nodes with no custom order/disabled blocks.
+Acceptance Criteria:
+  - [ ] _buildSystemPrompt() output is byte-identical to original when no custom order/disabled is set
+  - [ ] Custom promptBlockOrder is respected
+  - [ ] Disabled blocks are skipped (except protocol)
+  - [ ] Unknown block IDs in promptBlockOrder are silently ignored
+  - [ ] Missing block IDs (not in promptBlockOrder) are appended at the end in default order
+Dependencies: TASK #740
+---
+TASK #742: PBE-SRV-05 - Remove --append-system-prompt duplication in PTY spawn
+Area: V19.0 - Prompt Block Editor
+Agent: backend-dev
+Type: BUGFIX
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Context:
+  Remove the --append-system-prompt push at SwarmEngine.js lines 4571-4578.
+  The system prompt is already included in the assembled prompt passed via the session (combinedPrompt at line 4600).
+  This fixes double injection of systemPrompt in Claude PTY mode (DEC-039).
+Acceptance Criteria:
+  - [ ] Lines 4571-4578 removed (the if block that pushes --append-system-prompt)
+  - [ ] launchArgs no longer contains --append-system-prompt for any provider
+  - [ ] PTY-spawned agents receive systemPrompt only once (via combinedPrompt)
+  - [ ] Stream-json behavior is unchanged (was already correct)
+Dependencies: TASK #741
+---
+TASK #743: TEST GATE - Wave 1 server block refactoring verification
+Area: V19.0 - Prompt Block Editor
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Difficulty: HARD
+Status: PLANNED
+Gate: HARD
+Context:
+  Verify that the block refactoring produces identical output to the original _buildSystemPrompt() and that the three discrepancy fixes work correctly.
+Acceptance Criteria:
+  - [ ] Unit tests for each _buildBlock_* method with representative node data
+  - [ ] Regression test: _buildSystemPrompt() with default order produces identical output to pre-refactor
+  - [ ] Test: mission is now included in role block output
+  - [ ] Test: guardrails now appear in assembled prompt
+  - [ ] Test: --append-system-prompt is no longer in PTY launch args
+  - [ ] Test: custom promptBlockOrder changes assembly order
+  - [ ] Test: promptBlockDisabled skips blocks (except protocol)
+  - [ ] Full server test suite passes
+Dependencies: TASK #742
+---
+TASK #744: PBE-SRV-06 - New POST /api/v1/swarm/prompt-preview endpoint
+Area: V19.0 - Prompt Block Editor
+Agent: backend-dev
+Type: FEATURE
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: PLANNED
+Context:
+  New route in server/routes/swarm.js:
+  POST /api/v1/swarm/prompt-preview
+  Request body: { workflowDef, selectedAgentId, blockId (optional) }
+  Response: { blocks[], assembledPrompt, totalTokenEstimate, blockCount, cliInjections }
+  Each block: { id, title, source, enabled, compiledText, tokenEstimate }
+  cliInjections: { bootstrapPrompt, appendSystemPrompt, launchFlags[], claudeMdContent, claudeMdPath, toolsAllowlist[], totalCliTokenEstimate }
+  Uses _buildBlock_* methods individually. Runtime blocks return placeholder text.
+  claudeMdContent reads CLAUDE.md from project path via fs.readFile (null if not found).
+  Token estimate: text.length / 4 heuristic.
+  blockId filter: when set, returns only that block.
+Acceptance Criteria:
+  - [ ] POST /api/v1/swarm/prompt-preview returns 200 with correct schema
+  - [ ] blocks[] contains all 11 block definitions with compiled text
+  - [ ] Runtime blocks (awareness, inputs, handoffs, history) return placeholder text
+  - [ ] User blocks (role, guardrails, guidance) return compiled text from node data
+  - [ ] cliInjections contains bootstrapPrompt, launchFlags, claudeMdContent, toolsAllowlist
+  - [ ] blockId filter returns only the requested block
+  - [ ] Token estimates are included per block and total
+  - [ ] Requires X-Requested-With header
+  - [ ] Returns 400 for missing workflowDef or selectedAgentId
+Dependencies: TASK #741
+
+---
+
+### Wave 2 -- Client: Store and Node Integration (Tasks #745-#747)
+
+---
+TASK #745: PBE-CLI-01 - SwarmContext store additions for prompt editor
+Area: V19.0 - Prompt Block Editor
+Agent: frontend-dev
+Type: FEATURE
+Priority: HIGH
+Difficulty: EASY
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Context:
+  Add to SwarmContext (client/src/store/SwarmContext.jsx):
+  - expandedPromptEditorNodeId: null (state)
+  - setExpandedPromptEditorNodeId(nodeId) (action)
+  Mutual exclusion: setting expandedPromptEditorNodeId clears expandedOutputNodeId and expandedValidationNodeId (and vice versa for the existing setters).
+Acceptance Criteria:
+  - [ ] expandedPromptEditorNodeId state exists with null default
+  - [ ] setExpandedPromptEditorNodeId action works correctly
+  - [ ] Opening prompt editor closes output card (expandedOutputNodeId -> null)
+  - [ ] Opening prompt editor closes validation card (expandedValidationNodeId -> null)
+  - [ ] Opening output card closes prompt editor (expandedPromptEditorNodeId -> null)
+  - [ ] Opening validation card closes prompt editor (expandedPromptEditorNodeId -> null)
+Dependencies: none
+---
+TASK #746: PBE-CLI-02 - Gear icon on AgentNode (hover trigger)
+Area: V19.0 - Prompt Block Editor
+Agent: frontend-dev
+Type: FEATURE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Context:
+  Add gear icon to client/src/canvas/nodes/AgentNode.jsx:
+  - Position: absolute, to the LEFT of the agent node (position: absolute; top: 0; right: calc(100% + 6px))
+  - Visible on hover only (opacity-0 group-hover:opacity-100 transition), stays visible when panel is open
+  - Icon: small gear SVG, 18x18px, same visual weight as output-ready dot
+  - On click: call setExpandedPromptEditorNodeId(nodeId) from store
+  - When expandedPromptEditorNodeId === this nodeId, gear stays visible (not hover-only)
+Acceptance Criteria:
+  - [ ] Gear icon appears on hover to the LEFT of the agent node
+  - [ ] Icon is 18x18px with correct positioning (right: calc(100% + 6px))
+  - [ ] Click toggles expandedPromptEditorNodeId in store
+  - [ ] Gear stays visible when prompt editor is open for this node
+  - [ ] Gear disappears on mouse leave when panel is closed
+  - [ ] Does not interfere with existing output dot or validation card
+Dependencies: TASK #745
+---
+TASK #747: TEST GATE - Wave 2 store and node integration verification
+Area: V19.0 - Prompt Block Editor
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Difficulty: MEDIUM
+Status: PLANNED
+Gate: HARD
+Context:
+  Verify store additions and gear icon behavior at component level.
+Acceptance Criteria:
+  - [ ] SwarmContext tests cover expandedPromptEditorNodeId state and mutual exclusion
+  - [ ] AgentNode tests cover gear icon visibility on hover
+  - [ ] AgentNode tests cover gear icon click -> store update
+  - [ ] Mutual exclusion: opening prompt editor closes output/validation cards
+  - [ ] Client build passes
+Dependencies: TASK #746
+
+---
+
+### Wave 3 -- Client: PromptBlockEditor Panel (Tasks #748-#753)
+
+---
+TASK #748: PBE-CLI-03 - PromptBlockEditor floating panel component
+Area: V19.0 - Prompt Block Editor
+Agent: frontend-dev
+Type: FEATURE
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Context:
+  New file: client/src/canvas/nodes/PromptBlockEditor.jsx
+  Floating card positioned LEFT of the agent node (mirror of NodeOutputCard which is RIGHT):
+  - Position: absolute top-0 right-[calc(100%+14px)]
+  - Style: w-[380px] max-h-[520px] rounded-lg border border-indigo-500/30 bg-gray-950/[0.98] backdrop-blur-sm shadow-[0_8px_18px_rgba(0,0,0,0.28)]
+  - Classes: nowheel nodrag nopan
+  - Animation: slide-in from right (mirrored from NodeOutputCard left slide-in)
+  - Header: agent name, block count, token estimate (split: standard + CLI), Expert toggle, close button
+  - Body: scrollable list - renders PromptBlockCard for each block from server response
+  - Footer: "Copy assembled prompt" button (copies assembledPrompt to clipboard)
+  - Fetches POST /api/v1/swarm/prompt-preview on mount and on field change (debounced 300ms)
+  - Close on Escape key or close button
+Acceptance Criteria:
+  - [ ] Panel renders to the LEFT of the agent node with correct positioning
+  - [ ] Visual style matches NodeOutputCard exactly (border, bg, shadow, animation)
+  - [ ] nowheel/nodrag/nopan classes prevent React Flow interaction interference
+  - [ ] Header shows agent name, block count, token estimate
+  - [ ] Expert toggle in header (off by default)
+  - [ ] Body is scrollable and renders block cards
+  - [ ] Footer has "Copy assembled prompt" button that copies to clipboard
+  - [ ] Escape key closes the panel
+  - [ ] Calls prompt-preview endpoint on mount
+Dependencies: TASK #745
+---
+TASK #749: PBE-CLI-04 - PromptBlockCard component (collapsed/expanded states)
+Area: V19.0 - Prompt Block Editor
+Agent: frontend-dev
+Type: FEATURE
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Context:
+  New file: client/src/canvas/nodes/PromptBlockCard.jsx
+  Each block card has two states:
+  COLLAPSED (default):
+  - Color dot by source: blue (user), purple (pack), orange (runtime), gray (system), red (cli)
+  - Block title
+  - First ~80 chars of compiledText as snippet
+  - Source label: [user-authored], [from pack], [runtime only], [system], [cli injection]
+  - Drag handle for reorder
+  - Expand button
+  - Enable/disable toggle (hidden for system blocks)
+  EXPANDED:
+  - Form fields for editable blocks (role: systemPrompt+mission textarea; guardrails: textarea; guidance: tools checkboxes, skillHints, expectedOutput, expectedOutputContract)
+  - Preview section: pre showing compiledText in monospace
+  - Non-editable blocks (pack, runtime, system, cli) show only preview
+  Field changes call onChange callback (propagated to node.data update in parent)
+Acceptance Criteria:
+  - [ ] Collapsed state shows color dot, title, snippet, source label, drag handle, expand button
+  - [ ] Expanded state shows form fields for editable blocks + preview for all blocks
+  - [ ] Color coding: blue=user, purple=pack, orange=runtime, gray=system, red=cli
+  - [ ] Source labels render correctly per block type
+  - [ ] Enable/disable toggle works (hidden for system blocks, hidden for cli blocks)
+  - [ ] Form fields for role block: textarea for systemPrompt + mission
+  - [ ] Form fields for guardrails block: textarea
+  - [ ] Form fields for guidance block: tools checkboxes, skillHints, expectedOutput, expectedOutputContract
+  - [ ] Preview shows compiledText in monospace/pre style
+  - [ ] onChange propagates field changes to parent
+Dependencies: TASK #748
+---
+TASK #750: PBE-CLI-05 - Block drag-and-drop reorder
+Area: V19.0 - Prompt Block Editor
+Agent: frontend-dev
+Type: FEATURE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Context:
+  Implement drag-and-drop reorder for PromptBlockCard within PromptBlockEditor.
+  Use HTML5 pointer events (no external library initially):
+  - Drag handle initiates drag
+  - Visual feedback: dragged card has opacity-50, drop target has border highlight
+  - On drop: update node.data.promptBlockOrder in store
+  - Persist order via existing workflow save mechanism (no new persistence needed)
+  If pointer events prove insufficient for UX, escalate to @dnd-kit/core (~8KB).
+Acceptance Criteria:
+  - [ ] Drag handle initiates drag on pointer down
+  - [ ] Dragged card shows visual feedback (opacity change)
+  - [ ] Drop target shows insertion indicator
+  - [ ] Dropping updates promptBlockOrder in node.data
+  - [ ] New order is reflected immediately in the panel
+  - [ ] Order persists through workflow save/load cycle
+Dependencies: TASK #749
+---
+TASK #751: PBE-CLI-06 - Expert mode toggle and CLI injection section
+Area: V19.0 - Prompt Block Editor
+Agent: frontend-dev
+Type: FEATURE
+Priority: MEDIUM
+Difficulty: MEDIUM
+Suggested Model: claude-opus-4-6
+Status: COMPLETED
+Context:
+  Add expert mode to PromptBlockEditor:
+  - Toggle in header: [Expert] - off by default
+  - State stored in localStorage (promptBlockEditor.expertMode)
+  - When on: renders a "CLI Injections" collapsible section below standard blocks
+  - CLI section contains 5 PromptBlockCard instances with source="cli" (red dot):
+    cli-bootstrap, cli-system-prompt, cli-flags, cli-claude-md, cli-tools-allowlist
+  - All CLI blocks are read-only (no form fields, only preview)
+  - cli-system-prompt shows warning badge when appendSystemPrompt is non-null (double injection warning)
+  - cli-claude-md truncates at 2000 chars with "Show more" expand
+  - Token estimate in header always shows split even when expert mode is off
+Acceptance Criteria:
+  - [ ] Expert toggle appears in panel header
+  - [ ] Toggle state persists in localStorage
+  - [ ] CLI Injections section appears/disappears smoothly on toggle
+  - [ ] 5 CLI block cards render with red dot and correct data from cliInjections response
+  - [ ] CLI blocks are all read-only
+  - [ ] cli-system-prompt shows warning badge for double injection
+  - [ ] cli-claude-md truncates at 2000 chars with "Show more"
+  - [ ] Token split shown in header even when expert mode is off
+Dependencies: TASK #749, TASK #744
+---
+TASK #752: TEST GATE - Wave 3 PromptBlockEditor component verification
+Area: V19.0 - Prompt Block Editor
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Difficulty: HARD
+Status: PLANNED
+Gate: HARD
+Context:
+  Verify all Wave 3 components at unit and integration level.
+Acceptance Criteria:
+  - [ ] PromptBlockEditor renders with correct positioning and style
+  - [ ] PromptBlockCard collapsed/expanded states render correctly
+  - [ ] Color coding works for all 5 source types (user, pack, runtime, system, cli)
+  - [ ] Drag reorder updates promptBlockOrder
+  - [ ] Expert mode toggle shows/hides CLI section
+  - [ ] CLI blocks render with correct data
+  - [ ] Copy button copies assembled prompt
+  - [ ] Escape closes panel
+  - [ ] Field changes in editable blocks propagate correctly
+  - [ ] Client build passes
+Dependencies: TASK #751
+---
+TASK #753: PBE-SRV-07 - Unit tests for prompt-preview endpoint
+Area: V19.0 - Prompt Block Editor
+Agent: qa-tester
+Type: TEST
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PLANNED
+Context:
+  Write dedicated server tests for the POST /api/v1/swarm/prompt-preview endpoint:
+  - Response schema validation (blocks[], assembledPrompt, totalTokenEstimate, blockCount, cliInjections)
+  - Each block type returns correct source and compiledText
+  - Runtime blocks return placeholder text
+  - blockId filter works correctly
+  - cliInjections includes all expected fields
+  - CLAUDE.md reading works (present and absent cases)
+  - 400 for missing required fields
+  - 403 without X-Requested-With header
+Acceptance Criteria:
+  - [ ] All test cases pass
+  - [ ] Response schema is validated for all block types
+  - [ ] Edge cases covered: empty node data, no workflow, missing agent
+  - [ ] Full server test suite passes with new tests
+Dependencies: TASK #744
+
+---
+
+### Wave 4 -- Client: AgentInspector Slimming and Wiring (Tasks #754-#756)
+
+---
+TASK #754: PBE-CLI-07 - Remove prompt fields from AgentInspector Setup tab
+Area: V19.0 - Prompt Block Editor
+Agent: frontend-dev
+Type: REFACTOR
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-opus-4-6
+Status: PLANNED
+Context:
+  Slim down AgentInspector.jsx Setup tab by removing fields that moved to the Prompt Block Editor:
+  REMOVE: systemPrompt textarea, mission textarea, guardrails textarea, skillHints input, expectedOutput textarea, expectedOutputContract (format + instructions), contextSources checkboxes, memorySources checkboxes, tools checkboxes
+  REMOVE: Effective Preview (Derived) section and AgentDefinitionPreview component usage
+  REMOVE: CollapsibleSection wrappers for removed sections
+  KEEP: Agent name (header), model selector, isTriageNode checkbox, parentDepartmentId selector, handoffPolicy dropdown, errorRetryPolicy dropdown, maxTurns input, contextVisibility selector
+  The data fields (node.data.systemPrompt, etc.) are NOT deleted from node.data - they are just no longer editable from the inspector.
+Acceptance Criteria:
+  - [ ] Setup tab no longer shows systemPrompt, mission, guardrails, skillHints, expectedOutput, expectedOutputContract, contextSources, memorySources, tools
+  - [ ] Setup tab no longer shows Effective Preview section
+  - [ ] Setup tab keeps: model, isTriageNode, parentDepartmentId, handoffPolicy, errorRetryPolicy, maxTurns, contextVisibility
+  - [ ] node.data values are preserved (not deleted)
+  - [ ] Inspector is visually cleaner and shorter
+  - [ ] No broken references to removed components
+Dependencies: TASK #748
+---
+TASK #755: PBE-CLI-08 - Wire PromptBlockEditor into AgentNode render
+Area: V19.0 - Prompt Block Editor
+Agent: frontend-dev
+Type: FEATURE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-opus-4-6
+Status: PLANNED
+Context:
+  Wire the PromptBlockEditor panel into AgentNode.jsx (similar to how NodeOutputCard is wired):
+  - Read expandedPromptEditorNodeId from SwarmContext store
+  - When expandedPromptEditorNodeId === this node id, render PromptBlockEditor as absolute-positioned child
+  - Pass node data, workflow context, and onChange handlers
+  - Ensure panel coexists with (but mutually excludes) NodeOutputCard and NodeValidationCard
+Acceptance Criteria:
+  - [ ] PromptBlockEditor renders when expandedPromptEditorNodeId matches node id
+  - [ ] Panel is positioned LEFT of node (not overlapping output card on RIGHT)
+  - [ ] Mutual exclusion with NodeOutputCard and NodeValidationCard works
+  - [ ] Field changes in the block editor update node.data in the store
+  - [ ] Panel disappears when another node is selected or Escape is pressed
+Dependencies: TASK #748, TASK #746, TASK #754
+---
+TASK #756: TEST GATE - Wave 4 inspector slimming and wiring verification
+Area: V19.0 - Prompt Block Editor
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Difficulty: HARD
+Status: PLANNED
+Gate: HARD
+Context:
+  Verify that inspector slimming did not break anything and that the full editor-to-node wiring works.
+Acceptance Criteria:
+  - [ ] AgentInspector tests pass with slimmed Setup tab
+  - [ ] No broken imports or missing component references
+  - [ ] AgentNode tests cover PromptBlockEditor rendering condition
+  - [ ] Field changes in block editor correctly update node.data
+  - [ ] Existing AgentInspector tests still pass (kept fields work correctly)
+  - [ ] Client build passes
+Dependencies: TASK #755
+
+---
+
+### Wave 5 -- Integration, E2E and Closeout (Tasks #757-#766)
+
+---
+TASK #757: PBE-INT-01 - End-to-end field change -> preview update flow
+Area: V19.0 - Prompt Block Editor
+Agent: qa-tester
+Type: TEST
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PLANNED
+Context:
+  Integration test verifying the full loop:
+  1. User opens prompt block editor via gear icon
+  2. Edits systemPrompt in the role block
+  3. Server receives prompt-preview request with updated data
+  4. Response contains updated compiledText for role block
+  5. Preview in the card updates to show new text
+Acceptance Criteria:
+  - [ ] Edit in role block -> debounced fetch -> updated preview
+  - [ ] Edit in guardrails block -> debounced fetch -> updated preview
+  - [ ] Edit in guidance block (tools change) -> debounced fetch -> updated preview
+  - [ ] Block reorder -> fetch -> assembledPrompt reflects new order
+Dependencies: TASK #755, TASK #753
+---
+TASK #758: PBE-INT-02 - Block order persistence through save/load cycle
+Area: V19.0 - Prompt Block Editor
+Agent: qa-tester
+Type: TEST
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PLANNED
+Context:
+  Verify that custom block order and disabled blocks persist through workflow save and reload:
+  1. Open block editor, reorder blocks, disable a block
+  2. Save workflow
+  3. Reload page / reopen workflow
+  4. Open block editor - order and disabled state are preserved
+Acceptance Criteria:
+  - [ ] promptBlockOrder persists in saved workflow JSON
+  - [ ] promptBlockDisabled persists in saved workflow JSON
+  - [ ] After reload, block editor shows preserved order
+  - [ ] After reload, disabled blocks remain disabled
+  - [ ] Default order nodes (no custom order) still work correctly after reload
+Dependencies: TASK #757
+---
+TASK #759: PBE-INT-03 - Verify _buildSystemPrompt() respects saved block order at runtime
+Area: V19.0 - Prompt Block Editor
+Agent: qa-tester
+Type: TEST
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PLANNED
+Context:
+  Verify that when a workflow is executed, the server _buildSystemPrompt() uses the custom block order and disabled blocks from the saved workflow definition.
+Acceptance Criteria:
+  - [ ] Agent with custom block order produces prompt in that order
+  - [ ] Agent with disabled block skips that section in the assembled prompt
+  - [ ] Agent with default order (no promptBlockOrder) produces original prompt
+  - [ ] Disabled protocol block is ignored (protocol cannot be disabled)
+Dependencies: TASK #757
+---
+TASK #760: TEST GATE - Wave 5 integration verification
+Area: V19.0 - Prompt Block Editor
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Difficulty: HARD
+Status: PLANNED
+Gate: HARD
+Context:
+  All integration tests pass, all unit tests pass, server+client build clean.
+Acceptance Criteria:
+  - [ ] All PBE integration tests pass
+  - [ ] Full server test suite passes
+  - [ ] Full client test suite passes
+  - [ ] Client build passes (no new warnings)
+Dependencies: TASK #759
+---
+TASK #761: PBE-E2E-01 - Playwright smoke: gear icon -> panel open -> block interaction
+Area: V19.0 - Prompt Block Editor
+Agent: qa-tester
+Type: TEST
+Priority: HIGH
+Difficulty: HARD
+Status: PLANNED
+Context:
+  Playwright E2E smoke test:
+  1. Navigate to Swarm canvas with a workflow containing an agent
+  2. Hover over agent node - verify gear icon appears on left
+  3. Click gear icon - verify PromptBlockEditor panel opens to the left
+  4. Verify block cards are visible with correct source color dots
+  5. Click a user block (role) - verify it expands with form + preview
+  6. Edit systemPrompt text - verify preview updates
+  7. Click a runtime block (awareness) - verify it shows placeholder preview only
+  8. Close panel with Escape - verify it closes
+  9. Screenshot evidence at each step
+Acceptance Criteria:
+  - [ ] PW-PBE-01: gear icon visible on hover
+  - [ ] PW-PBE-02: panel opens to left of node
+  - [ ] PW-PBE-03: block cards visible with color coding
+  - [ ] PW-PBE-04: user block expands with form + preview
+  - [ ] PW-PBE-05: edit updates preview
+  - [ ] PW-PBE-06: runtime block shows placeholder
+  - [ ] PW-PBE-07: Escape closes panel
+Dependencies: TASK #760
+---
+TASK #762: PBE-E2E-02 - Playwright smoke: expert mode and CLI blocks
+Area: V19.0 - Prompt Block Editor
+Agent: qa-tester
+Type: TEST
+Priority: MEDIUM
+Difficulty: MEDIUM
+Status: PLANNED
+Context:
+  Playwright E2E smoke for expert mode:
+  1. Open prompt block editor
+  2. Toggle Expert mode on
+  3. Verify CLI Injections section appears
+  4. Verify 5 CLI blocks render with red dots
+  5. Verify cli-claude-md shows CLAUDE.md content
+  6. Toggle Expert mode off - section disappears
+  7. Verify token split still shows in header
+Acceptance Criteria:
+  - [ ] PW-EXP-01: expert toggle visible in header
+  - [ ] PW-EXP-02: CLI section appears on toggle
+  - [ ] PW-EXP-03: 5 red-dot CLI blocks visible
+  - [ ] PW-EXP-04: CLI blocks show correct content
+  - [ ] PW-EXP-05: toggle off hides section
+  - [ ] PW-EXP-06: token split visible in header
+Dependencies: TASK #761
+---
+TASK #763: PBE-E2E-03 - Playwright smoke: block reorder and inspector slimming
+Area: V19.0 - Prompt Block Editor
+Agent: qa-tester
+Type: TEST
+Priority: MEDIUM
+Difficulty: MEDIUM
+Status: PLANNED
+Context:
+  Playwright E2E smoke for reorder and inspector:
+  1. Open block editor, drag a block to reorder
+  2. Verify new order is reflected
+  3. Select the agent node - verify inspector is slimmed (no prompt fields)
+  4. Verify inspector shows only: model, start node, department, policies, context visibility
+Acceptance Criteria:
+  - [ ] PW-RO-01: drag reorder changes block position
+  - [ ] PW-RO-02: new order persists after panel close/reopen
+  - [ ] PW-INS-01: inspector Setup tab is slimmed
+  - [ ] PW-INS-02: no systemPrompt, mission, guardrails, tools in inspector
+  - [ ] PW-INS-03: model, policies, context visibility still in inspector
+Dependencies: TASK #761
+---
+TASK #764: TEST GATE - Full regression and build verification
+Area: V19.0 - Prompt Block Editor
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Difficulty: HARD
+Status: PLANNED
+Gate: HARD
+Context:
+  Final regression gate before closeout.
+Acceptance Criteria:
+  - [ ] Full client test suite passes
+  - [ ] Full server test suite passes
+  - [ ] Client build passes with no new warnings
+  - [ ] All Playwright E2E smokes pass (PBE + existing)
+  - [ ] git diff --check passes
+Dependencies: TASK #763
+---
+TASK #765: PBE-REVIEW - Architect verification and deslop
+Area: V19.0 - Prompt Block Editor
+Agent: architect
+Type: REVIEW
+Priority: CRITICAL
+Difficulty: HARD
+Status: PLANNED
+Gate: HARD
+Context:
+  Architect review of the complete V19.0 implementation:
+  - Verify block refactoring maintains backward compatibility
+  - Verify UI components follow existing patterns (NodeOutputCard style)
+  - Verify no data loss from inspector slimming
+  - Deslop pass on all changed files
+  - Post-deslop regression verification
+Acceptance Criteria:
+  - [ ] Architect review approves implementation
+  - [ ] Deslop pass completed on all changed files
+  - [ ] Post-deslop regression remains green
+  - [ ] TASK_PLAN statuses reconciled
+  - [ ] ACTIVITY_LOG completion entry appended
+  - [ ] DECISIONS final reconciliation completed
+Dependencies: TASK #764
+---
+TASK #766: AREA CHECKPOINT - V19.0 Prompt Block Editor closeout
+Area: V19.0 - Prompt Block Editor
+Agent: qa-tester
+Type: AREA_CHECKPOINT
+Priority: CRITICAL
+Difficulty: HARD
+Status: PLANNED
+Gate: HARD
+Acceptance Criteria:
+  - [ ] All V19.0 tasks are COMPLETED/PASS
+  - [ ] All test gates (Wave 1-5) are green
+  - [ ] All Playwright E2E smokes pass
+  - [ ] No regressions in existing functionality
+  - [ ] PRD acceptance criteria 1-29 are met
+  - [ ] Block editor is functional end-to-end
+Dependencies: TASK #765

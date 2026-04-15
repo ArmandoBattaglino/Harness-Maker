@@ -454,6 +454,13 @@ const RUNTIME_PROVIDER_PROFILES = {
   },
 };
 
+const DEFAULT_PROMPT_BLOCK_ORDER = [
+  'role', 'guardrails', 'guidance', 'awareness', 'inputs',
+  'pack-knowledge', 'pack-rules', 'handoffs', 'history', 'protocol', 'hitl',
+];
+
+const SYSTEM_BLOCKS = new Set(['protocol']);
+
 function normalizeRuntimeProvider(provider) {
   const value = String(provider ?? '').trim().toLowerCase();
   if (value === RUNTIME_PROVIDER.CLAUDE || value === RUNTIME_PROVIDER.CODEX || value === RUNTIME_PROVIDER.GEMINI || value === RUNTIME_PROVIDER.AUTO) {
@@ -4568,15 +4575,6 @@ class SwarmEngine {
         const binaryPath = await this._resolveRuntimeProviderBinary(provider);
         const launchArgs = this._buildRuntimeProviderArgs(provider, execution.workflowDef?.settings?.runtimeModels);
 
-        // Pass the agent's user-defined system prompt via --append-system-prompt
-        // so the Claude CLI treats it as a real system-level instruction rather
-        // than a user message that can be deprioritized.  This is the primary
-        // mechanism for ensuring the agent follows its configured role.
-        const agentSystemPromptText = (node.data && node.data.systemPrompt) || '';
-        if (provider === RUNTIME_PROVIDER.CLAUDE && agentSystemPromptText.trim()) {
-          launchArgs.push('--append-system-prompt', agentSystemPromptText.trim());
-        }
-
         const bootstrapPrompt = (
           (provider === RUNTIME_PROVIDER.CODEX && spawnOptions.resumeCodexPrompt === true)
           || (provider === RUNTIME_PROVIDER.CODEX && shouldCompactCodexPrompt)
@@ -6524,6 +6522,177 @@ class SwarmEngine {
     return state?.sessionId;
   }
 
+  // ──────────── Prompt Block Functions ────────────
+  // Each _buildBlock_* extracts one section from the original _buildSystemPrompt().
+  // They are called by the refactored _buildSystemPrompt() in user-defined order.
+
+  /** Block: role — agent's system prompt / mission (Task #738) */
+  _buildBlock_role(node, workflowContext) {
+    const mission = (node.data && node.data.mission) || '';
+    const systemPrompt = (node.data && node.data.systemPrompt) || '';
+    const parts = [mission.trim(), systemPrompt.trim()].filter(Boolean);
+    if (parts.length > 0) {
+      return '=== YOUR ROLE ===\n' + parts.join('\n');
+    }
+    // Fallback when no custom prompt
+    const fallback = [];
+    if (workflowContext.currentTask) {
+      fallback.push(`Current task: ${workflowContext.currentTask}`);
+    }
+    if (workflowContext.workflowDescription) {
+      fallback.push(`Workflow goal: ${workflowContext.workflowDescription}`);
+    }
+    return fallback.length > 0 ? fallback.join('\n') : '';
+  }
+
+  /** Block: guardrails — user-defined constraints (Task #739, FIX: was never injected) */
+  _buildBlock_guardrails(node) {
+    const guardrails = (node.data && node.data.guardrails) || '';
+    if (guardrails.trim()) {
+      return '=== GUARDRAILS ===\n' + guardrails.trim();
+    }
+    return '';
+  }
+
+  /** Block: guidance — quality guidance lines from tools, skills, expected output */
+  _buildBlock_guidance(node) {
+    const agentGuidanceLines = this._buildAgentGuidanceLines(node);
+    if (agentGuidanceLines.length > 0) {
+      return '=== AGENT QUALITY GUIDANCE ===\n' + agentGuidanceLines.join('\n') + '\nThese controls guide and expose expected behavior in wave 1; they are not a hard policy engine.';
+    }
+    return '';
+  }
+
+  /** Block: awareness — agent identity and peer status */
+  _buildBlock_awareness(execution, nodeId) {
+    if (!execution) return '';
+    const awareness = this._buildAgentAwareness(execution, nodeId);
+    if (awareness) {
+      return '=== AGENT AWARENESS ===\n' + awareness;
+    }
+    return '';
+  }
+
+  /** Block: inputs — workflow run inputs scoped to this node */
+  _buildBlock_inputs(node, workflowContext, execution, provider) {
+    const compactCodexPrompt = provider === RUNTIME_PROVIDER.CODEX;
+    const scopedWorkflowInputLines = this._buildScopedWorkflowInputLines(
+      execution,
+      node?.id,
+      compactCodexPrompt
+    );
+    if (!workflowContext.workflowRun?.inputs) return '';
+
+    const scopedInputKeys = workflowContext.workflowRun?.visualInputConnections?.[node.id];
+    const visualInputFields = (workflowContext.workflowRun?.inputContract ?? []).filter((field) => field?.inputNodeId);
+    const lines = [];
+    lines.push('=== WORKFLOW RUN INPUTS ===');
+    if (scopedWorkflowInputLines.length > 0) {
+      lines.push(...scopedWorkflowInputLines);
+    } else {
+      lines.push(JSON.stringify(workflowContext.workflowRun.inputs, null, 2));
+    }
+    const declaredOutputs = workflowContext.workflowRun.outputContract;
+    if (
+      declaredOutputs
+      && (
+        (Array.isArray(declaredOutputs.outputs) && declaredOutputs.outputs.length > 0)
+        || (Array.isArray(declaredOutputs.artifacts) && declaredOutputs.artifacts.length > 0)
+      )
+    ) {
+      lines.push('Declared workflow outputs/artifacts:');
+      lines.push(JSON.stringify(declaredOutputs, null, 2));
+    }
+    return lines.join('\n');
+  }
+
+  /** Block: pack-knowledge — pack knowledge context */
+  _buildBlock_packKnowledge(workflowContext) {
+    const packKnowledge = workflowContext.packKnowledge && typeof workflowContext.packKnowledge === 'object'
+      ? workflowContext.packKnowledge
+      : null;
+    if (packKnowledge && Object.keys(packKnowledge).length > 0) {
+      return '=== PACK KNOWLEDGE / CONTEXT ===\n' + JSON.stringify(packKnowledge, null, 2);
+    }
+    return '';
+  }
+
+  /** Block: pack-rules — pack behavior directives */
+  _buildBlock_packRules(workflowContext) {
+    const packBehaviorDirectives = Array.isArray(workflowContext.packBehaviorDirectives)
+      ? workflowContext.packBehaviorDirectives
+      : [];
+    if (packBehaviorDirectives.length > 0) {
+      const lines = ['=== PACK BEHAVIOR RULES ==='];
+      for (const rule of packBehaviorDirectives) {
+        lines.push(`- ${rule.name || rule.id}: ${rule.instruction}`);
+      }
+      return lines.join('\n');
+    }
+    return '';
+  }
+
+  /** Block: handoffs — inbound handoff payloads from upstream agents */
+  _buildBlock_handoffs(inboundHandoffs) {
+    if (!Array.isArray(inboundHandoffs) || inboundHandoffs.length === 0) return '';
+    const lines = ['Received handoffs:'];
+    for (const handoff of inboundHandoffs) {
+      lines.push(`From ${handoff.sourceLabel || handoff.sourceNodeId} (${handoff.sourceNodeId}): ${JSON.stringify(handoff.payload ?? {})}`);
+    }
+    return lines.join('\n');
+  }
+
+  /** Block: history — interaction transcript */
+  _buildBlock_history(execution, visibility, inboundHandoffs) {
+    if (visibility === 'full' && execution) {
+      const transcript = this._buildInteractionTranscript(execution);
+      if (transcript) {
+        return '=== INTERACTION HISTORY ===\n' + transcript;
+      }
+    } else if (visibility === 'minimal') {
+      if (Array.isArray(inboundHandoffs) && inboundHandoffs.length > 0) {
+        const last = inboundHandoffs[inboundHandoffs.length - 1];
+        return 'Latest handoff received:\n' + `From ${last.sourceLabel || last.sourceNodeId}: ${JSON.stringify(last.payload ?? {})}`;
+      }
+    }
+    return '';
+  }
+
+  /** Block: protocol — handoff/done protocol tokens (SYSTEM — cannot be disabled) */
+  _buildBlock_protocol(handoffTargets) {
+    const lines = ['=== PROTOCOL ==='];
+    lines.push('Do real work before emitting any control token.');
+    if (handoffTargets.length > 0) {
+      lines.push(`When done, last line: __HANDOFF__:<targetId>:{"summary":"...","result":"..."}`);
+      lines.push(`Valid targets: ${handoffTargets.join(', ')}`);
+      if (handoffTargets.length === 1) {
+        lines.push(`For this workflow, <targetId> must be ${handoffTargets[0]}.`);
+      }
+    } else {
+      lines.push('You are the final agent. When done, last line: __DONE__');
+    }
+    lines.push('Token must be plain text on its own last line, no fences or formatting.');
+    return lines.join('\n');
+  }
+
+  /** Block: hitl — HITL protocol (only when HITL mode is active) */
+  _buildBlock_hitl(execution) {
+    if (execution?.workflowDef?.settings?.mode !== 'hitl') return '';
+    const lines = [
+      '=== HITL (Human-in-the-Loop) ===',
+      'You are running in HITL mode. When you need human input, feedback, a decision, or approval, emit on its own line:',
+      '__HITL__:{"question":"your question or request for the human"}',
+      'To offer multiple-choice options the human can pick from, add an "options" array:',
+      '__HITL__:{"question":"Which approach?","options":["Option A","Option B","Option C"]}',
+      'The human can select one or more options and optionally add free-text notes.',
+      '"options" is optional — omit it for open-ended questions. Keep options concise (3-6 recommended).',
+      'The workflow will pause and present your question to the human operator.',
+      'After the human responds, you will receive their answer and can continue your work.',
+      'Only use __HITL__ when you genuinely need human input — not for status updates.',
+    ];
+    return lines.join('\n');
+  }
+
   /**
    * Build the system prompt for an agent node.
    * Assembles role, workflow context, and handoff targets per OpenAI Swarm pattern.
@@ -6617,148 +6786,51 @@ class SwarmEngine {
       return lines.join('\n');
     }
 
-    // Non-Codex branch: structured awareness + role + transcript + compact protocol
+    // Non-Codex branch: composable prompt blocks (V19.0 refactor)
     const execution = options.execution ?? null;
-    const agentPrompt = (node.data && node.data.systemPrompt) || '';
-    const hasCustomPrompt = agentPrompt.trim().length > 0;
     const visibility = node.data?.contextVisibility || 'full';
+    // inboundHandoffs already declared above (used by both Codex and non-Codex branches)
 
-    // --- AGENT AWARENESS ---
-    if (visibility === 'full' && execution) {
-      const awareness = this._buildAgentAwareness(execution, node.id);
-      if (awareness) {
-        lines.push('=== AGENT AWARENESS ===');
-        lines.push(awareness);
-        lines.push('');
+    // Determine block order and disabled set
+    const blockOrder = Array.isArray(node.data?.promptBlockOrder)
+      ? [...node.data.promptBlockOrder]
+      : [...DEFAULT_PROMPT_BLOCK_ORDER];
+    const blockDisabled = (node.data?.promptBlockDisabled && typeof node.data.promptBlockDisabled === 'object')
+      ? node.data.promptBlockDisabled
+      : {};
+
+    // Ensure any missing default blocks are appended at the end
+    for (const defaultBlock of DEFAULT_PROMPT_BLOCK_ORDER) {
+      if (!blockOrder.includes(defaultBlock)) {
+        blockOrder.push(defaultBlock);
       }
     }
 
-    // --- YOUR ROLE ---
-    if (hasCustomPrompt) {
-      lines.push('=== YOUR ROLE ===');
-      lines.push(agentPrompt);
-      lines.push('');
-    } else {
-      if (workflowContext.currentTask) {
-        lines.push(`Current task: ${workflowContext.currentTask}`);
-      }
-      if (workflowContext.workflowDescription) {
-        lines.push(`Workflow goal: ${workflowContext.workflowDescription}`);
-      }
-      lines.push('');
+    const blockBuilders = {
+      'role': () => this._buildBlock_role(node, workflowContext),
+      'guardrails': () => this._buildBlock_guardrails(node),
+      'guidance': () => this._buildBlock_guidance(node),
+      'awareness': () => (visibility === 'full') ? this._buildBlock_awareness(execution, node.id) : '',
+      'inputs': () => (visibility === 'full' || visibility === 'minimal') ? this._buildBlock_inputs(node, workflowContext, execution, provider) : '',
+      'pack-knowledge': () => (visibility === 'full' || visibility === 'minimal') ? this._buildBlock_packKnowledge(workflowContext) : '',
+      'pack-rules': () => this._buildBlock_packRules(workflowContext),
+      'handoffs': () => (visibility === 'full' || visibility === 'minimal') ? this._buildBlock_handoffs(inboundHandoffs) : '',
+      'history': () => this._buildBlock_history(execution, visibility, inboundHandoffs),
+      'protocol': () => this._buildBlock_protocol(handoffTargets),
+      'hitl': () => this._buildBlock_hitl(execution),
+    };
+
+    const sections = [];
+    for (const blockId of blockOrder) {
+      // System blocks cannot be disabled
+      if (blockDisabled[blockId] && !SYSTEM_BLOCKS.has(blockId)) continue;
+      const builder = blockBuilders[blockId];
+      if (!builder) continue; // unknown block ID — skip silently
+      const text = builder();
+      if (text) sections.push(text);
     }
 
-    const packKnowledge = workflowContext.packKnowledge && typeof workflowContext.packKnowledge === 'object'
-      ? workflowContext.packKnowledge
-      : null;
-    if ((visibility === 'full' || visibility === 'minimal') && workflowContext.workflowRun?.inputs) {
-      const scopedInputKeys = workflowContext.workflowRun?.visualInputConnections?.[node.id];
-      const visualInputFields = (workflowContext.workflowRun?.inputContract ?? []).filter((field) => field?.inputNodeId);
-      const shouldScopeVisualInputs = visualInputFields.length > 0;
-      const scopedInputs = shouldScopeVisualInputs
-        ? Object.fromEntries((scopedInputKeys ?? []).map((key) => [key, workflowContext.workflowRun.inputs[key]]))
-        : workflowContext.workflowRun.inputs;
-      lines.push('=== WORKFLOW RUN INPUTS ===');
-      if (scopedWorkflowInputLines.length > 0) {
-        lines.push(...scopedWorkflowInputLines);
-      } else {
-        lines.push(JSON.stringify(workflowContext.workflowRun.inputs, null, 2));
-      }
-      const declaredOutputs = workflowContext.workflowRun.outputContract;
-      if (
-        declaredOutputs
-        && (
-          (Array.isArray(declaredOutputs.outputs) && declaredOutputs.outputs.length > 0)
-          || (Array.isArray(declaredOutputs.artifacts) && declaredOutputs.artifacts.length > 0)
-        )
-      ) {
-        lines.push('Declared workflow outputs/artifacts:');
-        lines.push(JSON.stringify(declaredOutputs, null, 2));
-      }
-      lines.push('');
-    }
-
-    const agentGuidanceLines = this._buildAgentGuidanceLines(node);
-    if (agentGuidanceLines.length > 0) {
-      lines.push('=== AGENT QUALITY GUIDANCE ===');
-      lines.push(...agentGuidanceLines);
-      lines.push('These controls guide and expose expected behavior in wave 1; they are not a hard policy engine.');
-      lines.push('');
-    }
-
-    if ((visibility === 'full' || visibility === 'minimal') && packKnowledge && Object.keys(packKnowledge).length > 0) {
-      lines.push('=== PACK KNOWLEDGE / CONTEXT ===');
-      lines.push(JSON.stringify(packKnowledge, null, 2));
-      lines.push('');
-    }
-
-    const packBehaviorDirectives = Array.isArray(workflowContext.packBehaviorDirectives)
-      ? workflowContext.packBehaviorDirectives
-      : [];
-    if (packBehaviorDirectives.length > 0) {
-      lines.push('=== PACK BEHAVIOR RULES ===');
-      for (const rule of packBehaviorDirectives) {
-        lines.push(`- ${rule.name || rule.id}: ${rule.instruction}`);
-      }
-      lines.push('');
-    }
-
-    // --- INBOUND HANDOFFS (structured payloads from upstream) ---
-    if ((visibility === 'full' || visibility === 'minimal') && inboundHandoffs.length > 0) {
-      lines.push('Received handoffs:');
-      for (const handoff of inboundHandoffs) {
-        lines.push(`From ${handoff.sourceLabel || handoff.sourceNodeId} (${handoff.sourceNodeId}): ${JSON.stringify(handoff.payload ?? {})}`);
-      }
-      lines.push('');
-    }
-
-    // --- INTERACTION HISTORY ---
-    if (visibility === 'full' && execution) {
-      const transcript = this._buildInteractionTranscript(execution);
-      if (transcript) {
-        lines.push('=== INTERACTION HISTORY ===');
-        lines.push(transcript);
-        lines.push('');
-      }
-    } else if (visibility === 'minimal') {
-      if (inboundHandoffs.length > 0) {
-        lines.push('Latest handoff received:');
-        const last = inboundHandoffs[inboundHandoffs.length - 1];
-        lines.push(`From ${last.sourceLabel || last.sourceNodeId}: ${JSON.stringify(last.payload ?? {})}`);
-        lines.push('');
-      }
-    }
-
-    // --- COMPACT PROTOCOL ---
-    lines.push('=== PROTOCOL ===');
-    lines.push('Do real work before emitting any control token.');
-    if (handoffTargets.length > 0) {
-      lines.push(`When done, last line: __HANDOFF__:<targetId>:{"summary":"...","result":"..."}`);
-      lines.push(`Valid targets: ${handoffTargets.join(', ')}`);
-      if (handoffTargets.length === 1) {
-        lines.push(`For this workflow, <targetId> must be ${handoffTargets[0]}.`);
-      }
-    } else {
-      lines.push('You are the final agent. When done, last line: __DONE__');
-    }
-    lines.push('Token must be plain text on its own last line, no fences or formatting.');
-
-    // HITL mode: tell the agent it can request human input via __HITL__ token
-    if (options.execution?.workflowDef?.settings?.mode === 'hitl') {
-      lines.push('');
-      lines.push('=== HITL (Human-in-the-Loop) ===');
-      lines.push('You are running in HITL mode. When you need human input, feedback, a decision, or approval, emit on its own line:');
-      lines.push('__HITL__:{"question":"your question or request for the human"}');
-      lines.push('To offer multiple-choice options the human can pick from, add an "options" array:');
-      lines.push('__HITL__:{"question":"Which approach?","options":["Option A","Option B","Option C"]}');
-      lines.push('The human can select one or more options and optionally add free-text notes.');
-      lines.push('"options" is optional — omit it for open-ended questions. Keep options concise (3-6 recommended).');
-      lines.push('The workflow will pause and present your question to the human operator.');
-      lines.push('After the human responds, you will receive their answer and can continue your work.');
-      lines.push('Only use __HITL__ when you genuinely need human input — not for status updates.');
-    }
-
-    return lines.join('\n');
+    return sections.join('\n\n');
   }
 
   _compactCodexInstructionText(text, maxChars) {

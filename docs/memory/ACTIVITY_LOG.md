@@ -1,3 +1,68 @@
+## 2026-04-15 - qa-tester - V19.0 Prompt Block Editor Integration Tests (Tasks #757, #758, #759)
+**Outcome:** COMPLETED
+**Summary:** Created server/tests/prompt-block-editor.test.js with 52 integration tests covering _buildBlock_* methods, block order/assembly, runtime verification via _buildSystemPrompt, and POST /api/v1/swarm/prompt-preview endpoint. All 52 tests PASS, full server suite 739/739 PASS.
+**Files changed:** server/tests/prompt-block-editor.test.js (NEW)
+**Bugs found:** none
+**Decisions made:** Non-compact Codex uses block assembly in V19.0; used direct handler invocation for endpoint tests.
+**Blockers:** none
+**Next:** none
+
+---
+
+## 2026-04-15 - qa-tester - Playwright E2E smoke test for Prompt Block Editor (Tasks #761-#763)
+**Outcome:** COMPLETED
+**Summary:** Wrote scripts/v19-prompt-block-editor-playwright-smoke.mjs — a standalone Playwright E2E smoke test covering 14 test steps across 3 V19.0 tasks. Uses mock Express server with prompt-preview fixture data. Covers gear icon hover/click, panel open/close/Escape, block cards, user block expansion, runtime placeholders, Expert mode toggle with CLI Injections section, and slimmed AgentInspector verification. Screenshots at each step to screenshots/v19-pbe-*.png.
+**Files changed:** scripts/v19-prompt-block-editor-playwright-smoke.mjs (NEW)
+**Bugs found:** none (not executed yet)
+**Decisions made:** Mock server pattern matching existing Playwright scripts; aria-label-based gear button location; realistic prompt-preview fixture.
+**Blockers:** none
+**Next:** Run `npm run build && node scripts/v19-prompt-block-editor-playwright-smoke.mjs` to verify.
+
+---
+
+## 2026-04-15 - frontend-dev - Prompt Block Editor client components (Tasks #745, #746, #748, #749, #750, #751)
+**Outcome:** COMPLETED
+**Summary:** Implemented the full client-side Prompt Block Editor feature across 6 files. Added expandedPromptEditorNodeId state with mutual exclusion to SwarmContext. Added gear icon (hover-visible, indigo-colored) to AgentNode left side that opens the PromptBlockEditor panel. Created PromptBlockEditor (floating panel, left of node, fetches prompt-preview endpoint, expert mode with CLI injections, copy assembled prompt, escape/click-outside close). Created PromptBlockCard (collapsed/expanded states, color-coded source dots, enable/disable toggle, drag-and-drop reorder). Added promptEditorSlideIn animation and scrollbar styles to index.css. Exposed onUpdateNode through CanvasActionsContext for field changes from the editor. All 127 client tests pass, build clean.
+**Files changed:** client/src/store/SwarmContext.jsx, client/src/canvas/nodes/AgentNode.jsx, client/src/canvas/nodes/PromptBlockEditor.jsx (NEW), client/src/canvas/nodes/PromptBlockCard.jsx (NEW), client/src/canvas/SwarmCanvas.jsx, client/src/index.css
+**Bugs found:** handleUpdateNode was defined after canvasActions useMemo causing ReferenceError; fixed by moving it before canvasActions.
+**Decisions made:** Used CanvasActionsContext to expose onUpdateNode to AgentNode rather than prop-drilling; read workflowDef from Zustand store inside AgentNode; used HTML5 drag events for block reorder (no new dependencies).
+**Blockers:** none
+**Next:** TEST GATE #747 (store/node integration) and TEST GATE #752 (component verification) by qa-tester.
+
+---
+
+## 2026-04-15 - backend-dev - POST /api/v1/swarm/prompt-preview endpoint
+**Outcome:** COMPLETED
+**Summary:** Added POST /api/v1/swarm/prompt-preview route to server/routes/swarm.js. Simulates system-prompt block assembly for a selected agent node without a live execution. Returns block-level metadata (id, title, source, enabled, compiledText, tokenEstimate), the assembled prompt, total token estimate, block count, and CLI injection envelope (bootstrapPrompt, launchFlags, toolsAllowlist, claudeMdContent/Path, totalCliTokenEstimate). User/pack/system blocks are computed inline mirroring SwarmEngine._buildBlock_* logic; runtime blocks return placeholder text. Supports optional blockId filter and async CLAUDE.md reading from project path via ConfigStore. All 15 existing swarm-routes tests pass.
+**Files changed:** server/routes/swarm.js
+**Bugs found:** none
+**Decisions made:** Constants (block order, system blocks, block metadata, runtime placeholders) are defined route-locally rather than imported from SwarmEngine to avoid coupling.
+**Blockers:** none
+**Next:** Frontend consumer (PromptBlockEditor panel) and integration tests for the new endpoint.
+
+---
+
+## 2026-04-15 - backend-dev - Tasks #738-#742: V19.0 Prompt Block Editor server refactoring
+**Outcome:** COMPLETED / PASS
+**Summary:** Extracted 11 _buildBlock_* methods from monolithic _buildSystemPrompt(), added DEFAULT_PROMPT_BLOCK_ORDER/SYSTEM_BLOCKS constants, rewrote non-Codex branch to block-order loop driven by node.data.promptBlockOrder/promptBlockDisabled. Fixed mission field never injected, guardrails never injected, and systemPrompt double-injection via --append-system-prompt. All 220 tests pass.
+**Files changed:** server/services/SwarmEngine.js
+**Bugs found:** const re-declaration of inboundHandoffs in same scope (fixed in-place)
+**Decisions made:** none new (follows DEC-039 architecture)
+**Blockers:** none
+**Next:** TEST GATE #743 (qa-tester) should verify block methods and ordering
+
+---
+
+## 2026-04-15 - planner / architect - Prompt Block Editor PRD and V19.0 task plan
+**Outcome:** COMPLETED / PASS
+**Summary:** Designed and documented the Prompt Block Editor feature (V19.0) through deep analysis of the prompt injection pipeline in SwarmEngine.js. Discovered 4 critical discrepancies: mission field never injected, guardrails never injected, systemPrompt double-injected in PTY mode, advisory fields (handoffPolicy/errorRetryPolicy/maxTurns) have zero runtime enforcement. Produced a comprehensive PRD with 29 acceptance criteria covering 11 standard prompt blocks + 5 expert-level CLI injection blocks. Created V19.0 task plan with 29 tasks (#738-#766) organized in 5 waves: server block refactoring, store/node integration, PromptBlockEditor panel, inspector slimming, and integration/E2E/closeout. Each wave has a dedicated TEST GATE.
+**Files changed:** .omx/plans/prd-prompt-block-editor.md (created, then updated with expert-level CLI blocks), docs/TASK_PLAN.md (V19.0 area appended), docs/memory/ACTIVITY_LOG.md, docs/memory/DECISIONS.md
+**Bugs found (to be fixed in V19.0):** mission ignored (DEC-039), guardrails ignored (DEC-039), systemPrompt double injection in PTY (DEC-039), advisory fields not enforced
+**Decisions made:** DEC-039 (prompt block architecture), DEC-040 (expert-level CLI injection blocks)
+**Blockers:** none
+**Next:** begin Wave 1 implementation (server block refactoring, tasks #738-#744)
+
+---
 ﻿## 2026-04-14 - planner / architect / critic - Swarm progressive harness builder consensus plan
 **Outcome:** COMPLETED / PASS
 **Summary:** Ran deep-interview plus ralplan consensus planning for the Swarm-centered progressive harness builder direction. Captured the clarified product intent, wrote the deep-interview spec/transcript/context snapshot, and produced approved PRD + test-spec planning artifacts for a schema-first/compiler-first roadmap centered on full single-agent configurability, explicit UI/runtime gates, and milestone-level Ralph execution tasks.
@@ -6407,4 +6472,14 @@ full self-contained context and acceptance criteria.
 **Verification:** targeted client UX suite PASS (5 files / 41 tests); targeted server compiled-preview suites PASS (2 files / 19 tests); full client suite PASS (26 files / 127 tests); full server suite PASS (35 files / 687 tests); client build PASS (527 modules); `npm run test:playwright:agent-compiled-preview` PASS; LSP diagnostics 0 errors on touched implementation files (`tsc skipped: no tsconfig found` caveat); `git diff --check` PASS with LF/CRLF warnings only; architect verification APPROVE; post-deslop full regression remained green.
 **Blockers:** none.
 **Next:** Commit and push the Swarm UX clarity changes, then consider a future Wave 3 for richer responsive behavior and severity-aware activity badges.
+---
+
+
+## 2026-04-15 — frontend-dev — Task #754: Slim down AgentInspector Setup tab
+**Status:** COMPLETED
+**Files changed:** client/src/canvas/AgentInspector.jsx, client/src/canvas/AgentInspector.test.jsx
+**Summary:** Removed prompt-related UI fields (systemPrompt, mission, guardrails, skillHints, expectedOutput, expectedOutputContract, tools, contextSources, memorySources) and the Effective Preview section from the AgentInspector Setup tab. These fields are now handled by the Prompt Block Editor. Kept model selector, start node, department, context visibility, and runtime policies. Updated tests to verify removed fields are absent and kept fields remain functional.
+**Verification:** 26 test files / 125 tests PASS.
+**Blockers:** none.
+**Next:** none.
 ---

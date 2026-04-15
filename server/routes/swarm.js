@@ -9,7 +9,11 @@
 // GET    /api/v1/swarm/:executionId/status       â†’ 200 { executionId, status, agentStates, edgeCounters, budget }
 // GET    /api/v1/swarm/:executionId/agent/:nodeId/output â†’ 200 { output: string }
 // POST   /api/v1/swarm/:executionId/broadcast    â†’ 200 { sent: number }
+// POST   /api/v1/swarm/prompt-preview            â†’ 200 { blocks, assembledPrompt, ... }
 
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 import { Router } from 'express';
 import { generateWorkflowFromPrompt } from '../services/ScaffoldGenerator.js';
 import { getRuntimeCapabilitySnapshot } from '../services/SwarmEngine.js';
@@ -21,8 +25,106 @@ import {
   getExecutionHistoryStore,
   lookupExecution,
 } from '../services/ExecutionResultsService.js';
+import { ConfigStore } from '../services/ConfigStore.js';
 
 const STRUCTURED_AGENT_SPAWN_MODES = new Set(['stream-json', 'codex-sdk']);
+
+// -------------------------------------------------------------------------
+// Prompt-preview constants (mirrored from SwarmEngine — route-local to avoid
+// coupling to internal engine state)
+// -------------------------------------------------------------------------
+const PREVIEW_DEFAULT_BLOCK_ORDER = [
+  'role', 'guardrails', 'guidance', 'awareness', 'inputs',
+  'pack-knowledge', 'pack-rules', 'handoffs', 'history', 'protocol', 'hitl',
+];
+
+const PREVIEW_SYSTEM_BLOCKS = new Set(['protocol']);
+
+const BLOCK_METADATA = {
+  'role':           { title: 'Your Role',           source: 'user' },
+  'guardrails':     { title: 'Guardrails',          source: 'user' },
+  'guidance':       { title: 'Quality Guidance',    source: 'user' },
+  'awareness':      { title: 'Agent Awareness',     source: 'runtime' },
+  'inputs':         { title: 'Workflow Inputs',     source: 'runtime' },
+  'pack-knowledge': { title: 'Pack Knowledge',      source: 'pack' },
+  'pack-rules':     { title: 'Pack Behavior Rules', source: 'pack' },
+  'handoffs':       { title: 'Inbound Handoffs',    source: 'runtime' },
+  'history':        { title: 'Interaction History',  source: 'runtime' },
+  'protocol':       { title: 'Protocol',            source: 'system' },
+  'hitl':           { title: 'HITL Protocol',        source: 'system' },
+};
+
+const RUNTIME_PLACEHOLDERS = {
+  'awareness': '[Populated at runtime: agent identity, peers, and connection status within the workflow]',
+  'inputs':    '[Populated at runtime: workflow run inputs scoped to this agent]',
+  'handoffs':  '[Populated at runtime: inbound handoff payloads from upstream agents]',
+  'history':   '[Populated at runtime: interaction transcript based on context visibility setting]',
+};
+
+/** Placeholder descriptions shown when a block has no user content configured yet */
+const EMPTY_PLACEHOLDERS = {
+  'role':           '[Not configured — add a system prompt or mission to define this agent\'s role]',
+  'guardrails':     '[Not configured — add safety constraints and behavioral limits]',
+  'guidance':       '[Not configured — add tools, skill hints, or expected output format]',
+  'pack-knowledge': '[From pack: domain knowledge and context injected by the linked pack]',
+  'pack-rules':     '[From pack: behavioral rules and directives from the linked pack]',
+  'hitl':           '[Active only in HITL mode: human-in-the-loop interaction protocol]',
+};
+
+const USER_CLAUDE_DIR = path.join(os.homedir(), '.claude');
+const USER_CLAUDE_MD = path.join(USER_CLAUDE_DIR, 'CLAUDE.md');
+
+/**
+ * Safely read a file; returns empty string on ENOENT.
+ * @param {string} filePath
+ * @returns {Promise<string>}
+ */
+async function safeReadFile(filePath) {
+  try {
+    return await fs.promises.readFile(filePath, 'utf8');
+  } catch (err) {
+    if (err.code === 'ENOENT') return '';
+    throw err;
+  }
+}
+
+/**
+ * Build guidance lines for prompt-preview (mirrors SwarmEngine._buildAgentGuidanceLines).
+ * @param {object} node - agent node definition
+ * @returns {string[]}
+ */
+function buildGuidanceLines(node) {
+  const data = node?.data ?? {};
+  const lines = [];
+  if (Array.isArray(data.tools) && data.tools.length > 0) {
+    lines.push(`Tool boundary: ${data.tools.join(', ')}`);
+  }
+  if (Array.isArray(data.skillHints) && data.skillHints.length > 0) {
+    lines.push(`Preferred skills/workflows: ${data.skillHints.join(', ')}`);
+  }
+  if (Array.isArray(data.contextSources) && data.contextSources.length > 0) {
+    lines.push(`Context/source focus: ${data.contextSources.join(', ')}`);
+  }
+  if (data.expectedOutputContract && typeof data.expectedOutputContract === 'object') {
+    const format = typeof data.expectedOutputContract.format === 'string'
+      ? data.expectedOutputContract.format
+      : 'markdown';
+    const instructions = typeof data.expectedOutputContract.instructions === 'string'
+      ? data.expectedOutputContract.instructions.trim()
+      : '';
+    lines.push(`Expected output contract format: ${format}`);
+    if (instructions) {
+      lines.push(`Expected output contract instructions: ${instructions}`);
+    }
+  }
+  if (typeof data.expectedOutput === 'string' && data.expectedOutput.trim()) {
+    const format = typeof data.expectedOutputFormat === 'string' && data.expectedOutputFormat.trim()
+      ? ` (${data.expectedOutputFormat.trim()})`
+      : '';
+    lines.push(`Expected output${format}: ${data.expectedOutput.trim()}`);
+  }
+  return lines;
+}
 
 function getAgentNodeById(workflowDef, nodeId) {
   return workflowDef?.nodes?.find((node) => node.id === nodeId && node.type === 'agent') ?? null;
@@ -118,6 +220,255 @@ export default function swarmRoutes(swarmEngine, sessionManager, scaffoldProvide
       return res.status(err.statusCode ?? 500).json({
         error: err.message ?? 'Internal server error',
       });
+    }
+  });
+
+  // -------------------------------------------------------------------------
+  // POST /api/v1/swarm/prompt-preview
+  // Simulates system-prompt assembly for a single agent node without a live
+  // execution.  Returns block-level metadata, the assembled prompt text,
+  // token estimates, and the CLI injection envelope.
+  //
+  // Body: { workflowDef, selectedAgentId, blockId?, projectId? }
+  // → 200 { blocks, assembledPrompt, totalTokenEstimate, blockCount, cliInjections }
+  // → 400 if workflowDef or selectedAgentId missing
+  // → 404 if selectedAgentId not found in workflowDef.nodes
+  // -------------------------------------------------------------------------
+  router.post('/prompt-preview', async (req, res) => {
+    try {
+      const { workflowDef, selectedAgentId, blockId } = req.body ?? {};
+
+      if (!workflowDef || typeof workflowDef !== 'object') {
+        return res.status(400).json({ error: 'workflowDef is required and must be an object' });
+      }
+      if (!selectedAgentId || typeof selectedAgentId !== 'string') {
+        return res.status(400).json({ error: 'selectedAgentId is required and must be a string' });
+      }
+
+      const node = (workflowDef.nodes || []).find((n) => n.id === selectedAgentId);
+      if (!node) {
+        return res.status(404).json({ error: `Agent ${selectedAgentId} not found in workflow` });
+      }
+
+      // Derive handoff targets from edges
+      const handoffTargets = (workflowDef.edges || [])
+        .filter((e) => e.source === selectedAgentId)
+        .map((e) => e.target);
+
+      // Build a mock workflow context from the definition
+      const workflowContext = {
+        currentTask: workflowDef.settings?.currentTask || '',
+        workflowDescription: workflowDef.description || '',
+        packKnowledge: workflowDef.settings?.packKnowledge || null,
+        packBehaviorDirectives: workflowDef.settings?.packBehaviorDirectives || [],
+        workflowRun: null,
+      };
+
+      const visibility = node.data?.contextVisibility || 'full';
+
+      // Determine block order and disabled set (mirrors SwarmEngine._buildSystemPrompt)
+      const blockOrder = Array.isArray(node.data?.promptBlockOrder)
+        ? [...node.data.promptBlockOrder]
+        : [...PREVIEW_DEFAULT_BLOCK_ORDER];
+      const blockDisabled =
+        node.data?.promptBlockDisabled && typeof node.data.promptBlockDisabled === 'object'
+          ? node.data.promptBlockDisabled
+          : {};
+
+      // Ensure any missing default blocks are appended at the end
+      for (const def of PREVIEW_DEFAULT_BLOCK_ORDER) {
+        if (!blockOrder.includes(def)) {
+          blockOrder.push(def);
+        }
+      }
+
+      // Build each block
+      const blocks = [];
+      for (const bid of blockOrder) {
+        const meta = BLOCK_METADATA[bid];
+        if (!meta) continue;
+
+        const enabled = !blockDisabled[bid] || PREVIEW_SYSTEM_BLOCKS.has(bid);
+        let compiledText = '';
+
+        if (RUNTIME_PLACEHOLDERS[bid]) {
+          // Runtime-only blocks show placeholder text
+          compiledText = RUNTIME_PLACEHOLDERS[bid];
+        } else {
+          // Compute user / pack / system blocks inline
+          switch (bid) {
+            case 'role': {
+              const mission = (node.data?.mission || '').trim();
+              const systemPrompt = (node.data?.systemPrompt || '').trim();
+              const parts = [mission, systemPrompt].filter(Boolean);
+              if (parts.length > 0) {
+                compiledText = '=== YOUR ROLE ===\n' + parts.join('\n');
+              } else {
+                const fb = [];
+                if (workflowContext.currentTask) fb.push('Current task: ' + workflowContext.currentTask);
+                if (workflowContext.workflowDescription) fb.push('Workflow goal: ' + workflowContext.workflowDescription);
+                compiledText = fb.join('\n');
+              }
+              break;
+            }
+
+            case 'guardrails': {
+              const g = (node.data?.guardrails || '').trim();
+              if (g) compiledText = '=== GUARDRAILS ===\n' + g;
+              break;
+            }
+
+            case 'guidance': {
+              const lines = buildGuidanceLines(node);
+              if (lines.length > 0) {
+                compiledText =
+                  '=== AGENT QUALITY GUIDANCE ===\n' +
+                  lines.join('\n') +
+                  '\nThese controls guide and expose expected behavior in wave 1; they are not a hard policy engine.';
+              }
+              break;
+            }
+
+            case 'pack-knowledge': {
+              const pk = workflowContext.packKnowledge;
+              if (pk && typeof pk === 'object' && Object.keys(pk).length > 0) {
+                compiledText = '=== PACK KNOWLEDGE / CONTEXT ===\n' + JSON.stringify(pk, null, 2);
+              }
+              break;
+            }
+
+            case 'pack-rules': {
+              const dirs = workflowContext.packBehaviorDirectives;
+              if (Array.isArray(dirs) && dirs.length > 0) {
+                compiledText =
+                  '=== PACK BEHAVIOR RULES ===\n' +
+                  dirs.map((r) => `- ${r.name || r.id}: ${r.instruction}`).join('\n');
+              }
+              break;
+            }
+
+            case 'protocol': {
+              const pl = ['=== PROTOCOL ===', 'Do real work before emitting any control token.'];
+              if (handoffTargets.length > 0) {
+                pl.push('When done, last line: __HANDOFF__:<targetId>:{“summary”:”...”,”result”:”...”}');
+                pl.push('Valid targets: ' + handoffTargets.join(', '));
+                if (handoffTargets.length === 1) {
+                  pl.push(`For this workflow, <targetId> must be ${handoffTargets[0]}.`);
+                }
+              } else {
+                pl.push('You are the final agent. When done, last line: __DONE__');
+              }
+              pl.push('Token must be plain text on its own last line, no fences or formatting.');
+              compiledText = pl.join('\n');
+              break;
+            }
+
+            case 'hitl': {
+              if (workflowDef.settings?.mode === 'hitl') {
+                compiledText = [
+                  '=== HITL (Human-in-the-Loop) ===',
+                  'You are running in HITL mode. When you need human input, feedback, a decision, or approval, emit on its own line:',
+                  '__HITL__:{“question”:”your question or request for the human”}',
+                  'To offer multiple-choice options the human can pick from, add an “options” array:',
+                  '__HITL__:{“question”:”Which approach?”,”options”:[“Option A”,”Option B”,”Option C”]}',
+                  'The human can select one or more options and optionally add free-text notes.',
+                  '”options” is optional \u2014 omit it for open-ended questions. Keep options concise (3-6 recommended).',
+                  'The workflow will pause and present your question to the human operator.',
+                  'After the human responds, you will receive their answer and can continue your work.',
+                  'Only use __HITL__ when you genuinely need human input \u2014 not for status updates.',
+                ].join('\n');
+              }
+              break;
+            }
+
+            // Unknown user/pack/system block — leave empty
+            default:
+              break;
+          }
+        }
+
+        // If no real content, use a descriptive placeholder
+        if (!compiledText && EMPTY_PLACEHOLDERS[bid]) {
+          compiledText = EMPTY_PLACEHOLDERS[bid];
+        }
+
+        const tokenEstimate = Math.ceil((compiledText || '').length / 4);
+
+        // If filtering to a single block, skip non-matching blocks
+        if (blockId && bid !== blockId) continue;
+
+        blocks.push({
+          id: bid,
+          title: meta.title,
+          source: meta.source,
+          enabled,
+          compiledText: compiledText || '',
+          tokenEstimate,
+        });
+      }
+
+      // Assembled prompt: only enabled blocks with non-empty text
+      const assembledPrompt = blocks
+        .filter((b) => b.enabled && b.compiledText)
+        .map((b) => b.compiledText)
+        .join('\n\n');
+
+      const totalTokenEstimate = Math.ceil(assembledPrompt.length / 4);
+
+      // --- CLI injections envelope ---
+      const nodeTools = Array.isArray(node.data?.tools) && node.data.tools.length > 0
+        ? node.data.tools
+        : ['Bash', 'Read', 'Edit', 'Write', 'Grep', 'Glob', 'LS'];
+      const nodeModel = node.data?.model || 'opus';
+      const launchFlags = [
+        '--model', nodeModel,
+        '--output-format', 'stream-json',
+        '--verbose',
+        '--dangerously-skip-permissions',
+        '--tools', nodeTools.join(','),
+      ];
+
+      // Attempt to read CLAUDE.md from the project path
+      let claudeMdContent = null;
+      let claudeMdPath = null;
+      const projectId = req.body.projectId || workflowDef.projectId;
+      if (projectId && typeof projectId === 'string') {
+        const project = ConfigStore.getProjects().find((p) => p.id === projectId);
+        if (project?.path) {
+          const candidatePath = path.join(project.path, 'CLAUDE.md');
+          const content = await safeReadFile(candidatePath);
+          if (content) {
+            claudeMdContent = content;
+            claudeMdPath = candidatePath;
+          }
+        }
+      }
+
+      const bootstrapPrompt =
+        'Claude runtime is active for this Swarm agent.\nContinue the workflow using the shared task context below.';
+      const cliTexts = [bootstrapPrompt, launchFlags.join(' ')];
+      if (claudeMdContent) cliTexts.push(claudeMdContent);
+
+      const cliInjections = {
+        bootstrapPrompt,
+        appendSystemPrompt: null,
+        launchFlags,
+        claudeMdContent,
+        claudeMdPath,
+        toolsAllowlist: nodeTools,
+        totalCliTokenEstimate: Math.ceil(cliTexts.join(' ').length / 4),
+      };
+
+      return res.status(200).json({
+        blocks,
+        assembledPrompt,
+        totalTokenEstimate,
+        blockCount: blocks.filter((b) => b.enabled && b.compiledText).length,
+        cliInjections,
+      });
+    } catch (err) {
+      console.error(`[swarm] POST /prompt-preview error: ${err.message}`);
+      return res.status(500).json({ error: 'Internal server error' });
     }
   });
 

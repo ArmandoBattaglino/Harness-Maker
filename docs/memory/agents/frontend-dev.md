@@ -1,5 +1,63 @@
 ---
-## 2026-04-09 — Task #435: BUG-CHAT-CLIENT-10 — REST hydration re-introduces stale fragments after canonical
+## 2026-04-15 -- Tasks #745, #746, #748, #749, #750, #751: Prompt Block Editor client components
+**Status:** COMPLETED
+**Called by:** user
+
+### Context when I started
+V19.0 Prompt Block Editor server endpoint (POST /api/v1/swarm/prompt-preview) was implemented by backend-dev. The client needed the full UI: store state for panel toggle with mutual exclusion, gear icon on agent nodes, floating PromptBlockEditor panel, PromptBlockCard for individual blocks with collapsed/expanded states, drag-and-drop reorder, and expert mode for CLI injections.
+
+### What I did
+1. **SwarmContext.jsx** (#745): Added `expandedPromptEditorNodeId` state and `setExpandedPromptEditorNodeId` action. Updated all three setters (`setExpandedOutputNodeId`, `setExpandedValidationNodeId`, `setExpandedPromptEditorNodeId`) for proper mutual exclusion -- opening any one clears the other two. Added the new state to `buildClearedExecutionState`.
+2. **AgentNode.jsx** (#746): Added `group` class to the outer wrapper. Added indigo gear icon SVG (18x18px) positioned to the LEFT of the node (`right-[calc(100%+6px)]`), visible on hover (`opacity-0 group-hover:opacity-100`) and always visible when the panel is open. Click toggles `expandedPromptEditorNodeId`. Added `handlePromptFieldChange` that delegates to `canvasActions.onUpdateNode`. Renders PromptBlockEditor when `showPromptEditor` is true.
+3. **PromptBlockEditor.jsx** (#748, NEW): Floating panel positioned `right-[calc(100%+14px)]`, styled to match NodeOutputCard. Fetches POST /api/v1/swarm/prompt-preview on mount. Header shows agent name, block count, token estimate (standard + CLI split), Expert toggle, close button. Body renders PromptBlockCard for each block. Expert mode shows CLI Injections section with 5 read-only CLI blocks. Footer has "Copy assembled prompt" button. Handles Escape key and click-outside close.
+4. **PromptBlockCard.jsx** (#749, NEW): Collapsed state shows color-coded source dot (blue/purple/orange/gray/red), title, snippet, source label, ON/OFF toggle (hidden for system/cli), drag handle, expand chevron. Expanded state shows form fields for editable user blocks (role: mission+systemPrompt textareas, guardrails: textarea, guidance: info text) plus preview section with monospace compiledText.
+5. **Drag-and-drop** (#750): HTML5 drag events on PromptBlockCard. `dragIndex`/`dragOverIndex` state in PromptBlockEditor. Drop computes new block order and calls `onFieldChange('promptBlockOrder', newOrder)`. Visual feedback via border highlight on drop target.
+6. **Expert mode** (#751): Toggle in header persists to localStorage. When on, renders CLI Injections section with 5 PromptBlockCard instances (source="cli", red dots) for bootstrapPrompt, appendSystemPrompt, launchFlags, claudeMdContent, toolsAllowlist. All CLI blocks are read-only. Warning badge on cli-system-prompt when non-null.
+7. **SwarmCanvas.jsx**: Moved `handleUpdateNode` before `canvasActions` useMemo to fix hoisting error. Added `onUpdateNode` to canvasActions. Added `expandedPromptEditorNodeId` to node layering. Updated onNodeClick, onPaneClick, onEdgeClick, and context menu edit to clear `expandedPromptEditorNodeId`.
+8. **index.css**: Added `@keyframes promptEditorSlideIn` (from right, mirrored from outputCardSlideIn) and `.prompt-editor-scrollbar` styles.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| client/src/store/SwarmContext.jsx | MODIFIED | Added expandedPromptEditorNodeId state, action, and mutual exclusion |
+| client/src/canvas/nodes/AgentNode.jsx | MODIFIED | Added gear icon, PromptBlockEditor rendering, group class |
+| client/src/canvas/nodes/PromptBlockEditor.jsx | CREATED | Floating panel component for prompt block editing |
+| client/src/canvas/nodes/PromptBlockCard.jsx | CREATED | Individual block card with collapsed/expanded states |
+| client/src/canvas/SwarmCanvas.jsx | MODIFIED | Moved handleUpdateNode, added to canvasActions, layering, clear on click |
+| client/src/index.css | MODIFIED | Added promptEditorSlideIn animation and scrollbar styles |
+| docs/TASK_PLAN.md | MODIFIED | Marked 6 tasks COMPLETED |
+
+### Improvements delivered
+- Full prompt block editor UI accessible from agent node gear icon
+- Block-level prompt inspection with source color coding
+- Editable user blocks with live form fields
+- Expert mode revealing CLI injections for debugging
+- Drag-and-drop block reordering
+- Mutual exclusion with output card and validation card
+
+### Bugs I encountered
+| Bug | Root cause | Fix applied | Status |
+|-----|-----------|-------------|--------|
+| ReferenceError: Cannot access 'handleUpdateNode' before initialization | handleUpdateNode useCallback was defined after canvasActions useMemo that referenced it | Moved handleUpdateNode definition before canvasActions | FIXED |
+
+### Decisions I made
+- Used CanvasActionsContext to expose onUpdateNode rather than prop-drilling through React Flow node data
+- Read workflowDef from Zustand store inside AgentNode (it's already stored there)
+- Used HTML5 native drag events for block reorder -- no new dependencies needed
+- Matched NodeOutputCard's click-outside and Escape handling patterns exactly
+
+### What I learned
+- React hooks cannot reference callbacks defined later in the same component due to TDZ (temporal dead zone); the order of useCallback/useMemo matters
+- The existing `group/cost` named group on the cost badge means adding `group` to the outer wrapper requires no naming conflict resolution since the inner one uses `group/cost`
+
+### State I'm leaving behind
+All 6 tasks are COMPLETED. Build clean, 127/127 client tests pass. Two new files created: PromptBlockEditor.jsx and PromptBlockCard.jsx.
+
+### Handoff
+TEST GATE #747 (qa-tester) should verify store mutual exclusion and gear icon. TEST GATE #752 should verify all PromptBlockEditor component behaviors.
+
+---
+## 2026-04-09 -- Task #435: BUG-CHAT-CLIENT-10 -- REST hydration re-introduces stale fragments after canonical
 **Status:** COMPLETED
 **Called by:** orchestrator
 
@@ -3350,4 +3408,27 @@ All three acceptance criteria are met:
 
 ### Handoff
 None — task fully self-contained and already complete.
+---
+
+
+## Session — 2026-04-15 — Task #754: Slim down AgentInspector Setup tab
+
+### Context
+The Prompt Block Editor now handles prompt-related fields (systemPrompt, mission, guardrails, skillHints, expectedOutput, expectedOutputContract, tools, contextSources, memorySources). The Setup tab in AgentInspector needed to be slimmed down by removing their UI controls.
+
+### Changes
+- **AgentInspector.jsx**: Removed the entire "Behavior & Output Guidance" collapsible section (systemPrompt, mission, guardrails, skillHints, expectedOutput, expectedOutputContract, tools). Removed "Effective Preview (Derived)" section and its AgentDefinitionPreview component. Removed contextSources and memorySources from the "Context, Memory & Visibility" section, keeping only contextVisibility (renamed section to "Context Visibility"). Removed compiled preview state and fetch effect from the main component. Cleaned up unused constants (CLAUDE_TOOL_OPTIONS, DEFAULT_CLAUDE_TOOLS, isClaudeModel, normalizeClaudeToolSelection, normalizeCsv) and the apiPost import.
+- **AgentInspector.test.jsx**: Replaced 3 tests that validated removed fields with 2 new tests: one asserting removed fields are NOT present, another asserting kept fields (contextVisibility, handoffPolicy, errorRetryPolicy) remain functional. Removed the compiled-preview error test. Cleaned up unused waitFor import.
+
+### Kept in Setup tab
+- Agent name (header), Model selector, Start Node checkbox, Department selector
+- Context Visibility selector (own collapsible section)
+- Runtime & Policies: Max Turns, Handoff policy, Error/retry policy
+
+### Verification
+- All 5 tests in AgentInspector.test.jsx PASS
+- Full client test suite: 26 files / 125 tests PASS
+
+### Handoff
+None — task fully self-contained.
 ---

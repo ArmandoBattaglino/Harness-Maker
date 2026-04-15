@@ -1,4 +1,4 @@
-﻿import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+﻿import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import AgentInspector from './AgentInspector.jsx';
 import { useSwarmStore } from '../store/SwarmContext.jsx';
@@ -77,9 +77,8 @@ describe('AgentInspector output parity', () => {
     expect(sections[1]).toHaveTextContent('Older structured output.');
   });
 
-  it('exposes and saves lightweight workflow guidance controls for an agent', () => {
+  it('does not expose prompt-related fields that moved to the Prompt Block Editor', () => {
     useSwarmStore.setState({ selectedNodeId: 'node-a' });
-    const onUpdateNode = vi.fn();
 
     render(
       <AgentInspector
@@ -87,98 +86,44 @@ describe('AgentInspector output parity', () => {
           {
             id: 'node-a',
             type: 'agent',
-            data: { label: 'Writer' },
+            data: {
+              label: 'Writer',
+              systemPrompt: 'You are a writer.',
+              mission: 'Write well.',
+              guardrails: 'No slang.',
+              skillHints: ['writer'],
+              expectedOutput: 'A report.',
+              expectedOutputContract: { format: 'json', instructions: 'Return JSON.' },
+              contextSources: ['brief'],
+              memorySources: ['policy-docs'],
+            },
           },
         ]}
-        onUpdateNode={onUpdateNode}
+        onUpdateNode={vi.fn()}
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /Behavior & Output Guidance/i }));
-    fireEvent.change(screen.getByLabelText('Skill hints'), { target: { value: 'writer, qa-tester' } });
-    fireEvent.click(screen.getByRole('button', { name: /Context, Memory & Visibility/i }));
-    fireEvent.change(screen.getByLabelText('Context sources'), { target: { value: 'brief, docs/memory' } });
-    fireEvent.change(screen.getByLabelText('Expected output'), { target: { value: 'A measurable markdown report.' } });
+    // Removed sections should not be in the DOM
+    expect(screen.queryByRole('button', { name: /Behavior & Output Guidance/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Effective Preview/i })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Agent mission')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('System Prompt')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Guardrails')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Skill hints')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Expected output')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Expected output format')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Expected output instructions')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Context sources')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Memory sources')).not.toBeInTheDocument();
 
-    expect(onUpdateNode).toHaveBeenCalledWith('node-a', { skillHints: ['writer', 'qa-tester'] });
-    expect(onUpdateNode).toHaveBeenCalledWith('node-a', { contextSources: ['brief', 'docs/memory'] });
-    expect(onUpdateNode).toHaveBeenCalledWith('node-a', { expectedOutput: 'A measurable markdown report.' });
-    expect(screen.getByText(/Provider enforcement is shown separately in the derived preview/i)).toBeInTheDocument();
+    // Kept sections should still be present
+    expect(screen.getByRole('button', { name: /Essentials/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Context Visibility/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Runtime & Policies/i })).toBeInTheDocument();
   });
 
-  it('edits agent expected output contracts without replacing legacy expected output', () => {
+  it('keeps runtime and visibility controls functional after prompt field removal', () => {
     useSwarmStore.setState({ selectedNodeId: 'node-a' });
-    const onUpdateNode = vi.fn();
-
-    render(
-      <AgentInspector
-        nodes={[
-          {
-            id: 'node-a',
-            type: 'agent',
-            data: { label: 'Writer', expectedOutput: 'Legacy fallback.' },
-          },
-        ]}
-        onUpdateNode={onUpdateNode}
-      />
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: /Behavior & Output Guidance/i }));
-    fireEvent.change(screen.getByLabelText('Expected output format'), { target: { value: 'json' } });
-    fireEvent.change(screen.getByLabelText('Expected output instructions'), { target: { value: 'Return JSON findings.' } });
-
-    expect(onUpdateNode).toHaveBeenCalledWith('node-a', {
-      expectedOutputContract: { format: 'json' },
-    });
-    expect(onUpdateNode).toHaveBeenCalledWith('node-a', {
-      expectedOutputContract: { format: 'markdown', instructions: 'Return JSON findings.' },
-    });
-    expect(screen.getByLabelText('Expected output')).toHaveValue('Legacy fallback.');
-  });
-
-  it('exposes normalized Setup sections and derived preview observability', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        preview: {
-          ok: true,
-          domains: {
-            agents: [
-              {
-                id: 'node-a',
-                provider: 'codex',
-                model: 'gpt-5.4',
-                runtime: { spawnMode: 'codex-sdk' },
-                io: {
-                  inputKeys: ['brief'],
-                  artifactExpectations: [{ key: 'report' }],
-                },
-                memory: { precedence: ['workflow run inputs', 'agent memory sources'] },
-                policy: { handoff: 'explicit', errorRetry: 'retry-on-error' },
-                incompatibilities: [
-                  { code: 'tools_not_supported_by_provider', message: 'Codex does not enforce Claude tool allowlists.' },
-                ],
-                whyThisOutput: 'Provider codex executes the agent with its effective model.',
-              },
-            ],
-          },
-          observability: {
-            promptAssemblyOrder: ['agent awareness', 'mission/system prompt', 'runtime protocol'],
-          },
-          errors: [],
-          warnings: [{ code: 'guardrails_advisory', message: 'Guardrails are prompt guidance.' }],
-        },
-      }),
-    }));
-    useSwarmStore.setState({
-      selectedNodeId: 'node-a',
-      workflowDef: {
-        id: 'wf-1',
-        name: 'Harness workflow',
-        nodes: [{ id: 'node-a', type: 'agent', data: { label: 'Strategist' } }],
-        edges: [],
-      },
-    });
     const onUpdateNode = vi.fn();
 
     render(
@@ -189,96 +134,24 @@ describe('AgentInspector output parity', () => {
             type: 'agent',
             data: { label: 'Strategist', model: 'gpt-5.4' },
           },
-          { id: 'extractor-1', type: 'outputExtractor', data: { label: 'Report', artifactKey: 'report' } },
         ]}
-        edges={[{ id: 'edge-agent-report', source: 'node-a', target: 'extractor-1' }]}
         onUpdateNode={onUpdateNode}
       />
     );
 
-    const setupHeadings = [
-      'Essentials',
-      'Behavior & Output Guidance',
-      'Context, Memory & Visibility',
-      'Runtime & Policies',
-      'Effective Preview (Derived)',
-    ];
-    const headingIndexes = setupHeadings.map((heading) => document.body.textContent.indexOf(heading));
-    expect(headingIndexes.every((index) => index >= 0)).toBe(true);
-    expect([...headingIndexes].sort((a, b) => a - b)).toEqual(headingIndexes);
+    // Context Visibility
+    fireEvent.click(screen.getByRole('button', { name: /Context Visibility/i }));
+    fireEvent.change(screen.getByLabelText('Context Visibility'), { target: { value: 'minimal' } });
+    expect(onUpdateNode).toHaveBeenCalledWith('node-a', { contextVisibility: 'minimal' });
 
-    fireEvent.change(screen.getByLabelText('Agent mission'), { target: { value: 'Design a sector harness.' } });
-    fireEvent.click(screen.getByRole('button', { name: /Context, Memory & Visibility/i }));
-    fireEvent.change(screen.getByLabelText('Memory sources'), { target: { value: 'brief, policy-docs' } });
-    fireEvent.click(screen.getByRole('button', { name: /Behavior & Output Guidance/i }));
-    fireEvent.change(screen.getByLabelText('Guardrails'), { target: { value: 'Do not invent APIs.' } });
+    // Runtime & Policies
     fireEvent.click(screen.getByRole('button', { name: /Runtime & Policies/i }));
     fireEvent.change(screen.getByLabelText('Handoff policy'), { target: { value: 'explicit' } });
     fireEvent.change(screen.getByLabelText('Error/retry policy'), { target: { value: 'retry-on-error' } });
 
-    expect(onUpdateNode).toHaveBeenCalledWith('node-a', { mission: 'Design a sector harness.' });
-    expect(onUpdateNode).toHaveBeenCalledWith('node-a', { memorySources: ['brief', 'policy-docs'] });
-    expect(onUpdateNode).toHaveBeenCalledWith('node-a', { guardrails: 'Do not invent APIs.' });
     expect(onUpdateNode).toHaveBeenCalledWith('node-a', { handoffPolicy: 'explicit' });
     expect(onUpdateNode).toHaveBeenCalledWith('node-a', { errorRetryPolicy: 'retry-on-error' });
-
-    await waitFor(() => expect(screen.getByText('codex / gpt-5.4')).toBeInTheDocument());
-    expect(screen.getByRole('button', { name: /Effective Preview \(Derived\)/i })).toBeInTheDocument();
-    expect(screen.getByText('Prompt assembly order')).toBeInTheDocument();
-    expect(screen.getByText(/Memory provenance/)).toBeInTheDocument();
-    expect(screen.getByText(/Inputs: brief/)).toBeInTheDocument();
-    expect(screen.getByText(/Artifacts: report/)).toBeInTheDocument();
-    expect(screen.getByText(/Structured incompatibilities/)).toBeInTheDocument();
-    expect(screen.getByText(/not editable authoring truth/i)).toBeInTheDocument();
-    expect(fetch).toHaveBeenCalledWith('/api/v1/swarm/compiled-preview', expect.objectContaining({
-      method: 'POST',
-    }));
-    const requestBody = JSON.parse(fetch.mock.calls[0][1].body);
-    expect(requestBody.workflowDef.edges).toEqual([
-      { id: 'edge-agent-report', source: 'node-a', target: 'extractor-1' },
-    ]);
   });
-
-
-  it('keeps structured compiled preview errors visible when the preview API returns 400', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: false,
-      status: 400,
-      json: async () => ({
-        error: 'Compiled execution preview is invalid',
-        preview: {
-          ok: false,
-          domains: { agents: [] },
-          errors: [
-            { code: 'runtime_model_unsupported', message: 'Unsupported gemini model gemini-2.0-flash.' },
-          ],
-          warnings: [],
-        },
-        details: [{ code: 'runtime_model_unsupported' }],
-      }),
-    }));
-    useSwarmStore.setState({
-      selectedNodeId: 'node-a',
-      workflowDef: {
-        id: 'wf-1',
-        name: 'Harness workflow',
-        nodes: [{ id: 'node-a', type: 'agent', data: { label: 'Strategist' } }],
-        edges: [],
-      },
-    });
-
-    render(
-      <AgentInspector
-        nodes={[{ id: 'node-a', type: 'agent', data: { label: 'Strategist', model: 'gemini-2.0-flash' } }]}
-        onUpdateNode={vi.fn()}
-      />
-    );
-
-    await waitFor(() => expect(screen.getByText('Compiled execution preview is invalid')).toBeInTheDocument());
-    expect(screen.getByText(/Unsupported gemini model/)).toBeInTheDocument();
-    expect(screen.getByText(/Structured incompatibilities/)).toBeInTheDocument();
-  });
-
 
   it('edits Input block fields and Output Extractor artifact settings', () => {
     useSwarmStore.setState({

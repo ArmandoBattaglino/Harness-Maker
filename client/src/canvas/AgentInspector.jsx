@@ -10,7 +10,6 @@ import { mdComponents, sanitizeSchema } from '../utils/markdownComponents.jsx';
 import { formatAgentLiveSnippet, getPreferredAgentLiveSnippet } from '../utils/formatAgentOutput.js';
 import { getAgentOutputEntries, serializeAgentOutputEntries } from '../utils/agentOutputEntries.js';
 import { isVisualInputNode } from '../utils/visualIoContracts.js';
-import { apiPost } from '../hooks/useApi.js';
 
 const MODEL_OPTIONS = [
   { group: 'Claude', models: ['opus', 'sonnet', 'haiku'] },
@@ -18,51 +17,12 @@ const MODEL_OPTIONS = [
   { group: 'Gemini', models: ['gemini-2.5-pro', 'gemini-2.5-flash'] },
 ];
 
-const CLAUDE_TOOL_OPTIONS = [
-  'Bash',
-  'Read',
-  'Edit',
-  'MultiEdit',
-  'Write',
-  'Glob',
-  'Grep',
-  'LS',
-  'WebFetch',
-  'WebSearch',
-  'NotebookRead',
-  'NotebookEdit',
-  'TodoRead',
-  'TodoWrite',
-  'Agent',
-  'exit_plan_mode',
-];
-
-const DEFAULT_CLAUDE_TOOLS = ['Bash', 'Read', 'Edit', 'Write', 'Grep', 'Glob', 'LS'];
-
 const INPUT_CLS =
   'w-full bg-gray-700 text-white text-xs rounded px-2 py-1 border border-gray-600 focus:border-blue-500 focus:outline-none';
 const SELECT_OPTIONS = {
   handoffPolicy: ['auto', 'explicit', 'manual-review'],
   errorRetryPolicy: ['none', 'retry-on-error', 'escalate-to-human'],
 };
-
-function isClaudeModel(model = '') {
-  const normalized = String(model ?? '').trim().toLowerCase();
-  return normalized === 'opus'
-    || normalized === 'sonnet'
-    || normalized === 'haiku'
-    || normalized.startsWith('claude-');
-}
-
-function normalizeClaudeToolSelection(tools) {
-  if (!Array.isArray(tools)) return [...DEFAULT_CLAUDE_TOOLS];
-  const selected = new Set(tools.filter((tool) => CLAUDE_TOOL_OPTIONS.includes(tool)));
-  return CLAUDE_TOOL_OPTIONS.filter((tool) => selected.has(tool));
-}
-
-function normalizeCsv(value) {
-  return String(value ?? '').split(',').map((item) => item.trim()).filter(Boolean);
-}
 
 /**
  * Debounced field updater — returns a [localValue, setLocalValue] pair
@@ -158,122 +118,9 @@ function HandoffEntry({ handoff }) {
 /*  Per-type edit sections                                             */
 /* ------------------------------------------------------------------ */
 
-function AgentDefinitionPreview({ preview, selectedNodeId, loading, error }) {
-  const agentPreview = preview?.domains?.agents?.find((agent) => agent.id === selectedNodeId);
-  const issues = [
-    ...(preview?.errors ?? []),
-    ...(preview?.warnings ?? []),
-    ...(agentPreview?.incompatibilities ?? []),
-  ];
-  const inputKeys = agentPreview?.io?.inputKeys ?? [];
-  const artifactKeys = (agentPreview?.io?.artifactExpectations ?? []).map((artifact) => artifact.key);
-
-  return (
-    <CollapsibleSection title="Effective Preview (Derived)" defaultOpen={true}>
-      <div className="rounded border border-blue-800/60 bg-blue-950/25 p-2 text-[11px] text-blue-100">
-        Derived runtime view from WorkflowDefinition, AgentDefinition, Harness/Pack, and runtime capability rules. This preview explains effective behavior; it is not editable authoring truth.
-      </div>
-      {loading && <div className="text-[11px] text-gray-400">Loading compiled preview...</div>}
-      {error && <div className="rounded border border-amber-700 bg-amber-950/40 p-2 text-[11px] text-amber-200">{error}</div>}
-      {agentPreview && (
-        <div className="flex flex-col gap-2 text-[11px]">
-          <div className="grid grid-cols-2 gap-2">
-            <div className="rounded bg-gray-800 p-2">
-              <div className="text-gray-500">Effective provider</div>
-              <div className="font-semibold text-white">{agentPreview.provider} / {agentPreview.model}</div>
-            </div>
-            <div className="rounded bg-gray-800 p-2">
-              <div className="text-gray-500">Spawn mode</div>
-              <div className="font-semibold text-white">{agentPreview.runtime?.spawnMode}</div>
-            </div>
-          </div>
-          <div className="rounded bg-gray-800 p-2">
-            <div className="mb-1 text-gray-500">Prompt assembly order</div>
-            <ol className="list-decimal pl-4 text-gray-200">
-              {(preview?.observability?.promptAssemblyOrder ?? []).map((layer) => (
-                <li key={layer}>{layer}</li>
-              ))}
-            </ol>
-          </div>
-          <div className="rounded bg-gray-800 p-2">
-            <div className="mb-1 text-gray-500">Memory provenance</div>
-            <div className="text-gray-200">{agentPreview.memory?.precedence?.join(' -> ') || 'No memory sources configured yet.'}</div>
-          </div>
-          <div className="rounded bg-gray-800 p-2">
-            <div className="mb-1 text-gray-500">IO contract</div>
-            <div className="text-gray-200">Inputs: {inputKeys.length ? inputKeys.join(', ') : 'none'}</div>
-            <div className="text-gray-200">Artifacts: {artifactKeys.length ? artifactKeys.join(', ') : 'none'}</div>
-          </div>
-          <div className="rounded bg-gray-800 p-2">
-            <div className="mb-1 text-gray-500">Handoff / error policy</div>
-            <div className="text-gray-200">Handoff: {agentPreview.policy?.handoff}</div>
-            <div className="text-gray-200">Error/retry: {agentPreview.policy?.errorRetry}</div>
-          </div>
-          <div className="rounded bg-gray-800 p-2">
-            <div className="mb-1 text-gray-500">Why this output happened</div>
-            <div className="text-gray-200">{agentPreview.whyThisOutput}</div>
-          </div>
-        </div>
-      )}
-      {issues.length > 0 && (
-        <div className="rounded border border-amber-700 bg-amber-950/30 p-2">
-          <div className="mb-1 font-medium text-amber-200">Structured incompatibilities / notes</div>
-          <ul className="list-disc pl-4 text-amber-100">
-            {issues.map((issue, index) => (
-              <li key={`${issue.code}-${index}`}>{issue.message}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {!loading && !error && !agentPreview && (
-        <div className="text-[11px] text-gray-500">Effective preview needs valid workflow graph context and a selected agent.</div>
-      )}
-    </CollapsibleSection>
-  );
-}
-
-function AgentFields({ node, nodes, onUpdateNode, compiledPreview, previewLoading, previewError }) {
+function AgentFields({ node, nodes, onUpdateNode }) {
   const nodeId = node.id;
   const data = node.data || {};
-  const isClaude = isClaudeModel(data.model);
-
-  const commit = useCallback(
-    (field) => (val) => onUpdateNode(nodeId, { [field]: val }),
-    [nodeId, onUpdateNode]
-  );
-
-  const [promptLocal, setPromptLocal] = useDebouncedField(
-    data.systemPrompt,
-    commit('systemPrompt')
-  );
-  const [selectedTools, setSelectedTools] = useState(() => normalizeClaudeToolSelection(data.tools));
-  const toolsTimerRef = useRef(null);
-
-  useEffect(() => {
-    setSelectedTools(normalizeClaudeToolSelection(data.tools));
-  }, [data.tools, data.model]);
-
-  useEffect(() => () => clearTimeout(toolsTimerRef.current), []);
-
-  const commitTools = useCallback((tools) => {
-    clearTimeout(toolsTimerRef.current);
-    toolsTimerRef.current = setTimeout(() => {
-      onUpdateNode(nodeId, { tools });
-    }, 300);
-  }, [nodeId, onUpdateNode]);
-
-  const updateSelectedTools = useCallback((tools) => {
-    const normalizedTools = normalizeClaudeToolSelection(tools);
-    setSelectedTools(normalizedTools);
-    commitTools(normalizedTools);
-  }, [commitTools]);
-
-  const toggleTool = useCallback((toolName) => {
-    const nextTools = selectedTools.includes(toolName)
-      ? selectedTools.filter((tool) => tool !== toolName)
-      : [...selectedTools, toolName];
-    updateSelectedTools(nextTools);
-  }, [selectedTools, updateSelectedTools]);
 
   const departmentNodes = nodes.filter((n) => n.type === 'department');
 
@@ -281,18 +128,7 @@ function AgentFields({ node, nodes, onUpdateNode, compiledPreview, previewLoadin
     <>
       <CollapsibleSection title="Essentials">
         <div className="rounded border border-gray-700 bg-gray-800/60 p-2 text-[10px] text-gray-500">
-          Define who this agent is and where it starts in the workflow. These fields remain structured AgentDefinition authoring data.
-        </div>
-        <div className="flex flex-col gap-0.5">
-          <FieldLabel>Agent mission</FieldLabel>
-          <textarea
-            className={`${INPUT_CLS} font-mono resize-y`}
-            aria-label="Agent mission"
-            rows={3}
-            value={data.mission || ''}
-            onChange={(e) => onUpdateNode(nodeId, { mission: e.target.value })}
-            placeholder="Describe this agent's business mission in domain language."
-          />
+          Define who this agent is and where it starts in the workflow. Prompt-related fields are now edited in the Prompt Block Editor.
         </div>
         <div className="flex flex-col gap-0.5">
           <FieldLabel>Model</FieldLabel>
@@ -346,117 +182,12 @@ function AgentFields({ node, nodes, onUpdateNode, compiledPreview, previewLoadin
         </div>
       </CollapsibleSection>
 
-      <CollapsibleSection title="Behavior & Output Guidance" defaultOpen={false}>
-        <div className="rounded border border-gray-700 bg-gray-800/60 p-2 text-[10px] text-gray-500">
-          Prompt, guardrail, skill, and output guidance remain authoring controls. Provider enforcement is shown separately in the derived preview.
-        </div>
-        <div className="flex flex-col gap-0.5">
-          <FieldLabel>System Prompt</FieldLabel>
-          <textarea
-            className={`${INPUT_CLS} font-mono resize-y`}
-            rows={4}
-            style={{ minHeight: '4rem', maxHeight: '20rem' }}
-            value={promptLocal}
-            onChange={(e) => setPromptLocal(e.target.value)}
-          />
-        </div>
-        <div className="flex flex-col gap-0.5">
-          <FieldLabel>Guardrails</FieldLabel>
-          <textarea
-            className={`${INPUT_CLS} font-mono resize-y`}
-            aria-label="Guardrails"
-            rows={3}
-            value={data.guardrails || ''}
-            onChange={(e) => onUpdateNode(nodeId, { guardrails: e.target.value })}
-            placeholder="Forbidden actions, tone constraints, compliance requirements..."
-          />
-        </div>
-        <div className="flex flex-col gap-0.5">
-          <FieldLabel>Skill hints</FieldLabel>
-          <input
-            className={INPUT_CLS}
-            aria-label="Skill hints"
-            value={Array.isArray(data.skillHints) ? data.skillHints.join(', ') : ''}
-            onChange={(e) => onUpdateNode(nodeId, { skillHints: normalizeCsv(e.target.value) })}
-            placeholder="researcher, qa-tester, writer"
-          />
-        </div>
-        <div className="flex flex-col gap-0.5">
-          <FieldLabel>Expected output</FieldLabel>
-          <textarea
-            className={`${INPUT_CLS} font-mono resize-y`}
-            aria-label="Expected output"
-            rows={3}
-            value={data.expectedOutput || ''}
-            onChange={(e) => onUpdateNode(nodeId, { expectedOutput: e.target.value })}
-            placeholder="Define the measurable output this agent should produce."
-          />
-        </div>
-        <div className="flex flex-col gap-0.5">
-          <FieldLabel>Expected output format</FieldLabel>
-          <select
-            className={INPUT_CLS}
-            aria-label="Expected output format"
-            value={data.expectedOutputContract?.format || 'markdown'}
-            onChange={(e) => onUpdateNode(nodeId, {
-              expectedOutputContract: {
-                ...(data.expectedOutputContract || {}),
-                format: e.target.value,
-              },
-            })}
-          >
-            <option value="text">Text</option>
-            <option value="markdown">Markdown</option>
-            <option value="json">JSON</option>
-          </select>
-        </div>
-        <div className="flex flex-col gap-0.5">
-          <FieldLabel>Expected output instructions</FieldLabel>
-          <textarea
-            className={`${INPUT_CLS} font-mono resize-y`}
-            aria-label="Expected output instructions"
-            rows={3}
-            value={data.expectedOutputContract?.instructions || ''}
-            onChange={(e) => onUpdateNode(nodeId, {
-              expectedOutputContract: {
-                ...(data.expectedOutputContract || {}),
-                format: data.expectedOutputContract?.format || 'markdown',
-                instructions: e.target.value,
-              },
-            })}
-            placeholder="Describe the structured output this agent should pass downstream."
-          />
-        </div>
-      </CollapsibleSection>
-
-      <CollapsibleSection title="Context, Memory & Visibility" defaultOpen={false}>
-        <div className="rounded border border-gray-700 bg-gray-800/60 p-2 text-[10px] text-gray-500">
-          Context and memory controls describe what the agent can use; the preview shows the resulting precedence.
-        </div>
-        <div className="flex flex-col gap-0.5">
-          <FieldLabel>Context sources</FieldLabel>
-          <input
-            className={INPUT_CLS}
-            aria-label="Context sources"
-            value={Array.isArray(data.contextSources) ? data.contextSources.join(', ') : ''}
-            onChange={(e) => onUpdateNode(nodeId, { contextSources: normalizeCsv(e.target.value) })}
-            placeholder="project-memory, customer-brief, repository"
-          />
-        </div>
-        <div className="flex flex-col gap-0.5">
-          <FieldLabel>Memory sources</FieldLabel>
-          <input
-            className={INPUT_CLS}
-            aria-label="Memory sources"
-            value={Array.isArray(data.memorySources) ? data.memorySources.join(', ') : ''}
-            onChange={(e) => onUpdateNode(nodeId, { memorySources: normalizeCsv(e.target.value) })}
-            placeholder="customer-brief, prior-runs, policy-docs"
-          />
-        </div>
+      <CollapsibleSection title="Context Visibility" defaultOpen={false}>
         <div className="flex flex-col gap-0.5">
           <FieldLabel>Context Visibility</FieldLabel>
           <select
             className={INPUT_CLS}
+            aria-label="Context Visibility"
             value={data.contextVisibility || 'full'}
             onChange={(e) => onUpdateNode(nodeId, { contextVisibility: e.target.value })}
           >
@@ -472,7 +203,7 @@ function AgentFields({ node, nodes, onUpdateNode, compiledPreview, previewLoadin
 
       <CollapsibleSection title="Runtime & Policies" defaultOpen={false}>
         <div className="rounded border border-gray-700 bg-gray-800/60 p-2 text-[10px] text-gray-500">
-          Runtime and policy controls influence execution behavior. Unsupported or advisory provider behavior is called out in the derived preview.
+          Runtime and policy controls influence execution behavior.
         </div>
         <div className="flex flex-col gap-0.5">
           <FieldLabel>Max Turns</FieldLabel>
@@ -517,56 +248,7 @@ function AgentFields({ node, nodes, onUpdateNode, compiledPreview, previewLoadin
             </select>
           </label>
         </div>
-        {isClaude && (
-          <CollapsibleSection title="Tools" defaultOpen={false}>
-            <div className="flex items-center justify-between gap-2">
-              <FieldLabel>Allowed Tools</FieldLabel>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => updateSelectedTools([...CLAUDE_TOOL_OPTIONS])}
-                  className="text-[10px] px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"
-                >
-                  Select All
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateSelectedTools([])}
-                  className="text-[10px] px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"
-                >
-                  Deselect All
-                </button>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {CLAUDE_TOOL_OPTIONS.map((toolName) => (
-                <label
-                  key={toolName}
-                  className="flex items-center gap-2 rounded bg-gray-800/80 px-2 py-1 text-xs text-gray-200 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedTools.includes(toolName)}
-                    onChange={() => toggleTool(toolName)}
-                    className="accent-blue-500"
-                  />
-                  <span className="break-all">{toolName}</span>
-                </label>
-              ))}
-            </div>
-            <div className="text-[10px] text-gray-500">
-              Debounced 300ms. Default Claude selection: {DEFAULT_CLAUDE_TOOLS.join(', ')}.
-            </div>
-          </CollapsibleSection>
-        )}
       </CollapsibleSection>
-
-      <AgentDefinitionPreview
-        preview={compiledPreview}
-        selectedNodeId={nodeId}
-        loading={previewLoading}
-        error={previewError}
-      />
     </>
   );
 
@@ -1260,12 +942,9 @@ export default function AgentInspector({ nodes, edges = null, onUpdateNode }) {
   const expandedOutputNodeId = useSwarmStore((s) => s.expandedOutputNodeId);
   const setExpandedOutputNodeId = useSwarmStore((s) => s.setExpandedOutputNodeId);
   const setExpandedValidationNodeId = useSwarmStore((s) => s.setExpandedValidationNodeId);
+  const setExpandedPromptEditorNodeId = useSwarmStore((s) => s.setExpandedPromptEditorNodeId);
   const markViewed = useSwarmStore((s) => s.markAgentResultViewed);
-  const workflowDef = useSwarmStore((s) => s.workflowDef);
   const [activeTab, setActiveTab] = useState('config');
-  const [compiledPreview, setCompiledPreview] = useState(null);
-  const [previewLoading, setPreviewLoading] = useState(false);
-  const [previewError, setPreviewError] = useState('');
 
   const selectedNode = nodes?.find((n) => n.id === selectedNodeId);
   const preferredLiveSnippet = useMemo(
@@ -1296,48 +975,6 @@ export default function AgentInspector({ nodes, edges = null, onUpdateNode }) {
       setActiveTab('config');
     }
   }, [selectedNodeId]);
-
-  useEffect(() => {
-    if (!hasSelectedNode || nodeType !== 'agent' || !workflowDef || typeof fetch !== 'function') {
-      setCompiledPreview(null);
-      setPreviewError('');
-      setPreviewLoading(false);
-      return undefined;
-    }
-
-    const draftWorkflow = {
-      ...(workflowDef || {}),
-      id: workflowDef?.id || 'draft-workflow',
-      name: workflowDef?.name || 'Draft workflow',
-      nodes: Array.isArray(nodes) ? nodes : [],
-      edges: Array.isArray(edges) ? edges : (Array.isArray(workflowDef?.edges) ? workflowDef.edges : []),
-    };
-    if (!draftWorkflow.nodes.length) return undefined;
-
-    let cancelled = false;
-    setPreviewLoading(true);
-    setPreviewError('');
-    apiPost('/api/v1/swarm/compiled-preview', {
-      workflowDef: draftWorkflow,
-      selectedAgentId: selectedNodeId,
-    })
-      .then((response) => {
-        if (cancelled) return;
-        setCompiledPreview(response?.preview ?? null);
-      })
-      .catch((error) => {
-        if (cancelled) return;
-        setCompiledPreview(error.body?.preview ?? null);
-        setPreviewError(error.message || 'Unable to build compiled preview');
-      })
-      .finally(() => {
-        if (!cancelled) setPreviewLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [edges, hasSelectedNode, nodeType, nodes, selectedNodeId, workflowDef]);
 
   const handleCloseInspector = useCallback(() => {
     setSelectedNode(null);
@@ -1394,6 +1031,16 @@ export default function AgentInspector({ nodes, edges = null, onUpdateNode }) {
         >
           Setup
         </InspectorTabButton>
+        {nodeType === 'agent' && (
+          <InspectorTabButton
+            active={false}
+            onClick={() => {
+              setExpandedPromptEditorNodeId(selectedNodeId);
+            }}
+          >
+            Edit Prompts
+          </InspectorTabButton>
+        )}
         {hasInspectorOutput && (
           <InspectorTabButton
             active={activeTab === 'output'}
@@ -1494,9 +1141,6 @@ export default function AgentInspector({ nodes, edges = null, onUpdateNode }) {
           node={selectedNode}
           nodes={nodes}
           onUpdateNode={onUpdateNode}
-          compiledPreview={compiledPreview}
-          previewLoading={previewLoading}
-          previewError={previewError}
         />
       )}
       {activeTab === 'config' && nodeType === 'department' && (

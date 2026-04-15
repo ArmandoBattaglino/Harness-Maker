@@ -551,7 +551,7 @@ export default function SwarmCanvas({
   workflowProps,
 }) {
   const focusConnections = true;
-  const { fitView, screenToFlowPosition } = useReactFlow();
+  const { fitView, fitBounds, screenToFlowPosition, getZoom, setCenter } = useReactFlow();
   const focusedDepartmentId = useSwarmStore((s) => s.focusedDepartmentId);
   const setSelectedNode = useSwarmStore((s) => s.setSelectedNode);
   const sidePanelMode = useSwarmStore((s) => s.sidePanelMode);
@@ -561,8 +561,9 @@ export default function SwarmCanvas({
   const activityUnreadCount = useSwarmStore((s) => s.activityUnreadCount);
   const selectedNodeId = useSwarmStore((s) => s.selectedNodeId);
   const expandedOutputNodeId = useSwarmStore((s) => s.expandedOutputNodeId);
+  const expandedPromptEditorNodeId = useSwarmStore((s) => s.expandedPromptEditorNodeId);
   const showSidePanels = sidePanelOpen;
-  const showInspector = Boolean(selectedNodeId);
+  const showInspector = Boolean(selectedNodeId) && !expandedPromptEditorNodeId;
 
   // Initial nodes/edges from workflowDef (or empty)
   const initialNodes = workflowDef?.nodes ?? [];
@@ -629,6 +630,79 @@ export default function SwarmCanvas({
     setTimeout(() => fitView({ padding: 0.2, duration: 300 }), 50);
   }, [layoutNonce, edges, fitView, setNodes]);
 
+  // Center canvas to show both the agent node AND the floating prompt panel.
+  //
+  // Key insight: the panel is a CSS overlay (420×560px) that does NOT scale
+  // with React Flow zoom. Only the node scales. So we must:
+  // 1. Pick a zoom where the node + panel fit horizontally in the container
+  // 2. Position the viewport so the node's screen position leaves enough room
+  //    for the panel to its left (434px) and below (560px from node top).
+  useEffect(() => {
+    if (!expandedPromptEditorNodeId) return;
+    const targetNode = nodes.find((n) => n.id === expandedPromptEditorNodeId);
+    if (!targetNode) return;
+    const raf1 = requestAnimationFrame(() => {
+      const raf2 = requestAnimationFrame(() => {
+        const rfContainer = document.querySelector('.react-flow');
+        if (!rfContainer) return;
+        const { width: cW, height: cH } = rfContainer.getBoundingClientRect();
+
+        const nodeX = targetNode.position?.x ?? 0;
+        const nodeY = targetNode.position?.y ?? 0;
+        const nodeW = targetNode.measured?.width ?? targetNode.width ?? 180;
+
+        const PANEL_W = 420;  // panel width in screen px (doesn't scale)
+        const PANEL_GAP = 14; // gap between panel and node
+        const PANEL_H = 560;  // panel max-height in screen px (doesn't scale)
+        const PAD = 30;       // breathing room
+
+        // Zoom: ensure the node + panel fit horizontally.
+        // Total screen width needed: PANEL_W + PANEL_GAP + nodeW*Z + PAD*2
+        // Solve for Z: Z <= (cW - PANEL_W - PANEL_GAP - PAD*2) / nodeW
+        const maxZoomH = (cW - PANEL_W - PANEL_GAP - PAD * 2) / nodeW;
+        const Z = Math.max(0.3, Math.min(maxZoomH, 1.0));
+
+        // We want the node to appear on screen such that:
+        //   - 434px of space to its left (panel + gap)
+        //   - the panel (560px tall) is fully visible below the node's top
+        //   - both are centered in the container
+        //
+        // Combined bounding box on screen:
+        //   left  = nodeScreenX - (PANEL_W + PANEL_GAP)
+        //   right = nodeScreenX + nodeW * Z
+        //   top   = nodeScreenY
+        //   bottom= nodeScreenY + PANEL_H
+        //
+        // Center this bbox in the container:
+        //   bboxW = PANEL_W + PANEL_GAP + nodeW * Z
+        //   bboxH = PANEL_H
+        //   nodeScreenX = (cW - bboxW) / 2 + (PANEL_W + PANEL_GAP)
+        //   nodeScreenY = (cH - bboxH) / 2
+
+        const bboxW = PANEL_W + PANEL_GAP + nodeW * Z;
+        const nodeScreenX = (cW - bboxW) / 2 + PANEL_W + PANEL_GAP;
+        const nodeScreenY = (cH - PANEL_H) / 2;
+
+        // Convert desired screen position to flow center for setCenter.
+        // setCenter(fx, fy, {zoom: Z}) places flow point (fx, fy) at screen (cW/2, cH/2).
+        // A node at flow (nodeX, nodeY) then appears at screen:
+        //   sx = (nodeX - fx) * Z + cW/2
+        //   sy = (nodeY - fy) * Z + cH/2
+        //
+        // We want sx = nodeScreenX, sy = nodeScreenY:
+        //   fx = nodeX - (nodeScreenX - cW/2) / Z
+        //   fy = nodeY - (nodeScreenY - cH/2) / Z
+
+        const fx = nodeX - (nodeScreenX - cW / 2) / Z;
+        const fy = nodeY - (nodeScreenY - cH / 2) / Z;
+
+        setCenter(fx, fy, { zoom: Z, duration: 300 });
+      });
+      return () => cancelAnimationFrame(raf2);
+    });
+    return () => cancelAnimationFrame(raf1);
+  }, [expandedPromptEditorNodeId, setCenter, nodes]);
+
   // Wraps onNodesChange to also mark dirty
   const handleNodesChange = useCallback(
     (changes) => {
@@ -665,14 +739,15 @@ export default function SwarmCanvas({
   );
 
   const renderedNodes = useMemo(() => {
-    const layeredNodes = applyExpandedOutputLayering(visibleNodes, expandedOutputNodeId);
+    let layeredNodes = applyExpandedOutputLayering(visibleNodes, expandedOutputNodeId);
+    layeredNodes = applyExpandedOutputLayering(layeredNodes, expandedPromptEditorNodeId);
 
     if (!dropPreviewNode) {
       return layeredNodes;
     }
 
     return [...layeredNodes, dropPreviewNode];
-  }, [visibleNodes, expandedOutputNodeId, dropPreviewNode]);
+  }, [visibleNodes, expandedOutputNodeId, expandedPromptEditorNodeId, dropPreviewNode]);
 
   const visibleEdges = useMemo(
     () => edges.filter((e) => visibleNodeIds.has(e.source) && visibleNodeIds.has(e.target)),
@@ -763,7 +838,7 @@ export default function SwarmCanvas({
   const onNodeClick = useCallback(
     (event, node) => {
       setSelectedEdgeId(null);
-      useSwarmStore.setState({ expandedOutputNodeId: null, expandedValidationNodeId: null });
+      useSwarmStore.setState({ expandedOutputNodeId: null, expandedValidationNodeId: null, expandedPromptEditorNodeId: null });
       setSelectedNode(node.id);
     },
     [setSelectedNode]
@@ -774,7 +849,7 @@ export default function SwarmCanvas({
       clearDropPreview();
       setSelectedEdgeId(null);
       setSelectedNode(null);
-      useSwarmStore.setState({ expandedOutputNodeId: null, expandedValidationNodeId: null });
+      useSwarmStore.setState({ expandedOutputNodeId: null, expandedValidationNodeId: null, expandedPromptEditorNodeId: null });
     },
     [clearDropPreview, setSelectedNode]
   );
@@ -782,7 +857,7 @@ export default function SwarmCanvas({
   const onEdgeClick = useCallback(
     (event, edge) => {
       event?.stopPropagation?.();
-      useSwarmStore.setState({ expandedOutputNodeId: null, expandedValidationNodeId: null });
+      useSwarmStore.setState({ expandedOutputNodeId: null, expandedValidationNodeId: null, expandedPromptEditorNodeId: null });
       setSelectedNode(null);
       setSelectedEdgeId(edge.id);
     },
@@ -981,8 +1056,32 @@ export default function SwarmCanvas({
     [screenToFlowPosition, nodes, edges, pushHistory, setNodes]
   );
 
+  const handleUpdateNode = useCallback(
+    (nodeId, patch) => {
+      // FR-V5-18: debounce rapid data edits — batch into one history entry (500ms)
+      if (updateNodeDebounceRef.current) {
+        clearTimeout(updateNodeDebounceRef.current);
+      } else {
+        // First edit in this burst — capture state BEFORE the edit
+        updateNodeDebounceRef.current = 'pending';
+        // We snapshot immediately before the first edit
+        pushHistory(nodes, edges);
+      }
+      updateNodeDebounceRef.current = setTimeout(() => {
+        updateNodeDebounceRef.current = null;
+      }, 500);
+
+      setNodes((nds) =>
+        nds.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, ...patch } } : n))
+      );
+      if (markDirtyRef.current) markDirtyRef.current();
+    },
+    [setNodes, pushHistory, nodes, edges]
+  );
+
   const setExpandedOutputNodeId = useSwarmStore((s) => s.setExpandedOutputNodeId);
   const setExpandedValidationNodeId = useSwarmStore((s) => s.setExpandedValidationNodeId);
+  const setExpandedPromptEditorNodeId = useSwarmStore((s) => s.setExpandedPromptEditorNodeId);
   const canvasActions = useMemo(() => ({
     onViewOutput: (nodeId) => {
       setExpandedOutputNodeId(nodeId);
@@ -990,11 +1089,13 @@ export default function SwarmCanvas({
     onEdit: (nodeId) => {
       setExpandedOutputNodeId(null);
       setExpandedValidationNodeId(null);
+      setExpandedPromptEditorNodeId(null);
       setSelectedNode(nodeId);
     },
     onDuplicate: (nodeId) => duplicateNode(nodeId),
     onDelete: (nodeId) => deleteNode(nodeId),
-  }), [setSelectedNode, setExpandedOutputNodeId, setExpandedValidationNodeId, duplicateNode, deleteNode]);
+    onUpdateNode: (nodeId, patch) => handleUpdateNode(nodeId, patch),
+  }), [setSelectedNode, setExpandedOutputNodeId, setExpandedValidationNodeId, setExpandedPromptEditorNodeId, duplicateNode, deleteNode, handleUpdateNode]);
 
   // Build context menu actions based on type
   const contextMenuActions = useMemo(() => {
@@ -1018,6 +1119,7 @@ export default function SwarmCanvas({
           onClick: () => {
             setExpandedOutputNodeId(null);
             setExpandedValidationNodeId(null);
+            setExpandedPromptEditorNodeId(null);
             setSelectedNode(contextMenu.nodeId);
           },
         },
@@ -1032,30 +1134,7 @@ export default function SwarmCanvas({
       ];
     }
     return [];
-  }, [contextMenu, addNodeAtPosition, pasteNode, setSelectedNode, setExpandedOutputNodeId, setExpandedValidationNodeId, duplicateNode, copyNode, deleteNode, deleteEdge, setNodes]);
-
-  const handleUpdateNode = useCallback(
-    (nodeId, patch) => {
-      // FR-V5-18: debounce rapid data edits — batch into one history entry (500ms)
-      if (updateNodeDebounceRef.current) {
-        clearTimeout(updateNodeDebounceRef.current);
-      } else {
-        // First edit in this burst — capture state BEFORE the edit
-        updateNodeDebounceRef.current = 'pending';
-        // We snapshot immediately before the first edit
-        pushHistory(nodes, edges);
-      }
-      updateNodeDebounceRef.current = setTimeout(() => {
-        updateNodeDebounceRef.current = null;
-      }, 500);
-
-      setNodes((nds) =>
-        nds.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, ...patch } } : n))
-      );
-      if (markDirtyRef.current) markDirtyRef.current();
-    },
-    [setNodes, pushHistory, nodes, edges]
-  );
+  }, [contextMenu, addNodeAtPosition, pasteNode, setSelectedNode, setExpandedOutputNodeId, setExpandedValidationNodeId, setExpandedPromptEditorNodeId, duplicateNode, copyNode, deleteNode, deleteEdge, setNodes]);
 
   // FR-V5-17: Keyboard shortcuts for undo/redo
   useEffect(() => {

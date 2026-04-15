@@ -355,3 +355,22 @@
 **Alternatives rejected:** Keep rail open by default ? wastes canvas space in idle states. Auto-open on every unread event ? causes panel thrash and interrupts authoring/running flow. Never auto-open ? risks hiding HITL/blocking states that require operator action.
 **Revisit if:** Users miss important non-blocking activity despite badge indicators, or if later activity semantics add severity levels that warrant more nuanced behavior.
 ---
+
+
+## DEC-039: Prompt block architecture - refactor _buildSystemPrompt() into composable blocks with discrepancy fixes
+**Date:** 2026-04-15
+**Made by:** User + planner from prompt injection pipeline analysis
+**Decision:** Refactor the monolithic `_buildSystemPrompt()` (SwarmEngine.js:6536-6762) into 11 standalone `_buildBlock_*` methods that are iterable in user-defined order. Fix three discrepancies simultaneously: (1) inject `mission` into the role block (currently ignored), (2) inject `guardrails` as a new prompt section (currently ignored), (3) remove `--append-system-prompt` from PTY spawn to eliminate double injection. Block order and disabled state are stored in `node.data.promptBlockOrder` and `node.data.promptBlockDisabled`.
+**Reasoning:** The original monolithic function made it impossible to preview, reorder, or selectively disable prompt sections. Three fields configured by users (mission, guardrails, systemPrompt in PTY) were either silently ignored or duplicated, creating a trust gap between the authoring UI and the runtime behavior. Composable blocks enable the new Prompt Block Editor UI and the `/api/v1/swarm/prompt-preview` endpoint while fixing these bugs.
+**Alternatives rejected:** Patch discrepancies without refactoring - fixes bugs but leaves the monolith intact and blocks the block editor UI. Replace _buildSystemPrompt() with a template engine - over-engineering for predefined sections. Store block definitions in a separate config file - adds persistence complexity with no benefit (node.data already persists via workflow save).
+**Revisit if:** Custom user-defined blocks are needed (would require a block registry and schema validation), or if the number of blocks grows beyond ~15 (may need a more formal plugin architecture).
+---
+
+## DEC-040: Expert-level CLI injection blocks - expose Claude Code internal injections as read-only informational blocks
+**Date:** 2026-04-15
+**Made by:** User request for total prompt control
+**Decision:** Add 5 read-only expert-level blocks (cli-bootstrap, cli-system-prompt, cli-flags, cli-claude-md, cli-tools-allowlist) to the Prompt Block Editor, hidden behind an Expert Mode toggle. These blocks show what Claude Code itself injects at the CLI level (bootstrap prompt, --append-system-prompt, launch flags, CLAUDE.md content, --tools allowlist). They are colored red, always read-only, and stored in localStorage (UI preference, not workflow config). The prompt-preview endpoint includes a `cliInjections` object in every response.
+**Reasoning:** Power users need full transparency over everything reaching the agent, including injections outside the application's `_buildSystemPrompt()`. Without this, the block editor would still hide significant prompt content. Keeping them hidden by default prevents UI clutter for standard users while giving experts total visibility.
+**Alternatives rejected:** Make CLI blocks editable - dangerous, would override Claude Code's own safety/session mechanisms. Show CLI injections inline with standard blocks - confuses the source hierarchy (app-level vs CLI-level). Omit CLI injections entirely - defeats the "total control" requirement.
+**Revisit if:** Claude Code's injection model changes significantly, or if users request the ability to override CLI-level injections (would require careful security analysis).
+---
