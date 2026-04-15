@@ -68,12 +68,14 @@ const buildClearedExecutionState = () => ({
   packResult: null,
   chatFilter: 'all',
   sidePanelMode: 'chat',
-  sidePanelOpen: true,
+  sidePanelOpen: false,
+  activityUnreadCount: 0,
   focusedDepartmentId: null,
   departmentStack: [],
   selectedNodeId: null,
   expandedOutputNodeId: null,
   expandedValidationNodeId: null,
+  expandedPromptEditorNodeId: null,
   agentValidationIssuesByNodeId: {},
   ptyExplosionNodeId: null,
   wsConnected: false,
@@ -103,6 +105,7 @@ const useSwarmStore = create((set, get) => ({
   packResult: null,          // pack-shaped outputs/artifacts from status/results hydration
   chatFilter: 'all',         // 'all' or specific nodeId
   sidePanelMode: 'chat',     // 'feed' | 'chat' — which panel is shown
+  activityUnreadCount: 0,    // badge-only activity count while the rail is closed
 
   // Canvas navigation
   focusedDepartmentId: null,
@@ -110,13 +113,16 @@ const useSwarmStore = create((set, get) => ({
 
   // Selected node (for AgentInspector panel)
   selectedNodeId: null,
-  sidePanelOpen: true,
+  sidePanelOpen: false,
 
   // Expanded output card — which agent's floating output card is open on canvas
   expandedOutputNodeId: null,
 
   // Expanded validation card — which agent's floating validation card is open on canvas
   expandedValidationNodeId: null,
+
+  // Expanded prompt block editor — which agent's prompt editor panel is open on canvas
+  expandedPromptEditorNodeId: null,
 
   // Agent-scoped validation issues keyed by nodeId for local node UI
   agentValidationIssuesByNodeId: {},
@@ -176,6 +182,7 @@ const useSwarmStore = create((set, get) => ({
     // Auto-open chat panel when HITL arrives
     sidePanelOpen: true,
     sidePanelMode: 'chat',
+    activityUnreadCount: 0,
   })),
 
   resolveInboxItem: (itemId) => set((state) => ({
@@ -188,11 +195,13 @@ const useSwarmStore = create((set, get) => ({
   })),
 
   addFeedEvent: (event) => set((state) => ({
-    interAgentFeed: [...state.interAgentFeed, event].slice(-100)  // keep last 100
+    interAgentFeed: [...state.interAgentFeed, event].slice(-100),  // keep last 100
+    activityUnreadCount: state.sidePanelOpen ? 0 : state.activityUnreadCount + 1,
   })),
 
   addChatMessage: (msg) => set((state) => ({
-    chatMessages: [...state.chatMessages, msg].slice(-500)  // keep last 500
+    chatMessages: [...state.chatMessages, msg].slice(-500),  // keep last 500
+    activityUnreadCount: state.sidePanelOpen ? 0 : state.activityUnreadCount + 1,
   })),
 
   patchLatestChatMessage: (nodeId, patch, predicate = null) => set((state) => {
@@ -234,7 +243,10 @@ const useSwarmStore = create((set, get) => ({
 
   setChatFilter: (filter) => set({ chatFilter: filter }),
   setSidePanelMode: (mode) => set({ sidePanelMode: mode }),
-  setSidePanelOpen: (open) => set({ sidePanelOpen: open }),
+  setSidePanelOpen: (open) => set({
+    sidePanelOpen: open,
+    ...(open ? { activityUnreadCount: 0 } : {}),
+  }),
 
   setFocusedDepartment: (id) => set((state) => {
     // Avoid pushing duplicate if id is already the last item on the stack
@@ -258,14 +270,30 @@ const useSwarmStore = create((set, get) => ({
   setResumed: () => set({ executionStatus: 'running' }),
 
   setSelectedNode: (id) => set({ selectedNodeId: id }),
-  setExpandedOutputNodeId: (id) => set((state) => ({
-    expandedOutputNodeId: state.expandedOutputNodeId === id ? null : id,
-    expandedValidationNodeId: state.expandedOutputNodeId === id ? state.expandedValidationNodeId : null,
-  })),
-  setExpandedValidationNodeId: (id) => set((state) => ({
-    expandedValidationNodeId: state.expandedValidationNodeId === id ? null : id,
-    expandedOutputNodeId: state.expandedValidationNodeId === id ? state.expandedOutputNodeId : null,
-  })),
+  setExpandedOutputNodeId: (id) => set((state) => {
+    const isToggleOff = state.expandedOutputNodeId === id;
+    return {
+      expandedOutputNodeId: isToggleOff ? null : id,
+      expandedValidationNodeId: isToggleOff ? state.expandedValidationNodeId : null,
+      expandedPromptEditorNodeId: isToggleOff ? state.expandedPromptEditorNodeId : null,
+    };
+  }),
+  setExpandedValidationNodeId: (id) => set((state) => {
+    const isToggleOff = state.expandedValidationNodeId === id;
+    return {
+      expandedValidationNodeId: isToggleOff ? null : id,
+      expandedOutputNodeId: isToggleOff ? state.expandedOutputNodeId : null,
+      expandedPromptEditorNodeId: isToggleOff ? state.expandedPromptEditorNodeId : null,
+    };
+  }),
+  setExpandedPromptEditorNodeId: (id) => set((state) => {
+    const isToggleOff = state.expandedPromptEditorNodeId === id;
+    return {
+      expandedPromptEditorNodeId: isToggleOff ? null : id,
+      expandedOutputNodeId: isToggleOff ? state.expandedOutputNodeId : null,
+      expandedValidationNodeId: isToggleOff ? state.expandedValidationNodeId : null,
+    };
+  }),
   setAgentValidationIssuesByNodeId: (issuesByNodeId) => set({
     agentValidationIssuesByNodeId: issuesByNodeId || {},
   }),
@@ -400,6 +428,8 @@ const useSwarmStore = create((set, get) => ({
       interAgentFeed: prev.interAgentFeed,
       chatFilter: prev.chatFilter,
       sidePanelMode: prev.chatMessages.length > 0 ? 'chat' : prev.sidePanelMode,
+      sidePanelOpen: false,
+      activityUnreadCount: 0,
     });
   },
 

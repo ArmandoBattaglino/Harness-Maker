@@ -1,0 +1,36 @@
+﻿# Deep Interview Context Snapshot
+
+- **Task statement:** Brainstorm how to evolve the current Harness/Pack/Workflow builder into a truly configurable harness builder with near-zero domain limits while still remaining usable for domain experts who are not deeply technical.
+- **Desired outcome:** Identify what the user-facing construction flow is still missing so the product can support highly customizable, sector-specific harness authoring.
+- **Stated solution:** Analyze the existing codebase/product surfaces and run an intent-first brainstorming interview before planning implementation.
+- **Probable intent hypothesis:** The user wants a product strategy and UX model that balances unlimited flexibility with guided authoring, so domain experts can encode their own operating processes into agent-based harnesses without needing to think like developers.
+- **Known facts/evidence:**
+  - Current product already has two main authoring surfaces: advanced workflow/canvas authoring in Swarm and a pack-first Harness/Pack Builder with four explicit pack-owned surfaces (inputs, knowledge/context, behavior rules, outputs/artifacts).
+  - Swarm already supports agent nodes, input/output nodes, workflow settings, validation rail, direct workflow runs, runtime controls, and artifact panels.
+  - Pack Builder already supports runtime policy, dependencies, input schema, knowledge sources, behavior rules, output schema, artifact definitions, visible steps, completion criteria, and workflow drill-down.
+  - Pack Library already exposes an operator-facing launch/monitor/artifact surface separate from the advanced builder.
+  - Recent memory shows the product direction is moving from workflow editor toward vertical harness authoring, with workflow editor remaining the advanced drill-down surface.
+- **Constraints:**
+  - Must preserve high configurability/customization.
+  - Must also stay usable for non-programmer or semi-technical domain experts.
+  - Brownfield: recommendations should respect the current Swarm/Pack architecture instead of ignoring it.
+- **Unknowns/open questions:**
+  - Primary author persona: advanced builder, domain expert, operator, or a tiered combination?
+  - What “100% customizable” means in practice: data model freedom, UI composition, runtime controls, governance, marketplace/distribution, or all of them?
+  - Which parts must remain simple/opinionated vs fully open-ended?
+  - What should be intentionally out of scope to avoid infinite complexity?
+- **Decision-boundary unknowns:**
+  - How much structure OMX/the app may impose automatically.
+  - Whether the workflow canvas stays the core authoring surface or becomes a low-level substrate behind guided harness builders.
+  - Whether authoring should be template-first, ontology-first, wizard-first, or canvas-first.
+- **Likely codebase touchpoints:**
+  - client/src/views/SwarmView.jsx
+  - client/src/canvas/SwarmCanvas.jsx
+  - client/src/canvas/NodePalette.jsx
+  - client/src/canvas/AgentInspector.jsx
+  - client/src/canvas/WorkflowSettingsModal.jsx
+  - client/src/views/PackBuilderView.jsx
+  - client/src/views/PackLibraryView.jsx
+  - client/src/utils/visualWorkflowContracts.js
+  - server/routes/packs.js
+  - server/routes/swarm.js

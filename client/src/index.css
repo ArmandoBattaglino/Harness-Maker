@@ -238,6 +238,27 @@ body {
   to   { opacity: 1; transform: translateX(0); }
 }
 
+/* ── Prompt Block Editor Slide-In (from right) ─────── */
+
+@keyframes promptEditorSlideIn {
+  from { opacity: 0; transform: translateX(8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.prompt-editor-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.prompt-editor-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.prompt-editor-scrollbar::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 3px;
+}
+.prompt-editor-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
+}
+
 .output-card-scrollbar::-webkit-scrollbar {
   width: 5px;
 }

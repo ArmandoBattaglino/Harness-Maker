@@ -11,6 +11,7 @@ import NodeOutputCard from './NodeOutputCard';
 import { useCanvasActions } from '../CanvasActionsContext';
 import { getModelContextLimit } from '../../utils/modelContextLimits';
 import NodeValidationCard from './NodeValidationCard';
+import PromptBlockEditor from './PromptBlockEditor';
 
 function formatTokenCount(n) {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -32,7 +33,7 @@ function getIssueReviewLabel(count) {
 }
 
 // type: "agent"
-export default function AgentNode({ id, data, selected }) {
+export default function AgentNode({ id, data, selected, positionAbsoluteX, positionAbsoluteY }) {
   const agentState = useSwarmStore((s) => s.agentStates[id]);
   const hasUnviewedOutput = useSwarmStore(
     (s) => !!(s.agentResults[id]?.finalText && !s.agentResults[id]?.viewed)
@@ -46,11 +47,15 @@ export default function AgentNode({ id, data, selected }) {
   const setExpandedOutputNodeId = useSwarmStore((s) => s.setExpandedOutputNodeId);
   const expandedValidationNodeId = useSwarmStore((s) => s.expandedValidationNodeId);
   const setExpandedValidationNodeId = useSwarmStore((s) => s.setExpandedValidationNodeId);
+  const expandedPromptEditorNodeId = useSwarmStore((s) => s.expandedPromptEditorNodeId);
+  const setExpandedPromptEditorNodeId = useSwarmStore((s) => s.setExpandedPromptEditorNodeId);
+  const workflowDef = useSwarmStore((s) => s.workflowDef);
   const validationIssues = useSwarmStore((s) => s.agentValidationIssuesByNodeId[id] || []);
   const canvasActions = useCanvasActions();
   const isDropPreview = Boolean(data?.isDropPreview);
   const showOutputCard = expandedOutputNodeId === id && !isDropPreview;
   const showValidationCard = expandedValidationNodeId === id && !isDropPreview;
+  const showPromptEditor = expandedPromptEditorNodeId === id && !isDropPreview;
   const status = isDropPreview ? 'preview' : agentState?.status ?? 'idle';
   const isStreamJson = isStructuredSpawnMode(agentState?.spawnMode);
   const showThinking = isStreamJson && status === 'running' && agentState?.isThinking;
@@ -129,6 +134,15 @@ export default function AgentNode({ id, data, selected }) {
     setExpandedValidationNodeId(id);
   }, [id, setExpandedValidationNodeId]);
 
+  const handleGearClick = useCallback((event) => {
+    event.stopPropagation();
+    setExpandedPromptEditorNodeId(id);
+  }, [id, setExpandedPromptEditorNodeId]);
+
+  const handlePromptFieldChange = useCallback((field, value) => {
+    canvasActions?.onUpdateNode?.(id, { [field]: value });
+  }, [canvasActions, id]);
+
   const menuActions = useMemo(() => {
     if (isDropPreview || !canvasActions) return [];
     return [
@@ -170,7 +184,7 @@ export default function AgentNode({ id, data, selected }) {
 
   return (
     <div
-      className={`relative rounded-lg border-2 p-3 min-w-[160px] max-w-[220px] text-white text-sm
+      className={`group relative rounded-lg border-2 p-3 min-w-[160px] max-w-[220px] text-white text-sm
         ${showCostBadge && !isDropPreview ? 'pb-8' : 'pb-3'}
         ${colorClass}
         ${selected ? 'ring-2 ring-white ring-offset-1 ring-offset-transparent' : ''}
@@ -179,6 +193,20 @@ export default function AgentNode({ id, data, selected }) {
     >
       {!isDropPreview && (
         <Handle type="target" position={Position.Top} className="!bg-gray-400 !border-gray-600" />
+      )}
+
+      {/* Gear icon — prompt block editor toggle */}
+      {!isDropPreview && (
+        <button
+          onClick={handleGearClick}
+          className={`absolute top-0 right-[calc(100%+6px)] z-20 text-indigo-400 hover:text-indigo-300 transition-opacity ${showPromptEditor ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+          title="Prompt Block Editor"
+          aria-label="Open prompt block editor"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-[18px] h-[18px]">
+            <path fillRule="evenodd" d="M7.84 1.804A1 1 0 018.82 1h2.36a1 1 0 01.98.804l.331 1.652a6.993 6.993 0 011.929 1.115l1.598-.54a1 1 0 011.186.447l1.18 2.044a1 1 0 01-.205 1.251l-1.267 1.113a7.047 7.047 0 010 2.228l1.267 1.113a1 1 0 01.206 1.25l-1.18 2.045a1 1 0 01-1.187.447l-1.598-.54a6.993 6.993 0 01-1.929 1.115l-.33 1.652a1 1 0 01-.98.804H8.82a1 1 0 01-.98-.804l-.331-1.652a6.993 6.993 0 01-1.929-1.115l-1.598.54a1 1 0 01-1.186-.447l-1.18-2.044a1 1 0 01.205-1.251l1.267-1.114a7.05 7.05 0 010-2.227L1.821 7.773a1 1 0 01-.206-1.25l1.18-2.045a1 1 0 011.187-.447l1.598.54A6.993 6.993 0 017.51 3.456l.33-1.652zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+          </svg>
+        </button>
       )}
 
       {/* Validation warning badge */}
@@ -333,6 +361,18 @@ export default function AgentNode({ id, data, selected }) {
           nodeLabel={data.label}
           issues={validationIssues}
           onClose={() => setExpandedValidationNodeId(null)}
+        />
+      )}
+
+      {/* Floating prompt block editor — positioned to the left of the node */}
+      {showPromptEditor && (
+        <PromptBlockEditor
+          nodeId={id}
+          nodeData={data}
+          nodePosition={{ x: positionAbsoluteX ?? 0, y: positionAbsoluteY ?? 0 }}
+          workflowDef={workflowDef}
+          onFieldChange={handlePromptFieldChange}
+          onClose={() => setExpandedPromptEditorNodeId(null)}
         />
       )}
     </div>

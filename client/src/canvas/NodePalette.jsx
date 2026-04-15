@@ -109,26 +109,29 @@ function SavedWorkflowsSection({
   importError,
   onDismissImportError,
   projectLabel,
+  showHeader = true,
 }) {
   const fileInputRef = useRef(null);
   const [sectionOpen, setSectionOpen] = useState(true);
 
   return (
-    <div className="border-t border-gray-700/60 mt-1">
-      <button
-        onClick={() => setSectionOpen((v) => !v)}
-        className="flex items-center justify-between w-full px-2.5 py-2 text-[10px] font-semibold text-gray-500 uppercase tracking-widest hover:text-gray-300 transition-colors"
-      >
-        <span>Workflows</span>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-          className={`w-3 h-3 transition-transform ${sectionOpen ? 'rotate-180' : ''}`}
+    <div className={showHeader ? 'border-t border-gray-700/60 mt-1' : ''}>
+      {showHeader && (
+        <button
+          onClick={() => setSectionOpen((v) => !v)}
+          className="flex items-center justify-between w-full px-2.5 py-2 text-[10px] font-semibold text-gray-500 uppercase tracking-widest hover:text-gray-300 transition-colors"
         >
-          <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-        </svg>
-      </button>
+          <span>Workflows</span>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className={`w-3 h-3 transition-transform ${sectionOpen ? 'rotate-180' : ''}`}
+          >
+            <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+          </svg>
+        </button>
+      )}
 
       {sectionOpen && (
         <div className="px-2.5 pb-2.5 space-y-2">
@@ -229,6 +232,7 @@ function SavedWorkflowsSection({
 
 export default function NodePalette({ workflowProps }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [activeSection, setActiveSection] = useState('build');
 
   if (collapsed) {
     return (
@@ -249,15 +253,51 @@ export default function NodePalette({ workflowProps }) {
   return (
     <div className="w-52 bg-gray-900/80 border-r border-gray-700/60 flex flex-col shrink-0 overflow-hidden">
       <div className="flex-1 overflow-y-auto custom-scrollbar p-2.5">
-        <h3 className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-3">
-          Nodes
-        </h3>
-        {NODE_CARDS.map((card) => (
-          <PaletteCard key={`${card.type}-${card.subType}`} card={card} />
-        ))}
-
         {workflowProps && (
-          <SavedWorkflowsSection {...workflowProps} />
+          <div className="mb-3 grid grid-cols-2 gap-1 rounded-lg border border-gray-700/70 bg-gray-950/50 p-1">
+            <button
+              type="button"
+              onClick={() => setActiveSection('build')}
+              className={`rounded-md px-2 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors ${
+                activeSection === 'build'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-500 hover:bg-gray-800 hover:text-gray-300'
+              }`}
+            >
+              Build
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSection('workflows')}
+              className={`rounded-md px-2 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors ${
+                activeSection === 'workflows'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-500 hover:bg-gray-800 hover:text-gray-300'
+              }`}
+            >
+              Workflows
+            </button>
+          </div>
+        )}
+
+        {activeSection === 'build' && (
+          <>
+            <h3 className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-3">
+              Build
+            </h3>
+            {NODE_CARDS.map((card) => (
+              <PaletteCard key={`${card.type}-${card.subType}`} card={card} />
+            ))}
+          </>
+        )}
+
+        {workflowProps && activeSection === 'workflows' && (
+          <div>
+            <h3 className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-3">
+              Workflows
+            </h3>
+            <SavedWorkflowsSection {...workflowProps} showHeader={false} />
+          </div>
         )}
       </div>
       <div className="border-t border-gray-700/60 p-1.5 flex justify-center">

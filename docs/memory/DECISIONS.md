@@ -305,3 +305,72 @@
 **Alternatives rejected:** Keep auto-updating PROGRESS and CONTEXT alongside the canonical ledgers -- produces redundancy and stale summaries. Eliminate all human-ledger files in favor of `.omx/*` runtime memory -- loses a stable, reviewable human source of truth. Make ACTIVITY_LOG or TASK_PLAN optional -- weakens execution auditability.
 **Revisit if:** The repository later replaces PROGRESS/CONTEXT with a lean canonical dashboard, or adopts a different explicit memory architecture that changes which files are authoritative.
 ---
+
+
+## DEC-034: Progressive harness builder uses schema-first compiled contracts
+**Date:** 2026-04-14
+**Made by:** Ralph from approved Progressive Harness Builder PRD
+**Decision:** The progressive harness builder will preserve WorkflowDefinition, AgentDefinition, Harness/PackDefinition, and CompiledExecutionContract as distinct layers, with runtime execution using a derived compiled contract rather than duplicating authoring truth across UI surfaces.
+**Reasoning:** The approved PRD explicitly rejected collapsing workflow, agent, pack, and runtime state into one persistence blob. A schema-first compiled boundary prevents source-of-truth drift while supporting both guided semantic editing and technical deep editing.
+**Alternatives rejected:** Swarm UX-first consolidation without shared model/resolver ? risks hidden duplicate ownership. Pack-led long-term primary authoring ? conflicts with Swarm as the desired shell. Parallel persistence/domain ownership ? creates drift.
+**Revisit if:** A future architecture removes PackBuilder or replaces Swarm with a different primary shell after explicit parity gates pass.
+---
+
+
+## DEC-035: PackBuilder remains authoritative until explicit Swarm parity gates pass
+**Date:** 2026-04-14
+**Made by:** Ralph from approved Progressive Harness Builder PRD
+**Decision:** PackBuilder must remain the authoritative harness/pack authoring surface for pack-owned behavior until Swarm parity checkpoints prove equivalent authoring and runtime behavior and a separate retirement/deprecation gate is explicitly approved.
+**Reasoning:** The plan requires Swarm to become the primary shell without silently reassigning domain authority. Coexistence avoids breaking existing pack-authoritative flows while Swarm gains progressive harness-building capabilities.
+**Alternatives rejected:** Immediate PackBuilder retirement ? too aggressive and unverified. Silent authority transfer to Swarm UI ? confusing and unsafe for existing packs.
+**Revisit if:** Swarm passes side-by-side parity fixtures, pack/workflow equivalence tests, Playwright parity smoke, and the user explicitly approves PackBuilder retirement or reduction.
+---
+
+
+## DEC-036: Provider and predictability controls must surface structured incompatibilities
+**Date:** 2026-04-14
+**Made by:** Ralph from approved Progressive Harness Builder PRD
+**Decision:** Provider/runtime/tool capability mismatches and unsupported predictability controls must be surfaced as structured incompatibilities or degraded-support notes in compiled previews and UI, not silently accepted as if all providers enforce all controls.
+**Reasoning:** The product needs trustworthy harness configuration. Advisory-only or provider-specific controls can remain available, but users must see what is enforced, advisory, unsupported, or degraded before runtime.
+**Alternatives rejected:** Hide provider differences ? produces false predictability. Hard-fail every advisory control ? would unnecessarily break useful workflows. Provider-specific UI forks ? increases maintenance and source-of-truth drift.
+**Revisit if:** Runtime providers converge on a shared enforceable capability API or the app adopts a stricter provider support policy.
+---
+
+
+## DEC-037: Swarm UX clarity proceeds as UI-only IA polish before shell restructuring
+**Date:** 2026-04-14
+**Made by:** Ralph from approved Swarm UX Clarity ralplan
+**Decision:** The Swarm UX clarity program will first normalize AgentInspector information architecture and activity-rail behavior as UI-only polish over existing V18 contracts, then handle broader shell restructuring in a separate follow-up wave.
+**Reasoning:** The inspector-first lane improves the highest-friction authoring surface with the smallest reversible diff while preserving WorkflowDefinition, AgentDefinition, HarnessContract, and CompiledExecutionContract boundaries.
+**Alternatives rejected:** Shell-first cleanup ? attacks global clutter first but touches more navigation/layout surface and raises regression risk. Combined sweep ? too broad to verify and rollback safely. Relabel-only pass ? too weak to solve the core IA problem.
+**Revisit if:** Wave 1 verification shows the primary confusion is still dominated by shell-level layout rather than inspector grouping.
+---
+
+
+## DEC-038: Activity rail auto-opens only for intervention-critical Swarm events
+**Date:** 2026-04-14
+**Made by:** Ralph from approved Swarm UX Clarity ralplan
+**Decision:** The Swarm activity rail should be closed by default in idle authoring and auto-open only for intervention-critical events such as HITL/inbox arrivals or blocking runtime errors. Routine unread activity during an active run should surface as a badge without forcing the rail open.
+**Reasoning:** Keeping an empty rail open reduces canvas space and increases visual noise. Auto-opening only for intervention-critical states preserves operator visibility without causing focus shifts for routine activity.
+**Alternatives rejected:** Keep rail open by default ? wastes canvas space in idle states. Auto-open on every unread event ? causes panel thrash and interrupts authoring/running flow. Never auto-open ? risks hiding HITL/blocking states that require operator action.
+**Revisit if:** Users miss important non-blocking activity despite badge indicators, or if later activity semantics add severity levels that warrant more nuanced behavior.
+---
+
+
+## DEC-039: Prompt block architecture - refactor _buildSystemPrompt() into composable blocks with discrepancy fixes
+**Date:** 2026-04-15
+**Made by:** User + planner from prompt injection pipeline analysis
+**Decision:** Refactor the monolithic `_buildSystemPrompt()` (SwarmEngine.js:6536-6762) into 11 standalone `_buildBlock_*` methods that are iterable in user-defined order. Fix three discrepancies simultaneously: (1) inject `mission` into the role block (currently ignored), (2) inject `guardrails` as a new prompt section (currently ignored), (3) remove `--append-system-prompt` from PTY spawn to eliminate double injection. Block order and disabled state are stored in `node.data.promptBlockOrder` and `node.data.promptBlockDisabled`.
+**Reasoning:** The original monolithic function made it impossible to preview, reorder, or selectively disable prompt sections. Three fields configured by users (mission, guardrails, systemPrompt in PTY) were either silently ignored or duplicated, creating a trust gap between the authoring UI and the runtime behavior. Composable blocks enable the new Prompt Block Editor UI and the `/api/v1/swarm/prompt-preview` endpoint while fixing these bugs.
+**Alternatives rejected:** Patch discrepancies without refactoring - fixes bugs but leaves the monolith intact and blocks the block editor UI. Replace _buildSystemPrompt() with a template engine - over-engineering for predefined sections. Store block definitions in a separate config file - adds persistence complexity with no benefit (node.data already persists via workflow save).
+**Revisit if:** Custom user-defined blocks are needed (would require a block registry and schema validation), or if the number of blocks grows beyond ~15 (may need a more formal plugin architecture).
+---
+
+## DEC-040: Expert-level CLI injection blocks - expose Claude Code internal injections as read-only informational blocks
+**Date:** 2026-04-15
+**Made by:** User request for total prompt control
+**Decision:** Add 5 read-only expert-level blocks (cli-bootstrap, cli-system-prompt, cli-flags, cli-claude-md, cli-tools-allowlist) to the Prompt Block Editor, hidden behind an Expert Mode toggle. These blocks show what Claude Code itself injects at the CLI level (bootstrap prompt, --append-system-prompt, launch flags, CLAUDE.md content, --tools allowlist). They are colored red, always read-only, and stored in localStorage (UI preference, not workflow config). The prompt-preview endpoint includes a `cliInjections` object in every response.
+**Reasoning:** Power users need full transparency over everything reaching the agent, including injections outside the application's `_buildSystemPrompt()`. Without this, the block editor would still hide significant prompt content. Keeping them hidden by default prevents UI clutter for standard users while giving experts total visibility.
+**Alternatives rejected:** Make CLI blocks editable - dangerous, would override Claude Code's own safety/session mechanisms. Show CLI injections inline with standard blocks - confuses the source hierarchy (app-level vs CLI-level). Omit CLI injections entirely - defeats the "total control" requirement.
+**Revisit if:** Claude Code's injection model changes significantly, or if users request the ability to override CLI-level injections (would require careful security analysis).
+---

@@ -17,6 +17,7 @@
     "test:visual:swarm:reuse": "node scripts/swarm-visual-regression.mjs --reuse-server",
     "test:playwright:v17-review-followup": "node scripts/v17-review-followup-playwright-smoke.mjs",
     "test:playwright:workflow-heart": "node scripts/workflow-heart-playwright-smoke.mjs",
+    "test:playwright:agent-compiled-preview": "node scripts/agent-compiled-preview-playwright-smoke.mjs",
     "check:server-freshness": "node scripts/check-server-freshness.mjs",
     "check:server-freshness:warn": "node scripts/check-server-freshness.mjs --warn-only"
   },

@@ -1,4 +1,88 @@
 ---
+## 2026-04-15 — POST /api/v1/swarm/prompt-preview endpoint
+**Status:** COMPLETED
+**Called by:** user (direct request)
+
+### Context when I started
+V19.0 block refactoring was already complete: SwarmEngine._buildSystemPrompt() calls 11 _buildBlock_* methods in user-defined order. The next step was a preview endpoint that lets the frontend show the compiled prompt for any agent node without starting an execution.
+
+### What I did
+1. Added imports for `fs`, `path`, `os`, and `ConfigStore` to server/routes/swarm.js.
+2. Defined route-local constants: PREVIEW_DEFAULT_BLOCK_ORDER, PREVIEW_SYSTEM_BLOCKS, BLOCK_METADATA (11 entries with title/source), RUNTIME_PLACEHOLDERS (4 runtime blocks), USER_CLAUDE_MD path, safeReadFile helper, and buildGuidanceLines helper (mirrors SwarmEngine._buildAgentGuidanceLines).
+3. Added `POST /prompt-preview` async route handler at line 227 (between compiled-preview and history routes). The handler:
+   - Validates workflowDef (object) and selectedAgentId (string); returns 400 on bad input
+   - Finds the agent node; returns 404 if missing
+   - Derives handoffTargets from workflowDef.edges
+   - Builds mock workflowContext from workflowDef.settings/description
+   - Iterates the block order (node.data.promptBlockOrder or default), computes each block inline mirroring SwarmEngine methods, uses placeholder text for runtime blocks
+   - Supports optional blockId filter for single-block preview
+   - Assembles the full prompt from enabled non-empty blocks
+   - Builds CLI injection envelope with bootstrapPrompt, launchFlags, toolsAllowlist, and async CLAUDE.md reading via ConfigStore project lookup
+   - Returns { blocks, assembledPrompt, totalTokenEstimate, blockCount, cliInjections }
+4. Updated file header comment with the new route.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/routes/swarm.js | MODIFIED | Added 4 imports, ~110 lines of constants/helpers, ~200 lines of route handler |
+
+### Decisions I made
+- Constants are route-local (PREVIEW_*) rather than imported from SwarmEngine to avoid coupling the route to internal engine state
+- buildGuidanceLines is a standalone function rather than calling SwarmEngine instance methods, keeping the route self-contained
+- CLAUDE.md is read from project root (CLAUDE.md) via ConfigStore.getProjects() lookup; returns null if project not found or file missing
+- Token estimates use the simple length/4 heuristic matching the spec
+
+### State I'm leaving behind
+All 15 existing swarm-routes tests pass. No new tests added in this session (the spec did not request them).
+
+### Handoff
+Frontend consumer (PromptBlockEditor panel) can call POST /api/v1/swarm/prompt-preview. Integration tests should be added to cover block ordering, filtering, HITL mode, and CLAUDE.md reading scenarios.
+
+---
+## 2026-04-15 — Tasks #738-#742: V19.0 Prompt Block Editor server refactoring
+**Status:** COMPLETED
+**Called by:** orchestrator
+
+### Context when I started
+The `_buildSystemPrompt()` method in SwarmEngine.js was monolithic: one long non-Codex branch that assembled all prompt sections inline. The V19.0 plan called for extracting each section into a composable `_buildBlock_*` method, adding a block-order loop driven by node.data.promptBlockOrder, and fixing known bugs where `mission` and `guardrails` fields were never injected into the prompt.
+
+### What I did
+1. Added `DEFAULT_PROMPT_BLOCK_ORDER` and `SYSTEM_BLOCKS` constants after `RUNTIME_PROVIDER_PROFILES` (line 457).
+2. Added 11 `_buildBlock_*` methods (role, guardrails, guidance, awareness, inputs, packKnowledge, packRules, handoffs, history, protocol, hitl) as class methods before `_buildSystemPrompt()`.
+3. Replaced the non-Codex branch of `_buildSystemPrompt()` with a block-order loop that reads `node.data.promptBlockOrder` and `node.data.promptBlockDisabled`, falls back to `DEFAULT_PROMPT_BLOCK_ORDER`, and calls each block builder in sequence. System blocks (protocol) cannot be disabled.
+4. Removed the `--append-system-prompt` duplication in `_spawnAgent` (lines 4571-4578) which was double-injecting `systemPrompt` for Claude agents.
+5. Fixed a potential `const` re-declaration issue for `inboundHandoffs` in the non-Codex branch.
+
+### Files I touched
+| File | Action | What changed and why |
+|------|--------|----------------------|
+| server/services/SwarmEngine.js | MODIFIED | Added 2 constants (DEFAULT_PROMPT_BLOCK_ORDER, SYSTEM_BLOCKS), 11 _buildBlock_* methods, rewrote non-Codex _buildSystemPrompt branch to block-order loop, removed --append-system-prompt duplication |
+
+### Improvements delivered
+- Prompt sections are now composable: users can reorder blocks via node.data.promptBlockOrder and disable non-system blocks via node.data.promptBlockDisabled
+- mission field is now injected into the role block (was previously ignored)
+- guardrails field is now injected as a new block (was previously ignored)
+- systemPrompt is no longer double-injected for Claude agents (removed --append-system-prompt CLI arg)
+- Codex compact prompt branch is completely unchanged
+
+### Bugs I encountered
+- Found that the new non-Codex branch would re-declare `inboundHandoffs` with `const` in the same function scope as the outer declaration (line 6708). Fixed by removing the re-declaration and adding a comment.
+
+### Decisions I made
+- Sections are joined with `'\n\n'` (double newline) which produces the same visual separation as the original `lines.push('')` pattern between sections
+- Unknown block IDs in promptBlockOrder are silently skipped (defensive programming)
+- Missing default blocks are appended at the end of any custom order to prevent accidental omission
+
+### What I learned
+- The Codex branch returns early so there's no code-path where both branches execute, but JavaScript const scoping still applies to the entire function body.
+
+### State I'm leaving behind
+All 220 tests pass (211 swarm-engine + 9 codex-sdk/visual-io). The refactoring is backward-compatible: default block order with no disabled blocks produces equivalent output to the original code (with the intended mission/guardrails fixes).
+
+### Handoff
+TEST GATE #743 should verify the new block methods and block-order loop.
+
+---
 ## 2026-04-09 — Task #433: BUG-CHAT-SERVER-07/08 — chatTextNormalization DP performance cap
 **Status:** COMPLETED
 **Called by:** orchestrator

@@ -195,6 +195,88 @@ describe('swarmRoutes pause/resume contract', () => {
 });
 
 describe('swarmRoutes runtime model contract', () => {
+  it('returns a compiled execution preview without spawning an execution', () => {
+    const swarmEngine = {
+      startExecution: vi.fn(),
+      getStatus: vi.fn(),
+      pauseExecution: vi.fn(),
+      resumeExecution: vi.fn(),
+      stopExecution: vi.fn(),
+      getExecution: vi.fn(),
+    };
+    const router = swarmRoutes(swarmEngine, {
+      getSession: vi.fn(),
+      claudeBin: '/usr/local/bin/claude',
+      codexBin: '/usr/local/bin/codex',
+      geminiBin: null,
+    });
+    const handler = getRouteHandler(router, 'post', '/compiled-preview');
+    const req = {
+      params: {},
+      body: {
+        runtimeProvider: 'codex',
+        runtimeModels: { codex: 'gpt-5.4' },
+        selectedAgentId: 'agent-a',
+        workflowDef: {
+          id: 'wf-preview',
+          name: 'Preview workflow',
+          nodes: [
+            { id: 'agent-a', type: 'agent', data: { label: 'Agent A', model: 'gpt-5.4', systemPrompt: 'Plan the harness.' } },
+          ],
+          edges: [],
+        },
+      },
+      app: { locals: {} },
+    };
+    const res = createMockRes();
+
+    handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(swarmEngine.startExecution).not.toHaveBeenCalled();
+    expect(res.body.preview).toMatchObject({
+      ok: true,
+      version: 'progressive-harness-v1',
+      selectedAgentId: 'agent-a',
+      domains: {
+        workflow: expect.objectContaining({ domain: 'WorkflowDefinition' }),
+        compiledExecution: expect.objectContaining({ derivedOnly: true }),
+      },
+    });
+    expect(res.body.preview.domains.agents[0]).toMatchObject({
+      id: 'agent-a',
+      provider: 'codex',
+      model: 'gpt-5.4',
+    });
+  });
+
+  it('returns structured preview errors for invalid compiled contracts', () => {
+    const swarmEngine = {
+      startExecution: vi.fn(),
+      getStatus: vi.fn(),
+      pauseExecution: vi.fn(),
+      resumeExecution: vi.fn(),
+      stopExecution: vi.fn(),
+      getExecution: vi.fn(),
+    };
+    const router = swarmRoutes(swarmEngine, { getSession: vi.fn() });
+    const handler = getRouteHandler(router, 'post', '/compiled-preview');
+    const req = {
+      params: {},
+      body: { workflowDef: null },
+      app: { locals: {} },
+    };
+    const res = createMockRes();
+
+    handler(req, res);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toMatchObject({
+      error: 'Compiled execution preview is invalid',
+      details: [expect.objectContaining({ code: 'compiled_preview_invalid_request' })],
+    });
+  });
+
   it('returns backend-authoritative runtime capabilities', () => {
     const swarmEngine = {
       getStatus: vi.fn(),
