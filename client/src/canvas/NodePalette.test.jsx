@@ -3,14 +3,14 @@ import { describe, expect, it, vi } from 'vitest';
 import NodePalette from './NodePalette.jsx';
 
 describe('NodePalette visual I/O cards', () => {
-  it('shows Input Block and Output Extractor without removing existing cards', () => {
+  it('shows only 3 core node types after V15.0 cleanup', () => {
     render(<NodePalette />);
 
     expect(screen.getByText('Agent Node')).toBeInTheDocument();
     expect(screen.getByText('Department')).toBeInTheDocument();
     expect(screen.getByText('Webhook Trigger')).toBeInTheDocument();
-    expect(screen.getByText('Input Block')).toBeInTheDocument();
-    expect(screen.getByText('Output Extractor')).toBeInTheDocument();
+    expect(screen.queryByText('Input Block')).not.toBeInTheDocument();
+    expect(screen.queryByText('Output Extractor')).not.toBeInTheDocument();
   });
 
   it('separates Build node creation from Workflows management controls', () => {
@@ -50,9 +50,9 @@ describe('NodePalette visual I/O cards', () => {
     expect(screen.getByRole('button', { name: 'Import' })).toBeInTheDocument();
   });
 
-  it('emits the canonical workflowInput drag type for new Input Blocks', () => {
+  it('emits the correct drag type for agent nodes', () => {
     render(<NodePalette />);
-    const card = screen.getByText('Input Block').closest('[draggable="true"]');
+    const card = screen.getByText('Agent Node').closest('[draggable="true"]');
     const setData = vi.fn();
 
     fireEvent.dragStart(card, {
@@ -62,6 +62,6 @@ describe('NodePalette visual I/O cards', () => {
       },
     });
 
-    expect(setData).toHaveBeenCalledWith('application/reactflow-type', 'workflowInput');
+    expect(setData).toHaveBeenCalledWith('application/reactflow-type', 'agent');
   });
 });
