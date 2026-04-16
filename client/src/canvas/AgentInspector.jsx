@@ -933,6 +933,57 @@ function TriggerFields({ node, onUpdateNode }) {
 /*  Execution Info section with live timer                             */
 /* ------------------------------------------------------------------ */
 
+function downloadAsFile(content, filename, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function ExportDropdown({ outputEntries, agentLabel }) {
+  const [open, setOpen] = useState(false);
+  const safeName = (agentLabel || 'agent').replace(/[^a-zA-Z0-9-_]/g, '_');
+
+  const handleExport = (format) => {
+    setOpen(false);
+    const text = serializeAgentOutputEntries(outputEntries);
+    if (!text) return;
+    switch (format) {
+      case 'md':
+        downloadAsFile(text, `${safeName}-output.md`, 'text/markdown');
+        break;
+      case 'json':
+        downloadAsFile(JSON.stringify(outputEntries, null, 2), `${safeName}-output.json`, 'application/json');
+        break;
+      case 'txt':
+        downloadAsFile(text.replace(/[#*_`~>\-|]/g, ''), `${safeName}-output.txt`, 'text/plain');
+        break;
+    }
+  };
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="rounded-md border border-gray-700 bg-gray-800 px-2.5 py-1.5 text-[11px] font-medium text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
+      >
+        Export
+      </button>
+      {open && (
+        <div className="absolute bottom-full mb-1 left-0 z-50 rounded border border-gray-600 bg-gray-800 shadow-lg py-1 min-w-[120px]">
+          <button onClick={() => handleExport('md')} className="w-full text-left px-3 py-1 text-[11px] text-gray-300 hover:bg-gray-700">.md</button>
+          <button onClick={() => handleExport('json')} className="w-full text-left px-3 py-1 text-[11px] text-gray-300 hover:bg-gray-700">.json</button>
+          <button onClick={() => handleExport('txt')} className="w-full text-left px-3 py-1 text-[11px] text-gray-300 hover:bg-gray-700">.txt</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function formatTime(isoStr) {
   if (!isoStr) return '—';
   const d = new Date(isoStr);
@@ -1197,13 +1248,16 @@ export default function AgentInspector({ nodes, edges = null, onUpdateNode }) {
               </div>
             )}
           </div>
-          <button
-            type="button"
-            onClick={handleCopyPanelContent}
-            className="rounded-md border border-gray-700 bg-gray-800 px-2.5 py-1.5 text-[11px] font-medium text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
-          >
-            Copy
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleCopyPanelContent}
+              className="rounded-md border border-gray-700 bg-gray-800 px-2.5 py-1.5 text-[11px] font-medium text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
+            >
+              Copy
+            </button>
+            <ExportDropdown outputEntries={outputEntries} agentLabel={selectedNode?.data?.label || 'agent'} />
+          </div>
         </>
       )}
 
