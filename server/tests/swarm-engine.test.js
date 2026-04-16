@@ -5973,4 +5973,117 @@ describe('SwarmEngine', () => {
       expect(stateA._pendingHandoff).toBeNull();
     });
   });
+
+  describe('Test 17: V20.0 errorRetryPolicy enforcement', () => {
+    it('none policy — agent stays blocked on error (regression)', async () => {
+      const wf = buildTwoNodeWorkflow();
+      wf.nodes[0].data.errorRetryPolicy = 'none';
+      workflowStoreMock = { get: vi.fn().mockResolvedValue(wf) };
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
+      const execution = engine._executions.get(executionId);
+      const stateA = execution.agentStates.get('node-a');
+      stateA.status = 'running';
+
+      await engine._handleRuntimeBlocker(executionId, 'node-a', {
+        type: 'rate_limited',
+        message: 'Rate limited',
+      });
+
+      // Should be blocked (or fallback attempted, but not retrying)
+      expect(stateA.status).not.toBe('retrying');
+    });
+
+    it('retry-on-error — retries with agent_retrying event', async () => {
+      const wf = buildTwoNodeWorkflow();
+      wf.nodes[0].data.errorRetryPolicy = 'retry-on-error';
+      wf.nodes[0].data.errorMaxRetries = 2;
+      wf.nodes[0].data.errorBackoffBase = 1;
+      workflowStoreMock = { get: vi.fn().mockResolvedValue(wf) };
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
+      const execution = engine._executions.get(executionId);
+      const stateA = execution.agentStates.get('node-a');
+      stateA.status = 'running';
+      wsBroadcast.mockClear();
+
+      const result = await engine._handleRuntimeBlocker(executionId, 'node-a', {
+        type: 'rate_limited',
+        message: 'Rate limited',
+      });
+
+      // Should be retrying
+      expect(stateA.status).toBe('retrying');
+      expect(stateA.retryCount).toBe(1);
+      expect(result).toBe(true);
+
+      const retryEvents = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .filter((ev) => ev.type === 'agent_retrying');
+      expect(retryEvents.length).toBe(1);
+      expect(retryEvents[0].retryCount).toBe(1);
+      expect(retryEvents[0].maxRetries).toBe(2);
+    });
+
+    it('retry-on-error — exhaustion leads to normal error handling', async () => {
+      const wf = buildTwoNodeWorkflow();
+      wf.nodes[0].data.errorRetryPolicy = 'retry-on-error';
+      wf.nodes[0].data.errorMaxRetries = 1;
+      workflowStoreMock = { get: vi.fn().mockResolvedValue(wf) };
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
+      const execution = engine._executions.get(executionId);
+      const stateA = execution.agentStates.get('node-a');
+      stateA.status = 'running';
+      stateA.retryCount = 1; // Already used 1 retry
+
+      const result = await engine._handleRuntimeBlocker(executionId, 'node-a', {
+        type: 'rate_limited',
+        message: 'Rate limited',
+      });
+
+      // retryCount incremented to 2, exceeds maxRetries=1 — should fall through
+      expect(stateA.retryCount).toBe(2);
+      expect(stateA.status).not.toBe('retrying');
+    });
+
+    it('escalate-to-human — agent frozen with error_review inbox item', async () => {
+      const wf = buildTwoNodeWorkflow();
+      wf.nodes[0].data.errorRetryPolicy = 'escalate-to-human';
+      workflowStoreMock = { get: vi.fn().mockResolvedValue(wf) };
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
+      const execution = engine._executions.get(executionId);
+      const stateA = execution.agentStates.get('node-a');
+      stateA.status = 'running';
+      wsBroadcast.mockClear();
+
+      const result = await engine._handleRuntimeBlocker(executionId, 'node-a', {
+        type: 'rate_limited',
+        message: 'Rate limited',
+      });
+
+      expect(result).toBe(true);
+      expect(stateA.status).toBe('paused');
+
+      // Inbox item created with error_review type
+      expect(execution.inboxItems.length).toBe(1);
+      expect(execution.inboxItems[0].type).toBe('error_review');
+      expect(execution.inboxItems[0].options).toHaveLength(4);
+
+      // hitl_required WS event emitted
+      const hitlEvents = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .filter((ev) => ev.type === 'hitl_required');
+      expect(hitlEvents.length).toBe(1);
+    });
+  });
 });

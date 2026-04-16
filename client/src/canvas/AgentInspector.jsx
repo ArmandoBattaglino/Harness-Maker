@@ -260,6 +260,35 @@ function AgentFields({ node, nodes, onUpdateNode }) {
             {data.errorRetryPolicy === 'retry-on-error' && 'Retries with exponential backoff before stopping.'}
             {data.errorRetryPolicy === 'escalate-to-human' && 'Errors require human decision: retry, skip, or halt.'}
           </span>
+          {data.errorRetryPolicy === 'retry-on-error' && (
+            <div className="grid grid-cols-2 gap-2 mt-1">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[10px] text-gray-400">Max Retries</span>
+                <input
+                  type="number"
+                  className={INPUT_CLS}
+                  min={1}
+                  max={10}
+                  value={data.errorMaxRetries ?? 3}
+                  onChange={(e) => onUpdateNode(nodeId, { errorMaxRetries: Number(e.target.value) })}
+                />
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[10px] text-gray-400">Backoff Base (s)</span>
+                <input
+                  type="number"
+                  className={INPUT_CLS}
+                  min={1}
+                  max={10}
+                  value={data.errorBackoffBase ?? 1}
+                  onChange={(e) => onUpdateNode(nodeId, { errorBackoffBase: Number(e.target.value) })}
+                />
+              </div>
+              <span className="col-span-2 text-[9px] text-gray-500">
+                {`Backoff: ${data.errorBackoffBase ?? 1}s → ${(data.errorBackoffBase ?? 1) * 2}s → ${(data.errorBackoffBase ?? 1) * 4}s`}
+              </span>
+            </div>
+          )}
         </div>
       </CollapsibleSection>
     </>

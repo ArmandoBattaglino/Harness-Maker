@@ -777,6 +777,14 @@ export function useSwarm(workflowId) {
         case 'handoff_rejected':
           addFeedEvent({ ...msg, timestamp: Date.now() });
           break;
+        case 'agent_retrying':
+          updateAgentState(msg.nodeId, {
+            status: 'retrying',
+            retryCount: msg.retryCount,
+            maxRetries: msg.maxRetries,
+          });
+          addFeedEvent({ ...msg, timestamp: Date.now() });
+          break;
         case 'hitl_required':
           addInboxItem(msg);
           addChatMessage({

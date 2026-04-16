@@ -4314,6 +4314,69 @@ class SwarmEngine {
     this._broadcastAgentStatus(executionId, nodeId, state);
     this._setExecutionStatus(execution, 'blocked');
 
+    // V20.0 HARD-A3: per-node errorRetryPolicy
+    const node = execution.workflowDef.nodes.find((n) => n.id === nodeId);
+    const errorRetryPolicy = node?.data?.errorRetryPolicy || 'none';
+
+    if (errorRetryPolicy === 'retry-on-error') {
+      const maxRetries = node?.data?.errorMaxRetries ?? 3;
+      const backoffBase = node?.data?.errorBackoffBase ?? 1;
+      state.retryCount = (state.retryCount ?? 0) + 1;
+      if (state.retryCount <= maxRetries) {
+        const delaySec = Math.min(backoffBase * Math.pow(2, state.retryCount - 1), 30);
+        state.status = 'retrying';
+        state.runtimeBlocker = null;
+        execution.runtimeBlocker = null;
+        this._broadcastAgentStatus(executionId, nodeId, state);
+        this._syncExecutionStatusFromAgents(execution);
+        if (this._wsBroadcast) {
+          this._wsBroadcast(executionId, {
+            type: 'agent_retrying',
+            nodeId,
+            retryCount: state.retryCount,
+            maxRetries,
+            delaySec,
+          });
+        }
+        // Schedule retry after backoff
+        setTimeout(async () => {
+          const exec = this._executions.get(executionId);
+          if (!exec) return;
+          const st = exec.agentStates.get(nodeId);
+          if (!st || st.status !== 'retrying') return;
+          st.status = 'running';
+          st.runtimeBlocker = null;
+          this._broadcastAgentStatus(executionId, nodeId, st);
+          this._syncExecutionStatusFromAgents(exec);
+          try {
+            await this._spawnAgent(executionId, nodeId, {
+              requestedProvider: st.runtimeProvider ?? st.provider ?? exec?.providerStrategy?.mode,
+              replaceCurrentSession: true,
+            });
+          } catch (err) {
+            console.error(`[SwarmEngine] retry spawn error for ${nodeId}:`, err);
+          }
+        }, delaySec * 1000);
+        return true;
+      }
+      // All retries exhausted — fall through to normal error handling
+    }
+
+    if (errorRetryPolicy === 'escalate-to-human') {
+      const inboxItem = {
+        id: `error-review-${Date.now()}`,
+        type: 'error_review',
+        message: `Error in "${node?.data?.label || nodeId}": ${nextBlocker.type}`,
+        reason: cleanBlockerMessage,
+        sourceNodeId: nodeId,
+        blockerType: nextBlocker.type,
+        timestamp: new Date().toISOString(),
+        options: ['Retry same provider', 'Retry fallback provider', 'Skip agent', 'Halt workflow'],
+      };
+      this.freezeAgent(executionId, nodeId, inboxItem);
+      return true;
+    }
+
     const fallbackApplied = await this._attemptRuntimeFallback(executionId, nodeId, nextBlocker);
     if (!fallbackApplied) {
       this._broadcastExecutionSnapshot(execution);
@@ -4331,7 +4394,7 @@ class SwarmEngine {
     const hasRuntimeBlocker =
       Boolean(execution.runtimeBlocker)
       || agentStates.some((state) => Boolean(state.runtimeBlocker));
-    const hasRunning = agentStates.some((state) => state.status === 'running' || state.status === 'waiting');
+    const hasRunning = agentStates.some((state) => state.status === 'running' || state.status === 'waiting' || state.status === 'retrying');
     const hasPaused = agentStates.some((state) => state.status === 'paused');
     const hasBlocked = agentStates.some((state) => state.status === 'blocked');
     const hasFailed = agentStates.some((state) => state.status === 'failed');
