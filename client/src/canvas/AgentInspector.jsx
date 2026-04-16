@@ -219,6 +219,7 @@ function AgentFields({ node, nodes, onUpdateNode }) {
               })
             }
           />
+          <span className="text-[9px] text-gray-500">Limits turns for this agent only. Other agents continue.</span>
         </div>
         <div className="grid grid-cols-2 gap-2">
           <label className="text-[11px] text-gray-400">

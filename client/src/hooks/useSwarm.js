@@ -770,6 +770,10 @@ export function useSwarm(workflowId) {
         case 'circuit_breaker':
           addFeedEvent({ ...msg, timestamp: Date.now() });
           break;
+        case 'agent_maxTurns_reached':
+          updateAgentState(msg.nodeId, { status: 'maxTurns_reached' });
+          addFeedEvent({ ...msg, timestamp: Date.now() });
+          break;
         case 'hitl_required':
           addInboxItem(msg);
           addChatMessage({

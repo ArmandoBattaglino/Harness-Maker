@@ -5735,4 +5735,111 @@ describe('SwarmEngine', () => {
       expect(statusEvent.status).toBe('running');
     });
   });
+
+  describe('Test 15: V20.0 Per-node maxTurns enforcement', () => {
+    it('should stop agent after per-node maxTurns is exceeded', async () => {
+      const wf = buildTwoNodeWorkflow({ circuitBreakerThreshold: 100 });
+      wf.edges.push({ id: 'edge-ba', source: 'node-b', target: 'node-a' });
+      wf.nodes[0].data.maxTurns = 2;
+      wf.settings.maxConversationTurns = 100;
+      workflowStoreMock = { get: vi.fn().mockResolvedValue(wf) };
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
+      const execution = engine._executions.get(executionId);
+
+      // Handoff 1: node-a -> node-b (ptyHandoffCount becomes 1)
+      const stateA1 = execution.agentStates.get('node-a');
+      if (stateA1) stateA1.status = 'running';
+      await engine._onHandoff(executionId, 'node-a', { type: 'handoff', targetId: 'node-b', contextUpdate: {} });
+
+      // Handoff 2: node-b -> node-a
+      const stateB1 = execution.agentStates.get('node-b');
+      if (stateB1) stateB1.status = 'running';
+      await engine._onHandoff(executionId, 'node-b', { type: 'handoff', targetId: 'node-a', contextUpdate: {} });
+
+      // Handoff 3: node-a -> node-b (ptyHandoffCount becomes 2, hits maxTurns=2)
+      const stateA2 = execution.agentStates.get('node-a');
+      if (stateA2) stateA2.status = 'running';
+      await engine._onHandoff(executionId, 'node-a', { type: 'handoff', targetId: 'node-b', contextUpdate: {} });
+
+      // node-a should be maxTurns_reached
+      expect(execution.agentStates.get('node-a').status).toBe('maxTurns_reached');
+
+      // agent_maxTurns_reached WS event should have been emitted
+      const maxTurnsEvents = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .filter((ev) => ev.type === 'agent_maxTurns_reached');
+      expect(maxTurnsEvents.length).toBe(1);
+      expect(maxTurnsEvents[0].nodeId).toBe('node-a');
+      expect(maxTurnsEvents[0].perNodeMaxTurns).toBe(2);
+    });
+
+    it('should not affect other agents when one hits per-node maxTurns', async () => {
+      const wf = buildTwoNodeWorkflow({ circuitBreakerThreshold: 100 });
+      wf.edges.push({ id: 'edge-ba', source: 'node-b', target: 'node-a' });
+      wf.nodes[0].data.maxTurns = 1;
+      wf.settings.maxConversationTurns = 100;
+      workflowStoreMock = { get: vi.fn().mockResolvedValue(wf) };
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
+      const execution = engine._executions.get(executionId);
+
+      // Handoff: node-a -> node-b (ptyHandoffCount = 1, hits maxTurns=1)
+      const stateA = execution.agentStates.get('node-a');
+      if (stateA) stateA.status = 'running';
+      await engine._onHandoff(executionId, 'node-a', { type: 'handoff', targetId: 'node-b', contextUpdate: {} });
+
+      // node-a is stopped
+      expect(execution.agentStates.get('node-a').status).toBe('maxTurns_reached');
+
+      // Execution should NOT be completed — node-b is still alive
+      expect(execution.status).not.toBe('completed');
+    });
+
+    it('should use turnCount for structured agents and ptyHandoffCount for PTY', async () => {
+      const wf = buildTwoNodeWorkflow({ circuitBreakerThreshold: 100 });
+      wf.edges.push({ id: 'edge-ba', source: 'node-b', target: 'node-a' });
+      wf.nodes[0].data.maxTurns = 3;
+      wf.settings.maxConversationTurns = 100;
+      workflowStoreMock = { get: vi.fn().mockResolvedValue(wf) };
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
+      const execution = engine._executions.get(executionId);
+
+      // Simulate structured agent (stream-json) with turnCount already at 3
+      const stateA = execution.agentStates.get('node-a');
+      stateA.status = 'running';
+      stateA.spawnMode = 'stream-json';
+      stateA.turnCount = 3;
+
+      await engine._onHandoff(executionId, 'node-a', { type: 'handoff', targetId: 'node-b', contextUpdate: {} });
+
+      // Should be stopped since turnCount (3) >= maxTurns (3)
+      expect(stateA.status).toBe('maxTurns_reached');
+    });
+
+    it('should track nodeHandoffCounts in execution object', async () => {
+      const wf = buildTwoNodeWorkflow({ circuitBreakerThreshold: 100 });
+      wf.edges.push({ id: 'edge-ba', source: 'node-b', target: 'node-a' });
+      wf.settings.maxConversationTurns = 100;
+      workflowStoreMock = { get: vi.fn().mockResolvedValue(wf) };
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
+      const execution = engine._executions.get(executionId);
+
+      const stateA = execution.agentStates.get('node-a');
+      if (stateA) stateA.status = 'running';
+      await engine._onHandoff(executionId, 'node-a', { type: 'handoff', targetId: 'node-b', contextUpdate: {} });
+
+      expect(execution.nodeHandoffCounts.get('node-a')).toBe(1);
+    });
+  });
 });

@@ -120,6 +120,8 @@ export default function AgentNode({ id, data, selected, positionAbsoluteX, posit
     paused: 'border-orange-400 bg-orange-950',
     error: 'border-red-400 bg-red-950',
     preview: 'border-sky-400/80 bg-sky-950/40 border-dashed',
+    maxTurns_reached: 'border-amber-400 bg-amber-950',
+    retrying: 'border-yellow-400 bg-yellow-950 animate-pulse',
   };
   const colorClass = statusColors[status] || statusColors.idle;
 

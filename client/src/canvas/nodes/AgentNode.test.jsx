@@ -267,4 +267,47 @@ describe('AgentNode runtime shell contracts', () => {
     expect(screen.getByText(longLabel)).toHaveClass('min-w-0', 'flex-1', 'truncate');
     expect(screen.getByLabelText('Agent actions').closest('div')).toHaveClass('relative', 'shrink-0');
   });
+
+  it('renders amber border for maxTurns_reached status', () => {
+    useSwarmStore.setState({
+      agentStates: {
+        'node-mt': {
+          status: 'maxTurns_reached',
+          ptyHandoffCount: 3,
+        },
+      },
+    });
+
+    const { container } = render(
+      <AgentNode
+        id="node-mt"
+        data={{ label: 'Agent MT', systemPrompt: 'Be helpful' }}
+        selected={false}
+      />
+    );
+
+    const nodeDiv = container.querySelector('.border-amber-400');
+    expect(nodeDiv).toBeTruthy();
+  });
+
+  it('renders yellow pulsing border for retrying status', () => {
+    useSwarmStore.setState({
+      agentStates: {
+        'node-retry': {
+          status: 'retrying',
+        },
+      },
+    });
+
+    const { container } = render(
+      <AgentNode
+        id="node-retry"
+        data={{ label: 'Agent Retry', systemPrompt: 'Be helpful' }}
+        selected={false}
+      />
+    );
+
+    const nodeDiv = container.querySelector('.border-yellow-400');
+    expect(nodeDiv).toBeTruthy();
+  });
 });

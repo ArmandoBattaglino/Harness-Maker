@@ -841,6 +841,8 @@ class SwarmEngine {
         lastAssembledPrompt: state.lastAssembledPrompt,
         lastPromptTimestamp: state.lastPromptTimestamp ?? null,
       } : {}),
+      // Per-node handoff count for maxTurns display (V20.0 HARD-A1)
+      ...(state.nodeHandoffCount != null ? { nodeHandoffCount: state.nodeHandoffCount } : {}),
       // Stream-json specific fields (DEC-027)
       ...(this._isStructuredAgentState(state) ? {
         spawnMode: state.spawnMode,
@@ -4341,7 +4343,7 @@ class SwarmEngine {
       // auto-resolve each stale barrier and activate the downstream agent.
       // This is the final safety net for fan-in workflows.
       if (hasPendingBarriers && execution.agentInputBarriers instanceof Map) {
-        const terminalStatuses = new Set(['done', 'error', 'stopped', 'blocked', 'idle', 'handoffing']);
+        const terminalStatuses = new Set(['done', 'error', 'stopped', 'blocked', 'idle', 'handoffing', 'maxTurns_reached']);
         const edges = execution.workflowDef?.edges ?? [];
         const staleBarrierIds = [];
 
@@ -7910,6 +7912,40 @@ class SwarmEngine {
       return;
     }
 
+    // 0b. Per-node maxTurns enforcement (V20.0 HARD-A1)
+    // Track per-node handoff counts in execution (survives agent re-spawns)
+    if (!execution.nodeHandoffCounts) execution.nodeHandoffCounts = new Map();
+    const nodeHandoffs = (execution.nodeHandoffCounts.get(sourceNodeId) ?? 0) + 1;
+    execution.nodeHandoffCounts.set(sourceNodeId, nodeHandoffs);
+
+    if (sourceState) {
+      const sourceNode = execution.workflowDef.nodes.find((n) => n.id === sourceNodeId);
+      const perNodeMaxTurns = sourceNode?.data?.maxTurns;
+      if (perNodeMaxTurns != null && perNodeMaxTurns > 0) {
+        // For structured agents, prefer turnCount (incremented per LLM turn);
+        // for PTY agents, use the execution-level handoff counter
+        const agentTurns = this._isStructuredAgentState(sourceState)
+          ? Math.max(sourceState.turnCount ?? 0, nodeHandoffs)
+          : nodeHandoffs;
+        if (agentTurns >= perNodeMaxTurns) {
+          sourceState.status = 'maxTurns_reached';
+          sourceState.runtimeBlocker = null;
+          if (this._wsBroadcast) {
+            this._wsBroadcast(executionId, {
+              type: 'agent_maxTurns_reached',
+              nodeId: sourceNodeId,
+              agentTurns,
+              perNodeMaxTurns,
+            });
+          }
+          this._broadcastAgentStatus(executionId, sourceNodeId, sourceState);
+          // Workflow continues — only this agent stops. Do NOT return early
+          // so that the handoff target(s) still get activated below.
+          // _syncExecutionStatusFromAgents will be called at the end of _onHandoff.
+        }
+      }
+    }
+
     // 1. Shallow merge context update (DEC-V3-05: OpenAI Swarm pattern)
     if (contextUpdate && typeof contextUpdate === 'object') {
       Object.assign(execution.workflowContext, contextUpdate);
@@ -8089,7 +8125,10 @@ class SwarmEngine {
     }
 
     if (sourceState) {
-      sourceState.status = 'done';
+      // Preserve maxTurns_reached status — don't overwrite with 'done' (V20.0)
+      if (sourceState.status !== 'maxTurns_reached') {
+        sourceState.status = 'done';
+      }
       sourceState.runtimeBlocker = null;
       this._broadcastAgentStatus(executionId, sourceNodeId, sourceState);
     }
