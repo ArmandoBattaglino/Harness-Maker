@@ -565,13 +565,15 @@ Status: PENDING
 Gate: SOFT
 Context:
   Verify that token detail tooltip renders on AgentNode hover,
-  ChatMessage cost footer shows token breakdown, and existing
-  client tests still pass.
+  ChatMessage cost footer shows token breakdown, and all test
+  suites (server, client, E2E) still pass.
 Acceptance Criteria:
   - [ ] AgentNode cost badge tooltip renders with correct token data
   - [ ] ChatMessage cost footer renders token breakdown
-  - [ ] Existing client tests pass (npm test --prefix client)
+  - [ ] Server tests pass (npm test --prefix server)
+  - [ ] Client unit tests pass (npm test --prefix client)
   - [ ] Client build clean (npm run build --prefix client)
+  - [ ] E2E smoke: cost badge tooltip visible on hover over an agent node during execution (Playwright)
 Dependencies: TASK #517, TASK #518
 ---
 
@@ -744,10 +746,14 @@ Context:
   5. inbox approve routes correctly for stream-json vs PTY
   6. All existing server tests still pass
   7. Client build still clean
+  8. E2E: orange HitlChatCard appears in browser when agent emits __HITL__
 Acceptance Criteria:
   - [ ] New HITL tests pass
-  - [ ] npm test --prefix server passes (all existing + new)
-  - [ ] npm run build --prefix client passes
+  - [ ] Server tests pass (npm test --prefix server — all existing + new)
+  - [ ] Client unit tests pass (npm test --prefix client)
+  - [ ] Client build clean (npm run build --prefix client)
+  - [ ] E2E smoke: mode=hitl workflow triggers visible orange HitlChatCard in browser (Playwright)
+  - [ ] E2E smoke: approve action resumes agent and execution continues (Playwright)
 Dependencies: TASK #521, TASK #522, TASK #523, TASK #524, TASK #525
 ---
 
@@ -1115,7 +1121,28 @@ Acceptance Criteria:
 Dependencies: TASK #536, TASK #537
 ---
 
-TASK #539: AREA CHECKPOINT â€” V12.1 Canvas Node Overlap Fix closeout
+TASK #539: TEST GATE â€” V12.1 Canvas Node Overlap Fix regression
+Area: V12.1 - Canvas Node Overlap Fix
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-sonnet-4-6
+Status: PENDING
+Gate: HARD
+Context:
+  Verify all overlap fixes (default height, vertical gap floor, post-tidy resolution pass)
+  produce a correct, non-overlapping layout and leave the full test suite green.
+Acceptance Criteria:
+  - [ ] Server tests pass (npm test --prefix server)
+  - [ ] Client unit tests pass (npm test --prefix client)
+  - [ ] Client build clean (npm run build --prefix client)
+  - [ ] E2E smoke: Tidy on a 4-node workflow produces zero overlapping nodes (Playwright screenshot diff)
+  - [ ] E2E smoke: edge routing visually clean after overlap resolution
+Dependencies: TASK #536, TASK #537, TASK #538
+---
+
+TASK #539b: AREA CHECKPOINT â€” V12.1 Canvas Node Overlap Fix closeout
 Area: V12.1 - Canvas Node Overlap Fix
 Agent: qa-tester
 Type: AREA_CHECKPOINT
@@ -1124,14 +1151,14 @@ Difficulty: LOW
 Suggested Model: claude-sonnet-4-6
 Status: PENDING
 Context:
-  Close V12.1 only after all overlap fix tasks pass, client build is clean, and visual
+  Close V12.1 only after all overlap fix tasks pass, the test gate is green, and visual
   inspection confirms no node overlap after Tidy on a workflow with 4+ agent nodes.
 Acceptance Criteria:
-  - [ ] All tasks #536-#538 COMPLETED
+  - [ ] All tasks #536-#539 COMPLETED/PASS
   - [ ] Client build clean (no errors)
   - [ ] Tidy produces non-overlapping layout for workflows with varying node counts
   - [ ] Edge routing visually clean after overlap resolution
-Dependencies: TASK #536, TASK #537, TASK #538
+Dependencies: TASK #539
 ---
 
 ## AREA: V10.5 - Persistent Agent Sessions + Operator Messaging
@@ -25018,3 +25045,1082 @@ Acceptance Criteria:
   - [ ] PRD acceptance criteria 1-29 are met
   - [ ] Block editor is functional end-to-end
 Dependencies: TASK #765
+
+---
+
+## AREA: V20.0 — Harden Agent Inspector: Policy Enforcement (Macro A)
+_Branch: harden/agent-inspector_
+_Components: SwarmEngine (_onHandoff, _handleRuntimeBlocker, freezeAgent), AgentInspector, AgentNode, SwarmContext_
+_Tasks: #767 -> #804_
+_Gate: maxTurns per-node enforced, handoffPolicy enforced with HITL manual-review (4 options), errorRetryPolicy enforced with configurable retry + HITL escalation_
+_Source: Deep audit of Agent Inspector fields (2026-04-15) — 3 broken fields (maxTurns, handoffPolicy, errorRetryPolicy) compiled but never enforced at runtime_
+
+---
+
+TASK #767: HARD-A1-01 - Implement per-node maxTurns check in _onHandoff
+Area: V20.0 - Harden Agent Inspector: Policy Enforcement
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-opus-4-6
+Status: PLANNED
+Context:
+  The maxTurns field exists in the inspector UI per-node but SwarmEngine._onHandoff() (~line 7893) only checks the global workflow.settings.maxConversationTurns. The per-agent state.turnCount already exists for stream-json and codex-sdk runtimes.
+  After the global turn check, add a per-node check: read node.data.maxTurns, compare against state.turnCount. If exceeded, set status to 'maxTurns_reached', emit agent_maxTurns_reached event, skip target activation. The workflow continues — only this agent stops.
+Acceptance Criteria:
+  - [ ] In _onHandoff(), after global maxTurns check, add per-node check using node.data.maxTurns vs state.turnCount
+  - [ ] If exceeded: state.status = 'maxTurns_reached', broadcast event, log message
+  - [ ] Workflow continues with other agents — only the exceeded agent is stopped
+  - [ ] Global maxConversationTurns still works as safety net
+Dependencies: none
+---
+
+TASK #768: HARD-A1-02 - Add PTY handoff counter for maxTurns
+Area: V20.0 - Harden Agent Inspector: Policy Enforcement
+Agent: backend-dev
+Priority: HIGH
+Difficulty: LOW
+Suggested Model: claude-opus-4-6
+Status: PLANNED
+Context:
+  state.turnCount exists only for structured runtimes (stream-json, codex-sdk). PTY agents don't have it. Add state.ptyHandoffCount, incremented in _onHandoff() when the source is a PTY agent. Use this counter for the per-node maxTurns check on PTY agents.
+Acceptance Criteria:
+  - [ ] state.ptyHandoffCount added and incremented on each handoff emission for PTY agents
+  - [ ] Per-node maxTurns check uses ptyHandoffCount for PTY, turnCount for structured
+Dependencies: TASK #767
+---
+
+TASK #769: HARD-A1-03 - Frontend: maxTurns_reached status handling
+Area: V20.0 - Harden Agent Inspector: Policy Enforcement
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: LOW
+Suggested Model: claude-opus-4-6
+Status: PLANNED
+Context:
+  Handle the new agent_maxTurns_reached WS event in SwarmContext.jsx — set agentStates[nodeId].status = 'maxTurns_reached'. In AgentNode.jsx, add new status color: 'border-amber-400 bg-amber-950'. In AgentInspector.jsx, add helper text under maxTurns input: "Limits turns for this agent only. Other agents continue."
+Acceptance Criteria:
+  - [ ] SwarmContext handles agent_maxTurns_reached event
+  - [ ] AgentNode renders amber border for maxTurns_reached status
+  - [ ] Inspector shows helper text explaining per-node behavior
+Dependencies: TASK #767
+---
+
+TASK #770: HARD-A1-04 - Test: per-node maxTurns enforcement
+Area: V20.0 - Harden Agent Inspector: Policy Enforcement
+Agent: qa-tester
+Type: TEST
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PLANNED
+Context:
+  Backend test: agent with maxTurns=2 stops after 2 turns, workflow continues with other agents. Frontend test: AgentNode renders amber color for maxTurns_reached status.
+Acceptance Criteria:
+  - [ ] Backend test: agent with maxTurns=2 emits maxTurns_reached after 2 handoffs
+  - [ ] Backend test: other agents in same workflow are not affected
+  - [ ] Frontend test: amber border renders for maxTurns_reached status
+Dependencies: TASK #767, TASK #769
+---
+
+TASK #771: HARD-A1-05 - COMMIT + MEMORY UPDATE for maxTurns
+Area: V20.0 - Harden Agent Inspector: Policy Enforcement
+Agent: project-manager
+Type: CHECKPOINT
+Priority: HIGH
+Difficulty: LOW
+Status: PLANNED
+Context:
+  Commit message: "feat: enforce per-node maxTurns with amber status badge"
+  Update Knowledge plan file to mark A.1 as completed. Update audit file to mark maxTurns as WORKS.
+Acceptance Criteria:
+  - [ ] Git commit created with all maxTurns changes
+  - [ ] Knowledge plan updated: A.1 marked completed
+  - [ ] Audit updated: maxTurns field verdict changed from BROKEN to WORKS
+Dependencies: TASK #770
+---
+
+TASK #772: HARD-A2-01 - Implement handoffPolicy=explicit enforcement
+Area: V20.0 - Harden Agent Inspector: Policy Enforcement
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-opus-4-6
+Status: PLANNED
+Context:
+  In _resolveHandoffFanOutTargets() (~line 1732), read node.data.handoffPolicy from the SOURCE node. If policy='explicit', reject any target not present in the outgoing edges with an explicit log warning and broadcast handoff_rejected event. Today this is partially the default behavior, but the rejection should be explicit with logging.
+Acceptance Criteria:
+  - [ ] Read handoffPolicy from source node in _resolveHandoffFanOutTargets()
+  - [ ] If explicit: reject targets not in outgoing edges with warning log
+  - [ ] Broadcast handoff_rejected event with sourceNodeId and rejected targetId
+  - [ ] auto policy: behavior unchanged (current default)
+Dependencies: none
+---
+
+TASK #773: HARD-A2-02 - Implement handoffPolicy=manual-review with HITL freeze
+Area: V20.0 - Harden Agent Inspector: Policy Enforcement
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: PLANNED
+Context:
+  In _onHandoff() (~line 7922), after target resolution but before the target activation loop, read handoffPolicy from the SOURCE node. If manual-review: call freezeAgent(executionId, sourceNodeId, inboxItem) with type 'handoff_review'. The inbox item includes sourceNodeId, targetNodeId, contextUpdate (payload), and timestamp. Do NOT activate the target — wait for operator resolution.
+Acceptance Criteria:
+  - [ ] Read handoffPolicy from source node before target activation loop
+  - [ ] If manual-review: freezeAgent() with type handoff_review
+  - [ ] Inbox item contains: sourceNodeId, targetNodeId, contextUpdate, timestamp
+  - [ ] Target NOT activated until operator resolves
+Dependencies: none
+---
+
+TASK #774: HARD-A2-03 - Implement HITL resolve handler with 4 actions
+Area: V20.0 - Harden Agent Inspector: Policy Enforcement
+Agent: backend-dev
+Priority: CRITICAL
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: PLANNED
+Context:
+  Extend unfreezeAgent() to accept a resolution object: { action: 'approve'|'reject'|'reroute'|'edit', targetNodeId?, contextUpdate? }.
+  - Approve: unfreezeAgent() then proceed with original target activation
+  - Reject: mark source as done, do NOT activate target, log reason
+  - Reroute: validate that the new targetNodeId is in outgoing edges, activate that instead
+  - Edit context: accept modified contextUpdate from client, replace original payload, proceed with Approve
+  Also add REST endpoint: POST /api/v1/swarm/executions/:id/agents/:nodeId/resolve with resolution body.
+Acceptance Criteria:
+  - [ ] unfreezeAgent() accepts resolution object
+  - [ ] Approve action: activates original target
+  - [ ] Reject action: marks source done, no target activation
+  - [ ] Reroute action: validates new target in edges, activates it
+  - [ ] Edit context action: replaces contextUpdate, then activates target
+  - [ ] REST endpoint POST /resolve works with all 4 actions
+Dependencies: TASK #773
+---
+
+TASK #775: HARD-A2-04 - Frontend: handoffPolicy helper + inbox UI
+Area: V20.0 - Harden Agent Inspector: Policy Enforcement
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: PLANNED
+Context:
+  In AgentInspector.jsx, add dynamic helper text under the handoffPolicy select that changes based on selection:
+  - auto: "Handoffs proceed immediately without approval."
+  - explicit: "Only handoffs to connected nodes are allowed. Invented targets are blocked."
+  - manual-review: "Every handoff requires human approval. Approve/Reject/Reroute/Edit in Inbox."
+  In SwarmContext.jsx, handle inbox type handoff_review with 4 action buttons.
+  In the inbox UI: form key-value editor for Edit context (text input for strings, number for numbers, checkbox for booleans). Dropdown of outgoing edges for Reroute.
+Acceptance Criteria:
+  - [ ] Dynamic helper text changes under handoffPolicy select
+  - [ ] Inbox shows handoff_review items with 4 action buttons
+  - [ ] Edit context: form key-value for flat JSON, readonly textarea for nested
+  - [ ] Reroute: dropdown of outgoing edge targets
+  - [ ] Actions dispatch to POST /resolve endpoint
+Dependencies: TASK #774
+---
+
+TASK #776: HARD-A2-05 - Test: handoffPolicy enforcement end-to-end
+Area: V20.0 - Harden Agent Inspector: Policy Enforcement
+Agent: qa-tester
+Type: TEST
+Priority: HIGH
+Difficulty: HARD
+Status: PLANNED
+Acceptance Criteria:
+  - [ ] Backend test: auto policy — handoff proceeds immediately (regression)
+  - [ ] Backend test: explicit policy — invented target rejected with warning
+  - [ ] Backend test: manual-review — agent frozen, 4 resolve actions work
+  - [ ] Frontend test: helper text renders correctly for each policy
+  - [ ] Frontend test: inbox handoff_review item renders with 4 buttons
+Dependencies: TASK #772, TASK #775
+---
+
+TASK #777: HARD-A2-06 - COMMIT + MEMORY UPDATE for handoffPolicy
+Area: V20.0 - Harden Agent Inspector: Policy Enforcement
+Agent: project-manager
+Type: CHECKPOINT
+Priority: HIGH
+Difficulty: LOW
+Status: PLANNED
+Context:
+  Commit: "feat: enforce handoffPolicy per-node with HITL manual-review (approve/reject/reroute/edit)"
+  Update Knowledge plan: A.2 completed. Update audit: handoffPolicy changed from ADVISORY to WORKS.
+Acceptance Criteria:
+  - [ ] Git commit created
+  - [ ] Knowledge plan updated
+  - [ ] Audit updated
+Dependencies: TASK #776
+---
+
+TASK #778: HARD-A3-01 - Implement errorRetryPolicy=retry-on-error with configurable backoff
+Area: V20.0 - Harden Agent Inspector: Policy Enforcement
+Agent: backend-dev
+Priority: HIGH
+Difficulty: HARD
+Suggested Model: claude-opus-4-6
+Status: PLANNED
+Context:
+  In _handleRuntimeBlocker() (~line 4258), before _attemptRuntimeFallback(), read errorRetryPolicy from the node. If retry-on-error: check state.retryCount vs node.data.errorMaxRetries (default 3). If under limit: increment retryCount, set status 'retrying', schedule retry with setTimeout using backoff Math.min(node.data.errorBackoffBase * Math.pow(2, retryCount), 30) seconds. Retry uses --resume with same sessionId. If PTY: fresh spawn. If all retries exhausted: proceed with status 'error'.
+Acceptance Criteria:
+  - [ ] Read errorRetryPolicy from node data
+  - [ ] retry-on-error: check retryCount vs errorMaxRetries
+  - [ ] Schedule retry with exponential backoff, capped at 30s
+  - [ ] Retry uses --resume same sessionId (fresh spawn for PTY)
+  - [ ] Status 'retrying' set during retry wait
+  - [ ] After all retries exhausted: status 'error' (existing flow)
+Dependencies: none
+---
+
+TASK #779: HARD-A3-02 - Implement errorRetryPolicy=escalate-to-human
+Area: V20.0 - Harden Agent Inspector: Policy Enforcement
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-opus-4-6
+Status: PLANNED
+Context:
+  In _handleRuntimeBlocker(), if policy='escalate-to-human': call freezeAgent() with type 'error_review'. Inbox item includes error message, blocker type, and 4 options: Retry same provider / Retry fallback provider / Skip agent / Halt workflow. Extend resolve handler for error_review type.
+Acceptance Criteria:
+  - [ ] escalate-to-human: freezeAgent with type error_review
+  - [ ] Inbox item has error details and 4 options
+  - [ ] Resolve handler: retry-same re-spawns agent, retry-fallback tries next provider, skip marks done, halt stops execution
+Dependencies: TASK #778
+---
+
+TASK #780: HARD-A3-03 - Frontend: retry config + retrying status
+Area: V20.0 - Harden Agent Inspector: Policy Enforcement
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-opus-4-6
+Status: PLANNED
+Context:
+  AgentInspector.jsx: conditional fields (errorMaxRetries number 1-10, errorBackoffBase number 1-10s) visible only when errorRetryPolicy=retry-on-error. Preview formula text: "1s -> 2s -> 4s". Dynamic helper text under select.
+  AgentNode.jsx: new color retrying = 'border-yellow-400 bg-yellow-950 animate-pulse'. Badge text "Retrying (2/3)".
+  SwarmContext.jsx: handle status retrying + inbox type error_review with 4 options.
+Acceptance Criteria:
+  - [ ] Conditional fields appear/disappear based on policy selection
+  - [ ] Backoff preview formula shown
+  - [ ] Yellow pulsing border for retrying status
+  - [ ] Badge shows retry count (e.g., "Retrying 2/3")
+  - [ ] Inbox error_review items render with 4 action buttons
+Dependencies: TASK #779
+---
+
+TASK #781: HARD-A3-04 - Test: errorRetryPolicy end-to-end
+Area: V20.0 - Harden Agent Inspector: Policy Enforcement
+Agent: qa-tester
+Type: TEST
+Priority: HIGH
+Difficulty: HARD
+Status: PLANNED
+Acceptance Criteria:
+  - [ ] Backend test: none policy — agent stops on error (regression)
+  - [ ] Backend test: retry-on-error — retries with backoff, exhaustion leads to error
+  - [ ] Backend test: escalate-to-human — agent frozen, 4 resolve actions work
+  - [ ] Frontend test: conditional fields render/hide correctly
+  - [ ] Frontend test: yellow pulsing badge for retrying
+Dependencies: TASK #778, TASK #780
+---
+
+TASK #782: HARD-A3-05 - COMMIT + MEMORY UPDATE for errorRetryPolicy
+Area: V20.0 - Harden Agent Inspector: Policy Enforcement
+Agent: project-manager
+Type: CHECKPOINT
+Priority: HIGH
+Difficulty: LOW
+Status: PLANNED
+Context:
+  Commit: "feat: enforce errorRetryPolicy per-node with configurable retry and HITL escalation"
+  Update Knowledge: A.3 completed. Update audit: errorRetryPolicy changed from ADVISORY to WORKS.
+Acceptance Criteria:
+  - [ ] Git commit created
+  - [ ] Knowledge plan + audit updated
+Dependencies: TASK #781
+---
+
+TASK #783: TEST GATE - V20.0 Policy Enforcement full regression
+Area: V20.0 - Harden Agent Inspector: Policy Enforcement
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Difficulty: HARD
+Status: PLANNED
+Gate: HARD
+Acceptance Criteria:
+  - [ ] Server tests pass (npm test --prefix server — full suite including new policy tests)
+  - [ ] Client unit tests pass (npm test --prefix client)
+  - [ ] Client build clean (npm run build --prefix client)
+  - [ ] No regressions in existing HITL, handoff, or error handling flows
+  - [ ] All 3 policies enforced and tested (maxTurns, handoffPolicy, errorRetryPolicy)
+  - [ ] E2E smoke: per-node maxTurns stop shows amber badge on canvas (Playwright)
+  - [ ] E2E smoke: manual-review handoff shows HitlChatCard with 4 action buttons (Playwright)
+  - [ ] E2E smoke: retry-on-error shows yellow pulsing badge during retry countdown (Playwright)
+Dependencies: TASK #782
+---
+
+## AREA: V20.1 — Harden Agent Inspector: Input Node Fixes (Macro E)
+_Branch: harden/agent-inspector_
+_Components: AgentInspector InputBlockFields, workflowContracts.js_
+_Tasks: #784 -> #791_
+_Source: Audit revealed 2 phantom fields (defaultValue, helpText) — persisted but not editable/functional_
+
+---
+
+TASK #784: HARD-E-01 - Expose defaultValue field in Input Block editor
+Area: V20.1 - Harden Agent Inspector: Input Node Fixes
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: LOW
+Status: PLANNED
+Context:
+  In AgentInspector.jsx InputBlockFields, add a "Default Value" text input for each field, positioned below the Label input. The value maps to field.defaultValue. In the preview payload box, if defaultValue is configured, show it instead of the generic placeholder (<text>, 0, false).
+Acceptance Criteria:
+  - [ ] Default Value input appears for each field in the editor
+  - [ ] Changes persist via onUpdateNode
+  - [ ] Preview payload shows defaultValue when configured
+Dependencies: none
+---
+
+TASK #785: HARD-E-02 - Expose helpText field in Input Block editor
+Area: V20.1 - Harden Agent Inspector: Input Node Fixes
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: LOW
+Status: PLANNED
+Context:
+  In AgentInspector.jsx InputBlockFields, add a "Help Text" textarea (1 row) for each field, below Default Value. The value maps to field.helpText.
+Acceptance Criteria:
+  - [ ] Help Text textarea appears for each field in the editor
+  - [ ] Changes persist via onUpdateNode
+Dependencies: TASK #784
+---
+
+TASK #786: HARD-E-03 - Fix applyInputDefaults to use field.defaultValue
+Area: V20.1 - Harden Agent Inspector: Input Node Fixes
+Agent: backend-dev
+Priority: MEDIUM
+Difficulty: LOW
+Status: PLANNED
+Context:
+  In workflowContracts.js applyInputDefaults(), the function currently ignores field.defaultValue and always uses type-based defaults. Modify: if field.defaultValue is present and non-empty, use it as the fallback value. Otherwise use the existing type-based default.
+Acceptance Criteria:
+  - [ ] applyInputDefaults uses field.defaultValue when present
+  - [ ] Falls back to type-based default when defaultValue is empty/undefined
+  - [ ] Works correctly for all field types (text, number, boolean, enum, etc.)
+Dependencies: none
+---
+
+TASK #787: HARD-E-04 - Show helpText in operator start workflow UI
+Area: V20.1 - Harden Agent Inspector: Input Node Fixes
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: LOW
+Status: PLANNED
+Context:
+  In the operator UI where workflow inputs are filled at start time, display field.helpText as small gray text below each input field (tooltip/helper style).
+Acceptance Criteria:
+  - [ ] helpText displayed below each input field in the operator form
+  - [ ] Styled as small gray text (text-xs text-gray-500)
+Dependencies: TASK #785
+---
+
+TASK #788: HARD-E-05 - Test: defaultValue and helpText
+Area: V20.1 - Harden Agent Inspector: Input Node Fixes
+Agent: qa-tester
+Type: TEST
+Priority: MEDIUM
+Difficulty: LOW
+Status: PLANNED
+Acceptance Criteria:
+  - [ ] Backend test: applyInputDefaults uses defaultValue when present
+  - [ ] Backend test: applyInputDefaults falls back to type-based when no defaultValue
+  - [ ] Frontend test: Default Value and Help Text fields render in editor
+  - [ ] Frontend test: preview shows defaultValue when configured
+Dependencies: TASK #786, TASK #787
+---
+
+TASK #789: HARD-E-06 - COMMIT + MEMORY UPDATE for Input fixes
+Area: V20.1 - Harden Agent Inspector: Input Node Fixes
+Agent: project-manager
+Type: CHECKPOINT
+Priority: MEDIUM
+Difficulty: LOW
+Status: PLANNED
+Context:
+  Commit: "feat: expose and implement defaultValue and helpText for input fields"
+  Update audit: phantom fields marked as WORKS.
+Acceptance Criteria:
+  - [ ] Git commit created
+  - [ ] Knowledge audit updated
+Dependencies: TASK #788
+---
+
+TASK #790: TEST GATE - V20.1 Input Node Fixes regression
+Area: V20.1 - Harden Agent Inspector: Input Node Fixes
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PLANNED
+Gate: HARD
+Acceptance Criteria:
+  - [ ] Server tests pass (npm test --prefix server)
+  - [ ] Client unit tests pass (npm test --prefix client)
+  - [ ] Client build clean (npm run build --prefix client)
+  - [ ] No regressions in input node behavior
+  - [ ] E2E smoke: Default Value and Help Text visible in Input Block editor (Playwright)
+  - [ ] E2E smoke: operator start-workflow form shows helpText below each field (Playwright)
+Dependencies: TASK #789
+---
+
+TASK #791: AREA CHECKPOINT - V20.1 Input Node Fixes closeout
+Area: V20.1 - Harden Agent Inspector: Input Node Fixes
+Agent: project-manager
+Type: AREA_CHECKPOINT
+Priority: HIGH
+Difficulty: LOW
+Status: PLANNED
+Acceptance Criteria:
+  - [ ] All V20.1 tasks COMPLETED/PASS
+  - [ ] defaultValue and helpText functional end-to-end
+Dependencies: TASK #790
+---
+
+## AREA: V20.2 — Harden Agent Inspector: Capabilities Panel (Macro C)
+_Branch: harden/agent-inspector_
+_Components: CapabilitiesPanel.jsx (NEW), AgentNode, SwarmCanvas, SwarmContext, PromptBlockEditor_
+_Tasks: #792 -> #808_
+_Source: 6 agent fields (tools, skillHints, contextSources, expectedOutput, expectedOutputContract, memorySources) supported by backend but not editable in UI_
+
+---
+
+TASK #792: HARD-C1-01 - Store: expandedCapabilitiesNodeId state
+Area: V20.2 - Harden Agent Inspector: Capabilities Panel
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: LOW
+Status: PLANNED
+Context:
+  In SwarmContext.jsx, add expandedCapabilitiesNodeId (null|string) + setExpandedCapabilitiesNodeId setter. When set, clear expandedPromptEditorNodeId and expandedOutputNodeId (mutual exclusion).
+Acceptance Criteria:
+  - [ ] expandedCapabilitiesNodeId state added with setter
+  - [ ] Setting it clears PBE and output card expanded states
+  - [ ] Setting PBE or output card clears capabilities state
+Dependencies: none
+---
+
+TASK #793: HARD-C1-02 - AgentNode: book icon for Capabilities Panel
+Area: V20.2 - Harden Agent Inspector: Capabilities Panel
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: LOW
+Status: PLANNED
+Context:
+  In AgentNode.jsx, add a book/toolkit SVG icon at top-6 right-[calc(100%+6px)] (below the gear icon). Teal/emerald color. Same hover behavior as gear: opacity-0 group-hover:opacity-100. Click calls setExpandedCapabilitiesNodeId(id).
+Acceptance Criteria:
+  - [ ] Book icon renders below gear icon on agent nodes
+  - [ ] Teal/emerald color distinguishes from indigo gear
+  - [ ] Appears on hover, click opens capabilities panel
+Dependencies: TASK #792
+---
+
+TASK #794: HARD-C2-01 - Create CapabilitiesPanel.jsx base structure
+Area: V20.2 - Harden Agent Inspector: Capabilities Panel
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Suggested Model: claude-opus-4-6
+Status: PLANNED
+Context:
+  Create client/src/canvas/nodes/CapabilitiesPanel.jsx. Floating panel positioned left of the agent node (same pattern as PromptBlockEditor). Width ~320px. Header: agent name + provider badge (Claude/Codex/Gemini) + close button. Body: scrollable container with collapsible sections. Footer: prompt preview text.
+Acceptance Criteria:
+  - [ ] Panel renders left of agent node when expandedCapabilitiesNodeId is set
+  - [ ] Header shows agent name, provider badge, close button
+  - [ ] Body scrollable, footer always visible
+  - [ ] Close button clears expandedCapabilitiesNodeId
+Dependencies: TASK #792
+---
+
+TASK #795: HARD-C2-02 - Tools section with categorized checkboxes
+Area: V20.2 - Harden Agent Inspector: Capabilities Panel
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PLANNED
+Context:
+  Define KNOWN_TOOLS constant: 16 Claude tools in 5 categories (File, Web, Notebook, Task, Meta), each with { name, description, category, defaultEnabled }. Render as collapsible section (open by default) with checkbox grid per category. Each tool shows name + description. Default active: the 7 from DEFAULT_SWARM_CLAUDE_TOOLS. On change: onUpdateNode(nodeId, { tools: selectedToolNames }), debounced 300ms.
+  Provider-aware: if node.data.model resolves to Codex/Gemini, show "Tools not supported for {provider}" and disable checkboxes. React live to model changes.
+Acceptance Criteria:
+  - [ ] KNOWN_TOOLS constant with 16 tools, 5 categories, descriptions
+  - [ ] Checkbox grid renders by category with descriptions
+  - [ ] Default: 7 tools active
+  - [ ] Changes save to node.data.tools via onUpdateNode
+  - [ ] Disabled with message for Codex/Gemini providers
+  - [ ] Reacts live to model changes in inspector
+Dependencies: TASK #794
+---
+
+TASK #796: HARD-C2-03 - Custom tools input
+Area: V20.2 - Harden Agent Inspector: Capabilities Panel
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: LOW
+Status: PLANNED
+Context:
+  Below the known tools grid, add a "Custom" section with text input + [+] button. Added names appear as removable tags. Saved in node.data.tools alongside the known tool selections.
+Acceptance Criteria:
+  - [ ] Text input + add button for custom tool names
+  - [ ] Custom tools appear as removable tags
+  - [ ] Saved in node.data.tools array with known tools
+Dependencies: TASK #795
+---
+
+TASK #797: HARD-C2-04 - Skills section with discovery
+Area: V20.2 - Harden Agent Inspector: Capabilities Panel
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PLANNED
+Context:
+  Collapsible section (open by default). On panel mount, fetch GET /api/v1/skills?projectId={projectId}. Render each skill as checkbox + name + description (from SKILL.md frontmatter). Selected skills saved to node.data.skillHints[]. Add custom skills field (same pattern as custom tools).
+Acceptance Criteria:
+  - [ ] Fetch skills from API on mount
+  - [ ] Render checkbox + name + description for each discovered skill
+  - [ ] Selection saved to node.data.skillHints
+  - [ ] Custom skills input with tag pattern
+Dependencies: TASK #794
+---
+
+TASK #798: HARD-C2-05 - Context & Output section
+Area: V20.2 - Harden Agent Inspector: Capabilities Panel
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: LOW
+Status: PLANNED
+Context:
+  Collapsible section (closed by default). Contains:
+  - Context Sources: tag input -> node.data.contextSources[]
+  - Expected Output: textarea -> node.data.expectedOutput
+  - Expected Output Contract: format select (markdown/json/text/table) + instructions textarea -> node.data.expectedOutputContract = { format, instructions }
+Acceptance Criteria:
+  - [ ] Context Sources as tag input
+  - [ ] Expected Output as textarea
+  - [ ] Output Contract: format select + instructions textarea
+  - [ ] All fields save via onUpdateNode
+Dependencies: TASK #794
+---
+
+TASK #799: HARD-C2-06 - Preview footer
+Area: V20.2 - Harden Agent Inspector: Capabilities Panel
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: LOW
+Status: PLANNED
+Context:
+  Always-visible footer showing how current selections appear in the guidance prompt block:
+  "Tool boundary: Bash, Read, Edit, Write, Grep, Glob, LS"
+  "Preferred skills/workflows: researcher"
+  "Expected output: A detailed architecture report"
+  Assembled from current node.data values.
+Acceptance Criteria:
+  - [ ] Footer shows assembled guidance text preview
+  - [ ] Updates reactively when tools/skills/output change
+Dependencies: TASK #795, TASK #797, TASK #798
+---
+
+TASK #800: HARD-C3-01 - SwarmCanvas: render CapabilitiesPanel
+Area: V20.2 - Harden Agent Inspector: Capabilities Panel
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PLANNED
+Context:
+  In SwarmCanvas.jsx, import and render CapabilitiesPanel when expandedCapabilitiesNodeId is set. Handle z-index layering (same approach as PBE and NodeOutputCard). Ensure mutual exclusion with PBE and output card.
+Acceptance Criteria:
+  - [ ] CapabilitiesPanel renders in SwarmCanvas when state is set
+  - [ ] Correct z-index layering
+  - [ ] Opening capabilities closes PBE and vice versa
+Dependencies: TASK #794
+---
+
+TASK #801: HARD-C3-02 - PBE guidance block: summary + link
+Area: V20.2 - Harden Agent Inspector: Capabilities Panel
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: LOW
+Status: PLANNED
+Context:
+  In PromptBlockEditor.jsx, replace the current guidance block detail message ("Configure tools, skill hints, and expected output via the block editor fields") with a summary of what's configured + "Open Capabilities" button that calls setExpandedCapabilitiesNodeId(nodeId) and closes PBE.
+Acceptance Criteria:
+  - [ ] Guidance block shows summary: "Tools: 7 active | Skills: 1 | Output: configured"
+  - [ ] "Open Capabilities" button opens the panel and closes PBE
+Dependencies: TASK #800
+---
+
+TASK #802: HARD-C4-01 - Test: Capabilities Panel
+Area: V20.2 - Harden Agent Inspector: Capabilities Panel
+Agent: qa-tester
+Type: TEST
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PLANNED
+Acceptance Criteria:
+  - [ ] Test: panel renders with Claude node (tools enabled)
+  - [ ] Test: panel renders with Codex node (tools disabled)
+  - [ ] Test: tool selection updates node.data.tools
+  - [ ] Test: skill discovery with mock API response
+  - [ ] Test: mutual exclusion with PBE
+Dependencies: TASK #801
+---
+
+TASK #803: HARD-C4-02 - COMMIT + MEMORY UPDATE for Capabilities Panel
+Area: V20.2 - Harden Agent Inspector: Capabilities Panel
+Agent: project-manager
+Type: CHECKPOINT
+Priority: HIGH
+Difficulty: LOW
+Status: PLANNED
+Context:
+  Commit: "feat: add Capabilities Panel for tools, skills, and output configuration"
+  Update audit: tools, skillHints, contextSources, expectedOutput, expectedOutputContract changed from NOT EXPOSED to WORKS.
+Acceptance Criteria:
+  - [ ] Git commit created
+  - [ ] Knowledge audit updated for all 6 fields
+Dependencies: TASK #802
+---
+
+TASK #804: TEST GATE - V20.2 Capabilities Panel regression
+Area: V20.2 - Harden Agent Inspector: Capabilities Panel
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Difficulty: HARD
+Status: PLANNED
+Gate: HARD
+Acceptance Criteria:
+  - [ ] Server tests pass (npm test --prefix server)
+  - [ ] Client unit tests pass (npm test --prefix client)
+  - [ ] Client build clean (npm run build --prefix client)
+  - [ ] No regressions in PBE, inspector, or canvas behavior
+  - [ ] E2E smoke: book icon appears on hover over agent node (Playwright)
+  - [ ] E2E smoke: clicking book icon opens CapabilitiesPanel with all 6 editable fields (Playwright)
+  - [ ] E2E smoke: saving tool/skillHints changes persists across page reload (Playwright)
+Dependencies: TASK #803
+---
+
+## AREA: V20.3 — Harden Agent Inspector: Inspector Refactor (Macro B)
+_Branch: harden/agent-inspector_
+_Components: AgentInspector (tab split, Cost, Tool Activity, Agent Memory, Runtime vs Configured), SwarmEngine, SwarmContext, PromptBlockEditor_
+_Tasks: #805 -> #826_
+_Source: Inspector needs split Setup/Runtime tabs, structured Agent Memory, Cost Breakdown, Tool Activity Log, token weights_
+
+---
+
+TASK #805: HARD-B1-01 - Split inspector into Setup and Runtime tabs
+Area: V20.3 - Harden Agent Inspector: Inspector Refactor
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PLANNED
+Context:
+  Refactor AgentInspector.jsx activeTab logic. Add 'runtime' tab. Setup tab contains: AgentFields (Essentials, Context Visibility, Runtime & Policies). Runtime tab contains: Live Status, Cost Breakdown, Tool Activity, Agent Memory, Output snippet. Runtime tab visible only when agentState exists. Order in Runtime: status-first (Live Status -> Cost -> Tool Activity -> Agent Memory -> Snippet).
+Acceptance Criteria:
+  - [ ] Setup and Runtime are separate tabs
+  - [ ] Runtime tab appears only after execution
+  - [ ] Content correctly split between tabs
+  - [ ] Runtime sections in status-first order
+Dependencies: none
+---
+
+TASK #806: HARD-B1-02 - Test: tab split
+Area: V20.3 - Harden Agent Inspector: Inspector Refactor
+Agent: qa-tester
+Type: TEST
+Priority: HIGH
+Difficulty: LOW
+Status: PLANNED
+Acceptance Criteria:
+  - [ ] Test: Setup tab always visible, Runtime only with agentState
+  - [ ] Test: correct sections in each tab
+Dependencies: TASK #805
+---
+
+TASK #807: HARD-B1-03 - COMMIT for tab split
+Area: V20.3 - Harden Agent Inspector: Inspector Refactor
+Agent: project-manager
+Type: CHECKPOINT
+Priority: HIGH
+Difficulty: LOW
+Status: PLANNED
+Context: Commit: "refactor: split inspector into Setup and Runtime tabs"
+Dependencies: TASK #806
+---
+
+TASK #808: HARD-B2-01 - Backend: save lastAssembledBlocks in _buildSystemPrompt
+Area: V20.3 - Harden Agent Inspector: Inspector Refactor
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PLANNED
+Context:
+  In SwarmEngine._buildSystemPrompt() (~line 6809), after assembling blocks, also save state.lastAssembledBlocks = blocks.map(b => ({ id, source, content, tokens: Math.ceil(content.length/4) })). Broadcast alongside lastAssembledPrompt. Prompt output remains UNCHANGED.
+Acceptance Criteria:
+  - [ ] state.lastAssembledBlocks saved with id, source, content, tokens
+  - [ ] Broadcast in agent_status event
+  - [ ] Assembled prompt output UNCHANGED
+Dependencies: none
+---
+
+TASK #809: HARD-B2-02 - Frontend: Agent Memory accordion view
+Area: V20.3 - Harden Agent Inspector: Inspector Refactor
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PLANNED
+Context:
+  In AgentInspector.jsx Runtime tab, replace the Agent Memory blob with accordion. If agentState.lastAssembledBlocks exists: render CollapsibleSection per block with header (name + dot color by source + "~N tok" badge + percentage bar). Sources: user=blue, runtime=cyan, system=gray, pack=purple. All closed by default. Footer: total tokens / context limit. Fallback to blob if lastAssembledBlocks not available.
+Acceptance Criteria:
+  - [ ] Accordion renders per-block with colored dots and token badges
+  - [ ] Percentage bar per block
+  - [ ] Total footer
+  - [ ] Fallback to blob when blocks unavailable
+Dependencies: TASK #808
+---
+
+TASK #810: HARD-B2-03 - COMMIT for Agent Memory
+Area: V20.3 - Harden Agent Inspector: Inspector Refactor
+Agent: project-manager
+Type: CHECKPOINT
+Priority: HIGH
+Difficulty: LOW
+Status: PLANNED
+Context: Commit: "feat: structured Agent Memory view with per-block token estimates"
+Dependencies: TASK #809
+---
+
+TASK #811: HARD-B3-01 - Token weight badges in PBE
+Area: V20.3 - Harden Agent Inspector: Inspector Refactor
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: LOW
+Status: PLANNED
+Context:
+  In PromptBlockEditor.jsx, for each block in the list, add "~N tok" badge next to the title (tokens = Math.ceil(content.length/4)). Add proportional bar below header. Footer: "~2,450 / 200,000 tok (1.2%)".
+Acceptance Criteria:
+  - [ ] Token badge per block
+  - [ ] Proportional bar
+  - [ ] Footer with total
+Dependencies: TASK #808
+---
+
+TASK #812: HARD-B3-02 - COMMIT for token weight
+Area: V20.3 - Harden Agent Inspector: Inspector Refactor
+Agent: project-manager
+Type: CHECKPOINT
+Priority: MEDIUM
+Difficulty: LOW
+Status: PLANNED
+Context: Commit: "feat: add token weight badges to Prompt Block Editor"
+Dependencies: TASK #811
+---
+
+TASK #813: HARD-B4-01 - CostBreakdown component
+Area: V20.3 - Harden Agent Inspector: Inspector Refactor
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: LOW
+Status: PLANNED
+Context:
+  Create CostBreakdown component in AgentInspector.jsx. Agent detail: input tokens, output tokens, cache read, cache write, USD cost, turns. Workflow summary: total cost (sum all agentStates), this agent %, agent count, budget bar if settings.budgetTokens set. Render in Runtime tab position 2.
+Acceptance Criteria:
+  - [ ] Agent token/cost detail section
+  - [ ] Workflow summary with percentage
+  - [ ] Budget bar when configured
+Dependencies: TASK #805
+---
+
+TASK #814: HARD-B4-02 - COMMIT for Cost Breakdown
+Area: V20.3 - Harden Agent Inspector: Inspector Refactor
+Agent: project-manager
+Type: CHECKPOINT
+Priority: MEDIUM
+Difficulty: LOW
+Status: PLANNED
+Context: Commit: "feat: add Cost Breakdown with agent and workflow totals"
+Dependencies: TASK #813
+---
+
+TASK #815: HARD-B5-01 - Backend: emit agent_tool_result event
+Area: V20.3 - Harden Agent Inspector: Inspector Refactor
+Agent: backend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PLANNED
+Context:
+  In SwarmEngine spawn functions (stream-json, codex-sdk), after a tool call completes, emit WS event agent_tool_result with: { nodeId, toolUseId, toolName, status: 'success'|'error', durationMs, outputSummary (truncated 200 chars) }. This event does not exist today — only agent_tool_use (start) and agent_tool_delta (partial updates) are emitted.
+Acceptance Criteria:
+  - [ ] agent_tool_result emitted after each tool call completion
+  - [ ] Contains toolUseId, toolName, status, durationMs, outputSummary
+  - [ ] outputSummary truncated to 200 chars
+Dependencies: none
+---
+
+TASK #816: HARD-B5-02 - Store: toolHistory accumulation
+Area: V20.3 - Harden Agent Inspector: Inspector Refactor
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PLANNED
+Context:
+  In SwarmContext.jsx, add toolHistory[] array in agentStates. On agent_tool_use: push entry with { toolName, toolUseId, startedAt }. On agent_tool_result: update matching entry with { completedAt, status, durationMs, outputSummary }. In useSwarm.js, add handler for agent_tool_result. Limit: 100 entries per agent (FIFO).
+Acceptance Criteria:
+  - [ ] toolHistory populated on tool_use events
+  - [ ] Updated on tool_result events
+  - [ ] Max 100 entries per agent
+  - [ ] useSwarm.js handles agent_tool_result
+Dependencies: TASK #815
+---
+
+TASK #817: HARD-B5-03 - ToolActivityLog component
+Area: V20.3 - Harden Agent Inspector: Inspector Refactor
+Agent: frontend-dev
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PLANNED
+Context:
+  Create ToolActivityLog component. Header: "Tool Activity (N calls)". Compact list: status icon (ok=green, error=red) + tool name + target + duration + timestamp. Click expands: shows inputSummary + outputSummary. Max height with scroll. Render in Runtime tab position 3.
+Acceptance Criteria:
+  - [ ] Compact list with status, name, duration, timestamp
+  - [ ] Click to expand with input/output details
+  - [ ] Max height with scroll
+Dependencies: TASK #816
+---
+
+TASK #818: HARD-B5-04 - COMMIT for Tool Activity Log
+Area: V20.3 - Harden Agent Inspector: Inspector Refactor
+Agent: project-manager
+Type: CHECKPOINT
+Priority: HIGH
+Difficulty: LOW
+Status: PLANNED
+Context: Commit: "feat: add Tool Activity Log with agent_tool_result events"
+Dependencies: TASK #817
+---
+
+TASK #819: HARD-B6-01 - Runtime vs Configured indicator
+Area: V20.3 - Harden Agent Inspector: Inspector Refactor
+Agent: frontend-dev
+Priority: LOW
+Difficulty: LOW
+Status: PLANNED
+Context:
+  In the Runtime tab Live Status section, check agentState.runtimeProvider vs the provider derived from node.data.model. If different: show warning badge "Overridden: using {actual} (workflow settings)".
+Acceptance Criteria:
+  - [ ] Warning badge shown when runtime provider differs from configured model
+Dependencies: TASK #805
+---
+
+TASK #820: HARD-B6-02 - COMMIT for Runtime vs Configured
+Area: V20.3 - Harden Agent Inspector: Inspector Refactor
+Agent: project-manager
+Type: CHECKPOINT
+Priority: LOW
+Difficulty: LOW
+Status: PLANNED
+Context: Commit: "feat: show runtime vs configured model indicator"
+Dependencies: TASK #819
+---
+
+TASK #821: TEST GATE - V20.3 Inspector Refactor regression
+Area: V20.3 - Harden Agent Inspector: Inspector Refactor
+Agent: qa-tester
+Type: TEST_GATE
+Priority: CRITICAL
+Difficulty: HARD
+Status: PLANNED
+Gate: HARD
+Acceptance Criteria:
+  - [ ] Server tests pass (npm test --prefix server)
+  - [ ] Client unit tests pass (npm test --prefix client)
+  - [ ] Client build clean (npm run build --prefix client)
+  - [ ] Tab split works correctly (Configuration / Runtime tabs render)
+  - [ ] Agent Memory accordion functional (shows assembled prompt)
+  - [ ] Tool Activity Log populates during execution
+  - [ ] Cost Breakdown renders with per-agent and total data
+  - [ ] E2E smoke: inspector opens on Runtime tab and shows live token count (Playwright)
+  - [ ] E2E smoke: Tool Activity Log entries appear as agent runs a tool call (Playwright)
+  - [ ] E2E smoke: Cost Breakdown section shows USD and token detail (Playwright)
+Dependencies: TASK #820
+---
+
+## AREA: V20.4 — Harden Agent Inspector: Output Enhancements (Macro D)
+_Branch: harden/agent-inspector_
+_Components: AgentInspector (Output tab, Handoff tab)_
+_Tasks: #822 -> #832_
+
+---
+
+TASK #822: HARD-D1-01 - Export dropdown for agent output
+Area: V20.4 - Harden Agent Inspector: Output Enhancements
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: LOW
+Status: PLANNED
+Context:
+  Next to the Copy button in the Output tab, add an Export button with dropdown menu: Download .md, Download .json, Download .txt. Client-side generation using downloadAsFile utility (Blob + createObjectURL + temp anchor click).
+Acceptance Criteria:
+  - [ ] Export button with dropdown menu
+  - [ ] .md: serialized markdown output
+  - [ ] .json: JSON.stringify(outputEntries, null, 2)
+  - [ ] .txt: plain text stripped of markdown
+Dependencies: none
+---
+
+TASK #823: HARD-D2-01 - Search-as-you-type in Output tab
+Area: V20.4 - Harden Agent Inspector: Output Enhancements
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: MEDIUM
+Status: PLANNED
+Context:
+  Create OutputSearchBar component. Text input with debounce 200ms. Filter output entries case-insensitive. Show count "N of M turns". Prev/next navigation buttons. Highlight matches with <mark> tag (or span with bg-yellow).
+Acceptance Criteria:
+  - [ ] Search input with debounce 200ms
+  - [ ] Filter entries by text match
+  - [ ] Count display "N of M turns"
+  - [ ] Prev/next buttons scroll to matches
+  - [ ] Matches highlighted
+Dependencies: none
+---
+
+TASK #824: HARD-D3-01 - Improved HandoffEntry component
+Area: V20.4 - Harden Agent Inspector: Output Enhancements
+Agent: frontend-dev
+Priority: MEDIUM
+Difficulty: MEDIUM
+Status: PLANNED
+Context:
+  Improve HandoffEntry: syntax highlighted JSON (reuse mdComponents code blocks), collapsible for payloads > 10 lines, resolve target ID to agent label (nodes.find), delivery status badge (Pending -> Delivered). Backend: when target agent starts in _onHandoff, broadcast handoff delivery status update.
+Acceptance Criteria:
+  - [ ] JSON syntax highlighted
+  - [ ] Collapsible for large payloads
+  - [ ] Target agent name instead of ID
+  - [ ] Delivery status badge (Pending/Delivered)
+Dependencies: none
+---
+
+TASK #825: HARD-D-02 - COMMIT for Output Enhancements
+Area: V20.4 - Harden Agent Inspector: Output Enhancements
+Agent: project-manager
+Type: CHECKPOINT
+Priority: MEDIUM
+Difficulty: LOW
+Status: PLANNED
+Context: Commits: "feat: add export dropdown for agent output", "feat: add search-as-you-type in output tab", "feat: improve handoff display with syntax highlight and delivery status"
+Dependencies: TASK #822, TASK #823, TASK #824
+---
+
+TASK #826: TEST GATE - V20.4 Output Enhancements regression
+Area: V20.4 - Harden Agent Inspector: Output Enhancements
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: MEDIUM
+Status: PLANNED
+Gate: HARD
+Acceptance Criteria:
+  - [ ] Server tests pass (npm test --prefix server)
+  - [ ] Client unit tests pass (npm test --prefix client)
+  - [ ] Client build clean (npm run build --prefix client)
+  - [ ] Export generates valid files in all 3 formats (.md, .json, .txt)
+  - [ ] Search filters and highlights matches correctly
+  - [ ] Handoff display shows syntax-highlighted JSON and delivery badge without regressions
+  - [ ] E2E smoke: export dropdown triggers file download for each format (Playwright)
+  - [ ] E2E smoke: typing in search box filters output entries in real-time (Playwright)
+  - [ ] E2E smoke: HandoffEntry shows delivery status badge (Pending -> Delivered) (Playwright)
+Dependencies: TASK #825
+---
+
+## AREA: V20.5 — Harden Agent Inspector: Persistence & Infra (Macro F)
+_Branch: harden/agent-inspector_
+_Components: SwarmEngine, SwarmContext_
+_Tasks: #827 -> #831_
+
+---
+
+TASK #827: HARD-F-01 - Persist agent totalCost in execution snapshot
+Area: V20.5 - Harden Agent Inspector: Persistence & Infra
+Agent: backend-dev
+Priority: MEDIUM
+Difficulty: LOW
+Status: PLANNED
+Context:
+  In SwarmEngine._persistExecutionHistory(), include totalCost for each agent in the snapshot. In SwarmContext.jsx applyExecutionSnapshot(), if client agentState lacks totalCost but snapshot has it, restore from snapshot.
+Acceptance Criteria:
+  - [ ] totalCost included in execution snapshot per agent
+  - [ ] applyExecutionSnapshot restores totalCost from snapshot
+Dependencies: none
+---
+
+TASK #828: HARD-F-02 - COMMIT for persistence
+Area: V20.5 - Harden Agent Inspector: Persistence & Infra
+Agent: project-manager
+Type: CHECKPOINT
+Priority: MEDIUM
+Difficulty: LOW
+Status: PLANNED
+Context: Commit: "feat: persist agent costs in execution snapshot for refresh resilience"
+Dependencies: TASK #827
+---
+
+TASK #829: TEST GATE - V20.5 Persistence regression
+Area: V20.5 - Harden Agent Inspector: Persistence & Infra
+Agent: qa-tester
+Type: TEST_GATE
+Priority: HIGH
+Difficulty: LOW
+Status: PLANNED
+Gate: HARD
+Acceptance Criteria:
+  - [ ] Server tests pass (npm test --prefix server — includes agent totalCost snapshot round-trip)
+  - [ ] Client unit tests pass (npm test --prefix client — includes applyExecutionSnapshot totalCost restore)
+  - [ ] Client build clean (npm run build --prefix client)
+  - [ ] E2E smoke: page reload after completed execution restores cost badges without new execution (Playwright)
+  - [ ] No regressions in execution snapshot or hydration behavior
+Dependencies: TASK #828
+---
+
+TASK #830: HARD-F-03 - MEMORY UPDATE FINALE
+Area: V20.5 - Harden Agent Inspector: Persistence & Infra
+Agent: project-manager
+Type: CHECKPOINT
+Priority: HIGH
+Difficulty: LOW
+Status: PLANNED
+Context: Final memory update: Knowledge plan marked COMPLETED, audit file updated with new field verdicts, MEMORY.md index updated.
+Dependencies: TASK #829
+---
+
+TASK #831: AREA CHECKPOINT - V20.x Harden Agent Inspector COMPLETE
+Area: V20.5 - Harden Agent Inspector: Persistence & Infra
+Agent: project-manager
+Type: AREA_CHECKPOINT
+Priority: CRITICAL
+Difficulty: HARD
+Status: PLANNED
+Gate: HARD
+Acceptance Criteria:
+  - [ ] All V20.0-V20.5 areas COMPLETED/PASS
+  - [ ] All 14 commits merged on harden/agent-inspector branch
+  - [ ] All 9 memory updates completed
+  - [ ] Server tests pass (npm test --prefix server — full suite)
+  - [ ] Client unit tests pass (npm test --prefix client — full suite)
+  - [ ] Client build clean (npm run build --prefix client)
+  - [ ] All E2E gates from V20.0-V20.5 passed (Playwright smoke suite)
+  - [ ] No regressions in existing functionality
+  - [ ] 8 previously broken/misleading fields now functional
+  - [ ] 6 previously unexposed fields now editable
+  - [ ] Capabilities Panel, Inspector refactor, Output enhancements all working
+Dependencies: TASK #830
