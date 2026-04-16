@@ -65,6 +65,9 @@ describe('AgentInspector output parity', () => {
       />
     );
 
+    // V20.3: live output is now in the Runtime tab, not Setup
+    fireEvent.click(screen.getByRole('button', { name: 'Runtime' }));
+
     expect(screen.getByText("Penguins are among nature's most remarkable survivors.")).toBeInTheDocument();
     expect(screen.queryByText(/Penguinsare/i)).not.toBeInTheDocument();
 

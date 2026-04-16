@@ -1117,6 +1117,14 @@ export default function AgentInspector({ nodes, edges = null, onUpdateNode }) {
             Output
           </InspectorTabButton>
         )}
+        {nodeType === 'agent' && agentState && (
+          <InspectorTabButton
+            active={activeTab === 'runtime'}
+            onClick={() => setActiveTab('runtime')}
+          >
+            Runtime
+          </InspectorTabButton>
+        )}
         {hasInspectorOutput && handoffs.length > 0 && (
           <InspectorTabButton
             active={activeTab === 'handoff'}
@@ -1238,54 +1246,117 @@ export default function AgentInspector({ nodes, edges = null, onUpdateNode }) {
         <OutputExtractorFields node={selectedNode} onUpdateNode={onUpdateNode} />
       )}
 
-      {/* Execution Info — timing data (FR-V5-49/50) */}
-      {activeTab === 'config' && agentState?.timestamps?.started && (
-        <ExecutionInfo timestamps={agentState.timestamps} status={agentState.status} />
-      )}
-
-      {/* Live status (from Zustand) */}
-      {activeTab === 'config' && agentState && (
-        <CollapsibleSection title="Live Status">
-          <div className="bg-gray-800 rounded p-2 text-xs">
-            <div className="text-gray-400 mb-1">Status</div>
-            <div className="capitalize font-medium">{agentState.status}</div>
-            {agentState.handoffCount > 0 && (
-              <div className="text-gray-400 mt-1">
-                {agentState.handoffCount} handoffs sent
+      {/* ── Runtime Tab (V20.3) ── */}
+      {activeTab === 'runtime' && agentState && (
+        <>
+          {/* 1. Live Status */}
+          <CollapsibleSection title="Live Status" defaultOpen={true}>
+            <div className="bg-gray-800 rounded p-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Status</span>
+                <span className="capitalize font-medium">{agentState.status}</span>
               </div>
-            )}
-          </div>
-        </CollapsibleSection>
-      )}
-
-      {/* Last output snippet */}
-      {activeTab === 'config' && preferredLiveSnippet && (
-        <CollapsibleSection title="Output" defaultOpen={true}>
-          <div className="bg-gray-800 rounded p-2 text-xs font-mono whitespace-pre-wrap max-h-48 overflow-y-auto text-green-300 leading-relaxed">
-            {liveOutputText}
-          </div>
-          {tokenSemantics.notes.length > 0 && (
-            <div className="bg-gray-800/80 border border-gray-700 rounded p-2 text-[11px] text-amber-200 flex flex-col gap-1">
-              {tokenSemantics.notes.map((note) => (
-                <div key={note}>{note}</div>
-              ))}
+              {agentState.handoffCount > 0 && (
+                <div className="flex justify-between mt-1">
+                  <span className="text-gray-400">Handoffs</span>
+                  <span>{agentState.handoffCount}</span>
+                </div>
+              )}
+              {agentState.retryCount > 0 && (
+                <div className="flex justify-between mt-1">
+                  <span className="text-gray-400">Retries</span>
+                  <span className="text-yellow-300">{agentState.retryCount}/{agentState.maxRetries || '?'}</span>
+                </div>
+              )}
+              {agentState.runtimeProvider && agentState.runtimeProvider !== (selectedNode?.data?.model ? undefined : agentState.provider) && (
+                <div className="mt-2 rounded bg-amber-900/30 border border-amber-700/40 px-2 py-1 text-[10px] text-amber-300">
+                  Overridden: using {agentState.runtimeProvider} (workflow settings)
+                </div>
+              )}
             </div>
-          )}
-        </CollapsibleSection>
-      )}
+          </CollapsibleSection>
 
-      {/* Agent Memory — full assembled prompt debug view */}
-      {activeTab === 'config' && agentState?.lastAssembledPrompt && (
-        <CollapsibleSection title="Agent Memory" defaultOpen={false}>
-          {agentState.lastPromptTimestamp && (
-            <div className="text-[10px] text-gray-500 mb-1">
-              Last assembled: {new Date(agentState.lastPromptTimestamp).toLocaleTimeString()}
-            </div>
+          {/* 2. Cost Breakdown */}
+          {(agentState.totalCost || agentState.turnCost) && (
+            <CollapsibleSection title="Cost Breakdown" defaultOpen={true}>
+              <div className="bg-gray-800 rounded p-2 text-xs space-y-1">
+                {agentState.totalCost && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Input tokens</span>
+                      <span>{(agentState.totalCost.inputTokens ?? 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Output tokens</span>
+                      <span>{(agentState.totalCost.outputTokens ?? 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Total tokens</span>
+                      <span className="font-medium">{((agentState.totalCost.inputTokens ?? 0) + (agentState.totalCost.outputTokens ?? 0)).toLocaleString()}</span>
+                    </div>
+                    {(agentState.totalCost.cacheReadTokens ?? 0) > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Cache read</span>
+                        <span className="text-cyan-300">{agentState.totalCost.cacheReadTokens.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {(agentState.totalCost.cacheWriteTokens ?? 0) > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Cache write</span>
+                        <span className="text-cyan-300">{agentState.totalCost.cacheWriteTokens.toLocaleString()}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between border-t border-gray-700 pt-1 mt-1">
+                      <span className="text-gray-400">Cost</span>
+                      <span className="text-emerald-300 font-medium">${(agentState.totalCost.costUsd ?? 0).toFixed(4)}</span>
+                    </div>
+                  </>
+                )}
+                {agentState.turnCount > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Turns</span>
+                    <span>{agentState.turnCount}</span>
+                  </div>
+                )}
+              </div>
+            </CollapsibleSection>
           )}
-          <div className="bg-gray-800 rounded p-2 text-[11px] font-mono whitespace-pre-wrap max-h-64 overflow-y-auto text-blue-200 leading-relaxed border border-gray-700">
-            {agentState.lastAssembledPrompt}
-          </div>
-        </CollapsibleSection>
+
+          {/* 3. Execution Info */}
+          {agentState.timestamps?.started && (
+            <ExecutionInfo timestamps={agentState.timestamps} status={agentState.status} />
+          )}
+
+          {/* 4. Agent Memory */}
+          {agentState.lastAssembledPrompt && (
+            <CollapsibleSection title="Agent Memory" defaultOpen={false}>
+              {agentState.lastPromptTimestamp && (
+                <div className="text-[10px] text-gray-500 mb-1">
+                  Last assembled: {new Date(agentState.lastPromptTimestamp).toLocaleTimeString()}
+                </div>
+              )}
+              <div className="bg-gray-800 rounded p-2 text-[11px] font-mono whitespace-pre-wrap max-h-64 overflow-y-auto text-blue-200 leading-relaxed border border-gray-700">
+                {agentState.lastAssembledPrompt}
+              </div>
+            </CollapsibleSection>
+          )}
+
+          {/* 5. Output snippet */}
+          {preferredLiveSnippet && (
+            <CollapsibleSection title="Output Snippet" defaultOpen={true}>
+              <div className="bg-gray-800 rounded p-2 text-xs font-mono whitespace-pre-wrap max-h-48 overflow-y-auto text-green-300 leading-relaxed">
+                {liveOutputText}
+              </div>
+              {tokenSemantics.notes.length > 0 && (
+                <div className="bg-gray-800/80 border border-gray-700 rounded p-2 text-[11px] text-amber-200 flex flex-col gap-1">
+                  {tokenSemantics.notes.map((note) => (
+                    <div key={note}>{note}</div>
+                  ))}
+                </div>
+              )}
+            </CollapsibleSection>
+          )}
+        </>
       )}
     </div>
   );
