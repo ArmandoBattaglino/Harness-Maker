@@ -1737,6 +1737,26 @@ class SwarmEngine {
     const sourceNode = execution.workflowDef.nodes.find((node) => node.id === sourceNodeId);
     const outgoingTargets = this._getOutgoingTargets(execution.workflowDef, sourceNodeId);
     const sourceNodeType = sourceNode?.type ?? 'agent';
+    const handoffPolicy = sourceNode?.data?.handoffPolicy || 'auto';
+
+    // V20.0 HARD-A2: explicit policy — reject targets not in outgoing edges
+    if (handoffPolicy === 'explicit' && outgoingTargets.length > 0 && !outgoingTargets.includes(requestedTargetId)) {
+      console.warn(
+        `[SwarmEngine] handoffPolicy=explicit: rejected target "${requestedTargetId}" `
+        + `not in outgoing edges of "${sourceNodeId}" (valid: [${outgoingTargets.join(', ')}])`
+      );
+      if (this._wsBroadcast) {
+        const executionId = execution.executionId ?? execution.id;
+        this._wsBroadcast(executionId, {
+          type: 'handoff_rejected',
+          sourceNodeId,
+          rejectedTargetId: requestedTargetId,
+          validTargets: outgoingTargets,
+          reason: 'explicit_policy',
+        });
+      }
+      return outgoingTargets;
+    }
 
     // Fan-out: agent with multiple outgoing edges and the requested target is valid
     if (
@@ -7952,6 +7972,26 @@ class SwarmEngine {
     }
 
     const sourceNode = execution.workflowDef.nodes.find((n) => n.id === sourceNodeId);
+
+    // V20.0 HARD-A2: manual-review handoff policy — freeze agent for human review
+    const handoffPolicy = sourceNode?.data?.handoffPolicy || 'auto';
+    if (handoffPolicy === 'manual-review' && sourceState && !sourceState._bypassManualReview) {
+      const inboxItem = {
+        id: `handoff-review-${Date.now()}`,
+        type: 'handoff_review',
+        message: `Handoff from "${sourceNode?.data?.label || sourceNodeId}" requires approval`,
+        reason: 'manual-review handoff policy',
+        sourceNodeId,
+        targetNodeIds: targetIds,
+        contextUpdate,
+        timestamp: new Date().toISOString(),
+      };
+      this.freezeAgent(executionId, sourceNodeId, inboxItem);
+      // Store pending handoff data so it can be resumed on approve
+      sourceState._pendingHandoff = { targetIds, contextUpdate };
+      return;
+    }
+
     const isLoopEdge = sourceNode?.type === 'loop';
     const threshold = execution.workflowDef.settings?.circuitBreakerThreshold ?? 10;
 
@@ -8490,6 +8530,82 @@ class SwarmEngine {
 
     this._broadcastAgentStatus(executionId, nodeId, state);
     this._syncExecutionStatusFromAgents(execution);
+  }
+
+  /**
+   * Resolve a handoff_review HITL item with one of 4 actions.
+   * V20.0 HARD-A2: manual-review handoff policy resolution.
+   * @param {string} executionId
+   * @param {string} nodeId - the paused source agent
+   * @param {object} resolution - { action: 'approve'|'reject'|'reroute'|'edit', targetNodeId?, contextUpdate? }
+   */
+  async resolveHandoffReview(executionId, nodeId, resolution = {}) {
+    const execution = this._executions.get(executionId);
+    if (!execution) return;
+    const state = execution.agentStates.get(nodeId);
+    if (!state) return;
+    const pendingHandoff = state._pendingHandoff;
+    if (!pendingHandoff) return;
+
+    const { action, targetNodeId, contextUpdate: editedContext } = resolution;
+
+    // Remove the inbox item
+    const reviewIdx = execution.inboxItems.findIndex(
+      (item) => item.type === 'handoff_review' && item.sourceNodeId === nodeId
+    );
+    if (reviewIdx !== -1) {
+      const removedItem = execution.inboxItems.splice(reviewIdx, 1)[0];
+      if (this._wsBroadcast) {
+        this._wsBroadcast(executionId, { type: 'hitl_resolved', itemId: removedItem.id });
+      }
+    }
+
+    switch (action) {
+      case 'reject': {
+        state.status = 'done';
+        state._pendingHandoff = null;
+        this._broadcastAgentStatus(executionId, nodeId, state);
+        this._syncExecutionStatusFromAgents(execution);
+        return;
+      }
+      case 'reroute': {
+        const outgoing = this._getOutgoingTargets(execution.workflowDef, nodeId);
+        if (!targetNodeId || !outgoing.includes(targetNodeId)) {
+          // Invalid reroute target — fall back to approve
+          console.warn(`[SwarmEngine] resolveHandoffReview: reroute target "${targetNodeId}" invalid, falling back to approve`);
+        } else {
+          state._pendingHandoff.targetIds = [targetNodeId];
+        }
+        break;
+      }
+      case 'edit': {
+        if (editedContext && typeof editedContext === 'object') {
+          state._pendingHandoff.contextUpdate = editedContext;
+        }
+        break;
+      }
+      case 'approve':
+      default:
+        break;
+    }
+
+    // Resume the handoff — set bypass flag to avoid re-triggering manual-review
+    const resumeTargetIds = state._pendingHandoff.targetIds;
+    const resumeContext = state._pendingHandoff.contextUpdate;
+    state._pendingHandoff = null;
+    state._bypassManualReview = true;
+
+    this.unfreezeAgent(executionId, nodeId);
+
+    // Replay the handoff with resolved targets
+    for (const tgtId of resumeTargetIds) {
+      await this._onHandoff(executionId, nodeId, {
+        type: 'handoff',
+        targetId: tgtId,
+        contextUpdate: resumeContext,
+      });
+    }
+    state._bypassManualReview = false;
   }
 
   /**

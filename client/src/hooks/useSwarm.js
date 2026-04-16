@@ -774,6 +774,9 @@ export function useSwarm(workflowId) {
           updateAgentState(msg.nodeId, { status: 'maxTurns_reached' });
           addFeedEvent({ ...msg, timestamp: Date.now() });
           break;
+        case 'handoff_rejected':
+          addFeedEvent({ ...msg, timestamp: Date.now() });
+          break;
         case 'hitl_required':
           addInboxItem(msg);
           addChatMessage({

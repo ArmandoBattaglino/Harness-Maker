@@ -5842,4 +5842,135 @@ describe('SwarmEngine', () => {
       expect(execution.nodeHandoffCounts.get('node-a')).toBe(1);
     });
   });
+
+  describe('Test 16: V20.0 handoffPolicy enforcement', () => {
+    it('auto policy — handoff proceeds immediately (regression)', async () => {
+      const wf = buildTwoNodeWorkflow({ circuitBreakerThreshold: 100 });
+      wf.nodes[0].data.handoffPolicy = 'auto';
+      wf.settings.maxConversationTurns = 100;
+      workflowStoreMock = { get: vi.fn().mockResolvedValue(wf) };
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
+      const execution = engine._executions.get(executionId);
+
+      const stateA = execution.agentStates.get('node-a');
+      if (stateA) stateA.status = 'running';
+      await engine._onHandoff(executionId, 'node-a', { type: 'handoff', targetId: 'node-b', contextUpdate: {} });
+
+      // Source should be done (handoff completed immediately)
+      expect(stateA.status).toBe('done');
+    });
+
+    it('explicit policy — invented target rejected with warning', async () => {
+      const wf = buildTwoNodeWorkflow({ circuitBreakerThreshold: 100 });
+      wf.nodes[0].data.handoffPolicy = 'explicit';
+      wf.settings.maxConversationTurns = 100;
+      workflowStoreMock = { get: vi.fn().mockResolvedValue(wf) };
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
+      const execution = engine._executions.get(executionId);
+
+      const stateA = execution.agentStates.get('node-a');
+      if (stateA) stateA.status = 'running';
+      wsBroadcast.mockClear();
+
+      // Request a target that's NOT in the edges (invented)
+      await engine._onHandoff(executionId, 'node-a', { type: 'handoff', targetId: 'node-invented', contextUpdate: {} });
+
+      const rejectedEvents = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .filter((ev) => ev.type === 'handoff_rejected');
+      expect(rejectedEvents.length).toBe(1);
+      expect(rejectedEvents[0].rejectedTargetId).toBe('node-invented');
+      expect(rejectedEvents[0].reason).toBe('explicit_policy');
+    });
+
+    it('manual-review — agent frozen with handoff_review inbox item', async () => {
+      const wf = buildTwoNodeWorkflow({ circuitBreakerThreshold: 100 });
+      wf.nodes[0].data.handoffPolicy = 'manual-review';
+      wf.settings.maxConversationTurns = 100;
+      workflowStoreMock = { get: vi.fn().mockResolvedValue(wf) };
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
+      const execution = engine._executions.get(executionId);
+
+      const stateA = execution.agentStates.get('node-a');
+      if (stateA) stateA.status = 'running';
+      wsBroadcast.mockClear();
+
+      await engine._onHandoff(executionId, 'node-a', { type: 'handoff', targetId: 'node-b', contextUpdate: { info: 'test' } });
+
+      // Agent should be paused
+      expect(stateA.status).toBe('paused');
+      // Pending handoff should be stored
+      expect(stateA._pendingHandoff).toBeDefined();
+      expect(stateA._pendingHandoff.targetIds).toContain('node-b');
+
+      // hitl_required WS event emitted
+      const hitlEvents = wsBroadcast.mock.calls
+        .map(([, ev]) => ev)
+        .filter((ev) => ev.type === 'hitl_required');
+      expect(hitlEvents.length).toBe(1);
+      expect(hitlEvents[0].item.type).toBe('handoff_review');
+
+      // Inbox item created
+      expect(execution.inboxItems.length).toBe(1);
+      expect(execution.inboxItems[0].type).toBe('handoff_review');
+    });
+
+    it('resolveHandoffReview approve — resumes handoff', async () => {
+      const wf = buildTwoNodeWorkflow({ circuitBreakerThreshold: 100 });
+      wf.nodes[0].data.handoffPolicy = 'manual-review';
+      wf.settings.maxConversationTurns = 100;
+      workflowStoreMock = { get: vi.fn().mockResolvedValue(wf) };
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
+      const execution = engine._executions.get(executionId);
+
+      const stateA = execution.agentStates.get('node-a');
+      if (stateA) stateA.status = 'running';
+
+      // Trigger manual-review freeze
+      await engine._onHandoff(executionId, 'node-a', { type: 'handoff', targetId: 'node-b', contextUpdate: {} });
+      expect(stateA.status).toBe('paused');
+
+      // Resolve with approve
+      await engine.resolveHandoffReview(executionId, 'node-a', { action: 'approve' });
+
+      // After approve, the handoff should have completed — source is done
+      expect(stateA.status).toBe('done');
+      expect(stateA._pendingHandoff).toBeNull();
+    });
+
+    it('resolveHandoffReview reject — marks agent done without activating target', async () => {
+      const wf = buildTwoNodeWorkflow({ circuitBreakerThreshold: 100 });
+      wf.nodes[0].data.handoffPolicy = 'manual-review';
+      wf.settings.maxConversationTurns = 100;
+      workflowStoreMock = { get: vi.fn().mockResolvedValue(wf) };
+      engine = new SwarmEngine(mockSessionManager, workflowStoreMock, circuitBreaker, budgetTracker);
+      engine.setWsBroadcast(wsBroadcast);
+
+      const executionId = await engine.startExecution('wf-1', 'proj-1', '/projects/proj-1', { provider: 'gemini' });
+      const execution = engine._executions.get(executionId);
+
+      const stateA = execution.agentStates.get('node-a');
+      if (stateA) stateA.status = 'running';
+
+      await engine._onHandoff(executionId, 'node-a', { type: 'handoff', targetId: 'node-b', contextUpdate: {} });
+      expect(stateA.status).toBe('paused');
+
+      await engine.resolveHandoffReview(executionId, 'node-a', { action: 'reject' });
+
+      expect(stateA.status).toBe('done');
+      expect(stateA._pendingHandoff).toBeNull();
+    });
+  });
 });

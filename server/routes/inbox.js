@@ -168,5 +168,37 @@ export default function inboxRoutes(swarmEngine) {
     }
   });
 
+  // -------------------------------------------------------------------------
+  // POST /api/v1/swarm/:executionId/agents/:nodeId/resolve
+  // V20.0 HARD-A2: Resolve a handoff_review HITL item with 4 actions.
+  // Body: { action: 'approve'|'reject'|'reroute'|'edit', targetNodeId?, contextUpdate? }
+  // → 200 { ok: true }
+  // → 400 if action is invalid
+  // → 404 if execution or agent not found
+  // -------------------------------------------------------------------------
+  router.post('/:executionId/agents/:nodeId/resolve', async (req, res) => {
+    try {
+      const { executionId, nodeId } = req.params;
+      const { action, targetNodeId, contextUpdate } = req.body || {};
+
+      if (!['approve', 'reject', 'reroute', 'edit'].includes(action)) {
+        return res.status(400).json({ error: `Invalid action: ${action}. Must be approve|reject|reroute|edit` });
+      }
+
+      const execution = swarmEngine.getExecution(executionId);
+      if (!execution) return res.status(404).json({ error: 'Execution not found' });
+
+      const state = execution.agentStates.get(nodeId);
+      if (!state) return res.status(404).json({ error: 'Agent not found' });
+
+      await swarmEngine.resolveHandoffReview(executionId, nodeId, { action, targetNodeId, contextUpdate });
+
+      return res.json({ ok: true, status: swarmEngine.getStatus(executionId)?.status ?? 'running' });
+    } catch (err) {
+      console.error(`[inbox] POST /:executionId/agents/:nodeId/resolve error: ${err.message}`);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
   return router;
 }

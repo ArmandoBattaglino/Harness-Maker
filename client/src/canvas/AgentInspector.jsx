@@ -221,7 +221,7 @@ function AgentFields({ node, nodes, onUpdateNode }) {
           />
           <span className="text-[9px] text-gray-500">Limits turns for this agent only. Other agents continue.</span>
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="flex flex-col gap-1">
           <label className="text-[11px] text-gray-400">
             Handoff policy
             <select
@@ -235,6 +235,13 @@ function AgentFields({ node, nodes, onUpdateNode }) {
               ))}
             </select>
           </label>
+          <span className="text-[9px] text-gray-500">
+            {(data.handoffPolicy || 'auto') === 'auto' && 'Handoffs proceed immediately without approval.'}
+            {data.handoffPolicy === 'explicit' && 'Only handoffs to connected nodes are allowed. Invented targets are blocked.'}
+            {data.handoffPolicy === 'manual-review' && 'Every handoff requires human approval. Approve/Reject/Reroute/Edit in Inbox.'}
+          </span>
+        </div>
+        <div className="flex flex-col gap-1">
           <label className="text-[11px] text-gray-400">
             Error/retry policy
             <select
@@ -248,6 +255,11 @@ function AgentFields({ node, nodes, onUpdateNode }) {
               ))}
             </select>
           </label>
+          <span className="text-[9px] text-gray-500">
+            {(data.errorRetryPolicy || 'none') === 'none' && 'Agent stops on error.'}
+            {data.errorRetryPolicy === 'retry-on-error' && 'Retries with exponential backoff before stopping.'}
+            {data.errorRetryPolicy === 'escalate-to-human' && 'Errors require human decision: retry, skip, or halt.'}
+          </span>
         </div>
       </CollapsibleSection>
     </>
