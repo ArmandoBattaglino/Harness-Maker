@@ -12,6 +12,7 @@ import { useCanvasActions } from '../CanvasActionsContext';
 import { getModelContextLimit } from '../../utils/modelContextLimits';
 import NodeValidationCard from './NodeValidationCard';
 import PromptBlockEditor from './PromptBlockEditor';
+import CapabilitiesPanel from './CapabilitiesPanel';
 
 function formatTokenCount(n) {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -49,6 +50,8 @@ export default function AgentNode({ id, data, selected, positionAbsoluteX, posit
   const setExpandedValidationNodeId = useSwarmStore((s) => s.setExpandedValidationNodeId);
   const expandedPromptEditorNodeId = useSwarmStore((s) => s.expandedPromptEditorNodeId);
   const setExpandedPromptEditorNodeId = useSwarmStore((s) => s.setExpandedPromptEditorNodeId);
+  const expandedCapabilitiesNodeId = useSwarmStore((s) => s.expandedCapabilitiesNodeId);
+  const setExpandedCapabilitiesNodeId = useSwarmStore((s) => s.setExpandedCapabilitiesNodeId);
   const workflowDef = useSwarmStore((s) => s.workflowDef);
   const validationIssues = useSwarmStore((s) => s.agentValidationIssuesByNodeId[id] || []);
   const canvasActions = useCanvasActions();
@@ -56,6 +59,7 @@ export default function AgentNode({ id, data, selected, positionAbsoluteX, posit
   const showOutputCard = expandedOutputNodeId === id && !isDropPreview;
   const showValidationCard = expandedValidationNodeId === id && !isDropPreview;
   const showPromptEditor = expandedPromptEditorNodeId === id && !isDropPreview;
+  const showCapabilities = expandedCapabilitiesNodeId === id && !isDropPreview;
   const status = isDropPreview ? 'preview' : agentState?.status ?? 'idle';
   const isStreamJson = isStructuredSpawnMode(agentState?.spawnMode);
   const showThinking = isStreamJson && status === 'running' && agentState?.isThinking;
@@ -141,6 +145,11 @@ export default function AgentNode({ id, data, selected, positionAbsoluteX, posit
     setExpandedPromptEditorNodeId(id);
   }, [id, setExpandedPromptEditorNodeId]);
 
+  const handleBookClick = useCallback((event) => {
+    event.stopPropagation();
+    setExpandedCapabilitiesNodeId(id);
+  }, [id, setExpandedCapabilitiesNodeId]);
+
   const handlePromptFieldChange = useCallback((field, value) => {
     canvasActions?.onUpdateNode?.(id, { [field]: value });
   }, [canvasActions, id]);
@@ -207,6 +216,20 @@ export default function AgentNode({ id, data, selected, positionAbsoluteX, posit
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-[18px] h-[18px]">
             <path fillRule="evenodd" d="M7.84 1.804A1 1 0 018.82 1h2.36a1 1 0 01.98.804l.331 1.652a6.993 6.993 0 011.929 1.115l1.598-.54a1 1 0 011.186.447l1.18 2.044a1 1 0 01-.205 1.251l-1.267 1.113a7.047 7.047 0 010 2.228l1.267 1.113a1 1 0 01.206 1.25l-1.18 2.045a1 1 0 01-1.187.447l-1.598-.54a6.993 6.993 0 01-1.929 1.115l-.33 1.652a1 1 0 01-.98.804H8.82a1 1 0 01-.98-.804l-.331-1.652a6.993 6.993 0 01-1.929-1.115l-1.598.54a1 1 0 01-1.186-.447l-1.18-2.044a1 1 0 01.205-1.251l1.267-1.114a7.05 7.05 0 010-2.227L1.821 7.773a1 1 0 01-.206-1.25l1.18-2.045a1 1 0 011.187-.447l1.598.54A6.993 6.993 0 017.51 3.456l.33-1.652zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+          </svg>
+        </button>
+      )}
+
+      {/* Book icon — capabilities panel toggle (V20.2) */}
+      {!isDropPreview && (
+        <button
+          onClick={handleBookClick}
+          className={`absolute top-6 right-[calc(100%+6px)] z-20 text-teal-400 hover:text-teal-300 transition-opacity ${showCapabilities ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+          title="Capabilities Panel"
+          aria-label="Open capabilities panel"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-[16px] h-[16px]">
+            <path d="M10.75 16.82A7.462 7.462 0 0115 15.5c.71 0 1.396.098 2.046.282A.75.75 0 0018 15.06v-11a.75.75 0 00-.546-.721A9.006 9.006 0 0015 3a8.963 8.963 0 00-4.25 1.065V16.82zM9.25 4.065A8.963 8.963 0 005 3c-.85 0-1.673.118-2.454.339A.75.75 0 002 4.06v11a.75.75 0 00.954.721A7.506 7.506 0 015 15.5c1.579 0 3.042.487 4.25 1.32V4.065z" />
           </svg>
         </button>
       )}
@@ -375,6 +398,16 @@ export default function AgentNode({ id, data, selected, positionAbsoluteX, posit
           workflowDef={workflowDef}
           onFieldChange={handlePromptFieldChange}
           onClose={() => setExpandedPromptEditorNodeId(null)}
+        />
+      )}
+
+      {/* Floating capabilities panel — positioned to the right of the node (V20.2) */}
+      {showCapabilities && (
+        <CapabilitiesPanel
+          nodeId={id}
+          nodeData={data}
+          onUpdateNode={(nid, patch) => canvasActions?.onUpdateNode?.(nid, patch)}
+          onClose={() => setExpandedCapabilitiesNodeId(null)}
         />
       )}
     </div>
