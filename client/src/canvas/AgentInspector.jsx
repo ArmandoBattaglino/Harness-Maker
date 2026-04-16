@@ -308,23 +308,26 @@ function InputBlockFields({ node, onUpdateNode }) {
   const previewPayload = fields.reduce((acc, field) => {
     const key = field?.key || `field_${Object.keys(acc).length + 1}`;
     const type = field?.type || 'text';
-    acc[key] = type === 'image'
-      ? {
-          kind: 'run-image',
-          name: 'reference.png',
-          mimeType: 'image/png',
-          size: 2048,
-          note: 'metadata-only in current MVP',
-        }
-      : type === 'boolean'
-        ? false
-        : type === 'number' || type === 'integer'
-          ? 0
-          : type === 'json'
-            ? { example: 'value' }
-            : type === 'enum'
-              ? (Array.isArray(field.options) && field.options[0]) || 'option'
-              : `<${type}>`;
+    const hasDefault = field.defaultValue !== undefined && field.defaultValue !== '';
+    acc[key] = hasDefault
+      ? field.defaultValue
+      : type === 'image'
+        ? {
+            kind: 'run-image',
+            name: 'reference.png',
+            mimeType: 'image/png',
+            size: 2048,
+            note: 'metadata-only in current MVP',
+          }
+        : type === 'boolean'
+          ? false
+          : type === 'number' || type === 'integer'
+            ? 0
+            : type === 'json'
+              ? { example: 'value' }
+              : type === 'enum'
+                ? (Array.isArray(field.options) && field.options[0]) || 'option'
+                : `<${type}>`;
     return acc;
   }, {});
 
@@ -429,6 +432,25 @@ function InputBlockFields({ node, onUpdateNode }) {
               className="accent-blue-500"
             />
             Required
+          </label>
+          <label className="mt-2 block text-[11px] text-gray-400">
+            Default Value
+            <input
+              className={INPUT_CLS}
+              value={field.defaultValue || ''}
+              placeholder={field.type === 'boolean' ? 'false' : field.type === 'number' ? '0' : ''}
+              onChange={(e) => updateField(index, { defaultValue: e.target.value })}
+            />
+          </label>
+          <label className="mt-2 block text-[11px] text-gray-400">
+            Help Text
+            <textarea
+              className={INPUT_CLS}
+              rows={1}
+              value={field.helpText || ''}
+              placeholder="Describe this field for the operator..."
+              onChange={(e) => updateField(index, { helpText: e.target.value })}
+            />
           </label>
         </div>
       ))}
