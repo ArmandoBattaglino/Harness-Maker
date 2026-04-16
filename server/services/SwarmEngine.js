@@ -2189,6 +2189,14 @@ class SwarmEngine {
           status: state.status ?? 'unknown',
           provider: state.runtimeProvider ?? state.provider ?? null,
           handoffCount: state.handoffCount ?? 0,
+          // V20.5: persist totalCost for refresh resilience
+          ...(state.totalCostUsd != null || state.totalInputTokens != null ? {
+            totalCost: {
+              costUsd: state.totalCostUsd ?? 0,
+              inputTokens: state.totalInputTokens ?? 0,
+              outputTokens: state.totalOutputTokens ?? 0,
+            },
+          } : {}),
         };
       }
     }
